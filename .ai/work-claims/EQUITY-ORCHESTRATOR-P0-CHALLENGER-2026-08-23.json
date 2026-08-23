@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "SC-2 Equity Orchestrator P0 challenger plus P1 verified evidence/feature construction and research-only runtime binding, preserving homogeneous scoring authority",
+  "workItem": "SC-2 Equity Orchestrator P0 challenger plus P1 verified evidence/feature construction including SEC EDGAR point-in-time evidence, provider-neutral filing derivation and research-only runtime binding",
   "startedAt": "2026-08-23T17:08:00+02:00",
   "baseBranch": "main",
   "baseSha": "800b05261c1792fed5138a8125cf6a00b1f5af07",
@@ -21,17 +21,25 @@
     "market-evidence-dq/1.0.0",
     "effective-scoring-fingerprint/1.0.0",
     "existing AlphaVantage/FMP stock fundamentals paths",
-    "existing Traditional provider router with TwelveData/EODHD history fallback"
+    "existing Traditional provider router with TwelveData/EODHD history fallback",
+    "SEC EDGAR CompanyFacts public API and Fair Access policy"
   ],
   "claimedPaths": [
     ".ai/work-claims/EQUITY-ORCHESTRATOR-P0-CHALLENGER-2026-08-23.json",
+    ".env.example",
     "docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md",
     "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
     "docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md",
+    "docs/evidence/sc-md/SC2_EQUITY_P1_EVIDENCE_RUNTIME_2026-08-23.md",
+    "docs/evidence/sc-md/SC2_EQUITY_P1_SEC_EDGAR_2026-08-23.md",
     "docs/roadmaps/work-packages/SC-2E_EQUITY_ORCHESTRATOR_CHALLENGER.md",
     "server/equityResearchRuntime.ts",
+    "server/equitySecEvidenceBridge.ts",
+    "server/secEdgarCompanyFacts.ts",
     "server/stockFundamentals.ts",
     "src/platform/Scoring/EquityFeatureComposer.ts",
+    "src/platform/Scoring/EquityFilingDerivedMetrics.ts",
+    "src/platform/Scoring/EquityFilingFeatureComposer.ts",
     "src/platform/Scoring/EquityModelContracts.ts",
     "src/platform/Scoring/EquityOrchestrator.ts",
     "src/platform/Scoring/EquityResearchScoring.ts",
@@ -39,14 +47,23 @@
     "src/platform/Scoring/index.ts",
     "src/services/traditionalHistoryFallback.ts",
     "tests/unit/equityFeatureComposer.test.ts",
+    "tests/unit/equityFilingDerivedMetrics.test.ts",
+    "tests/unit/equityFilingFeatureComposer.test.ts",
     "tests/unit/equityOrchestratorP0.test.ts",
-    "tests/unit/equityResearchRuntime.test.ts"
+    "tests/unit/equityResearchRuntime.test.ts",
+    "tests/unit/equitySecEvidenceBridge.test.ts",
+    "tests/unit/secEdgarCompanyFacts.test.ts"
   ],
   "sourceInputs": [
     {
       "kind": "google-drive-file",
       "fileId": "1r49r3Eo72wfXlTTorx2uuqNUjaWtNhtm",
       "role": "Equity taxonomy, subclass and stock-specific scoring design input"
+    },
+    {
+      "kind": "primary-web-source",
+      "source": "SEC EDGAR APIs / Developer Resources / Fair Access",
+      "role": "CompanyFacts point-in-time evidence and automated-access governance"
     }
   ],
   "protectedExistingAuthorities": [
@@ -60,7 +77,7 @@
     "existing verified-score REST contracts"
   ],
   "implementationBoundary": {
-    "modelStage": "research-challenger-p1-evidence-runtime",
+    "modelStage": "research-challenger-p1-sec-evidence-runtime",
     "canonicalModelPromotionPerformed": false,
     "scoreEligible": false,
     "executionEligible": false,
@@ -71,6 +88,8 @@
     "newEvidenceAuthorityAllowed": false,
     "newHistoryProviderAuthorityAllowed": false,
     "assetRegistrySimulatedHistoryAllowed": false,
+    "secEvidenceOnly": true,
+    "secVendorCorrelationStackingAllowed": false,
     "regimeScoreImpactAllowed": false,
     "peerRelativeNormalizationImplemented": false,
     "currentNormalizationPromotionReady": false,
@@ -85,7 +104,7 @@
     "directOpenPrFileOverlap": false,
     "branchBehindBy": 0,
     "mergeBaseMatchesCurrentMain": true,
-    "changedFilesBeforeThisMetadataCommit": 17,
+    "changedFilesBeforeThisMetadataCommit": 28,
     "allChangedFilesClaimed": true
   },
   "validation": {
@@ -96,6 +115,7 @@
       "EquityOrchestrator.ts"
     ],
     "p1StaticReview": "COMPLETE",
+    "p1SecFocusedStaticReview": "COMPLETE",
     "p1FocusedTypeScriptAndUnit": "PENDING_BEFORE_PR",
     "fullRepositoryTypeScript": "NOT_RUN_PRE_PR_CONNECTOR_CONTEXT",
     "hostedCiTriggered": false,
