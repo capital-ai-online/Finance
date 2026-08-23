@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Datum:** 2026-08-19
-- **Revalidierung:** 2026-08-22 — Meme/DeFi Model Supersession
+- **Revalidierung:** 2026-08-23 — Equity Orchestrator P0 Challenger
 - **Owner-Entscheidung:** „Es sollen keine parallel Architekturen mehr entstehen und am Ende eine komplett Architektur entstehen, die sich in das FinTech Wertschöpfungs Ökosystem einbindet.“
 - **Authority:** `SC-MD-SPT-0001` bleibt kanonische Ausführungsautorität.
 
@@ -48,13 +48,14 @@ LLM-/Agent-Ausgaben dürfen keine verifizierten Finanzmerkmale ersetzen. AI kann
 
 Eine mögliche erneute Gemini-Anbindung ist **nicht Bestandteil von A1/A2**. ADR-0072 bleibt gültig. Jede Wiedereinführung benötigt eine neue explizite ADR und darf nur als Adapter innerhalb derselben Acquisition-/Evidence-Architektur erfolgen; ein `GEMINI_API_KEY` darf keinen separaten Scoring-Pfad reaktivieren.
 
-## Aktueller Registry-Stand nach Supersession B
+## Aktueller Registry-Stand nach Equity-P0-Revalidierung
 
 | Modell | Assets | Status | Feature Contract | Result Contract |
 |---|---|---|---|---|
 | `crypto-technical-provenance@0.7.0` | crypto | canonical/champion | `crypto-technical-features/0.7.0` | `scoring-integrity/1.1.0` |
-| `crypto-meme-integrity@0.2.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-meme-research-features/0.2.0` | `scoring-integrity/1.1.0` |
-| `crypto-defi-fundamental@0.2.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-defi-research-features/0.2.0` | `scoring-integrity/1.1.0` |
+| `crypto-meme-integrity@0.3.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-meme-research-features/0.3.0` | `scoring-integrity/1.1.0` |
+| `crypto-defi-fundamental@0.3.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-defi-research-features/0.3.0` | `scoring-integrity/1.1.0` |
+| `equity-multifactor@0.1.0` | stock | challenger/research-only, `scoreEligible=false` | `equity-multifactor-features/0.1.0` | `scoring-integrity/1.1.0` |
 | `traditional-scoring@2.1.0` | stock/forex/index | canonical/champion | `traditional-features/2.1.0` | `scoring-integrity/1.0.0` |
 | `commodity-evidence-scoring@1.0.0` | commodity | canonical/champion | `commodity-market-evidence/1.0.0` | `scoring-integrity/1.0.0` |
 | `sovereign-benchmark-yield-scoring@1.0.0` | bond `government-benchmark-yield` | canonical/champion | `sovereign-benchmark-yield-features/1.0.0` | `scoring-integrity/1.0.0` |
@@ -80,14 +81,29 @@ Supersession B ändert keine produktive Modellautorität. Sie entfernt stattdess
 1. **Meme:** Die historische 35/25/20/20-Formel aus `MemeCoinScoringService` ist nicht kanonisch und wird nicht in den Challenger übernommen. Trend, Momentum und Volatilität werden als korrelierte `meme-price-path`-Evidence gebunden. Contract-/Manipulationsrisiko ist zwingende Promotion-Voraussetzung. Es existieren keine ausführbaren Meme-Gewichte.
 2. **DeFi:** TVL, Fees und Revenue bleiben Raw Evidence, sind aber als `defi-scale-activity` correlation-bound. Eine spätere Promotion muss De-Korrelation oder einen validierten Latent-Factor nachweisen; drei unabhängige additive positive Gewichte sind nicht zulässig.
 3. **DeFiLlama:** ADR-0100 akzeptiert DeFiLlama ausschließlich als Evidence-Provider. `READY` verlangt vollständig VERIFIED Evidence; ein komplett stale Set ist explizit `STALE`. Providerstatus oder Providername darf nie Gewicht/Eligibility beeinflussen.
-4. **No Score Promotion:** `crypto-meme-integrity@0.2.0` und `crypto-defi-fundamental@0.2.0` bleiben `challenger`, `scoreEligible=false`, `research-only:not-executable`.
-5. **Fingerprint-Gate:** Kein Weight-Fingerprint wird für nicht-existierende Gewichte erfunden. Erst eine spätere Owner-approved Promotion darf versionierte Gewichte einführen und muss dann die bestehende `scoringFingerprint` Authority für Effective-Feature-/Effective-Weight-Lineage nutzen.
+4. **No Score Promotion:** `crypto-meme-integrity@0.3.0` und `crypto-defi-fundamental@0.3.0` bleiben `challenger`, `scoreEligible=false`, `research-only:not-executable`.
+5. **Fingerprint-Gate:** Produktive Weight-Fingerprints entstehen erst für ausdrücklich freigegebene Modellgewichte; Research-Weights bleiben nicht-autorisierend. Eine spätere Owner-approved Promotion muss die bestehende `scoringFingerprint` Authority für Effective-Feature-/Effective-Weight-Lineage nutzen.
+
+## Revalidierung 2026-08-23 — Equity Orchestrator P0 Challenger
+
+Der Equity-Ausbau ändert die produktive Scoring-Authority **nicht**. Er nutzt die in dieser ADR bereits erlaubte assetklassenspezifische Feature-/Modelllogik innerhalb derselben Wertschöpfungskette.
+
+1. **Equity Challenger:** `equity-multifactor@0.1.0` wird ausschließlich als `challenger`, `research-only`, `scoreEligible=false` für `stock` registriert.
+2. **Produktiver Stock-Pfad unverändert:** `traditional-scoring@2.1.0` bleibt bis zu einer separaten Owner-approved Promotion der einzige canonical/champion Stock-Pfad.
+3. **Keine Parallelarchitektur:** `EquityOrchestrator` ist eine reine Domain-Research-Grenze ohne Asset-Routing, Provider-I/O, öffentliche Route, Persistence-, Ranking- oder CanonicalScoreResult-Autorität. Ein produktiver Equity Executor darf ausschließlich hinter dem bestehenden `ScoringDispatcher` aktiviert werden.
+4. **Klassifikation getrennt:** Industry-/Taxonomy-Metadaten, Size Bucket, Style Tags und genau ein Primary Scoring Profile werden getrennt modelliert. Externe Taxonomien wie GICS dürfen nur bei zulässiger Provider-/Lizenznutzung als Metadaten verwendet werden.
+5. **Anti-Korrelation:** Equity 0.1.0 gewichtet ausschließlich sechs Faktor-Familien (`quality`, `valuation`, `growth`, `momentum`, `financialStrength`, `capitalAllocation`). Einzelmetriken innerhalb derselben ökonomischen Familie dürfen nicht als zusätzliche Top-Level-Faktoren wiederholt werden.
+6. **Evidence/DQ:** Research-Familien werden nur mit admissible `market-evidence-dq/1.0.0` Evidence zugelassen. Missing/stale/conflicting/unverified Evidence bleibt missing und darf nicht als 0, neutral oder PASS ersetzt werden.
+7. **Coverage Gate:** Ein Research-Composite erfordert mindestens vier zugelassene Faktor-Familien und mindestens 70 % nominale Gewichtsabdeckung; die effektiven Gewichte werden reproduzierbar fingerprinted.
+8. **Context-only Signale:** Regime, Sektorrotation, Sentiment und Pattern besitzen in Equity 0.1.0 weder `scoreImpact` noch `rankingImpact`.
+9. **Atomic Promotion:** Eine spätere produktive Promotion muss `stock` atomar vom Traditional-Champion auf einen Equity-Champion umstellen; zwei gleichberechtigte canonical Champions oder ein route-lokaler Equity-Fallback bleiben verboten.
 
 ## Konsequenzen
 
 - Neue Scoring-Features müssen UAI + Registry + Evidence Gate nutzen.
 - `/api/crypto/analyze` darf langfristig keinen alternativen kanonischen Finanzscore erzeugen; Agenten-Ausgaben werden Research/Enrichment.
 - `scoring.service.ts`, Meme-/Raw-Materials- und route-lokale Scorer bleiben während der Migration nur temporäre Implementierungsdetails und erhalten keinen neuen Architekturstatus.
+- Equity-Research-Ergebnisse bleiben bis zur expliziten Promotion ohne CanonicalScoreResult-, Ranking-, Eligibility- oder Execution-Wirkung.
 - Score-Gewichte, Provider-Routing, `scoreImpact`, `rankingImpact` und Eligibility-Schwellen werden außerhalb explizit versionierter und reviewter Modelländerungen nicht implizit verändert.
 - Änderungen an Feature-/Evidence-/Weight-Verträgen müssen in der Runtime-Lineage erkennbar sein und einen neuen Replay-Fingerprint erzeugen, soweit sie dessen fachliche Semantik beeinflussen.
 - Universe-Verfügbarkeitsziele dürfen niemals durch No-Demo-Data-Verstöße erfüllt werden.
@@ -103,18 +119,24 @@ Supersession B ändert keine produktive Modellautorität. Sie entfernt stattdess
 7. P0 Runtime-Lineage bindet effektive Feature-/Weight-Semantik und Evidence-Vertrag revisionssicher;
 8. Universe-SLA wird produktiv nur aus real entdeckten und zugelassenen Assets gespeist;
 9. Meme/DeFi-Challenger bleiben ohne validierte Evidence/Weights/Promotion nicht ausführbar;
-10. Main-Sync/Korrelationsprüfung vor PR-Erstellung und erneut vor Merge.
+10. Equity-Challenger bleibt bis zur separat validierten und Owner-approved atomaren Stock-Promotion research-only und `scoreEligible=false`;
+11. Main-Sync/Korrelationsprüfung vor PR-Erstellung und erneut vor Merge.
 
 ## Referenzen
 
 - `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md`
 - `docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md`
+- `docs/roadmaps/work-packages/SC-2E_EQUITY_ORCHESTRATOR_CHALLENGER.md`
 - `docs/evidence/sc-md/SC2_P0_MULTICLASS_INTEGRITY_2026-08-21.md`
 - `docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md`
+- `docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md`
 - ADR-0022, ADR-0032, ADR-0033, ADR-0072, ADR-0100
 - `src/services/scoringIntegrity.ts`
 - `src/platform/MarketData/contracts.ts`
 - `src/platform/MarketData/evidenceQualityContracts.ts`
 - `src/platform/Scoring/scoringFingerprint.ts`
 - `src/platform/Scoring/CryptoResearchModelContracts.ts`
+- `src/platform/Scoring/EquityModelContracts.ts`
+- `src/platform/Scoring/EquityResearchScoring.ts`
+- `src/platform/Scoring/EquityOrchestrator.ts`
 - `src/platform/Scoring/UniverseSla.ts`
