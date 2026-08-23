@@ -11,4 +11,6 @@ export * from './CryptoOrchestratorResearchModels';
 export * from './EquityModelContracts';
 export * from './EquityResearchScoring';
 export * from './EquityFeatureComposer';
+export * from './EquityFilingDerivedMetrics';
+export * from './EquityFilingFeatureComposer';
 export * from './EquityOrchestrator';
