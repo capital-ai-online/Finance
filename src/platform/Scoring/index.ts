@@ -12,3 +12,4 @@ export * from './CommodityResearchModelContracts';
 export * from './CommodityCategoryResearchEvaluation';
 export * from './CommodityModelValidation';
 export * from './CommodityBacktestingContracts';
+export * from './CommodityHistoricalBacktestEngine';

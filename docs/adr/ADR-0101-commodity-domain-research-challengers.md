@@ -1,10 +1,10 @@
 # ADR-0101 — Commodity Domain Research Challengers innerhalb der Single-Scoring-Architektur
 
-**Status:** Accepted for P0/P1 implementation and P2 validation foundation  
+**Status:** Accepted for P0/P1 implementation and P2 historical validation  
 **Date:** 2026-08-23  
 **Parent authority:** ADR-0087, SC-2 Model Registry & Universal Asset Interface  
 **Roadmap:** `docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md`  
-**Issues:** #490–#500
+**Traceability:** bestehende Commodity-Roadmap-Arbeitspunkte P0–P2-B; Roadmap-Issues werden in diesem Chat nicht als Status-Authority verändert.
 
 ## Kontext
 
@@ -51,6 +51,18 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 26. Eine Backtest-Ausgabe bleibt `VALIDATION_ONLY`, `canonical=false`, `scoreEligible=false`. `promotionEvidenceEligible=true` darf ausschließlich die Vollständigkeit eines Review-Pakets anzeigen und benötigt mindestens: gültigen Request, keine Leakage-Blocker, Point-in-Time-Gate, validierte Cost Assumptions, OOS-Validierung, Benchmark, Correlation Evidence und Sensitivity Evidence.
 27. Auch ein vollständiges P2-Evidence-Paket führt **keine** automatische Registry-Promotion aus. Champion/Challenger-Wechsel bleibt explizite Owner-Entscheidung in der bestehenden `ScoringModelRegistry`/`ScoringDispatcher`-Governance.
 
+## P2-B — Historical Dataset & Walk-forward/OOS Engine
+
+28. Der historische Backtest-Executor besitzt **keinen Provider-/HTTP-Zugriff**. Provider-Acquisition und historische Vintage-Beschaffung bleiben vorgelagert; der Executor akzeptiert nur ein bereits versioniertes, unveränderliches Historical Dataset. Dadurch ist derselbe Input deterministisch wiederholbar und die Validation Engine wird keine zweite Evidence-Acquisition-Authority.
+29. Historische Datensätze erhalten einen content-addressed `datasetFingerprint`. Er bindet Modell/Universe/Normalisierungsvertrag, PIT-Vintages, normalisierte Faktorwerte, Universe-Membership-Evidence, Normalisierungs-Evidence, Outcomes sowie Benchmark-Definitionen/-Returns. Eine Änderung historischer Inputs erzeugt eine andere Identität.
+30. Jede historische Asset-Zeile benötigt eine explizite `universeMembershipEvidenceId`. Historische Universen dürfen nicht aus dem heutigen Asset-Katalog rückwirkend konstruiert werden; fehlende Membership-Evidence gilt als Survivorship-Risk und blockiert den Datensatz.
+31. Normalisierte Latent-Factor-Werte benötigen eine eigene `normalizationEvidenceId` und einen versionierten `normalizationContractVersion`. Der Backtest-Executor normalisiert keine heterogenen Rohdaten selbst. Eine Roh-Evidence darf über `factorEvidenceFeatureKeys` nicht mehreren Latent Factors gleichzeitig als Autorisierung dienen.
+32. Walk-forward/expanding-window Splits sind strikt temporal: Training darf nur Beobachtungen enthalten, deren `decisionAt` vor dem Testzeitpunkt liegt **und deren Outcome (`realizedAt`) spätestens am Testzeitpunkt bereits bekannt war**. Dadurch wird Target-/Outcome-Leakage zusätzlich zur Feature-Availability-Grenze geschlossen.
+33. `minConfidence` wird vor der Bildung von Train-/Test-Splits angewendet. Niedrige Confidence wird nicht durch spätere Portfolioselektion neutralisiert. Unzureichende OOS-Perioden blockieren den Run fail-closed.
+34. Ein OOS-Run benötigt mindestens einen Benchmark des aktuellen Commodity-Champions und eine naive Baseline mit zeitlich ausgerichteten, evidenzgebundenen Returns. Fehlende Benchmark-Perioden verhindern ein vollständiges OOS-Evidence-Paket.
+35. Die Validation Engine berechnet ausschließlich Research-Metriken und -Evidence: Rank IC, Rank-Monotonicity, Top-N Hit Rate, Return/Volatility, Drawdown, Profit Factor, Turnover, Regime-/Domain-Diagnostik und versionierte Kosten. Der resultierende `commodity-oos:<sha256>`-Identifier ist ein reproduzierbarer Review-Nachweis, **keine** Score-/Registry-/Ranking-/Trading-Authority.
+36. Für den Historical Replay dürfen validierte `research-candidate` Faktorweights numerisch angewendet werden, um ihre empirische Wirkung zu testen. Das ändert ihren Contract nicht: `executable=false`, `scoreEligible=false`; Runtime/Dispatcher darf diese Gewichte weiterhin nicht verwenden.
+
 ## Sicherheits-, Governance- und Datenintegritätsfolgen
 
 - Keine neue Credential- oder IAM-Authority.
@@ -66,6 +78,8 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - P2-Validierungsartefakte besitzen keine Runtime-, Ranking-, Trading- oder Execution-Authority.
 - Missing-Data-Renormalisierung bleibt innerhalb eines Latent Factors; Cross-Factor-Reweighting durch Datenlücken ist verboten.
 - Backtest-Evidence ohne reale Release-/Vintage-Semantik gilt als Leakage-Risiko und ist nicht promotion-fähig.
+- Historical Dataset und OOS Evidence enthalten ausschließlich Identitäten/Lineage/Research-Werte; sie eröffnen keinen neuen externen Write-/Secret-/Execution-Pfad.
+- Der Backtest-Executor importiert keine Provider-Gateways, keine Routes und keinen `ScoringDispatcher`/`ScoringModelRegistry`/Ranking-Pfad.
 
 ## Nicht gewählt
 
@@ -77,7 +91,10 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - automatische Verteilung der Drive-Gruppengewichte auf einzelne Features;
 - Cross-Factor-Renormalisierung bei Missing Data;
 - Backtesting mit heutiger/latest-revision Evidence für historische Entscheidungszeitpunkte;
-- automatische Promotion durch `promotionEvidenceEligible`;
+- Live-Provider-Aufrufe innerhalb des Historical Backtest Executors;
+- rückwirkende Universe-Zusammensetzung aus dem heutigen Katalog;
+- Training auf Targets, die zum Test-Entscheidungszeitpunkt noch nicht realisiert waren;
+- automatische Promotion durch `promotionEvidenceEligible` oder OOS-Fingerprint;
 - Ore Grade/Tonnage/Capex/Opex im Commodity-Benchmark-Modell;
 - LLM-basierte numerische Füllwerte;
 - numerischer P1-Challenger-Score ohne P2-Kalibrierung und OOS-Evidence;
@@ -85,6 +102,6 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 
 ## Validierung / Promotion
 
-P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability- und Point-in-Time-Leakage-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die vollständigen P2/P3-Gates der Commodity Roadmap einschließlich OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
+P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability-, Historical-Dataset-, Point-in-Time-, Survivorship-, Outcome-Leakage-, Confidence-, Benchmark- und Walk-forward/OOS-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die vollständigen P2/P3-Gates der Commodity Roadmap einschließlich realer OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
 
 Für das Error-Handling sind zusätzlich mindestens Application-Level-Providerfehler (`status=error`), Health-Diagnostik mit `payloadUsable=false` sowie die Nichtweitergabe roher Exceptiontexte über Commodity-5xx-Routen als Regression zu prüfen.
