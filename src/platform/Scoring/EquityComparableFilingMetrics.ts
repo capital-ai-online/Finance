@@ -5,6 +5,7 @@ import {
 import type {
   EquityFilingDerivedMetricsResult,
   EquityFilingEvidenceSnapshot,
+  EquityFilingFactInput,
 } from './EquityFilingDerivedMetrics';
 
 export const EQUITY_COMPARABLE_FILING_METRICS_VERSION = 'equity-comparable-filing-metrics/0.1.0' as const;
@@ -143,11 +144,10 @@ function filingEvidence(
   snapshot: EquityFilingEvidenceSnapshot,
   fields: readonly string[],
 ): readonly MarketEvidenceQualityRecord[] {
-  const records = Object.values(snapshot.facts)
-    .filter((fact): fact is NonNullable<typeof fact> => Boolean(fact) && fields.includes(fact.field))
-    .map((fact) => fact.evidence)
-    .filter(isAdmissibleMarketEvidence);
-  return uniqueEvidence(records);
+  const facts = Object.values(snapshot.facts).filter(
+    (fact): fact is EquityFilingFactInput => fact !== undefined && fields.includes(fact.field),
+  );
+  return uniqueEvidence(facts.map((fact) => fact.evidence).filter(isAdmissibleMarketEvidence));
 }
 
 /**
