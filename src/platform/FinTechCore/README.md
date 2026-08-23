@@ -18,7 +18,7 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-5: deterministic Pre-Trade Risk + Compliance Decisions
 - FT-6A: Decision-/Hash-Binding Foundation, gemergt mit PR #481
 - FT-6B: single canonical OrderIntent, gemeinsames Fixed Point, deterministic Approval Binding, typed Reconciliation und v2 Persistence Boundary, gemergt mit PR #483
-- Supersession B: Meme/DeFi Research Models `0.2.0`, non-executable challengers, keine Promotion
+- Supersession B: Meme/DeFi Research Models `0.3.0`, non-executable challengers, keine Promotion
 - reale Exchange-/Custody-Ausfuehrung: **nicht freigeschaltet**
 - FT-7 Guarded Live: **blockiert bis separate Architektur-/Security-Entscheidung**
 
@@ -40,13 +40,13 @@ UAI
 
 `CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`. Der FinTech Core ersetzt keine Scoring-, IAM-, Compliance-Policy-, Quality-, Release-, Deployment- oder Supervisor-Authority.
 
-Der kanonische Crypto Champion bleibt `crypto-technical-provenance@0.7.0`. Die Kategorie-Challenger `crypto-meme-integrity@0.2.0` und `crypto-defi-fundamental@0.2.0` sind `research-only:not-executable`, `scoreEligible=false` und besitzen keine ausfuehrbaren Gewichte.
+Der kanonische Crypto Champion bleibt `crypto-technical-provenance@0.7.0`. Die Kategorie-Challenger `crypto-meme-integrity@0.3.0` und `crypto-defi-fundamental@0.3.0` sind `research-only:not-executable`, `scoreEligible=false` und besitzen keine ausfuehrbaren Gewichte.
 
 ## Meme / DeFi Research Supersession
 
 ### Meme
 
-`crypto-meme-research-features/0.2.0` ersetzt keine produktive Score-Formel. Die historische Meme-35/25/20/20-Formel bleibt Legacy/non-authorizing.
+`crypto-meme-research-features/0.3.0` ersetzt keine produktive Score-Formel. Die historische Meme-35/25/20/20-Formel bleibt Legacy/non-authorizing.
 
 - Trend, Momentum und Volatility Quality sind als `meme-price-path` korrelationsgebunden.
 - Liquiditaet darf nicht als Community-, Popularitaets- oder Manipulations-Evidence wiederverwendet werden.
@@ -55,7 +55,7 @@ Der kanonische Crypto Champion bleibt `crypto-technical-provenance@0.7.0`. Die K
 
 ### DeFi
 
-`crypto-defi-research-features/0.2.0` ist ebenfalls ein non-executable Challenger-Contract.
+`crypto-defi-research-features/0.3.0` ist ebenfalls ein non-executable Challenger-Contract.
 
 - TVL, Fees und Revenue liegen in derselben Korrelationsgruppe `defi-scale-activity`.
 - Eine spaetere additive Einzelgewichtung benoetigt validierte De-Korrelation oder einen Latent-Factor.
