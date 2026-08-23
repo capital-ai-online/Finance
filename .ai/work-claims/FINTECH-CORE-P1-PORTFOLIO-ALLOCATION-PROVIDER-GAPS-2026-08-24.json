@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FINTECH-CORE-P1-PORTFOLIO-ALLOCATION-PROVIDER-GAPS-2026-08-24",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Main-synced P1 deterministic portfolio allocation/position-sizing foundation, bounded FT-5 portfolio-risk evidence projection, and current Meme/DeFi provider-gap inventory",
+  "startedAt": "2026-08-24T00:00:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
+  "executionBranch": "feat/fintech-core-p1-portfolio-allocation-main-sync-2026-08-24",
+  "supersedesBranchAsIntegrationBase": "feat/fintech-core-p1-portfolio-allocation-provider-gaps-2026-08-23",
+  "dependsOn": [
+    "Owner chat priority P1: deterministic portfolio/position-sizing layer",
+    "Google Drive FinTech Enterprise Orchestration reference 15TtZwH1be6si8mEuo7Xc6inq_e21brfa",
+    "ADR-0087 Single Scoring Architecture",
+    "ADR-0099 FinTech Core Crypto Module 01",
+    "FT-5 deterministic Risk/Compliance decisions",
+    "FT-6B canonical OrderIntent and typed reconciliation",
+    "Meme/DeFi Research Scoring 0.3.0 on main",
+    "ProviderMatrix as the single provider inventory"
+  ],
+  "plannedPaths": [
+    ".ai/work-claims/FINTECH-CORE-P1-PORTFOLIO-ALLOCATION-PROVIDER-GAPS-2026-08-24.json",
+    "src/platform/FinTechCore/Portfolio/PortfolioAllocationContracts.ts",
+    "src/platform/FinTechCore/Portfolio/DeterministicPortfolioAllocator.ts",
+    "src/platform/FinTechCore/Portfolio/PortfolioRiskEvidenceProjection.ts",
+    "src/platform/FinTechCore/index.ts",
+    "src/platform/FinTechCore/README.md",
+    "tests/unit/fintechCorePortfolioAllocation.test.ts",
+    "docs/evidence/fintech-core/P1_PORTFOLIO_ALLOCATION_FOUNDATION_2026-08-24.md",
+    "docs/evidence/sc-md/SC3_P1_CRYPTO_PROVIDER_GAP_INVENTORY_2026-08-24.md",
+    "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md",
+    "docs/adr/registry.json",
+    "docs/governance/authority-registry.json",
+    "tests/unit/governanceControlPlane.test.ts"
+  ],
+  "protectedExistingAuthorities": [
+    "ScoringModelRegistry",
+    "ScoringDispatcher",
+    "CanonicalScoreResult",
+    "ProviderMatrix",
+    "Evidence/Data Quality contracts",
+    "FT-5 Risk/Compliance approval authority",
+    "FinTechCoreFixedPoint",
+    "FinTechCoreOrderIntent",
+    "fintech_core persistence authority",
+    "public.outbox_jobs queue/lease authority",
+    "ADR registry and stable ADR-0099 authorityId",
+    "Governance authority registry",
+    "FT-7 real-execution gate"
+  ],
+  "implementationBoundary": {
+    "portfolioAllocationStage": "deterministic-policy-target-constraint-and-notional-delta-foundation",
+    "allocationContractVersion": "fintech-core/portfolio-allocation/0.1.0",
+    "riskProjectionStage": "allocation-to-ft5-portfolio-evidence-projection-only",
+    "riskProjectionContractVersion": "fintech-core/portfolio-risk-projection/0.1.0",
+    "createsScoringAuthority": false,
+    "createsStrategyAuthority": false,
+    "createsRiskApprovalAuthority": false,
+    "createsExecutionAuthority": false,
+    "createsProviderRegistry": false,
+    "liveExecutionEnabled": false,
+    "supportedModes": ["RESEARCH", "PAPER"],
+    "financialRepresentation": "FinTechCoreFixedPoint atoms:string + scale:number",
+    "targetWeightsSource": "explicit governed target input with targetAuthorityId, targetAuthorityVersion and evidenceRefs; never inferred by LLM, raw provider or FinTechCore score-to-weight logic",
+    "providerGapWork": "inventory/correlation only; no external provider integration or credentials"
+  },
+  "correlation": {
+    "mainAtStart": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
+    "openPullRequestsAtStart": 0,
+    "legacyP1BranchAheadBy": 23,
+    "legacyP1BranchBehindBy": 81,
+    "legacyP1MergeBase": "800b05261c1792fed5138a8125cf6a00b1f5af07",
+    "selectivePortRequired": true,
+    "providerMatrixChangedSinceLegacyBase": true,
+    "ft7GatePreserved": true
+  },
+  "validation": {
+    "testsExecuted": false,
+    "hostedCiTriggered": false,
+    "reasonHostedCiNotTriggered": "Repository cost policy permits hosted build/test only after Pull Request creation."
+  },
+  "releaseCondition": "Coordination metadata is released when the implementation is merged, closed, superseded or abandoned."
+}
