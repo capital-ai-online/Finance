@@ -140,7 +140,9 @@ function observation(period: number, asset: 'A' | 'B'): CommodityHistoricalObser
     decisionAt,
     realizedAt: iso(base, 2),
     realizedReturn: asset === 'A' ? 0.02 + period * 0.0001 : -0.01,
+    confidence: 0.95,
     universeMembershipEvidenceId: `universe-membership:${period}:${asset}`,
+    normalizationEvidenceId: `normalization:${period}:${asset}`,
     pointInTimeSnapshot: {
       policyVersion: COMMODITY_POINT_IN_TIME_POLICY_VERSION,
       assetId: `commodity:${asset}`,
@@ -222,6 +224,7 @@ describe('Commodity historical PIT walk-forward validation engine', () => {
 
     expect(validation.valid).toBe(true);
     expect(validation.pointInTimeValid).toBe(true);
+    expect(validation.datasetFingerprint).toMatch(/^[a-f0-9]{64}$/);
     expect(validation.expectedLatentFactors).toEqual([
       'carryStructure',
       'marketStructure',
@@ -231,6 +234,18 @@ describe('Commodity historical PIT walk-forward validation engine', () => {
     ]);
     expect(validation.decisionTimestamps).toHaveLength(14);
     expect(validation.scoreEligible).toBe(false);
+  });
+
+  it('changes the dataset fingerprint when historical evidence content changes', () => {
+    const original = dataset();
+    const target = original.observations[0];
+    const modified: CommodityHistoricalDataset = {
+      ...original,
+      observations: [{ ...target, normalizationEvidenceId: `${target.normalizationEvidenceId}:revised` }, ...original.observations.slice(1)],
+    };
+
+    expect(validateCommodityHistoricalDataset(original).datasetFingerprint)
+      .not.toBe(validateCommodityHistoricalDataset(modified).datasetFingerprint);
   });
 
   it('builds walk-forward splits using only outcomes already realized before the test decision', () => {
@@ -271,7 +286,6 @@ describe('Commodity historical PIT walk-forward validation engine', () => {
     expect(first.result.pointInTimeValidated).toBe(true);
     expect(first.result.costAssumptionsValidated).toBe(true);
     expect(first.result.promotionEvidenceEligible).toBe(true);
-    expect(first.result.rankInformationCoefficient).toBeUndefined();
     expect(first.result.metrics.rankInformationCoefficient).toBe(1);
     expect(first.result.metrics.hitRateTopN).toBe(1);
     expect(first.benchmarkSummaries).toHaveLength(2);
@@ -333,6 +347,19 @@ describe('Commodity historical PIT walk-forward validation engine', () => {
     expect(validation.blockers).toContain(`${target.observationId}:UNIVERSE_MEMBERSHIP_EVIDENCE_REQUIRED`);
   });
 
+  it('blocks normalized factors without transformation evidence', () => {
+    const data = dataset();
+    const target = data.observations[0];
+    const invalid: CommodityHistoricalDataset = {
+      ...data,
+      observations: [{ ...target, normalizationEvidenceId: '' }, ...data.observations.slice(1)],
+    };
+
+    const validation = validateCommodityHistoricalDataset(invalid);
+    expect(validation.valid).toBe(false);
+    expect(validation.blockers).toContain(`${target.observationId}:NORMALIZATION_EVIDENCE_REQUIRED`);
+  });
+
   it('blocks one raw evidence feature from being reused across latent factors', () => {
     const data = dataset();
     const target = data.observations[0];
@@ -382,6 +409,18 @@ describe('Commodity historical PIT walk-forward validation engine', () => {
     const plan = buildCommodityOosSplitPlan(modified, request);
     expect(plan.valid).toBe(false);
     expect(plan.blockers.some(item => item.startsWith('OOS_TEST_PERIODS_INSUFFICIENT:'))).toBe(true);
+  });
+
+  it('applies minConfidence before constructing OOS train/test sets', () => {
+    const data = dataset();
+    const lowConfidence: CommodityHistoricalDataset = {
+      ...data,
+      observations: data.observations.map(item => ({ ...item, confidence: 0.5 })),
+    };
+
+    const plan = buildCommodityOosSplitPlan(lowConfidence, request);
+    expect(plan.valid).toBe(false);
+    expect(plan.blockers).toContain('OOS_TEST_PERIODS_INSUFFICIENT:0');
   });
 
   it('supports expanding-window planning while keeping all training rows strictly pre-test', () => {
