@@ -15,6 +15,7 @@ import {
   CRYPTO_DEFI_RESEARCH_FEATURE_CONTRACT_VERSION,
   CRYPTO_MEME_RESEARCH_FEATURE_CONTRACT_VERSION,
 } from './CryptoResearchModelContracts';
+import { EQUITY_RESEARCH_FEATURE_CONTRACT_VERSION } from './EquityModelContracts';
 
 export const VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY =
   'verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore' as const;
@@ -68,6 +69,22 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     scoreEligible: false,
     canonicalResultAdapterRequired: true,
     notes: 'Source-backed DeFi research challenger with deterministic research evaluator across utilization, revenue, liquidity, contract security, oracle, tokenomics, governance and ecosystem factors. DeFiLlama stays evidence-only; productive promotion remains blocked pending verified coverage/backtesting.',
+  },
+  {
+    registryVersion: SCORING_MODEL_REGISTRY_VERSION,
+    modelId: 'equity-multifactor',
+    version: '0.1.0',
+    alias: 'challenger',
+    lifecycle: 'challenger',
+    assetClasses: ['stock'],
+    featureContractVersion: EQUITY_RESEARCH_FEATURE_CONTRACT_VERSION,
+    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+    evidencePolicy: 'research-only',
+    executorKey: RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
+    priority: 20,
+    scoreEligible: false,
+    canonicalResultAdapterRequired: true,
+    notes: 'Equity-only multi-factor research challenger. Family-level anti-correlation and profile-specific research weights are implemented, while productive stock routing remains traditional-scoring until verified coverage, backtesting and explicit Owner-approved atomic promotion.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
