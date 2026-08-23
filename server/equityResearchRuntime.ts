@@ -13,7 +13,7 @@ import {
   orchestrateEquityResearch,
   type EquityOrchestratorResearchResult,
 } from '../src/platform/Scoring/EquityOrchestrator';
-import type { EquityClassification } from '../src/platform/Scoring/EquityModelContracts';
+import type { EquityClassification, EquityFactorFamily } from '../src/platform/Scoring/EquityModelContracts';
 import {
   getVerifiedTraditionalFallbackHistory,
   type VerifiedTraditionalFallbackHistory,
@@ -145,7 +145,17 @@ export async function runEquityResearchChallenger(
     : null;
 
   const composition: EquityFeatureCompositionResult = filingComposition
-    ? Object.freeze({ ...baseComposition, input: filingComposition.input })
+    ? Object.freeze({
+      input: filingComposition.input,
+      diagnostics: Object.freeze({
+        ...baseComposition.diagnostics,
+        composedFamilies: Object.freeze(Object.keys(filingComposition.input.families) as EquityFactorFamily[]),
+        warnings: Object.freeze([
+          ...baseComposition.diagnostics.warnings,
+          ...filingComposition.diagnostics.warnings,
+        ]),
+      }),
+    })
     : baseComposition;
   const orchestration = orchestrateEquityResearch(asset, composition.input);
 
