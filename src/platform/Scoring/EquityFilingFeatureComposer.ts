@@ -73,17 +73,24 @@ function component(
   if (!metric || score === undefined || !Number.isFinite(score)) return null;
   const facts = factsForMetric(snapshot, metric);
   if (facts.length === 0) return null;
-  const evidence = [...new Map(facts.map((fact) => [fact.evidence.evidenceRef ?? `${fact.field}:${fact.accession}`, fact.evidence])).values()];
+  const evidence = [...new Map(facts.map((fact) => [
+    fact.evidence.evidenceRef ?? `${fact.field}:${fact.accession}`,
+    fact.evidence,
+  ])).values()];
   return Object.freeze({ key, score: clamp01(score), evidence: Object.freeze(evidence) });
 }
 
 function family(components: readonly (FilingComponent | null)[], minimumComponents: number): EquityFactorFamilyInput | undefined {
   const valid = components.filter((item): item is FilingComponent => Boolean(item));
   if (valid.length < minimumComponents) return undefined;
+  const evidence = [...new Map(valid.flatMap((item) => item.evidence).map((item) => [
+    item.evidenceRef ?? `${item.providerId}:${item.field}:${item.observedAt ?? ''}`,
+    item,
+  ])).values()];
   return Object.freeze({
     score: valid.reduce((sum, item) => sum + item.score, 0) / valid.length,
     componentKeys: Object.freeze(valid.map((item) => item.key)),
-    evidence: Object.freeze(valid.flatMap((item) => item.evidence)),
+    evidence: Object.freeze(evidence),
   });
 }
 
