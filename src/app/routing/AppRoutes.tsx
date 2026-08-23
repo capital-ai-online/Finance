@@ -74,7 +74,7 @@ export function AppRoutes({
               ← Zurück zum Portal
             </a>
             <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">
-              Public Corporate Disclosure (TMG §5)
+              Anbieterkennzeichnung gemäß § 5 DDG
             </span>
           </div>
           <ImpressumAgb />
