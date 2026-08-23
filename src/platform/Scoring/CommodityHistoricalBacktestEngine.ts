@@ -52,10 +52,9 @@ export interface CommodityHistoricalBenchmarkReturn {
 /**
  * Historical observation used by the validation engine.
  *
- * `normalizedFactorValues` are already transformed, dimensionless latent-factor values. The
- * backtest engine intentionally does not normalize raw provider data: normalization is a separate,
- * versioned research concern. Every factor is bound back to PIT-eligible feature evidence through
- * `factorEvidenceFeatureKeys`; the same feature may not be reused across latent factors.
+ * Factor values are already transformed, dimensionless latent-factor values. Normalization stays a
+ * separate versioned research concern and is bound by `normalizationEvidenceId`. Each factor is also
+ * bound to PIT-eligible raw feature evidence; one raw feature cannot authorize multiple factors.
  */
 export interface CommodityHistoricalObservation {
   readonly observationId: string;
@@ -65,7 +64,9 @@ export interface CommodityHistoricalObservation {
   readonly decisionAt: string;
   readonly realizedAt: string;
   readonly realizedReturn: number;
+  readonly confidence: number;
   readonly universeMembershipEvidenceId: string;
+  readonly normalizationEvidenceId: string;
   readonly pointInTimeSnapshot: CommodityPointInTimeFeatureSnapshot;
   readonly normalizedFactorValues: Readonly<Record<string, number | null | undefined>>;
   readonly factorEvidenceFeatureKeys: Readonly<Record<string, readonly string[]>>;
@@ -90,6 +91,7 @@ export interface CommodityHistoricalDataset {
 
 export interface CommodityHistoricalDatasetValidation {
   readonly contractVersion: typeof COMMODITY_HISTORICAL_DATASET_CONTRACT_VERSION;
+  readonly datasetFingerprint: string;
   readonly valid: boolean;
   readonly blockers: readonly string[];
   readonly pointInTimeValid: boolean;
@@ -188,15 +190,13 @@ function round(value: number, digits = 12): number {
 }
 
 function mean(values: readonly number[]): number | null {
-  if (values.length === 0) return null;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
+  return values.length === 0 ? null : values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function standardDeviation(values: readonly number[]): number | null {
   const average = mean(values);
   if (average === null || values.length < 2) return null;
-  const variance = values.reduce((sum, value) => sum + ((value - average) ** 2), 0) / values.length;
-  return Math.sqrt(variance);
+  return Math.sqrt(values.reduce((sum, value) => sum + ((value - average) ** 2), 0) / values.length);
 }
 
 function periodsPerYear(frequency: CommodityBacktestRequest['rebalanceFrequency']): number {
@@ -210,23 +210,12 @@ function periodsPerYear(frequency: CommodityBacktestRequest['rebalanceFrequency'
 function annualizedReturn(returns: readonly number[], frequency: CommodityBacktestRequest['rebalanceFrequency']): number | null {
   if (returns.length === 0 || returns.some(value => !finite(value) || value <= -1)) return null;
   const growth = returns.reduce((value, periodReturn) => value * (1 + periodReturn), 1);
-  if (!(growth > 0)) return null;
-  return round((growth ** (periodsPerYear(frequency) / returns.length)) - 1);
+  return growth > 0 ? round((growth ** (periodsPerYear(frequency) / returns.length)) - 1) : null;
 }
 
 function annualizedVolatility(returns: readonly number[], frequency: CommodityBacktestRequest['rebalanceFrequency']): number | null {
   const deviation = standardDeviation(returns);
   return deviation === null ? null : round(deviation * Math.sqrt(periodsPerYear(frequency)));
-}
-
-function equityCurveFromReturns(
-  periods: readonly { decisionAt: string; return: number }[],
-): readonly { timestamp: string; value: number }[] {
-  let value = 1;
-  return Object.freeze(periods.map(period => {
-    value *= 1 + period.return;
-    return Object.freeze({ timestamp: period.decisionAt, value: round(value) });
-  }));
 }
 
 function maxDrawdownFromReturns(returns: readonly number[]): number | null {
@@ -238,8 +227,7 @@ function maxDrawdownFromReturns(returns: readonly number[]): number | null {
     if (!finite(periodReturn) || periodReturn <= -1) return null;
     value *= 1 + periodReturn;
     peak = Math.max(peak, value);
-    const drawdown = peak > 0 ? (value / peak) - 1 : 0;
-    maxDrawdown = Math.min(maxDrawdown, drawdown);
+    maxDrawdown = Math.min(maxDrawdown, (value / peak) - 1);
   }
   return round(maxDrawdown);
 }
@@ -285,8 +273,9 @@ function pearson(left: readonly number[], right: readonly number[]): number | nu
 }
 
 function spearman(left: readonly number[], right: readonly number[]): number | null {
-  if (left.length !== right.length || left.length < 2) return null;
-  return pearson(averageRanks(left), averageRanks(right));
+  return left.length === right.length && left.length >= 2
+    ? pearson(averageRanks(left), averageRanks(right))
+    : null;
 }
 
 function rankMonotonicity(predictions: readonly CommodityHistoricalPrediction[]): number | null {
@@ -300,14 +289,15 @@ function rankMonotonicity(predictions: readonly CommodityHistoricalPrediction[])
   });
   const bucketMeans = buckets.map(bucket => mean(bucket));
   if (bucketMeans.some(value => value === null)) return null;
-  return spearman(
-    bucketMeans.map((_, index) => index + 1),
-    bucketMeans as number[],
-  );
+  return spearman(bucketMeans.map((_, index) => index + 1), bucketMeans as number[]);
 }
 
 function sha256(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+function sortedRecord(record: Readonly<Record<string, unknown>>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right)));
 }
 
 function expectedLatentFactors(model: CommodityResearchModelContract): string[] {
@@ -319,12 +309,52 @@ function benchmarkKey(benchmarkId: string, decisionAt: string): string {
   return `${benchmarkId}::${decisionAt}`;
 }
 
-/**
- * Validates an immutable historical research dataset without consulting a live provider.
- * Provider acquisition belongs upstream. This validator proves that every candidate factor can be
- * traced to evidence that was available at the actual decision timestamp and that universe
- * membership itself has explicit historical evidence, reducing survivorship and revision leakage.
- */
+function datasetFingerprint(dataset: CommodityHistoricalDataset): string {
+  const observations = [...dataset.observations]
+    .sort((a, b) => a.observationId.localeCompare(b.observationId))
+    .map(observation => ({
+      observationId: observation.observationId,
+      assetId: observation.assetId,
+      symbol: observation.symbol,
+      domain: observation.domain,
+      decisionAt: observation.decisionAt,
+      realizedAt: observation.realizedAt,
+      realizedReturn: observation.realizedReturn,
+      confidence: observation.confidence,
+      universeMembershipEvidenceId: observation.universeMembershipEvidenceId,
+      normalizationEvidenceId: observation.normalizationEvidenceId,
+      normalizedFactorValues: sortedRecord(observation.normalizedFactorValues),
+      factorEvidenceFeatureKeys: Object.fromEntries(Object.entries(observation.factorEvidenceFeatureKeys)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([factor, keys]) => [factor, [...keys].sort()])),
+      pointInTimeSnapshot: {
+        policyVersion: observation.pointInTimeSnapshot.policyVersion,
+        assetId: observation.pointInTimeSnapshot.assetId,
+        decisionAt: observation.pointInTimeSnapshot.decisionAt,
+        values: [...observation.pointInTimeSnapshot.values]
+          .sort((a, b) => a.featureKey.localeCompare(b.featureKey))
+          .map(value => ({ ...value })),
+      },
+      regime: observation.regime ?? null,
+    }));
+  const benchmarks = [...dataset.benchmarks].sort((a, b) => a.benchmarkId.localeCompare(b.benchmarkId));
+  const benchmarkReturns = [...dataset.benchmarkReturns]
+    .sort((a, b) => benchmarkKey(a.benchmarkId, a.decisionAt).localeCompare(benchmarkKey(b.benchmarkId, b.decisionAt)));
+  return sha256({
+    contractVersion: dataset.contractVersion,
+    datasetId: dataset.datasetId,
+    datasetVersion: dataset.datasetVersion,
+    modelId: dataset.modelId,
+    modelVersion: dataset.modelVersion,
+    universeId: dataset.universeId,
+    normalizationContractVersion: dataset.normalizationContractVersion,
+    observations,
+    benchmarks,
+    benchmarkReturns,
+  });
+}
+
+/** Validates a historical dataset without consulting a live provider. */
 export function validateCommodityHistoricalDataset(
   dataset: CommodityHistoricalDataset,
 ): CommodityHistoricalDatasetValidation {
@@ -369,9 +399,7 @@ export function validateCommodityHistoricalDataset(
     benchmarkReturnKeys.add(key);
     const decisionMs = timestamp(item.decisionAt);
     const realizedMs = timestamp(item.realizedAt);
-    if (!Number.isFinite(decisionMs) || !Number.isFinite(realizedMs) || realizedMs <= decisionMs) {
-      blockers.push(`BENCHMARK_RETURN_TIME_INVALID:${key}`);
-    }
+    if (!Number.isFinite(decisionMs) || !Number.isFinite(realizedMs) || realizedMs <= decisionMs) blockers.push(`BENCHMARK_RETURN_TIME_INVALID:${key}`);
     if (!finite(item.return) || item.return <= -1) blockers.push(`BENCHMARK_RETURN_INVALID:${key}`);
     if (!item.evidenceId.trim()) blockers.push(`BENCHMARK_RETURN_EVIDENCE_REQUIRED:${key}`);
   }
@@ -394,7 +422,9 @@ export function validateCommodityHistoricalDataset(
     else decisionTimestamps.add(observation.decisionAt);
     if (!Number.isFinite(realizedMs) || (Number.isFinite(decisionMs) && realizedMs <= decisionMs)) blockers.push(`${prefix}:REALIZED_AT_INVALID`);
     if (!finite(observation.realizedReturn) || observation.realizedReturn <= -1) blockers.push(`${prefix}:REALIZED_RETURN_INVALID`);
+    if (!finite(observation.confidence) || observation.confidence < 0 || observation.confidence > 1) blockers.push(`${prefix}:CONFIDENCE_INVALID`);
     if (!observation.universeMembershipEvidenceId.trim()) blockers.push(`${prefix}:UNIVERSE_MEMBERSHIP_EVIDENCE_REQUIRED`);
+    if (!observation.normalizationEvidenceId.trim()) blockers.push(`${prefix}:NORMALIZATION_EVIDENCE_REQUIRED`);
 
     const membershipKey = `${observation.assetId}::${observation.decisionAt}`;
     if (membershipKeys.has(membershipKey)) blockers.push(`${prefix}:ASSET_DECISION_DUPLICATE`);
@@ -412,8 +442,7 @@ export function validateCommodityHistoricalDataset(
     if (unknownFactors.length > 0) blockers.push(`${prefix}:UNKNOWN_FACTORS:${unknownFactors.join(',')}`);
     const evidenceOwners = new Map<string, string>();
     for (const factor of factors) {
-      const value = observation.normalizedFactorValues[factor];
-      if (!finite(value)) blockers.push(`${prefix}:FACTOR_VALUE_REQUIRED:${factor}`);
+      if (!finite(observation.normalizedFactorValues[factor])) blockers.push(`${prefix}:FACTOR_VALUE_REQUIRED:${factor}`);
       const evidenceKeys = observation.factorEvidenceFeatureKeys[factor] ?? [];
       if (evidenceKeys.length === 0) blockers.push(`${prefix}:FACTOR_EVIDENCE_REQUIRED:${factor}`);
       for (const featureKey of evidenceKeys) {
@@ -434,6 +463,7 @@ export function validateCommodityHistoricalDataset(
   blockers.push(...pointInTimeBlockers);
   return Object.freeze({
     contractVersion: COMMODITY_HISTORICAL_DATASET_CONTRACT_VERSION,
+    datasetFingerprint: datasetFingerprint(dataset),
     valid: blockers.length === 0,
     blockers: Object.freeze(blockers),
     pointInTimeValid: pointInTimeBlockers.length === 0,
@@ -466,11 +496,7 @@ function selectWalkForwardTraining(
   return selected.sort((a, b) => timestamp(a.decisionAt) - timestamp(b.decisionAt) || a.assetId.localeCompare(b.assetId));
 }
 
-/**
- * Builds strictly temporal OOS splits. Training observations are eligible only when BOTH their
- * decision and their realized outcome pre-date the test decision. This closes a common leakage path
- * where the feature timestamp is historical but the target/outcome was not yet known.
- */
+/** Builds temporal OOS splits and excludes targets that were not yet realized at test time. */
 export function buildCommodityOosSplitPlan(
   dataset: CommodityHistoricalDataset,
   request: CommodityBacktestRequest,
@@ -491,7 +517,7 @@ export function buildCommodityOosSplitPlan(
     const endMs = timestamp(request.endDate);
     const inRange = dataset.observations.filter(observation => {
       const decisionMs = timestamp(observation.decisionAt);
-      return decisionMs >= startMs && decisionMs <= endMs;
+      return decisionMs >= startMs && decisionMs <= endMs && observation.confidence >= request.minConfidence;
     });
     const decisionTimestamps = [...new Set(inRange.map(observation => observation.decisionAt))]
       .sort((a, b) => timestamp(a) - timestamp(b));
@@ -514,7 +540,7 @@ export function buildCommodityOosSplitPlan(
       const trainingEndAt = training.at(-1)?.decisionAt;
       if (!trainingStartAt || !trainingEndAt || test.length === 0) continue;
       splits.push(Object.freeze({
-        splitId: `split:${sha256({ datasetId: dataset.datasetId, datasetVersion: dataset.datasetVersion, mode: request.windowMode, testDecisionAt, training: training.map(item => item.observationId), test: test.map(item => item.observationId) }).slice(0, 24)}`,
+        splitId: `split:${sha256({ datasetFingerprint: datasetValidation.datasetFingerprint, mode: request.windowMode, testDecisionAt, training: training.map(item => item.observationId), test: test.map(item => item.observationId) }).slice(0, 24)}`,
         mode: request.windowMode,
         testDecisionAt,
         trainingObservationIds: Object.freeze(training.map(item => item.observationId)),
@@ -543,7 +569,7 @@ function scoreObservation(
   observation: CommodityHistoricalObservation,
   profile: CommodityCandidateWeightProfile,
 ): CommodityHistoricalPrediction {
-  const factorContributions = Object.fromEntries(
+  const factorContributions: Record<string, number> = Object.fromEntries(
     Object.entries(profile.factorWeights)
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([factor, weight]) => {
@@ -552,14 +578,13 @@ function scoreObservation(
         return [factor, round(weight * value)];
       }),
   );
-  const signal = round(Object.values(factorContributions).reduce((sum, value) => sum + value, 0));
   return Object.freeze({
     observationId: observation.observationId,
     assetId: observation.assetId,
     symbol: observation.symbol,
     domain: observation.domain,
     decisionAt: observation.decisionAt,
-    signal,
+    signal: round(Object.values(factorContributions).reduce((sum, value) => sum + value, 0)),
     realizedReturn: observation.realizedReturn,
     factorContributions: Object.freeze(factorContributions),
     regime: observation.regime?.trim() || null,
@@ -588,22 +613,20 @@ function computeMetrics(
     if (ic !== null) informationCoefficients.push(ic);
     const monotonicity = rankMonotonicity(predictions);
     if (monotonicity !== null) monotonicities.push(monotonicity);
-    const selected = [...predictions]
-      .sort((a, b) => b.signal - a.signal || a.assetId.localeCompare(b.assetId))
-      .slice(0, request.topN);
+    const selected = [...predictions].sort((a, b) => b.signal - a.signal || a.assetId.localeCompare(b.assetId)).slice(0, request.topN);
     topNPositive += selected.filter(item => item.realizedReturn > 0).length;
     topNTotal += selected.length;
   }
   const netReturns = periods.map(period => period.netReturn);
   return Object.freeze({
-    rankInformationCoefficient: informationCoefficients.length > 0 ? round(mean(informationCoefficients)!) : null,
-    rankMonotonicity: monotonicities.length > 0 ? round(mean(monotonicities)!) : null,
+    rankInformationCoefficient: informationCoefficients.length > 0 ? round(mean(informationCoefficients) ?? 0) : null,
+    rankMonotonicity: monotonicities.length > 0 ? round(mean(monotonicities) ?? 0) : null,
     hitRateTopN: topNTotal > 0 ? round(topNPositive / topNTotal) : null,
     annualizedReturn: annualizedReturn(netReturns, request.rebalanceFrequency),
     annualizedVolatility: annualizedVolatility(netReturns, request.rebalanceFrequency),
     maxDrawdown: maxDrawdownFromReturns(netReturns),
     profitFactor: profitFactor(netReturns),
-    turnover: periods.length > 0 ? round(mean(periods.map(period => period.turnover))!) : null,
+    turnover: periods.length > 0 ? round(mean(periods.map(period => period.turnover)) ?? 0) : null,
     averageHoldingPeriodDays: request.holdingPeriodDays,
   });
 }
@@ -653,13 +676,7 @@ function combineCostValidation(
   return Object.freeze({ valid: blockers.length === 0, blockers: Object.freeze(blockers) });
 }
 
-/**
- * Executes a validation-only historical replay for a research candidate profile. This function is
- * intentionally disconnected from ScoringDispatcher/Ranking and cannot create a productive model
- * result. It applies the already-versioned candidate factor weights only to test their empirical
- * behavior; `executable=false` remains unchanged on the profile and all output authority remains
- * VALIDATION_ONLY.
- */
+/** Executes a validation-only historical replay for a research candidate profile. */
 export function executeCommodityHistoricalBacktest(input: {
   readonly runId: string;
   readonly request: CommodityBacktestRequest;
@@ -684,7 +701,6 @@ export function executeCommodityHistoricalBacktest(input: {
 
   if (input.weightProfile.modelId !== input.request.modelId) blockers.push('BACKTEST_WEIGHT_PROFILE_MODEL_MISMATCH');
   if (input.weightProfile.modelVersion !== input.request.modelVersion) blockers.push('BACKTEST_WEIGHT_PROFILE_MODEL_VERSION_MISMATCH');
-  if (input.dataset.normalizationContractVersion.trim().length === 0) blockers.push('BACKTEST_NORMALIZATION_CONTRACT_REQUIRED');
 
   const observationById = new Map(input.dataset.observations.map(observation => [observation.observationId, observation]));
   const benchmarkLookup = new Map(input.dataset.benchmarkReturns.map(item => [benchmarkKey(item.benchmarkId, item.decisionAt), item]));
@@ -692,15 +708,13 @@ export function executeCommodityHistoricalBacktest(input: {
   const predictionsByDecision = new Map<string, CommodityHistoricalPrediction[]>();
   const periodReturns: CommodityOosPeriodReturn[] = [];
   let previousSelection: string[] = [];
-  const oneTurnCostRate = round((
-    input.costAssumptions.commissionBps
-    + input.costAssumptions.slippageBps
-    + input.costAssumptions.spreadBps
-  ) / 10_000);
+  const oneTurnCostRate = round((input.costAssumptions.commissionBps + input.costAssumptions.slippageBps + input.costAssumptions.spreadBps) / 10_000);
 
   if (blockers.length === 0) {
     for (const split of splitPlan.splits) {
-      const testObservations = split.testObservationIds.map(id => observationById.get(id)).filter((item): item is CommodityHistoricalObservation => Boolean(item));
+      const testObservations = split.testObservationIds
+        .map(id => observationById.get(id))
+        .filter((item): item is CommodityHistoricalObservation => Boolean(item));
       if (testObservations.length < input.request.topN) {
         blockers.push(`OOS_TEST_UNIVERSE_BELOW_TOP_N:${split.testDecisionAt}:${testObservations.length}`);
         continue;
@@ -741,7 +755,11 @@ export function executeCommodityHistoricalBacktest(input: {
   }
 
   const metrics = computeMetrics(predictionsByDecision, periodReturns, input.request);
-  const equityCurve = equityCurveFromReturns(periodReturns.map(period => ({ decisionAt: period.decisionAt, return: period.netReturn })));
+  let equityValue = 1;
+  const equityCurve = periodReturns.map(period => {
+    equityValue *= 1 + period.netReturn;
+    return Object.freeze({ timestamp: period.decisionAt, value: round(equityValue) });
+  });
   const regimeAccumulator = new Map<string, number[]>();
   for (const period of periodReturns) {
     const selected = predictionsByDecision.get(period.decisionAt)?.filter(prediction => period.selectedAssetIds.includes(prediction.assetId)) ?? [];
@@ -752,7 +770,9 @@ export function executeCommodityHistoricalBacktest(input: {
       regimeAccumulator.set(prediction.regime, values);
     }
   }
-  const regimeDiagnostics = Object.fromEntries([...regimeAccumulator.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([regime, values]) => [regime, round(mean(values) ?? 0)]));
+  const regimeDiagnostics = Object.fromEntries([...regimeAccumulator.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([regime, values]) => [regime, round(mean(values) ?? 0)]));
   const domainDiagnostics = Object.freeze({
     [modelForId(input.request.modelId).domain]: periodReturns.length > 0 ? round(mean(periodReturns.map(period => period.netReturn)) ?? 0) : null,
   });
@@ -760,10 +780,9 @@ export function executeCommodityHistoricalBacktest(input: {
   const oosEvidenceId = blockers.length === 0 && periodReturns.length >= 2
     ? `commodity-oos:${sha256({
       executionVersion: COMMODITY_WALK_FORWARD_EXECUTION_VERSION,
-      dataset: [input.dataset.datasetId, input.dataset.datasetVersion],
-      normalizationContractVersion: input.dataset.normalizationContractVersion,
+      datasetFingerprint: datasetValidation.datasetFingerprint,
       request: input.request,
-      weightProfile: [input.weightProfile.profileId, input.weightProfile.profileVersion, input.weightProfile.factorWeights],
+      weightProfile: [input.weightProfile.profileId, input.weightProfile.profileVersion, sortedRecord(input.weightProfile.factorWeights)],
       costAssumptions: input.costAssumptions,
       splits: splitPlan.splits.map(split => ({ splitId: split.splitId, testDecisionAt: split.testDecisionAt })),
       periods: periodReturns,
