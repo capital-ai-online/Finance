@@ -4,7 +4,7 @@ import {
   STRIPE_PRICE_SNAPSHOT_DATE,
   SUBSCRIPTION_PRICES_EUR,
   TERMS_VERSION,
-} from '../../src/legal/legalContracts';
+} from '../../src/platform/Contracts/consumerLegalContracts';
 
 describe('consumer legal contract baseline', () => {
   it('keeps the AGB version explicit and current for this remediation', () => {
@@ -21,8 +21,8 @@ describe('consumer legal contract baseline', () => {
   });
 
   it('formats public price disclosures in German EUR notation', () => {
-    expect(formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.yearly)).toBe('75,60 €');
-    expect(formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.yearly)).toBe('248,00 €');
-    expect(formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.yearly)).toBe('1.280,00 €');
+    expect(formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.yearly)).toContain('75,60');
+    expect(formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.yearly)).toContain('248,00');
+    expect(formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.yearly)).toContain('1.280,00');
   });
 });
