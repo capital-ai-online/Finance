@@ -36,6 +36,8 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 14. Economic Importance und Supply Risk aus CRMA bleiben getrennte Merkmale. Supply-Risk/Kritikalität wird nicht automatisch in einen Benchmark-Market-Score addiert.
 15. Der Research-Evaluator erzeugt deterministische Feature-Lineage über den bestehenden Scoring-Fingerprint. Solange Gewichte nicht ausführbar sind, wird der Weight-Fingerprint explizit als `NON_EXECUTABLE_ZERO_WEIGHT` gebunden und darf nicht als produktive Gewichtung interpretiert werden.
 16. P0/P1 endet mit nicht-produktiven Challengern. Backtesting, Korrelation/Double-Counting, executable weights, Promotion Package und Consumer/Legacy-Retirement verbleiben in P2/P3.
+17. Der gemeinsame `ResearchEvidenceProviderHttp` unterscheidet HTTP-/Transportfehler von parsebaren Application-Level-Providerfehlern. Ein JSON-Payload mit explizitem `status=error` wird als `PROVIDER_ERROR`, `payloadUsable=false` und Provider-Health `unavailable` behandelt; der Payload wird nicht als `READY` weitergereicht.
+18. Öffentliche Commodity-5xx-Antworten geben nur stabile, nicht-sensitive Fehlercodes und generische Meldungen zurück. Exceptions und Providerdetails werden ausschließlich serverseitig diagnostiziert; rohe `error.message`- oder Provider-Payloadtexte sind keine API-Response-Evidence.
 
 ## Sicherheits-, Governance- und Datenintegritätsfolgen
 
@@ -47,6 +49,8 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - Kein selbstständiger Modell-Promotion-Mechanismus wird eingeführt.
 - Jährliche USGS-Daten und regulatorische CRMA-Referenzen werden nicht mit Intraday-/Weekly-Freshness verwechselt; die Policy folgt der Veröffentlichungsfrequenz der Quelle.
 - Duplicate Evidence ohne explizite vorgelagerte Merge-/Consensus-Entscheidung wird nicht stillschweigend überschrieben.
+- Erfolgreiches HTTP/JSON-Parsen allein bedeutet nicht `payloadUsable=true`, wenn der Provider im Payload selbst einen Fehlerstatus meldet.
+- Interne Exception-, SDK-, Netzwerk- oder Providerdetails werden nicht über Commodity-5xx-Routen an Clients gespiegelt; öffentliche Fehlercodes bleiben stabil und maschinenlesbar.
 
 ## Nicht gewählt
 
@@ -57,8 +61,11 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - ungeprüfte Übernahme der Owner-Beispielgewichte;
 - Ore Grade/Tonnage/Capex/Opex im Commodity-Benchmark-Modell;
 - LLM-basierte numerische Füllwerte;
-- numerischer P1-Challenger-Score ohne P2-Kalibrierung und OOS-Evidence.
+- numerischer P1-Challenger-Score ohne P2-Kalibrierung und OOS-Evidence;
+- rohe Exception-/Provider-Payloadtexte als öffentliche 5xx-Fehlerdetails.
 
 ## Validierung / Promotion
 
 P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die P2/P3-Gates der Commodity Roadmap einschließlich Point-in-Time/OOS-Backtesting, Korrelationsprüfung, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
+
+Für das Error-Handling sind zusätzlich mindestens Application-Level-Providerfehler (`status=error`), Health-Diagnostik mit `payloadUsable=false` sowie die Nichtweitergabe roher Exceptiontexte über Commodity-5xx-Routen als Regression zu prüfen.
