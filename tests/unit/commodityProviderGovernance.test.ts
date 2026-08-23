@@ -71,7 +71,7 @@ describe('Commodity P0/P1 provider governance', () => {
       apiKey: 'test',
       fetchImpl,
       nowMs: () => Date.parse('2026-08-23T12:00:00.000Z'),
-    })).rejects.toThrow('application-level error response');
+    })).rejects.toThrow('All approved history providers were unavailable or returned invalid data.');
 
     const health = getProviderHealth().find(item => item.provider === 'twelvedata' && item.capability === 'commodity-history');
     expect(health?.state).toBe('unavailable');
