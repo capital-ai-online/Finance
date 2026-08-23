@@ -4,7 +4,7 @@ import {
   type EquityClassification,
 } from '../../src/platform/Scoring/EquityModelContracts';
 import type { FinancialFieldProvenance } from '../../src/types/financialProvenance';
-import type { HistoryResult } from '../../src/lib/assetRegistry';
+import type { VerifiedTraditionalFallbackHistory } from '../../src/services/traditionalHistoryFallback';
 import type { StockFundamentals } from '../../server/stockFundamentals';
 import {
   EQUITY_RESEARCH_HISTORY_WINDOW_DAYS,
@@ -74,26 +74,31 @@ function fundamentals(): StockFundamentals {
   };
 }
 
-function liveHistory(): HistoryResult {
+function verifiedHistory(): VerifiedTraditionalFallbackHistory {
   const start = Date.parse('2025-12-06T00:00:00.000Z');
+  const points = Array.from({ length: 260 }, (_, index) => {
+    const date = new Date(start + index * 24 * 60 * 60 * 1000);
+    return { date: date.toISOString().slice(0, 10), close: 100 + index * 0.5 };
+  });
   return {
-    source: 'live',
-    points: Array.from({ length: 260 }, (_, index) => {
-      const date = new Date(start + index * 24 * 60 * 60 * 1000);
-      const dd = String(date.getUTCDate()).padStart(2, '0');
-      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const yy = String(date.getUTCFullYear()).slice(-2);
-      return { date: `${dd}.${mm}.${yy}`, close: 100 + index * 0.5 };
-    }),
+    provider: 'TwelveData',
+    closes: points.map(point => point.close),
+    points,
+    sourcePath: 'https://api.twelvedata.com/time_series',
+    retrievedAt,
   };
 }
 
-function deps(history: HistoryResult, cached: StockFundamentals | undefined = fundamentals()): EquityResearchRuntimeDependencies {
+function deps(
+  history: VerifiedTraditionalFallbackHistory | null,
+  cached: StockFundamentals | undefined = fundamentals(),
+): EquityResearchRuntimeDependencies {
   return {
     ensureFundamentalsFresh: async () => undefined,
     getCachedFundamentals: () => cached,
-    getHistory: async (_symbol, limit) => {
-      expect(limit).toBe(EQUITY_RESEARCH_HISTORY_WINDOW_DAYS);
+    getVerifiedHistory: async (_symbol, assetClass, days) => {
+      expect(assetClass).toBe('stock');
+      expect(days).toBe(EQUITY_RESEARCH_HISTORY_WINDOW_DAYS);
       return history;
     },
     now: () => evaluatedAt,
@@ -101,14 +106,14 @@ function deps(history: HistoryResult, cached: StockFundamentals | undefined = fu
 }
 
 describe('Equity research runtime', () => {
-  it('bindet bestehende reale Evidence an den research-only Challenger ohne öffentliche oder produktive Authority', async () => {
+  it('bindet bestehende provenance-aware Evidence an den research-only Challenger ohne öffentliche oder produktive Authority', async () => {
     const result = await runEquityResearchChallenger(
       { symbol: 'msft', classification },
-      deps(liveHistory()),
+      deps(verifiedHistory()),
     );
 
     expect(result.symbol).toBe('MSFT');
-    expect(result.historySource).toBe('live');
+    expect(result.historyProvider).toBe('TwelveData');
     expect(result.composition.diagnostics.composedFamilies).toContain('momentum');
     expect(result.orchestration.status).toBe('READY');
     expect(result.scoreEligible).toBe(false);
@@ -117,17 +122,13 @@ describe('Equity research runtime', () => {
     expect(result.orchestration.canonicalPromotionRequired).toBe(true);
   });
 
-  it('verwirft simulierte AssetRegistry-Historie vollständig aus der Momentum-Familie', async () => {
-    const simulated: HistoryResult = {
-      source: 'simulated',
-      points: liveHistory().points,
-    };
+  it('nimmt ohne provenance-aware History keine Momentum-Familie auf und besitzt keinen AssetRegistry-Simulationspfad', async () => {
     const result = await runEquityResearchChallenger(
       { symbol: 'MSFT', classification },
-      deps(simulated),
+      deps(null),
     );
 
-    expect(result.historySource).toBe('simulated');
+    expect(result.historyProvider).toBeNull();
     expect(result.composition.input.families.momentum).toBeUndefined();
     expect(result.composition.diagnostics.composedFamilies).not.toContain('momentum');
     expect(result.scoreEligible).toBe(false);
@@ -137,7 +138,7 @@ describe('Equity research runtime', () => {
   it('erfindet bei fehlenden Fundamentals keine Ersatzwerte und bleibt nicht scorefähig', async () => {
     const result = await runEquityResearchChallenger(
       { symbol: 'MSFT', classification },
-      deps({ source: 'simulated', points: [] }, undefined),
+      deps(null, undefined),
     );
 
     expect(result.composition.diagnostics.composedFamilies).toEqual([]);
