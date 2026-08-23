@@ -87,8 +87,9 @@ export interface EquityResearchRuntimeResult {
 const DEFAULT_DEPENDENCIES: EquityResearchRuntimeDependencies = Object.freeze({
   ensureFundamentalsFresh,
   getCachedFundamentals,
-  getVerifiedHistory: (symbol, assetClass, days) => getVerifiedTraditionalFallbackHistory(symbol, assetClass, days),
-  fetchSecEvidence: (symbol, asOf) => DEFAULT_SEC_ADAPTER.fetchEvidence({ symbol, asOf }),
+  getVerifiedHistory: (symbol: string, assetClass: 'stock', days: number) =>
+    getVerifiedTraditionalFallbackHistory(symbol, assetClass, days),
+  fetchSecEvidence: (symbol: string, asOf: string) => DEFAULT_SEC_ADAPTER.fetchEvidence({ symbol, asOf }),
   now: () => new Date().toISOString(),
 });
 
