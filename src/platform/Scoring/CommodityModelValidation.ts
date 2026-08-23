@@ -1,3 +1,4 @@
+import type { CommodityBacktestResult } from './CommodityBacktestingContracts';
 import { buildEffectiveScoringFingerprintMetadata } from './scoringFingerprint';
 import {
   COMMODITY_RESEARCH_DQ_POLICY_VERSION,
@@ -127,12 +128,16 @@ export interface CommodityWeightSensitivityFinding {
   readonly maxAbsoluteDelta: number;
   readonly topFactorChanged: boolean;
   readonly weightSum: number;
+  readonly valid: boolean;
+  readonly blockers: readonly string[];
 }
 
 export interface CommodityWeightStabilityReport {
   readonly contractVersion: typeof COMMODITY_WEIGHT_STABILITY_VERSION;
   readonly referenceProfileId: string;
   readonly findings: readonly CommodityWeightSensitivityFinding[];
+  readonly valid: boolean;
+  readonly blockers: readonly string[];
   readonly canonical: false;
   readonly scoreEligible: false;
 }
@@ -210,6 +215,19 @@ export function analyzeCommodityFeatureCorrelation(input: {
     throw new Error('COMMODITY_CORRELATION_THRESHOLD_INVALID');
   }
 
+  const inputFindings: string[] = [];
+  const seenTimestamps = new Set<string>();
+  for (const observation of input.observations) {
+    if (!Number.isFinite(Date.parse(observation.observedAt))) {
+      inputFindings.push(`CORRELATION_TIMESTAMP_INVALID:${observation.observedAt}`);
+      continue;
+    }
+    if (seenTimestamps.has(observation.observedAt)) {
+      inputFindings.push(`CORRELATION_TIMESTAMP_DUPLICATE:${observation.observedAt}`);
+    }
+    seenTimestamps.add(observation.observedAt);
+  }
+
   const pairs: CommodityFeatureCorrelationPair[] = [];
   const featureDefinitions = model.features.filter(feature => feature.role === 'RAW_EVIDENCE');
 
@@ -255,7 +273,7 @@ export function analyzeCommodityFeatureCorrelation(input: {
     }
   }
 
-  const blockingFindings = pairs.flatMap(pair => {
+  const pairFindings = pairs.flatMap(pair => {
     if (!pair.crossLatentFactor) return [];
     if (pair.status === 'INSUFFICIENT_DATA') {
       return [`CORRELATION_DATA_INSUFFICIENT:${pair.leftFeature}<->${pair.rightFeature}:${pair.pairedObservations}`];
@@ -268,6 +286,7 @@ export function analyzeCommodityFeatureCorrelation(input: {
     }
     return [];
   });
+  const blockingFindings = [...inputFindings, ...pairFindings];
 
   return Object.freeze({
     contractVersion: COMMODITY_CORRELATION_POLICY_VERSION,
@@ -360,6 +379,16 @@ export function validateCommodityCandidateWeightProfile(
   }, 0), 6);
   if (Math.abs(weightSum - 1) > 1e-6) blockers.push(`FACTOR_WEIGHT_SUM_NOT_ONE:${weightSum}`);
 
+  const aggregationFactors = profile.factorAggregations.map(item => item.latentFactor);
+  const duplicateAggregationFactors = aggregationFactors.filter((factor, index) => aggregationFactors.indexOf(factor) !== index);
+  if (duplicateAggregationFactors.length > 0) {
+    blockers.push(`DUPLICATE_FACTOR_AGGREGATIONS:${[...new Set(duplicateAggregationFactors)].sort().join(',')}`);
+  }
+  const unknownAggregationFactors = [...new Set(aggregationFactors)].filter(factor => !modelFactors.includes(factor));
+  if (unknownAggregationFactors.length > 0) {
+    blockers.push(`UNKNOWN_FACTOR_AGGREGATIONS:${unknownAggregationFactors.sort().join(',')}`);
+  }
+
   const aggregationByFactor = new Map(profile.factorAggregations.map(item => [item.latentFactor, item]));
   for (const factor of modelFactors) {
     const expectedKeys = model.features.filter(feature => feature.latentFactor === factor).map(feature => feature.key).sort();
@@ -372,6 +401,9 @@ export function validateCommodityCandidateWeightProfile(
       blockers.push(`CROSS_FACTOR_RENORMALIZATION_FORBIDDEN:${factor}`);
     }
     const suppliedKeys = [...aggregation.featureKeys].sort();
+    if (new Set(suppliedKeys).size !== suppliedKeys.length) {
+      blockers.push(`DUPLICATE_FACTOR_FEATURES:${factor}`);
+    }
     if (JSON.stringify(suppliedKeys) !== JSON.stringify(expectedKeys)) {
       blockers.push(`FACTOR_FEATURE_SET_MISMATCH:${factor}`);
     }
@@ -379,6 +411,9 @@ export function validateCommodityCandidateWeightProfile(
 
   if (profile.sourceHypothesis.executable !== false || profile.sourceHypothesis.status !== 'research-hypothesis') {
     blockers.push('SOURCE_HYPOTHESIS_MUST_REMAIN_NON_EXECUTABLE');
+  }
+  if (JSON.stringify(profile.sourceHypothesis.weights) !== JSON.stringify(model.weightHypothesis.weights)) {
+    blockers.push('SOURCE_HYPOTHESIS_MISMATCH');
   }
 
   const validWeightShape = blockers.length === 0;
@@ -415,19 +450,38 @@ export function analyzeCommodityWeightStability(input: {
   readonly reference: CommodityCandidateWeightProfile;
   readonly variants: readonly CommodityWeightSensitivityVariant[];
 }): CommodityWeightStabilityReport {
+  const referenceValidation = validateCommodityCandidateWeightProfile(input.reference);
   const factors = Object.keys(input.reference.factorWeights).sort();
   const referenceTop = [...factors].sort((left, right) => (
     input.reference.factorWeights[right] - input.reference.factorWeights[left] || left.localeCompare(right)
   ))[0] ?? null;
+  const reportBlockers = referenceValidation.valid
+    ? []
+    : referenceValidation.blockers.map(blocker => `REFERENCE_PROFILE_INVALID:${blocker}`);
 
   const findings = input.variants.map(variant => {
+    const variantBlockers: string[] = [];
+    const variantFactors = Object.keys(variant.factorWeights).sort();
+    if (JSON.stringify(variantFactors) !== JSON.stringify(factors)) {
+      variantBlockers.push('SENSITIVITY_FACTOR_SET_MISMATCH');
+    }
+    for (const factor of factors) {
+      const value = variant.factorWeights[factor];
+      if (!finite(value) || value < 0 || value > 1) {
+        variantBlockers.push(`SENSITIVITY_FACTOR_WEIGHT_INVALID:${factor}`);
+      }
+    }
+
     const deltas = factors.map(factor => Math.abs(
       (variant.factorWeights[factor] ?? 0) - (input.reference.factorWeights[factor] ?? 0),
     ));
     const weightSum = round(factors.reduce((sum, factor) => sum + (variant.factorWeights[factor] ?? 0), 0), 6);
+    if (Math.abs(weightSum - 1) > 1e-6) variantBlockers.push(`SENSITIVITY_WEIGHT_SUM_NOT_ONE:${weightSum}`);
+
     const variantTop = [...factors].sort((left, right) => (
       (variant.factorWeights[right] ?? 0) - (variant.factorWeights[left] ?? 0) || left.localeCompare(right)
     ))[0] ?? null;
+    reportBlockers.push(...variantBlockers.map(blocker => `${variant.variantId}:${blocker}`));
 
     return Object.freeze({
       variantId: variant.variantId,
@@ -435,6 +489,8 @@ export function analyzeCommodityWeightStability(input: {
       maxAbsoluteDelta: round(deltas.length > 0 ? Math.max(...deltas) : 0),
       topFactorChanged: referenceTop !== variantTop,
       weightSum,
+      valid: variantBlockers.length === 0,
+      blockers: Object.freeze(variantBlockers),
     });
   });
 
@@ -442,6 +498,8 @@ export function analyzeCommodityWeightStability(input: {
     contractVersion: COMMODITY_WEIGHT_STABILITY_VERSION,
     referenceProfileId: input.reference.profileId,
     findings: Object.freeze(findings),
+    valid: reportBlockers.length === 0 && findings.length > 0,
+    blockers: Object.freeze(reportBlockers),
     canonical: false,
     scoreEligible: false,
   });
@@ -455,14 +513,16 @@ export function assessCommodityWeightPromotionEvidence(input: {
   readonly weightValidation: CommodityCandidateWeightValidation;
   readonly correlationReport: CommodityCorrelationReport | null;
   readonly stabilityReport: CommodityWeightStabilityReport | null;
-  readonly backtestRunId: string | null;
+  readonly backtestResult: CommodityBacktestResult | null;
 }): CommodityWeightPromotionEvidenceAssessment {
   const blockers: string[] = [];
   if (!input.weightValidation.valid) blockers.push(...input.weightValidation.blockers);
   if (!input.correlationReport) blockers.push('CORRELATION_EVIDENCE_MISSING');
   else if (!input.correlationReport.evidenceComplete) blockers.push(...input.correlationReport.blockingFindings);
-  if (!input.stabilityReport || input.stabilityReport.findings.length === 0) blockers.push('SENSITIVITY_EVIDENCE_MISSING');
-  if (!input.backtestRunId?.trim()) blockers.push('POINT_IN_TIME_BACKTEST_EVIDENCE_MISSING');
+  if (!input.stabilityReport) blockers.push('SENSITIVITY_EVIDENCE_MISSING');
+  else if (!input.stabilityReport.valid) blockers.push(...input.stabilityReport.blockers);
+  if (!input.backtestResult) blockers.push('POINT_IN_TIME_BACKTEST_EVIDENCE_MISSING');
+  else if (!input.backtestResult.promotionEvidenceEligible) blockers.push('POINT_IN_TIME_BACKTEST_EVIDENCE_INCOMPLETE');
 
   return Object.freeze({
     contractVersion: COMMODITY_WEIGHT_VALIDATION_CONTRACT_VERSION,
