@@ -7,10 +7,11 @@ import express from 'express';
 import type { AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
-import { RawMaterialsOrchestrator } from '../orchestrator/rawMaterialsOrchestrator';
+import { RawMaterialsOrchestrator, type RawMaterialsResearchContext } from '../orchestrator/rawMaterialsOrchestrator';
 import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
 import { validateRawMaterialInput } from '../schemas/rawMaterialsValidation';
-import { RAW_MATERIALS_DATABASE } from '../config/rawMaterialsConfig';
+import { RAW_MATERIALS_DATABASE, findRawMaterialConfig } from '../config/rawMaterialsConfig';
+import type { AnalysisPayload, RawMaterialInput } from '../types/rawMaterials';
 import { getAssetCatalogEntry } from '../lib/assetSearchCatalog';
 import { getTwelveDataCommodityEvidence } from '../services/commodityMarketEvidence';
 import { dispatchCanonicalScore, type ScoringModelDescriptor } from '../platform/Scoring';
@@ -26,6 +27,68 @@ function modelRegistryView(model: ScoringModelDescriptor) {
     featureContractVersion: model.featureContractVersion,
     resultContractVersion: model.resultContractVersion,
     evidencePolicy: model.evidencePolicy,
+  };
+}
+
+/**
+ * TEMPORARY LEGACY UI COMPATIBILITY ONLY.
+ *
+ * The research orchestrator no longer owns or computes a score. This adapter preserves the
+ * historical /analyze response shape for RawMaterialsDashboard until that legacy surface is
+ * migrated. Its output stays explicitly non-canonical and score-ineligible and MUST NOT feed the
+ * registry, ranking, eligibility or execution chain.
+ */
+function buildLegacyResearchCompatibilityPayload(
+  research: RawMaterialsResearchContext,
+  customInput?: Partial<RawMaterialInput>,
+): AnalysisPayload {
+  const config = findRawMaterialConfig(research.rawMaterial);
+  const { fundamentals, risk, strategicValuation } = research.research;
+
+  const unifiedInput: RawMaterialInput = {
+    name: research.rawMaterial,
+    category_main: customInput?.category_main || research.classification.category_main,
+
+    market_liquidity: customInput?.market_liquidity ?? config?.market_liquidity,
+    volatility: customInput?.volatility ?? risk.volatility,
+    trading_volume: customInput?.trading_volume ?? config?.trading_volume,
+
+    ore_grade: customInput?.ore_grade ?? fundamentals.ore_grade,
+    tonnage: customInput?.tonnage ?? fundamentals.tonnage,
+    tonnage_reserve: customInput?.tonnage_reserve ?? fundamentals.tonnage_reserve,
+    substitution_potential: customInput?.substitution_potential ?? fundamentals.substitution_potential,
+    recyclability: customInput?.recyclability ?? fundamentals.recyclability,
+
+    processing_complexity: customInput?.processing_complexity ?? config?.processing_complexity,
+    infrastructure_availability: customInput?.infrastructure_availability ?? config?.infrastructure_availability,
+    extraction_costs: customInput?.extraction_costs ?? config?.extraction_costs,
+
+    geopolitical_risk: customInput?.geopolitical_risk ?? risk.geopolitical_risk,
+    supply_chain_risk: customInput?.supply_chain_risk ?? risk.supply_chain_risk,
+    regulatory_risk: customInput?.regulatory_risk ?? risk.regulatory_risk,
+    esg_risk: customInput?.esg_risk ?? risk.esg_risk,
+    producer_concentration: customInput?.producer_concentration ?? risk.producer_concentration,
+
+    military_importance: customInput?.military_importance ?? strategicValuation.military_importance,
+    industrial_importance: customInput?.industrial_importance ?? strategicValuation.industrial_importance,
+  };
+
+  const result = RawMaterialsScoringService.scoreMaterial(unifiedInput);
+  return {
+    ...result,
+    classification: {
+      ...result.classification,
+      category_main: research.classification.category_main,
+      category_sub: research.classification.category_sub,
+      market_type: research.classification.market_type,
+      valuation_mode: research.classification.valuation_mode,
+      confidence: Number(((result.classification.confidence + research.classification.confidence) / 2).toFixed(2)),
+    },
+    reasoning: [
+      ...result.reasoning,
+      ...research.reasoning,
+      'Legacy compatibility score only; canonical commodity scoring is available exclusively through ScoringDispatcher.',
+    ],
   };
 }
 
@@ -54,7 +117,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       res.json(list);
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error listing materials:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal Server Error', code: 'RAW_MATERIAL_LIST_FAILED' });
     }
   });
 
@@ -107,20 +170,23 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
         providerSymbol: evidence.providerSymbol,
       });
     } catch (error) {
+      console.error('[RawMaterialsRouter] Error retrieving verified commodity score:', error);
       return res.status(503).json({
         symbol,
         status: 'SOURCE_UNAVAILABLE',
+        code: 'COMMODITY_EVIDENCE_UNAVAILABLE',
         score: null,
         final_score: null,
-        reason: error instanceof Error ? error.message : String(error),
+        reason: 'Commodity evidence is temporarily unavailable.',
       });
     }
   });
 
   /**
    * POST /api/raw-materials/analyze
-   * Executes full multi-agent structural analysis for a specific material.
-   * This remains research/enrichment only and never enters canonical ranking/eligibility.
+   * Executes the multi-agent research pipeline. The orchestrator itself is research-only and does
+   * not compute a score. A temporary compatibility adapter keeps the existing dashboard payload
+   * shape isolated at this legacy route until the dashboard consumes research context directly.
    */
   router.post('/analyze', async (req, res) => {
     try {
@@ -129,11 +195,21 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
         return res.status(400).json({ error: 'Raw material "name" is required.' });
       }
 
-      const payload = await orchestrator.analyzeMaterial(name, customInput);
-      res.json({ ...payload, scoreSemantic: 'legacy-structural-research', canonical: false, scoreEligible: false, marketEvidenceVerified: false });
+      const research = await orchestrator.analyzeMaterial(name);
+      const payload = buildLegacyResearchCompatibilityPayload(research, customInput);
+      res.json({
+        ...payload,
+        researchContext: research,
+        orchestratorAuthority: research.authority,
+        scoreSemantic: 'legacy-structural-research',
+        canonical: false,
+        scoreEligible: false,
+        marketEvidenceVerified: false,
+        legacyCompatibility: true,
+      });
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error analyzing material:', error);
-      res.status(500).json({ error: error.message || 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal Server Error', code: 'RAW_MATERIAL_ANALYSIS_FAILED' });
     }
   });
 
@@ -153,7 +229,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       res.json({ ...payload, scoreSemantic: 'legacy-structural-research', canonical: false, scoreEligible: false, marketEvidenceVerified: false });
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error scoring material:', error);
-      res.status(500).json({ error: error.message || 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal Server Error', code: 'RAW_MATERIAL_SCORING_FAILED' });
     }
   });
 

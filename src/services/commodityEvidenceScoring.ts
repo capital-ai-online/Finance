@@ -54,8 +54,6 @@ function evidenceRefs(evidence: CommodityMarketEvidence): ScoringEvidenceRef[] {
 }
 
 function volatilityQuality(dailyStdevPct: number): number {
-  // Commodity daily volatility materially differs from crypto. 5% daily stdev is treated as
-  // the upper end of the normalised research band; above that the quality factor floors at zero.
   return clamp(100 - (dailyStdevPct / 5) * 100);
 }
 
@@ -115,8 +113,8 @@ export function scoreCommodityMarketEvidence(
     `Score uses ${closes.length} real daily observations from ${evidence.provider} (${evidence.providerSymbol}).`,
     'Only market-history factors are included; static registry/bootstrap commodity attributes have no score impact.',
   ];
-  if ((values.trend ?? 50) >= 60) reasoning.push('Verified price history indicates an above-average trend regime.');
-  if ((values.volatility_quality ?? 50) < 40) reasoning.push('Observed daily volatility materially reduces the market-evidence score.');
+  if (values.trend !== undefined && values.trend >= 60) reasoning.push('Verified price history indicates an above-average trend regime.');
+  if (values.volatility_quality !== undefined && values.volatility_quality < 40) reasoning.push('Observed daily volatility materially reduces the market-evidence score.');
 
   return {
     contractVersion: COMMODITY_EVIDENCE_SCORING_CONTRACT_VERSION,

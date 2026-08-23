@@ -44,7 +44,7 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
 
 describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
-    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.8.0');
+    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.9.0');
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');

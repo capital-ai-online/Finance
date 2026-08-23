@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "COMMODITY-ORCHESTRATOR-P0-P1-2026-08-23",
+  "workItem": "SC-2 Commodity Orchestrator P0/P1",
+  "workItemDE": "Commodity-Orchestrator P0/P1 korrelationsfrei in die bestehende SC-2-Wertschöpfungskette integrieren",
+  "startedAt": "2026-08-23T16:11:50Z",
+  "baseBranch": "main",
+  "baseSha": "4fbda0404c2843a4c814c463abc9eb1320a015f8",
+  "branch": "feat/commodity-orchestrator-p0-p1-final-2026-08-23",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub + Render Connector"
+  },
+  "claimedPaths": [
+    ".env.example",
+    "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
+    "docs/evidence/sc-md/SC_COMMODITY_RESEARCH_ORCHESTRATOR_BOUNDARY_2026-08-23.md",
+    "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
+    "src/config/rawMaterialsConfig.ts",
+    "src/orchestrator/rawMaterialsOrchestrator.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "src/platform/MarketData/providers/TwelveDataCommodityHistoryProvider.ts",
+    "src/platform/Scoring/Commodity*.ts",
+    "src/platform/Scoring/ScoringModelRegistry.ts",
+    "src/platform/Scoring/UniversalAssetAdapter.ts",
+    "src/platform/Scoring/index.ts",
+    "src/routes/rawMaterialsRoutes.ts",
+    "src/services/commodity*.ts",
+    "src/services/rawMaterialsScoring.ts",
+    "tests/unit/commodity*.test.ts",
+    "tests/unit/rawMaterialsOrchestratorAuthorityBoundary.test.ts"
+  ],
+  "ownerDecision": "P0 und P1 vollständig im bestehenden Commodity-Branch umsetzen; ein PR erst nach Abschluss und finalem Main-Sync zur CI-Kostenreduktion.",
+  "traceability": {
+    "roadmap": "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
+    "adr": ["ADR-0087", "ADR-0101"],
+    "epic": 508,
+    "issues": [490, 491, 492, 493, 494, 495, 496, 497, 498],
+    "ownerSource": "Google Drive Commodity Orchestrator Dokumentation 2026-08-23"
+  },
+  "finalMainSync": {
+    "mode": "fresh-branch-from-current-main",
+    "mainSha": "4fbda0404c2843a4c814c463abc9eb1320a015f8",
+    "consolidationCommit": "a2de6f0866390d0103157d1f8d2e973d43f4063b",
+    "previousAuditBranch": "feat/commodity-orchestrator-research-boundary-2026-08-23",
+    "correlation": "PR #510 Crypto Visualization sowie PR #512 Stripe/Checkout wurden datei- und semantikseitig geprüft. Keine Commodity-Datei, ScoringModelRegistry-, UAI-, Provider-, DQ- oder Raw-Materials-Authority wurde durch diese Main-Änderungen überschrieben.",
+    "openPrCorrelation": "none"
+  },
+  "implementedControls": [
+    "Agent Research remains UNVERIFIED_AGENT_RESEARCH and non-authorizing",
+    "Source-backed orchestration binds verified evidence to UAI, Commodity FeatureSnapshot and deterministic research readiness",
+    "P1 evaluator emits no numeric challenger composite and does not execute owner weight hypotheses",
+    "feature-specific freshness, temporal ordering and duplicate-evidence fail-closed checks",
+    "shared scoring-integrity DataQualityGate reused after Commodity field-level DQ",
+    "TwelveData commodity history routed through ProviderMatrix governance and MarketDataHistoryGateway",
+    "EIA, USDA FAS PSD, CFTC COT, USGS MCS and EU CRMA evidence adapters remain research-only",
+    "four Commodity category challengers remain lifecycle=challenger and scoreEligible=false",
+    "commodity-evidence-scoring@1.0.0 remains the only productive Commodity champion"
+  ],
+  "excludedScope": [
+    "P2 executable weights / correlation calibration / backtesting / promotion package",
+    "P2 Legacy Commodity Scoring retirement",
+    "P3 shadow observation / universe SLA / champion promotion",
+    "resource-project valuation",
+    "any second dispatcher, model registry, scoring engine, DQ authority or Crypto executor inside Commodity"
+  ],
+  "validation": {
+    "hostedCiBeforePr": false,
+    "staticContractReview": "completed",
+    "finalMainSync": "completed",
+    "behindMain": 0,
+    "renderWorkspace": "AICapital",
+    "renderService": "Finance"
+  }
+}

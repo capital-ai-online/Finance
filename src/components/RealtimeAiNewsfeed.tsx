@@ -8,6 +8,7 @@ interface RealtimeAiNewsfeedProps {
   selectedSymbol?: string;
   searchQuery?: string;
   categoryFilter?: string;
+  sourceFilter?: string;
   prioritySymbols?: string[];
   onTriggerPushNotification?: (data: {
     symbol: string;
@@ -27,28 +28,32 @@ interface RealtimeAiNewsfeedProps {
 /**
  * Canonical UI projection for the AI Newsfeed Viewer.
  *
- * Supersession 2026-08-22:
+ * Supersession 2026-08-22 / 2026-08-23:
  * - retired hard-coded and dynamically fabricated financial headlines/insights;
- * - all visible news now originates from /api/news -> NewsApiEvidenceProvider;
+ * - primary source is open-source Free Crypto News REST (cryptocurrency.cv) via /api/news;
+ * - GDELT remains keyless fallback;
  * - heuristic sentiment is presentation metadata only and never mutates an asset score;
- * - no push notification or ranking event is fabricated from an article.
+ * - no push notification or ranking event is fabricated from an article;
+ * - default display limit raised to 7; source + asset filters supported.
  */
 export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
   const symbol = props.selectedSymbol?.trim().toUpperCase() ?? '';
-  const limit = Math.max(1, Math.min(10, props.maxDisplayItems ?? 3));
+  const source = props.sourceFilter?.trim().toLowerCase() ?? '';
+  const limit = Math.max(1, Math.min(10, props.maxDisplayItems ?? 7));
 
   return (
     <div className="w-full space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-4 py-3">
         <div className="flex items-center gap-2 text-[11px] text-emerald-200">
           <ShieldCheck className="h-4 w-4" />
-          <span>Evidence-only Newsfeed · keine synthetischen Schlagzeilen · kein direkter Score-Impact</span>
+          <span>Evidence-only Newsfeed · Open-Source REST · keine synthetischen Schlagzeilen · kein direkter Score-Impact</span>
         </div>
         <span className="text-[10px] font-mono uppercase tracking-wide text-white/35">Tier: {props.subscriptionTier}</span>
       </div>
 
       <VerifiedNewsFeed
         symbol={symbol}
+        source={source}
         limit={limit}
         title={symbol ? `AI Newsfeed Viewer · ${symbol}` : 'AI Newsfeed Viewer'}
       />
