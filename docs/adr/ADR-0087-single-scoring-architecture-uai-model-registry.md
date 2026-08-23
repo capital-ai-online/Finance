@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Datum:** 2026-08-19
-- **Revalidierung:** 2026-08-23 — Equity Orchestrator P0 Challenger
+- **Revalidierung:** 2026-08-23 — Equity Orchestrator P0 + P1 SEC Evidence Integration
 - **Owner-Entscheidung:** „Es sollen keine parallel Architekturen mehr entstehen und am Ende eine komplett Architektur entstehen, die sich in das FinTech Wertschöpfungs Ökosystem einbindet.“
 - **Authority:** `SC-MD-SPT-0001` bleibt kanonische Ausführungsautorität.
 
@@ -98,12 +98,26 @@ Der Equity-Ausbau ändert die produktive Scoring-Authority **nicht**. Er nutzt d
 8. **Context-only Signale:** Regime, Sektorrotation, Sentiment und Pattern besitzen in Equity 0.1.0 weder `scoreImpact` noch `rankingImpact`.
 9. **Atomic Promotion:** Eine spätere produktive Promotion muss `stock` atomar vom Traditional-Champion auf einen Equity-Champion umstellen; zwei gleichberechtigte canonical Champions oder ein route-lokaler Equity-Fallback bleiben verboten.
 
+## Revalidierung 2026-08-23 — Equity P1 SEC Evidence Integration
+
+P1 ergänzt SEC EDGAR ausschließlich als **Evidence-Provider innerhalb der bestehenden Equity-Research-Kette**. Die produktive Modell- und Routing-Authority bleibt unverändert.
+
+1. **Evidence-only Provider:** `server/secEdgarCompanyFacts.ts` nutzt SEC CompanyFacts serverseitig, keyless und mit deklarierter User-Agent-/Fair-Access-Governance. Der Adapter besitzt keine Score-, Registry-, Dispatcher-, Ranking- oder Persistence-Authority.
+2. **Point-in-Time:** Facts werden nur zugelassen, wenn `filedAt <= asOf`. Filing-Verfügbarkeit, Accounting-Period-Ende und Retrieval-Zeit bleiben getrennt; Quarter-/Annual-/YTD-Kontexte werden deterministisch unterschieden.
+3. **Providerneutrale Grenze:** `server/equitySecEvidenceBridge.ts` projiziert SEC-spezifische Facts in `EquityFilingEvidenceSnapshot`; `EquityFilingDerivedMetrics` bleibt providerneutral und akzeptiert ausschließlich admissible Market-Evidence-DQ-Inputs.
+4. **Derived Metrics ohne Eigenautorität:** Current Ratio, Long-Term-Debt/Equity, Interest Coverage, YTD Free Cash Flow, Shareholder Distributions, Distribution Coverage und Reinvestment Intensity sind deterministische Research-Metriken und bleiben `scoreEligible=false`, `normalizationRequired=true`.
+5. **Correlation De-Duplication:** SEC filing-derived Financial-Strength-Komponenten dürfen vendor-derived Leverage nur ersetzen, wenn mindestens zwei unabhängige Filing-Komponenten admissible sind. SEC/FMP/AlphaVantage-Werte derselben ökonomischen Korrelationsgruppe werden nicht additiv gestapelt.
+6. **Capital Allocation bleibt fail-closed:** Distribution Coverage, FCF und Reinvestment Intensity erzeugen allein keinen Capital-Allocation-Family-Score. Eine zweite unabhängige, governance-fähige Größe wie Share-Count-Change und/oder peer-relative Normalisierung bleibt Voraussetzung.
+7. **Research Runtime:** `equity-research-runtime/0.2.0` bindet Existing Fundamentals, provenance-aware History und SEC Evidence ohne öffentliche Route, Persistence Writer oder `CanonicalScoreResult`; produktives Stock-Routing bleibt `traditional-scoring@2.1.0`.
+8. **Promotion unverändert:** Peer-/Sector-Normalisierung, mehrperiodige Filing-Historie, Backtesting und explizite Owner-Promotion bleiben getrennte Gates. P1 SEC allein berechtigt keinen Champion-Cutover.
+
 ## Konsequenzen
 
 - Neue Scoring-Features müssen UAI + Registry + Evidence Gate nutzen.
 - `/api/crypto/analyze` darf langfristig keinen alternativen kanonischen Finanzscore erzeugen; Agenten-Ausgaben werden Research/Enrichment.
 - `scoring.service.ts`, Meme-/Raw-Materials- und route-lokale Scorer bleiben während der Migration nur temporäre Implementierungsdetails und erhalten keinen neuen Architekturstatus.
 - Equity-Research-Ergebnisse bleiben bis zur expliziten Promotion ohne CanonicalScoreResult-, Ranking-, Eligibility- oder Execution-Wirkung.
+- SEC EDGAR ist Evidence Acquisition, kein eigenes Equity-Modell und keine alternative DQ-/Provider-Routing-Authority.
 - Score-Gewichte, Provider-Routing, `scoreImpact`, `rankingImpact` und Eligibility-Schwellen werden außerhalb explizit versionierter und reviewter Modelländerungen nicht implizit verändert.
 - Änderungen an Feature-/Evidence-/Weight-Verträgen müssen in der Runtime-Lineage erkennbar sein und einen neuen Replay-Fingerprint erzeugen, soweit sie dessen fachliche Semantik beeinflussen.
 - Universe-Verfügbarkeitsziele dürfen niemals durch No-Demo-Data-Verstöße erfüllt werden.
@@ -119,7 +133,7 @@ Der Equity-Ausbau ändert die produktive Scoring-Authority **nicht**. Er nutzt d
 7. P0 Runtime-Lineage bindet effektive Feature-/Weight-Semantik und Evidence-Vertrag revisionssicher;
 8. Universe-SLA wird produktiv nur aus real entdeckten und zugelassenen Assets gespeist;
 9. Meme/DeFi-Challenger bleiben ohne validierte Evidence/Weights/Promotion nicht ausführbar;
-10. Equity-Challenger bleibt bis zur separat validierten und Owner-approved atomaren Stock-Promotion research-only und `scoreEligible=false`;
+10. Equity-Challenger einschließlich SEC-derived Research bleibt bis zur separat validierten und Owner-approved atomaren Stock-Promotion research-only und `scoreEligible=false`;
 11. Main-Sync/Korrelationsprüfung vor PR-Erstellung und erneut vor Merge.
 
 ## Referenzen
@@ -130,6 +144,8 @@ Der Equity-Ausbau ändert die produktive Scoring-Authority **nicht**. Er nutzt d
 - `docs/evidence/sc-md/SC2_P0_MULTICLASS_INTEGRITY_2026-08-21.md`
 - `docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md`
 - `docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md`
+- `docs/evidence/sc-md/SC2_EQUITY_P1_EVIDENCE_RUNTIME_2026-08-23.md`
+- `docs/evidence/sc-md/SC2_EQUITY_P1_SEC_EDGAR_2026-08-23.md`
 - ADR-0022, ADR-0032, ADR-0033, ADR-0072, ADR-0100
 - `src/services/scoringIntegrity.ts`
 - `src/platform/MarketData/contracts.ts`
@@ -138,5 +154,10 @@ Der Equity-Ausbau ändert die produktive Scoring-Authority **nicht**. Er nutzt d
 - `src/platform/Scoring/CryptoResearchModelContracts.ts`
 - `src/platform/Scoring/EquityModelContracts.ts`
 - `src/platform/Scoring/EquityResearchScoring.ts`
+- `src/platform/Scoring/EquityFilingDerivedMetrics.ts`
+- `src/platform/Scoring/EquityFilingFeatureComposer.ts`
 - `src/platform/Scoring/EquityOrchestrator.ts`
+- `server/secEdgarCompanyFacts.ts`
+- `server/equitySecEvidenceBridge.ts`
+- `server/equityResearchRuntime.ts`
 - `src/platform/Scoring/UniverseSla.ts`
