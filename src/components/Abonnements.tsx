@@ -4,7 +4,6 @@ import {
   Check, 
   ShieldCheck, 
   Zap, 
-  Sparkles, 
   Cpu, 
   Award, 
   CreditCard, 
@@ -13,13 +12,6 @@ import {
   Lock, 
   HelpCircle,
   Eye,
-  Terminal,
-  Code,
-  CheckCircle,
-  AlertTriangle,
-  Database,
-  Server,
-  Mail,
   ChevronDown,
   Clock,
   X,
@@ -38,7 +30,6 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  const [showStripeGuide, setShowStripeGuide] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [showCheckoutModal, setShowCheckoutModal] = useState<string | null>(null);
   const [showInactivityOverlay, setShowInactivityOverlay] = useState(false);
@@ -106,21 +97,9 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       tierBadge: "Direkter Support"
     }
   ];
-  const [configStatus, setConfigStatus] = useState({
-    secretKeyConfigured: false,
-    webhookSecretConfigured: false,
-    publishableKeyConfigured: false,
-    dbConfigured: false
-  });
 
   React.useEffect(() => {
-    // 1. Fetch Stripe configuration status safely without leaking keys
-    fetch('/api/stripe/config-status')
-      .then(res => res.json())
-      .then(data => setConfigStatus(data))
-      .catch(err => console.error("Error loading stripe config status:", err));
-
-    // 2. Query persisted database-tier for this user
+    // Query persisted database-tier for this user
     if (email) {
       fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`)
         .then(res => res.json())
@@ -279,13 +258,13 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
         {/* Header */}
         <div className="max-w-3xl mx-auto text-center mb-10 relative z-10">
           <span className="px-2.5 py-1 rounded text-[9px] font-bold bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40 tracking-wider font-mono uppercase">
-            CAPITAL-AI SUBSCRIPTION &amp; UPGRADE PLATFORM
+            CAPITAL-AI SUBSCRIPTION & UPGRADE PLATFORM
           </span>
           <h2 className="text-3xl sm:text-4xl font-black text-white font-display mt-3">
             Wählen Sie Ihren Investment-Vorsprung
           </h2>
           <p className="text-xs sm:text-sm text-white/70 mt-2 max-w-xl mx-auto font-mono leading-relaxed">
-            Schalten Sie mit <strong className="text-aif-gold-DEFAULT">PRO</strong> den Realtime AI-Newsfeed frei oder sichern Sie sich mit <strong className="text-aif-neon-cyan">ENTERPRISE</strong> offizielle BaFin &amp; DSGVO PDF-Exports sowie uneingeschränktes Asset-Screening.
+            Schalten Sie mit <strong className="text-aif-gold-DEFAULT">PRO</strong> den Realtime AI-Newsfeed frei oder sichern Sie sich mit <strong className="text-aif-neon-cyan">ENTERPRISE</strong> offizielle BaFin & DSGVO PDF-Exports sowie uneingeschränktes Asset-Screening.
           </p>
 
           {/* Monthly / Yearly Toggle */}
@@ -334,7 +313,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
                     <p className="text-[11px] text-white/70 font-mono leading-relaxed">
                       ★ <strong className="text-white">Realtime AI-Newsfeed</strong> vollständig freigeschaltet.<br />
                       ★ <strong className="text-white">Unbegrenztes Assets-Screening</strong> im Scorer.<br />
-                      ★ Multi-Model AI Auto-Routing &amp; Push-Signale.
+                      ★ Multi-Model AI Auto-Routing & Push-Signale.
                     </p>
                   </div>
                   <div className="bg-black/60 border border-aif-neon-cyan/30 p-3 rounded-xl">
@@ -343,8 +322,8 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
                       <span>ENTERPRISE OS (€109/m)</span>
                     </div>
                     <p className="text-[11px] text-white/70 font-mono leading-relaxed">
-                      ★ <strong className="text-white">BaFin &amp; DSGVO PDF-Exports</strong> inklusive.<br />
-                      ★ Uneingeschränkte Asset-Auswahl &amp; Multi-Asset Universe.<br />
+                      ★ <strong className="text-white">BaFin & DSGVO PDF-Exports</strong> inklusive.<br />
+                      ★ Uneingeschränkte Asset-Auswahl & Multi-Asset Universe.<br />
                       ★ Priorisierter 24/7 VIP-Support.
                     </p>
                   </div>
@@ -550,7 +529,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
             <HelpCircle size={20} />
           </div>
           <div>
-            <h3 className="text-xl font-black text-white font-display">Häufig gestellte Fragen (FAQ) &amp; Tarif-Vergleich</h3>
+            <h3 className="text-xl font-black text-white font-display">Häufig gestellte Fragen (FAQ) & Tarif-Vergleich</h3>
             <p className="text-xs text-white/60 font-mono">Antworten zu Limits im Free-Modus, AI Newsfeed Freischaltung und Exports</p>
           </div>
         </div>
@@ -599,163 +578,6 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Stripe Developer & Integration Guide section */}
-      <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md relative">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <Terminal className="text-aif-gold-DEFAULT" size={18} />
-            <h3 className="text-sm font-bold uppercase tracking-wider font-display text-white">Stripe Checkout Integration (Developer Hub)</h3>
-          </div>
-          <button 
-            onClick={() => setShowStripeGuide(prev => !prev)}
-            className="text-xs text-aif-gold-DEFAULT hover:underline font-mono flex items-center gap-1 cursor-pointer"
-          >
-            <Code size={12} />
-            {showStripeGuide ? 'Dokumentation verbergen' : 'Backend Code anzeigen'}
-          </button>
-        </div>
-
-        <p className="text-xs text-white/60 leading-relaxed mb-4">
-          Für die reale Abrechnung von Capital-AI wurde das Stripe-Protokoll vorbereitet. Der untere Code zeigt die Stripe Session-Erstellung, um Stripe Customer Portals und Webhooks für automatische API-Planänderungen zu aktivieren.
-        </p>
-
-        {showStripeGuide && (
-          <div className="space-y-4">
-            <div className="bg-zinc-950 p-4 rounded-xl border border-white/15 overflow-x-auto font-mono text-[11px] leading-relaxed text-zinc-300">
-              <div className="flex justify-between text-[10px] text-white/30 uppercase border-b border-white/5 pb-2 mb-3 font-bold">
-                <span>server.ts (Express API Endpoint)</span>
-                <span className="text-emerald-400">Node.js ES6</span>
-              </div>
-              <pre className="whitespace-pre">{`import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_...');
-
-// POST endpoint to spin up a checkout session based on tier
-app.post('/api/stripe/create-checkout', async (req, res) => {
-  const { planId, email, successUrl, cancelUrl } = req.body;
-  
-  // Pricing IDs in your Stripe Dashboard
-  const STRIPE_PRICES: Record<string, string> = {
-    'Starter': 'price_1PabcStarterMonthly',
-    'Pro': 'price_1PabcProMonthly',
-    'Enterprise': 'price_1PabcEnterpriseMonthly'
-  };
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'sepa_debit', 'sofort'],
-      mode: 'subscription',
-      customer_email: email,
-      line_items: [{
-        price: STRIPE_PRICES[planId],
-        quantity: 1,
-      }],
-      success_url: \`\${successUrl}?session_id={CHECKOUT_SESSION_ID}\`,
-      cancel_url: cancelUrl,
-      subscription_data: {
-        metadata: { planId, email } // Passed into webhook for instant activation
-      }
-    });
-
-    res.json({ sessionId: session.id, checkoutUrl: session.url });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});`}</pre>
-            </div>
-
-            <div className="bg-zinc-950 p-4 rounded-xl border border-white/15 overflow-x-auto font-mono text-[11px] leading-relaxed text-zinc-300">
-              <div className="flex justify-between text-[10px] text-white/30 uppercase border-b border-white/5 pb-2 mb-3 font-bold">
-                <span>stripe-webhooks.ts (Instant activation worker)</span>
-                <span className="text-emerald-400">Secure Webhook Handlers</span>
-              </div>
-              <pre className="whitespace-pre">{`// Listen for Stripe events (e.g. checkout.session.completed)
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    return res.status(400).send(\`Webhook Error: \${err.message}\`);
-  }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const planId = session.metadata.planId;
-    const email = session.metadata.email;
-    
-    // DB Query: Update user plan tier instantly
-    db.users.update({ email }, { subscriptionTier: planId });
-    console.log(\`[CAPITAL-AI webhook] User \${email} upgraded to \${planId} plan!\`);
-  }
-  
-  res.json({ received: true });
-});`}</pre>
-            </div>
-          </div>
-        )}
-
-        {/* Integration Credentials list */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-white/5">
-          <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono">
-            <span className="text-[9px] uppercase tracking-wider text-white/40 block">Stripe Secret Key</span>
-            <span className={`text-xs font-bold block mt-1 ${configStatus.secretKeyConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
-              {configStatus.secretKeyConfigured ? '● Aktiviert (Live)' : '○ Sandbox-Modus (.env)'}
-            </span>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono">
-            <span className="text-[9px] uppercase tracking-wider text-white/40 block">Stripe Webhook Secret</span>
-            <span className={`text-xs font-bold block mt-1 ${configStatus.webhookSecretConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
-              {configStatus.webhookSecretConfigured ? '● Aktiviert (Live Webhook)' : '○ Sandbox-Modus (.env)'}
-            </span>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono">
-            <span className="text-[9px] uppercase tracking-wider text-white/40 block">Stripe Publishable Key</span>
-            <span className={`text-xs font-bold block mt-1 ${configStatus.publishableKeyConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
-              {configStatus.publishableKeyConfigured ? '● Aktiviert (Live)' : '○ Sandbox-Modus (.env)'}
-            </span>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono flex justify-between items-center">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/40 block">Produktiv-Datenbank (Supabase)</span>
-              <span className={`text-xs font-bold block mt-1 flex items-center gap-1 ${configStatus.dbConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
-                {configStatus.dbConfigured ? '● Verbunden (Live)' : '○ Fallback (Lokales File)'}
-              </span>
-            </div>
-            <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${configStatus.secretKeyConfigured && configStatus.webhookSecretConfigured && configStatus.dbConfigured ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-500'}`}>
-              {configStatus.secretKeyConfigured && configStatus.webhookSecretConfigured && configStatus.dbConfigured ? 'PROD BEREIT' : 'SEMI-PROD'}
-            </span>
-          </div>
-        </div>
-
-        {/* Support & Contact Banner */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-blue-950/30 via-indigo-950/30 to-purple-950/30 border border-blue-500/20 rounded-xl text-xs font-mono text-white/80 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-          <div className="flex items-center gap-3">
-            <Mail size={18} className="text-aif-gold-DEFAULT shrink-0 animate-pulse" />
-            <div>
-              <span className="font-bold text-white block">Fragen, Anregungen oder spezielle Wünsche zu den Abonnements?</span>
-              <span className="text-white/60 text-[11px]">Unser Support-Team unterstützt Sie gerne jederzeit persönlich.</span>
-            </div>
-          </div>
-          <a 
-            href="mailto:support@capital-ai.online" 
-            className="px-4 py-2 bg-aif-gold-DEFAULT text-black font-black uppercase tracking-wider text-[11px] rounded-lg hover:bg-amber-400 transition-all shadow-[0_0_15px_rgba(245,196,83,0.3)] shrink-0 cursor-pointer"
-          >
-            support@capital-ai.online
-          </a>
-        </div>
-
-        {/* Informational Guidance Alert for Prod sync */}
-        <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/5 text-[11px] font-mono leading-relaxed text-white/70 flex items-start gap-2">
-          <CheckCircle size={14} className="text-emerald-400 mt-0.5 shrink-0" />
-          <div>
-            <span className="text-white font-bold block mb-0.5">Produktiv-Synchronisation &amp; Go-Live Leitfaden</span>
-            Die Anwendung ist voll funktionsfähig für den Produktivbetrieb vorbereitet. Sobald Sie Ihre echten Supabase Zugangsdaten und Stripe Price-IDs in der Server-Konfiguration (<code className="text-aif-gold-DEFAULT">.env</code>) hinterlegen, synchronisieren sich Daten und Zahlungen in Echtzeit. 
-            Eine detaillierte Schritt-für-Schritt-Anleitung wurde in <code className="text-aif-gold-DEFAULT">docs/PRODUCTION_DEPLOYMENT_GUIDE.md</code> für Sie hinterlegt.
-          </div>
         </div>
       </div>
 
@@ -845,7 +667,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
                     </li>
                     <li className="flex items-start gap-1.5">
                       <Check size={13} className="text-aif-gold-DEFAULT shrink-0 mt-0.5" />
-                      <span>Multi-Model AI Auto-Routing &amp; Push-Alerts</span>
+                      <span>Multi-Model AI Auto-Routing & Push-Alerts</span>
                     </li>
                   </ul>
                   <button
@@ -871,11 +693,11 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
                   <ul className="text-[11px] text-white/80 font-mono space-y-1.5 mb-4">
                     <li className="flex items-start gap-1.5">
                       <ShieldCheck size={13} className="text-aif-neon-cyan shrink-0 mt-0.5" />
-                      <span><strong className="text-white">Offizielle BaFin &amp; DSGVO PDF-Exports</strong></span>
+                      <span><strong className="text-white">Offizielle BaFin & DSGVO PDF-Exports</strong></span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <Check size={13} className="text-aif-neon-cyan shrink-0 mt-0.5" />
-                      <span>Uneingeschränkte Asset-Auswahl &amp; Backtesting</span>
+                      <span>Uneingeschränkte Asset-Auswahl & Backtesting</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <Check size={13} className="text-aif-neon-cyan shrink-0 mt-0.5" />
