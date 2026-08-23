@@ -109,6 +109,7 @@ export interface CommodityBacktestResult {
   readonly pointInTimeValidated: boolean;
   readonly costAssumptionsValidated: boolean;
   readonly outOfSampleValidated: boolean;
+  readonly outOfSampleEvidenceId: string | null;
   readonly correlationEvidenceId: string | null;
   readonly sensitivityEvidenceId: string | null;
   readonly promotionEvidenceEligible: boolean;
@@ -250,8 +251,8 @@ export function validateCommodityPointInTimeSnapshot(
 /**
  * Result constructor keeps validation output non-authorizing. Even a complete evidence package is
  * only eligible for an Owner review; it cannot promote a Registry challenger or create a
- * CanonicalScoreResult. Every P2 dependency is bound explicitly so a caller cannot accidentally
- * label an OOS run as promotion evidence without PIT, cost, correlation and sensitivity evidence.
+ * CanonicalScoreResult. The constructor consumes the actual PIT/cost validation results rather than
+ * caller-supplied booleans; OOS is represented by a versioned/evidence identifier instead of a flag.
  */
 export function buildCommodityBacktestResult(input: {
   readonly runId: string;
@@ -262,18 +263,21 @@ export function buildCommodityBacktestResult(input: {
   readonly benchmarkIds: readonly string[];
   readonly regimeDiagnostics?: Readonly<Record<string, number | null>>;
   readonly domainDiagnostics?: Readonly<Record<string, number | null>>;
-  readonly pointInTimeValidated: boolean;
-  readonly costAssumptionsValidated: boolean;
-  readonly outOfSampleValidated: boolean;
+  readonly pointInTimeValidation: CommodityPointInTimeValidation;
+  readonly costAssumptionValidation: CommodityBacktestRequestValidation;
+  readonly outOfSampleEvidenceId: string | null;
   readonly correlationEvidenceId: string | null;
   readonly sensitivityEvidenceId: string | null;
 }): CommodityBacktestResult {
   const requestValidation = validateCommodityBacktestRequest(input.request);
+  const pointInTimeValidated = input.pointInTimeValidation.valid;
+  const costAssumptionsValidated = input.costAssumptionValidation.valid;
+  const outOfSampleValidated = Boolean(input.outOfSampleEvidenceId?.trim());
   const promotionEvidenceEligible = requestValidation.valid
     && input.leakageBlockers.length === 0
-    && input.pointInTimeValidated
-    && input.costAssumptionsValidated
-    && input.outOfSampleValidated
+    && pointInTimeValidated
+    && costAssumptionsValidated
+    && outOfSampleValidated
     && input.benchmarkIds.length > 0
     && Boolean(input.correlationEvidenceId?.trim())
     && Boolean(input.sensitivityEvidenceId?.trim());
@@ -288,9 +292,10 @@ export function buildCommodityBacktestResult(input: {
     benchmarkIds: Object.freeze([...input.benchmarkIds]),
     regimeDiagnostics: Object.freeze({ ...(input.regimeDiagnostics ?? {}) }),
     domainDiagnostics: Object.freeze({ ...(input.domainDiagnostics ?? {}) }),
-    pointInTimeValidated: input.pointInTimeValidated,
-    costAssumptionsValidated: input.costAssumptionsValidated,
-    outOfSampleValidated: input.outOfSampleValidated,
+    pointInTimeValidated,
+    costAssumptionsValidated,
+    outOfSampleValidated,
+    outOfSampleEvidenceId: input.outOfSampleEvidenceId,
     correlationEvidenceId: input.correlationEvidenceId,
     sensitivityEvidenceId: input.sensitivityEvidenceId,
     promotionEvidenceEligible,
