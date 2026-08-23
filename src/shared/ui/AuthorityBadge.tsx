@@ -12,6 +12,7 @@ export interface AuthorityBadgeProps {
   label?: string;
   className?: string;
   size?: 'sm' | 'md';
+  compact?: boolean;
 }
 
 type AuthorityTone = {
@@ -63,11 +64,13 @@ export function AuthorityBadge({
   label,
   className = '',
   size = 'sm',
+  compact = false,
 }: AuthorityBadgeProps) {
   const tone = AUTHORITY_TONES[authority];
-  const padding = size === 'md' ? 'px-2.5 py-1' : 'px-2 py-0.5';
-  const textSize = size === 'md' ? 'text-[10px]' : 'text-[9px]';
-  const iconSize = size === 'md' ? 12 : 10;
+  const resolvedSize = compact ? 'sm' : size;
+  const padding = resolvedSize === 'md' ? 'px-2.5 py-1' : 'px-2 py-0.5';
+  const textSize = resolvedSize === 'md' ? 'text-[10px]' : 'text-[9px]';
+  const iconSize = resolvedSize === 'md' ? 12 : 10;
   const visibleLabel = label ?? tone.label;
 
   return (
