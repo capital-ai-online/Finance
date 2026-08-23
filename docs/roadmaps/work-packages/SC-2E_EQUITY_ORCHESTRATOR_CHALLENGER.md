@@ -2,10 +2,11 @@
 
 **Parent:** `SC-MD-SPT-0001` / `SC-2 Model Registry & UAI`  
 **Authority:** ADR-0087 — one canonical scoring architecture  
-**Status:** P0 IMPLEMENTED — P1 SEC EVIDENCE INTEGRATION IMPLEMENTED — ADVANCED NORMALIZATION/BACKTESTING OPEN  
+**Status:** P0 IMPLEMENTED — P1 EVIDENCE/SEC/COMPARABLE FEATURES IMPLEMENTED — NORMALIZATION/BACKTESTING OPEN  
 **Priority:** P0/P1  
 **Branch:** `feature/equity-orchestrator-p0-challenger-2026-08-23`  
-**Baseline:** `main@800b05261c1792fed5138a8125cf6a00b1f5af07`  
+**Original baseline:** `main@800b05261c1792fed5138a8125cf6a00b1f5af07`  
+**Latest main sync:** `main@deaf7a5411efdc4aa4638757b7d6958a75c094cc`  
 **Source input:** Google Drive `1r49r3Eo72wfXlTTorx2uuqNUjaWtNhtm`
 
 ## Goal
@@ -16,51 +17,63 @@ Introduce a stock-specific Equity domain model without creating a second scoring
 
 The implementation remains a **research challenger only**. Productive `stock` routing stays on `traditional-scoring@2.1.0` until a separate Owner-approved promotion gate is satisfied.
 
-## P0 — Challenger Foundation
+## Current Version State
 
-- [x] fresh branch from current `main`
+| Contract / Runtime | Current branch version | Authority |
+|---|---|---|
+| Equity model | `equity-multifactor@0.2.0` | challenger / research-only |
+| Equity feature contract | `equity-multifactor-features/0.2.0` | research-only |
+| Equity classification | `equity-classification/0.1.0` | classification metadata |
+| Equity research runtime | `equity-research-runtime/0.4.0` | non-public application adapter |
+| Market Evidence DQ | `market-evidence-dq/1.0.0` | existing canonical DQ |
+| Productive stock model | `traditional-scoring@2.1.0` | canonical/champion |
+
+Equity 0.1.0 is retained only as the historical P0 foundation. The 0.2.0 version is required because comparable filing features, Capital Allocation evidence and additional Quality/Valuation features can alter research family scores and replay fingerprints.
+
+## P0 — Challenger Foundation — IMPLEMENTED
+
+- [x] fresh branch from current `main` at branch creation
 - [x] exclusive work claim with protected authority boundaries
-- [x] `equity-classification/0.1.0` contract: industry metadata, size bucket, multi-valued style tags and exactly one Primary Scoring Profile
-- [x] `equity-multifactor-features/0.1.0` contract
+- [x] `equity-classification/0.1.0`: industry metadata, size bucket, multi-valued style tags and exactly one Primary Scoring Profile
 - [x] six top-level factor families: Quality, Valuation, Growth, Momentum, Financial Strength, Capital Allocation
 - [x] anti-correlation rules: individual metrics are composed inside one family and cannot be re-added independently at top level
 - [x] profile-specific research weights for Compounder, Quality Growth, Value, Cyclical Value, Momentum, Income, Turnaround/Special Situation, Financial, Platform/Software, Semiconductor/AI Infrastructure, Healthcare Innovator and Energy/Commodity Producer
 - [x] deterministic `EquityResearchScoring` with existing `market-evidence-dq/1.0.0`
 - [x] minimum four admitted factor families and minimum 70% nominal-weight coverage
+- [x] profile-semantic required-family gates
 - [x] effective-feature/effective-weight fingerprint reuse
 - [x] Equity orchestration boundary with stock-only and evidence-identity guards
-- [x] `equity-multifactor@0.1.0` registered as `challenger`, `research-only`, `scoreEligible=false`
 - [x] productive stock champion remains `traditional-scoring@2.1.0`
-- [x] no Regime/Sentiment/Pattern score impact in Equity 0.1.0
+- [x] no Regime/Sentiment/Pattern score impact
 
 ## P1 — Evidence / Feature Construction
 
 ### P1.1 Existing provider evidence expansion — IMPLEMENTED
 
 - [x] reuse Alpha Vantage `OVERVIEW`; no additional request for the first expansion
-- [x] extract and attribute `priceToBookRatio`
-- [x] extract and attribute `operatingMarginPct`
-- [x] extract and attribute `returnOnEquityPct`
-- [x] extract and attribute `quarterlyRevenueGrowthPct`
-- [x] extract and attribute `quarterlyEarningsGrowthPct`
-- [x] retain existing P/E, dividend yield, profit margin and EPS evidence
+- [x] Price-to-Book
+- [x] Operating Margin TTM
+- [x] Return on Equity TTM
+- [x] Quarterly Revenue Growth YoY
+- [x] Quarterly Earnings Growth YoY
+- [x] retain P/E, Dividend Yield, Profit Margin and EPS evidence
 - [x] retain bounded FMP enrichment for leverage/free-cash-flow-per-share
-- [x] never substitute `retrievedAt` as financial `observedAt`; FMP observed date is bound only when present in the provider payload
+- [x] financial `observedAt` is never fabricated from retrieval time
 
-### P1.2 Equity feature composer — IMPLEMENTED
+### P1.2 Base Equity feature composer — IMPLEMENTED
 
 - [x] `EquityFeatureComposer` converts already acquired evidence into factor-family inputs
-- [x] existing `MarketEvidenceQualityRecord` is reused; no Equity-local DQ authority
-- [x] fundamental evidence freshness is explicit and fail-closed
-- [x] 12-1 and 6-1 momentum candidates require at least 252 dated real-history points
-- [x] Momentum runtime uses the existing provider-ranked TwelveData/EODHD Traditional history fallback only when provider/source/retrieval provenance is available
-- [x] `AssetRegistry` simulated history is not a dependency of the Equity research runtime
-- [x] Quality composes profitability/operating-margin/ROE observations inside one family
-- [x] Valuation composes P/E and price-to-book observations inside one family
-- [x] Growth composes quarterly revenue/earnings growth inside one family
-- [x] Financial Strength consumes attributable debt-to-equity evidence
-- [x] Capital Allocation is deliberately **not** synthesized from dividend yield alone
-- [x] research-only bounded absolute normalization is explicitly marked `promotionReady=false`
+- [x] existing `MarketEvidenceQualityRecord` reused; no Equity-local DQ authority
+- [x] fundamental evidence freshness explicit and fail-closed
+- [x] 12-1 and 6-1 Momentum require at least 252 dated real-history points
+- [x] Momentum uses existing provider-ranked TwelveData/EODHD history only when provider/source/retrieval provenance exists
+- [x] `AssetRegistry` simulated history is not a dependency
+- [x] Quality composes Profit Margin / Operating Margin / ROE inside one family
+- [x] Valuation composes P/E and Price-to-Book inside one family
+- [x] initial Growth composes vendor Revenue/Earnings YoY inside one family
+- [x] Financial Strength may consume attributable Debt/Equity fallback evidence
+- [x] Dividend Yield alone does not manufacture Capital Allocation
+- [x] bounded absolute normalization marked research-only / `promotionReady=false`
 
 ### P1.3 Profile semantic gates — IMPLEMENTED
 
@@ -79,13 +92,13 @@ Missing required families force `NOT_COMPUTABLE` even when generic family-count 
 
 ### P1.4 Research runtime binding — IMPLEMENTED
 
-- [x] `server/equityResearchRuntime.ts` binds existing Fundamentals + verified history to the pure Equity composer/orchestrator
-- [x] no HTTP route exposed
+- [x] `server/equityResearchRuntime.ts` binds existing Fundamentals + verified history to the pure Equity composers/orchestrator
+- [x] no HTTP route
 - [x] no persistence writer
 - [x] no `CanonicalScoreResult`
-- [x] `scoreEligible=false`, `executionEligible=false`
-- [x] provider I/O remains outside `EquityFeatureComposer`, `EquityResearchScoring` and `EquityOrchestrator`
-- [x] verified Traditional history projection preserves dated points, source path and retrieval time without a second provider call/authority
+- [x] `scoreEligible=false`, `executionEligible=false`, `publicRouteExposed=false`
+- [x] provider I/O remains outside `EquityResearchScoring` and `EquityOrchestrator`
+- [x] Traditional history projection preserves dated points, source path and retrieval time without a second provider authority
 
 Evidence: `docs/evidence/sc-md/SC2_EQUITY_P1_EVIDENCE_RUNTIME_2026-08-23.md`.
 
@@ -94,46 +107,63 @@ Evidence: `docs/evidence/sc-md/SC2_EQUITY_P1_EVIDENCE_RUNTIME_2026-08-23.md`.
 - [x] keyless server-side CompanyFacts adapter; no third-party SDK/dependency
 - [x] ticker -> CIK only from SEC-published association; no guessing/fuzzy fallback
 - [x] declared `SEC_EDGAR_USER_AGENT` required fail-closed
-- [x] serialized request start gap 150 ms by default, below SEC Fair Access 10 req/s ceiling
+- [x] serialized request gap 150 ms by default, below SEC Fair Access 10 req/s ceiling
 - [x] 24h ticker-map cache + 6h CompanyFacts cache
-- [x] only 10-Q/10-Q/A/10-K/10-K/A in v0.1.0
+- [x] 10-Q/10-Q/A/10-K/10-K/A in v0.1.0
 - [x] `filedAt <= asOf` look-ahead gate
 - [x] filed date retained separately from accounting period end
 - [x] deterministic Instant vs Periodic vs YTD XBRL context selection
-- [x] raw US-GAAP/dei inventory for revenue, income, balance-sheet, debt, interest, cash-flow, capex, dividends, buybacks, shares and diluted EPS
-- [x] output projected to existing `MarketEvidenceQualityRecord`
-- [x] SEC-specific output converted through `equitySecEvidenceBridge.ts` into provider-neutral `EquityFilingEvidenceSnapshot`
-- [x] deterministic filing-derived metrics for Current Ratio, Long-Term-Debt/Equity, Interest Coverage, FCF, Shareholder Distributions, Distribution Coverage and Reinvestment Intensity
-- [x] SEC filing-derived Financial Strength may replace correlated vendor leverage only with >=2 admissible independent filing components
-- [x] AlphaVantage/FMP/SEC observations in the same correlation group are never additively stacked
-- [x] SEC evidence is bound into `equity-research-runtime/0.2.0` without public route, persistence or `CanonicalScoreResult`
-- [x] Capital Allocation remains fail-closed; cash-allocation telemetry alone does not create a family score
-- [x] adapter/bridge/derived/runtime remain `scoreEligible=false`, `executionEligible=false`
-- [x] productive stock routing remains `traditional-scoring@2.1.0`
+- [x] provider-neutral SEC filing bridge
+- [x] Current Ratio, Long-Term-Debt/Equity, Interest Coverage, FCF, Shareholder Distributions, Distribution Coverage and Reinvestment Intensity derived only from compatible periods
+- [x] SEC Financial Strength replaces correlated vendor leverage only with sufficient independent filing components
+- [x] AlphaVantage/FMP/SEC observations in the same correlation group are not additively stacked
+- [x] no SEC raw/derived evidence receives productive score authority
 
 Evidence: `docs/evidence/sc-md/SC2_EQUITY_P1_SEC_EDGAR_2026-08-23.md`.
 
-### P1.6 Advanced factor-evidence derivation — NEXT
+### P1.6 Comparable filing + Quality/Valuation enrichment — IMPLEMENTED FOR INTERMEDIATE PR
 
-The SEC integration above is complete for current-period filing evidence. These are separate follow-on model-quality tasks, not missing SEC-adapter plumbing:
+#### Comparable SEC periods
 
-- [ ] richer Capital Allocation evidence: share-count change, shareholder yield and peer-normalized reinvestment efficiency
-- [ ] richer Quality evidence: period-aligned FCF conversion, earnings quality/variability, ROIC where directly reconstructable from verified filings
-- [ ] richer Valuation evidence: FCF yield and enterprise-value based measures with matching point-in-time market value
-- [ ] richer Growth evidence: comparable multi-period revenue/EPS/FCF growth instead of quarterly-only provider proxies
-- [ ] accession/period-history projection for prior comparable SEC facts
+- [x] bounded prior `asOf` generated from current verified filing period
+- [x] same cached SEC CompanyFacts adapter reused; no second endpoint/authority
+- [x] comparable period end separation constrained to roughly one fiscal year
+- [x] context/unit equality required
+- [x] periodic duration tolerance enforced
+- [x] bridge-level defense-in-depth rejects misclassified 10-Q YTD durations
+- [x] SEC Revenue YoY, Diluted EPS YoY and FCF YoY derived only from compatible verified periods
+- [x] Share Count Change YoY derived from compatible instant observations
+- [x] comparable SEC Growth replaces vendor quarterly Growth within the same correlation group when >=2 observations are admissible
+- [x] Capital Allocation requires Share Count Change + Distribution Coverage; neither signal is sufficient alone
+- [x] Reinvestment Intensity stays context-only pending peer/profile normalization
+
+#### Quality / Valuation quick wins
+
+- [x] `quality.freeCashFlowConversion` implemented from same-provider/same-observation TTM FCF/share and EPS provenance
+- [x] merged AlphaVantage/FMP display values are never cross-mixed for FCF conversion
+- [x] `valuation.freeCashFlowYield` implemented from attributable FCF/share plus latest fresh real history close
+- [x] FCF Yield uses existing TwelveData/EODHD provenance-aware history; no separate quote path
+- [x] both features enrich only already-existing Quality/Valuation families and cannot manufacture new family coverage
+- [x] both remain under `equity-multifactor-features/0.2.0` and research-only normalization
+
+### P1.7 Advanced Quality / Valuation evidence — NEXT AFTER INTERMEDIATE PR
+
+- [ ] Earnings Variability/Stability from comparable point-in-time filing history
+- [ ] ROIC only where NOPAT/invested-capital inputs can be reconstructed without fabricated tax/debt assumptions
+- [ ] EV/EBIT or EV/FCF only with matching point-in-time enterprise-value evidence
+- [ ] shareholder yield / buyback yield where market-cap and capital-action timing are aligned
 - [ ] IFRS/20-F/40-F and broader non-US coverage strategy
 
-### P1.7 Peer / Sector Normalization — BLOCKED UNTIL EVIDENCE COVERAGE
+### P1.8 Peer / Sector Normalization — BLOCKED UNTIL EVIDENCE COVERAGE
 
 - [ ] define admissible peer-universe identity contract
 - [ ] sector/industry-relative z-score policy
 - [ ] winsorization/outlier policy
 - [ ] minimum peer count and degraded-state semantics
 - [ ] no proprietary GICS dataset redistribution without an applicable licence
-- [ ] replace `research-bounded-absolute/0.1.0` before any productive promotion
+- [ ] replace `research-bounded-absolute/0.1.0` before productive promotion
 
-### P1.8 Validation / Backtesting — BLOCKED UNTIL FEATURE COVERAGE
+### P1.9 Validation / Backtesting — BLOCKED UNTIL NORMALIZATION
 
 - [ ] survivorship-controlled universe snapshots
 - [ ] point-in-time filing availability / look-ahead controls
@@ -152,40 +182,38 @@ The SEC integration above is complete for current-period filing evidence. These 
 - no new public score route
 - no new ranking or eligibility authority
 - no new DQ/confidence authority
-- no provider I/O inside the Equity scorer/orchestrator
+- no provider I/O inside `EquityResearchScoring` or `EquityOrchestrator`
 - no GICS dataset hardcoding or redistribution
-- no productive stock cutover in P0/P1 research work
+- no productive stock cutover in this intermediate PR
 - no `scoreImpact` or `rankingImpact` from regime, sentiment or pattern research
 - no AssetRegistry simulated history as Equity evidence
-- no SEC raw or derived fact directly promoted to productive score authority
+- no SEC raw/derived fact directly promoted to productive score authority
 
 ## Classification Design
 
 Structural industry classification and investment behavior are separated:
 
-1. **Industry:** provider/internal classification; GICS is permitted only when the upstream provider/licence authorizes usage.
+1. **Industry:** provider/internal classification; GICS only when upstream provider/licence authorizes usage.
 2. **Size bucket:** mega/large/mid/small/micro/unknown.
 3. **Style tags:** multi-valued descriptors such as quality, growth, value, momentum or income.
 4. **Primary profile:** exactly one deterministic profile that selects the Equity research weight set.
-
-This avoids ambiguous routing such as one issuer simultaneously being a Mega Cap Compounder, Quality Growth company, Momentum Leader and Semiconductor/AI Infrastructure company.
 
 ## Factor-Family Design
 
 Only the six families receive top-level model weights. Subfeatures are traceability/evidence inputs within the family.
 
-| Family | Example evidence | Anti-correlation boundary |
+| Family | Current research evidence | Anti-correlation boundary |
 |---|---|---|
-| Quality | profitability, ROIC, FCF conversion, earnings quality | profitability observations composed once |
-| Valuation | earnings yield, FCF yield, book-to-price, EV/EBIT | valuation observations composed once |
-| Growth | revenue/EPS/FCF growth | growth observations composed once |
-| Momentum | 12-1, 6-1, relative strength | one price-path family; no second trend/breakout bonus |
-| Financial Strength | leverage, interest coverage, liquidity | balance-sheet resilience composed once; primary filing evidence may supersede vendor-derived leverage within the same correlation group |
-| Capital Allocation | shareholder yield, dividend coverage, buybacks, reinvestment | no duplicate generic dividend/yield bonus; incomplete filing telemetry remains deferred |
+| Quality | profitability, ROE, aligned TTM FCF conversion | profitability observations and FCF conversion composed once inside Quality |
+| Valuation | earnings yield/P-E, book-to-price/P-B, FCF yield | valuation observations composed once; no second value bonus |
+| Growth | comparable SEC Revenue/EPS/FCF YoY; vendor fallback | filing history supersedes same-correlation vendor proxies, no stacking |
+| Momentum | 12-1, 6-1 | one price-path family; no second trend/breakout bonus |
+| Financial Strength | leverage, SEC liquidity/interest coverage | primary filing evidence may supersede vendor leverage within the same correlation group |
+| Capital Allocation | share-count change + distribution coverage | no generic dividend/yield bonus; incomplete evidence stays absent |
 
 ## Evidence and Missing-Data Policy
 
-The challenger consumes the existing `MarketEvidenceQualityRecord` contract. A family is admitted only if:
+A family is admitted only if:
 
 - its normalized family score is finite in `0..1`;
 - component keys are explicit;
@@ -211,15 +239,17 @@ A productive Equity champion requires all of the following in a separate reviewe
 
 ## Reuse / External Review
 
-The implementation uses existing repository capabilities rather than introducing an external scoring framework. Primary reference inputs reviewed for design are:
+The implementation reuses repository capabilities rather than introducing an external scoring framework:
 
-- MSCI factor methodology: separate Value/Quality/Momentum factor families and sector-relative standardization/winsorization patterns
-- Alpha Vantage Fundamental Data: existing `OVERVIEW` plus Income Statement, Balance Sheet and Cash Flow capabilities
-- SEC EDGAR XBRL APIs: authentication-free CompanyFacts evidence with published ticker/CIK associations, real-time filing dissemination and Fair Access requirements
-- FMP TTM ratios: existing bounded provider path; filing/as-of provenance remains mandatory before admission
-- NIST SP 800-218 / SP 800-218A: secure SDLC baseline already mapped by repository governance
+- Alpha Vantage/FMP existing Fundamentals paths;
+- TwelveData/EODHD existing Traditional history routing;
+- SEC EDGAR CompanyFacts keyless filing evidence;
+- existing Market Evidence DQ and Provider Health;
+- existing ScoringModelRegistry, ScoringDispatcher and fingerprint contracts.
 
-No additional plugin or open-source dependency is required for the implemented P1 steps.
+Primary methodology references used for design include MSCI factor-family separation and sector-relative standardization/winsorization patterns, SEC EDGAR developer/fair-access guidance and repository security/governance authorities.
+
+No additional plugin or open-source dependency is required for this intermediate P1 scope.
 
 ## Evidence
 
