@@ -1,6 +1,6 @@
 # CV — Crypto Visualization Optimization
 
-**Status:** PROPOSED / IMPLEMENTATION NOT STARTED  
+**Status:** ACTIVE / CV-0 IMPLEMENTED ON FEATURE BRANCH  
 **Stand:** 2026-08-23  
 **Baseline:** `main@800b05261c1792fed5138a8125cf6a00b1f5af07`  
 **Branch:** `feat/crypto-visualization-work-packages-2026-08-23`  
@@ -60,7 +60,7 @@ CAPITAL-AI soll diese Muster um einen eigenen Schwerpunkt erweitern: **Evidence-
 - Pane-Support vorhanden;
 - Apache-2.0, aber NOTICE-/Attribution-Anforderung beachten.
 
-**Entscheidung:** keine Dependency in diesem Plan-PR hinzufügen. Einführung nur in einem separaten Implementierungs-PR nach Bundle-, Lizenz-/Attribution-, Accessibility- und Integrationstest.
+**Entscheidung:** keine Dependency in CV-0 hinzufügen. Einführung nur in einem separaten Implementierungs-PR nach Bundle-, Lizenz-/Attribution-, Accessibility- und Integrationstest.
 
 ### Apache ECharts 6
 
@@ -70,44 +70,69 @@ ECharts 6 bietet Candlesticks, Heatmaps, `visualMap`, `dataZoom`, Matrix-Koordin
 
 ---
 
-# 4. Arbeitspakete
+# 4. Umsetzungsstatus
+
+| Paket | Priorität | Status | Nachweis |
+|---|---:|---|---|
+| CV-0 Authority/View-Model Contract | P0 | **IMPLEMENTED ON FEATURE BRANCH** | `docs/evidence/frontend/CV0_CRYPTO_VISUALIZATION_AUTHORITY_2026-08-23.md` |
+| CV-1 Score Command Center | P0 | NEXT | noch nicht gestartet |
+| CV-2 Verified Market Chart v2 | P0/P1 | PLANNED | Contract-/Library-Spike offen |
+| CV-3 Factor & Model Explorer | P0 | PLANNED | offen |
+| CV-4 Evidence & Provenance Matrix | P1 | PLANNED | offen |
+| CV-5 Multi-Timeframe Lens | P1 | PLANNED | offen |
+| CV-6 Ranking Heatmap & Breadth | P1 | PLANNED | offen |
+| CV-7 Meme & DeFi Research Lenses | P1/P2 | PLANNED | offen |
+| CV-8 Derivatives / Market Structure | P2 | PLANNED | offen |
+| CV-9 Accessibility / Performance Gate | P0 Gate | ACTIVE PER WAVE | CV-0 statische Regressionen vorhanden; Live-A11y/Performance noch nicht gemessen |
+
+# 5. Arbeitspakete
 
 ## CV-0 — Crypto Visualization Contract & Authority Labels
 
 **Priorität:** P0  
+**Status:** **IMPLEMENTED ON FEATURE BRANCH**  
 **Ziel:** eine read-only View-Model-Grenze zwischen Backend-Contracts und Visualisierung schaffen, ohne fachliche Regeln im Frontend zu duplizieren.
 
-### Scope
+### Umgesetzt
 
-- `CryptoVisualizationViewModel` bzw. äquivalente reine Projection definieren.
-- Jede dargestellte Kennzahl erhält mindestens:
-  - `authority`: `CANONICAL_SCORE | RESEARCH | EVIDENCE_ONLY | MARKET_DATA`;
-  - `status`: READY/PARTIAL/STALE/NOT_AVAILABLE/NOT_COMPUTABLE etc.;
-  - `observedAt/retrievedAt` soweit vorhanden;
-  - Provider/Evidence-Referenzen;
-  - `scoreEligible` / `executionEligible` wenn relevant.
-- Canonical/Research/Evidence visuell und semantisch unterschiedlich kennzeichnen.
-- Missing Evidence niemals in `0`, neutrale Farbe oder implizites PASS umwandeln.
+- [x] `CryptoVisualizationViewModel` / `CryptoVisualizationMetric` als reine Presentation Projection definiert.
+- [x] Authority-Metadaten:
+  - `CANONICAL_SCORE`
+  - `RESEARCH`
+  - `EVIDENCE_ONLY`
+  - `MARKET_DATA`
+- [x] `status`, `observedAt`, `retrievedAt`, Provider-/Evidence-Referenzen sowie optionale Eligibility-Felder abbildbar.
+- [x] Missing Values bleiben `null`/`undefined`; kein `0`, `50`, READY oder PASS wird erzeugt.
+- [x] `AuthorityBadge` implementiert.
+- [x] `FreshnessBadge` implementiert; keine lokalen Freshness-Schwellen.
+- [x] `EvidenceStateIndicator` implementiert.
+- [x] `ResearchOnlyBanner` implementiert und screenreader-lesbar.
+- [x] Binance Quick Analysis trennt `MARKET_DATA` und `RESEARCH` sichtbar.
+- [x] 4h Market Chart projiziert `qualityState`, Zeitstempel, Provider und Evidence über die CV-0-Grenze.
+- [x] statischen Vorab-Claim `4H · verified` entfernt; Status folgt dem gelieferten Contract.
+- [x] Regressionstest `tests/unit/cryptoVisualizationContract.test.ts` ergänzt.
+- [x] Evidence-Dokumentation erstellt.
 
-### UI-Primitive
+### Akzeptanzstatus
 
-- `AuthorityBadge`
-- `FreshnessBadge`
-- `EvidenceStateIndicator`
-- `ResearchOnlyBanner`
+- [x] Research kann nicht als kanonische Authority gekennzeichnet werden, ohne den Presentation-Consistency-Guard zu verletzen.
+- [x] `scoreEligible=false` und `executionEligible=false` sind im `ResearchOnlyBanner` sichtbar und per ARIA lesbar.
+- [x] Keine Modellgewichte oder Gate-Regeln werden im Frontend neu berechnet.
+- [x] Contract-/Regressionstest gegen Authority-Verwechslung im Source vorhanden.
+- [ ] TypeScript/Unit/Production-Build real ausgeführt und PASS nachgewiesen — **noch offen; nicht behauptet**.
+- [ ] Hosted `build-and-test` — erst nach späterer PR-Erstellung gemäß Kosten-/Governance-Regel.
 
-### Akzeptanz
+### Nachweis
 
-- Ein Research-Challenger kann niemals wie der kanonische Score aussehen.
-- `scoreEligible=false` und `executionEligible=false` sind sichtbar und screenreader-lesbar.
-- Keine Modellgewichte oder Gate-Regeln werden im Frontend neu berechnet.
-- Contract-/Regressionstest gegen Authority-Verwechslung.
+- Code-Commit: `a1dbac4a00b909e2af160462a891fddbf4f54299`
+- Evidence: `docs/evidence/frontend/CV0_CRYPTO_VISUALIZATION_AUTHORITY_2026-08-23.md`
 
 ---
 
 ## CV-1 — Crypto Score Command Center
 
 **Priorität:** P0  
+**Status:** NEXT  
 **Ziel:** den oberen Bereich des Enterprise Crypto Scorers von einer Gauge-Sammlung zu einem klaren Entscheidungs-/Evidence-Cockpit umbauen.
 
 ### Zielaufbau
@@ -124,6 +149,7 @@ ECharts 6 bietet Candlesticks, Heatmaps, `visualMap`, `dataZoom`, Matrix-Koordin
 ### Änderungen
 
 - Radial Gauge behalten, aber Kontext hinzufügen: Modell-ID/-Version, 30×1D Basis, Coverage, Freshness.
+- CV-0 `AuthorityBadge` im Score-Hero als `CANONICAL_SCORE` verwenden.
 - `Intelligent Score` nicht gleichrangig zum kanonischen Score visualisieren; als Ranking-Metrik kennzeichnen.
 - Score-Delta nur anzeigen, wenn ein historischer kanonischer Score gleicher Modellversion und Evidence-Semantik verfügbar ist.
 - Research-Lens nicht in die Scorefarbe einmischen.
@@ -188,11 +214,7 @@ Die Providerquelle muss jeden Wert attestieren; kein Client darf OHLCV aus Close
 
 ### Canonical Technical Lens
 
-- gruppierte horizontale Bullet Bars für:
-  - Technisch,
-  - Risiko,
-  - Marktstruktur,
-  - Kontext;
+- gruppierte horizontale Bullet Bars für Technisch, Risiko, Marktstruktur und Kontext;
 - Faktorwert + Status + Evidence/Freshness;
 - Radar nur als Overview, nicht als alleinige Detaildarstellung.
 
@@ -259,8 +281,6 @@ Zusätzlich:
 - Evidence-Drilldown nach Feature-Key und Evidence-ID;
 - bei Dune: Query Identity und Freshness, niemals arbitrary SQL/Execute Controls.
 
-### Visualisierung
-
 D3-basierte Matrix/Heatmap bevorzugen. Farbe + Symbol/Pattern kombinieren, damit Status nicht nur farbcodiert ist.
 
 ### Akzeptanz
@@ -278,9 +298,7 @@ D3-basierte Matrix/Heatmap bevorzugen. Farbe + Symbol/Pattern kombinieren, damit
 
 ### Darstellung
 
-Zeilen:
-
-- 1m, 5m, 15m, 30m, 1h, 4h, 1D, 1W — nur soweit reale Evidence existiert.
+Zeilen: 1m, 5m, 15m, 30m, 1h, 4h, 1D, 1W — nur soweit reale Evidence existiert.
 
 Spalten:
 
@@ -452,12 +470,12 @@ Liquidation Heatmaps oder Orderbook-Depth dürfen erst aufgenommen werden, wenn 
 
 ---
 
-# 5. Empfohlene Umsetzungsreihenfolge
+# 6. Empfohlene Umsetzungsreihenfolge
 
 ```text
-CV-0 Authority/View-Model Contract
+CV-0 Authority/View-Model Contract          DONE ON FEATURE BRANCH
    ↓
-CV-1 Score Command Center
+CV-1 Score Command Center                   NEXT
    ├── CV-3 Factor & Model Explorer
    ├── CV-4 Evidence Matrix
    └── CV-5 Multi-Timeframe Lens
@@ -473,14 +491,14 @@ CV-9 läuft als Gate über jede Welle
 
 ## Priorisierte erste Implementierungswelle
 
-**P0-A:** CV-0 + CV-1  
+**P0-A:** CV-0 **umgesetzt** → CV-1 **next**  
 **P0-B:** CV-2 Contract Spike + Financial Chart PoC  
 **P0-C:** CV-3 Hard-Gates/Model Explorer  
 **P1-A:** CV-4 + CV-5  
 **P1-B:** CV-6  
 **P1/P2:** CV-7 + CV-8
 
-# 6. Architektur-/Governance-Invarianten
+# 7. Architektur-/Governance-Invarianten
 
 1. `ScoringModelRegistry -> ScoringDispatcher -> Domain Executor -> CanonicalScoreResult` bleibt alleinige produktive Score-Authority.
 2. `crypto-meme-integrity@0.3.0` und `crypto-defi-fundamental@0.3.0` bleiben Research-Challenger, bis ein separater Promotion-Prozess abgeschlossen ist.
@@ -490,12 +508,16 @@ CV-9 läuft als Gate über jede Welle
 6. Kein Visual-Widget erzeugt oder verändert OrderIntent, FT-5 Decisions, FT-6 Binding oder FT-7 Capability.
 7. Missing/Stale/Invalid Data wird nie synthetisch aufgefüllt.
 8. Keine dritte allgemeine Chart-Library ohne dokumentierten Need-/Bundle-/License-Entscheid.
+9. CV-0 Authority-Metadaten sind Presentation Labels und keine zweite fachliche Registry.
+10. Freshness wird nur aus geliefertem Backend-/Providerzustand dargestellt; der Client darf keine eigenen Freshness-Grenzwerte erfinden.
 
-# 7. Erkannte Dokumentationsdrift
+# 8. Erkannte Dokumentationsdrift
 
 `src/platform/FinTechCore/README.md` beschreibt Meme-/DeFi-Challenger stellenweise noch als `0.2.0`, während die aktuelle `ScoringModelRegistry` und SC-3 Evidence bereits `0.3.0` führen. Diese Drift ist **nicht** Bestandteil der grafischen Umsetzung und soll in einem separaten Documentary-/Version-Sync behoben werden, statt durch dieses Work Package eine zweite fachliche Beschreibung zu erzeugen.
 
-# 8. Definition of Done für das Gesamtprogramm
+Die im `COMPONENT_INVENTORY.md` zuvor noch vorhandene Frontend-Design-Drift (`#18181b`, historische `aif-*`-Rollen, Montserrat) wurde im CV-0-Dokumentationsschritt auf den bereits kanonischen Manifest-v6.1-Iststand korrigiert. Dadurch entsteht keine neue Design-Authority; das Inventory verweist auf `docs/frontend/design-tokens.json`.
+
+# 9. Definition of Done für das Gesamtprogramm
 
 - Crypto-Hauptansicht trennt Canonical, Research und Evidence-only semantisch eindeutig.
 - Price/OHLCV, Faktoren, Evidence, Multi-Timeframe und Ranking sind drill-downfähig, ohne Backend-Regeln im Browser nachzubauen.
