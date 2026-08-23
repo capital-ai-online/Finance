@@ -117,7 +117,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       res.json(list);
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error listing materials:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal Server Error', code: 'RAW_MATERIAL_LIST_FAILED' });
     }
   });
 
@@ -170,12 +170,14 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
         providerSymbol: evidence.providerSymbol,
       });
     } catch (error) {
+      console.error('[RawMaterialsRouter] Error retrieving verified commodity score:', error);
       return res.status(503).json({
         symbol,
         status: 'SOURCE_UNAVAILABLE',
+        code: 'COMMODITY_EVIDENCE_UNAVAILABLE',
         score: null,
         final_score: null,
-        reason: error instanceof Error ? error.message : String(error),
+        reason: 'Commodity evidence is temporarily unavailable.',
       });
     }
   });
@@ -207,7 +209,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       });
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error analyzing material:', error);
-      res.status(500).json({ error: error.message || 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal Server Error', code: 'RAW_MATERIAL_ANALYSIS_FAILED' });
     }
   });
 
@@ -227,7 +229,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       res.json({ ...payload, scoreSemantic: 'legacy-structural-research', canonical: false, scoreEligible: false, marketEvidenceVerified: false });
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error scoring material:', error);
-      res.status(500).json({ error: error.message || 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal Server Error', code: 'RAW_MATERIAL_SCORING_FAILED' });
     }
   });
 
