@@ -86,6 +86,28 @@ describe('Commodity P2 point-in-time backtesting contracts', () => {
     );
   });
 
+  it('requires explicit CFTC release lineage even after the report becomes available', () => {
+    const validation = validateCommodityPointInTimeSnapshot({
+      policyVersion: COMMODITY_POINT_IN_TIME_POLICY_VERSION,
+      assetId: 'commodity:CMD_WTI_NYMEX',
+      decisionAt: '2026-08-22T16:00:00.000Z',
+      values: [{
+        featureKey: 'positioning.managedMoneyNetPctOi',
+        value: 8.5,
+        source: 'cftc-cot:disaggregated-futures-only',
+        observedAt: '2026-08-18T20:00:00.000Z',
+        availableAt: '2026-08-21T19:30:00.000Z',
+        retrievedAt: '2026-08-21T19:31:00.000Z',
+        evidenceId: 'cftc:2026-08-18:WTI',
+        releaseId: null,
+        revisionId: null,
+      }],
+    });
+
+    expect(validation.valid).toBe(false);
+    expect(validation.blockers).toContain('positioning.managedMoneyNetPctOi:RELEASE_ID_REQUIRED');
+  });
+
   it('requires release and revision lineage for revision-aware USDA/EIA vintages', () => {
     const validation = validateCommodityPointInTimeSnapshot({
       policyVersion: COMMODITY_POINT_IN_TIME_POLICY_VERSION,
@@ -105,7 +127,7 @@ describe('Commodity P2 point-in-time backtesting contracts', () => {
     });
 
     expect(validation.valid).toBe(false);
-    expect(validation.blockers).toContain('fundamentals.production:REVISION_AWARE_RELEASE_ID_REQUIRED');
+    expect(validation.blockers).toContain('fundamentals.production:RELEASE_ID_REQUIRED');
     expect(validation.blockers).toContain('fundamentals.production:REVISION_AWARE_REVISION_ID_REQUIRED');
   });
 
