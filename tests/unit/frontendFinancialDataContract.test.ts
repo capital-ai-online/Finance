@@ -17,17 +17,24 @@ function allComponentSources(): string {
 }
 
 describe('frontend financial data contract regression gate', () => {
-  it('Best/Worst renders progressively and uses only verified score boundaries from the canonical screening slice', () => {
-    const code = source('src/features/screening/ui/UniverseBestWorst.tsx');
+  it('RankingBoard renders progressively and uses only verified score boundaries from the canonical screening slice', () => {
+    const code = source('src/features/screening/ui/RankingBoard.tsx');
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/api/registry/assets/verified-scores');
-    expect(code).toContain('Progressive Scoring');
+    expect(code).toContain('Ranking Board');
     expect(code).toContain('AbortController');
     expect(code).toContain('text-asset-crypto');
     expect(code).toContain('text-asset-bond');
+    expect(code).toContain('extractSentiment');
+    expect(code).toContain('extractMomentum');
+    expect(code).toContain('extractLeadingPattern');
     expect(code).not.toMatch(/return\s+50(?:\.0)?\s*;/);
     expect(code).not.toContain('Math.random');
     expect(code).not.toContain('charCodeAt');
+
+    const alias = source('src/features/screening/ui/UniverseBestWorst.tsx');
+    expect(alias).toContain("from './RankingBoard'");
+    expect(alias).toContain('RankingBoard as UniverseBestWorst');
 
     const compatibility = source('src/components/UniverseBestWorst.tsx');
     expect(compatibility).toContain("../features/screening/ui/UniverseBestWorst");
@@ -125,7 +132,7 @@ describe('frontend financial data contract regression gate', () => {
     expect(selectedAssetHeaderIndex).toBeLessThan(quickAnalysisIndex);
   });
 
-  it('MarketScreener consumes verified score/context contracts and has no symbol-hash finance logic', () => {
+  it('MarketScreener consumes verified score/context contracts and has no character-hash finance logic', () => {
     const code = source('src/components/MarketScreener.tsx');
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/verified-context');

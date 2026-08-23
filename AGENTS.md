@@ -149,7 +149,43 @@ Standards alignment does not prove ISO certification, legal applicability or reg
 
 Before custom implementation, evaluate in order: existing repository/native capability; existing suitable connected plugin/platform capability; specialized plugin; maintained/security-reviewed/license-compatible open source; then custom implementation only where lower-risk alternatives do not fit.
 
-## 12. Canonical Supporting Sources
+## 12. Development Entry — Screening Ranking Board (homogeneous value chain)
+
+This section is a **Development entry point only**. It does not create a second Frontend, Scoring, Market-Data or Governance authority. Parent contracts remain:
+
+- `SC-MD-SPT-0001` — canonical Screening / Scoring / Market-Data value chain;
+- `ADR-0087` — Canonical Scoring;
+- `ADR-0032` — Asset Catalog ↔ Market Evidence;
+- `ADR-0041` + `ESS-0016` — Provider Data Plane / Provenance / Freshness;
+- `docs/frontend/FRONTEND_ARCH.md` — Frontend structure (`app` / `features` / `shared`).
+
+### Canonical ranking UI surface
+
+| Role | Path |
+|---|---|
+| **Productive Ranking Board** | `src/features/screening/ui/RankingBoard.tsx` |
+| Feature facade export | `src/features/screening/ui/index.ts` → `RankingBoard` |
+| Compatibility alias (old name) | `src/features/screening/ui/UniverseBestWorst.tsx` → re-exports `RankingBoard as UniverseBestWorst` |
+| Legacy components path | `src/components/UniverseBestWorst.tsx` → thin compatibility export |
+| Dashboard consumer | `activeView === 'universe-scoring'` still imports the alias; resolves to RankingBoard |
+
+### Homogeneous consumer contract (no parallel architecture)
+
+Agents working on universe Top/Worst rankings MUST:
+
+1. treat **RankingBoard** as the single productive UI implementation for Top 3 / Worst 3 per asset class (24-candidate budget);
+2. keep the existing verified score boundaries only:
+   - Crypto: `POST /api/crypto/score`
+   - Traditional: `GET /api/registry/assets/verified-scores`
+   - Catalog: `GET /api/registry/assets`
+3. display **Sentiment**, **Momentum** and **leading Pattern** only when present in verified score bodies (no demo fill, no synthetic scores, no correlation matrices, no new scoring engines);
+4. preserve Universe SLA projection via `buildUniverseAvailabilityProjection` / `universe-sla`;
+5. not introduce a second ranking component, a second dispatcher, or a Frontend-local score authority;
+6. keep design tokens from `docs/frontend/design-tokens.json` (`score-*`, `asset-*`, pattern badge conventions).
+
+`UniverseBestWorst` is **superseded as implementation** and remains only as a Strangler compatibility name until inbound consumers and docs are fully renamed.
+
+## 13. Canonical Supporting Sources
 
 - `docs/governance/authority-registry.json`
 - `docs/governance/control-catalog.json`
@@ -157,5 +193,8 @@ Before custom implementation, evaluate in order: existing repository/native capa
 - `docs/adr/registry.json`
 - `.ai/registry/ess-registry.json`
 - `docs/governance/document-registry.json`
+- `docs/frontend/FRONTEND_ARCH.md`
+- `docs/frontend/COMPONENT_INVENTORY.md`
+- `docs/frontend/design-tokens.json`
 
 If a supporting artifact conflicts with this trust root in repository-wide agent behavior, the conflict is reported and resolved fail-closed.
