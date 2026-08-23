@@ -134,7 +134,7 @@ describe('Equity SEC filing feature composition', () => {
       'interestCoverage',
     ]));
     expect(result.input.families.financialStrength?.componentKeys).toEqual([
-      'financialStrength.currentRatioQuality',
+      'financialStrength.liquidityQuality',
       'financialStrength.debtToEquityQuality',
       'financialStrength.interestCoverageQuality',
     ]);
