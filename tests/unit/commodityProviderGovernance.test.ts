@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getProviderMatrixEntry } from '../../src/platform/MarketData/ProviderMatrix';
+import { getProviderHealth, resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
 import {
   getTwelveDataCommodityEvidence,
   resetCommodityReferenceCache,
@@ -54,6 +55,32 @@ describe('Commodity P0/P1 provider governance', () => {
     expect(evidence.evidenceIds.every(id => id.startsWith('commodity:twelvedata:C_1:'))).toBe(true);
   });
 
+  it('fails closed on application-level provider errors and records unusable provider health', async () => {
+    resetCommodityReferenceCache();
+    resetProviderHealth();
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/commodities')) return jsonResponse({ data: [{ symbol: 'C_1', name: 'Corn' }] });
+      if (url.includes('/time_series')) {
+        return jsonResponse({ code: 429, message: 'provider-internal-detail', status: 'error' });
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    }) as typeof fetch;
+
+    await expect(getTwelveDataCommodityEvidence('CMD_CORN_CBOT', 20, {
+      apiKey: 'test',
+      fetchImpl,
+      nowMs: () => Date.parse('2026-08-23T12:00:00.000Z'),
+    })).rejects.toThrow('application-level error response');
+
+    const health = getProviderHealth().find(item => item.provider === 'twelvedata' && item.capability === 'commodity-history');
+    expect(health?.state).toBe('unavailable');
+    expect(health?.diagnosticCode).toBe('provider_error');
+    expect(health?.payloadUsable).toBe(false);
+    expect(health?.message).toBe('Provider returned an application-level error response.');
+    expect(health?.message).not.toContain('provider-internal-detail');
+  });
+
   it('contains no route-local direct TwelveData time-series fetch path', () => {
     const source = fs.readFileSync(path.join(process.cwd(), 'src/services/commodityMarketEvidence.ts'), 'utf8');
     expect(source).toContain('MarketDataHistoryGateway');
@@ -70,5 +97,14 @@ describe('Commodity P0/P1 provider governance', () => {
     expect(source).not.toContain('dispatchCanonicalScore');
     expect(source).not.toContain('ScoringModelRegistry');
     expect(source).not.toContain('CanonicalScoreResult');
+  });
+
+  it('does not expose raw caught exception messages from commodity 5xx routes', () => {
+    const source = fs.readFileSync(path.join(process.cwd(), 'src/routes/rawMaterialsRoutes.ts'), 'utf8');
+    expect(source).toContain("code: 'COMMODITY_EVIDENCE_UNAVAILABLE'");
+    expect(source).toContain("code: 'RAW_MATERIAL_ANALYSIS_FAILED'");
+    expect(source).toContain("code: 'RAW_MATERIAL_SCORING_FAILED'");
+    expect(source).not.toContain("reason: error instanceof Error ? error.message : String(error)");
+    expect(source).not.toContain("error: error.message || 'Internal Server Error'");
   });
 });
