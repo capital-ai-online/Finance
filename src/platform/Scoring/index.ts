@@ -8,3 +8,6 @@ export * from './UniverseSla';
 export * from './CryptoResearchModelContracts';
 export * from './CryptoCategoryResearchScoring';
 export * from './CryptoOrchestratorResearchModels';
+export * from './EquityModelContracts';
+export * from './EquityResearchScoring';
+export * from './EquityOrchestrator';
