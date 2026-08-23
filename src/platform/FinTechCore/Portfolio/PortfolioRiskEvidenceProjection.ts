@@ -233,6 +233,33 @@ export function projectPortfolioAllocationToRiskEvidence(
     );
   }
 
+  const allocationOutputCanonical = Object.freeze({
+    totalTargetWeightBps: proposal.totalTargetWeightBps,
+    reservedCashWeightBps: proposal.reservedCashWeightBps,
+    reservedCashNotional: proposal.reservedCashNotional,
+    deltas: proposal.deltas.map((delta) => ({
+      assetId: delta.assetId,
+      currentWeightBps: delta.currentWeightBps,
+      targetWeightBps: delta.targetWeightBps,
+      currentNotional: delta.currentNotional,
+      targetNotional: delta.targetNotional,
+      deltaNotional: delta.deltaNotional,
+      rebalanceRequired: delta.rebalanceRequired,
+      side: delta.side,
+    })),
+    evidenceRefs: proposal.evidenceRefs,
+  });
+  const expectedAllocationOutputHash = sha256({
+    inputHash: proposal.inputHash,
+    output: allocationOutputCanonical,
+  });
+  if (expectedAllocationOutputHash !== proposal.outputHash) {
+    return failure(
+      'SOURCE_HASH_INVALID',
+      'Allocation proposal output hash does not match the deterministic proposal content.',
+    );
+  }
+
   const portfolioEvidenceRefs = uniqueEvidenceRefs(
     projectionAuthority.evidenceRefs,
     proposal.evidenceRefs,
