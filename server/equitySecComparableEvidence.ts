@@ -1,3 +1,4 @@
+import { isAdmissibleMarketEvidence } from '../src/platform/MarketData/evidenceQualityContracts';
 import type {
   SecEdgarCompanyFactsResult,
   SecEdgarFactEvidence,
@@ -32,6 +33,7 @@ export interface EquitySecComparableEvidenceResult {
   readonly targetPriorPeriodEnd: string | null;
   readonly mappedCurrentFields: readonly EquityComparableRawField[];
   readonly mappedPriorFields: readonly EquityComparableRawField[];
+  readonly rejectedCurrentFields: readonly EquityComparableRawField[];
   readonly rejectedPriorFields: readonly EquityComparableRawField[];
   readonly scoreEligible: false;
   readonly executionEligible: false;
@@ -73,7 +75,7 @@ function anchorPeriodEnd(result: SecEdgarCompanyFactsResult): string | null {
   const priorities: readonly SecEdgarRawField[] = ['revenue', 'dilutedEps', 'sharesOutstanding'];
   for (const field of priorities) {
     const fact = result.facts[field];
-    if (fact?.evidence.qualityStatus === 'VERIFIED') return fact.periodEnd;
+    if (fact && isAdmissibleMarketEvidence(fact.evidence)) return fact.periodEnd;
   }
   return null;
 }
@@ -96,13 +98,23 @@ export function buildPriorComparableAsOf(current: SecEdgarCompanyFactsResult): {
   return priorAsOf ? { targetPriorPeriodEnd, priorAsOf } : null;
 }
 
+function compatibleContext(fact: SecEdgarFactEvidence): boolean {
+  if (fact.context === 'instant') return fact.periodStart === null;
+  if (fact.context !== 'periodic' || !fact.periodStart) return false;
+  const duration = daysBetween(fact.periodStart, fact.periodEnd);
+  if (duration === null) return false;
+  if (fact.form === '10-Q' || fact.form === '10-Q/A') return duration >= 45 && duration <= 120;
+  if (fact.form === '10-K' || fact.form === '10-K/A') return duration >= 300 && duration <= 430;
+  return false;
+}
+
 function toComparableFact(field: EquityComparableRawField, fact: SecEdgarFactEvidence): EquityComparableFactInput | null {
-  if (fact.context !== 'instant' && fact.context !== 'periodic') return null;
+  if (!compatibleContext(fact)) return null;
   return Object.freeze({
     field,
     value: fact.value,
     unit: fact.unit,
-    context: fact.context,
+    context: fact.context as 'instant' | 'periodic',
     periodStart: fact.periodStart,
     periodEnd: fact.periodEnd,
     filedAt: fact.filedAt,
@@ -126,7 +138,7 @@ function comparableSnapshot(
 
   for (const [rawField, fact] of Object.entries(sec.facts) as Array<[SecEdgarRawField, SecEdgarFactEvidence | undefined]>) {
     if (!fact || !isComparableField(rawField)) continue;
-    if (fact.evidence.assetId !== assetId || fact.evidence.qualityStatus !== 'VERIFIED') {
+    if (fact.evidence.assetId !== assetId || !isAdmissibleMarketEvidence(fact.evidence)) {
       rejected.push(rawField);
       continue;
     }
@@ -187,6 +199,7 @@ export function bridgeSecComparableEvidence(input: {
     targetPriorPeriodEnd: input.targetPriorPeriodEnd,
     mappedCurrentFields: Object.freeze([...new Set(current.mapped)].sort()),
     mappedPriorFields: Object.freeze([...new Set(prior.mapped)].sort()),
+    rejectedCurrentFields: Object.freeze([...new Set(current.rejected)].sort()),
     rejectedPriorFields: Object.freeze([...new Set(prior.rejected)].sort()),
     scoreEligible: false as const,
     executionEligible: false as const,
