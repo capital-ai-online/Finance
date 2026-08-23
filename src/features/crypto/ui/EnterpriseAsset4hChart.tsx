@@ -8,7 +8,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Activity, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
+import { Activity, AlertCircle, Loader2 } from 'lucide-react';
+import { AuthorityBadge, EvidenceStateIndicator, FreshnessBadge } from '../../../shared/ui';
+import { createCryptoVisualizationMetric } from './cryptoVisualizationViewModel';
 
 interface HistoryPoint {
   timestamp: string;
@@ -95,6 +97,23 @@ export function EnterpriseAsset4hChart({ symbol }: EnterpriseAsset4hChartProps) 
     close: point.close,
   })), [result]);
 
+  const visualizationMetric = useMemo(() => {
+    if (!result) return null;
+    const lastPoint = result.points.length > 0 ? result.points[result.points.length - 1] : null;
+    return createCryptoVisualizationMetric({
+      id: `market-history:${result.symbol}:4h`,
+      label: 'Verified 4h Market Bars',
+      value: result.points.length,
+      authority: 'MARKET_DATA',
+      status: result.qualityState,
+      observedAt: lastPoint?.timestamp ?? null,
+      retrievedAt: result.receivedAt,
+      providers: result.provider ? [result.provider] : [],
+      evidenceIds: result.evidenceId ? [result.evidenceId] : [],
+      reason: result.reason ?? result.error ?? null,
+    });
+  }, [result]);
+
   return (
     <section className="w-full rounded-2xl border border-brand-cyan/20 bg-surface/45 p-4 backdrop-blur-xl" aria-labelledby="enterprise-4h-chart-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -109,9 +128,16 @@ export function EnterpriseAsset4hChart({ symbol }: EnterpriseAsset4hChartProps) 
             Read-only Marktvisualisierung aus der kanonischen MarketData-History-Pipeline. Kein Chart-Score und keine Demo-Daten.
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-status-ready/20 bg-status-ready/5 px-2 py-1 text-[8px] font-mono uppercase tracking-wider text-status-ready">
-          <ShieldCheck size={10} /> 4H · verified
-        </span>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <AuthorityBadge authority="MARKET_DATA" label="4H Market Data" />
+          {visualizationMetric && (
+            <FreshnessBadge
+              state={visualizationMetric.status}
+              observedAt={visualizationMetric.observedAt}
+              retrievedAt={visualizationMetric.retrievedAt}
+            />
+          )}
+        </div>
       </div>
 
       {loading && (
@@ -129,6 +155,19 @@ export function EnterpriseAsset4hChart({ symbol }: EnterpriseAsset4hChartProps) 
             <div className="font-bold uppercase tracking-wider">DATA_UNAVAILABLE</div>
             <div className="mt-1 text-text-secondary">{error}</div>
           </div>
+        </div>
+      )}
+
+      {!loading && !error && visualizationMetric && chartData.length === 0 && (
+        <div className="mt-4 min-h-28 rounded-xl border border-border bg-background/35 p-4">
+          <EvidenceStateIndicator
+            status={visualizationMetric.status}
+            providerCount={visualizationMetric.providers.length}
+            evidenceCount={visualizationMetric.evidenceIds.length}
+          />
+          <p className="mt-2 text-[10px] leading-relaxed text-text-secondary">
+            {visualizationMetric.reason || 'Für diesen Marktstatus wurden keine verifizierten 4h-Punkte geliefert.'}
+          </p>
         </div>
       )}
 
@@ -175,9 +214,18 @@ export function EnterpriseAsset4hChart({ symbol }: EnterpriseAsset4hChartProps) 
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[8px] font-mono uppercase tracking-wider text-text-secondary">
-            <span>Quelle: {result?.provider ?? '—'} · {result?.providerFeed ?? '—'}</span>
-            <span>{chartData.length} Bars · Evidence {result?.evidenceId ? 'gebunden' : '—'}</span>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            {visualizationMetric && (
+              <EvidenceStateIndicator
+                status={visualizationMetric.status}
+                providerCount={visualizationMetric.providers.length}
+                evidenceCount={visualizationMetric.evidenceIds.length}
+              />
+            )}
+            <div className="flex flex-wrap items-center gap-2 text-[8px] font-mono uppercase tracking-wider text-text-secondary">
+              <span>Quelle: {result?.provider ?? '—'} · {result?.providerFeed ?? '—'}</span>
+              <span>{chartData.length} Bars · Evidence {result?.evidenceId ? 'gebunden' : 'nicht gebunden'}</span>
+            </div>
           </div>
         </>
       )}

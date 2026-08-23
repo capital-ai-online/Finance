@@ -3,3 +3,10 @@ export { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 export { DeFiOrchestration } from '../../../components/DeFiOrchestration';
 export { EnterpriseBinanceQuickAnalysis } from './EnterpriseBinanceQuickAnalysis';
 export { EnterpriseAsset4hChart } from './EnterpriseAsset4hChart';
+export {
+  createCryptoVisualizationMetric,
+  createCryptoVisualizationViewModel,
+  type CryptoVisualizationMetric,
+  type CryptoVisualizationMetricInput,
+  type CryptoVisualizationViewModel,
+} from './cryptoVisualizationViewModel';
