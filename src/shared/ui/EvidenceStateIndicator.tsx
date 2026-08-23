@@ -2,7 +2,8 @@ import React from 'react';
 import { AlertTriangle, CheckCircle2, Database } from 'lucide-react';
 
 export interface EvidenceStateIndicatorProps {
-  status: string;
+  status?: string;
+  state?: string;
   label?: string;
   providerCount?: number;
   evidenceCount?: number;
@@ -38,12 +39,13 @@ function resolveTone(status: string): EvidenceTone {
 
 export function EvidenceStateIndicator({
   status,
+  state,
   label,
   providerCount,
   evidenceCount,
   className = '',
 }: EvidenceStateIndicatorProps) {
-  const normalized = normalize(status || 'NOT_AVAILABLE');
+  const normalized = normalize(status ?? state ?? 'NOT_AVAILABLE');
   const tone = resolveTone(normalized);
   const visibleLabel = label ?? normalized;
   const metadata = [
