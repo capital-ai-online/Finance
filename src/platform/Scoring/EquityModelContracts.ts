@@ -1,5 +1,5 @@
-export const EQUITY_RESEARCH_MODEL_VERSION = '0.1.0' as const;
-export const EQUITY_RESEARCH_FEATURE_CONTRACT_VERSION = 'equity-multifactor-features/0.1.0' as const;
+export const EQUITY_RESEARCH_MODEL_VERSION = '0.2.0' as const;
+export const EQUITY_RESEARCH_FEATURE_CONTRACT_VERSION = 'equity-multifactor-features/0.2.0' as const;
 export const EQUITY_CLASSIFICATION_CONTRACT_VERSION = 'equity-classification/0.1.0' as const;
 
 export const EQUITY_FACTOR_FAMILIES = [
@@ -140,6 +140,8 @@ export const EQUITY_RESEARCH_MODEL_CONTRACT: EquityResearchModelContract = Objec
     feature('capitalAllocation.shareholderYield', 'capitalAllocation', 'governed-capital-actions-evidence', 'equity-capital-allocation'),
     feature('capitalAllocation.dividendCoverage', 'capitalAllocation', 'governed-cash-flow-evidence', 'equity-capital-allocation'),
     feature('capitalAllocation.buybackYield', 'capitalAllocation', 'governed-capital-actions-evidence', 'equity-capital-allocation'),
+    feature('capitalAllocation.shareCountChangeQuality', 'capitalAllocation', 'governed-filing-history-evidence', 'equity-capital-allocation'),
+    feature('capitalAllocation.distributionCoverage', 'capitalAllocation', 'governed-cash-flow-evidence', 'equity-capital-allocation'),
     feature('capitalAllocation.reinvestmentEfficiency', 'capitalAllocation', 'governed-filing-history-evidence', 'equity-capital-allocation'),
   ]),
   antiCorrelationRules: Object.freeze([
@@ -147,8 +149,9 @@ export const EQUITY_RESEARCH_MODEL_CONTRACT: EquityResearchModelContract = Objec
     'Profit margin, ROIC, ROE, cash-flow conversion and earnings quality are correlated quality observations and MUST be composed inside the quality family before top-level weighting.',
     'P/E, earnings yield, FCF yield, EV/EBIT and book-to-price are valuation observations and MUST be composed inside the valuation family rather than stacked as separate top-level factors.',
     'Multiple return horizons, relative strength, breakout and trend observations are one price-path family; the Equity model MUST NOT add a second generic technical/momentum score outside the momentum family.',
-    'Dividend yield, dividend coverage, buyback yield and shareholder yield are capital-allocation/income observations and MUST NOT be duplicated as independent generic yield bonuses.',
-    'Market regime, sector rotation, sentiment and pattern signals remain context-only for Equity 0.1.0 and have no scoreImpact or rankingImpact.',
+    'Vendor quarterly growth and comparable filing-based Revenue/EPS/FCF growth are one equity-growth correlation group; verified filing-history evidence may supersede vendor proxies but MUST NOT be stacked with them.',
+    'Dividend yield, distribution coverage, buyback observations, share-count change and shareholder yield are capital-allocation/income observations and MUST NOT be duplicated as independent generic yield bonuses.',
+    'Market regime, sector rotation, sentiment and pattern signals remain context-only for Equity 0.2.0 and have no scoreImpact or rankingImpact.',
     'Missing, stale, conflicting or unverified evidence remains missing; it MUST NOT be converted into zero, neutral, PASS or synthetic confidence.',
   ]),
   promotionRequirements: Object.freeze([
