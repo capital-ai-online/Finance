@@ -1,12 +1,13 @@
 # CAPITAL-AI Orchestration & Scoring Architecture
 
 **Document status:** canonical architecture projection  
-**Last synchronized:** 2026-08-22  
+**Last synchronized:** 2026-08-23  
 **Protected scoring authority:** ADR-0087  
 **FinTech workflow authority:** ADR-0099  
 **DeFi evidence authority:** ADR-0100  
 **Meme/DeFi supersession evidence:** `docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md`  
-**Meme/DeFi research implementation evidence:** `docs/evidence/sc-md/SC3_CRYPTO_MEME_DEFI_ORCHESTRATOR_SCORING_2026-08-22.md`
+**Meme/DeFi research implementation evidence:** `docs/evidence/sc-md/SC3_CRYPTO_MEME_DEFI_ORCHESTRATOR_SCORING_2026-08-22.md`  
+**Equity P0 evidence:** `docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md`
 
 > Diese Datei beschreibt den aktuellen Runtime-/Authority-Stand. Aeltere Specialized-first-, Universal-Fallback-, Gemini-, direkte Domain-Scoring- und vor-ADR-0087-Blueprint-Darstellungen sind superseded und besitzen keine aktuelle Architektur-Authority.
 
@@ -315,22 +316,43 @@ Aktuell gilt produktiv immer:
 Registry -> Dispatcher -> registrierter Domain Executor -> CanonicalScoreResult
 ```
 
-## 8. Assetklassen-Erweiterung
+## 8. Assetklassen-Erweiterung — Equity P0
 
-Kuenftige Orchestratoren fuer Aktien, Rohstoffe, Indizes und Forex muessen dieselben Plattformvertraege wiederverwenden:
+Der erste Aktien-spezifische Domain-Orchestrator ist als Research-Challenger innerhalb derselben Plattformvertraege implementiert:
 
 ```text
-UAI
-Evidence / DQ
-Feature Contract
-ScoringModelRegistry
-ScoringDispatcher
-CanonicalScoreResult
-Ranking / Eligibility
-EventMesh / Traceability
+UAI(stock)
+  -> bestehende Evidence Acquisition
+  -> market-evidence-dq/1.0.0
+  -> equity-classification/0.1.0
+  -> equity-multifactor-features/0.1.0
+  -> ScoringModelRegistry: equity-multifactor@0.1.0 challenger
+  -> EquityOrchestrator research-only
+  -> kein CanonicalScoreResult / kein Ranking / keine Execution
 ```
 
-Assetklassen duerfen eigene Research-/Feature-/Executor-Module besitzen, aber keine zweite Dispatcher-, Registry-, Evidence-, Queue-, Persistence- oder Governance-Architektur.
+Der produktive Pfad bleibt unveraendert:
+
+```text
+stock -> traditional-scoring@2.1.0 -> ScoringDispatcher -> CanonicalScoreResult
+```
+
+Equity 0.1.0 verwendet sechs korrelationsgebundene Top-Level-Familien:
+
+- Quality;
+- Valuation;
+- Growth;
+- Momentum;
+- Financial Strength;
+- Capital Allocation.
+
+Industry-/Taxonomy-Metadaten, Size Bucket, Style Tags und das Primary Scoring Profile sind getrennt. GICS kann nur als lizenz-/providerzulaessige externe Klassifikation verwendet werden und wird nicht als proprietaerer Datensatz in CAPITAL-AI hardcodiert.
+
+Regime, Sektorrotation, Sentiment und Pattern bleiben in Equity 0.1.0 `context-only` ohne `scoreImpact`/`rankingImpact`. Missing/stale/unverified Evidence bleibt missing. Ein Research-Composite verlangt mindestens vier admissible Familien und mindestens 70 Prozent nominale Gewichtsabdeckung.
+
+Eine spaetere produktive Promotion muss `stock` atomar aus `traditional-scoring` herausloesen und einen Equity-Champion hinter demselben `ScoringDispatcher` registrieren. Ein zweiter Dispatcher, eine zweite Registry, ein route-lokaler Equity-Score oder zwei gleichberechtigte canonical Stock-Champions bleiben verboten.
+
+Die gleichen Plattformvertraege gelten fuer weitere Orchestratoren fuer Rohstoffe, Indizes und Forex. Assetklassen duerfen eigene Research-/Feature-/Executor-Module besitzen, aber keine zweite Dispatcher-, Registry-, Evidence-, Queue-, Persistence- oder Governance-Architektur.
 
 ## 9. Security / Governance Boundaries
 
@@ -343,6 +365,7 @@ Assetklassen duerfen eigene Research-/Feature-/Executor-Module besitzen, aber ke
 - `fintech_core` bleibt privates Financial-Persistence-Schema.
 - Production-/Guarded-Live-Cutover ist ein separater, human-gated FT-7+ Prozess.
 - Meme/DeFi-Model-Promotion ist ein eigener human-gated Model-Governance-Prozess innerhalb ADR-0087, keine neue Architektur.
+- Equity-Model-Promotion ist ebenfalls ein eigener human-gated Model-Governance-Prozess innerhalb ADR-0087 und muss den bestehenden Stock-Champion atomar abloesen.
 - FinBERT/social/news/orderbook/derivatives/contract-scanner/holder-clustering/honeypot/oracle/audit Provider muessen ueber bestehende Provider-/Evidence-/DQ-Vertraege angebunden werden; ihre blosse Nennung im Source-Kit erteilt keine Provider-Authority.
 
 ## 10. Dokumenten-Authority
@@ -371,14 +394,13 @@ Physische Verschiebung/Loeschung dieser Artefakte ist nicht erforderlich, solang
 ## 12. Current State
 
 ```text
-PR #484 = MERGED
-main baseline at implementation start = c1a81db2f75d9fbb0fb17ce4e6440967189ad6be
-FT-0 ... FT-6B = DONE on main
-Supersession A+B = MERGED via PR #484
+main baseline for Equity P0 = 800b05261c1792fed5138a8125cf6a00b1f5af07
 crypto champion = crypto-technical-provenance@0.7.0 unchanged
-Meme research challenger = crypto-meme-integrity@0.3.0 in implementation branch
-DeFi research challenger = crypto-defi-fundamental@0.3.0 in implementation branch
-Added-kit sentiment/momentum/regime/pattern/signal-fusion/kill-switch research modules = IMPLEMENTED in branch
+Meme research challenger = crypto-meme-integrity@0.3.0
+DeFi research challenger = crypto-defi-fundamental@0.3.0
+Equity research challenger = equity-multifactor@0.1.0 in feature/equity-orchestrator-p0-challenger-2026-08-23
+productive stock champion = traditional-scoring@2.1.0 unchanged
+Equity productive promotion = BLOCKED pending evidence/backtest/correlation/governance and atomic stock cutover
 Meme/DeFi productive promotion = BLOCKED pending evidence/backtest/governance
 FT-7 = BLOCKED
 FT-8 = PLANNED
