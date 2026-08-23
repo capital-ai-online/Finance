@@ -12,26 +12,32 @@ import {
   Tooltip,
 } from 'recharts';
 import {
+  Activity,
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   Award,
   Database,
   Gauge,
+  Layers3,
+  Radar as RadarGlyph,
   RefreshCw,
   Search,
   ShieldCheck,
   Sparkles,
-  Radar as RadarGlyph,
-  Layers3,
-  TrendingUp,
-  Activity,
 } from 'lucide-react';
 import { AssetLogo } from '../../../components/AssetLogo';
-import { StatusBadge } from '../../../shared/ui/StatusBadge';
+import {
+  AuthorityBadge,
+  EvidenceStateIndicator,
+  FreshnessBadge,
+  ResearchOnlyBanner,
+  StatusBadge,
+} from '../../../shared/ui';
 import { assetRegistry } from '../../../lib/assetRegistry';
 import { EnterpriseAnalysisPanels } from '../../../components/EnterpriseAnalysisPanels';
 import { EnterpriseBinanceQuickAnalysis } from './EnterpriseBinanceQuickAnalysis';
+import { createCryptoVisualizationMetric } from './cryptoVisualizationViewModel';
 import type { TradeSetupLevels } from '../../../services/tradeSetupLevels';
 
 export interface CryptoScoringEnterpriseProps {
@@ -83,6 +89,12 @@ type EnterpriseViewModel = {
   dataQuality: string | null;
   featureVersion: string | null;
   scoringVersion: string | null;
+  observedAt: string | null;
+  retrievedAt: string | null;
+  modelId: string | null;
+  modelVersion: string | null;
+  modelAlias: string | null;
+  modelLifecycle: string | null;
   reason: string | null;
 };
 
@@ -105,7 +117,12 @@ const TIMEFRAMES = [
 ] as const;
 
 const TYPE_LABEL: Record<AssetType, string> = {
-  crypto: 'Krypto', stock: 'Aktien', forex: 'Forex', commodity: 'Rohstoffe', index: 'Indizes', bond: 'Anleihen',
+  crypto: 'Krypto',
+  stock: 'Aktien',
+  forex: 'Forex',
+  commodity: 'Rohstoffe',
+  index: 'Indizes',
+  bond: 'Anleihen',
 };
 
 const CRYPTO_FACTOR_META: Record<string, { label: string; category: string; invert?: boolean }> = {
@@ -121,11 +138,11 @@ const CRYPTO_FACTOR_META: Record<string, { label: string; category: string; inve
 };
 
 const FACTOR_CATEGORY_COLOR: Record<string, string> = {
-  'Technisch': 'var(--color-factor-technical)',
-  'Risiko': 'var(--color-factor-risk)',
-  'Marktstruktur': 'var(--color-factor-market-structure)',
-  'Kontext': 'var(--color-factor-context)',
-  'Faktor': 'var(--color-factor-generic)',
+  Technisch: 'var(--color-factor-technical)',
+  Risiko: 'var(--color-factor-risk)',
+  Marktstruktur: 'var(--color-factor-market-structure)',
+  Kontext: 'var(--color-factor-context)',
+  Faktor: 'var(--color-factor-generic)',
 };
 
 const AGGREGATE_LABELS: Record<string, string> = {
@@ -135,34 +152,26 @@ const AGGREGATE_LABELS: Record<string, string> = {
   technicalStrength: 'Technische Stärke',
 };
 
-type TierStyle = { hex: string; text: string; bg: string; border: string; label: string };
+type DecisionStyle = { text: string; bg: string; border: string };
 
-const NEUTRAL_STYLE: TierStyle = {
-  hex: 'var(--color-score-neutral)',
-  text: 'text-score-neutral',
-  bg: 'bg-score-neutral/5',
-  border: 'border-score-neutral/15',
-  label: 'Unbewertet',
+const DECISION_STYLE: Record<string, DecisionStyle> = {
+  a_setup: { text: 'text-score-best', bg: 'bg-score-best/10', border: 'border-score-best/25' },
+  tradeable_watch: { text: 'text-score-ranking', bg: 'bg-score-ranking/10', border: 'border-score-ranking/25' },
+  speculative_watch: { text: 'text-score-warning', bg: 'bg-score-warning/10', border: 'border-score-warning/25' },
+  observe: { text: 'text-score-warning', bg: 'bg-score-warning/10', border: 'border-score-warning/25' },
+  high_risk_speculation: { text: 'text-score-worst', bg: 'bg-score-worst/10', border: 'border-score-worst/25' },
+  reject: { text: 'text-score-worst', bg: 'bg-score-worst/10', border: 'border-score-worst/25' },
 };
 
-const DECISION_STYLE: Record<string, TierStyle> = {
-  a_setup: { hex: 'var(--color-score-best)', text: 'text-score-best', bg: 'bg-score-best/10', border: 'border-score-best/25', label: 'A-Setup' },
-  tradeable_watch: { hex: 'var(--color-score-ranking)', text: 'text-score-ranking', bg: 'bg-score-ranking/10', border: 'border-score-ranking/25', label: 'Tradeable Watch' },
-  speculative_watch: { hex: 'var(--color-score-warning)', text: 'text-score-warning', bg: 'bg-score-warning/10', border: 'border-score-warning/25', label: 'Speculative Watch' },
-  observe: { hex: 'var(--color-score-warning)', text: 'text-score-warning', bg: 'bg-score-warning/10', border: 'border-score-warning/25', label: 'Observe' },
-  high_risk_speculation: { hex: 'var(--color-score-worst)', text: 'text-score-worst', bg: 'bg-score-worst/10', border: 'border-score-worst/25', label: 'High-Risk Speculation' },
-  reject: { hex: 'var(--color-score-worst)', text: 'text-score-worst', bg: 'bg-score-worst/10', border: 'border-score-worst/25', label: 'Reject' },
+const NEUTRAL_DECISION_STYLE: DecisionStyle = {
+  text: 'text-text-secondary',
+  bg: 'bg-surface/70',
+  border: 'border-border',
 };
 
-function scoreTier(score: number | null, decision: string | null): TierStyle {
+function decisionStyle(decision: string | null): DecisionStyle {
   const key = decision?.toLowerCase().trim();
-  if (key && DECISION_STYLE[key]) return DECISION_STYLE[key];
-  if (score === null) return NEUTRAL_STYLE;
-  if (score >= 80) return DECISION_STYLE.a_setup;
-  if (score >= 65) return DECISION_STYLE.tradeable_watch;
-  if (score >= 50) return DECISION_STYLE.speculative_watch;
-  if (score >= 35) return DECISION_STYLE.observe;
-  return DECISION_STYLE.reject;
+  return key && DECISION_STYLE[key] ? DECISION_STYLE[key] : NEUTRAL_DECISION_STYLE;
 }
 
 function finite(value: unknown): number | null {
@@ -177,6 +186,10 @@ function normalizeReasoning(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String).filter(Boolean);
   if (typeof value === 'string' && value.trim()) return [value.trim()];
   return [];
+}
+
+function text(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 function prettifyFactorName(name: string): string {
@@ -215,10 +228,17 @@ function extractRawFactors(inputs: unknown): RadarFactor[] {
   });
 }
 
+function evidenceIdsFromIntegrity(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item: any) => item?.id ?? item?.evidenceId)
+    .filter((item: unknown): item is string => typeof item === 'string' && item.trim().length > 0);
+}
+
 function buildCryptoView(body: any, symbol: string, assetName: string): EnterpriseViewModel {
   const integrity = body?.integrity ?? {};
   return {
-    status: typeof body?.status === 'string' ? body.status : 'SCORE_NOT_COMPUTABLE',
+    status: text(body?.status) ?? 'SCORE_NOT_COMPUTABLE',
     symbol,
     assetName,
     assetType: 'crypto',
@@ -226,24 +246,30 @@ function buildCryptoView(body: any, symbol: string, assetName: string): Enterpri
     rankScore: finite(body?.rank_score),
     eligibleForTop10: body?.eligible_for_top10 === true,
     tradeSetup: isTradeSetup(body?.tradeSetup) ? body.tradeSetup : null,
-    decision: typeof body?.decision === 'string' ? body.decision : null,
-    decisionName: typeof body?.decisionName === 'string' ? body.decisionName : null,
-    decisionDesc: typeof body?.decisionDesc === 'string' ? body.decisionDesc : null,
-    riskLevel: typeof body?.risk_level === 'string' ? body.risk_level : null,
+    decision: text(body?.decision),
+    decisionName: text(body?.decisionName),
+    decisionDesc: text(body?.decisionDesc),
+    riskLevel: text(body?.risk_level),
     reasoning: normalizeReasoning(body?.reasoning),
     alerts: normalizeReasoning(body?.alerts),
     factors: extractFactors(body?.scores),
     rawFactors: extractRawFactors(body?.inputs),
     providers: strings(integrity?.providers ?? body?.providers),
-    evidenceIds: Array.isArray(integrity?.evidence)
-      ? integrity.evidence.map((item: any) => item?.evidenceId).filter((item: unknown): item is string => typeof item === 'string')
+    evidenceIds: evidenceIdsFromIntegrity(integrity?.evidence).length > 0
+      ? evidenceIdsFromIntegrity(integrity?.evidence)
       : strings(body?.evidenceIds),
     provenance: Array.isArray(body?.provenance) ? body.provenance : [],
     coverage: finite(integrity?.coverage),
-    dataQuality: typeof integrity?.dataQuality === 'string' ? integrity.dataQuality : null,
-    featureVersion: typeof integrity?.featureVersion === 'string' ? integrity.featureVersion : null,
-    scoringVersion: typeof integrity?.scoringVersion === 'string' ? integrity.scoringVersion : null,
-    reason: typeof integrity?.reason === 'string' ? integrity.reason : typeof body?.error === 'string' ? body.error : null,
+    dataQuality: text(integrity?.dataQuality),
+    featureVersion: text(integrity?.featureVersion),
+    scoringVersion: text(integrity?.scoringVersion),
+    observedAt: text(integrity?.observedAt),
+    retrievedAt: text(integrity?.retrievedAt),
+    modelId: text(integrity?.modelId),
+    modelVersion: text(integrity?.modelVersion),
+    modelAlias: text(integrity?.modelAlias),
+    modelLifecycle: text(integrity?.modelLifecycle),
+    reason: text(integrity?.reason) ?? text(body?.error),
   };
 }
 
@@ -256,7 +282,7 @@ function buildTraditionalView(body: any, symbol: string, assetName: string, asse
     return score === null ? [] : [{ name, score }];
   });
   return {
-    status: typeof body?.status === 'string' ? body.status : 'SCORE_NOT_COMPUTABLE',
+    status: text(body?.status) ?? 'SCORE_NOT_COMPUTABLE',
     symbol,
     assetName,
     assetType,
@@ -277,53 +303,84 @@ function buildTraditionalView(body: any, symbol: string, assetName: string, asse
     provenance,
     coverage: factorNames.length > 0 ? factorNames.length / Math.max(factorNames.length + strings(body?.missingFactors).length, 1) : null,
     dataQuality: body?.status === 'READY' ? 'verified' : null,
-    featureVersion: typeof body?.lineage?.featureVersion === 'string' ? body.lineage.featureVersion : null,
-    scoringVersion: typeof body?.lineage?.scoringVersion === 'string' ? body.lineage.scoringVersion : null,
-    reason: typeof body?.reason === 'string' ? body.reason : null,
+    featureVersion: text(body?.lineage?.featureVersion),
+    scoringVersion: text(body?.lineage?.scoringVersion),
+    observedAt: text(body?.observedAt),
+    retrievedAt: text(body?.retrievedAt),
+    modelId: text(body?.lineage?.modelId),
+    modelVersion: text(body?.lineage?.modelVersion),
+    modelAlias: text(body?.lineage?.modelAlias),
+    modelLifecycle: text(body?.lineage?.modelLifecycle),
+    reason: text(body?.reason),
   };
 }
 
 function unavailable(symbol: string, assetName: string, assetType: AssetType, reason: string): EnterpriseViewModel {
   return {
-    status: 'SCORE_NOT_COMPUTABLE', symbol, assetName, assetType, score: null, rankScore: null,
-    eligibleForTop10: false, tradeSetup: null,
-    decision: null, decisionName: null, decisionDesc: null, riskLevel: null, reasoning: [], alerts: [], factors: [],
-    rawFactors: [], providers: [], evidenceIds: [], provenance: [], coverage: null, dataQuality: null,
-    featureVersion: null, scoringVersion: null, reason,
+    status: 'SCORE_NOT_COMPUTABLE',
+    symbol,
+    assetName,
+    assetType,
+    score: null,
+    rankScore: null,
+    eligibleForTop10: false,
+    tradeSetup: null,
+    decision: null,
+    decisionName: null,
+    decisionDesc: null,
+    riskLevel: null,
+    reasoning: [],
+    alerts: [],
+    factors: [],
+    rawFactors: [],
+    providers: [],
+    evidenceIds: [],
+    provenance: [],
+    coverage: null,
+    dataQuality: null,
+    featureVersion: null,
+    scoringVersion: null,
+    observedAt: null,
+    retrievedAt: null,
+    modelId: null,
+    modelVersion: null,
+    modelAlias: null,
+    modelLifecycle: null,
+    reason,
   };
 }
 
-function ScoreGauge({ score, tier }: { score: number | null; tier: TierStyle }) {
+function ScoreGauge({ score }: { score: number | null }) {
   const value = Math.max(0, Math.min(100, score ?? 0));
   const data = [{ name: 'score', value }];
   return (
-    <div className="relative mx-auto h-40 w-40 sm:h-44 sm:w-44">
+    <div className="relative mx-auto h-44 w-44 sm:h-48 sm:w-48" aria-label={score === null ? 'Kanonischer Score nicht verfügbar' : `Kanonischer Score ${score.toFixed(1)} von 100`}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadialBarChart cx="50%" cy="50%" innerRadius="72%" outerRadius="100%" barSize={12} data={data} startAngle={90} endAngle={-270}>
+        <RadialBarChart cx="50%" cy="50%" innerRadius="72%" outerRadius="100%" barSize={13} data={data} startAngle={90} endAngle={-270}>
           <PolarAngleAxis type="number" domain={[0, 100]} tick={false} axisLine={false} />
-          <RadialBar dataKey="value" cornerRadius={10} background={{ fill: 'var(--color-border)' }} fill={tier.hex} isAnimationActive animationDuration={900} />
+          <RadialBar dataKey="value" cornerRadius={10} background={{ fill: 'var(--color-border)' }} fill="var(--color-brand-primary)" isAnimationActive animationDuration={900} />
         </RadialBarChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-black font-mono text-text-primary tabular-nums">{score !== null ? score.toFixed(1) : '—'}</span>
+        <span className="text-5xl font-black font-mono text-text-primary tabular-nums">{score !== null ? score.toFixed(1) : '—'}</span>
         <span className="mt-1 text-[9px] font-mono uppercase tracking-widest text-text-secondary">von 100</span>
       </div>
     </div>
   );
 }
 
-function FactorRadar({ data, tier }: { data: RadarFactor[]; tier: TierStyle }) {
+function FactorRadar({ data }: { data: RadarFactor[] }) {
   if (data.length === 0) {
     return <div className="flex h-64 items-center justify-center text-center text-xs text-text-secondary">Keine verifizierten Faktorwerte verfügbar.</div>;
   }
   return (
-    <div className="h-64 sm:h-72 w-full">
+    <div className="h-64 w-full sm:h-72">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="72%" data={data}>
           <PolarGrid stroke="var(--color-border)" />
           <PolarAngleAxis dataKey="label" stroke="var(--color-text-secondary)" fontSize={9} />
           <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-          <Radar name="Faktor-Score" dataKey="value" stroke={tier.hex} fill={tier.hex} fillOpacity={0.22} strokeWidth={2} isAnimationActive animationDuration={900} />
+          <Radar name="Faktor-Score" dataKey="value" stroke="var(--color-factor-technical)" fill="var(--color-factor-technical)" fillOpacity={0.18} strokeWidth={2} isAnimationActive animationDuration={900} />
           <Tooltip
             contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: 12 }}
             itemStyle={{ color: 'var(--color-text-primary)', fontSize: 11, fontFamily: 'monospace' }}
@@ -360,12 +417,11 @@ function TradeSetupLadder({ setup }: { setup: TradeSetupLevels }) {
       { key: 'sl2', label: 'SL2', value: setup.stopLoss2, kind: 'stop' },
     ];
 
-  const allValues = [...markers.map((m) => m.value), setup.entryLow, setup.entryHigh, setup.referencePrice];
+  const allValues = [...markers.map((marker) => marker.value), setup.entryLow, setup.entryHigh, setup.referencePrice];
   const min = Math.min(...allValues);
   const max = Math.max(...allValues);
   const span = Math.max(max - min, 1e-9);
   const pos = (value: number) => Math.max(2, Math.min(98, ((value - min) / span) * 100));
-
   const entryLowPos = pos(setup.entryLow);
   const entryHighPos = pos(setup.entryHigh);
   const refPos = pos(setup.referencePrice);
@@ -380,13 +436,12 @@ function TradeSetupLadder({ setup }: { setup: TradeSetupLevels }) {
           title="Entry-Zone"
         />
         {markers.map((marker, index) => {
-          const left = pos(marker.value);
           const above = index % 2 === 0;
           const color = marker.kind === 'stop'
             ? 'text-score-worst border-score-worst/40 bg-score-worst/10'
             : 'text-score-best border-score-best/40 bg-score-best/10';
           return (
-            <div key={marker.key} className="absolute top-1/2 -translate-y-1/2" style={{ left: `${left}%` }}>
+            <div key={marker.key} className="absolute top-1/2 -translate-y-1/2" style={{ left: `${pos(marker.value)}%` }}>
               <div className="absolute left-1/2 top-1/2 h-4 w-px -translate-x-1/2 -translate-y-1/2 bg-border" />
               <div className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[9px] font-mono font-bold ${color} ${above ? '-top-9' : 'top-4'}`}>
                 {marker.label} · {formatSetupPrice(marker.value)}
@@ -426,7 +481,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
   const assets = useMemo(() => assetRegistry.getAssets(), []);
   const selectedAsset = useMemo(() => assets.find((asset) => asset.symbol.toUpperCase() === symbol), [assets, symbol]);
-  const selectedTimeframe = TIMEFRAMES.find(item => item.value === timeframe) ?? null;
+  const selectedTimeframe = TIMEFRAMES.find((item) => item.value === timeframe) ?? null;
   const scoreTimeframeBound = selectedTimeframe?.scoreBound === true;
 
   const searchResults = useMemo(() => {
@@ -446,7 +501,9 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
       if (assetType === 'crypto') {
         const response = await fetch('/api/crypto/score', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ symbol, asset_name: assetName }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol, asset_name: assetName }),
         });
         const body = await response.json().catch(() => null);
         if (!body || typeof body !== 'object') throw new Error('Ungültige Antwort des Crypto-Scoring-Endpunkts.');
@@ -478,7 +535,23 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
   const ready = result?.status === 'READY' && result.score !== null;
   const coveragePct = result?.coverage === null || result?.coverage === undefined ? null : Math.round(result.coverage * 100);
-  const tier = useMemo(() => scoreTier(result?.score ?? null, result?.decision ?? null), [result?.score, result?.decision]);
+  const decisionTone = useMemo(() => decisionStyle(result?.decision ?? null), [result?.decision]);
+
+  const canonicalMetric = useMemo(() => {
+    if (!result) return null;
+    return createCryptoVisualizationMetric({
+      id: `canonical-score:${result.symbol}`,
+      label: 'Canonical Score',
+      value: result.score,
+      authority: 'CANONICAL_SCORE',
+      status: result.status,
+      observedAt: result.observedAt,
+      retrievedAt: result.retrievedAt,
+      providers: result.providers,
+      evidenceIds: result.evidenceIds,
+      reason: result.reason,
+    });
+  }, [result]);
 
   const radarData = useMemo<RadarFactor[]>(() => {
     if (!result) return [];
@@ -498,14 +571,18 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
     return result.factors.filter((factor) => factor.name in AGGREGATE_LABELS);
   }, [result]);
 
-  return (
-    <section id="enterprise-scorer" className="scroll-mt-24 bg-background/60 border border-border rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden space-y-8">
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-accent/5 blur-[130px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-cyan/[0.03] blur-[130px] rounded-full pointer-events-none" />
+  const modelLabel = result?.modelId
+    ? `${result.modelId}${result.modelVersion ? `@${result.modelVersion}` : ''}`
+    : result?.scoringVersion ?? '—';
 
-      <div className="relative z-30 rounded-2xl border border-brand-primary/20 bg-surface/45 p-5 space-y-4">
+  return (
+    <section id="enterprise-scorer" className="scroll-mt-24 space-y-8 overflow-hidden rounded-2xl border border-border bg-background/60 p-6 backdrop-blur-xl sm:p-8 relative">
+      <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-accent/5 blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-brand-cyan/[0.03] blur-[130px]" />
+
+      <div className="relative z-30 space-y-4 rounded-2xl border border-brand-primary/20 bg-surface/45 p-5">
         <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-brand-primary"><Search size={14} /> Asset-Suche</div>
-        <div className="flex flex-col lg:flex-row gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
             <input
@@ -513,18 +590,26 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               onChange={(event) => { setSearchValue(event.target.value); setSearchOpen(true); }}
               onFocus={() => setSearchOpen(true)}
               placeholder="Symbol oder Asset suchen: BTC, AAPL, EURUSD, Gold, Bond …"
-              className="w-full rounded-xl border border-border bg-background/50 pl-9 pr-3 py-3 text-sm text-text-primary outline-none focus:border-brand-primary/50 min-h-11"
+              className="min-h-11 w-full rounded-xl border border-border bg-background/50 py-3 pl-9 pr-3 text-sm text-text-primary outline-none focus:border-brand-primary/50"
             />
             {searchOpen && (
-              <div className="absolute left-0 right-0 top-full mt-2 max-h-80 overflow-y-auto rounded-xl border border-border bg-background shadow-2xl z-50">
-                {searchResults.length === 0 ? <div className="p-4 text-xs text-text-secondary">Kein Asset gefunden.</div> : searchResults.map((asset) => (
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-xl border border-border bg-background shadow-2xl">
+                {searchResults.length === 0 ? (
+                  <div className="p-4 text-xs text-text-secondary">Kein Asset gefunden.</div>
+                ) : searchResults.map((asset) => (
                   <button
                     type="button"
                     key={`${asset.type}-${asset.symbol}`}
                     onClick={() => { onSelectSymbol?.(asset.symbol); setSearchValue(''); setSearchOpen(false); }}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-3 min-h-11 border-b border-border last:border-0 hover:bg-surface text-left"
+                    className="flex min-h-11 w-full items-center justify-between gap-3 border-b border-border px-4 py-3 text-left last:border-0 hover:bg-surface"
                   >
-                    <div className="flex items-center gap-3"><AssetLogo symbol={asset.symbol} size="xs" /><div><div className="text-xs font-bold text-text-primary">{asset.symbol} · {asset.name}</div><div className="text-[10px] text-text-secondary">{TYPE_LABEL[asset.type as AssetType]}</div></div></div>
+                    <div className="flex items-center gap-3">
+                      <AssetLogo symbol={asset.symbol} size="xs" />
+                      <div>
+                        <div className="text-xs font-bold text-text-primary">{asset.symbol} · {asset.name}</div>
+                        <div className="text-[10px] text-text-secondary">{TYPE_LABEL[asset.type as AssetType]}</div>
+                      </div>
+                    </div>
                     <span className="text-[9px] font-mono uppercase text-text-secondary">auswählen</span>
                   </button>
                 ))}
@@ -533,7 +618,14 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
           </div>
           <div className="flex flex-wrap gap-2">
             {(['all', 'crypto', 'stock', 'forex', 'index', 'commodity', 'bond'] as const).map((type) => (
-              <button key={type} type="button" onClick={() => { setAssetTypeFilter(type); setSearchOpen(true); }} className={`rounded-lg border px-3 min-h-11 text-[10px] font-bold ${assetTypeFilter === type ? 'border-brand-primary/50 bg-brand-primary/10 text-brand-primary' : 'border-border text-text-secondary hover:text-text-primary'}`}>{type === 'all' ? 'Alle' : TYPE_LABEL[type]}</button>
+              <button
+                key={type}
+                type="button"
+                onClick={() => { setAssetTypeFilter(type); setSearchOpen(true); }}
+                className={`min-h-11 rounded-lg border px-3 text-[10px] font-bold ${assetTypeFilter === type ? 'border-brand-primary/50 bg-brand-primary/10 text-brand-primary' : 'border-border text-text-secondary hover:text-text-primary'}`}
+              >
+                {type === 'all' ? 'Alle' : TYPE_LABEL[type]}
+              </button>
             ))}
           </div>
         </div>
@@ -555,7 +647,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
                   onClick={() => onChangeTimeframe?.(item.value)}
                   aria-pressed={active}
                   data-score-bound={item.scoreBound ? 'true' : 'false'}
-                  className={`rounded-lg px-3 min-h-11 text-[9px] font-mono border transition-all ${active ? activeStyle : 'border-border text-text-secondary hover:border-brand-cyan/40 hover:text-text-primary'}`}
+                  className={`min-h-11 rounded-lg border px-3 text-[9px] font-mono transition-all ${active ? activeStyle : 'border-border text-text-secondary hover:border-brand-cyan/40 hover:text-text-primary'}`}
                   title={item.scoreBound
                     ? `Kanonische Score-Basis: ${SCORE_TEMPORAL_BASIS.label}.`
                     : `Analysekontext ${item.label}; der kanonische Crypto-Score bleibt auf ${SCORE_TEMPORAL_BASIS.label} gebunden.`}
@@ -573,33 +665,38 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
         </div>
       </div>
 
-      <div className="relative z-20 flex flex-col xl:flex-row xl:items-start justify-between gap-6 border-b border-border pb-6">
+      <div className="relative z-20 flex flex-col justify-between gap-6 border-b border-border pb-6 xl:flex-row xl:items-start">
         <div className="flex items-center gap-3">
           <AssetLogo symbol={symbol} size={48} />
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-gradient-to-r from-brand-primary/20 to-brand-accent/20 text-brand-primary border border-brand-primary/25 uppercase">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded border border-brand-primary/25 bg-gradient-to-r from-brand-primary/20 to-brand-accent/20 px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-widest text-brand-primary">
                 <Sparkles size={10} /> Enterprise Universum Scorer
               </span>
               <StatusBadge status={result?.status ?? (loading ? 'LOADING' : 'DATA_UNAVAILABLE')} />
-              {result?.decisionName && (
-                <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase border ${tier.bg} ${tier.text} ${tier.border}`}>{result.decisionName}</span>
-              )}
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-text-primary font-display">{selectedAsset?.name ?? symbol} <span className="text-text-secondary">({symbol})</span></h2>
-            <p className="text-xs text-text-secondary mt-1 font-mono">Multi-Faktor Institutional-Grade Scoring · alle Assetklassen durchsuchbar · evidence-gated</p>
+            <h2 className="font-display text-xl font-black text-text-primary sm:text-2xl">{selectedAsset?.name ?? symbol} <span className="text-text-secondary">({symbol})</span></h2>
+            <p className="mt-1 text-xs font-mono text-text-secondary">Canonical Score zuerst · Ranking, Research und Evidence als getrennte Linsen</p>
           </div>
         </div>
-        <button type="button" onClick={() => void loadEvaluation()} disabled={loading} className="inline-flex items-center justify-center gap-2 px-4 min-h-11 rounded-xl border border-border bg-surface text-xs font-bold text-text-primary hover:brightness-110 disabled:opacity-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Neu prüfen</button>
+        <button type="button" onClick={() => void loadEvaluation()} disabled={loading} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-xs font-bold text-text-primary hover:brightness-110 disabled:opacity-50">
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Neu prüfen
+        </button>
       </div>
 
-      <div className="relative z-20">
-        <EnterpriseBinanceQuickAnalysis symbol={symbol} />
-      </div>
+      {requestError && (
+        <div className="relative z-10 flex gap-3 rounded-xl border border-status-reject/30 bg-status-reject/10 p-4">
+          <AlertTriangle className="mt-0.5 shrink-0 text-status-reject" size={20} />
+          <div><p className="text-sm font-bold text-status-reject">DATA_UNAVAILABLE</p><p className="mt-1 text-xs text-text-secondary">{requestError}</p></div>
+        </div>
+      )}
 
-      {requestError && <div className="relative z-10 flex gap-3 rounded-xl border border-status-reject/30 bg-status-reject/10 p-4"><AlertTriangle className="mt-0.5 shrink-0 text-status-reject" size={20} /><div><p className="text-sm font-bold text-status-reject">DATA_UNAVAILABLE</p><p className="text-xs text-text-secondary mt-1">{requestError}</p></div></div>}
-
-      {!requestError && !loading && result && !ready && <div className="relative z-10 rounded-xl border border-status-warning/25 bg-status-warning/10 p-5 flex gap-3"><ShieldCheck className="shrink-0 text-status-warning" size={20} /><div><p className="text-sm font-bold text-status-warning">{result.status}</p><p className="text-xs text-text-secondary mt-1">{result.reason ?? 'Für dieses Asset ist derzeit keine ausreichend vollständige verifizierte Evidence verfügbar.'}</p></div></div>}
+      {!requestError && !loading && result && !ready && (
+        <div className="relative z-10 flex gap-3 rounded-xl border border-status-warning/25 bg-status-warning/10 p-5">
+          <ShieldCheck className="shrink-0 text-status-warning" size={20} />
+          <div><p className="text-sm font-bold text-status-warning">{result.status}</p><p className="mt-1 text-xs text-text-secondary">{result.reason ?? 'Für dieses Asset ist derzeit keine ausreichend vollständige verifizierte Evidence verfügbar.'}</p></div>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {result && (
@@ -611,39 +708,132 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             transition={{ duration: 0.25 }}
             className="relative z-10 space-y-8"
           >
-            <div className="grid grid-cols-1 xl:grid-cols-6 gap-6">
-              <div className={`xl:col-span-2 rounded-2xl border p-6 flex flex-col items-center justify-center gap-3 ${tier.border} ${tier.bg}`}>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-text-secondary font-mono"><Gauge size={13} /> Kanonischer Gesamt-Score</div>
-                <ScoreGauge score={result.score} tier={tier} />
-                <div className={`px-3 py-1 rounded-full border text-xs font-black uppercase tracking-wide flex items-center gap-1.5 ${tier.border} ${tier.bg} ${tier.text}`}>
-                  <TrendingUp size={12} /> {result.decisionName ?? tier.label}
+            <div id="crypto-score-command-center" className="space-y-5 rounded-2xl border border-brand-primary/25 bg-surface/45 p-5 sm:p-6" aria-labelledby="crypto-score-command-center-title">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-[0.18em] text-brand-primary"><Gauge size={13} /> CV-1 · Score Command Center</div>
+                  <h3 id="crypto-score-command-center-title" className="mt-1 font-display text-lg font-black text-text-primary">Canonical Score als führende Entscheidungsmetrik</h3>
+                  <p className="mt-1 max-w-3xl text-[10px] leading-relaxed text-text-secondary">Ranking, Research und Evidence bleiben sichtbar, sind aber semantisch und visuell vom kanonischen Score getrennt. Die UI berechnet keine Modellwahl, Eligibility oder Score-Delta.</p>
                 </div>
-                {result.decisionDesc && <p className="text-[10px] text-text-secondary text-center font-mono leading-relaxed">{result.decisionDesc}</p>}
-                <p className="text-[9px] text-text-secondary font-mono">Read-only · Backend Contract</p>
+                <AuthorityBadge authority="CANONICAL_SCORE" label="Canonical Score" />
               </div>
 
-              <div className="xl:col-span-1 rounded-2xl border border-score-ranking/20 bg-score-ranking/5 p-5 flex flex-col items-center justify-center gap-2 text-center">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-score-ranking font-mono"><Award size={13} /> Intelligent Score</div>
-                <div className="text-3xl font-black font-mono text-text-primary tabular-nums">{result.rankScore !== null ? result.rankScore.toFixed(1) : '—'}</div>
-                {result.eligibleForTop10 && (
-                  <span className="rounded-full border border-score-ranking/30 bg-score-ranking/10 px-2 py-0.5 text-[9px] font-mono font-bold uppercase text-score-ranking">Top-10 eligible</span>
-                )}
-                <p className="text-[9px] text-text-secondary font-mono leading-relaxed">Kompositscore aus Score, Datenqualität, Tier & Liquidität (ranking.service.ts)</p>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+                <div className="rounded-2xl border border-brand-primary/30 bg-brand-primary/[0.045] p-5 xl:col-span-5">
+                  <div className="grid items-center gap-4 sm:grid-cols-[auto_1fr]">
+                    <ScoreGauge score={canonicalMetric?.value as number | null} />
+                    <div className="min-w-0 space-y-3">
+                      <div>
+                        <div className="text-[9px] font-mono uppercase tracking-widest text-text-secondary">Modell</div>
+                        <div className="mt-1 break-all text-sm font-black text-text-primary">{modelLabel}</div>
+                        <div className="mt-1 text-[9px] font-mono text-text-secondary">
+                          {result.modelAlias ? `Alias ${result.modelAlias}` : 'Alias —'}{result.modelLifecycle ? ` · ${result.modelLifecycle}` : ''}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-border bg-background/35 p-3 text-[10px] font-mono text-text-secondary">
+                        <div className="flex items-center justify-between gap-3"><span>Score-Basis</span><strong className="text-right text-text-primary">{SCORE_TEMPORAL_BASIS.label}</strong></div>
+                        <div className="mt-1 flex items-center justify-between gap-3"><span>Feature Contract</span><strong className="text-right text-text-primary">{result.featureVersion ?? '—'}</strong></div>
+                        <div className="mt-1 flex items-center justify-between gap-3"><span>Scoring Contract</span><strong className="text-right text-text-primary">{result.scoringVersion ?? '—'}</strong></div>
+                      </div>
+                      {(result.decisionName || result.decision) && (
+                        <div className={`rounded-xl border p-3 ${decisionTone.border} ${decisionTone.bg}`}>
+                          <div className={`text-[9px] font-mono font-black uppercase tracking-wider ${decisionTone.text}`}>Backend Decision</div>
+                          <div className="mt-1 text-sm font-black text-text-primary">{result.decisionName ?? result.decision}</div>
+                          {result.decisionDesc && <p className="mt-1 text-[10px] leading-relaxed text-text-secondary">{result.decisionDesc}</p>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-score-ranking/20 bg-score-ranking/5 p-5 xl:col-span-3">
+                  <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-wider text-score-ranking"><Award size={13} /> Ranking Score</div>
+                  <div className="mt-4 text-4xl font-black font-mono tabular-nums text-text-primary">{result.rankScore !== null ? result.rankScore.toFixed(1) : '—'}</div>
+                  <p className="mt-1 text-[9px] font-mono uppercase tracking-wider text-score-ranking">sekundäre Ranking Projection · kein kanonischer Score</p>
+                  <div className="mt-4 rounded-xl border border-border bg-background/30 p-3 text-[10px] text-text-secondary">
+                    <div className="flex items-center justify-between gap-2"><span>Top-10 Eligibility</span><strong className="text-text-primary">{result.eligibleForTop10 ? 'JA' : 'NEIN'}</strong></div>
+                    <div className="mt-1 flex items-center justify-between gap-2"><span>Risk Level</span><strong className="text-text-primary">{result.riskLevel ?? '—'}</strong></div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 xl:col-span-4">
+                  <div className="rounded-xl border border-brand-cyan/20 bg-brand-cyan/[0.035] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-cyan">Technical / Canonical</div>
+                      <AuthorityBadge authority="CANONICAL_SCORE" compact />
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <StatusBadge status={result.status} />
+                      <FreshnessBadge observedAt={result.observedAt} retrievedAt={result.retrievedAt} label="Score Evidence" />
+                    </div>
+                    <p className="mt-2 text-[10px] leading-relaxed text-text-secondary">{SCORE_TEMPORAL_BASIS.lookbackBars} × {SCORE_TEMPORAL_BASIS.barInterval.toUpperCase()} bleiben die produktive Crypto-Scorebasis.</p>
+                  </div>
+
+                  <div className="rounded-xl border border-brand-accent/20 bg-brand-accent/[0.035] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">Research Context</div>
+                      <AuthorityBadge authority="RESEARCH" compact />
+                    </div>
+                    <p className="mt-2 text-[10px] leading-relaxed text-text-secondary">Sentiment, Momentum, Pattern und AI-Kurzanalyse bleiben getrennte Research-Linsen und verändern den Canonical Score nicht.</p>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-background/25 p-4">
+                    <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-wider text-text-secondary"><Database size={13} className="text-brand-cyan" /> Evidence Health</div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <EvidenceStateIndicator state={result.status} label={result.status} />
+                      <FreshnessBadge observedAt={result.observedAt} retrievedAt={result.retrievedAt} label="Evidence Zeit" />
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-lg border border-border bg-surface/60 p-2"><div className="text-lg font-black font-mono text-text-primary">{coveragePct === null ? '—' : `${coveragePct}%`}</div><div className="text-[8px] uppercase text-text-secondary">Coverage</div></div>
+                      <div className="rounded-lg border border-border bg-surface/60 p-2"><div className="text-lg font-black font-mono text-text-primary">{result.providers.length}</div><div className="text-[8px] uppercase text-text-secondary">Provider</div></div>
+                      <div className="rounded-lg border border-border bg-surface/60 p-2"><div className="text-lg font-black font-mono text-text-primary">{result.evidenceIds.length}</div><div className="text-[8px] uppercase text-text-secondary">Evidence</div></div>
+                    </div>
+                    <div className="mt-2 text-[9px] font-mono text-text-secondary">Data Quality: <span className="text-text-primary">{result.dataQuality ?? '—'}</span></div>
+                  </div>
+                </div>
               </div>
 
-              <div className="xl:col-span-3 rounded-2xl border border-border bg-surface/35 p-6">
-                <div className="flex items-center justify-between gap-3 mb-3">
+              {result.assetType === 'crypto' && (
+                <ResearchOnlyBanner
+                  title="Research-Linsen bleiben non-authorizing"
+                  description="Sentiment, Momentum, Pattern, Regime und AI-Kurzanalyse dienen als Kontext. Sie verändern weder Canonical Score noch Execution-Eligibility."
+                />
+              )}
+            </div>
+
+            {result.assetType === 'crypto' && (
+              <div className="relative z-20">
+                <EnterpriseBinanceQuickAnalysis symbol={symbol} />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
+              <div className="rounded-2xl border border-border bg-surface/35 p-6 xl:col-span-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm font-black uppercase text-text-primary"><RadarGlyph size={15} className="text-brand-cyan" /> Multi-Faktor Bewertungsmatrix</div>
                   <span className="text-[9px] font-mono uppercase tracking-widest text-text-secondary">{radarData.length} Kriterien</span>
                 </div>
-                <p className="text-[10px] text-text-secondary font-mono mb-3">State-of-the-Art institutionelles Faktormodell · dynamisch neugewichtet bei fehlenden Faktoren</p>
-                <FactorRadar data={radarData} tier={tier} />
+                <p className="mb-3 text-[10px] font-mono text-text-secondary">Verifizierte Faktorprojektion; CV-3 wird Hard Gates, Correlation Groups und Missing Evidence separat sichtbar machen.</p>
+                <FactorRadar data={radarData} />
+              </div>
+
+              <div className="rounded-2xl border border-border bg-surface/35 p-5 xl:col-span-2">
+                <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-secondary"><Database size={13} className="text-brand-accent" /> Lineage & Evidence</div>
+                <div className="space-y-2 text-[10px] font-mono">
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-secondary">Model</span><strong className="break-all text-right text-text-primary">{modelLabel}</strong></div>
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-secondary">Alias</span><strong className="text-right text-text-primary">{result.modelAlias ?? '—'}</strong></div>
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-secondary">Lifecycle</span><strong className="text-right text-text-primary">{result.modelLifecycle ?? '—'}</strong></div>
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-secondary">Feature</span><strong className="break-all text-right text-text-primary">{result.featureVersion ?? '—'}</strong></div>
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-secondary">Scoring</span><strong className="break-all text-right text-text-primary">{result.scoringVersion ?? '—'}</strong></div>
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-secondary">Provider</span><strong className="text-right text-text-primary">{result.providers.length}</strong></div>
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-secondary">Evidence IDs</span><strong className="text-right text-text-primary">{result.evidenceIds.length}</strong></div>
+                </div>
               </div>
             </div>
 
             {result.assetType === 'crypto' && (
               <div id="trade-setup-grafik" className="scroll-mt-24 rounded-2xl border border-border bg-surface/35 p-6">
-                <div className="flex items-center gap-2 mb-2 text-sm font-black uppercase text-text-primary"><Activity size={15} className="text-brand-primary" /> Trade-Setup Grafik</div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-black uppercase text-text-primary"><Activity size={15} className="text-brand-primary" /> Trade-Setup Grafik</div>
                 {result.tradeSetup ? (
                   <TradeSetupLadder setup={result.tradeSetup} />
                 ) : (
@@ -653,41 +843,41 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             )}
 
             {aggregates.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {aggregates.map((factor) => (
                   <div key={factor.name} className="rounded-xl border border-border bg-surface/35 p-4">
-                    <div className="text-[9px] uppercase tracking-widest text-text-secondary font-mono">{AGGREGATE_LABELS[factor.name]}</div>
+                    <div className="text-[9px] font-mono uppercase tracking-widest text-text-secondary">{AGGREGATE_LABELS[factor.name]}</div>
                     <div className="mt-2 text-2xl font-black font-mono text-text-primary">{factor.score.toFixed(0)}</div>
-                    <div className="mt-2 h-1.5 rounded-full bg-border overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.max(2, Math.min(100, factor.score))}%`, backgroundColor: tier.hex }} />
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
+                      <div className="h-full rounded-full bg-brand-cyan transition-all duration-700" style={{ width: `${Math.max(2, Math.min(100, factor.score))}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="rounded-xl border border-border bg-surface/35 p-5 text-xs space-y-2.5">
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-secondary mb-1"><Database size={13} className="text-brand-accent" /> Integrität & Coverage</div>
-                <div className="flex items-center justify-between"><span className="text-text-secondary">Coverage</span> <span className="text-text-primary font-bold">{coveragePct === null ? '—' : `${coveragePct}%`}</span></div>
-                <div className="flex items-center justify-between"><span className="text-text-secondary">Data Quality</span> <span className="text-text-primary font-bold">{result.dataQuality ?? '—'}</span></div>
-                <div className="flex items-center justify-between"><span className="text-text-secondary">Risk Level</span> <span className="text-text-primary font-bold">{result.riskLevel ?? '—'}</span></div>
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+              <div className="space-y-2.5 rounded-xl border border-border bg-surface/35 p-5 text-xs">
+                <div className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-secondary"><Database size={13} className="text-brand-accent" /> Integrität & Coverage</div>
+                <div className="flex items-center justify-between"><span className="text-text-secondary">Coverage</span><span className="font-bold text-text-primary">{coveragePct === null ? '—' : `${coveragePct}%`}</span></div>
+                <div className="flex items-center justify-between"><span className="text-text-secondary">Data Quality</span><span className="font-bold text-text-primary">{result.dataQuality ?? '—'}</span></div>
+                <div className="flex items-center justify-between"><span className="text-text-secondary">Risk Level</span><span className="font-bold text-text-primary">{result.riskLevel ?? '—'}</span></div>
               </div>
 
-              <div className="xl:col-span-2 rounded-xl border border-border bg-surface/35 p-5">
-                <div className="flex items-center gap-2 mb-3 text-[10px] font-black uppercase tracking-wider text-text-secondary"><Activity size={13} className="text-brand-cyan" /> Faktor-Detailwerte</div>
+              <div className="rounded-xl border border-border bg-surface/35 p-5 xl:col-span-2">
+                <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-secondary"><Activity size={13} className="text-brand-cyan" /> Faktor-Detailwerte</div>
                 {radarData.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {radarData.map((factor) => (
                       <div key={factor.key} className="rounded-lg border border-border bg-background/20 p-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="flex items-center gap-2 text-[10px] font-mono text-text-secondary break-all">
+                          <span className="flex items-center gap-2 break-all text-[10px] font-mono text-text-secondary">
                             <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: FACTOR_CATEGORY_COLOR[factor.category] ?? 'var(--color-factor-generic)' }} />
                             {factor.label}
                           </span>
-                          <span className="text-xs font-bold text-text-primary shrink-0">{factor.value.toFixed(1)}</span>
+                          <span className="shrink-0 text-xs font-bold text-text-primary">{factor.value.toFixed(1)}</span>
                         </div>
-                        <div className="mt-2 h-1.5 rounded-full bg-border overflow-hidden">
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
                           <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.max(2, Math.min(100, factor.value))}%`, backgroundColor: FACTOR_CATEGORY_COLOR[factor.category] ?? 'var(--color-factor-generic)' }} />
                         </div>
                       </div>
@@ -697,9 +887,20 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="rounded-xl border border-border bg-surface/35 p-5"><h3 className="text-xs font-black uppercase text-text-primary mb-3 flex items-center gap-2"><Layers3 size={14} className="text-brand-primary" /> Reasoning</h3>{result.reasoning.length ? <div className="space-y-2">{result.reasoning.slice(0, 8).map((text, index) => <div key={index} className="rounded-lg border border-border bg-background/20 p-3 text-xs text-text-secondary">{text}</div>)}</div> : <p className="text-xs text-text-secondary">Keine verifizierte Begründung verfügbar.</p>}</div>
-              <div className="rounded-xl border border-border bg-surface/35 p-5"><h3 className="text-xs font-black uppercase text-text-primary mb-3">Provider & Evidence</h3><div className="flex flex-wrap gap-2 mb-4">{result.providers.length ? result.providers.map((provider) => <span key={provider} className="rounded-md border border-brand-cyan/20 bg-brand-cyan/5 px-2 py-1 text-[10px] font-mono text-brand-cyan">{provider}</span>) : <span className="text-xs text-text-secondary">Keine Provider-Evidence.</span>}</div><div className="text-[10px] font-mono text-text-secondary space-y-1"><div>Evidence IDs: {result.evidenceIds.length}</div><div>Feature: {result.featureVersion ?? '—'}</div><div>Scoring: {result.scoringVersion ?? '—'}</div></div></div>
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <div className="rounded-xl border border-border bg-surface/35 p-5">
+                <h3 className="mb-3 flex items-center gap-2 text-xs font-black uppercase text-text-primary"><Layers3 size={14} className="text-brand-primary" /> Reasoning</h3>
+                {result.reasoning.length ? (
+                  <div className="space-y-2">{result.reasoning.slice(0, 8).map((entry, index) => <div key={index} className="rounded-lg border border-border bg-background/20 p-3 text-xs text-text-secondary">{entry}</div>)}</div>
+                ) : <p className="text-xs text-text-secondary">Keine verifizierte Begründung verfügbar.</p>}
+              </div>
+              <div className="rounded-xl border border-border bg-surface/35 p-5">
+                <h3 className="mb-3 text-xs font-black uppercase text-text-primary">Provider & Evidence</h3>
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {result.providers.length ? result.providers.map((provider) => <span key={provider} className="rounded-md border border-brand-cyan/20 bg-brand-cyan/5 px-2 py-1 text-[10px] font-mono text-brand-cyan">{provider}</span>) : <span className="text-xs text-text-secondary">Keine Provider-Evidence.</span>}
+                </div>
+                <div className="space-y-1 text-[10px] font-mono text-text-secondary"><div>Evidence IDs: {result.evidenceIds.length}</div><div>Feature: {result.featureVersion ?? '—'}</div><div>Scoring: {result.scoringVersion ?? '—'}</div></div>
+              </div>
             </div>
 
             <EnterpriseAnalysisPanels

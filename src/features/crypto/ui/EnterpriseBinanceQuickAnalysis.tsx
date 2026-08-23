@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, AlertCircle, Loader2, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
+import { AuthorityBadge, FreshnessBadge, ResearchOnlyBanner } from '../../../shared/ui';
 import { EnterpriseAsset4hChart } from './EnterpriseAsset4hChart';
 
 type QuickAnalysisResponse = {
@@ -94,7 +95,9 @@ export function EnterpriseBinanceQuickAnalysis({ symbol }: EnterpriseBinanceQuic
               Reale öffentliche Spot-Marktdaten zum aktuell gewählten Asset. Keine Demo-Daten und keine Anlageberatung.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <AuthorityBadge authority="RESEARCH" label="AI Research" />
+            <AuthorityBadge authority="MARKET_DATA" label="Spot Input" />
             <span className="rounded-full border border-border bg-surface px-2 py-1 text-[8px] font-mono uppercase tracking-wider text-text-secondary">
               Binance
             </span>
@@ -124,6 +127,11 @@ export function EnterpriseBinanceQuickAnalysis({ symbol }: EnterpriseBinanceQuic
 
         {result && (
           <div className="mt-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <AuthorityBadge authority="MARKET_DATA" />
+              <FreshnessBadge observedAt={result.marketData.asOf} label="Spot-Zeitstempel" />
+            </div>
+
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div className="rounded-xl border border-border bg-surface/60 p-2.5">
                 <span className="block text-[8px] font-mono uppercase tracking-wider text-text-secondary">Preis</span>
@@ -148,17 +156,21 @@ export function EnterpriseBinanceQuickAnalysis({ symbol }: EnterpriseBinanceQuic
               </div>
             </div>
 
-            <div className="rounded-xl border border-brand-primary/20 bg-brand-primary/[0.04] p-3">
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-brand-primary">CAPITAL-AI Einschätzung</span>
-                <span className="text-[8px] font-mono text-text-secondary">{result.marketData.symbol}</span>
+            <div className="rounded-xl border border-brand-accent/20 bg-brand-accent/[0.04] p-3">
+              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-brand-accent">CAPITAL-AI Einschätzung</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <AuthorityBadge authority="RESEARCH" label="Research Output" />
+                  <span className="text-[8px] font-mono text-text-secondary">{result.marketData.symbol}</span>
+                </div>
               </div>
               <p className="text-[11px] leading-relaxed text-text-primary/75">{result.analysis}</p>
+              <ResearchOnlyBanner modelLabel={result.provider} className="mt-3" />
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-[8px] font-mono uppercase tracking-wider text-text-secondary">
               <span>Quelle: {result.marketData.source}</span>
-              <span>{new Date(result.marketData.asOf).toLocaleString('de-DE')}</span>
+              <FreshnessBadge observedAt={result.marketData.asOf} label="As of" />
             </div>
           </div>
         )}

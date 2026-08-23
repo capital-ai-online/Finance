@@ -1,7 +1,7 @@
 # CAPITAL-AI Frontend Architecture & Interface Guidelines
 
 **Status:** Canonical Frontend Architecture  
-**Stand:** 22. August 2026  
+**Stand:** 23. August 2026  
 **Framework:** React 19 / Vite 6 / Tailwind CSS 4 / Motion
 
 ## 1. Architekturposition und Dokumentrolle
@@ -161,6 +161,29 @@ Insbesondere gilt:
 
 Dadurch kann sich die fachliche Wertschöpfungskette weiterentwickeln, ohne dass `FRONTEND_ARCH.md` eine konkurrierende oder veraltete Kopie konserviert.
 
+### 5.2 CV-0 Presentation-Authority-Projektion
+
+Für Financial-/Crypto-Visualisierungen darf das Frontend die **Herkunftsrolle** eines bereits gelieferten Werts als Presentation-Metadatum kennzeichnen. Die aktuell verwendeten Rollen sind:
+
+```text
+CANONICAL_SCORE  → autoritativ erzeugtes Scoring-Ergebnis
+RESEARCH         → Research-/Analysekontext, nicht kanonisch
+EVIDENCE_ONLY    → Evidence-Projektion ohne Score-Authority
+MARKET_DATA      → Markt-/History-Daten, getrennt vom Scoring
+```
+
+Diese Rollen sind **keine zweite Registry**. Sie dürfen weder Modellwahl noch Score-, Gate-, Freshness- oder Execution-Entscheidungen treffen.
+
+Verbindlich:
+
+- `RESEARCH` und `EVIDENCE_ONLY` dürfen eine vorhandene non-authorizing Backend-Semantik nur als `scoreEligible=false` / `executionEligible=false` projizieren.
+- fehlende Werte bleiben fehlend; `null`, `NOT_AVAILABLE`, `STALE`, `PARTIAL`, `INVALID` oder `NOT_COMPUTABLE` werden nicht zu numerischen Defaults oder PASS hochgestuft.
+- Freshness wird nicht aus clientseitig erfundenen Altersgrenzen berechnet. Die UI zeigt den gelieferten Status und vorhandene `observedAt`-/`retrievedAt`-Zeitstempel.
+- visuelle Authority-/Statuskommunikation verwendet Text/Icon zusätzlich zu Farbe.
+- die fachliche Bedeutung der Authority bleibt in ADR-/ESS-/SPT-/Platform-Contracts; die UI projiziert nur deren vorhandene Semantik.
+
+Implementierungsnachweis: `docs/evidence/frontend/CV0_CRYPTO_VISUALIZATION_AUTHORITY_2026-08-23.md`.
+
 ## 6. Shared Design System
 
 Kanonische Shared-Primitives:
@@ -173,10 +196,16 @@ Kanonische Shared-Primitives:
 - `Skeleton`
 - `EmptyState`
 - `StatusBadge`
+- `AuthorityBadge`
+- `FreshnessBadge`
+- `EvidenceStateIndicator`
+- `ResearchOnlyBanner`
 - `CapitalAiLogo`
 - `NeuralBackground`
 
 Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Bausteinen nur als dünne Compatibility-Exports erhalten. Fachliche Komponenten dürfen Shared-Primitives konsumieren, aber keine parallelen Basisimplementierungen etablieren.
+
+Die CV-0-Primitives sind fachneutral: `shared` kennt keine Crypto-Modelle, Provider oder Backend-Endpoints. Domänenspezifische Zuordnung zu konkreten Resultaten erfolgt erst im jeweiligen Feature-Slice.
 
 ## 7. Visual Identity
 
@@ -200,6 +229,8 @@ Die Visual Identity wird nicht lokal in Komponenten neu definiert. `docs/fronten
 - Fokuszustände bleiben sichtbar und farbunabhängig verständlich.
 - Statuskommunikation nutzt Text/Icon zusätzlich zu Farbe.
 - Assetklassenfarbe wird zusätzlich durch Klassenlabel/Icon kommuniziert.
+- Authority-Kommunikation nutzt ein explizites Textlabel und eine zugängliche Beschreibung zusätzlich zur semantischen Farbe.
+- `scoreEligible=false` / `executionEligible=false` müssen bei Research-only-Flächen wahrnehmbar und screenreader-lesbar bleiben, sofern diese Eligibility-Semantik Teil des gelieferten Contracts ist.
 - Dialoge besitzen semantische Dialogrollen und Escape-/Close-Verhalten.
 - Loading- und Empty-States werden über gemeinsame Primitives dargestellt.
 - Charts und komplexe Visualisierungen erhalten textuelle Beschreibungen bzw. zugängliche Alternativen.
