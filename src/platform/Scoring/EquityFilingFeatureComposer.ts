@@ -56,7 +56,7 @@ function factsForMetric(
 ): readonly EquityFilingFactInput[] {
   const facts = metric.sourceFields
     .map((field) => snapshot.facts[field])
-    .filter((fact): fact is EquityFilingFactInput => Boolean(fact));
+    .filter((fact): fact is EquityFilingFactInput => fact !== undefined);
   if (facts.length !== metric.sourceFields.length) return Object.freeze([]);
   if (facts.some((fact) => fact.evidence.assetId !== snapshot.assetId || !isAdmissibleMarketEvidence(fact.evidence))) {
     return Object.freeze([]);
@@ -81,7 +81,7 @@ function component(
 }
 
 function family(components: readonly (FilingComponent | null)[], minimumComponents: number): EquityFactorFamilyInput | undefined {
-  const valid = components.filter((item): item is FilingComponent => Boolean(item));
+  const valid = components.filter((item): item is FilingComponent => item !== null);
   if (valid.length < minimumComponents) return undefined;
   const evidence = [...new Map(valid.flatMap((item) => item.evidence).map((item) => [
     item.evidenceRef ?? `${item.providerId}:${item.field}:${item.observedAt ?? ''}`,
@@ -103,7 +103,7 @@ function family(components: readonly (FilingComponent | null)[], minimumComponen
  *
  * Capital-allocation raw metrics remain deferred until at least two independent, directionally
  * governed observations exist. Distribution coverage and reinvestment intensity are therefore kept
- * as research telemetry in 0.1.0 and do not manufacture a Capital Allocation family by themselves.
+ * as research telemetry and do not manufacture a Capital Allocation family by themselves.
  */
 export function augmentEquityResearchWithFilingEvidence(input: {
   readonly base: EquityFeatureCompositionResult;
@@ -139,7 +139,7 @@ export function augmentEquityResearchWithFilingEvidence(input: {
     component(
       input.snapshot,
       currentRatio,
-      'financialStrength.currentRatioQuality',
+      'financialStrength.liquidityQuality',
       currentRatio ? normalizeRange(currentRatio.value, 0.75, 2.0) : undefined,
     ),
     component(
