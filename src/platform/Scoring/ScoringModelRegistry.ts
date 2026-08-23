@@ -73,7 +73,7 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
     modelId: 'equity-multifactor',
-    version: '0.1.0',
+    version: '0.2.0',
     alias: 'challenger',
     lifecycle: 'challenger',
     assetClasses: ['stock'],
@@ -84,7 +84,7 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     priority: 20,
     scoreEligible: false,
     canonicalResultAdapterRequired: true,
-    notes: 'Equity-only multi-factor research challenger. Family-level anti-correlation and profile-specific research weights are implemented, while productive stock routing remains traditional-scoring until verified coverage, backtesting and explicit Owner-approved atomic promotion.',
+    notes: 'Equity-only multi-factor research challenger with point-in-time SEC filing evidence, comparable filing growth/share-count features, family-level anti-correlation and profile-specific research weights. Productive stock routing remains traditional-scoring until peer normalization, backtesting and explicit Owner-approved atomic promotion.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
