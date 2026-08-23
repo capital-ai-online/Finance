@@ -7,7 +7,8 @@
 **DeFi evidence authority:** ADR-0100  
 **Meme/DeFi supersession evidence:** `docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md`  
 **Meme/DeFi research implementation evidence:** `docs/evidence/sc-md/SC3_CRYPTO_MEME_DEFI_ORCHESTRATOR_SCORING_2026-08-22.md`  
-**Equity P0 evidence:** `docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md`
+**Equity P0 evidence:** `docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md`  
+**Equity P1 evidence:** `docs/evidence/sc-md/SC2_EQUITY_P1_EVIDENCE_RUNTIME_2026-08-23.md`, `docs/evidence/sc-md/SC2_EQUITY_P1_SEC_EDGAR_2026-08-23.md`
 
 > Diese Datei beschreibt den aktuellen Runtime-/Authority-Stand. Aeltere Specialized-first-, Universal-Fallback-, Gemini-, direkte Domain-Scoring- und vor-ADR-0087-Blueprint-Darstellungen sind superseded und besitzen keine aktuelle Architektur-Authority.
 
@@ -37,7 +38,7 @@ Universal Asset Identity (UAI)
 3. Domain-Orchestratoren duerfen Research/Evidence anreichern, aber keine produktive Score-Authority bilden.
 4. Kein Specialized-first-/Fallback-Routing darf `ScoringDispatcher` umgehen.
 5. Missing/stale/invalid Evidence wird nicht zu `0`, PASS, neutralem Score oder synthetischer Verfuegbarkeit umgedeutet.
-6. Challenger-/Category-/Meme-/DeFi-Modelle werden nur ueber explizite Registry-/Governance-Promotion produktiv.
+6. Challenger-/Category-/Meme-/DeFi-/Equity-Modelle werden nur ueber explizite Registry-/Governance-Promotion produktiv.
 7. Correlated Raw Features duerfen vor validierter De-Korrelation/Latent-Factor-Transformation nicht mehrfach additiv gewichtet werden.
 8. LLM-/Agent-Ausgaben sind keine Risk-, Compliance-, IAM-, Trading- oder Execution-Freigabe.
 9. Research Scores, Research Trade Scores und Kill-Switch-Empfehlungen sind keine `CanonicalScoreResult`-, Order- oder Policy-Authority.
@@ -48,7 +49,9 @@ Universal Asset Identity (UAI)
 
 Ein Orchestrator komponiert Research-/Evidence-/Workflow-Schritte. Er darf spezialisierte Analysebausteine koordinieren, besitzt aber nicht automatisch Scoring- oder Execution-Authority.
 
-`src/orchestrator/cryptoOrchestrator.ts` bleibt Research/Enrichment und `scoreEligible=false`. Die neue Methode `analyzeCategoryResearchModels(...)` delegiert deterministische Meme-/DeFi-/Signal-Research-Modelle an die Scoring-Plattform; sie erzeugt keine produktive Score- oder Order-Authority.
+`src/orchestrator/cryptoOrchestrator.ts` bleibt Research/Enrichment und `scoreEligible=false`. Die Methode `analyzeCategoryResearchModels(...)` delegiert deterministische Meme-/DeFi-/Signal-Research-Modelle an die Scoring-Plattform; sie erzeugt keine produktive Score- oder Order-Authority.
+
+Der Equity-Orchestrator folgt derselben Regel: `EquityOrchestrator` ist eine Domain-Research-Grenze. Produktive Stock-Execution darf erst nach separater Promotion hinter dem bestehenden `ScoringDispatcher` erfolgen.
 
 ### ScoringModelRegistry
 
@@ -302,11 +305,11 @@ Kanonische BOUND-FT-6B-Intents verwenden den v2-Persistence-RPC. Der weiterhin v
 Folgende fruehere Aussagen gelten nicht mehr als aktuelle Authority:
 
 - Specialized-first / Universal Fallback;
-- direkte Crypto-/Meme-/DeFi-Scoring-Authority aus API-/UI-/Orchestrator-Pfaden;
+- direkte Crypto-/Meme-/DeFi-/Equity-Scoring-Authority aus API-/UI-/Orchestrator-Pfaden;
 - providergebundene Gemini-/LLM-Scoring-Architektur;
 - historische Crypto-/Meme-/DeFi-Gewichte ausserhalb der aktuellen Registry-/Model-Governance;
 - implizite DeFiLlama-to-Score-Verbindungen;
-- additive Mehrfachgewichtung korrelierter DeFi- oder Meme-Rohsignale;
+- additive Mehrfachgewichtung korrelierter DeFi-, Meme- oder Equity-Rohsignale;
 - parallele Regime-/Pattern-Authorities neben den bestehenden FinTechCore Contracts;
 - Research Trade Score als Execution-Freigabe.
 
@@ -316,20 +319,36 @@ Aktuell gilt produktiv immer:
 Registry -> Dispatcher -> registrierter Domain Executor -> CanonicalScoreResult
 ```
 
-## 8. Assetklassen-Erweiterung — Equity P0
+## 8. Assetklassen-Erweiterung — Equity P1 / Model 0.2.0
 
-Der erste Aktien-spezifische Domain-Orchestrator ist als Research-Challenger innerhalb derselben Plattformvertraege implementiert:
+Der Aktien-spezifische Domain-Orchestrator ist als Research-Challenger innerhalb derselben Plattformvertraege implementiert:
 
 ```text
 UAI(stock)
-  -> bestehende Evidence Acquisition
+  -> existing Fundamentals / Market History / SEC Evidence Acquisition
   -> market-evidence-dq/1.0.0
   -> equity-classification/0.1.0
-  -> equity-multifactor-features/0.1.0
-  -> ScoringModelRegistry: equity-multifactor@0.1.0 challenger
+  -> equity-multifactor-features/0.2.0
+  -> Equity Feature / Filing / Comparable Composition
+  -> ScoringModelRegistry: equity-multifactor@0.2.0 challenger
   -> EquityOrchestrator research-only
   -> kein CanonicalScoreResult / kein Ranking / keine Execution
 ```
+
+Die research-only Runtime-Projektion lautet:
+
+```text
+AlphaVantage/FMP Fundamentals
+  + TwelveData/EODHD provenance-aware History
+  + SEC CompanyFacts current/prior as-of
+  -> EquityFeatureComposer
+  -> EquityVendorDerivedFeatureComposer
+  -> EquityFilingDerivedMetrics / EquityFilingFeatureComposer
+  -> EquityComparableFilingMetrics / EquityComparableFilingFeatureComposer
+  -> EquityOrchestrator
+```
+
+`equity-research-runtime/0.4.0` besitzt keine oeffentliche Route, keinen Persistence Writer, keinen `CanonicalScoreResult` und keine Ranking-/Execution-Authority.
 
 Der produktive Pfad bleibt unveraendert:
 
@@ -337,7 +356,9 @@ Der produktive Pfad bleibt unveraendert:
 stock -> traditional-scoring@2.1.0 -> ScoringDispatcher -> CanonicalScoreResult
 ```
 
-Equity 0.1.0 verwendet sechs korrelationsgebundene Top-Level-Familien:
+### Equity Factor Families
+
+Equity 0.2.0 verwendet sechs korrelationsgebundene Top-Level-Familien:
 
 - Quality;
 - Valuation;
@@ -346,11 +367,41 @@ Equity 0.1.0 verwendet sechs korrelationsgebundene Top-Level-Familien:
 - Financial Strength;
 - Capital Allocation.
 
+Nur diese Familien erhalten Top-Level-Gewichte. Raw-/Derived-Subfeatures werden innerhalb ihrer oekonomischen Familie komponiert und duerfen nicht erneut als generischer Bonus eingehen.
+
+Aktueller Research-Stand:
+
+| Family | Evidence / Composition |
+|---|---|
+| Quality | Profitability/Operating Margin/ROE plus same-provider/same-observation TTM FCF Conversion when admissible |
+| Valuation | P/E, Price-to-Book plus attributable FCF/share / fresh real close FCF Yield |
+| Growth | vendor quarterly fallback; comparable SEC Revenue/EPS/FCF YoY supersedes same-correlation proxies when sufficiently covered |
+| Momentum | 12-1 and 6-1 from real dated provenance-aware history |
+| Financial Strength | vendor leverage fallback; SEC Current Ratio/Debt/Interest Coverage may supersede same-correlation vendor evidence |
+| Capital Allocation | comparable Share-Count Change + Distribution Coverage jointly required; Reinvestment Intensity context-only |
+
+FCF Conversion wird nicht aus gemergten AlphaVantage/FMP-Displaywerten berechnet, sondern nur aus einem gleichen Provider-/Observation-Paar. FCF Yield benoetigt attributable FCF/share und einen frischen realen Market-History-Close. Beide Features duerfen nur bestehende Quality-/Valuation-Familien anreichern und keine Family-Coverage allein herstellen.
+
+### SEC Evidence Boundary
+
+SEC EDGAR bleibt Evidence Acquisition:
+
+- keyless CompanyFacts;
+- deklarierter User-Agent/Fair-Access;
+- SEC-publizierte Ticker/CIK-Zuordnung;
+- `filedAt <= asOf`;
+- getrennte Instant/Periodic/YTD-Kontexte;
+- providerneutrale Filing Bridges;
+- aktuelle und vergleichbare Vorperioden ueber denselben gecachten Adapter;
+- keine SEC-spezifische Score-/Registry-/DQ-/Ranking-Authority.
+
 Industry-/Taxonomy-Metadaten, Size Bucket, Style Tags und das Primary Scoring Profile sind getrennt. GICS kann nur als lizenz-/providerzulaessige externe Klassifikation verwendet werden und wird nicht als proprietaerer Datensatz in CAPITAL-AI hardcodiert.
 
-Regime, Sektorrotation, Sentiment und Pattern bleiben in Equity 0.1.0 `context-only` ohne `scoreImpact`/`rankingImpact`. Missing/stale/unverified Evidence bleibt missing. Ein Research-Composite verlangt mindestens vier admissible Familien und mindestens 70 Prozent nominale Gewichtsabdeckung.
+Regime, Sektorrotation, Sentiment und Pattern bleiben in Equity 0.2.0 `context-only` ohne `scoreImpact`/`rankingImpact`. Missing/stale/unverified Evidence bleibt missing. Ein Research-Composite verlangt mindestens vier admissible Familien, mindestens 70 Prozent nominale Gewichtsabdeckung und profile-semantische Pflichtfamilien.
 
 Eine spaetere produktive Promotion muss `stock` atomar aus `traditional-scoring` herausloesen und einen Equity-Champion hinter demselben `ScoringDispatcher` registrieren. Ein zweiter Dispatcher, eine zweite Registry, ein route-lokaler Equity-Score oder zwei gleichberechtigte canonical Stock-Champions bleiben verboten.
+
+Vor Promotion bleiben Peer-/Sector-relative Normalisierung, Winsorization/Outlier Policy, kontrolliertes Rolling/OOS-Backtesting, Correlation Review und Owner Approval zwingend.
 
 Die gleichen Plattformvertraege gelten fuer weitere Orchestratoren fuer Rohstoffe, Indizes und Forex. Assetklassen duerfen eigene Research-/Feature-/Executor-Module besitzen, aber keine zweite Dispatcher-, Registry-, Evidence-, Queue-, Persistence- oder Governance-Architektur.
 
@@ -394,13 +445,16 @@ Physische Verschiebung/Loeschung dieser Artefakte ist nicht erforderlich, solang
 ## 12. Current State
 
 ```text
-main baseline for Equity P0 = 800b05261c1792fed5138a8125cf6a00b1f5af07
+original Equity branch baseline = 800b05261c1792fed5138a8125cf6a00b1f5af07
+latest main synchronized into Equity branch = deaf7a5411efdc4aa4638757b7d6958a75c094cc
 crypto champion = crypto-technical-provenance@0.7.0 unchanged
 Meme research challenger = crypto-meme-integrity@0.3.0
 DeFi research challenger = crypto-defi-fundamental@0.3.0
-Equity research challenger = equity-multifactor@0.1.0 in feature/equity-orchestrator-p0-challenger-2026-08-23
+Equity research challenger = equity-multifactor@0.2.0
+Equity feature contract = equity-multifactor-features/0.2.0
+Equity research runtime = equity-research-runtime/0.4.0
 productive stock champion = traditional-scoring@2.1.0 unchanged
-Equity productive promotion = BLOCKED pending evidence/backtest/correlation/governance and atomic stock cutover
+Equity productive promotion = BLOCKED pending peer normalization/backtest/correlation/governance and atomic stock cutover
 Meme/DeFi productive promotion = BLOCKED pending evidence/backtest/governance
 FT-7 = BLOCKED
 FT-8 = PLANNED
