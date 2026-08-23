@@ -33,6 +33,39 @@ function energyRequest(): CommodityBacktestRequest {
   };
 }
 
+function validPointInTimeValidation() {
+  return validateCommodityPointInTimeSnapshot({
+    policyVersion: COMMODITY_POINT_IN_TIME_POLICY_VERSION,
+    assetId: 'commodity:CMD_WTI_NYMEX',
+    decisionAt: '2026-08-22T16:00:00.000Z',
+    values: [{
+      featureKey: 'market.priceHistory',
+      value: 74.2,
+      source: 'twelvedata:CL1',
+      observedAt: '2026-08-21T20:00:00.000Z',
+      availableAt: '2026-08-21T20:01:00.000Z',
+      retrievedAt: '2026-08-21T20:02:00.000Z',
+      evidenceId: 'commodity-history:twelvedata:CL1:2026-08-21',
+      releaseId: null,
+      revisionId: null,
+    }],
+  });
+}
+
+function validCostValidation() {
+  return validateCommodityBacktestCostAssumptions({
+    contractVersion: COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION,
+    assumptionId: 'commodity-liquid-futures-usd',
+    assumptionVersion: '1.0.0-research',
+    effectiveFrom: '2026-08-23T00:00:00.000Z',
+    commissionBps: 1,
+    slippageBps: 3,
+    spreadBps: 2,
+    source: 'research-calibration-required',
+    executable: false,
+  });
+}
+
 const EMPTY_METRICS = {
   rankInformationCoefficient: null,
   rankMonotonicity: null,
@@ -154,18 +187,43 @@ describe('Commodity P2 point-in-time backtesting contracts', () => {
   });
 
   it('keeps transaction-cost assumptions versioned and validation-only', () => {
-    const validation = validateCommodityBacktestCostAssumptions({
-      contractVersion: COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION,
-      assumptionId: 'commodity-liquid-futures-usd',
-      assumptionVersion: '1.0.0-research',
-      effectiveFrom: '2026-08-23T00:00:00.000Z',
-      commissionBps: 1,
-      slippageBps: 3,
-      spreadBps: 2,
-      source: 'research-calibration-required',
-      executable: false,
-    });
+    const validation = validCostValidation();
     expect(validation.valid).toBe(true);
+  });
+
+  it('does not accept caller booleans in place of actual PIT and cost validation evidence', () => {
+    const invalidPit = validateCommodityPointInTimeSnapshot({
+      policyVersion: COMMODITY_POINT_IN_TIME_POLICY_VERSION,
+      assetId: 'commodity:CMD_WTI_NYMEX',
+      decisionAt: '2026-08-19T16:00:00.000Z',
+      values: [{
+        featureKey: 'positioning.managedMoneyNetPctOi',
+        value: 8.5,
+        source: 'cftc-cot:disaggregated-futures-only',
+        observedAt: '2026-08-18T20:00:00.000Z',
+        availableAt: '2026-08-21T19:30:00.000Z',
+        retrievedAt: '2026-08-21T19:31:00.000Z',
+        evidenceId: 'cftc:2026-08-18:WTI',
+        releaseId: 'cftc-cot-2026-08-21',
+        revisionId: null,
+      }],
+    });
+    const result = buildCommodityBacktestResult({
+      runId: 'bt-energy-invalid-pit',
+      request: energyRequest(),
+      metrics: EMPTY_METRICS,
+      equityCurve: [],
+      leakageBlockers: [],
+      benchmarkIds: ['commodity-evidence-scoring@1.0.0'],
+      pointInTimeValidation: invalidPit,
+      costAssumptionValidation: validCostValidation(),
+      outOfSampleEvidenceId: 'oos:energy:001',
+      correlationEvidenceId: 'correlation:energy:001',
+      sensitivityEvidenceId: 'sensitivity:energy:001',
+    });
+
+    expect(result.pointInTimeValidated).toBe(false);
+    expect(result.promotionEvidenceEligible).toBe(false);
   });
 
   it('does not mark a run promotion-evidence eligible unless every P2 gate is bound', () => {
@@ -176,9 +234,9 @@ describe('Commodity P2 point-in-time backtesting contracts', () => {
       equityCurve: [],
       leakageBlockers: [],
       benchmarkIds: ['commodity-evidence-scoring@1.0.0'],
-      pointInTimeValidated: true,
-      costAssumptionsValidated: true,
-      outOfSampleValidated: true,
+      pointInTimeValidation: validPointInTimeValidation(),
+      costAssumptionValidation: validCostValidation(),
+      outOfSampleEvidenceId: 'oos:energy:001',
       correlationEvidenceId: null,
       sensitivityEvidenceId: 'sensitivity:energy:001',
     });
@@ -194,13 +252,14 @@ describe('Commodity P2 point-in-time backtesting contracts', () => {
       equityCurve: [],
       leakageBlockers: [],
       benchmarkIds: ['commodity-evidence-scoring@1.0.0'],
-      pointInTimeValidated: true,
-      costAssumptionsValidated: true,
-      outOfSampleValidated: true,
+      pointInTimeValidation: validPointInTimeValidation(),
+      costAssumptionValidation: validCostValidation(),
+      outOfSampleEvidenceId: 'oos:energy:002',
       correlationEvidenceId: 'correlation:energy:001',
       sensitivityEvidenceId: 'sensitivity:energy:001',
     });
     expect(complete.promotionEvidenceEligible).toBe(true);
+    expect(complete.outOfSampleValidated).toBe(true);
     expect(complete.authority).toBe('VALIDATION_ONLY');
     expect(complete.scoreEligible).toBe(false);
   });
