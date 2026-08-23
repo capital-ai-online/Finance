@@ -55,12 +55,19 @@
   },
   "prePrCorrelation": {
     "mainShaAtImplementationStart": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
-    "openPrAgainstMain": "none",
+    "mainShaAtFinalReview": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
+    "openPrAgainstMain": "#520 [CAPITAL-AI] P1 Portfolio Allocation und FT-5 Risk-Evidence-Projektion",
+    "openPrOverlap": "none; PR #520 changes FinTechCore/ADR-0099/authority-registry/crypto-governance files only and does not overlap Commodity Historical Vintage, ADR-0101 or the claimed paths",
     "productionCommitAtStart": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
-    "productionMainDrift": 1
+    "productionCommitAtFinalReview": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
+    "productionMainDriftAtFinalReview": 0,
+    "renderWorkspace": "AICapital",
+    "renderService": "Finance"
   },
   "validation": {
     "hostedCiBeforePr": false,
+    "staticContractReview": "completed",
+    "diffScopeReview": "completed; nine net files including the work-claim itself, no dependency/workflow/deployment/database changes",
     "runtimeAuthorityChanged": false,
     "productionWeightsActivated": false,
     "roadmapIssuesMutated": false
