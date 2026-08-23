@@ -52,6 +52,7 @@ export interface EquityResearchAssessment {
   readonly familyCoverageCount: number;
   readonly nominalWeightCoverage: number;
   readonly missingFamilies: readonly EquityFactorFamily[];
+  readonly missingRequiredFamilies: readonly EquityFactorFamily[];
   readonly warnings: readonly string[];
   readonly lineage: EquityResearchLineage | null;
   readonly scoreEligible: false;
@@ -74,6 +75,26 @@ export const EQUITY_PROFILE_WEIGHTS: Readonly<Record<EquityPrimaryProfile, Equit
   'semiconductor-ai-infrastructure': Object.freeze({ quality: 0.20, valuation: 0.15, growth: 0.25, momentum: 0.20, financialStrength: 0.15, capitalAllocation: 0.05 }),
   'healthcare-innovator': Object.freeze({ quality: 0.15, valuation: 0.10, growth: 0.25, momentum: 0.10, financialStrength: 0.30, capitalAllocation: 0.10 }),
   'energy-commodity-producer': Object.freeze({ quality: 0.15, valuation: 0.25, growth: 0.10, momentum: 0.10, financialStrength: 0.25, capitalAllocation: 0.15 }),
+});
+
+/**
+ * Profile-specific minimum semantic gates. Coverage alone is insufficient when a profile would
+ * otherwise become READY while its defining economic family is absent (for example Income without
+ * capital-allocation evidence or Financial without financial-strength evidence).
+ */
+export const EQUITY_REQUIRED_FAMILIES_BY_PROFILE: Readonly<Record<EquityPrimaryProfile, readonly EquityFactorFamily[]>> = Object.freeze({
+  compounder: Object.freeze(['quality', 'financialStrength']),
+  'quality-growth': Object.freeze(['quality', 'growth']),
+  value: Object.freeze(['valuation', 'financialStrength']),
+  'cyclical-value': Object.freeze(['valuation', 'financialStrength']),
+  momentum: Object.freeze(['momentum', 'financialStrength']),
+  income: Object.freeze(['quality', 'financialStrength', 'capitalAllocation']),
+  'turnaround-special-situation': Object.freeze(['financialStrength', 'momentum']),
+  financial: Object.freeze(['quality', 'valuation', 'financialStrength']),
+  'platform-software': Object.freeze(['quality', 'growth']),
+  'semiconductor-ai-infrastructure': Object.freeze(['growth', 'momentum', 'financialStrength']),
+  'healthcare-innovator': Object.freeze(['growth', 'financialStrength']),
+  'energy-commodity-producer': Object.freeze(['valuation', 'financialStrength']),
 });
 
 function finiteNormalized(value: number): boolean {
@@ -116,6 +137,7 @@ export function evaluateEquityResearchScore(input: EquityResearchScoringInput): 
       familyCoverageCount: 0,
       nominalWeightCoverage: 0,
       missingFamilies: Object.freeze([...EQUITY_FACTOR_FAMILIES]),
+      missingRequiredFamilies: Object.freeze([]),
       warnings: Object.freeze(['EQUITY_CLASSIFICATION_NOT_GOVERNED']),
       lineage: null,
     });
@@ -164,6 +186,8 @@ export function evaluateEquityResearchScore(input: EquityResearchScoringInput): 
     (sum, family) => values[family] !== undefined ? sum + weights[family] : sum,
     0,
   ));
+  const missingRequiredFamilies = EQUITY_REQUIRED_FAMILIES_BY_PROFILE[profile]
+    .filter((family) => values[family] === undefined);
 
   const fingerprints = buildEffectiveScoringFingerprintMetadata({
     modelVersion: `equity-multifactor/${EQUITY_RESEARCH_MODEL_VERSION}`,
@@ -182,7 +206,15 @@ export function evaluateEquityResearchScore(input: EquityResearchScoringInput): 
     evidenceContractVersion: MARKET_EVIDENCE_DQ_CONTRACT_VERSION,
   });
 
-  if (familyCoverageCount < EQUITY_MIN_FAMILY_COUNT || nominalWeightCoverage < EQUITY_MIN_NOMINAL_WEIGHT_COVERAGE) {
+  if (missingRequiredFamilies.length > 0) {
+    warnings.push(`EQUITY_PROFILE_REQUIRED_FAMILIES_MISSING:${missingRequiredFamilies.join(',')}`);
+  }
+
+  if (
+    familyCoverageCount < EQUITY_MIN_FAMILY_COUNT
+    || nominalWeightCoverage < EQUITY_MIN_NOMINAL_WEIGHT_COVERAGE
+    || missingRequiredFamilies.length > 0
+  ) {
     warnings.push(`INSUFFICIENT_EQUITY_FAMILY_COVERAGE:${familyCoverageCount}/${EQUITY_FACTOR_FAMILIES.length}:${nominalWeightCoverage}`);
     return makeAssessment({
       status: 'NOT_COMPUTABLE',
@@ -192,6 +224,7 @@ export function evaluateEquityResearchScore(input: EquityResearchScoringInput): 
       familyCoverageCount,
       nominalWeightCoverage,
       missingFamilies: Object.freeze([...missingFamilies]),
+      missingRequiredFamilies: Object.freeze([...missingRequiredFamilies]),
       warnings: Object.freeze([...warnings]),
       lineage,
     });
@@ -209,6 +242,7 @@ export function evaluateEquityResearchScore(input: EquityResearchScoringInput): 
     familyCoverageCount,
     nominalWeightCoverage,
     missingFamilies: Object.freeze([...missingFamilies]),
+    missingRequiredFamilies: Object.freeze([]),
     warnings: Object.freeze([...warnings]),
     lineage,
   });
