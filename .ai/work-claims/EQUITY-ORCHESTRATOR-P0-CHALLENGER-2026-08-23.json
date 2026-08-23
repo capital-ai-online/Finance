@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "EQUITY-ORCHESTRATOR-P0-CHALLENGER-2026-08-23",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "SC-2 Equity Orchestrator P0 challenger with stock-specific feature contract, research scoring and homogeneous registry integration",
+  "startedAt": "2026-08-23T17:08:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "800b05261c1792fed5138a8125cf6a00b1f5af07",
+  "executionBranch": "feature/equity-orchestrator-p0-challenger-2026-08-23",
+  "dependsOn": [
+    "SC-MD-SPT-0001",
+    "ADR-0087 Single Scoring Architecture",
+    "SC-2 Model Registry & UAI",
+    "market-evidence-dq/1.0.0",
+    "effective-scoring-fingerprint/1.0.0"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/EQUITY-ORCHESTRATOR-P0-CHALLENGER-2026-08-23.json",
+    "src/platform/Scoring/EquityModelContracts.ts",
+    "src/platform/Scoring/EquityResearchScoring.ts",
+    "src/platform/Scoring/EquityOrchestrator.ts",
+    "src/platform/Scoring/ScoringModelRegistry.ts",
+    "src/platform/Scoring/index.ts",
+    "tests/unit/equityOrchestratorP0.test.ts",
+    "docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md",
+    "docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md",
+    "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
+    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md"
+  ],
+  "sourceInputs": [
+    {
+      "kind": "google-drive-file",
+      "fileId": "1r49r3Eo72wfXlTTorx2uuqNUjaWtNhtm",
+      "role": "Equity taxonomy, subclass and stock-specific scoring design input"
+    }
+  ],
+  "protectedExistingAuthorities": [
+    "ScoringModelRegistry",
+    "ScoringDispatcher",
+    "CanonicalScoreResult",
+    "Market Evidence DQ",
+    "Ranking / Eligibility",
+    "EventMesh / Traceability / Supervisor",
+    "existing verified-score REST contracts"
+  ],
+  "implementationBoundary": {
+    "modelStage": "research-challenger",
+    "canonicalModelPromotionPerformed": false,
+    "scoreEligible": false,
+    "executionEligible": false,
+    "traditionalStockChampionPreserved": true,
+    "newScoringRegistryAllowed": false,
+    "newScoringDispatcherAllowed": false,
+    "newEvidenceAuthorityAllowed": false,
+    "regimeScoreImpactAllowed": false,
+    "missingEvidenceDefault": "NOT_COMPUTABLE"
+  },
+  "correlation": {
+    "mainAtStart": "800b05261c1792fed5138a8125cf6a00b1f5af07",
+    "openPullRequestsAtStart": 0,
+    "directOpenPrFileOverlap": false
+  },
+  "validation": {
+    "hostedCiTriggered": false,
+    "reasonHostedCiNotTriggered": "Repository cost policy permits hosted build/test only after Pull Request creation."
+  },
+  "releaseCondition": "Coordination metadata is released when the implementation is merged, closed, superseded or abandoned."
+}
