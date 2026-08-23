@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "COMMODITY-P2-VALIDATION-FOUNDATION-2026-08-23",
-  "status": "active",
-  "exclusive": true,
+  "status": "verified",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -14,7 +14,11 @@
   "baseBranch": "main",
   "baseSha": "b35c86dfc9e038c629377d0d9a0761df1a65d663",
   "branch": "feat/commodity-p2-validation-foundation-2026-08-23",
-  "pullRequest": null,
+  "pullRequest": 518,
+  "mergedPr": 518,
+  "mergedCommit": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
+  "releasedAt": "2026-08-23T21:57:12.000Z",
+  "releaseReason": "PR #518 merged into main; P2 validation-foundation writer coordination completed and is superseded by the bounded historical walk-forward work claim.",
   "claimedPaths": [
     ".ai/work-claims/COMMODITY-ORCHESTRATOR-P0-P1-2026-08-23.json",
     "src/platform/Scoring/CommodityModelValidation.ts",
@@ -61,7 +65,9 @@
     "hostedCiBeforePr": false,
     "staticContractReview": "completed",
     "runtimeAuthorityChanged": false,
-    "productionWeightsActivated": false
+    "productionWeightsActivated": false,
+    "mergedPrCi": "PASS",
+    "mergedPrGovernance": "PASS"
   },
   "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
 }
