@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MARKET_EVIDENCE_DQ_CONTRACT_VERSION,
+  type MarketEvidenceQualityRecord,
+} from '../../src/platform/MarketData/evidenceQualityContracts';
+import {
   EQUITY_CLASSIFICATION_CONTRACT_VERSION,
   type EquityClassification,
 } from '../../src/platform/Scoring/EquityModelContracts';
 import type { FinancialFieldProvenance } from '../../src/types/financialProvenance';
 import type { VerifiedTraditionalFallbackHistory } from '../../src/services/traditionalHistoryFallback';
 import type { StockFundamentals } from '../../server/stockFundamentals';
+import type { SecEdgarCompanyFactsResult, SecEdgarRawField } from '../../server/secEdgarCompanyFacts';
 import {
   EQUITY_RESEARCH_HISTORY_WINDOW_DAYS,
   runEquityResearchChallenger,
@@ -14,6 +19,7 @@ import {
 
 const evaluatedAt = '2026-08-23T15:00:00.000Z';
 const observedAt = '2026-06-30T00:00:00.000Z';
+const filedAt = '2026-07-25T00:00:00.000Z';
 const retrievedAt = '2026-08-23T14:00:00.000Z';
 
 const classification: EquityClassification = {
@@ -89,9 +95,88 @@ function verifiedHistory(): VerifiedTraditionalFallbackHistory {
   };
 }
 
+function secMarketEvidence(field: string): MarketEvidenceQualityRecord {
+  return {
+    assetId: 'stock:MSFT',
+    providerId: 'sec-edgar',
+    capability: 'companyfacts',
+    field,
+    observedAt: filedAt,
+    retrievedAt,
+    freshness: {
+      ageMs: Date.parse(evaluatedAt) - Date.parse(filedAt),
+      maxAgeMs: 190 * 24 * 60 * 60 * 1000,
+      evaluatedAt,
+    },
+    contractVersion: MARKET_EVIDENCE_DQ_CONTRACT_VERSION,
+    qualityStatus: 'VERIFIED',
+    evidenceRef: `sec-edgar:0000789019:${field}`,
+  };
+}
+
+function secEvidence(): SecEdgarCompanyFactsResult {
+  const instant = (field: SecEdgarRawField, value: number) => ({
+    field,
+    value,
+    unit: 'USD',
+    taxonomy: 'us-gaap',
+    tag: field,
+    context: 'instant' as const,
+    periodStart: null,
+    periodEnd: observedAt,
+    filedAt,
+    form: '10-Q',
+    accession: '0000789019-26-000001',
+    frame: null,
+    evidence: secMarketEvidence(field),
+  });
+  const periodic = (field: SecEdgarRawField, value: number) => ({
+    field,
+    value,
+    unit: 'USD',
+    taxonomy: 'us-gaap',
+    tag: field,
+    context: 'periodic' as const,
+    periodStart: '2026-04-01T00:00:00.000Z',
+    periodEnd: observedAt,
+    filedAt,
+    form: '10-Q',
+    accession: '0000789019-26-000001',
+    frame: null,
+    evidence: secMarketEvidence(field),
+  });
+
+  return {
+    contractVersion: 'sec-edgar-companyfacts-evidence/0.1.0',
+    status: 'PARTIAL',
+    symbol: 'MSFT',
+    cik: '0000789019',
+    entityName: 'Microsoft Corp',
+    evaluatedAt,
+    retrievedAt,
+    facts: {
+      currentAssets: instant('currentAssets', 150),
+      currentLiabilities: instant('currentLiabilities', 100),
+      shareholdersEquity: instant('shareholdersEquity', 100),
+      longTermDebtCurrent: instant('longTermDebtCurrent', 10),
+      longTermDebtNoncurrent: instant('longTermDebtNoncurrent', 50),
+      operatingIncome: periodic('operatingIncome', 80),
+      interestExpense: periodic('interestExpense', 10),
+    },
+    missingFields: [
+      'revenue', 'netIncome', 'operatingCashFlow', 'capitalExpenditure', 'dividendsPaid',
+      'shareRepurchases', 'sharesOutstanding', 'dilutedEps',
+    ],
+    staleFields: [],
+    scoreEligible: false,
+    executionEligible: false,
+  };
+}
+
 function deps(
   history: VerifiedTraditionalFallbackHistory | null,
   cached: StockFundamentals | undefined = fundamentals(),
+  sec?: SecEdgarCompanyFactsResult,
 ): EquityResearchRuntimeDependencies {
   return {
     ensureFundamentalsFresh: async () => undefined,
@@ -101,6 +186,11 @@ function deps(
       expect(days).toBe(EQUITY_RESEARCH_HISTORY_WINDOW_DAYS);
       return history;
     },
+    fetchSecEvidence: sec ? async (symbol, asOf) => {
+      expect(symbol).toBe('MSFT');
+      expect(asOf).toBe(evaluatedAt);
+      return sec;
+    } : undefined,
     now: () => evaluatedAt,
   };
 }
@@ -114,12 +204,41 @@ describe('Equity research runtime', () => {
 
     expect(result.symbol).toBe('MSFT');
     expect(result.historyProvider).toBe('TwelveData');
+    expect(result.secStatus).toBe('NOT_REQUESTED');
     expect(result.composition.diagnostics.composedFamilies).toContain('momentum');
     expect(result.orchestration.status).toBe('READY');
     expect(result.scoreEligible).toBe(false);
     expect(result.executionEligible).toBe(false);
     expect(result.publicRouteExposed).toBe(false);
     expect(result.orchestration.canonicalPromotionRequired).toBe(true);
+  });
+
+  it('integriert SEC Filing Evidence providerneutral und ersetzt korreliertes Vendor-Leverage statt es zu addieren', async () => {
+    const result = await runEquityResearchChallenger(
+      { symbol: 'MSFT', classification },
+      deps(verifiedHistory(), fundamentals(), secEvidence()),
+    );
+
+    expect(result.secStatus).toBe('PARTIAL');
+    expect(result.secCik).toBe('0000789019');
+    expect(result.secBridge?.mappedFields).toEqual(expect.arrayContaining([
+      'currentAssets',
+      'currentLiabilities',
+      'shareholdersEquity',
+      'longTermDebtCurrent',
+      'longTermDebtNoncurrent',
+      'operatingIncome',
+      'interestExpense',
+    ]));
+    expect(result.filingComposition?.diagnostics.overriddenFamilies).toEqual(['financialStrength']);
+    expect(result.composition.input.families.financialStrength?.componentKeys).toEqual([
+      'financialStrength.currentRatioQuality',
+      'financialStrength.debtToEquityQuality',
+      'financialStrength.interestCoverageQuality',
+    ]);
+    expect(result.composition.input.families.financialStrength?.evidence.every((item) => item.providerId === 'sec-edgar')).toBe(true);
+    expect(result.scoreEligible).toBe(false);
+    expect(result.publicRouteExposed).toBe(false);
   });
 
   it('nimmt ohne provenance-aware History keine Momentum-Familie auf und besitzt keinen AssetRegistry-Simulationspfad', async () => {
