@@ -67,14 +67,15 @@ function family(familyName: EquityFactorFamily, score: number, record = evidence
   };
 }
 
-describe('Equity P0 registry boundary', () => {
-  it('registriert Equity nur als research-only Challenger und lässt den produktiven Stock-Champion unverändert', () => {
+describe('Equity P0/P1 registry boundary', () => {
+  it('registriert Equity 0.2.0 nur als research-only Challenger und lässt den produktiven Stock-Champion unverändert', () => {
     const registry = new ScoringModelRegistry();
-    const challenger = registry.get('equity-multifactor', '0.1.0');
+    const challenger = registry.get('equity-multifactor', '0.2.0');
     expect(challenger?.lifecycle).toBe('challenger');
     expect(challenger?.alias).toBe('challenger');
     expect(challenger?.assetClasses).toEqual(['stock']);
     expect(challenger?.featureContractVersion).toBe(EQUITY_RESEARCH_FEATURE_CONTRACT_VERSION);
+    expect(challenger?.featureContractVersion).toBe('equity-multifactor-features/0.2.0');
     expect(challenger?.evidencePolicy).toBe('research-only');
     expect(challenger?.scoreEligible).toBe(false);
     expect(challenger?.executorKey).toBe(RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY);
@@ -103,6 +104,13 @@ describe('Equity factor-family model', () => {
     expect(EQUITY_RESEARCH_MODEL_CONTRACT.antiCorrelationRules.some(rule => rule.includes('context-only'))).toBe(true);
   });
 
+  it('inventarisiert die neuen Filing-History-Features im versionierten Contract', () => {
+    const keys = EQUITY_RESEARCH_MODEL_CONTRACT.features.map((feature) => feature.key);
+    expect(keys).toContain('capitalAllocation.shareCountChangeQuality');
+    expect(keys).toContain('capitalAllocation.distributionCoverage');
+    expect(keys).toContain('growth.freeCashFlowGrowth');
+  });
+
   it('hält jeden Primary-Profile-Gewichtssatz normiert auf 1.0', () => {
     for (const weights of Object.values(EQUITY_PROFILE_WEIGHTS)) {
       expect(Object.values(weights).reduce((sum, weight) => sum + weight, 0)).toBeCloseTo(1, 10);
@@ -121,6 +129,7 @@ describe('Equity factor-family model', () => {
     });
 
     expect(result.status).toBe('READY');
+    expect(result.modelVersion).toBe('0.2.0');
     expect(result.researchCompositeScore).toBe(78.24);
     expect(result.familyCoverageCount).toBe(4);
     expect(result.nominalWeightCoverage).toBe(0.85);
