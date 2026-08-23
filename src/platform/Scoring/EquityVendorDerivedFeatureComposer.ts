@@ -70,13 +70,15 @@ function uniqueEvidence(records: readonly MarketEvidenceQualityRecord[]): readon
   ])).values()]);
 }
 
-function findMatchingProvenance(
+function fieldProvenance(
   snapshot: EquityFundamentalSnapshot,
   field: 'epsTtm' | 'freeCashFlowPerShare',
 ): readonly FinancialFieldProvenance[] {
-  const expected = snapshot[field];
-  if (typeof expected !== 'number' || !Number.isFinite(expected)) return Object.freeze([]);
-  return Object.freeze(snapshot.provenance.filter((item) => item.field === field && item.value === expected));
+  return Object.freeze(snapshot.provenance.filter((item) =>
+    item.field === field
+    && typeof item.value === 'number'
+    && Number.isFinite(item.value),
+  ));
 }
 
 function financialEvidence(
@@ -153,26 +155,24 @@ function fcfConversionComponent(input: {
   fundamentals: EquityFundamentalSnapshot;
   evaluatedAt: string;
 }): DerivedComponent | null {
-  const fcf = input.fundamentals.freeCashFlowPerShare;
-  const eps = input.fundamentals.epsTtm;
-  if (typeof fcf !== 'number' || !Number.isFinite(fcf) || typeof eps !== 'number' || !Number.isFinite(eps) || eps <= 0) {
-    return null;
-  }
-  const fcfProvenance = findMatchingProvenance(input.fundamentals, 'freeCashFlowPerShare');
-  const epsProvenance = findMatchingProvenance(input.fundamentals, 'epsTtm');
+  const fcfProvenance = fieldProvenance(input.fundamentals, 'freeCashFlowPerShare');
+  const epsProvenance = fieldProvenance(input.fundamentals, 'epsTtm');
   const pair = fcfProvenance.flatMap((left) => epsProvenance.map((right) => ({ left, right })))
     .find(({ left, right }) =>
       left.provider === right.provider
       && Boolean(left.observedAt)
-      && left.observedAt === right.observedAt,
+      && left.observedAt === right.observedAt
+      && typeof left.value === 'number'
+      && typeof right.value === 'number'
+      && right.value > 0,
     );
-  if (!pair) return null;
+  if (!pair || typeof pair.left.value !== 'number' || typeof pair.right.value !== 'number') return null;
   const evidence = [
     financialEvidence(input.assetId, pair.left, input.evaluatedAt),
     financialEvidence(input.assetId, pair.right, input.evaluatedAt),
   ];
   if (evidence.some((record) => !isAdmissibleMarketEvidence(record))) return null;
-  const conversion = fcf / eps;
+  const conversion = pair.left.value / pair.right.value;
   return Object.freeze({
     key: 'quality.freeCashFlowConversion',
     score: normalizeRange(conversion, 0, 1.5),
@@ -186,15 +186,13 @@ function fcfYieldComponent(input: {
   history?: EquityHistorySnapshot;
   evaluatedAt: string;
 }): DerivedComponent | null {
-  const fcf = input.fundamentals.freeCashFlowPerShare;
-  if (typeof fcf !== 'number' || !Number.isFinite(fcf)) return null;
-  const provenance = findMatchingProvenance(input.fundamentals, 'freeCashFlowPerShare')
+  const provenance = fieldProvenance(input.fundamentals, 'freeCashFlowPerShare')
     .find((item) => Boolean(item.observedAt));
-  if (!provenance) return null;
+  if (!provenance || typeof provenance.value !== 'number') return null;
   const fcfEvidence = financialEvidence(input.assetId, provenance, input.evaluatedAt);
   const market = latestHistoryObservation(input.assetId, input.history, input.evaluatedAt);
   if (!isAdmissibleMarketEvidence(fcfEvidence) || !market) return null;
-  const yieldPct = (fcf / market.close) * 100;
+  const yieldPct = (provenance.value / market.close) * 100;
   return Object.freeze({
     key: 'valuation.freeCashFlowYield',
     score: normalizeRange(yieldPct, 0, 8),
@@ -218,8 +216,9 @@ function enrichExistingFamily(
  * Research-only composition of two already-inventoried Equity 0.2.0 features:
  * `quality.freeCashFlowConversion` and `valuation.freeCashFlowYield`.
  *
- * FCF conversion requires same-provider/same-observation TTM FCF-per-share and EPS evidence. FCF
- * yield requires admissible FCF-per-share plus a recent provenance-aware market close. The stage only
+ * FCF conversion is derived directly from a same-provider/same-observation provenance pair rather
+ * than from merged display values, preventing AlphaVantage/FMP period mixing. FCF yield requires
+ * attributable FCF-per-share evidence plus a recent provenance-aware market close. The stage only
  * enriches an already-existing Quality/Valuation family and therefore cannot manufacture family
  * coverage from a single derived signal.
  */
