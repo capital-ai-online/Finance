@@ -7,8 +7,12 @@
   "baseBranch": "main",
   "baseSha": "4fbda0404c2843a4c814c463abc9eb1320a015f8",
   "branch": "feat/commodity-orchestrator-p0-p1-final-2026-08-23",
-  "status": "active",
-  "exclusive": true,
+  "status": "verified",
+  "exclusive": false,
+  "mergedPr": 513,
+  "mergedCommit": "402af4bb2db1c199dcaad9a5f911d2fb84db722d",
+  "releasedAt": "2026-08-23T21:15:00.000Z",
+  "releaseReason": "PR #513 merged; P0/P1 writer coordination completed and superseded by the bounded P2 validation claim.",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -74,5 +78,6 @@
     "behindMain": 0,
     "renderWorkspace": "AICapital",
     "renderService": "Finance"
-  }
+  },
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
 }

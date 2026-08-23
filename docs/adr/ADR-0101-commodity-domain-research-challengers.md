@@ -1,10 +1,10 @@
 # ADR-0101 — Commodity Domain Research Challengers innerhalb der Single-Scoring-Architektur
 
-**Status:** Accepted for P0/P1 implementation  
+**Status:** Accepted for P0/P1 implementation and P2 validation foundation  
 **Date:** 2026-08-23  
 **Parent authority:** ADR-0087, SC-2 Model Registry & Universal Asset Interface  
 **Roadmap:** `docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md`  
-**Issues:** #490–#498
+**Issues:** #490–#500
 
 ## Kontext
 
@@ -39,6 +39,18 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 17. Der gemeinsame `ResearchEvidenceProviderHttp` unterscheidet HTTP-/Transportfehler von parsebaren Application-Level-Providerfehlern. Ein JSON-Payload mit explizitem `status=error` wird als `PROVIDER_ERROR`, `payloadUsable=false` und Provider-Health `unavailable` behandelt; der Payload wird nicht als `READY` weitergereicht.
 18. Öffentliche Commodity-5xx-Antworten geben nur stabile, nicht-sensitive Fehlercodes und generische Meldungen zurück. Exceptions und Providerdetails werden ausschließlich serverseitig diagnostiziert; rohe `error.message`- oder Provider-Payloadtexte sind keine API-Response-Evidence.
 
+## P2-A/P2-B — Validierungsgrundlage
+
+19. Die Drive-Gewichtsmatrizen bleiben auch in P2 zunächst `research-hypothesis`, `executable=false`. Sie werden **nicht** automatisch von fünf breiten Faktorgruppen auf einzelne Features expandiert. Eine Feature-/Latent-Factor-Allokation benötigt empirische Korrelation-, Sensitivitäts- und Point-in-Time-Backtest-Evidence.
+20. Kandidatengewichte werden auf **Latent-Factor-Ebene** validiert. Features innerhalb eines Faktors dürfen nur `WITHIN_LATENT_FACTOR_ONLY` renormalisiert werden; fehlende Features oder Faktoren dürfen kein Gewicht in einen anderen Faktor verschieben.
+21. Pairwise Correlation ist ein versioniertes Research-Diagnostic und keine Scoring-Komponente. Hohe empirische Korrelation über verschiedene Latent Factors ist Promotion-blockierend, bis Dekorrelation/Aggregation fachlich belegt ist. Korrelation innerhalb desselben Faktors wird über die Faktoraggregation gebunden und darf nicht als zusätzliche additive Belohnung auftreten.
+22. Der bestehende `buildEffectiveScoringFingerprintMetadata()`-Vertrag bleibt Authority für effective-feature/effective-weight-Lineage. P2 führt keinen zweiten Fingerprint-Mechanismus ein.
+23. Point-in-Time Backtesting trennt `observedAt`, `availableAt` und `retrievedAt`. Maßgeblich für Lookahead ist `availableAt` des **exakten Daten-Vintage**. Ein historischer Wirtschafts-/Positionswert darf nicht vor seiner tatsächlichen Veröffentlichung in einem Entscheidungs-Snapshot erscheinen.
+24. Revisionsfähige Fundamentals (insbesondere USDA/EIA) benötigen Release- und Revision-Lineage. Spätere Retrievals historischer Werte sind nur zulässig, wenn der exakt historisch verfügbare Vintage identifizierbar ist.
+25. Backtest-Requests binden Modellversion, Universe, Domains, Zeitraum, Rebalance, Holding Period, Top-N, Confidence, Window Mode, Trainingsminimum, Point-in-Time-Policy und versionierte Cost/Slippage-Annahmen.
+26. Eine Backtest-Ausgabe bleibt `VALIDATION_ONLY`, `canonical=false`, `scoreEligible=false`. `promotionEvidenceEligible=true` darf ausschließlich die Vollständigkeit eines Review-Pakets anzeigen und benötigt mindestens: gültigen Request, keine Leakage-Blocker, Point-in-Time-Gate, validierte Cost Assumptions, OOS-Validierung, Benchmark, Correlation Evidence und Sensitivity Evidence.
+27. Auch ein vollständiges P2-Evidence-Paket führt **keine** automatische Registry-Promotion aus. Champion/Challenger-Wechsel bleibt explizite Owner-Entscheidung in der bestehenden `ScoringModelRegistry`/`ScoringDispatcher`-Governance.
+
 ## Sicherheits-, Governance- und Datenintegritätsfolgen
 
 - Keine neue Credential- oder IAM-Authority.
@@ -51,6 +63,9 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - Duplicate Evidence ohne explizite vorgelagerte Merge-/Consensus-Entscheidung wird nicht stillschweigend überschrieben.
 - Erfolgreiches HTTP/JSON-Parsen allein bedeutet nicht `payloadUsable=true`, wenn der Provider im Payload selbst einen Fehlerstatus meldet.
 - Interne Exception-, SDK-, Netzwerk- oder Providerdetails werden nicht über Commodity-5xx-Routen an Clients gespiegelt; öffentliche Fehlercodes bleiben stabil und maschinenlesbar.
+- P2-Validierungsartefakte besitzen keine Runtime-, Ranking-, Trading- oder Execution-Authority.
+- Missing-Data-Renormalisierung bleibt innerhalb eines Latent Factors; Cross-Factor-Reweighting durch Datenlücken ist verboten.
+- Backtest-Evidence ohne reale Release-/Vintage-Semantik gilt als Leakage-Risiko und ist nicht promotion-fähig.
 
 ## Nicht gewählt
 
@@ -59,6 +74,10 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - Crypto-On-Chain-Features oder Crypto Domain Executor im Commodity-Modul;
 - globale 60-Minuten-Freshness für alle Fundamentals;
 - ungeprüfte Übernahme der Owner-Beispielgewichte;
+- automatische Verteilung der Drive-Gruppengewichte auf einzelne Features;
+- Cross-Factor-Renormalisierung bei Missing Data;
+- Backtesting mit heutiger/latest-revision Evidence für historische Entscheidungszeitpunkte;
+- automatische Promotion durch `promotionEvidenceEligible`;
 - Ore Grade/Tonnage/Capex/Opex im Commodity-Benchmark-Modell;
 - LLM-basierte numerische Füllwerte;
 - numerischer P1-Challenger-Score ohne P2-Kalibrierung und OOS-Evidence;
@@ -66,6 +85,6 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 
 ## Validierung / Promotion
 
-P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die P2/P3-Gates der Commodity Roadmap einschließlich Point-in-Time/OOS-Backtesting, Korrelationsprüfung, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
+P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability- und Point-in-Time-Leakage-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die vollständigen P2/P3-Gates der Commodity Roadmap einschließlich OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
 
 Für das Error-Handling sind zusätzlich mindestens Application-Level-Providerfehler (`status=error`), Health-Diagnostik mit `payloadUsable=false` sowie die Nichtweitergabe roher Exceptiontexte über Commodity-5xx-Routen als Regression zu prüfen.
