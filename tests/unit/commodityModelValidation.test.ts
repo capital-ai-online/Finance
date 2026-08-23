@@ -118,6 +118,24 @@ describe('Commodity P2 weight and correlation validation', () => {
     expect(validation.factorWeightFingerprint).toBeNull();
   });
 
+  it('binds a candidate to the Drive hypothesis of the selected model', () => {
+    const profile = energyProfile();
+    const invalid: CommodityCandidateWeightProfile = {
+      ...profile,
+      sourceHypothesis: {
+        ...profile.sourceHypothesis,
+        weights: {
+          ...profile.sourceHypothesis.weights,
+          commodityFundamentals: 34,
+        },
+      },
+    };
+
+    const validation = validateCommodityCandidateWeightProfile(invalid);
+    expect(validation.valid).toBe(false);
+    expect(validation.blockers).toContain('SOURCE_HYPOTHESIS_MISMATCH');
+  });
+
   it('requires a versioned normalization contract before correlation can be assessed', () => {
     expect(() => analyzeCommodityFeatureCorrelation({
       modelId: 'commodity-energy-hybrid',
@@ -158,7 +176,7 @@ describe('Commodity P2 weight and correlation validation', () => {
     expect(report.blockingFindings.some(item => item.startsWith('CORRELATION_DATA_INSUFFICIENT:'))).toBe(true);
   });
 
-  it('records sensitivity without turning it into an automatic promotion threshold', () => {
+  it('records valid sensitivity without turning it into an automatic promotion threshold', () => {
     const profile = energyProfile();
     const report = analyzeCommodityWeightStability({
       reference: profile,
@@ -177,7 +195,25 @@ describe('Commodity P2 weight and correlation validation', () => {
     expect(report.findings).toHaveLength(1);
     expect(report.findings[0].l1Distance).toBeCloseTo(0.1);
     expect(report.findings[0].weightSum).toBe(1);
+    expect(report.findings[0].valid).toBe(true);
+    expect(report.valid).toBe(true);
     expect(report.canonical).toBe(false);
+  });
+
+  it('rejects malformed sensitivity variants as promotion evidence', () => {
+    const report = analyzeCommodityWeightStability({
+      reference: energyProfile(),
+      variants: [{
+        variantId: 'invalid-missing-factor',
+        factorWeights: {
+          marketStructure: 0.5,
+          physicalBalance: 0.5,
+        },
+      }],
+    });
+
+    expect(report.valid).toBe(false);
+    expect(report.blockers.some(item => item.includes('SENSITIVITY_FACTOR_SET_MISMATCH'))).toBe(true);
   });
 
   it('cannot become promotion evidence without correlation, sensitivity and PIT backtest evidence', () => {
@@ -185,7 +221,7 @@ describe('Commodity P2 weight and correlation validation', () => {
       weightValidation: validateCommodityCandidateWeightProfile(energyProfile()),
       correlationReport: null,
       stabilityReport: null,
-      backtestRunId: null,
+      backtestResult: null,
     });
 
     expect(assessment.readyForOwnerReview).toBe(false);
