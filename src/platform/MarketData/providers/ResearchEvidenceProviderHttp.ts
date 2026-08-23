@@ -11,6 +11,7 @@ export type ResearchEvidenceHttpStatus =
   | 'RATE_LIMITED'
   | 'CIRCUIT_OPEN'
   | 'SOURCE_UNAVAILABLE'
+  | 'PROVIDER_ERROR'
   | 'INVALID';
 
 export interface ResearchEvidenceHttpResult {
@@ -38,11 +39,18 @@ function diagnosticFor(status: ResearchEvidenceHttpStatus): ProviderDiagnosticCo
   switch (status) {
     case 'NOT_CONFIGURED': return 'not_configured';
     case 'RATE_LIMITED': return 'rate_limited';
+    case 'PROVIDER_ERROR': return 'provider_error';
     case 'INVALID': return 'schema_error';
     case 'SOURCE_UNAVAILABLE':
     case 'CIRCUIT_OPEN': return 'transport_error';
     case 'READY': return 'healthy';
   }
+}
+
+function hasApplicationLevelProviderError(data: unknown): boolean {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+  const status = (data as Record<string, unknown>).status;
+  return typeof status === 'string' && status.trim().toLowerCase() === 'error';
 }
 
 /**
@@ -159,6 +167,16 @@ export class ResearchEvidenceProviderHttp {
       } catch {
         this.circuitBreaker.failure(this.providerId);
         return this.result('INVALID', retrievedAt, null, 'Provider returned non-JSON payload.');
+      }
+
+      if (hasApplicationLevelProviderError(data)) {
+        this.circuitBreaker.failure(this.providerId);
+        return this.result(
+          'PROVIDER_ERROR',
+          retrievedAt,
+          null,
+          'Provider returned an application-level error response.',
+        );
       }
 
       this.circuitBreaker.success(this.providerId);

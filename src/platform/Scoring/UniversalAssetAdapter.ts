@@ -7,6 +7,7 @@ import {
   type UniversalAssetIdentity,
   type UniversalAssetSource,
 } from './contracts';
+import { classifyCommodityResearchInstrumentKind } from './CommodityResearchModelContracts';
 
 const SCORABLE_ASSET_CLASS_SET = new Set<string>(SCORABLE_ASSET_CLASSES);
 
@@ -28,6 +29,13 @@ export function buildUniversalAssetId(assetClass: UniversalAssetClass, symbol: s
   return `${assetClass}:${normalizeUniversalAssetSymbol(symbol)}`;
 }
 
+function resolveInstrumentKind(input: UniversalAssetInput, symbol: string): string | undefined {
+  if (input.assetClass !== 'commodity') return input.instrumentKind?.trim() || undefined;
+  // Resource-project identities are intentionally not coerced into benchmark domains.
+  if (input.instrumentKind === 'commodity-resource-project') return input.instrumentKind;
+  return classifyCommodityResearchInstrumentKind(symbol, input.name, input.instrumentKind);
+}
+
 /**
  * Single construction boundary for UAI identity. It validates only identity semantics and never
  * promotes catalog/bootstrap values into market evidence.
@@ -44,7 +52,7 @@ export function createUniversalAssetIdentity(input: UniversalAssetInput): Univer
     assetClass: input.assetClass,
     name: input.name?.trim() || undefined,
     subtype: input.subtype?.trim() || undefined,
-    instrumentKind: input.instrumentKind?.trim() || undefined,
+    instrumentKind: resolveInstrumentKind(input, symbol),
     source: input.source ?? 'request',
     providerSymbols: input.providerSymbols,
   };
