@@ -4,17 +4,17 @@
 **Parent:** `SC-MD-SPT-0001` / `SC-2E Equity Orchestrator Challenger`  
 **Authority:** ADR-0087  
 **Branch:** `feature/equity-orchestrator-p0-challenger-2026-08-23`  
-**Status:** RAW EVIDENCE ADAPTER IMPLEMENTED — FACTOR PROMOTION NOT PERFORMED
+**Status:** IMPLEMENTED END-TO-END — RESEARCH-ONLY / NO PRODUCTIVE PROMOTION
 
 ## Purpose
 
-Add a keyless, filing-backed US equity evidence source without creating a second scoring, provider-routing, DQ or persistence architecture.
+Add filing-backed US equity evidence without creating a second scoring, provider-routing, DQ or persistence architecture.
 
-The adapter is server-side and evidence-only:
+Implemented chain:
 
-`SEC ticker/CIK association -> SEC CompanyFacts -> point-in-time fact selection -> MarketEvidenceQualityRecord`
+`SEC ticker/CIK association -> SEC CompanyFacts -> point-in-time fact selection -> MarketEvidenceQualityRecord -> provider-neutral EquityFilingEvidenceSnapshot -> deterministic Derived Metrics -> correlation-aware Equity Filing Feature Composition -> Equity Research Runtime`
 
-It does not produce `EquityFactorFamilyInput`, `CanonicalScoreResult`, rank, eligibility or execution authorization.
+The chain remains research-only. It does not create `CanonicalScoreResult`, ranking/eligibility authority or execution authorization.
 
 ## Primary Source Contract
 
@@ -32,7 +32,7 @@ Runtime configuration:
 
 This value is non-secret and remains a normal runtime environment setting, not a secret-file value.
 
-## Adapter
+## 1. SEC CompanyFacts Adapter
 
 `server/secEdgarCompanyFacts.ts`
 
@@ -57,9 +57,7 @@ Contract version:
 - CIK is normalized to the SEC 10-digit format;
 - a missing ticker association fails closed.
 
-The SEC itself states that ticker/CIK association files are periodically updated and are not guaranteed complete. CAPITAL-AI therefore treats absence as unavailable evidence, not as permission to infer an identity.
-
-## Point-in-Time / Look-Ahead Boundary
+## 2. Point-in-Time / Look-Ahead Boundary
 
 `fetchEvidence({ symbol, asOf })` only admits a fact when:
 
@@ -69,32 +67,23 @@ The SEC itself states that ticker/CIK association files are periodically updated
 
 This prevents a future 10-Q/10-K value from being selected in a historical `asOf` evaluation.
 
-CompanyFacts remains a current aggregation of filing facts; a later backtesting phase must still validate immutable accession-level replay assumptions and post-acceptance correction behavior before productive model promotion.
+CompanyFacts remains a current aggregation of filing facts; accession-level replay and post-acceptance correction behavior remain explicit backtesting gates before productive promotion.
 
-## XBRL Context Disambiguation
+## 3. XBRL Context Disambiguation
 
 A single 10-Q may contain multiple contexts for the same concept and period end. Array order is not accepted as semantic authority.
 
 Each field declares one context:
 
-- `instant` — balance-sheet/share-count observations; rows without duration are preferred;
-- `periodic` — income/EPS/interest observations; for 10-Q the duration nearest one quarter is preferred, for 10-K the duration nearest one year;
-- `ytd` — cash-flow/distribution observations; the longest duration within the latest filing/period is preferred.
+- `instant` — balance-sheet/share-count observations;
+- `periodic` — income/EPS/interest observations;
+- `ytd` — cash-flow/distribution observations.
 
-Candidate ordering is deterministic:
+Candidate ordering is deterministic and distinguishes quarterly, annual and YTD durations before a fact becomes research evidence.
 
-1. latest admissible `filed` date;
-2. latest period end;
-3. latest accession;
-4. context-specific duration rank;
-5. governed tag priority;
-6. governed unit priority.
+## 4. Raw Fact Inventory
 
-This specifically prevents quarterly Revenue/Net Income and YTD Operating Cash Flow/Capex/Dividends/Buybacks from being interchanged.
-
-## Raw Fact Inventory
-
-The first US-GAAP/dei evidence inventory includes:
+The US-GAAP/dei evidence inventory includes:
 
 - Revenue;
 - Net Income;
@@ -111,54 +100,148 @@ The first US-GAAP/dei evidence inventory includes:
 - Common Shares Outstanding;
 - Diluted EPS.
 
-Each selected fact retains:
+Each selected fact retains value/unit, taxonomy/tag, context, period start/end, filing date, form, accession, optional frame and a `MarketEvidenceQualityRecord`.
 
-- field;
-- value/unit;
-- taxonomy/tag;
-- context;
-- period start/end;
-- filing date;
-- form;
+Only 10-Q, 10-Q/A, 10-K and 10-K/A are admitted in version 0.1.0. IFRS/20-F/40-F support remains a later coverage task.
+
+## 5. Provider-neutral Bridge
+
+`server/equitySecEvidenceBridge.ts`
+
+Contract version:
+
+`equity-sec-evidence-bridge/0.1.0`
+
+The bridge removes SEC-specific coupling from the scoring platform. Only fields covered by the generic `EquityFilingEvidenceSnapshot` are mapped. Raw SEC fields that do not yet participate in a governed derivation remain visible as ignored/deferred evidence rather than being silently scored.
+
+The bridge preserves:
+
+- UAI asset identity;
+- reporting context;
+- filing availability;
 - accession;
-- frame where present;
-- `MarketEvidenceQualityRecord` with `evidenceRef`.
+- Market Evidence DQ record.
 
-Only 10-Q, 10-Q/A, 10-K and 10-K/A are admitted in version 0.1.0. IFRS/20-F/40-F support is intentionally not inferred from US-GAAP tags and remains a future coverage item.
+## 6. Deterministic Filing-derived Metrics
 
-## Freshness
+`src/platform/Scoring/EquityFilingDerivedMetrics.ts`
 
-Current research freshness uses a 190-day maximum age from `filedAt` to evaluation time.
+Contract version:
+
+`equity-filing-derived-metrics/0.1.0`
+
+Implemented research metrics:
+
+- Current Ratio;
+- Non-current Long-Term-Debt / Equity;
+- Total Long-Term-Debt / Equity;
+- Interest Coverage;
+- YTD Free Cash Flow;
+- YTD Shareholder Distributions;
+- Distribution Coverage;
+- Reinvestment Intensity.
+
+Rules:
+
+- only admissible VERIFIED evidence is used;
+- asset identity must match;
+- instant ratios require the same period end;
+- duration ratios require the same period start/end and context;
+- absent facts are never converted to zero;
+- incompatible periods produce explicit mismatch diagnostics;
+- derived metrics have no productive score authority and remain `normalizationRequired=true`.
+
+## 7. Correlation-aware Feature Composition
+
+`src/platform/Scoring/EquityFilingFeatureComposer.ts`
+
+Contract version:
+
+`equity-filing-feature-composition/0.1.0`
+
+The SEC filing layer may replace vendor-derived Financial Strength only when at least two independent filing-derived components are admissible. Current implementation can compose:
+
+- Current Ratio Quality;
+- Debt-to-Equity Quality;
+- Interest Coverage Quality.
+
+Source precedence is restricted to the same economic correlation group:
+
+`PRIMARY_FILING_EVIDENCE_OVER_VENDOR_DERIVED_FOR_SAME_CORRELATION_GROUP`
+
+This means SEC/FMP/AlphaVantage leverage observations are **not** stacked additively.
+
+If SEC evidence is incomplete, the existing vendor-derived Financial Strength fallback remains unchanged.
+
+### Capital Allocation boundary
+
+Free Cash Flow, Shareholder Distributions, Distribution Coverage and Reinvestment Intensity are retained as research telemetry but do **not** yet create a Capital Allocation family. A second independent governed observation such as share-count change and/or peer-relative normalization is required before this family may become score-bearing.
+
+## 8. Research Runtime Integration
+
+`server/equityResearchRuntime.ts`
+
+Runtime version:
+
+`equity-research-runtime/0.2.0`
+
+The runtime now composes:
+
+- AlphaVantage/FMP fundamentals;
+- provenance-aware TwelveData/EODHD price history;
+- SEC CompanyFacts evidence;
+- provider-neutral filing derived metrics;
+- correlation-aware filing feature composition;
+- existing Equity Research Scoring / Orchestrator.
+
+Still explicitly absent:
+
+- public SEC/Equity score route;
+- persistence writer;
+- productive `CanonicalScoreResult`;
+- ranking/eligibility change;
+- registry champion promotion;
+- execution authority.
+
+`traditional-scoring@2.1.0` remains the productive stock champion.
+
+## 9. Status / Freshness Semantics
+
+Current SEC research freshness uses a 190-day maximum age from `filedAt` to evaluation time.
 
 - within policy -> `VERIFIED`;
 - older -> `STALE`;
 - missing required identity/source -> `SOURCE_UNAVAILABLE`.
 
-This is a research evidence policy, not a final factor-model policy. Field-specific freshness may be refined before promotion.
-
-## Status Semantics
-
-- `READY` — all first-stage core fields (Revenue, Net Income, Operating Cash Flow, Current Assets, Current Liabilities, Equity) are verified;
-- `PARTIAL` — at least one verified fact, core set incomplete;
-- `STALE` — no verified fact, but stale filing evidence exists;
-- `SOURCE_UNAVAILABLE` — no admissible source result.
-
 Provider status never changes model weights or eligibility.
 
-## Tests
+## 10. Validation Coverage
 
-`tests/unit/secEdgarCompanyFacts.test.ts` covers offline fixtures for:
+Offline/unit coverage now spans:
 
 - CIK padding, User-Agent headers and evidence lineage;
 - deterministic latest fact selection;
-- Quarter vs YTD context selection within the same 10-Q;
+- Quarter vs YTD context selection;
 - historical `asOf` look-ahead prevention;
 - stale filing behavior;
-- cache reuse without additional SEC requests;
+- cache reuse without extra SEC requests;
 - mandatory declared User-Agent;
-- fail-closed unknown ticker/CIK mapping.
+- fail-closed unknown ticker/CIK mapping;
+- provider-specific SEC -> provider-neutral Filing Evidence bridge;
+- aligned Current Ratio / Debt-to-Equity / Interest Coverage derivation;
+- incompatible period rejection;
+- SEC primary-source override of correlated vendor leverage;
+- fallback preservation when SEC component coverage is insufficient;
+- Capital Allocation telemetry deferral;
+- Research Runtime SEC binding with no public/productive authority.
 
-No live SEC request is required by the unit tests.
+Relevant tests:
+
+- `tests/unit/secEdgarCompanyFacts.test.ts`
+- `tests/unit/equityFilingDerivedMetrics.test.ts`
+- `tests/unit/equitySecEvidenceBridge.test.ts`
+- `tests/unit/equityFilingFeatureComposer.test.ts`
+- `tests/unit/equityResearchRuntime.test.ts`
 
 ## Security / Governance Impact
 
@@ -166,21 +249,26 @@ No live SEC request is required by the unit tests.
 - no production setting mutated;
 - no public route;
 - no DB/persistence change;
-- no score/rank/eligibility impact;
+- no productive score/rank/eligibility impact;
 - no second provider router;
 - no LLM/AI extraction;
 - no ticker/CIK inference;
 - no simulated evidence;
 - existing `traditional-scoring@2.1.0` stock champion remains unchanged.
 
-## Next Evidence Work
+## P1 SEC Completion Boundary
 
-The SEC adapter is raw evidence only. Before factor-family promotion:
+P1 SEC is complete for **current-period, point-in-time CompanyFacts acquisition, provider-neutral derivation and research-runtime composition**.
 
-1. define deterministic derived-feature contracts for Current Ratio, Interest Coverage and other Financial Strength metrics;
-2. align cash-flow/net-income periods before FCF conversion or earnings-quality derivation;
-3. derive Capital Allocation only from validated payout/buyback/reinvestment evidence, not Dividend Yield alone;
-4. add comparable prior-period facts for multi-period growth/share-count change;
-5. add IFRS/non-US coverage strategy;
-6. validate accession-level point-in-time replay/backtesting;
-7. keep all derived outputs behind the existing Equity challenger and `scoreEligible=false` until model promotion gates pass.
+Separate follow-on work remains:
+
+1. accession/period-history projection for comparable prior periods;
+2. share-count-change and richer Capital Allocation modeling;
+3. period-aligned earnings-quality/FCF-conversion and ROIC research;
+4. point-in-time market-value joins for FCF-yield / EV-based valuation;
+5. IFRS/non-US filing strategy;
+6. peer/sector-relative normalization and winsorization;
+7. survivorship/look-ahead-controlled rolling/OOS backtesting;
+8. explicit Owner-approved champion promotion.
+
+These are model-quality/promotion gates and do not reopen the SEC adapter/runtime integration itself.
