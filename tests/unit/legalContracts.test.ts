@@ -4,7 +4,7 @@ import {
   STRIPE_PRICE_SNAPSHOT_DATE,
   SUBSCRIPTION_PRICES_EUR,
   TERMS_VERSION,
-} from '../../src/platform/Contracts/consumerLegalContracts';
+} from '../../src/features/billing/billingContract';
 
 describe('consumer legal contract baseline', () => {
   it('keeps the AGB version explicit and current for this remediation', () => {
