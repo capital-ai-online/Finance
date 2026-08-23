@@ -22,16 +22,16 @@
   ],
   "claimedPaths": [
     ".ai/work-claims/EQUITY-ORCHESTRATOR-P0-CHALLENGER-2026-08-23.json",
+    "docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md",
+    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
+    "docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md",
+    "docs/roadmaps/work-packages/SC-2E_EQUITY_ORCHESTRATOR_CHALLENGER.md",
     "src/platform/Scoring/EquityModelContracts.ts",
-    "src/platform/Scoring/EquityResearchScoring.ts",
     "src/platform/Scoring/EquityOrchestrator.ts",
+    "src/platform/Scoring/EquityResearchScoring.ts",
     "src/platform/Scoring/ScoringModelRegistry.ts",
     "src/platform/Scoring/index.ts",
-    "tests/unit/equityOrchestratorP0.test.ts",
-    "docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md",
-    "docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md",
-    "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
-    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md"
+    "tests/unit/equityOrchestratorP0.test.ts"
   ],
   "sourceInputs": [
     {
@@ -63,10 +63,24 @@
   },
   "correlation": {
     "mainAtStart": "800b05261c1792fed5138a8125cf6a00b1f5af07",
+    "mainAtLatestCheck": "800b05261c1792fed5138a8125cf6a00b1f5af07",
     "openPullRequestsAtStart": 0,
-    "directOpenPrFileOverlap": false
+    "openPullRequestsAtLatestCheck": 0,
+    "directOpenPrFileOverlap": false,
+    "branchBehindBy": 0,
+    "mergeBaseMatchesCurrentMain": true,
+    "changedFilesBeforeThisMetadataCommit": 11,
+    "allChangedFilesClaimed": true
   },
   "validation": {
+    "localStrictTypeScriptCoreModules": "PASS",
+    "localStrictTypeScriptScope": [
+      "EquityModelContracts.ts",
+      "EquityResearchScoring.ts",
+      "EquityOrchestrator.ts"
+    ],
+    "fullRepositoryTypeScript": "NOT_RUN_PRE_PR_CONNECTOR_CONTEXT",
+    "focusedUnitSuite": "NOT_RUN_PRE_PR_CONNECTOR_CONTEXT",
     "hostedCiTriggered": false,
     "reasonHostedCiNotTriggered": "Repository cost policy permits hosted build/test only after Pull Request creation."
   },
