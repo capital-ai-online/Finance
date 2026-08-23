@@ -6,7 +6,7 @@
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
-    "executionSurface": "ChatGPT / GitHub Connector"
+    "executionSurface": "ChatGPT / GitHub + Google Drive + Render Connector"
   },
   "workItem": "SC-2 Commodity P2-A correlation-safe weight governance + P2-B point-in-time validation foundation",
   "workItemDE": "Commodity P2 Validierungsgrundlage für Korrelation, Gewichtsstabilität und Point-in-Time-Backtesting",
@@ -16,6 +16,7 @@
   "branch": "feat/commodity-p2-validation-foundation-2026-08-23",
   "pullRequest": null,
   "claimedPaths": [
+    ".ai/work-claims/COMMODITY-ORCHESTRATOR-P0-P1-2026-08-23.json",
     "src/platform/Scoring/CommodityModelValidation.ts",
     "src/platform/Scoring/CommodityBacktestingContracts.ts",
     "src/platform/Scoring/index.ts",
@@ -37,7 +38,8 @@
     "included": [
       "P2-A latent-factor correlation and double-counting controls",
       "P2-A non-executable weight candidate validation and sensitivity evidence",
-      "P2-B backtest request/result contracts and point-in-time leakage gates"
+      "P2-B backtest request/result contracts and point-in-time leakage gates",
+      "release of the stale P0/P1 advisory writer claim after merged PR #513"
     ],
     "excluded": [
       "production weight activation",
@@ -47,6 +49,19 @@
       "full historical backtest execution engine",
       "P2-C/P2-D/P2-E and P3"
     ]
+  },
+  "prePrCorrelation": {
+    "mainShaAtImplementationStart": "b35c86dfc9e038c629377d0d9a0761df1a65d663",
+    "p0p1Merge": "402af4bb2db1c199dcaad9a5f911d2fb84db722d",
+    "mainChangesSinceP0P1": "13 commits reviewed; additive Newsfeed ProviderMatrix change retained existing Commodity provider definitions",
+    "openPr": "#517 Legal Consumer Contract Baseline und Preisdrift",
+    "openPrOverlap": "none; #517 changes legal/billing/router/test files only"
+  },
+  "validation": {
+    "hostedCiBeforePr": false,
+    "staticContractReview": "completed",
+    "runtimeAuthorityChanged": false,
+    "productionWeightsActivated": false
   },
   "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
 }
