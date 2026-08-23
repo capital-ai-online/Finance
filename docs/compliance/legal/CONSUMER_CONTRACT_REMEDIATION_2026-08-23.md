@@ -29,7 +29,7 @@ Read-only gegen das produktive CAPITAL-AI Stripe-Konto am 23.08.2026 geprüft:
 | Pro | 29,00 EUR | 248,00 EUR | aktiver recurring Price |
 | Enterprise | 109,00 EUR | 1.280,00 EUR | aktiver recurring Price |
 
-Die Price IDs bleiben Deployment-Konfiguration und werden nicht als zweite Source of Truth im Client dupliziert. Für den öffentlichen Vorvertragspreis existiert `src/platform/Contracts/consumerLegalContracts.ts`; der tatsächlich belastete Betrag bleibt durch den Stripe Price im Checkout bestimmt.
+Die Price IDs bleiben Deployment-Konfiguration und werden nicht als zweite Source of Truth im Client dupliziert. Für den öffentlichen Vorvertragspreis existiert `src/features/billing/billingContract.ts`; der tatsächlich belastete Betrag bleibt durch den Stripe Price im Checkout bestimmt.
 
 ## In diesem Scope umgesetzt
 
@@ -38,7 +38,7 @@ Die Price IDs bleiben Deployment-Konfiguration und werden nicht als zweite Sourc
 - [x] Vertragsbedingungen unterscheiden Preis-/Abrechnungsintervall, Laufzeit/Kündigung und Widerruf klarer.
 - [x] Impressumsdarstellung verwendet § 5 DDG konsistent; der verbliebene TMG-Hinweis im öffentlichen Router wurde entfernt.
 - [x] CAPITAL-AI wird nicht als eigene juristische Person oder regulatorisch lizenzierte Stelle dargestellt.
-- [x] Consumer-facing Contract-Werte werden in `src/platform/Contracts/consumerLegalContracts.ts` versioniert und durch einen Unit-Test gegen unbeabsichtigte Preis-/Versionsdrift geschützt.
+- [x] Consumer-facing Contract-Werte werden in `src/features/billing/billingContract.ts` versioniert und durch einen Unit-Test gegen unbeabsichtigte Preis-/Versionsdrift geschützt.
 - [x] Keine Stripe-, Supabase-, Render- oder sonstige Produktionsmutation in diesem Scope.
 
 ## Noch offene P0-Folgeschritte
@@ -85,9 +85,9 @@ Die AGB enthalten jetzt einen allgemeinen Widerrufshinweis. Vor produktiver rech
 
 ## Architektur-/Governance-Entscheidung
 
-Kein neuer ADR: Dieser Scope ändert keine Trust Boundary, Billing-Architektur oder Datenbankstruktur. Er führt einen expliziten Consumer-Contract innerhalb der bereits kanonischen `src/platform/Contracts`-Grenze ein und dokumentiert die nächsten Runtime-Gates.
+Kein neuer ADR: Dieser Scope ändert keine Trust Boundary, Billing-Architektur oder Datenbankstruktur. Er nutzt den bereits kanonischen Billing-Feature-Slice und dokumentiert die nächsten Runtime-Gates, statt das derzeit unspezifizierte `src/platform/Contracts`-Modul zu aktivieren.
 
-`ESS-0001-CONTRACTS` bleibt die technische Contract-Baseline; `src/platform/Contracts/consumerLegalContracts.ts` ist die scoped, ausführbare Projektion der hier benötigten Legal-/Preiswerte.
+`ESS-0001-CONTRACTS` bleibt die technische Contract-Baseline; `src/features/billing/billingContract.ts` ist die scoped, ausführbare Billing-/Legal-Projektion für die hier benötigten Vertrags- und Vorvertragspreiswerte.
 
 ## Release-/Merge-Gate
 
