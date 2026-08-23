@@ -232,7 +232,7 @@ describe('Equity research runtime', () => {
     ]));
     expect(result.filingComposition?.diagnostics.overriddenFamilies).toEqual(['financialStrength']);
     expect(result.composition.input.families.financialStrength?.componentKeys).toEqual([
-      'financialStrength.currentRatioQuality',
+      'financialStrength.liquidityQuality',
       'financialStrength.debtToEquityQuality',
       'financialStrength.interestCoverageQuality',
     ]);
