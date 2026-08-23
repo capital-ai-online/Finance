@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { Mail, MapPin, Phone, Scale, ShieldCheck } from 'lucide-react';
 import { CONTROLLER } from '../privacy/privacyPolicy';
+import {
+  formatEuro,
+  STRIPE_PRICE_SNAPSHOT_DATE,
+  SUBSCRIPTION_PRICES_EUR,
+  TERMS_EFFECTIVE_DATE,
+  TERMS_VERSION,
+} from '../legal/legalContracts';
 
 export function ImpressumAgb({ initialTab = 'impressum' }: { initialTab?: 'impressum' | 'agb' }) {
   const [activeTab, setActiveTab] = useState<'impressum' | 'agb'>(initialTab);
@@ -42,7 +49,7 @@ export function ImpressumAgb({ initialTab = 'impressum' }: { initialTab?: 'impre
           </div>
 
           <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-xs text-white/65 leading-relaxed">
-            <strong className="text-white">Rechtlicher Status:</strong> CAPITAL-AI ist eine Projekt-/Produktbezeichnung. Anbieter und Verantwortlicher ist Sven Michael Kulessa als Privatperson.
+            <strong className="text-white">Rechtlicher Status:</strong> CAPITAL-AI ist eine Projekt-/Produktbezeichnung. Anbieter und Verantwortlicher ist Sven Michael Kulessa als natürliche Person.
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -100,13 +107,16 @@ export function ImpressumAgb({ initialTab = 'impressum' }: { initialTab?: 'impre
           <div>
             <h1 className="text-lg font-black text-white font-display">Allgemeine Geschäftsbedingungen (AGB)</h1>
             <p className="text-xs text-white/50 mt-1">Vertragliche Rahmenbedingungen für die Nutzung der unter CAPITAL-AI angebotenen Software-Funktionen</p>
+            <p className="text-[10px] text-white/40 mt-2 font-mono">
+              Version {TERMS_VERSION} · gültig ab {TERMS_EFFECTIVE_DATE}
+            </p>
           </div>
 
           <div className="space-y-4 text-xs text-white/70">
             <section className="space-y-1">
               <h2 className="font-bold text-white font-display">§ 1 Anbieter, Geltungsbereich und Vertragsgegenstand</h2>
               <p className="leading-relaxed">
-                Anbieter ist {CONTROLLER.name}, {CONTROLLER.legalStatus}, {CONTROLLER.street}, {CONTROLLER.postalCode} {CONTROLLER.city}, {CONTROLLER.country}. CAPITAL-AI ist die Projekt-/Produktbezeichnung der angebotenen Software-Funktionen. Diese AGB gelten für deren Nutzung und, soweit angeboten, für kostenpflichtige Tarife.
+                Anbieter ist {CONTROLLER.name}, natürliche Person, {CONTROLLER.street}, {CONTROLLER.postalCode} {CONTROLLER.city}, {CONTROLLER.country}. CAPITAL-AI ist die Projekt-/Produktbezeichnung der angebotenen Software-Funktionen. Diese AGB gelten für deren Nutzung und, soweit angeboten, für kostenpflichtige Tarife.
               </p>
             </section>
 
@@ -117,30 +127,70 @@ export function ImpressumAgb({ initialTab = 'impressum' }: { initialTab?: 'impre
               </p>
             </section>
 
-            <section className="space-y-1">
-              <h2 className="font-bold text-white font-display">§ 3 Entgeltliche Tarife und Zahlungsabwicklung</h2>
+            <section className="space-y-2">
+              <h2 className="font-bold text-white font-display">§ 3 Entgeltliche Tarife, Preise und Zahlungsabwicklung</h2>
               <p className="leading-relaxed">
-                Soweit kostenpflichtige Tarife angeboten werden, ergeben sich Preis, Laufzeit und Leistungsumfang aus dem jeweiligen Bestellprozess. Die Zahlungsabwicklung kann über externe Zahlungsdienstleister wie Stripe erfolgen. Datenschutzinformationen hierzu stehen in der Datenschutzerklärung.
+                Bei kostenpflichtigen Tarifen werden Preis, Abrechnungsintervall und Leistungsumfang vor Abgabe der zahlungspflichtigen Bestellung angezeigt. Die Zahlungsabwicklung erfolgt über Stripe. Der im Stripe-Checkout für den ausgewählten Preis ausgewiesene Gesamtbetrag ist für die konkrete Bestellung maßgeblich.
+              </p>
+              <div className="overflow-x-auto rounded-lg border border-white/10 bg-white/[0.02]">
+                <table className="w-full min-w-[460px] text-left text-[11px]">
+                  <thead className="border-b border-white/10 text-white/50 font-mono uppercase">
+                    <tr>
+                      <th className="px-3 py-2">Tarif</th>
+                      <th className="px-3 py-2">Monatlich</th>
+                      <th className="px-3 py-2">Jährlich</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-white/75">
+                    <tr><td className="px-3 py-2 font-bold text-white">Starter</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.monthly)}</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.yearly)}</td></tr>
+                    <tr><td className="px-3 py-2 font-bold text-white">Pro</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.monthly)}</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.yearly)}</td></tr>
+                    <tr><td className="px-3 py-2 font-bold text-white">Enterprise</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.monthly)}</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.yearly)}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[10px] text-white/40 font-mono">
+                Preisstand: produktiver Stripe-Katalog, read-only verifiziert am {STRIPE_PRICE_SNAPSHOT_DATE}. Preisänderungen gelten nicht rückwirkend für bereits abgerechnete Zeiträume.
               </p>
             </section>
 
             <section className="space-y-1">
-              <h2 className="font-bold text-white font-display">§ 4 Daten- und Analysequalität</h2>
+              <h2 className="font-bold text-white font-display">§ 4 Laufzeit, Verlängerung und Kündigung</h2>
+              <p className="leading-relaxed">
+                Bei Abonnements richtet sich die Abrechnungsperiode nach der im Bestellprozess gewählten Monats- oder Jahresoption. Soweit im Bestellprozess nichts Abweichendes ausgewiesen wird, verlängert sich das Abonnement um die jeweils gewählte Abrechnungsperiode, sofern es nicht rechtzeitig beendet wird. Für authentifizierte Kunden steht zur Verwaltung des Abonnements das Stripe-Kundenportal zur Verfügung. Gesetzliche Kündigungsrechte und zwingende verbraucherschützende Regelungen bleiben unberührt.
+              </p>
+            </section>
+
+            <section className="space-y-1">
+              <h2 className="font-bold text-white font-display">§ 5 Widerruf bei Verbraucherverträgen</h2>
+              <p className="leading-relaxed">
+                Verbrauchern steht bei Fernabsatzverträgen, soweit die gesetzlichen Voraussetzungen vorliegen, grundsätzlich ein Widerrufsrecht zu. Die gesetzliche Widerrufsfrist beträgt regelmäßig 14 Tage. Der Widerruf ist durch eine eindeutige Erklärung gegenüber dem Anbieter möglich und bedarf keiner Begründung. Für eine elektronische Erklärung kann die Kontaktadresse <a href={`mailto:${CONTROLLER.email}`} className="text-aif-gold-DEFAULT hover:underline">{CONTROLLER.email}</a> verwendet werden. Gesetzliche Ausnahmen, Erlöschensgründe und weitergehende Rechte bleiben unberührt.
+              </p>
+            </section>
+
+            <section className="space-y-1">
+              <h2 className="font-bold text-white font-display">§ 6 Daten- und Analysequalität</h2>
               <p className="leading-relaxed">
                 Markt-, Scoring- und Analysefunktionen können von externen Datenquellen, Modellannahmen und technischen Verfügbarkeiten abhängen. Synthetische, Fallback- oder nicht marktdatenbasierte Werte sind in den dafür vorgesehenen Produktbereichen entsprechend zu kennzeichnen.
               </p>
             </section>
 
             <section className="space-y-1">
-              <h2 className="font-bold text-white font-display">§ 5 Datenschutz und Sicherheit</h2>
+              <h2 className="font-bold text-white font-display">§ 7 Datenschutz und Sicherheit</h2>
               <p className="leading-relaxed">
                 Personenbezogene Daten werden nach der veröffentlichten Datenschutzerklärung verarbeitet. Die Kenntnisnahme der Datenschutzerklärung ist keine pauschale Einwilligung in sämtliche Verarbeitungen. Optionale Einwilligungen, insbesondere Marketing- oder Tracking-Einwilligungen, werden getrennt eingeholt.
+              </p>
+            </section>
+
+            <section className="space-y-1">
+              <h2 className="font-bold text-white font-display">§ 8 Änderungen und Dokumentversion</h2>
+              <p className="leading-relaxed">
+                Für die Nachvollziehbarkeit wird jeder veröffentlichte AGB-Stand mit einer Dokumentversion geführt. Änderungen dieser AGB werden nicht allein durch die Veröffentlichung rückwirkend Bestandteil bereits geschlossener Verträge; zwingende gesetzliche Vorgaben und wirksam vereinbarte Änderungsmechanismen bleiben unberührt.
               </p>
             </section>
           </div>
 
           <div className="pt-4 border-t border-white/5 text-[10px] text-white/40 font-mono flex items-center justify-center gap-2">
-            <ShieldCheck size={12} /> Vertrags- und Datenschutzinformationen werden getrennt versioniert und nachweisbar geführt.
+            <ShieldCheck size={12} /> AGB-Version {TERMS_VERSION}; Datenschutzinformationen werden separat versioniert und nachweisbar geführt.
           </div>
         </div>
       )}
