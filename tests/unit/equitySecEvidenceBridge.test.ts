@@ -84,6 +84,7 @@ describe('Equity SEC evidence bridge', () => {
       'capitalExpenditure',
     ]));
     expect(result.ignoredFields).toEqual(expect.arrayContaining(['sharesOutstanding', 'revenue']));
+    expect(result.rejectedContextFields).toEqual([]);
     expect(result.snapshot.facts.currentAssets?.evidence.providerId).toBe('sec-edgar');
     expect(result.derived.metrics.currentRatio?.value).toBe(1.5);
     expect(result.derived.metrics.freeCashFlowYtd?.value).toBe(80);
@@ -98,5 +99,29 @@ describe('Equity SEC evidence bridge', () => {
     expect(result.mappedFields).toEqual([]);
     expect(result.snapshot.facts).toEqual({});
     expect(result.derived.metrics).toEqual({});
+  });
+
+  it('verwirft einen als periodic markierten 10-Q-Fact mit YTD-Dauer fail-closed', () => {
+    const sec = secResult();
+    const badOperatingIncome = {
+      ...secFact('operatingIncome', 80, 'periodic'),
+      periodStart: '2026-01-01T00:00:00.000Z',
+    };
+    const quarterlyInterestExpense = secFact('interestExpense', 10, 'periodic');
+    const malformed: SecEdgarCompanyFactsResult = {
+      ...sec,
+      facts: {
+        ...sec.facts,
+        operatingIncome: badOperatingIncome,
+        interestExpense: quarterlyInterestExpense,
+      },
+    };
+
+    const result = bridgeSecCompanyFactsToEquityFilingEvidence(malformed, 'stock:MSFT');
+
+    expect(result.rejectedContextFields).toContain('operatingIncome');
+    expect(result.mappedFields).toContain('interestExpense');
+    expect(result.snapshot.facts.operatingIncome).toBeUndefined();
+    expect(result.derived.metrics.interestCoverage).toBeUndefined();
   });
 });
