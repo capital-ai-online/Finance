@@ -1,6 +1,8 @@
 import { getAssetCatalogEntry } from '../lib/assetSearchCatalog';
-import { recordMarketDataProviderOutcome } from './marketDataProviderRouter';
-import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
+import { HistoryProviderRegistry } from '../platform/MarketData/HistoryProviderRegistry';
+import { MarketDataHistoryGateway } from '../platform/MarketData/MarketDataHistoryGateway';
+import { ResearchEvidenceProviderHttp } from '../platform/MarketData/providers/ResearchEvidenceProviderHttp';
+import { TwelveDataCommodityHistoryProvider } from '../platform/MarketData/providers/TwelveDataCommodityHistoryProvider';
 
 export const COMMODITY_MARKET_EVIDENCE_VERSION = 'commodity-market-evidence/1.0.0' as const;
 
@@ -12,7 +14,9 @@ export interface CommodityEvidencePoint {
 export interface CommodityMarketEvidence {
   version: typeof COMMODITY_MARKET_EVIDENCE_VERSION;
   symbol: string;
-  provider: 'TwelveData';
+  /** Provider display name; intentionally provider-neutral at the contract level. */
+  provider: string;
+  providerId: string;
   providerSymbol: string;
   providerName: string;
   points: CommodityEvidencePoint[];
@@ -38,9 +42,9 @@ export interface CommodityEvidenceOptions {
 
 const CATALOG_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 let catalogCache: { fetchedAt: number; items: TwelveCommodityReference[] } | null = null;
+let productionTransport: ResearchEvidenceProviderHttp | null = null;
 
-// Explicit mappings are limited to symbols that are documented by Twelve Data or are already
-// canonical spot symbols. All other catalog entries must pass provider-catalog discovery.
+// Explicit mappings are identity mappings only. They are not evidence and never provide a price.
 const APPROVED_STATIC_COMMODITY_SYMBOLS: Record<string, string> = {
   GLD: 'XAU/USD',
   SLV: 'XAG/USD',
@@ -75,33 +79,31 @@ function similarity(targetName: string, providerName: string): number {
   return intersection / Math.max(target.size, provider.size);
 }
 
-async function fetchJsonWithTimeout(
-  url: string,
-  options: CommodityEvidenceOptions,
-): Promise<any> {
-  const fetchImpl = options.fetchImpl ?? fetch;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 5_000);
-  try {
-    const response = await fetchImpl(url, {
-      signal: controller.signal,
-      headers: { Accept: 'application/json', Authorization: `apikey ${options.apiKey ?? process.env.TWELVEDATA_API_KEY ?? ''}` },
-    });
-    if (!response.ok) throw new Error(`TwelveData HTTP ${response.status}`);
-    const data: any = await response.json();
-    if (data?.status === 'error') throw new Error(data?.message || 'TwelveData provider error');
-    return data;
-  } finally {
-    clearTimeout(timeout);
-  }
+function commodityTransport(options: CommodityEvidenceOptions): ResearchEvidenceProviderHttp {
+  const injected = Boolean(options.fetchImpl || options.apiKey !== undefined || options.timeoutMs !== undefined || options.nowMs);
+  if (!injected && productionTransport) return productionTransport;
+  const transport = new ResearchEvidenceProviderHttp('twelvedata', 'commodity-history', {
+    baseUrl: 'https://api.twelvedata.com',
+    apiKey: options.apiKey ?? process.env.TWELVEDATA_API_KEY,
+    apiKeyRequired: true,
+    fetchImpl: options.fetchImpl,
+    timeoutMs: options.timeoutMs,
+    nowMs: options.nowMs,
+    authHeaders: key => ({ Authorization: `apikey ${key}` }),
+  });
+  if (!injected) productionTransport = transport;
+  return transport;
 }
 
-async function getCommodityReferenceCatalog(options: CommodityEvidenceOptions): Promise<TwelveCommodityReference[]> {
-  const apiKey = options.apiKey ?? process.env.TWELVEDATA_API_KEY;
-  if (!apiKey) throw new Error('TWELVEDATA_API_KEY is not configured.');
+async function getCommodityReferenceCatalog(
+  options: CommodityEvidenceOptions,
+  transport = commodityTransport(options),
+): Promise<TwelveCommodityReference[]> {
   const now = options.nowMs?.() ?? Date.now();
   if (catalogCache && now - catalogCache.fetchedAt < CATALOG_CACHE_TTL_MS) return catalogCache.items;
-  const data = await fetchJsonWithTimeout('https://api.twelvedata.com/commodities?outputsize=5000', { ...options, apiKey });
+  const response = await transport.requestJson('/commodities?outputsize=5000');
+  if (response.status !== 'READY') throw new Error(response.reason ?? `TwelveData catalog status ${response.status}.`);
+  const data: any = response.data;
   if (!Array.isArray(data?.data)) throw new Error('TwelveData commodities catalog returned no data array.');
   const items = data.data
     .map((item: any) => ({
@@ -118,11 +120,12 @@ async function getCommodityReferenceCatalog(options: CommodityEvidenceOptions): 
 export async function resolveTwelveDataCommodityReference(
   catalogSymbolInput: string,
   options: CommodityEvidenceOptions = {},
+  transport = commodityTransport(options),
 ): Promise<TwelveCommodityReference | null> {
   const catalogSymbol = catalogSymbolInput.toUpperCase().trim();
   const catalogEntry = getAssetCatalogEntry(catalogSymbol);
   if (!catalogEntry || catalogEntry.type !== 'commodity') return null;
-  const references = await getCommodityReferenceCatalog(options);
+  const references = await getCommodityReferenceCatalog(options, transport);
 
   const pinnedSymbol = APPROVED_STATIC_COMMODITY_SYMBOLS[catalogSymbol];
   if (pinnedSymbol) {
@@ -140,8 +143,8 @@ export async function resolveTwelveDataCommodityReference(
   const best = ranked.filter(item => Math.abs(item.score - bestScore) < 1e-9);
   if (best.length === 1) return best[0].item;
 
-  // Multiple spot quotes often differ only by quote currency. For ambiguous commodity names we
-  // accept USD as the canonical research quote; otherwise ambiguity remains fail-closed.
+  // Multiple spot quotes can differ only by quote currency. USD is permitted only when unique;
+  // otherwise identity mapping remains fail-closed.
   const usd = best.filter(result => result.item.symbol.toUpperCase().endsWith('/USD'));
   return usd.length === 1 ? usd[0].item : null;
 }
@@ -151,59 +154,55 @@ export async function getTwelveDataCommodityEvidence(
   days = 90,
   options: CommodityEvidenceOptions = {},
 ): Promise<CommodityMarketEvidence> {
-  const apiKey = options.apiKey ?? process.env.TWELVEDATA_API_KEY;
-  if (!apiKey) throw new Error('TWELVEDATA_API_KEY is not configured.');
   const symbol = catalogSymbolInput.toUpperCase().trim();
-  const reference = await resolveTwelveDataCommodityReference(symbol, { ...options, apiKey });
+  const transport = commodityTransport(options);
+  const reference = await resolveTwelveDataCommodityReference(symbol, options, transport);
   if (!reference) throw new Error(`No unambiguous approved TwelveData commodity mapping is available for ${symbol}.`);
 
   const boundedDays = Math.min(Math.max(days, 20), 365);
-  const sourcePath = 'https://api.twelvedata.com/time_series';
-  const url = `${sourcePath}?symbol=${encodeURIComponent(reference.symbol)}&interval=1day&outputsize=${boundedDays}`;
-  const started = Date.now();
-  try {
-    const data = await fetchJsonWithTimeout(url, { ...options, apiKey });
-    const returnedSymbol = typeof data?.meta?.symbol === 'string' ? data.meta.symbol.trim().toUpperCase() : '';
-    if (returnedSymbol && returnedSymbol !== reference.symbol.toUpperCase()) {
-      throw new Error(`TwelveData identity mismatch: expected ${reference.symbol}, received ${returnedSymbol}.`);
-    }
-    if (typeof data?.meta?.type === 'string' && !data.meta.type.toLowerCase().includes('commodity')) {
-      throw new Error(`TwelveData returned non-commodity instrument type ${data.meta.type}.`);
-    }
-    if (!Array.isArray(data?.values)) throw new Error('TwelveData returned no commodity time-series values.');
-    const points = data.values
-      .map((row: any) => ({
-        date: typeof row?.datetime === 'string' ? row.datetime.slice(0, 10) : '',
-        close: Number(row?.close),
-      }))
-      .filter((point: CommodityEvidencePoint) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.close) && point.close > 0)
-      .sort((a: CommodityEvidencePoint, b: CommodityEvidencePoint) => a.date.localeCompare(b.date))
-      .slice(-boundedDays);
-    if (points.length < 20) throw new Error(`TwelveData returned only ${points.length} valid commodity observations.`);
-    const retrievedAt = new Date(options.nowMs?.() ?? Date.now()).toISOString();
-    const last = points[points.length - 1];
-    const observedAt = `${last.date}T23:59:59.000Z`;
-    recordMarketDataProviderOutcome({ provider: 'TwelveData', success: true, latencyMs: Date.now() - started });
-    recordProviderHealth({ provider: 'TwelveData', capability: 'commodity-history', state: 'healthy', cacheMode: 'live', message: `${reference.symbol}: ${points.length} commodity observations.` });
-    return {
-      version: COMMODITY_MARKET_EVIDENCE_VERSION,
-      symbol,
-      provider: 'TwelveData',
-      providerSymbol: reference.symbol,
-      providerName: reference.name,
-      points,
-      observedAt,
-      retrievedAt,
-      sourcePath,
-      evidenceIds: points.map(point => `commodity:twelvedata:${reference.symbol}:${point.date}`),
-    };
-  } catch (error) {
-    recordMarketDataProviderOutcome({ provider: 'TwelveData', success: false });
-    recordProviderHealth({ provider: 'TwelveData', capability: 'commodity-history', state: 'unavailable', message: error instanceof Error ? error.message : String(error) });
-    throw error;
+  const registry = new HistoryProviderRegistry();
+  registry.register(new TwelveDataCommodityHistoryProvider({
+    providerSymbols: { [symbol]: reference.symbol },
+    transport,
+  }));
+  const gateway = new MarketDataHistoryGateway(registry, options.nowMs ?? Date.now);
+  const response = await gateway.getHistory({
+    symbol,
+    assetClass: 'commodity',
+    correlationId: `commodity-history:${symbol}:${options.nowMs?.() ?? Date.now()}`,
+    maxPoints: boundedDays,
+    barInterval: '1d',
+    allowedProviderIds: ['twelvedata'],
+  });
+  const history = response.history;
+  if (history.qualityState !== 'HISTORICAL' || history.points.length < 20) {
+    throw new Error(history.reason ?? `No governed commodity history is available for ${symbol}.`);
   }
+
+  const points: CommodityEvidencePoint[] = history.points.map(point => ({
+    date: point.timestamp.slice(0, 10),
+    close: point.close,
+  }));
+  const last = points.at(-1)!;
+  const observedAt = `${last.date}T23:59:59.000Z`;
+  const providerId = history.provider;
+  const provider = providerId === 'twelvedata' ? 'TwelveData' : providerId;
+  return {
+    version: COMMODITY_MARKET_EVIDENCE_VERSION,
+    symbol,
+    provider,
+    providerId,
+    providerSymbol: reference.symbol,
+    providerName: reference.name,
+    points,
+    observedAt,
+    retrievedAt: history.receivedAt,
+    sourcePath: 'https://api.twelvedata.com/time_series',
+    evidenceIds: points.map(point => `commodity:${providerId}:${reference.symbol}:${point.date}`),
+  };
 }
 
 export function resetCommodityReferenceCache(): void {
   catalogCache = null;
+  productionTransport = null;
 }
