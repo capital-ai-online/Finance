@@ -32,29 +32,32 @@ export type SecEdgarRawField =
   | 'sharesOutstanding'
   | 'dilutedEps';
 
+export type SecFactContext = 'instant' | 'periodic' | 'ytd';
+
 interface SecMetricDescriptor {
   readonly field: SecEdgarRawField;
   readonly taxonomy: 'us-gaap' | 'dei';
   readonly tags: readonly string[];
   readonly units: readonly string[];
+  readonly context: SecFactContext;
 }
 
 const METRICS: readonly SecMetricDescriptor[] = Object.freeze([
-  { field: 'revenue', taxonomy: 'us-gaap', tags: ['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues', 'SalesRevenueNet'], units: ['USD'] },
-  { field: 'netIncome', taxonomy: 'us-gaap', tags: ['NetIncomeLoss', 'ProfitLoss'], units: ['USD'] },
-  { field: 'operatingIncome', taxonomy: 'us-gaap', tags: ['OperatingIncomeLoss'], units: ['USD'] },
-  { field: 'currentAssets', taxonomy: 'us-gaap', tags: ['AssetsCurrent'], units: ['USD'] },
-  { field: 'currentLiabilities', taxonomy: 'us-gaap', tags: ['LiabilitiesCurrent'], units: ['USD'] },
-  { field: 'shareholdersEquity', taxonomy: 'us-gaap', tags: ['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'], units: ['USD'] },
-  { field: 'longTermDebtCurrent', taxonomy: 'us-gaap', tags: ['LongTermDebtCurrent', 'LongTermDebtAndFinanceLeaseObligationsCurrent'], units: ['USD'] },
-  { field: 'longTermDebtNoncurrent', taxonomy: 'us-gaap', tags: ['LongTermDebtNoncurrent', 'LongTermDebtAndFinanceLeaseObligationsNoncurrent'], units: ['USD'] },
-  { field: 'interestExpense', taxonomy: 'us-gaap', tags: ['InterestExpenseNonOperating', 'InterestAndDebtExpense'], units: ['USD'] },
-  { field: 'operatingCashFlow', taxonomy: 'us-gaap', tags: ['NetCashProvidedByUsedInOperatingActivities'], units: ['USD'] },
-  { field: 'capitalExpenditure', taxonomy: 'us-gaap', tags: ['PaymentsToAcquirePropertyPlantAndEquipment'], units: ['USD'] },
-  { field: 'dividendsPaid', taxonomy: 'us-gaap', tags: ['PaymentsOfDividends', 'PaymentsOfDividendsCommonStock'], units: ['USD'] },
-  { field: 'shareRepurchases', taxonomy: 'us-gaap', tags: ['PaymentsForRepurchaseOfCommonStock'], units: ['USD'] },
-  { field: 'sharesOutstanding', taxonomy: 'dei', tags: ['EntityCommonStockSharesOutstanding'], units: ['shares'] },
-  { field: 'dilutedEps', taxonomy: 'us-gaap', tags: ['EarningsPerShareDiluted'], units: ['USD/shares', 'USD-per-shares'] },
+  { field: 'revenue', taxonomy: 'us-gaap', tags: ['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues', 'SalesRevenueNet'], units: ['USD'], context: 'periodic' },
+  { field: 'netIncome', taxonomy: 'us-gaap', tags: ['NetIncomeLoss', 'ProfitLoss'], units: ['USD'], context: 'periodic' },
+  { field: 'operatingIncome', taxonomy: 'us-gaap', tags: ['OperatingIncomeLoss'], units: ['USD'], context: 'periodic' },
+  { field: 'currentAssets', taxonomy: 'us-gaap', tags: ['AssetsCurrent'], units: ['USD'], context: 'instant' },
+  { field: 'currentLiabilities', taxonomy: 'us-gaap', tags: ['LiabilitiesCurrent'], units: ['USD'], context: 'instant' },
+  { field: 'shareholdersEquity', taxonomy: 'us-gaap', tags: ['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'], units: ['USD'], context: 'instant' },
+  { field: 'longTermDebtCurrent', taxonomy: 'us-gaap', tags: ['LongTermDebtCurrent', 'LongTermDebtAndFinanceLeaseObligationsCurrent'], units: ['USD'], context: 'instant' },
+  { field: 'longTermDebtNoncurrent', taxonomy: 'us-gaap', tags: ['LongTermDebtNoncurrent', 'LongTermDebtAndFinanceLeaseObligationsNoncurrent'], units: ['USD'], context: 'instant' },
+  { field: 'interestExpense', taxonomy: 'us-gaap', tags: ['InterestExpenseNonOperating', 'InterestAndDebtExpense'], units: ['USD'], context: 'periodic' },
+  { field: 'operatingCashFlow', taxonomy: 'us-gaap', tags: ['NetCashProvidedByUsedInOperatingActivities'], units: ['USD'], context: 'ytd' },
+  { field: 'capitalExpenditure', taxonomy: 'us-gaap', tags: ['PaymentsToAcquirePropertyPlantAndEquipment'], units: ['USD'], context: 'ytd' },
+  { field: 'dividendsPaid', taxonomy: 'us-gaap', tags: ['PaymentsOfDividends', 'PaymentsOfDividendsCommonStock'], units: ['USD'], context: 'ytd' },
+  { field: 'shareRepurchases', taxonomy: 'us-gaap', tags: ['PaymentsForRepurchaseOfCommonStock'], units: ['USD'], context: 'ytd' },
+  { field: 'sharesOutstanding', taxonomy: 'dei', tags: ['EntityCommonStockSharesOutstanding'], units: ['shares'], context: 'instant' },
+  { field: 'dilutedEps', taxonomy: 'us-gaap', tags: ['EarningsPerShareDiluted'], units: ['USD/shares', 'USD-per-shares'], context: 'periodic' },
 ]);
 
 interface SecTickerRow {
@@ -79,6 +82,9 @@ interface SelectedFact {
   readonly taxonomy: string;
   readonly tag: string;
   readonly unit: string;
+  readonly context: SecFactContext;
+  readonly tagPriority: number;
+  readonly unitPriority: number;
   readonly row: SecFactUnitRow;
 }
 
@@ -88,6 +94,7 @@ export interface SecEdgarFactEvidence {
   readonly unit: string;
   readonly taxonomy: string;
   readonly tag: string;
+  readonly context: SecFactContext;
   readonly periodStart: string | null;
   readonly periodEnd: string;
   readonly filedAt: string;
@@ -145,42 +152,62 @@ function padCik(value: number | string): string {
   return String(value).replace(/\D/g, '').padStart(10, '0');
 }
 
-function factSortKey(row: SecFactUnitRow): string {
-  return `${row.filed ?? ''}|${row.end ?? ''}|${row.accn ?? ''}`;
+function durationDays(row: SecFactUnitRow): number | null {
+  const start = isoDay(row.start);
+  const end = isoDay(row.end);
+  if (!start || !end) return null;
+  const duration = (Date.parse(end) - Date.parse(start)) / 86_400_000;
+  return Number.isFinite(duration) && duration >= 0 ? duration : null;
 }
 
-function latestFact(
-  body: any,
-  descriptor: SecMetricDescriptor,
-  asOfMs: number,
-): SelectedFact | null {
+function contextRank(candidate: SelectedFact): number {
+  const duration = durationDays(candidate.row);
+  if (candidate.context === 'instant') return duration === null ? 0 : 100_000 + duration;
+  if (duration === null) return 90_000;
+  if (candidate.context === 'ytd') return -duration;
+
+  const annual = candidate.row.form === '10-K' || candidate.row.form === '10-K/A';
+  const target = annual ? 365 : 91;
+  const frameBonus = candidate.row.frame ? -5 : 0;
+  return Math.abs(duration - target) + frameBonus;
+}
+
+function compareCandidates(a: SelectedFact, b: SelectedFact): number {
+  const filed = String(b.row.filed).localeCompare(String(a.row.filed));
+  if (filed !== 0) return filed;
+  const end = String(b.row.end).localeCompare(String(a.row.end));
+  if (end !== 0) return end;
+  const accession = String(b.row.accn).localeCompare(String(a.row.accn));
+  if (accession !== 0) return accession;
+  const context = contextRank(a) - contextRank(b);
+  if (context !== 0) return context;
+  if (a.tagPriority !== b.tagPriority) return a.tagPriority - b.tagPriority;
+  return a.unitPriority - b.unitPriority;
+}
+
+function latestFact(body: any, descriptor: SecMetricDescriptor, asOfMs: number): SelectedFact | null {
   const candidates: SelectedFact[] = [];
-  for (const tag of descriptor.tags) {
+  descriptor.tags.forEach((tag, tagPriority) => {
     const concept = body?.facts?.[descriptor.taxonomy]?.[tag];
-    if (!concept?.units || typeof concept.units !== 'object') continue;
-    for (const unit of descriptor.units) {
+    if (!concept?.units || typeof concept.units !== 'object') return;
+    descriptor.units.forEach((unit, unitPriority) => {
       const rows = concept.units[unit];
-      if (!Array.isArray(rows)) continue;
+      if (!Array.isArray(rows)) return;
       for (const row of rows as SecFactUnitRow[]) {
         if (!finiteValue(row.val) || !row.accn || !row.form || !row.filed || !row.end) continue;
         if (!ALLOWED_FORMS.has(row.form)) continue;
         const filedAt = isoDay(row.filed);
         const periodEnd = isoDay(row.end);
         if (!filedAt || !periodEnd || Date.parse(filedAt) > asOfMs) continue;
-        candidates.push({ taxonomy: descriptor.taxonomy, tag, unit, row });
+        candidates.push({ taxonomy: descriptor.taxonomy, tag, unit, context: descriptor.context, tagPriority, unitPriority, row });
       }
-    }
-  }
-  candidates.sort((a, b) => factSortKey(b.row).localeCompare(factSortKey(a.row)));
+    });
+  });
+  candidates.sort(compareCandidates);
   return candidates[0] ?? null;
 }
 
-function sourceFailure(
-  symbol: string,
-  evaluatedAt: string,
-  reason: string,
-  cik: string | null = null,
-): SecEdgarCompanyFactsResult {
+function sourceFailure(symbol: string, evaluatedAt: string, reason: string, cik: string | null = null): SecEdgarCompanyFactsResult {
   return Object.freeze({
     contractVersion: SEC_EDGAR_EVIDENCE_VERSION,
     status: 'SOURCE_UNAVAILABLE' as const,
@@ -238,15 +265,11 @@ export class SecEdgarCompanyFactsAdapter {
       const timeout = setTimeout(() => controller.abort(), this.requestTimeoutMs);
       try {
         const response = await this.fetchImpl(url, {
-          headers: {
-            Accept: 'application/json',
-            'User-Agent': this.userAgent,
-          },
+          headers: { Accept: 'application/json', 'User-Agent': this.userAgent },
           signal: controller.signal,
         });
         if (!response.ok) throw new Error(`SEC_EDGAR_HTTP_${response.status}`);
-        const body = await response.json();
-        return { body, retrievedAt: new Date(this.nowMs()).toISOString() };
+        return { body: await response.json(), retrievedAt: new Date(this.nowMs()).toISOString() };
       } finally {
         clearTimeout(timeout);
       }
@@ -264,11 +287,7 @@ export class SecEdgarCompanyFactsAdapter {
       if (!row || typeof row.ticker !== 'string' || !Number.isFinite(row.cik_str)) continue;
       map.set(row.ticker.toUpperCase().trim(), row);
     }
-    this.tickerCache = {
-      value: map,
-      retrievedAt: response.retrievedAt,
-      expiresAt: now + this.tickerCacheTtlMs,
-    };
+    this.tickerCache = { value: map, retrievedAt: response.retrievedAt, expiresAt: now + this.tickerCacheTtlMs };
     return this.tickerCache;
   }
 
@@ -277,11 +296,7 @@ export class SecEdgarCompanyFactsAdapter {
     const cached = this.factsCache.get(cik);
     if (cached && cached.expiresAt > now) return cached;
     const response = await this.requestJson(`${SEC_COMPANYFACTS_BASE}/CIK${cik}.json`);
-    const entry = {
-      value: response.body,
-      retrievedAt: response.retrievedAt,
-      expiresAt: now + this.factsCacheTtlMs,
-    };
+    const entry = { value: response.body, retrievedAt: response.retrievedAt, expiresAt: now + this.factsCacheTtlMs };
     this.factsCache.set(cik, entry);
     return entry;
   }
@@ -331,6 +346,7 @@ export class SecEdgarCompanyFactsAdapter {
           unit: selected.unit,
           taxonomy: selected.taxonomy,
           tag: selected.tag,
+          context: selected.context,
           periodStart,
           periodEnd,
           filedAt,
@@ -344,11 +360,7 @@ export class SecEdgarCompanyFactsAdapter {
             field: descriptor.field,
             observedAt: filedAt,
             retrievedAt: companyFacts.retrievedAt,
-            freshness: {
-              ageMs,
-              maxAgeMs: SEC_EDGAR_FUNDAMENTAL_MAX_AGE_MS,
-              evaluatedAt,
-            },
+            freshness: { ageMs, maxAgeMs: SEC_EDGAR_FUNDAMENTAL_MAX_AGE_MS, evaluatedAt },
             contractVersion: MARKET_EVIDENCE_DQ_CONTRACT_VERSION,
             qualityStatus,
             evidenceRef,
