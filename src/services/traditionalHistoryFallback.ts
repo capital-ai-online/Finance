@@ -1,11 +1,23 @@
-import { fetchExternalHistory, isExternalProviderConfigured, type ExternalMarketDataProvider } from './externalMarketDataAdapters';
+import {
+  fetchExternalHistory,
+  isExternalProviderConfigured,
+  type ExternalHistoryPoint,
+  type ExternalMarketDataProvider,
+} from './externalMarketDataAdapters';
 import { MARKET_DATA_PROVIDER_REGISTRY } from './marketDataProviderRegistry';
 import { rankMarketDataProviders, recordMarketDataProviderOutcome } from './marketDataProviderRouter';
 import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
 
 export interface VerifiedTraditionalFallbackHistory {
   provider: 'TwelveData' | 'EODHD';
+  /** Existing compatibility projection used by Traditional scoring. */
   closes: number[];
+  /**
+   * Point-in-time-preserving extension for evidence-aware consumers such as the Equity challenger.
+   * Existing callers may continue using `closes`; no second provider request or history authority is
+   * introduced.
+   */
+  points: ExternalHistoryPoint[];
   sourcePath: string;
   retrievedAt: string;
 }
@@ -28,7 +40,8 @@ export async function getVerifiedTraditionalFallbackHistory(
     const started = Date.now();
     try {
       const result = await fetchExternalHistory(provider as ExternalMarketDataProvider, { symbol, assetClass, days });
-      const closes = result.points.map(point => point.close).filter(value => Number.isFinite(value) && value > 0);
+      const points = result.points.filter(point => Number.isFinite(point.close) && point.close > 0);
+      const closes = points.map(point => point.close);
       if (closes.length < 20) throw new Error(`${provider} returned only ${closes.length} valid closes.`);
       recordMarketDataProviderOutcome({ provider, success: true, latencyMs: Date.now() - started });
       recordProviderHealth({
@@ -38,7 +51,13 @@ export async function getVerifiedTraditionalFallbackHistory(
         cacheMode: 'live',
         message: `${closes.length} verified history points used for ${symbol}.`,
       });
-      return { provider, closes, sourcePath: result.sourcePath, retrievedAt: result.retrievedAt };
+      return {
+        provider,
+        closes,
+        points,
+        sourcePath: result.sourcePath,
+        retrievedAt: result.retrievedAt,
+      };
     } catch (error) {
       recordMarketDataProviderOutcome({ provider, success: false });
       recordProviderHealth({
