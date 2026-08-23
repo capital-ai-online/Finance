@@ -26,9 +26,14 @@ export const DEFAULT_COMMODITY_CORRELATION_POLICY = Object.freeze({
 
 export type CommodityWeightRenormalizationPolicy = 'WITHIN_LATENT_FACTOR_ONLY';
 
+/**
+ * Correlation input MUST already be transformed into deterministic, dimensionless model-ready
+ * values. Raw price/inventory/production levels with heterogeneous units or non-stationary trends
+ * are intentionally excluded by contract because their level-correlation can be spurious.
+ */
 export interface CommodityCorrelationObservation {
   readonly observedAt: string;
-  readonly values: Readonly<Record<string, number | null | undefined>>;
+  readonly normalizedValues: Readonly<Record<string, number | null | undefined>>;
 }
 
 export interface CommodityFeatureCorrelationPair {
@@ -51,11 +56,14 @@ export interface CommodityCorrelationReport {
   readonly modelId: CommodityResearchModelId;
   readonly modelVersion: '0.1.0';
   readonly method: 'pearson';
+  readonly inputSemantic: 'NORMALIZED_FEATURE_VALUE';
+  readonly normalizationContractVersion: string;
   readonly minimumPairedObservations: number;
   readonly highAbsoluteCorrelation: number;
   readonly observations: number;
   readonly pairs: readonly CommodityFeatureCorrelationPair[];
   readonly blockingFindings: readonly string[];
+  readonly evidenceComplete: boolean;
   readonly canonical: false;
   readonly scoreEligible: false;
 }
@@ -174,13 +182,15 @@ function pearson(left: readonly number[], right: readonly number[]): number | nu
 
 /**
  * Pairwise research diagnostic only. It never changes model weights and never emits a score.
- * Correlation is evaluated over feature pairs from the same Commodity model contract. Highly
- * correlated pairs that cross latent-factor boundaries block promotion evidence because they can
- * create hidden double counting even when each factor looks independently reasonable.
+ * Correlation is evaluated over NORMALIZED feature pairs from the same Commodity model contract.
+ * Highly correlated pairs that cross latent-factor boundaries block promotion evidence because
+ * they can create hidden double counting. Cross-factor pairs without sufficient usable history
+ * also fail closed: absence of correlation evidence is not evidence of independence.
  */
 export function analyzeCommodityFeatureCorrelation(input: {
   readonly modelId: CommodityResearchModelId;
   readonly observations: readonly CommodityCorrelationObservation[];
+  readonly normalizationContractVersion: string;
   readonly minimumPairedObservations?: number;
   readonly highAbsoluteCorrelation?: number;
 }): CommodityCorrelationReport {
@@ -190,6 +200,9 @@ export function analyzeCommodityFeatureCorrelation(input: {
   const highAbsoluteCorrelation = input.highAbsoluteCorrelation
     ?? DEFAULT_COMMODITY_CORRELATION_POLICY.highAbsoluteCorrelation;
 
+  if (!input.normalizationContractVersion.trim()) {
+    throw new Error('COMMODITY_CORRELATION_NORMALIZATION_CONTRACT_REQUIRED');
+  }
   if (!Number.isInteger(minimumPairedObservations) || minimumPairedObservations < 3) {
     throw new Error('COMMODITY_CORRELATION_MIN_OBSERVATIONS_INVALID');
   }
@@ -208,8 +221,8 @@ export function analyzeCommodityFeatureCorrelation(input: {
       const rightValues: number[] = [];
 
       for (const observation of input.observations) {
-        const leftValue = observation.values[leftDefinition.key];
-        const rightValue = observation.values[rightDefinition.key];
+        const leftValue = observation.normalizedValues[leftDefinition.key];
+        const rightValue = observation.normalizedValues[rightDefinition.key];
         if (finite(leftValue) && finite(rightValue)) {
           leftValues.push(leftValue);
           rightValues.push(rightValue);
@@ -242,22 +255,33 @@ export function analyzeCommodityFeatureCorrelation(input: {
     }
   }
 
-  const blockingFindings = pairs
-    .filter(pair => pair.highCorrelation && pair.crossLatentFactor)
-    .map(pair => (
-      `HIGH_CROSS_FACTOR_CORRELATION:${pair.leftFeature}<->${pair.rightFeature}:${String(pair.correlation)}`
-    ));
+  const blockingFindings = pairs.flatMap(pair => {
+    if (!pair.crossLatentFactor) return [];
+    if (pair.status === 'INSUFFICIENT_DATA') {
+      return [`CORRELATION_DATA_INSUFFICIENT:${pair.leftFeature}<->${pair.rightFeature}:${pair.pairedObservations}`];
+    }
+    if (pair.status === 'CONSTANT_SERIES') {
+      return [`CORRELATION_SERIES_CONSTANT:${pair.leftFeature}<->${pair.rightFeature}`];
+    }
+    if (pair.highCorrelation) {
+      return [`HIGH_CROSS_FACTOR_CORRELATION:${pair.leftFeature}<->${pair.rightFeature}:${String(pair.correlation)}`];
+    }
+    return [];
+  });
 
   return Object.freeze({
     contractVersion: COMMODITY_CORRELATION_POLICY_VERSION,
     modelId: model.modelId,
     modelVersion: model.modelVersion,
     method: 'pearson',
+    inputSemantic: 'NORMALIZED_FEATURE_VALUE',
+    normalizationContractVersion: input.normalizationContractVersion,
     minimumPairedObservations,
     highAbsoluteCorrelation,
     observations: input.observations.length,
     pairs: Object.freeze(pairs),
     blockingFindings: Object.freeze(blockingFindings),
+    evidenceComplete: blockingFindings.length === 0,
     canonical: false,
     scoreEligible: false,
   });
@@ -436,7 +460,7 @@ export function assessCommodityWeightPromotionEvidence(input: {
   const blockers: string[] = [];
   if (!input.weightValidation.valid) blockers.push(...input.weightValidation.blockers);
   if (!input.correlationReport) blockers.push('CORRELATION_EVIDENCE_MISSING');
-  else if (input.correlationReport.blockingFindings.length > 0) blockers.push(...input.correlationReport.blockingFindings);
+  else if (!input.correlationReport.evidenceComplete) blockers.push(...input.correlationReport.blockingFindings);
   if (!input.stabilityReport || input.stabilityReport.findings.length === 0) blockers.push('SENSITIVITY_EVIDENCE_MISSING');
   if (!input.backtestRunId?.trim()) blockers.push('POINT_IN_TIME_BACKTEST_EVIDENCE_MISSING');
 
