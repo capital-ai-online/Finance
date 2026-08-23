@@ -10,6 +10,10 @@ import {
   type EquityFilingFeatureCompositionResult,
 } from '../src/platform/Scoring/EquityFilingFeatureComposer';
 import {
+  augmentEquityResearchWithComparableFilings,
+  type EquityComparableFilingFeatureResult,
+} from '../src/platform/Scoring/EquityComparableFilingFeatureComposer';
+import {
   orchestrateEquityResearch,
   type EquityOrchestratorResearchResult,
 } from '../src/platform/Scoring/EquityOrchestrator';
@@ -31,8 +35,13 @@ import {
   bridgeSecCompanyFactsToEquityFilingEvidence,
   type EquitySecEvidenceBridgeResult,
 } from './equitySecEvidenceBridge';
+import {
+  bridgeSecComparableEvidence,
+  buildPriorComparableAsOf,
+  type EquitySecComparableEvidenceResult,
+} from './equitySecComparableEvidence';
 
-export const EQUITY_RESEARCH_RUNTIME_VERSION = 'equity-research-runtime/0.2.0' as const;
+export const EQUITY_RESEARCH_RUNTIME_VERSION = 'equity-research-runtime/0.3.0' as const;
 export const EQUITY_RESEARCH_HISTORY_WINDOW_DAYS = 365 as const;
 
 const DEFAULT_SEC_ADAPTER = new SecEdgarCompanyFactsAdapter();
@@ -45,7 +54,7 @@ export interface EquityResearchRuntimeDependencies {
     assetClass: 'stock',
     days: number,
   ) => Promise<VerifiedTraditionalFallbackHistory | null>;
-  /** Optional for deterministic tests; production default is the governed SEC CompanyFacts adapter. */
+  /** Optional for deterministic tests; production default is the governed cached SEC CompanyFacts adapter. */
   readonly fetchSecEvidence?: (symbol: string, asOf: string) => Promise<SecEdgarCompanyFactsResult>;
   readonly now: () => string;
 }
@@ -56,9 +65,14 @@ export interface EquityResearchRuntimeResult {
   readonly historyProvider: VerifiedTraditionalFallbackHistory['provider'] | null;
   readonly secStatus: SecEdgarCompanyFactsResult['status'] | 'NOT_REQUESTED';
   readonly secCik: string | null;
+  readonly priorSecStatus: SecEdgarCompanyFactsResult['status'] | 'NOT_REQUESTED';
+  readonly priorSecAsOf: string | null;
   readonly composition: EquityFeatureCompositionResult;
   readonly secBridge: EquitySecEvidenceBridgeResult | null;
+  readonly priorSecBridge: EquitySecEvidenceBridgeResult | null;
   readonly filingComposition: EquityFilingFeatureCompositionResult | null;
+  readonly comparableEvidence: EquitySecComparableEvidenceResult | null;
+  readonly comparableComposition: EquityComparableFilingFeatureResult | null;
   readonly orchestration: EquityOrchestratorResearchResult;
   readonly scoreEligible: false;
   readonly executionEligible: false;
@@ -90,13 +104,26 @@ function historySnapshot(history: VerifiedTraditionalFallbackHistory | null): Eq
   });
 }
 
+function composeDiagnostics(
+  base: EquityFeatureCompositionResult,
+  families: EquityResearchRuntimeResult['composition']['input']['families'],
+  warnings: readonly string[],
+): EquityFeatureCompositionResult['diagnostics'] {
+  return Object.freeze({
+    ...base.diagnostics,
+    composedFamilies: Object.freeze(Object.keys(families) as EquityFactorFamily[]),
+    warnings: Object.freeze([...base.diagnostics.warnings, ...warnings]),
+  });
+}
+
 /**
  * Research-only application adapter for the Equity challenger.
  *
  * Provider I/O stays outside `EquityFeatureComposer`, `EquityResearchScoring` and
- * `EquityOrchestrator`. The runtime reuses the existing AlphaVantage/FMP fundamentals path,
- * provenance-aware TwelveData/EODHD history routing and the governed SEC CompanyFacts evidence
- * adapter. Filing evidence is converted into provider-neutral contracts before feature composition.
+ * `EquityOrchestrator`. The runtime reuses existing AlphaVantage/FMP fundamentals, provenance-aware
+ * TwelveData/EODHD history and one governed cached SEC CompanyFacts adapter. A second historical
+ * `fetchEvidence(asOf=...)` call reuses that same adapter/cache and therefore does not create a second
+ * SEC provider authority or endpoint.
  *
  * No HTTP route, persistence writer, ranking authority, CanonicalScoreResult or productive model
  * promotion is created here. AssetRegistry simulated history is not a dependency.
@@ -112,18 +139,14 @@ export async function runEquityResearchChallenger(
   const evaluatedAt = dependencies.now();
 
   const historyPromise = dependencies.getVerifiedHistory(symbol, 'stock', EQUITY_RESEARCH_HISTORY_WINDOW_DAYS);
-  const secPromise = dependencies.fetchSecEvidence
+  const currentSecPromise = dependencies.fetchSecEvidence
     ? dependencies.fetchSecEvidence(symbol, evaluatedAt)
     : Promise.resolve<SecEdgarCompanyFactsResult | null>(null);
 
   await dependencies.ensureFundamentalsFresh(symbol);
-  const [history, secEvidence] = await Promise.all([historyPromise, secPromise]);
+  const [history, secEvidence] = await Promise.all([historyPromise, currentSecPromise]);
   const fundamentals = dependencies.getCachedFundamentals(symbol) ?? emptyFundamentals();
-  const asset = createUniversalAssetIdentity({
-    symbol,
-    assetClass: 'stock',
-    source: 'request',
-  });
+  const asset = createUniversalAssetIdentity({ symbol, assetClass: 'stock', source: 'request' });
 
   const baseComposition = composeEquityResearchInput({
     assetId: asset.assetId,
@@ -144,19 +167,48 @@ export async function runEquityResearchChallenger(
     })
     : null;
 
-  const composition: EquityFeatureCompositionResult = filingComposition
-    ? Object.freeze({
-      input: filingComposition.input,
-      diagnostics: Object.freeze({
-        ...baseComposition.diagnostics,
-        composedFamilies: Object.freeze(Object.keys(filingComposition.input.families) as EquityFactorFamily[]),
-        warnings: Object.freeze([
-          ...baseComposition.diagnostics.warnings,
-          ...filingComposition.diagnostics.warnings,
-        ]),
-      }),
+  const priorSpec = secEvidence && dependencies.fetchSecEvidence
+    ? buildPriorComparableAsOf(secEvidence)
+    : null;
+  const priorSecEvidence = priorSpec && dependencies.fetchSecEvidence
+    ? await dependencies.fetchSecEvidence(symbol, priorSpec.priorAsOf)
+    : null;
+  const priorSecBridge = priorSecEvidence
+    ? bridgeSecCompanyFactsToEquityFilingEvidence(priorSecEvidence, asset.assetId)
+    : null;
+
+  const comparableEvidence = secEvidence && secBridge && priorSecEvidence && priorSecBridge && priorSpec
+    ? bridgeSecComparableEvidence({
+      assetId: asset.assetId,
+      currentSec: secEvidence,
+      priorSec: priorSecEvidence,
+      currentBridge: secBridge,
+      priorBridge: priorSecBridge,
+      targetPriorPeriodEnd: priorSpec.targetPriorPeriodEnd,
+      priorAsOf: priorSpec.priorAsOf,
     })
-    : baseComposition;
+    : null;
+
+  const comparableComposition = filingComposition && comparableEvidence && secBridge
+    ? augmentEquityResearchWithComparableFilings({
+      base: filingComposition,
+      comparable: comparableEvidence.metrics,
+      currentFiling: secBridge.snapshot,
+      currentDerived: secBridge.derived,
+    })
+    : null;
+
+  const finalInput = comparableComposition?.input
+    ?? filingComposition?.input
+    ?? baseComposition.input;
+  const additionalWarnings = [
+    ...(filingComposition?.diagnostics.warnings ?? []),
+    ...(comparableComposition?.diagnostics.warnings ?? []),
+  ];
+  const composition: EquityFeatureCompositionResult = Object.freeze({
+    input: finalInput,
+    diagnostics: composeDiagnostics(baseComposition, finalInput.families, additionalWarnings),
+  });
   const orchestration = orchestrateEquityResearch(asset, composition.input);
 
   return Object.freeze({
@@ -165,9 +217,14 @@ export async function runEquityResearchChallenger(
     historyProvider: history?.provider ?? null,
     secStatus: secEvidence?.status ?? 'NOT_REQUESTED',
     secCik: secEvidence?.cik ?? null,
+    priorSecStatus: priorSecEvidence?.status ?? 'NOT_REQUESTED',
+    priorSecAsOf: priorSpec?.priorAsOf ?? null,
     composition,
     secBridge,
+    priorSecBridge,
     filingComposition,
+    comparableEvidence,
+    comparableComposition,
     orchestration,
     scoreEligible: false as const,
     executionEligible: false as const,
