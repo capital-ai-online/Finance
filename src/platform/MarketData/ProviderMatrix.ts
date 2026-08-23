@@ -12,7 +12,7 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.8.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.9.0' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
@@ -240,6 +240,19 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     notes: 'Open-source contract source/bytecode verification lookup. A Sourcify match is verification evidence only and MUST NOT be interpreted as formal verification, audit completion or security PASS.',
   },
   {
+    id: 'free-crypto-news',
+    displayName: 'Free Crypto News (cryptocurrency.cv)',
+    role: 'primary',
+    capabilities: ['news'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 20,
+    rateLimit: { capacity: 30, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Open-source (MIT) keyless REST aggregator (nirholas/cryptocurrency.cv). Primary AI Newsfeed source. Metadata + publisher URL only; no body scrape, no scoring authority.',
+  },
+  {
     id: 'gdelt',
     displayName: 'GDELT DOC 2.0',
     role: 'secondary',
@@ -250,7 +263,7 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 12, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
     gatewayStatus: 'not_wired',
-    notes: 'Keyless article-discovery/provenance source. CAPITAL-AI stores/projects metadata and source links only; publisher content rights remain with publishers.',
+    notes: 'Keyless article-discovery/provenance source. CAPITAL-AI stores/projects metadata and source links only; publisher content rights remain with publishers. Fallback for non-crypto or when free-crypto-news is unavailable.',
   },
   {
     id: 'dune',
