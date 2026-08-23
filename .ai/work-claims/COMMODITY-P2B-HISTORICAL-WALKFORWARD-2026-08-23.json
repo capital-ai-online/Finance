@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "COMMODITY-P2B-HISTORICAL-WALKFORWARD-2026-08-23",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub + Google Drive + Render Connector"
+  },
+  "workItem": "SC-2 Commodity P2-B historical point-in-time dataset validation and walk-forward out-of-sample execution",
+  "workItemDE": "Commodity P2-B historische Point-in-Time-Datensätze und Walk-forward/OOS-Validierung",
+  "startedAt": "2026-08-23T21:58:00.000Z",
+  "baseBranch": "main",
+  "baseSha": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
+  "branch": "feat/commodity-p2b-historical-walkforward-2026-08-23",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/COMMODITY-P2-VALIDATION-FOUNDATION-2026-08-23.json",
+    "src/platform/Scoring/CommodityHistoricalBacktestEngine.ts",
+    "src/platform/Scoring/index.ts",
+    "tests/unit/commodityHistoricalBacktestEngine.test.ts",
+    "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
+    "docs/evidence/sc-md/SC_COMMODITY_P2B_HISTORICAL_WALKFORWARD_2026-08-23.md"
+  ],
+  "ownerDecision": "PR #518 ist gemergt; die nächsten technisch notwendigen Commodity-Orchestrator-Punkte sollen code- und dokumentenbasiert fortgeführt werden. Roadmap-Issues werden in diesem Chat nicht verändert.",
+  "traceability": {
+    "roadmap": "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
+    "adr": ["ADR-0087", "ADR-0101"],
+    "driveSource": "Google Drive Commodity Orchestrator Dokumentation 2026-08-23",
+    "mergedFoundationPr": 518,
+    "mergedFoundationCommit": "14e4f3c8a309faae63fb336a432aac38ab08ceda"
+  },
+  "scopeBoundary": {
+    "included": [
+      "immutable historical dataset contract and validation",
+      "point-in-time factor-to-evidence lineage validation",
+      "walk-forward and expanding-window OOS split planning",
+      "validation-only candidate factor scoring",
+      "OOS portfolio/rank/risk/turnover metrics",
+      "benchmark coverage validation",
+      "deterministic OOS evidence fingerprint"
+    ],
+    "excluded": [
+      "provider network acquisition inside the backtest executor",
+      "production weight activation",
+      "ScoringDispatcher execution changes",
+      "CanonicalScoreResult or Ranking changes",
+      "model champion promotion",
+      "legacy commodity scorer retirement",
+      "P2-C/P2-D/P2-E and P3 runtime changes"
+    ]
+  },
+  "prePrCorrelation": {
+    "mainShaAtImplementationStart": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
+    "openPrAgainstMain": "none",
+    "productionCommitAtStart": "3435db68d15be6c441754c234b2af38b9f370145",
+    "productionMainDrift": 1
+  },
+  "validation": {
+    "hostedCiBeforePr": false,
+    "runtimeAuthorityChanged": false,
+    "productionWeightsActivated": false,
+    "roadmapIssuesMutated": false
+  },
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
