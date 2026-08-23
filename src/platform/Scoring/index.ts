@@ -10,3 +10,5 @@ export * from './CryptoCategoryResearchScoring';
 export * from './CryptoOrchestratorResearchModels';
 export * from './CommodityResearchModelContracts';
 export * from './CommodityCategoryResearchEvaluation';
+export * from './CommodityModelValidation';
+export * from './CommodityBacktestingContracts';
