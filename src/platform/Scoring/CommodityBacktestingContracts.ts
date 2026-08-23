@@ -1,6 +1,7 @@
-import type {
-  CommodityResearchDomain,
-  CommodityResearchModelId,
+import {
+  COMMODITY_RESEARCH_MODEL_CONTRACTS,
+  type CommodityResearchDomain,
+  type CommodityResearchModelId,
 } from './CommodityResearchModelContracts';
 
 export const COMMODITY_BACKTEST_CONTRACT_VERSION = 'commodity-backtest-contract/1.0.0' as const;
@@ -25,12 +26,17 @@ export interface CommodityBacktestRequest {
   readonly minConfidence: number;
   readonly windowMode: CommodityBacktestWindowMode;
   readonly minimumTrainingObservations: number;
-  readonly costAssumptionVersion: typeof COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION;
+  readonly costAssumptionContractVersion: typeof COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION;
+  readonly costAssumptionId: string;
+  readonly costAssumptionVersion: string;
   readonly pointInTimePolicyVersion: typeof COMMODITY_POINT_IN_TIME_POLICY_VERSION;
 }
 
 export interface CommodityBacktestCostAssumptions {
   readonly contractVersion: typeof COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION;
+  readonly assumptionId: string;
+  readonly assumptionVersion: string;
+  readonly effectiveFrom: string;
   readonly commissionBps: number;
   readonly slippageBps: number;
   readonly spreadBps: number;
@@ -100,6 +106,11 @@ export interface CommodityBacktestResult {
   readonly benchmarkIds: readonly string[];
   readonly regimeDiagnostics: Readonly<Record<string, number | null>>;
   readonly domainDiagnostics: Readonly<Record<string, number | null>>;
+  readonly pointInTimeValidated: boolean;
+  readonly costAssumptionsValidated: boolean;
+  readonly outOfSampleValidated: boolean;
+  readonly correlationEvidenceId: string | null;
+  readonly sensitivityEvidenceId: string | null;
   readonly promotionEvidenceEligible: boolean;
   readonly authority: 'VALIDATION_ONLY';
   readonly canonical: false;
@@ -128,10 +139,17 @@ export function validateCommodityBacktestRequest(
   request: CommodityBacktestRequest,
 ): CommodityBacktestRequestValidation {
   const blockers: string[] = [];
+  const model = COMMODITY_RESEARCH_MODEL_CONTRACTS.find(item => item.modelId === request.modelId);
   if (request.contractVersion !== COMMODITY_BACKTEST_CONTRACT_VERSION) blockers.push('BACKTEST_CONTRACT_VERSION_MISMATCH');
   if (request.assetClass !== 'commodity') blockers.push('BACKTEST_ASSET_CLASS_MISMATCH');
+  if (!model) blockers.push('BACKTEST_MODEL_NOT_FOUND');
+  else {
+    if (request.modelVersion !== model.modelVersion) blockers.push('BACKTEST_MODEL_VERSION_MISMATCH');
+    if (!request.domains.includes(model.domain)) blockers.push('BACKTEST_MODEL_DOMAIN_NOT_INCLUDED');
+  }
   if (!request.universeId.trim()) blockers.push('BACKTEST_UNIVERSE_REQUIRED');
   if (request.domains.length === 0) blockers.push('BACKTEST_DOMAIN_REQUIRED');
+  if (new Set(request.domains).size !== request.domains.length) blockers.push('BACKTEST_DOMAIN_DUPLICATE');
   if (!isTimestamp(request.startDate) || !isTimestamp(request.endDate)) blockers.push('BACKTEST_DATE_INVALID');
   else if (Date.parse(request.startDate) >= Date.parse(request.endDate)) blockers.push('BACKTEST_DATE_RANGE_INVALID');
   if (!Number.isInteger(request.holdingPeriodDays) || request.holdingPeriodDays < 1) blockers.push('BACKTEST_HOLDING_PERIOD_INVALID');
@@ -141,7 +159,9 @@ export function validateCommodityBacktestRequest(
     blockers.push('BACKTEST_MIN_TRAINING_OBSERVATIONS_INVALID');
   }
   if (request.pointInTimePolicyVersion !== COMMODITY_POINT_IN_TIME_POLICY_VERSION) blockers.push('POINT_IN_TIME_POLICY_VERSION_MISMATCH');
-  if (request.costAssumptionVersion !== COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION) blockers.push('COST_ASSUMPTION_VERSION_MISMATCH');
+  if (request.costAssumptionContractVersion !== COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION) blockers.push('COST_ASSUMPTION_CONTRACT_VERSION_MISMATCH');
+  if (!request.costAssumptionId.trim()) blockers.push('COST_ASSUMPTION_ID_REQUIRED');
+  if (!request.costAssumptionVersion.trim()) blockers.push('COST_ASSUMPTION_VERSION_REQUIRED');
 
   return Object.freeze({ valid: blockers.length === 0, blockers: Object.freeze(blockers) });
 }
@@ -151,6 +171,9 @@ export function validateCommodityBacktestCostAssumptions(
 ): CommodityBacktestRequestValidation {
   const blockers: string[] = [];
   if (assumptions.contractVersion !== COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION) blockers.push('COST_CONTRACT_VERSION_MISMATCH');
+  if (!assumptions.assumptionId.trim()) blockers.push('COST_ASSUMPTION_ID_REQUIRED');
+  if (!assumptions.assumptionVersion.trim()) blockers.push('COST_ASSUMPTION_VERSION_REQUIRED');
+  if (!isTimestamp(assumptions.effectiveFrom)) blockers.push('COST_ASSUMPTION_EFFECTIVE_FROM_INVALID');
   if (!finiteNonNegative(assumptions.commissionBps)) blockers.push('COMMISSION_BPS_INVALID');
   if (!finiteNonNegative(assumptions.slippageBps)) blockers.push('SLIPPAGE_BPS_INVALID');
   if (!finiteNonNegative(assumptions.spreadBps)) blockers.push('SPREAD_BPS_INVALID');
@@ -220,9 +243,10 @@ export function validateCommodityPointInTimeSnapshot(
 }
 
 /**
- * Result constructor keeps validation output non-authorizing. A future backtest engine may set
- * promotionEvidenceEligible only when request/cost/PIT/OOS checks have already passed; it still
- * cannot promote a Registry challenger or create a CanonicalScoreResult.
+ * Result constructor keeps validation output non-authorizing. Even a complete evidence package is
+ * only eligible for an Owner review; it cannot promote a Registry challenger or create a
+ * CanonicalScoreResult. Every P2 dependency is bound explicitly so a caller cannot accidentally
+ * label an OOS run as promotion evidence without PIT, cost, correlation and sensitivity evidence.
  */
 export function buildCommodityBacktestResult(input: {
   readonly runId: string;
@@ -233,13 +257,21 @@ export function buildCommodityBacktestResult(input: {
   readonly benchmarkIds: readonly string[];
   readonly regimeDiagnostics?: Readonly<Record<string, number | null>>;
   readonly domainDiagnostics?: Readonly<Record<string, number | null>>;
+  readonly pointInTimeValidated: boolean;
+  readonly costAssumptionsValidated: boolean;
   readonly outOfSampleValidated: boolean;
+  readonly correlationEvidenceId: string | null;
+  readonly sensitivityEvidenceId: string | null;
 }): CommodityBacktestResult {
   const requestValidation = validateCommodityBacktestRequest(input.request);
   const promotionEvidenceEligible = requestValidation.valid
     && input.leakageBlockers.length === 0
+    && input.pointInTimeValidated
+    && input.costAssumptionsValidated
     && input.outOfSampleValidated
-    && input.benchmarkIds.length > 0;
+    && input.benchmarkIds.length > 0
+    && Boolean(input.correlationEvidenceId?.trim())
+    && Boolean(input.sensitivityEvidenceId?.trim());
 
   return Object.freeze({
     contractVersion: COMMODITY_BACKTEST_CONTRACT_VERSION,
@@ -251,6 +283,11 @@ export function buildCommodityBacktestResult(input: {
     benchmarkIds: Object.freeze([...input.benchmarkIds]),
     regimeDiagnostics: Object.freeze({ ...(input.regimeDiagnostics ?? {}) }),
     domainDiagnostics: Object.freeze({ ...(input.domainDiagnostics ?? {}) }),
+    pointInTimeValidated: input.pointInTimeValidated,
+    costAssumptionsValidated: input.costAssumptionsValidated,
+    outOfSampleValidated: input.outOfSampleValidated,
+    correlationEvidenceId: input.correlationEvidenceId,
+    sensitivityEvidenceId: input.sensitivityEvidenceId,
     promotionEvidenceEligible,
     authority: 'VALIDATION_ONLY',
     canonical: false,
