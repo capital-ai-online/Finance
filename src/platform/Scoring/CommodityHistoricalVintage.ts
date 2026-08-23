@@ -57,6 +57,10 @@ export interface CommodityHistoricalSourcePolicy {
   readonly note: string;
 }
 
+const pitModes = (
+  ...values: CommodityHistoricalAcquisitionMode[]
+): readonly CommodityHistoricalAcquisitionMode[] => Object.freeze(values);
+
 const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHistoricalSourcePolicy>> = Object.freeze({
   eia: Object.freeze({
     providerId: 'eia',
@@ -64,7 +68,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: true,
     pitRequiresRevisionId: true,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE'),
     note: 'A current EIA API response for an old period does not prove the exact historical vintage that was available at a past decision time.',
   }),
   'usda-fas-psd': Object.freeze({
@@ -73,7 +77,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: true,
     pitRequiresRevisionId: true,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE'),
     note: 'PSD forecasts can revise multiple market years; historical promotion evidence therefore requires an archived release-specific capture.',
   }),
   'cftc-cot': Object.freeze({
@@ -82,7 +86,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: true,
     pitRequiresRevisionId: false,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE'),
     note: 'Report date alone is not release availability. Promotion-grade history requires evidence for the released report artifact and publication time.',
   }),
   'usgs-mcs': Object.freeze({
@@ -91,7 +95,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: true,
     pitRequiresRevisionId: true,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE', 'VERSIONED_ANNUAL_RELEASE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE', 'VERSIONED_ANNUAL_RELEASE'),
     note: 'Each annual/versioned MCS release becomes usable only from its publication/version availability time; old statistic years do not imply earlier availability.',
   }),
   'eu-crma': Object.freeze({
@@ -100,7 +104,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: true,
     pitRequiresRevisionId: true,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE', 'REGULATORY_ASSESSMENT_RELEASE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE', 'REGULATORY_ASSESSMENT_RELEASE'),
     note: 'Economic Importance and Supply Risk values require a versioned assessment/release artifact; the regulation methodology alone is not a numerical historical vintage.',
   }),
   'commodity-market-evidence': Object.freeze({
@@ -109,7 +113,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: false,
     pitRequiresRevisionId: false,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE', 'GOVERNED_MARKET_CAPTURE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE', 'GOVERNED_MARKET_CAPTURE'),
     note: 'Historical market observations require a governed capture/source timestamp and may not be reconstructed from a later mutable payload without lineage.',
   }),
   'governed-futures-curve-evidence': Object.freeze({
@@ -118,7 +122,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: false,
     pitRequiresRevisionId: false,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE', 'GOVERNED_MARKET_CAPTURE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE', 'GOVERNED_MARKET_CAPTURE'),
     note: 'Historical curve legs require governed contract identity and capture-time evidence.',
   }),
   'governed-official-supply-evidence': Object.freeze({
@@ -127,7 +131,7 @@ const SOURCE_POLICIES: Readonly<Record<CommodityHistoricalSourceId, CommodityHis
     pitRequiresAvailabilityEvidence: true,
     pitRequiresReleaseId: true,
     pitRequiresRevisionId: true,
-    supportedPitModes: Object.freeze(['ARCHIVED_RELEASE_CAPTURE', 'VERSIONED_ANNUAL_RELEASE', 'REGULATORY_ASSESSMENT_RELEASE']),
+    supportedPitModes: pitModes('ARCHIVED_RELEASE_CAPTURE', 'VERSIONED_ANNUAL_RELEASE', 'REGULATORY_ASSESSMENT_RELEASE'),
     note: 'Generic supply evidence is PIT-eligible only when the exact underlying official release/version is bound.',
   }),
 });
@@ -506,7 +510,7 @@ export function assembleCommodityHistoricalDataset(
     valid: validation.valid,
     dataset,
     validation,
-    blockers: Object.freeze([...validation.blockers, ...validation.pointInTimeBlockers]),
+    blockers: Object.freeze([...validation.blockers]),
     rejectedVintageIds: Object.freeze([]),
     authority: 'VALIDATION_ONLY',
     canonical: false,
