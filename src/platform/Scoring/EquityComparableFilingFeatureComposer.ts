@@ -10,6 +10,7 @@ import type {
 import type {
   EquityFilingDerivedMetricsResult,
   EquityFilingEvidenceSnapshot,
+  EquityFilingFactInput,
 } from './EquityFilingDerivedMetrics';
 import type { EquityFilingFeatureCompositionResult } from './EquityFilingFeatureComposer';
 import type { EquityFactorFamily } from './EquityModelContracts';
@@ -75,15 +76,14 @@ function currentFilingEvidence(
   snapshot: EquityFilingEvidenceSnapshot,
   fields: readonly string[],
 ): readonly MarketEvidenceQualityRecord[] {
-  const records = Object.values(snapshot.facts)
-    .filter((fact): fact is NonNullable<typeof fact> => Boolean(fact) && fields.includes(fact.field))
-    .map((fact) => fact.evidence)
-    .filter(isAdmissibleMarketEvidence);
-  return uniqueEvidence(records);
+  const facts = Object.values(snapshot.facts).filter(
+    (fact): fact is EquityFilingFactInput => fact !== undefined && fields.includes(fact.field),
+  );
+  return uniqueEvidence(facts.map((fact) => fact.evidence).filter(isAdmissibleMarketEvidence));
 }
 
 function family(components: readonly (Component | null)[], minimumComponents: number): EquityFactorFamilyInput | undefined {
-  const valid = components.filter((component): component is Component => Boolean(component));
+  const valid = components.filter((component): component is Component => component !== null);
   if (valid.length < minimumComponents) return undefined;
   return Object.freeze({
     score: valid.reduce((sum, component) => sum + component.score, 0) / valid.length,
@@ -155,7 +155,7 @@ export function augmentEquityResearchWithComparableFilings(input: {
       'dividendsPaid',
       'shareRepurchases',
     ])
-    : Object.freeze([]);
+    : Object.freeze([] as MarketEvidenceQualityRecord[]);
 
   const capitalAllocation = family([
     comparableComponent(
