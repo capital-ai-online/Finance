@@ -64,14 +64,14 @@ function energyProfile(): CommodityCandidateWeightProfile {
 function correlationObservations() {
   return Array.from({ length: 24 }, (_, index) => ({
     observedAt: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
-    values: {
-      'market.priceHistory': index + 1,
-      'fundamentals.inventoryLevel': (index + 1) * 2,
-      'fundamentals.production': (index + 1) * 3,
-      'fundamentals.supplyDemandBalance': index % 2 === 0 ? 1 : -1,
-      'market.termStructure': (index + 1) * 4,
-      'positioning.managedMoneyNetPctOi': (index % 5) - 2,
-      'risk.supplyConcentration': 40 + (index % 3),
+    normalizedValues: {
+      'market.priceHistory': (index - 12) / 12,
+      'fundamentals.inventoryLevel': ((index - 12) / 12) * 0.9,
+      'fundamentals.production': ((index - 12) / 12) * 0.85,
+      'fundamentals.supplyDemandBalance': index % 2 === 0 ? 0.5 : -0.5,
+      'market.termStructure': (index - 12) / 12,
+      'positioning.managedMoneyNetPctOi': ((index % 5) - 2) / 2,
+      'risk.supplyConcentration': ((index % 3) - 1) / 2,
     },
   }));
 }
@@ -118,10 +118,19 @@ describe('Commodity P2 weight and correlation validation', () => {
     expect(validation.factorWeightFingerprint).toBeNull();
   });
 
-  it('detects high empirical correlation across latent-factor boundaries', () => {
+  it('requires a versioned normalization contract before correlation can be assessed', () => {
+    expect(() => analyzeCommodityFeatureCorrelation({
+      modelId: 'commodity-energy-hybrid',
+      observations: correlationObservations(),
+      normalizationContractVersion: '',
+    })).toThrow('COMMODITY_CORRELATION_NORMALIZATION_CONTRACT_REQUIRED');
+  });
+
+  it('detects high empirical correlation across latent-factor boundaries on normalized features', () => {
     const report = analyzeCommodityFeatureCorrelation({
       modelId: 'commodity-energy-hybrid',
       observations: correlationObservations(),
+      normalizationContractVersion: 'commodity-correlation-normalization/test-v1',
     });
 
     const physicalPair = report.pairs.find(pair => (
@@ -131,9 +140,22 @@ describe('Commodity P2 weight and correlation validation', () => {
     expect(physicalPair?.highCorrelation).toBe(true);
     expect(physicalPair?.crossLatentFactor).toBe(false);
 
+    expect(report.inputSemantic).toBe('NORMALIZED_FEATURE_VALUE');
     expect(report.blockingFindings.some(item => item.startsWith('HIGH_CROSS_FACTOR_CORRELATION:'))).toBe(true);
+    expect(report.evidenceComplete).toBe(false);
     expect(report.canonical).toBe(false);
     expect(report.scoreEligible).toBe(false);
+  });
+
+  it('treats insufficient cross-factor history as incomplete correlation evidence', () => {
+    const report = analyzeCommodityFeatureCorrelation({
+      modelId: 'commodity-energy-hybrid',
+      observations: correlationObservations().slice(0, 5),
+      normalizationContractVersion: 'commodity-correlation-normalization/test-v1',
+    });
+
+    expect(report.evidenceComplete).toBe(false);
+    expect(report.blockingFindings.some(item => item.startsWith('CORRELATION_DATA_INSUFFICIENT:'))).toBe(true);
   });
 
   it('records sensitivity without turning it into an automatic promotion threshold', () => {
