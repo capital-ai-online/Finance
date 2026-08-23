@@ -6,6 +6,10 @@ import {
   type EquityHistorySnapshot,
 } from '../src/platform/Scoring/EquityFeatureComposer';
 import {
+  augmentEquityResearchWithVendorDerivedFeatures,
+  type EquityVendorDerivedFeatureResult,
+} from '../src/platform/Scoring/EquityVendorDerivedFeatureComposer';
+import {
   augmentEquityResearchWithFilingEvidence,
   type EquityFilingFeatureCompositionResult,
 } from '../src/platform/Scoring/EquityFilingFeatureComposer';
@@ -41,7 +45,7 @@ import {
   type EquitySecComparableEvidenceResult,
 } from './equitySecComparableEvidence';
 
-export const EQUITY_RESEARCH_RUNTIME_VERSION = 'equity-research-runtime/0.3.0' as const;
+export const EQUITY_RESEARCH_RUNTIME_VERSION = 'equity-research-runtime/0.4.0' as const;
 export const EQUITY_RESEARCH_HISTORY_WINDOW_DAYS = 365 as const;
 
 const DEFAULT_SEC_ADAPTER = new SecEdgarCompanyFactsAdapter();
@@ -68,6 +72,7 @@ export interface EquityResearchRuntimeResult {
   readonly priorSecStatus: SecEdgarCompanyFactsResult['status'] | 'NOT_REQUESTED';
   readonly priorSecAsOf: string | null;
   readonly composition: EquityFeatureCompositionResult;
+  readonly vendorDerivedComposition: EquityVendorDerivedFeatureResult;
   readonly secBridge: EquitySecEvidenceBridgeResult | null;
   readonly priorSecBridge: EquitySecEvidenceBridgeResult | null;
   readonly filingComposition: EquityFilingFeatureCompositionResult | null;
@@ -121,9 +126,10 @@ function composeDiagnostics(
  *
  * Provider I/O stays outside `EquityFeatureComposer`, `EquityResearchScoring` and
  * `EquityOrchestrator`. The runtime reuses existing AlphaVantage/FMP fundamentals, provenance-aware
- * TwelveData/EODHD history and one governed cached SEC CompanyFacts adapter. A second historical
- * `fetchEvidence(asOf=...)` call reuses that same adapter/cache and therefore does not create a second
- * SEC provider authority or endpoint.
+ * TwelveData/EODHD history and one governed cached SEC CompanyFacts adapter. TTM FCF conversion and
+ * FCF yield are composed only from already verified fundamentals/history and remain inside the
+ * existing Quality/Valuation families. A second historical `fetchEvidence(asOf=...)` call reuses the
+ * same SEC adapter/cache and therefore does not create a second SEC provider authority or endpoint.
  *
  * No HTTP route, persistence writer, ranking authority, CanonicalScoreResult or productive model
  * promotion is created here. AssetRegistry simulated history is not a dependency.
@@ -147,13 +153,30 @@ export async function runEquityResearchChallenger(
   const [history, secEvidence] = await Promise.all([historyPromise, currentSecPromise]);
   const fundamentals = dependencies.getCachedFundamentals(symbol) ?? emptyFundamentals();
   const asset = createUniversalAssetIdentity({ symbol, assetClass: 'stock', source: 'request' });
+  const normalizedHistory = historySnapshot(history);
 
   const baseComposition = composeEquityResearchInput({
     assetId: asset.assetId,
     classification: input.classification,
     fundamentals,
-    history: historySnapshot(history),
+    history: normalizedHistory,
     evaluatedAt,
+  });
+
+  const vendorDerivedComposition = augmentEquityResearchWithVendorDerivedFeatures({
+    base: baseComposition,
+    assetId: asset.assetId,
+    fundamentals,
+    history: normalizedHistory,
+    evaluatedAt,
+  });
+  const vendorBaseComposition: EquityFeatureCompositionResult = Object.freeze({
+    input: vendorDerivedComposition.input,
+    diagnostics: composeDiagnostics(
+      baseComposition,
+      vendorDerivedComposition.input.families,
+      vendorDerivedComposition.diagnostics.warnings,
+    ),
   });
 
   const secBridge = secEvidence
@@ -161,7 +184,7 @@ export async function runEquityResearchChallenger(
     : null;
   const filingComposition = secBridge
     ? augmentEquityResearchWithFilingEvidence({
-      base: baseComposition,
+      base: vendorBaseComposition,
       snapshot: secBridge.snapshot,
       derived: secBridge.derived,
     })
@@ -200,14 +223,14 @@ export async function runEquityResearchChallenger(
 
   const finalInput = comparableComposition?.input
     ?? filingComposition?.input
-    ?? baseComposition.input;
+    ?? vendorBaseComposition.input;
   const additionalWarnings = [
     ...(filingComposition?.diagnostics.warnings ?? []),
     ...(comparableComposition?.diagnostics.warnings ?? []),
   ];
   const composition: EquityFeatureCompositionResult = Object.freeze({
     input: finalInput,
-    diagnostics: composeDiagnostics(baseComposition, finalInput.families, additionalWarnings),
+    diagnostics: composeDiagnostics(vendorBaseComposition, finalInput.families, additionalWarnings),
   });
   const orchestration = orchestrateEquityResearch(asset, composition.input);
 
@@ -220,6 +243,7 @@ export async function runEquityResearchChallenger(
     priorSecStatus: priorSecEvidence?.status ?? 'NOT_REQUESTED',
     priorSecAsOf: priorSpec?.priorAsOf ?? null,
     composition,
+    vendorDerivedComposition,
     secBridge,
     priorSecBridge,
     filingComposition,
