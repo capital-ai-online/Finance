@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "SC-2 Equity Orchestrator P0 challenger with stock-specific feature contract, research scoring and homogeneous registry integration",
+  "workItem": "SC-2 Equity Orchestrator P0 challenger plus P1 verified evidence/feature construction, preserving homogeneous scoring authority",
   "startedAt": "2026-08-23T17:08:00+02:00",
   "baseBranch": "main",
   "baseSha": "800b05261c1792fed5138a8125cf6a00b1f5af07",
@@ -17,8 +17,10 @@
     "SC-MD-SPT-0001",
     "ADR-0087 Single Scoring Architecture",
     "SC-2 Model Registry & UAI",
+    "SC-2E Equity Orchestrator Challenger",
     "market-evidence-dq/1.0.0",
-    "effective-scoring-fingerprint/1.0.0"
+    "effective-scoring-fingerprint/1.0.0",
+    "existing AlphaVantage/FMP/Stooq provider paths"
   ],
   "claimedPaths": [
     ".ai/work-claims/EQUITY-ORCHESTRATOR-P0-CHALLENGER-2026-08-23.json",
@@ -26,11 +28,14 @@
     "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
     "docs/evidence/sc-md/SC2_EQUITY_ORCHESTRATOR_P0_CHALLENGER_2026-08-23.md",
     "docs/roadmaps/work-packages/SC-2E_EQUITY_ORCHESTRATOR_CHALLENGER.md",
+    "server/stockFundamentals.ts",
+    "src/platform/Scoring/EquityFeatureComposer.ts",
     "src/platform/Scoring/EquityModelContracts.ts",
     "src/platform/Scoring/EquityOrchestrator.ts",
     "src/platform/Scoring/EquityResearchScoring.ts",
     "src/platform/Scoring/ScoringModelRegistry.ts",
     "src/platform/Scoring/index.ts",
+    "tests/unit/equityFeatureComposer.test.ts",
     "tests/unit/equityOrchestratorP0.test.ts"
   ],
   "sourceInputs": [
@@ -50,7 +55,7 @@
     "existing verified-score REST contracts"
   ],
   "implementationBoundary": {
-    "modelStage": "research-challenger",
+    "modelStage": "research-challenger-p1-evidence-construction",
     "canonicalModelPromotionPerformed": false,
     "scoreEligible": false,
     "executionEligible": false,
@@ -59,6 +64,9 @@
     "newScoringDispatcherAllowed": false,
     "newEvidenceAuthorityAllowed": false,
     "regimeScoreImpactAllowed": false,
+    "peerRelativeNormalizationImplemented": false,
+    "currentNormalizationPromotionReady": false,
+    "capitalAllocationSyntheticProxyAllowed": false,
     "missingEvidenceDefault": "NOT_COMPUTABLE"
   },
   "correlation": {
@@ -69,18 +77,19 @@
     "directOpenPrFileOverlap": false,
     "branchBehindBy": 0,
     "mergeBaseMatchesCurrentMain": true,
-    "changedFilesBeforeThisMetadataCommit": 11,
+    "changedFilesBeforeThisMetadataCommit": 14,
     "allChangedFilesClaimed": true
   },
   "validation": {
-    "localStrictTypeScriptCoreModules": "PASS",
-    "localStrictTypeScriptScope": [
+    "p0LocalStrictTypeScriptCoreModules": "PASS",
+    "p0LocalStrictTypeScriptScope": [
       "EquityModelContracts.ts",
       "EquityResearchScoring.ts",
       "EquityOrchestrator.ts"
     ],
+    "p1StaticReview": "COMPLETE",
+    "p1FocusedTypeScriptAndUnit": "PENDING_BEFORE_PR",
     "fullRepositoryTypeScript": "NOT_RUN_PRE_PR_CONNECTOR_CONTEXT",
-    "focusedUnitSuite": "NOT_RUN_PRE_PR_CONNECTOR_CONTEXT",
     "hostedCiTriggered": false,
     "reasonHostedCiNotTriggered": "Repository cost policy permits hosted build/test only after Pull Request creation."
   },
