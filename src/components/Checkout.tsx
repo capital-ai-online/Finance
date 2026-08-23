@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { motion } from 'motion/react';
-import { 
-  CreditCard, 
-  Sparkles, 
-  ShieldCheck, 
-  Loader2, 
-  ArrowRight, 
-  X, 
+import {
+  CreditCard,
+  Sparkles,
+  ShieldCheck,
+  Loader2,
+  ArrowRight,
+  X,
   AlertTriangle,
   Info
 } from 'lucide-react';
@@ -22,6 +22,15 @@ interface CheckoutProps {
   onSuccess: (tier: 'Starter' | 'Pro' | 'Enterprise') => void;
 }
 
+interface AppliedCoupon {
+  id: string;
+  percent_off: number | null;
+  description: string;
+  isTrial: boolean;
+  trialDays: number | null;
+  renewalPriceEur: number | null;
+}
+
 export function Checkout({ planId, price, billingPeriod, email, userId, onClose, onSuccess }: CheckoutProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +39,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
 
   // Coupon states
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; percent_off: number | null; description: string } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
@@ -72,8 +81,11 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
       }
       setAppliedCoupon({
         id: data.couponId,
-        percent_off: data.percent_off,
-        description: data.description
+        percent_off: data.percent_off ?? null,
+        description: data.description,
+        isTrial: data.isTrial === true,
+        trialDays: Number.isInteger(data.trialDays) ? data.trialDays : null,
+        renewalPriceEur: typeof data.renewalPriceEur === 'number' ? data.renewalPriceEur : null,
       });
       setCouponSuccess(`✓ ${data.description}`);
     } catch (err: any) {
@@ -89,7 +101,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
 
     // Retrieve publishable key from dynamic state first, then build-time env as fallback
     let publishableKey = serverPublishableKey || (import.meta as any).env?.VITE_STRIPE_PUBLISHABLE_KEY;
-    
+
     if (publishableKey) {
       publishableKey = publishableKey.trim();
       if (publishableKey.startsWith('"') && publishableKey.endsWith('"')) {
@@ -175,7 +187,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Background overlay */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -184,14 +196,14 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
       />
 
       {/* Checkout Card */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
         className="bg-zinc-950 border border-white/15 p-6 rounded-2xl max-w-md w-full relative z-10 shadow-[0_0_50px_rgba(245,196,83,0.15)] overflow-hidden"
       >
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-aif-gold-DEFAULT via-amber-500 to-aif-neon-cyan" />
-        
+
         {/* Header with Close */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-2">
@@ -200,7 +212,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
             </div>
             <span className="text-xs uppercase font-mono tracking-widest text-white/50 font-bold">Stripe Secure Pay</span>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors cursor-pointer"
           >
@@ -227,20 +239,41 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
             <span className="text-white uppercase">{billingPeriod === 'yearly' ? 'Jährlich' : 'Monatlich'}</span>
           </div>
           <div className="flex justify-between text-xs text-white/60 border-b border-white/5 pb-2">
-            <span>Zahlungsmethoden:</span>
-            <span className="text-white">Kreditkarte, SEPA, Sofort</span>
+            <span>Zahlungsmethode:</span>
+            <span className="text-white">Kreditkarte</span>
           </div>
-          {appliedCoupon && appliedCoupon.percent_off !== null && (
+          {appliedCoupon?.isTrial ? (
+            <>
+              <div className="flex justify-between text-xs text-emerald-400 font-bold">
+                <span>Trial:</span>
+                <span>{appliedCoupon.trialDays ?? 3} Tage kostenlos</span>
+              </div>
+              <div className="flex justify-between text-xs text-white/60">
+                <span>Danach:</span>
+                <span className="text-white font-bold">
+                  {(appliedCoupon.renewalPriceEur ?? price).toFixed(2)} €/Monat
+                </span>
+              </div>
+            </>
+          ) : appliedCoupon && appliedCoupon.percent_off !== null ? (
             <div className="flex justify-between text-xs text-emerald-400 font-bold">
               <span>Gutschein-Rabatt ({appliedCoupon.percent_off}%):</span>
               <span>-{(price * (appliedCoupon.percent_off / 100)).toFixed(2)} €</span>
             </div>
-          )}
+          ) : null}
           <div className="flex justify-between text-sm text-white pt-1">
-            <span className="font-sans font-bold">Gesamtbetrag:</span>
+            <span className="font-sans font-bold">Heute fällig:</span>
             <span className="text-aif-gold-DEFAULT font-black text-base">
-              {appliedCoupon && appliedCoupon.percent_off === 100 ? 'Gratis' : `${(price * (appliedCoupon && appliedCoupon.percent_off !== null ? (100 - appliedCoupon.percent_off) / 100 : 1)).toFixed(2)} €`}
-              {!(appliedCoupon && appliedCoupon.percent_off === 100) && <span className="text-[10px] text-white/40 font-mono ml-0.5">{billingPeriod === 'yearly' ? '/ Jahr' : '/ Monat'}</span>}
+              {appliedCoupon?.isTrial
+                ? '0,00 €'
+                : appliedCoupon && appliedCoupon.percent_off === 100
+                ? 'Gratis'
+                : `${(price * (appliedCoupon && appliedCoupon.percent_off !== null ? (100 - appliedCoupon.percent_off) / 100 : 1)).toFixed(2)} €`}
+              {!appliedCoupon?.isTrial && !(appliedCoupon && appliedCoupon.percent_off === 100) && (
+                <span className="text-[10px] text-white/40 font-mono ml-0.5">
+                  {billingPeriod === 'yearly' ? '/ Jahr' : '/ Monat'}
+                </span>
+              )}
             </span>
           </div>
         </div>
@@ -249,9 +282,9 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 space-y-2">
           <label className="text-[10px] uppercase font-mono tracking-wider text-white/40 block font-bold">Gutscheincode einlösen</label>
           <div className="flex gap-2">
-            <input 
+            <input
               type="text"
-              placeholder="Code (z.B. SAVE20, FREE100)"
+              placeholder="Gutscheincode"
               value={couponCode}
               onChange={(e) => {
                 setCouponCode(e.target.value);
@@ -325,7 +358,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
             </div>
 
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={handleSimulateSuccess}
                 disabled={loading}
                 className="flex-1 py-3 bg-aif-gold-DEFAULT hover:bg-aif-gold-light disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(245,196,83,0.3)]"
@@ -333,7 +366,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                 <span>Demo-Upgrade simulieren</span>
               </button>
-              <button 
+              <button
                 onClick={() => setDemoMode(false)}
                 className="px-3.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-all cursor-pointer"
                 title="Erneut versuchen"
@@ -345,7 +378,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
         ) : (
           /* Real Stripe checkout initiator button */
           <div className="space-y-3">
-            <button 
+            <button
               onClick={handleCheckout}
               disabled={loading}
               className="w-full py-3 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(245,196,83,0.3)]"
@@ -358,12 +391,12 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
               ) : (
                 <>
                   <ShieldCheck size={14} />
-                  <span>Sichere Stripe-Zahlung starten</span>
+                  <span>{appliedCoupon?.isTrial ? '3-Tage-PRO-Trial starten' : 'Sichere Stripe-Zahlung starten'}</span>
                   <ArrowRight size={14} />
                 </>
               )}
             </button>
-            
+
             <p className="text-[10px] text-white/30 text-center font-mono flex items-center justify-center gap-1">
               <ShieldCheck size={12} className="text-emerald-400" /> End-to-End SSL verschlüsselt via Stripe Gateway
             </p>

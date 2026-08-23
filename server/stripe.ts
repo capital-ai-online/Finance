@@ -32,6 +32,64 @@ export function getStripeInstance() {
   return stripeClient;
 }
 
+interface StripeTrialOffer {
+  trialDays: number;
+  expectedPriceId: string | null;
+  renewalPriceEur: number | null;
+}
+
+function isDeletedCoupon(value: unknown): boolean {
+  return (value as { deleted?: boolean } | null)?.deleted === true;
+}
+
+function getStripeTrialOffer(coupon: Stripe.Coupon): StripeTrialOffer | null {
+  const metadata = coupon.metadata || {};
+  if (
+    metadata.capital_ai_offer_type !== 'trial_eligibility' ||
+    metadata.do_not_apply_as_discount !== 'true'
+  ) {
+    return null;
+  }
+
+  const trialDays = Number(metadata.trial_days);
+  if (!Number.isInteger(trialDays) || trialDays < 1 || trialDays > 30) {
+    throw new Error(`Invalid trial_days metadata on Stripe coupon '${coupon.id}'.`);
+  }
+
+  const renewalPrice = metadata.post_trial_amount_eur
+    ? Number(metadata.post_trial_amount_eur)
+    : null;
+
+  return {
+    trialDays,
+    expectedPriceId: metadata.auto_convert_price_id || null,
+    renewalPriceEur: Number.isFinite(renewalPrice) ? renewalPrice : null,
+  };
+}
+
+function trialCouponResponse(coupon: Stripe.Coupon, code: string) {
+  const trial = getStripeTrialOffer(coupon);
+  if (!trial) return null;
+
+  const renewalLabel = trial.renewalPriceEur !== null
+    ? `${trial.renewalPriceEur.toFixed(2).replace('.', ',')} €/Monat`
+    : 'dem regulären Monatspreis';
+
+  return {
+    success: true,
+    couponId: coupon.id,
+    code,
+    percent_off: null,
+    amount_off: null,
+    currency: null,
+    description: `${trial.trialDays} Tage PRO kostenlos, danach ${renewalLabel}`,
+    isDemo: false,
+    isTrial: true,
+    trialDays: trial.trialDays,
+    renewalPriceEur: trial.renewalPriceEur,
+  };
+}
+
 // 1. Stripe Checkout Session Creation
 stripeRouter.post('/create-checkout-session', async (req, res) => {
   try {
@@ -51,7 +109,7 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
       userId = identity.userId;
       email = identity.email || email;
     }
-    
+
     // Select price ID based on selected plan and billing period
     const planUpper = String(planId).toUpperCase();
     let priceId = '';
@@ -64,7 +122,7 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
       if (hyp) return hyp;
       return '';
     };
-    
+
     if (planUpper === 'STARTER') {
       if (billingPeriod === 'yearly') {
         priceId = getStripeVar('STRIPE_PRICE_ID_STARTER_YEARLY');
@@ -88,7 +146,7 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
     }
 
     if (!priceId || priceId.startsWith('price_...') || priceId.startsWith('prod_...')) {
-      const envKeySuggested = planUpper === 'STARTER' 
+      const envKeySuggested = planUpper === 'STARTER'
         ? (billingPeriod === 'yearly' ? 'STRIPE_PRICE_ID_STARTER_YEARLY' : 'STRIPE_PRICE_ID_STARTER_MONTHLY')
         : planUpper === 'PRO'
         ? (billingPeriod === 'yearly' ? 'STRIPE_PRICE_ID_PRO_YEARLY' : 'STRIPE_PRICE_ID_PRO_MONTHLY')
@@ -98,16 +156,49 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
         ? 'STRIPE_PRICE_ID_EXPORT_PDF'
         : `STRIPE_PRICE_ID_${planUpper}`;
 
-      return res.status(400).json({ 
-        error: `Der Stripe Price ID für '${planId}' (${billingPeriod || 'einmalig'}) ist auf dem Server noch nicht konfiguriert. Bitte setzen Sie '${envKeySuggested}' in Ihrer .env Datei.` 
+      return res.status(400).json({
+        error: `Der Stripe Price ID für '${planId}' (${billingPeriod || 'einmalig'}) ist auf dem Server noch nicht konfiguriert. Bitte setzen Sie '${envKeySuggested}' in Ihrer .env Datei.`
       });
     }
 
     const stripe = getStripeInstance();
-    
+
+    let validatedCoupon: Stripe.Coupon | null = null;
+    let trialOffer: StripeTrialOffer | null = null;
+
+    if (couponId) {
+      const retrievedCoupon = await stripe.coupons.retrieve(String(couponId));
+      if (isDeletedCoupon(retrievedCoupon)) {
+        return res.status(400).json({ error: 'Der Gutscheincode ist nicht mehr verfügbar.' });
+      }
+
+      validatedCoupon = retrievedCoupon as Stripe.Coupon;
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      if (
+        !validatedCoupon.valid ||
+        (validatedCoupon.redeem_by !== null && validatedCoupon.redeem_by < nowSeconds)
+      ) {
+        return res.status(400).json({ error: 'Der Gutscheincode ist ungültig oder abgelaufen.' });
+      }
+
+      trialOffer = getStripeTrialOffer(validatedCoupon);
+      if (trialOffer) {
+        if (planUpper !== 'PRO' || billingPeriod === 'yearly' || mode !== 'subscription') {
+          return res.status(400).json({
+            error: 'Dieser Trial-Code ist ausschließlich für das monatliche CAPITAL-AI PRO Abonnement gültig.'
+          });
+        }
+        if (trialOffer.expectedPriceId && priceId !== trialOffer.expectedPriceId) {
+          return res.status(409).json({
+            error: 'Der konfigurierte PRO-Monatspreis stimmt nicht mit dem freigegebenen Trial-Angebot überein.'
+          });
+        }
+      }
+    }
+
     // Auto-append plan information to success URL for client fallback tracking
-    const finalSuccessUrl = successUrl.includes('?') 
-      ? `${successUrl}&plan=${planId}` 
+    const finalSuccessUrl = successUrl.includes('?')
+      ? `${successUrl}&plan=${planId}`
       : `${successUrl}?plan=${planId}`;
 
     const sessionData: any = {
@@ -144,9 +235,9 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
     // hinterlegt). Dafür ist keine serverseitige Berechnung, kein Coupon und
     // keine zusätzliche Variable nötig - couponId bleibt ausschließlich für
     // vom Kunden eingelöste Promotion-Codes reserviert (ADR-0017).
-    if (couponId) {
-      sessionData.discounts = [{ coupon: couponId }];
-    } else {
+    if (couponId && validatedCoupon && !trialOffer) {
+      sessionData.discounts = [{ coupon: validatedCoupon.id }];
+    } else if (!couponId) {
       sessionData.allow_promotion_codes = true;
     }
 
@@ -157,9 +248,19 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
           email: email || '',
           plan: planId,
           plan_id: planId,
-          coupon_id: couponId || null
+          coupon_id: couponId || null,
+          offer_type: trialOffer ? 'trial_eligibility' : 'standard'
         }
       };
+
+      if (trialOffer) {
+        sessionData.subscription_data.trial_period_days = trialOffer.trialDays;
+        sessionData.subscription_data.trial_settings = {
+          end_behavior: {
+            missing_payment_method: 'cancel'
+          }
+        };
+      }
     }
 
     const session = await stripe.checkout.sessions.create(sessionData);
@@ -216,7 +317,11 @@ stripeRouter.post('/validate-coupon', async (req, res) => {
 
       if (promoCodes.data.length > 0) {
         const promo = promoCodes.data[0] as any;
-        const coupon = promo.coupon;
+        const coupon = promo.coupon as Stripe.Coupon;
+        const trialResponse = trialCouponResponse(coupon, promo.code);
+        if (trialResponse) {
+          return res.json(trialResponse);
+        }
         return res.json({
           success: true,
           couponId: coupon.id,
@@ -224,9 +329,9 @@ stripeRouter.post('/validate-coupon', async (req, res) => {
           percent_off: coupon.percent_off || null,
           amount_off: coupon.amount_off || null,
           currency: coupon.currency || null,
-          description: coupon.percent_off 
-            ? `${coupon.percent_off}% Rabatt (Stripe)` 
-            : coupon.amount_off 
+          description: coupon.percent_off
+            ? `${coupon.percent_off}% Rabatt (Stripe)`
+            : coupon.amount_off
             ? `${(coupon.amount_off / 100).toFixed(2)} ${String(coupon.currency).toUpperCase()} Rabatt (Stripe)`
             : 'Rabattcoupon angewendet',
           isDemo: false
@@ -235,22 +340,29 @@ stripeRouter.post('/validate-coupon', async (req, res) => {
 
       // Fallback: retrieve directly as a coupon ID
       try {
-        const coupon = await stripe.coupons.retrieve(code.trim());
-        if (coupon && coupon.valid) {
-          return res.json({
-            success: true,
-            couponId: coupon.id,
-            code: coupon.id,
-            percent_off: coupon.percent_off || null,
-            amount_off: coupon.amount_off || null,
-            currency: coupon.currency || null,
-            description: coupon.percent_off 
-              ? `${coupon.percent_off}% Rabatt (Stripe)` 
-              : coupon.amount_off 
-              ? `${(coupon.amount_off / 100).toFixed(2)} ${String(coupon.currency).toUpperCase()} Rabatt (Stripe)`
-              : 'Rabattcoupon angewendet',
-            isDemo: false
-          });
+        const retrievedCoupon = await stripe.coupons.retrieve(code.trim());
+        if (!isDeletedCoupon(retrievedCoupon)) {
+          const coupon = retrievedCoupon as Stripe.Coupon;
+          if (coupon.valid) {
+            const trialResponse = trialCouponResponse(coupon, coupon.id);
+            if (trialResponse) {
+              return res.json(trialResponse);
+            }
+            return res.json({
+              success: true,
+              couponId: coupon.id,
+              code: coupon.id,
+              percent_off: coupon.percent_off || null,
+              amount_off: coupon.amount_off || null,
+              currency: coupon.currency || null,
+              description: coupon.percent_off
+                ? `${coupon.percent_off}% Rabatt (Stripe)`
+                : coupon.amount_off
+                ? `${(coupon.amount_off / 100).toFixed(2)} ${String(coupon.currency).toUpperCase()} Rabatt (Stripe)`
+                : 'Rabattcoupon angewendet',
+              isDemo: false
+            });
+          }
         }
       } catch (err) {}
 
@@ -267,7 +379,7 @@ stripeRouter.get('/config-status', (req, res) => {
   const sk = getCleanEnv('STRIPE_SECRET_KEY');
   const pk = getCleanEnv('STRIPE_PUBLISHABLE_KEY') || getCleanEnv('VITE_STRIPE_PUBLISHABLE_KEY');
   const wh = getCleanEnv('STRIPE_WEBHOOK_SECRET');
-  
+
   res.json({
     secretKeyConfigured: !!sk && !sk.startsWith('sk_test_...'),
     publishableKeyConfigured: !!pk && !pk.startsWith('pk_test_...'),
@@ -397,6 +509,7 @@ async function resolveUserIdByEmail(email: string): Promise<string | null> {
       .select('id')
       .eq('email', email.toLowerCase().trim())
       .maybeSingle();
+
     if (error || !data) return null;
     return data.id;
   } catch {
