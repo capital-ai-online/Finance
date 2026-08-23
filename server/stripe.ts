@@ -38,6 +38,10 @@ interface StripeTrialOffer {
   renewalPriceEur: number | null;
 }
 
+function isDeletedCoupon(value: unknown): boolean {
+  return (value as { deleted?: boolean } | null)?.deleted === true;
+}
+
 function getStripeTrialOffer(coupon: Stripe.Coupon): StripeTrialOffer | null {
   const metadata = coupon.metadata || {};
   if (
@@ -164,7 +168,7 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
 
     if (couponId) {
       const retrievedCoupon = await stripe.coupons.retrieve(String(couponId));
-      if ('deleted' in retrievedCoupon && retrievedCoupon.deleted) {
+      if (isDeletedCoupon(retrievedCoupon)) {
         return res.status(400).json({ error: 'Der Gutscheincode ist nicht mehr verfügbar.' });
       }
 
@@ -337,26 +341,28 @@ stripeRouter.post('/validate-coupon', async (req, res) => {
       // Fallback: retrieve directly as a coupon ID
       try {
         const retrievedCoupon = await stripe.coupons.retrieve(code.trim());
-        if (!('deleted' in retrievedCoupon && retrievedCoupon.deleted) && retrievedCoupon.valid) {
+        if (!isDeletedCoupon(retrievedCoupon)) {
           const coupon = retrievedCoupon as Stripe.Coupon;
-          const trialResponse = trialCouponResponse(coupon, coupon.id);
-          if (trialResponse) {
-            return res.json(trialResponse);
+          if (coupon.valid) {
+            const trialResponse = trialCouponResponse(coupon, coupon.id);
+            if (trialResponse) {
+              return res.json(trialResponse);
+            }
+            return res.json({
+              success: true,
+              couponId: coupon.id,
+              code: coupon.id,
+              percent_off: coupon.percent_off || null,
+              amount_off: coupon.amount_off || null,
+              currency: coupon.currency || null,
+              description: coupon.percent_off
+                ? `${coupon.percent_off}% Rabatt (Stripe)`
+                : coupon.amount_off
+                ? `${(coupon.amount_off / 100).toFixed(2)} ${String(coupon.currency).toUpperCase()} Rabatt (Stripe)`
+                : 'Rabattcoupon angewendet',
+              isDemo: false
+            });
           }
-          return res.json({
-            success: true,
-            couponId: coupon.id,
-            code: coupon.id,
-            percent_off: coupon.percent_off || null,
-            amount_off: coupon.amount_off || null,
-            currency: coupon.currency || null,
-            description: coupon.percent_off
-              ? `${coupon.percent_off}% Rabatt (Stripe)`
-              : coupon.amount_off
-              ? `${(coupon.amount_off / 100).toFixed(2)} ${String(coupon.currency).toUpperCase()} Rabatt (Stripe)`
-              : 'Rabattcoupon angewendet',
-            isDemo: false
-          });
         }
       } catch (err) {}
 
