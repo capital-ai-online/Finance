@@ -7,7 +7,7 @@ import {
   SUBSCRIPTION_PRICES_EUR,
   TERMS_EFFECTIVE_DATE,
   TERMS_VERSION,
-} from '../platform/Contracts/consumerLegalContracts';
+} from '../features/billing/billingContract';
 
 export function ImpressumAgb({ initialTab = 'impressum' }: { initialTab?: 'impressum' | 'agb' }) {
   const [activeTab, setActiveTab] = useState<'impressum' | 'agb'>(initialTab);
