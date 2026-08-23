@@ -1,6 +1,6 @@
 # CAPITAL-AI FinTech Core
 
-Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht von CAPITAL-AI. Er komponiert Research-, Paper-, Risk-/Compliance- und spaeter separat autorisierte Execution-Gates. Er besitzt keine produktive Scoring-, IAM-, Compliance-Policy-, Deployment-, Exchange- oder Custody-Authority.
+Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht von CAPITAL-AI. Er komponiert Research-, Paper-, Portfolio-, Risk-/Compliance- und spaeter separat autorisierte Execution-Gates. Er besitzt keine produktive Scoring-, Investment-Strategy-, Suitability-, IAM-, Compliance-Policy-, Deployment-, Exchange- oder Custody-Authority.
 
 ## Aktueller Implementierungsstand
 
@@ -13,12 +13,13 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-2A: provenance-aware Primary-/Secondary-Analyseprofile
 - FT-2B: kategoriespezifische Feature-/Evidence-Contracts
 - FT-2C: detector-agnostische Pattern Detection Contracts und Research Resolver
+- FT-2D: Meme/DeFi Research Models `0.3.0`, non-executable challengers, keine Promotion
 - FT-3: private durable Workflow-/Event-/Decision-/OrderIntent-/Reconciliation-Persistenz
 - FT-4: deterministic, replay-faehiges Paper Trading
 - FT-5: deterministic Pre-Trade Risk + Compliance Decisions
 - FT-6A: Decision-/Hash-Binding Foundation, gemergt mit PR #481
 - FT-6B: single canonical OrderIntent, gemeinsames Fixed Point, deterministic Approval Binding, typed Reconciliation und v2 Persistence Boundary, gemergt mit PR #483
-- Supersession B: Meme/DeFi Research Models `0.3.0`, non-executable challengers, keine Promotion
+- P1 Portfolio Allocation: deterministic long-only/unlevered RESEARCH/PAPER Proposal + bounded FT-5 Portfolio-Risk-Evidence-Projektion, auf Main-Sync-Branch
 - reale Exchange-/Custody-Ausfuehrung: **nicht freigeschaltet**
 - FT-7 Guarded Live: **blockiert bis separate Architektur-/Security-Entscheidung**
 
@@ -38,9 +39,9 @@ UAI
   -> EventMesh / Traceability / Supervisor
 ```
 
-`CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`. Der FinTech Core ersetzt keine Scoring-, IAM-, Compliance-Policy-, Quality-, Release-, Deployment- oder Supervisor-Authority.
+`CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`. Der FinTech Core ersetzt keine Scoring-, Investment-Strategy-, Suitability-, IAM-, Compliance-Policy-, Quality-, Release-, Deployment- oder Supervisor-Authority.
 
-Der kanonische Crypto Champion bleibt `crypto-technical-provenance@0.7.0`. Die Kategorie-Challenger `crypto-meme-integrity@0.3.0` und `crypto-defi-fundamental@0.3.0` sind `research-only:not-executable`, `scoreEligible=false` und besitzen keine ausfuehrbaren Gewichte.
+Der kanonische Crypto Champion bleibt `crypto-technical-provenance@0.7.0`. Die Kategorie-Challenger `crypto-meme-integrity@0.3.0` und `crypto-defi-fundamental@0.3.0` sind `research-only:not-executable`, `scoreEligible=false` und besitzen keine produktive Ausfuehrungsautoritaet.
 
 ## Meme / DeFi Research Supersession
 
@@ -123,6 +124,69 @@ exchange routing = false
 
 Paper State wird aus append-only Domain Events rekonstruiert. Fee-, Slippage- und Funding-Evidence bleibt explizit. Missing/Stale Evidence wird nicht zu `0` oder `PASS` umgedeutet.
 
+## P1 Deterministic Portfolio Allocation / Position Sizing
+
+Contract:
+
+```text
+fintech-core/portfolio-allocation/0.1.0
+```
+
+P1 schliesst die deterministische Composition-Luecke zwischen einem **extern govern­ten** Portfolio-Target und FT-5. FinTechCore erzeugt weder Investmentziele noch Score-to-Weight-, Suitability- oder LLM-basierte Zielgewichte.
+
+Eingang:
+
+```text
+Workflow Context
++ versionierte Allocation Policy
++ vollstaendige Portfolio-Valuation-Evidence
++ explizite Target Weights
+  + targetAuthorityId
+  + targetAuthorityVersion
+  + evidenceRefs
+```
+
+Ergebnis:
+
+```text
+PROPOSED
++ current/target weights
++ current/target/delta notionals
++ cash reserve
++ concentration/deployment constraints
++ replay hashes
++ executionHandoffEligible=false
+```
+
+P1 ist bewusst auf `RESEARCH` und `PAPER`, `longOnly=true` und `leverageAllowed=false` begrenzt. `GUARDED_LIVE`, `PRODUCTION` und `EMERGENCY` werden fail-closed blockiert.
+
+Alle Financial Values verwenden `FinTechCoreFixedPoint`. Target Notional wird mit deterministischer Integer-BPS-Arithmetik berechnet; Rundungsresiduen verbleiben in der Cash Reserve.
+
+### P1 -> FT-5 Portfolio-Risk-Evidence Projection
+
+Contract:
+
+```text
+fintech-core/portfolio-risk-projection/0.1.0
+```
+
+Die Projektion erzeugt ausschliesslich die bereits von FT-5 erwarteten portfolio-abgeleiteten Felder:
+
+```text
+projectedGrossExposure
+currentEquity
+portfolioEvidenceAuthorityId
+portfolioEvidenceRefs
+```
+
+Sie erzeugt **keine Risk Decision**. Order Notional, Peak Equity, Liquidity, Market Freshness und Counterparty Evidence bleiben separate FT-5-Evidence-Quellen. Eine versionierte Projection Authority bindet die abgeleiteten Portfolio-Werte; der zugrunde liegende Valuation-Provider bleibt separat tracebar.
+
+FT-5 bleibt die einzige Risk-Approval-Authority. P1 besitzt keine Execution-Handoff-Berechtigung.
+
+### P1 Persistence Decision
+
+P1 fuehrt keine neue Tabelle, Queue, Portfolio-Ledger- oder spekulative Event-Authority ein. Der Proposal-/Projection-Slice besitzt aktuell keinen eigenstaendigen durable Consumer. Falls spaeter Persistence erforderlich wird, muss sie die bestehende FinTechCore Persistence-/Domain-Event-Authority mit einem explizit reviewten Contract wiederverwenden.
+
 ## FT-5 Deterministic Risk + Compliance
 
 FT-5 bleibt die einzige Approval-Quelle fuer FT-6.
@@ -134,7 +198,7 @@ PRE_TRADE_RISK_GATE
 PRE_TRADE_COMPLIANCE_GATE
 ```
 
-Risk-/Compliance-Entscheidungen sind versioniert, policy-gebunden und provenance-faehig. LLM-/Agent-Ausgaben koennen diese Freigaben weder erzeugen noch ueberschreiben.
+Risk-/Compliance-Entscheidungen sind versioniert, policy-gebunden und provenance-faehig. LLM-/Agent-Ausgaben oder P1-Portfolio-Proposals koennen diese Freigaben weder erzeugen noch ueberschreiben.
 
 ## FT-6B Canonical OrderIntent
 
@@ -193,7 +257,7 @@ public.fintech_core_append_order_intent_v2
 public.fintech_core_append_reconciliation_record_v2
 ```
 
-Die Supabase-Mutation wurde am **2026-08-22** nach Owner-Freigabe auf dem Projekt `AIFINANCIAL` angewendet und als Migration `20260822012200_fintech_core_ft6b_fixed_point_reconciliation` registriert.
+Die Supabase-Mutation wurde am **2026-08-22** nach Owner-Freigabe auf dem Projekt `AIFINANCIAL` angewendet und als Migration `20260822012200 fintech_core_ft6b_fixed_point_reconciliation` registriert.
 
 Post-Mutation-Verifikation:
 
@@ -217,13 +281,14 @@ Eine physische Entfernung des v1-Pfads erfolgt erst nach Consumer-/Replay-/Besta
 
 ## EventMesh
 
-FT-6B fuehrt keine spekulativen Event-Namen ein. Solange kein eindeutiger kanonischer FT-6 Event Catalog vorliegt, bleibt typed durable Reconciliation Evidence fuehrend. Ein Mismatch wird ueber `supervisorEscalationRequired=true` sichtbar gemacht.
+FT-6B und P1 fuehren keine spekulativen Event-Namen ein. Solange kein eindeutiger kanonischer Event Catalog bzw. durable P1-Consumer vorliegt, bleiben die vorhandenen typed Evidence-/Reconciliation-Contracts fuehrend.
 
 ## Security / Data Integrity
 
 - Missing/Stale/Mismatched Evidence wird nie synthetisch ergaenzt.
 - Pattern Evidence bleibt non-authorizing.
 - Paper Trading verwendet kein reales Kapital.
+- P1 erzeugt nur Allocation Proposal / Portfolio-Risk-Evidence, keine Risk-/Compliance-Approval.
 - Risk-/Compliance-Approval wird ausschliesslich aus FT-5 Decision Records abgeleitet.
 - Intent-/Idempotency-/Client-Order-ID-Kollisionen sind fail-closed.
 - Service-role RPCs oeffnen das private Finanzschema nicht fuer Browserrollen.
@@ -232,7 +297,7 @@ FT-6B fuehrt keine spekulativen Event-Namen ein. Solange kein eindeutiger kanoni
 
 ### Owner-approved Operating-Mode Hardening
 
-Die stale Future-Capability-Projektion wurde nach expliziter Owner-Freigabe am 2026-08-22 behoben. Fuer FT-6 gilt:
+Fuer FT-6 und den P1-Slice gilt weiterhin:
 
 ```text
 RESEARCH      real=false simulated=false newOrders=false
@@ -248,12 +313,13 @@ EMERGENCY     real=false simulated=false newOrders=false
 
 ```text
 FT-0 ... FT-6B = DONE on main
-Supersession A = implemented in branch, pending PR/merge
-Supersession B = implemented in same branch by Owner direction, pending PR/merge
+Supersession A+B = DONE on main
+Meme/DeFi Research Scoring 0.3.0 = DONE on main / non-executable
+P1 Portfolio Allocation + bounded FT-5 risk projection = IMPLEMENTED ON MAIN-SYNC BRANCH
 Meme/DeFi productive promotion = BLOCKED
 FT-7 = BLOCKED
 FT-8 = PLANNED
 FT-9 = PLANNED
 ```
 
-Die verbleibenden Meme-/DeFi-Arbeiten sind **Promotion-/Evidence-Validierung innerhalb der bestehenden Architektur**, keine neue Architektur oder separater Dispatcher.
+Die verbleibenden Meme-/DeFi-Arbeiten sind Provider-/Evidence-/Validation-/Promotion-Arbeiten innerhalb der bestehenden Architektur, keine neue Architektur oder separater Dispatcher.
