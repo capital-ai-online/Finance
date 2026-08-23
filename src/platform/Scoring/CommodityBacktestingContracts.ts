@@ -122,6 +122,10 @@ export interface CommodityBacktestRequestValidation {
   readonly blockers: readonly string[];
 }
 
+const RELEASE_AWARE_SOURCES = Object.freeze([
+  'cftc-cot',
+]);
+
 const REVISION_AWARE_SOURCES = Object.freeze([
   'usda-fas-psd',
   'eia',
@@ -218,10 +222,11 @@ export function validateCommodityPointInTimeSnapshot(
 
     if (!feature.evidenceId.trim()) featureBlockers.push('EVIDENCE_ID_REQUIRED');
     const normalizedSource = feature.source.trim().toLowerCase();
-    if (REVISION_AWARE_SOURCES.some(source => normalizedSource.startsWith(source))) {
-      if (!feature.releaseId?.trim()) featureBlockers.push('REVISION_AWARE_RELEASE_ID_REQUIRED');
-      if (!feature.revisionId?.trim()) featureBlockers.push('REVISION_AWARE_REVISION_ID_REQUIRED');
-    }
+    const revisionAware = REVISION_AWARE_SOURCES.some(source => normalizedSource.startsWith(source));
+    const releaseAware = revisionAware
+      || RELEASE_AWARE_SOURCES.some(source => normalizedSource.startsWith(source));
+    if (releaseAware && !feature.releaseId?.trim()) featureBlockers.push('RELEASE_ID_REQUIRED');
+    if (revisionAware && !feature.revisionId?.trim()) featureBlockers.push('REVISION_AWARE_REVISION_ID_REQUIRED');
 
     if (featureBlockers.length > 0) {
       rejectedFeatureKeys.push(feature.featureKey);
