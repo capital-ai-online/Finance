@@ -8,8 +8,13 @@ import type { FinancialFieldProvenance } from '../src/types/financialProvenance'
 
 export interface StockFundamentals {
   peRatio?: number;
+  priceToBookRatio?: number;
   dividendYieldPct?: number;
   profitMarginPct?: number;
+  operatingMarginPct?: number;
+  returnOnEquityPct?: number;
+  quarterlyRevenueGrowthPct?: number;
+  quarterlyEarningsGrowthPct?: number;
   debtToEquity?: number;
   epsTtm?: number;
   freeCashFlowPerShare?: number;
@@ -34,6 +39,17 @@ function finite(value: unknown): number | undefined {
 function positive(value: unknown): number | undefined {
   const parsed = finite(value);
   return parsed !== undefined && parsed > 0 ? parsed : undefined;
+}
+
+function percentage(value: unknown): number | undefined {
+  const parsed = finite(value);
+  return parsed !== undefined ? parsed * 100 : undefined;
+}
+
+function providerDate(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? `${match[1]}T00:00:00.000Z` : undefined;
 }
 
 function addProvenance(
@@ -70,22 +86,28 @@ async function fetchAlphaVantageFundamentals(symbol: string, key: string): Promi
 
     const fetchedAt = Date.now();
     const retrievedAt = new Date(fetchedAt).toISOString();
-    const observedAt = typeof data['LatestQuarter'] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data['LatestQuarter'])
-      ? `${data['LatestQuarter']}T00:00:00.000Z`
-      : undefined;
+    const observedAt = providerDate(data['LatestQuarter']);
     const sourcePath = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${encodeURIComponent(symbol)}`;
     const provenance: FinancialFieldProvenance[] = [];
 
     const peRatio = positive(data['PERatio']);
-    const dividendYieldRaw = finite(data['DividendYield']);
-    const profitMarginRaw = finite(data['ProfitMargin']);
+    const priceToBookRatio = positive(data['PriceToBookRatio']);
+    const dividendYieldPct = percentage(data['DividendYield']);
+    const profitMarginPct = percentage(data['ProfitMargin']);
+    const operatingMarginPct = percentage(data['OperatingMarginTTM']);
+    const returnOnEquityPct = percentage(data['ReturnOnEquityTTM']);
+    const quarterlyRevenueGrowthPct = percentage(data['QuarterlyRevenueGrowthYOY']);
+    const quarterlyEarningsGrowthPct = percentage(data['QuarterlyEarningsGrowthYOY']);
     const epsTtm = finite(data['EPS']);
-    const dividendYieldPct = dividendYieldRaw !== undefined ? dividendYieldRaw * 100 : undefined;
-    const profitMarginPct = profitMarginRaw !== undefined ? profitMarginRaw * 100 : undefined;
 
     addProvenance(provenance, { field: 'peRatio', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: peRatio, unit: 'ratio' });
+    addProvenance(provenance, { field: 'priceToBookRatio', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: priceToBookRatio, unit: 'ratio' });
     addProvenance(provenance, { field: 'dividendYieldPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: dividendYieldPct, unit: 'percent' });
     addProvenance(provenance, { field: 'profitMarginPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: profitMarginPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'operatingMarginPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: operatingMarginPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'returnOnEquityPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: returnOnEquityPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'quarterlyRevenueGrowthPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: quarterlyRevenueGrowthPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'quarterlyEarningsGrowthPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: quarterlyEarningsGrowthPct, unit: 'percent' });
     addProvenance(provenance, { field: 'epsTtm', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt, value: epsTtm, unit: 'USD/share' });
 
     recordProviderHealth({
@@ -93,7 +115,19 @@ async function fetchAlphaVantageFundamentals(symbol: string, key: string): Promi
       message: `OVERVIEW received for ${symbol} with ${provenance.length} attributable fields.`,
     });
 
-    return { peRatio, dividendYieldPct, profitMarginPct, epsTtm, fetchedAt, provenance };
+    return {
+      peRatio,
+      priceToBookRatio,
+      dividendYieldPct,
+      profitMarginPct,
+      operatingMarginPct,
+      returnOnEquityPct,
+      quarterlyRevenueGrowthPct,
+      quarterlyEarningsGrowthPct,
+      epsTtm,
+      fetchedAt,
+      provenance,
+    };
   } catch (err: any) {
     recordProviderHealth({
       provider: 'AlphaVantage', capability: 'stock-fundamentals', state: 'unavailable',
@@ -116,29 +150,48 @@ async function fetchFmpFundamentals(symbol: string, key: string): Promise<StockF
 
     const fetchedAt = Date.now();
     const retrievedAt = new Date(fetchedAt).toISOString();
+    // Ratios-TTM may expose a report/as-of date. We bind it only when the payload actually carries it;
+    // retrieval time is never substituted as observedAt for financial-statement evidence.
+    const observedAt = providerDate(data.date);
     const provenance: FinancialFieldProvenance[] = [];
     const peRatio = positive(data.priceToEarningsRatioTTM);
-    const dividendYieldRaw = finite(data.dividendYieldTTM);
-    const profitMarginRaw = finite(data.netProfitMarginTTM);
+    const priceToBookRatio = positive(data.priceToBookRatioTTM);
+    const dividendYieldPct = percentage(data.dividendYieldTTM);
+    const profitMarginPct = percentage(data.netProfitMarginTTM);
+    const operatingMarginPct = percentage(data.operatingProfitMarginTTM);
+    const returnOnEquityPct = percentage(data.returnOnEquityTTM);
     const debtToEquity = finite(data.debtToEquityRatioTTM);
     const epsTtm = finite(data.netIncomePerShareTTM);
     const freeCashFlowPerShare = finite(data.freeCashFlowPerShareTTM);
-    const dividendYieldPct = dividendYieldRaw !== undefined ? dividendYieldRaw * 100 : undefined;
-    const profitMarginPct = profitMarginRaw !== undefined ? profitMarginRaw * 100 : undefined;
 
-    addProvenance(provenance, { field: 'peRatio', provider: 'FMP', sourcePath, retrievedAt, value: peRatio, unit: 'ratio' });
-    addProvenance(provenance, { field: 'dividendYieldPct', provider: 'FMP', sourcePath, retrievedAt, value: dividendYieldPct, unit: 'percent' });
-    addProvenance(provenance, { field: 'profitMarginPct', provider: 'FMP', sourcePath, retrievedAt, value: profitMarginPct, unit: 'percent' });
-    addProvenance(provenance, { field: 'debtToEquity', provider: 'FMP', sourcePath, retrievedAt, value: debtToEquity, unit: 'ratio' });
-    addProvenance(provenance, { field: 'epsTtm', provider: 'FMP', sourcePath, retrievedAt, value: epsTtm, unit: 'USD/share' });
-    addProvenance(provenance, { field: 'freeCashFlowPerShare', provider: 'FMP', sourcePath, retrievedAt, value: freeCashFlowPerShare, unit: 'USD/share' });
+    addProvenance(provenance, { field: 'peRatio', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: peRatio, unit: 'ratio' });
+    addProvenance(provenance, { field: 'priceToBookRatio', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: priceToBookRatio, unit: 'ratio' });
+    addProvenance(provenance, { field: 'dividendYieldPct', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: dividendYieldPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'profitMarginPct', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: profitMarginPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'operatingMarginPct', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: operatingMarginPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'returnOnEquityPct', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: returnOnEquityPct, unit: 'percent' });
+    addProvenance(provenance, { field: 'debtToEquity', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: debtToEquity, unit: 'ratio' });
+    addProvenance(provenance, { field: 'epsTtm', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: epsTtm, unit: 'USD/share' });
+    addProvenance(provenance, { field: 'freeCashFlowPerShare', provider: 'FMP', sourcePath, retrievedAt, observedAt, value: freeCashFlowPerShare, unit: 'USD/share' });
 
     recordProviderHealth({
       provider: 'FMP', capability: 'stock-fundamentals', state: provenance.length > 0 ? 'healthy' : 'degraded', cacheMode: 'fresh',
       message: `ratios-ttm received for ${symbol} with ${provenance.length} attributable fields.`,
     });
 
-    return { peRatio, dividendYieldPct, profitMarginPct, debtToEquity, epsTtm, freeCashFlowPerShare, fetchedAt, provenance };
+    return {
+      peRatio,
+      priceToBookRatio,
+      dividendYieldPct,
+      profitMarginPct,
+      operatingMarginPct,
+      returnOnEquityPct,
+      debtToEquity,
+      epsTtm,
+      freeCashFlowPerShare,
+      fetchedAt,
+      provenance,
+    };
   } catch (err: any) {
     recordProviderHealth({ provider: 'FMP', capability: 'stock-fundamentals', state: 'unavailable', message: err?.message || String(err) });
     return null;
@@ -151,8 +204,13 @@ function mergeFundamentals(primary: StockFundamentals | null, fallback: StockFun
   const secondary = fallback ?? primary!;
   return {
     peRatio: preferred.peRatio ?? secondary.peRatio,
+    priceToBookRatio: preferred.priceToBookRatio ?? secondary.priceToBookRatio,
     dividendYieldPct: preferred.dividendYieldPct ?? secondary.dividendYieldPct,
     profitMarginPct: preferred.profitMarginPct ?? secondary.profitMarginPct,
+    operatingMarginPct: preferred.operatingMarginPct ?? secondary.operatingMarginPct,
+    returnOnEquityPct: preferred.returnOnEquityPct ?? secondary.returnOnEquityPct,
+    quarterlyRevenueGrowthPct: preferred.quarterlyRevenueGrowthPct ?? secondary.quarterlyRevenueGrowthPct,
+    quarterlyEarningsGrowthPct: preferred.quarterlyEarningsGrowthPct ?? secondary.quarterlyEarningsGrowthPct,
     debtToEquity: preferred.debtToEquity ?? secondary.debtToEquity,
     epsTtm: preferred.epsTtm ?? secondary.epsTtm,
     freeCashFlowPerShare: preferred.freeCashFlowPerShare ?? secondary.freeCashFlowPerShare,
