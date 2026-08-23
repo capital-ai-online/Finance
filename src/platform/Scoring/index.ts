@@ -13,4 +13,6 @@ export * from './EquityResearchScoring';
 export * from './EquityFeatureComposer';
 export * from './EquityFilingDerivedMetrics';
 export * from './EquityFilingFeatureComposer';
+export * from './EquityComparableFilingMetrics';
+export * from './EquityComparableFilingFeatureComposer';
 export * from './EquityOrchestrator';
