@@ -2,60 +2,54 @@
 
 - **Status:** Accepted
 - **Datum:** 2026-08-19
-- **Revalidierung:** 2026-08-23 — Equity Orchestrator P0 + P1 SEC Evidence Integration
+- **Letzte Revalidierung:** 2026-08-23 — Equity P1 SEC / Comparable Filing / Quality-Valuation Enrichment
 - **Owner-Entscheidung:** „Es sollen keine parallel Architekturen mehr entstehen und am Ende eine komplett Architektur entstehen, die sich in das FinTech Wertschöpfungs Ökosystem einbindet.“
 - **Authority:** `SC-MD-SPT-0001` bleibt kanonische Ausführungsautorität.
 
 ## Kontext
 
-Das Finance-Repository besitzt weiterhin mehrere historisch gewachsene Score-Einstiegspunkte und Ergebnisformen. Der verifizierte Crypto-Pfad liefert bereits `CanonicalScoreResult`, während Traditional-, Commodity-/Sovereign- und ältere Agent-/Base-/DeFi-/Meme-/Raw-Materials-Pfade eigene Auswahl-, Input- oder Ergebnislogik besitzen. Dadurch kann dieselbe fachliche Fähigkeit über unterschiedliche Architekturen erreicht werden.
+Das Finance-Repository besitzt historisch mehrere Score-Einstiegspunkte und Ergebnisformen. Die Zielarchitektur benötigt eine einzige produktive Modellauflösung und Ausführung, während Assetklassen eigene Feature Contracts und deterministische Domain-Modelle besitzen dürfen.
 
-SC-2 des kanonischen Screening/Scoring/Market-Data-SPT fordert eine Model Registry und Universal-Asset-Interface-(UAI)-Adapter. Diese ADR konkretisiert SC-2, ohne eine neue parallele Roadmap zu erzeugen.
+SC-2 des kanonischen Screening/Scoring/Market-Data-SPT fordert eine Model Registry und Universal-Asset-Interface-(UAI)-Adapter. Diese ADR konkretisiert SC-2, ohne eine parallele Roadmap oder zweite Scoring-Authority zu erzeugen.
 
 ## Entscheidung
 
-### 1. Eine Architektur, mehrere Adapter und Modelle
+### 1. Eine produktive Scoring-Wertschöpfungskette
 
-Es gibt künftig genau **eine** Scoring-Wertschöpfungskette:
+Es gibt genau eine produktive Scoring-Kette:
 
 `UAI Identity -> Evidence Acquisition -> Evidence/Quality Gate -> Feature Contract -> ScoringModelRegistry -> ScoringDispatcher -> Domain Executor Adapter -> CanonicalScoreResult -> Ranking/Eligibility -> EventMesh/Traceability/Supervisor`.
 
-Assetklassen dürfen eigene Feature Contracts und deterministische Modelle besitzen. Sie dürfen keine eigene konkurrierende Scoring-Architektur, eigenes Provenance-Modell oder eigene Eligibility-Semantik etablieren.
+Assetklassen dürfen eigene Feature Contracts, Research-Orchestratoren und deterministische Modelle besitzen. Sie dürfen keine konkurrierende Registry, keinen zweiten Dispatcher, kein eigenes Provenance-/DQ-Modell und keine eigene Ranking-/Eligibility-Authority etablieren.
 
 ### 2. UAI ist Identity, keine Evidence
 
-Das UAI transportiert ausschließlich stabile Identität und Mapping-Metadaten (`assetId`, Symbol, Assetklasse, Instrumenttyp, optionale Provider-Symbole). Registry-/Catalog-Preise, Scores, Bootstrap-Werte oder AI-Schätzungen werden niemals in UAI-Identity aufgenommen und erhalten dadurch keine Evidence-Wirkung.
+UAI transportiert ausschließlich stabile Identität und Mapping-Metadaten. Registry-/Catalog-Preise, Scores, Bootstrap-Werte, Demo-Werte oder AI-Schätzungen werden nicht zu Evidence, nur weil sie in einem Asset-Kontext verfügbar sind.
 
 ### 3. ScoringModelRegistry ist die einzige Modellauflösung
 
-Die Registry verwaltet versionierte Modelldeskriptoren mit Assetklassen-/Instrument-Support, Feature-/Result-Contract, Evidence-Policy, Executor-Key, Lifecycle und Deployment-Alias.
-
-- produktive Auflösung erfolgt nur über `lifecycle=canonical` + `alias=champion`;
+- produktive Auflösung nur über `lifecycle=canonical` + `alias=champion` + score-eligible;
 - Challenger/Legacy/Blocked werden nie implizit als Fallback verwendet;
-- keine registrierte Route oder Mehrdeutigkeit -> `SCORE_NOT_COMPUTABLE`;
-- gleiche Priorität mehrerer Champions ist ein Routingfehler und fail-closed;
-- Registry-Mutationen sind Git-/Review-gesteuert, nicht dynamisch aus Request-/LLM-Inhalten.
-
-Das Champion/Challenger-/Versionierungsmodell entspricht dem in Enterprise-MLOps üblichen Registry-Prinzip aus versionierten Modellen, Lineage/Metadaten und kontrollierter Promotion. Für CAPITAL-AI gilt dies auch für deterministische Finanzmodelle.
+- fehlende oder mehrdeutige Route -> `SCORE_NOT_COMPUTABLE`;
+- gleiche Priorität mehrerer Champions ist fail-closed;
+- Registry-Mutationen sind Git-/Review-gesteuert und nicht request-/LLM-gesteuert.
 
 ### 4. Bestehende Engines werden strangler-artig migriert
 
-Bestehende Engines werden nicht durch eine zweite neue Engine ersetzt. Sie werden nacheinander hinter UAI + Registry + Canonical-Result-Adapter gesetzt. Erst wenn ein alter Einstieg vollständig über den kanonischen Dispatcher erreichbar und regressionsgetestet ist, wird der direkte Parallelpfad entfernt.
+Bestehende Engines werden nacheinander hinter UAI + Registry + Dispatcher + Canonical Result gebracht. Ein alter direkter Einstieg wird erst entfernt, wenn der kanonische Pfad regressionsgetestet ist.
 
 ### 5. AI ist Research-/Extraction-Komponente, kein Evidence-Bypass
 
-LLM-/Agent-Ausgaben dürfen keine verifizierten Finanzmerkmale ersetzen. AI kann Research, Extraction, Source Discovery und strukturierte Evidence Candidates liefern. Ein AI-Modell selbst ist keine Finanzdaten-Provenance.
+LLM-/Agent-Ausgaben dürfen verifizierte Finanzmerkmale, Risk-/Compliance-Gates oder produktive Scoring-Authority nicht ersetzen. AI kann Research, Extraction, Source Discovery und strukturierte Evidence Candidates liefern.
 
-Eine mögliche erneute Gemini-Anbindung ist **nicht Bestandteil von A1/A2**. ADR-0072 bleibt gültig. Jede Wiedereinführung benötigt eine neue explizite ADR und darf nur als Adapter innerhalb derselben Acquisition-/Evidence-Architektur erfolgen; ein `GEMINI_API_KEY` darf keinen separaten Scoring-Pfad reaktivieren.
-
-## Aktueller Registry-Stand nach Equity-P0-Revalidierung
+## Aktueller Registry-Stand
 
 | Modell | Assets | Status | Feature Contract | Result Contract |
 |---|---|---|---|---|
 | `crypto-technical-provenance@0.7.0` | crypto | canonical/champion | `crypto-technical-features/0.7.0` | `scoring-integrity/1.1.0` |
 | `crypto-meme-integrity@0.3.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-meme-research-features/0.3.0` | `scoring-integrity/1.1.0` |
 | `crypto-defi-fundamental@0.3.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-defi-research-features/0.3.0` | `scoring-integrity/1.1.0` |
-| `equity-multifactor@0.1.0` | stock | challenger/research-only, `scoreEligible=false` | `equity-multifactor-features/0.1.0` | `scoring-integrity/1.1.0` |
+| `equity-multifactor@0.2.0` | stock | challenger/research-only, `scoreEligible=false` | `equity-multifactor-features/0.2.0` | `scoring-integrity/1.1.0` |
 | `traditional-scoring@2.1.0` | stock/forex/index | canonical/champion | `traditional-features/2.1.0` | `scoring-integrity/1.0.0` |
 | `commodity-evidence-scoring@1.0.0` | commodity | canonical/champion | `commodity-market-evidence/1.0.0` | `scoring-integrity/1.0.0` |
 | `sovereign-benchmark-yield-scoring@1.0.0` | bond `government-benchmark-yield` | canonical/champion | `sovereign-benchmark-yield-features/1.0.0` | `scoring-integrity/1.0.0` |
@@ -64,63 +58,72 @@ Individuelle Bonds bleiben gemäß ADR-0022 ohne ausreichende Evidence nicht sco
 
 ## Revalidierung 2026-08-21 — P0 Multi-Class Integrity
 
-Die P0-Härtung erweitert **keine** Authority und führt keinen zweiten Dispatcher ein. Sie konkretisiert die bereits akzeptierte Entscheidung durch folgende Runtime-Invarianten:
-
-1. **Crypto Champion Authority:** Nur `crypto-technical-provenance@0.7.0` ist produktiv scorefähig. Meme- und DeFi-Modelle bleiben Challenger und dürfen vor expliziter Validierung/Promotion keinen produktiven Score erzeugen.
-2. **Faktorautorität:** `exchange_liquidity` und `regime_bonus` sind keine Faktoren des kanonischen Crypto-0.7.0-Scores. Legacy-Felder dürfen den `final_score` nicht verändern.
-3. **Caller-Isolation:** Request-/Caller-Classification (`tier`, `confidence`) besitzt keine Autorität über Rank-Score oder Top-N-Eligibility.
-4. **Replay-/Lineage-Bindung:** Effective-Feature- und Effective-Weight-Fingerprints sind deterministisch und binden Modell-, Feature- und Evidence-Contract-Version; der Weight-Fingerprint bindet zusätzlich die Nominal-Weights-Version. Missing Evidence und dynamische Renormalisierung bleiben dadurch reproduzierbar und revisionssensitiv.
-5. **Evidence/DQ fail-closed:** `VERIFIED` verlangt echte Provenance, valide Zeitstempel und eine Freshness innerhalb des freigegebenen `maxAgeMs`. Als `VERIFIED` deklarierte, aber veraltete Evidence ist nicht admissible und muss als stale/degraded behandelt werden.
-6. **No-Demo Universe SLA:** Der Zielwert beträgt 24 reale, identity-deduped und evidence-admitted Assets je Assetklasse sowie je ausgewiesener Unterkategorie. Bei geringerer realer Verfügbarkeit wird `INSUFFICIENT_REAL_UNIVERSE`, `PROVIDER_DEGRADED` oder `EVIDENCE_INSUFFICIENT` ausgewiesen; Filler, synthetische Assets oder Interpolation sind verboten.
-7. **Single Dispatcher bleibt erhalten:** Alle produktiven Domain-Executors bleiben hinter `ScoringDispatcher`; die P0-Härtung ändert weder diese Topologie noch führt sie einen parallelen Model-Selection-Pfad ein.
+1. Nur `crypto-technical-provenance@0.7.0` ist produktiver Crypto-Champion.
+2. `exchange_liquidity` und `regime_bonus` sind keine Faktoren des kanonischen Crypto-0.7.0-Scores.
+3. Caller-Klassifikation besitzt keine Authority über Rank-Score/Top-N-Eligibility.
+4. Effective-Feature-/Weight-Fingerprints binden Feature-/Evidence-/Weight-Semantik reproduzierbar.
+5. `VERIFIED` Evidence benötigt echte Provenance und gültige Freshness.
+6. Universe-SLA wird ausschließlich mit realen, identity-deduped und evidence-admitted Assets erfüllt; keine Filler/Synthetic/Demo-Assets.
+7. Alle produktiven Domain-Executors bleiben hinter `ScoringDispatcher`.
 
 ## Revalidierung 2026-08-22 — Meme/DeFi Model Supersession
 
-Supersession B ändert keine produktive Modellautorität. Sie entfernt stattdessen zwei Modellkorrelationen aus der Zukunftsprojektion:
+1. Die historische Meme-35/25/20/20-Formel ist non-authorizing; Trend/Momentum/Volatilität bleiben als `meme-price-path` korrelationsgebunden.
+2. DeFi TVL/Fees/Revenue bleiben gemeinsam `defi-scale-activity`; keine dreifache additive Gewichtung ohne validierte De-Korrelation.
+3. DeFiLlama ist Evidence-Provider, keine Score-/Eligibility-Authority.
+4. Meme/DeFi bleiben `challenger`, `scoreEligible=false`, `research-only:not-executable`.
+5. Produktive Gewichte/Fingerprints erfordern explizite Promotion.
 
-1. **Meme:** Die historische 35/25/20/20-Formel aus `MemeCoinScoringService` ist nicht kanonisch und wird nicht in den Challenger übernommen. Trend, Momentum und Volatilität werden als korrelierte `meme-price-path`-Evidence gebunden. Contract-/Manipulationsrisiko ist zwingende Promotion-Voraussetzung. Es existieren keine ausführbaren Meme-Gewichte.
-2. **DeFi:** TVL, Fees und Revenue bleiben Raw Evidence, sind aber als `defi-scale-activity` correlation-bound. Eine spätere Promotion muss De-Korrelation oder einen validierten Latent-Factor nachweisen; drei unabhängige additive positive Gewichte sind nicht zulässig.
-3. **DeFiLlama:** ADR-0100 akzeptiert DeFiLlama ausschließlich als Evidence-Provider. `READY` verlangt vollständig VERIFIED Evidence; ein komplett stale Set ist explizit `STALE`. Providerstatus oder Providername darf nie Gewicht/Eligibility beeinflussen.
-4. **No Score Promotion:** `crypto-meme-integrity@0.3.0` und `crypto-defi-fundamental@0.3.0` bleiben `challenger`, `scoreEligible=false`, `research-only:not-executable`.
-5. **Fingerprint-Gate:** Produktive Weight-Fingerprints entstehen erst für ausdrücklich freigegebene Modellgewichte; Research-Weights bleiben nicht-autorisierend. Eine spätere Owner-approved Promotion muss die bestehende `scoringFingerprint` Authority für Effective-Feature-/Effective-Weight-Lineage nutzen.
+## Revalidierung 2026-08-23 — Equity P0 Foundation
 
-## Revalidierung 2026-08-23 — Equity Orchestrator P0 Challenger
+1. Equity ist eine Domain-Research-Grenze innerhalb derselben Architektur, kein zweiter Master-Orchestrator/Dispatcher.
+2. Industry/Taxonomy, Size Bucket, Style Tags und genau ein Primary Scoring Profile werden getrennt modelliert.
+3. Top-Level-Gewichte existieren ausschließlich für sechs Familien: `quality`, `valuation`, `growth`, `momentum`, `financialStrength`, `capitalAllocation`.
+4. Subfeatures derselben ökonomischen Familie werden nicht als zusätzliche Top-Level-Faktoren erneut addiert.
+5. Research-Familien benötigen admissible `market-evidence-dq/1.0.0` Evidence.
+6. Research-Composite benötigt mindestens vier admissible Familien, mindestens 70% nominale Weight Coverage und profile-semantische Pflichtfamilien.
+7. Regime, Sektorrotation, Sentiment und Pattern bleiben context-only ohne `scoreImpact`/`rankingImpact`.
+8. Produktiver Stock-Pfad bleibt `traditional-scoring@2.1.0`.
+9. Eine spätere Equity-Promotion muss `stock` atomar aus Traditional entfernen und den Equity-Champion im selben Change aktivieren.
 
-Der Equity-Ausbau ändert die produktive Scoring-Authority **nicht**. Er nutzt die in dieser ADR bereits erlaubte assetklassenspezifische Feature-/Modelllogik innerhalb derselben Wertschöpfungskette.
+## Revalidierung 2026-08-23 — Equity P1 SEC / Comparable Filing / 0.2.0
 
-1. **Equity Challenger:** `equity-multifactor@0.1.0` wird ausschließlich als `challenger`, `research-only`, `scoreEligible=false` für `stock` registriert.
-2. **Produktiver Stock-Pfad unverändert:** `traditional-scoring@2.1.0` bleibt bis zu einer separaten Owner-approved Promotion der einzige canonical/champion Stock-Pfad.
-3. **Keine Parallelarchitektur:** `EquityOrchestrator` ist eine reine Domain-Research-Grenze ohne Asset-Routing, Provider-I/O, öffentliche Route, Persistence-, Ranking- oder CanonicalScoreResult-Autorität. Ein produktiver Equity Executor darf ausschließlich hinter dem bestehenden `ScoringDispatcher` aktiviert werden.
-4. **Klassifikation getrennt:** Industry-/Taxonomy-Metadaten, Size Bucket, Style Tags und genau ein Primary Scoring Profile werden getrennt modelliert. Externe Taxonomien wie GICS dürfen nur bei zulässiger Provider-/Lizenznutzung als Metadaten verwendet werden.
-5. **Anti-Korrelation:** Equity 0.1.0 gewichtet ausschließlich sechs Faktor-Familien (`quality`, `valuation`, `growth`, `momentum`, `financialStrength`, `capitalAllocation`). Einzelmetriken innerhalb derselben ökonomischen Familie dürfen nicht als zusätzliche Top-Level-Faktoren wiederholt werden.
-6. **Evidence/DQ:** Research-Familien werden nur mit admissible `market-evidence-dq/1.0.0` Evidence zugelassen. Missing/stale/conflicting/unverified Evidence bleibt missing und darf nicht als 0, neutral oder PASS ersetzt werden.
-7. **Coverage Gate:** Ein Research-Composite erfordert mindestens vier zugelassene Faktor-Familien und mindestens 70 % nominale Gewichtsabdeckung; die effektiven Gewichte werden reproduzierbar fingerprinted.
-8. **Context-only Signale:** Regime, Sektorrotation, Sentiment und Pattern besitzen in Equity 0.1.0 weder `scoreImpact` noch `rankingImpact`.
-9. **Atomic Promotion:** Eine spätere produktive Promotion muss `stock` atomar vom Traditional-Champion auf einen Equity-Champion umstellen; zwei gleichberechtigte canonical Champions oder ein route-lokaler Equity-Fallback bleiben verboten.
+Die P1-Erweiterung ändert weiterhin **keine produktive Authority**. Aufgrund neuer research-score-wirksamer Features wurde die Challenger-Lineage auf `equity-multifactor@0.2.0` / `equity-multifactor-features/0.2.0` angehoben. Equity 0.1.0 bleibt historische P0-Evidence.
 
-## Revalidierung 2026-08-23 — Equity P1 SEC Evidence Integration
+### SEC EDGAR als Evidence Acquisition
 
-P1 ergänzt SEC EDGAR ausschließlich als **Evidence-Provider innerhalb der bestehenden Equity-Research-Kette**. Die produktive Modell- und Routing-Authority bleibt unverändert.
+1. `server/secEdgarCompanyFacts.ts` nutzt SEC CompanyFacts serverseitig, keyless und mit deklarierter User-Agent-/Fair-Access-Governance.
+2. Ticker -> CIK wird ausschließlich aus SEC-publizierter Zuordnung übernommen; kein Guessing/Fuzzy Fallback.
+3. `filedAt <= asOf` verhindert Filing-Look-Ahead; Filing Availability, Period End und Retrieval Time bleiben getrennt.
+4. Instant/Periodic/YTD-Kontexte werden deterministisch getrennt; Bridges besitzen zusätzliche Duration-Gates.
+5. SEC-spezifische Facts werden vor Scoring in providerneutrale Filing Contracts projiziert.
+6. SEC ist keine Registry-, Dispatcher-, DQ-, Ranking-, Persistence- oder Execution-Authority.
 
-1. **Evidence-only Provider:** `server/secEdgarCompanyFacts.ts` nutzt SEC CompanyFacts serverseitig, keyless und mit deklarierter User-Agent-/Fair-Access-Governance. Der Adapter besitzt keine Score-, Registry-, Dispatcher-, Ranking- oder Persistence-Authority.
-2. **Point-in-Time:** Facts werden nur zugelassen, wenn `filedAt <= asOf`. Filing-Verfügbarkeit, Accounting-Period-Ende und Retrieval-Zeit bleiben getrennt; Quarter-/Annual-/YTD-Kontexte werden deterministisch unterschieden.
-3. **Providerneutrale Grenze:** `server/equitySecEvidenceBridge.ts` projiziert SEC-spezifische Facts in `EquityFilingEvidenceSnapshot`; `EquityFilingDerivedMetrics` bleibt providerneutral und akzeptiert ausschließlich admissible Market-Evidence-DQ-Inputs.
-4. **Derived Metrics ohne Eigenautorität:** Current Ratio, Long-Term-Debt/Equity, Interest Coverage, YTD Free Cash Flow, Shareholder Distributions, Distribution Coverage und Reinvestment Intensity sind deterministische Research-Metriken und bleiben `scoreEligible=false`, `normalizationRequired=true`.
-5. **Correlation De-Duplication:** SEC filing-derived Financial-Strength-Komponenten dürfen vendor-derived Leverage nur ersetzen, wenn mindestens zwei unabhängige Filing-Komponenten admissible sind. SEC/FMP/AlphaVantage-Werte derselben ökonomischen Korrelationsgruppe werden nicht additiv gestapelt.
-6. **Capital Allocation bleibt fail-closed:** Distribution Coverage, FCF und Reinvestment Intensity erzeugen allein keinen Capital-Allocation-Family-Score. Eine zweite unabhängige, governance-fähige Größe wie Share-Count-Change und/oder peer-relative Normalisierung bleibt Voraussetzung.
-7. **Research Runtime:** `equity-research-runtime/0.2.0` bindet Existing Fundamentals, provenance-aware History und SEC Evidence ohne öffentliche Route, Persistence Writer oder `CanonicalScoreResult`; produktives Stock-Routing bleibt `traditional-scoring@2.1.0`.
-8. **Promotion unverändert:** Peer-/Sector-Normalisierung, mehrperiodige Filing-Historie, Backtesting und explizite Owner-Promotion bleiben getrennte Gates. P1 SEC allein berechtigt keinen Champion-Cutover.
+### Current-/Comparable Filing Features
+
+1. Financial Strength kann aus Current Ratio, Long-Term-Debt/Equity und Interest Coverage entstehen; SEC darf vendor-derived Leverage in derselben Korrelationsgruppe nur bei ausreichender Filing-Coverage **ersetzen**, nicht stapeln.
+2. YTD FCF, Shareholder Distributions, Distribution Coverage und Reinvestment Intensity bleiben deterministische Research-Metriken.
+3. Comparable SEC Periods müssen Kontext/Unit/Periodenlänge sowie ungefähr ein Fiskaljahr Abstand erfüllen.
+4. Comparable Revenue/EPS/FCF Growth kann Vendor-Quarterly-Growth innerhalb derselben Growth-Korrelationsgruppe ersetzen, nicht additiv ergänzen.
+5. Capital Allocation wird nur aus unabhängiger Share-Count-Change-Evidence plus Distribution Coverage freigeschaltet; Dividend Yield allein bleibt unzureichend.
+6. Reinvestment Intensity bleibt context-only, bis Peer-/Profile-Normalisierung eine belastbare Richtung definiert.
+
+### Quality / Valuation Enrichment
+
+1. `quality.freeCashFlowConversion` wird ausschließlich aus einem **same-provider/same-observation** TTM-FCF/share/EPS-Provenance-Paar abgeleitet. Gemergte AlphaVantage/FMP-Displaywerte werden dafür nicht cross-provider gemischt.
+2. `valuation.freeCashFlowYield` wird nur aus attributable FCF/share plus einem frischen, provenance-aware realen History-Close abgeleitet.
+3. Beide Features reichern nur bereits vorhandene Quality-/Valuation-Familien an; ein einzelnes Derived Signal darf keine neue Family-Coverage erzeugen.
+4. Die Runtime `equity-research-runtime/0.4.0` bleibt ohne öffentliche Route, Persistence Writer, `CanonicalScoreResult`, Ranking oder Execution.
+5. Sämtliche absoluten Normalisierungen bleiben research-only und `promotionReady=false`; Peer-/Sector-relative Normalisierung bleibt Promotion-Voraussetzung.
 
 ## Konsequenzen
 
-- Neue Scoring-Features müssen UAI + Registry + Evidence Gate nutzen.
-- `/api/crypto/analyze` darf langfristig keinen alternativen kanonischen Finanzscore erzeugen; Agenten-Ausgaben werden Research/Enrichment.
-- `scoring.service.ts`, Meme-/Raw-Materials- und route-lokale Scorer bleiben während der Migration nur temporäre Implementierungsdetails und erhalten keinen neuen Architekturstatus.
-- Equity-Research-Ergebnisse bleiben bis zur expliziten Promotion ohne CanonicalScoreResult-, Ranking-, Eligibility- oder Execution-Wirkung.
-- SEC EDGAR ist Evidence Acquisition, kein eigenes Equity-Modell und keine alternative DQ-/Provider-Routing-Authority.
-- Score-Gewichte, Provider-Routing, `scoreImpact`, `rankingImpact` und Eligibility-Schwellen werden außerhalb explizit versionierter und reviewter Modelländerungen nicht implizit verändert.
-- Änderungen an Feature-/Evidence-/Weight-Verträgen müssen in der Runtime-Lineage erkennbar sein und einen neuen Replay-Fingerprint erzeugen, soweit sie dessen fachliche Semantik beeinflussen.
-- Universe-Verfügbarkeitsziele dürfen niemals durch No-Demo-Data-Verstöße erfüllt werden.
+- Neue produktive Scoring-Features müssen UAI + Registry + Evidence Gate + Dispatcher nutzen.
+- Equity Research bleibt bis expliziter Promotion ohne CanonicalScoreResult-, Ranking-, Eligibility- oder Execution-Wirkung.
+- SEC EDGAR ist Evidence Acquisition, kein eigenes Equity-Modell und keine alternative Provider-/DQ-Authority.
+- Vendor-/Filing-/Market-Evidence derselben ökonomischen Korrelationsgruppe darf nicht doppelt gewichtet werden.
+- Änderungen an Feature-/Evidence-/Weight-Semantik müssen in Model-/Feature-Version und Replay-Lineage sichtbar sein.
+- No-Demo-Data bleibt für Universe- und Evidence-Verfügbarkeit verbindlich.
 
 ## Migration / Exit Criteria
 
@@ -128,13 +131,13 @@ P1 ergänzt SEC EDGAR ausschließlich als **Evidence-Provider innerhalb der best
 2. UAI-Adapter für alle aktiven Asset-Katalogpfade;
 3. alle produktiven Modellexecutoren versioniert in einer Registry;
 4. jeder öffentliche Score-Einstieg löst sein Modell über die Registry auf;
-5. alle Resultate werden zu `CanonicalScoreResult` adaptiert;
-6. direkte Parallel-Model-Selection wird entfernt;
-7. P0 Runtime-Lineage bindet effektive Feature-/Weight-Semantik und Evidence-Vertrag revisionssicher;
-8. Universe-SLA wird produktiv nur aus real entdeckten und zugelassenen Assets gespeist;
-9. Meme/DeFi-Challenger bleiben ohne validierte Evidence/Weights/Promotion nicht ausführbar;
-10. Equity-Challenger einschließlich SEC-derived Research bleibt bis zur separat validierten und Owner-approved atomaren Stock-Promotion research-only und `scoreEligible=false`;
-11. Main-Sync/Korrelationsprüfung vor PR-Erstellung und erneut vor Merge.
+5. alle produktiven Resultate werden zu `CanonicalScoreResult` adaptiert;
+6. direkte Parallel-Model-Selection entfernt;
+7. Runtime-Lineage bindet effektive Feature-/Weight-/Evidence-Semantik revisionssicher;
+8. Universe-SLA ausschließlich aus realen admitted Assets;
+9. Meme/DeFi-Challenger ohne Promotion nicht ausführbar;
+10. Equity-Challenger einschließlich SEC-/Comparable-/Derived Research bleibt bis zu Peer-Normalisierung, kontrolliertem Backtesting und Owner-approved atomarem Stock-Cutover research-only und `scoreEligible=false`;
+11. Main-Sync/Korrelationsprüfung vor PR und erneut vor Merge.
 
 ## Referenzen
 
@@ -147,17 +150,18 @@ P1 ergänzt SEC EDGAR ausschließlich als **Evidence-Provider innerhalb der best
 - `docs/evidence/sc-md/SC2_EQUITY_P1_EVIDENCE_RUNTIME_2026-08-23.md`
 - `docs/evidence/sc-md/SC2_EQUITY_P1_SEC_EDGAR_2026-08-23.md`
 - ADR-0022, ADR-0032, ADR-0033, ADR-0072, ADR-0100
-- `src/services/scoringIntegrity.ts`
-- `src/platform/MarketData/contracts.ts`
 - `src/platform/MarketData/evidenceQualityContracts.ts`
 - `src/platform/Scoring/scoringFingerprint.ts`
-- `src/platform/Scoring/CryptoResearchModelContracts.ts`
 - `src/platform/Scoring/EquityModelContracts.ts`
-- `src/platform/Scoring/EquityResearchScoring.ts`
+- `src/platform/Scoring/EquityFeatureComposer.ts`
+- `src/platform/Scoring/EquityVendorDerivedFeatureComposer.ts`
 - `src/platform/Scoring/EquityFilingDerivedMetrics.ts`
 - `src/platform/Scoring/EquityFilingFeatureComposer.ts`
+- `src/platform/Scoring/EquityComparableFilingMetrics.ts`
+- `src/platform/Scoring/EquityComparableFilingFeatureComposer.ts`
+- `src/platform/Scoring/EquityResearchScoring.ts`
 - `src/platform/Scoring/EquityOrchestrator.ts`
 - `server/secEdgarCompanyFacts.ts`
 - `server/equitySecEvidenceBridge.ts`
+- `server/equitySecComparableEvidence.ts`
 - `server/equityResearchRuntime.ts`
-- `src/platform/Scoring/UniverseSla.ts`
