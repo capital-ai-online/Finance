@@ -16,7 +16,10 @@ function jsonResponse(body: unknown, status = 200): Response {
   return { ok: status >= 200 && status < 300, status, json: async () => body } as Response;
 }
 
-function request(kind: 'BUY' | 'SELL', overrides: Partial<GoPlusGovernedTradeSimulationRequest> = {}): GoPlusGovernedTradeSimulationRequest {
+function request(
+  kind: 'BUY' | 'SELL',
+  overrides: Partial<GoPlusGovernedTradeSimulationRequest> = {},
+): GoPlusGovernedTradeSimulationRequest {
   return {
     kind,
     chainId: '1',
@@ -46,7 +49,7 @@ function verifiedEvidence(
     routeAuthorityId: 'AUTH-CRYPTO-ROUTE-RESEARCH',
     routeAuthorityVersion: '0.1.0',
     routeEvidenceRefs: ['route:quote:1'],
-    transactionFingerprint: `sha256:${kind === 'BUY' ? 'a' : 'b'.repeat(1)}${'0'.repeat(63)}`,
+    transactionFingerprint: `sha256:${(kind === 'BUY' ? 'a' : 'b').repeat(64)}`,
     retrievedAt: NOW,
     evidenceId: `goplus:${kind.toLowerCase()}:1`,
     simulated: true,
@@ -63,7 +66,8 @@ function verifiedEvidence(
 
 describe('P1-A GoPlus transaction simulation evidence', () => {
   it('fails closed without the key required by the transaction simulation endpoint', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ code: 1, result: {} }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) =>
+      jsonResponse({ code: 1, result: {} }));
     const provider = new GoPlusTransactionSimulationProvider({
       env: {},
       fetchImpl: fetchImpl as unknown as typeof fetch,
@@ -80,7 +84,8 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
   });
 
   it('rejects an ungoverned route before transport', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ code: 1, result: {} }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) =>
+      jsonResponse({ code: 1, result: {} }));
     const provider = new GoPlusTransactionSimulationProvider({
       apiKey: 'test-key',
       fetchImpl: fetchImpl as unknown as typeof fetch,
@@ -98,7 +103,7 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
   });
 
   it('accepts a governed BUY pre-run only when the target-token delta is positive', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
       result: {
         is_simulated: true,
@@ -130,7 +135,7 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
   });
 
   it('accepts a governed SELL pre-run only when the target-token delta is negative', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
       result: {
         is_simulated: '1',
@@ -153,7 +158,7 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
   });
 
   it('keeps a completed simulation without target-token delta non-computable', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
       result: { is_simulated: true, is_revert: false, erc20_balance_changes: [] },
     }));
@@ -172,7 +177,7 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
   });
 
   it('treats a provider-confirmed revert as a failed direction, never as missing evidence', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
       result: { is_simulated: true, is_revert: true, revert_reason: 'execution reverted' },
     }));
