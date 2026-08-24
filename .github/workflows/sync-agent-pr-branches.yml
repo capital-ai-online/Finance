@@ -78,7 +78,7 @@ jobs:
             fi
 
             case "$head" in
-              agent/*|claude/*|gemini/*|copilot/*|ai/*) ;;
+              agent/*|claude/*|grok/*|ai/*) ;;
               *)
                 echo "PR #$number ($head): kein Agenten-Branch-Praefix, uebersprungen."
                 continue
