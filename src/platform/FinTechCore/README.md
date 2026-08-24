@@ -13,7 +13,7 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-2A: provenance-aware Primary-/Secondary-Analyseprofile
 - FT-2B: kategoriespezifische Feature-/Evidence-Contracts
 - FT-2C: detector-agnostische Pattern Detection Contracts und Research Resolver
-- FT-2D: Meme/DeFi Research Models `0.3.0`, non-executable challengers, keine Promotion
+- Supersession B: Meme/DeFi Research Models `0.3.0`, non-executable challengers, keine Promotion (FT-2D)
 - FT-3: private durable Workflow-/Event-/Decision-/OrderIntent-/Reconciliation-Persistenz
 - FT-4: deterministic, replay-faehiges Paper Trading
 - FT-5: deterministic Pre-Trade Risk + Compliance Decisions
