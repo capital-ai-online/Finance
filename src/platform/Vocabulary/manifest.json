@@ -101,7 +101,9 @@
     "docs/roadmaps/work-packages/VW-6_GITHUB_WIKI_PROJECTION_2026-08-21.md",
     "docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md",
     "docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md",
-    "docs/security/VOCABULARY_WIKI_SYNC_THREAT_MODEL_2026-08-21.md"
+    "docs/security/VOCABULARY_WIKI_SYNC_THREAT_MODEL_2026-08-21.md",
+    "docs/evidence/vocabulary/VOCABULARY_VW0_VW5_MAIN_CORRELATION_2026-08-24.md",
+    "docs/evidence/vocabulary/VOCABULARY_FINAL_RELEASE_2026-08-24.md"
   ],
   "tests": [
     "src/platform/Vocabulary/Tests/vocabularyRegistry.test.ts",
