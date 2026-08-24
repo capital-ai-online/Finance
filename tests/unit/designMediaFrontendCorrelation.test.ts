@@ -24,6 +24,7 @@ const mediaRenderer = read('scripts/media/capital_ai_media.py');
 const mediaPreview = read('src/features/social/ui/MediaStudio/MediaStudioPreview.tsx');
 const rankingBoard = read('src/features/screening/ui/RankingBoard.tsx');
 const favoritePatterns = read('src/components/FavoriteAssetPatternSlots.tsx');
+const profilePage = read('src/components/ProfilePage.tsx');
 
 describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
   it('projects PDF and deterministic media from canonical brand roles', () => {
@@ -67,5 +68,19 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     expect(favoritePatterns).toContain("bullish: { text: 'text-score-best'");
     expect(favoritePatterns).toContain("bearish: { text: 'text-score-worst'");
     expect(favoritePatterns).toContain("neutral: { text: 'text-score-warning'");
+  });
+
+  it('keeps profile exports scoped to authoritative client-visible data', () => {
+    expect(profilePage).toContain("import { CAPITAL_AI_VERSION } from '../platform/Branding/runtimeBrand';");
+    expect(profilePage).toContain('platform_version: CAPITAL_AI_VERSION');
+    expect(profilePage).toContain("export_type: 'client_profile_snapshot'");
+    expect(profilePage).toContain('Billing, authentication, session, audit and backtest data are not included');
+    expect(profilePage).not.toContain('Version 0.7.0');
+    expect(profilePage).not.toContain('requests_completed_estimate');
+    expect(profilePage).not.toContain('device_fingerprint_secure');
+    expect(profilePage).not.toContain('backtest_history_archive');
+    expect(profilePage).not.toContain('aif_core_gdpr_export');
+    expect(profilePage).not.toContain('aif-gold-');
+    expect(profilePage).not.toContain('aif-neon-');
   });
 });
