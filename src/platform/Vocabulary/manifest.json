@@ -7,7 +7,7 @@
   "category": "platform",
   "layer": "CrossCutting",
   "lifecycle": "Operational",
-  "health": "Unknown",
+  "health": "Verified",
   "repository": "Finance",
   "ess": [
     "ESS-0001-CONTRACTS",
@@ -87,7 +87,10 @@
     "mode": "controlled-incremental",
     "automaticApplyAllowed": false,
     "blockingState": "DRIFT",
-    "nonBlockingDebtState": "OPEN"
+    "nonBlockingDebtState": "OPEN",
+    "initialCandidateCount": 5,
+    "migratedCandidateCount": 5,
+    "openCandidateCount": 0
   },
   "documentation": [
     "README.md",
@@ -134,11 +137,10 @@
       "GitHubWikiProjection",
       "GitHubWikiRemotePolicy",
       "ControlledWordingMigration",
-      "ContinuousGovernanceClosure"
+      "ContinuousGovernanceClosure",
+      "InitialMarketScreenerWordingMigration"
     ],
-    "plannedAreas": [
-      "Incremental execution of OPEN VW-7 component migrations as normal feature changes"
-    ]
+    "plannedAreas": []
   },
   "validation": {
     "targetedCommand": "npm run vocabulary:governance:check",
@@ -151,12 +153,14 @@
     "migrationDriftCheck": true,
     "closureValidator": "scripts/automation/validateVocabularyGovernanceClosure.ts"
   },
-  "implementationStatus": "VW-0 through VW-8 implemented as a dependency-free, read-only governance control plane. Wiki output is generated and non-authoritative, the optional sync path is exact-remote allowlisted and explicit-apply/push gated, source wording migration is controlled and incremental, and continuous checks are integrated into the existing repository test chain. No external platform, financial runtime, IAM, Billing, Wiki publish or production mutation is performed by the implementation baseline.",
+  "implementationStatus": "VW-0 through VW-8 are implemented as a dependency-free, read-only governance control plane. The initial five VW-7 MarketScreener candidates are migrated through stable Message Keys. Wiki output remains generated, non-authoritative and separately publication-gated. No financial runtime, IAM, Billing or production mutation authority is introduced.",
   "effectiveSince": {
     "pullRequest": 477,
     "state": "merged",
     "baseline": "main",
-    "verifiedMainSha": "7afa86e24812e3de96e93882b9658d2b2e0311e7"
+    "verifiedMainSha": "c0ebee48b062c98112b39340dcde3ab31c3d7c3d",
+    "hygienePullRequest": 524,
+    "hygieneMergeSha": "78ad9b3041317f5b941348a13c428395bee4561d"
   },
   "browserEntryPoint": "index.ts",
   "nodeEntryPoint": "node.ts",
