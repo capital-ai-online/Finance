@@ -35,12 +35,15 @@ export interface CryptoMemeHoneypotSimulationEvidence {
   readonly authority: 'RESEARCH_EVIDENCE_ONLY';
 }
 
-const FEATURE_KEYS = Object.freeze([
+const FEATURE_KEYS: readonly [
   'risk.buySimulationSuccess',
   'risk.sellSimulationSuccess',
-] as const);
+] = Object.freeze([
+  'risk.buySimulationSuccess',
+  'risk.sellSimulationSuccess',
+]);
 
-function refs(...groups: readonly (readonly string[])[]): readonly string[] {
+function refs(...groups: Array<readonly string[]>): readonly string[] {
   return Object.freeze([...new Set(groups.flat().map((value) => value.trim()).filter(Boolean))].sort());
 }
 
@@ -174,7 +177,7 @@ export function composeMemeHoneypotSimulationEvidence(
     );
   }
 
-  const hardGates = Object.freeze({
+  const hardGates: CryptoMemeHoneypotSimulationHardGates = Object.freeze({
     buySimulationSuccess: buy.directionSucceeded,
     sellSimulationSuccess: sell.directionSucceeded,
   });
