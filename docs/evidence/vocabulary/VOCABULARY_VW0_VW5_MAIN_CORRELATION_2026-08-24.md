@@ -2,7 +2,7 @@
 
 **Status:** VERIFIED ON MAIN  
 **Date:** 2026-08-24  
-**Baseline:** `main@0743e66742519a452a0633734685d4115e71150d`  
+**Baseline:** `main@0f864d31f60b4b1a1a9968202a62aa8357673049`  
 **Implementation merges:** PR #477; hygiene/browser-boundary closure PR #524  
 **Authorities:** `ESS-0017`, `ESS-0017-CONTRACTS`, `ADR-0078`, `SC-MD-SPT-0001`
 
