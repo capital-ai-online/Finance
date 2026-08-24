@@ -47,13 +47,15 @@ async function fetchBinanceKlines(symbol: string, interval: '1h' | '4h', limit =
 }
 
 const BIAS_STYLE: Record<DetectedPattern['bias'], { text: string; bg: string; border: string; Icon: typeof TrendingUp }> = {
-  bullish: { text: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', Icon: TrendingUp },
-  bearish: { text: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/25', Icon: TrendingDown },
-  neutral: { text: 'text-amber-200', bg: 'bg-amber-500/10', border: 'border-amber-500/25', Icon: Minus },
+  bullish: { text: 'text-score-best', bg: 'bg-score-best/10', border: 'border-score-best/25', Icon: TrendingUp },
+  bearish: { text: 'text-score-worst', bg: 'bg-score-worst/10', border: 'border-score-worst/25', Icon: TrendingDown },
+  neutral: { text: 'text-score-warning', bg: 'bg-score-warning/10', border: 'border-score-warning/25', Icon: Minus },
 };
 
 function PatternBadgeList({ patterns }: { patterns: DetectedPattern[] }) {
-  if (patterns.length === 0) return <p className="text-[10px] text-white/35">Kein aktives Muster erkannt.</p>;
+  // Missing pattern evidence is intentionally not rendered. A textual badge
+  // would be a placeholder and could be mistaken for an analytical result.
+  if (patterns.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1.5">
       {patterns.map((pattern) => {
@@ -113,15 +115,15 @@ function SlotCard({ symbol, cryptoAssets, onAssign, onClear, onSelectSymbol }: S
 
   if (!symbol) {
     return (
-      <div className="rounded-xl border border-dashed border-white/15 bg-black/20 p-4 space-y-3">
-        <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-white/40"><Star size={13} /> Slot leer</div>
+      <div className="rounded-xl border border-dashed border-border bg-background/20 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-text-secondary"><Star size={13} /> Slot leer</div>
         <div className="relative">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-secondary" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Krypto-Asset zuweisen…"
-            className="w-full rounded-lg border border-white/10 bg-black/40 py-2 pl-8 pr-2 text-xs text-white outline-none focus:border-aif-gold-DEFAULT/50"
+            className="w-full rounded-lg border border-border bg-background/40 py-2 pl-8 pr-2 text-xs text-text-primary outline-none focus:border-brand-primary/50"
           />
         </div>
         <div className="max-h-40 space-y-1 overflow-y-auto">
@@ -130,50 +132,50 @@ function SlotCard({ symbol, cryptoAssets, onAssign, onClear, onSelectSymbol }: S
               type="button"
               key={item.symbol}
               onClick={() => onAssign(item.symbol)}
-              className="flex w-full items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] px-2 py-1.5 text-left text-xs text-white/70 hover:border-aif-gold-DEFAULT/30 hover:text-white"
+              className="flex w-full items-center gap-2 rounded-lg border border-border bg-surface/30 px-2 py-1.5 text-left text-xs text-text-primary/70 hover:border-brand-primary/30 hover:text-text-primary"
             >
-              <AssetLogo symbol={item.symbol} size="xs" /> {item.symbol} <span className="text-white/35">· {item.name}</span>
+              <AssetLogo symbol={item.symbol} size="xs" /> {item.symbol} <span className="text-text-secondary">· {item.name}</span>
             </button>
           ))}
-          {suggestions.length === 0 && <p className="px-1 text-[10px] text-white/30">Kein Krypto-Asset gefunden.</p>}
+          {suggestions.length === 0 && <p className="px-1 text-[10px] text-text-secondary">Kein Krypto-Asset gefunden.</p>}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/25 p-4 space-y-3">
+    <div className="rounded-xl border border-border bg-background/25 p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <button type="button" onClick={() => onSelectSymbol?.(symbol)} className="flex items-center gap-2 text-left">
           <AssetLogo symbol={symbol} size="sm" />
           <div>
-            <div className="text-sm font-bold text-white">{symbol}</div>
-            <div className="text-[9px] text-white/40 font-mono">{asset?.name ?? symbol}</div>
+            <div className="text-sm font-bold text-text-primary">{symbol}</div>
+            <div className="text-[9px] text-text-secondary font-mono">{asset?.name ?? symbol}</div>
           </div>
         </button>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={() => void loadPatterns()} disabled={loading} className="rounded-md border border-white/10 bg-white/5 p-1.5 disabled:opacity-40" title="Muster neu prüfen">
+          <button type="button" onClick={() => void loadPatterns()} disabled={loading} className="rounded-md border border-border bg-surface/50 p-1.5 disabled:opacity-40" title="Muster neu prüfen">
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button type="button" onClick={onClear} className="rounded-md border border-white/10 bg-white/5 p-1.5" title="Slot leeren">
+          <button type="button" onClick={onClear} className="rounded-md border border-border bg-surface/50 p-1.5" title="Slot leeren">
             <X size={12} />
           </button>
         </div>
       </div>
 
       {error ? (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2.5 text-[10px] text-amber-100/70">
+        <div className="flex items-start gap-2 rounded-lg border border-score-warning/20 bg-score-warning/5 p-2.5 text-[10px] text-score-warning">
           <AlertTriangle size={12} className="mt-0.5 shrink-0" /> {error}
         </div>
       ) : (
         <div className="space-y-2.5">
           <div>
-            <div className="mb-1 text-[9px] font-mono font-black uppercase tracking-widest text-cyan-300">1H Chart</div>
-            {loading ? <p className="text-[10px] text-white/35">Lädt Kerzen…</p> : <PatternBadgeList patterns={patterns1h} />}
+            <div className="mb-1 text-[9px] font-mono font-black uppercase tracking-widest text-brand-cyan">1H Chart</div>
+            {loading ? <p className="text-[10px] text-text-secondary">Lädt Kerzen…</p> : <PatternBadgeList patterns={patterns1h} />}
           </div>
           <div>
-            <div className="mb-1 text-[9px] font-mono font-black uppercase tracking-widest text-purple-300">4H Chart</div>
-            {loading ? <p className="text-[10px] text-white/35">Lädt Kerzen…</p> : <PatternBadgeList patterns={patterns4h} />}
+            <div className="mb-1 text-[9px] font-mono font-black uppercase tracking-widest text-brand-accent">4H Chart</div>
+            {loading ? <p className="text-[10px] text-text-secondary">Lädt Kerzen…</p> : <PatternBadgeList patterns={patterns4h} />}
           </div>
         </div>
       )}
@@ -194,10 +196,10 @@ export function FavoriteAssetPatternSlots({ onSelectSymbol }: { onSelectSymbol?:
   }, [slots]);
 
   return (
-    <section id="favoriten-slots" className="scroll-mt-24 rounded-2xl border border-white/10 bg-neutral-950/60 p-5 sm:p-6 backdrop-blur-xl space-y-4">
+    <section id="favoriten-slots" className="scroll-mt-24 rounded-2xl border border-border bg-surface/60 p-5 sm:p-6 backdrop-blur-xl space-y-4">
       <div>
-        <div className="flex items-center gap-2 text-sm font-black uppercase text-white"><Star size={16} className="text-aif-gold-DEFAULT" /> Favoriten-Slots · Live-Pattern 1H/4H</div>
-        <p className="mt-1 text-[10px] font-mono text-white/40">3 fest zugeordnete Slots. Candlestick-Formationen werden live aus echten 1H-/4H-Kerzen (Binance) berechnet — read-only, kein Einfluss auf den kanonischen Score.</p>
+        <div className="flex items-center gap-2 text-sm font-black uppercase text-text-primary"><Star size={16} className="text-brand-primary" /> Favoriten-Slots · Live-Pattern 1H/4H</div>
+        <p className="mt-1 text-[10px] font-mono text-text-secondary">3 fest zugeordnete Slots. Candlestick-Formationen werden live aus echten 1H-/4H-Kerzen (Binance) berechnet — read-only, kein Einfluss auf den kanonischen Score.</p>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {slots.map((symbol, index) => (
