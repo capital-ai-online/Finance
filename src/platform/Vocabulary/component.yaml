@@ -9,7 +9,7 @@ component:
   category: platform
   layer: CrossCutting
   repository: Finance
-  effectiveAfter: Human Merge
+  effectiveSince: PR #477 human merge
 
 purposeDE: >
   Kanonische Registry für Terminologie und zweisprachiges Produkt-Wording mit
@@ -114,10 +114,10 @@ references:
     - docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md
 
 implementationStatusDE: >
-  VW-0 bis VW-8 branchbasiert implementiert. Wiki-Projektion ist deterministisch und standardmäßig Dry-Run;
+  VW-0 bis VW-8 via PR #477 auf main implementiert. Wiki-Projektion ist deterministisch und standardmäßig Dry-Run;
   externe Wiki-Publikation wurde nicht ausgeführt. VW-7 stellt eine kontrollierte Migrationsbaseline bereit;
   verbleibende OPEN-Kandidaten bleiben messbarer inkrementeller Backlog. Continuous Governance verwendet die bestehende Test-/Quality-Kette.
 implementationStatusEN: >
-  VW-0 through VW-8 are implemented on the branch. Wiki projection is deterministic and dry-run by default;
+  VW-0 through VW-8 are implemented on main via PR #477. Wiki projection is deterministic and dry-run by default;
   no external Wiki publication was executed. VW-7 provides a controlled migration baseline while remaining OPEN candidates
   stay measurable incremental backlog. Continuous governance reuses the existing test/quality chain.

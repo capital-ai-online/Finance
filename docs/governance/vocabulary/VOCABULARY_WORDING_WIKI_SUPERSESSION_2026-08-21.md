@@ -2,7 +2,7 @@
 
 **Document ID:** `DOC-GOV-VOC-WORDING-WIKI-SUPERSESSION-2026-08-21`  
 **Supersession ID:** `VOCABULARY-WORDING-WIKI-SUPERSESSION-0001`  
-**Status:** IMPLEMENTATION AUTHORIZED / EFFECTIVENESS PENDING HUMAN MERGE  
+**Status:** EFFECTIVE ON MAIN — merged via PR #477  
 **Version:** 1.5.0  
 **Date:** 2026-08-21  
 **Authority:** Owner chat priority 2026-08-21 + `ESS-0017` / `ESS-0017-CONTRACTS` + `GOV-AUTH-SUPERSESSION-0001`
@@ -22,7 +22,7 @@
 
 ## 2. Source artifacts being superseded as current-state sources
 
-The following phase/migration artifacts remain historical Evidence but cease to be current architecture/status authorities after Human Merge:
+The following phase/migration artifacts remain historical Evidence but ceased to be current architecture/status authorities when PR #477 was human-merged:
 
 - `docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md`
 - `docs/architecture/VOCABULARY_GOVERNANCE_PHASE_1_5_BASELINE.md`
@@ -37,7 +37,7 @@ Physical archival is intentionally deferred until reference/registry correlation
 
 ## 3. Replacement artifacts
 
-Current architecture after Human Merge:
+Current architecture on `main` after the human merge of PR #477:
 
 - `.ai/skills/ESS-0017-Vocabulary-Governance.md`
 - `.ai/skills/ESS-0017-Contracts.md`
@@ -120,5 +120,5 @@ After Human Merge: Human-gated Git revert of the supersession/implementation sli
 ## 12. Owner decision
 
 - Implementation of the supersession and VW-1 through VW-5: **AUTHORIZED by current Owner instruction**.
-- Effectiveness on `main`: **PENDING HUMAN MERGE**.
+- Effectiveness on `main`: **EFFECTIVE — PR #477 human-merged**.
 - Wiki publishing and mass UI wording migration: **NOT AUTHORIZED by this package**; they remain VW-6/VW-7.

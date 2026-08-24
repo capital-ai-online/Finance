@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "VW-0-VW8-VOCABULARY-WORDING-WIKI-2026-08-21",
-  "status": "active",
+  "status": "released",
   "exclusive": true,
   "branch": "feature/vocabulary-wording-wiki-vw0-vw5-2026-08-21",
   "agent": {
@@ -40,5 +40,12 @@
     "Financial runtime market-data scoring confidence ranking or eligibility behavior changes",
     "A second Event Bus Knowledge Graph Traceability Store CI control plane or release authority"
   ],
-  "releaseCondition": "Claim is released when the resulting pull request is merged, closed, superseded or abandoned. Human/CODEOWNER merge remains mandatory."
+  "releaseCondition": "Claim is released when the resulting pull request is merged, closed, superseded or abandoned. Human/CODEOWNER merge remains mandatory.",
+  "releaseEvidence": {
+    "pullRequest": 477,
+    "merged": true,
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+    "verifiedAt": "2026-08-24"
+  }
 }

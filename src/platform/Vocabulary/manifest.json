@@ -9,7 +9,6 @@
   "lifecycle": "Operational",
   "health": "Unknown",
   "repository": "Finance",
-  "effectiveAfter": "Human Merge",
   "ess": [
     "ESS-0001-CONTRACTS",
     "ESS-0012",
@@ -17,7 +16,9 @@
     "ESS-0017",
     "ESS-0017-CONTRACTS"
   ],
-  "adr": ["ADR-0078"],
+  "adr": [
+    "ADR-0078"
+  ],
   "dependencies": [],
   "forbiddenDependencies": [
     "src/platform/EventMesh/Core",
@@ -38,7 +39,8 @@
     "Projection/VocabularyWordingSnapshot.ts",
     "Wiki/VocabularyWikiProjection.ts",
     "Wiki/VocabularyWikiRemotePolicy.ts",
-    "Migration/WordingMigrationPlan.ts"
+    "Migration/WordingMigrationPlan.ts",
+    "node.ts"
   ],
   "contracts": [
     "ESS-0017-CONTRACTS",
@@ -74,7 +76,10 @@
     "defaultMode": "dry-run",
     "repositoryAuthoritative": false,
     "mutationAuthority": false,
-    "publishRequires": ["--apply", "--push"],
+    "publishRequires": [
+      "--apply",
+      "--push"
+    ],
     "remotePolicyMode": "exact-github-allowlist-no-embedded-credentials"
   },
   "wordingMigration": {
@@ -107,7 +112,17 @@
     "tests/unit/bilingualDocumentaryProjection.test.ts"
   ],
   "implementation": {
-    "completedWorkPackages": ["VW-0", "VW-1", "VW-2", "VW-3", "VW-4", "VW-5", "VW-6", "VW-7", "VW-8"],
+    "completedWorkPackages": [
+      "VW-0",
+      "VW-1",
+      "VW-2",
+      "VW-3",
+      "VW-4",
+      "VW-5",
+      "VW-6",
+      "VW-7",
+      "VW-8"
+    ],
     "implementedAreas": [
       "CanonicalVocabularyRegistry",
       "UiMessageCatalog",
@@ -136,5 +151,21 @@
     "migrationDriftCheck": true,
     "closureValidator": "scripts/automation/validateVocabularyGovernanceClosure.ts"
   },
-  "implementationStatus": "VW-0 through VW-8 implemented as a dependency-free, read-only governance control plane. Wiki output is generated and non-authoritative, the optional sync path is exact-remote allowlisted and explicit-apply/push gated, source wording migration is controlled and incremental, and continuous checks are integrated into the existing repository test chain. No external platform, financial runtime, IAM, Billing, Wiki publish or production mutation is performed by this branch."
+  "implementationStatus": "VW-0 through VW-8 implemented as a dependency-free, read-only governance control plane. Wiki output is generated and non-authoritative, the optional sync path is exact-remote allowlisted and explicit-apply/push gated, source wording migration is controlled and incremental, and continuous checks are integrated into the existing repository test chain. No external platform, financial runtime, IAM, Billing, Wiki publish or production mutation is performed by the implementation baseline.",
+  "effectiveSince": {
+    "pullRequest": 477,
+    "state": "merged",
+    "baseline": "main",
+    "verifiedMainSha": "7afa86e24812e3de96e93882b9658d2b2e0311e7"
+  },
+  "browserEntryPoint": "index.ts",
+  "nodeEntryPoint": "node.ts",
+  "browserBoundary": {
+    "nodeBuiltinsAllowed": false,
+    "nodeOnlyModules": [
+      "Usage/WordingUsageIndex.ts",
+      "Projection/VocabularyWordingSnapshot.ts",
+      "Validators/ContinuousGovernanceValidator.ts"
+    ]
+  }
 }

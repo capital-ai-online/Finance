@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   createDefaultUiMessageCatalog,
   fintechWordingBindings,
-  scanWordingUsages,
 } from '../index';
+import { scanWordingUsages } from '../node';
 
 const tempRoots: string[] = [];
 

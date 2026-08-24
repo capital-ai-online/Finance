@@ -1,6 +1,6 @@
 # VW-5 — Documentary / Knowledge / Traceability Handoff
 
-**Status:** IMPLEMENTED ON BRANCH / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Authorities:** `ESS-0017`, `ESS-0010`, `ESS-0009`, `ESS-0011`  
 **Boundary:** neutral Vocabulary snapshot -> existing Documentary contracts
 

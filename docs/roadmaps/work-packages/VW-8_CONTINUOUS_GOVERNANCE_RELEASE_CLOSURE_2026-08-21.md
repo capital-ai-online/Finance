@@ -1,6 +1,6 @@
 # VW-8 — Continuous Governance & Release Closure
 
-**Status:** IMPLEMENTED ON BRANCH / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Authority:** `ESS-0017` / `ESS-0017-CONTRACTS` / `ADR-0078`  
 **Check class:** Application/Test/Configuration (C)
 

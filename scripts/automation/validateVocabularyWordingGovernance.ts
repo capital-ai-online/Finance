@@ -4,12 +4,11 @@ import { execFileSync } from 'node:child_process';
 import {
   createDefaultUiMessageCatalog,
   createDefaultVocabularyRegistry,
-  createVocabularyWordingSnapshot,
   FINTECH_VALUE_CHAIN_STAGE_IDS,
   fintechWordingBindings,
-  scanWordingUsages,
   validateFintechWordingBindings,
 } from '../../src/platform/Vocabulary';
+import { createVocabularyWordingSnapshot, scanWordingUsages } from '../../src/platform/Vocabulary/node';
 import { projectVocabularyWordingThroughDocumentary } from '../../src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection';
 
 const root = process.cwd();
