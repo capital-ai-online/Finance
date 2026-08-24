@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "VW-0-VW5-HYGIENE-2026-08-24",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "branch": "agent/vocabulary-vw0-vw5-hygiene-2026-08-24",
   "agent": {
     "provider": "OpenAI",
@@ -34,5 +34,16 @@
     "Mass wording replacement"
   ],
   "releaseCondition": "Released when the resulting pull request is merged, closed, superseded or abandoned. Human/CODEOWNER merge remains mandatory.",
-  "workItemDE": "Vocabulary-Lifecycle, Supersession und Browser-/Node-Grenzen der VW-0-bis-VW-5-Governance konsolidieren und mergebereit validieren."
+  "workItemDE": "Vocabulary-Lifecycle, Supersession und Browser-/Node-Grenzen der VW-0-bis-VW-5-Governance konsolidieren und mergebereit validieren.",
+  "pullRequest": 524,
+  "mergedPr": 524,
+  "mainCommit": "78ad9b3041317f5b941348a13c428395bee4561d",
+  "releasedAt": "2026-08-24T21:30:00Z",
+  "releaseEvidence": {
+    "pullRequest": 524,
+    "merged": true,
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "78ad9b3041317f5b941348a13c428395bee4561d",
+    "verifiedAt": "2026-08-24"
+  }
 }
