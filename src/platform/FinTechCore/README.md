@@ -19,7 +19,8 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-5: deterministic Pre-Trade Risk + Compliance Decisions
 - FT-6A: Decision-/Hash-Binding Foundation, gemergt mit PR #481
 - FT-6B: single canonical OrderIntent, gemeinsames Fixed Point, deterministic Approval Binding, typed Reconciliation und v2 Persistence Boundary, gemergt mit PR #483
-- P1 Portfolio Allocation: deterministic long-only/unlevered RESEARCH/PAPER Proposal + bounded FT-5 Portfolio-Risk-Evidence-Projektion, auf Main-Sync-Branch
+- P1 Portfolio Allocation: deterministic long-only/unlevered RESEARCH/PAPER Proposal + bounded FT-5 Portfolio-Risk-Evidence-Projektion, gemergt mit PR #520 / auf `main`
+- P1-A Honeypot Simulation Evidence: governed read-only EVM BUY/SELL pre-run evidence fuer die bestehenden Meme-Hard-Gates; keine Route-/Order-/Execution-Authority
 - reale Exchange-/Custody-Ausfuehrung: **nicht freigeschaltet**
 - FT-7 Guarded Live: **blockiert bis separate Architektur-/Security-Entscheidung**
 
@@ -187,6 +188,31 @@ FT-5 bleibt die einzige Risk-Approval-Authority. P1 besitzt keine Execution-Hand
 
 P1 fuehrt keine neue Tabelle, Queue, Portfolio-Ledger- oder spekulative Event-Authority ein. Der Proposal-/Projection-Slice besitzt aktuell keinen eigenstaendigen durable Consumer. Falls spaeter Persistence erforderlich wird, muss sie die bestehende FinTechCore Persistence-/Domain-Event-Authority mit einem explizit reviewten Contract wiederverwenden.
 
+## P1-A Governed Honeypot Buy/Sell Simulation Evidence
+
+P1-A erweitert keine Scoring- oder Execution-Authority. Es nutzt den bestehenden `goplus`-Provider und `ResearchEvidenceProviderHttp` fuer read-only EVM Transaction-Simulation-Evidence.
+
+```text
+governed route/calldata evidence
+  -> GoPlus transaction_simulation
+  -> goplus-transaction-simulation-evidence/1.0.0
+  -> crypto-meme-honeypot-simulation-evidence/0.1.0
+  -> risk.buySimulationSuccess / risk.sellSimulationSuccess
+  -> Meme research hard-gate input only
+```
+
+Hard Rules:
+
+- der Provider konstruiert keine Route;
+- keine Signatur, kein Broadcast und kein Order Routing;
+- fehlender API-Key ist `NOT_CONFIGURED` und erzeugt keinen Netzwerkzugriff;
+- fehlende oder nicht zuordenbare Target-Token-Balance-Evidence bleibt `NOT_COMPUTABLE`;
+- Token-Security-Flags wie `is_honeypot`, `cannot_buy` oder `cannot_sell_all` duerfen keinen Simulation-PASS erzeugen;
+- BUY und SELL muessen Chain, Token und Route-Authority/-Version exakt teilen;
+- `scoreEligible=false`, `executionEligible=false`.
+
+Die Contract-Foundation allein belegt noch keine reale Asset-/Chain-Coverage, Freshness-Policy oder Model-Promotion. Diese Evidence bleibt getrennt nachzuweisen.
+
 ## FT-5 Deterministic Risk + Compliance
 
 FT-5 bleibt die einzige Approval-Quelle fuer FT-6.
@@ -281,7 +307,7 @@ Eine physische Entfernung des v1-Pfads erfolgt erst nach Consumer-/Replay-/Besta
 
 ## EventMesh
 
-FT-6B und P1 fuehren keine spekulativen Event-Namen ein. Solange kein eindeutiger kanonischer Event Catalog bzw. durable P1-Consumer vorliegt, bleiben die vorhandenen typed Evidence-/Reconciliation-Contracts fuehrend.
+FT-6B, P1 und P1-A fuehren keine spekulativen Event-Namen ein. Solange kein eindeutiger kanonischer Event Catalog bzw. durable Consumer vorliegt, bleiben die vorhandenen typed Evidence-/Reconciliation-Contracts fuehrend.
 
 ## Security / Data Integrity
 
@@ -289,6 +315,7 @@ FT-6B und P1 fuehren keine spekulativen Event-Namen ein. Solange kein eindeutige
 - Pattern Evidence bleibt non-authorizing.
 - Paper Trading verwendet kein reales Kapital.
 - P1 erzeugt nur Allocation Proposal / Portfolio-Risk-Evidence, keine Risk-/Compliance-Approval.
+- P1-A erzeugt nur Research-Hard-Gate-Evidence, keine Scoring-/Risk-/Execution-Approval.
 - Risk-/Compliance-Approval wird ausschliesslich aus FT-5 Decision Records abgeleitet.
 - Intent-/Idempotency-/Client-Order-ID-Kollisionen sind fail-closed.
 - Service-role RPCs oeffnen das private Finanzschema nicht fuer Browserrollen.
@@ -315,7 +342,8 @@ EMERGENCY     real=false simulated=false newOrders=false
 FT-0 ... FT-6B = DONE on main
 Supersession A+B = DONE on main
 Meme/DeFi Research Scoring 0.3.0 = DONE on main / non-executable
-P1 Portfolio Allocation + bounded FT-5 risk projection = IMPLEMENTED ON MAIN-SYNC BRANCH
+P1 Portfolio Allocation + bounded FT-5 risk projection = DONE ON MAIN / MERGED #520
+P1-A Honeypot buy/sell transaction-simulation evidence = IN IMPLEMENTATION / research-only
 Meme/DeFi productive promotion = BLOCKED
 FT-7 = BLOCKED
 FT-8 = PLANNED
