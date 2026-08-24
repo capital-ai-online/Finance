@@ -80,5 +80,29 @@
     "browserSecretExposureAllowed": false,
     "productionCredentialMutationPerformed": false
   },
+  "correlation": {
+    "mainAtScopeStart": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+    "mainAtPrePrValidation": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+    "branchBehindBy": 0,
+    "mergeBase": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+    "legacyP1MainSyncBranchPresent": false,
+    "legacyP1ProviderGapBranchPresent": false,
+    "onlyP1BranchPresent": "feat/fintech-core-p1a-honeypot-evidence-postmerge-2026-08-24",
+    "openPr524Detected": true,
+    "openPr524DirectFileOverlap": false,
+    "openPr524SemanticCorrelation": "Vocabulary/Wording governance only; no FinTechCore Crypto, MarketData provider, secret-manifest or P1-A security path overlap."
+  },
+  "validation": {
+    "scopeReview": "PASS_BY_DIFF_INSPECTION",
+    "claimMatchesChangedFiles": true,
+    "authorityReview": "PASS_BY_STATIC_INSPECTION",
+    "securityBoundaryReview": "PASS_BY_STATIC_INSPECTION",
+    "officialGoPlusTransactionSimulationRequestAuthReviewed": true,
+    "officialGoPlusNestedErc20ResponseShapeReviewed": true,
+    "nestedErc20ParserRegressionCoverageImplemented": true,
+    "negativeRegressionCoverageImplemented": true,
+    "hostedCiTriggeredPrePr": false,
+    "hostedCiPolicy": "Hosted CI is intentionally deferred until after Pull Request creation."
+  },
   "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
 }
