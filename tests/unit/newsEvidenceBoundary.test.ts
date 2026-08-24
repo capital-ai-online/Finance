@@ -35,15 +35,22 @@ describe('SC4 news evidence boundary', () => {
     expect(realtimeViewer).toContain('Newsfeed nach Nachrichtenherkunft filtern');
     expect(verifiedViewer).toContain("params.set('asset'");
     expect(verifiedViewer).toContain("provider === 'multi-provider'");
-    expect(newsRoutes).toContain("source: 'assetRegistry'");
+    expect(newsRoutes).toContain("source: 'assetSearchCatalog'");
     expect(newsRoutes).not.toContain('dispatchCanonicalScore');
     expect(newsRoutes).not.toContain('calculateRankScore');
     expect(newsRoutes).not.toContain('eligible_for_top10');
   });
 
+  it('uses the same canonical Enterprise asset catalog as registry and verified display paths', () => {
+    expect(newsRoutes).toContain('getAssetSearchCatalog');
+    expect(newsRoutes).toContain('getAssetCatalogEntry');
+    expect(newsRoutes).toContain('Legacy AssetRegistry bootstrap values are intentionally not a second Newsfeed universe.');
+    expect(newsRoutes).not.toContain("import { assetRegistry");
+  });
+
   it('fails closed when an explicit asset is outside the canonical Enterprise universe', () => {
     expect(newsRoutes).toContain('if (symbol && !asset)');
-    expect(newsRoutes).toContain('Asset ist nicht im kanonischen Enterprise-Universum registriert.');
+    expect(newsRoutes).toContain('Asset ist nicht im kanonischen Enterprise-Asset-Katalog registriert.');
     expect(newsRoutes).toContain("if (!symbol || asset?.type === 'crypto')");
     expect(newsRoutes).not.toContain('if (!asset || asset.type');
   });
