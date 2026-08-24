@@ -3,7 +3,7 @@ import { ResearchEvidenceProviderHttp, type ResearchEvidenceProviderHttpOptions 
 
 export const FREE_CRYPTO_NEWS_PROVIDER_ID = 'free-crypto-news' as const;
 export const FREE_CRYPTO_NEWS_BASE_URL = 'https://cryptocurrency.cv' as const;
-export const FREE_CRYPTO_NEWS_CONTRACT_VERSION = 'free-crypto-news-evidence/1.0.0' as const;
+export const FREE_CRYPTO_NEWS_CONTRACT_VERSION = 'free-crypto-news-evidence/1.1.0' as const;
 
 export type FreeCryptoNewsStatus = 'VERIFIED' | 'SOURCE_UNAVAILABLE' | 'INVALID';
 
@@ -46,6 +46,19 @@ function stableEvidenceRef(url: string, publishedAt: string): string {
   return `free-crypto-news:doc:${digest}`;
 }
 
+function normalizedSourceIdentity(value: string): string {
+  return value.trim().toLowerCase().replace(/^www\./, '').replace(/[^a-z0-9]+/g, '');
+}
+
+function articleMatchesSource(article: FreeCryptoNewsArticleEvidence, requestedSource: string): boolean {
+  const requested = normalizedSourceIdentity(requestedSource);
+  if (!requested) return false;
+  const candidates = [article.sourceName, article.sourceKey ?? '']
+    .map(normalizedSourceIdentity)
+    .filter(Boolean);
+  return candidates.includes(requested);
+}
+
 function normalizedArticle(value: unknown): FreeCryptoNewsArticleEvidence | null {
   if (!value || typeof value !== 'object') return null;
   const item = value as Record<string, unknown>;
@@ -85,10 +98,11 @@ function normalizedArticle(value: unknown): FreeCryptoNewsArticleEvidence | null
 }
 
 /**
- * Open-source, keyless crypto news aggregator (MIT, https://cryptocurrency.cv / nirholas).
+ * Public, keyless cryptocurrency.cv article-metadata API.
  *
- * CAPITAL-AI projects article metadata and publisher URL only.
- * No publisher body is scraped or granted scoring authority.
+ * CAPITAL-AI projects article metadata and publisher URL only. The upstream
+ * software license is not used as a source-use claim and publisher bodies are
+ * neither scraped nor granted scoring authority.
  */
 export class FreeCryptoNewsEvidenceProvider {
   private readonly http: ResearchEvidenceProviderHttp;
@@ -112,9 +126,9 @@ export class FreeCryptoNewsEvidenceProvider {
     limit?: number;
     page?: number;
   } = {}): Promise<FreeCryptoNewsEvidenceResult> {
-    const limit = Math.min(50, Math.max(1, Math.floor(options.limit ?? 20)));
+    const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 20)));
     const page = Math.max(1, Math.floor(options.page ?? 1));
-    const source = options.source?.trim().toLowerCase() || null;
+    const source = options.source?.trim() || null;
     const category = options.category?.trim().toLowerCase() || null;
     const query = options.query?.trim() || '';
 
@@ -122,10 +136,12 @@ export class FreeCryptoNewsEvidenceProvider {
       limit: String(limit),
       page: String(page),
     });
-    if (source) params.set('source', source);
     if (category) params.set('category', category);
 
-    // Prefer dedicated search endpoint when a free-text / asset query is present.
+    // Upstream source= accepts an internal RSS key (for example "coindesk"),
+    // while CAPITAL-AI exposes publisher display names to users. Do not couple
+    // the UI contract to that private key space: fetch public metadata first and
+    // apply the bounded source filter locally against sourceName/sourceKey.
     const path = query
       ? `/api/search?q=${encodeURIComponent(query)}&${params.toString()}`
       : `/api/news?${params.toString()}`;
@@ -138,7 +154,7 @@ export class FreeCryptoNewsEvidenceProvider {
         query: query || (source ? `source:${source}` : 'latest'),
         retrievedAt: result.retrievedAt,
         articles: Object.freeze([]),
-        reason: result.reason ?? 'Free Crypto News source unavailable.',
+        reason: result.reason ?? 'cryptocurrency.cv source unavailable.',
       });
     }
 
@@ -146,9 +162,12 @@ export class FreeCryptoNewsEvidenceProvider {
     const raw = Array.isArray(root.articles)
       ? root.articles
       : (Array.isArray(root.data) ? root.data : []);
-    const articles = raw
+    const normalizedArticles = raw
       .map(normalizedArticle)
       .filter((item): item is FreeCryptoNewsArticleEvidence => item !== null);
+    const articles = source
+      ? normalizedArticles.filter(article => articleMatchesSource(article, source))
+      : normalizedArticles;
 
     if (articles.length === 0) {
       return Object.freeze({
@@ -157,7 +176,9 @@ export class FreeCryptoNewsEvidenceProvider {
         query: query || (source ? `source:${source}` : 'latest'),
         retrievedAt: result.retrievedAt,
         articles: Object.freeze([]),
-        reason: 'Free Crypto News returned no usable article metadata.',
+        reason: source
+          ? `cryptocurrency.cv returned no usable article metadata for source ${source}.`
+          : 'cryptocurrency.cv returned no usable article metadata.',
       });
     }
 
@@ -176,32 +197,35 @@ export class FreeCryptoNewsEvidenceProvider {
   }
 
   public async listSources(): Promise<{ status: FreeCryptoNewsStatus; sources: readonly string[]; retrievedAt: string; reason?: string }> {
-    const result = await this.http.requestJson('/api/sources');
-    const retrievedAt = result.retrievedAt;
-    if (result.status !== 'READY' || !result.data) {
+    // The upstream /api/sources catalog currently requires a short-lived HMAC
+    // token. CAPITAL-AI deliberately introduces no new credential or payment
+    // path here; source-filter metadata is derived from the same public article
+    // evidence already consumed by the newsfeed.
+    const result = await this.searchArticles({ limit: 100 });
+    if (result.status !== 'VERIFIED') {
       return {
         status: 'SOURCE_UNAVAILABLE',
         sources: Object.freeze([]),
-        retrievedAt,
-        reason: result.reason ?? 'Sources endpoint unavailable.',
+        retrievedAt: result.retrievedAt,
+        reason: result.reason ?? 'Public source metadata unavailable.',
       };
     }
-    const root = result.data as Record<string, unknown>;
-    let list: string[] = [];
-    if (Array.isArray(root.sources)) {
-      list = root.sources.map((s) => {
-        if (typeof s === 'string') return s;
-        if (s && typeof s === 'object' && typeof (s as any).name === 'string') return (s as any).name;
-        if (s && typeof s === 'object' && typeof (s as any).key === 'string') return (s as any).key;
-        return null;
-      }).filter((x): x is string => Boolean(x));
-    } else if (Array.isArray(root.data)) {
-      list = root.data.filter((x): x is string => typeof x === 'string');
+
+    const sources = [...new Set(result.articles.map(article => article.sourceName.trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+    if (sources.length === 0) {
+      return {
+        status: 'SOURCE_UNAVAILABLE',
+        sources: Object.freeze([]),
+        retrievedAt: result.retrievedAt,
+        reason: 'Public article evidence contained no usable source names.',
+      };
     }
+
     return {
       status: 'VERIFIED',
-      sources: Object.freeze(list),
-      retrievedAt,
+      sources: Object.freeze(sources),
+      retrievedAt: result.retrievedAt,
     };
   }
 }

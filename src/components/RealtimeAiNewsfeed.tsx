@@ -43,9 +43,9 @@ const ASSET_TYPE_LABEL: Record<NewsAssetOption['type'], string> = {
 /**
  * Canonical UI projection for the AI Newsfeed Viewer.
  *
- * Supersession 2026-08-22 / 2026-08-24:
+ * Supersession 2026-08-22 / 2026-08-25:
  * - retired hard-coded and dynamically fabricated financial headlines/insights;
- * - Free Crypto News REST (cryptocurrency.cv) and GDELT are aggregated behind /api/news;
+ * - cryptocurrency.cv public REST and GDELT are aggregated behind /api/news;
  * - the default feed is independent from the Enterprise Scorer's currently selected asset;
  * - users can explicitly filter by Enterprise asset and publisher/news source;
  * - heuristic sentiment is presentation metadata only and never mutates an asset score;
@@ -68,17 +68,23 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
     let cancelled = false;
     const controller = new AbortController();
 
+    const fetchMetadata = async (url: string): Promise<unknown> => {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) throw new Error(`News filter metadata unavailable: ${url}`);
+      return response.json();
+    };
+
     const loadFilterMetadata = async () => {
-      try {
-        const [assetResponse, sourceResponse] = await Promise.all([
-          fetch('/api/news/assets', { signal: controller.signal }),
-          fetch('/api/news/sources', { signal: controller.signal }),
-        ]);
-        if (!assetResponse.ok || !sourceResponse.ok) throw new Error('News filter metadata unavailable');
+      const [assetResult, sourceResult] = await Promise.allSettled([
+        fetchMetadata('/api/news/assets'),
+        fetchMetadata('/api/news/sources'),
+      ]);
+      if (cancelled) return;
 
-        const [assetBody, sourceBody] = await Promise.all([assetResponse.json(), sourceResponse.json()]);
-        if (cancelled) return;
+      let metadataUnavailable = false;
 
+      if (assetResult.status === 'fulfilled') {
+        const assetBody = assetResult.value as { assets?: unknown };
         const nextAssets = Array.isArray(assetBody?.assets)
           ? assetBody.assets.filter((item: unknown): item is NewsAssetOption => {
               if (!item || typeof item !== 'object') return false;
@@ -88,16 +94,24 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
                 && ['crypto', 'stock', 'forex', 'commodity', 'index', 'bond'].includes(String(candidate.type));
             })
           : [];
+        setAssets(nextAssets);
+      } else {
+        metadataUnavailable = true;
+        setAssets([]);
+      }
+
+      if (sourceResult.status === 'fulfilled') {
+        const sourceBody = sourceResult.value as { sources?: unknown };
         const nextSources = Array.isArray(sourceBody?.sources)
           ? sourceBody.sources.filter((item: unknown): item is string => typeof item === 'string' && item.trim().length > 0)
           : [];
-
-        setAssets(nextAssets);
         setSources(nextSources);
-        setFilterMetadataUnavailable(false);
-      } catch {
-        if (!controller.signal.aborted && !cancelled) setFilterMetadataUnavailable(true);
+      } else {
+        metadataUnavailable = true;
+        setSources([]);
       }
+
+      setFilterMetadataUnavailable(metadataUnavailable);
     };
 
     void loadFilterMetadata();
@@ -118,13 +132,16 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
   }, [assets]);
 
   const hasActiveFilter = Boolean(assetFilter || sourceFilter);
+  const canUseScorerSymbol = Boolean(
+    selectedScorerSymbol && assets.some(asset => asset.symbol.toUpperCase() === selectedScorerSymbol),
+  );
 
   return (
     <div className="w-full space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-4 py-3">
         <div className="flex items-center gap-2 text-[11px] text-emerald-200">
           <ShieldCheck className="h-4 w-4" />
-          <span>Evidence-only Newsfeed · Multi-Asset · Open-Source REST + GDELT · kein direkter Score-Impact</span>
+          <span>Evidence-only Newsfeed · Multi-Asset · Public REST + GDELT · kein direkter Score-Impact</span>
         </div>
         <span className="text-[10px] font-mono uppercase tracking-wide text-white/35">Tier: {props.subscriptionTier}</span>
       </div>
@@ -187,7 +204,7 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-white/35">
           <span>Die Auswahl im Enterprise Scorer ändert den Newsfeed nicht automatisch.</span>
-          {selectedScorerSymbol && selectedScorerSymbol !== assetFilter && (
+          {canUseScorerSymbol && selectedScorerSymbol !== assetFilter && (
             <button
               type="button"
               onClick={() => setAssetFilter(selectedScorerSymbol)}
@@ -197,7 +214,7 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
             </button>
           )}
           {filterMetadataUnavailable && (
-            <span className="text-amber-300">Filter-Metadaten teilweise nicht verfügbar; der ungefilterte Feed bleibt nutzbar.</span>
+            <span className="text-amber-300">Filter-Metadaten teilweise nicht verfügbar; verfügbare Filter und der Feed bleiben nutzbar.</span>
           )}
         </div>
       </div>
