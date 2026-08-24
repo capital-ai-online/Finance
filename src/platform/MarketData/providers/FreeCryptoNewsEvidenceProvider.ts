@@ -46,6 +46,19 @@ function stableEvidenceRef(url: string, publishedAt: string): string {
   return `free-crypto-news:doc:${digest}`;
 }
 
+function normalizedSourceIdentity(value: string): string {
+  return value.trim().toLowerCase().replace(/^www\./, '').replace(/[^a-z0-9]+/g, '');
+}
+
+function articleMatchesSource(article: FreeCryptoNewsArticleEvidence, requestedSource: string): boolean {
+  const requested = normalizedSourceIdentity(requestedSource);
+  if (!requested) return false;
+  const candidates = [article.sourceName, article.sourceKey ?? '']
+    .map(normalizedSourceIdentity)
+    .filter(Boolean);
+  return candidates.includes(requested);
+}
+
 function normalizedArticle(value: unknown): FreeCryptoNewsArticleEvidence | null {
   if (!value || typeof value !== 'object') return null;
   const item = value as Record<string, unknown>;
@@ -115,7 +128,7 @@ export class FreeCryptoNewsEvidenceProvider {
   } = {}): Promise<FreeCryptoNewsEvidenceResult> {
     const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 20)));
     const page = Math.max(1, Math.floor(options.page ?? 1));
-    const source = options.source?.trim().toLowerCase() || null;
+    const source = options.source?.trim() || null;
     const category = options.category?.trim().toLowerCase() || null;
     const query = options.query?.trim() || '';
 
@@ -123,10 +136,12 @@ export class FreeCryptoNewsEvidenceProvider {
       limit: String(limit),
       page: String(page),
     });
-    if (source) params.set('source', source);
     if (category) params.set('category', category);
 
-    // Prefer dedicated search endpoint when a free-text / asset query is present.
+    // Upstream source= accepts an internal RSS key (for example "coindesk"),
+    // while CAPITAL-AI exposes publisher display names to users. Do not couple
+    // the UI contract to that private key space: fetch public metadata first and
+    // apply the bounded source filter locally against sourceName/sourceKey.
     const path = query
       ? `/api/search?q=${encodeURIComponent(query)}&${params.toString()}`
       : `/api/news?${params.toString()}`;
@@ -147,9 +162,12 @@ export class FreeCryptoNewsEvidenceProvider {
     const raw = Array.isArray(root.articles)
       ? root.articles
       : (Array.isArray(root.data) ? root.data : []);
-    const articles = raw
+    const normalizedArticles = raw
       .map(normalizedArticle)
       .filter((item): item is FreeCryptoNewsArticleEvidence => item !== null);
+    const articles = source
+      ? normalizedArticles.filter(article => articleMatchesSource(article, source))
+      : normalizedArticles;
 
     if (articles.length === 0) {
       return Object.freeze({
@@ -158,7 +176,9 @@ export class FreeCryptoNewsEvidenceProvider {
         query: query || (source ? `source:${source}` : 'latest'),
         retrievedAt: result.retrievedAt,
         articles: Object.freeze([]),
-        reason: 'cryptocurrency.cv returned no usable article metadata.',
+        reason: source
+          ? `cryptocurrency.cv returned no usable article metadata for source ${source}.`
+          : 'cryptocurrency.cv returned no usable article metadata.',
       });
     }
 
