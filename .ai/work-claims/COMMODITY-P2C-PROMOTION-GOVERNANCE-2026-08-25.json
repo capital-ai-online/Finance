@@ -53,8 +53,27 @@
       "roadmap issue mutation"
     ]
   },
+  "prePrCorrelation": {
+    "mainShaAtImplementationStart": "0743e66742519a452a0633734685d4115e71150d",
+    "mainShaAtFinalStaticReview": "0743e66742519a452a0633734685d4115e71150d",
+    "openPrAgainstMain": "none",
+    "productionCommitAtFinalStaticReview": "0743e66742519a452a0633734685d4115e71150d",
+    "productionMainDrift": 0,
+    "renderWorkspace": "AICapital",
+    "renderService": "Finance",
+    "netChangedFiles": 8,
+    "dependencyChanges": false,
+    "workflowChanges": false,
+    "registryMutation": false,
+    "dispatcherMutation": false,
+    "rankingMutation": false
+  },
   "validation": {
     "hostedCiBeforePr": false,
+    "staticCanonicalPathAudit": "completed",
+    "diffScopeReview": "completed; eight net files, bounded to P2-C contracts/tests/ADR/evidence/roadmap/claim lifecycle",
+    "fingerprintCompatibilityReview": "completed; existing raw SHA-256 weight/dataset fingerprints reused",
+    "trustByBooleanReview": "completed; P2-C revalidates weight profile, backtest structure, provider resilience and stress evidence and content-addresses correlation/sensitivity reports",
     "runtimeAuthorityChanged": false,
     "productionWeightsActivated": false,
     "roadmapIssuesMutated": false
