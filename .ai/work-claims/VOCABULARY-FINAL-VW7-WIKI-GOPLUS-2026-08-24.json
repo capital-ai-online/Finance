@@ -31,5 +31,5 @@
     "Automatic wording mass replacement",
     "Wiki back-propagation"
   ],
-  "releaseCondition": "Automatically released by the canonical Work Claim lifecycle after the resulting PR is human-merged, closed, superseded or abandoned."
+  "releaseCondition": "Writer authority ends at a terminal PR/work-item event; the responsible principal then persists status=released and exclusive=false with terminal evidence through normal branch/PR governance."
 }
