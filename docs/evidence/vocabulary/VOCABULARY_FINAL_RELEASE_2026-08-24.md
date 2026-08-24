@@ -24,6 +24,9 @@
 | Deploy state | `live` |
 | Provider authority | Research/evidence only; no route construction, signing, broadcasting or live-execution permission |
 | Functional invocation | Not claimed: the production route has not invoked the provider during this verification |
+| Operations / rollback | `docs/runbooks/GOPLUS_PRODUCTION_CREDENTIAL_ACTIVATION_2026-08-24.md` |
+
+The original P1-A threat model now points to the dedicated post-merge credential activation and rollback runbook; repository rollback and secret rotation remain deliberately separate.
 
 ## Wiki publication gate
 
