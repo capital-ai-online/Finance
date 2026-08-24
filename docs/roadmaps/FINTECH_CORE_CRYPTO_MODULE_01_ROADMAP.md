@@ -1,13 +1,14 @@
 # CAPITAL-AI FinTech Core Engine — Module 01 Enterprise Crypto Orchestration
 
 **Roadmap-ID:** `FT-CORE-CRYPTO-01`  
-**Version:** 2.1.0  
-**Status:** IN IMPLEMENTATION — FT-0 bis FT-6B, Supersession A+B und Meme/DeFi Research Scoring 0.3.0 auf `main`; P1 Portfolio Allocation auf Main-Sync-Branch; FT-7 blockiert  
-**Current baseline:** `main@14e4f3c8a309faae63fb336a432aac38ab08ceda`  
+**Version:** 2.2.0  
+**Status:** IN IMPLEMENTATION — FT-0 bis FT-6B, Supersession A+B, Meme/DeFi Research Scoring 0.3.0 und P1 Portfolio Allocation auf `main`; P1-A Honeypot Simulation Evidence in Umsetzung; FT-7 blockiert  
+**Current baseline:** `main@7afa86e24812e3de96e93882b9658d2b2e0311e7` bei Start des P1-A-Branches  
 **FT-6A Merge:** PR #481  
 **FT-6B Merge:** PR #483  
 **Supersession A+B Merge:** PR #484  
-**Primary Architecture Decision:** `ADR-0099` v1.9.0 on P1 branch  
+**P1 Merge:** PR #520  
+**Primary Architecture Decision:** `ADR-0099` v1.9.0 accepted/on `main`  
 **Protected Scoring Authority:** `ADR-0087`  
 **DeFi Evidence Authority:** `ADR-0100`
 
@@ -50,6 +51,8 @@ UAI Identity
 14. Correlated raw features duerfen nicht mehrfach additiv gewichtet werden.
 15. Pattern-/Regime-/Portfolio-Erweiterungen muessen bestehende Authorities wiederverwenden.
 16. Kill-Switch-Empfehlungen im Research Layer sind Telemetrie, keine Runtime-Mutation.
+17. Transaction-Simulation ist read-only Research Evidence: keine Route-Konstruktion, Signatur, Broadcast-, Order- oder Execution-Authority.
+18. Token-Security-Flags oder Provider-Verfuegbarkeit duerfen keine Buy-/Sell-Simulation als PASS ersetzen.
 
 ## 3. Phasenstatus
 
@@ -67,7 +70,8 @@ UAI Identity
 | FT-6A Decision Binding Foundation | DONE / MERGED #481 | decision/hash-bound PAPER intent scaffold |
 | FT-6B OrderIntent & Reconciliation Closure | DONE / MERGED #483 | canonical intent, Fixed Point, policy binding, typed reconciliation, v2 persistence |
 | Supersession A+B | DONE / MERGED #484 | authority/current-state cleanup + Meme/DeFi foundation + fail-closed operating modes |
-| P1 Portfolio Allocation / Position Sizing | IMPLEMENTED ON MAIN-SYNC BRANCH | deterministic governed targets -> constraints/deltas -> bounded FT-5 portfolio-risk projection |
+| P1 Portfolio Allocation / Position Sizing | DONE / MERGED #520 | deterministic governed targets -> constraints/deltas -> bounded FT-5 portfolio-risk projection |
+| P1-A Honeypot Buy/Sell Simulation Evidence | IN IMPLEMENTATION | existing GoPlus provider + governed read-only EVM pre-run contract -> exact Meme hard-gate evidence; no execution |
 | FT-7 Guarded Live / Single CEX | BLOCKED | separate explicit architecture/security decision required |
 | FT-8 Production Hardening | PLANNED | trace, SLO, BCP/DR, chaos/recovery |
 | FT-9 DEX/Bridge/Cross-Chain | PLANNED | no productive DeFi/DEX execution authorized here |
@@ -330,18 +334,20 @@ Bereits vorhanden und wiederzuverwenden:
 - CoinGecko / CoinAPI / historische EODHD Crypto Market Evidence;
 - `DefiLlamaProtocolProvider` / `defi-protocol-evidence/1.1.0`;
 - Binance Public / Kraken Futures Public;
-- GoPlus;
+- GoPlus Token-Security Evidence und P1-A read-only EVM Transaction-Simulation Foundation ueber dieselbe Provider-Identitaet;
 - DEX Screener;
 - Sourcify;
 - Dune Saved-Query Evidence;
 - Free Crypto News als primaere Crypto-News-Metadata/Provenance-Quelle;
 - GDELT als sekundaere/cross-asset News Discovery;
-- ProviderMatrix / Evidence/DQ Contracts;
+- ProviderMatrix / `ResearchEvidenceProviderHttp` / Evidence-DQ Contracts;
 - Pattern Research Foundation.
 
-Noch als gebundene Evidence-Provider/Adapter zu vervollstaendigen:
+P1-A Transaction-Simulation verwendet die bestehenden GoPlus-/ProviderMatrix-/RateLimit-/CircuitBreaker-/Supervisor-Health-Pfade. Der neue Contract ist `goplus-transaction-simulation-evidence/1.0.0`; die projektierten Research-Schluessel sind exakt `risk.buySimulationSuccess` und `risk.sellSimulationSuccess`. Fehlender API-Key, ungovernte Route, unvollstaendige Target-Token-Balance-Evidence oder Identity-Drift liefern kein PASS.
 
-- dedicated Honeypot Buy/Sell Simulation;
+Noch als gebundene Evidence-Provider/Adapter oder Validierung zu vervollstaendigen:
+
+- P1-A Simulation Coverage/Freshness und governte reale Route-/Calldata-Evidence pro Asset/Chain; keine Produktionsabdeckung wird aus der Contract-Foundation abgeleitet;
 - Exploit Incident Identity/Lifecycle;
 - Oracle Integrity/Liveness/Deviation Evidence;
 - External Audit / Formal Verification Evidence;
@@ -365,17 +371,18 @@ fintech_core.reconciliation_records
 public.outbox_jobs
 ```
 
-P1 fuehrt keine Datenbank-, Render-, Stripe-, Secret-, IAM- oder Execution-Mutation aus.
+P1/P1-A fuehren keine Datenbank-, Render-, Stripe-, Secret-, IAM- oder Execution-Mutation aus. Die Transaction Simulation ist eine read-only Pre-Run-Observation; sie signiert oder broadcastet keine Transaktion und darf keine FT-5-/FT-6-/FT-7-Freigabe erzeugen.
 
 ## 13. Current State
 
 ```text
-current main = 14e4f3c8a309faae63fb336a432aac38ab08ceda
+main at P1-A branch start = 7afa86e24812e3de96e93882b9658d2b2e0311e7
 FT-0 ... FT-6B = DONE on main
 Supersession A+B = DONE on main
 FT-2D Meme/DeFi Research Scoring 0.3.0 = DONE on main / non-executable
-P1 Portfolio Allocation = IMPLEMENTED ON MAIN-SYNC BRANCH
-P1 bounded FT-5 portfolio-risk projection = IMPLEMENTED ON MAIN-SYNC BRANCH
+P1 Portfolio Allocation = DONE ON MAIN / MERGED #520
+P1 bounded FT-5 portfolio-risk projection = DONE ON MAIN / MERGED #520
+P1-A Honeypot buy/sell transaction-simulation evidence = IN IMPLEMENTATION / non-executable
 crypto champion = crypto-technical-provenance@0.7.0 unchanged
 Meme/DeFi productive promotion = BLOCKED
 FT-7 = BLOCKED
@@ -383,13 +390,14 @@ FT-8 = PLANNED
 FT-9 = PLANNED
 ```
 
-Der historische P1-Branch war bei Wiederaufnahme 81 Commits hinter `main`; seine fachlich gueltigen Teile wurden selektiv auf einen frischen Branch vom aktuellen `main` portiert. Stale Dokument-/Registry-/Provider-Projektionen werden nicht uebernommen.
+Der historische P1-Branch war bei Wiederaufnahme 81 Commits hinter `main`; seine fachlich gueltigen Teile wurden selektiv portiert und mit PR #520 human-gated auf `main` gemergt. Der damalige Work-Claim wird im P1-A-Scope gemaess Release Condition auf `verified`/non-exclusive gesetzt.
 
 ## 14. Naechste Schritte
 
-1. fokussierte statische/Unit-Regression fuer Allocation + FT-5 Projection;
-2. Main-/Open-PR-Korrelation vor PR erneut ausfuehren;
-3. Hard-Gate Provider/Evidence Packages getrennt priorisieren: Honeypot -> Exploit -> Oracle -> Audit/Formal Verification -> Holder Clustering;
-4. Backtest-/Stress-/Correlation-Evidence als getrennten P2-Validation-Scope behandeln;
-5. erst danach produktive Meme/DeFi Model-Promotion separat Owner-gaten;
-6. FT-7 erst nach separater Architektur-/Security-Entscheidung oeffnen.
+1. P1-A Contract-/Negativtests und statische Konformitaetspruefung abschliessen;
+2. unmittelbar vor PR aktuellen `main` erneut laden und Branch-/Authority-/Open-PR-Korrelation wiederholen;
+3. P1-A reale Provider-Coverage/Freshness/Route-Evidence getrennt belegen; Contract-Foundation allein ist keine Promotion Evidence;
+4. weitere Hard-Gate Packages priorisieren: Exploit -> Oracle -> Audit/Formal Verification -> Holder Clustering;
+5. Backtest-/Stress-/Correlation-Evidence als getrennten P2-Validation-Scope behandeln;
+6. erst danach produktive Meme/DeFi Model-Promotion separat Owner-gaten;
+7. FT-7 erst nach separater Architektur-/Security-Entscheidung oeffnen.

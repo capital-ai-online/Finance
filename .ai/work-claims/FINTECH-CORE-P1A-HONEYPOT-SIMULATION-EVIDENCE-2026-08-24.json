@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FINTECH-CORE-P1A-HONEYPOT-SIMULATION-EVIDENCE-2026-08-24",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "FT-CORE-CRYPTO-01 P1-A: post-merge P1 canonical closure and governed read-only EVM buy/sell transaction-simulation evidence for Meme hard gates",
+  "startedAt": "2026-08-24T19:26:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+  "executionBranch": "feat/fintech-core-p1a-honeypot-evidence-postmerge-2026-08-24",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/FINTECH-CORE-P1-PORTFOLIO-ALLOCATION-PROVIDER-GAPS-2026-08-24.json",
+    "config/crypto-evidence.env.example",
+    "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "docs/evidence/sc-md/SC3_P1_CRYPTO_PROVIDER_GAP_INVENTORY_2026-08-24.md",
+    "docs/security/P1A_GOPLUS_TRANSACTION_SIMULATION_THREAT_MODEL_2026-08-24.md",
+    "scripts/security/secretFileManifest.ts",
+    "src/platform/FinTechCore/README.md",
+    "src/platform/FinTechCore/index.ts",
+    "src/platform/MarketData/providers/GoPlusTransactionSimulationProvider.ts",
+    "src/platform/FinTechCore/Modules/Crypto/Adapters/GoPlusHoneypotSimulationEvidenceAdapter.ts",
+    "tests/unit/goPlusTransactionSimulationEvidence.test.ts"
+  ],
+  "dependsOn": [
+    "Owner chat priority: continue open P1 work packages after current-main conformance review",
+    "FT-CORE-CRYPTO-01 P1-A hard-gate evidence completion",
+    "PR #520 merged P1 Portfolio Allocation / bounded FT-5 risk projection",
+    "ADR-0087 Single Scoring Architecture",
+    "ADR-0099 FinTech Core Crypto Module 01",
+    "ADR-0100 DeFi evidence-only boundary",
+    "ProviderMatrix as the single provider inventory",
+    "ResearchEvidenceProviderHttp as the governed evidence transport",
+    "crypto-meme-research-features/0.3.0 hard gates risk.buySimulationSuccess and risk.sellSimulationSuccess"
+  ],
+  "protectedExistingAuthorities": [
+    "ScoringModelRegistry",
+    "ScoringDispatcher",
+    "CanonicalScoreResult",
+    "ProviderMatrix",
+    "Evidence/Data Quality contracts",
+    "FT-5 Risk/Compliance approval authority",
+    "FinTechCoreOrderIntent",
+    "fintech_core persistence authority",
+    "public.outbox_jobs queue/lease authority",
+    "FT-7 real-execution gate"
+  ],
+  "implementationBoundary": {
+    "provider": "GoPlus existing provider identity only",
+    "providerContract": "goplus-transaction-simulation-evidence/1.0.0",
+    "evidenceContract": "crypto-meme-honeypot-simulation-evidence/0.1.0",
+    "transport": "native server-side TypeScript REST via ResearchEvidenceProviderHttp",
+    "authentication": "Authorization Bearer access token; repository compatibility variable GOPLUS_API_KEY is server-only and canonicalized through finance-secrets.env",
+    "automaticAccessTokenIssuance": false,
+    "rawGoPlusAppSecretAccepted": false,
+    "createsProviderRegistry": false,
+    "createsScoringAuthority": false,
+    "createsStrategyAuthority": false,
+    "createsRiskApprovalAuthority": false,
+    "createsExecutionAuthority": false,
+    "createsPersistenceAuthority": false,
+    "constructsTradeRoute": false,
+    "signsTransaction": false,
+    "broadcastsTransaction": false,
+    "liveExecutionEnabled": false,
+    "hardGateOutputs": [
+      "risk.buySimulationSuccess",
+      "risk.sellSimulationSuccess"
+    ],
+    "missingEvidencePolicy": "NOT_COMPUTABLE; never substitute PASS, FAIL, 0 or a token-security flag"
+  },
+  "security": {
+    "threatModel": "docs/security/P1A_GOPLUS_TRANSACTION_SIMULATION_THREAT_MODEL_2026-08-24.md",
+    "secretFile": "finance-secrets.env",
+    "browserSecretExposureAllowed": false,
+    "productionCredentialMutationPerformed": false
+  },
+  "correlation": {
+    "mainAtScopeStart": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+    "mainAtPrePrValidation": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+    "branchBehindBy": 0,
+    "mergeBase": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+    "legacyP1MainSyncBranchPresent": false,
+    "legacyP1ProviderGapBranchPresent": false,
+    "onlyP1BranchPresent": "feat/fintech-core-p1a-honeypot-evidence-postmerge-2026-08-24",
+    "openPr524Detected": true,
+    "openPr524DirectFileOverlap": false,
+    "openPr524SemanticCorrelation": "Vocabulary/Wording governance only; no FinTechCore Crypto, MarketData provider, secret-manifest or P1-A security path overlap."
+  },
+  "validation": {
+    "scopeReview": "PASS_BY_DIFF_INSPECTION",
+    "claimMatchesChangedFiles": true,
+    "authorityReview": "PASS_BY_STATIC_INSPECTION",
+    "securityBoundaryReview": "PASS_BY_STATIC_INSPECTION",
+    "officialGoPlusTransactionSimulationRequestAuthReviewed": true,
+    "officialGoPlusNestedErc20ResponseShapeReviewed": true,
+    "nestedErc20ParserRegressionCoverageImplemented": true,
+    "negativeRegressionCoverageImplemented": true,
+    "hostedCiTriggeredPrePr": false,
+    "hostedCiPolicy": "Hosted CI is intentionally deferred until after Pull Request creation."
+  },
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

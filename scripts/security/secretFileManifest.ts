@@ -33,9 +33,14 @@ export const SECRET_FILE_KEYS = [
   'TWELVEDATA_API_KEY',
   'FRED_API_KEY',
   'FMP_API_KEY',
-  // SC-4: Dune is the only new crypto-evidence provider secret. Runtime policy additionally
-  // requires Free-Tier attestation + allowlisted saved query IDs; the key alone grants nothing.
+  // SC-4: Dune is the only previously landed crypto-evidence provider secret. Runtime policy
+  // additionally requires Free-Tier attestation + allowlisted saved query IDs; the key alone grants nothing.
   'DUNE_API_KEY',
+  // P1-A: authenticated GoPlus transaction simulation requires a Bearer access token. The
+  // historical variable name is retained for compatibility, but the stored value MUST be the
+  // GoPlus access token used in Authorization: Bearer ..., never a raw app_secret and never VITE_*.
+  // Token Security remains keyless-capable; absence keeps P1-A simulation NOT_CONFIGURED.
+  'GOPLUS_API_KEY',
   'SMTP_PASSWORD',
   'METRICS_TOKEN',
   'YOUTUBE_CLIENT_SECRET',
