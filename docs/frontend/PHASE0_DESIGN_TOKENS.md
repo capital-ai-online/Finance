@@ -1,7 +1,7 @@
 # CAPITAL-AI — Design Tokens & Branding Manifest v6.1
 
 **Status:** ACTIVE / CANONICAL  
-**Stand:** 22. August 2026  
+**Stand:** 25. August 2026  
 **Runtime-Authority:** `docs/frontend/design-tokens.json`  
 **Web-Projektion:** `src/index.css` (`@theme`)  
 **Frontend-Architektur:** `docs/frontend/FRONTEND_ARCH.md`
@@ -62,7 +62,7 @@ Neue oder migrierte Komponenten verwenden ausschließlich Rollen aus der Registr
 
 Lokale Branding-Hexwerte sind nicht zulässig. Cyan selbst ist **nicht Legacy**; Legacy sind direkte lokale Cyan-/Blue-Literale und historische Aliasnamen.
 
-Die historischen Namen `aif-gold-*`, `aif-neon-purple` und `aif-neon-cyan` bleiben während der Strangler-Migration nur als Compatibility Surface. `aif-neon-cyan` projiziert auf das kanonische Cyan `#22D3EE`. Neue Komponenten dürfen diese Aliasnamen nicht mehr einführen.
+Die historischen Namen `aif-gold-*`, `aif-neon-purple` und `aif-neon-cyan` bleiben während der Strangler-Migration nur als Compatibility Surface. `aif-neon-cyan` projiziert auf das kanonische Cyan `#22D3EE`. Neue Komponenten dürfen diese Aliasnamen nicht mehr einführen. PDF- und Media-Renderer dürfen die Alias-Namespace nicht konsumieren; sie lesen die kanonischen `brand`-/`semantic`-Rollen direkt.
 
 ## 4. Typografie
 
@@ -82,11 +82,13 @@ Renderer-spezifische Fallbacks sind technische Adapter und keine alternative Pro
 
 ### PDF
 
-`src/platform/PdfReporting/pdfBrand.ts` erhält Build-time Werte aus derselben Registry. Documentation-as-Code liest die Registry ebenfalls direkt. Renderer-Fallbacks dürfen keine zweite Palette etablieren.
+`src/platform/PdfReporting/pdfBrand.ts` erhält Build-time Werte aus derselben Registry. Die Projektion in `vite.config.ts` verwendet ausschließlich kanonische `brand`-/`semantic`-/`print`-Pfade. Documentation-as-Code liest die Registry ebenfalls direkt. Renderer-Fallbacks dürfen keine zweite Palette etablieren.
 
 ### Social Media
 
-`MediaProjectV2` bindet `brandTokenSource` an `docs/frontend/design-tokens.json`. Generative Grafiken ohne diesen Contract bleiben Concept Art und keine Template-Authority.
+`MediaProjectV2` bindet `brandTokenSource` an `docs/frontend/design-tokens.json`. Der deterministische Python-Renderer liest ebenfalls direkt aus `color.brand` und `color.print`; `color.aif` ist keine Renderer-Abhängigkeit. Generative Grafiken ohne diesen Contract bleiben Concept Art und keine Template-Authority.
+
+Text-Templates müssen vor Rückgabe gegen `server/socialMedia/platformCharacterLimits.ts` validiert werden. Pflichttexte wie Disclaimer oder Supportinformationen werden nicht still gekürzt; eine Überschreitung schlägt fail-closed fehl.
 
 ### Externe Anbieter
 
@@ -94,7 +96,7 @@ Externe Provider erhalten versionierte Exporte/Contracts aus der Registry. Das D
 
 ## 6. Pattern und Accessibility
 
-BUY = Emerald, SELL = Rose. Wenn kein verifiziertes Pattern existiert, zeigt die UI `NO PATTERN`; keine Platzhalter oder erfundenen Signale.
+BUY = Emerald, SELL = Rose. Ein Pattern-Badge wird nur bei vorhandener Pattern-Evidence gerendert. Fehlt ein verifiziertes Pattern, bleibt der Fachwert visuell absent; die UI erzeugt weder einen Platzhalter noch ein abgeleitetes BUY-/SELL-Signal. Dieser Missing-State ist in `patterns.patternBadge` mit `renderWhenMissing: false` und `missingState: "omit"` kanonisch festgelegt.
 
 Fokus bleibt Gold mit sichtbarem 2-px-Ring. Status und Assetklasse werden zusätzlich durch Text/Icon kommuniziert. Interaktive Ziele bleiben, soweit sinnvoll, mindestens 44×44 px. `prefers-reduced-motion` ist verbindlich.
 
@@ -120,6 +122,9 @@ Damit werden Legacy-Anbindungen strangler-basiert abgelöst, ohne Parallelarchit
 - [x] Best/Worst bleibt von Assetklassenfarben getrennt.
 - [x] Inter / Poppins / JetBrains Mono sind rollenbasiert projiziert.
 - [x] Web-, PDF- und Social-Media-Pfade teilen dieselbe Authority.
-- [x] berührte Fachkomponenten wurden in die vorgesehenen Feature-Slices migriert.
+- [x] PDF- und Media-Renderer konsumieren keine deprecated `color.aif`-Runtimepfade.
+- [x] Pattern-Missing-State rendert keinen Platzhalter und erfindet kein Signal.
+- [x] Social-Templates erzwingen die kanonischen Plattformlimits fail-closed.
+- [x] berührte Fachkomponenten wurden in die vorgesehenen Feature-Slices migriert bzw. semantisch konsolidiert.
 - [ ] verbleibende nicht migrierte Fachkomponenten vollständig von lokalen Farbwerten befreien.
 - [ ] Compatibility-Aliase und Legacy-Pfade nach Inbound-Import-Zahl 0 löschen.
