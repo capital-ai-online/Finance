@@ -4,7 +4,7 @@
 **Status:** ACTIVE  
 **Version:** `2.0.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-08-19  
+**Updated:** 2026-08-24  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
@@ -40,8 +40,8 @@ READ-ONLY BASELINE
 → FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
 → PR / GOVERNANCE CHECKS / TECHNICAL CI
 → HUMAN MERGE DECISION
-→ HUMAN MERGE
-→ BRANCH RETIREMENT
+→ HUMAN MERGE OR OTHER TERMINAL PR EVENT
+→ WORK-CLAIM RELEASE + BRANCH RETIREMENT
 → READ-ONLY PRE-MUTATION CHECK (if external mutation is required)
 → EXPLICIT OWNER MUTATION APPROVAL
 → NON-AUTHORIZING MUTATION HANDOFF
@@ -68,6 +68,7 @@ A step marked REQUIRED for the concrete work package cannot be skipped.
 10. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
 11. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
 12. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
+13. **Work-claim lifecycle ownership.** A principal that creates an `active`/`exclusive` work claim remains responsible for its conformant release after the correlated work reaches a terminal state, unless responsibility is explicitly and traceably handed off.
 
 ## Pre-PR technical evidence
 
@@ -76,6 +77,56 @@ Branch-local or approved sandbox checks should be used before PR creation when t
 Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/governance/control-plane/pre-pr-build-evidence.schema.json` and is bound to exact base/head SHAs. It is non-authorizing.
 
 GitHub hosted `build-and-test` remains the independent technical validation for the final PR head.
+
+## Work-claim lifecycle and conformant closure
+
+Work claims are coordination records, not permanent locks and not authorization artifacts. Their lifecycle is part of the work item that created them.
+
+### Creator responsibility
+
+The agent, automation client or Human principal that successfully creates an `active` and `exclusive` work claim MUST remain responsible for its lifecycle until the claim is released. Responsibility MAY be transferred only by an explicit, traceable handoff or Human/Owner direction; an implicit change of model, chat, tool or provider does not transfer it.
+
+### Terminal events
+
+The following events terminate writer authority for the correlated work claim:
+
+- the correlated Pull Request is merged;
+- the correlated Pull Request is closed without merge;
+- the work is explicitly superseded by a new scoped work item;
+- the branch/work item is explicitly abandoned.
+
+A terminal event releases the claim's effective writer authority immediately. A stale JSON record that still says `status: "active"` after a terminal event MUST NOT continue to block or reserve the claimed paths; instead it is a governance lifecycle finding that requires persistent cleanup.
+
+### Persistent release record
+
+The responsible principal MUST close the persisted claim through normal branch/PR governance as soon as practicable after the terminal event. The original claim file is retained for auditability and MUST NOT be deleted merely because the work ended.
+
+A conformantly released claim uses at least:
+
+```json
+{
+  "status": "released",
+  "exclusive": false,
+  "releasedAt": "<ISO-8601 timestamp>",
+  "releaseReason": "merged | closed | superseded | abandoned"
+}
+```
+
+Where available, the same claim record SHOULD also retain the correlated Pull Request number, terminal PR/head SHA and, for a merged work item, the resulting merge/main SHA. Original identity and scope evidence such as `claimId`, `workItem`, `startedAt`, `baseBranch`, `baseSha`, `agent` and `claimedPaths` remains immutable historical evidence except for an explicitly documented correction of malformed metadata.
+
+### No recursive claim creation
+
+A maintenance change whose only purpose is to transition one or more terminal claims from `active` to `released` MUST NOT create a new work claim solely for that closure operation. This prevents an infinite claim-for-claim lifecycle. The closure change still follows the normal fresh-branch, current-main correlation, PR-body, CI and Human Merge rules applicable to its check class.
+
+### Handoff and failure handling
+
+If the original claim creator can no longer perform the persistent release, it MUST surface the unresolved lifecycle state and hand it off explicitly. The receiving principal may perform the closure under the same repository governance but does not inherit any additional merge, CI, deployment or production-mutation authority.
+
+Failure to persist a release after a terminal event is a governance hygiene finding. It does not revive writer authority and must not be interpreted as a valid reason to block unrelated work indefinitely.
+
+### Authority boundary
+
+Claim creation, claim release and claim-closure evidence never authorize Pull Request creation, CI, merge, deployment or protected external mutation by themselves. Existing Human/Owner and protected-action boundaries remain unchanged.
 
 ## Human / Owner boundary
 
@@ -134,6 +185,7 @@ Where applicable, retain:
 - baseline and candidate SHAs;
 - stable authority/control references;
 - branch / PR / final head / merge SHA;
+- work-claim identity and release state when a claim exists;
 - check class and validation result;
 - mutation class and target;
 - pre/post verification;
@@ -154,4 +206,4 @@ Existing M5–M10 runbooks remain available for domain/recovery evidence. M10 ma
 
 ## Closure rule
 
-A work package closes only when implementation, current authority, required validation/evidence, main correlation and any external mutation verification are consistent. A PR merge alone is not sufficient closure for work that includes production mutation.
+A work package closes only when implementation, current authority, required validation/evidence, main correlation, work-claim lifecycle and any external mutation verification are consistent. A PR merge alone is not sufficient closure for work that includes production mutation or leaves an unresolved claim lifecycle finding.
