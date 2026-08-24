@@ -198,23 +198,25 @@ describe('Governance Control Plane', () => {
     ).toEqual([]);
   });
 
-  it('keeps ADR-0099 v1.8 accepted and synchronized after combined Supersession A+B', () => {
+  it('keeps ADR-0099 v1.9 accepted and synchronized after the P1 portfolio-allocation extension', () => {
     const fixture = readFixture();
     const adr0099 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0099');
     const authority0099 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20');
 
     expect(adr0099).toMatchObject({
       authorityId: 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20',
-      version: '1.8.0',
+      version: '1.9.0',
       lifecycle: 'accepted',
       path: 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md',
     });
     expect(authority0099).toMatchObject({
       displayId: 'ADR-0099',
-      version: '1.8.0',
+      version: '1.9.0',
       lifecycle: 'accepted',
       path: 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md',
     });
+    expect(String(authority0099?.scope ?? '')).toContain('portfolio allocation');
+    expect(String(authority0099?.scope ?? '')).toContain('FT-5 remains sole Risk/Compliance approval authority');
   });
 
   it('keeps ADR-0100 v1.1 accepted and evidence-only after DeFi Supersession B', () => {
