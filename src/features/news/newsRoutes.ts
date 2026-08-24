@@ -1,9 +1,10 @@
 // ARCH-AUDIT-0002 / SC-4: /api/news is a read-only product projection of external article
-// metadata. Free Crypto News (open-source MIT, keyless REST) is the primary crypto source;
-// GDELT DOC 2.0 remains the keyless discovery fallback. Publisher content is never fabricated,
-// scraped into the product or granted scoring authority by this route.
+// metadata. Free Crypto News (open-source MIT, keyless REST) and GDELT DOC 2.0 are aggregated
+// behind one evidence boundary. Publisher content is never fabricated, scraped into the product
+// or granted scoring authority by this route.
 
 import express from 'express';
+import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
 import { FreeCryptoNewsEvidenceProvider } from '../../platform/MarketData/providers/FreeCryptoNewsEvidenceProvider';
 import { GdeltNewsEvidenceProvider } from '../../platform/MarketData/providers/GdeltNewsEvidenceProvider';
 
@@ -15,30 +16,54 @@ const POSITIVE_KEYWORDS = ['bullish', 'surge', 'gain', 'rise', 'rally', 'growth'
 const NEGATIVE_KEYWORDS = ['bearish', 'plummet', 'drop', 'fall', 'crash', 'risk', 'hack', 'misses', 'lawsuit'];
 const NEWS_CACHE_TTL_MS = 5 * 60_000;
 const MAX_NEWS_ITEMS = 20;
+const PROVIDER_FETCH_LIMIT = 50;
 const DEFAULT_LIMIT = 7;
 
+type NewsAssetType = RegistryAsset['type'];
+
+interface NewsAssetMeta {
+  readonly symbol: string;
+  readonly name: string;
+  readonly type: NewsAssetType;
+}
+
 interface ProjectedNewsItem {
-  id: string;
-  headline: string;
-  summary: string;
-  sentiment: NewsSentiment;
-  sentimentBasis: NewsSentimentBasis;
-  time: string;
-  source: string;
-  evidenceRef: string;
-  publishedAt: string;
-  url: string;
-  provider: string;
-  change24hPct?: number | null;
+  readonly id: string;
+  readonly headline: string;
+  readonly summary: string;
+  readonly sentiment: NewsSentiment;
+  readonly sentimentBasis: NewsSentimentBasis;
+  readonly time: string;
+  readonly source: string;
+  readonly evidenceRef: string;
+  readonly publishedAt: string;
+  readonly url: string;
+  readonly provider: string;
+  readonly assetSymbols: readonly string[];
+  readonly assetClasses: readonly NewsAssetType[];
+  readonly change24hPct?: number | null;
 }
 
 interface NewsCacheEntry {
-  expiresAt: number;
-  items: readonly ProjectedNewsItem[];
-  provider: string;
+  readonly expiresAt: number;
+  readonly items: readonly ProjectedNewsItem[];
+  readonly provider: string;
+}
+
+interface SourceCacheEntry {
+  readonly expiresAt: number;
+  readonly sources: readonly string[];
+  readonly retrievedAt: string;
 }
 
 const newsCache = new Map<string, NewsCacheEntry>();
+let sourceCache: SourceCacheEntry | null = null;
+
+const NEWS_ASSETS: readonly NewsAssetMeta[] = Object.freeze(
+  assetRegistry.getAssets()
+    .map(asset => Object.freeze({ symbol: asset.symbol, name: asset.name, type: asset.type }))
+    .sort((a, b) => a.type.localeCompare(b.type) || a.symbol.localeCompare(b.symbol)),
+);
 
 export function classifyNewsSentiment(headline: string, description = ''): NewsSentiment {
   const text = `${headline || ''} ${description || ''}`.toLowerCase();
@@ -61,97 +86,93 @@ function normalizedLimit(value: unknown): number {
 
 function normalizedSource(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  const source = value.trim().toLowerCase();
-  return source.length > 0 && source.length <= 64 ? source : null;
+  const source = value.trim();
+  return source.length > 0 && source.length <= 128 ? source : null;
 }
 
-function buildGdeltQuery(symbol: string | null): string {
-  if (symbol) return `"${symbol}" (crypto OR cryptocurrency OR market OR finance)`;
-  return '("artificial intelligence" OR fintech OR finance OR markets OR cryptocurrency)';
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export const newsRouter = express.Router();
+function sourceKey(value: string): string {
+  return value.trim().toLowerCase().replace(/^www\./, '');
+}
 
-newsRouter.get('/', async (req, res) => {
-  const symbol = normalizedSymbol(req.query.symbol);
-  if (req.query.symbol !== undefined && !symbol) {
-    return res.status(400).json({ status: 'INVALID_REQUEST', reason: 'Ungültiges Asset-Symbol.' });
+function sourceMatches(itemSource: string, requestedSource: string): boolean {
+  const item = sourceKey(itemSource);
+  const requested = sourceKey(requestedSource);
+  return item === requested || item.includes(requested) || requested.includes(item);
+}
+
+function gdeltDomainFilter(source: string | null): string {
+  if (!source) return '';
+  const candidate = sourceKey(source);
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(candidate) ? ` domainis:${candidate}` : '';
+}
+
+function getAssetMeta(symbol: string | null): NewsAssetMeta | null {
+  if (!symbol) return null;
+  const asset = assetRegistry.getAsset(symbol);
+  return asset ? { symbol: asset.symbol, name: asset.name, type: asset.type } : null;
+}
+
+function detectAssets(headline: string, description = '', requestedSymbol: string | null = null): readonly NewsAssetMeta[] {
+  if (requestedSymbol) {
+    const requested = getAssetMeta(requestedSymbol);
+    return requested ? Object.freeze([requested]) : Object.freeze([]);
   }
 
-  const source = normalizedSource(req.query.source);
-  const limit = normalizedLimit(req.query.limit);
-  const preferCrypto = !symbol || /^[A-Z0-9]{2,10}$/.test(symbol); // crypto-like symbols prefer open-source feed
+  const text = `${headline} ${description}`;
+  const matches = NEWS_ASSETS.filter(asset => {
+    const nameMatch = asset.name.length >= 4 && new RegExp(`\\b${escapeRegex(asset.name)}\\b`, 'i').test(text);
+    const symbolMatch = asset.symbol.length >= 4 && new RegExp(`\\b${escapeRegex(asset.symbol)}\\b`, 'i').test(text);
+    return nameMatch || symbolMatch;
+  });
+  return Object.freeze(matches.slice(0, 8));
+}
 
-  const cacheKey = `fcn|${symbol ?? ''}|${source ?? ''}|${limit}`;
-  const now = Date.now();
-  const cached = newsCache.get(cacheKey);
-  if (cached && cached.expiresAt > now) {
-    res.setHeader('x-capital-ai-news-cache', 'hit');
-    res.setHeader('x-capital-ai-news-provider', cached.provider);
-    return res.json(cached.items.slice(0, limit));
+function buildGdeltQuery(symbol: string | null, source: string | null = null): string {
+  const sourceClause = gdeltDomainFilter(source);
+  if (symbol) {
+    const asset = getAssetMeta(symbol);
+    const terms = asset && asset.name.toUpperCase() !== asset.symbol
+      ? `("${asset.symbol}" OR "${asset.name.replace(/"/g, '')}")`
+      : `"${symbol}"`;
+    return `${terms} (market OR finance OR trading OR investment OR economy)${sourceClause}`;
   }
+  return `("stock market" OR finance OR markets OR cryptocurrency OR forex OR commodities OR bonds OR "central bank")${sourceClause}`;
+}
 
-  // 1) Primary: open-source Free Crypto News (REST, keyless, MIT)
-  if (preferCrypto) {
-    try {
-      const fcn = new FreeCryptoNewsEvidenceProvider();
-      const result = await fcn.searchArticles({
-        query: symbol ?? undefined,
-        source: source ?? undefined,
-        limit: Math.max(limit, 10),
-      });
+function projectFreeCryptoArticle(
+  article: Awaited<ReturnType<FreeCryptoNewsEvidenceProvider['searchArticles']>>['articles'][number],
+  requestedSymbol: string | null,
+): ProjectedNewsItem {
+  const assets = detectAssets(article.title, article.description ?? '', requestedSymbol);
+  return Object.freeze({
+    id: article.evidenceRef,
+    headline: article.title,
+    summary: article.description
+      ?? 'Artikelmetadaten über Free Crypto News (open-source); vollständiger Inhalt und Nutzungsrechte verbleiben beim Herausgeber.',
+    sentiment: classifyNewsSentiment(article.title, article.description ?? ''),
+    sentimentBasis: NEWS_SENTIMENT_BASIS,
+    time: new Date(article.publishedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
+    source: article.sourceName,
+    evidenceRef: article.evidenceRef,
+    publishedAt: article.publishedAt,
+    url: article.url,
+    provider: 'free-crypto-news',
+    assetSymbols: Object.freeze(assets.map(asset => asset.symbol)),
+    assetClasses: Object.freeze([...new Set(assets.map(asset => asset.type))]),
+    change24hPct: null,
+  });
+}
 
-      if (result.status === 'VERIFIED' && result.articles.length > 0) {
-        const items: readonly ProjectedNewsItem[] = Object.freeze(
-          result.articles.slice(0, MAX_NEWS_ITEMS).map(article => Object.freeze({
-            id: article.evidenceRef,
-            headline: article.title,
-            summary: article.description
-              ?? 'Artikelmetadaten über Free Crypto News (open-source); vollständiger Inhalt und Nutzungsrechte verbleiben beim Herausgeber.',
-            sentiment: classifyNewsSentiment(article.title, article.description ?? ''),
-            sentimentBasis: NEWS_SENTIMENT_BASIS,
-            time: new Date(article.publishedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
-            source: article.sourceName,
-            evidenceRef: article.evidenceRef,
-            publishedAt: article.publishedAt,
-            url: article.url,
-            provider: 'free-crypto-news',
-            change24hPct: null, // enriched client-side or via separate quote path when available
-          })),
-        );
-
-        newsCache.set(cacheKey, { expiresAt: now + NEWS_CACHE_TTL_MS, items, provider: 'free-crypto-news' });
-        res.setHeader('x-capital-ai-news-cache', 'miss');
-        res.setHeader('x-capital-ai-news-provider', 'free-crypto-news');
-        return res.json(items.slice(0, limit));
-      }
-    } catch {
-      // fall through to GDELT
-    }
-  }
-
-  // 2) Fallback: GDELT DOC 2.0 (keyless, multi-asset)
-  const query = buildGdeltQuery(symbol);
-  const gdeltCacheKey = `gdelt|${query}|${limit}`;
-  const gdeltCached = newsCache.get(gdeltCacheKey);
-  if (gdeltCached && gdeltCached.expiresAt > now) {
-    res.setHeader('x-capital-ai-news-cache', 'hit');
-    res.setHeader('x-capital-ai-news-provider', 'gdelt');
-    return res.json(gdeltCached.items.slice(0, limit));
-  }
-
-  const provider = new GdeltNewsEvidenceProvider();
-  const result = await provider.searchArticles(query, Math.max(limit, 10), '1d');
-
-  if (result.status !== 'VERIFIED') {
-    return res.status(503).json({
-      status: 'NO_DATA',
-      source: 'free-crypto-news + GDELT DOC 2.0',
-      reason: result.reason ?? `News-Evidence ist nicht verfügbar (${result.status}).`,
-    });
-  }
-
-  const items: readonly ProjectedNewsItem[] = Object.freeze(result.articles.slice(0, MAX_NEWS_ITEMS).map(article => Object.freeze({
+function projectGdeltArticle(
+  article: Awaited<ReturnType<GdeltNewsEvidenceProvider['searchArticles']>>['articles'][number],
+  requestedSymbol: string | null,
+): ProjectedNewsItem {
+  const assets = detectAssets(article.title, '', requestedSymbol);
+  return Object.freeze({
     id: article.evidenceRef,
     headline: article.title,
     summary: 'Artikelmetadaten über GDELT; vollständiger Inhalt und Nutzungsrechte verbleiben beim Herausgeber.',
@@ -163,28 +184,144 @@ newsRouter.get('/', async (req, res) => {
     publishedAt: article.publishedAt,
     url: article.url,
     provider: 'gdelt',
+    assetSymbols: Object.freeze(assets.map(asset => asset.symbol)),
+    assetClasses: Object.freeze([...new Set(assets.map(asset => asset.type))]),
     change24hPct: null,
-  })));
+  });
+}
 
-  newsCache.set(gdeltCacheKey, { expiresAt: now + NEWS_CACHE_TTL_MS, items, provider: 'gdelt' });
+function mergeNewsItems(items: readonly ProjectedNewsItem[]): readonly ProjectedNewsItem[] {
+  const byUrl = new Map<string, ProjectedNewsItem>();
+  for (const item of items) {
+    const key = item.url.trim().toLowerCase();
+    const existing = byUrl.get(key);
+    if (!existing || Date.parse(item.publishedAt) > Date.parse(existing.publishedAt)) {
+      byUrl.set(key, item);
+    }
+  }
+  return Object.freeze(
+    [...byUrl.values()].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)),
+  );
+}
+
+export const newsRouter = express.Router();
+
+newsRouter.get('/', async (req, res) => {
+  const rawAsset = req.query.asset ?? req.query.symbol; // symbol remains a backwards-compatible alias.
+  const symbol = normalizedSymbol(rawAsset);
+  if (rawAsset !== undefined && !symbol) {
+    return res.status(400).json({ status: 'INVALID_REQUEST', reason: 'Ungültiges Asset-Symbol.' });
+  }
+
+  const source = normalizedSource(req.query.source);
+  const limit = normalizedLimit(req.query.limit);
+  const asset = getAssetMeta(symbol);
+  const cacheKey = `aggregate|${symbol ?? 'all'}|${sourceKey(source ?? 'all')}|${limit}`;
+  const now = Date.now();
+  const cached = newsCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    res.setHeader('x-capital-ai-news-cache', 'hit');
+    res.setHeader('x-capital-ai-news-provider', cached.provider);
+    return res.json(cached.items.slice(0, limit));
+  }
+
+  const providerLimit = Math.min(PROVIDER_FETCH_LIMIT, Math.max(20, limit * 4));
+  const gdelt = new GdeltNewsEvidenceProvider();
+  const fcn = new FreeCryptoNewsEvidenceProvider();
+
+  // The default feed is deliberately asset-independent: both providers are queried and merged.
+  // An explicit asset filter narrows evidence afterwards; it never inherits the Enterprise Scorer selection implicitly.
+  const tasks: Array<Promise<readonly ProjectedNewsItem[]>> = [
+    gdelt.searchArticles(buildGdeltQuery(symbol, source), providerLimit, '1d').then(result => {
+      if (result.status !== 'VERIFIED') return Object.freeze([]);
+      return Object.freeze(result.articles.map(article => projectGdeltArticle(article, symbol)));
+    }).catch(() => Object.freeze([])),
+  ];
+
+  if (!symbol || asset?.type === 'crypto') {
+    tasks.push(
+      fcn.searchArticles({
+        query: asset?.type === 'crypto' ? asset.symbol : undefined,
+        source: source ?? undefined,
+        limit: providerLimit,
+      }).then(result => {
+        if (result.status !== 'VERIFIED') return Object.freeze([]);
+        return Object.freeze(result.articles.map(article => projectFreeCryptoArticle(article, symbol)));
+      }).catch(() => Object.freeze([])),
+    );
+  }
+
+  const providerItems = (await Promise.all(tasks)).flat();
+  let items = mergeNewsItems(providerItems);
+  if (source) items = Object.freeze(items.filter(item => sourceMatches(item.source, source)));
+
+  if (items.length === 0) {
+    return res.status(503).json({
+      status: 'NO_DATA',
+      source: 'free-crypto-news + GDELT DOC 2.0',
+      reason: source
+        ? `Keine verifizierten News-Evidence-Treffer für die Quelle "${source}" verfügbar.`
+        : 'News-Evidence ist über die aktiven Provider derzeit nicht verfügbar.',
+    });
+  }
+
+  const providers = [...new Set(items.map(item => item.provider))];
+  const providerHeader = providers.length > 1 ? 'multi-provider' : providers[0] ?? 'news-evidence';
+  newsCache.set(cacheKey, { expiresAt: now + NEWS_CACHE_TTL_MS, items, provider: providerHeader });
   res.setHeader('x-capital-ai-news-cache', 'miss');
-  res.setHeader('x-capital-ai-news-provider', 'gdelt');
+  res.setHeader('x-capital-ai-news-provider', providerHeader);
   return res.json(items.slice(0, limit));
 });
 
-/** Optional sources list for filter UI (primary open-source feed). */
+/** Sources are aggregated from the active provider set for the filter UI. */
 newsRouter.get('/sources', async (_req, res) => {
-  try {
-    const fcn = new FreeCryptoNewsEvidenceProvider();
-    const result = await fcn.listSources();
-    if (result.status !== 'VERIFIED') {
-      return res.status(503).json({ status: 'NO_DATA', reason: result.reason ?? 'Sources unavailable' });
-    }
-    return res.json({ sources: result.sources, retrievedAt: result.retrievedAt, provider: 'free-crypto-news' });
-  } catch (error) {
-    return res.status(503).json({
-      status: 'NO_DATA',
-      reason: error instanceof Error ? error.message : String(error),
+  const now = Date.now();
+  if (sourceCache && sourceCache.expiresAt > now) {
+    return res.json({
+      sources: sourceCache.sources,
+      retrievedAt: sourceCache.retrievedAt,
+      provider: 'multi-provider',
+      providers: ['free-crypto-news', 'gdelt'],
+      cache: 'hit',
     });
   }
+
+  const fcn = new FreeCryptoNewsEvidenceProvider();
+  const gdelt = new GdeltNewsEvidenceProvider();
+  const [fcnResult, gdeltResult] = await Promise.all([
+    fcn.listSources().catch(() => null),
+    gdelt.searchArticles(buildGdeltQuery(null), PROVIDER_FETCH_LIMIT, '1d').catch(() => null),
+  ]);
+
+  const sourceNames = new Set<string>();
+  if (fcnResult?.status === 'VERIFIED') {
+    for (const name of fcnResult.sources) if (name.trim()) sourceNames.add(name.trim());
+  }
+  if (gdeltResult?.status === 'VERIFIED') {
+    for (const article of gdeltResult.articles) if (article.sourceName.trim()) sourceNames.add(article.sourceName.trim());
+  }
+
+  const sources = Object.freeze([...sourceNames].sort((a, b) => a.localeCompare(b)));
+  if (sources.length === 0) {
+    return res.status(503).json({ status: 'NO_DATA', reason: 'Sources unavailable' });
+  }
+
+  const retrievedAt = new Date(now).toISOString();
+  sourceCache = { expiresAt: now + NEWS_CACHE_TTL_MS, sources, retrievedAt };
+  return res.json({
+    sources,
+    retrievedAt,
+    provider: 'multi-provider',
+    providers: ['free-crypto-news', 'gdelt'],
+    cache: 'miss',
+  });
+});
+
+/** Canonical Enterprise Scorer asset metadata used exclusively for Newsfeed filtering. */
+newsRouter.get('/assets', (_req, res) => {
+  return res.json({
+    assets: NEWS_ASSETS,
+    count: NEWS_ASSETS.length,
+    source: 'assetRegistry',
+  });
 });
