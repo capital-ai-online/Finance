@@ -18,7 +18,7 @@ The credential activates only the existing research/evidence transport. It does 
 | Target identity | Owner-approved workspace `AICapital` and service `Finance` |
 | Secret placement | Entered by the owner as `GOPLUS_API_KEY`; value not read, copied, logged or committed |
 | Browser exposure | No `VITE_*` variable and no client-side propagation |
-| Service deploy | `dep-da6btofqj5pc739r49v0`, commit `0743e66742519a452a0633734685d4115e71150d`, state `live` |
+| Latest observed service deploy | `dep-da6cv6favr4c73eq5l2g`, commit `0f864d31f60b4b1a1a9968202a62aa8357673049`, state `live` |
 | Auto-deploy authority | Remains off; no second deployment authority introduced |
 | Log inspection | No observed `GOPLUS`, `GoPlus` or `NOT_CONFIGURED` error in the inspected deploy logs |
 | Functional provider call | Not claimed; no productive route invoked the provider during this verification |
