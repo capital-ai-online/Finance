@@ -7,6 +7,7 @@ import express from 'express';
 import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
 import { FreeCryptoNewsEvidenceProvider } from '../../platform/MarketData/providers/FreeCryptoNewsEvidenceProvider';
 import { GdeltNewsEvidenceProvider } from '../../platform/MarketData/providers/GdeltNewsEvidenceProvider';
+import { getVerifiedAssetDisplay } from '../../services/verifiedAssetDisplay';
 
 export type NewsSentiment = 'positive' | 'negative' | 'neutral';
 export type NewsSentimentBasis = 'heuristic';
@@ -261,6 +262,17 @@ newsRouter.get('/', async (req, res) => {
   const providerItems = (await Promise.all(tasks)).flat();
   let items = mergeNewsItems(providerItems);
   if (source) items = Object.freeze(items.filter(item => sourceMatches(item.source, source)));
+
+  // Preserve one canonical market-data path: only an explicitly filtered crypto asset is
+  // enriched, once per cache miss, through VerifiedAssetDisplay. Missing/unsupported 24h
+  // evidence remains null rather than being estimated or copied from article providers.
+  if (symbol && asset?.type === 'crypto' && items.length > 0) {
+    const display = await getVerifiedAssetDisplay(symbol).catch(() => null);
+    const change24hPct = display?.change24hPct;
+    if (change24hPct != null && Number.isFinite(change24hPct)) {
+      items = Object.freeze(items.map(item => Object.freeze({ ...item, change24hPct })));
+    }
+  }
 
   if (items.length === 0) {
     return res.status(503).json({
