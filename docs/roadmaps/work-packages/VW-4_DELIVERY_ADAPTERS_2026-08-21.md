@@ -1,6 +1,6 @@
 # VW-4 — Delivery Adapters
 
-**Status:** IMPLEMENTED ON BRANCH / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Authority:** `ESS-0017`
 
 ## Scope

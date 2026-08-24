@@ -1,6 +1,6 @@
 # VW-2 — FinTech Concept Baseline
 
-**Status:** IMPLEMENTED ON BRANCH / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Authorities:** `ESS-0017`, `SC-MD-SPT-0001` (parent, read-only)
 
 ## Scope

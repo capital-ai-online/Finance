@@ -1,6 +1,6 @@
 # VW-1 — UI Message Catalog
 
-**Status:** IMPLEMENTED ON BRANCH / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Authority:** `ESS-0017` / `ESS-0017-CONTRACTS`  
 **Traceability:** Owner priority 2026-08-21
 

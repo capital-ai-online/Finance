@@ -1,6 +1,6 @@
 # VW-0 — Vocabulary / Wording / Wiki Supersession
 
-**Status:** IMPLEMENTED ON BRANCH / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Date:** 2026-08-21  
 **Source:** Owner chat priority 2026-08-21  
 **Authorities:** `ESS-0017`, `ESS-0017-CONTRACTS`, `GOV-AUTH-SUPERSESSION-0001`  

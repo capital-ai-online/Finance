@@ -1,6 +1,6 @@
 # CAPITAL-AI Vocabulary, Wording & Wiki Architecture
 
-**Status:** Implementation Candidate — effective after Human Merge  
+**Status:** ACTIVE BASELINE ON MAIN — merged via PR #477  
 **Version:** 1.8.0  
 **Date:** 2026-08-21  
 **Authority:** `ESS-0017` / `ESS-0017-CONTRACTS` / `ADR-0078`  
@@ -124,18 +124,18 @@ Vocabulary/Wording must not:
 
 ## 9. Work-package status
 
-| Package | Scope | Status on branch |
+| Package | Scope | Current status |
 |---|---|---|
-| VW-0 | Supersession / Authority cleanup | implemented |
-| VW-1 | UI Message Catalog | implemented |
-| VW-2 | 18-stage FinTech Concept baseline | implemented |
-| VW-3 | Wording Usage Index | implemented |
-| VW-4 | React/PDF/E-Mail/SEO adapters | implemented |
-| VW-5 | Documentary D7 / Traceability handoff | implemented |
+| VW-0 | Supersession / Authority cleanup | active on main |
+| VW-1 | UI Message Catalog | active on main |
+| VW-2 | 18-stage FinTech Concept baseline | active on main |
+| VW-3 | Wording Usage Index | active on main |
+| VW-4 | React/PDF/E-Mail/SEO adapters | active on main |
+| VW-5 | Documentary D7 / Traceability handoff | active on main |
 | VW-6 | deterministic Wiki renderer / controlled sync | implemented; not externally published |
 | VW-7 | controlled incremental wording migration baseline | implemented; OPEN candidates remain |
-| VW-8 | continuous governance / release closure | implemented |
+| VW-8 | continuous governance / release closure | active on main |
 
 ## 10. Governance and rollback
 
-ESS Registry is synchronized in place; no second registry is created. `ESS-0017` remains `Proposed` until Human Merge. Rollback is repository-level `git revert`; this branch performs no Supabase, Render, Stripe, IAM, Wiki or production mutation.
+ESS Registry is synchronized in place; no second registry is created. The human merge of PR #477 made the implementation baseline effective on `main`; formal ESS/ADR lifecycle labels remain governed by their canonical registries. Rollback is repository-level `git revert`; this branch performs no Supabase, Render, Stripe, IAM, Wiki or production mutation.

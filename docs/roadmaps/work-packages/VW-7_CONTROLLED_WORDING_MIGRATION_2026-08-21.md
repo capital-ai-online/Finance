@@ -1,6 +1,6 @@
 # VW-7 — Controlled Wording Migration
 
-**Status:** IMPLEMENTED AS CONTROLLED INCREMENTAL MIGRATION BASELINE / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Authority:** `ESS-0017` / `ESS-0017-CONTRACTS`  
 **Boundary:** no blind mass replacement; no financial or compliance semantic changes
 

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "VW-0-VW5-HYGIENE-2026-08-24",
+  "status": "active",
+  "exclusive": true,
+  "branch": "chore/vocabulary-vw0-vw5-hygiene-2026-08-24",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate merged Vocabulary VW-0 through VW-5 against current main, correct stale Message Catalog/supersession/document lifecycle metadata, and harden closure validation without a parallel architecture.",
+  "startedAt": "2026-08-24",
+  "baseBranch": "main",
+  "baseSha": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
+  "claimedPaths": [
+    ".ai/work-claims/VW-0-VW5-HYGIENE-2026-08-24.json",
+    ".ai/work-claims/VW-0-VW8-VOCABULARY-WORDING-WIKI-2026-08-21.json",
+    "docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md",
+    "docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md",
+    "docs/roadmaps/work-packages/VW-*.md",
+    "docs/evidence/vocabulary/VOCABULARY_VW0_VW5_MAIN_CORRELATION_2026-08-24.md",
+    "scripts/automation/validateVocabularyGovernanceClosure.ts",
+    "src/platform/Vocabulary/manifest.json",
+    "src/platform/Vocabulary/component.yaml"
+  ],
+  "nonGoals": [
+    "Feature reimplementation",
+    "New localization runtime dependency",
+    "Financial runtime or production mutation",
+    "Wiki publication",
+    "Mass wording replacement"
+  ],
+  "releaseCondition": "Released when the resulting pull request is merged, closed, superseded or abandoned. Human/CODEOWNER merge remains mandatory."
+}

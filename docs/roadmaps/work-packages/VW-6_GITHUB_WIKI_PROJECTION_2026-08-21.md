@@ -1,6 +1,6 @@
 # VW-6 — GitHub Wiki Projection
 
-**Status:** IMPLEMENTED ON BRANCH / PENDING HUMAN MERGE  
+**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
 **Authority:** `ESS-0017` / `ESS-0017-CONTRACTS` / `ADR-0078`  
 **Boundary:** one-way generated projection; Wiki is never authority
 
