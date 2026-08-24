@@ -64,6 +64,10 @@ export interface GoPlusTradeSimulationEvidence {
 }
 
 export interface GoPlusTransactionSimulationProviderOptions {
+  /**
+   * GoPlus Bearer access token for authenticated Transaction Simulation. The historical option
+   * name is retained to match GOPLUS_API_KEY, but a raw GoPlus app_key/app_secret is not accepted.
+   */
   readonly apiKey?: string | null;
   readonly env?: NodeJS.ProcessEnv;
   readonly fetchImpl?: typeof fetch;
@@ -198,19 +202,36 @@ function stringValues(value: unknown): readonly string[] {
   return Object.freeze([...new Set(result)].sort());
 }
 
+function tokenDeltaCandidate(value: unknown, tokenAddress: string): string | null {
+  if (!value || typeof value !== 'object') return null;
+  const item = value as Record<string, unknown>;
+  if (typeof item.token_address !== 'string' || item.token_address.toLowerCase() !== tokenAddress) return null;
+  const tokenChange = item.token_balance_change && typeof item.token_balance_change === 'object'
+    ? item.token_balance_change as Record<string, unknown>
+    : null;
+  const balanceChange = item.balance_change && typeof item.balance_change === 'object'
+    ? item.balance_change as Record<string, unknown>
+    : null;
+  return integerString(item.change ?? tokenChange?.change ?? balanceChange?.change);
+}
+
+/**
+ * GoPlus documents ERC-20 changes as erc20_balance_changes[].erc20_change[]. Older/alternate
+ * payloads can expose token_address/change directly. Support both structures, but only accept the
+ * exact governed target token; an unrelated token movement never satisfies the BUY/SELL gate.
+ */
 function tokenBalanceDelta(payload: Record<string, unknown>, tokenAddress: string): string | null {
   const changes = Array.isArray(payload.erc20_balance_changes) ? payload.erc20_balance_changes : [];
   for (const entry of changes) {
+    const direct = tokenDeltaCandidate(entry, tokenAddress);
+    if (direct !== null) return direct;
     if (!entry || typeof entry !== 'object') continue;
     const item = entry as Record<string, unknown>;
-    if (typeof item.token_address !== 'string' || item.token_address.toLowerCase() !== tokenAddress) continue;
-    const tokenChange = item.token_balance_change && typeof item.token_balance_change === 'object'
-      ? item.token_balance_change as Record<string, unknown>
-      : null;
-    const balanceChange = item.balance_change && typeof item.balance_change === 'object'
-      ? item.balance_change as Record<string, unknown>
-      : null;
-    return integerString(item.change ?? tokenChange?.change ?? balanceChange?.change);
+    const nested = Array.isArray(item.erc20_change) ? item.erc20_change : [];
+    for (const candidate of nested) {
+      const delta = tokenDeltaCandidate(candidate, tokenAddress);
+      if (delta !== null) return delta;
+    }
   }
   return null;
 }
