@@ -38,12 +38,14 @@
   "pullRequest": 524,
   "mergedPr": 524,
   "mainCommit": "78ad9b3041317f5b941348a13c428395bee4561d",
-  "releasedAt": "2026-08-24T21:30:00Z",
+  "releasedAt": "2026-08-24T21:24:47Z",
   "releaseEvidence": {
     "pullRequest": 524,
     "merged": true,
     "mainContainsImplementation": true,
     "verifiedMainSha": "78ad9b3041317f5b941348a13c428395bee4561d",
     "verifiedAt": "2026-08-24"
-  }
+  },
+  "releaseReason": "merged",
+  "terminalHeadSha": "ad411439967cbd8c4d19ca2cd135be68c85091c5"
 }
