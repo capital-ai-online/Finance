@@ -6,40 +6,52 @@ RUNBOOK-0002
 
 ## Bezug
 
-ADR-0020 (Social Media Direct Publishing — Reale OAuth-2.0- und Plattform-API-Integration).
+ADR-0026 (Social Media Direct Publishing — Reale OAuth-2.0- und Plattform-API-Integration) und ADR-0027 (Social Media Access Restriction — Owner/Founder).
 
 ## Status
 
-Aktiv
+Aktiv — gegen Governance-/Deployment-Stand vom 2026-08-25 synchronisiert.
 
 ## Geltungsbereich
 
 Dieses Runbook beschreibt die Schritte, die **nur der Repository-Owner selbst** (oder jemand mit
-Vollmacht für die CAPITAL-AI-Organisation) durchführen kann: Registrierung von OAuth-Apps in vier
-externen Developer-Consolen und Eintragen der resultierenden Secrets in Render. Diese Schritte
-sind bewusst außerhalb dessen, was ein KI-Agent automatisieren kann — sie erfordern Login mit
-einem echten Geschäftskonto, Annahme externer Nutzungsbedingungen als Rechtsperson und teils
-Business-Verifizierung/App-Review durch die jeweilige Plattform.
+Vollmacht für die CAPITAL-AI-Organisation) durchführen kann: Registrierung von OAuth-Apps in
+externen Developer-Consolen und das kontrollierte Hinterlegen der resultierenden Konfiguration
+und Secrets in der autorisierten Produktionsumgebung. Diese Schritte sind geschützte externe
+Mutationen und werden durch einen Repository-Merge **nicht** automatisch autorisiert.
 
-Die zugehörige Backend-Implementierung (Token-Exchange, verschlüsselte Speicherung, echte
-Publish-Calls) ist bereits vollständig umgesetzt (siehe ADR-0020) — nach Abschluss dieses
-Runbooks funktioniert die Verbindung ohne weitere Code-Änderungen.
+Die zugehörige Backend-Implementierung (Authorization Code, State-Verifikation, Token-Exchange,
+verschlüsselte Speicherung und echte Publish-Calls) ist in ADR-0026 umgesetzt. Das aktuelle
+Security-Modell ist in
+`docs/security/SOCIAL_MEDIA_OAUTH_AUTHORIZATION_CODE_THREAT_MODEL_2026-08-25.md` dokumentiert.
 
 ---
 
-## 0. Vorab: Redirect-URI und Env-Var-Referenz
+## 0. Vorab: kanonische Redirect-URI und Credential-Referenz
 
-Für **alle** Plattformen wird exakt dieselbe Redirect-URI verwendet:
+Für **alle Produktions-Provider** ist die kanonische Redirect-URI:
 
+```text
+https://capital-ai.online/api/social-media/auth/callback
 ```
-https://<DEINE-PRODUKTIONS-DOMAIN>/api/social-media/auth/callback
+
+`https://www.capital-ai.online/api/social-media/auth/callback` ist serverseitig ebenfalls als
+CAPITAL-AI-Produktionsorigin zugelassen, soll aber nur verwendet werden, wenn dieselbe Origin im
+jeweiligen Provider-Portal ausdrücklich registriert wurde. Provider-Konfiguration und tatsächlich
+gesendete `redirect_uri` müssen bytegenau zusammenpassen.
+
+Für lokale Entwicklung/Tests ist ausschließlich Loopback vorgesehen, z. B.:
+
+```text
+http://localhost:3000/api/social-media/auth/callback
 ```
 
-Ersetze `<DEINE-PRODUKTIONS-DOMAIN>` durch die tatsächliche Render-Domain (z. B.
-`capital-ai.onrender.com` oder eine eigene Domain, falls konfiguriert). Für lokale
-Entwicklung/Tests: `http://localhost:3000/api/social-media/auth/callback`.
+Beliebige `*.onrender.com`-Hosts, fremde Hosts, HTTP-Produktions-Origins, abweichende Callback-
+Pfade sowie Redirect-URIs mit Query, Fragment oder Userinfo werden von
+`server/socialMedia/oauthSecurity.ts` fail-closed abgelehnt. Dadurch kann ein untrusted `Host`-
+oder Forwarded-Header keine OAuth-Redirect-Authority erzeugen.
 
-| Plattform | Env-Var (Client-ID) | Env-Var (Client-Secret) |
+| Plattform | Client-ID / Konfiguration | Client-Secret |
 |---|---|---|
 | YouTube | `YOUTUBE_CLIENT_ID` | `YOUTUBE_CLIENT_SECRET` |
 | TikTok | `TIKTOK_CLIENT_ID` | `TIKTOK_CLIENT_SECRET` |
@@ -47,64 +59,58 @@ Entwicklung/Tests: `http://localhost:3000/api/social-media/auth/callback`.
 | Facebook | `FACEBOOK_CLIENT_ID` | `FACEBOOK_CLIENT_SECRET` |
 | X (Twitter) | `X_CLIENT_ID` | `X_CLIENT_SECRET` |
 
-Ohne gesetztes Paar bleibt die jeweilige Plattform serverseitig gesperrt (`GET
-/api/social-media/auth/url` liefert HTTP 503) — es gibt keinen Fallback, der ohne echte
-Credentials funktioniert (fail-closed, siehe `server/socialMedia/oauthExchange.ts`
-`isProviderConfigured()`).
+Die fünf Client-IDs sind nicht-geheime Render-Konfigurationswerte und werden in `render.yaml` als
+`sync: false` geführt. Die fünf Client-Secrets sind dagegen Teil der kanonischen Secret-File-
+Inventarisierung in `scripts/security/secretFileManifest.ts` und gehören in
+`finance-secrets.env`; sie werden **nicht** als normale `render.yaml`-Env-Var gepflegt.
+
+Ohne gesetztes Client-ID/Secret-Paar bleibt die jeweilige Plattform serverseitig gesperrt (`GET
+/api/social-media/auth/url` liefert HTTP 503) — es gibt keinen Fallback ohne echte Credentials
+(`server/socialMedia/oauthExchange.ts` `isProviderConfigured()`).
 
 ---
 
 ## 1. YouTube (Google Cloud Console)
 
-1. [console.cloud.google.com](https://console.cloud.google.com) → neues Projekt anlegen oder
-   bestehendes wählen (z. B. „CAPITAL-AI Production").
-2. **APIs & Services → Library** → „YouTube Data API v3" suchen → **Enable**.
+1. Google Cloud Console öffnen → neues Projekt anlegen oder bestehendes Produktionsprojekt wählen.
+2. **APIs & Services → Library** → „YouTube Data API v3" → **Enable**.
 3. **APIs & Services → OAuth consent screen**:
-   - User Type: `External` (sofern kein Google Workspace vorhanden).
+   - User Type: `External` (sofern kein passender Workspace-interner Flow verwendet wird).
    - App-Name, Support-E-Mail, Developer-Kontakt-E-Mail ausfüllen.
    - Scopes hinzufügen: `.../auth/youtube.upload`, `.../auth/youtube.readonly`.
-   - **Test-Nutzer** hinzufügen (die eigene YouTube-Kontoemail), solange die App im
-     „Testing"-Status ist — nur diese Konten können sich verbinden, bis ein Verification-Review
-     durchlaufen wurde.
+   - Während des Testing-Status nur die notwendigen Test-Nutzer freigeben.
 4. **APIs & Services → Credentials → Create Credentials → OAuth client ID**:
    - Application type: `Web application`.
-   - Authorized redirect URIs: `https://<DOMAIN>/api/social-media/auth/callback` eintragen.
-   - Speichern → Client-ID und Client-Secret werden angezeigt.
-5. Render: `YOUTUBE_CLIENT_ID` und `YOUTUBE_CLIENT_SECRET` setzen (siehe Abschnitt 6).
+   - Authorized redirect URI exakt auf die kanonische Produktions-Callback-URI setzen.
+   - Client-ID und Client-Secret sicher übernehmen.
+5. Produktionskonfiguration gemäß Abschnitt 6 hinterlegen.
 
-**Wichtig:** Für den Übergang von „Testing" zu „In Production" (damit sich beliebige YouTube-Konten
-verbinden können, nicht nur explizit gelistete Test-Nutzer) verlangt Google einen
-Verifizierungsprozess inkl. Prüfung der `youtube.upload`-Scope-Nutzung — dieser kann mehrere Tage
-dauern. Bis dahin funktioniert die Verbindung nur für als Test-Nutzer eingetragene Konten.
+Für den Übergang von „Testing" zu „In Production" kann Google für die verwendeten Scopes eine
+separate Verifizierung verlangen. Das Provider-Review ist eine externe Betriebsfreigabe und kein
+Repository-Gate.
 
 ---
 
 ## 2. TikTok (TikTok for Developers)
 
-1. [developers.tiktok.com](https://developers.tiktok.com) → mit Business-Konto anmelden → **Manage
-   apps → Create an app**.
-2. App-Name, Kategorie, Beschreibung ausfüllen.
-3. **Add products**: „Login Kit" und „Content Posting API" hinzufügen.
-4. Unter Login Kit: Redirect-URI `https://<DOMAIN>/api/social-media/auth/callback` eintragen.
+1. TikTok for Developers → **Manage apps → Create an app**.
+2. App-Name, Kategorie und Beschreibung ausfüllen.
+3. **Login Kit** und **Content Posting API** hinzufügen.
+4. Unter Login Kit die kanonische Redirect-URI eintragen.
 5. Scopes aktivieren: `user.info.basic`, `video.upload`, `video.publish`.
-6. **Client Key** und **Client Secret** aus dem App-Dashboard kopieren.
-7. Render: `TIKTOK_CLIENT_ID` = Client Key, `TIKTOK_CLIENT_SECRET` = Client Secret.
+6. **Client Key** und **Client Secret** sicher übernehmen.
+7. Produktionskonfiguration gemäß Abschnitt 6 hinterlegen.
 
-**Wichtig — App-Review-Status:** `video.publish` ist ein review-pflichtiger Scope. Vor
-Freigabe durch TikTok landen veröffentlichte Videos zunächst als **privater Entwurf im
-Postfach** des verbindenden Nutzers, nicht öffentlich sichtbar (`platformPublishers.ts`
-kennzeichnet das Ergebnis entsprechend als `pending`, nicht als fertig veröffentlicht). Für
-öffentliches Direct-Posting muss der App-Review-Antrag bei TikTok gestellt und genehmigt werden
-(Beschreibung des Use-Case, Demo-Video des Flows).
+`video.publish` ist review-pflichtig. Bis zur jeweiligen Provider-Freigabe können Funktionen
+beschränkt sein; der Provider-Review-Status darf im Produkt nicht als CAPITAL-AI-Security- oder
+Governance-Freigabe interpretiert werden.
 
 ### 2.1 App-Review — Texte für das Einreichungsformular
 
-Fertige Textbausteine für die Pflichtfelder aus TikToks „App review criteria". Alle Aussagen
-sind an der tatsächlichen Implementierung (`server/socialMedia/`) ausgerichtet — nichts davon
-beschreibt eine Funktion, die es nicht gibt.
+Die folgenden Texte beschreiben den vorhandenen Use Case; sie ersetzen keine Prüfung der dann
+aktuellen TikTok-Vorgaben.
 
-**App-Beschreibung** (öffentliches Feld, erscheint auf der TikTok-Autorisierungsseite — kurz,
-beschreibt was die App/Website tut, nicht wie sie heißt):
+**App-Beschreibung**
 
 > DE: „CAPITAL-AI ist eine Enterprise-FinTech-Plattform für KI-gestützte Finanzanalysen und
 > automatisierte Marktberichte. Über die TikTok-Anbindung können Nutzer Kurzvideos, die aus
@@ -116,8 +122,7 @@ beschreibt was die App/Website tut, nicht wie sie heißt):
 > videos created from their analyses directly to their own TikTok profile from within their
 > CAPITAL-AI account."
 
-**Detaillierte Produkt-/Scope-Erklärung** (Pflichtfeld „detailed explanation of how each
-product and scope works within your app"):
+**Detaillierte Produkt-/Scope-Erklärung**
 
 > „CAPITAL-AI integrates TikTok Login Kit and the Content Posting API to let users publish
 > short-form videos generated within CAPITAL-AI directly to their own TikTok account, from the
@@ -128,86 +133,67 @@ product and scope works within your app"):
 >   follower count in the CAPITAL-AI dashboard, so the user can confirm which account is linked
 >   before publishing anything.
 > - **Content Posting API** (scopes `video.upload`, `video.publish`): once connected, the user
->   can trigger publishing of a video from within CAPITAL-AI. The video is submitted via the
->   `PULL_FROM_URL` method of `/v2/post/publish/video/init/`. Every publish action is an
->   explicit, individual user action — no content is ever posted automatically or without the
->   user actively selecting 'Sofort Veröffentlichen' (Publish Now) for that specific video."
+>   can trigger publishing of a video from within CAPITAL-AI. Every publish action is an
+>   explicit, individual user action — no content is posted merely because an OAuth account is
+>   connected."
 
-**Vorschlag für den Ablauf des Demo-Videos** (Pflichtanhang, von TikTok separat verlangt — muss
-tatsächlich aufgezeichnet werden, kein Text ersetzt das):
-1. CAPITAL-AI-Dashboard öffnen, zu „Social Media Accounts" navigieren (Domain im Video muss zur
-   angegebenen Website-URL passen).
-2. „Mit TikTok Verbinden" klicken → OAuth-Popup zeigen → Login/Consent auf der echten
-   TikTok-Seite → Popup schließt sich automatisch, Konto erscheint mit echtem Handle/Avatar/
-   Follower-Count.
-3. Ein Video zur Veröffentlichung auswählen, TikTok als Zielplattform wählen, Caption anpassen.
-4. „Sofort Veröffentlichen" klicken → Ergebnis-Ansicht zeigen (Status „Veröffentlicht"/„Geplant"
-   je nach Review-Stand).
-5. Optional: Konto-Trennung zeigen („Verbindung Trennen").
+**Vorschlag für den Ablauf des Demo-Videos**
 
-**Noch offene Pflichtangaben, die dieser Text nicht abdecken kann** (siehe Guidelines-Abschnitte
-„Website URL" und „Privacy Policy and Terms of Service"): die angegebene Website-URL muss eine
-vollständig ausgebaute, öffentlich erreichbare Seite sein (keine reine Landing-/Login-Seite),
-mit ohne Menü sichtbaren, aktiven Links zu Datenschutzerklärung und Nutzungsbedingungen. Das
-muss vor Einreichung manuell auf der tatsächlichen Produktions-Domain geprüft werden.
+1. CAPITAL-AI-Dashboard öffnen und „Social Media Accounts" aufrufen.
+2. „Mit TikTok Verbinden" → echte TikTok-OAuth-Seite → Login/Consent → verbundenes Konto anzeigen.
+3. Ein Video auswählen, TikTok als Zielplattform wählen und Caption prüfen.
+4. „Sofort Veröffentlichen" auslösen und den realen Provider-Status zeigen.
+5. Optional die Konto-Trennung zeigen.
+
+Vor einem App-Review müssen Website-URL, Datenschutzerklärung und Nutzungsbedingungen auf der
+Produktions-Domain tatsächlich erreichbar und inhaltlich aktuell sein.
 
 ---
 
-## 3. Meta — Instagram & Facebook (ein gemeinsamer Meta-App-Eintrag)
+## 3. Meta — Instagram & Facebook
 
-Instagram und Facebook nutzen **dieselbe Meta-App** und denselben OAuth-Dialog, aber getrennte
-Client-ID/Secret-Env-Var-Paare (identische Werte, zweimal eingetragen — historisch bedingt durch
-das ADR-0010-Schema, funktional beliebig).
+Instagram und Facebook nutzen dieselbe Meta-App und denselben OAuth-Dialog, im Repository aber
+getrennte Client-ID-/Secret-Schlüssel.
 
-1. [developers.facebook.com](https://developers.facebook.com) → **My Apps → Create App** → Typ
-   „Business" wählen.
-2. Produkte hinzufügen: **Facebook Login** und **Instagram Graph API**.
-3. **Facebook Login → Settings**: Valid OAuth Redirect URIs =
-   `https://<DOMAIN>/api/social-media/auth/callback`.
-4. **App Review → Permissions and Features**: folgende Berechtigungen beantragen (für den
-   eigenen Account/Test-Nutzer sofort nutzbar, für fremde Konten erst nach Review):
+1. Meta for Developers → **My Apps → Create App** → geeigneten Business-App-Typ wählen.
+2. **Facebook Login** und **Instagram Graph API** hinzufügen.
+3. **Facebook Login → Settings**: Valid OAuth Redirect URI exakt auf die kanonische Callback-URI setzen.
+4. Benötigte Permissions/Features beantragen:
    `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `instagram_basic`,
    `instagram_content_publish`.
-5. **Voraussetzung serverseitig:** Das zu verbindende Instagram-Konto muss ein
-   **Instagram-Business- oder Creator-Konto** sein, das mit einer Facebook-Page verknüpft ist —
-   private Instagram-Konten können über die Graph API grundsätzlich nicht per API posten. Die
-   Verknüpfung erfolgt in der Instagram-App unter Einstellungen → Konto → „Mit Facebook-Seite
-   verknüpfen", bevor der OAuth-Flow in CAPITAL-AI gestartet wird.
-6. App-ID und App-Secret aus **Settings → Basic** kopieren.
-7. Render: `INSTAGRAM_CLIENT_ID`/`FACEBOOK_CLIENT_ID` = App-ID, `INSTAGRAM_CLIENT_SECRET`/
-   `FACEBOOK_CLIENT_SECRET` = App-Secret (jeweils derselbe Wert).
+5. Instagram Publishing setzt ein kompatibles Business-/Creator-Konto und eine verknüpfte
+   Facebook-Page voraus.
+6. App-ID und App-Secret sicher übernehmen.
+7. Produktionskonfiguration gemäß Abschnitt 6 hinterlegen.
 
-**Wichtig — Page-Auswahl:** Der Backend-Code (`oauthExchange.ts` `fetchProviderProfile()`)
-verbindet automatisch die **erste** über `/me/accounts` gelistete Page des Nutzers. Verwaltet der
-Account mehrere Pages, muss vor dem Verbinden in Meta Business Suite sichergestellt werden, dass
-die gewünschte Page an erster Stelle steht, oder das zu verbindende Konto darf nur eine Page
-verwalten. Eine Auswahl-UI ist als Folgearbeit vorgemerkt (ADR-0020, Abschnitt 5).
+**Page-Auswahl:** `oauthExchange.ts` verbindet aktuell die erste über `/me/accounts` gelistete
+Page. Eine explizite Mehrfach-Page-Auswahl bleibt als ADR-0026-Folgearbeit bestehen. Sie ist kein
+Grund, AuthN/AuthZ oder State-Bindung abzuschwächen.
+
+Meta-Resource-API-Zugriffe senden Bearer-Tokens im `Authorization`-Header; Access-Tokens dürfen
+nicht in Resource-URL-Query-Strings zurückgeführt werden.
 
 ---
 
 ## 4. X / Twitter (X Developer Portal)
 
-1. [developer.x.com](https://developer.x.com) → Developer-Account beantragen (falls noch nicht
-   vorhanden — kann eine manuelle Prüfung durch X durchlaufen).
-2. **Projects & Apps → Create App** (innerhalb eines Projekts).
-3. **User authentication settings → Set up**:
-   - App permissions: `Read and write`.
-   - Type of App: `Web App, Automated App or Bot`.
-   - Callback URI: `https://<DOMAIN>/api/social-media/auth/callback`.
-   - Website URL: Produktions-Domain.
-4. Scopes: `tweet.read`, `tweet.write`, `users.read`, `offline.access`.
-5. **Keys and tokens → OAuth 2.0 Client ID and Client Secret** kopieren.
-6. Render: `X_CLIENT_ID`, `X_CLIENT_SECRET`.
+1. X Developer Portal → Projekt/App anlegen.
+2. **User authentication settings** konfigurieren:
+   - App permissions: `Read and write`;
+   - App-Typ gemäß serverseitigem Confidential-Client-Flow;
+   - Callback URI exakt auf die kanonische Produktions-Callback-URI;
+   - Website URL auf die Produktions-Domain.
+3. Scopes: `tweet.read`, `tweet.write`, `users.read`, `offline.access`.
+4. OAuth-2.0 Client ID und Client Secret sicher übernehmen.
+5. Produktionskonfiguration gemäß Abschnitt 6 hinterlegen.
 
-**Wichtig — PKCE:** X verlangt für jeden OAuth-2.0-Client zwingend PKCE
-(`code_challenge`/`code_verifier`), unabhängig davon, ob ein Client-Secret vorhanden ist. Das ist
-bereits serverseitig implementiert (`server/socialMedia/pkce.ts`) — hier ist keine zusätzliche
-Konfiguration nötig, außer sicherzustellen, dass „Confidential Client" (nicht „Public Client") im
-X-Portal ausgewählt ist, da der Server das Client-Secret per Basic-Auth mitsendet.
+**PKCE:** Der aktuelle X-Flow verwendet RFC-7636-PKCE mit `S256`. Der `code_verifier` wird
+serverseitig erzeugt, im OAuth-State gespeichert und beim Token-Exchange gebunden. Diese
+Sicherheitsanforderung darf nicht durch einen Provider-Portal-Workaround entfernt werden.
 
 ---
 
-## 5. Zusammenfassung: Redirect-URI-Eintrag pro Plattform
+## 5. Redirect-URI-Eintrag pro Plattform
 
 | Plattform | Ort des Redirect-URI-Eintrags |
 |---|---|
@@ -216,50 +202,63 @@ X-Portal ausgewählt ist, da der Server das Client-Secret per Basic-Auth mitsend
 | Instagram/Facebook | Meta for Developers → App → Facebook Login → Settings → Valid OAuth Redirect URIs |
 | X | X Developer Portal → App → User authentication settings → Callback URI |
 
-Alle vier müssen **exakt** `https://<DOMAIN>/api/social-media/auth/callback` sein (inkl. `https://`,
-ohne trailing slash) — eine abweichende URI führt beim jeweiligen Provider zu einem
-`redirect_uri_mismatch`-Fehler direkt im OAuth-Popup, bevor der Request CAPITAL-AI überhaupt
-erreicht.
+Produktiv ist standardmäßig exakt
+`https://capital-ai.online/api/social-media/auth/callback` zu registrieren. Eine abweichende URI
+muss sowohl providerseitig als auch durch eine explizite Repository-Security-Entscheidung
+zugelassen sein; ein beliebiger Runtime-Host ist keine gültige Authority.
 
 ---
 
-## 6. Render Environment Variables eintragen
+## 6. Render-Konfiguration und Secrets
 
-1. [dashboard.render.com](https://dashboard.render.com) → Service `capital-ai` → **Environment**.
-2. Für jede der 10 Variablen aus Abschnitt 0 (bereits als `sync: false`-Platzhalter in
-   `render.yaml` vorbereitet) den tatsächlichen Wert eintragen: **Add Environment Variable** →
-   Key + Value → **Save Changes**.
-3. Render löst nach dem Speichern automatisch einen Redeploy aus. Kein manueller Trigger nötig.
-4. **Nie** diese Werte in `.env`-Dateien committen — `.env.example` enthält nur die Variablennamen
-   als Platzhalter, so wie es bereits für alle anderen Secrets in diesem Projekt gehandhabt wird.
+**Dieser Abschnitt beschreibt die Konfiguration, autorisiert sie aber nicht.** Änderungen an
+Render-Secrets/Environment sind geschützte externe Mutationen und benötigen die hierfür geltende
+Human/Owner-Freigabe.
+
+1. Render-Service gemäß `render.yaml` (`Finance`) öffnen.
+2. Die fünf Client-IDs aus Abschnitt 0 als die bereits vorgesehenen `sync: false`-
+   Konfigurationswerte pflegen.
+3. Die fünf Client-Secrets ausschließlich über die kanonische Secret File
+   `finance-secrets.env` pflegen; `scripts/security/secretFileManifest.ts` ist die
+   Repository-Quelle der Secret-Key-Inventarisierung.
+4. Keine echten Werte in Git, `.env.example`, PR-Beschreibungen, CI-Logs oder Evidence kopieren.
+5. Eine Konfigurationsänderung ist **keine Deployment-Autorisierung**. `render.yaml` hält
+   `autoDeployTrigger: off`; die aktuelle Produktions-Promotion erfolgt über verifiziertes
+   `main`-CI, Supply-Chain-Attestation, exact-SHA Render Deploy Hook und Post-Deploy-
+   Identitätsprüfung gemäß `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
+
+Damit ist die frühere Annahme „10 normale `sync: false`-Variablen + automatischer Render-Redeploy"
+aufgehoben: Client-Secrets und Deployment-Authority folgen inzwischen getrennten kanonischen
+Governance-Pfaden.
 
 ---
 
-## 7. Validierung nach dem Deploy
+## 7. Validierung nach einer separat autorisierten Produktionsmutation
 
-1. `GET https://<DOMAIN>/healthz` → sollte `200 OK` liefern (bestätigt, dass der Server überhaupt
-   startet — schlägt eine der neuen Dateien beim Import fehl, würde der Server gar nicht hochfahren).
-2. Angemeldet in der CAPITAL-AI-App: **Dashboard → Social Media Accounts** öffnen.
-3. Für jede konfigurierte Plattform „Mit … Verbinden" klicken → Popup öffnet sich mit der
-   echten Provider-Login-Seite (nicht mehr mit einer Fake-Erfolgsseite) → nach Login/Consent
-   schließt sich das Popup automatisch und das Konto erscheint mit echtem Handle/Follower-Count.
-4. Für eine Plattform ohne gesetzte Env-Vars: „Verbinden" sollte eine Fehlermeldung „ist
-   serverseitig nicht konfiguriert" zeigen (HTTP 503) statt eines stillen Fehlschlags.
-5. `GET /api/social-media/accounts` **ohne** Authorization-Header sollte `401` liefern (Beleg,
-   dass die Auth-Pflicht aus ADR-0020 aktiv ist — die im ursprünglichen Auftrag genannte
-   „Validierung der Erreichbarkeit von GET /api/social-media/accounts" ist absichtlich kein
-   anonymer 200er mehr).
+1. `GET https://capital-ai.online/healthz` → `200 OK`.
+2. Angemeldet in CAPITAL-AI: **Dashboard → Social Media Accounts**.
+3. Für jede konfigurierte Plattform „Verbinden" starten; die Provider-OAuth-Seite muss die
+   registrierte CAPITAL-AI-Callback-URI verwenden.
+4. Eine Plattform ohne vollständiges Client-ID/Secret-Paar muss mit HTTP 503 fail-closed bleiben.
+5. `GET /api/social-media/accounts` ohne Authorization-Header muss `401` liefern (ADR-0026/0027).
+6. Ein Request mit fremdem Host bzw. nicht freigegebener Redirect-Origin muss bereits beim
+   Erzeugen der OAuth-Autorisierungs-URL abgelehnt werden.
+7. Wiederverwendung eines bereits konsumierten oder abgelaufenen `state` muss abgelehnt werden.
+8. Meta-Resource-Aufrufe dürfen Access-Tokens nicht als `access_token` in der Resource-URL tragen.
+
+Repository-seitig werden diese Invarianten zusätzlich durch
+`tests/unit/socialMediaOauthSecurity.test.ts` geprüft. Testevidence ist nicht autorisierend.
 
 ---
 
 ## 8. Rollback
 
-Alle Änderungen sind additiv (neue Tabellen, neuer Router, neue Env-Vars) — kein bestehender Pfad
-wird durch dieses Feature verändert. Rollback-Optionen:
+- **Provider deaktivieren:** fehlende/entfernte vollständige Credential-Konfiguration hält den
+  jeweiligen Provider fail-closed; jede echte Render-/Secret-Änderung benötigt erneut die
+  einschlägige Mutationsfreigabe.
+- **Code-Rollback:** frischer Branch vom dann aktuellen `main`, Human-reviewed Revert-PR und die
+  normale Deployment-Authority verwenden; keinen historischen Branch wiederverwenden.
+- **Datenbank:** bestehende Social-Media-Tabellen sind nicht Teil dieses Security-Hardening-
+  Arbeitspakets und werden durch dessen Repository-Rollback nicht automatisch gelöscht.
 
-- **Feature deaktivieren, ohne zu deployen:** Render-Env-Vars leer lassen/entfernen → alle fünf
-  Plattformen bleiben mit HTTP 503 gesperrt, der Rest der Anwendung ist unberührt.
-- **Vollständiger Code-Rollback:** siehe `docs/runbooks/DEPLOYMENT_ROLLBACK_UND_BACKUP.md`
-  (RUNBOOK-0001), Abschnitt „Anwendungsebene". Die drei neuen Supabase-Tabellen können bei einem
-  DB-Rollback stehen bleiben (sie werden von keinem anderen Code-Pfad gelesen) oder bei Bedarf
-  manuell per `drop table` entfernt werden.
+Siehe zusätzlich `docs/runbooks/DEPLOYMENT_ROLLBACK_UND_BACKUP.md`.
