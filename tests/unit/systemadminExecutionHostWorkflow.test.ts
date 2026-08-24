@@ -23,6 +23,14 @@ describe('SA3B Systemadmin GitHub Actions execution host contract', () => {
     expect(yaml).not.toContain('workflow_dispatch:');
   });
 
+  // Owner 2026-08-24: SA3B wurde stillgelegt ("bitte deaktiviere die aktiven GitHub bot ... diese
+  // erstellen jeweils Projekte, die ich erstmal beiseite gelegt habe"). Das gebundene Mandat
+  // REM-SA3B-PROBE-001.json ist ausserdem seit expiresAt 2026-08-19 abgelaufen. Der Test haelt die
+  // Stilllegung fest, damit ein Reaktivieren eine bewusste, sichtbare Aenderung bleibt.
+  it('keeps the privileged issue trigger stilled until an Owner reactivates it', () => {
+    expect(workflow()).toMatch(/if: >-\s*\n\s*false &&/);
+  });
+
   it('checks out trusted main without persistent credentials and never runs issue content as shell', () => {
     const yaml = workflow();
     expect(yaml).toContain('ref: main');

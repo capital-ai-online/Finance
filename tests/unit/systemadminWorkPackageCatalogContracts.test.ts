@@ -177,11 +177,16 @@ describe('Generalized Systemadmin work-package catalog contracts', () => {
     expect(sa4Runner).not.toContain('workPackages/registry.mjs');
   });
 
-  it('keeps the workflow issue-only, exact-owner and without CI/merge/dispatch (activated 2026-08-15)', () => {
+  // Owner 2026-08-24: der Trigger wurde stillgelegt ("bitte deaktiviere die aktiven GitHub bot ...
+  // diese erstellen jeweils Projekte, die ich erstmal beiseite gelegt habe"). Bis 2026-08-15 hat
+  // dieser Test die Aktivierung festgeschrieben; er schreibt jetzt die Stilllegung fest, damit ein
+  // Reaktivieren nicht unbemerkt durchrutscht. Alle uebrigen Zusicherungen - issue-only, exakter
+  // Owner, kein dispatch/merge/CI_REQUEST - gelten unveraendert weiter.
+  it('keeps the workflow stilled, issue-only, exact-owner and without CI/merge/dispatch (stilled 2026-08-24)', () => {
     const workflow = fs.readFileSync(workflowPath, 'utf8');
     expect(workflow).toContain('issues:');
     expect(workflow).toContain('if: >-');
-    expect(workflow).not.toMatch(/if: >-\s*\n\s*false &&/);
+    expect(workflow).toMatch(/if: >-\s*\n\s*false &&/);
     expect(workflow).toContain("github.event.issue.user.login == 'SvenKulessa'");
     expect(workflow).toContain("startsWith(github.event.issue.title, '[SYSTEMADMIN-WORK-PACKAGE]')");
     expect(workflow).toContain('id-token: write');

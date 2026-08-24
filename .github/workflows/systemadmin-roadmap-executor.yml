@@ -31,7 +31,18 @@ jobs:
     # neue Aufgabe ein neues Skript, nicht nur einen Trigger-Flip - siehe M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md
     # und die zugehoerige Owner-Entscheidung, das erst nach M5A VERIFIED PASS mit einem konkreten
     # M6-Arbeitspaket anzugehen.
+    #
+    # STILLGELEGT 2026-08-24 auf ausdrueckliche Owner-Anweisung ("bitte deaktiviere die aktiven
+    # GitHub bot ... diese erstellen jeweils Projekte, die ich erstmal beiseite gelegt habe").
+    # Das oben genannte Mandat REM-SA3B-PROBE-001.json ist zudem seit `expiresAt: 2026-08-19`
+    # abgelaufen; ein weiterhin scharfer privilegierter Host ohne gueltiges Mandat waere auch
+    # ohne diese Anweisung nicht begruendbar.
+    #
+    # Stillgelegt per `false &&` — identisch zu systemadmin-sa4-pilot.yml, damit der auditierte
+    # Vertrag unveraendert nachweisbar bleibt. Reaktivierung ist ein eigener, dokumentierter
+    # Human/Owner-Change und benoetigt ein gueltiges, nicht abgelaufenes Mandat.
     if: >-
+      false &&
       github.event.issue.user.login == 'SvenKulessa' &&
       startsWith(github.event.issue.title, '[SA3B-PROBE]')
     runs-on: ubuntu-latest
