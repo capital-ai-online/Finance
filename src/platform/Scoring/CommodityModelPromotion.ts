@@ -15,6 +15,7 @@ import {
   COMMODITY_WEIGHT_STABILITY_VERSION,
   COMMODITY_WEIGHT_VALIDATION_CONTRACT_VERSION,
   assessCommodityWeightPromotionEvidence,
+  validateCommodityCandidateWeightProfile,
   type CommodityCandidateWeightProfile,
   type CommodityCandidateWeightValidation,
   type CommodityCorrelationReport,
@@ -23,6 +24,7 @@ import {
 } from './CommodityModelValidation';
 import {
   COMMODITY_BACKTEST_CONTRACT_VERSION,
+  validateCommodityBacktestRequest,
   type CommodityBacktestResult,
 } from './CommodityBacktestingContracts';
 import { COMMODITY_HISTORICAL_VINTAGE_CONTRACT_VERSION } from './CommodityHistoricalVintage';
@@ -196,6 +198,8 @@ export interface CommodityPromotionReviewPackage {
   readonly providerResilience: CommodityProviderResilienceReport;
   readonly stressEvidence: CommodityStressEvidenceReport;
   readonly backtestResult: CommodityBacktestResult | null;
+  readonly correlationEvidenceId: string | null;
+  readonly sensitivityEvidenceId: string | null;
   readonly championChallengerDiff: CommodityChampionChallengerDiff | null;
   readonly blockers: readonly string[];
   readonly readyForOwnerReview: boolean;
@@ -297,12 +301,38 @@ function descriptorIdentity(input: Omit<CommodityImmutableModelDescriptor, 'desc
   };
 }
 
+export function commodityCorrelationReportEvidenceId(report: CommodityCorrelationReport): string {
+  return `commodity-correlation-review:${sha256({
+    contractVersion: report.contractVersion,
+    modelId: report.modelId,
+    modelVersion: report.modelVersion,
+    method: report.method,
+    inputSemantic: report.inputSemantic,
+    normalizationContractVersion: report.normalizationContractVersion,
+    minimumPairedObservations: report.minimumPairedObservations,
+    highAbsoluteCorrelation: report.highAbsoluteCorrelation,
+    observations: report.observations,
+    pairs: report.pairs,
+    blockingFindings: report.blockingFindings,
+    evidenceComplete: report.evidenceComplete,
+  })}`;
+}
+
+export function commodityWeightStabilityEvidenceId(report: CommodityWeightStabilityReport): string {
+  return `commodity-sensitivity-review:${sha256({
+    contractVersion: report.contractVersion,
+    referenceProfileId: report.referenceProfileId,
+    findings: report.findings,
+    valid: report.valid,
+    blockers: report.blockers,
+  })}`;
+}
+
 export function buildCommodityImmutableModelDescriptor(input: {
   readonly descriptorId: string;
   readonly descriptorVersion: string;
   readonly modelId: CommodityResearchModelId;
   readonly weightProfile: CommodityCandidateWeightProfile;
-  readonly weightValidation: CommodityCandidateWeightValidation;
   readonly supportedSources: readonly CommodityPromotionSupportedSource[];
   readonly validFrom: string;
   readonly validUntil?: string | null;
@@ -310,6 +340,7 @@ export function buildCommodityImmutableModelDescriptor(input: {
   readonly lineage: CommodityModelCalibrationLineage;
 }): CommodityImmutableModelDescriptor {
   const model = modelForId(input.modelId);
+  const weightValidation = validateCommodityCandidateWeightProfile(input.weightProfile);
   const base: Omit<CommodityImmutableModelDescriptor, 'descriptorFingerprint'> = {
     contractVersion: COMMODITY_MODEL_DESCRIPTOR_CONTRACT_VERSION,
     descriptorId: input.descriptorId.trim(),
@@ -327,7 +358,7 @@ export function buildCommodityImmutableModelDescriptor(input: {
     }),
     weightProfileId: input.weightProfile.profileId,
     weightProfileVersion: input.weightProfile.profileVersion,
-    effectiveWeightFingerprint: input.weightValidation.factorWeightFingerprint ?? '',
+    effectiveWeightFingerprint: weightValidation.valid ? weightValidation.factorWeightFingerprint ?? '' : '',
     supportedSources: Object.freeze([...new Set(input.supportedSources)].sort()) as readonly CommodityPromotionSupportedSource[],
     validFrom: input.validFrom,
     validUntil: input.validUntil ?? null,
@@ -448,6 +479,23 @@ export function buildCommodityProviderResilienceReport(input: {
   });
 }
 
+function validateProviderResilienceReport(report: CommodityProviderResilienceReport): readonly string[] {
+  const rebuilt = buildCommodityProviderResilienceReport({
+    modelId: report.modelId,
+    windowStart: report.windowStart,
+    windowEnd: report.windowEnd,
+    policy: report.policy,
+    observations: report.observations,
+  });
+  const blockers = [...rebuilt.blockers];
+  if (report.contractVersion !== COMMODITY_PROVIDER_RESILIENCE_CONTRACT_VERSION) blockers.push('PROVIDER_RESILIENCE_CONTRACT_VERSION_MISMATCH');
+  if (report.modelVersion !== rebuilt.modelVersion) blockers.push('PROVIDER_RESILIENCE_MODEL_VERSION_MISMATCH');
+  if (report.evidenceId !== rebuilt.evidenceId) blockers.push('PROVIDER_RESILIENCE_EVIDENCE_FINGERPRINT_MISMATCH');
+  if (report.evidenceComplete !== rebuilt.evidenceComplete) blockers.push('PROVIDER_RESILIENCE_COMPLETENESS_MISMATCH');
+  if (report.canonical !== false || report.scoreEligible !== false) blockers.push('PROVIDER_RESILIENCE_MUST_REMAIN_NON_AUTHORIZING');
+  return Object.freeze([...new Set(blockers)]);
+}
+
 export function buildCommodityStressEvidenceReport(input: {
   readonly modelId: CommodityResearchModelId;
   readonly policy: CommodityStressPolicy;
@@ -460,7 +508,7 @@ export function buildCommodityStressEvidenceReport(input: {
   if (policy.requiredScenarioIds.length === 0) blockers.push('STRESS_REQUIRED_SCENARIO_REQUIRED');
   if (new Set(policy.requiredScenarioIds).size !== policy.requiredScenarioIds.length) blockers.push('STRESS_REQUIRED_SCENARIO_DUPLICATE');
   if (policy.minimumRankInformationCoefficient !== null && (!Number.isFinite(policy.minimumRankInformationCoefficient) || policy.minimumRankInformationCoefficient < -1 || policy.minimumRankInformationCoefficient > 1)) blockers.push('STRESS_RANK_IC_THRESHOLD_INVALID');
-  if (policy.maximumAbsoluteDrawdown !== null && (!finiteRatio(policy.maximumAbsoluteDrawdown))) blockers.push('STRESS_DRAWDOWN_THRESHOLD_INVALID');
+  if (policy.maximumAbsoluteDrawdown !== null && !finiteRatio(policy.maximumAbsoluteDrawdown)) blockers.push('STRESS_DRAWDOWN_THRESHOLD_INVALID');
   if (policy.maximumTurnover !== null && (!Number.isFinite(policy.maximumTurnover) || policy.maximumTurnover < 0)) blockers.push('STRESS_TURNOVER_THRESHOLD_INVALID');
 
   const byScenario = new Map<string, CommodityStressScenarioResult>();
@@ -502,6 +550,21 @@ export function buildCommodityStressEvidenceReport(input: {
   });
 }
 
+function validateStressEvidenceReport(report: CommodityStressEvidenceReport): readonly string[] {
+  const rebuilt = buildCommodityStressEvidenceReport({
+    modelId: report.modelId,
+    policy: report.policy,
+    scenarios: report.scenarios,
+  });
+  const blockers = [...rebuilt.blockers];
+  if (report.contractVersion !== COMMODITY_STRESS_EVIDENCE_CONTRACT_VERSION) blockers.push('STRESS_CONTRACT_VERSION_MISMATCH');
+  if (report.modelVersion !== rebuilt.modelVersion) blockers.push('STRESS_MODEL_VERSION_MISMATCH');
+  if (report.evidenceId !== rebuilt.evidenceId) blockers.push('STRESS_EVIDENCE_FINGERPRINT_MISMATCH');
+  if (report.evidenceComplete !== rebuilt.evidenceComplete) blockers.push('STRESS_COMPLETENESS_MISMATCH');
+  if (report.canonical !== false || report.scoreEligible !== false) blockers.push('STRESS_EVIDENCE_MUST_REMAIN_NON_AUTHORIZING');
+  return Object.freeze([...new Set(blockers)]);
+}
+
 function buildChampionChallengerDiff(descriptor: CommodityImmutableModelDescriptor): CommodityChampionChallengerDiff | null {
   const champion = currentCommodityChampion();
   const challenger = registryChallenger(descriptor.modelId);
@@ -533,12 +596,31 @@ function buildChampionChallengerDiff(descriptor: CommodityImmutableModelDescript
   });
 }
 
+function backtestStructuralBlockers(result: CommodityBacktestResult): string[] {
+  const blockers: string[] = [];
+  const requestValidation = validateCommodityBacktestRequest(result.request);
+  blockers.push(...requestValidation.blockers.map(item => `BACKTEST_REQUEST:${item}`));
+  if (result.contractVersion !== COMMODITY_BACKTEST_CONTRACT_VERSION) blockers.push('BACKTEST_CONTRACT_VERSION_MISMATCH');
+  if (result.authority !== 'VALIDATION_ONLY' || result.canonical !== false || result.scoreEligible !== false) blockers.push('BACKTEST_RESULT_MUST_REMAIN_VALIDATION_ONLY');
+  if (result.leakageBlockers.length > 0) blockers.push(...result.leakageBlockers.map(item => `BACKTEST_LEAKAGE:${item}`));
+  if (!result.pointInTimeValidated) blockers.push('BACKTEST_POINT_IN_TIME_NOT_VALIDATED');
+  if (!result.costAssumptionsValidated) blockers.push('BACKTEST_COSTS_NOT_VALIDATED');
+  if (!result.outOfSampleValidated || !result.outOfSampleEvidenceId?.trim()) blockers.push('BACKTEST_OOS_NOT_VALIDATED');
+  if (!result.correlationEvidenceId?.trim()) blockers.push('BACKTEST_CORRELATION_EVIDENCE_REQUIRED');
+  if (!result.sensitivityEvidenceId?.trim()) blockers.push('BACKTEST_SENSITIVITY_EVIDENCE_REQUIRED');
+  if (!result.promotionEvidenceEligible) blockers.push('BACKTEST_PROMOTION_EVIDENCE_INCOMPLETE');
+  const championId = currentCommodityChampion();
+  if (!championId || !result.benchmarkIds.includes(`${championId.modelId}@${championId.version}`)) blockers.push('BACKTEST_CURRENT_CHAMPION_BENCHMARK_REQUIRED');
+  if (result.benchmarkIds.length < 2) blockers.push('BACKTEST_NAIVE_BASELINE_REQUIRED');
+  return blockers;
+}
+
 export function buildCommodityPromotionReviewPackage(input: {
   readonly packageId: string;
   readonly packageVersion: string;
   readonly createdAt: string;
   readonly descriptor: CommodityImmutableModelDescriptor;
-  readonly weightValidation: CommodityCandidateWeightValidation;
+  readonly weightProfile: CommodityCandidateWeightProfile;
   readonly correlationReport: CommodityCorrelationReport | null;
   readonly stabilityReport: CommodityWeightStabilityReport | null;
   readonly backtestResult: CommodityBacktestResult | null;
@@ -547,29 +629,55 @@ export function buildCommodityPromotionReviewPackage(input: {
 }): CommodityPromotionReviewPackage {
   const blockers: string[] = [];
   const descriptorValidation = validateCommodityImmutableModelDescriptor(input.descriptor);
+  const weightValidation = validateCommodityCandidateWeightProfile(input.weightProfile);
+
   if (!input.packageId.trim()) blockers.push('PROMOTION_PACKAGE_ID_REQUIRED');
   if (!isSemver(input.packageVersion)) blockers.push('PROMOTION_PACKAGE_VERSION_INVALID');
   if (!isTimestamp(input.createdAt)) blockers.push('PROMOTION_PACKAGE_CREATED_AT_INVALID');
   if (!descriptorValidation.valid) blockers.push(...descriptorValidation.blockers.map(item => `DESCRIPTOR:${item}`));
+  if (input.weightProfile.modelId !== input.descriptor.modelId) blockers.push('WEIGHT_PROFILE_MODEL_MISMATCH');
+  if (input.weightProfile.profileId !== input.descriptor.weightProfileId) blockers.push('WEIGHT_PROFILE_ID_MISMATCH');
+  if (input.weightProfile.profileVersion !== input.descriptor.weightProfileVersion) blockers.push('WEIGHT_PROFILE_VERSION_MISMATCH');
+  if (weightValidation.factorWeightFingerprint !== input.descriptor.effectiveWeightFingerprint) blockers.push('WEIGHT_PROFILE_FINGERPRINT_MISMATCH');
+
+  const correlationEvidenceId = input.correlationReport ? commodityCorrelationReportEvidenceId(input.correlationReport) : null;
+  const sensitivityEvidenceId = input.stabilityReport ? commodityWeightStabilityEvidenceId(input.stabilityReport) : null;
+  if (input.correlationReport) {
+    if (input.correlationReport.contractVersion !== COMMODITY_CORRELATION_POLICY_VERSION) blockers.push('CORRELATION_CONTRACT_VERSION_MISMATCH');
+    if (input.correlationReport.modelId !== input.descriptor.modelId || input.correlationReport.modelVersion !== input.descriptor.modelVersion) blockers.push('CORRELATION_MODEL_MISMATCH');
+    if (input.correlationReport.normalizationContractVersion !== input.descriptor.lineage.normalizationContractVersion) blockers.push('CORRELATION_NORMALIZATION_LINEAGE_MISMATCH');
+    if (!input.correlationReport.evidenceComplete || input.correlationReport.blockingFindings.length > 0) blockers.push('CORRELATION_EVIDENCE_INCOMPLETE');
+    if (correlationEvidenceId !== input.descriptor.lineage.correlationEvidenceId) blockers.push('CORRELATION_REPORT_LINEAGE_MISMATCH');
+  }
+  if (input.stabilityReport) {
+    if (input.stabilityReport.contractVersion !== COMMODITY_WEIGHT_STABILITY_VERSION) blockers.push('SENSITIVITY_CONTRACT_VERSION_MISMATCH');
+    if (input.stabilityReport.referenceProfileId !== input.descriptor.weightProfileId) blockers.push('SENSITIVITY_PROFILE_LINEAGE_MISMATCH');
+    if (!input.stabilityReport.valid || input.stabilityReport.blockers.length > 0) blockers.push('SENSITIVITY_EVIDENCE_INCOMPLETE');
+    if (sensitivityEvidenceId !== input.descriptor.lineage.sensitivityEvidenceId) blockers.push('SENSITIVITY_REPORT_LINEAGE_MISMATCH');
+  }
 
   const weightEvidence = assessCommodityWeightPromotionEvidence({
-    weightValidation: input.weightValidation,
+    weightValidation,
     correlationReport: input.correlationReport,
     stabilityReport: input.stabilityReport,
     backtestResult: input.backtestResult,
   });
   if (!weightEvidence.readyForOwnerReview) blockers.push(...weightEvidence.blockers.map(item => `WEIGHT_EVIDENCE:${item}`));
-  if (!input.providerResilience.evidenceComplete) blockers.push(...input.providerResilience.blockers.map(item => `PROVIDER_RESILIENCE:${item}`));
-  if (!input.stressEvidence.evidenceComplete) blockers.push(...input.stressEvidence.blockers.map(item => `STRESS_EVIDENCE:${item}`));
+
+  const resilienceBlockers = validateProviderResilienceReport(input.providerResilience);
+  blockers.push(...resilienceBlockers.map(item => `PROVIDER_RESILIENCE:${item}`));
+  const stressBlockers = validateStressEvidenceReport(input.stressEvidence);
+  blockers.push(...stressBlockers.map(item => `STRESS_EVIDENCE:${item}`));
 
   if (!input.backtestResult) blockers.push('BACKTEST_RESULT_REQUIRED');
   else {
+    blockers.push(...backtestStructuralBlockers(input.backtestResult));
     if (input.backtestResult.request.modelId !== input.descriptor.modelId) blockers.push('BACKTEST_MODEL_ID_MISMATCH');
     if (input.backtestResult.request.modelVersion !== input.descriptor.modelVersion) blockers.push('BACKTEST_MODEL_VERSION_MISMATCH');
     if (input.backtestResult.runId !== input.descriptor.lineage.backtestRunId) blockers.push('BACKTEST_RUN_LINEAGE_MISMATCH');
     if (input.backtestResult.outOfSampleEvidenceId !== input.descriptor.lineage.outOfSampleEvidenceId) blockers.push('BACKTEST_OOS_LINEAGE_MISMATCH');
-    if (input.backtestResult.correlationEvidenceId !== input.descriptor.lineage.correlationEvidenceId) blockers.push('BACKTEST_CORRELATION_LINEAGE_MISMATCH');
-    if (input.backtestResult.sensitivityEvidenceId !== input.descriptor.lineage.sensitivityEvidenceId) blockers.push('BACKTEST_SENSITIVITY_LINEAGE_MISMATCH');
+    if (input.backtestResult.correlationEvidenceId !== correlationEvidenceId) blockers.push('BACKTEST_CORRELATION_REPORT_MISMATCH');
+    if (input.backtestResult.sensitivityEvidenceId !== sensitivityEvidenceId) blockers.push('BACKTEST_SENSITIVITY_REPORT_MISMATCH');
   }
 
   if (input.providerResilience.modelId !== input.descriptor.modelId) blockers.push('PROVIDER_RESILIENCE_MODEL_MISMATCH');
@@ -583,21 +691,23 @@ export function buildCommodityPromotionReviewPackage(input: {
   if (!diff) blockers.push('CHAMPION_CHALLENGER_DIFF_UNAVAILABLE');
   else if (diff.rollbackTarget.modelId !== 'commodity-evidence-scoring') blockers.push('ROLLBACK_TARGET_NOT_CURRENT_COMMODITY_CHAMPION');
 
+  const uniqueBlockers = [...new Set(blockers)];
   const packageFingerprint = prefixedSha256({
     contractVersion: COMMODITY_PROMOTION_PACKAGE_CONTRACT_VERSION,
     packageId: input.packageId.trim(),
     packageVersion: input.packageVersion.trim(),
     createdAt: input.createdAt,
     descriptorFingerprint: input.descriptor.descriptorFingerprint,
+    weightFingerprint: weightValidation.factorWeightFingerprint,
     backtestRunId: input.backtestResult?.runId ?? null,
     outOfSampleEvidenceId: input.backtestResult?.outOfSampleEvidenceId ?? null,
-    correlationEvidenceId: input.backtestResult?.correlationEvidenceId ?? null,
-    sensitivityEvidenceId: input.backtestResult?.sensitivityEvidenceId ?? null,
+    correlationEvidenceId,
+    sensitivityEvidenceId,
     providerResilienceEvidenceId: input.providerResilience.evidenceId,
     stressEvidenceId: input.stressEvidence.evidenceId,
     currentChampion: diff?.currentChampion ?? null,
     rollbackTarget: diff?.rollbackTarget ?? null,
-    blockers: [...blockers].sort(),
+    blockers: [...uniqueBlockers].sort(),
   });
 
   return Object.freeze({
@@ -611,9 +721,11 @@ export function buildCommodityPromotionReviewPackage(input: {
     providerResilience: input.providerResilience,
     stressEvidence: input.stressEvidence,
     backtestResult: input.backtestResult,
+    correlationEvidenceId,
+    sensitivityEvidenceId,
     championChallengerDiff: diff,
-    blockers: Object.freeze(blockers),
-    readyForOwnerReview: blockers.length === 0,
+    blockers: Object.freeze(uniqueBlockers),
+    readyForOwnerReview: uniqueBlockers.length === 0,
     packageFingerprint,
     ownerDecisionRequired: true,
     registryMutationPerformed: false,
