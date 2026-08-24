@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "NEWSFEED-PROVIDER-FILTER-INTEGRITY-2026-08-25",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "AI Newsfeed provider integration, filter integrity, tests and UI completeness reconciliation",
+  "workItemDE": "Provider-Integration, Filter, Tests und UI gegen aktuellen main synchronisieren und Integritätslücken beheben",
+  "startedAt": "2026-08-25T00:28:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "0743e66742519a452a0633734685d4115e71150d",
+  "branch": "fix/ai-newsfeed-provider-filter-integrity-2026-08-25",
+  "pullRequest": null,
+  "claimedPaths": [
+    "src/features/news/newsRoutes.ts",
+    "src/platform/MarketData/providers/FreeCryptoNewsEvidenceProvider.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "src/components/RealtimeAiNewsfeed.tsx",
+    "src/components/VerifiedNewsFeed.tsx",
+    "tests/unit/newsEvidenceBoundary.test.ts",
+    "tests/unit/freeCryptoNewsEvidenceProvider.test.ts"
+  ],
+  "ownerDecision": "Provider-Integration, Filter, Tests und UI Zustand gegen den aktuellen Main syncen, auf Korrelationen, Datenintegrität und Vollständigkeit prüfen und zu behebende offene Punkte umsetzen.",
+  "traceability": {
+    "mergedProviderPr": 514,
+    "mergedFilterAggregationPr": 522,
+    "currentMainAtStart": "0743e66742519a452a0633734685d4115e71150d",
+    "existingPolicy": "docs/evidence/sc-md/SC4_CRYPTO_EVIDENCE_POLICY_SUPERSESSION_2026-08-22.md"
+  },
+  "scopeBoundary": {
+    "included": [
+      "provider contract drift reconciliation",
+      "canonical asset filter validation",
+      "source-filter metadata completeness",
+      "partial UI metadata resilience",
+      "verified crypto 24h enrichment through the existing canonical display service",
+      "provider and boundary regression tests",
+      "provider inventory metadata correction"
+    ],
+    "excluded": [
+      "new scoring authority",
+      "new market-data gateway",
+      "provider auto-upgrade or paid/x402 access",
+      "external platform mutation",
+      "publisher article-body ingestion",
+      "merge authorization"
+    ]
+  },
+  "prePrCorrelation": {
+    "mainShaAtImplementationStart": "0743e66742519a452a0633734685d4115e71150d",
+    "mainShaAtFinalSyncReview": "0743e66742519a452a0633734685d4115e71150d",
+    "openPrAgainstMain": 527,
+    "openPrOverlap": false,
+    "openPrScope": "Commodity P2-C; no overlapping claimed or changed newsfeed/provider paths",
+    "dependencyChanges": false,
+    "workflowChanges": false,
+    "scoringAuthorityChanged": false,
+    "externalMutation": false
+  },
+  "validation": {
+    "hostedCiBeforePr": false,
+    "staticCanonicalPathAudit": "completed",
+    "upstreamProviderContractReview": "completed; public /api/news remains keyless, /api/sources now requires a short-lived token",
+    "upstreamLicenseReview": "completed; current upstream LICENSE is proprietary/all-rights-reserved, stale MIT claims removed from active runtime metadata",
+    "diffScopeReview": "completed; bounded to news provider, route, UI and regression tests plus this claim",
+    "runtimeAuthorityChanged": false,
+    "duplicateArchitectureIntroduced": false
+  },
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
