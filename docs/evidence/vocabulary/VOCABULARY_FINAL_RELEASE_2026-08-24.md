@@ -19,10 +19,10 @@
 | Render workspace | `AICapital` |
 | Render service | `Finance` (`srv-d91o1o9o3t8c73edi55g`) |
 | Credential | `GOPLUS_API_KEY` entered by the owner; value not read, copied or stored in Git |
-| Latest observed deploy | `dep-da6btofqj5pc739r49v0` |
-| Deployed commit | `0743e66742519a452a0633734685d4115e71150d` |
+| Latest observed deploy | `dep-da6cv6favr4c73eq5l2g` |
+| Deployed commit | `0f864d31f60b4b1a1a9968202a62aa8357673049` |
 | Deploy state | `live` |
-| Production → current main drift | `13` commits immediately before final PR creation; production remains a valid ancestor |
+| Production → current main drift | `0` commits after deploy `dep-da6cv6favr4c73eq5l2g` reached `live` |
 | Provider authority | Research/evidence only; no route construction, signing, broadcasting or live-execution permission |
 | Functional invocation | Not claimed: the production route has not invoked the provider during this verification |
 | Operations / rollback | `docs/runbooks/GOPLUS_PRODUCTION_CREDENTIAL_ACTIVATION_2026-08-24.md` |
