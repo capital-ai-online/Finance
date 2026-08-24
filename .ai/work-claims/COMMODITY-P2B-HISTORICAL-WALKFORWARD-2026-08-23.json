@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "COMMODITY-P2B-HISTORICAL-WALKFORWARD-2026-08-23",
-  "status": "active",
-  "exclusive": true,
+  "status": "verified",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -14,7 +14,10 @@
   "baseBranch": "main",
   "baseSha": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
   "branch": "feat/commodity-p2b-historical-walkforward-2026-08-23",
-  "pullRequest": null,
+  "pullRequest": 519,
+  "mergedCommit": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
+  "releasedAt": "2026-08-23T22:17:36.000Z",
+  "releaseReason": "PR #519 merged; Historical Dataset and Walk-forward/OOS validation coordination completed and superseded by the bounded Historical Vintage Acquisition scope.",
   "claimedPaths": [
     ".ai/work-claims/COMMODITY-P2-VALIDATION-FOUNDATION-2026-08-23.json",
     "src/platform/Scoring/CommodityHistoricalBacktestEngine.ts",
