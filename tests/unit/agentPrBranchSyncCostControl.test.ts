@@ -44,10 +44,12 @@ describe('P2 agent PR main-sync cost control', () => {
     expect(yaml).toContain("| jq -c '[.]'");
   });
 
-  it('keeps the canonical agent branch allowlist and main base boundary', () => {
+  it('keeps the canonical active-provider branch allowlist and main base boundary', () => {
     const yaml = workflow();
     expect(yaml).toContain("if [ \"$base\" != 'main' ]; then");
-    expect(yaml).toContain('agent/*|claude/*|gemini/*|copilot/*|ai/*');
+    expect(yaml).toContain('agent/*|claude/*|grok/*|ai/*');
+    expect(yaml).not.toContain('gemini/*');
+    expect(yaml).not.toContain('copilot/*');
   });
 
   it('binds update-branch to the observed exact PR head SHA', () => {
