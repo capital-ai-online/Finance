@@ -1,9 +1,9 @@
 # Vocabulary VW-0–VW-5 Main Correlation and Hygiene Evidence
 
-**Status:** VERIFIED ON BRANCH  
+**Status:** VERIFIED ON MAIN  
 **Date:** 2026-08-24  
-**Baseline:** `main@7afa86e24812e3de96e93882b9658d2b2e0311e7`  
-**Implementation merge:** PR #477  
+**Baseline:** `main@c0ebee48b062c98112b39340dcde3ab31c3d7c3d`  
+**Implementation merges:** PR #477; hygiene/browser-boundary closure PR #524  
 **Authorities:** `ESS-0017`, `ESS-0017-CONTRACTS`, `ADR-0078`, `SC-MD-SPT-0001`
 
 ## Result
