@@ -9,7 +9,7 @@ const applicationPath = path.join(repoRoot, 'server.application.ts');
 const expectedMounts = [
   "app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic, openai));",
   "app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));",
-  "app.use('/api/stripe', stripeRouter);",
+  "app.use('/api/stripe', stripeReturnUrlGuard, stripeRouter);",
   "app.use('/api/orchestrator', orchestratorRouter);",
   "app.use('/api/admin/hygiene', hygieneRouter);",
   "app.use('/api/admin', systemEventsRouter);",
@@ -34,6 +34,8 @@ describe('ADR-0014 application route composition contract', () => {
   it('keeps the canonical composer aligned with the current production route mounts', () => {
     const composer = fs.readFileSync(composerPath, 'utf8');
     const application = fs.readFileSync(applicationPath, 'utf8');
+
+    expect(composer).toContain("import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';");
 
     for (const mount of expectedMounts) {
       expect(composer).toContain(mount);
