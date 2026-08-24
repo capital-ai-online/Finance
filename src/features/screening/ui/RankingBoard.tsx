@@ -707,13 +707,10 @@ function PatternBadge({
   direction: 'BULLISH' | 'BEARISH' | 'NEUTRAL' | null;
   strength: 'strong' | 'medium' | 'weak' | null;
 }) {
-  if (name === 'NO PATTERN' || !name) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded border border-border bg-surface/60 px-1.5 py-0.5 text-[8px] font-mono text-text-secondary uppercase">
-        NO PATTERN
-      </span>
-    );
-  }
+  // Missing pattern evidence stays absent by contract. Never synthesize a
+  // placeholder badge or infer a BUY/SELL signal from missing data.
+  if (name === 'NO PATTERN' || !name) return null;
+
   const dirColor =
     direction === 'BULLISH'
       ? 'text-score-best border-score-best/30 bg-score-best/10'
