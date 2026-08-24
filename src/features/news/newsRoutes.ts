@@ -1,7 +1,7 @@
 // ARCH-AUDIT-0002 / SC-4: /api/news is a read-only product projection of external article
-// metadata. Free Crypto News (open-source MIT, keyless REST) and GDELT DOC 2.0 are aggregated
-// behind one evidence boundary. Publisher content is never fabricated, scraped into the product
-// or granted scoring authority by this route.
+// metadata. cryptocurrency.cv public REST and GDELT DOC 2.0 are aggregated behind one
+// evidence boundary. Publisher content is never fabricated, scraped into the product or
+// granted scoring authority by this route.
 
 import express from 'express';
 import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
@@ -152,7 +152,7 @@ function projectFreeCryptoArticle(
     id: article.evidenceRef,
     headline: article.title,
     summary: article.description
-      ?? 'Artikelmetadaten über Free Crypto News (open-source); vollständiger Inhalt und Nutzungsrechte verbleiben beim Herausgeber.',
+      ?? 'Artikelmetadaten über cryptocurrency.cv Public REST; vollständiger Inhalt und Nutzungsrechte verbleiben beim Herausgeber.',
     sentiment: classifyNewsSentiment(article.title, article.description ?? ''),
     sentimentBasis: NEWS_SENTIMENT_BASIS,
     time: new Date(article.publishedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
@@ -213,9 +213,16 @@ newsRouter.get('/', async (req, res) => {
     return res.status(400).json({ status: 'INVALID_REQUEST', reason: 'Ungültiges Asset-Symbol.' });
   }
 
+  const asset = getAssetMeta(symbol);
+  if (symbol && !asset) {
+    return res.status(400).json({
+      status: 'INVALID_REQUEST',
+      reason: 'Asset ist nicht im kanonischen Enterprise-Universum registriert.',
+    });
+  }
+
   const source = normalizedSource(req.query.source);
   const limit = normalizedLimit(req.query.limit);
-  const asset = getAssetMeta(symbol);
   const cacheKey = `aggregate|${symbol ?? 'all'}|${sourceKey(source ?? 'all')}|${limit}`;
   const now = Date.now();
   const cached = newsCache.get(cacheKey);
@@ -258,7 +265,7 @@ newsRouter.get('/', async (req, res) => {
   if (items.length === 0) {
     return res.status(503).json({
       status: 'NO_DATA',
-      source: 'free-crypto-news + GDELT DOC 2.0',
+      source: 'cryptocurrency.cv + GDELT DOC 2.0',
       reason: source
         ? `Keine verifizierten News-Evidence-Treffer für die Quelle "${source}" verfügbar.`
         : 'News-Evidence ist über die aktiven Provider derzeit nicht verfügbar.',
