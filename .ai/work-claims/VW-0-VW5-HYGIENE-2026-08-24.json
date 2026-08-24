@@ -22,7 +22,9 @@
     "docs/evidence/vocabulary/VOCABULARY_VW0_VW5_MAIN_CORRELATION_2026-08-24.md",
     "scripts/automation/validateVocabularyGovernanceClosure.ts",
     "src/platform/Vocabulary/manifest.json",
-    "src/platform/Vocabulary/component.yaml"
+    "src/platform/Vocabulary/component.yaml",
+    "src/platform/Vocabulary/**",
+    "scripts/automation/validateVocabularyWordingGovernance.ts"
   ],
   "nonGoals": [
     "Feature reimplementation",
@@ -31,5 +33,6 @@
     "Wiki publication",
     "Mass wording replacement"
   ],
-  "releaseCondition": "Released when the resulting pull request is merged, closed, superseded or abandoned. Human/CODEOWNER merge remains mandatory."
+  "releaseCondition": "Released when the resulting pull request is merged, closed, superseded or abandoned. Human/CODEOWNER merge remains mandatory.",
+  "workItemDE": "Vocabulary-Lifecycle, Supersession und Browser-/Node-Grenzen der VW-0-bis-VW-5-Governance konsolidieren und mergebereit validieren."
 }

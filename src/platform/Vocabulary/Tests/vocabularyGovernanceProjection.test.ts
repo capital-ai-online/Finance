@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   createDefaultUiMessageCatalog,
   createDefaultVocabularyRegistry,
-  createVocabularyWordingSnapshot,
   fintechWordingBindings,
-  WordingUsageIndex,
 } from '../index';
+import { createVocabularyWordingSnapshot, WordingUsageIndex } from '../node';
 import { projectVocabularyWordingThroughDocumentary } from '../../Documentary/Knowledge/VocabularyWordingDocumentaryProjection';
 
 describe('VW-5 Vocabulary wording Documentary projection', () => {

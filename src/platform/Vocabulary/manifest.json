@@ -39,7 +39,8 @@
     "Projection/VocabularyWordingSnapshot.ts",
     "Wiki/VocabularyWikiProjection.ts",
     "Wiki/VocabularyWikiRemotePolicy.ts",
-    "Migration/WordingMigrationPlan.ts"
+    "Migration/WordingMigrationPlan.ts",
+    "node.ts"
   ],
   "contracts": [
     "ESS-0017-CONTRACTS",
@@ -156,5 +157,15 @@
     "state": "merged",
     "baseline": "main",
     "verifiedMainSha": "7afa86e24812e3de96e93882b9658d2b2e0311e7"
+  },
+  "browserEntryPoint": "index.ts",
+  "nodeEntryPoint": "node.ts",
+  "browserBoundary": {
+    "nodeBuiltinsAllowed": false,
+    "nodeOnlyModules": [
+      "Usage/WordingUsageIndex.ts",
+      "Projection/VocabularyWordingSnapshot.ts",
+      "Validators/ContinuousGovernanceValidator.ts"
+    ]
   }
 }

@@ -69,6 +69,14 @@ npm run vocabulary:governance:prepr
 
 The checks cover Message contracts, 18-stage correlation, Documentary handoff, Wiki determinism, migration drift and VW-0…VW-8 closure metadata. The existing `test:raw` path invokes the read-only Vocabulary governance gate.
 
+## Runtime entry points
+
+- `index.ts` — browser-safe public catalog, registry, bindings and delivery contracts; no Node built-ins.
+- `node.ts` — explicit Node-only automation, repository scanning, checksum projection and continuous-governance validation.
+- `Delivery/browserMessageCatalog.ts` — narrow React/accessibility resolver for browser consumers.
+
+Node-only consumers must import from `./node` or a direct Node-only module path. Frontend code must never import `node.ts`.
+
 ## Canonical access
 
 ```ts

@@ -1,8 +1,22 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createDefaultUiMessageCatalog, createDefaultVocabularyRegistry } from '../index';
 import { UiMessageCatalog } from '../Messages/UiMessageCatalog';
 
 describe('VW-1 UI Message Catalog', () => {
+  it('keeps Node-only governance utilities out of the browser entry point', () => {
+    const browserEntry = fs.readFileSync(path.join(process.cwd(), 'src/platform/Vocabulary/index.ts'), 'utf8');
+    const nodeEntry = fs.readFileSync(path.join(process.cwd(), 'src/platform/Vocabulary/node.ts'), 'utf8');
+
+    expect(browserEntry).not.toContain('WordingUsageIndex');
+    expect(browserEntry).not.toContain('VocabularyWordingSnapshot');
+    expect(browserEntry).not.toContain('ContinuousGovernanceValidator');
+    expect(nodeEntry).toContain("./Usage/WordingUsageIndex");
+    expect(nodeEntry).toContain("./Projection/VocabularyWordingSnapshot");
+    expect(nodeEntry).toContain("./Validators/ContinuousGovernanceValidator");
+  });
+
   it('loads the governed bilingual seed catalog', () => {
     const catalog = createDefaultUiMessageCatalog();
     const message = catalog.get('screening.request.title');
