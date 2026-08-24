@@ -4,12 +4,12 @@ component:
   version: 1.8.0
   status: implemented
   lifecycle: Operational
-  health: Unknown
+  health: Verified
   owner: Platform Director
   category: platform
   layer: CrossCutting
   repository: Finance
-  effectiveSince: PR #477 human merge
+  effectiveSince: PR #477 implementation + PR #524 hygiene merge
 
 purposeDE: >
   Kanonische Registry für Terminologie und zweisprachiges Produkt-Wording mit
@@ -119,5 +119,5 @@ implementationStatusDE: >
   verbleibende OPEN-Kandidaten bleiben messbarer inkrementeller Backlog. Continuous Governance verwendet die bestehende Test-/Quality-Kette.
 implementationStatusEN: >
   VW-0 through VW-8 are implemented on main via PR #477. Wiki projection is deterministic and dry-run by default;
-  no external Wiki publication was executed. VW-7 provides a controlled migration baseline while remaining OPEN candidates
-  stay measurable incremental backlog. Continuous governance reuses the existing test/quality chain.
+  Wiki publication remains a separately gated external action. The initial five VW-7 candidates are migrated through stable Message Keys.
+  Continuous governance reuses the existing test/quality chain.
