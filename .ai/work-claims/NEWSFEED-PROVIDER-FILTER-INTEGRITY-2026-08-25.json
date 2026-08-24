@@ -12,9 +12,9 @@
   "workItemDE": "Provider-Integration, Filter, Tests und UI gegen aktuellen main synchronisieren und Integritätslücken beheben",
   "startedAt": "2026-08-25T00:28:00+02:00",
   "baseBranch": "main",
-  "baseSha": "0743e66742519a452a0633734685d4115e71150d",
+  "baseSha": "63c2cd7660b11907c91327f220603d8caef21dad",
   "branch": "fix/ai-newsfeed-provider-filter-integrity-2026-08-25",
-  "pullRequest": null,
+  "pullRequest": 529,
   "claimedPaths": [
     "src/features/news/newsRoutes.ts",
     "src/platform/MarketData/providers/FreeCryptoNewsEvidenceProvider.ts",
@@ -22,24 +22,28 @@
     "src/components/RealtimeAiNewsfeed.tsx",
     "src/components/VerifiedNewsFeed.tsx",
     "tests/unit/newsEvidenceBoundary.test.ts",
-    "tests/unit/freeCryptoNewsEvidenceProvider.test.ts"
+    "tests/unit/freeCryptoNewsEvidenceProvider.test.ts",
+    "tests/unit/providerMatrix.test.ts"
   ],
   "ownerDecision": "Provider-Integration, Filter, Tests und UI Zustand gegen den aktuellen Main syncen, auf Korrelationen, Datenintegrität und Vollständigkeit prüfen und zu behebende offene Punkte umsetzen.",
   "traceability": {
     "mergedProviderPr": 514,
     "mergedFilterAggregationPr": 522,
+    "initialBaseSha": "0743e66742519a452a0633734685d4115e71150d",
     "currentMainAtStart": "0743e66742519a452a0633734685d4115e71150d",
+    "currentMainAtFinalSyncReview": "63c2cd7660b11907c91327f220603d8caef21dad",
     "existingPolicy": "docs/evidence/sc-md/SC4_CRYPTO_EVIDENCE_POLICY_SUPERSESSION_2026-08-22.md"
   },
   "scopeBoundary": {
     "included": [
       "provider contract drift reconciliation",
-      "canonical asset filter validation",
+      "canonical asset filter validation through assetSearchCatalog",
       "source-filter metadata completeness",
       "partial UI metadata resilience",
       "verified crypto 24h enrichment through the existing canonical display service",
       "provider and boundary regression tests",
-      "provider inventory metadata correction"
+      "provider inventory metadata correction",
+      "main synchronization and open-PR overlap correlation"
     ],
     "excluded": [
       "new scoring authority",
@@ -52,10 +56,10 @@
   },
   "prePrCorrelation": {
     "mainShaAtImplementationStart": "0743e66742519a452a0633734685d4115e71150d",
-    "mainShaAtFinalSyncReview": "0743e66742519a452a0633734685d4115e71150d",
-    "openPrAgainstMain": 527,
+    "mainShaAtFinalSyncReview": "63c2cd7660b11907c91327f220603d8caef21dad",
+    "openPrAgainstMain": 531,
     "openPrOverlap": false,
-    "openPrScope": "Commodity P2-C; no overlapping claimed or changed newsfeed/provider paths",
+    "openPrScope": "Open PRs #530 and #531; neither changes any claimed Newsfeed/provider path in PR #529.",
     "dependencyChanges": false,
     "workflowChanges": false,
     "scoringAuthorityChanged": false,
@@ -63,10 +67,10 @@
   },
   "validation": {
     "hostedCiBeforePr": false,
-    "staticCanonicalPathAudit": "completed",
-    "upstreamProviderContractReview": "completed; public /api/news remains keyless, /api/sources now requires a short-lived token",
+    "staticCanonicalPathAudit": "completed; News asset universe aligned from legacy assetRegistry to canonical assetSearchCatalog used by /api/registry/assets and VerifiedAssetDisplay",
+    "upstreamProviderContractReview": "completed; public /api/news remains keyless, /api/sources now requires a short-lived token, source filtering is normalized locally against public sourceName/sourceKey metadata",
     "upstreamLicenseReview": "completed; current upstream LICENSE is proprietary/all-rights-reserved, stale MIT claims removed from active runtime metadata",
-    "diffScopeReview": "completed; bounded to news provider, route, UI and regression tests plus this claim",
+    "diffScopeReview": "completed after main sync; 9 net files, no overlap with open PRs #530/#531",
     "runtimeAuthorityChanged": false,
     "duplicateArchitectureIntroduced": false
   },
