@@ -111,12 +111,14 @@
   "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
   "mergedPr": 525,
   "mainCommit": "c0ebee48b062c98112b39340dcde3ab31c3d7c3d",
-  "releasedAt": "2026-08-24T21:30:00Z",
+  "releasedAt": "2026-08-24T21:29:54Z",
   "releaseEvidence": {
     "pullRequest": 525,
     "merged": true,
     "mainContainsImplementation": true,
     "verifiedMainSha": "c0ebee48b062c98112b39340dcde3ab31c3d7c3d",
     "verifiedAt": "2026-08-24"
-  }
+  },
+  "releaseReason": "merged",
+  "terminalHeadSha": "54180bb904f6f2d7bbf8a23bbd2a473cc870e82a"
 }
