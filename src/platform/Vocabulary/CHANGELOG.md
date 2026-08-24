@@ -7,14 +7,14 @@
 - Die fünf initialen VW-7-`MarketScreener`-Kandidaten verwenden stabile Message Keys; die bisherigen Literale bleiben inhaltlich unverändert im kanonischen Katalog.
 - Browser-/Node-Grenze und Post-Merge-Evidence von PR #524 sind auf dem aktuellen Main-Stand korreliert.
 - Vocabulary-Komponentenstatus von `Unknown` auf evidenzbasiert `Verified` gesetzt.
-- Wiki-Publikation und GoPlus-Credential-Aktivierung bleiben separat kontrollierte externe Mutationen mit eigener Evidence.
+- Die GoPlus-Credential ist im Render-Webservice `Finance` gesetzt und der aktuelle Main-Deploy ist live; der Secretwert bleibt unveröffentlicht. Wiki-Publikation bleibt eine separat commitgebundene externe Mutation.
 
 ### English
 
 - Migrated the five initial VW-7 `MarketScreener` candidates to stable Message Keys without changing their canonical copy.
 - Correlated the browser/Node boundary and PR #524 post-merge evidence against current main.
 - Changed Vocabulary component health from `Unknown` to evidence-backed `Verified`.
-- Wiki publication and GoPlus credential activation remain separately controlled external mutations with dedicated evidence.
+- The GoPlus credential is present on the Render `Finance` web service and the current-main deployment is live; the secret value remains undisclosed. Wiki publication remains a separately commit-bound external mutation.
 
 
 ## 1.8.0 — 2026-08-21
