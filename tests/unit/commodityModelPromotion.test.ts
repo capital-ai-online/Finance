@@ -2,23 +2,24 @@ import { describe, expect, it } from 'vitest';
 import {
   COMMODITY_BACKTEST_CONTRACT_VERSION,
   COMMODITY_COST_ASSUMPTION_CONTRACT_VERSION,
-  COMMODITY_CORRELATION_POLICY_VERSION,
   COMMODITY_ENERGY_RESEARCH_MODEL_CONTRACT,
   COMMODITY_MODEL_DESCRIPTOR_CONTRACT_VERSION,
   COMMODITY_OWNER_PROMOTION_DECISION_CONTRACT_VERSION,
   COMMODITY_POINT_IN_TIME_POLICY_VERSION,
   COMMODITY_PROMOTION_PACKAGE_CONTRACT_VERSION,
-  COMMODITY_RESEARCH_DQ_POLICY_VERSION,
   COMMODITY_STRESS_EVIDENCE_CONTRACT_VERSION,
-  COMMODITY_WEIGHT_STABILITY_VERSION,
   COMMODITY_WEIGHT_VALIDATION_CONTRACT_VERSION,
   DEFAULT_SCORING_MODELS,
   RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
+  analyzeCommodityFeatureCorrelation,
+  analyzeCommodityWeightStability,
   assessCommodityOwnerPromotionDecision,
   buildCommodityImmutableModelDescriptor,
   buildCommodityPromotionReviewPackage,
   buildCommodityProviderResilienceReport,
   buildCommodityStressEvidenceReport,
+  commodityCorrelationReportEvidenceId,
+  commodityWeightStabilityEvidenceId,
   validateCommodityCandidateWeightProfile,
   validateCommodityImmutableModelDescriptor,
   type CommodityBacktestResult,
@@ -56,45 +57,49 @@ function energyWeightProfile(): CommodityCandidateWeightProfile {
 }
 
 function completeCorrelationReport(): CommodityCorrelationReport {
-  return {
-    contractVersion: COMMODITY_CORRELATION_POLICY_VERSION,
+  const featureKeys = COMMODITY_ENERGY_RESEARCH_MODEL_CONTRACT.features
+    .filter(feature => feature.role === 'RAW_EVIDENCE')
+    .map(feature => feature.key);
+  const observations = Array.from({ length: 30 }, (_, index) => ({
+    observedAt: new Date(Date.UTC(2024, 0, index + 1)).toISOString(),
+    normalizedValues: Object.fromEntries(featureKeys.map((key, featureIndex) => [
+      key,
+      Math.sin((index + 1) * (featureIndex + 1) * 1.61803398875)
+        + (0.07 * Math.cos((index + 3) * (featureIndex + 2))),
+    ])),
+  }));
+
+  const report = analyzeCommodityFeatureCorrelation({
     modelId: 'commodity-energy-hybrid',
-    modelVersion: '0.1.0',
-    method: 'pearson',
-    inputSemantic: 'NORMALIZED_FEATURE_VALUE',
+    observations,
     normalizationContractVersion: 'commodity-normalization/0.1.0',
     minimumPairedObservations: 20,
-    highAbsoluteCorrelation: 0.8,
-    observations: 104,
-    pairs: [],
-    blockingFindings: [],
-    evidenceComplete: true,
-    canonical: false,
-    scoreEligible: false,
-  };
+    highAbsoluteCorrelation: 0.999999,
+  });
+  expect(report.evidenceComplete).toBe(true);
+  return report;
 }
 
-function completeStabilityReport(): CommodityWeightStabilityReport {
-  return {
-    contractVersion: COMMODITY_WEIGHT_STABILITY_VERSION,
-    referenceProfileId: 'commodity-energy-research-candidate',
-    findings: [{
-      variantId: 'energy-sensitivity-small-shift',
-      l1Distance: 0.1,
-      maxAbsoluteDelta: 0.05,
-      topFactorChanged: false,
-      weightSum: 1,
-      valid: true,
-      blockers: [],
-    }],
-    valid: true,
-    blockers: [],
-    canonical: false,
-    scoreEligible: false,
-  };
+function completeStabilityReport(profile = energyWeightProfile()): CommodityWeightStabilityReport {
+  const factors = Object.keys(profile.factorWeights).sort();
+  const variantWeights = Object.fromEntries(factors.map(factor => [factor, profile.factorWeights[factor]]));
+  if (factors.length >= 3) {
+    variantWeights[factors[0]] += 0.02;
+    variantWeights[factors[1]] -= 0.01;
+    variantWeights[factors[2]] -= 0.01;
+  }
+  const report = analyzeCommodityWeightStability({
+    reference: profile,
+    variants: [{ variantId: 'energy-sensitivity-small-shift', factorWeights: variantWeights }],
+  });
+  expect(report.valid).toBe(true);
+  return report;
 }
 
-function completeBacktestResult(): CommodityBacktestResult {
+function completeBacktestResult(
+  correlationReport = completeCorrelationReport(),
+  stabilityReport = completeStabilityReport(),
+): CommodityBacktestResult {
   return {
     contractVersion: COMMODITY_BACKTEST_CONTRACT_VERSION,
     runId: 'commodity-energy-oos-2026-01',
@@ -138,8 +143,8 @@ function completeBacktestResult(): CommodityBacktestResult {
     costAssumptionsValidated: true,
     outOfSampleValidated: true,
     outOfSampleEvidenceId: 'commodity-oos:energy:2026-01',
-    correlationEvidenceId: 'commodity-correlation:energy:2026-01',
-    sensitivityEvidenceId: 'commodity-sensitivity:energy:2026-01',
+    correlationEvidenceId: commodityCorrelationReportEvidenceId(correlationReport),
+    sensitivityEvidenceId: commodityWeightStabilityEvidenceId(stabilityReport),
     promotionEvidenceEligible: true,
     authority: 'VALIDATION_ONLY',
     canonical: false,
@@ -147,7 +152,10 @@ function completeBacktestResult(): CommodityBacktestResult {
   };
 }
 
-function descriptor() {
+function descriptor(
+  correlationReport = completeCorrelationReport(),
+  stabilityReport = completeStabilityReport(),
+) {
   const profile = energyWeightProfile();
   const validation = validateCommodityCandidateWeightProfile(profile);
   expect(validation.valid).toBe(true);
@@ -157,7 +165,6 @@ function descriptor() {
     descriptorVersion: '0.1.0',
     modelId: 'commodity-energy-hybrid',
     weightProfile: profile,
-    weightValidation: validation,
     supportedSources: ['twelvedata', 'eia', 'cftc-cot'],
     validFrom: '2026-09-01T00:00:00.000Z',
     createdAt: '2026-08-25T00:00:00.000Z',
@@ -169,8 +176,8 @@ function descriptor() {
       calibrationEvidenceId: 'commodity-calibration:energy:2026-01',
       backtestRunId: 'commodity-energy-oos-2026-01',
       outOfSampleEvidenceId: 'commodity-oos:energy:2026-01',
-      correlationEvidenceId: 'commodity-correlation:energy:2026-01',
-      sensitivityEvidenceId: 'commodity-sensitivity:energy:2026-01',
+      correlationEvidenceId: commodityCorrelationReportEvidenceId(correlationReport),
+      sensitivityEvidenceId: commodityWeightStabilityEvidenceId(stabilityReport),
     },
   });
 }
@@ -229,16 +236,17 @@ function completeStressEvidence() {
 
 function completePackage() {
   const profile = energyWeightProfile();
-  const weightValidation = validateCommodityCandidateWeightProfile(profile);
+  const correlationReport = completeCorrelationReport();
+  const stabilityReport = completeStabilityReport(profile);
   return buildCommodityPromotionReviewPackage({
     packageId: 'commodity-energy-promotion-review',
     packageVersion: '0.1.0',
     createdAt: '2026-08-25T00:10:00.000Z',
-    descriptor: descriptor(),
-    weightValidation,
-    correlationReport: completeCorrelationReport(),
-    stabilityReport: completeStabilityReport(),
-    backtestResult: completeBacktestResult(),
+    descriptor: descriptor(correlationReport, stabilityReport),
+    weightProfile: profile,
+    correlationReport,
+    stabilityReport,
+    backtestResult: completeBacktestResult(correlationReport, stabilityReport),
     providerResilience: completeProviderResilience(),
     stressEvidence: completeStressEvidence(),
   });
@@ -336,14 +344,16 @@ describe('Commodity P2-C promotion governance', () => {
 
   it('keeps an incomplete review package fail-closed when empirical backtest evidence is absent', () => {
     const profile = energyWeightProfile();
+    const correlationReport = completeCorrelationReport();
+    const stabilityReport = completeStabilityReport(profile);
     const packageResult = buildCommodityPromotionReviewPackage({
       packageId: 'commodity-energy-promotion-review',
       packageVersion: '0.1.0',
       createdAt: '2026-08-25T00:10:00.000Z',
-      descriptor: descriptor(),
-      weightValidation: validateCommodityCandidateWeightProfile(profile),
-      correlationReport: completeCorrelationReport(),
-      stabilityReport: completeStabilityReport(),
+      descriptor: descriptor(correlationReport, stabilityReport),
+      weightProfile: profile,
+      correlationReport,
+      stabilityReport,
       backtestResult: null,
       providerResilience: completeProviderResilience(),
       stressEvidence: completeStressEvidence(),
@@ -356,12 +366,40 @@ describe('Commodity P2-C promotion governance', () => {
     expect(packageResult.scoreEligible).toBe(false);
   });
 
+  it('does not trust promotionEvidenceEligible when backtest invariants contradict it', () => {
+    const profile = energyWeightProfile();
+    const correlationReport = completeCorrelationReport();
+    const stabilityReport = completeStabilityReport(profile);
+    const forgedBacktest = {
+      ...completeBacktestResult(correlationReport, stabilityReport),
+      pointInTimeValidated: false,
+      promotionEvidenceEligible: true,
+    };
+    const packageResult = buildCommodityPromotionReviewPackage({
+      packageId: 'commodity-energy-promotion-review',
+      packageVersion: '0.1.0',
+      createdAt: '2026-08-25T00:10:00.000Z',
+      descriptor: descriptor(correlationReport, stabilityReport),
+      weightProfile: profile,
+      correlationReport,
+      stabilityReport,
+      backtestResult: forgedBacktest,
+      providerResilience: completeProviderResilience(),
+      stressEvidence: completeStressEvidence(),
+    });
+
+    expect(packageResult.readyForOwnerReview).toBe(false);
+    expect(packageResult.blockers).toContain('BACKTEST_POINT_IN_TIME_NOT_VALIDATED');
+  });
+
   it('can make a complete evidence package owner-reviewable but never self-promotes', () => {
     const reviewPackage = completePackage();
 
     expect(reviewPackage.readyForOwnerReview).toBe(true);
     expect(reviewPackage.blockers).toEqual([]);
     expect(reviewPackage.packageFingerprint).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(reviewPackage.correlationEvidenceId).toMatch(/^commodity-correlation-review:[0-9a-f]{64}$/);
+    expect(reviewPackage.sensitivityEvidenceId).toMatch(/^commodity-sensitivity-review:[0-9a-f]{64}$/);
     expect(reviewPackage.championChallengerDiff?.currentChampion).toMatchObject({
       modelId: 'commodity-evidence-scoring',
       version: '1.0.0',
