@@ -115,8 +115,8 @@ references:
 
 implementationStatusDE: >
   VW-0 bis VW-8 via PR #477 auf main implementiert. Wiki-Projektion ist deterministisch und standardmäßig Dry-Run;
-  externe Wiki-Publikation wurde nicht ausgeführt. VW-7 stellt eine kontrollierte Migrationsbaseline bereit;
-  verbleibende OPEN-Kandidaten bleiben messbarer inkrementeller Backlog. Continuous Governance verwendet die bestehende Test-/Quality-Kette.
+  externe Wiki-Publikation wurde nicht ausgeführt. Die fünf initialen VW-7-Kandidaten verwenden stabile Message Keys;
+  im kontrollierten initialen Slice verbleibt kein OPEN-Kandidat. Continuous Governance verwendet die bestehende Test-/Quality-Kette.
 implementationStatusEN: >
   VW-0 through VW-8 are implemented on main via PR #477. Wiki projection is deterministic and dry-run by default;
   Wiki publication remains a separately gated external action. The initial five VW-7 candidates are migrated through stable Message Keys.
