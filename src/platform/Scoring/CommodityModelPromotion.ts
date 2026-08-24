@@ -25,20 +25,13 @@ import {
   COMMODITY_BACKTEST_CONTRACT_VERSION,
   type CommodityBacktestResult,
 } from './CommodityBacktestingContracts';
-import {
-  COMMODITY_HISTORICAL_VINTAGE_CONTRACT_VERSION,
-} from './CommodityHistoricalVintage';
+import { COMMODITY_HISTORICAL_VINTAGE_CONTRACT_VERSION } from './CommodityHistoricalVintage';
 
-export const COMMODITY_MODEL_DESCRIPTOR_CONTRACT_VERSION =
-  'commodity-model-descriptor/1.0.0' as const;
-export const COMMODITY_PROVIDER_RESILIENCE_CONTRACT_VERSION =
-  'commodity-provider-resilience/1.0.0' as const;
-export const COMMODITY_STRESS_EVIDENCE_CONTRACT_VERSION =
-  'commodity-model-stress-evidence/1.0.0' as const;
-export const COMMODITY_PROMOTION_PACKAGE_CONTRACT_VERSION =
-  'commodity-model-promotion-package/1.0.0' as const;
-export const COMMODITY_OWNER_PROMOTION_DECISION_CONTRACT_VERSION =
-  'commodity-owner-promotion-decision/1.0.0' as const;
+export const COMMODITY_MODEL_DESCRIPTOR_CONTRACT_VERSION = 'commodity-model-descriptor/1.0.0' as const;
+export const COMMODITY_PROVIDER_RESILIENCE_CONTRACT_VERSION = 'commodity-provider-resilience/1.0.0' as const;
+export const COMMODITY_STRESS_EVIDENCE_CONTRACT_VERSION = 'commodity-model-stress-evidence/1.0.0' as const;
+export const COMMODITY_PROMOTION_PACKAGE_CONTRACT_VERSION = 'commodity-model-promotion-package/1.0.0' as const;
+export const COMMODITY_OWNER_PROMOTION_DECISION_CONTRACT_VERSION = 'commodity-owner-promotion-decision/1.0.0' as const;
 
 export type CommodityPromotionSupportedSource =
   | 'twelvedata'
@@ -53,6 +46,7 @@ export type CommodityPromotionSupportedSource =
 export interface CommodityModelCalibrationLineage {
   readonly datasetId: string;
   readonly datasetVersion: string;
+  /** Raw 64-char SHA-256 hex, matching CommodityHistoricalDatasetValidation. */
   readonly datasetFingerprint: string;
   readonly normalizationContractVersion: string;
   readonly calibrationEvidenceId: string;
@@ -79,6 +73,7 @@ export interface CommodityImmutableModelDescriptor {
   }>;
   readonly weightProfileId: string;
   readonly weightProfileVersion: string;
+  /** Raw 64-char SHA-256 hex, matching scoringFingerprint.ts. */
   readonly effectiveWeightFingerprint: string;
   readonly supportedSources: readonly CommodityPromotionSupportedSource[];
   readonly validFrom: string;
@@ -187,10 +182,7 @@ export interface CommodityChampionChallengerDiff {
     executorKey: string;
   }>;
   readonly changedDimensions: readonly string[];
-  readonly rollbackTarget: Readonly<{
-    modelId: string;
-    version: string;
-  }>;
+  readonly rollbackTarget: Readonly<{ modelId: string; version: string }>;
 }
 
 export interface CommodityPromotionReviewPackage {
@@ -203,7 +195,7 @@ export interface CommodityPromotionReviewPackage {
   readonly weightEvidence: CommodityWeightPromotionEvidenceAssessment;
   readonly providerResilience: CommodityProviderResilienceReport;
   readonly stressEvidence: CommodityStressEvidenceReport;
-  readonly backtestResult: CommodityBacktestResult;
+  readonly backtestResult: CommodityBacktestResult | null;
   readonly championChallengerDiff: CommodityChampionChallengerDiff | null;
   readonly blockers: readonly string[];
   readonly readyForOwnerReview: boolean;
@@ -240,6 +232,14 @@ function sha256(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
+function prefixedSha256(value: unknown): string {
+  return `sha256:${sha256(value)}`;
+}
+
+function isSha256Hex(value: string): boolean {
+  return /^[0-9a-f]{64}$/i.test(value.trim());
+}
+
 function isTimestamp(value: string): boolean {
   return Number.isFinite(Date.parse(value));
 }
@@ -263,16 +263,15 @@ function registryChallenger(modelId: CommodityResearchModelId): ScoringModelDesc
 }
 
 function currentCommodityChampion(): ScoringModelDescriptor | null {
-  const candidates = DEFAULT_SCORING_MODELS
+  return DEFAULT_SCORING_MODELS
     .filter(model => model.assetClasses.includes('commodity')
       && model.lifecycle === 'canonical'
       && model.alias === 'champion'
       && model.scoreEligible !== false)
-    .sort((left, right) => right.priority - left.priority || left.modelId.localeCompare(right.modelId));
-  return candidates[0] ?? null;
+    .sort((a, b) => b.priority - a.priority || a.modelId.localeCompare(b.modelId))[0] ?? null;
 }
 
-function canonicalDescriptorIdentity(input: Omit<CommodityImmutableModelDescriptor, 'descriptorFingerprint'>): unknown {
+function descriptorIdentity(input: Omit<CommodityImmutableModelDescriptor, 'descriptorFingerprint'>): unknown {
   return {
     contractVersion: input.contractVersion,
     descriptorId: input.descriptorId,
@@ -311,7 +310,7 @@ export function buildCommodityImmutableModelDescriptor(input: {
   readonly lineage: CommodityModelCalibrationLineage;
 }): CommodityImmutableModelDescriptor {
   const model = modelForId(input.modelId);
-  const descriptorBase = {
+  const base: Omit<CommodityImmutableModelDescriptor, 'descriptorFingerprint'> = {
     contractVersion: COMMODITY_MODEL_DESCRIPTOR_CONTRACT_VERSION,
     descriptorId: input.descriptorId.trim(),
     descriptorVersion: input.descriptorVersion.trim(),
@@ -334,14 +333,13 @@ export function buildCommodityImmutableModelDescriptor(input: {
     validUntil: input.validUntil ?? null,
     createdAt: input.createdAt,
     lineage: Object.freeze({ ...input.lineage }),
-    lifecycle: 'challenger' as const,
-    immutable: true as const,
-    runtimeExecutable: false as const,
-    canonical: false as const,
-    scoreEligible: false as const,
+    lifecycle: 'challenger',
+    immutable: true,
+    runtimeExecutable: false,
+    canonical: false,
+    scoreEligible: false,
   };
-  const descriptorFingerprint = `sha256:${sha256(canonicalDescriptorIdentity(descriptorBase))}`;
-  return Object.freeze({ ...descriptorBase, descriptorFingerprint });
+  return Object.freeze({ ...base, descriptorFingerprint: prefixedSha256(descriptorIdentity(base)) });
 }
 
 export function validateCommodityImmutableModelDescriptor(
@@ -356,9 +354,9 @@ export function validateCommodityImmutableModelDescriptor(
   if (!isSemver(descriptor.descriptorVersion)) blockers.push('MODEL_DESCRIPTOR_VERSION_INVALID');
   if (descriptor.modelVersion !== model.modelVersion) blockers.push('MODEL_DESCRIPTOR_MODEL_VERSION_MISMATCH');
   if (descriptor.featureContractVersion !== model.featureContractVersion) blockers.push('MODEL_DESCRIPTOR_FEATURE_CONTRACT_MISMATCH');
-  if (!isSemver(descriptor.weightProfileVersion)) blockers.push('MODEL_DESCRIPTOR_WEIGHT_PROFILE_VERSION_INVALID');
   if (!descriptor.weightProfileId.trim()) blockers.push('MODEL_DESCRIPTOR_WEIGHT_PROFILE_ID_REQUIRED');
-  if (!/^sha256:[0-9a-f]{64}$/i.test(descriptor.effectiveWeightFingerprint)) blockers.push('MODEL_DESCRIPTOR_WEIGHT_FINGERPRINT_INVALID');
+  if (!isSemver(descriptor.weightProfileVersion)) blockers.push('MODEL_DESCRIPTOR_WEIGHT_PROFILE_VERSION_INVALID');
+  if (!isSha256Hex(descriptor.effectiveWeightFingerprint)) blockers.push('MODEL_DESCRIPTOR_WEIGHT_FINGERPRINT_INVALID');
   if (descriptor.supportedSources.length === 0) blockers.push('MODEL_DESCRIPTOR_SUPPORTED_SOURCE_REQUIRED');
   if (new Set(descriptor.supportedSources).size !== descriptor.supportedSources.length) blockers.push('MODEL_DESCRIPTOR_SUPPORTED_SOURCE_DUPLICATE');
   if (!isTimestamp(descriptor.validFrom) || !isTimestamp(descriptor.createdAt)) blockers.push('MODEL_DESCRIPTOR_TIMESTAMP_INVALID');
@@ -366,7 +364,11 @@ export function validateCommodityImmutableModelDescriptor(
     if (!isTimestamp(descriptor.validUntil)) blockers.push('MODEL_DESCRIPTOR_VALID_UNTIL_INVALID');
     else if (isTimestamp(descriptor.validFrom) && Date.parse(descriptor.validUntil) <= Date.parse(descriptor.validFrom)) blockers.push('MODEL_DESCRIPTOR_VALIDITY_RANGE_INVALID');
   }
-  if (descriptor.lifecycle !== 'challenger' || descriptor.runtimeExecutable !== false || descriptor.canonical !== false || descriptor.scoreEligible !== false || descriptor.immutable !== true) {
+  if (!isSha256Hex(descriptor.lineage.datasetFingerprint)) blockers.push('MODEL_DESCRIPTOR_DATASET_FINGERPRINT_INVALID');
+  for (const [key, value] of Object.entries(descriptor.lineage)) {
+    if (!String(value ?? '').trim()) blockers.push(`MODEL_DESCRIPTOR_LINEAGE_REQUIRED:${key}`);
+  }
+  if (descriptor.lifecycle !== 'challenger' || descriptor.immutable !== true || descriptor.runtimeExecutable !== false || descriptor.canonical !== false || descriptor.scoreEligible !== false) {
     blockers.push('MODEL_DESCRIPTOR_MUST_REMAIN_NON_EXECUTABLE_CHALLENGER');
   }
   if (!challenger) blockers.push('MODEL_DESCRIPTOR_REGISTRY_CHALLENGER_MISSING');
@@ -377,17 +379,8 @@ export function validateCommodityImmutableModelDescriptor(
     if (challenger.scoreEligible !== false) blockers.push('MODEL_DESCRIPTOR_REGISTRY_CHALLENGER_SCORE_ELIGIBLE');
   }
 
-  const lineageEntries = Object.entries(descriptor.lineage);
-  for (const [key, value] of lineageEntries) {
-    if (!String(value ?? '').trim()) blockers.push(`MODEL_DESCRIPTOR_LINEAGE_REQUIRED:${key}`);
-  }
-  if (!/^sha256:[0-9a-f]{64}$/i.test(descriptor.lineage.datasetFingerprint)) blockers.push('MODEL_DESCRIPTOR_DATASET_FINGERPRINT_INVALID');
-
-  const expectedFingerprint = `sha256:${sha256(canonicalDescriptorIdentity({
-    ...descriptor,
-    descriptorFingerprint: undefined,
-  } as unknown as Omit<CommodityImmutableModelDescriptor, 'descriptorFingerprint'>))}`;
-  if (descriptor.descriptorFingerprint !== expectedFingerprint) blockers.push('MODEL_DESCRIPTOR_FINGERPRINT_MISMATCH');
+  const { descriptorFingerprint: _ignored, ...base } = descriptor;
+  if (descriptor.descriptorFingerprint !== prefixedSha256(descriptorIdentity(base))) blockers.push('MODEL_DESCRIPTOR_FINGERPRINT_MISMATCH');
 
   return Object.freeze({
     valid: blockers.length === 0,
@@ -420,33 +413,24 @@ export function buildCommodityProviderResilienceReport(input: {
   if (input.observations.length === 0) blockers.push('PROVIDER_RESILIENCE_OBSERVATION_REQUIRED');
 
   const seen = new Set<string>();
-  for (const observation of input.observations) {
-    if (seen.has(observation.providerId)) blockers.push(`PROVIDER_RESILIENCE_DUPLICATE_PROVIDER:${observation.providerId}`);
-    seen.add(observation.providerId);
-    if (!Number.isInteger(observation.sampleCount) || observation.sampleCount < 1) blockers.push(`PROVIDER_RESILIENCE_SAMPLE_COUNT_INVALID:${observation.providerId}`);
-    if (!finiteRatio(observation.availabilityRate)) blockers.push(`PROVIDER_RESILIENCE_AVAILABILITY_INVALID:${observation.providerId}`);
-    if (!finiteRatio(observation.freshnessPassRate)) blockers.push(`PROVIDER_RESILIENCE_FRESHNESS_INVALID:${observation.providerId}`);
-    if (!finiteRatio(observation.errorRate)) blockers.push(`PROVIDER_RESILIENCE_ERROR_RATE_INVALID:${observation.providerId}`);
-    if (!Number.isInteger(observation.circuitOpenEvents) || observation.circuitOpenEvents < 0) blockers.push(`PROVIDER_RESILIENCE_CIRCUIT_EVENTS_INVALID:${observation.providerId}`);
-    if (observation.p95LatencyMs !== null && (!Number.isFinite(observation.p95LatencyMs) || observation.p95LatencyMs < 0)) blockers.push(`PROVIDER_RESILIENCE_LATENCY_INVALID:${observation.providerId}`);
-    if (!observation.evidenceId.trim()) blockers.push(`PROVIDER_RESILIENCE_EVIDENCE_REQUIRED:${observation.providerId}`);
-    if (observation.required) {
-      if (observation.availabilityRate < policy.minimumAvailabilityRate) blockers.push(`PROVIDER_RESILIENCE_AVAILABILITY_BELOW_POLICY:${observation.providerId}`);
-      if (observation.freshnessPassRate < policy.minimumFreshnessPassRate) blockers.push(`PROVIDER_RESILIENCE_FRESHNESS_BELOW_POLICY:${observation.providerId}`);
-      if (observation.errorRate > policy.maximumErrorRate) blockers.push(`PROVIDER_RESILIENCE_ERROR_ABOVE_POLICY:${observation.providerId}`);
-      if (observation.circuitOpenEvents > policy.maximumCircuitOpenEvents) blockers.push(`PROVIDER_RESILIENCE_CIRCUIT_ABOVE_POLICY:${observation.providerId}`);
-      if (policy.maximumP95LatencyMs !== null && observation.p95LatencyMs !== null && observation.p95LatencyMs > policy.maximumP95LatencyMs) blockers.push(`PROVIDER_RESILIENCE_LATENCY_ABOVE_POLICY:${observation.providerId}`);
+  for (const item of input.observations) {
+    if (seen.has(item.providerId)) blockers.push(`PROVIDER_RESILIENCE_DUPLICATE_PROVIDER:${item.providerId}`);
+    seen.add(item.providerId);
+    if (!Number.isInteger(item.sampleCount) || item.sampleCount < 1) blockers.push(`PROVIDER_RESILIENCE_SAMPLE_COUNT_INVALID:${item.providerId}`);
+    if (!finiteRatio(item.availabilityRate)) blockers.push(`PROVIDER_RESILIENCE_AVAILABILITY_INVALID:${item.providerId}`);
+    if (!finiteRatio(item.freshnessPassRate)) blockers.push(`PROVIDER_RESILIENCE_FRESHNESS_INVALID:${item.providerId}`);
+    if (!finiteRatio(item.errorRate)) blockers.push(`PROVIDER_RESILIENCE_ERROR_RATE_INVALID:${item.providerId}`);
+    if (!Number.isInteger(item.circuitOpenEvents) || item.circuitOpenEvents < 0) blockers.push(`PROVIDER_RESILIENCE_CIRCUIT_EVENTS_INVALID:${item.providerId}`);
+    if (item.p95LatencyMs !== null && (!Number.isFinite(item.p95LatencyMs) || item.p95LatencyMs < 0)) blockers.push(`PROVIDER_RESILIENCE_LATENCY_INVALID:${item.providerId}`);
+    if (!item.evidenceId.trim()) blockers.push(`PROVIDER_RESILIENCE_EVIDENCE_REQUIRED:${item.providerId}`);
+    if (item.required) {
+      if (item.availabilityRate < policy.minimumAvailabilityRate) blockers.push(`PROVIDER_RESILIENCE_AVAILABILITY_BELOW_POLICY:${item.providerId}`);
+      if (item.freshnessPassRate < policy.minimumFreshnessPassRate) blockers.push(`PROVIDER_RESILIENCE_FRESHNESS_BELOW_POLICY:${item.providerId}`);
+      if (item.errorRate > policy.maximumErrorRate) blockers.push(`PROVIDER_RESILIENCE_ERROR_ABOVE_POLICY:${item.providerId}`);
+      if (item.circuitOpenEvents > policy.maximumCircuitOpenEvents) blockers.push(`PROVIDER_RESILIENCE_CIRCUIT_ABOVE_POLICY:${item.providerId}`);
+      if (policy.maximumP95LatencyMs !== null && item.p95LatencyMs !== null && item.p95LatencyMs > policy.maximumP95LatencyMs) blockers.push(`PROVIDER_RESILIENCE_LATENCY_ABOVE_POLICY:${item.providerId}`);
     }
   }
-
-  const evidenceId = `commodity-provider-resilience:${sha256({
-    modelId: model.modelId,
-    modelVersion: model.modelVersion,
-    windowStart: input.windowStart,
-    windowEnd: input.windowEnd,
-    policy,
-    observations: [...input.observations].sort((a, b) => a.providerId.localeCompare(b.providerId)),
-  })}`;
 
   return Object.freeze({
     contractVersion: COMMODITY_PROVIDER_RESILIENCE_CONTRACT_VERSION,
@@ -458,7 +442,7 @@ export function buildCommodityProviderResilienceReport(input: {
     observations: Object.freeze(input.observations.map(item => Object.freeze({ ...item }))),
     blockers: Object.freeze(blockers),
     evidenceComplete: blockers.length === 0 && input.observations.some(item => item.required),
-    evidenceId,
+    evidenceId: `commodity-provider-resilience:${sha256({ modelId: model.modelId, windowStart: input.windowStart, windowEnd: input.windowEnd, policy, observations: input.observations })}`,
     canonical: false,
     scoreEligible: false,
   });
@@ -472,54 +456,37 @@ export function buildCommodityStressEvidenceReport(input: {
   const model = modelForId(input.modelId);
   const blockers: string[] = [];
   const policy = input.policy;
-
   if (!policy.policyId.trim() || !isSemver(policy.policyVersion)) blockers.push('STRESS_POLICY_INVALID');
   if (policy.requiredScenarioIds.length === 0) blockers.push('STRESS_REQUIRED_SCENARIO_REQUIRED');
   if (new Set(policy.requiredScenarioIds).size !== policy.requiredScenarioIds.length) blockers.push('STRESS_REQUIRED_SCENARIO_DUPLICATE');
   if (policy.minimumRankInformationCoefficient !== null && (!Number.isFinite(policy.minimumRankInformationCoefficient) || policy.minimumRankInformationCoefficient < -1 || policy.minimumRankInformationCoefficient > 1)) blockers.push('STRESS_RANK_IC_THRESHOLD_INVALID');
-  if (policy.maximumAbsoluteDrawdown !== null && (!Number.isFinite(policy.maximumAbsoluteDrawdown) || policy.maximumAbsoluteDrawdown < 0 || policy.maximumAbsoluteDrawdown > 1)) blockers.push('STRESS_DRAWDOWN_THRESHOLD_INVALID');
+  if (policy.maximumAbsoluteDrawdown !== null && (!finiteRatio(policy.maximumAbsoluteDrawdown))) blockers.push('STRESS_DRAWDOWN_THRESHOLD_INVALID');
   if (policy.maximumTurnover !== null && (!Number.isFinite(policy.maximumTurnover) || policy.maximumTurnover < 0)) blockers.push('STRESS_TURNOVER_THRESHOLD_INVALID');
 
   const byScenario = new Map<string, CommodityStressScenarioResult>();
-  for (const scenario of input.scenarios) {
-    if (!scenario.scenarioId.trim()) blockers.push('STRESS_SCENARIO_ID_REQUIRED');
-    if (byScenario.has(scenario.scenarioId)) blockers.push(`STRESS_SCENARIO_DUPLICATE:${scenario.scenarioId}`);
-    byScenario.set(scenario.scenarioId, scenario);
-    if (!scenario.regime.trim()) blockers.push(`STRESS_REGIME_REQUIRED:${scenario.scenarioId}`);
-    if (!scenario.outOfSampleEvidenceId.trim()) blockers.push(`STRESS_OOS_EVIDENCE_REQUIRED:${scenario.scenarioId}`);
-    if (!scenario.evidenceId.trim()) blockers.push(`STRESS_EVIDENCE_REQUIRED:${scenario.scenarioId}`);
-    if (!scenario.leakageFree) blockers.push(`STRESS_LEAKAGE_BLOCKER:${scenario.scenarioId}`);
-    if (scenario.rankInformationCoefficient !== null && (!Number.isFinite(scenario.rankInformationCoefficient) || scenario.rankInformationCoefficient < -1 || scenario.rankInformationCoefficient > 1)) blockers.push(`STRESS_RANK_IC_INVALID:${scenario.scenarioId}`);
-    if (scenario.maxDrawdown !== null && (!Number.isFinite(scenario.maxDrawdown) || scenario.maxDrawdown > 0 || scenario.maxDrawdown < -1)) blockers.push(`STRESS_DRAWDOWN_INVALID:${scenario.scenarioId}`);
-    if (scenario.turnover !== null && (!Number.isFinite(scenario.turnover) || scenario.turnover < 0)) blockers.push(`STRESS_TURNOVER_INVALID:${scenario.scenarioId}`);
+  for (const item of input.scenarios) {
+    if (!item.scenarioId.trim()) blockers.push('STRESS_SCENARIO_ID_REQUIRED');
+    if (byScenario.has(item.scenarioId)) blockers.push(`STRESS_SCENARIO_DUPLICATE:${item.scenarioId}`);
+    byScenario.set(item.scenarioId, item);
+    if (!item.regime.trim()) blockers.push(`STRESS_REGIME_REQUIRED:${item.scenarioId}`);
+    if (!item.outOfSampleEvidenceId.trim()) blockers.push(`STRESS_OOS_EVIDENCE_REQUIRED:${item.scenarioId}`);
+    if (!item.evidenceId.trim()) blockers.push(`STRESS_EVIDENCE_REQUIRED:${item.scenarioId}`);
+    if (!item.leakageFree) blockers.push(`STRESS_LEAKAGE_BLOCKER:${item.scenarioId}`);
+    if (item.rankInformationCoefficient !== null && (!Number.isFinite(item.rankInformationCoefficient) || item.rankInformationCoefficient < -1 || item.rankInformationCoefficient > 1)) blockers.push(`STRESS_RANK_IC_INVALID:${item.scenarioId}`);
+    if (item.maxDrawdown !== null && (!Number.isFinite(item.maxDrawdown) || item.maxDrawdown < -1 || item.maxDrawdown > 0)) blockers.push(`STRESS_DRAWDOWN_INVALID:${item.scenarioId}`);
+    if (item.turnover !== null && (!Number.isFinite(item.turnover) || item.turnover < 0)) blockers.push(`STRESS_TURNOVER_INVALID:${item.scenarioId}`);
   }
 
   for (const scenarioId of policy.requiredScenarioIds) {
-    const scenario = byScenario.get(scenarioId);
-    if (!scenario) {
+    const item = byScenario.get(scenarioId);
+    if (!item) {
       blockers.push(`STRESS_REQUIRED_SCENARIO_MISSING:${scenarioId}`);
       continue;
     }
-    if (policy.minimumRankInformationCoefficient !== null
-      && (scenario.rankInformationCoefficient === null || scenario.rankInformationCoefficient < policy.minimumRankInformationCoefficient)) {
-      blockers.push(`STRESS_RANK_IC_BELOW_POLICY:${scenarioId}`);
-    }
-    if (policy.maximumAbsoluteDrawdown !== null
-      && (scenario.maxDrawdown === null || Math.abs(scenario.maxDrawdown) > policy.maximumAbsoluteDrawdown)) {
-      blockers.push(`STRESS_DRAWDOWN_ABOVE_POLICY:${scenarioId}`);
-    }
-    if (policy.maximumTurnover !== null
-      && (scenario.turnover === null || scenario.turnover > policy.maximumTurnover)) {
-      blockers.push(`STRESS_TURNOVER_ABOVE_POLICY:${scenarioId}`);
-    }
+    if (policy.minimumRankInformationCoefficient !== null && (item.rankInformationCoefficient === null || item.rankInformationCoefficient < policy.minimumRankInformationCoefficient)) blockers.push(`STRESS_RANK_IC_BELOW_POLICY:${scenarioId}`);
+    if (policy.maximumAbsoluteDrawdown !== null && (item.maxDrawdown === null || Math.abs(item.maxDrawdown) > policy.maximumAbsoluteDrawdown)) blockers.push(`STRESS_DRAWDOWN_ABOVE_POLICY:${scenarioId}`);
+    if (policy.maximumTurnover !== null && (item.turnover === null || item.turnover > policy.maximumTurnover)) blockers.push(`STRESS_TURNOVER_ABOVE_POLICY:${scenarioId}`);
   }
-
-  const evidenceId = `commodity-stress:${sha256({
-    modelId: model.modelId,
-    modelVersion: model.modelVersion,
-    policy,
-    scenarios: [...input.scenarios].sort((a, b) => a.scenarioId.localeCompare(b.scenarioId)),
-  })}`;
 
   return Object.freeze({
     contractVersion: COMMODITY_STRESS_EVIDENCE_CONTRACT_VERSION,
@@ -529,7 +496,7 @@ export function buildCommodityStressEvidenceReport(input: {
     scenarios: Object.freeze(input.scenarios.map(item => Object.freeze({ ...item }))),
     blockers: Object.freeze(blockers),
     evidenceComplete: blockers.length === 0,
-    evidenceId,
+    evidenceId: `commodity-stress:${sha256({ modelId: model.modelId, policy, scenarios: input.scenarios })}`,
     canonical: false,
     scoreEligible: false,
   });
@@ -547,7 +514,6 @@ function buildChampionChallengerDiff(descriptor: CommodityImmutableModelDescript
     champion.executorKey !== challenger.executorKey ? 'executorKey' : null,
     champion.evidencePolicy !== challenger.evidencePolicy ? 'evidencePolicy' : null,
   ].filter((value): value is string => value !== null);
-
   return Object.freeze({
     currentChampion: Object.freeze({
       modelId: champion.modelId,
@@ -595,6 +561,7 @@ export function buildCommodityPromotionReviewPackage(input: {
   if (!weightEvidence.readyForOwnerReview) blockers.push(...weightEvidence.blockers.map(item => `WEIGHT_EVIDENCE:${item}`));
   if (!input.providerResilience.evidenceComplete) blockers.push(...input.providerResilience.blockers.map(item => `PROVIDER_RESILIENCE:${item}`));
   if (!input.stressEvidence.evidenceComplete) blockers.push(...input.stressEvidence.blockers.map(item => `STRESS_EVIDENCE:${item}`));
+
   if (!input.backtestResult) blockers.push('BACKTEST_RESULT_REQUIRED');
   else {
     if (input.backtestResult.request.modelId !== input.descriptor.modelId) blockers.push('BACKTEST_MODEL_ID_MISMATCH');
@@ -604,12 +571,11 @@ export function buildCommodityPromotionReviewPackage(input: {
     if (input.backtestResult.correlationEvidenceId !== input.descriptor.lineage.correlationEvidenceId) blockers.push('BACKTEST_CORRELATION_LINEAGE_MISMATCH');
     if (input.backtestResult.sensitivityEvidenceId !== input.descriptor.lineage.sensitivityEvidenceId) blockers.push('BACKTEST_SENSITIVITY_LINEAGE_MISMATCH');
   }
+
   if (input.providerResilience.modelId !== input.descriptor.modelId) blockers.push('PROVIDER_RESILIENCE_MODEL_MISMATCH');
   if (input.stressEvidence.modelId !== input.descriptor.modelId) blockers.push('STRESS_EVIDENCE_MODEL_MISMATCH');
-
-  const requiredSources = new Set(input.descriptor.supportedSources);
   const resilienceSources = new Set(input.providerResilience.observations.filter(item => item.required).map(item => item.providerId));
-  for (const source of requiredSources) {
+  for (const source of input.descriptor.supportedSources) {
     if (!resilienceSources.has(source)) blockers.push(`PROVIDER_RESILIENCE_REQUIRED_SOURCE_MISSING:${source}`);
   }
 
@@ -617,15 +583,14 @@ export function buildCommodityPromotionReviewPackage(input: {
   if (!diff) blockers.push('CHAMPION_CHALLENGER_DIFF_UNAVAILABLE');
   else if (diff.rollbackTarget.modelId !== 'commodity-evidence-scoring') blockers.push('ROLLBACK_TARGET_NOT_CURRENT_COMMODITY_CHAMPION');
 
-  const packageIdentity = {
+  const packageFingerprint = prefixedSha256({
     contractVersion: COMMODITY_PROMOTION_PACKAGE_CONTRACT_VERSION,
     packageId: input.packageId.trim(),
     packageVersion: input.packageVersion.trim(),
     createdAt: input.createdAt,
     descriptorFingerprint: input.descriptor.descriptorFingerprint,
-    weightFingerprint: input.descriptor.effectiveWeightFingerprint,
     backtestRunId: input.backtestResult?.runId ?? null,
-    oosEvidenceId: input.backtestResult?.outOfSampleEvidenceId ?? null,
+    outOfSampleEvidenceId: input.backtestResult?.outOfSampleEvidenceId ?? null,
     correlationEvidenceId: input.backtestResult?.correlationEvidenceId ?? null,
     sensitivityEvidenceId: input.backtestResult?.sensitivityEvidenceId ?? null,
     providerResilienceEvidenceId: input.providerResilience.evidenceId,
@@ -633,8 +598,7 @@ export function buildCommodityPromotionReviewPackage(input: {
     currentChampion: diff?.currentChampion ?? null,
     rollbackTarget: diff?.rollbackTarget ?? null,
     blockers: [...blockers].sort(),
-  };
-  const packageFingerprint = `sha256:${sha256(packageIdentity)}`;
+  });
 
   return Object.freeze({
     contractVersion: COMMODITY_PROMOTION_PACKAGE_CONTRACT_VERSION,
@@ -646,10 +610,7 @@ export function buildCommodityPromotionReviewPackage(input: {
     weightEvidence,
     providerResilience: input.providerResilience,
     stressEvidence: input.stressEvidence,
-    backtestResult: input.backtestResult ?? ({
-      contractVersion: COMMODITY_BACKTEST_CONTRACT_VERSION,
-      runId: 'missing',
-    } as CommodityBacktestResult),
+    backtestResult: input.backtestResult,
     championChallengerDiff: diff,
     blockers: Object.freeze(blockers),
     readyForOwnerReview: blockers.length === 0,
@@ -662,9 +623,9 @@ export function buildCommodityPromotionReviewPackage(input: {
 }
 
 /**
- * Validates explicit Human/Owner decision evidence against the exact review-package fingerprint.
- * This function still does not mutate ScoringModelRegistry or ScoringDispatcher. Controlled
- * promotion remains a separate Human-gated repository change on a fresh branch.
+ * Binds a Human/Owner decision to the exact review-package fingerprint. This assessment still never
+ * mutates ScoringModelRegistry/ScoringDispatcher; controlled promotion requires a separate fresh
+ * branch and Human merge decision after all P2/P3 gates are satisfied.
  */
 export function assessCommodityOwnerPromotionDecision(
   reviewPackage: CommodityPromotionReviewPackage,
