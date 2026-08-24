@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "VOCABULARY-FINAL-VW7-WIKI-GOPLUS-2026-08-24",
+  "status": "active",
+  "exclusive": true,
+  "branch": "agent/vocabulary-final-vw7-wiki-goplus-2026-08-24",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector / Render Connector"
+  },
+  "workItem": "Close remaining post-merge Vocabulary evidence debt, migrate the five governed VW-7 MarketScreener messages, prepare deterministic Wiki publication evidence, and correlate GoPlus production credential activation without expanding financial authority.",
+  "workItemDE": "Verbleibende Post-Merge-Evidence des Vocabulary schließen, fünf kontrollierte VW-7-MarketScreener-Wordings migrieren, deterministische Wiki-Publikation nachweisen und die GoPlus-Produktiv-Credential-Aktivierung ohne Erweiterung finanzieller Authority korrelieren.",
+  "startedAt": "2026-08-24T23:50:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c0ebee48b062c98112b39340dcde3ab31c3d7c3d",
+  "claimedPaths": [
+    ".ai/work-claims/VOCABULARY-FINAL-VW7-WIKI-GOPLUS-2026-08-24.json",
+    ".ai/work-claims/VW-0-VW5-HYGIENE-2026-08-24.json",
+    ".ai/work-claims/FINTECH-CORE-P1A-HONEYPOT-SIMULATION-EVIDENCE-2026-08-24.json",
+    "src/components/MarketScreener.tsx",
+    "src/platform/Vocabulary/**",
+    "docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md",
+    "docs/evidence/vocabulary/VOCABULARY_VW0_VW5_MAIN_CORRELATION_2026-08-24.md",
+    "docs/evidence/vocabulary/VOCABULARY_FINAL_RELEASE_2026-08-24.md"
+  ],
+  "nonGoals": [
+    "M10 activation",
+    "Financial scoring/order/execution authority",
+    "Secret disclosure or secret storage in Git",
+    "Automatic wording mass replacement",
+    "Wiki back-propagation"
+  ],
+  "releaseCondition": "Automatically released by the canonical Work Claim lifecycle after the resulting PR is human-merged, closed, superseded or abandoned."
+}
