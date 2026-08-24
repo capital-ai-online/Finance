@@ -70,6 +70,14 @@ describe('SC4 news evidence boundary', () => {
     expect(realtimeViewer).toContain('verfügbare Filter und der Feed bleiben nutzbar');
   });
 
+  it('enriches filtered crypto news only through the canonical verified display service', () => {
+    expect(newsRoutes).toContain("getVerifiedAssetDisplay");
+    expect(newsRoutes).toContain("asset?.type === 'crypto'");
+    expect(newsRoutes).toContain('display?.change24hPct');
+    expect(newsRoutes).not.toContain('asset.change24h');
+    expect(newsRoutes).not.toContain('calculateNewsImpactScore');
+  });
+
   it('does not restore synthetic realtime headlines or synthetic score impacts', () => {
     expect(realtimeViewer).toContain('VerifiedNewsFeed');
     for (const forbidden of [
