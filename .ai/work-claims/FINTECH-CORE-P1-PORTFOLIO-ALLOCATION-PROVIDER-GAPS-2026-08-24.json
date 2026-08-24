@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "FINTECH-CORE-P1-PORTFOLIO-ALLOCATION-PROVIDER-GAPS-2026-08-24",
-  "status": "active",
-  "exclusive": true,
+  "status": "verified",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -10,10 +10,13 @@
   },
   "workItem": "Main-synced P1 deterministic portfolio allocation/position-sizing foundation, bounded FT-5 portfolio-risk evidence projection, and current Meme/DeFi provider-gap inventory",
   "startedAt": "2026-08-24T00:00:00+02:00",
+  "verifiedAt": "2026-08-24T03:12:09Z",
   "baseBranch": "main",
   "baseSha": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
   "executionBranch": "feat/fintech-core-p1-portfolio-allocation-main-sync-2026-08-24",
   "pullRequest": 520,
+  "mergedPr": 520,
+  "mainCommit": "6c46aab0ab6341c20db6ad001b98572237fbcda0",
   "supersedesBranchAsIntegrationBase": "feat/fintech-core-p1-portfolio-allocation-provider-gaps-2026-08-23",
   "dependsOn": [
     "Owner chat priority P1: deterministic portfolio/position-sizing layer",
@@ -91,7 +94,6 @@
     "postPrMainSemanticCorrelation": "Commodity ADR-0101 and Commodity historical-validation/scoring files only; P1 FinTechCore/ADR-0099/provider/governance files do not overlap.",
     "syncCommit": "a0ff942c4cc2dcf94efd895246c8bc158b13c14e",
     "syncMethod": "two-parent merge commit using the validated P1 tree plus exact seven Commodity blobs from cbae921a main",
-    "branchAheadByAfterSync": 17,
     "branchBehindByAfterSync": 0,
     "mergeBaseAfterSync": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
     "pr519Merged": true,
@@ -111,10 +113,14 @@
     "governanceVersionPinsUpdated": true,
     "postPrMainSyncVerified": true,
     "postPrMainSyncDiffPreservedExactly14P1Files": true,
-    "testsExecuted": false,
-    "testExecutionStatus": "POST_PR_CI_STARTED_ON_PRE_SYNC_HEAD; SUPERSEDED_BY_POST_PR_MAIN_SYNC_HEAD",
+    "testsExecuted": true,
+    "testExecutionStatus": "PASS_ON_FINAL_PR_HEAD",
+    "ciWorkflowRun": 32685331214,
+    "governanceWorkflowRun": 32685331229,
+    "ciConclusion": "success",
+    "governanceConclusion": "success",
     "hostedCiTriggered": true,
-    "hostedCiPolicy": "Hosted CI began only after PR #520 existed. Old-head runs are not treated as final after the mandatory main sync."
+    "hostedCiPolicy": "Hosted CI ran only after PR #520 existed; final CI and governance runs passed before the human merge."
   },
-  "releaseCondition": "Coordination metadata is released when the implementation is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
 }
