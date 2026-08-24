@@ -34,9 +34,9 @@ function sentimentLabel(sentiment: VerifiedNewsItem['sentiment']): string {
 }
 
 function providerLabel(provider: string | null): string {
-  if (provider === 'free-crypto-news') return 'Free Crypto News';
+  if (provider === 'free-crypto-news') return 'cryptocurrency.cv';
   if (provider === 'gdelt') return 'GDELT';
-  if (provider === 'multi-provider') return 'Free Crypto News + GDELT';
+  if (provider === 'multi-provider') return 'cryptocurrency.cv + GDELT';
   return 'News Evidence';
 }
 
