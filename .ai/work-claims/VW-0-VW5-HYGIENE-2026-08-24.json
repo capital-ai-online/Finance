@@ -3,7 +3,7 @@
   "claimId": "VW-0-VW5-HYGIENE-2026-08-24",
   "status": "active",
   "exclusive": true,
-  "branch": "chore/vocabulary-vw0-vw5-hygiene-2026-08-24",
+  "branch": "agent/vocabulary-vw0-vw5-hygiene-2026-08-24",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
