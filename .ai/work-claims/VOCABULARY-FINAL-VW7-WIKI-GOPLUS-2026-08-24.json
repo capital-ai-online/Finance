@@ -22,7 +22,9 @@
     "src/platform/Vocabulary/**",
     "docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md",
     "docs/evidence/vocabulary/VOCABULARY_VW0_VW5_MAIN_CORRELATION_2026-08-24.md",
-    "docs/evidence/vocabulary/VOCABULARY_FINAL_RELEASE_2026-08-24.md"
+    "docs/evidence/vocabulary/VOCABULARY_FINAL_RELEASE_2026-08-24.md",
+    "docs/security/P1A_GOPLUS_TRANSACTION_SIMULATION_THREAT_MODEL_2026-08-24.md",
+    "docs/runbooks/GOPLUS_PRODUCTION_CREDENTIAL_ACTIVATION_2026-08-24.md"
   ],
   "nonGoals": [
     "M10 activation",
