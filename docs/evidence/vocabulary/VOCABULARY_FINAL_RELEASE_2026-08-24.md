@@ -1,6 +1,6 @@
 # Vocabulary Final Release Evidence — 2026-08-24
 
-**Status:** PRE-PR VERIFIED; EXTERNAL ACTIVATION PARTIAL  
+**Status:** REPOSITORY PRE-PR VERIFIED; GOPLUS CREDENTIAL ACTIVE; WIKI POST-MERGE GATED  
 **Current-main baseline:** `0743e66742519a452a0633734685d4115e71150d`  
 **Branch:** `agent/vocabulary-final-vw7-wiki-goplus-2026-08-24`
 
