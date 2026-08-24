@@ -1,13 +1,13 @@
 # Vocabulary Final Release Evidence — 2026-08-24
 
 **Status:** REPOSITORY PRE-PR VERIFIED; GOPLUS CREDENTIAL ACTIVE; WIKI POST-MERGE GATED  
-**Current-main baseline:** `0743e66742519a452a0633734685d4115e71150d`  
+**Current-main baseline:** `0f864d31f60b4b1a1a9968202a62aa8357673049`  
 **Branch:** `agent/vocabulary-final-vw7-wiki-goplus-2026-08-24`
 
 ## Repository closure
 
 - PR #524 and PR #525 are merged and their Work Claims are released with merge evidence.
-- PR #526 Work Claim lifecycle governance is included through a non-conflicting main merge.
+- PR #526 Work Claim lifecycle governance and merged PR #527 are included through non-conflicting main merges.
 - The five governed VW-7 `MarketScreener` candidates now resolve through their stable browser-safe Message Catalog keys.
 - Vocabulary remains the canonical, dependency-free wording control plane; no second registry, scoring authority, execution authority, persistence authority or event authority was introduced.
 - Hosted PR validation is pending creation of the final pull request.
@@ -22,6 +22,7 @@
 | Latest observed deploy | `dep-da6btofqj5pc739r49v0` |
 | Deployed commit | `0743e66742519a452a0633734685d4115e71150d` |
 | Deploy state | `live` |
+| Production → current main drift | `13` commits immediately before final PR creation; production remains a valid ancestor |
 | Provider authority | Research/evidence only; no route construction, signing, broadcasting or live-execution permission |
 | Functional invocation | Not claimed: the production route has not invoked the provider during this verification |
 | Operations / rollback | `docs/runbooks/GOPLUS_PRODUCTION_CREDENTIAL_ACTIVATION_2026-08-24.md` |
