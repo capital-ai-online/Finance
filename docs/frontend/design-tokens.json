@@ -163,10 +163,12 @@
       "class": "bg-surface/70 border border-border backdrop-blur-md rounded-xl p-6"
     },
     "patternBadge": {
-      "noPatternLabel": "NO PATTERN",
+      "renderWhenMissing": false,
+      "missingState": "omit",
       "noPlaceholder": true,
-      "buyColor": "#44DE88",
-      "sellColor": "#F87171",
+      "buySemanticToken": "color.score.best",
+      "sellSemanticToken": "color.score.worst",
+      "neutralSemanticToken": "color.score.warning",
       "strengths": ["strong", "medium", "weak"]
     }
   }
