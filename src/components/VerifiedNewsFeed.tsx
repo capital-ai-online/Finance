@@ -13,6 +13,8 @@ export interface VerifiedNewsItem {
   publishedAt: string;
   url: string;
   provider?: string;
+  assetSymbols?: string[];
+  assetClasses?: string[];
   change24hPct?: number | null;
 }
 
@@ -29,6 +31,13 @@ function sentimentLabel(sentiment: VerifiedNewsItem['sentiment']): string {
   if (sentiment === 'positive') return 'Positiv · Heuristik';
   if (sentiment === 'negative') return 'Negativ · Heuristik';
   return 'Neutral · Heuristik';
+}
+
+function providerLabel(provider: string | null): string {
+  if (provider === 'free-crypto-news') return 'Free Crypto News';
+  if (provider === 'gdelt') return 'GDELT';
+  if (provider === 'multi-provider') return 'Free Crypto News + GDELT';
+  return 'News Evidence';
 }
 
 function formatChange24h(value: number | null | undefined): string | null {
@@ -60,8 +69,8 @@ export function VerifiedNewsFeed({
       setReason(null);
       try {
         const params = new URLSearchParams({ limit: String(Math.max(1, Math.min(20, limit))) });
-        if (symbol.trim()) params.set('symbol', symbol.trim().toUpperCase());
-        if (source.trim()) params.set('source', source.trim().toLowerCase());
+        if (symbol.trim()) params.set('asset', symbol.trim().toUpperCase());
+        if (source.trim()) params.set('source', source.trim());
         const response = await fetch(`/api/news?${params.toString()}`, { signal: controller.signal });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) {
@@ -102,8 +111,8 @@ export function VerifiedNewsFeed({
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-white/45">
             <span className="inline-flex items-center gap-1 text-emerald-300"><ShieldCheck className="h-3 w-3" /> Verifizierte externe Artikel</span>
-            <span>· Open-Source REST · {activeProvider === 'free-crypto-news' ? 'Free Crypto News' : activeProvider === 'gdelt' ? 'GDELT' : 'News Evidence'}</span>
-            {symbol && <span>· {symbol.toUpperCase()}</span>}
+            <span>· {providerLabel(activeProvider)}</span>
+            {symbol && <span>· Asset: {symbol.toUpperCase()}</span>}
             {source && <span>· Quelle: {source}</span>}
           </div>
         </div>
@@ -153,6 +162,11 @@ export function VerifiedNewsFeed({
               {!compact && item.summary && <p className="mt-2 text-xs leading-relaxed text-white/55">{item.summary}</p>}
               <div className="mt-3 flex flex-wrap items-center gap-2 text-[9px] text-white/35">
                 <span className="rounded-full border border-white/10 px-2 py-1">{sentimentLabel(item.sentiment)}</span>
+                {item.assetSymbols?.slice(0, 4).map(assetSymbol => (
+                  <span key={assetSymbol} className="rounded-full border border-aif-gold-DEFAULT/20 bg-aif-gold-DEFAULT/5 px-2 py-1 font-mono text-aif-gold-DEFAULT/80">
+                    {assetSymbol}
+                  </span>
+                ))}
                 {changeLabel && (
                   <span
                     className={`rounded-md border px-2 py-0.5 font-mono text-[10px] ${
