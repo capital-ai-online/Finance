@@ -1,10 +1,11 @@
 # ADR-0101 — Commodity Domain Research Challengers innerhalb der Single-Scoring-Architektur
 
-**Status:** Accepted for P0/P1 implementation and P2 historical validation  
+**Status:** Accepted for P0/P1 implementation and P2 validation/promotion governance  
 **Date:** 2026-08-23  
+**Updated:** 2026-08-25  
 **Parent authority:** ADR-0087, SC-2 Model Registry & Universal Asset Interface  
 **Roadmap:** `docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md`  
-**Traceability:** bestehende Commodity-Roadmap-Arbeitspunkte P0–P2-B; Roadmap-Issues werden in diesem Chat nicht als Status-Authority verändert.
+**Traceability:** Commodity P0–P2-C gemäß gemergtem Code/Evidence; Roadmap-Issues werden in diesem Chat nicht als Status-Authority verändert.
 
 ## Kontext
 
@@ -73,6 +74,17 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 42. EU-CRMA-Methodik und numerische Criticality-Evidence werden getrennt behandelt. Economic Importance und Supply Risk bleiben getrennte Features; ein numerical PIT Vintage benötigt eine versionierte veröffentlichte Assessment-/Release-Evidence. Die Verordnung allein autorisiert keinen historischen Zahlenwert.
 43. `assembleCommodityHistoricalDataset()` ist die einzige neue Brücke von source-spezifischen Vintages zur PR-#519-Historical-Validation-Engine. Sie akzeptiert ausschließlich `PIT_VERIFIED`, prüft Asset/Domain/Decision Availability sowie Normalisierungs-Lineage und delegiert die finale Dataset-/PIT-/Factor-Evidence-Validierung an `validateCommodityHistoricalDataset()`. Aktuelle Historie wird weder still verworfen noch hochgestuft.
 
+## P2-C — Model Descriptor & Promotion Governance
+
+44. Jede promotionsfähige Modellrevision benötigt einen unveränderlichen `CommodityImmutableModelDescriptor`. Dieser bindet Modell-, Feature-, Weight-, DQ-, Correlation-, Stability-, Backtest- und Historical-Vintage-Vertragsversionen sowie `validFrom`/optional `validUntil`, unterstützte Quellen und Calibration-/Dataset-/OOS-Lineage.
+45. Der Descriptor übernimmt die bestehenden Fingerprint-Semantiken: `effectiveWeightFingerprint` und Historical-`datasetFingerprint` bleiben die kanonischen raw SHA-256-Hexwerte der vorhandenen Plattformfunktionen. Descriptor- und Promotion-Package-Identitäten erhalten eigene `sha256:<hex>`-Fingerprints; es entsteht keine konkurrierende Weight-/Dataset-Fingerprint-Authority.
+46. Ein P2-C-Review-Paket benötigt neben der P2-A/P2-B Weight-/Correlation-/Sensitivity-/Backtest-Evidence zusätzlich **Provider-Resilience-Evidence** und **Stress-/Regime-Evidence**. Thresholds werden als versionierte Policies ausgewertet; Caller-Booleans können kein PASS autorisieren.
+47. Provider Resilience bindet je erforderlicher Quelle mindestens Sample Count, Availability Rate, Freshness Pass Rate, Error Rate, Circuit-Open Events, optional P95-Latency und eine Evidence-ID. Alle im Descriptor als supported/required gebundenen Quellen müssen im Resilience-Paket nachgewiesen sein.
+48. Stress Evidence bindet explizit erforderliche Szenarien, OOS-Evidence, Leakage-Status sowie policybasierte Grenzen für Rank IC, Drawdown und Turnover. Fehlende Szenarien, Leakage oder Policy-Verletzungen blockieren Owner-Reviewfähigkeit fail-closed.
+49. Das Promotion Package erzeugt einen deterministischen Champion/Challenger-Diff gegen den **aktuell registrierten** Commodity-Champion und bindet diesen Champion zugleich als Rollback Target. Für den aktuellen Stand ist `commodity-evidence-scoring@1.0.0` Rollback-Ziel; eine spätere Änderung der Registry erzeugt ein neues Review-Paket.
+50. `readyForOwnerReview=true` ist ausschließlich ein Evidence-Completeness-Signal. Das Paket bleibt `canonical=false`, `scoreEligible=false`, `registryMutationPerformed=false` und enthält keinerlei Mutation von `ScoringModelRegistry`, `ScoringDispatcher`, Ranking oder Runtime Executor.
+51. Eine Owner-Entscheidung muss explizit als `HUMAN_OWNER`-Evidence an den **exakten Promotion-Package-Fingerprint** gebunden sein. Auch eine gültige `APPROVE`-Assessment-Ausgabe führt keine Registry-Mutation aus. Controlled Promotion bleibt ein separates Folgepaket auf frischem Branch nach vollständigen P2/P3-Gates und Human Merge.
+
 ## Sicherheits-, Governance- und Datenintegritätsfolgen
 
 - Keine neue Credential- oder IAM-Authority.
@@ -85,13 +97,15 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - Duplicate Evidence ohne explizite vorgelagerte Merge-/Consensus-Entscheidung wird nicht stillschweigend überschrieben.
 - Erfolgreiches HTTP/JSON-Parsen allein bedeutet nicht `payloadUsable=true`, wenn der Provider im Payload selbst einen Fehlerstatus meldet.
 - Interne Exception-, SDK-, Netzwerk- oder Providerdetails werden nicht über Commodity-5xx-Routen an Clients gespiegelt; öffentliche Fehlercodes bleiben stabil und maschinenlesbar.
-- P2-Validierungsartefakte besitzen keine Runtime-, Ranking-, Trading- oder Execution-Authority.
+- P2-Validierungs- und Promotion-Review-Artefakte besitzen keine Runtime-, Ranking-, Trading- oder Execution-Authority.
 - Missing-Data-Renormalisierung bleibt innerhalb eines Latent Factors; Cross-Factor-Reweighting durch Datenlücken ist verboten.
 - Backtest-Evidence ohne reale Release-/Vintage-Semantik gilt als Leakage-Risiko und ist nicht promotion-fähig.
 - Historical Dataset und OOS Evidence enthalten ausschließlich Identitäten/Lineage/Research-Werte; sie eröffnen keinen neuen externen Write-/Secret-/Execution-Pfad.
 - Der Backtest-Executor importiert keine Provider-Gateways, keine Routes und keinen `ScoringDispatcher`/`ScoringModelRegistry`/Ranking-Pfad.
 - Historical Acquisition nutzt für HTTP-Quellen weiterhin `ResearchEvidenceProviderHttp`; es entsteht kein zweiter Rate-Limit-/Circuit-Breaker-/Provider-Health-Stack.
 - Evidence Grade ist fail-closed. `CURRENT_HISTORY_ONLY` und `REFERENCE_STATIC` bleiben Research-Evidence und können nicht durch Dataset Assembly zu `PIT_VERIFIED` konvertiert werden.
+- Ein Owner-Approval-Evidence-Objekt ist Evidence und keine technische Mutation Authority. Registry-/Dispatcher-Änderungen bleiben separate, human-gated Repository-Arbeit.
+- Der persistierte Work Claim eines terminal gemergten Commodity-Pakets wird entsprechend Development Chain Execution Policy 2.0.0 auf `released`, `exclusive=false` gestellt; stale Claim-Metadaten dürfen keine künstliche Writer-Authority fortsetzen.
 
 ## Nicht gewählt
 
@@ -108,7 +122,9 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - aus CFTC-Wochentag/Report-Date abgeleitete Availability ohne Release-Artefakt;
 - rückwirkende Universe-Zusammensetzung aus dem heutigen Katalog;
 - Training auf Targets, die zum Test-Entscheidungszeitpunkt noch nicht realisiert waren;
-- automatische Promotion durch `promotionEvidenceEligible` oder OOS-Fingerprint;
+- automatische Promotion durch `promotionEvidenceEligible`, OOS-Fingerprint, vollständiges P2-C-Paket oder Owner-Decision-Assessment;
+- direkte Registry-/Dispatcher-Mutation aus `CommodityModelPromotion`;
+- ein zweites MLOps-/Model-Registry-System nur für Promotion-Artefakte;
 - Ore Grade/Tonnage/Capex/Opex im Commodity-Benchmark-Modell;
 - LLM-basierte numerische Füllwerte;
 - numerischer P1-Challenger-Score ohne P2-Kalibrierung und OOS-Evidence;
@@ -116,6 +132,8 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 
 ## Validierung / Promotion
 
-P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability-, Historical-Dataset-, Historical-Vintage-, Point-in-Time-, Survivorship-, Outcome-Leakage-, Confidence-, Benchmark- und Walk-forward/OOS-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die vollständigen P2/P3-Gates der Commodity Roadmap einschließlich realer OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
+P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability-, Historical-Dataset-, Historical-Vintage-, Point-in-Time-, Survivorship-, Outcome-Leakage-, Confidence-, Benchmark-, Walk-forward/OOS-, Provider-Resilience-, Stress-/Regime-, Descriptor-/Fingerprint- und Owner-Decision-Binding-Negativtests.
+
+Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert. Sie erfordert weiterhin reale OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review, P2-D/P3-Integrationsgates, finalen Main-/Open-PR-Sync und eine separate explizite Human/Owner-Entscheidung. Ein Review-Paket oder eine Entscheidungsevidence kann diese nachgelagerte Registry-/Runtime-Änderung nicht selbst ausführen.
 
 Für das Error-Handling sind zusätzlich mindestens Application-Level-Providerfehler (`status=error`), Health-Diagnostik mit `payloadUsable=false` sowie die Nichtweitergabe roher Exceptiontexte über Commodity-5xx-Routen als Regression zu prüfen.

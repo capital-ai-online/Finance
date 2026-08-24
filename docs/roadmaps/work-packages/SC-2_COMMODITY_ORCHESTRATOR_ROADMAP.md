@@ -3,10 +3,40 @@
 **SPT:** `SC-MD-SPT-0001`  
 **Parent Work Package:** `SC-2 — Model Registry & Universal Asset Interface`  
 **Authority:** ADR-0087 / `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Status:** ROADMAP BASELINE — implementation after roadmap approval/order only  
-**Baseline:** `main@800b05261c1792fed5138a8125cf6a00b1f5af07`  
-**Execution branch:** `feat/commodity-orchestrator-research-boundary-2026-08-23`  
+**Status:** ACTIVE ROADMAP — canonical implementation status is projected below from merged code/evidence  
+**Original Baseline:** `main@800b05261c1792fed5138a8125cf6a00b1f5af07`  
+**Original execution branch:** `feat/commodity-orchestrator-research-boundary-2026-08-23`  
 **Source package:** Google-Drive Commodity-Orchestrator documentation supplied 2026-08-23 plus repository canonical architecture/evidence  
+**Status evidence:** `docs/evidence/sc-md/SC_COMMODITY_P2C_PROMOTION_GOVERNANCE_2026-08-25.md`  
+
+## 0. Kanonische Implementierungsprojektion — 2026-08-25
+
+> Die darunter erhaltenen Checkboxen bilden die ursprüngliche Roadmap-/Planungsbaseline ab und werden **nicht** rückwirkend als Merge-Nachweis interpretiert. Maßgeblich für den tatsächlichen Implementierungsstand sind gemergter Code, ADRs, Evidence, Tests und die folgende Projektion. Roadmap-Issue-Zustände sind in diesem Workstream keine Implementierungs-Authority.
+
+| Phase | Kanonischer Status | Evidenz / verbleibendes Gate |
+|---|---|---|
+| P0-A | IMPLEMENTED | Research-/Authority-Boundary gemergt |
+| P0-B | IMPLEMENTED IN CANONICAL CHAIN | Missing/Neutral-Semantik aus kanonischem Pfad isoliert; physische Legacy-Entfernung bleibt P2-E |
+| P0-C | IMPLEMENTED | UAI, Taxonomie und Feature Contracts gemergt |
+| P0-D | IMPLEMENTED | Commodity Provider-/Evidence-Pfade hinter zentraler Governance |
+| P0-E | IMPLEMENTED | ein Commodity-Champion + vier `scoreEligible=false` Challenger in bestehender Registry |
+| P1-A | IMPLEMENTED RESEARCH FOUNDATION | Energy Evidence/Contract/Challenger; keine Promotion |
+| P1-B | IMPLEMENTED RESEARCH FOUNDATION | Industrial/Critical Metals Evidence/Contract/Challenger |
+| P1-C | IMPLEMENTED RESEARCH FOUNDATION | Precious Metals Evidence/Contract/Challenger |
+| P1-D | IMPLEMENTED RESEARCH FOUNDATION | Agriculture Evidence/Contract/Challenger |
+| P1-E | IMPLEMENTED | source-/feature-spezifische DQ/Hard Gates fail-closed |
+| P2-A | FOUNDATION IMPLEMENTED; EMPIRICAL EVIDENCE OPEN | Weight/Correlation/Sensitivity/Fingerprint Contracts vorhanden; reale Reports je Modell erforderlich |
+| P2-B | ENGINE + VINTAGE GOVERNANCE IMPLEMENTED; EMPIRICAL DATASETS OPEN | PIT Contracts, Walk-forward/OOS Engine und Historical Vintage Acquisition gemergt; reale archivierte Datasets/Runs fehlen noch |
+| P2-C | IN PROGRESS | immutable Descriptor, Resilience/Stress/Promotion Review und Owner-Decision-Binding auf `feat/commodity-p2c-promotion-governance-2026-08-25`; keine Registry-Mutation |
+| P2-D | OPEN | CanonicalScoreResult/Explainability/Ranking für Kategorie-Challenger erst nach Evidence Review |
+| P2-E | OPEN | Legacy RawMaterials Routes/UI/Scorer bleiben physisch vorhanden, aber non-canonical |
+| P3-A | OPEN | Shadow Runtime / Observability |
+| P3-B | OPEN | Universe Coverage / SLA |
+| P3-C | BLOCKED | Controlled Champion Promotion erst nach vollständiger P2/P3-Evidence + Human/Owner-Entscheidung |
+| P3-D | OPEN / SEPARATE | Resource Project Valuation bleibt eigener Model Scope |
+
+**Merged implementation anchors:** PR #513 (P0/P1), PR #518 (P2 Validation Foundation), PR #519 (Historical Walk-forward/OOS), PR #521 (Historical Vintage Acquisition).  
+**Current architectural invariant:** `ScoringModelRegistry` und `ScoringDispatcher` bleiben die einzigen produktiven Model-/Execution-Authorities; `commodity-evidence-scoring@1.0.0` bleibt bis zu einer separat kontrollierten Promotion der Commodity-Champion.
 
 ## 1. Ziel
 

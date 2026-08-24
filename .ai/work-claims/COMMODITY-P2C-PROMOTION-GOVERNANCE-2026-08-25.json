@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "COMMODITY-P2C-PROMOTION-GOVERNANCE-2026-08-25",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub + Google Drive + Render Connector"
+  },
+  "workItem": "SC-2 Commodity P2-C immutable model descriptor and fail-closed promotion evidence governance",
+  "workItemDE": "Commodity P2-C Modellversionierung und fail-closed Promotion-Paket",
+  "startedAt": "2026-08-25T00:16:00.000+02:00",
+  "baseBranch": "main",
+  "baseSha": "0743e66742519a452a0633734685d4115e71150d",
+  "branch": "feat/commodity-p2c-promotion-governance-2026-08-25",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/COMMODITY-P2B-HISTORICAL-VINTAGE-ACQUISITION-2026-08-24.json",
+    "src/platform/Scoring/CommodityModelPromotion.ts",
+    "src/platform/Scoring/index.ts",
+    "tests/unit/commodityModelPromotion.test.ts",
+    "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
+    "docs/evidence/sc-md/SC_COMMODITY_P2C_PROMOTION_GOVERNANCE_2026-08-25.md",
+    "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md"
+  ],
+  "ownerDecision": "Alle kanonischen Commodity-Pfade sowie die bisherige code- und dokumentenbasierte Umsetzung prüfen und die weiteren offenen Arbeitspakete fortführen. Roadmap-Issues werden in diesem Chat nicht mutiert.",
+  "traceability": {
+    "roadmap": "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
+    "adr": ["ADR-0087", "ADR-0101"],
+    "driveSource": "Google Drive Commodity Orchestrator Dokumentation 2026-08-23",
+    "mergedHistoricalVintagePr": 521,
+    "mergedHistoricalVintageCommit": "e429c31cead5b397ae98bc1959e0e0e6ab9fca0f",
+    "currentMainAtStart": "0743e66742519a452a0633734685d4115e71150d"
+  },
+  "scopeBoundary": {
+    "included": [
+      "canonical path and implementation status reconciliation",
+      "immutable commodity model descriptor",
+      "promotion evidence bundle completeness validation",
+      "provider resilience and stress evidence contracts",
+      "champion/challenger diff and rollback target",
+      "explicit owner decision evidence binding without self-promotion",
+      "roadmap status projection from merged code/evidence"
+    ],
+    "excluded": [
+      "ScoringModelRegistry champion mutation",
+      "ScoringDispatcher execution changes",
+      "CanonicalScoreResult or Ranking integration",
+      "legacy commodity scorer retirement",
+      "shadow runtime activation",
+      "external platform mutation",
+      "roadmap issue mutation"
+    ]
+  },
+  "prePrCorrelation": {
+    "mainShaAtImplementationStart": "0743e66742519a452a0633734685d4115e71150d",
+    "mainShaAtFinalStaticReview": "0743e66742519a452a0633734685d4115e71150d",
+    "openPrAgainstMain": "none",
+    "productionCommitAtFinalStaticReview": "0743e66742519a452a0633734685d4115e71150d",
+    "productionMainDrift": 0,
+    "renderWorkspace": "AICapital",
+    "renderService": "Finance",
+    "netChangedFiles": 8,
+    "dependencyChanges": false,
+    "workflowChanges": false,
+    "registryMutation": false,
+    "dispatcherMutation": false,
+    "rankingMutation": false
+  },
+  "validation": {
+    "hostedCiBeforePr": false,
+    "staticCanonicalPathAudit": "completed",
+    "diffScopeReview": "completed; eight net files, bounded to P2-C contracts/tests/ADR/evidence/roadmap/claim lifecycle",
+    "fingerprintCompatibilityReview": "completed; existing raw SHA-256 weight/dataset fingerprints reused",
+    "trustByBooleanReview": "completed; P2-C revalidates weight profile, backtest structure, provider resilience and stress evidence and content-addresses correlation/sensitivity reports",
+    "runtimeAuthorityChanged": false,
+    "productionWeightsActivated": false,
+    "roadmapIssuesMutated": false
+  },
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

@@ -22,9 +22,14 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(requirements).not.toMatch(/Pillow[><~^]/);
   });
 
-  it('uses canonical design tokens instead of a parallel brand palette', () => {
+  it('uses canonical design tokens instead of a parallel or deprecated brand palette', () => {
     expect(core).toContain('docs" / "frontend" / "design-tokens.json');
     expect(core).toContain('load_brand_palette');
+    expect(core).toContain('brand = color["brand"]');
+    expect(core).toContain('brand["primary"]');
+    expect(core).toContain('brand["cyan"]');
+    expect(core).toContain('brand["accent"]');
+    expect(core).not.toContain('color["aif"]');
     expect(core).not.toContain('requests.');
     expect(core).not.toContain('httpx.');
   });

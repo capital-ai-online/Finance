@@ -62,16 +62,19 @@ function hexToRgb(value: string): [number, number, number] {
   ];
 }
 
+// Renderer adapters consume canonical semantic/brand roles directly. The
+// deprecated color.aif namespace remains a temporary web compatibility surface
+// only and must never become a runtime dependency for PDF/media projections.
 const pdfBrandDefinition = {
   colors: {
     canvas: hexToRgb(tokenString('color', 'background')),
     foreground: hexToRgb(tokenString('color', 'foreground')),
-    goldLight: hexToRgb(tokenString('color', 'aif', 'gold', 'light')),
-    gold: hexToRgb(tokenString('color', 'aif', 'gold', 'DEFAULT')),
-    goldDark: hexToRgb(tokenString('color', 'aif', 'gold', 'dark')),
-    goldMuted: hexToRgb(tokenString('color', 'aif', 'gold', 'muted')),
-    cyan: hexToRgb(tokenString('color', 'aif', 'neon', 'cyan')),
-    purple: hexToRgb(tokenString('color', 'aif', 'neon', 'purple')),
+    goldLight: hexToRgb(tokenString('color', 'brand', 'primary')),
+    gold: hexToRgb(tokenString('color', 'brand', 'primary')),
+    goldDark: hexToRgb(tokenString('color', 'brand', 'primary')),
+    goldMuted: hexToRgb(tokenString('color', 'brand', 'primary')),
+    cyan: hexToRgb(tokenString('color', 'brand', 'cyan')),
+    purple: hexToRgb(tokenString('color', 'brand', 'accent')),
     success: hexToRgb(tokenString('color', 'semantic', 'success')),
     warning: hexToRgb(tokenString('color', 'semantic', 'warning')),
     danger: hexToRgb(tokenString('color', 'semantic', 'danger')),

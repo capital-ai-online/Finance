@@ -106,17 +106,18 @@ def load_brand_palette(token_path: Path = DEFAULT_TOKEN_PATH) -> BrandPalette:
         raise MediaRenderError(f"Design-token file not found: {token_path}")
     data = json.loads(token_path.read_text(encoding="utf-8"))
     color = data["color"]
-    aif = color["aif"]
+    brand = color["brand"]
     print_tokens = color["print"]
+    primary = str(_token_value(brand["primary"]))
     return BrandPalette(
         background=str(_token_value(color["background"])),
         foreground=str(_token_value(color["foreground"])),
-        gold_light=str(_token_value(aif["gold"]["light"])),
-        gold=str(_token_value(aif["gold"]["DEFAULT"])),
-        gold_dark=str(_token_value(aif["gold"]["dark"])),
-        gold_muted=str(_token_value(aif["gold"]["muted"])),
-        cyan=str(_token_value(aif["neon"]["cyan"])),
-        purple=str(_token_value(aif["neon"]["purple"])),
+        gold_light=primary,
+        gold=primary,
+        gold_dark=primary,
+        gold_muted=primary,
+        cyan=str(_token_value(brand["cyan"])),
+        purple=str(_token_value(brand["accent"])),
         text_primary=str(_token_value(print_tokens["textPrimary"])),
         text_secondary=str(_token_value(print_tokens["textSecondary"])),
         surface_light=str(_token_value(print_tokens["surfaceLight"])),
