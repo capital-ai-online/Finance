@@ -8,6 +8,7 @@ import {
 import { composeMemeHoneypotSimulationEvidence } from '../../src/platform/FinTechCore/Modules/Crypto/Adapters/GoPlusHoneypotSimulationEvidenceAdapter';
 
 const TOKEN = '0x1111111111111111111111111111111111111111';
+const OTHER_TOKEN = '0x4444444444444444444444444444444444444444';
 const FROM = '0x2222222222222222222222222222222222222222';
 const ROUTER = '0x3333333333333333333333333333333333333333';
 const NOW = '2026-08-24T17:30:00.000Z';
@@ -102,13 +103,19 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it('accepts a governed BUY pre-run only when the target-token delta is positive', async () => {
+  it('accepts the documented nested GoPlus ERC20 BUY delta only for the governed target token', async () => {
     const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
       result: {
         is_simulated: true,
         is_revert: false,
-        erc20_balance_changes: [{ token_address: TOKEN, change: '100' }],
+        erc20_balance_changes: [{
+          address: FROM,
+          erc20_change: [
+            { token_address: OTHER_TOKEN, change: '999' },
+            { token_address: TOKEN, change: '0x64' },
+          ],
+        }],
         flagged: [],
         suspicious_addresses: [],
       },
@@ -134,13 +141,16 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer test-key');
   });
 
-  it('accepts a governed SELL pre-run only when the target-token delta is negative', async () => {
+  it('accepts the documented nested GoPlus ERC20 SELL delta only when it is negative', async () => {
     const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
       result: {
         is_simulated: '1',
         is_revert: '0',
-        erc20_balance_changes: [{ token_address: TOKEN, token_balance_change: { change: '-250' } }],
+        erc20_balance_changes: [{
+          address: FROM,
+          erc20_change: [{ token_address: TOKEN, change: '-0xfa' }],
+        }],
       },
     }));
     const provider = new GoPlusTransactionSimulationProvider({
@@ -160,7 +170,14 @@ describe('P1-A GoPlus transaction simulation evidence', () => {
   it('keeps a completed simulation without target-token delta non-computable', async () => {
     const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
-      result: { is_simulated: true, is_revert: false, erc20_balance_changes: [] },
+      result: {
+        is_simulated: true,
+        is_revert: false,
+        erc20_balance_changes: [{
+          address: FROM,
+          erc20_change: [{ token_address: OTHER_TOKEN, change: '100' }],
+        }],
+      },
     }));
     const provider = new GoPlusTransactionSimulationProvider({
       apiKey: 'test-key',
