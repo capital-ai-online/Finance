@@ -92,6 +92,65 @@ describe('FreeCryptoNewsEvidenceProvider', () => {
     expect(requestedUrl).not.toContain('/api/sources');
   });
 
+  it('filters by the public display name while matching the upstream source key locally', async () => {
+    let requestedUrl = '';
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      requestedUrl = String(input);
+      return jsonResponse({
+        articles: [
+          {
+            title: 'CoinDesk article',
+            link: 'https://www.coindesk.com/markets/example',
+            pubDate: '2026-08-25T00:00:00Z',
+            source: 'CoinDesk',
+            sourceKey: 'coindesk',
+          },
+          {
+            title: 'Reuters article',
+            link: 'https://www.reuters.com/markets/example',
+            pubDate: '2026-08-25T00:01:00Z',
+            source: 'Reuters',
+            sourceKey: 'reuters_mainstream',
+          },
+        ],
+      });
+    }) as typeof fetch;
+
+    const provider = new FreeCryptoNewsEvidenceProvider({
+      fetchImpl,
+      nowMs: () => Date.parse('2026-08-25T00:10:00Z'),
+    });
+    const result = await provider.searchArticles({ source: 'CoinDesk', limit: 20 });
+
+    expect(result.status).toBe('VERIFIED');
+    expect(result.articles.map(article => article.sourceName)).toEqual(['CoinDesk']);
+    expect(requestedUrl).toBe('https://cryptocurrency.cv/api/news?limit=20&page=1');
+    expect(requestedUrl).not.toContain('source=');
+  });
+
+  it('accepts a normalized internal source key without exposing it as a UI requirement', async () => {
+    const fetchImpl = (async () => jsonResponse({
+      articles: [
+        {
+          title: 'U.Today article',
+          link: 'https://u.today/example',
+          pubDate: '2026-08-25T00:00:00Z',
+          source: 'U.Today',
+          sourceKey: 'u_today',
+        },
+      ],
+    })) as typeof fetch;
+
+    const provider = new FreeCryptoNewsEvidenceProvider({
+      fetchImpl,
+      nowMs: () => Date.parse('2026-08-25T00:10:00Z'),
+    });
+    const result = await provider.searchArticles({ source: 'u_today', limit: 20 });
+
+    expect(result.status).toBe('VERIFIED');
+    expect(result.articles[0]?.sourceName).toBe('U.Today');
+  });
+
   it('fails closed when the public evidence route is unavailable', async () => {
     const fetchImpl = (async () => jsonResponse({ error: 'unavailable' }, 503)) as typeof fetch;
     const provider = new FreeCryptoNewsEvidenceProvider({
