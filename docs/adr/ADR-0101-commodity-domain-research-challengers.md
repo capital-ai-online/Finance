@@ -63,6 +63,16 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 35. Die Validation Engine berechnet ausschließlich Research-Metriken und -Evidence: Rank IC, Rank-Monotonicity, Top-N Hit Rate, Return/Volatility, Drawdown, Profit Factor, Turnover, Regime-/Domain-Diagnostik und versionierte Kosten. Der resultierende `commodity-oos:<sha256>`-Identifier ist ein reproduzierbarer Review-Nachweis, **keine** Score-/Registry-/Ranking-/Trading-Authority.
 36. Für den Historical Replay dürfen validierte `research-candidate` Faktorweights numerisch angewendet werden, um ihre empirische Wirkung zu testen. Das ändert ihren Contract nicht: `executable=false`, `scoreEligible=false`; Runtime/Dispatcher darf diese Gewichte weiterhin nicht verwenden.
 
+## P2-B — Historical Vintage Acquisition & Dataset Assembly
+
+37. Ein historischer **Wert** und ein historisch **verfügbarer Vintage** sind unterschiedliche Evidence-Klassen. Eine heutige API-Abfrage eines alten EIA-, USDA- oder CFTC-Zeitraums wird deshalb als `CURRENT_HISTORY_ONLY` klassifiziert und darf nicht allein aufgrund des alten `observedAt` in ein promotionsfähiges PIT-Dataset gelangen.
+38. `CommodityHistoricalVintage` leitet den Evidence-Grad policybasiert aus Source, Acquisition Mode, `observedAt`, `availableAt`, `retrievedAt`, Release-/Revision-ID und Availability-Evidence ab. Ein Caller kann `PIT_VERIFIED` nicht als freies Boolean setzen. Jeder Vintage erhält einen content-addressed Fingerprint.
+39. EIA- und USDA-Historie ist nur dann `PIT_VERIFIED`, wenn ein **archivierter release-spezifischer Capture** den damals verfügbaren Payload/Vintage bindet. Für USDA gilt dies insbesondere wegen revisionsfähiger Forecast-/Market-Year-Werte; eine aktuelle `dataReleaseDates`-Antwort beweist nicht den Inhalt früherer Releases.
+40. CFTC `report_date` ist Observation-Time und nicht automatisch Availability-Time. PRE-/Socrata-Historie aus einer heutigen Abfrage bleibt `CURRENT_HISTORY_ONLY`. `PIT_VERIFIED` erfordert Evidence des tatsächlich veröffentlichten/archivierten Report-Artefakts einschließlich Publikationszeitpunkt; eine nur kalenderbasierte Friday-Annahme wird nicht als Beweis akzeptiert.
+41. USGS MCS wird als versionierte Annual Release modelliert: Statistikjahr ist `observedAt`, Veröffentlichungs-/Versionszeitpunkt ist `availableAt`. Ein in MCS 2026 enthaltener Wert für 2025 darf folglich nicht für eine Decision vor Veröffentlichung der 2026er Release verwendet werden. Versions-/Revision-Evidence bleibt Bestandteil des Vintages.
+42. EU-CRMA-Methodik und numerische Criticality-Evidence werden getrennt behandelt. Economic Importance und Supply Risk bleiben getrennte Features; ein numerical PIT Vintage benötigt eine versionierte veröffentlichte Assessment-/Release-Evidence. Die Verordnung allein autorisiert keinen historischen Zahlenwert.
+43. `assembleCommodityHistoricalDataset()` ist die einzige neue Brücke von source-spezifischen Vintages zur PR-#519-Historical-Validation-Engine. Sie akzeptiert ausschließlich `PIT_VERIFIED`, prüft Asset/Domain/Decision Availability sowie Normalisierungs-Lineage und delegiert die finale Dataset-/PIT-/Factor-Evidence-Validierung an `validateCommodityHistoricalDataset()`. Aktuelle Historie wird weder still verworfen noch hochgestuft.
+
 ## Sicherheits-, Governance- und Datenintegritätsfolgen
 
 - Keine neue Credential- oder IAM-Authority.
@@ -80,6 +90,8 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - Backtest-Evidence ohne reale Release-/Vintage-Semantik gilt als Leakage-Risiko und ist nicht promotion-fähig.
 - Historical Dataset und OOS Evidence enthalten ausschließlich Identitäten/Lineage/Research-Werte; sie eröffnen keinen neuen externen Write-/Secret-/Execution-Pfad.
 - Der Backtest-Executor importiert keine Provider-Gateways, keine Routes und keinen `ScoringDispatcher`/`ScoringModelRegistry`/Ranking-Pfad.
+- Historical Acquisition nutzt für HTTP-Quellen weiterhin `ResearchEvidenceProviderHttp`; es entsteht kein zweiter Rate-Limit-/Circuit-Breaker-/Provider-Health-Stack.
+- Evidence Grade ist fail-closed. `CURRENT_HISTORY_ONLY` und `REFERENCE_STATIC` bleiben Research-Evidence und können nicht durch Dataset Assembly zu `PIT_VERIFIED` konvertiert werden.
 
 ## Nicht gewählt
 
@@ -92,6 +104,8 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - Cross-Factor-Renormalisierung bei Missing Data;
 - Backtesting mit heutiger/latest-revision Evidence für historische Entscheidungszeitpunkte;
 - Live-Provider-Aufrufe innerhalb des Historical Backtest Executors;
+- heutige EIA-/USDA-/CFTC-Historie als implizit point-in-time korrekt;
+- aus CFTC-Wochentag/Report-Date abgeleitete Availability ohne Release-Artefakt;
 - rückwirkende Universe-Zusammensetzung aus dem heutigen Katalog;
 - Training auf Targets, die zum Test-Entscheidungszeitpunkt noch nicht realisiert waren;
 - automatische Promotion durch `promotionEvidenceEligible` oder OOS-Fingerprint;
@@ -102,6 +116,6 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 
 ## Validierung / Promotion
 
-P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability-, Historical-Dataset-, Point-in-Time-, Survivorship-, Outcome-Leakage-, Confidence-, Benchmark- und Walk-forward/OOS-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die vollständigen P2/P3-Gates der Commodity Roadmap einschließlich realer OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
+P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability-, Historical-Dataset-, Historical-Vintage-, Point-in-Time-, Survivorship-, Outcome-Leakage-, Confidence-, Benchmark- und Walk-forward/OOS-Negativtests. Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert und erfordert die vollständigen P2/P3-Gates der Commodity Roadmap einschließlich realer OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review und expliziter Owner-Entscheidung.
 
 Für das Error-Handling sind zusätzlich mindestens Application-Level-Providerfehler (`status=error`), Health-Diagnostik mit `payloadUsable=false` sowie die Nichtweitergabe roher Exceptiontexte über Commodity-5xx-Routen als Regression zu prüfen.
