@@ -4,7 +4,8 @@
 // granted scoring authority by this route.
 
 import express from 'express';
-import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
+import { getAssetCatalogEntry, getAssetSearchCatalog } from '../../lib/assetSearchCatalog';
+import type { AssetCatalogEntry } from '../../services/assetCatalogIntegrity';
 import { FreeCryptoNewsEvidenceProvider } from '../../platform/MarketData/providers/FreeCryptoNewsEvidenceProvider';
 import { GdeltNewsEvidenceProvider } from '../../platform/MarketData/providers/GdeltNewsEvidenceProvider';
 import { getVerifiedAssetDisplay } from '../../services/verifiedAssetDisplay';
@@ -20,7 +21,7 @@ const MAX_NEWS_ITEMS = 20;
 const PROVIDER_FETCH_LIMIT = 50;
 const DEFAULT_LIMIT = 7;
 
-type NewsAssetType = RegistryAsset['type'];
+type NewsAssetType = AssetCatalogEntry['type'];
 
 interface NewsAssetMeta {
   readonly symbol: string;
@@ -60,8 +61,10 @@ interface SourceCacheEntry {
 const newsCache = new Map<string, NewsCacheEntry>();
 let sourceCache: SourceCacheEntry | null = null;
 
+// Use the same canonical catalog that backs /api/registry/assets and VerifiedAssetDisplay.
+// Legacy AssetRegistry bootstrap values are intentionally not a second Newsfeed universe.
 const NEWS_ASSETS: readonly NewsAssetMeta[] = Object.freeze(
-  assetRegistry.getAssets()
+  getAssetSearchCatalog()
     .map(asset => Object.freeze({ symbol: asset.symbol, name: asset.name, type: asset.type }))
     .sort((a, b) => a.type.localeCompare(b.type) || a.symbol.localeCompare(b.symbol)),
 );
@@ -113,7 +116,7 @@ function gdeltDomainFilter(source: string | null): string {
 
 function getAssetMeta(symbol: string | null): NewsAssetMeta | null {
   if (!symbol) return null;
-  const asset = assetRegistry.getAsset(symbol);
+  const asset = getAssetCatalogEntry(symbol);
   return asset ? { symbol: asset.symbol, name: asset.name, type: asset.type } : null;
 }
 
@@ -218,7 +221,7 @@ newsRouter.get('/', async (req, res) => {
   if (symbol && !asset) {
     return res.status(400).json({
       status: 'INVALID_REQUEST',
-      reason: 'Asset ist nicht im kanonischen Enterprise-Universum registriert.',
+      reason: 'Asset ist nicht im kanonischen Enterprise-Asset-Katalog registriert.',
     });
   }
 
@@ -336,11 +339,11 @@ newsRouter.get('/sources', async (_req, res) => {
   });
 });
 
-/** Canonical Enterprise Scorer asset metadata used exclusively for Newsfeed filtering. */
+/** Canonical Enterprise asset-catalog metadata used exclusively for Newsfeed filtering. */
 newsRouter.get('/assets', (_req, res) => {
   return res.json({
     assets: NEWS_ASSETS,
     count: NEWS_ASSETS.length,
-    source: 'assetRegistry',
+    source: 'assetSearchCatalog',
   });
 });
