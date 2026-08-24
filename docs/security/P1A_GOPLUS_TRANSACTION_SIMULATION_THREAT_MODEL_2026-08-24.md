@@ -22,7 +22,7 @@ The security objective is therefore **evidence integrity and authority containme
 
 ## 2. Assets to protect
 
-1. `GOPLUS_API_KEY` confidentiality and non-propagation into source, logs, PR metadata or evidence records.
+1. GoPlus Bearer access-token confidentiality and non-propagation into source, logs, PR metadata or evidence records. The existing repository variable name `GOPLUS_API_KEY` is retained for compatibility, but its P1-A value is the Bearer access token expected by the Transaction Simulation API, not a raw GoPlus `app_key` or `app_secret`.
 2. Route/calldata provenance and the upstream route-authority binding supplied by the caller.
 3. Chain, token, sender, target and transaction-parameter identity.
 4. Integrity of simulation status, revert state and target-token balance changes.
@@ -54,14 +54,20 @@ Risk: credential leakage, provider outage, schema drift, malicious/malformed res
 
 Controls:
 
-- API key is read only from runtime configuration and sent in the Authorization header;
-- absent key returns `NOT_CONFIGURED` before transport;
+- the GoPlus Transaction Simulation endpoint is called over native server-side TypeScript REST;
+- official GoPlus documentation requires `Authorization: Bearer ...` for this endpoint;
+- the current contract consumes an already-issued Bearer access token from server runtime configuration under the compatibility variable `GOPLUS_API_KEY`;
+- the token is declared as a canonical `finance-secrets.env` secret and must never use a `VITE_*` name;
+- a raw GoPlus `app_secret` is neither accepted by the P1-A provider nor sent as the Bearer value;
+- absent token returns `NOT_CONFIGURED` before transport;
 - shared `ResearchEvidenceProviderHttp` retains ProviderMatrix, timeout, rate-limit, circuit-breaker and Supervisor-health behavior;
 - non-success transport/application results fail closed;
 - response must expose deterministic simulation/revert fields before it is admissible;
 - no provider response can grant a financial or execution capability.
 
-Residual risk: HTTPS/provider integrity and GoPlus service correctness remain external dependencies. P1-A does not claim independent provider corroboration.
+The standard GoPlus token-issuance API itself uses `app_key`, timestamp and a SHA-1 signature derived with `app_secret`. P1-A deliberately does **not** implement credential exchange/refresh in this scope; automatic token lifecycle is a separate security/operations decision. This avoids introducing an additional long-lived `app_secret` into the application solely for a research-only foundation.
+
+Residual risk: HTTPS/provider integrity, GoPlus service correctness and Bearer-token lifecycle remain external dependencies. P1-A does not claim independent provider corroboration or automatic token renewal.
 
 ### TB-3 — GoPlus response -> Meme hard-gate research evidence
 
@@ -84,8 +90,10 @@ Residual risk: this contract foundation does not yet establish a production fres
 
 | Threat | Impact | Control | Residual state |
 |---|---|---|---|
-| API key omitted | accidental unauthenticated fallback | `NOT_CONFIGURED`; no fetch | controlled |
-| API key leakage | provider credential compromise | env-only lookup; no key in evidence/logging contract | operational secret hygiene still required |
+| Bearer token omitted | accidental unauthenticated fallback | `NOT_CONFIGURED`; no fetch | controlled |
+| Bearer token leakage | provider credential compromise | `finance-secrets.env` only; no token in evidence/logging contract; never `VITE_*` | operational secret hygiene still required |
+| Raw app key/secret mistaken for Bearer token | auth failure or secret misuse | documented contract: P1-A expects issued Bearer token only | controlled for current scope |
+| Token expiry/rotation | source unexpectedly unavailable | fail-closed transport status; no PASS; automatic refresh intentionally out of scope | open operational prerequisite |
 | Arbitrary/invalid calldata | misleading simulation | strict calldata/address validation + route authority/evidence refs | upstream route-authority truth still external |
 | BUY/SELL identity drift | combines unrelated simulations | exact chain/token/route-authority correlation | controlled |
 | Provider outage / HTTP failure | missing evidence | `SOURCE_UNAVAILABLE`; no PASS | controlled |
@@ -103,7 +111,7 @@ Residual risk: this contract foundation does not yet establish a production fres
 
 The P1-A unit suite must prove at minimum:
 
-- missing API key causes no network call;
+- missing Bearer access token causes no network call;
 - missing route authority/evidence causes no network call;
 - positive BUY target-token delta is required for BUY success;
 - negative SELL target-token delta is required for SELL success;
@@ -119,7 +127,7 @@ The P1-A unit suite must prove at minimum:
 P1-A may not be treated as productive Meme/DeFi promotion evidence until a separate reviewed package establishes:
 
 1. governed real route/calldata construction and route-authority verification;
-2. production credential/entitlement availability without exposing the secret;
+2. production Bearer-token entitlement, expiry/rotation handling and availability without exposing credentials;
 3. chain/asset coverage for the governed universe;
 4. versioned freshness/SLA admission policy;
 5. known-honeypot and normal-token false-positive/false-negative calibration;
@@ -132,8 +140,8 @@ FT-7 real execution remains independently blocked.
 ## 7. Data integrity and privacy
 
 - No customer PII is required by the contract.
-- No private key, wallet signing secret or exchange credential is accepted.
-- `GOPLUS_API_KEY` is not part of request/evidence output objects.
+- No private key, wallet signing secret, GoPlus `app_secret` or exchange credential is accepted by the P1-A request contract.
+- `GOPLUS_API_KEY` is a server-only compatibility name for the issued GoPlus Bearer access token and is not part of request/evidence output objects.
 - Transaction fingerprints contain a hash of request identity, not the secret.
 - Evidence references must remain provenance pointers, not raw credentials.
 - Missing/malformed evidence is never synthesized.
