@@ -19,15 +19,19 @@ function isLocalDevelopmentOrigin(url: URL): boolean {
   );
 }
 
+function allowsLoopback(nodeEnv: string): boolean {
+  return nodeEnv === 'development' || nodeEnv === 'test';
+}
+
 /**
  * Validates and canonicalizes the OAuth callback URI before it becomes part of persisted state.
- * Production accepts only the CAPITAL-AI HTTPS origins. Non-production additionally accepts
- * loopback localhost/127.0.0.1 so local OAuth testing remains possible without widening the
- * production trust boundary.
+ * Production accepts only the CAPITAL-AI HTTPS origins. Loopback is allowed exclusively when
+ * NODE_ENV is explicitly `development` or `test`; unknown/missing environment values therefore
+ * inherit the strict production-origin boundary instead of silently widening trust.
  */
 export function assertSafeOAuthRedirectUri(
   redirectUri: string,
-  nodeEnv = process.env.NODE_ENV || 'development'
+  nodeEnv = process.env.NODE_ENV || ''
 ): string {
   let url: URL;
   try {
@@ -48,12 +52,13 @@ export function assertSafeOAuthRedirectUri(
   }
 
   const productionOrigin = PRODUCTION_OAUTH_ORIGINS.has(url.origin);
-  if (nodeEnv === 'production') {
-    if (!productionOrigin || url.protocol !== 'https:') {
-      throw new Error('OAuth redirect URI origin is not allowed in production.');
-    }
-  } else if (!productionOrigin && !isLocalDevelopmentOrigin(url)) {
+  const explicitLoopback = allowsLoopback(nodeEnv) && isLocalDevelopmentOrigin(url);
+
+  if (!productionOrigin && !explicitLoopback) {
     throw new Error('OAuth redirect URI origin is not allowed.');
+  }
+  if (productionOrigin && url.protocol !== 'https:') {
+    throw new Error('OAuth redirect URI origin is not allowed in production.');
   }
 
   return `${url.origin}${SOCIAL_MEDIA_OAUTH_CALLBACK_PATH}`;
