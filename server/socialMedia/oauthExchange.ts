@@ -45,7 +45,7 @@ export async function createAuthorizationRequest(
 
   let safeRedirectUri: string;
   try {
-    safeRedirectUri = assertSafeOAuthRedirectUri(redirectUri, getCleanEnv('NODE_ENV') || 'development');
+    safeRedirectUri = assertSafeOAuthRedirectUri(redirectUri, getCleanEnv('NODE_ENV') || '');
   } catch {
     // Die abgelehnte URI selbst wird bewusst nicht geloggt: Host/Forwarded-Header sind
     // untrusted input und sollen weder Logs injizieren noch dort als scheinbar valide URL stehen.
@@ -220,7 +220,7 @@ interface ProfileInfo {
   handle?: string;
   avatarUrl?: string;
   followersCount?: number;
-  externalAccountId?: string;
+  externalAccountId: string;
   /** Fuer Meta: das tatsaechlich zu persistierende Token ist das Page-Token, nicht das User-Token. */
   effectiveAccessToken?: string;
 }
@@ -233,13 +233,13 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
       });
       const json: any = await res.json();
       const channel = json.items?.[0];
-      if (!channel) return {};
+      if (!res.ok || !channel?.id) throw new Error(`YouTube profile HTTP ${res.status}; identity missing=${!channel?.id}`);
       return {
         accountName: channel.snippet?.title,
         handle: channel.snippet?.customUrl ? `@${channel.snippet.customUrl}` : channel.snippet?.title,
         avatarUrl: channel.snippet?.thumbnails?.default?.url,
         followersCount: channel.statistics?.subscriberCount ? Number(channel.statistics.subscriberCount) : undefined,
-        externalAccountId: channel.id,
+        externalAccountId: String(channel.id),
       };
     }
 
@@ -250,37 +250,39 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
       );
       const json: any = await res.json();
       const user = json.data?.user;
-      if (!user) return {};
+      if (!res.ok || !user?.open_id) throw new Error(`TikTok profile HTTP ${res.status}; identity missing=${!user?.open_id}`);
       return {
         accountName: user.display_name,
-        handle: `@${user.display_name}`,
+        handle: user.display_name ? `@${user.display_name}` : undefined,
         avatarUrl: user.avatar_url,
         followersCount: user.follower_count,
-        externalAccountId: user.open_id,
+        externalAccountId: String(user.open_id),
       };
     }
 
     if (platform === 'facebook' || platform === 'instagram') {
       // Meta-Publishing laeuft ueber die Page (nicht das User-Konto): erst die verwalteten
       // Pages laden, die erste nehmen (Mehrfach-Page-Auswahl ist Folgearbeit, siehe ADR-0026).
-      // Resource-API Bearer Tokens werden gemaess OAuth Security BCP nicht in Query-URLs gelegt.
       const pagesRes = await fetch('https://graph.facebook.com/v19.0/me/accounts', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const pagesJson: any = await pagesRes.json();
       const page = pagesJson.data?.[0];
-      if (!page) return {};
+      if (!pagesRes.ok || !page?.id || !page?.access_token) {
+        throw new Error(`Meta pages HTTP ${pagesRes.status}; page identity/token missing`);
+      }
 
       if (platform === 'facebook') {
         return {
           accountName: page.name,
           handle: page.name,
-          externalAccountId: page.id,
+          externalAccountId: String(page.id),
           effectiveAccessToken: page.access_token,
         };
       }
 
-      // instagram: ueber die Page das verknuepfte IG-Business-Konto ermitteln.
+      // Instagram ist erst verbunden, wenn eine tatsaechliche Business-/Creator-Identity
+      // hinter der Page nachgewiesen wurde; ein Page-Token allein erzeugt keinen connected-State.
       const pageId = encodeURIComponent(String(page.id));
       const igRes = await fetch(
         `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account`,
@@ -288,8 +290,8 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
       );
       const igJson: any = await igRes.json();
       const igAccountId = igJson.instagram_business_account?.id;
-      if (!igAccountId) {
-        return { effectiveAccessToken: page.access_token }; // Page verbunden, aber keine IG-Verknuepfung
+      if (!igRes.ok || !igAccountId) {
+        throw new Error(`Instagram binding HTTP ${igRes.status}; business identity missing=${!igAccountId}`);
       }
       const encodedIgAccountId = encodeURIComponent(String(igAccountId));
       const igProfileRes = await fetch(
@@ -297,12 +299,13 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
         { headers: { Authorization: `Bearer ${page.access_token}` } }
       );
       const igProfile: any = await igProfileRes.json();
+      if (!igProfileRes.ok) throw new Error(`Instagram profile HTTP ${igProfileRes.status}`);
       return {
         accountName: igProfile.username,
-        handle: `@${igProfile.username}`,
+        handle: igProfile.username ? `@${igProfile.username}` : undefined,
         avatarUrl: igProfile.profile_picture_url,
         followersCount: igProfile.followers_count,
-        externalAccountId: igAccountId,
+        externalAccountId: String(igAccountId),
         effectiveAccessToken: page.access_token,
       };
     }
@@ -313,19 +316,24 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
       });
       const json: any = await res.json();
       const user = json.data;
-      if (!user) return {};
+      if (!res.ok || !user?.id) throw new Error(`X profile HTTP ${res.status}; identity missing=${!user?.id}`);
       return {
         accountName: user.name || user.username,
-        handle: `@${user.username}`,
+        handle: user.username ? `@${user.username}` : undefined,
         avatarUrl: user.profile_image_url,
         followersCount: user.public_metrics?.followers_count,
-        externalAccountId: user.id,
+        externalAccountId: String(user.id),
       };
     }
+
+    throw new Error('Unsupported provider profile path');
   } catch (err: any) {
-    logger.error('Profil-Nachladen fehlgeschlagen (Konto bleibt trotzdem verbunden)', { platform, error: err?.message || String(err) });
+    logger.error('Provider-Profil konnte nicht verifiziert werden; OAuth-Verbindung wird nicht persistiert', {
+      platform,
+      error: err?.message || String(err),
+    });
+    throw new Error(`${platform}: Provider-Konto konnte nicht verifiziert werden.`);
   }
-  return {};
 }
 
 export type OAuthCallbackResult =
