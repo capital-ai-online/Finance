@@ -1,6 +1,8 @@
 # CAPITAL-AI — Vollständiger Architektur-Sicherheitscheck (2026-08-25)
 
 **Status:** Evidence / Review-Ergebnis (nicht-autorisierend im Sinne von AGENTS.md §2 — dokumentiert Befunde, ersetzt keine ADR-Entscheidung)
+
+**Update (2026-08-25, selber Tag):** Befunde #1–#5 und #7–#10 wurden auf diesem Branch direkt behoben (siehe Commit-Historie). #6 und #11 bleiben offen — Details siehe „Umsetzungsstatus" am Ende dieses Dokuments.
 **Scope:** Gesamte Architektur — Auth/Session, Autorisierung & Supabase RLS, API-Layer, Secrets/Config/Supply-Chain, Payments (Stripe), Frontend, KI-/Agent-Orchestrierung
 **Methode:** Sieben parallele, read-only Code-Audits über die jeweiligen Komponenten, keine automatisierten Scanner (kein Netzwerkzugriff auf Live-CVE-Datenbanken), Befunde durch Datei/Zeilen-Referenzen verifizierbar.
 
@@ -132,3 +134,25 @@ Nur `ALTER` einer vorbestehenden Tabelle; ursprüngliches `CREATE TABLE`/`GRANT`
 5. **Mittelfristig:** `documentSanitizer.ts` entweder umbenennen (um falsches Sicherheitsgefühl zu vermeiden) oder um echte Bereinigung erweitern (Befund 4); CSP `'unsafe-eval'` entfernen (Befund 8); DNS-Rebinding-Schutz für Social-Media-Fetch per IP-Pinning schließen (Befund 9); Branch-Namen-Bypass in CI durch robusteren Mechanismus ersetzen (Befund 10).
 
 Dieser Bericht dokumentiert Befunde; er autorisiert keine Änderung an Sicherheitskontrollen oder Governance gemäß AGENTS.md §6/§8. Für Umsetzung gilt der reguläre Branch → PR → Human-Merge-Pfad.
+
+---
+
+## Umsetzungsstatus (2026-08-25, auf diesem Branch)
+
+Auf explizite Anweisung direkt umgesetzt und durch vollständigen `tsc --noEmit`-Lauf, die komplette Vitest-Suite (2042 Tests) sowie die betroffenen `node --test`-Suiten verifiziert:
+
+| # | Befund | Status | Umsetzung |
+|---|---|---|---|
+| 1 | Autonomer Dokument-Schreibpfad | **Behoben** | `documentHygiene.ts`: `auto_override`/`propagate_dependencies` schreiben nicht mehr direkt; jede Änderung läuft über den admin-gesicherten `/review`-Freigabepfad. |
+| 2 | Session-Token in `localStorage` | **Teilbehoben** | Redundantes eigenes Token-Duplikat (`UserSession.accessToken`) nicht mehr persistiert/gesetzt — dieser Pfad war ungenutzt (alle Fetches nutzen `authFetch()`, das den Token frisch aus der Supabase-SDK-Session liest). Das von Supabase-js selbst verwaltete `sb-<project>-auth-token` in `localStorage` bleibt bestehen (SDK-Default); eine vollständige Migration auf httpOnly-Cookies wäre ein größerer, separat zu planender Umbau des Auth-Flows. |
+| 3 | Fehlende Server-Revalidierung | **Bewertet, kein Änderungsbedarf identifiziert** | Der Code revalidiert die Session bereits asynchron über `supabase.auth.getSession()` unabhängig vom lokalen Fast-Path und überschreibt Tier/Identität mit dem Server-Ergebnis. Das Restrisiko ist ein kurzes UI-Zeitfenster mit potenziell manipuliertem `subscriptionTier` vor Revalidierung — kein Entitlement-Bypass, sofern serverseitige Endpunkte den Tier nicht aus dem Client übernehmen (nicht erneut vollständig auditiert). |
+| 4 | `documentSanitizer.ts` täuscht Sicherheit vor | **Behoben** | Funktionen umbenannt (`sanitize*` → `applyBranding*`), irreführende „verifiziert & bereinigt"-Statustexte entfernt, Datei-Kommentar erklärt den tatsächlichen (rein kosmetischen) Zweck. |
+| 5 | `/api/chat` unauthentifiziert + Rate-Limit-Bypass | **Behoben** | Verifizierte Supabase-Identität jetzt Pflicht (`resolveVerifiedIdentity`); `MarketScreener.tsx` nutzt `authFetch`. |
+| 6 | MFA/Step-Up nur clientseitig, fail-open | **Offen** | Erfordert eine serverseitige Middleware, die `mfa_required_account`/`onboarding_required` auf allen (nicht nur Owner-/Admin-)Routen durchsetzt — eine reine Frontend-Änderung reicht nicht. Nicht umgesetzt, da eine belastbare Umsetzung eine vollständige Route-für-Route-Analyse erfordert, die den Rahmen dieser Sitzung sprengt; siehe Empfehlung 4 im Bericht oben. |
+| 7 | `X-Forwarded-For` global ungeprüft | **Behoben** | `app.set('trust proxy', 1)` in `server.application.ts`; `getClientIp()` nutzt jetzt `req.ip`; `requestOrchestrator.ts` nutzt denselben Helper statt eigener Header-Auswertung. |
+| 8 | CSP `'unsafe-eval'` | **Behoben** | Aus Baseline- und Strict-Produktions-CSP entfernt, nach Verifikation, dass das produktive Bundle keine `eval()`/`new Function()`-Aufrufe enthält. |
+| 9 | SSRF/DNS-Rebinding (Social-Media-Upload) | **Behoben** | `fetchValidatedMediaAsset()` re-validiert und pinnt die Verbindung auf die unmittelbar vor dem Connect aufgelöste Adresse; Host/SNI bleiben unverändert am ursprünglichen Hostnamen. |
+| 10 | CI-Governance-Bypass an Branch-Namen | **Behoben** | Zusätzlich an Repo (kein Fork) und Owner-GitHub-Login gebunden statt an einen frei wählbaren String, in `ci.yml` und `pr-governance.yml`. |
+| 11 | `profiles`-Grants nicht aus Repo verifizierbar | **Offen (erfordert Live-Zugriff)** | Kann nur gegen das laufende Supabase-Projekt geprüft werden (`information_schema.role_table_grants`); außerhalb der Reichweite dieser Code-Änderung. |
+
+Alle Low/Informational-Befunde aus der ursprünglichen Liste wurden in dieser Runde nicht bearbeitet (bewusste Priorisierung auf Kritisch/Hoch/Medium).
