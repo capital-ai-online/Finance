@@ -1,6 +1,6 @@
 import React from 'react';
 import { Activity, Beaker, Database, ShieldCheck } from 'lucide-react';
-import { RawMaterialsDashboard } from '../../../components/RawMaterialsDashboard';
+import { RawMaterialsDashboard } from './RawMaterialsDashboard';
 
 const TOOL_PROJECTIONS = [
   {
@@ -73,4 +73,3 @@ export function CommodityEvaluationWorkspace() {
     </section>
   );
 }
-

@@ -12,6 +12,10 @@ describe('Commodity evaluation tools in the Asset Universe', () => {
     'utf8',
   );
   const rawMaterialsSource = fs.readFileSync(
+    path.join(process.cwd(), 'src/features/commodities/ui/RawMaterialsDashboard.tsx'),
+    'utf8',
+  );
+  const rawMaterialsCompatibilitySource = fs.readFileSync(
     path.join(process.cwd(), 'src/components/RawMaterialsDashboard.tsx'),
     'utf8',
   );
@@ -34,6 +38,9 @@ describe('Commodity evaluation tools in the Asset Universe', () => {
     expect(workspaceSource).toContain('CANONICAL SCORE');
     expect(workspaceSource).toContain('NOT SCORE ELIGIBLE');
     expect(workspaceSource).toContain('<RawMaterialsDashboard />');
+    expect(rawMaterialsCompatibilitySource).toContain(
+      "from '../features/commodities/ui/RawMaterialsDashboard'",
+    );
   });
 
   it('loads the canonical score only from the governed verified-score route and preserves fail-closed UI states', () => {
@@ -53,4 +60,3 @@ describe('Commodity evaluation tools in the Asset Universe', () => {
     expect(rawMaterialsSource).toContain('NIEDRIGE RESILIENZ / HOHES RISIKO');
   });
 });
-
