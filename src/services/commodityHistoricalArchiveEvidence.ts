@@ -150,8 +150,8 @@ function nonEmpty(value: string | null | undefined): boolean {
   return Boolean(value?.trim());
 }
 
-function validSha256(value: string): boolean {
-  return /^[0-9a-f]{64}$/i.test(value.trim());
+function validSha256(value: unknown): boolean {
+  return typeof value === 'string' && /^[0-9a-f]{64}$/i.test(value.trim());
 }
 
 function isArchiveProviderId(value: string): value is CommodityHistoricalArchiveProviderId {
