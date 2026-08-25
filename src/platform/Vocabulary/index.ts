@@ -14,7 +14,7 @@ export {
   type GovernanceLifecycleSink,
   type GovernanceLifecycleType,
 } from './Services/GovernanceLifecycle';
-export { VocabularyValidator } from './Validators/VocabularyValidator';
+export { VocabularyValidator, normalizeVocabularyTerm } from './Validators/VocabularyValidator';
 export type {
   UiMessageDefinition,
   UiMessageFinding,
