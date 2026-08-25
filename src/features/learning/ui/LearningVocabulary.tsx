@@ -30,6 +30,10 @@ const CATEGORY_LABELS: Record<VocabularyCategory, string> = {
 const ALL_CATEGORIES = 'all' as const;
 type CategoryFilter = typeof ALL_CATEGORIES | VocabularyCategory;
 
+function normalizeSearch(value: string): string {
+  return value.trim().normalize('NFKC').toLocaleLowerCase('de-DE');
+}
+
 function isVocabularyCategory(value: string): value is VocabularyCategory {
   return Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, value);
 }
@@ -40,7 +44,7 @@ function parseCategoryFilter(value: string): CategoryFilter {
 }
 
 function searchableText(concept: VocabularyConcept): string {
-  return [
+  return normalizeSearch([
     concept.id,
     concept.canonicalCodeTerm,
     concept.displayNameDE,
@@ -48,9 +52,7 @@ function searchableText(concept: VocabularyConcept): string {
     concept.definitionDE,
     concept.definitionEN,
     ...concept.aliases,
-  ]
-    .join(' ')
-    .toLocaleLowerCase('de-DE');
+  ].join(' '));
 }
 
 function governanceReferences(concept: VocabularyConcept): string[] {
@@ -58,7 +60,7 @@ function governanceReferences(concept: VocabularyConcept): string[] {
     ...concept.essReferences,
     ...concept.adrReferences,
     ...concept.traceabilityReferences,
-  ]));
+  ])).sort();
 }
 
 export function LearningVocabulary() {
@@ -83,7 +85,7 @@ export function LearningVocabulary() {
   );
 
   const filteredConcepts = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase('de-DE');
+    const normalizedQuery = normalizeSearch(query);
 
     return approvedConcepts.filter((concept) => {
       if (category !== ALL_CATEGORIES && concept.category !== category) return false;
@@ -104,10 +106,10 @@ export function LearningVocabulary() {
               </div>
               <div>
                 <h1 id="learning-vocabulary-title" className="text-2xl font-black text-text-primary font-display sm:text-3xl">
-                  CAPITAL-AI Vocabulary
+                  Capital-AI Learning Platform
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">
-                  Das freigegebene zweisprachige Begriffssystem von CAPITAL-AI – direkt aus der kanonischen Vocabulary Registry, ohne kopierte oder lokal neu definierte Begriffe.
+                  Das freigegebene zweisprachige Vocabulary von CAPITAL-AI – direkt aus der kanonischen Registry, ohne kopierte oder lokal neu definierte Begriffe.
                 </p>
               </div>
             </div>
