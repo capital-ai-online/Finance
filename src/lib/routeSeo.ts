@@ -19,6 +19,12 @@ const DEFAULT: RouteSeo = {
 
 const ROUTES: Record<string, RouteSeo> = {
   '/': DEFAULT,
+  '/learning-platform': {
+    title: 'Capital-AI Learning Platform – Canonical Vocabulary',
+    description:
+      'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen read-only bereit.',
+    canonicalPath: '/learning-platform',
+  },
   '/impressum': {
     title: 'Impressum – CAPITAL-AI',
     description: 'Impressum und Anbieterkennzeichnung gemäß TMG §5 für CAPITAL-AI (Sven Kulessa).',
