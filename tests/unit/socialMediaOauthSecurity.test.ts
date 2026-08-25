@@ -28,7 +28,7 @@ describe('social media OAuth redirect binding', () => {
     ).toThrow(/not allowed/i);
   });
 
-  it('accepts loopback callbacks only outside production', () => {
+  it('accepts loopback only for explicit development/test environments', () => {
     expect(
       assertSafeOAuthRedirectUri(`http://localhost:3000${SOCIAL_MEDIA_OAUTH_CALLBACK_PATH}`, 'development')
     ).toBe(`http://localhost:3000${SOCIAL_MEDIA_OAUTH_CALLBACK_PATH}`);
@@ -36,9 +36,11 @@ describe('social media OAuth redirect binding', () => {
       assertSafeOAuthRedirectUri(`http://127.0.0.1:3000${SOCIAL_MEDIA_OAUTH_CALLBACK_PATH}`, 'test')
     ).toBe(`http://127.0.0.1:3000${SOCIAL_MEDIA_OAUTH_CALLBACK_PATH}`);
 
-    expect(() =>
-      assertSafeOAuthRedirectUri(`http://localhost:3000${SOCIAL_MEDIA_OAUTH_CALLBACK_PATH}`, 'production')
-    ).toThrow(/not allowed/i);
+    for (const nodeEnv of ['production', '', 'staging', 'prodution']) {
+      expect(() =>
+        assertSafeOAuthRedirectUri(`http://localhost:3000${SOCIAL_MEDIA_OAUTH_CALLBACK_PATH}`, nodeEnv)
+      ).toThrow(/not allowed/i);
+    }
   });
 
   it('rejects callback path, query, fragment and userinfo manipulation', () => {
@@ -75,22 +77,44 @@ describe('social media OAuth source security regressions', () => {
     expect(code).toContain(".is('used_at', null)");
     expect(code).toContain(".gt('expires_at'");
     expect(code).toContain('assertSafeOAuthRedirectUri');
+    expect(code).toContain("getCleanEnv('NODE_ENV') || ''");
     expect(code).toContain('redirect_uri: safeRedirectUri');
   });
 
-  it('does not put Meta resource access tokens into URLs or expose raw provider JSON in errors', () => {
+  it('keeps Meta resource access tokens out of URLs and request bodies', () => {
+    const oauthCode = source('server/socialMedia/oauthExchange.ts');
+    const publishCode = source('server/socialMedia/platformPublishers.ts');
+
+    for (const code of [oauthCode, publishCode]) {
+      expect(code).not.toMatch(/[?&]access_token=/);
+    }
+    expect(oauthCode).not.toMatch(/me\/accounts\?access_token=/);
+    expect(publishCode).not.toContain('access_token: input.accessToken');
+    expect(publishCode).toContain('Authorization: `Bearer ${input.accessToken}`');
+    expect(publishCode).toContain('encodeURIComponent(String(input.externalAccountId))');
+  });
+
+  it('does not expose raw provider token JSON in OAuth exchange errors', () => {
     const code = source('server/socialMedia/oauthExchange.ts');
-    expect(code).not.toMatch(/me\/accounts\?access_token=/);
-    expect(code).not.toMatch(/fields=[^`\n]*&access_token=/);
     expect(code).not.toContain('JSON.stringify(json)');
     expect(code).not.toContain('JSON.stringify(shortJson)');
   });
 
-  it('uses the current social-media ADR numbers in active OAuth implementation files', () => {
+  it('requires verified provider identity before persisting a connected account', () => {
+    const code = source('server/socialMedia/oauthExchange.ts');
+    expect(code).toContain('externalAccountId: string;');
+    expect(code).toContain('if (!pagesRes.ok || !page?.id || !page?.access_token)');
+    expect(code).toContain('if (!igRes.ok || !igAccountId)');
+    expect(code).toContain('OAuth-Verbindung wird nicht persistiert');
+    expect(code).not.toContain('Konto bleibt trotzdem verbunden');
+  });
+
+  it('uses the current social-media ADR numbers in active implementation files', () => {
     for (const relativePath of [
       'server/socialMedia/oauthExchange.ts',
       'server/socialMedia/oauthProviders.ts',
       'server/socialMedia/pkce.ts',
+      'server/socialMedia/platformPublishers.ts',
     ]) {
       const code = source(relativePath);
       expect(code).toContain('ADR-0026');
