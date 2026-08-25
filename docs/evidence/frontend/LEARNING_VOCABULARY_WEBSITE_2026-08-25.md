@@ -1,13 +1,16 @@
 # Learning Vocabulary Website Evidence — 2026-08-25
 
-**Status:** IMPLEMENTED ON FEATURE BRANCH / HOSTED CI NOT STARTED
+**Status:** PR #535 CREATED / PRE-CHECK COMPLETE / EXACT-HEAD CI PENDING
 
 ## Baseline
 
 - Repository: `SvenKulessa/Finance`
 - Main-Baseline bei Branch-Erzeugung: `b08b8e0b73e5413aeec286a3522a85448c3e3421`
-- Baseline-Inhalt: Merge von PR #531 `[CAPITAL-AI] Vocabulary VW-7 und GoPlus Operations finalisieren`
+- Baseline-Inhalt bei Branch-Erzeugung: Merge von PR #531 `[CAPITAL-AI] Vocabulary VW-7 und GoPlus Operations finalisieren`
 - Feature-Branch: `feat/learning-vocabulary-website-2026-08-25`
+- Vor finaler PR-Ausgestaltung wurde der Branch non-destruktiv per Merge-Commit auf `main@7fc2d25bb5f8b74b1c276b6aaf8f01683cd76c45` synchronisiert.
+- Der synchronisierte `main` enthält PR #532 `[CAPITAL-AI] Domain- und Mail-Security-Härtung governance-konform vorbereiten`.
+- Die Netto-PR-Differenz bleibt auf die fünf Learning-/Dashboard-/Test-/Evidence-Pfade begrenzt; die beiden #532-Dateien erscheinen nicht im PR-Scope.
 
 ## Ziel
 
@@ -109,19 +112,28 @@ Der Source-Level-Vertrag prüft unter anderem:
 5. Keine lokalen Hex-Farben in der Learning-Komponente.
 6. Learning ist in `activeView`, Hauptzentrale, Breadcrumb und Dynamic Rendering verdrahtet.
 
+## Pre-Check vor Exact-Head-CI
+
+- PR-Klasse nach `scripts/pr/classifyPrScope.mjs`: **C** — Application/Test ohne Runtime-/Dependency-/Docker-/Deployment-Scope.
+- Keine `package.json`-, Lockfile-, Server-, Workflow-, Docker- oder Render-Datei im Netto-Diff.
+- Offene PRs #533 und #534 wurden auf File-Level-Overlap geprüft; kein direkter Pfadkonflikt mit den fünf Learning-Pfaden.
+- Browser-/Node-Grenze des Vocabulary bleibt unverändert.
+- Die aktuelle `main`-CI und anschließende Render-Deployment-Verifikation für `main@7fc2d25bb5f8b74b1c276b6aaf8f01683cd76c45` waren erfolgreich; dies ist Baseline-Evidence und kein Testnachweis für den PR-Head.
+
 ## Validierungsstatus
 
-Noch **nicht** als PASS behauptet:
+Für den finalen PR-Head noch **nicht** als PASS behauptet:
 
-- TypeScript
+- Governance-/Security-PR-Check
+- TypeScript/Lint
 - Unit Test Suite
 - Production Build
 - Hosted `build-and-test`
 
-Die Testdatei wurde angelegt, aber in diesem Branch vor einem PR noch nicht durch gehostete CI ausgeführt.
+Diese Checks dürfen erst nach Ausführung auf dem exakten PR-Head als PASS markiert werden.
 
 ## PR-/Produktionsstatus
 
-- Kein Pull Request durch diese Umsetzung erzeugt.
-- Kein Merge durchgeführt.
-- Keine Render-, Supabase-, Stripe-, Credential- oder sonstige Produktionsmutation durchgeführt.
+- Pull Request #535 wurde gegen `main` angelegt und wird mit der kanonischen PR-Vorlage 1.5.0 finalisiert.
+- Kein Merge durchgeführt; Merge bleibt Human-/CODEOWNER-only.
+- Keine Render-, Supabase-, Stripe-, Credential- oder sonstige externe Produktionsmutation durch diesen PR durchgeführt.
