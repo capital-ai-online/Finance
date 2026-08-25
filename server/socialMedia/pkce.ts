@@ -1,4 +1,4 @@
-// ADR-0020 — PKCE (RFC 7636) fuer den X-(Twitter)-OAuth-2.0-Handshake.
+// ADR-0026 — PKCE (RFC 7636) fuer den X-(Twitter)-OAuth-2.0-Handshake.
 //
 // X lehnt Authorization-Code-Requests ohne code_challenge grundsaetzlich ab, auch fuer
 // confidential Clients mit Client-Secret. Kein externes Paket noetig - Node hat crypto

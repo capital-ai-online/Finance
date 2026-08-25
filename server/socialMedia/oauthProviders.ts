@@ -1,4 +1,4 @@
-// ADR-0020 — Provider-Metadaten fuer den Social-Media-OAuth-2.0-Handshake.
+// ADR-0026 — Provider-Metadaten fuer den Social-Media-OAuth-2.0-Handshake.
 //
 // Bewusst getrennt von den eigentlichen Secret-Werten (die liegen ausschliesslich in
 // getCleanEnv()-Aufrufen in oauthExchange.ts) und bewusst unter server/ statt src/platform/

@@ -1,4 +1,4 @@
-// ADR-0020 — Echter OAuth-2.0-Authorization-Code-Handshake pro Plattform.
+// ADR-0026 — Echter OAuth-2.0-Authorization-Code-Handshake pro Plattform.
 //
 // Ersetzt den Handover-Prototyp, dessen /auth/callback den `code`-Parameter nie gegen ein
 // Access-Token eintauschte und den `state`-Parameter nie verifizierte (siehe Migration
@@ -13,6 +13,7 @@ import { getCleanEnv } from '../env';
 import { createLogger } from '../logger';
 import { getProviderConfig } from './oauthProviders';
 import { generateCodeVerifier, deriveCodeChallenge } from './pkce';
+import { assertSafeOAuthRedirectUri } from './oauthSecurity';
 import { upsertConnectedAccount } from './tokenStore';
 import { checkSocialMediaAccessForUserId, accessDeniedMessage } from './accessControl';
 import type { SupportedAccountPlatform, SocialAccount } from '../../src/platform/SocialMediaEngine/types';
@@ -42,6 +43,16 @@ export async function createAuthorizationRequest(
     return { error: `${platform}: OAuth-Client-Credentials fehlen (siehe Runbook docs/runbooks/SOCIAL_MEDIA_OAUTH_SETUP.md).` };
   }
 
+  let safeRedirectUri: string;
+  try {
+    safeRedirectUri = assertSafeOAuthRedirectUri(redirectUri, getCleanEnv('NODE_ENV') || '');
+  } catch {
+    // Die abgelehnte URI selbst wird bewusst nicht geloggt: Host/Forwarded-Header sind
+    // untrusted input und sollen weder Logs injizieren noch dort als scheinbar valide URL stehen.
+    logger.warn('OAuth-Redirect-URI abgelehnt', { platform });
+    return { error: 'OAuth-Redirect-URI ist nicht kanonisch freigegeben.' };
+  }
+
   const cfg = getProviderConfig(platform);
   const stateToken = crypto.randomBytes(24).toString('base64url');
   const codeVerifier = cfg.requiresPkce ? generateCodeVerifier() : null;
@@ -51,7 +62,7 @@ export async function createAuthorizationRequest(
     state_token: stateToken,
     user_id: userId,
     platform,
-    redirect_uri: redirectUri,
+    redirect_uri: safeRedirectUri,
     code_verifier: codeVerifier,
     expires_at: new Date(Date.now() + STATE_TTL_MS).toISOString(),
   });
@@ -62,7 +73,7 @@ export async function createAuthorizationRequest(
 
   const params = new URLSearchParams({
     [cfg.clientIdParam]: getCleanEnv(cfg.clientIdEnvVar),
-    redirect_uri: redirectUri,
+    redirect_uri: safeRedirectUri,
     response_type: 'code',
     scope: cfg.scopes.join(platform === 'tiktok' ? ',' : ' '),
     state: stateToken,
@@ -132,7 +143,7 @@ async function exchangeCodeForToken(
       body: body.toString(),
     });
     const json: any = await res.json();
-    if (!res.ok) throw new Error(`X-Token-Exchange fehlgeschlagen: ${JSON.stringify(json)}`);
+    if (!res.ok || !json.access_token) throw new Error(`X-Token-Exchange fehlgeschlagen (HTTP ${res.status}).`);
     return { accessToken: json.access_token, refreshToken: json.refresh_token, expiresInSeconds: json.expires_in };
   }
 
@@ -151,7 +162,7 @@ async function exchangeCodeForToken(
     });
     const json: any = await res.json();
     const payload = json.data && json.data.access_token ? json.data : json;
-    if (!res.ok || !payload.access_token) throw new Error(`TikTok-Token-Exchange fehlgeschlagen: ${JSON.stringify(json)}`);
+    if (!res.ok || !payload.access_token) throw new Error(`TikTok-Token-Exchange fehlgeschlagen (HTTP ${res.status}).`);
     return { accessToken: payload.access_token, refreshToken: payload.refresh_token, expiresInSeconds: payload.expires_in };
   }
 
@@ -166,7 +177,7 @@ async function exchangeCodeForToken(
     const shortRes = await fetch(`${cfg.tokenUrl}?${params.toString()}`);
     const shortJson: any = await shortRes.json();
     if (!shortRes.ok || !shortJson.access_token) {
-      throw new Error(`Meta-Token-Exchange fehlgeschlagen: ${JSON.stringify(shortJson)}`);
+      throw new Error(`Meta-Token-Exchange fehlgeschlagen (HTTP ${shortRes.status}).`);
     }
     // Schritt 2: gegen langlebiges Token tauschen (~60 Tage statt ~1-2h).
     const longParams = new URLSearchParams({
@@ -180,7 +191,7 @@ async function exchangeCodeForToken(
     if (!longRes.ok || !longJson.access_token) {
       // Langlebiger Exchange ist ein Nice-to-have; bei Fehlschlag reicht das kurzlebige Token,
       // fuehrt aber zu schnellerem Ablauf (status wechselt dann auf 'token_expired').
-      logger.error('Meta Long-Lived-Token-Exchange fehlgeschlagen, verwende Short-Lived-Token', { platform });
+      logger.error('Meta Long-Lived-Token-Exchange fehlgeschlagen, verwende Short-Lived-Token', { platform, status: longRes.status });
       return { accessToken: shortJson.access_token, expiresInSeconds: shortJson.expires_in };
     }
     return { accessToken: longJson.access_token, expiresInSeconds: longJson.expires_in };
@@ -200,7 +211,7 @@ async function exchangeCodeForToken(
     body: body.toString(),
   });
   const json: any = await res.json();
-  if (!res.ok || !json.access_token) throw new Error(`YouTube-Token-Exchange fehlgeschlagen: ${JSON.stringify(json)}`);
+  if (!res.ok || !json.access_token) throw new Error(`YouTube-Token-Exchange fehlgeschlagen (HTTP ${res.status}).`);
   return { accessToken: json.access_token, refreshToken: json.refresh_token, expiresInSeconds: json.expires_in };
 }
 
@@ -209,7 +220,7 @@ interface ProfileInfo {
   handle?: string;
   avatarUrl?: string;
   followersCount?: number;
-  externalAccountId?: string;
+  externalAccountId: string;
   /** Fuer Meta: das tatsaechlich zu persistierende Token ist das Page-Token, nicht das User-Token. */
   effectiveAccessToken?: string;
 }
@@ -222,13 +233,13 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
       });
       const json: any = await res.json();
       const channel = json.items?.[0];
-      if (!channel) return {};
+      if (!res.ok || !channel?.id) throw new Error(`YouTube profile HTTP ${res.status}; identity missing=${!channel?.id}`);
       return {
         accountName: channel.snippet?.title,
         handle: channel.snippet?.customUrl ? `@${channel.snippet.customUrl}` : channel.snippet?.title,
         avatarUrl: channel.snippet?.thumbnails?.default?.url,
         followersCount: channel.statistics?.subscriberCount ? Number(channel.statistics.subscriberCount) : undefined,
-        externalAccountId: channel.id,
+        externalAccountId: String(channel.id),
       };
     }
 
@@ -239,52 +250,62 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
       );
       const json: any = await res.json();
       const user = json.data?.user;
-      if (!user) return {};
+      if (!res.ok || !user?.open_id) throw new Error(`TikTok profile HTTP ${res.status}; identity missing=${!user?.open_id}`);
       return {
         accountName: user.display_name,
-        handle: `@${user.display_name}`,
+        handle: user.display_name ? `@${user.display_name}` : undefined,
         avatarUrl: user.avatar_url,
         followersCount: user.follower_count,
-        externalAccountId: user.open_id,
+        externalAccountId: String(user.open_id),
       };
     }
 
     if (platform === 'facebook' || platform === 'instagram') {
       // Meta-Publishing laeuft ueber die Page (nicht das User-Konto): erst die verwalteten
-      // Pages laden, die erste nehmen (Mehrfach-Page-Auswahl ist Folgearbeit, siehe ADR-0020).
-      const pagesRes = await fetch(`https://graph.facebook.com/v19.0/me/accounts?access_token=${encodeURIComponent(accessToken)}`);
+      // Pages laden, die erste nehmen (Mehrfach-Page-Auswahl ist Folgearbeit, siehe ADR-0026).
+      const pagesRes = await fetch('https://graph.facebook.com/v19.0/me/accounts', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       const pagesJson: any = await pagesRes.json();
       const page = pagesJson.data?.[0];
-      if (!page) return {};
+      if (!pagesRes.ok || !page?.id || !page?.access_token) {
+        throw new Error(`Meta pages HTTP ${pagesRes.status}; page identity/token missing`);
+      }
 
       if (platform === 'facebook') {
         return {
           accountName: page.name,
           handle: page.name,
-          externalAccountId: page.id,
+          externalAccountId: String(page.id),
           effectiveAccessToken: page.access_token,
         };
       }
 
-      // instagram: ueber die Page das verknuepfte IG-Business-Konto ermitteln.
+      // Instagram ist erst verbunden, wenn eine tatsaechliche Business-/Creator-Identity
+      // hinter der Page nachgewiesen wurde; ein Page-Token allein erzeugt keinen connected-State.
+      const pageId = encodeURIComponent(String(page.id));
       const igRes = await fetch(
-        `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${encodeURIComponent(page.access_token)}`
+        `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account`,
+        { headers: { Authorization: `Bearer ${page.access_token}` } }
       );
       const igJson: any = await igRes.json();
       const igAccountId = igJson.instagram_business_account?.id;
-      if (!igAccountId) {
-        return { effectiveAccessToken: page.access_token }; // Page verbunden, aber keine IG-Verknuepfung
+      if (!igRes.ok || !igAccountId) {
+        throw new Error(`Instagram binding HTTP ${igRes.status}; business identity missing=${!igAccountId}`);
       }
+      const encodedIgAccountId = encodeURIComponent(String(igAccountId));
       const igProfileRes = await fetch(
-        `https://graph.facebook.com/v19.0/${igAccountId}?fields=username,profile_picture_url,followers_count&access_token=${encodeURIComponent(page.access_token)}`
+        `https://graph.facebook.com/v19.0/${encodedIgAccountId}?fields=username,profile_picture_url,followers_count`,
+        { headers: { Authorization: `Bearer ${page.access_token}` } }
       );
       const igProfile: any = await igProfileRes.json();
+      if (!igProfileRes.ok) throw new Error(`Instagram profile HTTP ${igProfileRes.status}`);
       return {
         accountName: igProfile.username,
-        handle: `@${igProfile.username}`,
+        handle: igProfile.username ? `@${igProfile.username}` : undefined,
         avatarUrl: igProfile.profile_picture_url,
         followersCount: igProfile.followers_count,
-        externalAccountId: igAccountId,
+        externalAccountId: String(igAccountId),
         effectiveAccessToken: page.access_token,
       };
     }
@@ -295,19 +316,24 @@ async function fetchProviderProfile(platform: SupportedAccountPlatform, accessTo
       });
       const json: any = await res.json();
       const user = json.data;
-      if (!user) return {};
+      if (!res.ok || !user?.id) throw new Error(`X profile HTTP ${res.status}; identity missing=${!user?.id}`);
       return {
         accountName: user.name || user.username,
-        handle: `@${user.username}`,
+        handle: user.username ? `@${user.username}` : undefined,
         avatarUrl: user.profile_image_url,
         followersCount: user.public_metrics?.followers_count,
-        externalAccountId: user.id,
+        externalAccountId: String(user.id),
       };
     }
+
+    throw new Error('Unsupported provider profile path');
   } catch (err: any) {
-    logger.error('Profil-Nachladen fehlgeschlagen (Konto bleibt trotzdem verbunden)', { platform, error: err?.message || String(err) });
+    logger.error('Provider-Profil konnte nicht verifiziert werden; OAuth-Verbindung wird nicht persistiert', {
+      platform,
+      error: err?.message || String(err),
+    });
+    throw new Error(`${platform}: Provider-Konto konnte nicht verifiziert werden.`);
   }
-  return {};
 }
 
 export type OAuthCallbackResult =
@@ -320,7 +346,7 @@ export async function completeOAuthCallback(code: string, stateToken: string): P
     return { success: false, platform: 'unknown', error: 'Ungueltiger, bereits verwendeter oder abgelaufener OAuth-State.' };
   }
 
-  // ADR-0021: Zugriff erneut pruefen (nicht nur beim Erzeugen der Auth-URL) - zwischen
+  // ADR-0027: Zugriff erneut pruefen (nicht nur beim Erzeugen der Auth-URL) - zwischen
   // /auth/url und diesem Callback koennen mehrere Minuten liegen, in denen z.B. ein
   // Founder-Abo ablaufen oder ein Owner-Status entzogen werden koennte. Ohne diesen
   // Re-Check koennte ein zwischenzeitlich ungueltig gewordener Zugriff trotzdem noch ein

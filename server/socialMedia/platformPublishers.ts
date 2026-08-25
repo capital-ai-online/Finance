@@ -1,10 +1,10 @@
-// ADR-0020 — Echte Veroeffentlichungs-Calls pro Plattform.
+// ADR-0026 — Echte Veroeffentlichungs-Calls pro Plattform.
 //
 // Ersetzt den Handover-Prototyp, der fuer jede Plattform ausschliesslich eine aus
 // `Date.now()` konstruierte Fake-URL zurueckgab, ohne je einen HTTP-Request an YouTube/
 // TikTok/Instagram/Facebook/X zu senden.
 //
-// Wichtige, bewusste Grenze dieser Implementierung (siehe ADR-0020 Abschnitt 3 fuer die
+// Wichtige, bewusste Grenze dieser Implementierung (siehe ADR-0026 Abschnitt 3 fuer die
 // vollstaendige Begruendung): das im Handover uebergebene System erzeugt Podcast-Skripte,
 // Video-Storyboards und Marketing-Texte, aber KEIN gerendertes Video-/Audio-File - der dafuer
 // zustaendige Service (SocialMediaGeneratorService.generateSeries) wurde im Handover nicht
@@ -41,7 +41,7 @@ function mediaRequiredError(platform: string): PublishResult {
     success: false,
     errorMessage: `${platform}: Kein mediaUrl im Publish-Request vorhanden. ${platform} erfordert ein ` +
       `oeffentlich erreichbares Video-Asset - dieses System rendert aktuell keine Videos ` +
-      `(siehe ADR-0020, Abschnitt 3: Content-Generation-Service war nicht Teil des Handovers).`,
+      `(siehe ADR-0026, Abschnitt 3: Content-Generation-Service war nicht Teil des Handovers).`,
   };
 }
 
@@ -57,9 +57,6 @@ async function publishToYouTube(input: PublishInput): Promise<PublishResult> {
       snippet: { title: input.videoTitle || input.caption.slice(0, 100), description: input.caption, tags: input.hashtags },
       status: { privacyStatus: 'public' },
     };
-    // Direct-Upload (uploadType=media) statt vollem chunked Resumable-Upload-Protokoll - fuer
-    // die kurzen Short-Form-Clips dieses Produkts (TikTok/Reels-Format) ausreichend; grosse
-    // Longform-Videos wuerden das Resumable-Protokoll brauchen (Folgearbeit, siehe ADR-0020).
     const uploadRes = await fetch(
       'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status',
       {
@@ -106,10 +103,6 @@ async function publishToTikTok(input: PublishInput): Promise<PublishResult> {
     if (!res.ok || json.error?.code !== 'ok') {
       return { success: false, errorMessage: `TikTok-Publish fehlgeschlagen: ${JSON.stringify(json.error || json)}` };
     }
-    // TikToks Content-Posting-API veroeffentlicht bei nicht auditierten Apps zunaechst als
-    // Entwurf im Postfach des Nutzers (kein oeffentlicher Permalink im Init-Response) - siehe
-    // Runbook fuer den App-Review-Status. `publish_id` dient dem Nutzer als Nachweis, dass der
-    // Request angekommen ist; ein garantierter Public-Permalink existiert erst nach Freigabe.
     return { success: true, pending: true, publishedUrl: undefined };
   } catch (err: any) {
     return { success: false, errorMessage: `TikTok-Publish-Fehler: ${err?.message || String(err)}` };
@@ -122,16 +115,19 @@ async function publishToInstagram(input: PublishInput): Promise<PublishResult> {
     return { success: false, errorMessage: 'Instagram: Kein verknuepftes Business-Konto (externalAccountId fehlt).' };
   }
   try {
+    const accountId = encodeURIComponent(String(input.externalAccountId));
     const containerRes = await fetch(
-      `https://graph.facebook.com/v19.0/${input.externalAccountId}/media`,
+      `https://graph.facebook.com/v19.0/${accountId}/media`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${input.accessToken}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           media_type: 'REELS',
           video_url: input.mediaUrl,
           caption: input.caption,
-          access_token: input.accessToken,
         }),
       }
     );
@@ -140,22 +136,27 @@ async function publishToInstagram(input: PublishInput): Promise<PublishResult> {
       return { success: false, errorMessage: `Instagram-Container-Erstellung fehlgeschlagen: ${JSON.stringify(containerJson.error || containerJson)}` };
     }
 
-    // Kurzes, begrenztes Polling auf den Verarbeitungsstatus statt eines langen synchronen
-    // Blockings - IG-Videoverarbeitung kann mehrere Minuten dauern. Bleibt sie laenger
-    // unfertig, wird ehrlich 'pending' statt einer erfundenen Erfolgs-URL zurueckgegeben.
+    const containerId = encodeURIComponent(String(containerJson.id));
     for (let attempt = 0; attempt < 5; attempt++) {
       await new Promise(r => setTimeout(r, 2000));
       const statusRes = await fetch(
-        `https://graph.facebook.com/v19.0/${containerJson.id}?fields=status_code&access_token=${encodeURIComponent(input.accessToken)}`
+        `https://graph.facebook.com/v19.0/${containerId}?fields=status_code`,
+        { headers: { Authorization: `Bearer ${input.accessToken}` } }
       );
       const statusJson: any = await statusRes.json();
+      if (!statusRes.ok) {
+        return { success: false, errorMessage: `Instagram-Statusabfrage fehlgeschlagen (HTTP ${statusRes.status}).` };
+      }
       if (statusJson.status_code === 'FINISHED') {
         const publishRes = await fetch(
-          `https://graph.facebook.com/v19.0/${input.externalAccountId}/media_publish`,
+          `https://graph.facebook.com/v19.0/${accountId}/media_publish`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ creation_id: containerJson.id, access_token: input.accessToken }),
+            headers: {
+              Authorization: `Bearer ${input.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ creation_id: containerJson.id }),
           }
         );
         const publishJson: any = await publishRes.json();
@@ -179,11 +180,15 @@ async function publishToFacebook(input: PublishInput): Promise<PublishResult> {
     return { success: false, errorMessage: 'Facebook: Keine verknuepfte Page (externalAccountId fehlt).' };
   }
   try {
+    const accountId = encodeURIComponent(String(input.externalAccountId));
     if (input.mediaUrl) {
-      const res = await fetch(`https://graph.facebook.com/v19.0/${input.externalAccountId}/videos`, {
+      const res = await fetch(`https://graph.facebook.com/v19.0/${accountId}/videos`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_url: input.mediaUrl, description: input.caption, access_token: input.accessToken }),
+        headers: {
+          Authorization: `Bearer ${input.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ file_url: input.mediaUrl, description: input.caption }),
       });
       const json: any = await res.json();
       if (!res.ok || !json.id) {
@@ -191,11 +196,13 @@ async function publishToFacebook(input: PublishInput): Promise<PublishResult> {
       }
       return { success: true, publishedUrl: `https://facebook.com/${json.id}` };
     }
-    // Ohne Media: reiner Text-Post auf die Page - funktioniert vollstaendig ohne Rendering-Pipeline.
-    const res = await fetch(`https://graph.facebook.com/v19.0/${input.externalAccountId}/feed`, {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${accountId}/feed`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: input.caption, access_token: input.accessToken }),
+      headers: {
+        Authorization: `Bearer ${input.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: input.caption }),
     });
     const json: any = await res.json();
     if (!res.ok || !json.id) {
@@ -209,9 +216,6 @@ async function publishToFacebook(input: PublishInput): Promise<PublishResult> {
 
 async function publishToX(input: PublishInput): Promise<PublishResult> {
   try {
-    // Reiner Text-Tweet - funktioniert vollstaendig ohne Rendering-Pipeline. Medien-Anhang
-    // (Video) wuerde einen separaten, mehrstufigen INIT/APPEND/FINALIZE-Media-Upload
-    // voraussetzen (v1.1-Media-Endpoint) - Folgearbeit, siehe ADR-0020.
     const text = input.caption.length > 280 ? `${input.caption.slice(0, 277)}...` : input.caption;
     const res = await fetch('https://api.twitter.com/2/tweets', {
       method: 'POST',
