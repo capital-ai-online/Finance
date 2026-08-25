@@ -96,15 +96,15 @@ export function LearningVocabulary() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:min-w-64">
-              <div className="rounded-xl border border-border bg-canvas/60 p-3">
-                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-text-muted">
+              <div className="rounded-xl border border-border bg-background/60 p-3">
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary/70">
                   <CheckCircle2 size={12} className="text-brand-success" aria-hidden />
                   Freigegeben
                 </div>
                 <div className="mt-1 text-xl font-black text-text-primary">{approvedConcepts.length}</div>
               </div>
-              <div className="rounded-xl border border-border bg-canvas/60 p-3">
-                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-text-muted">
+              <div className="rounded-xl border border-border bg-background/60 p-3">
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary/70">
                   <Tags size={12} className="text-brand-cyan" aria-hidden />
                   Kategorien
                 </div>
@@ -119,7 +119,7 @@ export function LearningVocabulary() {
             <span className="sr-only">Vocabulary durchsuchen</span>
             <Search
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/70"
               aria-hidden
             />
             <input
@@ -127,7 +127,7 @@ export function LearningVocabulary() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Begriff, Definition, Alias oder Concept-ID suchen …"
-              className="w-full rounded-xl border border-border bg-canvas/70 py-3 pl-10 pr-4 text-sm text-text-primary outline-none transition focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20 placeholder:text-text-muted"
+              className="w-full rounded-xl border border-border bg-background/70 py-3 pl-10 pr-4 text-sm text-text-primary outline-none transition focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20 placeholder:text-text-secondary/60"
             />
           </label>
 
@@ -136,7 +136,7 @@ export function LearningVocabulary() {
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value as CategoryFilter)}
-              className="w-full rounded-xl border border-border bg-canvas/70 px-3 py-3 text-sm text-text-primary outline-none transition focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20"
+              className="w-full rounded-xl border border-border bg-background/70 px-3 py-3 text-sm text-text-primary outline-none transition focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20"
             >
               <option value={ALL_CATEGORIES}>Alle Kategorien</option>
               {categories.map((item) => (
@@ -157,7 +157,7 @@ export function LearningVocabulary() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-mono text-text-muted" aria-live="polite">
+        <p className="text-xs font-mono text-text-secondary/70" aria-live="polite">
           {filteredConcepts.length} von {approvedConcepts.length} freigegebenen Begriffen
         </p>
         {(query || category !== ALL_CATEGORIES) && (
@@ -189,13 +189,13 @@ export function LearningVocabulary() {
                     </span>
                   </div>
                   <h2 className="mt-3 text-lg font-black text-text-primary font-display">{concept.displayNameDE}</h2>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-text-muted">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-text-secondary/70">
                     <Languages size={13} aria-hidden />
                     <span>{concept.displayNameEN}</span>
                   </div>
                 </div>
 
-                <div className="shrink-0 rounded-lg border border-border bg-canvas/60 px-2.5 py-1.5 text-[10px] font-mono text-text-muted" title="Stabile Concept-ID">
+                <div className="shrink-0 rounded-lg border border-border bg-background/60 px-2.5 py-1.5 text-[10px] font-mono text-text-secondary/70" title="Stabile Concept-ID">
                   {concept.id}
                 </div>
               </div>
@@ -219,14 +219,14 @@ export function LearningVocabulary() {
 
               <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
                 <div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-text-muted">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-text-secondary/70">
                     <Code2 size={12} aria-hidden />
                     Canonical Code Term
                   </div>
                   <code className="mt-1 block break-all text-xs font-bold text-brand-primary">{concept.canonicalCodeTerm}</code>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-text-muted">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-text-secondary/70">
                     <Tags size={12} aria-hidden />
                     Aliase
                   </div>
@@ -240,7 +240,7 @@ export function LearningVocabulary() {
                 {[...concept.essReferences, ...concept.adrReferences, ...concept.traceabilityReferences].map((reference) => (
                   <span
                     key={`${concept.id}-${reference}`}
-                    className="rounded border border-border bg-canvas/60 px-2 py-0.5 text-[9px] font-mono text-text-muted"
+                    className="rounded border border-border bg-background/60 px-2 py-0.5 text-[9px] font-mono text-text-secondary/70"
                   >
                     {reference}
                   </span>
@@ -251,7 +251,7 @@ export function LearningVocabulary() {
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border bg-surface/50 p-10 text-center">
-          <Search size={28} className="mx-auto text-text-muted" aria-hidden />
+          <Search size={28} className="mx-auto text-text-secondary/70" aria-hidden />
           <h2 className="mt-3 text-base font-black text-text-primary">Kein Vocabulary-Eintrag gefunden</h2>
           <p className="mt-1 text-sm text-text-secondary">Passe Suchbegriff oder Kategorie an.</p>
         </div>
