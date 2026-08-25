@@ -19,6 +19,10 @@ describe('Commodity evaluation tools in the Asset Universe', () => {
     path.join(process.cwd(), 'src/components/RawMaterialsDashboard.tsx'),
     'utf8',
   );
+  const rawMaterialsRouteSource = fs.readFileSync(
+    path.join(process.cwd(), 'src/routes/rawMaterialsRoutes.ts'),
+    'utf8',
+  );
   const frontendArchitectureGateSource = fs.readFileSync(
     path.join(process.cwd(), 'scripts/automation/validateFrontendArchitecture.ts'),
     'utf8',
@@ -55,6 +59,21 @@ describe('Commodity evaluation tools in the Asset Universe', () => {
     expect(rawMaterialsSource).toContain('scoreEligible=false');
     expect(rawMaterialsSource).toContain('4 Research Agents / Parallel');
     expect(rawMaterialsSource).not.toContain('8 Workers / Parallel Processing');
+  });
+
+  it('binds canonical commodity responses to the verified request symbol after canonical spreads', () => {
+    expect(rawMaterialsRouteSource).toMatch(
+      /\.\.\.dispatch\.canonical,\s*symbol,\s*assetId:/,
+    );
+    expect(rawMaterialsRouteSource).toMatch(
+      /\.\.\.canonical,\s*symbol,\s*assetId:/,
+    );
+    expect(rawMaterialsRouteSource).not.toMatch(
+      /symbol,\s*assetId:[\s\S]{0,240}\.\.\.dispatch\.canonical/,
+    );
+    expect(rawMaterialsRouteSource).not.toMatch(
+      /symbol,\s*assetId:[\s\S]{0,240}\.\.\.canonical/,
+    );
   });
 
   it('labels legacy structural values as research-only and does not invert the resilience warning', () => {
