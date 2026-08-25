@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "VOCABULARY-FINAL-VW7-WIKI-GOPLUS-2026-08-24",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "branch": "agent/vocabulary-final-vw7-wiki-goplus-2026-08-24",
   "agent": {
     "provider": "OpenAI",
@@ -33,5 +33,18 @@
     "Automatic wording mass replacement",
     "Wiki back-propagation"
   ],
-  "releaseCondition": "Writer authority ends at a terminal PR/work-item event; the responsible principal then persists status=released and exclusive=false with terminal evidence through normal branch/PR governance."
+  "releaseCondition": "Writer authority ends at a terminal PR/work-item event; the responsible principal then persists status=released and exclusive=false with terminal evidence through normal branch/PR governance.",
+  "pullRequest": 531,
+  "mergedPr": 531,
+  "mainCommit": "b08b8e0b73e5413aeec286a3522a85448c3e3421",
+  "releasedAt": "2026-08-25T00:53:36Z",
+  "releaseEvidence": {
+    "pullRequest": 531,
+    "merged": true,
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "b08b8e0b73e5413aeec286a3522a85448c3e3421",
+    "verifiedAt": "2026-08-25"
+  },
+  "releaseReason": "merged",
+  "terminalHeadSha": "ca667a93a0d7338c177aa0e6096ac6210976aa44"
 }
