@@ -19,6 +19,10 @@ describe('Commodity evaluation tools in the Asset Universe', () => {
     path.join(process.cwd(), 'src/components/RawMaterialsDashboard.tsx'),
     'utf8',
   );
+  const frontendArchitectureGateSource = fs.readFileSync(
+    path.join(process.cwd(), 'scripts/automation/validateFrontendArchitecture.ts'),
+    'utf8',
+  );
 
   it('mounts one dedicated Commodities workspace instead of the former synthetic slider score', () => {
     expect(assetUniverseSource).toContain("id: 'commodities'");
@@ -58,5 +62,9 @@ describe('Commodity evaluation tools in the Asset Universe', () => {
     expect(rawMaterialsSource).toContain('Legacy Research-Score');
     expect(rawMaterialsSource).toContain('payload.scores.risk_resilience < 40');
     expect(rawMaterialsSource).toContain('NIEDRIGE RESILIENZ / HOHES RISIKO');
+  });
+
+  it('registers the canonical Commodity feature slice in the frontend architecture gate', () => {
+    expect(frontendArchitectureGateSource).toContain("'src/features/commodities/ui/index.ts'");
   });
 });
