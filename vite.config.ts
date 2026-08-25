@@ -8,6 +8,34 @@ const packageMetadata = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'),
 ) as { version: string };
 
+const PLATFORM_SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+if (!PLATFORM_SEMVER.test(packageMetadata.version)) {
+  throw new Error('[Vite] package.json#version must be strict MAJOR.MINOR.PATCH SemVer.');
+}
+
+// Strangler adapter for the remaining Dashboard monolith. The source file is
+// deliberately not treated as a version authority: at transform time its
+// platform-version label is projected from package.json#version. The rule is
+// scoped to this single human-facing label so model/provider/schema versions
+// remain independent version domains.
+const DASHBOARD_PLATFORM_VERSION_PATTERN = /Beta · Version \d+\.\d+\.\d+/g;
+function platformVersionProjectionPlugin() {
+  return {
+    name: 'capital-ai-platform-version-projection',
+    enforce: 'pre' as const,
+    transform(code: string, id: string) {
+      const normalizedId = id.replace(/\\/g, '/');
+      if (!normalizedId.endsWith('/src/components/Dashboard.tsx')) return null;
+
+      const projected = code.replace(
+        DASHBOARD_PLATFORM_VERSION_PATTERN,
+        `Beta · Version ${packageMetadata.version}`,
+      );
+      return projected === code ? null : { code: projected, map: null };
+    },
+  };
+}
+
 type TokenNode = {
   value?: unknown;
   $value?: unknown;
@@ -95,7 +123,7 @@ const pdfBrandDefinition = {
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [platformVersionProjectionPlugin(), react(), tailwindcss()],
     define: {
       __CAPITAL_AI_VERSION__: JSON.stringify(packageMetadata.version),
       __CAPITAL_AI_PDF_BRAND__: JSON.stringify(pdfBrandDefinition),

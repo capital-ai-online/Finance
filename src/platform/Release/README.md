@@ -23,16 +23,25 @@ A version changes only at the dedicated Release Version Gate defined by ADR-0030
 ## Authority and projection model
 
 ```text
-package.json#version                    <- sole platform-version authority
+package.json#version                         <- sole platform-version authority
         |
-        +--> releaseVersionGate.ts      <- controlled explicit mutation
-        +--> readmeVersionProjection.ts <- deterministic documentation projection
-        +--> platformVersionControlPlane.ts <- read-only runtime/admin projection
+        +--> releaseVersionGate.ts           <- controlled explicit mutation
+        +--> readmeVersionProjection.ts      <- deterministic documentation projection
+        +--> platformVersionControlPlane.ts  <- read-only runtime/admin projection
+        |         +--> VersionManager GET /api/admin/version (compatibility adapter)
+        |
+        +--> vite.config.ts
+                  +--> __CAPITAL_AI_VERSION__
+                            +--> Release/clientVersion.ts <- canonical browser projection
+                                      +--> UI / PDF / client-visible exports
+                                      +--> Branding/runtimeBrand.ts (compatibility re-export)
 
-AGENTS.md Control Plane Version         <- independent Governance metadata
+AGENTS.md Control Plane Version              <- independent Governance metadata
 ```
 
 `AGENTS.md` is never a product-version mirror. README is never an authority. `uploads/version_manager.json` and `/api/admin/version/bump` are retired legacy paths and cannot determine or mutate the platform version.
+
+Client code must not pin a second platform SemVer literal. Browser-visible platform-version text is projected through `src/platform/Release/clientVersion.ts`; historical/model/schema/provider contract versions remain independent version domains and must not be rewritten to the platform version merely because they are SemVer-shaped.
 
 ---
 
@@ -73,11 +82,13 @@ The command is a **dry run by default**. Only an intentional execution with `--a
 7. `docs/API.md`
 8. `index.html`
 
-### Derived projection
+### Derived projections
 
 9. `README.md`, regenerated through `npm run readme:sync`
+10. `__CAPITAL_AI_VERSION__`, injected by Vite from `package.json#version`
+11. `src/platform/Release/clientVersion.ts`, validated browser-safe projection consumed by UI/PDF code
 
-`README.md` is included in the atomic rollback set but is not rewritten by generic mirror logic. `AGENTS.md` is excluded from both product-version mutation and consistency projection.
+`README.md` is included in the atomic rollback set but is not rewritten by generic mirror logic. `AGENTS.md` is excluded from both product-version mutation and consistency projection. Client components are consumers of the injected projection and therefore do not require direct string rewrites during a release.
 
 ---
 
@@ -119,11 +130,13 @@ Hosted GitHub CI remains an independent exact-head verification and is not repla
 
 ---
 
-## Runtime/admin projection
+## Runtime/admin/client projection
 
 `src/platform/Release/Services/platformVersionControlPlane.ts` reads `package.json#version` and, when present, validates the immutable runtime release manifest against that authority.
 
 The compatibility endpoint remains `/api/admin/version`, but it is routed through the normal Express admin authorization middleware. The production runtime guard may reject retired writes but must not answer this authenticated GET before AuthN/AuthZ.
+
+`vite.config.ts` reads the same authority during the build and injects `__CAPITAL_AI_VERSION__`. `src/platform/Release/clientVersion.ts` validates this value as strict SemVer and exposes it to browser code. `src/platform/Branding/runtimeBrand.ts` is only a temporary compatibility re-export so existing PDF/branding imports can be strangled toward the Release namespace without introducing a second authority.
 
 No HTTP endpoint in `src/platform/VersionManager` may bump a version, persist local version state, generate ADR/compliance documents or execute a version event chain.
 
@@ -141,6 +154,7 @@ This component deliberately does **not** create a final Git tag. A final immutab
 
 - `tests/unit/releaseVersionGate.test.ts` — transition classification, fail-closed metadata, direct mirrors, README rollback, AGENTS exclusion.
 - `tests/unit/platformVersionConsistency.test.ts` — `package.json` SemVer and current projection consistency; independent Governance Control Plane version contract for AGENTS.
+- `tests/unit/clientPlatformVersionProjection.test.ts` — build-time client projection and audited runtime UI paths may not pin a stale platform version.
 - `tests/unit/readmeVersionProjection.test.ts` — deterministic/idempotent README projection and malformed-input failure.
 - `scripts/pr/runtimeArtifactImmutability.test.mjs` — retired write denial and proof that admin version GET is not intercepted before Express authorization.
 

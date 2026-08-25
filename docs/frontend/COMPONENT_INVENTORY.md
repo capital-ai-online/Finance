@@ -90,7 +90,7 @@ Development-Einstieg für Agents: `AGENTS.md` §12 (Screening Ranking Board / ho
 | QuantumGraph | `QuantumGraph.tsx` | `src/features/analytics/ui` |
 | Charts | `Charts.tsx` | `src/features/analytics/ui`; generische Chart-Primitives später auf `src/shared` prüfen |
 | PerformanceDashboard | `PerformanceDashboard.tsx` | `src/features/analytics/ui` |
-| RawMaterialsDashboard | `RawMaterialsDashboard.tsx` | `src/features/screening/ui` bzw. Domain-Slice nach Dependency-Audit |
+| RawMaterialsDashboard | `src/features/commodities/ui/RawMaterialsDashboard.tsx` | Commodity-Domain-Slice; `src/components/RawMaterialsDashboard.tsx` bleibt dünner Compatibility-Export |
 | DeFiOrchestration | `DeFiOrchestration.tsx` | `src/features/crypto/ui` |
 
 ### Fachliche Authority-Referenz

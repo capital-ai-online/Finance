@@ -1,10 +1,11 @@
-declare const __CAPITAL_AI_VERSION__: string;
-
 /**
- * Canonical client-visible release version injected by Vite from package.json.
+ * Branding compatibility export.
  *
- * Keep release identity outside individual UI/report components so the product
- * wordmark and generated artifacts cannot drift to independent hard-coded
- * versions.
+ * Platform-version authority belongs to the Release control plane. Existing
+ * branding/report imports remain source-compatible while the legacy location
+ * is strangled out.
  */
-export const CAPITAL_AI_VERSION = __CAPITAL_AI_VERSION__;
+export {
+  CAPITAL_AI_VERSION,
+  CAPITAL_AI_VERSION_LABEL,
+} from '../Release/clientVersion';

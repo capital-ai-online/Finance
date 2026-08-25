@@ -91,7 +91,7 @@ Die Policies sind nonce-basiert und setzen unter anderem `object-src 'none'`, `f
 | DNSSEC | `DNSSEC signed=FAIL`, `validation=FAIL`, gleichzeitig RRSIG/Chain-of-Trust teilweise PASS | widersprüchliche Evidence; zuerst live verifizieren | signierte Zone + gültige DS-Delegation + externe Validation |
 | Web IPv6 | AAAA fehlt | **Provider Exception** für Render; kein AAAA erzwingen | IPv4-only solange Render dies verlangt |
 | DMARC | vorhanden, `p=none` | stufenweiser Enforcement-Rollout | `quarantine` → `reject` nach Telemetrie |
-| CAA | fehlt | Render-CAs vollständig erlauben | Let's Encrypt + Google Trust Services |
+| CAA | fehlt | Render-CAs vollständig und minimal erlauben | Let's Encrypt + Google Trust Services; Wildcard-Issuance standardmäßig explizit gesperrt und nur bei verifiziertem Wildcard-Scope freigegeben |
 | Mail IPv6 | fehlt | Provider Capability / Ausnahme | kein künstlicher AAAA-Record |
 | SPF | vorhanden, Syntax PASS, kein `-all` | erst Sender-Inventar + Alignment | `-all` nur nach vollständiger Verifikation |
 | DKIM | Scan `N/A` | produktive Mailstreams verifizieren | DKIM aktiv und DMARC-aligned |
@@ -111,34 +111,46 @@ Render Custom Domains nutzen für diesen Web-Service die dokumentierte IPv4-Konf
 
 ## 6. CAA Change Set — Owner-gated
 
-Render kann Zertifikate über Let's Encrypt und Google Trust Services beziehen. Deshalb darf eine CAA-Policy nicht nur eine der beiden CAs freigeben.
+Render dokumentiert für Custom-Domain-TLS zwei zulässige Certificate Authorities: Let's Encrypt (`letsencrypt.org`) und Google Trust Services (`pki.goog`). Nach RFC-CAA-Semantik autorisieren normale `issue`-Records ohne vorhandenen `issuewild`-Record auch Wildcard-Zertifikate. Deshalb enthält der aktuell dokumentierte Apex-/`www`-Scope zusätzlich ein explizites `issuewild ";"` als Fail-Closed-Deny für Wildcard-Issuance. Ein später verifizierter Render-Wildcard-Custom-Domain-Scope darf diesen Deny-Record nur nach read-only Verifikation und separater Owner-Freigabe durch die exakt benötigten Render-Wildcard-CAs **ersetzen**. Der Google-Parameter `cansignhttpexchanges=yes` gehört zu Signed HTTP Exchange (SXG) und wird für normales Render-TLS bewusst **nicht** gesetzt.
 
-Vorgesehener Satz für `capital-ai.online`:
+Vorgesehener minimaler Satz für `capital-ai.online` ohne Wildcard-Scope:
 
 ```dns
 @ CAA 0 issue "letsencrypt.org"
-@ CAA 0 issuewild "letsencrypt.org"
-@ CAA 0 issue "pki.goog; cansignhttpexchanges=yes"
-@ CAA 0 issuewild "pki.goog; cansignhttpexchanges=yes"
+@ CAA 0 issue "pki.goog"
+@ CAA 0 issuewild ";"
 ```
+
+Falls später ein verifizierter Render-Wildcard-Scope erforderlich ist, muss der Deny-Record `@ CAA 0 issuewild ";"` ersetzt werden. Zulässig sind dann exakt diese Wildcard-Rechte:
+
+```dns
+@ CAA 0 issuewild "letsencrypt.org"
+@ CAA 0 issuewild "pki.goog"
+```
+
+Der Deny-Record und erlaubende `issuewild`-Records dürfen nicht gleichzeitig als Zielkonfiguration dokumentiert oder publiziert werden.
 
 ### Pre-Check
 
 1. aktuellen CAA-Satz live lesen;
 2. aktuellen TLS-Issuer für Apex und `www` dokumentieren;
 3. Render Custom Domain Status = verified bestätigen;
-4. verifizieren, dass keine weitere bewusst verwendete CA ausgeschlossen wird.
+4. verifizieren, dass keine weitere bewusst verwendete CA ausgeschlossen wird;
+5. verifizieren, ob überhaupt ein Render-Wildcard-Domain-Scope existiert; ohne verifizierten Wildcard-Scope bleibt `@ CAA 0 issuewild ";"` verpflichtender Fail-Closed-Default.
 
 ### Post-Check
 
 - CAA über mindestens zwei unabhängige Resolver lesen;
 - Zertifikatstatus weiterhin gültig;
 - HTTPS auf Apex und `www` erfolgreich;
-- keine Certificate-Issuance-Warnung.
+- keine Certificate-Issuance-Warnung;
+- ohne verifizierten Wildcard-Scope ist exakt der Wildcard-Deny `@ CAA 0 issuewild ";"` wirksam;
+- bei verifiziertem Wildcard-Scope wurde der Deny-Record ersetzt und nur `letsencrypt.org`/`pki.goog` über `issuewild` freigegeben;
+- keine SXG-spezifische CAA-Erweiterung ohne expliziten SXG-Scope.
 
 ### Rollback
 
-Bei Zertifikats-/Renewal-Problemen den zuvor evidenzierten CAA-Satz wiederherstellen. Kein pauschales `CAA 0 issue ";"` ohne Owner-Entscheidung.
+Bei Zertifikats-/Renewal-Problemen den zuvor evidenzierten CAA-Satz wiederherstellen. Das gezielte `CAA 0 issuewild ";"` ist der dokumentierte Wildcard-Deny; ein separates pauschales `CAA 0 issue ";"` für normale Zertifikate darf nicht ohne Owner-Entscheidung eingeführt werden.
 
 ## 7. DNSSEC Change Set — zweiphasig und fail-closed
 
@@ -287,7 +299,9 @@ Web-DNS- und Mail-Enforcement bleiben getrennte Mutationspakete. Nach jedem exte
 
 - HTTPS Apex + `www` erfolgreich;
 - gültiges Zertifikat;
-- CAA enthält alle von Render benötigten CAs;
+- CAA enthält alle von Render benötigten CAs und sperrt Wildcard-Issuance ohne verifizierten Wildcard-Scope explizit über `@ CAA 0 issuewild ";"`;
+- ein später verifizierter Wildcard-Scope ersetzt den Deny-Record durch exakt `letsencrypt.org`/`pki.goog` als `issuewild` und erweitert keine weiteren Rechte;
+- keine SXG-Berechtigung ohne expliziten SXG-Scope;
 - keine AAAA-Fehlroute;
 - kanonischer CSP-/HSTS-/Security-Header-Pfad live bestätigt;
 - ausgelieferter `X-CSP-Mode` dokumentiert.
