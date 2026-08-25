@@ -1,68 +1,111 @@
 # Frontend Orchestrator FO-01 — Admin Read Authorization Evidence
 
-**Status:** IMPLEMENTED ON BRANCH / PRE-PR VALIDATION
+**Status:** IMPLEMENTED / HTTP AUTHORIZATION EVIDENCE ADDED
 
 ## Traceability
 
 - Work package: `FO-01 — Admin Read Boundary schließen`
-- Source: user-prioritized Frontend-Orchestrator follow-up work package
 - Security authority: `ADR-0067 — S1 Security Hardening Interlock`
 - Frontend authority: `docs/frontend/FRONTEND_ARCH.md`
 - Branch: `fix/frontend-orchestrator-read-authz-2026-08-25`
-- Branch baseline: `main@6283b3618274d36a026a6ce791d3d291945a7f7f`
+- Current synchronized baseline: `main@877dd1e6351ce813d57bace23daa7b81cd9aa6a7`
+- Protected endpoints:
+  - `GET /api/orchestrator/stats`
+  - `GET /api/orchestrator/ping-models`
 
 ## Problem
 
-The administrative Request-Orchestrator UI consumed two operational read endpoints:
+The administrative Request-Orchestrator UI consumed operational read endpoints that were reachable without the shared server-side IAM guard. UI visibility is not an authorization boundary; a direct HTTP client must not be able to bypass the admin portal and obtain operational telemetry or model-integration state.
 
-- `GET /api/orchestrator/stats`
-- `GET /api/orchestrator/ping-models`
-
-The UI itself was rendered only inside the existing admin portal, but both HTTP endpoints were callable without the shared server-side admin authorization middleware. The browser also used unauthenticated `fetch()` calls for those reads, unlike the already protected mutation endpoints.
-
-Client-side visibility is not an authorization boundary. OWASP API Security classifies administrative functions that are callable without the required privileges as Broken Function Level Authorization (API5:2023). The repository's ADR-0067 likewise requires authorization to be enforced at the application route/service boundary and to fail closed.
+This is a Broken Function Level Authorization class of defect: authorization must be enforced at the server route/service boundary and must fail closed independently of the React presentation layer.
 
 ## Implemented control
 
 ### Server boundary
 
-`server/orchestrator.ts` now applies the existing `requireOrchestratorAdmin` middleware to both operational GET routes. The middleware continues to delegate to the canonical shared IAM function:
+`server/orchestrator.ts` applies `requireOrchestratorAdmin` before both operational GET handlers. The guard delegates to the existing canonical authority:
 
 `checkAdminAccess(req, 'orchestrator-config', SUPERVISOR_ZONE_ROLES)`
 
-No second IAM role registry, owner list, token verifier or bespoke authorization path was introduced.
+`SUPERVISOR_ZONE_ROLES` remains the single role set for this surface (`owner`, `admin`, `supervisor`). No second token verifier, role list, owner list or alternate authorization path is introduced.
 
 ### Frontend consumer
 
-`src/components/OrchestratorPanel.tsx` now uses the existing shared `authFetch()` adapter for both protected reads. This preserves the central Supabase-session bearer-token behavior and the existing global unauthorized-session handling.
+`src/components/OrchestratorPanel.tsx` uses the shared `authFetch()` adapter for both reads, so the existing verified Supabase session bearer is attached. The client supplies identity evidence only; it does not decide authorization.
 
-### Regression guard
+## Evidence layers
 
-`tests/unit/orchestratorAdminReadBoundary.test.ts` statically enforces:
+FO-01 now has two independent repository-level evidence layers.
 
-1. `/stats` is protected by `requireOrchestratorAdmin`;
-2. `/ping-models` is protected by `requireOrchestratorAdmin`;
-3. both frontend reads use `authFetch()`;
-4. plain unauthenticated `fetch()` is not reintroduced for those paths;
-5. the router remains mounted through the canonical application route composition.
+### Layer 1 — structural contract
+
+`tests/unit/orchestratorAdminReadBoundary.test.ts` enforces that:
+
+1. `/stats` is guarded by `requireOrchestratorAdmin`;
+2. `/ping-models` is guarded by `requireOrchestratorAdmin`;
+3. the guard remains bound to `checkAdminAccess(..., SUPERVISOR_ZONE_ROLES)`;
+4. both frontend reads use `authFetch()`;
+5. unauthenticated plain `fetch()` is not reintroduced;
+6. the router remains mounted through the canonical application composition.
+
+### Layer 2 — real HTTP/router execution
+
+`tests/integration/orchestratorAdminReadAuthz.test.ts` starts the real Express router over `node:http` and calls both protected endpoints through `fetch()`.
+
+The external identity-verification boundary is deliberately mocked. This follows the existing repository security-test pattern: mock the external verification decision, exercise the application's own orchestration and enforcement. The test therefore proves that the router cannot bypass a canonical IAM DENY and that an IAM ALLOW reaches the handler. It does not replace the dedicated tests of `checkAdminAccess()` itself.
+
+The HTTP matrix covers both `/stats` and `/ping-models`:
+
+| Scenario | Canonical IAM decision represented | Expected HTTP result | Operational handler/payload |
+|---|---|---:|---|
+| No bearer token | `no-valid-credentials` | `401` | denied |
+| Invalid bearer token | `no-valid-credentials` | `401` | denied |
+| Valid standard-user identity | `insufficient-role` | `401` | denied |
+| Rate-limited authorization attempt | `rate-limited` | `429` | denied |
+| Authorized supervisor | `iam-role` | `200` | allowed |
+
+Additional assertions prove that:
+
+- the actual Express request is delegated to `checkAdminAccess` with zone `orchestrator-config` and exactly `SUPERVISOR_ZONE_ROLES`;
+- `orchestrator.getStats()` is **never executed** for missing, invalid, insufficient-role or rate-limited scenarios;
+- a DENY response never contains the marker used by the mocked operational stats payload;
+- no `supertest` or other new dependency is introduced; native `node:http` + `fetch` matches repository convention.
+
+## Canonical IAM behavior correlated
+
+The router evidence is chained to the existing `checkAdminAccess()` authority. That authority independently remains fail-closed for:
+
+- missing Supabase configuration;
+- unavailable IAM schema;
+- missing bearer credentials;
+- tokens that do not resolve to a permitted IAM role;
+- role outside the supplied allowed-role set;
+- rate limiting;
+- unexpected internal errors.
+
+A route-level ALLOW therefore cannot be manufactured by React state or by a client-supplied role field: the server consumes the canonical IAM result.
 
 ## Security properties
 
 - deny-by-default remains server-side;
-- frontend gating is not treated as security enforcement;
-- existing Supabase/IAM authorities are reused;
-- no secrets, credentials or new external write paths are introduced;
-- no Render, Supabase, Stripe or production mutation is required;
-- no new package or open-source dependency is introduced.
+- frontend gating is presentation only;
+- IAM authority and role registry are not duplicated;
+- handler non-execution is verified for DENY cases;
+- rate-limit denial is preserved as `429`;
+- no secrets, credentials, schema, Render, Supabase or Stripe state are mutated;
+- no new package/dependency is introduced.
 
-## Best-practice / state-of-the-art check
+## Main synchronization / correlation
 
-Primary external reference reviewed on 2026-08-25:
+After PR #536 merged, this branch was synchronized to `main@877dd1e6351ce813d57bace23daa7b81cd9aa6a7`. The imported main delta only releases the terminal Vocabulary work claim under `.ai/work-claims/**`; it does not overlap with the FO-01 server, frontend, test or security-evidence paths.
 
-- OWASP Web Security Testing Guide — API Broken Function Level Authorization (`WSTG-APIT-04`);
-- OWASP API Security Top 10 2023 — authorization remains a primary API security concern.
+The currently open PR set was also re-correlated. FO-01 has no file-level overlap with the other open PRs at the time of this evidence update.
 
-The smallest compatible remediation is to enforce the existing repository IAM middleware on every administrative function rather than adding a new authorization library.
+## Best-practice check
+
+The control follows the standard API authorization model: enforce function-level authorization at the server boundary, keep the browser untrusted, use a single canonical identity/role authority, test negative paths, and verify that protected handlers are unreachable after a DENY.
+
+No additional authorization library is warranted for this bounded fix because CAPITAL-AI already has a central IAM implementation and role registry.
 
 ## Scope intentionally excluded
 
@@ -71,13 +114,11 @@ FO-01 does **not** change:
 - proxy/client-IP trust semantics (`FO-02`);
 - numeric configuration validation (`FO-03`);
 - telemetry wording/coverage (`FO-04`);
-- polling lifecycle or request cancellation (`FO-05`);
-- physical migration of the legacy component to `src/features/governance` (`FO-07` / BB-8).
+- polling lifecycle/cancellation/backoff (`FO-05`);
+- physical component migration (`FO-07` / BB-8).
 
-These remain separate work packages to avoid mixing trust-boundary changes.
+These remain separate trust-boundary or architecture work packages.
 
-## Validation status before PR
+## Hosted validation
 
-Repository-side static review confirms the intended four-file scope and exact authorization wiring. Hosted GitHub CI/build/test has intentionally not been triggered before PR creation under the repository cost-control policy.
-
-Before PR creation, the branch must be synchronized again with the then-current `main`, correlated for security/IAM/frontend changes, and the targeted static/contract checks must be re-evaluated.
+Exact-head GitHub CI/Governance remains authoritative after each branch mutation. The HTTP evidence is part of the normal Vitest suite and the PR classifier treats the resulting scope as Runtime/Class R, so TypeScript, unit/integration tests, production build, CSP/predeploy checks and Docker/runtime checks are all required before merge.
