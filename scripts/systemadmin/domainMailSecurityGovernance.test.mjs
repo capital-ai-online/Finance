@@ -71,17 +71,55 @@ test('runbook names the canonical security and governance authorities', () => {
   }
 });
 
-test('domain hardening runbook preserves Render CAA and IPv6 safety invariants', () => {
+test('domain hardening runbook preserves minimal Render CAA and IPv6 safety invariants', () => {
   for (const expected of [
     '@ CAA 0 issue "letsencrypt.org"',
+    '@ CAA 0 issue "pki.goog"',
+    '@ CAA 0 issuewild ";"',
     '@ CAA 0 issuewild "letsencrypt.org"',
-    '@ CAA 0 issue "pki.goog; cansignhttpexchanges=yes"',
-    '@ CAA 0 issuewild "pki.goog; cansignhttpexchanges=yes"',
+    '@ CAA 0 issuewild "pki.goog"',
+    'verifizierter Render-Wildcard-Scope',
     'PROVIDER_EXCEPTION_RENDER_IPV4',
     'keinen AAAA-Record hinzufügen',
   ]) {
     assert.ok(runbook.includes(expected), `missing hardening invariant: ${expected}`);
   }
+
+  const defaultScopeStart = runbook.indexOf('Vorgesehener minimaler Satz für `capital-ai.online` ohne Wildcard-Scope:');
+  const verifiedWildcardStart = runbook.indexOf('Falls später ein verifizierter Render-Wildcard-Scope erforderlich ist');
+  const preCheckStart = runbook.indexOf('### Pre-Check');
+
+  assert.ok(defaultScopeStart >= 0, 'default CAA scope must be documented');
+  assert.ok(verifiedWildcardStart > defaultScopeStart, 'verified wildcard scope must follow the default scope');
+  assert.ok(preCheckStart > verifiedWildcardStart, 'pre-check must follow the wildcard transition block');
+
+  const defaultScope = runbook.slice(defaultScopeStart, verifiedWildcardStart);
+  const verifiedWildcardScope = runbook.slice(verifiedWildcardStart, preCheckStart);
+
+  assert.ok(
+    defaultScope.includes('@ CAA 0 issuewild ";"'),
+    'default non-wildcard scope must explicitly deny wildcard issuance',
+  );
+  assert.ok(
+    !defaultScope.includes('@ CAA 0 issuewild "letsencrypt.org"') &&
+      !defaultScope.includes('@ CAA 0 issuewild "pki.goog"'),
+    'default non-wildcard scope must not grant wildcard issuance to Render CAs',
+  );
+  assert.ok(
+    verifiedWildcardScope.includes('muss der Deny-Record `@ CAA 0 issuewild ";"` ersetzt werden'),
+    'verified wildcard transition must replace, not append to, the deny record',
+  );
+  assert.ok(
+    verifiedWildcardScope.includes('@ CAA 0 issuewild "letsencrypt.org"') &&
+      verifiedWildcardScope.includes('@ CAA 0 issuewild "pki.goog"'),
+    'verified wildcard scope must remain restricted to the two Render CAs',
+  );
+
+  assert.doesNotMatch(
+    runbook,
+    /pki\.goog;\s*cansignhttpexchanges=yes/,
+    'normal Render TLS must not inherit the SXG-specific Google CAA parameter',
+  );
 });
 
 test('mail enforcement stays staged and protected by explicit mutation gates', () => {
