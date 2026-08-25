@@ -87,11 +87,14 @@ describe('CAPITAL-AI Branding Manifest v6.1 / PDF brand projection', () => {
     expect(css).not.toContain('Montserrat');
   });
 
-  it('derives the PDF renderer adapter from the design-token source of truth', () => {
+  it('derives the PDF renderer adapter from canonical design-token roles', () => {
     expect(vite).toContain("docs/frontend/design-tokens.json");
     expect(vite).toContain('__CAPITAL_AI_PDF_BRAND__');
-    expect(vite).toContain("tokenString('color', 'aif', 'gold', 'DEFAULT')");
+    expect(vite).toContain("tokenString('color', 'brand', 'primary')");
+    expect(vite).toContain("tokenString('color', 'brand', 'cyan')");
+    expect(vite).toContain("tokenString('color', 'brand', 'accent')");
     expect(vite).toContain("tokenString('color', 'print', 'textPrimary')");
+    expect(vite).not.toMatch(/tokenString\('color',\s*'aif'/);
     expect(pdfBrand).toContain('export const PDF_BRAND = __CAPITAL_AI_PDF_BRAND__');
     expect(pdfBrand).not.toContain('canvas: [24, 24, 27]');
   });

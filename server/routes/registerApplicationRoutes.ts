@@ -24,6 +24,7 @@ import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExec
 import { breakGlassRouter } from '../systemadmin/breakGlassRouter';
 import { m10CredentialEnrollmentRouter } from '../m10/credentialEnrollmentRouter';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
+import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
 import { createLegacyScoringCompatibilityRouter } from './legacyScoringCompatibilityRoutes';
@@ -68,7 +69,10 @@ export function registerApplicationRoutes(
   app.use('/api/crypto/evidence', cryptoEvidenceRouter);
   app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));
 
-  app.use('/api/stripe', stripeRouter);
+  // Security boundary: client-supplied Stripe return targets are normalized and
+  // validated against the existing ADR-0009/CORS origin authority before any
+  // Checkout or Billing Portal session can be created.
+  app.use('/api/stripe', stripeReturnUrlGuard, stripeRouter);
   app.use('/api/orchestrator', orchestratorRouter);
   app.use('/api/admin/hygiene', hygieneRouter);
   app.use('/api/admin', systemEventsRouter);

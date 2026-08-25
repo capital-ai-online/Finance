@@ -11,6 +11,11 @@ import {
   MARKETING_EMOJI_LEXICON,
   decorateMarketingText,
 } from './marketingEmojiLexicon';
+import {
+  PLATFORM_CHARACTER_LIMITS,
+  conservativeCharacterCount,
+  type SocialMediaTextPlatform,
+} from './platformCharacterLimits';
 
 export type TemplateLocale = 'de' | 'en';
 
@@ -88,6 +93,28 @@ function normalizeTopic(value: string): string {
   return value.replace(/\s+/g, ' ').trim().slice(0, 200);
 }
 
+function assertPlatformText(
+  platform: SocialMediaTextPlatform,
+  text: string,
+  field: string,
+): string {
+  const characterCount = conservativeCharacterCount(text);
+  const maxCharacters = PLATFORM_CHARACTER_LIMITS[platform].maxCharacters;
+  if (characterCount > maxCharacters) {
+    throw new Error(
+      `${field} exceeds ${platform} character limit (${characterCount}/${maxCharacters}).`,
+    );
+  }
+  return text;
+}
+
+function validateThread(entries: ThreadTweet[]): ThreadTweet[] {
+  for (const entry of entries) {
+    assertPlatformText('x', entry.text, `twitterThread[${entry.index}]`);
+  }
+  return entries;
+}
+
 function supportLine(): string {
   return `${EMOJI.support} Support: ${SUPPORT_EMAIL}`;
 }
@@ -114,24 +141,24 @@ function buildThread(
   disclaimer: string,
 ): ThreadTweet[] {
   if (locale === 'en') {
-    return [
+    return validateThread([
       { index: 1, text: `1/ ${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic} — a structured learning thread (not advice).` },
       { index: 2, text: `2/ ${EMOJI.finance} Define the question clearly. What decision are you actually trying to improve?${note ? ` Context: ${note}` : ''}` },
       { index: 3, text: `3/ ${EMOJI.security} Separate facts from narratives. Prefer primary sources and transparent methods.` },
       { index: 4, text: `4/ ${EMOJI.warning} Risk first: what can go wrong, and how would you notice early?` },
       { index: 5, text: `5/ ${EMOJI.access} ${cta}. ${disclaimer}` },
       { index: 6, text: `6/ ${supportLine()}` },
-    ];
+    ]);
   }
 
-  return [
+  return validateThread([
     { index: 1, text: `1/ ${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic} — Lern-Thread (keine Beratung).` },
     { index: 2, text: `2/ ${EMOJI.finance} Frage schärfen: Welche Entscheidung soll besser werden?${note ? ` Kontext: ${note}` : ''}` },
     { index: 3, text: `3/ ${EMOJI.security} Fakten von Narrativen trennen. Primärquellen und transparente Methoden bevorzugen.` },
     { index: 4, text: `4/ ${EMOJI.warning} Risiko zuerst: Was kann schiefgehen — und woran merkst du es früh?` },
     { index: 5, text: `5/ ${EMOJI.access} ${cta}. ${disclaimer}` },
     { index: 6, text: `6/ ${supportLine()}` },
-  ];
+  ]);
 }
 
 function buildPodcast(
@@ -276,12 +303,12 @@ function buildMarketingPack(
   ].join('\n');
 
   return {
-    linkedinPost: longDescription,
-    twitterThread: thread.map((entry) => entry.text),
-    instagramCaption,
-    tiktokDescription,
-    youtubeDescription,
-    facebookPost,
+    linkedinPost: assertPlatformText('linkedin', longDescription, 'linkedinPost'),
+    twitterThread: thread.map((entry) => assertPlatformText('x', entry.text, `twitterThread[${entry.index}]`)),
+    instagramCaption: assertPlatformText('instagram', instagramCaption, 'instagramCaption'),
+    tiktokDescription: assertPlatformText('tiktok', tiktokDescription, 'tiktokDescription'),
+    youtubeDescription: assertPlatformText('youtube', youtubeDescription, 'youtubeDescription'),
+    facebookPost: assertPlatformText('facebook', facebookPost, 'facebookPost'),
     hashtags,
     ctaButtonText: cta,
     supportEmail: SUPPORT_EMAIL,

@@ -47,4 +47,14 @@ describe('platformCharacterLimits', () => {
     expect(isWithinPlatformCharacterLimit('instagram', 'x'.repeat(2201))).toBe(false);
     expect(isWithinPlatformCharacterLimit('youtube', 'x'.repeat(5001))).toBe(false);
   });
+
+  it('rejects generated packages instead of truncating mandatory copy', () => {
+    expect(() =>
+      buildScriptPackage({
+        topic: 'Datenintegrität',
+        locale: 'de',
+        ctaText: `Mehr erfahren ${'x'.repeat(320)}`,
+      }),
+    ).toThrow(/twitterThread\[5\] exceeds x character limit/);
+  });
 });

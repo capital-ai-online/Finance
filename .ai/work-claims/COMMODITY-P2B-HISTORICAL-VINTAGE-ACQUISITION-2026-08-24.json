@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "COMMODITY-P2B-HISTORICAL-VINTAGE-ACQUISITION-2026-08-24",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -14,7 +14,7 @@
   "baseBranch": "main",
   "baseSha": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
   "branch": "feat/commodity-p2b-historical-vintage-acquisition-2026-08-24",
-  "pullRequest": null,
+  "pullRequest": 521,
   "claimedPaths": [
     ".ai/work-claims/COMMODITY-P2B-HISTORICAL-WALKFORWARD-2026-08-23.json",
     "src/platform/Scoring/CommodityHistoricalVintage.ts",
@@ -31,7 +31,10 @@
     "adr": ["ADR-0087", "ADR-0101"],
     "driveSource": "Google Drive Commodity Orchestrator Dokumentation 2026-08-23",
     "mergedWalkForwardPr": 519,
-    "mergedWalkForwardCommit": "cbae921a45e6bbac6bec3cae4433529046c2d4f6"
+    "mergedWalkForwardCommit": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
+    "historicalVintagePr": 521,
+    "historicalVintagePrHead": "3707c580b48d12d430f35ac8c2f20d574ff5c874",
+    "historicalVintageMergeCommit": "e429c31cead5b397ae98bc1959e0e0e6ab9fca0f"
   },
   "scopeBoundary": {
     "included": [
@@ -55,11 +58,11 @@
   },
   "prePrCorrelation": {
     "mainShaAtImplementationStart": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
-    "mainShaAtFinalReview": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
-    "openPrAgainstMain": "#520 [CAPITAL-AI] P1 Portfolio Allocation und FT-5 Risk-Evidence-Projektion",
-    "openPrOverlap": "none; PR #520 changes FinTechCore/ADR-0099/authority-registry/crypto-governance files only and does not overlap Commodity Historical Vintage, ADR-0101 or the claimed paths",
+    "mainShaAtFinalReview": "6c46aab0ab6341c20db6ad001b98572237fbcda0",
+    "openPrAgainstMain": "none at final merge gate",
+    "openPrOverlap": "none",
     "productionCommitAtStart": "14e4f3c8a309faae63fb336a432aac38ab08ceda",
-    "productionCommitAtFinalReview": "cbae921a45e6bbac6bec3cae4433529046c2d4f6",
+    "productionCommitAtFinalReview": "6c46aab0ab6341c20db6ad001b98572237fbcda0",
     "productionMainDriftAtFinalReview": 0,
     "renderWorkspace": "AICapital",
     "renderService": "Finance"
@@ -72,5 +75,9 @@
     "productionWeightsActivated": false,
     "roadmapIssuesMutated": false
   },
+  "releasedAt": "2026-08-25T00:16:00.000+02:00",
+  "releaseReason": "merged",
+  "terminalPrHeadSha": "3707c580b48d12d430f35ac8c2f20d574ff5c874",
+  "mergeMainSha": "e429c31cead5b397ae98bc1959e0e0e6ab9fca0f",
   "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
 }

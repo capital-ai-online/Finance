@@ -12,7 +12,7 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.9.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.9.1' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
@@ -306,7 +306,7 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
   },
   {
     id: 'free-crypto-news',
-    displayName: 'Free Crypto News (cryptocurrency.cv)',
+    displayName: 'cryptocurrency.cv Public News',
     role: 'primary',
     capabilities: ['news'],
     assetClasses: ['crypto'],
@@ -315,7 +315,7 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 30, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'not_wired',
-    notes: 'Open-source (MIT) keyless REST aggregator (nirholas/cryptocurrency.cv). Primary AI Newsfeed source. Metadata + publisher URL only; no body scrape, no scoring authority.',
+    notes: 'Public keyless cryptocurrency.cv article-metadata API. Upstream software is currently proprietary; CAPITAL-AI consumes the public REST data surface only. The token-protected source catalog is not a credential dependency: filter sources are derived from recent public article evidence. Metadata + publisher URL only; no body scrape, no scoring authority.',
   },
   {
     id: 'gdelt',
