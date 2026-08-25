@@ -13,9 +13,13 @@ import {
   type UsdaPsdAttributeBinding,
   type UsgsMcsObservationInput,
 } from './commodityOfficialEvidence';
+import {
+  validateCommodityVerifiedArchivedReleaseEvidence,
+  type CommodityVerifiedArchivedReleaseEvidence,
+} from './commodityHistoricalArchiveEvidence';
 
 export const COMMODITY_HISTORICAL_OFFICIAL_ACQUISITION_VERSION =
-  'commodity-historical-official-acquisition/1.0.0' as const;
+  'commodity-historical-official-acquisition/1.1.0' as const;
 
 export type CommodityHistoricalAcquisitionStatus =
   | 'READY'
@@ -35,15 +39,11 @@ export interface CommodityHistoricalAcquisitionResult {
   readonly scoreEligible: false;
 }
 
-export interface CommodityArchivedReleaseEvidence {
-  readonly publishedAt: string;
-  readonly capturedAt: string;
-  readonly releaseId: string;
-  readonly revisionId?: string | null;
-  readonly availabilityEvidenceId: string;
-  readonly sourceVersion: string;
-  readonly sourcePath: string;
-}
+/**
+ * Backward-compatible type name with a hardened contract. Archived release metadata is no longer a
+ * free-form object: it must be the verified projection emitted by commodityHistoricalArchiveEvidence.
+ */
+export interface CommodityArchivedReleaseEvidence extends CommodityVerifiedArchivedReleaseEvidence {}
 
 function result(input: Readonly<{
   providerId: CommodityHistoricalSourceId;
@@ -119,6 +119,13 @@ function dateOnly(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10);
 }
 
+function verifiedRelease(
+  providerId: Parameters<typeof validateCommodityVerifiedArchivedReleaseEvidence>[0],
+  release: CommodityArchivedReleaseEvidence,
+): boolean {
+  return validateCommodityVerifiedArchivedReleaseEvidence(providerId, release).valid;
+}
+
 export interface EiaHistoricalRangeRequest {
   readonly assetId: string;
   readonly symbol: string;
@@ -131,11 +138,7 @@ export interface EiaHistoricalRangeOptions extends CommodityEvidenceAdapterOptio
   readonly apiKey?: string;
 }
 
-/**
- * Retrieves historical EIA values through the governed shared HTTP transport.
- * The output is deliberately CURRENT_HISTORY_ONLY: API v2 can return old periods, but a current
- * response does not prove which revision was available at a historical decision time.
- */
+/** Current EIA history is research-only and never proves an old revision was historically available. */
 export async function fetchEiaCurrentHistoricalVintages(
   input: EiaHistoricalRangeRequest,
   options: EiaHistoricalRangeOptions = {},
@@ -221,11 +224,7 @@ export interface UsdaHistoricalRangeOptions extends CommodityEvidenceAdapterOpti
   readonly apiKey?: string;
 }
 
-/**
- * Retrieves current USDA PSD history for research/discovery. Because PSD explicitly revises values
- * across market years, rows from today's endpoint remain CURRENT_HISTORY_ONLY and cannot enter a
- * promotion-grade PIT dataset until an archived release capture is supplied.
- */
+/** Current USDA PSD history remains CURRENT_HISTORY_ONLY because historical market-year values revise. */
 export async function fetchUsdaCurrentHistoricalVintages(
   input: UsdaHistoricalRangeRequest,
   options: UsdaHistoricalRangeOptions = {},
@@ -301,6 +300,7 @@ export async function fetchUsdaCurrentHistoricalVintages(
   });
 }
 
+/** @deprecated Archive metadata cannot promote values returned by the mutable/current PRE endpoint. */
 export interface CftcArchivedReportEvidence extends CommodityArchivedReleaseEvidence {
   readonly reportDate: string;
 }
@@ -313,13 +313,14 @@ export interface CftcHistoricalRangeRequest {
   readonly startDate: string;
   readonly endDate: string;
   readonly featureKey?: string;
+  /** @deprecated Use buildArchivedOfficialHistoricalVintages with rows parsed from the verified archive payload. */
   readonly archivedReports?: readonly CftcArchivedReportEvidence[];
 }
 
 /**
- * Retrieves CFTC Disaggregated Futures Only history. Current PRE rows remain CURRENT_HISTORY_ONLY.
- * A row becomes PIT_VERIFIED only when the caller supplies evidence for the archived released report
- * artifact (publication timestamp + content/capture evidence), not merely a derived Friday rule.
+ * Retrieves CFTC PRE history for research/discovery only. A live/current PRE row always remains
+ * CURRENT_HISTORY_ONLY. Attaching archive metadata cannot change value provenance; PIT CFTC values
+ * must be normalized from rows extracted from the verified archive artifact via the archived-row path.
  */
 export async function fetchCftcHistoricalVintages(
   input: CftcHistoricalRangeRequest,
@@ -349,7 +350,6 @@ export async function fetchCftcHistoricalVintages(
     return result({ providerId: 'cftc-cot', status: 'SOURCE_UNAVAILABLE', reason: response.reason });
   }
 
-  const archivedByDate = new Map((input.archivedReports ?? []).map(item => [dateOnly(item.reportDate), item]));
   const vintages: CommodityHistoricalVintageArtifact[] = [];
   const featureKey = input.featureKey ?? 'positioning.managedMoneyNetPctOi';
   for (const row of rowsFrom(response.data)) {
@@ -358,7 +358,6 @@ export async function fetchCftcHistoricalVintages(
     const openInterest = asNumber(row.open_interest_all);
     if (long === null || short === null || openInterest === null || openInterest <= 0) continue;
     const reportDate = normalizePeriod(row.report_date_as_yyyy_mm_dd ?? row.report_date, response.retrievedAt);
-    const archive = archivedByDate.get(dateOnly(reportDate));
     const value = ((long - short) / openInterest) * 100;
     vintages.push(buildCommodityHistoricalVintage({
       providerId: 'cftc-cot',
@@ -369,25 +368,30 @@ export async function fetchCftcHistoricalVintages(
       value,
       unit: 'percent-open-interest',
       source: `cftc-cot:${String(row.market_and_exchange_names ?? input.marketNameContains)}`,
-      sourceVersion: archive?.sourceVersion ?? `CFTC-PRE-${CFTC_DISAGGREGATED_FUTURES_ONLY_DATASET}-current-history`,
-      sourcePath: archive?.sourcePath ?? `https://publicreporting.cftc.gov/resource/${CFTC_DISAGGREGATED_FUTURES_ONLY_DATASET}.json`,
+      sourceVersion: `CFTC-PRE-${CFTC_DISAGGREGATED_FUTURES_ONLY_DATASET}-current-history`,
+      sourcePath: `https://publicreporting.cftc.gov/resource/${CFTC_DISAGGREGATED_FUTURES_ONLY_DATASET}.json`,
       observedAt: reportDate,
-      availableAt: archive?.publishedAt ?? response.retrievedAt,
-      retrievedAt: archive?.capturedAt ?? response.retrievedAt,
+      availableAt: response.retrievedAt,
+      retrievedAt: response.retrievedAt,
       evidenceId: `cftc:${CFTC_DISAGGREGATED_FUTURES_ONLY_DATASET}:${String(row.cftc_contract_market_code ?? input.marketNameContains)}:${dateOnly(reportDate)}`,
-      releaseId: archive?.releaseId ?? null,
-      revisionId: archive?.revisionId ?? null,
-      availabilityEvidenceId: archive?.availabilityEvidenceId ?? null,
-      acquisitionMode: archive ? 'ARCHIVED_RELEASE_CAPTURE' : 'LIVE_API_CURRENT_HISTORY',
+      releaseId: null,
+      revisionId: null,
+      availabilityEvidenceId: null,
+      acquisitionMode: 'LIVE_API_CURRENT_HISTORY',
       periodLabel: dateOnly(reportDate),
     }));
   }
+  const archiveMetadataSupplied = (input.archivedReports?.length ?? 0) > 0;
   return result({
     providerId: 'cftc-cot',
-    status: vintages.length > 0 ? 'READY' : 'SOURCE_UNAVAILABLE',
+    status: vintages.length === 0 ? 'SOURCE_UNAVAILABLE' : archiveMetadataSupplied ? 'PARTIAL' : 'READY',
     vintages,
     missingFeatureKeys: vintages.length > 0 ? [] : [featureKey],
-    reason: vintages.length === 0 ? 'No usable CFTC managed-money historical rows were returned.' : undefined,
+    reason: vintages.length === 0
+      ? 'No usable CFTC managed-money historical rows were returned.'
+      : archiveMetadataSupplied
+        ? 'Archive metadata cannot promote values returned by the current PRE endpoint. Normalize archived rows through the verified archive path.'
+        : undefined,
   });
 }
 
@@ -400,12 +404,9 @@ export interface ArchivedFeatureRow {
   readonly periodLabel?: string | null;
 }
 
-/**
- * Source-neutral archived capture normalizer used when an official release artifact has already
- * been preserved outside the mutable live API. This is the upgrade path for EIA/USDA/CFTC archives.
- */
+/** Only content-verified archive release evidence may cross this PIT-normalization boundary. */
 export function buildArchivedOfficialHistoricalVintages(input: Readonly<{
-  providerId: Extract<CommodityHistoricalSourceId, 'eia' | 'usda-fas-psd' | 'cftc-cot' | 'governed-official-supply-evidence'>;
+  providerId: Extract<CommodityHistoricalSourceId, 'eia' | 'usda-fas-psd' | 'cftc-cot'>;
   assetId: string;
   symbol: string;
   domain: CommodityResearchDomain;
@@ -413,8 +414,11 @@ export function buildArchivedOfficialHistoricalVintages(input: Readonly<{
   release: CommodityArchivedReleaseEvidence;
   rows: readonly ArchivedFeatureRow[];
 }>): CommodityHistoricalAcquisitionResult {
-  if (!validTimestamp(input.release.publishedAt) || !validTimestamp(input.release.capturedAt)) {
-    return result({ providerId: input.providerId, status: 'INVALID', reason: 'Archived release timestamps are invalid.' });
+  if (!verifiedRelease(input.providerId, input.release)) {
+    return result({ providerId: input.providerId, status: 'INVALID', reason: 'Archived release evidence failed content-addressed integrity validation.' });
+  }
+  if (input.rows.length === 0) {
+    return result({ providerId: input.providerId, status: 'INVALID', reason: 'At least one archived feature row is required.' });
   }
   const vintages = input.rows.map(row => buildCommodityHistoricalVintage({
     providerId: input.providerId,
@@ -432,7 +436,7 @@ export function buildArchivedOfficialHistoricalVintages(input: Readonly<{
     retrievedAt: input.release.capturedAt,
     evidenceId: row.evidenceId,
     releaseId: input.release.releaseId,
-    revisionId: input.release.revisionId ?? null,
+    revisionId: input.release.revisionId,
     availabilityEvidenceId: input.release.availabilityEvidenceId,
     acquisitionMode: 'ARCHIVED_RELEASE_CAPTURE',
     periodLabel: row.periodLabel ?? null,
@@ -447,11 +451,7 @@ export function buildArchivedOfficialHistoricalVintages(input: Readonly<{
   });
 }
 
-/**
- * Normalizes one versioned USGS Mineral Commodity Summaries release. Statistic year is the economic
- * observation; publication/version availability governs PIT use. A 2026 release cannot be used in a
- * 2024 decision merely because it contains a 2024 statistic.
- */
+/** Normalizes one versioned USGS MCS release; the verified release URL remains the source path. */
 export function buildUsgsHistoricalReleaseVintages(input: Readonly<{
   assetId: string;
   symbol: string;
@@ -459,6 +459,9 @@ export function buildUsgsHistoricalReleaseVintages(input: Readonly<{
   release: CommodityArchivedReleaseEvidence;
   observations: readonly UsgsMcsObservationInput[];
 }>): CommodityHistoricalAcquisitionResult {
+  if (!verifiedRelease('usgs-mcs', input.release)) {
+    return result({ providerId: 'usgs-mcs', status: 'INVALID', reason: 'USGS release evidence failed content-addressed integrity validation.' });
+  }
   const vintages = input.observations
     .filter(item => item.value !== null && Number.isFinite(item.value) && Number.isInteger(item.year))
     .map(item => buildCommodityHistoricalVintage({
@@ -471,13 +474,13 @@ export function buildUsgsHistoricalReleaseVintages(input: Readonly<{
       unit: item.unit,
       source: `usgs-mcs:${item.commodity}:${item.statistic}`,
       sourceVersion: input.release.sourceVersion,
-      sourcePath: item.sourcePath?.trim() || input.release.sourcePath,
+      sourcePath: input.release.sourcePath,
       observedAt: `${item.year}-12-31T23:59:59.000Z`,
       availableAt: input.release.publishedAt,
       retrievedAt: input.release.capturedAt,
       evidenceId: `usgs-mcs:${input.release.releaseId}:${item.commodity}:${item.statistic}:${item.year}`,
       releaseId: input.release.releaseId,
-      revisionId: input.release.revisionId ?? null,
+      revisionId: input.release.revisionId,
       availabilityEvidenceId: input.release.availabilityEvidenceId,
       acquisitionMode: 'VERSIONED_ANNUAL_RELEASE',
       periodLabel: String(item.year),
@@ -497,16 +500,16 @@ export interface EuCrmaHistoricalAssessmentInput {
   readonly evidenceId: string;
 }
 
-/**
- * Normalizes versioned EU criticality assessment values while keeping EI and Supply Risk separate.
- * The CRMA methodology is not itself a numerical vintage; a published assessment/release artifact is required.
- */
+/** Keeps EI and Supply Risk separate; the numerical assessment needs verified release evidence. */
 export function buildEuCrmaHistoricalAssessmentVintages(input: Readonly<{
   assetId: string;
   symbol: string;
   release: CommodityArchivedReleaseEvidence;
   criticality: EuCrmaHistoricalAssessmentInput;
 }>): CommodityHistoricalAcquisitionResult {
+  if (!verifiedRelease('eu-crma', input.release)) {
+    return result({ providerId: 'eu-crma', status: 'INVALID', reason: 'CRMA release evidence failed content-addressed integrity validation.' });
+  }
   if (!validTimestamp(input.criticality.assessmentPeriodEndAt) || !input.criticality.evidenceId.trim()) {
     return result({ providerId: 'eu-crma', status: 'INVALID', reason: 'CRMA assessment period and evidence id are required.' });
   }
@@ -533,7 +536,7 @@ export function buildEuCrmaHistoricalAssessmentVintages(input: Readonly<{
       retrievedAt: input.release.capturedAt,
       evidenceId: `${input.criticality.evidenceId}:${featureKey}`,
       releaseId: input.release.releaseId,
-      revisionId: input.release.revisionId ?? null,
+      revisionId: input.release.revisionId,
       availabilityEvidenceId: input.release.availabilityEvidenceId,
       acquisitionMode: 'REGULATORY_ASSESSMENT_RELEASE',
       periodLabel: dateOnly(input.criticality.assessmentPeriodEndAt),
