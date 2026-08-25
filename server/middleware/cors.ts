@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from 'express';
 import { getServerSupabase, isSupabaseConfigured } from '../db';
+import { getClientIp } from '../../src/platform/Security/rateLimiter';
 
 const PRODUCTION_ORIGINS = [
   'https://capital-ai.online',
@@ -33,10 +34,12 @@ async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger
 
   try {
     const supabase = getServerSupabase();
-    const xff = req.headers['x-forwarded-for'];
-    const ip = typeof xff === 'string'
-      ? xff.split(',')[0].trim()
-      : (req.socket?.remoteAddress || 'unknown');
+    // SECURITY (2026-08-25 architecture review follow-up, correlation check): this used to parse
+    // x-forwarded-for locally instead of using the shared, trust-proxy-aware getClientIp() helper
+    // (src/platform/Security/rateLimiter.ts) - a third, independent reimplementation of the same
+    // logic already fixed in rateLimiter.ts and requestOrchestrator.ts, with the same forgeable-IP
+    // weakness (a spoofed header would have been recorded verbatim into security_events).
+    const ip = getClientIp(req);
 
     await supabase.from('security_events').insert({
       event_type: 'suspicious_request',

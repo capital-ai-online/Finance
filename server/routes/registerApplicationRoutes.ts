@@ -30,6 +30,9 @@ import { seoEngineRouter } from './seoEngineRoutes';
 import { createLegacyScoringCompatibilityRouter } from './legacyScoringCompatibilityRoutes';
 import { verifiedAssetDisplayRouter } from './verifiedAssetDisplayRoutes';
 import { cryptoEvidenceRouter } from './cryptoEvidenceRoutes';
+import { createMarketSentimentRouter } from './marketSentimentRoutes';
+import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
+import { assetRegistry } from '../../src/lib/assetRegistry';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -96,4 +99,11 @@ export function registerApplicationRoutes(
   app.use('/api/social-media', socialMediaRouter);
   app.use('/api/seo', seoEngineRouter);
   app.use('/api', aiRouter);
+  // Router-Anbindung (2026-08-25): bis dahin definiert, aber nirgends eingebunden (toter Code,
+  // siehe docs/security/FULL_ARCHITECTURE_SECURITY_REVIEW_2026-08-25.md, "Nebenbefund"). Die
+  // Frontend-Aufrufer (MarketSentiment.tsx, SentimentDashboard.tsx, PortfolioBacktester.tsx)
+  // riefen diese Pfade bereits auf und erhielten dadurch immer 404 - keine neue Fläche, sondern
+  // eine bereits im Frontend vorhandene, bisher nie erreichbare Funktion.
+  app.use('/api', createMarketSentimentRouter({ ai, anthropic, openai, assetRegistry, fallbackAssets: [] }));
+  app.use('/api', createPortfolioReviewRouter({ ai, anthropic, openai }));
 }
