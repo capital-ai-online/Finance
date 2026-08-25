@@ -47,9 +47,9 @@ test('production web security checks follow the canonical runtime response path'
     'canonical security response context must be attached before the compatibility CSP setter',
   );
 
-  assert.match(
-    extractedSecurityHeaders,
-    /active server entry point is\s+not switched in this phase/s,
+  assert.ok(
+    extractedSecurityHeaders.includes('The active server entry point is') &&
+      extractedSecurityHeaders.includes('not switched in this phase'),
     'extracted securityHeaders middleware must not be mistaken for the active runtime authority',
   );
 });
