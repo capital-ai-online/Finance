@@ -57,10 +57,20 @@ export function resetRateLimit(key: string): void {
 }
 
 export function getClientIp(req: { headers: Record<string, unknown>; socket?: { remoteAddress?: string }; ip?: string }): string {
-  // Render terminiert TLS und setzt x-forwarded-for; erstes Element ist die echte Client-IP.
+  // SECURITY (2026-08-25 architecture review, finding #7): vormals wurde x-forwarded-for hier
+  // direkt und ungeprueft geparst, ohne dass Express eine trust-proxy-Konfiguration hatte - ein
+  // Client konnte durch einen beliebigen x-forwarded-for-Wert jedes Mal eine neue Rate-Limit-
+  // Bucket-Identitaet erzeugen. server.application.ts setzt jetzt `app.set('trust proxy', 1)'
+  // fuer den einzigen echten Reverse-Proxy (Render); req.ip beruecksichtigt das bereits korrekt
+  // und darf nicht mehr durch eine eigene, davon unabhaengige Header-Auswertung umgangen werden.
+  // req.ip ist nur vorhanden, wenn der Request ueber Express lief (nicht bei Tests mit einem
+  // reinen Mock-Request) - dafuer bleibt der eigene Header-Fallback als reine Kompatibilitaet.
+  if (req.ip) {
+    return req.ip;
+  }
   const xff = req.headers['x-forwarded-for'];
   if (typeof xff === 'string' && xff.length > 0) {
     return xff.split(',')[0].trim();
   }
-  return req.ip || req.socket?.remoteAddress || 'unknown';
+  return req.socket?.remoteAddress || 'unknown';
 }

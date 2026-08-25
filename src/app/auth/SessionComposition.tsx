@@ -123,12 +123,14 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         }
       }
 
+      // SECURITY (2026-08-25 architecture review, finding #2): accessToken is intentionally not
+      // set here anymore - see the comment on UserSession.accessToken. authFetch() always reads
+      // the live token from the Supabase SDK session directly instead.
       updateUserSession({
         type: 'registered',
         name,
         email,
         subscriptionTier: tier,
-        accessToken: session.access_token,
         id: user.id,
       });
     } catch (err) {
@@ -138,7 +140,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         name,
         email,
         subscriptionTier: 'Free',
-        accessToken: session.access_token,
         id: user.id,
       });
     } finally {

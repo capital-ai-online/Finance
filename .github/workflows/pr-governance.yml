@@ -160,7 +160,14 @@ jobs:
         run: npm run repository:validate:advisory
 
       - name: Produktions-Baseline über trusted-main Policy erzeugen
-        if: github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass'
+        # SECURITY (2026-08-25 architecture review, finding #10): binding this exception to the head
+        # ref string alone let any contributor able to open a PR replicate it by naming their own
+        # branch identically. Also requiring the same (non-fork) repo and the Owner's GitHub login
+        # closes that without changing the exception's intended, time-boxed scope.
+        if: >-
+          github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass' ||
+          github.event.pull_request.head.repo.full_name != github.repository ||
+          github.event.pull_request.user.login != 'SvenKulessa'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -173,7 +180,14 @@ jobs:
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
       - name: Kanonische PR-Vorlage fail-closed prüfen
-        if: github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass'
+        # SECURITY (2026-08-25 architecture review, finding #10): binding this exception to the head
+        # ref string alone let any contributor able to open a PR replicate it by naming their own
+        # branch identically. Also requiring the same (non-fork) repo and the Owner's GitHub login
+        # closes that without changing the exception's intended, time-boxed scope.
+        if: >-
+          github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass' ||
+          github.event.pull_request.head.repo.full_name != github.repository ||
+          github.event.pull_request.user.login != 'SvenKulessa'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}

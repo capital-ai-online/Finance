@@ -40,11 +40,16 @@ function createRequestNonce(): string {
  * broad https: fallbacks are limited to non-script resource classes.
  */
 export function buildBaselineProductionCsp(nonce: string): string {
+  // SECURITY (2026-08-25 architecture review, finding #8): 'unsafe-eval' was removed. The
+  // production bundle (dist/assets/*.js) was verified to contain zero eval()/new Function() call
+  // sites - the only hit before removal was a string literal in a linter-rule description, not an
+  // actual call. Keeping 'unsafe-eval' in the enforced policy needlessly weakened XSS mitigation
+  // by allowing eval-based execution even for non-nonced/injected script content.
   return [
     "default-src 'self'",
     "object-src 'none'",
     "base-uri 'none'",
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com https://pagead2.googlesyndication.com`,
+    `script-src 'self' 'nonce-${nonce}' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com https://pagead2.googlesyndication.com`,
     "style-src 'self' https://fonts.googleapis.com https://cookiehub.net https://cdn.cookiehub.eu",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
@@ -66,7 +71,9 @@ export function buildStrictProductionCsp(nonce: string): string {
     "default-src 'self' https:",
     "object-src 'none'",
     "base-uri 'none'",
-    `script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:`,
+    // SECURITY (2026-08-25 architecture review, finding #8): 'unsafe-eval' removed, see the note
+    // in buildBaselineProductionCsp above (verified-empty of eval()/new Function() call sites).
+    `script-src 'nonce-${nonce}' 'unsafe-inline' 'strict-dynamic' https: http:`,
     "style-src 'self' https://fonts.googleapis.com https://cookiehub.net https://cdn.cookiehub.eu",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",

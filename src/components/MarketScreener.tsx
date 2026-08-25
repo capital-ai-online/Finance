@@ -13,6 +13,7 @@ import Markdown from 'react-markdown';
 import { AssetLogo } from './AssetLogo';
 import { StatusBadge } from './StatusBadge';
 import { UserSession } from '../App';
+import { authFetch } from '../lib/authFetch';
 
 interface MarketScreenerProps {
   onSelectSymbol: (symbol: string) => void;
@@ -108,6 +109,20 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+// SECURITY (2026-08-25 architecture review, finding #5): /api/chat requires a verified
+// Supabase session now; requestAiSummary() previously called it via the plain, unauthenticated
+// fetchWithTimeout(). authFetchWithTimeout() attaches the same Bearer token authFetch() would,
+// while keeping the existing AbortController timeout behavior.
+async function authFetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 10_000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await authFetch(url, { ...init, signal: controller.signal });
   } finally {
     window.clearTimeout(timer);
   }
@@ -279,7 +294,7 @@ export function MarketScreener({
   const requestAiSummary = async (result: ScreeningResult) => {
     setAnalysisLoading(result.symbol);
     try {
-      const response = await fetchWithTimeout('/api/chat', {
+      const response = await authFetchWithTimeout('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

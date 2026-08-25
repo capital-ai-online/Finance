@@ -1,6 +1,6 @@
 import express from 'express';
 import { orchestrator } from '../src/lib/requestOrchestrator';
-import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { checkAdminAccess, resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/services/aiUsageTracker';
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
@@ -25,6 +25,18 @@ function parseProviderAttribution(provider: string): { modelProvider: AiProvider
 }
 
 aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
+  // SECURITY (2026-08-25 architecture review, finding #5): dieser Endpunkt loest kostenpflichtige
+  // Anthropic/OpenAI-Completions aus und war zuvor komplett unauthentifiziert erreichbar; kombiniert
+  // mit dem zuvor ungeprueften x-forwarded-for-basierten Rate-Limit (siehe requestOrchestrator.ts)
+  // liess sich das 30-req/min-Limit trivial umgehen, was einen unbegrenzten Kosten-DoS gegen das
+  // KI-Budget ermoeglichte. Ein gueltiges, per Supabase verifiziertes Bearer-Token ist jetzt
+  // erforderlich; das nutzerbezogene Rate-Limit in resolveVerifiedIdentity/checkAdminAccess-Mustern
+  // bleibt zusaetzlich eine zweite Verteidigungslinie unabhaengig von der Client-IP.
+  const identity = await resolveVerifiedIdentity(req);
+  if (!identity) {
+    return res.status(401).json({ error: 'Anmeldung erforderlich, um den KI-Assistenten zu nutzen.' });
+  }
+
   const anthropic = isAnthropicConfigured() ? getAnthropicInstance() : null;
   const openai = isOpenAIConfigured() ? getOpenAIInstance() : null;
   if (!anthropic && !openai) {

@@ -70,6 +70,18 @@ const app = express();
 // versions-spezifischen Exploits erleichtert. disable('x-powered-by') unterdrueckt den Header
 // vollstaendig (Aequivalent zu Nginx' server_tokens off; / PHPs expose_php = Off).
 app.disable('x-powered-by');
+// SECURITY (2026-08-25 architecture review, findings #5/#7): ohne eine explizite trust-proxy-
+// Konfiguration behandelt Express X-Forwarded-For NICHT als vertrauenswuerdig, aber mehrere
+// Stellen im Code (rateLimiter.getClientIp, requestOrchestrator.handle) lasen den Header bisher
+// trotzdem direkt und ungeprueft aus - ein Client konnte pro Request eine beliebige X-Forwarded-
+// For-IP vortaeuschen und damit sowohl IP-basierte Rate-Limits (Admin-Brute-Force-Schutz, Step-
+// Up-Verifikation, Break-Glass, /api/chat, globales Limit) als auch die in security_events/
+// iam_access_log protokollierte IP faelschen. Render sitzt als einziger Reverse-Proxy direkt vor
+// dieser App (siehe render.yaml), daher ist genau EIN vertrauenswuerdiger Hop korrekt: Express
+// berechnet req.ip/req.ips dann aus X-Forwarded-For unter Beruecksichtigung dieses einen Hops,
+// statt den Header roh zu vertrauen. Alle Call-Sites wurden auf req.ip/getClientIp(req)
+// umgestellt (kein direktes req.headers['x-forwarded-for'] mehr fuer Sicherheitsentscheidungen).
+app.set('trust proxy', 1);
 const PORT = resolveRuntimePort(getCleanEnv('PORT'));
 
 // Audit ARCH-AUDIT-0002 (S4): weist als erste Middleware jedem Request eine Correlation-ID

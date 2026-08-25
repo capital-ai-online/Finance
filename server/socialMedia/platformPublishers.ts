@@ -16,6 +16,7 @@
 
 import { createLogger } from '../logger';
 import type { SupportedAccountPlatform } from '../../src/platform/SocialMediaEngine/types';
+import { fetchValidatedMediaAsset } from './mediaAssetValidation';
 
 const logger = createLogger('social-media:publish');
 
@@ -48,11 +49,14 @@ function mediaRequiredError(platform: string): PublishResult {
 async function publishToYouTube(input: PublishInput): Promise<PublishResult> {
   if (!input.mediaUrl) return mediaRequiredError('YouTube');
   try {
-    const videoRes = await fetch(input.mediaUrl);
+    // SECURITY (2026-08-25 architecture review, finding #9): fetchValidatedMediaAsset pins the
+    // connection to a freshly re-validated address instead of a bare fetch(), closing the DNS-
+    // rebinding TOCTOU window between the route-level validateMediaAssetUrl check and this download.
+    const videoRes = await fetchValidatedMediaAsset(input.mediaUrl);
     if (!videoRes.ok || !videoRes.body) {
-      return { success: false, errorMessage: `YouTube: mediaUrl nicht erreichbar (HTTP ${videoRes.status}).` };
+      return { success: false, errorMessage: `YouTube: mediaUrl nicht erreichbar (HTTP ${videoRes.status}${videoRes.error ? `, ${videoRes.error}` : ''}).` };
     }
-    const videoBytes = Buffer.from(await videoRes.arrayBuffer());
+    const videoBytes = videoRes.body;
     const metadata = {
       snippet: { title: input.videoTitle || input.caption.slice(0, 100), description: input.caption, tags: input.hashtags },
       status: { privacyStatus: 'public' },
