@@ -1,9 +1,9 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.1.1`  
+**Version:** `2.1.2`  
 **Status date:** `2026-08-25`  
-**Current repository baseline:** `main@0743e66742519a452a0633734685d4115e71150d` — PR #526 merge  
+**Current repository baseline:** `main@1a2af9070c05dc1ecea128c149d40bbdeca16a33` — PR #529 merge  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -59,12 +59,12 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document; synchronized to `main@0743e66742519a452a0633734685d4115e71150d` |
-| Open Pull Requests at this synchronization | `#527`, `#528`, `#529`; no file-level overlap with this OAuth/Auth/Governance work package. PR #528 shares only the broader Social Media domain via `server/socialMedia/scriptTemplates.ts`, not OAuth state, provider, PKCE, redirect or token handling |
+| Current-State Index | this document; synchronized to `main@1a2af9070c05dc1ecea128c149d40bbdeca16a33` |
+| Open Pull Requests at this synchronization | `#530`, `#531`, `#532`; #531 Vocabulary/GoPlus and #532 Domain/Mail Security have no file-level overlap with PR #530 Social-Media OAuth/Auth-Code runtime, publisher, tests or governance documents |
 | M10 Passkey PR-CI enforcement | **SUSPENDED / OFF** |
 | Human/CODEOWNER Merge | **REQUIRED** |
 | GitHub hosted validation | scope-/cost-controlled according to current CI governance |
-| Social Media OAuth / Auth Code | ADR-0026/ADR-0027 path; single-use/expiry-bound state, exact allowlisted production callback origins, X PKCE S256, Bearer transport for provider resource APIs and dedicated negative-test/threat-model evidence |
+| Social Media OAuth / Auth Code | ADR-0026/ADR-0027 path; single-use/expiry-bound state, strict environment-aware callback allowlist, X PKCE S256, verified provider identity before `connected`, Bearer transport across Meta resource/publish APIs and dedicated negative-test/threat-model evidence |
 | FinTech value-chain quality projection | `fintech-value-chain-quality/1.0.0`, **18 stages**, read-only/non-authorizing |
 | Vocabulary | `src/platform/Vocabulary` v1.8.0; 18-stage wording projection and Documentary handoff implemented |
 | FinTechCore Crypto Module | v0.6.2; FT-0 through FT-6B merged; FT-7/live execution remains blocked |
@@ -80,7 +80,7 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 
 - no direct agent changes on `main`;
 - one scoped branch/work claim per bounded work package where required by the active workflow;
-- final main synchronization and open-PR semantic/namespace correlation before PR creation;
+- final main synchronization and open-PR semantic/namespace correlation before PR creation and again before merge readiness;
 - no fabricated evidence, market data, citations or compliance assertions;
 - Human/Owner-only merge;
 - M10 remains off until a new explicit reactivation decision;
@@ -92,13 +92,15 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 - `ScoringModelRegistry -> ScoringDispatcher -> Domain Executor -> CanonicalScoreResult` remains the productive scoring path;
 - historical evidence cannot silently regain current authority;
 - Social Media OAuth production callbacks remain bound to explicit CAPITAL-AI HTTPS origins and the canonical callback path before state persistence;
+- loopback OAuth callbacks require exact `development` or `test`; missing/unknown environment labels remain strict;
 - OAuth state remains server-generated, expiry-bound and single-use, with the provider derived from persisted state rather than callback-controlled input;
+- connected Social Media accounts require a successfully verified provider identity before persistence;
 - reusable OAuth client secrets remain server-side under the canonical secret-file inventory;
 - provider resource access tokens are transported as Bearer credentials and are not placed into resource URL query strings.
 
 ## Current next action
 
-1. validate the current Social Media OAuth Authorization-Code hardening and negative-test/threat-model contract through the normal exact-head PR CI after PR creation;
+1. validate PR #530's synchronized OAuth/Auth-Code hardening, provider-identity binding and Meta Bearer transport through exact-head hosted CI;
 2. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until its separately governed reactivation prerequisites and a new explicit Human/Owner decision are satisfied;
-3. maintain current-main and open-PR correlation through merge readiness, including semantic review of PR #528's separate Social Media template scope;
+3. maintain current-main and open-PR correlation through merge readiness, especially if #531 or #532 merges before #530;
 4. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
