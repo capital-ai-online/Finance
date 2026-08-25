@@ -13,7 +13,7 @@ Im Follow-up dieses PRs wurden zwei zunächst zu optimistisch als behoben dokume
 1. **Session-Restore (#3):** vorher weiterhin fail-open, weil `mcc_user_session` vor Supabase-Revalidierung als authentifizierter UI-Zustand gerendert wurde. Das ist jetzt korrigiert: außerhalb des expliziten Local-Dev-Gates wird kein Custom-LocalStorage-Objekt als Authentifizierungsauthority restauriert; fehlende/fehlerhafte Supabase-Revalidierung leert den Zustand fail-closed.
 2. **Client-IP (#7):** die erste Remediation über `app.set('trust proxy', 1)` war zu breit. Sie wurde zurückgenommen. Rate-Limit-/Request-Orchestrator-Identität verwendet nun die zentrale `getClientIp()`-Boundary: auf Render ausschließlich syntaktisch valides `CF-Connecting-IP`, ansonsten direkte Express-/Socket-Peer-IP. Rohes `X-Forwarded-For` ist keine Rate-Limit-Authority mehr.
 
-Ein begrenzter Rest von #7 bleibt bestehen: der ältere inline CORS-Auditpfad in `server.application.ts::logBlockedOrigin()` schreibt weiterhin eine aus `X-Forwarded-For` abgeleitete IP in `security_events`. Das beeinflusst keine Auth-/Rate-Limit-Entscheidung, kann aber Audit-Provenance verfälschen und muss separat bereinigt werden.
+Der zunächst verbliebene Rest von #7 — der inline CORS-Auditpfad in `server.application.ts::logBlockedOrigin()`, der weiterhin eine lokal aus `X-Forwarded-For` abgeleitete IP in `security_events` schrieb — wurde im selben Sync-Pass geschlossen: der Aufruf nutzt jetzt dieselbe zentrale `getClientIp()`-Boundary wie alle anderen Aufrufer.
 
 ## Befundstatus
 
@@ -25,7 +25,7 @@ Ein begrenzter Rest von #7 bleibt bestehen: der ältere inline CORS-Auditpfad in
 | 4 | `documentSanitizer` behauptete Sanitisierung ohne entsprechende Kontrolle | Hoch | **Behoben im PR** — irreführende Sicherheitssemantik entfernt/gehärtet |
 | 5 | `/api/chat` anonym + Rate-Limit über forgebares XFF umgehbar | Hoch | **Behoben im PR/Follow-up** — Auth-Gate + zentrale Client-IP-Boundary |
 | 6 | MFA/Login-Step-Up für normale Userpfade nicht durchgängig serverseitig enforced | Hoch | **OFFEN** — eigener AuthN/AuthZ-Scope erforderlich |
-| 7 | XFF konnte Rate-Limits/Audit-Provenance beeinflussen | Medium | **Teilweise behoben** — Security-Decision-Pfade geschlossen; inline CORS-Audit-Rest offen |
+| 7 | XFF konnte Rate-Limits/Audit-Provenance beeinflussen | Medium | **Behoben** — Security-Decision-Pfade und inline CORS-Audit-Pfad nutzen einheitlich `getClientIp()` |
 | 8 | Produktions-CSP enthielt `unsafe-eval` | Medium | **Behoben im PR**, durch bestehende CSP-/Build-Checks zu validieren |
 | 9 | Social-Media `mediaUrl` DNS-Rebinding-/SSRF-Risiko | Medium | **Behoben im PR** — validierter/pinned Fetch-Pfad ohne Redirect |
 | 10 | Governance-CI-Ausnahme nur an frei wählbaren Branch-Namen gebunden | Medium | **Behoben im PR** — Ausnahme zusätzlich an Repository/Owner gebunden |
@@ -87,8 +87,8 @@ Eine globale numerische Express-Konfiguration `app.set('trust proxy', 1)` wurde 
 - malformed Edge Header,
 - fail-closed `unknown` bei ungültigen Quellen.
 
-### Restbefund
-`server.application.ts::logBlockedOrigin()` enthält historisch noch eine lokale XFF-Auswertung für `security_events.ip_address`. Dies beeinflusst keine Authentisierung, Autorisierung oder Rate-Limit-Bucket-Entscheidung, kann jedoch die Audit-IP eines geblockten CORS-Events verfälschen. Status von Finding #7 ist deshalb **teilweise behoben**, nicht vollständig geschlossen.
+### Restbefund — geschlossen
+`server.application.ts::logBlockedOrigin()` enthielt bis zu diesem Sync-Pass noch eine lokale XFF-Auswertung für `security_events.ip_address` (übersehen bei der ersten Konsolidierung, da zu diesem Zeitpunkt nur die zusätzliche, unwirksame Kopie in `server/middleware/cors.ts` korrigiert wurde). Der Aufruf verwendet jetzt ebenfalls `getClientIp(req)`. Damit ist keine unabhängige XFF-Auswertung mehr im Code vorhanden — `rateLimiter.ts`, `requestOrchestrator.ts`, `server/middleware/cors.ts` (unwired) und `server.application.ts` nutzen einheitlich dieselbe Boundary. Finding #7 ist vollständig geschlossen.
 
 ## 6 — MFA / Login Step-Up
 
@@ -125,8 +125,7 @@ RLS-Policy-Definitionen sind vorhanden, aber die vollständige GRANT-Historie de
 
 ## Security-Abschlussstatus dieses PRs
 
-**Geschlossen / durch Codeänderung adressiert:** #1, #2, #3, #4, #5, #8, #9, #10 sowie der Security-Decision-Anteil von #7.  
-**Teilweise offen:** #7 Audit-Provenance im inline CORS-Logger.  
+**Geschlossen / durch Codeänderung adressiert:** #1, #2, #3, #4, #5, #7, #8, #9, #10.  
 **Offen / separates Arbeitspaket:** #6 MFA/AAL-Enforcement, #11 Supabase Grants/RLS-Live-Evidence.
 
 Der PR darf deshalb nicht als „alle Sicherheitsrisiken vollständig behoben“ beschrieben werden. Er ist ein Architektur-Security-Review mit konkreten Remediations und explizit fortbestehenden Gates. Die Merge-Entscheidung bleibt Human/Owner-only.
