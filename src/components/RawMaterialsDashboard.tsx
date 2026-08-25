@@ -26,6 +26,114 @@ import {
 import { RAW_MATERIALS_DATABASE } from '../config/rawMaterialsConfig';
 import { AnalysisPayload, RawMaterialInput } from '../types/rawMaterials';
 
+interface RawMaterialListItem {
+  symbol: string;
+  name: string;
+  category_main: string;
+  category_sub: string;
+  is_critical: boolean;
+  score: number | null;
+  scoreSemantic?: string;
+  canonical?: boolean;
+  marketEvidenceVerified?: boolean;
+}
+
+interface CommodityCanonicalScoreProjection {
+  symbol: string;
+  status: string;
+  score: number | null;
+  score10?: number | null;
+  reason?: string;
+  contractVersion?: string;
+  providers?: string[];
+  evidenceIds?: string[];
+  factors?: Record<string, number | null>;
+  modelRegistry?: {
+    modelId?: string;
+    version?: string;
+    lifecycle?: string;
+    featureContractVersion?: string;
+  } | null;
+}
+
+interface RawMaterialResearchPayload extends AnalysisPayload {
+  scoreSemantic?: string;
+  canonical?: boolean;
+  scoreEligible?: boolean;
+  marketEvidenceVerified?: boolean;
+  legacyCompatibility?: boolean;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeMaterialList(payload: unknown): RawMaterialListItem[] | null {
+  if (!Array.isArray(payload)) return null;
+  const normalized: RawMaterialListItem[] = [];
+  for (const item of payload) {
+    if (!isRecord(item) || typeof item.symbol !== 'string' || typeof item.name !== 'string') continue;
+    normalized.push({
+      symbol: item.symbol,
+      name: item.name,
+      category_main: typeof item.category_main === 'string' ? item.category_main : 'Unknown',
+      category_sub: typeof item.category_sub === 'string' ? item.category_sub : 'Nicht klassifiziert',
+      is_critical: item.is_critical === true,
+      score: typeof item.score === 'number' && Number.isFinite(item.score) ? item.score : null,
+      scoreSemantic: typeof item.scoreSemantic === 'string' ? item.scoreSemantic : undefined,
+      canonical: item.canonical === true,
+      marketEvidenceVerified: item.marketEvidenceVerified === true,
+    });
+  }
+  return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeCanonicalScore(payload: unknown, fallbackSymbol: string): CommodityCanonicalScoreProjection | null {
+  if (!isRecord(payload) || typeof payload.status !== 'string') return null;
+  const factors = isRecord(payload.factors)
+    ? Object.fromEntries(
+      Object.entries(payload.factors).map(([key, value]) => [
+        key,
+        typeof value === 'number' && Number.isFinite(value) ? value : null,
+      ]),
+    )
+    : undefined;
+  const modelRegistry = isRecord(payload.modelRegistry)
+    ? {
+      modelId: typeof payload.modelRegistry.modelId === 'string' ? payload.modelRegistry.modelId : undefined,
+      version: typeof payload.modelRegistry.version === 'string' ? payload.modelRegistry.version : undefined,
+      lifecycle: typeof payload.modelRegistry.lifecycle === 'string' ? payload.modelRegistry.lifecycle : undefined,
+      featureContractVersion: typeof payload.modelRegistry.featureContractVersion === 'string'
+        ? payload.modelRegistry.featureContractVersion
+        : undefined,
+    }
+    : null;
+
+  return {
+    symbol: typeof payload.symbol === 'string' ? payload.symbol : fallbackSymbol,
+    status: payload.status,
+    score: typeof payload.score === 'number' && Number.isFinite(payload.score) ? payload.score : null,
+    score10: typeof payload.score10 === 'number' && Number.isFinite(payload.score10) ? payload.score10 : null,
+    reason: typeof payload.reason === 'string' ? payload.reason : undefined,
+    contractVersion: typeof payload.contractVersion === 'string' ? payload.contractVersion : undefined,
+    providers: Array.isArray(payload.providers)
+      ? payload.providers.filter((provider): provider is string => typeof provider === 'string')
+      : undefined,
+    evidenceIds: Array.isArray(payload.evidenceIds)
+      ? payload.evidenceIds.filter((evidenceId): evidenceId is string => typeof evidenceId === 'string')
+      : undefined,
+    factors,
+    modelRegistry,
+  };
+}
+
+function findSelectedMaterial(items: RawMaterialListItem[], selectedName: string): RawMaterialListItem | undefined {
+  const normalized = selectedName.toLowerCase().trim();
+  return items.find((item) => {
+    const itemName = item.name.toLowerCase().trim();
+    return itemName === normalized || itemName.includes(normalized) || normalized.includes(itemName);
+  });
+}
 
 export function buildRawMaterialFallbackList() {
   return Object.values(RAW_MATERIALS_DATABASE).map(item => ({
@@ -43,13 +151,16 @@ export function RawMaterialsDashboard() {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [materialsList, setMaterialsList] = useState<any[]>([]);
+  const [materialsList, setMaterialsList] = useState<RawMaterialListItem[]>([]);
 
   // Active Analysis Payload
   const [selectedMaterial, setSelectedMaterial] = useState<string>('Kupfer');
-  const [payload, setPayload] = useState<AnalysisPayload | null>(null);
+  const [payload, setPayload] = useState<RawMaterialResearchPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canonicalScore, setCanonicalScore] = useState<CommodityCanonicalScoreProjection | null>(null);
+  const [canonicalLoading, setCanonicalLoading] = useState(false);
+  const [canonicalError, setCanonicalError] = useState<string | null>(null);
 
   // Terminkurven werden nur mit verifizierten Laufzeitdaten dargestellt.
   // Der bisherige symbolbasierte Generator wurde entfernt, weil er keine Marktevidence war.
@@ -89,12 +200,48 @@ export function RawMaterialsDashboard() {
     }
   }, [selectedMaterial, sandboxMode]);
 
+  useEffect(() => {
+    const selected = findSelectedMaterial(materialsList, selectedMaterial);
+    if (!selected?.symbol) {
+      setCanonicalScore(null);
+      setCanonicalError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchCanonicalScore = async () => {
+      setCanonicalLoading(true);
+      setCanonicalError(null);
+      try {
+        const res = await fetch(`/api/raw-materials/verified-score/${encodeURIComponent(selected.symbol)}`, {
+          signal: controller.signal,
+        });
+        const body: unknown = await res.json();
+        const normalized = normalizeCanonicalScore(body, selected.symbol);
+        if (!normalized) {
+          throw new Error('INVALID_CANONICAL_COMMODITY_RESPONSE');
+        }
+        setCanonicalScore(normalized);
+      } catch (fetchError) {
+        if (controller.signal.aborted) return;
+        console.error('[RawMaterialsDashboard] Canonical commodity score unavailable.', fetchError);
+        setCanonicalScore(null);
+        setCanonicalError('Der verifizierte Commodity-Markt-Score ist derzeit nicht abrufbar.');
+      } finally {
+        if (!controller.signal.aborted) setCanonicalLoading(false);
+      }
+    };
+
+    void fetchCanonicalScore();
+    return () => controller.abort();
+  }, [materialsList, selectedMaterial]);
+
   const fetchMaterials = async () => {
     try {
       const res = await fetch('/api/raw-materials/list');
       if (res.ok) {
-        const data = await res.json();
-        setMaterialsList(data);
+        const data: unknown = await res.json();
+        setMaterialsList(normalizeMaterialList(data) ?? buildRawMaterialFallbackList());
       } else {
         setMaterialsList(buildRawMaterialFallbackList());
       }
@@ -121,7 +268,7 @@ export function RawMaterialsDashboard() {
         throw new Error('Fehler bei der Rohstoff-Analyse durch die Agenten.');
       }
 
-      const data = await res.json();
+      const data = await res.json() as RawMaterialResearchPayload;
       setPayload(data);
     } catch (err: any) {
       console.error(err);
@@ -159,7 +306,7 @@ export function RawMaterialsDashboard() {
         throw new Error(errData.error || 'Fehler bei der Sandbox-Berechnung.');
       }
 
-      const data = await res.json();
+      const data = await res.json() as RawMaterialResearchPayload;
       setPayload(data);
     } catch (err: any) {
       console.error(err);
@@ -201,17 +348,22 @@ export function RawMaterialsDashboard() {
     m.category_sub.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getScoreColor = (score: number) => {
-    if (score >= 75) return 'text-emerald-400';
-    if (score >= 50) return 'text-aif-gold-DEFAULT';
-    return 'text-rose-400';
+  const getScoreColor = (score: number | null) => {
+    if (score === null || !Number.isFinite(score)) return 'text-status-unavailable';
+    if (score >= 75) return 'text-score-best';
+    if (score >= 50) return 'text-score-warning';
+    return 'text-score-worst';
   };
 
   const getScoreBg = (score: number) => {
-    if (score >= 75) return 'bg-emerald-500/10 border-emerald-500/20';
-    if (score >= 50) return 'bg-aif-gold-DEFAULT/10 border-aif-gold-DEFAULT/20';
-    return 'bg-rose-500/10 border-rose-500/20';
+    if (score >= 75) return 'bg-score-best/10 border-score-best/20';
+    if (score >= 50) return 'bg-score-warning/10 border-score-warning/20';
+    return 'bg-score-worst/10 border-score-worst/20';
   };
+
+  const canonicalScoreValue = canonicalScore?.score10 ?? canonicalScore?.score ?? null;
+  const canonicalReady = canonicalScore?.status === 'READY' && typeof canonicalScoreValue === 'number';
+  const canonicalFactors = Object.entries(canonicalScore?.factors ?? {});
 
   return (
     <div className="space-y-8">
@@ -221,15 +373,17 @@ export function RawMaterialsDashboard() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <span className="px-3 py-1 rounded-full text-[10px] font-bold font-mono bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 tracking-widest uppercase">
-              ROHSTOFF-ANALYSE
+              COMMODITY WORKSPACE
             </span>
-            <span className="text-[11px] font-mono text-white/50 tracking-wider">Version 0.7.0 (Beta-Phase)</span>
+            <span className="text-[11px] font-mono text-white/50 tracking-wider">Authority-getrennte Bewertungsoberfläche</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-[#D4A017] font-display tracking-tight uppercase">
-            Rohstoff-Kategorisierung & AI-Scoring
+            Rohstoff-Analyse & getrennte Scores
           </h1>
           <p className="text-xs text-white/60 font-sans font-medium mt-1 leading-relaxed max-w-3xl">
-            Zentralisierte Multi-Agenten-Architektur zur vollautomatischen Klassifizierung, geologischen Bewertung, geopolitischen Risiko-Analyse und strategischen Relevanzbewertung physischer & kritischer Rohstoffe.
+            Der kanonische Markt-Score wird ausschließlich aus verifizierter Marktevidence erzeugt.
+            Klassifizierung, strukturelle Bewertung und manuelle Szenarien bleiben explizit
+            nicht-kanonische Research-Ergebnisse des Rohstoff-Orchestrators.
           </p>
         </div>
 
@@ -240,7 +394,7 @@ export function RawMaterialsDashboard() {
           </div>
           <div>
             <div className="text-[10px] font-mono text-white/50 uppercase tracking-widest">Master Orchestrator</div>
-            <div className="text-xs font-mono font-black text-white">8 Workers / Parallel Processing</div>
+            <div className="text-xs font-mono font-black text-white">4 Research Agents / Parallel</div>
           </div>
         </div>
       </div>
@@ -293,7 +447,7 @@ export function RawMaterialsDashboard() {
                             </span>
                           )}
                           <span className={`text-xs font-mono font-black ${getScoreColor(material.score)}`}>
-                            {material.score} Pkt.
+                            {typeof material.score === 'number' ? `${material.score} Research-Pkt.` : 'DATA_UNAVAILABLE'}
                           </span>
                           <ChevronRight size={14} className="text-white/30 group-hover:text-white" />
                         </div>
@@ -328,6 +482,99 @@ export function RawMaterialsDashboard() {
         </div>
       </div>
 
+      {/* Canonical market-evidence score — separate from all orchestrator research output. */}
+      <section className="ui-panel space-y-5" aria-labelledby="canonical-commodity-score-title">
+        <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-1">
+            <span className="font-mono text-[9px] font-black uppercase tracking-widest text-status-info">
+              CANONICAL SCORE
+            </span>
+            <h2 id="canonical-commodity-score-title" className="font-display text-base font-black uppercase tracking-wide text-text-primary">
+              Verifizierter Commodity-Markt-Score
+            </h2>
+            <p className="max-w-3xl text-[11px] leading-relaxed text-text-secondary">
+              ScoringDispatcher-Projektion aus realer Preis-Historie. Registry-Stammdaten,
+              Orchestrator-Research und Sandbox-Eingaben haben keinen Einfluss auf diesen Wert.
+            </p>
+          </div>
+          <span className={`inline-flex min-h-11 items-center rounded-lg border px-3 py-2 font-mono text-[10px] font-black uppercase tracking-widest ${
+            canonicalReady
+              ? 'border-status-ready/30 bg-status-ready/10 text-status-ready'
+              : 'border-status-unavailable/30 bg-status-unavailable/10 text-status-unavailable'
+          }`}>
+            {canonicalLoading ? 'LOADING' : canonicalScore?.status ?? (canonicalError ? 'SOURCE_UNAVAILABLE' : 'DATA_UNAVAILABLE')}
+          </span>
+        </div>
+
+        {canonicalLoading ? (
+          <div className="flex min-h-28 items-center justify-center gap-3 rounded-xl border border-border bg-surface/60 text-xs text-text-secondary">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-status-info border-t-transparent" aria-hidden="true" />
+            Verifizierte Commodity-Evidence wird geladen …
+          </div>
+        ) : canonicalReady ? (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="rounded-xl border border-status-ready/30 bg-status-ready/10 p-5 text-center">
+              <div className="font-mono text-[9px] font-black uppercase tracking-widest text-status-ready">Markt-Score</div>
+              <div className="mt-2 font-mono text-4xl font-black text-text-primary">{canonicalScoreValue?.toFixed(1)}</div>
+              <div className="mt-1 font-mono text-[10px] text-text-secondary">von 10 · READY</div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-surface/60 p-5 lg:col-span-2">
+              <dl className="grid grid-cols-1 gap-3 text-[11px] sm:grid-cols-2">
+                <div>
+                  <dt className="font-mono text-[9px] uppercase tracking-widest text-text-secondary">Modell</dt>
+                  <dd className="mt-1 font-bold text-text-primary">
+                    {canonicalScore?.modelRegistry?.modelId ?? 'commodity-evidence-scoring'}
+                    {canonicalScore?.modelRegistry?.version ? `@${canonicalScore.modelRegistry.version}` : ''}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[9px] uppercase tracking-widest text-text-secondary">Provider</dt>
+                  <dd className="mt-1 font-bold text-text-primary">{canonicalScore?.providers?.join(', ') || 'Nicht ausgewiesen'}</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[9px] uppercase tracking-widest text-text-secondary">Contract</dt>
+                  <dd className="mt-1 break-all font-mono text-text-primary">{canonicalScore?.contractVersion ?? 'Nicht ausgewiesen'}</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[9px] uppercase tracking-widest text-text-secondary">Evidence</dt>
+                  <dd className="mt-1 font-bold text-text-primary">{canonicalScore?.evidenceIds?.length ?? 0} Nachweise</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="rounded-xl border border-border bg-surface/60 p-5 lg:col-span-3">
+              <h3 className="font-mono text-[9px] font-black uppercase tracking-widest text-text-secondary">Verifizierte Faktoren</h3>
+              <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+                {canonicalFactors.map(([factor, value]) => (
+                  <div key={factor} className="rounded-lg border border-border bg-background/60 p-3">
+                    <div className="break-words font-mono text-[9px] uppercase tracking-wide text-text-secondary">{factor.replaceAll('_', ' ')}</div>
+                    <div className="mt-1 font-mono text-lg font-black text-text-primary">
+                      {typeof value === 'number' ? value.toFixed(1) : 'DATA_UNAVAILABLE'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-status-unavailable/30 bg-status-unavailable/10 p-5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 shrink-0 text-status-unavailable" size={18} aria-hidden="true" />
+              <div>
+                <h3 className="font-mono text-xs font-black uppercase tracking-widest text-text-primary">
+                  {canonicalScore?.status ?? (canonicalError ? 'SOURCE_UNAVAILABLE' : 'DATA_UNAVAILABLE')}
+                </h3>
+                <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+                  {canonicalError ?? canonicalScore?.reason ?? 'Für den gewählten Rohstoff liegt derzeit kein berechenbarer, verifizierter Markt-Score vor.'}
+                  {' '}Es wird kein Ersatzwert erzeugt.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* Main Scoring Cockpit Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -360,7 +607,7 @@ export function RawMaterialsDashboard() {
               <div className="space-y-4">
                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-300 leading-relaxed flex gap-2">
                   <AlertTriangle size={16} className="shrink-0" />
-                  <span>Sie befinden sich im <b>Sandbox-Modus</b>. Tunen Sie die Schieberegler manuell, um die Auswirkung auf den Gesamtscore in Echtzeit zu berechnen.</span>
+                   <span>Sie befinden sich im <b>Research-Sandbox-Modus</b>. Die manuell berechnete strukturelle Projektion ist nicht kanonisch, nicht rankingfähig und nicht ausführungsberechtigt.</span>
                 </div>
 
                 <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 scrollbar-thin">
@@ -527,7 +774,9 @@ export function RawMaterialsDashboard() {
                     <span>Agenten-Hinweis</span>
                   </div>
                   <p className="text-white/70 text-[11px]">
-                    Der Master-Orchestrator fragt parallel geologische, finanzielle und geopolitische Metriken ab, validiert den Input über quantitative Typsicherheit und liefert den standardisierten Score.
+                    Der Rohstoff-Orchestrator bündelt Klassifizierungs-, Fundamental-, Risiko- und
+                    Relevanz-Research. Die daraus erzeugte Legacy-Projektion bleibt getrennt vom
+                    kanonischen Commodity-Markt-Score.
                   </p>
                 </div>
               </div>
@@ -563,7 +812,7 @@ export function RawMaterialsDashboard() {
                 {/* Score Gauge Block */}
                 <div className={`p-6 rounded-2xl border ${getScoreBg(payload.scores.final_score)} md:col-span-1 flex flex-col items-center justify-center text-center relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-                  <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Gesamt-Bewertungs-Score</span>
+                   <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Struktureller Research-Score · nicht kanonisch</span>
                   <div className="relative flex items-center justify-center">
                     <svg className="w-24 h-24 transform -rotate-90">
                       <circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
@@ -575,7 +824,7 @@ export function RawMaterialsDashboard() {
                     </svg>
                     <div className="absolute text-2xl font-mono font-black text-white">{payload.scores.final_score}</div>
                   </div>
-                  <span className="text-[10px] font-mono text-white/50 mt-2">Berechnet nach Modell {payload.metadata.scoring_version}</span>
+                   <span className="text-[10px] font-mono text-white/50 mt-2">Legacy Research-Modell {payload.metadata.scoring_version} · scoreEligible=false</span>
                 </div>
 
                 {/* Score Summary Metrics */}
@@ -602,13 +851,13 @@ export function RawMaterialsDashboard() {
 
                   <div className="col-span-2 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
                     <span className="text-white/50">Kritikalitäts-Status:</span>
-                    {payload.scores.risk_resilience >= 60 ? (
+                    {payload.scores.risk_resilience < 40 ? (
                       <span className="px-2 py-0.5 rounded font-bold font-mono bg-rose-500/15 border border-rose-500/20 text-rose-400 animate-pulse">
-                        HOCHRISIKO / SYSTEMKRITISCH
+                        NIEDRIGE RESILIENZ / HOHES RISIKO
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded font-bold font-mono bg-emerald-500/15 border border-emerald-500/20 text-emerald-400">
-                        RISIKOKLASSE STANDARD
+                        RESILIENZ NICHT KRITISCH
                       </span>
                     )}
                   </div>
@@ -752,7 +1001,7 @@ export function RawMaterialsDashboard() {
                 <th className="py-3 px-4">Name</th>
                 <th className="py-3 px-4">Kategorie</th>
                 <th className="py-3 px-4 text-center">Strategisch Kritisch</th>
-                <th className="py-3 px-4 text-right">Standard AI-Score</th>
+                <th className="py-3 px-4 text-right">Legacy Research-Score</th>
                 <th className="py-3 px-4 text-right">Aktion</th>
               </tr>
             </thead>
@@ -778,7 +1027,7 @@ export function RawMaterialsDashboard() {
                     )}
                   </td>
                   <td className="py-3 px-4 text-right font-mono font-bold text-white">
-                    {material.score} / 100
+                    {typeof material.score === 'number' ? `${material.score} / 100` : 'DATA_UNAVAILABLE'}
                   </td>
                   <td className="py-3 px-4 text-right">
                     <button
