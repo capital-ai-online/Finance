@@ -30,6 +30,15 @@ const CATEGORY_LABELS: Record<VocabularyCategory, string> = {
 const ALL_CATEGORIES = 'all' as const;
 type CategoryFilter = typeof ALL_CATEGORIES | VocabularyCategory;
 
+function isVocabularyCategory(value: string): value is VocabularyCategory {
+  return Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, value);
+}
+
+function parseCategoryFilter(value: string): CategoryFilter {
+  if (value === ALL_CATEGORIES) return ALL_CATEGORIES;
+  return isVocabularyCategory(value) ? value : ALL_CATEGORIES;
+}
+
 function searchableText(concept: VocabularyConcept): string {
   return [
     concept.id,
@@ -42,6 +51,14 @@ function searchableText(concept: VocabularyConcept): string {
   ]
     .join(' ')
     .toLocaleLowerCase('de-DE');
+}
+
+function governanceReferences(concept: VocabularyConcept): string[] {
+  return Array.from(new Set([
+    ...concept.essReferences,
+    ...concept.adrReferences,
+    ...concept.traceabilityReferences,
+  ]));
 }
 
 export function LearningVocabulary() {
@@ -135,7 +152,7 @@ export function LearningVocabulary() {
             <span className="sr-only">Vocabulary-Kategorie filtern</span>
             <select
               value={category}
-              onChange={(event) => setCategory(event.target.value as CategoryFilter)}
+              onChange={(event) => setCategory(parseCategoryFilter(event.target.value))}
               className="w-full rounded-xl border border-border bg-background/70 px-3 py-3 text-sm text-text-primary outline-none transition focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20"
             >
               <option value={ALL_CATEGORIES}>Alle Kategorien</option>
@@ -237,7 +254,7 @@ export function LearningVocabulary() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4" aria-label="Governance-Referenzen">
-                {[...concept.essReferences, ...concept.adrReferences, ...concept.traceabilityReferences].map((reference) => (
+                {governanceReferences(concept).map((reference) => (
                   <span
                     key={`${concept.id}-${reference}`}
                     className="rounded border border-border bg-background/60 px-2 py-0.5 text-[9px] font-mono text-text-secondary/70"

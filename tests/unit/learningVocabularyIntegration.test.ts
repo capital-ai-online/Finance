@@ -23,6 +23,18 @@ describe('Learning Vocabulary website integration', () => {
     expect(learning).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
   });
 
+  it('validates category input fail-closed and de-duplicates governance references', () => {
+    const learning = source('src/features/learning/ui/LearningVocabulary.tsx');
+
+    expect(learning).toContain('function isVocabularyCategory(value: string): value is VocabularyCategory');
+    expect(learning).toContain('Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, value)');
+    expect(learning).toContain('return isVocabularyCategory(value) ? value : ALL_CATEGORIES;');
+    expect(learning).toContain('setCategory(parseCategoryFilter(event.target.value))');
+    expect(learning).not.toContain('event.target.value as CategoryFilter');
+    expect(learning).toContain('function governanceReferences(concept: VocabularyConcept): string[]');
+    expect(learning).toContain('return Array.from(new Set([');
+  });
+
   it('wires Learning into Hauptzentrale, breadcrumb and active view rendering', () => {
     const dashboard = source('src/components/Dashboard.tsx');
 
