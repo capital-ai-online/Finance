@@ -3,6 +3,7 @@ export * as UserUI from './users/ui';
 export * as SettingsUI from './settings/ui';
 export * as ScreeningUI from './screening/ui';
 export * as CryptoUI from './crypto/ui';
+export * as CommoditiesUI from './commodities/ui';
 export * as StocksUI from './stocks/ui';
 export * as AnalyticsUI from './analytics/ui';
 export * as NewsUI from './news/ui';

@@ -70,6 +70,7 @@ src/
 │   ├── settings/ui/
 │   ├── screening/ui/
 │   ├── crypto/ui/
+│   ├── commodities/ui/
 │   ├── stocks/ui/
 │   ├── analytics/ui/
 │   ├── news/
