@@ -130,3 +130,7 @@ RLS-Policy-Definitionen sind vorhanden, aber die vollständige GRANT-Historie de
 **Offen / separates Arbeitspaket:** #6 MFA/AAL-Enforcement, #11 Supabase Grants/RLS-Live-Evidence.
 
 Der PR darf deshalb nicht als „alle Sicherheitsrisiken vollständig behoben“ beschrieben werden. Er ist ein Architektur-Security-Review mit konkreten Remediations und explizit fortbestehenden Gates. Die Merge-Entscheidung bleibt Human/Owner-only.
+
+## Main-Sync-/Pipeline-Korrelation 2026-08-25
+
+Nach dem Human-Merge von PR #533 wurde dieser Branch non-destruktiv auf `main@be4077743b7d287249d61d672486e74f6fa2fb52` synchronisiert. Der Commodity-Archive-Scope aus #533 hat keinen File-Level-Overlap mit den 23 Security-Dateien dieses PRs. Die nach dem automatischen Sync zunächst als `action_required` markierten Workflow-Runs sind kein Testfehler: der Sync-Commit wurde durch `github-actions[bot]` erzeugt, während dieser PR selbst Workflow-Dateien ändert. Dieser Evidence-Commit stellt einen owner-authentifizierten aktuellen PR-Head für die erneute Exact-Head-Validierung her. Die offenen Security-Findings #6, der Audit-Provenance-Rest von #7 und #11 bleiben ausdrücklich offen und werden durch diesen Pipeline-Schritt nicht als behoben klassifiziert.
