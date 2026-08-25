@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.23.0",
+  "version": "1.22.0",
   "date": "2026-08-25",
   "canonicalLocation": "docs/adr",
   "rules": {
