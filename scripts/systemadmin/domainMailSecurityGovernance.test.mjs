@@ -71,17 +71,23 @@ test('runbook names the canonical security and governance authorities', () => {
   }
 });
 
-test('domain hardening runbook preserves Render CAA and IPv6 safety invariants', () => {
+test('domain hardening runbook preserves minimal Render CAA and IPv6 safety invariants', () => {
   for (const expected of [
     '@ CAA 0 issue "letsencrypt.org"',
-    '@ CAA 0 issuewild "letsencrypt.org"',
-    '@ CAA 0 issue "pki.goog; cansignhttpexchanges=yes"',
-    '@ CAA 0 issuewild "pki.goog; cansignhttpexchanges=yes"',
+    '@ CAA 0 issue "pki.goog"',
+    'issuewild',
+    'verifizierter Render-Wildcard-Scope',
     'PROVIDER_EXCEPTION_RENDER_IPV4',
     'keinen AAAA-Record hinzufügen',
   ]) {
     assert.ok(runbook.includes(expected), `missing hardening invariant: ${expected}`);
   }
+
+  assert.doesNotMatch(
+    runbook,
+    /pki\.goog;\s*cansignhttpexchanges=yes/,
+    'normal Render TLS must not inherit the SXG-specific Google CAA parameter',
+  );
 });
 
 test('mail enforcement stays staged and protected by explicit mutation gates', () => {
