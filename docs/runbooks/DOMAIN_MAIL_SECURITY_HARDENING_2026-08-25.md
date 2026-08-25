@@ -3,67 +3,117 @@
 **Dokumentstatus:** ACTIVE RUNBOOK / NON-AUTHORIZING EXECUTION PACKAGE  
 **Datum:** 2026-08-25  
 **Scope:** `capital-ai.online`  
-**Repository-Baseline:** `main@63c2cd7660b11907c91327f220603d8caef21dad`  
-**Produktions-Baseline:** Render `AICapital / Finance` live auf `63c2cd7660b11907c91327f220603d8caef21dad`  
+**Repository-Sync-Baseline:** `main@b08b8e0b73e5413aeec286a3522a85448c3e3421`  
+**Produktions-Baseline:** verifizierter `main`-Deploy `b08b8e0b73e5413aeec286a3522a85448c3e3421`, GitHub-Workflow `32795419244`, Render-Deploy `dep-da6egogn74is73ermnfg`  
 **Quellbefund:** IntoDNS.ai Scan vom 2026-08-20, Score 49/100  
-**Mutation State:** `PLANNED` — DNS/TLS/Domain-Mutationen bleiben Human/Owner-geschützt
+**Mutation State:** `PLANNED` — DNS/TLS/Domain-/Mailprovider-Mutationen bleiben Human/Owner-geschützt
+
+> Die SHA-Angaben dokumentieren den korrelierten Stand dieser Prüfung. Unmittelbar vor Human Merge und erneut vor jeder externen Mutation müssen `main`, Produktion, offene PRs und Providerziel read-only neu verifiziert werden. Eine historische SHA ist Evidence, keine dauerhafte Authority.
 
 ## 1. Authority und Ausführungsgrenze
 
-Dieses Runbook konkretisiert die bestehende Governance aus:
+Dieses Runbook konkretisiert bestehende Authority; es erzeugt keine neue:
 
-- `/AGENTS.md` (`AUTH-GOV-AGENT-TRUST-ROOT`), insbesondere Human Merge und geschützte DNS/TLS/Domain-Mutationen;
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`), insbesondere getrennte Repository-/Produktionsmutation, Pre-/Post-Verification, Rollback und Evidence;
-- bestehender Render-Produktionsarchitektur mit `autoDeploy=off`.
+- `/AGENTS.md` — `AUTH-GOV-AGENT-TRUST-ROOT`;
+- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` — `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`;
+- `docs/architecture/adr/ADR-0013-server-composition-root-and-modular-bootstrap.md` — aktuelle Server-Composition-Grenze;
+- `docs/adr/ADR-0040-csp-runtime-remediation-safe-rollout.md` — CSP-Rollout-/Response-Grenze;
+- aktuelle Render-Promotion-Architektur: Render native Auto Deploy bleibt OFF; verifizierter `main`-CI-Pfad ist Deployment-Authority.
 
-Das Dokument selbst autorisiert **keine** DNS-, Registrar-, Mailprovider- oder TLS-Mutation. Die Mutation erfolgt erst nach Human Merge und expliziter Owner-Freigabe auf dem verifizierten Provider-Ziel. Fehlende oder widersprüchliche Providerdaten führen zu `STOP`.
+Das Dokument selbst autorisiert **keine** DNS-, Registrar-, Mailprovider- oder TLS-Mutation. Nach Human Merge ist für einen konkreten externen Change weiterhin eine explizite Owner-Freigabe auf dem verifizierten Ziel erforderlich. Fehlende, widersprüchliche oder nicht eindeutig zuordenbare Providerdaten führen zu `STOP`.
 
-## 2. Baseline und Findings
+## 2. Korrelation mit aktuellem `main`
+
+Der Branch für PR #532 wurde am 2026-08-25 von einer veralteten Merge-Base `63c2cd7660b11907c91327f220603d8caef21dad` auf `main@b08b8e0b73e5413aeec286a3522a85448c3e3421` synchronisiert.
+
+Korrelation nach dem Sync:
+
+- Branch enthält den aktuellen `main` vollständig;
+- Netto-Scope bleibt auf dieses Runbook und `scripts/systemadmin/domainMailSecurityGovernance.test.mjs` begrenzt;
+- PR #532 ist zum Prüfzeitpunkt der einzige offene PR;
+- die zuvor offenen PRs #529, #530 und #531 sind in `main` enthalten;
+- keine parallele Writer-/Dateiüberschneidung für die beiden #532-Pfade ist offen;
+- `main`-CI `32795419244` ist erfolgreich;
+- derselbe Workflow hat den exakten SHA `b08b8e0b...` über den Render-Deploy-Hook promoted und anschließend als live und healthy verifiziert.
+
+Diese Korrelation ist ein technischer Datenintegritätsnachweis. Sie ersetzt weder Human Merge noch die spätere Owner-Freigabe für DNS/TLS/Domain-/Mailprovider-Mutationen.
+
+## 3. Kanonische Web-Security-Pfade
+
+### 3.1 Runtime-Entry und Composition
+
+Nach ADR-0013 ist die Kette:
+
+```text
+server.ts
+  -> import './server.application'
+server.application.ts
+  -> Compatibility-Composition / Middleware-Ordering
+server/logger.ts::requestContext()
+  -> attachSecurityResponseContext(req, res)
+server/securityResponse.ts
+  -> autoritative CSP-/Nonce-Response-Grenze gemäß ADR-0040
+```
+
+`server.application.ts` ist ausdrücklich ein **Compatibility-Composition-Modul**, keine neue Domain-Authority. `server/middleware/securityHeaders.ts` ist zwar als extrahierte Policy vorhanden, ist laut eigener Modul-Dokumentation aber noch **nicht** als aktiver Serverpfad umgeschaltet. Der Governance-Test darf es deshalb nicht als produktive Authority behandeln.
+
+### 3.2 Aktive Header-Kontrollen
+
+Der aktuelle Runtime-Pfad schützt unter anderem:
+
+- `X-Powered-By` deaktiviert in `server.application.ts`;
+- explizite Produktions-CORS-Allowlist in `server.application.ts`;
+- `X-Content-Type-Options: nosniff`;
+- `Referrer-Policy: strict-origin-when-cross-origin`;
+- `X-Frame-Options: SAMEORIGIN`;
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` in Production;
+- Probe-/Secret-Pfade werden früh mit 404 behandelt;
+- CSP/Nonce wird autoritativ durch `server/securityResponse.ts` gesetzt und normalisiert.
+
+### 3.3 CSP-Wahrheit statt Legacy-Stringprüfung
+
+Der alte #532-Stand hatte den Legacy-CSP-String in `server.application.ts` als produktive Wahrheit geprüft und daraus abgeleitet, Production laufe ohne `unsafe-inline`/`unsafe-eval`. Diese Aussage ist auf aktuellem `main` **nicht kanonisch**.
+
+`server/securityResponse.ts` implementiert gemäß ADR-0040 drei explizite Produktionsmodi:
+
+- `baseline`;
+- `report-only` — Default, sofern `CSP_MODE` nicht abweichend gesetzt ist;
+- `strict`.
+
+Die Policies sind nonce-basiert und setzen unter anderem `object-src 'none'`, `frame-ancestors 'self'`, CSP-Mode-/Policy-Evidence und im Report-Only-Modus zusätzlich `Content-Security-Policy-Report-Only`. Die Baseline enthält aktuell bewusst `unsafe-eval`; daher darf kein Audit-/Runbooktext behaupten, Production sei allein aufgrund des Legacy-Strings vollständig frei davon.
+
+**Decision:** Der IntoDNS-CSP-Finding vom 2026-08-20 wird nicht durch eine zweite CSP-Implementierung repariert. Der kanonische Post-Check prüft die tatsächlich ausgelieferten Header und den `X-CSP-Mode` der Live-Response. Unterschiedliche CSP-Quellen dürfen nicht als parallele Authority fortgeschrieben werden.
+
+## 4. Baseline und Findings
 
 | Finding | Scan 2026-08-20 | Governance-Entscheidung | Zielzustand |
 |---|---|---|---|
 | DNSSEC | `DNSSEC signed=FAIL`, `validation=FAIL`, gleichzeitig RRSIG/Chain-of-Trust teilweise PASS | widersprüchliche Evidence; zuerst live verifizieren | signierte Zone + gültige DS-Delegation + externe Validation |
 | Web IPv6 | AAAA fehlt | **Provider Exception** für Render; kein AAAA erzwingen | IPv4-only solange Render dies verlangt |
 | DMARC | vorhanden, `p=none` | stufenweiser Enforcement-Rollout | `quarantine` → `reject` nach Telemetrie |
-| CAA | fehlt | verpflichtend, aber Render-CAs vollständig erlauben | Let's Encrypt + Google Trust Services |
+| CAA | fehlt | Render-CAs vollständig erlauben | Let's Encrypt + Google Trust Services |
 | Mail IPv6 | fehlt | Provider Capability / Ausnahme | kein künstlicher AAAA-Record |
 | SPF | vorhanden, Syntax PASS, kein `-all` | erst Sender-Inventar + Alignment | `-all` nur nach vollständiger Verifikation |
-| DKIM | Scan `N/A` | für produktive Mailstreams verifizieren | DKIM aktiv und DMARC-aligned |
+| DKIM | Scan `N/A` | produktive Mailstreams verifizieren | DKIM aktiv und DMARC-aligned |
 | MTA-STS | fehlt | kontrollierter Testing→Enforce Rollout | MTA-STS + TLS-RPT |
 | Blacklist | `not blacklisted=FAIL`, aber `no critical listings=PASS` | konkrete Liste/IP zuerst identifizieren | Ursache beseitigt / Delisting evidenziert |
-| CSP | Scan FAIL | aktueller Code enthält bereits CSP; Scan ist älter als aktuelle Produktion | Live-Revalidation statt Doppelimplementierung |
+| CSP | Scan FAIL | kanonische Runtime besitzt CSP; Live-Response neu messen | tatsächlichen CSP-Modus/Headers verifizieren |
 
-## 3. Bereits vorhandene Web-Härtung
+## 5. Render-Provider-Invariante: kein AAAA erzwingen
 
-Der aktuelle produktive Quellstand setzt in `server.application.ts` bereits:
-
-- `X-Powered-By` deaktiviert;
-- explizite CORS-Allowlist für `https://capital-ai.online` und `https://www.capital-ai.online`;
-- `X-Content-Type-Options: nosniff`;
-- `Referrer-Policy: strict-origin-when-cross-origin`;
-- `X-Frame-Options: SAMEORIGIN`;
-- `Content-Security-Policy` mit produktivem `script-src` ohne `unsafe-inline`/`unsafe-eval`;
-- `frame-ancestors`;
-- `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` in Production;
-- explizite 404-Behandlung typischer Probe-/Secret-Pfade.
-
-**Decision:** Der CSP-Finding aus dem Scan vom 2026-08-20 wird nicht durch eine zweite CSP-Implementierung „repariert“. Er bleibt bis zum externen Post-Deployment-Headercheck `REVALIDATE`. Eine Doppelimplementierung würde unterschiedliche Policy-Quellen erzeugen.
-
-## 4. Render-Provider-Invariante: kein AAAA erzwingen
-
-Render Custom Domains nutzen für diesen Web-Service IPv4. Ein publizierter/staler AAAA-Record kann Requests an ein nicht zuständiges IPv6-Ziel schicken.
+Render Custom Domains nutzen für diesen Web-Service die dokumentierte IPv4-Konfiguration. Ein publizierter oder staler AAAA-Record kann Requests an ein nicht zuständiges IPv6-Ziel schicken.
 
 **Control:**
 
 - Für `capital-ai.online` und `www.capital-ai.online` **keinen AAAA-Record hinzufügen**, solange Render die Domain hostet und keine abweichende, verifizierte IPv6-Architektur freigegeben ist.
 - Der IntoDNS-IPv6-Finding wird als `PROVIDER_EXCEPTION_RENDER_IPV4` dokumentiert.
-- Eine zukünftige IPv6-Migration ist ein eigener Architektur-/DNS-Change mit Firewall-, Routing-, TLS- und Observability-Validation.
+- Eine zukünftige IPv6-Migration ist ein eigener Architektur-/DNS-Change mit Routing-, TLS-, Firewall- und Observability-Validation.
 
-## 5. CAA Change Set — bereit zur Owner-Mutation
+## 6. CAA Change Set — Owner-gated
 
-Render stellt Zertifikate über Let's Encrypt und Google Trust Services aus. Deshalb darf die CAA-Policy **nicht** nur Let's Encrypt zulassen.
+Render kann Zertifikate über Let's Encrypt und Google Trust Services beziehen. Deshalb darf eine CAA-Policy nicht nur eine der beiden CAs freigeben.
 
-Für die Zone `capital-ai.online` ist folgender vollständiger Satz vorgesehen:
+Vorgesehener Satz für `capital-ai.online`:
 
 ```dns
 @ CAA 0 issue "letsencrypt.org"
@@ -77,128 +127,111 @@ Für die Zone `capital-ai.online` ist folgender vollständiger Satz vorgesehen:
 1. aktuellen CAA-Satz live lesen;
 2. aktuellen TLS-Issuer für Apex und `www` dokumentieren;
 3. Render Custom Domain Status = verified bestätigen;
-4. sicherstellen, dass keine weitere bewusst verwendete CA ausgeschlossen wird.
+4. verifizieren, dass keine weitere bewusst verwendete CA ausgeschlossen wird.
 
 ### Post-Check
 
-- CAA über mindestens zwei unabhängige Resolver abfragen;
-- Render-Zertifikatstatus weiterhin `issued/valid`;
-- HTTPS auf Apex und `www` weiterhin erfolgreich;
-- keine Certificate-Issuance-Warnung in Render.
+- CAA über mindestens zwei unabhängige Resolver lesen;
+- Zertifikatstatus weiterhin gültig;
+- HTTPS auf Apex und `www` erfolgreich;
+- keine Certificate-Issuance-Warnung.
 
 ### Rollback
 
-Bei Zertifikats-/Renewal-Problemen den zuvor evidenzierten CAA-Satz wiederherstellen. Kein „CAA 0 issue \";\"“ als Schnellfix ohne Owner-Entscheidung.
+Bei Zertifikats-/Renewal-Problemen den zuvor evidenzierten CAA-Satz wiederherstellen. Kein pauschales `CAA 0 issue ";"` ohne Owner-Entscheidung.
 
-## 6. DNSSEC Change Set — zweiphasig und fail-closed
+## 7. DNSSEC Change Set — zweiphasig und fail-closed
 
-Der Scan ist intern widersprüchlich. Deshalb ist die Reihenfolge verbindlich:
+Der Scan ist intern widersprüchlich. Reihenfolge:
 
-### Phase DNSSEC-A — Baseline
+### DNSSEC-A — Read-only Baseline
 
 - autoritative Nameserver ermitteln;
 - Registrar/DNS-Provider eindeutig identifizieren;
-- `DNSKEY`, `DS`, `RRSIG` und Validierungsstatus extern lesen;
-- aktuelle Zone/TTL und Provider-DNSSEC-Modus als Evidence sichern.
+- `DNSKEY`, `DS`, `RRSIG` und externen Validierungsstatus lesen;
+- Zone/TTL und Provider-DNSSEC-Modus evidenzieren.
 
-Wenn bereits eine vollständige gültige Chain of Trust existiert, wird **keine** zweite Aktivierung vorgenommen; der Scan-Finding wird als Scanner-/Timing-Fehlklassifikation behandelt.
+Wenn bereits eine vollständige gültige Chain of Trust existiert, erfolgt **keine** zweite Aktivierung.
 
-### Phase DNSSEC-B — Aktivierung, nur falls wirklich unsigniert
+### DNSSEC-B — nur falls wirklich unsigniert
 
-1. DNSSEC beim **autoritativen DNS-Provider** aktivieren;
-2. Provider-generierte DS-Daten übernehmen — keine frei erfundenen Key-Tags/Digests;
+1. DNSSEC beim autoritativen DNS-Provider aktivieren;
+2. Provider-generierte DS-Daten verwenden — **keine frei erfundenen Key-Tags/Digests**;
 3. DS beim Parent/Registrar veröffentlichen bzw. Provider-Automation bestätigen;
-4. Propagation abwarten und externe Validation durchführen;
-5. erst bei `SECURE`/gültiger Chain Finding schließen.
+4. Propagation und externe Validatoren prüfen;
+5. Finding erst bei `SECURE` schließen.
 
 ### STOP / Rollback
 
-- `BOGUS`, SERVFAIL oder DS/DNSKEY-Mismatch → weitere Änderungen stoppen;
-- falschen DS am Parent entfernen bzw. auf den zuvor evidenzierten Zustand zurückrollen;
-- DNSSEC nie durch manuell erfundene DS-/DNSKEY-Werte „reparieren“.
+- `BOGUS`, SERVFAIL oder DS/DNSKEY-Mismatch → STOP;
+- falschen DS am Parent auf den zuvor evidenzierten Zustand zurückrollen;
+- keine manuell erfundenen DS-/DNSKEY-Werte.
 
-## 7. SPF / DKIM / DMARC — Enforcement ohne Mail-Ausfall
+## 8. SPF / DKIM / DMARC — Enforcement ohne Mail-Ausfall
 
-### 7.1 Sender-Inventar ist Gate
+### 8.1 Sender-Inventar ist Gate
 
-Vor SPF- oder DMARC-Enforcement müssen alle legitimen Absender erfasst sein, mindestens:
+Vor SPF- oder DMARC-Enforcement sind mindestens zu erfassen:
 
 - primärer Mailprovider;
 - Website-/Kontaktformulare;
 - Transaktionsmail;
-- Billing/Stripe-nahe Benachrichtigungen, soweit Domain-Absender genutzt werden;
+- Billing-nahe Benachrichtigungen mit Domain-Absender;
 - CRM/Newsletter;
 - Support-/Ticketing;
 - Monitoring/Alerting;
 - sonstige SaaS-Sender.
 
-Für jeden Sender sind Envelope-From, sichtbares `From:`, SPF-Ergebnis, DKIM-`d=` und DMARC-Alignment zu dokumentieren.
+Je Sender: Envelope-From, sichtbares `From:`, SPF-Ergebnis, DKIM-`d=` und DMARC-Alignment.
 
-### 7.2 DKIM
+### 8.2 DKIM
 
-**MUST:** Jeder produktive Mailstream soll DKIM signieren. Mindestens ein gültiger Selector pro aktivem Mailprovider ist live zu verifizieren. Private Keys gehören ausschließlich zum Mailprovider/Secret Store und niemals in Repository-Evidence.
+Jeder produktive Mailstream soll DKIM signieren. Mindestens ein gültiger Selector pro aktivem Mailprovider ist live zu verifizieren. **Private Keys** gehören ausschließlich zum Mailprovider/Secret Store und **niemals in Repository-Evidence**.
 
-### 7.3 SPF
+### 8.3 SPF
 
-Der bestehende SPF-Record bleibt bis zum vollständigen Sender-Inventar unverändert. Erst wenn alle legitimen Sender enthalten und Testmails erfolgreich sind, darf der Abschlussmechanismus auf `-all` gehärtet werden.
+Der bestehende SPF-Record bleibt bis zum vollständigen Sender-Inventar unverändert. Erst nach erfolgreicher Verifikation aller legitimen Sender darf der Abschlussmechanismus auf `-all` gehärtet werden.
 
-**STOP:** Mehrere SPF-Records, >10 DNS-Lookups, unbekannte Includes oder legitime Sender außerhalb des Records.
+**STOP:** mehrere SPF-Records, >10 DNS-Lookups, unbekannte Includes oder legitime Sender außerhalb des Records.
 
-### 7.4 DMARC Phase 0 — Monitoring
-
-Aktueller Scanstatus `p=none` ist für die Inventarisierung zulässig. Reporting wird nur aktiviert, wenn ein tatsächlich existierendes, zugriffskontrolliertes Reporting-Postfach bestätigt wurde.
-
-Template, **nicht ohne ersetzten Platzhalter publizieren**:
+### 8.4 DMARC Phase 0 — Monitoring
 
 ```dns
 _dmarc TXT "v=DMARC1; p=none; rua=mailto:<DMARC_REPORT_MAILBOX>"
 ```
 
-Gate zum nächsten Schritt:
+Platzhalter niemals ungeprüft publizieren. Gate zum nächsten Schritt: repräsentativer Reporting-Zeitraum, keine unbekannten legitimen Sender, kritische Mailstreams aligned, Forwarding-/Mailinglisten-Risiken bewertet.
 
-- mindestens ein repräsentativer Reporting-Zeitraum ausgewertet;
-- keine unbekannten legitimen Sender;
-- alle kritischen Mailstreams bestehen SPF- oder DKIM-Alignment;
-- Forwarding/Mailinglisten-Risiken bewertet.
-
-### 7.5 DMARC Phase 1 — Quarantine
-
-Kontrollierter Rollout, zum Beispiel:
+### 8.5 DMARC Phase 1 — Quarantine
 
 ```dns
 _dmarc TXT "v=DMARC1; p=quarantine; pct=25; rua=mailto:<DMARC_REPORT_MAILBOX>"
 ```
 
-Dann nach sauberer Telemetrie `pct=50` und `pct=100`.
+Nach sauberer Telemetrie `pct=50`, danach `pct=100`.
 
-### 7.6 DMARC Phase 2 — Reject
-
-Erst nach vollständig sauberem Quarantine-Rollout:
+### 8.6 DMARC Phase 2 — Reject
 
 ```dns
 _dmarc TXT "v=DMARC1; p=reject; rua=mailto:<DMARC_REPORT_MAILBOX>"
 ```
 
-**Rollback:** Bei belegtem legitimen Mailverlust eine Stufe zurück (`reject` → `quarantine`, `quarantine` → `none`) und betroffenen Sender korrigieren. Eine Rückstufung ist ein Security-Control-Change und muss evidenziert werden.
+**Rollback:** bei belegtem legitimen Mailverlust eine Stufe zurück und den betroffenen Sender korrigieren. Die Rückstufung bleibt ein evidenzpflichtiger Security-Control-Change.
 
-## 8. MTA-STS + TLS-RPT
+## 9. MTA-STS + TLS-RPT
 
-MTA-STS wird erst nach Live-Ermittlung der tatsächlich aktiven MX-Hosts konfiguriert.
-
-### DNS Discovery
+Erst nach Live-Ermittlung der tatsächlichen MX-Hosts:
 
 ```dns
 _mta-sts TXT "v=STSv1; id=<MONOTONIC_POLICY_ID>"
 _smtp._tls TXT "v=TLSRPTv1; rua=mailto:<TLS_RPT_MAILBOX>"
 ```
 
-### Policy Host
-
-Die Policy muss über exakt folgenden Host via gültigem HTTPS bereitgestellt werden:
+Policy-URL:
 
 `https://mta-sts.capital-ai.online/.well-known/mta-sts.txt`
 
-Testing-Template:
+Testing:
 
 ```text
 version: STSv1
@@ -207,9 +240,7 @@ mx: <CURRENT_MX_1>
 max_age: 86400
 ```
 
-Bei mehreren MX-Hosts ist je passendem Muster eine `mx:`-Zeile aufzunehmen.
-
-Nach TLS-RPT-Auswertung und erfolgreicher TLS-/Hostname-Validation:
+Nach sauberer TLS-RPT-/Hostname-Validation:
 
 ```text
 version: STSv1
@@ -218,46 +249,37 @@ mx: <CURRENT_MX_1>
 max_age: 604800
 ```
 
-**STOP:** MTA-STS-Subdomain ohne gültiges HTTPS, nicht passende MX-Namen, Zertifikatsfehler oder TLS-RPT mit legitimen Zustellfehlern.
+**STOP:** ungültiges HTTPS auf der Policy-Subdomain, nicht passende MX-Namen, Zertifikatsfehler oder legitime Zustellfehler in TLS-RPT.
 
-## 9. Blacklist-/Reputation-Finding
+## 10. Blacklist-/Reputation-Finding
 
-Der Scan meldet gleichzeitig `Mail servers not blacklisted = FAIL` und `No critical blacklist listings = PASS`. Das Finding wird deshalb nicht pauschal als Spam-Blocklist-Vorfall gewertet.
+Der Scan meldet zugleich `Mail servers not blacklisted = FAIL` und `No critical blacklist listings = PASS`. Deshalb keine pauschale Delisting-Mutation.
 
-Verbindliche Untersuchung:
-
-1. aktive MX-Hosts und deren A/AAAA-Adressen bestimmen;
+1. aktive MX-Hosts und IPs bestimmen;
 2. konkrete Liste identifizieren;
-3. prüfen, ob die gelistete IP dem eigenen Mailprovider zugeordnet ist;
-4. bei realem Finding Root Cause bestimmen (Compromise, Shared-IP-Reputation, Fehlklassifikation, Bounce-/Spam-Verhalten);
-5. erst nach Behebung Delisting beim Listenbetreiber beantragen;
-6. Post-Check und Provider-Ticket/Delisting-Evidence dokumentieren.
+3. IP-Ownership/Shared-IP beim Mailprovider prüfen;
+4. Root Cause bestimmen;
+5. erst nach Behebung Delisting beantragen;
+6. Post-Check und Provider-/Listen-Evidence sichern.
 
-Keine bezahlten „Delisting Services“ ohne verifizierte Listung und Owner-Freigabe.
-
-## 10. Optional / nicht merge-blockierend
-
-- BIMI: erst nach stabiler DMARC-`p=quarantine`/`reject`-Policy und Marken-/VMC-Anforderungen bewerten.
-- DANE/TLSA: nur mit stabiler DNSSEC-Chain und passender Mailserver-Ownership.
-- HTTPS/SVCB: Optimierung, kein Ersatz für A/CNAME/TLS-Härtung.
-- IPv6 für Mail: nur wenn Mailprovider es nativ und supportet anbietet.
+Keine bezahlten Delisting-Dienste ohne verifizierte Listung und Owner-Freigabe.
 
 ## 11. Ausführungsreihenfolge
 
 ```text
-1. Human Merge dieses Runbooks / CI-Evidence
-2. Read-only Provider- und Live-DNS-Baseline
-3. Owner-Freigabe für konkreten DNS-Zielprovider
-4. CAA publizieren und verifizieren
-5. DNSSEC nur bei verifiziert unsignierter Zone aktivieren und verifizieren
+1. Human Merge des Repository-Pakets
+2. Read-only Provider-/DNS-/TLS-/Mail-Baseline
+3. Owner-Freigabe für konkretes Providerziel
+4. CAA publizieren + verifizieren
+5. DNSSEC nur bei verifiziert unsignierter Zone aktivieren + verifizieren
 6. Sender-/DKIM-/SPF-/DMARC-Inventar abschließen
 7. DMARC Quarantine stufenweise
 8. MTA-STS/TLS-RPT Testing → Enforce
 9. DMARC Reject
-10. IntoDNS/independent rescan + append-only Evidence
+10. unabhängiger Rescan + append-only Evidence
 ```
 
-CAA und DNSSEC dürfen nur in einer Reihenfolge ausgeführt werden, in der nach jedem Schritt DNS- und HTTPS-Erreichbarkeit verifiziert wird. Mail-Enforcement ist davon getrennt und darf nicht durch einen Web-DNS-Change erzwungen werden.
+Web-DNS- und Mail-Enforcement bleiben getrennte Mutationspakete. Nach jedem externen Schritt muss Erreichbarkeit/Integrität verifiziert werden, bevor der nächste startet.
 
 ## 12. Acceptance Criteria
 
@@ -266,8 +288,9 @@ CAA und DNSSEC dürfen nur in einer Reihenfolge ausgeführt werden, in der nach 
 - HTTPS Apex + `www` erfolgreich;
 - gültiges Zertifikat;
 - CAA enthält alle von Render benötigten CAs;
-- keine AAAA-Fehlroute zur Render-Domain;
-- CSP/HSTS und bestehende Security Header live bestätigt.
+- keine AAAA-Fehlroute;
+- kanonischer CSP-/HSTS-/Security-Header-Pfad live bestätigt;
+- ausgelieferter `X-CSP-Mode` dokumentiert.
 
 ### DNSSEC
 
@@ -287,22 +310,24 @@ CAA und DNSSEC dürfen nur in einer Reihenfolge ausgeführt werden, in der nach 
 
 ## 13. Evidence Minimum
 
-Für jeden externen Change werden append-only mindestens dokumentiert:
+Für jeden externen Change append-only mindestens:
 
-- Zeitpunkt und ausführender Human/Owner bzw. autorisierter Executor;
+- Zeitpunkt und Human/Owner bzw. autorisierter Executor;
 - Provider/Zone/Target ohne Secrets;
-- Pre-Change DNS-/TLS-/Mail-Baseline;
+- Pre-Change Baseline;
 - freigegebener Record-/Policy-Diff;
 - Post-Change Resolver-/TLS-/Mail-Validation;
 - Rollbackstatus;
 - resultierender Scan/Score;
 - Mutation State: `HUMAN APPROVED` → `MUTATED` → `VERIFIED PASS` oder `FAILED / ROLLED BACK`.
 
-## 14. Aktueller Closure-Status
+## 14. Closure-Status
 
 | Control | Status 2026-08-25 |
 |---|---|
-| Web CSP/HSTS/Headers im aktuellen Source | `IMPLEMENTED / LIVE-REVALIDATE` |
+| PR #532 / Main-Sync | `SYNCED / 0 BEHIND` |
+| Governance-/Canonical-Path-Korrelation | `CORRELATED / REMEDIATED IN PR` |
+| Web CSP/HSTS/Headers | `IMPLEMENTED / LIVE-REVALIDATE` |
 | Render IPv6 | `PROVIDER_EXCEPTION_RENDER_IPV4` |
 | CAA | `PLANNED / OWNER MUTATION REQUIRED` |
 | DNSSEC | `PLANNED / LIVE BASELINE REQUIRED` |
@@ -310,4 +335,4 @@ Für jeden externen Change werden append-only mindestens dokumentiert:
 | MTA-STS/TLS-RPT | `PLANNED / MX + POLICY HOST REQUIRED` |
 | Blacklist | `INVESTIGATE / CONCRETE LIST REQUIRED` |
 
-Das Arbeitspaket ist erst geschlossen, wenn die geschützten externen Mutationen separat autorisiert, durchgeführt und post-verifiziert wurden. Repository-Merge allein ist kein Closure-Nachweis.
+Das Arbeitspaket ist erst geschlossen, wenn Repository-Evidence und alle tatsächlich erforderlichen externen Mutationen konsistent sind. Repository-Merge allein ist für DNS/TLS/Domain-/Mail-Hardening kein Closure-Nachweis.
