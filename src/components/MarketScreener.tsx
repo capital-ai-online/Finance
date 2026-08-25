@@ -14,6 +14,7 @@ import { AssetLogo } from './AssetLogo';
 import { StatusBadge } from './StatusBadge';
 import { UserSession } from '../App';
 import { authFetch } from '../lib/authFetch';
+import { getReactMessage } from '../platform/Vocabulary/Delivery/browserMessageCatalog';
 
 interface MarketScreenerProps {
   onSelectSymbol: (symbol: string) => void;
@@ -327,8 +328,8 @@ export function MarketScreener({
               <ShieldCheck size={18} />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verified Enterprise Screener</span>
             </div>
-            <h2 className="mt-1 text-xl font-black text-white">Multi-Asset Screening</h2>
-            <p className="mt-1 text-xs text-white/45">Score, Evidence und Macro Context bleiben getrennte, versionierte Verträge.</p>
+            <h2 className="mt-1 text-xl font-black text-white">{getReactMessage('screening.title')}</h2>
+            <p className="mt-1 text-xs text-white/45">{getReactMessage('screening.subtitle.contractSeparation')}</p>
           </div>
           <button
             type="button"
@@ -337,7 +338,7 @@ export function MarketScreener({
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-aif-gold-DEFAULT/30 bg-aif-gold-DEFAULT/10 px-4 py-2 text-xs font-black text-aif-gold-DEFAULT disabled:opacity-50"
           >
             <RefreshCw size={14} className={scanning ? 'animate-spin' : ''} />
-            {scanning ? 'Verifizierte Daten prüfen…' : 'Screening starten'}
+            {scanning ? getReactMessage('screening.action.loading') : getReactMessage('screening.action.start')}
           </button>
         </div>
 
@@ -348,7 +349,7 @@ export function MarketScreener({
               value={searchVal}
               onChange={(event) => { setSearchVal(event.target.value); setShowDropdown(true); }}
               onFocus={() => setShowDropdown(true)}
-              placeholder="Asset, Symbol oder Währungspaar suchen…"
+              placeholder={getReactMessage('screening.search.placeholder')}
               className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
             />
             <ChevronDown size={14} className="text-white/25" />
