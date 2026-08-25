@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ComplianceRun, ScannerResult, Finding, RemediationPlan, ComplianceCertificate } from '../platform/Compliance/types';
 import { authFetch } from '../lib/authFetch';
+import { CAPITAL_AI_VERSION } from '../platform/Release/clientVersion';
 
 interface SecurityComplianceAuditorProps {
   currentUserEmail: string;
@@ -650,7 +651,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
 
                   <div className="space-y-4 text-xs font-sans text-white/80 leading-relaxed">
                     <p>
-                      Dieser interne Selbstcheck bestätigt, dass der Build des Systems <span className="text-white font-bold font-mono">CAPITAL-AI (Version 0.7.0)</span> die intern definierten Prüfkriterien für Hochsicherheitsumgebungen und Risikomanagement zum Prüfzeitpunkt erfüllt hat. Dies ist <span className="text-white font-bold">keine Zertifizierung durch die BaFin oder eine andere Aufsichtsbehörde</span> — es handelt sich um ein automatisiertes, plattforminternes Prüfprotokoll.
+                      Dieser interne Selbstcheck bestätigt, dass der Build des Systems <span className="text-white font-bold font-mono">CAPITAL-AI (Version {CAPITAL_AI_VERSION})</span> die intern definierten Prüfkriterien für Hochsicherheitsumgebungen und Risikomanagement zum Prüfzeitpunkt erfüllt hat. Dies ist <span className="text-white font-bold">keine Zertifizierung durch die BaFin oder eine andere Aufsichtsbehörde</span> — es handelt sich um ein automatisiertes, plattforminternes Prüfprotokoll.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-[10px] text-white/60 bg-black/40 p-4 rounded-xl border border-white/5">

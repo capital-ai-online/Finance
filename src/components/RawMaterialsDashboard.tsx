@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { RAW_MATERIALS_DATABASE } from '../config/rawMaterialsConfig';
 import { AnalysisPayload, RawMaterialInput } from '../types/rawMaterials';
+import { CAPITAL_AI_VERSION } from '../platform/Release/clientVersion';
 
 
 export function buildRawMaterialFallbackList() {
@@ -223,7 +224,7 @@ export function RawMaterialsDashboard() {
             <span className="px-3 py-1 rounded-full text-[10px] font-bold font-mono bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 tracking-widest uppercase">
               ROHSTOFF-ANALYSE
             </span>
-            <span className="text-[11px] font-mono text-white/50 tracking-wider">Version 0.7.0 (Beta-Phase)</span>
+            <span className="text-[11px] font-mono text-white/50 tracking-wider">Version {CAPITAL_AI_VERSION} (Beta-Phase)</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-[#D4A017] font-display tracking-tight uppercase">
             Rohstoff-Kategorisierung & AI-Scoring
