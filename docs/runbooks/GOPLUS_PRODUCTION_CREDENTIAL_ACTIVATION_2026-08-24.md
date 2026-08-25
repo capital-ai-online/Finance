@@ -18,13 +18,13 @@ The credential activates only the existing research/evidence transport. It does 
 | Target identity | Owner-approved workspace `AICapital` and service `Finance` |
 | Secret placement | Entered by the owner as `GOPLUS_API_KEY`; value not read, copied, logged or committed |
 | Browser exposure | No `VITE_*` variable and no client-side propagation |
-| Latest observed service deploy | `dep-da6dick9v7es73cdejn0`, commit `1a2af9070c05dc1ecea128c149d40bbdeca16a33`, state `live` |
-| Current verified main | `a0a1caf9f5da703f48fb1dc65244009d2ed79cf2`; production commit is an ancestor with `17` commits of undeployed main drift |
+| Latest observed service deploy | `dep-da6e5vgn74is73eqn04g`, commit `a0a1caf9f5da703f48fb1dc65244009d2ed79cf2`, state `live` |
+| Current verified main | `a0a1caf9f5da703f48fb1dc65244009d2ed79cf2`; production/main drift `0` commits |
 | Auto-deploy authority | Remains off; no second deployment authority introduced |
 | Log inspection | No observed `GOPLUS`, `GoPlus` or `NOT_CONFIGURED` error in the inspected deploy logs; intermittent unrelated news-evidence 503 completions are recorded separately below |
 | Functional provider call | Not claimed; no productive route invoked the provider during this verification |
 
-A healthy deployment proves service availability, not provider correctness or token freshness. Four intermittent post-deploy 503 completions (00:07Z–00:09Z) correlated by router-local path and approximately eight-second duration with the news-evidence fail-closed `NO_DATA` path; no GoPlus marker was present and later requests succeeded. This code/timing correlation is an inference rather than a captured upstream trace and does not validate or invalidate the GoPlus token. Productive model-promotion gates in the threat model remain open.
+A healthy deployment proves service availability, not provider correctness or token freshness. On preceding deploy `dep-da6dick9v7es73cdejn0`, four intermittent 503 completions (00:07Z–00:09Z) correlated by router-local path and approximately eight-second duration with the news-evidence fail-closed `NO_DATA` path; no GoPlus marker was present and later requests succeeded. This code/timing correlation is an inference rather than a captured upstream trace and does not validate or invalidate the GoPlus token. Productive model-promotion gates in the threat model remain open.
 
 ## Fail-closed operational checks
 

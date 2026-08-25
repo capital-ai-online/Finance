@@ -22,17 +22,17 @@
 | Render workspace | `AICapital` |
 | Render service | `Finance` (`srv-d91o1o9o3t8c73edi55g`) |
 | Credential | `GOPLUS_API_KEY` entered by the owner; value not read, copied or stored in Git |
-| Latest observed deploy | `dep-da6dick9v7es73cdejn0` |
-| Deployed commit | `1a2af9070c05dc1ecea128c149d40bbdeca16a33` |
+| Latest observed deploy | `dep-da6e5vgn74is73eqn04g` |
+| Deployed commit | `a0a1caf9f5da703f48fb1dc65244009d2ed79cf2` |
 | Deploy state | `live` |
-| Production → verified main drift | `17` commits; production is an ancestor of `a0a1caf9f5da703f48fb1dc65244009d2ed79cf2` |
+| Production → verified main drift | `0` commits; production and verified main are identical |
 | Auto-deploy | `off`; no second deployment authority introduced |
 | GoPlus log correlation | No observed `GOPLUS`, `GoPlus` or `NOT_CONFIGURED` error in the inspected logs |
 | Provider authority | Research/evidence only; no route construction, signing, broadcasting or live-execution permission |
 | Functional invocation | Not claimed: the production route has not invoked the provider during this verification |
 | Operations / rollback | `docs/runbooks/GOPLUS_PRODUCTION_CREDENTIAL_ACTIVATION_2026-08-24.md` |
 
-Post-deploy telemetry contained four intermittent HTTP 503 completions between 00:07Z and 00:09Z with router-local paths `/` and `/sources`, followed by successful requests. Code/timing correlation points to the news-evidence router's explicit fail-closed `NO_DATA` response after the shared 8-second provider bound; this is an inference, not a captured upstream trace. The events had no GoPlus marker, do not correlate with the 13-file PR #531 scope and are therefore not attributed to Vocabulary or `GOPLUS_API_KEY`.
+Telemetry on the preceding deploy `dep-da6dick9v7es73cdejn0` contained four intermittent HTTP 503 completions between 00:07Z and 00:09Z with router-local paths `/` and `/sources`, followed by successful requests. Code/timing correlation points to the news-evidence router's explicit fail-closed `NO_DATA` response after the shared 8-second provider bound; this is an inference, not a captured upstream trace. The events had no GoPlus marker, do not correlate with the 13-file PR #531 scope and are therefore not attributed to Vocabulary or `GOPLUS_API_KEY`.
 
 The original P1-A threat model points to the dedicated post-merge credential activation and rollback runbook; repository rollback and secret rotation remain deliberately separate.
 
