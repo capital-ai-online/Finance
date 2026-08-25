@@ -91,7 +91,7 @@ Die Policies sind nonce-basiert und setzen unter anderem `object-src 'none'`, `f
 | DNSSEC | `DNSSEC signed=FAIL`, `validation=FAIL`, gleichzeitig RRSIG/Chain-of-Trust teilweise PASS | widersprüchliche Evidence; zuerst live verifizieren | signierte Zone + gültige DS-Delegation + externe Validation |
 | Web IPv6 | AAAA fehlt | **Provider Exception** für Render; kein AAAA erzwingen | IPv4-only solange Render dies verlangt |
 | DMARC | vorhanden, `p=none` | stufenweiser Enforcement-Rollout | `quarantine` → `reject` nach Telemetrie |
-| CAA | fehlt | Render-CAs vollständig erlauben | Let's Encrypt + Google Trust Services |
+| CAA | fehlt | Render-CAs vollständig und minimal erlauben | Let's Encrypt + Google Trust Services; Wildcard-Rechte nur bei verifiziertem Wildcard-Scope |
 | Mail IPv6 | fehlt | Provider Capability / Ausnahme | kein künstlicher AAAA-Record |
 | SPF | vorhanden, Syntax PASS, kein `-all` | erst Sender-Inventar + Alignment | `-all` nur nach vollständiger Verifikation |
 | DKIM | Scan `N/A` | produktive Mailstreams verifizieren | DKIM aktiv und DMARC-aligned |
@@ -111,15 +111,20 @@ Render Custom Domains nutzen für diesen Web-Service die dokumentierte IPv4-Konf
 
 ## 6. CAA Change Set — Owner-gated
 
-Render kann Zertifikate über Let's Encrypt und Google Trust Services beziehen. Deshalb darf eine CAA-Policy nicht nur eine der beiden CAs freigeben.
+Render dokumentiert für Custom-Domain-TLS zwei zulässige Certificate Authorities: Let's Encrypt (`letsencrypt.org`) und Google Trust Services (`pki.goog`). Für den aktuell dokumentierten Apex-/`www`-Scope werden nur die normalen `issue`-Rechte freigegeben. `issuewild` wird erst ergänzt, wenn ein Render-Wildcard-Custom-Domain-Scope read-only verifiziert und separat freigegeben ist. Der Google-Parameter `cansignhttpexchanges=yes` gehört zu Signed HTTP Exchange (SXG) und wird für normales Render-TLS bewusst **nicht** gesetzt.
 
-Vorgesehener Satz für `capital-ai.online`:
+Vorgesehener minimaler Satz für `capital-ai.online`:
 
 ```dns
 @ CAA 0 issue "letsencrypt.org"
+@ CAA 0 issue "pki.goog"
+```
+
+Falls später ein verifizierter Render-Wildcard-Scope erforderlich ist, dürfen zusätzlich exakt diese Wildcard-Rechte freigegeben werden:
+
+```dns
 @ CAA 0 issuewild "letsencrypt.org"
-@ CAA 0 issue "pki.goog; cansignhttpexchanges=yes"
-@ CAA 0 issuewild "pki.goog; cansignhttpexchanges=yes"
+@ CAA 0 issuewild "pki.goog"
 ```
 
 ### Pre-Check
@@ -127,14 +132,16 @@ Vorgesehener Satz für `capital-ai.online`:
 1. aktuellen CAA-Satz live lesen;
 2. aktuellen TLS-Issuer für Apex und `www` dokumentieren;
 3. Render Custom Domain Status = verified bestätigen;
-4. verifizieren, dass keine weitere bewusst verwendete CA ausgeschlossen wird.
+4. verifizieren, dass keine weitere bewusst verwendete CA ausgeschlossen wird;
+5. `issuewild` nur dann als erforderlich einstufen, wenn ein tatsächlicher Render-Wildcard-Domain-Scope existiert.
 
 ### Post-Check
 
 - CAA über mindestens zwei unabhängige Resolver lesen;
 - Zertifikatstatus weiterhin gültig;
 - HTTPS auf Apex und `www` erfolgreich;
-- keine Certificate-Issuance-Warnung.
+- keine Certificate-Issuance-Warnung;
+- keine SXG-spezifische CAA-Erweiterung ohne expliziten SXG-Scope.
 
 ### Rollback
 
@@ -287,7 +294,7 @@ Web-DNS- und Mail-Enforcement bleiben getrennte Mutationspakete. Nach jedem exte
 
 - HTTPS Apex + `www` erfolgreich;
 - gültiges Zertifikat;
-- CAA enthält alle von Render benötigten CAs;
+- CAA enthält alle von Render benötigten CAs und keine zusätzliche Wildcard-/SXG-Berechtigung ohne verifizierten Scope;
 - keine AAAA-Fehlroute;
 - kanonischer CSP-/HSTS-/Security-Header-Pfad live bestätigt;
 - ausgelieferter `X-CSP-Mode` dokumentiert.
