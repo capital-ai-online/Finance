@@ -106,12 +106,18 @@ const ALLOWED_MEDIA_TYPES = new Set([
   'text/plain',
 ]);
 
+function roles(
+  ...values: CommodityHistoricalArchiveArtifactRole[]
+): readonly CommodityHistoricalArchiveArtifactRole[] {
+  return Object.freeze(values);
+}
+
 const ALLOWED_ROLES: Readonly<Record<CommodityHistoricalArchiveProviderId, readonly CommodityHistoricalArchiveArtifactRole[]>> = Object.freeze({
-  eia: Object.freeze(['DATA_PAYLOAD', 'PUBLICATION_REPORT']),
-  'usda-fas-psd': Object.freeze(['DATA_PAYLOAD', 'PUBLICATION_REPORT']),
-  'cftc-cot': Object.freeze(['DATA_PAYLOAD', 'PUBLICATION_REPORT']),
-  'usgs-mcs': Object.freeze(['DATA_PAYLOAD', 'PUBLICATION_REPORT']),
-  'eu-crma': Object.freeze(['DATA_PAYLOAD', 'PUBLICATION_REPORT', 'REGULATORY_ASSESSMENT']),
+  eia: roles('DATA_PAYLOAD', 'PUBLICATION_REPORT'),
+  'usda-fas-psd': roles('DATA_PAYLOAD', 'PUBLICATION_REPORT'),
+  'cftc-cot': roles('DATA_PAYLOAD', 'PUBLICATION_REPORT'),
+  'usgs-mcs': roles('DATA_PAYLOAD', 'PUBLICATION_REPORT'),
+  'eu-crma': roles('DATA_PAYLOAD', 'PUBLICATION_REPORT', 'REGULATORY_ASSESSMENT'),
 });
 
 const SENSITIVE_QUERY_PARAMETER_NAMES = new Set([
