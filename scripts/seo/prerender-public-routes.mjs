@@ -11,6 +11,13 @@ import path from 'node:path';
 const ORIGIN = 'https://capital-ai.online';
 const dist = path.join(process.cwd(), 'dist');
 const indexPath = path.join(dist, 'index.html');
+const packagePath = path.join(process.cwd(), 'package.json');
+const packageMetadata = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+const PLATFORM_VERSION = String(packageMetadata.version || '');
+
+if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(PLATFORM_VERSION)) {
+  throw new Error('[SEO prerender] package.json#version must be strict MAJOR.MINOR.PATCH SemVer.');
+}
 
 const ROUTES = [
   {
@@ -18,7 +25,7 @@ const ROUTES = [
     file: 'index.html',
     title: 'CAPITAL-AI Portal',
     description:
-      'Offizielles CAPITAL-AI Portal (Version 0.6.0) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.',
+      `Offizielles CAPITAL-AI Portal (Version ${PLATFORM_VERSION}) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.`,
     noscript:
       'CAPITAL-AI Portal: quantitative Analysen, Compliance und Asset-Scoring. Bildungsorientiert — keine Anlageberatung.',
   },

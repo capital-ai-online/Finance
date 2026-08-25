@@ -23,6 +23,16 @@ The current platform-version authority is exclusively `package.json#version`. Ve
 
 ---
 
+## Client/runtime projection
+
+Human-facing browser surfaces do not receive a second version authority. `vite.config.ts` injects `package.json#version` as `__CAPITAL_AI_VERSION__`; `src/platform/Release/clientVersion.ts` exposes the validated `CAPITAL_AI_VERSION` projection to browser code. Branding, SEO and audited runtime surfaces consume that projection rather than maintaining local platform-version literals.
+
+The remaining Dashboard monolith is handled through a narrowly scoped build-time strangler in `vite.config.ts`. It replaces only the human-facing `Beta · Version x.y.z` label during transformation. Model, provider, schema, scoring and ADR versions remain independent version domains and are not rewritten.
+
+`VersionManager` does not own this projection; it remains a read-only compatibility surface to the same Release authority.
+
+---
+
 ## Retired legacy behavior
 
 The following former VersionManager semantics are explicitly retired and non-authorizing:
@@ -70,6 +80,7 @@ A future cleanup may relocate this validator to a more appropriate Governance/Re
 ## Current dependencies
 
 - `src/platform/Release/Services/platformVersionControlPlane.ts`
+- `src/platform/Release/clientVersion.ts`
 - `src/platform/Security/authMiddleware.ts`
 - `src/platform/Security/types.ts`
 - Node.js `fs` / `path` for the independent repository convention validator
