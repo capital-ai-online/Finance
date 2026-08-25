@@ -23,6 +23,15 @@ const ROUTES = [
       'CAPITAL-AI Portal: quantitative Analysen, Compliance und Asset-Scoring. Bildungsorientiert — keine Anlageberatung.',
   },
   {
+    routePath: '/learning-platform',
+    file: 'learning-platform/index.html',
+    title: 'Capital-AI Learning Platform – Canonical Vocabulary',
+    description:
+      'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen read-only bereit.',
+    noscript:
+      'Capital-AI Learning Platform: freigegebenes zweisprachiges Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen.',
+  },
+  {
     routePath: '/impressum',
     file: 'impressum/index.html',
     title: 'Impressum – CAPITAL-AI',
