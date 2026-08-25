@@ -16,11 +16,11 @@ async function requireOrchestratorAdmin(req: express.Request, res: express.Respo
   next();
 }
 
-orchestratorRouter.get('/stats', (_req, res) => {
+orchestratorRouter.get('/stats', requireOrchestratorAdmin, (_req, res) => {
   res.json(orchestrator.getStats());
 });
 
-orchestratorRouter.get('/ping-models', (_req, res) => {
+orchestratorRouter.get('/ping-models', requireOrchestratorAdmin, (_req, res) => {
   const models = [
     { id: 'claude', name: 'Claude 3.5 Sonnet', task: 'Code & Review', cost: '3.00', configured: false },
     { id: 'gpt4', name: 'GPT-4o', task: 'Reasoning & Legacy', cost: '2.50', configured: false },
