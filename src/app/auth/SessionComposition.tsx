@@ -9,7 +9,6 @@ import { LoginStepUpGate } from '../../components/LoginStepUpGate';
 import { RegistrationCompletionGate } from '../../components/RegistrationCompletionGate';
 import {
   clearLoginStepUpMarkers,
-  hasPassedLoginStepUpThisTab,
   loginStepUpRequirement,
 } from '../../lib/loginStepUp';
 import { needsOnboarding } from '../../lib/onboarding';
@@ -169,8 +168,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   };
 
   useEffect(() => {
-    let hasLocalSession = false;
-
     // ADR-0003.5: development auto-login remains double-gated by exact local
     // hostname plus explicit build flag.
     const isExplicitLocalDev =
@@ -193,32 +190,12 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
-    const localSessionJson = localStorage.getItem('mcc_user_session');
-    if (localSessionJson) {
-      try {
-        const parsed = JSON.parse(localSessionJson);
-        const isRegisteredSession = parsed?.type === 'registered' && parsed?.email;
-        const canUseFastPath =
-          isRegisteredSession &&
-          (!parsed.id || hasPassedLoginStepUpThisTab(parsed.id));
-
-        if (canUseFastPath) {
-          setUserSession(parsed);
-          setLoading(false);
-          hasLocalSession = true;
-        } else if (parsed?.type === 'guest') {
-          localStorage.removeItem('mcc_user_session');
-        }
-      } catch (e) {
-        console.error('Failed to parse local session', e);
-        localStorage.removeItem('mcc_user_session');
-      }
-    }
-
+    // SECURITY (2026-08-25 architecture review, finding #3): mcc_user_session is a display cache,
+    // never an authentication authority. It is intentionally not restored before Supabase validates
+    // the current SDK session. A tampered/stale cache therefore cannot render an authenticated UI,
+    // and a Supabase outage fails closed instead of preserving cached authentication state.
     if (!supabase) {
-      if (!hasLocalSession) {
-        updateUserSession(null);
-      }
+      updateUserSession(null);
       setLoading(false);
       return;
     }
@@ -229,17 +206,13 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         if (session) {
           establishSession(session);
         } else {
-          if (!hasLocalSession) {
-            updateUserSession(null);
-          }
+          updateUserSession(null);
           setLoading(false);
         }
       })
       .catch((err) => {
-        console.warn('Supabase getSession failed, using authenticated local cache state:', err);
-        if (!hasLocalSession) {
-          updateUserSession(null);
-        }
+        console.warn('Supabase getSession failed; clearing non-authoritative local session cache:', err);
+        updateUserSession(null);
         setLoading(false);
       });
 
@@ -559,13 +532,16 @@ export function SessionComposition({ children }: SessionCompositionProps) {
                       if (session) {
                         await establishSession(session);
                       } else {
+                        updateUserSession(null);
                         setLoading(false);
                       }
                     } catch (err) {
                       console.error('Retry failed:', err);
+                      updateUserSession(null);
                       setLoading(false);
                     }
                   } else {
+                    updateUserSession(null);
                     setLoading(false);
                   }
                 }}
