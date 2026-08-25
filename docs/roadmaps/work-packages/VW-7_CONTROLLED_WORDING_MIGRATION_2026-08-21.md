@@ -1,6 +1,6 @@
 # VW-7 — Controlled Wording Migration
 
-**Status:** IMPLEMENTED / MERGED VIA PR #477 / ACTIVE BASELINE ON MAIN
+**Status:** IMPLEMENTED BASELINE / FIVE CONTROLLED MIGRATIONS COMPLETE ON FINALIZATION BRANCH
 **Authority:** `ESS-0017` / `ESS-0017-CONTRACTS`  
 **Boundary:** no blind mass replacement; no financial or compliance semantic changes
 
@@ -27,7 +27,7 @@ The first migration baseline covers five existing `MarketScreener` strings:
 - loading action;
 - asset-search placeholder.
 
-Their current copy is first captured unchanged in the canonical Message Catalog. This prevents semantic wording changes from being mixed with the infrastructure cutover.
+Their copy was first captured unchanged in the canonical Message Catalog. The five `MarketScreener` consumers now resolve the same text through their stable Message Keys without semantic copy changes.
 
 ## Implementation
 
@@ -54,3 +54,4 @@ Their current copy is first captured unchanged in the canonical Message Catalog.
 - [x] drift detection implemented
 - [x] no broad regex/string replacement across financial hotpaths
 - [x] remaining wording debt is measurable instead of hidden
+- [x] all five initial `MarketScreener` candidates resolve stable Message Keys and validate as `MIGRATED`

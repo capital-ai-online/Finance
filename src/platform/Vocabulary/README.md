@@ -55,7 +55,7 @@ MIGRATED  source references the stable Message Key
 DRIFT     mapping is ambiguous/broken and blocks governance
 ```
 
-The current baseline governs five real `MarketScreener` strings. They remain explicit incremental migration debt where still `OPEN`; this component does not claim a completed repository-wide UI text migration.
+The initial five governed `MarketScreener` strings now resolve through their stable Message Keys and validate as `MIGRATED`. This closes the initial VW-7 slice without claiming a repository-wide mass migration.
 
 A browser-safe resolver is available at `Delivery/browserMessageCatalog.ts` without Node-only dependencies.
 
