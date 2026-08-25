@@ -12,6 +12,8 @@
 // ausgelagert werden. Für den aktuellen Deployment-Stand (eine Instanz)
 // ist das unkritisch, aber bei Skalierung erneut zu prüfen.
 
+import { isIP } from 'node:net';
+
 interface Bucket {
   count: number;
   windowStart: number;
@@ -56,11 +58,28 @@ export function resetRateLimit(key: string): void {
   buckets.delete(key);
 }
 
+function validatedIp(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const candidate = value.trim();
+  return isIP(candidate) > 0 ? candidate : null;
+}
+
 export function getClientIp(req: { headers: Record<string, unknown>; socket?: { remoteAddress?: string }; ip?: string }): string {
-  // Render terminiert TLS und setzt x-forwarded-for; erstes Element ist die echte Client-IP.
-  const xff = req.headers['x-forwarded-for'];
-  if (typeof xff === 'string' && xff.length > 0) {
-    return xff.split(',')[0].trim();
+  // SECURITY (2026-08-25 architecture review, finding #7): niemals rohes X-Forwarded-For
+  // als Rate-Limit-Identität verwenden. Eine globale numerische Express-`trust proxy`-Regel würde
+  // zusätzlich Host/Proto-Forwarding vertrauen und damit eine breitere Trust Boundary einführen als
+  // für Rate-Limiting/Audit nötig. Auf Render wird deshalb ausschließlich der vom Edge gesetzte
+  // CF-Connecting-IP akzeptiert, und auch dieser nur nach syntaktischer IP-Validierung.
+  if (process.env.RENDER === 'true') {
+    const edgeIp = validatedIp(req.headers['cf-connecting-ip']);
+    if (edgeIp) return edgeIp;
   }
-  return req.ip || req.socket?.remoteAddress || 'unknown';
+
+  // Ohne explizite Proxy-Vertrauensregel entspricht req.ip dem direkten Socket-Peer. Das ist für
+  // lokale/non-Render Umgebungen die engste vertrauenswürdige Quelle.
+  const expressIp = validatedIp(req.ip);
+  if (expressIp) return expressIp;
+
+  const socketIp = validatedIp(req.socket?.remoteAddress);
+  return socketIp ?? 'unknown';
 }
