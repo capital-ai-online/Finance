@@ -11,6 +11,7 @@
 | `settings` | Profil, Passkeys, TOTP |
 | `screening` | Screener, Universen, Best/Worst, Multi-Asset-Auswahl |
 | `crypto` | Crypto-/DeFi-spezifische Analyseoberflächen |
+| `commodities` | Commodity-Markt-Score und getrennte Rohstoff-Orchestrator-Research-Werkzeuge |
 | `stocks` | Equity-/Value-spezifische Analyseoberflächen |
 | `analytics` | Charts, Heatmaps, Risiko- und Performance-Visualisierung |
 | `news` | Newsfeed und Sentiment |

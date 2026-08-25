@@ -144,10 +144,10 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       });
       if (dispatch.status !== 'DISPATCHED') {
         return res.status(422).json({
+          ...dispatch.canonical,
           symbol,
           assetId: dispatch.asset.assetId,
           modelRegistry: dispatch.model ? modelRegistryView(dispatch.model) : null,
-          ...dispatch.canonical,
           reason: dispatch.reason,
         });
       }
@@ -155,10 +155,10 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       const result = dispatch.assessment;
       const canonical = dispatch.canonical;
       return res.status(canonical.status === 'READY' ? 200 : 422).json({
+        ...canonical,
         symbol,
         assetId: dispatch.asset.assetId,
         modelRegistry: modelRegistryView(dispatch.model),
-        ...canonical,
         score10: canonical.score,
         scoreSemantic: result.scoreSemantic,
         contractVersion: result.contractVersion,
