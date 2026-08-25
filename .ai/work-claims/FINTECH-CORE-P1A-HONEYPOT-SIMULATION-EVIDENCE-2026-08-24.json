@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "FINTECH-CORE-P1A-HONEYPOT-SIMULATION-EVIDENCE-2026-08-24",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,7 +13,7 @@
   "baseBranch": "main",
   "baseSha": "7afa86e24812e3de96e93882b9658d2b2e0311e7",
   "executionBranch": "feat/fintech-core-p1a-honeypot-evidence-postmerge-2026-08-24",
-  "pullRequest": null,
+  "pullRequest": 525,
   "claimedPaths": [
     ".ai/work-claims/FINTECH-CORE-P1-PORTFOLIO-ALLOCATION-PROVIDER-GAPS-2026-08-24.json",
     "config/crypto-evidence.env.example",
@@ -88,9 +88,11 @@
     "legacyP1MainSyncBranchPresent": false,
     "legacyP1ProviderGapBranchPresent": false,
     "onlyP1BranchPresent": "feat/fintech-core-p1a-honeypot-evidence-postmerge-2026-08-24",
-    "openPr524Detected": true,
+    "openPr524Detected": false,
     "openPr524DirectFileOverlap": false,
-    "openPr524SemanticCorrelation": "Vocabulary/Wording governance only; no FinTechCore Crypto, MarketData provider, secret-manifest or P1-A security path overlap."
+    "openPr524SemanticCorrelation": "Vocabulary/Wording governance only; no FinTechCore Crypto, MarketData provider, secret-manifest or P1-A security path overlap.",
+    "openPr524Merged": true,
+    "postMergeMain": "c0ebee48b062c98112b39340dcde3ab31c3d7c3d"
   },
   "validation": {
     "scopeReview": "PASS_BY_DIFF_INSPECTION",
@@ -102,7 +104,21 @@
     "nestedErc20ParserRegressionCoverageImplemented": true,
     "negativeRegressionCoverageImplemented": true,
     "hostedCiTriggeredPrePr": false,
-    "hostedCiPolicy": "Hosted CI is intentionally deferred until after Pull Request creation."
+    "hostedCiPolicy": "Hosted CI is intentionally deferred until after Pull Request creation.",
+    "postPrHostedCi": "PASS",
+    "postPrGovernance": "PASS"
   },
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "mergedPr": 525,
+  "mainCommit": "c0ebee48b062c98112b39340dcde3ab31c3d7c3d",
+  "releasedAt": "2026-08-24T21:29:54Z",
+  "releaseEvidence": {
+    "pullRequest": 525,
+    "merged": true,
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "c0ebee48b062c98112b39340dcde3ab31c3d7c3d",
+    "verifiedAt": "2026-08-24"
+  },
+  "releaseReason": "merged",
+  "terminalHeadSha": "54180bb904f6f2d7bbf8a23bbd2a473cc870e82a"
 }

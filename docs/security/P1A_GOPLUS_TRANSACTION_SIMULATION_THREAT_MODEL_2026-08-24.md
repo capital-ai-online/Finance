@@ -148,13 +148,11 @@ FT-7 real execution remains independently blocked.
 
 ## 8. Rollback
 
-No external mutation, deployment, schema change or provider-side configuration is performed by this work package.
-
-Rollback is therefore repository-only:
+The original P1-A implementation work package performed no external mutation, deployment, schema change or provider-side configuration. Its code rollback remains repository-only:
 
 1. human-gated `git revert` of the P1-A merge commit;
 2. verify the new provider/adapter exports are absent;
 3. run the existing class-C validation path;
 4. confirm Meme/DeFi challengers remain non-executable and FT-7 remains blocked.
 
-No provider credential rotation is required unless a separate security incident establishes credential exposure.
+A later Owner-approved Render activation placed `GOPLUS_API_KEY` on the `Finance` service. Credential removal, rotation, target verification and post-mutation checks are governed separately by `docs/runbooks/GOPLUS_PRODUCTION_CREDENTIAL_ACTIVATION_2026-08-24.md`. Code rollback does not rotate or restore credentials, and a suspected compromised token must never be recovered by reinstating an older value.
