@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { getClientIp } from '../platform/Security/rateLimiter';
 
 export interface RequestLogEntry {
   id: string;
@@ -175,7 +176,13 @@ export class RequestOrchestrator {
   public handle(endpointKey: string) {
     return async (req: Request, res: Response, next: NextFunction) => {
       const requestId = Math.random().toString(36).substring(2, 11);
-      const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+      // SECURITY (2026-08-25 architecture review, finding #5): der rohe x-forwarded-for-Header
+      // wurde hier zuvor ungeprueft als Rate-Limit-Schluessel verwendet - ein Client konnte pro
+      // Request einen frei waehlbaren Wert senden und damit pro Anfrage eine neue Bucket-Identitaet
+      // erzeugen, was das 30-req/min-Limit fuer u.a. /api/chat vollstaendig aushebelte. getClientIp()
+      // nutzt stattdessen req.ip, das Express unter der in server.application.ts gesetzten
+      // trust-proxy-Konfiguration korrekt aus dem einen vertrauenswuerdigen Render-Hop ableitet.
+      const ip = getClientIp(req);
       const startTimestamp = Date.now();
 
       // 1. IP Rate Limiting Check

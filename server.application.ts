@@ -132,8 +132,12 @@ async function logBlockedOrigin(origin: string, req: express.Request) {
   if (!isSupabaseConfigured()) return;
   try {
     const supabase = getServerSupabase();
-    const xff = req.headers['x-forwarded-for'];
-    const ip = typeof xff === 'string' ? xff.split(',')[0].trim() : (req.socket?.remoteAddress || 'unknown');
+    // SECURITY (2026-08-25 architecture review, finding #7 Restbefund): letzte verbliebene lokale
+    // X-Forwarded-For-Auswertung im Live-Pfad, identifiziert im Security-Follow-up-Review nach der
+    // getClientIp()-Haertung von rateLimiter.ts/requestOrchestrator.ts/cors.ts - dieser Aufruf hier
+    // wurde beim ersten Konsolidierungs-Pass uebersehen. Nutzt jetzt dieselbe zentrale, Render-CF-
+    // Connecting-IP-bewusste Boundary statt eine vierte, unabhaengige Kopie zu erhalten.
+    const ip = getClientIp(req as any);
     await supabase.from('security_events').insert({
       event_type: 'suspicious_request',
       ip_address: ip,

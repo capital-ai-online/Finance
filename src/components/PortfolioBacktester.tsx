@@ -33,6 +33,7 @@ import {
   drawCapitalAiReportHeader,
 } from '../platform/PdfReporting/pdfBrand';
 import { PdfExportModal } from './PdfExportModal';
+import { authFetch } from '../lib/authFetch';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -431,7 +432,9 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
     setAIError(null);
 
     try {
-      const response = await fetch('/api/portfolio-review', {
+      // SECURITY (2026-08-25, Router-Anbindung): /api/portfolio-review verlangt jetzt eine
+      // verifizierte Identitaet (konsistent mit /api/chat) - authFetch() haengt das Bearer-Token an.
+      const response = await authFetch('/api/portfolio-review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

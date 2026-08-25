@@ -5,11 +5,11 @@ import { Type } from '../src/services/aiSchema';
 import { logSystemEvent } from './systemEvents';
 import { FileWatcher } from './fileWatcher';
 import { decisionEngine } from './decisionEngine';
-import { 
-  sanitizeMarkdownContent, 
-  sanitizeTextContent, 
-  sanitizeJsonContent, 
-  sanitizeAllDocs 
+import {
+  applyMarkdownBrandingHeader,
+  applyTextBrandingHeader,
+  applyJsonBrandingMetadata,
+  sanitizeAllDocs
 } from './documentSanitizer';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
@@ -269,13 +269,13 @@ export function ensureBrandingInContent(filePath: string, content: string): stri
   const ext = path.extname(filePath).toLowerCase();
   
   if (ext === '.md') {
-    return sanitizeMarkdownContent(content);
+    return applyMarkdownBrandingHeader(content);
   }
   if (ext === '.json') {
-    return sanitizeJsonContent(content);
+    return applyJsonBrandingMetadata(content);
   }
   if (ext === '.txt') {
-    return sanitizeTextContent(content);
+    return applyTextBrandingHeader(content);
   }
   
   return content;
@@ -576,95 +576,48 @@ export async function processFileEvent(
     transitionTo('EXECUTING', { email: userEmail, filePath: normPath });
     logEntry.stateFlow.push('EXECUTING');
 
-    // Rule FA-11: auto_override applies only when confidence > 0.85 and action is auto_override
-    if (analysis.suggestedAction === 'auto_override' && analysis.confidence >= 0.85) {
-      backupFile(normPath);
-      logEntry.actionTaken = 'auto_override';
-      logEntry.details = `Automatische Freigabe erteilt. Begründung: ${analysis.reason}`;
-      logEntry.stateFlow.push('DONE');
-      activeLogs.unshift(logEntry);
+    // SECURITY (2026-08-25 architecture review, finding #1): the AI classification above is
+    // computed from the very document content under review. A hostile or injected document can
+    // instruct the model to self-report suggestedAction=auto_override with a high confidence
+    // score, which previously caused fs.writeFileSync to run with no human confirmation at all -
+    // the model was simultaneously the attack target and the sole authorization authority. No
+    // classification outcome may trigger a direct file write anymore; every change (including
+    // trivial typos and dependency propagation) is now routed through the human-gated
+    // /review endpoint (requireAdmin + requireWritableDocumentHygiene), which performs the actual
+    // write only after an administrator explicitly approves the ticket.
+    logEntry.actionTaken = 'flagged_for_review';
+    logEntry.status = 'PAUSED';
+    logEntry.details = affected.length > 0
+      ? `Review erforderlich. Grund: ${analysis.reason} (Vorgeschlagene Aktion: ${analysis.suggestedAction}, Konfidenz: ${analysis.confidence}). Bei Freigabe werden zusätzlich ${affected.length} abhängige Dokumente aktualisiert: [${affected.join(', ')}].`
+      : `Review erforderlich. Grund: ${analysis.reason} (Vorgeschlagene Aktion: ${analysis.suggestedAction}, Konfidenz: ${analysis.confidence}).`;
+    logEntry.stateFlow.push('REVIEW_REQUIRED');
+    activeLogs.unshift(logEntry);
 
-      logSystemEvent(
-        'ORCHESTRATOR',
-        'Auto Override Approved',
-        userEmail,
-        `Autonomously applied changes to ${normPath} (Confidence: ${analysis.confidence})`,
-        'SUCCESS'
-      );
-      transitionTo('IDLE', { email: userEmail, filePath: normPath });
-    } 
-    else if (analysis.suggestedAction === 'propagate_dependencies' && analysis.confidence >= 0.85 && affected.length > 0) {
-      // Automatic dependency propagation
-      backupFile(normPath);
-      logEntry.actionTaken = 'propagate_dependencies';
-      logEntry.details = `Änderung automatisch freigegeben und wird auf ${affected.length} abhängige Dokumente übertragen. Begründung: ${analysis.reason}`;
-      
-      const propagationList: string[] = [];
-      for (const depFile of affected) {
-        const depFullPath = path.join(DOCS_DIR, depFile);
-        if (fs.existsSync(depFullPath)) {
-          const currentDepContent = fs.readFileSync(depFullPath, 'utf8');
-          const updatedDepContent = await generatePropagatedContent(
-            depFile,
-            currentDepContent,
-            normPath,
-            diff
-          );
-          if (updatedDepContent && updatedDepContent !== currentDepContent) {
-            backupFile(depFile);
-            fs.writeFileSync(depFullPath, updatedDepContent, 'utf8');
-            propagationList.push(depFile);
-          }
-        }
-      }
+    const ticket: ReviewTicket = {
+      id: 'ticket_' + Math.random().toString(36).substring(2, 12),
+      filePath: normPath,
+      timestamp: new Date().toISOString(),
+      previousContent: oldContent,
+      proposedContent: newContent,
+      diff,
+      classification: analysis.classification,
+      confidence: analysis.confidence,
+      reason: analysis.reason,
+      status: 'PENDING',
+    };
 
-      logEntry.details += ` Übertragene Dateien: [${propagationList.join(', ')}]`;
-      logEntry.stateFlow.push('DONE');
-      activeLogs.unshift(logEntry);
+    // If a pending ticket already exists for this file, overwrite or replace it to avoid clutter
+    pendingTickets = pendingTickets.filter(t => t.filePath !== normPath);
+    pendingTickets.unshift(ticket);
 
-      logSystemEvent(
-        'ORCHESTRATOR',
-        'Auto Propagation Complete',
-        userEmail,
-        `Propagated changes from ${normPath} to: ${propagationList.join(', ')}`,
-        'SUCCESS'
-      );
-      transitionTo('IDLE', { email: userEmail, filePath: normPath });
-    }
-    else {
-      // Rule FA-13: manual_review triggered
-      logEntry.actionTaken = 'flagged_for_review';
-      logEntry.status = 'PAUSED';
-      logEntry.details = `Review erforderlich. Grund: ${analysis.reason} (Action: ${analysis.suggestedAction}, Konfidenz: ${analysis.confidence})`;
-      logEntry.stateFlow.push('REVIEW_REQUIRED');
-      activeLogs.unshift(logEntry);
-
-      const ticket: ReviewTicket = {
-        id: 'ticket_' + Math.random().toString(36).substring(2, 12),
-        filePath: normPath,
-        timestamp: new Date().toISOString(),
-        previousContent: oldContent,
-        proposedContent: newContent,
-        diff,
-        classification: analysis.classification,
-        confidence: analysis.confidence,
-        reason: analysis.reason,
-        status: 'PENDING',
-      };
-      
-      // If a pending ticket already exists for this file, overwrite or replace it to avoid clutter
-      pendingTickets = pendingTickets.filter(t => t.filePath !== normPath);
-      pendingTickets.unshift(ticket);
-
-      logSystemEvent(
-        'SECURITY',
-        'Review Ticket Created',
-        userEmail,
-        `Document ${normPath} flagged for review. Decision chain paused. Reason: ${analysis.reason}`,
-        'WARNING'
-      );
-      transitionTo('REVIEW_REQUIRED', { email: userEmail, filePath: normPath });
-    }
+    logSystemEvent(
+      'SECURITY',
+      'Review Ticket Created',
+      userEmail,
+      `Document ${normPath} flagged for review. Decision chain paused. Reason: ${analysis.reason}`,
+      'WARNING'
+    );
+    transitionTo('REVIEW_REQUIRED', { email: userEmail, filePath: normPath });
 
     saveHygieneDb();
   } catch (err: any) {

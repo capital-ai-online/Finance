@@ -3,6 +3,15 @@ import path from 'path';
 
 const DOCS_DIR = path.join(process.cwd(), 'docs');
 
+// SECURITY (2026-08-25 architecture review, finding #4): despite the historical "sanitize*"
+// naming and the "verifiziert & bereinigt" (verified & cleaned) status text this module used to
+// stamp into documents, none of the functions below perform any content security validation -
+// they only insert/update a branding header block. They do not strip scripts, HTML, prompt-
+// injection payloads, or secrets from the document body. Untrusted content passing through here
+// remains fully untrusted afterwards. Real defenses live elsewhere (input validation at API
+// boundaries, the human-gated /review approval flow in documentHygiene.ts). Do not treat a
+// "branded" document as vetted, and do not reintroduce a status string that implies otherwise.
+
 // Beautiful, responsive SVG logo matching the 3D network node design of the Capital-AI application
 export const CAPITAL_AI_SVG_LOGO = `
 <div align="center">
@@ -53,7 +62,7 @@ ${CAPITAL_AI_SVG_LOGO}
 | **Gründer & Inhaber** | **Sven Kulessa** |
 | **Zentrale E-Mail** | [sven.kulessa@capital-ai.online](mailto:sven.kulessa@capital-ai.online) |
 | **Echtheits-Emblem** | \`⊞ CAPITAL-AI CORE\` |
-| **Status** | 🟢 Revisionssicher verifiziert & bereinigt |
+| **Status** | 🟢 Branding-Header aktuell (keine Sicherheits-Validierung des Inhalts) |
 
 ---
 <!-- CAPITAL-AI DOCUMENTARY HEADER END -->
@@ -71,14 +80,15 @@ System:       Capital-AI Documentary (Autonomous AI Document Hygienist)
 Gründer:      Sven Kulessa
 Kontakt:      sven.kulessa@capital-ai.online
 Echtheits-Emblem:  ⊞ CAPITAL-AI CORE
-Status:       🟢 Revisionssicher verifiziert & bereinigt
+Status:       🟢 Branding-Header aktuell (keine Sicherheits-Validierung des Inhalts)
 ========================================================================
 `.trim();
 
 /**
- * Sanitizes markdown content by adding or updating the standard framed header.
+ * Adds or updates the standard framed branding header in markdown content.
+ * This does NOT validate or sanitize the document body - see the file-level note above.
  */
-export function sanitizeMarkdownContent(content: string): string {
+export function applyMarkdownBrandingHeader(content: string): string {
   const headerStartToken = '<!-- CAPITAL-AI DOCUMENTARY HEADER START -->';
   const headerEndToken = '<!-- CAPITAL-AI DOCUMENTARY HEADER END -->';
 
@@ -97,9 +107,10 @@ export function sanitizeMarkdownContent(content: string): string {
 }
 
 /**
- * Sanitizes plain text content by adding or updating the standard header.
+ * Adds or updates the standard branding header in plain text content.
+ * This does NOT validate or sanitize the document body - see the file-level note above.
  */
-export function sanitizeTextContent(content: string): string {
+export function applyTextBrandingHeader(content: string): string {
   const headerStartToken = '⊞ CAPITAL-AI CORE • CAPITAL-AI DOCUMENTARY';
   const headerEndToken = '========================================================================';
 
@@ -122,9 +133,10 @@ export function sanitizeTextContent(content: string): string {
 }
 
 /**
- * Sanitizes JSON content by embedding standard metadata properties.
+ * Embeds standard branding metadata properties into JSON content.
+ * This does NOT validate or sanitize the document body - see the file-level note above.
  */
-export function sanitizeJsonContent(content: string): string {
+export function applyJsonBrandingMetadata(content: string): string {
   try {
     const obj = JSON.parse(content);
     if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) {
@@ -134,7 +146,7 @@ export function sanitizeJsonContent(content: string): string {
         email: "sven.kulessa@capital-ai.online",
         emblem: "⊞ CAPITAL-AI CORE",
         version: "0.5.4",
-        status: "Verified & Hygienically Cleaned",
+        status: "Branding metadata applied (no content security validation)",
         timestamp: new Date().toISOString()
       };
       return JSON.stringify(obj, null, 2);
@@ -146,9 +158,9 @@ export function sanitizeJsonContent(content: string): string {
 }
 
 /**
- * Sanitizes a single document on disk. Returns true if file was modified.
+ * Applies the branding header/metadata to a single document on disk. Returns true if modified.
  */
-export function sanitizeFile(filePath: string): boolean {
+export function applyBrandingToFile(filePath: string): boolean {
   if (!fs.existsSync(filePath)) {
     return false;
   }
@@ -159,11 +171,11 @@ export function sanitizeFile(filePath: string): boolean {
     let sanitizedContent = content;
 
     if (ext === '.md') {
-      sanitizedContent = sanitizeMarkdownContent(content);
+      sanitizedContent = applyMarkdownBrandingHeader(content);
     } else if (ext === '.txt') {
-      sanitizedContent = sanitizeTextContent(content);
+      sanitizedContent = applyTextBrandingHeader(content);
     } else if (ext === '.json') {
-      sanitizedContent = sanitizeJsonContent(content);
+      sanitizedContent = applyJsonBrandingMetadata(content);
     } else {
       return false; // Skip unsupported extensions
     }
@@ -180,7 +192,8 @@ export function sanitizeFile(filePath: string): boolean {
 }
 
 /**
- * Recursively scans and sanitizes every markdown, text, and JSON document under the target directory.
+ * Recursively applies the branding header/metadata to every markdown, text, and JSON document
+ * under the target directory. Kept as `sanitizeAllDocs` for backward-compatible call sites.
  */
 export function sanitizeAllDocs(dir: string = DOCS_DIR): { total: number; modified: number } {
   let total = 0;
@@ -207,7 +220,7 @@ export function sanitizeAllDocs(dir: string = DOCS_DIR): { total: number; modifi
         const ext = path.extname(entry.name).toLowerCase();
         if (['.md', '.txt', '.json'].includes(ext)) {
           total++;
-          const wasModified = sanitizeFile(fullPath);
+          const wasModified = applyBrandingToFile(fullPath);
           if (wasModified) {
             modified++;
           }

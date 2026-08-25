@@ -2,6 +2,7 @@ import express from 'express';
 import { Type } from '../../src/services/aiSchema';
 import { orchestrator } from '../../src/lib/requestOrchestrator';
 import { generateStructuredWithFallback } from '../../src/services/agentModelRouting';
+import { resolveVerifiedIdentity } from '../../src/platform/Security/authMiddleware';
 
 export interface PortfolioReviewRouteDependencies {
   ai: any | null;
@@ -13,7 +14,16 @@ export function createPortfolioReviewRouter(deps: PortfolioReviewRouteDependenci
   const router = express.Router();
   const { anthropic, openai } = deps;
 
+  // SECURITY (2026-08-25, Router-Anbindung): dieser Router war bis dahin nirgends eingebunden
+  // (siehe docs/security/FULL_ARCHITECTURE_SECURITY_REVIEW_2026-08-25.md, "Nebenbefund"). Der
+  // einzige Aufrufer (PortfolioBacktester.tsx) rendert ausschließlich innerhalb des bereits
+  // Login-pflichtigen Dashboards - konsistent mit der /api/chat-Absicherung wird daher auch hier
+  // eine verifizierte Identität verlangt.
   router.post('/portfolio-review', express.json(), orchestrator.handle('Portfolio Review'), async (req, res) => {
+    const identity = await resolveVerifiedIdentity(req);
+    if (!identity) {
+      return res.status(401).json({ error: 'Anmeldung erforderlich, um das AI-Portfolio-Review zu nutzen.' });
+    }
     if (!anthropic && !openai) {
       return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY oder OPENAI_API_KEY erforderlich).' });
     }
