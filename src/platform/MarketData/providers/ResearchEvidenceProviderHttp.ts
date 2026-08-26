@@ -152,7 +152,7 @@ export class ResearchEvidenceProviderHttp {
           payloadUsable: false,
           message: `HTTP ${response.status}`,
         });
-        this.observe(status, retrievedAt, startedAtMs, false, budget, response.status);
+        this.observe(status, retrievedAt, startedAtMs, true, false, budget, response.status);
         return {
           transportVersion: RESEARCH_EVIDENCE_HTTP_VERSION,
           providerId: this.providerId,
@@ -171,7 +171,7 @@ export class ResearchEvidenceProviderHttp {
         data = await response.json();
       } catch {
         this.circuitBreaker.failure(this.providerId);
-        return this.result('INVALID', retrievedAt, null, 'Provider returned non-JSON payload.', startedAtMs, budget, response.status);
+        return this.result('INVALID', retrievedAt, null, 'Provider returned non-JSON payload.', startedAtMs, budget, response.status, true);
       }
 
       if (hasApplicationLevelProviderError(data)) {
@@ -184,6 +184,7 @@ export class ResearchEvidenceProviderHttp {
           startedAtMs,
           budget,
           response.status,
+          true,
         );
       }
 
@@ -196,7 +197,7 @@ export class ResearchEvidenceProviderHttp {
         diagnosticCode: 'healthy',
         payloadUsable: true,
       });
-      this.observe('READY', retrievedAt, startedAtMs, true, budget, response.status);
+      this.observe('READY', retrievedAt, startedAtMs, true, true, budget, response.status);
       return {
         transportVersion: RESEARCH_EVIDENCE_HTTP_VERSION,
         providerId: this.providerId,
@@ -208,7 +209,7 @@ export class ResearchEvidenceProviderHttp {
     } catch (error) {
       this.circuitBreaker.failure(this.providerId);
       const reason = error instanceof Error ? error.message : String(error);
-      return this.result('SOURCE_UNAVAILABLE', retrievedAt, null, reason, startedAtMs, budget);
+      return this.result('SOURCE_UNAVAILABLE', retrievedAt, null, reason, startedAtMs, budget, undefined, true);
     } finally {
       clearTimeout(timeout);
     }
@@ -218,6 +219,7 @@ export class ResearchEvidenceProviderHttp {
     status: ResearchEvidenceHttpStatus,
     retrievedAt: string,
     startedAtMs: number,
+    requestAttempted: boolean,
     payloadUsable: boolean,
     budget?: RateLimitDecision,
     httpStatus?: number,
@@ -228,6 +230,7 @@ export class ResearchEvidenceProviderHttp {
       capability: this.capability,
       observedAt: retrievedAt,
       outcome: status,
+      requestAttempted,
       durationMs: Math.max(0, now - startedAtMs),
       payloadUsable,
       circuitState: this.circuitBreaker.state(this.providerId),
@@ -245,6 +248,7 @@ export class ResearchEvidenceProviderHttp {
     startedAtMs: number,
     budget?: RateLimitDecision,
     httpStatus?: number,
+    requestAttempted = false,
   ): ResearchEvidenceHttpResult {
     recordProviderHealth({
       provider: this.providerId,
@@ -256,7 +260,7 @@ export class ResearchEvidenceProviderHttp {
       circuitOpenUntil: status === 'CIRCUIT_OPEN' ? this.circuitBreaker.openedUntilIso(this.providerId) ?? undefined : undefined,
       message: reason,
     });
-    this.observe(status, retrievedAt, startedAtMs, false, budget, httpStatus);
+    this.observe(status, retrievedAt, startedAtMs, requestAttempted, false, budget, httpStatus);
     return {
       transportVersion: RESEARCH_EVIDENCE_HTTP_VERSION,
       providerId: this.providerId,
