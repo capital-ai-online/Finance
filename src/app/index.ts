@@ -2,6 +2,8 @@ export { default as App } from './App';
 export { AppShell, type AppShellProps } from './AppShell';
 export { SessionComposition, type SessionCompositionValue } from './auth/SessionComposition';
 export {
+  Dashboard,
+  type DashboardProps,
   DASHBOARD_VIEWS,
   DASHBOARD_VIEW_SECTION,
   getDashboardSection,
