@@ -6,28 +6,28 @@
 **Vorgänger:** PR #549 / `SC_COMMODITY_P3A_RUNTIME_ACTIVATION_2026-08-26.md`  
 **Branch:** `feat/commodity-p3b-universe-sla-2026-08-26`  
 **Initial Base:** `main@825788cac6250d2913f9a67eeb3d316ca5dc390f`  
-**Synchronisierter Main:** `main@e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
+**Synchronisierter Main:** `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`
 
 ## 1. Produktions- und P3-A-Status
 
-PR #549 wurde human-gemergt und hat die P3-A Runtime-Activation produktiv eingeführt. Während P3-B1 lief, wurde zusätzlich PR #550 mit der Security-Remediation in `main` gemergt.
+PR #549 wurde human-gemergt und hat die P3-A Runtime-Activation produktiv eingeführt. Während P3-B1 liefen danach zusätzlich PR #550 mit der Security-Remediation und PR #551 mit der Dark-Black-/AIF-Gold-Branding-Migration in `main` ein.
 
 Aktueller Main-Commit:
 
-`e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
+`f78d9f2838cfc3b2896cb167978a470aeb484f5e`
 
 Aktueller Render Deploy:
 
-- Deploy ID: `dep-da7m1b49v7es739h68qg`
-- Commit: `e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
+- Deploy ID: `dep-da7m53btqb8s73djfveg`
+- Commit: `f78d9f2838cfc3b2896cb167978a470aeb484f5e`
 - Status: `live`
-- `finishedAt`: `2026-08-26T21:55:56.530441Z` (`2026-08-26 23:55:56 CEST`)
+- `finishedAt`: `2026-08-26T22:03:45.889801Z` (`2026-08-27 00:03:45 CEST`)
 
-Der Main-CI-Lauf #2499 (`33017297542`) ist vollständig erfolgreich. Der Render-Deployment-Verifier hat denselben Main-Commit als live korreliert. Damit gilt aktuell:
+Der Main-CI-Lauf #2502 (`33017773705`) hat Repository-Integrität, Dependency-Audit, TypeScript, Unit Tests, Production Build, CSP, Deployment-Readiness, Docker-Hardening/Image und Supply-Chain-Provenance erfolgreich durchlaufen. Der Render-Deployment-Pfad liefert denselben Main-Commit live aus. Damit gilt aktuell:
 
-`production == main == e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
+`production == main == f78d9f2838cfc3b2896cb167978a470aeb484f5e`
 
-Die Security-Änderungen aus PR #550 betreffen Server-Security, Auth-/Telemetry-, OrchestratorPanel- und Security-Testpfade. Sie verändern weder AssetCatalog, ProviderMatrix, Commodity-Taxonomie noch TwelveData-Reference-Mapping. P3-B1 wurde nach dem Merge explizit mit diesem Main synchronisiert.
+Die Security-Änderungen aus PR #550 betreffen Server-Security, Auth-/Telemetry-, OrchestratorPanel- und Security-Testpfade. PR #551 betrifft Design Tokens, CSS, Social-Media-Preview/-Templates und Branding-Tests. Beide ändern weder AssetCatalog, ProviderMatrix, Commodity-Taxonomie noch TwelveData-Reference-Mapping. P3-B1 wurde nach beiden Main-Merges explizit synchronisiert.
 
 ### P3-A Observation Start Gate
 
@@ -35,7 +35,7 @@ Die P3-A Runtime-Activation-Evidence verlangt zusätzlich mindestens eine reale,
 
 Render Request Logs wurden für den Zeitraum
 
-`2026-08-26T21:27:40Z` bis `2026-08-26T21:59:00Z`
+`2026-08-26T21:27:40Z` bis `2026-08-26T22:04:30Z`
 
 auf `/api/raw-materials/verified-score/*` geprüft. Ergebnis: keine passende reale Anfrage im geprüften Fenster.
 
@@ -166,22 +166,33 @@ Ein verbindliches produktives SLO wird erst nach realer Messung und Owner-/Produ
 
 ## 8. Finaler Main-Sync / Korrelation
 
-Während der initialen PR-Erstellung wurde PR #550 in `main` gemergt. Der Branch wurde daraufhin mit einem expliziten Merge-Commit mit `main@e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba` synchronisiert.
+Während der P3-B1-Umsetzung traten zwei Main-Races auf. Beide wurden vor Merge-Readiness explizit synchronisiert und semantisch bewertet.
 
-Korrelation der neuen Main-Änderungen:
+### PR #550 — Security Remediation
 
+- Merge-Main: `e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
 - Security-/Auth-/Telemetry-/ProbeProtection-/Honeytoken-Änderungen: übernommen, nicht verändert;
 - `src/components/OrchestratorPanel.tsx`: übernommen, kein P3-B-Consumer;
-- AssetCatalog: unverändert;
-- ProviderMatrix: unverändert;
-- Commodity Research Taxonomy: unverändert;
-- TwelveData Commodity Mapping: unverändert;
-- ScoringModelRegistry/ScoringDispatcher: unverändert durch P3-B1.
+- kein P3-B-Claimed-Path-Overlap.
 
-Offene Parallel-PRs nach dem Sync:
+### PR #551 — Branding / Social Engine
 
-- #551 Branding/Social — kein File-Level-Overlap;
-- #552 Frontend Dashboard Consumer — kein File-Level-Overlap.
+- Merge-Main: `f78d9f2838cfc3b2896cb167978a470aeb484f5e`
+- Design Tokens, CSS, MediaStudioPreview, Social-Media-Templates und Branding-Tests: übernommen, nicht verändert;
+- keine Änderung an AssetCatalog, ProviderMatrix, Commodity Research Taxonomy, TwelveData Mapping oder Scoring Authority;
+- kein P3-B-Claimed-Path-Overlap.
+
+Nach beiden Synchronisierungen bleiben unverändert:
+
+- AssetCatalog: Identity-Authority;
+- ProviderMatrix: Provider-Policy-Authority;
+- Commodity Research Taxonomy: Domain-Authority;
+- TwelveData Commodity Mapping: Provider-Identity-Boundary;
+- ScoringModelRegistry/ScoringDispatcher: alleinige produktive Scoring-Authority.
+
+Offener Parallel-PR nach dem finalen Sync:
+
+- #552 Frontend Dashboard Consumer — kein File-Level-Overlap mit P3-B1.
 
 ## 9. Nächste Arbeitspakete
 
@@ -232,7 +243,7 @@ Für P3-B1 ist keine zusätzliche Library gerechtfertigt.
 
 ## 11. Status
 
-- Main/Production: `e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba` / `LIVE`
+- Main/Production: `f78d9f2838cfc3b2896cb167978a470aeb484f5e` / `LIVE`
 - P3-A Runtime Activation: `DEPLOYED`
 - P3-A Observation Period: `START_PENDING_REAL_TRAFFIC`
 - P3-B1 Universe/SLA Foundation: `IMPLEMENTED_ON_BRANCH`
