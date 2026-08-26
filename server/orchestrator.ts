@@ -45,7 +45,7 @@ orchestratorRouter.get('/ping-models', requireOrchestratorAdmin, (_req, res) => 
 
 orchestratorRouter.post('/config', requireOrchestratorAdmin, (req, res) => {
   const validation = validateOrchestratorConfigPatch(req.body);
-  if (!validation.ok) {
+  if (validation.ok === false) {
     return res.status(400).json({
       error: 'Ungültige Orchestrator-Konfiguration.',
       code: validation.code,
