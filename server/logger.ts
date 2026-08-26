@@ -8,6 +8,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { attachSecurityResponseContext } from './securityResponse';
 import { getDeploymentIdentity } from './deploymentIdentity';
 import { redactTelemetryAttributes, TELEMETRY_SCHEMA_VERSION } from '../src/platform/Telemetry';
+import { getClientIp } from '../src/platform/Security/rateLimiter';
+import { buildTelemetryClientContext } from './telemetryClientContext';
 
 declare global {
   namespace Express {
@@ -94,6 +96,10 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
     if (req.path === '/healthz') return;
     const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
     const level: LogLevel = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
+    // F-02: Korrelationsmerkmale über die kanonische getClientIp()-Boundary. Pseudonymisiert,
+    // weil die Render-App-Logs eine Drittanbieter-Senke ohne projekteigene Retention-Kontrolle
+    // sind - siehe server/telemetryClientContext.ts.
+    const client = buildTelemetryClientContext(getClientIp(req as any), req.headers['user-agent']);
     createLogger('http', req.requestId)[level]('Request abgeschlossen', {
       eventName: 'request.completed',
       signal: 'metric',
@@ -103,6 +109,9 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
       path: req.path,
       statusCode: res.statusCode,
       durationMs: Number(durationMs.toFixed(3)),
+      clientIpHash: client.clientIpHash,
+      clientNetwork: client.clientNetwork,
+      userAgent: client.userAgent,
     });
   });
 

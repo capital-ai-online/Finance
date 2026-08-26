@@ -17,6 +17,7 @@ import { ADMIN_ZONE_ROLES } from './types';
 import { checkRateLimit, getClientIp } from './rateLimiter';
 import { hashOpaqueToken } from './secretCrypto';
 import { createLogger } from '../../../server/logger';
+import { annotateReason, buildDebounceKey, createIamAuditDebounce } from './iamAuditDebounce';
 
 // Audit ARCH-AUDIT-0002 (S4): strukturierte, Correlation-ID-tragende Logs fuer den
 // sicherheitskritischsten Modul dieser Codebasis statt Ad-hoc-console.error-Strings.
@@ -117,6 +118,11 @@ async function resolveRoleFromToken(token: string): Promise<{ role: Role | null;
 // Grund, IP, User-Agent) statt nur role/zone/outcome - notwendig, um Angriffsmuster
 // (z.B. wiederholte Versuche derselben IP gegen wechselnde Zonen) überhaupt erkennen
 // zu können.
+// F-01: Wiederholte identische Abweisungen werden verdichtet statt einzeln geschrieben. Der
+// Zähler der unterdrückten Wiederholungen reist mit dem nächsten Datensatz mit, es geht also
+// keine Evidenz verloren. GRANTED bleibt bewusst unentprellt.
+const deniedAuditDebounce = createIamAuditDebounce();
+
 async function logAccess(
   role: string,
   zone: string,
@@ -124,6 +130,16 @@ async function logAccess(
   ctx: { tokenRef?: string; userId?: string; reason?: string; ip?: string; userAgent?: string } = {}
 ) {
   if (!isSupabaseConfigured()) return;
+
+  let reason = ctx.reason || null;
+  if (outcome === 'DENIED') {
+    const decision = deniedAuditDebounce.decide(
+      buildDebounceKey({ role, zone, reason: ctx.reason, ip: ctx.ip })
+    );
+    if (!decision.write) return;
+    reason = annotateReason(reason, decision.suppressedSincePrevious);
+  }
+
   try {
     const supabase = getServerSupabase();
     await supabase.from('iam_access_log').insert({
@@ -132,7 +148,7 @@ async function logAccess(
       outcome,
       token_id: ctx.tokenRef ? `tok_${ctx.tokenRef.slice(0, 10)}` : 'no-token',
       user_id: ctx.userId || null,
-      reason: ctx.reason || null,
+      reason,
       ip_address: ctx.ip || null,
       user_agent: ctx.userAgent || null,
     });
