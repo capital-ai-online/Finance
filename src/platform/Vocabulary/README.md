@@ -77,16 +77,30 @@ The checks cover Message contracts, 18-stage correlation, Documentary handoff, W
 
 Node-only consumers must import from `./node` or a direct Node-only module path. Frontend code must never import `node.ts`.
 
+## Canonical normalization and consumer integration
+
+`normalizeVocabularyTerm()` is the shared lexical comparison contract for Registry and read-only consumers: trim, Unicode NFKC normalization and deterministic `en-US` lowercasing. Consumers such as the Quality Skill Engine must use this contract instead of implementing their own normalization semantics.
+
+`buildVocabularyInventory()` accepts an `IVocabularyRegistry` dependency but defaults to `createDefaultVocabularyRegistry()`. Dependency injection exists for deterministic testing and read-only adaptation; it does not create or authorize a second terminology registry.
+
+Active Canonical/Display/Alias terms and Forbidden Terms are mutually exclusive. Registry registration fails closed on same-concept and cross-concept collisions so one normalized label cannot simultaneously resolve as active vocabulary and prohibited wording.
+
 ## Canonical access
 
 ```ts
-import { createDefaultVocabularyRegistry, createDefaultUiMessageCatalog, VocabularyService } from './index';
+import {
+  createDefaultVocabularyRegistry,
+  createDefaultUiMessageCatalog,
+  normalizeVocabularyTerm,
+  VocabularyService,
+} from './index';
 
 const registry = createDefaultVocabularyRegistry();
 const vocabulary = new VocabularyService(registry);
 const messages = createDefaultUiMessageCatalog(registry);
 
 vocabulary.getCanonicalTerm('Abonnement'); // Subscription
+normalizeVocabularyTerm('Ｓｕｂｓｃｒｉｐｔｉｏｎ'); // subscription
 messages.get('screening.action.start')?.text.de; // Screening starten
 ```
 
@@ -96,6 +110,7 @@ messages.get('screening.action.start')?.text.de; // Screening starten
 - no synthetic upgrade of `DATA_UNAVAILABLE`, DENY, partial or ineligible states;
 - no autonomous Legal/Compliance approval;
 - no second Event Bus, Knowledge Graph, Traceability Store or CI control plane;
+- no second Vocabulary Registry authority through consumer dependency injection;
 - no Wiki back-propagation;
 - no blind/automatic source-string replacement;
 - no automatic code rename outside the Safe Rename Gate;

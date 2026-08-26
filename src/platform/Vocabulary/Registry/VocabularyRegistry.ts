@@ -4,6 +4,7 @@ import { VocabularyValidator } from '../Validators/VocabularyValidator';
 export class VocabularyRegistry {
   private readonly concepts = new Map<string, VocabularyConcept>();
   private readonly termIndex = new Map<string, string>();
+  private readonly forbiddenTermIndex = new Map<string, string>();
 
   constructor(private readonly validator = new VocabularyValidator()) {}
 
@@ -23,6 +24,9 @@ export class VocabularyRegistry {
 
     for (const term of this.indexedTerms(snapshot)) {
       this.termIndex.set(this.validator.normalize(term), snapshot.id);
+    }
+    for (const term of snapshot.forbiddenTerms) {
+      this.forbiddenTermIndex.set(this.validator.normalize(term), snapshot.id);
     }
   }
 
@@ -46,23 +50,64 @@ export class VocabularyRegistry {
   }
 
   findForbiddenUsage(term: string): VocabularyConcept[] {
-    const normalized = this.validator.normalize(term);
-    return this.list().filter((concept) =>
-      concept.forbiddenTerms.some((candidate) => this.validator.normalize(candidate) === normalized),
-    );
+    const id = this.forbiddenTermIndex.get(this.validator.normalize(term));
+    const concept = id ? this.concepts.get(id) : undefined;
+    return concept ? [concept] : [];
   }
 
   private validateForRegistration(concept: VocabularyConcept): VocabularyFinding[] {
     const findings = this.validator.validate(concept);
+    const activeTerms = new Map<string, string>();
 
     for (const term of this.indexedTerms(concept)) {
       const normalized = this.validator.normalize(term);
+      activeTerms.set(normalized, term);
+
       const existingId = this.termIndex.get(normalized);
       if (existingId && existingId !== concept.id) {
         findings.push({
           code: 'TERM_COLLISION',
           conceptId: concept.id,
           message: `Term "${term}" already belongs to ${existingId}.`,
+        });
+      }
+
+      const forbiddenById = this.forbiddenTermIndex.get(normalized);
+      if (forbiddenById && forbiddenById !== concept.id) {
+        findings.push({
+          code: 'TERM_COLLISION',
+          conceptId: concept.id,
+          message: `Term "${term}" is forbidden by ${forbiddenById} and cannot be registered as an active term.`,
+        });
+      }
+    }
+
+    for (const forbiddenTerm of concept.forbiddenTerms) {
+      const normalized = this.validator.normalize(forbiddenTerm);
+      const activeTerm = activeTerms.get(normalized);
+      if (activeTerm) {
+        findings.push({
+          code: 'TERM_COLLISION',
+          conceptId: concept.id,
+          message: `Forbidden term "${forbiddenTerm}" collides with active term "${activeTerm}" in the same concept.`,
+        });
+      }
+
+      const existingActiveId = this.termIndex.get(normalized);
+      if (existingActiveId && existingActiveId !== concept.id) {
+        findings.push({
+          code: 'TERM_COLLISION',
+          conceptId: concept.id,
+          message: `Forbidden term "${forbiddenTerm}" is already an active term of ${existingActiveId}.`,
+        });
+      }
+
+      const existingForbiddenId = this.forbiddenTermIndex.get(normalized);
+      if (existingForbiddenId && existingForbiddenId !== concept.id) {
+        findings.push({
+          code: 'TERM_COLLISION',
+          conceptId: concept.id,
+          message: `Forbidden term "${forbiddenTerm}" is already governed by ${existingForbiddenId}.`,
         });
       }
     }

@@ -1,15 +1,19 @@
-import { createDefaultVocabularyRegistry } from '../../Vocabulary';
+import {
+  createDefaultVocabularyRegistry,
+  normalizeVocabularyTerm,
+  type IVocabularyRegistry,
+} from '../../Vocabulary';
 import type { VocabularyInventoryEntry, VerificationSkill } from './types';
 
-const normalize = (value: string) => value.trim().toLocaleLowerCase('en-US');
-
-export function buildVocabularyInventory(skills: VerificationSkill[]): VocabularyInventoryEntry[] {
-  const registry = createDefaultVocabularyRegistry();
+export function buildVocabularyInventory(
+  skills: VerificationSkill[],
+  registry: IVocabularyRegistry = createDefaultVocabularyRegistry(),
+): VocabularyInventoryEntry[] {
   const usage = new Map<string, { term: string; skillIds: Set<string> }>();
 
   for (const skill of skills) {
     for (const term of skill.vocabularyTerms) {
-      const key = normalize(term);
+      const key = normalizeVocabularyTerm(term);
       const current = usage.get(key) ?? { term, skillIds: new Set<string>() };
       current.skillIds.add(skill.id);
       usage.set(key, current);
@@ -25,7 +29,7 @@ export function buildVocabularyInventory(skills: VerificationSkill[]): Vocabular
         const forbiddenConcept = forbiddenMatches[0];
         return {
           term,
-          normalizedTerm: normalize(term),
+          normalizedTerm: normalizeVocabularyTerm(term),
           status: 'FORBIDDEN' as const,
           conceptId: forbiddenConcept.id,
           canonicalTerm: forbiddenConcept.canonicalCodeTerm,
@@ -36,11 +40,13 @@ export function buildVocabularyInventory(skills: VerificationSkill[]): Vocabular
       }
 
       if (concept) {
-        const canonicalForms = [concept.canonicalCodeTerm, concept.displayNameDE, concept.displayNameEN].map(normalize);
-        const status = canonicalForms.includes(normalize(term)) ? 'CANONICAL' as const : 'ALIAS' as const;
+        const canonicalForms = [concept.canonicalCodeTerm, concept.displayNameDE, concept.displayNameEN].map(
+          normalizeVocabularyTerm,
+        );
+        const status = canonicalForms.includes(normalizeVocabularyTerm(term)) ? 'CANONICAL' as const : 'ALIAS' as const;
         return {
           term,
-          normalizedTerm: normalize(term),
+          normalizedTerm: normalizeVocabularyTerm(term),
           status,
           conceptId: concept.id,
           canonicalTerm: concept.canonicalCodeTerm,
@@ -52,7 +58,7 @@ export function buildVocabularyInventory(skills: VerificationSkill[]): Vocabular
 
       return {
         term,
-        normalizedTerm: normalize(term),
+        normalizedTerm: normalizeVocabularyTerm(term),
         status: 'NEW_CANDIDATE' as const,
         conceptId: null,
         canonicalTerm: null,
