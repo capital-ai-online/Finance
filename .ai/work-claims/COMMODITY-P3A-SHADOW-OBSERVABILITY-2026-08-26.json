@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "COMMODITY-P3A-SHADOW-OBSERVABILITY-2026-08-26",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "branch": "feat/commodity-p3a-shadow-observability-2026-08-26",
   "agent": {
     "provider": "OpenAI",
@@ -36,5 +36,9 @@
     "Render, Supabase, Stripe or secret mutation",
     "Marking P3-A exit gate complete before a real observation period"
   ],
-  "releaseCondition": "Writer authority ends at a terminal PR/work-item event; release through normal branch/PR governance with terminal evidence."
+  "releaseCondition": "Writer authority ends at a terminal PR/work-item event; release through normal branch/PR governance with terminal evidence.",
+  "releasedAt": "2026-08-26T18:01:28Z",
+  "terminalEvent": "PR_MERGED",
+  "terminalPr": 547,
+  "terminalMergeSha": "c734e0820435bea4774e1311b1e60b2b744b908e"
 }
