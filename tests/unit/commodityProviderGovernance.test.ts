@@ -87,6 +87,8 @@ describe('Commodity P0/P1 provider governance', () => {
 
     const runtime = summarizeProviderRuntime('twelvedata', 'commodity-history');
     expect(runtime.sampleCount).toBe(2);
+    expect(runtime.requestAttemptCount).toBe(2);
+    expect(runtime.localDenialCount).toBe(0);
     expect(runtime.availabilityRate).toBe(0.5);
     expect(runtime.errorRate).toBe(0.5);
     expect(runtime.currentCircuitState).toBe('CLOSED');
