@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { getProviderMatrixEntry } from '../MarketData/ProviderMatrix';
 import { summarizeProviderRuntime, type ProviderRuntimeSummary } from '../MarketData/providerRuntimeObservability';
 import { createTelemetryRecord, type TelemetryRecord } from '../Telemetry/contracts';
 import {
@@ -147,6 +148,10 @@ function providerViews(
     const bindingKey = `${providerId}:${capability}`;
     if (!providerId || !capability || binding.featureKeys.length === 0 || seen.has(bindingKey)) {
       throw new Error('COMMODITY_SHADOW_PROVIDER_BINDING_INVALID');
+    }
+    const provider = getProviderMatrixEntry(providerId);
+    if (!provider || !provider.enabled || !provider.assetClasses.includes('commodity')) {
+      throw new Error('COMMODITY_SHADOW_PROVIDER_NOT_GOVERNED');
     }
     if (binding.featureKeys.some(featureKey => !knownFeatureKeys.has(featureKey))) {
       throw new Error('COMMODITY_SHADOW_PROVIDER_FEATURE_BINDING_UNKNOWN');
