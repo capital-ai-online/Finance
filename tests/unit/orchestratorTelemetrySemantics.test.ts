@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   ORCHESTRATOR_PROHIBITED_TELEMETRY_CLAIMS,
@@ -34,6 +36,18 @@ describe('FO-04 orchestrator telemetry truth contract', () => {
     const canonicalCopy = JSON.stringify(ORCHESTRATOR_TELEMETRY_CONTRACT);
     for (const claim of ORCHESTRATOR_PROHIBITED_TELEMETRY_CLAIMS) {
       expect(canonicalCopy).not.toContain(claim);
+    }
+  });
+
+  it('keeps misleading legacy claims out of the productive orchestrator panel', () => {
+    const panelSource = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/OrchestratorPanel.tsx'),
+      'utf8',
+    );
+
+    expect(panelSource).toContain('ORCHESTRATOR_TELEMETRY_CONTRACT');
+    for (const claim of ORCHESTRATOR_PROHIBITED_TELEMETRY_CLAIMS) {
+      expect(panelSource).not.toContain(claim);
     }
   });
 });
