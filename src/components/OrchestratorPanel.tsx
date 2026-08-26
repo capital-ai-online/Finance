@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { authFetch } from '../lib/authFetch';
+import { describeRefusal, isRefusalStatus } from './orchestratorPollPolicy';
 import { 
   Activity, 
   Cpu, 
@@ -41,6 +42,20 @@ interface OrchestratorStats {
   recentLogs: RequestLogEntry[];
 }
 
+const POLL_INTERVAL_MS = 2000;
+
+// F-01 / ADR-0067: Ein 401/403/429 auf den administrativen Orchestrator-Reads bedeutet, dass der
+// Server diesen Aufruf abweist — Sitzung abgelaufen, Rolle außerhalb SUPERVISOR_ZONE_ROLES oder
+// Autorisierungs-Rate-Limit. Keiner dieser Zustände bessert sich dadurch, dass der Panel-Poll ihn
+// alle zwei Sekunden wiederholt; jeder Versuch schreibt serverseitig einen weiteren DENIED-Datensatz
+// nach iam_access_log und verdünnt damit das Sicherheits-Auditlog.
+//
+// Der globale 'auth:unauthorized'-Handler in SessionComposition.tsx reicht als Stopp NICHT aus: er
+// ruft handleLogout(), was folgenlos bleibt, wenn gar keine Session mehr zu löschen ist — also genau
+// in dem Zustand, der das 401 überhaupt erst erzeugt. Zusätzlich ist das Admin-Gate in
+// AdminPortal.tsx eine clientseitige E-Mail-Prüfung, sodass das Panel montiert bleiben kann,
+// während der Server bereits ablehnt. Der Poll muss sich deshalb lokal selbst beenden.
+
 export function OrchestratorPanel() {
   const [stats, setStats] = useState<OrchestratorStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,10 +74,39 @@ export function OrchestratorPanel() {
   const [optimalModelId, setOptimalModelId] = useState<string>('');
   const [isPinging, setIsPinging] = useState(false);
 
+  // Serverseitige Abweisung der administrativen Reads; solange gesetzt, laeuft kein Poll.
+  const [refusal, setRefusal] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = () => {
+    if (pollRef.current !== null) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+
+  const startPolling = () => {
+    if (pollRef.current !== null) return;
+    pollRef.current = setInterval(() => {
+      fetchStats();
+    }, POLL_INTERVAL_MS);
+  };
+
+  // Beendet den Poll und haelt fest, warum. Der Aufruf ist idempotent.
+  const blockOnRefusal = (status: number) => {
+    stopPolling();
+    setRefusal(describeRefusal(status));
+    setError(null);
+  };
+
   const triggerPingTests = async () => {
     setIsPinging(true);
     try {
       const res = await authFetch('/api/orchestrator/ping-models');
+      if (isRefusalStatus(res.status)) {
+        blockOnRefusal(res.status);
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setModelPings(data.models);
@@ -80,10 +124,15 @@ export function OrchestratorPanel() {
     if (showRefreshIndicator) setIsRefreshing(true);
     try {
       const res = await authFetch('/api/orchestrator/stats');
+      // Abweisung durch den Server: Poll beenden, statt ihn im 2-Sekunden-Takt zu wiederholen.
+      if (isRefusalStatus(res.status)) {
+        blockOnRefusal(res.status);
+        return;
+      }
       if (!res.ok) throw new Error('Fehler beim Laden der Orchestrator-Daten.');
       const data: OrchestratorStats = await res.json();
       setStats(data);
-      
+
       // Sync form controls with server settings only on initial load or non-interactive refresh
       if (loading) {
         setConcurrencyLimit(data.concurrencyLimit);
@@ -91,6 +140,9 @@ export function OrchestratorPanel() {
         setMaxRequestsPerWindow(data.maxRequestsPerWindow);
       }
       setError(null);
+      // Autorisierter Read: eine zuvor abgewiesene Sitzung ist wieder gueltig, Poll darf laufen.
+      setRefusal(null);
+      startPolling();
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Server-Verbindungsfehler.');
@@ -100,14 +152,12 @@ export function OrchestratorPanel() {
     }
   };
 
-  // Auto-refresh stats every 2 seconds & load model pings on mount
+  // Auto-refresh stats & load model pings on mount. fetchStats() startet den Poll selbst, sobald ein
+  // Read autorisiert war - so beginnt bei einer bereits abgelehnten Sitzung gar kein Intervall.
   useEffect(() => {
     fetchStats();
     triggerPingTests();
-    const interval = setInterval(() => {
-      fetchStats();
-    }, 2000);
-    return () => clearInterval(interval);
+    return () => stopPolling();
   }, []);
 
   // Update server config
@@ -206,7 +256,14 @@ export function OrchestratorPanel() {
         </div>
       </div>
 
-      {error && (
+      {refusal && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2 font-mono">
+          <Lock size={16} className="mt-0.5 shrink-0" />
+          <span>{refusal}</span>
+        </div>
+      )}
+
+      {error && !refusal && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 font-mono">
           <ShieldAlert size={16} />
           <span>Warnung: {error} (Daten veraltet)</span>
