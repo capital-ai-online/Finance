@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getProviderMatrixEntry } from '../../src/platform/MarketData/ProviderMatrix';
+import {
+  resetProviderRuntimeObservability,
+  summarizeProviderRuntime,
+} from '../../src/platform/MarketData/providerRuntimeObservability';
 import { getProviderHealth, resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
 import {
   getTwelveDataCommodityEvidence,
@@ -58,6 +62,7 @@ describe('Commodity P0/P1 provider governance', () => {
   it('fails closed on application-level provider errors and records unusable provider health', async () => {
     resetCommodityReferenceCache();
     resetProviderHealth();
+    resetProviderRuntimeObservability();
     const fetchImpl = (async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes('/commodities')) return jsonResponse({ data: [{ symbol: 'C_1', name: 'Corn' }] });
@@ -79,6 +84,12 @@ describe('Commodity P0/P1 provider governance', () => {
     expect(health?.payloadUsable).toBe(false);
     expect(health?.message).toBe('Provider returned an application-level error response.');
     expect(health?.message).not.toContain('provider-internal-detail');
+
+    const runtime = summarizeProviderRuntime('twelvedata', 'commodity-history');
+    expect(runtime.sampleCount).toBe(2);
+    expect(runtime.availabilityRate).toBe(0.5);
+    expect(runtime.errorRate).toBe(0.5);
+    expect(runtime.currentCircuitState).toBe('CLOSED');
   });
 
   it('contains no route-local direct TwelveData time-series fetch path', () => {
