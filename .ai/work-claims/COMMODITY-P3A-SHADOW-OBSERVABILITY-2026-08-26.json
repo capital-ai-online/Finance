@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "COMMODITY-P3A-SHADOW-OBSERVABILITY-2026-08-26",
+  "status": "active",
+  "exclusive": true,
+  "branch": "feat/commodity-p3a-shadow-observability-2026-08-26",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Implement SC-2 Commodity P3-A shadow runtime observability without ranking, eligibility, execution or registry-mutation authority, reusing existing provider resilience, telemetry and scoring lineage primitives.",
+  "workItemDE": "SC-2 Commodity P3-A Shadow Runtime & Observability ohne Ranking-, Eligibility-, Execution- oder Registry-Mutations-Authority umsetzen und bestehende Provider-Resilience-, Telemetrie- und Scoring-Lineage-Primitiven wiederverwenden.",
+  "startedAt": "2026-08-26T15:42:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "1a3d26bac1155954a3ab1cde0b72fac5e8351091",
+  "claimedPaths": [
+    "src/platform/MarketData/providerRuntimeObservability.ts",
+    "src/platform/MarketData/providers/ResearchEvidenceProviderHttp.ts",
+    "src/platform/Scoring/CommodityShadowObservability.ts",
+    "src/platform/Scoring/index.ts",
+    "src/orchestrator/rawMaterialsOrchestrator.ts",
+    "tests/unit/providerRuntimeObservability.test.ts",
+    "tests/unit/commodityShadowObservability.test.ts",
+    "tests/unit/commodityProviderGovernance.test.ts",
+    "tests/unit/rawMaterialsP3AShadowRuntime.test.ts",
+    "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
+    "docs/evidence/sc-md/SC_COMMODITY_P3A_SHADOW_OBSERVABILITY_2026-08-26.md"
+  ],
+  "nonGoals": [
+    "Champion promotion or ScoringModelRegistry mutation",
+    "Ranking, eligibility, trading or execution impact",
+    "Numeric challenger composite score before executable weights are approved",
+    "New provider calls or new keyed-API bindings",
+    "External observability vendor/exporter installation",
+    "Render, Supabase, Stripe or secret mutation",
+    "Marking P3-A exit gate complete before a real observation period"
+  ],
+  "releaseCondition": "Writer authority ends at a terminal PR/work-item event; release through normal branch/PR governance with terminal evidence."
+}

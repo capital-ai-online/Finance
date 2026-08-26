@@ -15,3 +15,4 @@ export * from './CommodityBacktestingContracts';
 export * from './CommodityHistoricalBacktestEngine';
 export * from './CommodityHistoricalVintage';
 export * from './CommodityModelPromotion';
+export * from './CommodityShadowObservability';
