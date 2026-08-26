@@ -54,8 +54,8 @@ export function MediaStudioPreview({ project, playheadFrame }: MediaStudioPrevie
             className="absolute inset-0"
             style={{
               background: [
-                'radial-gradient(circle at 18% 22%, color-mix(in srgb, var(--color-brand-primary) 16%, transparent), transparent 28%)',
-                'radial-gradient(circle at 82% 72%, color-mix(in srgb, var(--color-brand-cyan) 10%, transparent), transparent 26%)',
+                'radial-gradient(circle at 18% 22%, color-mix(in srgb, var(--color-brand-primary) 18%, transparent), transparent 28%)',
+                'radial-gradient(circle at 82% 72%, color-mix(in srgb, var(--color-brand-primary) 8%, transparent), transparent 26%)',
                 'linear-gradient(135deg, color-mix(in srgb, var(--color-foreground) 2.5%, transparent), transparent 55%)',
               ].join(','),
             }}
@@ -65,15 +65,15 @@ export function MediaStudioPreview({ project, playheadFrame }: MediaStudioPrevie
             style={{ boxShadow: '0 0 18px color-mix(in srgb, var(--color-brand-primary) 55%, transparent)' }}
           />
           <div
-            className="absolute left-[28%] top-[30%] h-1.5 w-1.5 rounded-full bg-brand-cyan/60"
-            style={{ boxShadow: '0 0 14px color-mix(in srgb, var(--color-brand-cyan) 55%, transparent)' }}
+            className="absolute left-[28%] top-[30%] h-1.5 w-1.5 rounded-full bg-brand-primary/45"
+            style={{ boxShadow: '0 0 14px color-mix(in srgb, var(--color-brand-primary) 38%, transparent)' }}
           />
           <div
-            className="absolute right-[19%] top-[23%] h-2 w-2 rounded-full bg-brand-accent/60"
-            style={{ boxShadow: '0 0 14px color-mix(in srgb, var(--color-brand-accent) 50%, transparent)' }}
+            className="absolute right-[19%] top-[23%] h-2 w-2 rounded-full bg-brand-accent/45"
+            style={{ boxShadow: '0 0 12px color-mix(in srgb, var(--color-brand-accent) 32%, transparent)' }}
           />
-          <div className="absolute left-[12.5%] top-[17.5%] h-px w-[23%] origin-left rotate-[22deg] bg-gradient-to-r from-brand-primary/45 to-brand-cyan/20" />
-          <div className="absolute right-[19.5%] top-[24%] h-px w-[30%] origin-right -rotate-[18deg] bg-gradient-to-l from-brand-accent/35 to-transparent" />
+          <div className="absolute left-[12.5%] top-[17.5%] h-px w-[23%] origin-left rotate-[22deg] bg-gradient-to-r from-brand-primary/45 to-brand-primary/15" />
+          <div className="absolute right-[19.5%] top-[24%] h-px w-[30%] origin-right -rotate-[18deg] bg-gradient-to-l from-brand-accent/25 to-transparent" />
 
           <div className="relative z-10 flex h-full flex-col justify-between p-[7%]">
             <div>
@@ -114,7 +114,7 @@ export function MediaStudioPreview({ project, playheadFrame }: MediaStudioPrevie
                   </p>
                 )}
               </div>
-              <div className="font-mono text-[clamp(7px,0.8vw,11px)] font-bold uppercase tracking-[0.2em] text-brand-cyan/60">
+              <div className="font-mono text-[clamp(7px,0.8vw,11px)] font-bold uppercase tracking-[0.2em] text-brand-primary/60">
                 Draft · offline
               </div>
             </div>

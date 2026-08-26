@@ -1,20 +1,20 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
-  "version": "0.6.0-brand-manifest-v6.1",
-  "description": "Canonical CAPITAL-AI design-token registry. Branding Manifest v6 is projected through this registry into web, PDF, social media and other renderer adapters; external design documents are provenance inputs, not runtime authorities.",
+  "version": "0.6.0-brand-manifest-v6.2",
+  "description": "Canonical CAPITAL-AI design-token registry. Dark Black and AIF Gold are the primary brand pair. Cyan is not a primary branding color and remains available only for semantic market/data visualization roles; external design documents are provenance inputs, not runtime authorities.",
   "provenance": {
-    "brandManifestVersion": "6.1",
-    "sourceType": "owner-supplied-google-drive-artifact-plus-owner-amendment",
+    "brandManifestVersion": "6.2",
+    "sourceType": "owner-supplied-google-drive-artifact-plus-owner-amendments",
     "sourceFileId": "1k57e2jFpMnJMVjWK2tB8vSvZM7rUrwcP",
     "sourceSha256": "e4a6f4247fc8dd4aae9414bb3a5964bd248328592b7f3907eb04899d537d88de",
-    "ownerAmendment": "2026-08-22: Cyan restored as canonical market/data-visualization color while Purple remains the AI/intelligence accent.",
-    "ingestedAt": "2026-08-22",
+    "ownerAmendment": "2026-08-26: Dark Black (#08080C) and AIF Gold (#F9BF21) are the primary brand pair. Cyan is removed from primary branding and retained only for semantic market/data visualization.",
+    "ingestedAt": "2026-08-26",
     "runtimeAuthority": "docs/frontend/design-tokens.json",
     "webProjection": "src/index.css @theme"
   },
   "color": {
-    "background": { "value": "#08080C", "type": "color", "css": "--color-background" },
+    "background": { "value": "#08080C", "type": "color", "css": "--color-background", "note": "Dark Black / primary brand canvas" },
     "foreground": { "value": "#FFFFFF", "type": "color", "css": "--color-foreground" },
     "border": { "value": "#252529", "type": "color", "css": "--color-border" },
     "text": {
@@ -22,14 +22,14 @@
       "secondary": { "value": "#A1A1AA", "type": "color", "css": "--color-text-secondary" }
     },
     "brand": {
-      "primary": { "value": "#F9BF21", "type": "color", "css": "--color-brand-primary", "note": "Gold / primary focus and premium brand anchor" },
-      "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Purple / AI and intelligence accent" },
-      "cyan": { "value": "#22D3EE", "type": "color", "css": "--color-brand-cyan", "note": "Cyan / market data, live feeds and technical visualization" },
-      "success": { "value": "#44DE88", "type": "color", "css": "--color-brand-success" },
-      "danger": { "value": "#F87171", "type": "color", "css": "--color-brand-danger" }
+      "primary": { "value": "#F9BF21", "type": "color", "css": "--color-brand-primary", "note": "AIF Gold / primary focus, premium brand anchor and primary brand color" },
+      "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Secondary AI/intelligence accent; not a primary brand color" },
+      "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-brand-cyan", "deprecated": true, "note": "Deprecated compatibility alias. Cyan is no longer a brand color; legacy brand-cyan resolves to AIF Gold. Use semantic.info, assetClass.crypto, factor.technical or status info roles for cyan data visualization." },
+      "success": { "value": "#44DE88", "type": "color", "css": "--color-brand-success", "note": "Semantic compatibility role; not a primary brand color" },
+      "danger": { "value": "#F87171", "type": "color", "css": "--color-brand-danger", "note": "Semantic compatibility role; not a primary brand color" }
     },
     "assetClass": {
-      "crypto": { "value": "#22D3EE", "type": "color", "css": "--color-asset-crypto", "note": "Crypto / digital-asset visualization" },
+      "crypto": { "value": "#22D3EE", "type": "color", "css": "--color-asset-crypto", "note": "Crypto / digital-asset visualization; semantic only, not branding" },
       "stock": { "value": "#44DE88", "type": "color", "css": "--color-asset-stock" },
       "index": { "value": "#60A5FA", "type": "color", "css": "--color-asset-index" },
       "forex": { "value": "#8D26FF", "type": "color", "css": "--color-asset-forex" },
@@ -44,7 +44,7 @@
       "ranking": { "value": "#8D26FF", "type": "color", "css": "--color-score-ranking" }
     },
     "factor": {
-      "technical": { "value": "#22D3EE", "type": "color", "css": "--color-factor-technical" },
+      "technical": { "value": "#22D3EE", "type": "color", "css": "--color-factor-technical", "note": "Technical/data visualization only; not branding" },
       "risk": { "value": "#F9BF21", "type": "color", "css": "--color-factor-risk" },
       "marketStructure": { "value": "#8D26FF", "type": "color", "css": "--color-factor-market-structure" },
       "context": { "value": "#44DE88", "type": "color", "css": "--color-factor-context" },
@@ -59,7 +59,7 @@
         "muted": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-muted", "deprecated": true }
       },
       "neon": {
-        "cyan": { "value": "#22D3EE", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Compatibility alias to canonical brand.cyan; new code uses semantic tokens." },
+        "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Legacy branding alias now resolves to AIF Gold. Cyan remains available only through semantic data-visualization roles." },
         "purple": { "value": "#8D26FF", "type": "color", "css": "--color-aif-neon-purple", "deprecated": true }
       }
     },
@@ -67,8 +67,8 @@
       "success": { "value": "#44DE88", "type": "color", "note": "validated / READY / BUY semantics" },
       "danger": { "value": "#F87171", "type": "color", "note": "REJECT / error / SELL semantics" },
       "warning": { "value": "#F9BF21", "type": "color", "note": "observe / partial" },
-      "info": { "value": "#22D3EE", "type": "color", "note": "Market/data/live informational state" },
-      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent" },
+      "info": { "value": "#22D3EE", "type": "color", "note": "Market/data/live informational state. Semantic visualization only; never primary branding." },
+      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent; secondary to the Dark Black + AIF Gold brand pair" },
       "muted": { "value": "#A1A1AA", "type": "color", "note": "secondary text" },
       "status": {
         "ready": { "value": "#44DE88", "type": "color" },
@@ -79,7 +79,7 @@
     },
     "surface": {
       "glass": { "value": "rgba(18, 18, 21, 0.72)", "type": "color", "note": "Glass surface projection" },
-      "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Secondary surface" }
+      "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Secondary dark surface" }
     },
     "print": {
       "textPrimary": { "value": "#1D2430", "type": "color", "note": "Primary text on light PDF surfaces" },
@@ -130,8 +130,8 @@
     "glass": { "value": "0 0 0 1px rgba(37,37,41,1)" },
     "goldGlow": { "value": "0 0 20px rgba(249,191,33,0.55)" },
     "purpleGlow": { "value": "0 0 15px rgba(141,38,255,0.65)" },
-    "cyanGlow": { "value": "0 0 15px rgba(34,211,238,0.55)" },
-    "brandPulse": { "value": "0 0 25px rgba(249,191,33,0.25), 0 0 35px rgba(141,38,255,0.16), 0 0 22px rgba(34,211,238,0.10)" }
+    "cyanGlow": { "value": "0 0 15px rgba(249,191,33,0.55)", "deprecated": true, "note": "Legacy branding shadow alias; resolves to Gold under Branding Manifest v6.2" },
+    "brandPulse": { "value": "0 0 25px rgba(249,191,33,0.25), 0 0 35px rgba(249,191,33,0.16), 0 0 22px rgba(249,191,33,0.10)" }
   },
   "motion": {
     "duration": {

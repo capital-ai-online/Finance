@@ -64,7 +64,7 @@ describe('ADR-0098 MediaProject v2 contract', () => {
     expect(project.canvas).toEqual({ width: 1080, height: 1920, aspectRatio: '9:16' });
     expect(project.renderRecipe).toMatchObject({
       templateId: 'capital-ai-pro-trial-coupon',
-      templateVersion: '1.0.0',
+      templateVersion: '1.1.0',
       brandTokenSource: 'docs/frontend/design-tokens.json',
       brandTextMode: 'deterministic',
       networkPolicy: 'offline',
