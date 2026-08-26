@@ -49,7 +49,7 @@ describe('FO-03 Orchestrator config policy', () => {
     const result = validateOrchestratorConfigPatch(input);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
+    if (result.ok === false) {
       expect(result.code).toBe('ORCHESTRATOR_CONFIG_INVALID');
       expect(result.issues[0]?.code).toBe('INVALID_BODY');
     }
@@ -59,7 +59,7 @@ describe('FO-03 Orchestrator config policy', () => {
     const result = validateOrchestratorConfigPatch({});
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues[0]?.code).toBe('EMPTY_CONFIG');
+    if (result.ok === false) expect(result.issues[0]?.code).toBe('EMPTY_CONFIG');
   });
 
   it.each([
@@ -73,7 +73,7 @@ describe('FO-03 Orchestrator config policy', () => {
     const result = validateOrchestratorConfigPatch({ [field]: candidate });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
+    if (result.ok === false) {
       expect(result.issues).toContainEqual(expect.objectContaining({
         field,
         code: 'OUT_OF_RANGE',
@@ -90,7 +90,7 @@ describe('FO-03 Orchestrator config policy', () => {
     const result = validateOrchestratorConfigPatch({ [field]: candidate });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
+    if (result.ok === false) {
       expect(result.issues).toContainEqual(expect.objectContaining({
         field,
         code: 'INVALID_INTEGER',
@@ -105,7 +105,7 @@ describe('FO-03 Orchestrator config policy', () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
+    if (result.ok === false) {
       expect(result.issues).toContainEqual(expect.objectContaining({
         field: 'queueTimeoutMs',
         code: 'UNKNOWN_FIELD',
