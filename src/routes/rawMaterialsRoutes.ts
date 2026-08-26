@@ -14,6 +14,7 @@ import { RAW_MATERIALS_DATABASE, findRawMaterialConfig } from '../config/rawMate
 import type { AnalysisPayload, RawMaterialInput } from '../types/rawMaterials';
 import { getAssetCatalogEntry } from '../lib/assetSearchCatalog';
 import { getTwelveDataCommodityEvidence } from '../services/commodityMarketEvidence';
+import { observeVerifiedCommodityScoreShadow } from '../services/commodityShadowRuntimeBridge';
 import { dispatchCanonicalScore, type ScoringModelDescriptor } from '../platform/Scoring';
 
 function modelRegistryView(model: ScoringModelDescriptor) {
@@ -125,6 +126,9 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
    * GET /api/raw-materials/verified-score/:symbol
    * Approved canonical commodity market-evidence score. Evidence acquisition is domain-specific;
    * model resolution and execution authority are owned exclusively by ScoringDispatcher.
+   *
+   * P3-A mirrors the exact already-acquired evidence into a read-only challenger observation after
+   * dispatcher evaluation. This adds no provider call and cannot alter the canonical response.
    */
   router.get('/verified-score/:symbol', async (req, res) => {
     const symbol = String(req.params.symbol || '').toUpperCase().trim();
@@ -142,6 +146,26 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
         source: 'catalog',
         execution: { kind: 'commodity-evidence', evidence },
       });
+
+      const shadow = observeVerifiedCommodityScoreShadow({
+        orchestrator,
+        asset: {
+          symbol,
+          name: asset.name,
+          subtype: asset.subtype,
+          instrumentKind: asset.instrumentKind,
+        },
+        evidence,
+        dispatch,
+        environment: process.env.NODE_ENV,
+      });
+      if (shadow.status === 'BLOCKED') {
+        console.warn('[RawMaterialsRouter] P3-A shadow runtime blocked', {
+          symbol,
+          code: shadow.code,
+        });
+      }
+
       if (dispatch.status !== 'DISPATCHED') {
         return res.status(422).json({
           ...dispatch.canonical,
