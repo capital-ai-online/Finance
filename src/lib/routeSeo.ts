@@ -4,6 +4,8 @@
  * Full prerender remains S2 (scripts/seo/prerender-public-routes.mjs).
  */
 
+import { CAPITAL_AI_VERSION } from '../platform/Release/clientVersion';
+
 export interface RouteSeo {
   title: string;
   description: string;
@@ -13,7 +15,7 @@ export interface RouteSeo {
 const DEFAULT: RouteSeo = {
   title: 'CAPITAL-AI Portal',
   description:
-    'Offizielles CAPITAL-AI Portal (Version 0.6.0) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.',
+    `Offizielles CAPITAL-AI Portal (Version ${CAPITAL_AI_VERSION}) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.`,
   canonicalPath: '/',
 };
 
