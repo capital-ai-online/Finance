@@ -2,151 +2,152 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.5.1  
-**Stand:** 20. August 2026  
+**Version:** 1.6.0  
+**Stand:** 26. August 2026  
+**Korrelationsbasis:** `main@73ad480c1008696c1e48a4c3614e9d03ee318d7c`  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
 **Bestandsnachweis:** `docs/frontend/COMPONENT_INVENTORY.md`
 
-Dieses Dokument ist die **kanonische Frontend-Migrations- und UX-Roadmap**. Es definiert Reihenfolge, Status und geplante Arbeit, aber **keine** eigene Source-Tree-, Dependency-, Market-Data-, Scoring-, Entitlement- oder Governance-Authority.
+Dieses Dokument ist die **kanonische Frontend-Migrations- und UX-Roadmap**. Es definiert Reihenfolge, Status und geplante Arbeit, aber keine eigene Source-Tree-, Dependency-, Market-Data-, Scoring-, Entitlement-, IAM- oder Governance-Authority.
 
 Verbindliches Rollenmodell:
 
 - `FRONTEND_ARCH.md` bestimmt **wie** das Frontend strukturiert sein muss.
 - `COMPONENT_INVENTORY.md` beschreibt **was** aktuell existiert und wo es physisch liegt.
 - `FRONTEND_ROADMAP.md` bestimmt **wann/in welcher Reihenfolge** migriert wird.
-- `SC-MD-SPT-0001` und die zuständigen ADR-/ESS-Dokumente bestimmen **wie fachliche Financial-Runtime-/Evidence-/Scoring-Prozesse funktionieren**.
+- `docs/frontend/design-tokens.json` ist die maschinenlesbare Design-/Branding-Authority.
+- `SC-MD-SPT-0001` und die zuständigen ADR-/ESS-Dokumente bestimmen die fachlichen Runtime-/Evidence-/Scoring-/Governance-Contracts.
 
-Die Roadmap darf daher keine fachliche Parent-Authority duplizieren. Änderungen an Runtime-/Financial-Contracts werden nur als Abhängigkeit oder Migrationsvoraussetzung referenziert.
+Prinzip: **Projection, not Redefinition**.
 
 ---
 
-## 1. Vision
+## 1. Zielbild
 
-Das Frontend soll sich von einem funktionalen, dichten Dashboard zu einem **ruhigen, präzisen und institutionell wirkenden Cockpit** entwickeln:
+Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu einem ruhigen, präzisen und institutionell wirkenden FinTech-/Quant-Cockpit weiterentwickelt:
 
 - klare visuelle Hierarchie,
 - reduzierte kognitive Last,
-- exzellente Data-Visualisierung (Recharts / D3),
-- AI-native Interaktionen und Explainability,
-- hohe Accessibility (WCAG 2.2 AA / BFSG / EN 301 549),
-- konsistentes Design-System,
-- fachlich saubere Vertical Slices ohne parallele Frontend-Authority.
-
-Zielbild: modernes FinTech-/Quant-Interface mit klarer Trennung zwischen Application Composition, fachlichen Feature-Slices, Shared-Primitives und bestehenden Enterprise-/Runtime-Authorities.
-
----
-
-## 2. Aktueller Stand
-
-### Stärken
-
-- Dark-Theme-Identität (`#18181b`, AIF-Gold, Neon-Cyan/Purple),
-- klare Status-Kommunikation (READY / REJECT / DATA_UNAVAILABLE),
-- Multi-Asset-Scoring-/Screening-Funktionalität vorhanden,
-- Responsive Basis und Motion-Integration,
-- Fokus-Outline und Reduced-Motion-Support,
-- `app/features/shared`-Strukturbaseline durch gemergten PR #459,
-- Shared-Primitives und Architektur-Gate auf `main`,
-- BB-1 Application Composition durch gemergten PR #462 auf `main`.
-
-### Strukturelle Restschuld
-
-- `Dashboard.tsx` bleibt ein großer zentraler Kopplungspunkt,
-- viele fachliche Implementierungen liegen physisch noch in `src/components/`,
-- Feature-`ui/index.ts` dienen teilweise noch als Strangler-Fassaden auf Legacy-Pfade,
-- Legacy-Type-Consumer können während der Migration noch über die Root-Compatibility-Fassade auf `UserSession` zugreifen,
-- die physischen Feature-Migrationen BB-3 bis BB-9 stehen noch aus.
+- konsistente Shared-Primitives,
+- belastbare Data-Visualisierung,
+- AI-native Explainability ohne lokale Scoring-Authority,
+- WCAG 2.2 AA / BFSG / EN 301 549,
+- fachlich saubere Vertical Slices,
+- keine neuen produktiven Implementierungen unter `src/components/`.
 
 ---
 
-## 3. Architektur-Baseline — PR #459
+## 2. Verifizierter Ist-Stand auf main
 
-PR #459 ist am 20. August 2026 gemergt und etabliert die strukturelle Voraussetzung für alle folgenden Migrationswellen:
+### 2.1 Erfolgreich abgeschlossene Architekturarbeit
+
+- [x] **BB-0 Foundation / PR #459:** `src/app`, `src/features`, `src/shared`, Shared-Primitives und `frontend:architecture:check` etabliert.
+- [x] **BB-1 Application Composition / PR #462:** `src/app/App.tsx`, `SessionComposition`, `AppRoutes` und kanonischer `UserSession`-Vertrag etabliert; `src/App.tsx` ist Compatibility-Fassade.
+- [x] **Crypto Visualization / CV-0:** Authority-/Freshness-/Evidence-Primitives sowie read-only Presentation Projection vorhanden.
+- [x] **Screening:** `RankingBoard` ist produktive kanonische Ranking-Fläche; `UniverseBestWorst` ist Compatibility-Alias.
+- [x] **Commodities / PR #539:** `src/features/commodities/ui/RawMaterialsDashboard.tsx` ist kanonische Commodity-UI; Legacy-Pfad bleibt Compatibility-Export.
+- [x] **Learning / PR #540:** `src/features/learning/ui` sowie öffentliche `/learning-platform`-Route sind integriert; Vocabulary bleibt read-only Projektion der kanonischen Registry.
+- [x] **Newsfeed / PR #529:** Asset-/Quellenfilter, Provider-Evidence und `change24hPct` wurden mit den kanonischen Katalog-/Display-Pfaden korreliert.
+- [x] **Release-Version / PR #542:** Plattformversion wird aus `package.json#version` über die Release Control Plane projiziert.
+- [x] **Frontend-Orchestrator / PR #541, #534, #543:** Admin-Reads, AuthZ-Evidence und Konfigurationsvalidierung wurden fail-closed gehärtet.
+
+### 2.2 Aktuelle strukturelle Restschuld
+
+- `src/components/Dashboard.tsx` bleibt der größte Presentation-Kopplungspunkt.
+- `Dashboard.tsx` importiert zahlreiche fachliche Komponenten weiterhin direkt aus `./...` statt über Feature-Fassaden.
+- `Dashboard.tsx` konsumiert `UserSession` noch über `../App` statt direkt über die kanonische Presentation-Contract-Grenze.
+- Navigation, View-Registry, Drawer, Header und View-Routing sind noch gemeinsam im Dashboard-Monolithen gebunden.
+- Viele Feature-Implementierungen liegen physisch weiterhin in `src/components/`.
+- Die Root-Feature-Fassade `src/features/index.ts` war nach PR #540 noch nicht um `LearningUI` ergänzt; dies wird mit Roadmap 1.6.0 korrigiert.
+- `FRONTEND_ARCH.md` und `COMPONENT_INVENTORY.md` sind jünger als die alte Roadmap, müssen aber nach jeder weiteren Welle erneut mit dem exakten Main-Stand korreliert werden.
+
+---
+
+## 3. Darstellung und Qualitätsbewertung
+
+| Bereich | Bewertung | Befund | Nächste Qualitätsmaßnahme |
+|---|---|---|---|
+| Branding / Design Tokens | **gut** | Gold, Purple, Cyan und semantische Statusfarben sind zentral dokumentiert; lokale historische `aif-*`-Aliase existieren noch | neue UI ausschließlich über semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
+| Typografie | **gut mit Drift-Risiko** | Inter/Poppins/JetBrains Mono sind kanonisch definiert | Headings/Body/Tech-Data in Komponenten automatisiert prüfen |
+| Shared UI | **gut** | Button, Card, Input, Modal, Tooltip, Skeleton, EmptyState und Status-/Evidence-Primitives vorhanden | Nutzung in Legacy-Komponenten erhöhen und Parallelimplementierungen entfernen |
+| Dashboard IA | **kritische Restschuld** | hohe Funktionsdichte, sehr große View-Union, Navigation und Fachkomponenten eng gekoppelt | BB-2 priorisieren |
+| Screening | **gut** | kanonisches RankingBoard und klare Authority-Grenze | Filter-/Search-UX und progressive Disclosure verbessern |
+| Commodities | **gut** | eigener Feature-Slice, Research/Verified-Grenze explizit | Visual Consistency und gemeinsame Asset-Universe-Navigation prüfen |
+| Learning | **gut** | eigener Slice, Public Route, read-only Vocabulary | Feature-Namespace und gemeinsame Public-Surface-Patterns konsolidieren |
+| News / Sentiment | **mittel bis gut** | fachliche Integrity-Härtung stark; Komponenten physisch teils Legacy | BB-5 Migration und einheitliche Loading/Empty/Error-Semantik |
+| Governance / Admin | **funktional, hohe Komplexität** | Security-Grenzen gehärtet, UI-Implementierungen teils Legacy | BB-8; Admin-Navigation und Operational Status konsolidieren |
+| Accessibility | **Baseline vorhanden** | 44px Targets, Focus und Reduced Motion dokumentiert | axe/Lighthouse-Baseline und vollständige Keyboard-/Screenreader-Prüfung |
+| Mobile | **mittel** | responsive Basis vorhanden, Dashboard-Dichte bleibt problematisch | Navigation/Drawer in BB-2 entkoppeln und mobile IA separat prüfen |
+
+---
+
+## 4. Kanonische Pfade und Korrelationen
+
+### 4.1 Application Composition
+
+```text
+src/main.tsx
+  → src/App.tsx                    # Compatibility
+  → src/app/App.tsx                # kanonischer Composition Root
+  → src/app/auth/SessionComposition.tsx
+  → src/app/routing/AppRoutes.tsx
+  → src/components/Dashboard.tsx   # aktueller BB-2-Strangler
+```
+
+### 4.2 Feature- und Shared-Richtung
 
 ```text
 src/app
-  ↓
-src/features/<domain>/ui
-  ↓
-src/shared
+  → src/features/<domain>/ui
+  → src/shared
 ```
 
-Umgesetzt auf `main`:
+Nicht zulässig:
 
-- `src/app/AppShell.tsx`,
-- Feature-UI-Fassaden für Public, Users, Settings, Screening, Crypto, Stocks, Analytics, News, Portfolio, Billing, Reporting, Social und Governance,
-- `StatusBadge` → `src/shared/ui/StatusBadge.tsx`,
-- `CapitalAiLogo` → `src/shared/branding/CapitalAiLogo.tsx`,
-- `Button`, `Card`, `Input`, `Modal`, `Tooltip`, `Skeleton`, `EmptyState` → `src/shared/ui`,
-- `NeuralBackground` → `src/shared/visuals`,
-- Legacy-Pfade für bereits migrierte Shared-Bausteine nur als Compatibility-Exports,
-- `frontend:architecture:check` als strukturelles Gate,
-- klare Dokumentrollen nach `Projection, not Redefinition`.
+- `shared → features/app`,
+- `platform → React UI`,
+- neue fachliche Implementierung unter `src/components/`,
+- lokale Neuautorisierung von Scoring, IAM, Evidence oder Entitlements.
+
+### 4.3 Aktuelle kanonische Feature-Slices
+
+- `features/screening/ui`
+- `features/crypto/ui`
+- `features/commodities/ui`
+- `features/stocks/ui`
+- `features/analytics/ui`
+- `features/news/ui`
+- `features/portfolio/ui`
+- `features/billing/ui`
+- `features/reporting/ui`
+- `features/social/ui`
+- `features/governance/ui`
+- `features/learning/ui`
+
+`src/features/index.ts` muss diese produktiven Namespaces vollständig projizieren.
 
 ---
 
-## 4. Schrittweise Auflösung der bisherigen Big-Bang-Restschuld
+## 5. Migrationswellen
 
-Jede Welle muss einzeln mergebar und rücksetzbar bleiben. Vor jeder Welle wird gegen den aktuellen `main` synchronisiert und auf offene PR-/Pfadkorrelationen geprüft.
+### BB-0 — Foundation — **DONE**
 
-### Welle 0 / BB-0 — Foundation / Architecture Baseline — **DONE**
+- [x] App/Features/Shared-Baseline.
+- [x] Shared-Primitives.
+- [x] Architecture Gate.
 
-- [x] `app/features/shared` etablieren.
-- [x] Shared-Primitives physisch verschieben.
-- [x] Compatibility-Exports für bereits migrierte Shared-Bausteine.
-- [x] Feature-UI-Fassaden etablieren.
-- [x] Frontend-Architecture-Gate integrieren.
-- [x] Frontend-Dokumentrollen entkoppeln.
-- [x] Human-/CODEOWNER-Merge von PR #459.
+### BB-1 — Application Composition — **DONE**
 
-### Welle 1 / BB-1 — Application Composition — **DONE / MERGED VIA PR #462**
+- [x] Session/Auth Composition.
+- [x] Public/Root Route Composition.
+- [x] kanonischer Presentation-Session-Vertrag.
 
-**Source branch:** `refactor/frontend-bb1-app-composition-2026-08-20`  
-**Merge:** PR #462 am 20. August 2026
+### BB-2 — Dashboard Composition — **IN PROGRESS / P0**
 
-**Ziel:** historischen Root `src/App.tsx` von Auth-/Session-/Routing-Verantwortungen entkoppeln.
+**Ziel:** `Dashboard.tsx` als zentralen Kopplungspunkt in kleine Composition-Bausteine zerlegen, ohne fachliche Contracts zu verändern.
 
-Umgesetzte Struktur:
-
-```text
-src/app/
-├── App.tsx
-├── AppShell.tsx
-├── auth/
-│   └── SessionComposition.tsx
-├── routing/
-│   └── AppRoutes.tsx
-├── types/
-│   └── UserSession.ts
-├── index.ts
-└── README.md
-```
-
-Umgesetzt:
-
-- [x] `UserSession`/`SubscriptionTier` aus historischem Root extrahiert.
-- [x] Supabase-Session-Lifecycle, Onboarding, Login-Step-Up, Password-Recovery und globale 401-Behandlung in `SessionComposition.tsx` komponiert.
-- [x] öffentliche Legal-Pfade sowie Landing-/Dashboard-Auswahl nach `AppRoutes.tsx` extrahiert.
-- [x] `src/app/App.tsx` als kanonischen Composition Root etabliert.
-- [x] `src/App.tsx` auf dünne Compatibility-Fassade reduziert.
-- [x] Architektur-Gate um BB-1-Pfade und Root-Fassadenregel erweitert.
-- [x] App-README, Frontend-Architektur und Component Inventory aktualisiert.
-- [x] deutscher PR #462 erstellt und Human-gesteuert nach `main` gemergt.
-
-Bewusst **nicht** Bestandteil von BB-1:
-
-- keine Dashboard-Zerlegung,
-- keine physische Feature-Migration,
-- kein neues Routing-Framework,
-- keine Abschwächung der IAM-/AuthN-/AuthZ-/MFA-Semantik,
-- keine Backend-/Supabase-/Stripe-/Render-Mutation.
-
-### Welle 2 / BB-2 — Dashboard Composition — **NEXT**
-
-**Ziel:** `Dashboard.tsx` als zentralen Kopplungspunkt zerlegen.
-
-Vorgesehene Struktur:
+Zielstruktur:
 
 ```text
 src/app/dashboard/
@@ -158,228 +159,146 @@ src/app/dashboard/
 └── dashboardViews.ts
 ```
 
+Arbeitspakete:
+
+- [x] **BB-2A Readiness:** aktuellen Main, Roadmap, Feature-Slices und kanonische Pfade korrelieren.
+- [x] **BB-2A Namespace-Korrektur:** `LearningUI` in `src/features/index.ts` aufnehmen.
+- [ ] **BB-2B View Contract:** `DashboardView` und View→Section-Mapping nach `src/app/dashboard/dashboardViews.ts` extrahieren.
+- [ ] **BB-2C Session Contract:** Dashboard direkt auf `src/app/types/UserSession` umstellen; Root-Compatibility-Import entfernen.
+- [ ] **BB-2D View Router:** fachliche Render-Switches nach `DashboardViewRouter.tsx` verschieben und Feature-Fassaden konsumieren.
+- [ ] **BB-2E Navigation:** Desktop Navigation und Mobile Drawer aus dem Monolithen lösen.
+- [ ] **BB-2F Header/Shell:** Header, Profil-/Logout-Flächen und globale Shell-Verantwortung extrahieren.
+- [ ] **BB-2G Closure:** `Dashboard.tsx` auf reine Composition reduzieren; Architecture-/Unit-/Build-Gates aktualisieren.
+
 Regeln:
 
-- Dashboard-Composition konsumiert Feature-Fassaden statt direkter `./Component`-Imports.
-- Fachliche Komponenten bleiben in dieser Welle zunächst in ihren bestehenden Slices/Legacy-Pfaden.
-- `UserSession`-Consumer werden auf die kanonische nicht-zirkuläre Contract-Grenze umgestellt.
-- Keine Änderung fachlicher Scoring-/Market-Data-/Entitlement-Contracts.
+- keine neue Routing-Library in BB-2,
+- keine fachliche Feature-Migration erzwingen,
+- keine Änderung von Scoring-/Market-Data-/Entitlement-/IAM-Contracts,
+- jede Teilwelle separat mergebar und revertierbar.
 
-### Welle 3 / BB-3 — Public / Users / Settings / Billing
+### BB-3 — Public / Users / Settings / Billing — **PLANNED**
 
-Physisch verschieben:
+Landing, Legal, Login-/Registration-Gates, Profile, Passkey/TOTP und Subscription-/Checkout-Flächen physisch in ihre Slices verschieben.
 
-- LandingPage,
-- Datenschutz,
-- Impressum/AGB,
-- LoginStepUpGate,
-- RegistrationCompletionGate,
-- StepUpModal,
-- ProfilePage,
-- Passkey/TOTP Settings,
-- Subscription-/Checkout-Flächen.
+### BB-4 — Screening & Discovery — **PARTIAL / PLANNED**
 
-Ziele: `features/public`, `features/users`, `features/settings`, `features/billing`.
+`RankingBoard` ist bereits kanonisch. Screener, MarketScreener, AssetUniverseDashboard und weitere Discovery-Flächen nach Dependency-Audit physisch migrieren.
 
-### Welle 4 / BB-4 — Screening & Discovery
+### BB-5 — News / Sentiment / Social / Reporting — **PLANNED**
 
-Physisch verschieben:
+RealtimeAiNewsfeed, Newsticker, MarketSentiment, SentimentDashboard, SocialAccountManager, Publisher und Export-Flächen physisch migrieren.
 
-- Screener,
-- MarketScreener,
-- AssetUniverseDashboard,
-- UniverseBestWorst,
-- verwandte Discovery-/Filter-/Alert-Flächen nach Dependency-Audit.
+### BB-6 — Analytics / Crypto / Commodities / Visualization — **PARTIAL**
 
-Ziel: `features/screening/ui`.
+Crypto- und Commodity-Slices sind bereits teilweise kanonisch. Charts, Heatmap, Performance, Risk und verbleibende Analyseflächen nach Dependency-Audit migrieren.
 
-Financial-Data-Regeln werden nur über die zuständigen Parent-Authorities konsumiert; diese Roadmap definiert keine eigene Request-Sequenz.
+### BB-7 — Portfolio / Risk / Backtesting — **PLANNED**
 
-### Welle 5 / BB-5 — News / Sentiment / Social / Reporting
+Watchlist, Pattern Slots, Backtesting, Portfolio Performance und Monte Carlo physisch migrieren.
 
-Physisch verschieben:
+### BB-8 — Governance / Admin / Compliance — **PLANNED**
 
-- RealtimeAiNewsfeed,
-- Newsticker,
-- MarketSentiment,
-- SentimentDashboard,
-- SocialAccountManager,
-- SocialDirectPublisherModal,
-- ComplianceExporter,
-- PdfExportModal.
+AdminPortal/AdminPanel, Supervisor, Security/Audit, Document Hygiene, VersionManager und Governance-Flächen migrieren; bestehende Platform-Authorities bleiben außerhalb des UI-Slice.
 
-Ziele: `features/news`, `features/social`, `features/reporting`.
+### BB-9 — Stocks / Buffett — **PLANNED**
 
-### Welle 6 / BB-6 — Analytics / Crypto / Data Visualization
+`BuffetValueCheck` separat und spät migrieren; Parent-Contracts und fail-closed Evidence unverändert erhalten.
 
-Physisch verschieben und bei Bedarf zerlegen:
+### BB-10 — Legacy Exit — **PLANNED**
 
-- Charts,
-- HeatmapCreator,
-- PerformanceDashboard,
-- RealTimeRiskAssessment,
-- EnterpriseAnalysisPanels,
-- CryptoScoringEnterprise,
-- EnterpriseBinanceQuickAnalysis,
-- DeFiOrchestration,
-- RawMaterialsDashboard nach Domain-/Dependency-Audit.
+- produktive Inbound-Imports auf kanonische Pfade umstellen,
+- Compatibility-Exports erst bei 0 produktiven Legacy-Consumern entfernen,
+- `src/components/` erst bei 0 produktiven Implementierungen löschen.
 
-Nur nach nachgewiesener Fachneutralität dürfen generische Visual-Primitives nach `src/shared` verschoben werden.
+### BB-11 — Closure — **PLANNED**
 
-### Welle 7 / BB-7 — Portfolio / Risk / Backtesting
-
-Physisch verschieben:
-
-- Watchlist,
-- FavoriteAssetPatternSlots,
-- BacktestEngine,
-- PortfolioBacktester,
-- PortfolioPerformance,
-- MonteCarloDetailed,
-- weitere Portfolio-/Risk-Consumer nach Dependency-Audit.
-
-Ziel: `features/portfolio/ui` bzw. fachlich passende Slices.
-
-### Welle 8 / BB-8 — Governance / Admin / Compliance UI
-
-Physisch verschieben:
-
-- AdminPortal / AdminPanel,
-- SupervisorDashboard,
-- SecurityComplianceAuditor,
-- SecurityRadarBadge,
-- Audit-Flächen,
-- DocumentHygienePanel,
-- VersionManagerPanel,
-- ADR-/Governance-Flächen.
-
-Ziel: `features/governance/ui`.
-
-Die UI bleibt Consumer bestehender Governance-/Supervisor-/Compliance-Authorities; keine Platform-Authority wird in den Frontend-Slice verschoben.
-
-### Welle 9 / BB-9 — Stocks / Buffett
-
-`BuffetValueCheck.tsx` wird bewusst **spät und separat** physisch nach `features/stocks/ui` verschoben.
-
-Voraussetzungen:
-
-- aktueller Main-Sync,
-- keine parallele Änderung am Buffett-/Verified-Display-Scope,
-- alle zuständigen Parent-Contracts unverändert erhalten,
-- Tests für Entitlement-/Evidence-/Fail-Closed-Verhalten bleiben grün.
-
-Diese Roadmap normiert die Financial-Subchain nicht; fachlich maßgeblich bleiben `SC-MD-SPT-0001`, ADR-0032, ADR-0034, ADR-0041/ESS-0016 und ADR-0087.
-
-### Welle 10 / BB-10 — Legacy Exit
-
-- alle produktiven Inbound-Imports auf kanonische Pfade umstellen,
-- Compatibility-Exports nur bei `0` verbleibenden produktiven Legacy-Consumern entfernen,
-- `src/components/` erst löschen, wenn dort keine produktive Implementierung mehr liegt,
-- Component Inventory final auf kanonische Pfade aktualisieren,
-- Architektur-Gate um nicht mehr benötigte Legacy-Ausnahmen bereinigen.
-
-### Welle 11 / BB-11 — Closure
-
-- finale Architektur-/Dokumentrollen validieren,
-- alle Legacy-Ausnahmen aus dem Architektur-Gate entfernen, die nicht mehr benötigt werden,
-- TypeScript, Unit-/Contract-/Architecture-Tests und Production Build auf dem vollständigen Zielzustand ausführen,
-- Documentation Hygiene und Governance Control Plane gegen den finalen Frontend-Zustand prüfen,
-- keine neue fachliche Authority im Frontend zurücklassen.
+Architecture-/Authority-Drift, TypeScript, Unit-/Contract-/Architecture-Tests, Production Build, Accessibility und Documentation Hygiene final validieren.
 
 ---
 
-## 5. Visual-/UX-Roadmap
+## 6. Visual-/UX-Roadmap
 
-Die strukturelle Migration ersetzt nicht die bestehende UX-/Design-Weiterentwicklung.
+### Phase A — Design System
 
-### Phase A — Visual Design System
+- [ ] semantische Farben in produktiven Komponenten weiter konsolidieren,
+- [x] Shared-Primitives und Evidence-/Authority-Badges,
+- [ ] Score-Gauges und Multi-Faktor-Matrix konsolidieren,
+- [ ] Typografie/Icon-Nutzung automatisiert prüfen,
+- [ ] Storybook-/Component-Library-Grundlage bewerten.
 
-- [ ] Semantic Colors weiter konsolidieren.
-- [x] `StatusBadge` als Shared-Primitive.
-- [x] `Button`, `Card`, `Input`, `Modal`, `Tooltip`, `Skeleton`, `EmptyState` als Shared-Baseline.
-- [x] NeuralBackground als Shared-Visual.
-- [ ] Score-Gauges und Multi-Faktor-Matrix vervollständigen.
-- [ ] Typografie und Icon-Nutzung vereinheitlichen.
-- [ ] Storybook-/Component-Library-Grundlage prüfen.
-
-### Phase B — Information Architecture & UX
+### Phase B — Information Architecture
 
 - [ ] Progressive Disclosure,
-- [ ] primäre Hierarchie Score → Kurzanalyse → Detail-Matrix,
-- [ ] verbesserte Asset-Suche & Filter-UX,
-- [ ] Onboarding / First-Time-User-Flow,
-- [x] Shared Empty-/Loading-Primitives als technische Basis,
+- [ ] Score → Kurzanalyse → Detail-Matrix als dominante Hierarchie,
+- [ ] Asset-Suche und Filter vereinheitlichen,
 - [ ] Secondary Navigation reduzieren,
-- [ ] Command-Palette prüfen.
+- [ ] Command Palette bewerten.
 
-### Phase C — Interaktionen & Data Visualization
+### Phase C — Interaktion / Visualization
 
-- [ ] Mikro-Interaktionen und Transitions,
-- [ ] interaktive Multi-Faktor-Bewertungsmatrix,
-- [ ] Score-Visualisierung mit Recharts/D3,
-- [ ] Keyboard-Navigation und Focus-Management,
+- [ ] interaktive Multi-Faktor-Matrix,
+- [ ] Recharts/D3-Score-Visualisierung,
+- [ ] vollständige Keyboard-Navigation und Focus-Management,
 - [ ] Live-Daten-Feedback,
 - [ ] Export-/Share-UX.
 
-### Phase D — Mobile & Accessibility
+### Phase D — Mobile / Accessibility
 
-- [x] 44×44 Touch-Targets als Baseline,
+- [x] 44×44 Target-Baseline,
+- [x] Reduced-Motion-Baseline,
 - [ ] mobile Informationsarchitektur,
-- [ ] vollständige Screenreader-Unterstützung,
-- [ ] Kontrast-/Fokus-Optimierung,
-- [x] `prefers-reduced-motion` Baseline.
+- [ ] Screenreader-End-to-End-Prüfung,
+- [ ] Lighthouse Accessibility ≥ 95 und axe-Baseline.
 
-### Phase E — AI-native Features & Skalierung
+### Phase E — AI-native UX
 
 - [ ] Conversational Layer,
-- [ ] personalisierte Dashboards / Saved Views,
+- [ ] Saved Views / personalisierte Dashboards,
 - [ ] Explainability-UI,
-- [ ] Design-System + Storybook,
-- [ ] Komponentenbibliothek dokumentieren,
-- [ ] optionales Theming / Light Mode bewerten.
+- [ ] dokumentierte Komponentenbibliothek.
 
 ---
 
-## 6. Governance-Regeln je Migrationswelle
+## 7. Governance je Welle
 
-Vor jedem Migrations-PR sind mindestens folgende Punkte zu prüfen:
+Vor jedem Frontend-PR:
 
 1. aktueller `main` und Merge-Base,
-2. offene PRs und überlappende Pfade,
-3. Inbound-/Outbound-Imports der Zielkomponente,
-4. zuständige fachliche Parent-Authority,
-5. Tests/Contracts, die zusammen mit der Komponente erhalten werden müssen,
-6. ob ein Compatibility-Export erforderlich ist,
-7. ob das `COMPONENT_INVENTORY.md` den realen Pfad-/Migrationsstatus widerspiegelt,
-8. ob `FRONTEND_ARCH.md` unverändert gültig bleibt,
-9. ob fachliche Regeln nur referenziert und nicht als zweite Authority neu beschrieben werden,
-10. TypeScript, Unit-/Contract-Tests, Production Build und Frontend-Architecture-Gate.
-
-Eine Migrationswelle darf keine bestehende Runtime-/Scoring-/IAM-/Compliance-/Governance-Authority in `src/shared` oder eine neue Frontend-Parallelarchitektur verschieben.
+2. offene PRs und File-/Namespace-Overlap,
+3. Inbound-/Outbound-Imports,
+4. fachliche Parent-Authority,
+5. Tests und Contracts,
+6. Compatibility-Export-Bedarf,
+7. `COMPONENT_INVENTORY.md`-Korrelation,
+8. `FRONTEND_ARCH.md`-Korrelation,
+9. Design-Token-/Accessibility-Drift,
+10. TypeScript, Unit-/Contract-/Architecture-Tests und Production Build.
 
 ---
 
-## 7. Erfolgsmetriken
+## 8. Erfolgsmetriken
 
 - Lighthouse Performance ≥ 90,
-- Accessibility Score ≥ 95,
-- Reduktion der Time-to-First-Score,
-- positive Nutzerbewertung zu Klarheit und Übersichtlichkeit,
-- steigende Komponenten-Wiederverwendbarkeit,
+- Accessibility ≥ 95,
+- sinkende Time-to-First-Score,
 - sinkende Anzahl produktiver Implementierungen unter `src/components/`,
-- keine neuen Shared→Feature/App-Abhängigkeiten,
-- keine duplizierten fachlichen Authorities in Frontend-Dokumenten.
+- steigende Nutzung von Shared-Primitives,
+- keine Shared→Feature/App-Abhängigkeiten,
+- keine duplizierten fachlichen Authorities,
+- geringere Dashboard-Komplexität und kleinere Composition-Units.
 
 ---
 
-## 8. Nächste Schritte
+## 9. Unmittelbare Reihenfolge
 
-1. Governance-/Authority-Korrelation auf dem aktuellen `main` abschließen und Dokumentrollen maschinenlesbar halten.
-2. BB-2 Dashboard Composition auf einem frischen Branch vom dann aktuellen `main` beginnen.
-3. Danach physische Feature-Migrationen nur in kleinen, fachlich zusammengehörigen Wellen durchführen.
-4. Nach jeder Welle Inventory und Roadmap aktualisieren und Architecture-/Authority-Drift prüfen.
-5. Live Lighthouse-/axe-Baseline ergänzen.
+1. **BB-2B:** `DashboardView` + Section-Mapping extrahieren.
+2. **BB-2C:** direkten kanonischen `UserSession`-Import herstellen.
+3. **BB-2D:** View Router und Feature-Fassaden entkoppeln.
+4. **BB-2E/F:** Navigation, Drawer und Header extrahieren.
+5. Danach Roadmap/Inventory/Architecture erneut gegen den dann aktuellen `main` korrelieren.
+6. Erst anschließend mit BB-3/BB-4 physischen Legacy-Migrationen fortfahren.
 
 ---
 
-*Ursprung: Frontend-Roadmap vom 16.08.2026. Version 1.5.1 vom 20.08.2026 korrigiert nach Merge von PR #462 ausschließlich den BB-1-Status; die normative Frontend-Architecture und alle fachlichen Parent-Authorities bleiben unverändert.*
+*Version 1.6.0 ersetzt den veralteten Stand vom 20.08.2026. Sie korreliert die kanonische Frontend-Roadmap mit `main@73ad480c1008696c1e48a4c3614e9d03ee318d7c`, übernimmt die seitdem gemergten Frontend-Slices und priorisiert BB-2 als nächste strukturelle Migrationswelle.*
