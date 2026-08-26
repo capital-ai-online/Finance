@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   buildCommodityResearchFeatureSnapshot,
-  evaluateCommodityCategoryResearchSnapshot,
   getCommodityShadowObservations,
   getCommodityShadowTelemetry,
   recordCommodityShadowObservation,
@@ -61,7 +60,7 @@ describe('Commodity P3-A shadow observability', () => {
     resetProviderRuntimeObservability();
   });
 
-  it('records research challenger observations without score/ranking/execution authority', () => {
+  it('records registry-bound research challenger observations without score/ranking/execution authority', () => {
     recordProviderRuntimeObservation({
       providerId: 'eia',
       capability: 'commodity-fundamentals',
@@ -75,11 +74,8 @@ describe('Commodity P3-A shadow observability', () => {
       rateResetAt: '2026-08-26T13:42:00.000Z',
     });
 
-    const snapshot = energySnapshot();
-    const evaluation = evaluateCommodityCategoryResearchSnapshot(snapshot);
     const observation = recordCommodityShadowObservation({
-      snapshot,
-      evaluation,
+      snapshot: energySnapshot(),
       providerBindings: [{
         providerId: 'eia',
         capability: 'commodity-fundamentals',
@@ -95,6 +91,8 @@ describe('Commodity P3-A shadow observability', () => {
     });
 
     expect(observation.evaluationStatus).toBe('RESEARCH_READY');
+    expect(observation.modelId).toBe('commodity-energy-hybrid');
+    expect(observation.executorKey).toBe('research-only:not-executable');
     expect(observation.challengerScoreStability).toEqual({
       status: 'NOT_APPLICABLE_UNTIL_EXECUTABLE_WEIGHTS',
       score: null,
@@ -112,20 +110,14 @@ describe('Commodity P3-A shadow observability', () => {
   });
 
   it('measures feature/evidence/status and champion drift without inventing challenger score drift', () => {
-    const firstSnapshot = energySnapshot();
-    const firstEvaluation = evaluateCommodityCategoryResearchSnapshot(firstSnapshot);
     const first = recordCommodityShadowObservation({
-      snapshot: firstSnapshot,
-      evaluation: firstEvaluation,
+      snapshot: energySnapshot(),
       champion: { modelId: 'commodity-evidence-scoring', modelVersion: '1.0.0', status: 'READY', score: 62 },
       environment: 'test',
     });
 
-    const secondSnapshot = energySnapshot(false);
-    const secondEvaluation = evaluateCommodityCategoryResearchSnapshot(secondSnapshot);
     const second = recordCommodityShadowObservation({
-      snapshot: secondSnapshot,
-      evaluation: secondEvaluation,
+      snapshot: energySnapshot(false),
       champion: { modelId: 'commodity-evidence-scoring', modelVersion: '1.0.0', status: 'READY', score: 59.5 },
       environment: 'test',
     });
@@ -144,14 +136,25 @@ describe('Commodity P3-A shadow observability', () => {
     expect(getCommodityShadowTelemetry()[1].eventName).toBe('commodity.shadow.observation.completed');
   });
 
-  it('fails closed when snapshot and evaluation contracts do not match', () => {
-    const snapshot = energySnapshot();
-    const evaluation = {
-      ...evaluateCommodityCategoryResearchSnapshot(snapshot),
-      featureContractVersion: 'tampered-contract',
+  it('fails closed when a caller tampers with the governed snapshot contract', () => {
+    const snapshot = {
+      ...energySnapshot(),
+      contractVersion: 'tampered-contract',
     } as any;
 
-    expect(() => recordCommodityShadowObservation({ snapshot, evaluation, environment: 'test' }))
-      .toThrow('COMMODITY_SHADOW_FEATURE_CONTRACT_MISMATCH');
+    expect(() => recordCommodityShadowObservation({ snapshot, environment: 'test' }))
+      .toThrow('COMMODITY_RESEARCH_CONTRACT_MISMATCH');
+  });
+
+  it('fails closed on unknown provider-to-feature shadow bindings', () => {
+    expect(() => recordCommodityShadowObservation({
+      snapshot: energySnapshot(),
+      providerBindings: [{
+        providerId: 'eia',
+        capability: 'commodity-fundamentals',
+        featureKeys: ['fundamentals.notGoverned'],
+      }],
+      environment: 'test',
+    })).toThrow('COMMODITY_SHADOW_PROVIDER_FEATURE_BINDING_UNKNOWN');
   });
 });
