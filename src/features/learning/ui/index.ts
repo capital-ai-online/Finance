@@ -1,0 +1,1 @@
+export { LearningVocabulary } from './LearningVocabulary';
