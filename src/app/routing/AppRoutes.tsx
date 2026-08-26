@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Dashboard } from '../../components/Dashboard';
+import { Dashboard } from '../dashboard';
 import { Datenschutz } from '../../components/Datenschutz';
 import { ImpressumAgb } from '../../components/ImpressumAgb';
 import { LandingPage } from '../../components/LandingPage';

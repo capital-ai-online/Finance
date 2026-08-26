@@ -1,3 +1,4 @@
+export { Dashboard, type DashboardProps } from './Dashboard';
 export {
   DASHBOARD_VIEWS,
   DASHBOARD_VIEW_SECTION,
