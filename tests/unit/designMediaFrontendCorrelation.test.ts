@@ -6,6 +6,15 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const tokens = JSON.parse(read('docs/frontend/design-tokens.json')) as {
+  color: {
+    brand: {
+      primary: { value: string };
+      cyan: { value: string; deprecated?: boolean };
+    };
+    semantic: {
+      info: { value: string };
+    };
+  };
   patterns: {
     patternBadge: {
       renderWhenMissing: boolean;
@@ -22,6 +31,7 @@ const tokens = JSON.parse(read('docs/frontend/design-tokens.json')) as {
 const viteConfig = read('vite.config.ts');
 const mediaRenderer = read('scripts/media/capital_ai_media.py');
 const mediaPreview = read('src/features/social/ui/MediaStudio/MediaStudioPreview.tsx');
+const mediaTemplates = read('src/platform/SocialMediaEngine/Editing/MediaStudioTemplates.ts');
 const rankingBoard = read('src/features/screening/ui/RankingBoard.tsx');
 const favoritePatterns = read('src/components/FavoriteAssetPatternSlots.tsx');
 const profilePage = read('src/components/ProfilePage.tsx');
@@ -37,14 +47,30 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     expect(mediaRenderer).not.toContain('color["aif"]');
   });
 
-  it('keeps the active Media Studio preview on semantic web tokens', () => {
+  it('keeps Cyan out of generic Social Media branding while preserving semantic data Cyan', () => {
+    expect(tokens.color.brand.primary.value).toBe('#F9BF21');
+    expect(tokens.color.brand.cyan.value).toBe(tokens.color.brand.primary.value);
+    expect(tokens.color.brand.cyan.deprecated).toBe(true);
+    expect(tokens.color.semantic.info.value).toBe('#22D3EE');
+    expect(tokens.color.semantic.info.value).not.toBe(tokens.color.brand.primary.value);
+  });
+
+  it('keeps the active Media Studio preview on Dark Black + AIF Gold branding', () => {
     expect(mediaPreview).toContain('border-brand-primary/25');
     expect(mediaPreview).toContain('var(--color-brand-primary)');
-    expect(mediaPreview).toContain('var(--color-brand-cyan)');
     expect(mediaPreview).toContain('var(--color-brand-accent)');
+    expect(mediaPreview).not.toContain('var(--color-brand-cyan)');
+    expect(mediaPreview).not.toContain('brand-cyan');
     expect(mediaPreview).not.toContain('aif-gold-');
     expect(mediaPreview).not.toMatch(/rgba\(245,\s*196,\s*83/);
     expect(mediaPreview).not.toMatch(/rgba\(13,\s*221,\s*221/);
+  });
+
+  it('keeps new Social Media templates token-bound and versioned for Branding Manifest v6.2', () => {
+    expect(mediaTemplates).toContain('brandTokenSource: MEDIA_PROJECT_BRAND_TOKEN_SOURCE');
+    expect(mediaTemplates).toContain("templateVersion: '1.1.0'");
+    expect(mediaTemplates).toContain('Dark Black + AIF Gold lead generic content');
+    expect(mediaTemplates).toContain('Cyan is reserved for semantic data visualization');
   });
 
   it('defines missing pattern evidence as omission, never a placeholder signal', () => {

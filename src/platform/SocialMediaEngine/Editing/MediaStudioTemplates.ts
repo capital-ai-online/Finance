@@ -65,7 +65,7 @@ export function createCapitalAiMediaStudioProject(
     transitions: [],
     renderRecipe: {
       templateId: 'capital-ai-media-studio',
-      templateVersion: '1.0.0',
+      templateVersion: '1.1.0',
       rendererProfile: 'media-project-v2-preview',
       brandTokenSource: MEDIA_PROJECT_BRAND_TOKEN_SOURCE,
       brandTextMode: 'deterministic',
@@ -90,6 +90,8 @@ export function createCapitalAiMediaStudioProject(
 /**
  * Canonical coupon-promo draft. It deliberately reuses MediaProjectV2 and the
  * same design-token authority as every other Social Media Engine render.
+ * Branding Manifest v6.2 is therefore inherited from the canonical token source:
+ * Dark Black + AIF Gold lead generic content; Cyan is reserved for semantic data visualization.
  * No generative image is a template authority for this campaign.
  */
 export function createCapitalAiProTrialCouponProject(
@@ -133,7 +135,7 @@ export function createCapitalAiProTrialCouponProject(
     transitions: [],
     renderRecipe: {
       templateId: 'capital-ai-pro-trial-coupon',
-      templateVersion: '1.0.0',
+      templateVersion: '1.1.0',
       rendererProfile: 'media-project-v2-preview',
       brandTokenSource: MEDIA_PROJECT_BRAND_TOKEN_SOURCE,
       brandTextMode: 'deterministic',
