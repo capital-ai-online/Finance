@@ -13,11 +13,12 @@ describe('Capital-AI Learning Platform integration', () => {
     const learning = source('src/features/learning/ui/LearningVocabulary.tsx');
 
     expect(learning).toContain('createDefaultVocabularyRegistry');
+    expect(learning).toContain('normalizeVocabularyTerm');
     expect(learning).toContain("from '../../../platform/Vocabulary'");
     expect(learning).toContain("concept.status === 'approved'");
     expect(learning).toContain('Read-only Lernprojektion.');
     expect(learning).toContain('Capital-AI Learning Platform');
-    expect(learning).toContain("normalize('NFKC')");
+    expect(learning).not.toContain('function normalizeSearch');
 
     expect(learning).not.toContain("platform/Vocabulary/node");
     expect(learning).not.toContain('node:crypto');
