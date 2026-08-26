@@ -160,6 +160,18 @@ describe('Commodity P3-A shadow observability', () => {
     })).toThrow('COMMODITY_SHADOW_PROVIDER_FEATURE_BINDING_UNKNOWN');
   });
 
+  it('fails closed on provider bindings outside the governed commodity provider matrix', () => {
+    expect(() => recordCommodityShadowObservation({
+      snapshot: energySnapshot(),
+      providerBindings: [{
+        providerId: 'unregistered-provider',
+        capability: 'commodity-fundamentals',
+        featureKeys: ['fundamentals.inventoryLevel'],
+      }],
+      environment: 'test',
+    })).toThrow('COMMODITY_SHADOW_PROVIDER_NOT_GOVERNED');
+  });
+
   it('fails closed when champion comparison is not bound to the registered commodity champion', () => {
     expect(() => recordCommodityShadowObservation({
       snapshot: energySnapshot(),
