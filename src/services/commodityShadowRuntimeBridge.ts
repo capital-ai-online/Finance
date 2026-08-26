@@ -29,7 +29,7 @@ export interface CommodityShadowRuntimeBridgeResult {
 }
 
 function stableBridgeFailureCode(error: unknown): string {
-  if (error instanceof Error && /^COMMODITY_[A-Z0-9_:-]+$/.test(error.message)) return error.message;
+  if (error instanceof Error && /^COMMODITY_[A-Z0-9_]+$/.test(error.message)) return error.message;
   return 'COMMODITY_SHADOW_RUNTIME_BRIDGE_FAILED';
 }
 
