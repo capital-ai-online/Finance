@@ -2,9 +2,10 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.6.0  
-**Stand:** 26. August 2026  
-**Korrelationsbasis:** `main@73ad480c1008696c1e48a4c3614e9d03ee318d7c`  
+**Version:** 1.7.1  
+**Stand:** 27. August 2026  
+**Korrelationsbasis:** `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`  
+**Candidate:** `refactor/frontend-bb2bc-dashboard-consumer-cutover-main-2026-08-26`  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
 **Bestandsnachweis:** `docs/frontend/COMPONENT_INVENTORY.md`
@@ -38,12 +39,15 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 
 ---
 
-## 2. Verifizierter Ist-Stand auf main
+## 2. Verifizierter Ist-Stand auf main + BB-2B/BB-2C Candidate
 
 ### 2.1 Erfolgreich abgeschlossene Architekturarbeit
 
 - [x] **BB-0 Foundation / PR #459:** `src/app`, `src/features`, `src/shared`, Shared-Primitives und `frontend:architecture:check` etabliert.
 - [x] **BB-1 Application Composition / PR #462:** `src/app/App.tsx`, `SessionComposition`, `AppRoutes` und kanonischer `UserSession`-Vertrag etabliert; `src/App.tsx` ist Compatibility-Fassade.
+- [x] **BB-2 View Contract / PR #546:** `DashboardView`, exhaustive View→Section-Projektion und Regressionstest unter `src/app/dashboard` etabliert.
+- [x] **BB-2 Composition Boundary / PR #548:** `AppRoutes` konsumiert den kanonischen `src/app/dashboard/Dashboard.tsx`-Entry; der Legacy-Monolith ist hinter einer expliziten Strangler-Grenze gebunden.
+- [x] **Branding / PR #551:** Dark Black `#08080C` + AIF Gold `#F9BF21` sind das kanonische Primary Brand Pair; Cyan bleibt ausschließlich semantische Market-/Data-/Live-/Technical-Visualisierungsfarbe und Purple sekundärer AI-/Intelligence-Akzent.
 - [x] **Crypto Visualization / CV-0:** Authority-/Freshness-/Evidence-Primitives sowie read-only Presentation Projection vorhanden.
 - [x] **Screening:** `RankingBoard` ist produktive kanonische Ranking-Fläche; `UniverseBestWorst` ist Compatibility-Alias.
 - [x] **Commodities / PR #539:** `src/features/commodities/ui/RawMaterialsDashboard.tsx` ist kanonische Commodity-UI; Legacy-Pfad bleibt Compatibility-Export.
@@ -56,11 +60,16 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 
 - `src/components/Dashboard.tsx` bleibt der größte Presentation-Kopplungspunkt.
 - `Dashboard.tsx` importiert zahlreiche fachliche Komponenten weiterhin direkt aus `./...` statt über Feature-Fassaden.
-- `Dashboard.tsx` konsumiert `UserSession` noch über `../App` statt direkt über die kanonische Presentation-Contract-Grenze.
-- Navigation, View-Registry, Drawer, Header und View-Routing sind noch gemeinsam im Dashboard-Monolithen gebunden.
+- Navigation, Drawer, Header und View-Routing sind noch gemeinsam im Dashboard-Monolithen gebunden.
 - Viele Feature-Implementierungen liegen physisch weiterhin in `src/components/`.
-- Die Root-Feature-Fassade `src/features/index.ts` war nach PR #540 noch nicht um `LearningUI` ergänzt; dies wird mit Roadmap 1.6.0 korrigiert.
-- `FRONTEND_ARCH.md` und `COMPONENT_INVENTORY.md` sind jünger als die alte Roadmap, müssen aber nach jeder weiteren Welle erneut mit dem exakten Main-Stand korreliert werden.
+- `FRONTEND_ARCH.md` und `COMPONENT_INVENTORY.md` müssen nach jeder weiteren Welle erneut mit dem exakten Main-Stand korreliert werden.
+
+Mit dem BB-2B/BB-2C-Candidate gilt zusätzlich:
+
+- die lokale 27er-View-Union ist aus dem Consumer entfernt; `Dashboard.tsx` konsumiert `DashboardView` direkt aus `src/app/dashboard/dashboardViews.ts`,
+- das lokale `getViewCategory()`-Mapping ist entfernt; die Section-Projektion erfolgt über `getDashboardSection(activeView)`,
+- `UserSession` wird direkt aus `src/app/types/UserSession.ts` konsumiert; die Root-Compatibility-Fassade `src/App.tsx` ist keine Session-Type-Authority des Dashboards mehr,
+- der separate Navigation-State `universes` bleibt bewusst außerhalb der fachlichen View→Section-Authority.
 
 ---
 
@@ -68,17 +77,17 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 
 | Bereich | Bewertung | Befund | Nächste Qualitätsmaßnahme |
 |---|---|---|---|
-| Branding / Design Tokens | **gut** | Gold, Purple, Cyan und semantische Statusfarben sind zentral dokumentiert; lokale historische `aif-*`-Aliase existieren noch | neue UI ausschließlich über semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
+| Branding / Design Tokens | **gut** | Dark Black + AIF Gold sind das kanonische Primary Brand Pair; Purple bleibt sekundärer AI-Akzent und Cyan ausschließlich semantische Market-/Data-/Live-/Technical-Visualisierungsfarbe; historische `aif-*`-/`brand-cyan`-Compatibility-Aliase existieren noch | neue UI ausschließlich über kanonische Rollen/semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
 | Typografie | **gut mit Drift-Risiko** | Inter/Poppins/JetBrains Mono sind kanonisch definiert | Headings/Body/Tech-Data in Komponenten automatisiert prüfen |
 | Shared UI | **gut** | Button, Card, Input, Modal, Tooltip, Skeleton, EmptyState und Status-/Evidence-Primitives vorhanden | Nutzung in Legacy-Komponenten erhöhen und Parallelimplementierungen entfernen |
-| Dashboard IA | **kritische Restschuld** | hohe Funktionsdichte, sehr große View-Union, Navigation und Fachkomponenten eng gekoppelt | BB-2 priorisieren |
+| Dashboard IA | **kritische Restschuld** | View-/Session-Contracts sind zentralisiert; Rendering, Navigation, Drawer und Header bleiben im Monolithen gekoppelt | BB-2D priorisieren |
 | Screening | **gut** | kanonisches RankingBoard und klare Authority-Grenze | Filter-/Search-UX und progressive Disclosure verbessern |
 | Commodities | **gut** | eigener Feature-Slice, Research/Verified-Grenze explizit | Visual Consistency und gemeinsame Asset-Universe-Navigation prüfen |
 | Learning | **gut** | eigener Slice, Public Route, read-only Vocabulary | Feature-Namespace und gemeinsame Public-Surface-Patterns konsolidieren |
 | News / Sentiment | **mittel bis gut** | fachliche Integrity-Härtung stark; Komponenten physisch teils Legacy | BB-5 Migration und einheitliche Loading/Empty/Error-Semantik |
 | Governance / Admin | **funktional, hohe Komplexität** | Security-Grenzen gehärtet, UI-Implementierungen teils Legacy | BB-8; Admin-Navigation und Operational Status konsolidieren |
 | Accessibility | **Baseline vorhanden** | 44px Targets, Focus und Reduced Motion dokumentiert | axe/Lighthouse-Baseline und vollständige Keyboard-/Screenreader-Prüfung |
-| Mobile | **mittel** | responsive Basis vorhanden, Dashboard-Dichte bleibt problematisch | Navigation/Drawer in BB-2 entkoppeln und mobile IA separat prüfen |
+| Mobile | **mittel** | responsive Basis vorhanden, Dashboard-Dichte bleibt problematisch | Navigation/Drawer in BB-2E entkoppeln und mobile IA separat prüfen |
 
 ---
 
@@ -88,11 +97,19 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 
 ```text
 src/main.tsx
-  → src/App.tsx                    # Compatibility
-  → src/app/App.tsx                # kanonischer Composition Root
+  → src/App.tsx                         # Compatibility
+  → src/app/App.tsx                     # kanonischer Composition Root
   → src/app/auth/SessionComposition.tsx
   → src/app/routing/AppRoutes.tsx
-  → src/components/Dashboard.tsx   # aktueller BB-2-Strangler
+  → src/app/dashboard/Dashboard.tsx     # kanonische Dashboard-Composition-Grenze
+  → src/components/Dashboard.tsx        # bounded Legacy-Strangler
+```
+
+Der Legacy-Strangler konsumiert Presentation-Contracts direkt aus:
+
+```text
+src/app/dashboard/dashboardViews.ts
+src/app/types/UserSession.ts
 ```
 
 ### 4.2 Feature- und Shared-Richtung
@@ -163,8 +180,8 @@ Arbeitspakete:
 
 - [x] **BB-2A Readiness:** aktuellen Main, Roadmap, Feature-Slices und kanonische Pfade korrelieren.
 - [x] **BB-2A Namespace-Korrektur:** `LearningUI` in `src/features/index.ts` aufnehmen.
-- [ ] **BB-2B View Contract:** `DashboardView` und View→Section-Mapping nach `src/app/dashboard/dashboardViews.ts` extrahieren.
-- [ ] **BB-2C Session Contract:** Dashboard direkt auf `src/app/types/UserSession` umstellen; Root-Compatibility-Import entfernen.
+- [x] **BB-2B View Contract:** `DashboardView` und View→Section-Mapping nach `src/app/dashboard/dashboardViews.ts` extrahieren und Legacy-Consumer auf den kanonischen Contract umstellen.
+- [x] **BB-2C Session Contract:** Dashboard direkt auf `src/app/types/UserSession` umstellen; Root-Compatibility-Import entfernen.
 - [ ] **BB-2D View Router:** fachliche Render-Switches nach `DashboardViewRouter.tsx` verschieben und Feature-Fassaden konsumieren.
 - [ ] **BB-2E Navigation:** Desktop Navigation und Mobile Drawer aus dem Monolithen lösen.
 - [ ] **BB-2F Header/Shell:** Header, Profil-/Logout-Flächen und globale Shell-Verantwortung extrahieren.
@@ -292,13 +309,13 @@ Vor jedem Frontend-PR:
 
 ## 9. Unmittelbare Reihenfolge
 
-1. **BB-2B:** `DashboardView` + Section-Mapping extrahieren.
-2. **BB-2C:** direkten kanonischen `UserSession`-Import herstellen.
-3. **BB-2D:** View Router und Feature-Fassaden entkoppeln.
-4. **BB-2E/F:** Navigation, Drawer und Header extrahieren.
+1. **BB-2D:** View Router und Feature-Fassaden aus dem Legacy-Dashboard entkoppeln.
+2. **BB-2E:** Navigation und Drawer extrahieren.
+3. **BB-2F:** Header/Shell-Verantwortung extrahieren.
+4. **BB-2G:** Dashboard auf reine Composition reduzieren und Closure-Gates aktualisieren.
 5. Danach Roadmap/Inventory/Architecture erneut gegen den dann aktuellen `main` korrelieren.
 6. Erst anschließend mit BB-3/BB-4 physischen Legacy-Migrationen fortfahren.
 
 ---
 
-*Version 1.6.0 ersetzt den veralteten Stand vom 20.08.2026. Sie korreliert die kanonische Frontend-Roadmap mit `main@73ad480c1008696c1e48a4c3614e9d03ee318d7c`, übernimmt die seitdem gemergten Frontend-Slices und priorisiert BB-2 als nächste strukturelle Migrationswelle.*
+*Version 1.7.1 korreliert die Roadmap mit `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`, übernimmt die gemergten BB-2B-/Composition-Arbeiten aus PR #546 und #548 sowie die Branding-Korrektur aus PR #551 und schließt im aktuellen Candidate den Dashboard-Consumer-Cutover für BB-2B sowie den direkten Session-Contract für BB-2C ab. Nächster P0-Schritt ist BB-2D.*

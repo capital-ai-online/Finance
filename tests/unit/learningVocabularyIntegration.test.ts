@@ -27,9 +27,12 @@ describe('Capital-AI Learning Platform integration', () => {
 
   it('wires one Learning tab to the shared LearningVocabulary component', () => {
     const dashboard = source('src/components/Dashboard.tsx');
+    const dashboardViews = source('src/app/dashboard/dashboardViews.ts');
 
     expect(dashboard).toContain("import { LearningVocabulary } from '../features/learning/ui';");
-    expect(dashboard).toContain("'dashboard' | 'myworkspace' | 'learning'");
+    expect(dashboard).toContain('type DashboardView,');
+    expect(dashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(dashboardViews).toContain("'learning'");
     expect(dashboard).toContain('title="Learning"');
     expect(dashboard).toContain("navigateTo('learning')");
     expect(dashboard).toContain("activeView === 'learning' && (");

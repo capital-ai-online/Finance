@@ -59,9 +59,20 @@ describe('BB-2B dashboard view contract', () => {
     }
   });
 
-  it('proves the extracted contract still covers every view used by the legacy dashboard', () => {
-    for (const view of DASHBOARD_VIEWS) {
-      expect(legacyDashboard, view).toContain(`'${view}'`);
+  it('keeps every legacy dashboard navigation target covered by the extracted contract', () => {
+    expect(legacyDashboard).toContain('type DashboardView,');
+    expect(legacyDashboard).toContain('getDashboardSection,');
+    expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
+
+    const navigationTargets = Array.from(
+      legacyDashboard.matchAll(/(?:navigateTo|setActiveView)\('([^']+)'\)/g),
+      match => match[1],
+    );
+    const knownViews = new Set<string>(DASHBOARD_VIEWS);
+
+    expect(navigationTargets.length).toBeGreaterThan(0);
+    for (const view of navigationTargets) {
+      expect(knownViews.has(view), view).toBe(true);
     }
   });
 });
