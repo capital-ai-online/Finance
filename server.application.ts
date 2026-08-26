@@ -52,6 +52,7 @@ import { enforceScreeningQuota } from './server/quota';
 import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter';
 import { isOriginAllowed } from './server/middleware/cors';
 import { isKnownProbePath } from './server/middleware/probeProtection';
+import { createHoneytokenTripwire } from './server/security/honeytokenTripwire';
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
 import { getStripeConfigurationStatus, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
@@ -82,6 +83,12 @@ app.use(requestContext);
 // (Prometheus-Exposition-Format, siehe server/metrics.ts). Frueh montiert, damit auch von
 // spaeteren Middlewares/Routen abgelehnte Requests (CORS-Block, Rate-Limit) erfasst werden.
 app.use(metricsMiddleware);
+
+// Honeytoken-Tripwire. Frueh montiert, damit auch Requests erfasst werden, die spaeter am
+// Probe-Filter, am Rate-Limit oder an CORS abgewiesen werden - gerade dort taucht ein
+// ausprobiertes Credential auf. Die Middleware veraendert Antwortverhalten und Latenz nicht;
+// ohne konfiguriertes Honeytoken ist sie ein reiner Durchreicher.
+app.use(createHoneytokenTripwire());
 
 // ---------------------------------------------------------
 // Compliance-Review Punkt 1: Prozessweites Sicherheitsnetz gegen unbehandelte
