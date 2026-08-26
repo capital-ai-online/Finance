@@ -9,6 +9,17 @@ const core = read('scripts/media/capital_ai_media.py');
 const renderer = read('scripts/media/render_content_assets.py');
 const pdfCompanion = read('scripts/docs/export_pdf_media_bundle.py');
 const requirements = read('scripts/media/requirements-content-media.txt');
+const designTokens = JSON.parse(read('docs/frontend/design-tokens.json')) as {
+  color: {
+    brand: {
+      primary: { value: string };
+      cyan: { value: string; deprecated?: boolean };
+    };
+    semantic: {
+      info: { value: string };
+    };
+  };
+};
 const example = JSON.parse(read('scripts/media/examples/capital_ai_media_manifest.json'));
 const graham = JSON.parse(read('docs/content-creator/packages/graham-fair-value-check/MEDIA_RENDER_MANIFEST.json'));
 
@@ -22,7 +33,7 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(requirements).not.toMatch(/Pillow[><~^]/);
   });
 
-  it('uses canonical design tokens instead of a parallel or deprecated brand palette', () => {
+  it('uses canonical design tokens instead of a parallel or deprecated palette authority', () => {
     expect(core).toContain('docs" / "frontend" / "design-tokens.json');
     expect(core).toContain('load_brand_palette');
     expect(core).toContain('brand = color["brand"]');
@@ -32,6 +43,14 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(core).not.toContain('color["aif"]');
     expect(core).not.toContain('requests.');
     expect(core).not.toContain('httpx.');
+  });
+
+  it('projects generic Social Media rendering to Dark Black + AIF Gold under Branding Manifest v6.2', () => {
+    expect(designTokens.color.brand.primary.value).toBe('#F9BF21');
+    expect(designTokens.color.brand.cyan.value).toBe(designTokens.color.brand.primary.value);
+    expect(designTokens.color.brand.cyan.deprecated).toBe(true);
+    expect(designTokens.color.semantic.info.value).toBe('#22D3EE');
+    expect(designTokens.color.semantic.info.value).not.toBe(designTokens.color.brand.primary.value);
   });
 
   it('keeps subprocess execution shell-free and bounded', () => {

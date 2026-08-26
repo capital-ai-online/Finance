@@ -30,7 +30,7 @@ function tokenValue(tokens: Record<string, unknown>, ...segments: string[]): unk
   return current;
 }
 
-describe('CAPITAL-AI Branding Manifest v6.1 / PDF brand projection', () => {
+describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
   const tokens = JSON.parse(read('docs/frontend/design-tokens.json')) as Record<string, unknown>;
   const css = read('src/index.css');
   const vite = read('vite.config.ts');
@@ -60,22 +60,27 @@ describe('CAPITAL-AI Branding Manifest v6.1 / PDF brand projection', () => {
       expect(tokenValue(tokens, ...tokenPath)).toBe(cssThemeValue(css, variable));
     }
 
+    expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
     expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F9BF21');
     expect(tokenValue(tokens, 'color', 'brand', 'accent')).toBe('#8D26FF');
-    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe('#22D3EE');
+    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe('#F9BF21');
     expect(tokenValue(tokens, 'color', 'brand', 'success')).toBe('#44DE88');
     expect(tokenValue(tokens, 'color', 'brand', 'danger')).toBe('#F87171');
-    expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
     expect(tokenValue(tokens, 'color', 'surface', 'elevated')).toBe('#121215');
   });
 
-  it('restores Cyan as the market/data visualization role while keeping the historical alias semantic', () => {
+  it('keeps Dark Black + AIF Gold as the primary brand pair and Cyan semantic-only', () => {
+    expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
+    expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F9BF21');
+    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe(
+      tokenValue(tokens, 'color', 'brand', 'primary'),
+    );
     expect(tokenValue(tokens, 'color', 'aif', 'neon', 'cyan')).toBe(
-      tokenValue(tokens, 'color', 'brand', 'cyan'),
+      tokenValue(tokens, 'color', 'brand', 'primary'),
     );
     expect(tokenValue(tokens, 'color', 'semantic', 'info')).toBe('#22D3EE');
     expect(tokenValue(tokens, 'color', 'assetClass', 'crypto')).toBe('#22D3EE');
-    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).not.toBe(tokenValue(tokens, 'color', 'brand', 'accent'));
+    expect(tokenValue(tokens, 'color', 'factor', 'technical')).toBe('#22D3EE');
   });
 
   it('uses Inter headings, Poppins body and JetBrains Mono data typography', () => {
@@ -99,7 +104,7 @@ describe('CAPITAL-AI Branding Manifest v6.1 / PDF brand projection', () => {
     expect(pdfBrand).not.toContain('canvas: [24, 24, 27]');
   });
 
-  it('renders the canonical shared mark with Gold and Purple while Cyan remains a visualization role', () => {
+  it('renders the canonical shared mark with Gold as the brand anchor', () => {
     expect(pdfBrand).toContain('drawCapitalAiEmblem');
     expect(pdfBrand).toContain('drawCapitalAiWordmark');
     expect(pdfBrand).toContain('EMBLEM_NODES');

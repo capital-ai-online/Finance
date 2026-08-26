@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Branding Manifest v6.1 — canonical web projection */
+  /* Branding Manifest v6.2 — canonical web projection */
   --color-background: #08080C;
   --color-foreground: #FFFFFF;
   --color-border: #252529;
@@ -10,9 +10,10 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A1A1AA;
 
+  /* Primary brand pair: Dark Black canvas + AIF Gold. */
   --color-brand-primary: #F9BF21;
+  /* Secondary AI accent; not a primary brand color. */
   --color-brand-accent: #8D26FF;
-  --color-brand-cyan: #22D3EE;
   --color-brand-success: #44DE88;
   --color-brand-danger: #F87171;
 
@@ -43,12 +44,13 @@
   --color-status-info: #22D3EE;
   --color-status-ai: #8D26FF;
 
-  /* Compatibility aliases only. New UI code uses brand-/asset-/score-/factor-/status-* roles. */
+  /* Compatibility aliases only. Cyan is no longer a branding role. */
+  --color-brand-cyan: #F9BF21;
   --color-aif-gold-light: #F9BF21;
   --color-aif-gold-DEFAULT: #F9BF21;
   --color-aif-gold-dark: #F9BF21;
   --color-aif-gold-muted: #F9BF21;
-  --color-aif-neon-cyan: #22D3EE;
+  --color-aif-neon-cyan: #F9BF21;
   --color-aif-neon-purple: #8D26FF;
 
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
@@ -132,15 +134,15 @@ h6 {
     transform: scale(1);
     box-shadow:
       0 0 18px color-mix(in srgb, var(--color-brand-primary) 18%, transparent),
-      0 0 24px color-mix(in srgb, var(--color-brand-accent) 10%, transparent),
-      0 0 18px color-mix(in srgb, var(--color-brand-cyan) 8%, transparent);
+      0 0 24px color-mix(in srgb, var(--color-brand-primary) 10%, transparent),
+      0 0 18px color-mix(in srgb, var(--color-brand-primary) 8%, transparent);
   }
   50% {
     transform: scale(1.01);
     box-shadow:
       0 0 28px color-mix(in srgb, var(--color-brand-primary) 32%, transparent),
-      0 0 32px color-mix(in srgb, var(--color-brand-accent) 20%, transparent),
-      0 0 24px color-mix(in srgb, var(--color-brand-cyan) 14%, transparent);
+      0 0 32px color-mix(in srgb, var(--color-brand-primary) 20%, transparent),
+      0 0 24px color-mix(in srgb, var(--color-brand-primary) 14%, transparent);
   }
 }
 
