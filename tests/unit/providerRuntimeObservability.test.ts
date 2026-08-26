@@ -45,7 +45,7 @@ describe('P3-A provider runtime observability', () => {
     expect(summary.currentCircuitState).toBe('OPEN');
   });
 
-  it('distinguishes local rate budget denial from provider HTTP 429', () => {
+  it('distinguishes local rate budget denial from provider HTTP 429 without fabricating provider rates', () => {
     recordProviderRuntimeObservation({
       providerId: 'eia',
       capability: 'commodity-fundamentals',
@@ -63,8 +63,8 @@ describe('P3-A provider runtime observability', () => {
     const summary = summarizeProviderRuntime('eia', 'commodity-fundamentals');
     expect(summary.requestAttemptCount).toBe(0);
     expect(summary.localDenialCount).toBe(1);
-    expect(summary.availabilityRate).toBe(0);
-    expect(summary.errorRate).toBe(0);
+    expect(summary.availabilityRate).toBeNull();
+    expect(summary.errorRate).toBeNull();
     expect(summary.p95LatencyMs).toBeNull();
     expect(summary.localRateLimitDenials).toBe(1);
     expect(summary.providerRateLimitedEvents).toBe(0);
