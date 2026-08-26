@@ -59,9 +59,10 @@ test('silent git commands report success independently of stdout', () => {
 
 function validBaseline() {
   const baseline = {
-    schemaVersion: '1.1.0',
+    schemaVersion: '1.2.0',
     generatedAt: new Date().toISOString(),
-    productionUrl: 'https://capital-ai.online/healthz',
+    productionUrl: 'https://capital-ai.online/',
+    productionHealthUrl: 'https://capital-ai.online/healthz',
     bootstrap: false,
     production: {
       status: 'ok',
@@ -99,12 +100,33 @@ test('production baseline id atomically binds production, main, head and drift',
   );
 });
 
+test('production website URL and health endpoint are distinct baseline identities', () => {
+  const baseline = validBaseline();
+  const originalId = baseline.baselineId;
+
+  baseline.productionUrl = baseline.productionHealthUrl;
+  assert.notEqual(computeProductionBaselineId(baseline), originalId);
+  assert.equal(
+    validateProductionBaselineForPr(baseline).some((error) => error.includes('productionUrl must be https://capital-ai.online/')),
+    true,
+  );
+
+  const healthBaseline = validBaseline();
+  healthBaseline.productionHealthUrl = healthBaseline.productionUrl;
+  assert.equal(
+    validateProductionBaselineForPr(healthBaseline).some((error) => error.includes('productionHealthUrl must be https://capital-ai.online/healthz')),
+    true,
+  );
+});
+
 test('production baseline block is rendered from one validated object without fallback values', () => {
   const baseline = validBaseline();
   const block = renderProductionBaselineBlock(baseline);
 
   assert.match(block, /Baseline-ID/);
   assert.match(block, new RegExp(baseline.baselineId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(block, /\*\*Produktions-URL:\*\* `https:\/\/capital-ai\.online\/`/);
+  assert.match(block, /\*\*Produktions-Health-URL:\*\* `https:\/\/capital-ai\.online\/healthz`/);
   assert.match(block, new RegExp(baseline.production.commitSha));
   assert.match(block, new RegExp(baseline.main.sha));
   assert.match(block, new RegExp(baseline.head.sha));

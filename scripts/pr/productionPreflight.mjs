@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import {
+  DEFAULT_PRODUCTION_URL,
   DEFAULT_PRODUCTION_HEALTH_URL,
   PRODUCTION_BASELINE_SCHEMA_VERSION,
   appendGithubOutput,
@@ -13,7 +14,8 @@ import {
   writeJsonFile,
 } from './lib.mjs';
 
-const productionUrl = process.env.CAPITAL_AI_PRODUCTION_HEALTH_URL || DEFAULT_PRODUCTION_HEALTH_URL;
+const productionUrl = process.env.CAPITAL_AI_PRODUCTION_URL || DEFAULT_PRODUCTION_URL;
+const productionHealthUrl = process.env.CAPITAL_AI_PRODUCTION_HEALTH_URL || DEFAULT_PRODUCTION_HEALTH_URL;
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
 const outputPath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
@@ -63,23 +65,23 @@ function correlateDeploymentIdentity(payloadDeployment, headerDeployment) {
 async function fetchProductionHealth() {
   let response;
   try {
-    response = await fetch(productionUrl, {
+    response = await fetch(productionHealthUrl, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(15_000),
     });
   } catch (error) {
-    fail(`Production health request failed for ${productionUrl}: ${error?.message || error}`);
+    fail(`Production health request failed for ${productionHealthUrl}: ${error?.message || error}`);
   }
 
   if (!response.ok) {
-    fail(`Production health request returned HTTP ${response.status} for ${productionUrl}.`);
+    fail(`Production health request returned HTTP ${response.status} for ${productionHealthUrl}.`);
   }
 
   let payload;
   try {
     payload = await response.json();
   } catch {
-    fail(`Production health response from ${productionUrl} is not valid JSON.`);
+    fail(`Production health response from ${productionHealthUrl} is not valid JSON.`);
   }
 
   if (payload?.status !== 'ok') {
@@ -135,6 +137,7 @@ if (!deployment?.commitSha || !/^[0-9a-f]{40}$/i.test(String(deployment.commitSh
     schemaVersion: '1.0.0',
     generatedAt,
     productionUrl,
+    productionHealthUrl,
     bootstrap: true,
     bootstrapPr: 75,
     bootstrapReason: 'PR #75 introduces deployment identity headers; current production contract predates ADR-0036.',
@@ -161,6 +164,8 @@ if (!deployment?.commitSha || !/^[0-9a-f]{40}$/i.test(String(deployment.commitSh
 
   writeJsonFile(outputPath, legacyBaseline);
   appendGithubOutput({
+    production_url: productionUrl,
+    production_health_url: productionHealthUrl,
     production_sha: 'legacy-unavailable',
     production_version: 'legacy-unavailable',
     production_branch: 'legacy-unavailable',
@@ -225,6 +230,7 @@ const baseline = {
   schemaVersion: PRODUCTION_BASELINE_SCHEMA_VERSION,
   generatedAt,
   productionUrl,
+  productionHealthUrl,
   bootstrap: false,
   production: {
     status: productionHealth.status,
@@ -262,6 +268,8 @@ baseline.baselineId = computeProductionBaselineId(baseline);
 writeJsonFile(outputPath, baseline);
 appendGithubOutput({
   baseline_id: baseline.baselineId,
+  production_url: productionUrl,
+  production_health_url: productionHealthUrl,
   production_sha: productionSha,
   production_version: productionVersion,
   production_branch: productionBranch,
