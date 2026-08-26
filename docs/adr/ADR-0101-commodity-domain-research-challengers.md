@@ -1,11 +1,11 @@
 # ADR-0101 — Commodity Domain Research Challengers innerhalb der Single-Scoring-Architektur
 
-**Status:** Accepted for P0/P1 implementation and P2 validation/promotion governance  
+**Status:** Accepted for P0/P1 implementation and P2 validation/promotion governance; P3-A observability foundation defined  
 **Date:** 2026-08-23  
-**Updated:** 2026-08-25  
+**Updated:** 2026-08-26  
 **Parent authority:** ADR-0087, SC-2 Model Registry & Universal Asset Interface  
 **Roadmap:** `docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md`  
-**Traceability:** Commodity P0–P2-C gemäß gemergtem Code/Evidence; Roadmap-Issues werden in diesem Chat nicht als Status-Authority verändert.
+**Traceability:** Commodity P0–P2-C gemäß gemergtem Code/Evidence; P3-A Foundation auf dediziertem Branch, Exit Gate bleibt bis realer Beobachtungsperiode offen. Roadmap-Issues werden in diesem Chat nicht als Status-Authority verändert.
 
 ## Kontext
 
@@ -85,6 +85,18 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 50. `readyForOwnerReview=true` ist ausschließlich ein Evidence-Completeness-Signal. Das Paket bleibt `canonical=false`, `scoreEligible=false`, `registryMutationPerformed=false` und enthält keinerlei Mutation von `ScoringModelRegistry`, `ScoringDispatcher`, Ranking oder Runtime Executor.
 51. Eine Owner-Entscheidung muss explizit als `HUMAN_OWNER`-Evidence an den **exakten Promotion-Package-Fingerprint** gebunden sein. Auch eine gültige `APPROVE`-Assessment-Ausgabe führt keine Registry-Mutation aus. Controlled Promotion bleibt ein separates Folgepaket auf frischem Branch nach vollständigen P2/P3-Gates und Human Merge.
 
+## P3-A — Shadow Runtime & Observability
+
+52. `provider-runtime-observability/1.0.0` ergänzt die vorhandene `ProviderHealth`-Momentaufnahme um ein bounded, pro Prozess geführtes Laufzeit-Ledger. Gespeichert werden ausschließlich governte Provider-/Capability-IDs, Outcome, Dauer, HTTP-Status, Payload-Usability, Circuit-State sowie Rate-Budget-Rest/Reset. URL, Request-Pfad, Query, Payload, API-Key, Secret oder Provider-Rohdaten sind verboten.
+53. `ResearchEvidenceProviderHttp` erzeugt genau eine Runtime-Beobachtung pro Request-Outcome — einschließlich `NOT_CONFIGURED`, lokalem `RATE_LIMITED`, `CIRCUIT_OPEN`, HTTP-/Transportfehler, Application-Level-Providerfehler, Schemafehler und `READY`. Damit erben EIA/USDA/CFTC/USGS und weitere dort angebundene Quellen dieselbe Latency-/Error-/Circuit-/Budget-Beobachtung ohne zweiten Transportstack.
+54. `commodity-shadow-observability/1.0.0` akzeptiert ausschließlich einen bereits governten `CommodityResearchFeatureSnapshot` plus die deterministische `CommodityCategoryResearchEvaluation`. Provider-/Feature-Zuordnung wird nur über explizite Bindings akzeptiert; P3-A inferiert weder Category noch Provider aus Symbolen und erzeugt keine zusätzlichen API-Aufrufe.
+55. Solange `weightHypothesis.executable=false` und `researchCompositeScore=null` gelten, ist numerische Challenger-Score-Stability **nicht anwendbar**. P3-A persistiert deshalb `NOT_APPLICABLE_UNTIL_EXECUTABLE_WEIGHTS` mit `score=null`/`delta=null`, statt aus DQ, Coverage oder Hypothesengewichten einen Ersatzscore abzuleiten.
+56. Für den bestehenden produktiven Commodity-Champion darf ein bereits vorliegender Canonical-Score als read-only Comparator mitgeführt werden. Dessen Score-/Feature-/Weight-Drift ist Beobachtungsevidence und verändert weder Challenger noch Champion, Ranking oder Eligibility.
+57. P3-A misst Research-Status, Feature-/Required-Coverage, DQ, Feature-Status-Wechsel sowie effective-feature/evidence-Fingerprint-Drift. Der P3-A-`evidenceFingerprint` ist eine content-addressed Observation-Identität und ersetzt weder den bestehenden Scoring-Fingerprint noch Historical Dataset/Weight Fingerprints.
+58. Jede Shadow-Beobachtung erzeugt eine sanitisierte kanonische `TelemetryRecord`-Evidence mit `eventName=commodity.shadow.observation.completed` und `auditReference=ADR-0101/P3-A`. Die Enterprise Traceability Matrix wird zur Laufzeit nicht mutiert; operative Telemetrie referenziert Governance/Lineage, während ETM weiter über ihren bestehenden Build-Prozess erzeugt wird.
+59. Die erste P3-A-Stufe bleibt absichtlich in-memory und pro Prozess, analog zu vorhandenen Circuit-/Rate-/Gemini-Shadow-Primitiven. OpenTelemetry/Prometheus bleiben geeignete spätere Exportpfade, werden in diesem bounded Scope aber nicht als neue Runtime-Dependency eingeführt. Horizontal geteilte Langzeit-SLO-/Promotion-Evidence benötigt einen separaten persistenten/exportierten Observability-Slice.
+60. Die Implementierung der Foundation erfüllt **nicht** automatisch das P3-A Exit Gate. Eine definierte reale Beobachtungsperiode mit ausreichenden Samples sowie ohne ungeklärte P0/P1-Integrity-Findings bleibt zwingende nachgelagerte Evidence.
+
 ## Sicherheits-, Governance- und Datenintegritätsfolgen
 
 - Keine neue Credential- oder IAM-Authority.
@@ -106,6 +118,8 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - Evidence Grade ist fail-closed. `CURRENT_HISTORY_ONLY` und `REFERENCE_STATIC` bleiben Research-Evidence und können nicht durch Dataset Assembly zu `PIT_VERIFIED` konvertiert werden.
 - Ein Owner-Approval-Evidence-Objekt ist Evidence und keine technische Mutation Authority. Registry-/Dispatcher-Änderungen bleiben separate, human-gated Repository-Arbeit.
 - Der persistierte Work Claim eines terminal gemergten Commodity-Pakets wird entsprechend Development Chain Execution Policy 2.0.0 auf `released`, `exclusive=false` gestellt; stale Claim-Metadaten dürfen keine künstliche Writer-Authority fortsetzen.
+- Shadow-Ledger enthalten keine Provider-Payloads, Rohwerte, URLs, Queries oder Secrets; Feature-Rohwerte gehen ausschließlich gehasht in den P3-A-Evidence-Fingerprint ein.
+- `canonical=false`, `scoreEligible=false`, `rankingEligible=false`, `executionEligible=false` und `registryMutationPerformed=false` sind feste Shadow-Contract-Invarianten.
 
 ## Nicht gewählt
 
@@ -127,13 +141,15 @@ ADR-0087 bleibt deshalb übergeordnet: UAI, `ScoringModelRegistry`, `ScoringDisp
 - ein zweites MLOps-/Model-Registry-System nur für Promotion-Artefakte;
 - Ore Grade/Tonnage/Capex/Opex im Commodity-Benchmark-Modell;
 - LLM-basierte numerische Füllwerte;
-- numerischer P1-Challenger-Score ohne P2-Kalibrierung und OOS-Evidence;
-- rohe Exception-/Provider-Payloadtexte als öffentliche 5xx-Fehlerdetails.
+- numerischer P1/P3-A-Challenger-Score ohne P2-Kalibrierung, executable weights und OOS-Evidence;
+- rohe Exception-/Provider-Payloadtexte als öffentliche 5xx-Fehlerdetails;
+- neue OpenTelemetry-/Prometheus-Runtime-Dependency nur für die erste bounded P3-A-Ledger-Stufe;
+- automatische keyed-API-Aufrufe allein zur Erzeugung von Observability-Samples.
 
 ## Validierung / Promotion
 
-P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability-, Historical-Dataset-, Historical-Vintage-, Point-in-Time-, Survivorship-, Outcome-Leakage-, Confidence-, Benchmark-, Walk-forward/OOS-, Provider-Resilience-, Stress-/Regime-, Descriptor-/Fingerprint- und Owner-Decision-Binding-Negativtests.
+P0/P1 benötigt Contract-/Authority-/Provider-Negativtests. P2 ergänzt Correlation-/Double-Counting-, Weight-Stability-, Historical-Dataset-, Historical-Vintage-, Point-in-Time-, Survivorship-, Outcome-Leakage-, Confidence-, Benchmark-, Walk-forward/OOS-, Provider-Resilience-, Stress-/Regime-, Descriptor-/Fingerprint- und Owner-Decision-Binding-Negativtests. P3-A ergänzt Provider-Latency/Error/Circuit/Budget-Aggregation, Shadow-Authority-, Snapshot/Evaluation-Mismatch-, Drift- und Sanitization-Regressionen.
 
-Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert. Sie erfordert weiterhin reale OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review, P2-D/P3-Integrationsgates, finalen Main-/Open-PR-Sync und eine separate explizite Human/Owner-Entscheidung. Ein Review-Paket oder eine Entscheidungsevidence kann diese nachgelagerte Registry-/Runtime-Änderung nicht selbst ausführen.
+Produktive Promotion eines Kategorie-Modells ist durch diese ADR ausdrücklich **nicht** autorisiert. Sie erfordert weiterhin reale OOS-/Stress-Evidence, Provider-Resilienz, Security/Data-Integrity Review, P2-D/P3-Integrationsgates, finalen Main-/Open-PR-Sync und eine separate explizite Human/Owner-Entscheidung. Ein Review-Paket, eine Shadow-Beobachtung oder eine Entscheidungsevidence kann diese nachgelagerte Registry-/Runtime-Änderung nicht selbst ausführen.
 
 Für das Error-Handling sind zusätzlich mindestens Application-Level-Providerfehler (`status=error`), Health-Diagnostik mit `payloadUsable=false` sowie die Nichtweitergabe roher Exceptiontexte über Commodity-5xx-Routen als Regression zu prüfen.
