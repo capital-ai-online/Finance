@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { orchestrator } from '../src/lib/requestOrchestrator';
+import { validateOrchestratorConfigPatch } from '../src/lib/orchestratorConfigPolicy';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
 import { getCleanEnv } from './env';
@@ -43,13 +44,19 @@ orchestratorRouter.get('/ping-models', requireOrchestratorAdmin, (_req, res) => 
 });
 
 orchestratorRouter.post('/config', requireOrchestratorAdmin, (req, res) => {
-  const { concurrencyLimit, maxQueueSize, maxRequestsPerWindow } = req.body;
-  orchestrator.updateConfig({
-    concurrencyLimit: typeof concurrencyLimit === 'number' ? concurrencyLimit : undefined,
-    maxQueueSize: typeof maxQueueSize === 'number' ? maxQueueSize : undefined,
-    maxRequestsPerWindow: typeof maxRequestsPerWindow === 'number' ? maxRequestsPerWindow : undefined,
-  });
-  res.json({ success: true, stats: orchestrator.getStats() });
+  const validation = validateOrchestratorConfigPatch(req.body);
+  if (validation.ok === false) {
+    return res.status(400).json({
+      error: 'Ungültige Orchestrator-Konfiguration.',
+      code: validation.code,
+      issues: validation.issues,
+    });
+  }
+
+  // FO-03: erst nach vollständiger Validierung mutieren. Dadurch kann ein gemischter Payload
+  // niemals teilweise angewandt werden.
+  orchestrator.updateConfig(validation.value);
+  return res.json({ success: true, stats: orchestrator.getStats() });
 });
 
 orchestratorRouter.post('/reset', requireOrchestratorAdmin, (_req, res) => {
