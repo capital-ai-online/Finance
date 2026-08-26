@@ -18,9 +18,13 @@ import {
   createUniversalAssetIdentity,
   evaluateCommodityCategoryResearchSnapshot,
   isCommodityResearchInstrumentKind,
+  recordCommodityShadowObservation,
   type CommodityCategoryResearchEvaluation,
   type CommodityResearchFeatureObservation,
   type CommodityResearchFeatureSnapshot,
+  type CommodityShadowChampionView,
+  type CommodityShadowObservation,
+  type CommodityShadowProviderBinding,
   type UniversalAssetIdentity,
   type UniversalAssetSource,
 } from '../platform/Scoring';
@@ -32,7 +36,7 @@ import {
 export const RAW_MATERIALS_RESEARCH_ORCHESTRATOR_CONTRACT_VERSION =
   'raw-materials-research-orchestrator/1.0.0' as const;
 export const RAW_MATERIALS_SOURCE_BACKED_RESEARCH_CONTRACT_VERSION =
-  'raw-materials-source-backed-research/1.0.0' as const;
+  'raw-materials-source-backed-research/1.1.0' as const;
 
 /**
  * Explicit authority boundary for the commodity/raw-materials orchestrator.
@@ -70,6 +74,8 @@ export interface RawMaterialsSourceBackedResearchContext {
   asset: UniversalAssetIdentity;
   featureSnapshot: CommodityResearchFeatureSnapshot;
   challengerEvaluation: CommodityCategoryResearchEvaluation;
+  /** P3-A read-only shadow evidence. It cannot influence ranking, eligibility or execution. */
+  shadowObservation: CommodityShadowObservation;
   canonical: false;
   scoreEligible: false;
   executionEligible: false;
@@ -84,6 +90,11 @@ export interface RawMaterialsSourceBackedResearchInput {
   marketEvidence?: CommodityMarketEvidence | null;
   officialEvidence?: readonly CommodityOfficialEvidenceBundle[];
   additionalVerifiedObservations?: readonly CommodityResearchFeatureObservation[];
+  /** Explicit P3-A provider↔feature mapping. No symbol/provider inference is performed. */
+  shadowProviderBindings?: readonly CommodityShadowProviderBinding[];
+  /** Optional already-produced canonical champion comparator; validated read-only against the registry. */
+  championComparator?: CommodityShadowChampionView | null;
+  shadowEnvironment?: string;
   nowMs?: number;
 }
 
@@ -188,12 +199,13 @@ export class RawMaterialsOrchestrator {
   }
 
   /**
-   * P1 source-backed composition boundary for Commodity challengers.
+   * Source-backed composition boundary for Commodity challengers and P3-A shadow observation.
    *
    * Provider adapters acquire/validate evidence before calling this method. The orchestrator binds
-   * that evidence to UAI, composes the domain FeatureSnapshot and evaluates deterministic research
-   * readiness. It does not fetch arbitrary provider data, execute weight hypotheses, emit a
-   * CanonicalScoreResult or bypass ScoringDispatcher.
+   * that evidence to UAI, composes the domain FeatureSnapshot, evaluates deterministic research
+   * readiness and records the same snapshot in the read-only P3-A shadow ledger. The shadow hook
+   * performs no provider call and cannot emit CanonicalScoreResult, mutate the registry, rank assets
+   * or grant execution eligibility.
    */
   public composeSourceBackedResearch(
     input: RawMaterialsSourceBackedResearchInput,
@@ -220,6 +232,12 @@ export class RawMaterialsOrchestrator {
       nowMs: input.nowMs,
     });
     const challengerEvaluation = evaluateCommodityCategoryResearchSnapshot(featureSnapshot);
+    const shadowObservation = recordCommodityShadowObservation({
+      snapshot: featureSnapshot,
+      providerBindings: input.shadowProviderBindings,
+      champion: input.championComparator,
+      environment: input.shadowEnvironment,
+    });
 
     return Object.freeze({
       contractVersion: RAW_MATERIALS_SOURCE_BACKED_RESEARCH_CONTRACT_VERSION,
@@ -227,6 +245,7 @@ export class RawMaterialsOrchestrator {
       asset,
       featureSnapshot,
       challengerEvaluation,
+      shadowObservation,
       canonical: false,
       scoreEligible: false,
       executionEligible: false,
