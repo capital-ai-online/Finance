@@ -31,6 +31,7 @@ const requiredPaths = [
   'src/features/settings/ui/index.ts',
   'src/features/screening/ui/index.ts',
   'src/features/crypto/ui/index.ts',
+  'src/features/commodities/ui/index.ts',
   'src/features/stocks/ui/index.ts',
   'src/features/analytics/ui/index.ts',
   'src/features/news/ui/index.ts',

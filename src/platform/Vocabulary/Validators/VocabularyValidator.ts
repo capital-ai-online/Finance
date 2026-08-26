@@ -3,6 +3,15 @@ import type { VocabularyConcept, VocabularyFinding } from '../Domain/VocabularyC
 const CONCEPT_ID_PATTERN = /^VOC-[A-Z][A-Z0-9_]*-\d{4}$/;
 const TECHNICAL_TERM_PATTERN = /^[A-Za-z][A-Za-z0-9]*$/;
 
+/**
+ * Canonical term normalization shared by the Vocabulary authority and read-only consumers.
+ * NFKC prevents compatibility-equivalent Unicode representations from drifting into
+ * separate aliases/candidates before deterministic case-insensitive comparison.
+ */
+export function normalizeVocabularyTerm(value: string): string {
+  return value.trim().normalize('NFKC').toLocaleLowerCase('en-US');
+}
+
 export class VocabularyValidator {
   validate(concept: VocabularyConcept): VocabularyFinding[] {
     const findings: VocabularyFinding[] = [];
@@ -62,6 +71,6 @@ export class VocabularyValidator {
   }
 
   normalize(value: string): string {
-    return value.trim().normalize('NFKC').toLocaleLowerCase('en-US');
+    return normalizeVocabularyTerm(value);
   }
 }

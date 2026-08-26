@@ -62,7 +62,7 @@ export function OrchestratorPanel() {
   const triggerPingTests = async () => {
     setIsPinging(true);
     try {
-      const res = await fetch('/api/orchestrator/ping-models');
+      const res = await authFetch('/api/orchestrator/ping-models');
       if (res.ok) {
         const data = await res.json();
         setModelPings(data.models);
@@ -79,7 +79,7 @@ export function OrchestratorPanel() {
   const fetchStats = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) setIsRefreshing(true);
     try {
-      const res = await fetch('/api/orchestrator/stats');
+      const res = await authFetch('/api/orchestrator/stats');
       if (!res.ok) throw new Error('Fehler beim Laden der Orchestrator-Daten.');
       const data: OrchestratorStats = await res.json();
       setStats(data);
