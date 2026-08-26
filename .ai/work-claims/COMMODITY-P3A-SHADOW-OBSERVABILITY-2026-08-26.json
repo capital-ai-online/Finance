@@ -19,9 +19,11 @@
     "src/platform/MarketData/providers/ResearchEvidenceProviderHttp.ts",
     "src/platform/Scoring/CommodityShadowObservability.ts",
     "src/platform/Scoring/index.ts",
+    "src/orchestrator/rawMaterialsOrchestrator.ts",
     "tests/unit/providerRuntimeObservability.test.ts",
     "tests/unit/commodityShadowObservability.test.ts",
     "tests/unit/commodityProviderGovernance.test.ts",
+    "tests/unit/rawMaterialsP3AShadowRuntime.test.ts",
     "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
     "docs/evidence/sc-md/SC_COMMODITY_P3A_SHADOW_OBSERVABILITY_2026-08-26.md"
   ],
