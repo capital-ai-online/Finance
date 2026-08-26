@@ -5,9 +5,10 @@ import { createHash } from 'node:crypto';
 
 export const PR_TEMPLATE_VERSION = '1.5.0';
 export const PR_TEMPLATE_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${PR_TEMPLATE_VERSION}`;
+export const DEFAULT_PRODUCTION_URL = 'https://capital-ai.online/';
 export const DEFAULT_PRODUCTION_HEALTH_URL = 'https://capital-ai.online/healthz';
 export const MAX_PR_START_DELAY_MS = 15 * 60 * 1000;
-export const PRODUCTION_BASELINE_SCHEMA_VERSION = '1.1.0';
+export const PRODUCTION_BASELINE_SCHEMA_VERSION = '1.2.0';
 export const PRODUCTION_BASELINE_START = 'CAPITAL_AI_PRODUCTION_BASELINE_START';
 export const PRODUCTION_BASELINE_END = 'CAPITAL_AI_PRODUCTION_BASELINE_END';
 
@@ -265,6 +266,7 @@ export function productionBaselineIdentity(baseline) {
   return {
     schemaVersion: String(baseline?.schemaVersion || ''),
     productionUrl: String(baseline?.productionUrl || ''),
+    productionHealthUrl: String(baseline?.productionHealthUrl || ''),
     productionStatus: String(baseline?.production?.status || ''),
     productionVersion: String(baseline?.production?.version || ''),
     productionSha: String(baseline?.production?.commitSha || '').toLowerCase(),
@@ -291,8 +293,11 @@ export function validateProductionBaselineForPr(baseline) {
   if (identity.schemaVersion !== PRODUCTION_BASELINE_SCHEMA_VERSION) {
     errors.push(`schemaVersion must be ${PRODUCTION_BASELINE_SCHEMA_VERSION}`);
   }
-  if (identity.productionUrl !== DEFAULT_PRODUCTION_HEALTH_URL) {
-    errors.push(`productionUrl must be ${DEFAULT_PRODUCTION_HEALTH_URL}`);
+  if (identity.productionUrl !== DEFAULT_PRODUCTION_URL) {
+    errors.push(`productionUrl must be ${DEFAULT_PRODUCTION_URL}`);
+  }
+  if (identity.productionHealthUrl !== DEFAULT_PRODUCTION_HEALTH_URL) {
+    errors.push(`productionHealthUrl must be ${DEFAULT_PRODUCTION_HEALTH_URL}`);
   }
   if (identity.productionStatus !== 'ok') errors.push('production.status must be ok');
   if (!semverTuple(identity.productionVersion)) errors.push('production.version must be semantic x.y.z');
@@ -339,6 +344,7 @@ export function renderProductionBaselineBlock(baseline) {
     `\`${PRODUCTION_BASELINE_START}\``,
     `- **Baseline-ID:** \`${baseline.baselineId}\``,
     `- **Produktions-URL:** \`${baseline.productionUrl}\``,
+    `- **Produktions-Health-URL:** \`${baseline.productionHealthUrl}\``,
     `- **Produktionsversion:** \`${baseline.production.version}\``,
     `- **Produktions-Commit:** \`${baseline.production.commitSha}\``,
     `- **Produktions-Branch:** \`${baseline.production.branch}\``,
