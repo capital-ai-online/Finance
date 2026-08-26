@@ -50,6 +50,8 @@ import { logSystemEvent } from './server/systemEvents';
 import { startRecursiveFileWatcher } from './server/documentHygiene';
 import { enforceScreeningQuota } from './server/quota';
 import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter';
+import { isOriginAllowed } from './server/middleware/cors';
+import { isKnownProbePath } from './server/middleware/probeProtection';
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
 import { getStripeConfigurationStatus, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
@@ -107,25 +109,9 @@ process.on('uncaughtException', (err) => {
 
 const isProductionEnv = getCleanEnv('NODE_ENV') === 'production';
 
-// Produktionsdomains: fest codiert, keine Muster-/Suffix-Prüfung (ADR-0009 Regel 1+2).
-const PRODUCTION_ORIGINS = [
-  'https://capital-ai.online',
-  'https://www.capital-ai.online',
-];
-
-function isLocalDevOrigin(origin: string): boolean {
-  // Nur exakt localhost/127.0.0.1 mit optionalem Port - kein Teilstring-Match,
-  // der z.B. auf "http://localhost.attacker.com" anspringen könnte.
-  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-}
-
-function isOriginAllowed(origin: string): boolean {
-  if (PRODUCTION_ORIGINS.includes(origin)) return true;
-  if (!isProductionEnv) {
-    if (isLocalDevOrigin(origin)) return true;
-  }
-  return false;
-}
+// F-03: Origin-Allowlist und Probe-Muster lagen doppelt vor - einmal hier inline (aktiv) und
+// einmal in server/middleware/ (unverdrahtet). Die Kopien sind jetzt aufgeloest: die Module unter
+// server/middleware/ sind die einzige Quelle, dieser Pfad konsumiert sie.
 
 async function logBlockedOrigin(origin: string, req: express.Request) {
   serverLogger.warn('Blocked CORS Origin', { requestId: req.requestId, origin, path: req.originalUrl });
@@ -159,7 +145,7 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   if (origin) {
-    if (isOriginAllowed(origin)) {
+    if (isOriginAllowed(origin, isProductionEnv)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       // Credentials nur setzen, wenn die Origin tatsächlich validiert wurde
       // (ADR-0009: "Voraussetzung: Origin muss vorher validiert sein.").
@@ -192,61 +178,26 @@ app.use((req, res, next) => {
   // 2. HTTP Security Headers Hardening (OWASP Compliance). Audit ARCH-AUDIT-0002 (N7)
   // nennt "Helmet" als Massnahme; bewusst kein zusaetzliches Paket eingefuehrt, weil
   // dieser Block bereits alle sicherheitsrelevanten Header setzt, die Helmet default-
-  // maessig liefern wuerde (CSP, X-Content-Type-Options, Referrer-Policy, HSTS,
-  // Clickjacking-Schutz via frame-ancestors) - inklusive der projektspezifischen
-  // ADR-0009-Origin-Allowlist-Logik, die eine generische Helmet-Konfiguration erst
-  // wieder nachbilden muesste. Ein zweites Paket mit eigener Default-CSP wuerde mit
-  // dieser bestehenden Logik kollidieren statt sie wiederzuverwenden.
+  // maessig liefern wuerde - inklusive der projektspezifischen ADR-0009-Origin-Allowlist-Logik,
+  // die eine generische Helmet-Konfiguration erst wieder nachbilden muesste. Ein zweites Paket
+  // mit eigener Default-CSP wuerde mit der bestehenden Logik kollidieren statt sie
+  // wiederzuverwenden. Die CSP selbst kommt ausschliesslich aus server/securityResponse.ts.
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   // Security-Audit (WebscanRadar, 02.08.2026): "X-Frame-Options fehlt" (MEDIUM, -10 Punkte) -
   // ohne diesen Header war die Seite per <iframe> einbettbar (Clickjacking). SAMEORIGIN passt
-  // zur bereits gesetzten CSP frame-ancestors 'self'-Regel weiter unten (redundante, aber von
+  // zur CSP-Regel frame-ancestors 'self' aus server/securityResponse.ts (redundante, aber von
   // aelteren Browsern ohne CSP-Unterstuetzung benoetigte Absicherung).
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
-  // Content-Security-Policy: frame-ancestors an dieselbe Allowlist-Logik wie CORS
-  // angeglichen (dieselbe `*.run.app`-Wildcard-Schwäche betraf zuvor auch hier
-  // die Clickjacking-Absicherung, siehe ADR-0009-Geist auch wenn nicht wörtlich
-  // Teil des ADR-Texts).
-  const frameAncestors = [
-    "'self'",
-    ...(!isProductionEnv ? ["http://localhost:*"] : []),
-  ].join(' ');
-  // Audit ARCH-AUDIT-0002 (N7): script-src und style-src ohne 'unsafe-inline'/'unsafe-eval'
-  // in Produktion. Der Vite-Produktionsbuild enthaelt weder Inline-<script>- noch
-  // Inline-<style>-Tags (nur externe, gehashte Dateien unter /assets, siehe
-  // dist/index.html); React setzt Inline-Styles ueber die DOM-CSSOM-Eigenschaft
-  // (element.style.xxx), nicht ueber das style=""-Attribut, und ist von style-src
-  // nicht betroffen. Verifiziert per Playwright-Konsolen-Check (securitypolicyviolation-
-  // Events) gegen den echten Produktionsbuild ueber mehrere Navigationspfade - keine
-  // CSP-Violation-Reports (tiefere, nur eingeloggt erreichbare Ansichten wurden mangels
-  // Testzugangsdaten in dieser Umgebung nicht erreicht, sollten aber denselben
-  // externen-Assets-Build durchlaufen). Im Entwicklungsmodus benoetigt Vites HMR-Client
-  // weiterhin 'unsafe-inline'/'unsafe-eval', daher dort unveraendert gelockert.
-  // CookieHub (Cookie-Consent-Banner) und Google Analytics (gtag.js, nur nach Einwilligung
-  // geladen, siehe Inline-Script in index.html) muessen hier explizit erlaubt werden - ohne
-  // diese beiden Hosts blockiert der Browser die Skripte still per CSP-Violation, das Banner
-  // erscheint nie und GA erhaelt selbst nach Opt-in keine Daten.
-  const scriptSrc = isProductionEnv
-    ? "'self' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com"
-    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com";
-  // CookieHub laedt sein eigenes Stylesheet von cdn.cookiehub.eu (siehe window.__cookiehub.css
-  // im ausgelieferten Snippet) - ohne diesen Host in style-src blockiert der Browser das
-  // Stylesheet per CSP (Konsolen-Meldung "Refused to apply style..."), das Banner-Markup wird
-  // zwar ins DOM injiziert, bleibt aber komplett unformatiert/unsichtbar, obwohl weder Skript-
-  // Laden noch die vom Server ausgelieferte Konfiguration selbst einen Fehler zeigen.
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self' https:; " +
-    `script-src ${scriptSrc}; ` +
-    "style-src 'self' https://fonts.googleapis.com https://cdn.cookiehub.eu; " +
-    "img-src 'self' data: https: referrer; " +
-    "font-src 'self' data: https://fonts.gstatic.com; " +
-    "frame-src 'self' https://*.stripe.com; " +
-    `frame-ancestors ${frameAncestors};`
-  );
+  // F-04: Die Content-Security-Policy wird ausschliesslich von server/securityResponse.ts gesetzt
+  // (ADR-0035/ADR-0040, nonce-basiert, mit object-src 'none', base-uri 'none' und form-action).
+  // Der frueher hier stehende ADR-0009-Header war bereits wirkungslos, weil requestContext() -
+  // registriert vor diesem Block - res.setHeader patcht und jedes Setzen von
+  // Content-Security-Policy durch die gehaertete Fassung ersetzt. Er blieb aber eine Falle: haette
+  // sich die Middleware-Reihenfolge je verschoben, waere die Produktion still auf eine Policy ohne
+  // object-src/base-uri/form-action zurueckgefallen. Eine einzige Quelle schliesst das aus.
 
   // Audit ARCH-AUDIT-0002 (N7, CSRF-Anteil): kein CSRF-Token-Mechanismus implementiert,
   // weil er hier keine reale Schutzwirkung haette - dieses Ergebnis, nicht eine
@@ -277,16 +228,8 @@ app.use((req, res, next) => {
 // verschleiert aber gegenueber automatisierten Scans nicht, dass hier nichts dergleichen
 // existiert. Diese Pfade jetzt frueh und explizit mit 404 beantworten, statt sie durch die
 // gesamte Middleware-Kette bis zum SPA-Fallback laufen zu lassen.
-const PROBE_PATH_PATTERNS = [
-  /\.php$/i,
-  /^\/wp-(admin|login|content|includes|json)(\/|$)/i,
-  /^\/(config|wp-config)\.(php|json|ya?ml|ini)$/i,
-  /^\/\.env(\.|$)/i,
-  /^\/\.git(\/|$)/i,
-  /^\/(phpinfo|info|test)\.php$/i,
-];
 app.use((req, res, next) => {
-  if (PROBE_PATH_PATTERNS.some((pattern) => pattern.test(req.path))) {
+  if (isKnownProbePath(req.path)) {
     return res.status(404).end();
   }
   next();

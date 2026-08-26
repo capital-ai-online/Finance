@@ -6,10 +6,6 @@ const serverEntry = readFileSync(new URL('../../server.ts', import.meta.url), 'u
 const serverApplication = readFileSync(new URL('../../server.application.ts', import.meta.url), 'utf8');
 const logger = readFileSync(new URL('../../server/logger.ts', import.meta.url), 'utf8');
 const securityResponse = readFileSync(new URL('../../server/securityResponse.ts', import.meta.url), 'utf8');
-const extractedSecurityHeaders = readFileSync(
-  new URL('../../server/middleware/securityHeaders.ts', import.meta.url),
-  'utf8',
-);
 const runbook = readFileSync(
   new URL('../../docs/runbooks/DOMAIN_MAIL_SECURITY_HARDENING_2026-08-25.md', import.meta.url),
   'utf8',
@@ -39,18 +35,28 @@ test('production web security checks follow the canonical runtime response path'
   assert.match(serverApplication, /X-Frame-Options', 'SAMEORIGIN'/);
   assert.match(serverApplication, /Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload'/);
 
-  const requestContextAt = serverApplication.indexOf('app.use(requestContext);');
-  const compatibilityCspAt = serverApplication.indexOf("'Content-Security-Policy'");
-  assert.ok(requestContextAt >= 0, 'requestContext must be mounted');
+  assert.ok(serverApplication.includes('app.use(requestContext);'), 'requestContext must be mounted');
+
+  // F-04: Zuvor genuegte es, dass der kanonische Response-Context VOR dem Kompatibilitaets-CSP-
+  // Setter montiert war - die Haertung hing damit allein an der Middleware-Reihenfolge. Der
+  // Kompatibilitaets-Setter ist entfernt; die Invariante ist jetzt strenger und nicht mehr von
+  // einer Reihenfolge abhaengig: server.application.ts setzt ueberhaupt keine CSP.
   assert.ok(
-    compatibilityCspAt > requestContextAt,
-    'canonical security response context must be attached before the compatibility CSP setter',
+    !serverApplication.includes("'Content-Security-Policy'"),
+    'server.application.ts must not set Content-Security-Policy - server/securityResponse.ts is the sole authority',
   );
 
+  // F-03: Security-Middleware darf nicht doppelt vorliegen. Die aktive Kette konsumiert die
+  // Module unter server/middleware/, statt deren Logik ein zweites Mal inline zu fuehren.
+  assert.match(serverApplication, /import \{ isOriginAllowed \} from '\.\/server\/middleware\/cors';/);
+  assert.match(serverApplication, /import \{ isKnownProbePath \} from '\.\/server\/middleware\/probeProtection';/);
   assert.ok(
-    extractedSecurityHeaders.includes('The active server entry point is') &&
-      extractedSecurityHeaders.includes('not switched in this phase'),
-    'extracted securityHeaders middleware must not be mistaken for the active runtime authority',
+    !serverApplication.includes('const PROBE_PATH_PATTERNS'),
+    'probe patterns must live only in server/middleware/probeProtection.ts',
+  );
+  assert.ok(
+    !serverApplication.includes('const PRODUCTION_ORIGINS'),
+    'CORS origin allowlist must live only in server/middleware/cors.ts',
   );
 });
 
