@@ -68,6 +68,8 @@ describe('P3-A provider runtime observability', () => {
       'rateResetAt',
       'version',
     ].sort());
-    expect(JSON.stringify(observation)).not.toMatch(/url|query|payload|api.?key|secret/i);
+    const serialized = JSON.stringify(observation);
+    expect(serialized).not.toMatch(/url|query|api.?key|secret|responsebody|requestbody/i);
+    expect(serialized).toContain('payloadUsable');
   });
 });
