@@ -19,15 +19,19 @@ Die realen Risiken liegen an drei Stellen:
 
 | # | Befund | Schweregrad | Status |
 |---|---|---:|---|
-| F-01 | Admin-Panel flutet das Sicherheits-Auditlog | Hoch | **Aktiv/laufend** |
-| F-02 | HTTP-Telemetrie ohne Quell-IP — Korrelation unmöglich | Mittel | Offen |
-| F-03 | Dupliziertes Security-Middleware, nur eine Kopie aktiv | Mittel | Offen |
-| F-04 | Gehärtete CSP hängt an einem Monkey-Patch | Mittel | Offen (aktuell korrekt) |
-| F-05 | Neun Tabellen mit RLS, aber ohne Policy | Mittel | Offen |
-| F-06 | Leaked-Password-Protection deaktiviert | Mittel | Offen |
-| F-07 | MFA-Step-Up nicht serverseitig durchgesetzt | Mittel | Übernommen aus Review 2026-08-25 |
-| F-08 | Lücken im Probe-Schutz | Niedrig | Offen |
-| F-09 | Strict-CSP dauerhaft im Report-Only-Modus | Info | Offen |
+| F-01 | Admin-Panel flutet das Sicherheits-Auditlog | Hoch | **Behoben** — siehe Nachtrag |
+| F-02 | HTTP-Telemetrie ohne Quell-IP — Korrelation unmöglich | Mittel | **Behoben** — siehe Nachtrag |
+| F-03 | Dupliziertes Security-Middleware, nur eine Kopie aktiv | Mittel | **Behoben** — siehe Nachtrag |
+| F-04 | Gehärtete CSP hängt an einem Monkey-Patch | Mittel | **Behoben** — siehe Nachtrag |
+| F-05 | Neun Tabellen mit RLS, aber ohne Policy | Mittel | **Behoben** — siehe Nachtrag |
+| F-06 | Leaked-Password-Protection deaktiviert | Mittel | **OFFEN** — nur über Dashboard/Management-API, Pro-Plan |
+| F-07 | MFA-Step-Up nicht serverseitig durchgesetzt | Mittel | OFFEN — eigener AuthN/AuthZ-Scope |
+| F-08 | Lücken im Probe-Schutz | Niedrig | **Behoben** — siehe Nachtrag |
+| F-09 | Strict-CSP dauerhaft im Report-Only-Modus | Info | OFFEN — ADR-0040-Promotionsevidenz ausstehend |
+
+> **Nachtrag 2026-08-26 (Remediation).** Sieben der neun Befunde wurden nach Freigabe umgesetzt;
+> der Abschnitt „Umsetzungsstand" am Ende dieses Dokuments hält fest, was geändert wurde, was
+> bewusst offenblieb und welche Empfehlung sich bei der Umsetzung als unwirksam erwies.
 
 ## 1 — Komponenteninventar
 
@@ -281,3 +285,90 @@ Geprüft und standhaltend; hier aufgeführt, damit sie bei künftigen Umbauten n
 - Keine Mutation an Supabase, Render, Stripe, Secrets oder DNS wurde vorgenommen.
 
 Dieser Report ist Evidence im Sinne von `AGENTS.md` und nicht autorisierend.
+
+## Umsetzungsstand (Nachtrag 2026-08-26)
+
+Basis der Umsetzung: `main@c734e08` (93 Commits nach der ursprünglichen Prüfbasis `6b5cca8`).
+Alle Befunde wurden vor der Umsetzung gegen den neuen `main` erneut verifiziert und galten
+unverändert.
+
+### Umgesetzt
+
+| # | Maßnahme | Ort |
+|---|---|---|
+| 1 | Poll stoppt bei 401/403/429, startet erst aus einem autorisierten Read heraus | `src/lib/orchestratorPollPolicy.ts`, `OrchestratorPanel.tsx` |
+| 1 | `authFetch()` sendet ohne verifiziertes Token nicht mehr | `src/lib/authFetch.ts` |
+| 1 | Wiederholte identische Denials werden verdichtet, Zähler reist mit | `src/platform/Security/iamAuditDebounce.ts` |
+| 2 | `clientIpHash`, `clientNetwork`, `userAgent` in `request.completed` | `server/telemetryClientContext.ts`, `server/logger.ts` |
+| 3 | `cors.ts` und `probeProtection.ts` sind einzige Quelle; `securityHeaders.ts` und `globalRateLimit.ts` gelöscht | `server/middleware/`, `server.application.ts` |
+| 4 | Toter ADR-0009-CSP-Setter entfernt | `server.application.ts` |
+| 5 | Explizite Deny-Policies für die neun Tabellen | Supabase-Migration `f05_explicit_deny_policies_for_service_role_only_tables` |
+| 7 | Probe-Muster um real beobachtete Scanner-Pfade erweitert | `server/middleware/probeProtection.ts` |
+
+### Entscheidungen während der Umsetzung
+
+**F-02 wurde pseudonymisiert statt roh umgesetzt.** Der Report empfahl, IP und User-Agent zu
+ergänzen. Bei der Umsetzung wurde deutlich, dass die Render-App-Logs eine Drittanbieter-Senke ohne
+die projekteigenen Retention-Kontrollen sind. Eine rohe IP gehört dorthin nicht. Stattdessen wird
+ein tagesweise gesalzener Hash (innerhalb 24 h korrelierbar, darüber hinaus nicht verkettbar) und
+ein grobes Netzpräfix geschrieben. Die Verknüpfung mit `iam_access_log` bleibt möglich, indem
+dessen roher `ip_address`-Wert mit demselben Tagessalz gehasht wird. Für instanzübergreifende
+Korrelation muss `TELEMETRY_IP_HASH_SALT` gesetzt sein; ohne diese Variable ist das Salz
+prozesslokal.
+
+**`FORCE ROW LEVEL SECURITY` wurde bewusst NICHT gesetzt.** Der Report hatte es für die
+Audit-Tabellen empfohlen. Die Live-Prüfung der Rollenkonfiguration zeigt, dass diese Empfehlung
+hier wirkungslos wäre: `FORCE RLS` wirkt auf den Table-Owner, und der Owner `postgres` trägt
+ebenso wie `service_role` das Attribut `BYPASSRLS`. `BYPASSRLS` hebelt RLS vollständig aus und
+wird von `FORCE RLS` nicht überstimmt. Die Einstellung wäre eine kosmetische Änderung ohne
+Schutzwirkung gewesen. Wer diese Verteidigungslinie wirklich will, muss die Schreibpfade auf eine
+Rolle ohne `BYPASSRLS` umstellen — ein eigener Scope.
+
+**Die Deny-Policies ändern das Laufzeitverhalten nicht.** RLS ohne Policy verweigert bereits jeden
+Zugriff für Rollen ohne `BYPASSRLS`. Der Gewinn liegt in der Nachweisbarkeit: der Sollzustand ist
+jetzt aus den Migrationen belegbar, statt dass ein leeres Policy-Set offenlässt, ob es beabsichtigt
+oder vergessen war. Vor der Anwendung wurde verifiziert, dass alle neun Tabellen ausschließlich über
+`getServerSupabase()` (service_role) angesprochen werden. Der Supabase-Advisor meldet die neun
+`rls_enabled_no_policy`-Befunde nicht mehr.
+
+**F-04 wurde zu einer stärkeren Invariante ausgebaut.** Der Governance-Test
+`scripts/systemadmin/domainMailSecurityGovernance.test.mjs` prüfte bisher nur, dass der kanonische
+Response-Context *vor* dem Kompatibilitäts-CSP-Setter montiert ist — die Härtung hing damit an
+einer Reihenfolge. Der Setter ist entfernt; der Test prüft jetzt, dass `server.application.ts`
+überhaupt keine CSP setzt.
+
+### Offen
+
+**F-06 — Leaked-Password-Protection.** Nicht umsetzbar aus dieser Sitzung: der Supabase-MCP-Server
+stellt kein Werkzeug für die Auth-Konfiguration bereit. Die Einstellung liegt im Dashboard unter
+*Authentication → Sign In / Providers → Email* (`/dashboard/project/_/auth/providers?provider=Email`,
+Abschnitt „Password Security"), alternativ per Management-API:
+
+```bash
+curl -X PATCH "https://api.supabase.com/v1/projects/ryzywoktpmyhwzxmstyu/config/auth" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"password_hibp_enabled": true}'
+```
+
+Zu beachten: Supabase dokumentiert die Funktion als **Pro-Plan-Feature**. Steht das Projekt auf dem
+Free-Plan, ist der Advisor-Befund erst nach einem Plan-Upgrade schließbar.
+
+**F-07 — MFA/Step-Up und `profiles`-GRANTs.** Unverändert offen, bewusst als eigener
+AuthN/AuthZ-Scope zurückgestellt (bereits so im Review vom 2026-08-25 festgehalten).
+
+**F-09 — Strict-CSP.** `CSP_MODE` bleibt ungesetzt, die strikte Policy also report-only. Die
+Promotion nach `strict` verlangt die in ADR-0040 vorgesehene Produktionsevidenz aus der
+Report-Auswertung; diese Auswertung hat nicht stattgefunden.
+
+### Verifikation
+
+- `tsc --noEmit`: 0 Fehler
+- Vitest: 2172 Tests in 349 Dateien grün
+- `node --test scripts/pr/*.test.mjs scripts/systemadmin/*.test.mjs`: 84 Tests grün
+- Produktionsbuild: erfolgreich
+- `verifyDockerHardening.mjs`: bestanden
+- `verifyProductionConfigInvariants.ts`: 17 Invarianten bestanden
+- Supabase-Advisor: neun `rls_enabled_no_policy`-Befunde geschlossen, ein Auth-Befund verbleibt
+- Die Regressionstests zu F-01 wurden per Mutation gegen den alten Zustand geprüft und schlagen
+  dort fehl — sie greifen also tatsächlich.
