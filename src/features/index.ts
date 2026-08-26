@@ -12,3 +12,4 @@ export * as BillingUI from './billing/ui';
 export * as ReportingUI from './reporting/ui';
 export * as SocialUI from './social/ui';
 export * as GovernanceUI from './governance/ui';
+export * as LearningUI from './learning/ui';
