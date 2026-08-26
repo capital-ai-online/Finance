@@ -67,9 +67,9 @@ describe('FO-01 orchestrator admin read boundary', () => {
     it('routes both protected reads through the shared refusal policy', () => {
       const source = readRepoFile('src/components/OrchestratorPanel.tsx');
 
-      expect(source).toContain("from './orchestratorPollPolicy'");
+      expect(source).toContain("from '../lib/orchestratorPollPolicy'");
       // Sowohl der Stats-Poll als auch der Model-Ping müssen abbrechen.
-      expect(source.match(/if \(isRefusalStatus\(res\.status\)\) \{\s*blockOnRefusal\(res\.status\);\s*return;/g))
+      expect(source.match(/if \(isRefusalStatus\(response\.status\)\) \{\s*blockOnRefusal\(response\.status\);\s*return;/g))
         .toHaveLength(2);
     });
 

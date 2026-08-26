@@ -12,6 +12,7 @@ import { isPublicSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNor
 
 interface PublicHtmlFiles {
   root: string;
+  learningPlatform: string;
   impressum: string;
   agb: string;
   datenschutz: string;
@@ -30,6 +31,7 @@ function buildPublicHtmlFiles(distPath: string): PublicHtmlFiles {
   const root = path.resolve(rootDir, 'index.html');
   const candidates: PublicHtmlFiles = {
     root,
+    learningPlatform: path.resolve(rootDir, 'learning-platform', 'index.html'),
     impressum: path.resolve(rootDir, 'impressum', 'index.html'),
     agb: path.resolve(rootDir, 'agb', 'index.html'),
     datenschutz: path.resolve(rootDir, 'datenschutz', 'index.html'),
@@ -52,6 +54,8 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
     switch (stripTrailingSlashPath(req.path)) {
       case '/':
         return res.sendFile(files.root);
+      case '/learning-platform':
+        return res.sendFile(existingOrRoot(files.learningPlatform));
       case '/impressum':
         return res.sendFile(existingOrRoot(files.impressum));
       case '/agb':

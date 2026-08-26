@@ -1,3 +1,4 @@
+import { normalizeVocabularyTerm } from '../../Vocabulary';
 import { errorClassById } from './errorClasses';
 import type { CatalogValidationFinding, VerificationSkill } from './types';
 
@@ -26,7 +27,7 @@ export function validateSkillCatalog(skills: VerificationSkill[]): CatalogValida
 
     const normalizedVocabulary = new Set<string>();
     for (const term of skill.vocabularyTerms) {
-      const normalized = term.trim().toLocaleLowerCase('en-US');
+      const normalized = normalizeVocabularyTerm(term);
       if (normalizedVocabulary.has(normalized)) {
         findings.push({ code: 'DUPLICATE_SKILL_TERM', severity: 'warning', message: `Duplicate vocabulary term ${term}.`, skillId: skill.id });
       }

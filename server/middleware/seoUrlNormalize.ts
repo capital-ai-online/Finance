@@ -7,6 +7,7 @@ import type { Express, Request, Response, NextFunction } from 'express';
 
 export const PUBLIC_SPA_PATHS = new Set([
   '/',
+  '/learning-platform',
   '/impressum',
   '/agb',
   '/datenschutz',

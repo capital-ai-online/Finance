@@ -11,7 +11,7 @@ import {
   REFUSAL_STATUS_CODES,
   describeRefusal,
   isRefusalStatus,
-} from '../../src/components/orchestratorPollPolicy';
+} from '../../src/lib/orchestratorPollPolicy';
 
 describe('F-01 Orchestrator-Poll-Abbruchpolicy', () => {
   it('stoppt den Poll bei jeder serverseitigen Abweisung', () => {
@@ -56,7 +56,7 @@ describe('F-01 Orchestrator-Poll-Abbruchpolicy', () => {
   it('ist frei von React-/DOM-Abhängigkeiten', async () => {
     // Die Policy muss in der node-Umgebung ohne jsdom ladbar bleiben, damit diese Ebene
     // ausgeführte statt behauptete Evidenz liefert.
-    const mod = await import('../../src/components/orchestratorPollPolicy');
+    const mod = await import('../../src/lib/orchestratorPollPolicy');
     expect(Object.keys(mod).sort()).toEqual([
       'REFUSAL_STATUS_CODES',
       'describeRefusal',

@@ -1,7 +1,8 @@
 import { CircuitBreaker } from '../CircuitBreaker';
-import { RateLimitBudget } from '../RateLimitBudget';
+import { RateLimitBudget, type RateLimitDecision } from '../RateLimitBudget';
 import { getProviderMatrixEntry } from '../ProviderMatrix';
 import { recordProviderHealth, type ProviderDiagnosticCode } from '../../Supervisor/providerHealth';
+import { recordProviderRuntimeObservation } from '../providerRuntimeObservability';
 
 export const RESEARCH_EVIDENCE_HTTP_VERSION = 'research-evidence-http/1.1.0' as const;
 
@@ -99,14 +100,15 @@ export class ResearchEvidenceProviderHttp {
     path: string,
     init: Omit<RequestInit, 'signal'> = {},
   ): Promise<ResearchEvidenceHttpResult> {
-    const retrievedAt = new Date(this.nowMs()).toISOString();
+    const startedAtMs = this.nowMs();
+    const retrievedAt = new Date(startedAtMs).toISOString();
     if (!this.apiKey && this.apiKeyRequired) {
-      return this.result('NOT_CONFIGURED', retrievedAt, null, 'Required provider API key is not configured.');
+      return this.result('NOT_CONFIGURED', retrievedAt, null, 'Required provider API key is not configured.', startedAtMs);
     }
 
     if (!this.circuitBreaker.allow(this.providerId)) {
       const reason = `Circuit open until ${this.circuitBreaker.openedUntilIso(this.providerId) ?? 'unknown'}.`;
-      return this.result('CIRCUIT_OPEN', retrievedAt, null, reason);
+      return this.result('CIRCUIT_OPEN', retrievedAt, null, reason, startedAtMs);
     }
 
     const budget = this.rateLimitBudget.tryConsume(this.providerId, this.capability);
@@ -116,6 +118,8 @@ export class ResearchEvidenceProviderHttp {
         retrievedAt,
         null,
         `Provider budget exhausted until ${new Date(budget.resetAtMs).toISOString()}.`,
+        startedAtMs,
+        budget,
       );
     }
 
@@ -148,6 +152,7 @@ export class ResearchEvidenceProviderHttp {
           payloadUsable: false,
           message: `HTTP ${response.status}`,
         });
+        this.observe(status, retrievedAt, startedAtMs, true, false, budget, response.status);
         return {
           transportVersion: RESEARCH_EVIDENCE_HTTP_VERSION,
           providerId: this.providerId,
@@ -166,7 +171,7 @@ export class ResearchEvidenceProviderHttp {
         data = await response.json();
       } catch {
         this.circuitBreaker.failure(this.providerId);
-        return this.result('INVALID', retrievedAt, null, 'Provider returned non-JSON payload.');
+        return this.result('INVALID', retrievedAt, null, 'Provider returned non-JSON payload.', startedAtMs, budget, response.status, true);
       }
 
       if (hasApplicationLevelProviderError(data)) {
@@ -176,6 +181,10 @@ export class ResearchEvidenceProviderHttp {
           retrievedAt,
           null,
           'Provider returned an application-level error response.',
+          startedAtMs,
+          budget,
+          response.status,
+          true,
         );
       }
 
@@ -188,6 +197,7 @@ export class ResearchEvidenceProviderHttp {
         diagnosticCode: 'healthy',
         payloadUsable: true,
       });
+      this.observe('READY', retrievedAt, startedAtMs, true, true, budget, response.status);
       return {
         transportVersion: RESEARCH_EVIDENCE_HTTP_VERSION,
         providerId: this.providerId,
@@ -199,10 +209,35 @@ export class ResearchEvidenceProviderHttp {
     } catch (error) {
       this.circuitBreaker.failure(this.providerId);
       const reason = error instanceof Error ? error.message : String(error);
-      return this.result('SOURCE_UNAVAILABLE', retrievedAt, null, reason);
+      return this.result('SOURCE_UNAVAILABLE', retrievedAt, null, reason, startedAtMs, budget, undefined, true);
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  private observe(
+    status: ResearchEvidenceHttpStatus,
+    retrievedAt: string,
+    startedAtMs: number,
+    requestAttempted: boolean,
+    payloadUsable: boolean,
+    budget?: RateLimitDecision,
+    httpStatus?: number,
+  ): void {
+    const now = this.nowMs();
+    recordProviderRuntimeObservation({
+      providerId: this.providerId,
+      capability: this.capability,
+      observedAt: retrievedAt,
+      outcome: status,
+      requestAttempted,
+      durationMs: Math.max(0, now - startedAtMs),
+      payloadUsable,
+      circuitState: this.circuitBreaker.state(this.providerId),
+      httpStatus: httpStatus ?? null,
+      rateRemaining: budget?.remaining ?? null,
+      rateResetAt: budget ? new Date(budget.resetAtMs).toISOString() : null,
+    });
   }
 
   private result(
@@ -210,6 +245,10 @@ export class ResearchEvidenceProviderHttp {
     retrievedAt: string,
     data: null,
     reason: string,
+    startedAtMs: number,
+    budget?: RateLimitDecision,
+    httpStatus?: number,
+    requestAttempted = false,
   ): ResearchEvidenceHttpResult {
     recordProviderHealth({
       provider: this.providerId,
@@ -221,6 +260,7 @@ export class ResearchEvidenceProviderHttp {
       circuitOpenUntil: status === 'CIRCUIT_OPEN' ? this.circuitBreaker.openedUntilIso(this.providerId) ?? undefined : undefined,
       message: reason,
     });
+    this.observe(status, retrievedAt, startedAtMs, requestAttempted, false, budget, httpStatus);
     return {
       transportVersion: RESEARCH_EVIDENCE_HTTP_VERSION,
       providerId: this.providerId,
@@ -228,6 +268,7 @@ export class ResearchEvidenceProviderHttp {
       retrievedAt,
       data,
       reason,
+      httpStatus,
     };
   }
 }
