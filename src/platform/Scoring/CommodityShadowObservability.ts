@@ -14,6 +14,7 @@ import {
 export const COMMODITY_SHADOW_OBSERVABILITY_VERSION = 'commodity-shadow-observability/1.0.0' as const;
 const SHADOW_LEDGER_LIMIT = 2_000;
 const TELEMETRY_LEDGER_LIMIT = 1_000;
+const RAW_SHA256_PATTERN = /^[0-9a-f]{64}$/;
 
 export interface CommodityShadowProviderBinding {
   readonly providerId: string;
@@ -167,6 +168,35 @@ function providerViews(
   });
 }
 
+function validateChampionView(champion: CommodityShadowChampionView | null | undefined): CommodityShadowChampionView | null {
+  if (!champion) return null;
+  const descriptor = scoringModelRegistry.get(champion.modelId, champion.modelVersion);
+  if (!descriptor
+    || descriptor.lifecycle !== 'canonical'
+    || descriptor.alias !== 'champion'
+    || descriptor.scoreEligible === false
+    || !descriptor.assetClasses.includes('commodity')) {
+    throw new Error('COMMODITY_SHADOW_CHAMPION_BINDING_INVALID');
+  }
+  if (!champion.status.trim()) throw new Error('COMMODITY_SHADOW_CHAMPION_STATUS_REQUIRED');
+  if (champion.score !== null && !Number.isFinite(champion.score)) {
+    throw new Error('COMMODITY_SHADOW_CHAMPION_SCORE_INVALID');
+  }
+  for (const fingerprint of [champion.effectiveFeatureFingerprint, champion.effectiveWeightFingerprint]) {
+    if (fingerprint !== undefined && fingerprint !== null && !RAW_SHA256_PATTERN.test(fingerprint)) {
+      throw new Error('COMMODITY_SHADOW_CHAMPION_FINGERPRINT_INVALID');
+    }
+  }
+  return Object.freeze({
+    modelId: descriptor.modelId,
+    modelVersion: descriptor.version,
+    status: champion.status.trim(),
+    score: champion.score,
+    effectiveFeatureFingerprint: champion.effectiveFeatureFingerprint ?? null,
+    effectiveWeightFingerprint: champion.effectiveWeightFingerprint ?? null,
+  });
+}
+
 function featureStatusChanges(
   current: CommodityResearchFeatureSnapshot,
   previous: CommodityShadowObservation | null,
@@ -226,19 +256,11 @@ export function recordCommodityShadowObservation(input: Readonly<{
 
   const previous = previousFor(snapshot.assetId, evaluation.modelId);
   const currentEvidenceFingerprint = evidenceFingerprint(snapshot);
-  const champion = input.champion ?? null;
+  const canonicalChampion = validateChampionView(input.champion);
   const previousChampion = previous?.champion ?? null;
   const currentFeatureStatuses = Object.freeze(Object.fromEntries(snapshot.features.map(feature => [feature.featureKey, feature.status])));
   const statusChanges = featureStatusChanges(snapshot, previous);
   const observedAt = snapshot.capturedAt;
-  const canonicalChampion = champion ? {
-    modelId: champion.modelId,
-    modelVersion: champion.modelVersion,
-    status: champion.status,
-    score: champion.score,
-    effectiveFeatureFingerprint: champion.effectiveFeatureFingerprint ?? null,
-    effectiveWeightFingerprint: champion.effectiveWeightFingerprint ?? null,
-  } : null;
   const observationFingerprint = sha256({
     version: COMMODITY_SHADOW_OBSERVABILITY_VERSION,
     observedAt,
@@ -355,6 +377,8 @@ export function recordCommodityShadowObservation(input: Readonly<{
       providerCount: observation.providers.length,
       featureStatusChanges: observation.drift.featureStatusChanges,
       challengerScoreStatus: observation.challengerScoreStability.status,
+      championModelId: observation.champion?.modelId ?? null,
+      championModelVersion: observation.champion?.modelVersion ?? null,
     },
     auditReference: observation.auditReference,
   });
