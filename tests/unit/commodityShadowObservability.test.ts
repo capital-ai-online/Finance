@@ -66,6 +66,7 @@ describe('Commodity P3-A shadow observability', () => {
       capability: 'commodity-fundamentals',
       observedAt: '2026-08-26T13:41:00.000Z',
       outcome: 'READY',
+      requestAttempted: true,
       durationMs: 85,
       payloadUsable: true,
       circuitState: 'CLOSED',
@@ -104,6 +105,7 @@ describe('Commodity P3-A shadow observability', () => {
     expect(observation.executionEligible).toBe(false);
     expect(observation.registryMutationPerformed).toBe(false);
     expect(observation.providers[0].runtime.sampleCount).toBe(1);
+    expect(observation.providers[0].runtime.requestAttemptCount).toBe(1);
     expect(observation.providers[0].freshnessPassRate).toBe(1);
     expect(observation.evidenceFingerprint).toMatch(/^[0-9a-f]{64}$/);
     expect(observation.observationId).toMatch(/^commodity-shadow:sha256:[0-9a-f]{64}$/);
@@ -156,5 +158,18 @@ describe('Commodity P3-A shadow observability', () => {
       }],
       environment: 'test',
     })).toThrow('COMMODITY_SHADOW_PROVIDER_FEATURE_BINDING_UNKNOWN');
+  });
+
+  it('fails closed when champion comparison is not bound to the registered commodity champion', () => {
+    expect(() => recordCommodityShadowObservation({
+      snapshot: energySnapshot(),
+      champion: {
+        modelId: 'commodity-energy-hybrid',
+        modelVersion: '0.1.0',
+        status: 'READY',
+        score: 63.5,
+      },
+      environment: 'test',
+    })).toThrow('COMMODITY_SHADOW_CHAMPION_BINDING_INVALID');
   });
 });
