@@ -2,9 +2,9 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.7.0  
-**Stand:** 26. August 2026  
-**Korrelationsbasis:** `main@825788cac6250d2913f9a67eeb3d316ca5dc390f`  
+**Version:** 1.7.1  
+**Stand:** 27. August 2026  
+**Korrelationsbasis:** `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`  
 **Candidate:** `refactor/frontend-bb2bc-dashboard-consumer-cutover-main-2026-08-26`  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
@@ -47,6 +47,7 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 - [x] **BB-1 Application Composition / PR #462:** `src/app/App.tsx`, `SessionComposition`, `AppRoutes` und kanonischer `UserSession`-Vertrag etabliert; `src/App.tsx` ist Compatibility-Fassade.
 - [x] **BB-2 View Contract / PR #546:** `DashboardView`, exhaustive View→Section-Projektion und Regressionstest unter `src/app/dashboard` etabliert.
 - [x] **BB-2 Composition Boundary / PR #548:** `AppRoutes` konsumiert den kanonischen `src/app/dashboard/Dashboard.tsx`-Entry; der Legacy-Monolith ist hinter einer expliziten Strangler-Grenze gebunden.
+- [x] **Branding / PR #551:** Dark Black `#08080C` + AIF Gold `#F9BF21` sind das kanonische Primary Brand Pair; Cyan bleibt ausschließlich semantische Market-/Data-/Live-/Technical-Visualisierungsfarbe und Purple sekundärer AI-/Intelligence-Akzent.
 - [x] **Crypto Visualization / CV-0:** Authority-/Freshness-/Evidence-Primitives sowie read-only Presentation Projection vorhanden.
 - [x] **Screening:** `RankingBoard` ist produktive kanonische Ranking-Fläche; `UniverseBestWorst` ist Compatibility-Alias.
 - [x] **Commodities / PR #539:** `src/features/commodities/ui/RawMaterialsDashboard.tsx` ist kanonische Commodity-UI; Legacy-Pfad bleibt Compatibility-Export.
@@ -76,7 +77,7 @@ Mit dem BB-2B/BB-2C-Candidate gilt zusätzlich:
 
 | Bereich | Bewertung | Befund | Nächste Qualitätsmaßnahme |
 |---|---|---|---|
-| Branding / Design Tokens | **gut** | Gold, Purple, Cyan und semantische Statusfarben sind zentral dokumentiert; lokale historische `aif-*`-Aliase existieren noch | neue UI ausschließlich über semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
+| Branding / Design Tokens | **gut** | Dark Black + AIF Gold sind das kanonische Primary Brand Pair; Purple bleibt sekundärer AI-Akzent und Cyan ausschließlich semantische Market-/Data-/Live-/Technical-Visualisierungsfarbe; historische `aif-*`-/`brand-cyan`-Compatibility-Aliase existieren noch | neue UI ausschließlich über kanonische Rollen/semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
 | Typografie | **gut mit Drift-Risiko** | Inter/Poppins/JetBrains Mono sind kanonisch definiert | Headings/Body/Tech-Data in Komponenten automatisiert prüfen |
 | Shared UI | **gut** | Button, Card, Input, Modal, Tooltip, Skeleton, EmptyState und Status-/Evidence-Primitives vorhanden | Nutzung in Legacy-Komponenten erhöhen und Parallelimplementierungen entfernen |
 | Dashboard IA | **kritische Restschuld** | View-/Session-Contracts sind zentralisiert; Rendering, Navigation, Drawer und Header bleiben im Monolithen gekoppelt | BB-2D priorisieren |
@@ -317,4 +318,4 @@ Vor jedem Frontend-PR:
 
 ---
 
-*Version 1.7.0 korreliert die Roadmap mit `main@825788cac6250d2913f9a67eeb3d316ca5dc390f`, übernimmt die gemergten BB-2B-/Composition-Arbeiten aus PR #546 und #548 und schließt im aktuellen Candidate den Dashboard-Consumer-Cutover für BB-2B sowie den direkten Session-Contract für BB-2C ab. Nächster P0-Schritt ist BB-2D.*
+*Version 1.7.1 korreliert die Roadmap mit `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`, übernimmt die gemergten BB-2B-/Composition-Arbeiten aus PR #546 und #548 sowie die Branding-Korrektur aus PR #551 und schließt im aktuellen Candidate den Dashboard-Consumer-Cutover für BB-2B sowie den direkten Session-Contract für BB-2C ab. Nächster P0-Schritt ist BB-2D.*
