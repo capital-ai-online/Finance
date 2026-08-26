@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { authFetch } from '../lib/authFetch';
-import { 
-  Activity, 
-  Cpu, 
-  Layers, 
-  Settings, 
-  RefreshCw, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Sliders, 
-  Database, 
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Cpu,
+  Database,
+  Layers,
+  RefreshCw,
+  ShieldAlert,
+  Sliders,
   Trash2,
-  Lock,
-  Wifi,
-  ShieldAlert
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { authFetch } from '../lib/authFetch';
+import { ORCHESTRATOR_TELEMETRY_CONTRACT } from '../lib/orchestratorTelemetrySemantics';
 
 interface RequestLogEntry {
   id: string;
@@ -41,125 +38,159 @@ interface OrchestratorStats {
   recentLogs: RequestLogEntry[];
 }
 
+interface ModelIntegrationStatus {
+  id: string;
+  name: string;
+  task: string;
+  configured: boolean;
+  status: string;
+  latency: number | null;
+  cost?: string;
+}
+
+interface MetricCardProps {
+  label: string;
+  value: React.ReactNode;
+  note: string;
+  icon: React.ReactNode;
+  progress?: number;
+  progressLabel?: string;
+}
+
+function MetricCard({ label, value, note, icon, progress, progressLabel }: MetricCardProps) {
+  return (
+    <div className="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-md flex flex-col justify-between min-h-[150px]">
+      <div>
+        <div className="flex justify-between items-center text-white/55 text-[11px] font-mono uppercase gap-2">
+          <span>{label}</span>
+          {icon}
+        </div>
+        <div className="text-3xl font-black font-display text-white mt-2">{value}</div>
+      </div>
+      <div className="mt-4 space-y-2">
+        {progress !== undefined && (
+          <>
+            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-aif-gold-DEFAULT h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[9px] text-white/40 font-mono">
+              <span>{progressLabel}</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+          </>
+        )}
+        <p className="text-[10px] text-white/45 font-mono leading-relaxed">{note}</p>
+      </div>
+    </div>
+  );
+}
+
 export function OrchestratorPanel() {
   const [stats, setStats] = useState<OrchestratorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Form controls for configuration
-  const [concurrencyLimit, setConcurrencyLimit] = useState<number>(3);
-  const [maxQueueSize, setMaxQueueSize] = useState<number>(10);
-  const [maxRequestsPerWindow, setMaxRequestsPerWindow] = useState<number>(30);
+  const [concurrencyLimit, setConcurrencyLimit] = useState(3);
+  const [maxQueueSize, setMaxQueueSize] = useState(10);
+  const [maxRequestsPerWindow, setMaxRequestsPerWindow] = useState(30);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const formInitialized = useRef(false);
 
-  // Model Routing & Latency Check states
-  const [modelPings, setModelPings] = useState<any[]>([]);
-  const [optimalModelId, setOptimalModelId] = useState<string>('');
-  const [isPinging, setIsPinging] = useState(false);
+  const [modelStatuses, setModelStatuses] = useState<ModelIntegrationStatus[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [modelError, setModelError] = useState<string | null>(null);
 
-  const triggerPingTests = async () => {
-    setIsPinging(true);
+  const fetchModelIntegrationStatus = async () => {
+    setIsLoadingModels(true);
     try {
-      const res = await authFetch('/api/orchestrator/ping-models');
-      if (res.ok) {
-        const data = await res.json();
-        setModelPings(data.models);
-        setOptimalModelId(data.optimalModelId);
-      }
-    } catch (e) {
-      console.error('Failed to fetch model pings:', e);
+      const response = await authFetch('/api/orchestrator/ping-models');
+      if (!response.ok) throw new Error('Modell-Integrationsstatus konnte nicht geladen werden.');
+      const data = await response.json();
+      setModelStatuses(Array.isArray(data.models) ? data.models : []);
+      setModelError(null);
+    } catch (err) {
+      console.error('Failed to fetch model integration status:', err);
+      setModelError(err instanceof Error ? err.message : 'Modell-Integrationsstatus konnte nicht geladen werden.');
     } finally {
-      setIsPinging(false);
+      setIsLoadingModels(false);
     }
   };
 
-  // Fetch stats from backend API
   const fetchStats = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) setIsRefreshing(true);
     try {
-      const res = await authFetch('/api/orchestrator/stats');
-      if (!res.ok) throw new Error('Fehler beim Laden der Orchestrator-Daten.');
-      const data: OrchestratorStats = await res.json();
+      const response = await authFetch('/api/orchestrator/stats');
+      if (!response.ok) throw new Error('Fehler beim Laden der Orchestrator-Daten.');
+      const data: OrchestratorStats = await response.json();
       setStats(data);
-      
-      // Sync form controls with server settings only on initial load or non-interactive refresh
-      if (loading) {
+
+      if (!formInitialized.current) {
         setConcurrencyLimit(data.concurrencyLimit);
         setMaxQueueSize(data.maxQueueSize);
         setMaxRequestsPerWindow(data.maxRequestsPerWindow);
+        formInitialized.current = true;
       }
       setError(null);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'Server-Verbindungsfehler.');
+      setError(err instanceof Error ? err.message : 'Server-Verbindungsfehler.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
   };
 
-  // Auto-refresh stats every 2 seconds & load model pings on mount
+  // FO-05 owns polling lifecycle hardening. FO-04 keeps the existing cadence unchanged.
   useEffect(() => {
     fetchStats();
-    triggerPingTests();
-    const interval = setInterval(() => {
-      fetchStats();
-    }, 2000);
+    fetchModelIntegrationStatus();
+    const interval = setInterval(() => fetchStats(), 2000);
     return () => clearInterval(interval);
   }, []);
 
-  // Update server config
-  const handleSaveConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveConfig = async (event: React.FormEvent) => {
+    event.preventDefault();
     setIsSaving(true);
     try {
-      const res = await authFetch('/api/orchestrator/config', {
+      const response = await authFetch('/api/orchestrator/config', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          concurrencyLimit,
-          maxQueueSize,
-          maxRequestsPerWindow
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ concurrencyLimit, maxQueueSize, maxRequestsPerWindow }),
       });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Konfiguration konnte nicht aktualisiert werden.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Konfiguration konnte nicht aktualisiert werden.');
       }
-      const data = await res.json();
+      const data = await response.json();
       if (data.success) {
         setStats(data.stats);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       }
-    } catch (err: any) {
-      alert(err.message || 'Verbindungsfehler.');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Verbindungsfehler.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Reset counters
   const handleResetStats = async () => {
-    if (!window.confirm('Möchten Sie die Transaktions- und Ablehnungszähler wirklich zurücksetzen?')) return;
+    if (!window.confirm('Möchten Sie die Orchestrator-Zähler und Recent Events wirklich zurücksetzen?')) return;
     try {
-      const res = await authFetch('/api/orchestrator/reset', { 
-        method: 'POST'
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Zurücksetzen fehlgeschlagen.');
+      const response = await authFetch('/api/orchestrator/reset', { method: 'POST' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Zurücksetzen fehlgeschlagen.');
       }
-      const data = await res.json();
-      if (data.success) {
-        setStats(data.stats);
-      }
-    } catch (err: any) {
-      alert(err.message || 'Verbindungsfehler.');
+      const data = await response.json();
+      if (data.success) setStats(data.stats);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Verbindungsfehler.');
     }
   };
 
@@ -167,198 +198,112 @@ export function OrchestratorPanel() {
     return (
       <div className="bg-black/40 border border-white/10 rounded-2xl p-8 backdrop-blur-md flex flex-col items-center justify-center min-h-[300px]">
         <div className="w-10 h-10 border-2 border-aif-gold-DEFAULT border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-xs font-mono text-white/50 uppercase tracking-widest">Initialisiere Orchestrator Telemetrie...</p>
+        <p className="text-xs font-mono text-white/50 uppercase tracking-widest">Initialisiere Orchestrator-Telemetrie...</p>
       </div>
     );
   }
 
-  // Calculate load percentages
   const activePercent = stats ? Math.min(100, (stats.activeRequests / stats.concurrencyLimit) * 100) : 0;
   const queuePercent = stats ? Math.min(100, (stats.queueSize / stats.maxQueueSize) * 100) : 0;
+  const contract = ORCHESTRATOR_TELEMETRY_CONTRACT;
 
   return (
     <div className="space-y-6">
-      
-      {/* Header Info */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10 mb-2">
-        <div>
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/25 text-amber-400 border border-amber-500/40 tracking-wider font-mono uppercase">
-            Capital-AI • Server-Side Traffic Protection
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10">
+        <div className="max-w-4xl">
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/35 tracking-wider font-mono uppercase">
+            Capital-AI • {contract.scope.badge}
           </span>
-          <h2 className="text-2xl font-black text-white font-display mt-2">Request-Orchestrator & Rate Limiter</h2>
-          <p className="text-xs text-white/70 mt-1 font-sans">
-            Automatische Ablaufsteuerung, Lastverteilung und DDoS-Schutz zur Vermeidung von Serverüberlastungen und API-Abstürzen.
-          </p>
+          <h2 className="text-2xl font-black text-white font-display mt-2">Request-Orchestrator Telemetrie</h2>
+          <p className="text-xs text-white/70 mt-1 font-sans">{contract.scope.description}</p>
+          <p className="text-[10px] text-white/40 mt-1 font-mono">{contract.scope.freshness}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => fetchStats(true)}
-            className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/80 flex items-center gap-1.5 text-xs font-mono uppercase cursor-pointer"
-            disabled={isRefreshing}
-          >
-            <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
-            <span>Aktualisieren</span>
-          </button>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            <Lock size={12} />
-            <span className="text-[11px] font-mono tracking-wider font-bold uppercase">AIF-Shield Aktiv</span>
-          </div>
-        </div>
+        <button
+          onClick={() => fetchStats(true)}
+          className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/80 flex items-center gap-1.5 text-xs font-mono uppercase cursor-pointer"
+          disabled={isRefreshing}
+        >
+          <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
+          <span>Aktualisieren</span>
+        </button>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 font-mono">
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 font-mono">
           <ShieldAlert size={16} />
-          <span>Warnung: {error} (Daten veraltet)</span>
+          <span>Warnung: {error} (zuletzt geladene Daten können veraltet sein)</span>
         </div>
       )}
 
-      {/* Grid: Overview KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        
-        {/* KPI 1: Active Concurrency */}
-        <div className="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-white/50 text-[11px] font-mono uppercase">
-              <span>Aktive Threads</span>
-              <Activity size={14} className="text-amber-400 animate-pulse" />
-            </div>
-            <div className="text-3xl font-black font-display text-white mt-2">
-              {stats?.activeRequests} <span className="text-sm font-mono font-medium text-white/35">/ {stats?.concurrencyLimit}</span>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-              <div 
-                className="bg-amber-400 h-1.5 rounded-full transition-all duration-500" 
-                style={{ width: `${activePercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[9px] text-white/40 font-mono mt-1.5">
-              <span>Auslastung</span>
-              <span>{Math.round(activePercent)}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 2: Queue Size */}
-        <div className="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-white/50 text-[11px] font-mono uppercase">
-              <span>Warteschlange</span>
-              <Layers size={14} className="text-cyan-400" />
-            </div>
-            <div className="text-3xl font-black font-display text-white mt-2">
-              {stats?.queueSize} <span className="text-sm font-mono font-medium text-white/35">/ {stats?.maxQueueSize}</span>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-              <div 
-                className="bg-cyan-400 h-1.5 rounded-full transition-all duration-500" 
-                style={{ width: `${queuePercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[9px] text-white/40 font-mono mt-1.5">
-              <span>Warteliste voll</span>
-              <span>{Math.round(queuePercent)}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 3: Requests in Last Minute */}
-        <div className="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-white/50 text-[11px] font-mono uppercase">
-              <span>Anfragen / Min</span>
-              <Clock size={14} className="text-aif-gold-DEFAULT animate-pulse" />
-            </div>
-            <div className="text-3xl font-black font-display text-white mt-2">
-              {stats?.requestsLastMinute ?? 0} <span className="text-xs font-mono font-medium text-white/35">/ {stats?.maxRequestsPerWindow}</span>
-            </div>
-          </div>
-          <p className="text-[10px] text-aif-gold-DEFAULT font-mono mt-4 flex items-center gap-1">
-            <span>Echtzeit Durchsatz</span>
-          </p>
-        </div>
-
-        {/* KPI 4: Processed Requests */}
-        <div className="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-white/50 text-[11px] font-mono uppercase">
-              <span>Verarbeitet</span>
-              <CheckCircle size={14} className="text-emerald-400" />
-            </div>
-            <div className="text-3xl font-black font-display text-white mt-2">
-              {stats?.totalProcessed.toLocaleString()}
-            </div>
-          </div>
-          <p className="text-[10px] text-emerald-400/80 font-mono mt-4 flex items-center gap-1">
-            <Wifi size={10} />
-            <span>Erfolgreich</span>
-          </p>
-        </div>
-
-        {/* KPI 5: Rejected / Dropped Requests */}
-        <div className="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-white/50 text-[11px] font-mono uppercase">
-              <span>Verworfen</span>
-              <AlertTriangle size={14} className="text-rose-400" />
-            </div>
-            <div className="text-3xl font-black font-display text-white mt-2">
-              {stats?.totalRejected.toLocaleString()}
-            </div>
-          </div>
-          <p className="text-[10px] text-rose-400/80 font-mono mt-4 flex items-center gap-1">
-            <span>Server geschützt</span>
-          </p>
-        </div>
-
-        {/* KPI 6: Rate Limit Triggers */}
-        <div className="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-white/50 text-[11px] font-mono uppercase">
-              <span>Spam-Blocks</span>
-              <ShieldAlert size={14} className="text-purple-400" />
-            </div>
-            <div className="text-3xl font-black font-display text-white mt-2">
-              {stats?.rateLimitsHit}
-            </div>
-          </div>
-          <p className="text-[10px] text-purple-400/80 font-mono mt-4 flex items-center gap-1">
-            <span>DDoS unterbunden</span>
-          </p>
-        </div>
-
+        <MetricCard
+          label={contract.metrics.activeRequests.label}
+          value={<>{stats?.activeRequests ?? 0} <span className="text-sm text-white/35">/ {stats?.concurrencyLimit ?? 0}</span></>}
+          note={contract.metrics.activeRequests.note}
+          icon={<Activity size={14} className="text-amber-400" />}
+          progress={activePercent}
+          progressLabel="Slot-Auslastung"
+        />
+        <MetricCard
+          label={contract.metrics.queueSize.label}
+          value={<>{stats?.queueSize ?? 0} <span className="text-sm text-white/35">/ {stats?.maxQueueSize ?? 0}</span></>}
+          note={contract.metrics.queueSize.note}
+          icon={<Layers size={14} className="text-purple-400" />}
+          progress={queuePercent}
+          progressLabel="Queue-Auslastung"
+        />
+        <MetricCard
+          label={contract.metrics.recentEvents.label}
+          value={stats?.requestsLastMinute ?? 0}
+          note={contract.metrics.recentEvents.note}
+          icon={<Clock size={14} className="text-aif-gold-DEFAULT" />}
+        />
+        <MetricCard
+          label={contract.metrics.totalProcessed.label}
+          value={(stats?.totalProcessed ?? 0).toLocaleString()}
+          note={contract.metrics.totalProcessed.note}
+          icon={<CheckCircle size={14} className="text-emerald-400" />}
+        />
+        <MetricCard
+          label={contract.metrics.totalRejected.label}
+          value={(stats?.totalRejected ?? 0).toLocaleString()}
+          note={contract.metrics.totalRejected.note}
+          icon={<AlertTriangle size={14} className="text-rose-400" />}
+        />
+        <MetricCard
+          label={contract.metrics.rateLimitsHit.label}
+          value={stats?.rateLimitsHit ?? 0}
+          note={contract.metrics.rateLimitsHit.note}
+          icon={<ShieldAlert size={14} className="text-purple-400" />}
+        />
       </div>
 
-      {/* Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left 2 Columns: Activity Live Logs */}
         <div className="lg:col-span-2 bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md flex flex-col h-[520px]">
           <div className="flex justify-between items-center pb-4 border-b border-white/10 mb-4">
             <div className="flex items-center gap-2">
               <Database className="text-aif-gold-DEFAULT" size={16} />
-              <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider">Echtzeit Transaktions-Log</h3>
+              <div>
+                <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider">{contract.events.title}</h3>
+                <p className="text-[10px] text-white/40 mt-0.5 font-mono">{contract.events.limitation}</p>
+              </div>
             </div>
             <button
               onClick={handleResetStats}
               className="text-white/40 hover:text-rose-400 transition-all p-1 hover:bg-white/5 rounded-lg flex items-center gap-1 text-[10px] font-mono uppercase"
-              title="Zähler zurücksetzen"
+              title="Zähler und Recent Events zurücksetzen"
             >
               <Trash2 size={12} />
               <span>Reset</span>
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-1 space-y-1.5 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
             {!stats || stats.recentLogs.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center">
                 <Clock size={24} className="text-white/20 mb-2" />
-                <p className="text-xs font-mono text-white/35">Noch keine Transaktionen erfasst.</p>
-                <p className="text-[10px] text-white/25 mt-0.5">Senden Sie eine Chatfrage oder laden Sie Marktdaten.</p>
+                <p className="text-xs font-mono text-white/35">{contract.events.empty}</p>
+                <p className="text-[10px] text-white/25 mt-1">{contract.events.limitation}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -366,37 +311,35 @@ export function OrchestratorPanel() {
                   <thead>
                     <tr className="border-b border-white/5 text-[11px] font-mono text-white/55 uppercase tracking-wider bg-white/5">
                       <th className="p-2.5">ID</th>
-                      <th className="p-2.5">Endpoint</th>
-                      <th className="p-2.5">Client-IP</th>
-                      <th className="p-2.5">Status</th>
+                      <th className="p-2.5">Endpoint-Key</th>
+                      <th className="p-2.5">Maskierte Client-IP</th>
+                      <th className="p-2.5">Orchestrator-Status</th>
                       <th className="p-2.5">Zeitstempel</th>
-                      <th className="p-2.5 text-right">Latenz</th>
+                      <th className="p-2.5 text-right">Dauer</th>
                     </tr>
                   </thead>
                   <tbody>
                     {stats.recentLogs.map((log) => {
-                      let badgeColor = 'bg-white/5 text-white/50 border-white/10';
-                      if (log.status === 'RUNNING') badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/25 animate-pulse';
-                      else if (log.status === 'COMPLETED') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25';
-                      else if (log.status === 'QUEUED') badgeColor = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25';
-                      else if (log.status === 'REJECTED') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/25';
-                      else if (log.status === 'TIMED_OUT') badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/25';
+                      const badgeClass =
+                        log.status === 'RUNNING'
+                          ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
+                          : log.status === 'COMPLETED'
+                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+                            : log.status === 'QUEUED'
+                              ? 'bg-purple-500/10 text-purple-300 border-purple-500/25'
+                              : 'bg-rose-500/10 text-rose-300 border-rose-500/25';
 
                       return (
                         <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-all font-mono">
                           <td className="p-2.5 text-white/40">#{log.id}</td>
                           <td className="p-2.5 font-bold text-white/80">{log.endpoint}</td>
-                          <td className="p-2.5 text-white/50 truncate max-w-[120px]">{log.ip}</td>
+                          <td className="p-2.5 text-white/50 truncate max-w-[150px]">{log.ip}</td>
                           <td className="p-2.5">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badgeColor}`}>
-                              {log.status}
-                            </span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badgeClass}`}>{log.status}</span>
                           </td>
-                          <td className="p-2.5 text-white/40">
-                            {new Date(log.timestamp).toLocaleTimeString()}
-                          </td>
-                          <td className="p-2.5 text-right font-bold text-cyan-400">
-                            {log.duration !== undefined ? `${log.duration}ms` : '-'}
+                          <td className="p-2.5 text-white/40">{new Date(log.timestamp).toLocaleTimeString()}</td>
+                          <td className="p-2.5 text-right font-bold text-white/65">
+                            {log.duration !== undefined ? `${log.duration}ms` : '—'}
                           </td>
                         </tr>
                       );
@@ -408,200 +351,107 @@ export function OrchestratorPanel() {
           </div>
         </div>
 
-        {/* Right 1 Column: Interactive Tuner Controls */}
-        <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
-          <form onSubmit={handleSaveConfig} className="space-y-6 flex flex-col h-full justify-between">
-            <div className="space-y-5">
-              <div className="flex items-center gap-2 pb-4 border-b border-white/10">
-                <Sliders className="text-aif-gold-DEFAULT" size={16} />
-                <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider">Modul-Einstellregler</h3>
-              </div>
-
-              {/* ADR-0003.5: Admin-Passcode-Eingabe entfernt - Autorisierung läuft
-                  jetzt automatisch über die Supabase-Session (Bearer-Token), kein
-                  manuell eingegebener/gespeicherter Passcode mehr nötig. */}
-
-              {/* Slider 1: Concurrency */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-mono text-white/70 uppercase">Max Parallel-Anfragen</label>
-                  <span className="text-xs font-black text-amber-400 font-mono bg-amber-400/10 px-2 py-0.5 rounded">
-                    {concurrencyLimit} Threads
-                  </span>
-                </div>
-                <input 
-                  type="range" 
-                  min="1" 
-                  max="10" 
-                  value={concurrencyLimit} 
-                  onChange={(e) => setConcurrencyLimit(Number(e.target.value))}
-                  className="w-full accent-aif-gold-DEFAULT cursor-pointer h-1 rounded-lg bg-white/10"
-                />
-                <p className="text-[9px] text-white/40 leading-normal">
-                  Wie viele teure Rechen- & KI-Operationen dürfen gleichzeitig laufen, bevor andere Anfragen in die Warteschlange müssen.
-                </p>
-              </div>
-
-              {/* Slider 2: Queue Capacity */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-mono text-white/70 uppercase">Warteschlangen-Größe</label>
-                  <span className="text-xs font-black text-cyan-400 font-mono bg-cyan-400/10 px-2 py-0.5 rounded">
-                    {maxQueueSize} Plätze
-                  </span>
-                </div>
-                <input 
-                  type="range" 
-                  min="2" 
-                  max="30" 
-                  value={maxQueueSize} 
-                  onChange={(e) => setMaxQueueSize(Number(e.target.value))}
-                  className="w-full accent-cyan-400 cursor-pointer h-1 rounded-lg bg-white/10"
-                />
-                <p className="text-[9px] text-white/40 leading-normal">
-                  Größe des Wartebereichs. Übersteigt der Traffic dieses Limit, werden Anfragen zum Server-Schutz sofort mit Code 429 verworfen.
-                </p>
-              </div>
-
-              {/* Slider 3: Rate Limiter Ceiling */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-mono text-white/70 uppercase">Client-Limit pro Minute</label>
-                  <span className="text-xs font-black text-purple-400 font-mono bg-purple-400/10 px-2 py-0.5 rounded">
-                    {maxRequestsPerWindow} Req/Min
-                  </span>
-                </div>
-                <input 
-                  type="range" 
-                  min="5" 
-                  max="100" 
-                  value={maxRequestsPerWindow} 
-                  onChange={(e) => setMaxRequestsPerWindow(Number(e.target.value))}
-                  className="w-full accent-purple-400 cursor-pointer h-1 rounded-lg bg-white/10"
-                />
-                <p className="text-[9px] text-white/40 leading-normal">
-                  Sliding-Window Blockgrenze pro Client-IP pro Minute, um Spam-Bots und automatisierte Ausleseversuche zu stoppen.
-                </p>
-              </div>
+        <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+          <form onSubmit={handleSaveConfig} className="space-y-6">
+            <div className="flex items-center gap-2 pb-4 border-b border-white/10">
+              <Sliders className="text-aif-gold-DEFAULT" size={16} />
+              <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider">Orchestrator-Konfiguration</h3>
             </div>
 
-            <div className="pt-4 border-t border-white/10 space-y-3">
-              {saveSuccess && (
-                <div className="text-center text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 py-2 px-3 rounded-lg font-mono animate-fade-in">
-                  ✓ Parameter erfolgreich gespeichert!
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="w-full py-3 rounded-xl bg-aif-gold-DEFAULT text-black text-xs font-black tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(245,196,83,0.2)] hover:shadow-[0_0_25px_rgba(245,196,83,0.35)] hover:scale-[1.02] cursor-pointer disabled:opacity-50"
-              >
-                {isSaving ? 'Speichere...' : 'Parameter anwenden'}
-              </button>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center gap-3">
+                <label className="text-[11px] font-mono text-white/70 uppercase">Max. parallele Requests</label>
+                <span className="text-xs font-black text-amber-300 font-mono">{concurrencyLimit}</span>
+              </div>
+              <input type="range" min="1" max="10" value={concurrencyLimit} onChange={(event) => setConcurrencyLimit(Number(event.target.value))} className="w-full accent-aif-gold-DEFAULT cursor-pointer" />
+              <p className="text-[9px] text-white/40">Begrenzt parallele Ausführung ausschließlich für instrumentierte Orchestrator-Routen.</p>
             </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center gap-3">
+                <label className="text-[11px] font-mono text-white/70 uppercase">Max. Queue-Größe</label>
+                <span className="text-xs font-black text-purple-300 font-mono">{maxQueueSize}</span>
+              </div>
+              <input type="range" min="2" max="30" value={maxQueueSize} onChange={(event) => setMaxQueueSize(Number(event.target.value))} className="w-full accent-purple-400 cursor-pointer" />
+              <p className="text-[9px] text-white/40">Ist die Queue voll, werden weitere instrumentierte Requests mit HTTP 429 abgelehnt.</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center gap-3">
+                <label className="text-[11px] font-mono text-white/70 uppercase">Client-Limit pro Minute</label>
+                <span className="text-xs font-black text-purple-300 font-mono">{maxRequestsPerWindow}</span>
+              </div>
+              <input type="range" min="5" max="100" value={maxRequestsPerWindow} onChange={(event) => setMaxRequestsPerWindow(Number(event.target.value))} className="w-full accent-purple-400 cursor-pointer" />
+              <p className="text-[9px] text-white/40">Sliding-Window-Grenze pro abgeleiteter Client-IP; keine Bot- oder Angriffserkennung.</p>
+            </div>
+
+            {saveSuccess && (
+              <div className="text-center text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 py-2 px-3 rounded-lg font-mono">
+                ✓ Parameter gespeichert.
+              </div>
+            )}
+
+            <button type="submit" disabled={isSaving} className="w-full py-3 rounded-xl bg-aif-gold-DEFAULT text-black text-xs font-black tracking-widest uppercase transition-all hover:scale-[1.01] cursor-pointer disabled:opacity-50">
+              {isSaving ? 'Speichere...' : 'Parameter anwenden'}
+            </button>
           </form>
         </div>
-
       </div>
 
-      {/* Model Auto-Routing Latency Checks */}
       <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-white/10">
           <div>
             <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider flex items-center gap-2">
               <Cpu size={16} className="text-aif-gold-DEFAULT" />
-              <span>Model Auto-Routing &amp; Latency Monitor</span>
+              <span>{contract.models.title}</span>
             </h3>
-            <p className="text-[11px] text-white/50 mt-1">
-              Aktive Latenzprüfungen des <strong>Auto-Routers</strong> zur dynamischen Auswahl des schnellsten LLM-Knotens unter 200ms.
-            </p>
+            <p className="text-[11px] text-white/50 mt-1">{contract.models.description}</p>
           </div>
           <button
             type="button"
-            onClick={triggerPingTests}
-            disabled={isPinging}
-            className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-mono uppercase transition-all flex items-center gap-2 shrink-0 self-start sm:self-auto cursor-pointer"
+            onClick={fetchModelIntegrationStatus}
+            disabled={isLoadingModels}
+            className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-mono uppercase transition-all flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw size={12} className={isPinging ? 'animate-spin' : ''} />
-            <span>{isPinging ? 'Pinge LLM-Knoten...' : 'Latenz-Ping ausführen'}</span>
+            <RefreshCw size={12} className={isLoadingModels ? 'animate-spin' : ''} />
+            <span>{isLoadingModels ? contract.models.loadingLabel : contract.models.refreshLabel}</span>
           </button>
         </div>
 
-        {modelPings.length === 0 ? (
+        {modelError && (
+          <div className="text-xs font-mono text-rose-300 bg-rose-500/10 border border-rose-500/25 rounded-lg p-3">{modelError}</div>
+        )}
+
+        {modelStatuses.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-xs font-mono text-white/40 uppercase">Initialisiere Auto-Router Telemetrie...</p>
+            <p className="text-xs font-mono text-white/40 uppercase">{contract.models.loadingLabel}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {modelPings.map((m) => {
-              const isOptimal = m.id === optimalModelId;
-              const isConfigured = m.configured ?? m.status === 'Configured';
-              const latencyWarning = typeof m.latency === 'number' && m.latency >= 200;
-              return (
-                <div 
-                  key={m.id} 
-                  className={`p-4 rounded-xl border relative overflow-hidden transition-all duration-300 ${
-                    isOptimal 
-                      ? 'bg-aif-gold-DEFAULT/5 border-aif-gold-DEFAULT/40 shadow-[0_0_20px_rgba(245,196,83,0.08)]' 
-                      : 'bg-black/20 border-white/5'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="truncate max-w-[80%]">
-                      <div className="text-xs font-black text-white truncate">{m.name}</div>
-                      <div className="text-[9px] font-mono text-white/40 uppercase mt-0.5">{m.task}</div>
-                    </div>
-                    {isOptimal && (
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 uppercase font-black tracking-wider animate-pulse">
-                        Optimal
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex justify-between items-baseline">
-                    <div className="space-y-0.5">
-                      <div className="text-[9px] font-mono text-white/40 uppercase">Latency</div>
-                      <div className={`text-xl font-black font-mono ${
-                        latencyWarning ? 'text-rose-400' : isOptimal ? 'text-aif-gold-DEFAULT' : 'text-cyan-400'
-                      }`}>
-                        {typeof m.latency === 'number' ? `${m.latency}ms` : '—'}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[9px] font-mono text-white/40 uppercase">Cost/1M</div>
-                      <div className="text-xs font-mono text-white/70 font-bold">${m.cost}</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t border-white/5 flex justify-between items-center text-[9px] font-mono">
-                    <span className="text-white/40">Status:</span>
-                    <span className={`font-bold flex items-center gap-1 ${
-                      isConfigured ? 'text-emerald-400' : 'text-white/40'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        isConfigured ? 'bg-emerald-500' : 'bg-white/20'
-                      }`} />
-                      {isConfigured ? 'CONFIGURED' : 'NOT INTEGRATED'}
-                    </span>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {modelStatuses.map((model) => (
+              <div key={model.id} className="p-4 rounded-xl border bg-black/20 border-white/10">
+                <div className="text-xs font-black text-white">{model.name}</div>
+                <div className="text-[9px] font-mono text-white/40 uppercase mt-0.5">{model.task}</div>
+                <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center text-[9px] font-mono gap-3">
+                  <span className="text-white/40">Integration:</span>
+                  <span className={model.configured ? 'font-bold text-emerald-300' : 'font-bold text-white/45'}>
+                    {model.configured ? 'CONFIGURED' : 'NOT INTEGRATED'}
+                  </span>
                 </div>
-              );
-            })}
+                <p className="text-[9px] text-white/35 font-mono mt-3">{contract.models.noMeasurement}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Safeguards Disclaimer */}
-      <div className="bg-white/5 border border-white/5 rounded-xl p-4 flex items-center gap-3">
-        <Cpu className="text-amber-500 shrink-0" size={20} />
+      <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3">
+        <ShieldAlert className="text-amber-400 shrink-0 mt-0.5" size={20} />
         <div>
-          <div className="text-[11px] font-mono text-white/40 uppercase font-bold">Failsafe-Sicherheitsnetzwerk</div>
-          <p className="text-xs text-white/70 mt-0.5">
-            Der Request-Orchestrator ist vollständig asynchron programmiert. Bei Serverüberlastung oder Erreichen von externen Rate-Limits (wie Alpha Vantage Limits) fängt die Warteschlange Anfragen zuverlässig ab und schützt so den Node.js-Prozess vor Abstürzen durch unbehandelte Timeouts oder Heap-Memory Errors.
-          </p>
+          <div className="text-[11px] font-mono text-amber-300 uppercase font-bold">{contract.safeguards.title}</div>
+          <p className="text-xs text-white/70 mt-1 leading-relaxed">{contract.safeguards.description}</p>
         </div>
       </div>
-
     </div>
   );
 }
