@@ -18,6 +18,7 @@ export interface ProviderRuntimeObservation {
   readonly capability: string;
   readonly observedAt: string;
   readonly outcome: ProviderRuntimeOutcome;
+  /** True only when network/provider transport was actually started. */
   readonly requestAttempted: boolean;
   readonly durationMs: number;
   readonly payloadUsable: boolean;
@@ -31,12 +32,21 @@ export interface ProviderRuntimeSummary {
   readonly version: typeof PROVIDER_RUNTIME_OBSERVABILITY_VERSION;
   readonly providerId: string;
   readonly capability: string;
+  /** All observations, including fail-closed local denials. */
   readonly sampleCount: number;
+  /** Observations that actually reached provider transport. */
   readonly requestAttemptCount: number;
+  /** Fail-closed observations rejected before provider transport. */
+  readonly localDenialCount: number;
+  /** READY / attempted provider requests. Local configuration/circuit/budget denials are excluded. */
   readonly availabilityRate: number;
+  /** Non-READY / attempted provider requests. Local denials are excluded. */
   readonly errorRate: number;
+  /** Calculated only from attempted provider requests. */
   readonly p95LatencyMs: number | null;
   readonly rateLimitedEvents: number;
+  readonly providerRateLimitedEvents: number;
+  readonly localRateLimitDenials: number;
   readonly circuitOpenEvents: number;
   readonly currentCircuitState: CircuitState | null;
   readonly lastObservedAt: string | null;
@@ -81,6 +91,9 @@ export function recordProviderRuntimeObservation(input: Omit<ProviderRuntimeObse
   if (input.rateResetAt !== null && !Number.isFinite(Date.parse(input.rateResetAt))) {
     throw new Error('PROVIDER_RUNTIME_OBSERVATION_RATE_RESET_INVALID');
   }
+  if (!input.requestAttempted && input.httpStatus !== null) {
+    throw new Error('PROVIDER_RUNTIME_OBSERVATION_LOCAL_DENIAL_HTTP_STATUS_FORBIDDEN');
+  }
 
   const observation = Object.freeze({
     ...input,
@@ -111,18 +124,22 @@ export function summarizeProviderRuntime(providerIdInput: string, capabilityInpu
   const samples = ledger.filter(item => item.providerId === providerId && item.capability === capability);
   const attempted = samples.filter(item => item.requestAttempted);
   const last = samples.at(-1) ?? null;
-  const ready = samples.filter(item => item.outcome === 'READY').length;
-  const errors = samples.filter(item => item.outcome !== 'READY').length;
+  const ready = attempted.filter(item => item.outcome === 'READY').length;
+  const errors = attempted.filter(item => item.outcome !== 'READY').length;
+  const rateLimited = samples.filter(item => item.outcome === 'RATE_LIMITED');
   return Object.freeze({
     version: PROVIDER_RUNTIME_OBSERVABILITY_VERSION,
     providerId,
     capability,
     sampleCount: samples.length,
     requestAttemptCount: attempted.length,
-    availabilityRate: ratio(ready, samples.length),
-    errorRate: ratio(errors, samples.length),
+    localDenialCount: samples.length - attempted.length,
+    availabilityRate: ratio(ready, attempted.length),
+    errorRate: ratio(errors, attempted.length),
     p95LatencyMs: percentile95(attempted.map(item => item.durationMs)),
-    rateLimitedEvents: samples.filter(item => item.outcome === 'RATE_LIMITED').length,
+    rateLimitedEvents: rateLimited.length,
+    providerRateLimitedEvents: rateLimited.filter(item => item.requestAttempted).length,
+    localRateLimitDenials: rateLimited.filter(item => !item.requestAttempted).length,
     circuitOpenEvents: samples.filter(item => item.outcome === 'CIRCUIT_OPEN').length,
     currentCircuitState: last?.circuitState ?? null,
     lastObservedAt: last?.observedAt ?? null,
