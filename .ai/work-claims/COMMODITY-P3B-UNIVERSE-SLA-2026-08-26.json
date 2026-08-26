@@ -14,6 +14,7 @@
   "startedAt": "2026-08-26T23:40:00+02:00",
   "baseBranch": "main",
   "baseSha": "825788cac6250d2913f9a67eeb3d316ca5dc390f",
+  "synchronizedMainSha": "e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba",
   "claimedPaths": [
     ".ai/work-claims/COMMODITY-P3B-UNIVERSE-SLA-2026-08-26.json",
     "src/services/commodityUniverseSla.ts",
@@ -28,8 +29,11 @@
     "Champion promotion or P3-C decision",
     "Render, Supabase, Stripe, secret or database mutation"
   ],
+  "mainCorrelation": [
+    "PR #550 security remediation merged into main@e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba during PR-open race; branch synchronized with an explicit merge commit.",
+    "PR #550 changed server security, auth, telemetry, OrchestratorPanel and security-test paths; no P3-B claimed-path, AssetCatalog, ProviderMatrix, Commodity taxonomy or TwelveData mapping overlap."
+  ],
   "knownParallelPrs": [
-    "#550 security report — no claimed-path overlap identified",
     "#551 branding/social migration — no claimed-path overlap identified",
     "#552 frontend Dashboard consumer cutover — no claimed-path overlap identified"
   ],
