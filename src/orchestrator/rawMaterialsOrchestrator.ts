@@ -68,14 +68,25 @@ export interface RawMaterialsResearchContext {
   reasoning: string[];
 }
 
+export interface RawMaterialsShadowRuntimeResult {
+  status: 'RECORDED' | 'BLOCKED';
+  observation: CommodityShadowObservation | null;
+  /** Stable internal diagnostic code only; never raw provider/error payload text. */
+  code: string | null;
+  canonical: false;
+  scoreEligible: false;
+  rankingEligible: false;
+  executionEligible: false;
+}
+
 export interface RawMaterialsSourceBackedResearchContext {
   contractVersion: typeof RAW_MATERIALS_SOURCE_BACKED_RESEARCH_CONTRACT_VERSION;
   authority: typeof RAW_MATERIALS_RESEARCH_AUTHORITY;
   asset: UniversalAssetIdentity;
   featureSnapshot: CommodityResearchFeatureSnapshot;
   challengerEvaluation: CommodityCategoryResearchEvaluation;
-  /** P3-A read-only shadow evidence. It cannot influence ranking, eligibility or execution. */
-  shadowObservation: CommodityShadowObservation;
+  /** P3-A is isolated from the primary research result; BLOCKED shadow evidence cannot fail research. */
+  shadowRuntime: RawMaterialsShadowRuntimeResult;
   canonical: false;
   scoreEligible: false;
   executionEligible: false;
@@ -128,6 +139,11 @@ export const RAW_MATERIALS_ORCHESTRATOR_AGENT_DESCRIPTORS: readonly Orchestrator
     model: 'provider-neutral',
   },
 ];
+
+function shadowFailureCode(error: unknown): string {
+  if (error instanceof Error && /^COMMODITY_[A-Z0-9_]+$/.test(error.message)) return error.message;
+  return 'COMMODITY_SHADOW_OBSERVATION_FAILED';
+}
 
 export class RawMaterialsOrchestrator {
   private classificationAgent: ClassificationAgent;
@@ -203,9 +219,9 @@ export class RawMaterialsOrchestrator {
    *
    * Provider adapters acquire/validate evidence before calling this method. The orchestrator binds
    * that evidence to UAI, composes the domain FeatureSnapshot, evaluates deterministic research
-   * readiness and records the same snapshot in the read-only P3-A shadow ledger. The shadow hook
+   * readiness and attempts the same snapshot in the read-only P3-A shadow ledger. The shadow hook
    * performs no provider call and cannot emit CanonicalScoreResult, mutate the registry, rank assets
-   * or grant execution eligibility.
+   * or grant execution eligibility. Shadow failures are isolated and never fail the research result.
    */
   public composeSourceBackedResearch(
     input: RawMaterialsSourceBackedResearchInput,
@@ -232,12 +248,35 @@ export class RawMaterialsOrchestrator {
       nowMs: input.nowMs,
     });
     const challengerEvaluation = evaluateCommodityCategoryResearchSnapshot(featureSnapshot);
-    const shadowObservation = recordCommodityShadowObservation({
-      snapshot: featureSnapshot,
-      providerBindings: input.shadowProviderBindings,
-      champion: input.championComparator,
-      environment: input.shadowEnvironment,
-    });
+
+    let shadowRuntime: RawMaterialsShadowRuntimeResult;
+    try {
+      const observation = recordCommodityShadowObservation({
+        snapshot: featureSnapshot,
+        providerBindings: input.shadowProviderBindings,
+        champion: input.championComparator,
+        environment: input.shadowEnvironment,
+      });
+      shadowRuntime = Object.freeze({
+        status: 'RECORDED' as const,
+        observation,
+        code: null,
+        canonical: false as const,
+        scoreEligible: false as const,
+        rankingEligible: false as const,
+        executionEligible: false as const,
+      });
+    } catch (error) {
+      shadowRuntime = Object.freeze({
+        status: 'BLOCKED' as const,
+        observation: null,
+        code: shadowFailureCode(error),
+        canonical: false as const,
+        scoreEligible: false as const,
+        rankingEligible: false as const,
+        executionEligible: false as const,
+      });
+    }
 
     return Object.freeze({
       contractVersion: RAW_MATERIALS_SOURCE_BACKED_RESEARCH_CONTRACT_VERSION,
@@ -245,7 +284,7 @@ export class RawMaterialsOrchestrator {
       asset,
       featureSnapshot,
       challengerEvaluation,
-      shadowObservation,
+      shadowRuntime,
       canonical: false,
       scoreEligible: false,
       executionEligible: false,
