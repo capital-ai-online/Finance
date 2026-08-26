@@ -18,7 +18,12 @@ import { CapitalAiLogo } from './CapitalAiLogo';
 import { MarketScreener } from './MarketScreener';
 import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { SecurityRadarBadge } from './SecurityRadarBadge';
-import { UserSession } from '../App';
+import type { UserSession } from '../app/types/UserSession';
+import {
+  getDashboardSection,
+  type DashboardSection,
+  type DashboardView,
+} from '../app/dashboard/dashboardViews';
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
 import { AdminPortal } from './AdminPortal';
 import { InteractModule } from './InteractModule';
@@ -87,6 +92,8 @@ interface DashboardProps {
   onRegisterEmail?: (name: string, email: string, password: string) => Promise<void>;
 }
 
+type DashboardExpandedSection = DashboardSection | 'universes';
+
 // Sprungnavigation der Orientierungsleiste (Gast- und Standard-Variante teilen sich dieselben Links,
 // siehe activeView === 'dashboard' unten), damit die Zielsprung-Anker an einer Stelle gepflegt werden.
 function OrientationJumpNav({ onBuffetValueClick }: { onBuffetValueClick: () => void }) {
@@ -130,21 +137,15 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'learning' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'social-accounts' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [activeView, setActiveView] = useState<DashboardView>('dashboard');
   const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'seo' | 'compliance'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<string | null>('hub');
+  const [expandedSection, setExpandedSection] = useState<DashboardExpandedSection | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
 
   // Auto-expand appropriate accordion section on activeView changes for best mobile/desktop experience
   React.useEffect(() => {
-    const getViewCategory = (view: string) => {
-      if (['dashboard', 'myworkspace', 'learning', 'universe-scoring', 'abonnements', 'profil'].includes(view)) return 'hub';
-      if (['market-screener', 'charts', 'preis-alarme', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
-      if (['admin-panel', 'auth-debugger', 'markdown-orchestrator', 'request-orchestrator', 'performance', 'audit-logs', 'admin-portal'].includes(view)) return 'system_admin';
-      return 'hub';
-    };
-    setExpandedSection(getViewCategory(activeView));
+    setExpandedSection(getDashboardSection(activeView));
   }, [activeView]);
 
   // Switch to dashboard view automatically when user becomes registered
