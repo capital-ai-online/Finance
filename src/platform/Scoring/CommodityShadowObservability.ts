@@ -1,8 +1,15 @@
 import { createHash } from 'node:crypto';
 import { summarizeProviderRuntime, type ProviderRuntimeSummary } from '../MarketData/providerRuntimeObservability';
 import { createTelemetryRecord, type TelemetryRecord } from '../Telemetry/contracts';
-import type { CommodityCategoryResearchEvaluation } from './CommodityCategoryResearchEvaluation';
+import {
+  evaluateCommodityCategoryResearchSnapshot,
+  type CommodityCategoryResearchEvaluation,
+} from './CommodityCategoryResearchEvaluation';
 import type { CommodityResearchFeatureSnapshot } from './CommodityResearchModelContracts';
+import {
+  RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
+  scoringModelRegistry,
+} from './ScoringModelRegistry';
 
 export const COMMODITY_SHADOW_OBSERVABILITY_VERSION = 'commodity-shadow-observability/1.0.0' as const;
 const SHADOW_LEDGER_LIMIT = 2_000;
@@ -59,6 +66,8 @@ export interface CommodityShadowObservation {
   readonly instrumentKind: CommodityResearchFeatureSnapshot['instrumentKind'];
   readonly modelId: string;
   readonly modelVersion: string;
+  readonly modelRegistryVersion: string;
+  readonly executorKey: string;
   readonly featureContractVersion: string;
   readonly evaluationStatus: CommodityCategoryResearchEvaluation['status'];
   readonly coverage: number;
@@ -92,6 +101,7 @@ export type CommodityShadowTelemetrySink = (record: TelemetryRecord) => void;
 
 const observations: CommodityShadowObservation[] = [];
 const telemetryLedger: TelemetryRecord[] = [];
+const shadowSnapshotStatusLedger = new Map<string, Readonly<Record<string, string>>>();
 
 function sha256(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -128,15 +138,27 @@ function providerViews(
   snapshot: CommodityResearchFeatureSnapshot,
   bindings: readonly CommodityShadowProviderBinding[],
 ): CommodityShadowProviderView[] {
+  const knownFeatureKeys = new Set(snapshot.features.map(feature => feature.featureKey));
+  const seen = new Set<string>();
   return bindings.map(binding => {
+    const providerId = binding.providerId.trim();
+    const capability = binding.capability.trim();
+    const bindingKey = `${providerId}:${capability}`;
+    if (!providerId || !capability || binding.featureKeys.length === 0 || seen.has(bindingKey)) {
+      throw new Error('COMMODITY_SHADOW_PROVIDER_BINDING_INVALID');
+    }
+    if (binding.featureKeys.some(featureKey => !knownFeatureKeys.has(featureKey))) {
+      throw new Error('COMMODITY_SHADOW_PROVIDER_FEATURE_BINDING_UNKNOWN');
+    }
+    seen.add(bindingKey);
     const featureKeys = new Set(binding.featureKeys);
     const features = snapshot.features.filter(feature => featureKeys.has(feature.featureKey));
     const fresh = features.filter(feature => feature.status === 'VALID').length;
     const available = features.filter(feature => feature.status !== 'MISSING').length;
     return Object.freeze({
-      providerId: binding.providerId,
-      capability: binding.capability,
-      runtime: summarizeProviderRuntime(binding.providerId, binding.capability),
+      providerId,
+      capability,
+      runtime: summarizeProviderRuntime(providerId, capability),
       featureCount: features.length,
       freshFeatureCount: fresh,
       freshnessPassRate: ratio(fresh, features.length),
@@ -152,11 +174,10 @@ function featureStatusChanges(
   if (!previous) return 0;
   const previousSnapshot = shadowSnapshotStatusLedger.get(previous.observationId);
   if (!previousSnapshot) return 0;
-  const keys = new Set([...Object.keys(previousSnapshot), ...current.features.map(item => item.featureKey)]);
-  return [...keys].filter(key => previousSnapshot[key] !== current.features.find(item => item.featureKey === key)?.status).length;
+  const currentStatuses = Object.fromEntries(current.features.map(item => [item.featureKey, item.status]));
+  const keys = new Set([...Object.keys(previousSnapshot), ...Object.keys(currentStatuses)]);
+  return [...keys].filter(key => previousSnapshot[key] !== currentStatuses[key]).length;
 }
-
-const shadowSnapshotStatusLedger = new Map<string, Readonly<Record<string, string>>>();
 
 function previousFor(assetId: string, modelId: string): CommodityShadowObservation | null {
   return [...observations].reverse().find(item => item.assetId === assetId && item.modelId === modelId) ?? null;
@@ -168,28 +189,39 @@ function defaultTelemetrySink(record: TelemetryRecord): void {
 }
 
 /**
- * P3-A records a governed challenger evaluation in parallel with, but outside of, productive
- * scoring/ranking authority. It never executes candidate weights and never promotes the model.
+ * P3-A evaluates and records a governed challenger snapshot in parallel with, but outside of,
+ * productive scoring/ranking authority. Caller-supplied evaluation state is intentionally not
+ * accepted: the deterministic evaluator and registered challenger descriptor are re-read here.
  */
 export function recordCommodityShadowObservation(input: Readonly<{
   snapshot: CommodityResearchFeatureSnapshot;
-  evaluation: CommodityCategoryResearchEvaluation;
   providerBindings?: readonly CommodityShadowProviderBinding[];
   champion?: CommodityShadowChampionView | null;
   telemetrySink?: CommodityShadowTelemetrySink;
   environment?: string;
 }>): CommodityShadowObservation {
-  const { snapshot, evaluation } = input;
+  const { snapshot } = input;
   if (snapshot.assetId.trim() === '' || snapshot.symbol.trim() === '') throw new Error('COMMODITY_SHADOW_IDENTITY_REQUIRED');
-  if (snapshot.contractVersion !== evaluation.featureContractVersion) throw new Error('COMMODITY_SHADOW_FEATURE_CONTRACT_MISMATCH');
-  if (snapshot.domain !== evaluation.domain || snapshot.instrumentKind !== evaluation.instrumentKind) {
-    throw new Error('COMMODITY_SHADOW_MODEL_SCOPE_MISMATCH');
-  }
-  if (snapshot.canonical !== false || snapshot.scoreEligible !== false || evaluation.canonical !== false || evaluation.scoreEligible !== false || evaluation.executionEligible !== false) {
+  if (snapshot.canonical !== false || snapshot.scoreEligible !== false) throw new Error('COMMODITY_SHADOW_AUTHORITY_VIOLATION');
+
+  const evaluation = evaluateCommodityCategoryResearchSnapshot(snapshot);
+  if (evaluation.canonical !== false || evaluation.scoreEligible !== false || evaluation.executionEligible !== false) {
     throw new Error('COMMODITY_SHADOW_AUTHORITY_VIOLATION');
   }
   if (evaluation.researchCompositeScore !== null || evaluation.weightHypothesis.executable !== false) {
     throw new Error('COMMODITY_SHADOW_EXECUTABLE_SCORE_FORBIDDEN');
+  }
+
+  const descriptor = scoringModelRegistry.get(evaluation.modelId, evaluation.modelVersion);
+  if (!descriptor
+    || descriptor.lifecycle !== 'challenger'
+    || descriptor.alias !== 'challenger'
+    || descriptor.scoreEligible !== false
+    || descriptor.evidencePolicy !== 'research-only'
+    || descriptor.executorKey !== RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY
+    || descriptor.featureContractVersion !== evaluation.featureContractVersion
+    || !descriptor.instrumentKinds?.includes(snapshot.instrumentKind)) {
+    throw new Error('COMMODITY_SHADOW_REGISTRY_BINDING_INVALID');
   }
 
   const previous = previousFor(snapshot.assetId, evaluation.modelId);
@@ -199,6 +231,14 @@ export function recordCommodityShadowObservation(input: Readonly<{
   const currentFeatureStatuses = Object.freeze(Object.fromEntries(snapshot.features.map(feature => [feature.featureKey, feature.status])));
   const statusChanges = featureStatusChanges(snapshot, previous);
   const observedAt = snapshot.capturedAt;
+  const canonicalChampion = champion ? {
+    modelId: champion.modelId,
+    modelVersion: champion.modelVersion,
+    status: champion.status,
+    score: champion.score,
+    effectiveFeatureFingerprint: champion.effectiveFeatureFingerprint ?? null,
+    effectiveWeightFingerprint: champion.effectiveWeightFingerprint ?? null,
+  } : null;
   const observationFingerprint = sha256({
     version: COMMODITY_SHADOW_OBSERVABILITY_VERSION,
     observedAt,
@@ -206,6 +246,7 @@ export function recordCommodityShadowObservation(input: Readonly<{
     symbol: snapshot.symbol,
     modelId: evaluation.modelId,
     modelVersion: evaluation.modelVersion,
+    modelRegistryVersion: descriptor.registryVersion,
     featureContractVersion: evaluation.featureContractVersion,
     evaluationStatus: evaluation.status,
     coverage: snapshot.coverage,
@@ -214,7 +255,7 @@ export function recordCommodityShadowObservation(input: Readonly<{
     effectiveFeatureFingerprint: evaluation.lineage.effectiveFeatureFingerprint,
     nonExecutableWeightFingerprint: evaluation.lineage.nonExecutableWeightFingerprint,
     evidenceFingerprint: currentEvidenceFingerprint,
-    champion,
+    champion: canonicalChampion,
   });
   const observationId = `commodity-shadow:sha256:${observationFingerprint}`;
 
@@ -229,6 +270,8 @@ export function recordCommodityShadowObservation(input: Readonly<{
     instrumentKind: snapshot.instrumentKind,
     modelId: evaluation.modelId,
     modelVersion: evaluation.modelVersion,
+    modelRegistryVersion: descriptor.registryVersion,
+    executorKey: descriptor.executorKey,
     featureContractVersion: evaluation.featureContractVersion,
     evaluationStatus: evaluation.status,
     coverage: snapshot.coverage,
@@ -247,7 +290,7 @@ export function recordCommodityShadowObservation(input: Readonly<{
       score: null,
       delta: null,
     }),
-    champion,
+    champion: canonicalChampion,
     providers: Object.freeze(providerViews(snapshot, input.providerBindings ?? [])),
     drift: Object.freeze({
       previousObservationId: previous?.observationId ?? null,
@@ -258,18 +301,18 @@ export function recordCommodityShadowObservation(input: Readonly<{
       featureStatusChanges: statusChanges,
       featureFingerprintChanged: Boolean(previous && previous.effectiveFeatureFingerprint !== evaluation.lineage.effectiveFeatureFingerprint),
       evidenceFingerprintChanged: Boolean(previous && previous.evidenceFingerprint !== currentEvidenceFingerprint),
-      championScoreDelta: previousChampion?.score !== null && previousChampion?.score !== undefined && champion?.score !== null && champion?.score !== undefined
-        ? Number((champion.score - previousChampion.score).toFixed(4))
+      championScoreDelta: previousChampion?.score !== null && previousChampion?.score !== undefined && canonicalChampion?.score !== null && canonicalChampion?.score !== undefined
+        ? Number((canonicalChampion.score - previousChampion.score).toFixed(4))
         : null,
       championFeatureFingerprintChanged: Boolean(
         previousChampion?.effectiveFeatureFingerprint
-        && champion?.effectiveFeatureFingerprint
-        && previousChampion.effectiveFeatureFingerprint !== champion.effectiveFeatureFingerprint
+        && canonicalChampion?.effectiveFeatureFingerprint
+        && previousChampion.effectiveFeatureFingerprint !== canonicalChampion.effectiveFeatureFingerprint
       ),
       championWeightFingerprintChanged: Boolean(
         previousChampion?.effectiveWeightFingerprint
-        && champion?.effectiveWeightFingerprint
-        && previousChampion.effectiveWeightFingerprint !== champion.effectiveWeightFingerprint
+        && canonicalChampion?.effectiveWeightFingerprint
+        && previousChampion.effectiveWeightFingerprint !== canonicalChampion.effectiveWeightFingerprint
       ),
     }),
     canonical: false,
@@ -301,6 +344,7 @@ export function recordCommodityShadowObservation(input: Readonly<{
     attributes: {
       modelId: evaluation.modelId,
       modelVersion: evaluation.modelVersion,
+      modelRegistryVersion: descriptor.registryVersion,
       domain: snapshot.domain,
       evaluationStatus: evaluation.status,
       coverage: snapshot.coverage,
