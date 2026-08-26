@@ -18,6 +18,7 @@ export interface ProviderRuntimeObservation {
   readonly capability: string;
   readonly observedAt: string;
   readonly outcome: ProviderRuntimeOutcome;
+  readonly requestAttempted: boolean;
   readonly durationMs: number;
   readonly payloadUsable: boolean;
   readonly circuitState: CircuitState;
@@ -31,6 +32,7 @@ export interface ProviderRuntimeSummary {
   readonly providerId: string;
   readonly capability: string;
   readonly sampleCount: number;
+  readonly requestAttemptCount: number;
   readonly availabilityRate: number;
   readonly errorRate: number;
   readonly p95LatencyMs: number | null;
@@ -107,6 +109,7 @@ export function summarizeProviderRuntime(providerIdInput: string, capabilityInpu
   const providerId = providerIdInput.trim();
   const capability = capabilityInput.trim();
   const samples = ledger.filter(item => item.providerId === providerId && item.capability === capability);
+  const attempted = samples.filter(item => item.requestAttempted);
   const last = samples.at(-1) ?? null;
   const ready = samples.filter(item => item.outcome === 'READY').length;
   const errors = samples.filter(item => item.outcome !== 'READY').length;
@@ -115,9 +118,10 @@ export function summarizeProviderRuntime(providerIdInput: string, capabilityInpu
     providerId,
     capability,
     sampleCount: samples.length,
+    requestAttemptCount: attempted.length,
     availabilityRate: ratio(ready, samples.length),
     errorRate: ratio(errors, samples.length),
-    p95LatencyMs: percentile95(samples.map(item => item.durationMs)),
+    p95LatencyMs: percentile95(attempted.map(item => item.durationMs)),
     rateLimitedEvents: samples.filter(item => item.outcome === 'RATE_LIMITED').length,
     circuitOpenEvents: samples.filter(item => item.outcome === 'CIRCUIT_OPEN').length,
     currentCircuitState: last?.circuitState ?? null,
