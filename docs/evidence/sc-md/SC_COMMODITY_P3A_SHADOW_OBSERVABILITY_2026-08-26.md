@@ -15,11 +15,12 @@ Dieser Slice implementiert die **Observability Foundation**:
 
 1. bounded Provider-Runtime-Observations an der bestehenden `ResearchEvidenceProviderHttp`-Grenze;
 2. Availability/Error/P95-Latency/Circuit-/Rate-Budget-Aggregation;
-3. source-backed Commodity Shadow Observations über bereits governte `CommodityResearchFeatureSnapshot` + `CommodityCategoryResearchEvaluation`;
-4. Feature-/DQ-/Evidence-/Fingerprint-Drift;
-5. optionalen read-only Champion-Comparator;
-6. sanitisierte kanonische `TelemetryRecord`-Evidence mit ADR-Referenz;
-7. explizite Authority- und Regression-Gates.
+3. source-backed Commodity Shadow Observations über bereits governte `CommodityResearchFeatureSnapshot`s;
+4. erneute deterministische Challenger-Evaluation und Registry-Bindung direkt an der Shadow-Grenze;
+5. Feature-/DQ-/Evidence-/Fingerprint-Drift;
+6. optionalen read-only Champion-Comparator;
+7. sanitisierte kanonische `TelemetryRecord`-Evidence mit ADR-Referenz;
+8. explizite Authority- und Regression-Gates.
 
 Der P3-A Exit ist **nicht** erfüllt, solange keine definierte reale Beobachtungsperiode mit ausreichenden Samples und ohne ungeklärte P0/P1-Integrity-Findings vorliegt.
 
@@ -34,8 +35,8 @@ Der P3-A Exit ist **nicht** erfüllt, solange keine definierte reale Beobachtung
 | `ProviderHealth` | aktueller Supervisor-Zustand bleibt unverändert bestehen |
 | `TelemetryRecord` | kanonischer operativer Telemetrievertrag |
 | `CommodityResearchFeatureSnapshot` | source-backed Feature-/Freshness-/Coverage-Evidence |
-| `CommodityCategoryResearchEvaluation` | deterministische Research-Readiness und bestehende Feature-/Weight-Lineage |
-| `ScoringModelRegistry` | Challenger-Lifecycle/`scoreEligible=false`; wird nicht mutiert |
+| `CommodityCategoryResearchEvaluation` | wird im Observer deterministisch neu aus dem Snapshot erzeugt |
+| `ScoringModelRegistry` | Challenger-Lifecycle/`scoreEligible=false` wird read-only erneut gebunden; Registry wird nicht mutiert |
 | `ScoringDispatcher` | produktive Score-Authority; wird durch P3-A nicht umgangen oder erweitert |
 
 Keine zweite Registry, kein zweiter Dispatcher, kein zweiter allgemeiner DQ-Service und kein neues Observability-SDK wurden eingeführt.
@@ -51,7 +52,7 @@ Ein Sample enthält ausschließlich:
 - Observation-Zeitpunkt;
 - Outcome;
 - Dauer in Millisekunden;
-- `payloadUsable`;
+- `payloadUsable` als technisches Boolean-Metadatum;
 - Circuit-State;
 - optionalen HTTP-Status;
 - lokales Rate-Budget Remaining/Reset.
@@ -75,11 +76,12 @@ Der Ledger ist auf 2.000 Samples pro Prozess begrenzt. Aus den Samples werden Sa
 Der Observer akzeptiert ausschließlich:
 
 - einen bereits klassifizierten `CommodityResearchFeatureSnapshot`;
-- die daraus erzeugte `CommodityCategoryResearchEvaluation`;
 - optional explizite Provider↔Feature-Bindings;
 - optional einen bereits vorliegenden Canonical-Champion-Comparator.
 
-Snapshot/Evaluation-Contract-, Domain- oder Instrument-Kind-Mismatch blockiert fail-closed. Ebenso blockiert jede unerwartete Score-/Execution-Authority.
+**Caller-supplied Evaluation State wird absichtlich nicht akzeptiert.** Der Observer führt `evaluateCommodityCategoryResearchSnapshot()` selbst erneut aus und liest anschließend den zugehörigen Challenger-Descriptor aus der bestehenden `ScoringModelRegistry`. Damit können Status, Modellversion, Feature-Contract, Executor-Key, Lifecycle oder Fingerprints nicht als frei vertrauenswürdige Caller-Felder eingeschleust werden.
+
+Feature-Contract-, Domain-/Instrument-Kind-, Registry- oder Authority-Verletzungen blockieren fail-closed. Provider↔Feature-Bindings müssen explizit sein; unbekannte Feature-Keys werden abgelehnt.
 
 ### Authority-Invarianten
 
@@ -141,7 +143,7 @@ Jede Shadow-Beobachtung erzeugt einen `TelemetryRecord`:
 - `assetClass=commodity`;
 - `auditReference=ADR-0101/P3-A`.
 
-Die Attribute enthalten Modell-/Contract-/Coverage-/Fingerprint-/Status-Metadaten, jedoch keine Provider-Rohwerte oder Secrets.
+Die Attribute enthalten Modell-/Registry-/Contract-/Coverage-/Fingerprint-/Status-Metadaten, jedoch keine Provider-Rohwerte oder Secrets.
 
 Die Enterprise Traceability Matrix wird **nicht** zur Laufzeit beschrieben. P3-A erzeugt operative Observation-/Audit-Evidence; ETM bleibt ein separat generierter Traceability-Prozess.
 
@@ -177,10 +179,11 @@ Ein persistenter/zentraler OpenTelemetry-/Prometheus-Exporter ist als separater 
 - keine Payload-/URL-/Query-Persistenz;
 - keine neue externe Write-Boundary;
 - keine Registry-/Dispatcher-/Ranking-Mutation;
+- keine vom Caller vertrauenswürdige Challenger-Evaluation;
 - keine simulierten/fiktiven Challenger Scores;
 - keine neue Provider-/Category-Heuristik;
 - keine zusätzlichen kostenverursachenden API-Aufrufe;
-- Mismatch und unerwartete Authority fail-closed;
+- Contract-/Registry-/Binding-/Authority-Mismatch fail-closed;
 - bounded In-Memory-Ledger verhindert unbeschränktes Speicherwachstum.
 
 ## 11. Tests
@@ -189,17 +192,18 @@ Neue/erweiterte Regressionen:
 
 - `tests/unit/providerRuntimeObservability.test.ts`
   - Availability/Error/P95/Circuit/Rate Aggregation;
-  - fester sanitiserter Contract ohne URL/Query/Payload/Secret.
+  - fester sanitiserter Contract ohne URL/Query/Request-/Response-Body/Secret.
 - `tests/unit/commodityProviderGovernance.test.ts`
   - realer TwelveData-Governancepfad erzeugt Provider-Runtime-Samples;
   - Application-Level-Providerfehler bleiben unusable/fail-closed.
 - `tests/unit/commodityShadowObservability.test.ts`
+  - Registry-gebundene Re-Evaluation statt Caller-Trust;
   - Shadow Authority bleibt false;
   - READY→BLOCKED Drift wird erkannt;
   - Evidence-/Feature-Fingerprint-Drift;
   - optionaler Champion-Score-Drift;
   - Challenger Score Drift bleibt N/A;
-  - Snapshot/Evaluation-Mismatch blockiert.
+  - manipulierte Snapshot-Contracts und unbekannte Provider↔Feature-Bindings blockieren.
 
 ## 12. Verbleibende P3-A Gates
 
