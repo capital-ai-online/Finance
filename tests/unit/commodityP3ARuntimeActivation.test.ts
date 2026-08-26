@@ -29,6 +29,7 @@ function successfulDispatch(): CommodityCanonicalScoringDispatchResult {
     status: 'DISPATCHED',
     dispatcherVersion: 'canonical-scoring-dispatcher/1.1.0',
     asset: {
+      contractVersion: 'uai/1.0.0',
       assetId: 'commodity:cmd_gold_comex',
       symbol: 'CMD_GOLD_COMEX',
       name: 'COMEX Gold Futures',
