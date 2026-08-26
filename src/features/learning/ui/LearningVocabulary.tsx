@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import {
   createDefaultVocabularyRegistry,
+  normalizeVocabularyTerm,
   type VocabularyCategory,
   type VocabularyConcept,
 } from '../../../platform/Vocabulary';
@@ -30,10 +31,6 @@ const CATEGORY_LABELS: Record<VocabularyCategory, string> = {
 const ALL_CATEGORIES = 'all' as const;
 type CategoryFilter = typeof ALL_CATEGORIES | VocabularyCategory;
 
-function normalizeSearch(value: string): string {
-  return value.trim().normalize('NFKC').toLocaleLowerCase('de-DE');
-}
-
 function isVocabularyCategory(value: string): value is VocabularyCategory {
   return Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, value);
 }
@@ -44,7 +41,7 @@ function parseCategoryFilter(value: string): CategoryFilter {
 }
 
 function searchableText(concept: VocabularyConcept): string {
-  return normalizeSearch([
+  return normalizeVocabularyTerm([
     concept.id,
     concept.canonicalCodeTerm,
     concept.displayNameDE,
@@ -85,7 +82,7 @@ export function LearningVocabulary() {
   );
 
   const filteredConcepts = useMemo(() => {
-    const normalizedQuery = normalizeSearch(query);
+    const normalizedQuery = normalizeVocabularyTerm(query);
 
     return approvedConcepts.filter((concept) => {
       if (category !== ALL_CATEGORIES && concept.category !== category) return false;
