@@ -38,10 +38,10 @@ export interface ProviderRuntimeSummary {
   readonly requestAttemptCount: number;
   /** Fail-closed observations rejected before provider transport. */
   readonly localDenialCount: number;
-  /** READY / attempted provider requests. Local configuration/circuit/budget denials are excluded. */
-  readonly availabilityRate: number;
-  /** Non-READY / attempted provider requests. Local denials are excluded. */
-  readonly errorRate: number;
+  /** READY / attempted provider requests; null means no provider request has been sampled. */
+  readonly availabilityRate: number | null;
+  /** Non-READY / attempted provider requests; null means no provider request has been sampled. */
+  readonly errorRate: number | null;
   /** Calculated only from attempted provider requests. */
   readonly p95LatencyMs: number | null;
   readonly rateLimitedEvents: number;
@@ -67,8 +67,8 @@ function percentile95(values: readonly number[]): number | null {
   return Number(sorted[index].toFixed(2));
 }
 
-function ratio(numerator: number, denominator: number): number {
-  return denominator === 0 ? 0 : Number((numerator / denominator).toFixed(4));
+function sampledRatio(numerator: number, denominator: number): number | null {
+  return denominator === 0 ? null : Number((numerator / denominator).toFixed(4));
 }
 
 /**
@@ -134,8 +134,8 @@ export function summarizeProviderRuntime(providerIdInput: string, capabilityInpu
     sampleCount: samples.length,
     requestAttemptCount: attempted.length,
     localDenialCount: samples.length - attempted.length,
-    availabilityRate: ratio(ready, attempted.length),
-    errorRate: ratio(errors, attempted.length),
+    availabilityRate: sampledRatio(ready, attempted.length),
+    errorRate: sampledRatio(errors, attempted.length),
     p95LatencyMs: percentile95(attempted.map(item => item.durationMs)),
     rateLimitedEvents: rateLimited.length,
     providerRateLimitedEvents: rateLimited.filter(item => item.requestAttempted).length,
