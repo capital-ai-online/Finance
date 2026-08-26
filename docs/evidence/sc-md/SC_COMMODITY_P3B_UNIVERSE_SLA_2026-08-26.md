@@ -5,30 +5,43 @@
 **Authority:** ADR-0087 / ADR-0101  
 **Vorgänger:** PR #549 / `SC_COMMODITY_P3A_RUNTIME_ACTIVATION_2026-08-26.md`  
 **Branch:** `feat/commodity-p3b-universe-sla-2026-08-26`  
-**Base:** `main@825788cac6250d2913f9a67eeb3d316ca5dc390f`
+**Initial Base:** `main@825788cac6250d2913f9a67eeb3d316ca5dc390f`  
+**Synchronisierter Main:** `main@e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
 
 ## 1. Produktions- und P3-A-Status
 
-PR #549 wurde human-gemergt. Der aktuelle Main-Commit ist:
+PR #549 wurde human-gemergt und hat die P3-A Runtime-Activation produktiv eingeführt. Während P3-B1 lief, wurde zusätzlich PR #550 mit der Security-Remediation in `main` gemergt.
 
-`825788cac6250d2913f9a67eeb3d316ca5dc390f`
+Aktueller Main-Commit:
 
-Render Deploy:
+`e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
 
-- Deploy ID: `dep-da7lk38u01pc73dq99a0`
-- Commit: `825788cac6250d2913f9a67eeb3d316ca5dc390f`
+Aktueller Render Deploy:
+
+- Deploy ID: `dep-da7m1b49v7es739h68qg`
+- Commit: `e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
 - Status: `live`
-- `finishedAt`: `2026-08-26T21:27:40.719061Z` (`2026-08-26 23:27:40 CEST`)
+- `finishedAt`: `2026-08-26T21:55:56.530441Z` (`2026-08-26 23:55:56 CEST`)
 
-Damit sind Merge, Deployment und Commit-Korrelation erfüllt.
+Der Main-CI-Lauf #2499 (`33017297542`) ist vollständig erfolgreich. Der Render-Deployment-Verifier hat denselben Main-Commit als live korreliert. Damit gilt aktuell:
 
-Die P3-A Runtime-Activation-Evidence verlangt jedoch zusätzlich mindestens eine reale, nach diesem Deploy ausgeführte `GET /api/raw-materials/verified-score/:symbol`-Anfrage, die eine Shadow Observation erzeugen kann.
+`production == main == e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba`
 
-Render Request Logs wurden für den Zeitraum unmittelbar nach dem Live-Deploy bis `2026-08-26T21:41:00Z` auf `/api/raw-materials/verified-score/*` geprüft. Ergebnis: keine passende reale Anfrage im geprüften Fenster.
+Die Security-Änderungen aus PR #550 betreffen Server-Security, Auth-/Telemetry-, OrchestratorPanel- und Security-Testpfade. Sie verändern weder AssetCatalog, ProviderMatrix, Commodity-Taxonomie noch TwelveData-Reference-Mapping. P3-B1 wurde nach dem Merge explizit mit diesem Main synchronisiert.
+
+### P3-A Observation Start Gate
+
+Die P3-A Runtime-Activation-Evidence verlangt zusätzlich mindestens eine reale, nach dem Activation-Deploy ausgeführte `GET /api/raw-materials/verified-score/:symbol`-Anfrage, die eine Shadow Observation erzeugen kann.
+
+Render Request Logs wurden für den Zeitraum
+
+`2026-08-26T21:27:40Z` bis `2026-08-26T21:59:00Z`
+
+auf `/api/raw-materials/verified-score/*` geprüft. Ergebnis: keine passende reale Anfrage im geprüften Fenster.
 
 **Status P3-A:** `OBSERVATION_START_PENDING_TRAFFIC`.
 
-Der Render-Deploy-Zeitpunkt wird daher noch nicht als `observationPeriodStartedAt` festgeschrieben. Es wird kein synthetischer Traffic allein zur Erzeugung von Samples erzeugt.
+Der Deploy-Zeitpunkt wird daher weiterhin nicht als `observationPeriodStartedAt` festgeschrieben. Es wird kein synthetischer Traffic allein zur Erzeugung von Samples erzeugt. Sobald eine reale Verified-Score-Anfrage auf einer Produktion eingeht, in der die P3-A-Activation enthalten ist, muss das Observation-Writing erneut über Runtime-Evidence verifiziert werden; erst dann beginnt die Mindestbeobachtungsperiode von 14 Kalendertagen.
 
 ## 2. P3-B Roadmap-Anforderung
 
@@ -151,7 +164,26 @@ Ein verbindliches produktives SLO wird erst nach realer Messung und Owner-/Produ
 5. der 24-Credit-History-Batch bleibt nur modelliert und `historyProbePerformed=false`;
 6. der P3-B Exit bleibt in dieser Stufe explizit geschlossen.
 
-## 8. Nächste Arbeitspakete
+## 8. Finaler Main-Sync / Korrelation
+
+Während der initialen PR-Erstellung wurde PR #550 in `main` gemergt. Der Branch wurde daraufhin mit einem expliziten Merge-Commit mit `main@e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba` synchronisiert.
+
+Korrelation der neuen Main-Änderungen:
+
+- Security-/Auth-/Telemetry-/ProbeProtection-/Honeytoken-Änderungen: übernommen, nicht verändert;
+- `src/components/OrchestratorPanel.tsx`: übernommen, kein P3-B-Consumer;
+- AssetCatalog: unverändert;
+- ProviderMatrix: unverändert;
+- Commodity Research Taxonomy: unverändert;
+- TwelveData Commodity Mapping: unverändert;
+- ScoringModelRegistry/ScoringDispatcher: unverändert durch P3-B1.
+
+Offene Parallel-PRs nach dem Sync:
+
+- #551 Branding/Social — kein File-Level-Overlap;
+- #552 Frontend Dashboard Consumer — kein File-Level-Overlap.
+
+## 9. Nächste Arbeitspakete
 
 ### P3-B2 — Runtime Mapping Evidence
 
@@ -185,12 +217,12 @@ Nur nach P3-B3:
 
 ### P3-A parallel
 
-- auf die erste reale Verified-Score-Anfrage nach `main@825788ca...` warten;
+- auf die erste reale Verified-Score-Anfrage auf einer Produktion mit enthaltener P3-A Runtime-Activation warten;
 - anschließend Observation-Writing über Runtime-Evidence verifizieren;
 - erst dann `observationPeriodStartedAt` festlegen;
 - Mindestperiode 14 Kalendertage ab tatsächlichem Start.
 
-## 9. Open-Source-/Plugin-Bewertung
+## 10. Open-Source-/Plugin-Bewertung
 
 Für P3-B1 ist keine zusätzliche Library gerechtfertigt.
 
@@ -198,8 +230,9 @@ Für P3-B1 ist keine zusätzliche Library gerechtfertigt.
 - GitHub und Render decken Repository-/Deploy-/Log-Korrelation ab.
 - Keine zusätzliche Provider-, MLOps- oder SLA-Plattform wird eingeführt.
 
-## 10. Status
+## 11. Status
 
+- Main/Production: `e9d9c27a4bebdbc45ab70d923d4f154bcd7740ba` / `LIVE`
 - P3-A Runtime Activation: `DEPLOYED`
 - P3-A Observation Period: `START_PENDING_REAL_TRAFFIC`
 - P3-B1 Universe/SLA Foundation: `IMPLEMENTED_ON_BRANCH`
