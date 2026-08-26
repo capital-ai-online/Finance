@@ -148,15 +148,38 @@ Der Work Claim aus PR #547 ist durch dessen Human-Merge terminal und wird in die
 
 gesetzt. Der ursprüngliche Claim bleibt als historische Traceability erhalten, besitzt aber keine Writer-Authority mehr.
 
-## 11. Validierungsstatus
+## 11. Main-Sync / Korrelation — 2026-08-26
 
-Vor PR-Erstellung:
+Nach Merge von PR #548 wurde dieser Branch non-destructive mit `main@60663c3fc6f76e8ae1f5685076480c552ab722f8` synchronisiert.
 
-- keine Hosted-CI ausgelöst;
-- keine Render-/Supabase-/Stripe-/Secret-Mutation;
-- keine Dependency-/Workflow-/Docker-Änderung;
-- aktueller Scope auf Runtime Bridge, Verified-Score-Binding, Regression, Claim-Lifecycle und Evidence begrenzt.
+Vor dem Sync: `7 ahead / 6 behind`, Merge-Base `c734e0820435bea4774e1311b1e60b2b744b908e`.
 
-Nach PR-Erstellung gelten die vorhandenen Class-R-/trusted-main-Gates. Der Startzeitpunkt der Beobachtungsperiode darf erst nach Human-Merge + verifiziertem Render-Live-Deploy dokumentiert werden.
+Die seit dem alten Merge-Base hinzugekommenen Main-Dateien lagen ausschließlich im BB-2-Dashboard-Scope (`src/app/**` plus `tests/unit/dashboardCompositionBoundary.test.ts`). Der P3-A-Scope hatte keinen File-Level-Overlap. Der Sync erfolgte als echter Merge-Commit ohne Force-Push.
 
-**Status:** P3-A Foundation live; produktive Challenger-Observation-Aktivierung in diesem Slice; Beobachtungsperiode noch nicht gestartet.
+Nach dem Sync und der nachfolgenden Baseline-Contract-Korrektur enthält der Branch aktuellen `main` vollständig; Merge-Base ist `60663c3fc6f76e8ae1f5685076480c552ab722f8`, `0 behind`.
+
+## 12. Production-URL-Contract-Korrektur
+
+Im bestehenden PR-Baseline-Schema `1.1.0` wurde das Feld `productionUrl` technisch mit dem Health-Endpoint `https://capital-ai.online/healthz` belegt und im PR-Body zugleich als **Produktions-URL** beschriftet. Dadurch wurden kanonischer Website-Origin und Health-Probe semantisch vermischt.
+
+Dieser PR korrigiert das für nachfolgende PRs mit Baseline-Schema `1.2.0`:
+
+- `productionUrl = https://capital-ai.online/` — kanonischer Produktions-/Website-Origin;
+- `productionHealthUrl = https://capital-ai.online/healthz` — technischer Health-/Deployment-Identity-Endpoint;
+- `productionPreflight.mjs` fragt ausschließlich `productionHealthUrl` ab;
+- beide URLs werden content-addressed in die Baseline-ID aufgenommen;
+- `renderProductionBaselineBlock()` rendert beide Felder getrennt;
+- `validateProductionBaselineForPr()` validiert beide Semantiken fail-closed;
+- `scripts/pr/lib.test.mjs` schützt die Trennung regressionsfest.
+
+Der aktuelle PR selbst wird bis zum Merge weiterhin durch den **trusted-main Schema-1.1.0-Validator** geprüft. Deshalb muss sein maschinenverwalteter Baseline-Block für diesen Übergangs-PR noch das alte trusted-main-Format verwenden. Nach Human-Merge wird `1.2.0` der kanonische Contract für neu gerenderte PR-Baselines.
+
+## 13. Validierungsstatus
+
+- `main@60663c3fc6f76e8ae1f5685076480c552ab722f8` ist im Main-CI #2487 vollständig PASS und wurde anschließend als genau dieser Commit live und healthy auf Render verifiziert.
+- trusted-main Preflight für den aktuellen PR-Head erzeugt eine aktuelle Schema-1.1.0-Baseline gegen genau diesen Production-/Main-Stand.
+- Exact-Head CI/Governance nach Main-Sync und URL-Contract-Korrektur sind maßgeblich; ältere grüne Runs gelten nur als historische Evidence.
+- keine Supabase-/Stripe-/Secret-/Datenbankmutation;
+- keine Workflow-Datei geändert.
+
+**Status:** P3-A Runtime Activation + Production-URL-Contract-Korrektur im PR; Beobachtungsperiode noch nicht gestartet.
