@@ -15,12 +15,10 @@
   "baseBranch": "main",
   "baseSha": "825788cac6250d2913f9a67eeb3d316ca5dc390f",
   "claimedPaths": [
+    ".ai/work-claims/COMMODITY-P3B-UNIVERSE-SLA-2026-08-26.json",
     "src/services/commodityUniverseSla.ts",
     "tests/unit/commodityUniverseSla.test.ts",
-    "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
-    "docs/evidence/sc-md/SC_COMMODITY_P3B_UNIVERSE_SLA_2026-08-26.md",
-    "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
-    ".ai/work-claims/COMMODITY-P3B-UNIVERSE-SLA-2026-08-26.json"
+    "docs/evidence/sc-md/SC_COMMODITY_P3B_UNIVERSE_SLA_2026-08-26.md"
   ],
   "nonGoals": [
     "Executing 24 TwelveData history requests before provider-plan/quota verification",
@@ -34,5 +32,6 @@
     "#550 security report — no claimed-path overlap identified",
     "#551 branding/social migration — no claimed-path overlap identified"
   ],
+  "architectureDecision": "No new ADR decision. P3-B1 implements the existing SC-2 P3-B roadmap and ADR-0101 authority boundaries through an internal non-authoritative assessment contract only.",
   "releaseCondition": "Writer authority ends at terminal PR/work-item event; release through normal branch/PR governance with final main/open-PR correlation."
 }
