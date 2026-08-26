@@ -33,6 +33,7 @@ import { AssetUniverseDashboard } from './AssetUniverseDashboard';
 import { SystemLatencyMonitor } from './SystemLatencyMonitor';
 import { LandingPage } from './LandingPage';
 import { DeFiOrchestration } from './DeFiOrchestration';
+import { LearningVocabulary } from '../features/learning/ui';
 
 import { 
   LogOut, 
@@ -73,6 +74,7 @@ import {
   Award,
   Share2,
   Star,
+  BookOpen,
   Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -128,7 +130,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'social-accounts' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'learning' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'social-accounts' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
   const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'seo' | 'compliance'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
@@ -137,7 +139,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   // Auto-expand appropriate accordion section on activeView changes for best mobile/desktop experience
   React.useEffect(() => {
     const getViewCategory = (view: string) => {
-      if (['dashboard', 'myworkspace', 'universe-scoring', 'abonnements', 'profil'].includes(view)) return 'hub';
+      if (['dashboard', 'myworkspace', 'learning', 'universe-scoring', 'abonnements', 'profil'].includes(view)) return 'hub';
       if (['market-screener', 'charts', 'preis-alarme', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
       if (['admin-panel', 'auth-debugger', 'markdown-orchestrator', 'request-orchestrator', 'performance', 'audit-logs', 'admin-portal'].includes(view)) return 'system_admin';
       return 'hub';
@@ -530,6 +532,20 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             >
                               <FolderKanban size={14} className={activeView === 'myworkspace' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
                               <span>Myworkspace</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Learning" text="Kanonisches CAPITAL-AI Vocabulary mit freigegebenen DE/EN-Begriffen, Definitionen und Governance-Referenzen.">
+                            <button
+                              onClick={() => navigateTo('learning')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'learning'
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]'
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <BookOpen size={14} className={activeView === 'learning' ? 'text-black' : 'text-brand-accent'} />
+                              <span>Learning</span>
                             </button>
                           </SidebarTooltip>
 
@@ -1261,6 +1277,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               <span>/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
                 {activeView === 'myworkspace' && 'Myworkspace – Persönlicher Radar'}
+                {activeView === 'learning' && 'Learning · CAPITAL-AI Vocabulary'}
                 {activeView === 'universe-scoring' && 'Universe TOP Rankings'}
                 {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
                 {activeView === 'social-accounts' && 'Social Media Direct Publishing Hub'}
@@ -1592,6 +1609,10 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                   </div>
                 </div>
               </div>
+            )}
+
+            {activeView === 'learning' && (
+              <LearningVocabulary />
             )}
 
             {/* Detailed Views */}
