@@ -7,6 +7,7 @@ import {
   Cpu,
   Database,
   Layers,
+  Lock,
   RefreshCw,
   ShieldAlert,
   Sliders,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { authFetch } from '../lib/authFetch';
 import { ORCHESTRATOR_TELEMETRY_CONTRACT } from '../lib/orchestratorTelemetrySemantics';
+import { describeRefusal, isRefusalStatus } from '../lib/orchestratorPollPolicy';
 
 interface RequestLogEntry {
   id: string;
@@ -47,6 +49,20 @@ interface ModelIntegrationStatus {
   latency: number | null;
   cost?: string;
 }
+
+const POLL_INTERVAL_MS = 2000;
+
+// FO-05 / F-01: Ein 401/403/429 auf den administrativen Orchestrator-Reads bedeutet, dass der Server
+// diesen Aufruf abweist — Sitzung abgelaufen, Rolle außerhalb SUPERVISOR_ZONE_ROLES oder
+// Autorisierungs-Rate-Limit. Keiner dieser Zustände bessert sich dadurch, dass der Panel-Poll ihn
+// alle zwei Sekunden wiederholt; jeder Versuch schreibt serverseitig einen weiteren DENIED-Datensatz
+// nach iam_access_log und verdünnt damit das Sicherheits-Auditlog.
+//
+// Der globale 'auth:unauthorized'-Handler in SessionComposition.tsx reicht als Stopp NICHT aus: er
+// ruft handleLogout(), was folgenlos bleibt, wenn gar keine Session mehr zu löschen ist — also genau
+// in dem Zustand, der das 401 überhaupt erst erzeugt. Zusätzlich ist das Admin-Gate in
+// AdminPortal.tsx eine clientseitige E-Mail-Prüfung, sodass das Panel montiert bleiben kann,
+// während der Server bereits ablehnt. Der Poll muss sich deshalb lokal selbst beenden.
 
 interface MetricCardProps {
   label: string;
@@ -105,10 +121,38 @@ export function OrchestratorPanel() {
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
 
+  // FO-05 / F-01 — serverseitige Abweisung der administrativen Reads. Solange gesetzt, läuft kein Poll.
+  const [refusal, setRefusal] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = () => {
+    if (pollRef.current !== null) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+
+  const startPolling = () => {
+    if (pollRef.current !== null) return;
+    pollRef.current = setInterval(() => fetchStats(), POLL_INTERVAL_MS);
+  };
+
+  // Beendet den Poll und hält fest, warum. Der Aufruf ist idempotent.
+  const blockOnRefusal = (status: number) => {
+    stopPolling();
+    setRefusal(describeRefusal(status));
+    setError(null);
+    setModelError(null);
+  };
+
   const fetchModelIntegrationStatus = async () => {
     setIsLoadingModels(true);
     try {
       const response = await authFetch('/api/orchestrator/ping-models');
+      if (isRefusalStatus(response.status)) {
+        blockOnRefusal(response.status);
+        return;
+      }
       if (!response.ok) throw new Error('Modell-Integrationsstatus konnte nicht geladen werden.');
       const data = await response.json();
       setModelStatuses(Array.isArray(data.models) ? data.models : []);
@@ -125,6 +169,11 @@ export function OrchestratorPanel() {
     if (showRefreshIndicator) setIsRefreshing(true);
     try {
       const response = await authFetch('/api/orchestrator/stats');
+      // Abweisung durch den Server: Poll beenden, statt ihn im 2-Sekunden-Takt zu wiederholen.
+      if (isRefusalStatus(response.status)) {
+        blockOnRefusal(response.status);
+        return;
+      }
       if (!response.ok) throw new Error('Fehler beim Laden der Orchestrator-Daten.');
       const data: OrchestratorStats = await response.json();
       setStats(data);
@@ -136,6 +185,9 @@ export function OrchestratorPanel() {
         formInitialized.current = true;
       }
       setError(null);
+      // Autorisierter Read: eine zuvor abgewiesene Sitzung ist wieder gültig, Poll darf laufen.
+      setRefusal(null);
+      startPolling();
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Server-Verbindungsfehler.');
@@ -145,12 +197,12 @@ export function OrchestratorPanel() {
     }
   };
 
-  // FO-05 owns polling lifecycle hardening. FO-04 keeps the existing cadence unchanged.
+  // FO-05 — Polling-Lifecycle. Das Intervall startet erst aus einem autorisierten Read heraus
+  // (siehe fetchStats), damit bei einer bereits abgewiesenen Sitzung gar kein Poll entsteht.
   useEffect(() => {
     fetchStats();
     fetchModelIntegrationStatus();
-    const interval = setInterval(() => fetchStats(), 2000);
-    return () => clearInterval(interval);
+    return () => stopPolling();
   }, []);
 
   const handleSaveConfig = async (event: React.FormEvent) => {
@@ -228,7 +280,14 @@ export function OrchestratorPanel() {
         </button>
       </div>
 
-      {error && (
+      {refusal && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2 font-mono">
+          <Lock size={16} className="mt-0.5 shrink-0" />
+          <span>{refusal}</span>
+        </div>
+      )}
+
+      {error && !refusal && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 font-mono">
           <ShieldAlert size={16} />
           <span>Warnung: {error} (zuletzt geladene Daten können veraltet sein)</span>
