@@ -30,7 +30,8 @@
   ],
   "knownParallelPrs": [
     "#550 security report — no claimed-path overlap identified",
-    "#551 branding/social migration — no claimed-path overlap identified"
+    "#551 branding/social migration — no claimed-path overlap identified",
+    "#552 frontend Dashboard consumer cutover — no claimed-path overlap identified"
   ],
   "architectureDecision": "No new ADR decision. P3-B1 implements the existing SC-2 P3-B roadmap and ADR-0101 authority boundaries through an internal non-authoritative assessment contract only.",
   "releaseCondition": "Writer authority ends at terminal PR/work-item event; release through normal branch/PR governance with final main/open-PR correlation."
