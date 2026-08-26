@@ -109,3 +109,14 @@ FO-04 ändert bewusst nicht:
 - BB-2/BB-8 Frontend-Migration;
 - Multi-Instance-/Distributed-Telemetrie;
 - echte Provider-Health-/Latency-Messungen.
+
+## Main-Sync / Korrelation — 2026-08-26
+
+Nach Merge von PR #544 wurde FO-04 erneut gegen `main@3c0a1fb653a657afb73a1b19c98b4a66df92d453` korreliert.
+
+- Vor Sync: `5 ahead / 3 behind`, Merge-Base `73ad480c1008696c1e48a4c3614e9d03ee318d7c`.
+- Neue Main-Nettoänderungen seit der bisherigen Merge-Base: ausschließlich `docs/frontend/FRONTEND_ROADMAP.md` und `src/features/index.ts`.
+- FO-04-Netto-Diff: `src/components/OrchestratorPanel.tsx`, `src/lib/orchestratorTelemetrySemantics.ts`, `tests/unit/orchestratorTelemetrySemantics.test.ts` und diese Evidence-Datei.
+- File-Level-Overlap: keiner.
+- Semantische Korrelation: PR #544 aktualisiert Frontend-Roadmap/Feature-Fassade; FO-04 bleibt auf Telemetrie-Meaning-/Presentation-Scope begrenzt und erzeugt keine neue fachliche Authority.
+- Non-destruktiver Merge-Sync durchgeführt; Merge-Base anschließend exakt `main@3c0a1fb653a657afb73a1b19c98b4a66df92d453`, `0 behind`.
