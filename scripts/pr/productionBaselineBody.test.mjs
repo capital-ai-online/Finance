@@ -79,6 +79,10 @@ test('duplicate or missing baseline markers remain fail-closed', () => {
     /genau einen kanonischen Produktions-Baseline-Block/,
   );
   assert.throws(
+    () => replaceProductionBaselineBlock(`${block}\n\`CAPITAL_AI_PRODUCTION_BASELINE_START\``, baseline),
+    /genau einen kanonischen Produktions-Baseline-Block/,
+  );
+  assert.throws(
     () => replaceProductionBaselineBlock('kein Baseline-Block', baseline),
     /genau einen kanonischen Produktions-Baseline-Block/,
   );
