@@ -82,7 +82,7 @@
       "type": "governance",
       "owner": "CAPITAL-AI",
       "authority": "ADR-0096 / AUTH-GOV-AGENT-TRUST-ROOT",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "language": "en",
       "lifecycle": "approved",
       "path": "AGENTS.md"
@@ -657,7 +657,7 @@
       "projectionOf": ["AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],
       "normative": false,
       "normativeScope": [],
-      "version": "2.1.0",
+      "version": "2.2.0",
       "language": "mixed",
       "lifecycle": "approved",
       "path": "docs/architecture/ROADMAP.md"

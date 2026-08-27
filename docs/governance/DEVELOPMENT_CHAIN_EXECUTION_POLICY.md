@@ -2,9 +2,9 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.0.0`  
+**Version:** `2.1.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-08-24  
+**Updated:** 2026-08-27  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
@@ -22,7 +22,8 @@ As of the Owner-directed M10 recovery on 2026-08-19:
 - former checkbox/Files-Viewed/emoji authorization rituals are retired;
 - M10 Passkey `AUTHORIZE_PR_CI` is **SUSPENDED / OFF**;
 - normal PR technical CI proceeds without an M10 passkey;
-- Human Merge remains mandatory;
+- explicit Human/Owner approval is mandatory after final main synchronization/correlation and before creating each PR or Draft PR;
+- Human Merge remains a separate mandatory decision;
 - Render native Auto Deploy remains off;
 - verified `main` CI is the production deployment authority.
 
@@ -38,6 +39,7 @@ READ-ONLY BASELINE
 → REPOSITORY IMPLEMENTATION
 → CHEAP / SANDBOX PRE-PR VALIDATION WHERE ACTUALLY AVAILABLE
 → FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
+→ EXACT-SNAPSHOT HUMAN/OWNER PR-CREATION APPROVAL
 → PR / GOVERNANCE CHECKS / TECHNICAL CI
 → HUMAN MERGE DECISION
 → HUMAN MERGE OR OTHER TERMINAL PR EVENT
@@ -59,22 +61,23 @@ A step marked REQUIRED for the concrete work package cannot be skipped.
 1. **Roadmap/authority before mutation.** No external platform mutation without scope, authority and rollback classification.
 2. **Fresh branch.** Repository edits occur only on a fresh scoped branch from current `main`; direct edits to `main` are prohibited.
 3. **One work item / one branch.** A merged branch is not reused; rollback uses a fresh branch from then-current `main`.
-4. **Final main synchronization.** Immediately before PR creation, refresh `main`, correlate new merges and adapt/revalidate the candidate.
-5. **Concurrent writer control.** Open PR changed-file and semantic overlap is inspected before new writes and again before PR creation; overlap is sequenced/rescoped rather than silently merged.
-6. **Fail closed.** Missing, conflicting or non-resolvable protected authority causes STOP.
-7. **Human Merge.** Agents do not self-merge and technical evidence does not authorize merge.
-8. **Authority is not transport.** ChatGPT, Claude, Grok, MCP, SDK, GitHub Actions and provider identity do not create authority.
-9. **Evidence is not authority.** Test/build logs, PR bodies, labels, reactions and reports cannot grant protected permission.
-10. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
-11. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
-12. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
-13. **Work-claim lifecycle ownership.** A principal that creates an `active`/`exclusive` work claim remains responsible for its conformant release after the correlated work reaches a terminal state, unless responsibility is explicitly and traceably handed off.
+4. **Final main synchronization.** Immediately before PR-creation approval is requested, refresh `main`, correlate new merges/open writers, synchronize and adapt/revalidate the exact candidate.
+5. **Concurrent writer control.** Open PR changed-file, semantic, namespace and authority overlap is inspected before new writes and again before approval is requested; overlap is sequenced/rescoped rather than silently merged.
+6. **Human/Owner PR-creation approval.** Each PR or Draft PR requires explicit approval for the reported current-main SHA and candidate head SHA. Any pre-creation change to either SHA invalidates approval and requires repeated correlation/synchronization plus renewed approval.
+7. **Fail closed.** Missing, stale, conflicting or non-resolvable protected authority or PR-creation approval causes STOP before the external mutation.
+8. **Human Merge.** PR-creation approval is not merge approval. Agents do not self-merge and technical evidence does not authorize merge.
+9. **Authority is not transport.** ChatGPT, Claude, Grok, MCP, SDK, GitHub Actions and provider identity do not create authority.
+10. **Evidence is not authority.** Test/build logs, PR bodies, labels, reactions and reports cannot grant PR-creation, merge or protected-mutation permission.
+11. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
+12. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
+13. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
+14. **Work-claim lifecycle ownership.** A principal that creates an `active`/`exclusive` work claim remains responsible for its conformant release after the correlated work reaches a terminal state, unless responsibility is explicitly and traceably handed off.
 
 ## Pre-PR technical evidence
 
 Branch-local or approved sandbox checks should be used before PR creation when the exact repository snapshot is actually available to that execution environment. A model must not claim PASS for checks it did not execute.
 
-Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/governance/control-plane/pre-pr-build-evidence.schema.json` and is bound to exact base/head SHAs. It is non-authorizing.
+Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/governance/control-plane/pre-pr-build-evidence.schema.json` and is bound to exact base/head SHAs. Before requesting PR-creation approval, the agent reports those SHAs, the current-main/open-writer correlation result and the evidence actually available. Evidence remains non-authorizing.
 
 GitHub hosted `build-and-test` remains the independent technical validation for the final PR head.
 
@@ -132,7 +135,8 @@ Claim creation, claim release and claim-closure evidence never authorize Pull Re
 
 Human/Owner retains at least:
 
-- final merge authority;
+- explicit exact-snapshot approval before creation of each PR or Draft PR;
+- final merge authority as a separate decision;
 - explicit protected external mutation approval;
 - Owner/Admin IAM elevation and recovery/break-glass;
 - secret disclosure/rotation outside pre-approved narrow automation;
@@ -183,6 +187,7 @@ Render native Auto Deploy remains off. A second deploy authority requires an exp
 Where applicable, retain:
 
 - baseline and candidate SHAs;
+- final main/open-writer correlation plus explicit PR-creation approval evidence;
 - stable authority/control references;
 - branch / PR / final head / merge SHA;
 - work-claim identity and release state when a claim exists;
@@ -196,7 +201,7 @@ Where applicable, retain:
 
 ## Stop / rollback rules
 
-STOP on unexpected target, unreviewed main drift, unresolved open-PR write overlap, missing required approval, missing audit persistence for protected mutation, failed pre-check, unknown high-impact side effect, failed/inconclusive post-verification or unresolved higher-authority conflict.
+STOP on unexpected target, unreviewed main drift, unresolved open-PR write overlap, missing/ambiguous/stale PR-creation approval, missing other required approval, missing audit persistence for protected mutation, failed pre-check, unknown high-impact side effect, failed/inconclusive post-verification or unresolved higher-authority conflict.
 
 Repository rollback uses a fresh branch from current `main`; external rollback follows the applicable protected runbook/approval process.
 
