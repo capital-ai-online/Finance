@@ -81,7 +81,7 @@ test('self-service guide preserves protected mutation boundaries', () => {
     'pct=25',
     'p=reject',
     'DNSSEC beim **autoritativen DNS-Provider** aktivieren',
-    'ausschließlich die dort erzeugten DS-Daten',
+    'Ausschließlich die dort erzeugten DS-Daten',
     'CSP_MODE=strict',
     'Supabase Leaked-Password-Protection',
   ]) {
