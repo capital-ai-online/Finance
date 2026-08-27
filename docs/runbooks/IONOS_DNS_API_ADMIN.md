@@ -55,9 +55,27 @@ A DNS change therefore has two separate reviews:
 1. repository change to the desired-state file through the normal PR/CI/Human-Merge lifecycle;
 2. separate production DNS apply through the manual workflow after an exact read/plan review.
 
-Current managed entries are limited to the already intended MTA-STS CNAME, TLS-RPT TXT and DMARC monitoring TXT. CAA is supported by the engine but is **not yet encoded as desired state** because the existing IONOS wildcard certificate issuer/renewal requirement must be resolved before a restrictive CAA policy is applied.
+Current managed entries are limited to:
+
+- explicit MTA-STS CNAME;
+- TLS-RPT TXT;
+- DMARC monitoring TXT;
+- CAA policy for Render single-host certificates and the existing IONOS/Sectigo wildcard certificate.
 
 SPF, DKIM and MX are intentionally not managed by this path.
+
+## CAA target state
+
+`capital-ai.online` currently does not use a Render wildcard custom domain. The existing IONOS wildcard certificate cannot currently be removed and must remain renewable. The desired CAA policy therefore allows Render's normal certificate authorities for non-wildcard issuance and Sectigo for the IONOS certificate, while only Sectigo receives wildcard authority:
+
+```dns
+@ CAA 0 issue "letsencrypt.org"
+@ CAA 0 issue "pki.goog"
+@ CAA 0 issue "sectigo.com"
+@ CAA 0 issuewild "sectigo.com"
+```
+
+There is deliberately no `issuewild` authorization for `letsencrypt.org` or `pki.goog` while no Render wildcard custom domain exists. If that architecture changes, update the desired-state file through a new reviewed repository change before any DNS apply.
 
 ## Read-only execution
 
