@@ -29,7 +29,7 @@ const desired = {
   deleteUnmanagedRecords: false,
   records: [
     { name: 'mta-sts', type: 'CNAME', content: 'finance-7clq.onrender.com', ttl: 3600, singleton: true, state: 'present' },
-    { name: '_smtp._tls', type: 'TXT', content: 'v=TLSRPTv1; rua=mailto:support@capital-ai.online', ttl: 3600, state: 'present' },
+    { name: '_smtp._tls', type: 'TXT', content: 'v=TLSRPTv1; rua=mailto:support@capital-ai.online', ttl: 3600, singleton: true, state: 'present' },
     ...caaRecords,
   ],
 };
@@ -51,6 +51,74 @@ test('buildPlan updates singleton, preserves exact TXT and adds all missing CAA 
     caaRecords.map((record) => record.content).sort(),
   );
   assert.match(plan.planSha256, /^sha256:[a-f0-9]{64}$/);
+});
+
+test('mail policy TXT singletons replace wrong report destinations instead of adding duplicates', () => {
+  const live = {
+    id: 'zone-mail',
+    name: 'capital-ai.online',
+    records: [
+      {
+        id: 'dmarc-live',
+        name: '_dmarc.capital-ai.online',
+        type: 'TXT',
+        content: '"v=DMARC1; p=none; rua=mailto:support@capital-ai.online"',
+        ttl: 3600,
+        prio: 0,
+        disabled: false,
+      },
+      {
+        id: 'tlsrpt-live',
+        name: '_smtp._tls.capital-ai.online',
+        type: 'TXT',
+        content: '"v=TLSRPTv1; rua=mailto:sven.kulessa@capital-ai.online"',
+        ttl: 3600,
+        prio: 0,
+        disabled: false,
+      },
+    ],
+  };
+  const mailDesired = {
+    schemaVersion: 1,
+    zone: 'capital-ai.online',
+    deleteUnmanagedRecords: false,
+    records: [
+      {
+        name: '_dmarc',
+        type: 'TXT',
+        content: 'v=DMARC1; p=none; rua=mailto:Sven.kulessa@capital-ai.online',
+        ttl: 3600,
+        singleton: true,
+        state: 'present',
+      },
+      {
+        name: '_smtp._tls',
+        type: 'TXT',
+        content: 'v=TLSRPTv1; rua=mailto:support@capital-ai.online',
+        ttl: 3600,
+        singleton: true,
+        state: 'present',
+      },
+    ],
+  };
+
+  const plan = buildPlan(live, mailDesired);
+  assert.equal(plan.mutations.length, 2);
+  assert.deepEqual(plan.mutations.map((mutation) => mutation.method), ['PUT', 'PUT']);
+  assert.deepEqual(plan.mutations.map((mutation) => mutation.recordId), ['dmarc-live', 'tlsrpt-live']);
+  assert.equal(plan.mutations.some((mutation) => mutation.method === 'POST'), false);
+  assert.deepEqual(plan.warnings, []);
+});
+
+test('mail policy TXT records must be declared singleton fail-closed', () => {
+  for (const name of ['_dmarc', '_smtp._tls']) {
+    assert.throws(() => validateDesiredConfig({
+      schemaVersion: 1,
+      zone: 'capital-ai.online',
+      deleteUnmanagedRecords: false,
+      records: [{ name, type: 'TXT', content: 'policy-value', state: 'present' }],
+    }), /singleton/i);
+  }
 });
 
 test('CAA policy permits Render single-host issuance and IONOS Sectigo wildcard renewal', () => {
