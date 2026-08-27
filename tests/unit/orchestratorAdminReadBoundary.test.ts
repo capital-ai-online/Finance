@@ -1,9 +1,8 @@
-// FO-01 / ADR-0067 regression guard for the Request-Orchestrator admin read boundary.
+// FO-01 / FO-05 regression guard for the Request-Orchestrator admin read boundary.
 //
 // The Orchestrator UI is an administrative projection. Client-side visibility must never be
 // treated as authorization: every operational read endpoint must pass through the existing
-// server-side IAM guard, and the browser consumer must attach the verified Supabase session
-// token through the shared authFetch adapter.
+// server-side IAM guard, while frontend access remains centralized through authFetch.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,22 +18,25 @@ describe('FO-01 orchestrator admin read boundary', () => {
   it('protects operational orchestrator GET endpoints with the shared admin guard', () => {
     const source = readRepoFile('server/orchestrator.ts');
 
-    expect(source).toMatch(
-      /orchestratorRouter\.get\('\/stats',\s*requireOrchestratorAdmin,/
-    );
-    expect(source).toMatch(
-      /orchestratorRouter\.get\('\/ping-models',\s*requireOrchestratorAdmin,/
-    );
+    expect(source).toMatch(/orchestratorRouter\.get\('\/stats',\s*requireOrchestratorAdmin,/);
+    expect(source).toMatch(/orchestratorRouter\.get\('\/ping-models',\s*requireOrchestratorAdmin,/);
     expect(source).toContain("checkAdminAccess(req, 'orchestrator-config', SUPERVISOR_ZONE_ROLES)");
   });
 
-  it('uses the authenticated frontend adapter for protected orchestrator reads', () => {
-    const source = readRepoFile('src/components/OrchestratorPanel.tsx');
+  it('routes all frontend orchestrator calls through the typed authFetch adapter', () => {
+    const client = readRepoFile('src/features/governance/ui/orchestrator/orchestratorApi.ts');
+    const panel = readRepoFile('src/components/OrchestratorPanel.tsx');
 
-    expect(source).toContain("authFetch('/api/orchestrator/stats')");
-    expect(source).toContain("authFetch('/api/orchestrator/ping-models')");
-    expect(source).not.toContain("fetch('/api/orchestrator/stats')");
-    expect(source).not.toContain("fetch('/api/orchestrator/ping-models')");
+    expect(client).toContain("import { authFetch } from '../../../../lib/authFetch'");
+    expect(client).toContain('const response = await authFetch(url, options)');
+    expect(client).toContain("'/api/orchestrator/stats'");
+    expect(client).toContain("'/api/orchestrator/ping-models'");
+    expect(client).toContain("'/api/orchestrator/config'");
+    expect(client).toContain("'/api/orchestrator/reset'");
+
+    expect(panel).not.toContain("authFetch('/api/orchestrator/stats')");
+    expect(panel).not.toContain("fetch('/api/orchestrator/stats')");
+    expect(panel).toContain('useOrchestratorTelemetry');
   });
 
   it('keeps the orchestrator router mounted through the canonical application composition', () => {
@@ -42,42 +44,23 @@ describe('FO-01 orchestrator admin read boundary', () => {
     expect(routes).toContain("app.use('/api/orchestrator', orchestratorRouter)");
   });
 
-  // F-01 — der Poll darf eine serverseitige Abweisung nicht im 2-Sekunden-Takt wiederholen.
-  // Jeder wiederholte Versuch schreibt einen weiteren DENIED-Datensatz nach iam_access_log.
-  describe('F-01 poll termination on server refusal', () => {
-    it('starts the interval only from an authorized read, never unconditionally on mount', () => {
-      const source = readRepoFile('src/components/OrchestratorPanel.tsx');
+  describe('F-01 refusal termination after FO-05 extraction', () => {
+    it('keeps refusal handling in the lifecycle hook and stops rescheduling refused reads', () => {
+      const hook = readRepoFile('src/features/governance/ui/orchestrator/useOrchestratorTelemetry.ts');
 
-      // Das Intervall wird ausschließlich in startPolling() erzeugt. Ein setInterval direkt im
-      // Mount-Effekt würde bei einer bereits abgelehnten Sitzung sofort wieder zu poppeln beginnen.
-      const intervalCreations = source.match(/setInterval\(/g) ?? [];
-      expect(intervalCreations).toHaveLength(1);
-      expect(source).toMatch(/const startPolling = \(\) => \{[\s\S]*?setInterval\(/);
-      expect(source).toMatch(/if \(pollRef\.current !== null\) return;/);
+      expect(hook).toContain('isRefusalStatus(err.status)');
+      expect(hook).toContain('blockOnRefusal(err.status)');
+      expect(hook).toContain('refusalActiveRef.current = true');
+      expect(hook).toContain('refusalActiveRef.current) return');
     });
 
-    it('clears the interval on refusal and on unmount', () => {
-      const source = readRepoFile('src/components/OrchestratorPanel.tsx');
+    it('does not reintroduce interval-based blind polling', () => {
+      const hook = readRepoFile('src/features/governance/ui/orchestrator/useOrchestratorTelemetry.ts');
+      const panel = readRepoFile('src/components/OrchestratorPanel.tsx');
 
-      expect(source).toMatch(/const stopPolling = \(\) => \{[\s\S]*?clearInterval\(pollRef\.current\)/);
-      expect(source).toMatch(/const blockOnRefusal = \(status: number\) => \{\s*stopPolling\(\);/);
-      expect(source).toContain('return () => stopPolling();');
-    });
-
-    it('routes both protected reads through the shared refusal policy', () => {
-      const source = readRepoFile('src/components/OrchestratorPanel.tsx');
-
-      expect(source).toContain("from '../lib/orchestratorPollPolicy'");
-      // Sowohl der Stats-Poll als auch der Model-Ping müssen abbrechen.
-      expect(source.match(/if \(isRefusalStatus\(response\.status\)\) \{\s*blockOnRefusal\(response\.status\);\s*return;/g))
-        .toHaveLength(2);
-    });
-
-    it('resumes polling once a read is authorized again', () => {
-      const source = readRepoFile('src/components/OrchestratorPanel.tsx');
-
-      // Nach erneuter Anmeldung darf das Panel nicht dauerhaft tot bleiben.
-      expect(source).toMatch(/setRefusal\(null\);\s*startPolling\(\);/);
+      expect(hook).not.toContain('setInterval(');
+      expect(panel).not.toContain('setInterval(');
+      expect(hook).toContain('setTimeout(() =>');
     });
   });
 });

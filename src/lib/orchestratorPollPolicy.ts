@@ -1,31 +1,47 @@
-// F-01 / ADR-0067 — Poll-Abbruchpolicy für die administrativen Request-Orchestrator-Reads.
+// FO-05 / F-01 — Polling-Policy für die administrativen Request-Orchestrator-Reads.
 //
-// Bewusst frei von React- und DOM-Abhängigkeiten, damit die sicherheitsrelevante Entscheidung
-// "weiterpollen oder stoppen" in der bestehenden node-Vitest-Umgebung ausgeführt und nicht nur
-// über einen Quelltextvergleich behauptet werden kann.
-//
-// Hintergrund: PR #541 hat `/api/orchestrator/stats` und `/ping-models` hinter den kanonischen
-// IAM-Guard gestellt. Der Panel-Poll lief danach unverändert alle zwei Sekunden weiter und erzeugte
-// pro Versuch einen DENIED-Datensatz in `iam_access_log`. Ein abgewiesener Aufruf wird durch
-// Wiederholung nicht autorisiert — er verdünnt nur das Sicherheits-Auditlog.
+// Bewusst frei von React- und DOM-Abhängigkeiten, damit sicherheits- und lifecycle-relevante
+// Entscheidungen in der bestehenden node-Vitest-Umgebung ausgeführt werden können.
 
 /** HTTP-Status, die eine serverseitige Abweisung des Aufrufers bedeuten. */
 export const REFUSAL_STATUS_CODES: readonly number[] = [401, 403, 429];
 
+/** Erfolgsintervall für sichtbare, autorisierte Admin-Telemetrie. */
+export const ORCHESTRATOR_POLL_BASE_INTERVAL_MS = 2_000;
+
+/** Obergrenze für transientes Retry-Backoff, damit Fehler nicht zu aggressiv gepollt werden. */
+export const ORCHESTRATOR_POLL_MAX_BACKOFF_MS = 30_000;
+
 /**
  * Entscheidet, ob eine Antwort den automatischen Poll beenden muss.
  *
- * Nur Autorisierungs-/Rate-Limit-Abweisungen stoppen den Poll. Transiente Serverfehler (5xx) und
- * Netzwerkfehler tun das ausdrücklich nicht: dort ist ein erneuter Versuch sinnvoll, und der
- * Server hat den Aufrufer nicht abgelehnt.
+ * 401/403/429 werden nicht automatisch wiederholt. Transiente Netzwerk-/5xx-Fehler bleiben
+ * retry-fähig, laufen aber mit bounded exponential backoff statt im festen 2-Sekunden-Takt.
  */
 export function isRefusalStatus(status: number): boolean {
   return REFUSAL_STATUS_CODES.includes(status);
 }
 
 /**
- * Operator-Meldung zu einer Abweisung: was passiert ist, warum der Poll steht und was zu tun ist.
+ * Liefert die Verzögerung bis zum nächsten automatischen Poll.
+ * 0 Fehler => 2s, 1 => 4s, 2 => 8s, 3 => 16s, ab 4 => maximal 30s.
  */
+export function getOrchestratorPollDelayMs(consecutiveFailures: number): number {
+  const normalizedFailures = Number.isFinite(consecutiveFailures)
+    ? Math.max(0, Math.floor(consecutiveFailures))
+    : 0;
+  const exponentialDelay = ORCHESTRATOR_POLL_BASE_INTERVAL_MS * (2 ** normalizedFailures);
+  return Math.min(ORCHESTRATOR_POLL_MAX_BACKOFF_MS, exponentialDelay);
+}
+
+/** Abort ist ein kontrollierter Lifecycle-Abbruch und kein Telemetriefehler. */
+export function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException
+    ? error.name === 'AbortError'
+    : error instanceof Error && error.name === 'AbortError';
+}
+
+/** Operator-Meldung zu einer Abweisung: Ursache, Folge und nächster Schritt. */
 export function describeRefusal(status: number): string {
   if (status === 429) {
     return 'Zu viele Autorisierungsversuche (429). Automatische Aktualisierung gestoppt – bitte kurz warten und erneut aktualisieren.';
