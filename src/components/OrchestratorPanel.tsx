@@ -13,56 +13,12 @@ import {
   Sliders,
   Trash2,
 } from 'lucide-react';
-import { authFetch } from '../lib/authFetch';
+import {
+  resetOrchestratorStats,
+  updateOrchestratorConfig,
+} from '../features/governance/ui/orchestrator/orchestratorApi';
+import { useOrchestratorTelemetry } from '../features/governance/ui/orchestrator/useOrchestratorTelemetry';
 import { ORCHESTRATOR_TELEMETRY_CONTRACT } from '../lib/orchestratorTelemetrySemantics';
-import { describeRefusal, isRefusalStatus } from '../lib/orchestratorPollPolicy';
-
-interface RequestLogEntry {
-  id: string;
-  ip: string;
-  endpoint: string;
-  timestamp: string;
-  status: 'COMPLETED' | 'QUEUED' | 'REJECTED' | 'TIMED_OUT' | 'RUNNING';
-  duration?: number;
-}
-
-interface OrchestratorStats {
-  activeRequests: number;
-  queueSize: number;
-  totalProcessed: number;
-  totalRejected: number;
-  rateLimitsHit: number;
-  concurrencyLimit: number;
-  maxQueueSize: number;
-  rateLimitWindowMs: number;
-  maxRequestsPerWindow: number;
-  requestsLastMinute: number;
-  recentLogs: RequestLogEntry[];
-}
-
-interface ModelIntegrationStatus {
-  id: string;
-  name: string;
-  task: string;
-  configured: boolean;
-  status: string;
-  latency: number | null;
-  cost?: string;
-}
-
-const POLL_INTERVAL_MS = 2000;
-
-// FO-05 / F-01: Ein 401/403/429 auf den administrativen Orchestrator-Reads bedeutet, dass der Server
-// diesen Aufruf abweist — Sitzung abgelaufen, Rolle außerhalb SUPERVISOR_ZONE_ROLES oder
-// Autorisierungs-Rate-Limit. Keiner dieser Zustände bessert sich dadurch, dass der Panel-Poll ihn
-// alle zwei Sekunden wiederholt; jeder Versuch schreibt serverseitig einen weiteren DENIED-Datensatz
-// nach iam_access_log und verdünnt damit das Sicherheits-Auditlog.
-//
-// Der globale 'auth:unauthorized'-Handler in SessionComposition.tsx reicht als Stopp NICHT aus: er
-// ruft handleLogout(), was folgenlos bleibt, wenn gar keine Session mehr zu löschen ist — also genau
-// in dem Zustand, der das 401 überhaupt erst erzeugt. Zusätzlich ist das Admin-Gate in
-// AdminPortal.tsx eine clientseitige E-Mail-Prüfung, sodass das Panel montiert bleiben kann,
-// während der Server bereits ablehnt. Der Poll muss sich deshalb lokal selbst beenden.
 
 interface MetricCardProps {
   label: string;
@@ -105,10 +61,22 @@ function MetricCard({ label, value, note, icon, progress, progressLabel }: Metri
 }
 
 export function OrchestratorPanel() {
-  const [stats, setStats] = useState<OrchestratorStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const {
+    stats,
+    loading,
+    error,
+    refusal,
+    isRefreshing,
+    freshness,
+    lastUpdatedAt,
+    nextPollDelayMs,
+    modelStatuses,
+    modelError,
+    isLoadingModels,
+    refreshStats,
+    refreshModelStatus,
+    applyStatsSnapshot,
+  } = useOrchestratorTelemetry();
 
   const [concurrencyLimit, setConcurrencyLimit] = useState(3);
   const [maxQueueSize, setMaxQueueSize] = useState(10);
@@ -117,110 +85,25 @@ export function OrchestratorPanel() {
   const [isSaving, setIsSaving] = useState(false);
   const formInitialized = useRef(false);
 
-  const [modelStatuses, setModelStatuses] = useState<ModelIntegrationStatus[]>([]);
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
-  const [modelError, setModelError] = useState<string | null>(null);
-
-  // FO-05 / F-01 — serverseitige Abweisung der administrativen Reads. Solange gesetzt, läuft kein Poll.
-  const [refusal, setRefusal] = useState<string | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const stopPolling = () => {
-    if (pollRef.current !== null) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  };
-
-  const startPolling = () => {
-    if (pollRef.current !== null) return;
-    pollRef.current = setInterval(() => fetchStats(), POLL_INTERVAL_MS);
-  };
-
-  // Beendet den Poll und hält fest, warum. Der Aufruf ist idempotent.
-  const blockOnRefusal = (status: number) => {
-    stopPolling();
-    setRefusal(describeRefusal(status));
-    setError(null);
-    setModelError(null);
-  };
-
-  const fetchModelIntegrationStatus = async () => {
-    setIsLoadingModels(true);
-    try {
-      const response = await authFetch('/api/orchestrator/ping-models');
-      if (isRefusalStatus(response.status)) {
-        blockOnRefusal(response.status);
-        return;
-      }
-      if (!response.ok) throw new Error('Modell-Integrationsstatus konnte nicht geladen werden.');
-      const data = await response.json();
-      setModelStatuses(Array.isArray(data.models) ? data.models : []);
-      setModelError(null);
-    } catch (err) {
-      console.error('Failed to fetch model integration status:', err);
-      setModelError(err instanceof Error ? err.message : 'Modell-Integrationsstatus konnte nicht geladen werden.');
-    } finally {
-      setIsLoadingModels(false);
-    }
-  };
-
-  const fetchStats = async (showRefreshIndicator = false) => {
-    if (showRefreshIndicator) setIsRefreshing(true);
-    try {
-      const response = await authFetch('/api/orchestrator/stats');
-      // Abweisung durch den Server: Poll beenden, statt ihn im 2-Sekunden-Takt zu wiederholen.
-      if (isRefusalStatus(response.status)) {
-        blockOnRefusal(response.status);
-        return;
-      }
-      if (!response.ok) throw new Error('Fehler beim Laden der Orchestrator-Daten.');
-      const data: OrchestratorStats = await response.json();
-      setStats(data);
-
-      if (!formInitialized.current) {
-        setConcurrencyLimit(data.concurrencyLimit);
-        setMaxQueueSize(data.maxQueueSize);
-        setMaxRequestsPerWindow(data.maxRequestsPerWindow);
-        formInitialized.current = true;
-      }
-      setError(null);
-      // Autorisierter Read: eine zuvor abgewiesene Sitzung ist wieder gültig, Poll darf laufen.
-      setRefusal(null);
-      startPolling();
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'Server-Verbindungsfehler.');
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  };
-
-  // FO-05 — Polling-Lifecycle. Das Intervall startet erst aus einem autorisierten Read heraus
-  // (siehe fetchStats), damit bei einer bereits abgewiesenen Sitzung gar kein Poll entsteht.
   useEffect(() => {
-    fetchStats();
-    fetchModelIntegrationStatus();
-    return () => stopPolling();
-  }, []);
+    if (!stats || formInitialized.current) return;
+    setConcurrencyLimit(stats.concurrencyLimit);
+    setMaxQueueSize(stats.maxQueueSize);
+    setMaxRequestsPerWindow(stats.maxRequestsPerWindow);
+    formInitialized.current = true;
+  }, [stats]);
 
   const handleSaveConfig = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSaving(true);
     try {
-      const response = await authFetch('/api/orchestrator/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ concurrencyLimit, maxQueueSize, maxRequestsPerWindow }),
+      const data = await updateOrchestratorConfig({
+        concurrencyLimit,
+        maxQueueSize,
+        maxRequestsPerWindow,
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Konfiguration konnte nicht aktualisiert werden.');
-      }
-      const data = await response.json();
       if (data.success) {
-        setStats(data.stats);
+        applyStatsSnapshot(data.stats);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       }
@@ -234,13 +117,8 @@ export function OrchestratorPanel() {
   const handleResetStats = async () => {
     if (!window.confirm('Möchten Sie die Orchestrator-Zähler und Recent Events wirklich zurücksetzen?')) return;
     try {
-      const response = await authFetch('/api/orchestrator/reset', { method: 'POST' });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Zurücksetzen fehlgeschlagen.');
-      }
-      const data = await response.json();
-      if (data.success) setStats(data.stats);
+      const data = await resetOrchestratorStats();
+      if (data.success) applyStatsSnapshot(data.stats);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Verbindungsfehler.');
     }
@@ -258,6 +136,15 @@ export function OrchestratorPanel() {
   const activePercent = stats ? Math.min(100, (stats.activeRequests / stats.concurrencyLimit) * 100) : 0;
   const queuePercent = stats ? Math.min(100, (stats.queueSize / stats.maxQueueSize) * 100) : 0;
   const contract = ORCHESTRATOR_TELEMETRY_CONTRACT;
+  const freshnessLabel = freshness === 'fresh'
+    ? 'aktuell'
+    : freshness === 'paused'
+      ? 'pausiert (Tab verborgen)'
+      : freshness === 'refused'
+        ? 'gestoppt'
+        : freshness === 'stale'
+          ? 'veraltet / Retry'
+          : 'initialisiert';
 
   return (
     <div className="space-y-6">
@@ -268,11 +155,15 @@ export function OrchestratorPanel() {
           </span>
           <h2 className="text-2xl font-black text-white font-display mt-2">Request-Orchestrator Telemetrie</h2>
           <p className="text-xs text-white/70 mt-1 font-sans">{contract.scope.description}</p>
-          <p className="text-[10px] text-white/40 mt-1 font-mono">{contract.scope.freshness}</p>
+          <p className="text-[10px] text-white/40 mt-1 font-mono">
+            {contract.scope.freshness} · Lifecycle: {freshnessLabel}
+            {lastUpdatedAt ? ` · Stand ${new Date(lastUpdatedAt).toLocaleTimeString()}` : ''}
+            {freshness === 'stale' && nextPollDelayMs ? ` · nächster Retry ≤ ${Math.ceil(nextPollDelayMs / 1000)}s` : ''}
+          </p>
         </div>
         <button
-          onClick={() => fetchStats(true)}
-          className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/80 flex items-center gap-1.5 text-xs font-mono uppercase cursor-pointer"
+          onClick={() => void refreshStats()}
+          className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/80 flex items-center gap-1.5 text-xs font-mono uppercase cursor-pointer disabled:opacity-50"
           disabled={isRefreshing}
         >
           <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
@@ -290,7 +181,7 @@ export function OrchestratorPanel() {
       {error && !refusal && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 font-mono">
           <ShieldAlert size={16} />
-          <span>Warnung: {error} (zuletzt geladene Daten können veraltet sein)</span>
+          <span>Warnung: {error} (letzter erfolgreicher Stand bleibt sichtbar; Retry läuft mit Backoff)</span>
         </div>
       )}
 
@@ -468,7 +359,7 @@ export function OrchestratorPanel() {
           </div>
           <button
             type="button"
-            onClick={fetchModelIntegrationStatus}
+            onClick={() => void refreshModelStatus()}
             disabled={isLoadingModels}
             className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-mono uppercase transition-all flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50"
           >
