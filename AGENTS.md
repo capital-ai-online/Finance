@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.1.0`  
+**Control Plane Version:** `2.2.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-08-19  
+**Effective date:** 2026-08-27  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -69,6 +69,7 @@ CURRENT MAIN + OPEN-PR BASELINE
 → SCOPED IMPLEMENTATION
 → CHEAP / LOCAL / SANDBOX PRE-PR VALIDATION WHERE ACTUALLY AVAILABLE
 → FINAL MAIN RE-SYNC + CORRELATION REVIEW
+→ EXPLICIT HUMAN/OWNER PR-CREATION APPROVAL
 → PULL REQUEST
 → INDEPENDENT HOSTED GITHUB CHECKS
 → HUMAN/CODEOWNER MERGE DECISION
@@ -80,6 +81,22 @@ CURRENT MAIN + OPEN-PR BASELINE
 Direct edits to `main` are prohibited. One work item uses one scoped branch. Rollback uses a fresh branch from then-current `main`.
 
 Pre-PR evidence is technical evidence only and must be bound to the exact candidate snapshot. Immediately before PR creation, refresh `main`, correlate new merges/open PRs, synchronize, resolve semantic conflicts and repeat necessary low-cost checks.
+
+### Human/Owner gate before PR creation (`CTRL-SDLC-PR-CREATE-001`)
+
+A Pull Request or Draft Pull Request MUST NOT be created until the Human/Owner has explicitly approved that creation for the exact correlated candidate. This applies to every creation surface, including GitHub UI automation, API, MCP, connector, CLI, agent tools and trusted workflows.
+
+The required order is:
+
+1. immediately before approval is requested, refresh current `main` and correlate new merges, open Pull Requests, changed-file overlap, semantic overlap and namespace/authority conflicts;
+2. synchronize the scoped branch with that `main`, resolve conflicts, and repeat the necessary low-cost checks on the exact candidate snapshot;
+3. report the exact `main` SHA, candidate branch/head SHA, intended PR scope, correlation result and available validation evidence to the Human/Owner;
+4. obtain an explicit Human/Owner approval to create the Pull Request or Draft Pull Request for that reported snapshot;
+5. immediately before the external create mutation, re-read `main` and the candidate head; create the PR only if both SHAs are unchanged.
+
+A task request, permission to create a branch or commit, approval to run checks, technical evidence, prior/general approval, reaction, label or checkbox is not PR-creation approval. If `main` or the candidate head changes before creation, the approval expires; correlation, synchronization and required validation MUST be repeated and renewed explicit approval obtained. The agent stops fail-closed before the create mutation while approval is absent or stale.
+
+PR-creation approval authorizes only creation of the concrete PR or Draft PR. It does not authorize merge, deployment or any protected external mutation.
 
 ### Canonical PR-body contract for every creation surface
 
