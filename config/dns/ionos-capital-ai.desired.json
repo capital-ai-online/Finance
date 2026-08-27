@@ -4,6 +4,42 @@
   "deleteUnmanagedRecords": false,
   "records": [
     {
+      "name": "@",
+      "type": "CAA",
+      "content": "0 issue \"letsencrypt.org\"",
+      "ttl": 3600,
+      "prio": 0,
+      "disabled": false,
+      "state": "present"
+    },
+    {
+      "name": "@",
+      "type": "CAA",
+      "content": "0 issue \"pki.goog\"",
+      "ttl": 3600,
+      "prio": 0,
+      "disabled": false,
+      "state": "present"
+    },
+    {
+      "name": "@",
+      "type": "CAA",
+      "content": "0 issue \"sectigo.com\"",
+      "ttl": 3600,
+      "prio": 0,
+      "disabled": false,
+      "state": "present"
+    },
+    {
+      "name": "@",
+      "type": "CAA",
+      "content": "0 issuewild \"sectigo.com\"",
+      "ttl": 3600,
+      "prio": 0,
+      "disabled": false,
+      "state": "present"
+    },
+    {
       "name": "mta-sts",
       "type": "CNAME",
       "content": "finance-7clq.onrender.com",
