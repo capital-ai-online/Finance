@@ -16,6 +16,13 @@ const zone = {
   ],
 };
 
+const caaRecords = [
+  { name: '@', type: 'CAA', content: '0 issue "letsencrypt.org"', ttl: 3600, state: 'present' },
+  { name: '@', type: 'CAA', content: '0 issue "pki.goog"', ttl: 3600, state: 'present' },
+  { name: '@', type: 'CAA', content: '0 issue "sectigo.com"', ttl: 3600, state: 'present' },
+  { name: '@', type: 'CAA', content: '0 issuewild "sectigo.com"', ttl: 3600, state: 'present' },
+];
+
 const desired = {
   schemaVersion: 1,
   zone: 'capital-ai.online',
@@ -23,7 +30,7 @@ const desired = {
   records: [
     { name: 'mta-sts', type: 'CNAME', content: 'finance-7clq.onrender.com', ttl: 3600, singleton: true, state: 'present' },
     { name: '_smtp._tls', type: 'TXT', content: 'v=TLSRPTv1; rua=mailto:support@capital-ai.online', ttl: 3600, state: 'present' },
-    { name: '@', type: 'CAA', content: '0 issue "letsencrypt.org"', ttl: 3600, state: 'present' },
+    ...caaRecords,
   ],
 };
 
@@ -32,13 +39,29 @@ test('normalizes relative names into the managed zone', () => {
   assert.equal(normalizeName('@'), 'capital-ai.online');
 });
 
-test('buildPlan updates singleton, preserves exact TXT and adds missing CAA', () => {
+test('buildPlan updates singleton, preserves exact TXT and adds all missing CAA values', () => {
   const plan = buildPlan(zone, desired);
-  assert.equal(plan.mutations.length, 2);
+  assert.equal(plan.mutations.length, 5);
   assert.equal(plan.mutations[0].method, 'PUT');
   assert.equal(plan.mutations[0].recordId, 'r1');
-  assert.equal(plan.mutations[1].method, 'POST');
+  const caaMutations = plan.mutations.filter((mutation) => mutation.type === 'CAA');
+  assert.equal(caaMutations.length, 4);
+  assert.deepEqual(
+    caaMutations.map((mutation) => mutation.content).sort(),
+    caaRecords.map((record) => record.content).sort(),
+  );
   assert.match(plan.planSha256, /^sha256:[a-f0-9]{64}$/);
+});
+
+test('CAA policy permits Render single-host issuance and IONOS Sectigo wildcard renewal', () => {
+  assert.deepEqual(caaRecords.map((record) => record.content), [
+    '0 issue "letsencrypt.org"',
+    '0 issue "pki.goog"',
+    '0 issue "sectigo.com"',
+    '0 issuewild "sectigo.com"',
+  ]);
+  assert.equal(caaRecords.some((record) => /issuewild "letsencrypt\.org"/.test(record.content)), false);
+  assert.equal(caaRecords.some((record) => /issuewild "pki\.goog"/.test(record.content)), false);
 });
 
 test('protected record types are rejected fail-closed', () => {
