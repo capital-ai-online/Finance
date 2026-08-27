@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `2.2.0`  
 **Status date:** `2026-08-27`  
-**Current repository baseline:** `main@72333ebbc72a805ce32265f5e2ca08ec9fe30c83` — observed before the scoped governance branch  
+**Current repository baseline:** `main@589057b96f9801303b357758bcb9730da0bf2c40` — includes merged PR #555  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -60,8 +60,8 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document; synchronized to `main@72333ebbc72a805ce32265f5e2ca08ec9fe30c83` |
-| Open Pull Requests at this synchronization | `#555`; Frontend-Orchestrator polling lifecycle only, with no changed-file overlap against this Governance work package |
+| Current-State Index | this document; synchronized to `main@589057b96f9801303b357758bcb9730da0bf2c40` |
+| Open Pull Requests at this synchronization | none; merged PR `#555` is part of current `main` and has no changed-file overlap against this Governance work package |
 | M10 Passkey PR-CI enforcement | **SUSPENDED / OFF** |
 | Human/Owner PR creation | **REQUIRED** after final main/open-PR correlation and bound to exact main/head SHAs |
 | Human/CODEOWNER Merge | **REQUIRED** as a separate decision |
@@ -103,7 +103,7 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 
 ## Current next action
 
-1. keep open PR #555 isolated from this Governance work package and re-correlate if its scope or changed files move;
+1. treat merged PR #555 as part of the current-main baseline; its Frontend-Orchestrator files remain isolated from this Governance work package;
 2. require final current-main/open-PR correlation, branch synchronization and exact-snapshot Human/Owner approval before creating any PR or Draft PR;
 3. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until its separately governed reactivation prerequisites and a new explicit Human/Owner decision are satisfied;
 4. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
