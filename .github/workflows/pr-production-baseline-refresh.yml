@@ -1,0 +1,111 @@
+name: PR Production Baseline Auto-Refresh
+run-name: >-
+  PR #${{ github.event.workflow_run.pull_requests[0].number || 'N/A' }} – Produktions-Baseline nach Governance aktualisieren
+
+# Trusted default-branch writer:
+# - PR Governance remains read-only and fail-closed.
+# - This workflow runs only after that workflow completed and therefore uses the workflow definition from main.
+# - Candidate code is checked out as data but never executed; all executed policy scripts come from main.
+# - The updater replaces only the canonical baseline block and is idempotent, preventing edited -> governance -> refresh loops.
+on:
+  workflow_run:
+    workflows: ['PR Governance']
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-production-baseline-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+  cancel-in-progress: true
+
+jobs:
+  refresh-baseline:
+    name: Atomare Produktions-Baseline vertrauenswürdig nachziehen
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.pull_requests[0].number != null
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Vertrauenswürdigen Policy-Stand aus main auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+
+      - name: Aktuellen PR-Snapshot für den Write-Pfad autorisieren
+        id: pr
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v8.0.0
+        with:
+          script: |
+            const number = context.payload.workflow_run.pull_requests?.[0]?.number;
+            if (!number) {
+              core.setOutput('eligible', 'false');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: number,
+            });
+
+            const sameRepo = pr.head.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
+            const eligible = pr.state === 'open' && pr.base.ref === 'main' && sameRepo;
+
+            core.info(
+              `PR #${number}: state=${pr.state}, base=${pr.base.ref}, headRepo=${pr.head.repo?.full_name || 'missing'}, eligible=${eligible}`,
+            );
+            core.setOutput('eligible', eligible ? 'true' : 'false');
+            core.setOutput('pr_number', String(number));
+            core.setOutput('head_sha', pr.head.sha || '');
+
+      - name: Kandidaten-Head ohne persistierte Zugangsdaten auschecken
+        if: steps.pr.outputs.eligible == 'true'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ steps.pr.outputs.head_sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Aktuellen main-Stand in Kandidaten-Repository importieren
+        if: steps.pr.outputs.eligible == 'true'
+        working-directory: candidate
+        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
+
+      - name: Produktions-Baseline mit trusted-main Policy neu erzeugen
+        if: steps.pr.outputs.eligible == 'true'
+        working-directory: candidate
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+        run: node ../policy/scripts/pr/productionPreflight.mjs
+
+      - name: Nur kanonischen Produktions-Baseline-Block aktualisieren
+        if: steps.pr.outputs.eligible == 'true'
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+        run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
+
+      - name: Nicht autorisierten PR ohne Mutation überspringen
+        if: steps.pr.outputs.eligible != 'true'
+        run: echo "Kein offener same-repository PR gegen main; Baseline-Write bleibt deaktiviert."
