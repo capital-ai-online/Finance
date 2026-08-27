@@ -4,6 +4,12 @@ export { SessionComposition, type SessionCompositionValue } from './auth/Session
 export {
   Dashboard,
   type DashboardProps,
+  DashboardViewRouter,
+  type DashboardAdminTab,
+  type DashboardViewRouterProps,
+  DASHBOARD_ROUTED_VIEWS,
+  isDashboardRoutedView,
+  type DashboardRoutedView,
   DASHBOARD_VIEWS,
   DASHBOARD_VIEW_SECTION,
   getDashboardSection,
