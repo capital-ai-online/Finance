@@ -10,6 +10,7 @@ export const DEFAULT_DESIRED_FILE = 'config/dns/ionos-capital-ai.desired.json';
 export const OWNER = 'SvenKulessa';
 export const ALLOWED_WRITE_TYPES = new Set(['CAA', 'CNAME', 'TXT']);
 export const PROHIBITED_WRITE_TYPES = new Set(['A', 'AAAA', 'MX', 'NS', 'SOA', 'DS', 'DNSKEY']);
+export const REQUIRED_SINGLETON_TXT_NAMES = new Set(['_dmarc', '_smtp._tls']);
 
 function fail(message) {
   throw new Error(`[IONOS-DNS][SECURITY] ${message}`);
@@ -56,6 +57,11 @@ export function zoneFingerprint(zone) {
   return `sha256:${sha256(canonicalJson({ name: String(zone?.name || '').toLowerCase(), records }))}`;
 }
 
+function isRequiredSingleton(record, expectedZone) {
+  if (record.type !== 'TXT') return false;
+  return [...REQUIRED_SINGLETON_TXT_NAMES].some((name) => record.name === normalizeName(name, expectedZone));
+}
+
 export function validateDesiredConfig(config, expectedZone = DEFAULT_ZONE) {
   if (!config || typeof config !== 'object') fail('Desired-State-Konfiguration fehlt.');
   if (config.schemaVersion !== 1) fail('Unsupported desired-state schemaVersion.');
@@ -72,6 +78,9 @@ export function validateDesiredConfig(config, expectedZone = DEFAULT_ZONE) {
     if (!(record.name === expectedZone || record.name.endsWith(`.${expectedZone}`))) fail(`Record ${record.name} liegt außerhalb der Zone.`);
     if (!record.content) fail(`Record ${record.name}/${record.type} besitzt keinen Inhalt.`);
     if (!['present', 'absent'].includes(state)) fail(`Ungültiger state für ${record.name}/${record.type}.`);
+    if (isRequiredSingleton(record, expectedZone) && entry.singleton !== true) {
+      fail(`Mail-Policy-Record ${record.name}/${record.type} muss singleton=true sein.`);
+    }
     if (entry.singleton === true) {
       const key = `${record.name}|${record.type}`;
       if (seenSingleton.has(key)) fail(`Singleton ${key} ist mehrfach im Desired State definiert.`);
