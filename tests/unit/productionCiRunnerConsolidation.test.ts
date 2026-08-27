@@ -57,7 +57,7 @@ describe('P2B production CI runner consolidation', () => {
     expect(build).toContain('artifacts/deployment/verifyDeploymentIdentity.mjs');
   });
 
-  it('keeps the production environment job minimal and exact-SHA-bound', () => {
+  it('keeps the production environment job minimal, exact-SHA-bound, and on Node 24 actions', () => {
     const deploy = jobBlock(workflow(), 'deploy-production');
     expect(deploy).toContain('needs: [build-and-test]');
     expect(deploy).toContain('environment: production');
@@ -66,7 +66,9 @@ describe('P2B production CI runner consolidation', () => {
     expect(deploy).not.toContain('actions/checkout@');
     expect(deploy).not.toContain('npm ci');
     expect(deploy).not.toContain('npm run build');
-    expect(deploy).toContain('actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093');
+    expect(deploy).toContain('actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c');
+    expect(deploy).not.toContain('actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093');
+    expect(deploy).toContain("node-version: '24.18.0'");
     expect(deploy).toContain('manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA');
     expect(deploy).toContain('ref=${VERIFIED_COMMIT_SHA}');
     expect(deploy).toContain('node p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs');
