@@ -28,9 +28,18 @@ export function replaceProductionBaselineBlock(body, baseline) {
   const text = String(body || '');
   const startMarker = `<!-- ${PRODUCTION_BASELINE_START} -->`;
   const endMarker = `<!-- ${PRODUCTION_BASELINE_END} -->`;
+  const visibleStartMarker = `\`${PRODUCTION_BASELINE_START}\``;
+  const visibleEndMarker = `\`${PRODUCTION_BASELINE_END}\``;
 
-  if (occurrenceCount(text, startMarker) !== 1 || occurrenceCount(text, endMarker) !== 1) {
-    fail('PR-Body muss genau einen kanonischen Produktions-Baseline-Block enthalten; Auto-Refresh bleibt fail-closed.');
+  const markerCountsAreCanonical = [
+    [startMarker, 1],
+    [endMarker, 1],
+    [visibleStartMarker, 1],
+    [visibleEndMarker, 1],
+  ].every(([marker, expected]) => occurrenceCount(text, marker) === expected);
+
+  if (!markerCountsAreCanonical) {
+    fail('PR-Body muss genau einen kanonischen Produktions-Baseline-Block mit eindeutigen Kommentar- und sichtbaren Markern enthalten; Auto-Refresh bleibt fail-closed.');
   }
 
   const currentBlock = extractProductionBaselineBlock(text);
