@@ -32,6 +32,7 @@ import { verifiedAssetDisplayRouter } from './verifiedAssetDisplayRoutes';
 import { cryptoEvidenceRouter } from './cryptoEvidenceRoutes';
 import { createMarketSentimentRouter } from './marketSentimentRoutes';
 import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
+import { createMtaStsRouter } from './mtaStsRoutes';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 
 export interface ApplicationRouteProviders {
@@ -61,6 +62,10 @@ export function registerApplicationRoutes(
 
   registerTrailingSlashNormalize(app);
   installProductionSoft404Intercept();
+
+  // RFC 8461 policy endpoint. DNS discovery and the mta-sts custom domain remain
+  // separately owner-managed; the application only serves the static policy body.
+  app.use(createMtaStsRouter());
 
   // SC-2 Phase C3: intercept historical Crypto scoring endpoints before the legacy declarations
   // in server.application.ts. Standard- and Meme-Crypto terminate at the canonical dispatcher;
