@@ -9,7 +9,7 @@ import { replaceProductionBaselineBlock } from './productionBaselineBody.mjs';
 function validBaseline(overrides = {}) {
   const baseline = {
     schemaVersion: '1.2.0',
-    generatedAt: '2026-08-27T20:40:00.000Z',
+    generatedAt: '2026-08-20T20:40:00.000Z',
     productionUrl: 'https://capital-ai.online/',
     productionHealthUrl: 'https://capital-ai.online/healthz',
     bootstrap: false,
@@ -40,10 +40,10 @@ function validBaseline(overrides = {}) {
 }
 
 test('same atomic baseline preserves existing generatedAt and performs no body write', () => {
-  const oldBaseline = validBaseline({ generatedAt: '2026-08-27T20:30:00.000Z' });
+  const oldBaseline = validBaseline({ generatedAt: '2026-08-20T20:30:00.000Z' });
   const currentBody = `Vorher\n${renderProductionBaselineBlock(oldBaseline)}\nNachher`;
 
-  const freshPreflight = validBaseline({ generatedAt: '2026-08-27T20:45:00.000Z' });
+  const freshPreflight = validBaseline({ generatedAt: '2026-08-20T20:45:00.000Z' });
   const result = replaceProductionBaselineBlock(currentBody, freshPreflight);
 
   assert.equal(result.changed, false);
@@ -52,11 +52,11 @@ test('same atomic baseline preserves existing generatedAt and performs no body w
 });
 
 test('changed main/head identity replaces only the canonical baseline block', () => {
-  const previous = validBaseline({ generatedAt: '2026-08-27T20:30:00.000Z' });
+  const previous = validBaseline({ generatedAt: '2026-08-20T20:30:00.000Z' });
   const currentBody = `# PR\nOwner note stays\n${renderProductionBaselineBlock(previous)}\nManual appendix stays`;
 
   const next = validBaseline({
-    generatedAt: '2026-08-27T20:45:00.000Z',
+    generatedAt: '2026-08-20T20:45:00.000Z',
     main: { sha: '4'.repeat(40) },
     head: { sha: '5'.repeat(40), version: '0.7.0' },
     drift: { productionToMainCommits: 2, mainToHeadCommits: 1 },
