@@ -2,6 +2,9 @@ import fs from 'node:fs';
 
 const dockerfile = fs.readFileSync('Dockerfile', 'utf8');
 const dockerignore = fs.readFileSync('.dockerignore', 'utf8');
+const packageJson = fs.readFileSync('package.json', 'utf8');
+const viteProductionStub = fs.readFileSync('server/runtime/viteProductionDisabled.ts', 'utf8');
+const containerWorkflow = fs.readFileSync('.github/workflows/container-security.yml', 'utf8');
 
 const requirements = [
   ['immutable Node 24.18 LTS base image digest', /FROM\s+node:24\.18\.0-alpine@sha256:[a-f0-9]{64}/],
@@ -12,8 +15,7 @@ const requirements = [
   ['unprivileged production dependency install', /AS\s+prod-deps[\s\S]*?USER\s+node[\s\S]*?RUN\s+npm\s+ci\s+--omit=dev/],
   ['production esbuild binaries pruned before runner copy', /AS\s+prod-deps[\s\S]*?rm\s+-rf\s+\/app\/node_modules\/esbuild\s+\/app\/node_modules\/@esbuild/],
   ['production Vite build tooling pruned before runner copy', /\/app\/node_modules\/vite\s+\/app\/node_modules\/@vitejs\s+\/app\/node_modules\/@tailwindcss[\s\\]*\n?\s*\/app\/node_modules\/tailwindcss/],
-  ['fail-closed Vite runtime stub', /VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE/],
-  ['Vite stub import verified', /node\s+--input-type=module\s+-e\s+"const vite = await import\('vite'\); if \(typeof vite\.createServer !== 'function'\) process\.exit\(1\)"/],
+  ['production bundle verifies fail-closed Vite marker', /grep\s+-Fq\s+'VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_BUNDLE'\s+\/app\/dist\/server\.cjs/],
   ['production dependencies copied from isolated stage', /COPY\s+--from=prod-deps\s+--chown=root:root\s+\/app\/node_modules\s+\.\/node_modules/],
   ['runtime OpenSSL security upgrade', /apk\s+upgrade\s+--no-cache\s+libcrypto3\s+libssl3/],
   ['runtime npm and corepack removed', /rm\s+-rf\s+\/usr\/local\/lib\/node_modules\/npm\s+\/usr\/local\/lib\/node_modules\/corepack/],
@@ -45,6 +47,7 @@ const forbidden = [
   ['source commit persisted as image ENV', /^ENV\s+RELEASE_SOURCE_COMMIT\b/m],
   ['legacy exposed port 3000', /^EXPOSE\s+3000\s*$/m],
   ['legacy fixed healthcheck port 3000', /127\.0\.0\.1:3000\/healthz/],
+  ['synthetic Vite package created inside node_modules', /mkdir\s+-p\s+\/app\/node_modules\/vite|VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE/],
 ];
 
 const ignoreRequirements = [
@@ -87,12 +90,28 @@ const runnerSection = runnerStageIndex >= 0 ? dockerfile.slice(runnerStageIndex)
 if (/\bnpm\s+(?:ci|install)\b/.test(runnerSection)) {
   failures.push('forbidden: runtime stage must not install npm dependencies');
 }
-if (runnerSection.includes('VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE')) {
-  failures.push('forbidden: Vite stub must be created in prod-deps before the runner COPY, not synthesized in the final image');
+if (/node_modules\/vite/.test(runnerSection)) {
+  failures.push('forbidden: final runtime stage must not recreate or modify Vite');
 }
 
 if (/ARG\s+(?:.*SECRET|.*PASSWORD|.*TOKEN|STRIPE_SECRET_KEY|SUPABASE_SERVICE_ROLE_KEY)/i.test(dockerfile)) {
   failures.push('forbidden: secret-like Docker ARG detected');
+}
+
+if (!packageJson.includes('--alias:vite=./server/runtime/viteProductionDisabled.ts')) {
+  failures.push('package.json build:raw must alias Vite to the fail-closed production module');
+}
+if (!viteProductionStub.includes("throw new Error('VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_BUNDLE')")) {
+  failures.push('production Vite alias must fail closed instead of starting a development server');
+}
+if (!containerWorkflow.includes('test ! -e /app/node_modules/vite')) {
+  failures.push('container workflow must assert that Vite is absent from the runtime image');
+}
+if (!containerWorkflow.includes('format: cyclonedx') || !containerWorkflow.includes('runtime-image-sbom.cdx.json')) {
+  failures.push('container workflow must generate a CycloneDX SBOM from the final runtime image');
+}
+if (!containerWorkflow.includes('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a')) {
+  failures.push('container evidence upload action must be pinned to the approved v7.0.1 commit');
 }
 
 if (failures.length) {
