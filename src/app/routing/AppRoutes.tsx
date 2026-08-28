@@ -40,6 +40,26 @@ export function AppRoutes({
     return typeof window !== 'undefined' ? window.location.pathname : '/';
   });
 
+  const renderLandingPage = () => (
+    <LandingPage
+      onLoginEmail={async (email, password) => {
+        clearJustLoggedOut();
+        await handleLogin(email, password);
+        if (typeof window !== 'undefined') {
+          window.location.assign('/dashboard');
+        }
+      }}
+      onGuestLogin={() => {
+        // Compatibility prop until LandingPage API cleanup: guest access is disabled.
+      }}
+      onRegisterEmail={async (name, email, password) => {
+        clearJustLoggedOut();
+        await handleRegister(name, email, password);
+      }}
+      justLoggedOut={justLoggedOut}
+    />
+  );
+
   if (currentPath === '/datenschutz' || currentPath === '/datenschutz/') {
     return (
       <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-cyan-500/30 selection:text-white">
@@ -130,6 +150,13 @@ export function AppRoutes({
     );
   }
 
+  // The canonical application homepage remains public and explanatory even when a valid
+  // authenticated session exists. This is required for a stable public product entry point
+  // and keeps Google OAuth branding review independent from account/session state.
+  if (currentPath === '/' || currentPath === '') {
+    return renderLandingPage();
+  }
+
   if (userSession && (currentPath === '/media-studio' || currentPath === '/media-studio/')) {
     return (
       <div className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 lg:px-8">
@@ -142,7 +169,7 @@ export function AppRoutes({
               <h1 className="mt-1 text-lg font-black text-white">Media Creation Studio</h1>
             </div>
             <a
-              href="/"
+              href="/dashboard"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"
             >
               ← Zurück zum Cockpit
@@ -158,7 +185,12 @@ export function AppRoutes({
     return (
       <Dashboard
         userSession={userSession}
-        onLogout={handleLogout}
+        onLogout={async () => {
+          await handleLogout();
+          if (typeof window !== 'undefined') {
+            window.location.replace('/');
+          }
+        }}
         onRegister={(name, email) => {}}
         onLoginEmail={handleLogin}
         onRegisterEmail={handleRegister}
@@ -166,20 +198,5 @@ export function AppRoutes({
     );
   }
 
-  return (
-    <LandingPage
-      onLoginEmail={async (email, password) => {
-        clearJustLoggedOut();
-        await handleLogin(email, password);
-      }}
-      onGuestLogin={() => {
-        // Compatibility prop until LandingPage API cleanup: guest access is disabled.
-      }}
-      onRegisterEmail={async (name, email, password) => {
-        clearJustLoggedOut();
-        await handleRegister(name, email, password);
-      }}
-      justLoggedOut={justLoggedOut}
-    />
-  );
+  return renderLandingPage();
 }
