@@ -28,10 +28,23 @@ export function resolveProductionCspMode(value = process.env.CSP_MODE): Producti
 }
 
 function createRequestNonce(): string {
+  // 18 Bytes = 144 Bit Entropie; oberhalb der in ESS-0014-CONTRACTS geforderten 128 Bit.
   return crypto.randomBytes(18).toString('base64url');
 }
 
+/**
+ * Enforced recovery/baseline policy.
+ *
+ * The Vite application bundle is explicitly trusted through 'self'. A nonce mismatch can
+ * therefore no longer blank the application shell. Third-party scripts remain allowlisted;
+ * broad https: fallbacks are limited to non-script resource classes.
+ */
 export function buildBaselineProductionCsp(nonce: string): string {
+  // SECURITY (2026-08-25 architecture review, finding #8): 'unsafe-eval' was removed. The
+  // production bundle (dist/assets/*.js) was verified to contain zero eval()/new Function() call
+  // sites - the only hit before removal was a string literal in a linter-rule description, not an
+  // actual call. Keeping 'unsafe-eval' in the enforced policy needlessly weakened XSS mitigation
+  // by allowing eval-based execution even for non-nonced/injected script content.
   return [
     "default-src 'self'",
     "object-src 'none'",
@@ -49,11 +62,17 @@ export function buildBaselineProductionCsp(nonce: string): string {
   ].join('; ') + ';';
 }
 
+/**
+ * ADR-0035 target policy. In report-only mode this is evaluated without blocking the UI;
+ * promotion to enforced strict mode requires ADR-0040 production evidence.
+ */
 export function buildStrictProductionCsp(nonce: string): string {
   return [
     "default-src 'self' https:",
     "object-src 'none'",
     "base-uri 'none'",
+    // SECURITY (2026-08-25 architecture review, finding #8): 'unsafe-eval' removed, see the note
+    // in buildBaselineProductionCsp above (verified-empty of eval()/new Function() call sites).
     `script-src 'nonce-${nonce}' 'unsafe-inline' 'strict-dynamic' https: http:`,
     "style-src 'self' https://fonts.googleapis.com https://cookiehub.net https://cdn.cookiehub.eu https://hcaptcha.com https://*.hcaptcha.com",
     "font-src 'self' data: https://fonts.gstatic.com",
@@ -68,6 +87,7 @@ export function buildStrictProductionCsp(nonce: string): string {
 }
 
 function buildDevelopmentCsp(): string {
+  // Vite HMR requires eval/inline/ws in development. This is never selected in production.
   return [
     "default-src 'self' https: data: blob:",
     "object-src 'none'",
@@ -97,6 +117,13 @@ function isLikelyHtmlNavigation(req: Request): boolean {
   return !req.path.startsWith('/api/') && !/\/[^/]+\.[a-z0-9]+$/i.test(req.path);
 }
 
+/**
+ * Attaches the CSP/nonce response context to one Express request.
+ *
+ * `server.ts` still contains a legacy CSP setter. Until the active server-composition work is
+ * reconciled, this module remains the authoritative response boundary and normalizes only the
+ * two CSP header names. Other response headers are left untouched.
+ */
 export function attachSecurityResponseContext(req: Request, res: Response): void {
   const nonce = createRequestNonce();
   res.locals.cspNonce = nonce;
@@ -150,6 +177,8 @@ export function attachSecurityResponseContext(req: Request, res: Response): void
     if (responseTypeDecided) return;
     responseTypeDecided = true;
     const contentType = String(res.getHeader('content-type') || '').toLowerCase();
+    // sendFile/static normally sets text/html before the first chunk. The navigation fallback
+    // covers runtimes that decide the MIME type only after the stream begins.
     bufferHtml = contentType.includes('text/html') || (htmlNavigation && contentType === '');
   };
 
