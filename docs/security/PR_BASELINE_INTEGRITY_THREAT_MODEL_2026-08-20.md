@@ -124,7 +124,13 @@ Die historische Branch-Allowlist erkannte nur `agent/*`, `claude/*`, `grok/*`, `
 
 Ein pauschales Re-Run des letzten Governance-Workflows könnte einen anderen PR, Head oder Base-Snapshot wiederverwenden.
 
-**Kontrolle:** Nach einem tatsächlichen Baseline-Write werden Live-PR und Live-main erneut gegen die Matrix-SHAs geprüft. Anschließend wird nur ein bereits abgeschlossener `PR Governance`-Run ausgewählt, dessen PR-Nummer, Head-SHA und Base-SHA exakt dem gebundenen Snapshot entsprechen. Fehlt ein solcher Run, wird fail-closed abgebrochen. GitHub verlangt für Workflow-Re-Runs `Actions: write`; diese Berechtigung bleibt auf den trusted Writer begrenzt.
+**Kontrolle:** Nach einem tatsächlichen Baseline-Write werden Live-PR und Live-main erneut gegen die Matrix-SHAs geprüft. Anschließend wird nur ein bereits abgeschlossener Lauf des stabilen Workflow-Pfads `.github/workflows/pr-governance.yml` ausgewählt, dessen PR-Nummer, Head-SHA und Base-SHA exakt dem gebundenen Snapshot entsprechen. Fehlt ein solcher Run, wird fail-closed abgebrochen. GitHub verlangt für Workflow-Re-Runs `Actions: write`; diese Berechtigung bleibt auf den trusted Writer begrenzt.
+
+### T16 — Dynamischer `run-name` wird fälschlich als Workflow-Identität verwendet
+
+GitHub unterscheidet zwischen dem statischen Workflow-`name`, der im `workflow_run.workflows`-Trigger als Source-Allowlist verwendet wird, und dem optionalen `run-name`, der den einzelnen Lauf in der Actions-Oberfläche bezeichnet. `CI` und `PR Governance` verwenden dynamische `run-name`-Werte. Eine zusätzliche Prüfung auf `workflow_run.name == 'CI'`, `workflow_run.name == 'PR Governance'` oder `run.name === 'PR Governance'` kann dadurch einen zulässigen Lauf verwerfen, obwohl der native Source-Filter bereits den richtigen Workflow gebunden hat. Der reale Main-CI für `2a3dba2397c775ba39831173d6ca7210634fb446` reproduzierte genau diesen Fehler: CI und Render-Deploy waren erfolgreich, der nachgelagerte Baseline-Run wurde jedoch `skipped`.
+
+**Kontrolle:** Die Source-Authority bleibt ausschließlich `on.workflow_run.workflows: ['PR Governance', 'CI']`. Innerhalb des trusted Writers wird der zulässige Pfad anhand der nicht-präsentationalen Ereignismerkmale (`pull_request` bzw. `push + main + success`) und weiterhin über exakte SHAs, Deployment-Job und `/healthz` korreliert. Für die Suche eines bereits abgeschlossenen Governance-Laufs wird der stabile Repository-Pfad `.github/workflows/pr-governance.yml` statt dessen dynamischem Run-Namen verwendet. Regressionstests verbieten die drei fehlerhaften Run-Name-Vergleiche explizit.
 
 ## Keine automatische PR-Schreibberechtigung im untrusted PR-Workflow
 
@@ -160,6 +166,7 @@ Draft-PRs bleiben gemäß bestehender Kostenpolicy bei `main`-Push bewusst unsyn
 - PR-Heads ohne aktuellen Main-Ancestor (`behind`/`diverged`) werden vom Post-Deploy-Reconciler ausgeschlossen.
 - Candidate-Code wird im privilegierten Reconciliation-Workflow nicht ausgeführt; Policy-Skripte stammen aus dem gebundenen Main-Checkout.
 - Governance-Re-Run erfordert exakte PR-Nummer, Head-SHA und Base-SHA.
+- Dynamische `run-name`-Werte dürfen weder den CI-/Governance-Source-Pfad noch die Auswahl des Governance-Re-Runs bestimmen.
 - Konventionelle `feat/fix/...`-Branches erhalten Auto-Sync nur bei Repository-Owner-Autorenschaft; Fork-/fremde Standard-Branches bleiben ausgeschlossen.
 - Workflow-Security bleibt zuständig für unveränderliche Action-SHAs, Minimalberechtigungen und das Verbot von `pull_request_target`.
 

@@ -1,11 +1,12 @@
 name: PR Production Baseline Auto-Refresh
 run-name: >-
-  ${{ github.event.workflow_run.name == 'CI' && github.event.workflow_run.event == 'push'
+  ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'
       && format('main@{0} – Produktions-Baselines nach verifiziertem Deploy korrelieren', github.event.workflow_run.head_sha)
       || format('PR #{0} – Produktions-Baseline korrelieren und Governance revalidieren', github.event.workflow_run.pull_requests[0].number || 'N/A') }}
 
 # Trusted default-branch writer:
 # - PR Governance remains read-only and fail-closed.
+# - The workflow source allowlist is defined by on.workflow_run.workflows; dynamic run-name labels are never identity.
 # - The workflow reacts to either completed PR Governance or a successfully completed main CI run.
 # - A main-CI trigger is accepted only when the exact main SHA also has a successful
 #   "Deployment verifiziert / Render-Produktion" job and /healthz reports that same SHA.
@@ -25,14 +26,13 @@ permissions:
 
 concurrency:
   group: >-
-    pr-production-baseline-${{ github.event.workflow_run.name == 'CI' && github.event.workflow_run.event == 'push' && 'main-deploy' || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+    pr-production-baseline-${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && 'main-deploy' || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
   refresh-baseline:
     name: Atomare Produktions-Baseline vertrauenswürdig nachziehen
     if: >-
-      github.event.workflow_run.name == 'PR Governance' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.pull_requests[0].number != null
     runs-on: ubuntu-latest
@@ -202,7 +202,6 @@ jobs:
   discover_post_deploy_prs:
     name: Verifiziertes Production/Main korrelieren und synchronisierte PRs bestimmen
     if: >-
-      github.event.workflow_run.name == 'CI' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.conclusion == 'success'
@@ -252,7 +251,7 @@ jobs:
 
             if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('Aktueller trusted-main SHA ist ungültig.');
             if (!/^[0-9a-f]{40}$/.test(sourceHeadSha)) fail('Triggering CI head_sha ist ungültig.');
-            if (sourceRun.name !== 'CI' || sourceRun.event !== 'push' || sourceRun.head_branch !== 'main') {
+            if (sourceRun.event !== 'push' || sourceRun.head_branch !== 'main') {
               fail('Post-Deploy-Reconciliation akzeptiert ausschließlich den CI push/main Pfad.');
             }
             if (sourceRun.conclusion !== 'success') fail(`Triggering CI ist nicht erfolgreich: ${sourceRun.conclusion}`);
@@ -459,7 +458,7 @@ jobs:
               per_page: 100,
             });
             const exactRun = runs
-              .filter((run) => run.name === 'PR Governance')
+              .filter((run) => run.path === '.github/workflows/pr-governance.yml')
               .filter((run) => (run.pull_requests || []).some((item) =>
                 Number(item.number) === prNumber &&
                 normalizeSha(item.head?.sha) === expectedHeadSha &&

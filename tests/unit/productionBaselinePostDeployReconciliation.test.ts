@@ -10,28 +10,37 @@ function workflow(): string {
 }
 
 describe('production baseline post-deploy reconciliation', () => {
-  it('listens to both PR Governance and CI completion from the trusted default branch workflow', () => {
+  it('uses the workflow_run source allowlist instead of dynamic run-name labels as identity', () => {
     const yaml = workflow();
     expect(yaml).toContain("workflows: ['PR Governance', 'CI']");
     expect(yaml).toContain('types: [completed]');
-    expect(yaml).toContain("github.event.workflow_run.name == 'PR Governance'");
-    expect(yaml).toContain("github.event.workflow_run.name == 'CI'");
+    expect(yaml).not.toContain("github.event.workflow_run.name == 'PR Governance'");
+    expect(yaml).not.toContain("github.event.workflow_run.name == 'CI'");
+    expect(yaml).not.toContain("sourceRun.name !== 'CI'");
   });
 
-  it('accepts the deployment trigger only for successful push/main CI', () => {
+  it('accepts the deployment trigger only for successful push/main CI semantics', () => {
     const yaml = workflow();
     expect(yaml).toContain("github.event.workflow_run.event == 'push'");
     expect(yaml).toContain("github.event.workflow_run.head_branch == 'main'");
     expect(yaml).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(yaml).toContain("sourceRun.event !== 'push' || sourceRun.head_branch !== 'main'");
     expect(yaml).toContain("job.name === 'Deployment verifiziert / Render-Produktion'");
     expect(yaml).toContain("deployJob.status !== 'completed' || deployJob.conclusion !== 'success'");
+  });
+
+  it('keeps the PR Governance path event-bound without depending on its dynamic run-name', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("github.event.workflow_run.event == 'pull_request'");
+    expect(yaml).toContain('github.event.workflow_run.pull_requests[0].number != null');
+    expect(yaml).toContain("sourceRun.event !== 'pull_request'");
   });
 
   it('correlates source CI, current main and live production before any PR write', () => {
     const yaml = workflow();
     expect(yaml).toContain('sourceHeadSha !== mainSha');
     expect(yaml).toContain("fetch('https://capital-ai.online/healthz'");
-    expect(yaml).toContain("health?.deployment?.commitSha");
+    expect(yaml).toContain('health?.deployment?.commitSha');
     expect(yaml).toContain("healthResponse.headers.get('x-capital-ai-commit')");
     expect(yaml).toContain('productionSha !== mainSha || productionSha !== sourceHeadSha');
     expect(yaml).toContain('keine PR-Baseline wird aus einem überholten Deploy-Event geschrieben');
@@ -58,9 +67,10 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).not.toContain('npm --prefix candidate');
   });
 
-  it('re-runs only a completed Governance run bound to the exact PR head and current main base', () => {
+  it('re-runs only a completed Governance workflow path bound to the exact PR head and current main base', () => {
     const yaml = workflow();
-    expect(yaml).toContain("run.name === 'PR Governance'");
+    expect(yaml).toContain("run.path === '.github/workflows/pr-governance.yml'");
+    expect(yaml).not.toContain("run.name === 'PR Governance'");
     expect(yaml).toContain("event: 'pull_request'");
     expect(yaml).toContain('head_sha: expectedHeadSha');
     expect(yaml).toContain('normalizeSha(item.base?.sha) === expectedMainSha');
