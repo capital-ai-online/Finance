@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { SessionComposition } from './auth/SessionComposition';
+import { ProductVocabularyBoundary } from './presentation/ProductVocabularyBoundary';
 import { AppRoutes } from './routing/AppRoutes';
 
 /**
@@ -16,8 +17,10 @@ import { AppRoutes } from './routing/AppRoutes';
  */
 export default function App() {
   return (
-    <SessionComposition>
-      {(session) => <AppRoutes {...session} />}
-    </SessionComposition>
+    <ProductVocabularyBoundary>
+      <SessionComposition>
+        {(session) => <AppRoutes {...session} />}
+      </SessionComposition>
+    </ProductVocabularyBoundary>
   );
 }
