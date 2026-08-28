@@ -19,9 +19,24 @@ import { hashOpaqueToken } from './secretCrypto';
 import { createLogger } from '../../../server/logger';
 import { annotateReason, buildDebounceKey, createIamAuditDebounce } from './iamAuditDebounce';
 
-// Audit ARCH-AUDIT-0002 (S4): strukturierte, Correlation-ID-tragende Logs fuer den
-// sicherheitskritischsten Modul dieser Codebasis statt Ad-hoc-console.error-Strings.
 const iamLogger = createLogger('iam');
+const MAX_BEARER_TOKEN_LENGTH = 8_192;
+const MAX_STEP_UP_TOKEN_LENGTH = 512;
+
+/**
+ * Strict RFC6750-style bearer extraction for every IAM path.
+ * Rejects duplicate/comma-joined credentials, embedded whitespace/control characters and
+ * unbounded headers before they reach Supabase Auth or hashing/audit code.
+ */
+export function extractBearerToken(req: Pick<Request, 'headers'>): string | null {
+  const raw = req.headers.authorization;
+  if (typeof raw !== 'string') return null;
+  const match = raw.match(/^Bearer ([^\s,]+)$/i);
+  if (!match) return null;
+  const token = match[1];
+  if (token.length > MAX_BEARER_TOKEN_LENGTH) return null;
+  return token;
+}
 
 export interface AuthzResult {
   authorized: boolean;
@@ -39,14 +54,7 @@ export interface AuthzResult {
   actorLabel: string;
 }
 
-// --- IAM-Schema-Health-Check (Compliance-Review Punkt 2) -----------------------
-//
-// Prüft EINMALIG beim Serverstart (server.ts ruft runIamSchemaHealthCheck() auf),
-// ob profiles.iam_role tatsächlich existiert, statt das stillschweigend erst beim
-// ersten Request zu bemerken. Ergebnis wird gecacht, damit checkAdminAccess() bei
-// jedem Request sofort und ohne zusätzliche Query fail-closed reagieren kann,
-// falls das Schema fehlt (z.B. Migration in einer neuen Umgebung noch nicht gelaufen).
-let iamSchemaHealthy: boolean | null = null; // null = noch nicht geprüft
+let iamSchemaHealthy: boolean | null = null;
 
 export async function runIamSchemaHealthCheck(): Promise<boolean> {
   if (!isSupabaseConfigured()) {
@@ -64,9 +72,6 @@ export async function runIamSchemaHealthCheck(): Promise<boolean> {
       .eq('column_name', 'iam_role')
       .maybeSingle();
 
-    // information_schema ist über PostgREST i.d.R. nicht direkt abfragbar; Fallback
-    // auf einen echten Lesezugriff mit LIMIT 0, der bei fehlender Spalte einen
-    // eindeutigen Fehler wirft.
     if (error) {
       const { error: probeError } = await supabase.from('profiles').select('iam_role').limit(0);
       if (probeError) {
@@ -78,6 +83,7 @@ export async function runIamSchemaHealthCheck(): Promise<boolean> {
         return false;
       }
     }
+    void data;
     iamSchemaHealthy = true;
     console.log('[IAM][HEALTH-CHECK] OK: profiles.iam_role verfügbar.');
     return true;
@@ -102,25 +108,15 @@ async function resolveRoleFromToken(token: string): Promise<{ role: Role | null;
       .single();
 
     if (profileErr || !profile) {
-      // profiles.role existiert evtl. noch nicht (Migration ausstehend) -> kontrolliert null zurückgeben
       return { role: null, userId: userData.user.id };
     }
     return { role: (profile.iam_role as Role) || 'user', userId: userData.user.id };
   } catch (err: any) {
-    // Audit ARCH-AUDIT-0002 (AUD2-F-020): zuvor stillschweigend verschluckt - ein
-    // Token-Aufloesungsfehler konnte damit unbemerkt bleiben statt im Log sichtbar zu sein.
     console.error(`[IAM][ERROR] resolveRoleFromToken fehlgeschlagen: ${err?.message || err}`);
     return { role: null };
   }
 }
 
-// Compliance-Review Punkt 3: vollständiger Kontext (User-ID, Ziel-Ressource/Zone,
-// Grund, IP, User-Agent) statt nur role/zone/outcome - notwendig, um Angriffsmuster
-// (z.B. wiederholte Versuche derselben IP gegen wechselnde Zonen) überhaupt erkennen
-// zu können.
-// F-01: Wiederholte identische Abweisungen werden verdichtet statt einzeln geschrieben. Der
-// Zähler der unterdrückten Wiederholungen reist mit dem nächsten Datensatz mit, es geht also
-// keine Evidenz verloren. GRANTED bleibt bewusst unentprellt.
 const deniedAuditDebounce = createIamAuditDebounce();
 
 async function logAccess(
@@ -142,35 +138,27 @@ async function logAccess(
 
   try {
     const supabase = getServerSupabase();
+    const tokenFingerprint = ctx.tokenRef
+      ? `tok_sha256_${hashOpaqueToken(ctx.tokenRef).slice(0, 24)}`
+      : 'no-token';
     await supabase.from('iam_access_log').insert({
       role,
       zone,
       outcome,
-      token_id: ctx.tokenRef ? `tok_${ctx.tokenRef.slice(0, 10)}` : 'no-token',
+      token_id: tokenFingerprint,
       user_id: ctx.userId || null,
       reason,
       ip_address: ctx.ip || null,
       user_agent: ctx.userAgent || null,
     });
   } catch (err: any) {
-    // Audit ARCH-AUDIT-0002 (AUD2-F-020): Request bleibt bewusst unblockiert (Zugriffslog ist
-    // nicht sicherheitsentscheidend), aber der Fehler war zuvor komplett unsichtbar - genau das
-    // Muster, das AUD2-F-011 (Schema-Mismatch) unbemerkt liess.
     iamLogger.error('iam_access_log-Insert fehlgeschlagen', { zone, error: err?.message || String(err) });
   }
 }
 
-/**
- * Ermittelt die verifizierte Identität des Aufrufers aus dem Bearer-Token, OHNE eine
- * bestimmte Rolle zu verlangen. Für Endpunkte, die selbst kein Admin-Zone sind, aber
- * niemals einem client-gelieferten email/userId-Parameter vertrauen dürfen, um zu
- * bestimmen, wessen Konto betroffen ist (z.B. Abo-/Credits-Endpunkte in stripe.ts).
- * Gibt null zurück, wenn kein gültiges Token vorliegt - Aufrufer müssen das als 401 behandeln.
- */
 export async function resolveVerifiedIdentity(req: Request): Promise<{ userId: string; email: string | null } | null> {
   if (!isSupabaseConfigured()) return null;
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const token = extractBearerToken(req);
   if (!token) return null;
   try {
     const supabase = getServerSupabase();
@@ -178,26 +166,11 @@ export async function resolveVerifiedIdentity(req: Request): Promise<{ userId: s
     if (error || !data?.user) return null;
     return { userId: data.user.id, email: data.user.email ?? null };
   } catch (err: any) {
-    // Audit ARCH-AUDIT-0002 (AUD2-F-020)
     iamLogger.error('resolveVerifiedIdentity fehlgeschlagen', { requestId: req.requestId, error: err?.message || String(err) });
     return null;
   }
 }
 
-/**
- * Zentrale Autorisierungsprüfung für Systemadmin-/Master-Supervisor-Endpunkte.
- * Ersetzt die bisher pro Datei duplizierte ADMIN_EMAILS-Prüfung.
- *
- * Compliance-Review Punkt 1: die gesamte Funktion ist in einen Top-Level try/catch
- * gehüllt - kein unerwarteter Fehler (z.B. Netzwerkfehler bei Supabase, Bug in einer
- * Hilfsfunktion) kann hier je zu einer unbehandelten Promise-Rejection werden. Jeder
- * Fehlerfall führt zu einer klaren, fail-closed AuthzResult-Antwort statt zu einem
- * hängenden Request oder Prozessabsturz.
- *
- * @param req Express-Request
- * @param zone Bezeichner der geschützten Zone (für iam_access_log), z.B. 'system-events', 'agents-registry'
- * @param allowedRoles erlaubte Rollen für diese Zone (Default: owner, admin)
- */
 export async function checkAdminAccess(
   req: Request,
   zone: string,
@@ -208,15 +181,11 @@ export async function checkAdminAccess(
 
   try {
     if (!isSupabaseConfigured()) {
-      // Fail closed: ohne Supabase kann keine Rolle verifiziert werden. Kein Fallback.
       iamLogger.error('Zugriff verweigert - Supabase nicht konfiguriert (fail-closed)', { requestId: req.requestId, zone });
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'supabase-not-configured' });
       return { authorized: false, role: null, reason: 'supabase-not-configured', actorLabel: 'unknown' };
     }
 
-    // Compliance-Review Punkt 2: Health-Check-Ergebnis konsultieren, bevor überhaupt
-    // eine Token-Prüfung versucht wird. Noch nicht geprüft (null) -> on-demand nachholen,
-    // damit einzelne, isoliert gestartete Prozesse (z.B. Tests) nicht fälschlich blockieren.
     if (iamSchemaHealthy === null) {
       await runIamSchemaHealthCheck();
     }
@@ -226,25 +195,18 @@ export async function checkAdminAccess(
       return { authorized: false, role: null, reason: 'iam-schema-unavailable', actorLabel: 'unknown' };
     }
 
-    // ADR-0003.5: Rate-Limiting pro IP+Zone, bevor überhaupt eine Token-Prüfung passiert -
-    // schützt gegen Brute-Force/Enumeration auf Admin-Zonen. Siehe rateLimiter.ts für die
-    // bekannte Einschränkung (Single-Instance, In-Memory).
     if (!checkRateLimit(`admin:${clientIp}:${zone}`, 30, 60_000)) {
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'rate-limited (zone)' });
       return { authorized: false, role: null, reason: 'rate-limited', actorLabel: clientIp };
     }
-    // Zusätzlicher globaler Zähler über alle Admin-Zonen hinweg pro IP, gegen verteiltes
-    // Durchprobieren (eine Zone knapp unter dem Limit halten, dafür viele Zonen parallel).
     if (!checkRateLimit(`admin-global:${clientIp}`, 120, 60_000)) {
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'rate-limited (global)' });
       return { authorized: false, role: null, reason: 'rate-limited', actorLabel: clientIp };
     }
 
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-
+    const token = extractBearerToken(req);
     if (!token) {
-      await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'no-bearer-token' });
+      await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'no-or-malformed-bearer-token' });
       return { authorized: false, role: null, reason: 'no-valid-credentials', actorLabel: 'unknown' };
     }
 
@@ -265,13 +227,10 @@ export async function checkAdminAccess(
     await logAccess('unknown', zone, 'DENIED', { tokenRef: token, userId, ip: clientIp, userAgent, reason: 'token-did-not-resolve-to-role' });
     return { authorized: false, role: null, reason: 'no-valid-credentials', actorLabel: 'unknown' };
   } catch (err: any) {
-    // Fängt JEDEN unerwarteten Fehler ab (z.B. Supabase-Netzwerkfehler) und garantiert
-    // eine fail-closed Antwort statt einer unbehandelten Promise-Rejection.
     iamLogger.error('Unerwarteter Fehler in checkAdminAccess', { requestId: req.requestId, zone, error: err?.message || String(err) });
     try {
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: `internal-error: ${err?.message || 'unknown'}` });
     } catch (logErr: any) {
-      // Logging selbst darf hier nicht nochmal fehlschlagen können - stdout als letzte Instanz.
       iamLogger.error('logAccess fehlgeschlagen waehrend internal-error-Behandlung', { requestId: req.requestId, zone, error: logErr?.message || String(logErr) });
     }
     return { authorized: false, role: null, reason: 'internal-error', actorLabel: 'unknown' };
@@ -293,29 +252,12 @@ export interface Aal2Result {
   reason: Aal2DenyReason | 'aal2-verified';
 }
 
-/**
- * ADR-0064 / ESS-0020 — zentrale, serverseitige AAL2-Prüfung.
- *
- * Nutzt den bereits vorliegenden Bearer-Token (dieselbe Identität wie checkAdminAccess/
- * resolveVerifiedIdentity) und fragt Supabase Auth direkt nach dem Authenticator Assurance
- * Level DIESES Tokens - `supabase.auth.mfa.getAuthenticatorAssuranceLevel(jwt)` löst dafür einen
- * echten Netzwerk-Roundtrip gegen Supabase Auth aus und validiert den Token dabei erneut. Das
- * `aal`-Claim ist Teil des von GoTrue signierten Tokens und daher vom Client nicht fälschbar;
- * diese Funktion vertraut ausdrücklich NIEMALS einem client-gelieferten AAL-Feld, Header oder
- * einem UI-/sessionStorage-Marker (siehe nativeMfa.ts Modul-Kommentar).
- *
- * Fail-closed bei jedem Fehler: fehlender Token, ungültiger Token, Lookup-Fehler (Netzwerk/Auth)
- * oder AAL kleiner als `aal2` führen alle zu `verified: false`. Da jeder Aufruf den Token frisch
- * gegen Supabase verifiziert, kann kein zwischenzeitlich zurückgestufter/abgelaufener Zustand
- * unbemerkt bleiben ("stale aal2/aal1" - es gibt keinen gecachten Vorzustand, der veralten könnte).
- */
 export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
   if (!isSupabaseConfigured()) {
     return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
   }
 
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const token = extractBearerToken(req);
   if (!token) {
     return { verified: false, currentLevel: null, reason: 'no-bearer-token' };
   }
@@ -348,7 +290,6 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
 
     return { verified: true, userId: userData.user.id, currentLevel: 'aal2', reason: 'aal2-verified' };
   } catch (err: any) {
-    // Fail-closed: jeder unerwartete Fehler (Netzwerk, SDK) verweigert AAL2 statt offen zu scheitern.
     iamLogger.error('requireVerifiedAal2 unerwarteter Fehler - fail-closed verweigert', {
       requestId: req.requestId,
       error: err?.message || String(err),
@@ -357,32 +298,12 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
   }
 }
 
-/**
- * Prüft einen kurzlebigen Step-up-Nachweis für kritische Owner-Aktionen
- * (Rollenverwaltung, Break-Glass, Versions-Bumps/Rollbacks).
- *
- * Erwartet: normaler Authorization-Bearer-Token (Identität) PLUS x-step-up-token-Header
- * (ausgestellt durch POST /api/auth/step-up/verify nach frischer TOTP-Eingabe, 5 Min gültig).
- * Verifikation ist atomar und Einmal-verwendbar (UPDATE ... WHERE used_at IS NULL),
- * um Race-Conditions bei parallelen Requests mit demselben Token auszuschließen.
- *
- * ADR-0064: ein gespeichertes Step-Up-Token allein genügt seit M5A nicht mehr. Die aktuelle
- * Session muss ZUM ZEITPUNKT DIESES REQUESTS AAL2 sein - ein Token kann eine AAL1-Sitzung nicht
- * auf AAL2 anheben, und ein Token aus einer inzwischen auf AAL1 zurückgefallenen Sitzung
- * (Logout/Ablauf/Faktor entfernt) darf nicht mehr akzeptiert werden.
- *
- * M9 (Independent Evidence Review, Finding F2, 2026-08-16): `purpose` ist jetzt ein
- * Pflichtparameter und wird gegen den bei Ausstellung (`server/stepUp.ts`) gespeicherten
- * `purpose`-Wert geprüft. Vorher wurde `purpose` bei Ausstellung gespeichert, aber beim Konsum nie
- * gelesen - ein für einen Zweck ausgestelltes Token (z. B. `version-bump`) hätte innerhalb seines
- * 5-Minuten-Fensters für jeden anderen Step-up-gated Endpunkt wiederverwendet werden können. Jeder
- * Aufrufer muss seinen eigenen, bereits vorhandenen eindeutigen Bezeichner (z. B. den `zone`-String,
- * den er ohnehin schon an `checkAdminAccess` übergibt) als `purpose` reichen.
- */
 export async function requireStepUp(req: Request, purpose: string): Promise<boolean> {
   const stepUpHeader = req.headers['x-step-up-token'];
   if (!stepUpHeader || typeof stepUpHeader !== 'string') return false;
-  if (!purpose) return false;
+  if (stepUpHeader.length > MAX_STEP_UP_TOKEN_LENGTH) return false;
+  if (!/^[A-Za-z0-9_-]+$/.test(stepUpHeader)) return false;
+  if (!purpose || purpose.length > 128) return false;
   if (!isSupabaseConfigured()) return false;
 
   const aal2 = await requireVerifiedAal2(req);
@@ -403,8 +324,6 @@ export async function requireStepUp(req: Request, purpose: string): Promise<bool
       .maybeSingle();
     return !error && !!data;
   } catch (err: any) {
-    // Fail-closed korrekt (return false), aber der Fehler war zuvor unsichtbar - Audit
-    // ARCH-AUDIT-0002 (AUD2-F-020).
     iamLogger.error('requireStepUp fehlgeschlagen', { requestId: req.requestId, error: err?.message || String(err) });
     return false;
   }
@@ -429,8 +348,6 @@ export async function logIamEvent(
       new_value: newValue ?? null,
     });
   } catch (err: any) {
-    // Audit ARCH-AUDIT-0002 (AUD2-F-020): audit_logs_iam existiert produktiv (siehe Kopf dieser
-    // Datei); ein Insert-Fehler hier verdient Sichtbarkeit statt stillem Verschlucken.
     console.error(`[IAM][ERROR] logIamEvent-Insert fehlgeschlagen (action="${action}"): ${err?.message || err}`);
   }
 }

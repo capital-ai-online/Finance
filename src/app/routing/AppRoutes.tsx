@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Dashboard } from '../dashboard';
 import { Datenschutz } from '../../components/Datenschutz';
 import { ImpressumAgb } from '../../components/ImpressumAgb';
-import { LandingPage } from '../../components/LandingPage';
+import { NativePasskeyLogin } from '../../components/NativePasskeyLogin';
 import { LearningVocabulary } from '../../features/learning/ui';
 import { MediaStudio } from '../../features/social/ui';
 import type { UserSession } from '../types/UserSession';
@@ -41,25 +41,7 @@ export function AppRoutes({
     return typeof window !== 'undefined' ? window.location.pathname : '/';
   });
 
-  const renderLandingPage = () => (
-    <LandingPage
-      onLoginEmail={async (email, password) => {
-        clearJustLoggedOut();
-        await handleLogin(email, password);
-        if (typeof window !== 'undefined') {
-          window.location.assign('/dashboard');
-        }
-      }}
-      onGuestLogin={() => {
-        // Compatibility prop until LandingPage API cleanup: guest access is disabled.
-      }}
-      onRegisterEmail={async (name, email, password) => {
-        clearJustLoggedOut();
-        await handleRegister(name, email, password);
-      }}
-      justLoggedOut={justLoggedOut}
-    />
-  );
+  const renderLandingPage = () => <NativePasskeyLogin justLoggedOut={justLoggedOut} />;
 
   if (currentPath === '/datenschutz' || currentPath === '/datenschutz/') {
     return (

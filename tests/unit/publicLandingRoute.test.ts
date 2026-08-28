@@ -58,6 +58,8 @@ describe('public homepage and auth hydration boundary', () => {
     expect(publicHomepage).toContain("email: ''");
     expect(publicHomepage).not.toContain('@capital-ai.online');
     expect(publicHomepage).not.toContain('@guest');
-    expect(sessionComposition).toContain('Anonymous and guest sessions are intentionally not supported.');
+    expect(sessionComposition).toContain(
+      'Anonymous/guest sessions are not accepted as authenticated sessions.',
+    );
   });
 });
