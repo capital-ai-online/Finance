@@ -30,6 +30,10 @@ services:
       # Public hCaptcha browser sitekey. The secret key remains exclusively in Supabase Auth.
       - key: VITE_HCAPTCHA_SITE_KEY
         sync: false
+      # Native Supabase passkey remains OFF until WebAuthn RP and CAPTCHA compatibility are
+      # explicitly validated. When enabled later, LoginPage promotes it ahead of Google.
+      - key: VITE_NATIVE_PASSKEY_LOGIN_ENABLED
+        value: "false"
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
       - key: STRIPE_PRICE_ID_STARTER_MONTHLY

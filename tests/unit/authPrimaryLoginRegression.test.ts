@@ -48,6 +48,13 @@ describe('website primary login regression boundary', () => {
     );
     expect(loginPage).toContain('nativePasskeyEnabled && <PasskeyLoginPanel />');
     expect(passkeyPanel).toContain('signInWithPasskey');
+    expect(dockerfile).toContain('ARG VITE_NATIVE_PASSKEY_LOGIN_ENABLED');
+    expect(dockerfile).toContain(
+      'VITE_NATIVE_PASSKEY_LOGIN_ENABLED=$VITE_NATIVE_PASSKEY_LOGIN_ENABLED',
+    );
+    expect(renderBlueprint).toMatch(
+      /- key: VITE_NATIVE_PASSKEY_LOGIN_ENABLED\s+value: "false"/,
+    );
   });
 
   it('does not perform asynchronous Supabase work inside onAuthStateChange itself', () => {
@@ -90,13 +97,13 @@ describe('website primary login regression boundary', () => {
     expect(csp).toContain('https://*.hcaptcha.com');
   });
 
-  it('projects only the public hCaptcha site key into the Vite Docker build', () => {
+  it('projects only public auth configuration into the Vite Docker build', () => {
     expect(dockerfile).toContain('ARG VITE_HCAPTCHA_SITE_KEY');
     expect(dockerfile).toContain('VITE_HCAPTCHA_SITE_KEY=$VITE_HCAPTCHA_SITE_KEY');
     expect(dockerfile).not.toContain('HCAPTCHA_SECRET');
   });
 
-  it('declares only the public hCaptcha site key as externally managed Render configuration', () => {
+  it('declares public hCaptcha configuration without exposing the CAPTCHA secret', () => {
     expect(renderBlueprint).toMatch(/- key: VITE_HCAPTCHA_SITE_KEY\s+sync: false/);
     expect(renderBlueprint).not.toContain('HCAPTCHA_SECRET');
   });
