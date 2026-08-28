@@ -8,13 +8,15 @@ run-name: >-
 
 # ADR-0036 / productionPreflight.mjs requires the current main commit to be an ancestor of a
 # merge-ready PR head. That invariant remains strict. Cost control therefore changes only WHEN an
-# agent branch is synchronized:
-# - main push: sync review-ready agent PRs, but deliberately leave draft PRs untouched;
+# agent/owner work branch is synchronized:
+# - main push: sync review-ready trusted work PRs, but deliberately leave draft PRs untouched;
 # - ready_for_review: sync exactly the PR that just left draft state;
 # - workflow_dispatch: explicit recovery/maintenance path that may sync drafts as well.
 #
-# This prevents every main merge from fanning out into synchronize -> CI + Governance runs for all
-# long-lived drafts while preserving automatic current-main ancestry before review/merge.
+# Trusted work branches are same-repository PRs against main and either:
+# - active provider prefixes agent/*, claude/*, grok/*, ai/*; or
+# - conventional work prefixes created by the repository owner (feat/fix/hotfix/chore/refactor/docs/test/perf/security).
+# This covers ChatGPT-created conventional branches without treating a collaborator-chosen generic prefix as agent identity.
 on:
   push:
     branches: [main]
@@ -53,16 +55,17 @@ jobs:
           if [ "$EVENT_NAME" = 'pull_request' ]; then
             # ready_for_review is a single-PR transition. Keep the operation scoped to that PR.
             prs="$(gh pr view "$EVENT_PR_NUMBER" --repo "$REPO" \
-              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft \
+              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
               | jq -c '[.]')"
           else
             prs="$(gh pr list --repo "$REPO" --state open \
-              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft \
+              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
               --limit 200)"
           fi
 
           count="$(echo "$prs" | jq 'length')"
-          echo "Zu bewertende PRs: $count (event=$EVENT_NAME)"
+          repo_owner="${REPO%%/*}"
+          echo "Zu bewertende PRs: $count (event=$EVENT_NAME, repo_owner=$repo_owner)"
 
           echo "$prs" | jq -c '.[]' | while read -r pr; do
             number="$(echo "$pr" | jq -r '.number')"
@@ -71,24 +74,32 @@ jobs:
             base="$(echo "$pr" | jq -r '.baseRefName')"
             cross="$(echo "$pr" | jq -r '.isCrossRepository')"
             draft="$(echo "$pr" | jq -r '.isDraft')"
+            author="$(echo "$pr" | jq -r '.author.login // ""')"
 
             if [ "$base" != 'main' ]; then
               echo "PR #$number ($head): Base ist $base statt main, uebersprungen."
               continue
             fi
 
-            case "$head" in
-              agent/*|claude/*|grok/*|ai/*) ;;
-              *)
-                echo "PR #$number ($head): kein Agenten-Branch-Praefix, uebersprungen."
-                continue
-                ;;
-            esac
-
             if [ "$cross" = 'true' ]; then
               echo "PR #$number ($head): Fork-PR, kein Auto-Sync moeglich."
               continue
             fi
+
+            case "$head" in
+              agent/*|claude/*|grok/*|ai/*)
+                ;;
+              feat/*|fix/*|hotfix/*|chore/*|refactor/*|docs/*|test/*|perf/*|security/*)
+                if [ "$author" != "$repo_owner" ]; then
+                  echo "PR #$number ($head): konventioneller Work-Branch, aber Autor $author ist nicht Repository-Owner $repo_owner; fail-closed uebersprungen."
+                  continue
+                fi
+                ;;
+              *)
+                echo "PR #$number ($head): weder aktiver Provider-Branch noch Owner-erstellter Standard-Work-Branch, uebersprungen."
+                continue
+                ;;
+            esac
 
             if [ "$EVENT_NAME" = 'push' ] && [ "$draft" = 'true' ]; then
               echo "PR #$number ($head): Draft bleibt bei main-Push bewusst unsynchronisiert (P2 Cost-Control)."
