@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-BASELINE-POST-DEPLOY-RECONCILIATION-2026-08-28",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Harden production baseline reconciliation so verified main deployments refresh synchronized open PR baselines and owner-authored standard work branches are covered by automatic main synchronization.",
+  "workItemDE": "Produktions-Baseline-Reconciliation so härten, dass verifizierte main-Deployments synchronisierte offene PR-Baselines nachziehen und Owner-erstellte Standard-Work-Branches von der automatischen main-Synchronisierung erfasst werden.",
+  "startedAt": "2026-08-28T12:40:00Z",
+  "baseBranch": "main",
+  "baseSha": "efe5e2c60a356132fd434ec172105c06666afd8d",
+  "pullRequest": null,
+  "branch": "fix/post-deploy-baseline-reconciliation-2026-08-28",
+  "claimedPaths": [
+    ".ai/work-claims/PR-BASELINE-AUTO-REFRESH-2026-08-27.json",
+    ".github/workflows/pr-production-baseline-refresh.yml",
+    ".github/workflows/sync-agent-pr-branches.yml",
+    "tests/unit/productionBaselinePostDeployReconciliation.test.ts",
+    "tests/unit/agentPrBranchSyncCostControl.test.ts",
+    "docs/security/PR_BASELINE_INTEGRITY_THREAT_MODEL_2026-08-20.md"
+  ],
+  "releaseCondition": "Claim wird bei Merge, Schließung, Supersession oder Abbruch des zugehörigen Governance-Arbeitszweigs freigegeben."
+}
