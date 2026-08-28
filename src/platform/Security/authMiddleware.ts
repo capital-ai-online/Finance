@@ -34,7 +34,7 @@ export function extractBearerToken(req: Pick<Request, 'headers'>): string | null
   const match = raw.match(/^Bearer ([^\s,]+)$/i);
   if (!match) return null;
   const token = match[1];
-  if (token.length < 16 || token.length > MAX_BEARER_TOKEN_LENGTH) return null;
+  if (token.length > MAX_BEARER_TOKEN_LENGTH) return null;
   return token;
 }
 
@@ -301,7 +301,7 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
 export async function requireStepUp(req: Request, purpose: string): Promise<boolean> {
   const stepUpHeader = req.headers['x-step-up-token'];
   if (!stepUpHeader || typeof stepUpHeader !== 'string') return false;
-  if (stepUpHeader.length < 16 || stepUpHeader.length > MAX_STEP_UP_TOKEN_LENGTH) return false;
+  if (stepUpHeader.length > MAX_STEP_UP_TOKEN_LENGTH) return false;
   if (!/^[A-Za-z0-9_-]+$/.test(stepUpHeader)) return false;
   if (!purpose || purpose.length > 128) return false;
   if (!isSupabaseConfigured()) return false;
