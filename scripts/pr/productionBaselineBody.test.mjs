@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -37,6 +38,10 @@ function validBaseline(overrides = {}) {
   };
   baseline.baselineId = computeProductionBaselineId(baseline);
   return baseline;
+}
+
+function peerSource(name) {
+  return fs.readFileSync(new URL(`./${name}`, import.meta.url), 'utf8');
 }
 
 test('same atomic baseline preserves existing generatedAt and performs no body write', () => {
@@ -86,4 +91,27 @@ test('duplicate or missing baseline markers remain fail-closed', () => {
     () => replaceProductionBaselineBlock('kein Baseline-Block', baseline),
     /genau einen kanonischen Produktions-Baseline-Block/,
   );
+});
+
+test('initial renderer and trusted open-PR updater share one canonical baseline render authority', () => {
+  const initialRenderer = peerSource('renderPullRequestBody.mjs');
+  const baselineBody = peerSource('productionBaselineBody.mjs');
+  const openPrUpdater = peerSource('updatePrProductionBaseline.mjs');
+  const validator = peerSource('validatePrBody.mjs');
+  const template = fs.readFileSync(
+    new URL('../../.github/pull_request_template.md', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(initialRenderer, /renderProductionBaselineBlock/);
+  assert.match(baselineBody, /renderProductionBaselineBlock/);
+  assert.match(openPrUpdater, /replaceProductionBaselineBlock/);
+  assert.doesNotMatch(openPrUpdater, /renderProductionBaselineBlock/);
+
+  assert.match(template, /Automatic Production Baseline Reconciliation pending/);
+  assert.match(template, /updatePrProductionBaseline\.mjs/);
+  assert.match(template, /renderProductionBaselineBlock/);
+  assert.match(validator, /Automatic Production Baseline Reconciliation pending/);
+  assert.match(validator, /updatePrProductionBaseline\.mjs/);
+  assert.match(validator, /renderPullRequestBody\.mjs/);
 });

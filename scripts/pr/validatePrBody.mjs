@@ -107,8 +107,13 @@ if (normalizeBlock(bodyBaselineBlock) !== normalizeBlock(expectedBaselineBlock))
   fail(
     `PR #${prNumber} enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline. ` +
       `Erwartete aktuelle Baseline-ID: ${baseline.baselineId}. ` +
-      `Erzeuge den PR-Body erneut über productionPreflight.mjs -> renderPullRequestBody.mjs; ` +
-      `manuelle Einzelwert-Korrekturen sind nicht zulässig.`,
+      `Automatic Production Baseline Reconciliation pending: Der trusted Baseline-Writer aktualisiert ` +
+      `bei einem bereits offenen PR nach Abschluss dieses Governance-Laufs ausschließlich den ` +
+      `kanonischen Block über productionPreflight.mjs -> updatePrProductionBaseline.mjs -> ` +
+      `productionBaselineBody.mjs und bindet den einmaligen Governance-Re-Run an denselben ` +
+      `PR-Head und main-Base. Für die initiale PR-Erzeugung bleibt ` +
+      `productionPreflight.mjs -> renderPullRequestBody.mjs kanonisch. ` +
+      `Manuelle Einzelwert-Korrekturen sind nicht zulässig.`,
   );
 }
 
