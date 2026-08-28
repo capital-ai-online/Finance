@@ -11,7 +11,9 @@ const requirements = [
   ['unprivileged builder dependency install', /AS\s+builder[\s\S]*?USER\s+node[\s\S]*?RUN\s+npm\s+ci/],
   ['unprivileged production dependency install', /AS\s+prod-deps[\s\S]*?USER\s+node[\s\S]*?RUN\s+npm\s+ci\s+--omit=dev/],
   ['production esbuild binaries pruned before runner copy', /AS\s+prod-deps[\s\S]*?rm\s+-rf\s+\/app\/node_modules\/esbuild\s+\/app\/node_modules\/@esbuild/],
-  ['Vite import verified after esbuild pruning', /node\s+--input-type=module\s+-e\s+"const vite = await import\('vite'\); if \(typeof vite\.createServer !== 'function'\) process\.exit\(1\)"/],
+  ['production Vite build tooling pruned before runner copy', /\/app\/node_modules\/vite\s+\/app\/node_modules\/@vitejs\s+\/app\/node_modules\/@tailwindcss[\s\\]*\n?\s*\/app\/node_modules\/tailwindcss/],
+  ['fail-closed Vite runtime stub', /VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE/],
+  ['Vite stub import verified', /node\s+--input-type=module\s+-e\s+"const vite = await import\('vite'\); if \(typeof vite\.createServer !== 'function'\) process\.exit\(1\)"/],
   ['production dependencies copied from isolated stage', /COPY\s+--from=prod-deps\s+--chown=root:root\s+\/app\/node_modules\s+\.\/node_modules/],
   ['runtime OpenSSL security upgrade', /apk\s+upgrade\s+--no-cache\s+libcrypto3\s+libssl3/],
   ['runtime npm and corepack removed', /rm\s+-rf\s+\/usr\/local\/lib\/node_modules\/npm\s+\/usr\/local\/lib\/node_modules\/corepack/],
@@ -84,6 +86,9 @@ const runnerStageIndex = dockerfile.indexOf(' AS runner');
 const runnerSection = runnerStageIndex >= 0 ? dockerfile.slice(runnerStageIndex) : '';
 if (/\bnpm\s+(?:ci|install)\b/.test(runnerSection)) {
   failures.push('forbidden: runtime stage must not install npm dependencies');
+}
+if (runnerSection.includes('VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE')) {
+  failures.push('forbidden: Vite stub must be created in prod-deps before the runner COPY, not synthesized in the final image');
 }
 
 if (/ARG\s+(?:.*SECRET|.*PASSWORD|.*TOKEN|STRIPE_SECRET_KEY|SUPABASE_SERVICE_ROLE_KEY)/i.test(dockerfile)) {
