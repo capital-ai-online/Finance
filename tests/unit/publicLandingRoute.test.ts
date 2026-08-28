@@ -29,17 +29,19 @@ describe('public homepage and auth hydration boundary', () => {
     expect(publicHomepage).toContain("window.location.assign('/dashboard')");
   });
 
-  it('does not block public routes on Supabase, step-up or subscription hydration', () => {
+  it('keeps unauthenticated public hydration non-blocking but never suppresses an authenticated gate', () => {
     expect(sessionComposition).toContain("'/'");
     expect(sessionComposition).toContain("'/datenschutz'");
     expect(sessionComposition).toContain("'/impressum'");
     expect(sessionComposition).toContain("'/agb'");
     expect(sessionComposition).toContain("'/learning-platform'");
     expect(sessionComposition).toContain('if (loading && !renderPublicShellImmediately)');
-    expect(sessionComposition).toContain(
+    expect(sessionComposition).toContain('if (pendingOnboardingSession)');
+    expect(sessionComposition).toContain('if (pendingStepUpSession)');
+    expect(sessionComposition).not.toContain(
       'if (pendingOnboardingSession && !renderPublicShellImmediately)',
     );
-    expect(sessionComposition).toContain(
+    expect(sessionComposition).not.toContain(
       'if (pendingStepUpSession && !renderPublicShellImmediately)',
     );
   });
@@ -53,13 +55,12 @@ describe('public homepage and auth hydration boundary', () => {
     expect(publicHomepage).toContain('href="/impressum/"');
   });
 
-  it('uses only a presentation visitor state and does not synthesize an account email', () => {
+  it('uses only a presentation visitor state and never accepts anonymous Supabase sessions', () => {
     expect(publicHomepage).toContain("type: 'guest'");
     expect(publicHomepage).toContain("email: ''");
     expect(publicHomepage).not.toContain('@capital-ai.online');
     expect(publicHomepage).not.toContain('@guest');
-    expect(sessionComposition).toContain(
-      'Anonymous/guest sessions are not accepted as authenticated sessions.',
-    );
+    expect(sessionComposition).toContain('session.user.is_anonymous');
+    expect(sessionComposition).toContain('rejectAnonymousSession');
   });
 });
