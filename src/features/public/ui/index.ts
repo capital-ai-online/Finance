@@ -1,5 +1,9 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
-// Authentication is intentionally projected through the Supabase-native passkey surface only.
-export { NativePasskeyLogin as LandingPage } from '../../../components/NativePasskeyLogin';
+// Canonical Public / Access UI facade.
+export { LandingPage } from './LandingPage';
+export { LoginPage } from './LoginPage';
+export { LoginPageRedirect } from './LoginPageRedirect';
+export { PasskeyLoginPanel } from './PasskeyLoginPanel';
+
+// Transitional legal-page compatibility exports.
 export { Datenschutz } from '../../../components/Datenschutz';
 export { ImpressumAgb } from '../../../components/ImpressumAgb';

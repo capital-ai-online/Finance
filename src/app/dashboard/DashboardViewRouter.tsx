@@ -79,9 +79,8 @@ function DisabledDashboardView({
  * BB-2D strangler router.
  *
  * Feature views are composed exclusively through canonical feature facades;
- * disabled views remain presentation-only. The router projects state and
- * callbacks supplied by the Dashboard composition layer and does not create
- * scoring, IAM, billing, evidence, trading, or provider/runtime authority.
+ * disabled views remain presentation-only. Login is now a first-class `/login`
+ * route, so the legacy dashboard login view only redirects to that route.
  */
 export function DashboardViewRouter({
   activeView,
@@ -99,8 +98,6 @@ export function DashboardViewRouter({
   onSearchQueryChange,
   categoryFilter,
   onCategoryFilterChange,
-  onLoginEmail,
-  onRegisterEmail,
 }: DashboardViewRouterProps): React.ReactNode {
   switch (activeView) {
     case 'learning':
@@ -229,17 +226,7 @@ export function DashboardViewRouter({
       );
 
     case 'login':
-      return (
-        <PublicUI.LandingPage
-          onLoginEmail={async (email, password) => {
-            if (onLoginEmail) await onLoginEmail(email, password);
-          }}
-          onGuestLogin={() => onNavigate('dashboard')}
-          onRegisterEmail={async (name, email, password) => {
-            if (onRegisterEmail) await onRegisterEmail(name, email, password);
-          }}
-        />
-      );
+      return <PublicUI.LoginPageRedirect />;
 
     default:
       return null;

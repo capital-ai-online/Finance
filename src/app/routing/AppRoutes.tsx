@@ -1,17 +1,19 @@
-/** 
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dashboard } from '../dashboard';
-import { Datenschutz } from '../../components/Datenschutz';
-import { ImpressumAgb } from '../../components/ImpressumAgb';
-import { NativePasskeyLogin } from '../../components/NativePasskeyLogin';
+import {
+  Datenschutz,
+  ImpressumAgb,
+  LandingPage,
+  LoginPage,
+} from '../../features/public/ui';
 import { LearningVocabulary } from '../../features/learning/ui';
 import { MediaStudio } from '../../features/social/ui';
 import type { UserSession } from '../types/UserSession';
-import { PublicHomepage } from './PublicHomepage';
 
 interface AppRoutesProps {
   userSession: UserSession | null;
@@ -22,12 +24,34 @@ interface AppRoutesProps {
   handleLogout: () => Promise<void>;
 }
 
+function RouteRedirect({ to, label }: { to: string; label: string }) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.location.replace(to);
+    }
+  }, [to]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-white">
+      <a
+        href={to}
+        className="text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT hover:underline"
+      >
+        {label}
+      </a>
+    </div>
+  );
+}
+
 /**
  * BB-1 route/presentation composition.
  *
- * This module intentionally preserves the existing lightweight pathname
- * routing semantics. Introducing a routing framework or moving feature
- * implementations belongs to a separate migration decision/wave.
+ * Canonical page contract:
+ * - `/` is the public LandingPage.
+ * - `/login` is the dedicated LoginPage.
+ * - `/dashboard` and `/media-studio` require a composed registered session.
+ *
+ * Feature-internal dashboard navigation remains a separate legacy/BB-2 concern.
  */
 export function AppRoutes({
   userSession,
@@ -38,12 +62,33 @@ export function AppRoutes({
   handleLogout,
 }: AppRoutesProps) {
   const [currentPath] = useState(() => {
-    return typeof window !== 'undefined' ? window.location.pathname : '/';
+    return typeof window !== 'undefined'
+      ? window.location.pathname.replace(/\/+$/, '') || '/'
+      : '/';
   });
 
-  const renderLandingPage = () => <NativePasskeyLogin justLoggedOut={justLoggedOut} />;
+  const renderAuthenticatedDashboard = () => {
+    if (!userSession) {
+      return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
+    }
 
-  if (currentPath === '/datenschutz' || currentPath === '/datenschutz/') {
+    return (
+      <Dashboard
+        userSession={userSession}
+        onLogout={async () => {
+          await handleLogout();
+          if (typeof window !== 'undefined') {
+            window.location.replace('/');
+          }
+        }}
+        onRegister={() => undefined}
+        onLoginEmail={handleLogin}
+        onRegisterEmail={handleRegister}
+      />
+    );
+  };
+
+  if (currentPath === '/datenschutz') {
     return (
       <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-cyan-500/30 selection:text-white">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(13,221,221,0.08),rgba(0,0,0,0))]" />
@@ -53,7 +98,7 @@ export function AppRoutes({
               href="/"
               className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-2 text-white"
             >
-              ← Zurück zum Portal
+              ← Zurück zur Landingpage
             </a>
             <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">
               Public Security Compliance Document
@@ -65,7 +110,7 @@ export function AppRoutes({
     );
   }
 
-  if (currentPath === '/impressum' || currentPath === '/impressum/') {
+  if (currentPath === '/impressum') {
     return (
       <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-aif-gold-DEFAULT/30 selection:text-white">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,196,83,0.08),rgba(0,0,0,0))]" />
@@ -75,7 +120,7 @@ export function AppRoutes({
               href="/"
               className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-2 text-white"
             >
-              ← Zurück zum Portal
+              ← Zurück zur Landingpage
             </a>
             <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">
               Anbieterkennzeichnung gemäß § 5 DDG
@@ -87,7 +132,7 @@ export function AppRoutes({
     );
   }
 
-  if (currentPath === '/agb' || currentPath === '/agb/') {
+  if (currentPath === '/agb') {
     return (
       <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-aif-gold-DEFAULT/30 selection:text-white">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,196,83,0.08),rgba(0,0,0,0))]" />
@@ -97,7 +142,7 @@ export function AppRoutes({
               href="/"
               className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-2 text-white"
             >
-              ← Zurück zum Portal
+              ← Zurück zur Landingpage
             </a>
             <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">
               Allgemeine Geschäftsbedingungen
@@ -109,7 +154,7 @@ export function AppRoutes({
     );
   }
 
-  if (currentPath === '/learning-platform' || currentPath === '/learning-platform/') {
+  if (currentPath === '/learning-platform') {
     return (
       <div className="min-h-screen bg-[#18181b] px-4 py-6 text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-5">
@@ -118,13 +163,15 @@ export function AppRoutes({
               <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-aif-gold-DEFAULT">
                 CAPITAL-AI / LEARNING
               </p>
-              <p className="mt-1 text-sm font-bold text-white/70">Canonical Vocabulary · Read-only</p>
+              <p className="mt-1 text-sm font-bold text-white/70">
+                Canonical Vocabulary · Read-only
+              </p>
             </div>
             <a
               href="/"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"
             >
-              ← Zurück zum Portal
+              ← Zurück zur Landingpage
             </a>
           </header>
           <LearningVocabulary />
@@ -133,12 +180,9 @@ export function AppRoutes({
     );
   }
 
-  // The canonical root is the public Enterprise-Scorer dashboard. Authentication stays an
-  // explicit user action opened from the dashboard sidebar; a registered session must not turn
-  // the public homepage into a login or private-account surface.
-  if (currentPath === '/' || currentPath === '') {
+  if (currentPath === '/') {
     return (
-      <PublicHomepage
+      <LandingPage
         clearJustLoggedOut={clearJustLoggedOut}
         handleLogin={handleLogin}
         handleRegister={handleRegister}
@@ -146,7 +190,22 @@ export function AppRoutes({
     );
   }
 
-  if (userSession && (currentPath === '/media-studio' || currentPath === '/media-studio/')) {
+  if (currentPath === '/login') {
+    if (userSession) {
+      return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
+    }
+    return <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />;
+  }
+
+  if (currentPath === '/dashboard') {
+    return renderAuthenticatedDashboard();
+  }
+
+  if (currentPath === '/media-studio') {
+    if (!userSession) {
+      return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
+    }
+
     return (
       <div className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[1680px] space-y-5">
@@ -161,7 +220,7 @@ export function AppRoutes({
               href="/dashboard"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"
             >
-              ← Zurück zum Cockpit
+              ← Zurück zum Dashboard
             </a>
           </header>
           <MediaStudio />
@@ -171,21 +230,8 @@ export function AppRoutes({
   }
 
   if (userSession) {
-    return (
-      <Dashboard
-        userSession={userSession}
-        onLogout={async () => {
-          await handleLogout();
-          if (typeof window !== 'undefined') {
-            window.location.replace('/');
-          }
-        }}
-        onRegister={(name, email) => {}}
-        onLoginEmail={handleLogin}
-        onRegisterEmail={handleRegister}
-      />
-    );
+    return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
   }
 
-  return renderLandingPage();
+  return <RouteRedirect to="/" label="Zur Landingpage" />;
 }

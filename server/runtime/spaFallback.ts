@@ -1,7 +1,13 @@
-import express, { type Express, type Request, type Response, type NextFunction, type RequestHandler } from 'express';
+import express, {
+  type Express,
+  type Request,
+  type Response,
+  type NextFunction,
+  type RequestHandler,
+} from 'express';
 import fs from 'fs';
 import path from 'path';
-import { isPublicSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNormalize';
+import { isApplicationSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNormalize';
 
 /**
  * SEO-ROADMAP-0001 / D3 + S2 — production SPA fallback with soft-404 guard.
@@ -46,13 +52,18 @@ function buildPublicHtmlFiles(distPath: string): PublicHtmlFiles {
 
 export function registerProductionSpaFallback(app: Express, distPath: string): void {
   const files = buildPublicHtmlFiles(distPath);
-  const existingOrRoot = (candidate: string): string => fs.existsSync(candidate) ? candidate : files.root;
+  const existingOrRoot = (candidate: string): string =>
+    fs.existsSync(candidate) ? candidate : files.root;
 
   app.get('*', (req: Request, res: Response) => {
     // The untrusted request value controls only this finite branch selection.
     // Every sendFile argument below was precomputed from trusted literals.
     switch (stripTrailingSlashPath(req.path)) {
       case '/':
+        return res.sendFile(files.root);
+      case '/login':
+      case '/dashboard':
+      case '/media-studio':
         return res.sendFile(files.root);
       case '/learning-platform':
         return res.sendFile(existingOrRoot(files.learningPlatform));
@@ -83,7 +94,11 @@ export function installProductionSoft404Intercept(): void {
   };
   const originalGet = proto.get;
 
-  proto.get = function patchedGet(this: Express, routePath: unknown, ...handlers: RequestHandler[]) {
+  proto.get = function patchedGet(
+    this: Express,
+    routePath: unknown,
+    ...handlers: RequestHandler[]
+  ) {
     if (
       routePath === '*' &&
       process.env.NODE_ENV === 'production' &&
@@ -91,7 +106,7 @@ export function installProductionSoft404Intercept(): void {
     ) {
       const wrapped: RequestHandler[] = handlers.map((handler) => {
         return function soft404Guard(req: Request, res: Response, next: NextFunction) {
-          if (isPublicSpaPath(req.path)) {
+          if (isApplicationSpaPath(req.path)) {
             return handler(req, res, next);
           }
           return res.status(404).type('text/plain').send('Not Found');

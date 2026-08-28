@@ -4,13 +4,23 @@ import type { Express, Request, Response, NextFunction } from 'express';
  * SEO-ROADMAP-0001 / Q2 + D3 helpers.
  * Preferred public URLs are without trailing slash (except bare `/`).
  */
-
 export const PUBLIC_SPA_PATHS = new Set([
   '/',
   '/learning-platform',
   '/impressum',
   '/agb',
   '/datenschutz',
+]);
+
+/**
+ * Non-indexable application routes that still need the production SPA entry document on direct
+ * navigation. Keep them separate from PUBLIC_SPA_PATHS so auth/private routes never leak into the
+ * SEO prerender/public-route contract.
+ */
+export const APPLICATION_SPA_PATHS = new Set([
+  '/login',
+  '/dashboard',
+  '/media-studio',
 ]);
 
 export function stripTrailingSlashPath(pathname: string): string {
@@ -20,6 +30,11 @@ export function stripTrailingSlashPath(pathname: string): string {
 
 export function isPublicSpaPath(pathname: string): boolean {
   return PUBLIC_SPA_PATHS.has(stripTrailingSlashPath(pathname));
+}
+
+export function isApplicationSpaPath(pathname: string): boolean {
+  const normalized = stripTrailingSlashPath(pathname);
+  return PUBLIC_SPA_PATHS.has(normalized) || APPLICATION_SPA_PATHS.has(normalized);
 }
 
 /**
@@ -37,7 +52,9 @@ export function shouldRedirectTrailingSlash(pathname: string): boolean {
   return true;
 }
 
-export function trailingSlashRedirectLocation(req: Pick<Request, 'path' | 'url' | 'originalUrl'>): string {
+export function trailingSlashRedirectLocation(
+  req: Pick<Request, 'path' | 'url' | 'originalUrl'>,
+): string {
   const path = stripTrailingSlashPath(req.path);
   const original = req.originalUrl || req.url || '';
   const qIndex = original.indexOf('?');
