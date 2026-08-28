@@ -11,37 +11,65 @@ test('trusted baseline refresh owns only the permissions required for PR write a
   assert.doesNotMatch(workflow, /permissions:\s*write-all/);
 });
 
-test('Governance rerun is reachable only after a real baseline body mutation', () => {
+test('Governance reconciliation runs for every eligible PR snapshot and receives the atomic baseline-change result', () => {
   assert.match(workflow, /id: refresh/);
+  assert.match(workflow, /- name: Baseline-Write oder Race-Recovery an exakte PR-Governance binden/);
   assert.match(
     workflow,
-    /if: steps\.pr\.outputs\.eligible == 'true' && steps\.refresh\.outputs\.changed == 'true'/,
+    /if: steps\.pr\.outputs\.eligible == 'true'\n\s+uses: actions\/github-script@/,
   );
-  assert.match(workflow, /steps\.refresh\.outputs\.changed != 'true'/);
+  assert.ok(
+    workflow.includes('BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}'),
+    'reconciliation must receive the canonical baseline updater result',
+  );
+  assert.ok(
+    workflow.includes("const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';"),
+    'baseline-change state must be normalized inside the trusted rerun decision',
+  );
 });
 
-test('Governance rerun is bound to the same PR, immutable head, main SHA and source run', () => {
+test('Governance rerun is bound to the same PR, immutable head and current main SHA', () => {
   for (const token of [
     'EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}',
     'EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}',
-    'SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}',
     "sourceRun.event !== 'pull_request'",
-    'normalizeSha(sourceRun.head_sha) !== expectedHeadSha',
+    'Number(sourceRun.pull_requests?.[0]?.number) !== prNumber',
     "pr.state !== 'open' || pr.base?.ref !== 'main' || !sameRepo",
     'liveHeadSha !== expectedHeadSha',
     'liveMainSha !== expectedMainSha',
+    "event: 'pull_request'",
+    'head_sha: expectedHeadSha',
+    "run.path === '.github/workflows/pr-governance.yml'",
+    'normalizeSha(item.head?.sha) === expectedHeadSha',
+    'normalizeSha(item.base?.sha) === expectedMainSha',
   ]) {
     assert.ok(workflow.includes(token), `missing exact-snapshot guard: ${token}`);
   }
 });
 
-test('Governance rerun targets only the exact triggering Actions run and loop terminates on unchanged baseline', () => {
+test('unchanged baseline permits exactly one stale-baseline race recovery and then terminates', () => {
   assert.ok(
-    workflow.includes("POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun"),
-    'exact workflow-run rerun endpoint must be used',
+    workflow.includes("exactRun.conclusion === 'failure' && Number(exactRun.run_attempt || 1) === 1"),
+    'race recovery must require a failed first Governance attempt',
   );
   assert.ok(
-    workflow.includes('Baseline unverändert; kein Governance-Re-Run und damit keine Workflow-Schleife.'),
-    'unchanged baseline must terminate orchestration without another rerun',
+    workflow.includes('const shouldRerun = baselineChanged || firstFailedAttempt;'),
+    'rerun authority must be limited to a real baseline write or the bounded first-attempt recovery',
+  );
+  assert.ok(
+    workflow.includes('if (!shouldRerun)'),
+    'all unchanged non-first-failure states must terminate without another rerun',
+  );
+  assert.ok(
+    workflow.includes('kein automatischer Re-Run.'),
+    'the workflow must explicitly terminate after a successful or already-retried Governance result',
+  );
+  assert.ok(
+    workflow.includes('Race-Recovery für bereits korrekte Baseline'),
+    'the bounded stale-baseline recovery path must remain explicit and reviewable',
+  );
+  assert.ok(
+    workflow.includes("POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun"),
+    'the exact workflow-run rerun endpoint must be used',
   );
 });
