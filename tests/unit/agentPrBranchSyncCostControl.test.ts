@@ -22,12 +22,14 @@ describe('P2 agent PR main-sync cost control', () => {
     expect(yaml).toContain("if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository");
   });
 
-  it('observes draft state and exact head identity before deciding to sync', () => {
+  it('observes draft, author and exact head identity before deciding to sync', () => {
     const yaml = workflow();
     expect(yaml).toContain('headRefOid');
     expect(yaml).toContain('isDraft');
     expect(yaml).toContain('isCrossRepository');
     expect(yaml).toContain('baseRefName');
+    expect(yaml).toContain('author');
+    expect(yaml).toContain("author=\"$(echo \"$pr\" | jq -r '.author.login // \"\"')\"");
   });
 
   it('skips draft PRs only for automatic main-push fan-out', () => {
@@ -44,10 +46,14 @@ describe('P2 agent PR main-sync cost control', () => {
     expect(yaml).toContain("| jq -c '[.]'");
   });
 
-  it('keeps the canonical active-provider branch allowlist and main base boundary', () => {
+  it('keeps active provider prefixes and covers owner-authored conventional work branches', () => {
     const yaml = workflow();
     expect(yaml).toContain("if [ \"$base\" != 'main' ]; then");
     expect(yaml).toContain('agent/*|claude/*|grok/*|ai/*');
+    expect(yaml).toContain('feat/*|fix/*|hotfix/*|chore/*|refactor/*|docs/*|test/*|perf/*|security/*');
+    expect(yaml).toContain('repo_owner="${REPO%%/*}"');
+    expect(yaml).toContain('if [ "$author" != "$repo_owner" ]; then');
+    expect(yaml).toContain('konventioneller Work-Branch, aber Autor $author ist nicht Repository-Owner $repo_owner; fail-closed uebersprungen.');
     expect(yaml).not.toContain('gemini/*');
     expect(yaml).not.toContain('copilot/*');
   });
