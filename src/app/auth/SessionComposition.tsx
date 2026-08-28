@@ -34,6 +34,7 @@ interface AuthErrorState {
 
 const PUBLIC_SHELL_PATHS = new Set([
   '/',
+  '/login',
   '/datenschutz',
   '/impressum',
   '/agb',
@@ -327,8 +328,8 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   }
 
   // Authenticated gates always outrank the public-shell latency optimization. In particular, an
-  // OAuth callback returns to '/', so suppressing these gates on public paths strands a valid
-  // Supabase session without ever composing the authenticated application session.
+  // OAuth callback can return to `/login`, so immediately rendering the login shell must never
+  // suppress onboarding/AAL processing once Supabase has established the authenticated session.
   if (pendingOnboardingSession) {
     return (
       <RegistrationCompletionGate
