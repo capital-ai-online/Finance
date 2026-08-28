@@ -56,7 +56,7 @@ jobs:
             --tag "capital-ai-security:$SOURCE_SHA" \
             .
 
-      - name: Runtime-Metadaten fail-closed prüfen
+      - name: Runtime-Metadaten und Angriffsfläche fail-closed prüfen
         shell: bash
         run: |
           set -euo pipefail
@@ -65,7 +65,43 @@ jobs:
           test "$(docker image inspect "$image" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
           test "$(docker image inspect "$image" --format '{{json .Config.ExposedPorts}}')" = '{"10000/tcp":{}}'
           docker image inspect "$image" --format '{{json .Config.Healthcheck.Test}}' | grep -Fq '${PORT:-10000}/healthz'
-          test "$(docker run --rm --entrypoint sh "$image" -c 'test ! -e /app/dist/server.cjs.map && id -u')" != '0'
+          docker run --rm --entrypoint sh "$image" -c '
+            set -eu
+            test "$(id -u)" != "0"
+            test ! -e /app/dist/server.cjs.map
+            test ! -e /app/node_modules/esbuild
+            test ! -e /app/node_modules/@esbuild
+            for path in \
+              /usr/local/lib/node_modules/npm \
+              /usr/local/lib/node_modules/corepack \
+              /usr/local/bin/npm \
+              /usr/local/bin/npx \
+              /usr/local/bin/corepack \
+              /usr/local/bin/yarn \
+              /usr/local/bin/yarnpkg \
+              /usr/local/bin/pnpm \
+              /usr/local/bin/pnpx; do
+              test ! -e "$path"
+              test ! -L "$path"
+            done
+          '
+
+      - name: Backend-Sourcemap aus allen finalen Image-Layern ausschließen
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="capital-ai-security:$SOURCE_SHA"
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          docker image save "$image" -o "$tmpdir/image.tar"
+          tar -xf "$tmpdir/image.tar" -C "$tmpdir"
+          mapfile -t layers < <(jq -r '.[0].Layers[]' "$tmpdir/manifest.json")
+          for layer in "${layers[@]}"; do
+            if tar -tf "$tmpdir/$layer" | grep -Eq '(^|/)app/dist/server\.cjs\.map$'; then
+              echo "::error::Backend source map is recoverable from final image layer $layer"
+              exit 1
+            fi
+          done
 
       - name: Fixbare HIGH/CRITICAL Schwachstellen im finalen Image blockieren
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
