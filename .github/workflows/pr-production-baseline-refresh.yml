@@ -12,8 +12,9 @@ run-name: >-
 #   "Deployment verifiziert / Render-Produktion" job and /healthz reports that same SHA.
 # - Candidate code is checked out as data but never executed; all executed policy scripts come from main.
 # - The updater replaces only the canonical baseline block and is idempotent.
-# - A real baseline write explicitly re-runs exact-head/base PR Governance after revalidating PR head and main.
-#   This is required because mutations made with GITHUB_TOKEN do not recursively emit a new pull_request:edited workflow.
+# - Baseline writes and first-attempt stale-baseline races are rebound to an exact completed
+#   PR Governance run for the same PR/head/base. Race recovery is limited to run_attempt == 1,
+#   so a real Governance failure cannot create an automatic rerun loop.
 on:
   workflow_run:
     workflows: ['PR Governance', 'CI']
@@ -126,14 +127,14 @@ jobs:
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
         run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
 
-      - name: Geänderte Baseline gegen exakten Snapshot revalidieren und Governance erneut ausführen
-        if: steps.pr.outputs.eligible == 'true' && steps.refresh.outputs.changed == 'true'
+      - name: Baseline-Write oder Race-Recovery an exakte PR-Governance binden
+        if: steps.pr.outputs.eligible == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
           PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
           EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}
-          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}
         with:
           script: |
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
@@ -141,21 +142,15 @@ jobs:
             const prNumber = Number(process.env.PR_NUMBER);
             const expectedHeadSha = normalizeSha(process.env.EXPECTED_HEAD_SHA);
             const expectedMainSha = normalizeSha(process.env.EXPECTED_MAIN_SHA);
-            const sourceRunId = Number(process.env.SOURCE_RUN_ID);
+            const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';
             const sourceRun = context.payload.workflow_run;
 
             if (!Number.isInteger(prNumber) || prNumber <= 0) fail('PR-Nummer für Governance-Re-Run ist ungültig.');
             if (!/^[0-9a-f]{40}$/.test(expectedHeadSha)) fail('Gebundener PR-Head-SHA ist ungültig.');
             if (!/^[0-9a-f]{40}$/.test(expectedMainSha)) fail('Gebundener main-SHA ist ungültig.');
-            if (!Number.isInteger(sourceRunId) || sourceRunId <= 0 || Number(sourceRun.id) !== sourceRunId) {
-              fail('Triggering Governance run id stimmt nicht mit der gebundenen Run-ID überein.');
-            }
-            if (sourceRun.event !== 'pull_request') fail(`Unerwartetes Governance-Event: ${sourceRun.event}`);
+            if (sourceRun.event !== 'pull_request') fail(`Unerwartetes Workflow-Run-Event: ${sourceRun.event}`);
             if (Number(sourceRun.pull_requests?.[0]?.number) !== prNumber) {
-              fail('Triggering Governance Run ist nicht an denselben Pull Request gebunden.');
-            }
-            if (normalizeSha(sourceRun.head_sha) !== expectedHeadSha) {
-              fail('Triggering Governance Run ist nicht an denselben PR-Head gebunden.');
+              fail('Triggering Workflow Run ist nicht an denselben Pull Request gebunden.');
             }
 
             const { data: pr } = await github.rest.pulls.get({
@@ -166,10 +161,10 @@ jobs:
             const liveHeadSha = normalizeSha(pr.head?.sha);
             const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
             if (pr.state !== 'open' || pr.base?.ref !== 'main' || !sameRepo) {
-              fail('PR-Grenze änderte sich nach dem Baseline-Write; Governance wird nicht erneut gestartet.');
+              fail('PR-Grenze änderte sich während der Baseline-Revalidierung; Governance wird nicht erneut gestartet.');
             }
             if (liveHeadSha !== expectedHeadSha) {
-              fail(`PR-Head änderte sich nach dem Baseline-Write (${liveHeadSha.slice(0, 12)} != ${expectedHeadSha.slice(0, 12)}).`);
+              fail(`PR-Head änderte sich während der Baseline-Revalidierung (${liveHeadSha.slice(0, 12)} != ${expectedHeadSha.slice(0, 12)}).`);
             }
 
             const { data: main } = await github.rest.repos.getBranch({
@@ -179,21 +174,57 @@ jobs:
             });
             const liveMainSha = normalizeSha(main.commit?.sha);
             if (liveMainSha !== expectedMainSha) {
-              fail(`main änderte sich nach dem Baseline-Write (${liveMainSha.slice(0, 12)} != ${expectedMainSha.slice(0, 12)}).`);
+              fail(`main änderte sich während der Baseline-Revalidierung (${liveMainSha.slice(0, 12)} != ${expectedMainSha.slice(0, 12)}).`);
+            }
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event: 'pull_request',
+              head_sha: expectedHeadSha,
+              status: 'completed',
+              per_page: 100,
+            });
+            const exactRun = runs
+              .filter((run) => run.path === '.github/workflows/pr-governance.yml')
+              .filter((run) => (run.pull_requests || []).some((item) =>
+                Number(item.number) === prNumber &&
+                normalizeSha(item.head?.sha) === expectedHeadSha &&
+                normalizeSha(item.base?.sha) === expectedMainSha))
+              .sort((a, b) => Number(b.id) - Number(a.id))[0];
+
+            if (!exactRun) {
+              core.notice(
+                `PR #${prNumber}: ${baselineChanged ? 'Baseline aktualisiert' : 'Baseline bereits korrekt'}, aber noch keine abgeschlossene exact-head/base Governance vorhanden; deren Completion-Event übernimmt die weitere Revalidierung.`,
+              );
+              return;
+            }
+
+            const firstFailedAttempt =
+              exactRun.conclusion === 'failure' && Number(exactRun.run_attempt || 1) === 1;
+            const shouldRerun = baselineChanged || firstFailedAttempt;
+
+            if (!shouldRerun) {
+              core.info(
+                `PR #${prNumber}: Baseline bereits korrekt; latest Governance ${exactRun.id} conclusion=${exactRun.conclusion} attempt=${exactRun.run_attempt || 1}; kein automatischer Re-Run.`,
+              );
+              return;
             }
 
             await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: sourceRunId,
+              run_id: exactRun.id,
             });
             core.notice(
-              `PR #${prNumber}: Baseline wurde geändert und gegen head=${expectedHeadSha.slice(0, 12)} / main=${expectedMainSha.slice(0, 12)} revalidiert; Governance Run ${sourceRunId} wird exakt erneut ausgeführt.`,
+              baselineChanged
+                ? `PR #${prNumber}: Baseline-Write an exact-head/base Governance Run ${exactRun.id} gebunden; Governance wird erneut ausgeführt.`
+                : `PR #${prNumber}: Race-Recovery für bereits korrekte Baseline; fehlgeschlagener Governance Run ${exactRun.id} wird einmalig von attempt 1 erneut ausgeführt.`,
             );
 
-      - name: Unveränderte Baseline ohne Governance-Re-Run bestätigen
-        if: steps.pr.outputs.eligible == 'true' && steps.refresh.outputs.changed != 'true'
-        run: echo "Baseline unverändert; kein Governance-Re-Run und damit keine Workflow-Schleife."
+      - name: Baseline-Status bestätigen
+        if: steps.pr.outputs.eligible == 'true'
+        run: echo "Baseline-Korrelation abgeschlossen; etwaige Governance-Revalidierung ist exact-head/base gebunden und gegen Rerun-Schleifen begrenzt."
 
       - name: Nicht autorisierten PR ohne Mutation überspringen
         if: steps.pr.outputs.eligible != 'true'
