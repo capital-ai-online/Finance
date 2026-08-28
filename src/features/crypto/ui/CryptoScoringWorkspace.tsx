@@ -4,6 +4,7 @@ import {
   type CryptoScoringEnterpriseProps,
 } from './CryptoScoringEnterprise';
 import { CryptoCategoryResearchLenses } from './CryptoCategoryResearchLenses';
+import { CryptoResearchTopologyPanels } from './CryptoResearchTopologyPanels';
 import { CryptoResearchVisualizationSuite } from './CryptoResearchVisualizationSuite';
 
 /**
@@ -18,6 +19,7 @@ export function CryptoScoringWorkspace(props: CryptoScoringEnterpriseProps) {
     <>
       <CanonicalCryptoScoringEnterprise {...props} />
       <CryptoCategoryResearchLenses selectedSymbol={props.selectedSymbol} />
+      <CryptoResearchTopologyPanels selectedSymbol={props.selectedSymbol} />
       <CryptoResearchVisualizationSuite selectedSymbol={props.selectedSymbol} />
     </>
   );
