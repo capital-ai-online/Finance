@@ -1,6 +1,6 @@
 # Production Docker hardening for Render.
-# All stages are pinned to the same immutable Node 24.18.0 Alpine multi-platform image digest.
-FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS builder
+# All stages are pinned to the same immutable Node 24.20.0 Alpine multi-platform image digest.
+FROM node:24.20.0-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS builder
 WORKDIR /app
 
 # Never execute dependency lifecycle scripts as root. The official Node image already
@@ -47,7 +47,7 @@ RUN RELEASE_SOURCE_COMMIT="${RELEASE_SOURCE_COMMIT:-$RENDER_GIT_COMMIT}" npm run
 # tree immutable and root-owned once copied into the runner. Build/development toolchains that
 # are still classified as application dependencies in the source lockfile are removed entirely;
 # unlike the previous implementation, no synthetic package is inserted into node_modules.
-FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS prod-deps
+FROM node:24.20.0-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS prod-deps
 WORKDIR /app
 RUN chown node:node /app
 USER node
@@ -60,7 +60,7 @@ RUN npm ci --omit=dev \
     /app/node_modules/.bin/tailwindcss \
   && npm cache clean --force
 
-FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS runner
+FROM node:24.20.0-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS runner
 WORKDIR /app
 
 # Patch fixable OpenSSL CVEs exposed by the pinned upstream image at build time. The mutable

@@ -7,7 +7,7 @@ const viteProductionStub = fs.readFileSync('server/runtime/viteProductionDisable
 const containerWorkflow = fs.readFileSync('.github/workflows/container-security.yml', 'utf8');
 
 const requirements = [
-  ['immutable Node 24.18 LTS base image digest', /FROM\s+node:24\.18\.0-alpine@sha256:[a-f0-9]{64}/],
+  ['immutable Node 24.20 LTS base image digest', /FROM\s+node:24\.20\.0-alpine@sha256:[a-f0-9]{64}/],
   ['multi-stage builder', /AS\s+builder/i],
   ['dedicated production dependency stage', /AS\s+prod-deps/i],
   ['multi-stage runner', /AS\s+runner/i],
@@ -39,7 +39,8 @@ const requirements = [
 ];
 
 const forbidden = [
-  ['floating Node 24.18 base tag without digest', /^FROM\s+node:24\.18\.0-alpine(?:\s|$)/m],
+  ['floating Node 24.20 base tag without digest', /^FROM\s+node:24\.20\.0-alpine(?:\s|$)/m],
+  ['obsolete Node 24.18 production base', /^FROM\s+node:24\.18\.0-alpine(?:@sha256:[a-f0-9]{64})?(?:\s|$)/m],
   ['legacy Node 22 production base', /^FROM\s+node:22(?:[.-]|\s|$)/m],
   ['root runtime user', /^USER\s+root\s*$/m],
   ['production npm shim command', /CMD\s*\[\s*"npm"/],
@@ -74,9 +75,9 @@ for (const entry of ignoreRequirements) {
   if (!dockerignore.split(/\r?\n/).includes(entry)) failures.push(`.dockerignore missing: ${entry}`);
 }
 
-const baseImages = dockerfile.match(/^FROM\s+node:24\.18\.0-alpine@sha256:[a-f0-9]{64}/gm) || [];
+const baseImages = dockerfile.match(/^FROM\s+node:24\.20\.0-alpine@sha256:[a-f0-9]{64}/gm) || [];
 if (baseImages.length !== 3 || new Set(baseImages).size !== 1) {
-  failures.push('all builder/prod-deps/runner stages must use the same immutable Node image digest');
+  failures.push('all builder/prod-deps/runner stages must use the same immutable Node 24.20 image digest');
 }
 
 const sourceMapRemovalIndex = dockerfile.indexOf('rm -f /app/dist/server.cjs.map');
