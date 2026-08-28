@@ -34,12 +34,30 @@ interface AuthErrorState {
   receivedId?: string;
 }
 
+const PUBLIC_SHELL_PATHS = new Set([
+  '/',
+  '/datenschutz',
+  '/impressum',
+  '/agb',
+  '/learning-platform',
+]);
+
+function shouldRenderPublicShellImmediately(): boolean {
+  if (typeof window === 'undefined') return false;
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  return PUBLIC_SHELL_PATHS.has(pathname);
+}
+
 /**
  * BB-1 Application Composition boundary.
  *
  * Owns authenticated session restoration, Supabase auth lifecycle, onboarding,
  * login step-up, password recovery and global unauthorized handling.
  * Anonymous and guest sessions are intentionally not supported.
+ *
+ * Public routes are deliberately allowed to render while authentication is hydrated in the
+ * background. This keeps the canonical public homepage independent from Supabase/IAM/Billing
+ * latency while protected routes continue to fail closed behind the existing security gates.
  */
 export function SessionComposition({ children }: SessionCompositionProps) {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
@@ -51,6 +69,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   const [passwordRecoverySubmitting, setPasswordRecoverySubmitting] = useState(false);
   const [pendingStepUpSession, setPendingStepUpSession] = useState<any | null>(null);
   const [pendingOnboardingSession, setPendingOnboardingSession] = useState<any | null>(null);
+  const renderPublicShellImmediately = shouldRenderPublicShellImmediately();
 
   const updateUserSession = (session: UserSession | null) => {
     setUserSession(session);
@@ -345,7 +364,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
-  if (loading) {
+  if (loading && !renderPublicShellImmediately) {
     return (
       <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -358,7 +377,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     );
   }
 
-  if (pendingOnboardingSession) {
+  if (pendingOnboardingSession && !renderPublicShellImmediately) {
     return (
       <RegistrationCompletionGate
         session={pendingOnboardingSession}
@@ -376,7 +395,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     );
   }
 
-  if (pendingStepUpSession) {
+  if (pendingStepUpSession && !renderPublicShellImmediately) {
     return (
       <LoginStepUpGate
         session={pendingStepUpSession}
@@ -452,7 +471,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     );
   }
 
-  if (authError) {
+  if (authError && !renderPublicShellImmediately) {
     return (
       <div
         id="auth-error-screen"
