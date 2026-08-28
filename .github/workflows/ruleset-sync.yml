@@ -21,9 +21,10 @@ concurrency:
   group: ruleset-sync
   cancel-in-progress: false
 
-# Dieser Workflow ist bewusst NICHT zeitgesteuert. Er verbraucht Runner-Zeit nur bei einer
-# Aenderung des Ruleset-Sollzustands/Sync-Codes oder bei explizitem manuellen Aufruf. Die
-# Sicherheitsmutation wird nicht durch das optionale Repository-Advisory-Kostenbudget unterdrueckt.
+# Dieser Workflow ist bewusst NICHT zeitgesteuert. Ein Push auf main erzeugt ausschliesslich
+# einen Plan/Diff. Administrative GitHub-Aenderungen sind nur ueber einen expliziten manuellen
+# workflow_dispatch mit dry_run=false erlaubt. Die Sicherheitsmutation wird nicht durch das
+# optionale Repository-Advisory-Kostenbudget unterdrueckt.
 jobs:
   sync:
     name: Ruleset lesen, Diff anzeigen, ggf. anwenden
@@ -48,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = 'refs/heads/main'
-          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.dry_run }}" = "false" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "false" ]; then
             MODE=apply
           else
             MODE=plan
