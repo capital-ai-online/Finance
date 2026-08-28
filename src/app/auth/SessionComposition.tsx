@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { LoginStepUpGate } from '../../components/LoginStepUpGate';
 import { RegistrationCompletionGate } from '../../components/RegistrationCompletionGate';
+import { requestHcaptchaToken } from '../../lib/hcaptcha';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
 import { needsOnboarding } from '../../lib/onboarding';
 import type { SubscriptionTier, UserSession } from '../types/UserSession';
@@ -48,10 +49,11 @@ function shouldRenderPublicShellImmediately(): boolean {
 /**
  * BB-1 Application Composition boundary.
  *
- * Supabase Auth is the sole authentication authority. Interactive primary authentication is
- * restricted to Supabase-native passkeys. Every restored or newly issued Supabase session is
- * routed through LoginStepUpGate so native AAL/TOTP state is evaluated fail-closed before private
- * application access. Anonymous/guest sessions are not accepted as authenticated sessions.
+ * Supabase Auth is the sole authentication authority. Supported website primary authentication
+ * methods may issue a Supabase session through email/password, Google OAuth or a native passkey.
+ * Every restored or newly issued non-anonymous Supabase session is routed through LoginStepUpGate
+ * so native AAL/TOTP state remains fail-closed before private application access. Owner/PR passkey
+ * authorization is a separate governance boundary and is not weakened by website login methods.
  */
 export function SessionComposition({ children }: SessionCompositionProps) {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
@@ -165,9 +167,8 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
-    // SECURITY: every authenticated Supabase session must pass the native assurance gate.
-    // LoginStepUpGate itself passes through aal1/aal1 sessions and requires native TOTP when
-    // nextLevel is aal2. Errors in that evaluation are fail-closed.
+    // SECURITY: every authenticated Supabase session must pass the native assurance gate,
+    // independently from whether primary authentication used password, Google OAuth or passkey.
     setPendingStepUpSession(session);
     setLoading(false);
   };
@@ -206,7 +207,11 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       .getSession()
       .then(({ data: { session } }) => {
         if (session) {
-          establishSession(session);
+          establishSession(session).catch((err) => {
+            console.error('[Auth] Initial session establishment failed:', err);
+            updateUserSession(null);
+            setLoading(false);
+          });
         } else {
           updateUserSession(null);
           setLoading(false);
@@ -220,15 +225,24 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        await establishSession(session);
-      } else {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Supabase documents that awaiting another Supabase call inside onAuthStateChange may
+      // deadlock the client. Defer all session work until the auth callback has returned.
+      window.setTimeout(() => {
+        if (session) {
+          establishSession(session).catch((err) => {
+            console.error('[Auth] Deferred session establishment failed:', err);
+            updateUserSession(null);
+            setLoading(false);
+          });
+          return;
+        }
+
         updateUserSession(null);
         setPendingStepUpSession(null);
         setPendingOnboardingSession(null);
         setLoading(false);
-      }
+      }, 0);
     });
 
     return () => {
@@ -237,34 +251,36 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   }, []);
 
   /**
-   * Compatibility callback retained for existing presentation interfaces.
-   * Email/password arguments are deliberately ignored; native Supabase passkeys are the only
-   * primary login mechanism.
+   * Existing registered website users authenticate with their Supabase email/password identity.
+   * hCaptcha remains enabled as the bot-abuse control and its short-lived token is attached to the
+   * password grant. A successful primary login still has to pass LoginStepUpGate afterwards.
    */
-  const handleLogin = async (_email: string, _password: string) => {
+  const handleLogin = async (email: string, password: string) => {
     if (!supabase) {
       throw new Error('Supabase ist nicht konfiguriert. Anmeldung ist nicht möglich.');
     }
 
     try {
-      const auth = supabase.auth as typeof supabase.auth & {
-        signInWithPasskey: () => Promise<{ error: Error | null }>;
-      };
-      const { error } = await auth.signInWithPasskey();
+      const captchaToken = await requestHcaptchaToken();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: { captchaToken },
+      });
       if (error) throw error;
     } catch (err: any) {
-      console.warn('[Auth] Supabase native passkey login failed:', err);
-      throw new Error(err?.message || 'Passkey-Anmeldung fehlgeschlagen.');
+      console.warn('[Auth] E-Mail-/Passwort-Anmeldung fehlgeschlagen:', err);
+      throw new Error(err?.message || 'Anmeldung fehlgeschlagen.');
     }
   };
 
   /**
-   * Self-service account creation is intentionally disabled in passkey-only mode because Supabase
-   * requires an already confirmed authenticated user before registerPasskey() can be called.
+   * Account provisioning remains a separately controlled product decision. This fix restores
+   * sign-in for already registered users and Google OAuth without silently reopening sign-up.
    */
   const handleRegister = async (_name: string, _email: string, _password: string) => {
     throw new Error(
-      'Selbstregistrierung ist im Passkey-only-Modus deaktiviert. Konten müssen kontrolliert bereitgestellt und vor dem Cutover mit einem Supabase-Passkey ausgestattet werden.',
+      'Selbstregistrierung ist derzeit kontrolliert deaktiviert. Bereits registrierte Konten können sich per E-Mail/Passwort oder Google anmelden.',
     );
   };
 
@@ -310,7 +326,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     );
   }
 
-  if (pendingOnboardingSession && !renderPublicShellImmediately) {
+  // Authenticated gates always outrank the public-shell latency optimization. In particular, an
+  // OAuth callback returns to '/', so suppressing these gates on public paths strands a valid
+  // Supabase session without ever composing the authenticated application session.
+  if (pendingOnboardingSession) {
     return (
       <RegistrationCompletionGate
         session={pendingOnboardingSession}
@@ -328,7 +347,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     );
   }
 
-  if (pendingStepUpSession && !renderPublicShellImmediately) {
+  if (pendingStepUpSession) {
     return (
       <LoginStepUpGate
         session={pendingStepUpSession}
@@ -346,7 +365,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     );
   }
 
-  if (authError && !renderPublicShellImmediately) {
+  if (authError) {
     return (
       <div
         id="auth-error-screen"
