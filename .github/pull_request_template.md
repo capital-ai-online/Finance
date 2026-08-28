@@ -10,7 +10,7 @@
 >
 > **M10:** Nach verifiziertem Controlled Cutover autorisiert ausschließlich eine PR-state-gebundene Owner-Passkey/WebAuthn-Transaktion `AUTHORIZE_PR_CI` für teure PR-CI. Vor dem verifizierten Cutover bleibt der dokumentierte Pre-M10-Pfad aktiv. CI-Autorisierung und Merge bleiben getrennte Human-Gates.
 >
-> **Baseline-Hinweis:** Abschnitt 3 wird durch `scripts/pr/productionPreflight.mjs` berechnet und ausschließlich über die kanonische `renderProductionBaselineBlock`-Authority projiziert. Bei der initialen PR-Erzeugung erfolgt dies über `scripts/pr/renderPullRequestBody.mjs`; bei einem bereits offenen PR aktualisiert der trusted Workflow `.github/workflows/pr-production-baseline-refresh.yml` ausschließlich den Baseline-Block über `scripts/pr/updatePrProductionBaseline.mjs` → `scripts/pr/productionBaselineBody.mjs`. Nach einem neuen Head kann der erste Governance-Lauf fail-closed mit **Automatic Production Baseline Reconciliation pending** enden; der trusted Writer bindet den anschließenden einmaligen Governance-Re-Run an exakt denselben PR-Head und `main`-Base. Einzelwerte dürfen nicht manuell geschätzt, ersetzt oder mit `nicht-verfügbar` befüllt werden. Die `Baseline-ID` bindet Produktions-, `main`- und PR-Head-Identität content-addressed zusammen.
+> **Baseline-Hinweis:** Abschnitt 3 wird ausschließlich als atomarer Block aus `scripts/pr/productionPreflight.mjs` + `scripts/pr/renderPullRequestBody.mjs` erzeugt. Einzelwerte dürfen nicht manuell geschätzt, ersetzt oder mit `nicht-verfügbar` befüllt werden. Die `Baseline-ID` bindet Produktions-, `main`- und PR-Head-Identität content-addressed zusammen.
 
 ## 1. Arbeitsauftrag
 
