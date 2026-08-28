@@ -29,6 +29,8 @@ function looksLikePlaceholder(value: string): string | null {
 // scripts/automation/verifyDeploymentReadiness.ts (Build-Zeit-Gate).
 const CRITICAL_SECRETS: SecretRule[] = [
   {
+    // Lokale/dev Kompatibilität darf vorübergehend noch service_role verwenden. Produktion
+    // verlangt weiter unten jedoch explizit den unabhängig rotierbaren SUPABASE_SECRET_KEY.
     key: 'SUPABASE_SECRET_KEY',
     alternates: ['SUPABASE_SERVICE_ROLE_KEY'],
     validate: looksLikePlaceholder,
@@ -73,6 +75,16 @@ export function validateRuntimeSecrets(isProduction: boolean): void {
     }
     const error = rule.validate?.(value);
     if (error) problems.push(`${rule.key}: ${error}`);
+  }
+
+  // Security hardening 2026-08-29: production may no longer rely on the legacy JWT-shaped
+  // service_role key. Keeping the fallback outside production avoids an abrupt local-dev break,
+  // while every production boot proves the modern independently rotatable secret-key contract.
+  if (isProduction && !getCleanEnv('SUPABASE_SECRET_KEY')) {
+    problems.push(
+      'SUPABASE_SECRET_KEY: in Produktion zwingend erforderlich; '
+      + 'SUPABASE_SERVICE_ROLE_KEY ist nur noch ein Nicht-Produktions-Kompatibilitätspfad.'
+    );
   }
 
   if (problems.length === 0) {

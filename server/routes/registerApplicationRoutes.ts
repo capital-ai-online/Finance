@@ -33,6 +33,7 @@ import { cryptoEvidenceRouter } from './cryptoEvidenceRoutes';
 import { createMarketSentimentRouter } from './marketSentimentRoutes';
 import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
 import { createMtaStsRouter } from './mtaStsRoutes';
+import { createBusinessReadinessRouter } from './businessReadinessRoutes';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 
 export interface ApplicationRouteProviders {
@@ -62,6 +63,11 @@ export function registerApplicationRoutes(
 
   registerTrailingSlashNormalize(app);
   installProductionSoft404Intercept();
+
+  // Operations readiness: `/healthz` remains the platform liveness contract owned by
+  // server.application.ts. This router adds the full non-secret projection under
+  // `/healthz/readiness` and a strict 200/503 business gate under `/readyz`.
+  app.use(createBusinessReadinessRouter());
 
   // RFC 8461 policy endpoint. DNS discovery and the mta-sts custom domain remain
   // separately owner-managed; the application only serves the static policy body.
