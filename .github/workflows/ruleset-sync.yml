@@ -20,36 +20,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  plan:
-    name: Diff gegen Live-Ruleset berechnen
+  sync:
+    name: Ruleset lesen, Diff anzeigen, ggf. anwenden
     runs-on: ubuntu-latest
-    # administration:read reicht dem automatischen GITHUB_TOKEN, um den Ruleset-Zustand zu LESEN.
-    # Kein Custom-Secret noetig - dieser Job ist ungefaehrlich und laeuft immer automatisch.
-    permissions:
-      contents: read
-      administration: read
-    outputs:
-      changed: ${{ steps.diff.outputs.changed }}
-    steps:
-      - name: Repository auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-
-      - name: Live-Ruleset lesen und Diff berechnen
-        id: diff
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node scripts/security/rulesetSync.mjs plan >> "$GITHUB_STEP_SUMMARY"
-
-  apply:
-    name: Ruleset anwenden (nur nach manueller Freigabe)
-    needs: plan
-    if: >-
-      needs.plan.outputs.changed == 'true' &&
-      (github.event_name == 'push' || inputs.dry_run == false)
-    runs-on: ubuntu-latest
-    environment: ruleset-admin   # GitHub pausiert hier auf die Required-Reviewer-Freigabe
+    environment: ruleset-admin
     permissions:
       contents: read
     steps:
@@ -58,7 +32,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Ruleset anwenden
+      - name: Ruleset lesen, Diff anzeigen, ggf. anwenden
         env:
           GH_TOKEN: ${{ secrets.RULESET }}
-        run: node scripts/security/rulesetSync.mjs apply >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.dry_run }}" = "false" ]; then
+            MODE=apply
+          else
+            MODE=plan
+          fi
+          node scripts/security/rulesetSync.mjs "$MODE" >> "$GITHUB_STEP_SUMMARY"
