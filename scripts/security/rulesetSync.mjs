@@ -3,12 +3,13 @@ import fs from 'node:fs';
 const OWNER = 'SvenKulessa';
 const REPO = 'Finance';
 const EXPECTED_PATH = '.github/policies/main-production-protection.expected.json';
-const mode = process.argv[2]; // 'plan' | 'apply'
+const mode = process.argv[2]; // plan | apply-package-a | apply
 const token = process.env.GH_TOKEN;
 const repositoryPath = `/repos/${OWNER}/${REPO}`;
+const APPLY_MODES = new Set(['apply-package-a', 'apply']);
+const PRESERVED_LIVE_RULE_TYPES = new Set(['code_quality']);
 
-// Bind Required Checks to the GitHub Apps that actually produce them. This prevents another
-// actor/integration with write access from spoofing a required context by name alone.
+// Required contexts are issuer-bound so a different integration cannot spoof a required status by name.
 const CHECK_INTEGRATION_IDS = new Map([
   ['build-and-test', 15368],
   ['PR Governance (Kosten / Workflow / Vorlage)', 15368],
@@ -16,17 +17,23 @@ const CHECK_INTEGRATION_IDS = new Map([
   ['GitGuardian Security Checks', 46505],
 ]);
 
-if (!['plan', 'apply'].includes(mode)) {
-  console.error('Usage: rulesetSync.mjs <plan|apply>');
+if (!['plan', 'apply-package-a', 'apply'].includes(mode)) {
+  console.error('Usage: rulesetSync.mjs <plan|apply-package-a|apply>');
   process.exit(1);
 }
 if (!token) {
   console.error('GH_TOKEN is required');
   process.exit(1);
 }
-if (mode === 'apply' && process.env.GITHUB_REF !== 'refs/heads/main') {
+if (APPLY_MODES.has(mode) && process.env.GITHUB_REF !== 'refs/heads/main') {
   console.error(`REF DENY: ruleset/repository apply is allowed only on refs/heads/main, got ${process.env.GITHUB_REF || 'missing'}`);
   process.exit(1);
+}
+
+function responseDetail(response) {
+  return typeof response.data === 'object' && response.data?.message
+    ? response.data.message
+    : String(response.data || '');
 }
 
 async function ghResponse(path, init = {}) {
@@ -56,35 +63,33 @@ async function ghResponse(path, init = {}) {
 async function gh(path, init = {}) {
   const response = await ghResponse(path, init);
   if (!response.ok) {
-    const detail = typeof response.data === 'object' && response.data?.message
-      ? response.data.message
-      : String(response.data || '');
-    throw new Error(`${init.method || 'GET'} ${path} -> ${response.status} ${detail}`);
+    throw new Error(`${init.method || 'GET'} ${path} -> ${response.status} ${responseDetail(response)}`);
   }
   return response.data;
+}
+
+async function optionalGh(path, unsupportedStatuses) {
+  const response = await ghResponse(path);
+  if (response.ok) return { supported: true, status: response.status, data: response.data };
+  if (unsupportedStatuses.has(response.status)) {
+    return { supported: false, status: response.status, data: null };
+  }
+  throw new Error(`GET ${path} -> ${response.status} ${responseDetail(response)}`);
 }
 
 async function featureEnabled(path) {
   const response = await ghResponse(path);
   if (response.status === 200 || response.status === 204) return true;
   if (response.status === 404) return false;
-  const detail = typeof response.data === 'object' && response.data?.message
-    ? response.data.message
-    : String(response.data || '');
-  throw new Error(`GET ${path} -> ${response.status} ${detail}`);
+  throw new Error(`GET ${path} -> ${response.status} ${responseDetail(response)}`);
 }
 
 function statusCheck(context) {
   const integrationId = CHECK_INTEGRATION_IDS.get(context);
-  if (!integrationId) {
-    throw new Error(`No trusted integration_id is registered for required check: ${context}`);
-  }
+  if (!integrationId) throw new Error(`No trusted integration_id is registered for required check: ${context}`);
   return { context, integration_id: integrationId };
 }
 
-// Uebersetzt das abstrakte expected.json-Format in die konkrete GitHub-Ruleset-API-Struktur.
-// Die Parameter bilden den beabsichtigten vollständigen Zustand ab; ein PUT darf keine bereits
-// aktive Schutzwirkung versehentlich durch Weglassen eines Feldes zurücksetzen.
 function buildDesiredRuleset(expected) {
   const req = expected.required;
   return {
@@ -119,6 +124,17 @@ function buildDesiredRuleset(expected) {
       },
     ],
   };
+}
+
+// Package C has not decided whether Code Quality should become policy-owned. Preserve the current
+// live rule byte-for-structure instead of silently deleting it during the Package-A reconciliation.
+function preserveApprovedLiveRules(desired, current) {
+  if (!current?.rules) return desired;
+  const desiredTypes = new Set(desired.rules.map((rule) => rule.type));
+  const preserved = current.rules.filter(
+    (rule) => PRESERVED_LIVE_RULE_TYPES.has(rule.type) && !desiredTypes.has(rule.type),
+  );
+  return { ...desired, rules: [...desired.rules, ...preserved] };
 }
 
 function normalizedRule(rule) {
@@ -175,24 +191,20 @@ function normalizedRuleset(value) {
   };
 }
 
-// Hard-Floor: unabhaengig davon, was in expected.json steht oder wer die PR gemerged hat -
-// diese Kernschutzregeln duerfen NIE unterschritten werden. Bricht vor jedem API-Schreibzugriff ab.
 function enforceRulesetFloor(desired) {
   const failures = [];
   const normalized = normalizedRuleset(desired);
-  const statusRule = normalized.rules.find((r) => r.type === 'required_status_checks');
-  const prRule = normalized.rules.find((r) => r.type === 'pull_request');
-  const checks = new Map((statusRule?.parameters.required_status_checks ?? []).map((c) => [c.context, c.integration_id]));
+  const statusRule = normalized.rules.find((rule) => rule.type === 'required_status_checks');
+  const prRule = normalized.rules.find((rule) => rule.type === 'pull_request');
+  const checks = new Map((statusRule?.parameters.required_status_checks ?? []).map((check) => [check.context, check.integration_id]));
 
   for (const [context, integrationId] of CHECK_INTEGRATION_IDS) {
-    if (checks.get(context) !== integrationId) {
-      failures.push(`required check "${context}" muss an integration_id ${integrationId} gebunden sein`);
-    }
+    if (checks.get(context) !== integrationId) failures.push(`required check "${context}" muss an integration_id ${integrationId} gebunden sein`);
   }
   if (checks.size !== CHECK_INTEGRATION_IDS.size) failures.push('Required-Check-Menge darf keine unbekannten oder fehlenden Kontexte enthalten');
   if (statusRule?.parameters.strict_required_status_checks_policy !== true) failures.push('strict required status checks muss aktiviert sein');
   if (statusRule?.parameters.do_not_enforce_on_create !== false) failures.push('Required Checks muessen auch bei Ref-Erstellung gelten');
-  if (!normalized.rules.some((r) => r.type === 'non_fast_forward')) failures.push('non_fast_forward-Schutz fehlt');
+  if (!normalized.rules.some((rule) => rule.type === 'non_fast_forward')) failures.push('non_fast_forward-Schutz fehlt');
   if (!prRule) failures.push('pull_request-Pflicht fehlt');
   if (prRule?.parameters.require_code_owner_review !== true) failures.push('CODEOWNER-Review-Pflicht fehlt');
   if (prRule?.parameters.required_review_thread_resolution !== true) failures.push('Review-Thread-Aufloesung muss erforderlich sein');
@@ -202,12 +214,10 @@ function enforceRulesetFloor(desired) {
   if (normalized.target !== 'branch') failures.push('Ruleset target muss branch sein');
   if (!normalized.conditions.ref_name.include.includes('~DEFAULT_BRANCH')) failures.push('Ruleset muss den Default-Branch erfassen');
 
-  if (failures.length) {
-    throw new Error(`RULESET FLOOR VERLETZT:\n${failures.map((f) => `- ${f}`).join('\n')}`);
-  }
+  if (failures.length) throw new Error(`RULESET FLOOR VERLETZT:\n${failures.map((failure) => `- ${failure}`).join('\n')}`);
 }
 
-function desiredRepositorySecurity(expected) {
+function desiredRepositorySecurity(expected, { forkPrApprovalSupported }) {
   const hardening = expected.repository_hardening;
   if (!hardening?.actions) throw new Error('repository_hardening.actions fehlt im Sollzustand');
   const actions = hardening.actions;
@@ -230,7 +240,8 @@ function desiredRepositorySecurity(expected) {
       access_level: String(actions.private_repo_access_level || ''),
     },
     fork_pr_approval: {
-      approval_policy: String(actions.fork_pr_approval_policy || ''),
+      supported: forkPrApprovalSupported === true,
+      approval_policy: forkPrApprovalSupported === true ? String(actions.fork_pr_approval_policy || '') : null,
     },
     fork_pr_workflows: {
       run_workflows_from_fork_pull_requests: actions.fork_pr_workflows?.run_workflows_from_fork_pull_requests === true,
@@ -256,7 +267,9 @@ function enforceRepositoryFloor(desired) {
   if (desired.workflow_permissions.default_workflow_permissions !== 'read') failures.push('Default GITHUB_TOKEN muss read-only sein');
   if (desired.workflow_permissions.can_approve_pull_request_reviews !== false) failures.push('GitHub Actions darf PR-Reviews nicht genehmigen');
   if (desired.private_repo_access.access_level !== 'none') failures.push('externe private Workflows duerfen dieses Repository nicht als Workflow-/Action-Quelle nutzen');
-  if (desired.fork_pr_approval.approval_policy !== 'all_external_contributors') failures.push('alle externen Fork-PR-Workflows muessen Approval erfordern');
+  if (desired.fork_pr_approval.supported && desired.fork_pr_approval.approval_policy !== 'all_external_contributors') {
+    failures.push('alle externen Fork-PR-Workflows muessen Approval erfordern');
+  }
   if (desired.fork_pr_workflows.send_write_tokens_to_workflows !== false) failures.push('Fork-PR-Workflows duerfen keine Write-Tokens erhalten');
   if (desired.fork_pr_workflows.send_secrets_and_variables !== false) failures.push('Fork-PR-Workflows duerfen keine Secrets/Variablen erhalten');
   if (desired.fork_pr_workflows.require_approval_for_fork_pr_workflows !== true) failures.push('Fork-PR-Workflows muessen Admin-Approval erfordern');
@@ -265,29 +278,38 @@ function enforceRepositoryFloor(desired) {
   }
   if (desired.vulnerability_alerts !== true) failures.push('Vulnerability Alerts muessen aktiviert sein');
   if (desired.dependabot_security_updates !== true) failures.push('Dependabot Security Updates muessen aktiviert sein');
-  if (failures.length) {
-    throw new Error(`REPOSITORY FLOOR VERLETZT:\n${failures.map((f) => `- ${f}`).join('\n')}`);
+  if (failures.length) throw new Error(`REPOSITORY FLOOR VERLETZT:\n${failures.map((failure) => `- ${failure}`).join('\n')}`);
+}
+
+function enforceRepositoryCore(actual, desired) {
+  if (!jsonEqual(actual.repository, desired.repository)) {
+    throw new Error(`PACKAGE-A REPOSITORY CORE VERLETZT:\n${JSON.stringify({ actual: actual.repository, desired: desired.repository }, null, 2)}`);
   }
 }
 
 async function readRepositorySecurity() {
-  const [repo, actionsPermissions, workflowPermissions, privateRepoAccess, forkPrApproval, forkPrWorkflows, retention] = await Promise.all([
-    gh(repositoryPath),
+  // Read the repository first so 422 is tolerated only for the known contributor-approval endpoint
+  // on a private repository. Auth failures and server failures remain fail-closed.
+  const repo = await gh(repositoryPath);
+  const [actionsPermissions, workflowPermissions, privateRepoAccess, forkPrWorkflows, retention] = await Promise.all([
     gh(`${repositoryPath}/actions/permissions`),
     gh(`${repositoryPath}/actions/permissions/workflow`),
     gh(`${repositoryPath}/actions/permissions/access`),
-    gh(`${repositoryPath}/actions/permissions/fork-pr-contributor-approval`),
     gh(`${repositoryPath}/actions/permissions/fork-pr-workflows-private-repos`),
     gh(`${repositoryPath}/actions/permissions/artifact-and-log-retention`),
   ]);
+
+  const forkPrApprovalResult = await optionalGh(
+    `${repositoryPath}/actions/permissions/fork-pr-contributor-approval`,
+    repo.private === true ? new Set([404, 422]) : new Set([404]),
+  );
   const vulnerabilityAlerts = await featureEnabled(`${repositoryPath}/vulnerability-alerts`);
   const dependabotStatus = await ghResponse(`${repositoryPath}/automated-security-fixes`);
-  const dependabotSecurityUpdates = dependabotStatus.status === 200 && dependabotStatus.data?.enabled === true && dependabotStatus.data?.paused !== true;
+  const dependabotSecurityUpdates = dependabotStatus.status === 200
+    && dependabotStatus.data?.enabled === true
+    && dependabotStatus.data?.paused !== true;
   if (![200, 404].includes(dependabotStatus.status)) {
-    const detail = typeof dependabotStatus.data === 'object' && dependabotStatus.data?.message
-      ? dependabotStatus.data.message
-      : String(dependabotStatus.data || '');
-    throw new Error(`GET ${repositoryPath}/automated-security-fixes -> ${dependabotStatus.status} ${detail}`);
+    throw new Error(`GET ${repositoryPath}/automated-security-fixes -> ${dependabotStatus.status} ${responseDetail(dependabotStatus)}`);
   }
 
   return {
@@ -309,7 +331,10 @@ async function readRepositorySecurity() {
       access_level: String(privateRepoAccess.access_level || ''),
     },
     fork_pr_approval: {
-      approval_policy: String(forkPrApproval.approval_policy || ''),
+      supported: forkPrApprovalResult.supported,
+      approval_policy: forkPrApprovalResult.supported
+        ? String(forkPrApprovalResult.data?.approval_policy || '')
+        : null,
     },
     fork_pr_workflows: {
       run_workflows_from_fork_pull_requests: forkPrWorkflows.run_workflows_from_fork_pull_requests === true,
@@ -329,11 +354,15 @@ function jsonEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-async function applyRepositorySecurity(desired) {
+async function applyRepositoryCore(desired) {
   await gh(repositoryPath, {
     method: 'PATCH',
     body: JSON.stringify(desired.repository),
   });
+}
+
+async function applyRepositorySecurity(desired) {
+  await applyRepositoryCore(desired);
   await gh(`${repositoryPath}/actions/permissions`, {
     method: 'PUT',
     body: JSON.stringify(desired.actions_permissions),
@@ -346,10 +375,12 @@ async function applyRepositorySecurity(desired) {
     method: 'PUT',
     body: JSON.stringify(desired.private_repo_access),
   });
-  await gh(`${repositoryPath}/actions/permissions/fork-pr-contributor-approval`, {
-    method: 'PUT',
-    body: JSON.stringify(desired.fork_pr_approval),
-  });
+  if (desired.fork_pr_approval.supported) {
+    await gh(`${repositoryPath}/actions/permissions/fork-pr-contributor-approval`, {
+      method: 'PUT',
+      body: JSON.stringify({ approval_policy: desired.fork_pr_approval.approval_policy }),
+    });
+  }
   await gh(`${repositoryPath}/actions/permissions/fork-pr-workflows-private-repos`, {
     method: 'PUT',
     body: JSON.stringify(desired.fork_pr_workflows),
@@ -362,23 +393,51 @@ async function applyRepositorySecurity(desired) {
   await gh(`${repositoryPath}/automated-security-fixes`, { method: 'PUT' });
 }
 
+async function applyAndVerifyRuleset({ existing, desiredRuleset, desiredRulesetNormalized }) {
+  if (existing) {
+    await gh(`${repositoryPath}/rulesets/${existing.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(desiredRuleset),
+    });
+  } else {
+    await gh(`${repositoryPath}/rulesets`, {
+      method: 'POST',
+      body: JSON.stringify(desiredRuleset),
+    });
+  }
+
+  const afterRulesets = await gh(`${repositoryPath}/rulesets`);
+  const afterSummary = afterRulesets.find((ruleset) => ruleset.name === desiredRuleset.name);
+  if (!afterSummary) throw new Error('Ruleset fehlt nach Apply');
+  const afterRuleset = await gh(`${repositoryPath}/rulesets/${afterSummary.id}`);
+  enforceRulesetFloor(afterRuleset);
+  const afterRulesetNormalized = normalizedRuleset(afterRuleset);
+  if (!jsonEqual(afterRulesetNormalized, desiredRulesetNormalized)) {
+    throw new Error(`Ruleset Post-Apply-Verifikation fehlgeschlagen:\n${JSON.stringify({ after: afterRulesetNormalized, expected: desiredRulesetNormalized }, null, 2)}`);
+  }
+}
+
 const expected = JSON.parse(fs.readFileSync(EXPECTED_PATH, 'utf8'));
-const desiredRuleset = buildDesiredRuleset(expected);
-const desiredSecurity = desiredRepositorySecurity(expected);
+const rulesets = await gh(`${repositoryPath}/rulesets`);
+const existing = rulesets.find((ruleset) => ruleset.name === expected.ruleset_name);
+const currentRuleset = existing ? await gh(`${repositoryPath}/rulesets/${existing.id}`) : null;
+const desiredRuleset = preserveApprovedLiveRules(buildDesiredRuleset(expected), currentRuleset);
 enforceRulesetFloor(desiredRuleset);
+
+const currentSecurity = await readRepositorySecurity();
+const desiredSecurity = desiredRepositorySecurity(expected, {
+  forkPrApprovalSupported: currentSecurity.fork_pr_approval.supported,
+});
 enforceRepositoryFloor(desiredSecurity);
 
-const rulesets = await gh(`${repositoryPath}/rulesets`);
-const existing = rulesets.find((r) => r.name === expected.ruleset_name);
-const currentRuleset = existing ? await gh(`${repositoryPath}/rulesets/${existing.id}`) : null;
 const currentRulesetNormalized = currentRuleset ? normalizedRuleset(currentRuleset) : null;
 const desiredRulesetNormalized = normalizedRuleset(desiredRuleset);
 const rulesetChanged = !jsonEqual(currentRulesetNormalized, desiredRulesetNormalized);
-
-const currentSecurity = await readRepositorySecurity();
 const repositoryChanged = !jsonEqual(currentSecurity, desiredSecurity);
+const repositoryCoreChanged = !jsonEqual(currentSecurity.repository, desiredSecurity.repository);
 
 console.log('## GitHub Security Reconciliation');
+console.log(`mode=${mode}`);
 console.log('### Ruleset');
 console.log('```json');
 console.log(JSON.stringify({ current: currentRulesetNormalized ?? '(existiert noch nicht)', desired: desiredRulesetNormalized }, null, 2));
@@ -389,46 +448,39 @@ console.log('```json');
 console.log(JSON.stringify({ current: currentSecurity, desired: desiredSecurity }, null, 2));
 console.log('```');
 console.log(`repository_changed=${repositoryChanged}`);
+console.log(`repository_core_changed=${repositoryCoreChanged}`);
+console.log(`fork_pr_contributor_approval_supported=${currentSecurity.fork_pr_approval.supported}`);
+if (!currentSecurity.fork_pr_approval.supported) {
+  console.log('fork-pr-contributor-approval ist fuer diese private Repository-Konstellation nicht verfuegbar; private Fork-Workflow-Approval bleibt separat fail-closed erforderlich.');
+}
 if (process.env.GITHUB_OUTPUT) {
-  fs.appendFileSync(process.env.GITHUB_OUTPUT, `ruleset_changed=${rulesetChanged}\nrepository_changed=${repositoryChanged}\n`);
+  fs.appendFileSync(
+    process.env.GITHUB_OUTPUT,
+    `ruleset_changed=${rulesetChanged}\nrepository_changed=${repositoryChanged}\nrepository_core_changed=${repositoryCoreChanged}\n`,
+  );
 }
 
-if (mode === 'apply') {
-  // Ruleset first: the merge boundary is the critical security floor. If a secondary repository
-  // endpoint later fails due to product/account constraints, the branch protection still becomes
-  // stronger rather than remaining at the old weak baseline.
-  if (rulesetChanged) {
-    if (existing) {
-      await gh(`${repositoryPath}/rulesets/${existing.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(desiredRuleset),
-      });
-    } else {
-      await gh(`${repositoryPath}/rulesets`, {
-        method: 'POST',
-        body: JSON.stringify(desiredRuleset),
-      });
-    }
-  }
+if (mode === 'plan') {
+  console.log('Plan-only: keine GitHub-Einstellung wurde veraendert.');
+  process.exit(0);
+}
 
-  const afterRulesets = await gh(`${repositoryPath}/rulesets`);
-  const afterSummary = afterRulesets.find((r) => r.name === expected.ruleset_name);
-  if (!afterSummary) throw new Error('Ruleset fehlt nach Apply');
-  const afterRuleset = await gh(`${repositoryPath}/rulesets/${afterSummary.id}`);
-  const afterRulesetNormalized = normalizedRuleset(afterRuleset);
-  enforceRulesetFloor(afterRuleset);
-  if (!jsonEqual(afterRulesetNormalized, desiredRulesetNormalized)) {
-    throw new Error(`Ruleset Post-Apply-Verifikation fehlgeschlagen:\n${JSON.stringify({ after: afterRulesetNormalized, expected: desiredRulesetNormalized }, null, 2)}`);
-  }
+if (rulesetChanged) {
+  await applyAndVerifyRuleset({ existing, desiredRuleset, desiredRulesetNormalized });
+}
 
-  if (repositoryChanged) {
-    await applyRepositorySecurity(desiredSecurity);
-  }
+if (mode === 'apply-package-a') {
+  if (repositoryCoreChanged) await applyRepositoryCore(desiredSecurity);
   const afterSecurity = await readRepositorySecurity();
-  enforceRepositoryFloor(afterSecurity);
-  if (!jsonEqual(afterSecurity, desiredSecurity)) {
-    throw new Error(`Repository Post-Apply-Verifikation fehlgeschlagen:\n${JSON.stringify({ after: afterSecurity, expected: desiredSecurity }, null, 2)}`);
-  }
-
-  console.log('GitHub Ruleset + Repository/Actions hardening applied and fail-closed post-write verified.');
+  enforceRepositoryCore(afterSecurity, desiredSecurity);
+  console.log('Package A applied: Ruleset-Kernschutz und Repository-Core wurden fail-closed verifiziert; Paket-B-Einstellungen blieben unangetastet.');
+  process.exit(0);
 }
+
+if (repositoryChanged) await applyRepositorySecurity(desiredSecurity);
+const afterSecurity = await readRepositorySecurity();
+enforceRepositoryFloor(afterSecurity);
+if (!jsonEqual(afterSecurity, desiredSecurity)) {
+  throw new Error(`Repository Post-Apply-Verifikation fehlgeschlagen:\n${JSON.stringify({ after: afterSecurity, expected: desiredSecurity }, null, 2)}`);
+}
+console.log('Full apply: GitHub Ruleset + Repository/Actions hardening applied and fail-closed post-write verified.');
