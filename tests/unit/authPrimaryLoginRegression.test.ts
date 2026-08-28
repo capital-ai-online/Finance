@@ -11,6 +11,7 @@ const sessionComposition = read('src/app/auth/SessionComposition.tsx');
 const loginStepUpGate = read('src/components/LoginStepUpGate.tsx');
 const hcaptcha = read('src/lib/hcaptcha.ts');
 const dockerfile = read('Dockerfile');
+const renderBlueprint = read('render.yaml');
 
 describe('website primary login regression boundary', () => {
   it('keeps Google OAuth available as a supported website login', () => {
@@ -70,5 +71,10 @@ describe('website primary login regression boundary', () => {
     expect(dockerfile).toContain('ARG VITE_HCAPTCHA_SITE_KEY');
     expect(dockerfile).toContain('VITE_HCAPTCHA_SITE_KEY=$VITE_HCAPTCHA_SITE_KEY');
     expect(dockerfile).not.toContain('HCAPTCHA_SECRET');
+  });
+
+  it('declares the public site key as externally managed Render build configuration', () => {
+    expect(renderBlueprint).toMatch(/- key: VITE_HCAPTCHA_SITE_KEY\s+sync: false/);
+    expect(renderBlueprint).not.toContain('HCAPTCHA_SECRET');
   });
 });
