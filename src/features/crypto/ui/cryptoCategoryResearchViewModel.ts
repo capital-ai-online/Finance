@@ -1,12 +1,12 @@
 import { ClassificationService } from '../../../services/classification.service';
 import {
-  CRYPTO_CATEGORY_ANALYSIS_PROFILES,
   resolveCryptoAnalysisProfile,
   type CryptoAnalysisProfileId,
   type CryptoMetricDirection,
   type CryptoProfileBinding,
   type CryptoProfileSourceStatus,
 } from '../../../platform/FinTechCore/CryptoModuleContracts';
+import { resolveEffectiveCryptoCategoryAnalysisProfile } from '../../../platform/FinTechCore/Modules/Crypto/CryptoMemeProfileSupersession';
 import {
   CRYPTO_DEFI_RESEARCH_MODEL_CONTRACT,
   CRYPTO_MEME_RESEARCH_MODEL_CONTRACT,
@@ -152,7 +152,7 @@ export function buildCryptoCategoryResearchViewModel(
   const symbol = symbolInput.toUpperCase().trim();
   const classification = classificationOverride ?? ClassificationService.classifyAsset(symbol);
   const binding = resolveCryptoAnalysisProfile(classification.category_main);
-  const profile = CRYPTO_CATEGORY_ANALYSIS_PROFILES[binding.profileId];
+  const profile = resolveEffectiveCryptoCategoryAnalysisProfile(binding.profileId);
 
   const metrics = profile.metrics.map((metric) => Object.freeze({
     key: metric.metric,
