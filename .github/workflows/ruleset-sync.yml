@@ -1,0 +1,56 @@
+name: Ruleset Sync (main-production-protection)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/policies/main-production-protection.expected.json'
+      - '.github/workflows/ruleset-sync.yml'
+      - 'scripts/security/rulesetSync.mjs'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'true = nur Diff anzeigen, keine Aenderung anwenden'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ruleset-sync
+  cancel-in-progress: false
+
+# Dieser Workflow ist bewusst NICHT zeitgesteuert. Er verbraucht Runner-Zeit nur bei einer
+# Aenderung des Ruleset-Sollzustands/Sync-Codes oder bei explizitem manuellen Aufruf. Die
+# Sicherheitsmutation wird nicht durch das optionale Repository-Advisory-Kostenbudget unterdrueckt.
+jobs:
+  sync:
+    name: Ruleset lesen, Diff anzeigen, ggf. anwenden
+    # Environment-Secrets duerfen niemals an eine Branch-Version dieses Workflows gelangen.
+    # Auch workflow_dispatch wird deshalb ausschliesslich auf dem geschuetzten main ausgefuehrt.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: ruleset-admin
+    permissions:
+      contents: read
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Ruleset lesen, Diff anzeigen, ggf. anwenden
+        env:
+          GH_TOKEN: ${{ secrets.RULESET }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/main'
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.dry_run }}" = "false" ]; then
+            MODE=apply
+          else
+            MODE=plan
+          fi
+          node scripts/security/rulesetSync.mjs "$MODE" >> "$GITHUB_STEP_SUMMARY"

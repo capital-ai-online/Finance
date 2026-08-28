@@ -61,7 +61,7 @@ describe('governance authority consistency', () => {
       promotion?: Record<string, string | null>;
     };
 
-    expect(policy.schema_version).toBe('1.2');
+    expect(policy.schema_version).toBe('1.3');
     expect(policy.authority?.accepted_decision).toContain('ADR-0069');
     expect(policy.authority?.historical_decision_records_are_non_normative).toBe(true);
     expect(policy.promotion?.['decision_2026-08-16_owner_gate_retired']).toContain('retired');

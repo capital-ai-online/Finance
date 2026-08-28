@@ -1,11 +1,11 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "repository": "SvenKulessa/Finance",
   "target": "refs/heads/main",
   "ruleset_name": "main-production-protection",
   "authority": {
-    "current_as_of": "2026-08-19",
-    "accepted_decision": "ADR-0069 including Owner addendum 2026-08-16 + ADR-0066/ESS-0022 M10 Controlled Cutover",
+    "current_as_of": "2026-08-28",
+    "accepted_decision": "ADR-0069 including Owner addendum 2026-08-16 + ADR-0066/ESS-0022 M10 Controlled Cutover + Owner-authorized 2026-08-28 repository hardening",
     "pre_m10_ci_authorization": "Historical state before M10 Controlled Cutover: technical CI started on normal PR events without legacy checkbox/Viewed/emoji authorization.",
     "merge_authorization": "Human/Owner-only; M10 CI authorization and CI success never authorize merge.",
     "m10_future_state": "Controlled-Cutover target: normal PR events fail cheaply before expensive CI; a PR-state-bound Owner Passkey/WebAuthn AUTHORIZE_PR_CI approval is atomically consumed exactly once and dispatches build-and-test on the approved current head through a single-use server workflow gate. This becomes enforced only after Human merge/deployment and post-cutover verification.",
@@ -15,13 +15,44 @@
     "pull_request": true,
     "required_status_checks": [
       "build-and-test",
+      "PR Governance (Kosten / Workflow / Vorlage)",
+      "Hardened image / HIGH+CRITICAL CVE gate",
       "GitGuardian Security Checks"
     ],
     "strict_required_status_checks_policy": true,
     "deletion_protection": false,
     "non_fast_forward_protection": true,
     "require_code_owner_review": true,
+    "required_review_thread_resolution": true,
+    "require_extra_approval_for_unattributed_changes": true,
     "bypass_actors": []
+  },
+  "repository_hardening": {
+    "web_commit_signoff_required": true,
+    "allow_auto_merge": false,
+    "delete_branch_on_merge": true,
+    "actions": {
+      "enabled": true,
+      "allowed_actions": "all",
+      "sha_pinning_required": true,
+      "default_workflow_permissions": "read",
+      "can_approve_pull_request_reviews": false,
+      "private_repo_access_level": "none",
+      "fork_pr_approval_policy": "all_external_contributors",
+      "fork_pr_workflows": {
+        "run_workflows_from_fork_pull_requests": true,
+        "send_write_tokens_to_workflows": false,
+        "send_secrets_and_variables": false,
+        "require_approval_for_fork_pr_workflows": true
+      },
+      "artifact_and_log_retention_days": 90
+    },
+    "vulnerability_alerts": true,
+    "dependabot_security_updates": true,
+    "plan_bound_features": {
+      "secret_scanning_and_push_protection": "do-not-force-via-this-sync; availability is plan/product dependent and GitGuardian remains the required external secret detector",
+      "codeql": "not-enabled-by-this-sync; prior repository decision intentionally avoids redundant CodeQL SAST"
+    }
   },
   "promotion": {
     "state": "m10_controlled_cutover_pending_human_merge_and_postmerge_verification",
@@ -29,6 +60,8 @@
     "shadow_check": null,
     "promotion_gate": "M10 Phase-6 Shadow/Negative/Recovery assurance VERIFIED PASS on 2026-08-19. Controlled-Cutover code still requires Human merge, deployment, exactly-one approved current-head build-and-test, unapproved no-expensive-CI evidence, replay/drift/recovery checks and final traceability sync before M10 COMPLETE.",
     "rollback": "Before cutover merge, preserve the simplified pre-M10 PR CI path. After cutover merge, fail closed and repair through a fresh Human-authorized branch; never restore emoji/checkbox/Viewed/label/reaction authorization as a fallback.",
+    "decision_2026-08-28_ruleset_hardening": "After Human merge, main-production-protection must require build-and-test, PR Governance, the hardened image HIGH/CRITICAL CVE gate and GitGuardian; status checks are strict/up-to-date, CODEOWNER review and review-thread resolution remain enabled, unattributed changes require extra approval, non-fast-forward protection remains enabled and bypass actors remain empty. The single-owner deletion-protection exception remains an explicit residual risk to avoid creating a permanent bypass actor or repository administration deadlock.",
+    "decision_2026-08-28_repository_hardening": "The same main-only ruleset-admin reconciliation also enforces repository-wide baseline controls that are available with repository Administration permission: GitHub Actions SHA pinning, read-only default workflow token, no workflow PR approvals, no external private workflow access, fail-closed fork-PR token/secret boundaries, 90-day artifact/log retention, web commit signoff, vulnerability alerts and Dependabot security updates. Plan-bound GHAS/CodeQL/secret-scanning settings are not blindly toggled.",
     "historical_decision_2026-08-14": "At that date, Owner required the then-existing Human/Owner comment-gate and head-bound evidence during the capital-ai-ci migration. This is retained as historical evidence only and was superseded for current process by the Accepted ADR-0069 Owner addendum dated 2026-08-16.",
     "decision_2026-08-14b": "Owner created the live ruleset with deletion_protection deliberately left disabled: in the current single-owner topology, enabling it forced a bypass actor entry to remain administrable, which would itself reintroduce a bypass exception. Accepted residual risk: main can currently be deleted without a ruleset block. Revisit once a second trusted reviewer identity exists (see single_owner_topology.promotion_condition). Owner also enabled require_code_owner_review; .github/CODEOWNERS received a `* @SvenKulessa` catch-all the same day so the rule covers paths beyond the previously explicit list.",
     "decision_2026-08-14c": "GitHub Advanced Security CodeQL was evaluated against the already-active Snyk Code check (context code/snyk) and found redundant for SAST coverage (both do semantic source-code vulnerability analysis; Snyk Code needs no GitHub Actions runtime, matching ADR-0070's no-new-workflow design). Owner decided against CodeQL as a required check. GitGuardian Security Checks and both Snyk contexts (security/snyk, code/snyk) passed on three independent head-bound pull requests (#249, #250, #251), exceeding ADR-0070's two-head promotion gate, and were promoted to required checks with Owner approval. See docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md.",
