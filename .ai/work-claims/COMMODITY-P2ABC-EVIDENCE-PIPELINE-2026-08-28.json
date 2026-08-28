@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "COMMODITY-P2ABC-EVIDENCE-PIPELINE-2026-08-28",
+  "status": "active",
+  "exclusive": true,
+  "branch": "feat/commodity-p2abc-evidence-pipeline-2026-08-28",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Continue SC-2 Commodity P2-A through P2-C by composing the existing correlation, sensitivity, PIT/OOS, descriptor, resilience, stress and promotion-review primitives into one fail-closed evidence pipeline without creating scoring or promotion authority, and close all repository-verifiable follow-up gaps on PR #576.",
+  "workItemDE": "SC-2 Commodity P2-A bis P2-C fortführen, die bestehenden Correlation-, Sensitivity-, PIT/OOS-, Descriptor-, Resilience-, Stress- und Promotion-Review-Primitiven zu einer fail-closed Evidence-Pipeline verbinden und alle repository-verifizierbaren Folgeschritte auf PR #576 schließen, ohne Scoring- oder Promotion-Authority einzuführen.",
+  "startedAt": "2026-08-28T13:00:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "fc891ac601daa1a77cf25450b324a1f9ba5ed93d",
+  "claimedPaths": [
+    "src/platform/Scoring/CommodityP2EvidencePipeline.ts",
+    "src/platform/Scoring/index.ts",
+    "tests/unit/commodityP2EvidencePipeline.test.ts",
+    "docs/evidence/sc-md/SC_COMMODITY_P2ABC_EVIDENCE_PIPELINE_2026-08-28.md",
+    "docs/evidence/sc-md/SC_COMMODITY_P2_EMPIRICAL_READINESS_2026-08-28.md",
+    "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
+    "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
+    "docs/adr/registry.json",
+    "docs/governance/authority-registry.json",
+    ".ai/work-claims/COMMODITY-P2ABC-EVIDENCE-PIPELINE-2026-08-28.json"
+  ],
+  "nonGoals": [
+    "Fabricating or reconstructing historical PIT values from current mutable provider APIs",
+    "Changing ScoringModelRegistry or ScoringDispatcher authority",
+    "Promoting any Commodity challenger to champion",
+    "Creating CanonicalScoreResult, ranking, trading or execution authority",
+    "Adding MLflow, Evidently or another parallel MLOps/model-registry runtime",
+    "Render, Supabase, Stripe, secret, workflow or dependency mutation",
+    "Marking P2-A or P2-B empirical exit gates complete without real archived evidence"
+  ],
+  "releaseCondition": "Writer authority ends at a terminal PR/work-item event; release through normal branch/PR governance with terminal evidence."
+}
