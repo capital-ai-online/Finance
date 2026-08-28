@@ -9,6 +9,7 @@ dist
 !.github/workflows/
 .github/workflows/*
 !.github/workflows/google-marketing-protected-change.yml
+.mcp.json
 Dockerfile
 .dockerignore
 README.md
