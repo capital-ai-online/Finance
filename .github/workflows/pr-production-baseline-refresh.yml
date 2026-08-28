@@ -1,17 +1,21 @@
 name: PR Production Baseline Auto-Refresh
 run-name: >-
-  PR #${{ github.event.workflow_run.pull_requests[0].number || 'N/A' }} – Produktions-Baseline korrelieren und Governance revalidieren
+  ${{ github.event.workflow_run.name == 'CI' && github.event.workflow_run.event == 'push'
+      && format('main@{0} – Produktions-Baselines nach verifiziertem Deploy korrelieren', github.event.workflow_run.head_sha)
+      || format('PR #{0} – Produktions-Baseline korrelieren und Governance revalidieren', github.event.workflow_run.pull_requests[0].number || 'N/A') }}
 
 # Trusted default-branch writer:
 # - PR Governance remains read-only and fail-closed.
-# - This workflow runs only after that workflow completed and therefore uses the workflow definition from main.
+# - The workflow reacts to either completed PR Governance or a successfully completed main CI run.
+# - A main-CI trigger is accepted only when the exact main SHA also has a successful
+#   "Deployment verifiziert / Render-Produktion" job and /healthz reports that same SHA.
 # - Candidate code is checked out as data but never executed; all executed policy scripts come from main.
 # - The updater replaces only the canonical baseline block and is idempotent.
-# - A real baseline write explicitly re-runs the exact triggering Governance run after revalidating PR head and main.
+# - A real baseline write explicitly re-runs exact-head/base PR Governance after revalidating PR head and main.
 #   This is required because mutations made with GITHUB_TOKEN do not recursively emit a new pull_request:edited workflow.
 on:
   workflow_run:
-    workflows: ['PR Governance']
+    workflows: ['PR Governance', 'CI']
     types: [completed]
 
 permissions:
@@ -20,13 +24,15 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-production-baseline-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+  group: >-
+    pr-production-baseline-${{ github.event.workflow_run.name == 'CI' && github.event.workflow_run.event == 'push' && 'main-deploy' || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
   refresh-baseline:
     name: Atomare Produktions-Baseline vertrauenswürdig nachziehen
     if: >-
+      github.event.workflow_run.name == 'PR Governance' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.pull_requests[0].number != null
     runs-on: ubuntu-latest
@@ -192,3 +198,287 @@ jobs:
       - name: Nicht autorisierten PR ohne Mutation überspringen
         if: steps.pr.outputs.eligible != 'true'
         run: echo "Kein offener same-repository PR gegen main; Baseline-Write bleibt deaktiviert."
+
+  discover_post_deploy_prs:
+    name: Verifiziertes Production/Main korrelieren und synchronisierte PRs bestimmen
+    if: >-
+      github.event.workflow_run.name == 'CI' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.conclusion == 'success'
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.reconcile.outputs.matrix }}
+      count: ${{ steps.reconcile.outputs.count }}
+      main_sha: ${{ steps.reconcile.outputs.main_sha }}
+      production_sha: ${{ steps.reconcile.outputs.production_sha }}
+
+    steps:
+      - name: Vertrauenswürdigen aktuellen main-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Exakten aktuellen main-SHA binden
+        id: policy_main
+        working-directory: policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Production/Main/Deploy korrelieren und PR-Matrix bilden
+        id: reconcile
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v8.0.0
+        env:
+          TRUSTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const fail = (message) => { throw new Error(message); };
+            const sourceRun = context.payload.workflow_run;
+            const mainSha = normalizeSha(process.env.TRUSTED_MAIN_SHA);
+            const sourceHeadSha = normalizeSha(sourceRun.head_sha);
+
+            if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('Aktueller trusted-main SHA ist ungültig.');
+            if (!/^[0-9a-f]{40}$/.test(sourceHeadSha)) fail('Triggering CI head_sha ist ungültig.');
+            if (sourceRun.name !== 'CI' || sourceRun.event !== 'push' || sourceRun.head_branch !== 'main') {
+              fail('Post-Deploy-Reconciliation akzeptiert ausschließlich den CI push/main Pfad.');
+            }
+            if (sourceRun.conclusion !== 'success') fail(`Triggering CI ist nicht erfolgreich: ${sourceRun.conclusion}`);
+
+            if (sourceHeadSha !== mainSha) {
+              core.notice(
+                `CI-Deploy ${sourceHeadSha.slice(0, 12)} ist nicht mehr aktueller main ${mainSha.slice(0, 12)}; keine PR-Baseline wird aus einem überholten Deploy-Event geschrieben.`,
+              );
+              core.setOutput('matrix', JSON.stringify({ include: [] }));
+              core.setOutput('count', '0');
+              core.setOutput('main_sha', mainSha);
+              core.setOutput('production_sha', 'stale-source-run');
+              return;
+            }
+
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: sourceRun.id,
+              per_page: 100,
+            });
+            const deployJob = jobs.find((job) => job.name === 'Deployment verifiziert / Render-Produktion');
+            if (!deployJob || deployJob.status !== 'completed' || deployJob.conclusion !== 'success') {
+              fail('Triggering main-CI besitzt keinen erfolgreich abgeschlossenen verifizierten Produktions-Deploy-Job.');
+            }
+
+            const healthResponse = await fetch('https://capital-ai.online/healthz', {
+              headers: { Accept: 'application/json' },
+              signal: AbortSignal.timeout(15_000),
+            });
+            if (!healthResponse.ok) fail(`Production /healthz antwortet mit HTTP ${healthResponse.status}.`);
+            const health = await healthResponse.json();
+            if (health?.status !== 'ok') fail(`Production /healthz meldet status=${String(health?.status)}.`);
+
+            const payloadSha = normalizeSha(health?.deployment?.commitSha);
+            const headerSha = normalizeSha(healthResponse.headers.get('x-capital-ai-commit'));
+            if (payloadSha && headerSha && payloadSha !== headerSha) {
+              fail(`Production-Identität widerspricht sich zwischen JSON und Header (${payloadSha} != ${headerSha}).`);
+            }
+            const productionSha = payloadSha || headerSha;
+            if (!/^[0-9a-f]{40}$/.test(productionSha)) fail('Production /healthz liefert keinen gültigen immutable Commit-SHA.');
+            if (productionSha !== mainSha || productionSha !== sourceHeadSha) {
+              fail(
+                `Post-Deploy-Korrelation fehlgeschlagen: production=${productionSha.slice(0, 12)}, main=${mainSha.slice(0, 12)}, source=${sourceHeadSha.slice(0, 12)}.`,
+              );
+            }
+
+            const pulls = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              base: 'main',
+              per_page: 100,
+            });
+
+            const include = [];
+            const skipped = [];
+            for (const pr of pulls) {
+              const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
+              const headSha = normalizeSha(pr.head?.sha);
+              if (!sameRepo || !/^[0-9a-f]{40}$/.test(headSha)) {
+                skipped.push(`#${pr.number}:cross-repo-or-invalid-head`);
+                continue;
+              }
+
+              const compare = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                basehead: `${mainSha}...${headSha}`,
+              });
+              const containsMain = compare.data.status === 'ahead' || compare.data.status === 'identical';
+              if (!containsMain) {
+                skipped.push(`#${pr.number}:not-synced(${compare.data.status})`);
+                continue;
+              }
+
+              include.push({
+                pr_number: Number(pr.number),
+                head_sha: headSha,
+                base_sha: mainSha,
+              });
+            }
+
+            core.setOutput('matrix', JSON.stringify({ include }));
+            core.setOutput('count', String(include.length));
+            core.setOutput('main_sha', mainSha);
+            core.setOutput('production_sha', productionSha);
+            core.notice(
+              `Post-Deploy-Korrelation PASS: production=main=${mainSha.slice(0, 12)}; ${include.length} synchronisierte offene PR(s), ${skipped.length} fail-closed übersprungen.`,
+            );
+            await core.summary
+              .addHeading('Production/Main/PR Korrelation')
+              .addRaw(`Production = main = \`${mainSha}\`. Synchronisierte PRs: ${include.length}. Übersprungen: ${skipped.length ? skipped.join(', ') : 'keine'}.`)
+              .write();
+
+  refresh_post_deploy_baselines:
+    name: PR #${{ matrix.pr_number }} nach verifiziertem Production-Deploy nachziehen
+    needs: discover_post_deploy_prs
+    if: ${{ needs.discover_post_deploy_prs.result == 'success' && needs.discover_post_deploy_prs.outputs.count != '0' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.discover_post_deploy_prs.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Gebundenen trusted-main Policy-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ matrix.base_sha }}
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Exakten Kandidaten-Head ohne persistierte Zugangsdaten auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ matrix.head_sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Gebundenen main-Stand in Kandidaten-Repository importieren
+        working-directory: candidate
+        env:
+          EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags ../policy "$EXPECTED_MAIN_SHA:refs/remotes/origin/main"
+          test "$(git rev-parse refs/remotes/origin/main)" = "$EXPECTED_MAIN_SHA"
+          git merge-base --is-ancestor "$EXPECTED_MAIN_SHA" HEAD
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+
+      - name: Produktions-Baseline mit gebundener trusted-main Policy neu erzeugen
+        working-directory: candidate
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+        run: node ../policy/scripts/pr/productionPreflight.mjs
+
+      - name: Nur kanonischen Produktions-Baseline-Block aktualisieren
+        id: refresh
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+        run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
+
+      - name: Geänderte Baseline an exakte vorhandene PR-Governance binden und erneut ausführen
+        if: steps.refresh.outputs.changed == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v8.0.0
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ matrix.head_sha }}
+          EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const fail = (message) => { throw new Error(message); };
+            const prNumber = Number(process.env.PR_NUMBER);
+            const expectedHeadSha = normalizeSha(process.env.EXPECTED_HEAD_SHA);
+            const expectedMainSha = normalizeSha(process.env.EXPECTED_MAIN_SHA);
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
+            if (pr.state !== 'open' || pr.base?.ref !== 'main' || !sameRepo) {
+              fail(`PR #${prNumber} verließ die erlaubte open/same-repo/main-Grenze nach dem Baseline-Write.`);
+            }
+            if (normalizeSha(pr.head?.sha) !== expectedHeadSha) {
+              fail(`PR #${prNumber} Head änderte sich nach dem Baseline-Write.`);
+            }
+
+            const { data: main } = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main',
+            });
+            if (normalizeSha(main.commit?.sha) !== expectedMainSha) {
+              fail(`main änderte sich nach dem Baseline-Write für PR #${prNumber}; Governance-Re-Run wird verweigert.`);
+            }
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event: 'pull_request',
+              head_sha: expectedHeadSha,
+              status: 'completed',
+              per_page: 100,
+            });
+            const exactRun = runs
+              .filter((run) => run.name === 'PR Governance')
+              .filter((run) => (run.pull_requests || []).some((item) =>
+                Number(item.number) === prNumber &&
+                normalizeSha(item.head?.sha) === expectedHeadSha &&
+                normalizeSha(item.base?.sha) === expectedMainSha))
+              .sort((a, b) => Number(b.id) - Number(a.id))[0];
+
+            if (!exactRun) {
+              fail(`Keine abgeschlossene PR-Governance für PR #${prNumber} auf exakt head/base ${expectedHeadSha.slice(0, 12)}/${expectedMainSha.slice(0, 12)} gefunden.`);
+            }
+
+            await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: exactRun.id,
+            });
+            core.notice(
+              `PR #${prNumber}: Post-Deploy-Baseline aktualisiert; exact-head/base Governance Run ${exactRun.id} wird erneut ausgeführt.`,
+            );
+
+      - name: Unveränderte Post-Deploy-Baseline bestätigen
+        if: steps.refresh.outputs.changed != 'true'
+        run: echo "PR #${{ matrix.pr_number }} Baseline bereits korrekt; kein Body-Write und kein Governance-Re-Run."
