@@ -1,5 +1,7 @@
 // Verified crypto feature facade. Legacy implementations are migrated slice by slice per BB-6.
-export { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
+export { CryptoScoringWorkspace as CryptoScoringEnterprise } from './CryptoScoringWorkspace';
+export type { CryptoScoringEnterpriseProps } from './CryptoScoringWorkspace';
+export { CryptoCategoryResearchLenses } from './CryptoCategoryResearchLenses';
 export { DeFiOrchestration } from '../../../components/DeFiOrchestration';
 export { EnterpriseBinanceQuickAnalysis } from './EnterpriseBinanceQuickAnalysis';
 export { EnterpriseAsset4hChart } from './EnterpriseAsset4hChart';
