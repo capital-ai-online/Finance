@@ -20,6 +20,8 @@
     "tests/unit/commodityP2EvidencePipeline.test.ts",
     "docs/evidence/sc-md/SC_COMMODITY_P2ABC_EVIDENCE_PIPELINE_2026-08-28.md",
     "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
+    "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
+    "docs/adr/registry.json",
     ".ai/work-claims/COMMODITY-P2ABC-EVIDENCE-PIPELINE-2026-08-28.json"
   ],
   "nonGoals": [
