@@ -28,17 +28,15 @@
     "docs/evidence/fintech-core/FT6A_MIGRATION_LEDGER_RECOVERY_POST_MUTATION_2026-08-28.md",
     "docs/evidence/sc-md/SC3_P1A_CRYPTO_HONEYPOT_COVERAGE_VALIDATION_2026-08-28.md",
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
-    "src/platform/MarketData/providers/GoPlusTransactionSimulationProvider.ts",
-    "src/platform/FinTechCore/Modules/Crypto/Adapters/GoPlusHoneypotSimulationEvidenceAdapter.ts",
     "src/platform/FinTechCore/Modules/Crypto/Validation/HoneypotSimulationValidation.ts",
     "src/platform/FinTechCore/index.ts",
-    "tests/unit/goPlusTransactionSimulationEvidence.test.ts"
+    "tests/unit/honeypotSimulationValidation.test.ts"
   ],
   "scope": {
     "included": [
       "close PR #574 coordination metadata with verified post-mutation evidence",
       "fail closed on stale or excessively skewed BUY/SELL simulation observations",
-      "treat GoPlus partial application responses as incomplete evidence rather than valid simulation output",
+      "bind exact chain/token/route coverage to versioned empirical coverage evidence",
       "add deterministic independent-label validation metrics without promotion authority",
       "update the canonical Crypto roadmap to current main and P1-A status"
     ],
@@ -46,6 +44,7 @@
       "constructing trade routes or calldata",
       "live exchange execution, signing or broadcast",
       "automatic retries that consume provider quota",
+      "changing the existing GoPlus transport/provider contract in this slice",
       "hard-coded production performance thresholds",
       "claiming real known-positive/negative accuracy from test fixtures",
       "Meme/DeFi productive model promotion",
@@ -59,6 +58,6 @@
     "riskApprovalAuthorityCreated": false,
     "executionAuthorityCreated": false,
     "ft7RemainsBlocked": true,
-    "missingOrStaleEvidencePolicy": "NOT_COMPUTABLE"
+    "missingOrStaleEvidencePolicy": "NOT_ADMITTED/NOT_COMPUTABLE"
   }
 }
