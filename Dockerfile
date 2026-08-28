@@ -43,14 +43,13 @@ WORKDIR /app
 RUN chown node:node /app
 USER node
 COPY --chown=node:node package*.json ./
+# esbuild is required to BUILD the application but is not executed by the production server.
+# Its precompiled Go binaries carried fixable HIGH/CRITICAL CVEs. Remove them before this
+# stage is copied into the runner so the vulnerable binaries never enter a final-image layer.
+# Vite is statically imported by the legacy composition root, so verify that its module can
+# still be loaded without the removed executable; createServer is never invoked in production.
 RUN npm ci --omit=dev \
-  # esbuild is required to BUILD the application but is not executed by the production server.
-  # Its precompiled Go binaries carried fixable HIGH/CRITICAL CVEs. Remove them before this
-  # stage is copied into the runner so the vulnerable binaries never enter a final-image layer.
   && rm -rf /app/node_modules/esbuild /app/node_modules/@esbuild \
-  # Vite is statically imported by the legacy composition root, so verify that its module can
-  # still be loaded without the removed esbuild executable. createServer itself is never invoked
-  # in NODE_ENV=production; a future source cleanup can move Vite fully to devDependencies.
   && node --input-type=module -e "const vite = await import('vite'); if (typeof vite.createServer !== 'function') process.exit(1)" \
   && npm cache clean --force
 
@@ -58,12 +57,10 @@ FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a
 WORKDIR /app
 
 # Patch the fixable OpenSSL CVEs that were present in the immutable upstream image. Keeping the
-# upstream digest pinned preserves source-image identity; the image CVE gate below verifies the
-# resulting runtime filesystem and blocks future fixable HIGH/CRITICAL regressions.
+# upstream digest pinned preserves source-image identity; the image CVE gate verifies the result.
+# npm/yarn/corepack are package-management tooling, not runtime requirements. The pinned Node
+# base currently bundles fixable HIGH/CRITICAL vulnerabilities there, so remove the tooling.
 RUN apk upgrade --no-cache libcrypto3 libssl3 \
-  # npm/yarn/corepack are build/package-management tooling, not runtime requirements. The pinned
-  # Node base currently bundles fixable HIGH/CRITICAL vulnerabilities in this toolchain. Remove
-  # it entirely from the runtime filesystem instead of trying to keep unused package managers patched.
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-* \
   && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
     /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm /usr/local/bin/pnpx
@@ -90,7 +87,6 @@ ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
 # Deny writes to all application/dependency artifacts; only uploads and the dedicated
 # temp/home directory are writable. The backend source map was already removed in builder.
 RUN mkdir -p /app/uploads /app/docs /tmp/capitalai \
-  && mkdir -p /app/server \
   && chown -R root:root /app/node_modules /app/package*.json /app/dist /app/server /app/docs \
   && chmod -R a-w /app/node_modules /app/dist /app/server \
   && chmod a-w /app/package*.json \
