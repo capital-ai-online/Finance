@@ -1,16 +1,10 @@
 name: Container Security
 
 on:
+  # Required-Check-Vertrag: der Job-Kontext muss auf jedem PR existieren. Der teure Docker/Trivy-
+  # Pfad wird unten jedoch nur fuer containerrelevante Diffs ausgefuehrt.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - 'Dockerfile'
-      - '.dockerignore'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'server/runtime/viteProductionDisabled.ts'
-      - 'scripts/security/verifyDockerHardening.mjs'
-      - '.github/workflows/container-security.yml'
   push:
     branches: [main]
     paths:
@@ -43,12 +37,42 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
           persist-credentials: false
 
+      - name: Container-Security-Scope kostensparend bestimmen
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          required=true
+          if [ "$EVENT_NAME" = 'pull_request' ]; then
+            required=false
+            while IFS= read -r path; do
+              case "$path" in
+                Dockerfile|.dockerignore|package.json|package-lock.json|server/runtime/viteProductionDisabled.ts|scripts/security/verifyDockerHardening.mjs|.github/workflows/container-security.yml)
+                  required=true
+                  break
+                  ;;
+              esac
+            done < <(git diff --name-only "$BASE_SHA...$SOURCE_SHA")
+          fi
+          echo "required=$required" >> "$GITHUB_OUTPUT"
+          echo "Container security heavy path required=$required"
+
+      - name: Kostensparpfad — kein Container-Scope
+        if: steps.scope.outputs.required != 'true'
+        run: echo 'Kein containerrelevanter Diff; Required-Check-Kontext bleibt PASS ohne Docker-Build/Trivy-Scan.'
+
       - name: Docker-Hardening-Invarianten prüfen
+        if: steps.scope.outputs.required == 'true'
         run: node scripts/security/verifyDockerHardening.mjs
 
       - name: Produktionsimage aus exakt diesem Commit bauen
+        if: steps.scope.outputs.required == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -59,6 +83,7 @@ jobs:
             .
 
       - name: Runtime-Metadaten und Angriffsfläche fail-closed prüfen
+        if: steps.scope.outputs.required == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -95,6 +120,7 @@ jobs:
           '
 
       - name: Backend-Sourcemap aus allen finalen Image-Layern ausschließen
+        if: steps.scope.outputs.required == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -112,6 +138,7 @@ jobs:
           done
 
       - name: Finale Image-ID als Supply-Chain-Evidence erfassen
+        if: steps.scope.outputs.required == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -121,6 +148,7 @@ jobs:
           printf '%s\n' "$SOURCE_SHA" > artifacts/container-security/source-sha.txt
 
       - name: CycloneDX-SBOM aus dem finalen Runtime-Image erzeugen
+        if: steps.scope.outputs.required == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
@@ -129,6 +157,7 @@ jobs:
           vuln-type: 'os,library'
 
       - name: Fixbare HIGH/CRITICAL Schwachstellen im finalen Image blockieren
+        if: steps.scope.outputs.required == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
@@ -139,7 +168,7 @@ jobs:
           severity: 'HIGH,CRITICAL'
 
       - name: Container-Security-Evidence unveränderlich zum Run ablegen
-        if: always()
+        if: always() && steps.scope.outputs.required == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: container-security-${{ env.SOURCE_SHA }}
