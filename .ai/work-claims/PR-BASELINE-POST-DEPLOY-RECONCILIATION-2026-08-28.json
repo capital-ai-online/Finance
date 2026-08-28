@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-BASELINE-POST-DEPLOY-RECONCILIATION-2026-08-28",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,8 +13,12 @@
   "startedAt": "2026-08-28T12:40:00Z",
   "baseBranch": "main",
   "baseSha": "efe5e2c60a356132fd434ec172105c06666afd8d",
-  "pullRequest": null,
+  "pullRequest": 579,
   "branch": "fix/post-deploy-baseline-reconciliation-2026-08-28",
+  "releasedAt": "2026-08-28T13:08:40Z",
+  "releaseReason": "PR #579 wurde am 28.08.2026 gemergt; der Claim wird gemäß Development-Chain-Lifecycle nach dem terminalen Merge persistent freigegeben.",
+  "terminalHeadSha": "70ef878d8c143cb3608fad361e3fc30a343607bc",
+  "mergeMainSha": "2a3dba2397c775ba39831173d6ca7210634fb446",
   "claimedPaths": [
     ".ai/work-claims/PR-BASELINE-AUTO-REFRESH-2026-08-27.json",
     ".github/workflows/pr-production-baseline-refresh.yml",
