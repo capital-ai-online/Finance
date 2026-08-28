@@ -12,6 +12,10 @@ import {
   loginStepUpRequirement,
 } from '../../lib/loginStepUp';
 import { needsOnboarding } from '../../lib/onboarding';
+import {
+  assertStrongUncompromisedPassword,
+  PASSWORD_MIN_LENGTH,
+} from '../../lib/passwordSecurity';
 import type { SubscriptionTier, UserSession } from '../types/UserSession';
 
 export interface SessionCompositionValue {
@@ -281,6 +285,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     }
 
     try {
+      // Free-tier compensating control for Supabase Pro leaked-password protection:
+      // enforce the strong local policy and query HIBP with k-anonymity before Auth receives it.
+      await assertStrongUncompromisedPassword(password);
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -307,13 +315,11 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
-    if (!newPassword || newPassword.length < 8) {
-      setPasswordRecoveryError('Das Passwort muss mindestens 8 Zeichen lang sein.');
-      return;
-    }
-
     setPasswordRecoverySubmitting(true);
     try {
+      // Use exactly the same policy for recovery/password rotation as for signup.
+      await assertStrongUncompromisedPassword(newPassword);
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
         setPasswordRecoveryError(error.message);
@@ -420,6 +426,9 @@ export function SessionComposition({ children }: SessionCompositionProps) {
           <div className="space-y-2 text-center mb-6">
             <h1 className="text-xl font-bold font-display tracking-tight text-white">Neues Passwort festlegen</h1>
             <p className="text-xs text-white/60">Bitte vergeben Sie ein neues Passwort für Ihr Konto.</p>
+            <p className="text-[11px] text-white/40">
+              Mindestens {PASSWORD_MIN_LENGTH} Zeichen sowie Groß-/Kleinbuchstabe, Ziffer und Sonderzeichen.
+            </p>
           </div>
           <form
             onSubmit={(e) => {
@@ -442,8 +451,9 @@ export function SessionComposition({ children }: SessionCompositionProps) {
                 name="newPassword"
                 type="password"
                 required
-                minLength={8}
+                minLength={PASSWORD_MIN_LENGTH}
                 autoFocus
+                autoComplete="new-password"
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-aif-gold-DEFAULT/50 outline-none"
               />
             </div>
@@ -453,7 +463,8 @@ export function SessionComposition({ children }: SessionCompositionProps) {
                 name="newPasswordConfirm"
                 type="password"
                 required
-                minLength={8}
+                minLength={PASSWORD_MIN_LENGTH}
+                autoComplete="new-password"
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-aif-gold-DEFAULT/50 outline-none"
               />
             </div>
@@ -463,7 +474,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
               disabled={passwordRecoverySubmitting}
               className="w-full px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50"
             >
-              {passwordRecoverySubmitting ? 'Wird gespeichert…' : 'Passwort speichern'}
+              {passwordRecoverySubmitting ? 'Wird geprüft…' : 'Passwort speichern'}
             </button>
           </form>
         </div>
