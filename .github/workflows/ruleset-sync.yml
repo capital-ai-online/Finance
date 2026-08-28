@@ -7,6 +7,7 @@ on:
       - '.github/policies/main-production-protection.expected.json'
       - '.github/workflows/ruleset-sync.yml'
       - 'scripts/security/rulesetSync.mjs'
+      - 'scripts/security/rulesetAdminEnvironment.mjs'
   workflow_dispatch:
     inputs:
       mode:
@@ -62,4 +63,10 @@ jobs:
               *) echo 'Unbekannter ruleset-sync Modus' >&2; exit 1 ;;
             esac
           fi
+
+          ENV_MODE=plan
+          if [ "$MODE" != 'plan' ]; then
+            ENV_MODE=apply
+          fi
+          node scripts/security/rulesetAdminEnvironment.mjs "$ENV_MODE" >> "$GITHUB_STEP_SUMMARY"
           node scripts/security/rulesetSync.mjs "$MODE" >> "$GITHUB_STEP_SUMMARY"
