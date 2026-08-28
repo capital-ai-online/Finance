@@ -9,10 +9,14 @@ on:
       - 'scripts/security/rulesetSync.mjs'
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'true = nur Diff anzeigen, keine Aenderung anwenden'
-        type: boolean
-        default: true
+      mode:
+        description: 'plan = nur Diff; package_a = freigegebene Kernhaertung; full = kompletter Sollzustand'
+        type: choice
+        options:
+          - plan
+          - package_a
+          - full
+        default: plan
 
 permissions:
   contents: read
@@ -23,8 +27,8 @@ concurrency:
 
 # Dieser Workflow ist bewusst NICHT zeitgesteuert. Ein Push auf main erzeugt ausschliesslich
 # einen Plan/Diff. Administrative GitHub-Aenderungen sind nur ueber einen expliziten manuellen
-# workflow_dispatch mit dry_run=false erlaubt. Die Sicherheitsmutation wird nicht durch das
-# optionale Repository-Advisory-Kostenbudget unterdrueckt.
+# workflow_dispatch erlaubt. package_a ist absichtlich enger als full, damit eine Freigabe der
+# Kernhaertung keine noch nicht freigegebenen Actions-/Security-Einstellungen mitsetzt.
 jobs:
   sync:
     name: Ruleset lesen, Diff anzeigen, ggf. anwenden
@@ -49,9 +53,13 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = 'refs/heads/main'
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "false" ]; then
-            MODE=apply
-          else
-            MODE=plan
+          MODE=plan
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            case "${{ inputs.mode }}" in
+              package_a) MODE=apply-package-a ;;
+              full) MODE=apply ;;
+              plan) MODE=plan ;;
+              *) echo 'Unbekannter ruleset-sync Modus' >&2; exit 1 ;;
+            esac
           fi
           node scripts/security/rulesetSync.mjs "$MODE" >> "$GITHUB_STEP_SUMMARY"
