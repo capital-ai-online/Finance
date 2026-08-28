@@ -26,16 +26,28 @@ describe('CV-3/CV-7 crypto category research projection', () => {
     expect(view.researchLens?.hardGates.length).toBeGreaterThan(0);
   });
 
-  it('exposes Meme research even while the older category profile remains pending evidence', () => {
+  it('projects the effective SC-3 Meme profile and its research challenger coherently', () => {
     const view = buildCryptoCategoryResearchViewModel('DOGE');
 
     expect(view.category).toBe('Meme');
     expect(view.profileId).toBe('meme');
-    expect(view.sourceStatus).toBe('PENDING_EVIDENCE');
-    expect(view.metrics).toEqual([]);
+    expect(view.sourceStatus).toBe('SOURCE_DEFINED');
+    expect(view.analysisReady).toBe(true);
+    expect(view.metrics.map((metric) => [metric.key, metric.weight])).toEqual([
+      ['liquidity', 0.25],
+      ['marketStructure', 0.20],
+      ['sentiment', 0.18],
+      ['narrative', 0.15],
+      ['distribution', 0.12],
+      ['exchangeAccess', 0.10],
+    ]);
+    expect(view.hardGates).toContain('buySimulationSuccess');
+    expect(view.hardGates).toContain('independentMarketConfirmations');
+    expect(view.scoreAuthority).toBe('SCORING_DISPATCHER_ONLY');
     expect(view.researchLens).toMatchObject({
       modelId: 'crypto-meme-integrity',
       modelVersion: '0.3.0',
+      lifecycle: 'challenger',
       scoreEligible: false,
     });
     expect(view.researchLens?.groups.some((group) => group.id === 'meme-holder-distribution')).toBe(true);
