@@ -6,18 +6,27 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const routes = read('src/app/routing/AppRoutes.tsx');
+const publicHomepage = read('src/app/routing/PublicHomepage.tsx');
 const sessionComposition = read('src/app/auth/SessionComposition.tsx');
-const landingPage = read('src/components/LandingPage.tsx');
+const dashboard = read('src/components/Dashboard.tsx');
 
-describe('public landing route and auth hydration boundary', () => {
-  it('keeps the canonical root route public even when a registered session exists', () => {
+describe('public homepage and auth hydration boundary', () => {
+  it('keeps the canonical root route on the public Enterprise-Scorer dashboard', () => {
     const rootRouteIndex = routes.indexOf("if (currentPath === '/' || currentPath === '')");
     const authenticatedDashboardIndex = routes.indexOf('if (userSession)');
 
     expect(rootRouteIndex).toBeGreaterThanOrEqual(0);
     expect(authenticatedDashboardIndex).toBeGreaterThan(rootRouteIndex);
-    expect(routes).toContain("window.location.assign('/dashboard')");
+    expect(routes).toContain('<PublicHomepage');
     expect(routes).toContain("window.location.replace('/')");
+    expect(publicHomepage).toContain('<Dashboard');
+    expect(dashboard).toContain('<CryptoScoringEnterprise');
+  });
+
+  it('opens authentication only from the dashboard login action and continues to /dashboard', () => {
+    expect(dashboard).toContain('<span>Login (Anmelden)</span>');
+    expect(dashboard).toContain("setActiveView('login')");
+    expect(publicHomepage).toContain("window.location.assign('/dashboard')");
   });
 
   it('does not block public routes on Supabase, step-up or subscription hydration', () => {
@@ -36,17 +45,19 @@ describe('public landing route and auth hydration boundary', () => {
   });
 
   it('keeps the public homepage suitable for Google OAuth branding review', () => {
-    expect(landingPage).toContain('Multi-Asset-Analyse mit erklärbaren KI-Scorings');
-    expect(landingPage).toContain('Aktien, Indizes, Forex, Krypto und Rohstoffe');
-    expect(landingPage).toContain('Fundamentale Bewertung (Graham, DCF)');
-    expect(landingPage).toContain('Backtesting &amp; Stressszenarien');
-    expect(landingPage).toContain('PDF-/CSV-Exporte für Compliance');
-    expect(landingPage).toContain('https://capital-ai.online/datenschutz/');
-    expect(landingPage).toContain('https://capital-ai.online/agb/');
+    expect(publicHomepage).toContain('CAPITAL-AI – quantitative Multi-Asset-Analyse');
+    expect(publicHomepage).toContain('Aktien, Indizes, Forex, Kryptowährungen und Rohstoffe');
+    expect(publicHomepage).toContain('erklärbaren KI-Scorings');
+    expect(publicHomepage).toContain('href="/datenschutz/"');
+    expect(publicHomepage).toContain('href="/agb/"');
+    expect(publicHomepage).toContain('href="/impressum/"');
   });
 
-  it('does not create a guest identity on the canonical public route', () => {
-    expect(routes).not.toContain("type: 'guest'");
+  it('uses only a presentation visitor state and does not synthesize an account email', () => {
+    expect(publicHomepage).toContain("type: 'guest'");
+    expect(publicHomepage).toContain("email: ''");
+    expect(publicHomepage).not.toContain('@capital-ai.online');
+    expect(publicHomepage).not.toContain('@guest');
     expect(sessionComposition).toContain('Anonymous and guest sessions are intentionally not supported.');
   });
 });
