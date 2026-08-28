@@ -278,13 +278,20 @@ newsRouter.get('/', async (req, res) => {
   }
 
   if (items.length === 0) {
-    return res.status(503).json({
-      status: 'NO_DATA',
-      source: 'cryptocurrency.cv + GDELT DOC 2.0',
-      reason: source
-        ? `Keine verifizierten News-Evidence-Treffer für die Quelle "${source}" verfügbar.`
-        : 'News-Evidence ist über die aktiven Provider derzeit nicht verfügbar.',
-    });
+    // Provider outages must not destabilize the signed-in shell. If a previously verified
+    // projection exists, serve it as explicitly stale evidence. Without any prior evidence,
+    // return an empty successful projection with a machine-readable degradation header rather
+    // than turning an optional news panel into a 503 for the whole application.
+    if (cached?.items.length) {
+      res.setHeader('x-capital-ai-news-cache', 'stale');
+      res.setHeader('x-capital-ai-news-provider', cached.provider);
+      res.setHeader('x-capital-ai-news-degraded', 'true');
+      return res.json(cached.items.slice(0, limit));
+    }
+    res.setHeader('x-capital-ai-news-cache', 'miss');
+    res.setHeader('x-capital-ai-news-provider', 'unavailable');
+    res.setHeader('x-capital-ai-news-degraded', 'true');
+    return res.status(200).json([]);
   }
 
   const providers = [...new Set(items.map(item => item.provider))];
@@ -325,7 +332,28 @@ newsRouter.get('/sources', async (_req, res) => {
 
   const sources = Object.freeze([...sourceNames].sort((a, b) => a.localeCompare(b)));
   if (sources.length === 0) {
-    return res.status(503).json({ status: 'NO_DATA', reason: 'Sources unavailable' });
+    if (sourceCache?.sources.length) {
+      return res.status(200).json({
+        sources: sourceCache.sources,
+        retrievedAt: sourceCache.retrievedAt,
+        provider: 'multi-provider',
+        providers: ['free-crypto-news', 'gdelt'],
+        cache: 'stale',
+        degraded: true,
+        status: 'NO_DATA',
+        reason: 'Source providers unavailable; serving last verified source catalog.',
+      });
+    }
+    return res.status(200).json({
+      sources: [],
+      retrievedAt: new Date(now).toISOString(),
+      provider: 'multi-provider',
+      providers: ['free-crypto-news', 'gdelt'],
+      cache: 'miss',
+      degraded: true,
+      status: 'NO_DATA',
+      reason: 'Sources unavailable',
+    });
   }
 
   const retrievedAt = new Date(now).toISOString();

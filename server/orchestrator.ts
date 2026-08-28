@@ -12,7 +12,16 @@ export const orchestratorRouter = express.Router();
 async function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   const authz = await checkAdminAccess(req, 'orchestrator-config', SUPERVISOR_ZONE_ROLES);
   if (!authz.authorized) {
-    return res.status(authz.reason === 'rate-limited' ? 429 : 401).json({ error: 'Ungültiger Zugriff. Zugriff verweigert.' });
+    // HTTP-Semantik ist Teil des Session-Vertrags: ein gültig authentifizierter Nutzer mit
+    // unzureichender IAM-Rolle ist 403 (Forbidden), nicht 401 (Unauthenticated). authFetch()
+    // darf nur bei tatsächlich ungültigen Credentials eine Session-Reparatur bzw. einen Logout
+    // anstoßen. Rate-Limits bleiben 429.
+    const status = authz.reason === 'rate-limited'
+      ? 429
+      : authz.reason === 'insufficient-role'
+      ? 403
+      : 401;
+    return res.status(status).json({ error: 'Ungültiger Zugriff. Zugriff verweigert.' });
   }
   next();
 }

@@ -167,10 +167,10 @@ describe('FO-01 Orchestrator admin read HTTP authorization', () => {
       expect(result.text).not.toContain('AUTHORIZED_STATS_PAYLOAD');
     });
 
-    it(`${path} denies a valid identity outside SUPERVISOR_ZONE_ROLES`, async () => {
+    it(`${path} returns HTTP 403 for a valid identity outside SUPERVISOR_ZONE_ROLES`, async () => {
       const result = await requestApp(path, 'insufficient-role');
 
-      expect(result.status).toBe(401);
+      expect(result.status).toBe(403);
       expect(result.json).toEqual({ error: 'Ungültiger Zugriff. Zugriff verweigert.' });
       expect(result.text).not.toContain('AUTHORIZED_STATS_PAYLOAD');
     });
