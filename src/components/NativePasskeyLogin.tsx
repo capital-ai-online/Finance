@@ -3,14 +3,22 @@ import { AlertCircle, Fingerprint, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { CapitalAiLogo } from './CapitalAiLogo';
 
+interface NativePasskeyLoginProps {
+  onLoginEmail?: (email: string, password: string) => Promise<void>;
+  onGuestLogin?: () => void;
+  onRegisterEmail?: (name: string, email: string, password: string) => Promise<void>;
+  justLoggedOut?: boolean;
+}
+
 /**
  * Supabase Auth is the single interactive authentication authority.
  *
- * No password, OAuth, magic-link, legacy WebAuthn or registration fallback is exposed here.
+ * Compatibility props are intentionally ignored so legacy password/OAuth/registration callbacks
+ * cannot become alternate authentication paths through the public UI facade.
  * Accounts must already be confirmed and have at least one Supabase-native passkey enrolled before
  * this login surface is enabled in production.
  */
-export function NativePasskeyLogin() {
+export function NativePasskeyLogin({ justLoggedOut }: NativePasskeyLoginProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +66,12 @@ export function NativePasskeyLogin() {
           </p>
         </div>
 
+        {justLoggedOut && (
+          <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-center text-xs text-emerald-300">
+            Erfolgreich abgemeldet.
+          </div>
+        )}
+
         {error && (
           <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-300">
             <AlertCircle size={15} className="mt-0.5 shrink-0" />
@@ -76,8 +90,8 @@ export function NativePasskeyLogin() {
         </button>
 
         <p className="mt-5 border-t border-white/10 pt-4 text-center text-[11px] leading-relaxed text-white/35">
-          Kein Passkey für dieses Konto vorhanden? Der Zugriff bleibt bewusst gesperrt. Die
-          Passkey-Einrichtung erfolgt über einen kontrollierten bestehenden Supabase-Auth-Zugang.
+          Kein Supabase-Passkey für dieses Konto vorhanden? Der Zugriff bleibt bewusst gesperrt.
+          Es gibt auf dieser Oberfläche keinen Passwort-, OAuth- oder Recovery-Fallback.
         </p>
       </div>
     </main>
