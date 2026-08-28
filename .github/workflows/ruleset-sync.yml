@@ -27,6 +27,9 @@ concurrency:
 jobs:
   sync:
     name: Ruleset lesen, Diff anzeigen, ggf. anwenden
+    # Environment-Secrets duerfen niemals an eine Branch-Version dieses Workflows gelangen.
+    # Auch workflow_dispatch wird deshalb ausschliesslich auf dem geschuetzten main ausgefuehrt.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: ruleset-admin
@@ -36,6 +39,7 @@ jobs:
       - name: Repository auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
+          ref: main
           persist-credentials: false
 
       - name: Ruleset lesen, Diff anzeigen, ggf. anwenden
@@ -43,6 +47,7 @@ jobs:
           GH_TOKEN: ${{ secrets.RULESET }}
         run: |
           set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/main'
           if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.dry_run }}" = "false" ]; then
             MODE=apply
           else
