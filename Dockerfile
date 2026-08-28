@@ -43,13 +43,18 @@ WORKDIR /app
 RUN chown node:node /app
 USER node
 COPY --chown=node:node package*.json ./
-# esbuild is required to BUILD the application but is not executed by the production server.
-# Its precompiled Go binaries carried fixable HIGH/CRITICAL CVEs. Remove them before this
-# stage is copied into the runner so the vulnerable binaries never enter a final-image layer.
-# Vite is statically imported by the legacy composition root, so verify that its module can
-# still be loaded without the removed executable; createServer is never invoked in production.
+# Vite/esbuild/Tailwind plugins are build/development tooling. server.application.ts still has
+# a legacy static Vite import, even though createServer() is only called outside production.
+# Remove the real toolchain before the runner COPY and leave a tiny fail-closed ESM stub solely
+# to satisfy that static import. If NODE_ENV is ever overridden away from production inside this
+# production image, createServer() throws instead of silently enabling a development server.
 RUN npm ci --omit=dev \
   && rm -rf /app/node_modules/esbuild /app/node_modules/@esbuild \
+    /app/node_modules/vite /app/node_modules/@vitejs /app/node_modules/@tailwindcss \
+  && rm -f /app/node_modules/.bin/esbuild /app/node_modules/.bin/vite \
+  && mkdir -p /app/node_modules/vite \
+  && printf '%s\n' '{"type":"module","exports":"./index.js"}' > /app/node_modules/vite/package.json \
+  && printf '%s\n' "export async function createServer() { throw new Error('VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE'); }" > /app/node_modules/vite/index.js \
   && node --input-type=module -e "const vite = await import('vite'); if (typeof vite.createServer !== 'function') process.exit(1)" \
   && npm cache clean --force
 
