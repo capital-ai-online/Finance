@@ -24,7 +24,7 @@ describe('SEO application wiring contract (Q2/D3)', () => {
       const spa = fs.readFileSync(spaPath, 'utf8');
       expect(spa).toContain('installProductionSoft404Intercept');
       expect(spa).toContain('registerProductionSpaFallback');
-      expect(spa).toContain('isPublicSpaPath');
+      expect(spa).toContain('isApplicationSpaPath');
 
       const app = fs.readFileSync(appPath, 'utf8');
       expect(app).toContain('registerProductionSpaFallback');
