@@ -51,7 +51,9 @@ COPY --chown=node:node package*.json ./
 RUN npm ci --omit=dev \
   && rm -rf /app/node_modules/esbuild /app/node_modules/@esbuild \
     /app/node_modules/vite /app/node_modules/@vitejs /app/node_modules/@tailwindcss \
+    /app/node_modules/tailwindcss \
   && rm -f /app/node_modules/.bin/esbuild /app/node_modules/.bin/vite \
+    /app/node_modules/.bin/tailwindcss \
   && mkdir -p /app/node_modules/vite \
   && printf '%s\n' '{"type":"module","exports":"./index.js"}' > /app/node_modules/vite/package.json \
   && printf '%s\n' "export async function createServer() { throw new Error('VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE'); }" > /app/node_modules/vite/index.js \
