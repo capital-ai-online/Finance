@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CRYPTO-P1A-COVERAGE-FRESHNESS-VALIDATION-2026-08-28",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub + Supabase Connectors"
+  },
+  "workItem": "FT-CORE-CRYPTO-01 P1-A: governed freshness/pair-skew admission and known-positive/negative validation harness for GoPlus buy/sell transaction-simulation evidence",
+  "startedAt": "2026-08-28T13:45:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "27b4d6baa7ceec954b5d91a83e240e47447a998b",
+  "executionBranch": "feat/crypto-p1a-coverage-validation-2026-08-28",
+  "prioritySource": "FT-CORE-CRYPTO-01 section 14 step 3 and SC3_P1_CRYPTO_PROVIDER_GAP_INVENTORY_2026-08-24 highest-value P1-A completion package",
+  "dependsOn": [
+    "PR #525 merged P1-A GoPlus transaction-simulation contract foundation",
+    "PR #574 merged FT-6A migration-ledger recovery",
+    "ADR-0087 Single Scoring Architecture",
+    "ADR-0099 FinTech Core Crypto Module 01",
+    "ADR-0100 DeFi evidence-only boundary",
+    "ProviderMatrix and ResearchEvidenceProviderHttp"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CRYPTO-P1A-COVERAGE-FRESHNESS-VALIDATION-2026-08-28.json",
+    ".ai/work-claims/FT6A-MIGRATION-LEDGER-RECOVERY-2026-08-28.json",
+    "docs/evidence/fintech-core/FT6A_MIGRATION_LEDGER_RECOVERY_POST_MUTATION_2026-08-28.md",
+    "docs/evidence/sc-md/SC3_P1A_CRYPTO_HONEYPOT_COVERAGE_VALIDATION_2026-08-28.md",
+    "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "src/platform/FinTechCore/Modules/Crypto/Validation/HoneypotSimulationValidation.ts",
+    "src/platform/FinTechCore/index.ts",
+    "tests/unit/honeypotSimulationValidation.test.ts"
+  ],
+  "scope": {
+    "included": [
+      "close PR #574 coordination metadata with verified post-mutation evidence",
+      "fail closed on stale or excessively skewed BUY/SELL simulation observations",
+      "bind exact chain/token/route coverage to versioned empirical coverage evidence",
+      "add deterministic independent-label validation metrics without promotion authority",
+      "update the canonical Crypto roadmap to current main and P1-A status"
+    ],
+    "excluded": [
+      "constructing trade routes or calldata",
+      "live exchange execution, signing or broadcast",
+      "automatic retries that consume provider quota",
+      "changing the existing GoPlus transport/provider contract in this slice",
+      "hard-coded production performance thresholds",
+      "claiming real known-positive/negative accuracy from test fixtures",
+      "Meme/DeFi productive model promotion",
+      "FT-7 guarded-live activation"
+    ]
+  },
+  "securityBoundary": {
+    "newSecretsCommitted": false,
+    "productionMutationPlanned": false,
+    "scoreAuthorityCreated": false,
+    "riskApprovalAuthorityCreated": false,
+    "executionAuthorityCreated": false,
+    "ft7RemainsBlocked": true,
+    "missingOrStaleEvidencePolicy": "NOT_ADMITTED/NOT_COMPUTABLE"
+  }
+}

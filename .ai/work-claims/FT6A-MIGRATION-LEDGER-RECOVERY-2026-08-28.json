@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "FT6A-MIGRATION-LEDGER-RECOVERY-2026-08-28",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -15,9 +15,11 @@
   "branch": "fix-ft6a-migration-ledger-recovery-2026-08-28",
   "executionBranch": "fix-ft6a-migration-ledger-recovery-2026-08-28",
   "prioritySource": "FT-CORE-CRYPTO-01 / ADR-0099 plus owner instruction 2026-08-28 to continue FT-6A and unlock the next blockers",
-  "mustReconcileAgainstMainBeforePr": true,
-  "pullRequestCreationRequiresExplicitOwnerApproval": true,
-  "pullRequestCreationApproved": true,
+  "pullRequest": 574,
+  "mergedPr": 574,
+  "mergeCommit": "27b4d6baa7ceec954b5d91a83e240e47447a998b",
+  "releasedAt": "2026-08-28T13:42:00+02:00",
+  "releaseReason": "merged_and_production_recovery_verified",
   "protectedAuthorities": [
     "ScoringModelRegistry",
     "ScoringDispatcher",
@@ -47,7 +49,6 @@
       "document controlled post-merge deployment and verification"
     ],
     "excluded": [
-      "production database mutation before PR review and merge",
       "GUARDED_LIVE activation",
       "PRODUCTION execution",
       "exchange order placement",
@@ -55,13 +56,19 @@
       "new FinTechCore tables, queues or execution authorities"
     ]
   },
-  "securityBoundary": {
-    "newSecretsCommitted": false,
-    "productionExecutionChanged": false,
-    "realCapitalMovementAllowed": false,
-    "productionDatabaseMutationBeforeReview": false,
-    "costlyGitHubCiBeforePr": false,
-    "existingSqlBlobsRewritten": false,
-    "ft7RemainsBlocked": true
+  "releaseEvidence": {
+    "repositoryMergeVerified": true,
+    "productionProject": "AIFINANCIAL",
+    "productionMigrationVersion": "20260827135000",
+    "productionMigrationName": "fintech_core_ft6a_order_intent_reconciliation_ledger_recovery",
+    "migrationLedgerAligned": true,
+    "requiredColumnsVerified": true,
+    "requiredIndexesVerified": true,
+    "requiredForeignKeysVerified": true,
+    "v1RpcsSecurityInvoker": true,
+    "v1RpcsServiceRoleOnly": true,
+    "securityAdvisorNewFt6aFindings": 0,
+    "ft7RemainsBlocked": true,
+    "evidenceDocument": "docs/evidence/fintech-core/FT6A_MIGRATION_LEDGER_RECOVERY_POST_MUTATION_2026-08-28.md"
   }
 }
