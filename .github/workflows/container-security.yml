@@ -1,0 +1,78 @@
+name: Container Security
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/security/verifyDockerHardening.mjs'
+      - '.github/workflows/container-security.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/security/verifyDockerHardening.mjs'
+      - '.github/workflows/container-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-security-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  image-security:
+    name: Hardened image / HIGH+CRITICAL CVE gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Docker-Hardening-Invarianten prüfen
+        run: node scripts/security/verifyDockerHardening.mjs
+
+      - name: Produktionsimage aus exakt diesem Commit bauen
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$SOURCE_SHA" = "$(git rev-parse HEAD)"
+          docker build \
+            --build-arg RELEASE_SOURCE_COMMIT="$SOURCE_SHA" \
+            --tag "capital-ai-security:$SOURCE_SHA" \
+            .
+
+      - name: Runtime-Metadaten fail-closed prüfen
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="capital-ai-security:$SOURCE_SHA"
+          test "$(docker image inspect "$image" --format '{{.Config.User}}')" = 'capitalai'
+          test "$(docker image inspect "$image" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          test "$(docker image inspect "$image" --format '{{json .Config.ExposedPorts}}')" = '{"10000/tcp":{}}'
+          docker image inspect "$image" --format '{{json .Config.Healthcheck.Test}}' | grep -Fq '${PORT:-10000}/healthz'
+          test "$(docker run --rm --entrypoint sh "$image" -c 'test ! -e /app/dist/server.cjs.map && id -u')" != '0'
+
+      - name: Fixbare HIGH/CRITICAL Schwachstellen im finalen Image blockieren
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
