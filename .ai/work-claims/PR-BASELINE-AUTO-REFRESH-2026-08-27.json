@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-BASELINE-AUTO-REFRESH-2026-08-27",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,7 +13,10 @@
   "startedAt": "2026-08-27T20:35:00Z",
   "baseBranch": "main",
   "baseSha": "40440f6bfd4ed9acd3d6162a7131e1e4773376f1",
-  "pullRequest": null,
+  "pullRequest": 563,
+  "branch": "agent/pr-baseline-auto-refresh-2026-08-27",
+  "releasedAt": "2026-08-28T12:40:00Z",
+  "releaseReason": "PR #563 wurde am 27.08.2026 gemergt; der Claim war auf main irrtümlich active/exclusive geblieben und wird im Post-Deploy-Reconciliation-Follow-up lifecycle-konform freigegeben.",
   "claimedPaths": [
     ".github/workflows/pr-production-baseline-refresh.yml",
     "scripts/pr/productionBaselineBody.mjs",
