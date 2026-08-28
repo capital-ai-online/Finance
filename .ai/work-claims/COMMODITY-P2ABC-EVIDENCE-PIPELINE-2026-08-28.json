@@ -9,8 +9,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "Continue SC-2 Commodity P2-A through P2-C by composing the existing correlation, sensitivity, PIT/OOS, descriptor, resilience, stress and promotion-review primitives into one fail-closed evidence pipeline without creating scoring or promotion authority.",
-  "workItemDE": "SC-2 Commodity P2-A bis P2-C fortführen und die bestehenden Correlation-, Sensitivity-, PIT/OOS-, Descriptor-, Resilience-, Stress- und Promotion-Review-Primitiven zu einer fail-closed Evidence-Pipeline verbinden, ohne Scoring- oder Promotion-Authority einzuführen.",
+  "workItem": "Continue SC-2 Commodity P2-A through P2-C by composing the existing correlation, sensitivity, PIT/OOS, descriptor, resilience, stress and promotion-review primitives into one fail-closed evidence pipeline without creating scoring or promotion authority, and close all repository-verifiable follow-up gaps on PR #576.",
+  "workItemDE": "SC-2 Commodity P2-A bis P2-C fortführen, die bestehenden Correlation-, Sensitivity-, PIT/OOS-, Descriptor-, Resilience-, Stress- und Promotion-Review-Primitiven zu einer fail-closed Evidence-Pipeline verbinden und alle repository-verifizierbaren Folgeschritte auf PR #576 schließen, ohne Scoring- oder Promotion-Authority einzuführen.",
   "startedAt": "2026-08-28T13:00:00+02:00",
   "baseBranch": "main",
   "baseSha": "fc891ac601daa1a77cf25450b324a1f9ba5ed93d",
@@ -19,9 +19,11 @@
     "src/platform/Scoring/index.ts",
     "tests/unit/commodityP2EvidencePipeline.test.ts",
     "docs/evidence/sc-md/SC_COMMODITY_P2ABC_EVIDENCE_PIPELINE_2026-08-28.md",
+    "docs/evidence/sc-md/SC_COMMODITY_P2_EMPIRICAL_READINESS_2026-08-28.md",
     "docs/roadmaps/work-packages/SC-2_COMMODITY_ORCHESTRATOR_ROADMAP.md",
     "docs/adr/ADR-0101-commodity-domain-research-challengers.md",
     "docs/adr/registry.json",
+    "docs/governance/authority-registry.json",
     ".ai/work-claims/COMMODITY-P2ABC-EVIDENCE-PIPELINE-2026-08-28.json"
   ],
   "nonGoals": [
