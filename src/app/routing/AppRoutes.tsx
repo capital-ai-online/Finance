@@ -11,6 +11,7 @@ import { LandingPage } from '../../components/LandingPage';
 import { LearningVocabulary } from '../../features/learning/ui';
 import { MediaStudio } from '../../features/social/ui';
 import type { UserSession } from '../types/UserSession';
+import { PublicHomepage } from './PublicHomepage';
 
 interface AppRoutesProps {
   userSession: UserSession | null;
@@ -150,11 +151,17 @@ export function AppRoutes({
     );
   }
 
-  // The canonical application homepage remains public and explanatory even when a valid
-  // authenticated session exists. This is required for a stable public product entry point
-  // and keeps Google OAuth branding review independent from account/session state.
+  // The canonical root is the public Enterprise-Scorer dashboard. Authentication stays an
+  // explicit user action opened from the dashboard sidebar; a registered session must not turn
+  // the public homepage into a login or private-account surface.
   if (currentPath === '/' || currentPath === '') {
-    return renderLandingPage();
+    return (
+      <PublicHomepage
+        clearJustLoggedOut={clearJustLoggedOut}
+        handleLogin={handleLogin}
+        handleRegister={handleRegister}
+      />
+    );
   }
 
   if (userSession && (currentPath === '/media-studio' || currentPath === '/media-studio/')) {
