@@ -32,41 +32,37 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
 # CI injects RELEASE_SOURCE_COMMIT explicitly; Render can provide RENDER_GIT_COMMIT.
 # Delete the backend source map in the SAME builder layer that creates it. The final runner
 # therefore never receives the source map in a COPY layer, rather than merely white-out deleting it.
+# package.json aliases the production server bundle's legacy static Vite import to a local
+# fail-closed module; the real Vite development server is therefore not a runtime dependency.
 RUN RELEASE_SOURCE_COMMIT="${RELEASE_SOURCE_COMMIT:-$RENDER_GIT_COMMIT}" npm run build \
+  && grep -Fq 'VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_BUNDLE' /app/dist/server.cjs \
   && rm -f /app/dist/server.cjs.map
 
 # Install the production dependency graph in a dedicated unprivileged stage. This prevents
 # package lifecycle scripts from gaining root privileges while keeping the final dependency
-# tree immutable and root-owned once copied into the runner.
+# tree immutable and root-owned once copied into the runner. Build/development toolchains that
+# are still classified as application dependencies in the source lockfile are removed entirely;
+# unlike the previous implementation, no synthetic package is inserted into node_modules.
 FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS prod-deps
 WORKDIR /app
 RUN chown node:node /app
 USER node
 COPY --chown=node:node package*.json ./
-# Vite/esbuild/Tailwind plugins are build/development tooling. server.application.ts still has
-# a legacy static Vite import, even though createServer() is only called outside production.
-# Remove the real toolchain before the runner COPY and leave a tiny fail-closed ESM stub solely
-# to satisfy that static import. If NODE_ENV is ever overridden away from production inside this
-# production image, createServer() throws instead of silently enabling a development server.
 RUN npm ci --omit=dev \
   && rm -rf /app/node_modules/esbuild /app/node_modules/@esbuild \
     /app/node_modules/vite /app/node_modules/@vitejs /app/node_modules/@tailwindcss \
     /app/node_modules/tailwindcss \
   && rm -f /app/node_modules/.bin/esbuild /app/node_modules/.bin/vite \
     /app/node_modules/.bin/tailwindcss \
-  && mkdir -p /app/node_modules/vite \
-  && printf '%s\n' '{"type":"module","exports":"./index.js"}' > /app/node_modules/vite/package.json \
-  && printf '%s\n' "export async function createServer() { throw new Error('VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE'); }" > /app/node_modules/vite/index.js \
-  && node --input-type=module -e "const vite = await import('vite'); if (typeof vite.createServer !== 'function') process.exit(1)" \
   && npm cache clean --force
 
 FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS runner
 WORKDIR /app
 
-# Patch the fixable OpenSSL CVEs that were present in the immutable upstream image. Keeping the
-# upstream digest pinned preserves source-image identity; the image CVE gate verifies the result.
-# npm/yarn/corepack are package-management tooling, not runtime requirements. The pinned Node
-# base currently bundles fixable HIGH/CRITICAL vulnerabilities there, so remove the tooling.
+# Patch fixable OpenSSL CVEs exposed by the pinned upstream image at build time. The mutable
+# Alpine security repository is an explicit availability-vs-reproducibility trade-off: the exact
+# resulting image identity and final package inventory are captured by CI as image ID + SBOM.
+# npm/yarn/corepack are package-management tooling, not runtime requirements; remove them too.
 RUN apk upgrade --no-cache libcrypto3 libssl3 \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-* \
   && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
