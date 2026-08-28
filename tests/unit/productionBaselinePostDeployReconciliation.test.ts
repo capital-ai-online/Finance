@@ -67,23 +67,28 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).not.toContain('npm --prefix candidate');
   });
 
-  it('re-runs only a completed Governance workflow path bound to the exact PR head and current main base', () => {
+  it('re-runs only exact completed Governance and bounds stale-baseline race recovery to attempt one', () => {
     const yaml = workflow();
     expect(yaml).toContain("run.path === '.github/workflows/pr-governance.yml'");
     expect(yaml).not.toContain("run.name === 'PR Governance'");
     expect(yaml).toContain("event: 'pull_request'");
     expect(yaml).toContain('head_sha: expectedHeadSha');
     expect(yaml).toContain('normalizeSha(item.base?.sha) === expectedMainSha');
+    expect(yaml).toContain("exactRun.conclusion === 'failure'");
+    expect(yaml).toContain("Number(exactRun.run_attempt || 1) === 1");
+    expect(yaml).toContain('const shouldRerun = baselineChanged || firstFailedAttempt;');
     expect(yaml).toContain("POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun");
-    expect(yaml).toContain('main änderte sich nach dem Baseline-Write');
+    expect(yaml).not.toContain('run_id: sourceRunId');
+    expect(yaml).toContain('main änderte sich während der Baseline-Revalidierung');
   });
 
-  it('keeps deploy reconciliation idempotent and bounded under one main-deploy concurrency group', () => {
+  it('keeps reconciliation idempotent and bounded under one main-deploy concurrency group', () => {
     const yaml = workflow();
     expect(yaml).toContain("'main-deploy'");
     expect(yaml).toContain('cancel-in-progress: true');
-    expect(yaml).toContain("if: steps.refresh.outputs.changed == 'true'");
-    expect(yaml).toContain('Baseline bereits korrekt; kein Body-Write und kein Governance-Re-Run.');
+    expect(yaml).toContain('BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}');
+    expect(yaml).toContain('kein automatischer Re-Run');
+    expect(yaml).toContain('gegen Rerun-Schleifen begrenzt');
     expect(yaml).toContain('max-parallel: 4');
   });
 
