@@ -91,7 +91,7 @@ describe('production baseline post-deploy reconciliation', () => {
     const yaml = workflow();
     expect(yaml).toContain('actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8');
     expect(yaml).toContain('actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444');
-    expect(yaml).toContain('actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea');
+    expect(yaml).toContain('actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3');
     expect(yaml).not.toContain('pull_request_target');
   });
 });
