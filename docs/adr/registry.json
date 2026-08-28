@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.1.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.22.0",
-  "date": "2026-08-25",
+  "version": "1.23.0",
+  "date": "2026-08-28",
   "canonicalLocation": "docs/adr",
   "rules": {
     "newRecordPattern": "ADR-NNNN-<slug>.md",
@@ -37,6 +37,7 @@
     {"authorityId":"AUTH-ADR-MEDIA-PROJECT-V2-2026-08-20","displayId":"ADR-0098","version":"1.0.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0098-media-project-v2-timeline-contract.md","legacyAliases":[],"supersedes":[],"note":"MC-1 canonical MediaProject v2 timeline/domain contract; implementation candidate effective only after Human Merge."},
     {"authorityId":"AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20","displayId":"ADR-0099","version":"1.9.0","date":"2026-08-24","lifecycle":"accepted","path":"docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md","legacyAliases":[],"supersedes":[],"note":"P1 extension on current main: deterministic externally-governed long-only/unlevered RESEARCH/PAPER portfolio allocation plus bounded FT-5 portfolio-risk evidence projection. FT-5 remains sole Risk/Compliance approval authority; no strategy/suitability authority, live execution, second scoring authority, queue, portfolio ledger, persistence or custody capability added. Meme/DeFi 0.3.0 current-state projection normalized."},
     {"authorityId":"AUTH-ADR-DEFILLAMA-DEFI-EVIDENCE-PROVIDER-2026-08-21","displayId":"ADR-0100","version":"1.1.0","date":"2026-08-22","lifecycle":"accepted","path":"docs/adr/ADR-0100-defillama-defi-evidence-provider.md","legacyAliases":[],"supersedes":[],"note":"Accepted evidence-only DeFiLlama free-tier authority. api.llama.fi protocol TVL/fees/revenue feeds FinTechCore CryptoFeatureEvidence only; no MarketDataGateway routing or ScoringDispatcher bypass. Service contract 1.1.0 exposes stale evidence explicitly. TVL/fees/revenue are correlation-bound as one DeFi scale/activity group in Supersession B. crypto-defi-fundamental remains challenger, scoreEligible=false, research-only:not-executable."},
+    {"authorityId":"AUTH-ADR-COMMODITY-DOMAIN-RESEARCH-CHALLENGERS-2026-08-23","displayId":"ADR-0101","version":"1.1.0","date":"2026-08-28","lifecycle":"accepted","path":"docs/adr/ADR-0101-commodity-domain-research-challengers.md","legacyAliases":[],"supersedes":[],"note":"Backfilled on first post-registry touch. Version 1.1.0 binds the P2-A→P2-C Evidence Composition contract while preserving validation-only/non-authorizing Commodity challenger governance."},
     {"authorityId":"AUTH-ADR-COMMODITY-HISTORICAL-ARCHIVE-INTEGRITY-2026-08-25","displayId":"ADR-0102","version":"1.0.0","date":"2026-08-25","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0102-commodity-historical-archive-integrity.md","legacyAliases":[],"supersedes":[],"note":"P2-B content-addressed archive integrity. Metadata-only release objects and live CFTC PRE values cannot be promoted to PIT by attached archive metadata; effective only after Human Merge."}
   ],
   "parallelNamespaceReservations": [
