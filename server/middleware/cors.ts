@@ -34,11 +34,6 @@ async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger
 
   try {
     const supabase = getServerSupabase();
-    // SECURITY (2026-08-25 architecture review follow-up, correlation check): this used to parse
-    // x-forwarded-for locally instead of using the shared, trust-proxy-aware getClientIp() helper
-    // (src/platform/Security/rateLimiter.ts) - a third, independent reimplementation of the same
-    // logic already fixed in rateLimiter.ts and requestOrchestrator.ts, with the same forgeable-IP
-    // weakness (a spoofed header would have been recorded verbatim into security_events).
     const ip = getClientIp(req);
 
     await supabase.from('security_events').insert({
@@ -58,11 +53,12 @@ async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger
 }
 
 /**
- * ADR-0009 CORS boundary extracted without changing policy semantics.
+ * ADR-0009 CORS boundary.
  *
- * Production accepts only the two explicit CAPITAL-AI origins. Development may
- * additionally accept localhost/127.0.0.1. Unknown origins never receive ACAO
- * credentials.
+ * Production accepts only the two explicit CAPITAL-AI browser origins. Development may
+ * additionally accept localhost/127.0.0.1. A disallowed Origin is rejected server-side for
+ * every HTTP method rather than relying on the browser to hide the response. Requests without
+ * an Origin remain valid for non-browser integrations such as Stripe webhooks and health probes.
  */
 export function registerCorsMiddleware(
   app: Express,
@@ -72,6 +68,8 @@ export function registerCorsMiddleware(
     const origin = req.headers.origin;
 
     if (origin) {
+      res.vary('Origin');
+
       if (isOriginAllowed(origin, options.isProduction)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -83,14 +81,13 @@ export function registerCorsMiddleware(
           });
         });
 
-        if (req.method === 'OPTIONS') {
-          return res.status(403).json({ error: 'Origin nicht erlaubt.' });
-        }
+        return res.status(403).json({ error: 'Origin nicht erlaubt.' });
       }
     }
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature, x-step-up-token');
+    res.setHeader('Access-Control-Max-Age', '600');
 
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
