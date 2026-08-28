@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.2.0",
+  "claimId": "FT6A-MIGRATION-LEDGER-RECOVERY-2026-08-28",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub + Supabase Connectors"
+  },
+  "workItem": "FT-6A migration-ledger recovery and fail-closed FinTechCore migration baseline before any further pre-FT7 persistence work",
+  "startedAt": "2026-08-28T13:03:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "fc891ac601daa1a77cf25450b324a1f9ba5ed93d",
+  "executionBranch": "feat/pre-ft7-crypto-readiness-2026-08-28",
+  "prioritySource": "FT-CORE-CRYPTO-01 / ADR-0099 plus owner instruction 2026-08-28 to continue FT-6A and unlock the next blockers",
+  "mustReconcileAgainstMainBeforePr": true,
+  "pullRequestCreationRequiresExplicitOwnerApproval": true,
+  "pullRequestCreationApproved": true,
+  "protectedAuthorities": [
+    "ScoringModelRegistry",
+    "ScoringDispatcher",
+    "public.outbox_jobs",
+    "fintech_core persistence",
+    "FT-5 risk/compliance approval",
+    "FT-7 execution gate"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/FT6A-MIGRATION-LEDGER-RECOVERY-2026-08-28.json",
+    "docs/runbooks/FINTECH_CORE_SUPABASE_MIGRATION_LEDGER_RECOVERY.md",
+    "scripts/governance/verifyFintechCoreMigrationLedger.mjs",
+    "scripts/pr/fintechCoreMigrationLedger.test.mjs",
+    "supabase/migrations/20260821000550_fintech_core_durable_traceability.sql",
+    "supabase/migrations/20260821000558_fintech_core_durable_traceability_least_privilege.sql",
+    "supabase/migrations/20260821000716_fintech_core_fk_indexes.sql",
+    "supabase/migrations/20260821003628_fintech_core_rpc_persistence_boundary.sql",
+    "supabase/migrations/20260821071823_fintech_core_paper_replay_reader.sql",
+    "supabase/migrations/20260822012200_fintech_core_ft6b_fixed_point_reconciliation.sql",
+    "supabase/migrations/20260827135000_fintech_core_ft6a_order_intent_reconciliation_ledger_recovery.sql"
+  ],
+  "scope": {
+    "included": [
+      "align repository FinTechCore migration timestamps to the production migration ledger",
+      "represent the missing FT-6A schema prerequisites as the sole new recovery migration",
+      "add a content-hash migration baseline gate",
+      "document controlled post-merge deployment and verification"
+    ],
+    "excluded": [
+      "production database mutation before PR review and merge",
+      "GUARDED_LIVE activation",
+      "PRODUCTION execution",
+      "exchange order placement",
+      "custody or wallet mutation",
+      "new FinTechCore tables, queues or execution authorities"
+    ]
+  },
+  "securityBoundary": {
+    "newSecretsCommitted": false,
+    "productionExecutionChanged": false,
+    "realCapitalMovementAllowed": false,
+    "productionDatabaseMutationBeforeReview": false,
+    "costlyGitHubCiBeforePr": false,
+    "existingSqlBlobsRewritten": false,
+    "ft7RemainsBlocked": true
+  }
+}
