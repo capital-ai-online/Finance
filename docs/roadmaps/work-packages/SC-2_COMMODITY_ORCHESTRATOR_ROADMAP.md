@@ -7,11 +7,11 @@
 **Original Baseline:** `main@800b05261c1792fed5138a8125cf6a00b1f5af07`  
 **Original execution branch:** `feat/commodity-orchestrator-research-boundary-2026-08-23`  
 **Source package:** Google-Drive Commodity-Orchestrator documentation supplied 2026-08-23 plus repository canonical architecture/evidence  
-**Status evidence:** `docs/evidence/sc-md/SC_COMMODITY_P2C_PROMOTION_GOVERNANCE_2026-08-25.md`  
+**Status evidence:** `docs/evidence/sc-md/SC_COMMODITY_P2ABC_EVIDENCE_PIPELINE_2026-08-28.md`  
 
-## 0. Kanonische Implementierungsprojektion — 2026-08-25
+## 0. Kanonische Implementierungsprojektion — 2026-08-28
 
-> Die darunter erhaltenen Checkboxen bilden die ursprüngliche Roadmap-/Planungsbaseline ab und werden **nicht** rückwirkend als Merge-Nachweis interpretiert. Maßgeblich für den tatsächlichen Implementierungsstand sind gemergter Code, ADRs, Evidence, Tests und die folgende Projektion. Roadmap-Issue-Zustände sind in diesem Workstream keine Implementierungs-Authority.
+> Die darunter erhaltenen Checkboxen bilden die ursprüngliche Roadmap-/Planungsbaseline ab und werden **nicht** rückwirkend als Merge-Nachweis interpretiert. Maßgeblich für den tatsächlichen Implementierungsstand sind gemergter Code, ADRs, Evidence, Tests und die folgende Projektion. Änderungen dieses Branches werden erst nach Human Merge zu `main` kanonisch; empirische Exit-Gates werden niemals allein durch vorhandenen Framework-Code als erfüllt interpretiert.
 
 | Phase | Kanonischer Status | Evidenz / verbleibendes Gate |
 |---|---|---|
@@ -25,17 +25,18 @@
 | P1-C | IMPLEMENTED RESEARCH FOUNDATION | Precious Metals Evidence/Contract/Challenger |
 | P1-D | IMPLEMENTED RESEARCH FOUNDATION | Agriculture Evidence/Contract/Challenger |
 | P1-E | IMPLEMENTED | source-/feature-spezifische DQ/Hard Gates fail-closed |
-| P2-A | FOUNDATION IMPLEMENTED; EMPIRICAL EVIDENCE OPEN | Weight/Correlation/Sensitivity/Fingerprint Contracts vorhanden; reale Reports je Modell erforderlich |
-| P2-B | ENGINE + VINTAGE GOVERNANCE IMPLEMENTED; EMPIRICAL DATASETS OPEN | PIT Contracts, Walk-forward/OOS Engine und Historical Vintage Acquisition gemergt; reale archivierte Datasets/Runs fehlen noch |
-| P2-C | IN PROGRESS | immutable Descriptor, Resilience/Stress/Promotion Review und Owner-Decision-Binding auf `feat/commodity-p2c-promotion-governance-2026-08-25`; keine Registry-Mutation |
+| P2-A | FOUNDATION IMPLEMENTED; COMPOSITION ON THIS BRANCH; EMPIRICAL EVIDENCE OPEN | Weight/Correlation/Sensitivity/Fingerprint Contracts vorhanden; `CommodityP2EvidencePipeline` bindet Evidence deterministisch, reale Reports je Modell bleiben erforderlich |
+| P2-B | ENGINE + VINTAGE GOVERNANCE IMPLEMENTED; COMPOSITION ON THIS BRANCH; EMPIRICAL DATASETS OPEN | PIT Contracts, Walk-forward/OOS Engine und Historical Vintage Acquisition gemergt; reale archivierte Datasets/Runs fehlen weiterhin |
+| P2-C | GOVERNANCE IMPLEMENTED; COMPOSITION ON THIS BRANCH; OWNER REVIEW BLOCKED BY EVIDENCE | Descriptor, Resilience/Stress, Promotion Review und Owner-Decision-Binding sind gemergt; Pipeline bindet P2-A/P2-B-Lineage, keine Registry-Mutation |
 | P2-D | OPEN | CanonicalScoreResult/Explainability/Ranking für Kategorie-Challenger erst nach Evidence Review |
 | P2-E | OPEN | Legacy RawMaterials Routes/UI/Scorer bleiben physisch vorhanden, aber non-canonical |
-| P3-A | OPEN | Shadow Runtime / Observability |
-| P3-B | OPEN | Universe Coverage / SLA |
+| P3-A | RUNTIME ACTIVATION IMPLEMENTED; EXIT OPEN | PR #547/#549 gemergt; reale Observation Period benötigt mindestens eine post-deploy Verified-Score-Observation und ausreichende Samples |
+| P3-B | OPEN | PR #553 wurde durch PR #554 vollständig revertiert; Universe Coverage / SLA bleibt offen |
 | P3-C | BLOCKED | Controlled Champion Promotion erst nach vollständiger P2/P3-Evidence + Human/Owner-Entscheidung |
 | P3-D | OPEN / SEPARATE | Resource Project Valuation bleibt eigener Model Scope |
 
-**Merged implementation anchors:** PR #513 (P0/P1), PR #518 (P2 Validation Foundation), PR #519 (Historical Walk-forward/OOS), PR #521 (Historical Vintage Acquisition).  
+**Merged implementation anchors:** PR #513 (P0/P1), PR #518 (P2 Validation Foundation), PR #519 (Historical Walk-forward/OOS), PR #521 (Historical Vintage Acquisition), PR #527 (P2-C Promotion Governance), PR #547/#549 (P3-A Observability + Runtime Activation), PR #554 (Revert P3-B1).  
+**Current branch candidate:** `feat/commodity-p2abc-evidence-pipeline-2026-08-28` — P2-A→P2-C Evidence-Composition; erst nach Human Merge kanonisch.  
 **Current architectural invariant:** `ScoringModelRegistry` und `ScoringDispatcher` bleiben die einzigen produktiven Model-/Execution-Authorities; `commodity-evidence-scoring@1.0.0` bleibt bis zu einer separat kontrollierten Promotion der Commodity-Champion.
 
 ## 1. Ziel

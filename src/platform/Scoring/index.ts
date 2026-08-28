@@ -15,4 +15,5 @@ export * from './CommodityBacktestingContracts';
 export * from './CommodityHistoricalBacktestEngine';
 export * from './CommodityHistoricalVintage';
 export * from './CommodityModelPromotion';
+export * from './CommodityP2EvidencePipeline';
 export * from './CommodityShadowObservability';
