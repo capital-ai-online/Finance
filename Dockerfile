@@ -1,12 +1,17 @@
 # Production Docker hardening for Render.
-# Both stages are pinned to the same immutable Node 24.18.0 Alpine multi-platform image digest.
+# All stages are pinned to the same immutable Node 24.18.0 Alpine multi-platform image digest.
 FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS builder
 WORKDIR /app
 
-COPY package*.json ./
+# Never execute dependency lifecycle scripts as root. The official Node image already
+# provides the unprivileged `node` identity; keep the complete build under that user.
+RUN chown node:node /app
+USER node
+
+COPY --chown=node:node package*.json ./
 RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
 
 # Exact source identity is non-sensitive build metadata. Git metadata stays excluded from context.
 ARG RELEASE_SOURCE_COMMIT
@@ -28,24 +33,30 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
 # The identity is scoped to this build command and is not persisted into the runtime image.
 RUN RELEASE_SOURCE_COMMIT="${RELEASE_SOURCE_COMMIT:-$RENDER_GIT_COMMIT}" npm run build
 
+# Install the production dependency graph in a dedicated unprivileged stage. This prevents
+# package lifecycle scripts from gaining root privileges while keeping the final dependency
+# tree immutable and root-owned once copied into the runner.
+FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS prod-deps
+WORKDIR /app
+RUN chown node:node /app
+USER node
+COPY --chown=node:node package*.json ./
+RUN npm ci --omit=dev \
+  && npm cache clean --force
+
 FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS runner
 WORKDIR /app
 
-# Keep build-time Node invocations free of runtime preload hooks.
-ENV NODE_ENV=production
+# Render binds public web services to PORT=10000 by default. Keeping the image default aligned
+# makes Docker's declared port, the process listener and the health check one explicit contract.
+ENV NODE_ENV=production \
+    PORT=10000
 
-# Create the runtime identity before installing/copying artifacts.
+# Create the runtime identity before copying artifacts.
 RUN addgroup -S capitalai && adduser -S capitalai -G capitalai
 
-COPY package*.json ./
-
-# Install runtime dependencies only. Application code and dependencies remain root-owned/read-only.
-RUN npm ci --omit=dev \
-  && npm cache clean --force \
-  && chown -R root:root /app/node_modules /app/package*.json \
-  && chmod -R a-w /app/node_modules \
-  && chmod a-w /app/package*.json
-
+COPY --chown=root:root package*.json ./
+COPY --from=prod-deps --chown=root:root /app/node_modules ./node_modules
 COPY --from=builder --chown=root:root /app/dist ./dist
 COPY --from=builder --chown=root:root /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
 
@@ -55,10 +66,13 @@ ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
     HOME=/tmp/capitalai \
     TMPDIR=/tmp/capitalai
 
-# Deny writes to application artifacts. Only uploads and the dedicated temp/home directory are writable.
-RUN mkdir -p /app/uploads /app/docs /tmp/capitalai \
-  && chown root:root /app/dist /app/server /app/docs \
-  && chmod -R a-w /app/dist /app/server \
+# Do not ship the backend source map in the production runtime image. Deny writes to all
+# application/dependency artifacts; only uploads and the dedicated temp/home directory are writable.
+RUN rm -f /app/dist/server.cjs.map \
+  && mkdir -p /app/uploads /app/docs /tmp/capitalai \
+  && chown -R root:root /app/node_modules /app/package*.json /app/dist /app/server /app/docs \
+  && chmod -R a-w /app/node_modules /app/dist /app/server \
+  && chmod a-w /app/package*.json \
   && chmod 0555 /app/docs \
   && chown capitalai:capitalai /app/uploads /tmp/capitalai \
   && chmod 0750 /app/uploads \
@@ -66,10 +80,10 @@ RUN mkdir -p /app/uploads /app/docs /tmp/capitalai \
 
 USER capitalai
 
-EXPOSE 3000
+EXPOSE 10000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -q -O /dev/null http://127.0.0.1:3000/healthz || exit 1
+  CMD wget -q -O /dev/null "http://127.0.0.1:${PORT:-10000}/healthz" || exit 1
 
 # Run Node directly so the application is PID 1 and receives termination signals without an npm shim.
 CMD ["node", "dist/server.cjs"]
