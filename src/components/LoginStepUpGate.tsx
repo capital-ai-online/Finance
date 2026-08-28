@@ -21,10 +21,11 @@ type GateRequirement = 'checking' | 'native' | 'blocked';
 /**
  * Supabase-native assurance gate.
  *
- * The primary authentication authority is the Supabase-native passkey flow. If Supabase reports
- * that this account can reach AAL2, the verified native TOTP factor is required before application
- * access. Any failure to read AAL state, enumerate factors or create the challenge fails closed.
- * There is deliberately no legacy Passkey/TOTP/password fallback.
+ * Primary authentication may arrive through an allowed Supabase website login method such as
+ * email/password, Google OAuth or a native passkey. This gate is deliberately independent from
+ * that choice: if Supabase reports that the session can reach AAL2, the verified native TOTP
+ * factor is required before private application access. Any failure to read AAL state, enumerate
+ * factors or create the challenge fails closed. There is no bypass around the native AAL gate.
  */
 export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
   const [requirement, setRequirement] = useState<GateRequirement>('checking');
@@ -158,8 +159,8 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
         {requirement === 'native' && (
           <form onSubmit={handleNativeVerify} className="space-y-4">
             <p className="text-xs text-white/60 leading-relaxed text-center">
-              Für dieses Konto ist natives Supabase-MFA aktiv. Bitte bestätige die Passkey-Sitzung
-              mit dem aktuellen Code aus deiner Authenticator-App.
+              Für dieses Konto ist natives Supabase-MFA aktiv. Bitte bestätige die aktuelle
+              Anmeldung mit dem Code aus deiner Authenticator-App.
             </p>
             <input
               type="text"
@@ -197,7 +198,8 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
               </p>
             </div>
             <p className="text-[11px] text-white/35 text-center leading-relaxed">
-              Es wird bewusst kein Legacy-, Passwort-, OAuth- oder lokaler MFA-Fallback verwendet.
+              Der native MFA-/AAL-Sicherheitsstatus wird nicht durch einen alternativen Faktor oder
+              einen anderen Primärlogin umgangen.
             </p>
           </div>
         )}
