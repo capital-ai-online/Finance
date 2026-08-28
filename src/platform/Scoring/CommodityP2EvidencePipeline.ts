@@ -42,7 +42,7 @@ import type { CommodityResearchModelId } from './CommodityResearchModelContracts
 export const COMMODITY_P2_EVIDENCE_PIPELINE_VERSION =
   'commodity-p2-evidence-pipeline/1.0.0' as const;
 
-export interface CommodityP2StressScenarioInput extends Omit<CommodityStressScenarioResult, 'outOfSampleEvidenceId'> {}
+export type CommodityP2StressScenarioInput = Omit<CommodityStressScenarioResult, 'outOfSampleEvidenceId'>;
 
 export interface CommodityP2EvidencePipelineInput {
   readonly runId: string;
