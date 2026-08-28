@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
 import { isNativePasskeyLoginEnabled } from '../../../lib/authFeatureFlags';
-import { requestHcaptchaToken } from '../../../lib/hcaptcha';
+import { preloadHcaptchaSdk, requestHcaptchaToken } from '../../../lib/hcaptcha';
 import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
 import { PasskeyLoginPanel } from './PasskeyLoginPanel';
 
@@ -24,11 +24,10 @@ interface LoginPageProps {
 /**
  * Canonical authentication page for `/login`.
  *
- * Google OAuth is the leading provider while native Supabase passkeys are disabled. Google owns
- * the account-verification ceremony and can use a Google-account passkey when the user has one
- * configured; CAPITAL-AI never receives or stores that Google passkey. Once the controlled native
- * passkey feature flag is enabled, the native panel is rendered first and becomes the leading
- * website login path.
+ * Existing registered users authenticate primarily with email/password. Google OAuth is presented
+ * as an alternative provider below the normal account login. Google owns its account-verification
+ * ceremony and can use a Google-account passkey when configured; CAPITAL-AI never receives or
+ * stores that Google passkey. A controlled native Supabase passkey remains feature-gated.
  */
 export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
   const nativePasskeyEnabled = isNativePasskeyLoginEnabled();
@@ -42,6 +41,10 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+
+  const warmHcaptcha = () => {
+    void preloadHcaptchaSdk().catch(() => undefined);
+  };
 
   const handleGoogleLogin = async () => {
     setError(null);
@@ -164,27 +167,105 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
           )}
 
           <div className="space-y-4">
+            <div>
+              <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-aif-gold-DEFAULT">
+                Registriertes Konto
+              </p>
+              <form onSubmit={handlePasswordLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="login-email"
+                    className="text-[10px] font-bold uppercase tracking-widest text-white/55"
+                  >
+                    E-Mail-Adresse
+                  </label>
+                  <div className="relative">
+                    <Mail
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35"
+                    />
+                    <input
+                      id="login-email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onFocus={warmHcaptcha}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-4 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="login-password"
+                      className="text-[10px] font-bold uppercase tracking-widest text-white/55"
+                    >
+                      Passwort
+                    </label>
+                    <button
+                      type="button"
+                      onClick={openPasswordReset}
+                      className="text-[10px] font-bold text-aif-gold-DEFAULT hover:underline"
+                    >
+                      Passwort vergessen?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35"
+                    />
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      value={password}
+                      onFocus={warmHcaptcha}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-11 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/35 transition hover:text-white/70"
+                      aria-label={showPassword ? 'Passwort ausblenden' : 'Passwort anzeigen'}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-aif-gold-DEFAULT px-4 py-3 text-xs font-black uppercase tracking-wider text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                  Anmelden
+                </button>
+              </form>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">
+                Alternative Anmeldung
+              </span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+
             {nativePasskeyEnabled && <PasskeyLoginPanel />}
 
-            <section
-              className={
-                nativePasskeyEnabled
-                  ? 'rounded-xl border border-white/10 bg-white/[0.02] p-4'
-                  : 'rounded-xl border border-aif-gold-DEFAULT/20 bg-aif-gold-DEFAULT/5 p-4'
-              }
-            >
+            <section className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
               <div className="mb-3 flex items-center gap-2">
-                <KeyRound
-                  size={16}
-                  className={nativePasskeyEnabled ? 'text-white/60' : 'text-aif-gold-DEFAULT'}
-                />
+                <KeyRound size={16} className="text-white/60" />
                 <div>
-                  <p
-                    className={`text-[10px] font-black uppercase tracking-[0.18em] ${
-                      nativePasskeyEnabled ? 'text-white/55' : 'text-aif-gold-DEFAULT'
-                    }`}
-                  >
-                    {nativePasskeyEnabled ? 'Google Fallback' : 'Primärer Login · Google'}
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
+                    Google
                   </p>
                   <p className="mt-1 text-[11px] leading-relaxed text-white/45">
                     Ist für Ihr Google-Konto ein Passkey eingerichtet, kann Google die Anmeldung
@@ -229,93 +310,9 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
               </button>
             </section>
 
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">
-                registriertes Konto
-              </span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
-
-            <form onSubmit={handlePasswordLogin} className="space-y-4">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="login-email"
-                  className="text-[10px] font-bold uppercase tracking-widest text-white/55"
-                >
-                  E-Mail-Adresse
-                </label>
-                <div className="relative">
-                  <Mail
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35"
-                  />
-                  <input
-                    id="login-email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-4 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="login-password"
-                    className="text-[10px] font-bold uppercase tracking-widest text-white/55"
-                  >
-                    Passwort
-                  </label>
-                  <button
-                    type="button"
-                    onClick={openPasswordReset}
-                    className="text-[10px] font-bold text-aif-gold-DEFAULT hover:underline"
-                  >
-                    Passwort vergessen?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35"
-                  />
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-11 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((current) => !current)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/35 transition hover:text-white/70"
-                    aria-label={showPassword ? 'Passwort ausblenden' : 'Passwort anzeigen'}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-aif-gold-DEFAULT px-4 py-3 text-xs font-black uppercase tracking-wider text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                Anmelden
-              </button>
-            </form>
-
             <p className="text-center text-[10px] leading-relaxed text-white/35">
               Die Selbstregistrierung bleibt kontrolliert deaktiviert. Bereits registrierte Konten
-              können Google oder E-Mail/Passwort verwenden. Nach erfolgreicher Primäranmeldung
+              können E-Mail/Passwort oder Google verwenden. Nach erfolgreicher Primäranmeldung
               bleibt das native Supabase-AAL-/MFA-Gate verpflichtend.
             </p>
           </div>
@@ -365,6 +362,7 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
                     type="email"
                     autoComplete="email"
                     value={resetEmail}
+                    onFocus={warmHcaptcha}
                     onChange={(event) => setResetEmail(event.target.value)}
                     className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-4 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
                     placeholder="name@beispiel.com"

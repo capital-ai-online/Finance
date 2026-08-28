@@ -99,6 +99,17 @@ function waitForSdk(): Promise<HcaptchaApi> {
 }
 
 /**
+ * Starts loading the hCaptcha browser SDK without requesting or persisting a challenge token.
+ *
+ * This is a latency optimization only. Missing public configuration remains fail-closed in
+ * requestHcaptchaToken(), and every protected authentication request still obtains a fresh token.
+ */
+export async function preloadHcaptchaSdk(): Promise<void> {
+  if (!configuredSiteKey()) return;
+  await waitForSdk();
+}
+
+/**
  * Obtains one short-lived hCaptcha token for a user-initiated Supabase Auth request.
  *
  * The public site key is build-time client configuration. The hCaptcha secret remains solely in

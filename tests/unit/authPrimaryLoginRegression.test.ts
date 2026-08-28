@@ -17,13 +17,19 @@ const dockerfile = read('Dockerfile');
 const renderBlueprint = read('render.yaml');
 
 describe('website primary login regression boundary', () => {
-  it('keeps Google OAuth as the leading website provider until native passkey activation', () => {
+  it('keeps registered email/password login ahead of Google OAuth in the login UI', () => {
     expect(loginPage).toContain("provider: 'google'");
     expect(loginPage).toContain('supabase.auth.signInWithOAuth');
     expect(loginPage).toContain("redirectTo: `${window.location.origin}/login`");
     expect(loginPage).toContain("prompt: 'select_account'");
-    expect(loginPage).toContain('Primärer Login · Google');
+    expect(loginPage).toContain('Registriertes Konto');
+    expect(loginPage).toContain('Alternative Anmeldung');
     expect(loginPage).toContain('Google-Konto ein Passkey eingerichtet');
+
+    const passwordLoginIndex = loginPage.indexOf('<form onSubmit={handlePasswordLogin}');
+    const googleLoginIndex = loginPage.indexOf('<span>Mit Google anmelden</span>');
+    expect(passwordLoginIndex).toBeGreaterThanOrEqual(0);
+    expect(googleLoginIndex).toBeGreaterThan(passwordLoginIndex);
   });
 
   it('authenticates existing registered users by password with a CAPTCHA token', () => {
@@ -64,7 +70,11 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('establishSession(session).catch');
   });
 
-  it('lets authenticated OAuth callbacks reach onboarding/AAL gates', () => {
+  it('renders the login shell immediately while preserving authenticated onboarding/AAL gates', () => {
+    expect(sessionComposition).toMatch(
+      /const PUBLIC_SHELL_PATHS = new Set\(\[[\s\S]*'\/login',[\s\S]*\]\);/,
+    );
+    expect(sessionComposition).toContain('if (loading && !renderPublicShellImmediately)');
     expect(sessionComposition).toContain('if (pendingOnboardingSession)');
     expect(sessionComposition).toContain('if (pendingStepUpSession)');
     expect(sessionComposition).not.toContain(
@@ -80,6 +90,15 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain('There is no bypass around the native AAL gate.');
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
     expect(loginStepUpGate).toContain('verifyTotpChallenge');
+  });
+
+  it('preloads the hCaptcha SDK without generating or persisting a token', () => {
+    expect(loginPage).toContain('preloadHcaptchaSdk');
+    expect(loginPage).toContain('onFocus={warmHcaptcha}');
+    expect(hcaptcha).toContain('export async function preloadHcaptchaSdk()');
+    expect(hcaptcha).toContain('await waitForSdk()');
+    expect(hcaptcha).not.toContain('localStorage');
+    expect(hcaptcha).not.toContain('sessionStorage');
   });
 
   it('obtains hCaptcha tokens without persisting or logging them', () => {
