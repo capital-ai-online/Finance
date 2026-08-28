@@ -28,11 +28,16 @@ export function createMarketSentimentRouter(deps: MarketSentimentRouteDependenci
     if (!identity) {
       return res.status(401).json({ error: 'Anmeldung erforderlich.' });
     }
-    // Der frühere Gemini/Google-Search-Pfad wurde entfernt. Ohne verifizierten News-
-    // Evidence-Provider wird bewusst kein synthetischer Sentiment-Score erzeugt.
-    return res.status(503).json({
+    // Der frühere Gemini/Google-Search-Pfad wurde entfernt. Das ist aktuell ein bekannter
+    // Capability-Zustand und kein transienter Serverausfall. Deshalb wird die Anfrage technisch
+    // erfolgreich mit einem expliziten DATA_UNAVAILABLE-Vertrag beantwortet, statt permanent 503
+    // zu erzeugen. Es wird weiterhin bewusst KEIN synthetischer Sentiment-Score zurückgegeben.
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    return res.status(200).json({
       status: 'DATA_UNAVAILABLE',
-      error: 'VERIFIED_NEWS_EVIDENCE_UNAVAILABLE',
+      available: false,
+      code: 'VERIFIED_NEWS_EVIDENCE_UNAVAILABLE',
+      error: 'Verifizierte News-Evidence für das Markt-Sentiment ist derzeit nicht verfügbar.',
       reason: 'Der frühere Gemini-Grounding-Provider wurde entfernt; ein verifizierter Ersatz ist noch nicht angebunden.',
     });
   });
