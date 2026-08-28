@@ -1,13 +1,13 @@
 import type { CryptoCategory, CryptoClassification } from '../../../../types/crypto.types';
 import {
-  CRYPTO_CATEGORY_ANALYSIS_PROFILES,
   resolveCryptoAnalysisProfile,
   type CryptoAnalysisProfileId,
   type CryptoProfileBinding,
 } from '../../CryptoModuleContracts';
+import { resolveEffectiveCryptoCategoryAnalysisProfile } from './CryptoMemeProfileSupersession';
 
 export const CRYPTO_CATEGORY_PROFILE_RESOLVER_VERSION =
-  'fintech-core.crypto/category-profile-resolver/0.1.0' as const;
+  'fintech-core.crypto/category-profile-resolver/0.2.0' as const;
 
 export type CryptoCategoryEvidenceSource =
   | 'CANONICAL_CLASSIFICATION'
@@ -83,7 +83,7 @@ function toResolved(
     source,
     confidence: clampConfidence(confidence),
     evidenceRefs: Object.freeze([...evidenceRefs]),
-    sourceStatus: CRYPTO_CATEGORY_ANALYSIS_PROFILES[binding.profileId].sourceStatus,
+    sourceStatus: resolveEffectiveCryptoCategoryAnalysisProfile(binding.profileId).sourceStatus,
   });
 }
 
@@ -95,7 +95,8 @@ function toResolved(
  * - agent research can never promote a secondary profile;
  * - verified/deterministic secondary evidence requires at least one evidence reference;
  * - conditional mappings require explicit semantic qualifiers;
- * - duplicate profile IDs are not counted twice.
+ * - duplicate profile IDs are not counted twice;
+ * - superseded category profiles are resolved through the effective profile contract.
  */
 export function resolveCryptoCategoryProfiles(
   classification: CryptoClassification,
