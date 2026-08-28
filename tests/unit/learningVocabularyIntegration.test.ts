@@ -43,8 +43,8 @@ describe('Capital-AI Learning Platform integration', () => {
     const routes = source('src/app/routing/AppRoutes.tsx');
 
     expect(routes).toContain("import { LearningVocabulary } from '../../features/learning/ui';");
+    expect(routes).toContain("window.location.pathname.replace(/\\/+$/, '') || '/'");
     expect(routes).toContain("currentPath === '/learning-platform'");
-    expect(routes).toContain("currentPath === '/learning-platform/'");
     expect(routes).toContain('CAPITAL-AI / LEARNING');
     expect(routes).toContain('<LearningVocabulary />');
   });
