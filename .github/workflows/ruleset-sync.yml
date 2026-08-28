@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '.github/policies/main-production-protection.expected.json'
+      - '.github/workflows/ruleset-sync.yml'
+      - 'scripts/security/rulesetSync.mjs'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -19,10 +21,14 @@ concurrency:
   group: ruleset-sync
   cancel-in-progress: false
 
+# Dieser Workflow ist bewusst NICHT zeitgesteuert. Er verbraucht Runner-Zeit nur bei einer
+# Aenderung des Ruleset-Sollzustands/Sync-Codes oder bei explizitem manuellen Aufruf. Die
+# Sicherheitsmutation wird nicht durch das optionale Repository-Advisory-Kostenbudget unterdrueckt.
 jobs:
   sync:
     name: Ruleset lesen, Diff anzeigen, ggf. anwenden
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     environment: ruleset-admin
     permissions:
       contents: read
