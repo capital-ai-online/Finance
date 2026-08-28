@@ -64,6 +64,7 @@ jobs:
           test "$(docker image inspect "$image" --format '{{.Config.User}}')" = 'capitalai'
           test "$(docker image inspect "$image" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
           test "$(docker image inspect "$image" --format '{{json .Config.ExposedPorts}}')" = '{"10000/tcp":{}}'
+          docker image inspect "$image" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep -Fxq 'NODE_ENV=production'
           docker image inspect "$image" --format '{{json .Config.Healthcheck.Test}}' | grep -Fq '${PORT:-10000}/healthz'
           docker run --rm --entrypoint sh "$image" -c '
             set -eu
@@ -71,6 +72,13 @@ jobs:
             test ! -e /app/dist/server.cjs.map
             test ! -e /app/node_modules/esbuild
             test ! -e /app/node_modules/@esbuild
+            test ! -e /app/node_modules/@vitejs
+            test ! -e /app/node_modules/@tailwindcss
+            test ! -e /app/node_modules/tailwindcss
+            test -f /app/node_modules/vite/package.json
+            test -f /app/node_modules/vite/index.js
+            test "$(find /app/node_modules/vite -type f | wc -l | tr -d " ")" = "2"
+            grep -Fq VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_IMAGE /app/node_modules/vite/index.js
             for path in \
               /usr/local/lib/node_modules/npm \
               /usr/local/lib/node_modules/corepack \
