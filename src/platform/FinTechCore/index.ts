@@ -21,6 +21,7 @@ export * from './Modules/Crypto/CryptoCategoryProfileResolver';
 export * from './Modules/Crypto/CryptoCategoryFeatureContracts';
 export * from './Modules/Crypto/Adapters/VerifiedCryptoSnapshotFeatureAdapter';
 export * from './Modules/Crypto/Adapters/GoPlusHoneypotSimulationEvidenceAdapter';
+export * from './Modules/Crypto/Validation/HoneypotSimulationValidation';
 export * from './Modules/Crypto/Pattern/PatternDetectionContracts';
 export * from './Modules/Crypto/Pattern/PatternReliabilityRegistry';
 export * from './Modules/Crypto/Pattern/PatternSignalResolver';
