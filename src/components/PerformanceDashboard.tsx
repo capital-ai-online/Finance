@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, CheckCircle2, Clock, Database, Gauge, RefreshCw } from 'lucide-react';
 import { QualityCenterPanel } from './QualityCenterPanel';
+import { authFetch } from '../lib/authFetch';
 
 interface RequestLogEntry {
   id: string;
@@ -38,7 +39,7 @@ export default function PerformanceDashboard() {
   const refresh = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/orchestrator/stats');
+      const response = await authFetch('/api/orchestrator/stats');
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const body = await response.json();
       setStats(body);
