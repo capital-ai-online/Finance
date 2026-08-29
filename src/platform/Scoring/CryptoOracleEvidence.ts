@@ -59,15 +59,20 @@ function hasText(value: string): boolean {
   return value.trim().length > 0;
 }
 
-function sameFeed(feed: CryptoOracleFeedIdentity, observation: CryptoOracleObservation): boolean {
-  return (
+function sameRiskIdentity(feed: CryptoOracleFeedIdentity, observation: CryptoOracleObservation): boolean {
+  const sameScope = (
     observation.protocolId === feed.protocolId &&
     observation.chainId === feed.chainId &&
-    observation.oracleId === feed.oracleId &&
-    observation.feedId === feed.feedId &&
     observation.baseAssetId === feed.baseAssetId &&
     observation.quoteAssetId === feed.quoteAssetId
   );
+  if (!sameScope) return false;
+
+  if (observation.role === 'PRIMARY') {
+    return observation.oracleId === feed.oracleId && observation.feedId === feed.feedId;
+  }
+
+  return hasText(observation.oracleId) && hasText(observation.feedId);
 }
 
 function validNonNegative(value: number): boolean {
@@ -80,7 +85,7 @@ function admissibleObservation(
   policy: CryptoOracleEvidencePolicy,
   evaluatedAtMs: number,
 ): boolean {
-  if (!sameFeed(feed, observation)) return false;
+  if (!sameRiskIdentity(feed, observation)) return false;
   if (!Number.isFinite(observation.observedAtMs) || observation.observedAtMs <= 0) return false;
   if (!Number.isFinite(observation.feedUpdatedAtMs) || observation.feedUpdatedAtMs <= 0) return false;
   if (observation.observedAtMs > evaluatedAtMs || observation.feedUpdatedAtMs > evaluatedAtMs) return false;
@@ -176,59 +181,63 @@ export function evaluateCryptoOracleEvidence(
     return evaluation(feed, 'NOT_COMPUTABLE', null, admitted, 'Keine admissible PRIMARY-Oracle-Evidence vorhanden.');
   }
 
-  const hasUnknownAvailability = admitted.some((entry) => entry.availability === 'UNKNOWN');
+  if (policy.fallbackRequirement === 'REQUIRED' && fallback.length === 0) {
+    return evaluation(feed, 'NOT_COMPUTABLE', null, primary, 'Die Oracle-Policy verlangt attestierte FALLBACK-Evidence.');
+  }
+
+  const gateRelevant = Object.freeze(
+    policy.fallbackRequirement === 'REQUIRED' ? [...primary, ...fallback] : [...primary],
+  );
+
+  const hasUnknownAvailability = gateRelevant.some((entry) => entry.availability === 'UNKNOWN');
   if (hasUnknownAvailability) {
-    return evaluation(feed, 'NOT_COMPUTABLE', null, admitted, 'Mindestens eine admissible Oracle-Observation hat unbekannte Availability.');
+    return evaluation(feed, 'NOT_COMPUTABLE', null, gateRelevant, 'Mindestens eine gate-relevante Oracle-Observation hat unbekannte Availability.');
   }
 
-  const unavailable = admitted.find((entry) => entry.availability === 'UNAVAILABLE');
+  const unavailable = gateRelevant.find((entry) => entry.availability === 'UNAVAILABLE');
   if (unavailable) {
-    return evaluation(feed, 'BLOCKED', false, admitted, `${unavailable.role}-Oracle meldet UNAVAILABLE.`);
+    return evaluation(feed, 'BLOCKED', false, gateRelevant, `${unavailable.role}-Oracle meldet UNAVAILABLE.`);
   }
 
-  const staleFeed = admitted.find((entry) => evaluatedAtMs - entry.feedUpdatedAtMs > policy.maxFeedUpdateAgeMs);
+  const staleFeed = gateRelevant.find((entry) => evaluatedAtMs - entry.feedUpdatedAtMs > policy.maxFeedUpdateAgeMs);
   if (staleFeed) {
-    return evaluation(feed, 'BLOCKED', false, admitted, `${staleFeed.role}-Oracle-Feed ist außerhalb der govern­ten Feed-Freshness-Policy.`);
+    return evaluation(feed, 'BLOCKED', false, gateRelevant, `${staleFeed.role}-Oracle-Feed ist außerhalb der governten Feed-Freshness-Policy.`);
   }
 
-  const missingDeviation = admitted.some((entry) => entry.deviationBps === null);
-  const missingConfidence = admitted.some((entry) => entry.confidenceBps === null);
+  const missingDeviation = gateRelevant.some((entry) => entry.deviationBps === null);
+  const missingConfidence = gateRelevant.some((entry) => entry.confidenceBps === null);
   if (missingDeviation || missingConfidence) {
-    return evaluation(feed, 'NOT_COMPUTABLE', null, admitted, 'Deviation- oder Confidence-Evidence ist unvollständig.');
+    return evaluation(feed, 'NOT_COMPUTABLE', null, gateRelevant, 'Deviation- oder Confidence-Evidence ist unvollständig.');
   }
 
-  const excessiveDeviation = admitted.find((entry) => (entry.deviationBps ?? 0) > policy.maxDeviationBps);
+  const excessiveDeviation = gateRelevant.find((entry) => (entry.deviationBps ?? 0) > policy.maxDeviationBps);
   if (excessiveDeviation) {
-    return evaluation(feed, 'BLOCKED', false, admitted, `${excessiveDeviation.role}-Oracle überschreitet die governte Deviation-Grenze.`);
+    return evaluation(feed, 'BLOCKED', false, gateRelevant, `${excessiveDeviation.role}-Oracle überschreitet die governte Deviation-Grenze.`);
   }
 
-  const excessiveConfidence = admitted.find((entry) => (entry.confidenceBps ?? 0) > policy.maxConfidenceBps);
+  const excessiveConfidence = gateRelevant.find((entry) => (entry.confidenceBps ?? 0) > policy.maxConfidenceBps);
   if (excessiveConfidence) {
-    return evaluation(feed, 'BLOCKED', false, admitted, `${excessiveConfidence.role}-Oracle überschreitet die governte Confidence-/Uncertainty-Grenze.`);
+    return evaluation(feed, 'BLOCKED', false, gateRelevant, `${excessiveConfidence.role}-Oracle überschreitet die governte Confidence-/Uncertainty-Grenze.`);
   }
 
   const sourceAuthorities = new Set(
-    admitted.map((entry) => `${entry.sourceAuthorityId}@${entry.sourceAuthorityVersion}`),
+    gateRelevant.map((entry) => `${entry.sourceAuthorityId}@${entry.sourceAuthorityVersion}`),
   );
   if (sourceAuthorities.size < policy.minIndependentSourceAuthorities) {
     return evaluation(
       feed,
       'NOT_COMPUTABLE',
       null,
-      admitted,
+      gateRelevant,
       `Nur ${sourceAuthorities.size} unabhängige Source-Authority-Nachweise; mindestens ${policy.minIndependentSourceAuthorities} sind erforderlich.`,
     );
-  }
-
-  if (policy.fallbackRequirement === 'REQUIRED' && fallback.length === 0) {
-    return evaluation(feed, 'NOT_COMPUTABLE', null, admitted, 'Die Oracle-Policy verlangt attestierte FALLBACK-Evidence.');
   }
 
   return evaluation(
     feed,
     'PASS',
     true,
-    admitted,
-    'Oracle Availability, Feed-Freshness, Deviation, Confidence und Source-Diversity liegen innerhalb der govern­ten Policy.',
+    gateRelevant,
+    'Oracle Availability, Feed-Freshness, Deviation, Confidence und Source-Diversity liegen innerhalb der governten Policy.',
   );
 }
