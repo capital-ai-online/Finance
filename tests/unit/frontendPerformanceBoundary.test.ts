@@ -9,20 +9,24 @@ const landing = read('src/features/public/ui/LandingPage.tsx');
 const viteConfig = read('vite.config.ts');
 
 describe('frontend performance boundaries', () => {
-  it('keeps the public root isolated from authenticated heavy feature graphs', () => {
+  it('keeps the public root out of the static Dashboard dependency graph', () => {
     expect(routes).toContain("import { LandingPage } from '../../features/public/ui/LandingPage'");
     expect(routes).not.toContain("import { Dashboard } from '../dashboard'");
     expect(routes).toContain("await import('../dashboard/Dashboard')");
     expect(routes).toContain("await import('../../features/social/ui/MediaStudio')");
     expect(routes).toContain("await import('../../features/learning/ui/LearningVocabulary')");
-    expect(landing).not.toContain('app/dashboard');
+    expect(landing).not.toContain("import { Dashboard }");
+    expect(landing).toContain('React.lazy');
+    expect(landing).toContain("import('../../../app/dashboard/Dashboard')");
   });
 
-  it('loads the public scorer only near the viewport', () => {
-    expect(landing).toContain('React.lazy');
-    expect(landing).toContain("import('../../crypto/ui/CryptoScoringEnterprise')");
-    expect(landing).toContain('IntersectionObserver');
-    expect(landing).toContain("{ rootMargin: '320px 0px' }");
+  it('preserves the productive Dashboard-backed landing page behind an async loading boundary', () => {
+    expect(landing).toContain('const LazyDashboard = React.lazy');
+    expect(landing).toContain('<React.Suspense');
+    expect(landing).toContain('<LazyDashboard');
+    expect(landing).toContain('userSession={PUBLIC_VISITOR_SESSION}');
+    expect(landing).toContain('This changes loading behavior only');
+    expect(landing).not.toContain("import('../../crypto/ui/CryptoScoringEnterprise')");
   });
 
   it('fails builds that regress the initial JavaScript entry budget', () => {
