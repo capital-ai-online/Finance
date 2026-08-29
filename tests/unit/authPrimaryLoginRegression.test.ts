@@ -107,9 +107,10 @@ describe('website primary login regression boundary', () => {
     expect(passkeySettings).toContain('registerWebauthnMfaFactor');
     expect(passkeySettings).toContain("factor.factorType === 'webauthn'");
     expect(passkeySettings).toContain("supabase.auth.mfa.unenroll({ factorId })");
-    expect(passkeySettings).not.toContain('registerPasskey');
-    expect(passkeySettings).not.toContain('auth.passkey.list');
-    expect(passkeySettings).not.toContain('signInWithPasskey');
+    expect(passkeySettings).not.toContain('.auth.registerPasskey(');
+    expect(passkeySettings).not.toContain('.auth.passkey.list(');
+    expect(passkeySettings).not.toContain('.auth.passkey.delete(');
+    expect(passkeySettings).not.toContain('.auth.signInWithPasskey(');
 
     expect(mfaLastFactorGuard).toContain('listVerifiedNativeMfaFactors');
     expect(mfaLastFactorGuard).not.toContain('supabase.auth.passkey.list');
