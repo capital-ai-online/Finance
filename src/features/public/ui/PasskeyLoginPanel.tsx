@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { AlertCircle, Fingerprint, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
+import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 
 /**
  * Native Supabase passkey login panel.
  *
- * This panel is rendered only after the controlled native-passkey feature flag has been enabled.
- * Until that activation, Google OAuth and registered email/password identities remain the website
- * primary-login paths. Native passkey failures remain fail-closed.
+ * Password authentication is intentionally unavailable. Native passkeys are the preferred
+ * first-party login path; Google OAuth remains a federated fallback. Passkey failures remain
+ * fail-closed and every successful session still has to pass the native AAL/MFA boundary.
  */
 export function PasskeyLoginPanel() {
   const [loading, setLoading] = useState(false);
@@ -23,10 +24,18 @@ export function PasskeyLoginPanel() {
 
     setLoading(true);
     try {
+      // Supabase Auth applies the project's CAPTCHA protection to the passkey authentication
+      // options endpoint as well. Obtain one fresh token immediately before the user-initiated
+      // WebAuthn ceremony; the token is neither persisted nor logged.
+      const captchaToken = await requestHcaptchaToken();
       const auth = supabase.auth as typeof supabase.auth & {
-        signInWithPasskey: () => Promise<{ error: Error | null }>;
+        signInWithPasskey: (credentials?: {
+          options?: { captchaToken?: string };
+        }) => Promise<{ error: Error | null }>;
       };
-      const { error: passkeyError } = await auth.signInWithPasskey();
+      const { error: passkeyError } = await auth.signInWithPasskey({
+        options: { captchaToken },
+      });
       if (passkeyError) throw passkeyError;
     } catch (err: any) {
       console.warn('[Auth] Supabase native passkey login failed:', err);
@@ -44,8 +53,8 @@ export function PasskeyLoginPanel() {
             Primärer Login · Native Passkey
           </p>
           <p className="mt-1 text-[11px] leading-relaxed text-white/45">
-            Der native Supabase-Passkey ist für diese Website kontrolliert aktiviert und wird
-            gegenüber den Fallback-Anmeldewegen priorisiert.
+            Der native Supabase-Passkey ist für diese Website aktiviert und wird gegenüber dem
+            föderierten Fallback priorisiert.
           </p>
         </div>
       </div>

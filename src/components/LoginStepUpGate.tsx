@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, KeyRound, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { markLoginStepUpPassed } from '../lib/loginStepUp';
 import {
   NativeMfaError,
   getCurrentAssuranceLevel,
-  listVerifiedTotpFactors,
+  listVerifiedNativeMfaFactors,
   challengeTotpFactor,
   verifyTotpChallenge,
+  authenticateWebauthnMfaFactor,
 } from '../platform/Security/nativeMfa';
 
 interface LoginStepUpGateProps {
@@ -16,21 +17,46 @@ interface LoginStepUpGateProps {
   onAbort: () => void;
 }
 
-type GateRequirement = 'checking' | 'native' | 'blocked';
+type GateRequirement = 'checking' | 'totp' | 'webauthn' | 'blocked';
+const MFA_OPERATION_TIMEOUT_MS = 10_000;
+
+function withMfaTimeout<T>(operation: Promise<T>, operationName: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      reject(
+        new NativeMfaError(
+          `${operationName} hat das Sicherheits-Zeitlimit überschritten. Bitte erneut anmelden.`,
+        ),
+      );
+    }, MFA_OPERATION_TIMEOUT_MS);
+
+    operation.then(
+      (value) => {
+        window.clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timeoutId);
+        reject(error);
+      },
+    );
+  });
+}
 
 /**
  * Supabase-native assurance gate.
  *
- * Primary authentication may arrive through an allowed Supabase website login method such as
- * email/password, Google OAuth or a native passkey. This gate is deliberately independent from
- * that choice: if Supabase reports that the session can reach AAL2, the verified native TOTP
- * factor is required before private application access. Any failure to read AAL state, enumerate
- * factors or create the challenge fails closed. There is no bypass around the native AAL gate.
+ * Primary authentication may arrive through email/password, Google OAuth or a native passkey.
+ * Every path converges here. Supabase AAL/TOTP/WebAuthn failures remain fail-closed, and a
+ * provider/client operation that never settles becomes an explicit blocked/error state instead
+ * of an endless spinner. WebAuthn in this component is the Supabase MFA factor namespace and is
+ * intentionally distinct from the primary-login `auth.signInWithPasskey()` API.
  */
 export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
   const [requirement, setRequirement] = useState<GateRequirement>('checking');
-  const [nativeFactorId, setNativeFactorId] = useState('');
-  const [nativeChallengeId, setNativeChallengeId] = useState('');
+  const [totpFactorId, setTotpFactorId] = useState('');
+  const [totpChallengeId, setTotpChallengeId] = useState('');
+  const [webauthnFactorId, setWebauthnFactorId] = useState('');
   const [nativeCode, setNativeCode] = useState('');
   const [nativeVerifying, setNativeVerifying] = useState(false);
   const [nativeError, setNativeError] = useState<string | null>(null);
@@ -50,7 +76,10 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       }
 
       try {
-        const level = await getCurrentAssuranceLevel(supabase);
+        const level = await withMfaTimeout(
+          getCurrentAssuranceLevel(supabase),
+          'AAL-Prüfung',
+        );
         if (cancelled) return;
 
         if (level.currentLevel === 'aal2') {
@@ -60,22 +89,40 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
         }
 
         if (level.nextLevel === 'aal2') {
-          const factors = await listVerifiedTotpFactors(supabase);
+          const factors = await withMfaTimeout(
+            listVerifiedNativeMfaFactors(supabase),
+            'MFA-Faktorprüfung',
+          );
           if (cancelled) return;
 
-          if (factors.length === 0) {
-            throw new NativeMfaError(
-              'AAL2 ist erforderlich, aber es wurde kein verifizierter nativer TOTP-Faktor gefunden.',
-            );
+          const webauthnFactor = factors.find((factor) => factor.factorType === 'webauthn');
+          const totpFactor = factors.find((factor) => factor.factorType === 'totp');
+
+          setWebauthnFactorId(webauthnFactor?.id ?? '');
+          setTotpFactorId(totpFactor?.id ?? '');
+
+          // Prefer the phishing-resistant WebAuthn MFA factor when available. The ceremony itself
+          // starts only after a user click, preserving browser user-activation semantics.
+          if (webauthnFactor) {
+            setRequirement('webauthn');
+            return;
           }
 
-          const challengeId = await challengeTotpFactor(supabase, factors[0].id);
-          if (cancelled) return;
+          if (totpFactor) {
+            const challengeId = await withMfaTimeout(
+              challengeTotpFactor(supabase, totpFactor.id),
+              'MFA-Challenge',
+            );
+            if (cancelled) return;
 
-          setNativeFactorId(factors[0].id);
-          setNativeChallengeId(challengeId);
-          setRequirement('native');
-          return;
+            setTotpChallengeId(challengeId);
+            setRequirement('totp');
+            return;
+          }
+
+          throw new NativeMfaError(
+            'AAL2 ist erforderlich, aber es wurde kein verifizierter nativer MFA-Faktor gefunden.',
+          );
         }
 
         if (level.currentLevel === 'aal1' && level.nextLevel === 'aal1') {
@@ -104,6 +151,58 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  async function switchToTotp() {
+    if (!supabase || !totpFactorId) {
+      setNativeError('Kein verifizierter TOTP-Faktor als Fallback verfügbar.');
+      return;
+    }
+
+    setNativeVerifying(true);
+    setNativeError(null);
+    try {
+      const challengeId = await withMfaTimeout(
+        challengeTotpFactor(supabase, totpFactorId),
+        'MFA-Challenge',
+      );
+      setTotpChallengeId(challengeId);
+      setNativeCode('');
+      setRequirement('totp');
+    } catch (err) {
+      console.error('[LoginStepUpGate] TOTP fallback challenge failed closed:', err);
+      setNativeError(
+        err instanceof NativeMfaError ? err.message : 'TOTP-Challenge konnte nicht erstellt werden.',
+      );
+    } finally {
+      setNativeVerifying(false);
+    }
+  }
+
+  async function handleWebauthnVerify() {
+    if (!supabase || !webauthnFactorId) {
+      setNativeError('WebAuthn-MFA-Faktor ist nicht verfügbar. Verifikation wurde blockiert.');
+      return;
+    }
+
+    setNativeVerifying(true);
+    setNativeError(null);
+    try {
+      await withMfaTimeout(
+        authenticateWebauthnMfaFactor(supabase, webauthnFactorId),
+        'WebAuthn-MFA-Verifikation',
+      );
+
+      markLoginStepUpPassed(userId);
+      onVerified();
+    } catch (err) {
+      console.error('[LoginStepUpGate] Native WebAuthn MFA verification failed closed:', err);
+      setNativeError(
+        err instanceof NativeMfaError ? err.message : 'WebAuthn-MFA-Verifikation fehlgeschlagen.',
+      );
+    } finally {
+      setNativeVerifying(false);
+    }
+  }
+
   async function handleNativeVerify(e: React.FormEvent) {
     e.preventDefault();
 
@@ -121,9 +220,15 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
     setNativeVerifying(true);
     setNativeError(null);
     try {
-      await verifyTotpChallenge(supabase, nativeFactorId, nativeChallengeId, nativeCode.trim());
+      await withMfaTimeout(
+        verifyTotpChallenge(supabase, totpFactorId, totpChallengeId, nativeCode.trim()),
+        'MFA-Verifikation',
+      );
 
-      const verifiedLevel = await getCurrentAssuranceLevel(supabase);
+      const verifiedLevel = await withMfaTimeout(
+        getCurrentAssuranceLevel(supabase),
+        'AAL2-Nachprüfung',
+      );
       if (verifiedLevel.currentLevel !== 'aal2') {
         throw new NativeMfaError('Die Sitzung hat nach der Verifikation kein AAL2 erreicht.');
       }
@@ -156,37 +261,85 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
           </p>
         )}
 
-        {requirement === 'native' && (
-          <form onSubmit={handleNativeVerify} className="space-y-4">
+        {requirement === 'webauthn' && (
+          <div className="space-y-4">
             <p className="text-xs text-white/60 leading-relaxed text-center">
-              Für dieses Konto ist natives Supabase-MFA aktiv. Bitte bestätige die aktuelle
-              Anmeldung mit dem Code aus deiner Authenticator-App.
+              Für dieses Konto ist ein verifizierter WebAuthn-MFA-Faktor aktiv. Bestätige die
+              aktuelle Anmeldung mit deinem Passkey oder Sicherheitsschlüssel.
             </p>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              autoFocus
-              value={nativeCode}
-              onChange={(e) => setNativeCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
-              className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
-            />
             {nativeError && (
               <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
                 {nativeError}
               </p>
             )}
             <button
-              type="submit"
-              disabled={nativeVerifying || nativeCode.length !== 6}
+              type="button"
+              onClick={handleWebauthnVerify}
+              disabled={nativeVerifying}
               className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
             >
-              <KeyRound size={16} />
-              {nativeVerifying ? 'Prüfe AAL2…' : 'AAL2 bestätigen'}
+              <Fingerprint size={16} />
+              {nativeVerifying ? 'Prüfe WebAuthn-AAL2…' : 'Passkey-AAL2 bestätigen'}
             </button>
-          </form>
+            {totpFactorId && (
+              <button
+                type="button"
+                onClick={switchToTotp}
+                disabled={nativeVerifying}
+                className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Stattdessen Authenticator-App verwenden
+              </button>
+            )}
+          </div>
+        )}
+
+        {requirement === 'totp' && (
+          <div className="space-y-4">
+            <form onSubmit={handleNativeVerify} className="space-y-4">
+              <p className="text-xs text-white/60 leading-relaxed text-center">
+                Für dieses Konto ist natives Supabase-MFA aktiv. Bitte bestätige die aktuelle
+                Anmeldung mit dem Code aus deiner Authenticator-App.
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                autoFocus
+                value={nativeCode}
+                onChange={(e) => setNativeCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="000000"
+                className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
+              />
+              {nativeError && (
+                <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+                  {nativeError}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={nativeVerifying || nativeCode.length !== 6}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <KeyRound size={16} />
+                {nativeVerifying ? 'Prüfe AAL2…' : 'AAL2 bestätigen'}
+              </button>
+            </form>
+            {webauthnFactorId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNativeError(null);
+                  setRequirement('webauthn');
+                }}
+                disabled={nativeVerifying}
+                className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Stattdessen Passkey verwenden
+              </button>
+            )}
+          </div>
         )}
 
         {requirement === 'blocked' && (
@@ -198,8 +351,8 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
               </p>
             </div>
             <p className="text-[11px] text-white/35 text-center leading-relaxed">
-              Der native MFA-/AAL-Sicherheitsstatus wird nicht durch einen alternativen Faktor oder
-              einen anderen Primärlogin umgangen.
+              Der native MFA-/AAL-Sicherheitsstatus wird nicht durch einen alternativen
+              Primärlogin oder einen unverifizierten Faktor umgangen.
             </p>
           </div>
         )}
