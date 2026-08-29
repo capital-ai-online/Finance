@@ -245,12 +245,6 @@ export function evaluateCryptoContractAssuranceEvidence(
     }
   }
 
-  const invalidRequiredScope = policy.requiredAuditScope === 'FULL_CONTRACT'
-    && admittedAudits.some((entry) => entry.scope !== 'FULL_CONTRACT');
-  if (invalidRequiredScope) {
-    return evaluateResult(identity, 'NOT_COMPUTABLE', null, admittedCodeIdentity, admittedAudits, admittedProofs, 'Mindestens ein admissibles Audit erfüllt den geforderten FULL_CONTRACT-Scope nicht.');
-  }
-
   const blockingSeverities = new Set(policy.blockingFindingSeverities);
   const unresolvedBlockingFinding = admittedAudits.some((audit) =>
     audit.findings.some((finding) => blockingSeverities.has(finding.severity) && finding.unresolvedCount > 0));
@@ -258,7 +252,10 @@ export function evaluateCryptoContractAssuranceEvidence(
     return evaluateResult(identity, 'BLOCKED', false, admittedCodeIdentity, admittedAudits, admittedProofs, 'Mindestens ein admissibles Audit enthält ungeklärte Findings in einer policy-blockierenden Severity.');
   }
 
-  const independentAuditors = new Set(admittedAudits.map((entry) =>
+  const quorumEligibleAudits = policy.requiredAuditScope === 'FULL_CONTRACT'
+    ? admittedAudits.filter((entry) => entry.scope === 'FULL_CONTRACT')
+    : admittedAudits;
+  const independentAuditors = new Set(quorumEligibleAudits.map((entry) =>
     `${entry.auditorAuthorityId}@${entry.auditorAuthorityVersion}`));
   if (independentAuditors.size < policy.minIndependentAuditors) {
     return evaluateResult(
@@ -268,7 +265,7 @@ export function evaluateCryptoContractAssuranceEvidence(
       admittedCodeIdentity,
       admittedAudits,
       admittedProofs,
-      `Nur ${independentAuditors.size} unabhängige Auditor-Authorities; mindestens ${policy.minIndependentAuditors} sind erforderlich.`,
+      `Nur ${independentAuditors.size} scope-qualifizierte unabhängige Auditor-Authorities; mindestens ${policy.minIndependentAuditors} sind erforderlich.`,
     );
   }
 
