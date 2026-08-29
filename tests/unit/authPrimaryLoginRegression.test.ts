@@ -14,6 +14,8 @@ const loginPage = read('src/features/public/ui/LoginPage.tsx');
 const passkeyPanel = read('src/features/public/ui/PasskeyLoginPanel.tsx');
 const sessionComposition = read('src/app/auth/SessionComposition.tsx');
 const loginStepUpGate = read('src/components/LoginStepUpGate.tsx');
+const registrationCompletionGate = read('src/components/RegistrationCompletionGate.tsx');
+const nativeMfa = read('src/platform/Security/nativeMfa.ts');
 const hcaptcha = read('src/lib/hcaptcha.ts');
 const authFeatureFlags = read('src/lib/authFeatureFlags.ts');
 const supabaseClient = read('src/supabaseClient.ts');
@@ -85,6 +87,18 @@ describe('website primary login regression boundary', () => {
     expect(passkeyPanel).toContain('options: { captchaToken }');
     expect(passkeyPanel).not.toContain('localStorage');
     expect(passkeyPanel).not.toContain('sessionStorage');
+  });
+
+  it('separates primary passkeys from WebAuthn MFA and verifies both AAL2 paths', () => {
+    expect(registrationCompletionGate).toContain('registerWebauthnMfaFactor');
+    expect(registrationCompletionGate).not.toContain('supabase.auth.registerPasskey()');
+    expect(nativeMfa).toContain('client.auth.mfa.webauthn.register({ friendlyName })');
+    expect(nativeMfa).toContain('client.auth.mfa.webauthn.authenticate({ factorId })');
+    expect(nativeMfa).toContain("factor.status === 'verified'");
+    expect(loginStepUpGate).toContain('listVerifiedNativeMfaFactors');
+    expect(loginStepUpGate).toContain('authenticateWebauthnMfaFactor');
+    expect(loginStepUpGate).toContain("factor.factorType === 'webauthn'");
+    expect(loginStepUpGate).toContain('Stattdessen Authenticator-App verwenden');
   });
 
   it('uses one synchronous Supabase auth-state bootstrap instead of racing getSession', () => {
