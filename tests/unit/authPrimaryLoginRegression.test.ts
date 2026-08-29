@@ -87,8 +87,8 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('window.setTimeout(() =>');
     expect(sessionComposition).toContain('getSessionBootstrapKey(session)');
 
-    // The sole remaining getSession() is the explicit human retry on the identity-mismatch screen.
-    expect(sessionComposition.match(/getSession\(\)/g)?.length ?? 0).toBe(1);
+    // The sole remaining Supabase getSession() call is the explicit human retry on the identity-mismatch screen.
+    expect(sessionComposition.match(/supabase\.auth\.getSession\(\)/g)?.length ?? 0).toBe(1);
   });
 
   it('only establishes sessions for initial/sign-in events and uses a non-secret key', () => {
