@@ -91,7 +91,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     const failures: string[] = [];
 
     try {
-      const response = await fetch('/api/orchestrator/stats');
+      const response = await authFetch('/api/orchestrator/stats');
       if (response.ok) {
         const data = await response.json();
         setRequestStats({

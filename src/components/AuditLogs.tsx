@@ -117,7 +117,7 @@ export function AuditLogs() {
   // Fetch stats for telemetry
   const fetchTelemetry = async () => {
     try {
-      const res = await fetch('/api/orchestrator/stats');
+      const res = await authFetch('/api/orchestrator/stats');
       if (!res.ok) throw new Error('Orchestrator-Statistiken nicht erreichbar.');
       const data: OrchestratorStats = await res.json();
       setTelemetryStats(data);
