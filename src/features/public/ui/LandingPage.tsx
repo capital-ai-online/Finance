@@ -1,5 +1,4 @@
 import React from 'react';
-import { Dashboard } from '../../../app/dashboard';
 import type { UserSession } from '../../../app/types/UserSession';
 
 interface LandingPageProps {
@@ -7,6 +6,11 @@ interface LandingPageProps {
   handleLogin: (email: string, password: string) => Promise<void>;
   handleRegister: (name: string, email: string, password: string) => Promise<void>;
 }
+
+const LazyDashboard = React.lazy(async () => {
+  const module = await import('../../../app/dashboard/Dashboard');
+  return { default: module.Dashboard };
+});
 
 /**
  * Presentation-only visitor state for the public landing page.
@@ -21,11 +25,31 @@ const PUBLIC_VISITOR_SESSION: UserSession = {
   subscriptionTier: 'Free',
 };
 
+function DashboardLoadingState() {
+  return (
+    <main
+      className="flex min-h-screen items-center justify-center bg-black px-6 text-center text-white"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="space-y-3">
+        <div className="mx-auto h-8 w-8 animate-pulse rounded-full border border-aif-gold-DEFAULT/40 bg-aif-gold-DEFAULT/10" />
+        <p className="text-sm font-bold text-white/80">CAPITAL-AI wird geladen</p>
+      </div>
+    </main>
+  );
+}
+
 /**
  * Canonical public landing page for `/`.
  *
- * Product discovery stays available without authentication. Authentication itself is a separate
- * page at `/login`, reached from the dashboard's lower-left login action.
+ * The productive Dashboard remains the single functional landing-page authority. It is loaded
+ * through a React.lazy boundary so the public entry chunk does not statically absorb the complete
+ * Dashboard/Scorer dependency graph. This changes loading behavior only; it does not introduce a
+ * second landing page or a reduced public shell.
+ *
+ * Authentication itself is a separate page at `/login`, reached from the dashboard's lower-left
+ * login action.
  */
 export function LandingPage({
   clearJustLoggedOut,
@@ -34,19 +58,21 @@ export function LandingPage({
 }: LandingPageProps) {
   return (
     <>
-      <Dashboard
-        userSession={PUBLIC_VISITOR_SESSION}
-        onLogout={() => undefined}
-        onRegister={() => undefined}
-        onLoginEmail={async (email, password) => {
-          clearJustLoggedOut();
-          await handleLogin(email, password);
-        }}
-        onRegisterEmail={async (name, email, password) => {
-          clearJustLoggedOut();
-          await handleRegister(name, email, password);
-        }}
-      />
+      <React.Suspense fallback={<DashboardLoadingState />}>
+        <LazyDashboard
+          userSession={PUBLIC_VISITOR_SESSION}
+          onLogout={() => undefined}
+          onRegister={() => undefined}
+          onLoginEmail={async (email, password) => {
+            clearJustLoggedOut();
+            await handleLogin(email, password);
+          }}
+          onRegisterEmail={async (name, email, password) => {
+            clearJustLoggedOut();
+            await handleRegister(name, email, password);
+          }}
+        />
+      </React.Suspense>
 
       <footer
         aria-label="CAPITAL-AI Produkt- und Datenschutzinformationen"
