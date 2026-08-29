@@ -1,7 +1,7 @@
 import type { MarketDataAsset } from './marketDataCoordinator';
 import type { StooqFallbackAsset } from './stooqProviderStage';
 import { runMarketDataCompatibilityRefresh } from './marketDataCompatibilityFacade';
-import { createMarketDataRuntimeFacade } from './marketDataRuntimeFacade';
+import { createMarketDataRuntimeFacade, type MarketDataRefreshTiming } from './marketDataRuntimeFacade';
 import {
   enrichAssetWithCanonicalScore,
   isCanonicalScorableMarketDataAsset,
@@ -11,6 +11,7 @@ const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', '
 const FOREX_TICKERS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'];
 const COMMODITY_TICKERS = ['XAUUSD', 'XAGUSD', 'CL.F', 'NG.F', 'CO.F'];
 export const APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS = 90_000;
+export const APPLICATION_ENRICHMENT_CONCURRENCY = 4;
 
 export interface ApplicationMarketDataRuntimeOptions {
   fallbackAssets: StooqFallbackAsset[];
@@ -21,7 +22,18 @@ export interface ApplicationMarketDataRuntimeOptions {
   evaluateAlerts?: (assets: MarketDataAsset[]) => Promise<void> | void;
   onProviderFailure?: (stage: string, error: unknown) => void;
   onRefreshFailure?: (error: unknown) => void;
+  onRefreshTiming?: (timing: MarketDataRefreshTiming) => void;
   ttlMs?: number;
+}
+
+function emitDefaultRefreshTiming(timing: MarketDataRefreshTiming): void {
+  if (process.env.NODE_ENV === 'test') return;
+  console.info('[MarketDataRuntime] refresh timing', {
+    kind: timing.kind,
+    outcome: timing.outcome,
+    assetCount: timing.assetCount,
+    durationMs: Number(timing.durationMs.toFixed(1)),
+  });
 }
 
 /**
@@ -36,6 +48,8 @@ export interface ApplicationMarketDataRuntimeOptions {
  * Background provider refresh is throttled to a 90-second cadence at this boundary even if a
  * legacy composition-root timer invokes backgroundRefresh() more frequently. Calls inside the
  * throttle window are coalesced into the next eligible refresh instead of triggering provider I/O.
+ * Evidence enrichment additionally has a four-worker provider budget to avoid CoinGecko/other
+ * provider bursts and to leave capacity for unrelated HTTP traffic.
  */
 export function createApplicationMarketDataRuntime(options: ApplicationMarketDataRuntimeOptions) {
   return createMarketDataRuntimeFacade({
@@ -43,6 +57,7 @@ export function createApplicationMarketDataRuntime(options: ApplicationMarketDat
     backgroundRefreshIntervalMs: APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS,
     syncAsset: options.syncAsset,
     onRefreshFailure: options.onRefreshFailure,
+    onRefreshTiming: options.onRefreshTiming ?? emitDefaultRefreshTiming,
     refresh: () => runMarketDataCompatibilityRefresh({
       fallbackAssets: options.fallbackAssets,
       stockTickers: STOCK_TICKERS,
@@ -55,6 +70,7 @@ export function createApplicationMarketDataRuntime(options: ApplicationMarketDat
       persistSnapshots: options.persistSnapshots,
       evaluateAlerts: options.evaluateAlerts,
       onProviderFailure: options.onProviderFailure,
+      enrichmentConcurrency: APPLICATION_ENRICHMENT_CONCURRENCY,
     }),
   });
 }

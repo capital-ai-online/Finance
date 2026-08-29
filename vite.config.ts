@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, type Plugin} from 'vite';
 
 const packageMetadata = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'),
@@ -11,6 +11,36 @@ const packageMetadata = JSON.parse(
 const PLATFORM_SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 if (!PLATFORM_SEMVER.test(packageMetadata.version)) {
   throw new Error('[Vite] package.json#version must be strict MAJOR.MINOR.PATCH SemVer.');
+}
+
+const INITIAL_ENTRY_BUDGET_BYTES = 900 * 1024;
+const ASYNC_CHUNK_WARNING_BYTES = 2 * 1024 * 1024;
+
+function frontendPerformanceBudgetPlugin(): Plugin {
+  return {
+    name: 'capital-ai-frontend-performance-budget',
+    apply: 'build',
+    generateBundle(_outputOptions, bundle) {
+      for (const output of Object.values(bundle)) {
+        if (output.type !== 'chunk') continue;
+        const bytes = Buffer.byteLength(output.code, 'utf8');
+
+        if (output.isEntry && bytes > INITIAL_ENTRY_BUDGET_BYTES) {
+          this.error(
+            `[PerformanceBudget] Initial entry ${output.fileName} is ${(bytes / 1024).toFixed(1)} KiB; ` +
+            `budget is ${INITIAL_ENTRY_BUDGET_BYTES / 1024} KiB. Use route/feature dynamic import() instead of widening the public bundle.`,
+          );
+        }
+
+        if (!output.isEntry && bytes > ASYNC_CHUNK_WARNING_BYTES) {
+          this.warn(
+            `[PerformanceBudget] Async chunk ${output.fileName} is ${(bytes / 1024).toFixed(1)} KiB. ` +
+            'This does not block the release, but should be split at the next feature boundary.',
+          );
+        }
+      }
+    },
+  };
 }
 
 // Strangler adapter for the remaining Dashboard monolith. The source file is
@@ -123,7 +153,7 @@ const pdfBrandDefinition = {
 
 export default defineConfig(() => {
   return {
-    plugins: [platformVersionProjectionPlugin(), react(), tailwindcss()],
+    plugins: [frontendPerformanceBudgetPlugin(), platformVersionProjectionPlugin(), react(), tailwindcss()],
     define: {
       __CAPITAL_AI_VERSION__: JSON.stringify(packageMetadata.version),
       __CAPITAL_AI_PDF_BRAND__: JSON.stringify(pdfBrandDefinition),
@@ -134,10 +164,9 @@ export default defineConfig(() => {
       },
     },
     build: {
-      // HOTFIX: Rollup übernimmt die Chunk-Aufteilung wieder selbst.
-      // Die zuvor erzwungene Trennung in vendor und vendor-react erzeugte
-      // einen zyklischen Chunk (vendor -> vendor-react -> vendor) und ließ
-      // React in Produktion vor dem Mount mit createContext abbrechen.
+      // HOTFIX: Rollup übernimmt die Chunk-Aufteilung wieder selbst. Manual vendor chunks remain
+      // forbidden here because the previous vendor/vendor-react split created a React cycle.
+      // Performance is enforced at route/feature boundaries plus the entry budget above instead.
       chunkSizeWarningLimit: 900,
     },
     server: {

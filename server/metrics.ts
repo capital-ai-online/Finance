@@ -4,16 +4,9 @@
 // pino/winston) und N7 (Security-Header, kein helmet-Paket): das Projekt vermeidet bewusst
 // zusaetzliche Abhaengigkeiten fuer klein und gut spezifizierte Probleme. Ein Prometheus-
 // Textformat-Endpunkt ist genau das - und bleibt kompatibel mit einer spaeteren OTel-
-// Collector-Anbindung (die meisten Collector-Setups scrapen ohnehin Prometheus-Format oder
-// exportieren dorthin), ist also kein Sackgassen-Format.
-//
-// Bewusst NICHT umgesetzt: verteiltes Tracing (Spans ueber Prozess-/Service-Grenzen). Diese
-// Anwendung ist ein einzelner Node-Prozess ohne Microservices, zwischen denen Anfragen
-// weitergereicht werden - der eigentliche Bedarf ("wie lange dauert welche Route, wo haeufen
-// sich Fehler") wird durch die Latenz-Histogramme und Fehlerzaehler unten bereits abgedeckt.
-// Echtes Tracing waere ein separater, eigens zu begruendender Abhaengigkeits-Entscheid
-// (OpenTelemetry SDK + Exporter), keine Erweiterung dieses Moduls.
+// Collector-Anbindung.
 
+import { performance } from 'node:perf_hooks';
 import type { Request, Response, NextFunction } from 'express';
 
 interface Counter {
@@ -24,19 +17,32 @@ interface Counter {
 interface Histogram {
   help: string;
   buckets: number[];
-  // Je Label-Kombination: kumulative Bucket-Zaehler (gleiche Laenge wie buckets) + Summe + Count.
   values: Map<string, { bucketCounts: number[]; sum: number; count: number }>;
 }
 
 const HTTP_REQUESTS_TOTAL: Counter = { help: 'Gesamtzahl abgeschlossener HTTP-Requests.', values: new Map() };
 const HTTP_ERRORS_TOTAL: Counter = { help: 'Gesamtzahl HTTP-Requests mit Statuscode >= 500.', values: new Map() };
-// Sekunden-Buckets, angelehnt an uebliche Prometheus-Defaults fuer Web-Latenzen.
 const DURATION_BUCKETS = [0.01, 0.05, 0.1, 0.3, 0.5, 1, 2, 5, 10];
 const HTTP_REQUEST_DURATION_SECONDS: Histogram = {
   help: 'Verteilung der HTTP-Antwortzeiten in Sekunden.',
   buckets: DURATION_BUCKETS,
   values: new Map(),
 };
+
+const EVENT_LOOP_SAMPLE_INTERVAL_MS = 1_000;
+let latestEventLoopLagMs = 0;
+let maxEventLoopLagMs = 0;
+let expectedEventLoopSampleAt = performance.now() + EVENT_LOOP_SAMPLE_INTERVAL_MS;
+
+// PERFORMANCE-2026-08-29: a ref-free lag sentinel makes multi-second event-loop stalls visible in
+// the existing /metrics surface. It performs no I/O and never changes request behavior.
+const eventLoopLagTimer = setInterval(() => {
+  const now = performance.now();
+  latestEventLoopLagMs = Math.max(0, now - expectedEventLoopSampleAt);
+  maxEventLoopLagMs = Math.max(maxEventLoopLagMs, latestEventLoopLagMs);
+  expectedEventLoopSampleAt = now + EVENT_LOOP_SAMPLE_INTERVAL_MS;
+}, EVENT_LOOP_SAMPLE_INTERVAL_MS);
+eventLoopLagTimer.unref?.();
 
 function labelKey(method: string, route: string, statusBucket: string): string {
   return `method="${method}",route="${route}",status="${statusBucket}"`;
@@ -61,10 +67,7 @@ function observeHistogram(hist: Histogram, key: string, valueSeconds: number): v
 
 /**
  * Reduziert dynamische Pfadsegmente (IDs, Symbole) auf das Express-Routenmuster
- * (req.route.path), um unbegrenzte Label-Kardinalitaet zu vermeiden (z.B.
- * /api/registry/assets/BTC, /api/registry/assets/ETH, ... wuerden sonst je einen eigenen
- * Zeitreihen-Satz erzeugen). Nicht auf eine registrierte Route gemappte Requests (404,
- * abgelehnte CORS-Preflights) fallen auf 'unmatched'.
+ * (req.route.path), um unbegrenzte Label-Kardinalitaet zu vermeiden.
  */
 function resolveRouteLabel(req: Request): string {
   const routePath = (req as any).route?.path;
@@ -113,6 +116,7 @@ function formatHistogram(name: string, hist: Histogram): string {
 
 function formatProcessGauges(): string {
   const mem = process.memoryUsage();
+  const eventLoopUtilization = performance.eventLoopUtilization().utilization;
   const lines = [
     '# HELP process_uptime_seconds Laufzeit des Prozesses in Sekunden.',
     '# TYPE process_uptime_seconds gauge',
@@ -123,6 +127,15 @@ function formatProcessGauges(): string {
     '# HELP nodejs_heap_used_bytes Genutzter V8-Heap in Bytes.',
     '# TYPE nodejs_heap_used_bytes gauge',
     `nodejs_heap_used_bytes ${mem.heapUsed}`,
+    '# HELP nodejs_event_loop_lag_seconds Zuletzt gemessene Event-Loop-Verzoegerung in Sekunden.',
+    '# TYPE nodejs_event_loop_lag_seconds gauge',
+    `nodejs_event_loop_lag_seconds ${(latestEventLoopLagMs / 1000).toFixed(6)}`,
+    '# HELP nodejs_event_loop_lag_max_seconds Maximale Event-Loop-Verzoegerung seit Prozessstart in Sekunden.',
+    '# TYPE nodejs_event_loop_lag_max_seconds gauge',
+    `nodejs_event_loop_lag_max_seconds ${(maxEventLoopLagMs / 1000).toFixed(6)}`,
+    '# HELP nodejs_event_loop_utilization_ratio Anteil aktiver Event-Loop-Zeit seit Prozessstart.',
+    '# TYPE nodejs_event_loop_utilization_ratio gauge',
+    `nodejs_event_loop_utilization_ratio ${Number.isFinite(eventLoopUtilization) ? eventLoopUtilization.toFixed(6) : '0.000000'}`,
   ];
   return lines.join('\n');
 }

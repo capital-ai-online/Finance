@@ -1,4 +1,14 @@
+import { performance } from 'node:perf_hooks';
 import type { MarketDataAsset } from './marketDataCoordinator';
+
+export type MarketDataRefreshKind = 'foreground' | 'background';
+
+export interface MarketDataRefreshTiming {
+  kind: MarketDataRefreshKind;
+  durationMs: number;
+  assetCount: number;
+  outcome: 'success' | 'failure';
+}
 
 export interface MarketDataRuntimeFacadeOptions {
   refresh: () => Promise<MarketDataAsset[]>;
@@ -6,7 +16,13 @@ export interface MarketDataRuntimeFacadeOptions {
   ttlMs?: number;
   backgroundRefreshIntervalMs?: number;
   now?: () => number;
+  cooperativeYield?: () => Promise<void>;
   onRefreshFailure?: (error: unknown) => void;
+  onRefreshTiming?: (timing: MarketDataRefreshTiming) => void;
+}
+
+function yieldToEventLoop(): Promise<void> {
+  return new Promise(resolve => setImmediate(resolve));
 }
 
 /**
@@ -15,11 +31,18 @@ export interface MarketDataRuntimeFacadeOptions {
  *
  * Provider I/O, fallback completion, scoring/enrichment and persistence remain behind
  * the injected refresh callback (the ADR-0014 compatibility facade).
+ *
+ * PERFORMANCE-2026-08-29: cache synchronization yields cooperatively and every actual refresh
+ * reports stage timing. This keeps long background refreshes observable without moving provider
+ * semantics or cache authority into the HTTP layer.
  */
 export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOptions) {
   const ttlMs = options.ttlMs ?? 60_000;
   const backgroundRefreshIntervalMs = Math.max(0, options.backgroundRefreshIntervalMs ?? 0);
   const now = options.now ?? Date.now;
+  // Production keeps a real macrotask boundary so pending HTTP/static work can progress.
+  // Tests that virtualize timers may inject a deterministic yield without weakening runtime behavior.
+  const cooperativeYield = options.cooperativeYield ?? yieldToEventLoop;
 
   let cached: MarketDataAsset[] | null = null;
   let lastRefreshAt = 0;
@@ -27,26 +50,45 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
   let activeRefresh: Promise<MarketDataAsset[]> | null = null;
   let scheduledBackgroundRefresh: Promise<MarketDataAsset[] | null> | null = null;
 
-  const syncAll = (assets: MarketDataAsset[]) => {
-    for (const asset of assets) options.syncAsset(asset);
+  const syncAll = async (assets: MarketDataAsset[]) => {
+    for (let index = 0; index < assets.length; index += 1) {
+      options.syncAsset(assets[index]);
+      if ((index + 1) % 25 === 0) await cooperativeYield();
+    }
   };
 
-  const refreshAndSync = (): Promise<MarketDataAsset[]> => {
+  const refreshAndSync = (kind: MarketDataRefreshKind): Promise<MarketDataAsset[]> => {
     if (activeRefresh) return activeRefresh;
 
-    // Every actual provider refresh — foreground or background — advances the shared cadence
-    // anchor. This prevents a queued background tick from firing shortly after a foreground
-    // refresh and bypassing the provider-budget interval.
     lastProviderRefreshStartedAt = now();
+    const startedAt = performance.now();
 
-    // Coalesce the complete refresh transaction, not only provider I/O. Cache mutation and
-    // registry synchronization must therefore execute exactly once for all concurrent callers.
     const transaction = (async (): Promise<MarketDataAsset[]> => {
-      const assets = await options.refresh();
-      cached = assets;
-      lastRefreshAt = now();
-      syncAll(assets);
-      return assets;
+      try {
+        // Background work deliberately gives already-ready HTTP/static work one turn before
+        // provider/scoring fan-out begins on the single Render Node process.
+        if (kind === 'background') await cooperativeYield();
+
+        const assets = await options.refresh();
+        cached = assets;
+        lastRefreshAt = now();
+        await syncAll(assets);
+        options.onRefreshTiming?.({
+          kind,
+          durationMs: performance.now() - startedAt,
+          assetCount: assets.length,
+          outcome: 'success',
+        });
+        return assets;
+      } catch (error) {
+        options.onRefreshTiming?.({
+          kind,
+          durationMs: performance.now() - startedAt,
+          assetCount: 0,
+          outcome: 'failure',
+        });
+        throw error;
+      }
     })();
 
     activeRefresh = transaction;
@@ -62,7 +104,7 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
 
   const runBackgroundRefresh = async (): Promise<MarketDataAsset[] | null> => {
     try {
-      return await refreshAndSync();
+      return await refreshAndSync('background');
     } catch (error) {
       options.onRefreshFailure?.(error);
       return null;
@@ -73,7 +115,7 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
     if (cached && now() - lastRefreshAt < ttlMs) return cached;
 
     try {
-      return await refreshAndSync();
+      return await refreshAndSync('foreground');
     } catch (error) {
       options.onRefreshFailure?.(error);
       if (cached) return cached;
@@ -92,9 +134,6 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
 
     scheduledBackgroundRefresh = new Promise((resolve) => {
       const timer = setTimeout(() => {
-        // A foreground refresh may have happened while this timer was waiting. Clear the
-        // scheduled handle first and re-enter backgroundRefresh() so the cadence is recalculated
-        // instead of blindly triggering provider I/O at the old deadline.
         scheduledBackgroundRefresh = null;
         void backgroundRefresh().then(resolve);
       }, remainingMs);
