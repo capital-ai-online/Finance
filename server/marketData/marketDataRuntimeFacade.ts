@@ -16,6 +16,7 @@ export interface MarketDataRuntimeFacadeOptions {
   ttlMs?: number;
   backgroundRefreshIntervalMs?: number;
   now?: () => number;
+  cooperativeYield?: () => Promise<void>;
   onRefreshFailure?: (error: unknown) => void;
   onRefreshTiming?: (timing: MarketDataRefreshTiming) => void;
 }
@@ -39,6 +40,9 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
   const ttlMs = options.ttlMs ?? 60_000;
   const backgroundRefreshIntervalMs = Math.max(0, options.backgroundRefreshIntervalMs ?? 0);
   const now = options.now ?? Date.now;
+  // Production keeps a real macrotask boundary so pending HTTP/static work can progress.
+  // Tests that virtualize timers may inject a deterministic yield without weakening runtime behavior.
+  const cooperativeYield = options.cooperativeYield ?? yieldToEventLoop;
 
   let cached: MarketDataAsset[] | null = null;
   let lastRefreshAt = 0;
@@ -49,7 +53,7 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
   const syncAll = async (assets: MarketDataAsset[]) => {
     for (let index = 0; index < assets.length; index += 1) {
       options.syncAsset(assets[index]);
-      if ((index + 1) % 25 === 0) await yieldToEventLoop();
+      if ((index + 1) % 25 === 0) await cooperativeYield();
     }
   };
 
@@ -63,7 +67,7 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
       try {
         // Background work deliberately gives already-ready HTTP/static work one turn before
         // provider/scoring fan-out begins on the single Render Node process.
-        if (kind === 'background') await yieldToEventLoop();
+        if (kind === 'background') await cooperativeYield();
 
         const assets = await options.refresh();
         cached = assets;
