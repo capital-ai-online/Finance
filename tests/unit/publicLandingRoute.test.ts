@@ -19,8 +19,9 @@ describe('canonical landing, login and protected-route boundary', () => {
   it('preserves the productive Dashboard-backed LandingPage as the canonical public root', () => {
     expect(routes).toContain("if (currentPath === '/')");
     expect(routes).toContain('<LandingPage');
-    expect(landingPage).toContain("from '../../../app/dashboard'");
-    expect(landingPage).toContain('<Dashboard');
+    expect(landingPage).toContain("import('../../../app/dashboard/Dashboard')");
+    expect(landingPage).toContain('const LazyDashboard = React.lazy');
+    expect(landingPage).toContain('<LazyDashboard');
     expect(landingPage).toContain('userSession={PUBLIC_VISITOR_SESSION}');
     expect(dashboard).toContain('<CryptoScoringEnterprise');
   });
