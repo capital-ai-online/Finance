@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildBaselineProductionCsp } from '../../server/securityResponse';
+import {
+  getSessionBootstrapKey,
+  isSessionEstablishmentEvent,
+} from '../../src/app/auth/sessionBootstrap';
 
 const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
@@ -17,19 +21,31 @@ const dockerfile = read('Dockerfile');
 const renderBlueprint = read('render.yaml');
 
 describe('website primary login regression boundary', () => {
-  it('keeps registered email/password login ahead of Google OAuth in the login UI', () => {
+  it('keeps registered email/password login ahead of direct Google OAuth', () => {
     expect(loginPage).toContain("provider: 'google'");
     expect(loginPage).toContain('supabase.auth.signInWithOAuth');
     expect(loginPage).toContain("redirectTo: `${window.location.origin}/login`");
     expect(loginPage).toContain("prompt: 'select_account'");
     expect(loginPage).toContain('Registriertes Konto');
     expect(loginPage).toContain('Alternative Anmeldung');
-    expect(loginPage).toContain('Google-Konto ein Passkey eingerichtet');
+    expect(loginPage).toContain('aria-label="Mit Google anmelden"');
+    expect(loginPage).not.toContain('Google-Konto ein Passkey eingerichtet');
+    expect(loginPage).not.toContain('Passkey-Verifikation verbleibt vollständig bei Google');
 
     const passwordLoginIndex = loginPage.indexOf('<form onSubmit={handlePasswordLogin}');
     const googleLoginIndex = loginPage.indexOf('<span>Mit Google anmelden</span>');
     expect(passwordLoginIndex).toBeGreaterThanOrEqual(0);
     expect(googleLoginIndex).toBeGreaterThan(passwordLoginIndex);
+  });
+
+  it('restores the branded login frame and the explanatory web-content panel', () => {
+    expect(loginPage).toContain('conic-gradient(from_0deg,#F5C453_0deg,#0DDDDD_120deg,#B026FF_240deg,#F5C453_360deg)');
+    expect(loginPage).toContain('Finanzanalyse-Plattform');
+    expect(loginPage).toContain('Multi-Asset-Analyse mit erklärbaren KI-Scorings');
+    expect(loginPage).toContain('Fundamentale Bewertung (Graham, DCF)');
+    expect(loginPage).toContain('Backtesting &amp; Stressszenarien');
+    expect(loginPage).toContain('PDF-/CSV-Exporte für Compliance');
+    expect(loginPage).toContain('aria-label="Webinhalte und Funktionsübersicht"');
   });
 
   it('authenticates existing registered users by password with a CAPTCHA token', () => {
@@ -63,11 +79,34 @@ describe('website primary login regression boundary', () => {
     );
   });
 
-  it('does not perform asynchronous Supabase work inside onAuthStateChange itself', () => {
-    expect(sessionComposition).toContain('supabase.auth.onAuthStateChange((_event, session) =>');
+  it('uses one synchronous Supabase auth-state bootstrap instead of racing getSession', () => {
+    expect(sessionComposition).toContain('supabase.auth.onAuthStateChange((event, session) =>');
     expect(sessionComposition).not.toContain('onAuthStateChange(async');
+    expect(sessionComposition).toContain('isSessionEstablishmentEvent(event)');
+    expect(sessionComposition).toContain('scheduleSessionEstablishment(session)');
     expect(sessionComposition).toContain('window.setTimeout(() =>');
-    expect(sessionComposition).toContain('establishSession(session).catch');
+    expect(sessionComposition).toContain('getSessionBootstrapKey(session)');
+
+    // The sole remaining getSession() is the explicit human retry on the identity-mismatch screen.
+    expect(sessionComposition.match(/getSession\(\)/g)?.length ?? 0).toBe(1);
+  });
+
+  it('only establishes sessions for initial/sign-in events and uses a non-secret key', () => {
+    expect(isSessionEstablishmentEvent('INITIAL_SESSION')).toBe(true);
+    expect(isSessionEstablishmentEvent('SIGNED_IN')).toBe(true);
+    expect(isSessionEstablishmentEvent('TOKEN_REFRESHED')).toBe(false);
+    expect(isSessionEstablishmentEvent('MFA_CHALLENGE_VERIFIED')).toBe(false);
+    expect(isSessionEstablishmentEvent('SIGNED_OUT')).toBe(false);
+
+    const session = {
+      access_token: 'must-not-be-read-by-helper',
+      expires_at: 1_800_000_000,
+      user: { id: 'user-123', is_anonymous: false },
+    };
+    const key = getSessionBootstrapKey(session);
+    expect(key).toBe('user-123:1800000000');
+    expect(key).not.toContain(session.access_token);
+    expect(getSessionBootstrapKey({ user: { id: 'anon', is_anonymous: true } })).toBe('');
   });
 
   it('renders the login shell immediately while preserving authenticated onboarding/AAL gates', () => {
@@ -77,19 +116,15 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('if (loading && !renderPublicShellImmediately)');
     expect(sessionComposition).toContain('if (pendingOnboardingSession)');
     expect(sessionComposition).toContain('if (pendingStepUpSession)');
-    expect(sessionComposition).not.toContain(
-      'pendingStepUpSession && !renderPublicShellImmediately',
-    );
-    expect(sessionComposition).not.toContain(
-      'pendingOnboardingSession && !renderPublicShellImmediately',
-    );
   });
 
-  it('keeps the native MFA/AAL gate mandatory regardless of primary login method', () => {
+  it('keeps the native MFA/AAL gate mandatory and bounded instead of hanging forever', () => {
     expect(loginStepUpGate).toContain('email/password, Google OAuth or a native passkey');
-    expect(loginStepUpGate).toContain('There is no bypass around the native AAL gate.');
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
     expect(loginStepUpGate).toContain('verifyTotpChallenge');
+    expect(loginStepUpGate).toContain('MFA_OPERATION_TIMEOUT_MS = 10_000');
+    expect(loginStepUpGate).toContain('withMfaTimeout(');
+    expect(loginStepUpGate).toContain("setRequirement('blocked')");
   });
 
   it('preloads the hCaptcha SDK without generating or persisting a token', () => {
