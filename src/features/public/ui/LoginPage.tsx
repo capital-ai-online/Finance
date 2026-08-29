@@ -144,8 +144,8 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
 
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <aside className="order-2 mx-auto w-full max-w-xl space-y-5 lg:order-1 lg:mx-0" aria-label="Webinhalte und Funktionsübersicht">
-            <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-aif-neon-cyan">
-              <span className="h-1.5 w-1.5 rounded-full bg-aif-neon-cyan shadow-[0_0_8px_rgba(13,221,221,0.6)]" />
+            <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-brand-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-primary shadow-[0_0_8px_rgba(249,191,33,0.55)]" />
               <span>Finanzanalyse-Plattform</span>
             </div>
             <h1 className="text-balance text-2xl font-black leading-tight text-white sm:text-3xl">
@@ -176,7 +176,7 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
             <div className="relative overflow-hidden rounded-2xl p-[2px] shadow-2xl">
               <div
                 aria-hidden="true"
-                className="absolute inset-[-180%] bg-[conic-gradient(from_0deg,#F5C453_0deg,#0DDDDD_120deg,#B026FF_240deg,#F5C453_360deg)] animate-[spin_8s_linear_infinite]"
+                className="absolute inset-[-180%] bg-[conic-gradient(from_0deg,var(--color-brand-primary)_0deg,var(--color-brand-accent)_180deg,var(--color-brand-primary)_360deg)] animate-[spin_8s_linear_infinite] motion-reduce:animate-none"
               />
               <section className="relative z-10 rounded-[14px] bg-[#06070B]/95 p-6 backdrop-blur-2xl sm:p-8">
                 <div className="mb-6 flex flex-col items-center text-center">
