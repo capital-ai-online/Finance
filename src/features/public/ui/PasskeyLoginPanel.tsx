@@ -6,9 +6,9 @@ import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 /**
  * Native Supabase passkey login panel.
  *
- * This panel is rendered only after the controlled native-passkey feature flag has been enabled.
- * Until that activation, Google OAuth and registered email/password identities remain the website
- * primary-login paths. Native passkey failures remain fail-closed.
+ * Password authentication is intentionally unavailable. Native passkeys are the preferred
+ * first-party login path; Google OAuth remains a federated fallback. Passkey failures remain
+ * fail-closed and every successful session still has to pass the native AAL/MFA boundary.
  */
 export function PasskeyLoginPanel() {
   const [loading, setLoading] = useState(false);
@@ -53,8 +53,8 @@ export function PasskeyLoginPanel() {
             Primärer Login · Native Passkey
           </p>
           <p className="mt-1 text-[11px] leading-relaxed text-white/45">
-            Der native Supabase-Passkey ist für diese Website kontrolliert aktiviert und wird
-            gegenüber den Fallback-Anmeldewegen priorisiert.
+            Der native Supabase-Passkey ist für diese Website aktiviert und wird gegenüber dem
+            föderierten Fallback priorisiert.
           </p>
         </div>
       </div>
