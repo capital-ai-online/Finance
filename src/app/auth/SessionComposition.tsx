@@ -7,7 +7,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { LoginStepUpGate } from '../../components/LoginStepUpGate';
 import { RegistrationCompletionGate } from '../../components/RegistrationCompletionGate';
-import { requestHcaptchaToken } from '../../lib/hcaptcha';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
 import { needsOnboarding } from '../../lib/onboarding';
 import {
@@ -175,7 +174,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
-    // SECURITY: password, Google OAuth and native passkey all converge on this exact gate.
+    // SECURITY: Google OAuth and native passkey both converge on this exact gate.
     setPendingStepUpSession(session);
     setLoading(false);
   };
@@ -265,28 +264,18 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = async (email: string, password: string) => {
-    if (!supabase) {
-      throw new Error('Supabase ist nicht konfiguriert. Anmeldung ist nicht möglich.');
-    }
-
-    try {
-      const captchaToken = await requestHcaptchaToken();
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: { captchaToken },
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      console.warn('[Auth] E-Mail-/Passwort-Anmeldung fehlgeschlagen:', err);
-      throw new Error(err?.message || 'Anmeldung fehlgeschlagen.');
-    }
+  const handleLogin = async (_email: string, _password: string) => {
+    // SECURITY: keep the legacy callback for component compatibility, but make it fail closed.
+    // Password authentication is intentionally unavailable in the application even if an old
+    // presentation component still attempts to invoke this callback.
+    throw new Error(
+      'Passwortbasierte Anmeldung ist deaktiviert. Verwenden Sie den nativen Passkey oder Google.',
+    );
   };
 
   const handleRegister = async (_name: string, _email: string, _password: string) => {
     throw new Error(
-      'Selbstregistrierung ist derzeit kontrolliert deaktiviert. Bereits registrierte Konten können sich per E-Mail/Passwort oder Google anmelden.',
+      'Selbstregistrierung ist derzeit kontrolliert deaktiviert. Bereits registrierte Konten verwenden Passkey oder Google.',
     );
   };
 
