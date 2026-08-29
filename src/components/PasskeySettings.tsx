@@ -1,27 +1,24 @@
 import { useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { canRemoveLastFactor } from '../lib/mfaLastFactorGuard';
+import {
+  NativeMfaError,
+  listVerifiedNativeMfaFactors,
+  registerWebauthnMfaFactor,
+  type NativeMfaFactor,
+} from '../platform/Security/nativeMfa';
 
 /**
- * Echte Passkey-Verwaltung auf Basis der nativen Supabase-Auth-Passkey-API (Beta, seit Mai 2026).
- * Ersetzt die vorherige rein client-seitige Simulation (SicherheitsmanagementPoC.tsx),
- * nachdem die Architektur-Integration damit erfolgreich verifiziert wurde.
+ * Self-service settings for WebAuthn MFA factors.
  *
- * Voraussetzungen (müssen VOR der Nutzung erfüllt sein):
- * 1. Dashboard: Authentication -> Passkeys -> "Enable Passkey authentication" aktiv
- * 2. Relying Party ID / Origins auf die echte Produktionsdomain gesetzt
- * 3. Nutzer ist eingeloggt (Passkey-Registrierung setzt eine bestehende, bestätigte Session voraus)
+ * IMPORTANT: these credentials are deliberately enrolled through `auth.mfa.webauthn` and are
+ * therefore AAL2 factors. They are not primary-login passkeys (`auth.registerPasskey`). Primary
+ * authentication stays email/password or Google OAuth; after successful primary authentication
+ * Supabase reports `nextLevel === 'aal2'` when one of these verified factors is enrolled, and the
+ * existing LoginStepUpGate performs the WebAuthn challenge.
  */
-
-interface PasskeyEntry {
-  id: string;
-  friendly_name?: string;
-  created_at: string;
-  last_used_at?: string;
-}
-
 export default function PasskeySettings() {
-  const [passkeys, setPasskeys] = useState<PasskeyEntry[]>([]);
+  const [passkeys, setPasskeys] = useState<NativeMfaFactor[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
@@ -44,13 +41,17 @@ export default function PasskeySettings() {
       setMessage({ type: 'error', text: 'Supabase-Client ist nicht konfiguriert (fehlende ENV-Variablen).' });
       return;
     }
+
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.passkey.list();
-      if (error) throw error;
-      setPasskeys(data ?? []);
-    } catch (e: any) {
-      setMessage({ type: 'error', text: `Passkeys konnten nicht geladen werden: ${e.message ?? e}` });
+      const factors = await listVerifiedNativeMfaFactors(supabase);
+      setPasskeys(factors.filter((factor) => factor.factorType === 'webauthn'));
+    } catch (error: any) {
+      const text =
+        error instanceof NativeMfaError
+          ? error.message
+          : `AAL2-Passkeys konnten nicht geladen werden: ${error?.message ?? error}`;
+      setMessage({ type: 'error', text });
     } finally {
       setLoading(false);
     }
@@ -60,64 +61,49 @@ export default function PasskeySettings() {
     if (!supabase) return;
     setMessage(null);
     setLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.registerPasskey();
-      if (error) {
-        // Bekannte Fehlercodes laut Supabase-Doku sauber behandeln
-        if ((error as any).code === 'passkey_disabled') {
-          setMessage({ type: 'error', text: 'Passkey-Anmeldung ist im Supabase-Dashboard noch nicht aktiviert (Authentication → Passkeys).' });
-        } else if ((error as any).code === 'too_many_passkeys') {
-          setMessage({ type: 'error', text: 'Maximale Anzahl an Passkeys für dieses Konto erreicht.' });
-        } else if ((error as any).code === 'webauthn_credential_exists') {
-          setMessage({ type: 'info', text: 'Dieser Passkey (Gerät/Authenticator) ist bereits registriert.' });
-        } else {
-          setMessage({ type: 'error', text: `Registrierung fehlgeschlagen oder abgebrochen: ${error.message}` });
-        }
-        return;
-      }
-      setMessage({ type: 'success', text: `Passkey erfolgreich registriert: ${data.friendly_name ?? data.id}` });
+      await registerWebauthnMfaFactor(supabase, 'CAPITAL-AI AAL2 Passkey');
+      setMessage({
+        type: 'success',
+        text: 'AAL2-Passkey erfolgreich aktiviert. Künftige Anmeldungen fordern diesen Faktor nach dem Primärlogin an.',
+      });
       await loadPasskeys();
-    } catch (e: any) {
-      setMessage({ type: 'error', text: `Unerwarteter Fehler bei der Passkey-Registrierung: ${e.message ?? e}` });
+    } catch (error: any) {
+      setMessage({
+        type: 'error',
+        text:
+          error instanceof NativeMfaError
+            ? error.message
+            : `AAL2-Passkey konnte nicht registriert werden: ${error?.message ?? error}`,
+      });
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleRename(passkeyId: string, currentName?: string) {
+  async function handleDelete(factorId: string) {
     if (!supabase) return;
-    const newName = window.prompt('Neuer Name für diesen Passkey:', currentName ?? '');
-    if (!newName) return;
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.passkey.update({ passkeyId, friendlyName: newName.slice(0, 120) });
-      if (error) throw error;
-      await loadPasskeys();
-    } catch (e: any) {
-      setMessage({ type: 'error', text: `Umbenennen fehlgeschlagen: ${e.message ?? e}` });
-    } finally {
-      setLoading(false);
-    }
-  }
+    if (!window.confirm('Diesen AAL2-Passkey wirklich entfernen?')) return;
 
-  async function handleDelete(passkeyId: string) {
-    if (!supabase) return;
-    if (!window.confirm('Diesen Passkey wirklich entfernen? Er kann danach nicht mehr zum Anmelden genutzt werden.')) return;
     setLoading(true);
+    setMessage(null);
     try {
       if (currentUserId) {
-        const guard = await canRemoveLastFactor(supabase, currentUserId, 'passkey');
+        const guard = await canRemoveLastFactor(supabase, currentUserId, 'native');
         if (!guard.allowed) {
-          setMessage({ type: 'error', text: guard.reason! });
+          setMessage({ type: 'error', text: guard.reason ?? 'Der letzte MFA-Faktor darf nicht entfernt werden.' });
           return;
         }
       }
-      const { error } = await supabase.auth.passkey.delete({ passkeyId });
+
+      const { error } = await supabase.auth.mfa.unenroll({ factorId });
       if (error) throw error;
-      setMessage({ type: 'success', text: 'Passkey entfernt.' });
+
+      setMessage({ type: 'success', text: 'AAL2-Passkey entfernt.' });
       await loadPasskeys();
-    } catch (e: any) {
-      setMessage({ type: 'error', text: `Löschen fehlgeschlagen: ${e.message ?? e}` });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: `Entfernen fehlgeschlagen: ${error?.message ?? error}` });
     } finally {
       setLoading(false);
     }
@@ -128,22 +114,27 @@ export default function PasskeySettings() {
   }
 
   return (
-    <div className="space-y-4 p-4 rounded-lg border border-white/10 bg-black/20">
+    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
       <div>
-        <h3 className="text-white font-semibold">Passkeys</h3>
-        <p className="text-white/50 text-sm">
+        <h3 className="font-semibold text-white">AAL2-Passkeys</h3>
+        <p className="mt-1 text-sm leading-relaxed text-white/50">
+          WebAuthn-Passkeys werden hier als zusätzlicher AAL2-Sicherheitsfaktor aktiviert. Nach
+          einer Anmeldung mit Google oder E-Mail/Passwort fordert CAPITAL-AI den Passkey an, wenn
+          für dein Konto ein verifizierter WebAuthn-MFA-Faktor hinterlegt ist.
+        </p>
+        <p className="mt-1 text-xs text-white/40">
           {currentUserEmail ? `Konto: ${currentUserEmail}` : 'Nicht eingeloggt'}
         </p>
       </div>
 
       {message && (
         <div
-          className={`text-sm rounded px-3 py-2 ${
+          className={`rounded px-3 py-2 text-sm ${
             message.type === 'success'
               ? 'bg-emerald-500/10 text-emerald-400'
               : message.type === 'error'
-              ? 'bg-red-500/10 text-red-400'
-              : 'bg-blue-500/10 text-blue-400'
+                ? 'bg-red-500/10 text-red-400'
+                : 'bg-blue-500/10 text-blue-400'
           }`}
         >
           {message.text}
@@ -153,46 +144,37 @@ export default function PasskeySettings() {
       <button
         onClick={handleRegister}
         disabled={loading || !currentUserEmail}
-        className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-medium"
+        className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-40"
       >
-        {loading ? 'Bitte warten…' : 'Neuen Passkey auf diesem Gerät registrieren'}
+        {loading ? 'Bitte warten…' : 'AAL2-Passkey auf diesem Gerät aktivieren'}
       </button>
+
       {!currentUserEmail && (
-        <p className="text-amber-400 text-xs">Du musst eingeloggt sein, um einen Passkey zu registrieren.</p>
+        <p className="text-xs text-amber-400">Du musst eingeloggt sein, um einen AAL2-Passkey zu aktivieren.</p>
       )}
 
       <div className="space-y-2">
-        {passkeys.length === 0 && <p className="text-white/40 text-sm">Noch keine Passkeys registriert.</p>}
-        {passkeys.map((pk) => (
-          <div key={pk.id} className="flex items-center justify-between rounded border border-white/10 px-3 py-2">
+        {passkeys.length === 0 && (
+          <p className="text-sm text-white/40">Noch kein WebAuthn-AAL2-Passkey aktiviert.</p>
+        )}
+        {passkeys.map((passkey) => (
+          <div
+            key={passkey.id}
+            className="flex items-center justify-between rounded border border-white/10 px-3 py-2"
+          >
             <div>
-              <p className="text-white text-sm">{pk.friendly_name || 'Unbenannter Passkey'}</p>
-              <p className="text-white/40 text-xs">
-                Erstellt: {new Date(pk.created_at).toLocaleString('de-DE')}
-                {pk.last_used_at && ` · Zuletzt genutzt: ${new Date(pk.last_used_at).toLocaleString('de-DE')}`}
-              </p>
+              <p className="text-sm text-white">{passkey.friendlyName || 'CAPITAL-AI AAL2 Passkey'}</p>
+              <p className="text-xs text-white/40">Verifizierter WebAuthn-MFA-Faktor</p>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => handleRename(pk.id, pk.friendly_name)} className="text-xs text-white/60 hover:text-white">
-                Umbenennen
-              </button>
-              <button onClick={() => handleDelete(pk.id)} className="text-xs text-red-400 hover:text-red-300">
-                Entfernen
-              </button>
-            </div>
+            <button
+              onClick={() => handleDelete(passkey.id)}
+              className="text-xs text-red-400 hover:text-red-300"
+            >
+              Entfernen
+            </button>
           </div>
         ))}
       </div>
     </div>
   );
-}
-
-/**
- * Eigenständige Sign-in-Funktion für die Login-Seite (außerhalb einer bestehenden Session).
- * Nutzt discoverable credentials -> Nutzer muss keine E-Mail eingeben, der Browser/Authenticator
- * löst das Konto anhand des gespeicherten Credentials selbst auf.
- */
-export async function signInWithPasskey() {
-  if (!supabase) return { error: new Error('Supabase nicht konfiguriert') };
-  return supabase.auth.signInWithPasskey();
 }

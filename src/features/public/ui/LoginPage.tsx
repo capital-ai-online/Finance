@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
-import { isNativePasskeyLoginEnabled } from '../../../lib/authFeatureFlags';
 import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
-import { PasskeyLoginPanel } from './PasskeyLoginPanel';
 
 interface LoginPageProps {
   /**
    * Kept temporarily for route-interface compatibility. Canonical primary authentication is
-   * handled on this page directly through Supabase Auth so email/password, passkey and OAuth use
-   * the same provider/session authority before converging on SessionComposition onboarding/AAL.
+   * handled on this page directly through Supabase Auth. Email/password and Google OAuth converge
+   * on SessionComposition, which applies onboarding and AAL/MFA before protected application use.
    */
   onLoginEmail: (email: string, password: string) => Promise<void>;
   justLoggedOut?: boolean;
@@ -22,13 +20,13 @@ type ActiveAction = 'email' | 'google' | null;
 /**
  * Canonical authentication page for `/login`.
  *
- * Supported primary authentication methods are email/password, native Supabase passkeys and
- * Google OAuth. New email/password registrations are allowed and then converge on the same
- * RegistrationCompletionGate and native AAL/MFA gate as OAuth-created accounts. CAPTCHA remains
- * fail-closed for password and passkey Auth requests; Google OAuth uses Supabase's provider flow.
+ * Primary authentication is email/password or Google OAuth. WebAuthn passkeys configured by an
+ * authenticated user in Settings are deliberately AAL2 MFA factors, not a primary-login option.
+ * CAPTCHA remains fail-closed for password authentication and self-registration. Google OAuth
+ * returns to `/`, after which SessionComposition performs onboarding/AAL evaluation before the
+ * landing page is released to the authenticated session.
  */
 export function LoginPage({ justLoggedOut }: LoginPageProps) {
-  const nativePasskeyEnabled = isNativePasskeyLoginEnabled();
   const [mode, setMode] = useState<EmailAuthMode>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -126,12 +124,13 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/login`,
+          redirectTo: `${window.location.origin}/`,
           queryParams: { prompt: 'select_account' },
         },
       });
       if (oauthError) throw oauthError;
-      // A successful OAuth start redirects away from this page. Keep controls disabled until then.
+      // OAuth returns to the canonical root. SessionComposition performs onboarding/AAL before
+      // allowing the authenticated route tree to continue.
     } catch (err: any) {
       console.warn('[Auth] Google OAuth start failed:', err);
       setError(err?.message || 'Google-Anmeldung konnte nicht gestartet werden.');
@@ -317,19 +316,10 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
                   <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-white/10" />
                     <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">
-                      Weitere Anmeldeoptionen
+                      Oder
                     </span>
                     <div className="h-px flex-1 bg-white/10" />
                   </div>
-
-                  {nativePasskeyEnabled ? (
-                    <PasskeyLoginPanel />
-                  ) : (
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs leading-relaxed text-white/50">
-                      Der native Passkey-Login ist in diesem Build nicht aktiviert. E-Mail/Passwort
-                      und Google OAuth bleiben als reguläre Anmeldewege verfügbar.
-                    </div>
-                  )}
 
                   <button
                     type="button"
@@ -354,9 +344,9 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
                   </button>
 
                   <p className="text-center text-[10px] leading-relaxed text-white/35">
-                    E-Mail/Passwort, Passkey und Google werden durch Supabase Auth verwaltet. Neue
-                    Konten durchlaufen anschließend die bestehende Profil-, Datenschutz- und
-                    MFA-Einrichtung; vorhandene MFA-Konten behalten ihr AAL2-Step-up.
+                    E-Mail/Passwort und Google sind die regulären Anmeldewege. Ein in den
+                    Benutzereinstellungen aktivierter WebAuthn-Passkey wird anschließend als
+                    zusätzlicher AAL2-Faktor abgefragt; er ist kein separater Login-Button.
                   </p>
                 </div>
               </section>

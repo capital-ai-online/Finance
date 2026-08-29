@@ -5,13 +5,17 @@
 // server/stepUp.ts) - Bestandskonten ohne diese Verpflichtung bleiben frei, ihren letzten Faktor
 // zu entfernen, wie bisher.
 //
-// Bewusst client-seitig (kein Server-Proxy fuer supabase.auth.mfa.unenroll()/passkey.delete()):
-// das ist eine Selbstschutz-/UX-Sicherung gegen versehentliches Aussperren, keine
-// Verteidigung gegen einen Angreifer - ein technisch versierter Nutzer koennte diese Pruefung
-// durch einen direkten API-Aufruf umgehen. Das ist eine bewusst akzeptierte Grenze.
+// Primaerlogin-Passkeys (`auth.registerPasskey`) zaehlen bewusst NICHT als MFA/AAL2-Faktor. Fuer
+// diese Schutzinvariante werden nur verifizierte native Supabase-MFA-Faktoren (TOTP/WebAuthn) und
+// der verbleibende Legacy-TOTP-Status beruecksichtigt.
+//
+// Bewusst client-seitig (kein Server-Proxy fuer supabase.auth.mfa.unenroll()): das ist eine
+// Selbstschutz-/UX-Sicherung gegen versehentliches Aussperren, keine Verteidigung gegen einen
+// Angreifer - ein technisch versierter Nutzer koennte diese Pruefung durch einen direkten API-
+// Aufruf umgehen. Das ist eine bewusst akzeptierte Grenze.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { listVerifiedTotpFactors } from '../platform/Security/nativeMfa';
+import { listVerifiedNativeMfaFactors } from '../platform/Security/nativeMfa';
 
 export interface RemovalGuardResult {
   allowed: boolean;
@@ -19,8 +23,10 @@ export interface RemovalGuardResult {
 }
 
 /**
- * kind: der Faktor-Typ, der gerade entfernt werden soll ('native' oder 'passkey') - wird von der
- * Gesamtzahl ausgeschlossen, um zu pruefen, ob danach noch mindestens ein Faktor uebrig bleibt.
+ * `native` bezeichnet einen echten Supabase-MFA-Faktor. `passkey` bleibt aus
+ * Rueckwaertskompatibilitaet fuer alte Aufrufer erhalten, zaehlt aber selbst nicht als AAL2-
+ * Schutz. Damit kann ein Primaerlogin-Passkey nie das Entfernen des letzten echten MFA-Faktors
+ * legitimieren.
  */
 export async function canRemoveLastFactor(
   supabase: SupabaseClient,
@@ -32,39 +38,31 @@ export async function canRemoveLastFactor(
     .select('mfa_required_account, totp_enabled')
     .eq('id', userId)
     .maybeSingle();
+
   if (profileError || !profile?.mfa_required_account) {
-    // Kein verpflichtetes Konto (oder Status nicht ladbar) - keine Einschraenkung.
     return { allowed: true };
   }
 
   let nativeCount = 0;
-  let passkeyCount = 0;
   try {
-    const factors = await listVerifiedTotpFactors(supabase);
+    const factors = await listVerifiedNativeMfaFactors(supabase);
     nativeCount = factors.length;
   } catch {
-    // Fail-open beim Zaehlen: ein Ladefehler blockiert keine Aktion, die sonst erlaubt waere.
+    // Bestehendes UX-Verhalten: ein reiner Client-Zaehler ist keine serverseitige Authority.
   }
-  try {
-    const { data: passkeys } = await supabase.auth.passkey.list();
-    passkeyCount = (passkeys ?? []).length;
-  } catch {
-    // s.o.
-  }
-  const legacyTotp = profile.totp_enabled ? 1 : 0;
 
+  const legacyTotp = profile.totp_enabled ? 1 : 0;
   const remainingAfterRemoval =
-    (kind === 'native' ? Math.max(0, nativeCount - 1) : nativeCount) +
-    (kind === 'passkey' ? Math.max(0, passkeyCount - 1) : passkeyCount) +
-    legacyTotp;
+    (kind === 'native' ? Math.max(0, nativeCount - 1) : nativeCount) + legacyTotp;
 
   if (remainingAfterRemoval < 1) {
     return {
       allowed: false,
       reason:
-        'Dies ist dein letzter verbleibender 2FA-/Passkey-Faktor. Da für dieses Konto mindestens ' +
-        'ein Faktor Pflicht ist, richte zuerst einen weiteren Faktor ein, bevor du diesen entfernst.',
+        'Dies ist dein letzter verifizierter MFA-Faktor. Da für dieses Konto mindestens ein ' +
+        'AAL2-Faktor Pflicht ist, richte zuerst einen weiteren MFA-Faktor ein, bevor du diesen entfernst.',
     };
   }
+
   return { allowed: true };
 }

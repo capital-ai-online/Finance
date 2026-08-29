@@ -12,6 +12,8 @@ const read = (relativePath: string) =>
 
 const loginPage = read('src/features/public/ui/LoginPage.tsx');
 const passkeyPanel = read('src/features/public/ui/PasskeyLoginPanel.tsx');
+const passkeySettings = read('src/components/PasskeySettings.tsx');
+const mfaLastFactorGuard = read('src/lib/mfaLastFactorGuard.ts');
 const sessionComposition = read('src/app/auth/SessionComposition.tsx');
 const loginStepUpGate = read('src/components/LoginStepUpGate.tsx');
 const registrationCompletionGate = read('src/components/RegistrationCompletionGate.tsx');
@@ -23,29 +25,29 @@ const dockerfile = read('Dockerfile');
 const renderBlueprint = read('render.yaml');
 
 describe('website primary login regression boundary', () => {
-  it('supports normal email/password login, registration, native passkey and Google OAuth', () => {
+  it('supports normal email/password and Google primary login without exposing native passkey login', () => {
     expect(loginPage).toContain('supabase.auth.signInWithPassword');
     expect(loginPage).toContain('supabase.auth.signUp');
     expect(loginPage).toContain('type="password"');
     expect(loginPage).toContain('Mit E-Mail anmelden');
     expect(loginPage).toContain('Normales Nutzerkonto registrieren');
-    expect(loginPage).toContain('nativePasskeyEnabled ?');
-    expect(loginPage).toContain('<PasskeyLoginPanel />');
     expect(loginPage).toContain("provider: 'google'");
     expect(loginPage).toContain('supabase.auth.signInWithOAuth');
-    expect(loginPage).toContain("redirectTo: `${window.location.origin}/login`");
+    expect(loginPage).toContain("redirectTo: `${window.location.origin}/`");
+    expect(loginPage).not.toContain("redirectTo: `${window.location.origin}/login`");
     expect(loginPage).toContain("prompt: 'select_account'");
     expect(loginPage).toContain('aria-label="Mit Google anmelden"');
+    expect(loginPage).not.toContain('<PasskeyLoginPanel />');
+    expect(loginPage).not.toContain('nativePasskeyEnabled');
+    expect(loginPage).not.toContain('signInWithPasskey');
 
     const emailLoginIndex = loginPage.indexOf('Mit E-Mail anmelden');
-    const passkeyIndex = loginPage.indexOf('<PasskeyLoginPanel />');
     const googleLoginIndex = loginPage.indexOf('<span>Mit Google anmelden</span>');
     expect(emailLoginIndex).toBeGreaterThanOrEqual(0);
-    expect(passkeyIndex).toBeGreaterThan(emailLoginIndex);
-    expect(googleLoginIndex).toBeGreaterThan(passkeyIndex);
+    expect(googleLoginIndex).toBeGreaterThan(emailLoginIndex);
   });
 
-  it('restores the branded login frame and the explanatory web-content panel', () => {
+  it('keeps the branded login frame and the explanatory web-content panel', () => {
     expect(loginPage).toContain(
       'conic-gradient(from_0deg,var(--color-brand-primary)_0deg,var(--color-brand-accent)_180deg,var(--color-brand-primary)_360deg)',
     );
@@ -78,23 +80,21 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('Selbstregistrierung ist derzeit kontrolliert deaktiviert');
   });
 
-  it('enables native Supabase passkeys in the production Render blueprint', () => {
+  it('keeps the dormant native primary-passkey capability out of the canonical login surface', () => {
     expect(authFeatureFlags).toContain('VITE_NATIVE_PASSKEY_LOGIN_ENABLED');
-    expect(authFeatureFlags).toContain("return value === 'true'");
     expect(supabaseClient).toContain(
       'experimental: { passkey: isNativePasskeyLoginEnabled() }',
     );
     expect(passkeyPanel).toContain('signInWithPasskey');
     expect(dockerfile).toContain('ARG VITE_NATIVE_PASSKEY_LOGIN_ENABLED');
-    expect(dockerfile).toContain(
-      'VITE_NATIVE_PASSKEY_LOGIN_ENABLED=$VITE_NATIVE_PASSKEY_LOGIN_ENABLED',
-    );
     expect(renderBlueprint).toMatch(
       /- key: VITE_NATIVE_PASSKEY_LOGIN_ENABLED\s+value: "true"/,
     );
+    expect(loginPage).not.toContain('PasskeyLoginPanel');
+    expect(loginPage).not.toContain('isNativePasskeyLoginEnabled');
   });
 
-  it('binds native passkey authentication to a fresh hCaptcha token', () => {
+  it('keeps any dormant native primary-passkey authentication CAPTCHA-bound', () => {
     expect(passkeyPanel).toContain("import { requestHcaptchaToken } from '../../../lib/hcaptcha'");
     expect(passkeyPanel).toContain('const captchaToken = await requestHcaptchaToken()');
     expect(passkeyPanel).toContain('options: { captchaToken }');
@@ -102,7 +102,21 @@ describe('website primary login regression boundary', () => {
     expect(passkeyPanel).not.toContain('sessionStorage');
   });
 
-  it('separates primary passkeys from WebAuthn MFA and verifies both AAL2 paths', () => {
+  it('binds user-settings passkeys to verified WebAuthn MFA instead of primary login', () => {
+    expect(passkeySettings).toContain('listVerifiedNativeMfaFactors');
+    expect(passkeySettings).toContain('registerWebauthnMfaFactor');
+    expect(passkeySettings).toContain("factor.factorType === 'webauthn'");
+    expect(passkeySettings).toContain("supabase.auth.mfa.unenroll({ factorId })");
+    expect(passkeySettings).not.toContain('.auth.registerPasskey(');
+    expect(passkeySettings).not.toContain('.auth.passkey.list(');
+    expect(passkeySettings).not.toContain('.auth.passkey.delete(');
+    expect(passkeySettings).not.toContain('.auth.signInWithPasskey(');
+
+    expect(mfaLastFactorGuard).toContain('listVerifiedNativeMfaFactors');
+    expect(mfaLastFactorGuard).not.toContain('supabase.auth.passkey.list');
+  });
+
+  it('separates primary authentication from WebAuthn MFA and verifies both AAL2 paths', () => {
     expect(registrationCompletionGate).toContain('registerWebauthnMfaFactor');
     expect(registrationCompletionGate).not.toContain('supabase.auth.registerPasskey()');
     expect(nativeMfa).toContain('client.auth.mfa.webauthn.register({ friendlyName })');
@@ -120,7 +134,7 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('const onboardingRequired = await needsOnboarding(session)');
     expect(sessionComposition).toContain('setPendingOnboardingSession(session)');
     expect(sessionComposition).toContain('setPendingStepUpSession(session)');
-    expect(loginStepUpGate).toContain('Primary authentication may arrive through email/password, Google OAuth or a native passkey.');
+    expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
   });
 
   it('uses one synchronous Supabase auth-state bootstrap instead of racing getSession', () => {
@@ -131,7 +145,6 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('window.setTimeout(() =>');
     expect(sessionComposition).toContain('getSessionBootstrapKey(session)');
 
-    // The sole remaining Supabase getSession() call is the explicit human retry on the identity-mismatch screen.
     expect(sessionComposition.match(/supabase\.auth\.getSession\(\)/g)?.length ?? 0).toBe(1);
   });
 
