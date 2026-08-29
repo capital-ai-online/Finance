@@ -51,6 +51,7 @@ export function LandingPage(props: LandingPageProps) {
   const previewRef = React.useRef<HTMLElement | null>(null);
   const [loadPreview, setLoadPreview] = React.useState(false);
   const [selectedSymbol, setSelectedSymbol] = React.useState('BTC');
+  const [timeframe, setTimeframe] = React.useState('1 tag');
 
   React.useEffect(() => {
     const element = previewRef.current;
@@ -184,8 +185,8 @@ export function LandingPage(props: LandingPageProps) {
                 <LazyCryptoScoringEnterprise
                   selectedSymbol={selectedSymbol}
                   onSelectSymbol={setSelectedSymbol}
-                  colorScheme="gold"
-                  timeframe="24std"
+                  timeframe={timeframe}
+                  onChangeTimeframe={setTimeframe}
                 />
               </React.Suspense>
             ) : (
