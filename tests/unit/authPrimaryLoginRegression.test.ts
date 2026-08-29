@@ -79,6 +79,14 @@ describe('website primary login regression boundary', () => {
     );
   });
 
+  it('binds native passkey authentication to a fresh hCaptcha token', () => {
+    expect(passkeyPanel).toContain("import { requestHcaptchaToken } from '../../../lib/hcaptcha'");
+    expect(passkeyPanel).toContain('const captchaToken = await requestHcaptchaToken()');
+    expect(passkeyPanel).toContain('options: { captchaToken }');
+    expect(passkeyPanel).not.toContain('localStorage');
+    expect(passkeyPanel).not.toContain('sessionStorage');
+  });
+
   it('uses one synchronous Supabase auth-state bootstrap instead of racing getSession', () => {
     expect(sessionComposition).toContain('supabase.auth.onAuthStateChange((event, session) =>');
     expect(sessionComposition).not.toContain('onAuthStateChange(async');
