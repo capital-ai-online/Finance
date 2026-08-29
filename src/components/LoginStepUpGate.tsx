@@ -17,15 +17,37 @@ interface LoginStepUpGateProps {
 }
 
 type GateRequirement = 'checking' | 'native' | 'blocked';
+const MFA_OPERATION_TIMEOUT_MS = 10_000;
+
+function withMfaTimeout<T>(operation: Promise<T>, operationName: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      reject(
+        new NativeMfaError(
+          `${operationName} hat das Sicherheits-Zeitlimit überschritten. Bitte erneut anmelden.`,
+        ),
+      );
+    }, MFA_OPERATION_TIMEOUT_MS);
+
+    operation.then(
+      (value) => {
+        window.clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timeoutId);
+        reject(error);
+      },
+    );
+  });
+}
 
 /**
  * Supabase-native assurance gate.
  *
- * Primary authentication may arrive through an allowed Supabase website login method such as
- * email/password, Google OAuth or a native passkey. This gate is deliberately independent from
- * that choice: if Supabase reports that the session can reach AAL2, the verified native TOTP
- * factor is required before private application access. Any failure to read AAL state, enumerate
- * factors or create the challenge fails closed. There is no bypass around the native AAL gate.
+ * Primary authentication may arrive through email/password, Google OAuth or a native passkey.
+ * Every path converges here. Supabase AAL/TOTP failures remain fail-closed, and a provider/client
+ * operation that never settles becomes an explicit blocked state instead of an endless spinner.
  */
 export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
   const [requirement, setRequirement] = useState<GateRequirement>('checking');
@@ -50,7 +72,10 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       }
 
       try {
-        const level = await getCurrentAssuranceLevel(supabase);
+        const level = await withMfaTimeout(
+          getCurrentAssuranceLevel(supabase),
+          'AAL-Prüfung',
+        );
         if (cancelled) return;
 
         if (level.currentLevel === 'aal2') {
@@ -60,7 +85,10 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
         }
 
         if (level.nextLevel === 'aal2') {
-          const factors = await listVerifiedTotpFactors(supabase);
+          const factors = await withMfaTimeout(
+            listVerifiedTotpFactors(supabase),
+            'MFA-Faktorprüfung',
+          );
           if (cancelled) return;
 
           if (factors.length === 0) {
@@ -69,7 +97,10 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
             );
           }
 
-          const challengeId = await challengeTotpFactor(supabase, factors[0].id);
+          const challengeId = await withMfaTimeout(
+            challengeTotpFactor(supabase, factors[0].id),
+            'MFA-Challenge',
+          );
           if (cancelled) return;
 
           setNativeFactorId(factors[0].id);
@@ -121,9 +152,15 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
     setNativeVerifying(true);
     setNativeError(null);
     try {
-      await verifyTotpChallenge(supabase, nativeFactorId, nativeChallengeId, nativeCode.trim());
+      await withMfaTimeout(
+        verifyTotpChallenge(supabase, nativeFactorId, nativeChallengeId, nativeCode.trim()),
+        'MFA-Verifikation',
+      );
 
-      const verifiedLevel = await getCurrentAssuranceLevel(supabase);
+      const verifiedLevel = await withMfaTimeout(
+        getCurrentAssuranceLevel(supabase),
+        'AAL2-Nachprüfung',
+      );
       if (verifiedLevel.currentLevel !== 'aal2') {
         throw new NativeMfaError('Die Sitzung hat nach der Verifikation kein AAL2 erreicht.');
       }
