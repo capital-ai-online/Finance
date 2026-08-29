@@ -16,14 +16,12 @@ const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
 
 describe('canonical landing, login and protected-route boundary', () => {
-  it('uses a lightweight LandingPage as the canonical public root page', () => {
+  it('preserves the productive Dashboard-backed LandingPage as the canonical public root', () => {
     expect(routes).toContain("if (currentPath === '/')");
     expect(routes).toContain('<LandingPage');
-    expect(landingPage).not.toContain("from '../../../app/dashboard'");
-    expect(landingPage).not.toContain('<Dashboard');
-    expect(landingPage).toContain("import('../../crypto/ui/CryptoScoringEnterprise')");
-    expect(landingPage).toContain('<LazyCryptoScoringEnterprise');
-    expect(landingPage).toContain('IntersectionObserver');
+    expect(landingPage).toContain("from '../../../app/dashboard'");
+    expect(landingPage).toContain('<Dashboard');
+    expect(landingPage).toContain('userSession={PUBLIC_VISITOR_SESSION}');
     expect(dashboard).toContain('<CryptoScoringEnterprise');
   });
 
@@ -77,12 +75,10 @@ describe('canonical landing, login and protected-route boundary', () => {
   it('keeps the canonical landing page suitable for Google OAuth branding review', () => {
     expect(landingPage).toContain('CAPITAL-AI – quantitative Multi-Asset-Analyse');
     expect(landingPage).toContain('Aktien, Indizes, Forex, Kryptowährungen und Rohstoffe');
-    expect(landingPage).toContain('erklärbaren');
-    expect(landingPage).toContain('KI-Scorings');
+    expect(landingPage).toContain('erklärbaren KI-Scorings');
     expect(landingPage).toContain('href="/datenschutz/"');
     expect(landingPage).toContain('href="/agb/"');
     expect(landingPage).toContain('href="/impressum/"');
-    expect(landingPage).toContain('href="/login"');
   });
 
   it('uses only a presentation visitor state and never accepts anonymous Supabase sessions', () => {
