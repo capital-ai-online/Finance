@@ -10,10 +10,8 @@ const dashboardEntry = read('src/app/dashboard/Dashboard.tsx');
 const dashboardIndex = read('src/app/dashboard/index.ts');
 
 describe('BB-2 dashboard composition boundary', () => {
-  it('routes application composition lazily through the canonical app dashboard entry', () => {
-    expect(appRoutes).toContain('const Dashboard = React.lazy(async () => {');
-    expect(appRoutes).toContain("import('../dashboard/Dashboard')");
-    expect(appRoutes).not.toContain("import { Dashboard } from '../dashboard'");
+  it('routes application composition through the canonical app dashboard entry', () => {
+    expect(appRoutes).toContain("import { Dashboard } from '../dashboard'");
     expect(appRoutes).not.toContain("../../components/Dashboard");
   });
 

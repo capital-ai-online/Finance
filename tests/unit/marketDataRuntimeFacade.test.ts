@@ -9,8 +9,6 @@ const asset = (symbol: string, price = 1) => ({
   dataSource: 'live' as const,
 });
 
-const deterministicYield = async (): Promise<void> => undefined;
-
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -94,7 +92,6 @@ describe('market-data runtime facade', () => {
       syncAsset: vi.fn(),
       backgroundRefreshIntervalMs: 90_000,
       now: () => clock,
-      cooperativeYield: deterministicYield,
     });
 
     await runtime.backgroundRefresh();
@@ -123,7 +120,6 @@ describe('market-data runtime facade', () => {
       syncAsset: vi.fn(),
       backgroundRefreshIntervalMs: 90_000,
       now: () => clock,
-      cooperativeYield: deterministicYield,
     });
 
     await runtime.backgroundRefresh();
@@ -147,7 +143,6 @@ describe('market-data runtime facade', () => {
       ttlMs: 1,
       backgroundRefreshIntervalMs: 90_000,
       now: () => clock,
-      cooperativeYield: deterministicYield,
     });
 
     await runtime.backgroundRefresh();
