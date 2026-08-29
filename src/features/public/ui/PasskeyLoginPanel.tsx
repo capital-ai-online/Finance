@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertCircle, Fingerprint, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
+import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 
 /**
  * Native Supabase passkey login panel.
@@ -23,10 +24,18 @@ export function PasskeyLoginPanel() {
 
     setLoading(true);
     try {
+      // Supabase Auth applies the project's CAPTCHA protection to the passkey authentication
+      // options endpoint as well. Obtain one fresh token immediately before the user-initiated
+      // WebAuthn ceremony; the token is neither persisted nor logged.
+      const captchaToken = await requestHcaptchaToken();
       const auth = supabase.auth as typeof supabase.auth & {
-        signInWithPasskey: () => Promise<{ error: Error | null }>;
+        signInWithPasskey: (credentials?: {
+          options?: { captchaToken?: string };
+        }) => Promise<{ error: Error | null }>;
       };
-      const { error: passkeyError } = await auth.signInWithPasskey();
+      const { error: passkeyError } = await auth.signInWithPasskey({
+        options: { captchaToken },
+      });
       if (passkeyError) throw passkeyError;
     } catch (err: any) {
       console.warn('[Auth] Supabase native passkey login failed:', err);
