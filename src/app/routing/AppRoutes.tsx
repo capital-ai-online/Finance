@@ -4,16 +4,38 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Dashboard } from '../dashboard';
-import {
-  Datenschutz,
-  ImpressumAgb,
-  LandingPage,
-  LoginPage,
-} from '../../features/public/ui';
-import { LearningVocabulary } from '../../features/learning/ui';
-import { MediaStudio } from '../../features/social/ui';
+import { LandingPage } from '../../features/public/ui/LandingPage';
 import type { UserSession } from '../types/UserSession';
+
+const Dashboard = React.lazy(async () => {
+  const module = await import('../dashboard/Dashboard');
+  return { default: module.Dashboard };
+});
+
+const LoginPage = React.lazy(async () => {
+  const module = await import('../../features/public/ui/LoginPage');
+  return { default: module.LoginPage };
+});
+
+const Datenschutz = React.lazy(async () => {
+  const module = await import('../../features/public/ui/Datenschutz');
+  return { default: module.Datenschutz };
+});
+
+const ImpressumAgb = React.lazy(async () => {
+  const module = await import('../../features/public/ui/ImpressumAgb');
+  return { default: module.ImpressumAgb };
+});
+
+const LearningVocabulary = React.lazy(async () => {
+  const module = await import('../../features/learning/ui/LearningVocabulary');
+  return { default: module.LearningVocabulary };
+});
+
+const MediaStudio = React.lazy(async () => {
+  const module = await import('../../features/social/ui/MediaStudio');
+  return { default: module.MediaStudio };
+});
 
 interface AppRoutesProps {
   userSession: UserSession | null;
@@ -22,6 +44,25 @@ interface AppRoutesProps {
   handleLogin: (email: string, password: string) => Promise<void>;
   handleRegister: (name: string, email: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
+}
+
+function RouteChunkFallback() {
+  return (
+    <div
+      className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-white"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="space-y-3 text-center">
+        <div className="mx-auto h-8 w-8 animate-pulse rounded-full border border-aif-gold-DEFAULT/40 bg-aif-gold-DEFAULT/10" />
+        <p className="text-xs font-bold uppercase tracking-wider text-white/55">Ansicht wird geladen</p>
+      </div>
+    </div>
+  );
+}
+
+function RouteChunk({ children }: { children: React.ReactNode }) {
+  return <React.Suspense fallback={<RouteChunkFallback />}>{children}</React.Suspense>;
 }
 
 function RouteRedirect({ to, label }: { to: string; label: string }) {
@@ -47,11 +88,12 @@ function RouteRedirect({ to, label }: { to: string; label: string }) {
  * BB-1 route/presentation composition.
  *
  * Canonical page contract:
- * - `/` is the public LandingPage.
- * - `/login` is the dedicated LoginPage.
+ * - `/` is the lightweight public LandingPage and stays in the initial bundle.
+ * - `/login`, legal/learning pages and protected application surfaces are route-level chunks.
  * - `/dashboard` and `/media-studio` require a composed registered session.
  *
- * Feature-internal dashboard navigation remains a separate legacy/BB-2 concern.
+ * PERFORMANCE-2026-08-29: direct dynamic imports intentionally avoid the public route pulling the
+ * legacy Dashboard, chart/PDF/admin/social feature graph into the initial JavaScript chunk.
  */
 export function AppRoutes({
   userSession,
@@ -73,25 +115,27 @@ export function AppRoutes({
     }
 
     return (
-      <Dashboard
-        userSession={userSession}
-        onLogout={async () => {
-          await handleLogout();
-          if (typeof window !== 'undefined') {
-            window.location.replace('/');
-          }
-        }}
-        onRegister={() => undefined}
-        onLoginEmail={handleLogin}
-        onRegisterEmail={handleRegister}
-      />
+      <RouteChunk>
+        <Dashboard
+          userSession={userSession}
+          onLogout={async () => {
+            await handleLogout();
+            if (typeof window !== 'undefined') {
+              window.location.replace('/');
+            }
+          }}
+          onRegister={() => undefined}
+          onLoginEmail={handleLogin}
+          onRegisterEmail={handleRegister}
+        />
+      </RouteChunk>
     );
   };
 
   if (currentPath === '/datenschutz') {
     return (
-      <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-cyan-500/30 selection:text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(13,221,221,0.08),rgba(0,0,0,0))]" />
+      <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-aif-gold-DEFAULT/30 selection:text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,196,83,0.08),rgba(0,0,0,0))]" />
         <div className="max-w-5xl mx-auto space-y-6 relative z-10">
           <div className="flex justify-between items-center bg-[#0d0e12]/80 border border-white/10 rounded-xl p-4 backdrop-blur-md">
             <a
@@ -104,7 +148,9 @@ export function AppRoutes({
               Public Security Compliance Document
             </span>
           </div>
-          <Datenschutz />
+          <RouteChunk>
+            <Datenschutz />
+          </RouteChunk>
         </div>
       </div>
     );
@@ -126,7 +172,9 @@ export function AppRoutes({
               Anbieterkennzeichnung gemäß § 5 DDG
             </span>
           </div>
-          <ImpressumAgb />
+          <RouteChunk>
+            <ImpressumAgb />
+          </RouteChunk>
         </div>
       </div>
     );
@@ -148,7 +196,9 @@ export function AppRoutes({
               Allgemeine Geschäftsbedingungen
             </span>
           </div>
-          <ImpressumAgb initialTab="agb" />
+          <RouteChunk>
+            <ImpressumAgb initialTab="agb" />
+          </RouteChunk>
         </div>
       </div>
     );
@@ -174,7 +224,9 @@ export function AppRoutes({
               ← Zurück zur Landingpage
             </a>
           </header>
-          <LearningVocabulary />
+          <RouteChunk>
+            <LearningVocabulary />
+          </RouteChunk>
         </div>
       </div>
     );
@@ -194,7 +246,11 @@ export function AppRoutes({
     if (userSession) {
       return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
     }
-    return <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />;
+    return (
+      <RouteChunk>
+        <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />
+      </RouteChunk>
+    );
   }
 
   if (currentPath === '/dashboard') {
@@ -223,7 +279,9 @@ export function AppRoutes({
               ← Zurück zum Dashboard
             </a>
           </header>
-          <MediaStudio />
+          <RouteChunk>
+            <MediaStudio />
+          </RouteChunk>
         </div>
       </div>
     );
