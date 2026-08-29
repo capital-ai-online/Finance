@@ -50,6 +50,8 @@ function observation(overrides: Partial<CryptoOracleObservation> = {}): CryptoOr
 function independentObservation(overrides: Partial<CryptoOracleObservation> = {}): CryptoOracleObservation {
   return observation({
     role: 'FALLBACK',
+    oracleId: 'oracle-b',
+    feedId: 'eth-usd-fallback',
     providerId: 'provider-b',
     sourceAuthorityId: 'source-b',
     evidenceRefs: ['evidence:b'],
@@ -59,7 +61,8 @@ function independentObservation(overrides: Partial<CryptoOracleObservation> = {}
 
 describe('crypto oracle evidence', () => {
   it('passes only with fresh in-policy evidence and independent source authorities', () => {
-    const result = evaluateCryptoOracleEvidence(feed, [observation(), independentObservation()], policy, NOW);
+    const requiredFallback = { ...policy, fallbackRequirement: 'REQUIRED' as const };
+    const result = evaluateCryptoOracleEvidence(feed, [observation(), independentObservation()], requiredFallback, NOW);
     expect(result.state).toBe('PASS');
     expect(result.oracleRiskWithinPolicy).toBe(true);
     expect(result.independentSourceAuthorityCount).toBe(2);
@@ -67,7 +70,7 @@ describe('crypto oracle evidence', () => {
     expect(result.executionEligible).toBe(false);
   });
 
-  it('fails closed when evidence is missing, stale as observation, or identity-mismatched', () => {
+  it('fails closed when evidence is missing, stale as observation, or primary identity-mismatched', () => {
     expect(evaluateCryptoOracleEvidence(feed, undefined, policy, NOW).state).toBe('NOT_COMPUTABLE');
 
     const staleObservation = observation({ observedAtMs: NOW - policy.maxObservationAgeMs - 1 });
@@ -77,34 +80,45 @@ describe('crypto oracle evidence', () => {
     expect(evaluateCryptoOracleEvidence(feed, [wrongFeed], policy, NOW).state).toBe('NOT_COMPUTABLE');
   });
 
-  it('blocks a stale feed even when the observation itself is fresh', () => {
+  it('allows a separately identified fallback only within the same protocol/chain/asset risk identity', () => {
+    const requiredFallback = { ...policy, fallbackRequirement: 'REQUIRED' as const };
+    const valid = evaluateCryptoOracleEvidence(feed, [observation(), independentObservation()], requiredFallback, NOW);
+    expect(valid.state).toBe('PASS');
+
+    const wrongAssetFallback = independentObservation({ baseAssetId: 'BTC' });
+    const invalid = evaluateCryptoOracleEvidence(feed, [observation(), wrongAssetFallback], requiredFallback, NOW);
+    expect(invalid.state).toBe('NOT_COMPUTABLE');
+  });
+
+  it('blocks a stale primary feed even when the observation itself is fresh', () => {
     const staleFeed = observation({ feedUpdatedAtMs: NOW - policy.maxFeedUpdateAgeMs - 1 });
-    const result = evaluateCryptoOracleEvidence(feed, [staleFeed, independentObservation()], policy, NOW);
+    const result = evaluateCryptoOracleEvidence(feed, [staleFeed], { ...policy, minIndependentSourceAuthorities: 1 }, NOW);
     expect(result.state).toBe('BLOCKED');
     expect(result.oracleRiskWithinPolicy).toBe(false);
   });
 
-  it('blocks unavailable, excessive-deviation, and excessive-confidence observations', () => {
+  it('blocks unavailable, excessive-deviation, and excessive-confidence primary observations', () => {
+    const singleSourcePolicy = { ...policy, minIndependentSourceAuthorities: 1 };
     const unavailable = evaluateCryptoOracleEvidence(
       feed,
-      [observation({ availability: 'UNAVAILABLE' }), independentObservation()],
-      policy,
+      [observation({ availability: 'UNAVAILABLE' })],
+      singleSourcePolicy,
       NOW,
     );
     expect(unavailable.state).toBe('BLOCKED');
 
     const deviation = evaluateCryptoOracleEvidence(
       feed,
-      [observation({ deviationBps: policy.maxDeviationBps + 1 }), independentObservation()],
-      policy,
+      [observation({ deviationBps: policy.maxDeviationBps + 1 })],
+      singleSourcePolicy,
       NOW,
     );
     expect(deviation.state).toBe('BLOCKED');
 
     const confidence = evaluateCryptoOracleEvidence(
       feed,
-      [observation({ confidenceBps: policy.maxConfidenceBps + 1 }), independentObservation()],
-      policy,
+      [observation({ confidenceBps: policy.maxConfidenceBps + 1 })],
+      singleSourcePolicy,
       NOW,
     );
     expect(confidence.state).toBe('BLOCKED');
@@ -113,14 +127,19 @@ describe('crypto oracle evidence', () => {
   it('does not invent PASS from missing quality metrics or insufficient independence', () => {
     const missingMetric = evaluateCryptoOracleEvidence(
       feed,
-      [observation({ confidenceBps: null }), independentObservation()],
-      policy,
+      [observation({ confidenceBps: null })],
+      { ...policy, minIndependentSourceAuthorities: 1 },
       NOW,
     );
     expect(missingMetric.state).toBe('NOT_COMPUTABLE');
 
-    const sameSource = independentObservation({ sourceAuthorityId: 'source-a' });
-    const insufficient = evaluateCryptoOracleEvidence(feed, [observation(), sameSource], policy, NOW);
+    const secondPrimarySameSource = observation({
+      providerId: 'provider-b',
+      authorityId: 'oracle-evidence-adapter-b',
+      sourceAuthorityId: 'source-a',
+      evidenceRefs: ['evidence:b'],
+    });
+    const insufficient = evaluateCryptoOracleEvidence(feed, [observation(), secondPrimarySameSource], policy, NOW);
     expect(insufficient.state).toBe('NOT_COMPUTABLE');
     expect(insufficient.independentSourceAuthorityCount).toBe(1);
   });
@@ -134,7 +153,7 @@ describe('crypto oracle evidence', () => {
     expect(withFallback.state).toBe('PASS');
   });
 
-  it('does not allow fallback evidence to mask a stale primary feed', () => {
+  it('does not allow required fallback evidence to mask a stale primary feed', () => {
     const requiredFallback = { ...policy, fallbackRequirement: 'REQUIRED' as const };
     const result = evaluateCryptoOracleEvidence(
       feed,
@@ -146,5 +165,18 @@ describe('crypto oracle evidence', () => {
       NOW,
     );
     expect(result.state).toBe('BLOCKED');
+  });
+
+  it('does not let an optional fallback affect primary-only gate semantics', () => {
+    const primaryOnlyPolicy = { ...policy, minIndependentSourceAuthorities: 1 };
+    const unhealthyOptionalFallback = independentObservation({ availability: 'UNAVAILABLE' });
+    const result = evaluateCryptoOracleEvidence(
+      feed,
+      [observation(), unhealthyOptionalFallback],
+      primaryOnlyPolicy,
+      NOW,
+    );
+    expect(result.state).toBe('PASS');
+    expect(result.acceptedObservationCount).toBe(1);
   });
 });
