@@ -23,21 +23,20 @@ const dockerfile = read('Dockerfile');
 const renderBlueprint = read('render.yaml');
 
 describe('website primary login regression boundary', () => {
-  it('keeps registered email/password login ahead of direct Google OAuth', () => {
+  it('keeps native passkey primary and Google OAuth as the federated fallback', () => {
+    expect(loginPage).toContain('nativePasskeyEnabled ?');
+    expect(loginPage).toContain('<PasskeyLoginPanel />');
     expect(loginPage).toContain("provider: 'google'");
     expect(loginPage).toContain('supabase.auth.signInWithOAuth');
     expect(loginPage).toContain("redirectTo: `${window.location.origin}/login`");
     expect(loginPage).toContain("prompt: 'select_account'");
-    expect(loginPage).toContain('Registriertes Konto');
-    expect(loginPage).toContain('Alternative Anmeldung');
+    expect(loginPage).toContain('Föderierter Fallback');
     expect(loginPage).toContain('aria-label="Mit Google anmelden"');
-    expect(loginPage).not.toContain('Google-Konto ein Passkey eingerichtet');
-    expect(loginPage).not.toContain('Passkey-Verifikation verbleibt vollständig bei Google');
 
-    const passwordLoginIndex = loginPage.indexOf('<form onSubmit={handlePasswordLogin}');
+    const passkeyIndex = loginPage.indexOf('<PasskeyLoginPanel />');
     const googleLoginIndex = loginPage.indexOf('<span>Mit Google anmelden</span>');
-    expect(passwordLoginIndex).toBeGreaterThanOrEqual(0);
-    expect(googleLoginIndex).toBeGreaterThan(passwordLoginIndex);
+    expect(passkeyIndex).toBeGreaterThanOrEqual(0);
+    expect(googleLoginIndex).toBeGreaterThan(passkeyIndex);
   });
 
   it('restores the branded login frame and the explanatory web-content panel', () => {
@@ -53,34 +52,35 @@ describe('website primary login regression boundary', () => {
     expect(loginPage).toContain('aria-label="Webinhalte und Funktionsübersicht"');
   });
 
-  it('authenticates existing registered users by password with a CAPTCHA token', () => {
-    expect(sessionComposition).toContain('requestHcaptchaToken()');
-    expect(sessionComposition).toContain('supabase.auth.signInWithPassword');
-    expect(sessionComposition).toContain('options: { captchaToken }');
-    expect(sessionComposition).not.toContain('Email/password arguments are deliberately ignored');
+  it('removes password login and password recovery from the canonical login page', () => {
+    expect(loginPage).not.toContain('signInWithPassword');
+    expect(loginPage).not.toContain('resetPasswordForEmail');
+    expect(loginPage).not.toContain('handlePasswordLogin');
+    expect(loginPage).not.toContain('type="password"');
+    expect(loginPage).not.toContain('Passwort vergessen');
+    expect(loginPage).toContain('Passwort-Anmeldung und Passwort-Reset sind deaktiviert');
   });
 
-  it('protects password reset requests with a short-lived CAPTCHA token', () => {
-    expect(loginPage).toContain('const captchaToken = await requestHcaptchaToken()');
-    expect(loginPage).toContain('supabase.auth.resetPasswordForEmail');
-    expect(loginPage).toContain('captchaToken,');
-    expect(loginPage).toContain("redirectTo: `${window.location.origin}/login`");
+  it('keeps the legacy password callback fail-closed for old presentation components', () => {
+    expect(sessionComposition).not.toContain('supabase.auth.signInWithPassword');
+    expect(sessionComposition).not.toContain('requestHcaptchaToken');
+    expect(sessionComposition).toContain('const handleLogin = async (_email: string, _password: string) =>');
+    expect(sessionComposition).toContain('Passwortbasierte Anmeldung ist deaktiviert');
   });
 
-  it('keeps native Supabase passkeys disabled until the controlled feature flag is enabled', () => {
+  it('enables native Supabase passkeys in the production Render blueprint', () => {
     expect(authFeatureFlags).toContain('VITE_NATIVE_PASSKEY_LOGIN_ENABLED');
     expect(authFeatureFlags).toContain("return value === 'true'");
     expect(supabaseClient).toContain(
       'experimental: { passkey: isNativePasskeyLoginEnabled() }',
     );
-    expect(loginPage).toContain('nativePasskeyEnabled && <PasskeyLoginPanel />');
     expect(passkeyPanel).toContain('signInWithPasskey');
     expect(dockerfile).toContain('ARG VITE_NATIVE_PASSKEY_LOGIN_ENABLED');
     expect(dockerfile).toContain(
       'VITE_NATIVE_PASSKEY_LOGIN_ENABLED=$VITE_NATIVE_PASSKEY_LOGIN_ENABLED',
     );
     expect(renderBlueprint).toMatch(
-      /- key: VITE_NATIVE_PASSKEY_LOGIN_ENABLED\s+value: "false"/,
+      /- key: VITE_NATIVE_PASSKEY_LOGIN_ENABLED\s+value: "true"/,
     );
   });
 
@@ -144,21 +144,11 @@ describe('website primary login regression boundary', () => {
   });
 
   it('keeps the native MFA/AAL gate mandatory and bounded instead of hanging forever', () => {
-    expect(loginStepUpGate).toContain('email/password, Google OAuth or a native passkey');
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
     expect(loginStepUpGate).toContain('verifyTotpChallenge');
     expect(loginStepUpGate).toContain('MFA_OPERATION_TIMEOUT_MS = 10_000');
     expect(loginStepUpGate).toContain('withMfaTimeout(');
     expect(loginStepUpGate).toContain("setRequirement('blocked')");
-  });
-
-  it('preloads the hCaptcha SDK without generating or persisting a token', () => {
-    expect(loginPage).toContain('preloadHcaptchaSdk');
-    expect(loginPage).toContain('onFocus={warmHcaptcha}');
-    expect(hcaptcha).toContain('export async function preloadHcaptchaSdk()');
-    expect(hcaptcha).toContain('await waitForSdk()');
-    expect(hcaptcha).not.toContain('localStorage');
-    expect(hcaptcha).not.toContain('sessionStorage');
   });
 
   it('obtains hCaptcha tokens without persisting or logging them', () => {
