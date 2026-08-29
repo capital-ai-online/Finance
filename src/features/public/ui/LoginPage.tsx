@@ -1,21 +1,15 @@
 import React, { useState } from 'react';
-import {
-  AlertCircle,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Loader2,
-  Lock,
-  Mail,
-  ShieldCheck,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
 import { isNativePasskeyLoginEnabled } from '../../../lib/authFeatureFlags';
-import { preloadHcaptchaSdk, requestHcaptchaToken } from '../../../lib/hcaptcha';
 import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
 import { PasskeyLoginPanel } from './PasskeyLoginPanel';
 
 interface LoginPageProps {
+  /**
+   * Kept temporarily for route-interface compatibility. Password authentication is intentionally
+   * disabled and this callback is never invoked from the canonical login page.
+   */
   onLoginEmail: (email: string, password: string) => Promise<void>;
   justLoggedOut?: boolean;
 }
@@ -23,26 +17,14 @@ interface LoginPageProps {
 /**
  * Canonical authentication page for `/login`.
  *
- * Existing registered users authenticate primarily with email/password. Google OAuth is a direct
- * alternative action without an intermediate CAPITAL-AI dialog. Google owns its account ceremony;
- * the native Supabase AAL/MFA step remains mandatory after any successful primary authentication.
+ * Password authentication and password recovery are deliberately absent. Native Supabase passkeys
+ * are the preferred first-party authentication method; Google OAuth remains a federated fallback.
+ * Every successful primary authentication still converges on the native Supabase AAL/MFA gate.
  */
-export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
+export function LoginPage({ justLoggedOut }: LoginPageProps) {
   const nativePasskeyEnabled = isNativePasskeyLoginEnabled();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resetOpen, setResetOpen] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
-  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
-
-  const warmHcaptcha = () => {
-    void preloadHcaptchaSdk().catch(() => undefined);
-  };
 
   const handleGoogleLogin = async () => {
     setError(null);
@@ -69,65 +51,6 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
     }
   };
 
-  const handlePasswordLogin = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError(null);
-
-    if (!email || !password) {
-      setError('Bitte E-Mail-Adresse und Passwort eingeben.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await onLoginEmail(email, password);
-    } catch (err: any) {
-      setError(err?.message || 'Anmeldung fehlgeschlagen.');
-      setLoading(false);
-    }
-  };
-
-  const openPasswordReset = () => {
-    setResetEmail(email);
-    setResetError(null);
-    setResetSuccess(null);
-    setResetOpen(true);
-  };
-
-  const handlePasswordReset = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setResetError(null);
-    setResetSuccess(null);
-
-    if (!resetEmail) {
-      setResetError('Bitte geben Sie Ihre registrierte E-Mail-Adresse ein.');
-      return;
-    }
-    if (!supabase) {
-      setResetError('Supabase ist nicht konfiguriert.');
-      return;
-    }
-
-    setResetLoading(true);
-    try {
-      const captchaToken = await requestHcaptchaToken();
-      const { error: passwordResetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/login`,
-        captchaToken,
-      });
-      if (passwordResetError) throw passwordResetError;
-
-      setResetSuccess(
-        'Der geschützte Reset-Link wurde angefordert. Bitte prüfen Sie Ihr E-Mail-Postfach.',
-      );
-    } catch (err: any) {
-      console.warn('[Auth] Password reset request failed:', err);
-      setResetError(err?.message || 'Der Passwort-Reset konnte nicht angefordert werden.');
-    } finally {
-      setResetLoading(false);
-    }
-  };
-
   return (
     <main
       role="main"
@@ -143,7 +66,10 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
         </a>
 
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
-          <aside className="order-2 mx-auto w-full max-w-xl space-y-5 lg:order-1 lg:mx-0" aria-label="Webinhalte und Funktionsübersicht">
+          <aside
+            className="order-2 mx-auto w-full max-w-xl space-y-5 lg:order-1 lg:mx-0"
+            aria-label="Webinhalte und Funktionsübersicht"
+          >
             <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-brand-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-primary shadow-[0_0_8px_rgba(249,191,33,0.55)]" />
               <span>Finanzanalyse-Plattform</span>
@@ -182,7 +108,7 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
                 <div className="mb-6 flex flex-col items-center text-center">
                   <CapitalAiLogo size={110} showText={true} />
                   <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.2em] text-white/40">
-                    Sichere Anmeldung
+                    Sichere passwordless Anmeldung
                   </p>
                 </div>
 
@@ -201,82 +127,22 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
                 )}
 
                 <div className="space-y-4">
-                  <div>
-                    <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-aif-gold-DEFAULT">
-                      Registriertes Konto
-                    </p>
-                    <form onSubmit={handlePasswordLogin} className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label htmlFor="login-email" className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                          E-Mail-Adresse
-                        </label>
-                        <div className="relative">
-                          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
-                          <input
-                            id="login-email"
-                            type="email"
-                            autoComplete="email"
-                            value={email}
-                            onFocus={warmHcaptcha}
-                            onChange={(event) => setEmail(event.target.value)}
-                            className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-4 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label htmlFor="login-password" className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                            Passwort
-                          </label>
-                          <button type="button" onClick={openPasswordReset} className="text-[10px] font-bold text-aif-gold-DEFAULT hover:underline">
-                            Passwort vergessen?
-                          </button>
-                        </div>
-                        <div className="relative">
-                          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
-                          <input
-                            id="login-password"
-                            type={showPassword ? 'text' : 'password'}
-                            autoComplete="current-password"
-                            value={password}
-                            onFocus={warmHcaptcha}
-                            onChange={(event) => setPassword(event.target.value)}
-                            className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-11 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword((current) => !current)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/35 transition hover:text-white/70"
-                            aria-label={showPassword ? 'Passwort ausblenden' : 'Passwort anzeigen'}
-                          >
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-aif-gold-DEFAULT px-4 py-3 text-xs font-black uppercase tracking-wider text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                        Anmelden
-                      </button>
-                    </form>
-                  </div>
+                  {nativePasskeyEnabled ? (
+                    <PasskeyLoginPanel />
+                  ) : (
+                    <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs leading-relaxed text-rose-200">
+                      Der native Passkey-Login ist in diesem Build nicht aktiviert. Der Zugriff bleibt
+                      fail-closed; verwenden Sie nur den freigegebenen federierten Fallback.
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-white/10" />
                     <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">
-                      Alternative Anmeldung
+                      Föderierter Fallback
                     </span>
                     <div className="h-px flex-1 bg-white/10" />
                   </div>
-
-                  {nativePasskeyEnabled && <PasskeyLoginPanel />}
 
                   <button
                     type="button"
@@ -285,94 +151,29 @@ export function LoginPage({ onLoginEmail, justLoggedOut }: LoginPageProps) {
                     className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-3 text-xs font-bold text-neutral-800 shadow-sm transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Mit Google anmelden"
                   >
-                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <svg
+                      className="h-4 w-4 shrink-0"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
                       <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.53-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-8.83z" />
                       <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.11 0-5.74-2.11-6.68-4.96H1.21v3.15C3.18 21.88 7.39 24 12 24z" />
                       <path fill="#FBBC05" d="M5.32 14.24A7.16 7.16 0 0 1 5 12c0-.79.13-1.57.32-2.34V6.51H1.21A11.94 11.94 0 0 0 0 12c0 1.92.45 3.74 1.21 5.39l4.11-3.15z" />
                       <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.39 0 3.18 2.12 1.21 5.39l4.11 3.15c.94-2.85 3.57-4.96 6.68-4.96z" />
                     </svg>
-                    {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
                     <span>Mit Google anmelden</span>
                   </button>
 
                   <p className="text-center text-[10px] leading-relaxed text-white/35">
-                    Die Selbstregistrierung bleibt kontrolliert deaktiviert. Bereits registrierte Konten
-                    können E-Mail/Passwort oder Google verwenden. Nach erfolgreicher Primäranmeldung
-                    bleibt das native Supabase-AAL-/MFA-Gate verpflichtend.
+                    Passwort-Anmeldung und Passwort-Reset sind deaktiviert. Primär wird ein nativer,
+                    hCaptcha-gebundener Supabase-Passkey verwendet. Nach jeder erfolgreichen
+                    Primäranmeldung bleibt das native Supabase-AAL-/MFA-Gate verpflichtend.
                   </p>
                 </div>
               </section>
             </div>
-
-            {resetOpen && (
-              <section className="rounded-2xl border border-white/10 bg-black/50 p-6 backdrop-blur-xl">
-                <div className="mb-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-aif-gold-DEFAULT">
-                    Passwort zurücksetzen · hCaptcha geschützt
-                  </p>
-                  <p className="mt-2 text-xs leading-relaxed text-white/50">
-                    Vor jeder Reset-Anforderung wird ein kurzlebiger hCaptcha-Token erzeugt und direkt
-                    an Supabase Auth übergeben. Der Token wird nicht gespeichert.
-                  </p>
-                </div>
-
-                {resetError && (
-                  <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-300">
-                    <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                    <span>{resetError}</span>
-                  </div>
-                )}
-
-                {resetSuccess ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-                      <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
-                      <span>{resetSuccess}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setResetOpen(false)}
-                      className="min-h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-bold text-white transition hover:bg-white/10"
-                    >
-                      Schließen
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handlePasswordReset} className="space-y-4">
-                    <div className="relative">
-                      <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
-                      <input
-                        type="email"
-                        autoComplete="email"
-                        value={resetEmail}
-                        onFocus={warmHcaptcha}
-                        onChange={(event) => setResetEmail(event.target.value)}
-                        className="w-full rounded-xl border border-white/15 bg-black/60 py-3 pl-10 pr-4 text-sm text-white outline-none transition focus:border-aif-gold-DEFAULT/60"
-                        placeholder="name@beispiel.com"
-                        required
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setResetOpen(false)}
-                        className="min-h-11 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-bold text-white transition hover:bg-white/10"
-                      >
-                        Abbrechen
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={resetLoading}
-                        className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-aif-gold-DEFAULT px-4 py-3 text-xs font-black text-black transition hover:brightness-110 disabled:opacity-50"
-                      >
-                        {resetLoading ? <Loader2 size={15} className="animate-spin" /> : null}
-                        Reset-Link senden
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </section>
-            )}
           </div>
         </div>
       </div>
