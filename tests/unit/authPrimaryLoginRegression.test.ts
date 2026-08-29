@@ -41,7 +41,10 @@ describe('website primary login regression boundary', () => {
   });
 
   it('restores the branded login frame and the explanatory web-content panel', () => {
-    expect(loginPage).toContain('conic-gradient(from_0deg,#F5C453_0deg,#0DDDDD_120deg,#B026FF_240deg,#F5C453_360deg)');
+    expect(loginPage).toContain(
+      'conic-gradient(from_0deg,var(--color-brand-primary)_0deg,var(--color-brand-accent)_180deg,var(--color-brand-primary)_360deg)',
+    );
+    expect(loginPage).toContain('motion-reduce:animate-none');
     expect(loginPage).toContain('Finanzanalyse-Plattform');
     expect(loginPage).toContain('Multi-Asset-Analyse mit erklärbaren KI-Scorings');
     expect(loginPage).toContain('Fundamentale Bewertung (Graham, DCF)');
