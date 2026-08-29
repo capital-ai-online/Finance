@@ -3,13 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { LoginStepUpGate } from '../../components/LoginStepUpGate';
 import { RegistrationCompletionGate } from '../../components/RegistrationCompletionGate';
 import { requestHcaptchaToken } from '../../lib/hcaptcha';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
 import { needsOnboarding } from '../../lib/onboarding';
+import {
+  getSessionBootstrapKey,
+  isSessionEstablishmentEvent,
+} from './sessionBootstrap';
 import type { SubscriptionTier, UserSession } from '../types/UserSession';
 
 export interface SessionCompositionValue {
@@ -48,13 +52,14 @@ function shouldRenderPublicShellImmediately(): boolean {
 }
 
 /**
- * BB-1 Application Composition boundary.
+ * Supabase Auth is the sole website authentication authority. Every restored or newly issued
+ * non-anonymous session must pass onboarding and the native AAL/TOTP gate before private access.
  *
- * Supabase Auth is the sole authentication authority. Supported website primary authentication
- * methods may issue a Supabase session through email/password, Google OAuth or a native passkey.
- * Every restored or newly issued non-anonymous Supabase session is routed through LoginStepUpGate
- * so native AAL/TOTP state remains fail-closed before private application access. Owner/PR passkey
- * authorization is a separate governance boundary and is not weakened by website login methods.
+ * The bootstrap deliberately uses one auth-state source only. Supabase emits INITIAL_SESSION when
+ * the listener is registered, so running getSession() in parallel with onAuthStateChange creates a
+ * redundant lock/race during OAuth callback recovery. All post-auth Supabase work is deferred until
+ * the synchronous auth callback has returned and duplicate INITIAL_SESSION/SIGNED_IN events are
+ * collapsed by a non-secret session key.
  */
 export function SessionComposition({ children }: SessionCompositionProps) {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
@@ -63,6 +68,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   const [authError, setAuthError] = useState<AuthErrorState | null>(null);
   const [pendingStepUpSession, setPendingStepUpSession] = useState<any | null>(null);
   const [pendingOnboardingSession, setPendingOnboardingSession] = useState<any | null>(null);
+  const sessionBootstrapKeyRef = useRef<string | null>(null);
   const renderPublicShellImmediately = shouldRenderPublicShellImmediately();
 
   const updateUserSession = (session: UserSession | null) => {
@@ -74,8 +80,15 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     }
   };
 
-  const rejectAnonymousSession = async () => {
+  const resetAuthProjection = () => {
+    sessionBootstrapKeyRef.current = null;
+    setPendingStepUpSession(null);
+    setPendingOnboardingSession(null);
     updateUserSession(null);
+  };
+
+  const rejectAnonymousSession = async () => {
+    resetAuthProjection();
     if (supabase) {
       try {
         await supabase.auth.signOut();
@@ -87,8 +100,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   };
 
   const handleSupabaseSession = async (session: any) => {
-    const user = session.user;
-
+    const user = session?.user;
     if (!user || user.is_anonymous) {
       await rejectAnonymousSession();
       return;
@@ -103,15 +115,12 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
     try {
       const res = await fetch(`/api/stripe/user-subscription?userId=${encodeURIComponent(user.id)}`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       let tier: SubscriptionTier = 'Free';
 
       if (res.ok) {
         const data = await res.json();
-
         if (data && data.userId && data.userId !== user.id) {
           console.error(
             'CRITICAL SECURITY MISMATCH: Expected User ID',
@@ -129,10 +138,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
           setLoading(false);
           return;
         }
-
-        if (data && data.subscriptionTier) {
-          tier = data.subscriptionTier;
-        }
+        if (data?.subscriptionTier) tier = data.subscriptionTier;
       }
 
       updateUserSession({
@@ -162,21 +168,57 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
-    if (await needsOnboarding(session)) {
+    const onboardingRequired = await needsOnboarding(session);
+    if (onboardingRequired) {
       setPendingOnboardingSession(session);
       setLoading(false);
       return;
     }
 
-    // SECURITY: every authenticated Supabase session must pass the native assurance gate,
-    // independently from whether primary authentication used password, Google OAuth or passkey.
+    // SECURITY: password, Google OAuth and native passkey all converge on this exact gate.
     setPendingStepUpSession(session);
     setLoading(false);
   };
 
+  const scheduleSessionEstablishment = (session: any) => {
+    const key = getSessionBootstrapKey(session);
+    if (!key || sessionBootstrapKeyRef.current === key) return;
+
+    sessionBootstrapKeyRef.current = key;
+    setLoading(true);
+
+    // Supabase documents that async Supabase work from onAuthStateChange can deadlock the client.
+    // A macrotask guarantees the auth callback and its internal lock have returned first.
+    window.setTimeout(() => {
+      establishSession(session).catch((err) => {
+        console.error('[Auth] Deferred session establishment failed:', err);
+        if (sessionBootstrapKeyRef.current === key) sessionBootstrapKeyRef.current = null;
+        updateUserSession(null);
+        setPendingStepUpSession(null);
+        setPendingOnboardingSession(null);
+        setLoading(false);
+      });
+    }, 0);
+  };
+
+  const handleLogout = async () => {
+    sessionBootstrapKeyRef.current = null;
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Supabase signOut error:', e);
+      }
+    }
+
+    clearLoginStepUpMarkers();
+    resetAuthProjection();
+    setJustLoggedOut(true);
+    setLoading(false);
+    setTimeout(() => setJustLoggedOut(false), 5000);
+  };
+
   useEffect(() => {
-    // ADR-0003.5: development auto-login remains double-gated by exact local hostname plus an
-    // explicit build flag. It is not compiled into a production authentication path by default.
     const isExplicitLocalDev =
       typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
@@ -197,65 +239,32 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
-    // Local session cache is display-only and never an authentication authority.
     if (!supabase) {
-      updateUserSession(null);
+      resetAuthProjection();
       setLoading(false);
       return;
     }
 
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        if (session) {
-          establishSession(session).catch((err) => {
-            console.error('[Auth] Initial session establishment failed:', err);
-            updateUserSession(null);
-            setLoading(false);
-          });
-        } else {
-          updateUserSession(null);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.warn('Supabase getSession failed; clearing non-authoritative local session cache:', err);
-        updateUserSession(null);
-        setLoading(false);
-      });
-
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Supabase documents that awaiting another Supabase call inside onAuthStateChange may
-      // deadlock the client. Defer all session work until the auth callback has returned.
-      window.setTimeout(() => {
-        if (session) {
-          establishSession(session).catch((err) => {
-            console.error('[Auth] Deferred session establishment failed:', err);
-            updateUserSession(null);
-            setLoading(false);
-          });
-          return;
-        }
-
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // The callback itself remains synchronous. No Supabase API is awaited here.
+      if (event === 'SIGNED_OUT' || !session) {
+        sessionBootstrapKeyRef.current = null;
         updateUserSession(null);
         setPendingStepUpSession(null);
         setPendingOnboardingSession(null);
         setLoading(false);
-      }, 0);
+        return;
+      }
+
+      if (!isSessionEstablishmentEvent(event)) return;
+      scheduleSessionEstablishment(session);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  /**
-   * Existing registered website users authenticate with their Supabase email/password identity.
-   * hCaptcha remains enabled as the bot-abuse control and its short-lived token is attached to the
-   * password grant. A successful primary login still has to pass LoginStepUpGate afterwards.
-   */
   const handleLogin = async (email: string, password: string) => {
     if (!supabase) {
       throw new Error('Supabase ist nicht konfiguriert. Anmeldung ist nicht möglich.');
@@ -275,41 +284,17 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     }
   };
 
-  /**
-   * Account provisioning remains a separately controlled product decision. This fix restores
-   * sign-in for already registered users and Google OAuth without silently reopening sign-up.
-   */
   const handleRegister = async (_name: string, _email: string, _password: string) => {
     throw new Error(
       'Selbstregistrierung ist derzeit kontrolliert deaktiviert. Bereits registrierte Konten können sich per E-Mail/Passwort oder Google anmelden.',
     );
   };
 
-  const handleLogout = async () => {
-    if (supabase) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {
-        console.warn('Supabase signOut error:', e);
-      }
-    }
-
-    clearLoginStepUpMarkers();
-    setPendingStepUpSession(null);
-    setPendingOnboardingSession(null);
-    updateUserSession(null);
-    setJustLoggedOut(true);
-    setTimeout(() => {
-      setJustLoggedOut(false);
-    }, 5000);
-  };
-
   useEffect(() => {
     const handleUnauthorized = () => {
       console.warn('[Auth] 401 empfangen - Session ist ungültig/abgelaufen, logge aus.');
-      handleLogout();
+      void handleLogout();
     };
-
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
@@ -327,9 +312,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     );
   }
 
-  // Authenticated gates always outrank the public-shell latency optimization. In particular, an
-  // OAuth callback can return to `/login`, so immediately rendering the login shell must never
-  // suppress onboarding/AAL processing once Supabase has established the authenticated session.
   if (pendingOnboardingSession) {
     return (
       <RegistrationCompletionGate
@@ -368,26 +350,14 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
   if (authError) {
     return (
-      <div
-        id="auth-error-screen"
-        className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-aif-gold-DEFAULT selection:text-black"
-      >
-        <div
-          id="auth-error-card"
-          className="w-full max-w-md bg-black/40 border border-red-500/30 rounded-2xl p-8 backdrop-blur-xl shadow-[0_0_50px_rgba(239,68,68,0.1)] relative overflow-hidden"
-        >
+      <div id="auth-error-screen" className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-aif-gold-DEFAULT selection:text-black">
+        <div id="auth-error-card" className="w-full max-w-md bg-black/40 border border-red-500/30 rounded-2xl p-8 backdrop-blur-xl shadow-[0_0_50px_rgba(239,68,68,0.1)] relative overflow-hidden">
           <div className="flex flex-col items-center text-center space-y-6">
             <div className="space-y-2">
-              <h1 className="text-xl font-bold font-display tracking-tight text-white">
-                Identitäts-Diskrepanz erkannt
-              </h1>
-              <p className="text-xs font-mono uppercase tracking-widest text-red-400">
-                Security Guard Protocol
-              </p>
+              <h1 className="text-xl font-bold font-display tracking-tight text-white">Identitäts-Diskrepanz erkannt</h1>
+              <p className="text-xs font-mono uppercase tracking-widest text-red-400">Security Guard Protocol</p>
             </div>
-
             <p className="text-sm text-white/70 leading-relaxed">{authError.message}</p>
-
             <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 text-left font-mono text-[11px]">
               <div>
                 <span className="text-white/40 block mb-0.5">Aktive Auth-Sitzung (id):</span>
@@ -404,31 +374,28 @@ export function SessionComposition({ children }: SessionCompositionProps) {
                 <span className="text-white/80">{authError.code}</span>
               </div>
             </div>
-
             <div className="flex flex-col sm:flex-row gap-3 w-full pt-2">
               <button
                 onClick={async () => {
                   setAuthError(null);
                   setLoading(true);
                   if (!supabase) {
-                    updateUserSession(null);
+                    resetAuthProjection();
                     setLoading(false);
                     return;
                   }
-
                   try {
-                    const {
-                      data: { session },
-                    } = await supabase.auth.getSession();
+                    const { data: { session } } = await supabase.auth.getSession();
                     if (session) {
+                      sessionBootstrapKeyRef.current = null;
                       await establishSession(session);
                     } else {
-                      updateUserSession(null);
+                      resetAuthProjection();
                       setLoading(false);
                     }
                   } catch (err) {
                     console.error('Retry failed:', err);
-                    updateUserSession(null);
+                    resetAuthProjection();
                     setLoading(false);
                   }
                 }}
