@@ -14,20 +14,24 @@ import { supabase } from '../supabaseClient';
 export async function needsOnboarding(session: { user: any }): Promise<boolean> {
   const user = session?.user;
   if (!user || user.is_anonymous) return false;
-  if (!supabase) return false;
 
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('onboarding_required')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (error) throw error;
-    return data?.onboarding_required === true;
-  } catch (err) {
-    // Fail-open wie loginStepUpRequirement(): ein Ausfall des profiles-Reads darf keinen
-    // Nutzer aus der App aussperren.
-    console.error('[Onboarding] Status konnte nicht geladen werden, ueberspringe Onboarding-Gate:', err);
-    return false;
+  if (!supabase) {
+    throw new Error('[Onboarding] Supabase ist nicht verfuegbar; Onboarding-Status nicht verifizierbar.');
   }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('onboarding_required')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error('[Onboarding] Status konnte nicht geladen werden.', { cause: error });
+  }
+
+  if (!data) {
+    throw new Error('[Onboarding] Profil fehlt; Onboarding-Status nicht verifizierbar.');
+  }
+
+  return data.onboarding_required === true;
 }
