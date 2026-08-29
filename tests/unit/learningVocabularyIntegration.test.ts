@@ -39,12 +39,10 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(dashboard).toContain('<LearningVocabulary />');
   });
 
-  it('exposes the same LearningVocabulary component lazily at /learning-platform', () => {
+  it('exposes the same LearningVocabulary component directly at /learning-platform', () => {
     const routes = source('src/app/routing/AppRoutes.tsx');
 
-    expect(routes).toContain('const LearningVocabulary = React.lazy(async () => {');
-    expect(routes).toContain("import('../../features/learning/ui/LearningVocabulary')");
-    expect(routes).not.toContain("import { LearningVocabulary } from '../../features/learning/ui';");
+    expect(routes).toContain("import { LearningVocabulary } from '../../features/learning/ui';");
     expect(routes).toContain("window.location.pathname.replace(/\\/+$/, '') || '/'");
     expect(routes).toContain("currentPath === '/learning-platform'");
     expect(routes).toContain('CAPITAL-AI / LEARNING');
