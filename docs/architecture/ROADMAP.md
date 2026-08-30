@@ -1,11 +1,11 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.3.0`  
+**Version:** `2.4.0`  
 **Status date:** `2026-08-30`  
-**Current repository baseline:** `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7` — includes merged PR #607  
-**Open PR correlation:** PR #608 (`docs/value-chain-coverage-hardening-2026-08-30`) — no file overlap with this current-state index work package  
-**Platform version authority:** `package.json#version`  
+**Current repository baseline:** `main@4e3de6f489989e64962225874dd7dd69400fcd95` — includes merged PRs #607, #610, #611, #612  
+**Open PR correlation:** this status snapshot is updated on `docs/open-steps-bind-2026-08-30-v5` (OPEN-STEPS-BIND-2026-08-30); no other open PRs at bind time  
+**Platform version authority:** `package.json#version` = `0.6.0`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
 
@@ -38,13 +38,13 @@ Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registri
 ## S1-R2 security-governance state
 
 - `S1-R2-01` workflow startup-failure classification is resolved as historical/obsolete phantom-control evidence; active workflow YAML was not changed.
-- `S1-R2-02` GitHub default-branch enforcement is **IMPLEMENTED / POST-MUTATION VERIFICATION PENDING**.
-- GitHub Pro capability is active for the private repository and the repository ruleset `main-production-protection` is readable and enforced.
-- Live rules currently include `non_fast_forward`, `pull_request`, strict `required_status_checks`, `required_signatures`, `required_linear_history` and an empty bypass actor set.
-- Required checks are `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks`.
-- `Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain intentionally outside the pre-merge required-check set because they can be skipped on PR validation.
-- Remaining live drift against the canonical expected policy: `deletion` is not yet present and `required_review_thread_resolution` is still `false`; both are prepared for reconciliation through the existing Owner-gated `ruleset-sync` workflow after Human merge.
-- `required_signatures` is active now. New PR work intended for `main` must therefore use verified signed commits; unsigned agent/API-created commits are not merge-ready evidence.
+- `S1-R2-02` GitHub default-branch enforcement code/docs merged as PR #611 (`dc3dd333`). **OWNER DISPATCH PENDING** on `ruleset-sync` `mode=plan` then `mode=full` from `main` only.
+- GitHub Pro capability is active for the private repository and the repository ruleset `main-production-protection` is readable.
+- Required checks remain `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks`.
+- `Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain intentionally outside the pre-merge required-check set.
+- Remaining expected-policy drift for Owner plan/apply: `deletion` may still be absent and `required_review_thread_resolution` may still be `false`.
+- Owner deactivated `required_signatures` after #610 so Connector commits remain mergeable. PR #613 (commit-signing automation) was closed/abandoned and must not be merged. A later `full` apply must not silently re-enable `required_signatures` against that Owner decision; plan-diff is mandatory.
+- Checklist: `docs/evidence/security/S1_R2_02_POST_MERGE_DISPATCH_CHECKLIST_2026-08-30.md`.
 
 ## ESS current-state correlation
 
@@ -52,22 +52,22 @@ Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registri
 |---|---|---|
 | `ESS-0012` | `.ai/skills/ESS-0012-Documentation-Governance.md`; registered as `AUTH-ESS-DOCUMENTATION-GOVERNANCE` v1.0.0 | **RESOLVED / ENTERPRISE-APPROVED**; documentation-only governance, non-authorizing for repository-wide execution |
 | `ESS-0019` | `.ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md`; registered as `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE` v1.1.0 | **RESOLVED / ACCEPTED**; provider-neutral capability/risk/audit plane subordinate to `/AGENTS.md` |
-| `ESS-0011` | referenced by ESS-0012 and ESS-0001 contracts as Enterprise Traceability, but no current `.ai/skills/ESS-0011-Enterprise-Traceability.md`, `ESS-0011-Contracts.md`, or Authority Registry entry resolves on current main | **UNRESOLVED REFERENCE / GOVERNANCE DRIFT**; must not be treated as a current executable authority until namespace/path authority is reconciled |
-| `ESS-0001` | `.ai/skills/ESS-0001-Documentary-Architect.md` and `.ai/skills/ESS-0001-Contracts.md` both exist; the latter identifies itself as `ESS-0001-CONTRACTS` while the former owns display ID `ESS-0001`; neither is represented by a stable Authority Registry entry | **AMBIGUOUS LEGACY NAMESPACE / M10 BLOCKER**; retain files unchanged until dedicated ESS namespace reconciliation resolves stable authority identities |
+| `ESS-0011` | `.ai/skills/ESS-0011-Enterprise-Traceability.md` and `.ai/skills/ESS-0011-Contracts.md` exist on main; registered as `AUTH-ESS-ENTERPRISE-TRACEABILITY` | **PATH RESOLVED / AUTHORITY REGISTERED**; runtime ETM remains partial (`traceability:build`); not a missing-file blocker |
+| `ESS-0001` | `.ai/skills/ESS-0001-Documentary-Architect.md` (`AUTH-ESS-DOCUMENTARY-ARCHITECT`) and `.ai/skills/ESS-0001-Contracts.md` (`AUTH-ESS-DOCUMENTARY-CONTRACTS`, no own ESS number) | **NAMESPACE RESOLVED**; two physical artifacts, two stable authorityIds; files unchanged |
 
-The index does not silently rename, delete or re-authorize these ESS artifacts. Missing or ambiguous authority resolution remains fail-closed and is an explicit blocker for any future M10 reactivation.
+Reconciliation evidence: `docs/governance/ESS_NAMESPACE_RECONCILIATION_2026-08-30.md`. The index does not rename, delete or re-number ESS artifacts.
 
 ## M10 — historical verification versus current enforcement
 
 M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` has historical `COMPLETE / VERIFIED PASS` evidence. Those records remain valid historical evidence but **do not represent current enforcement**.
 
-**M10 PR-CI passkey enforcement is currently `SUSPENDED / OFF`.** Human/CODEOWNER merge remains required. Historical M10 evidence cannot reactivate the gate.
+**M10 PR-CI passkey enforcement is currently `SUSPENDED / OFF`.** Human/CODEOWNER merge remains required. Historical M10 evidence cannot reactivate the gate. Removing the ESS-0011 missing-path classification does **not** clear the remaining M10 blockers.
 
 ### Mandatory blockers before M10 reactivation
 
 M10 MUST remain off until all then-current prerequisites are resolved and evidenced, including:
 
-1. no duplicate or ambiguous ADR, ESS, Authority or current-state references remain in the correlated architecture; current explicit blockers include unresolved `ESS-0011` references and the legacy `ESS-0001` namespace split;
+1. no duplicate or ambiguous ADR, ESS, Authority or current-state references remain in the correlated architecture; the former missing-path `ESS-0011` and unregistered `ESS-0001` split are reconciled in this snapshot, but Governance/Documentary responsibility and version-contract work remain;
 2. `src/platform/Governance` and `src/platform/Documentary/Governance` retain an explicit non-overlapping responsibility model;
 3. README/runtime/documentary/version contracts resolve to canonical version sources rather than duplicated status authorities;
 4. structural Governance validation and independent hosted CI pass on the exact final candidate head;
@@ -76,7 +76,7 @@ M10 MUST remain off until all then-current prerequisites are resolved and eviden
 
 ## Deployment authority — current state
 
-Render native Auto Deploy remains off. Current production promotion authority resolves through verified `main` CI and the existing deployment control plane. A second automatic deployment authority requires a separate architecture/security decision.
+Render native Auto Deploy remains off. Current production promotion authority resolves through verified `main` CI and the existing deployment control plane. A second automatic deployment authority requires a separate architecture/security decision. Live `/healthz` at this snapshot returned `status=ok` (2026-08-30T16:14:33Z).
 
 ## DevelopmentChain / Governance status
 
@@ -84,19 +84,20 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document; synchronized to `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7` plus provider-side Ruleset readback dated 2026-08-30 |
-| Open Pull Requests at this synchronization | PR #608 plus bounded S1-R2-02 cutover work; no semantic authority overlap intended |
+| Current-State Index | this document v2.4.0; synchronized to `main@4e3de6f489989e64962225874dd7dd69400fcd95` |
+| Open Pull Requests at this synchronization | OPEN-STEPS-BIND-2026-08-30 on `docs/open-steps-bind-2026-08-30-v5`; no other open PRs at bind |
 | S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
-| S1-R2-02 GitHub main enforcement | **IMPLEMENTED / POST-MUTATION VERIFICATION PENDING**; active Ruleset and signed-commit enforcement confirmed; deletion/review-thread reconciliation pending |
+| S1-R2-02 GitHub main enforcement | **IMPLEMENTED / OWNER DISPATCH PENDING** after #611; `required_signatures` Owner-deactivated; #613 abandoned |
+| Value-Chain Coverage | Coverage-Map + Inventar *-0 on main via #610; live registry insert + *-1 specification in OPEN-STEPS-BIND |
 | M10 Passkey PR-CI enforcement | **SUSPENDED / OFF** |
 | Human/Owner PR creation | **REQUIRED** after final main/open-PR correlation and bound to exact main/head SHAs |
 | Human/CODEOWNER Merge | **REQUIRED** as a separate decision |
 | GitHub hosted validation | scope-/cost-controlled; Required Checks are `build-and-test`, PR Governance, hardened-image CVE gate and GitGuardian |
-| Commit authenticity | `required_signatures` active for protected `main`; merge candidates must satisfy verified-signature enforcement |
+| Commit authenticity | `required_signatures` currently Owner-deactivated; Connector commits are mergeable; no silent re-enable via ruleset-sync |
 | ESS-0012 | **RESOLVED** through Authority Registry |
 | ESS-0019 | **RESOLVED** through Authority Registry |
-| ESS-0011 | **UNRESOLVED REFERENCE** on current main |
-| ESS-0001 | **LEGACY NAMESPACE AMBIGUITY**; two related physical artifacts, no stable Authority Registry identity |
+| ESS-0011 | **PATH RESOLVED / AUTHORITY REGISTERED** |
+| ESS-0001 | **NAMESPACE RESOLVED** (Architect + CONTRACTS authorityIds) |
 | Social Media OAuth / Auth Code | ADR-0026/ADR-0027 path; single-use/expiry-bound state, strict environment-aware callback allowlist, X PKCE S256, verified provider identity before `connected`, Bearer transport across Meta resource/publish APIs and dedicated negative-test/threat-model evidence |
 | FinTech value-chain quality projection | `fintech-value-chain-quality/1.0.0`, **18 stages**, read-only/non-authorizing |
 | Vocabulary | `src/platform/Vocabulary` v1.8.0; 18-stage wording projection and Documentary handoff implemented |
@@ -128,7 +129,7 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 - missing ESS files or ambiguous ESS display IDs do not acquire authority by reference alone;
 - native GitHub protection must not be simulated by a workflow-only substitute;
 - skipped checks must not be made Required without a proven event/applicability contract;
-- protected-main commits must satisfy active signed-commit enforcement;
+- Owner decisions on `required_signatures` must not be silently reversed by agent-authored expected-policy applies;
 - Social Media OAuth production callbacks remain bound to explicit CAPITAL-AI HTTPS origins and the canonical callback path before state persistence;
 - loopback OAuth callbacks require exact `development` or `test`; missing/unknown environment labels remain strict;
 - OAuth state remains server-generated, expiry-bound and single-use, with the provider derived from persisted state rather than callback-controlled input;
@@ -138,9 +139,8 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 
 ## Current next action
 
-1. complete S1-R2-02 through the canonical `ruleset-sync` path after Human merge: reconcile `deletion=true` and `required_review_thread_resolution=true`, then capture provider readback;
-2. require verified signed commits for future merge candidates and do not weaken `required_signatures` to accommodate unsigned automation commits;
-3. re-correlate PR #608 against current main before merge;
-4. reconcile `ESS-0011` missing-path references and the `ESS-0001` legacy namespace split in a dedicated ESS authority/namespace work package before any M10 reactivation;
-5. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until all current reactivation prerequisites and a new explicit Human/Owner decision are satisfied;
-6. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
+1. Human-review and merge OPEN-STEPS-BIND-2026-08-30 (this documentary bind);
+2. Owner-only S1-R2-02 `ruleset-sync` on `main`: `mode=plan` then, if ACCEPT, `mode=full`; capture readback; do not re-enable `required_signatures` against the Owner decision;
+3. after merge, first runtime candidates are SUP-1 / VM-2 / DQ-1 as Klasse-C work on a fresh branch; PD-1 waits for Owner-ACCEPT;
+4. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until remaining blockers and a new explicit Human/Owner decision are satisfied;
+5. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
