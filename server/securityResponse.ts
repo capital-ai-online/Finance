@@ -2,11 +2,11 @@
 //
 // ADR-0035 introduced a per-response nonce and strict-dynamic policy. ADR-0040 adds a
 // production-safe rollout boundary after the strict policy could prevent the Vite/React
-// bootstrap from rendering. Production supports three explicit modes:
+// bootstrap from rendering. Production therefore supports three explicit modes:
 //
 // - baseline: availability-safe enforced CSP with first-party scripts explicitly allowed;
-// - report-only: baseline enforced + strict nonce policy in report-only mode (rollback/diagnostic);
-// - strict: strict nonce + strict-dynamic policy enforced (default after S1-R2-09 promotion).
+// - report-only: baseline enforced + strict nonce policy in report-only mode (default);
+// - strict: strict nonce + strict-dynamic policy enforced after production evidence exists.
 //
 // The same cryptographic nonce is injected into the HTML and every generated CSP variant.
 // HTML remains no-store so a cached body can never be paired with a new response nonce.
@@ -15,7 +15,7 @@ import crypto from 'crypto';
 import type { Request, Response } from 'express';
 
 const CSP_NONCE_PLACEHOLDER = '__CSP_NONCE__';
-const DEFAULT_PRODUCTION_CSP_MODE: ProductionCspMode = 'strict';
+const DEFAULT_PRODUCTION_CSP_MODE: ProductionCspMode = 'report-only';
 
 export type ProductionCspMode = 'baseline' | 'report-only' | 'strict';
 
@@ -63,9 +63,8 @@ export function buildBaselineProductionCsp(nonce: string): string {
 }
 
 /**
- * ADR-0035 target policy. This is the production default after S1-R2-09 promotion.
- * `report-only` remains an explicit rollback/diagnostic mode and `baseline` an explicit
- * availability recovery mode; neither is selected implicitly in production.
+ * ADR-0035 target policy. In report-only mode this is evaluated without blocking the UI;
+ * promotion to enforced strict mode requires ADR-0040 production evidence.
  */
 export function buildStrictProductionCsp(nonce: string): string {
   return [
