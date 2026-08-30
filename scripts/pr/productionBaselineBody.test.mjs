@@ -70,20 +70,71 @@ test('changed main/head identity replaces only the canonical baseline block', ()
   assert.doesNotMatch(result.body, new RegExp(previous.baselineId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });
 
-test('duplicate or missing baseline markers remain fail-closed', () => {
+test('marker-free canonical section 3 is reconstructed atomically', () => {
+  const baseline = validBaseline();
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->',
+    '# CAPITAL-AI Änderungsantrag (Pull Request)',
+    '',
+    '## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe',
+    '',
+    'Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '',
+    '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
+    '',
+    'ADVISORY / NOT MACHINE-RENDERED',
+    'mainSha: stale-main',
+    'headSha: stale-head',
+    '',
+    '## 4. Umfang / Multi-Agent-Koordination',
+    '',
+    'Owner note after baseline stays',
+  ].join('\n');
+
+  const result = replaceProductionBaselineBlock(body, baseline);
+
+  assert.equal(result.changed, true);
+  assert.match(result.body, new RegExp(baseline.baselineId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(result.body, /<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/);
+  assert.match(result.body, /`CAPITAL_AI_PRODUCTION_BASELINE_START`/);
+  assert.match(result.body, /`CAPITAL_AI_PRODUCTION_BASELINE_END`/);
+  assert.match(result.body, /<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/);
+  assert.doesNotMatch(result.body, /ADVISORY \/ NOT MACHINE-RENDERED/);
+  assert.doesNotMatch(result.body, /stale-main|stale-head/);
+  assert.match(result.body, /## 4\. Umfang \/ Multi-Agent-Koordination\n\nOwner note after baseline stays$/);
+});
+
+test('partial or duplicate baseline markers remain fail-closed', () => {
   const baseline = validBaseline();
   const block = renderProductionBaselineBlock(baseline);
 
   assert.throws(
     () => replaceProductionBaselineBlock(`A\n${block}\n${block}\nB`, baseline),
-    /genau einen kanonischen Produktions-Baseline-Block/,
+    /unvollständigen oder duplizierten Produktions-Baseline-Markerzustand/,
   );
   assert.throws(
     () => replaceProductionBaselineBlock(`${block}\n\`CAPITAL_AI_PRODUCTION_BASELINE_START\``, baseline),
-    /genau einen kanonischen Produktions-Baseline-Block/,
+    /unvollständigen oder duplizierten Produktions-Baseline-Markerzustand/,
   );
+});
+
+test('marker-free body without unique canonical section boundaries remains fail-closed', () => {
+  const baseline = validBaseline();
+
   assert.throws(
     () => replaceProductionBaselineBlock('kein Baseline-Block', baseline),
-    /genau einen kanonischen Produktions-Baseline-Block/,
+    /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt 3/,
+  );
+
+  const duplicateHeading = [
+    '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
+    'alt',
+    '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
+    'alt 2',
+    '## 4. Umfang / Multi-Agent-Koordination',
+  ].join('\n');
+  assert.throws(
+    () => replaceProductionBaselineBlock(duplicateHeading, baseline),
+    /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt 3/,
   );
 });
