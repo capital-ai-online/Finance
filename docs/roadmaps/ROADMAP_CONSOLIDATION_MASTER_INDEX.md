@@ -2,7 +2,7 @@
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
 Stand: 2026-08-30  
-Repository-Baseline: `main@e53b738289f16cbf1951d12b7362dac568763735`  
+Repository-Baseline: `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7`  
 Owner: SvenKulessa  
 Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 
@@ -18,7 +18,7 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 
 **Integration 2026-08-15:** Die DEVELOPMENT Chain und der Systemadmin-Agent sind in der kanonischen Ausführungsroadmap **ROADMAP-INTEGRATED-DC-SA-0001** (`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md`) verbunden. Diese Integrated Roadmap ist die verbindende Ausführungsautorität für DC + SA Phasen (I0–I4).
 
-**Value-Chain Coverage 2026-08-30:** Die operative Kette (ARCH-CHAIN-0001) und die Finanz-/Scoring-Kette (ADR-0087) sind stufenweise gegen bestehende Roadmaps korreliert. Lücken ohne eigene Roadmap führt **ROADMAP-VC-COV-HARDEN-2026-08-30**. Inventar-WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0 liegen in `docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md`. Document-Registry-Einträge sind in PR #608 eingefügt.
+**Value-Chain Coverage 2026-08-30:** Die operative Kette (ARCH-CHAIN-0001) und die Finanz-/Scoring-Kette (ADR-0087) sind stufenweise gegen bestehende Roadmaps korreliert. Lücken ohne eigene Roadmap führt **ROADMAP-VC-COV-HARDEN-2026-08-30**. Inventar-WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0 liegen in `docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md`. Document-Registry-Insert (`DOC-ROADMAP-VC-COV-HARDEN-2026-08-30`, `DOC-WP-VC-H-INVENTORY-2026-08-30`) ist Teil von PR #608.
 
 ## 2. Verbindliche Authority-Reihenfolge
 
@@ -37,10 +37,10 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + `docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md`** | **ACTIVE — COVERAGE**; Inventar *-0 DONE in PR #608; Registry-Insert DONE | Nächste Implementierung erst nach Human-Merge: SUP-1 / VM-2 / DQ-1 (Klasse C), PD-1 nach Owner-ACCEPT |
+| **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + `docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md` + Registry-Insert in `docs/governance/document-registry.json`** | **ACTIVE — COVERAGE**; Inventar *-0 DONE in PR #608; Registry-Insert DONE in PR #608 | Nächste Implementierung erst nach Human-Merge: SUP-1 / VM-2 / DQ-1 (Klasse C), PD-1 nach Owner-ACCEPT |
 | **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
-| S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW auf main@e53b738; S1-R2-Reassessment in offenem PR #607 | Human-Review/Merge #607; danach R2-00/R2-01 ohne Provider-Mutation |
+| S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | S1-R2-Reassessment auf main nach Merge #607 (`677a88ca`) | R2-00/R2-01 ohne Provider-Mutation; Security-Owner bleibt S1 |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline; Event-Producer-Lücken zusätzlich in VC-H-EM inventarisiert |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
 | IAM-DIAG | Diagnostics IAM | `docs/roadmaps/AI_SYSTEM_ADMIN_DIAGNOSTICS_IAM_ROADMAP.md` | teilweise überholt, nicht vollständig evidenzgebunden | retained/superseded/migrated-Matrix |

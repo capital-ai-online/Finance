@@ -3,23 +3,25 @@
 **Document ID:** WP-VC-H-INVENTORY-2026-08-30  
 **Status:** INVENTORY COMPLETE / IMPLEMENTATION NOT STARTED  
 **Date:** 2026-08-30  
-**Baseline:** `main@e53b738289f16cbf1951d12b7362dac568763735`  
+**Evidence-Baseline:** `main@e53b738289f16cbf1951d12b7362dac568763735` (Restore #606)  
+**PR-Basis nach Sync:** `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7` (Merge #607, nur S1-Roadmap)  
 **PR:** #608  
 **Authority projection:** ROADMAP-VC-COV-HARDEN-2026-08-30  
 **Class:** D  
 **Does not authorize:** Runtime-Code, Merge, Deploy, Provider-Mutation, Scoring-Promotion
 
-Dieses Paket schließt die Inventar-Stufen **PROD-0, SUP-0, VM-0, PD-0, REL-0, DQ-0, EM-0, KG-0**.  
+Dieses Paket schließt die Inventar-Stufen **PROD-0, SUP-0, VM-0, PD-0, REL-0, DQ-0, EM-0, KG-0** in PR #608.  
 Implementierungsstufen `*-1` und höher bleiben eigene spätere Workitems.
 
 ---
 
 ## Gemeinsame Inventar-Regeln
 
-- Nur Repository- und Dokumentennachweise gegen `main@e53b738`.
+- Inventarbefunde gegen Evidence-Baseline `main@e53b738`. Merge #607 ändert nur `S1_SECURITY_HARDENING_ROADMAP.md`; Runtime-Befunde bleiben gültig.
 - Historical Evidence (ARCH-GAP-0001, Handoff 29.08. auf `fd4c339`) erzeugt keine aktuelle Production-Authority.
-- Offener PR #607 bleibt Security-Owner für S1-R2; dieses Paket dupliziert S1 nicht.
+- S1-R2 ist nach Merge #607 auf `main`; dieses Paket dupliziert S1 nicht.
 - `package.json#version` = `0.6.0` bleibt einzige Plattform-Versionsautorität.
+- Registry-Insert für dieses Pack und die Coverage-Roadmap liegt in derselben PR #608 (`docs/governance/document-registry.json`).
 
 ---
 
@@ -27,9 +29,10 @@ Implementierungsstufen `*-1` und höher bleiben eigene spätere Workitems.
 
 | Identität | SHA / Nachweis | Status |
 |---|---|---|
-| GitHub `main` (dieser PR-Basis) | `e53b738289f16cbf1951d12b7362dac568763735` (Merge #606) | CURRENT REPO |
+| GitHub `main` zum Inventarzeitpunkt | `e53b738289f16cbf1951d12b7362dac568763735` (Merge #606) | EVIDENCE BASELINE |
+| GitHub `main` dieser PR-Basis | `677a88ca5156b51060e9204aa06b9afdcf4e47b7` (Merge #607) | CURRENT PR BASE |
 | Operations-Handoff 2026-08-29 | bindet Production und `main` an `fd4c33905f45332f6ae11de6b80a6a3c20576c77` | STALE vs. aktuelles main |
-| PR #607 reassessment | Live-Commit `4c25dec3ff4a9b2507bae8cfd265f055c6afa52f`; main `e53b738`; same-tree nach #606, unterschiedliche Commit-Identitäten | ADVISORY / S1-owned |
+| S1-R2 Reassessment (#607 MERGED) | Live-Commit `4c25dec3ff4a9b2507bae8cfd265f055c6afa52f`; Restore-main `e53b738`; same-tree nach #606, unterschiedliche Commit-Identitäten | ADVISORY / S1-owned |
 | Render Auto-Deploy | AUS (Handoff + S1) | CONFIRMED IN DOCS |
 | `/healthz` vs `/readyz` | Liveness vs. fachliches Gate | IMPLEMENTIERT (Handoff §2) |
 | RPO / RTO | UNVERIFIED | S1-R2-07, nicht dieses WP |
@@ -145,7 +148,7 @@ Implementierungsstufen `*-1` und höher bleiben eigene spätere Workitems.
 | `src/platform/Knowledge/` | Zielmodul | nur README + Manifest |
 | `.ai/knowledge/` | vertraglicher Graph-Eingang | leer / nicht als Runtime-Eingang genutzt (CHAIN-02) |
 | Vocabulary-Registry ESS-0017 | ja, read-only | CANONICAL terminology |
-| `docs/governance/document-registry.json` | ja, approved/reviewed Einträge | ACTIVE |
+| `docs/governance/document-registry.json` | ja, approved/reviewed Einträge | ACTIVE; VC-COV-Einträge in PR #608 |
 | ADR-Registry | ja, approved ADRs | ACTIVE |
 | Scoring / MarketData / Secrets | nein | verboten (KG-3) |
 
@@ -157,13 +160,13 @@ Implementierungsstufen `*-1` und höher bleiben eigene spätere Workitems.
 
 | WP | Status nach diesem PR | Nächste Klasse |
 |---|---|---|
-| PROD-0 | INVENTORY DONE | D (PROD-1 Handoff) oder S1-R2-11 |
-| SUP-0 | INVENTORY DONE | C SUP-1 |
-| VM-0 | INVENTORY DONE | C VM-2 (VM-1 weitgehend erfüllt) |
-| PD-0 | INVENTORY DONE | C PD-1 nach Owner-ACCEPT |
-| REL-0 | INVENTORY DONE | C REL-1 |
-| DQ-0 | INVENTORY DONE | C DQ-1 |
-| EM-0 | INVENTORY DONE | C EM-1 |
-| KG-0 | INVENTORY DONE | C KG-1 |
+| PROD-0 | INVENTORY DONE in PR #608 | D (PROD-1 Handoff) oder S1-R2-11 |
+| SUP-0 | INVENTORY DONE in PR #608 | C SUP-1 |
+| VM-0 | INVENTORY DONE in PR #608 | C VM-2 (VM-1 weitgehend erfüllt) |
+| PD-0 | INVENTORY DONE in PR #608 | C PD-1 nach Owner-ACCEPT |
+| REL-0 | INVENTORY DONE in PR #608 | C REL-1 |
+| DQ-0 | INVENTORY DONE in PR #608 | C DQ-1 |
+| EM-0 | INVENTORY DONE in PR #608 | C EM-1 |
+| KG-0 | INVENTORY DONE in PR #608 | C KG-1 |
 
 Keine dieser Folgestufen ist in PR #608 als Runtime implementiert.
