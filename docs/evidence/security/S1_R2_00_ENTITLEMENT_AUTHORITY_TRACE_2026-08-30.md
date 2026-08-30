@@ -3,6 +3,7 @@
 Status: **CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE — PR VERIFY PENDING**  
 Evidence date: 2026-08-30  
 Repository baseline for the current PR: `main@3815c7fce44e30bccf227a4399220407f4095706`  
+Correlated authenticated-readback candidate: PR #625 exact-head `f13632b76ff437274b60917a705aebcef047a9b0` — Governance, Container Security and `build-and-test` PASS  
 Supabase project: `AIFINANCIAL` / `ryzywoktpmyhwzxmstyu`  
 Scope: production-reachable subscription/tier authority, browser simulation reachability, protected entitlement decisions and Stripe→Supabase persistence.
 
@@ -16,13 +17,17 @@ If a browser-controlled tier is sufficient at any production-reachable protected
 
 ## 2. Confirmed server/provider subscription authority
 
-The primary subscription truth remains correctly isolated from browser mutation.
+The primary subscription truth remains correctly isolated from browser mutation. PR #625 additionally removes the stale pre-MFA/query-identity readback pattern from the client projection path; this strengthens the same authority model and does not create a second authority.
 
 ### Authenticated tier projection
 
-`src/app/auth/SessionComposition.tsx` requests `/api/stripe/user-subscription` with the Supabase bearer token and defaults the UI projection to `Free` on failure.
+`src/app/auth/SessionComposition.tsx` now requests `/api/stripe/user-subscription` through the existing rotation-aware `authFetch` contract. It no longer appends a client `userId` query parameter and no longer constructs the request from a pre-MFA `session.access_token` captured before step-up.
 
-`GET /api/stripe/user-subscription` in `server/stripe.ts` calls `resolveVerifiedIdentity(req)` and resolves the tier with `getSubscription(identity.userId)`. Query/body user identifiers do not select the account.
+After successful MFA verification, `SessionComposition` re-reads the live Supabase session, verifies that the resulting user ID matches the expected subject and only then continues the application/session handoff. `authFetch` obtains the current SDK-managed bearer, performs one bounded refresh/retry on a 401, and emits the global unauthorized path only when the retry cannot recover the authenticated session.
+
+`src/lib/subscriptionReadback.ts` centralizes Dashboard/Abonnements tier readback on the same bearer-only endpoint. It supplies neither `email` nor `userId` as identity input and accepts only the canonical `Free | Starter | Pro | Enterprise` tier set.
+
+`GET /api/stripe/user-subscription` in `server/stripe.ts` calls `resolveVerifiedIdentity(req)` and resolves the tier with `getSubscription(identity.userId)`. Query/body user identifiers therefore do not select the account.
 
 ### Protected server quota decisions
 
@@ -51,16 +56,18 @@ This proves that a browser cannot directly rewrite the persisted Stripe/Supabase
 
 The separate provider evidence `docs/evidence/security/STRIPE_LEGACY_WEBHOOK_DECOMMISSION_2026-08-30.md` additionally records the enabled canonical Supabase Stripe webhook and successful subscription lifecycle ingestion.
 
-## 4. Browser-controlled tier projection remains reachable
+## 4. Browser presentation state is reduced but not globally eliminated
 
-The production frontend still contains browser-writable presentation state:
+The correlated PR #625 materially narrows the browser projection surface:
 
-1. `Dashboard.tsx` restores an encrypted local profile object that includes `subscriptionTier`;
-2. the Stripe return fallback accepts `?payment=success&plan=...` and assigns `plan` to `profile.subscriptionTier`;
-3. `Abonnements` / `SubscriptionModal` can update the same local profile tier through UI callbacks;
-4. Checkout simulated success is DEV-only and therefore is not itself the production exploit path.
+1. encrypted Dashboard profile restoration no longer restores `email`, `id` or `subscriptionTier` as authority; those fields are overwritten from the current authenticated `UserSession`;
+2. Dashboard and Abonnements reconcile the current tier through `readAuthenticatedSubscriptionTier()` and the bearer-only server contract;
+3. guest sessions do not issue authenticated subscription readbacks;
+4. Checkout simulated success remains DEV-only.
 
-These mechanisms do **not** mutate `public.subscriptions` and do not bypass the verified server endpoints by themselves. They nevertheless mean `profile.subscriptionTier` must be treated strictly as presentation state.
+Browser-writable presentation state nevertheless still exists. In particular, the Stripe return UI path can temporarily project a client `plan` into `profile.subscriptionTier`, and subscription UI callbacks can update presentation state before/while authoritative server reconciliation completes.
+
+These remaining browser values do **not** mutate `public.subscriptions` and must never be sufficient by themselves to confer a protected paid capability.
 
 ## 5. Confirmed paid-capability authority gap
 
@@ -79,7 +86,7 @@ ComplianceExporter.isEnterprise === true
         `-- userEmail absent  --> generatePDFReport() directly in browser
 ```
 
-`Dashboard.tsx` renders `ComplianceExporter` without a `userEmail` prop. Therefore the second branch is the normal Dashboard call site.
+`Dashboard.tsx` renders `ComplianceExporter` without a `userEmail` prop. Therefore the second branch was the normal Dashboard call site.
 
 A browser-controlled local `Enterprise` projection could consequently satisfy the only gate and execute client-side PDF generation without `/api/stripe/pdf-credits` or `/api/stripe/consume-pdf-credit`.
 
@@ -87,18 +94,28 @@ This is a production-reachable paid-capability bypass even though the underlying
 
 **Classification: `CONFIRMED AUTHORITY GAP`.**
 
-## 6. Candidate remediation in PR #624
+## 6. Correlated candidate remediation
 
-The current branch removes the alternate authority path:
+The current PR #624 removes the alternate PDF authority path while the merged-in PR #625 candidate hardens the upstream subscription projection. The two changes are complementary and share one authority chain rather than creating parallel enforcement.
 
-### `ComplianceExporter.tsx`
+### PR #625 — authenticated readback hardening
+
+- post-MFA continuation uses the live Supabase session rather than the pre-step-up session object;
+- Subscription readback uses `authFetch('/api/stripe/user-subscription')` without `email`/`userId` identity query parameters;
+- Dashboard cached entitlement is subordinate to the current authenticated `UserSession`;
+- Dashboard and Abonnements use the central authenticated readback helper;
+- the exact PR #625 head `f13632b76ff437274b60917a705aebcef047a9b0` passed Governance, Container Security and full `build-and-test` before correlation into #624.
+
+### PR #624 — Compliance PDF authority containment
+
+`ComplianceExporter.tsx`:
 
 - `subscriptionTier === 'Enterprise'` remains only a UX pre-filter;
 - an Enterprise-looking browser state can only open `PdfExportModal`;
 - absence of `userEmail` can no longer call `generatePDFReport()` directly;
 - report generation is prepared first, but the download commit is reachable only after the modal's server authorization flow succeeds.
 
-### `PdfExportModal.tsx`
+`PdfExportModal.tsx`:
 
 - credit/subscription state is loaded whenever the modal opens, independent of a browser email string;
 - `/api/stripe/pdf-credits` is called through `authFetch`;
@@ -115,7 +132,7 @@ browser presentation tier
 open export modal only
         |
         v
-authFetch bearer identity
+authFetch live bearer identity
         |
         v
 server getSubscription(identity.userId) / PDF credit ledger
@@ -127,9 +144,11 @@ DENY  -> fail closed, no download
 
 ## 7. Negative evidence / abuse matrix
 
-| Abuse case | Baseline result | Candidate result |
+| Abuse case | Baseline result | Correlated candidate result |
 |---|---|---|
-| Browser forges another user ID on subscription read | DENY | DENY |
+| Browser forges another user ID on subscription read | DENY | DENY — no client identity query in canonical readback |
+| Stale pre-MFA token is reused for subscription projection | Rotation/race risk | DENY — live SDK session + bounded `authFetch` refresh/retry |
+| Encrypted Dashboard cache overwrites current paid/free tier | Stale presentation risk | DENY — current `UserSession` overrides cached entitlement |
 | Browser writes `public.subscriptions` | DENY by RLS | DENY by RLS |
 | Browser writes `stripe.subscriptions` | DENY | DENY |
 | Browser sends `tier=Enterprise` to quota API | DENY | DENY |
@@ -142,12 +161,12 @@ DENY  -> fail closed, no download
 
 R2-06 is **ACTIVE / REMEDIATION REQUIRED** because R2-00 established a real production-reachable browser-to-paid-capability authority gap.
 
-The PDF bypass is contained by this candidate, but R2-06 must remain open until the broader entitlement inventory is resolved. In particular:
+The PDF bypass is contained by this candidate, and PR #625 removes the previously identified cached/query-based entitlement projection drift. R2-06 must nevertheless remain open until the broader entitlement inventory is resolved. Remaining work includes:
 
-- browser `profile.subscriptionTier` restoration/Stripe-return mutation should be reduced to a server-refreshed presentation projection rather than an independently writable premium-looking state;
-- product claims such as Pro-only Realtime AI Newsfeed must be reconciled with actual server enforcement or explicitly reclassified as non-protected/public capability;
-- every paid server capability must have a verified-identity + server-subscription/ledger decision point;
-- regression coverage must prevent future client-only premium gates from becoming the sole authorization layer.
+- remove or explicitly bound the temporary Stripe-return/UI `profile.subscriptionTier` projection so it cannot become the sole gate for any premium capability;
+- reconcile product claims such as Pro-only Realtime AI Newsfeed with actual server enforcement or explicitly reclassify them as non-protected/public capability;
+- require every paid server capability to have a verified-identity + server-subscription/ledger decision point;
+- retain regression coverage that prevents future client-only premium gates from becoming the sole authorization layer.
 
 No claim of global `HARDENED / VERIFIED` is made.
 
@@ -159,9 +178,9 @@ R2-00 trace work is complete as a finding:
 
 Promotion to merged evidence requires:
 
-- exact-head Unit/TypeScript/Build and Governance checks PASS;
-- the R2-00 regression test confirms the PDF path cannot commit a download without the authenticated ledger path;
-- branch remains correlated with current `main`;
+- exact-head Unit/TypeScript/Build and Governance checks PASS for the correlated #624 head;
+- the R2-00 regression test confirms both the bearer-only Subscription readback and that the PDF path cannot commit a download without the authenticated ledger path;
+- branch remains correlated with current `main` and with the already validated #625 candidate state;
 - Human/CODEOWNER merge.
 
 R2-00 does not require a Supabase/Stripe provider mutation. The live provider readback was read-only. R2-06 remains the active remediation control after this trace.
