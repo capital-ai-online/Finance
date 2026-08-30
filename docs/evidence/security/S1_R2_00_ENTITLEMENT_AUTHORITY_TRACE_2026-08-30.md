@@ -1,146 +1,167 @@
 # S1-R2-00 — Entitlement Authority Trace
 
-Status: **CANDIDATE / NOT AUTHORITY — PR VERIFY PENDING**  
+Status: **CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE — PR VERIFY PENDING**  
 Evidence date: 2026-08-30  
-Source baseline: `main@e311c30d18951785a68154d994a403799819c194`  
+Repository baseline for the current PR: `main@3815c7fce44e30bccf227a4399220407f4095706`  
 Supabase project: `AIFINANCIAL` / `ryzywoktpmyhwzxmstyu`  
-Scope: production-reachable subscription/tier authority, browser simulation reachability, server entitlement decisions and Stripe→Supabase persistence.
+Scope: production-reachable subscription/tier authority, browser simulation reachability, protected entitlement decisions and Stripe→Supabase persistence.
 
 ## 1. Question and classification rule
 
-S1-R2-00 asks whether a browser-controlled or simulated subscription tier can become authority for protected server capability.
+S1-R2-00 asks whether browser-controlled or simulated subscription state can become authority for a protected paid capability.
 
-The finding may close as `NOT AUTHORITY` only if all of the following are true:
+The control may be classified `NOT AUTHORITY` only if every production-reachable paid capability resolves its grant from a verified server/provider authority and no browser-only branch can independently confer that capability.
 
-1. browser simulation cannot persist or confer production entitlement;
-2. authenticated tier projection is read from server state bound to the verified principal;
-3. protected API decisions derive tier from verified server identity plus server-owned subscription state;
-4. the production subscription store cannot be written by normal browser roles;
-5. Stripe-verifiable provider state is the production source for subscription changes;
-6. no production source call site invokes the privileged direct tier writer with browser-controlled tier input.
+If a browser-controlled tier is sufficient at any production-reachable protected call site, the result is `CONFIRMED AUTHORITY GAP` and R2-06 activates immediately.
 
-If any item fails, R2-00 becomes `CONFIRMED AUTHORITY GAP` and R2-06 activates.
+## 2. Confirmed server/provider subscription authority
 
-## 2. Browser and UI reachability
+The primary subscription truth remains correctly isolated from browser mutation.
 
-`src/components/Checkout.tsx` contains a simulated-success path for local development. Its activation requires `import.meta.env.DEV === true`. Missing or placeholder Stripe configuration in Production sets `demoMode` false and denies checkout. The simulated callback only updates client/UI state through `onSuccess(planId)`; it does not call a subscription persistence endpoint.
+### Authenticated tier projection
 
-`src/app/auth/SessionComposition.tsx` does not trust cached/browser tier as server authority. After a valid Supabase session and AAL/onboarding gates, it requests `/api/stripe/user-subscription` with the session bearer token. Failure resolves the UI projection to `Free`.
+`src/app/auth/SessionComposition.tsx` requests `/api/stripe/user-subscription` with the Supabase bearer token and defaults the UI projection to `Free` on failure.
 
-The query parameter currently included by the client is non-authoritative compatibility noise: the server endpoint ignores it and derives the subject exclusively from `resolveVerifiedIdentity(req)`.
+`GET /api/stripe/user-subscription` in `server/stripe.ts` calls `resolveVerifiedIdentity(req)` and resolves the tier with `getSubscription(identity.userId)`. Query/body user identifiers do not select the account.
 
-## 3. Server entitlement decision points
+### Protected server quota decisions
 
-### Warren Buffett Value Check
+`server/quota.ts` resolves a verified identity and derives quota decisions from `getSubscription(identity.userId)`. Client `tier` / `subscriptionTier` input is not used as entitlement authority.
 
-`server/entitlements.ts` routes authorization through `enforceBuffettValueCheckQuota()`.
+`/api/stripe/pdf-credits` and `/api/stripe/consume-pdf-credit` likewise resolve the bearer principal first and read subscription/credit state server-side. Enterprise unlimited PDF authorization is therefore robust when those endpoints are actually used.
 
-`server/quota.ts` resolves the verified identity, obtains `getSubscription(identity.userId)`, normalizes that server value, and derives the applicable quota from `src/config/subscriptionEntitlements.ts`. Guest Buffett access is denied.
+### Production persistence
 
-### Verified screening quota
+`server/db.ts#getSubscription()` reads `public.subscriptions` from privileged Supabase state in Production and fails closed to `Free` when the privileged store is unavailable. Its local JSON compatibility path is not production authority.
 
-`enforceScreeningQuota()` uses the same identity→server-subscription chain for authenticated users. Missing identity uses the bounded guest/free path and cannot create a paid entitlement.
+No production source call site invokes the historical privileged `saveSubscription()` helper outside its own definition.
 
-### PDF credits / Enterprise bypass
+## 3. Live Supabase readback
 
-`server/stripe.ts` protects `/pdf-credits` and `/consume-pdf-credit` with `resolveVerifiedIdentity(req)`, then reads the tier through `getSubscription(identity.userId)`. The Enterprise unlimited decision therefore does not consume a browser-provided tier.
+Read-only database inspection of project `ryzywoktpmyhwzxmstyu` confirmed:
 
-### Subscription projection endpoint
+- `public.subscriptions` has RLS enabled;
+- `authenticated` has an own-row SELECT policy only;
+- no `anon`/`authenticated` INSERT, UPDATE or DELETE policy exists for `public.subscriptions`;
+- `stripe.subscriptions` and `stripe.customers` are not granted to normal browser roles;
+- `stripe_subscription_sync_trigger` executes `public.sync_stripe_subscription_to_public()` AFTER INSERT/UPDATE on `stripe.subscriptions`;
+- the trigger function derives paid tiers from Stripe subscription metadata / known Price IDs, refuses unknown Price IDs, demotes non-active/non-trialing state to `Free`, and upserts by verified Supabase user identity.
 
-`GET /api/stripe/user-subscription` requires a verified identity and returns `getSubscription(identity.userId)`. Request query/body user identifiers do not select the account.
+This proves that a browser cannot directly rewrite the persisted Stripe/Supabase subscription truth.
 
-## 4. Checkout identity and price binding
+The separate provider evidence `docs/evidence/security/STRIPE_LEGACY_WEBHOOK_DECOMMISSION_2026-08-30.md` additionally records the enabled canonical Supabase Stripe webhook and successful subscription lifecycle ingestion.
 
-`POST /api/stripe/create-checkout-session` does not accept a client `userId` as authority. If a verified session exists, metadata user identity is taken from `resolveVerifiedIdentity(req)`; guest metadata leaves `user_id` empty for later provider-side correlation.
+## 4. Browser-controlled tier projection remains reachable
 
-Client `planId` is treated as a selection request, not entitlement proof. The server converts it to an allowlisted plan discriminator and selects the Stripe Price ID from server environment configuration. No Price ID is accepted from the request body. Unknown/unconfigured plans fail before Stripe Checkout creation.
+The production frontend still contains browser-writable presentation state:
 
-Subscription metadata is created only by the server as part of that validated Checkout session. Trial coupons additionally bind the expected Stripe Price ID and fail on mismatch.
+1. `Dashboard.tsx` restores an encrypted local profile object that includes `subscriptionTier`;
+2. the Stripe return fallback accepts `?payment=success&plan=...` and assigns `plan` to `profile.subscriptionTier`;
+3. `Abonnements` / `SubscriptionModal` can update the same local profile tier through UI callbacks;
+4. Checkout simulated success is DEV-only and therefore is not itself the production exploit path.
 
-## 5. Express webhook is not subscription authority
+These mechanisms do **not** mutate `public.subscriptions` and do not bypass the verified server endpoints by themselves. They nevertheless mean `profile.subscriptionTier` must be treated strictly as presentation state.
 
-The Express Stripe webhook no longer writes subscription tiers. `checkout.session.completed` performs only application side effects such as PDF-credit grants and confirmation mail. `customer.subscription.updated` and `customer.subscription.deleted` are intentionally not used to call `saveSubscription()`.
+## 5. Confirmed paid-capability authority gap
 
-The production subscription mutation path documented and implemented by the application is the Supabase Stripe synchronization path into `stripe.subscriptions`, followed by the database trigger `sync_stripe_subscription_to_public()`.
+The baseline implementation of `src/components/ComplianceExporter.tsx` violated that rule.
 
-## 6. Live Supabase readback
+Its production-reachable click path was:
 
-Read-only database inspection was performed on project `ryzywoktpmyhwzxmstyu` on 2026-08-30.
+```text
+browser profile.subscriptionTier === Enterprise
+        |
+        v
+ComplianceExporter.isEnterprise === true
+        |
+        +-- userEmail present --> PdfExportModal --> authenticated server ledger
+        |
+        `-- userEmail absent  --> generatePDFReport() directly in browser
+```
 
-### `public.subscriptions`
+`Dashboard.tsx` renders `ComplianceExporter` without a `userEmail` prop. Therefore the second branch is the normal Dashboard call site.
 
-- Row Level Security is enabled.
-- `authenticated` has only the policy **Users can read own subscriptions** with predicate `auth.uid() = user_id`.
-- No authenticated/anon INSERT, UPDATE or DELETE RLS policy exists.
-- `service_role` has the explicit full-access policy used for privileged backend/provider synchronization.
+A browser-controlled local `Enterprise` projection could consequently satisfy the only gate and execute client-side PDF generation without `/api/stripe/pdf-credits` or `/api/stripe/consume-pdf-credit`.
 
-Although table-level grants exist for API roles, RLS prevents ordinary browser roles from turning those grants into subscription writes.
+This is a production-reachable paid-capability bypass even though the underlying persisted subscription remains protected.
 
-### `stripe.subscriptions`
+**Classification: `CONFIRMED AUTHORITY GAP`.**
 
-The Stripe schema subscription table is not granted to `anon` or `authenticated`. Browser credentials therefore cannot forge the provider synchronization source.
+## 6. Candidate remediation in PR #624
 
-### Stripe→public trigger
+The current branch removes the alternate authority path:
 
-An enabled trigger on `stripe.subscriptions` executes `public.sync_stripe_subscription_to_public()` for provider synchronization changes.
+### `ComplianceExporter.tsx`
 
-The function is `SECURITY DEFINER`, owned by the database administrative role, and:
+- `subscriptionTier === 'Enterprise'` remains only a UX pre-filter;
+- an Enterprise-looking browser state can only open `PdfExportModal`;
+- absence of `userEmail` can no longer call `generatePDFReport()` directly;
+- report generation is prepared first, but the download commit is reachable only after the modal's server authorization flow succeeds.
 
-1. resolves Stripe customer email from provider-synchronized data;
-2. resolves the corresponding `auth.users.id`;
-3. uses server-generated `metadata.plan_id` when present, otherwise a fixed known-Price-ID mapping;
-4. refuses to guess a tier for an unknown Price ID;
-5. demotes non-`active`/non-`trialing` subscriptions to `Free`;
-6. upserts the resulting state to `public.subscriptions` by `user_id`.
+### `PdfExportModal.tsx`
 
-No browser role is in this write path.
+- credit/subscription state is loaded whenever the modal opens, independent of a browser email string;
+- `/api/stripe/pdf-credits` is called through `authFetch`;
+- `/api/stripe/consume-pdf-credit` is called through `authFetch`;
+- PDF-credit Checkout also uses `authFetch`, allowing the server to prefer the verified principal;
+- `email` is optional presentation/checkout metadata, not an authorization prerequisite.
 
-## 7. Privileged direct writer reachability
+The resulting authority chain is:
 
-`server/db.ts` still contains the backend helper `saveSubscription(userId, tier, email)` for historical/development compatibility. It uses privileged credentials in Production and would therefore be a second authority if a production request path called it with attacker-controlled tier input.
+```text
+browser presentation tier
+        |
+        v
+open export modal only
+        |
+        v
+authFetch bearer identity
+        |
+        v
+server getSubscription(identity.userId) / PDF credit ledger
+        |
+        v
+ALLOW -> commit prepared PDF download
+DENY  -> fail closed, no download
+```
 
-Repository-wide production-source inspection found no call site outside the function definition. `server/stripe.ts` no longer imports or calls it. The R2-00 regression test recursively scans `server/**` and `src/**` and fails if another production call site is introduced.
+## 7. Negative evidence / abuse matrix
 
-This classifies the helper as **dormant / not production-reachable**, not as an entitlement authority.
+| Abuse case | Baseline result | Candidate result |
+|---|---|---|
+| Browser forges another user ID on subscription read | DENY | DENY |
+| Browser writes `public.subscriptions` | DENY by RLS | DENY by RLS |
+| Browser writes `stripe.subscriptions` | DENY | DENY |
+| Browser sends `tier=Enterprise` to quota API | DENY | DENY |
+| Production Checkout enters local demo mode | DENY | DENY |
+| Browser locally projects `Enterprise` and starts compliance PDF | **ALLOW — authority gap** | Modal only; server ledger decides |
+| Missing browser email skips PDF server authorization | **ALLOW — authority gap** | DENY / authenticated ledger required |
+| New production call site invokes `saveSubscription()` | Not present | CI regression contract denies introduction |
 
-## 8. Negative evidence / abuse cases
+## 8. R2-06 activation
 
-| Abuse case | Result |
-|---|---|
-| Production browser enters checkout demo mode because Stripe config is absent | DENY — Production fails closed |
-| Browser invokes simulated success and thereby persists Pro/Enterprise | DENY — simulation is DEV-only and UI-local |
-| Browser supplies another user ID to subscription read endpoint | DENY — verified bearer principal selects user |
-| Browser supplies `tier=Enterprise` to quota endpoint | DENY — quota reads `getSubscription(identity.userId)` |
-| Browser writes `public.subscriptions` through normal Supabase client | DENY — RLS has no browser write policy |
-| Browser writes `stripe.subscriptions` | DENY — no anon/authenticated table access |
-| Unknown Stripe price silently becomes paid tier | DENY — trigger has no guessed paid fallback |
-| Express webhook independently mutates subscription tier | DENY — tier persistence removed from Express webhook |
-| New production code calls privileged `saveSubscription()` | CI DENY — R2-00 regression contract fails |
+R2-06 is **ACTIVE / REMEDIATION REQUIRED** because R2-00 established a real production-reachable browser-to-paid-capability authority gap.
 
-## 9. Classification
+The PDF bypass is contained by this candidate, but R2-06 must remain open until the broader entitlement inventory is resolved. In particular:
 
-**R2-00 classification: `NOT AUTHORITY`**, subject to exact-head PR CI and Human merge of the evidence/regression contract.
+- browser `profile.subscriptionTier` restoration/Stripe-return mutation should be reduced to a server-refreshed presentation projection rather than an independently writable premium-looking state;
+- product claims such as Pro-only Realtime AI Newsfeed must be reconciled with actual server enforcement or explicitly reclassified as non-protected/public capability;
+- every paid server capability must have a verified-identity + server-subscription/ledger decision point;
+- regression coverage must prevent future client-only premium gates from becoming the sole authorization layer.
 
-The browser `subscriptionTier`, Checkout `onSuccess()` simulation and client plan selection are presentation/request state. They do not constitute protected server entitlement authority. Protected decisions resolve a verified principal and read server-side subscription state whose production mutation chain is Stripe-verifiable provider synchronization into Supabase.
+No claim of global `HARDENED / VERIFIED` is made.
 
-## 10. R2-06 disposition
+## 9. R2-00 disposition
 
-Because R2-00 does **not** establish a browser-to-server entitlement authority gap, **R2-06 is not activated**.
+R2-00 trace work is complete as a finding:
 
-R2-06 must reopen immediately if a future change makes any of the following production-reachable:
+**`CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE — PR VERIFY PENDING`.**
 
-- client-selected tier written through a privileged backend API;
-- subscription writes by `anon`/`authenticated` roles;
-- protected capability gated only by browser/session projection rather than verified server state;
-- a second subscription mutation path that is not derived from Stripe-verifiable provider state.
+Promotion to merged evidence requires:
 
-## 11. Verification gate
+- exact-head Unit/TypeScript/Build and Governance checks PASS;
+- the R2-00 regression test confirms the PDF path cannot commit a download without the authenticated ledger path;
+- branch remains correlated with current `main`;
+- Human/CODEOWNER merge.
 
-Before this evidence is promoted from candidate to final roadmap closure:
-
-- `tests/unit/s1R2EntitlementAuthority.test.ts` must PASS on the exact PR head;
-- normal Governance/Security and `build-and-test` must PASS;
-- the branch must remain correlated with current `main` and parallel PR scope;
-- Human/CODEOWNER merge remains required.
-
-No Supabase, Stripe or GitHub provider mutation is authorized or required by this R2-00 trace.
+R2-00 does not require a Supabase/Stripe provider mutation. The live provider readback was read-only. R2-06 remains the active remediation control after this trace.
