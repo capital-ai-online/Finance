@@ -54,21 +54,17 @@ jobs:
           PR_NUMBER: ${{ inputs.pull_number }}
         run: |
           set -euo pipefail
-          node scripts/security/inspectCommitSignatures.mjs > "$RUNNER_TEMP/signature-report.json" || status=$?
+          set +e
+          node scripts/security/inspectCommitSignatures.mjs > "$RUNNER_TEMP/signature-report.json"
+          status=$?
+          set -e
           cat "$RUNNER_TEMP/signature-report.json" >> "$GITHUB_STEP_SUMMARY"
-          HEAD_SHA="$(node -e 'const r=require(process.env.RUNNER_TEMP+"/signature-report.json"); process.stdout.write(r.headSha||"")')"
-          HEAD_REF="$(node -e 'const r=require(process.env.RUNNER_TEMP+"/signature-report.json"); process.stdout.write(r.headRef||"")')"
-          UNSIGNED="$(node -e 'const r=require(process.env.RUNNER_TEMP+"/signature-report.json"); process.stdout.write(String(r.unsignedCount??""))')"
-          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
-          echo "unsigned_count=$UNSIGNED" >> "$GITHUB_OUTPUT"
-          if [ "${status:-0}" = "2" ]; then
+          node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/signature-report.json","utf8")); const o=process.env.GITHUB_OUTPUT; fs.appendFileSync(o, `head_sha=${r.headSha}\nhead_ref=${r.headRef}\nunsigned_count=${r.unsignedCount}\n`);'
+          if [ "$status" = "2" ]; then
             echo "Unsigned commits vorhanden; Apply bleibt Owner-Entscheidung."
             exit 0
           fi
-          if [ "${status:-0}" != "0" ]; then
-            exit "$status"
-          fi
+          exit "$status"
 
   apply:
     name: Signierten Squash-Commit schreiben
@@ -134,18 +130,33 @@ jobs:
           export GNUPGHOME="$RUNNER_TEMP/gnupg-signing"
           mkdir -p "$GNUPGHOME"
           chmod 700 "$GNUPGHOME"
+          printf '%s\n' 'pinentry-mode loopback' 'batch' > "$GNUPGHOME/gpg.conf"
+          printf '%s\n' 'allow-loopback-pinentry' > "$GNUPGHOME/gpg-agent.conf"
           printf '%s\n' "$COMMIT_SIGNING_GPG_PRIVATE_KEY" | gpg --batch --import
           KEY_ID="$(gpg --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')"
           test -n "$KEY_ID"
+
+          WRAPPER="$RUNNER_TEMP/gpg-loopback"
+          cat > "$WRAPPER" <<'WRAP'
+          #!/bin/bash
+          set -euo pipefail
+          extra=()
           if [ -n "${COMMIT_SIGNING_GPG_PASSPHRASE:-}" ]; then
-            echo "$COMMIT_SIGNING_GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign <<<'capital-ai-signing-probe'
+            extra+=(--pinentry-mode loopback --passphrase-fd 3)
           fi
+          if [ -n "${COMMIT_SIGNING_GPG_PASSPHRASE:-}" ]; then
+            gpg "${extra[@]}" "$@" 3<<<"$COMMIT_SIGNING_GPG_PASSPHRASE"
+          else
+            gpg "$@"
+          fi
+          WRAP
+          chmod +x "$WRAPPER"
 
           git config user.name "$COMMIT_SIGNING_GIT_NAME"
           git config user.email "$COMMIT_SIGNING_GIT_EMAIL"
           git config user.signingkey "$KEY_ID"
           git config commit.gpgsign true
-          git config gpg.program gpg
+          git config gpg.program "$WRAPPER"
 
           SUBJECT="$(git log -1 --format=%s)"
           git reset --soft origin/main
@@ -154,13 +165,7 @@ jobs:
             exit 1
           fi
 
-          if [ -n "${COMMIT_SIGNING_GPG_PASSPHRASE:-}" ]; then
-            export GPG_TTY=""
-            git -c gpg.program=gpg commit --no-verify -S -m "$SUBJECT" --gpg-sign="$KEY_ID"
-          else
-            git commit --no-verify -S -m "$SUBJECT"
-          fi
-
+          git commit --no-verify -S -m "$SUBJECT"
           NEW_SHA="$(git rev-parse HEAD)"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force-with-lease=refs/heads/${HEAD_REF}:${EXPECTED_HEAD_SHA} origin "HEAD:refs/heads/${HEAD_REF}"
