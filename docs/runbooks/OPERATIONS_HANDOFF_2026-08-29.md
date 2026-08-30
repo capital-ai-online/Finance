@@ -2,192 +2,172 @@
 
 Status: PARTIAL / ACTION REQUIRED  
 Last synchronized: 2026-08-30  
-Repository baseline: `main@b8c4757aaa62a2a63745e2f86a777630968f4f5d`  
-Live production deployment: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`  
-Active candidate branch: `security/s1-r2-09-11-hardening-20260830`  
+Repository baseline: `main@5e4da8caba1aa7bae70abe5bf021a857ccef2f84`  
+Last verified production deployment: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`  
+Active governance branch: `security/r2-02-live-ruleset-authority-20260830`  
 Canonical Security authority: `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md`
 
-## Zweck und Authority-Grenze
+## Purpose and authority boundary
 
-Dieses Dokument konsolidiert Operations-, Provider-, Deployment- und Recovery-Evidence für S1. Es ergänzt `docs/runbooks/DEPLOYMENT_ROLLBACK_UND_BACKUP.md`, ersetzt aber weder die kanonische S1-Roadmap noch Owner-Gates für externe Mutationen.
+This runbook consolidates operational/provider/deployment evidence for S1. It does not replace the canonical S1 roadmap and does not create a second Security authority.
 
-Es existiert weiterhin **keine zweite Security-Roadmap**. Finding-Status und das `HARDENED / VERIFIED`-Gate gehören ausschließlich in `S1_SECURITY_HARDENING_ROADMAP.md`.
-
-## 1. Verifizierte Repository- und Produktionsidentität
+## 1. Repository and production identity
 
 ### GitHub
 
-- `main`: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`
-- Dieser Stand ist der Human-Merge von PR #618.
-- Die aktive R2-09..R2-11-Arbeit liegt separat auf `security/s1-r2-09-11-hardening-20260830` und ist **noch keine Production Evidence**.
-
-### Render — am 2026-08-30 erneut verifiziert
-
-- Workspace: `AICapital`
-- Service: `Finance`
-- Runtime: Docker
-- Branch: `main`
-- Region: Frankfurt
-- Plan: Starter
-- Auto-Deploy: `no` / Trigger `off`
-- Health-Check: `/healthz`
-- Instanzen: 1
-- Live Deploy: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`
-- Status: `live`
-- Trigger des Live-Deploys: `deploy_hook`
-
-Damit gilt am Synchronisationszeitpunkt:
+PR #619 is merged. Current repository `main` is:
 
 ```text
-Production commit = b8c4757aaa62a2a63745e2f86a777630968f4f5d
-main commit       = b8c4757aaa62a2a63745e2f86a777630968f4f5d
+5e4da8caba1aa7bae70abe5bf021a857ccef2f84
 ```
 
-Production und `main` sind aktuell identisch. Der Candidate Head muss weiterhin separat gebunden werden.
+The last separately verified Render Production identity remains:
+
+```text
+b8c4757aaa62a2a63745e2f86a777630968f4f5d
+```
+
+Until a newer Render deployment is read back, merge identity must not be presented as deployment evidence.
 
 ### Supabase
 
-Zuletzt erneut verifiziert am 2026-08-30:
+Last verified project facts remain:
 
-- Projekt: `AIFINANCIAL`
-- Ref: `ryzywoktpmyhwzxmstyu`
-- Region: `eu-west-1`
-- Status: `ACTIVE_HEALTHY`
-- PostgreSQL: `17.6.1.127`, Engine `17`, Release Channel `ga`
+- project: `AIFINANCIAL`;
+- ref: `ryzywoktpmyhwzxmstyu`;
+- region: `eu-west-1`;
+- status: `ACTIVE_HEALTHY`;
+- PostgreSQL engine 17.
 
-Diese Health-/Versionslesung beweist keine Backup-Retention und keine Auth-Konfigurationsmutation.
+These facts do not prove backup retention or Auth configuration changes.
 
-## 2. Owner-Entscheidung zu S1-R2-08
+## 2. Owner decision — S1-R2-08
 
 Status: **OWNER-ACCEPTED / TIER EXCEPTION**.
 
-Der Owner hat am 2026-08-30 festgelegt, dass Supabase leaked-password protection im aktuellen Free/Base-Tier nicht umgesetzt wird, weil die native Funktion auf diesem Tier nicht verfügbar ist. Es wird dafür **kein eigener Passwort-Leak-Dienst und keine zweite Passwortdatenbank** eingeführt.
+Native leaked-password protection is unavailable on the active Supabase Free/Base tier. No custom leak-password database/service is introduced solely to emulate the paid capability. Existing compensating controls remain relevant and the decision must be revisited if tier capability changes.
 
-Operative Konsequenzen:
+## 3. GitHub Default-Branch Enforcement — S1-R2-02
 
-- keine Supabase-Provider-Mutation für R2-08;
-- vorhandene kompensierende Auth-/Abuse-Kontrollen bleiben bestehen und dürfen nicht geschwächt werden;
-- die Ausnahme ist erneut zu bewerten, wenn der Supabase-Tier wechselt oder das Feature im aktiven Tier verfügbar wird;
-- die Ausnahme autorisiert nicht das Überspringen anderer offener R2-P1-Gates.
+Status: **OWNER-ACCEPTED / VERIFIED LIVE STATE**.
 
-## 3. Liveness, Readiness und Fatal Recovery
+### Verified sequence
 
-Betriebsvertrag bleibt:
+1. PR #619 merged to trusted `main@5ec3a4179f1a7e01295abf038f6767a581abdf68`.
+2. `ruleset-sync` Run #8 (`33329575562`) ran successfully in `mode=plan` on that exact `main`.
+3. Provider readback confirmed the active `main-production-protection` ruleset.
+4. Owner then explicitly withdrew the repository-owned canonical desired rules and instructed that the current live rules remain in force.
 
-| Endpunkt | Zweck | Semantik |
+### Accepted live provider state
+
+The active GitHub ruleset currently has:
+
+- enforcement `active`;
+- empty bypass actors and no current-user bypass;
+- non-fast-forward protection;
+- pull-request rule with zero required approvals in the current single-owner topology;
+- no required CODEOWNER review;
+- no required review-thread resolution;
+- extra approval for unattributed changes enabled;
+- merge methods `merge`, `squash`, `rebase`;
+- advisory `code_quality` warnings;
+- strict/up-to-date required status checks for:
+  - `build-and-test` (`integration_id=15368`);
+  - `PR Governance (Kosten / Workflow / Vorlage)` (`integration_id=15368`);
+  - `Hardened image / HIGH+CRITICAL CVE gate` (`integration_id=15368`);
+  - `GitGuardian Security Checks` (`integration_id=46505`).
+
+Deletion protection, required linear history, CODEOWNER review and review-thread resolution are not active rules. Repository merge commits remain allowed and web commit signoff is not required. These properties are now part of the Owner-accepted current provider state rather than pending desired-state drift.
+
+### Repository control-plane change
+
+The repository must no longer mutate GitHub toward a separate canonical Sollzustand:
+
+- `.github/policies/main-production-protection.expected.json` is retired/deleted;
+- `ruleset-sync` is read-only provider readback;
+- `package_a` and `full` are removed;
+- `scripts/security/rulesetAdminEnvironment.mjs` is removed;
+- no ruleset/repository write request is implemented by the remaining readback script.
+
+Historical ruleset audit/evidence files remain historical records only. They do not authorize re-creating the retired desired-state reconciliation.
+
+No GitHub ruleset mutation remains pending for R2-02. A future change requires a new explicit Owner decision and the normal reviewed PR/provider-verification path.
+
+## 4. Liveness, readiness and fatal recovery — S1-R2-04
+
+Status: **OPEN / CONFIRMED**.
+
+Current endpoint semantics remain:
+
+| Endpoint | Purpose | Semantics |
 |---|---|---|
-| `/healthz` | Render-Liveness | laufender Prozess |
-| `/healthz/readiness` | nicht-sensitive Readiness-Projektion | kann Degradation anzeigen |
-| `/readyz` | striktes Fach-/Dependency-Gate | `200` ready, `503` not-ready |
+| `/healthz` | Render liveness | running process |
+| `/healthz/readiness` | non-sensitive readiness projection | may report degradation |
+| `/readyz` | strict dependency/business readiness | `200` ready, `503` not-ready |
 
-S1-R2-04 bleibt `OPEN / CONFIRMED`: der Fatal-Recovery-Pfad benötigt weiterhin fail-fast, bounded cleanup, non-zero exit und post-deploy Render-Supervisor-Evidence.
-
-## 4. GitHub Default-Branch Enforcement — S1-R2-02
-
-Status: **PARTIAL / OWNER DISPATCH PENDING**.
-
-Repositoryseitig sind Ruleset-Reconciliation und kanonischer Policy-Floor vorhanden. Live-Provider-Evidence benötigt weiterhin den Owner-gated Pfad:
-
-1. trusted `main`;
-2. `ruleset-sync mode=plan`;
-3. vollständigen Diff prüfen;
-4. separate Owner-Akzeptanz;
-5. erst dann `mode=full`;
-6. Provider-Readback und Enforcement-Nachweis.
-
-`required_signatures` bleibt absichtlich optional. Dieser R2-09..R2-11-PR führt keine GitHub-Ruleset-Mutation aus.
+Fatal recovery still requires fail-fast, bounded cleanup, non-zero exit and Render supervisor evidence.
 
 ## 5. Stripe Operations Boundary
 
-### R2-05 — Redirect Boundary
+### R2-05 — Redirect boundary
 
-Bleibt **OPEN / CONFIRMED**. Der separate Redirect-Finding wird durch den R2-10-Sandbox-Fix nicht als geschlossen dargestellt. Client-gelieferte absolute Redirect-Authorities müssen weiterhin durch einen server-owned Origin/relative-target Contract ersetzt werden.
+Status: **OPEN / CONFIRMED**.
 
-### R2-10 — Demo-/Sandbox-Isolation im Candidate
+Client-controlled absolute Checkout redirect URLs remain a separate finding. The server must own redirect origins and constrain destination selection.
 
-Status: **IMPLEMENTED / PR VERIFY PENDING**.
+### R2-10 — Development sandbox isolation
 
-Candidate-Verhalten:
+Status: **MERGED / POST-DEPLOY VERIFY PENDING**.
 
-- fehlender/Placeholder Stripe Publishable Key darf in **Development** einen Sandboxpfad öffnen;
-- dieser Pfad ist explizit an `import.meta.env.DEV === true` gebunden;
-- in Production führt derselbe Zustand fail-closed zu einer Checkout-Fehlermeldung;
-- Production setzt `demoMode` nicht aktiv und kann den simulierten Success-/Tier-Pfad dadurch nicht erreichen;
-- Couponvalidierung bleibt serverseitig über `/api/stripe/validate-coupon` autoritativ.
+PR #619 gates simulated Stripe success behind `import.meta.env.DEV === true`. Production fails closed on missing/placeholder publishable configuration. Post-deploy evidence must verify the Production bundle/runtime cannot reach the development simulation path.
 
-Post-Merge/Deploy muss verifiziert werden, dass der Production-Bundle-/Runtime-Pfad keine Development-Sandbox freigibt.
-
-R2-00/R2-06 bleiben davon getrennt: Entitlement Authority muss weiterhin server-/Stripe-verifizierbar sein.
+R2-00/R2-06 remain separate authority questions.
 
 ## 6. CSP Operations — S1-R2-09
 
 Status: **PARTIAL / REPORT-ONLY**.
 
-Aktueller geschützter Vertrag in `server/securityResponse.ts`:
+ADR-0040 and GMG-005 remain authoritative:
 
-- zentrale CSP-Response-Boundary bleibt unverändert die Authority;
-- Produktionsdefault bleibt **`report-only`** gemäß ADR-0040 und Protected Change Guard GMG-005;
-- die availability-safe Baseline wird enforced, während Nonce + `'strict-dynamic'` als Strict-Target über `Content-Security-Policy-Report-Only` ausgewertet werden;
-- `'unsafe-eval'` bleibt aus dem Produktions-Target ausgeschlossen;
-- `CSP_MODE=strict` bleibt als explizites Ziel vorhanden, darf aber erst nach bestandenem Promotion Gate aktiviert werden;
-- `CSP_MODE=baseline` bleibt expliziter Availability-Recovery-Pfad;
-- leere/ungültige Produktionswerte fallen auf `report-only`, nicht auf eine ungeprüfte Strict-Promotion.
+- Production defaults to `report-only`;
+- availability-safe baseline is enforced;
+- nonce + `strict-dynamic` target is evaluated through Report-Only;
+- `unsafe-eval` remains absent from the production target;
+- `CSP_MODE=strict` requires separate protected promotion evidence;
+- `baseline` remains the availability-recovery path.
 
-### Promotion Evidence
-
-Die bestehende Security-Evidence vom 2026-08-29 hält fest, dass derzeit kein gemessenes Zero-Violation-Produktionsfenster vorliegt. Deshalb wird in diesem PR **keine Strict-Promotion** durchgeführt.
-
-Vor einer späteren geschützten Promotion sind mindestens zu belegen:
-
-- Report-Only-Beobachtungsfenster ohne legitime blockierende First-Party-/Integration-Violations;
-- App-Bootstrap und Vite Entry Asset funktionieren;
-- CookieHub/Consent bleibt Source of Truth;
-- Stripe, Supabase, hCaptcha und weitere genehmigte Integrationen bleiben kompatibel;
-- gleiche Nonce-Bindung zwischen HTML und Strict-Target;
-- Rollback-Bereitschaft auf `report-only`/`baseline`.
-
-Erst danach darf ein separater reviewed protected change `CSP_MODE=strict` bzw. einen Strict-Default promoten. Bis dahin bleibt R2-09 nicht `VERIFIED PASS`.
+No automatic Strict promotion is authorized by PR #619 or the R2-02 decision.
 
 ## 7. Backup / RPO / RTO — S1-R2-07
 
-Status bleibt **OPEN / UNVERIFIED**.
+Status: **OPEN / UNVERIFIED**.
 
-Es fehlen weiterhin:
+Still required:
 
 - business-approved RPO/RTO;
-- nachweislich laufender verschlüsselter Off-site-Backup-Pfad;
-- gemessene Backup-Age/RPO;
-- isolierter Restore-Drill;
-- gemessene End-to-End-RTO und Integritätsnachweis.
+- recurring encrypted off-site backup evidence;
+- measured backup age/RPO;
+- isolated restore drill;
+- measured end-to-end RTO and integrity verification.
 
-Ein Runbook allein ist kein Recovery-Nachweis.
+## 8. Evidence identity / staleness — S1-R2-11
 
-## 8. Evidence Identity / Staleness — S1-R2-11
+Status: **MERGED / VERIFY PENDING**.
 
-Status: **IMPLEMENTED / PR VERIFY PENDING**.
+The merged implementation retains trusted-main PR baseline generation and exposes explicit states:
 
-Bestehende Authority wird wiederverwendet:
-
-- `scripts/pr/productionPreflight.mjs` erzeugt content-addressed Production/Main/Head-Baselines;
-- `.github/workflows/pr-production-baseline-refresh.yml` ist der trusted-main Auto-Refresh-Pfad;
-- Candidate-Code wird dort nicht als Policy-Authority ausgeführt.
-
-Der Candidate erweitert die bestehende Semantik um explizite Maschinenzustände:
-
-| Zustand | Bedeutung |
+| State | Meaning |
 |---|---|
-| `CURRENT` | Body bindet bereits die aktuelle Production/Main/Head-Identität |
-| `STALE` | aktuelle Baseline weicht von der im Body gebundenen Identität ab |
-| `CURRENT_AFTER_REFRESH` | STALE wurde durch trusted Auto-Refresh atomar korrigiert |
-| `STALE_RETRY_REQUIRED` | Head/Main/Boundary änderte sich während Preflight/Write; kein unsicherer Write |
+| `CURRENT` | body already binds current Production/Main/Head identity |
+| `STALE` | current identity differs from body baseline |
+| `CURRENT_AFTER_REFRESH` | trusted refresh corrected a stale baseline |
+| `STALE_RETRY_REQUIRED` | identity changed during preflight/write; unsafe write denied |
 
-Regressionstests prüfen `CURRENT`, `STALE`, markerfreien kontrollierten Repair sowie fail-closed Duplicate-/Ambiguity-Zustände.
+This mechanism remains independent of the retired GitHub ruleset desired-state policy.
 
-Dieser Mechanismus ersetzt keine Human-Merge-Entscheidung. Kandidaten dürfen ihre eigene Governance-Semantik nicht als vertrauenswürdige Policy ausführen.
+## 9. Render secret boundary
 
-## 9. Render Secret Boundary
-
-Kanonische server-only Authority bleibt:
+Canonical server-only authority remains:
 
 - `finance-secrets.env`;
 - `scripts/security/secretFileManifest.ts`;
@@ -195,53 +175,16 @@ Kanonische server-only Authority bleibt:
 - `server/validateRuntimeSecrets.ts`;
 - `scripts/automation/verifyDeploymentReadiness.ts`.
 
-Keine Secret-Werte werden für diesen Workstream gelesen oder in Evidence/PR-Body aufgenommen.
+No secret values are included in repository evidence.
 
-## 10. Rollback
+## 10. Rollback and future changes
 
-- **Code:** Human-reviewed Revert-PR; keine direkte `main`-Mutation.
-- **CSP:** aktueller Default bleibt `report-only`; `baseline` ist der bestehende Availability-Recovery-Modus; keine zweite CSP-Authority.
-- **Billing Sandbox:** Revert des Candidate-Commits nur über normalen PR-Pfad; Production darf nicht als Sandbox-Ersatz betrieben werden.
-- **Evidence Refresh:** bestehender trusted-main Workflow; bei Identity Race `STALE_RETRY_REQUIRED`, kein erzwungener Body-Write.
-- **Render:** nur verifizierte Deployment-Identitäten, anschließend Health/Ready/Auth/Billing prüfen.
-- **GitHub Ruleset / Supabase / sonstige Provider:** nur separat Owner-gated.
+- **Code:** Human-reviewed PR/revert path; no direct agent write to `main`.
+- **GitHub ruleset:** current live provider state remains authoritative. No automatic Soll-reconciliation exists. Any future policy change requires new Owner instruction plus provider readback.
+- **CSP:** default remains `report-only`; `baseline` is the existing availability recovery mode.
+- **Billing sandbox:** Production must remain fail-closed; remediation/revert uses the normal PR path.
+- **Evidence refresh:** identity races remain fail-closed via `STALE_RETRY_REQUIRED`.
 
-## 11. Combined R2 Tail Handoff
+## 11. Overall handoff
 
-Der Owner hat ausdrücklich angeordnet, R2-09 bis R2-11 in **einem Pull Request** zu bearbeiten. Der kombinierte Scope ist:
-
-```text
-R2-08 Owner-Tier-Exception dokumentieren
-+ R2-09 ADR-0040 report-only promotion gate und strict target erhalten
-+ R2-10 Stripe demo/sandbox production isolation
-+ R2-11 machine stale-state semantics
-+ targeted regression tests
-+ S1/Ops synchronization
-```
-
-Keine Provider-Mutation erfolgt durch den Branch. Der PR ist wegen Runtime-/Security-Scope als Klasse R zu behandeln.
-
-Vor Merge erforderlich:
-
-- Branch gegen aktuellen `main` korrelieren;
-- vollständige kanonische PR-Baseline Production/Main/Head;
-- Governance/Security;
-- TypeScript/Lint;
-- Unit Tests inklusive `s1R2SecurityHardening.test.ts` und PR-Governance-Tests;
-- Production Build/CSP-Pfad;
-- Predeploy/Readiness soweit Workflow-Contract verlangt;
-- `build-and-test`;
-- Human/CODEOWNER Review;
-- separater Human-Merge.
-
-Nach Merge erforderlich:
-
-- verifiziertes Render-Deployment des Merge-Commits;
-- R2-10 Billing Production Sandbox-DENY bestätigen;
-- Production/Main/PR-Evidence-Auto-Refresh beobachten und R2-11 final verifizieren;
-- R2-09 Report-Only-Telemetrie weiter sammeln; **keine automatische Strict-Promotion**;
-- Roadmap/Handoff nur dann auf `VERIFIED PASS` für R2-10/R2-11 fortschreiben, wenn die jeweilige Evidence vollständig ist; R2-09 benötigt weiterhin ein separates bestandenes Promotion Gate.
-
-## 12. Gesamt-Handoff
-
-R2-08 ist eine explizite Tier-Ausnahme. R2-10/R2-11 sind auf dem Candidate implementiert, R2-09 bleibt bewusst `PARTIAL / REPORT-ONLY`. Frühere offene P1-Controls R2-00, R2-02..R2-07 bleiben unverändert offen/partial und blockieren weiterhin den globalen `HARDENED / VERIFIED`-Status.
+R2-02 is now an explicit Owner-accepted live-provider-state decision, not a pending `mode=full` task. R2-08 remains a tier exception. R2-09 remains `PARTIAL / REPORT-ONLY`; R2-10 and R2-11 are merged but still need their applicable runtime/operational verification. R2-00 and R2-03 through R2-07 remain open/conditional and continue to block the global `HARDENED / VERIFIED` status.
