@@ -18,7 +18,8 @@ describe('Login-Step-Up authority boundary', () => {
     expect(loginStepUpSource).not.toContain("from '../supabaseClient'");
     expect(loginStepUpSource).not.toContain('supabase.auth.passkey.list');
     expect(loginStepUpSource).not.toContain(".select('totp_enabled')");
-    expect(loginStepUpSource).toContain('authority lives exclusively in `LoginStepUpGate`');
+    expect(loginStepUpSource).toContain('Compatibility-only tab marker for the canonical native Supabase AAL gate.');
+    expect(loginStepUpSource).toContain('lives exclusively in `LoginStepUpGate`');
   });
 });
 

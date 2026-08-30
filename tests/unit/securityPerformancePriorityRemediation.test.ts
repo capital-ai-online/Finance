@@ -51,9 +51,12 @@ describe('P2 public/login bundle boundary', () => {
 });
 
 describe('P2 Google Analytics build fallback', () => {
-  it('replaces an absent CI/local GA build value with a fail-closed empty value', () => {
+  it('uses deployment/.env GA values when present and otherwise fails closed to an empty value', () => {
+    expect(viteConfig).toContain("const fileEnv = loadEnv(mode, process.cwd(), 'VITE_')");
     expect(viteConfig).toContain('if (process.env.VITE_GA_MEASUREMENT_ID === undefined)');
-    expect(viteConfig).toContain("process.env.VITE_GA_MEASUREMENT_ID = ''");
+    expect(viteConfig).toContain(
+      "process.env.VITE_GA_MEASUREMENT_ID = fileEnv.VITE_GA_MEASUREMENT_ID ?? ''",
+    );
 
     const consentRuntime = read('public/google-analytics-consent.js');
     expect(consentRuntime).toContain('/^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID)');
