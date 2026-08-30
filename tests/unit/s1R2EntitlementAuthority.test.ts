@@ -11,8 +11,12 @@ function productionSourceFiles(directory: string): string[] {
   for (const entry of fs.readdirSync(absolute, { withFileTypes: true })) {
     const relative = path.posix.join(directory, entry.name);
     if (entry.isDirectory()) {
+      if (entry.name === '__tests__' || entry.name === 'tests') continue;
       result.push(...productionSourceFiles(relative));
-    } else if (/\.(?:ts|tsx|mjs|js)$/.test(entry.name)) {
+    } else if (
+      /\.(?:ts|tsx|mjs|js)$/.test(entry.name) &&
+      !/\.(?:test|spec)\.(?:ts|tsx|mjs|js)$/.test(entry.name)
+    ) {
       result.push(relative);
     }
   }
@@ -76,19 +80,25 @@ describe('S1-R2-00 entitlement authority boundary', () => {
     expect(modal).not.toContain('if (isOpen && email)');
   });
 
-  it('does not expose the privileged direct subscription writer through production source call sites', () => {
+  it('has no production invocation of the privileged direct subscription writer', () => {
+    const db = read('server/db.ts');
+    expect(db).toMatch(/export async function saveSubscription\s*\(/);
+
     const files = [...productionSourceFiles('server'), ...productionSourceFiles('src')];
-    const callSites: string[] = [];
+    const invocationSites: string[] = [];
     for (const file of files) {
       const source = read(file);
       const lines = source.split('\n');
       lines.forEach((line, index) => {
-        if (/\bsaveSubscription\s*\(/.test(line)) callSites.push(`${file}:${index + 1}:${line.trim()}`);
+        const mentionsInvocationSyntax = /\bsaveSubscription\s*\(/.test(line);
+        const isFunctionDeclaration = /\bfunction\s+saveSubscription\s*\(/.test(line);
+        if (mentionsInvocationSyntax && !isFunctionDeclaration) {
+          invocationSites.push(`${file}:${index + 1}:${line.trim()}`);
+        }
       });
     }
 
-    expect(callSites).toHaveLength(1);
-    expect(callSites[0]).toMatch(/^server\/db\.ts:\d+:export async function saveSubscription\(/);
+    expect(invocationSites).toEqual([]);
     expect(read('server/stripe.ts')).not.toContain('saveSubscription');
   });
 
