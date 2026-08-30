@@ -1,8 +1,9 @@
 {
   "schemaVersion": "1.1.0",
-  "purpose": "Registry insert payload applied in the successor PR that replaces #608. Source of truth after merge is docs/governance/document-registry.json.",
+  "purpose": "Registry insert payload applied in OPEN-STEPS-BIND-2026-08-30. Source of truth after merge is docs/governance/document-registry.json.",
   "status": "INSERTED_IN_SUCCESSOR_PR",
-  "supersedes": "PR #608",
+  "supersedes": "PR #608 / evidence-only payload on main after #610",
+  "appliedOnBranch": "docs/open-steps-bind-2026-08-30-v5",
   "targetRegistry": "docs/governance/document-registry.json",
   "targetField": "entries",
   "entries": [
@@ -35,6 +36,51 @@
       "language": "de",
       "lifecycle": "reviewed",
       "path": "docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md"
+    },
+    {
+      "documentId": "DOC-WP-VC-H-IMPLEMENT-2026-08-30",
+      "type": "work-package",
+      "documentRole": "specification",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ROADMAP-VC-COV-HARDEN-2026-08-30",
+      "authorityRefs": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS"],
+      "projectionOf": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS"],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/roadmaps/work-packages/VC_H_IMPLEMENTATION_PACK_2026-08-30.md"
+    },
+    {
+      "documentId": "DOC-GOV-ESS-NAMESPACE-RECONCILE-2026-08-30",
+      "type": "governance-evidence",
+      "documentRole": "evidence",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16",
+      "authorityRefs": ["AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16", "AUTH-GOV-AUTHORITY-REGISTRY"],
+      "projectionOf": ["AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16"],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/governance/ESS_NAMESPACE_RECONCILIATION_2026-08-30.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-S1-R2-02-POST-MERGE-DISPATCH-2026-08-30",
+      "type": "security-evidence",
+      "documentRole": "evidence",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "S1_SECURITY_HARDENING_ROADMAP",
+      "authorityRefs": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS"],
+      "projectionOf": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS"],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/security/S1_R2_02_POST_MERGE_DISPATCH_CHECKLIST_2026-08-30.md"
     }
   ]
 }
