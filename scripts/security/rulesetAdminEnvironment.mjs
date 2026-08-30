@@ -2,7 +2,8 @@ const OWNER = 'SvenKulessa';
 const REPO = 'Finance';
 const ENVIRONMENT = 'ruleset-admin';
 const mode = process.argv[2]; // plan | apply
-const token = process.env.GH_TOKEN;
+const readToken = process.env.RULESET_ADMIN_READ_TOKEN;
+const adminToken = process.env.GH_TOKEN;
 const repositoryPath = `/repos/${OWNER}/${REPO}`;
 const environmentPath = `${repositoryPath}/environments/${encodeURIComponent(ENVIRONMENT)}`;
 const policiesPath = `${environmentPath}/deployment-branch-policies`;
@@ -11,8 +12,12 @@ if (!['plan', 'apply'].includes(mode)) {
   console.error('Usage: rulesetAdminEnvironment.mjs <plan|apply>');
   process.exit(1);
 }
-if (!token) {
-  console.error('GH_TOKEN is required');
+if (!readToken) {
+  console.error('RULESET_ADMIN_READ_TOKEN is required');
+  process.exit(1);
+}
+if (mode === 'apply' && !adminToken) {
+  console.error('GH_TOKEN is required for apply');
   process.exit(1);
 }
 if (mode === 'apply' && process.env.GITHUB_REF !== 'refs/heads/main') {
@@ -26,11 +31,12 @@ function responseDetail(response) {
     : String(response.data || '');
 }
 
-async function ghResponse(path, init = {}) {
+async function ghResponse(path, authToken, init = {}) {
+  if (!authToken) throw new Error(`Missing token for ${init.method || 'GET'} ${path}`);
   const res = await fetch(`https://api.github.com${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${authToken}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2026-03-10',
       ...(init.body ? { 'Content-Type': 'application/json' } : {}),
@@ -51,8 +57,8 @@ async function ghResponse(path, init = {}) {
   return { ok: res.ok, status: res.status, data };
 }
 
-async function gh(path, init = {}) {
-  const response = await ghResponse(path, init);
+async function gh(path, authToken, init = {}) {
+  const response = await ghResponse(path, authToken, init);
   if (!response.ok) {
     throw new Error(`${init.method || 'GET'} ${path} -> ${response.status} ${responseDetail(response)}`);
   }
@@ -81,10 +87,13 @@ function preservedEnvironmentBody(environment) {
 }
 
 async function readState() {
-  const environment = await gh(environmentPath);
+  // Read-only state always uses the least-privilege workflow token. This keeps plan mode
+  // independent from administrative PAT Actions permissions and lets post-apply verification
+  // prove the live state through a separate authority from the write token.
+  const environment = await gh(environmentPath, readToken);
   let policies = [];
   if (environment.deployment_branch_policy?.custom_branch_policies === true) {
-    const result = await gh(`${policiesPath}?per_page=100`);
+    const result = await gh(`${policiesPath}?per_page=100`, readToken);
     policies = Array.isArray(result.branch_policies) ? result.branch_policies : [];
   }
   return {
@@ -126,7 +135,7 @@ if (mode === 'plan') {
 // null keeps that state rather than inventing an unsupported reviewer gate.
 if (before.environment.deployment_branch_policy?.custom_branch_policies !== true
   || before.environment.deployment_branch_policy?.protected_branches === true) {
-  await gh(environmentPath, {
+  await gh(environmentPath, adminToken, {
     method: 'PUT',
     body: JSON.stringify(preservedEnvironmentBody(before.environment)),
   });
@@ -140,9 +149,9 @@ const afterModeSwitch = await readState();
 for (const policy of afterModeSwitch.policies) {
   const id = Number(policy.id);
   if (!Number.isInteger(id) || id <= 0) throw new Error('Deployment branch policy has no valid id');
-  await gh(`${policiesPath}/${id}`, { method: 'DELETE' });
+  await gh(`${policiesPath}/${id}`, adminToken, { method: 'DELETE' });
 }
-await gh(policiesPath, {
+await gh(policiesPath, adminToken, {
   method: 'POST',
   body: JSON.stringify({ name: 'main', type: 'branch' }),
 });
