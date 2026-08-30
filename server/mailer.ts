@@ -92,8 +92,27 @@ export async function sendMail(params: SendMailParams): Promise<{ success: boole
   }
 }
 
+/**
+ * Stripe's checkout email field and application metadata (plan_id, session/user identifiers)
+ * are attacker-influenceable inputs that end up interpolated into HTML e-mail bodies below.
+ * RFC 5322 permits a quoted local-part such as `"<script>..."@example.com`, so an unescaped
+ * template would let a crafted checkout e-mail inject markup into the owner/customer inbox.
+ * Every dynamic value in the templates below MUST go through this before interpolation.
+ */
+function escapeHtml(value: unknown): string {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      default: return '&#39;';
+    }
+  });
+}
+
 export function buildSubscriptionActivatedEmail(planId: string, email: string): { subject: string; html: string } {
-  const planLabel = String(planId).charAt(0).toUpperCase() + String(planId).slice(1).toLowerCase();
+  const planLabel = escapeHtml(String(planId).charAt(0).toUpperCase() + String(planId).slice(1).toLowerCase());
   return {
     subject: `Ihr CAPITAL-AI ${planLabel}-Abonnement ist aktiv`,
     html: `
@@ -122,26 +141,28 @@ export interface SubscriptionConfirmationData {
   currency?: string | null;
 }
 
-function buildOwnerSubscriptionNotificationEmail(
+export function buildOwnerSubscriptionNotificationEmail(
   customerEmail: string,
   data: SubscriptionConfirmationData
 ): { subject: string; html: string } {
   const amount =
     typeof data.amountTotal === 'number' && data.currency
-      ? `${(data.amountTotal / 100).toFixed(2)} ${data.currency.toUpperCase()}`
+      ? `${(data.amountTotal / 100).toFixed(2)} ${escapeHtml(data.currency.toUpperCase())}`
       : 'unbekannt';
   return {
     // Do not put customer identifiers into the subject: SMTP/provider logs commonly retain it.
+    // planId is constrained upstream to a known plan constant (see stripe.ts price-ID lookup),
+    // but the subject is plain text/no HTML context, so no escaping is required here.
     subject: `Neues Abo aktiviert: ${data.planId}`,
     html: `
       <div style="font-family: sans-serif;">
         <h3>Neue Abo-Aktivierung</h3>
         <ul>
-          <li><strong>Plan:</strong> ${data.planId}</li>
-          <li><strong>E-Mail:</strong> ${customerEmail || '(unbekannt)'}</li>
-          <li><strong>User-ID:</strong> ${data.userId || '(unbekannt)'}</li>
+          <li><strong>Plan:</strong> ${escapeHtml(data.planId)}</li>
+          <li><strong>E-Mail:</strong> ${customerEmail ? escapeHtml(customerEmail) : '(unbekannt)'}</li>
+          <li><strong>User-ID:</strong> ${data.userId ? escapeHtml(data.userId) : '(unbekannt)'}</li>
           <li><strong>Betrag:</strong> ${amount}</li>
-          <li><strong>Stripe Checkout Session:</strong> ${data.sessionId}</li>
+          <li><strong>Stripe Checkout Session:</strong> ${escapeHtml(data.sessionId)}</li>
         </ul>
       </div>
     `,
