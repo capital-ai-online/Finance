@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { secureStorage } from '../lib/cryptoHelper';
+import { readAuthenticatedSubscriptionTier } from '../lib/subscriptionReadback';
 import { Screener } from './Screener';
 import { Newsticker } from './Newsticker';
 import { UniverseBestWorst } from './UniverseBestWorst';
@@ -235,7 +236,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     id: userSession.id
   });
 
-  // Synchronize profile state with userSession prop and load encrypted cached profile if database is offline
+  // Synchronize profile state with userSession prop and load encrypted cached profile if database is offline.
+  // Identity and entitlement are never restored from local cache: the live UserSession remains authoritative.
   React.useEffect(() => {
     const loadSecureProfile = async () => {
       if (userSession && userSession.email) {
@@ -244,7 +246,12 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           const savedStr = await secureStorage.getItem('aif_encrypted_user_profile', pass);
           if (savedStr) {
             const parsed = JSON.parse(savedStr);
-            setProfile({ ...parsed, id: userSession.id });
+            setProfile({
+              ...parsed,
+              email: userSession.email,
+              subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
+              id: userSession.id,
+            });
             return;
           }
         } catch (e) {
@@ -303,17 +310,21 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // 2. Fetch/sync latest persistent tier from backend webhook storage on mount
-    if (profile.email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
-            setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
+    // 2. Reconcile the registered user's tier through the authenticated bearer-only contract.
+    // Guest sessions intentionally have no Supabase bearer and therefore skip this readback.
+    if (userSession.type === 'registered' && userSession.id) {
+      void readAuthenticatedSubscriptionTier()
+        .then((tier) => {
+          if (tier) {
+            setProfile((prev) =>
+              prev.subscriptionTier === tier ? prev : { ...prev, subscriptionTier: tier },
+            );
           }
         })
-        .catch(err => console.error("Error syncing subscription tier with server:", err));
+        .catch((err) => console.error('Error syncing authenticated subscription tier:', err));
     }
+    // The dashboard instance is bound to one authenticated subject for its lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Get active avatar icon for sidebar and profile dropdown

@@ -2,9 +2,9 @@
 
 Status: PARTIAL / ACTION REQUIRED  
 Last synchronized: 2026-08-30  
-Repository baseline: `main@5e4da8caba1aa7bae70abe5bf021a857ccef2f84`  
-Last verified production deployment: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`  
-Active governance branch: `security/r2-02-live-ruleset-authority-20260830`  
+Repository baseline: `main@3815c7fce44e30bccf227a4399220407f4095706`  
+Last machine-bound production deployment: `e311c30d18951785a68154d994a403799819c194`  
+Active security branch: `security/s1-r2-00-entitlement-authority-20260830`  
 Canonical Security authority: `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md`
 
 ## Purpose and authority boundary
@@ -13,41 +13,105 @@ This runbook consolidates operational/provider/deployment evidence for S1. It do
 
 ## 1. Repository and production identity
 
-### GitHub
+### GitHub / Production
 
-PR #619 is merged. Current repository `main` is:
-
-```text
-5e4da8caba1aa7bae70abe5bf021a857ccef2f84
-```
-
-The last separately verified Render Production identity remains:
+The current R2-00 repository baseline is:
 
 ```text
-b8c4757aaa62a2a63745e2f86a777630968f4f5d
+main = 3815c7fce44e30bccf227a4399220407f4095706
 ```
 
-Until a newer Render deployment is read back, merge identity must not be presented as deployment evidence.
+The last machine-bound production deployment retained in this handoff is `e311c30d18951785a68154d994a403799819c194`. R2-00 performs no Render mutation; the PR's trusted baseline automation remains responsible for exact Production/Main/Head correlation.
 
 ### Supabase
 
-Last verified project facts remain:
+Read-only provider inspection for R2-00 was performed against:
 
 - project: `AIFINANCIAL`;
 - ref: `ryzywoktpmyhwzxmstyu`;
 - region: `eu-west-1`;
-- status: `ACTIVE_HEALTHY`;
+- status previously verified `ACTIVE_HEALTHY`;
 - PostgreSQL engine 17.
 
-These facts do not prove backup retention or Auth configuration changes.
+No schema, RLS, Auth or data mutation was performed for R2-00.
 
-## 2. Owner decision — S1-R2-08
+## 2. Entitlement Authority — S1-R2-00 / S1-R2-06
+
+R2-00 status: **CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE — PR VERIFY PENDING**.  
+R2-06 status: **ACTIVE / REMEDIATION REQUIRED**.  
+Evidence: `docs/evidence/security/S1_R2_00_ENTITLEMENT_AUTHORITY_TRACE_2026-08-30.md`.
+
+### Persisted subscription authority
+
+The verified provider/server subscription chain is:
+
+```text
+Supabase verified identity
+        ↓
+server getSubscription(user_id)
+        ↓
+public.subscriptions
+        ↑
+Stripe provider synchronization
+        ↓
+stripe.subscriptions
+        ↓
+sync_stripe_subscription_to_public()
+```
+
+This chain remains protected from ordinary browser writes.
+
+Verified findings:
+
+- Stripe simulated success in `Checkout.tsx` is gated by `import.meta.env.DEV === true`; missing/placeholder Stripe configuration in Production fails closed.
+- Session bootstrap reads the tier through authenticated `/api/stripe/user-subscription`; server identity comes from the bearer token, not the query `userId`.
+- Buffett and screening quota enforcement resolve `resolveVerifiedIdentity(req)` and derive tier from `getSubscription(identity.userId)`.
+- `/pdf-credits` and `/consume-pdf-credit` use the same verified-identity/server-subscription or credit-ledger path.
+- Checkout selects Stripe Price IDs from server configuration after an allowlisted plan request and never accepts a Price ID or authoritative user ID from the request body.
+- Express webhook subscription-tier writes have been retired; provider subscription state is synchronized through Supabase.
+- `public.subscriptions` has RLS enabled. `authenticated` has only an own-row SELECT policy; no normal browser INSERT/UPDATE/DELETE policy exists.
+- `stripe.subscriptions` is not exposed to `anon`/`authenticated` roles.
+- the live Stripe→public synchronization trigger is active and uses a `SECURITY DEFINER` function that resolves provider customer/user identity, refuses an unknown-price guessed paid tier, demotes inactive subscriptions to `Free`, and upserts by `user_id`.
+- the historical privileged `saveSubscription()` helper remains defined in `server/db.ts`, but no production source call site invokes it. Regression coverage fails if such a call site is introduced.
+
+### Confirmed capability-boundary gap
+
+Persisted subscription truth being protected did not make every paid capability safe.
+
+`Dashboard.tsx` supplies browser `profile.subscriptionTier` to `ComplianceExporter` without `userEmail`. In the baseline implementation, `ComplianceExporter` treated local `Enterprise` as sufficient and used a missing-email fallback that called browser-side PDF generation directly instead of `PdfExportModal`.
+
+Because the Dashboard can restore/mutate local tier projection state, that branch allowed a premium Compliance PDF download without the authenticated `/pdf-credits` / `/consume-pdf-credit` decision.
+
+Operational classification is therefore **`CONFIRMED AUTHORITY GAP`** and R2-06 is activated.
+
+### Candidate containment in PR #624
+
+- `ComplianceExporter` has no direct generation fallback when email metadata is absent.
+- Browser `Enterprise` is only a UX pre-filter that can open `PdfExportModal`.
+- `PdfExportModal` calls `/pdf-credits` through `authFetch` whenever it opens.
+- `/consume-pdf-credit` uses `authFetch` before a prepared download can be committed.
+- PDF-credit Checkout also uses `authFetch`; browser email is optional metadata, not an authorization prerequisite.
+- a missing/invalid bearer identity therefore fails closed before the premium download is committed.
+
+No Stripe or Supabase provider mutation is required for this containment.
+
+### Remaining R2-06 work
+
+R2-06 remains open after the bounded PDF fix. Follow-up must:
+
+- demote browser-restored / Stripe-return `profile.subscriptionTier` to server-refreshed presentation state only;
+- reconcile Pro/Enterprise product claims, including Realtime AI Newsfeed, with actual server-side entitlement enforcement or explicit public-capability classification;
+- inventory every paid action/export/server route and prove verified-principal + server subscription/ledger authorization;
+- add negative tests for browser tier escalation at each protected boundary;
+- verify the merged containment in Production where runtime evidence is required.
+
+## 3. Owner decision — S1-R2-08
 
 Status: **OWNER-ACCEPTED / TIER EXCEPTION**.
 
 Native leaked-password protection is unavailable on the active Supabase Free/Base tier. No custom leak-password database/service is introduced solely to emulate the paid capability. Existing compensating controls remain relevant and the decision must be revisited if tier capability changes.
 
-## 3. GitHub Default-Branch Enforcement — S1-R2-02
+## 4. GitHub Default-Branch Enforcement — S1-R2-02
 
 Status: **OWNER-ACCEPTED / VERIFIED LIVE STATE**.
 
@@ -77,11 +141,11 @@ The active GitHub ruleset currently has:
   - `Hardened image / HIGH+CRITICAL CVE gate` (`integration_id=15368`);
   - `GitGuardian Security Checks` (`integration_id=46505`).
 
-Deletion protection, required linear history, CODEOWNER review and review-thread resolution are not active rules. Repository merge commits remain allowed and web commit signoff is not required. These properties are now part of the Owner-accepted current provider state rather than pending desired-state drift.
+Deletion protection, required linear history, CODEOWNER review and review-thread resolution are not active rules. Repository merge commits remain allowed and web commit signoff is not required. These properties are part of the Owner-accepted current provider state rather than pending desired-state drift.
 
 ### Repository control-plane change
 
-The repository must no longer mutate GitHub toward a separate canonical Sollzustand:
+The repository no longer mutates GitHub toward a separate canonical Sollzustand:
 
 - `.github/policies/main-production-protection.expected.json` is retired/deleted;
 - `ruleset-sync` is read-only provider readback;
@@ -89,11 +153,9 @@ The repository must no longer mutate GitHub toward a separate canonical Sollzust
 - `scripts/security/rulesetAdminEnvironment.mjs` is removed;
 - no ruleset/repository write request is implemented by the remaining readback script.
 
-Historical ruleset audit/evidence files remain historical records only. They do not authorize re-creating the retired desired-state reconciliation.
+Historical ruleset audit/evidence files remain historical records only. Any future provider-policy change requires a new explicit Owner decision and normal reviewed verification.
 
-No GitHub ruleset mutation remains pending for R2-02. A future change requires a new explicit Owner decision and the normal reviewed PR/provider-verification path.
-
-## 4. Liveness, readiness and fatal recovery — S1-R2-04
+## 5. Liveness, readiness and fatal recovery — S1-R2-04
 
 Status: **OPEN / CONFIRMED**.
 
@@ -107,7 +169,7 @@ Current endpoint semantics remain:
 
 Fatal recovery still requires fail-fast, bounded cleanup, non-zero exit and Render supervisor evidence.
 
-## 5. Stripe Operations Boundary
+## 6. Stripe Operations Boundary
 
 ### R2-05 — Redirect boundary
 
@@ -119,11 +181,9 @@ Client-controlled absolute Checkout redirect URLs remain a separate finding. The
 
 Status: **MERGED / POST-DEPLOY VERIFY PENDING**.
 
-PR #619 gates simulated Stripe success behind `import.meta.env.DEV === true`. Production fails closed on missing/placeholder publishable configuration. Post-deploy evidence must verify the Production bundle/runtime cannot reach the development simulation path.
+PR #619 gates simulated Stripe success behind `import.meta.env.DEV === true`. Production fails closed on missing/placeholder publishable configuration. R2-00 confirms that this DEV-only simulation is not the discovered production authority gap; R2-10 still requires its separate Production runtime/bundle verification.
 
-R2-00/R2-06 remain separate authority questions.
-
-## 6. CSP Operations — S1-R2-09
+## 7. CSP Operations — S1-R2-09
 
 Status: **PARTIAL / REPORT-ONLY**.
 
@@ -136,9 +196,9 @@ ADR-0040 and GMG-005 remain authoritative:
 - `CSP_MODE=strict` requires separate protected promotion evidence;
 - `baseline` remains the availability-recovery path.
 
-No automatic Strict promotion is authorized by PR #619 or the R2-02 decision.
+No automatic Strict promotion is authorized.
 
-## 7. Backup / RPO / RTO — S1-R2-07
+## 8. Backup / RPO / RTO — S1-R2-07
 
 Status: **OPEN / UNVERIFIED**.
 
@@ -150,7 +210,7 @@ Still required:
 - isolated restore drill;
 - measured end-to-end RTO and integrity verification.
 
-## 8. Evidence identity / staleness — S1-R2-11
+## 9. Evidence identity / staleness — S1-R2-11
 
 Status: **MERGED / VERIFY PENDING**.
 
@@ -163,9 +223,7 @@ The merged implementation retains trusted-main PR baseline generation and expose
 | `CURRENT_AFTER_REFRESH` | trusted refresh corrected a stale baseline |
 | `STALE_RETRY_REQUIRED` | identity changed during preflight/write; unsafe write denied |
 
-This mechanism remains independent of the retired GitHub ruleset desired-state policy.
-
-## 9. Render secret boundary
+## 10. Render secret boundary
 
 Canonical server-only authority remains:
 
@@ -177,14 +235,15 @@ Canonical server-only authority remains:
 
 No secret values are included in repository evidence.
 
-## 10. Rollback and future changes
+## 11. Rollback and future changes
 
-- **Code:** Human-reviewed PR/revert path; no direct agent write to `main`.
-- **GitHub ruleset:** current live provider state remains authoritative. No automatic Soll-reconciliation exists. Any future policy change requires new Owner instruction plus provider readback.
+- **Code/Evidence:** Human-reviewed PR/revert path; no direct agent write to `main`.
+- **R2-00/R2-06:** any protected capability gated solely by browser tier, browser-reachable subscription writer, browser write RLS policy or non-Stripe-verifiable production mutation path keeps/reopens the control. The current PDF containment must remain server-ledger bound.
+- **GitHub ruleset:** current live provider state remains authoritative; no automatic Soll-reconciliation exists.
 - **CSP:** default remains `report-only`; `baseline` is the existing availability recovery mode.
-- **Billing sandbox:** Production must remain fail-closed; remediation/revert uses the normal PR path.
+- **Billing sandbox:** Production must remain fail-closed.
 - **Evidence refresh:** identity races remain fail-closed via `STALE_RETRY_REQUIRED`.
 
-## 11. Overall handoff
+## 12. Overall handoff
 
-R2-02 is now an explicit Owner-accepted live-provider-state decision, not a pending `mode=full` task. R2-08 remains a tier exception. R2-09 remains `PARTIAL / REPORT-ONLY`; R2-10 and R2-11 are merged but still need their applicable runtime/operational verification. R2-00 and R2-03 through R2-07 remain open/conditional and continue to block the global `HARDENED / VERIFIED` status.
+R2-00 is a **`CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE`**: persisted Stripe/Supabase subscription authority is protected, but a browser-only Compliance PDF grant existed at the capability boundary. PR #624 contains the bounded fail-closed containment and regression contract; Human merge and exact-head checks remain required. **R2-06 is ACTIVE** for the remaining premium-capability inventory and remediation. R2-02 is an Owner-accepted live-provider-state decision. R2-08 remains a tier exception. R2-09 remains `PARTIAL / REPORT-ONLY`; R2-10 and R2-11 still need their applicable runtime/operational verification. No provider mutation is authorized by this handoff.

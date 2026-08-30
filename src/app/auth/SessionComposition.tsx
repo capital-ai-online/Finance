@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { LoginStepUpGate } from '../../components/LoginStepUpGate';
 import { RegistrationCompletionGate } from '../../components/RegistrationCompletionGate';
+import { authFetch } from '../../lib/authFetch';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
 import { needsOnboarding } from '../../lib/onboarding';
 import {
@@ -113,9 +114,15 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       'User';
 
     try {
-      const res = await fetch(`/api/stripe/user-subscription?userId=${encodeURIComponent(user.id)}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      // Always resolve billing through the live Supabase SDK session. MFA verification rotates
+      // session credentials, so reusing the pre-step-up access token here can race the rotation
+      // and temporarily project a paid account as Free. authFetch performs exactly one guarded
+      // refresh/retry and only emits the global unauthorized event when that retry also fails.
+      const res = await authFetch('/api/stripe/user-subscription');
+      if (res.status === 401) {
+        return;
+      }
+
       let tier: SubscriptionTier = 'Free';
 
       if (res.ok) {
@@ -324,10 +331,50 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       <LoginStepUpGate
         session={pendingStepUpSession}
         onVerified={async () => {
-          const session = pendingStepUpSession;
+          const expectedSession = pendingStepUpSession;
           setPendingStepUpSession(null);
           setLoading(true);
-          await handleSupabaseSession(session);
+
+          if (!supabase) {
+            resetAuthProjection();
+            setLoading(false);
+            return;
+          }
+
+          try {
+            // Supabase MFA verification issues/rotates the live session. Never continue the
+            // billing/bootstrap handoff with the pre-MFA session object captured by the gate.
+            const {
+              data: { session: liveSession },
+              error,
+            } = await supabase.auth.getSession();
+
+            const expectedUserId = expectedSession?.user?.id || '';
+            const receivedUserId = liveSession?.user?.id || '';
+            if (error || !liveSession || !expectedUserId || receivedUserId !== expectedUserId) {
+              console.error('[Auth] Post-MFA session handoff failed:', error || 'identity mismatch');
+              setAuthError({
+                message:
+                  'Die aktualisierte Sitzung konnte nach der Sicherheitsbestätigung nicht eindeutig übernommen werden. Der Zugriff bleibt gesperrt, bis die Sitzung erneut aufgebaut wurde.',
+                code: 'POST_MFA_SESSION_HANDOFF_FAILED',
+                expectedId: expectedUserId || 'unknown',
+                ...(receivedUserId ? { receivedId: receivedUserId } : {}),
+              });
+              setLoading(false);
+              return;
+            }
+
+            await handleSupabaseSession(liveSession);
+          } catch (err) {
+            console.error('[Auth] Post-MFA live-session read failed:', err);
+            setAuthError({
+              message:
+                'Die aktualisierte Sitzung konnte nach der Sicherheitsbestätigung nicht geladen werden. Bitte bauen Sie die Sitzung erneut auf.',
+              code: 'POST_MFA_SESSION_READ_FAILED',
+              expectedId: expectedSession?.user?.id || 'unknown',
+            });
+            setLoading(false);
+          }
         }}
         onAbort={async () => {
           setPendingStepUpSession(null);

@@ -138,7 +138,7 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
   });
 
-  it('uses one synchronous Supabase auth-state bootstrap instead of racing getSession', () => {
+  it('uses one synchronous Supabase auth-state bootstrap without forbidding bounded post-auth session reads', () => {
     expect(sessionComposition).toContain('supabase.auth.onAuthStateChange((event, session) =>');
     expect(sessionComposition).not.toContain('onAuthStateChange(async');
     expect(sessionComposition).toContain('isSessionEstablishmentEvent(event)');
@@ -146,7 +146,13 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('window.setTimeout(() =>');
     expect(sessionComposition).toContain('getSessionBootstrapKey(session)');
 
-    expect(sessionComposition.match(/supabase\.auth\.getSession\(\)/g)?.length ?? 0).toBe(1);
+    const bootstrapStart = sessionComposition.indexOf('useEffect(() => {');
+    const bootstrapEnd = sessionComposition.indexOf('const handleLogin', bootstrapStart);
+    const bootstrapEffect = sessionComposition.slice(bootstrapStart, bootstrapEnd);
+
+    expect(bootstrapStart).toBeGreaterThan(-1);
+    expect(bootstrapEnd).toBeGreaterThan(bootstrapStart);
+    expect(bootstrapEffect).not.toContain('supabase.auth.getSession()');
   });
 
   it('only establishes sessions for initial/sign-in events and uses a non-secret key', () => {

@@ -2,9 +2,9 @@
 
 Status: ACTIVE / PARTIAL / ACTION REQUIRED  
 Status date: 2026-08-30  
-Repository baseline reviewed: `main@5e4da8caba1aa7bae70abe5bf021a857ccef2f84`  
-Last verified production deployment identity: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`  
-Active governance branch: `security/r2-02-live-ruleset-authority-20260830`  
+Repository baseline reviewed: `main@3815c7fce44e30bccf227a4399220407f4095706`  
+Last verified production deployment identity: `e311c30d18951785a68154d994a403799819c194`  
+Active security branch: `security/s1-r2-00-entitlement-authority-20260830`  
 Historical security baseline: `docs/security/SECURITY_REMEDIATION_BASELINE_2026-08-12.md`  
 Current Operations handoff: `docs/runbooks/OPERATIONS_HANDOFF_2026-08-29.md`
 
@@ -25,13 +25,13 @@ S1 remains the single canonical bounded security-hardening gate inside the DEVEL
 
 | ID | Source finding | Priority | Current status | Required disposition |
 |---|---|---:|---|---|
-| S1-R2-00 | P1-C01 simulated client tier transition | P1 Conditional | OPEN / TRACE PENDING | Prove complete reachability and authority |
+| S1-R2-00 | P1-C01 simulated/client tier transition | P1 Conditional | CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE — PR VERIFY PENDING | Exact-head regression + Human merge; retain finding as trigger for R2-06 |
 | S1-R2-01 | P2-04 workflow `345251495` startup failure | P1 Operational | RESOLVED / OBSOLETE HISTORICAL | Retain traceability |
 | S1-R2-02 | P1-01 default-branch enforcement | P1 | OWNER-ACCEPTED / VERIFIED LIVE STATE | Retain current provider rules; readback only |
 | S1-R2-03 | P1-02 Node control-plane 24.18.0 | P1 | OPEN / PARTIAL CONVERGENCE | Converge repository/control-plane to Node 24.20.0 |
 | S1-R2-04 | P1-03 `uncaughtException` resumes process | P1 | OPEN / CONFIRMED | Fail-fast + bounded cleanup + non-zero exit + supervisor evidence |
 | S1-R2-05 | P1-04 client-controlled Stripe redirect URLs | P1 | OPEN / CONFIRMED | Server-owned canonical redirect boundary |
-| S1-R2-06 | P1-C01 entitlement authority, if reachable | P1 | CONDITIONAL | Activate only if R2-00 proves authority impact |
+| S1-R2-06 | P1-C01 entitlement authority, if reachable | P1 | ACTIVE / REMEDIATION REQUIRED | Complete paid-capability inventory and bind every protected grant to verified server/provider authority |
 | S1-R2-07 | P1-05 RPO/RTO and restore capability | P1 | OPEN / UNVERIFIED | Encrypted off-site backup + isolated measured restore drill |
 | S1-R2-08 | P2-03 leaked-password protection | P2 | OWNER-ACCEPTED / TIER EXCEPTION | Retain compensating controls |
 | S1-R2-09 | P2-02 strict CSP promotion | P2 | PARTIAL / REPORT-ONLY | Collect ADR-0040 promotion evidence |
@@ -43,16 +43,20 @@ S1 remains the single canonical bounded security-hardening gate inside the DEVEL
 
 ```text
 R2-00 entitlement authority trace
-+ R2-01 RESOLVED historical classification
+→ CONFIRMED AUTHORITY GAP
+→ R2-06 ACTIVE + bounded PDF authority containment candidate
+        ↓
+R2-01 RESOLVED historical classification
         ↓
 R2-02 OWNER-ACCEPTED live GitHub provider state
+        ↓
+R2-06 remaining entitlement inventory/remediation
         ↓
 R2-03 Node control-plane supersession
         ↓
 R2-04 fatal process recovery
         ↓
 R2-05 Stripe redirect boundary
-→ R2-06 entitlement remediation only if R2-00 activates it
         ↓
 R2-07 disaster recovery evidence
         ↓
@@ -63,20 +67,56 @@ R2-09 report-only promotion gate + R2-10/R2-11 post-merge verification
 S1-R2 HARDENED / VERIFIED gate
 ```
 
+R2-06 is now an active P1 control because R2-00 proved a production-reachable browser-only paid-capability grant. The current PR contains the first bounded containment for the Compliance PDF path; broader entitlement closure remains separate from this finding until verified.
+
 ## S1-R2-00 — Entitlement authority trace
 
-**Current state:** OPEN / TRACE PENDING
+**Current state:** CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE — PR VERIFY PENDING  
+**Evidence:** `docs/evidence/security/S1_R2_00_ENTITLEMENT_AUTHORITY_TRACE_2026-08-30.md`
 
-Required proof remains:
+The trace against current repository state plus read-only live Supabase inspection establishes two distinct facts that must not be conflated.
 
-- identify production-reachable simulated tier/payment callers;
-- prove whether browser tier state can influence persisted/server authorization;
-- inventory protected API entitlement decision points;
-- prove browser-controlled tier values cannot grant protected server capability;
-- prove Stripe-verifiable server state is subscription truth;
-- classify `NOT AUTHORITY` or `CONFIRMED AUTHORITY GAP`.
+### Persisted subscription authority remains protected
 
-If authority impact is proven, R2-06 activates immediately.
+- Checkout simulated-success is reachable only when `import.meta.env.DEV === true`; Production with missing/placeholder Stripe configuration fails closed.
+- After authenticated session establishment, the tier projection is loaded from `/api/stripe/user-subscription` with the Supabase bearer token; failure projects `Free`.
+- `/api/stripe/user-subscription` resolves the subject from `resolveVerifiedIdentity(req)` before calling `getSubscription(identity.userId)`.
+- Warren Buffett and verified-screening quota decisions resolve the verified principal and derive tier from `getSubscription(identity.userId)`, not request tier data.
+- `/api/stripe/pdf-credits` and `/api/stripe/consume-pdf-credit` use the same verified identity plus server subscription/credit state.
+- Stripe Checkout maps client plan selection to server-owned Price IDs and never accepts a Price ID or authoritative user ID from the request body.
+- Provider subscription changes flow through Supabase Stripe synchronization into `stripe.subscriptions` and the database trigger `sync_stripe_subscription_to_public()`.
+- Live `public.subscriptions` has RLS enabled. Authenticated users have only an own-row SELECT policy; no browser INSERT/UPDATE/DELETE policy exists. `stripe.subscriptions` is not granted to `anon`/`authenticated`.
+- The live Stripe→public trigger derives provider/user identity, accepts known provider metadata/Price IDs, refuses guessed unknown paid tiers, demotes inactive subscriptions to `Free`, and upserts by `user_id`.
+- `server/db.ts` contains the historical privileged `saveSubscription()` helper, but repository production source has no call site outside the definition. Regression coverage fails if such a call site is introduced.
+
+### Production-reachable client-only PDF grant was confirmed
+
+`Dashboard.tsx` passes `profile.subscriptionTier` into `ComplianceExporter` but does not pass `userEmail`. The baseline `ComplianceExporter` treated browser `subscriptionTier === 'Enterprise'` as the gate and, when `userEmail` was absent, called client-side `generatePDFReport()` directly instead of entering `PdfExportModal`.
+
+Because the Dashboard also permits browser/local profile tier projection, that alternate branch made the paid Compliance PDF capability production-reachable without `/pdf-credits` or `/consume-pdf-credit`.
+
+This does not corrupt Stripe/Supabase subscription truth; it is nevertheless a real entitlement authority bypass at the capability boundary. Therefore R2-00 is classified **CONFIRMED AUTHORITY GAP**, not `NOT AUTHORITY`.
+
+### Candidate containment in PR #624
+
+- `ComplianceExporter` no longer has a missing-email direct generation branch; an Enterprise-looking browser state may only open the modal.
+- `PdfExportModal` loads `/pdf-credits` through `authFetch` whenever it opens, independent of browser email metadata.
+- credit consumption and PDF-credit Checkout use `authFetch`.
+- the prepared PDF download is committed only after the authenticated server ledger grants Enterprise-unlimited or a consumable credit.
+
+### Regression contract
+
+`tests/unit/s1R2EntitlementAuthority.test.ts` locks:
+
+- DEV-only browser simulation;
+- authenticated server tier projection;
+- verified-identity + server-subscription quota decisions;
+- authenticated server-ledger requirement before Compliance PDF commit;
+- no production call site for `saveSubscription()` outside its definition;
+- allowlisted server Price-ID selection with verified identity;
+- current-user-only subscription readback.
+
+R2-00 trace work becomes merged evidence only after exact-head CI/Governance PASS and Human merge. R2-06 remains active after that merge because the trace proved a real gap and the complete premium-capability inventory is broader than the contained PDF path.
 
 ## S1-R2-01 — Workflow startup-failure classification
 
@@ -147,9 +187,21 @@ Client-controlled absolute `successUrl` / `cancelUrl` remain outside the accepte
 
 ## S1-R2-06 — Stripe-verified entitlement projection
 
-**Current state:** CONDITIONAL
+**Current state:** ACTIVE / REMEDIATION REQUIRED
 
-Only activates if R2-00 proves an authority gap. Browser or redirect state must never become subscription authority; protected entitlement must remain server-/Stripe-verifiable.
+R2-00 confirmed that persisted subscription state is server/provider controlled but also found a production-reachable paid capability whose sole effective gate was browser projection state. R2-06 is therefore activated.
+
+The current PR contains a bounded containment for Compliance PDF export: a local Enterprise-looking state can only enter the authenticated `PdfExportModal`; the download commit requires server-granted Enterprise-unlimited state or a server ledger credit.
+
+R2-06 remains open until the complete paid-capability inventory is reconciled. Required work includes:
+
+- eliminate or strictly demote browser-restored / Stripe-return `profile.subscriptionTier` from any authorization role;
+- reconcile Pro/Enterprise product claims (including Realtime AI Newsfeed and other premium UI) with actual server enforcement or explicitly classify the capability as public/non-protected;
+- ensure every protected server capability performs verified-principal + server subscription/ledger authorization;
+- add negative tests for browser-tier escalation at each protected boundary;
+- verify no alternate client-only generation/export/action path bypasses the server entitlement decision.
+
+Closure requires exact-head test evidence and, for production-runtime claims, post-deploy verification after Human merge.
 
 ## S1-R2-07 — Disaster recovery / RPO / RTO
 
@@ -182,7 +234,7 @@ R2-09 remains open until the ADR-0040 observation and compatibility evidence per
 
 **Current state:** MERGED / POST-DEPLOY VERIFY PENDING
 
-PR #619 DEV-gates the Stripe simulation path via `import.meta.env.DEV === true`; Production fails closed on missing/placeholder Stripe configuration. This does not close R2-00/R2-06 or R2-05. Post-deploy evidence must confirm the Production bundle/runtime cannot reach the simulated-success path.
+PR #619 DEV-gates the Stripe simulation path via `import.meta.env.DEV === true`; Production fails closed on missing/placeholder Stripe configuration. This does not close R2-05. Post-deploy evidence must confirm the Production bundle/runtime cannot reach the simulated-success path.
 
 ## S1-R2-11 — Content-addressed evidence and stale-state automation
 
@@ -201,13 +253,13 @@ Historical drift remains closed. Production, `main` and candidate identities mus
 S1-R2 may report `HARDENED / VERIFIED` only when:
 
 ```text
-R2-00 authority trace resolved
+R2-00 CONFIRMED AUTHORITY GAP evidence merged and its containment remains valid
 AND R2-01 historical classification remains accepted
 AND R2-02 Owner-accepted live GitHub provider state remains current/readable
 AND R2-03 Node control-plane superseded
 AND R2-04 fatal process recovery verified
 AND R2-05 Stripe redirect boundary closed
-AND R2-06 closed or NOT-AUTHORITY evidence accepted
+AND R2-06 entitlement remediation verified across all protected paid capabilities
 AND R2-07 measured restore drill complete
 AND R2-08 Owner tier exception remains valid or native control becomes available
 AND R2-09 strict Production CSP verified after a separately approved promotion

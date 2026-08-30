@@ -56,11 +56,11 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       if (onUpgradeClick) onUpgradeClick();
       return;
     }
-    if (userEmail) {
-      setShowExportModal(true);
-    } else {
-      generatePDFReport();
-    }
+
+    // The browser tier is only a presentation/UX pre-filter. The actual export grant is
+    // resolved in PdfExportModal from the authenticated server-side credit/subscription ledger.
+    // Never fall back to direct client-side generation when identity metadata is absent.
+    setShowExportModal(true);
   };
 
   const preparePDFReport = async (): Promise<() => void> => {
@@ -547,15 +547,6 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
     }
   };
 
-  const generatePDFReport = async () => {
-    try {
-      const commitDownload = await preparePDFReport();
-      commitDownload();
-    } catch {
-      // preparePDFReport already exposes the user-facing error state.
-    }
-  };
-
   return (
     <div className="bg-gradient-to-br from-indigo-950/20 via-black/40 to-neutral-900 border border-white/10 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden" id="aif-compliance-exporter">
       {/* Visual neon purple blur spot */}
@@ -605,7 +596,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
           </button>
 
           <AnimatePresence>
-            {showExportModal && userEmail && (
+            {showExportModal && (
               <PdfExportModal
                 isOpen={showExportModal}
                 onClose={() => setShowExportModal(false)}
