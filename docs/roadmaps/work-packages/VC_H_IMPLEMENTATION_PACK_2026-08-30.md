@@ -3,7 +3,7 @@
 **Document ID:** WP-VC-H-IMPLEMENT-2026-08-30  
 **Status:** SPECIFIED / RUNTIME NOT STARTED  
 **Date:** 2026-08-30  
-**Baseline:** `main@4e3de6f489989e64962225874dd7dd69400fcd95`  
+**Baseline:** `main@460e8dd088a78f426cac392c20da104f5873ecad`  
 **Depends on:** WP-VC-H-INVENTORY-2026-08-30 (`*-0` DONE via #610)  
 **Class:** D in this PR; runtime follow-ups are Klasse C and require a fresh branch  
 **Does not authorize:** Merge, Deploy, Scoring-Promotion, Provider-Mutation, M10

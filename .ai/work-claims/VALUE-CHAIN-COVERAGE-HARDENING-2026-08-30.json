@@ -11,9 +11,9 @@
   "workItem": "Map every CAPITAL-AI operational and financial value-chain stage to an existing roadmap or a bounded gap-hardening package; insert document-registry entries; complete Klasse-D inventory WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0.",
   "workItemDE": "Wertschöpfungsketten-Coverage einbinden, Document-Registry-Insert ausführen und Inventar-WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0 als Klasse D schließen.",
   "startedAt": "2026-08-30T14:56:00+02:00",
-  "updatedAt": "2026-08-30T18:45:00+02:00",
+  "updatedAt": "2026-08-30T19:25:00+02:00",
   "closedAt": "2026-08-30T18:45:00+02:00",
-  "closeReason": "Merged as PR #610 onto main@1286bded. Live registry insert and *-1 specification continue under OPEN-STEPS-BIND-2026-08-30 on branch docs/open-steps-bind-2026-08-30-v6.",
+  "closeReason": "Merged as PR #610 at 1286bdedc8416bb6621bbd621a723117f92e47bc. The expanded append-only insert payload and *-1 specification continue under OPEN-STEPS-BIND-2026-08-30; physical insertion into document-registry.json remains a separate, unperformed step.",
   "baseBranch": "main",
   "baseSha": "677a88ca5156b51060e9204aa06b9afdcf4e47b7",
   "claimedPaths": [
@@ -24,10 +24,11 @@
     "docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json",
     "docs/governance/document-registry.json"
   ],
-  "releaseCondition": "Released after Human merge of PR #610. Successor claim OPEN-STEPS-BIND-2026-08-30 owns the live registry insert.",
+  "releaseCondition": "Released after Human merge of PR #610. Successor claim OPEN-STEPS-BIND-2026-08-30 owns payload preparation and documentary binding only, not physical mutation of document-registry.json.",
   "notes": [
     "PR #610 MERGED 2026-08-30T15:29:32Z, merge_commit 1286bdedc8416bb6621bbd621a723117f92e47bc.",
-    "Live document-registry.json was not mutated in #610; insert moves to OPEN-STEPS-BIND-2026-08-30.",
+    "Live document-registry.json was not mutated in #610 and is not mutated by OPEN-STEPS-BIND-2026-08-30; only an append-only payload is prepared.",
+    "Any physical registry insertion requires a separate scoped change and Human review.",
     "Inventory *-0 remains closed. Implementation *-1+ is specified, not coded, in the successor pack."
   ]
 }

@@ -8,16 +8,15 @@
     "model": "Grok 4.6",
     "executionSurface": "Grok GitHub Connector"
   },
-  "workItem": "Bind remaining open documentary steps after #610/#611/#612 on a fresh branch: live document-registry insert (append-only), close VC-COV claim, current-state sync, ESS path/authority reconciliation, VC-H *-1 specification pack, S1-R2-02 post-merge dispatch checklist. No runtime, no ruleset apply, no M10 reactivation.",
-  "workItemDE": "Offene Folgeschritte nach #610/#611/#612 dokumentarisch auf frischem Branch binden: Live-Registry-Insert (append-only), Claim-Close, Current-State-Sync, ESS-Reconciliation, VC-H-*-1-Spezifikation, S1-R2-02 Dispatch-Checkliste. Kein Runtime, kein Ruleset-Apply, kein M10.",
+  "workItem": "Bind remaining open documentary steps after #610/#611/#612 on a fresh branch: prepare an append-only document-registry insert payload without mutating the registry, close the VC-COV claim, synchronize current state, reconcile ESS paths/authority, specify the VC-H *-1 pack, and provide the S1-R2-02 post-merge dispatch checklist. No runtime, no ruleset apply, no M10 reactivation.",
+  "workItemDE": "Offene dokumentarische Folgeschritte nach #610/#611/#612 auf frischem Branch binden: append-only Registry-Insert-Payload vorbereiten, ohne die Registry zu mutieren; VC-COV-Claim schließen; Current State synchronisieren; ESS-Pfade/Authority abgleichen; VC-H-*-1-Paket spezifizieren; S1-R2-02-Dispatch-Checkliste bereitstellen. Kein Runtime, kein Ruleset-Apply, kein M10.",
   "startedAt": "2026-08-30T17:50:00+02:00",
-  "updatedAt": "2026-08-30T18:45:00+02:00",
+  "updatedAt": "2026-08-30T19:25:00+02:00",
   "baseBranch": "main",
-  "baseSha": "4e3de6f489989e64962225874dd7dd69400fcd95",
+  "baseSha": "460e8dd088a78f426cac392c20da104f5873ecad",
   "claimedPaths": [
     ".ai/work-claims/OPEN-STEPS-BIND-2026-08-30.json",
     ".ai/work-claims/VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30.json",
-    "docs/governance/document-registry.json",
     "docs/governance/authority-registry.json",
     "docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json",
     "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
@@ -28,14 +27,16 @@
   ],
   "releaseCondition": "Claim is released when this pull request is merged, closed, superseded or abandoned. Merge remains Human/Owner-only.",
   "notes": [
-    "Fresh branch docs/open-steps-bind-2026-08-30-v6 from main@4e3de6f.",
-    "Supersedes open PR #616 / branch docs/open-steps-bind-2026-08-30-v5 (governance baseline failed; registry compacted).",
-    "Append-only document-registry insert; existing entries keep original formatting.",
-    "Does not apply ruleset-sync. #615 documents that mode=full is BLOCKED until rulesetSync preserves required_linear_history.",
+    "Branch docs/open-steps-bind-2026-08-30-v6 is synchronized with main@460e8dd088a78f426cac392c20da104f5873ecad.",
+    "Supersedes closed PR #616 / branch docs/open-steps-bind-2026-08-30-v5 (governance baseline failed; registry was compacted).",
+    "This PR prepares an append-only document-registry payload only; docs/governance/document-registry.json is not claimed or mutated.",
+    "PR #615 implements the policy/builder/floor remediation for required_linear_history; ruleset mode=full remains blocked until #615 is Human-merged and its exact head is green.",
+    "PR #615 is the prerequisite writer for overlapping ROADMAP.md and authority-registry.json state; this PR must follow it.",
     "Does not reactivate M10.",
     "Does not implement Supervisor/PD/DQ runtime. *-1 pack is specification-only.",
     "ESS-0011 skill files already exist on main; reconciliation registers stable authorityIds.",
     "PR #613 commit-signing automation remains discarded.",
-    "Live /healthz 2026-08-30T16:23:47Z status=ok; x-capital-ai-commit=4e3de6f; version 0.6.0."
+    "Production preflight baseline binds production and main to 460e8dd088a78f426cac392c20da104f5873ecad; platform version 0.6.0.",
+    "Corrective consistency update performed through the authorized GitHub connector; original work-agent metadata is preserved."
   ]
 }
