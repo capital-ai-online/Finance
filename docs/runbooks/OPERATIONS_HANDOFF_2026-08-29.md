@@ -121,30 +121,32 @@ R2-00/R2-06 bleiben davon getrennt: Entitlement Authority muss weiterhin server-
 
 ## 6. CSP Operations — S1-R2-09
 
-Status: **IMPLEMENTED / PR + POST-DEPLOY VERIFY PENDING**.
+Status: **PARTIAL / REPORT-ONLY**.
 
-Candidate-Verhalten in `server/securityResponse.ts`:
+Aktueller geschützter Vertrag in `server/securityResponse.ts`:
 
 - zentrale CSP-Response-Boundary bleibt unverändert die Authority;
-- Produktionsdefault wird von `report-only` auf **`strict`** angehoben;
-- Nonce + `'strict-dynamic'` bleiben enforced;
-- `'unsafe-eval'` bleibt ausgeschlossen;
-- `CSP_MODE=report-only` bleibt expliziter Diagnose-/Rollbackpfad;
+- Produktionsdefault bleibt **`report-only`** gemäß ADR-0040 und Protected Change Guard GMG-005;
+- die availability-safe Baseline wird enforced, während Nonce + `'strict-dynamic'` als Strict-Target über `Content-Security-Policy-Report-Only` ausgewertet werden;
+- `'unsafe-eval'` bleibt aus dem Produktions-Target ausgeschlossen;
+- `CSP_MODE=strict` bleibt als explizites Ziel vorhanden, darf aber erst nach bestandenem Promotion Gate aktiviert werden;
 - `CSP_MODE=baseline` bleibt expliziter Availability-Recovery-Pfad;
-- leere/ungültige Produktionswerte fallen auf `strict`, nicht auf eine schwächere Policy.
+- leere/ungültige Produktionswerte fallen auf `report-only`, nicht auf eine ungeprüfte Strict-Promotion.
 
-### Post-Deploy Evidence
+### Promotion Evidence
 
-Nach Human-Merge und verifiziertem Deployment sind mindestens zu prüfen:
+Die bestehende Security-Evidence vom 2026-08-29 hält fest, dass derzeit kein gemessenes Zero-Violation-Produktionsfenster vorliegt. Deshalb wird in diesem PR **keine Strict-Promotion** durchgeführt.
 
-- `X-CSP-Mode: strict`;
-- enforced `Content-Security-Policy` enthält nonce/strict-dynamic;
-- kein unerwarteter `Content-Security-Policy-Report-Only`-Header im Strict-Modus;
-- App-Bootstrap funktioniert;
-- Stripe Checkout, Consent/CookieHub, hCaptcha und weitere genehmigte Integrationen funktionieren;
-- bei Availability-Regression ausschließlich bestehende `report-only`/`baseline` Recovery-Modi verwenden.
+Vor einer späteren geschützten Promotion sind mindestens zu belegen:
 
-Bis diese Evidence vorliegt, ist R2-09 nicht `VERIFIED PASS`.
+- Report-Only-Beobachtungsfenster ohne legitime blockierende First-Party-/Integration-Violations;
+- App-Bootstrap und Vite Entry Asset funktionieren;
+- CookieHub/Consent bleibt Source of Truth;
+- Stripe, Supabase, hCaptcha und weitere genehmigte Integrationen bleiben kompatibel;
+- gleiche Nonce-Bindung zwischen HTML und Strict-Target;
+- Rollback-Bereitschaft auf `report-only`/`baseline`.
+
+Erst danach darf ein separater reviewed protected change `CSP_MODE=strict` bzw. einen Strict-Default promoten. Bis dahin bleibt R2-09 nicht `VERIFIED PASS`.
 
 ## 7. Backup / RPO / RTO — S1-R2-07
 
@@ -198,7 +200,7 @@ Keine Secret-Werte werden für diesen Workstream gelesen oder in Evidence/PR-Bod
 ## 10. Rollback
 
 - **Code:** Human-reviewed Revert-PR; keine direkte `main`-Mutation.
-- **CSP:** explizit `report-only` oder `baseline` als bestehende Recovery-Modi; keine zweite CSP-Authority.
+- **CSP:** aktueller Default bleibt `report-only`; `baseline` ist der bestehende Availability-Recovery-Modus; keine zweite CSP-Authority.
 - **Billing Sandbox:** Revert des Candidate-Commits nur über normalen PR-Pfad; Production darf nicht als Sandbox-Ersatz betrieben werden.
 - **Evidence Refresh:** bestehender trusted-main Workflow; bei Identity Race `STALE_RETRY_REQUIRED`, kein erzwungener Body-Write.
 - **Render:** nur verifizierte Deployment-Identitäten, anschließend Health/Ready/Auth/Billing prüfen.
@@ -206,11 +208,11 @@ Keine Secret-Werte werden für diesen Workstream gelesen oder in Evidence/PR-Bod
 
 ## 11. Combined R2 Tail Handoff
 
-Der Owner hat ausdrücklich angeordnet, R2-09 bis R2-11 in **einem Pull Request** zu erledigen. Der kombinierte Scope ist:
+Der Owner hat ausdrücklich angeordnet, R2-09 bis R2-11 in **einem Pull Request** zu bearbeiten. Der kombinierte Scope ist:
 
 ```text
 R2-08 Owner-Tier-Exception dokumentieren
-+ R2-09 CSP strict production default
++ R2-09 ADR-0040 report-only promotion gate und strict target erhalten
 + R2-10 Stripe demo/sandbox production isolation
 + R2-11 machine stale-state semantics
 + targeted regression tests
@@ -235,11 +237,11 @@ Vor Merge erforderlich:
 Nach Merge erforderlich:
 
 - verifiziertes Render-Deployment des Merge-Commits;
-- CSP Strict Post-Deploy Evidence;
-- Billing Production Sandbox-DENY bestätigen;
+- R2-10 Billing Production Sandbox-DENY bestätigen;
 - Production/Main/PR-Evidence-Auto-Refresh beobachten und R2-11 final verifizieren;
-- Roadmap/Handoff nur dann auf `VERIFIED PASS` für R2-09..11 fortschreiben, wenn die jeweilige Evidence vollständig ist.
+- R2-09 Report-Only-Telemetrie weiter sammeln; **keine automatische Strict-Promotion**;
+- Roadmap/Handoff nur dann auf `VERIFIED PASS` für R2-10/R2-11 fortschreiben, wenn die jeweilige Evidence vollständig ist; R2-09 benötigt weiterhin ein separates bestandenes Promotion Gate.
 
 ## 12. Gesamt-Handoff
 
-R2-08 ist eine explizite Tier-Ausnahme. R2-09..11 sind auf dem Candidate implementiert, aber noch nicht Human-gemergt oder Production-verifiziert. Frühere offene P1-Controls R2-00, R2-02..R2-07 bleiben unverändert offen/partial und blockieren weiterhin den globalen `HARDENED / VERIFIED`-Status.
+R2-08 ist eine explizite Tier-Ausnahme. R2-10/R2-11 sind auf dem Candidate implementiert, R2-09 bleibt bewusst `PARTIAL / REPORT-ONLY`. Frühere offene P1-Controls R2-00, R2-02..R2-07 bleiben unverändert offen/partial und blockieren weiterhin den globalen `HARDENED / VERIFIED`-Status.
