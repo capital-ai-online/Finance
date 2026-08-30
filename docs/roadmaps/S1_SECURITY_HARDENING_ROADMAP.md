@@ -19,7 +19,7 @@ Production and `main` are currently aligned at `b8c4757aaa62a2a63745e2f86a777630
 ## Owner decisions recorded 2026-08-30
 
 1. **S1-R2-08 leaked-password protection is skipped for the current Supabase Free/Base tier.** The Owner explicitly accepted that the native control is unavailable on the active tier and instructed that no custom leaked-password service/database be introduced solely to emulate the paid native feature. Existing compensating controls remain required.
-2. **S1-R2-09 through S1-R2-11 are intentionally implemented in one bounded Pull Request.** This is an explicit Owner batching instruction for the remaining P2 tail controls and is an exception to the normal one-control-per-remediation-PR slicing rule.
+2. **S1-R2-09 through S1-R2-11 are intentionally addressed in one bounded Pull Request.** R2-09 remains behind the accepted ADR-0040 Report-Only Promotion Gate until the required production evidence exists; R2-10 and R2-11 implementation proceeds in the same bounded PR.
 3. This batching instruction does **not** authorize merging, deployment, Render/Supabase/GitHub provider mutation or closure of unrelated open P1 controls.
 
 ## Reassessment register (R2)
@@ -35,7 +35,7 @@ Production and `main` are currently aligned at `b8c4757aaa62a2a63745e2f86a777630
 | S1-R2-06 | P1-C01 entitlement authority, if reachable | P1 | CONDITIONAL | Activate only if R2-00 proves authority impact |
 | S1-R2-07 | P1-05 RPO/RTO and restore capability | P1 | OPEN / UNVERIFIED | Encrypted off-site backup + isolated measured restore drill |
 | S1-R2-08 | P2-03 leaked-password protection | P2 | OWNER-ACCEPTED / TIER EXCEPTION | Native control skipped on Free/Base tier; compensating controls retained |
-| S1-R2-09 | P2-02 strict CSP promotion | P2 | IMPLEMENTED / PR + POST-DEPLOY VERIFY PENDING | Strict production default; explicit rollback modes retained |
+| S1-R2-09 | P2-02 strict CSP promotion | P2 | PARTIAL / REPORT-ONLY | Collect ADR-0040 promotion evidence before any strict production default |
 | S1-R2-10 | P2-05 demo billing/coupon logic | P2 | IMPLEMENTED / PR VERIFY PENDING | Production denies missing Stripe config; simulation DEV-only |
 | S1-R2-11 | P2-01/P2-06 evidence identity and staleness | P2 | IMPLEMENTED / PR VERIFY PENDING | Explicit machine `CURRENT`/`STALE` state transitions |
 | S1-R2-12 | P2-01 production/main content drift | P2 | VERIFIED / HISTORICAL | Keep identity correlation |
@@ -59,7 +59,7 @@ R2-07 disaster recovery evidence
         ↓
 R2-08 OWNER-ACCEPTED tier exception
         ↓
-R2-09 + R2-10 + R2-11 combined tail PR by explicit Owner instruction
+R2-09 promotion-gate preservation + R2-10 + R2-11 combined tail PR by explicit Owner instruction
         ↓
 S1-R2 HARDENED / VERIFIED gate
 ```
@@ -143,22 +143,26 @@ No Supabase provider mutation is authorized by this exception.
 
 ## S1-R2-09 — CSP strict-mode promotion
 
-**Current state:** IMPLEMENTED / PR + POST-DEPLOY VERIFY PENDING
+**Current state:** PARTIAL / REPORT-ONLY
 
-### Implementation in the active tail branch
+### Current protected state
 
 - `server/securityResponse.ts` remains the single authoritative CSP response boundary.
-- Production default changes from `report-only` to **`strict`**.
-- Per-response nonce and `'strict-dynamic'` remain the enforced script authority.
-- `'unsafe-eval'` remains absent.
-- Explicit `CSP_MODE=report-only` remains a diagnostic/rollback mode.
+- Production continues to default to **`report-only`** in accordance with ADR-0040 and GMG-005.
+- The enforced baseline remains availability-safe while the strict nonce + `'strict-dynamic'` target is evaluated through `Content-Security-Policy-Report-Only`.
+- `'unsafe-eval'` remains absent from the production target policy.
+- Explicit `CSP_MODE=strict` remains available only for an evidence-backed protected promotion.
 - Explicit `CSP_MODE=baseline` remains an availability-recovery mode.
-- Invalid/empty production mode values fail toward the strict default rather than silently weakening policy.
-- Regression tests assert strict default, rollback modes, nonce/strict-dynamic and absence of unsafe-eval.
+- Empty/invalid values fail safely to `report-only`; they do not silently promote strict enforcement.
+- Regression tests assert the report-only default, explicit strict target, nonce/strict-dynamic and absence of unsafe-eval.
+
+### Promotion evidence still required
+
+The existing 2026-08-29 security evidence records that no measured zero-violation production observation window is available. Therefore this PR does **not** promote the production default to strict. Required evidence remains the ADR-0040 Report-Only Promotion Gate, including successful first-party bootstrap and compatibility of CookieHub/Consent, Stripe, Supabase, hCaptcha and other approved integrations.
 
 ### Exit
 
-Code-level closure requires exact-head CI PASS. Final `VERIFIED PASS` additionally requires post-deploy evidence that Production reports strict CSP and approved integrations remain operational. If legitimate production breakage occurs, rollback uses the existing explicit report-only/baseline mode rather than a second CSP implementation.
+R2-09 remains open until the required production observation evidence exists and a separately reviewed protected change promotes strict enforcement. Final `VERIFIED PASS` requires Production to report strict CSP with approved integrations operational. Availability rollback remains the existing `report-only`/`baseline` path rather than a second CSP implementation.
 
 ## S1-R2-10 — Demo/sandbox billing isolation
 
@@ -222,7 +226,7 @@ The Owner explicitly requested one Pull Request for the remaining tail controls.
 
 ```text
 R2-08 decision evidence only
-+ R2-09 CSP production strict default
++ R2-09 preserve ADR-0040 report-only promotion gate and strict target
 + R2-10 production billing sandbox isolation
 + R2-11 explicit evidence staleness state
 + targeted regression tests
