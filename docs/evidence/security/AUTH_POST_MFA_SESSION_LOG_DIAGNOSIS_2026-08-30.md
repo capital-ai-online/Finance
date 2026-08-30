@@ -62,16 +62,28 @@ This mismatch explains why a successful MFA verification can be followed by a br
 4. does not project a `Free` session from an unrecoverable 401 while the global unauthorized path is taking over;
 5. has a regression test covering the post-MFA session handoff and rotation-aware subscription request.
 
-## Residual legacy subscription readbacks
+## Legacy subscription readbacks — remediated on branch
 
-Two older frontend readbacks still use the pre-hardening contract and must be removed or migrated before this work is considered fully closed:
+The two remaining pre-hardening frontend readbacks have been migrated without restoring the removed IDOR-prone query contract:
 
-- `src/components/Dashboard.tsx` performs an unauthenticated `GET /api/stripe/user-subscription?email=...` on mount;
-- `src/components/Abonnements.tsx` performs the same unauthenticated email-query readback.
+- `src/components/Dashboard.tsx` now reconciles a registered user's tier through `readAuthenticatedSubscriptionTier()`;
+- `src/components/Abonnements.tsx` uses the same authenticated helper and only runs it for a registered subject (`userId` present);
+- `src/lib/subscriptionReadback.ts` is the single UI readback adapter and calls only `authFetch('/api/stripe/user-subscription')`;
+- neither Dashboard nor Abonnements sends `email` or `userId` as subscription-readback query parameters.
 
-The server route intentionally no longer trusts `email` or `userId` query parameters. Identity is derived only from a verified Bearer token. These legacy calls can therefore no longer refresh a stale locally cached tier and can leave a historical UI value visible.
+The server therefore remains the identity authority: `resolveVerifiedIdentity(req)` derives the subject from the verified Bearer token, and the client only consumes the returned subscription projection.
 
-This residual is separate from the post-MFA token-rotation fix and should be migrated to `authFetch('/api/stripe/user-subscription')` without restoring the removed IDOR-prone query contract.
+### Dashboard cache authority repair
+
+The encrypted local Dashboard profile remains useful for user-editable presentation/profile fields, but it is no longer an entitlement authority. When cached profile data is restored, the current authenticated `UserSession` overwrites cached `email`, `id` and `subscriptionTier` values before the profile becomes visible. A stale locally cached `Free` value can therefore no longer downgrade a freshly resolved paid session.
+
+`tests/unit/subscriptionReadbackAuthContract.test.ts` guards the following boundaries:
+
+- the centralized readback uses `authFetch('/api/stripe/user-subscription')`;
+- no `?email=` or `?userId=` subscription identity is reintroduced;
+- Dashboard and Abonnements contain no legacy direct subscription fetch;
+- Dashboard cached entitlement remains subordinate to the live `UserSession`;
+- guest sessions do not issue authenticated subscription readbacks.
 
 ## MFA factor deactivation boundary
 
@@ -81,8 +93,9 @@ Current Supabase Auth implements admin factor deletion transactionally and downg
 
 ## Validation / promotion gate
 
-- Branch is based on exact `main@e311c30d18951785a68154d994a403799819c194`.
+- Branch originated from exact `main@e311c30d18951785a68154d994a403799819c194`.
 - No open PR overlapped this scope at branch creation.
 - No hosted Build/Test run was triggered before PR creation.
+- Post-MFA session handoff, authenticated subscription readback and Dashboard cache-authority boundaries are covered by regression tests in the branch.
 - PR creation, hosted CI and production promotion remain separate governed steps.
-- Before promotion, migrate the remaining Dashboard/Abonnements legacy readbacks or explicitly split them into a separately tracked follow-up with evidence that the authenticated `UserSession` tier is authoritative for all affected UI surfaces.
+- Before PR creation, re-read current `main`, correlate open PR scopes and report exact candidate/main SHAs for explicit Owner approval in accordance with `AGENTS.md`.
