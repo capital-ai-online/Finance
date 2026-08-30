@@ -64,7 +64,7 @@ afterEach(() => {
 });
 
 describe('ADR-0035 / ADR-0040 security response context', () => {
-  it('defaults production to enforced baseline plus strict report-only evaluation', () => {
+  it('defaults production to enforced strict CSP with no report-only duplicate', () => {
     process.env.NODE_ENV = 'production';
     delete process.env.CSP_MODE;
     const req = createHtmlRequest();
@@ -75,16 +75,15 @@ describe('ADR-0035 / ADR-0040 security response context', () => {
     mock.res.end('<html><head><script nonce="__CSP_NONCE__" src="/assets/app.js"></script></head></html>');
 
     const enforced = String(mock.headers.get('content-security-policy'));
-    const reportOnly = String(mock.headers.get('content-security-policy-report-only'));
-    const nonce = reportOnly.match(/'nonce-([^']+)'/)?.[1];
+    const nonce = enforced.match(/'nonce-([^']+)'/)?.[1];
 
-    expect(enforced).toContain("script-src 'self'");
-    expect(enforced).not.toContain("'strict-dynamic'");
-    expect(reportOnly).toContain("'strict-dynamic'");
+    expect(enforced).toContain("'strict-dynamic'");
+    expect(enforced).not.toContain("'unsafe-eval'");
+    expect(mock.headers.has('content-security-policy-report-only')).toBe(false);
     expect(nonce).toBeTruthy();
     expect(mock.body()).toContain(`nonce="${nonce}"`);
     expect(mock.body()).not.toContain('__CSP_NONCE__');
-    expect(mock.headers.get('x-csp-mode')).toBe('report-only');
+    expect(mock.headers.get('x-csp-mode')).toBe('strict');
     expect(mock.headers.get('x-csp-policy')).toBe('ADR-0035+ADR-0040');
     expect(mock.headers.get('cache-control')).toBe('no-store, max-age=0');
     expect(req.headers['if-none-match']).toBeUndefined();
@@ -92,7 +91,7 @@ describe('ADR-0035 / ADR-0040 security response context', () => {
     expect(req.headers.range).toBeUndefined();
   });
 
-  it('enforces strict-dynamic only when strict mode is explicitly selected', () => {
+  it('keeps explicit strict selection equivalent to the production default', () => {
     process.env.NODE_ENV = 'production';
     process.env.CSP_MODE = 'strict';
     const mock = createMockResponse();
@@ -121,9 +120,10 @@ describe('ADR-0035 / ADR-0040 security response context', () => {
     expect(mock.headers.get('x-csp-mode')).toBe('baseline');
   });
 
-  it('fails safely to report-only mode for an unknown CSP_MODE value', () => {
-    expect(resolveProductionCspMode('unexpected')).toBe('report-only');
+  it('supports explicit report-only recovery and fails closed to strict for unknown modes', () => {
+    expect(resolveProductionCspMode('unexpected')).toBe('strict');
     expect(resolveProductionCspMode('STRICT')).toBe('strict');
+    expect(resolveProductionCspMode('report-only')).toBe('report-only');
   });
 
   it('keeps the baseline and strict policy builders independently testable', () => {
@@ -160,12 +160,12 @@ describe('ADR-0035 / ADR-0040 security response context', () => {
 
     const first = createMockResponse();
     attachSecurityResponseContext(createHtmlRequest(), first.res);
-    const firstNonce = String(first.headers.get('content-security-policy-report-only'))
+    const firstNonce = String(first.headers.get('content-security-policy'))
       .match(/'nonce-([^']+)'/)?.[1];
 
     const second = createMockResponse();
     attachSecurityResponseContext(createHtmlRequest(), second.res);
-    const secondNonce = String(second.headers.get('content-security-policy-report-only'))
+    const secondNonce = String(second.headers.get('content-security-policy'))
       .match(/'nonce-([^']+)'/)?.[1];
 
     expect(firstNonce).toBeTruthy();
