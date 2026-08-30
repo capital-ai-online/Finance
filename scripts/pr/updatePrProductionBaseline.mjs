@@ -32,8 +32,14 @@ function normalizeSha(value) {
 }
 
 function skip(reason) {
-  console.log(`[PR-BASELINE-REFRESH] SKIP PR #${prNumber}: ${reason}`);
-  appendGithubOutput({ changed: 'false', skipped: 'true', skip_reason: reason, baseline_id: baseline.baselineId });
+  console.log(`[PR-BASELINE-REFRESH] STALE_RETRY_REQUIRED PR #${prNumber}: ${reason}`);
+  appendGithubOutput({
+    changed: 'false',
+    skipped: 'true',
+    evidence_state: 'STALE_RETRY_REQUIRED',
+    skip_reason: reason,
+    baseline_id: baseline.baselineId,
+  });
   process.exit(0);
 }
 
@@ -91,10 +97,18 @@ if (currentMainSha !== normalizeSha(baseline?.main?.sha)) {
 
 const update = replaceProductionBaselineBlock(latestBody, baseline);
 if (!update.changed) {
-  console.log(`[PR-BASELINE-REFRESH] PR #${prNumber} ist bereits auf ${baseline.baselineId}; kein Body-Write.`);
-  appendGithubOutput({ changed: 'false', skipped: 'false', baseline_id: baseline.baselineId });
+  console.log(`[PR-BASELINE-REFRESH] CURRENT PR #${prNumber}: ${baseline.baselineId}; kein Body-Write.`);
+  appendGithubOutput({
+    changed: 'false',
+    skipped: 'false',
+    evidence_state: update.evidenceState,
+    detected_evidence_state: update.evidenceState,
+    baseline_id: baseline.baselineId,
+  });
   process.exit(0);
 }
+
+console.log(`[PR-BASELINE-REFRESH] ${update.evidenceState} PR #${prNumber}: Baseline wird atomar aktualisiert.`);
 
 const updatedPr = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token, {
   method: 'PATCH',
@@ -106,5 +120,11 @@ if (!String(updatedPr?.body || '').includes(baseline.baselineId)) {
   fail(`PR #${prNumber} wurde geschrieben, bestätigt aber die erwartete Baseline-ID ${baseline.baselineId} nicht.`);
 }
 
-appendGithubOutput({ changed: 'true', skipped: 'false', baseline_id: baseline.baselineId });
-console.log(`[PR-BASELINE-REFRESH] PR #${prNumber} atomar auf ${baseline.baselineId} aktualisiert; alle übrigen Body-Inhalte wurden beibehalten.`);
+appendGithubOutput({
+  changed: 'true',
+  skipped: 'false',
+  evidence_state: 'CURRENT_AFTER_REFRESH',
+  detected_evidence_state: update.evidenceState,
+  baseline_id: baseline.baselineId,
+});
+console.log(`[PR-BASELINE-REFRESH] CURRENT_AFTER_REFRESH PR #${prNumber}: atomar auf ${baseline.baselineId} aktualisiert; alle übrigen Body-Inhalte wurden beibehalten.`);
