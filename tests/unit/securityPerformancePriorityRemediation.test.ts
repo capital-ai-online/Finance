@@ -62,11 +62,12 @@ describe('P2 Google Analytics build fallback', () => {
 });
 
 describe('P3 dependency lifecycle-script policy', () => {
-  it('allows only the reviewed exact package versions and fails closed on new scripts', () => {
+  it('allows only reviewed build scripts, explicitly denies the macOS-only fsevents hook, and fails closed on new scripts', () => {
     expect(packageJson.allowScripts).toEqual({
       'core-js@3.49.0': true,
       'esbuild@0.25.12': true,
       'esbuild@0.28.1': true,
+      'fsevents@2.3.3': false,
     });
     expect(npmrc.trim()).toBe('strict-allow-scripts=true');
   });
