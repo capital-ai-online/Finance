@@ -20,6 +20,7 @@ on:
         default: plan
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -30,6 +31,13 @@ concurrency:
 # einen Plan/Diff. Administrative GitHub-Aenderungen sind nur ueber einen expliziten manuellen
 # workflow_dispatch erlaubt. package_a ist absichtlich enger als full, damit eine Freigabe der
 # Kernhaertung keine noch nicht freigegebenen Actions-/Security-Einstellungen mitsetzt.
+#
+# Trust boundary:
+# - github.token mit actions:read liest ausschliesslich das ruleset-admin Environment.
+# - RULESET bleibt der separate administrative Token fuer Ruleset-/Repository-Reads und Writes
+#   sowie Environment-Writes in expliziten Apply-Modi.
+# - Plan darf keine Environment-Mutation ausfuehren und benoetigt fuer Environment-Readback keine
+#   Actions-Berechtigung auf dem administrativen RULESET-Token.
 jobs:
   sync:
     name: Ruleset lesen, Diff anzeigen, ggf. anwenden
@@ -40,6 +48,7 @@ jobs:
     timeout-minutes: 5
     environment: ruleset-admin
     permissions:
+      actions: read
       contents: read
     steps:
       - name: Repository auschecken
@@ -48,8 +57,14 @@ jobs:
           ref: main
           persist-credentials: false
 
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+
       - name: Ruleset lesen, Diff anzeigen, ggf. anwenden
         env:
+          RULESET_ADMIN_READ_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ secrets.RULESET }}
         run: |
           set -euo pipefail
