@@ -23,8 +23,8 @@ type ActiveAction = 'email' | 'google' | null;
  * Primary authentication is email/password or Google OAuth. WebAuthn passkeys configured by an
  * authenticated user in Settings are deliberately AAL2 MFA factors, not a primary-login option.
  * CAPTCHA remains fail-closed for password authentication and self-registration. Google OAuth
- * returns to `/`, after which SessionComposition performs onboarding/AAL evaluation before the
- * landing page is released to the authenticated session.
+ * and email-confirmation redirects return to `/`, after which SessionComposition performs
+ * onboarding/AAL evaluation before the landing page is released to the authenticated session.
  */
 export function LoginPage({ justLoggedOut }: LoginPageProps) {
   const [mode, setMode] = useState<EmailAuthMode>('login');
@@ -86,7 +86,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
         options: {
           data: { full_name: normalizedName },
           captchaToken,
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
       if (signUpError) throw signUpError;
