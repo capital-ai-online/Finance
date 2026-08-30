@@ -17,16 +17,18 @@ import {
   X,
   ArrowRight
 } from 'lucide-react';
+import type { SubscriptionTier } from '../app/types/UserSession';
+import { readAuthenticatedSubscriptionTier } from '../lib/subscriptionReadback';
 import { Checkout } from './Checkout';
 
 interface AbonnementsProps {
-  currentTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
-  onUpdateTier: (tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise') => void;
+  currentTier: SubscriptionTier;
+  onUpdateTier: (tier: SubscriptionTier) => void;
   email?: string;
   userId?: string;
 }
 
-export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@gmail.com', userId }: AbonnementsProps) {
+export function Abonnements({ currentTier, onUpdateTier, email = '', userId }: AbonnementsProps) {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
@@ -99,18 +101,26 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
   ];
 
   React.useEffect(() => {
-    // Query persisted database-tier for this user
-    if (email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.subscriptionTier && data.subscriptionTier !== currentTier) {
-            onUpdateTier(data.subscriptionTier);
-          }
-        })
-        .catch(err => console.error("Error syncing user subscription tier:", err));
-    }
-  }, [email]);
+    // The readback is authenticated exclusively through authFetch's live Supabase bearer token.
+    // userId is only a local signal that this view belongs to a registered session; it is never
+    // sent as a query parameter or used by the server as identity input.
+    if (!userId) return;
+
+    let cancelled = false;
+    void readAuthenticatedSubscriptionTier()
+      .then((tier) => {
+        if (!cancelled && tier && tier !== currentTier) {
+          onUpdateTier(tier);
+        }
+      })
+      .catch((err) => console.error('Error syncing authenticated subscription tier:', err));
+
+    return () => {
+      cancelled = true;
+    };
+    // Re-read when the authenticated subject changes. Identity remains bearer-derived server-side.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   // Preisvorschau im Frontend. Der tatsächlich abgerechnete Betrag wird
   // ausschließlich von Stripe über die separate STRIPE_PRICE_ID_*_YEARLY
@@ -206,7 +216,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       desc: 'Formelle BaFin/DSGVO PDF-Exports, API-Zugang und Prioritäts-Support.',
       devices: 'Bis zu 5 Geräte',
       features: [
-        'Offizielle BaFin & DSGVO PDF/CSV Exports',
+        'Offizielle BaFin/DSGVO PDF/CSV Exports',
         'Realtime AI-Newsfeed & Multi-Model Engine',
         'Unbegrenzte Screenings, Backtests & Monte-Carlo',
         'Exklusives Buffett-Style AI Cockpit',
