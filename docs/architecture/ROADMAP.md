@@ -3,8 +3,8 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `2.5.0`  
 **Status date:** `2026-08-30`  
-**Current repository baseline:** `main@460e8dd088a78f426cac392c20da104f5873ecad` — includes merged PRs #607, #610, #611, #612 and #614  
-**Open PR correlation:** #615 is the prerequisite writer for S1 policy/ruleset safety and overlaps this branch on `ROADMAP.md` and the Authority Registry. This #617 snapshot must follow #615 and be rebased/revalidated after its Human merge.  
+**Current repository baseline:** `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc` — includes merged PRs #607, #610, #611, #612, #614 and #615  
+**Open PR correlation:** #617 is the only open PR. Its branch is synchronized with `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc`; the former #615 overlap is resolved by treating ROADMAP v2.4.0 / Authority Registry v1.34.0 as predecessors of this v2.5.0 / v1.35.0 projection.  
 **Platform version authority:** `package.json#version` = `0.6.0`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -38,12 +38,12 @@ Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registri
 ## S1-R2 security-governance state
 
 - `S1-R2-01` workflow startup-failure classification is resolved as historical/obsolete phantom-control evidence; active workflow YAML was not changed.
-- `S1-R2-02` GitHub default-branch enforcement code/docs merged as PR #611 (`dc3dd333`). **OWNER DISPATCH PENDING**; PR #615 now implements policy-owned `required_linear_history`, Squash/Rebase-only methods and fail-closed builder/normalizer/floor checks, but must be Human-merged with Exact-Head-PASS before any apply.
+- `S1-R2-02` GitHub default-branch enforcement code/docs merged as PR #611 (`dc3dd333`). PR #615 was Human-merged at `main@f714eae6` after Exact-Head-PASS and now supplies policy-owned `required_linear_history`, Squash/Rebase-only methods and fail-closed builder/normalizer/floor checks. **OWNER DISPATCH PENDING**; no live apply has occurred.
 - GitHub Pro capability is active for the private repository and the repository ruleset `main-production-protection` is readable.
-- Provider readback on 2026-08-30 at 19:08 CEST contains only `non_fast_forward`, `pull_request` (without CODEOWNER or thread-resolution requirements) and advisory `code_quality`; the bypass actor set is empty and `current_user_can_bypass=never`.
+- Provider readback after the #615 merge on 2026-08-30 at 19:39 CEST still contains only `non_fast_forward`, `pull_request` (without CODEOWNER or thread-resolution requirements) and advisory `code_quality`; the bypass actor set is empty and `current_user_can_bypass=never`.
 - Live drift: `required_status_checks`, `required_linear_history` and `deletion` are absent; CODEOWNER review and required review-thread resolution are disabled.
 - `required_signatures` is intentionally absent after the explicit Owner decision dated 2026-08-30. Commit signing is optional and is not a merge-readiness, CI, PR-creation or protected-main prerequisite. PR #613 remains discarded.
-- The canonical target after #615 retains four required checks: `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks`; it also restores linear history, deletion protection, CODEOWNER review and thread resolution.
+- The canonical target now present on `main` retains four required checks: `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks`; it also restores linear history, deletion protection, CODEOWNER review and thread resolution when a separately authorized live apply is performed.
 - `Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain intentionally outside the pre-merge required-check set.
 - A live plan/full apply is a separate Owner-gated provider mutation and is not authorized by #615 or #617.
 - Checklist: `docs/evidence/security/S1_R2_02_POST_MERGE_DISPATCH_CHECKLIST_2026-08-30.md`.
@@ -78,7 +78,7 @@ M10 MUST remain off until all then-current prerequisites are resolved and eviden
 
 ## Deployment authority — current state
 
-Render native Auto Deploy remains off. Current production promotion authority resolves through verified `main` CI and the existing deployment control plane. A second automatic deployment authority requires a separate architecture/security decision. The production preflight baseline generated on 2026-08-30 binds production and `main` to `460e8dd088a78f426cac392c20da104f5873ecad` at platform version `0.6.0`.
+Render native Auto Deploy remains off. Current production promotion authority resolves through verified `main` CI and the existing deployment control plane. A second automatic deployment authority requires a separate architecture/security decision. Production/main/head identity for this PR is supplied only by the machine-managed exact-head preflight block; this documentary synchronization performs no production mutation or inferred production rebinding.
 
 ## DevelopmentChain / Governance status
 
@@ -86,10 +86,10 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document v2.5.0; synchronized to `main@460e8dd088a78f426cac392c20da104f5873ecad` |
-| Open Pull Requests at this synchronization | #615 is prerequisite; OPEN-STEPS-BIND-2026-08-30 (#617) follows it and overlaps on current-state/authority files |
+| Current-State Index | this document v2.5.0; synchronized to `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc` |
+| Open Pull Requests at this synchronization | only #617; former #615 overlap resolved during main synchronization |
 | S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
-| S1-R2-02 GitHub main enforcement | **IMPLEMENTED IN REPOSITORY / LIVE DRIFT OPEN** after #611; #615 remediation pending Human merge; `required_signatures` intentionally absent; `mode=full` blocked |
+| S1-R2-02 GitHub main enforcement | **REMEDIATION MERGED / LIVE DRIFT OPEN**; #615 is on main, `required_signatures` intentionally absent, Owner plan/apply still pending |
 | Value-Chain Coverage | Coverage-Map + Inventar *-0 on main via #610; append-only registry payload + *-1 specification in OPEN-STEPS-BIND; physical registry insert not performed |
 | M10 Passkey PR-CI enforcement | **SUSPENDED / OFF** |
 | Human/Owner PR creation | **REQUIRED** after final main/open-PR correlation and bound to exact main/head SHAs |
@@ -142,11 +142,10 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 
 ## Current next action
 
-1. Human-review and merge #615 first; require its exact-head checks to pass;
-2. rebase/synchronize #617 on the resulting `main`, resolve current-state/authority overlap, and rerun exact-head checks before Human review;
-3. keep `required_signatures` disabled as an intentional Owner decision; do not merge #613;
-4. only after #615 is merged: Owner-only S1-R2-02 `ruleset-sync` on `main` starts with `mode=plan`; `mode=full` requires separate Owner-ACCEPT and verified diff/readback;
-5. keep the physical `document-registry.json` insert separate from this payload-only PR;
-6. after the documentary bind, first runtime candidates are SUP-1 / VM-2 / DQ-1 as Klasse-C work on a fresh branch; PD-1 waits for Owner-ACCEPT;
-7. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until remaining blockers and a new explicit Human/Owner decision are satisfied;
-8. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
+1. run and review all Exact-Head checks for synchronized PR #617, then leave the merge decision to the Human/Owner;
+2. keep `required_signatures` disabled as an intentional Owner decision; do not revive discarded PR #613;
+3. Owner-only S1-R2-02 `ruleset-sync` on trusted `main` starts with `mode=plan`; `mode=full` requires separate Owner-ACCEPT and verified diff/readback;
+4. keep the physical `document-registry.json` insert separate from this payload-only PR;
+5. after the documentary bind, first runtime candidates are SUP-1 / VM-2 / DQ-1 as Klasse-C work on a fresh branch; PD-1 waits for Owner-ACCEPT;
+6. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until remaining blockers and a new explicit Human/Owner decision are satisfied;
+7. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.

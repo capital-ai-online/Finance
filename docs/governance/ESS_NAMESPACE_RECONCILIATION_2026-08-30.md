@@ -2,7 +2,7 @@
 
 **Document ID:** DOC-GOV-ESS-NAMESPACE-RECONCILE-2026-08-30  
 **Status:** REVIEWED / PATH-RESOLVED / AUTHORITY-IDS REGISTERED  
-**Baseline:** `main@460e8dd088a78f426cac392c20da104f5873ecad`  
+**Baseline:** `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc`  
 **Does not:** rename ESS numbers, delete skill files, reactivate M10, create ESS-0025+
 
 ## Befund gegen #611-Index
