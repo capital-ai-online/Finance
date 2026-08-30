@@ -68,7 +68,8 @@ describe('website primary login regression boundary', () => {
     expect(loginPage).toContain('supabase.auth.signUp');
     expect(loginPage).toContain('data: { full_name: normalizedName }');
     expect(loginPage).toContain('captchaToken,');
-    expect(loginPage).toContain("emailRedirectTo: `${window.location.origin}/login`");
+    expect(loginPage).toContain("emailRedirectTo: `${window.location.origin}/`");
+    expect(loginPage).not.toContain("emailRedirectTo: `${window.location.origin}/login`");
     expect(loginPage).not.toContain('localStorage.setItem');
     expect(loginPage).not.toContain('sessionStorage.setItem');
   });
