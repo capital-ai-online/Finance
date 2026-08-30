@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "COMMIT-SIGNING-AUTOMATION-2026-08-30",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Add owner-gated automation that inspects unsigned PR commits and, after explicit workflow_dispatch apply, recreates the PR head as one verified-signed squash commit without merging or weakening repository rulesets.",
+  "workItemDE": "Owner-gesteuerte Commit-Signing-Automatisierung: unsigned PR-Commits prüfen und nach explizitem Apply als einen signierten Squash-Commit auf dem PR-Branch neu erzeugen. Kein Self-Merge, kein Ruleset-Apply.",
+  "startedAt": "2026-08-30T17:36:00+02:00",
+  "updatedAt": "2026-08-30T17:36:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "1286bdedc8416bb6621bbd621a723117f92e47bc",
+  "claimedPaths": [
+    ".ai/work-claims/COMMIT-SIGNING-AUTOMATION-2026-08-30.json",
+    ".github/workflows/sign-pr-commits.yml",
+    "scripts/security/inspectCommitSignatures.mjs",
+    "docs/runbooks/COMMIT_SIGNING_AUTOMATION.md",
+    "docs/evidence/security/COMMIT_SIGNING_AUTOMATION_PREFLIGHT_2026-08-30.md"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned. Merge remains Human/Owner-only.",
+  "notes": [
+    "Does not re-enable required_signatures. Owner disabled that rule on 2026-08-30; reactivation remains a separate ruleset-admin decision.",
+    "Does not mutate .github/policies/main-production-protection.expected.json or docs/architecture/ROADMAP.md (open PR #611).",
+    "No self-merge. No production, Render, Supabase or Stripe mutation.",
+    "Apply mode requires Owner-provided GPG secrets and fails closed without them."
+  ]
+}

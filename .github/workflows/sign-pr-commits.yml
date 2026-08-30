@@ -1,0 +1,167 @@
+name: PR-Commits signieren
+run-name: >-
+  PR #${{ inputs.pull_number }} — Commit-Signing ${{ inputs.mode }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_number:
+        description: 'Offene Same-Repository-PR-Nummer gegen main'
+        required: true
+        type: string
+      mode:
+        description: 'plan = nur Signaturstand; apply = PR-Head als einen signierten Squash-Commit neu schreiben'
+        type: choice
+        options:
+          - plan
+          - apply
+        default: plan
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: sign-pr-commits-${{ inputs.pull_number }}
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Signaturstand prüfen
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      head_sha: ${{ steps.inspect.outputs.head_sha }}
+      head_ref: ${{ steps.inspect.outputs.head_ref }}
+      unsigned_count: ${{ steps.inspect.outputs.unsigned_count }}
+    steps:
+      - name: Vertrauenswürdigen main-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+
+      - name: PR-Commit-Signaturen inspizieren
+        id: inspect
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pull_number }}
+        run: |
+          set -euo pipefail
+          node scripts/security/inspectCommitSignatures.mjs > "$RUNNER_TEMP/signature-report.json" || status=$?
+          cat "$RUNNER_TEMP/signature-report.json" >> "$GITHUB_STEP_SUMMARY"
+          HEAD_SHA="$(node -e 'const r=require(process.env.RUNNER_TEMP+"/signature-report.json"); process.stdout.write(r.headSha||"")')"
+          HEAD_REF="$(node -e 'const r=require(process.env.RUNNER_TEMP+"/signature-report.json"); process.stdout.write(r.headRef||"")')"
+          UNSIGNED="$(node -e 'const r=require(process.env.RUNNER_TEMP+"/signature-report.json"); process.stdout.write(String(r.unsignedCount??""))')"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+          echo "unsigned_count=$UNSIGNED" >> "$GITHUB_OUTPUT"
+          if [ "${status:-0}" = "2" ]; then
+            echo "Unsigned commits vorhanden; Apply bleibt Owner-Entscheidung."
+            exit 0
+          fi
+          if [ "${status:-0}" != "0" ]; then
+            exit "$status"
+          fi
+
+  apply:
+    name: Signierten Squash-Commit schreiben
+    needs: inspect
+    if: github.ref == 'refs/heads/main' && inputs.mode == 'apply'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Signing-Geheimnisse prüfen
+        env:
+          COMMIT_SIGNING_GPG_PRIVATE_KEY: ${{ secrets.COMMIT_SIGNING_GPG_PRIVATE_KEY }}
+          COMMIT_SIGNING_GIT_NAME: ${{ secrets.COMMIT_SIGNING_GIT_NAME }}
+          COMMIT_SIGNING_GIT_EMAIL: ${{ secrets.COMMIT_SIGNING_GIT_EMAIL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${COMMIT_SIGNING_GPG_PRIVATE_KEY:-}" ] || [ -z "${COMMIT_SIGNING_GIT_NAME:-}" ] || [ -z "${COMMIT_SIGNING_GIT_EMAIL:-}" ]; then
+            echo "Apply fail-closed: Repository-Secrets COMMIT_SIGNING_GPG_PRIVATE_KEY, COMMIT_SIGNING_GIT_NAME und COMMIT_SIGNING_GIT_EMAIL fehlen." >&2
+            echo "Public Key muss am GitHub-Konto des Owners als verifizierter Signing-Key hinterlegt sein." >&2
+            exit 1
+          fi
+
+      - name: PR-Branch ohne persistierte Checkout-Credentials holen
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ needs.inspect.outputs.head_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: GPG-Schlüssel importieren und Head signiert squashen
+        env:
+          COMMIT_SIGNING_GPG_PRIVATE_KEY: ${{ secrets.COMMIT_SIGNING_GPG_PRIVATE_KEY }}
+          COMMIT_SIGNING_GPG_PASSPHRASE: ${{ secrets.COMMIT_SIGNING_GPG_PASSPHRASE }}
+          COMMIT_SIGNING_GIT_NAME: ${{ secrets.COMMIT_SIGNING_GIT_NAME }}
+          COMMIT_SIGNING_GIT_EMAIL: ${{ secrets.COMMIT_SIGNING_GIT_EMAIL }}
+          EXPECTED_HEAD_SHA: ${{ needs.inspect.outputs.head_sha }}
+          HEAD_REF: ${{ needs.inspect.outputs.head_ref }}
+          PR_NUMBER: ${{ inputs.pull_number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test -n "$HEAD_REF"
+          test -n "$EXPECTED_HEAD_SHA"
+          case "$HEAD_REF" in
+            main|master) echo "Refuse to rewrite protected default branch $HEAD_REF" >&2; exit 1 ;;
+          esac
+
+          CURRENT_HEAD="$(git rev-parse HEAD)"
+          if [ "$CURRENT_HEAD" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "Head drift: $CURRENT_HEAD != $EXPECTED_HEAD_SHA" >&2
+            exit 1
+          fi
+
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "PR-Head enthält aktuellen main nicht; zuerst Branch synchronisieren." >&2
+            exit 1
+          fi
+
+          export GNUPGHOME="$RUNNER_TEMP/gnupg-signing"
+          mkdir -p "$GNUPGHOME"
+          chmod 700 "$GNUPGHOME"
+          printf '%s\n' "$COMMIT_SIGNING_GPG_PRIVATE_KEY" | gpg --batch --import
+          KEY_ID="$(gpg --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')"
+          test -n "$KEY_ID"
+          if [ -n "${COMMIT_SIGNING_GPG_PASSPHRASE:-}" ]; then
+            echo "$COMMIT_SIGNING_GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign <<<'capital-ai-signing-probe'
+          fi
+
+          git config user.name "$COMMIT_SIGNING_GIT_NAME"
+          git config user.email "$COMMIT_SIGNING_GIT_EMAIL"
+          git config user.signingkey "$KEY_ID"
+          git config commit.gpgsign true
+          git config gpg.program gpg
+
+          SUBJECT="$(git log -1 --format=%s)"
+          git reset --soft origin/main
+          if git diff --cached --quiet; then
+            echo "Kein Diff gegen origin/main; nichts zu signieren." >&2
+            exit 1
+          fi
+
+          if [ -n "${COMMIT_SIGNING_GPG_PASSPHRASE:-}" ]; then
+            export GPG_TTY=""
+            git -c gpg.program=gpg commit --no-verify -S -m "$SUBJECT" --gpg-sign="$KEY_ID"
+          else
+            git commit --no-verify -S -m "$SUBJECT"
+          fi
+
+          NEW_SHA="$(git rev-parse HEAD)"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force-with-lease=refs/heads/${HEAD_REF}:${EXPECTED_HEAD_SHA} origin "HEAD:refs/heads/${HEAD_REF}"
+          echo "Signed squash $NEW_SHA replaced unsigned head $EXPECTED_HEAD_SHA on $HEAD_REF for PR #$PR_NUMBER." >> "$GITHUB_STEP_SUMMARY"
