@@ -47,6 +47,28 @@ describe('S1-R2-00 entitlement authority boundary', () => {
     expect(quota).not.toMatch(/req\.query[^\n]*(?:tier|subscriptionTier)/i);
   });
 
+  it('requires the authenticated server ledger before committing a compliance PDF export', () => {
+    const exporter = read('src/components/ComplianceExporter.tsx');
+    const modal = read('src/components/PdfExportModal.tsx');
+
+    const clickStart = exporter.indexOf('const handleExportClick');
+    const prepareStart = exporter.indexOf('const preparePDFReport');
+    expect(clickStart).toBeGreaterThan(-1);
+    expect(prepareStart).toBeGreaterThan(clickStart);
+    const clickHandler = exporter.slice(clickStart, prepareStart);
+
+    expect(clickHandler).toContain('setShowExportModal(true);');
+    expect(clickHandler).not.toContain('generatePDFReport');
+    expect(exporter).toContain('{showExportModal && (');
+    expect(exporter).not.toContain('{showExportModal && userEmail && (');
+
+    expect(modal).toContain("authFetch('/api/stripe/pdf-credits')");
+    expect(modal).toContain("authFetch('/api/stripe/consume-pdf-credit'");
+    expect(modal).toContain("authFetch('/api/stripe/create-checkout-session'");
+    expect(modal).toContain('if (isOpen) {');
+    expect(modal).not.toContain('if (isOpen && email)');
+  });
+
   it('does not expose the privileged direct subscription writer through production source call sites', () => {
     const files = [...productionSourceFiles('server'), ...productionSourceFiles('src')];
     const callSites: string[] = [];
