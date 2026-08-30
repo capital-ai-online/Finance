@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.1.0",
+  "purpose": "Registry insert payload applied in the successor PR that replaces #608. Source of truth after merge is docs/governance/document-registry.json.",
+  "status": "INSERTED_IN_SUCCESSOR_PR",
+  "supersedes": "PR #608",
+  "targetRegistry": "docs/governance/document-registry.json",
+  "targetField": "entries",
+  "entries": [
+    {
+      "documentId": "DOC-ROADMAP-VC-COV-HARDEN-2026-08-30",
+      "type": "roadmap",
+      "documentRole": "roadmap",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ARCH-CHAIN-0001 + ADR-0087 + AUTH-GOV-DEVELOPMENT-CHAIN-STATUS",
+      "authorityRefs": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS", "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],
+      "projectionOf": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS", "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.0.1",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md"
+    },
+    {
+      "documentId": "DOC-WP-VC-H-INVENTORY-2026-08-30",
+      "type": "work-package",
+      "documentRole": "inventory",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ROADMAP-VC-COV-HARDEN-2026-08-30",
+      "authorityRefs": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS"],
+      "projectionOf": ["AUTH-GOV-DEVELOPMENT-CHAIN-STATUS"],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md"
+    }
+  ]
+}
