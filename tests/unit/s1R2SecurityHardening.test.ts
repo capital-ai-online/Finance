@@ -6,20 +6,20 @@ import {
   resolveProductionCspMode,
 } from '../../server/securityResponse';
 
-describe('S1-R2-09 strict CSP promotion', () => {
-  it('uses strict CSP as the production default', () => {
-    expect(resolveProductionCspMode(undefined)).toBe('strict');
-    expect(resolveProductionCspMode('')).toBe('strict');
-    expect(resolveProductionCspMode('unexpected-value')).toBe('strict');
+describe('S1-R2-09 strict CSP promotion gate', () => {
+  it('keeps production on report-only until ADR-0040 promotion evidence exists', () => {
+    expect(resolveProductionCspMode(undefined)).toBe('report-only');
+    expect(resolveProductionCspMode('')).toBe('report-only');
+    expect(resolveProductionCspMode('unexpected-value')).toBe('report-only');
   });
 
-  it('retains explicit report-only and baseline rollback modes', () => {
+  it('retains explicit strict target and baseline recovery modes', () => {
     expect(resolveProductionCspMode('report-only')).toBe('report-only');
     expect(resolveProductionCspMode('baseline')).toBe('baseline');
     expect(resolveProductionCspMode('strict')).toBe('strict');
   });
 
-  it('enforces nonce + strict-dynamic without unsafe-eval', () => {
+  it('keeps the strict target nonce-based and free of unsafe-eval', () => {
     const csp = buildStrictProductionCsp('r2-test-nonce');
     expect(csp).toContain("script-src 'nonce-r2-test-nonce'");
     expect(csp).toContain("'strict-dynamic'");
