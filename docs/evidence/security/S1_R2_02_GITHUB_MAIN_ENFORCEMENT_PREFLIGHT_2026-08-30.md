@@ -1,7 +1,7 @@
 # S1-R2-02 — GitHub Default-Branch Enforcement Preflight / Post-Activation Evidence
 
 - Date: 2026-08-30
-- Baseline: `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7`
+- Baseline: `main@4e3de6f489989e64962225874dd7dd69400fcd95`
 - Repository: `SvenKulessa/Finance` (private)
 - Ruleset: `main-production-protection`
 - Mutation status: PARTIALLY IMPLEMENTED / CANONICAL RECONCILIATION PENDING
@@ -12,17 +12,19 @@ Before GitHub Pro activation, the private repository Rulesets API returned HTTP 
 
 ## Current provider readback
 
-GitHub Pro capability is now operational for this repository. The repository Rulesets API is readable and reports `main-production-protection` with `enforcement: active`.
+GitHub Pro capability is operational for this repository. The repository Rulesets API is readable and reports `main-production-protection` with `enforcement: active`.
 
-The current live ruleset contains:
+Provider readback dated 2026-08-30 after the Owner signing decision reports the current live ruleset contains:
 
 - `non_fast_forward`;
 - `pull_request` with `require_code_owner_review: true`;
 - strict `required_status_checks`;
-- `required_signatures`;
 - `required_linear_history`;
+- `code_quality` with warning severity;
 - `bypass_actors: []`;
 - `current_user_can_bypass: never`.
+
+`required_signatures` is not present in the current live ruleset.
 
 The current required status checks are:
 
@@ -42,19 +44,23 @@ Two bounded differences remain between the active provider state and `.github/po
 
 The canonical expected policy therefore keeps both controls enabled as the desired state. The historical single-owner deletion exception is superseded by the explicit Owner decision dated 2026-08-30.
 
-## Signed-commit enforcement
+## Commit signing decision
 
-`required_signatures` is active on protected `main`. Merge candidates must therefore satisfy GitHub's verified-signature enforcement. The previous S1-R2-02 PR branch contained unsigned API-created commits and is not acceptable as final merge evidence under the active rule.
+Owner decision dated 2026-08-30: commit signing is no longer a mandatory merge or protected-main control for CAPITAL-AI. `required_signatures` is intentionally disabled and must not be treated as a prerequisite for PR creation, CI execution, merge readiness or S1-R2-02 completion.
 
-The remediation strategy is fail-closed: do not weaken `required_signatures`; recreate the bounded change set from current `main`, minimize commit count, and require a verified signed candidate before Human merge.
+Signed commits remain permitted and may be used voluntarily for provenance or higher-assurance workflows, but the absence of a verified signature is not by itself a governance failure. Human/Owner merge authority, CODEOWNER review, required status checks, non-fast-forward protection, linear history and the bypass-free ruleset remain the authoritative controls.
+
+This decision specifically removes the previous requirement to re-create agent/API-generated commits only to satisfy signature enforcement. It does not weaken the prohibition on direct agent changes to `main` or the requirement for Human/Owner merge decisions.
 
 ## Canonical reconciliation path
 
-No direct ad-hoc Ruleset API mutation is authorized. After Human merge of the policy change, reconciliation must use the existing canonical workflow:
+No direct ad-hoc Ruleset API mutation is authorized. Reconciliation must use the existing canonical workflow after the policy/script safety review is complete:
 
 `.github/workflows/ruleset-sync.yml` → `workflow_dispatch(mode=full)` on `main` → protected environment `ruleset-admin` → `scripts/security/rulesetSync.mjs apply`.
 
-The full reconciliation is expected to preserve the existing live controls and additionally apply:
+Before `mode=full` is executed, `rulesetSync.mjs` must be verified to preserve or canonically own all intended live controls, especially `required_linear_history` and `code_quality`, while keeping `required_signatures` disabled.
+
+The reconciliation target additionally applies:
 
 - `deletion`;
 - `required_review_thread_resolution: true`.
@@ -68,13 +74,14 @@ S1-R2-02 reaches `VERIFIED PASS` only when the provider readback confirms:
 - `pull_request` present;
 - `required_review_thread_resolution: true`;
 - exactly the intended four required checks remain issuer-bound;
-- `required_signatures` remains present;
+- `required_linear_history` remains present;
+- `required_signatures` remains absent unless a later explicit Owner decision re-enables it;
 - `bypass_actors: []`;
 - `current_user_can_bypass: never`.
 
 ## Rollback
 
-If the full reconciliation causes an event/check deadlock, roll back only the incompatible rule through the same Owner-gated ruleset-sync path. Do not remove PR enforcement, signed-commit enforcement, non-fast-forward protection or bypass-free posture merely to make a blocked change mergeable.
+If the full reconciliation causes an event/check deadlock, roll back only the incompatible rule through the same Owner-gated ruleset-sync path. Do not remove PR enforcement, required checks, non-fast-forward protection, linear-history protection or bypass-free posture merely to make a blocked change mergeable. Commit signing is optional under the current Owner decision and is not part of the rollback floor.
 
 ## Production boundary
 
