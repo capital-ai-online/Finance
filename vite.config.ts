@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 
 const packageMetadata = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'),
@@ -11,13 +11,6 @@ const packageMetadata = JSON.parse(
 const PLATFORM_SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 if (!PLATFORM_SEMVER.test(packageMetadata.version)) {
   throw new Error('[Vite] package.json#version must be strict MAJOR.MINOR.PATCH SemVer.');
-}
-
-// The GA measurement ID is optional during CI/local builds. Exposing an empty value keeps the
-// consent runtime fail-closed and prevents Vite from shipping an unresolved %VITE_*% placeholder.
-// A real Render build-time value, when present, always wins.
-if (process.env.VITE_GA_MEASUREMENT_ID === undefined) {
-  process.env.VITE_GA_MEASUREMENT_ID = '';
 }
 
 // Strangler adapter for the remaining Dashboard monolith. The source file is
@@ -156,7 +149,16 @@ const pdfBrandDefinition = {
   },
 } as const;
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  // Resolve normal Vite .env files first. Only if neither the deployment environment nor the
+  // mode-specific file supplies GA do we expose an empty public value. Empty is deliberately
+  // invalid in the consent runtime, so CI/local builds remain fail-closed without an unresolved
+  // `%VITE_GA_MEASUREMENT_ID%` placeholder or warning.
+  const fileEnv = loadEnv(mode, process.cwd(), 'VITE_');
+  if (process.env.VITE_GA_MEASUREMENT_ID === undefined) {
+    process.env.VITE_GA_MEASUREMENT_ID = fileEnv.VITE_GA_MEASUREMENT_ID ?? '';
+  }
+
   return {
     plugins: [platformVersionProjectionPlugin(), react(), tailwindcss()],
     define: {
