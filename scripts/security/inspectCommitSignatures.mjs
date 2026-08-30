@@ -2,7 +2,7 @@
 
 /**
  * Read-only inspector for GitHub commit verification on an open same-repository PR.
- * Does not mutate branches, rulesets or pull-request state.
+ * Emits one JSON object on stdout. Human summary goes to stderr.
  */
 
 const repository = String(process.env.GITHUB_REPOSITORY || '').trim();
@@ -85,9 +85,9 @@ const report = {
   commits: rows,
 };
 
-console.log(JSON.stringify(report, null, 2));
-console.log(
-  `[COMMIT-SIGNING] PR #${prNumber}: ${report.verifiedCount}/${report.commitCount} verified; unsigned=${report.unsignedCount}.`,
+process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+process.stderr.write(
+  `[COMMIT-SIGNING] PR #${prNumber}: ${report.verifiedCount}/${report.commitCount} verified; unsigned=${report.unsignedCount}.\n`,
 );
 
 if (unsigned.length > 0) {
