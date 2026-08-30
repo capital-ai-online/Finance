@@ -2,11 +2,13 @@ import fs from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-describe('ruleset sync linear-history contract', () => {
+describe('ruleset sync security contract', () => {
   const expected = JSON.parse(
     fs.readFileSync('.github/policies/main-production-protection.expected.json', 'utf8'),
   );
   const source = fs.readFileSync('scripts/security/rulesetSync.mjs', 'utf8');
+  const adminSource = fs.readFileSync('scripts/security/rulesetAdminEnvironment.mjs', 'utf8');
+  const workflow = fs.readFileSync('.github/workflows/ruleset-sync.yml', 'utf8');
 
   it('owns linear history in the canonical expected policy', () => {
     expect(expected.required.required_linear_history).toBe(true);
@@ -30,5 +32,21 @@ describe('ruleset sync linear-history contract', () => {
   it('keeps mandatory signing disabled unless a later Owner decision changes policy', () => {
     expect(expected.required.required_signatures).toBeUndefined();
     expect(source).not.toContain("{ type: 'required_signatures' }");
+  });
+
+  it('keeps plan environment readback least-privilege and separate from admin writes', () => {
+    expect(workflow).toContain('actions: read');
+    expect(workflow).toContain('RULESET_ADMIN_READ_TOKEN: ${{ github.token }}');
+    expect(workflow).toContain('GH_TOKEN: ${{ secrets.RULESET }}');
+    expect(adminSource).toContain('const readToken = process.env.RULESET_ADMIN_READ_TOKEN;');
+    expect(adminSource).toContain('const adminToken = process.env.GH_TOKEN;');
+    expect(adminSource).toContain("if (mode === 'apply' && !adminToken)");
+    expect(adminSource).toContain('const environment = await gh(environmentPath, readToken);');
+    expect(adminSource).toContain('await gh(environmentPath, adminToken, {');
+  });
+
+  it('pins the ruleset control plane to the current supported Node 24 baseline', () => {
+    expect(workflow).toContain('actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444');
+    expect(workflow).toContain("node-version: '24.18.0'");
   });
 });
