@@ -101,6 +101,7 @@ function buildDesiredRuleset(expected) {
     rules: [
       ...(req.non_fast_forward_protection ? [{ type: 'non_fast_forward' }] : []),
       ...(req.deletion_protection ? [{ type: 'deletion' }] : []),
+      ...(req.required_linear_history ? [{ type: 'required_linear_history' }] : []),
       {
         type: 'pull_request',
         parameters: {
@@ -111,7 +112,7 @@ function buildDesiredRuleset(expected) {
           require_last_push_approval: false,
           required_review_thread_resolution: req.required_review_thread_resolution === true,
           require_extra_approval_for_unattributed_changes: req.require_extra_approval_for_unattributed_changes === true,
-          allowed_merge_methods: ['merge', 'squash', 'rebase'],
+          allowed_merge_methods: req.allowed_merge_methods ?? ['squash', 'rebase'],
         },
       },
       {
@@ -138,7 +139,7 @@ function preserveApprovedLiveRules(desired, current) {
 }
 
 function normalizedRule(rule) {
-  if (rule.type === 'non_fast_forward' || rule.type === 'deletion') return { type: rule.type };
+  if (['non_fast_forward', 'deletion', 'required_linear_history'].includes(rule.type)) return { type: rule.type };
   if (rule.type === 'pull_request') {
     const p = rule.parameters ?? {};
     return {
@@ -205,6 +206,9 @@ function enforceRulesetFloor(desired) {
   if (statusRule?.parameters.strict_required_status_checks_policy !== true) failures.push('strict required status checks muss aktiviert sein');
   if (statusRule?.parameters.do_not_enforce_on_create !== false) failures.push('Required Checks muessen auch bei Ref-Erstellung gelten');
   if (!normalized.rules.some((rule) => rule.type === 'non_fast_forward')) failures.push('non_fast_forward-Schutz fehlt');
+  if (!normalized.rules.some((rule) => rule.type === 'required_linear_history')) failures.push('required_linear_history-Schutz fehlt');
+  if (prRule?.parameters.allowed_merge_methods.includes('merge')) failures.push('Merge-Commits sind mit required_linear_history unvereinbar');
+  if (!prRule?.parameters.allowed_merge_methods.includes('squash') || !prRule?.parameters.allowed_merge_methods.includes('rebase')) failures.push('squash und rebase muessen als lineare Merge-Methoden zugelassen sein');
   if (!prRule) failures.push('pull_request-Pflicht fehlt');
   if (prRule?.parameters.require_code_owner_review !== true) failures.push('CODEOWNER-Review-Pflicht fehlt');
   if (prRule?.parameters.required_review_thread_resolution !== true) failures.push('Review-Thread-Aufloesung muss erforderlich sein');

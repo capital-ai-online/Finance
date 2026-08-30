@@ -1,10 +1,10 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.3.0`  
+**Version:** `2.4.0`  
 **Status date:** `2026-08-30`  
-**Current repository baseline:** `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7` — includes merged PR #607  
-**Open PR correlation:** PR #608 (`docs/value-chain-coverage-hardening-2026-08-30`) — no file overlap with this current-state index work package  
+**Current repository baseline:** `main@460e8dd088a78f426cac392c20da104f5873ecad` — includes merged PRs #611, #612 and #614  
+**Open PR correlation:** PR #617 (`docs/open-steps-bind-2026-08-30-v6`) also updates this current-state index; #615 is the prerequisite S1 ruleset/signing authority and must merge first.  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -40,11 +40,11 @@ Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registri
 - `S1-R2-01` workflow startup-failure classification is resolved as historical/obsolete phantom-control evidence; active workflow YAML was not changed.
 - `S1-R2-02` GitHub default-branch enforcement is **IMPLEMENTED / POST-MUTATION VERIFICATION PENDING**.
 - GitHub Pro capability is active for the private repository and the repository ruleset `main-production-protection` is readable and enforced.
-- Live rules currently include `non_fast_forward`, `pull_request`, strict `required_status_checks`, `required_signatures`, `required_linear_history` and an empty bypass actor set.
-- Required checks are `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks`.
-- `Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain intentionally outside the pre-merge required-check set because they can be skipped on PR validation.
-- Remaining live drift against the canonical expected policy: `deletion` is not yet present and `required_review_thread_resolution` is still `false`; both are prepared for reconciliation through the existing Owner-gated `ruleset-sync` workflow after Human merge.
-- `required_signatures` is active now. New PR work intended for `main` must therefore use verified signed commits; unsigned agent/API-created commits are not merge-ready evidence.
+- Live provider readback at 2026-08-30T19:08:51+02:00 contains only `non_fast_forward`, `pull_request` and `code_quality`; `bypass_actors` is empty and `current_user_can_bypass` is `never`.
+- **Critical live protection drift:** `required_status_checks`, `required_linear_history`, `deletion`, CODEOWNER review and review-thread resolution are absent. `require_extra_approval_for_unattributed_changes` is the only active review hardening flag.
+- `required_signatures` is intentionally absent after the explicit Owner decision dated 2026-08-30. Commit signing is optional and is not a merge-readiness, CI, PR-creation or protected-main prerequisite.
+- The canonical target in this PR explicitly owns `required_linear_history`, limits allowed merge methods to squash/rebase and retains the four issuer-bound checks: `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks`.
+- `Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain intentionally outside the required-check set. No live Ruleset apply is authorized by this PR.
 
 ## ESS current-state correlation
 
@@ -84,15 +84,15 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document; synchronized to `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7` plus provider-side Ruleset readback dated 2026-08-30 |
-| Open Pull Requests at this synchronization | PR #608 plus bounded S1-R2-02 cutover work; no semantic authority overlap intended |
+| Current-State Index | this document v2.4.0; synchronized to `main@460e8dd088a78f426cac392c20da104f5873ecad` plus provider-side Ruleset readback at 2026-08-30T19:08:51+02:00 |
+| Open Pull Requests at this synchronization | #615 is the S1 prerequisite; #617 is the dependent Current-State/ESS/VC-COV projection and must be rebased after #615 |
 | S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
-| S1-R2-02 GitHub main enforcement | **IMPLEMENTED / POST-MUTATION VERIFICATION PENDING**; active Ruleset and signed-commit enforcement confirmed; deletion/review-thread reconciliation pending |
+| S1-R2-02 GitHub main enforcement | **REMEDIATION IN PR / LIVE RECONCILIATION PENDING**; current live protection drift is documented; commit signing remains optional |
 | M10 Passkey PR-CI enforcement | **SUSPENDED / OFF** |
 | Human/Owner PR creation | **REQUIRED** after final main/open-PR correlation and bound to exact main/head SHAs |
 | Human/CODEOWNER Merge | **REQUIRED** as a separate decision |
-| GitHub hosted validation | scope-/cost-controlled; Required Checks are `build-and-test`, PR Governance, hardened-image CVE gate and GitGuardian |
-| Commit authenticity | `required_signatures` active for protected `main`; merge candidates must satisfy verified-signature enforcement |
+| GitHub hosted validation | canonical target requires `build-and-test`, PR Governance, hardened-image CVE gate and GitGuardian; the live Ruleset currently does not require them |
+| Commit authenticity | Signing is optional under the Owner decision dated 2026-08-30; unsigned commits are not rejected solely for lacking a verified signature. Human/Owner merge authority and required checks remain mandatory. |
 | ESS-0012 | **RESOLVED** through Authority Registry |
 | ESS-0019 | **RESOLVED** through Authority Registry |
 | ESS-0011 | **UNRESOLVED REFERENCE** on current main |
@@ -128,7 +128,7 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 - missing ESS files or ambiguous ESS display IDs do not acquire authority by reference alone;
 - native GitHub protection must not be simulated by a workflow-only substitute;
 - skipped checks must not be made Required without a proven event/applicability contract;
-- protected-main commits must satisfy active signed-commit enforcement;
+- commit signing may be used voluntarily but must not be elevated to a mandatory protected-main or merge-readiness control without a new explicit Human/Owner decision;
 - Social Media OAuth production callbacks remain bound to explicit CAPITAL-AI HTTPS origins and the canonical callback path before state persistence;
 - loopback OAuth callbacks require exact `development` or `test`; missing/unknown environment labels remain strict;
 - OAuth state remains server-generated, expiry-bound and single-use, with the provider derived from persisted state rather than callback-controlled input;
@@ -138,9 +138,9 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 
 ## Current next action
 
-1. complete S1-R2-02 through the canonical `ruleset-sync` path after Human merge: reconcile `deletion=true` and `required_review_thread_resolution=true`, then capture provider readback;
-2. require verified signed commits for future merge candidates and do not weaken `required_signatures` to accommodate unsigned automation commits;
-3. re-correlate PR #608 against current main before merge;
-4. reconcile `ESS-0011` missing-path references and the `ESS-0001` legacy namespace split in a dedicated ESS authority/namespace work package before any M10 reactivation;
-5. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until all current reactivation prerequisites and a new explicit Human/Owner decision are satisfied;
+1. Human-review and merge #615 only after exact-head CI proves the `required_linear_history` policy/builder/floor regression fix;
+2. after merge, run Owner-gated `ruleset-sync mode=plan` on trusted `main` and review the complete diff; `mode=full` remains a separate protected Owner mutation;
+3. keep `required_signatures` disabled as an intentional Owner decision; signing remains optional provenance;
+4. rebase dependent PR #617 onto the resulting `main`, preserve ROADMAP v2.4.0 as its predecessor and revalidate its ESS/VC-COV updates;
+5. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until all remaining prerequisites and a new explicit Human/Owner decision are satisfied;
 6. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
