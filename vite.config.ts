@@ -13,6 +13,13 @@ if (!PLATFORM_SEMVER.test(packageMetadata.version)) {
   throw new Error('[Vite] package.json#version must be strict MAJOR.MINOR.PATCH SemVer.');
 }
 
+// The GA measurement ID is optional during CI/local builds. Exposing an empty value keeps the
+// consent runtime fail-closed and prevents Vite from shipping an unresolved %VITE_*% placeholder.
+// A real Render build-time value, when present, always wins.
+if (process.env.VITE_GA_MEASUREMENT_ID === undefined) {
+  process.env.VITE_GA_MEASUREMENT_ID = '';
+}
+
 // Strangler adapter for the remaining Dashboard monolith. The source file is
 // deliberately not treated as a version authority: at transform time its
 // platform-version label is projected from package.json#version. The rule is
@@ -90,6 +97,34 @@ function hexToRgb(value: string): [number, number, number] {
   ];
 }
 
+// Keep only independent, known-heavy libraries in dedicated chunks. React and the generic
+// vendor graph intentionally remain under Rollup control: an earlier vendor/vendor-react split
+// introduced a cyclic chunk and a production createContext crash.
+function performanceManualChunk(id: string): string | undefined {
+  const normalizedId = id.replace(/\\/g, '/');
+  if (!normalizedId.includes('/node_modules/')) return undefined;
+
+  if (
+    normalizedId.includes('/node_modules/jspdf/') ||
+    normalizedId.includes('/node_modules/html2canvas/')
+  ) {
+    return 'vendor-pdf';
+  }
+
+  if (
+    normalizedId.includes('/node_modules/recharts/') ||
+    /\/node_modules\/d3(?:-[^/]+)?\//.test(normalizedId)
+  ) {
+    return 'vendor-charts';
+  }
+
+  if (normalizedId.includes('/node_modules/motion/')) {
+    return 'vendor-motion';
+  }
+
+  return undefined;
+}
+
 // Renderer adapters consume canonical semantic/brand roles directly. The
 // deprecated color.aif namespace remains a temporary web compatibility surface
 // only and must never become a runtime dependency for PDF/media projections.
@@ -134,11 +169,14 @@ export default defineConfig(() => {
       },
     },
     build: {
-      // HOTFIX: Rollup übernimmt die Chunk-Aufteilung wieder selbst.
-      // Die zuvor erzwungene Trennung in vendor und vendor-react erzeugte
-      // einen zyklischen Chunk (vendor -> vendor-react -> vendor) und ließ
-      // React in Produktion vor dem Mount mit createContext abbrechen.
+      // Preserve the proven non-cyclic default graph and carve out only isolated heavy libraries.
+      // Route-level lazy boundaries keep dashboard/media/learning code out of the login entry path.
       chunkSizeWarningLimit: 900,
+      rollupOptions: {
+        output: {
+          manualChunks: performanceManualChunk,
+        },
+      },
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
