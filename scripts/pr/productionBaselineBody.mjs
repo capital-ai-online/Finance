@@ -49,6 +49,7 @@ function repairMissingProductionBaselineBlock(text, baseline, markers) {
   return {
     body: `${text.slice(0, sectionBodyStart)}\n\n${replacement}\n\n${text.slice(nextSectionStart)}`,
     changed: true,
+    evidenceState: 'STALE',
     baselineId: baseline.baselineId,
   };
 }
@@ -60,6 +61,10 @@ function repairMissingProductionBaselineBlock(text, baseline, markers) {
  * already represents the same atomic baseline identity, its original generatedAt
  * timestamp is preserved and the operation becomes a no-op. This prevents the
  * trusted auto-refresh workflow from creating an edited -> governance -> refresh loop.
+ *
+ * `evidenceState` is machine-readable in the returned result:
+ * - CURRENT: body already matches Production/main/head identity;
+ * - STALE: identity or canonical baseline content changed and requires refresh.
  *
  * A marker-free but otherwise canonical section 3 may be reconstructed atomically.
  * Partial/duplicate marker states and ambiguous section boundaries remain fail-closed.
@@ -94,6 +99,7 @@ export function replaceProductionBaselineBlock(body, baseline) {
       return {
         body: text,
         changed: false,
+        evidenceState: 'CURRENT',
         baselineId: baseline.baselineId,
       };
     }
@@ -109,6 +115,7 @@ export function replaceProductionBaselineBlock(body, baseline) {
   return {
     body: `${text.slice(0, startAt)}${replacement}${text.slice(endAt + endMarker.length)}`,
     changed: true,
+    evidenceState: 'STALE',
     baselineId: baseline.baselineId,
   };
 }

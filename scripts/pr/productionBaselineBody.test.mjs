@@ -39,7 +39,7 @@ function validBaseline(overrides = {}) {
   return baseline;
 }
 
-test('same atomic baseline preserves existing generatedAt and performs no body write', () => {
+test('same atomic baseline is CURRENT, preserves generatedAt and performs no body write', () => {
   const oldBaseline = validBaseline({ generatedAt: '2026-08-20T20:30:00.000Z' });
   const currentBody = `Vorher\n${renderProductionBaselineBlock(oldBaseline)}\nNachher`;
 
@@ -47,11 +47,12 @@ test('same atomic baseline preserves existing generatedAt and performs no body w
   const result = replaceProductionBaselineBlock(currentBody, freshPreflight);
 
   assert.equal(result.changed, false);
+  assert.equal(result.evidenceState, 'CURRENT');
   assert.equal(result.body, currentBody);
   assert.equal(result.baselineId, oldBaseline.baselineId);
 });
 
-test('changed main/head identity replaces only the canonical baseline block', () => {
+test('changed main/head identity is STALE and replaces only the canonical baseline block', () => {
   const previous = validBaseline({ generatedAt: '2026-08-20T20:30:00.000Z' });
   const currentBody = `# PR\nOwner note stays\n${renderProductionBaselineBlock(previous)}\nManual appendix stays`;
 
@@ -64,13 +65,14 @@ test('changed main/head identity replaces only the canonical baseline block', ()
   const result = replaceProductionBaselineBlock(currentBody, next);
 
   assert.equal(result.changed, true);
+  assert.equal(result.evidenceState, 'STALE');
   assert.match(result.body, /^# PR\nOwner note stays\n/);
   assert.match(result.body, /\nManual appendix stays$/);
   assert.match(result.body, new RegExp(next.baselineId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.doesNotMatch(result.body, new RegExp(previous.baselineId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });
 
-test('marker-free canonical section 3 is reconstructed atomically', () => {
+test('marker-free canonical section 3 is classified STALE and reconstructed atomically', () => {
   const baseline = validBaseline();
   const body = [
     '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->',
@@ -94,6 +96,7 @@ test('marker-free canonical section 3 is reconstructed atomically', () => {
   const result = replaceProductionBaselineBlock(body, baseline);
 
   assert.equal(result.changed, true);
+  assert.equal(result.evidenceState, 'STALE');
   assert.match(result.body, new RegExp(baseline.baselineId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(result.body, /<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/);
   assert.match(result.body, /`CAPITAL_AI_PRODUCTION_BASELINE_START`/);
