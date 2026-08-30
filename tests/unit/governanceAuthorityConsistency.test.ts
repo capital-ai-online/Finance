@@ -78,6 +78,22 @@ describe('governance authority consistency', () => {
     expect(chain).not.toContain('Google AI Studio ist die Entwicklungsumgebung für Anwendungscode');
   });
 
+  it('bounds every chat-governed post-PR handoff to the next two actionable steps', () => {
+    const agents = read('AGENTS.md');
+    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
+    const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
+
+    expect(handoff.status).toBe('required');
+    expect(handoff.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
+    expect(handoff.authorityRefs).toContain('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION');
+    expect(handoff.requirement).toMatch(/at most the two highest-priority/i);
+    expect(handoff.requirement).toMatch(/exit gate/i);
+    expect(agents).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
+    expect(agents).toContain('only the two highest-priority immediately actionable steps');
+    expect(chain).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
+    expect(chain).toContain('current `main`, open Pull Requests, changed-file/semantic overlap');
+  });
+
   it('requires diff and impact analysis before semantic supersession becomes effective', () => {
     const authorityPolicy = read('docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md');
     const supersession = control('CTRL-GOV-AUTH-002');

@@ -1,56 +1,46 @@
 # CAPITAL-AI S1 Security Hardening Roadmap
 
-Status: ACTIVE / PARTIAL / ACTION REQUIRED
-Status date: 2026-08-30
-Repository baseline reviewed: `main@2bc3020b3ea8fba122d9f9ca3a7051e079244b4f`
-Production deployment identity reviewed: `f714eae6a551ac8f3f92f4070f693c88ec35f6fc`
-Production/Main identity state: commit identities differ after documentation/governance-only PR #617; no runtime/dependency/workflow delta was introduced by #617
-Current reassessment source: CAPITAL-AI Full-Stack Security & Governance Reassessment, 2026-08-29 13:10 CEST, synchronized to repository/provider evidence on 2026-08-30
-Historical security baseline: `docs/security/SECURITY_REMEDIATION_BASELINE_2026-08-12.md`
+Status: ACTIVE / PARTIAL / ACTION REQUIRED  
+Status date: 2026-08-30  
+Repository baseline reviewed: `main@b8c4757aaa62a2a63745e2f86a777630968f4f5d`  
+Production deployment identity reviewed: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`  
+Active R2 tail implementation branch: `security/s1-r2-09-11-hardening-20260830`  
+Historical security baseline: `docs/security/SECURITY_REMEDIATION_BASELINE_2026-08-12.md`  
 Current Operations handoff: `docs/runbooks/OPERATIONS_HANDOFF_2026-08-29.md`
 
 ## Objective and authority
 
 S1 remains the **single canonical bounded security-hardening gate** inside the DEVELOPMENT Chain. This file is updated in place. No second Security roadmap, parallel hardening program or competing S1 status authority may be introduced.
 
-The active objective remains to move CAPITAL-AI from `PARTIAL / ACTION REQUIRED` to `HARDENED / VERIFIED` by closing the confirmed High findings, resolving the conditional billing-authority finding, completing native default-branch enforcement, operationalizing recovery evidence and ensuring security evidence becomes stale when Production, `main` or a candidate head changes.
+The active objective remains `HARDENED / VERIFIED`. No finding is closed from intent alone: `VERIFIED PASS` requires the applicable code/configuration/provider evidence, positive/negative tests and exact identity binding.
 
-No finding is closed from roadmap intent alone. `VERIFIED PASS` requires code/configuration or provider evidence, the specified positive/negative tests and exact identity binding.
+Production and `main` are currently aligned at `b8c4757aaa62a2a63745e2f86a777630968f4f5d`. Candidate-branch changes are not production evidence until Human merge, deployment and post-deploy verification complete.
 
-## 2026-08-30 current-state synchronization
+## Owner decisions recorded 2026-08-30
 
-The original 2026-08-29 reassessment was produced against older repository/deployment identities. Subsequent PRs changed the repository/governance state materially:
-
-- PR #606 removed the former production/main runtime-content drift while preserving separate immutable commit identities.
-- `S1-R2-01` is now classified as historical/obsolete phantom-control evidence; no active workflow YAML was changed to manufacture a pass.
-- PR #611 introduced the S1-R2-02 ruleset reconciliation path; PR #615 hardened the canonical expected policy/builder/floor and made commit signing explicitly optional while retaining linear history as a mandatory target control.
-- PR #617 merged as `main@2bc3020b3ea8fba122d9f9ca3a7051e079244b4f` and added the post-merge S1-R2-02 dispatch checklist plus synchronized current-state governance evidence.
-- Render currently reports live Production at `f714eae6a551ac8f3f92f4070f693c88ec35f6fc`. The delta to `main@2bc3020...` is the documentation/governance-only #617 merge; Production and `main` therefore remain different deployment identities even though #617 introduced no runtime/dependency/workflow change.
-- The live GitHub ruleset remains only partially reconciled. Provider readback documented after #615 still lacks required status checks, required linear history, deletion protection, CODEOWNER review and required review-thread resolution. `required_signatures` is intentionally absent by Owner decision and is not an S1 completion requirement.
-
-The 2026-08-29 assessment remains the source of the still-open findings, but its old commit-level assertions are historical and MUST NOT be presented as current state.
+1. **S1-R2-08 leaked-password protection is skipped for the current Supabase Free/Base tier.** The Owner explicitly accepted that the native control is unavailable on the active tier and instructed that no custom leaked-password service/database be introduced solely to emulate the paid native feature. Existing compensating controls remain required.
+2. **S1-R2-09 through S1-R2-11 are intentionally addressed in one bounded Pull Request.** R2-09 remains behind the accepted ADR-0040 Report-Only Promotion Gate until the required production evidence exists; R2-10 and R2-11 implementation proceeds in the same bounded PR.
+3. This batching instruction does **not** authorize merging, deployment, Render/Supabase/GitHub provider mutation or closure of unrelated open P1 controls.
 
 ## Reassessment register (R2)
 
 | ID | Source finding | Priority | Current status | Required disposition |
 |---|---|---:|---|---|
-| S1-R2-00 | P1-C01 simulated client tier transition | P1 Conditional | OPEN / TRACE PENDING | Prove complete reachability and authority before normal billing work |
-| S1-R2-01 | P2-04 workflow `345251495` startup failure | P1 Operational | RESOLVED / OBSOLETE HISTORICAL | Retain traceability; do not create a replacement phantom control |
-| S1-R2-02 | P1-01 default-branch enforcement | P1 | PARTIAL / OWNER DISPATCH PENDING | Owner-gated `mode=plan` → separate ACCEPT → `mode=full` → provider readback |
-| S1-R2-03 | P1-02 Node control-plane 24.18.0 | P1 | OPEN / PARTIAL CONVERGENCE | Supersede repository/control-plane pins to 24.20.0 |
-| S1-R2-04 | P1-03 `uncaughtException` resumes process | P1 | OPEN / CONFIRMED | Fail-fast, bounded cleanup, non-zero exit, supervisor recovery evidence |
+| S1-R2-00 | P1-C01 simulated client tier transition | P1 Conditional | OPEN / TRACE PENDING | Prove complete reachability and authority |
+| S1-R2-01 | P2-04 workflow `345251495` startup failure | P1 Operational | RESOLVED / OBSOLETE HISTORICAL | Retain traceability; do not recreate phantom control |
+| S1-R2-02 | P1-01 default-branch enforcement | P1 | PARTIAL / OWNER DISPATCH PENDING | `mode=plan` → separate Owner ACCEPT → `mode=full` → readback |
+| S1-R2-03 | P1-02 Node control-plane 24.18.0 | P1 | OPEN / PARTIAL CONVERGENCE | Converge repository/control-plane to Node 24.20.0 |
+| S1-R2-04 | P1-03 `uncaughtException` resumes process | P1 | OPEN / CONFIRMED | Fail-fast + bounded cleanup + non-zero exit + supervisor evidence |
 | S1-R2-05 | P1-04 client-controlled Stripe redirect URLs | P1 | OPEN / CONFIRMED | Server-owned canonical redirect boundary |
 | S1-R2-06 | P1-C01 entitlement authority, if reachable | P1 | CONDITIONAL | Activate only if R2-00 proves authority impact |
-| S1-R2-07 | P1-05 RPO/RTO and restore capability | P1 | OPEN / UNVERIFIED | Recurring encrypted off-site backup + isolated measured restore drill |
-| S1-R2-08 | P2-03 leaked-password protection | P2 | OPEN / PLAN-GATED | Native Supabase control if available; otherwise bounded compensating-control acceptance |
-| S1-R2-09 | P2-02 strict CSP promotion | P2 | PARTIAL / REPORT-ONLY | Complete production observation/evidence then promote strict mode |
-| S1-R2-10 | P2-05 demo billing/coupon logic | P2 | OPEN | Remove or isolate reachable demo/simulation behavior from production contract |
-| S1-R2-11 | P2-01/P2-06 evidence identity and staleness | P2 | PARTIAL | Identity binding exists; complete automatic stale-state semantics |
-| S1-R2-12 | P2-01 production/main content drift | P2 | VERIFIED / HISTORICAL | Keep identity correlation; no additional runtime rollback work for #606 state |
+| S1-R2-07 | P1-05 RPO/RTO and restore capability | P1 | OPEN / UNVERIFIED | Encrypted off-site backup + isolated measured restore drill |
+| S1-R2-08 | P2-03 leaked-password protection | P2 | OWNER-ACCEPTED / TIER EXCEPTION | Native control skipped on Free/Base tier; compensating controls retained |
+| S1-R2-09 | P2-02 strict CSP promotion | P2 | PARTIAL / REPORT-ONLY | Collect ADR-0040 promotion evidence before any strict production default |
+| S1-R2-10 | P2-05 demo billing/coupon logic | P2 | IMPLEMENTED / PR VERIFY PENDING | Production denies missing Stripe config; simulation DEV-only |
+| S1-R2-11 | P2-01/P2-06 evidence identity and staleness | P2 | IMPLEMENTED / PR VERIFY PENDING | Explicit machine `CURRENT`/`STALE` state transitions |
+| S1-R2-12 | P2-01 production/main content drift | P2 | VERIFIED / HISTORICAL | Keep identity correlation |
 
 ## Mandatory execution order
-
-Security work remains split by trust boundary. Do not combine unrelated implementation controls into one remediation PR.
 
 ```text
 R2-00 entitlement authority trace
@@ -67,328 +57,200 @@ R2-05 Stripe redirect boundary
         ↓
 R2-07 disaster recovery evidence
         ↓
-R2-08 leaked-password control / compensation
-→ R2-09 CSP strict promotion
-→ R2-10 demo billing isolation
+R2-08 OWNER-ACCEPTED tier exception
         ↓
-R2-11 evidence/staleness completion
+R2-09 promotion-gate preservation + R2-10 + R2-11 combined tail PR by explicit Owner instruction
         ↓
 S1-R2 HARDENED / VERIFIED gate
 ```
 
-R2-00 remains a read-only/classification gate and may run in parallel with preparation work that does not mutate its billing authority boundary. R2-01 requires no further implementation unless new evidence proves a current control is missing.
+The combined R2-09..R2-11 PR does not reorder or implicitly close the earlier open P1 controls.
 
 ## S1-R2-00 — Entitlement authority trace
 
-**Source:** P1-C01  
-**Priority:** Conditional P1 — immediate read-only trace  
-**Mutation:** No for the trace phase  
 **Current state:** OPEN / TRACE PENDING
 
-Trace the complete call graph from subscription UI through checkout/tier callbacks, server session creation, webhook processing, subscription persistence and every protected API entitlement decision.
+Required proof remains:
 
-Required proof:
+- identify production-reachable simulated tier/payment callers;
+- prove whether browser tier state can influence persisted/server authorization;
+- inventory protected API entitlement decision points;
+- prove browser-controlled tier values cannot grant protected server capability;
+- prove Stripe-verifiable server state is subscription truth;
+- classify `NOT AUTHORITY` or `CONFIRMED AUTHORITY GAP`.
 
-1. identify every production-reachable caller of simulated payment/tier behavior;
-2. determine whether browser/UI tier state changes presentation only or can influence persisted/server authorization state;
-3. inventory every protected API capability decision and its authoritative data source;
-4. prove a browser-controlled tier value cannot make a protected server operation succeed;
-5. prove Stripe-verifiable server state is the source of persisted subscription truth;
-6. emit explicit classification `NOT AUTHORITY` or `CONFIRMED AUTHORITY GAP`.
+If authority impact is proven, R2-06 activates immediately.
 
-If `CONFIRMED AUTHORITY GAP`, activate R2-06 immediately. If `NOT AUTHORITY`, R2-10 remains production-hygiene cleanup rather than an authorization hotfix.
+## S1-R2-01 — Workflow startup-failure classification
 
-## S1-R2-01 — Workflow startup-failure control classification
-
-**Source:** P2-04  
-**Priority:** P1 Operational during classification  
-**Observed historical control:** workflow ID `345251495`, `path: BuildFailed`, `startup_failure`, zero jobs  
 **Current state:** RESOLVED / OBSOLETE HISTORICAL
 
-Current DevelopmentChain evidence classifies this as obsolete/historical phantom-control evidence. No active workflow YAML was changed and no no-op success workflow was introduced.
-
-Closure contract:
-
-- retain the historical identifier and classification for auditability;
-- do not restore or recreate the workflow unless new current evidence identifies a real missing control owner/event model;
-- any future replacement must have a canonical YAML owner, expected event contract and independent validation.
-
-R2-01 is satisfied for the current R2 gate by the documented retirement/classification evidence.
+The historical workflow ID `345251495` remains classified as obsolete phantom-control evidence. No no-op workflow was introduced. Reopening requires new evidence of a real missing current control.
 
 ## S1-R2-02 — GitHub default-branch enforcement
 
-**Source:** P1-01  
-**Priority:** P1  
-**Mutation:** Owner-gated GitHub platform mutation  
-**Current state:** PARTIAL / OWNER DISPATCH PENDING
+**Current state:** PARTIAL / OWNER DISPATCH PENDING  
+**Mutation:** Owner-gated GitHub provider mutation
 
-### Current evidence
+Current canonical target retains pull-request enforcement, four issuer-bound required checks, linear history, deletion protection, CODEOWNER review and review-thread resolution. Commit signing remains intentionally optional under the Owner decision dated 2026-08-30.
 
-- GitHub Pro capability is active and `main-production-protection` is readable.
-- PR #611 introduced the canonical ruleset reconciliation implementation.
-- PR #615 merged policy/builder/floor remediation and defines `required_linear_history=true`, squash/rebase-only merge methods, deletion protection, CODEOWNER review, review-thread resolution and four issuer-bound required checks.
-- Post-#615 provider readback documented on 2026-08-30 still shows only `non_fast_forward`, `pull_request` without CODEOWNER/thread-resolution enforcement, and advisory `code_quality`.
-- Live `required_status_checks`, `required_linear_history` and `deletion` are still absent.
-- `bypass_actors=[]` and `current_user_can_bypass=never` are retained in the documented readback.
-- `required_signatures` is intentionally disabled by explicit Owner decision. Signing is optional provenance and is not a merge-readiness or S1 completion prerequisite.
-- Canonical dispatch evidence: `docs/evidence/security/S1_R2_02_POST_MERGE_DISPATCH_CHECKLIST_2026-08-30.md`.
+Closure still requires trusted-main `ruleset-sync mode=plan`, separate Owner ACCEPT for `mode=full`, provider readback and proof of effective enforcement.
 
-### Required next path
+## S1-R2-03 — Node control-plane supersession
 
-1. trusted `main` only;
-2. Owner runs `ruleset-sync` with `mode=plan`;
-3. review complete diff against canonical expected policy/floor;
-4. `mode=full` remains blocked until a separate explicit Owner ACCEPT;
-5. after accepted `mode=full`, capture provider readback;
-6. prove required checks/Human gate are enforced and direct/force/deletion bypasses remain denied as designed.
-
-### Exit
-
-`VERIFIED PASS` requires provider readback showing the intended active protection controls and evidence that a valid PR is mergeable only after applicable required checks and Human/CODEOWNER authority. A workflow-only substitute is not equivalent.
-
-## S1-R2-03 — Node control-plane supersession to 24.20.0
-
-**Source:** P1-02  
-**Priority:** P1  
-**Reuse:** existing Node supersession infrastructure  
 **Current state:** OPEN / PARTIAL CONVERGENCE
 
-Current code-based state on the reviewed baseline:
+- Docker runtime is already Node `24.20.0`.
+- `.nvmrc` and remaining repository/control-plane policy are not yet fully converged.
+- Existing supersession infrastructure must be reused; no parallel updater.
 
-- `Dockerfile` is already pinned to Node `24.20.0` with an immutable image digest;
-- `.nvmrc` remains `24.18.0`;
-- `package.json#engines.node` remains `>=24.18.0 <25`;
-- active CI/action runtime usage has advanced, but the repository/control-plane contract has not yet converged to one 24.20.0 baseline.
+Exit requires all active Node policy to resolve consistently to the approved 24.20.0 baseline and exact-head CI PASS.
 
-Required implementation:
+## S1-R2-04 — Fatal process handling
 
-1. use the existing supersession workflow/automation rather than a parallel updater;
-2. update `.nvmrc`, engine policy and all active control-plane references owned by that contract;
-3. keep the supported major line bounded to Node 24;
-4. verify lockfile/install/build/test behavior on the remediation branch;
-5. prove no unintended 24.18.0 pin remains and Docker runtime identity is unchanged unless explicitly in scope.
-
-### Exit
-
-Repository and active control-plane Node policy consistently resolve to 24.20.0 and exact-head CI passes.
-
-## S1-R2-04 — Fatal process handling and supervised recovery
-
-**Source:** P1-03  
-**Priority:** P1  
 **Current state:** OPEN / CONFIRMED
 
-Current code still registers `uncaughtException`, logs the error and explicitly continues without `process.exit()`. This remains inconsistent with the S1 architecture rule that process state is untrusted after an uncaught exception.
-
-Required implementation:
-
-1. centralize secret-safe fatal-error reporting;
-2. stop accepting new work and make readiness unhealthy immediately;
-3. perform only bounded proven-safe cleanup;
-4. terminate non-zero;
-5. rely on Render supervision for replacement;
-6. verify `/healthz` and `/readyz` behavior around failure/recovery;
-7. add child-process negative evidence proving the failed process does not continue serving.
-
-### Exit
-
-Local child-process evidence plus post-deployment supervisor recovery evidence bound to the deployed commit.
+Unhandled exceptions must make readiness unhealthy, stop new work, run only bounded safe cleanup, exit non-zero and rely on the Render supervisor for replacement. Closure requires child-process negative evidence and post-deploy recovery evidence.
 
 ## S1-R2-05 — Stripe Checkout redirect boundary
 
-**Source:** P1-04  
-**Priority:** P1  
 **Current state:** OPEN / CONFIRMED
 
-Current server code still accepts `successUrl` and `cancelUrl` from `req.body`, derives `finalSuccessUrl` from the client-supplied value and passes the client-supplied cancellation URL into Stripe Checkout Session creation.
-
-Required implementation:
-
-1. remove direct trust in request-body absolute redirect URLs;
-2. construct production Checkout URLs from one canonical server-owned application origin;
-3. allow only explicitly validated relative destinations/route tokens where client destination choice is required;
-4. permit localhost only under explicit non-production construction;
-5. reject absolute, scheme-relative, encoded/obfuscated external and unknown destinations;
-6. retain webhook/server verification as payment/entitlement authority.
-
-### Exit
-
-Every Checkout Session has a server-owned allowed redirect destination and the negative suite proves open-redirect payloads are rejected.
+Client-controlled absolute `successUrl` / `cancelUrl` remain outside the accepted architecture. The server must own redirect origins and accept only constrained relative destinations/tokens when destination choice is needed. Open-redirect negative tests remain mandatory.
 
 ## S1-R2-06 — Stripe-verified entitlement projection
 
-**Source:** P1-C01 only if R2-00 confirms authority impact  
-**Priority:** P1 when activated  
 **Current state:** CONDITIONAL
 
-If activated:
+Only activates if R2-00 proves an authority gap. A browser or redirect must never become subscription authority; only Stripe-verifiable server state may change protected entitlement.
 
-- remove client-side simulated tier update from authorization semantics;
-- expose pending UI state instead of optimistic entitlement grant;
-- persist subscription/tier only from Stripe-verifiable server evidence;
-- make protected APIs resolve entitlement from authoritative server state;
-- preserve webhook replay/idempotency authority;
-- do not trust successful redirect navigation as payment proof.
+## S1-R2-07 — Disaster recovery / RPO / RTO
 
-### Exit
-
-A manipulated browser cannot upgrade protected server capabilities; only Stripe-verifiable server state can change entitlement.
-
-## S1-R2-07 — Disaster recovery, RPO and RTO evidence
-
-**Source:** P1-05  
-**Priority:** P1  
-**Mutation/cost:** Owner-gated where external storage, paid Supabase capability or temporary infrastructure incurs cost  
 **Current state:** OPEN / UNVERIFIED
 
-Current Operations evidence still has no measured recurring recovery proof:
-
-- Supabase project remains `ACTIVE_HEALTHY`, region `eu-west-1`, PostgreSQL 17.6.1.127 / engine 17;
-- a runbook exists, but a runbook alone is not recovery evidence;
-- recurring encrypted off-site logical backup with retention is not evidenced as operating;
-- RPO remains `UNVERIFIED`;
-- isolated restore drill and measured RTO remain `UNVERIFIED`.
-
-Required implementation:
-
-1. obtain business-approved RPO/RTO targets rather than inventing infrastructure defaults;
-2. operationalize regular least-privilege logical dumps;
-3. encrypt before/at off-site storage with separated key custody;
-4. define retention/deletion consistent with DSGVO/data minimization;
-5. restore only into an isolated non-production target by default;
-6. validate schema/data/integrity invariants;
-7. measure actual backup age/RPO and end-to-end restore RTO;
-8. document failure conditions, owner sign-off and next drill date.
-
-### Exit
-
-At least one successful isolated restore drill has measured RPO/RTO and integrity evidence.
+A runbook is not recovery evidence. Closure requires business-approved RPO/RTO, recurring encrypted off-site backup, isolated restore, integrity validation and measured actual RPO/RTO.
 
 ## S1-R2-08 — Leaked-password protection
 
-**Source:** P2-03  
-**Priority:** P2  
-**Current state:** OPEN / PLAN-GATED
+**Current state:** OWNER-ACCEPTED / TIER EXCEPTION  
+**Owner decision:** 2026-08-30
 
-Preferred path:
+The active Supabase Free/Base tier does not provide the desired native leaked-password control. By explicit Owner instruction this control is **not** implemented through a custom substitute and does not block execution of the subsequent R2 tail controls.
 
-- use native Supabase leaked-password protection when the active project plan supports it, through an explicit Owner-gated Auth configuration change and provider readback;
-- otherwise document the plan limitation and retain/verify compensating controls including hCaptcha, rate limits, password policy, credential-stuffing detection and MFA/AAL2;
-- do not create a second custom leaked-password database/service without a separate privacy/security assessment.
+Required residual controls remain the repository/product controls already used for credential-abuse reduction, including applicable hCaptcha/rate limiting/password-policy/MFA-AAL2 protections. This decision must be revisited if the Supabase tier changes or the native feature becomes available on the active tier.
 
-### Exit
-
-Native protection is verified active, or a time-bounded Owner-approved compensating-control acceptance exists.
+No Supabase provider mutation is authorized by this exception.
 
 ## S1-R2-09 — CSP strict-mode promotion
 
-**Source:** P2-02 and historical S1.6 / F-06..F-08  
-**Priority:** P2  
 **Current state:** PARTIAL / REPORT-ONLY
 
-Current server implementation already provides one authoritative CSP response boundary with per-response nonce and explicit `baseline`, `report-only` and `strict` modes. The production default is `report-only`; strict policy is enforced only when `CSP_MODE=strict` is explicitly selected.
+### Current protected state
 
-Remaining work:
+- `server/securityResponse.ts` remains the single authoritative CSP response boundary.
+- Production continues to default to **`report-only`** in accordance with ADR-0040 and GMG-005.
+- The enforced baseline remains availability-safe while the strict nonce + `'strict-dynamic'` target is evaluated through `Content-Security-Policy-Report-Only`.
+- `'unsafe-eval'` remains absent from the production target policy.
+- Explicit `CSP_MODE=strict` remains available only for an evidence-backed protected promotion.
+- Explicit `CSP_MODE=baseline` remains an availability-recovery mode.
+- Empty/invalid values fail safely to `report-only`; they do not silently promote strict enforcement.
+- Regression tests assert the report-only default, explicit strict target, nonce/strict-dynamic and absence of unsafe-eval.
 
-1. keep the existing authoritative generator/boundary; do not add a second CSP system;
-2. collect a defined production report-only observation window;
-3. classify violations and remove obsolete authorities;
-4. verify Stripe, Supabase, Cookie/Consent, hCaptcha and other approved integrations;
-5. promote `CSP_MODE=strict` only after legitimate blockers are closed;
-6. retain rollback to report-only for availability recovery.
+### Promotion evidence still required
+
+The existing 2026-08-29 security evidence records that no measured zero-violation production observation window is available. Therefore this PR does **not** promote the production default to strict. Required evidence remains the ADR-0040 Report-Only Promotion Gate, including successful first-party bootstrap and compatibility of CookieHub/Consent, Stripe, Supabase, hCaptcha and other approved integrations.
 
 ### Exit
 
-Strict CSP is enforced in Production with telemetry/evidence showing expected integrations remain functional.
+R2-09 remains open until the required production observation evidence exists and a separately reviewed protected change promotes strict enforcement. Final `VERIFIED PASS` requires Production to report strict CSP with approved integrations operational. Availability rollback remains the existing `report-only`/`baseline` path rather than a second CSP implementation.
 
 ## S1-R2-10 — Demo/sandbox billing isolation
 
-**Source:** P2-05 and R2-00 follow-up  
-**Priority:** P2 unless R2-00 proves authority impact  
-**Current state:** OPEN
+**Current state:** IMPLEMENTED / PR VERIFY PENDING
 
-Required implementation:
+### Implementation in the active tail branch
 
-- remove demo coupons/simulated payment or tier behavior from the production billing contract;
-- prefer separate test fixtures/adapters over production code branches;
-- if non-production branches remain, construct them so Production cannot activate them accidentally;
-- keep Stripe-side coupon validation authoritative.
+`src/components/Checkout.tsx` now treats missing/placeholder Stripe publishable configuration as follows:
 
-### Exit
+- **Development:** sandbox/demo mode may be entered only behind `import.meta.env.DEV === true`.
+- **Production:** checkout fails closed, demo mode is kept false and the UI reports Stripe Checkout unavailable.
+- Production cannot enter the simulated-success UI merely because Stripe configuration is missing.
+- Existing server-side coupon validation remains authoritative; this work does not replace it with client coupon authority.
+- Regression tests verify that the only `setDemoMode(true)` path is DEV-gated and that the production-deny path remains present.
 
-Production server/UI bundles contain no reachable demo entitlement/payment behavior and tests retain an isolated supported fixture path.
-
-## S1-R2-11 — Content-addressed security evidence and stale-state automation
-
-**Source:** P2-01/P2-06  
-**Priority:** P2  
-**Reuse:** `scripts/pr/productionPreflight.mjs` and canonical production-baseline identity contracts  
-**Current state:** PARTIAL
-
-Progress now present:
-
-- PR preflight/evidence can bind Production, `main` and candidate head separately;
-- content-addressed Baseline IDs are used by the current PR-governance path;
-- same deployment commit and same repository content are treated as distinct concepts.
-
-Remaining work:
-
-1. security assessment/evidence snapshots must record at least `auditGeneratedAt`, `productionCommit`, `mainCommit` and `candidateHead` when applicable;
-2. Production rollback or `main` advance must automatically make prior current-state assessment evidence `STALE` unless explicitly historical;
-3. current summaries must not continue presenting superseded SHAs as current;
-4. machine validation must prove stale-state behavior rather than relying on manual discipline.
+This closes the production reachability of the UI sandbox behavior; it does not itself close R2-00/R2-06 or R2-05.
 
 ### Exit
 
-Staleness is machine-detectable and current security status cannot silently reference superseded Production/Main identities.
+Exact-head CI must prove the production build/test path. Production deployment must not expose the development sandbox path.
 
-## R2 implementation slicing
+## S1-R2-11 — Content-addressed evidence and stale-state automation
 
-| Sequence | Work package | Current disposition | Typical class | External mutation |
-|---:|---|---|---|---|
-| 0 | S1-R2-DOC | This in-place roadmap/handoff sync | D | No |
-| 1 | S1-R2-00 | OPEN / trace | D/C only if harness required | No |
-| 2 | S1-R2-01 | RESOLVED / historical | D evidence only if new facts emerge | No |
-| 3 | S1-R2-02 | PARTIAL / owner dispatch | M | **Yes — GitHub, Owner-gated** |
-| 4 | S1-R2-03 | OPEN | R | No except approved dispatch path |
-| 5 | S1-R2-04 | OPEN | R | Deployment evidence after PR |
-| 6 | S1-R2-05 | OPEN | C/R | No Stripe provider mutation required |
-| 7 | S1-R2-06 | CONDITIONAL | C/R | Normally no provider mutation |
-| 8 | S1-R2-07 | OPEN / UNVERIFIED | M | **Yes / cost-sensitive where applicable** |
-| 9 | S1-R2-08 | OPEN / PLAN-GATED | M or D | **Potential Supabase mutation** |
-| 10 | S1-R2-09 | PARTIAL / report-only | R/M | Render config/deploy promotion may be Owner-gated |
-| 11 | S1-R2-10 | OPEN | C/R | No |
-| 12 | S1-R2-11 | PARTIAL | C/R | No |
+**Current state:** IMPLEMENTED / PR VERIFY PENDING
 
-Each implementation work package starts from then-current `main`, uses a fresh scoped branch and gets a final main/open-PR correlation immediately before PR creation.
+Existing architecture already provides:
 
-## R2 validation contract
+- content-addressed Production/Main/Head Baseline IDs;
+- trusted-main preflight generation;
+- trusted auto-refresh after PR Governance and verified main deployment;
+- fail-closed identity checks before PR-body mutation.
 
-### Before every implementation PR
+### Added explicit stale semantics in the active tail branch
 
-- fetch current `main`;
-- re-check open PR scopes and correlations;
-- identify the affected trust boundary;
-- reuse existing repository/native platform capability before adding dependencies;
-- run static/local/low-cost tests appropriate to scope;
-- inspect diff and changed files;
-- do not trigger expensive GitHub CI before PR creation unless the active policy explicitly requires it.
+`scripts/pr/productionBaselineBody.mjs` now returns a machine-readable evidence state:
 
-### Immediately before PR creation
+- `CURRENT` — canonical PR body already matches current Production/Main/Head identity;
+- `STALE` — identity/content changed and the canonical baseline requires atomic refresh.
 
-- fetch `main` again;
-- correlate newly merged changes across files, architecture, dependencies, APIs, configuration, data models, AuthN/AuthZ, security, compliance and governance;
-- synchronize the branch and resolve semantic as well as Git conflicts;
-- repeat necessary low-cost checks;
-- bind Human/Owner PR-creation approval to exact reported main/head identities under the active governance policy.
+`scripts/pr/updatePrProductionBaseline.mjs` exposes final workflow states:
 
-### After PR creation
+- `CURRENT`;
+- `CURRENT_AFTER_REFRESH` with detected state `STALE`;
+- `STALE_RETRY_REQUIRED` when main/head/boundary changes invalidate the preflight before write.
 
-- run the minimum targeted required CI first where policy permits;
-- bundle related fixes before rerunning costly jobs;
-- complete mandatory checks before Human merge;
-- bind evidence to exact PR head/base;
-- no agent may merge its own remediation PR.
+Regression tests prove same-identity `CURRENT`, changed-identity `STALE`, marker-free stale repair and fail-closed duplicate/ambiguous marker states.
+
+### Exit
+
+Exact-head governance tests must PASS and the trusted refresh workflow must continue to execute only from trusted-main policy. No candidate PR may authorize its own weakened stale-state semantics.
+
+## S1-R2-12 — Production/main content drift
+
+**Current state:** VERIFIED / HISTORICAL
+
+The historical runtime/content drift finding remains closed by the prior reconciliation path. Production, `main` and candidate identities must nevertheless always be represented independently.
+
+## Combined R2-09..R2-11 Pull Request contract
+
+The Owner explicitly requested one Pull Request for the remaining tail controls. The PR therefore has a bounded combined security scope:
+
+```text
+R2-08 decision evidence only
++ R2-09 preserve ADR-0040 report-only promotion gate and strict target
++ R2-10 production billing sandbox isolation
++ R2-11 explicit evidence staleness state
++ targeted regression tests
++ S1/Ops documentary synchronization
+```
+
+Expected check class is application/runtime security (`R` under the canonical PR template). No external provider mutation is performed by the branch itself.
+
+Before PR creation:
+
+- re-read current `main` and open PRs;
+- ensure branch contains current `main`;
+- review changed files for scope creep;
+- bind the canonical Production/Main/Head preflight.
+
+After PR creation:
+
+- Governance/Security checks;
+- TypeScript/lint;
+- unit tests including the new R2 tests;
+- production build including CSP production-path test;
+- predeploy/deployment-readiness checks as selected by the canonical workflow;
+- final `build-and-test`;
+- Human/CODEOWNER review and separate Human merge decision.
 
 ## R2 HARDENED / VERIFIED gate
 
@@ -396,36 +258,30 @@ S1-R2 may report `HARDENED / VERIFIED` only when:
 
 ```text
 R2-00 authority trace resolved
-AND R2-01 historical workflow classification remains accepted
+AND R2-01 historical classification remains accepted
 AND R2-02 live main protection enforced and read back
 AND R2-03 Node control-plane superseded
 AND R2-04 fatal process recovery verified
 AND R2-05 Stripe redirect boundary closed
 AND R2-06 closed or NOT-AUTHORITY evidence accepted
 AND R2-07 measured restore drill complete
+AND R2-08 Owner tier exception remains valid or native control becomes available
+AND R2-09 strict Production CSP verified after deploy
+AND R2-10 production sandbox isolation verified
+AND R2-11 stale-state automation verified
 ```
 
-P2 findings R2-08..R2-11 must each be either `VERIFIED PASS` or covered by an explicit, bounded, Owner-approved residual-risk/time-box before overall security status may be represented as fully hardened.
+The R2-08 tier exception is an explicit bounded Owner residual-risk decision. It does not imply that other open P1 controls may be skipped.
 
-## Authoritative implementation references
+## Historical S1 traceability
 
-During implementation use current primary provider/runtime documentation rather than this roadmap as a substitute for platform semantics:
-
-- GitHub protected branches/rulesets/required status checks;
-- Node.js process/fatal exception guidance and the approved Node 24.x baseline;
-- Stripe Checkout Session redirect and webhook/fulfillment semantics;
-- Supabase Auth password-security capabilities and database backup/restore capabilities;
-- Render deployment/runtime evidence for supervised recovery and exact deployment identity.
-
-## Historical S1 baseline — retained traceability, not a second active roadmap
-
-The historical 2026-08-12 F-01..F-18 baseline remains authoritative for traceability through `docs/security/SECURITY_REMEDIATION_BASELINE_2026-08-12.md` and repository history. The active execution priority is the R2 register above.
+The historical F-01..F-18 baseline remains authoritative for traceability through `docs/security/SECURITY_REMEDIATION_BASELINE_2026-08-12.md` and repository history. R2 changes current execution priority; it does not erase historical closure evidence.
 
 | Historical finding(s) | Canonical ownership retained |
 |---|---|
 | F-01, F-11, F-12 | S1.1 Documentation API authorization/filesystem boundary |
 | F-02 | S1.2 Production runtime controls fail closed |
-| F-04, F-15 | S1.3 Trusted proxy/client identity/rate limiting; F-15 also blocks unsafe scale transitions |
+| F-04, F-15 | S1.3 Trusted proxy/client identity/rate limiting |
 | F-05 | S1.4 Server-secret namespace isolation |
 | F-03, F-09 | S1.5 CI trust-chain/GitHub output/template integrity |
 | F-06, F-07, F-08 | S1.6 Browser HTTP policy hardening |
@@ -433,48 +289,19 @@ The historical 2026-08-12 F-01..F-18 baseline remains authoritative for traceabi
 | F-14 | M5A Native MFA / AAL2 |
 | F-10, F-17 | M6 Supply Chain Provenance |
 | F-13 | M9 independent/adversarial assurance |
-| F-18 | Retain `ACCEPTED / INTENTIONAL` only while deny-by-default RLS intent remains evidenced |
-
-Historical closure status must not be weakened by R2 work. R2 changes current priority/order only where the 2026-08-29 reassessment introduced or reclassified findings.
+| F-18 | Retain accepted state only while deny-by-default RLS intent remains evidenced |
 
 ## Verbindlicher PR-Template-Contract
 
-Every PR against `main`, including S1 remediation PRs, MUST use the complete canonical `.github/pull_request_template.md` contract.
-
-- no shortened/free-form body replaces the template;
-- all numbered sections remain;
-- N/A fields are justified;
-- machine-readable baseline fields and Human/Owner attestations remain governed by the canonical tooling;
-- after every new head, exact-head evidence must be refreshed as required;
-- a PR may not authorize itself solely through CI authority that it modifies.
-
-## Integration into the DEVELOPMENT Chain
-
-The canonical DEVELOPMENT Chain remains authoritative. S1-R2 is a security reassessment tranche inside S1, not a replacement DevelopmentChain.
-
-```text
-current main
-→ fresh scoped branch
-→ bounded implementation
-→ positive + negative tests
-→ final main/open-PR resynchronization and correlation
-→ PR using canonical template and exact-head approval contract
-→ independent CI / Human file review
-→ Human/CODEOWNER merge decision
-→ Human merge
-→ separate Owner-gated provider/deployment mutation where applicable
-→ evidence + roadmap/handoff sync
-```
+Every PR against `main`, including this combined R2 tail PR, MUST use the complete canonical `.github/pull_request_template.md` contract. Machine-managed Production/Main/Head identity fields remain authoritative; Human/CODEOWNER merge remains required and agent self-merge remains prohibited.
 
 ## Definition of Done
 
 S1 is complete only when:
 
-- the R2 `HARDENED / VERIFIED` gate is satisfied;
-- historical F-01..F-18 remain closed, accepted with bounded risk or explicitly owned by their canonical phase;
+- the R2 `HARDENED / VERIFIED` gate above is satisfied;
 - no secrets are present in evidence;
-- all remediation PRs use the canonical PR contract and receive Human review/Human merge;
-- each implementation branch is based on then-current `main` and receives final synchronization/correlation before PR creation;
-- provider mutations remain separately Owner-authorized and post-change read back;
-- work branches are deleted after successful merge;
-- DEVELOPMENT Chain, S1 roadmap and Operations handoff are synchronized to the exact final identities.
+- current evidence is bound to exact identities and stale evidence fails closed;
+- remediation PRs receive independent checks and Human review/Human merge;
+- external provider/deployment mutations remain separately Owner-authorized and post-change read back;
+- DEVELOPMENT Chain, this S1 roadmap and the Operations handoff remain synchronized to final identities.
