@@ -1,11 +1,11 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "repository": "SvenKulessa/Finance",
   "target": "refs/heads/main",
   "ruleset_name": "main-production-protection",
   "authority": {
-    "current_as_of": "2026-08-28",
-    "accepted_decision": "ADR-0069 including Owner addendum 2026-08-16 + ADR-0066/ESS-0022 M10 Controlled Cutover + Owner-authorized 2026-08-28 repository hardening",
+    "current_as_of": "2026-08-30",
+    "accepted_decision": "ADR-0069 including Owner addendum 2026-08-16 + ADR-0066/ESS-0022 M10 Controlled Cutover + Owner-authorized 2026-08-28 repository hardening + Owner-authorized 2026-08-30 GitHub Pro ruleset hardening",
     "pre_m10_ci_authorization": "Historical state before M10 Controlled Cutover: technical CI started on normal PR events without legacy checkbox/Viewed/emoji authorization.",
     "merge_authorization": "Human/Owner-only; M10 CI authorization and CI success never authorize merge.",
     "m10_future_state": "Controlled-Cutover target: normal PR events fail cheaply before expensive CI; a PR-state-bound Owner Passkey/WebAuthn AUTHORIZE_PR_CI approval is atomically consumed exactly once and dispatches build-and-test on the approved current head through a single-use server workflow gate. This becomes enforced only after Human merge/deployment and post-cutover verification.",
@@ -20,7 +20,7 @@
       "GitGuardian Security Checks"
     ],
     "strict_required_status_checks_policy": true,
-    "deletion_protection": false,
+    "deletion_protection": true,
     "non_fast_forward_protection": true,
     "require_code_owner_review": true,
     "required_review_thread_resolution": true,
@@ -60,10 +60,11 @@
     "shadow_check": null,
     "promotion_gate": "M10 Phase-6 Shadow/Negative/Recovery assurance VERIFIED PASS on 2026-08-19. Controlled-Cutover code still requires Human merge, deployment, exactly-one approved current-head build-and-test, unapproved no-expensive-CI evidence, replay/drift/recovery checks and final traceability sync before M10 COMPLETE.",
     "rollback": "Before cutover merge, preserve the simplified pre-M10 PR CI path. After cutover merge, fail closed and repair through a fresh Human-authorized branch; never restore emoji/checkbox/Viewed/label/reaction authorization as a fallback.",
-    "decision_2026-08-28_ruleset_hardening": "After Human merge, main-production-protection must require build-and-test, PR Governance, the hardened image HIGH/CRITICAL CVE gate and GitGuardian; status checks are strict/up-to-date, CODEOWNER review and review-thread resolution remain enabled, unattributed changes require extra approval, non-fast-forward protection remains enabled and bypass actors remain empty. The single-owner deletion-protection exception remains an explicit residual risk to avoid creating a permanent bypass actor or repository administration deadlock.",
+    "decision_2026-08-30_pro_ruleset_hardening": "After GitHub Pro activation and explicit Owner instruction, main deletion protection is promoted from historical residual risk to a required rule. The ruleset must remain bypass-free. The same full ruleset reconciliation also restores required review-thread resolution if live state drifted from the canonical expected policy.",
+    "decision_2026-08-28_ruleset_hardening": "After Human merge, main-production-protection must require build-and-test, PR Governance, the hardened image HIGH/CRITICAL CVE gate and GitGuardian; status checks are strict/up-to-date, CODEOWNER review and review-thread resolution remain enabled, unattributed changes require extra approval, non-fast-forward protection remains enabled and bypass actors remain empty. The historical deletion-protection exception was superseded by the explicit Owner decision dated 2026-08-30.",
     "decision_2026-08-28_repository_hardening": "The same main-only ruleset-admin reconciliation also enforces repository-wide baseline controls that are available with repository Administration permission: GitHub Actions SHA pinning, read-only default workflow token, no workflow PR approvals, no external private workflow access, fail-closed fork-PR token/secret boundaries, 90-day artifact/log retention, web commit signoff, vulnerability alerts and Dependabot security updates. Plan-bound GHAS/CodeQL/secret-scanning settings are not blindly toggled.",
     "historical_decision_2026-08-14": "At that date, Owner required the then-existing Human/Owner comment-gate and head-bound evidence during the capital-ai-ci migration. This is retained as historical evidence only and was superseded for current process by the Accepted ADR-0069 Owner addendum dated 2026-08-16.",
-    "decision_2026-08-14b": "Owner created the live ruleset with deletion_protection deliberately left disabled: in the current single-owner topology, enabling it forced a bypass actor entry to remain administrable, which would itself reintroduce a bypass exception. Accepted residual risk: main can currently be deleted without a ruleset block. Revisit once a second trusted reviewer identity exists (see single_owner_topology.promotion_condition). Owner also enabled require_code_owner_review; .github/CODEOWNERS received a `* @SvenKulessa` catch-all the same day so the rule covers paths beyond the previously explicit list.",
+    "historical_decision_2026-08-14b": "Owner originally created the live ruleset with deletion_protection disabled because the then-observed single-owner topology appeared to require an undesirable bypass actor for administrability. This exception is historical and non-normative after the explicit 2026-08-30 Owner decision to enable deletion protection with an empty bypass actor set.",
     "decision_2026-08-14c": "GitHub Advanced Security CodeQL was evaluated against the already-active Snyk Code check (context code/snyk) and found redundant for SAST coverage (both do semantic source-code vulnerability analysis; Snyk Code needs no GitHub Actions runtime, matching ADR-0070's no-new-workflow design). Owner decided against CodeQL as a required check. GitGuardian Security Checks and both Snyk contexts (security/snyk, code/snyk) passed on three independent head-bound pull requests (#249, #250, #251), exceeding ADR-0070's two-head promotion gate, and were promoted to required checks with Owner approval. See docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md.",
     "decision_2026-08-15": "Snyk's private-test quota was exhausted (external Snyk-side account limit, both security/snyk and code/snyk contexts started reporting 'error'/'You have used your limit of private tests' regardless of actual scan outcome), permanently blocking merge on at least 3 concurrently open pull requests (#295, #296, #297) despite ADR-0070's Rollback step 1. Owner removed both security/snyk and code/snyk from the live ruleset on 2026-08-15. GitGuardian Security Checks remains required and unaffected.",
     "historical_decision_2026_08_15_ci_consolidation": "Owner selected consolidation option 1: build-and-test remains the sole repository-hosted technical Required Check; capital-ai-ci was removed after parallel evidence on PR #308 and PR #309. The sentence in the original record that the Human/Owner head-bound gate remained unchanged was true for 2026-08-15 only and is non-normative after the 2026-08-16 ADR-0069 Owner addendum.",
@@ -73,8 +74,8 @@
   "single_owner_topology": {
     "observed_collaborators": 1,
     "required_approving_review_count": 0,
-    "rationale": "A mandatory independent GitHub approval would deadlock the current single-owner repository. HIGH/CRITICAL agent actions remain subject to CAPITAL-AI capability, approval and step-up controls until an independent reviewer exists.",
-    "promotion_condition": "Enable at least one independent approving review, deletion_protection and a bypass-free enforcement posture when a distinct trusted reviewer identity is available."
+    "rationale": "A mandatory independent GitHub approval would deadlock the current single-owner repository. HIGH/CRITICAL agent actions remain subject to CAPITAL-AI capability, approval and step-up controls until an independent reviewer exists. Deletion protection is independently required and must not introduce a bypass actor.",
+    "promotion_condition": "Enable at least one independent approving review when a distinct trusted reviewer identity is available; retain deletion protection and a bypass-free enforcement posture independently of reviewer topology."
   },
   "desired_when_supported_without_deadlock": {
     "required_review_thread_resolution": true,
