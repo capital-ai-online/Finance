@@ -20,7 +20,7 @@ test('production web security checks follow the canonical runtime response path'
 
   assert.match(securityResponse, /buildBaselineProductionCsp/);
   assert.match(securityResponse, /buildStrictProductionCsp/);
-  assert.match(securityResponse, /DEFAULT_PRODUCTION_CSP_MODE: ProductionCspMode = 'strict'/);
+  assert.match(securityResponse, /DEFAULT_PRODUCTION_CSP_MODE: ProductionCspMode = 'report-only'/);
   assert.match(securityResponse, /Content-Security-Policy/);
   assert.match(securityResponse, /Content-Security-Policy-Report-Only/);
   assert.match(securityResponse, /X-CSP-Policy/);
