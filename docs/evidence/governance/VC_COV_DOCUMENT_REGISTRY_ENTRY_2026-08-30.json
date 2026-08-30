@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "purpose": "Proposed document-registry.json entry for ROADMAP-VC-COV-HARDEN-2026-08-30. Insert into docs/governance/document-registry.json entries[] during Human review or a follow-up Klasse-D hygiene PR. This file does not replace the registry.",
+  "targetRegistry": "docs/governance/document-registry.json",
+  "targetField": "entries",
+  "entry": {
+    "documentId": "DOC-ROADMAP-VC-COV-HARDEN-2026-08-30",
+    "type": "roadmap",
+    "documentRole": "roadmap",
+    "owner": "CAPITAL-AI Owner",
+    "authority": "ARCH-CHAIN-0001 + ADR-0087 + AUTH-GOV-DEVELOPMENT-CHAIN-STATUS",
+    "authorityRefs": [
+      "AUTH-GOV-DEVELOPMENT-CHAIN-STATUS",
+      "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+    ],
+    "projectionOf": [
+      "AUTH-GOV-DEVELOPMENT-CHAIN-STATUS",
+      "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+    ],
+    "normative": false,
+    "normativeScope": [],
+    "version": "1.0.0",
+    "language": "de",
+    "lifecycle": "reviewed",
+    "path": "docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md"
+  }
+}
