@@ -51,20 +51,23 @@ describe('governance authority consistency', () => {
     expect(library).toContain('2026-08-16 retired');
   });
 
-  it('keeps machine-readable main-protection policy explicit about current versus historical authority', () => {
-    const policy = JSON.parse(read('.github/policies/main-production-protection.expected.json')) as {
-      schema_version: string;
-      authority?: {
-        accepted_decision?: string;
-        historical_decision_records_are_non_normative?: boolean;
-      };
-      promotion?: Record<string, string | null>;
-    };
+  it('keeps ruleset authority at the live provider and retires repository-owned desired policy', () => {
+    const expectedPolicyPath = path.join(
+      root,
+      '.github/policies/main-production-protection.expected.json',
+    );
+    const sync = read('scripts/security/rulesetSync.mjs');
+    const workflow = read('.github/workflows/ruleset-sync.yml');
 
-    expect(policy.schema_version).toBe('1.4');
-    expect(policy.authority?.accepted_decision).toContain('ADR-0069');
-    expect(policy.authority?.historical_decision_records_are_non_normative).toBe(true);
-    expect(policy.promotion?.['decision_2026-08-16_owner_gate_retired']).toContain('retired');
+    expect(fs.existsSync(expectedPolicyPath)).toBe(false);
+    expect(sync).toContain("const RULESET_NAME = 'main-production-protection';");
+    expect(sync).toContain("authority: 'live-provider-state'");
+    expect(sync).toContain('Provider authority: current live GitHub configuration');
+    expect(sync).not.toContain('EXPECTED_PATH');
+    expect(sync).not.toContain('apply-package-a');
+    expect(workflow).toContain('Ruleset Readback (main-production-protection)');
+    expect(workflow).not.toContain('package_a');
+    expect(workflow).not.toContain('full');
   });
 
   it('does not assign provider-specific profiles repository authority in the active DevelopmentChain', () => {
