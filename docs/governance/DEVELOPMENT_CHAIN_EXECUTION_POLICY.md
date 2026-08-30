@@ -4,7 +4,7 @@
 **Status:** ACTIVE  
 **Version:** `2.1.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-08-27  
+**Updated:** 2026-08-30  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
@@ -40,7 +40,9 @@ READ-ONLY BASELINE
 → CHEAP / SANDBOX PRE-PR VALIDATION WHERE ACTUALLY AVAILABLE
 → FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
 → EXACT-SNAPSHOT HUMAN/OWNER PR-CREATION APPROVAL
-→ PR / GOVERNANCE CHECKS / TECHNICAL CI
+→ PR CREATED
+→ POST-PR CHAT HANDOFF (MAXIMUM TWO NEXT STEPS)
+→ GOVERNANCE CHECKS / TECHNICAL CI
 → HUMAN MERGE DECISION
 → HUMAN MERGE OR OTHER TERMINAL PR EVENT
 → WORK-CLAIM RELEASE + BRANCH RETIREMENT
@@ -72,6 +74,7 @@ A step marked REQUIRED for the concrete work package cannot be skipped.
 12. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
 13. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
 14. **Work-claim lifecycle ownership.** A principal that creates an `active`/`exclusive` work claim remains responsible for its conformant release after the correlated work reaches a terminal state, unless responsibility is explicitly and traceably handed off.
+15. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports the correlated snapshot/gates and displays at most the two highest-priority immediately actionable next steps, each with an exit gate; completion of either step triggers a fresh main/open-PR correlation and reprioritization.
 
 ## Pre-PR technical evidence
 
@@ -80,6 +83,24 @@ Branch-local or approved sandbox checks should be used before PR creation when t
 Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/governance/control-plane/pre-pr-build-evidence.schema.json` and is bound to exact base/head SHAs. Before requesting PR-creation approval, the agent reports those SHAs, the current-main/open-writer correlation result and the evidence actually available. Evidence remains non-authorizing.
 
 GitHub hosted `build-and-test` remains the independent technical validation for the final PR head.
+
+## Post-PR chat handoff and next-step queue (`CTRL-SDLC-CHAT-HANDOFF-001`)
+
+A chat-governed work item does not end its handoff at successful PR creation. Immediately after creation, the chat MUST expose the PR reference, branch/head, the main baseline used for the final correlation, the correlation result, and the known validation/open-gate state.
+
+The chat then recomputes the next-step queue against the current repository and governance state. Relevant current best practices and state-of-the-art guidance MAY be used to improve prioritization, but remain advisory unless adopted by an applicable CAPITAL-AI authority. They MUST NOT create a parallel governance hierarchy.
+
+When multiple follow-up actions exist, the visible queue is deliberately bounded:
+
+- more than two available actions → display only the two highest-priority immediately actionable steps;
+- one available action → display that one;
+- no remaining action → explicitly state that no further implementation step is currently identified.
+
+Each displayed step MUST be bounded/atomic and state an exit gate. Default prioritization is security/data integrity → governance/compliance → CI/build reliability → architecture/integration consistency → deployment readiness → observability/performance → UX/documentation, unless a higher authority or a concrete incident requires another order.
+
+After either displayed step is completed, the executor MUST re-read current `main`, open Pull Requests, changed-file/semantic overlap and applicable governance state and then reprioritize. The prior second item is not automatically promoted to first place.
+
+This handoff is non-authorizing. A recommended next step never constitutes PR creation approval, merge approval, deployment approval or protected external-mutation approval.
 
 ## Work-claim lifecycle and conformant closure
 

@@ -71,6 +71,7 @@ CURRENT MAIN + OPEN-PR BASELINE
 → FINAL MAIN RE-SYNC + CORRELATION REVIEW
 → EXPLICIT HUMAN/OWNER PR-CREATION APPROVAL
 → PULL REQUEST
+→ POST-PR CHAT HANDOFF (MAXIMUM TWO NEXT STEPS)
 → INDEPENDENT HOSTED GITHUB CHECKS
 → HUMAN/CODEOWNER MERGE DECISION
 → HUMAN MERGE
@@ -107,6 +108,18 @@ The rendered body MUST preserve the exact `CAPITAL_AI_PR_TEMPLATE_VERSION` marke
 For an agent branch with exactly one new `.ai/work-claims/*.json` claim, use the trusted `open-agent-draft-pr.yml` / `scripts/pr/renderPullRequestBody.mjs` path where available. For an authorized Human/UI/API/MCP/Connector path with no new claim, render the same current-`main` template directly and set claim-only fields to justified `N/A`; do not invent a claim solely to satisfy PR creation.
 
 The PR body contract MUST be checked **before** the external create mutation. Creating a non-conforming PR and relying on CI to repair it afterwards is prohibited because it produces avoidable failing runs and bypasses the intended pre-mutation governance boundary. If the client cannot read the current canonical template or cannot preserve its required markers/sections, PR creation stops fail-closed.
+
+### Mandatory post-PR chat handoff (`CTRL-SDLC-CHAT-HANDOFF-001`)
+
+After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by a prioritized **Nächste Schritte** section.
+
+The next-step queue MUST be recomputed from the then-current repository and governance state and from relevant current best-practice / state-of-the-art evidence where that materially improves the decision. External guidance remains advisory and MUST NOT create a competing policy hierarchy or silently override canonical CAPITAL-AI authority.
+
+If more than two implementation or follow-up steps are available, the chat MUST display **only the two highest-priority immediately actionable steps**. If one remains, it displays one; if none remain, it states that no additional implementation step is currently identified. Each displayed step MUST be bounded/atomic, name its intended exit gate, and respect this default prioritization unless a higher authority changes it: security/data integrity → governance/compliance → CI/build reliability → architecture/integration consistency → deployment readiness → observability/performance → UX/documentation.
+
+After either displayed step is completed, current `main`, open Pull Requests, changed-file/semantic overlap and applicable governance state MUST be re-read and the queue reprioritized. The previously displayed second step does not automatically become the new first step.
+
+The post-PR chat handoff is a coordination and transparency control only. It never grants merge, deployment or protected external-mutation authority.
 
 Avoid unnecessary paid GitHub CI/build/test runs before PR creation. After PR creation, use the smallest sufficient checks first and complete required checks before merge.
 
