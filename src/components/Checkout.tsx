@@ -115,10 +115,17 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
 
     console.log("[Stripe Diagnostics] Resolved publishable key:", publishableKey ? `${publishableKey.substring(0, 10)}...` : 'undefined');
 
-    // Gracefully handle missing Stripe keys with a high-fidelity guidance UI
+    // Sandbox/demo activation is development-only. Production must fail closed when Stripe
+    // configuration is unavailable so a browser can never simulate a successful entitlement.
     if (!publishableKey || publishableKey === '' || publishableKey === 'pk_test_...' || publishableKey.startsWith('pk_test_...')) {
-      console.warn("[Stripe Diagnostics] Publishable key is missing or is a placeholder. Switching to sandbox/demo mode.");
-      setDemoMode(true);
+      if ((import.meta as any).env?.DEV === true) {
+        console.warn("[Stripe Diagnostics] Publishable key is missing or is a placeholder. Development sandbox mode enabled.");
+        setDemoMode(true);
+      } else {
+        console.error("[Stripe Diagnostics] Publishable key is missing or is a placeholder. Production checkout denied.");
+        setDemoMode(false);
+        setError('Stripe Checkout ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.');
+      }
       setLoading(false);
       return;
     }
@@ -335,7 +342,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
           </div>
         )}
 
-        {/* Guidance when API Keys are not yet filled */}
+        {/* Development-only guidance when API keys are intentionally absent */}
         {demoMode ? (
           <div className="space-y-4">
             <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-xs text-amber-400 font-mono space-y-2">
@@ -352,8 +359,8 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
                 <li><code className="text-white">STRIPE_PRICE_ID_{planId.toUpperCase()}</code></li>
               </ul>
               <div className="pt-2 border-t border-amber-500/10 flex items-center justify-between">
-                <span className="text-[10px] text-amber-500 font-bold uppercase">Sandbox-Modus aktiv</span>
-                <span className="text-white/40 text-[9px]">Sie können die Zahlung simulieren</span>
+                <span className="text-[10px] text-amber-500 font-bold uppercase">Development-Sandbox aktiv</span>
+                <span className="text-white/40 text-[9px]">Nur lokale Entwicklung: Zahlung simulieren</span>
               </div>
             </div>
 
@@ -364,7 +371,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
                 className="flex-1 py-3 bg-aif-gold-DEFAULT hover:bg-aif-gold-light disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(245,196,83,0.3)]"
               >
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                <span>Demo-Upgrade simulieren</span>
+                <span>DEV-Upgrade simulieren</span>
               </button>
               <button
                 onClick={() => setDemoMode(false)}
