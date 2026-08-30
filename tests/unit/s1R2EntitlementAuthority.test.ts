@@ -80,7 +80,7 @@ describe('S1-R2-00 entitlement authority boundary', () => {
     const stripe = read('server/stripe.ts');
     expect(stripe).toContain("stripeRouter.get('/user-subscription'");
     expect(stripe).toContain('const identity = await resolveVerifiedIdentity(req);');
-    expect(stripe).toContain('const currentTier = await getSubscription(identity.userId);');
+    expect(stripe).toContain('const tier = await getSubscription(identity.userId);');
     expect(stripe).toContain('userId: identity.userId');
   });
 });
