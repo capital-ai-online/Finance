@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30",
+  "status": "active",
+  "exclusive": false,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Map every CAPITAL-AI operational and financial value-chain stage to an existing roadmap or a bounded gap-hardening package; register the coverage roadmap architecturally without creating a second scoring, event, version, merge or security authority.",
+  "workItemDE": "Jede Stufe der operativen und der Finanz-Wertschöpfungskette einer bestehenden Roadmap oder einem begrenzten Gap-Hardening-Paket zuordnen und die Coverage-Roadmap architekturgemäß einbinden, ohne eine zweite Scoring-, Event-, Versions-, Merge- oder Security-Authority zu erzeugen.",
+  "startedAt": "2026-08-30T14:56:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "e53b738289f16cbf1951d12b7362dac568763735",
+  "claimedPaths": [
+    ".ai/work-claims/VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30.json",
+    "docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned. Merge remains Human/Owner-only.",
+  "notes": [
+    "Open PR #607 overlaps only docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md — excluded from this claim.",
+    "No ADR/ESS number allocated. No authority-registry mutation. No runtime code in this claim."
+  ]
+}
