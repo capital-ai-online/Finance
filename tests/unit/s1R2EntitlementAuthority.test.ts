@@ -30,13 +30,20 @@ describe('S1-R2-00 entitlement authority boundary', () => {
     expect(checkout).toContain("setError('Stripe Checkout ist derzeit nicht verfügbar.");
   });
 
-  it('projects subscription tier from the authenticated server endpoint rather than browser state', () => {
+  it('projects subscription tier through the rotation-aware authenticated readback contract', () => {
     const session = read('src/app/auth/SessionComposition.tsx');
-    expect(session).toContain('/api/stripe/user-subscription?userId=');
-    expect(session).toContain('Authorization: `Bearer ${session.access_token}`');
+    const readback = read('src/lib/subscriptionReadback.ts');
+
+    expect(session).toContain("import { authFetch } from '../../lib/authFetch'");
+    expect(session).toContain("await authFetch('/api/stripe/user-subscription')");
+    expect(session).not.toContain('/api/stripe/user-subscription?userId=');
+    expect(session).not.toContain('Authorization: `Bearer ${session.access_token}`');
     expect(session).toContain("let tier: SubscriptionTier = 'Free';");
     expect(session).toContain('if (data?.subscriptionTier) tier = data.subscriptionTier;');
-    expect(session).toContain("subscriptionTier: 'Free'");
+
+    expect(readback).toContain("authFetch('/api/stripe/user-subscription')");
+    expect(readback).not.toContain('?email=');
+    expect(readback).not.toContain('?userId=');
   });
 
   it('derives protected quota decisions from verified identity plus server subscription state', () => {
