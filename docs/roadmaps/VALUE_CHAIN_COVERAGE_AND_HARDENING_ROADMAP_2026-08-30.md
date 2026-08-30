@@ -1,11 +1,12 @@
 # CAPITAL-AI Value-Chain Coverage and Hardening Roadmap
 
 **Document ID:** ROADMAP-VC-COV-HARDEN-2026-08-30  
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Status:** ACTIVE — COVERAGE MAP + GAP HARDENING ONLY  
 **Date:** 2026-08-30  
-**Repository baseline:** `main@e53b738289f16cbf1951d12b7362dac568763735`  
-**Open PR correlation:** #607 touches only `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` (no file overlap with this program)  
+**Evidence-Baseline:** `main@e53b738289f16cbf1951d12b7362dac568763735`  
+**PR-Basis:** `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7` (Merge #607)  
+**Open PR correlation:** #608 (dieser PR). #607 ist MERGED (S1-Roadmap, keine Dateiüberschneidung).  
 **Owner:** CAPITAL-AI Owner  
 **Document role:** `roadmap` (nicht authority)  
 **Primary projection of:** ARCH-CHAIN-0001 (`docs/architecture/AI_VALUE_CHAIN_VALIDATION.md`), ADR-0087, ESS-0001…ESS-0013, AUTH-GOV-DEVELOPMENT-CHAIN-STATUS  
@@ -80,7 +81,7 @@ UAI Identity
 | 5 Platform Director | **Nein** | ESS-0003, ADR-0006 | `Contracts/`, `Events/`, `Policies/`, README, Manifest — kein Entscheidungs-Runtime-Kern | **GAP** | **VC-H-PD** |
 | 6 Version Manager | **Nein** (ESS-0004 suspended) | D0 in Documentary-Roadmap; `src/platform/VersionManager/*` | `platformVersionAuthority.ts`, `versionManager.ts`, Convention-Validator vorhanden | **GAP / PARTIAL** | **VC-H-VM** |
 | 7 Release | **Nein** | ESS-0007 Skill | `clientVersion.ts` + `Services/` — Release-Center nicht vollautomatisiert | **GAP / PARTIAL** | **VC-H-REL** |
-| 8 Production | Teilweise (S1 + Handoff) | `S1_SECURITY_HARDENING_ROADMAP.md` (#607), `docs/runbooks/OPERATIONS_HANDOFF_2026-08-29.md` | main nach #606 restored; Live-Commit-Identität weicht von main-SHA; Auto-Deploy AUS | PARTIAL — Security/Ops führen | **VC-H-PROD** nur Identitäts-/Handoff-Korrelation, keine zweite Security-Roadmap |
+| 8 Production | Teilweise (S1 + Handoff) | `S1_SECURITY_HARDENING_ROADMAP.md` (#607 MERGED), `docs/runbooks/OPERATIONS_HANDOFF_2026-08-29.md` | main nach #606 restored; Live-Commit-Identität weicht von main-SHA; Auto-Deploy AUS | PARTIAL — Security/Ops führen | **VC-H-PROD** nur Identitäts-/Handoff-Korrelation, keine zweite Security-Roadmap |
 
 ---
 
@@ -108,7 +109,7 @@ UAI Identity
 
 | Thema | Grund |
 |---|---|
-| S1 / S1-R2 | eigene aktive Roadmap, offener PR #607 |
+| S1 / S1-R2 | eigene aktive Roadmap, #607 MERGED auf main |
 | SEO-GM, Frontend BB-2D, Crypto FT-*, Commodity P3-A | eigene Fachroadmaps |
 | M9-Drills, SA5, M10-On, FT-7, Model-Promotion | blockiert ohne neue Owner-Anweisung |
 | ESS-0004 Version Manager als neue Authority | Dokument **suspended**; Plattformversion bleibt `package.json#version` |
@@ -118,7 +119,7 @@ UAI Identity
 
 ## 5. Gap-Hardening-Pakete
 
-Jedes Paket ist ein eigenes späteres Workitem. Dieses Dokument implementiert **keinen** Runtime-Code.
+Jedes Paket ist ein eigenes späteres Workitem. Dieses Dokument implementiert **keinen** Runtime-Code. Die Inventarstufen `*-0` sind in PR #608 geschlossen (`VC_H_INVENTORY_PACK_2026-08-30.md`).
 
 Gemeinsame DoD-Regeln:
 
@@ -147,7 +148,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse | Abhängigkeit |
 |---|---|---|---|
-| SUP-0 | Inventory Ist-Funktion vs. ESS-0002 Kapitel | D | keine |
+| SUP-0 | Inventory Ist-Funktion vs. ESS-0002 Kapitel | D | **DONE in PR #608** |
 | SUP-1 | Finding-Lifecycle als read-only Projektion + Tests | C | SUP-0 |
 | SUP-2 | Observation-Payload an Event-Contract E3 angleichen, ohne neuen Bus | C | VC-H-EM-0 |
 | SUP-3 | Negative Tests: Supervisor kann Merge/Deploy/Score nicht auslösen | C | SUP-1 |
@@ -171,7 +172,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse | Abhängigkeit |
 |---|---|---|---|
-| PD-0 | Contract-Inventar: welche Decisions existieren, wer darf sie fällen | D | keine |
+| PD-0 | Contract-Inventar: welche Decisions existieren, wer darf sie fällen | D | **DONE in PR #608** |
 | PD-1 | Read-only Decision-Request-Projektion (Antrag, nicht Freigabe) | C | PD-0 |
 | PD-2 | Binding an Owner-/Human-Gate; Director gibt nur Routing-Empfehlung | C | PD-1 |
 | PD-3 | Negative Tests: keine Secret-, Deploy-, Billing- oder Score-Mutation | C | PD-2 |
@@ -197,7 +198,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse |
 |---|---|---|
-| VM-0 | Quelleninventar: package.json, VersionManager, Manifeste, README, ADR-History | D |
+| VM-0 | Quelleninventar: package.json, VersionManager, Manifeste, README, ADR-History | D — **DONE in PR #608** |
 | VM-1 | Projektionsvertrag: VersionManager liest nur `package.json#version` | C |
 | VM-2 | Drift-Test: abweichende Manifest-/Doc-Versionen werden als Drift gemeldet, nicht still überschrieben | C |
 | VM-3 | Keine Reaktivierung von ESS-0004 ohne Owner-ADR | D |
@@ -222,7 +223,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse |
 |---|---|---|
-| REL-0 | Inventory Release-Services vs. ESS-0007 | D |
+| REL-0 | Inventory Release-Services vs. ESS-0007 | D — **DONE in PR #608** |
 | REL-1 | Release-Evidence-Contract: version + mainSHA + (optional) productionSHA | C |
 | REL-2 | Negativ: Release-Modul löst kein Deploy aus | C |
 | REL-3 | Anbindung an Documentary Release-Evidence (DOC D-stream), keine zweite Pipeline | C |
@@ -235,7 +236,7 @@ Gemeinsame DoD-Regeln:
 
 - Operations-Handoff bindet einen älteren Production-SHA.
 - PR #606 restored main auf verifizierten Render-Stand (`e53b738`).
-- S1-R2-11 (#607) fordert content-addressed Security-Evidence — das bleibt S1-owned.
+- S1-R2 (#607 MERGED) fordert content-addressed Security-Evidence — das bleibt S1-owned.
 - `/healthz` = Liveness, `/readyz` = fachliches Gate.
 
 **Schwachstellen / Erweiterungen**
@@ -248,7 +249,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse | Abgrenzung |
 |---|---|---|---|
-| PROD-0 | Evidence-Datei: `productionCommit` / `mainCommit` / `handoffCommit` | D | keine Secret-Werte |
+| PROD-0 | Evidence-Datei: `productionCommit` / `mainCommit` / `handoffCommit` | D — **DONE in PR #608** | keine Secret-Werte |
 | PROD-1 | Handoff-Dokument gegen aktuellen Stand korrelieren | D | S1 bleibt Security-Owner |
 | PROD-2 | Gemini-Drift als Cleanup-Vorschlag, keine stille Manifest-Mutation | D | ADR-0088/0089/0090 prüfen |
 | PROD-3 | Deploy weiterhin Owner-Gate; dieses Paket deployt nicht | — | hart |
@@ -273,7 +274,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse |
 |---|---|---|
-| DQ-0 | Gate-Inventar über SPT/Crypto/Commodity | D |
+| DQ-0 | Gate-Inventar über SPT/Crypto/Commodity | D — **DONE in PR #608** |
 | DQ-1 | Gemeinsame Negative Tests: missing/stale/partial → kein Neutral-Score | C |
 | DQ-2 | Keine neue DQ-Engine; nur Contract-Tests gegen bestehende Gates | C |
 
@@ -296,7 +297,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse | Abgrenzung |
 |---|---|---|---|
-| EM-0 | Producer/Consumer-Matrix gegen E0, nur Inventar | D | DOC E0 führt |
+| EM-0 | Producer/Consumer-Matrix gegen E0, nur Inventar | D — **DONE in PR #608** | DOC E0 führt |
 | EM-1 | Minimal-Adapter: vorhandene Supervisor-/Documentary-Observation auf E3-Felder | C | kein neuer Bus |
 | EM-2 | Traceability-Query für eine Korrelations-ID (read-only) | C | ESS-0011 |
 | EM-3 | Keine DesignProposedEvent-Fiktion ohne echten Producer | D | CHAIN-01 ehrlich lassen |
@@ -320,7 +321,7 @@ Gemeinsame DoD-Regeln:
 
 | ID | Inhalt | Klasse |
 |---|---|---|
-| KG-0 | Inventar: welche Registries dürfen Knowledge speisen (Vocabulary, Document-Registry, ADR-Registry) | D |
+| KG-0 | Inventar: welche Registries dürfen Knowledge speisen (Vocabulary, Document-Registry, ADR-Registry) | D — **DONE in PR #608** |
 | KG-1 | Read-only Index aus approved Registry-Einträgen, keine Concept-Erzeugung | C |
 | KG-2 | Documentary D6 anbinden: nur `approved` Dokumente | C |
 | KG-3 | Negativ: Knowledge schreibt keine ADRs/ESS/Scores | C |
@@ -332,13 +333,13 @@ Gemeinsame DoD-Regeln:
 ## 6. Empfohlene Reihenfolge
 
 ```text
-VC-H-PROD-0     Production/main/Handoff-Identität (Doku)
-VC-H-SUP-0      Supervisor-Inventar
-VC-H-VM-0       Versionsquellen-Inventar
-VC-H-PD-0       Director-Contract-Inventar
-VC-H-DQ-0       DQ-Gate-Inventar
-VC-H-EM-0       Event-Producer-Matrix
-VC-H-KG-0       Knowledge-Quellen-Inventar
+VC-H-PROD-0     DONE in PR #608
+VC-H-SUP-0      DONE in PR #608
+VC-H-VM-0       DONE in PR #608
+VC-H-PD-0       DONE in PR #608
+VC-H-DQ-0       DONE in PR #608
+VC-H-EM-0       DONE in PR #608
+VC-H-KG-0       DONE in PR #608
         ↓
 VC-H-SUP-1/3    Finding-Lifecycle + Negative Tests
 VC-H-VM-1/2     Versionsprojektion + Drift-Tests
@@ -350,22 +351,24 @@ VC-H-EM-1/2     Observation → Event-Felder / Trace-Query
 VC-H-KG-1/2     Read-only Knowledge-Index
 ```
 
-P0 bleibt S1-R2 (#607) und Operations-Handoff außerhalb dieses Programms, aber vor Runtime-Härtung der Stufen 7/8.
+P0 bleibt S1-R2 (jetzt auf main nach #607) und Operations-Handoff außerhalb dieses Programms, aber vor Runtime-Härtung der Stufen 7/8.
 
 ---
 
-## 7. Architektur-Einbindung (verbindlich)
+## 7. Architektur-Einbindung (verbindlich) — in PR #608 enthalten
 
-| Artefakt | Rolle |
+| Artefakt | Rolle in PR #608 |
 |---|---|
 | Diese Datei | ausführbare Gap-Roadmap + Coverage-Map |
+| `docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md` | Inventar-WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0 |
+| `docs/governance/document-registry.json` | **Insert ausgeführt:** `DOC-ROADMAP-VC-COV-HARDEN-2026-08-30`, `DOC-WP-VC-H-INVENTORY-2026-08-30` |
+| `docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json` | Evidence-Payload des Inserts (status `INSERTED_IN_PR_608`) |
 | `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md` | Portfolio-Zeile `VC-COV` |
-| `docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json` | vorgeschlagener Registry-Eintrag `DOC-ROADMAP-VC-COV-HARDEN-2026-08-30` (Insert in `document-registry.json` bei Review) |
 | `.ai/work-claims/VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30.json` | Koordinations-Claim |
 | ARCH-CHAIN-0001 | Validierungsquelle, nicht ersetzt |
 | ADR-0087 / SPT / S1 / DOC | bleiben Fachautoritäten |
 
-Keine neue ADR-Nummer in diesem PR. Keine ESS-Nummer. Keine Authority-Registry-Mutation, solange keine neue AUTH reserviert ist.
+Keine neue ADR-Nummer in diesem PR. Keine ESS-Nummer. Keine Authority-Registry-Mutation. Document-Registry ist Projektionskatalog, keine neue AUTH.
 
 ---
 
@@ -379,6 +382,8 @@ Das Coverage-Programm ist geschlossen, wenn:
 4. Master-Index und Document-Registry denselben Pfad und dieselbe Version nennen;
 5. Historical Evidence nicht als aktuelle Production-Authority zitiert wird.
 
+Inventar `*-0` und Registry-Insert erfüllen den Einbindungsteil von Punkt 4 in diesem PR; Implementierung `*-1+` bleibt Folgearbeit.
+
 ---
 
 ## 9. Version History
@@ -386,3 +391,4 @@ Das Coverage-Programm ist geschlossen, wenn:
 | Version | Datum | Beschreibung |
 |---|---|---|
 | 1.0.0 | 2026-08-30 | Erstaufnahme Coverage-Map gegen `main@e53b738`; Gap-Pakete für Stufen ohne eigene Roadmap |
+| 1.0.1 | 2026-08-30 | Registry-Insert und Inventar-WPs ausdrücklich als Inhalt von PR #608 gebunden; Rebase auf main nach Merge #607 |
