@@ -2,7 +2,7 @@
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
 Stand: 2026-08-30  
-Repository-Baseline: `main@677a88ca5156b51060e9204aa06b9afdcf4e47b7`  
+Repository-Baseline: `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc`  
 Owner: SvenKulessa  
 Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 
@@ -18,7 +18,7 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 
 **Integration 2026-08-15:** Die DEVELOPMENT Chain und der Systemadmin-Agent sind in der kanonischen Ausführungsroadmap **ROADMAP-INTEGRATED-DC-SA-0001** (`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md`) verbunden. Diese Integrated Roadmap ist die verbindende Ausführungsautorität für DC + SA Phasen (I0–I4).
 
-**Value-Chain Coverage 2026-08-30:** Die operative Kette (ARCH-CHAIN-0001) und die Finanz-/Scoring-Kette (ADR-0087) sind stufenweise gegen bestehende Roadmaps korreliert. Lücken ohne eigene Roadmap führt **ROADMAP-VC-COV-HARDEN-2026-08-30**. Inventar-WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0 liegen in `docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md`. Document-Registry-Insert (`DOC-ROADMAP-VC-COV-HARDEN-2026-08-30`, `DOC-WP-VC-H-INVENTORY-2026-08-30`) liegt in diesem Nachfolge-PR zu #608. Offener PR #609 (S1-R2-02) hat keine Dateiüberschneidung.
+**Value-Chain Coverage 2026-08-30:** Coverage-Map und Inventar *-0 sind über PR #610 auf `main`. Ein append-only Registry-Insert-Payload, Claim-Close, Current-State-Sync, ESS-Reconciliation, VC-H *-1 Spezifikation und S1-R2-02 Dispatch-Checkliste liegen in OPEN-STEPS-BIND-2026-08-30 (`docs/open-steps-bind-2026-08-30-v6`). `document-registry.json` wird dabei nicht mutiert. PR #615 ist auf `main@f714eae6` gemergt; PR #617 ist damit synchronisiert. Live `mode=full` bleibt bis zu separatem Owner-Plan, Owner-ACCEPT und verifiziertem Readback gesperrt.
 
 ## 2. Verbindliche Authority-Reihenfolge
 
@@ -37,10 +37,10 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + `docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md` + Registry-Insert in `docs/governance/document-registry.json`** | **ACTIVE — COVERAGE**; Inventar *-0 DONE; Registry-Insert DONE; ersetzt PR #608 | Nächste Implementierung erst nach Human-Merge: SUP-1 / VM-2 / DQ-1 (Klasse C), PD-1 nach Owner-ACCEPT |
+| **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + Inventar-Pack + `VC_H_IMPLEMENTATION_PACK_2026-08-30.md` + Registry-Insert-Payload** | **ACTIVE — COVERAGE**; Inventar *-0 auf main (#610); Payload + *-1-Spezifikation in synchronisiertem OPEN-STEPS-BIND; physischer Registry-Insert nicht ausgeführt | Exact-Head-Checks und Human-Review für diesen D-PR; Registry-Mutation nur als separater Scope; Runtime anschließend auf frischem Branch |
 | **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
-| S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | S1-R2-Reassessment auf main nach Merge #607 (`677a88ca`); S1-R2-02 in offenem PR #609 | Human-Review #609; R2-00/R2-01 ohne Provider-Mutation; Security-Owner bleibt S1 |
+| S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | S1-R2-Reassessment auf main (#607); S1-R2-02 Code/Docs gemergt (#611); #615 Policy/Builder/Floor-Fix auf main; Live-Drift offen; `mode=full` BLOCKED; #613 verworfen | Owner `workflow_dispatch` zuerst `mode=plan`; `required_signatures` nicht still reaktivieren; full nur nach separatem Owner-ACCEPT |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline; Event-Producer-Lücken zusätzlich in VC-H-EM inventarisiert |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
 | IAM-DIAG | Diagnostics IAM | `docs/roadmaps/AI_SYSTEM_ADMIN_DIAGNOSTICS_IAM_ROADMAP.md` | teilweise überholt, nicht vollständig evidenzgebunden | retained/superseded/migrated-Matrix |

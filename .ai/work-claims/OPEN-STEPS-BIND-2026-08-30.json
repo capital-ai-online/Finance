@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPEN-STEPS-BIND-2026-08-30",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Bind remaining open documentary steps after #610/#611/#612 on a fresh branch: prepare an append-only document-registry insert payload without mutating the registry, close the VC-COV claim, synchronize current state, reconcile ESS paths/authority, specify the VC-H *-1 pack, and provide the S1-R2-02 post-merge dispatch checklist. No runtime, no ruleset apply, no M10 reactivation.",
+  "workItemDE": "Offene dokumentarische Folgeschritte nach #610/#611/#612 auf frischem Branch binden: append-only Registry-Insert-Payload vorbereiten, ohne die Registry zu mutieren; VC-COV-Claim schließen; Current State synchronisieren; ESS-Pfade/Authority abgleichen; VC-H-*-1-Paket spezifizieren; S1-R2-02-Dispatch-Checkliste bereitstellen. Kein Runtime, kein Ruleset-Apply, kein M10.",
+  "startedAt": "2026-08-30T17:50:00+02:00",
+  "updatedAt": "2026-08-30T19:39:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "f714eae6a551ac8f3f92f4070f693c88ec35f6fc",
+  "claimedPaths": [
+    ".ai/work-claims/OPEN-STEPS-BIND-2026-08-30.json",
+    ".ai/work-claims/VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30.json",
+    "docs/governance/authority-registry.json",
+    "docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/architecture/ROADMAP.md",
+    "docs/roadmaps/work-packages/VC_H_IMPLEMENTATION_PACK_2026-08-30.md",
+    "docs/governance/ESS_NAMESPACE_RECONCILIATION_2026-08-30.md",
+    "docs/evidence/security/S1_R2_02_POST_MERGE_DISPATCH_CHECKLIST_2026-08-30.md"
+  ],
+  "releaseCondition": "Claim is released when this pull request is merged, closed, superseded or abandoned. Merge remains Human/Owner-only.",
+  "notes": [
+    "Branch docs/open-steps-bind-2026-08-30-v6 is synchronized with main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc, including merged PR #615.",
+    "Supersedes closed PR #616 / branch docs/open-steps-bind-2026-08-30-v5 (governance baseline failed; registry was compacted).",
+    "This PR prepares an append-only document-registry payload only; docs/governance/document-registry.json is not claimed or mutated.",
+    "PR #615 was Human-merged as main commit f714eae6a551ac8f3f92f4070f693c88ec35f6fc after exact-head CI; its required_linear_history policy/builder/floor remediation is now present on main.",
+    "The ROADMAP.md conflict is resolved by preserving v2.4.0 as predecessor and advancing this current-state projection to v2.5.0; authority-registry v1.35.0 is a strict superset of main v1.34.0.",
+    "Live ruleset reconciliation remains a separate Owner-gated plan/apply; this branch performs no provider mutation.",
+    "Does not reactivate M10.",
+    "Does not implement Supervisor/PD/DQ runtime. *-1 pack is specification-only.",
+    "ESS-0011 skill files already exist on main; reconciliation registers stable authorityIds.",
+    "PR #613 commit-signing automation remains discarded.",
+    "Production/main/head identity remains bound by the machine-managed exact-head PR baseline; this claim does not infer production state.",
+    "Corrective consistency update performed through the authorized GitHub connector; original work-agent metadata is preserved."
+  ]
+}
