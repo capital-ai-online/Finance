@@ -18,7 +18,8 @@ import { CAPITAL_AI_VERSION } from '../platform/Branding/runtimeBrand';
 interface PdfExportModalBaseProps {
   isOpen: boolean;
   onClose: () => void;
-  email: string;
+  /** Presentation/checkout metadata only. Authorization is derived from authFetch bearer identity. */
+  email?: string;
 }
 
 type PdfExportModalProps = PdfExportModalBaseProps & (
@@ -49,10 +50,10 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
   });
 
   useEffect(() => {
-    if (isOpen && email) {
+    if (isOpen) {
       void fetchCredits();
     }
-  }, [isOpen, email]);
+  }, [isOpen]);
 
   const fetchCredits = async () => {
     try {
@@ -128,12 +129,12 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
       setLoading(true);
       setError(null);
 
-      const res = await fetch('/api/stripe/create-checkout-session', {
+      const res = await authFetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: 'EXPORT_PDF',
-          email,
+          ...(email ? { email } : {}),
           successUrl: window.location.href,
           cancelUrl: window.location.href,
         }),
