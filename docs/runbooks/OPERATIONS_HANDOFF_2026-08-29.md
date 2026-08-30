@@ -2,7 +2,7 @@
 
 Status: PARTIAL / ACTION REQUIRED  
 Last synchronized: 2026-08-30  
-Repository baseline: `main@e311c30d18951785a68154d994a403799819c194`  
+Repository baseline: `main@3815c7fce44e30bccf227a4399220407f4095706`  
 Last machine-bound production deployment: `e311c30d18951785a68154d994a403799819c194`  
 Active security branch: `security/s1-r2-00-entitlement-authority-20260830`  
 Canonical Security authority: `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md`
@@ -15,13 +15,13 @@ This runbook consolidates operational/provider/deployment evidence for S1. It do
 
 ### GitHub / Production
 
-The current R2-00 source baseline is:
+The current R2-00 repository baseline is:
 
 ```text
-main = e311c30d18951785a68154d994a403799819c194
+main = 3815c7fce44e30bccf227a4399220407f4095706
 ```
 
-The current machine-managed Production/Main baseline used by the repository workflow also binds Production to `e311c30d18951785a68154d994a403799819c194`. R2-00 performs no Render mutation; production identity is used only as correlation evidence.
+The last machine-bound production deployment retained in this handoff is `e311c30d18951785a68154d994a403799819c194`. R2-00 performs no Render mutation; the PR's trusted baseline automation remains responsible for exact Production/Main/Head correlation.
 
 ### Supabase
 
@@ -35,14 +35,15 @@ Read-only provider inspection for R2-00 was performed against:
 
 No schema, RLS, Auth or data mutation was performed for R2-00.
 
-## 2. Entitlement Authority — S1-R2-00
+## 2. Entitlement Authority — S1-R2-00 / S1-R2-06
 
-Status: **CANDIDATE / NOT AUTHORITY — PR VERIFY PENDING**.  
+R2-00 status: **CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE — PR VERIFY PENDING**.  
+R2-06 status: **ACTIVE / REMEDIATION REQUIRED**.  
 Evidence: `docs/evidence/security/S1_R2_00_ENTITLEMENT_AUTHORITY_TRACE_2026-08-30.md`.
 
-### Production reachability result
+### Persisted subscription authority
 
-The traced production authority chain is:
+The verified provider/server subscription chain is:
 
 ```text
 Supabase verified identity
@@ -58,28 +59,51 @@ stripe.subscriptions
 sync_stripe_subscription_to_public()
 ```
 
-Browser/session `subscriptionTier` is a presentation projection, not a protected server authority.
+This chain remains protected from ordinary browser writes.
 
 Verified findings:
 
 - Stripe simulated success in `Checkout.tsx` is gated by `import.meta.env.DEV === true`; missing/placeholder Stripe configuration in Production fails closed.
 - Session bootstrap reads the tier through authenticated `/api/stripe/user-subscription`; server identity comes from the bearer token, not the query `userId`.
 - Buffett and screening quota enforcement resolve `resolveVerifiedIdentity(req)` and derive tier from `getSubscription(identity.userId)`.
-- PDF-credit Enterprise decisions use the same verified-identity/server-subscription path.
+- `/pdf-credits` and `/consume-pdf-credit` use the same verified-identity/server-subscription or credit-ledger path.
 - Checkout selects Stripe Price IDs from server configuration after an allowlisted plan request and never accepts a Price ID or authoritative user ID from the request body.
-- Express webhook subscription-tier writes have been retired; it handles application side effects only.
+- Express webhook subscription-tier writes have been retired; provider subscription state is synchronized through Supabase.
 - `public.subscriptions` has RLS enabled. `authenticated` has only an own-row SELECT policy; no normal browser INSERT/UPDATE/DELETE policy exists.
 - `stripe.subscriptions` is not exposed to `anon`/`authenticated` roles.
-- the live Stripe→public synchronization trigger is active and uses a `SECURITY DEFINER` function that resolves the provider customer/user, refuses an unknown-price guessed paid tier, demotes inactive subscriptions to `Free`, and upserts by `user_id`.
-- the historical privileged `saveSubscription()` helper remains defined in `server/db.ts`, but no production source call site invokes it. The R2-00 regression contract fails if such a call site is introduced.
+- the live Stripe→public synchronization trigger is active and uses a `SECURITY DEFINER` function that resolves provider customer/user identity, refuses an unknown-price guessed paid tier, demotes inactive subscriptions to `Free`, and upserts by `user_id`.
+- the historical privileged `saveSubscription()` helper remains defined in `server/db.ts`, but no production source call site invokes it. Regression coverage fails if such a call site is introduced.
 
-### Operational classification
+### Confirmed capability-boundary gap
 
-R2-00 is therefore classified as **`NOT AUTHORITY` candidate**. Final roadmap closure requires exact-head CI/Governance PASS and Human merge of the evidence/regression contract.
+Persisted subscription truth being protected did not make every paid capability safe.
 
-S1-R2-06 is **not activated** by this result. It must reopen if browser/request tier data becomes able to write subscription state or directly grant protected server capability.
+`Dashboard.tsx` supplies browser `profile.subscriptionTier` to `ComplianceExporter` without `userEmail`. In the baseline implementation, `ComplianceExporter` treated local `Enterprise` as sufficient and used a missing-email fallback that called browser-side PDF generation directly instead of `PdfExportModal`.
 
-No Stripe or Supabase provider mutation is required for this classification.
+Because the Dashboard can restore/mutate local tier projection state, that branch allowed a premium Compliance PDF download without the authenticated `/pdf-credits` / `/consume-pdf-credit` decision.
+
+Operational classification is therefore **`CONFIRMED AUTHORITY GAP`** and R2-06 is activated.
+
+### Candidate containment in PR #624
+
+- `ComplianceExporter` has no direct generation fallback when email metadata is absent.
+- Browser `Enterprise` is only a UX pre-filter that can open `PdfExportModal`.
+- `PdfExportModal` calls `/pdf-credits` through `authFetch` whenever it opens.
+- `/consume-pdf-credit` uses `authFetch` before a prepared download can be committed.
+- PDF-credit Checkout also uses `authFetch`; browser email is optional metadata, not an authorization prerequisite.
+- a missing/invalid bearer identity therefore fails closed before the premium download is committed.
+
+No Stripe or Supabase provider mutation is required for this containment.
+
+### Remaining R2-06 work
+
+R2-06 remains open after the bounded PDF fix. Follow-up must:
+
+- demote browser-restored / Stripe-return `profile.subscriptionTier` to server-refreshed presentation state only;
+- reconcile Pro/Enterprise product claims, including Realtime AI Newsfeed, with actual server-side entitlement enforcement or explicit public-capability classification;
+- inventory every paid action/export/server route and prove verified-principal + server subscription/ledger authorization;
+- add negative tests for browser tier escalation at each protected boundary;
+- verify the merged containment in Production where runtime evidence is required.
 
 ## 3. Owner decision — S1-R2-08
 
@@ -157,7 +181,7 @@ Client-controlled absolute Checkout redirect URLs remain a separate finding. The
 
 Status: **MERGED / POST-DEPLOY VERIFY PENDING**.
 
-PR #619 gates simulated Stripe success behind `import.meta.env.DEV === true`. Production fails closed on missing/placeholder publishable configuration. R2-00 statically proves that this simulation is not entitlement authority; R2-10 still requires its separate Production runtime/bundle verification.
+PR #619 gates simulated Stripe success behind `import.meta.env.DEV === true`. Production fails closed on missing/placeholder publishable configuration. R2-00 confirms that this DEV-only simulation is not the discovered production authority gap; R2-10 still requires its separate Production runtime/bundle verification.
 
 ## 7. CSP Operations — S1-R2-09
 
@@ -214,7 +238,7 @@ No secret values are included in repository evidence.
 ## 11. Rollback and future changes
 
 - **Code/Evidence:** Human-reviewed PR/revert path; no direct agent write to `main`.
-- **R2-00:** any new browser-reachable subscription writer, browser write RLS policy, protected client-tier decision or non-Stripe-verifiable production mutation path reopens the finding and activates R2-06 review.
+- **R2-00/R2-06:** any protected capability gated solely by browser tier, browser-reachable subscription writer, browser write RLS policy or non-Stripe-verifiable production mutation path keeps/reopens the control. The current PDF containment must remain server-ledger bound.
 - **GitHub ruleset:** current live provider state remains authoritative; no automatic Soll-reconciliation exists.
 - **CSP:** default remains `report-only`; `baseline` is the existing availability recovery mode.
 - **Billing sandbox:** Production must remain fail-closed.
@@ -222,4 +246,4 @@ No secret values are included in repository evidence.
 
 ## 12. Overall handoff
 
-R2-00 is now a **`NOT AUTHORITY` candidate** backed by source reachability, live read-only Supabase RLS/trigger evidence and a regression contract; Human merge is still required before final closure. R2-06 is not activated. R2-02 is an Owner-accepted live-provider-state decision. R2-08 remains a tier exception. R2-09 remains `PARTIAL / REPORT-ONLY`; R2-10 and R2-11 still need their applicable runtime/operational verification. After R2-00 validation/merge, **R2-03 is the next active implementation control** in the canonical sequence.
+R2-00 is a **`CONFIRMED AUTHORITY GAP / REMEDIATION CANDIDATE`**: persisted Stripe/Supabase subscription authority is protected, but a browser-only Compliance PDF grant existed at the capability boundary. PR #624 contains the bounded fail-closed containment and regression contract; Human merge and exact-head checks remain required. **R2-06 is ACTIVE** for the remaining premium-capability inventory and remediation. R2-02 is an Owner-accepted live-provider-state decision. R2-08 remains a tier exception. R2-09 remains `PARTIAL / REPORT-ONLY`; R2-10 and R2-11 still need their applicable runtime/operational verification. No provider mutation is authorized by this handoff.
