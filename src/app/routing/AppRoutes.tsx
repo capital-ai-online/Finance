@@ -3,17 +3,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
-import { Dashboard } from '../dashboard';
-import {
-  Datenschutz,
-  ImpressumAgb,
-  LandingPage,
-  LoginPage,
-} from '../../features/public/ui';
-import { LearningVocabulary } from '../../features/learning/ui';
-import { MediaStudio } from '../../features/social/ui';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { Datenschutz, ImpressumAgb, LoginPage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
+
+// PERFORMANCE: keep the dedicated login/legal shell out of the large dashboard/analytics graph.
+// These boundaries are route-owned only; they do not create parallel feature implementations.
+const LandingPage = lazy(() =>
+  import('../../features/public/ui/LandingPage').then((module) => ({ default: module.LandingPage })),
+);
+const Dashboard = lazy(() =>
+  import('../dashboard/Dashboard').then((module) => ({ default: module.Dashboard })),
+);
+const LearningVocabulary = lazy(() =>
+  import('../../features/learning/ui/LearningVocabulary').then((module) => ({
+    default: module.LearningVocabulary,
+  })),
+);
+const MediaStudio = lazy(() =>
+  import('../../features/social/ui/MediaStudio').then((module) => ({ default: module.MediaStudio })),
+);
 
 interface AppRoutesProps {
   userSession: UserSession | null;
@@ -22,6 +31,20 @@ interface AppRoutesProps {
   handleLogin: (email: string, password: string) => Promise<void>;
   handleRegister: (name: string, email: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
+}
+
+function RouteLoadingBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-white">
+          <p className="text-xs font-mono uppercase tracking-widest text-white/45">Ansicht wird geladen…</p>
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
+  );
 }
 
 function RouteRedirect({ to, label }: { to: string; label: string }) {
@@ -73,18 +96,20 @@ export function AppRoutes({
     }
 
     return (
-      <Dashboard
-        userSession={userSession}
-        onLogout={async () => {
-          await handleLogout();
-          if (typeof window !== 'undefined') {
-            window.location.replace('/');
-          }
-        }}
-        onRegister={() => undefined}
-        onLoginEmail={handleLogin}
-        onRegisterEmail={handleRegister}
-      />
+      <RouteLoadingBoundary>
+        <Dashboard
+          userSession={userSession}
+          onLogout={async () => {
+            await handleLogout();
+            if (typeof window !== 'undefined') {
+              window.location.replace('/');
+            }
+          }}
+          onRegister={() => undefined}
+          onLoginEmail={handleLogin}
+          onRegisterEmail={handleRegister}
+        />
+      </RouteLoadingBoundary>
     );
   };
 
@@ -174,7 +199,9 @@ export function AppRoutes({
               ← Zurück zur Landingpage
             </a>
           </header>
-          <LearningVocabulary />
+          <RouteLoadingBoundary>
+            <LearningVocabulary />
+          </RouteLoadingBoundary>
         </div>
       </div>
     );
@@ -182,11 +209,13 @@ export function AppRoutes({
 
   if (currentPath === '/') {
     return (
-      <LandingPage
-        clearJustLoggedOut={clearJustLoggedOut}
-        handleLogin={handleLogin}
-        handleRegister={handleRegister}
-      />
+      <RouteLoadingBoundary>
+        <LandingPage
+          clearJustLoggedOut={clearJustLoggedOut}
+          handleLogin={handleLogin}
+          handleRegister={handleRegister}
+        />
+      </RouteLoadingBoundary>
     );
   }
 
@@ -223,7 +252,9 @@ export function AppRoutes({
               ← Zurück zum Dashboard
             </a>
           </header>
-          <MediaStudio />
+          <RouteLoadingBoundary>
+            <MediaStudio />
+          </RouteLoadingBoundary>
         </div>
       </div>
     );

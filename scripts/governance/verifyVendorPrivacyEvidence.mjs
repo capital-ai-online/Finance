@@ -18,9 +18,12 @@ const file = resolve(process.cwd(), fileIndex >= 0 && args[fileIndex + 1] ? args
 
 const errors = [];
 const warnings = [];
+const informational = [];
 const isIsoDate = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
 const isSha256 = (value) => typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value);
 const daysBetween = (a, b) => Math.floor(Math.abs(b.getTime() - a.getTime()) / 86_400_000);
+const isActiveProductionProcessing = (vendor) => String(vendor?.processingStatus || '').startsWith('active-');
+const isPlannedProcessing = (vendor) => String(vendor?.processingStatus || '').startsWith('planned-');
 
 function problem(target, message) { (strict ? errors : warnings).push(`${target}: ${message}`); }
 function requireEvidence(target, evidence) {
@@ -56,6 +59,10 @@ for (const vendor of vendors) {
   if (!DPA_STATUSES.has(vendor.dpa.status)) errors.push(`${target}: unsupported DPA status ${vendor.dpa.status || 'missing'}`);
   if (!SUBPROCESSOR_STATUSES.has(vendor.subprocessors.status)) errors.push(`${target}: unsupported subprocessor status ${vendor.subprocessors.status || 'missing'}`);
 
+  if (isPlannedProcessing(vendor) && vendor.roleStatus !== 'pre-onboarding-pending' && vendor.overallEvidenceStatus !== 'verified') {
+    errors.push(`${target}: planned processing must remain pre-onboarding-pending until legal onboarding evidence is verified`);
+  }
+
   if (vendor.roleStatus === 'verified-scoped' && (vendor.roleEvidence?.status !== 'verified' || !vendor.roleEvidence?.scope || !vendor.roleEvidence?.evidenceLocation)) {
     errors.push(`${target}: verified-scoped role requires verified roleEvidence with scope and evidenceLocation`);
   }
@@ -86,8 +93,12 @@ for (const vendor of vendors) {
       requireEvidence(`${target}/subprocessors`, vendor.subprocessors);
       if (vendor.subprocessors.changeNotifications === 'unknown') errors.push(`${target}: verified subprocessors require a known change-notification posture`);
     }
-  } else {
+  } else if (strict || isActiveProductionProcessing(vendor)) {
+    // Normal CI must surface unresolved evidence for active production processors/controllers.
+    // Strict verification additionally blocks every not-yet-onboarded candidate before activation.
     problem(target, `overall evidence status is ${vendor.overallEvidenceStatus || 'missing'}`);
+  } else {
+    informational.push(`${target}: planned/inactive pre-onboarding evidence remains pending`);
   }
 
   const mechanisms = Array.isArray(vendor.transfers.mechanisms) ? vendor.transfers.mechanisms : [];
@@ -111,10 +122,15 @@ for (const vendor of vendors) {
 console.log(`Vendor privacy evidence preflight (${strict ? 'strict' : 'onboarding'} mode)`);
 console.log(`Inventory: ${file}`);
 console.log(`Candidates: ${vendors.length}/${EXPECTED_VENDOR_IDS.length}`);
+for (const item of informational) console.log(`INFO ${item}`);
 for (const warning of warnings) console.warn(`WARN ${warning}`);
 for (const error of errors) console.error(`ERROR ${error}`);
 if (errors.length > 0) {
   console.error(`Evidence gate failed with ${errors.length} error(s).`);
   process.exit(1);
 }
-console.log(strict ? 'Vendor privacy evidence strict gate passed.' : `Vendor privacy evidence structure is valid; ${warnings.length} onboarding gap(s) remain.`);
+if (strict) {
+  console.log('Vendor privacy evidence strict gate passed.');
+} else {
+  console.log(`Vendor privacy evidence structure is valid; ${warnings.length} active production gap(s), ${informational.length} planned/inactive candidate(s).`);
+}
