@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30",
+  "status": "active",
+  "exclusive": false,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Map every CAPITAL-AI operational and financial value-chain stage to an existing roadmap or a bounded gap-hardening package; insert document-registry entries; complete Klasse-D inventory WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0.",
+  "workItemDE": "Wertschöpfungsketten-Coverage einbinden, Document-Registry-Insert ausführen und Inventar-WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0 als Klasse D schließen.",
+  "startedAt": "2026-08-30T14:56:00+02:00",
+  "updatedAt": "2026-08-30T16:10:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "677a88ca5156b51060e9204aa06b9afdcf4e47b7",
+  "claimedPaths": [
+    ".ai/work-claims/VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30.json",
+    "docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/roadmaps/work-packages/VC_H_INVENTORY_PACK_2026-08-30.md",
+    "docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json",
+    "docs/governance/document-registry.json"
+  ],
+  "releaseCondition": "Claim is released when the successor pull request is merged, closed, superseded or abandoned. Merge remains Human/Owner-only.",
+  "notes": [
+    "Successor branch docs/vc-cov-hardening-2026-08-30-v2 replaces PR #608 (unsigned-commit ruleset block).",
+    "Open PR #609 (S1-R2-02) has no file overlap with this claim.",
+    "Registry insert is IN this PR: docs/governance/document-registry.json plus evidence payload.",
+    "Inventory WPs PROD-0/SUP-0/VM-0/PD-0/REL-0/DQ-0/EM-0/KG-0 are IN this PR via VC_H_INVENTORY_PACK_2026-08-30.md.",
+    "No ADR/ESS number allocated. No authority-registry mutation. No runtime code in this claim.",
+    "Inventory pack closes *-0 only. Implementation *-1+ remains out of this PR."
+  ]
+}
