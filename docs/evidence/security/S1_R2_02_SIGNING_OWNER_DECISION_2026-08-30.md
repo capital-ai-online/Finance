@@ -2,7 +2,7 @@
 
 - Date: 2026-08-30
 - Repository: `SvenKulessa/Finance`
-- Baseline at decision synchronization: `main@4e3de6f489989e64962225874dd7dd69400fcd95`
+- Baseline at decision synchronization: `main@460e8dd088a78f426cac392c20da104f5873ecad`
 - Decision authority: Human/Owner
 - Classification: ACTIVE GOVERNANCE DECISION
 
@@ -14,16 +14,18 @@ Commit signing is not a mandatory CAPITAL-AI merge-readiness, PR-creation, CI, o
 
 ## Controls that remain mandatory
 
-The signing decision does not weaken the remaining repository governance floor:
+The signing decision does not weaken the canonical repository governance floor. The live readback at 2026-08-30T19:08:51+02:00 is currently below this floor; that drift is documented and must be restored through the corrected, Owner-gated reconciliation path:
 
 - branch-based changes; no direct agent changes to `main`;
 - Human/Owner-only merge decision;
 - CODEOWNER review where required by the live ruleset;
 - strict required status checks;
 - non-fast-forward protection;
-- required linear history;
+- required linear history with squash/rebase-only merge methods;
 - bypass-free ruleset posture;
 - post-change provider readback and evidence binding for security/governance mutations.
+
+This decision does not authorize the current absence of Required Checks, CODEOWNER review, review-thread resolution, deletion protection or linear history.
 
 ## Rationale
 

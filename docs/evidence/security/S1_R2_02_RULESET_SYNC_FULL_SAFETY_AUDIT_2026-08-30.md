@@ -1,101 +1,69 @@
-# S1-R2-02 — Ruleset Sync Full-Safety Audit
+# S1-R2-02 — Ruleset Sync Full-Safety Audit and Remediation
 
 - Date: 2026-08-30
-- Repository baseline at audit start: `main@4e3de6f489989e64962225874dd7dd69400fcd95`
+- Repository baseline: `main@460e8dd088a78f426cac392c20da104f5873ecad`
 - Work branch: `docs/s1-r2-02-signing-decision-20260830`
-- Scope: `scripts/security/rulesetSync.mjs`, canonical expected policy and live `main-production-protection` ruleset
-- Classification: **FULL APPLY BLOCKED / SCRIPT PRESERVATION GAP CONFIRMED**
+- Scope: `scripts/security/rulesetSync.mjs`, canonical expected policy and live `main-production-protection`
+- Classification: **REMEDIATION IMPLEMENTED IN PR / LIVE APPLY NOT AUTHORIZED**
 
-## Audit objective
+## Live readback
 
-Before any Owner-gated `workflow_dispatch(mode=full)` execution, verify that the canonical ruleset reconciliation preserves the intended live controls and does not reintroduce commit-signing enforcement.
-
-## Current live ruleset readback
-
-The live provider state read during this work package contains:
+The provider readback at 2026-08-30T19:08:51+02:00 contains only:
 
 - `non_fast_forward`;
-- `pull_request` with CODEOWNER review enabled;
-- strict issuer-bound `required_status_checks` for the intended four checks;
+- `pull_request` with extra approval for unattributed changes, but without CODEOWNER review or review-thread resolution;
 - `code_quality` with severity `warnings`;
-- `required_linear_history`;
-- empty `bypass_actors`;
-- `current_user_can_bypass: never`.
+- empty bypass actors.
 
-`required_signatures` is not present and is intentionally no longer a mandatory governance control.
+The live ruleset does not contain `required_status_checks`, `required_linear_history`, `deletion` or `required_signatures`. Absence of `required_signatures` is intentional; the other missing controls are critical drift.
 
-## Script audit result
+## Confirmed original defect
 
-`buildDesiredRuleset(expected)` currently constructs the desired ruleset from the canonical expected policy with:
+The pre-remediation `buildDesiredRuleset(expected)` constructed `non_fast_forward`, `deletion`, `pull_request` and `required_status_checks`, but did not construct `required_linear_history`.
 
-- `non_fast_forward` when enabled;
-- `deletion` when enabled;
-- `pull_request`;
-- `required_status_checks`.
+`preserveApprovedLiveRules(...)` preserved only `code_quality`. A full `PUT /rulesets/{id}` could therefore remove linear-history protection and then validate the incomplete payload as successful.
 
-The function does not construct either `required_linear_history` or `required_signatures`.
+## Remediation in this PR
 
-`preserveApprovedLiveRules(desired, current)` preserves only rule types listed in `PRESERVED_LIVE_RULE_TYPES`.
+The correction makes linear history policy-owned instead of accidentally preserved:
 
-At the audited head, that set contains only:
+1. `.github/policies/main-production-protection.expected.json` declares `required_linear_history: true`.
+2. The expected policy declares only `squash` and `rebase` as allowed merge methods.
+3. `buildDesiredRuleset(expected)` constructs `required_linear_history`.
+4. Normalization treats this rule as a parameterless security rule.
+5. `enforceRulesetFloor(...)` fails closed when linear history is absent or merge commits are allowed.
+6. `tests/unit/rulesetSyncContract.test.ts` locks policy, builder, normalizer and floor ownership.
+7. `code_quality` remains structurally preserved until separately policy-owned.
+8. `required_signatures` remains absent unless a later explicit Owner decision reactivates it.
 
-```text
-code_quality
-```
+## Negative contract
 
-Therefore:
+The corrected implementation must reject a desired ruleset when:
 
-1. `code_quality` is preserved by the current reconciliation path;
-2. `required_linear_history` is **not** preserved and is absent from the desired payload;
-3. a `PUT` full ruleset reconciliation can consequently remove the currently active `required_linear_history` rule;
-4. `required_signatures` is neither constructed nor preserved, so the sync does **not** re-enable signing enforcement. This matches the current Owner decision.
+- `required_linear_history` is missing;
+- a normal merge commit is included in the allowed merge methods;
+- any of the four issuer-bound Required Checks is missing or spoofed;
+- CODEOWNER review or review-thread resolution is disabled;
+- bypass actors are present.
 
-## Apply-path verification
-
-The audit also confirmed that both `apply-package-a` and `apply` reach the same ruleset write path when `rulesetChanged=true`:
-
-`preserveApprovedLiveRules(...)` → normalized desired ruleset → `applyAndVerifyRuleset(...)` → `PUT /rulesets/{id}`.
-
-Post-write verification compares the provider readback against that same incomplete desired ruleset. It would therefore consider removal of `required_linear_history` a successful reconciliation rather than detecting it as a regression.
-
-`enforceRulesetFloor(...)` currently checks `non_fast_forward`, pull-request controls, required checks, bypass state, active enforcement and default-branch targeting, but it does not require `required_linear_history`. The floor therefore does not prevent this regression either.
-
-## Security decision
-
-`mode=full` and `apply-package-a` MUST NOT be executed while this preservation gap exists.
-
-This is a fail-closed operational block, not a request to weaken the live ruleset.
-
-## Required remediation before full apply
-
-The canonical reconciliation implementation must be changed so that `required_linear_history` cannot be silently removed. The preferred architecture is policy ownership rather than accidental preservation:
-
-- add an explicit canonical expected-policy field for linear-history enforcement;
-- construct `required_linear_history` from that field in `buildDesiredRuleset`;
-- enforce it in `enforceRulesetFloor`;
-- add regression coverage proving full reconciliation retains it;
-- keep `required_signatures` outside the mandatory desired set unless a future explicit Human/Owner decision reactivates signing enforcement;
-- continue preserving `code_quality` until its policy ownership is separately decided.
-
-## Negative tests required for remediation
-
-A corrected implementation must demonstrate that:
-
-- live `required_linear_history` cannot disappear after full reconciliation;
-- absent `required_signatures` remains absent and is not recreated by sync;
-- `code_quality` remains structurally preserved while non-policy-owned;
-- `deletion=true` and `required_review_thread_resolution=true` can be added without removing unrelated approved controls;
-- all four issuer-bound Required Checks remain exact;
-- `bypass_actors` remains empty.
+It must not recreate `required_signatures` under the current Owner decision.
 
 ## Operational gate
 
-Until the remediation above is merged and validated:
+Until this PR is Human-merged and exact-head CI is green:
 
 ```text
-Ruleset Sync mode=plan            ALLOWED
+Ruleset Sync mode=plan            ALLOWED on trusted main
 Ruleset Sync mode=apply-package-a BLOCKED
 Ruleset Sync mode=full            BLOCKED
 ```
 
-No Render, Supabase, Stripe or application-runtime mutation is part of this audit.
+After merge, the Owner first runs `mode=plan` and reviews the complete desired/live diff. A later apply is a separate protected mutation and is not authorized by this PR or this evidence.
+
+## CI recursion finding
+
+Both open PR branches were automatically synchronized after merge #614 by `sync-agent-pr-branches.yml` using `GITHUB_TOKEN`. The resulting `pull_request` workflow runs were attributed to `github-actions[bot]` and ended `action_required` with zero jobs. The corrective human-authorized branch commit in this PR creates a fresh exact head so normal PR checks can run again. The recurring auto-sync design requires a separate bounded workflow-reliability remediation; it is not silently mixed into this Ruleset patch.
+
+## Production boundary
+
+No Render, Supabase, Stripe, application-runtime or live GitHub Ruleset mutation is performed by this PR.

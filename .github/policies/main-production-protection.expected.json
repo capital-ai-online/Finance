@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "repository": "SvenKulessa/Finance",
   "target": "refs/heads/main",
   "ruleset_name": "main-production-protection",
@@ -22,6 +22,8 @@
     "strict_required_status_checks_policy": true,
     "deletion_protection": true,
     "non_fast_forward_protection": true,
+    "required_linear_history": true,
+    "allowed_merge_methods": ["squash", "rebase"],
     "require_code_owner_review": true,
     "required_review_thread_resolution": true,
     "require_extra_approval_for_unattributed_changes": true,
@@ -60,6 +62,7 @@
     "shadow_check": null,
     "promotion_gate": "M10 Phase-6 Shadow/Negative/Recovery assurance VERIFIED PASS on 2026-08-19. Controlled-Cutover code still requires Human merge, deployment, exactly-one approved current-head build-and-test, unapproved no-expensive-CI evidence, replay/drift/recovery checks and final traceability sync before M10 COMPLETE.",
     "rollback": "Before cutover merge, preserve the simplified pre-M10 PR CI path. After cutover merge, fail closed and repair through a fresh Human-authorized branch; never restore emoji/checkbox/Viewed/label/reaction authorization as a fallback.",
+    "decision_2026-08-30_signing_optional_linear_history": "Owner decision: required_signatures remains disabled; required_linear_history is mandatory, policy-owned and paired with squash/rebase-only merge methods. Full reconciliation must never silently remove linear history or recreate signature enforcement.",
     "decision_2026-08-30_pro_ruleset_hardening": "After GitHub Pro activation and explicit Owner instruction, main deletion protection is promoted from historical residual risk to a required rule. The ruleset must remain bypass-free. The same full ruleset reconciliation also restores required review-thread resolution if live state drifted from the canonical expected policy.",
     "decision_2026-08-28_ruleset_hardening": "After Human merge, main-production-protection must require build-and-test, PR Governance, the hardened image HIGH/CRITICAL CVE gate and GitGuardian; status checks are strict/up-to-date, CODEOWNER review and review-thread resolution remain enabled, unattributed changes require extra approval, non-fast-forward protection remains enabled and bypass actors remain empty. The historical deletion-protection exception was superseded by the explicit Owner decision dated 2026-08-30.",
     "decision_2026-08-28_repository_hardening": "The same main-only ruleset-admin reconciliation also enforces repository-wide baseline controls that are available with repository Administration permission: GitHub Actions SHA pinning, read-only default workflow token, no workflow PR approvals, no external private workflow access, fail-closed fork-PR token/secret boundaries, 90-day artifact/log retention, web commit signoff, vulnerability alerts and Dependabot security updates. Plan-bound GHAS/CodeQL/secret-scanning settings are not blindly toggled.",

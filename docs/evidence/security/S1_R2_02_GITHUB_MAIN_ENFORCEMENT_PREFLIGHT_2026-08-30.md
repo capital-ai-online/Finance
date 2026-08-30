@@ -1,7 +1,7 @@
 # S1-R2-02 — GitHub Default-Branch Enforcement Preflight / Post-Activation Evidence
 
 - Date: 2026-08-30
-- Baseline: `main@4e3de6f489989e64962225874dd7dd69400fcd95`
+- Baseline: `main@460e8dd088a78f426cac392c20da104f5873ecad`
 - Repository: `SvenKulessa/Finance` (private)
 - Ruleset: `main-production-protection`
 - Mutation status: PARTIALLY IMPLEMENTED / CANONICAL RECONCILIATION PENDING
@@ -12,37 +12,15 @@ Before GitHub Pro activation, the private repository Rulesets API returned HTTP 
 
 ## Current provider readback
 
-GitHub Pro capability is operational for this repository. The repository Rulesets API is readable and reports `main-production-protection` with `enforcement: active`.
-
-Provider readback dated 2026-08-30 after the Owner signing decision reports the current live ruleset contains:
+Provider readback at 2026-08-30T19:08:51+02:00 reports the active `main-production-protection` ruleset with:
 
 - `non_fast_forward`;
-- `pull_request` with `require_code_owner_review: true`;
-- strict `required_status_checks`;
-- `required_linear_history`;
+- `pull_request` with `require_extra_approval_for_unattributed_changes: true`, but CODEOWNER review and review-thread resolution disabled;
 - `code_quality` with warning severity;
 - `bypass_actors: []`;
 - `current_user_can_bypass: never`.
 
-`required_signatures` is not present in the current live ruleset.
-
-The current required status checks are:
-
-- `build-and-test`;
-- `PR Governance (Kosten / Workflow / Vorlage)`;
-- `Hardened image / HIGH+CRITICAL CVE gate`;
-- `GitGuardian Security Checks`.
-
-`Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain outside the pre-merge required-check set because their event contract permits `skipped` states.
-
-## Current drift against canonical expected policy
-
-Two bounded differences remain between the active provider state and `.github/policies/main-production-protection.expected.json`:
-
-1. the live ruleset does not yet contain a `deletion` rule, while the canonical expected policy requires `deletion_protection: true`;
-2. the live pull-request rule reports `required_review_thread_resolution: false`, while the canonical expected policy requires `true`.
-
-The canonical expected policy therefore keeps both controls enabled as the desired state. The historical single-owner deletion exception is superseded by the explicit Owner decision dated 2026-08-30.
+The live ruleset currently lacks `required_status_checks`, `required_linear_history`, `deletion`, CODEOWNER review and review-thread resolution. This is critical protection drift against the canonical expected policy. `required_signatures` is intentionally absent under the Owner decision below.
 
 ## Commit signing decision
 
@@ -58,9 +36,11 @@ No direct ad-hoc Ruleset API mutation is authorized. Reconciliation must use the
 
 `.github/workflows/ruleset-sync.yml` → `workflow_dispatch(mode=full)` on `main` → protected environment `ruleset-admin` → `scripts/security/rulesetSync.mjs apply`.
 
-Before `mode=full` is executed, `rulesetSync.mjs` must be verified to preserve or canonically own all intended live controls, especially `required_linear_history` and `code_quality`, while keeping `required_signatures` disabled.
+This PR repairs `rulesetSync.mjs` so the canonical expected policy explicitly owns `required_linear_history`, enforces it in the fail-closed floor, restricts merge methods to squash/rebase and retains `code_quality` as an approved live rule. `required_signatures` remains outside the mandatory target.
 
-The reconciliation target additionally applies:
+No apply is performed from this PR. After Human merge and exact-head validation, the Owner must run `mode=plan` on trusted `main` before any separately authorized `mode=full` mutation.
+
+The reconciliation target applies:
 
 - `deletion`;
 - `required_review_thread_resolution: true`.
@@ -71,8 +51,8 @@ S1-R2-02 reaches `VERIFIED PASS` only when the provider readback confirms:
 
 - `deletion` present;
 - `non_fast_forward` present;
-- `pull_request` present;
-- `required_review_thread_resolution: true`;
+- `pull_request` present with CODEOWNER review and `required_review_thread_resolution: true`;
+- `deletion` present;
 - exactly the intended four required checks remain issuer-bound;
 - `required_linear_history` remains present;
 - `required_signatures` remains absent unless a later explicit Owner decision re-enables it;
