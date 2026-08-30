@@ -7,6 +7,9 @@ import {
   renderProductionBaselineBlock,
 } from './lib.mjs';
 
+const PRODUCTION_BASELINE_SECTION_HEADING = '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis';
+const NEXT_SECTION_HEADING = '## 4. Umfang / Multi-Agent-Koordination';
+
 function occurrenceCount(text, needle) {
   if (!needle) return 0;
   return String(text || '').split(needle).length - 1;
@@ -16,6 +19,40 @@ function normalizeBlock(value) {
   return String(value || '').replace(/\r\n/g, '\n').trim();
 }
 
+function repairMissingProductionBaselineBlock(text, baseline, markers) {
+  const markerOccurrences = markers.reduce((sum, marker) => sum + occurrenceCount(text, marker), 0);
+  if (markerOccurrences > 0) {
+    fail(
+      'PR-Body enthält einen unvollständigen oder duplizierten Produktions-Baseline-Markerzustand; ' +
+        'Auto-Refresh repariert nur vollständig markerfreie kanonische Abschnitt-3-Bodies.',
+    );
+  }
+
+  if (
+    occurrenceCount(text, PRODUCTION_BASELINE_SECTION_HEADING) !== 1 ||
+    occurrenceCount(text, NEXT_SECTION_HEADING) !== 1
+  ) {
+    fail(
+      'PR-Body besitzt keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt 3; ' +
+        'Auto-Refresh bleibt fail-closed.',
+    );
+  }
+
+  const sectionStart = text.indexOf(PRODUCTION_BASELINE_SECTION_HEADING);
+  const sectionBodyStart = sectionStart + PRODUCTION_BASELINE_SECTION_HEADING.length;
+  const nextSectionStart = text.indexOf(NEXT_SECTION_HEADING, sectionBodyStart);
+  if (sectionStart < 0 || nextSectionStart < 0 || nextSectionStart <= sectionBodyStart) {
+    fail('Kanonische Abschnittsgrenzen für die Produktions-Baseline konnten nicht sicher bestimmt werden.');
+  }
+
+  const replacement = renderProductionBaselineBlock(baseline);
+  return {
+    body: `${text.slice(0, sectionBodyStart)}\n\n${replacement}\n\n${text.slice(nextSectionStart)}`,
+    changed: true,
+    baselineId: baseline.baselineId,
+  };
+}
+
 /**
  * Replace only the canonical production-baseline block inside an existing PR body.
  *
@@ -23,6 +60,9 @@ function normalizeBlock(value) {
  * already represents the same atomic baseline identity, its original generatedAt
  * timestamp is preserved and the operation becomes a no-op. This prevents the
  * trusted auto-refresh workflow from creating an edited -> governance -> refresh loop.
+ *
+ * A marker-free but otherwise canonical section 3 may be reconstructed atomically.
+ * Partial/duplicate marker states and ambiguous section boundaries remain fail-closed.
  */
 export function replaceProductionBaselineBlock(body, baseline) {
   const text = String(body || '');
@@ -30,16 +70,12 @@ export function replaceProductionBaselineBlock(body, baseline) {
   const endMarker = `<!-- ${PRODUCTION_BASELINE_END} -->`;
   const visibleStartMarker = `\`${PRODUCTION_BASELINE_START}\``;
   const visibleEndMarker = `\`${PRODUCTION_BASELINE_END}\``;
+  const markers = [startMarker, endMarker, visibleStartMarker, visibleEndMarker];
 
-  const markerCountsAreCanonical = [
-    [startMarker, 1],
-    [endMarker, 1],
-    [visibleStartMarker, 1],
-    [visibleEndMarker, 1],
-  ].every(([marker, expected]) => occurrenceCount(text, marker) === expected);
+  const markerCountsAreCanonical = markers.every((marker) => occurrenceCount(text, marker) === 1);
 
   if (!markerCountsAreCanonical) {
-    fail('PR-Body muss genau einen kanonischen Produktions-Baseline-Block mit eindeutigen Kommentar- und sichtbaren Markern enthalten; Auto-Refresh bleibt fail-closed.');
+    return repairMissingProductionBaselineBlock(text, baseline, markers);
   }
 
   const currentBlock = extractProductionBaselineBlock(text);
