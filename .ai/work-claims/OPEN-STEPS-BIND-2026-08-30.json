@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPEN-STEPS-BIND-2026-08-30",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Bind remaining open documentary steps after #610/#611/#612 on a fresh branch: live document-registry insert (append-only), close VC-COV claim, current-state sync, ESS path/authority reconciliation, VC-H *-1 specification pack, S1-R2-02 post-merge dispatch checklist. No runtime, no ruleset apply, no M10 reactivation.",
+  "workItemDE": "Offene Folgeschritte nach #610/#611/#612 dokumentarisch auf frischem Branch binden: Live-Registry-Insert (append-only), Claim-Close, Current-State-Sync, ESS-Reconciliation, VC-H-*-1-Spezifikation, S1-R2-02 Dispatch-Checkliste. Kein Runtime, kein Ruleset-Apply, kein M10.",
+  "startedAt": "2026-08-30T17:50:00+02:00",
+  "updatedAt": "2026-08-30T18:45:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "4e3de6f489989e64962225874dd7dd69400fcd95",
+  "claimedPaths": [
+    ".ai/work-claims/OPEN-STEPS-BIND-2026-08-30.json",
+    ".ai/work-claims/VALUE-CHAIN-COVERAGE-HARDENING-2026-08-30.json",
+    "docs/governance/document-registry.json",
+    "docs/governance/authority-registry.json",
+    "docs/evidence/governance/VC_COV_DOCUMENT_REGISTRY_ENTRY_2026-08-30.json",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/architecture/ROADMAP.md",
+    "docs/roadmaps/work-packages/VC_H_IMPLEMENTATION_PACK_2026-08-30.md",
+    "docs/governance/ESS_NAMESPACE_RECONCILIATION_2026-08-30.md",
+    "docs/evidence/security/S1_R2_02_POST_MERGE_DISPATCH_CHECKLIST_2026-08-30.md"
+  ],
+  "releaseCondition": "Claim is released when this pull request is merged, closed, superseded or abandoned. Merge remains Human/Owner-only.",
+  "notes": [
+    "Fresh branch docs/open-steps-bind-2026-08-30-v6 from main@4e3de6f.",
+    "Supersedes open PR #616 / branch docs/open-steps-bind-2026-08-30-v5 (governance baseline failed; registry compacted).",
+    "Append-only document-registry insert; existing entries keep original formatting.",
+    "Does not apply ruleset-sync. #615 documents that mode=full is BLOCKED until rulesetSync preserves required_linear_history.",
+    "Does not reactivate M10.",
+    "Does not implement Supervisor/PD/DQ runtime. *-1 pack is specification-only.",
+    "ESS-0011 skill files already exist on main; reconciliation registers stable authorityIds.",
+    "PR #613 commit-signing automation remains discarded.",
+    "Live /healthz 2026-08-30T16:23:47Z status=ok; x-capital-ai-commit=4e3de6f; version 0.6.0."
+  ]
+}
