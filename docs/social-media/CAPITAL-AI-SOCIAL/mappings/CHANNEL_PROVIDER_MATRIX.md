@@ -1,17 +1,17 @@
 # CAPITAL-AI-SOCIAL Channel & Provider Matrix
 
-**Baseline:** `main@1f55340d89178fb5c1ab735242f42c263918b692`  
+**Synchronized baseline:** `main@1f01120164ba4a3c194a4e0a79292a262a372588`  
 **Evidence rule:** only repository-verified capabilities are marked supported. Credential presence is never inferred.
 
 ## Channel capability matrix
 
 | Channel | Provider | Content types evidenced | Text limit | Media support | Link support | Scheduling | Publishing | Analytics | Approval | Status |
 |---|---|---|---:|---|---|---|---|---|---|---|
-| X | `x` | text post; thread payload type exists | 280 standard | text primary; media capability not claimed here | text URLs | preparation/log only | real text publish adapter | not verified | external approval required by applicable control path | SUPPORTED |
-| Facebook | `facebook` | Page text post; video when media URL supplied | 63,206 operational registry max | text + video | text URLs | preparation/log only | real Page publish adapter | not verified | external approval required by applicable control path | SUPPORTED |
-| Instagram | `instagram` | media/Reels-style publish | 2,200 caption | media required by current adapter | caption links not promoted as provider capability | preparation/log only | real media adapter; media required | not verified | external approval required by applicable control path | SUPPORTED / MEDIA REQUIRED |
-| TikTok | `tiktok` | Direct Post video | 2,200 video caption | media required | no extra link capability claimed | preparation/log only | real Direct Post adapter; media required | not verified | external approval required by applicable control path | SUPPORTED / MEDIA REQUIRED |
-| YouTube | `youtube` | video upload/description | 5,000 description | media required | description URLs | preparation/log only | real upload adapter; media required | not verified | external approval required by applicable control path | SUPPORTED / MEDIA REQUIRED |
+| X | `x` | text post; thread payload type exists | 280 standard | text primary; media capability not claimed here | text URLs | preparation/log only | real text publish adapter | not verified | external approval required when current gate is enabled; unconditional enforcement not claimed | SUPPORTED |
+| Facebook | `facebook` | Page text post; video when media URL supplied | 63,206 operational registry max | text + video | text URLs | preparation/log only | real Page publish adapter | not verified | same current approval-gate boundary | SUPPORTED |
+| Instagram | `instagram` | media/Reels-style publish | 2,200 caption | media required by current adapter | caption links not promoted as provider capability | preparation/log only | real media adapter; media required | not verified | same current approval-gate boundary | SUPPORTED / MEDIA REQUIRED |
+| TikTok | `tiktok` | Direct Post video | 2,200 video caption | media required | no extra link capability claimed | preparation/log only | real Direct Post adapter; media required | not verified | same current approval-gate boundary | SUPPORTED / MEDIA REQUIRED |
+| YouTube | `youtube` | video upload/description | 5,000 description | media required | description URLs | preparation/log only | real upload adapter; media required | not verified | same current approval-gate boundary | SUPPORTED / MEDIA REQUIRED |
 | LinkedIn | none | legacy `linkedinPost` / `linkedin_video_pack` shape only | 3,000 feed post registry | no provider adapter evidenced | no provider capability evidenced | UNSUPPORTED | UNSUPPORTED | UNSUPPORTED | N/A until adapter exists | PARTIAL |
 | Mastodon | none | none found | UNKNOWN | UNKNOWN | UNKNOWN | UNSUPPORTED | UNSUPPORTED | UNSUPPORTED | N/A | UNSUPPORTED |
 
@@ -28,6 +28,12 @@ LinkedIn is not counted as a provider because it is absent from the canonical su
 | `instagram` | Instagram | same canonical stack | media container + publish | Meta OAuth flow | CAPITAL-AI-SEC / approved secret boundary | not canonically evidenced | required | preparation/log only | yes with valid media | no Social analytics adapter verified | MEDIA REQUIRED |
 | `tiktok` | TikTok | same canonical stack | Direct Post init | OAuth flow | CAPITAL-AI-SEC / approved secret boundary | not canonically evidenced | required | preparation/log only | yes with valid media | no Social analytics adapter verified | MEDIA REQUIRED |
 | `youtube` | YouTube | same canonical stack | video upload | OAuth flow | CAPITAL-AI-SEC / approved secret boundary | not canonically evidenced | required | preparation/log only | yes with valid media | readonly scopes do not establish Social analytics consumption | MEDIA REQUIRED |
+
+## Current publishing-control readback
+
+Current main still implements `isApprovalGateEnabled()` with an environment opt-out: `SOCIAL_MEDIA_REQUIRE_APPROVAL=false` disables the instant-publish approval gate. The publish route consumes a hash-bound approval only when that gate is enabled. This matrix therefore does not claim unconditional fail-closed publication approval.
+
+Media URL validation remains present before publication. `draft` and `scheduled` paths record preparation/log state rather than invoking the provider in the inspected route.
 
 ## Security/provider boundary
 
