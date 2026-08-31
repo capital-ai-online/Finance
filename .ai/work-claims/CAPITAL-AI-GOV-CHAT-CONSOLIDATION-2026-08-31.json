@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-CHAT-CONSOLIDATION-2026-08-31",
+  "status": "merged",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Consolidate all remaining CAPITAL-AI-GOV tasks and reusable governance artifacts from the current project chat history and terminal GOV branches into one fresh current-main project execution projection, and version the existing branch control so every new agent-managed work branch identifies its project folder and compact task, while keeping foreign VC work as explicit handoffs and preserving the single Governance Control Plane.",
+  "workItemDE": "Alle verbleibenden CAPITAL-AI-GOV-Aufgaben und wiederverwendbaren Governance-Artefakte aus dem aktuellen Projekt-Chatverlauf und terminalen GOV-Branches in eine frische current-main Projekt-Ausfuehrungsprojektion konsolidieren und die bestehende Branch-Control so versionieren, dass jeder neue agentengefuehrte Arbeitsbranch Projektordner und kompakte Aufgabe ausweist; fremde VC-Arbeit bleibt expliziter Handoff und der einzige Governance Control Plane bleibt unveraendert.",
+  "startedAt": "2026-08-31T20:06:00+02:00",
+  "mergedAt": "2026-08-31T20:40:56+02:00",
+  "baseBranch": "main",
+  "baseSha": "64a3415781a50177798cbe9404b1855735e5371a",
+  "pullRequest": 630,
+  "branch": "agent/governance-chat-consolidation-20260831",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "PVC-05 Platform Director + cross-cutting Governance",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-CHAT-CONSOLIDATION-2026-08-31.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-CHAT-PR-CREATION-V2-2026-08-31.json",
+    "AGENTS.md",
+    "docs/governance/authority-registry.json",
+    "docs/governance/control-catalog.json",
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md",
+    "docs/projects/PROJECT_EXECUTION_MODEL.md",
+    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md",
+    "docs/projects/governance/**"
+  ],
+  "reuseInputs": [
+    "agent/governance-pvc-architecture-20260831",
+    "gov/project-architecture-pvc-20260831",
+    "gov/capital-ai-gov-v2-20260831",
+    "gov/capital-ai-gov-vc-integration-20260831",
+    "docs/capital-ai-gov-consolidation-20260831",
+    "agent/governance-chat-pr-20260831"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-OPS: DevelopmentChain project integration and OPS-owned PVC stages",
+    "CAPITAL-AI-DATA/CAPITAL-AI-FINTECH/CAPITAL-AI-DOC/CAPITAL-AI-QM/CAPITAL-AI-OPS: coordinated FVC namespace migration if approved",
+    "CAPITAL-AI-CLIENT/CAPITAL-AI-OPS: Admin Panel process/dependency visualization implementation"
+  ],
+  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. AUTH-GOV-AGENT-TRUST-ROOT is versioned to 2.2.1, AUTH-GOV-CONTROL-CATALOG to 1.8.0 and AUTH-GOV-AUTHORITY-REGISTRY to 1.37.0. CTRL-SDLC-BRANCH-001 keeps its stable ID and gains the Owner-directed project-folder plus compact-task naming requirement. ADR-0096 and all Human/merge/production boundaries remain unchanged.",
+  "releaseCondition": "Released by Human merge of PR #630. Merge remains Human-only; no production authority was granted.",
+  "outcome": "PR #630 merged into main; branch was subsequently deleted. This metadata update terminalizes the stale active writer state without reopening the completed work item."
+}
