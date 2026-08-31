@@ -1,19 +1,20 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-CHAT-PR-CREATION-V2-2026-08-31",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
   "workItem": "Clarify the canonical PR template contract so an exact-snapshot Owner-approved Chat/API/MCP/Connector may create a PR directly when the trusted workflow is not callable from that execution surface, provided it renders the production baseline and full PR body transport-equivalently and fail-closed from current-main contracts and live identities.",
-  "workItemDE": "Den kanonischen PR-Template-Vertrag so klarstellen, dass ein für den exakten Snapshot Owner-freigegebener Chat/API/MCP/Connector einen PR direkt erstellen darf, wenn der Trusted Workflow von dieser Ausführungsoberfläche nicht aufrufbar ist, sofern Produktions-Baseline und vollständiger PR-Body transportäquivalent aus current-main-Verträgen und Live-Identitäten gerendert werden und bei fehlender Evidenz fail-closed gestoppt wird.",
+  "workItemDE": "Den kanonischen PR-Template-Vertrag so klarstellen, dass ein fuer den exakten Snapshot Owner-freigegebener Chat/API/MCP/Connector einen PR direkt erstellen darf, wenn der Trusted Workflow von dieser Ausfuehrungsoberflaeche nicht aufrufbar ist, sofern Produktions-Baseline und vollstaendiger PR-Body transportaequivalent aus current-main-Vertraegen und Live-Identitaeten gerendert werden und bei fehlender Evidenz fail-closed gestoppt wird.",
   "startedAt": "2026-08-31T19:48:14+02:00",
+  "releasedAt": "2026-08-31T19:58:03+02:00",
   "baseBranch": "main",
   "baseSha": "2d0a2fc04cdb4937967d26ce2f71a424d6cff0c2",
-  "pullRequest": null,
+  "pullRequest": 629,
   "branch": "agent/governance-chat-pr-v2-20260831",
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "governance",
@@ -22,7 +23,10 @@
     ".ai/work-claims/CAPITAL-AI-GOV-CHAT-PR-CREATION-V2-2026-08-31.json",
     ".github/pull_request_template.md"
   ],
-  "authorityGuard": "No new AUTH/CTRL/ADR/ESS identity is created. AGENTS.md already applies CTRL-SDLC-PR-CREATE-001 to API/MCP/Connector creation surfaces and requires the current-main canonical template. Exact-snapshot Owner approval, independent hosted validation, M10 suspended state and Human-only merge remain unchanged.",
+  "authorityGuard": "No new AUTH/CTRL/ADR/ESS identity was created. AGENTS.md applies CTRL-SDLC-PR-CREATE-001 to API/MCP/Connector creation surfaces. Exact-snapshot Owner approval, independent hosted validation, M10 suspended state and Human-only merge remain unchanged.",
   "supersedesWorkItem": "agent/governance-chat-pr-20260831",
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Satisfied by Human Merge of PR #629 into main.",
+  "releaseReason": "merged",
+  "mergedByPullRequest": 629,
+  "mergedMainSha": "64a3415781a50177798cbe9404b1855735e5371a"
 }
