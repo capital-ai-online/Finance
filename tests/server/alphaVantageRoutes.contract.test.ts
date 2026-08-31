@@ -16,6 +16,21 @@ describe('alphaVantageRoutes contract', () => {
     expect(source).toContain("source: 'Alpha Vantage'");
   });
 
+  it('uses only the canonical Alpha Vantage credential identity', () => {
+    expect(source).toContain("const ALPHA_VANTAGE_CREDENTIAL = 'ALPHA_VANTAGE_API_KEY'");
+    expect(source).toContain('process.env[ALPHA_VANTAGE_CREDENTIAL]');
+    expect(source).not.toContain('process.env.ALPHA_VANTAGE_KEY');
+    expect(source).not.toContain("process.env['ALPHA_VANTAGE_KEY']");
+    expect(source).not.toContain('ALPHA_VANTAGE_API_KEY ??');
+    expect(source).not.toContain('ALPHA_VANTAGE_KEY ??');
+  });
+
+  it('fails closed as unavailable when the canonical credential is missing', () => {
+    expect(source).toContain('status(503)');
+    expect(source).toContain("status: 'UNAVAILABLE'");
+    expect(source).toContain('ALPHA_VANTAGE_CREDENTIAL} is not configured');
+  });
+
   it('does not leak API keys into logs', () => {
     expect(source).toContain("url.replace(key, 'REDACTED')");
     expect(source).not.toContain('console.log(key)');
