@@ -1,8 +1,8 @@
 # CAPITAL-AI Konsolidierte Gesamtroadmap
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
-Stand: 2026-08-30  
-Repository-Baseline: `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc`  
+Stand: 2026-08-31  
+Repository-Baseline: `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
 Owner: SvenKulessa  
 Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 
@@ -20,6 +20,8 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 
 **Value-Chain Coverage 2026-08-30:** Coverage-Map und Inventar *-0 sind über PR #610 auf `main`. Ein append-only Registry-Insert-Payload, Claim-Close, Current-State-Sync, ESS-Reconciliation, VC-H *-1 Spezifikation und S1-R2-02 Dispatch-Checkliste liegen in OPEN-STEPS-BIND-2026-08-30 (`docs/open-steps-bind-2026-08-30-v6`). `document-registry.json` wird dabei nicht mutiert. PR #615 ist auf `main@f714eae6` gemergt; PR #617 ist damit synchronisiert. Live `mode=full` bleibt bis zu separatem Owner-Plan, Owner-ACCEPT und verifiziertem Readback gesperrt.
 
+**Compliance-Integration 2026-08-31:** **CAPITAL-AI-COMP** (`docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md`) ist der cross-cutting **Compliance Assessment Single Point of Execution** für Applicability, Requirement/Control Mapping, Assessment, Findings, Evidence, Regulatory Traceability, Legal Review und Remediation Handoffs. `primary_value_chain_ownership = []`: technische/organisatorische Remediation verbleibt beim jeweiligen Primary Owner und wird mit `[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` referenziert. CAPITAL-AI-COMP ist non-authorizing und erzeugt keine zweite Governance-, Security-, QM- oder Policy-Hierarchie.
+
 ## 2. Verbindliche Authority-Reihenfolge
 
 1. verifizierte Runtime-, Code- und Produktions-Evidence;
@@ -33,11 +35,14 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 
 Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
+`CAPITAL-AI-COMP` ist eine non-authorizing Compliance-Assessment-/Traceability-Projektion und verändert diese Authority-Reihenfolge nicht. Compliance Findings können auf Fachroadmaps verweisen, autorisieren deren technische Ausführung jedoch nicht.
+
 ## 3. Konsolidiertes Portfolio
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
 | **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + Inventar-Pack + `VC_H_IMPLEMENTATION_PACK_2026-08-30.md` + Registry-Insert-Payload** | **ACTIVE — COVERAGE**; Inventar *-0 auf main (#610); Payload + *-1-Spezifikation in synchronisiertem OPEN-STEPS-BIND; physischer Registry-Insert nicht ausgeführt | Exact-Head-Checks und Human-Review für diesen D-PR; Registry-Mutation nur als separater Scope; Runtime anschließend auf frischem Branch |
+| **COMP** | **CAPITAL-AI Compliance** | **`docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md` (`CAPITAL-AI-COMP`, V2.1)** | **ACTIVE — CROSS-CUTTING ASSESSMENT / NON-AUTHORIZING**; Applicability, Requirements, Control Mapping, Assessment, Findings, Evidence, Remediation Handoff und Continuous Compliance zentralisiert; keine Primary-VC-Execution-Ownership | Compliance-Gaps evidenzbasiert bewerten; fremde Remediation ausschließlich via `[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`; Legal-Review-Fälle getrennt halten |
 | **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | S1-R2-Reassessment auf main (#607); S1-R2-02 Code/Docs gemergt (#611); #615 Policy/Builder/Floor-Fix auf main; Live-Drift offen; `mode=full` BLOCKED; #613 verworfen | Owner `workflow_dispatch` zuerst `mode=plan`; `required_signatures` nicht still reaktivieren; full nur nach separatem Owner-ACCEPT |
