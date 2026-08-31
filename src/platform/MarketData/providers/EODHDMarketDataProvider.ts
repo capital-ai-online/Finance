@@ -14,6 +14,7 @@ import {
   type MarketDataProviderDescriptor,
   type SnapshotRequest,
 } from '../contracts';
+import { providerErrorMessage } from '../providerCredentialRedaction';
 
 export interface EODHDMarketDataProviderOptions {
   fetchImpl?: typeof fetch;
@@ -87,7 +88,7 @@ export class EODHDMarketDataProvider implements MarketDataProvider {
         evidenceId: `quote:eodhd:${symbol}:USD:${observedAt}`,
       };
     } catch (error) {
-      return this.unavailable(request, retrievedAt, error instanceof Error ? error.message : String(error));
+      return this.unavailable(request, retrievedAt, providerErrorMessage(error));
     } finally {
       clearTimeout(timeout);
     }
