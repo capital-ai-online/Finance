@@ -1,40 +1,69 @@
-# CAPITAL-AI-QM — Takeover Index
+# CAPITAL-AI-QM — Assurance Referral Index
 
-This file is the **only mapping table** between external roadmaps/current-state sources and QM execution. It grants no authority over the source domain.
+This file is the single mapping table between source roadmaps, QM assurance work and Primary Owner remediation. It grants no technical implementation authority to QM.
 
-| Source | Source item / context | Classification | Transferred QM portion | QM-ID | Source state |
-|---|---|---|---|---|---|
-| `docs/architecture/ROADMAP.md` | Current DevelopmentChain state / exact-head quality evidence | MIXED | Current-state build/test/regression/evidence verification only; DevelopmentChain execution remains governed by its existing authorities | QM-5 / QM-9 | REFERENCED_BY_QM — current-state source; takeover marker requires ADR-0103 activation |
-| `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | Historical implementation-roadmap CI/build/test context | MIXED | Historical build/test/coverage/regression quality context only; not promoted back to current-state authority | QM-5 | HISTORICAL_CONTEXT_REFERENCE |
-| `docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` | Delivery QA and release evidence | MIXED | Quality evidence verification and non-authorizing readiness snapshot | QM-5 / QM-8 | REFERENCED_BY_QM — source marker requires ADR-0103 activation |
-| `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | Auth/session remediation and post-change verification | MIXED | Session/runtime regression evidence only; no IAM/MFA/Security policy | QM-3 | REFERENCED_BY_QM — source marker requires ADR-0103 activation |
-| `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | Security/performance priority regression | MIXED | Frontend runtime/performance verification only | QM-4 | REFERENCED_BY_QM — source marker requires ADR-0103 activation |
-| `docs/frontend/FRONTEND_ROADMAP.md` | Frontend migration, UX, accessibility and performance work | MIXED | Runtime/performance/accessibility evidence, regression and documentation consistency only; feature migration/UX sequencing stays Frontend | QM-4 / QM-6 | REFERENCED_BY_QM — no operational handoff while ADR-0103 is proposed |
-| `docs/frontend/FRONTEND_ARCH.md` | Frontend source tree, dependency direction and presentation architecture | NOT_QM | QM may verify conformance/evidence only; Frontend architecture authority remains here | QM-4 / QM-6 | AUTHORITY_REFERENCE |
-| `docs/frontend/COMPONENT_INVENTORY.md` | Physical frontend component inventory | NOT_QM | Baseline/input for runtime attribution and documentation drift; no execution authority transfer | QM-4 / QM-6 | BASELINE_REFERENCE |
-| `docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` | 18-stage value-chain coverage/hardening | MIXED | Evidence completeness, regression and read-only quality projection only | QM-7 | REFERENCED_BY_QM — source marker requires ADR-0103 activation |
-| `tests/unit/securityPerformancePriorityRemediation.test.ts` | Existing performance regression baseline | QUALITY_EXECUTION | Reuse regression evidence; do not duplicate bundle/routing architecture | QM-4 | BASELINE_REFERENCE |
-| `docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md` | Documentation/authority consistency | NOT_QM | QM verifies consistency only; Governance retains authority | QM-6 / QM-9 | AUTHORITY_REFERENCE |
-| `.ai/skills/ESS-0012-Documentation-Governance.md` | Documentation governance | NOT_QM | Quality documentation consistency only | QM-6 | AUTHORITY_REFERENCE |
+## V2 routing rule
 
-## Correlation notes
+- QM assessment/verification remains in `CAPITAL-AI-QM`.
+- Technical remediation remains in the Primary Owner project for the affected VC stage.
+- Every confirmed implementation finding uses `[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`.
+- The target project maintains remediation execution status; QM maintains finding/verification status.
+- `remediation_execution_local=false`.
 
-- `docs/architecture/ROADMAP.md` is treated as the current DevelopmentChain state source where the Governance Authority Registry says so. The older `DEVELOPMENT_CHAIN_ROADMAP.md` remains historical implementation context and is not reactivated by QM.
-- `docs/frontend/FRONTEND_ROADMAP.md` remains the Frontend migration/UX roadmap. Its Product/UX work, migration waves and presentation decisions are not transferred to QM.
-- A roadmap-local target such as a Lighthouse score remains a source-roadmap target unless an existing normative Quality/Frontend authority adopts it. QM does not silently convert such targets into Chapter-12 Quality Gates.
-- The 18-stage Value Chain remains the existing runtime/domain model. QM only projects evidence across it.
+## Primary Owner reference
 
-## Source takeover marker
+| VC | Target project | VC | Target project |
+|---|---|---|---|
+| VC-01 | `CAPITAL-AI-CLIENT` | VC-10 | `CAPITAL-AI-DATA` |
+| VC-02 | `CAPITAL-AI-OPS` | VC-11 | `CAPITAL-AI-DATA` |
+| VC-03 | `CAPITAL-AI-DOC` | VC-12 | `CAPITAL-AI-FINTECH` |
+| VC-04 | `CAPITAL-AI-OPS` | VC-13 | `CAPITAL-AI-FINTECH` |
+| VC-05 | `CAPITAL-AI-GOV` | VC-14 | `CAPITAL-AI-FINTECH` |
+| VC-06 | `CAPITAL-AI-OPS` | VC-15 | `CAPITAL-AI-FINTECH` |
+| VC-07 | `CAPITAL-AI-OPS` | VC-16 | `CAPITAL-AI-FINTECH` |
+| VC-08 | `CAPITAL-AI-OPS` | VC-17 | `CAPITAL-AI-FINTECH` |
+| VC-09 | `CAPITAL-AI-DATA` | VC-18 | `CAPITAL-AI-OPS` |
 
-A source document is changed to `HANDED_OFF_TO_QM` only when **ADR-0103 is effective** and the quality-only subtask has actually been split from the domain work and linked to a canonical QM item:
+## Current source correlations
 
-> QUALITY-MANAGEMENT TAKEOVER
->
-> Execution State: HANDED_OFF_TO_QM  
-> Canonical Work Item: `docs/projects/quality-management/ROADMAP.md#<QM-ID>`
->
-> Execution ownership for this quality-management subtask has been transferred to CAPITAL-AI-QM.  
-> This source roadmap retains domain context and dependency information only.  
-> Operational status MUST NOT be maintained in parallel here.
+| Source | Context | QM workstream | VC / target routing | QM responsibility |
+|---|---|---|---|---|
+| `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | auth/session and security-performance regression evidence | `QM-03`, `QM-05`, `QM-07` | attribute finding to affected VC stage; route via Primary Owner table | measurement, regression assessment, evidence, verification only |
+| `docs/architecture/ROADMAP.md` | current DevelopmentChain state and CI/release evidence | `QM-02`, `QM-07`, `QM-08` | generally `CAPITAL-AI-OPS` for delivery/CI concerns; exact VC required per finding | consume evidence; do not own CI topology or remediation |
+| `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | historical implementation-roadmap context | `QM-05`, `QM-07` | historical evidence only; no current owner transfer | baseline/reference only |
+| `docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` | delivery QA and readiness evidence | `QM-02`, `QM-07` | exact affected VC determines owner | non-authorizing Quality readiness verification |
+| `docs/frontend/FRONTEND_ROADMAP.md` | frontend runtime/performance quality | `QM-03`, `QM-05` | normally VC-18 -> `CAPITAL-AI-OPS`; other findings require exact VC attribution | performance/regression finding and verification, not frontend implementation |
+| `docs/frontend/FRONTEND_ARCH.md` | frontend structural authority | `QM-01`, `QM-05` | VC attribution per affected delivery/runtime boundary | criterion/evidence reference only; no architecture redefinition |
+| `docs/frontend/COMPONENT_INVENTORY.md` | physical frontend inventory | `QM-03`, `QM-07` | VC attribution per affected component path | measurement baseline only |
+| `docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` | VC-01..VC-18 evidence completeness | `QM-03`, `QM-04`, `QM-07`, `QM-08` | every finding maps through Primary Owner table | read-only measurement, finding, evidence and improvement verification |
+| `.ai/skills/ESS-0012-Documentation-Governance.md` | documentation governance | `QM-01`, `QM-07` | documentation findings affecting VC-03 route to `CAPITAL-AI-DOC`; governance findings use their actual VC/authority | consume authority; no Documentation Governance takeover |
+| `docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md` | authority/document consistency | `QM-01`, `QM-08` | VC-05 -> `CAPITAL-AI-GOV` when remediation is required | consistency finding only; Governance remains owner |
+| `tests/unit/securityPerformancePriorityRemediation.test.ts` | existing performance regression baseline | `QM-05`, `QM-07` | target depends on failing behavior's VC stage | reuse test evidence; no duplicate bundle/routing architecture |
 
-`REFERENCED_BY_QM` is intentionally used while ADR-0103 remains `proposed`. It MUST NOT be misrepresented as a completed handoff or used to suppress current domain status before the authority becomes effective.
+## Required handoff record
+
+For each confirmed finding that requires implementation, record:
+
+```text
+[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+Finding: <finding_id>
+QM Workstream: <QM-01..QM-08>
+Roadmap Reference: <canonical source/target roadmap>
+Evidence: <evidence reference>
+Required Remediation: <bounded technical action>
+Verification Gate: <how QM will verify after implementation>
+QM Finding Status: REFERRED
+Target Remediation Status: maintained by <TARGET_PROJECT>
+```
+
+A chat notice is required when the referral is created.
+
+## Legacy takeover semantics
+
+The draft marker `QUALITY-MANAGEMENT TAKEOVER / HANDED_OFF_TO_QM` is superseded by the V2 referral model before ADR-0103 activation. It MUST NOT be used to transfer foreign technical execution into QM.
+
+Existing source roadmaps remain unchanged until a concrete confirmed finding is referred. A referral may add a roadmap cross-reference, but implementation status continues in the target project's own roadmap/PR.
+
+## Closure rule
+
+QM closes a finding only after the target project provides remediation evidence, the required verification gate is executed, and QM records `VERIFIED -> CLOSED`. A target implementation commit, PR or claim by itself is not sufficient verification evidence.
