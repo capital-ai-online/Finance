@@ -1,13 +1,13 @@
 {
   "registry": "ESS Registry",
-  "registryVersion": "1.4.0",
+  "registryVersion": "1.5.0",
   "authority": "Platform Director",
   "contract": "ESS-0001-CONTRACTS Chapter 16 — ESS Registry Contract",
   "description": "Verbindliche Vergabe des ESS-Nummernraums des CAPITAL-AI Core. Reservierte Nummern stammen aus ESS-0001, Abschnitt 'Related Enterprise Specifications', und duerfen niemals abweichend belegt werden.",
   "generated": false,
   "seed": true,
-  "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben. Nachzug ESS-0019 bis ESS-0024 sowie Aufloesung der ESS-0022-Doppelvergabe unter ADR-0085 (2026-08-16). Governance-Ergaenzung 2026-08-19: ESS-0004 ist unter ADR-0096 suspended; ESS-0012 bleibt aktiv im Documentation-only Scope. Quality-Ergaenzung 2026-08-20: ESS-0005 besitzt mit Repository Quality P0-P2 eine erste read-only Teilimplementierung; der breitere Quality-Center-Scope bleibt inkrementell. Vocabulary-Revalidierung 2026-08-22: ESS-0017/ESS-0017-CONTRACTS v1.8.0 sind seit Human Merge von PR #477 published/operational; Vocabulary bleibt read-only gegen Financial Runtime.",
-  "updatedAt": "2026-08-22",
+  "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben. Nachzug ESS-0019 bis ESS-0024 sowie Aufloesung der ESS-0022-Doppelvergabe unter ADR-0085 (2026-08-16). Governance-Ergaenzung 2026-08-19: ESS-0004 ist unter ADR-0096 suspended; ESS-0012 bleibt aktiv im Documentation-only Scope. Quality-Revalidierung 2026-08-31: ESS-0005 v1.2.0 bleibt die read-only Quality-Center-Komponentenspezifikation, ist auf die vorhandene 18-stufige Wertschöpfungskettenprojektion abgeglichen und referenziert das vorgeschlagene CAPITAL-AI-QM Single-Execution-Projekt unter ADR-0103; keine neue Quality-, CI-, EventBus-, Auth-, Routing-, Release- oder Domain-Authority entsteht. Vocabulary-Revalidierung 2026-08-22: ESS-0017/ESS-0017-CONTRACTS v1.8.0 sind seit Human Merge von PR #477 published/operational; Vocabulary bleibt read-only gegen Financial Runtime.",
+  "updatedAt": "2026-08-31",
   "freeNumberSpaceStartsAt": "ESS-0025",
   "entries": [
     {"id":"ESS-0001","title":"Documentary & Code Intelligence Architect","status":"published","version":"1.0.0","document":".ai/skills/ESS-0001-Documentary-Architect.md","reservedBy":"ESS-0001","owner":"Platform Director"},
@@ -15,7 +15,7 @@
     {"id":"ESS-0002","title":"Supervisor Architect","status":"published","version":"1.0.0","document":".ai/skills/ESS-0002-Supervisor-Architect.md","reservedBy":"ESS-0001","owner":"Platform Director"},
     {"id":"ESS-0003","title":"Platform Director","status":"published","version":"1.0.0","document":".ai/skills/ESS-0003-Platform-Director.md","reservedBy":"ESS-0001","owner":"Platform Director","relatedAdr":["ADR-0006"]},
     {"id":"ESS-0004","title":"Enterprise Version Manager","status":"suspended","version":"1.0.0","document":"docs/archive/governance/suspended/ESS-0004-Enterprise-Version-Manager.md","reservedBy":"ESS-0001","owner":"Platform Director","rationale":"Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.","implementedBy":"src/platform/VersionManager","implementationNote":"ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigte dieses Feld auf einen leeren, vom Enterprise Bootstrapper generierten Ordner, waehrend der echte Code unter server/versionManager.ts lag - eine Governance-Inkonsistenz. Der Code wurde physisch nach src/platform/VersionManager/versionManager.ts verschoben. Unter ADR-0096 ist die mutierende VersionManager-Architektur seit 2026-08-19 SUSPENDED; der verbleibende Namespace ist nur read-only Compatibility.","relatedAdr":["ADR-0016","ADR-0096"],"scope":"historical-non-authorizing","suspendedAt":"2026-08-19","suspensionAuthority":"AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","replacement":"package.json#version + src/platform/Release/Services/platformVersionControlPlane.ts + Release Version Gate"},
-    {"id":"ESS-0005","title":"Quality Center","status":"published","version":"1.1.0","document":".ai/skills/ESS-0005-Quality-Center.md","reservedBy":"ESS-0001","owner":"Platform Director","rationale":"Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.","implementedBy":"src/platform/Quality","implementationNote":"Repository Quality P0-P2 (2026-08-20): erste read-only Teilimplementierung mit neutralem Governance-Evidence-Contract, RepositoryQualityCoordinator und Composition-Adaptern fuer bestehende Domain-Validatoren. Keine neue Rule-/Version-/Merge-/Release-Authority; ValidatorRegistry, acht Quality Gates, ScoreCalculator, TechnicalDebtRegister und CoverageCollector bleiben inkrementell.","relatedAdr":["ADR-0016","ADR-0096"],"implementationStatus":"PARTIAL - Repository Quality P0-P2 read-only baseline"},
+    {"id":"ESS-0005","title":"Quality Center","status":"published","version":"1.2.0","document":".ai/skills/ESS-0005-Quality-Center.md","reservedBy":"ESS-0001","owner":"Platform Director","rationale":"Komponentenspezifikation der bestehenden read-only Quality-Center-Grenze. ESS-0001-CONTRACTS Chapter 12 bleibt normative Contract-/Gate-/Threshold-Authority; ADR-0096 bleibt Governance Control Plane. ADR-0103 fuegt ausschliesslich vorgeschlagene Projekt-Execution-Koordination hinzu.","implementedBy":"src/platform/Quality","implementationNote":"Revalidated 2026-08-31 against current main baseline: ValidatorRegistry integration, 16 mandatory validator execution/adapters, RepositoryQualityCoordinator, eight Quality Gates, QualityScoreCalculator fail-safe semantics, CoverageCollector, TechnicalDebtRegister, DocumentationConsistencyValidator, QualityCenterOrchestrator and the existing read-only 18-stage FintechValueChainQualityProjection are documented as the canonical implementation boundary. No second validator/event bus/CI/auth/router/release/value-chain architecture is authorized.","relatedAdr":["ADR-0016","ADR-0096","ADR-0103"],"projectRoadmap":"docs/projects/quality-management/ROADMAP.md","takeoverIndex":"docs/projects/quality-management/TAKEOVER_INDEX.md","implementationStatus":"REVALIDATED READ-ONLY QUALITY CENTER / 18-STAGE PROJECTION; QM PROJECT PROPOSED UNTIL ADR-0103 ACCEPTANCE"},
     {"id":"ESS-0006","title":"Security & Compliance","status":"published","version":"1.0.0","document":".ai/skills/ESS-0006-Security-Compliance.md","reservedBy":"ESS-0001","owner":"Platform Director","rationale":"Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.","implementedBy":"src/platform/Security, src/platform/Compliance","implementationNote":"ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigten beide Pfade auf leere, vom Enterprise Bootstrapper generierte Ordner, waehrend der echte Code unter server/iam/ (Security) und server/compliance/ (Compliance) lag - eine Governance-Inkonsistenz. Beide wurden physisch nach src/platform/Security/ bzw. src/platform/Compliance/ verschoben, die Angabe ist jetzt korrekt.","relatedAdr":["ADR-0016"]},
     {"id":"ESS-0007","title":"Enterprise Release Center","status":"published","version":"1.0.0","document":".ai/skills/ESS-0007-Enterprise-Release-Center.md","reservedBy":"ESS-0001","owner":"Platform Director","rationale":"Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.","implementedBy":"src/platform/Release","implementationNote":"ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Release ist als unspezifiziert markiert (manifest.json status='unspecified') - es existiert kein Code, nur die Verzeichnisstruktur. Kann bei Bedarf zu einem spaeteren Zeitpunkt implementiert werden. Aktuelle Plattformversions-Authority wird unter ADR-0096 auf package.json#version und den Release Control Plane aufgeloest; historische ESS-0004/Version-Manager-Authority-Verweise sind non-authorizing.","relatedAdr":["ADR-0016","ADR-0030","ADR-0096"],"versionAuthorityResolution":"ADR-0096: package.json#version is the sole current platform-version authority."},
     {"id":"ESS-0008","title":"AI Agent Framework","status":"published","version":"1.0.0","document":".ai/skills/ESS-0008-AI-Agent-Framework.md","reservedBy":"ESS-0001","owner":"Platform Director","rationale":"Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.","implementedBy":"src/agents, src/orchestrator","relatedAdr":["ADR-0016"]},
@@ -61,15 +61,8 @@
         "integratedAt": "2026-07-31",
         "integratedBy": "ADR-0013 Nummernaufloesung und nachtraegliche Formatangleichung",
         "component": "src/components/SecurityComplianceAuditor.tsx",
-        "relatedEss": [
-          "ESS-0001-CONTRACTS",
-          "ESS-0002",
-          "ESS-0011",
-          "ESS-0012"
-        ],
-        "relatedAdr": [
-          "ADR-0003.5"
-        ],
+        "relatedEss": ["ESS-0001-CONTRACTS","ESS-0002","ESS-0011","ESS-0012"],
+        "relatedAdr": ["ADR-0003.5"],
         "implementationStatus": "IN PROGRESS",
         "openFinding": "FND-ADR-0012-01 - Die Komponente ruft sieben Endpunkte unter /api/compliance/* auf, von denen keiner im Backend existiert. Die im ADR genannten Datenquellen audit_logs_iam und iam_access_log werden von der Komponente nicht referenziert. Die beschriebene aktive Produktionsintegration ist damit nicht gegeben.",
         "parserFix": "Das Dokument besass keine Markdown-Struktur und war fuer die ADR-Auto-Migration in server/documentHygiene.ts nicht parsebar. Titel, Metadatenfelder und Abschnittsueberschriften wurden formatangeglichen, der Inhalt blieb unveraendert."
@@ -84,27 +77,8 @@
     "leadingEnvironment": "Produktivstand dieses Repositorys",
     "invalidatedExternalAssignments": {
       "source": "CAPITAL-AI-Dev-main",
-      "adr": [
-        "ADR-0010",
-        "ADR-0011",
-        "ADR-0012",
-        "ADR-0013"
-      ],
-      "ess": [
-        "ESS-0002",
-        "ESS-0003",
-        "ESS-0004",
-        "ESS-0005",
-        "ESS-0006",
-        "ESS-0007",
-        "ESS-0008",
-        "ESS-0009",
-        "ESS-0010",
-        "ESS-0013",
-        "ESS-0013-CONTRACTS",
-        "ESS-0014",
-        "ESS-0014-CONTRACTS"
-      ]
+      "adr": ["ADR-0010","ADR-0011","ADR-0012","ADR-0013"],
+      "ess": ["ESS-0002","ESS-0003","ESS-0004","ESS-0005","ESS-0006","ESS-0007","ESS-0008","ESS-0009","ESS-0010","ESS-0013","ESS-0013-CONTRACTS","ESS-0014","ESS-0014-CONTRACTS"]
     },
     "freeNumberSpaceUnchanged": "Die fruehere abweichende ESS-0014-Belegung im Entwicklungsstand bleibt ungueltig. Im fuehrenden Produktionsrepository ist ESS-0014 an Google Marketing MCP Governance vergeben, ESS-0015 an API Interface Inventory & QA Governance, ESS-0016 an Enterprise Market Data Provider & MCP Governance, ESS-0017 an Vocabulary Governance und ESS-0018 an Agentic Supabase Tool Governance; ESS-0019 bis ESS-0024 sind unter ADR-0085 nachregistriert; der naechste freie Nummernraum beginnt bei ESS-0025.",
     "auditReference": "docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md (ARCH-AUDIT-0002)"
