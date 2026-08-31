@@ -3,100 +3,99 @@
 **Document role:** Security validation evidence / non-authorizing  
 **Project:** `CAPITAL-AI-SEC`  
 **Prompt:** `CAPITAL-AI-SEC-V2` v2.1 parts 1+2  
-**Current synchronized main:** `8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`  
-**Branch:** `chore/agent-security-consolidation`  
-**Synchronization merge:** `a4c4875c54fd008e952237c4981eab6010a9308e`  
-**Validation scope:** current-main synchronization, documentation architecture, ownership, namespace separation, cross-project routing, authority duplication and overlap handling.  
+**Document revision:** `2.1.2`  
+**Current main baseline:** `8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`  
+**Active branch:** `agent/security-pvc-handoff-correlation-20260831`  
+**Superseded working branch:** `chore/agent-security-consolidation` — no PR; no further writes for PR readiness  
+**Validation scope:** branch governance, current-main correlation, PVC ownership, Security finding handoffs, namespace separation, authority duplication and foreign-execution boundaries.  
 **Production/provider mutation:** none.
 
-## 1. Synchronization result
+## 1. Result
 
-**PASS — branch contains current `main@8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`.**
+**PASS — all currently open CAPITAL-AI-SEC handoffs are explicitly correlated to current Primary Project Owners and `PVC-*` stages.**
 
-The previous Security candidate was based on `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`. Current main advanced through merged PRs #626, #627, #628, #629 and #630, including the canonical project-organization / Project Value Chain model and updated Agent Trust Root.
+The earlier synchronized Security branch was created before the effective repository branch-naming convention. Current `AGENTS.md` requires an active non-conforming branch to be replaced before protected work or PR readiness. A fresh branch was therefore created directly from current `main`:
 
-A two-parent synchronization commit was created with:
+`agent/security-pvc-handoff-correlation-20260831`
 
-- Security parent: `916ef1c48fb835270608f849f50f87b0a77eb697`;
-- current-main parent: `8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`;
-- synchronization commit: `a4c4875c54fd008e952237c4981eab6010a9308e`.
+The Security-owned five-file candidate was ported to that branch; foreign project files were not modified.
 
-No direct edit to `main` occurred.
+## 2. Current-main authority and project model consumed
 
-## 2. Current-main project namespace impact
+Correlation reuses rather than duplicates:
 
-Current main now distinguishes:
+- `/AGENTS.md` — repository trust root;
+- `docs/projects/README.md` — canonical non-authorizing project execution surface;
+- `docs/projects/PROJECT_VALUE_CHAIN.md` — `PVC-01..PVC-18` and one Primary Project Owner per stage;
+- `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md` — repository compatibility marker plus structured PVC fields;
+- `docs/projects/PROJECT_EXECUTION_MODEL.md` — DevelopmentChain/OPS ownership separation;
+- `docs/projects/governance/ROADMAP.md` and `CROSS_PROJECT_HANDOFFS.md` — current Governance handoff pattern;
+- ESS-0006 and `src/platform/Security` — existing Security component boundary;
+- S1 Security Hardening — retained finding identities.
 
-- `PVC-01..PVC-18` — organizational Project Value Chain / project routing;
-- existing technical `VC-*` — technical financial chain identifiers under their existing authority.
+No new ADR, ESS, `AUTH-*` or `CTRL-*` identity is introduced.
 
-`docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md` retains a legacy `VC-<NN>` compatibility marker but requires explicit `project_namespace: PVC` and `project_stage: PVC-<NN>` for new/refreshed project-routing handoffs.
+## 3. Final Security handoff correlation
 
-Security documents were therefore synchronized semantically as well as structurally:
+| Finding | Current Primary Owner | project_stage | Security state |
+|---|---|---|---|
+| S1-R2-03 Node control-plane convergence | `CAPITAL-AI-OPS` | `PVC-06` Version Management | REFERRED_NOT_EXECUTED |
+| S1-R2-04 fatal process handling | `CAPITAL-AI-OPS` | `PVC-04` Supervisor | REFERRED_NOT_EXECUTED |
+| S1-R2-05 Stripe redirect boundary | `CAPITAL-AI-OPS` | `PVC-02` Controlled Implementation | REFERRED_NOT_EXECUTED |
+| S1-R2-06 entitlement authority | `CAPITAL-AI-OPS` parent inventory | `PVC-02` Controlled Implementation | REFERRED_NOT_EXECUTED / ACTIVE |
+| S1-R2-07 recovery/RPO/RTO | `CAPITAL-AI-OPS` | `PVC-08` Production Operations | REFERRED_NOT_EXECUTED |
+| S1-R2-09 strict CSP promotion | `CAPITAL-AI-OPS` | `PVC-08` Production Operations | WAITING_FOR_EVIDENCE |
+| S1-R2-10 demo billing post-deploy proof | `CAPITAL-AI-OPS` | `PVC-08` Production Operations | WAITING_FOR_EVIDENCE |
+| S1-R2-11 evidence identity/staleness | `CAPITAL-AI-DATA` | `PVC-10` Evidence Management | WAITING_FOR_EVIDENCE |
+| MFA/AAL authority-lifecycle drift | `CAPITAL-AI-GOV` | `PVC-05` Platform Director | REFERRED_NOT_EXECUTED / CLARIFY |
 
-- `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md` → v2.1.1 / current-main baseline / PVC separation;
-- `docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md` → v2.1.1 / current-main project-routing contract;
-- `docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md` → v2.1.1 / PVC + technical-VC separation;
-- `src/platform/Security/README.md` → v1.1.1 / current project-routing boundary;
-- this evidence → current synchronization state.
+Every current record now contains the Security marker, the repository compatibility marker, `project_namespace: PVC`, `project_stage`, target project, task/reason/dependency, required evidence, verification gate, status and roadmap/reference.
 
-## 3. Ownership validation
+## 4. Non-trivial ownership decisions
+
+### R2-06 entitlement inventory
+
+The parent cross-repository capability inventory is routed to `CAPITAL-AI-OPS / PVC-02` because it is controlled implementation/server-enforcement work. This does not make OPS owner of every capability. If inventory finds productive code owned by Agent Client or FinTech, a child handoff is required to `CAPITAL-AI-CLIENT / PVC-01` or the applicable `CAPITAL-AI-FINTECH / PVC-12..17` stage.
+
+### R2-09 CSP promotion
+
+`CAPITAL-AI-SEO` can supply browser/marketing compatibility and violation evidence but is cross-cutting and owns no productive PVC stage. Production CSP promotion is therefore routed to `CAPITAL-AI-OPS / PVC-08` and remains evidence-gated.
+
+### R2-11 evidence identity/staleness
+
+Evidence identity/freshness semantics map to `CAPITAL-AI-DATA / PVC-10`. Existing PR baseline-refresh tooling remains relevant evidence. If correction requires PR/trace tooling code, that implementation is a secondary `CAPITAL-AI-OPS` handoff under the applicable OPS stage; DATA ownership of evidence semantics does not silently transfer tooling ownership.
+
+### MFA/AAL lifecycle drift
+
+Normative lifecycle reconciliation maps to `CAPITAL-AI-GOV / PVC-05`. Security records and verifies the mismatch but cannot promote ESS/ADR/registry state or accept the risk.
+
+## 5. Target roadmap handling
+
+Current Governance already uses future target project paths such as `docs/projects/operations/ROADMAP.md` and `docs/projects/data/ROADMAP.md` in non-authorizing handoffs. CAPITAL-AI-SEC follows the same pattern.
+
+Those paths are **handoff destinations**, not files Security may create on behalf of the target project. Existing legacy roadmaps remain source/context references until the corresponding Primary Owner performs its own project migration.
+
+## 6. Validation checklist
 
 | Validation | Result | Evidence / note |
 |---|---|---|
-| Security owns productive PVC stage | PASS / NONE | `primary Project Value Chain ownership=[]` |
-| Cross-cutting coverage | PASS | Security overlays PVC-01..PVC-18 without Primary ownership |
-| technical/project namespace separation | PASS | PVC project routing is explicitly separated from technical `VC-*` |
-| foreign implementation remains foreign | PASS | Security owns requirement/finding/testing/verification only |
-| fail-closed ambiguity | PASS | unknown current Primary Owner/PVC routing is not silently inferred |
-| duplicate Security authority | PASS / NONE | ESS-0006, existing IAM/Security controls and S1 identities reused |
-| duplicate Governance Control Plane | PASS / NONE | current Governance remains authority resolver |
-| second EventMesh/Data/Scoring architecture | PASS / NONE | current architectures reused |
-| autonomous Production mutation | PASS / NONE | no external mutation performed |
-| self-accepted risk | PASS / NONE | Human/Owner gate retained |
-| direct main edit | PASS / NONE | branch-only repository writes |
+| current `/AGENTS.md` read | PASS | Control Plane 2.2.1 baseline consumed |
+| current main SHA established | PASS | `8e0e4a541da24ce2e28988e31c9a8bb7e5711a25` |
+| fresh conforming branch | PASS | `agent/security-pvc-handoff-correlation-20260831` created directly from current main |
+| open PR overlap at precheck | PASS / NONE | no open PRs |
+| Security-owned foreign PVC execution | PASS / NONE | only Security documentation/component boundary changed |
+| all open Security findings routed | PASS | 9 current handoffs have explicit Primary Owner + PVC stage |
+| `PVC-*` vs technical `VC-*` separation | PASS | project routing is explicitly namespaced |
+| cross-project dependencies explicit | PASS | R2-06, R2-09 and R2-11 split dependencies documented |
+| duplicate Security authority | PASS / NONE | ESS-0006/current controls reused |
+| duplicate Governance/EventMesh/Data/Scoring architecture | PASS / NONE | existing authorities/components reused |
+| autonomous Production mutation | PASS / NONE | none performed |
+| self-accepted risk | PASS / NONE | Human/Owner boundary preserved |
+| target-project code changed | PASS / NONE | no foreign productive remediation implemented |
 
-## 4. Finding routing status after synchronization
+## 7. Candidate scope
 
-The S1 finding identities remain valid, but their earlier branch-local routing used legacy labels such as `DC-SA`, `DEVELOPMENT`, `SC-MD-SPT`, `SEO-GM` and `GOV` with unqualified `VC-*` markers.
-
-Current main introduces explicit PVC project-routing semantics. Security therefore does **not** silently reinterpret those older labels as current project ownership.
-
-Current state:
-
-| Finding group | Status after sync |
-|---|---|
-| S1-R2-03/04/05/06/07/09/10/11 | finding retained; `PVC_ENRICHMENT_REQUIRED` before renewed project-routing PASS |
-| MFA/AAL authority-lifecycle drift | finding retained; current `CAPITAL-AI-GOV` / PVC routing must be explicitly recorded before closure |
-| S1-R2-00 containment | remains merged implementation/history; not reopened by synchronization |
-
-This is fail-closed correlation, not loss of finding traceability.
-
-## 5. Open PR / writer correlation
-
-Immediately before synchronization, current GitHub state reported **no open Pull Requests**.
-
-The previous PR #626 overlap no longer exists as an open writer because #626 is merged into current main. Its project-model changes are consumed as current-main authority/input, not as an open concurrent writer.
-
-No current changed-file overlap with an open PR is present.
-
-## 6. Main changes correlated
-
-Current main includes the following relevant merged changes after the previous Security baseline:
-
-- #626 — CAPITAL-AI-CLIENT project consolidation;
-- #627 — CAPITAL-AI-COMP consolidation;
-- #628 — PR template compacting;
-- #629 — chat/PR connector contract;
-- #630 — Governance consolidation and branch convention.
-
-The effective `/AGENTS.md` is now Control Plane Version 2.2.1 and requires final-main synchronization plus current project/branch governance before PR readiness.
-
-The existing Security branch predates the new branch-naming convention. `/AGENTS.md` applies the new naming convention to **new** agent-managed branches and explicitly does not require historical/terminal existing branches to be retroactively renamed.
-
-## 7. Candidate scope after synchronization
-
-Security-specific diff remains limited to:
+The intended Security candidate remains limited to:
 
 - `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`;
 - `docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md`;
@@ -104,20 +103,13 @@ Security-specific diff remains limited to:
 - `src/platform/Security/README.md`;
 - `docs/evidence/security/CAPITAL_AI_SEC_V2_VALIDATION_2026-08-31.md`.
 
-Current-main files are inherited through the synchronization merge and are not claimed as Security-owned changes.
+## 8. Remaining gates
 
-## 8. Known open semantic gate
+No Security Pull Request exists, therefore no PR-triggered hosted Governance/technical-validation/build-and-test evidence exists for this candidate and no hosted CI PASS is claimed.
 
-The branch is synchronized with main, but **PR readiness is not re-asserted yet** because the existing Security finding handoffs must be enriched with the new current-main PVC project-routing fields before they can again be claimed fully routed under the current project contract.
+Before PR creation, current `main`, open PRs and the exact branch head must be read again. The branch must remain `behind_by=0`; any new overlap or main drift invalidates the candidate correlation until re-synchronized. PR creation remains separately and explicitly Human/Owner-gated. Merge remains Human/CODEOWNER-only.
 
-This does not block the completed branch synchronization itself. It blocks a renewed exact-snapshot PR-ready claim until correlation is complete.
+## 9. Historical branch notes
 
-## 9. Validation limitations
-
-No Security Pull Request exists for this branch, therefore no PR-triggered hosted CI evidence exists for the synchronized candidate.
-
-No hosted CI PASS is claimed. Documentation/security verification performed here is non-authorizing.
-
-## 10. Operational note
-
-During construction of the synchronization commit, a temporary branch named `tmp-not-use` was inadvertently created at the then-current main SHA. It is not part of CAPITAL-AI-SEC scope, contains no unique changes and has no PR. The available connector surface in this session exposes branch creation/ref movement but no branch-ref deletion action, so no false deletion claim is made.
+- `chore/agent-security-consolidation` is superseded for this work by the conforming branch above and has no PR.
+- `tmp-not-use` remains an unrelated empty helper branch at an older/current-main snapshot from the prior synchronization session; it contains no unique Security change and is not part of this candidate.
