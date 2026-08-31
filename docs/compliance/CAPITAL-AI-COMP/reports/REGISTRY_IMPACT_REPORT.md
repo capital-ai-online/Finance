@@ -2,7 +2,8 @@
 
 **Document ID:** `DOC-COMP-REGISTRY-IMPACT-2026-08-31`  
 **Role:** assessment report / non-authorizing  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
+**Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
 **Baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`
 
 ## Decision
@@ -13,15 +14,15 @@ This consolidation introduces **no new normative Authority, Control, ADR or ESS*
 |---|---|---|
 | `docs/governance/authority-registry.json` | none | **NO CHANGE** — roadmap/assessment/finding/evidence are not `AUTH-*` |
 | `docs/governance/control-catalog.json` | none | **NO CHANGE** — existing controls are reused; Compliance does not define new `CTRL-*` |
-| `docs/adr/registry.json` | no new ADR | **NO CHANGE** — ADR-0007 ambiguity is documented as a gap, not repaired by Compliance |
-| `.ai/registry/ess-registry.json` | no new ESS | **NO CHANGE** — ESS-0006 clarification is documented only |
-| `docs/governance/document-registry.json` | potential registration of material new `DOC-*` artifacts | **REVIEW REQUIRED BEFORE MERGE-READINESS** |
+| `docs/adr/registry.json` | no new ADR | **NO CHANGE** — ADR-0007 ambiguity is documented and handed to Governance rather than repaired by Compliance |
+| `.ai/registry/ess-registry.json` | no new ESS | **NO CHANGE** — ESS-0006 clarification is handed to its responsible owner |
+| `docs/governance/document-registry.json` | material new `DOC-*` artifacts may require selected non-normative registration under the current Documentary/Governance convention | **IMPACT IDENTIFIED / COMP-07 HANDOFF ASSIGNED** |
 
 ## Document-registry assessment
 
-The current Document Registry already establishes non-authorizing roles such as `projection`, `inventory`, `roadmap`, `evidence` and `specification`, and already registers existing Compliance projection/inventory artifacts. The V2.1 project uses the same role model and canonical path.
+The current Document Registry establishes non-authorizing roles such as `projection`, `inventory`, `roadmap`, `evidence` and `specification`, and already registers selected Compliance projection/inventory artifacts. V2.1 uses the same role model and canonical path.
 
-Material candidates for direct registration are at minimum:
+Material candidates for direct registration include:
 
 | Document ID | Role | Path | Normative? |
 |---|---|---|---:|
@@ -34,6 +35,23 @@ Material candidates for direct registration are at minimum:
 | `DOC-COMP-GAP-REPORT-2026-08-31` | assessment report | `docs/compliance/CAPITAL-AI-COMP/reports/COMPLIANCE_GAP_REPORT.md` | no |
 | `DOC-COMP-VALIDATION-2026-08-31` | evidence/validation report | `docs/compliance/CAPITAL-AI-COMP/reports/VALIDATION_REPORT.md` | no |
 
+## V2.1 one-project boundary
+
+Direct mutation of the Governance-owned `document-registry.json` is **not executed in this Compliance-only PR scope**. Instead:
+
+```text
+[COMPLIANCE_HANDOFF -> GOV-DOC | VC-03]
+```
+
+is recorded in the Handoff Register with the current Document Lifecycle policy and Documentary/Governance references. The receiving owner decides which non-normative entries are required and performs that mutation in the appropriate scoped work/PR.
+
+This preserves:
+
+- `one_project_scope_per_pr = true`;
+- `execute_foreign_work = false`;
+- Governance ownership of repository registries;
+- no new `AUTH-*`/`CTRL-*` identity from a Compliance roadmap/report.
+
 ## Why no authority/control mutation is justified
 
 - Existing Governance already owns authority/control identity and supersession.
@@ -42,8 +60,6 @@ Material candidates for direct registration are at minimum:
 - Security, SDLC, deployment, document-lifecycle and historical-authority controls already exist.
 - V2.1 requires reuse and explicitly prohibits a second policy hierarchy.
 
-## Open merge-readiness gate
+## Registry impact status
 
-`COMP-GAP-008` remains open until the current `document-registry.json` registration convention is correlated against the final document set. If direct entries are required, they must be added as **non-normative** document records only and must not add `AUTH-*` or `CTRL-*` identities.
-
-This report does not itself authorize or perform a Governance registry mutation.
+Registry impact is **ASSESSED AND ASSIGNED**. `COMP-GAP-008` remains an open target-owner finding until Documentary/Governance returns the relevant registry decision/evidence; it does not authorize Compliance to mutate the registry itself.
