@@ -3,9 +3,10 @@
 **Source project:** `CAPITAL-AI-SEC`  
 **Source PR:** `#631`  
 **Security merge SHA:** `b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
-**Current-main correlation:** `1f55340d89178fb5c1ab735242f42c263918b692`  
+**Current-main correlation:** `6b1e7e5234604641449f304b5b251bd74151ddab`  
 **Target project:** `CAPITAL-AI-FINTECH`  
 **Target project folder:** `docs/projects/fintech`  
+**Primary owner:** `CAPITAL-AI-FINTECH`  
 **Affected project stages:** `PVC-12..PVC-17`
 
 ## Boundary
@@ -33,6 +34,8 @@ Therefore this synchronization records the Security requirement baseline and ret
 - project_namespace: `PVC`
 - project_stage: `PVC-12`
 - target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech`
+- primary_owner: `CAPITAL-AI-FINTECH`
 - task: preserve validated-input, feature-integrity and provenance boundaries in FINTECH feature engineering
 - reason: untrusted, stale or provenance-incomplete input must not become trusted scoring features
 - dependency: `CAPITAL-AI-DATA / PVC-09..11`; existing scoring/feature contracts
@@ -48,6 +51,8 @@ Therefore this synchronization records the Security requirement baseline and ret
 - project_namespace: `PVC`
 - project_stage: `PVC-13`
 - target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech`
+- primary_owner: `CAPITAL-AI-FINTECH`
 - task: preserve model/registry integrity, controlled lifecycle state and least-privilege boundaries
 - reason: model identity or lifecycle ambiguity could grant unintended productive scoring authority
 - dependency: ADR-0087; `ScoringModelRegistry`; existing model tests
@@ -63,6 +68,8 @@ Therefore this synchronization records the Security requirement baseline and ret
 - project_namespace: `PVC`
 - project_stage: `PVC-14`
 - target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech`
+- primary_owner: `CAPITAL-AI-FINTECH`
 - task: preserve single-dispatcher/tool integrity and deny scoring bypass paths
 - reason: alternate dispatch or untrusted tool selection could bypass governed model/evidence controls
 - dependency: ADR-0087; `ScoringDispatcher`; registered executors
@@ -78,6 +85,8 @@ Therefore this synchronization records the Security requirement baseline and ret
 - project_namespace: `PVC`
 - project_stage: `PVC-15`
 - target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech`
+- primary_owner: `CAPITAL-AI-FINTECH`
 - task: preserve provider/tool/domain execution boundaries and canonical executor contracts
 - reason: provider-specific or tool-specific execution must not bypass DATA or create independent scoring authority
 - dependency: DATA ingress/evidence/DQ; registered executor adapters; ProviderMatrix capability mapping
@@ -93,6 +102,8 @@ Therefore this synchronization records the Security requirement baseline and ret
 - project_namespace: `PVC`
 - project_stage: `PVC-16`
 - target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech`
+- primary_owner: `CAPITAL-AI-FINTECH`
 - task: preserve CanonicalScoreResult integrity, lineage and fail-closed unavailable semantics
 - reason: malformed, synthetic or lineage-free results could become trusted decision inputs
 - dependency: `src/types/scoringIntegrity.ts`; dispatcher/model/executor lineage
@@ -108,6 +119,8 @@ Therefore this synchronization records the Security requirement baseline and ret
 - project_namespace: `PVC`
 - project_stage: `PVC-17`
 - target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech`
+- primary_owner: `CAPITAL-AI-FINTECH`
 - task: preserve protected decision-input integrity and fail-closed ranking admission
 - reason: unverified score, comparability, governance or operations evidence must not influence productive ranking
 - dependency: CanonicalScoreResult; ranking contracts/services; FE remains consumer only
