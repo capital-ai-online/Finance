@@ -2,9 +2,10 @@
 
 **Document ID:** `DOC-COMP-VALIDATION-2026-08-31`  
 **Role:** validation evidence / non-authorizing  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Baseline for implementation:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`
+**Initial implementation baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
+**Synchronized main baseline:** `main@5d3360c21ee51771495aab734ba81c2bdfd3d08b`
 
 The exact final candidate SHA is intentionally not embedded in this file because updating the file would change that SHA. The exact candidate is reported externally after the final main/open-PR correlation.
 
@@ -12,14 +13,16 @@ The exact final candidate SHA is intentionally not embedded in this file because
 
 | Check | Result | Evidence / limitation |
 |---|---|---|
-| Dedicated branch from current baseline | PASS | `feat/capital-ai-comp-consolidation`; merge base was current baseline main |
-| Direct main edit | PASS — none | all writes targeted the dedicated branch |
-| Documentation-only scope | PASS | pre-final compare shows only `docs/**` files; no source/runtime/workflow/dependency/deployment changes |
-| Foreign technical execution | PASS — none | no Security/Data/Runtime/Release implementation file changed; target remediation uses handoff register |
-| Primary VC execution ownership by Compliance | PASS — none | `primary_value_chain_ownership = []`; 18-stage matrix lists external Primary Owners |
-| Workstream model | PASS | exactly current `COMP-01`…`COMP-08`; `COMP-09`…`COMP-16` appear only where explicitly labeled retired migration history |
+| Dedicated branch | PASS | all implementation writes target `feat/capital-ai-comp-consolidation`; no direct `main` write |
+| Final main synchronization performed | PASS at this validation snapshot | merge commit synchronized the branch with `main@5d3360c2`; compare showed merge-base = current main and `behind_by=0` before this report update |
+| Documentation-only scope | PASS | compare against synchronized main shows only `docs/**`: `docs/compliance/CAPITAL-AI-COMP/**` plus Master Roadmap integration |
+| Main CLIENT content preserved | PASS | `docs/projects/agent-client/**` inherited unchanged from main and remains present on the branch |
+| Foreign technical execution | PASS — none | no Security/Data/Runtime/Release/Agent-Client implementation file changed; target remediation uses handoff register |
+| Primary VC execution ownership by Compliance | PASS — none | `primary_value_chain_ownership = []` |
+| VC-01 ownership correlation | PASS | `CAPITAL-AI-CLIENT` is the single Primary Owner for VC-01 technical implementation; S1/Privacy/SEO-GM/Frontend/AI remain source-domain controls/evidence where relevant |
+| Workstream model | PASS | exactly current `COMP-01`…`COMP-08`; no active COMP-09…16 taxonomy |
 | Required finding fields | PASS | Gap Report/Handoff Register include requirement, applicability, affected project/VC, evidence, assessment, remediation, legal-review flag and status |
-| All actionable remediation assigned | PASS | COMP-07 Handoff Register assigns current actionable gaps; QM-template gap is deliberately DEFERRED because no canonical template exists |
+| All actionable remediation assigned | PASS | COMP-07 Handoff Register assigns current actionable gaps; QM-template gap remains deliberately DEFERRED because no canonical template exists |
 
 ## Governance / architecture checks
 
@@ -27,12 +30,14 @@ The exact final candidate SHA is intentionally not embedded in this file because
 |---|---|---|
 | Parallel Governance hierarchy | PASS — none created | Authority Registry and Control Catalog reused; no new authority/control files |
 | New ADR/ESS | PASS — none | ADR-0007/ESS-0006 are findings/handoffs only |
-| Second Security architecture | PASS — none | Security remains Primary Owner for technical Security work |
+| Second Security architecture | PASS — none | Security retains Security control/evidence and downstream Security ownership; VC-01 technical ownership is correctly delegated to CAPITAL-AI-CLIENT |
+| Second Agent Client architecture | PASS — none | existing `docs/projects/agent-client/**` from main is consumed/referenced; branch does not modify or duplicate that project tree |
 | Second QM structure | PASS — none | missing `CAPITAL-AI-QM` template recorded as COMP-GAP-001; no invented project model |
 | Parallel Risk model | PASS — none | findings can refer existing/domain risk evidence; no new ERM registry |
 | External standards promoted to Authority | PASS — no | ISO/NIST/OWASP/CIS remain benchmark/crosswalk/control-source inputs |
 | Historical authority resurrection | PASS — blocked by mapping | ADR-0007/ESS-0006 handled through current registry/lifecycle controls |
-| Master Roadmap integration | PASS | Portfolio now references `CAPITAL-AI-COMP` as cross-cutting assessment SPOE, non-authorizing |
+| Document-domain placement | PASS | `AUTH-GOV-DOCUMENT-LIFECYCLE` defines `docs/compliance/` as canonical applicability/control/evidence domain; the project remains there |
+| Master Roadmap integration | PASS | final branch Master retains both `CLIENT` as VC-01 Primary Owner and `COMP` as cross-cutting assessment SPOE |
 | Registry impact | PASS — assessed/assigned | no AUTH/CTRL/ADR/ESS mutation; potential document-registry work assigned to `[COMPLIANCE_HANDOFF -> GOV-DOC | VC-03]` |
 
 ## Compliance mapping checks
@@ -47,10 +52,11 @@ The exact final candidate SHA is intentionally not embedded in this file because
 | Evidence partial | 15 PARTIALLY_COMPLIANT |
 | Evidence missing | 5 EVIDENCE_MISSING |
 | Not assessed | 11 NOT_ASSESSED |
-| Requirement→Control→Evidence | PASS — 36-row mapping present |
-| Value-chain coverage | PASS — VC-01…VC-18 mapped without Compliance execution ownership |
-| Cross-roadmap traceability | PASS — source roadmap, owner, VC, requirement, evidence/action mapped |
-| Legal Review separation | PASS — DORA and role/use-case legal ambiguity remain fail-closed; additional legal handoffs are explicit |
+| Requirement→Control→Evidence | PASS — 36-row mapping present; VC-01 implementation/source-domain distinction revalidated |
+| Value-chain coverage | PASS — VC-01…VC-18 mapped without Compliance execution ownership; VC-01 = CAPITAL-AI-CLIENT |
+| Cross-roadmap traceability | PASS — Agent Client roadmap added as current VC-01 owner source; older S1/Privacy/SEO-GM/Frontend VC-01 references normalized |
+| Handoff traceability | PASS — confirmed VC-01 technical remediation targets `[COMPLIANCE_HANDOFF -> CAPITAL-AI-CLIENT | VC-01]` |
+| Legal Review separation | PASS — DORA and role/use-case legal ambiguity remain fail-closed; organizational/legal handoffs do not grant technical VC ownership |
 
 ## Findings checks
 
@@ -67,8 +73,9 @@ Priorities are derived from repository evidence/source priority and scope, not m
 ## Documentation / link checks
 
 - New artifacts use the canonical `docs/compliance/` domain and stable `DOC-*` metadata.
+- `docs/projects/agent-client/ROADMAP.md` and its project companions are current-main context and are not modified by this Compliance branch.
 - Key direct target-roadmap paths referenced by handoffs were verified during inventory/correlation.
-- The Master Roadmap cross-reference points to the new Compliance roadmap path.
+- The Master Roadmap contains both current CLIENT and COMP portfolio entries.
 - An automated repository-wide Markdown link checker was **not executed** in this connector-only pre-PR environment; this is not replaced by an invented PASS claim.
 - Repository Governance/Documentation scripts were **not executed locally** because the active GitHub connector provides repository reads/writes but no repository command runner. No costly hosted CI was triggered before PR creation, consistent with policy.
 
@@ -91,12 +98,12 @@ Pre-PR expensive hosted CI was intentionally not triggered. After an authorized 
 
 ## Final gate still external to this report
 
-Immediately before requesting PR-creation approval the chat must:
+Immediately before reporting the candidate/asking for PR-creation approval the chat must:
 
 1. re-read current main SHA;
 2. re-read open PRs and overlap;
 3. compare branch to current main and confirm synchronization;
 4. report exact candidate SHA;
-5. obtain explicit Human/Owner PR-creation approval bound to those SHAs.
+5. obtain explicit Human/Owner PR-creation approval bound to those SHAs before creating a PR.
 
 This report does not authorize PR creation or merge.
