@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Branch Correlation — 2026-08-31
 
-**Correlation baseline:** `main@e434fce28630fc694b9dfe471418a2ac98eda9dd`  
+**Correlation baseline:** `main@6b1e7e5234604641449f304b5b251bd74151ddab`  
 **PR candidate branch:** `agent/fintech-v2-security-sync-20260831`
 
 ## Search result
@@ -14,7 +14,7 @@ Searches for `scoring`, `ranking`, `crypto` and `agent/fintech` returned no addi
 
 ## Older FinTech consolidation branch
 
-At correlation time the older consolidation branch was **10 commits ahead of its old merge base and 107 commits behind current main**. It is therefore not safe to merge wholesale.
+At correlation time the older consolidation branch was **10 commits ahead of its old merge base and 107 commits behind the then-current main**. It is therefore not safe to merge wholesale.
 
 | Older branch artifact | PR-candidate disposition |
 |---|---|
@@ -50,7 +50,15 @@ The older branch is therefore **considered and semantically subsumed**, but is n
 
 `agent/fintech-v2-security-sync-20260831`.
 
-No V2 file was discarded during the replacement. The replacement branch uses current main as merge base and preserves the prior V2 branch as history/reuse evidence only.
+No V2 file was discarded during the replacement. The replacement branch preserves the prior V2 branch as history/reuse evidence only.
+
+## Subsequent main correlation — Governance PR #634
+
+After the first exact-snapshot PR approval, current main advanced via PR #634 to `6b1e7e5234604641449f304b5b251bd74151ddab`. The old approval was therefore invalidated before PR creation.
+
+PR #634 changed the repository-wide foreign-project handoff control and contract but had no direct FinTech file overlap. Its four current-main files (`AGENTS.md`, Control Catalog, Cross-Project Handoff Contract and governance consistency test) were synchronized into this branch. The FinTech handoff records were then refreshed to carry the newly mandatory `target_project_folder` and `primary_owner` fields.
+
+This is a semantic correlation, not foreign Governance implementation by FINTECH.
 
 ## Provider-related Security branches
 
@@ -60,13 +68,13 @@ At correlation this branch was fully behind current main with `ahead_by=0`; it h
 
 ### `agent/security-provider-credential-guard-20260831`
 
-This branch remains Security-owned and contains Security tooling/tests for provider credential coverage. It has no `docs/projects/fintech/**`, scoring-registry, dispatcher, ranking or FINTECH runtime changes in its branch delta and has no open PR at correlation time.
+This branch remains Security-owned and contains Security tooling/tests for provider credential coverage. It has no `docs/projects/fintech/**`, scoring-registry, dispatcher, ranking or FINTECH runtime changes in its branch delta and had no open PR at correlation time.
 
 Disposition: **FOREIGN SECURITY SCOPE / CONSIDERED / NOT MERGED**. FINTECH continues to reference Security verification boundaries through `SECURITY_HANDOFFS.md`; any later Security finding affecting PVC-12..17 must arrive through the canonical handoff contract.
 
 ## Open Pull Requests and writer conclusion
 
-At the correlation baseline there were no open Pull Requests. No active writer with a claimed `docs/projects/fintech/**` path was discovered on current main. Security/Governance writer metadata remains foreign and does not transfer PVC ownership.
+At the latest correlation baseline there were no open Pull Requests. No active writer with a claimed `docs/projects/fintech/**` path was discovered on current main. Security/Governance writer metadata remains foreign and does not transfer PVC ownership.
 
 ## Conclusion
 
