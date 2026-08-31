@@ -32,9 +32,11 @@
     "src/platform/MarketData/providers/ResearchEvidenceProviderHttp.ts",
     "src/services/cryptoSpotConsensus.ts",
     "src/services/externalSpotPriceAdapters.ts",
+    "src/services/marketDataProviderRegistry.ts",
     "tests/server/alphaVantageRoutes.contract.test.ts",
     "tests/server/marketDataAdapterComposition.contract.test.ts",
     "tests/unit/externalSpotPriceAdapters.test.ts",
+    "tests/unit/marketDataProviderRegistry.test.ts",
     "tests/unit/marketDataProviderStages.test.ts",
     "tests/unit/providerMatrix.test.ts",
     "tests/unit/providerSecurityRemediation.test.ts"
