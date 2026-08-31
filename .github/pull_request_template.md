@@ -6,6 +6,14 @@
 Kanonische PR-Vorlage. Pflichtabschnitte und maschinenverwaltete Baseline-Felder nicht entfernen.
 Nicht zutreffende Angaben mit begründetem N/A ausfüllen.
 Merge bleibt Human-/CODEOWNER-only. M10 AUTHORIZE_PR_CI ist gemäß aktueller Governance suspendiert.
+
+CHAT/API/MCP/CONNECTOR PR-CREATE CONTRACT:
+- Der Trusted-Workflow bleibt der bevorzugte Renderer, sofern er von der aktuellen Ausführungsoberfläche aufrufbar ist.
+- Ist er dort nicht aufrufbar, darf ein Chat/API/MCP/Connector nach gültiger exakter Human/Owner-Snapshot-Freigabe den PR direkt erstellen.
+- Voraussetzung ist transportäquivalentes Rendering aus der current-main-Vorlage und dem current-main-Vertrag in scripts/pr/lib.mjs: PRODUCTION_BASELINE_SCHEMA_VERSION, productionBaselineIdentity(), computeProductionBaselineId() und renderProductionBaselineBlock().
+- Production-, main- und Head-Identitäten müssen unmittelbar vor PR-Erstellung live korreliert werden; fehlende, geschätzte, veraltete oder Ersatzwerte sind verboten und führen fail-closed zum STOP.
+- Unmittelbar vor create_pull_request werden current main und Candidate-Head erneut gelesen; jede SHA-Änderung invalidiert die Freigabe.
+- Hosted CI berechnet die Baseline unabhängig erneut; Abweichungen bleiben merge-blockierend. Diese Transportfreigabe ändert weder CTRL-SDLC-PR-CREATE-001 noch Human-only Merge, M10-Status oder geschützte Produktionsmutations-Gates.
 -->
 
 ## 1. Arbeitsauftrag
