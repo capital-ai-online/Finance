@@ -2,7 +2,7 @@
 
 **Document ID:** `DOC-WP-CAPITAL-AI-SEC-2026-08-31`  
 **Project:** `CAPITAL-AI-SEC`  
-**Version:** `2.1.1`  
+**Version:** `2.1.2`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY BACKLOG / NON-AUTHORIZING`  
 **Date:** `2026-08-31`  
 **Baseline:** `main@8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`  
@@ -16,7 +16,7 @@
 
 **Entry:** current `main` and open PRs correlated; affected project and project-routing stage known or explicitly BLOCKED; existing authority/control reused; threat/control and expected verification evidence defined.  
 **Security action:** define requirement, threat model, test/negative test, finding, handoff and verification gate.  
-**Foreign implementation:** do not execute under CAPITAL-AI-SEC. Retain `[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` as the Security compatibility marker and add the current repository routing fields `project_namespace: PVC`, `project_stage: PVC-<NN>`, `target_project`, `task`, `reason`, `dependency`, `required_evidence`, `verification_gate`, `status`.  
+**Foreign implementation:** do not execute under CAPITAL-AI-SEC. Retain `[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` as the Security marker, record `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` for repository routing compatibility, and add `project_namespace: PVC`, `project_stage: PVC-<NN>`, `target_project`, `task`, `reason`, `dependency`, `required_evidence`, `verification_gate`, `status`.  
 **Technical stage:** when an existing technical financial `VC-*` stage is relevant, record `technical_namespace` and `technical_stage` separately.  
 **Verification:** exact candidate/runtime evidence as appropriate; missing/stale evidence is not PASS.  
 **Closure:** `VERIFIED/CLOSED` requires independent Security verification; `ACCEPTED_RISK` requires applicable Human/Owner authority.
@@ -49,20 +49,18 @@ Immediate Security items:
 - preserve authentication vs authorization separation;
 - track ESS-0020/ADR-0064 lifecycle mismatch without self-promoting either authority;
 - verify agent/Systemadmin capabilities cannot create Owner authority;
-- route governance-lifecycle clarification through current `CAPITAL-AI-GOV` project semantics before PR readiness.
+- route Governance lifecycle clarification to `CAPITAL-AI-GOV / PVC-05`.
 
 ## SEC-03 — Application/API Security
 
 **Owns:** requirements/tests for input validation, safe output, error handling, browser/API authorization, redirect safety, rate limiting and capability boundaries.
 
-Legacy finding references retained from the pre-sync branch:
+Current routed findings:
 
-- S1-R2-05 Stripe redirect boundary;
-- S1-R2-06 entitlement authority;
-- S1-R2-09 CSP promotion;
-- S1-R2-10 post-deploy demo-billing isolation verification.
-
-Their earlier `DEVELOPMENT`, `SC-MD-SPT` and `SEO-GM` handoff labels remain historical/technical traceability only until explicit current-main `PVC-*` project routing is added.
+- S1-R2-05 → `CAPITAL-AI-OPS / PVC-02` — server-owned Stripe redirect boundary;
+- S1-R2-06 → `CAPITAL-AI-OPS / PVC-02` — parent entitlement inventory and server-side enforcement coordination; child capability handoffs go to the actual Primary Owner when discovered;
+- S1-R2-09 → `CAPITAL-AI-OPS / PVC-08` — production CSP promotion; `CAPITAL-AI-SEO` remains compatibility/evidence dependency only;
+- S1-R2-10 → `CAPITAL-AI-OPS / PVC-08` — post-deploy production reachability evidence.
 
 Exit: protected API/browser capabilities have server-side authorization, directly relevant negative evidence and current project-routing metadata.
 
@@ -85,13 +83,13 @@ Foreign data-pipeline or domain-schema implementation remains with the current P
 
 **Owns:** runtime/container/network/process/recovery Security requirements and verification.
 
-Legacy S1 finding references retained:
+Current routed findings:
 
-- S1-R2-03 Node control-plane convergence;
-- S1-R2-04 fatal process handling;
-- S1-R2-07 measured recovery/RPO/RTO.
+- S1-R2-03 → `CAPITAL-AI-OPS / PVC-06` — Node/control-plane version convergence;
+- S1-R2-04 → `CAPITAL-AI-OPS / PVC-04` — fail-fast process behavior and supervisor recovery;
+- S1-R2-07 → `CAPITAL-AI-OPS / PVC-08` — measured recovery/RPO/RTO.
 
-Current-main project routing must resolve these against `CAPITAL-AI-OPS` and the applicable `PVC-*` stage before the handoff is considered refreshed/current. Security may require fail-closed behavior and block verification, but Operations retains implementation/runtime ownership.
+Security may require fail-closed behavior and block verification, but Operations retains implementation/runtime ownership.
 
 ## SEC-06 — Supply Chain
 
@@ -141,7 +139,7 @@ Lifecycle:
 
 `DISCOVERED → TRIAGED → CONFIRMED → ROUTED/ASSIGNED → REMEDIATING → IMPLEMENTED → EVIDENCE_READY → VERIFIED → CLOSED`.
 
-Every refreshed project-routed finding must include:
+Every refreshed project-routed finding includes:
 
 - affected/target project;
 - `project_namespace: PVC`;
@@ -154,7 +152,7 @@ Every refreshed project-routed finding must include:
 - verification gate;
 - status;
 - target roadmap;
-- Security handoff compatibility marker.
+- Security and repository handoff markers.
 
 No P0 may remain unowned. HIGH/CRITICAL protected changes retain applicable Owner gates. Security cannot self-accept risk.
 
@@ -166,29 +164,38 @@ Evidence precedence:
 
 `runtime → provider/security configuration → negative tests → hosted CI → code → scan → policy/control → roadmap`.
 
-Current verification priorities retained after synchronization:
+Current verification priorities:
 
-- S1-R2-11 evidence identity/staleness;
-- MFA/AAL authority-lifecycle drift clarification;
-- re-correlation of legacy handoffs to current `PVC-*` routing before any renewed `ROUTED`/`VERIFIED` claim.
+- S1-R2-09/10/11 evidence return from their Primary Owners;
+- MFA/AAL authority-lifecycle reconciliation under Governance;
+- R2-03/04/05/06/07 target-owned remediation evidence when implemented.
 
 Exit: every `VERIFIED` claim names exact applicable evidence; stale/missing evidence remains explicit.
 
-## Current handoff re-correlation register
+## Current handoff register — PVC correlated
 
-| Source | Pre-sync label | Current requirement | Status |
-|---|---|---|---|
-| S1-R2-03 | DC-SA / VC-05 | current Primary Project Owner + explicit PVC stage | PVC ENRICHMENT REQUIRED |
-| S1-R2-04 | DC-SA / VC-05 | current Primary Project Owner + explicit PVC stage | PVC ENRICHMENT REQUIRED |
-| S1-R2-05 | DEVELOPMENT / VC-03 | current Primary Project Owner + explicit PVC stage; technical stage separate | PVC ENRICHMENT REQUIRED |
-| S1-R2-06 | SC-MD-SPT / VC-03 | current Primary Project Owner + explicit PVC stage; retain technical owner/stage separately | PVC ENRICHMENT REQUIRED |
-| S1-R2-07 | DC-SA / VC-05 | current Primary Project Owner + explicit PVC stage | PVC ENRICHMENT REQUIRED |
-| S1-R2-09 | SEO-GM / VC-18 | target project + explicit PVC impact stage | PVC ENRICHMENT REQUIRED |
-| S1-R2-10 | DEVELOPMENT / VC-03 | current Primary Project Owner + explicit PVC stage; technical stage separate | PVC ENRICHMENT REQUIRED |
-| S1-R2-11 | DC-SA / VC-17 | current Primary Project Owner + explicit PVC stage | PVC ENRICHMENT REQUIRED |
-| MFA/AAL lifecycle drift | GOV / VC-02 | `CAPITAL-AI-GOV` + explicit PVC routing | PVC ENRICHMENT REQUIRED |
+| Source | Security marker | project_stage | Primary target | Target roadmap/reference | Status |
+|---|---|---|---|---|---|
+| S1-R2-03 | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-06]` | `PVC-06` | CAPITAL-AI-OPS | `docs/projects/operations/ROADMAP.md` (target canonical OPS roadmap) | REFERRED_NOT_EXECUTED |
+| S1-R2-04 | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-04]` | `PVC-04` | CAPITAL-AI-OPS | `docs/projects/operations/ROADMAP.md` | REFERRED_NOT_EXECUTED |
+| S1-R2-05 | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-02]` | `PVC-02` | CAPITAL-AI-OPS | `docs/projects/operations/ROADMAP.md` | REFERRED_NOT_EXECUTED |
+| S1-R2-06 | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-02]` | `PVC-02` | CAPITAL-AI-OPS | `docs/projects/operations/ROADMAP.md`; child handoffs as capabilities are inventoried | REFERRED_NOT_EXECUTED / ACTIVE |
+| S1-R2-07 | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` | CAPITAL-AI-OPS | `docs/projects/operations/ROADMAP.md` | REFERRED_NOT_EXECUTED |
+| S1-R2-09 | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` | CAPITAL-AI-OPS | `docs/projects/operations/ROADMAP.md`; SEO roadmap supplies evidence context | WAITING_FOR_EVIDENCE |
+| S1-R2-10 | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` | CAPITAL-AI-OPS | `docs/projects/operations/ROADMAP.md` | WAITING_FOR_EVIDENCE |
+| S1-R2-11 | `[SECURITY_HANDOFF -> CAPITAL-AI-DATA | VC-10]` | `PVC-10` | CAPITAL-AI-DATA | `docs/projects/data/ROADMAP.md` (target canonical DATA roadmap) | WAITING_FOR_EVIDENCE |
+| MFA/AAL lifecycle drift | `[SECURITY_HANDOFF -> CAPITAL-AI-GOV | VC-05]` | `PVC-05` | CAPITAL-AI-GOV | `docs/projects/governance/ROADMAP.md` | REFERRED_NOT_EXECUTED / CLARIFY |
 
-S1-R2-00 remains merged containment evidence on current `main`; it is not reopened by synchronization.
+Each row also has the repository compatibility marker `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` with the same numeric `PVC-*` routing stage and `project_namespace: PVC`.
+
+### Cross-project dependency notes
+
+- **R2-06:** `CAPITAL-AI-OPS / PVC-02` owns the parent controlled-implementation inventory. If the inventory identifies Agent Client or FinTech-owned productive code, the remediation becomes a child handoff to `CAPITAL-AI-CLIENT / PVC-01` or the applicable `CAPITAL-AI-FINTECH / PVC-12..17` stage. Security does not absorb that work.
+- **R2-09:** `CAPITAL-AI-SEO` may supply CSP compatibility/violation evidence but owns no productive PVC stage; production promotion remains `CAPITAL-AI-OPS / PVC-08`.
+- **R2-11:** `CAPITAL-AI-DATA / PVC-10` owns evidence identity/freshness semantics. If correction requires PR/trace tooling code, that code is a secondary `CAPITAL-AI-OPS` implementation handoff under the applicable OPS stage.
+- **MFA/AAL drift:** `CAPITAL-AI-GOV / PVC-05` owns lifecycle reconciliation; Security cannot self-promote ESS/ADR/registry state.
+
+S1-R2-00 remains merged containment evidence on current `main`; it is not reopened by this correlation.
 
 ## PR ownership rule
 
