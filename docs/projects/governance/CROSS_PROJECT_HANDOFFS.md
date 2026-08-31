@@ -3,6 +3,28 @@
 **Source:** `CAPITAL-AI-GOV`  
 **Rule:** foreign execution is referred, never locally completed. Every handoff carries a target roadmap reference even when the target project must create that canonical roadmap as part of its migration.
 
+## Inbound Security referral — PVC-05 Platform Director
+
+### [SECURITY_HANDOFF -> CAPITAL-AI-GOV | VC-05]
+### [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-GOV | VC-05]
+
+- **source_project:** `CAPITAL-AI-SEC`
+- **source_pr:** `#631`
+- **project_namespace:** `PVC`
+- **project_stage:** `PVC-05`
+- **target_project:** `CAPITAL-AI-GOV`
+- **target_roadmap_reference:** `docs/projects/governance/ROADMAP.md`
+- **security_finding:** `MFA/AAL lifecycle drift`
+- **task:** correlate the Governance-side MFA/AAL lifecycle against current Identity/Owner gates and produce only PVC-05-owned remediation/evidence.
+- **reason:** identity-assurance lifecycle drift can create ambiguity between Governance approval state and Security assurance expectations.
+- **dependency:** `docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md`, current `/AGENTS.md`, Authority Registry, Control Catalog and accepted ADR/ESS identity/approval contracts.
+- **required_evidence:** exact-candidate changed-file set, Authority/ADR/ESS/Control correlation, targeted positive and negative lifecycle/gate evidence, residual-risk and unresolved-dependency record.
+- **verification_gate:** `CAPITAL-AI-SEC independent verification`.
+- **status:** `REFERRED_NOT_EXECUTED`
+- **detail:** `SECURITY_HANDOFF_CAPITAL_AI_SEC.md`
+
+CAPITAL-AI-GOV may later return `IMPLEMENTED` or `EVIDENCE_READY` for its own scope. It must not mark the Security finding `VERIFIED` or `CLOSED`; that decision remains with CAPITAL-AI-SEC after independent review.
+
 ## [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-CLIENT | VC-01]
 
 - **project_namespace:** `PVC`
