@@ -42,9 +42,12 @@ describe('alphaVantageRoutes contract', () => {
     expect(source).toContain('ALPHA_VANTAGE_CREDENTIAL} is not configured');
   });
 
-  it('does not leak API keys into logs', () => {
-    expect(source).toContain("url.replace(key, 'REDACTED')");
+  it('redacts credential-bearing request and transport diagnostics', () => {
+    expect(source).toContain('redactProviderCredentialText(url)');
+    expect(source).toContain('providerErrorMessage(err)');
+    expect(source).toContain('encodeURIComponent(key)');
     expect(source).not.toContain('console.log(key)');
+    expect(source).not.toContain('err.message ||');
   });
 
   it('keeps provider rate-limit/error behavior explicit', () => {
