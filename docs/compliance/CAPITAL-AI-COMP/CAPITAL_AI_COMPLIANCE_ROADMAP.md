@@ -1,244 +1,310 @@
 # CAPITAL-AI Compliance Roadmap
 
 **Project ID:** `CAPITAL-AI-COMP`  
+**Display name:** CAPITAL-AI Compliance  
+**Role:** `CROSS_CUTTING_COMPLIANCE`  
 **Document ID:** `DOC-COMP-ROADMAP-2026-08-31`  
 **Document role:** roadmap / non-authorizing projection  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
+**Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
 **Date:** 2026-08-31  
-**Status:** ACTIVE — CANONICAL COMPLIANCE EXECUTION ROADMAP / NON-AUTHORIZING  
+**Status:** ACTIVE — CANONICAL COMPLIANCE ASSESSMENT ROADMAP / NON-AUTHORIZING  
 **Owner:** CAPITAL-AI Owner / Compliance  
-**Baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`
+**Baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
+**Primary value-chain ownership:** none (`[]`)
 
 ## 1. Purpose
 
-Create one Compliance Single Point of Execution for CAPITAL-AI. This roadmap centralizes compliance assessment and tracking while preserving existing Governance, Security, Quality, Data, Development, Release and Operations ownership.
+`CAPITAL-AI-COMP` is the central execution surface for **Compliance assessment**, not for foreign technical implementation. It maps applicable internal/external requirements across relevant CAPITAL-AI value-chain stages, assesses evidence, records findings and delegates remediation to the Primary Owner of the affected architecture/value-chain stage.
 
-The roadmap is a coordination and traceability projection. It does not manufacture legal applicability, `AUTH-*`, `CTRL-*`, ADR, ESS, certification or merge/deployment authority.
+The roadmap is a coordination, assessment and traceability projection. It does not manufacture legal applicability, `AUTH-*`, `CTRL-*`, ADR, ESS, certification, merge/deployment authority or technical execution ownership.
 
 ## 2. Scope and non-goals
 
-### In scope
+### Compliance-owned scope
 
-- compliance scope and applicability;
-- external/internal requirement inventory;
-- requirement-to-authority/control mapping;
-- evidence requirements and verification;
-- compliance assessment and gaps;
-- cross-roadmap compliance ownership;
-- standards crosswalks;
-- change-impact and continuous monitoring model;
-- reporting and remediation traceability.
+- Applicability;
+- Requirement Mapping;
+- Control Mapping to existing authorities/controls;
+- Compliance Assessment;
+- Compliance Findings;
+- Compliance Evidence;
+- Regulatory Traceability;
+- Legal Review Handoff;
+- Remediation Handoff;
+- Continuous Compliance change-impact/freshness assessment.
 
 ### Non-goals
 
-- a second Governance Control Plane;
+- any primary value-chain execution ownership;
+- technical remediation in Security, Development, Data, Scoring, Documentary, Release, Production, Operations, Frontend or other domains;
+- a second Governance Control Plane or policy hierarchy;
 - a second control catalog;
 - a second ADR/ESS namespace;
 - a second Security architecture/roadmap;
 - a second Quality Management system;
 - a parallel Enterprise Risk Management model;
-- legal opinions or unsupported certification/compliance claims;
-- technical remediation inside fachdomain components unless separately authorized.
+- legal opinions or unsupported certification/compliance claims.
 
 ## 3. Authority
 
 Compliance consumes current effective repository authority in this order:
 
-1. explicit Human/Owner decisions and binding external obligations after applicability determination;
-2. `/AGENTS.md`;
-3. `docs/governance/authority-registry.json` and `control-catalog.json`;
-4. accepted/current ADR/ESS/domain contracts resolved by their registries;
-5. current policies/runbooks for their bounded scope;
-6. implementation/runtime evidence;
-7. non-authorizing roadmaps, inventories, reports and mappings.
+1. applicable binding obligation after source-backed applicability determination and competent Legal/Human decision where required;
+2. explicit Human/Owner decisions and effective Accepted ADRs within scope;
+3. `/AGENTS.md`, current Governance Control Catalog and effective ESS/governance policies;
+4. approved domain roadmaps/contracts/runbooks implementing higher authority;
+5. implementation/runtime evidence;
+6. non-authorizing inventories, assessments, reports and mappings.
 
-Relevant current controls include `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001`, `CTRL-GOV-HIST-001`, `CTRL-SDLC-BRANCH-001`, `CTRL-SDLC-SYNC-001`, `CTRL-SDLC-PR-CREATE-001`, `CTRL-CI-HOSTED-001`, `CTRL-MERGE-HUMAN-001`, `CTRL-DEPLOY-AUTH-001`, `CTRL-SEC-SECRET-001`, `CTRL-SEC-LEASTPRIV-001`, `CTRL-AIMS-PDCA-001` and `CTRL-COMPLIANCE-CLAIM-001`.
+Relevant controls include `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001`, `CTRL-GOV-HIST-001`, `CTRL-SDLC-BRANCH-001`, `CTRL-SDLC-SYNC-001`, `CTRL-SDLC-PR-CREATE-001`, `CTRL-CI-HOSTED-001`, `CTRL-MERGE-HUMAN-001`, `CTRL-DEPLOY-AUTH-001`, `CTRL-SEC-SECRET-001`, `CTRL-SEC-LEASTPRIV-001`, `CTRL-AIMS-PDCA-001` and `CTRL-COMPLIANCE-CLAIM-001`.
 
-External requirements are never treated as repository Architecture Authority merely because they are listed here.
+External requirements are not repository Architecture Authority merely because they are listed or mapped by Compliance.
 
 ## 4. Compliance boundary
 
-| Domain | Compliance relationship |
-|---|---|
-| Governance | consumes Authority, Controls and decision gates; never redefines them |
-| Quality Management | consumes quality evidence where a compliance requirement depends on it; does not own quality gates |
-| Security | maps requirements/controls and assesses evidence; Security owns design, hardening and verification |
-| Risk | references the existing risk model/evidence where available; does not create parallel ERM |
-| Development | defines/assesses SDLC evidence expectations; Development implements code/review/test controls |
-| Data | maps privacy/data obligations; Data owns provenance, lineage, quality and retention implementations |
-| Scoring | assesses decision-support/transparency/traceability evidence; scoring authority remains in scoring ADR/roadmap |
-| Release/Production | assesses authorization, CI, deployment, rollback and runtime evidence; does not deploy |
-| Operations | assesses monitoring/incident/continuity evidence; Operations owns procedures/execution |
-| Legal/Human Owner | resolves legal applicability and accepted risk where repository evidence is insufficient |
+| Domain | Primary ownership | Compliance relationship |
+|---|---|---|
+| Governance | authority, controls, decision gates, supersession | consume/map only |
+| Quality Management | quality control/test/improvement | consume quality evidence where relevant |
+| Security | technical security design/hardening/testing | assess and hand off gaps |
+| Development | code, SDLC, review/test/CI implementation | assess and hand off gaps |
+| Data/Privacy implementation | data flows, lineage, retention mechanisms | assess requirements/evidence; legal scope separately gated |
+| Scoring/Product/AI | model, scoring, decision-support implementation | assess transparency/traceability/AI obligations |
+| Documentary/Evidence | documentary engine and evidence lifecycle implementation | consume provenance-bound evidence |
+| Release/Production/Operations | release, deploy, monitoring, incident/continuity execution | assess authorization/evidence; never execute |
+| Legal/Human Owner | legal applicability and competent risk acceptance | receives Legal Review handoffs |
 
 ## 5. Compliance value chain
 
 ```text
-External / Internal Requirement
-→ Applicability
-→ Authority Mapping
-→ Control Mapping
-→ Domain Implementation
-→ Evidence Collection
-→ Compliance Assessment
-→ Gap
-→ Remediation
-→ Verification
-→ Reporting
-→ Continuous Monitoring
+Requirement Source
+→ COMP-01 Applicability
+→ COMP-02 Requirements
+→ COMP-03 Control Mapping
+→ Primary Owner implementation (outside Compliance)
+→ COMP-06 Evidence
+→ COMP-04 Assessment
+→ COMP-05 Findings
+→ COMP-07 Remediation Handoff
+→ Primary Owner remediation (target-project work)
+→ Evidence return
+→ COMP-04 Verification
+→ COMP-08 Continuous Compliance
 ```
 
 Evidence is provenance-bound; a roadmap checkbox cannot by itself establish compliance.
 
 ## 6. Regulatory / standards inventory
 
-Current repository-supported candidates:
-
-| Source | Treatment | Initial disposition |
+| Source | Treatment | Current disposition |
 |---|---|---|
-| GDPR / DSGVO | external requirement | APPLICABLE to repository-documented personal-data/controller scope; legal interpretation remains bounded |
-| EU AI Act | external requirement | PARTIALLY_APPLICABLE / role-and-use-case dependent; high-risk applicability not inferred |
-| DORA | external requirement | UNKNOWN / REQUIRES_LEGAL_REVIEW until entity scope is established |
-| DDG / TDDDG / consumer obligations | external requirement | repository evidence exists; precise applicability remains scoped/legal-reviewed |
-| contractual/vendor obligations | external/internal requirement | applicable only where an actual contract/provider/use exists |
-| ISO/IEC 27001 | benchmark/control source | no certification claim; dated internal SoA evidence only |
-| ISO/IEC 42001 | benchmark/control source | benchmark unless Owner adopts a bounded management-system target |
-| NIST SSDF / SP 800-218A | benchmark/control source | Secure-SDLC crosswalk input |
-| NIST AI RMF / GenAI profile | benchmark | AI-risk crosswalk input |
+| GDPR / DSGVO | external requirement | `APPLICABLE` to repository-documented personal-data scope; individual legal interpretations remain bounded |
+| EU AI Act | external requirement | `PARTIALLY_APPLICABLE` / role-and-use-case dependent; high-risk scope not inferred |
+| DORA | external requirement | `REQUIRES_LEGAL_REVIEW` until entity/business scope is established |
+| DDG / TDDDG / consumer obligations | external requirement | relevance documented; exact obligation set Legal Review gated |
+| contractual/vendor obligations | external/internal requirement | applicable only for actual contracts/providers/use cases |
+| ISO/IEC 27001 | benchmark/control source | dated internal SoA only; no certification claim |
+| ISO/IEC 42001 | benchmark/control source | benchmark unless explicitly adopted as a bounded management-system target |
+| NIST SSDF / SP 800-218A | benchmark/control source | secure-SDLC / AI-development assessment input |
+| NIST AI RMF / GenAI profile | benchmark | AI-risk assessment input |
 | OWASP / CIS | benchmark/control source | security/SDLC assessment input |
 
-The detailed applicability decisions live in `inventory/APPLICABILITY_MATRIX.md`.
+Detailed dispositions live in `inventory/APPLICABILITY_MATRIX.md`.
 
-## 7. Compliance coverage matrix
+## 7. Value-chain coverage
 
-All portfolio domains are covered through `mappings/VALUE_CHAIN_COMPLIANCE_COVERAGE_MATRIX.md`, including the 18-stage CAPITAL-AI value-chain projection: Agent Client, Controlled Implementation, Documentary Engine, Supervisor, Platform Director, Version Management, Release Management, Production Operations, UAI/Data Ingestion, Evidence Management, Data Quality, Feature Engineering, Scoring Models, Scoring Orchestration, Domain Analysis, Canonical Scoring, Ranking/Decision Support and EventMesh/Traceability.
+Compliance has no primary VC ownership. `mappings/VALUE_CHAIN_COMPLIANCE_COVERAGE_MATRIX.md` maps requirements, Primary Owners, evidence and open gaps over these 18 stages:
 
-The coverage matrix identifies requirements, existing controls/evidence, domain owner, compliance owner and open gaps without transferring implementation ownership.
+1. `VC-01` Agent Client
+2. `VC-02` Controlled Implementation
+3. `VC-03` Documentary Engine
+4. `VC-04` Supervisor
+5. `VC-05` Platform Director
+6. `VC-06` Version Management
+7. `VC-07` Release Management
+8. `VC-08` Production Operations
+9. `VC-09` UAI / Data Ingestion
+10. `VC-10` Evidence Management
+11. `VC-11` Data Quality
+12. `VC-12` Feature Engineering
+13. `VC-13` Scoring Models
+14. `VC-14` Scoring Orchestration
+15. `VC-15` Domain Analysis
+16. `VC-16` Canonical Scoring
+17. `VC-17` Ranking / Decision Support
+18. `VC-18` EventMesh / Traceability
 
-## 8. Compliance work packages
+When a finding requires foreign implementation, Compliance creates `[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` and stops local technical execution.
 
-The repository inventory resolves the following execution streams:
+## 8. Workstreams
 
-| WP | Workstream | Primary classification | Initial state |
+The V2.1 project model has exactly eight workstreams:
+
+| WP | Workstream | Scope | State |
 |---|---|---|---|
-| COMP-01 | Compliance Scope & Applicability | COMP-OWNED | ACTIVE |
-| COMP-02 | Regulatory Requirements | COMP-OWNED | ACTIVE |
-| COMP-03 | AI Compliance | COMP-SHARED | ACTIVE |
-| COMP-04 | Data Protection & Privacy Compliance | COMP-SHARED | ACTIVE |
-| COMP-05 | Security Compliance | COMP-SHARED | ACTIVE |
-| COMP-06 | Secure SDLC Compliance | COMP-SHARED | ACTIVE |
-| COMP-07 | Operational Compliance | COMP-SHARED | PLANNED |
-| COMP-08 | Release & Production Compliance | COMP-SHARED | ACTIVE |
-| COMP-09 | Documentation & Record Keeping | COMP-SHARED | ACTIVE |
-| COMP-10 | Evidence & Auditability | COMP-OWNED | ACTIVE |
-| COMP-11 | Standards Crosswalk | COMP-OWNED | ACTIVE |
-| COMP-12 | Control Effectiveness Mapping | COMP-OWNED | ACTIVE |
-| COMP-13 | Compliance Gap Management | COMP-OWNED | ACTIVE |
-| COMP-14 | Compliance Reporting | COMP-OWNED | PLANNED |
-| COMP-15 | Continuous Compliance Monitoring | COMP-SHARED | PLANNED |
-| COMP-16 | Compliance Lifecycle & Change Impact | COMP-OWNED | ACTIVE |
+| `COMP-01` | Applicability | source/scope/jurisdiction/use-case applicability; Legal Review separation | ACTIVE |
+| `COMP-02` | Requirements | source-backed requirements and versions | ACTIVE |
+| `COMP-03` | Control Mapping | map to existing AUTH/CTRL/ADR/ESS/roadmap; no duplicate policy | ACTIVE |
+| `COMP-04` | Assessment | evidence-based assessment and verification | ACTIVE |
+| `COMP-05` | Findings | normalized findings, severity, lifecycle | ACTIVE |
+| `COMP-06` | Evidence | provenance, completeness, staleness and sufficiency | ACTIVE |
+| `COMP-07` | Remediation Handoff | Primary Owner assignment + target roadmap/VC marker | ACTIVE |
+| `COMP-08` | Continuous Compliance | change impact, reassessment and monitoring | ACTIVE |
 
-Detailed DoD, dependencies and evidence are in `work-packages/COMPLIANCE_WORK_PACKAGES.md`.
+`COMP-09`…`COMP-16` are retired branch-draft labels and must not appear as current workstreams after migration. Their subject matter is absorbed into COMP-01…08.
 
-## 9. Evidence model
+Detailed DoD/dependencies are in `work-packages/COMPLIANCE_WORK_PACKAGES.md`.
+
+## 9. Handoff model
+
+Canonical marker:
+
+```text
+[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+```
+
+Every active handoff must contain:
+
+- source requirement;
+- applicability;
+- affected Primary Owner project;
+- affected VC stage;
+- existing authority/control mapping;
+- evidence/evidence gap;
+- assessment/finding;
+- required remediation outcome (not implementation design unless needed to define the compliance result);
+- target roadmap reference;
+- Legal Review flag;
+- handoff status.
+
+`execute_foreign_work = false`. Technical remediation is performed in the target project's work item/branch/PR. `CAPITAL-AI-COMP` consumes returned evidence and reassesses independently.
+
+## 10. Finding model
+
+Required fields:
+
+```text
+requirement
+applicability
+affected_project
+affected_vc_stage
+evidence
+assessment
+required_remediation
+legal_review_required
+status
+```
+
+Finding IDs/severity are traceability metadata in addition to, not instead of, these fields.
+
+Lifecycle:
+
+```text
+DISCOVERED
+→ TRIAGED
+→ APPLICABILITY_CONFIRMED
+→ GAP_CONFIRMED
+→ REMEDIATION_ASSIGNED
+→ IMPLEMENTED
+→ EVIDENCE_READY
+→ VERIFIED
+→ CLOSED
+```
+
+Alternate terminal states: `NOT_APPLICABLE`, `ACCEPTED_RISK`, `LEGAL_REVIEW`, `DEFERRED`, `SUPERSEDED`.
+
+Severity is `P0 CRITICAL`, `P1 HIGH`, `P2 MEDIUM`, `P3 LOW` and must be evidence/scope-derived.
+
+## 11. Evidence model
 
 Preferred evidence order:
 
 1. runtime/provider evidence bound to identity/time/scope;
-2. code/configuration and database policy state;
+2. code/configuration/database policy state;
 3. independent hosted CI on the exact candidate head;
 4. registry/control evidence;
 5. signed/approved documentation;
 6. roadmap claims.
 
-Evidence must identify provenance, date/baseline, responsible domain, requirement/control relationship and limitations. Historical evidence remains valid as history but cannot prove current state without revalidation.
+Evidence records identify provenance, baseline/date, responsible domain, requirement/control relationship and limitations. Historical evidence remains history, not automatic current proof.
 
-## 10. Traceability
+Assessment statuses:
+
+`COMPLIANT`, `PARTIALLY_COMPLIANT`, `NON_COMPLIANT`, `NOT_APPLICABLE`, `NOT_ASSESSED`, `EVIDENCE_MISSING`.
+
+`COMPLIANT` is used only when sufficient current scoped evidence exists.
+
+## 12. Traceability
 
 Required chain:
 
 ```text
-Requirement
-↔ AUTH
-↔ CTRL
-↔ ADR
-↔ ESS
-↔ Roadmap
-↔ Work Package
+Requirement Source
+↔ Applicability
+↔ Existing AUTH / CTRL
+↔ ADR / ESS
+↔ Primary Owner Roadmap / VC Stage
 ↔ Implementation
 ↔ Evidence
-↔ Assessment
+↔ Compliance Assessment
+↔ Finding
+↔ Handoff
+↔ Remediation Evidence
+↔ Verification
 ```
 
-`mappings/REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md` and `traceability/COMPLIANCE_TRACEABILITY_MATRIX.md` are the canonical non-authorizing projections for this chain. Requirement IDs are project-local identifiers and never replace `AUTH-*` or `CTRL-*` identities.
+`mappings/REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md`, `mappings/COMPLIANCE_HANDOFF_REGISTER.md` and `traceability/COMPLIANCE_TRACEABILITY_MATRIX.md` are non-authorizing projections of this chain.
 
-## 11. Gap management
+## 13. Continuous Compliance
 
-Lifecycle:
+New or changed features, AI models, data sources, providers, markets, countries, user types, processing purposes, deployment models or external integrations trigger:
 
 ```text
-DISCOVERED → TRIAGED → APPLICABILITY_CONFIRMED → GAP_CONFIRMED
-→ REMEDIATION_ASSIGNED → IMPLEMENTED → EVIDENCE_READY → VERIFIED → CLOSED
+Change
+→ COMP-08 impact review
+→ COMP-01 applicability reassessment
+→ COMP-02 requirement delta
+→ COMP-03 control impact
+→ COMP-06 evidence impact
+→ COMP-04 reassessment
+→ COMP-05 finding if required
+→ COMP-07 handoff if foreign remediation is required
 ```
 
-Alternate terminal states: `NOT_APPLICABLE`, `ACCEPTED_RISK`, `LEGAL_REVIEW`, `DEFERRED`, `SUPERSEDED`.
+Continuous Compliance does not create a second runtime orchestrator. Existing repository/runtime/evidence capabilities are reused.
 
-Severity:
-
-- P0 CRITICAL: actual critical legal/control/authority/evidence failure with demonstrated scope;
-- P1 HIGH: material gap requiring prioritized remediation/decision;
-- P2 MEDIUM: significant but bounded evidence/process/control gap;
-- P3 LOW: hygiene, metadata or deferred optimization gap.
-
-No severity is derived solely from a regulation or standard name.
-
-## 12. Risks
+## 14. Risks and controls
 
 | Risk | Response |
 |---|---|
-| Compliance drift from changing product/provider/jurisdiction scope | COMP-16 change-impact assessment |
-| false applicability/legal conclusion | fail closed to `UNKNOWN` or `REQUIRES_LEGAL_REVIEW` |
-| duplicate authority/control hierarchy | map only to existing registries; Governance owns changes |
-| stale evidence | baseline/date/provenance required; revalidate before `COMPLIANT` |
-| certification overclaim | enforce `CTRL-COMPLIANCE-CLAIM-001` |
-| historical ADR/ESS resurrected by citation | use current registries and `CTRL-GOV-HIST-001` |
-| project/QM structural divergence | track `COMP-GAP-001`; reconcile only to future Human-merged canonical QM model |
-| technical implementation copied into Compliance | keep COMP-SHARED domain ownership explicit |
+| Compliance drift | COMP-08 change-impact/freshness review |
+| false applicability/legal conclusion | `UNKNOWN` / `REQUIRES_LEGAL_REVIEW` fail closed |
+| duplicate policy hierarchy | COMP-03 maps only to existing authority/control sources |
+| foreign technical execution | COMP-07 handoff; target-project PR required |
+| stale/missing evidence | COMP-06 keeps gap explicit; no positive claim |
+| certification overclaim | `CTRL-COMPLIANCE-CLAIM-001` |
+| historical ADR/ESS resurrection | current registries + `CTRL-GOV-HIST-001` |
+| project/QM structural divergence | `COMP-GAP-001`; no invented QM template |
 
-## 13. Reporting
+## 15. Exit criteria
 
-Compliance reporting provides:
+The consolidation is complete when:
 
-- applicability status;
-- requirement coverage;
-- control/evidence coverage;
-- findings by severity/lifecycle;
-- evidence completeness/staleness;
-- legal/Owner decisions required;
-- remediation WP status;
-- change-impact alerts.
+- requirements are source-backed and mapped;
+- applicability states are explicit and Legal Review items are separated;
+- Primary Owner projects and relevant VC stages are explicit for implementation-dependent requirements/findings;
+- existing Controls/Authorities are reused rather than duplicated;
+- evidence gaps remain explicit;
+- assessments use the defined statuses and no unsupported compliance/certification claim is introduced;
+- active findings use the required field set;
+- every required foreign remediation has a `COMP-07` handoff with target roadmap reference;
+- no foreign technical execution exists in this branch;
+- no second Governance, Security, QM, Risk or technical architecture has been introduced;
+- `CAPITAL-AI-COMP` is integrated into the Master Roadmap as Compliance assessment Single Point of Execution;
+- Registry impact is assessed without treating roadmap/assessment/evidence as Authority/Control;
+- final current-main synchronization, open-PR correlation and low-cost validation pass before PR-creation approval is requested.
 
-Reports are assessments/evidence projections, never certification.
+## 16. PR boundary
 
-## 14. Exit criteria
-
-The consolidation work package is complete when:
-
-- all discovered current/historical roadmaps are inventoried or explicitly `UNKNOWN` with a reason;
-- compliance-relevant work is classified `COMP-OWNED`, `COMP-SHARED`, `COMP-CONSUMER` or `NOT-COMPLIANCE`;
-- existing compliance artifacts are inventoried and reused where appropriate;
-- external requirements are separated from applicability and internal authority;
-- no legal applicability is asserted without repository evidence or Human/Legal decision;
-- no second Governance, QM, Security or ERM structure is created;
-- `CAPITAL-AI-COMP` exists as the compliance execution index;
-- requirement/control/evidence and cross-roadmap mappings exist;
-- findings are prioritized and ADR/ESS conflicts/gaps documented;
-- the Master Roadmap references `CAPITAL-AI-COMP` as Compliance Single Point of Execution;
-- Registry impact is explicitly assessed;
-- unsupported certification/compliance claims are not introduced;
-- no unresolved evidence-backed P0 compliance conflict remains in this consolidation snapshot;
-- final current-main synchronization, open-PR overlap check and exact candidate validation are complete before PR-creation approval is requested.
-
-## Current next action
-
-Execution proceeds through the work packages and matrices in this project. Fachroadmaps retain local implementation/evidence responsibility and refer compliance assessment to `CAPITAL-AI-COMP`; completed domain work is not reopened merely because ownership is consolidated.
+This consolidation remains a `CAPITAL-AI-COMP` documentation/assessment scope. Technical remediation identified by it uses the target project's PR. PR creation requires explicit Human/Owner approval for the exact final main/head snapshot; merge remains Human/CODEOWNER-only.
