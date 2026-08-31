@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Consolidated Project Roadmap
 
 **Project:** `CAPITAL-AI-GOV`  
-**Baseline:** `main@b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
+**Baseline:** `main@1f55340d89178fb5c1ab735242f42c263918b692`  
 **Trust root:** `/AGENTS.md`  
 **Role:** roadmap / execution projection — non-authorizing
 
