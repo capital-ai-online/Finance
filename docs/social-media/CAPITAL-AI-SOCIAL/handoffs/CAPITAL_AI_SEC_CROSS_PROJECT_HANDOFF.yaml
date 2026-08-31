@@ -1,0 +1,165 @@
+prompt:
+  id: "CAPITAL-AI-SEC-CROSS-PROJECT-HANDOFF"
+  version: "1.0"
+  repository: "SvenKulessa/Finance"
+
+  source:
+    project: "CAPITAL-AI-SEC"
+    source_pr: 631
+    merged_main: "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6"
+    security_roadmap: "docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md"
+    security_work_packages: "docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md"
+    security_traceability: "docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md"
+
+  synchronized_against:
+    main_sha: "1f55340d89178fb5c1ab735242f42c263918b692"
+    main_includes:
+      - "CAPITAL-AI-SEC PR #631"
+      - "CAPITAL-AI-OPS PR #632"
+    open_pull_requests_at_precheck: 0
+
+  target_context:
+    target_project: "CAPITAL-AI-SOCIAL"
+    target_project_folder: "docs/social-media/CAPITAL-AI-SOCIAL"
+    affected_pvc: []
+    security_findings: []
+    target_roadmap: "docs/social-media/CAPITAL-AI-SOCIAL/ROADMAP.md"
+    routing_status: "NO_CURRENT_SECURITY_FINDING_ROUTED_TO_SOCIAL"
+    routing_note: >
+      PROJECT_VALUE_CHAIN.md assigns PVC-01..PVC-18 to CLIENT, OPS, DOC,
+      GOV, DATA and FINTECH and explicitly creates no implicit PVC-19 for
+      Social. The current CAPITAL-AI-SEC traceability routes active findings
+      to OPS, DATA and GOV, not to CAPITAL-AI-SOCIAL. No PVC stage or Security
+      finding is fabricated by this target-project synchronization.
+
+  purpose: >
+    CAPITAL-AI-SEC informiert dieses Projekt über Security-Anforderungen,
+    Findings und Verification-Gates, deren produktive Umsetzung oder
+    fachliche Evidence in den Zuständigkeitsbereich dieses Primary Owners fällt.
+
+  mandatory_precheck:
+    - "aktuelle /AGENTS.md von main lesen"
+    - "aktuellen main SHA bestimmen"
+    - "offene Pull Requests prüfen"
+    - "aktive Work Claims / Writer prüfen"
+    - "Changed-File- und Semantic-Overlap prüfen"
+    - "docs/projects/PROJECT_VALUE_CHAIN.md lesen"
+    - "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md lesen"
+    - "CAPITAL-AI-SEC Security Traceability gegen aktuellen main prüfen"
+    - "betroffene PVC-Stufe und Primary Owner bestätigen"
+    - "Authority-/ADR-/ESS-/Control-Konflikte prüfen"
+    - "Reuse vor Neubau prüfen"
+
+  security_boundary:
+    security_owns:
+      - "Security Requirement"
+      - "Threat / Control Definition"
+      - "Security Finding"
+      - "Negative-Test-Erwartung"
+      - "Security Verification"
+
+    target_project_owns:
+      - "produktive Implementierung im eigenen Scope, sofern Social tatsächlich Primary Owner der betroffenen Änderung ist"
+      - "projektlokale technische Änderungen"
+      - "Runtime-/Provider-Evidence, soweit CAPITAL-AI-SOCIAL dafür fachlich zuständig ist"
+      - "eigene Roadmap- und Work-Package-Integration"
+
+    security_does_not_own:
+      - "produktive Target-Project-Implementierung"
+      - "Target-Project Roadmap Authority"
+      - "Production Deployment Authority"
+      - "Accepted Risk Authority"
+      - "fremde PVC-Stufen"
+
+  execution_rules:
+    - >
+      Security-Anforderung nicht als implizite Übertragung von
+      Domain- oder PVC-Ownership interpretieren.
+    - >
+      Keine zweite Security-, Governance-, IAM-, Secrets-, Data-,
+      Scoring-, EventMesh-, Release- oder Production-Architektur erzeugen.
+    - >
+      Bestehende Security Controls, Middleware, Authorities, ADRs,
+      ESS und Tests wiederverwenden.
+    - >
+      Fehlende oder widersprüchliche Authority, Identity oder Evidence
+      bleibt fail-closed.
+    - >
+      HIGH/CRITICAL geschützte Änderungen behalten alle bestehenden
+      Human/Owner-Gates.
+    - >
+      Kein Agent darf Accepted Risk selbst genehmigen oder eine eigene
+      Implementierung selbst auf Security VERIFIED/CLOSED setzen.
+    - >
+      Produktive Mutationen erfolgen ausschließlich über die bestehende
+      Target-Project-/Operations-/Owner-Authority.
+
+  required_handoff_record:
+    applicability: "ONLY_WHEN_CAPITAL_AI_SEC_ROUTES_A_CONCRETE_FINDING_WITH_VALID_PVC_STAGE"
+    compatibility_marker: "[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]"
+    repository_marker: "[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]"
+    required_fields:
+      project_namespace: "PVC"
+      project_stage: "<PVC-NN>"
+      target_project: "<TARGET_PROJECT>"
+      task: "<TARGET-OWNED-REMEDIATION-OR-EVIDENCE>"
+      reason: "<THREAT_OR_CONTROL>"
+      dependency: "<SECURITY_AND_DOMAIN_DEPENDENCIES>"
+      required_evidence: "<REQUIRED_EVIDENCE>"
+      verification_gate: "CAPITAL-AI-SEC independent verification"
+      status: "REFERRED_NOT_EXECUTED"
+    current_instance: null
+
+  implementation_flow:
+    - >
+      Security Finding gegen aktuellen main und Target Scope verifizieren.
+    - >
+      Security-Abhängigkeit in der kanonischen Target-Roadmap bzw.
+      im zuständigen Work Package referenzieren.
+    - >
+      Falls technische Remediation erforderlich ist, einen Target-Project-
+      eigenen Work Claim und einen regelkonformen Target-Project-Branch verwenden.
+    - >
+      Nur Dateien ändern, die tatsächlich zum Primary-Owner-Scope gehören.
+    - >
+      Zielgerichtete positive und negative Security-Tests ausführen.
+    - >
+      Exact-Candidate- bzw. Runtime-Evidence erfassen.
+    - >
+      Evidence an CAPITAL-AI-SEC zurückgeben.
+    - >
+      CAPITAL-AI-SEC entscheidet anschließend unabhängig über
+      Security VERIFIED/CLOSED.
+
+  cross_domain_rule: >
+    Wird während der Umsetzung festgestellt, dass ein Teil der Remediation
+    einem anderen Primary Owner gehört, diese Arbeit nicht lokal übernehmen.
+    Stattdessen einen separaten Cross-Project-Handoff erstellen und die
+    fremde Implementierung dort als REFERRED_NOT_EXECUTED belassen.
+
+  required_return:
+    marker: "[SECURITY_HANDOFF_RETURN -> CAPITAL-AI-SEC]"
+    fields:
+      - "source_security_finding"
+      - "target_project"
+      - "project_stage"
+      - "implementation_status"
+      - "changed_files"
+      - "candidate_sha"
+      - "runtime_sha_if_applicable"
+      - "security_tests"
+      - "negative_tests"
+      - "evidence_paths"
+      - "known_residual_risk"
+      - "unresolved_dependencies"
+      - "verification_requested"
+
+  completion_rule: >
+    Das Target Project darf IMPLEMENTED bzw. EVIDENCE_READY melden.
+    Security VERIFIED oder CLOSED wird erst durch CAPITAL-AI-SEC nach
+    unabhängiger Prüfung der zurückgelieferten Evidence gesetzt.
+
+  merge_boundary:
+    direct_main_edit: false
+    human_codeowner_merge_only: true
+    autonomous_production_mutation: false
