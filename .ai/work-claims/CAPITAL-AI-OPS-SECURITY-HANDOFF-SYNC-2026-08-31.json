@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Synchronize the CAPITAL-AI-OPS project surface to current main, migrate the unmerged OPS V2.1 projection into docs/projects/operations, and integrate CAPITAL-AI-SEC PR #631 handoffs without absorbing Security verification or foreign PVC ownership.",
+  "workItemDE": "Die CAPITAL-AI-OPS-Projektflaeche gegen current main synchronisieren, die ungemergte OPS-V2.1-Projektion nach docs/projects/operations migrieren und die CAPITAL-AI-SEC-Handoffs aus PR #631 integrieren, ohne Security-Verifikation oder fremde PVC-Ownership zu uebernehmen.",
+  "startedAt": "2026-08-31T21:22:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6",
+  "pullRequest": null,
+  "branch": "agent/operations-security-handoff-sync-20260831",
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "operations",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Primary owner of PVC-02, PVC-04, PVC-06, PVC-07, PVC-08 and PVC-18",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31.json",
+    "docs/projects/operations/**"
+  ],
+  "reuseInputs": [
+    "docs/capital-ai-ops-consolidation-20260831",
+    "docs/projects/PROJECT_EXECUTION_MODEL.md",
+    "docs/projects/governance/P2_DEVELOPMENT_CHAIN_HANDOFF.md",
+    "docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md",
+    "docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md",
+    "docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-SEC retains Security requirements, findings, negative-test expectations and independent verification",
+    "CAPITAL-AI-DATA retains S1-R2-11 primary remediation/evidence ownership at PVC-10",
+    "CAPITAL-AI-CLIENT/CAPITAL-AI-FINTECH receive child handoffs if S1-R2-06 inventory identifies their productive code",
+    "CAPITAL-AI-GOV retains PVC-05 decisions and DevelopmentChain policy authority"
+  ],
+  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity. package.json#version remains sole platform-version authority; VersionManager remains read-only; Release Version Gate remains the controlled transition mechanism; Supervisor stays non-deciding; EventMesh and Traceability create no authority; production mutation remains separately authorized.",
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a separate exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only."
+}
