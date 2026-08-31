@@ -1,4 +1,4 @@
-# ADR-0103 — Quality Management Project as Single Execution Point
+# ADR-0103 — Independent Cross-Cutting Quality Assurance
 
 **Authority ID:** `AUTH-ADR-QM-PROJECT-SINGLE-EXECUTION-2026-08-31`  
 **Version:** `1.0.0`  
@@ -6,104 +6,183 @@
 **Lifecycle:** `proposed`  
 **Owner:** CAPITAL-AI Owner  
 **Effective:** only after Human Merge / acceptance  
-**Governance boundary:** ADR-0096
+**Governance boundary:** ADR-0096  
+**Project contract:** `CAPITAL-AI-QM-V2` v2.1
+
+> The stable Authority ID is retained from the original branch reservation. In this ADR, `execution` means execution of independent Quality/Assurance activities only; it never means foreign-domain technical remediation.
 
 ## Context
 
-Quality-related execution is distributed across domain roadmaps. Parallel status tracking risks duplicated tests, inconsistent evidence, stale baselines and competing Quality work packages. ESS-0005 already defines the canonical read-only Quality Center technical boundary.
+Quality criteria, measurements, regression evidence and findings span all 18 value-chain stages. Without one cross-cutting assurance model, the repository risks duplicated tests, parallel Quality status, inconsistent evidence and Quality logic entering productive hot paths.
 
-The runtime implementation also already contains an 18-stage `FintechValueChainQualityProjection`; creating a new QM value-chain, validator registry, EventBus, CI topology, Auth controller, Router or Release controller would create duplicate architecture.
+ESS-0005 already defines the canonical read-only Quality Center. The runtime already contains the 18-stage `FintechValueChainQualityProjection`. A second value chain, Validator Registry, EventBus, CI topology, Auth controller, Router, Data Quality runtime, Scoring path, Ranking path or Release controller would be duplicate architecture.
+
+The original QM consolidation draft used takeover language that could be read as transferring technical execution into QM. `CAPITAL-AI-QM-V2` corrects that boundary: QM owns assurance; Primary Owners own remediation.
 
 ## Decision
 
-After this ADR is accepted, `docs/projects/quality-management/ROADMAP.md` is the **single operational execution/status point for Quality Management work** transferred from other roadmaps.
+After acceptance, `CAPITAL-AI-QM` is the repository's independent cross-cutting Quality/Assurance function.
 
-Source roadmaps continue to own:
-- domain context;
-- dependencies;
-- original findings;
-- domain implementation and mutation authority.
+QM:
 
-They MUST NOT continue operational status tracking for a quality-only subtask after a `HANDED_OFF_TO_QM` marker is established.
+- observes `VC-01` through `VC-18`;
+- owns Quality criteria correlation, measurement, Quality gates, findings, evidence, technical-debt assurance, regression assessment and continuous-improvement tracking;
+- may execute existing authorized validators/tests and read-only evidence adapters;
+- may identify, specify and prioritize required remediation;
+- verifies remediation after the responsible Primary Owner implements it.
 
-`docs/projects/quality-management/TAKEOVER_INDEX.md` is the single source-to-QM mapping table.
+QM owns **no productive VC stage**:
 
-## Boundary
+```text
+primary_value_chain_ownership: []
+executes_as_primary_owner: []
+remediation_execution_local: false
+```
 
-This ADR grants QM no Governance, Security, Compliance, IAM, Release, Frontend Product, Financial Runtime, scoring, ranking or production mutation authority.
+## Primary Owner routing
 
-QM may execute existing validators/tests, aggregate evidence, measure runtime/performance, detect regressions/debt/drift and issue non-authorizing quality findings/readiness snapshots.
+| VC | Primary Owner | VC | Primary Owner |
+|---|---|---|---|
+| VC-01 | `CAPITAL-AI-CLIENT` | VC-10 | `CAPITAL-AI-DATA` |
+| VC-02 | `CAPITAL-AI-OPS` | VC-11 | `CAPITAL-AI-DATA` |
+| VC-03 | `CAPITAL-AI-DOC` | VC-12 | `CAPITAL-AI-FINTECH` |
+| VC-04 | `CAPITAL-AI-OPS` | VC-13 | `CAPITAL-AI-FINTECH` |
+| VC-05 | `CAPITAL-AI-GOV` | VC-14 | `CAPITAL-AI-FINTECH` |
+| VC-06 | `CAPITAL-AI-OPS` | VC-15 | `CAPITAL-AI-FINTECH` |
+| VC-07 | `CAPITAL-AI-OPS` | VC-16 | `CAPITAL-AI-FINTECH` |
+| VC-08 | `CAPITAL-AI-OPS` | VC-17 | `CAPITAL-AI-FINTECH` |
+| VC-09 | `CAPITAL-AI-DATA` | VC-18 | `CAPITAL-AI-OPS` |
 
-QM MUST NOT:
-- redefine Security/IAM/Compliance/Governance policy;
-- change Quality thresholds outside their existing authority;
-- redefine CI required checks or topology;
-- authorize merge/deploy/release;
-- introduce a parallel EventBus, Validator Registry, Auth controller, Router/Public Shell, scoring/ranking path or value-chain model.
+This routing table governs QM referral. It does not redefine the internal technical authority of the target projects.
+
+## Eight QM workstreams
+
+1. `QM-01` Quality Criteria
+2. `QM-02` Quality Gates
+3. `QM-03` Quality Measurement
+4. `QM-04` Findings
+5. `QM-05` Regression
+6. `QM-06` Technical Debt
+7. `QM-07` Evidence
+8. `QM-08` Continuous Improvement
+
+The canonical operational roadmap is `docs/projects/quality-management/ROADMAP.md`.
+
+## Finding and referral contract
+
+Every confirmed finding contains:
+
+- `finding_id`;
+- `affected_vc_stage`;
+- `target_project`;
+- `severity`;
+- `evidence`;
+- `required_remediation`;
+- `verification_gate`;
+- `status`.
+
+Lifecycle:
+
+```text
+DISCOVERED -> TRIAGED -> CONFIRMED -> REFERRED -> REMEDIATING
+-> EVIDENCE_READY -> VERIFIED -> CLOSED
+```
+
+A finding requiring implementation uses:
+
+```text
+[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+```
+
+A roadmap reference and explicit chat notice are required. The target project performs remediation in its own project-scoped branch/PR. QM performs the declared verification gate after evidence is ready.
+
+The earlier draft `QUALITY-MANAGEMENT TAKEOVER / HANDED_OFF_TO_QM` model is superseded before this ADR becomes effective and MUST NOT be used to transfer foreign technical execution to QM.
+
+## Prohibited authority
+
+QM MUST NOT assume or mutate:
+
+- Market Data;
+- UAI execution;
+- Data Quality runtime ownership;
+- Scoring;
+- Ranking;
+- provider routing;
+- IAM/Security/Compliance/Governance policy;
+- Release approval;
+- Production mutation;
+- Frontend Product architecture;
+- foreign-domain technical implementation.
+
+No productive hot path may gain a direct Quality dependency. Domain evidence is consumed through existing contracts/adapters.
 
 ## Existing authorities retained
 
-This ADR **does not supersede**:
+This ADR does **not supersede**:
+
 - ADR-0096 Governance Control Plane;
 - ADR-0016 ESS component-specification history;
 - ADR-0073 CI consolidation/build/test authority;
 - ADR-0047 authoritative GitHub pre-merge gate;
 - ESS-0001-CONTRACTS Chapter 12;
-- ESS-0005 Quality Center technical component authority;
+- ESS-0005 Quality Center;
 - ESS-0012 Documentation Governance;
-- Security/IAM/Compliance/Release/Frontend/Financial domain authorities.
+- Security/IAM/Compliance/Release/Frontend/Data/Financial domain authorities;
+- `AGENTS.md` repository-wide PR/merge execution controls.
 
-ESS-0005 is amended in place to reference this execution project and to align its documented value-chain projection with the existing 18-stage implementation. No competing ESS is created.
-
-## Value-chain relationship
-
-QM projects quality evidence read-only across the existing stages `VC-01` through `VC-18`. The projection is observability/evidence correlation only and does not authorize mutations at any stage.
-
-## Takeover contract
-
-For a transferred subtask the source uses:
-
-> QUALITY-MANAGEMENT TAKEOVER
->
-> Execution State: HANDED_OFF_TO_QM  
-> Canonical Work Item: `docs/projects/quality-management/ROADMAP.md#<QM-ID>`
->
-> Execution ownership for this quality-management subtask has been transferred to CAPITAL-AI-QM.  
-> This source roadmap retains domain context and dependency information only.  
-> Operational status MUST NOT be maintained in parallel here.
-
-Mixed items transfer only their Quality execution portion.
+ESS-0005 is clarified in place. No competing ESS or Quality runtime is created.
 
 ## Evidence semantics
 
-`PASS` requires complete, real, correctly commit-bound positive evidence. `FAIL` is real negative evidence. Missing, skipped, incomplete, stale or wrong-commit evidence is `NOT_AVAILABLE`. Test/file existence is not execution evidence.
+`PASS` requires complete, real and correctly identity-bound positive evidence. `FAIL` is real negative evidence. Missing, skipped, incomplete, stale or wrong-snapshot evidence is `NOT_AVAILABLE`.
+
+File/test/workflow existence is never execution evidence.
+
+## Pull Request boundary
+
+For a QM project PR:
+
+- one project scope per PR;
+- initial title `[CAPITAL-AI-QM] - PR`;
+- after GitHub assigns the number, final title `[CAPITAL-AI-QM] - PR <PR_NUMBER>`;
+- explicit Owner approval is required for the exact correlated candidate before creation;
+- Human/CODEOWNER merge only;
+- no direct edit to `main`;
+- technical remediation findings are implemented in the target project's PR, not in the QM PR.
+
+This ADR does not weaken the stricter exact-snapshot PR-creation procedure in `AGENTS.md`.
 
 ## Consequences
 
 ### Positive
-- one QM execution roadmap;
-- one operational QM status source;
-- cross-domain traceability without domain-authority transfer;
-- reuse of existing tests/validators/gates;
-- explicit evidence and drift handling.
+
+- independent assurance across all 18 stages;
+- explicit remediation ownership;
+- no Quality code in productive hot paths;
+- one Finding/Evidence lifecycle;
+- reusable existing tests/validators;
+- missing evidence remains visible rather than synthesized;
+- no duplicated Data/Scoring/Release architecture.
 
 ### Trade-offs
-- source roadmaps require granular takeover markers;
-- mixed domain/QM items require separation;
-- historical documents remain for traceability instead of destructive cleanup.
 
-## Supersession impact package
+- cross-project remediation requires explicit referral and a second verification step;
+- QM cannot close findings solely because a target PR merged;
+- roadmap and chat traceability are required for handoffs.
 
-This ADR introduces a new project execution authority; it does not supersede an existing ADR authority. Historical and domain documents are retained. Any future supersession discovered during QM review MUST be separately registered under ADR-0096 with explicit affected authority IDs, migration impact and non-authorizing legacy handling.
+## Supersession impact
+
+This proposed ADR introduces QM assurance coordination and does not supersede an existing active ADR authority. Historical/domain documents remain traceable. Any future authority supersession requires the ADR-0096 impact package and explicit supersedes edge.
 
 ## Definition of Done
 
-1. QM project directory exists.
-2. ESS-0005 references it without changing Quality Center mutation boundaries.
-3. ADR-0103 is registered.
-4. Master roadmap contains the QM portfolio entry.
-5. Active roadmaps are reviewed for duplicate quality execution.
-6. Transferred quality subtasks use a takeover marker.
-7. No work item has two operational QM status authorities.
-8. The documented value-chain projection matches the existing 18-stage runtime implementation.
-9. No parallel runtime architecture is introduced.
+1. QM project contract v2.1 is present.
+2. QM owns zero productive VC stages.
+3. All 18 stages have Primary Owner routing.
+4. The eight V2 workstreams are canonical.
+5. Every confirmed finding has an explicit target project.
+6. Foreign technical remediation is absent from QM.
+7. ESS-0005 remains read-only/non-authorizing.
+8. Missing evidence remains `NOT_AVAILABLE`.
+9. No parallel Runtime/Data/Scoring/Ranking/Release/Value-Chain architecture is introduced.
+10. Remediation occurs in the target project and closure requires independent QM verification.
