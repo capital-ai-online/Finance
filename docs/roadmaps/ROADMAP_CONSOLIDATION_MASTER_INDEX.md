@@ -1,8 +1,8 @@
 # CAPITAL-AI Konsolidierte Gesamtroadmap
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
-Stand: 2026-08-30  
-Repository-Baseline: `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc`  
+Stand: 2026-08-31  
+Repository-Baseline: `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
 Owner: SvenKulessa  
 Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 
@@ -20,6 +20,8 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 
 **Value-Chain Coverage 2026-08-30:** Coverage-Map und Inventar *-0 sind über PR #610 auf `main`. Ein append-only Registry-Insert-Payload, Claim-Close, Current-State-Sync, ESS-Reconciliation, VC-H *-1 Spezifikation und S1-R2-02 Dispatch-Checkliste liegen in OPEN-STEPS-BIND-2026-08-30 (`docs/open-steps-bind-2026-08-30-v6`). `document-registry.json` wird dabei nicht mutiert. PR #615 ist auf `main@f714eae6` gemergt; PR #617 ist damit synchronisiert. Live `mode=full` bleibt bis zu separatem Owner-Plan, Owner-ACCEPT und verifiziertem Readback gesperrt.
 
+**Agent-Client Ownership 2026-08-31:** `CAPITAL-AI-CLIENT` ist als alleiniger Primary Owner von `VC-01 — Agent Client` in `docs/projects/agent-client/` konsolidiert. Die kanonische VC-01-Ausführungsroadmap ist `docs/projects/agent-client/ROADMAP.md`. Sie übernimmt keine Ausführung fremder VC-Stufen; Controlled Implementation, Platform/Governance Decisions und EventMesh/Traceability werden ausschließlich als Cross-Project-Handoffs referenziert.
+
 ## 2. Verbindliche Authority-Reihenfolge
 
 1. verifizierte Runtime-, Code- und Produktions-Evidence;
@@ -28,7 +30,7 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 4. `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001) für DC+SA-Verbindung;
 5. `DEVELOPMENT_CHAIN_ROADMAP.md` (Detail-Phasen);
 6. diese Gesamtroadmap (Portfolio-Index);
-7. Fachroadmaps (für SEO/Google Marketing: **SEO-GM-ROADMAP-0002**; für Kettenlücken ohne Fachroadmap: **ROADMAP-VC-COV-HARDEN-2026-08-30**);
+7. Fachroadmaps, darunter `docs/projects/agent-client/ROADMAP.md` ausschließlich für VC-01, **SEO-GM-ROADMAP-0002** für SEO/Google Marketing und **ROADMAP-VC-COV-HARDEN-2026-08-30** für Kettenlücken ohne Fachroadmap;
 8. historische oder als Legacy/SUPERSEDED markierte Indizes.
 
 Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
@@ -37,6 +39,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
+| **CLIENT** | **CAPITAL-AI Client / VC-01** | **`docs/projects/agent-client/ROADMAP.md` + Inventar/Mapping/Traceability** | **ACTIVE — VC-01 PRIMARY OWNER**; logische Ownership konsolidiert; keine physische Runtime-Verlagerung; keine fremde VC-Ausführung | CLIENT-02 bis CLIENT-07 ausschließlich im VC-01-Scope; fremde Arbeit nur über dokumentierte Cross-Project-Handoffs; PR/CI erst nach separatem Owner-Gate |
 | **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + Inventar-Pack + `VC_H_IMPLEMENTATION_PACK_2026-08-30.md` + Registry-Insert-Payload** | **ACTIVE — COVERAGE**; Inventar *-0 auf main (#610); Payload + *-1-Spezifikation in synchronisiertem OPEN-STEPS-BIND; physischer Registry-Insert nicht ausgeführt | Exact-Head-Checks und Human-Review für diesen D-PR; Registry-Mutation nur als separater Scope; Runtime anschließend auf frischem Branch |
 | **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
