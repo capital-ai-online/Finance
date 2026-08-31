@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.2.0`  
+**Control Plane Version:** `2.2.1`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-08-27  
+**Effective date:** 2026-08-31  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -80,6 +80,18 @@ CURRENT MAIN + OPEN-PR BASELINE
 ```
 
 Direct edits to `main` are prohibited. One work item uses one scoped branch. Rollback uses a fresh branch from then-current `main`.
+
+### Branch naming (`CTRL-SDLC-BRANCH-001`)
+
+Every **new** agent-managed work branch MUST use a permitted execution-prefix and MUST encode both the canonical project-folder slug and the compact work item:
+
+`<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>`
+
+Examples: `agent/governance-chat-consolidation-20260831`, `agent/operations-development-chain-20260901`, `agent/fintech-fvc-migration-20260901`.
+
+`project-folder` is the canonical project folder/slug for the Primary Owner (for example `governance`, `operations`, `agent-client`, `data`, `fintech`). `compact-task` MUST be short, lowercase kebab-case and specific enough to identify the scoped work item. The approved execution-prefix remains subject to the current trusted branch/workflow policy; this naming rule does not authorize a new provider prefix. Historical, merged, closed or already-terminal branches are not renamed retroactively.
+
+A newly created branch that omits either project-folder or compact-task identity is non-conforming and MUST be replaced by a fresh current-main branch before protected work or PR readiness proceeds. Branch naming is coordination metadata only and never changes project ownership, Authority, merge authority or production permissions.
 
 Pre-PR evidence is technical evidence only and must be bound to the exact candidate snapshot. Immediately before PR creation, refresh `main`, correlate new merges/open PRs, synchronize, resolve semantic conflicts and repeat necessary low-cost checks.
 
