@@ -2,7 +2,7 @@
 
 **Baseline:** `main@64a3415781a50177798cbe9404b1855735e5371a`  
 **Candidate:** `agent/governance-chat-consolidation-20260831`  
-**Scope:** documentation / project architecture / work-claim lifecycle
+**Scope:** documentation / project architecture / work-claim lifecycle / branch governance
 
 ## PASS — pre-implementation correlation
 
@@ -19,7 +19,7 @@
 
 ## PASS — consolidation design
 
-- Fresh branch created directly from current main.
+- Fresh branch created directly from current main and itself conforms to the project/task branch convention.
 - One new exclusive consolidation work claim created.
 - `docs/projects/` is explicitly non-authorizing.
 - `PVC-*` is explicitly separated from current technical `SC-MD-SPT-0001` `VC-*` identifiers.
@@ -27,19 +27,27 @@
 - P3 FVC migration remains multi-owner and unexecuted.
 - Admin Panel graph implementation remains CLIENT/OPS-owned.
 - Old GOV branch content is reused selectively; stale branch snapshots are not merged wholesale.
-- No new ADR/ESS/AUTH identity is created.
+- No new ADR/ESS/AUTH/CTRL identity is created.
 - M10 remains suspended/off.
 - Human-only merge remains unchanged.
 - Compact PR template/direct Chat PR transport already merged on main are referenced, not reimplemented.
+
+## PASS — branch governance versioning
+
+The Owner-directed branch naming convention is now repository-wide in the existing governance chain, with no parallel authority:
+
+- `AUTH-GOV-AGENT-TRUST-ROOT` / `AGENTS.md`: `2.2.0 -> 2.2.1`;
+- `CTRL-SDLC-BRANCH-001`: stable Control ID retained; requirement now mandates `<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>` for every new agent-managed work branch;
+- `AUTH-GOV-CONTROL-CATALOG`: `1.7.0 -> 1.8.0`;
+- `AUTH-GOV-AUTHORITY-REGISTRY`: `1.36.0 -> 1.37.0`;
+- historical/merged/terminal branches are explicitly non-retroactive;
+- a newly created non-conforming branch must be replaced from then-current main before protected work or PR readiness;
+- the naming rule does not grant provider-prefix, project ownership, merge or production authority.
 
 ## Lifecycle remediation
 
 - `agent/governance-pvc-architecture-20260831` claim: changed from active/exclusive to `superseded`/non-exclusive.
 - PR #629 merged claim on main: corrected in this candidate from stale `active` to `released`, `releaseReason: merged`, `pullRequest: 629`.
-
-## Open governance follow-up deliberately not made enforceable here
-
-The Owner-directed branch naming convention `agent/<project-folder>-<compact-task>-<YYYYMMDD>` is captured in `TASK_REGISTER.md`. Repository-wide enforcement requires a later versioned update of the existing Trust Root / `CTRL-SDLC-BRANCH-001`; this candidate does not create a competing project-level authority.
 
 ## Connector-unavailable local commands
 
@@ -51,7 +59,7 @@ The GitHub connector used for this work cannot execute repository shell commands
 - `npm run repository:quality:check`
 - direct execution of `scripts/pr/validateWorkClaim.mjs`
 
-Runtime build/unit tests are not required as pre-PR evidence for this documentation-only consolidation unless repository hosted CI classifies the changed scope more strictly.
+Runtime build/unit tests are not required as pre-PR evidence for this governance/documentation consolidation unless repository hosted CI classifies the changed scope more strictly.
 
 ## Remaining pre-PR gates
 
