@@ -1,192 +1,231 @@
-# CAPITAL-AI-QM — Canonical Quality Management Roadmap
+# CAPITAL-AI-QM — Canonical Quality Assurance Roadmap
 
 **Project ID:** `CAPITAL-AI-QM`  
+**Prompt:** `CAPITAL-AI-QM-V2` v2.1  
 **Status:** `PROPOSED — CONSOLIDATION BRANCH`  
 **Activation:** after ADR-0103 acceptance / Human Merge  
-**Portfolio authority:** `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md`  
+**Project contract:** `docs/projects/quality-management/PROJECT_CONTRACT_V2.md`  
 **Technical authority:** `ESS-0005 Quality Center`  
 **Contract basis:** `ESS-0001-CONTRACTS Chapter 12`  
 **Governance boundary:** `ADR-0096`
 
-Operational QM state MUST be maintained here only after takeover. Domain implementation state remains in the source domain roadmap.
+This roadmap is the operational source for **QM assurance work only**. Domain implementation/remediation state remains with the Primary Owner project.
 
-## State model
+## Non-negotiable ownership boundary
 
-`PROPOSED | READY | IN_PROGRESS | BLOCKED | DONE | NOT_AVAILABLE`
+```text
+primary_value_chain_ownership: []
+executes_as_primary_owner: []
+observes: VC-01..VC-18
+remediation_execution_local: false
+```
 
-Evidence result semantics are separately constrained to `PASS | FAIL | NOT_AVAILABLE`.
+QM may identify, specify, prioritize and verify remediation. It MUST NOT implement foreign-domain remediation.
+
+## Primary Owner routing
+
+| VC | Primary Owner | VC | Primary Owner |
+|---|---|---|---|
+| VC-01 | `CAPITAL-AI-CLIENT` | VC-10 | `CAPITAL-AI-DATA` |
+| VC-02 | `CAPITAL-AI-OPS` | VC-11 | `CAPITAL-AI-DATA` |
+| VC-03 | `CAPITAL-AI-DOC` | VC-12 | `CAPITAL-AI-FINTECH` |
+| VC-04 | `CAPITAL-AI-OPS` | VC-13 | `CAPITAL-AI-FINTECH` |
+| VC-05 | `CAPITAL-AI-GOV` | VC-14 | `CAPITAL-AI-FINTECH` |
+| VC-06 | `CAPITAL-AI-OPS` | VC-15 | `CAPITAL-AI-FINTECH` |
+| VC-07 | `CAPITAL-AI-OPS` | VC-16 | `CAPITAL-AI-FINTECH` |
+| VC-08 | `CAPITAL-AI-OPS` | VC-17 | `CAPITAL-AI-FINTECH` |
+| VC-09 | `CAPITAL-AI-DATA` | VC-18 | `CAPITAL-AI-OPS` |
+
+## Finding lifecycle
+
+```text
+DISCOVERED
+-> TRIAGED
+-> CONFIRMED
+-> REFERRED
+-> REMEDIATING
+-> EVIDENCE_READY
+-> VERIFIED
+-> CLOSED
+```
+
+Every confirmed finding requires: `finding_id`, `affected_vc_stage`, `target_project`, `severity`, `evidence`, `required_remediation`, `verification_gate`, `status`.
+
+Cross-project referral marker:
+
+```text
+[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+```
 
 ---
 
-## QM-0 — Authority & Repository Baseline
+## QM-01 — Quality Criteria
 
 **State:** `IN_PROGRESS`
 
-### Work
-- bind observations to the exact current `main` commit;
-- correlate open PRs and parallel work claims;
-- revalidate ESS-0005 against the actual codebase;
-- confirm ESS-0001-CONTRACTS Chapter 12 and ADR-0096 boundaries;
-- inventory Quality, Performance, Test, CI and Evidence artifacts;
-- prevent creation of a second Quality authority.
+### Scope
+- correlate applicable existing criteria from ESS/ADR/contracts;
+- maintain a measurable criterion catalogue without inventing foreign domain rules;
+- map every criterion to evidence source, VC stage and governing authority;
+- distinguish normative CAPITAL-AI criteria from advisory external benchmarks.
 
-### Exit
-- baseline documented;
-- no authority collision;
-- existing QM artifacts inventoried.
+### Exit gate
+- every active criterion has authority/source and measurable evidence semantics;
+- no duplicate Security, Compliance, Data, Scoring, Release or Product criterion authority exists in QM.
 
 ---
 
-## QM-1 — Cross-Roadmap Quality Takeover
-
-**State:** `IN_PROGRESS`
-
-Classify every candidate as `DOMAIN_IMPLEMENTATION`, `QUALITY_EXECUTION`, `MIXED` or `NOT_QM`. Transfer only quality execution. Mixed work retains the domain part at source.
-
-### Sources
-- Roadmap Consolidation Master Index;
-- DEVELOPMENT Chain;
-- Integrated Development/Systemadmin Roadmap;
-- S1 Security Hardening;
-- frontend/performance work packages;
-- Compliance/Governance work packages;
-- Release/CI work packages;
-- Value Chain Coverage and Hardening roadmap;
-- other active domain roadmaps discovered during review.
-
-### Exit
-- TAKEOVER_INDEX complete for active discovered items;
-- no parallel QM status maintenance;
-- source/domain relationship is traceable.
-
----
-
-## QM-2 — Quality Center Baseline
-
-**State:** `READY`
-
-Verify and reuse, never duplicate:
-- ValidatorRegistry;
-- 16 Mandatory Validators;
-- Chapter12ValidatorRunner;
-- RepositoryQualityCoordinator;
-- QualityGateRunner;
-- QualityScoreCalculator;
-- CoverageCollector;
-- TechnicalDebtRegister;
-- DocumentationConsistencyValidator;
-- FintechValueChainQualityProjection;
-- QualityCenterOrchestrator.
-
-Existing Quality Gates and EventMesh are reused. Missing evidence is `NOT_AVAILABLE`, never synthetic `PASS`.
-
-### Exit
-Implementation status is evidenced against ESS-0005 and the Quality Center remains read-only.
-
----
-
-## QM-3 — Authentication & Session Runtime Quality
-
-**State:** `READY`
-
-### Baseline findings
-`refresh_token_not_found`, `session_not_found`, repeated `/auth/v1/user` calls, Post-OAuth bootstrap and Onboarding -> AAL/MFA -> Application bootstrap are quality/performance observation targets.
-
-### Measure
-- deterministic session initialization;
-- redundant Auth request count;
-- session recovery behavior;
-- bootstrap latency and critical path;
-- error classification;
-- regression evidence.
-
-No IAM/MFA policy mutation. Findings requiring policy or implementation changes are handed to the responsible Security/Auth domain.
-
----
-
-## QM-4 — Frontend Runtime & Performance Quality
+## QM-02 — Quality Gates
 
 **State:** `READY`
 
 ### Scope
-Route stalls on `/` and `/sources`, public/login bundle boundary, lazy loading, chunking, React bundle boundaries, initial rendering and blocking bootstrap dependencies.
+- execute/reuse existing Quality gates and validators;
+- preserve `PASS | FAIL | NOT_AVAILABLE` semantics;
+- verify gate inputs are current and correctly bound;
+- issue findings when an authoritative gate fails or evidence is incomplete.
 
-`tests/unit/securityPerformancePriorityRemediation.test.ts` is an existing baseline and MUST be reused. It protects heavy-route lazy loading and the absence of a parallel `vendor-react` boundary.
+### Boundary
+QM does not redefine CI required checks, release gates or domain authorization. Existing gates remain under their current authorities.
 
-### Exit
-- stall attribution: network vs JavaScript vs rendering vs auth bootstrap;
-- regression boundary documented;
-- no second Public Shell, Router or `vendor-react` architecture;
-- performance evidence bound to a reproducible runtime identity.
-
-External performance recommendations are advisory until adopted by an existing authority; QM cannot invent normative thresholds.
-
----
-
-## QM-5 — CI, Build & Regression Quality
-
-**State:** `READY`
-
-CI topology and required checks remain under ADR-0073/ADR-0047. QM consumes evidence only.
-
-Verify exact-head binding for Build, Unit, Integration, Contract, Architecture, Security, Performance, E2E, Coverage and Runtime Release Manifest evidence.
-
-- `PASS` = complete commit-bound positive evidence.
-- `FAIL` = real negative evidence.
-- `NOT_AVAILABLE` = missing, incomplete, skipped or wrong-commit evidence.
-
-File existence MUST NOT be interpreted as a passed test.
+### Exit gate
+- gate result has authoritative input evidence and exact identity;
+- missing or wrong-snapshot evidence remains `NOT_AVAILABLE`.
 
 ---
 
-## QM-6 — Documentation Quality & Technical Debt
+## QM-03 — Quality Measurement
 
 **State:** `READY`
 
-Check Quality documentation against code, roadmap/evidence consistency, baseline drift, duplicated QM work and technical debt traceability. Resolution requires resolution evidence.
+### Scope
+Measure all 18 VC stages where evidence exists, including:
+- runtime/session behavior;
+- frontend latency and blocking attribution;
+- test/coverage/build evidence;
+- architecture and documentation consistency;
+- evidence freshness/completeness;
+- value-chain continuity.
 
-ESS-0012 retains Documentation Governance authority.
+### Rules
+- no synthetic scores;
+- no new business-domain measurement formula without authority;
+- use evidence adapters rather than duplicating domain logic;
+- no direct Quality dependency in productive hot paths.
+
+### Exit gate
+Every reported measurement contains source, environment/snapshot identity and known limitations.
 
 ---
 
-## QM-7 — Cross-Domain Quality Projection
+## QM-04 — Findings
 
 **State:** `READY`
 
-Read-only quality projection across all 18 canonical value-chain stages and domain boundaries.
+### Scope
+- discover and triage quality deviations;
+- confirm them against reproducible evidence;
+- assign `affected_vc_stage` and `target_project`;
+- specify required remediation and verification gate;
+- refer remediation to the Primary Owner.
 
-QM answers only:
-- Is required evidence present?
-- Is it current?
-- Is it bound to the correct commit?
-- Was the relevant test actually executed?
-- Is there a regression?
-- Is the existing Quality Contract fulfilled?
+### Referral rule
+A confirmed finding requiring implementation MUST transition to `REFERRED` with:
 
-QM does not decide domain policy, feature semantics or production authorization.
+```text
+[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+```
+
+The target project performs remediation in its own roadmap/branch/PR. QM tracks the finding lifecycle but not the target project's technical implementation authority.
+
+### Exit gate
+No confirmed finding is unowned.
 
 ---
 
-## QM-8 — Quality Release Readiness
+## QM-05 — Regression
 
 **State:** `READY`
 
-Produces one non-authorizing snapshot:
-- `QUALITY READY`
-- `QUALITY BLOCKED`
-- `QUALITY EVIDENCE INCOMPLETE`
+### Scope
+- maintain reproducible before/after evidence;
+- reuse existing tests before adding new Quality-specific regression evidence;
+- verify auth/session, frontend/runtime, CI/build and value-chain regressions;
+- attribute regressions to the responsible VC stage/Primary Owner.
 
-Snapshot includes Contract, Architecture, Version, Documentation, Test, Security-quality evidence, Compliance-quality evidence, Build, technical debt, known regressions and missing evidence.
+Existing baseline examples such as `tests/unit/securityPerformancePriorityRemediation.test.ts` are reused. QM creates no second Public Shell, Router, `vendor-react`, CI or Runtime architecture.
 
-`QUALITY READY` is not merge/deployment approval.
+### Exit gate
+Regression verdict is evidence-bound and any required remediation is referred to the target project.
 
 ---
 
-## QM-9 — Drift & Continuous Quality Review
+## QM-06 — Technical Debt
 
 **State:** `READY`
 
-Recurring append-only review of roadmap, documentation, contract, test/build, coverage, debt, parallel architecture, duplicate validators, stale evidence and cross-roadmap QM duplication.
+### Scope
+- record quality debt with cause, impact, evidence, VC stage and Primary Owner;
+- prioritize debt by severity/risk using existing authority semantics;
+- require resolution evidence before closure;
+- prevent silent debt closure.
 
-### Exit rule
-Findings are evidence; domain mutation follows a handoff to the authoritative project.
+### Boundary
+QM owns the debt record and verification, not foreign-domain code remediation.
+
+### Exit gate
+Every active debt item has a target project or an explicit `NOT_AVAILABLE` dependency preventing assignment.
+
+---
+
+## QM-07 — Evidence
+
+**State:** `READY`
+
+### Scope
+- collect/correlate authoritative test, build, runtime and quality evidence;
+- bind evidence to exact commit/runtime/environment identities;
+- maintain evidence lifecycle and known limitations;
+- expose missing evidence as `NOT_AVAILABLE`;
+- avoid copying large generated artifacts into Git when authoritative stores already exist.
+
+### Exit gate
+Every `PASS`, `FAIL`, `VERIFIED` or closure decision is traceable to authoritative evidence.
+
+---
+
+## QM-08 — Continuous Improvement
+
+**State:** `READY`
+
+### Scope
+- review quality trend, recurring findings, debt and regression patterns;
+- detect duplicate architecture, duplicate validators and stale assurance documentation;
+- track improvement actions and verify outcomes;
+- keep the Quality Center sidecar/read-only;
+- periodically revalidate the VC-01..VC-18 Owner routing and evidence coverage.
+
+### Exit gate
+- no foreign technical execution retained in QM;
+- no confirmed finding without remediation owner;
+- no productive hot-path Quality authority;
+- Quality Center remains read-only/non-authorizing.
+
+---
+
+## Validation invariants
+
+1. QM remains independent.
+2. QM owns zero productive VC stages.
+3. All findings have a target project once confirmed.
+4. All 18 stages are measurable where evidence exists.
+5. Missing evidence remains `NOT_AVAILABLE`.
+6. QM has no DATA ownership.
+7. Remediation implementation occurs in the target project's PR.
+8. `QUALITY READY` is not merge/release/deployment authorization.
+9. Human/CODEOWNER merge remains mandatory.
+10. Direct `main` edits are prohibited.
+
+## Completion
+
+This V2 migration is complete when the QM roadmap references relevant Primary Owner projects, old foreign-execution semantics have been removed, every finding uses explicit owner routing, the eight workstreams are canonical, and ESS-0005/ADR-0103 describe QM as independent read-only assurance rather than a foreign-domain remediation executor.
