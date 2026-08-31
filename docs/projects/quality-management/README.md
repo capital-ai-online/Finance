@@ -1,13 +1,17 @@
 # CAPITAL-AI — Quality Management
 
 **Project ID:** `CAPITAL-AI-QM`  
-**Domain:** Quality Management  
+**Prompt:** `CAPITAL-AI-QM-V2` v2.1  
+**Role:** `CROSS_CUTTING_QUALITY_ASSURANCE`  
 **Lifecycle:** `PROPOSED — ACTIVATES AFTER ADR-0103 ACCEPTANCE / HUMAN MERGE`  
-**Canonical execution roadmap:** [`ROADMAP.md`](./ROADMAP.md)
+**Canonical project contract:** [`PROJECT_CONTRACT_V2.md`](./PROJECT_CONTRACT_V2.md)  
+**Canonical assurance roadmap:** [`ROADMAP.md`](./ROADMAP.md)
 
 ## Purpose
 
-This project is the single operational execution point for quality-management work packages after ADR-0103 becomes effective. It consolidates quality execution without taking authority from Security, Compliance, Governance, IAM, Release, Frontend Product or Financial Runtime domains.
+CAPITAL-AI-QM is the independent Quality/Assurance function for the repository. It observes and evaluates all 18 canonical value-chain stages, but owns **none** of them as productive Primary Owner.
+
+QM measures quality, executes authorized Quality gates and validators, records findings/evidence/technical debt, assesses regression risk and verifies remediation. Technical remediation is implemented by the Primary Owner of the affected VC stage in that project's own branch/PR.
 
 ## Authority chain
 
@@ -15,62 +19,94 @@ This project is the single operational execution point for quality-management wo
 Human / Owner
   -> ADR / ESS / Contracts
   -> ADR-0096 Governance Control Plane
-  -> Domain Authority
-  -> CAPITAL-AI-QM ROADMAP
-  -> ESS-0005 Quality Center
-  -> Validators / tests / measurements / evidence
-  -> Quality report / findings / domain handoff
+  -> Primary Owner / Domain Authority
+  -> CAPITAL-AI-QM independent assurance
+  -> ESS-0005 Quality Center / existing validators / evidence adapters
+  -> Quality finding
+  -> [QUALITY_HANDOFF -> TARGET_PROJECT | VC-NN]
+  -> Primary Owner remediation
+  -> QM verification gate
 ```
 
-Normative authority remains at canonical locations. No ADR or ESS copies are stored here.
+Normative domain authority remains at canonical locations. QM does not duplicate ADR, ESS, Data, Scoring, Ranking, Routing, Release, Runtime or Product authorities.
 
-- `ESS-0001-CONTRACTS`, Chapter 12 — validation and quality contracts.
-- `ESS-0005 Quality Center` — technical Quality Center component boundary.
-- `ADR-0096` — Governance Control Plane and supersession rules.
-- `ADR-0073` / `ADR-0047` — CI and pre-merge gate authority.
-- `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md` — portfolio authority.
-- `ADR-0103` — proposed QM single-execution authority.
+## Primary value-chain ownership
 
-## Execution boundary
+```text
+primary_value_chain_ownership: []
+executes_as_primary_owner: []
+observes: VC-01 through VC-18
+```
 
-QM may execute existing validators, aggregate quality evidence, verify tests/coverage/build evidence, measure runtime and performance, detect regressions and technical debt, validate QM documentation consistency and produce a non-authorizing release-readiness snapshot.
+| VC | Primary Owner |
+|---|---|
+| VC-01 | `CAPITAL-AI-CLIENT` |
+| VC-02 | `CAPITAL-AI-OPS` |
+| VC-03 | `CAPITAL-AI-DOC` |
+| VC-04 | `CAPITAL-AI-OPS` |
+| VC-05 | `CAPITAL-AI-GOV` |
+| VC-06 | `CAPITAL-AI-OPS` |
+| VC-07 | `CAPITAL-AI-OPS` |
+| VC-08 | `CAPITAL-AI-OPS` |
+| VC-09 | `CAPITAL-AI-DATA` |
+| VC-10 | `CAPITAL-AI-DATA` |
+| VC-11 | `CAPITAL-AI-DATA` |
+| VC-12 | `CAPITAL-AI-FINTECH` |
+| VC-13 | `CAPITAL-AI-FINTECH` |
+| VC-14 | `CAPITAL-AI-FINTECH` |
+| VC-15 | `CAPITAL-AI-FINTECH` |
+| VC-16 | `CAPITAL-AI-FINTECH` |
+| VC-17 | `CAPITAL-AI-FINTECH` |
+| VC-18 | `CAPITAL-AI-OPS` |
 
-QM MUST NOT define or mutate Security/IAM/Compliance/Governance policy, authorize merge/deploy/release, invent numeric quality thresholds, replace frontend/auth/routing architecture, or alter financial/scoring/ranking logic.
+## Local QM scope
+
+QM owns Quality Criteria, Quality Measurement, Quality Gates, Quality Findings, Quality Evidence, Technical Debt, Regression Assessment, Continuous Improvement Tracking and the read-only Quality Center orchestration defined by ESS-0005.
+
+QM MUST NOT perform Market Data mutation, UAI execution, Data Quality runtime ownership, Scoring mutation, Ranking mutation, provider routing, Release approval or Production mutation.
+
+## Eight workstreams
+
+- `QM-01` Quality Criteria
+- `QM-02` Quality Gates
+- `QM-03` Quality Measurement
+- `QM-04` Findings
+- `QM-05` Regression
+- `QM-06` Technical Debt
+- `QM-07` Evidence
+- `QM-08` Continuous Improvement
+
+## Finding and handoff rule
+
+Every confirmed finding has an affected VC stage and target project. The required cross-project marker is:
+
+```text
+[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+```
+
+QM may identify, specify and prioritize required remediation, but `remediation_execution_local=false`. The target project implements; QM verifies the resulting evidence.
 
 ## Canonical value-chain projection
 
-The current implementation in `src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts` projects the full 18-stage chain read-only:
-
-1. `VC-01-REQUEST-INTAKE`
-2. `VC-02-IDENTITY-ACCESS`
-3. `VC-03-ENTITLEMENT-USAGE`
-4. `VC-04-ASSET-UAI`
-5. `VC-05-ORCHESTRATION-RUNTIME-GUARD`
-6. `VC-06-EVIDENCE-ACQUISITION`
-7. `VC-07-DATA-VALIDATION-PROVENANCE`
-8. `VC-08-DISPLAY-RESEARCH`
-9. `VC-09-CLASSIFICATION-FEATURE-CONTRACT`
-10. `VC-10-SCORING-MODEL-REGISTRY`
-11. `VC-11-SCORING-DISPATCHER`
-12. `VC-12-DOMAIN-EXECUTOR`
-13. `VC-13-CANONICAL-SCORE-LINEAGE`
-14. `VC-14-CONFIDENCE-DQ`
-15. `VC-15-RANKING-COMPARABILITY`
-16. `VC-16-RANKING-ELIGIBILITY-SLO`
-17. `VC-17-EVENT-TRACEABILITY-SUPERVISOR`
-18. `VC-18-DELIVERY-SURFACES`
-
-No parallel value-chain model may be introduced by this project.
+`src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts` remains the existing 18-stage read-only sidecar. No productive hot path may gain a direct Quality dependency. Missing evidence remains `NOT_AVAILABLE`.
 
 ## Navigation
 
-- [`ROADMAP.md`](./ROADMAP.md) — operational QM status and work items.
-- [`TAKEOVER_INDEX.md`](./TAKEOVER_INDEX.md) — single mapping table from source roadmaps to QM.
-- [`QUALITY_BASELINE.md`](./QUALITY_BASELINE.md) — observed repository and authority baseline.
-- [`METRICS_AND_EVIDENCE.md`](./METRICS_AND_EVIDENCE.md) — evidence semantics and metric rules.
-- [`runbooks/`](./runbooks/) — repeatable execution procedures.
+- [`PROJECT_CONTRACT_V2.md`](./PROJECT_CONTRACT_V2.md) — V2.1 ownership, handoff and PR contract.
+- [`ROADMAP.md`](./ROADMAP.md) — eight canonical assurance workstreams.
+- [`TAKEOVER_INDEX.md`](./TAKEOVER_INDEX.md) — source/referral mapping and Primary Owner routing.
+- [`QUALITY_BASELINE.md`](./QUALITY_BASELINE.md) — repository/authority baseline.
+- [`METRICS_AND_EVIDENCE.md`](./METRICS_AND_EVIDENCE.md) — evidence and finding schema.
+- [`runbooks/`](./runbooks/) — repeatable assurance procedures.
 - [`evidence/`](./evidence/) — append-only evidence guidance.
 
-## Takeover rule
+## Higher authorities retained
 
-A source roadmap retains domain context and dependencies. Once a quality-only subtask is marked `HANDED_OFF_TO_QM`, operational status is maintained only in `ROADMAP.md`. Mixed work packages transfer only their `QUALITY_EXECUTION` portion.
+- `ESS-0001-CONTRACTS Chapter 12` — validator/gate/metric contracts.
+- `ESS-0005` — technical Quality Center boundary.
+- `ADR-0096` — Governance Control Plane and supersession rules.
+- `ADR-0073` / `ADR-0047` — CI and pre-merge authority.
+- `AGENTS.md` — repository-wide agent/PR execution controls.
+- `ADR-0103` — proposed QM assurance coordination authority.
+
+`QUALITY READY` or a verified finding closure is Quality evidence only; it is never merge, release, deployment or production authorization.
