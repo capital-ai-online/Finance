@@ -1,16 +1,41 @@
 # Pull Request Check Classification
 
 Status: ACTIVE  
-Updated: 2026-08-16  
-Authority: CAPITAL-AI DevelopmentChain
+Updated: 2026-09-01  
+Authority: CAPITAL-AI DevelopmentChain / `CTRL-CI-HOSTED-001`
 
 ## Zweck
 
-Dieses Dokument legt fest, welche Checks ein Pull Request abhängig vom tatsächlichen Änderungsumfang durchlaufen muss. Ziel ist, unnötige CI-Läufe zu vermeiden, ohne Sicherheits- oder Qualitätsgates zu schwächen.
+Dieses Dokument legt fest, welche technischen Validierungen ein Pull Request abhängig vom tatsächlichen Änderungsumfang durchlaufen muss. Ziel ist, unnötige GitHub-Hosted-CI-Kosten zu vermeiden, ohne Sicherheits-, Qualitäts- oder Merge-Gates zu schwächen.
 
-**Stand 2026-08-16:** Das frühere Pre-CI-Owner-Gate (Checkboxen + Review `💪`/`okay`) ist **retired**. Technische CI startet ohne diese Zeremonie. Merge bleibt Human/Owner-only. Ab M10 gilt Passkey-Autorisierung laut M10-Runbook.
+Der Required-Check-Kontext `build-and-test` bleibt als unabhängiger technischer Check für den finalen PR-Head bestehen. **Der Name des Check-Kontexts bedeutet nicht, dass jeder PR einen Production Build oder die vollständige Production-Testkette ausführen muss.** Die teuren Schritte innerhalb des Checks werden scope-basiert klassifiziert.
+
+### Owner-Entscheidung 2026-09-01 — Production-Scope-Regel
+
+Production Build/Test eines Pull Requests wird nur ausgeführt, wenn der geänderte Scope die **Buildfähigkeit, Runtime, Deploymentfähigkeit oder Production-Artefakte** beeinflussen kann. Nicht deploymentrelevante Änderungen erhalten ausschließlich die für ihren Scope erforderlichen Validierungen.
+
+Diese Regel konkretisiert `CTRL-CI-HOSTED-001` und die bestehende ADR-0073-Single-`build-and-test`-Architektur. Sie ändert weder Human/CODEOWNER-Merge-Authority noch die Production-Pipeline auf `main`.
+
+Der Required-Check-Workflow darf nicht über `paths`/`paths-ignore` für nicht produktionsrelevante PRs vollständig unterdrückt werden. Stattdessen bleibt der Check vorhanden und überspringt innerhalb des Jobs die nicht erforderlichen Production-Schritte. Dadurch bleibt der Required-Check-Vertrag deterministisch.
 
 ## Begriffe
+
+### Production Impact
+
+Ein Änderungsumfang hat `production_impact=true`, wenn er die gebaute oder ausgelieferte Anwendung, ihre Buildfähigkeit, Runtime, produktive Konfiguration, Abhängigkeiten, Container-/Deployment-Artefakte oder die Production-Deployment-Kette beeinflussen kann.
+
+Typische Beispiele:
+
+- `src/**`, produktive Assets und Anwendungseinstiegspunkte;
+- Server-/Runtime-Code;
+- Dependency-Manifeste und Lockfiles;
+- Build-/Compiler-Konfiguration, sofern sie das Produktionsartefakt beeinflussen kann;
+- Docker-/Render-/Deployment-Konfiguration;
+- der kanonische Production-CI-/Deploy-Workflow.
+
+Bekannt nicht produktionsrelevante Validierungsflächen, beispielsweise Documentation-only, Test-only, PR-/Governance-Validatoren oder nicht deployende Governance-Workflows, erhalten `production_impact=false`, solange kein produktionsrelevanter Pfad im selben PR enthalten ist.
+
+Unbekannte nicht-dokumentarische Pfade werden fail-closed als potentiell produktionsrelevant behandelt, bis sie ausdrücklich und überprüfbar als reine Validierungs-/Tooling-Fläche klassifiziert sind.
 
 ### Threat Model
 
@@ -30,21 +55,41 @@ Ein Rollback-Runbook definiert, wie nach einer fehlerhaften Mutation der letzte 
 
 Nur `docs/**`, `.ai/**` oder Markdown.
 
-Pflicht: Governance/Security, Docs-Fast-Path, `build-and-test`.
+Pflicht: Governance/Security, Docs-Fast-Path und erfolgreicher Required-Check-Kontext `build-and-test`.
 
-Nicht erforderlich: npm, TypeScript, Unit Tests, Production Build, Docker. Kein Owner-Checkbox-/Emoji-Gate.
+Nicht erforderlich: `npm ci`, TypeScript/Lint, Unit Tests, Production Build, Production-CSP-Test, Predeploy oder Docker.
+
+`production_impact=false`.
 
 ### C — Application / Test / Configuration
 
-Anwendungs-/Servicecode, Tests oder nicht-dokumentarische Konfiguration ohne Runtime-/Deployment-Relevanz.
+Nicht-dokumentarische Änderungen ohne Runtime-/Dependency-/Docker-/Deployment-Klasse R. Klasse C wird zusätzlich nach Production Impact differenziert.
 
-Pflicht zusätzlich zu Governance: Git-/Toolchain-Integrität, `npm ci`, Production Dependency Audit, Production Config Invariants, Docker-Hardening-Policy-Check, TypeScript/Lint, Unit Tests, Production Build, CSP-Test, Predeploy-Check, `build-and-test`.
+#### C-P — production-impacting
+
+Beispiele: Anwendungscode oder sonstige Änderungen, die Buildfähigkeit oder das Production-Artefakt beeinflussen können.
+
+Pflicht nach Scope: Repository-/Toolchain-Integrität, Node/npm, TypeScript/Lint, Unit Tests, Production Build, Production-CSP-Test und Predeploy. Nicht benötigte Teilprüfungen dürfen nur dann entfallen, wenn die maschinenlesbare Scope-Klassifikation dies deterministisch begründet.
+
+`production_impact=true`.
+
+#### C-N — non-production validation/tooling
+
+Beispiele: reine Tests, `scripts/pr/**`, `scripts/governance/**`, nicht deployende `.github/**`-Governance-/Policy-Flächen und Kombinationen daraus.
+
+Pflicht: ausschließlich die für den geänderten Scope erforderlichen Validatoren, beispielsweise Node, Lint, Unit-/Validator-Tests oder Workflow-Security.
+
+Nicht erforderlich: Production Build, Production-CSP-Test, Production-Config-/Predeploy-Check oder Docker, solange kein produktionsrelevanter Pfad im PR enthalten ist.
+
+`production_impact=false`.
 
 ### R — Runtime / Dependency / Docker / Deployment
 
-Dockerfile, Dependency-Manifeste, Server/Runtime, Render-Konfiguration, Runtime-/Docker-Security oder relevante Workflows.
+Dockerfile, Dependency-Manifeste, Server/Runtime, Render-Konfiguration, Runtime-/Docker-Security, `ci.yml` oder relevante Deploy-Workflows.
 
-Pflicht: vollständige Klasse C plus Docker Image Build, Image User/CMD/Healthcheck, Workflow Security bei Workflow-Änderungen sowie Deployment-/Rollback-Nachweis wenn Produktionsverhalten betroffen ist.
+Pflicht: vollständige Production-Validierung einschließlich Node/npm, Dependency Audit, TypeScript/Lint, Unit Tests, Production Build, CSP/Predeploy, Docker-Hardening und Docker-Image-Prüfung sowie Workflow Security bei Workflow-Änderungen. Deployment-/Rollback-Nachweis ist zusätzlich erforderlich, wenn Produktionsverhalten betroffen ist.
+
+`production_impact=true`.
 
 ### M — External Platform Mutation
 
@@ -54,18 +99,24 @@ Pflicht zusätzlich: autorisierende Roadmap/ADR/ESS, Owner Mutation Approval, Pr
 
 ## Auswahlregel
 
-Die strengste zutreffende Klasse gilt für den gesamten PR. Ein neuer Commit, der den Scope erweitert, kann die Checkklasse erhöhen.
+Die strengste zutreffende Klasse gilt für den gesamten PR. Ein einzelner produktionsrelevanter Pfad eskaliert einen gemischten PR auf `production_impact=true`; bekannte Non-Production-Pfade dürfen einen produktionsrelevanten Pfad niemals herunterstufen.
+
+Ein neuer Commit, der den Scope erweitert, kann Checkklasse oder Production Impact erhöhen und invalidiert die vorherige Scope-Entscheidung für den neuen Head.
+
+Für `push` auf `main` gilt unabhängig vom ursprünglichen PR-Scope weiterhin **Full Production CI**. Die Production-Promotion-Kette darf nicht aus einem eingeschränkten PR-Check wiederverwendet oder abgekürzt werden.
 
 ## Merge-Regel
 
 Ein PR ist merge-fähig, wenn:
 
-1. alle Checks der gewählten Klasse PASS sind;
-2. `build-and-test` PASS ist;
+1. alle für seine Klasse und seinen Production-Impact ausgewählten Checks PASS sind;
+2. der Required-Check-Kontext `build-and-test` PASS ist;
 3. Governance PASS ist;
 4. keine offenen merge-blockierenden Funde bestehen;
 5. eine separate ausdrückliche menschliche Merge-Anweisung vorliegt (Agenten mergen nicht).
 
+Ein `build-and-test` PASS bei `production_impact=false` bestätigt den erfolgreich scope-reduzierten technischen Check; er behauptet **nicht**, dass ein Production Build ausgeführt wurde.
+
 **Nicht erforderlich:** Owner-Body-Checkboxen, Review-Text `💪`/`okay`, Viewed-Attestation als CI-Gate.
 
-**Ab M10:** zusätzliche Passkey-/WebAuthn-Autorisierung gemäß `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`.
+M10 `AUTHORIZE_PR_CI` bleibt gemäß current `AGENTS.md` suspendiert/off, bis eine neue explizite Owner-Entscheidung die dort genannten Reaktivierungsbedingungen erfüllt.
