@@ -35,13 +35,16 @@
 | `GOV-CHAT-015` | Clean old GOV writer claims / stop parallel GOV merge sources | CAPITAL-AI-GOV | `IN_CANDIDATE` | all historical GOV branch claims terminal; current consolidation is sole GOV writer |
 | `GOV-CHAT-016` | Close merged PR #629 claim that remained `active` on main | CAPITAL-AI-GOV | `IN_CANDIDATE` | claim changed to `released/merged`; merge of this candidate is exit gate |
 | `GOV-CHAT-017` | Branch names must include project-folder name + compact task | CAPITAL-AI-GOV governance rule owner | `OPEN_GOV` | intended convention: `agent/<project-folder>-<compact-task>-<YYYYMMDD>`; requires Trust-Root/`CTRL-SDLC-BRANCH-001` versioned clarification before repository-wide enforcement |
-| `GOV-CHAT-018` | Keep PR titles in project-qualified German format | CAPITAL-AI-GOV / relevant project owner | `DONE_MAIN` operational convention | current pattern retained: temporary `[CAPITAL-AI-GOV] - PR - <TASK>`, final includes PR number |
+| `GOV-CHAT-018` | Keep PR titles/bodies in project-qualified German presentation where repository automation does not require fixed machine text | CAPITAL-AI-GOV / relevant project owner | `OPEN_GOV` | capture as versioned PR-convention clarification if repository-wide enforcement is desired; current title pattern already used operationally |
 | `GOV-CHAT-019` | Build/test only after PR where cost-control policy permits; avoid unnecessary pre-PR paid CI | existing Governance/CI authority | `DONE_MAIN` | `/AGENTS.md` already requires smallest sufficient checks and cost control |
 | `GOV-CHAT-020` | Sync candidate against current main and correlate open PRs/writers before PR | existing Governance authority | `DONE_MAIN` | `CTRL-SDLC-SYNC-001` / `CTRL-SDLC-PR-CREATE-001` |
 | `GOV-CHAT-021` | Maintain before/after or migration matrix for GOV structural changes | CAPITAL-AI-GOV | `IN_CANDIDATE` | P1 matrix + component matrix + final validation report |
 | `GOV-CHAT-022` | Preserve explicit cross-project handoff markers and target-roadmap/evidence gates | CAPITAL-AI-GOV coordination | `IN_CANDIDATE` | `CROSS_PROJECT_HANDOFF_CONTRACT.md` + handoff register |
 | `GOV-CHAT-023` | Do not create duplicate ADR/ESS/AUTH/CTRL identities merely for project-folder assignment | CAPITAL-AI-GOV | `IN_CANDIDATE` | no new identity introduced in this candidate |
 | `GOV-CHAT-024` | Retain old GOV branches as historical/reuse inputs only | CAPITAL-AI-GOV | `IN_CANDIDATE` | branch disposition below; no direct stale-branch merge |
+| `GOV-CHAT-025` | Maintain one canonical current CAPITAL-AI-GOV roadmap/task surface instead of parallel current roadmap variants | CAPITAL-AI-GOV | `IN_CANDIDATE` | `ROADMAP.md` + this register are current project surfaces; old branch roadmaps are reuse/history only |
+| `GOV-CHAT-026` | Emit bounded post-PR chat handoff with at most two prioritized next steps | existing Governance authority | `DONE_MAIN` | `CTRL-SDLC-CHAT-HANDOFF-001` in current Trust Root/control catalog |
+| `GOV-CHAT-027` | Reuse repository/native/plugin/open-source capability before custom implementation | existing Governance authority + affected owner | `DONE_MAIN` | `/AGENTS.md` reuse order applies; Admin Panel handoff requires graph-tool evaluation before custom build |
 
 ## Historical GOV branch disposition
 
