@@ -12,25 +12,32 @@ prompt:
     security_traceability: "docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md"
 
   synchronized_against:
-    main_sha: "1f55340d89178fb5c1ab735242f42c263918b692"
+    main_sha: "1f01120164ba4a3c194a4e0a79292a262a372588"
     main_includes:
       - "CAPITAL-AI-SEC PR #631"
       - "CAPITAL-AI-OPS PR #632"
+      - "CAPITAL-AI-QM PR #636"
+      - "canonical docs/projects project-organization model"
     open_pull_requests_at_precheck: 0
 
   target_context:
     target_project: "CAPITAL-AI-SOCIAL"
-    target_project_folder: "docs/social-media/CAPITAL-AI-SOCIAL"
+    target_project_folder: "REQUIRES_CORRELATION"
+    current_local_domain_path: "docs/social-media/CAPITAL-AI-SOCIAL"
     affected_pvc: []
     security_findings: []
     target_roadmap: "docs/social-media/CAPITAL-AI-SOCIAL/ROADMAP.md"
     routing_status: "NO_CURRENT_SECURITY_FINDING_ROUTED_TO_SOCIAL"
+    folder_resolution_status: "REQUIRES_CORRELATION"
     routing_note: >
-      PROJECT_VALUE_CHAIN.md assigns PVC-01..PVC-18 to CLIENT, OPS, DOC,
-      GOV, DATA and FINTECH and explicitly creates no implicit PVC-19 for
-      Social. The current CAPITAL-AI-SEC traceability routes active findings
-      to OPS, DATA and GOV, not to CAPITAL-AI-SOCIAL. No PVC stage or Security
-      finding is fabricated by this target-project synchronization.
+      Current docs/projects/README.md names CAPITAL-AI-SOCIAL as a cross-cutting
+      project without productive PVC ownership, but current main contains no
+      canonical docs/projects/<social-slug>/ directory and no authority-backed
+      Social project-folder slug was resolved. The current local domain surface
+      remains docs/social-media/CAPITAL-AI-SOCIAL for this bounded PR. The
+      Security traceability routes active findings to OPS, DATA and GOV, not to
+      CAPITAL-AI-SOCIAL. No PVC stage, canonical project folder or Security
+      finding is fabricated by this synchronization.
 
   purpose: >
     CAPITAL-AI-SEC informiert dieses Projekt über Security-Anforderungen,
@@ -43,10 +50,12 @@ prompt:
     - "offene Pull Requests prüfen"
     - "aktive Work Claims / Writer prüfen"
     - "Changed-File- und Semantic-Overlap prüfen"
+    - "docs/projects/README.md lesen"
     - "docs/projects/PROJECT_VALUE_CHAIN.md lesen"
     - "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md lesen"
     - "CAPITAL-AI-SEC Security Traceability gegen aktuellen main prüfen"
     - "betroffene PVC-Stufe und Primary Owner bestätigen"
+    - "kanonischen Target Project Folder aus current main auflösen; bei Unklarheit REQUIRES_CORRELATION"
     - "Authority-/ADR-/ESS-/Control-Konflikte prüfen"
     - "Reuse vor Neubau prüfen"
 
@@ -59,7 +68,7 @@ prompt:
       - "Security Verification"
 
     target_project_owns:
-      - "produktive Implementierung im eigenen Scope, sofern Social tatsächlich Primary Owner der betroffenen Änderung ist"
+      - "produktive Implementierung im eigenen Scope, sofern Social tatsächlich Owner der betroffenen Änderung ist"
       - "projektlokale technische Änderungen"
       - "Runtime-/Provider-Evidence, soweit CAPITAL-AI-SOCIAL dafür fachlich zuständig ist"
       - "eigene Roadmap- und Work-Package-Integration"
@@ -82,8 +91,8 @@ prompt:
       Bestehende Security Controls, Middleware, Authorities, ADRs,
       ESS und Tests wiederverwenden.
     - >
-      Fehlende oder widersprüchliche Authority, Identity oder Evidence
-      bleibt fail-closed.
+      Fehlende oder widersprüchliche Authority, Identity, Project-Folder-
+      Auflösung oder Evidence bleibt fail-closed.
     - >
       HIGH/CRITICAL geschützte Änderungen behalten alle bestehenden
       Human/Owner-Gates.
@@ -95,13 +104,15 @@ prompt:
       Target-Project-/Operations-/Owner-Authority.
 
   required_handoff_record:
-    applicability: "ONLY_WHEN_CAPITAL_AI_SEC_ROUTES_A_CONCRETE_FINDING_WITH_VALID_PVC_STAGE"
+    applicability: "ONLY_WHEN_CAPITAL_AI_SEC_ROUTES_A_CONCRETE_FINDING_WITH_VALID_OWNERSHIP_AND_PVC_ROUTING"
     compatibility_marker: "[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]"
     repository_marker: "[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]"
     required_fields:
       project_namespace: "PVC"
       project_stage: "<PVC-NN>"
       target_project: "<TARGET_PROJECT>"
+      target_project_folder: "<CANONICALLY_RESOLVED_TARGET_PROJECT_FOLDER>"
+      primary_owner: "<PRIMARY_OWNER>"
       task: "<TARGET-OWNED-REMEDIATION-OR-EVIDENCE>"
       reason: "<THREAT_OR_CONTROL>"
       dependency: "<SECURITY_AND_DOMAIN_DEPENDENCIES>"
@@ -113,6 +124,9 @@ prompt:
   implementation_flow:
     - >
       Security Finding gegen aktuellen main und Target Scope verifizieren.
+    - >
+      Kanonischen Target Project Folder aus current main auflösen; bei
+      Unklarheit REQUIRES_CORRELATION und keine fremde Implementierung.
     - >
       Security-Abhängigkeit in der kanonischen Target-Roadmap bzw.
       im zuständigen Work Package referenzieren.
