@@ -1,6 +1,9 @@
-# CAPITAL-AI-QM — Metrics and Evidence Contract
+# CAPITAL-AI-QM — Metrics, Findings and Evidence Contract
 
-This project consumes existing normative metrics and thresholds. It does not invent them.
+**Project contract:** `CAPITAL-AI-QM-V2` v2.1  
+**Workstreams:** `QM-01` through `QM-08`
+
+QM consumes existing normative metrics, thresholds and domain evidence. It does not invent foreign-domain policy or execute foreign-domain remediation.
 
 ## Evidence record
 
@@ -18,38 +21,78 @@ Every QM evidence record MUST contain at least:
 | Source artifact | traceable test report/log/manifest/measurement source |
 | Status | evidence lifecycle state |
 | Known limitations | gaps, skips, sampling or environment constraints |
-| Related QM work item | `QM-*` reference |
+| Related QM workstream | `QM-01..QM-08` |
+| Affected VC stage | `VC-01..VC-18` where applicable |
+| Primary Owner | project from the canonical QM owner routing table |
+
+## Finding record
+
+Every confirmed QM finding MUST contain:
+
+| Field | Rule |
+|---|---|
+| `finding_id` | stable unique identifier |
+| `affected_vc_stage` | exactly one primary `VC-01..VC-18`; additional affected stages may be references only |
+| `target_project` | Primary Owner project responsible for remediation |
+| `severity` | existing authoritative severity semantics; QM does not invent a second scale |
+| `evidence` | one or more reproducible evidence references |
+| `required_remediation` | bounded technical outcome; implementation remains with target project |
+| `verification_gate` | exact QM verification procedure/evidence required after remediation |
+| `status` | lifecycle state below |
+
+Finding lifecycle:
+
+```text
+DISCOVERED
+-> TRIAGED
+-> CONFIRMED
+-> REFERRED
+-> REMEDIATING
+-> EVIDENCE_READY
+-> VERIFIED
+-> CLOSED
+```
+
+`REMEDIATING` is the target project's implementation state as observed by QM; it does not transfer implementation authority.
+
+A finding that requires implementation MUST carry:
+
+```text
+[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+```
+
+and a canonical target roadmap/PR reference plus a chat notice.
 
 ## Result semantics
 
 ### PASS
-Only complete, positive and correctly commit-bound evidence. For execution gates this requires proof the relevant process actually ran.
+Only complete, positive and correctly identity-bound evidence. For execution gates this requires proof the relevant process actually ran.
 
 ### FAIL
 Observed negative evidence from the authoritative test/validator/measurement source.
 
 ### NOT_AVAILABLE
-Missing, skipped, incomplete, expired, unbound, wrong-commit or otherwise non-reproducible evidence.
+Missing, skipped, incomplete, expired, stale, unbound, wrong-commit or otherwise non-reproducible evidence.
 
 A file existing in the repository is never sufficient proof that its test passed.
 
 ## Measurement classes
 
-- Contract/validator conformance.
-- Test execution and coverage evidence.
-- Build and runtime-release-manifest evidence.
-- Frontend/runtime latency and blocking attribution.
-- Auth/session request and recovery behavior.
-- Bundle/chunk/lazy-load regression evidence.
-- Accessibility verification evidence.
-- Supply-chain provenance/attestation evidence.
-- Technical-debt lifecycle evidence.
-- Documentation/baseline drift evidence.
-- 18-stage value-chain evidence completeness.
+- Contract/validator conformance (`QM-01`, `QM-02`).
+- Test execution and coverage evidence (`QM-02`, `QM-07`).
+- Build and runtime-release-manifest evidence (`QM-02`, `QM-07`).
+- Frontend/runtime latency and blocking attribution (`QM-03`).
+- Auth/session request and recovery behavior (`QM-03`, `QM-05`).
+- Bundle/chunk/lazy-load regression evidence (`QM-05`).
+- Accessibility verification evidence (`QM-03`, `QM-07`).
+- Supply-chain provenance/attestation evidence (`QM-07`).
+- Technical-debt lifecycle evidence (`QM-06`).
+- Documentation/baseline drift evidence (`QM-08`).
+- 18-stage value-chain evidence completeness (`QM-03`, `QM-07`, `QM-08`).
 
 ## Performance measurements
 
-For QM-3/QM-4 capture raw observations such as navigation timings, long tasks, request waterfalls, render milestones, JavaScript execution, resource sizes, auth bootstrap spans and route transition traces. Use an environment identity and repeatable test profile.
+For `QM-03`/`QM-05`, capture raw observations such as navigation timings, long tasks, request waterfalls, render milestones, JavaScript execution, resource sizes, auth bootstrap spans and route transition traces. Use an environment identity and repeatable test profile.
 
 Separate:
 
@@ -64,42 +107,38 @@ Current Core Web Vitals may be recorded as advisory evidence:
 | INP | `<= 200 ms` at p75 | `NON_NORMATIVE_ADVISORY` |
 | CLS | `<= 0.1` at p75 | `NON_NORMATIVE_ADVISORY` |
 
-The p75 interpretation should be segmented at least by mobile/desktop when field evidence is used, following the current Web Vitals recommendation.
-
-These values MUST NOT become Chapter-12 gates or merge blockers unless an existing CAPITAL-AI authority explicitly adopts them. A source-roadmap Lighthouse target is likewise not automatically a Quality Contract threshold.
+These values MUST NOT become Chapter-12 gates or merge blockers unless an existing CAPITAL-AI authority explicitly adopts them.
 
 ## Accessibility evidence
 
-WCAG 2.2 is the current W3C Recommendation and may be used as an advisory verification taxonomy. Where Frontend/Compliance already requires WCAG 2.2 AA, QM may collect execution evidence for the relevant success criteria but does not define accessibility policy.
+WCAG 2.2 may be used as an advisory verification taxonomy. Where an existing Frontend/Compliance authority already requires a criterion, QM may collect execution evidence but does not define accessibility policy.
 
-Evidence should distinguish automated checks from manual/assistive-technology verification; an automated score alone does not establish conformance.
+Automated checks and manual/assistive-technology verification must be distinguished; an automated score alone does not establish conformance.
 
 ## Security-quality evidence
 
-OWASP ASVS 5.0.0 may be used to classify security-verification evidence using version-qualified requirement IDs. QM does not implement Security policy or treat an unmapped ASVS item as an automatic CAPITAL-AI gate. Findings requiring mutation are handed to Security.
+OWASP ASVS 5.0.0 may be used to classify security-verification evidence using version-qualified requirement IDs. QM does not implement Security policy. A confirmed remediation finding is routed to the Primary Owner for its actual VC stage.
 
 ## Supply-chain evidence
 
-SLSA v1.2 may be used as an advisory provenance/attestation crosswalk for the existing source/build/release pipeline. Prefer evidence from the current GitHub/attestation/release control path. Do not create a second CI pipeline, signer or release authority for QM.
+SLSA v1.2 may be used as an advisory provenance/attestation crosswalk for the existing source/build/release pipeline. Do not create a second CI pipeline, signer or release authority for QM.
 
 ## Telemetry rules
 
 Prefer existing application/observability instrumentation and the existing EventMesh over a parallel telemetry bus. Correlate browser/runtime traces with build/runtime identity where available. Do not log tokens, credentials or protected user data as quality evidence.
 
-OpenTelemetry browser semantic conventions, including `browser.web_vital`, currently have upstream `Development` status. If used, the adapter/schema version must be explicit and the upstream semantic convention must remain non-normative until stable/adopted internally.
+OpenTelemetry browser semantic conventions may be used only with explicit schema/version status where applicable; upstream development semantics are non-normative until stable/adopted internally.
 
 ## External-reference lifecycle
 
-External standards are versioned observations, not CAPITAL-AI authority. Every external mapping should record:
+External standards are versioned observations, not CAPITAL-AI authority. Every external mapping should record source/version/status, observation date, stability, internal adoption authority and whether the mapping is `NON_NORMATIVE_ADVISORY`.
 
-- source and version/status;
-- observation date;
-- whether the external source is stable/final or draft/development;
-- internal authority that would be required for adoption;
-- whether the mapping is `NON_NORMATIVE_ADVISORY` or already backed by an internal contract.
-
-NIST SP 800-218 SSDF v1.1 remains the current final baseline in the Agent Trust Root. SP 800-218 Rev.1 / SSDF v1.2 is an Initial Public Draft and is monitored only until finalization or explicit internal adoption.
+NIST SP 800-218 SSDF v1.1 remains the current final baseline in the Agent Trust Root; later draft revisions are monitored only until finalization or explicit internal adoption.
 
 ## Storage
 
-Repository evidence guidance lives under `docs/projects/quality-management/evidence/`. Large or generated CI artifacts remain in their authoritative CI/artifact store and are referenced rather than copied into Git history.
+Repository evidence guidance lives under `docs/projects/quality-management/evidence/`. Large/generated CI artifacts remain in their authoritative CI/artifact store and are referenced rather than copied into Git history.
+
+## Closure invariant
+
+A finding may transition `VERIFIED -> CLOSED` only after target-project remediation evidence exists and the declared `verification_gate` has actually executed successfully. PR/commit existence alone is never closure evidence.
