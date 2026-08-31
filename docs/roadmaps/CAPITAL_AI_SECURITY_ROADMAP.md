@@ -2,7 +2,7 @@
 
 **Document ID:** `DOC-ROADMAP-CAPITAL-AI-SEC-2026-08-31`  
 **Project ID:** `CAPITAL-AI-SEC`  
-**Version:** `2.1.1`  
+**Version:** `2.1.2`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
 **Date:** `2026-08-31`  
 **Repository baseline:** `main@8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`  
@@ -86,11 +86,15 @@ Existing controls, middleware, tests, Security evidence and S1 findings are reus
 
 ## 5. Cross-project handoff contract
 
-CAPITAL-AI-SEC retains the compatibility marker required by the Security work model:
+CAPITAL-AI-SEC retains the Security marker required by the Security work model:
 
 `[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
 
-Under the current-main project-routing contract, every new or refreshed Security handoff must additionally carry:
+Current repository project routing also requires the compatibility repository marker:
+
+`[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
+
+Every new or refreshed Security handoff additionally carries:
 
 - `project_namespace: PVC`;
 - `project_stage: PVC-<NN>`;
@@ -178,19 +182,27 @@ This table is Security coverage, not ownership.
 
 Security also checks applicable technical `VC-*` stages under their existing technical authority, including identity/entitlement, provider/data integrity, scoring/ranking, API/browser and evidence boundaries. Those identifiers remain governed by their technical architecture and do not become project-routing identities through this roadmap.
 
-## 9. Current finding re-correlation after main synchronization
+## 9. Current finding routing after final PVC correlation
 
-The S1 finding identities remain valid and are not reopened merely because `main` advanced. However, the earlier branch-local handoff records used legacy target labels (`DC-SA`, `DEVELOPMENT`, `SC-MD-SPT`, `SEO-GM`, `GOV`) together with unqualified `VC-*` markers.
+The S1 finding identities remain unchanged. The former branch-local targets (`DC-SA`, `DEVELOPMENT`, `SC-MD-SPT`, `SEO-GM`, `GOV`) are retained only as historical source labels. Current project routing is now bound to the canonical Primary Project Owners from `docs/projects/PROJECT_VALUE_CHAIN.md`.
 
-Current `main` now requires explicit `PVC-*` project routing. Therefore those handoff records are **not silently promoted** to current project-routing mappings. They remain finding evidence while project-routing enrichment is pending.
+Every row below carries the same numeric repository compatibility marker as its explicit `project_stage`, while `project_namespace: PVC` is authoritative for project routing. No row assigns Security primary PVC ownership.
 
-Status after synchronization:
+| Finding | Security handoff | project_stage | target_project | target roadmap/reference | Dependency / boundary | External status |
+|---|---|---|---|---|---|---|
+| S1-R2-03 Node control-plane convergence | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-06]` | `PVC-06` Version Management | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md` (target canonical OPS roadmap); source: `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` | Node/runtime version identity; implementation remains OPS-owned | `REFERRED_NOT_EXECUTED` |
+| S1-R2-04 fatal process handling | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-04]` | `PVC-04` Supervisor | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` | `PVC-08` supplies post-deploy runtime/supervisor evidence | `REFERRED_NOT_EXECUTED` |
+| S1-R2-05 Stripe redirect boundary | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-02]` | `PVC-02` Controlled Implementation | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: `DEVELOPMENT_CHAIN_ROADMAP.md` | application/server remediation; Security verifies open-redirect DENY behavior | `REFERRED_NOT_EXECUTED` |
+| S1-R2-06 entitlement authority | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-02]` | `PVC-02` Controlled Implementation | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; Security source: `S1_SECURITY_HARDENING_ROADMAP.md` | parent inventory is OPS-coordinated; `CAPITAL-AI-CLIENT/PVC-01` and capability-specific Primary Owners become child handoffs if their code is affected | `REFERRED_NOT_EXECUTED / ACTIVE` |
+| S1-R2-07 recovery / RPO / RTO | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: current Operations handoff/runbooks | measured restore/RPO/RTO remains Operations evidence, not Security execution | `REFERRED_NOT_EXECUTED` |
+| S1-R2-09 strict CSP promotion | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source context: `SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` | `CAPITAL-AI-SEO` supplies browser/compatibility evidence but owns no productive PVC stage; promotion remains OPS-owned | `WAITING_FOR_EVIDENCE` |
+| S1-R2-10 demo billing isolation post-deploy proof | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: `DEVELOPMENT_CHAIN_ROADMAP.md` | Security verifies returned production reachability evidence; failed proof creates a new `PVC-02` implementation handoff | `WAITING_FOR_EVIDENCE` |
+| S1-R2-11 evidence identity/staleness | `[SECURITY_HANDOFF -> CAPITAL-AI-DATA | VC-10]` | `PVC-10` Evidence Management | `CAPITAL-AI-DATA` | `docs/projects/data/ROADMAP.md` (target canonical DATA roadmap); source: S1 + PR baseline tooling | DATA owns evidence identity/freshness semantics; any PR/trace tooling code remediation is a secondary `CAPITAL-AI-OPS` handoff, not implicit DATA ownership | `WAITING_FOR_EVIDENCE` |
+| MFA/AAL authority-lifecycle drift | `[SECURITY_HANDOFF -> CAPITAL-AI-GOV | VC-05]` | `PVC-05` Platform Director | `CAPITAL-AI-GOV` | `docs/projects/governance/ROADMAP.md` | Governance/Owner reconciles ADR/ESS/registry lifecycle; Security must not self-promote authority | `REFERRED_NOT_EXECUTED / CLARIFY` |
 
-- S1-R2-03/04/05/06/07/09/10/11: finding identities retained; `project_namespace/project_stage/target_project` must be re-correlated before PR readiness;
-- MFA/AAL authority-lifecycle drift: Governance ownership remains conceptually applicable, but current `CAPITAL-AI-GOV` / `PVC-05` routing must be recorded explicitly before closure;
-- S1-R2-00 containment remains merged historical/current implementation evidence and is not reopened.
+For each row, the repository compatibility marker is also recorded as `[CROSS_PROJECT_HANDOFF -> <target_project> | VC-<NN>]` using the same numeric project stage. Target project roadmap paths that do not yet exist are **handoff destinations**, not permission for Security to create the foreign project surface; this matches the current Governance handoff model.
 
-No foreign implementation is executed by CAPITAL-AI-SEC while this routing enrichment is pending.
+S1-R2-00 containment remains merged implementation/history and is not reopened.
 
 ## 10. Finding lifecycle
 
