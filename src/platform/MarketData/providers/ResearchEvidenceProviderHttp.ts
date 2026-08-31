@@ -1,6 +1,7 @@
 import { CircuitBreaker } from '../CircuitBreaker';
 import { RateLimitBudget, type RateLimitDecision } from '../RateLimitBudget';
 import { getProviderMatrixEntry } from '../ProviderMatrix';
+import { providerErrorMessage } from '../providerCredentialRedaction';
 import { recordProviderHealth, type ProviderDiagnosticCode } from '../../Supervisor/providerHealth';
 import { recordProviderRuntimeObservation } from '../providerRuntimeObservability';
 
@@ -208,7 +209,7 @@ export class ResearchEvidenceProviderHttp {
       };
     } catch (error) {
       this.circuitBreaker.failure(this.providerId);
-      const reason = error instanceof Error ? error.message : String(error);
+      const reason = providerErrorMessage(error);
       return this.result('SOURCE_UNAVAILABLE', retrievedAt, null, reason, startedAtMs, budget, undefined, true);
     } finally {
       clearTimeout(timeout);

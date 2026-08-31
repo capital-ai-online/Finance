@@ -1,6 +1,6 @@
 import type { MarketDataProviderStage } from './marketDataCoordinator';
 import { createCryptoMarketDataStage } from './cryptoMarketDataStage';
-import { createStooqProviderStage, type StooqFallbackAsset } from './stooqProviderStage';
+import type { StooqFallbackAsset } from './stooqProviderStage';
 import { createFmpIndexProviderStage } from './fmpIndexProviderStage';
 
 export function createMarketDataProviderStages(options: {
@@ -18,14 +18,6 @@ export function createMarketDataProviderStages(options: {
       fallbackAssets: options.fallbackAssets,
       fetchImpl: options.fetchImpl,
       now: options.now,
-      logger: options.logger,
-    }),
-    createStooqProviderStage({
-      stockTickers: options.stockTickers,
-      forexTickers: options.forexTickers,
-      commodityTickers: options.commodityTickers,
-      fallbackAssets: options.fallbackAssets,
-      fetchImpl: options.fetchImpl,
       logger: options.logger,
     }),
     createFmpIndexProviderStage({

@@ -44,7 +44,7 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
 
 describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
-    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.9.1');
+    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.10.0');
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
@@ -52,7 +52,8 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(getProviderMatrixEntry('coinapi')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('eodhd')?.gatewayStatus).toBe('behind_gateway');
     expect(providersBehindGateway().map((e) => e.id)).toEqual(expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko', 'coinapi', 'eodhd']));
-    expect(providersLegacyOffGateway().some((e) => e.id === 'stooq')).toBe(true);
+    expect(getProviderMatrixEntry('stooq')).toMatchObject({ enabled: false, gatewayStatus: 'not_wired' });
+    expect(providersLegacyOffGateway().some((e) => e.id === 'stooq')).toBe(false);
   });
 
   it('declares Binance and Kraken as co-primary crypto evidence suppliers without gateway authority', () => {

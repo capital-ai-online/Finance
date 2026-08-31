@@ -12,7 +12,7 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.9.1' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.10.0' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
@@ -154,12 +154,12 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     role: 'secondary',
     capabilities: ['snapshot', 'history'],
     assetClasses: ['stock', 'index'],
-    enabled: true,
+    enabled: false,
     priority: 50,
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
-    gatewayStatus: 'legacy_off_gateway',
-    notes: 'Legacy fallback paths; optional SC-5 later migration.',
+    gatewayStatus: 'not_wired',
+    notes: 'Productive direct Stooq network access is retired. Future use requires an explicit canonical MarketDataGateway adapter and governed re-authorization.',
   },
   {
     id: 'defillama',

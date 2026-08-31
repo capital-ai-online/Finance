@@ -1,15 +1,25 @@
 import { Router } from 'express';
 import { orchestrator } from '../../src/lib/requestOrchestrator';
+import { providerErrorMessage, redactProviderCredentialText } from '../../src/platform/MarketData/providerCredentialRedaction';
 
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP'];
+export const ALPHA_VANTAGE_CREDENTIAL = 'ALPHA_VANTAGE_API_KEY' as const;
+
+export function resolveAlphaVantageCredential(environment: NodeJS.ProcessEnv = process.env): string | undefined {
+  const value = environment[ALPHA_VANTAGE_CREDENTIAL]?.trim();
+  return value || undefined;
+}
 
 export const alphaVantageRouter = Router();
 
 alphaVantageRouter.get('/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), async (req, res) => {
   const { symbol } = req.query;
-  const key = process.env.ALPHA_VANTAGE_KEY;
+  const key = resolveAlphaVantageCredential();
   if (!key) {
-    return res.status(400).json({ error: 'ALPHA_VANTAGE_KEY is not configured.' });
+    return res.status(503).json({
+      error: `${ALPHA_VANTAGE_CREDENTIAL} is not configured.`,
+      status: 'UNAVAILABLE',
+    });
   }
   if (!symbol) {
     return res.status(400).json({ error: 'Symbol parameter is required.' });
@@ -20,10 +30,10 @@ alphaVantageRouter.get('/alpha-vantage-quote', orchestrator.handle('Alpha Vantag
 
   try {
     const url = isCrypto
-      ? `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${rawSymbol}&to_currency=USD&apikey=${key}`
-      : `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${rawSymbol}&apikey=${key}`;
+      ? `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${rawSymbol}&to_currency=USD&apikey=${encodeURIComponent(key)}`
+      : `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${rawSymbol}&apikey=${encodeURIComponent(key)}`;
 
-    console.log(`[Alpha Vantage Quote] Requesting URL: ${url.replace(key, 'REDACTED')}`);
+    console.log(`[Alpha Vantage Quote] Requesting URL: ${redactProviderCredentialText(url)}`);
     const response = await fetch(url);
     if (!response.ok) {
       return res.status(500).json({ error: `Alpha Vantage returned HTTP status ${response.status}` });
@@ -65,7 +75,9 @@ alphaVantageRouter.get('/alpha-vantage-quote', orchestrator.handle('Alpha Vantag
       source: 'Alpha Vantage',
       timestamp: quoteObj['07. latest trading day'],
     });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message || 'Interner Serverfehler beim Abruf von Alpha Vantage.' });
+  } catch (err: unknown) {
+    return res.status(500).json({
+      error: providerErrorMessage(err) || 'Interner Serverfehler beim Abruf von Alpha Vantage.',
+    });
   }
 });
