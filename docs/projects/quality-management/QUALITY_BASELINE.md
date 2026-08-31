@@ -3,99 +3,134 @@
 **Observed at:** 2026-08-31  
 **Observed main:** `0f5d4f23841ef3824dec8447f700de0cd9614f16`  
 **Open PR correlation at baseline:** no open PRs observed  
-**QM branch:** `docs/qm-project-consolidation-20260831`
+**QM branch:** `docs/qm-project-consolidation-20260831`  
+**Project contract:** `CAPITAL-AI-QM-V2` v2.1
+
+## V2 ownership baseline
+
+CAPITAL-AI-QM is an independent cross-cutting Quality/Assurance function.
+
+```text
+primary_value_chain_ownership: []
+executes_as_primary_owner: []
+observes: VC-01..VC-18
+remediation_execution_local: false
+```
+
+Primary Owner routing:
+
+| VC | Owner | VC | Owner |
+|---|---|---|---|
+| VC-01 | `CAPITAL-AI-CLIENT` | VC-10 | `CAPITAL-AI-DATA` |
+| VC-02 | `CAPITAL-AI-OPS` | VC-11 | `CAPITAL-AI-DATA` |
+| VC-03 | `CAPITAL-AI-DOC` | VC-12 | `CAPITAL-AI-FINTECH` |
+| VC-04 | `CAPITAL-AI-OPS` | VC-13 | `CAPITAL-AI-FINTECH` |
+| VC-05 | `CAPITAL-AI-GOV` | VC-14 | `CAPITAL-AI-FINTECH` |
+| VC-06 | `CAPITAL-AI-OPS` | VC-15 | `CAPITAL-AI-FINTECH` |
+| VC-07 | `CAPITAL-AI-OPS` | VC-16 | `CAPITAL-AI-FINTECH` |
+| VC-08 | `CAPITAL-AI-OPS` | VC-17 | `CAPITAL-AI-FINTECH` |
+| VC-09 | `CAPITAL-AI-DATA` | VC-18 | `CAPITAL-AI-OPS` |
 
 ## Authority findings
 
-| Artifact | Finding | QM action |
+| Artifact | Finding | V2 QM action |
 |---|---|---|
-| `ADR-0096` | Accepted Governance Control Plane; explicitly recognizes the current 18-stage value-chain projection and obsolete earlier 14-stage projection | Retain; subordinate QM to it |
-| `ESS-0005` | Correct read-only Quality Center architecture; previous documentation described the obsolete 14-stage projection | Amend the same ESS to 1.2.0 and align it to the existing 18-stage runtime; do not create a competing ESS |
-| `ADR-0016` | Historical architecture decision introducing ESS component specifications / Quality Center scope | Retain as history; no supersession required |
-| `ADR-0073` | Canonical CI consolidation/build/test authority | Retain; QM consumes evidence only |
-| `ADR-0047` | Authoritative GitHub pre-merge CI gate | Retain; QM does not redefine required checks |
-| `ESS-0012` | Documentation Governance authority | Retain; QM only checks QM documentation consistency |
-| `docs/frontend/FRONTEND_ARCH.md` | Canonical frontend source-tree/dependency/presentation authority | Retain; QM measures conformance/performance only |
-| `docs/frontend/FRONTEND_ROADMAP.md` | Canonical Frontend migration/UX roadmap; includes quality-oriented targets among product/migration work | Map only evidence/performance/accessibility subwork to QM; leave implementation sequencing at Frontend |
-| `FintechValueChainQualityProjection.ts` | Runtime already projects 18 stages read-only | Make documentation match runtime; no new projection architecture |
-| `securityPerformancePriorityRemediation.test.ts` | Existing lazy-loading / bundle-boundary regression evidence including prohibition of `vendor-react` parallel boundary | Reuse as QM-4 baseline |
+| `ADR-0096` | Accepted Governance Control Plane and 18-stage current-state model | retain; QM remains subordinate |
+| `ESS-0005` | canonical read-only Quality Center | retain/amend in place; no competing ESS or runtime |
+| `ADR-0103` | proposed QM project authority | clarify as independent assurance, not foreign remediation execution |
+| `ADR-0016` | historical ESS component-specification rationale | retain as history |
+| `ADR-0073` / `ADR-0047` | CI topology / pre-merge gate authority | retain; QM consumes evidence only |
+| `ESS-0012` | Documentation Governance authority | retain; QM verifies evidence only |
+| `docs/frontend/FRONTEND_ARCH.md` | Frontend structure/presentation authority | retain; QM measures conformance/performance only |
+| `FintechValueChainQualityProjection.ts` | existing 18-stage read-only projection | reuse; no new value-chain model |
+| `securityPerformancePriorityRemediation.test.ts` | existing frontend performance/bundle regression evidence | reuse under `QM-05`/`QM-07` |
 
 ## Architecture plausibility result
 
-No second Validator Registry, EventBus, Auth controller, Router/Public Shell, CI topology, release authority, scoring/ranking authority, frontend architecture or value-chain architecture is required for CAPITAL-AI-QM.
+No second Validator Registry, EventBus, Auth controller, Router/Public Shell, CI topology, release authority, Data Quality runtime, Market Data routing, UAI execution, scoring/ranking authority, frontend architecture or value-chain architecture is required for CAPITAL-AI-QM.
 
-The consolidation is therefore a **single-execution and evidence-coordination change**, not a new application architecture.
+The consolidation is therefore an **assurance/evidence sidecar change**, not a new application architecture.
 
-The existing architecture already separates the required responsibilities:
+Existing responsibility split:
 
 - Governance/lifecycle/supersession -> ADR-0096 and Governance registries;
 - Quality contracts/threshold authority -> ESS-0001-CONTRACTS Chapter 12;
 - Quality execution/aggregation -> ESS-0005 and `src/platform/Quality`;
 - CI topology/required checks -> ADR-0073 / ADR-0047;
-- Frontend presentation structure -> `FRONTEND_ARCH`;
-- Security/IAM/Compliance -> their existing domain authorities;
-- Financial runtime/scoring/ranking -> existing SC-MD-SPT/domain authorities;
-- QM project status/execution coordination -> proposed ADR-0103 after it becomes effective.
+- Frontend presentation -> `FRONTEND_ARCH`;
+- Data / Financial runtime / Scoring / Ranking -> existing domain authorities;
+- technical remediation -> Primary Owner project of the affected VC stage;
+- cross-cutting findings/evidence/verification -> proposed CAPITAL-AI-QM V2.
+
+## Workstream migration result
+
+The pre-V2 draft `QM-0..QM-9` model is replaced by:
+
+- `QM-01` Quality Criteria;
+- `QM-02` Quality Gates;
+- `QM-03` Quality Measurement;
+- `QM-04` Findings;
+- `QM-05` Regression;
+- `QM-06` Technical Debt;
+- `QM-07` Evidence;
+- `QM-08` Continuous Improvement.
+
+The old `HANDED_OFF_TO_QM` execution-transfer semantics are retired before activation. V2 uses:
+
+```text
+[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
+```
+
+QM retains finding/verification status; the target project retains remediation implementation status.
 
 ## Supersession policy
 
-Old ADR/ESS documents are not deleted merely because they are old. Under ADR-0096:
+No existing active ADR needs to be superseded by ADR-0103 at this baseline. Old documents are not deleted merely because they are old. Under ADR-0096:
 
 1. retain historical decisions for traceability;
 2. supersede only an actual authority overlap;
-3. provide an explicit supersedes edge and impact package;
-4. use suspended/historical/legacy-redirect states for non-authorizing remnants;
-5. never infer precedence only from a newer date or number.
+3. require an explicit supersedes edge and impact package;
+4. use suspended/historical/legacy-redirect for non-authorizing remnants;
+5. never infer authority from recency alone.
 
-At this baseline no existing ADR needs to be superseded by ADR-0103. ADR-0103 adds the missing **QM project execution coordination** while remaining subordinate to existing domain authorities.
+Current outcome:
 
-The concrete old-artifact outcome is therefore:
-
-- **retain** ADR-0016 as historical design rationale;
-- **retain** ADR-0047/ADR-0073 as CI authorities;
-- **retain** ADR-0096 as Governance Control Plane;
-- **retain and amend in place** ESS-0005 rather than replacing it;
-- **retain** ESS-0012 as Documentation Governance;
-- use already `historical`/`suspended` records such as ADR-0005/ESS-0004 as non-authorizing examples of the correct lifecycle mechanism;
-- perform future retirement only when QM-6/QM-9 finds a real semantic authority collision and the required supersession impact package exists.
+- retain ADR-0016 as historical design rationale;
+- retain ADR-0047/ADR-0073 as CI authorities;
+- retain ADR-0096 as Governance Control Plane;
+- retain/amend ESS-0005 in place;
+- retain ESS-0012 as Documentation Governance;
+- do not introduce any new DATA/Runtime/Scoring/Release authority under QM.
 
 ## Evidence baseline
 
-The Quality Center already has component contracts for mandatory validators, gates, score evidence, coverage, technical debt, documentation consistency, EventMesh publication and value-chain projection. A test file's presence is not execution evidence.
+The existing Quality Center already supports mandatory validators, gates, score evidence, coverage, technical debt, documentation consistency, EventMesh publication and 18-stage value-chain projection.
 
-Any CI/runtime result not verified against the exact observed commit is `NOT_AVAILABLE` for this baseline.
+A file/test/workflow's presence is not execution evidence. Any result not verified against its exact commit/runtime/environment identity is `NOT_AVAILABLE`.
 
-## State-of-the-art advisory baseline — 2026-08-31
+Every confirmed finding must include `finding_id`, `affected_vc_stage`, `target_project`, `severity`, `evidence`, `required_remediation`, `verification_gate` and lifecycle `status`.
 
-These external standards are **review lenses only** until an existing CAPITAL-AI authority explicitly adopts a requirement or threshold. They must not form a second governance hierarchy.
+## Advisory state-of-the-art baseline
 
-| External source | Current status observed | Recommended QM use | Authority boundary |
-|---|---|---|---|
-| OWASP ASVS | stable `5.0.0` | map web-application security verification evidence and gaps to stable versioned ASVS requirement IDs | Security domain decides remediation/policy; QM only reports evidence |
-| NIST SP 800-218 SSDF | final `v1.1`; Rev.1 / `v1.2` is an Initial Public Draft | keep v1.1 as the stable secure-development benchmark already reflected by the Agent Trust Root; monitor v1.2 as research input only | no automatic import of draft requirements |
-| SLSA | approved `v1.2` | evaluate existing source/build provenance and attestations against Source/Build tracks before inventing new supply-chain machinery | CI/Release authorities retain topology and release control |
-| W3C WCAG | WCAG 2.2 Recommendation | use AA success criteria as an accessibility verification lens for existing frontend work, including accessible authentication and target/focus behavior | Frontend/Compliance authorities decide normative adoption and remediation |
-| Core Web Vitals | current set: LCP, INP, CLS | collect reproducible field/lab evidence; advisory “good” references are LCP <= 2.5 s, INP <= 200 ms, CLS <= 0.1 at p75 | values are `NON_NORMATIVE_ADVISORY` until adopted by a CAPITAL-AI contract |
-| OpenTelemetry browser semantic conventions | `Development` | prefer existing telemetry; if browser Web Vital semantic conventions are used, pin/version them and treat the schema as experimental | no second telemetry/event bus and no unstable schema as normative contract |
+External standards remain review lenses only until an existing CAPITAL-AI authority explicitly adopts them. They do not create a second governance hierarchy.
 
-Official references used for this advisory review:
+| External source | Review use | Boundary |
+|---|---|---|
+| OWASP ASVS 5.0.0 | security-verification taxonomy | Security/domain Primary Owner performs remediation |
+| NIST SP 800-218 SSDF v1.1 | secure-development benchmark | no automatic import of draft requirements |
+| SLSA v1.2 | provenance/attestation crosswalk | CI/Release authorities retain topology/control |
+| WCAG 2.2 | accessibility verification lens | Frontend/Compliance authorities retain policy/implementation |
+| Core Web Vitals | reproducible field/lab performance evidence | external values remain advisory unless internally adopted |
+| OpenTelemetry browser conventions | telemetry interoperability reference | no second telemetry/EventBus; unstable schemas remain non-normative |
 
-- https://owasp.org/www-project-application-security-verification-standard/
-- https://csrc.nist.gov/pubs/sp/800/218/final
-- https://csrc.nist.gov/pubs/sp/800/218/r1/ipd
-- https://slsa.dev/spec/v1.2/
-- https://www.w3.org/TR/WCAG22/
-- https://web.dev/articles/vitals
-- https://opentelemetry.io/docs/specs/semconv/browser/
+## V2 validation baseline
 
-### State-of-the-art recommendations for the web application
+- QM remains independent: **DESIGN PASS**.
+- productive hot-path authority in QM: **NONE BY DESIGN**.
+- DATA ownership in QM: **NONE**.
+- VC-01..VC-18 routing: **DEFINED**.
+- missing evidence semantics: **NOT_AVAILABLE PRESERVED**.
+- foreign technical remediation in QM roadmap: **REMOVED BY V2 MIGRATION**.
+- Quality Center mutation authority: **NONE**.
 
-1. **Evidence before thresholds:** instrument and reproduce route/auth/render bottlenecks first; do not optimize from synthetic assumptions.
-2. **Field + lab separation:** use real-user/field evidence for user-experience status and deterministic lab traces for regression/root-cause analysis; record environment and percentile semantics.
-3. **Supply-chain provenance reuse:** strengthen the existing attestation pipeline toward SLSA v1.2 evidence instead of creating a second CI/release mechanism.
-4. **Security verification mapping:** map existing security test evidence to OWASP ASVS 5.0.0 where useful, but hand all policy/remediation decisions to Security.
-5. **Accessible authentication and interaction:** include WCAG 2.2 AA verification in Frontend quality evidence, especially auth/session flows, keyboard/focus, target size and error states.
-6. **Telemetry convergence:** correlate browser, auth, backend and build identities through existing observability/EventMesh surfaces; do not introduce an independent QM telemetry bus.
-7. **Version unstable external schemas:** any OpenTelemetry browser semantic-convention adoption remains adapter/version-pinned while its upstream status is Development.
-
-These recommendations are intended to modernize verification and evidence quality without changing existing CAPITAL-AI architecture ownership.
+These are design/baseline findings only; they do not claim unexecuted CI/runtime checks as PASS.
