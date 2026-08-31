@@ -5,7 +5,7 @@ export const ALPHA_VANTAGE_CREDENTIAL = 'ALPHA_VANTAGE_API_KEY' as const;
  *
  * The historical ALPHA_VANTAGE_KEY name is deliberately non-authorizing and is never
  * read here. Missing/blank canonical configuration must remain unavailable rather than
- * falling back to a legacy alias, VITE_* value, demo data or synthetic evidence.
+ * falling back to a legacy alias, frontend-exposed configuration, demo data or synthetic evidence.
  */
 export function resolveAlphaVantageCredential(
   environment: NodeJS.ProcessEnv = process.env,
