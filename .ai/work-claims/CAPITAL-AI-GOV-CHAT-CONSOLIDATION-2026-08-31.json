@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-CHAT-CONSOLIDATION-2026-08-31",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Consolidate all remaining CAPITAL-AI-GOV tasks and reusable governance artifacts from the current project chat history and terminal GOV branches into one fresh current-main project execution projection, while keeping foreign VC work as explicit handoffs and preserving the single Governance Control Plane.",
+  "workItemDE": "Alle verbleibenden CAPITAL-AI-GOV-Aufgaben und wiederverwendbaren Governance-Artefakte aus dem aktuellen Projekt-Chatverlauf und terminalen GOV-Branches in eine frische current-main Projekt-Ausfuehrungsprojektion konsolidieren; fremde VC-Arbeit bleibt expliziter Handoff und der einzige Governance Control Plane bleibt unveraendert.",
+  "startedAt": "2026-08-31T20:06:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "64a3415781a50177798cbe9404b1855735e5371a",
+  "pullRequest": null,
+  "branch": "agent/governance-chat-consolidation-20260831",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "branchConvention": "agent/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "PVC-05 Platform Director + cross-cutting Governance",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-CHAT-CONSOLIDATION-2026-08-31.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-CHAT-PR-CREATION-V2-2026-08-31.json",
+    "AGENTS.md",
+    "docs/governance/control-catalog.json",
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md",
+    "docs/projects/PROJECT_EXECUTION_MODEL.md",
+    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md",
+    "docs/projects/governance/**"
+  ],
+  "reuseInputs": [
+    "agent/governance-pvc-architecture-20260831",
+    "gov/project-architecture-pvc-20260831",
+    "gov/capital-ai-gov-v2-20260831",
+    "gov/capital-ai-gov-vc-integration-20260831",
+    "docs/capital-ai-gov-consolidation-20260831",
+    "agent/governance-chat-pr-20260831"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-OPS: DevelopmentChain project integration and OPS-owned PVC stages",
+    "CAPITAL-AI-DATA/CAPITAL-AI-FINTECH/CAPITAL-AI-DOC/CAPITAL-AI-QM/CAPITAL-AI-OPS: coordinated FVC namespace migration if approved",
+    "CAPITAL-AI-CLIENT/CAPITAL-AI-OPS: Admin Panel process/dependency visualization implementation"
+  ],
+  "authorityGuard": "No new ADR/ESS/AUTH identity is created. Existing AGENTS.md, ADR-0096, authority registry and control catalog remain the governance authority chain; CTRL-SDLC-BRANCH-001 is only clarified for the Owner-directed branch naming convention.",
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a separate exact-snapshot Human/Owner approval; merge remains Human-only."
+}
