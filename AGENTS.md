@@ -121,7 +121,11 @@ For an agent branch with exactly one new `.ai/work-claims/*.json` claim, use the
 
 The PR body contract MUST be checked **before** the external create mutation. Creating a non-conforming PR and relying on CI to repair it afterwards is prohibited because it produces avoidable failing runs and bypasses the intended pre-mutation governance boundary. If the client cannot read the current canonical template or cannot preserve its required markers/sections, PR creation stops fail-closed.
 
-### Mandatory post-PR chat handoff (`CTRL-SDLC-CHAT-HANDOFF-001`)
+### Mandatory chat handoffs (`CTRL-SDLC-CHAT-HANDOFF-001`)
+
+This stable control has two explicit triggers: `POST_PR_HANDOFF` and `FOREIGN_PROJECT_HANDOFF`. Both are coordination/transparency controls only and never grant merge, deployment, protected external-mutation, foreign-implementation, Security-verification or Domain-Ownership authority.
+
+#### Trigger 1 — `POST_PR_HANDOFF`
 
 After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by a prioritized **Nächste Schritte** section.
 
@@ -131,7 +135,13 @@ If more than two implementation or follow-up steps are available, the chat MUST 
 
 After either displayed step is completed, current `main`, open Pull Requests, changed-file/semantic overlap and applicable governance state MUST be re-read and the queue reprioritized. The previously displayed second step does not automatically become the new first step.
 
-The post-PR chat handoff is a coordination and transparency control only. It never grants merge, deployment or protected external-mutation authority.
+#### Trigger 2 — `FOREIGN_PROJECT_HANDOFF`
+
+Whenever analysis, planning, implementation or validation determines that the next required productive work step belongs to another canonical project or Primary Owner, the current chat MUST stop local foreign implementation and route the work explicitly rather than silently crossing ownership boundaries.
+
+The chat MUST resolve the target project and canonical target folder from current repository authority/project surfaces, report the affected VC/PVC and Primary Owner, set the foreign work to `REFERRED_NOT_EXECUTED`, emit `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`, and immediately generate a complete copyable target-project prompt. Unknown target owner or target folder is fail-closed as `REQUIRES_CORRELATION`; the agent MUST NOT guess.
+
+The visible handoff block, project-folder resolution order, prompt content contract, optional additive Security marker, multi-owner partitioning and prompt-size rules are canonical in `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Generated handoff prompts MUST preserve all required context and MUST be split only when necessary into parts of at most **400 lines**; required content may not be removed to fit the line limit.
 
 Avoid unnecessary paid GitHub CI/build/test runs before PR creation. After PR creation, use the smallest sufficient checks first and complete required checks before merge.
 
