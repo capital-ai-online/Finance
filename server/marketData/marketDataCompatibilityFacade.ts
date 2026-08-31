@@ -18,6 +18,22 @@ export interface MarketDataCompatibilityFacadeOptions {
   providerStages?: MarketDataProviderStage[];
 }
 
+function fallbackCompatibilityMetadata(asset: MarketDataAsset): MarketDataAsset {
+  const {
+    score: _score,
+    scoreEligible: _scoreEligible,
+    scoringEligible: _scoringEligible,
+    executionEligible: _executionEligible,
+    executionPriceEligible: _executionPriceEligible,
+    ...metadata
+  } = asset;
+  return {
+    ...metadata,
+    status: 'Fallback',
+    dataSource: 'fallback' as const,
+  };
+}
+
 function appendMissingFallbackAssets(
   collected: MarketDataAsset[],
   registryAssets: MarketDataAsset[],
@@ -25,11 +41,7 @@ function appendMissingFallbackAssets(
   const existingSymbols = new Set(collected.map(asset => asset.symbol.toUpperCase()));
   const missing = registryAssets
     .filter(asset => !existingSymbols.has(asset.symbol.toUpperCase()))
-    .map(asset => ({
-      ...asset,
-      status: 'Fallback',
-      dataSource: 'fallback' as const,
-    }));
+    .map(fallbackCompatibilityMetadata);
 
   return [...collected, ...missing];
 }
@@ -40,9 +52,10 @@ function appendMissingFallbackAssets(
  * Periodic refresh is deliberately restricted to evidence enrichment of assets that were actually
  * observed by a provider in the current refresh (`dataSource=live`). Catalog/bootstrap fallback
  * rows remain compatibility metadata and MUST NOT trigger downstream history/fundamental/scoring
- * provider calls. This prevents the full AssetRegistry from turning every 60s/periodic market-data
- * refresh into a global evidence crawl. New and long-tail assets use their per-symbol verified
- * contracts instead (ADR-0032 revalidation / SC-MD-SPT-0001).
+ * provider calls. Fallback rows also have score/execution-eligibility fields stripped so catalog
+ * bootstrap values cannot be mistaken for current scoring or execution authority. New and
+ * long-tail assets use their per-symbol verified contracts instead (ADR-0032 revalidation /
+ * SC-MD-SPT-0001).
  */
 export async function runMarketDataCompatibilityRefresh(
   options: MarketDataCompatibilityFacadeOptions,
