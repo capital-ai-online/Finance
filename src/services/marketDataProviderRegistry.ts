@@ -49,8 +49,8 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
   },
   {
     id: 'Stooq', assetClasses: ['stock', 'forex'], capabilities: ['history'], basePriority: 2,
-    enabled: true, activation: 'active', purpose: 'Traditional market history',
-    governanceNotes: 'Existing source. Keep fail-closed behavior when simulated/bootstrap history is detected.',
+    enabled: false, activation: 'reference-only', purpose: 'Retired legacy traditional-market reference source',
+    governanceNotes: 'Productive direct network access is disabled. Reintroduction requires a canonical MarketDataProvider adapter, ProviderMatrix authorization and MarketDataGateway routing; bootstrap/fallback rows are never evidence.',
   },
   {
     id: 'AlphaVantage', assetClasses: ['stock'], capabilities: ['fundamentals', 'history', 'quotes'], basePriority: 2,
