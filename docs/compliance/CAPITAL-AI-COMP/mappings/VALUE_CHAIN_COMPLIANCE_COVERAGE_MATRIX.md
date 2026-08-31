@@ -2,16 +2,18 @@
 
 **Document ID:** `DOC-COMP-VC-COVERAGE-2026-08-31`  
 **Role:** assessment mapping / non-authorizing  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
+**Baseline:** `main@5d3360c21ee51771495aab734ba81c2bdfd3d08b`  
 **Primary value-chain ownership by Compliance:** `[]`
 
 Compliance maps requirements and evidence across the value chain. It never becomes the technical Primary Owner of a stage.
 
+Main correlation on 2026-08-31 established `CAPITAL-AI-CLIENT` (`docs/projects/agent-client/`) as the single Primary Owner of `VC-01 — Agent Client`. Security, Privacy, Frontend, SEO/Marketing and AI sources may remain requirement/control/evidence providers for VC-01 concerns, but they are not parallel VC-01 Primary Owners. Confirmed VC-01 technical remediation is handed to `CAPITAL-AI-CLIENT`.
+
 | VC | Stage | Primary Owner / current technical authority | Compliance-relevant requirement groups | Existing evidence/control sources | Assessment posture | Open Compliance action |
 |---|---|---|---|---|---|---|
-| VC-01 | Agent Client | Development / Frontend / Security depending concern | REQ-COMP-002, 009, 015, 019, 021, 023 | AGENTS, Frontend authority, S1 evidence, privacy APIs, transparency material | PARTIALLY_COMPLIANT / mixed evidence | assess current UI/auth/privacy/transparency evidence; hand off technical gaps |
+| VC-01 | Agent Client | **CAPITAL-AI-CLIENT** | REQ-COMP-002, 009, 015, 019, 021, 023 | `docs/projects/agent-client/**`, AGENTS, Frontend authority, S1 evidence, privacy APIs, transparency/SEO-GM material | PARTIALLY_COMPLIANT / mixed evidence | assess client-facing auth/privacy/transparency evidence; confirmed technical gap → `CAPITAL-AI-CLIENT` handoff; source-domain evidence remains referenced |
 | VC-02 | Controlled Implementation | Development / Governance | REQ-COMP-001, 003..007, 010..012, 024..028 | AGENTS, Control Catalog, ADR/ESS registries, GitHub branch/PR/CI evidence, standards crosswalk | PARTIALLY_COMPLIANT; final candidate gates pending | final snapshot assessment; no duplicate SDLC/Governance controls |
 | VC-03 | Documentary Engine | Documentary | REQ-COMP-011, 012, 035 | ESS-0010/0012, document registry, lifecycle policy, Documentary evidence | PARTIALLY_COMPLIANT | verify document identity/lifecycle/evidence references; technical gap → DOC handoff |
 | VC-04 | Supervisor | Supervisor / VC-COV mapped owner | REQ-COMP-029, 033 | ESS-0002, VC-COV inventory/evidence | NOT_ASSESSED | assess finding/escalation evidence only; implementation stays target owner |
@@ -37,5 +39,7 @@ For every row, Compliance may set applicability, map controls, assess evidence, 
 ```text
 [COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]
 ```
+
+For `VC-01`, `<TARGET_PROJECT>` is `CAPITAL-AI-CLIENT` for technical Agent-Client remediation. Requirement/control/evidence source domains remain traceable but do not replace that Primary Owner.
 
 The corresponding target roadmap/reference is recorded in `COMPLIANCE_HANDOFF_REGISTER.md`.
