@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-DATA-ALPHA-RUNTIME-CORRELATION-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate and remediate remaining DATA-owned Alpha Vantage runtime consumers so ALPHA_VANTAGE_API_KEY is the sole effective runtime credential before OPS migrates production secrets.",
+  "workItemDE": "Verbleibende DATA-owned Alpha-Vantage-Runtime-Consumer korrelieren und so haerten, dass ALPHA_VANTAGE_API_KEY vor der OPS-Production-Secret-Migration die allein wirksame Runtime-Credential-Identitaet ist.",
+  "startedAt": "2026-09-01T00:00:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "9a794dcda380676da915160cd2f61b81035b6516",
+  "pullRequest": null,
+  "branch": "agent/data-alpha-runtime-correlation-20260901",
+  "project": "CAPITAL-AI-DATA",
+  "projectFolder": "data",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Primary Project Value Chain owner for PVC-09 UAI/Data Ingestion, PVC-10 Evidence Management and PVC-11 Data Quality",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-DATA-ALPHA-RUNTIME-CORRELATION-2026-09-01.json",
+    "server/marketData/alphaVantageCredential.ts",
+    "server/routes/alphaVantageRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "server/routes/registerMarketDataAdapters.ts",
+    "server/stockFundamentals.ts",
+    "tests/server/alphaVantageRoutes.contract.test.ts",
+    "tests/server/marketDataAdapterComposition.contract.test.ts",
+    "tests/unit/stockFundamentals.test.ts",
+    "tests/unit/providerSecurityRemediation.test.ts"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-OPS: scripts/security/secretFileManifest.ts, Render/production secret provisioning/removal and production deployment mutation",
+    "CAPITAL-AI-CLIENT or frontend owner: user-facing legacy Alpha Vantage wording in src/components/Charts.tsx",
+    "CAPITAL-AI-FINTECH: scoring/ranking semantics beyond credential-safe DATA input",
+    "CAPITAL-AI-SEC: independent Security verification and CLOSED/VERIFIED lifecycle decisions"
+  ],
+  "authorityGuard": "ALPHA_VANTAGE_API_KEY is the sole productive credential identity. ALPHA_VANTAGE_KEY remains non-authorizing and must never satisfy effective runtime readiness. No alias fallback, synthetic data, zero substitution, fabricated evidence, silent DQ PASS, scoring migration, second data plane, direct main mutation or foreign production mutation.",
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires fresh exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only."
+}
