@@ -97,6 +97,38 @@ describe('governance authority consistency', () => {
     expect(chain).toContain('current `main`, open Pull Requests, changed-file/semantic overlap');
   });
 
+  it('reuses the same chat-handoff control for foreign-project routing and bounded copyable prompts', () => {
+    const agents = read('AGENTS.md');
+    const handoffContract = read('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
+    const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
+    const sameIdControls = controlCatalog.controls.filter(
+      (item) => item.controlId === 'CTRL-SDLC-CHAT-HANDOFF-001',
+    );
+
+    expect(sameIdControls).toHaveLength(1);
+    expect(handoff.requirement).toContain('POST_PR_HANDOFF');
+    expect(handoff.requirement).toContain('FOREIGN_PROJECT_HANDOFF');
+    expect(handoff.requirement).toContain('REFERRED_NOT_EXECUTED');
+    expect(handoff.requirement).toContain('REQUIRES_CORRELATION');
+    expect(handoff.requirement).toMatch(/at most 400 lines/i);
+    expect(handoff.evidence).toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
+
+    expect(agents).toContain('Trigger 1 — `POST_PR_HANDOFF`');
+    expect(agents).toContain('Trigger 2 — `FOREIGN_PROJECT_HANDOFF`');
+    expect(agents).toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
+    expect(agents).toContain('parts of at most **400 lines**');
+
+    expect(handoffContract).toContain('PROJECT HANDOFF REQUIRED');
+    expect(handoffContract).toContain('Target Project Folder: <TARGET_FOLDER>');
+    expect(handoffContract).toContain('Status: REFERRED_NOT_EXECUTED');
+    expect(handoffContract).toContain('[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]');
+    expect(handoffContract).toContain('Maximum: **400 lines per prompt part**');
+    expect(handoffContract).toContain('TEIL 1 VON N');
+    expect(handoffContract).toContain('REQUIRES_CORRELATION');
+    expect(handoffContract).toContain('The Security marker is additive only.');
+    expect(handoffContract).toContain('It does not authorize:');
+  });
+
   it('requires diff and impact analysis before semantic supersession becomes effective', () => {
     const authorityPolicy = read('docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md');
     const supersession = control('CTRL-GOV-AUTH-002');
