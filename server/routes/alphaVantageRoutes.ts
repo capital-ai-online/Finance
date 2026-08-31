@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { orchestrator } from '../../src/lib/requestOrchestrator';
 import { providerErrorMessage, redactProviderCredentialText } from '../../src/platform/MarketData/providerCredentialRedaction';
+import {
+  ALPHA_VANTAGE_CREDENTIAL,
+  resolveAlphaVantageCredential,
+} from '../marketData/alphaVantageCredential';
+
+export { ALPHA_VANTAGE_CREDENTIAL, resolveAlphaVantageCredential } from '../marketData/alphaVantageCredential';
 
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP'];
-export const ALPHA_VANTAGE_CREDENTIAL = 'ALPHA_VANTAGE_API_KEY' as const;
-
-export function resolveAlphaVantageCredential(environment: NodeJS.ProcessEnv = process.env): string | undefined {
-  const value = environment[ALPHA_VANTAGE_CREDENTIAL]?.trim();
-  return value || undefined;
-}
 
 export const alphaVantageRouter = Router();
 

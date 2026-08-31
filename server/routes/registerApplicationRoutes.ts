@@ -34,6 +34,7 @@ import { createMarketSentimentRouter } from './marketSentimentRoutes';
 import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
 import { createMtaStsRouter } from './mtaStsRoutes';
 import { createBusinessReadinessRouter } from './businessReadinessRoutes';
+import { registerMarketDataAdapters } from './registerMarketDataAdapters';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 
 export interface ApplicationRouteProviders {
@@ -63,6 +64,11 @@ export function registerApplicationRoutes(
 
   registerTrailingSlashNormalize(app);
   installProductionSoft404Intercept();
+
+  // DATA-owned external market-data HTTP adapters are mounted here so the canonical
+  // fail-closed provider boundary takes precedence over any later compatibility route
+  // declarations that still remain in server.application.ts.
+  registerMarketDataAdapters(app);
 
   // Operations readiness: `/healthz` remains the platform liveness contract owned by
   // server.application.ts. This router adds the full non-secret projection under

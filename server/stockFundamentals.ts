@@ -3,6 +3,11 @@
 // for fields that OVERVIEW does not provide (notably leverage and free-cash-flow-per-share).
 
 import { getCleanEnv } from './env';
+import {
+  ALPHA_VANTAGE_CREDENTIAL,
+  resolveAlphaVantageCredential,
+} from './marketData/alphaVantageCredential';
+import { providerErrorMessage } from '../src/platform/MarketData/providerCredentialRedaction';
 import { recordProviderHealth } from '../src/platform/Supervisor/providerHealth';
 import type { FinancialFieldProvenance } from '../src/types/financialProvenance';
 
@@ -94,10 +99,10 @@ async function fetchAlphaVantageFundamentals(symbol: string, key: string): Promi
     });
 
     return { peRatio, dividendYieldPct, profitMarginPct, epsTtm, fetchedAt, provenance };
-  } catch (err: any) {
+  } catch (err: unknown) {
     recordProviderHealth({
       provider: 'AlphaVantage', capability: 'stock-fundamentals', state: 'unavailable',
-      message: err?.message || String(err),
+      message: providerErrorMessage(err),
     });
     return null;
   }
@@ -139,8 +144,11 @@ async function fetchFmpFundamentals(symbol: string, key: string): Promise<StockF
     });
 
     return { peRatio, dividendYieldPct, profitMarginPct, debtToEquity, epsTtm, freeCashFlowPerShare, fetchedAt, provenance };
-  } catch (err: any) {
-    recordProviderHealth({ provider: 'FMP', capability: 'stock-fundamentals', state: 'unavailable', message: err?.message || String(err) });
+  } catch (err: unknown) {
+    recordProviderHealth({
+      provider: 'FMP', capability: 'stock-fundamentals', state: 'unavailable',
+      message: providerErrorMessage(err),
+    });
     return null;
   }
 }
@@ -165,15 +173,17 @@ export async function ensureFundamentalsFresh(symbol: string): Promise<void> {
   const s = symbol.toUpperCase().trim();
   if (isFresh(cache.get(s))) return;
 
-  const alphaKey = getCleanEnv('ALPHA_VANTAGE_KEY');
+  const alphaKey = resolveAlphaVantageCredential();
   const fmpKey = getCleanEnv('FMP_API_KEY');
-  if (!alphaKey && !fmpKey) {
+
+  if (!alphaKey) {
     recordProviderHealth({
       provider: 'AlphaVantage', capability: 'stock-fundamentals', state: 'unavailable',
-      message: 'Neither ALPHA_VANTAGE_KEY nor FMP_API_KEY is configured.',
+      message: `${ALPHA_VANTAGE_CREDENTIAL} is not configured.`,
     });
-    return;
   }
+
+  if (!alphaKey && !fmpKey) return;
 
   const alpha = alphaKey ? await fetchAlphaVantageFundamentals(s, alphaKey) : null;
   const fmp = fmpKey ? await fetchFmpFundamentals(s, fmpKey) : null;
