@@ -9,6 +9,12 @@
  *   C — application, tests, scripts, non-deploy config
  *   R — runtime / dependency / docker / deployment surface
  *
+ * Production-scope invariant:
+ *   Production Build/CSP/Predeploy/Docker run only when the changed PR scope can
+ *   affect buildability, runtime, deployability or production artifacts.
+ *   Known non-production validation/tooling surfaces receive only their scoped
+ *   validators. Unknown non-doc paths remain fail-closed as production-impacting.
+ *
  * Highest class among changed paths wins. Unknown non-doc paths escalate to C.
  */
 
@@ -65,6 +71,21 @@ export function isDependencyManifest(filePath) {
 }
 
 /**
+ * Paths that are deterministically validation/tooling-only and therefore do not
+ * require a production artifact build by themselves. Runtime/deploy workflow
+ * paths are intentionally excluded and continue to fail closed as class R.
+ */
+export function isKnownNonProductionValidationPath(filePath) {
+  const p = normalizePath(filePath);
+  if (isDocsPath(p)) return true;
+  if (p.startsWith('tests/')) return true;
+  if (p.startsWith('scripts/pr/')) return true;
+  if (p.startsWith('scripts/governance/')) return true;
+  if (p.startsWith('.github/') && !isRuntimeDeployPath(p)) return true;
+  return false;
+}
+
+/**
  * @param {string[]} files
  * @param {{ forceFull?: boolean }} [options]
  */
@@ -74,6 +95,7 @@ export function classifyChangedFiles(files, options = {}) {
   if (options.forceFull) {
     return {
       class: 'R',
+      production_impact: true,
       node: true,
       lint: true,
       unit: true,
@@ -93,6 +115,7 @@ export function classifyChangedFiles(files, options = {}) {
   if (normalized.length === 0) {
     return {
       class: 'D',
+      production_impact: false,
       node: false,
       lint: false,
       unit: false,
@@ -142,6 +165,7 @@ export function classifyChangedFiles(files, options = {}) {
   if (!hasNonDocs) {
     return {
       class: 'D',
+      production_impact: false,
       node: false,
       lint: false,
       unit: false,
@@ -158,7 +182,8 @@ export function classifyChangedFiles(files, options = {}) {
 
   const klass = hasRuntime ? 'R' : 'C';
 
-  // Class C defaults: full app validation without docker image
+  // Class C defaults fail closed: unknown non-doc changes may affect the production artifact.
+  let productionImpact = true;
   let node = true;
   let lint = true;
   let unit = true;
@@ -170,35 +195,32 @@ export function classifyChangedFiles(files, options = {}) {
   const workflow_security = hasWorkflow;
   const npm_advisory = true;
 
-  // Narrow C: only tests → unit + node, skip build/predeploy when clearly test-only
+  // Narrow C: only tests → test the scope, but do not rebuild production artifacts.
   const onlyTests = normalized.every(
     (f) => isDocsPath(f) || f.startsWith('tests/') || f.startsWith('.ai/'),
   );
   if (klass === 'C' && onlyTests) {
+    productionImpact = false;
     build = false;
     predeploy = false;
     audit = false;
   }
 
-  // Narrow C: only scripts/pr or scripts without src → still lint/unit via node test for *.mjs if present
-  const onlyPrScripts = normalized.every(
-    (f) =>
-      isDocsPath(f) ||
-      f.startsWith('scripts/pr/') ||
-      f.startsWith('.ai/') ||
-      f.startsWith('.github/'),
-  );
-  if (klass === 'C' && onlyPrScripts && !hasRuntime) {
-    // Keep node for running classify tests / validators; skip production build
+  // Narrow C: deterministic non-production validation/tooling surface.
+  const onlyNonProductionValidation = normalized.every(isKnownNonProductionValidationPath);
+  if (klass === 'C' && onlyNonProductionValidation && !hasRuntime) {
+    productionImpact = false;
     build = false;
     predeploy = false;
     audit = false;
-    // unit: run npm test still catches scripts/pr/*.test.mjs if wired; keep true for safety
+    // Keep Node/Lint/Unit validation for tooling code; these are scoped technical
+    // validators, not production artifact Build/CSP/Predeploy checks.
     unit = true;
     lint = true;
   }
 
   if (klass === 'R') {
+    productionImpact = true;
     node = true;
     lint = true;
     unit = true;
@@ -211,6 +233,7 @@ export function classifyChangedFiles(files, options = {}) {
 
   return {
     class: klass,
+    production_impact: productionImpact,
     node,
     lint,
     unit,
@@ -240,6 +263,7 @@ export function writeGithubOutput(scope) {
   const outputPath = process.env.GITHUB_OUTPUT;
   const lines = [
     `class=${scope.class}`,
+    `production_impact=${scope.production_impact}`,
     `node=${scope.node}`,
     `lint=${scope.lint}`,
     `unit=${scope.unit}`,
@@ -279,7 +303,7 @@ function main() {
   }
 
   const scope = classifyChangedFiles(files, { forceFull });
-  console.log(`[classifyPrScope] class=${scope.class} files=${forceFull ? '(force-full)' : files.length}`);
+  console.log(`[classifyPrScope] class=${scope.class} production_impact=${scope.production_impact} files=${forceFull ? '(force-full)' : files.length}`);
   console.log(JSON.stringify(scope, null, 2));
   writeGithubOutput(scope);
 }
