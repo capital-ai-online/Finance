@@ -1,8 +1,8 @@
 # CAPITAL-AI Konsolidierte Gesamtroadmap
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
-Stand: 2026-08-30  
-Repository-Baseline: `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc`  
+Stand: 2026-08-31  
+Repository-Baseline: `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
 Owner: SvenKulessa  
 Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 
@@ -11,6 +11,8 @@ Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 Dieses Dokument ersetzt den bisherigen reinen Portfolio-Index durch eine vollständige, dokumentenbasierte Ausführungsroadmap. Es führt alle noch offenen Roadmaps, die DEVELOPMENT Chain M0–M10, die P0–P3-Prioritäten und begrenzte Systemadministrator-Prototypaufträge zusammen.
 
 Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder Human/Owner-Authority. Ein Status `DOCUMENTATION READY` oder `PROTOTYPE READY` erzeugt keine Mutationsberechtigung.
+
+**FinTech V2 Integration 2026-08-31:** `CAPITAL-AI-FINTECH` (`docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md`) konsolidiert die Ziel-Ownership für Financial Feature Engineering, Scoring Models, Scoring Orchestration, Domain Executors, Canonical Scoring und Ranking/Decision Support. Die V2-Zielnummerierung VC-12..VC-18 kollidiert noch mit der aktuellen kanonischen SPT/QM-Projektion; deshalb bleibt sie eine explizite Migrationsprojektion mit DATA/OPS/FE/QM/SEC/COMP-Handoffs und überschreibt aktuelle Stage-Semantik nicht isoliert.
 
 **Domain-Update 2026-08-15:** SEO Management und Marketing Agent sind in **SEO-GM-ROADMAP-0002** (`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`) zu einem Single Point of Trust konsolidiert. Die früheren Dateien `docs/seo/SEO_MANAGEMENT_ROADMAP.md` und `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` sind SUPERSEDED.
 
@@ -28,7 +30,7 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 4. `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001) für DC+SA-Verbindung;
 5. `DEVELOPMENT_CHAIN_ROADMAP.md` (Detail-Phasen);
 6. diese Gesamtroadmap (Portfolio-Index);
-7. Fachroadmaps (für SEO/Google Marketing: **SEO-GM-ROADMAP-0002**; für Kettenlücken ohne Fachroadmap: **ROADMAP-VC-COV-HARDEN-2026-08-30**);
+7. Fachroadmaps, einschließlich `docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md` als FinTech-Ausführungs-/Ownership-Projektion innerhalb ihrer Grenzen;
 8. historische oder als Legacy/SUPERSEDED markierte Indizes.
 
 Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
@@ -37,6 +39,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
+| **FINTECH** | **CAPITAL-AI FinTech — Financial Scoring & Ranking Ownership** | **`docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md`** | **ACTIVE — V2 OWNERSHIP MIGRATION**; Registry/Dispatcher/CanonicalScore core wird wiederverwendet; Ranking ownership target explizit; VC-Stage-Reassignment und FE-local Ranking cleanup sind cross-project pending | FinTech-PR nur für Projekt-/Ownership-/Handoff-Scope; danach separate DATA/QM/OPS/FE Änderungen nach jeweiligem Handoff |
 | **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + Inventar-Pack + `VC_H_IMPLEMENTATION_PACK_2026-08-30.md` + Registry-Insert-Payload** | **ACTIVE — COVERAGE**; Inventar *-0 auf main (#610); Payload + *-1-Spezifikation in synchronisiertem OPEN-STEPS-BIND; physischer Registry-Insert nicht ausgeführt | Exact-Head-Checks und Human-Review für diesen D-PR; Registry-Mutation nur als separater Scope; Runtime anschließend auf frischem Branch |
 | **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
@@ -69,10 +72,12 @@ Nur der Owner kann HIGH/CRITICAL-, Produktions-, IAM-, Billing-, Datenbank-, Dep
 
 Der Inhalt der Abschnitte 5–13 aus dem Stand 2026-08-14 bleibt in Substanz gültig (M5/M5A/M6/M7 Evidence, P0–P3, SA-Prototypen, Branch-Lifecycle).
 
+**FinTech Ergänzung:** FinTech-Ausführung folgt `docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md`; fremde DATA/OPS/FE/QM/SEC/COMP-Implementierung erfolgt nur über die dort dokumentierten Cross-Project-Handoffs und separate Projekt-PRs.
+
 **Anpassung P3-2:** SEO/Marketing-Baseline ist nicht mehr „parallel read-only Q1–Q6/MA0“, sondern folgt **SEO-GM-ROADMAP-0002** (Single Point of Trust). SA-P11 bleibt read-only Revalidator gegen die neue kanonische Roadmap, ohne Publikation.
 
 **Ausführungsbacklog Position 11:** „SEO/MA/Monetarisierung“ → Ausführung ausschließlich unter SEO-GM-ROADMAP-0002 und jeweiliger ADR/ESS-Authority.
 
 ## Abschlusskriterien (unverändert im Kern)
 
-Die Roadmap ist erst abgeschlossen, wenn M0–M10 VERIFIED PASS, P0/P1 geschlossen oder akzeptiert, keine unowned HIGH/CRITICAL, produktive Mutationen Owner-genehmigt, Traceability vollständig, **offene Fachroadmaps abgeschlossen, superseded oder archiviert** (SEO+MA: durch SEO-GM-ROADMAP-0002 erfüllt sobald dessen DoD erreicht ist; Kettenlücken: durch ROADMAP-VC-COV-HARDEN-2026-08-30 erfüllt sobald dessen Programm-Exit erreicht ist), und alle gemergten Arbeitsbranches gelöscht sind.
+Die Roadmap ist erst abgeschlossen, wenn M0–M10 VERIFIED PASS, P0/P1 geschlossen oder akzeptiert, keine unowned HIGH/CRITICAL, produktive Mutationen Owner-genehmigt, Traceability vollständig, offene Fachroadmaps abgeschlossen, superseded oder archiviert und alle gemergten Arbeitsbranches gelöscht sind. Für FINTECH gilt zusätzlich: V2 Stage-Ownership darf erst als kanonisch VERIFIED gelten, wenn SPT, DATA, QM und OPS dieselben Stage-Semantiken abbilden und FE keine eigene Ranking-Business-Authority mehr ausübt.
