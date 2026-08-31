@@ -12,7 +12,7 @@ Dieses Dokument ersetzt den bisherigen reinen Portfolio-Index durch eine vollst�
 
 Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder Human/Owner-Authority. Ein Status `DOCUMENTATION READY`, `PROTOTYPE READY` oder `QUALITY READY` erzeugt keine Mutations-, Merge-, Release- oder Deploymentberechtigung.
 
-**Quality-Management-Konsolidierung 2026-08-31:** `docs/projects/quality-management/ROADMAP.md` ist im Branch `docs/qm-project-consolidation-20260831` als vorgeschlagener Single Point of Execution fuer ausschliesslich qualitaetsbezogene Arbeitspakete angelegt. Aktivierung erfolgt erst durch Human Merge / Annahme von ADR-0103. Fachroadmaps behalten Domain-Kontext und Mutation Authority. Nach einem expliziten `HANDED_OFF_TO_QM` darf der operative Status des uebernommenen Quality-Unterpunkts nicht parallel in der Fachroadmap gepflegt werden. Das alleinige Cross-Roadmap-Mapping liegt in `docs/projects/quality-management/TAKEOVER_INDEX.md`.
+**Quality-Management-V2 2026-08-31:** `docs/projects/quality-management/PROJECT_CONTRACT_V2.md` und `ROADMAP.md` definieren im Branch `docs/qm-project-consolidation-20260831` die vorgeschlagene unabhaengige, cross-cutting Quality-Assurance-Funktion. Aktivierung erfolgt erst durch Human Merge / Annahme von ADR-0103. QM beobachtet VC-01 bis VC-18, besitzt aber keine produktive VC-Stufe. Technische Remediation verbleibt beim Primary Owner der betroffenen Stufe und wird ueber `[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` referiert. QM pflegt Finding-/Verification-Status; das Zielprojekt pflegt Remediation-Execution. Das Mapping liegt in `docs/projects/quality-management/TAKEOVER_INDEX.md`.
 
 **Domain-Update 2026-08-15:** SEO Management und Marketing Agent sind in **SEO-GM-ROADMAP-0002** (`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`) zu einem Single Point of Trust konsolidiert. Die früheren Dateien `docs/seo/SEO_MANAGEMENT_ROADMAP.md` und `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` sind SUPERSEDED.
 
@@ -31,16 +31,16 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 5. `DEVELOPMENT_CHAIN_ROADMAP.md` (Detail-Phasen);
 6. diese Gesamtroadmap (Portfolio-Index);
 7. Fachroadmaps (für SEO/Google Marketing: **SEO-GM-ROADMAP-0002**; für Kettenlücken ohne Fachroadmap: **ROADMAP-VC-COV-HARDEN-2026-08-30**);
-8. nach ADR-0103-Aktivierung: `docs/projects/quality-management/ROADMAP.md` fuer den explizit uebernommenen Quality-Execution-Anteil; die jeweilige Domain Authority bleibt fuer fachliche Mutation vorrangig;
+8. nach ADR-0103-Aktivierung: `docs/projects/quality-management/ROADMAP.md` fuer unabhaengige Quality-Assurance, Findings und Verifikation; die jeweilige Primary-Owner-/Domain-Authority bleibt fuer technische Remediation vorrangig;
 9. historische oder als Legacy/SUPERSEDED markierte Indizes.
 
-Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Ein QM-Takeover verschiebt keine Domain Authority.
+Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Ein QM-Finding oder Handoff verschiebt keine Domain Authority.
 
 ## 3. Konsolidiertes Portfolio
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| **QM** | **Quality Management** | **`docs/projects/quality-management/ROADMAP.md` + `TAKEOVER_INDEX.md`** | **PROPOSED — ACTIVATES WITH ADR-0103 ACCEPTANCE / HUMAN MERGE**; ESS-0005 bleibt technische read-only Quality-Center-Authority | QM-0/QM-1 Konsolidierung und Evidence-Revalidierung; keine Domain-Mutation oder Parallelarchitektur |
+| **QM** | **Quality Management / Independent Assurance** | **`docs/projects/quality-management/PROJECT_CONTRACT_V2.md` + `ROADMAP.md` + `TAKEOVER_INDEX.md`** | **PROPOSED — ACTIVATES WITH ADR-0103 ACCEPTANCE / HUMAN MERGE**; QM besitzt 0 produktive VC-Stufen; ESS-0005 bleibt technische read-only Quality-Center-Authority | V2-Workstreams `QM-01..QM-08` revalidieren; Findings nur mit VC-/Primary-Owner-Routing; keine fremde technische Remediation |
 | **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + Inventar-Pack + `VC_H_IMPLEMENTATION_PACK_2026-08-30.md` + Registry-Insert-Payload** | **ACTIVE — COVERAGE**; Inventar *-0 auf main (#610); Payload + *-1-Spezifikation in synchronisiertem OPEN-STEPS-BIND; physischer Registry-Insert nicht ausgeführt | Exact-Head-Checks und Human-Review für diesen D-PR; Registry-Mutation nur als separater Scope; Runtime anschließend auf frischem Branch |
 | **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
@@ -69,6 +69,8 @@ Eine Agentenanfrage ist keine Genehmigung. Vor jeder sicherheits-, datenintegrit
 
 Nur der Owner kann HIGH/CRITICAL-, Produktions-, IAM-, Billing-, Datenbank-, Deployment-, Secret-, DNS- oder externe Plattformmutation genehmigen. Provider- oder Modellidentität erzeugt keine Authority.
 
+QM-Findings sind keine Mutationsgenehmigung. Bei einem bestaetigten technischen Finding wird der zuständige Primary Owner ueber `[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` adressiert. Die Umsetzung erfolgt im Zielprojekt; QM fuehrt ausschliesslich die anschliessende Verifikation durch.
+
 ## 5–13. DEVELOPMENT Chain, Prioritäten, Prototyp-Vertrag, Abhängigkeiten
 
 Der Inhalt der Abschnitte 5–13 aus dem Stand 2026-08-14 bleibt in Substanz gültig (M5/M5A/M6/M7 Evidence, P0–P3, SA-Prototypen, Branch-Lifecycle).
@@ -77,6 +79,6 @@ Der Inhalt der Abschnitte 5–13 aus dem Stand 2026-08-14 bleibt in Substanz gü
 
 **Ausführungsbacklog Position 11:** „SEO/MA/Monetarisierung“ → Ausführung ausschließlich unter SEO-GM-ROADMAP-0002 und jeweiliger ADR/ESS-Authority.
 
-## Abschlusskriterien (unverändert im Kern)
+## Abschlusskriterien
 
-Die Roadmap ist erst abgeschlossen, wenn M0–M10 VERIFIED PASS, P0/P1 geschlossen oder akzeptiert, keine unowned HIGH/CRITICAL, produktive Mutationen Owner-genehmigt, Traceability vollständig, **offene Fachroadmaps abgeschlossen, superseded oder archiviert** (SEO+MA: durch SEO-GM-ROADMAP-0002 erfüllt sobald dessen DoD erreicht ist; Kettenlücken: durch ROADMAP-VC-COV-HARDEN-2026-08-30 erfüllt sobald dessen Programm-Exit erreicht ist), alle explizit uebernommenen Quality-Unterpunkte ohne Parallelstatus im CAPITAL-AI-QM gepflegt werden, und alle gemergten Arbeitsbranches gelöscht sind.
+Die Roadmap ist erst abgeschlossen, wenn M0–M10 VERIFIED PASS, P0/P1 geschlossen oder akzeptiert, keine unowned HIGH/CRITICAL, produktive Mutationen Owner-genehmigt, Traceability vollständig, offene Fachroadmaps abgeschlossen/superseded/archiviert, QM bestaetigte Findings explizite Primary Owner besitzen, keine fremde technische Execution in QM verbleibt, Quality Center read-only/non-authorizing bleibt und alle gemergten Arbeitsbranches gelöscht sind.
