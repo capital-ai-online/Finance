@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   classifyChangedFiles,
   isDocsPath,
+  isKnownNonProductionValidationPath,
   isRuntimeDeployPath,
   isWorkflowPath,
 } from './classifyPrScope.mjs';
@@ -32,19 +33,33 @@ describe('isWorkflowPath', () => {
   });
 });
 
+describe('isKnownNonProductionValidationPath', () => {
+  it('recognizes deterministic validation/tooling surfaces', () => {
+    assert.equal(isKnownNonProductionValidationPath('tests/unit/x.test.ts'), true);
+    assert.equal(isKnownNonProductionValidationPath('scripts/pr/classifyPrScope.mjs'), true);
+    assert.equal(isKnownNonProductionValidationPath('scripts/governance/validate.mjs'), true);
+    assert.equal(isKnownNonProductionValidationPath('.github/workflows/pr-governance.yml'), true);
+    assert.equal(isKnownNonProductionValidationPath('.github/workflows/ci.yml'), false);
+    assert.equal(isKnownNonProductionValidationPath('src/app.ts'), false);
+  });
+});
+
 describe('classifyChangedFiles', () => {
-  it('class D for docs-only', () => {
+  it('class D for docs-only without production impact', () => {
     const s = classifyChangedFiles(['docs/a.md', '.ai/x.json']);
     assert.equal(s.class, 'D');
+    assert.equal(s.production_impact, false);
     assert.equal(s.node, false);
     assert.equal(s.unit, false);
+    assert.equal(s.build, false);
     assert.equal(s.docker, false);
     assert.equal(s.workflow_security, false);
   });
 
-  it('class C for src changes without docker', () => {
+  it('class C for src changes with production impact but without docker', () => {
     const s = classifyChangedFiles(['src/app.ts']);
     assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, true);
     assert.equal(s.node, true);
     assert.equal(s.lint, true);
     assert.equal(s.unit, true);
@@ -56,6 +71,7 @@ describe('classifyChangedFiles', () => {
   it('class R for Dockerfile', () => {
     const s = classifyChangedFiles(['Dockerfile']);
     assert.equal(s.class, 'R');
+    assert.equal(s.production_impact, true);
     assert.equal(s.docker, true);
     assert.equal(s.docker_image, true);
     assert.equal(s.audit, true);
@@ -64,39 +80,79 @@ describe('classifyChangedFiles', () => {
   it('class R for package.json', () => {
     const s = classifyChangedFiles(['package.json']);
     assert.equal(s.class, 'R');
+    assert.equal(s.production_impact, true);
     assert.equal(s.audit, true);
   });
 
-  it('test-only narrows build/predeploy', () => {
+  it('test-only keeps scoped tests but skips production build/predeploy', () => {
     const s = classifyChangedFiles(['tests/unit/foo.test.ts']);
     assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, false);
     assert.equal(s.unit, true);
     assert.equal(s.build, false);
     assert.equal(s.predeploy, false);
   });
 
-  it('workflow change sets workflow_security', () => {
+  it('governance tooling skips production build/predeploy', () => {
+    const s = classifyChangedFiles([
+      'scripts/governance/validateGovernanceControlPlane.mjs',
+      'docs/governance/PR_CHECK_CLASSIFICATION.md',
+    ]);
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, false);
+    assert.equal(s.node, true);
+    assert.equal(s.unit, true);
+    assert.equal(s.build, false);
+    assert.equal(s.predeploy, false);
+  });
+
+  it('non-deploy workflow change sets workflow security without production build', () => {
     const s = classifyChangedFiles(['.github/workflows/pr-governance.yml']);
     assert.equal(s.workflow_security, true);
-    // pr-governance alone is not runtime deploy path → C
     assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, false);
+    assert.equal(s.build, false);
+    assert.equal(s.predeploy, false);
   });
 
-  it('ci.yml is class R', () => {
+  it('ci.yml is class R and production impacting', () => {
     const s = classifyChangedFiles(['.github/workflows/ci.yml']);
     assert.equal(s.class, 'R');
+    assert.equal(s.production_impact, true);
   });
 
-  it('forceFull yields full R', () => {
+  it('unknown non-doc config fails closed as production impacting', () => {
+    const s = classifyChangedFiles(['vite.config.ts']);
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, true);
+    assert.equal(s.build, true);
+    assert.equal(s.predeploy, true);
+  });
+
+  it('forceFull yields full R production validation', () => {
     const s = classifyChangedFiles([], { forceFull: true });
     assert.equal(s.class, 'R');
+    assert.equal(s.production_impact, true);
     assert.equal(s.docker_image, true);
     assert.equal(s.node, true);
   });
 
-  it('mixed docs+src escalates to C', () => {
+  it('mixed docs+src escalates to production-impacting C', () => {
     const s = classifyChangedFiles(['docs/a.md', 'src/x.ts']);
     assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, true);
     assert.equal(s.node, true);
+    assert.equal(s.build, true);
+  });
+
+  it('mixed governance tooling+src cannot downgrade production impact', () => {
+    const s = classifyChangedFiles([
+      'scripts/governance/validateGovernanceControlPlane.mjs',
+      'src/x.ts',
+    ]);
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, true);
+    assert.equal(s.build, true);
+    assert.equal(s.predeploy, true);
   });
 });
