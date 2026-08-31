@@ -1,11 +1,11 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** `SC-MD-SPT-0001`  
-**Version:** `1.2.0`  
+**Version:** `1.3.0`  
 **Status:** ACTIVE — CANONICAL FINANCIAL VALUE-CHAIN AUTHORITY  
-**Stand:** 2026-08-22  
+**Stand:** 2026-08-31  
 **Current-state rule:** exact `main`/production SHAs are validation-time evidence, not permanent document authority  
-**Last observed synchronization baseline:** `main@f01a615edfa4a87939fb07bdce08829a1b46a1e6` after PR #485  
+**Last observed synchronization baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
 **Owner:** SvenKulessa
 
 ## 1. Purpose
@@ -23,6 +23,7 @@ Historical PR numbers and SHAs remain traceability evidence only. In particular,
 | Verified display | `verified-asset-display/1.0.0` | read-only presentation/research projection; never execution-price or scoring authority |
 | Scoring | ADR-0087 + `ScoringModelRegistry` + `ScoringDispatcher` | only productive multi-asset scoring exit |
 | FinTech Core workflow composition | ADR-0099 | workflow/OrderIntent/Risk/Paper composition; cannot replace ADR-0087 scoring authority |
+| CAPITAL-AI-FINTECH V2 ownership projection | `docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md` | target primary owner for Feature Engineering -> Ranking execution; reuses current authorities and does not silently renumber current VC stages |
 | DeFiLlama | ADR-0100 | evidence-only; no direct score/dispatcher bypass |
 | Ranking / eligibility | canonical Ranking contracts/services | consumes canonical score/evidence; no caller-provided rank authority |
 | Quality | ESS-0005 + `FintechValueChainQualityProjection` | read-only structural/evidence validation; non-authorizing |
@@ -75,6 +76,12 @@ VC-18  API / UI / Alerts / downstream evidence
 
 This numbering supersedes the older 14-stage projection as **current state**. Historical evidence recorded under older stage numbers remains immutable historical evidence and is not rewritten.
 
+### V2 ownership migration projection
+
+`CAPITAL-AI-FINTECH-V2` defines a target department projection in which target VC-12..VC-17 cover Feature Engineering through Ranking/Decision Support and target VC-18 is handed to CAPITAL-AI-OPS. Those target labels do **not** overwrite the current stage IDs above in this FinTech-only change because the current Quality projection and other cross-project consumers still encode the present semantics.
+
+The correlated migration record is `docs/fintech/CAPITAL-AI-FINTECH/mappings/VALUE_CHAIN_OWNERSHIP.md`. Canonical renumbering requires synchronized DATA/QM/OPS/SPT updates and must not be performed as an isolated FinTech mutation.
+
 ## 4. Financial-runtime invariants
 
 1. **One productive scoring path**  
@@ -121,6 +128,12 @@ Protected relationships:
 - `GUARDED_LIVE` / `PRODUCTION` expose no real-execution capability before the separate FT-7 architecture/security decision;
 - existing persistence/queue authorities are reused rather than duplicated.
 
+### CAPITAL-AI-FINTECH V2 relationship
+
+`docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md` consolidates execution ownership for financial Feature Engineering, Scoring Models, Scoring Orchestration, Domain Executors, Canonical Scoring and Ranking/Decision Support. It is subordinate to the current authorities above and reuses rather than replaces them.
+
+The project explicitly records foreign-domain work through `[CROSS_PROJECT_HANDOFF -> ...]` markers. Provider/data ingress and DQ remain DATA responsibilities; EventMesh/Traceability transport remains OPS; Frontend is a consumer only; Quality remains read-only.
+
 ## 7. Meme / DeFi and DeFiLlama
 
 Current Meme/DeFi 0.3.0 research scoring is permitted only inside the existing research/challenger boundary. Effective feature/weight fingerprint lineage and correlation groups prevent silent additive double-counting.
@@ -131,7 +144,7 @@ DeFiLlama remains ADR-0100 evidence-only. TVL/fees/revenue evidence must pass ex
 
 ### Quality
 
-`src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts` is the machine-readable structural projection of these 18 stages. Its contract is read-only and explicitly non-authorizing.
+`src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts` is the machine-readable structural projection of these 18 stages. Its contract is read-only and explicitly non-authorizing. V2 stage-number migration is an explicit CAPITAL-AI-QM handoff and is not performed in this FinTech-only change.
 
 ### Vocabulary
 
@@ -147,6 +160,8 @@ ADR-0097 maintenance, semantic freshness and Archive Retention operate only on r
 
 VC-18 includes API, UI, alerts and downstream evidence/export surfaces. Delivery may expose canonical financial results and provenance but cannot recalculate or replace upstream authority decisions.
 
+The current `RankingBoard` still performs local READY-score ordering for display. Under the V2 target boundary this is recorded as `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FE | VC-17]`; it is not silently accepted as a second productive ranking authority and is not modified in the FinTech project PR.
+
 AI-generated explanatory content, where used, is analysis/presentation only. Retrieval context alone does not prove claim-level grounding or citation completeness and cannot become financial evidence.
 
 ## 10. Version and current-state synchronization
@@ -157,7 +172,7 @@ AI-generated explanatory content, where used, is analysis/presentation only. Ret
 - DevelopmentChain current state is projected separately by `docs/architecture/ROADMAP.md`;
 - Quality/Vocabulary/Documentary manifests must reference this SPT by stable ID rather than copy independent stage authorities.
 
-A merge that changes stage semantics must update this document and the machine-readable projection/consumers in the same governed change or explicitly fail validation as drift.
+A merge that changes stage semantics must update this document and the machine-readable projection/consumers in the same governed change or explicitly fail validation as drift. The V2 FinTech branch intentionally records the stage-semantic migration as pending because foreign project changes are prohibited in the same PR.
 
 ## 11. Historical disposition
 
@@ -172,7 +187,8 @@ A change is value-chain-ready only when:
 - no second Scoring Registry/Dispatcher/Evidence/DQ/Queue/Governance architecture is introduced;
 - new provider/runtime behavior is mapped to an existing authority or an explicit new bounded ADR when genuinely required;
 - current Quality projection and component manifests agree on 18 stages;
-- Documentary remains VC-17 sidecar and Vocabulary remains read-only projection;
+- Documentary remains VC-17 sidecar until a separately synchronized target-stage migration changes that current contract;
+- Vocabulary remains read-only projection;
 - missing/stale evidence fails closed;
 - current `main` and open PRs are re-correlated immediately before PR creation;
 - hosted CI validates the exact remote PR head;
