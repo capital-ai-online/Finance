@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-DATA-SECURITY-HANDOFF-SYNC-2026-08-31",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Synchronize the CAPITAL-AI-DATA consolidation with current main and integrate the merged CAPITAL-AI-SEC S1-R2-11 cross-project handoff for PVC-10 without executing foreign Security verification or OPS tooling work.",
+  "workItemDE": "CAPITAL-AI-DATA-Konsolidierung gegen current main synchronisieren und den gemergten CAPITAL-AI-SEC Cross-Project-Handoff S1-R2-11 fuer PVC-10 integrieren, ohne fremde Security-Verifikation oder OPS-Tooling-Arbeit auszufuehren.",
+  "startedAt": "2026-08-31T21:23:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "7fa5cfddcdb775078e1518bef4908af2e8706415",
+  "pullRequest": null,
+  "branch": "agent/data-security-handoff-sync-20260831",
+  "project": "CAPITAL-AI-DATA",
+  "projectFolder": "data",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "supersedesWorkingBranch": "docs/data-project-consolidation-20260831",
+  "ownerRole": "Primary Project Value Chain owner for PVC-09 UAI/Data Ingestion, PVC-10 Evidence Management and PVC-11 Data Quality",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-DATA-SECURITY-HANDOFF-SYNC-2026-08-31.json",
+    "docs/projects/data/README.md",
+    "docs/projects/data/ROADMAP.md",
+    "docs/projects/data/TAKEOVER_INDEX.md",
+    "docs/projects/data/DATA_BASELINE.md",
+    "docs/projects/data/DATA_CONTRACTS.md",
+    "docs/projects/data/HANDOFFS.md",
+    "docs/projects/data/handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md",
+    "docs/projects/data/runbooks/DATA_PROVIDER_INGRESS_AND_DQ.md",
+    "docs/projects/data/runbooks/DATA_FINTECH_HANDOFF.md",
+    "docs/projects/data/evidence/README.md"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-SEC: independent Security verification and VERIFIED/CLOSED decision for S1-R2-11",
+    "CAPITAL-AI-OPS: any future PR/trace/DevelopmentChain tooling-code remediation required by S1-R2-11; OPS project surface is current on main",
+    "CAPITAL-AI-FINTECH: downstream feature engineering/scoring/ranking after PVC-11 -> PVC-12; FINTECH project surface is current on main",
+    "CAPITAL-AI-QM: independent read-only Quality assessment; QM project surface is current on main"
+  ],
+  "authorityGuard": "PVC project routing is distinct from technical SC-MD-SPT VC stages. DATA owns target-project implementation/evidence semantics only in PVC-09..11. No Security self-verification, OPS tooling absorption, scoring logic, Quality hot-path dependency, second data plane, second DQ architecture or direct main mutation.",
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a fresh exact-snapshot Owner approval; merge remains Human/CODEOWNER-only."
+}
