@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { resolveAlphaVantageCredential } from '../../server/routes/alphaVantageRoutes';
 
 const source = fs.readFileSync(path.join(process.cwd(), 'server/routes/alphaVantageRoutes.ts'), 'utf8');
 
@@ -17,12 +18,22 @@ describe('alphaVantageRoutes contract', () => {
   });
 
   it('uses only the canonical Alpha Vantage credential identity', () => {
-    expect(source).toContain("const ALPHA_VANTAGE_CREDENTIAL = 'ALPHA_VANTAGE_API_KEY'");
-    expect(source).toContain('process.env[ALPHA_VANTAGE_CREDENTIAL]');
+    expect(source).toContain("ALPHA_VANTAGE_CREDENTIAL = 'ALPHA_VANTAGE_API_KEY'");
+    expect(source).toContain('environment[ALPHA_VANTAGE_CREDENTIAL]');
     expect(source).not.toContain('process.env.ALPHA_VANTAGE_KEY');
     expect(source).not.toContain("process.env['ALPHA_VANTAGE_KEY']");
     expect(source).not.toContain('ALPHA_VANTAGE_API_KEY ??');
     expect(source).not.toContain('ALPHA_VANTAGE_KEY ??');
+  });
+
+  it('never lets the legacy credential satisfy canonical readiness', () => {
+    expect(resolveAlphaVantageCredential({ ALPHA_VANTAGE_KEY: 'legacy-only' })).toBeUndefined();
+    expect(resolveAlphaVantageCredential({})).toBeUndefined();
+    expect(resolveAlphaVantageCredential({ ALPHA_VANTAGE_API_KEY: 'canonical-only' })).toBe('canonical-only');
+    expect(resolveAlphaVantageCredential({
+      ALPHA_VANTAGE_API_KEY: 'canonical',
+      ALPHA_VANTAGE_KEY: 'legacy',
+    })).toBe('canonical');
   });
 
   it('fails closed as unavailable when the canonical credential is missing', () => {
