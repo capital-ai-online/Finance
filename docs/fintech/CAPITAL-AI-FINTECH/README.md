@@ -1,86 +1,35 @@
-# CAPITAL-AI-FINTECH
+# CAPITAL-AI-FINTECH — Supporting Detail Package
 
-Status: `ACTIVE — V2 OWNERSHIP CONSOLIDATION`  
-Project role: `PRIMARY_VALUE_CHAIN_OWNER` for the financial scoring/ranking domain  
-Repository baseline: `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
-Trust root: `/AGENTS.md`
+Status: `ACTIVE SUPPORTING / NON-AUTHORIZING`  
+Canonical organizational project surface: `docs/projects/fintech/`  
+Current synchronization baseline: `main@1f55340d89178fb5c1ab735242f42c263918b692`
 
-## Purpose
+This directory was created by the initial CAPITAL-AI-FINTECH V2 consolidation before the repository introduced the qualified `PVC-*` project-routing namespace and canonical `docs/projects/<project>/` execution model.
 
-CAPITAL-AI-FINTECH is the bounded execution and ownership project for financial feature engineering, model selection, productive scoring orchestration, asset-class domain execution, canonical score production and ranking/decision-support inputs.
+It remains a supporting detail/evidence package for inventories and original V2 traceability. It does not compete with the current organizational project surface.
 
-It does **not** become a second governance, DATA, Evidence, Data-Quality, Security, Compliance, EventMesh or Frontend authority.
+Use these current entry points:
 
-## Canonical financial execution chain
+- `docs/projects/fintech/README.md`
+- `docs/projects/fintech/ROADMAP.md`
+- `docs/projects/fintech/PVC_OWNERSHIP.md`
+- `docs/projects/fintech/WORK_PACKAGES.md`
+- `docs/projects/fintech/CROSS_PROJECT_DEPENDENCIES.md`
+- `docs/projects/fintech/SECURITY_HANDOFFS.md`
+- `docs/projects/fintech/VALIDATION_REPORT.md`
 
-```text
-Validated Data Input
-  -> Feature Contract
-  -> ScoringModelRegistry
-  -> ScoringDispatcher
-  -> Domain Executor
-  -> CanonicalScoreResult
-  -> Ranking / Decision Support
-```
+## Preserved technical invariants
 
-Current productive authorities are reused:
+- one productive `ScoringModelRegistry`;
+- one productive `ScoringDispatcher`;
+- one CanonicalScoreResult contract family;
+- one target productive FINTECH Ranking authority;
+- no synthetic/neutral missing-evidence fallback;
+- DATA remains owner of UAI/Evidence/DQ;
+- OPS remains owner of PVC-18 EventMesh/Traceability;
+- Frontend remains a consumer;
+- Research/challenger scoring remains non-productive until governed promotion.
 
-- `src/platform/Scoring/ScoringModelRegistry.ts` — one model registry;
-- `src/platform/Scoring/ScoringDispatcher.ts` — one productive scoring dispatcher;
-- `src/types/scoringIntegrity.ts` — CanonicalScoreResult contract;
-- `src/platform/Ranking/CrossAssetRanking.ts` and `src/services/ranking.service.ts` — existing ranking contracts/services, to be consolidated without a second ranking engine.
+The original V2 target labels `VC-12..17` are superseded **as project-routing labels** by current `PVC-12..17`. Existing technical `VC-*` stages under `SC-MD-SPT-0001` remain unchanged.
 
-## Ownership boundary
-
-### FINTECH-owned target capabilities
-
-- Financial Feature Contracts and Feature Engineering;
-- Scoring Models and model lifecycle projection;
-- ScoringModelRegistry;
-- ScoringDispatcher;
-- Scoring Orchestration;
-- Domain Executors / asset-class analysis;
-- CanonicalScoreResult production;
-- Ranking / Decision Support inputs;
-- provider-capability requirements for supported asset classes.
-
-### Foreign authorities retained
-
-- `CAPITAL-AI-DATA`: canonical ingress, UAI/data acquisition, Evidence, provenance and Data Quality;
-- `CAPITAL-AI-OPS`: EventMesh / Traceability runtime transport and operations;
-- `CAPITAL-AI-FE`: presentation only; no score/rank calculation authority;
-- `CAPITAL-AI-QM`: read-only quality projection/validation;
-- `CAPITAL-AI-SEC`: credential/API/security controls;
-- `CAPITAL-AI-COMP`: regulatory/compliance applicability and assessment.
-
-## Current-state versus V2 target VC projection
-
-V2.1 introduces a target semantic ownership projection for VC-12..VC-17. The current canonical `SC-MD-SPT-0001` and `FintechValueChainQualityProjection` use different stage semantics: current VC-12 is Domain Executor, current VC-13 is CanonicalScoreResult and current VC-17 is EventMesh/Traceability/Supervisor.
-
-Therefore V2 target labels are **not silently written over current canonical stage IDs**. Migration requires coordinated cross-project handoffs and synchronized SPT/QM/OPS projections.
-
-See:
-
-- `ROADMAP.md`;
-- `mappings/VALUE_CHAIN_OWNERSHIP.md`;
-- `inventories/FINTECH_EXECUTION_INVENTORY.md`;
-- `handoffs/CROSS_PROJECT_HANDOFFS.md`;
-- `work-packages/FINTECH_WORKSTREAMS_V2.md`;
-- `reports/FINTECH_V2_VALIDATION_2026-08-31.md`.
-
-## Non-negotiable invariants
-
-1. one ScoringModelRegistry;
-2. one productive ScoringDispatcher;
-3. one CanonicalScoreResult contract;
-4. one productive Ranking authority;
-5. no synthetic/neutral score fallback;
-6. missing/stale/invalid evidence fails closed;
-7. no Frontend-local scoring or ranking business logic;
-8. provider-specific logic cannot bypass DATA ingress/DQ boundaries;
-9. research/challenger models remain non-productive until explicit governed promotion;
-10. cross-project work is recorded as handoff and implemented in the owning project/PR.
-
-## Structure note
-
-The repository contains no exact `CAPITAL-AI-QM` project path/name on this baseline. Exact structural parity is therefore not claimed. This project uses the requested common project pattern (`README`, `ROADMAP`, `work-packages`, `inventories`, `mappings`, `handoffs`, `reports`) and records QM parity as an open cross-project validation item rather than fabricating a source structure.
+Security handoff source PR #631 is integrated at `docs/projects/fintech/SECURITY_HANDOFFS.md`. No current concrete Security finding is directly routed to FINTECH; S1-R2-06 remains a conditional child-handoff dependency only.
