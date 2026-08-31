@@ -12,7 +12,7 @@
   "workItemDE": "Den CAPITAL-AI-SEC Cross-Project-Handoff zum PVC-05 MFA/AAL-Lifecycle-Drift in die kanonische CAPITAL-AI-GOV Roadmap- und Handoff-Projektion integrieren; Security-Verifikation bleibt unabhaengig und bestehende Governance-Authorities bleiben unveraendert.",
   "startedAt": "2026-08-31T21:24:00+02:00",
   "baseBranch": "main",
-  "baseSha": "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6",
+  "baseSha": "1f55340d89178fb5c1ab735242f42c263918b692",
   "pullRequest": null,
   "branch": "agent/governance-security-handoff-20260831",
   "project": "CAPITAL-AI-GOV",
