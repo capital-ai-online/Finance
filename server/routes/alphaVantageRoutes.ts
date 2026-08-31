@@ -2,14 +2,18 @@ import { Router } from 'express';
 import { orchestrator } from '../../src/lib/requestOrchestrator';
 
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP'];
+const ALPHA_VANTAGE_CREDENTIAL = 'ALPHA_VANTAGE_API_KEY' as const;
 
 export const alphaVantageRouter = Router();
 
 alphaVantageRouter.get('/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), async (req, res) => {
   const { symbol } = req.query;
-  const key = process.env.ALPHA_VANTAGE_KEY;
+  const key = process.env[ALPHA_VANTAGE_CREDENTIAL];
   if (!key) {
-    return res.status(400).json({ error: 'ALPHA_VANTAGE_KEY is not configured.' });
+    return res.status(503).json({
+      error: `${ALPHA_VANTAGE_CREDENTIAL} is not configured.`,
+      status: 'UNAVAILABLE',
+    });
   }
   if (!symbol) {
     return res.status(400).json({ error: 'Symbol parameter is required.' });
