@@ -22,8 +22,6 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-CHAT-CONSOLIDATION-2026-08-31.json",
     ".ai/work-claims/CAPITAL-AI-GOV-CHAT-PR-CREATION-V2-2026-08-31.json",
-    "AGENTS.md",
-    "docs/governance/control-catalog.json",
     "docs/projects/README.md",
     "docs/projects/PROJECT_VALUE_CHAIN.md",
     "docs/projects/PROJECT_EXECUTION_MODEL.md",
@@ -43,6 +41,6 @@
     "CAPITAL-AI-DATA/CAPITAL-AI-FINTECH/CAPITAL-AI-DOC/CAPITAL-AI-QM/CAPITAL-AI-OPS: coordinated FVC namespace migration if approved",
     "CAPITAL-AI-CLIENT/CAPITAL-AI-OPS: Admin Panel process/dependency visualization implementation"
   ],
-  "authorityGuard": "No new ADR/ESS/AUTH identity is created. Existing AGENTS.md, ADR-0096, authority registry and control catalog remain the governance authority chain; CTRL-SDLC-BRANCH-001 is only clarified for the Owner-directed branch naming convention.",
+  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. Existing AGENTS.md, ADR-0096, authority registry and control catalog remain the governance authority chain. The Owner-directed branch naming convention is recorded as an OPEN_GOV follow-up and is not made repository-wide enforceable by this project document.",
   "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a separate exact-snapshot Human/Owner approval; merge remains Human-only."
 }
