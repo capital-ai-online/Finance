@@ -2,9 +2,11 @@
 
 **Document ID:** `DOC-COMP-REQ-CTRL-EVIDENCE-2026-08-31`  
 **Role:** projection / assessment mapping / non-authorizing  
+**Version:** 1.1.0  
+**Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
 **Baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`
 
-`COMPLIANT` is intentionally avoided where final/current evidence has not been independently verified. A documented control without current execution evidence is not enough.
+`COMPLIANT` is intentionally avoided where final/current evidence has not been independently verified. A documented control without current execution evidence is not enough. `Implementation owner` below is the Primary Owner; it does not transfer execution ownership to Compliance. VC-stage and handoff details are resolved through the Requirements Inventory and Handoff Register.
 
 | Req | Existing AUTH / CTRL / ADR / ESS | Implementation owner | Primary evidence | Assessment | Evidence gap / note |
 |---|---|---|---|---|---|
@@ -18,8 +20,8 @@
 | REQ-COMP-008 | `CTRL-DEPLOY-AUTH-001` | Release/Operations | CI/deploy exact-SHA evidence | NOT_ASSESSED | no deployment in this package |
 | REQ-COMP-009 | `CTRL-SEC-LEASTPRIV-001`, S1 authorities | Security | S1-R2 evidence, code/tests | PARTIALLY_COMPLIANT | open Security findings remain domain-owned |
 | REQ-COMP-010 | `CTRL-SEC-SECRET-001` | Security/Development | repository/code scanning and secret-handling controls | PARTIALLY_COMPLIANT | continuous control, no new secret evidence here |
-| REQ-COMP-011 | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001` | Documentary/Governance | canonical paths + document registry | PARTIALLY_COMPLIANT | final registry/hygiene check pending |
-| REQ-COMP-012 | `AUTH-GOV-SUPERSESSION-POLICY`, `CTRL-GOV-HIST-001` | Governance | ADR/ESS registries + archive | PARTIALLY_COMPLIANT | ADR-0007 legacy and ESS-0006 stale content tracked |
+| REQ-COMP-011 | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001` | Documentary/Governance | canonical paths + document registry | PARTIALLY_COMPLIANT | selected new registry treatment assigned via GOV-DOC handoff |
+| REQ-COMP-012 | `AUTH-GOV-SUPERSESSION-POLICY`, `CTRL-GOV-HIST-001` | Governance | ADR/ESS registries + archive | PARTIALLY_COMPLIANT | ADR-0007/ESS-0006 gaps handed to Governance owners |
 | REQ-COMP-013 | privacy ADRs / data controls | Privacy/Data | processing registry, code/config, retention/privacy evidence | PARTIALLY_COMPLIANT | current production/legal basis revalidation |
 | REQ-COMP-014 | ADR-0095 / Documentary controls | Privacy/Documentary | privacy notice/processing records | PARTIALLY_COMPLIANT | current completeness assessment pending |
 | REQ-COMP-015 | privacy authorities | Privacy/Development | privacy request/export API + DB evidence | PARTIALLY_COMPLIANT | runtime freshness not established in this branch |
@@ -36,12 +38,12 @@
 | REQ-COMP-026 | SDLC controls + `CTRL-AIMS-PDCA-001` | Development/Security | branch/review/CI/dependency evidence | NOT_APPLICABLE | SSDF control source only |
 | REQ-COMP-027 | `CTRL-AIMS-PDCA-001` | AI/Compliance | AI inventory/risk mappings | NOT_APPLICABLE | AI RMF benchmark only |
 | REQ-COMP-028 | Security/SDLC controls | Security/Development | hardening/scanner/test evidence | NOT_APPLICABLE | OWASP/CIS benchmark only |
-| REQ-COMP-029 | ESS-0006 principle + `CTRL-COMPLIANCE-CLAIM-001` | Compliance | runtime/code/CI/registry/doc evidence chain | PARTIALLY_COMPLIANT | evidence completeness varies by requirement |
-| REQ-COMP-030 | AI inventory change triggers + COMP roadmap | Compliance + domain owners | feature/model/provider/data change records | NOT_ASSESSED | no central automated impact trigger yet |
+| REQ-COMP-029 | ESS-0006 principle + `CTRL-COMPLIANCE-CLAIM-001` | Compliance evidence consumer | runtime/code/CI/registry/doc evidence chain | PARTIALLY_COMPLIANT | evidence completeness varies by requirement |
+| REQ-COMP-030 | AI inventory change triggers + COMP roadmap | Compliance + domain owners | feature/model/provider/data change records | NOT_ASSESSED | COMP-08 defines assessment trigger; no second orchestrator created |
 | REQ-COMP-031 | contract/vendor artifacts | Legal/Owner | contract evidence inventory | NOT_ASSESSED | complete contract universe unknown |
 | REQ-COMP-032 | S1/Operations authorities | Operations/Security | backup/restore/incident evidence | EVIDENCE_MISSING | S1 R2-07 explicitly open/unverified |
 | REQ-COMP-033 | ESS-0006 + Traceability/Telemetry/domain controls | Security/Traceability/Compliance | audit logs, compliance runs, system evidence | PARTIALLY_COMPLIANT | end-to-end event coverage assessment needed |
-| REQ-COMP-034 | data/scoring authorities | Data/Scoring | provider provenance, quality and scoring evidence | NOT_ASSESSED | 18-stage coverage assessment not complete |
+| REQ-COMP-034 | data/scoring authorities | Data/Scoring | provider provenance, quality and scoring evidence | NOT_ASSESSED | 18-stage coverage assessment remains mixed |
 | REQ-COMP-035 | `CTRL-GOV-DOC-001`, Documentary authorities | Documentary/all domains | document registry, archive, evidence directories | PARTIALLY_COMPLIANT | legacy/stale record reconciliation ongoing |
 | REQ-COMP-036 | `CTRL-DEPLOY-AUTH-001` + DevelopmentChain | Release/Operations | release/rollback/runbook/deploy identity evidence | NOT_ASSESSED | future-release exact evidence required |
 
@@ -51,3 +53,4 @@
 - `EVIDENCE_MISSING` means a material required evidence class is absent or not established in this snapshot.
 - `NOT_ASSESSED` is deliberately used where applicability or current-state verification is incomplete.
 - `NOT_APPLICABLE` for standards means *not a binding CAPITAL-AI requirement source*; the standard may still be used as a benchmark/control source.
+- A technical or Governance remediation required by one of these rows is executed only by its Primary Owner through the handoff contract; `CAPITAL-AI-COMP` reassesses returned evidence independently.
