@@ -1,6 +1,6 @@
-# CAPITAL-AI-SOCIAL V2.1.1 Validation Report — 2026-08-31
+# CAPITAL-AI-SOCIAL V2.1.2 Validation Report — 2026-08-31
 
-**Baseline at implementation start:** `main@1f55340d89178fb5c1ab735242f42c263918b692`  
+**Synchronized main:** `1f01120164ba4a3c194a4e0a79292a262a372588`  
 **Branch:** `agent/social-media-security-handoff-sync-20260831`  
 **Security source:** PR #631 merged as `b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
 **Scope rule:** one Social project per PR; foreign-domain implementation excluded
@@ -10,26 +10,44 @@
 | Check | Result |
 |---|---|
 | current `/AGENTS.md` read | PASS — trust root v2.2.1 applied |
-| current main SHA determined | PASS |
-| open PRs checked | PASS — 0 at latest pre-implementation check |
-| active work claims/writers checked | PASS WITH NOTE — merged SEC and OPS claims still show `active`, but their claimed paths do not overlap Social; release-condition metadata should be reconciled by their owners |
-| changed-file/semantic overlap checked | PASS for Social scope |
+| current main SHA determined | PASS — synchronized to `1f011201...` |
+| open PRs checked | PASS — 0 at pre-sync correlation |
+| active Social writer/claim checked | PASS — no Social claim/path writer discovered for this project path |
+| changed-file/semantic overlap checked | PASS — current main contains no `docs/social-media/CAPITAL-AI-SOCIAL/**` path |
+| `docs/projects/README.md` read | PASS — Social explicitly cross-cutting, no productive PVC ownership |
 | `docs/projects/PROJECT_VALUE_CHAIN.md` read | PASS |
 | `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md` read | PASS |
 | CAPITAL-AI-SEC traceability correlated | PASS |
+| CAPITAL-AI-QM current project surface correlated | PASS — `docs/projects/quality-management/` now exists |
 | affected PVC / Primary Owner confirmed | PASS — Social owns no Primary PVC; no current Security finding routed to Social |
+| canonical Social project folder resolved | REQUIRES_CORRELATION — no `docs/projects/<social-slug>/` exists or is explicitly defined on current main |
 | Authority/ADR/ESS/Control conflicts checked | PASS — no new authority identity created |
-| reuse before create checked | PASS — existing Social/provider and Security contracts referenced |
+| reuse before create checked | PASS — existing Social/provider, Security and project contracts referenced |
 
-## Branch synchronization decision
+## Main synchronization
 
-The earlier `capital-ai-social-v2-20260831` branch was based on an older main and does not satisfy the current `/AGENTS.md` branch naming rule for new PR readiness. It is retained as historical branch state and not mutated.
+The branch had diverged from current main by 72 commits. It was synchronized non-destructively by creating a merge commit whose first parent is `main@1f01120164ba4a3c194a4e0a79292a262a372588` and whose second parent is the prior Social head. The resulting tree preserves current main and overlays only the existing Social project subtree.
 
-This candidate was recreated from current main under the conforming branch:
+No direct edit to `main`, force update or foreign-domain implementation occurred.
 
-`agent/social-media-security-handoff-sync-20260831`
+## Project-organization correlation
 
-Only `docs/social-media/CAPITAL-AI-SOCIAL/**` is modified.
+Current main now defines `docs/projects/` as the canonical organizational execution surface. `CAPITAL-AI-SOCIAL` is explicitly named as a cross-cutting project but has no productive `PVC-*` ownership.
+
+A canonical `docs/projects/<social-slug>/` folder is absent and unresolved. The branch therefore retains the bounded local domain path:
+
+`docs/social-media/CAPITAL-AI-SOCIAL/`
+
+and marks canonical Social project-folder migration as `REQUIRES_CORRELATION` rather than inventing a slug.
+
+## Quality Management correlation
+
+PR #636 added the current CAPITAL-AI-QM project surface under `docs/projects/quality-management/`. The Social candidate now reflects that state:
+
+- QM may independently assess Quality under its own effective authority lifecycle;
+- Social remains responsible only for Social-owned remediation/evidence;
+- neither project gains the other's Domain/Publishing/Verification authority;
+- no QM file is modified by this candidate.
 
 ## Security handoff integration
 
@@ -40,12 +58,13 @@ The received `CAPITAL-AI-SEC-CROSS-PROJECT-HANDOFF` v1.0 prompt is stored as:
 Target binding:
 
 - target project: `CAPITAL-AI-SOCIAL`;
-- target folder: `docs/social-media/CAPITAL-AI-SOCIAL`;
-- target roadmap: `docs/social-media/CAPITAL-AI-SOCIAL/ROADMAP.md`;
+- canonical target project folder: `REQUIRES_CORRELATION`;
+- current local domain path: `docs/social-media/CAPITAL-AI-SOCIAL`;
+- target roadmap candidate: `docs/social-media/CAPITAL-AI-SOCIAL/ROADMAP.md`;
 - Primary PVC ownership: `[]`;
 - current routed Security findings: `[]`.
 
-No placeholder `PVC-NN` was instantiated because `PROJECT_VALUE_CHAIN.md` does not assign a PVC stage to Social and the current Security Traceability Matrix does not route a finding to Social. Creating a synthetic stage/finding would violate the fail-closed and ownership rules.
+No placeholder `PVC-NN`, canonical project folder or Security finding was fabricated.
 
 ## Boundary validation
 
@@ -53,45 +72,45 @@ No placeholder `PVC-NN` was instantiated because `PROJECT_VALUE_CHAIN.md` does n
 |---|---|---|
 | content generation != publication approval | PASS | ROADMAP + package contract separate preparation/approval/handoff |
 | provider adapter != publishing authority | PASS | provider capability only |
-| no autonomous external publication created | PASS | documentation-only Social candidate |
-| Security requirement != Social/PVC ownership transfer | PASS | inbound prompt + roadmap explicitly preserve ownership |
+| no autonomous external publication created by candidate | PASS | documentation-only Social candidate |
+| Security requirement != Social/PVC ownership transfer | PASS | inbound prompt + roadmap preserve ownership |
 | Security VERIFIED/CLOSED cannot be self-set | PASS | return contract delegates independent verification to CAPITAL-AI-SEC |
-| stale approval cannot authorize changed content | PASS AS REQUIREMENT | immutable candidate/hash requirement retained; enforcement belongs to applicable control owner |
+| stale approval cannot authorize changed content | PASS for hash-binding requirement | current runtime recomputes approval content hash when gate is enabled |
+| unconditional approval gate claimed | PASS — NOT CLAIMED | current main still permits `SOCIAL_MEDIA_REQUIRE_APPROVAL=false` |
 | credentials excluded from roadmap/evidence | PASS | no secret values added |
 | no fabricated engagement metrics | PASS | analytics remains evidence-only/GAP |
 | financial statements evidence-bound | PASS | source/provenance requirement explicit |
 | no duplicate provider architecture | PASS FOR CANDIDATE | no provider runtime code added |
-| Social/SEO/DOC/SEC/COMP/OPS boundaries explicit | PASS | roadmap + handoff register |
+| Social/SEO/DOC/SEC/COMP/QM/OPS boundaries explicit | PASS | roadmap + handoff register |
 | publishing evidence explicit | PASS AS TARGET CONTRACT | runtime remains partial |
 | foreign-domain work handed off | PASS | no foreign implementation changes |
 
-## Security source correlation
+## Current Social runtime readback
 
-Current CAPITAL-AI-SEC V2.1.2 defines Security ownership as requirements, threats/controls, findings, negative-test expectations and independent verification. It explicitly owns no productive `PVC-*` stage.
+Current main verifies:
 
-Current Security finding routing targets:
-
-- CAPITAL-AI-OPS for PVC-02/04/06/08 findings;
-- CAPITAL-AI-DATA for PVC-10 evidence identity/freshness;
-- CAPITAL-AI-GOV for PVC-05 MFA/AAL lifecycle reconciliation.
-
-No active row targets CAPITAL-AI-SOCIAL. The generic prompt is therefore an inbound contract/template, not evidence of an assigned remediation.
-
-## Work-claim/writer note
-
-`.ai/work-claims/CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31.json` and `.ai/work-claims/CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31.json` are present on main with `status: active`, even though their associated PR work has been merged. Their claimed paths are Security/Operations paths and do not overlap this Social project path. This candidate does not alter those foreign claims.
+- provider-backed supported account/publish identities: X, Facebook, Instagram, TikTok and YouTube;
+- LinkedIn remains partial and Mastodon unsupported in the inspected canonical provider stack;
+- `POST /api/social-media/generate` exists;
+- media asset URL validation runs before publish;
+- final publish content is hash-compared against the approval when the approval gate is enabled;
+- `SOCIAL_MEDIA_REQUIRE_APPROVAL=false` can disable that gate, so unconditional fail-closed approval enforcement is **not** claimed;
+- `draft` and `scheduled` paths write preparation/log entries and do not themselves prove provider scheduling/publication;
+- no complete Social analytics adapter is evidenced by this candidate.
 
 ## Known Social gaps retained
 
-1. Runtime Social Content Package does not yet carry the entire V2.1.1 source/provenance/status contract in one canonical object.
+1. Runtime Social Content Package does not yet carry the entire V2.1.2 source/provenance/status contract in one canonical object.
 2. Publication evidence persistence is partial relative to the target Social evidence contract.
 3. Provider-specific scheduling is not evidenced; local scheduled state is preparation/logging only.
 4. LinkedIn lacks a canonical provider adapter.
 5. Provider rate-limit/last-verified metadata lacks one canonical evidence model.
 6. Social analytics consumption remains a gap.
-7. No Security finding is currently routed to Social; Security-specific remediation remains inactive until a valid handoff exists.
+7. No Security finding is currently routed to Social.
+8. Canonical `docs/projects/<social-folder>/` resolution remains open.
+9. Current main approval-gate enforcement remains environment-disableable; any hardening is separately owned work and not falsely closed by this documentation PR.
 
-These gaps do not justify a second generator/provider/Security architecture.
+These gaps do not justify a second generator/provider/Security/Quality architecture.
 
 ## Security return gate
 
@@ -99,23 +118,23 @@ If a future valid Security handoff is implemented, Social returns:
 
 `[SECURITY_HANDOFF_RETURN -> CAPITAL-AI-SEC]`
 
-with the exact fields defined in the synchronized prompt. Social may set its implementation to `IMPLEMENTED` or `EVIDENCE_READY`; CAPITAL-AI-SEC independently decides Security `VERIFIED/CLOSED`.
+with the exact fields defined in the synchronized prompt. Social may set implementation status to `IMPLEMENTED` or `EVIDENCE_READY`; CAPITAL-AI-SEC independently decides Security `VERIFIED/CLOSED`.
 
 ## PR gate
 
-Before PR creation for the exact candidate:
+Immediately before PR creation:
 
 1. re-read current `main`;
-2. re-read open PRs and active writers;
-3. compare `main...candidate` and confirm `behind_by=0`;
-4. confirm every changed file is under `docs/social-media/CAPITAL-AI-SOCIAL/**`;
-5. re-check semantic/Security/provider overlap;
-6. report exact candidate SHA and validation evidence;
-7. obtain explicit Owner approval to create that exact snapshot PR;
-8. immediately before PR creation re-read both main and candidate and stop if either changed.
+2. re-read open PRs and active Social writers;
+3. compare `main...candidate` and require `behind_by=0` and merge-base=current main;
+4. confirm changed files remain exclusively under `docs/social-media/CAPITAL-AI-SOCIAL/**`;
+5. re-check semantic/Security/provider/project overlap;
+6. read current `.github/pull_request_template.md` and render every required field;
+7. obtain/confirm explicit Human/Owner PR-creation authorization for the resulting correlated candidate;
+8. immediately before create, re-read both main and candidate and stop if either changed.
 
-PR body must be rendered from the then-current `.github/pull_request_template.md`. Merge remains Human/CODEOWNER-only.
+Merge remains Human/CODEOWNER-only. No deployment or external publication is authorized by this candidate or PR creation.
 
 ## Result
 
-**V2.1.1 Social + CAPITAL-AI-SEC handoff synchronization implemented on a current-main, Social-only candidate. Final exact-head correlation remains required before requesting PR-creation approval.**
+**V2.1.2 Social + CAPITAL-AI-SEC handoff synchronization is documentation-complete on the synchronized Social branch. Exact final-head/main correlation and canonical PR-body rendering remain the final create gate.**
