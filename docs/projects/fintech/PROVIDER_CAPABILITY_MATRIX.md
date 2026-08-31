@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Provider Capability Matrix
 
-**Baseline:** `main@e434fce28630fc694b9dfe471418a2ac98eda9dd`  
+**Baseline:** `main@6b1e7e5234604641449f304b5b251bd74151ddab`  
 **Source correlation:** `fintech/capital-ai-fintech-consolidation-20260831@e32112791458902959dfc53e0fd1f6df477cc356`  
 **Canonical provider source:** `src/platform/MarketData/ProviderMatrix.ts` (`provider-matrix/1.9.1`)  
 **Role:** FINTECH capability-requirement projection only; not a second provider registry or DATA authority.
