@@ -2,7 +2,7 @@
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
 Stand: 2026-08-31  
-Repository-Baseline: `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
+Repository-Baseline: `main@5d3360c21ee51771495aab734ba81c2bdfd3d08b`  
 Owner: SvenKulessa  
 Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 
@@ -12,8 +12,6 @@ Dieses Dokument ersetzt den bisherigen reinen Portfolio-Index durch eine vollst�
 
 Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder Human/Owner-Authority. Ein Status `DOCUMENTATION READY` oder `PROTOTYPE READY` erzeugt keine Mutationsberechtigung.
 
-**FinTech V2 Integration 2026-08-31:** `CAPITAL-AI-FINTECH` (`docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md`) konsolidiert die Ziel-Ownership für Financial Feature Engineering, Scoring Models, Scoring Orchestration, Domain Executors, Canonical Scoring und Ranking/Decision Support. Die V2-Zielnummerierung VC-12..VC-18 kollidiert noch mit der aktuellen kanonischen SPT/QM-Projektion; deshalb bleibt sie eine explizite Migrationsprojektion mit DATA/OPS/FE/QM/SEC/COMP-Handoffs und überschreibt aktuelle Stage-Semantik nicht isoliert.
-
 **Domain-Update 2026-08-15:** SEO Management und Marketing Agent sind in **SEO-GM-ROADMAP-0002** (`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`) zu einem Single Point of Trust konsolidiert. Die früheren Dateien `docs/seo/SEO_MANAGEMENT_ROADMAP.md` und `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` sind SUPERSEDED.
 
 **Portfolio-Sync SEO-GM 2026-08-16:** Die Portfolio-Zeile `SEO-GM` in §3 war auf dem Stand SEO-GM-ROADMAP-0002 v0002.1 stehengeblieben und nannte bereits erledigte Arbeitspakete als nächste Schritte. Sie ist auf **v0002.11** nachgezogen (WP-S1, Q3, WP-D1/D2/D3 und WP-S2 VERIFIED; WP-M0 durch Owner-ACCEPT erfuellt). Diese Synchronisation ist rein statusabbildend; Programmautorität und Statusfortschreibung liegen unverändert allein bei SEO-GM-ROADMAP-0002.
@@ -21,6 +19,10 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 **Integration 2026-08-15:** Die DEVELOPMENT Chain und der Systemadmin-Agent sind in der kanonischen Ausführungsroadmap **ROADMAP-INTEGRATED-DC-SA-0001** (`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md`) verbunden. Diese Integrated Roadmap ist die verbindende Ausführungsautorität für DC + SA Phasen (I0–I4).
 
 **Value-Chain Coverage 2026-08-30:** Coverage-Map und Inventar *-0 sind über PR #610 auf `main`. Ein append-only Registry-Insert-Payload, Claim-Close, Current-State-Sync, ESS-Reconciliation, VC-H *-1 Spezifikation und S1-R2-02 Dispatch-Checkliste liegen in OPEN-STEPS-BIND-2026-08-30 (`docs/open-steps-bind-2026-08-30-v6`). `document-registry.json` wird dabei nicht mutiert. PR #615 ist auf `main@f714eae6` gemergt; PR #617 ist damit synchronisiert. Live `mode=full` bleibt bis zu separatem Owner-Plan, Owner-ACCEPT und verifiziertem Readback gesperrt.
+
+**Agent-Client Ownership 2026-08-31:** `CAPITAL-AI-CLIENT` ist als alleiniger Primary Owner von `VC-01 — Agent Client` in `docs/projects/agent-client/` konsolidiert. Die kanonische VC-01-Ausführungsroadmap ist `docs/projects/agent-client/ROADMAP.md`. Sie übernimmt keine Ausführung fremder VC-Stufen; Controlled Implementation, Platform/Governance Decisions und EventMesh/Traceability werden ausschließlich als Cross-Project-Handoffs referenziert.
+
+**Compliance-Integration 2026-08-31:** **CAPITAL-AI-COMP** (`docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md`) ist der cross-cutting **Compliance Assessment Single Point of Execution** für Applicability, Requirement/Control Mapping, Assessment, Findings, Evidence, Regulatory Traceability, Legal Review und Remediation Handoffs. `primary_value_chain_ownership = []`: technische/organisatorische Remediation verbleibt beim jeweiligen Primary Owner und wird mit `[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` referenziert. Für `VC-01` ist dieser technische Primary Owner `CAPITAL-AI-CLIENT`; Security, Privacy, Frontend, SEO-GM und AI bleiben ggf. Requirement-/Control-/Evidence-Quellen. CAPITAL-AI-COMP ist non-authorizing und erzeugt keine zweite Governance-, Security-, QM- oder Policy-Hierarchie.
 
 ## 2. Verbindliche Authority-Reihenfolge
 
@@ -30,17 +32,20 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 4. `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001) für DC+SA-Verbindung;
 5. `DEVELOPMENT_CHAIN_ROADMAP.md` (Detail-Phasen);
 6. diese Gesamtroadmap (Portfolio-Index);
-7. Fachroadmaps, einschließlich `docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md` als FinTech-Ausführungs-/Ownership-Projektion innerhalb ihrer Grenzen;
+7. Fachroadmaps, darunter `docs/projects/agent-client/ROADMAP.md` ausschließlich für VC-01, **SEO-GM-ROADMAP-0002** für SEO/Google Marketing und **ROADMAP-VC-COV-HARDEN-2026-08-30** für Kettenlücken ohne Fachroadmap;
 8. historische oder als Legacy/SUPERSEDED markierte Indizes.
 
 Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
+
+`CAPITAL-AI-COMP` ist eine non-authorizing Compliance-Assessment-/Traceability-Projektion und verändert diese Authority-Reihenfolge nicht. Compliance Findings können auf Fachroadmaps verweisen, autorisieren deren technische Ausführung jedoch nicht.
 
 ## 3. Konsolidiertes Portfolio
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| **FINTECH** | **CAPITAL-AI FinTech — Financial Scoring & Ranking Ownership** | **`docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md`** | **ACTIVE — V2 OWNERSHIP MIGRATION**; Registry/Dispatcher/CanonicalScore core wird wiederverwendet; Ranking ownership target explizit; VC-Stage-Reassignment und FE-local Ranking cleanup sind cross-project pending | FinTech-PR nur für Projekt-/Ownership-/Handoff-Scope; danach separate DATA/QM/OPS/FE Änderungen nach jeweiligem Handoff |
+| **CLIENT** | **CAPITAL-AI Client / VC-01** | **`docs/projects/agent-client/ROADMAP.md` + Inventar/Mapping/Traceability** | **ACTIVE — VC-01 PRIMARY OWNER**; logische Ownership konsolidiert; keine physische Runtime-Verlagerung; keine fremde VC-Ausführung | CLIENT-02 bis CLIENT-07 ausschließlich im VC-01-Scope; fremde Arbeit nur über dokumentierte Cross-Project-Handoffs; PR/CI erst nach separatem Owner-Gate |
 | **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + Inventar-Pack + `VC_H_IMPLEMENTATION_PACK_2026-08-30.md` + Registry-Insert-Payload** | **ACTIVE — COVERAGE**; Inventar *-0 auf main (#610); Payload + *-1-Spezifikation in synchronisiertem OPEN-STEPS-BIND; physischer Registry-Insert nicht ausgeführt | Exact-Head-Checks und Human-Review für diesen D-PR; Registry-Mutation nur als separater Scope; Runtime anschließend auf frischem Branch |
+| **COMP** | **CAPITAL-AI Compliance** | **`docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md` (`CAPITAL-AI-COMP`, V2.1)** | **ACTIVE — CROSS-CUTTING ASSESSMENT / NON-AUTHORIZING**; Applicability, Requirements, Control Mapping, Assessment, Findings, Evidence, Remediation Handoff und Continuous Compliance zentralisiert; keine Primary-VC-Execution-Ownership | Compliance-Gaps evidenzbasiert bewerten; fremde Remediation ausschließlich via `[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`; VC-01-Technik an CAPITAL-AI-CLIENT; Legal-Review-Fälle getrennt halten |
 | **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | S1-R2-Reassessment auf main (#607); S1-R2-02 Code/Docs gemergt (#611); #615 Policy/Builder/Floor-Fix auf main; Live-Drift offen; `mode=full` BLOCKED; #613 verworfen | Owner `workflow_dispatch` zuerst `mode=plan`; `required_signatures` nicht still reaktivieren; full nur nach separatem Owner-ACCEPT |
@@ -72,12 +77,10 @@ Nur der Owner kann HIGH/CRITICAL-, Produktions-, IAM-, Billing-, Datenbank-, Dep
 
 Der Inhalt der Abschnitte 5–13 aus dem Stand 2026-08-14 bleibt in Substanz gültig (M5/M5A/M6/M7 Evidence, P0–P3, SA-Prototypen, Branch-Lifecycle).
 
-**FinTech Ergänzung:** FinTech-Ausführung folgt `docs/fintech/CAPITAL-AI-FINTECH/ROADMAP.md`; fremde DATA/OPS/FE/QM/SEC/COMP-Implementierung erfolgt nur über die dort dokumentierten Cross-Project-Handoffs und separate Projekt-PRs.
-
 **Anpassung P3-2:** SEO/Marketing-Baseline ist nicht mehr „parallel read-only Q1–Q6/MA0“, sondern folgt **SEO-GM-ROADMAP-0002** (Single Point of Trust). SA-P11 bleibt read-only Revalidator gegen die neue kanonische Roadmap, ohne Publikation.
 
 **Ausführungsbacklog Position 11:** „SEO/MA/Monetarisierung“ → Ausführung ausschließlich unter SEO-GM-ROADMAP-0002 und jeweiliger ADR/ESS-Authority.
 
 ## Abschlusskriterien (unverändert im Kern)
 
-Die Roadmap ist erst abgeschlossen, wenn M0–M10 VERIFIED PASS, P0/P1 geschlossen oder akzeptiert, keine unowned HIGH/CRITICAL, produktive Mutationen Owner-genehmigt, Traceability vollständig, offene Fachroadmaps abgeschlossen, superseded oder archiviert und alle gemergten Arbeitsbranches gelöscht sind. Für FINTECH gilt zusätzlich: V2 Stage-Ownership darf erst als kanonisch VERIFIED gelten, wenn SPT, DATA, QM und OPS dieselben Stage-Semantiken abbilden und FE keine eigene Ranking-Business-Authority mehr ausübt.
+Die Roadmap ist erst abgeschlossen, wenn M0–M10 VERIFIED PASS, P0/P1 geschlossen oder akzeptiert, keine unowned HIGH/CRITICAL, produktive Mutationen Owner-genehmigt, Traceability vollständig, **offene Fachroadmaps abgeschlossen, superseded oder archiviert** (SEO+MA: durch SEO-GM-ROADMAP-0002 erfüllt sobald dessen DoD erreicht ist; Kettenlücken: durch ROADMAP-VC-COV-HARDEN-2026-08-30 erfüllt sobald dessen Programm-Exit erreicht ist), und alle gemergten Arbeitsbranches gelöscht sind.
