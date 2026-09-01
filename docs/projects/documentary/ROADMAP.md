@@ -171,6 +171,39 @@ Exit status:
 
 The reconciliation intentionally did **not** mutate `docs/governance/document-registry.json`: the merged work changed roadmap status/ownership projection without moving the registered document, changing its stable identity, creating a second registry entry or executing the ADR-0097 autonomous maintenance-agent patch path. Registry/governance impact remained read-only.
 
+### WP-DOC-05 — Deterministic Mermaid projection
+
+**State:** `IMPLEMENTED — CANDIDATE; HUMAN MERGE + VALIDATION PENDING`
+
+Work:
+
+- close the explicitly recorded model-driven Mermaid gap as exactly one Documentary-owned D6 implementation slice;
+- reuse `Knowledge/DocumentaryKnowledgeProjection.ts` as the sole node/relationship input contract rather than defining a second graph model;
+- render deterministic Mermaid source text only under `src/platform/Documentary/Mermaid/`;
+- keep the generator pure/read-only: no Mermaid execution, browser rendering, persistence, event publication, lifecycle transition or approval;
+- neutralize evidence-controlled labels and prohibit generated `click`, literal URL, HTML/script or external-resource directives;
+- advance only the Documentary component version (`1.13.0 -> 1.14.0`); document-schema and platform-version authorities remain unchanged.
+
+Candidate evidence:
+
+- correlated against `main@190f319ec8026d8141601b69a8bb4d97470ec5ea` after the Human Merge of WP-DOC-01 closure PR `#674`;
+- the technical roadmap and component README/manifest all identify Mermaid as a Documentary-owned planned gap before this candidate;
+- `DocumentaryKnowledgeProjection` already supplies deterministic nodes, directed relationships and a projection checksum, so no parallel Diagram/Graph/Knowledge registry or contract is required;
+- `DocumentaryMermaidRenderer.ts` uses SHA-256-derived node aliases, stable sorting, fixed D7 relationship types and escaped labels;
+- targeted unit coverage checks deterministic output, source-evidence binding, malformed identity fail-closed behavior and neutralization of directive/URL-shaped evidence;
+- existing `documentaryVersionAuthority.test.ts` requires each implemented area to contain runtime code; the new `Mermaid/` namespace satisfies that invariant rather than merely flipping manifest metadata;
+- open PR `#669` changes only a Governance work-claim file and has no changed-file or semantic overlap with this WP-DOC-05 writer set;
+- no Document Registry, AUTH, CTRL, ADR, ESS, EventMesh, Release, Platform Version, Vocabulary, Knowledge persistence or foreign-project implementation is changed.
+
+Exit candidate:
+
+- exactly one formerly planned Documentary gap—deterministic Mermaid source projection—is implemented;
+- Mermaid consumes existing D7 semantics and creates no second graph/diagram/Knowledge authority or registry;
+- output is deterministic text only and cannot authorize or perform execution, merge, release, deployment or production mutation;
+- component, document-schema and platform-version authorities remain separated;
+- `Migration`, `Plugins`, broader Architecture runtime and additional ESS-0012 validators remain separately scoped backlog and are not bundled into WP-DOC-05;
+- targeted and repository-required validation must pass on the exact candidate before Human/CODEOWNER merge.
+
 ## 4. Dependencies and handoffs
 
 | Dependency | Owner / Stage | Documentary relationship | Status |
@@ -222,6 +255,15 @@ For WP-DOC-04 specifically, validation must additionally confirm:
 - no duplicate document identity/registry or parallel architecture is introduced;
 - the exact diff remains documentation-only.
 
+For WP-DOC-05 specifically, validation must additionally confirm:
+
+- targeted Mermaid renderer tests pass and output is deterministic under input reordering;
+- malformed projection identity fails closed;
+- evidence-controlled labels cannot become emitted `click`, literal URL, HTML/script or external-resource directives;
+- `Mermaid` is backed by real runtime code when declared implemented in Documentary baseline/manifest metadata;
+- Documentary component version changes independently while document-schema and platform versions remain unchanged;
+- no Diagram/Graph/Knowledge registry, EventMesh, Release, Platform Version or foreign-owner implementation appears in the exact diff.
+
 ## 7. Negative tests
 
 The candidate must fail closed if any of the following is observed:
@@ -229,7 +271,7 @@ The candidate must fail closed if any of the following is observed:
 - a second CAPITAL-AI-DOC project identity or canonical project folder;
 - duplicate Documentary runtime architecture;
 - duplicate document identity introduced by the project surface;
-- a second Vocabulary, Knowledge or Wiki authority/registry;
+- a second Vocabulary, Knowledge, Wiki or Diagram/Graph authority/registry;
 - transfer of `PVC-03` Primary Ownership away from `CAPITAL-AI-DOC`;
 - conflation of organizational `PVC-03` with technical `VC-*` namespaces;
 - DATA-, GOV-, OPS- or FINTECH-owned productive implementation bundled into the DOC branch;
