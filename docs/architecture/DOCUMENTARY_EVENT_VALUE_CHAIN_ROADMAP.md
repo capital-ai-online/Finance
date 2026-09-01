@@ -5,7 +5,7 @@
 **Last Documentary correlation:** 2026-09-01  
 **Primary Authority:** ESS-0010 Documentary Engine  
 **Related Authorities:** ESS-0009 Knowledge, ESS-0011 Traceability, ESS-0012 Documentation Governance, ESS-0017 Vocabulary Governance, ADR-0096 Governance Control Plane, ADR-0097 Documentary Maintenance Control Loop  
-**Project execution surface:** `docs/projects/documentary/ROADMAP.md` / `WP-DOC-04`  
+**Project execution surface:** `docs/projects/documentary/ROADMAP.md` / `WP-DOC-05`  
 **Project routing:** `CAPITAL-AI-DOC / PVC-03`
 
 This roadmap is a non-authorizing Documentary execution projection. Current implementation status is resolved from current code, manifests, registries and accepted authorities before this roadmap. The original 2026-08-10 baseline remains historical context and is not allowed to override newer implementation evidence.
@@ -41,14 +41,14 @@ Foreign implementation is routed using `docs/projects/CROSS_PROJECT_HANDOFF_CONT
 
 The 2026-08-10 roadmap baseline described Documentary as mostly target structure and reported README/manifest version drift. That description is now **historical**.
 
-Current repository evidence shows:
+Current repository evidence on this revision shows:
 
-- Documentary component version `1.13.0` in `src/platform/Documentary/manifest.json` and the component README;
+- Documentary component version `1.14.0` in `src/platform/Documentary/manifest.json` and the component README;
 - component-version authority: `src/platform/Documentary/manifest.json#version`;
 - document-schema-version authority: `src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`;
 - platform-version authority: repository `package.json#version`, consumed through the Release control plane; Documentary does not own platform-version mutation;
-- implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance (documentation-only), Interfaces, Knowledge, Lifecycle, Models, Observability (maintenance slice), Orchestration, Traceability and Versioning;
-- planned/partial areas remain Mermaid, Migration, Plugins, additional Architecture-runtime functions and additional ESS-0012 validators.
+- implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance (documentation-only), Interfaces, Knowledge, Lifecycle, Mermaid, Models, Observability (maintenance slice), Orchestration, Traceability and Versioning;
+- planned/partial areas remain Migration, Plugins, additional Architecture-runtime functions and additional ESS-0012 validators.
 
 The current implementation remains intentionally classified as **Partial Implementation**. “Partial” no longer means “only the bilingual layer exists”; it means the established Documentary baseline is implemented while explicitly listed future slices remain open.
 
@@ -60,7 +60,7 @@ The current implementation remains intentionally classified as **Partial Impleme
 
 Implemented evidence:
 
-- README and manifest agree on Documentary component version `1.13.0`;
+- README and manifest agree on Documentary component version `1.14.0`;
 - component, document-schema and platform versions are semantically separated;
 - Documentary consumes platform version from the existing Release control plane and does not reactivate a second Version Manager authority;
 - `Architecture/documentary-baseline.json` and dedicated D0 evidence remain implementation references.
@@ -101,9 +101,9 @@ The current D4 identity is **Review & Lifecycle Governance**, superseding the or
 
 **State:** IMPLEMENTED BASELINE
 
-The current D6 identity is **Generators & Renderers**. `Generators/DocumentaryRenderer.ts` renders governed `DocumentaryDocument` models for supported document profiles. It does not grant approval, persist a second document store or publish independent event authority.
+The current D6 identity is **Generators & Renderers**. `Generators/DocumentaryRenderer.ts` renders governed `DocumentaryDocument` models for supported document profiles. `Mermaid/DocumentaryMermaidRenderer.ts` deterministically projects the existing D7 `DocumentaryKnowledgeProjection` into Mermaid source text with SHA-256 node aliases, stable ordering and escaped labels. It does not execute Mermaid, emit active click/URL/HTML/script directives, grant approval, persist graph state, create a second diagram/Knowledge registry or publish independent event authority.
 
-Bilingual rendering continues to reuse the existing Vocabulary/Wording contracts. Model-driven Mermaid generation remains planned.
+Bilingual rendering continues to reuse the existing Vocabulary/Wording contracts. The Mermaid slice reuses the existing D7 node/relationship contract rather than defining a parallel graph model.
 
 ### D7 — Knowledge Integration
 
@@ -134,16 +134,15 @@ Compliance-owned documents, foreign runtime paths and foreign project migrations
 
 The stale 2026-08-10 gap list is replaced by the following current backlog:
 
-1. model-driven Mermaid/architecture diagram generation;
-2. general Documentary Migration support with safe compatibility handling;
-3. plugin extension model without introducing a second provider/agent framework;
-4. additional ESS-0012 documentation-only validators where current policy requires them;
-5. broader Documentary quality/SLO definitions beyond the implemented maintenance observability slice;
-6. additional generator profiles only when backed by existing document models, provenance and lifecycle contracts;
-7. further deterministic retry/idempotency hardening inside Documentary-owned consumers where evidence demonstrates a gap;
-8. sensitive-document classification consumption from Security/Compliance contracts without acquiring Security/Compliance decision authority.
+1. general Documentary Migration support with safe compatibility handling;
+2. plugin extension model without introducing a second provider/agent framework;
+3. additional ESS-0012 documentation-only validators where current policy requires them;
+4. broader Documentary quality/SLO definitions beyond the implemented maintenance observability slice;
+5. additional generator profiles only when backed by existing document models, provenance and lifecycle contracts;
+6. further deterministic retry/idempotency hardening inside Documentary-owned consumers where evidence demonstrates a gap;
+7. sensitive-document classification consumption from Security/Compliance contracts without acquiring Security/Compliance decision authority.
 
-Historical 2026-08-10 gaps such as “Engine fehlt”, “Models fehlen”, “Generators fehlen”, “Knowledge-Projektion fehlt” or README/manifest version drift are closed by current implementation evidence and must not be reopened merely because the original roadmap text remains in Git history.
+The former model-driven Mermaid/architecture-diagram gap is closed on this revision by the deterministic source-text projection in D6. Historical 2026-08-10 gaps such as “Engine fehlt”, “Models fehlen”, “Generators fehlen”, “Knowledge-Projektion fehlt” or README/manifest version drift are closed by current implementation evidence and must not be reopened merely because the original roadmap text remains in Git history.
 
 ## 5. Workstream E — Event-Driven Value Chain
 
@@ -208,7 +207,7 @@ Documentary may detect stale paths and propose document-identity-based repairs. 
 The original 2026-08-10 sequence is historical. Current Documentary sequencing is evidence-driven:
 
 1. maintain D0–D7 implemented baselines without reintroducing duplicate authorities;
-2. execute remaining DOC-owned Mermaid/Migration/Plugins/validator work only as separately scoped work packages;
+2. execute remaining DOC-owned Migration/Plugins/validator work only as separately scoped work packages;
 3. extend D9 only inside Documentary scope unless a central observability change is handed off;
 4. treat E0/E2/E3/E5 central runtime work as OPS dependencies/handoffs;
 5. preserve GOV decision boundaries for Platform Director and repository Governance;
@@ -225,7 +224,7 @@ The Documentary roadmap is current when:
 - Documentary-owned work remains inside CAPITAL-AI-DOC / PVC-03;
 - EventMesh/central Traceability runtime, Platform Version Management, Release and Production are not represented as Documentary implementation work;
 - Platform Director/repository Governance decisions remain CAPITAL-AI-GOV-owned;
-- no second Document, Vocabulary, Knowledge, Wiki, Event, Version, Release or Governance registry/authority is introduced;
+- no second Document, Vocabulary, Knowledge, Wiki, Event, Diagram, Version, Release or Governance registry/authority is introduced;
 - historical baseline information remains traceable and is explicitly non-current;
 - remaining planned Documentary areas are accurately bounded and independently actionable.
 

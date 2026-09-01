@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.13.0
+Version: 1.14.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer, D7 Knowledge Projection sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
 
 ## Implemented Scope
 
@@ -45,6 +45,7 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Traceability/DocumentaryTraceability.ts`
 - `Lifecycle/DocumentaryLifecycle.ts`
 - `Generators/DocumentaryRenderer.ts`
+- `Mermaid/DocumentaryMermaidRenderer.ts`
 - `Knowledge/DocumentaryKnowledgeProjection.ts`
 - `Architecture/documentary-baseline.json`
 
@@ -105,9 +106,11 @@ Die Projektion ist ausschließlich ein Übergabevertrag an die in ESS-0009 spezi
 
 ## D6 Generators & Renderer
 
-D6 rendert ausschließlich bereits erzeugte `DocumentaryDocument`-Modelle. Unterstützt werden die Dokumenttypen `architecture`, `component`, `api`, `runbook`, `release-evidence` und `handoff` mit dokumenttyp-spezifischen Abschnittsprofilen.
+D6 rendert ausschließlich bereits erzeugte Documentary-Modelle oder deren deterministische Projektionen. Der Markdown-Renderer unterstützt die Dokumenttypen `architecture`, `component`, `api`, `runbook`, `release-evidence` und `handoff` mit dokumenttyp-spezifischen Abschnittsprofilen.
 
-Der Renderer verändert weder den Lifecycle-Status noch den Dokument-Fingerprint. Er führt keine Freigabe, Persistenz, Source-Code-Mutation oder Event-Publikation durch.
+`Mermaid/DocumentaryMermaidRenderer.ts` rendert die bestehende `DocumentaryKnowledgeProjection` deterministisch als Mermaid-Quelltext. Node-Aliase sind vollständige SHA-256-Ableitungen der vorhandenen Node-IDs; Nodes und Relationships werden stabil sortiert. Evidence-Labels werden escaped, und der Generator erzeugt weder `click`-/URL-/HTML-/Script-Direktiven noch externe Ressourcen. Mermaid wird nicht ausgeführt und kein Graph persistiert.
+
+Die Renderer verändern weder Lifecycle-Status noch Dokument-Fingerprint oder Knowledge-Projektion. Sie führen keine Freigabe, Persistenz, Source-Code-Mutation oder Event-Publikation durch und erzeugen keine zweite Diagramm- oder Knowledge-Registry.
 
 ## D4 Review & Lifecycle Governance
 
@@ -131,13 +134,13 @@ Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach App
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren. Diese Bereiche gehören nicht zum ADR-0097-Maintenance-Work-Package.
+Weiterhin geplant: `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren. Diese Bereiche gehören nicht zum ADR-0097-Maintenance-Work-Package und werden durch WP-DOC-05 nicht berührt.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
+Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
 
 ## ESS / ADR
 
