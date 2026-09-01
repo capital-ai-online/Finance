@@ -6,7 +6,7 @@
 **Source project:** `CAPITAL-AI-GOV`  
 **Source project folder:** `docs/projects/governance/`  
 **Primary project stage:** `PVC-05 — Platform Director`  
-**Current authority:** `/AGENTS.md`, ADR-0096, ADR-0104 v1.3.0 and the current Governance Control Catalog remain controlling until a later Human-merged cutover  
+**Current authority:** `/AGENTS.md`, ADR-0096, ADR-0104 v1.4.0 and the current Governance Control Catalog control text activation after Human Merge; this device contract remains non-authorizing until its later Human-merged cutover  
 **Implementation targets:** `CAPITAL-AI-OPS` plus independent `CAPITAL-AI-SEC` verification
 
 ## 1. Decision intent
@@ -120,8 +120,10 @@ adrVersion
 slotId = ADR-0104-S1 | ADR-0104-S2 | ADR-0104-S3
 slotPreState = AVAILABLE
 chatBindingHash
-projectId
-projectFolder
+authorizedProjectSet[] = sorted canonical { projectId, projectFolder, projectStage, primaryOwner }
+projectSetDigest
+initialActiveProjectId
+initialActiveProjectFolder
 currentMainSha
 sessionDuration = PT8H
 sessionStart
@@ -132,11 +134,11 @@ expiresAt
 nonce
 ```
 
-The activation verifier MUST re-resolve current `main`, ADR-0104 version, slot availability, canonical project/folder mapping and the exact chat binding before consuming the approval.
+The activation verifier MUST re-resolve current `main`, ADR-0104 version, slot availability, every canonical project/folder/stage/Primary-Owner mapping, the exact immutable project-set digest, initial active-project membership and the exact chat binding before consuming the approval. Empty, duplicate, more-than-three-member or post-challenge-modified sets MUST fail closed.
 
 A text command such as `activate ADR-0104-S1`, an approval emoji, a copied prompt, a GitHub reaction, a stored device-ID string or a previously valid assertion MUST NOT independently activate the slot after device-gated cutover.
 
-A successful device assertion and successful ADR-0104 precondition check together create the authoritative activation record. If either side fails, activation is `DENIED / FAIL_CLOSED` and the slot remains `AVAILABLE` unless a separately defined atomic transaction has already committed the transition.
+A successful device assertion and successful ADR-0104 precondition check together create the authoritative activation record, including the immutable project set and its digest. If either side fails, activation is `DENIED / FAIL_CLOSED` and the slot remains `AVAILABLE` unless a separately defined atomic transaction has already committed the transition.
 
 ## 6. Transaction and replay controls
 

@@ -127,6 +127,9 @@ describe('governance authority consistency', () => {
     expect(handoffContract).toContain('TEIL 1 VON N');
     expect(handoffContract).toContain('REQUIRES_CORRELATION');
     expect(handoffContract).toContain('The Security marker is additive only.');
+    expect(handoffContract).toContain('IN-SESSION PROJECT SWITCH');
+    expect(handoffContract).toContain('AUTHORIZED_PROJECT_SET');
+    expect(handoffContract).toContain('each project/work item uses its own branch and PR');
     expect(handoffContract).toContain('It does not authorize:');
   });
 
@@ -145,7 +148,7 @@ describe('governance authority consistency', () => {
     expect(impact).toContain('AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19');
   });
 
-  it('scopes ADR-0104 supersession metadata and preserves S2 consumption', () => {
+  it('scopes ADR-0104 project-set supersession and preserves S2 consumption', () => {
     const registry = JSON.parse(read('docs/adr/registry.json')) as {
       migratedRecords: Array<{
         displayId: string;
@@ -156,17 +159,42 @@ describe('governance authority consistency', () => {
           targets?: Array<{ authorityId?: string; controls?: string[] }>;
           exclusions?: string[];
         };
+        projectSetPolicy?: {
+          mode?: string;
+          minProjects?: number;
+          maxProjects?: number;
+          runtimeProjectAdditionAllowed?: boolean;
+          currentS1Transition?: {
+            sessionEnd?: string;
+            durationExtended?: boolean;
+            projectIdsAfterMerge?: string[];
+          };
+        };
         note?: string;
       }>;
     };
     const adr0104 = registry.migratedRecords.find((item) => item.displayId === 'ADR-0104');
 
     expect(adr0104).toBeDefined();
-    expect(adr0104?.version).toBe('1.3.1');
+    expect(adr0104?.version).toBe('1.4.0');
     expect(adr0104?.supersessionScope?.type).toBe('conditional-partial');
-    expect(adr0104?.supersessionScope?.activationCondition).toMatch(/ACTIVE/i);
+    expect(adr0104?.supersessionScope?.activationCondition).toMatch(/immutable predeclared set/i);
+    expect(adr0104?.supersessionScope?.targets?.some((target) =>
+      target.controls?.includes('FOREIGN_PROJECT_HANDOFF:IN_SET_STOP_AND_SEPARATE_CHAT_ONLY')
+    )).toBe(true);
     expect(adr0104?.supersessionScope?.exclusions).toContain('CTRL-MERGE-HUMAN-001');
-    expect(adr0104?.supersessionScope?.exclusions).toContain('FOREIGN_PROJECT_HANDOFF');
-    expect(adr0104?.note).toContain('S2=CONSUMED');
+    expect(adr0104?.supersessionScope?.exclusions).toContain('FOREIGN_PROJECT_HANDOFF_OUTSIDE_AUTHORIZED_PROJECT_SET');
+    expect(adr0104?.projectSetPolicy).toMatchObject({
+      mode: 'immutable-predeclared-bounded-set',
+      minProjects: 1,
+      maxProjects: 3,
+      runtimeProjectAdditionAllowed: false,
+    });
+    expect(adr0104?.projectSetPolicy?.currentS1Transition).toMatchObject({
+      sessionEnd: '2026-09-02T02:46:32Z',
+      durationExtended: false,
+      projectIdsAfterMerge: ['CAPITAL-AI-GOV', 'CAPITAL-AI-OPS'],
+    });
+    expect(adr0104?.note).toContain('S2 remains CONSUMED');
   });
 });

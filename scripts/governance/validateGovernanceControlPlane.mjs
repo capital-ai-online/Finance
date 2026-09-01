@@ -310,18 +310,32 @@ if (errors.length === 0) {
   }
 
   const adr0104 = adrs.find((item) => item.displayId === 'ADR-0104');
-  if (!adr0104 || adr0104.version !== '1.3.1') {
-    fail('ADR_0104_RACE_VERSION_MISSING', 'ADR-0104 registry must project the S2/v1.3 race correction as v1.3.1.');
+  if (!adr0104 || adr0104.version !== '1.4.0') {
+    fail('ADR_0104_PROJECT_SET_VERSION_MISSING', 'ADR-0104 registry must project the bounded project-set amendment as v1.4.0.');
   } else {
     const scope = adr0104.supersessionScope;
+    const projectSet = adr0104.projectSetPolicy;
+    const inSetTarget = scope?.targets?.find((target) =>
+      target.controls?.includes('FOREIGN_PROJECT_HANDOFF:IN_SET_STOP_AND_SEPARATE_CHAT_ONLY')
+    );
     if (!scope || scope.type !== 'conditional-partial') {
       fail('ADR_0104_SUPERSESSION_SCOPE_MISSING', 'ADR-0104 supersession metadata must be conditional-partial.');
     }
     if (!Array.isArray(scope?.targets) || scope.targets.length === 0 || !Array.isArray(scope?.exclusions) || scope.exclusions.length === 0) {
       fail('ADR_0104_SUPERSESSION_SCOPE_INCOMPLETE', 'ADR-0104 scoped supersession must identify targets and exclusions.');
     }
-    if (!scope?.exclusions?.includes('CTRL-MERGE-HUMAN-001') || !scope?.exclusions?.includes('FOREIGN_PROJECT_HANDOFF')) {
-      fail('ADR_0104_SUPERSESSION_EXCLUSIONS_INCOMPLETE', 'ADR-0104 scoped supersession must explicitly preserve Human merge and foreign-project handoff.');
+    if (!inSetTarget) {
+      fail('ADR_0104_IN_SET_HANDOFF_TARGET_MISSING', 'ADR-0104 must name the narrowly superseded in-set STOP/separate-chat handoff surface.');
+    }
+    if (!scope?.exclusions?.includes('CTRL-MERGE-HUMAN-001') || !scope?.exclusions?.includes('FOREIGN_PROJECT_HANDOFF_OUTSIDE_AUTHORIZED_PROJECT_SET')) {
+      fail('ADR_0104_SUPERSESSION_EXCLUSIONS_INCOMPLETE', 'ADR-0104 must explicitly preserve Human merge and out-of-set foreign-project handoff.');
+    }
+    if (projectSet?.mode !== 'immutable-predeclared-bounded-set' || projectSet?.minProjects !== 1 || projectSet?.maxProjects !== 3 || projectSet?.runtimeProjectAdditionAllowed !== false) {
+      fail('ADR_0104_PROJECT_SET_POLICY_INVALID', 'ADR-0104 must bind an immutable predeclared project set of one to three projects and prohibit runtime additions.');
+    }
+    const currentS1Projects = projectSet?.currentS1Transition?.projectIdsAfterMerge;
+    if (!Array.isArray(currentS1Projects) || currentS1Projects.join(',') !== 'CAPITAL-AI-GOV,CAPITAL-AI-OPS' || projectSet?.currentS1Transition?.sessionEnd !== '2026-09-02T02:46:32Z' || projectSet?.currentS1Transition?.durationExtended !== false) {
+      fail('ADR_0104_CURRENT_S1_TRANSITION_INVALID', 'ADR-0104 current S1 transition must be exactly GOV+OPS, conditional before the unchanged session end, without duration extension.');
     }
   }
 
