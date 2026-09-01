@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -14,6 +14,7 @@
   "baseBranch": "main",
   "baseSha": "8e0e4a541da24ce2e28988e31c9a8bb7e5711a25",
   "pullRequest": 631,
+  "mergedPr": 631,
   "branch": "agent/security-pvc-handoff-correlation-20260831",
   "project": "CAPITAL-AI-SEC",
   "projectFolder": "security",
@@ -34,5 +35,17 @@
     "CAPITAL-AI-CLIENT/CAPITAL-AI-FINTECH: child remediation only if target-owned code is identified by the entitlement inventory"
   ],
   "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SEC owns requirements/findings/testing/verification only, no productive PVC stage. Foreign implementation remains target-project work; no self-accepted risk, autonomous production mutation, duplicate Governance Control Plane, EventMesh, data or scoring architecture.",
-  "releaseCondition": "Release on merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Released when the resulting pull request is merged, closed, superseded or abandoned. Merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-08-31T19:16:17Z",
+  "mainCommit": "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6",
+  "terminalHeadSha": "b6f40c19910ddec530fb106f1d4c9d5a5f726989",
+  "releaseEvidence": {
+    "pullRequest": 631,
+    "merged": true,
+    "mergeCommitSha": "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "4ead0a3982e78ef3f957fd083e88cd5de943eaf4",
+    "verifiedAt": "2026-09-01"
+  }
 }
