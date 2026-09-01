@@ -5,7 +5,7 @@
 **Role:** Primary Project Value Chain Owner  
 **Primary stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`  
 **Status:** ACTIVE — PROJECT EXECUTION SURFACE / NON-AUTHORIZING  
-**Baseline:** `main@9fe9be4e8c1c3b46232d73f87fc5bec75d2242f5`  
+**Baseline:** `main@19b2527de88444b999b7820c5a6712e8d80b60df`  
 **Trust root:** `/AGENTS.md`
 
 ## Purpose
