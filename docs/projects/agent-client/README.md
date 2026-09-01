@@ -2,16 +2,16 @@
 
 **Project ID:** `CAPITAL-AI-CLIENT`  
 **Display name:** CAPITAL-AI Client  
-**Value-chain stage:** `VC-01 — Agent Client`  
+**Project value-chain stage:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`  
-**Lifecycle:** `ACTIVE — LOGICAL OWNERSHIP CONSOLIDATION`  
+**Lifecycle:** `ACTIVE — CONTRACT BASELINE / LOGICAL OWNERSHIP`  
 **Canonical execution roadmap:** [`ROADMAP.md`](./ROADMAP.md)
 
 ## Purpose
 
-CAPITAL-AI-CLIENT is the single Primary Owner for VC-01. It owns the client-side contract from authenticated human intent to a structured request handed to the authoritative control boundary, and the client-side handling of responses, status and errors returned from that boundary.
+CAPITAL-AI-CLIENT is the single Primary Owner for PVC-01. It owns the client-side contract from attributable Human intent to a structured request handed to the authoritative downstream boundary, and the client-side handling of response, status and error semantics returned from that boundary.
 
-The project does **not** authorize itself, execute protected mutations, own the Agent Control Plane, or absorb work from VC-02 through VC-18.
+The project does **not** authorize itself, execute protected mutations, own the Agent Control Plane, or absorb work from PVC-02 through PVC-18.
 
 ## Authority chain
 
@@ -19,56 +19,55 @@ The project does **not** authorize itself, execute protected mutations, own the 
 Human / Owner
   -> AGENTS.md
   -> ADR / ESS / Contracts
-  -> CAPITAL-AI-CLIENT VC-01 contract
-  -> Agent Control Plane / authoritative downstream project
+  -> CAPITAL-AI-CLIENT PVC-01 request/response contract
+  -> authoritative downstream control/execution boundary
   -> response / status / error envelope
   -> CAPITAL-AI-CLIENT UX handling
 ```
 
-`AGENTS.md` remains the trust root. Roadmaps and client identity are projections/inputs, not authorization authority. Natural-language user intent is never treated as an authorization policy.
+Natural-language content, provider/model metadata, correlation IDs and client status never become authorization policy.
 
-## VC-01 ownership boundary
+## PVC-01 ownership boundary
 
-### Owned here
+Owned here:
 
 - Agent Client architecture;
 - request construction;
 - identity handoff;
 - capability request handoff;
-- response handling;
-- client-side status handling;
-- client-side error handling;
+- response/status/error handling;
 - Agent Client UX contracts.
 
-### Explicitly not owned here
+Explicitly not owned here:
 
-Controlled Implementation, Supervisor, Platform Director, Version Management, Release Management, Production Operations, UAI/Data Ingestion, Evidence Management, Data Quality, Scoring, Ranking and EventMesh/Traceability remain with their canonical downstream owners.
+- authorization/policy evaluation;
+- protected execution/mutation;
+- Platform Director/Governance decisions;
+- Version/Release/Production Operations;
+- Data, Evidence, Data Quality, Scoring, Ranking;
+- EventMesh/Trace authority.
 
 ## Architecture rule
 
-The migration model is **logical ownership before physical relocation**. Existing productive code remains in place unless a later evidenced refactor is required to remove duplication. Imports, contracts, tests and runtime behavior must remain stable. New duplicate Agent Client implementations are prohibited; changes use reuse/strangler/refactor patterns.
+Migration posture is **logical ownership before physical relocation**. Existing productive code remains in place unless a later evidenced strangler/refactor removes real duplication or drift. New duplicate Agent Client implementations are prohibited.
 
-Current architecture already defines:
-
-```text
-Human -> AI Client -> Agent Control Plane -> Capability/Policy -> Tool Adapter -> Platform -> Evidence
-```
-
-CAPITAL-AI-CLIENT owns only the `Human -> AI Client -> handoff` and downstream response/UX edge. Authorization and protected execution start after that handoff.
+Current re-correlation on `main@891f3933ac0476b1e7d4fa5cd6f397257ac52e68` found no productive PVC-01 runtime path that justifies a physical Agent Client module. CLIENT-02 through CLIENT-06 are therefore implemented first as the provider-neutral contract baseline in [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md). A physical module remains gated by [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md).
 
 ## Canonical navigation
 
-- [`ROADMAP.md`](./ROADMAP.md) — canonical VC-01 execution roadmap.
-- [`AGENT_CLIENT_INVENTORY.md`](./AGENT_CLIENT_INVENTORY.md) — repository-wide Agent Client task/source classification.
-- [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md) — current runtime and document mapping to VC-01 ownership.
-- [`WORK_PACKAGES.md`](./WORK_PACKAGES.md) — CLIENT-01 through CLIENT-07 work packages.
-- [`TRACEABILITY.md`](./TRACEABILITY.md) — authority, source, runtime and handoff traceability.
-- [`evidence/BASELINE_2026-08-31.md`](./evidence/BASELINE_2026-08-31.md) — exact-main baseline and validation evidence.
+- [`ROADMAP.md`](./ROADMAP.md) — canonical PVC-01 roadmap/status.
+- [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md) — CLIENT-02 through CLIENT-06 contract baseline.
+- [`AGENT_CLIENT_INVENTORY.md`](./AGENT_CLIENT_INVENTORY.md) — repository-wide relationship inventory.
+- [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md) — current runtime/document mapping and strangler trigger.
+- [`WORK_PACKAGES.md`](./WORK_PACKAGES.md) — CLIENT-01 through CLIENT-07.
+- [`TRACEABILITY.md`](./TRACEABILITY.md) — authority/source/runtime/handoff traceability.
+- [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md) — current-main recorrelation and strangler evidence.
+- [`evidence/BASELINE_2026-08-31.md`](./evidence/BASELINE_2026-08-31.md) — historical initial baseline.
 
 ## Cross-project rule
 
-Foreign work is represented only by:
+Foreign productive work is routed through the canonical handoff contract and is never implemented or marked `DONE`/`VERIFIED` locally. The compatibility marker remains:
 
 `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
 
-A handoff is non-authorizing. CAPITAL-AI-CLIENT does not implement the foreign task and never marks it `DONE` or `VERIFIED` locally.
+Project routing identity uses the canonical `PVC-*` mapping from current main.
