@@ -1,9 +1,14 @@
 # DSGVO Remediation Roadmap — 2026-08-19
 
+**Portfolio role:** `HISTORICAL_REMEDIATION_WITH_RESIDUALS`  
+**Project execution/status source:** `docs/projects/compliance/ROADMAP.md` plus the roadmap of each affected Primary Owner  
+**Roadmap registry:** `docs/projects/ROADMAP_REGISTRY.md`  
 **Baseline:** `main` @ `345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`  
 **Branch:** `agent/dsgvo-remediation-controller-rights`  
 **Owner/Controller:** Sven Michael Kulessa, von Lepel Straße 3a, 27259 Freistatt, Deutschland  
-**Status:** P0/P1 repository remediation implemented; vendor evidence onboarding and follow-up advisor hardening in progress on PR #414
+**Status:** `MERGED IMPLEMENTATION / REMEDIATION EVIDENCE — PR #414`; unresolved vendor/legal/advisor items require current revalidation and owner routing rather than continued status ownership by this historical branch roadmap
+
+> **Current-state note (2026-09-01):** PR #414 is merged. The baseline, branch distance and CI checklist below are retained as historical execution evidence from the remediation cycle. They are not a current-main or current-portfolio status source. Any still-open item must be revalidated against current Authority/evidence and entered into the applicable current project roadmap/task surface before execution.
 
 ## Ziel
 
@@ -94,7 +99,7 @@ Das Ziel ist **keine Selbsterklärung einer Zertifizierung**. Die Anwendung darf
 - [ ] `promo_redemptions`-Identitäts-/Idempotenzmodell fachlich klären, bevor ein Primary Key festgelegt wird.
 - [ ] Follow-up-Advisor-Migration erst nach separater Produktionsfreigabe anwenden und danach Advisors erneut verifizieren.
 
-## Release Gate
+## Release Gate — historischer Branch-Snapshot
 
 ### Main-Korrelation
 
@@ -103,17 +108,17 @@ Am 19. August 2026 wurde der Branch nach den Vendor-Evidence-/Advisor-Follow-up-
 - `main` stand weiterhin auf `345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`.
 - Branch war zuletzt **27 Commits voraus und 0 Commits zurück**; Merge-Base weiterhin identisch mit `main`.
 - Seit Branch-Erstellung wurden damit keine neuen Main-Commits gemerged.
-- Es existieren folglich keine zwischenzeitlichen Main-Änderungen, die mit Auth-, Supabase-, Routing-, Legal-, Privacy- oder Vendor-Evidence-Dateien dieses Branches korrelieren oder neu eingearbeitet werden müssten.
+- Es existierten zu diesem Snapshot folglich keine zwischenzeitlichen Main-Änderungen, die mit Auth-, Supabase-, Routing-, Legal-, Privacy- oder Vendor-Evidence-Dateien dieses Branches korreliert werden mussten.
 
-### PR-/CI-Gate
+### PR-/CI-Gate — historischer Snapshot
 
-- [x] Branch nach Follow-up-Änderungen gegen aktuellen `main` verglichen.
-- [x] Keine zwischenzeitlichen Main-Korrelationen festgestellt.
+- [x] Branch nach Follow-up-Änderungen gegen damaligen `main` verglichen.
+- [x] Keine damaligen Main-Korrelationen festgestellt.
 - [x] Diff enthält Regression-Tests für Controller-Identity, DDG-Referenz, Compliance-Claims und PII-Logging.
 - [x] Vendor-Evidence-Onboarding-Preflight in `npm test` integriert.
-- [ ] Aktueller GitHub-CI-Lauf nach Vendor-/Advisor-Follow-up erfolgreich.
+- [x] PR #414 wurde anschließend gemerged; der PR-Abschluss dokumentiert die finalen Repository-/CI- und Produktions-Evidenzen des damaligen Kandidaten.
 
-Lokale CLI-Ausführung ist in der aktuellen Agent-Laufzeit nicht verfügbar; der GitHub-PR-CI-Lauf ist deshalb der ausführbare Build/Test-Nachweis für diesen Branch.
+Diese Angaben sind Merge-/Remediation-Evidence. Sie dürfen nicht als aktueller Build-/CI-PASS für spätere Änderungen verwendet werden.
 
 ## Nicht durch Sourcecode allein beweisbar
 
