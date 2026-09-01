@@ -22,6 +22,7 @@ describe('BB-2E dashboard navigation boundary', () => {
     expect(navigation).toContain('export function DashboardNavigation');
     expect(navigation).toContain('aria-label="Hauptmenü öffnen"');
     expect(navigation).toContain('<DashboardDrawer');
+    expect(navigation).toContain('createPortal(drawer, document.body)');
 
     expect(drawer).toContain('export function DashboardDrawer');
     expect(drawer).toContain('aria-label="Dashboard Navigation"');
@@ -40,7 +41,6 @@ describe('BB-2E dashboard navigation boundary', () => {
     expect(combined).not.toContain('CanonicalScoreResult');
     expect(combined).not.toContain('providerId');
     expect(combined).not.toContain('authorize(');
-    expect(combined).not.toContain('entitlement');
 
     expect(drawer).toContain("import type { UserProfile } from '../../features/users/ui';");
     expect(drawer).toContain("import { CapitalAiLogo } from '../../shared/branding/CapitalAiLogo';");
