@@ -58,10 +58,7 @@ describe('governance authority consistency', () => {
   });
 
   it('keeps ruleset authority at the live provider and retires repository-owned desired policy', () => {
-    const expectedPolicyPath = path.join(
-      root,
-      '.github/policies/main-production-protection.expected.json',
-    );
+    const expectedPolicyPath = path.join(root, '.github/policies/main-production-protection.expected.json');
     const sync = read('scripts/security/rulesetSync.mjs');
     const workflow = read('.github/workflows/ruleset-sync.yml');
 
@@ -107,9 +104,7 @@ describe('governance authority consistency', () => {
     const agents = read('AGENTS.md');
     const handoffContract = read('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
     const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
-    const sameIdControls = controlCatalog.controls.filter(
-      (item) => item.controlId === 'CTRL-SDLC-CHAT-HANDOFF-001',
-    );
+    const sameIdControls = controlCatalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-CHAT-HANDOFF-001');
 
     expect(sameIdControls).toHaveLength(1);
     expect(handoff.requirement).toContain('POST_PR_HANDOFF');
@@ -138,11 +133,11 @@ describe('governance authority consistency', () => {
   it('requires diff and impact analysis before semantic supersession becomes effective', () => {
     const authorityPolicy = read('docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md');
     const supersession = control('CTRL-GOV-AUTH-002');
-    const impactPath =
-      'docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md';
+    const impactPath = 'docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md';
     const impact = read(impactPath);
 
     expect(authorityPolicy).toContain('AUTH-GOV-SUPERSESSION-POLICY');
+    expect(authorityPolicy).toContain('A bare `supersedes: ["AUTH-..."]` entry is a relation anchor only');
     expect(supersession.status).toBe('required');
     expect(supersession.authorityRefs).toContain('AUTH-GOV-SUPERSESSION-POLICY');
     expect(supersession.evidence).toContain(impactPath);
@@ -172,6 +167,6 @@ describe('governance authority consistency', () => {
     expect(adr0104?.supersessionScope?.activationCondition).toMatch(/ACTIVE/i);
     expect(adr0104?.supersessionScope?.exclusions).toContain('CTRL-MERGE-HUMAN-001');
     expect(adr0104?.supersessionScope?.exclusions).toContain('FOREIGN_PROJECT_HANDOFF');
-    expect(adr0104?.note).toContain('S2 is CONSUMED');
+    expect(adr0104?.note).toContain('S2=CONSUMED');
   });
 });
