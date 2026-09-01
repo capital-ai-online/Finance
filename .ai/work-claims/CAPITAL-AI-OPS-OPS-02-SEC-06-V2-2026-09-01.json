@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-OPS-02-SEC-06-V2-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "workItem": "OPS-02-SEC-06 — Premium / Protected Capability Inventory recorrelation after PR #684 changed current main and ADR-0104 v1.2.0. Preserve the completed parent inventory, DENY matrix and Primary-Owner child routing without foreign implementation.",
+  "startedAt": "2026-09-01T14:51:00Z",
+  "baseBranch": "main",
+  "baseSha": "6dea22e5b8c4f2b0b9c9fbfb73615738acf57a54",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-OPS-02-SEC-06-V2-2026-09-01.json",
+    "docs/projects/operations/controlled-implementation/OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/SECURITY_HANDOFFS.md",
+    "docs/projects/operations/CROSS_PROJECT_DEPENDENCIES.md",
+    "docs/projects/operations/controlled-implementation/README.md"
+  ]
+}
