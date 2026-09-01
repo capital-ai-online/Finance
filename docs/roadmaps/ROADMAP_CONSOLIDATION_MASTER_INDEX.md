@@ -1,92 +1,83 @@
-# CAPITAL-AI Konsolidierte Gesamtroadmap
+# CAPITAL-AI Roadmap Portfolio Index
 
-Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
-Stand: 2026-08-31  
-Repository-Baseline: `main@6b1e7e5234604641449f304b5b251bd74151ddab`  
-Owner: SvenKulessa  
-Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
+**Document role:** `CROSS_PROJECT_INDEX` / derived navigation / non-authorizing  
+**Status:** `ACTIVE — DERIVED PORTFOLIO INDEX`  
+**Single-source registry:** `docs/projects/ROADMAP_REGISTRY.md`  
+**Trust root:** `/AGENTS.md`  
+**DevelopmentChain current-state authority:** `docs/architecture/ROADMAP.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`)  
+**Predecessor snapshot:** repository history before the 2026-09-01 single-source consolidation; predecessor blob `7a2c7fd5997bb2406c12bfb0d55cba3ee2a3a2ee`
 
-## 1. Zweck
+## Purpose
 
-Dieses Dokument ersetzt den bisherigen reinen Portfolio-Index durch eine vollständige, dokumentenbasierte Ausführungsroadmap. Es führt alle noch offenen Roadmaps, die DEVELOPMENT Chain M0–M10, die P0–P3-Prioritäten und begrenzte Systemadministrator-Prototypaufträge zusammen.
+This file is a **derived portfolio navigation index**. It no longer maintains an independent status truth, Authority hierarchy, execution backlog or next-action table.
 
-Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder Human/Owner-Authority. Ein Status `DOCUMENTATION READY`, `PROTOTYPE READY` oder `QUALITY READY` erzeugt keine Mutations-, Merge-, Release- oder Deploymentberechtigung.
+Organizational project execution/status is maintained exactly once per canonical project in `docs/projects/<project>/ROADMAP.md`. Detailed domain/program roadmaps remain available for bounded architecture, workstream, finding, migration or historical context. Technical and Governance Authority continues to resolve through `/AGENTS.md`, accepted ADR/ESS/AUTH/CTRL identities, current registries and specific registered authorities.
 
-**Quality-Management-V2 2026-08-31:** `docs/projects/quality-management/PROJECT_CONTRACT_V2.md` und `ROADMAP.md` definieren die vorgeschlagene unabhängige, cross-cutting Quality-Assurance-Funktion. Aktivierung erfolgt erst durch Human Merge / Annahme von ADR-0103. QM beobachtet `VC-01` bis `VC-18`, besitzt aber keine produktive VC-Stufe. Technische Remediation verbleibt beim Primary Owner der betroffenen Stufe und wird über `[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` referiert. QM pflegt Finding-/Verification-Status; das Zielprojekt pflegt Remediation-Execution. Das Cross-Project-Mapping liegt in `docs/projects/quality-management/TAKEOVER_INDEX.md`.
+The complete 28-roadmap correlation and role classification is maintained in [`docs/projects/ROADMAP_REGISTRY.md`](../projects/ROADMAP_REGISTRY.md).
 
-**Domain-Update 2026-08-15:** SEO Management und Marketing Agent sind in **SEO-GM-ROADMAP-0002** (`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`) zu einem Single Point of Trust konsolidiert. Die früheren Dateien `docs/seo/SEO_MANAGEMENT_ROADMAP.md` und `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` sind SUPERSEDED.
+## Canonical project execution roadmaps
 
-**Portfolio-Sync SEO-GM 2026-08-16:** Die Portfolio-Zeile `SEO-GM` in §3 war auf dem Stand SEO-GM-ROADMAP-0002 v0002.1 stehengeblieben und nannte bereits erledigte Arbeitspakete als nächste Schritte. Sie ist auf **v0002.11** nachgezogen (WP-S1, Q3, WP-D1/D2/D3 und WP-S2 VERIFIED; WP-M0 durch Owner-ACCEPT erfuellt). Diese Synchronisation ist rein statusabbildend; Programmautorität und Statusfortschreibung liegen unverändert allein bei SEO-GM-ROADMAP-0002.
+| Project | PVC / relationship | Organizational project execution/status source |
+|---|---|---|
+| `CAPITAL-AI-CLIENT` | `PVC-01` | [`docs/projects/agent-client/ROADMAP.md`](../projects/agent-client/ROADMAP.md) |
+| `CAPITAL-AI-OPS` | `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18` | [`docs/projects/operations/ROADMAP.md`](../projects/operations/ROADMAP.md) |
+| `CAPITAL-AI-DOC` | `PVC-03` | [`docs/projects/documentary/ROADMAP.md`](../projects/documentary/ROADMAP.md) |
+| `CAPITAL-AI-GOV` | `PVC-05` + cross-cutting Governance | [`docs/projects/governance/ROADMAP.md`](../projects/governance/ROADMAP.md) |
+| `CAPITAL-AI-DATA` | `PVC-09..PVC-11` | [`docs/projects/data/ROADMAP.md`](../projects/data/ROADMAP.md) |
+| `CAPITAL-AI-FINTECH` | `PVC-12..PVC-17` | [`docs/projects/fintech/ROADMAP.md`](../projects/fintech/ROADMAP.md) |
+| `CAPITAL-AI-QM` | cross-cutting | [`docs/projects/quality-management/ROADMAP.md`](../projects/quality-management/ROADMAP.md) |
+| `CAPITAL-AI-SEC` | cross-cutting | [`docs/projects/security/ROADMAP.md`](../projects/security/ROADMAP.md) |
+| `CAPITAL-AI-COMP` | cross-cutting | [`docs/projects/compliance/ROADMAP.md`](../projects/compliance/ROADMAP.md) |
+| `CAPITAL-AI-FE` | cross-cutting presentation | [`docs/projects/frontend/ROADMAP.md`](../projects/frontend/ROADMAP.md) |
+| `CAPITAL-AI-SEO` | cross-cutting SEO/marketing | [`docs/projects/seo/ROADMAP.md`](../projects/seo/ROADMAP.md) |
+| `CAPITAL-AI-SOCIAL` | cross-cutting distribution | [`docs/projects/social-media/ROADMAP.md`](../projects/social-media/ROADMAP.md) |
 
-**Integration 2026-08-15:** Die DEVELOPMENT Chain und der Systemadmin-Agent sind in der kanonischen Ausführungsroadmap **ROADMAP-INTEGRATED-DC-SA-0001** (`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md`) verbunden. Diese Integrated Roadmap ist die verbindende Ausführungsautorität für DC + SA Phasen (I0–I4).
+The project-roadmap status label is not automatically `ACTIVE`. Proposed or blocked project lifecycles remain proposed or blocked until their own Authority/gates change. In particular, `CAPITAL-AI-QM` remains subject to proposed ADR-0103.
 
-**Value-Chain Coverage 2026-08-30:** Coverage-Map und Inventar *-0 sind über PR #610 auf `main`. Ein append-only Registry-Insert-Payload, Claim-Close, Current-State-Sync, ESS-Reconciliation, VC-H *-1 Spezifikation und S1-R2-02 Dispatch-Checkliste liegen in OPEN-STEPS-BIND-2026-08-30 (`docs/open-steps-bind-2026-08-30-v6`). `document-registry.json` wird dabei nicht mutiert. PR #615 ist auf `main@f714eae6` gemergt; PR #617 ist damit synchronisiert. Live `mode=full` bleibt bis zu separatem Owner-Plan, Owner-ACCEPT und verifiziertem Readback gesperrt.
+## Current higher/bounded sources
 
-**Agent-Client Ownership 2026-08-31:** `CAPITAL-AI-CLIENT` ist als alleiniger Primary Owner von `VC-01 — Agent Client` in `docs/projects/agent-client/` konsolidiert. Die kanonische VC-01-Ausführungsroadmap ist `docs/projects/agent-client/ROADMAP.md`. Sie übernimmt keine Ausführung fremder VC-Stufen; Controlled Implementation, Platform/Governance Decisions und EventMesh/Traceability werden ausschließlich als Cross-Project-Handoffs referenziert.
+| Source | Role |
+|---|---|
+| [`docs/architecture/ROADMAP.md`](../architecture/ROADMAP.md) | `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS` — current DevelopmentChain status authority |
+| [`docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md`](./SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md) | `SC-MD-SPT-0001` — bounded technical financial value-chain authority |
+| [`docs/projects/PROJECT_VALUE_CHAIN.md`](../projects/PROJECT_VALUE_CHAIN.md) | organizational PVC ownership/routing model |
+| [`docs/governance/authority-registry.json`](../governance/authority-registry.json) | stable Authority identities/lifecycle |
+| [`docs/governance/control-catalog.json`](../governance/control-catalog.json) | canonical machine-readable control catalog |
+| [`docs/adr/registry.json`](../adr/registry.json) | ADR lifecycle/identity registry |
 
-**Compliance-Integration 2026-08-31:** **CAPITAL-AI-COMP** (`docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md`) ist der cross-cutting **Compliance Assessment Single Point of Execution** für Applicability, Requirement/Control Mapping, Assessment, Findings, Evidence, Regulatory Traceability, Legal Review und Remediation Handoffs. `primary_value_chain_ownership = []`: technische/organisatorische Remediation verbleibt beim jeweiligen Primary Owner und wird mit `[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` referenziert. Für `VC-01` ist dieser technische Primary Owner `CAPITAL-AI-CLIENT`; Security, Privacy, Frontend, SEO-GM und AI bleiben ggf. Requirement-/Control-/Evidence-Quellen. CAPITAL-AI-COMP ist non-authorizing und erzeugt keine zweite Governance-, Security-, QM- oder Policy-Hierarchie.
+## Detailed / program roadmaps
 
-## 2. Verbindliche Authority-Reihenfolge
+The following are retained as bounded detail, coordination or evidence sources. They **do not** constitute a second organizational project-status source:
 
-1. verifizierte Runtime-, Code- und Produktions-Evidence;
-2. ausdrückliche Human/Owner-Freigabe;
-3. spezifische ADR/ESS/IAM/REM/Runbook-Authority;
-4. `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001) für DC+SA-Verbindung;
-5. `DEVELOPMENT_CHAIN_ROADMAP.md` (Detail-Phasen);
-6. diese Gesamtroadmap (Portfolio-Index);
-7. Fachroadmaps, darunter `docs/projects/agent-client/ROADMAP.md` ausschließlich für VC-01, **SEO-GM-ROADMAP-0002** für SEO/Google Marketing und **ROADMAP-VC-COV-HARDEN-2026-08-30** für Kettenlücken ohne Fachroadmap;
-8. nach ADR-0103-Aktivierung: `docs/projects/quality-management/ROADMAP.md` für unabhängige Quality-Assurance, Findings und Verifikation; die jeweilige Primary-Owner-/Domain-Authority bleibt für technische Remediation vorrangig;
-9. historische oder als Legacy/SUPERSEDED markierte Indizes.
+- [`INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md`](./INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md) — integrated Development/Systemadmin program detail; non-authorizing projection.
+- [`DEVELOPMENT_CHAIN_ROADMAP.md`](./DEVELOPMENT_CHAIN_ROADMAP.md) — historical DevelopmentChain implementation detail; current state is `docs/architecture/ROADMAP.md`.
+- [`SYSTEMADMIN_AGENT_ROADMAP.md`](./SYSTEMADMIN_AGENT_ROADMAP.md) — Systemadmin program detail under OPS/Governance boundaries.
+- [`VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md`](./VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md) — cross-project coverage/gap coordination; target projects retain execution status.
+- [`CAPITAL_AI_SECURITY_ROADMAP.md`](./CAPITAL_AI_SECURITY_ROADMAP.md) and [`S1_SECURITY_HARDENING_ROADMAP.md`](./S1_SECURITY_HARDENING_ROADMAP.md) — Security domain/workstream detail; project status is `docs/projects/security/ROADMAP.md`.
+- [`FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md`](./FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md) — FinTech module detail; project status is `docs/projects/fintech/ROADMAP.md`.
+- [`SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`](./SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md) — SEO/Google Marketing program detail; project status is `docs/projects/seo/ROADMAP.md`.
+- [`docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md`](../architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md) — Documentary technical detail; project status is `docs/projects/documentary/ROADMAP.md`.
+- [`docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md`](../compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md) — Compliance assessment detail; project status is `docs/projects/compliance/ROADMAP.md`.
+- [`docs/frontend/FRONTEND_ROADMAP.md`](../frontend/FRONTEND_ROADMAP.md) — Frontend migration/UX detail; project status is `docs/projects/frontend/ROADMAP.md` and architecture remains `FRONTEND_ARCH.md`.
+- [`docs/social-media/CAPITAL-AI-SOCIAL/ROADMAP.md`](../social-media/CAPITAL-AI-SOCIAL/ROADMAP.md) — Social domain detail; project status is `docs/projects/social-media/ROADMAP.md`.
 
-Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Ein QM-Finding oder Quality-Handoff verschiebt keine Domain Authority.
+## Historical / merged remediation context
 
-`CAPITAL-AI-COMP` ist eine non-authorizing Compliance-Assessment-/Traceability-Projektion und verändert diese Authority-Reihenfolge nicht. Compliance Findings können auf Fachroadmaps verweisen, autorisieren deren technische Ausführung jedoch nicht.
+- [`DSGVO_REMEDIATION_2026-08-19.md`](./DSGVO_REMEDIATION_2026-08-19.md) is retained as implementation/remediation evidence. PR #414 is merged. Any residuals must be revalidated and routed through the current Compliance/Security/Primary-Owner project surfaces rather than treating the old branch roadmap as current portfolio truth.
+- [`GOVERNANCE_CONTROL_PLANE_CONSOLIDATION_2026-08-19.md`](./GOVERNANCE_CONTROL_PLANE_CONSOLIDATION_2026-08-19.md) is retained as merged Governance consolidation context. Current Authority/lifecycle state is resolved from the current registries, Control Catalog, `/AGENTS.md` and specific accepted Authorities.
+- `MARKETING_AGENT_ROADMAP.md` and `docs/seo/SEO_MANAGEMENT_ROADMAP.md` remain superseded by the consolidated SEO/Google-Marketing program and are not independently progressed.
+- Historical AI-Agent, Vocabulary, branding and work-package roadmaps remain evidence only unless a current canonical project roadmap explicitly reopens a bounded work item.
 
-## 3. Konsolidiertes Portfolio
+## Portfolio reading order
 
-| ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
-|---|---|---|---|---|
-| **QM** | **Quality Management / Independent Assurance** | **`docs/projects/quality-management/PROJECT_CONTRACT_V2.md` + `ROADMAP.md` + `TAKEOVER_INDEX.md`** | **PROPOSED — ACTIVATES WITH ADR-0103 ACCEPTANCE / HUMAN MERGE**; QM besitzt 0 produktive VC-Stufen; ESS-0005 bleibt technische read-only Quality-Center-Authority | V2-Workstreams `QM-01..QM-08` revalidieren; Findings nur mit VC-/Primary-Owner-Routing; keine fremde technische Remediation |
-| **CLIENT** | **CAPITAL-AI Client / VC-01** | **`docs/projects/agent-client/ROADMAP.md` + Inventar/Mapping/Traceability** | **ACTIVE — VC-01 PRIMARY OWNER**; logische Ownership konsolidiert; keine physische Runtime-Verlagerung; keine fremde VC-Ausführung | CLIENT-02 bis CLIENT-07 ausschließlich im VC-01-Scope; fremde Arbeit nur über dokumentierte Cross-Project-Handoffs; PR/CI erst nach separatem Owner-Gate |
-| **VC-COV** | **Value-Chain Coverage + Gap Hardening** | **`docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md` + Inventar-Pack + `VC_H_IMPLEMENTATION_PACK_2026-08-30.md` + Registry-Insert-Payload** | **ACTIVE — COVERAGE**; Inventar *-0 auf main (#610); Payload + *-1-Spezifikation in synchronisiertem OPEN-STEPS-BIND; physischer Registry-Insert nicht ausgeführt | Exact-Head-Checks und Human-Review für diesen D-PR; Registry-Mutation nur als separater Scope; Runtime anschließend auf frischem Branch |
-| **COMP** | **CAPITAL-AI Compliance** | **`docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md` (`CAPITAL-AI-COMP`, V2.1)** | **ACTIVE — CROSS-CUTTING ASSESSMENT / NON-AUTHORIZING**; Applicability, Requirements, Control Mapping, Assessment, Findings, Evidence, Remediation Handoff und Continuous Compliance zentralisiert; keine Primary-VC-Execution-Ownership | Compliance-Gaps evidenzbasiert bewerten; fremde Remediation ausschließlich via `[COMPLIANCE_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`; VC-01-Technik an CAPITAL-AI-CLIENT; Legal-Review-Fälle getrennt halten |
-| **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
-| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
-| S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | S1-R2-Reassessment auf main (#607); S1-R2-02 Code/Docs gemergt (#611); #615 Policy/Builder/Floor-Fix auf main; Live-Drift offen; `mode=full` BLOCKED; #613 verworfen | Owner `workflow_dispatch` zuerst `mode=plan`; `required_signatures` nicht still reaktivieren; full nur nach separatem Owner-ACCEPT |
-| DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline; Event-Producer-Lücken zusätzlich in VC-H-EM inventarisiert |
-| SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
-| IAM-DIAG | Diagnostics IAM | `docs/roadmaps/AI_SYSTEM_ADMIN_DIAGNOSTICS_IAM_ROADMAP.md` | teilweise überholt, nicht vollständig evidenzgebunden | retained/superseded/migrated-Matrix |
-| **SEO-GM** | **SEO + Google Marketing + Content Distribution** | **`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` (SEO-GM-ROADMAP-0002, v0002.11)** | **ACTIVE — CANONICAL** (Stand 2026-08-16); Q1/Q4/Q5 DONE, **Q3 VERIFIED**, Q2 PARTIAL; **D1/D2/D3 VERIFIED** (PR #375, PR #360); **S1 VERIFIED** (ADR-0082); **S2 VERIFIED** (ADR-0084 Prerender); S3 DONE; S4 IN PROGRESS; **WP-M0 ERFÜLLT** (Owner-ACCEPT 2026-08-16: ESS-0024 + ADR-0080 accepted, **ohne** Runtime-Capability); D4/D5 offen; ADR-0035 Strict-CSP-DoD offen | **WP-N1** (`POST /api/social-media/generate`, Text-Packages ohne Publish) als naechstes Marketing-Paket; Q2-Restabschluss und WP-D4 als Code-Arbeit; WP-D5 optional (Credentials Owner-separat). Runtime-Enablement des Marketing-Agenten bleibt gesperrt: Execution Policy §18 unerfuellt. |
-| MA | Marketing Agent (historisch) | `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` | **SUPERSEDED** → SEO-GM | keine parallele Fortschreibung |
-| SEO | SEO Management (historisch) | `docs/seo/SEO_MANAGEMENT_ROADMAP.md` | **SUPERSEDED** → SEO-GM | keine parallele Fortschreibung |
-| GOV | GitHub/CI/Branch Governance | DEVELOPMENT Policy + PR-Template | laufend | Kosten-, Gate- und Branch-Cleanup-Evidence pflegen; QM konsumiert Quality-Evidence nur read-only |
-| AI-T | AI-Transparenz/Provenance | ADR-0057/0059/0062 + Documentary Provenance; eigener Content-Transparency-Contract noch offen | teilweise nachgewiesen | P0-Vertrag für kundenwirksame Ausgaben erstellen und Ausgabe-/Auditpfade verifizieren |
+For a new work item:
 
-Nicht als eigene offene Programme zählen: `docs/architecture/ROADMAP.md`, `AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md`, abgeschlossene Vocabulary-Migrationen, einzelne Work Packages und Work Claims.
+1. read `/AGENTS.md` and applicable current Authorities;
+2. resolve the target project using `docs/projects/PROJECT_VALUE_CHAIN.md` / project routing;
+3. read the target `docs/projects/<project>/ROADMAP.md` for organizational execution status;
+4. read any detail/technical roadmap required by that work item;
+5. use this file only for navigation and cross-project orientation.
 
-Hinweis zur Nummerierung: Die vorhandene `.ai/skills/ESS-0020-Supabase-Native-MFA-AAL2-Hardening.md` ist ausschließlich MFA/AAL2-Authority. Sie darf nicht als AI-Content-Transparency-Contract zitiert werden. Ein eigener Transparenzvertrag bleibt Bestandteil von P0-1 und erhält erst nach Kollisionsprüfung eine freie ESS-ID.
+## Update rule
 
-## 4. Mutationsanfrage und Freigabe
-
-Eine Mutation darf initiiert werden durch:
-
-- den Owner im Chat, PR oder freigegebenen Mandat;
-- den Systemadministrator-Agenten als formale Rückfrage mit Lösungsvorschlägen.
-
-Eine Agentenanfrage ist keine Genehmigung. Vor jeder sicherheits-, datenintegritäts-, manipulations- oder produktionsrelevanten Mutation muss ein Mutation Proposal vorliegen (Felder unverändert wie zuvor dokumentiert).
-
-Nur der Owner kann HIGH/CRITICAL-, Produktions-, IAM-, Billing-, Datenbank-, Deployment-, Secret-, DNS- oder externe Plattformmutation genehmigen. Provider- oder Modellidentität erzeugt keine Authority.
-
-QM-Findings sind keine Mutationsgenehmigung. Bei einem bestätigten technischen Finding wird der zuständige Primary Owner über `[QUALITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]` adressiert. Die Umsetzung erfolgt im Zielprojekt; QM führt ausschließlich die anschließende Verifikation durch.
-
-## 5–13. DEVELOPMENT Chain, Prioritäten, Prototyp-Vertrag, Abhängigkeiten
-
-Der Inhalt der Abschnitte 5–13 aus dem Stand 2026-08-14 bleibt in Substanz gültig (M5/M5A/M6/M7 Evidence, P0–P3, SA-Prototypen, Branch-Lifecycle).
-
-**Anpassung P3-2:** SEO/Marketing-Baseline ist nicht mehr „parallel read-only Q1–Q6/MA0“, sondern folgt **SEO-GM-ROADMAP-0002** (Single Point of Trust). SA-P11 bleibt read-only Revalidator gegen die neue kanonische Roadmap, ohne Publikation.
-
-**Ausführungsbacklog Position 11:** „SEO/MA/Monetarisierung“ → Ausführung ausschließlich unter SEO-GM-ROADMAP-0002 und jeweiliger ADR/ESS-Authority.
-
-## Abschlusskriterien
-
-Die Roadmap ist erst abgeschlossen, wenn M0–M10 VERIFIED PASS, P0/P1 geschlossen oder akzeptiert, keine unowned HIGH/CRITICAL, produktive Mutationen Owner-genehmigt, Traceability vollständig, offene Fachroadmaps abgeschlossen/superseded/archiviert, bestätigte QM-Findings explizite Primary Owner besitzen, keine fremde technische Execution in QM verbleibt, Quality Center read-only/non-authorizing bleibt und alle gemergten Arbeitsbranches gelöscht sind.
+When a project changes status, update the owning project roadmap only. Update this portfolio index only when project routing, roadmap-role classification or navigation changes. Do not duplicate fast-changing work-package status here.
