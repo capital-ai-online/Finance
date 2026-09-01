@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Baseline:** `main@19b2527de88444b999b7820c5a6712e8d80b60df`
+**Baseline:** `main@6dea22e5b8c4f2b0b9c9fbfb73615738acf57a54`
 
 ## Current-main inbound package
 
@@ -10,7 +10,7 @@
 |---:|---|---|---|---|---|
 | P1 | `OPS-02-GOV-040` User-Lifecycle Harness & Provider Test Contract | `PVC-02` + `PVC-08` evidence | `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS` | establish the OPS-owned lifecycle/provider test harness and stable server-side auth/billing test contract using isolated provider/test environments; do not implement FE projection, Security verification, Compliance assessment or GOV closeout | stable executable test contract; provider/server lifecycle coverage; webhook/outbox/subscription projection evidence; exact runtime/provider evidence only where actually executed; no Production mutation implied |
 
-The Governance dependency map lists the bounded owner scope as Playwright/provider harness, Supabase Local Stack/Mailpit, Stripe Sandbox/Test Clocks, webhook/outbox/subscription projection tests and server-side auth/billing boundaries. Implementation is not part of the current claim/project-reconciliation package.
+The Governance dependency map lists the bounded owner scope as Playwright/provider harness, Supabase Local Stack/Mailpit, Stripe Sandbox/Test Clocks, webhook/outbox/subscription projection tests and server-side auth/billing boundaries. Open PR #683 is the separate productive candidate for this package and owns eight Lifecycle implementation/test/evidence paths. The current claim/project-reconciliation package neither changes those paths nor treats an open candidate as merged evidence.
 
 ## Security-priority packages
 
@@ -42,6 +42,7 @@ The Governance dependency map lists the bounded owner scope as Playwright/provid
 - PR #642 is merged repository evidence for the OPS-owned Alpha Vantage secret/deployment control-plane consolidation. Its stale post-merge Work Claim is terminalized by the current reconciliation package. This does not prove Production secret presence or authorize a deploy.
 - PR #648 is merged `PVC-02` evidence for fail-closed merged-branch lifecycle cleanup. It contributes to `OPS-02-A` but does not complete the broader Controlled Implementation inventory by itself.
 - PR #632 remains the merged project-surface/Security-handoff baseline; its historical Work Claim is already released.
+- PR #684 is merged Governance baseline evidence for ADR-0104 session/merge-boundary hardening; it does not complete an OPS package and changes no OPS project path.
 
 ## Package rules
 
@@ -51,3 +52,4 @@ The Governance dependency map lists the bounded owner scope as Playwright/provid
 4. HIGH/CRITICAL protected changes retain all applicable Human/Owner gates.
 5. Runtime mutation and provider mutation are never implied by a documentation or code package.
 6. `OPS-02-SEC-06` and `OPS-02-GOV-040` are semantically adjacent around entitlement/auth/billing boundaries; they remain separate packages unless a fresh correlation proves that one coherent implementation package is safer than parallel work.
+7. Open PR #683 is the current writer for `OPS-02-GOV-040`; parallel OPS work must respect its exact claimed/changed paths and semantic boundary until it is terminal.
