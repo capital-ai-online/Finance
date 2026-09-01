@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.3.0`  
+**Control Plane Version:** `2.4.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-01  
 **Repository:** `SvenKulessa/Finance`
@@ -139,11 +139,13 @@ After either displayed step is completed, current `main`, open Pull Requests, ch
 
 #### Trigger 2 — `FOREIGN_PROJECT_HANDOFF`
 
-Whenever analysis, planning, implementation or validation determines that the next required productive work step belongs to another canonical project or Primary Owner, the current chat MUST stop local foreign implementation and route the work explicitly rather than silently crossing ownership boundaries.
+Whenever analysis, planning, implementation or validation determines that the next required productive work step belongs to another canonical project or Primary Owner, the default rule is to stop local foreign implementation and route the work explicitly.
 
-The chat MUST resolve the target project and canonical target folder from current repository authority/project surfaces, report the affected VC/PVC and Primary Owner, set the foreign work to `REFERRED_NOT_EXECUTED`, emit `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`, and immediately generate a complete copyable target-project prompt. Unknown target owner or target folder is fail-closed as `REQUIRES_CORRELATION`; the agent MUST NOT guess.
+A conditional exception exists only during a valid ACTIVE ADR-0104 v1.4.0 session when the target project is already a member of the activation's immutable `AUTHORIZED_PROJECT_SET`. In that case the same exact chat may continue after a visible `IN_SESSION_PROJECT_SWITCH`, fresh canonical project/folder/Primary-Owner resolution, current-main/open-PR/active-writer/overlap correlation and an audit update. The authorized set and `PT8H` end time cannot change. Each project/work item still requires its own fresh branch and PR.
 
-The visible handoff block, project-folder resolution order, prompt content contract, optional additive Security marker, multi-owner partitioning and prompt-size rules are canonical in `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Generated handoff prompts MUST preserve all required context and MUST be split only when necessary into parts of at most **400 lines**; required content may not be removed to fit the line limit.
+A project outside the set, an unresolved mapping, an expired/consumed slot, a different chat or a missing switch record triggers the full handoff. The chat MUST resolve the target project and canonical target folder from current repository authority/project surfaces, report the affected VC/PVC and Primary Owner, set the foreign work to `REFERRED_NOT_EXECUTED`, emit `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`, and immediately generate a complete copyable target-project prompt. Unknown target owner or target folder is fail-closed as `REQUIRES_CORRELATION`; the agent MUST NOT guess.
+
+The visible handoff/switch blocks, project-folder resolution order, prompt content contract, optional additive Security marker, multi-owner partitioning and prompt-size rules are canonical in `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Generated handoff prompts MUST preserve all required context and MUST be split only when necessary into parts of at most **400 lines**; required content may not be removed to fit the line limit.
 
 Avoid unnecessary paid GitHub CI/build/test runs before PR creation. After PR creation, use the smallest sufficient checks first and complete required checks before merge.
 
