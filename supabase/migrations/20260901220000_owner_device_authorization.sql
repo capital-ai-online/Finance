@@ -56,18 +56,36 @@ create table if not exists public.owner_authorization_consumptions (
   consumed_at timestamptz not null default now()
 );
 
-create index if not exists idx_owner_auth_challenges_owner_action
-  on public.owner_authorization_challenges(owner_user_id, action, issued_at desc);
-create index if not exists idx_owner_auth_evidence_owner_verified
-  on public.owner_authorization_evidence(owner_user_id, verified_at desc);
+create table if not exists public.adr0104_owner_sessions (
+  id uuid primary key default gen_random_uuid(),
+  slot_id text not null unique check (slot_id in ('ADR-0104-S1', 'ADR-0104-S2', 'ADR-0104-S3')),
+  owner_user_id uuid not null references auth.users(id) on delete cascade,
+  chat_binding_hash text not null,
+  project_set_digest text not null,
+  authorized_project_set jsonb not null,
+  active_project_id text not null,
+  current_main_sha text not null check (current_main_sha ~ '^[0-9a-f]{40}$'),
+  evidence_id uuid not null unique references public.owner_authorization_evidence(id),
+  session_start timestamptz not null,
+  session_end timestamptz not null,
+  state text not null check (state in ('ACTIVE', 'CONSUMED', 'REVOKED')),
+  created_at timestamptz not null default now(),
+  constraint adr0104_session_duration check (session_end > session_start)
+);
+
+create index if not exists idx_owner_auth_challenges_owner_action on public.owner_authorization_challenges(owner_user_id, action, issued_at desc);
+create index if not exists idx_owner_auth_evidence_owner_verified on public.owner_authorization_evidence(owner_user_id, verified_at desc);
+create index if not exists idx_adr0104_sessions_owner_state on public.adr0104_owner_sessions(owner_user_id, state, session_end desc);
 
 alter table public.owner_device_credentials enable row level security;
 alter table public.owner_authorization_challenges enable row level security;
 alter table public.owner_authorization_evidence enable row level security;
 alter table public.owner_authorization_consumptions enable row level security;
+alter table public.adr0104_owner_sessions enable row level security;
 
 -- No browser-facing policies are created. Productive access is service-role/server-only.
 revoke all on public.owner_device_credentials from anon, authenticated;
 revoke all on public.owner_authorization_challenges from anon, authenticated;
 revoke all on public.owner_authorization_evidence from anon, authenticated;
 revoke all on public.owner_authorization_consumptions from anon, authenticated;
+revoke all on public.adr0104_owner_sessions from anon, authenticated;
