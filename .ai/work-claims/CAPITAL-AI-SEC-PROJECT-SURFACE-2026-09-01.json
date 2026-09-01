@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-PROJECT-SURFACE-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,6 +13,8 @@
   "startedAt": "2026-09-01T03:58:01+02:00",
   "baseBranch": "main",
   "baseSha": "4ead0a3982e78ef3f957fd083e88cd5de943eaf4",
+  "pullRequest": 647,
+  "mergedPr": 647,
   "branch": "agent/security-project-surface-20260901",
   "project": "CAPITAL-AI-SEC",
   "projectFolder": "security",
@@ -46,5 +48,17 @@
     "CAPITAL-AI-CLIENT/CAPITAL-AI-FINTECH: child remediation only where target-owned productive code is identified"
   ],
   "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SEC gains no productive PVC stage. docs/projects/security is organizational navigation only and does not replace src/platform/Security, existing Security roadmaps, Security traceability/evidence, Governance/IAM authorities, EventMesh, data/scoring architecture, Release/Operations authority or target-project implementation ownership. Shared Governance project-registry paths remain outside this claim while their active GOV writer exists.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-09-01T02:12:46Z",
+  "mainCommit": "6786f5a53f41b793ef080dacbf05fc52585eb34f",
+  "terminalHeadSha": "13bc2cdc36e986e773b1852c3e529a3fae249885",
+  "releaseEvidence": {
+    "pullRequest": 647,
+    "merged": true,
+    "mergeCommitSha": "6786f5a53f41b793ef080dacbf05fc52585eb34f",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "8922b2cd9d4fc27ac375298b07cd1fa86ae211e9",
+    "verifiedAt": "2026-09-01"
+  }
 }
