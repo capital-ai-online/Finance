@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -17,8 +17,6 @@
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "governance",
   "projectStage": "PVC-05",
-  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
-  "ownerRole": "Organizational project architecture and Governance execution coordination; no foreign productive PVC implementation",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json",
     "scripts/governance/validateProjectValueChain.mjs",
@@ -26,28 +24,14 @@
     ".github/workflows/pr-governance.yml",
     "docs/projects/README.md"
   ],
-  "reuseInputs": [
-    "scripts/governance/**",
-    "scripts/pr/*.test.mjs",
-    ".github/workflows/pr-governance.yml",
-    ".github/workflows/ci.yml",
-    "scripts/pr/classifyPrScope.mjs",
-    "docs/projects/PROJECT_VALUE_CHAIN.md",
-    "docs/projects/README.md"
-  ],
-  "correlationInputs": [
-    "main@3935e08a0289be69683b8af9004fc177a99b04c0",
-    "/AGENTS.md@current-main",
-    "docs/projects/PROJECT_VALUE_CHAIN.md",
-    "docs/projects/PROJECT_EXECUTION_MODEL.md",
-    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md",
-    "docs/projects/governance/README.md",
-    "docs/governance/control-catalog.json",
-    "open PR baseline: none"
-  ],
-  "foreignWork": [
-    "No foreign project content is rewritten. Existing CLIENT VC-01 transitional wording is explicitly tolerated only while the canonical PROJECT_VALUE_CHAIN transitional exception remains present."
-  ],
-  "authorityGuard": "The validator enforces internal consistency of already-declared project/PVC mappings. It creates no AUTH/CTRL/ADR/ESS identity, does not turn project roadmaps into authorization authority, grants no productive PVC ownership, and performs no merge, deployment or external mutation. In the Governance workflow only trusted-main validator code may execute against candidate project metadata. The test reuses scripts/pr/*.test.mjs so package.json and production/deployment scope stay untouched.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment.",
+  "releasedAt": "2026-09-01T12:00:00Z",
+  "releaseReason": "The PVC consistency implementation was already merged through PR #662; the later claim-closure PR #669 was closed unmerged and left this metadata stale. Current main contains the implementation, so this writer is released without asserting that PR #669 merged.",
+  "releaseEvidence": {
+    "implementationPullRequest": 662,
+    "implementationMergeCommit": "57dd3868e06c4ded63371e1347dbd7a64bc0a54a",
+    "closurePullRequest": 669,
+    "closurePullRequestResult": "closed-unmerged",
+    "terminalImplementationHead": "04471f680983ade9622d1ed3e7b54900b051e1c0"
+  }
 }
