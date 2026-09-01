@@ -1,140 +1,135 @@
 # CAPITAL-AI-FINTECH — Validation Report
 
-**Date:** 2026-08-31  
-**Synced main:** `6b1e7e5234604641449f304b5b251bd74151ddab`  
-**Security source merge:** PR #631 / `b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
-**Governance correlation:** PR #633 and PR #634 included in synced main  
-**Branch:** `agent/fintech-v2-security-sync-20260831`  
-**PR:** NOT CREATED AT THIS REPORT SNAPSHOT
+**Date:** 2026-09-01  
+**Source main at work-item start:** `6ace37bffa7912ec4f224feb69dd62ff9c629192`  
+**Branch:** `agent/fintech-project-surface-sync-20260901`  
+**Work item:** `FIN-SYNC-01`  
+**Scope:** `docs/projects/fintech/**` project-surface synchronization only  
+**PR:** NOT CREATED
 
 ## Precheck result
 
 | Check | Result |
 |---|---|
-| current `/AGENTS.md` read | PASS — control plane 2.2.1 including `FOREIGN_PROJECT_HANDOFF` trigger |
-| current main determined | PASS — `6b1e7e5...` at this validation pass |
-| open PRs checked | PASS — 0 at correlation pass |
-| active writer/claims checked | PASS WITH NOTE — no current claim owns `docs/projects/fintech/**`; foreign Governance/Security metadata remains outside FINTECH ownership |
-| changed-file overlap checked | PASS — PR #634 has no FinTech file overlap; its four Governance/control files are inherited from current main |
-| semantic overlap checked | PASS — new handoff fields applied; `PVC-*` project ownership remains separate from technical SPT `VC-*` stages |
-| `PROJECT_VALUE_CHAIN.md` read | PASS |
-| `CROSS_PROJECT_HANDOFF_CONTRACT.md` read | PASS — current contract requires target folder + Primary Owner |
-| Security traceability checked | PASS — Security v2.1.2 cross-cutting routing model |
-| affected PVC / Primary Owner confirmed | PASS — `PVC-12..17` -> CAPITAL-AI-FINTECH |
-| Authority/ADR/ESS/control conflict | PASS — no new authority identity created; technical SPT remains separate |
-| reuse-before-create | PASS — existing Registry/Dispatcher/Ranking/ProviderMatrix/Security controls reused |
-| FinTech branch search | PASS — two pre-existing FinTech-name branches found and correlated |
-| branch naming / PR readiness | PASS — conforming `agent/fintech-v2-security-sync-20260831` candidate contains current main |
-
-## Branch correlation
-
-### `fintech/capital-ai-fintech-consolidation-20260831`
-
-Status at review: stale/diverged; 10 branch commits from its historical merge base and 107 commits behind the then-current main. It was not merged wholesale.
-
-Disposition:
-
-- provider/capability/fallback work retained in `PROVIDER_CAPABILITY_MATRIX.md`;
-- cross-roadmap semantics retained in current dependencies/migration/work packages;
-- old assessment/evidence/validation/work-package projections are superseded by the current PVC project surface;
-- stale master-roadmap state is not replayed;
-- current technical SPT semantics win.
-
-### `fintech/capital-ai-fintech-v2-ownership-20260831`
-
-Its complete V2/PVC/Security-handoff content was carried into the conforming PR branch. The older branch is retained only as historical/reuse evidence and is no longer the PR candidate.
-
-### Provider-related Security branches
-
-- `agent/security-provider-hardening-20260831`: fully contained in main at review; no independent import required.
-- `agent/security-provider-credential-guard-20260831`: Security-owned credential-coverage tooling/tests; no FINTECH project file delta and no open PR at review. Considered as foreign Security scope and not merged into FINTECH.
-
-Full record: `BRANCH_CORRELATION_2026-08-31.md`.
+| current `/AGENTS.md` read | PASS — Control Plane 2.2.1; fresh-branch lifecycle and explicit Human PR-creation gate apply |
+| project resolution | PASS — `CAPITAL-AI-FINTECH`, folder `docs/projects/fintech/`, Primary Owner PVC-12..17 |
+| current main at branch creation | PASS — `6ace37bffa7912ec4f224feb69dd62ff9c629192` |
+| open PR baseline | PASS WITH NOTE — one open PR (#691), CAPITAL-AI-OPS M10 retirement; no FINTECH project-folder overlap at entry |
+| fresh branch naming | PASS — `agent/fintech-project-surface-sync-20260901` |
+| direct edits to main | NONE |
+| foreign productive implementation | NONE |
+| runtime / production mutation | NONE |
 
 ## Current project ownership
 
-`docs/projects/PROJECT_VALUE_CHAIN.md` explicitly assigns:
+`docs/projects/README.md` assigns `PVC-12..17` to `CAPITAL-AI-FINTECH`. Technical `SC-MD-SPT-0001` `VC-*` stages remain separate and unchanged.
 
-- `PVC-12` Feature Engineering -> CAPITAL-AI-FINTECH;
-- `PVC-13` Scoring Models -> CAPITAL-AI-FINTECH;
-- `PVC-14` Scoring Orchestration -> CAPITAL-AI-FINTECH;
-- `PVC-15` Domain Analysis / Executor -> CAPITAL-AI-FINTECH;
-- `PVC-16` Canonical Scoring -> CAPITAL-AI-FINTECH;
-- `PVC-17` Ranking / Decision Support -> CAPITAL-AI-FINTECH.
+FINTECH retains:
 
-Technical `SC-MD-SPT-0001` `VC-*` stages remain unchanged.
+- PVC-12 Feature Engineering;
+- PVC-13 Scoring Models;
+- PVC-14 Scoring Orchestration;
+- PVC-15 Domain Analysis / Executor;
+- PVC-16 Canonical Scoring;
+- PVC-17 Ranking / Decision Support.
 
-## Cross-project handoff contract validation
+DATA retains PVC-09..11; OPS retains PVC-18. Frontend, Quality, Security and Compliance remain cross-cutting consumers/validators and do not acquire FINTECH productive PVC ownership.
 
-Current Governance PR #634 extended `CTRL-SDLC-CHAT-HANDOFF-001` with `FOREIGN_PROJECT_HANDOFF` and requires every new project-routing record to carry `target_project_folder` and `primary_owner` in addition to the existing PVC/task/reason/dependency/evidence/gate/status fields.
+## Project-routing validation
 
-FINTECH records now comply:
+Current canonical project folders are consumed from `docs/projects/README.md`.
 
-- DATA PVC-09..11 -> `docs/projects/data`, Primary Owner DATA;
-- OPS PVC-18 -> `docs/projects/operations`, Primary Owner OPS;
-- FE PVC-17 consumer cleanup -> `docs/frontend`, productive PVC Primary Owner remains FINTECH;
-- QM PVC-12..17 read-only validation -> Governance-declared target `docs/projects/quality-management`, productive PVC Primary Owner remains FINTECH;
-- COMP PVC-12..17 assessment -> `docs/compliance/CAPITAL-AI-COMP`, productive PVC Primary Owner remains FINTECH;
-- Security PVC-12..17 -> `docs/projects/fintech`, Primary Owner FINTECH, independent Security verification retained.
+| Target | Current canonical folder | Result |
+|---|---|---|
+| CAPITAL-AI-DATA | `docs/projects/data/` | PASS |
+| CAPITAL-AI-OPS | `docs/projects/operations/` | PASS |
+| CAPITAL-AI-QM | `docs/projects/quality-management/` | corrected from stale materialization note |
+| CAPITAL-AI-SEC | `docs/projects/security/` | PASS boundary reference |
+| CAPITAL-AI-COMP | `docs/projects/compliance/` | corrected from legacy domain path |
+| CAPITAL-AI-FE | `docs/projects/frontend/` | corrected from legacy domain path |
 
-No handoff transfers Domain/PVC authority.
+No handoff transfers underlying Authority or Primary PVC ownership.
 
 ## Security handoff validation
 
-| Item | Result |
-|---|---|
-| Security owns requirement/finding/verification | PASS |
-| FINTECH owns only target-local implementation/evidence | PASS |
-| direct active Security finding routed to FINTECH | NONE CURRENTLY ROUTED |
-| conditional Security dependency | S1-R2-06 child handoff if OPS inventory identifies FINTECH productive protected-capability code |
-| stage Security baseline mapped for PVC-12..17 | PASS |
-| required target folder / Primary Owner fields | PASS |
-| Security return envelope documented | PASS |
-| FINTECH self-verifies Security | NO / PROHIBITED |
-| Accepted Risk self-approval | NO / PROHIBITED |
+Merged OPS PR #694 materially changes the old FINTECH Security correlation. `OPS-02-SEC-06` has completed the parent entitlement-capability inventory for `S1-R2-06 — Entitlement authority` and routes two concrete FINTECH child remediations.
+
+| Item | PVC | Result |
+|---|---|---|
+| `FIN-SEC-02` | PVC-16 | ACTIVE ROUTED WORK / `REFERRED_NOT_EXECUTED` — canonical verified-score/context/batch paths require the accepted `verified_screening` entitlement/quota boundary |
+| `FIN-SEC-03` | PVC-15 | ACTIVE ROUTED WORK / `REFERRED_NOT_EXECUTED` — Backtest/Monte Carlo/full-AI protected execution requires an authoritative server boundary; Buffett authority must be preserved |
+| Security finding ownership | cross-cutting | CAPITAL-AI-SEC retained |
+| FINTECH self-verifies Security | — | NO / PROHIBITED |
+| Accepted Risk self-approval | — | NO / PROHIBITED |
+
+Required implementation evidence includes relevant ALLOW cases and DENY cases for browser-tier escalation, forged/missing identity, stale entitlement and alternate paths. Final `VERIFIED/CLOSED` remains an independent CAPITAL-AI-SEC decision.
+
+## Provider capability validation
+
+Canonical source `src/platform/MarketData/ProviderMatrix.ts` is `provider-matrix/1.10.0` on the source baseline. The previous FINTECH projection referenced `1.9.1`.
+
+Corrections applied:
+
+- Provider count remains 22;
+- Stooq is `enabled=false`, `not_wired`, with productive direct network access retired;
+- TwelveData commodity history is documented behind the governed history/research-evidence transport;
+- CoinAPI direct consensus use remains a boundary observation to assess against DATA/gateway ownership;
+- EODHD historical/EOD semantics are preserved as non-live evidence.
+
+Static provider registration is not interpreted as runtime health, entitlement, freshness or semantic fallback equivalence.
 
 ## Scoring/ranking architecture validation
 
 | Check | Result |
 |---|---|
-| one ScoringModelRegistry | PASS |
-| one productive ScoringDispatcher | PASS |
-| CanonicalScoreResult family preserved | PASS |
-| no synthetic/neutral fallback introduced | PASS |
+| one ScoringModelRegistry preserved | PASS — no runtime change |
+| one productive ScoringDispatcher preserved | PASS — no runtime change |
+| CanonicalScoreResult family preserved | PASS — no runtime change |
+| no synthetic/neutral fallback introduced | PASS — documentation invariants retained |
 | DATA/DQ authority retained upstream | PASS |
-| productive asset classes remain repository-derived | PASS |
-| explicit Domain Executor requirement | PASS |
 | ProviderMatrix reused, not duplicated | PASS |
-| provider runtime health/entitlement inferred from static config | NO |
 | ranking business ownership mapped to FINTECH PVC-17 | PASS organizationally |
-| one productive ranking runtime authority | PARTIAL — existing backend mechanisms still require consolidation |
-| frontend-local business ordering removed | NOT YET — foreign FE handoff remains open |
+| one productive ranking runtime authority | PARTIAL — FIN-17 remains open |
+| frontend-local Top/Worst ordering removed | NOT YET — foreign FE work remains downstream of FIN-17 |
 | EventMesh/Traceability ownership | PASS — OPS PVC-18 |
 
-## Findings after synchronization
+## Current prioritized findings
 
-### P0
+### P1/HIGH
 
-None introduced or newly unresolved by this documentation/project-routing synchronization.
+1. `FIN-SEC-02` — S1-R2-06 canonical verified-screening alternate-route authorization.
+2. `FIN-SEC-03` — S1-R2-06 protected financial-analysis authorization/capability binding.
 
 ### P1
 
-1. FIN-17 runtime ranking consolidation remains incomplete; do not enable cross-asset ranking impact merely by documentation.
-2. `RankingBoard` still derives Top/Worst ordering client-side; separate CAPITAL-AI-FE remediation is required after FINTECH exposes the canonical order contract.
-3. FIN-12 DATA validated-input boundary remains a cross-project dependency; no DQ bypass is permitted.
-4. If S1-R2-06 identifies FINTECH-owned protected capability code, that child Security handoff becomes P1/HIGH program work under all existing Owner gates.
-5. Direct provider paths discovered in productive FINTECH execution require DATA/gateway-boundary assessment before remediation; no provider-specific bypass is normalized by this PR.
+3. `FIN-17` — backend ranking authority consolidation before FE consumer migration.
+4. `FIN-12` — explicit validated DATA/evidence/DQ → versioned feature-contract boundary.
 
 ### P2
 
-1. provider capability mapping remains repository/static evidence, not proof of runtime entitlement or health;
-2. legacy CanonicalScoreResult compatibility must remain versioned;
-3. QM target project surface remains a cross-project migration dependency and is not fabricated by FINTECH.
+5. `FIN-19` — provider capability requirements must stay mapped to canonical DATA contracts and current ProviderMatrix without ingress takeover.
+6. `FIN-20` — complete exact scoring/ranking lineage and Security/OPS return evidence.
 
 ## Scope integrity
 
-This synchronization changes FINTECH project/roadmap/handoff/evidence documentation only relative to current main. It performs no runtime Security remediation, no provider mutation, no model promotion, no ranking-impact activation, no FE runtime edit and no production mutation. Governance PR #634 files appear in branch history only because current main is synchronized; they are not part of the FINTECH diff against current main.
+This candidate changes FINTECH project/roadmap/handoff/provider/evidence documentation only. It performs no runtime Security remediation, no provider mutation, no entitlement mutation, no model promotion, no ranking-impact activation, no FE runtime edit and no production mutation.
+
+Detailed evidence: `evidence/PROJECT_SURFACE_CORRELATION_2026-09-01.md`.
+
+## Validation classification
+
+Documentation-only structural/correlation validation applies. TypeScript, build and runtime tests are not claimed because no runtime code is modified. The final branch compare against then-current `main` is required before this report can be treated as candidate evidence.
 
 ## PR gate
 
-Immediately before PR creation, current main, open PRs and the exact branch head must be read again. The exact candidate SHA, main SHA, scope and validation state must be reported to the Human/Owner; any subsequent SHA change invalidates approval.
+No PR or Draft PR may be created from this report alone.
+
+Immediately before requesting Human/Owner PR-creation approval:
+
+1. re-read current `main`;
+2. re-read all open PRs and correlate changed-file/semantic overlap;
+3. synchronize the branch if `main` moved;
+4. repeat necessary low-cost validation on the exact candidate snapshot;
+5. report exact `main` SHA, branch/head SHA, intended PR scope, correlation result and evidence;
+6. obtain explicit Human/Owner approval for that exact snapshot;
+7. re-read both SHAs immediately before any create mutation.
