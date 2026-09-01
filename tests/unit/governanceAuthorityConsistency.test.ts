@@ -31,17 +31,23 @@ describe('governance authority consistency', () => {
     expect(adr0069).toContain('Owner-Gate-Ritual retired');
   });
 
-  it('does not present the retired Viewed/emoji ritual as a current Systemadmin merge prerequisite', () => {
+  it('treats productive M10 as retired and excludes it from current implementation discovery', () => {
     const agents = read('AGENTS.md');
+    const roadmap = read('docs/architecture/ROADMAP.md');
     const m10 = control('CTRL-CI-M10-001');
 
-    expect(agents).not.toContain(
-      'Human/Owner current-head review, Viewed attestations, scope-appropriate CI and a separate explicit Human merge instruction remain mandatory.',
-    );
     expect(m10.status).toBe('required');
     expect(m10.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
-    expect(m10.requirement).toMatch(/M10 .*suspended\/off/i);
-    expect(m10.requirement).toContain('Historical M10 evidence cannot reactivate the gate.');
+    expect(m10.requirement).toMatch(/M10 .*retired/i);
+    expect(m10.requirement).toContain('PR #691');
+    expect(m10.requirement).toMatch(/MUST NOT search/i);
+    expect(m10.requirement).toMatch(/absence of a productive M10 implementation as a gap/i);
+    expect(agents).toContain('RETIRED / OFF');
+    expect(agents).toContain('MUST NOT search');
+    expect(agents).not.toContain('M10 MUST NOT be reactivated until');
+    expect(roadmap).toContain('M10 PR-CI passkey runtime is `RETIRED / OFF`');
+    expect(roadmap).toContain('No productive M10 implementation is expected in current state');
+    expect(roadmap).not.toContain('Mandatory blockers before M10 reactivation');
   });
 
   it('labels the governance library as a historical snapshot with a current-authority annotation', () => {
@@ -142,5 +148,30 @@ describe('governance authority consistency', () => {
     expect(supersession.evidence).toContain(impactPath);
     expect(impact).toContain('DOC-GOV-CONTROL-PLANE-IMPACT-2026-08-19');
     expect(impact).toContain('AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19');
+  });
+
+  it('scopes ADR-0104 supersession metadata and preserves S2 consumption', () => {
+    const registry = JSON.parse(read('docs/adr/registry.json')) as {
+      migratedRecords: Array<{
+        displayId: string;
+        version: string;
+        supersessionScope?: {
+          type?: string;
+          activationCondition?: string;
+          targets?: Array<{ authorityId?: string; controls?: string[] }>;
+          exclusions?: string[];
+        };
+        note?: string;
+      }>;
+    };
+    const adr0104 = registry.migratedRecords.find((item) => item.displayId === 'ADR-0104');
+
+    expect(adr0104).toBeDefined();
+    expect(adr0104?.version).toBe('1.3.1');
+    expect(adr0104?.supersessionScope?.type).toBe('conditional-partial');
+    expect(adr0104?.supersessionScope?.activationCondition).toMatch(/ACTIVE/i);
+    expect(adr0104?.supersessionScope?.exclusions).toContain('CTRL-MERGE-HUMAN-001');
+    expect(adr0104?.supersessionScope?.exclusions).toContain('FOREIGN_PROJECT_HANDOFF');
+    expect(adr0104?.note).toContain('S2 is CONSUMED');
   });
 });
