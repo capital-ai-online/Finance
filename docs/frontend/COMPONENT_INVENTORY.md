@@ -1,6 +1,7 @@
 # CAPITAL-AI Frontend – Component Inventory
 
-**Stand:** 23. August 2026  
+**Stand:** 1. September 2026  
+**Korrelationsbasis:** `main@9be95dd753f962a789312fec77571e2a9778b586` + `agent/frontend-bb2e-navigation-20260901`  
 **Dokumentrolle:** Ist-Bestand und Migrationsstatus  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`
 
@@ -16,7 +17,7 @@ Verbindliche Abgrenzung:
 
 ---
 
-## Application Composition — BB-1
+## Application Composition — BB-1 / BB-2
 
 | Verantwortung | Kanonischer Pfad | Legacy-/Compatibility-Pfad | Status |
 |---|---|---|---|
@@ -25,8 +26,14 @@ Verbindliche Abgrenzung:
 | Route/Presentation Composition | `src/app/routing/AppRoutes.tsx` | zuvor Bestandteil von `src/App.tsx` | BB-1 extrahiert; öffentliche Pfade und Landing/Dashboard-Auswahl erhalten |
 | Presentation Session Type | `src/app/types/UserSession.ts` | zuvor Interface in `src/App.tsx` | BB-1 extrahiert; Root re-exportiert Typ temporär für Legacy-Consumer |
 | App Shell | `src/app/AppShell.tsx` | N/A | kanonisch seit Foundation |
+| Dashboard Composition Boundary | `src/app/dashboard/Dashboard.tsx` | `src/components/Dashboard.tsx` | kanonischer Entry kapselt weiterhin den bounded Legacy-Strangler |
+| Dashboard View Contract | `src/app/dashboard/dashboardViews.ts` | lokale View-Union entfernt | BB-2B kanonisch; Legacy-Consumer projiziert `DashboardView` |
+| Dashboard View Router | `src/app/dashboard/DashboardViewRouter.tsx` + `dashboardRoutedViews.ts` | Render-Switches teilweise noch in `src/components/Dashboard.tsx` | BB-2D Foundation auf Main vorhanden; produktiver Consumer-Cutover offen |
+| Dashboard Navigation | `src/app/dashboard/DashboardNavigation.tsx` | Inline-Hamburger/Drawer im Legacy-Dashboard | BB-2E Candidate; Menu-Trigger und Open/Close-State extrahiert |
+| Dashboard Drawer | `src/app/dashboard/DashboardDrawer.tsx` | Inline-Drawer im Legacy-Dashboard | BB-2E Candidate; produktiver Inline-Drawer-Renderpfad aus Legacy-Dashboard entfernt |
+| Dashboard Header/Shell | geplant `src/app/dashboard/DashboardHeader.tsx` | weiterhin in `src/components/Dashboard.tsx` | BB-2F offen |
 
-BB-1 verschiebt keine fachliche Feature-Implementierung. `Dashboard.tsx`, Landing-/Legal-Komponenten sowie Auth-Gates bleiben bis zu ihren jeweiligen Wellen an den bisherigen physischen Pfaden und werden lediglich durch die neue Composition-Schicht konsumiert.
+BB-1/BB-2 verschieben keine fachliche Authority. Die App-Schicht komponiert und präsentiert vorhandene Feature-/Shared-Contracts; Scoring, Market Data, Evidence, Entitlements, IAM und Governance bleiben bei ihren Parent-Authorities.
 
 ---
 
@@ -53,18 +60,21 @@ Die CV-0-Primitives sind **fachneutrale Presentation-Komponenten**. Sie wählen 
 
 ---
 
-## Kern-Dashboard & Cockpit — derzeitige Legacy-Implementierungen
+## Kern-Dashboard & Cockpit — aktuelle Implementierungen
 
-| Komponente | Datei unter `src/components/` | Ziel-/Ownership-Slice |
+| Komponente | Aktueller Pfad | Ziel-/Ownership-Slice |
 |---|---|---|
-| Dashboard | `Dashboard.tsx` | `src/app/dashboard` / Dashboard-Composition, in BB-2 zu zerlegen |
-| AssetUniverseDashboard | `AssetUniverseDashboard.tsx` | `src/features/screening/ui` |
-| RankingBoard | N/A (kanonisch unter Feature-Slice) | `src/features/screening/ui/RankingBoard.tsx` — **produktive** Ranking-Fläche (Top/Worst 3, Sentiment, Momentum, Pattern); ersetzt UniverseBestWorst |
-| UniverseBestWorst | `UniverseBestWorst.tsx` | `src/features/screening/ui/UniverseBestWorst.tsx` — **nur noch Compatibility-Alias** → `RankingBoard as UniverseBestWorst` |
-| Screener | `Screener.tsx` | `src/features/screening/ui` |
-| MarketScreener | `MarketScreener.tsx` | `src/features/screening/ui` |
-| Watchlist | `Watchlist.tsx` | `src/features/portfolio/ui` |
-| FavoriteAssetPatternSlots | `FavoriteAssetPatternSlots.tsx` | `src/features/portfolio/ui` |
+| Dashboard Legacy-Strangler | `src/components/Dashboard.tsx` | `src/app/dashboard`; BB-2E entfernt den produktiven Inline-Drawer, Render-/Header-Restschuld bleibt |
+| DashboardNavigation | `src/app/dashboard/DashboardNavigation.tsx` | `src/app/dashboard`; BB-2E App-Composition |
+| DashboardDrawer | `src/app/dashboard/DashboardDrawer.tsx` | `src/app/dashboard`; BB-2E Presentation-only Drawer |
+| DashboardViewRouter | `src/app/dashboard/DashboardViewRouter.tsx` | `src/app/dashboard`; BB-2D Foundation, Consumer-Cutover noch offen |
+| AssetUniverseDashboard | `src/components/AssetUniverseDashboard.tsx` | `src/features/screening/ui` |
+| RankingBoard | `src/features/screening/ui/RankingBoard.tsx` | **produktive** Ranking-Fläche (Top/Worst 3, Sentiment, Momentum, Pattern); ersetzt UniverseBestWorst |
+| UniverseBestWorst | `src/components/UniverseBestWorst.tsx` | `src/features/screening/ui/UniverseBestWorst.tsx` — **nur noch Compatibility-Alias** → `RankingBoard as UniverseBestWorst` |
+| Screener | `src/components/Screener.tsx` | `src/features/screening/ui` |
+| MarketScreener | `src/components/MarketScreener.tsx` | `src/features/screening/ui` |
+| Watchlist | `src/components/Watchlist.tsx` | `src/features/portfolio/ui` |
+| FavoriteAssetPatternSlots | `src/components/FavoriteAssetPatternSlots.tsx` | `src/features/portfolio/ui` |
 
 Development-Einstieg für Agents: `AGENTS.md` §12 (Screening Ranking Board / homogene Wertschöpfungskette).
 
@@ -227,4 +237,4 @@ Die Auth-Gates selbst bleiben in BB-1 physisch unverändert; nur ihre globale Co
 
 ---
 
-*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. Am 20.08.2026 auf die `app/features/shared`-Architektur, das Projection-not-Redefinition-Prinzip und BB-1 Application Composition ausgerichtet. Am 23.08.2026 RankingBoard als Ersatz von UniverseBestWorst dokumentiert und mit CV-0 um Authority-/Freshness-/Evidence-Primitives sowie Manifest-v6.1-Iststand ergänzt.*
+*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. Am 20.08.2026 auf die `app/features/shared`-Architektur, das Projection-not-Redefinition-Prinzip und BB-1 Application Composition ausgerichtet. Am 23.08.2026 RankingBoard als Ersatz von UniverseBestWorst dokumentiert und mit CV-0 um Authority-/Freshness-/Evidence-Primitives sowie Manifest-v6.1-Iststand ergänzt. Am 01.09.2026 mit `main@9be95dd753f962a789312fec77571e2a9778b586` und dem BB-2E-Navigation-Candidate korreliert; BB-2D bleibt als vorhandene Router-Foundation mit offenem Consumer-Cutover ausgewiesen.*
