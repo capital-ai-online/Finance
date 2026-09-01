@@ -1,7 +1,7 @@
 # CAPITAL-AI-DOC — Canonical Documentary Project Roadmap
 
 **Project ID:** `CAPITAL-AI-DOC`  
-**Status:** `ACTIVE — PROJECT SURFACE MIGRATION CANDIDATE`  
+**Status:** `ACTIVE — CANONICAL PROJECT SURFACE`  
 **Project Value Chain ownership:** `PVC-03`  
 **Primary Owner:** `CAPITAL-AI-DOC`  
 **Repository trust root:** `/AGENTS.md`  
@@ -38,7 +38,7 @@ Where older technical roadmap prose conflicts with the current component README,
 
 ### WP-DOC-00 — Canonical project surface
 
-**State:** `IN_PROGRESS — candidate`
+**State:** `IMPLEMENTED — MERGED / VALIDATED ON MAIN`
 
 Work:
 
@@ -47,11 +47,22 @@ Work:
 - reuse the current project execution model and current Documentary authorities;
 - avoid new registry/authority identities for organizational navigation.
 
-Exit:
+Closure evidence:
+
+- implementation candidate head: `f7c1d9569832c8f21db8904e2eeeee4a3e2b758a`;
+- Human/CODEOWNER merge: PR `#645` on 2026-09-01;
+- merge commit: `22c4b53f83313eb03090ef0867f8f793b98e5fcc`;
+- hosted PR Governance, CI and Container Security workflows completed successfully on the exact candidate before merge;
+- current `main@e71f37127194ab34ed3c2594846c8b5449c20926` contains both `docs/projects/documentary/README.md` and this `ROADMAP.md`;
+- `docs/projects/README.md` records the CAPITAL-AI-DOC surface as `present via PR #645`, while the Documentary README identifies it as `ACTIVE — CANONICAL ORGANIZATIONAL PROJECT SURFACE`;
+- current-main correlation finds no competing Documentary project folder, no Documentary branch and no open-PR changed-file overlap on `docs/projects/documentary/**`.
+
+Exit status:
 
 - `README.md` and this `ROADMAP.md` form the bounded project navigation surface;
 - no competing CAPITAL-AI-DOC project folder or project identity exists;
-- no technical runtime, registry or authority is duplicated.
+- no technical runtime, registry or authority is duplicated;
+- the former project-surface migration candidate state is closed; future Documentary work continues through independently scoped WP-DOC work packages.
 
 ### WP-DOC-01 — Current Documentary baseline and document model correlation
 
