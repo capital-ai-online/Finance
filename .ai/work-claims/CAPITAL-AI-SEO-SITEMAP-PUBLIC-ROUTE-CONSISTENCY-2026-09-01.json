@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-SITEMAP-PUBLIC-ROUTE-CONSISTENCY-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Keep the public sitemap aligned with the canonical public SEO route set and add a regression check that fails when sitemap coverage drifts from routeSeo.",
+  "workItemDE": "Die öffentliche Sitemap mit dem kanonischen Public-SEO-Routensatz synchron halten und eine Regression-Prüfung ergänzen, die bei Abweichung zwischen Sitemap und routeSeo fehlschlägt.",
+  "startedAt": "2026-09-01T11:36:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "9be95dd753f962a789312fec77571e2a9778b586",
+  "branch": "agent/seo-sitemap-public-route-consistency-20260901",
+  "project": "CAPITAL-AI-SEO",
+  "projectFolder": "seo",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Cross-cutting SEO requirements and verification; no productive PVC ownership",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-SITEMAP-PUBLIC-ROUTE-CONSISTENCY-2026-09-01.json",
+    "public/sitemap.xml",
+    "tests/unit/seoPublicRouteSitemap.test.ts",
+    "docs/seo/SEO_CHECKLIST.md"
+  ],
+  "reuseInputs": [
+    "src/lib/routeSeo.ts",
+    "scripts/seo/prerender-public-routes.mjs",
+    "server/middleware/seoUrlNormalize.ts",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    "docs/projects/seo/README.md"
+  ],
+  "correlationInputs": [
+    "main@9be95dd753f962a789312fec77571e2a9778b586",
+    "/AGENTS.md",
+    "docs/projects/seo/README.md",
+    "docs/projects/seo/ROADMAP.md"
+  ],
+  "foreignWork": [],
+  "authorityGuard": "SEO changes only sitemap/configuration verification and SEO evidence. No Frontend source, runtime/deployment, Governance, Compliance, AUTH, CTRL, ADR or ESS authority is changed. src/lib/routeSeo.ts remains reused read-only as the existing public SEO route source for this check.",
+  "validationPlan": [
+    "targeted Vitest: tests/unit/seoPublicRouteSitemap.test.ts",
+    "npm run seo:prerender",
+    "npm run lint",
+    "npm run build"
+  ],
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}
