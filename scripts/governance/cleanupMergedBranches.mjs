@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const DEFAULT_GRACE_DAYS = 14;
+const DEFAULT_GRACE_MINUTES = 60;
 const BASE_BRANCH = 'main';
 const NEVER_DELETE_NAMES = new Set(['main', 'master', 'develop', 'development', 'staging', 'production']);
 const NEVER_DELETE_PREFIXES = ['release/', 'hotfix/', 'protected/'];
@@ -9,10 +9,10 @@ export function isProtectedName(name) {
   return NEVER_DELETE_NAMES.has(name) || NEVER_DELETE_PREFIXES.some(prefix => name.startsWith(prefix));
 }
 
-export function isOldEnough(commitDate, now, graceDays) {
+export function isInactiveLongEnough(commitDate, now, graceMinutes) {
   const timestamp = Date.parse(commitDate || '');
   if (!Number.isFinite(timestamp)) return false;
-  return now.getTime() - timestamp >= graceDays * 24 * 60 * 60 * 1000;
+  return now.getTime() - timestamp >= graceMinutes * 60 * 1000;
 }
 
 export function isMergedComparisonStatus(status) {
@@ -67,6 +67,10 @@ async function openPullRequests(owner, repo, name) {
   return github(`/repos/${owner}/${repo}/pulls?state=open&base=${BASE_BRANCH}&head=${head}&per_page=100`);
 }
 
+async function openPullRequestsUsingBase(owner, repo, name) {
+  return github(`/repos/${owner}/${repo}/pulls?state=open&base=${encodeURIComponent(name)}&per_page=100`);
+}
+
 async function closedPullRequests(owner, repo, name) {
   const head = encodeURIComponent(`${owner}:${name}`);
   return github(`/repos/${owner}/${repo}/pulls?state=closed&base=${BASE_BRANCH}&head=${head}&per_page=100&sort=updated&direction=desc`);
@@ -82,7 +86,7 @@ async function mergedIntoMain(owner, repo, name, tipSha) {
   return { eligible: false, reason: `compare:${comparison.status}` };
 }
 
-async function validateCandidate(owner, repo, branch, now, graceDays) {
+async function validateCandidate(owner, repo, branch, now, graceMinutes) {
   const name = branch.name;
   const initialSha = branch.commit?.sha;
   if (!name || !initialSha) return { eligible: false, reason: 'missing-name-or-sha' };
@@ -91,12 +95,15 @@ async function validateCandidate(owner, repo, branch, now, graceDays) {
   const current = await branchState(owner, repo, name);
   if (current.protected) return { eligible: false, reason: 'github-protected' };
   if (current.commit?.sha !== initialSha) return { eligible: false, reason: 'tip-moved-before-evaluation' };
-  if (!isOldEnough(current.commit?.commit?.committer?.date || current.commit?.commit?.author?.date, now, graceDays)) {
-    return { eligible: false, reason: 'grace-period' };
+  if (!isInactiveLongEnough(current.commit?.commit?.committer?.date || current.commit?.commit?.author?.date, now, graceMinutes)) {
+    return { eligible: false, reason: 'inactivity-window' };
   }
 
   const openPrs = await openPullRequests(owner, repo, name);
   if (openPrs.length > 0) return { eligible: false, reason: `open-pr:#${openPrs[0].number}` };
+
+  const dependentPrs = await openPullRequestsUsingBase(owner, repo, name);
+  if (dependentPrs.length > 0) return { eligible: false, reason: `open-pr-base:#${dependentPrs[0].number}` };
 
   const merged = await mergedIntoMain(owner, repo, name, initialSha);
   if (!merged.eligible) return merged;
@@ -109,6 +116,8 @@ async function revalidateBeforeDelete(owner, repo, name, expectedSha) {
   if (current.commit?.sha !== expectedSha) return { ok: false, reason: 'tip-moved-on-recheck' };
   const openPrs = await openPullRequests(owner, repo, name);
   if (openPrs.length > 0) return { ok: false, reason: `open-pr-on-recheck:#${openPrs[0].number}` };
+  const dependentPrs = await openPullRequestsUsingBase(owner, repo, name);
+  if (dependentPrs.length > 0) return { ok: false, reason: `open-pr-base-on-recheck:#${dependentPrs[0].number}` };
   const merged = await mergedIntoMain(owner, repo, name, expectedSha);
   if (!merged.eligible) return { ok: false, reason: `merge-proof-lost:${merged.reason}` };
   return { ok: true, reason: merged.reason };
@@ -119,15 +128,17 @@ async function main() {
   const [owner, repo] = repository.split('/');
   if (!owner || !repo) throw new Error('GITHUB_REPOSITORY fehlt oder ist ungültig.');
   const dryRun = asBoolean(arg('dry-run', 'true'));
-  const graceDays = Number(arg('grace-days', String(DEFAULT_GRACE_DAYS)));
-  if (!Number.isInteger(graceDays) || graceDays < 1 || graceDays > 365) throw new Error('grace-days muss zwischen 1 und 365 liegen.');
+  const graceMinutes = Number(arg('grace-minutes', String(DEFAULT_GRACE_MINUTES)));
+  if (!Number.isInteger(graceMinutes) || graceMinutes < 60 || graceMinutes > 525600) {
+    throw new Error('grace-minutes muss zwischen 60 und 525600 liegen.');
+  }
 
   const now = new Date();
   const branches = await listBranches(owner, repo);
   const results = [];
 
   for (const branch of branches) {
-    const evaluation = await validateCandidate(owner, repo, branch, now, graceDays);
+    const evaluation = await validateCandidate(owner, repo, branch, now, graceMinutes);
     const record = { branch: branch.name, sha: branch.commit?.sha, ...evaluation, dryRun };
     if (!evaluation.eligible) {
       console.log(JSON.stringify({ action: 'skip', ...record }));
@@ -155,7 +166,7 @@ async function main() {
 
   const deleted = results.filter(item => item.action === 'deleted').length;
   const candidates = results.filter(item => item.action === 'would-delete').length;
-  console.log(`[branch-cleanup] mode=${dryRun ? 'dry-run' : 'apply'} branches=${branches.length} deleted=${deleted} wouldDelete=${candidates}`);
+  console.log(`[branch-cleanup] mode=${dryRun ? 'dry-run' : 'apply'} branches=${branches.length} deleted=${deleted} wouldDelete=${candidates} graceMinutes=${graceMinutes}`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

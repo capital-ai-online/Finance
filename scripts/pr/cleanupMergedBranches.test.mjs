@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  isInactiveLongEnough,
   isMergedComparisonStatus,
-  isOldEnough,
   isProtectedName,
 } from '../governance/cleanupMergedBranches.mjs';
 
@@ -13,11 +13,12 @@ test('protected branch names and prefixes fail closed', () => {
   assert.equal(isProtectedName('agent/merged-feature'), false);
 });
 
-test('grace period uses commit timestamp and rejects invalid timestamps', () => {
-  const now = new Date('2026-08-27T20:00:00Z');
-  assert.equal(isOldEnough('2026-08-13T19:59:59Z', now, 14), true);
-  assert.equal(isOldEnough('2026-08-14T20:00:01Z', now, 14), false);
-  assert.equal(isOldEnough('invalid', now, 14), false);
+test('inactivity window uses commit timestamp and rejects invalid timestamps', () => {
+  const now = new Date('2026-09-01T02:00:00Z');
+  assert.equal(isInactiveLongEnough('2026-09-01T01:00:00Z', now, 60), true);
+  assert.equal(isInactiveLongEnough('2026-09-01T00:59:59Z', now, 60), true);
+  assert.equal(isInactiveLongEnough('2026-09-01T01:00:01Z', now, 60), false);
+  assert.equal(isInactiveLongEnough('invalid', now, 60), false);
 });
 
 test('only ancestry statuses proving branch tip is contained in main are accepted', () => {
