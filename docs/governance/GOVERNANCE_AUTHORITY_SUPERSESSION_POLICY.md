@@ -3,13 +3,13 @@
 **Document ID:** `GOV-AUTH-SUPERSESSION-0001`  
 **Authority ID:** `AUTH-GOV-SUPERSESSION-POLICY`  
 **Status:** ACTIVE — effective through Human Merge of ADR-0096 in PR #447  
-**Version:** `1.1.0`  
-**Date:** `2026-08-19`  
+**Version:** `1.2.0`  
+**Date:** `2026-09-01`  
 **Authority:** `ADR-0096` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`; applicable law and higher Accepted Decisions remain controlling
 
 ## Purpose
 
-Define deterministic resolution of conflicting governance artifacts without allowing document recency, model output, file location or repository write access to manufacture authority.
+Define deterministic resolution of conflicting governance artifacts without allowing document recency, model output, file location, repository write access or an underspecified `supersedes` list to manufacture authority.
 
 ## Stable identity rule
 
@@ -47,10 +47,32 @@ When artifacts carry **different `authorityId` values**, recency alone never sup
 Semantic supersession is permitted only when:
 
 - the replacement has equal or higher authority for the correlated scope;
-- an explicit `supersedes` relationship identifies the replaced authority;
+- an explicit `supersedes` relationship identifies the correlated authority;
+- the supersession scope is explicit rather than inferred;
 - no higher authority, regulatory obligation or Accepted Decision conflicts;
 - the semantic delta and impact are documented before effectiveness;
 - the Owner can review the package before Human Merge.
+
+**A bare `supersedes: ["AUTH-..."]` entry is a relation anchor only. It is never sufficient evidence of global replacement.**
+
+### Scoped supersession contract
+
+Cross-authority supersession MUST declare one of these semantic types:
+
+- `global` — the replacement intentionally replaces the correlated authority across its entire compatible scope;
+- `conditional-partial` — only named controls/surfaces are replaced while a named activation condition is true;
+- `partial` — only named controls/surfaces are replaced without an activation-state transition.
+
+For `conditional-partial` or `partial` supersession, machine-readable metadata MUST identify at minimum:
+
+1. `type`;
+2. `activationCondition` where conditional;
+3. exact `targets` / controls / surfaces affected;
+4. explicit `exclusions` that remain governed by the original authority.
+
+Missing or ambiguous scope resolves fail-closed to **no privilege expansion**. Consumers MUST NOT convert a relation anchor into broader permissions.
+
+ADR-0104 v1.3.1 is the canonical current example: its three referenced `AUTH-*` values remain relation anchors; only repeated PR-create approval and eligible protected-mutation approval surfaces are conditionally replaced during an exact `ACTIVE` chat/project-bound session. Human merge, foreign-project handoff, ownership, correlation, validation and safety controls remain excluded.
 
 **Newer is not, by itself, higher authority.**
 
@@ -79,6 +101,10 @@ Before semantic supersession, archival or a namespace repair that could change i
 | Source artifact | current/older path, display ID, version and lifecycle |
 | Replacement artifact | proposed path/display ID/version |
 | Correlation | exact rule/topic that overlaps |
+| Supersession type | `global`, `partial` or `conditional-partial` |
+| Activation condition | required for conditional supersession; otherwise `N/A` |
+| Exact targets | affected controls/surfaces only |
+| Explicit exclusions | preserved authority/control surfaces |
 | Authority comparison | hierarchy tier + lifecycle for each artifact |
 | Semantic diff | old behavior → new behavior |
 | Operational impact | workflow/runtime/CI/agent behavior |
@@ -97,26 +123,22 @@ Historical evidence should normally be retained and marked historical/non-normat
 3. classify each by authority tier, lifecycle, version and effective date;
 4. fail closed on unresolved higher-tier conflict;
 5. for the same `authorityId`, choose the newest effective version/date;
-6. for different authorities, require an explicit supersession edge and impact package;
-7. prefer effective Accepted/Active authority over Proposed/Draft material;
-8. preserve historical evidence and aliases as non-authorizing;
-9. require Human Merge for repository governance changes;
-10. for external mutation, apply separate protected mutation controls.
+6. for different authorities, require an explicit supersession edge, declared supersession type/scope and impact package;
+7. never infer global replacement from a bare relation anchor;
+8. prefer effective Accepted/Active authority over Proposed/Draft material;
+9. preserve historical evidence and aliases as non-authorizing;
+10. require Human Merge for repository governance changes;
+11. for external mutation, apply separate protected mutation controls.
 
 ## Current PR-CI interpretation
 
 The former PR-body checkbox / Files-Viewed / `💪` / `okay` ritual is historical and non-authorizing.
 
-The current Owner-directed transition state after the M10 recovery is:
+The former M10 Passkey `AUTHORIZE_PR_CI` productive runtime is **RETIRED / OFF** after Human Merge of PR #691. Normal technical/governance PR validation continues without an M10 implementation.
 
-```text
-PR OPEN / UPDATE
-→ technical/governance CI without M10 Passkey gate
-→ Human/Owner merge decision
-→ Human Merge
-```
+Current-state repository, web-application, architecture, inventory, roadmap, agent and validation scans MUST NOT search for, expect, reconstruct or report the absence of a productive M10 implementation as a gap. Historical M10 evidence remains available only for explicit audit/history use and cannot manufacture current authority.
 
-M10 Passkey `AUTHORIZE_PR_CI` is **SUSPENDED/OFF** and does not reactivate through historical documentation. Reactivation requires a new explicit Owner decision and validated control change.
+Any future PR-CI/passkey authorization mechanism is a new separately scoped Human/Owner architecture/security/governance decision, not an inferred M10 reactivation.
 
 ## Production deployment interpretation
 
@@ -135,7 +157,7 @@ A second automatic Render deployment authority must not be introduced without an
 
 ## Enforcement
 
-The repository control-plane validator checks structural invariants including stable-ID uniqueness, active ADR/ESS namespace uniqueness, registry target existence and non-authoritative provider adapters.
+The repository control-plane validator checks structural invariants including stable-ID uniqueness, active ADR/ESS namespace uniqueness, registry target existence, scoped supersession metadata and the retired M10 current-state discovery boundary.
 
 Current implementation:
 

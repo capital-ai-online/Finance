@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.2.1`  
+**Control Plane Version:** `2.3.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-08-31  
+**Effective date:** 2026-09-01  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -33,7 +33,9 @@ For two artifacts carrying the **same stable `authorityId`**, the newest effecti
 
 For artifacts with **different `authorityId` values**, recency alone never creates authority. Supersession requires an explicit `supersedes` relationship, equal-or-higher authority for the correlated scope, an Owner-visible semantic diff/impact package, and no conflicting higher authority.
 
-Historical records are retained and labeled `SUPERSEDED` or `HISTORICAL`; they are not silently rewritten as current policy.
+A bare `supersedes` authority ID is only a relation anchor. It MUST NOT be interpreted as global replacement unless the supersession metadata explicitly declares global scope. Conditional or partial supersession MUST identify activation condition, exact target control/surface and explicit exclusions. Missing supersession scope is fail-closed rather than permission broadening.
+
+Historical records are retained and labeled `SUPERSEDED`, `RETIRED` or `HISTORICAL`; they are not silently rewritten as current policy.
 
 ## 3. Stable Identity Model
 
@@ -155,18 +157,15 @@ No agent may expand its own authority, mandate, permissions or approval scope.
 
 ## 7. Current PR-CI and Production Deployment State
 
-M10 Passkey `AUTHORIZE_PR_CI` gating is **SUSPENDED / OFF**. Normal PR technical `build-and-test` may run without the M10 passkey gate; manual `workflow_dispatch` is not an alternate bypass. Human/CODEOWNER merge remains mandatory.
+The former M10 Passkey `AUTHORIZE_PR_CI` productive runtime is **RETIRED / OFF**. Human Merge of PR #691 removed the productive M10 runtime, router/UI authorization path, workflow gate/bypass surfaces and active production authorization state while retaining historical evidence.
 
-M10 MUST NOT be reactivated until all of the following are true and evidenced on then-current `main`:
+**Repository- and web-application-wide current-state rule:** agents, inventories, architecture scans, roadmaps, validators and implementation-gap analyses MUST NOT search for, expect, reconstruct, recommend restoration of, or report the absence of a productive **M10 implementation** as a gap. M10 is historical terminology/evidence only unless a future explicit Human/Owner authority decision creates a new work item that deliberately adopts that name again.
 
-1. no duplicate or ambiguous ADR/ESS/Authority references remain in the correlated governance architecture;
-2. `src/platform/Governance` and `src/platform/Documentary/Governance` have one explicit, non-overlapping responsibility model;
-3. README version projection/documentary hygiene and Version Manager/Release version contracts are reconciled into one source-of-truth model;
-4. router-related governance/version references identified during the cleanup are reconciled and no second current-state source remains;
-5. the resulting architecture passes structural governance validation and independent hosted CI on the exact final head;
-6. a new explicit Human/Owner decision authorizes controlled M10 reactivation.
+Historical M10 documents, commits, tests and evidence may be inspected when the task explicitly concerns audit, archaeology, incident review or historical traceability. They are non-authorizing and MUST NOT cause current-state discovery to infer a missing runtime component or a reactivation backlog.
 
-Historical M10 evidence cannot reactivate the gate automatically.
+Any future PR-CI/passkey authorization mechanism is a **new separately scoped architecture and authority decision**. It is not an automatic M10 reactivation and must be evaluated against then-current requirements without reconstructing retired M10 implementation merely because historical evidence exists.
+
+Normal PR technical `build-and-test` and applicable hosted checks continue under current controls. Human/CODEOWNER merge remains mandatory.
 
 Render native Auto Deploy remains **OFF**. Production promotion authority remains the verified `main` pipeline: successful build/test → supply-chain attestation → exact-SHA Render deploy hook → post-deployment identity verification.
 

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-ADR0104-S1-RESET-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -25,22 +25,12 @@
     "docs/governance/authority-registry.json",
     "docs/governance/control-catalog.json"
   ],
-  "correlationInputs": [
-    "main@6dea22e5b8c4f2b0b9c9fbfb73615738acf57a54 after Human Merge of PR #684 was the branch creation baseline",
-    "PR #683 subsequently Human-merged and advanced main to f40aeb084675d282a1a188bf05832ce9dc976836",
-    "PR #683 changed CAPITAL-AI-OPS lifecycle paths and has no claimed-path or semantic overlap with this ADR-0104 Governance amendment",
-    "candidate is rematerialized on main@f40aeb084675d282a1a188bf05832ce9dc976836 before PR-readiness",
-    "/AGENTS.md v2.2.1@current-main",
-    "docs/projects/README.md resolves CAPITAL-AI-GOV -> docs/projects/governance/ -> PVC-05",
-    "docs/projects/governance/README.md@current-main",
-    "ADR-0104 v1.2.0 remains the effective current-main authority until Human Merge of v1.3.0"
-  ],
-  "syncEvidence": {
-    "currentMainSha": "f40aeb084675d282a1a188bf05832ce9dc976836",
-    "candidateRebasedOnCurrentMain": true,
-    "openPrOverlap": "none observed after PR #683 merged; final correlation still required immediately before PR approval request"
-  },
-  "authorityGuard": "No new AUTH, CTRL, ADR or ESS identity is created. The stable ADR-0104 authority is amended in place. Historical PR #678 evidence remains traceable and non-authorizing. Human Owner-only Pull Request merge and foreign-project routing remain preserved.",
-  "securityGuard": "The reset is a one-time explicit Owner-directed quota-state change effective only after Human Merge. S1 becomes AVAILABLE but not ACTIVE; later activation still requires one exact chat, one canonical project/project folder, PT8H, fail-closed correlation and all provider/secret/assurance controls. Any successful post-v1.3 slot activation consumes that slot again.",
-  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. This branch does not itself activate S1. PR creation remains subject to the then-current exact-snapshot Human/Owner gate; merge remains Human Owner-only."
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. This branch does not itself activate S1. PR creation remains subject to the then-current exact-snapshot Human/Owner gate; merge remains Human Owner-only.",
+  "releasedAt": "2026-09-01T15:22:24Z",
+  "releaseReason": "Human Merge of PR #689 satisfied the claim release condition. The claim is historical evidence only and must not remain an active writer.",
+  "releaseEvidence": {
+    "pullRequest": 689,
+    "result": "merged",
+    "currentMainContainsMerge": true
+  }
 }

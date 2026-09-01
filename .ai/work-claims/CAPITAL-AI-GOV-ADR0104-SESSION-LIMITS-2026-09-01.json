@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-ADR0104-SESSION-LIMITS-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -25,25 +25,12 @@
     "docs/governance/authority-registry.json",
     "docs/governance/control-catalog.json"
   ],
-  "correlationInputs": [
-    "main@19b2527de88444b999b7820c5a6712e8d80b60df after merge of PR #679",
-    "/AGENTS.md v2.2.1@current-main requires MERGE to remain Human/Owner-only",
-    "docs/projects/README.md resolves CAPITAL-AI-GOV -> docs/projects/governance/ -> PVC-05",
-    "docs/projects/governance/README.md@current-main",
-    "ADR-0104 v1.1.0@current-main",
-    "PR #682 M10 Catalog CI Repair is already contained in current main and preserved by this candidate",
-    "PR #679 Documentary Mermaid Projection is already contained in current main and has zero claimed-path overlap with this Governance work item",
-    "no open Pull Requests observed immediately before the prior synchronization",
-    "Human Owner instruction: every Pull Request must be merged by the Owner",
-    "NIST SP 800-63B-4 session-management guidance supports explicit session binding and bounded lifetime",
-    "OWASP LLM06:2025 Excessive Agency recommends minimum necessary extension privileges and execution in the user's authorization context"
-  ],
-  "syncEvidence": {
-    "currentMainSha": "19b2527de88444b999b7820c5a6712e8d80b60df",
-    "candidateRebasedOnCurrentMain": true,
-    "openPrOverlap": "none observed at prior final correlation; final correlation still required immediately before PR approval request"
-  },
-  "authorityGuard": "No new AUTH, CTRL, ADR or ESS identity is created. The existing ADR-0104 stable authority is tightened in-place through its unmerged v1.2 candidate. The session may not transfer between chats or project owners, may not execute foreign-project work, no fourth successful activation is authorized without a new explicit Human Owner authority change, and Pull Request merge execution is never delegated. Every Pull Request must be merged by the Human Owner.",
-  "securityGuard": "Single-chat/single-project binding, a monotonic lifetime activation quota of three, fail-closed project correlation, preserved provider authentication, technical gates, secret protection, independent assurance, rollback requirements and a mandatory Human Owner merge action reduce delegated blast radius and preserve separation of duties. Expired or revoked successful sessions still consume their activation ordinal; invalid activation attempts do not.",
-  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. PR creation requires the then-applicable exact-snapshot Human/Owner gate because this chat does not claim inheritance of the earlier unbound v1.1 bootstrap session. Any resulting Pull Request must be merged by the Human Owner; the delegated executor may not merge or enable auto-merge."
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. PR creation requires the then-applicable exact-snapshot Human/Owner gate. Any resulting Pull Request must be merged by the Human Owner.",
+  "releasedAt": "2026-09-01T14:48:30Z",
+  "releaseReason": "Human Merge of PR #684 satisfied the release condition. The claim is retained only as historical coordination evidence.",
+  "releaseEvidence": {
+    "pullRequest": 684,
+    "result": "merged",
+    "currentMainContainsMerge": true
+  }
 }

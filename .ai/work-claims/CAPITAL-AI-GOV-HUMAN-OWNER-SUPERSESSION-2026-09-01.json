@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-HUMAN-OWNER-SUPERSESSION-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -17,7 +17,6 @@
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "governance",
   "projectStage": "PVC-05",
-  "ownerRole": "Governance authority/supersession design until bootstrap Human Merge; after activation the Human Owner remains the principal while this chat receives time-boxed delegated execution authority rather than Human identity",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-HUMAN-OWNER-SUPERSESSION-2026-09-01.json",
     "docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md",
@@ -25,24 +24,12 @@
     "docs/governance/authority-registry.json",
     "docs/governance/control-catalog.json"
   ],
-  "correlationInputs": [
-    "main@a90dc644fb5c8efacdf25e464f2b20c62474501f at work-item start",
-    "main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065 after Human Merge of PR #676",
-    "/AGENTS.md@current-main",
-    "docs/projects/governance/README.md@current-main",
-    "docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md@current-main",
-    "docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md@current-main",
-    "docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md@current-main",
-    "PR #676 merged during preparation and was incorporated by main synchronization",
-    "open PR #669 changes only .ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json and has no claimed-path overlap",
-    "no open PR containing ADR-0104 found"
-  ],
-  "syncEvidence": {
-    "currentMainSha": "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065",
-    "mainSyncCommit": "94f993d6700a032fecd979727026c0d5f4e058e6",
-    "behindByAfterSync": 0,
-    "openPrOverlap": "none"
-  },
-  "authorityGuard": "The Human Owner remains the Human principal. ADR-0104 may, after bootstrap Human Merge, temporarily delegate execution of Human-directed cross-project work, PR creation, eligible merges and connected-provider/production mutations to this chat for PT8H. The executor does not acquire Human identity and may not invent unrelated objectives, bypass provider-enforced authentication/capability limits, disclose reusable secrets, ignore external law/contracts, fabricate validation evidence or proceed through unresolved security-critical ambiguity.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment of the bootstrap work item. The bootstrap PR still requires exact Base/Head Human/Owner approval and Human Merge under current main; only after that merge does the PT8H delegated session activate."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment of the bootstrap work item.",
+  "releasedAt": "2026-09-01T13:48:30Z",
+  "releaseReason": "PR #678 was Human-merged and the bootstrap work item terminalized. Later ADR-0104 amendments further constrained its semantics; this claim is historical/non-authorizing and no longer owns any path.",
+  "releaseEvidence": {
+    "pullRequest": 678,
+    "result": "merged",
+    "currentMainContainsMerge": true
+  }
 }
