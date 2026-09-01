@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-M10-CATALOG-CI-REPAIR-V2-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -22,19 +22,13 @@
     ".ai/work-claims/CAPITAL-AI-GOV-M10-CATALOG-CI-REPAIR-V2-2026-09-01.json",
     "docs/governance/control-catalog.json"
   ],
-  "correlationInputs": [
-    "main@d2bf8782fee4acfeddbef31955e9b01f4a8be0fd",
-    "PR #680 merged as d2bf8782fee4acfeddbef31955e9b01f4a8be0fd and does not touch control-catalog.json",
-    "PR #681 closed unmerged after create-time main race",
-    "PR #679 build-and-test failure: governanceControlPlane.test.ts TEST 10",
-    "PR #679 build-and-test failure: governanceAuthorityConsistency.test.ts historical M10 sentence",
-    "AGENTS.md section 7 M10 suspended/off prerequisite chain",
-    "scripts/governance/validateGovernanceControlPlane.mjs requiredReactivationTopic contract",
-    "ADR-0104 active PT8H Human Owner delegated execution session",
-    "superseded stale writer agent/governance-global-roadmap-rule-v2-20260901 abandoned before repair",
-    "no current open PR changes control-catalog.json at this correlation point"
-  ],
-  "authorityGuard": "No new AUTH, CTRL, ADR or ESS identity is created. CTRL-CI-M10-001 remains SUSPENDED/OFF. This repair restores the prerequisites already mandated by current AGENTS.md and retains the ADR-0104 standing-authorization clause. Tests and validators are intentionally not weakened.",
-  "securityGuard": "Fail-closed M10 reactivation prerequisites are restored; historical evidence remains non-authorizing and ADR-0104 cannot manufacture missing prerequisites or validation evidence.",
-  "releaseCondition": "Release on Human/delegated merge under active ADR-0104, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/delegated merge under active ADR-0104, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-01T14:23:23Z",
+  "releaseReason": "PR #682 merged and satisfied this repair claim. PR #691 subsequently retired the productive M10 runtime, so this former reactivation-prerequisite writer is historical evidence only.",
+  "releaseEvidence": {
+    "pullRequest": 682,
+    "result": "merged",
+    "supersedingCurrentStateEvidence": "PR #691 merged M10 productive retirement",
+    "currentMainContainsMerge": true
+  }
 }
