@@ -2,7 +2,7 @@
 
 **Authority ID:** `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL`  
 **Status:** REQUIRED  
-**Version:** `3.1.0`  
+**Version:** `3.2.0`  
 **Effective from:** 2026-08-11  
 **Updated:** 2026-09-01  
 **Repository Owner:** `SvenKulessa`  
@@ -37,7 +37,7 @@ Any future passkey/PR-CI authorization mechanism is a new separately scoped Huma
 1. The gate applies to every Pull Request and Draft Pull Request, regardless of whether creation uses GitHub UI automation, API, MCP, connector, CLI, an agent tool or a trusted workflow.
 2. Immediately before approval is requested, current `main` is refreshed, open/new writers are correlated, the branch is synchronized, conflicts are resolved and necessary low-cost validation is repeated.
 3. The Owner receives the exact `main` SHA, candidate branch/head SHA, intended scope, correlation outcome and available validation evidence.
-4. PR creation requires explicit Human/Owner approval for that reported snapshot unless a current effective scoped delegation explicitly and conditionally replaces only this approval prompt for the exact work/chat/project context. Approval for the task, branch, commits, checks or general continuation is otherwise insufficient.
+4. PR creation requires explicit Human/Owner approval for that reported snapshot unless a current effective scoped delegation explicitly and conditionally replaces only this approval prompt for the exact work/chat/immutable-project-set/current-project context. Approval for the task, branch, commits, checks or general continuation is otherwise insufficient.
 5. Immediately before creation, `main` and candidate head are read again. Any SHA change invalidates snapshot-bound approval/delegation correlation and requires repeated correlation/synchronization.
 6. Agents and connectors stop fail-closed before the external PR-create mutation while required authority is absent, ambiguous or stale.
 
