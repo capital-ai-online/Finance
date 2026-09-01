@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -14,6 +14,8 @@
   "baseBranch": "main",
   "baseSha": "37bf7d954363d99d67083edbf520bd77892888dd",
   "initialBaseSha": "88286e1cfd58b314a818276b5cf61b2ff0b4128d",
+  "pullRequest": 656,
+  "mergedPr": 656,
   "branch": "agent/governance-user-lifecycle-control-20260901",
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "governance",
@@ -46,5 +48,17 @@
     "CAPITAL-AI-COMP: independent purchase/cancellation consumer-compliance assessment after writer correlation"
   ],
   "authorityGuard": "This claim is non-authorizing execution coordination. It creates no ADR/ESS/AUTH/CTRL identity, grants no productive PVC ownership, performs no Security or Compliance self-verification, and authorizes no production mutation, deployment, live payment, production provider configuration or Human merge.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated under current AGENTS.md; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated under current AGENTS.md; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-09-01T04:21:11Z",
+  "mainCommit": "3935e08a0289be69683b8af9004fc177a99b04c0",
+  "terminalHeadSha": "bb614672827f58b5019f7fa6ade11340a1d96491",
+  "releaseEvidence": {
+    "pullRequest": 656,
+    "merged": true,
+    "mergeCommitSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+    "verifiedAt": "2026-09-01"
+  }
 }
