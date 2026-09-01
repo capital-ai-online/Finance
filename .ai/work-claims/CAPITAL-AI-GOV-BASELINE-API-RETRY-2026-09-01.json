@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-BASELINE-API-RETRY-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Harden the trusted post-merge PR production-baseline refresh against transient GitHub REST 5xx failures while preserving fail-closed behavior for semantic, authorization and boundary failures.",
+  "workItemDE": "Den vertrauenswürdigen Post-Merge-Refresh der PR-Produktions-Baseline gegen transiente GitHub-REST-5xx-Fehler härten, ohne Fail-Closed-Verhalten für semantische, Autorisierungs- oder Boundary-Fehler abzuschwächen.",
+  "startedAt": "2026-09-01T06:58:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "fa216a268ced98c45371010c78863e3710aead43",
+  "branch": "agent/governance-baseline-api-retry-20260901",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Governance CI/workflow reliability for the existing production-baseline control path; no production, deployment or foreign-project mutation authority",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-BASELINE-API-RETRY-2026-09-01.json",
+    ".github/workflows/pr-production-baseline-post-merge-refresh.yml",
+    "tests/unit/productionBaselinePostMergeRefresh.test.ts"
+  ],
+  "reuseInputs": [
+    ".github/workflows/pr-production-baseline-post-merge-refresh.yml",
+    "tests/unit/productionBaselinePostMergeRefresh.test.ts",
+    "actions/github-script built-in retry support",
+    "GitHub REST API error-handling guidance"
+  ],
+  "correlationInputs": [
+    "main@fa216a268ced98c45371010c78863e3710aead43",
+    "PR #660 merged",
+    "workflow run 33471584769 failed on transient GitHub compare API HTTP 502",
+    "open PR #662 has no changed-file overlap with this claim",
+    "/AGENTS.md@fa216a268ced98c45371010c78863e3710aead43"
+  ],
+  "nonGoals": [
+    "Change production-baseline identity semantics",
+    "Retry semantic or authorization failures until they appear successful",
+    "Modify deployment, Render, Stripe, Supabase, IAM or production state",
+    "Modify foreign project files",
+    "Create a second baseline algorithm"
+  ],
+  "authorityGuard": "The fix reuses the existing trusted post-merge baseline workflow and its pinned actions. Retries are bounded and limited by actions/github-script semantics so transient server failures may recover while non-retryable 4xx and repository invariant failures remain fail-closed. Human/CODEOWNER merge and separate production-mutation gates remain unchanged.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}
