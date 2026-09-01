@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-PROJECT-SURFACE-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Materialize the canonical non-authorizing CAPITAL-AI-SEO project navigation under docs/projects/seo while preserving existing SEO/Google Marketing roadmap, SEO management, checklist, runbook and publishing/governance boundaries.",
+  "workItemDE": "Die kanonische non-authorizing CAPITAL-AI-SEO-Projektnavigation unter docs/projects/seo materialisieren und bestehende SEO-/Google-Marketing-Roadmap-, Management-, Checklist-, Runbook- sowie Publishing-/Governance-Grenzen erhalten.",
+  "startedAt": "2026-09-01T04:24:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "88286e1cfd58b314a818276b5cf61b2ff0b4128d",
+  "branch": "agent/seo-project-surface-20260901",
+  "project": "CAPITAL-AI-SEO",
+  "projectFolder": "seo",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Cross-cutting SEO and Google Marketing execution/project coordination; primary productive PVC ownership none",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-PROJECT-SURFACE-2026-09-01.json",
+    "docs/projects/seo/README.md",
+    "docs/projects/seo/ROADMAP.md"
+  ],
+  "reuseInputs": [
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    "docs/seo/SEO_MANAGEMENT_ROADMAP.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/seo/S1_SEO_ENGINE.md",
+    "docs/seo/S2_PRERENDER.md",
+    "docs/seo/S3_SEO_DASHBOARD.md",
+    "docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md",
+    "docs/governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md"
+  ],
+  "correlationInputs": [
+    "main@88286e1cfd58b314a818276b5cf61b2ff0b4128d",
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md",
+    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-FE owns productive presentation implementation when SEO requires UI/page changes",
+    "CAPITAL-AI-OPS owns production deployment, DNS/TLS and provider operations",
+    "CAPITAL-AI-GOV owns Governance/publishing-control authority",
+    "CAPITAL-AI-COMP owns compliance assessment where marketing obligations apply"
+  ],
+  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SEO gains no productive PVC stage. docs/projects/seo is organizational navigation only and does not replace docs/seo, the consolidated SEO/Google Marketing roadmap, Frontend, Operations, Governance, Compliance or publishing authority. Marketing/SEO automation never inherits infrastructure or publication authority merely from project ownership. Shared Governance project-registry paths remain outside this claim.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}
