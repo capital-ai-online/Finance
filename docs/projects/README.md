@@ -64,15 +64,15 @@ The canonical repository routing is:
 | `CAPITAL-AI-DATA` | `PVC-09..11` Primary Owner | `docs/projects/data/` | `data` | `CAPITAL-AI-DATA` | present |
 | `CAPITAL-AI-FINTECH` | `PVC-12..17` Primary Owner | `docs/projects/fintech/` | `fintech` | `CAPITAL-AI-FINTECH` | present |
 | `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | `CAPITAL-AI-QM` | present |
-| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | owner migration gap |
-| `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | `CAPITAL-AI-COMP` | owner migration gap |
-| `CAPITAL-AI-FE` | cross-cutting presentation consumer; no productive PVC | `docs/projects/frontend/` | `frontend` | `CAPITAL-AI-FE` | owner migration gap |
-| `CAPITAL-AI-SEO` | cross-cutting SEO/marketing domain; no productive PVC | `docs/projects/seo/` | `seo` | `CAPITAL-AI-SEO` | owner migration gap |
-| `CAPITAL-AI-SOCIAL` | cross-cutting Social distribution; no productive PVC | `docs/projects/social-media/` | `social-media` | `CAPITAL-AI-SOCIAL` | owner migration gap |
+| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | present via PR #647 |
+| `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | `CAPITAL-AI-COMP` | present via PR #652 |
+| `CAPITAL-AI-FE` | cross-cutting presentation consumer; no productive PVC | `docs/projects/frontend/` | `frontend` | `CAPITAL-AI-FE` | present via PR #653 |
+| `CAPITAL-AI-SEO` | cross-cutting SEO/marketing domain; no productive PVC | `docs/projects/seo/` | `seo` | `CAPITAL-AI-SEO` | present via PR #654 |
+| `CAPITAL-AI-SOCIAL` | cross-cutting Social distribution; no productive PVC | `docs/projects/social-media/` | `social-media` | `CAPITAL-AI-SOCIAL` | present via PR #655 |
 
-For previously unresolved cross-cutting projects, the folder basename deliberately reuses the stable repository domain basename already associated with that project (`security`, `compliance`, `frontend`, `seo`, `social-media`) instead of introducing an additional project-name alias namespace. The `CAPITAL-AI-SEC` `security` branch/project-folder convention is also already present in merged repository work-claim evidence; this mapping makes the organizational destination explicit.
+The cross-cutting folder basenames deliberately reuse the stable repository domain basenames already associated with those projects (`security`, `compliance`, `frontend`, `seo`, `social-media`) instead of introducing an additional project-name alias namespace. The `CAPITAL-AI-SEC` `security` branch/project-folder convention is also already present in merged repository work-claim evidence; this mapping makes the organizational destination explicit.
 
-A project folder may be canonically resolved even when it is not yet materialized on `main`. Absence of the target folder is an owner migration gap, not a competing identity and not permission for CAPITAL-AI-GOV or another project to create the foreign project surface.
+A project folder may be canonically resolved before it is materialized on `main`. Absence of a target folder is an owner migration gap, not a competing identity and not permission for CAPITAL-AI-GOV or another project to create the foreign project surface. The current routing table records the correlated materialization state and must be updated when that state changes.
 
 The branch slug is always derived from the canonical project-folder basename. Domain/runtime/normative artifacts remain at their existing canonical paths unless a separate, owner-scoped migration proves that relocation is required. In particular, project navigation does not replace `src/platform/Security/`, `docs/compliance/CAPITAL-AI-COMP/`, `docs/frontend/`, `docs/seo/` or `docs/social-media/CAPITAL-AI-SOCIAL/`.
 

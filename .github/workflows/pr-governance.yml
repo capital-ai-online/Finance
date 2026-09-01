@@ -72,6 +72,18 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: node ../policy/scripts/pr/classifyPrScope.mjs
 
+      - name: Project Value Chain und Projektordner mit trusted-main Validator prüfen
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          validator='../policy/scripts/governance/validateProjectValueChain.mjs'
+          if [ ! -f "$validator" ]; then
+            echo 'Bootstrap: trusted main enthält den PVC-Konsistenzvalidator noch nicht. Candidate-Policy wird im Governance-Runner nicht ausgeführt; die Candidate-Implementierung wird durch die normale CI/Test-Stufe validiert.'
+            exit 0
+          fi
+          node "$validator" --root .
+
       - name: Kosten-Gate für optionales Repository-Advisory prüfen
         id: cost_gate
         if: github.event.action != 'edited'
