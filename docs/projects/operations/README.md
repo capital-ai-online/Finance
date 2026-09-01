@@ -5,7 +5,7 @@
 **Role:** Primary Project Value Chain Owner  
 **Primary stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`  
 **Status:** ACTIVE — PROJECT EXECUTION SURFACE / NON-AUTHORIZING  
-**Baseline:** `main@6dea22e5b8c4f2b0b9c9fbfb73615738acf57a54`  
+**Baseline:** `main@f40aeb084675d282a1a188bf05832ce9dc976836`  
 **Trust root:** `/AGENTS.md`
 
 ## Purpose
@@ -21,8 +21,8 @@ Per `docs/projects/ROADMAP_REGISTRY.md`, `docs/projects/operations/ROADMAP.md` i
 - PR #632 materialized the canonical OPS project surface and Security handoff projection; its historical writer is already `released/non-exclusive`.
 - PR #642 merged the OPS-owned Alpha Vantage repository secret/deployment-control-plane consolidation. Its stale post-merge writer metadata is terminalized by the current reconciliation package; this does not assert or perform a Production secret/deploy mutation.
 - PR #648 merged the fail-closed one-hour branch-cleanup hardening and is current `PVC-02` Controlled Implementation evidence for repository branch lifecycle.
-- `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS` is an accepted inbound Governance handoff to `PVC-02` with secondary `PVC-08` runtime/provider evidence. Its separate productive implementation is now represented by open PR #683 on eight non-overlapping Lifecycle paths; this reconciliation does not absorb or modify that writer scope.
-- PR #684 merged Governance-only ADR-0104 session/merge-boundary hardening into current `main`; it changes no OPS project path and is consumed as a Governance baseline only.
+- PR #683 merged the separate `OPS-02-GOV-040` User-Lifecycle Harness implementation into current main. Repository implementation exists, while the associated evidence remains `CANDIDATE IMPLEMENTED / PROVIDER EXECUTION PARTIAL`; Supabase Local and Stripe Sandbox scenarios that were not executed remain `NOT_AVAILABLE`, and `EVIDENCE_READY` is not claimed. The stale post-merge Lifecycle writer is terminalized by this reconciliation package.
+- PR #684 merged Governance-only ADR-0104 session/merge-boundary hardening; it changes no OPS project path and remains a consumed Governance baseline.
 - Downstream Frontend, Security and Compliance lifecycle work remains outside OPS ownership. OPS returns stable test/runtime evidence; the respective Primary Owners retain implementation, verification and assessment authority.
 
 ## Authority boundary
