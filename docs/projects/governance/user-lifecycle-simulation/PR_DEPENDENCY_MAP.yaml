@@ -1,7 +1,7 @@
-schema_version: "1.1.0"
+schema_version: "1.2.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 rule: "one_primary_owner_per_pr"
-correlation_baseline: "main@190f319ec8026d8141601b69a8bb4d97470ec5ea"
+correlation_baseline: "main@a90dc644fb5c8efacdf25e464f2b20c62474501f"
 human_merge_only: true
 auto_merge: false
 production_deploy_from_task: false
@@ -21,6 +21,25 @@ pull_requests:
     depends_on: []
 
   - sequence: 2
+    id: "PR-GOV-ULS-DECISIONS"
+    project: "CAPITAL-AI-GOV"
+    project_folder: "docs/projects/governance/"
+    pvc: "PVC-05"
+    branch: "agent/governance-user-lifecycle-decisions-20260901"
+    title: "[CAPITAL-AI-GOV][governance] User-Lifecycle-Entscheidungen festschreiben"
+    state: "CANDIDATE_IN_PROGRESS"
+    productive_code: false
+    depends_on:
+      - "PR-GOV-ULS-BOOTSTRAP merged"
+      - "PR #675 owner-sequence recorrelation merged"
+      - "GOV-ULS-DEC-001 explicit Owner decision"
+      - "GOV-ULS-DEC-002 explicit Owner decision"
+    decisions:
+      - "GOV-ULS-DEC-001: 248 EUR annual Pro catalog price"
+      - "GOV-ULS-DEC-002: local and global logout, local default"
+    production_mutation: false
+
+  - sequence: 3
     id: "PR-OPS-ULS-HARNESS"
     project: "CAPITAL-AI-OPS"
     project_folder: "docs/projects/operations/"
@@ -28,11 +47,12 @@ pull_requests:
     secondary_pvc: "PVC-08"
     branch: "agent/operations-user-lifecycle-simulation-20260901"
     title: "[CAPITAL-AI-OPS][operations] User-Lifecycle-Testsystem implementieren"
-    state: "READY_FOR_OWNER_HANDOFF"
+    state: "READY_AFTER_GOV_DECISION_PROJECTION_MERGE"
     productive_code: true
     depends_on:
       - "PR-GOV-ULS-BOOTSTRAP merged"
-      - "Current GOV lifecycle recorrelation consumed"
+      - "PR #675 owner-sequence recorrelation merged"
+      - "PR-GOV-ULS-DECISIONS merged"
     resolved_correlation_blockers:
       - claim: "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
         status: "released"
@@ -44,19 +64,18 @@ pull_requests:
       - "Webhook/outbox/subscription projection tests"
       - "server-side auth and billing boundaries"
 
-  - sequence: 3
+  - sequence: 4
     id: "PR-FE-ULS-PROJECTION"
     project: "CAPITAL-AI-FE"
     project_folder: "docs/projects/frontend/"
     relationship: "cross_cutting_presentation"
     branch: "agent/frontend-user-lifecycle-projection-20260901"
     title: "[CAPITAL-AI-FE][frontend] Pricing und Lifecycle-UI vereinheitlichen"
-    state: "BLOCKED_BY_DECISIONS_AND_OPS_CONTRACT"
+    state: "BLOCKED_BY_OPS_CONTRACT"
     productive_code: true
     depends_on:
       - "PR-GOV-ULS-BOOTSTRAP merged"
-      - "GOV-ULS-DEC-001 resolved"
-      - "GOV-ULS-DEC-002 resolved"
+      - "PR-GOV-ULS-DECISIONS merged"
       - "PR-OPS-ULS-HARNESS or stable OPS test contract"
       - "PR #653 project surface merged"
     resolved_correlation_blockers:
@@ -73,7 +92,7 @@ pull_requests:
       - "Customer Portal/cancellation access"
       - "Accessibility and responsive presentation"
 
-  - sequence: 4
+  - sequence: 5
     id: "PR-SEC-ULS-ASSURANCE"
     project: "CAPITAL-AI-SEC"
     project_folder: "docs/projects/security/"
@@ -90,7 +109,7 @@ pull_requests:
       backend_provider: "CAPITAL-AI-OPS"
       presentation: "CAPITAL-AI-FE"
 
-  - sequence: 5
+  - sequence: 6
     id: "PR-COMP-ULS-CONSUMER"
     project: "CAPITAL-AI-COMP"
     project_folder: "docs/projects/compliance/"
@@ -113,7 +132,7 @@ pull_requests:
       ui: "CAPITAL-AI-FE"
       provider_process: "CAPITAL-AI-OPS"
 
-  - sequence: 6
+  - sequence: 7
     id: "PR-GOV-ULS-CLOSEOUT"
     project: "CAPITAL-AI-GOV"
     project_folder: "docs/projects/governance/"
@@ -138,4 +157,3 @@ execution_rules:
   pr_language: "de-DE"
   title_contains_project_name: true
   title_contains_project_folder_slug: true
-

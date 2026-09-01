@@ -1,6 +1,9 @@
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 authority_effect: "none"
+projection_baseline: "main@a90dc644fb5c8efacdf25e464f2b20c62474501f"
+projection_branch: "agent/governance-user-lifecycle-decisions-20260901"
+recorded_owner_authority_source: "current_chat_instruction"
 
 status_vocabulary:
   - "UNRESOLVED"
@@ -11,31 +14,58 @@ status_vocabulary:
 decisions:
   - id: "GOV-ULS-DEC-001"
     topic: "Pro-Jahrespreis"
-    status: "UNRESOLVED"
+    status: "DECIDED"
     options:
       - label: "Aktueller Billing-Katalog"
         value_eur: 248.00
       - label: "10-Prozent-Rabatt auf 348 EUR"
         value_eur: 313.20
+    decision:
+      label: "Aktueller Billing-Katalog"
+      value_eur: 248.00
+      currency: "EUR"
+      billing_interval: "year"
+    owner_decision_evidence:
+      source: "current_chat_instruction"
+      recorded_on: "2026-09-01"
+      selection: "248 EUR - aktueller Katalog"
+    rationale: "Preserves the current canonical Billing catalog and does not authorize a Stripe price migration."
     effect:
-      frontend_pr: "BLOCKED_UNTIL_RESOLVED"
-      pricing_expectation: "MUST_DERIVE_FROM_CANONICAL_SOURCE_AFTER_DECISION"
+      frontend_pr: "PRICE_DECISION_RESOLVED_AFTER_GOV_PROJECTION_MERGE"
+      operations_tests: "Use 248.00 EUR as the annual Pro catalog expectation."
+      pricing_expectation: "MUST_STILL_DERIVE_FROM_CANONICAL_RUNTIME_SOURCE"
+    production_change_authorized: false
     owner: "CAPITAL-AI-GOV"
 
   - id: "GOV-ULS-DEC-002"
     topic: "Logout-Semantik"
-    status: "RECOMMENDED_PENDING_OWNER_DECISION"
+    status: "DECIDED"
     options:
       - "Dieses Geraet: local"
       - "Alle Geraete: global"
       - "Beide Funktionen mit eindeutiger UI"
     recommendation: "Beide Funktionen mit eindeutiger UI"
+    decision:
+      supported_actions:
+        - label: "Dieses Geraet"
+          scope: "local"
+          default: true
+        - label: "Alle Geraete"
+          scope: "global"
+          default: false
+          explicit_confirmation_required: true
+      default_scope: "local"
+    owner_decision_evidence:
+      source: "current_chat_instruction"
+      recorded_on: "2026-09-01"
+      selection: "Beide, lokal als Standard"
     current_observation:
       function: "supabase.auth.signOut()"
       default_scope: "global"
     effect:
-      frontend_pr: "BLOCKED_UNTIL_RESOLVED"
-      operations_tests: "Current global behavior remains regression baseline until decision"
+      frontend_pr: "LOGOUT_DECISION_RESOLVED_AFTER_GOV_PROJECTION_MERGE"
+      operations_tests: "Verify local default, explicit global action and failure/session invalidation behavior."
+    production_change_authorized: false
     owner: "CAPITAL-AI-GOV"
 
   - id: "GOV-ULS-DEC-003"

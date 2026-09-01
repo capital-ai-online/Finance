@@ -1,12 +1,12 @@
-schema_version: "1.1.0"
+schema_version: "1.2.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 artifact_role: "non_authorizing_execution_coordination"
-status: "GOV_RECORRELATION_IN_CANDIDATE"
+status: "GOV_DECISIONS_IN_CANDIDATE"
 
 repository:
   full_name: "SvenKulessa/Finance"
   default_branch: "main"
-  current_correlation_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+  current_correlation_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
   bootstrap_execution_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
   bootstrap_merge_sha: "3935e08a0289be69683b8af9004fc177a99b04c0"
   historical_evidence_sha: "d1a69971b3332bfec487b86c6ac210c973034d32"
@@ -24,6 +24,7 @@ project_resolution:
 authorization:
   overall_orchestration: "GRANTED"
   source: "current_chat_instruction"
+  standing_chat_authorization: "PREPARATORY_ROADMAP_STEPS_ONLY"
   branch_and_candidate_changes: true
   exact_pr_snapshot_approval_required: true
   human_merge_only: true
@@ -55,15 +56,24 @@ writer_release:
     - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20"
     - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
 
+recorrelation:
+  work_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
+  pull_request: 675
+  state: "MERGED"
+  terminal_head_sha: "b7f647734934b6e723b3db345a41f1725cee11c2"
+  merge_commit_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
+  claim_status_in_candidate: "released"
+  claim_exclusive_in_candidate: false
+
 work_claim:
-  id: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
-  branch: "agent/governance-user-lifecycle-recorrelation-20260901"
+  id: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
+  branch: "agent/governance-user-lifecycle-decisions-20260901"
   status: "active"
   exclusive: true
 
 precheck:
-  result: "PASS_FOR_GOV_RECORRELATION"
-  current_main_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+  result: "PASS_FOR_GOV_DECISION_PROJECTION"
+  current_main_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
   mandatory_sources_read: true
   new_authority_required: false
   gov_target_path_active_writer_overlap: false
@@ -94,15 +104,18 @@ precheck:
 owner_execution:
   governance:
     project: "CAPITAL-AI-GOV"
-    mode: "EXECUTE_LOCAL_RECORRELATION"
+    mode: "EXECUTE_LOCAL_DECISION_PROJECTION"
   operations:
     project: "CAPITAL-AI-OPS"
-    mode: "READY_FOR_OWNER_HANDOFF"
-    prerequisite: "Consume merged GOV bootstrap and current recorrelation"
+    mode: "READY_AFTER_GOV_DECISION_PROJECTION_MERGE"
+    prerequisite: "Consume merged GOV bootstrap, recorrelation and decision projection"
   frontend:
     project: "CAPITAL-AI-FE"
     mode: "REFERRED_NOT_EXECUTED"
-    blocker: "GOV-ULS-DEC-001, GOV-ULS-DEC-002 and stable OPS test contract"
+    resolved_decisions:
+      - "GOV-ULS-DEC-001: annual Pro price 248 EUR"
+      - "GOV-ULS-DEC-002: local and global logout, local default"
+    blocker: "Stable OPS test contract"
   security:
     project: "CAPITAL-AI-SEC"
     mode: "REFERRED_NOT_EXECUTED"
@@ -127,10 +140,23 @@ simulation_contract:
     - "src/features/billing/billingContract.ts"
   duplicate_authorities_prohibited: true
 
+owner_decisions:
+  annual_pro_price:
+    id: "GOV-ULS-DEC-001"
+    value_eur: 248.00
+    source: "current_catalog"
+    production_price_migration_authorized: false
+  logout:
+    id: "GOV-ULS-DEC-002"
+    supported_scopes: ["local", "global"]
+    default_scope: "local"
+    global_requires_explicit_confirmation: true
+    production_session_mutation_authorized: false
+
 exit_gate:
-  current_result: "GOV_CANDIDATE_PENDING_VALIDATION_RECORRELATION_AND_EXACT_PR_SNAPSHOT_APPROVAL"
+  current_result: "GOV_DECISION_CANDIDATE_PENDING_VALIDATION_RECORRELATION_AND_EXACT_PR_SNAPSHOT_APPROVAL"
   next_foreign_owner: "CAPITAL-AI-OPS"
-  owner_decisions_required_before_frontend:
+  owner_decisions_resolved_in_candidate:
     - "GOV-ULS-DEC-001"
     - "GOV-ULS-DEC-002"
-
+  next_owner_handoff_gate: "Human merge of the GOV decision projection"
