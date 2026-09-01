@@ -69,6 +69,12 @@ function findEnvVarUsages(): Set<string> {
   const found = new Set<string>();
   const directPattern = /getCleanEnv\(\s*['"]([A-Z_0-9]+)['"]\s*\)/g;
   const dynamicPattern = /(?:clientIdEnvVar|clientSecretEnvVar):\s*['"]([A-Z_0-9]+)['"]/g;
+  // Some guarded provider boundaries expose one canonical env identity as an `as const`
+  // constant and resolve it through environment[CONSTANT]. Resolve that indirection here so
+  // deployment coverage cannot silently miss a productive credential merely because the
+  // runtime avoids duplicating the literal at every call site.
+  const namedEnvKeyPattern = /(?:export\s+)?const\s+([A-Z][A-Z0-9_]*)\s*=\s*['"]([A-Z_0-9]+)['"]\s+as\s+const/g;
+  const indexedNamedEnvPattern = /(?:process\.env|environment)\[\s*([A-Z][A-Z0-9_]*)\s*\]/g;
   const files = collectTsFiles([path.join(REPO_ROOT, 'server.ts'), path.join(REPO_ROOT, 'server'), path.join(REPO_ROOT, 'src')]);
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8');
@@ -77,6 +83,15 @@ function findEnvVarUsages(): Set<string> {
     while ((match = directPattern.exec(content))) found.add(match[1]);
     dynamicPattern.lastIndex = 0;
     while ((match = dynamicPattern.exec(content))) found.add(match[1]);
+
+    const namedEnvKeys = new Map<string, string>();
+    namedEnvKeyPattern.lastIndex = 0;
+    while ((match = namedEnvKeyPattern.exec(content))) namedEnvKeys.set(match[1], match[2]);
+    indexedNamedEnvPattern.lastIndex = 0;
+    while ((match = indexedNamedEnvPattern.exec(content))) {
+      const resolved = namedEnvKeys.get(match[1]);
+      if (resolved) found.add(resolved);
+    }
   }
   return found;
 }
