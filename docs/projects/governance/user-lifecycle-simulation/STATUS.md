@@ -4,7 +4,7 @@
 **Project:** `CAPITAL-AI-GOV`  
 **Project folder:** `docs/projects/governance/`  
 **Primary stage:** `PVC-05`  
-**Execution baseline:** `main@85d821a58851d769fde9c95558c03d9e5608efd7`  
+**Execution baseline:** `main@37bf7d954363d99d67083edbf520bd77892888dd`  
 **Initial baseline:** `main@88286e1cfd58b314a818276b5cf61b2ff0b4128d`  
 **Branch:** `agent/governance-user-lifecycle-control-20260901`  
 **Status:** `GOVERNANCE_BOOTSTRAP_IN_CANDIDATE`
@@ -19,13 +19,12 @@ No deployment, production mutation, live Stripe payment, production Supabase mig
 
 - Current project resolution is `CAPITAL-AI-GOV / governance / PVC-05`.
 - The historical SHA `d1a69971b3332bfec487b86c6ac210c973034d32` is evidence only, not current authority.
-- PR #652 (Compliance project surface) merged while this candidate was in progress; the GOV branch was synchronized with merge commit `85d821a58851d769fde9c95558c03d9e5608efd7` before PR readiness.
-- Open PRs #653 (Frontend), #654 (SEO) and #655 (Social) do not overlap the GOV bootstrap files.
-- #653 remains a downstream FE prerequisite because it materializes the target project surface used by the later lifecycle owner PR.
-- `CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31` is active/exclusive and blocks overlapping OPS lifecycle work until OPS correlation resolves it.
-- `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` is stale active writer metadata although PR #463 is merged; it does not overlap this candidate.
+- Project-surface PRs #652 (Compliance), #653 (Frontend), #654 (SEO) and #655 (Social) merged while this candidate was being prepared; the GOV branch was rebased onto `main@37bf7d954363d99d67083edbf520bd77892888dd`.
+- There are no open pull requests in the repository at the current correlation snapshot.
+- `CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31` remains active/exclusive and blocks overlapping OPS lifecycle work.
+- `CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01` remains active/exclusive after merged PR #653, and `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` remains active/exclusive after merged PR #463. Both must be resolved before overlapping FE lifecycle work.
+- `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` remains active/exclusive after merged PR #652; overlapping COMP lifecycle work remains blocked until that writer is resolved.
 - The earlier SEC stale-writer statement is obsolete: the SEC handoff claim is released and Security project-surface PR #647 is merged.
-- `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` remains active/exclusive after merged PR #652; the Compliance project surface exists, but overlapping COMP lifecycle work stays blocked until that writer is resolved.
 
 ## Decision gates
 
@@ -42,7 +41,7 @@ No deployment, production mutation, live Stripe payment, production Supabase mig
 | Owner | Planned return | Current state |
 |---|---|---|
 | `CAPITAL-AI-OPS` | lifecycle harness/provider evidence | `REFERRED_NOT_EXECUTED / BLOCKED_BY_CORRELATION` |
-| `CAPITAL-AI-FE` | lifecycle/pricing UI projection | `REFERRED_NOT_EXECUTED / DECISION_AND_PR_PREREQUISITES` |
+| `CAPITAL-AI-FE` | lifecycle/pricing UI projection | `REFERRED_NOT_EXECUTED / BLOCKED_BY_DECISIONS_AND_WRITERS` |
 | `CAPITAL-AI-SEC` | independent Security assurance | `REFERRED_NOT_EXECUTED` |
 | `CAPITAL-AI-COMP` | purchase/cancellation assessment | `REFERRED_NOT_EXECUTED / BLOCKED_BY_STALE_WRITER` |
 | `CAPITAL-AI-GOV` | final evidence closeout | `BLOCKED_BY_OWNER_RETURNS` |
