@@ -1,11 +1,11 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.5.0`  
-**Status date:** `2026-08-30`  
-**Current repository baseline:** `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc` — includes merged PRs #607, #610, #611, #612, #614 and #615  
-**Open PR correlation:** #617 is the only open PR. Its branch is synchronized with `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc`; the former #615 overlap is resolved by treating ROADMAP v2.4.0 / Authority Registry v1.34.0 as predecessors of this v2.5.0 / v1.35.0 projection.  
-**Platform version authority:** `package.json#version` = `0.6.0`  
+**Version:** `2.6.0`  
+**Status date:** `2026-09-01`  
+**Current repository baseline for this synchronization:** `main@abdee9686825b39f34e5edbe6960e9c20f523618` — includes Human Merge of PR #691 and complete productive M10 retirement  
+**Open PR correlation at this synchronization:** PR #697 is open and changes the governance owner-device-authorization contract/navigation; no overlap with this M10 current-state index mutation was identified.  
+**Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
 
@@ -38,15 +38,10 @@ Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registri
 ## S1-R2 security-governance state
 
 - `S1-R2-01` workflow startup-failure classification is resolved as historical/obsolete phantom-control evidence; active workflow YAML was not changed.
-- `S1-R2-02` GitHub default-branch enforcement code/docs merged as PR #611 (`dc3dd333`). PR #615 was Human-merged at `main@f714eae6` after Exact-Head-PASS and now supplies policy-owned `required_linear_history`, Squash/Rebase-only methods and fail-closed builder/normalizer/floor checks. **OWNER DISPATCH PENDING**; no live apply has occurred.
-- GitHub Pro capability is active for the private repository and the repository ruleset `main-production-protection` is readable.
-- Provider readback after the #615 merge on 2026-08-30 at 19:39 CEST still contains only `non_fast_forward`, `pull_request` (without CODEOWNER or thread-resolution requirements) and advisory `code_quality`; the bypass actor set is empty and `current_user_can_bypass=never`.
-- Live drift: `required_status_checks`, `required_linear_history` and `deletion` are absent; CODEOWNER review and required review-thread resolution are disabled.
-- `required_signatures` is intentionally absent after the explicit Owner decision dated 2026-08-30. Commit signing is optional and is not a merge-readiness, CI, PR-creation or protected-main prerequisite. PR #613 remains discarded.
-- The canonical target now present on `main` retains four required checks: `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks`; it also restores linear history, deletion protection, CODEOWNER review and thread resolution when a separately authorized live apply is performed.
+- `S1-R2-02` GitHub default-branch enforcement code/docs merged as PR #611 (`dc3dd333`). PR #615 was Human-merged at `main@f714eae6` after Exact-Head-PASS and supplies policy-owned `required_linear_history`, Squash/Rebase-only methods and fail-closed builder/normalizer/floor checks. Provider mutation/readback remains governed separately.
+- `required_signatures` is intentionally absent after the explicit Owner decision dated 2026-08-30. Commit signing is optional and is not a merge-readiness, CI, PR-creation or protected-main prerequisite.
+- The canonical required-check target retains `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks` where applicable.
 - `Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain intentionally outside the pre-merge required-check set.
-- A live plan/full apply is a separate Owner-gated provider mutation and is not authorized by #615 or #617.
-- Checklist: `docs/evidence/security/S1_R2_02_POST_MERGE_DISPATCH_CHECKLIST_2026-08-30.md`.
 
 ## ESS current-state correlation
 
@@ -54,31 +49,33 @@ Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registri
 |---|---|---|
 | `ESS-0012` | `.ai/skills/ESS-0012-Documentation-Governance.md`; registered as `AUTH-ESS-DOCUMENTATION-GOVERNANCE` v1.0.0 | **RESOLVED / ENTERPRISE-APPROVED**; documentation-only governance, non-authorizing for repository-wide execution |
 | `ESS-0019` | `.ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md`; registered as `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE` v1.1.0 | **RESOLVED / ACCEPTED**; provider-neutral capability/risk/audit plane subordinate to `/AGENTS.md` |
-| `ESS-0011` | `.ai/skills/ESS-0011-Enterprise-Traceability.md` and `.ai/skills/ESS-0011-Contracts.md` exist on main; registered as `AUTH-ESS-ENTERPRISE-TRACEABILITY` | **PATH RESOLVED / AUTHORITY REGISTERED**; runtime ETM remains partial (`traceability:build`); not a missing-file blocker |
-| `ESS-0001` | `.ai/skills/ESS-0001-Documentary-Architect.md` (`AUTH-ESS-DOCUMENTARY-ARCHITECT`) and `.ai/skills/ESS-0001-Contracts.md` (`AUTH-ESS-DOCUMENTARY-CONTRACTS`, no own ESS number) | **NAMESPACE RESOLVED**; two physical artifacts, two stable authorityIds; files unchanged |
+| `ESS-0011` | `.ai/skills/ESS-0011-Enterprise-Traceability.md` and `.ai/skills/ESS-0011-Contracts.md`; registered as `AUTH-ESS-ENTERPRISE-TRACEABILITY` | **PATH RESOLVED / AUTHORITY REGISTERED** |
+| `ESS-0001` | `.ai/skills/ESS-0001-Documentary-Architect.md` and `.ai/skills/ESS-0001-Contracts.md` | **NAMESPACE RESOLVED**; distinct stable authority identities |
 
-Reconciliation evidence: `docs/governance/ESS_NAMESPACE_RECONCILIATION_2026-08-30.md`. The index does not rename, delete or re-number ESS artifacts.
+Reconciliation evidence remains in `docs/governance/ESS_NAMESPACE_RECONCILIATION_2026-08-30.md`.
 
-## M10 — historical verification versus current enforcement
+## M10 — retired current-state boundary
 
-M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` has historical `COMPLETE / VERIFIED PASS` evidence. Those records remain valid historical evidence but **do not represent current enforcement**.
+M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` has historical verification/evidence. Human Merge of PR #691 subsequently removed the productive M10 runtime and authorization surfaces from the current application architecture.
 
-**M10 PR-CI passkey enforcement is currently `SUSPENDED / OFF`.** Human/CODEOWNER merge remains required. Historical M10 evidence cannot reactivate the gate. Removing the ESS-0011 missing-path classification does **not** clear the remaining M10 blockers.
+**M10 PR-CI passkey runtime is `RETIRED / OFF`. No productive M10 implementation is expected in current state.**
 
-### Mandatory blockers before M10 reactivation
+Repository-wide and web-application-wide current-state discovery MUST NOT:
 
-M10 MUST remain off until all then-current prerequisites are resolved and evidenced, including:
+- search for or expect an M10 implementation;
+- classify missing M10 runtime/router/UI/workflow components as an implementation gap;
+- reconstruct or recommend restoration of M10 merely from historical documents, evidence or tests;
+- create a reactivation backlog from historical M10 terminology.
 
-1. no duplicate or ambiguous ADR, ESS, Authority or current-state references remain in the correlated architecture; the former missing-path `ESS-0011` and unregistered `ESS-0001` split are reconciled in this snapshot, but Governance/Documentary responsibility and version-contract work remain;
-2. `src/platform/Governance` and `src/platform/Documentary/Governance` retain an explicit non-overlapping responsibility model;
-3. README/runtime/documentary/version contracts resolve to canonical version sources rather than duplicated status authorities;
-4. structural Governance validation and independent hosted CI pass on the exact final candidate head;
-5. native default-branch enforcement remains active and post-mutation readback is evidence-bound;
-6. a new explicit Human/Owner decision approves controlled M10 reactivation.
+Historical M10 artifacts may be inspected only for explicit audit, archaeology, incident-review or historical-traceability tasks. They are non-authorizing.
+
+Any future PR-CI/passkey authorization mechanism is a **new separately scoped architecture and Human/Owner authority decision**. It is not inferred as M10 reactivation and is evaluated against then-current requirements without searching for a retired implementation.
+
+Normal PR technical validation remains governed by current hosted-check controls. Human/CODEOWNER merge remains mandatory.
 
 ## Deployment authority — current state
 
-Render native Auto Deploy remains off. Current production promotion authority resolves through verified `main` CI and the existing deployment control plane. A second automatic deployment authority requires a separate architecture/security decision. Production/main/head identity for this PR is supplied only by the machine-managed exact-head preflight block; this documentary synchronization performs no production mutation or inferred production rebinding.
+Render native Auto Deploy remains off. Current production promotion authority resolves through verified `main` CI and the existing deployment control plane. A second automatic deployment authority requires a separate architecture/security decision. Repository merge, roadmap status and historical evidence remain non-authorizing for external production mutation.
 
 ## DevelopmentChain / Governance status
 
@@ -86,27 +83,20 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document v2.5.0; synchronized to `main@f714eae6a551ac8f3f92f4070f693c88ec35f6fc` |
-| Open Pull Requests at this synchronization | only #617; former #615 overlap resolved during main synchronization |
+| Current-State Index | this document v2.6.0; M10 retirement synchronized to `main@abdee9686825b39f34e5edbe6960e9c20f523618` |
+| Open Pull Requests at this synchronization | #697; no identified changed-path overlap with this M10 status update |
 | S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
-| S1-R2-02 GitHub main enforcement | **REMEDIATION MERGED / LIVE DRIFT OPEN**; #615 is on main, `required_signatures` intentionally absent, Owner plan/apply still pending |
-| Value-Chain Coverage | Coverage-Map + Inventar *-0 on main via #610; append-only registry payload + *-1 specification in OPEN-STEPS-BIND; physical registry insert not performed |
-| M10 Passkey PR-CI enforcement | **SUSPENDED / OFF** |
-| Human/Owner PR creation | **REQUIRED** after final main/open-PR correlation and bound to exact main/head SHAs |
+| S1-R2-02 GitHub main enforcement | governed by current provider/readback controls; `required_signatures` intentionally absent |
+| M10 Passkey PR-CI implementation | **RETIRED / HISTORICAL ONLY — NO CURRENT IMPLEMENTATION EXPECTED** |
+| Human/Owner PR creation | **REQUIRED** after final main/open-PR correlation and bound to exact main/head SHAs unless a valid separately activated bounded authority explicitly replaces only that approval prompt |
 | Human/CODEOWNER Merge | **REQUIRED** as a separate decision |
-| GitHub hosted validation | scope-/cost-controlled; canonical Required Checks are `build-and-test`, PR Governance, hardened-image CVE gate and GitGuardian, but the live ruleset currently lacks their enforcement |
-| Commit authenticity | Signing is optional under the Owner decision dated 2026-08-30; unsigned commits are not rejected solely for lacking a verified signature |
+| GitHub hosted validation | scope-/cost-controlled under current required-check policy |
+| Commit authenticity | Signing remains optional unless a later explicit Human/Owner decision changes it |
 | ESS-0012 | **RESOLVED** through Authority Registry |
 | ESS-0019 | **RESOLVED** through Authority Registry |
 | ESS-0011 | **PATH RESOLVED / AUTHORITY REGISTERED** |
-| ESS-0001 | **NAMESPACE RESOLVED** (Architect + CONTRACTS authorityIds) |
-| Social Media OAuth / Auth Code | ADR-0026/ADR-0027 path; single-use/expiry-bound state, strict environment-aware callback allowlist, X PKCE S256, verified provider identity before `connected`, Bearer transport across Meta resource/publish APIs and dedicated negative-test/threat-model evidence |
-| FinTech value-chain quality projection | `fintech-value-chain-quality/1.0.0`, **18 stages**, read-only/non-authorizing |
-| Vocabulary | `src/platform/Vocabulary` v1.8.0; 18-stage wording projection and Documentary handoff implemented |
-| FinTechCore Crypto Module | v0.6.2; FT-0 through FT-6B merged; FT-7/live execution remains blocked |
-| Meme/DeFi research scoring | research/challenger only; productive score authority remains ADR-0087 / ScoringDispatcher |
-| DeFiLlama | ADR-0100 evidence-only; no scoring bypass |
-| Documentary | read-only Evidence sidecar; machine-readable bindings remain non-authorizing projections of current authorities |
+| ESS-0001 | **NAMESPACE RESOLVED** |
+| Documentary | read-only evidence sidecar; machine-readable bindings remain non-authorizing projections of current authorities |
 
 ## Agent capability architecture
 
@@ -115,37 +105,26 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 ## Protected current invariants
 
 - no direct agent changes on `main`;
-- one scoped branch/work claim per bounded work package where required by the active workflow;
+- one scoped branch/work item per bounded work package where required by the active workflow;
 - final main synchronization and open-PR semantic/namespace correlation before requesting PR-creation approval and again before merge readiness;
-- explicit Human/Owner approval bound to the exact reported main/head SHAs before each PR or Draft-PR creation; any pre-creation drift invalidates approval;
+- explicit Human/Owner approval bound to the exact reported main/head SHAs before each PR or Draft-PR creation unless an effective explicitly scoped authority replaces only that approval surface;
 - no fabricated evidence, market data, citations or compliance assertions;
 - Human/Owner-only merge;
-- M10 remains off until a new explicit reactivation decision;
+- M10 is retired/historical: current-state repository and web-application scans do not seek an M10 implementation or treat its absence as a gap;
+- a future PR-CI/passkey authorization mechanism requires a new explicit Human/Owner architecture/authority decision and is not inferred from M10 history;
 - fail-closed treatment of security-critical ambiguity;
 - no reusable credentials in model-visible evidence;
-- external production mutations remain separately authorized;
+- external production mutations remain separately governed;
 - package version remains the platform-version authority;
 - Vocabulary, Documentary, Quality and Skill Engine remain projections/control surfaces and cannot create a second financial runtime authority;
-- `ScoringModelRegistry -> ScoringDispatcher -> Domain Executor -> CanonicalScoreResult` remains the productive scoring path;
 - historical evidence cannot silently regain current authority;
-- missing ESS files or ambiguous ESS display IDs do not acquire authority by reference alone;
 - native GitHub protection must not be simulated by a workflow-only substitute;
-- skipped checks must not be made Required without a proven event/applicability contract;
-- Owner decisions on `required_signatures` must not be silently reversed by agent-authored expected-policy applies;
-- commit signing may be used voluntarily but must not be elevated to a mandatory protected-main or merge-readiness control without a new explicit Human/Owner decision;
-- Social Media OAuth production callbacks remain bound to explicit CAPITAL-AI HTTPS origins and the canonical callback path before state persistence;
-- loopback OAuth callbacks require exact `development` or `test`; missing/unknown environment labels remain strict;
-- OAuth state remains server-generated, expiry-bound and single-use, with the provider derived from persisted state rather than callback-controlled input;
-- connected Social Media accounts require a successfully verified provider identity before persistence;
-- reusable OAuth client secrets remain server-side under the canonical secret-file inventory;
-- provider resource access tokens are transported as Bearer credentials and are not placed into resource URL query strings.
+- skipped checks must not be made Required without a proven event/applicability contract.
 
 ## Current next action
 
-1. run and review all Exact-Head checks for synchronized PR #617, then leave the merge decision to the Human/Owner;
-2. keep `required_signatures` disabled as an intentional Owner decision; do not revive discarded PR #613;
-3. Owner-only S1-R2-02 `ruleset-sync` on trusted `main` starts with `mode=plan`; `mode=full` requires separate Owner-ACCEPT and verified diff/readback;
-4. keep the physical `document-registry.json` insert separate from this payload-only PR;
-5. after the documentary bind, first runtime candidates are SUP-1 / VM-2 / DQ-1 as Klasse-C work on a fresh branch; PD-1 waits for Owner-ACCEPT;
-6. keep M10 `AUTHORIZE_PR_CI` enforcement `SUSPENDED / OFF` until remaining blockers and a new explicit Human/Owner decision are satisfied;
-7. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
+1. correlate current main, open PR #697 and this governance candidate before any PR-creation approval request;
+2. keep M10 historical-only and exclude productive M10 implementation discovery from repository/web-application gap analysis;
+3. evaluate any future passkey/PR-CI authorization proposal as a new separately scoped architecture/security/governance work item rather than an M10 reconstruction;
+4. retain Human/CODEOWNER-only merge and current hosted technical validation;
+5. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
