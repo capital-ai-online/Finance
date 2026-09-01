@@ -27,6 +27,18 @@ describe('BB-2E dashboard navigation boundary', () => {
     expect(drawer).toContain('export function DashboardDrawer');
     expect(drawer).toContain('aria-label="Dashboard Navigation"');
     expect(drawer).toContain('getDashboardSection(activeView)');
+    expect(drawer).toContain("event.key === 'Escape'");
+    expect(drawer).toContain("expandedSection === 'hub' ? null : 'hub'");
+  });
+
+  it('projects the BB-2E boundary through the canonical dashboard and app facades', () => {
+    const dashboardIndex = source('src/app/dashboard/index.ts');
+    const appIndex = source('src/app/index.ts');
+
+    expect(dashboardIndex).toContain('DashboardDrawer');
+    expect(dashboardIndex).toContain('DashboardNavigation');
+    expect(appIndex).toContain('DashboardDrawer');
+    expect(appIndex).toContain('DashboardNavigation');
   });
 
   it('keeps the app navigation presentation-only and inside the canonical dependency direction', () => {
