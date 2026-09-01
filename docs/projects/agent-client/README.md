@@ -2,16 +2,16 @@
 
 **Project ID:** `CAPITAL-AI-CLIENT`  
 **Display name:** CAPITAL-AI Client  
-**Value-chain stage:** `VC-01 — Agent Client`  
+**Project value-chain stage:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`  
-**Lifecycle:** `ACTIVE — LOGICAL OWNERSHIP CONSOLIDATION`  
+**Lifecycle:** `ACTIVE — CONTRACT BASELINE / LOGICAL OWNERSHIP`  
 **Canonical execution roadmap:** [`ROADMAP.md`](./ROADMAP.md)
 
 ## Purpose
 
-CAPITAL-AI-CLIENT is the single Primary Owner for VC-01. It owns the client-side contract from authenticated human intent to a structured request handed to the authoritative control boundary, and the client-side handling of responses, status and errors returned from that boundary.
+CAPITAL-AI-CLIENT is the single Primary Owner for PVC-01. It owns the client-side contract from authenticated human intent to a structured request handed to the authoritative control boundary, and the client-side handling of responses, status and errors returned from that boundary.
 
-The project does **not** authorize itself, execute protected mutations, own the Agent Control Plane, or absorb work from VC-02 through VC-18.
+The project does **not** authorize itself, execute protected mutations, own the Agent Control Plane, or absorb work from PVC-02 through PVC-18.
 
 ## Authority chain
 
@@ -19,7 +19,7 @@ The project does **not** authorize itself, execute protected mutations, own the 
 Human / Owner
   -> AGENTS.md
   -> ADR / ESS / Contracts
-  -> CAPITAL-AI-CLIENT VC-01 contract
+  -> CAPITAL-AI-CLIENT PVC-01 contract
   -> Agent Control Plane / authoritative downstream project
   -> response / status / error envelope
   -> CAPITAL-AI-CLIENT UX handling
@@ -27,7 +27,7 @@ Human / Owner
 
 `AGENTS.md` remains the trust root. Roadmaps and client identity are projections/inputs, not authorization authority. Natural-language user intent is never treated as an authorization policy.
 
-## VC-01 ownership boundary
+## PVC-01 ownership boundary
 
 ### Owned here
 
@@ -56,19 +56,25 @@ Human -> AI Client -> Agent Control Plane -> Capability/Policy -> Tool Adapter -
 
 CAPITAL-AI-CLIENT owns only the `Human -> AI Client -> handoff` and downstream response/UX edge. Authorization and protected execution start after that handoff.
 
+The current re-correlation found no productive PVC-01 runtime path that justifies a physical Agent Client module. CLIENT-02 through CLIENT-06 are therefore implemented first as the provider-neutral contract baseline in [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md). A physical module remains gated by the strangler trigger in [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md).
+
 ## Canonical navigation
 
-- [`ROADMAP.md`](./ROADMAP.md) — canonical VC-01 execution roadmap.
+- [`ROADMAP.md`](./ROADMAP.md) — canonical PVC-01 execution roadmap.
+- [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md) — current CLIENT-02 through CLIENT-06 contract baseline.
 - [`AGENT_CLIENT_INVENTORY.md`](./AGENT_CLIENT_INVENTORY.md) — repository-wide Agent Client task/source classification.
-- [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md) — current runtime and document mapping to VC-01 ownership.
+- [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md) — current runtime and document mapping to PVC-01 ownership.
 - [`WORK_PACKAGES.md`](./WORK_PACKAGES.md) — CLIENT-01 through CLIENT-07 work packages.
 - [`TRACEABILITY.md`](./TRACEABILITY.md) — authority, source, runtime and handoff traceability.
-- [`evidence/BASELINE_2026-08-31.md`](./evidence/BASELINE_2026-08-31.md) — exact-main baseline and validation evidence.
+- [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md) — current-main re-correlation and strangler decision evidence.
+- [`evidence/BASELINE_2026-08-31.md`](./evidence/BASELINE_2026-08-31.md) — historical initial consolidation baseline.
 
 ## Cross-project rule
 
-Foreign work is represented only by:
+The repository compatibility marker remains:
 
 `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
+
+Every new project-routing handoff also carries the explicit project identity `project_stage: PVC-<NN>` according to `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`.
 
 A handoff is non-authorizing. CAPITAL-AI-CLIENT does not implement the foreign task and never marks it `DONE` or `VERIFIED` locally.
