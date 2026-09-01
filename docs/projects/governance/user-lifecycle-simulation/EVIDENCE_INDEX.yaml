@@ -1,0 +1,188 @@
+schema_version: "1.0.0"
+prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
+evidence_policy: "redacted_non_authorizing_index"
+
+baseline:
+  repository_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
+  branch: "agent/governance-user-lifecycle-control-20260901"
+  work_claim: "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
+  environment: "GitHub repository current main plus ChatGPT connector/sandbox validation"
+  provider_mode: "governance_precheck_only"
+
+precheck_evidence:
+  trust_root:
+    path: "/AGENTS.md"
+    result: "READ_CURRENT_MAIN"
+  project_model:
+    paths:
+      - "docs/projects/README.md"
+      - "docs/projects/PROJECT_VALUE_CHAIN.md"
+      - "docs/projects/PROJECT_EXECUTION_MODEL.md"
+      - "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md"
+    result: "CORRELATED"
+  project_context:
+    paths:
+      - "docs/projects/governance/README.md"
+      - "docs/projects/governance/ROADMAP.md"
+      - "docs/projects/governance/TASK_REGISTER.md"
+      - "docs/projects/governance/CROSS_PROJECT_HANDOFFS.md"
+      - "docs/projects/operations/README.md"
+      - "docs/projects/operations/ROADMAP.md"
+      - "docs/frontend/FRONTEND_ARCH.md"
+    result: "CORRELATED"
+  authority_context:
+    paths:
+      - "docs/adr/registry.json"
+      - "docs/governance/authority-registry.json"
+      - "docs/governance/control-catalog.json"
+      - "docs/governance/document-registry.json"
+    result: "NO_NEW_AUTHORITY_REQUIRED"
+  open_pr_snapshot:
+    prs: [652, 653, 654, 655]
+    result: "NO_CHANGED_FILE_OVERLAP_WITH_GOV_BOOTSTRAP"
+  active_claim_snapshot:
+    search_candidates: 52
+    target_gov_shared_path_overlap: false
+    ops_overlap_for_future_owner_pr: true
+    result: "GOV_PASS_WITH_DOWNSTREAM_BLOCKER"
+
+existing_test_reuse_inventory:
+  auth:
+    - "tests/unit/authPrimaryLoginRegression.test.ts"
+    - "tests/unit/sessionCompositionSecurityBoundary.test.ts"
+    - "tests/unit/postMfaSubscriptionHandoffRegression.test.ts"
+    - "tests/unit/publicLandingRoute.test.ts"
+  billing_webhook:
+    - "tests/unit/stripeWebhookInbox.test.ts"
+    - "tests/unit/businessReadiness.test.ts"
+  mail_outbox:
+    - "tests/unit/mailer.test.ts"
+    - "tests/unit/outbox.test.ts"
+  entitlement:
+    - "tests/unit/subscriptionReadbackAuthContract.test.ts"
+    - "tests/unit/s1R2EntitlementAuthority.test.ts"
+  reuse_rule: "Extend these contracts where appropriate; do not create parallel Auth, Stripe inbox, outbox or entitlement authorities."
+
+state_of_art_correlation:
+  checked_on: "2026-09-01"
+  playwright:
+    sources:
+      - "https://playwright.dev/docs/best-practices"
+      - "https://playwright.dev/docs/browser-contexts"
+    result: "ALIGNED"
+    notes:
+      - "Per-test isolated BrowserContexts support deterministic session/device and multi-user testing."
+      - "Shared mutable backend fixtures must be avoided; use unique test data per lifecycle."
+  supabase:
+    sources:
+      - "https://supabase.com/docs/guides/local-development/cli/testing-and-linting"
+      - "https://supabase.com/docs/guides/auth/signout"
+    result: "ALIGNED_WITH_PROVIDER_CAPABILITY_NOTE"
+    notes:
+      - "Supabase Local uses Mailpit for Auth-email testing and exposes DB test/lint workflows."
+      - "signOut supports global (default), local and others scopes; product decision GOV-ULS-DEC-002 intentionally remains local/global/both oriented."
+      - "Revoked access JWTs can remain valid until expiry; logout tests must document that residual window."
+  stripe:
+    sources:
+      - "https://docs.stripe.com/billing/testing/test-clocks"
+      - "https://docs.stripe.com/webhooks"
+      - "https://docs.stripe.com/customer-management/integrate-customer-portal"
+    result: "ALIGNED"
+    notes:
+      - "Test Clocks/Simulations are appropriate for subscription time transitions in sandbox."
+      - "Webhook signature verification requires the unmodified raw body."
+      - "Duplicate events must be deduplicated; complex processing should be asynchronous and endpoints should return 2xx quickly after durable acceptance."
+      - "Customer Portal supports payment methods, invoices, subscription changes and cancellation according to configured product catalog."
+  consumer_law:
+    sources:
+      - "https://www.gesetze-im-internet.de/bgb/__312j.html"
+      - "https://www.gesetze-im-internet.de/bgb/__312k.html"
+    result: "CONDITIONAL_APPLICABILITY_REQUIRES_COMP_REVIEW"
+    notes:
+      - "Both provisions contain exceptions for financial-services websites/contracts."
+      - "Governance records technical evidence requirements but must not decide legal applicability."
+
+pre_pr_validation:
+  scope: "documentation/governance only"
+  production_build:
+    result: "NOT_RUN_BY_COST_POLICY"
+    reason: "No runtime/deployment-affecting code changed; full build is reserved for applicable post-PR CI."
+  local_checkout:
+    attempted_command: "git clone --depth=1 --branch agent/governance-user-lifecycle-control-20260901 https://github.com/SvenKulessa/Finance.git"
+    result: "NOT_AVAILABLE"
+    reason: "Sandbox DNS/network resolution unavailable; github.com could not be resolved."
+  repository_scripts:
+    discovered:
+      - "npm run pr:validate-claim"
+      - "npm run pr:governance:test"
+      - "npm run governance:control-plane"
+      - "npm run repository:validate"
+      - "npm run docs:hygiene:check"
+    result: "NOT_AVAILABLE"
+    reason: "No executable repository checkout in sandbox; results are not fabricated."
+  connector_structural_checks:
+    result: "PASS"
+    assertions:
+      - "Fresh branch exists from recorded baseline."
+      - "Exclusive work claim exists on branch."
+      - "Required six governance artifacts are addressable on branch."
+      - "Shared GOV paths had no active writer overlap in precheck."
+      - "No product/runtime/provider code is included in intended candidate scope."
+
+required_future_evidence:
+  operations:
+    status: "NOT_AVAILABLE"
+    required:
+      - "Lifecycle state-machine run"
+      - "Supabase local/RLS negative tests"
+      - "Mailpit delivery/idempotency evidence"
+      - "Stripe Sandbox/Test Clock evidence"
+      - "Webhook idempotency evidence"
+  frontend:
+    status: "NOT_AVAILABLE"
+    required:
+      - "Canonical pricing/entitlement projection tests"
+      - "Login/OAuth/logout UX tests"
+      - "Checkout synchronization and portal UX tests"
+      - "Accessibility/responsive evidence"
+  security:
+    status: "NOT_AVAILABLE"
+    required:
+      - "Independent cross-user/RLS/webhook/manipulation assessment"
+      - "Secret leakage review"
+      - "No critical open deviation marked VERIFIED"
+  compliance:
+    status: "NOT_AVAILABLE"
+    required:
+      - "Applicability/classification decision for BGB 312j/312k"
+      - "Conditional BGB 312j purchase-flow technical evidence if applicable"
+      - "Conditional BGB 312k cancellation-flow technical evidence if applicable"
+      - "No legal-advice claim"
+
+per_test_run_required_fields:
+  - "Repository SHA"
+  - "Branch"
+  - "Work Claim"
+  - "Environment"
+  - "Provider Mode"
+  - "Startzeit"
+  - "Endzeit"
+  - "Testkommando"
+  - "PASS/FAIL/NOT_AVAILABLE"
+  - "Bekannte Einschraenkungen"
+
+forbidden_in_evidence:
+  - "Secrets"
+  - "Access Tokens"
+  - "Refresh Tokens"
+  - "Cookies"
+  - "Webhook Secrets"
+  - "Service-Role Keys"
+  - "Google Credentials"
+  - "Vollstaendige Zahlungsdaten"
+
+quality_semantics:
+  PASS: "Requirement reproducibly satisfied in the documented environment"
+  FAIL: "Requirement reproducibly violated"
+  NOT_AVAILABLE: "Authoritative evidence or required environment unavailable"
+  mock_is_provider_verification: false

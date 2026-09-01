@@ -1,0 +1,124 @@
+schema_version: "1.0.0"
+prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
+rule: "one_primary_owner_per_pr"
+human_merge_only: true
+auto_merge: false
+production_deploy_from_task: false
+
+pull_requests:
+  - sequence: 1
+    id: "PR-GOV-ULS-BOOTSTRAP"
+    project: "CAPITAL-AI-GOV"
+    project_folder: "docs/projects/governance/"
+    pvc: "PVC-05"
+    branch: "agent/governance-user-lifecycle-control-20260901"
+    title: "[CAPITAL-AI-GOV][governance] User-Lifecycle-Simulation steuern"
+    state: "CANDIDATE_IN_PROGRESS"
+    productive_code: false
+    depends_on: []
+
+  - sequence: 2
+    id: "PR-OPS-ULS-HARNESS"
+    project: "CAPITAL-AI-OPS"
+    project_folder: "docs/projects/operations/"
+    pvc: "PVC-02"
+    secondary_pvc: "PVC-08"
+    branch: "agent/operations-user-lifecycle-simulation-20260901"
+    title: "[CAPITAL-AI-OPS][operations] User-Lifecycle-Testsystem implementieren"
+    state: "REFERRED_NOT_EXECUTED"
+    productive_code: true
+    depends_on:
+      - "PR-GOV-ULS-BOOTSTRAP merged or otherwise accepted as stable handoff baseline"
+    correlation_blockers:
+      - "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31 is active/exclusive on docs/projects/operations/**"
+    owner_scope:
+      - "Playwright/provider harness"
+      - "Supabase Local Stack and Mailpit"
+      - "Stripe Sandbox and Test Clocks"
+      - "Webhook/outbox/subscription projection tests"
+      - "server-side auth and billing boundaries"
+
+  - sequence: 3
+    id: "PR-FE-ULS-PROJECTION"
+    project: "CAPITAL-AI-FE"
+    project_folder: "docs/projects/frontend/"
+    relationship: "cross_cutting_presentation"
+    branch: "agent/frontend-user-lifecycle-projection-20260901"
+    title: "[CAPITAL-AI-FE][frontend] Pricing und Lifecycle-UI vereinheitlichen"
+    state: "REFERRED_NOT_EXECUTED"
+    productive_code: true
+    depends_on:
+      - "PR-GOV-ULS-BOOTSTRAP"
+      - "GOV-ULS-DEC-001 resolved"
+      - "GOV-ULS-DEC-002 resolved"
+      - "PR-OPS-ULS-HARNESS or stable OPS test contract"
+      - "PR #653 project-surface materialization resolved"
+    owner_scope:
+      - "Login/registration/OAuth/logout UX"
+      - "Pricing and entitlement projection"
+      - "Checkout synchronization state"
+      - "Customer Portal/cancellation access"
+      - "Accessibility and responsive presentation"
+
+  - sequence: 4
+    id: "PR-SEC-ULS-ASSURANCE"
+    project: "CAPITAL-AI-SEC"
+    project_folder: "docs/projects/security/"
+    relationship: "cross_cutting_security"
+    branch: "agent/security-user-lifecycle-assurance-20260901"
+    title: "[CAPITAL-AI-SEC][security] User-Lifecycle-Sicherheit verifizieren"
+    state: "REFERRED_NOT_EXECUTED"
+    productive_code: false
+    depends_on:
+      - "PR-OPS-ULS-HARNESS"
+      - "PR-FE-ULS-PROJECTION"
+    verification_owner: "CAPITAL-AI-SEC"
+    remediation_routing:
+      backend_provider: "CAPITAL-AI-OPS"
+      presentation: "CAPITAL-AI-FE"
+
+  - sequence: 5
+    id: "PR-COMP-ULS-CONSUMER"
+    project: "CAPITAL-AI-COMP"
+    project_folder: "docs/projects/compliance/"
+    relationship: "cross_cutting_compliance"
+    branch: "agent/compliance-user-lifecycle-consumer-20260901"
+    title: "[CAPITAL-AI-COMP][compliance] Kauf und Kuendigung pruefen"
+    state: "REFERRED_NOT_EXECUTED"
+    productive_code: false
+    depends_on:
+      - "PR-FE-ULS-PROJECTION"
+      - "PR-OPS-ULS-HARNESS"
+      - "PR #652 project surface is merged on main"
+    correlation_blockers:
+      - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01 remains active/exclusive after merged PR #652 and must be terminalized or proven non-overlapping before COMP lifecycle work"
+    legal_advice_claimed: false
+    remediation_routing:
+      ui: "CAPITAL-AI-FE"
+      provider_process: "CAPITAL-AI-OPS"
+
+  - sequence: 6
+    id: "PR-GOV-ULS-CLOSEOUT"
+    project: "CAPITAL-AI-GOV"
+    project_folder: "docs/projects/governance/"
+    pvc: "PVC-05"
+    branch: "agent/governance-user-lifecycle-closeout-20260901"
+    title: "[CAPITAL-AI-GOV][governance] User-Lifecycle-Evidence korrelieren"
+    state: "BLOCKED_BY_OWNER_RETURNS"
+    productive_code: false
+    depends_on:
+      - "PR-OPS-ULS-HARNESS merged return"
+      - "PR-FE-ULS-PROJECTION merged return"
+      - "PR-SEC-ULS-ASSURANCE merged return"
+      - "PR-COMP-ULS-CONSUMER merged return"
+
+execution_rules:
+  sync_with_current_main_before_each_pr: true
+  recorrelation_before_each_pr: true
+  changed_file_overlap_check: true
+  semantic_overlap_check: true
+  exact_base_head_snapshot_required: true
+  exact_snapshot_owner_approval_required_if_agents_requires: true
+  pr_language: "de-DE"
+  title_contains_project_name: true
+  title_contains_project_folder_slug: true

@@ -1,0 +1,65 @@
+schema_version: "1.0.0"
+prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
+authority_effect: "none"
+
+status_vocabulary:
+  - "UNRESOLVED"
+  - "RECOMMENDED_PENDING_OWNER_DECISION"
+  - "DEFAULT_FOR_SIMULATION"
+  - "DECIDED"
+
+decisions:
+  - id: "GOV-ULS-DEC-001"
+    topic: "Pro-Jahrespreis"
+    status: "UNRESOLVED"
+    options:
+      - label: "Aktueller Billing-Katalog"
+        value_eur: 248.00
+      - label: "10-Prozent-Rabatt auf 348 EUR"
+        value_eur: 313.20
+    effect:
+      frontend_pr: "BLOCKED_UNTIL_RESOLVED"
+      pricing_expectation: "MUST_DERIVE_FROM_CANONICAL_SOURCE_AFTER_DECISION"
+    owner: "CAPITAL-AI-GOV"
+
+  - id: "GOV-ULS-DEC-002"
+    topic: "Logout-Semantik"
+    status: "RECOMMENDED_PENDING_OWNER_DECISION"
+    options:
+      - "Dieses Geraet: local"
+      - "Alle Geraete: global"
+      - "Beide Funktionen mit eindeutiger UI"
+    recommendation: "Beide Funktionen mit eindeutiger UI"
+    current_observation:
+      function: "supabase.auth.signOut()"
+      default_scope: "global"
+    effect:
+      frontend_pr: "BLOCKED_UNTIL_RESOLVED"
+      operations_tests: "Current global behavior remains regression baseline until decision"
+    owner: "CAPITAL-AI-GOV"
+
+  - id: "GOV-ULS-DEC-003"
+    topic: "Stripe-Zahlungsmethoden"
+    status: "DEFAULT_FOR_SIMULATION"
+    decision: "Bestehende Card-only-Policy beibehalten"
+    production_change_authorized: false
+    change_requires_separate_decision: true
+    owner: "CAPITAL-AI-GOV"
+
+  - id: "GOV-ULS-DEC-004"
+    topic: "Kuendigungszeitpunkt"
+    status: "DEFAULT_FOR_SIMULATION"
+    decision: "Zum Periodenende"
+    production_change_authorized: false
+    owner: "CAPITAL-AI-GOV"
+
+  - id: "GOV-ULS-DEC-005"
+    topic: "Stripe Tax"
+    status: "DECIDED"
+    decision: "automatic_tax bleibt deaktiviert, bis aktive Steuerregistrierungen belegt sind"
+    activation_requires:
+      - "Aktive Steuerregistrierung"
+      - "Compliance-Freigabe"
+      - "Separate Produktionsautorisierung"
+    production_change_authorized: false
+    owner: "CAPITAL-AI-GOV"
