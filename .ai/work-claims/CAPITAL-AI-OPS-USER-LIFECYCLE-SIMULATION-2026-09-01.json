@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-USER-LIFECYCLE-SIMULATION-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub/Supabase/Render connectors"
+  },
+  "workItem": "Implement the OPS-owned reproducible User-Lifecycle harness and provider-test package for Supabase Local/Mailpit, Stripe sandbox/Test Clocks, durable webhook/outbox processing, stable user-id subscription projection and server-side entitlement readback without creating parallel authorities or mutating Production.",
+  "workItemDE": "Den OPS-eigenen reproduzierbaren User-Lifecycle-Harness und das Provider-Testpaket fuer Supabase Local/Mailpit, Stripe Sandbox/Test Clocks, dauerhafte Webhook-/Outbox-Verarbeitung, stabile User-ID-Subscription-Projektion und serverseitigen Entitlement-Readback implementieren, ohne parallele Authorities oder Production-Mutationen zu erzeugen.",
+  "startedAt": "2026-09-01T15:51:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "315056a50dc6f779c178c4ff6d06074353d1972a",
+  "pullRequest": null,
+  "branch": "agent/operations-user-lifecycle-simulation-20260901",
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "operations",
+  "projectStage": "PVC-02",
+  "secondaryProjectStage": "PVC-08",
+  "ownerRole": "Primary owner of Controlled Implementation plus provider/runtime evidence within Production Operations boundaries",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-USER-LIFECYCLE-SIMULATION-2026-09-01.json",
+    "scripts/operations/userLifecycleHarness.ts",
+    "tests/provider/userLifecycleProviderContract.test.ts",
+    "tests/unit/userLifecycleHarness.test.ts",
+    "tests/unit/userLifecycleSubscriptionProjection.test.ts",
+    "supabase/migrations/20260901162000_user_lifecycle_subscription_identity_authority.sql",
+    "docs/projects/operations/evidence/USER_LIFECYCLE_SIMULATION_2026-09-01.md",
+    "docs/projects/operations/work-packages/USER_LIFECYCLE_SIMULATION.md"
+  ],
+  "reuseInputs": [
+    "server/stripe.ts",
+    "server/stripeEventInbox.ts",
+    "server/mailer.ts",
+    "server/outbox.ts",
+    "server/outboxWorker.ts",
+    "src/platform/Security/authMiddleware.ts",
+    "src/lib/subscriptionReadback.ts",
+    "src/features/billing/billingContract.ts",
+    "tests/unit/stripeWebhookInbox.test.ts",
+    "tests/unit/mailer.test.ts",
+    "tests/unit/outbox.test.ts",
+    "tests/unit/subscriptionReadbackAuthContract.test.ts",
+    "tests/unit/s1R2EntitlementAuthority.test.ts",
+    "supabase/migrations/**"
+  ],
+  "authorityGuard": "package.json#version remains sole platform-version authority. Existing Auth, Stripe inbox, outbox and entitlement contracts remain authoritative. The candidate changes only the existing subscription-projection function through a normal migration; it creates no second Auth/Billing/EventMesh/Release/Production authority, no Security self-verification, no Compliance approval and no Production mutation.",
+  "providerGuard": "The connected Supabase project and Render are read-only correlation/evidence inputs for this work item. The new Supabase migration is not applied by this work item. Provider tests target Supabase Local/Mailpit and Stripe sandbox/test mode only; secrets, tokens, cookies, service-role keys and full payment data are excluded from evidence.",
+  "foreignWork": [
+    "CAPITAL-AI-FE consumes the stable OPS lifecycle test contract and owns presentation/shared consumer remediation after this package",
+    "CAPITAL-AI-SEC retains independent Security assurance and VERIFIED/CLOSED authority",
+    "CAPITAL-AI-COMP retains independent applicability/compliance assessment",
+    "CAPITAL-AI-GOV retains final cross-owner evidence correlation"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. PR creation remains subject to final exact-snapshot Human/Owner approval under the current CAPITAL-AI-OPS project instructions. Production deployment/mutation is not authorized by this work item."
+}
