@@ -103,7 +103,7 @@ Exit:
 
 ### WP-DOC-04 — Technical roadmap ownership reconciliation
 
-**State:** `IMPLEMENTED — CANDIDATE; HUMAN MERGE + VALIDATION PENDING`
+**State:** `IMPLEMENTED — MERGED / VALIDATED ON MAIN`
 
 Implemented correlation:
 
@@ -118,18 +118,26 @@ Implemented correlation:
 - reused the canonical Document Registry and existing Vocabulary/Knowledge/Wiki contracts instead of creating parallel registries or authorities;
 - preserved the 2026-08-10 roadmap baseline as historical context rather than silently treating it as current implementation truth.
 
-Exit candidate:
+Closure evidence:
+
+- implementation candidate head: `5d833cfd020b66c5d94acee147d857ce4b94cf10`;
+- Human/CODEOWNER merge: PR `#664` on 2026-09-01;
+- merge commit and post-merge `main`: `1952a07ba40a543b570e8e48d98aeea209250dff`;
+- hosted PR Governance, CI and Container Security workflows completed successfully on the exact candidate before merge;
+- post-merge correlation confirms the technical roadmap and this project roadmap are present on current `main` with no additional Documentary writer or open-PR overlap.
+
+Exit status:
 
 - Documentary roadmap contains no foreign productive implementation ownership;
 - no second EventMesh, Traceability, Release, Version or Governance architecture is implied;
 - stale implementation gaps are not reopened when current code/manifests prove them implemented;
 - remaining Documentary-owned work is independently bounded and actionable;
-- applicable documentation/governance validation passes on the exact candidate synchronized with current main;
-- Human/Owner PR-creation approval and Human/CODEOWNER merge remain separate gates.
+- applicable hosted documentation/governance validation passed on the exact merged candidate;
+- Human/Owner PR-creation approval and Human/CODEOWNER merge gates were satisfied for PR #664; future changes re-enter the normal current-main lifecycle.
 
 ### WP-DOC-04 evidence note
 
-The reconciliation intentionally does **not** mutate `docs/governance/document-registry.json`: this work changes current roadmap status/ownership projection without moving the registered document, changing its stable identity, creating a second registry entry or executing the ADR-0097 autonomous maintenance-agent patch path. Registry/governance impact remains read-only for this candidate.
+The reconciliation intentionally did **not** mutate `docs/governance/document-registry.json`: the merged work changed roadmap status/ownership projection without moving the registered document, changing its stable identity, creating a second registry entry or executing the ADR-0097 autonomous maintenance-agent patch path. Registry/governance impact remained read-only.
 
 ## 4. Dependencies and handoffs
 
