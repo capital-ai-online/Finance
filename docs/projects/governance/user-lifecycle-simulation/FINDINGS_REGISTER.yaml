@@ -1,5 +1,6 @@
 schema_version: "1.0.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
+correlation_baseline: "main@190f319ec8026d8141601b69a8bb4d97470ec5ea"
 
 allowed_status:
   - "DISCOVERED"
@@ -58,10 +59,15 @@ findings:
     severity: "medium"
     reproduction: "Correlate GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20 work-claim status with merged PR #463."
     expected: "Merged work has terminal writer metadata before semantically overlapping FE lifecycle work."
-    actual: "Claim remains active/exclusive while PR #463 is merged; it does not overlap the GOV bootstrap but covers Frontend governance/architecture files relevant to later FE work."
+    actual: "Historical bootstrap evidence observed the claim as active/exclusive after PR #463."
     required_remediation: "Terminalize or explicitly resolve the stale writer before overlapping FE lifecycle work; do not treat it as authority."
-    verification_owner: "CAPITAL-AI-GOV for stale governance metadata; CAPITAL-AI-FE for owner-side overlap correlation"
-    status: "BLOCKED"
+    resolution_evidence:
+      pull_request: 661
+      current_claim_status: "released"
+      current_claim_exclusive: false
+      verified_main_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+    verification_owner: "CAPITAL-AI-GOV for stale governance metadata; CAPITAL-AI-FE retains productive owner-side overlap correlation"
+    status: "VERIFIED"
 
   - finding_id: "FINDING-ULS-CORRELATION-002"
     source_pr: "PR-GOV-ULS-BOOTSTRAP"
@@ -71,10 +77,15 @@ findings:
     severity: "high"
     reproduction: "Inspect CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31 work claim on current main."
     expected: "No overlapping exclusive writer before starting the lifecycle OPS branch."
-    actual: "Claim is active/exclusive and owns docs/projects/operations/**."
+    actual: "Historical bootstrap evidence observed the claim as active/exclusive over docs/projects/operations/**."
     required_remediation: "Correlate and terminalize/complete the existing OPS writer before creating overlapping OPS lifecycle work."
-    verification_owner: "CAPITAL-AI-OPS with repository work-claim validation"
-    status: "BLOCKED"
+    resolution_evidence:
+      pull_request: 661
+      current_claim_status: "released"
+      current_claim_exclusive: false
+      verified_main_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+    verification_owner: "CAPITAL-AI-OPS with repository work-claim validation; release state correlated by CAPITAL-AI-GOV"
+    status: "VERIFIED"
 
   - finding_id: "FINDING-ULS-CORRELATION-003"
     source_pr: "PR-GOV-ULS-BOOTSTRAP"
@@ -84,10 +95,11 @@ findings:
     severity: "low"
     reproduction: "Compare P6 Security stale-claim text with current Security claim files and merged PR #647 evidence."
     expected: "Current roadmap reflects terminalized Security writer and materialized security project surface."
-    actual: "Baseline P6 text described the SEC claim as active and Security folder as an open gap, while current main shows released/merged evidence."
+    actual: "The baseline P6 text was corrected for Security but still projected other already released owner writers as active."
     required_remediation: "Correct stale P6 wording without changing Security authority."
     verification_owner: "CAPITAL-AI-GOV documentation correlation"
-    status: "EVIDENCE_READY"
+    remediation_candidate: "agent/governance-user-lifecycle-recorrelation-20260901"
+    status: "REMEDIATING"
 
   - finding_id: "FINDING-ULS-CORRELATION-004"
     source_pr: "PR-GOV-ULS-BOOTSTRAP"
@@ -97,10 +109,15 @@ findings:
     severity: "medium"
     reproduction: "Correlate merged PR #653 with .ai/work-claims/CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01.json on current main."
     expected: "Merged project-surface work has terminal writer metadata before overlapping FE lifecycle work starts."
-    actual: "PR #653 is merged and Frontend project navigation exists, but its exclusive work claim remains active on main."
+    actual: "Historical bootstrap evidence observed the project-surface claim as active/exclusive after merged PR #653."
     required_remediation: "CAPITAL-AI-FE must terminalize or otherwise resolve the stale project-surface writer before lifecycle work that overlaps its claimed README/ROADMAP paths."
-    verification_owner: "CAPITAL-AI-FE with repository work-claim validation"
-    status: "BLOCKED"
+    resolution_evidence:
+      pull_request: 661
+      current_claim_status: "released"
+      current_claim_exclusive: false
+      verified_main_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+    verification_owner: "CAPITAL-AI-FE with repository work-claim validation; release state correlated by CAPITAL-AI-GOV"
+    status: "VERIFIED"
 
   - finding_id: "FINDING-ULS-CORRELATION-005"
     source_pr: "PR-GOV-ULS-BOOTSTRAP"
@@ -110,10 +127,15 @@ findings:
     severity: "medium"
     reproduction: "Correlate merged PR #652 with .ai/work-claims/CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01.json on current main."
     expected: "Merged project-surface work has terminal writer metadata before overlapping COMP work starts."
-    actual: "PR #652 is merged and project navigation exists, but its exclusive work claim remains active on main."
+    actual: "Historical bootstrap evidence observed the project-surface claim as active/exclusive after merged PR #652."
     required_remediation: "CAPITAL-AI-COMP must terminalize or otherwise resolve the stale writer before any lifecycle task that overlaps its claimed README/ROADMAP paths."
-    verification_owner: "CAPITAL-AI-COMP with repository work-claim validation"
-    status: "BLOCKED"
+    resolution_evidence:
+      pull_request: 661
+      current_claim_status: "released"
+      current_claim_exclusive: false
+      verified_main_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+    verification_owner: "CAPITAL-AI-COMP with repository work-claim validation; release state correlated by CAPITAL-AI-GOV"
+    status: "VERIFIED"
 
   - finding_id: "FINDING-ULS-COMPLIANCE-001"
     source_pr: "PR-GOV-ULS-BOOTSTRAP"
