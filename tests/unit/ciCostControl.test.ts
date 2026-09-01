@@ -58,6 +58,20 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(cost).toContain('correlatedPr?.base?.sha === baseSha');
   });
 
+  it('reuses a successful prior attempt only for the same exact PR snapshot', () => {
+    const cost = stepBlock(workflow(), 'P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
+
+    expect(cost).toContain('currentRun.data.run_attempt');
+    expect(cost).toContain("'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}'");
+    expect(cost).toContain('attempt_number: currentAttempt - 1');
+    expect(cost).toContain("previous.conclusion === 'success'");
+    expect(cost).toContain("previous.event === 'pull_request'");
+    expect(cost).toContain('previous.head_sha === headSha');
+    expect(cost).toContain('previousCorrelatedPr?.head?.sha === headSha');
+    expect(cost).toContain('previousCorrelatedPr?.base?.sha === baseSha');
+    expect(cost).toContain('vollständige CI bleibt aktiv');
+  });
+
   it('limits snapshot reuse to pull_request events', () => {
     const cost = stepBlock(workflow(), 'P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
     expect(cost).toContain("if: github.event_name == 'pull_request'");
