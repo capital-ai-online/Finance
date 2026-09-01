@@ -3,10 +3,11 @@
 **Project ID:** `CAPITAL-AI-SOCIAL`  
 **Document role:** roadmap / non-authorizing domain projection  
 **Status:** ACTIVE — CANONICAL SOCIAL DOMAIN ROADMAP CANDIDATE  
-**Version:** 2.1.2  
-**Date:** 2026-08-31  
-**Synchronized baseline:** `main@1f01120164ba4a3c194a4e0a79292a262a372588`  
+**Version:** 2.1.3  
+**Date:** 2026-09-01  
+**Synchronized baseline:** `main@9be95dd753f962a789312fec77571e2a9778b586`  
 **Security source:** PR #631 merged as `b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
+**Project-surface source:** PR #655 merged as `37bf7d954363d99d67083edbf520bd77892888dd`  
 **Trust root:** `/AGENTS.md`  
 **Primary Project Value Chain ownership:** `[]`
 
@@ -29,7 +30,15 @@ Target invariants:
 
 Current `main` defines `docs/projects/` as the canonical project-organization surface and explicitly names `CAPITAL-AI-SOCIAL` as a cross-cutting project without productive `PVC-*` ownership.
 
-No canonical Social folder under `docs/projects/` is currently present or explicitly resolved. This roadmap therefore keeps the bounded existing Social domain surface at `docs/social-media/CAPITAL-AI-SOCIAL/` and records canonical project-folder migration as `REQUIRES_CORRELATION` rather than guessing a slug.
+PR #655 materialized the canonical non-authorizing Social project surface at:
+
+`docs/projects/social-media/`
+
+with branch project-folder slug `social-media`. This project surface is organizational navigation/execution projection only. It does not relocate, duplicate or supersede the bounded Social domain execution surface at:
+
+`docs/social-media/CAPITAL-AI-SOCIAL/`
+
+The detailed Social roadmap, contracts, mappings, handoffs, work packages and reports remain canonical under the bounded Social domain path.
 
 ## Scope
 
@@ -60,9 +69,9 @@ Social does not own canonical Documentary truth, SEO architecture, Security requ
 
 ## Quality Management correlation
 
-`docs/projects/quality-management/` is now present on current main. Social does not duplicate its project contract, assurance roadmap, findings lifecycle or verification authority. Where Quality assessment later targets Social, Social implements only Social-owned remediation and returns evidence; Quality closure remains with the applicable QM authority lifecycle.
+`docs/projects/quality-management/` is present on current main. Social does not duplicate its project contract, assurance roadmap, findings lifecycle or verification authority. Where Quality assessment later targets Social, Social implements only Social-owned remediation and returns evidence; Quality closure remains with the applicable QM authority lifecycle.
 
-This PR modifies no QM artifact.
+This work item modifies no QM artifact.
 
 ## Security cross-project handoff integration
 
@@ -78,7 +87,7 @@ Security owns Security requirements, threat/control definition, Security finding
 
 `PROJECT_VALUE_CHAIN.md` assigns `PVC-01..PVC-18` to CLIENT/OPS/DOC/GOV/DATA/FINTECH. CAPITAL-AI-SOCIAL therefore has `primary_value_chain_ownership: []`.
 
-The current Security Traceability Matrix contains no existing finding targeted to CAPITAL-AI-SOCIAL. This roadmap does not fabricate a Security finding or `PVC-*` stage. The generic handoff prompt is retained in `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.yaml`; its canonical target-project folder remains unresolved until current repository authority explicitly defines one.
+The current Security Traceability Matrix contains no existing finding targeted to CAPITAL-AI-SOCIAL. This roadmap does not fabricate a Security finding or `PVC-*` stage. The generic handoff prompt is retained in `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.yaml`; its Social target-project folder is now resolved to `docs/projects/social-media/` from current repository authority. That folder resolution does not make the handoff actionable by itself: a concrete Security finding with valid ownership and PVC routing is still required.
 
 When a future Security finding is routed to Social:
 
@@ -231,8 +240,11 @@ Current Social gaps retained:
 4. LinkedIn adapter absent;
 5. provider rate-limit/last-verified evidence model incomplete;
 6. Social analytics consumption absent;
-7. canonical `docs/projects/<social-folder>/` path unresolved on current main;
-8. runtime approval gate remains environment-disableable on current main and therefore must not be misreported as unconditionally fail-closed.
+7. runtime approval gate remains environment-disableable on current main and therefore must not be misreported as unconditionally fail-closed.
+
+Resolved project-organization finding:
+
+- canonical Social project folder is resolved and present as `docs/projects/social-media/` through merged PR #655; this remains an organizational, non-authorizing project surface.
 
 ## Exit criteria
 

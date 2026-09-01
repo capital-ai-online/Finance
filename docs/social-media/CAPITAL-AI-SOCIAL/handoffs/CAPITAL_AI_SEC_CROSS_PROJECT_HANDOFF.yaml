@@ -12,32 +12,34 @@ prompt:
     security_traceability: "docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md"
 
   synchronized_against:
-    main_sha: "1f01120164ba4a3c194a4e0a79292a262a372588"
+    main_sha: "9be95dd753f962a789312fec77571e2a9778b586"
     main_includes:
       - "CAPITAL-AI-SEC PR #631"
       - "CAPITAL-AI-OPS PR #632"
       - "CAPITAL-AI-QM PR #636"
+      - "CAPITAL-AI-SOCIAL project-surface PR #655"
       - "canonical docs/projects project-organization model"
     open_pull_requests_at_precheck: 0
 
   target_context:
     target_project: "CAPITAL-AI-SOCIAL"
-    target_project_folder: "REQUIRES_CORRELATION"
+    target_project_folder: "docs/projects/social-media/"
     current_local_domain_path: "docs/social-media/CAPITAL-AI-SOCIAL"
     affected_pvc: []
     security_findings: []
     target_roadmap: "docs/social-media/CAPITAL-AI-SOCIAL/ROADMAP.md"
     routing_status: "NO_CURRENT_SECURITY_FINDING_ROUTED_TO_SOCIAL"
-    folder_resolution_status: "REQUIRES_CORRELATION"
+    folder_resolution_status: "RESOLVED"
     routing_note: >
-      Current docs/projects/README.md names CAPITAL-AI-SOCIAL as a cross-cutting
-      project without productive PVC ownership, but current main contains no
-      canonical docs/projects/<social-slug>/ directory and no authority-backed
-      Social project-folder slug was resolved. The current local domain surface
-      remains docs/social-media/CAPITAL-AI-SOCIAL for this bounded PR. The
-      Security traceability routes active findings to OPS, DATA and GOV, not to
-      CAPITAL-AI-SOCIAL. No PVC stage, canonical project folder or Security
-      finding is fabricated by this synchronization.
+      Current main explicitly materializes CAPITAL-AI-SOCIAL as the cross-cutting,
+      non-authorizing project surface at docs/projects/social-media/ through merged
+      PR #655, while productive Social domain detail remains under
+      docs/social-media/CAPITAL-AI-SOCIAL/. CAPITAL-AI-SOCIAL retains no productive
+      PVC ownership. The Security traceability routes no current Security finding to
+      CAPITAL-AI-SOCIAL. Resolving the project folder does not fabricate a PVC stage,
+      Security finding, publishing authority, credential authority or provider
+      mutation authority, and does not make this generic handoff actionable without
+      a concrete Security finding with valid ownership/routing metadata.
 
   purpose: >
     CAPITAL-AI-SEC informiert dieses Projekt über Security-Anforderungen,
