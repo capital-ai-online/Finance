@@ -66,7 +66,7 @@ Exit status:
 
 ### WP-DOC-01 — Current Documentary baseline and document model correlation
 
-**State:** `IMPLEMENTED — CANDIDATE; HUMAN MERGE + VALIDATION PENDING`
+**State:** `IMPLEMENTED — MERGED / VALIDATED ON MAIN`
 
 Work:
 
@@ -75,25 +75,31 @@ Work:
 - reuse the existing Document Registry and Documentary model/provenance contracts;
 - reconcile stale technical-roadmap status statements only in a separately scoped Documentary-owned change when evidence proves they are stale.
 
-Candidate evidence:
+Closure evidence:
 
-- correlated against `main@2fa023bceb8646eaf7bd42c2a16cea5dc7be4522` after Human Merge of PR `#672`;
+- implementation candidate head: `9d2d1fff975d26aadf818b996810092d7b9cd9d8`;
+- Human/CODEOWNER merge: PR `#673` on 2026-09-01;
+- merge commit and post-merge `main`: `c05b0e7eca59ae14a7030df464658626349b3612`;
+- hosted PR Governance, CI and Container Security workflows completed successfully on the exact candidate before merge; a superseded duplicate Governance run was cancelled and does not replace the successful final run;
+- both `agent/documentary-wp-doc-01-baseline-closure-20260901` and the accidental `__invalid_noop__` ref were removed after merge;
+- current open PRs `#666`–`#669` have no changed-file or semantic overlap with `docs/projects/documentary/**` or the WP-DOC-01 baseline/registry/model boundary;
+- the candidate was correlated against `main@2fa023bceb8646eaf7bd42c2a16cea5dc7be4522` after Human Merge of PR `#672`;
 - `src/platform/Documentary/README.md` and `manifest.json` agree on component version `1.13.0` and retain the component as Partial Implementation with explicitly bounded planned areas;
 - component-version authority remains `manifest.json#version`, document-schema authority remains `Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION` (`1.0.0`), and platform-version authority remains repository `package.json#version` through the existing Release control plane;
 - `Models/DocumentaryDocument.ts` requires stable `documentId`, source commit and provenance, carries schema/component/platform versions and lifecycle metadata, and derives a deterministic SHA-256 fingerprint without creating a second registry;
 - `Models/DocumentaryProvenance.ts` keeps evidence references explicit and fail-closed for code evidence without commit/path provenance;
-- `docs/governance/document-registry.json` remains the canonical document-identity surface with stable `documentId`, lifecycle and current path represented as distinct fields; no registry mutation is required for this correlation-only candidate;
+- `docs/governance/document-registry.json` remains the canonical document-identity surface with stable `documentId`, lifecycle and current path represented as distinct fields; no registry mutation was required for this correlation-only work;
 - `AUTH-GOV-DOCUMENT-LIFECYCLE` preserves stable document identity across supersession/archive and requires controlled registry updates or non-authorizing redirects for path moves;
-- `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` is already `ACTIVE — CURRENT-STATE CORRELATED`, records D0 and D3 as implemented baselines, reuses the existing registry at H4, and independently bounds remaining Mermaid/Migration/Plugins/validator work;
-- open PRs `#666`–`#669` and current branch/writer correlation show no changed-file or semantic overlap with this bounded WP-DOC-01 roadmap-status candidate.
+- `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` is already `ACTIVE — CURRENT-STATE CORRELATED`, records D0 and D3 as implemented baselines, reuses the existing registry at H4, and independently bounds remaining Mermaid/Migration/Plugins/validator work.
 
-Exit candidate:
+Exit status:
 
 - project planning reflects the current Documentary component, model/provenance and version-authority baseline without creating a second implementation inventory;
 - component, document-schema and platform versions remain distinct and independently authoritative in their existing scopes;
 - document identity and lifecycle remain registry-backed and path-independent; path is mutable registry metadata rather than document identity;
 - no Model, Document Registry, Lifecycle, Release or Governance authority is duplicated or transferred;
-- remaining Documentary implementation areas continue as separately scoped work packages rather than being bundled into this baseline correlation.
+- remaining Documentary implementation areas continue as separately scoped work packages rather than being bundled into this baseline correlation;
+- applicable hosted validation passed on the exact merged candidate and the former candidate/pending state is closed on current main.
 
 ### WP-DOC-02 — Documentary lifecycle, maintenance and Documentation Governance
 
