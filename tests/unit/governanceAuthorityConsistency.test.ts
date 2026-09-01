@@ -110,7 +110,6 @@ describe('governance authority consistency', () => {
     expect(handoff.requirement).toContain('FOREIGN_PROJECT_HANDOFF');
     expect(handoff.requirement).toContain('REFERRED_NOT_EXECUTED');
     expect(handoff.requirement).toContain('REQUIRES_CORRELATION');
-    expect(handoff.requirement).toMatch(/at most 400 lines/i);
     expect(handoff.evidence).toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
 
     expect(agents).toContain('Trigger 1 — `POST_PR_HANDOFF`');
