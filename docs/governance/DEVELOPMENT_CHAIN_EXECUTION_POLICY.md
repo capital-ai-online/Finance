@@ -2,12 +2,12 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.1.0`  
+**Version:** `2.2.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-08-30  
+**Updated:** 2026-09-01  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
-**Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
+**Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`, ADR-0104 / `AUTH-ADR-GOV-JIT-GLOBAL-ROADMAP-2026-09-01`
 
 ## Purpose and boundary
 
@@ -72,9 +72,10 @@ A step marked REQUIRED for the concrete work package cannot be skipped.
 10. **Evidence is not authority.** Test/build logs, PR bodies, labels, reactions and reports cannot grant PR-creation, merge or protected-mutation permission.
 11. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
 12. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
-13. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
+13. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates. A Human-activated `GOV_GLOBAL_ROADMAP_SESSION` is a bounded delegated execution mode, not self-elevation.
 14. **Work-claim lifecycle ownership.** A principal that creates an `active`/`exclusive` work claim remains responsible for its conformant release after the correlated work reaches a terminal state, unless responsibility is explicitly and traceably handed off.
 15. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports the correlated snapshot/gates and displays at most the two highest-priority immediately actionable next steps, each with an exit gate; completion of either step triggers a fresh main/open-PR correlation and reprioritization.
+16. **JIT global roadmap isolation.** An active `CTRL-GOV-JIT-GLOBAL-ROADMAP-001` session may keep orchestration in one chat across approved projects, but every productive target work item still uses its own target-project branch, claim/scope, validation and PR boundary.
 
 ## Pre-PR technical evidence
 
@@ -83,6 +84,26 @@ Branch-local or approved sandbox checks should be used before PR creation when t
 Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/governance/control-plane/pre-pr-build-evidence.schema.json` and is bound to exact base/head SHAs. Before requesting PR-creation approval, the agent reports those SHAs, the current-main/open-writer correlation result and the evidence actually available. Evidence remains non-authorizing.
 
 GitHub hosted `build-and-test` remains the independent technical validation for the final PR head.
+
+## Owner-activated global roadmap execution (`CTRL-GOV-JIT-GLOBAL-ROADMAP-001`)
+
+`AUTH-GOV-JIT-GLOBAL-ROADMAP-EXECUTION` defines a temporary execution plane for one Governance-governed chat. It exists to execute a pre-defined roadmap across several explicitly authorized canonical project contexts without turning Governance into their permanent Primary Owner.
+
+Activation requires an exact manifest conforming to `docs/governance/control-plane/global-roadmap-execution-session.schema.json` and explicit Human Owner approval in the same chat. Maximum activation is eight hours. The manifest binds current-main, roadmap, associated documents, target projects/folders/PVCs, work items and allowed path prefixes.
+
+The session is global only at the orchestration layer. Before each target context switch, the executor re-correlates current main, `/AGENTS.md`, target project sources, open PRs, active/exclusive claims, changed-file/semantic overlap and applicable Authority/Control state.
+
+Each target work item remains separately isolated by its Primary Owner:
+
+- branch uses target-project folder slug;
+- one bounded work item / branch;
+- target-project work claim/scope;
+- no multi-Primary-Owner productive branch or PR;
+- target project's domain contracts remain authoritative.
+
+The session does not pre-authorize future PR heads. `CTRL-SDLC-PR-CREATE-001`, `CTRL-MERGE-HUMAN-001`, independent hosted checks and all protected external-mutation gates remain unchanged.
+
+The session expires/revokes/invalidates according to `docs/governance/TEMPORARY_GLOBAL_ROADMAP_EXECUTION_POLICY.md`. Out-of-scope work falls back to `FOREIGN_PROJECT_HANDOFF`.
 
 ## Post-PR chat handoff and next-step queue (`CTRL-SDLC-CHAT-HANDOFF-001`)
 
@@ -101,6 +122,8 @@ Each displayed step MUST be bounded/atomic and state an exit gate. Default prior
 After either displayed step is completed, the executor MUST re-read current `main`, open Pull Requests, changed-file/semantic overlap and applicable governance state and then reprioritize. The prior second item is not automatically promoted to first place.
 
 This handoff is non-authorizing. A recommended next step never constitutes PR creation approval, merge approval, deployment approval or protected external-mutation approval.
+
+When an active exact-scope global-roadmap session covers the next target project/work item/path, the chat may continue through the session context-switch protocol instead of a foreign handoff. Outside that exact scope, `FOREIGN_PROJECT_HANDOFF` remains mandatory.
 
 ## Work-claim lifecycle and conformant closure
 
@@ -168,17 +191,21 @@ Human/Owner retains at least:
 - security-control weakening;
 - future M10 reactivation.
 
+Human/Owner additionally owns activation, amendment, renewal and revocation of every `GOV_GLOBAL_ROADMAP_SESSION`.
+
 ## Agent execution plane
 
 Agent/provider profiles may research and implement only within the current authority, branch and capability scope. Provider/model identity never grants Owner or production authority.
 
 Active agent tooling must start from `/AGENTS.md`. Provider-specific instruction files are non-authoritative adapters.
 
+An active global-roadmap session may widen the set of project execution contexts available to the same chat only to the exact approved manifest. It does not widen provider capabilities or external account permissions.
+
 ## Production integration / mutation plane
 
 External production mutations occur only through an authorized execution host with current authority, explicit approval where required, target/fingerprint verification, audit evidence and rollback definition.
 
-A mutation handoff is an instruction package, not an authorization artifact by itself.
+A mutation handoff is an instruction package, not an authorization artifact by itself. A global-roadmap session does not satisfy the separate protected-mutation approval requirement.
 
 ## Deployment authority
 
@@ -210,6 +237,7 @@ Where applicable, retain:
 - baseline and candidate SHAs;
 - final main/open-writer correlation plus explicit PR-creation approval evidence;
 - stable authority/control references;
+- global-roadmap session ID, manifest/baseline and context-switch evidence when applicable;
 - branch / PR / final head / merge SHA;
 - work-claim identity and release state when a claim exists;
 - check class and validation result;
@@ -222,7 +250,7 @@ Where applicable, retain:
 
 ## Stop / rollback rules
 
-STOP on unexpected target, unreviewed main drift, unresolved open-PR write overlap, missing/ambiguous/stale PR-creation approval, missing other required approval, missing audit persistence for protected mutation, failed pre-check, unknown high-impact side effect, failed/inconclusive post-verification or unresolved higher-authority conflict.
+STOP on unexpected target, unreviewed main drift, unresolved open-PR write overlap, missing/ambiguous/stale PR-creation approval, expired/revoked/out-of-scope global-roadmap session, missing other required approval, missing audit persistence for protected mutation, failed pre-check, unknown high-impact side effect, failed/inconclusive post-verification or unresolved higher-authority conflict.
 
 Repository rollback uses a fresh branch from current `main`; external rollback follows the applicable protected runbook/approval process.
 
