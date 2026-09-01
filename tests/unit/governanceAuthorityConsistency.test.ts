@@ -129,6 +129,70 @@ describe('governance authority consistency', () => {
     expect(handoffContract).toContain('It does not authorize:');
   });
 
+  it('permits only Human-activated, time-bound, exact-scope global roadmap execution', () => {
+    const agents = read('AGENTS.md');
+    const policy = read('docs/governance/TEMPORARY_GLOBAL_ROADMAP_EXECUTION_POLICY.md');
+    const handoffContract = read('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
+    const projectExecution = read('docs/projects/PROJECT_EXECUTION_MODEL.md');
+    const adr = read('docs/adr/ADR-0104-owner-activated-global-roadmap-execution.md');
+    const sessionSchema = JSON.parse(
+      read('docs/governance/control-plane/global-roadmap-execution-session.schema.json'),
+    ) as {
+      properties: Record<string, { const?: unknown }>;
+    };
+    const jit = control('CTRL-GOV-JIT-GLOBAL-ROADMAP-001');
+    const sameIdControls = controlCatalog.controls.filter(
+      (item) => item.controlId === 'CTRL-GOV-JIT-GLOBAL-ROADMAP-001',
+    );
+
+    expect(sameIdControls).toHaveLength(1);
+    expect(jit.status).toBe('required');
+    expect(jit.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
+    expect(jit.authorityRefs).toContain('AUTH-GOV-JIT-GLOBAL-ROADMAP-EXECUTION');
+    expect(jit.authorityRefs).toContain('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION');
+    expect(jit.authorityRefs).toContain('AUTH-ADR-GOV-JIT-GLOBAL-ROADMAP-2026-09-01');
+    expect(jit.requirement).toContain('GOV_GLOBAL_ROADMAP_SESSION');
+    expect(jit.requirement).toMatch(/at most 8 hours/i);
+    expect(jit.requirement).toContain('Primary ownership never transfers');
+    expect(jit.requirement).toContain('Exact-snapshot PR approval');
+    expect(jit.requirement).toContain('Human/CODEOWNER merge');
+    expect(jit.requirement).toContain('FOREIGN_PROJECT_HANDOFF');
+
+    expect(agents).toContain('Owner-activated temporary global roadmap execution');
+    expect(agents).toContain('GOV_GLOBAL_ROADMAP_SESSION');
+    expect(agents).toContain('Maximum duration is **8 hours**');
+    expect(agents).toContain('[GLOBAL_ROADMAP_CONTEXT_SWITCH -> <TARGET_PROJECT> | PVC-<NN>]');
+    expect(agents).toContain('one branch/PR MUST NOT combine productive work owned by different Primary Owners');
+
+    expect(policy).toContain('global administrator');
+    expect(policy).toContain('repository-execution metaphor only');
+    expect(policy).toContain('Scope expansion is never implicit.');
+    expect(policy).toContain('Human/CODEOWNER merge remains separately required');
+    expect(policy).toContain('A session does not authorize protected external mutations.');
+
+    expect(sessionSchema.properties.mode.const).toBe('GOV_GLOBAL_ROADMAP_SESSION');
+    expect(sessionSchema.properties.maxDurationHours.const).toBe(8);
+    expect(sessionSchema.properties.chatBound.const).toBe(true);
+    expect(sessionSchema.properties.repositoryMutationOnly.const).toBe(true);
+    expect(sessionSchema.properties.exactPrApprovalRequired.const).toBe(true);
+    expect(sessionSchema.properties.humanMergeRequired.const).toBe(true);
+    expect(sessionSchema.properties.protectedExternalMutationSeparatelyApproved.const).toBe(true);
+    expect(sessionSchema.properties.securityVerificationDelegated.const).toBe(false);
+    expect(sessionSchema.properties.ownerTransfer.const).toBe(false);
+
+    expect(handoffContract).toContain('Owner-activated global-roadmap execution exception');
+    expect(handoffContract).toContain('GLOBAL ROADMAP CONTEXT SWITCH');
+    expect(handoffContract).toContain('[GLOBAL_ROADMAP_CONTEXT_SWITCH -> <TARGET_PROJECT> | PVC-<NN>]');
+    expect(handoffContract).toContain('fall back to the normal `FOREIGN_PROJECT_HANDOFF`');
+
+    expect(projectExecution).toContain('The chat may traverse multiple Primary Owners, but a productive branch/PR may not.');
+    expect(projectExecution).toContain('The session does not bypass `DC-00..DC-11`');
+
+    expect(adr).toContain('AUTH-ADR-GOV-JIT-GLOBAL-ROADMAP-2026-09-01');
+    expect(adr).toContain('execution delegation, not an ownership transfer');
+    expect(adr).toContain('Maximum activation duration');
+  });
+
   it('requires diff and impact analysis before semantic supersession becomes effective', () => {
     const authorityPolicy = read('docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md');
     const supersession = control('CTRL-GOV-AUTH-002');
