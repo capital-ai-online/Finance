@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-OPS-02-SEC-06-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "workItem": "OPS-02-SEC-06 — Premium / Protected Capability Inventory: correlate every canonical paid capability against productive entry points, verified identity, authoritative entitlement state, alternate paths, DENY expectations and Primary Owner routing without implementing foreign project code.",
+  "startedAt": "2026-09-01T14:31:00Z",
+  "baseBranch": "main",
+  "baseSha": "19b2527de88444b999b7820c5a6712e8d80b60df",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-OPS-02-SEC-06-2026-09-01.json",
+    "docs/projects/operations/controlled-implementation/OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/SECURITY_HANDOFFS.md",
+    "docs/projects/operations/CROSS_PROJECT_DEPENDENCIES.md",
+    "docs/projects/operations/controlled-implementation/README.md"
+  ]
+}
