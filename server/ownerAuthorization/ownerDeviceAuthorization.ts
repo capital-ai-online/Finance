@@ -12,7 +12,11 @@ import {
   resolveAdr0104ProjectSet,
   type Adr0104SlotId,
 } from './adr0104ProjectSet';
-import { assertCurrentMainSha } from './currentMain';
+import {
+  digestCanonicalAdr0104ProjectSet,
+  resolveCanonicalAdr0104ProjectSetFromMain,
+} from './adr0104CanonicalProjects';
+import { assertCurrentMainSha, fetchCurrentMainTextFile } from './currentMain';
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 
@@ -106,6 +110,21 @@ export async function verifyAdr0104Authentication(ownerUserId: string, challenge
   assertAdr0104SlotAvailable(challenge.context.slotId as Adr0104SlotId);
   await assertCurrentMainSha(challenge.context.currentMainSha);
 
+  const projectIds = Array.isArray(challenge.context?.authorizedProjectSet)
+    ? challenge.context.authorizedProjectSet.map((project: any) => String(project?.projectId ?? ''))
+    : [];
+  const canonicalProjects = await resolveCanonicalAdr0104ProjectSetFromMain(
+    projectIds,
+    challenge.context.currentMainSha,
+    fetchCurrentMainTextFile,
+  );
+  const canonicalProjectSetDigest = digestCanonicalAdr0104ProjectSet(canonicalProjects);
+  if (canonicalProjectSetDigest !== challenge.context.projectSetDigest) throw new Error('ADR0104_CANONICAL_PROJECT_SET_DRIFT');
+  const canonicalInitialProject = assertInitialProjectMember(canonicalProjects, challenge.context.initialActiveProjectId);
+  if (canonicalInitialProject.projectFolder !== challenge.context.initialActiveProjectFolder) {
+    throw new Error('ADR0104_CANONICAL_INITIAL_PROJECT_DRIFT');
+  }
+
   const { data: existingSlot } = await supabase.from('adr0104_owner_sessions').select('id').eq('slot_id', challenge.context.slotId).maybeSingle();
   if (existingSlot) throw new Error('ADR0104_SLOT_UNAVAILABLE');
 
@@ -114,14 +133,9 @@ export async function verifyAdr0104Authentication(ownerUserId: string, challenge
     .eq('device_type', 'singleDevice').eq('backup_eligible', false).eq('backed_up', false).single();
   if (credentialError || !credential) throw new Error('OWNER_DEVICE_CREDENTIAL_INVALID');
 
-  const { data: consumed, error: consumeError } = await supabase.from('owner_authorization_challenges')
-    .update({ consumed_at: now.toISOString() }).eq('id', challengeId).is('consumed_at', null).select('id').single();
-  if (consumeError || !consumed) throw new Error('OWNER_AUTH_CHALLENGE_REPLAY');
-
-  let verified = false;
-  let newCounter = Number(credential.counter);
+  let verification;
   try {
-    const verification = await verifyAuthenticationResponse({
+    verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge: challenge.challenge,
       expectedOrigin: origin,
@@ -134,58 +148,44 @@ export async function verifyAdr0104Authentication(ownerUserId: string, challenge
         transports: credential.transports ?? [],
       },
     });
-    verified = verification.verified;
-    newCounter = verification.authenticationInfo?.newCounter ?? newCounter;
   } catch {
-    verified = false;
+    throw new Error('OWNER_AUTH_WEBAUTHN_VERIFICATION_FAILED');
   }
+  if (!verification.verified) throw new Error('OWNER_AUTH_WEBAUTHN_VERIFICATION_FAILED');
 
   const deviceBound = credential.device_type === 'singleDevice' && credential.backup_eligible === false && credential.backed_up === false;
-  const outcome = verified && deviceBound ? 'ALLOW' : 'DENY';
-  const reasonClass = outcome === 'ALLOW' ? 'WEBAUTHN_DEVICE_BOUND_VERIFIED' : 'WEBAUTHN_VERIFICATION_FAILED';
-  const { data: evidence, error: evidenceError } = await supabase.from('owner_authorization_evidence').insert({
-    challenge_id: challengeId,
-    owner_user_id: ownerUserId,
-    credential_id: credential.id,
-    action: 'ACTIVATE_ADR_0104_SESSION',
-    context_digest: challenge.context_digest,
-    rp_verified: verified,
-    origin_verified: verified,
-    user_presence_verified: verified,
-    user_verification_verified: verified,
-    device_bound_verified: deviceBound,
-    outcome,
-    reason_class: reasonClass,
-  }).select('id').single();
-  if (evidenceError || !evidence) throw new Error('OWNER_AUTH_EVIDENCE_PERSIST_FAILED');
-  if (outcome !== 'ALLOW') throw new Error('OWNER_AUTH_DENIED');
+  if (!deviceBound) throw new Error('OWNER_AUTH_DEVICE_BOUND_PROFILE_FAILED');
+  const newCounter = verification.authenticationInfo?.newCounter ?? Number(credential.counter);
 
-  const { error: counterError } = await supabase.from('owner_device_credentials').update({ counter: newCounter })
-    .eq('id', credential.id).eq('counter', credential.counter);
-  if (counterError) throw new Error('OWNER_AUTH_COUNTER_UPDATE_FAILED');
-
-  const { data: session, error: sessionError } = await supabase.from('adr0104_owner_sessions').insert({
-    slot_id: challenge.context.slotId,
-    owner_user_id: ownerUserId,
-    chat_binding_hash: challenge.context.chatBindingHash,
-    project_set_digest: challenge.context.projectSetDigest,
-    authorized_project_set: challenge.context.authorizedProjectSet,
-    active_project_id: challenge.context.initialActiveProjectId,
-    current_main_sha: challenge.context.currentMainSha,
-    evidence_id: evidence.id,
-    session_start: challenge.context.sessionStart,
-    session_end: challenge.context.sessionEnd,
-    state: 'ACTIVE',
-  }).select('id').single();
-  if (sessionError || !session) throw new Error('ADR0104_SESSION_ACTIVATION_FAILED');
-
-  const { error: consumptionError } = await supabase.from('owner_authorization_consumptions').insert({
-    evidence_id: evidence.id,
-    action: 'ACTIVATE_ADR_0104_SESSION',
-    target_digest: challenge.context_digest,
-    result: 'CONSUMED',
+  const { data: consumed, error: consumptionError } = await supabase.rpc('consume_adr0104_owner_authorization', {
+    p_challenge_id: challengeId,
+    p_owner_user_id: ownerUserId,
+    p_credential_record_id: credential.id,
+    p_expected_counter: Number(credential.counter),
+    p_new_counter: newCounter,
+    p_context_digest: challenge.context_digest,
+    p_slot_id: challenge.context.slotId,
+    p_chat_binding_hash: challenge.context.chatBindingHash,
+    p_project_set_digest: canonicalProjectSetDigest,
+    p_authorized_project_set: canonicalProjects,
+    p_active_project_id: canonicalInitialProject.projectId,
+    p_current_main_sha: challenge.context.currentMainSha,
+    p_session_start: challenge.context.sessionStart,
+    p_session_end: challenge.context.sessionEnd,
+    p_device_bound_verified: true,
+    p_ceremony_verified: true,
+    p_reason_class: 'WEBAUTHN_DEVICE_BOUND_CEREMONY_VERIFIED',
   });
-  if (consumptionError) throw new Error('OWNER_AUTH_CONSUMPTION_PERSIST_FAILED');
+  const result = Array.isArray(consumed) ? consumed[0] : consumed;
+  if (consumptionError || !result?.evidence_id || !result?.session_id) {
+    throw new Error('OWNER_AUTH_ATOMIC_CONSUMPTION_FAILED');
+  }
 
-  return { authorized: true as const, evidenceId: evidence.id, sessionId: session.id, contextDigest: challenge.context_digest, activation: challenge.context };
+  return {
+    authorized: true as const,
+    evidenceId: result.evidence_id,
+    sessionId: result.session_id,
+    contextDigest: challenge.context_digest,
+    activation: { ...challenge.context, authorizedProjectSet: canonicalProjects, projectSetDigest: canonicalProjectSetDigest },
+  };
 }
