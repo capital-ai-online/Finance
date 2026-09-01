@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-ROADMAP-SINGLE-SOURCE-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate the 28 currently relevant roadmap documents and implement a repository-wide single-source model where each canonical project roadmap owns organizational project execution status while bounded technical authorities, domain detail roadmaps and historical evidence remain preserved.",
+  "workItemDE": "Die 28 aktuell relevanten Roadmap-Dokumente korrelieren und ein repositoryweites Single-Source-Modell umsetzen: je kanonischem Projekt genau eine organisatorische Projektstatus-Roadmap; technische Authorities, Fachdetails und historische Evidence bleiben erhalten.",
+  "startedAt": "2026-09-01T14:03:35Z",
+  "baseBranch": "main",
+  "baseSha": "315056a50dc6f779c178c4ff6d06074353d1972a",
+  "branch": "agent/governance-roadmap-single-source-20260901",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "ownerRole": "Governance coordination under active ADR-0104 Human Owner delegated execution session; project/domain ownership and technical authority remain with their canonical owners and authorities.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-ROADMAP-SINGLE-SOURCE-2026-09-01.json",
+    "docs/projects/ROADMAP_REGISTRY.md",
+    "docs/projects/README.md",
+    "docs/projects/agent-client/ROADMAP.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/projects/data/ROADMAP.md",
+    "docs/projects/fintech/ROADMAP.md",
+    "docs/projects/quality-management/ROADMAP.md",
+    "docs/projects/security/ROADMAP.md",
+    "docs/projects/compliance/ROADMAP.md",
+    "docs/projects/frontend/ROADMAP.md",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/projects/social-media/ROADMAP.md",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md",
+    "docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md",
+    "docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md",
+    "docs/roadmaps/VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md",
+    "docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md",
+    "docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    "docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md",
+    "docs/frontend/FRONTEND_ROADMAP.md",
+    "docs/social-media/CAPITAL-AI-SOCIAL/ROADMAP.md",
+    "docs/roadmaps/DSGVO_REMEDIATION_2026-08-19.md",
+    "docs/roadmaps/GOVERNANCE_CONTROL_PLANE_CONSOLIDATION_2026-08-19.md"
+  ],
+  "correlationInputs": [
+    "main@315056a50dc6f779c178c4ff6d06074353d1972a",
+    "/AGENTS.md@current-main",
+    "docs/projects/README.md@current-main",
+    "docs/projects/governance/README.md@current-main",
+    "docs/architecture/ROADMAP.md@current-main",
+    "docs/compliance/CAPITAL-AI-COMP/inventory/COMPLIANCE_ROADMAP_INVENTORY.md@current-main",
+    "ADR-0104 active delegated session",
+    "open PR #679 correlated"
+  ],
+  "overlapGuard": {
+    "openPr": 679,
+    "excludedFromMutation": [
+      "docs/projects/documentary/ROADMAP.md",
+      "docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md"
+    ],
+    "reason": "PR #679 actively writes both Documentary roadmap paths; this consolidation classifies them in the registry but does not mutate those paths until that writer terminalizes. Their existing roles already align with the target model."
+  },
+  "authorityGuard": "This work changes roadmap role/status-source semantics only. It must not demote /AGENTS.md, accepted ADR/ESS/AUTH/CTRL authority, AUTH-GOV-DEVELOPMENT-CHAIN-STATUS, SC-MD-SPT-0001 or other bounded technical authorities. Exact main SHAs remain observational evidence, not permanent authority.",
+  "releaseCondition": "Release after the consolidation PR is merged, closed, superseded or abandoned."
+}
