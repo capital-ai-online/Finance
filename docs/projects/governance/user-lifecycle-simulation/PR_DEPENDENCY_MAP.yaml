@@ -52,7 +52,10 @@ pull_requests:
       - "GOV-ULS-DEC-001 resolved"
       - "GOV-ULS-DEC-002 resolved"
       - "PR-OPS-ULS-HARNESS or stable OPS test contract"
-      - "PR #653 project-surface materialization resolved"
+      - "PR #653 project surface is merged on main"
+    correlation_blockers:
+      - "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01 remains active/exclusive after merged PR #653"
+      - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20 remains active/exclusive after merged PR #463 and must be semantically correlated before FE lifecycle work"
     owner_scope:
       - "Login/registration/OAuth/logout UX"
       - "Pricing and entitlement projection"
