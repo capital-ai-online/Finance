@@ -1,8 +1,44 @@
 # CAPITAL-AI-FINTECH — Cross-Project Dependencies
 
-Baseline: `main@6b1e7e5234604641449f304b5b251bd74151ddab`
+**Baseline:** `main@6ace37bffa7912ec4f224feb69dd62ff9c629192`  
+**Project:** `CAPITAL-AI-FINTECH`  
+**Canonical folder:** `docs/projects/fintech/`
 
-All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign implementation remains `REFERRED_NOT_EXECUTED` or another allowed external state; FINTECH does not mark foreign work DONE/VERIFIED/CLOSED. The `primary_owner` field names the productive PVC owner and does not imply that every cross-cutting target project owns that PVC stage.
+All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign implementation remains `REFERRED_NOT_EXECUTED` or another permitted external state; FINTECH does not mark foreign work `DONE`, Security `VERIFIED/CLOSED`, or Accepted Risk. The `primary_owner` field identifies productive PVC ownership and does not transfer Authority through a handoff.
+
+## Inbound OPS Security child handoffs
+
+Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` child remediation to FINTECH.
+
+### PVC-16 — canonical verified-screening alternate routes
+
+- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-16]`
+- project_namespace: `PVC`
+- project_stage: `PVC-16`
+- target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech/`
+- primary_owner: `CAPITAL-AI-FINTECH`
+- task: make every productive canonical verified-score/context/batch path consume the accepted `verified_screening` entitlement/quota boundary without creating a second scoring or entitlement authority
+- reason: canonical registry score routes currently bypass `enforceScreeningQuota()` while legacy guarded scoring routes consume it
+- dependency: ADR-0034; existing ScoringModelRegistry/ScoringDispatcher/CanonicalScoreResult chain; server quota contract
+- required_evidence: Free/Starter/Pro/Enterprise quota-positive cases plus browser-tier escalation, forged identity, missing/invalid identity where applicable, stale-entitlement and direct alternate-route DENY evidence
+- verification_gate: CAPITAL-AI-SEC independent verification of returned S1-R2-06 boundary
+- status: `REFERRED_NOT_EXECUTED`
+
+### PVC-15 — financial analysis entitlement boundary
+
+- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-15]`
+- project_namespace: `PVC`
+- project_stage: `PVC-15`
+- target_project: `CAPITAL-AI-FINTECH`
+- target_project_folder: `docs/projects/fintech/`
+- primary_owner: `CAPITAL-AI-FINTECH`
+- task: define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve the existing Buffett server authority while correcting consumer integration through the proper downstream handoff
+- reason: Backtest and Monte Carlo are executable without a paid server grant; `full_ai_analysis` is unbound; Buffett is fail-closed because its current browser caller does not use the bearer-aware client contract
+- dependency: ADR-0034; DATA validated/history inputs where applicable; Frontend remains a consumer and must not invent entitlement semantics
+- required_evidence: verified-principal/server-entitlement decision; Free/Starter DENY; forged/missing-bearer DENY; stale-entitlement DENY; direct/automatic alternate-path DENY; explicit `full_ai_analysis` binding; Buffett authorization success/failure through bearer-aware consumer path
+- verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation and any required downstream consumer handoff
+- status: `REFERRED_NOT_EXECUTED`
 
 ## Upstream DATA
 
@@ -12,9 +48,9 @@ All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign imple
 - project_namespace: `PVC`
 - project_stage: `PVC-09`
 - target_project: `CAPITAL-AI-DATA`
-- target_project_folder: `docs/projects/data`
+- target_project_folder: `docs/projects/data/`
 - primary_owner: `CAPITAL-AI-DATA`
-- task: provide canonical asset identity / validated ingress required by FINTECH feature contracts
+- task: provide canonical asset identity and validated ingress required by FINTECH feature contracts
 - reason: provider-specific ingress must not become FINTECH-owned bypass logic
 - dependency: existing UAI/provider authorities
 - required_evidence: exact input identity, provider provenance and contract validation
@@ -27,12 +63,12 @@ All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign imple
 - project_namespace: `PVC`
 - project_stage: `PVC-10`
 - target_project: `CAPITAL-AI-DATA`
-- target_project_folder: `docs/projects/data`
+- target_project_folder: `docs/projects/data/`
 - primary_owner: `CAPITAL-AI-DATA`
 - task: preserve evidence identity, provenance and freshness supplied to scoring
 - reason: scoring cannot infer or manufacture missing evidence
 - dependency: existing Evidence contracts and provider data plane
-- required_evidence: evidence IDs, timestamps, provider lineage
+- required_evidence: evidence IDs, timestamps and provider lineage
 - verification_gate: DATA evidence contract
 - status: `REFERRED_NOT_EXECUTED`
 
@@ -42,7 +78,7 @@ All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign imple
 - project_namespace: `PVC`
 - project_stage: `PVC-11`
 - target_project: `CAPITAL-AI-DATA`
-- target_project_folder: `docs/projects/data`
+- target_project_folder: `docs/projects/data/`
 - primary_owner: `CAPITAL-AI-DATA`
 - task: supply explicit DQ result/gate before FINTECH feature/scoring execution
 - reason: missing/failed DQ must remain fail-closed
@@ -59,7 +95,7 @@ All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign imple
 - project_namespace: `PVC`
 - project_stage: `PVC-18`
 - target_project: `CAPITAL-AI-OPS`
-- target_project_folder: `docs/projects/operations`
+- target_project_folder: `docs/projects/operations/`
 - primary_owner: `CAPITAL-AI-OPS`
 - task: transport and retain FINTECH score/ranking traceability through existing EventMesh/Traceability contracts
 - reason: transport/operations must remain separate from financial decision authority
@@ -68,13 +104,13 @@ All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign imple
 - verification_gate: OPS transport/operations validation
 - status: `REFERRED_NOT_EXECUTED`
 
-## Frontend consumer cleanup
+## Frontend consumer work
 
 - repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FE | VC-17]`
 - project_namespace: `PVC`
 - project_stage: `PVC-17`
 - target_project: `CAPITAL-AI-FE`
-- target_project_folder: `docs/frontend`
+- target_project_folder: `docs/projects/frontend/`
 - primary_owner: `CAPITAL-AI-FINTECH`
 - task: remove browser-owned Top/Worst business ordering once FINTECH exposes the canonical rank/order result
 - reason: FE is a presentation consumer and must not become a second productive Ranking authority
@@ -83,15 +119,15 @@ All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign imple
 - verification_gate: FINTECH contract compatibility plus FE project validation
 - status: `REFERRED_NOT_EXECUTED`
 
-`PVC-17` remains Primary-owned by CAPITAL-AI-FINTECH; this handoff is limited to the FE consumer surface and transfers no PVC ownership.
+Additional downstream consumer work may be required by FIN-SEC-03 for bearer-aware Buffett integration. That consumer implementation belongs to `CAPITAL-AI-FE` if/when FINTECH defines the exact contract and routing; this document does not pre-claim foreign implementation.
 
 ## Quality
 
 - repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-QM | VC-12]`
 - project_namespace: `PVC`
-- project_stage: `PVC-12`
+- project_stage: `PVC-12..PVC-17`
 - target_project: `CAPITAL-AI-QM`
-- target_project_folder: `docs/projects/quality-management`
+- target_project_folder: `docs/projects/quality-management/`
 - primary_owner: `CAPITAL-AI-FINTECH`
 - task: validate FINTECH structural/evidence contracts read-only across PVC-12..17 without acquiring financial decision authority
 - reason: quality projection must observe current project routing and technical contracts without redefining them
@@ -100,19 +136,19 @@ All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign imple
 - verification_gate: QM independent quality validation
 - status: `REFERRED_NOT_EXECUTED`
 
-The `docs/projects/quality-management` path is the current Governance-declared target project folder; absence of a mature target surface remains a QM migration dependency and does not authorize FINTECH to create QM implementation.
+The QM project surface is present on current `main`; it is no longer treated as an unmaterialized migration gap.
 
 ## Security
 
-Security handoffs for each FINTECH stage are defined in `SECURITY_HANDOFFS.md`; Security owns verification, not FINTECH implementation authority.
+Security requirements and return rules are maintained in `SECURITY_HANDOFFS.md`. `CAPITAL-AI-SEC` owns finding identity, independent verification and any `VERIFIED/CLOSED` decision. FINTECH owns only FINTECH-target implementation/evidence.
 
 ## Compliance
 
 - repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-COMP | VC-12]`
 - project_namespace: `PVC`
-- project_stage: `PVC-12`
+- project_stage: `PVC-12..PVC-17`
 - target_project: `CAPITAL-AI-COMP`
-- target_project_folder: `docs/compliance/CAPITAL-AI-COMP`
+- target_project_folder: `docs/projects/compliance/`
 - primary_owner: `CAPITAL-AI-FINTECH`
 - task: assess applicable compliance requirements across FINTECH model/score/ranking evidence without executing FINTECH remediation
 - reason: compliance assessment is cross-cutting and non-authorizing
@@ -123,4 +159,4 @@ Security handoffs for each FINTECH stage are defined in `SECURITY_HANDOFFS.md`; 
 
 ## Cross-domain rule
 
-If a FINTECH task discovers work owned by another Primary Owner, FINTECH stops local implementation for that foreign portion and creates a separate handoff. No project-routing marker transfers underlying Authority. Current `CTRL-SDLC-CHAT-HANDOFF-001` additionally requires a visible foreign-project switch and complete copyable target-project prompt when such productive foreign work becomes the next required step.
+If a FINTECH task discovers productive work owned by another Primary Owner, FINTECH stops local implementation for that foreign portion and emits the required foreign-project handoff. No project-routing marker transfers underlying Authority.

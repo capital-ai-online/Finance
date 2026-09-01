@@ -1,151 +1,109 @@
 # CAPITAL-AI-FINTECH — Security Handoffs
 
-**Source project:** `CAPITAL-AI-SEC`  
-**Source PR:** `#631`  
-**Security merge SHA:** `b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
-**Current-main correlation:** `6b1e7e5234604641449f304b5b251bd74151ddab`  
-**Target project:** `CAPITAL-AI-FINTECH`  
-**Target project folder:** `docs/projects/fintech`  
+**Project:** `CAPITAL-AI-FINTECH`  
+**Target project folder:** `docs/projects/fintech/`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
-**Affected project stages:** `PVC-12..PVC-17`
+**Affected project stages:** `PVC-12..PVC-17`  
+**Current-main correlation:** `main@6ace37bffa7912ec4f224feb69dd62ff9c629192`  
+**Current routed Security source:** `S1-R2-06 — Entitlement authority`, via merged OPS PR #694 / `OPS-02-SEC-06`
 
 ## Boundary
 
-CAPITAL-AI-SEC owns Security requirements, threats/control definitions, Security findings, negative-test expectations and independent Security verification.
+`CAPITAL-AI-SEC` owns Security requirements, threat/control definitions, finding identity, negative-test expectations and independent Security verification.
 
-CAPITAL-AI-FINTECH owns productive implementation and project-local evidence only where a concrete Security requirement or finding affects FINTECH-owned `PVC-12..17` code.
+`CAPITAL-AI-FINTECH` owns productive implementation and project-local evidence only where a concrete Security requirement/finding affects FINTECH-owned `PVC-12..17` code.
 
-FINTECH cannot self-approve Accepted Risk and cannot mark its own remediation Security `VERIFIED` or `CLOSED`.
+FINTECH cannot self-approve Accepted Risk and cannot mark its own Security remediation `VERIFIED` or `CLOSED`. FINTECH completion states are limited to target-local states such as `IMPLEMENTED` or `EVIDENCE_READY`, followed by an explicit return to Security.
 
 ## Current finding correlation
 
-The current Security routing matrix has **no concrete active finding directly routed to CAPITAL-AI-FINTECH**.
+The previous FINTECH project surface stated that no concrete active Security finding was directly routed to FINTECH and treated `S1-R2-06` as conditional on an OPS entitlement inventory. That condition is now satisfied.
 
-S1-R2-06 remains a conditional dependency. Its parent entitlement inventory is routed to `CAPITAL-AI-OPS / PVC-02`. Only if that inventory identifies FINTECH-owned productive protected-capability code does a child remediation handoff become FINTECH work.
+Merged OPS PR #694 completed `OPS-02-SEC-06` and routed two concrete child remediations to FINTECH:
 
-Therefore this synchronization records the Security requirement baseline and return contract, but does not invent a Security finding or claim remediation execution.
+| FINTECH item | PVC | Security finding | Current state | Required outcome |
+|---|---|---|---|---|
+| `FIN-SEC-02` | PVC-16 | S1-R2-06 | REFERRED_NOT_EXECUTED / P1 HIGH | canonical verified-score/context/batch routes consume the accepted `verified_screening` server entitlement/quota boundary |
+| `FIN-SEC-03` | PVC-15 | S1-R2-06 | REFERRED_NOT_EXECUTED / P1 HIGH | Backtest/Monte Carlo/full-AI protected financial analysis uses an authoritative verified-principal/server-entitlement boundary; Buffett server authority remains intact |
 
-## Stage-level Security requirement records
+The parent OPS inventory remains coordination/evidence only. It does not implement FINTECH code and does not close the Security finding.
 
-### PVC-12 — Feature Engineering
+## Stage-level Security baseline
 
-- security_marker: `[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-12]`
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-12]`
-- project_namespace: `PVC`
-- project_stage: `PVC-12`
-- target_project: `CAPITAL-AI-FINTECH`
-- target_project_folder: `docs/projects/fintech`
-- primary_owner: `CAPITAL-AI-FINTECH`
-- task: preserve validated-input, feature-integrity and provenance boundaries in FINTECH feature engineering
-- reason: untrusted, stale or provenance-incomplete input must not become trusted scoring features
-- dependency: `CAPITAL-AI-DATA / PVC-09..11`; existing scoring/feature contracts
-- required_evidence: feature-contract tests, missing/invalid-evidence negative tests, exact candidate lineage
-- verification_gate: `CAPITAL-AI-SEC independent verification`
-- status: `REFERRED_NOT_EXECUTED`
-- source_security_finding: `NONE_CURRENTLY_ROUTED`
+| PVC | FINTECH capability | Security requirement focus | Current direct remediation |
+|---|---|---|---|
+| PVC-12 | Feature Engineering | validated input, feature integrity, provenance, fail-closed DQ/evidence | none newly routed by OPS-02-SEC-06 |
+| PVC-13 | Scoring Models | model/registry integrity, controlled lifecycle, least privilege | none newly routed by OPS-02-SEC-06 |
+| PVC-14 | Scoring Orchestration | one dispatcher/tool boundary, no bypass | none newly routed by OPS-02-SEC-06 |
+| PVC-15 | Domain Analysis / Executor | provider/tool/domain boundary plus protected-capability authorization | `FIN-SEC-03` |
+| PVC-16 | Canonical Scoring | result integrity/lineage plus canonical verified-screening authorization | `FIN-SEC-02` |
+| PVC-17 | Ranking / Decision Support | protected decision-input integrity and fail-closed ranking admission | no new direct S1-R2-06 child; existing baseline remains |
 
-### PVC-13 — Scoring Models
+## FIN-SEC-02 — PVC-16 verified-screening alternate-route boundary
 
-- security_marker: `[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-13]`
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-13]`
-- project_namespace: `PVC`
-- project_stage: `PVC-13`
-- target_project: `CAPITAL-AI-FINTECH`
-- target_project_folder: `docs/projects/fintech`
-- primary_owner: `CAPITAL-AI-FINTECH`
-- task: preserve model/registry integrity, controlled lifecycle state and least-privilege boundaries
-- reason: model identity or lifecycle ambiguity could grant unintended productive scoring authority
-- dependency: ADR-0087; `ScoringModelRegistry`; existing model tests
-- required_evidence: registry uniqueness/lifecycle tests, challenger non-production negative tests, exact model/version lineage
-- verification_gate: `CAPITAL-AI-SEC independent verification`
-- status: `REFERRED_NOT_EXECUTED`
-- source_security_finding: `NONE_CURRENTLY_ROUTED`
+`[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-16]`  
+`[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-16]`
 
-### PVC-14 — Scoring Orchestration
+- `project_namespace: PVC`
+- `project_stage: PVC-16`
+- `target_project: CAPITAL-AI-FINTECH`
+- `target_project_folder: docs/projects/fintech/`
+- `primary_owner: CAPITAL-AI-FINTECH`
+- `source_security_finding: S1-R2-06`
+- `task: make every productive canonical verified-score/context/batch path consume the accepted verified_screening entitlement/quota boundary without creating a second scoring or entitlement authority`
+- `reason: canonical registry score routes currently bypass enforceScreeningQuota while legacy guarded scoring routes consume it`
+- `dependency: ADR-0034; existing ScoringModelRegistry/ScoringDispatcher/CanonicalScoreResult chain; server quota contract`
+- `required_evidence: Free/Starter/Pro/Enterprise quota-positive cases; browser-tier escalation DENY; forged identity DENY; missing/invalid identity DENY where applicable; stale-entitlement DENY; direct alternate-route DENY`
+- `verification_gate: CAPITAL-AI-SEC independent verification`
+- `status: REFERRED_NOT_EXECUTED`
 
-- security_marker: `[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-14]`
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-14]`
-- project_namespace: `PVC`
-- project_stage: `PVC-14`
-- target_project: `CAPITAL-AI-FINTECH`
-- target_project_folder: `docs/projects/fintech`
-- primary_owner: `CAPITAL-AI-FINTECH`
-- task: preserve single-dispatcher/tool integrity and deny scoring bypass paths
-- reason: alternate dispatch or untrusted tool selection could bypass governed model/evidence controls
-- dependency: ADR-0087; `ScoringDispatcher`; registered executors
-- required_evidence: dispatcher tests, unknown/ambiguous-model denial tests, no-bypass structural evidence
-- verification_gate: `CAPITAL-AI-SEC independent verification`
-- status: `REFERRED_NOT_EXECUTED`
-- source_security_finding: `NONE_CURRENTLY_ROUTED`
+### Security invariant
 
-### PVC-15 — Domain Analysis / Executor
+The remediation must reuse the accepted server entitlement/quota authority. It must not create a second scoring registry, dispatcher, CanonicalScoreResult family, browser-owned entitlement decision or FINTECH-local duplicate subscription authority.
 
-- security_marker: `[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-15]`
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-15]`
-- project_namespace: `PVC`
-- project_stage: `PVC-15`
-- target_project: `CAPITAL-AI-FINTECH`
-- target_project_folder: `docs/projects/fintech`
-- primary_owner: `CAPITAL-AI-FINTECH`
-- task: preserve provider/tool/domain execution boundaries and canonical executor contracts
-- reason: provider-specific or tool-specific execution must not bypass DATA or create independent scoring authority
-- dependency: DATA ingress/evidence/DQ; registered executor adapters; ProviderMatrix capability mapping
-- required_evidence: executor contract tests, unsupported-scope denial, provider-bypass negative tests where applicable
-- verification_gate: `CAPITAL-AI-SEC independent verification`
-- status: `REFERRED_NOT_EXECUTED`
-- source_security_finding: `NONE_CURRENTLY_ROUTED`
+## FIN-SEC-03 — PVC-15 financial-analysis entitlement boundary
 
-### PVC-16 — Canonical Scoring
+`[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-15]`  
+`[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-15]`
 
-- security_marker: `[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-16]`
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-16]`
-- project_namespace: `PVC`
-- project_stage: `PVC-16`
-- target_project: `CAPITAL-AI-FINTECH`
-- target_project_folder: `docs/projects/fintech`
-- primary_owner: `CAPITAL-AI-FINTECH`
-- task: preserve CanonicalScoreResult integrity, lineage and fail-closed unavailable semantics
-- reason: malformed, synthetic or lineage-free results could become trusted decision inputs
-- dependency: `src/types/scoringIntegrity.ts`; dispatcher/model/executor lineage
-- required_evidence: scoring-integrity/lineage tests and unavailable-result negative tests
-- verification_gate: `CAPITAL-AI-SEC independent verification`
-- status: `REFERRED_NOT_EXECUTED`
-- source_security_finding: `NONE_CURRENTLY_ROUTED`
+- `project_namespace: PVC`
+- `project_stage: PVC-15`
+- `target_project: CAPITAL-AI-FINTECH`
+- `target_project_folder: docs/projects/fintech/`
+- `primary_owner: CAPITAL-AI-FINTECH`
+- `source_security_finding: S1-R2-06`
+- `task: define one authoritative entitlement boundary for Backtest and Monte Carlo; bind full_ai_analysis to an explicit productive financial-domain execution contract; preserve the existing Buffett server authority while correcting its consumer integration through the proper downstream handoff`
+- `reason: Backtest and Monte Carlo are currently executable without a paid server grant; full_ai_analysis is unbound; Buffett is fail-closed because the current browser caller does not use the bearer-aware client contract`
+- `dependency: ADR-0034; DATA validated/history inputs where applicable; Frontend remains a consumer and must not invent business entitlement semantics`
+- `required_evidence: authoritative verified-principal/server-entitlement decision; Free/Starter DENY; forged identity DENY; missing bearer DENY; stale-entitlement DENY; automatic/direct alternate-path DENY; exact full_ai_analysis capability binding; Buffett authorization success/failure through bearer-aware consumer path`
+- `verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation and required downstream consumer handoff`
+- `status: REFERRED_NOT_EXECUTED`
 
-### PVC-17 — Ranking / Decision Support
+### Ownership split
 
-- security_marker: `[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-17]`
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-17]`
-- project_namespace: `PVC`
-- project_stage: `PVC-17`
-- target_project: `CAPITAL-AI-FINTECH`
-- target_project_folder: `docs/projects/fintech`
-- primary_owner: `CAPITAL-AI-FINTECH`
-- task: preserve protected decision-input integrity and fail-closed ranking admission
-- reason: unverified score, comparability, governance or operations evidence must not influence productive ranking
-- dependency: CanonicalScoreResult; ranking contracts/services; FE remains consumer only
-- required_evidence: ranking/eligibility tests, missing-comparability/governance evidence negative tests, exact score/rank lineage
-- verification_gate: `CAPITAL-AI-SEC independent verification`
-- status: `REFERRED_NOT_EXECUTED`
-- source_security_finding: `NONE_CURRENTLY_ROUTED`
+FINTECH owns the financial-domain capability and authoritative execution contract. If browser/UI consumers require changes after that contract is defined, productive presentation work is routed to `CAPITAL-AI-FE / docs/projects/frontend/` and remains foreign implementation from the FINTECH chat.
 
-## Conditional S1-R2-06 child-handoff rule
+DATA-owned history/evidence ingress remains `CAPITAL-AI-DATA / PVC-09..11`; FINTECH must not absorb provider or DQ authority while implementing the protected execution boundary.
 
-If OPS identifies a protected FINTECH capability during S1-R2-06 inventory:
+## Baseline Security requirements for all PVC-12..17 work
 
-1. map it to the exact FINTECH `PVC-12..17` stage;
-2. use a FINTECH-owned work claim/branch;
-3. change only FINTECH-owned implementation;
-4. run directly relevant positive and negative Security tests;
-5. bind evidence to exact candidate/runtime identity;
-6. return evidence to CAPITAL-AI-SEC;
-7. leave Security `VERIFIED/CLOSED` to independent Security review.
+FINTECH changes must preserve:
 
-Until that condition occurs, no S1-R2-06 FINTECH remediation is claimed.
+- validated input/evidence/DQ boundaries;
+- one productive ScoringModelRegistry and one productive ScoringDispatcher;
+- registered executor/provider boundaries;
+- CanonicalScoreResult integrity, lineage and fail-closed unavailable semantics;
+- protected ranking-input integrity;
+- least privilege and verified-principal authorization for protected capabilities;
+- no browser/local subscription tier as grant authority;
+- no neutral/synthetic fallback for missing required evidence;
+- no self-verification of Security findings.
+
+When a concrete remediation changes code, directly relevant positive and negative Security tests are required and must be bound to the exact candidate/runtime identity.
 
 ## Required return contract
 
-For an actual implementation/evidence item, FINTECH returns:
+For actual FINTECH implementation/evidence work, return:
 
 `[SECURITY_HANDOFF_RETURN -> CAPITAL-AI-SEC]`
 

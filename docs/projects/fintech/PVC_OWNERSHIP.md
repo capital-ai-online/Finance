@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — PVC Ownership
 
-Baseline: `main@1f55340d89178fb5c1ab735242f42c263918b692`
+**Baseline:** `main@6ace37bffa7912ec4f224feb69dd62ff9c629192`
 
 ## Canonical organizational ownership
 
@@ -17,7 +17,7 @@ Baseline: `main@1f55340d89178fb5c1ab735242f42c263918b692`
 | `PVC-17` | Ranking / Decision Support | CAPITAL-AI-FINTECH |
 | `PVC-18` | EventMesh / Traceability | CAPITAL-AI-OPS |
 
-This mapping is derived from `docs/projects/PROJECT_VALUE_CHAIN.md` on current main.
+This mapping is derived from current `docs/projects/PROJECT_VALUE_CHAIN.md` / `docs/projects/README.md` and is an organizational routing projection only.
 
 ## Namespace separation
 
@@ -35,8 +35,10 @@ Repository handoff compatibility still uses:
 
 `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
 
-The numeric marker follows the explicit project stage for project-routing records and must not be interpreted as a technical financial VC without the separate technical namespace fields.
+The marker must be interpreted together with the explicit project namespace/stage fields and must not silently redefine technical financial VC semantics.
 
 ## FINTECH boundary
 
 FINTECH owns business semantics and productive implementation for PVC-12..17 only. DATA remains upstream; OPS remains downstream; Security/Quality/Compliance/Frontend remain cross-cutting or consumer roles and receive no Primary PVC ownership through this mapping.
+
+The S1-R2-06 child handoffs currently routed to FINTECH affect PVC-15 and PVC-16, but they do not change this ownership model or transfer Security verification authority.
