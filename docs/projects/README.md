@@ -64,7 +64,7 @@ The canonical repository routing is:
 | `CAPITAL-AI-DATA` | `PVC-09..11` Primary Owner | `docs/projects/data/` | `data` | `CAPITAL-AI-DATA` | present |
 | `CAPITAL-AI-FINTECH` | `PVC-12..17` Primary Owner | `docs/projects/fintech/` | `fintech` | `CAPITAL-AI-FINTECH` | present |
 | `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | `CAPITAL-AI-QM` | present |
-| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | owner migration gap |
+| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | present |
 | `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | `CAPITAL-AI-COMP` | owner migration gap |
 | `CAPITAL-AI-FE` | cross-cutting presentation consumer; no productive PVC | `docs/projects/frontend/` | `frontend` | `CAPITAL-AI-FE` | owner migration gap |
 | `CAPITAL-AI-SEO` | cross-cutting SEO/marketing domain; no productive PVC | `docs/projects/seo/` | `seo` | `CAPITAL-AI-SEO` | owner migration gap |
