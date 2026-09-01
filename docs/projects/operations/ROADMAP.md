@@ -6,8 +6,8 @@
 **Version:** `2.3.0`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-01`  
-**Repository baseline:** `main@19b2527de88444b999b7820c5a6712e8d80b60df`  
-**Open PR baseline:** none at final reconciliation; PR #679 merged during correlation without OPS overlap  
+**Repository baseline:** `main@6dea22e5b8c4f2b0b9c9fbfb73615738acf57a54`  
+**Open PR baseline:** PR #683 — separate `OPS-02-GOV-040` implementation candidate; no exact changed-file overlap with this reconciliation package  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 ## 1. Objective
@@ -45,6 +45,7 @@ PVC-02 Controlled Implementation
 10. Release does not imply Production deployment.
 11. Production mutation requires separate current authorization.
 12. Security verification remains independent under CAPITAL-AI-SEC.
+13. Human/CODEOWNER merge remains non-delegable under the current Governance baseline, including merged ADR-0104 v1.2 hardening from PR #684.
 
 ## 4. Current-main reconciliation — 2026-09-01
 
@@ -53,8 +54,10 @@ PVC-02 Controlled Implementation
 | PR #632 — OPS project surface / Security handoffs | `MERGED`; historical writer already `released/non-exclusive` | retain as project-surface and Security-handoff evidence |
 | PR #642 — Alpha Vantage secret/deployment control plane | `MERGED`; repository implementation is on main | stale `active/exclusive` writer is terminalized in this reconciliation candidate; no Production secret/deploy mutation is asserted |
 | PR #648 — one-hour merged-branch cleanup | `MERGED` | retain as `PVC-02` branch-lifecycle hardening evidence |
-| `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS` | `READY_FOR_HANDOFF` on current Governance projection | accept into OPS backlog as a separate `PVC-02` package with secondary `PVC-08` provider/runtime evidence |
-| PR #679 — Documentary Mermaid projection | `MERGED` during reconciliation, foreign `PVC-03` | no OPS changed-file/semantic overlap; incorporated through main resync without expanding OPS scope |
+| `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS` | accepted OPS handoff; productive implementation is now open PR #683 | keep as separate `OPS-02-GOV-040` package with secondary `PVC-08` provider/runtime evidence; open candidate is not merged evidence |
+| PR #679 — Documentary Mermaid projection | `MERGED`, foreign `PVC-03` | no OPS changed-file/semantic overlap; incorporated through main resync without expanding OPS scope |
+| PR #684 — ADR-0104 v1.2 Governance hardening | `MERGED`, Governance `PVC-05` | current Governance baseline; no OPS changed-file overlap and no local Governance Authority mutation |
+| PR #683 — User Lifecycle Harness | `OPEN`, OPS `PVC-02` + `PVC-08` evidence; eight implementation/test/evidence paths | active separate writer for `OPS-02-GOV-040`; no exact changed-file overlap with this six-file reconciliation package |
 
 The reconciliation package changes only OPS claim/project metadata. It does not implement the User-Lifecycle harness, mutate provider/Production state, claim Security verification or absorb Frontend/Compliance work.
 
@@ -62,11 +65,11 @@ The reconciliation package changes only OPS claim/project metadata. It does not 
 
 | Workstream | PVC | Scope | Current state |
 |---|---|---|---|
-| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE / CURRENT-MAIN RECONCILED |
+| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE / CURRENT-MAIN RECONCILED; ULS WRITER #683 OPEN |
 | `OPS-04` Supervisor | `PVC-04` | observation, evaluation, escalation, approved bounded recovery | PARTIAL |
 | `OPS-06` Version Management | `PVC-06` | toolchain/version identity and controlled transition coordination | PARTIAL / BOUNDARY RESOLVED |
 | `OPS-07` Release Management | `PVC-07` | Release candidate evidence, gate execution, rollback contract | PARTIAL |
-| `OPS-08` Production Operations | `PVC-08` | readiness, health, post-deploy verification, incident/recovery, reliability/capacity | PARTIAL / ULS PROVIDER-EVIDENCE HANDOFF ACCEPTED |
+| `OPS-08` Production Operations | `PVC-08` | readiness, health, post-deploy verification, incident/recovery, reliability/capacity | PARTIAL / ULS PROVIDER-EVIDENCE IMPLEMENTATION CANDIDATE OPEN |
 | `OPS-18` EventMesh & Traceability | `PVC-18` | EventMesh reliability plus non-authorizing trace/evidence linkage | PARTIAL |
 
 ## 6. Component placement
@@ -107,12 +110,14 @@ No runtime component is moved solely for organizational ownership:
 - server-side authentication and billing boundaries;
 - `PVC-08` provider/runtime evidence where runtime claims are made.
 
-This handoff does not transfer Frontend projection, Security verification, Compliance/legal assessment or Governance closeout authority. Those downstream owners remain blocked on returned OPS/FE evidence according to the current Governance dependency map.
+Open PR #683 is the separate implementation candidate for that package. Its current eight-path scope is distinct from this reconciliation diff. Until PR #683 is merged and its evidence is re-correlated, this roadmap does not claim the package complete or its required downstream return satisfied.
+
+This handoff does not transfer Frontend projection, Security verification, Compliance/legal assessment or Governance closeout authority. Those downstream owners remain dependent on returned OPS/FE evidence according to the current Governance dependency map.
 
 ## 9. Priority execution queue
 
 1. `OPS-02-SEC-06` — premium/protected capability inventory and child-owner routing (`S1-R2-06`).
-2. `OPS-02-GOV-040` — User-Lifecycle harness and stable provider/server test contract (`GOV-CHAT-040`); separate bounded implementation package.
+2. `OPS-02-GOV-040` — User-Lifecycle harness and stable provider/server test contract (`GOV-CHAT-040`); implementation candidate open in PR #683 and therefore protected from parallel overlapping work.
 3. `OPS-06-SEC-03` — Node control-plane convergence (`S1-R2-03`).
 4. `OPS-04-SEC-04` — fatal process handling and recovery contract (`S1-R2-04`).
 5. `OPS-02-SEC-05` — Stripe redirect boundary (`S1-R2-05`).
@@ -123,18 +128,18 @@ This handoff does not transfer Frontend projection, Security verification, Compl
 10. `OPS-18-A` — EventMesh/Traceability operational coverage.
 11. reliability/capacity and lower-priority operational evidence packages.
 
-`OPS-02-SEC-06` and `OPS-02-GOV-040` are semantically adjacent around entitlement/auth/billing boundaries, but they are not automatically combined. A fresh current-main/changed-file/semantic-overlap correlation is required before either implementation branch begins.
+`OPS-02-SEC-06` and `OPS-02-GOV-040` are semantically adjacent around entitlement/auth/billing boundaries, but they are not automatically combined. A fresh current-main/changed-file/semantic-overlap correlation is required before either implementation branch begins. While PR #683 is open, its writer scope must be treated as active.
 
 No Security finding is marked VERIFIED by this roadmap.
 
 ## 10. Cross-project dependencies
 
-- `CAPITAL-AI-GOV / PVC-05`: policy/Platform Director decisions, governance authority, project model, and the merged User-Lifecycle decisions feeding `GOV-CHAT-040`.
+- `CAPITAL-AI-GOV / PVC-05`: policy/Platform Director decisions, governance authority, project model, merged User-Lifecycle decisions feeding `GOV-CHAT-040`, and current ADR-0104 v1.2 baseline.
 - `CAPITAL-AI-DOC / PVC-03`: Documentary/evidence handoff.
 - `CAPITAL-AI-SEC`: Security requirements/findings/tests/independent verification; no productive PVC ownership.
 - `CAPITAL-AI-DATA / PVC-10`: S1-R2-11 primary evidence identity/freshness ownership.
 - `CAPITAL-AI-CLIENT / PVC-01` and `CAPITAL-AI-FINTECH / PVC-12..17`: child entitlement remediation only when the R2-06 inventory identifies their productive code.
-- `CAPITAL-AI-FE`: User-Lifecycle presentation/projection consumer; remains blocked by the stable OPS test contract for the ULS sequence.
+- `CAPITAL-AI-FE`: User-Lifecycle presentation/projection consumer; depends on the stable OPS test contract for the ULS sequence.
 - `CAPITAL-AI-COMP`: independent consumer/compliance assessment after OPS/FE evidence; technical evidence does not create legal authority.
 - SEO/marketing surfaces may supply CSP compatibility evidence but own no Production Operations stage.
 
@@ -152,6 +157,8 @@ No Security finding is marked VERIFIED by this roadmap.
 - [x] merged PR #642 stale writer terminalization represented in the current reconciliation candidate;
 - [x] merged PR #648 branch-lifecycle evidence correlated to `PVC-02`;
 - [x] `GOV-CHAT-040` accepted into OPS planning without executing the technical harness in this package;
+- [x] open PR #683 correlated as a separate non-overlapping OPS writer for `OPS-02-GOV-040`;
+- [ ] PR #683 implementation/evidence merged and re-correlated before downstream return is treated as complete;
 - [ ] target-owned technical remediation packages implemented on separate bounded branches where code changes are required;
 - [ ] applicable positive/negative Security tests executed per package;
 - [ ] runtime/provider evidence collected for runtime claims;
@@ -160,4 +167,4 @@ No Security finding is marked VERIFIED by this roadmap.
 
 ## 12. PR / production boundary
 
-This roadmap does not authorize PR creation, merge, Release transition or Production mutation. Exact-main/head Owner approval remains mandatory before PR creation; Human/CODEOWNER merge remains separate; Production mutation requires a separate current gate.
+This roadmap does not authorize PR creation, merge, Release transition or Production mutation. Exact-main/head Owner approval remains mandatory before PR creation; Human/CODEOWNER merge remains separate and non-delegable; Production mutation requires a separate current gate.
