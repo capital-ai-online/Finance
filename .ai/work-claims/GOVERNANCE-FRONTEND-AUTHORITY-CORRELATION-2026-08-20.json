@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20",
-  "status": "active",
-  "lifecycle": "active",
-  "exclusive": true,
+  "status": "released",
+  "lifecycle": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -18,12 +18,16 @@
   "lastMainSyncSha": "cb07abdeb871c1c7ba682fecfa91faa4a8de852e",
   "mainSyncObservedAt": "2026-08-20T23:48:49+02:00",
   "pullRequest": 463,
+  "mergedPr": 463,
   "parallelWriterFindings": [
     {
       "pullRequest": 461,
       "state": "merged-before-final-readiness-sync",
       "branch": "feature/media-creation-mc1-media-project-v2",
-      "overlap": ["docs/adr/registry.json", "docs/governance/authority-registry.json"],
+      "overlap": [
+        "docs/adr/registry.json",
+        "docs/governance/authority-registry.json"
+      ],
       "resolution": "PR #461 merged into main as cb07abdeb871c1c7ba682fecfa91faa4a8de852e. ADR-0098 and AUTH-ADR-MEDIA-PROJECT-V2-2026-08-20 were preserved verbatim in the semantic registry merge; no shared Authority ID or ADR display-ID collision exists."
     }
   ],
@@ -47,5 +51,17 @@
     "scripts/pr/validateWorkClaim.mjs",
     "tests/unit/governanceControlPlane.test.ts"
   ],
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-08-20T22:23:39Z",
+  "mainCommit": "401817cdd7afc42c3e82a7d30da9fc45caa60002",
+  "terminalHeadSha": "f236637a22a7786e05619951b8338d085a0af3b5",
+  "releaseEvidence": {
+    "pullRequest": 463,
+    "merged": true,
+    "mergeCommitSha": "401817cdd7afc42c3e82a7d30da9fc45caa60002",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+    "verifiedAt": "2026-09-01"
+  }
 }
