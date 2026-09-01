@@ -49,17 +49,32 @@ The `PVC-*` namespace is intentionally distinct from the existing technical fina
 
 Cross-cutting projects such as `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FE`, `CAPITAL-AI-SEO` and `CAPITAL-AI-SOCIAL` own no productive PVC stage solely because they validate, constrain, present or distribute outputs.
 
-## Canonical Primary-Owner project-folder routing
+## Canonical project-folder routing
 
 Project-folder routing is an organizational mapping only. It does not create technical Authority, merge authority, deployment authority, Domain Ownership transfer or permission for one project to materialize another project's project surface.
 
-The repository-wide correlation for the previously unresolved Documentary project is:
+The canonical repository routing is:
 
-| Project | Primary PVC stage | Canonical project folder | Branch project-folder slug | Materialization owner |
-|---|---|---|---|---|
-| `CAPITAL-AI-DOC` | `PVC-03` | `docs/projects/documentary/` | `documentary` | `CAPITAL-AI-DOC` |
+| Project | PVC relationship | Canonical project folder | Branch project-folder slug | Materialization owner | Main surface state |
+|---|---|---|---|---|---|
+| `CAPITAL-AI-CLIENT` | `PVC-01` Primary Owner | `docs/projects/agent-client/` | `agent-client` | `CAPITAL-AI-CLIENT` | present |
+| `CAPITAL-AI-OPS` | `PVC-02/04/06/07/08/18` Primary Owner | `docs/projects/operations/` | `operations` | `CAPITAL-AI-OPS` | present |
+| `CAPITAL-AI-DOC` | `PVC-03` Primary Owner | `docs/projects/documentary/` | `documentary` | `CAPITAL-AI-DOC` | present via PR #645 |
+| `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance | `docs/projects/governance/` | `governance` | `CAPITAL-AI-GOV` | present |
+| `CAPITAL-AI-DATA` | `PVC-09..11` Primary Owner | `docs/projects/data/` | `data` | `CAPITAL-AI-DATA` | present |
+| `CAPITAL-AI-FINTECH` | `PVC-12..17` Primary Owner | `docs/projects/fintech/` | `fintech` | `CAPITAL-AI-FINTECH` | present |
+| `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | `CAPITAL-AI-QM` | present |
+| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | owner migration gap |
+| `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | `CAPITAL-AI-COMP` | owner migration gap |
+| `CAPITAL-AI-FE` | cross-cutting presentation consumer; no productive PVC | `docs/projects/frontend/` | `frontend` | `CAPITAL-AI-FE` | owner migration gap |
+| `CAPITAL-AI-SEO` | cross-cutting SEO/marketing domain; no productive PVC | `docs/projects/seo/` | `seo` | `CAPITAL-AI-SEO` | owner migration gap |
+| `CAPITAL-AI-SOCIAL` | cross-cutting Social distribution; no productive PVC | `docs/projects/social-media/` | `social-media` | `CAPITAL-AI-SOCIAL` | owner migration gap |
 
-This mapping is the canonical project-organization input for the `/AGENTS.md` branch-naming rule after the Human-reviewed GOV correlation is merged into `main`. The branch slug is derived from the canonical folder basename `documentary`; it is not inferred from the project name. The absence of `docs/projects/documentary/**` before the owning DOC migration is a migration gap, not a competing folder identity and not permission for CAPITAL-AI-GOV to create that foreign project surface.
+For previously unresolved cross-cutting projects, the folder basename deliberately reuses the stable repository domain basename already associated with that project (`security`, `compliance`, `frontend`, `seo`, `social-media`) instead of introducing an additional project-name alias namespace. The `CAPITAL-AI-SEC` `security` branch/project-folder convention is also already present in merged repository work-claim evidence; this mapping makes the organizational destination explicit.
+
+A project folder may be canonically resolved even when it is not yet materialized on `main`. Absence of the target folder is an owner migration gap, not a competing identity and not permission for CAPITAL-AI-GOV or another project to create the foreign project surface.
+
+The branch slug is always derived from the canonical project-folder basename. Domain/runtime/normative artifacts remain at their existing canonical paths unless a separate, owner-scoped migration proves that relocation is required. In particular, project navigation does not replace `src/platform/Security/`, `docs/compliance/CAPITAL-AI-COMP/`, `docs/frontend/`, `docs/seo/` or `docs/social-media/CAPITAL-AI-SOCIAL/`.
 
 ## Standard project surface
 
@@ -73,7 +88,7 @@ Each mature project SHOULD expose under `docs/projects/<project>/`:
 - evidence references;
 - validation / Definition of Done.
 
-Existing projects are migrated incrementally by their Primary Owner. Missing files are a migration gap, not permission for another project to execute foreign work.
+Existing projects are migrated incrementally by their Primary Owner or, for cross-cutting projects, by the project owner responsible for that domain surface. Missing files are a migration gap, not permission for another project to execute foreign work.
 
 ## DevelopmentChain relationship
 
