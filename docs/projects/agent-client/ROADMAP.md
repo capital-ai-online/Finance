@@ -1,181 +1,139 @@
-# CAPITAL-AI-CLIENT — Canonical VC-01 Roadmap
+# CAPITAL-AI-CLIENT — Canonical PVC-01 Roadmap
 
 **Project ID:** `CAPITAL-AI-CLIENT`  
-**Scope:** `VC-01 — Agent Client`  
+**Scope:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`  
-**Baseline:** `main@0f5d4f23841ef3824dec8447f700de0cd9614f16`  
+**Baseline:** `main@891f3933ac0476b1e7d4fa5cd6f397257ac52e68`  
 **Trust root:** `AGENTS.md`
 
-Operational status for VC-01 is maintained here. Foreign value-chain stages remain references/handoffs and are never executed or completed by this project.
+Operational status for PVC-01 is maintained here. Foreign project value-chain stages remain references/handoffs and are never executed or completed by this project.
 
 ## Purpose
 
-Consolidate the repository's Agent Client concerns into one traceable client boundary without creating a second control plane or moving productive code solely for organizational reasons.
+Consolidate Agent Client concerns into one traceable client boundary without creating a second control plane or moving productive code solely for organizational reasons.
 
-## Scope
+## Current re-correlation
 
-VC-01 covers request construction, attributable identity handoff, capability request handoff, response/status/error handling and the client UX contract. Authorization policy, controlled execution, platform decisions and trace/event ownership are outside scope.
+Current evidence: [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md).
 
-## VC-01 Ownership
+The current-main scan resolves `CAPITAL-AI-CLIENT` to `docs/projects/agent-client/` / `PVC-01`, finds no competing Agent Client project writer, and finds no productive Agent Client runtime path satisfying the physical strangler/refactor trigger. Open PR #691 belongs to CAPITAL-AI-OPS and is foreign to this project scope.
 
-`CAPITAL-AI-CLIENT` is the **only Primary Owner** of VC-01. All other projects are consumers, downstream authorities or context sources for this stage.
+Historical PR #668 attempted the same contract-baseline direction but was closed without merge. Its content is historical input only; this roadmap is re-derived from current main.
 
-No client-generated identity, provider/model name, natural-language prompt, roadmap status or UI state grants authorization. The client cannot self-authorize.
-
-## Agent Client Inventory
-
-Canonical inventory: [`AGENT_CLIENT_INVENTORY.md`](./AGENT_CLIENT_INVENTORY.md).
-
-Classification model:
-
-- `OWNED` — execution/status belongs to CAPITAL-AI-CLIENT.
-- `SHARED` — VC-01 owns only the client-facing slice; downstream execution remains external.
-- `CONSUMER` — VC-01 consumes an authoritative contract or response.
-- `NOT-CLIENT` — retained only as context/reference; no local execution.
-
-Historical/completed work remains preserved in source documents and is not rewritten as new client work.
+Therefore the smallest conforming continuation is the provider-neutral contract baseline in [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md). A physical TypeScript Agent Client module remains deferred until a productive duplication/drift trigger exists.
 
 ## Architecture
 
 Migration model: `logical-ownership-before-physical-relocation`.
 
-Existing architecture is reused:
-
 ```text
 Human
-  -> Agent Client [VC-01 / CAPITAL-AI-CLIENT]
-  -> identity + capability request handoff
-  -> Control Plane / downstream authority [foreign VC]
+  -> Agent Client [PVC-01 / CAPITAL-AI-CLIENT]
+  -> attributable identity + requested capability handoff
+  -> authoritative control/execution boundary [foreign PVC]
   -> response + status + error envelope
-  -> Agent Client [VC-01]
+  -> Agent Client [PVC-01]
   -> Human UX
 ```
 
-Physical relocation is permitted only when required to remove real duplication. Until then, [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md) records logical ownership against current code/doc locations.
+Authorization policy, controlled execution, platform decisions, production mutation and EventMesh/trace ownership are outside PVC-01.
 
-## Request Contract
+## CLIENT-02 — Request Contract
 
-CLIENT-02 defines a provider-neutral request envelope. Minimum client-owned semantics:
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-- stable client request ID;
-- authenticated human/client attribution inputs;
-- requested operation/intention;
-- requested capability as a **request**, never a grant;
-- target/resource context needed by the downstream authority;
-- optional provider/model metadata as non-authoritative metadata;
-- correlation metadata that can be handed downstream without creating EventMesh ownership.
+[`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md#client-02--request-contract) defines stable request identity, attributable identity handoff, operation, requested capability, target context and optional non-authoritative provider/model/correlation metadata.
 
-The client must reject malformed local requests before handoff where validation is purely syntactic. Authorization decisions are not made in VC-01.
+The client performs only syntactic fail-closed validation. A capability request is never a grant.
 
-## Identity Handoff
+## CLIENT-03 — Identity Handoff
 
-CLIENT-03 packages attributable identity inputs for the authoritative IAM/control boundary. Existing `AgentPrincipalContext` semantics are consumed; the client does not own or execute `evaluateAgentAuthorization`.
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-Identity handoff must distinguish Human, app/client, agent/session and credential holder. Missing identity is surfaced as a client error; it is never synthesized into an authorization principal.
+Existing `AgentPrincipalContext` semantics are consumed. Missing attribution is not synthesized. Human, app/client, agent/session and credential-holder attribution remain distinguishable. `evaluateAgentAuthorization` stays downstream.
 
-## Capability Handoff
+## CLIENT-04 — Capability Handoff
 
-CLIENT-04 sends an explicit capability **request** using the canonical capability vocabulary. It does not infer grants, elevate risk, attach self-approval or convert provider/model identity into authority.
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-Unknown/unsupported requested capabilities fail locally as contract errors or are denied downstream; no implicit inheritance is introduced.
+Requested capability uses the canonical capability vocabulary. Unknown values fail closed; provider/model metadata, natural language and correlation metadata never create authority, approval or implicit inheritance.
 
-## Response Contract
+## CLIENT-05 — Response Contract
 
-CLIENT-05 owns the client-facing response envelope and translation into UX state. It must preserve authoritative downstream verdict/status/error semantics and must not rewrite `DENY`, missing evidence or blocked states into success.
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-Minimum client states: `IDLE | SUBMITTING | ACCEPTED | BLOCKED | SUCCEEDED | FAILED` plus a stable correlation/request identifier where available.
+Canonical client lifecycle:
 
-## Security Boundary
+`IDLE | SUBMITTING | ACCEPTED | BLOCKED | SUCCEEDED | FAILED`
 
-CLIENT-06 enforces the VC-01 side of TB1/TB2:
+Downstream `DENY`, missing evidence, policy blocks and transport failures remain semantically distinct and are never rewritten into success.
 
-- natural-language content is untrusted input, not policy;
-- client identity is attributable metadata, not authorization;
-- capability requests are non-authorizing;
-- external/retrieved content cannot grant capability;
-- no direct protected-production mutation path originates in the client;
-- secrets/privileged credentials remain behind authoritative tools/connectors;
-- client response rendering must preserve deny/fail-closed semantics.
+## CLIENT-06 — Client Security Boundary
 
-## Testing
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-CLIENT-07 defines contract-level evidence for:
+PVC-01 preserves:
 
-- request schema/required-field validation;
-- identity-handoff completeness;
-- requested-capability vocabulary handling;
-- provider/model non-authority;
-- response/status/error state mapping;
-- deny/blocked/failure preservation;
-- no direct production mutation path;
-- no duplicated client/control-plane implementation.
+- natural-language/retrieved content as untrusted data;
+- identity attribution without authorization invention;
+- request-not-grant capability semantics;
+- no direct protected provider/production mutation path;
+- no client-held privileged tool credentials;
+- deny/failure/redaction semantics through UX rendering;
+- Human Owner-only PR merge.
 
-Repository build/test execution remains governed by the repository PR/CI gate. This branch does not trigger the expensive build-and-test path before PR creation.
+## CLIENT-07 — Testing & Evidence
 
-## Evidence
+**State:** `EVIDENCE CURRENT — RUNTIME TESTS DEFERRED`
 
-Baseline evidence: [`evidence/BASELINE_2026-08-31.md`](./evidence/BASELINE_2026-08-31.md). Evidence is observational and non-authorizing.
+Runtime tests are mandatory once a physical PVC-01 slice is evidenced. No physical slice is introduced here because the strangler trigger is not met; therefore no runtime/build/test PASS is manufactured.
 
-Required implementation evidence for later code slices must bind source/main/head SHA, affected contract, test result and ownership mapping.
+Future physical slices must test at minimum:
 
-## Cross-Project Handoffs
+- missing request ID;
+- incomplete identity handoff;
+- unknown requested capability;
+- provider/model privilege-elevation attempt;
+- retrieved content containing approval instructions;
+- downstream DENY/BLOCKED preservation;
+- transport error distinction;
+- production mutation remaining request-only at PVC-01;
+- duplicate implementation scan.
 
-### [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-OPS | VC-02]
-
-- **target_project:** `CAPITAL-AI-OPS`
-- **vc_stage:** `VC-02`
-- **task:** Controlled Implementation of accepted/authorized agent actions after the VC-01 handoff.
-- **dependency_reason:** Client requests cannot authorize or execute protected implementation.
-- **required_input:** structured client request, attributable identity/correlation context, requested capability.
-- **required_evidence:** authoritative authorization/execution outcome tied to the request and exact target.
-- **status:** `HANDED_OFF / NOT EXECUTED BY CAPITAL-AI-CLIENT`
-
-### [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-GOV | VC-05]
-
-- **target_project:** `CAPITAL-AI-GOV`
-- **vc_stage:** `VC-05`
-- **task:** Platform/policy decisions when a client-contract change would alter authorization, platform authority or governance semantics.
-- **dependency_reason:** VC-01 may request/use policy but cannot define platform authority.
-- **required_input:** proposed contract delta, compatibility/risk analysis and affected authority references.
-- **required_evidence:** accepted/rejected governance decision/ADR or equivalent canonical authority reference.
-- **status:** `REFERENCE HANDOFF / NOT EXECUTED BY CAPITAL-AI-CLIENT`
-
-### [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-OPS | VC-18]
-
-- **target_project:** `CAPITAL-AI-OPS`
-- **vc_stage:** `VC-18`
-- **task:** EventMesh/traceability correlation, event production/consumption and authoritative cross-stage trace retention.
-- **dependency_reason:** VC-01 may emit/pass correlation inputs but does not own the EventMesh or end-to-end trace authority.
-- **required_input:** request/correlation identifiers and client-observed status boundary.
-- **required_evidence:** downstream trace/event linkage where required by the authoritative VC-18 contract.
-- **status:** `HANDED_OFF / NOT EXECUTED BY CAPITAL-AI-CLIENT`
-
-## Work Packages
-
-Canonical package details: [`WORK_PACKAGES.md`](./WORK_PACKAGES.md).
+## Work-package status
 
 | ID | Workstream | State |
 |---|---|---|
-| CLIENT-01 | Agent Client Inventory | `DONE — BASELINE DOCUMENTED` |
-| CLIENT-02 | Request Contract | `READY` |
-| CLIENT-03 | Identity Handoff | `READY` |
-| CLIENT-04 | Capability Handoff | `READY` |
-| CLIENT-05 | Response Contract | `READY` |
-| CLIENT-06 | Client Security Boundary | `READY` |
-| CLIENT-07 | Client Testing & Evidence | `READY` |
+| CLIENT-01 | Agent Client Inventory / Re-correlation | `DONE — RE-CORRELATED` |
+| CLIENT-02 | Request Contract | `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED` |
+| CLIENT-03 | Identity Handoff | `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED` |
+| CLIENT-04 | Capability Handoff | `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED` |
+| CLIENT-05 | Response Contract | `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED` |
+| CLIENT-06 | Client Security Boundary | `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED` |
+| CLIENT-07 | Client Testing & Evidence | `EVIDENCE CURRENT — RUNTIME TESTS DEFERRED` |
 
-`DONE` above is restricted to the local inventory document itself; no foreign VC work is represented as done or verified.
+`COMPLETE` is restricted to the local contract baseline. It does not claim physical runtime implementation, downstream execution, hosted CI or foreign-project verification.
 
-## Exit Criteria
+## Cross-project dependencies
 
-CAPITAL-AI-CLIENT reaches consolidation exit when all of the following are evidenced:
+- `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-OPS | VC-02]`: controlled implementation/execution after the PVC-01 request handoff.
+- `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-GOV | VC-05]`: governance/platform decisions when a client contract change would alter authority semantics.
+- `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-OPS | VC-18]`: authoritative EventMesh/trace linkage where required.
 
-- VC-01 has exactly one Primary Owner: CAPITAL-AI-CLIENT;
-- no local execution of VC-02 through VC-18 exists;
-- no direct protected mutation path exists from the client;
-- no parallel Agent Client architecture has been introduced;
-- request, identity, capability and response contracts are traceable;
-- all foreign work has explicit cross-project handoffs;
-- runtime/document mappings remain traceable after refactors;
-- required client contract tests/evidence exist for any code implementation slice;
-- PR/CI/Human merge gates are satisfied separately under `AGENTS.md`.
+All remain `REFERRED_NOT_EXECUTED` or dependency-only locally.
+
+## Next trigger
+
+Do **not** add a physical Agent Client runtime module merely to satisfy the roadmap. Resume runtime implementation only when current-main evidence proves at least one trigger in `RUNTIME_MAPPING.md`: duplicated productive request construction, divergent identity/capability handoff, divergent response/status mapping, or another concrete productive consumer that benefits from a shared PVC-01 contract without importing downstream authority.
+
+## Exit criteria
+
+- exactly one PVC-01 Primary Owner;
+- no local execution of PVC-02..PVC-18;
+- no direct protected mutation path from the client;
+- no parallel Agent Client/control-plane architecture;
+- request, identity, capability, response and security contracts traceable;
+- foreign work routed explicitly;
+- runtime mappings updated after any later refactor;
+- exact-head tests/evidence for every physical client slice;
+- Human Owner-only merge preserved.
