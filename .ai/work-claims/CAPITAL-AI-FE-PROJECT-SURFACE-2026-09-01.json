@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,6 +13,8 @@
   "startedAt": "2026-09-01T04:21:00+02:00",
   "baseBranch": "main",
   "baseSha": "88286e1cfd58b314a818276b5cf61b2ff0b4128d",
+  "pullRequest": 653,
+  "mergedPr": 653,
   "branch": "agent/frontend-project-surface-20260901",
   "project": "CAPITAL-AI-FE",
   "projectFolder": "frontend",
@@ -45,5 +47,17 @@
     "CAPITAL-AI-OPS retains deployment/runtime operations"
   ],
   "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-FE gains no productive PVC stage. docs/projects/frontend is organizational navigation only and does not replace docs/frontend/FRONTEND_ARCH.md, feature/domain authorities, scoring/data contracts, Governance/IAM, Release/Operations or productive Primary Owner responsibilities. Shared Governance project-registry paths remain outside this claim.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-09-01T03:55:51Z",
+  "mainCommit": "8a8b94840349af78534a1104485dae0ede66e02d",
+  "terminalHeadSha": "2a5957c4b3a7d5aafbdc3eabd1064d6c94c45453",
+  "releaseEvidence": {
+    "pullRequest": 653,
+    "merged": true,
+    "mergeCommitSha": "8a8b94840349af78534a1104485dae0ede66e02d",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+    "verifiedAt": "2026-09-01"
+  }
 }
