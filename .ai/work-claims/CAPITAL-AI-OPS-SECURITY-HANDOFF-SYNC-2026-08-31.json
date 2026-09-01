@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,7 +13,8 @@
   "startedAt": "2026-08-31T21:22:00+02:00",
   "baseBranch": "main",
   "baseSha": "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6",
-  "pullRequest": null,
+  "pullRequest": 632,
+  "mergedPr": 632,
   "branch": "agent/operations-security-handoff-sync-20260831",
   "project": "CAPITAL-AI-OPS",
   "projectFolder": "operations",
@@ -38,5 +39,17 @@
     "CAPITAL-AI-GOV retains PVC-05 decisions and DevelopmentChain policy authority"
   ],
   "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity. package.json#version remains sole platform-version authority; VersionManager remains read-only; Release Version Gate remains the controlled transition mechanism; Supervisor stays non-deciding; EventMesh and Traceability create no authority; production mutation remains separately authorized.",
-  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a separate exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a separate exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-08-31T19:35:53Z",
+  "mainCommit": "1f55340d89178fb5c1ab735242f42c263918b692",
+  "terminalHeadSha": "d46fdc1023013fcd12a47bd34df4abb35d873ead",
+  "releaseEvidence": {
+    "pullRequest": 632,
+    "merged": true,
+    "mergeCommitSha": "1f55340d89178fb5c1ab735242f42c263918b692",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+    "verifiedAt": "2026-09-01"
+  }
 }
