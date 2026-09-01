@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-BASELINE-MERGE-REFRESH-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Harden the trusted PR production-baseline auto-refresh so every successful main merge synchronization refreshes synchronized open PR baselines before the later verified production deployment refresh, without executing candidate code or weakening exact main/head governance binding.",
+  "workItemDE": "Den vertrauenswürdigen PR-Produktions-Baseline-Auto-Refresh so härten, dass nach jeder erfolgreichen Main-Merge-Synchronisierung die Baselines synchronisierter offener PRs vor dem späteren verifizierten Production-Deploy-Refresh aktualisiert werden, ohne Kandidatencode auszuführen oder die exakte Main-/Head-Governance-Bindung abzuschwächen.",
+  "startedAt": "2026-09-01T04:58:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "d1a69971b3332bfec487b86c6ac210c973034d32",
+  "branch": "agent/governance-pr-baseline-merge-refresh-20260901",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-BASELINE-MERGE-REFRESH-2026-09-01.json",
+    ".github/workflows/pr-production-baseline-post-merge-refresh.yml",
+    "tests/unit/productionBaselinePostMergeRefresh.test.ts"
+  ],
+  "reuseInputs": [
+    ".github/workflows/pr-production-baseline-refresh.yml",
+    ".github/workflows/sync-agent-pr-branches.yml",
+    "scripts/pr/productionPreflight.mjs",
+    "scripts/pr/updatePrProductionBaseline.mjs",
+    "tests/unit/productionBaselinePostDeployReconciliation.test.ts"
+  ],
+  "correlationInputs": [
+    "main@d1a69971b3332bfec487b86c6ac210c973034d32",
+    "PR #650 stale-baseline race observed after PR #649 merge",
+    "GitHub workflow_run privileged-follow-up security guidance",
+    "GitHub GITHUB_TOKEN workflow-trigger recursion restrictions"
+  ],
+  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. The new post-merge orchestration reuses the existing trusted-main baseline contracts; it does not create a second baseline algorithm. Candidate code remains data-only, immutable action SHAs remain pinned, fork/cross-repository and draft PRs remain excluded, current main/head/production identities are rebound immediately before mutation, and Human/CODEOWNER merge authority is unchanged.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}
