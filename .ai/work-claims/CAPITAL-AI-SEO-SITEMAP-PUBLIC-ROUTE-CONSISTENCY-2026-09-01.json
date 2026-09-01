@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEO-SITEMAP-PUBLIC-ROUTE-CONSISTENCY-2026-09-01",
-  "status": "active",
+  "status": "ready-for-pr",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -45,5 +45,11 @@
     "npm run lint",
     "npm run build"
   ],
+  "validationEvidence": {
+    "repositoryDiff": "4 scoped files before claim finalization: sitemap +5 lines, checklist +3/-2, one new 34-line regression test, one new claim; no Frontend/runtime source modified",
+    "routeCorrelation": "src/lib/routeSeo.ts and scripts/seo/prerender-public-routes.mjs both expose five public routes including /learning-platform; sitemap candidate now contains the same five canonical paths",
+    "branchSync": "candidate was 4 commits ahead / 0 behind main@9be95dd753f962a789312fec77571e2a9778b586 before claim finalization",
+    "localExecution": "UNAVAILABLE on ChatGPT GitHub Connector; targeted Vitest, seo:prerender, lint and build remain pending for hosted/eligible execution surface"
+  },
   "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
 }
