@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Create a time-boxed Human Owner supersession that permits this chat to execute work across canonical project folders without foreign-project handoff contracts during an eight-hour owner-supervised session, while preserving Human-only merge and individually gated high-impact protected mutations.",
-  "workItemDE": "Eine zeitlich begrenzte Human-Owner-Supersession erstellen, die diesem Chat für eine achtstündige, owner-beaufsichtigte Session projektordnerübergreifende Ausführung ohne Foreign-Project-Handoff-Verträge erlaubt, während Human-only Merge und einzeln freizugebende hochkritische Protected Mutations erhalten bleiben.",
+  "workItem": "Create a time-boxed Human Owner supersession that permits this chat to execute Human-directed work across canonical project folders with delegated PR creation, merge and mutation authority during an eight-hour owner session, without foreign-project handoff contracts or repeated Owner approval prompts.",
+  "workItemDE": "Eine zeitlich begrenzte Human-Owner-Supersession erstellen, die diesem Chat für eine achtstündige Owner-Session projektordnerübergreifende Ausführung inklusive delegierter PR-Erstellung, Merge- und Mutationsbefugnis ohne Foreign-Project-Handoff-Verträge oder wiederholte Owner-Freigaben erlaubt.",
   "startedAt": "2026-09-01T13:17:00Z",
   "baseBranch": "main",
   "baseSha": "a90dc644fb5c8efacdf25e464f2b20c62474501f",
@@ -17,7 +17,7 @@
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "governance",
   "projectStage": "PVC-05",
-  "ownerRole": "Governance authority/supersession design only until Human Merge; no self-elevation or Human identity transfer",
+  "ownerRole": "Governance authority/supersession design until bootstrap Human Merge; after activation the Human Owner remains the principal while this chat receives time-boxed delegated execution authority rather than Human identity",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-HUMAN-OWNER-SUPERSESSION-2026-09-01.json",
     "docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md",
@@ -43,6 +43,6 @@
     "behindByAfterSync": 0,
     "openPrOverlap": "none"
   },
-  "authorityGuard": "The Human Owner remains the Human Owner. This work item may define a time-boxed delegated execution session, but the agent/chat does not become a Human principal, may not self-merge, and may not silently remove separately required high-impact protected-action gates.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation requires separate exact Base/Head Human/Owner approval; merge remains Human/CODEOWNER-only."
+  "authorityGuard": "The Human Owner remains the Human principal. ADR-0104 may, after bootstrap Human Merge, temporarily delegate execution of Human-directed cross-project work, PR creation, eligible merges and connected-provider/production mutations to this chat for PT8H. The executor does not acquire Human identity and may not invent unrelated objectives, bypass provider-enforced authentication/capability limits, disclose reusable secrets, ignore external law/contracts, fabricate validation evidence or proceed through unresolved security-critical ambiguity.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment of the bootstrap work item. The bootstrap PR still requires exact Base/Head Human/Owner approval and Human Merge under current main; only after that merge does the PT8H delegated session activate."
 }
