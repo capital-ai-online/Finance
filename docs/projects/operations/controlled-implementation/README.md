@@ -12,4 +12,10 @@ It does not own every productive source change. The affected Primary Owner remai
 - `S1-R2-05` server-owned Stripe redirect boundary.
 - `S1-R2-06` parent protected-capability inventory and server-enforcement coordination.
 
+### S1-R2-06 parent inventory
+
+Canonical parent evidence: [`OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md`](./OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md).
+
+The parent inventory correlates all seven canonical subscription capability keys, maps current server enforcement and alternate paths, defines negative/DENY expectations, and routes concrete productive remediation to current Primary Owners. Foreign remediation remains `REFERRED_NOT_EXECUTED`; CAPITAL-AI-SEC independently verifies returned child evidence.
+
 Security defines threat/control and negative-test expectations; OPS returns implementation/evidence for independent Security verification.
