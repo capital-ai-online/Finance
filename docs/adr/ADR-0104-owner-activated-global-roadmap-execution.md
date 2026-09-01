@@ -31,6 +31,8 @@ This is an **execution delegation, not an ownership transfer**.
 
 ## Activation contract
 
+**Maximum activation duration:** 8 hours.
+
 A session becomes active only when all of the following are true:
 
 1. current `main` and `/AGENTS.md` are freshly resolved;
