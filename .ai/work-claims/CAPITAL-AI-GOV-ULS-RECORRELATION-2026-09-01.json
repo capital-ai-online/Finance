@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -47,5 +47,13 @@
     "CAPITAL-AI-COMP: independent purchase/cancellation assessment and applicability classification after OPS/FE evidence"
   ],
   "authorityGuard": "This claim only corrects non-authorizing Governance coordination drift. It creates no ADR/ESS/AUTH/CTRL identity, grants no productive PVC ownership, performs no Security or Compliance self-verification, resolves no Human-only business or legal decision, and authorizes no production mutation, deployment, live payment or provider configuration.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation requires separate exact Base/Head Human/Owner approval; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation requires separate exact Base/Head Human/Owner approval; merge remains Human/CODEOWNER-only.",
+  "releaseEvidence": {
+    "pullRequest": 675,
+    "terminalHeadSha": "b7f647734934b6e723b3db345a41f1725cee11c2",
+    "mergeCommitSha": "a90dc644fb5c8efacdf25e464f2b20c62474501f",
+    "mergedAt": "2026-09-01T12:24:08Z",
+    "verifiedMainSha": "a90dc644fb5c8efacdf25e464f2b20c62474501f",
+    "releaseReason": "Human merge satisfied the declared release condition."
+  }
 }
