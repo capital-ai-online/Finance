@@ -3,7 +3,7 @@
 **Role:** project-local correlation evidence / non-authorizing  
 **Project:** `CAPITAL-AI-OPS`  
 **Project folder:** `docs/projects/operations/`  
-**Reconciliation base:** `main@d2bf8782fee4acfeddbef31955e9b01f4a8be0fd`  
+**Reconciliation base:** `main@9fe9be4e8c1c3b46232d73f87fc5bec75d2242f5`  
 **Candidate branch:** `agent/operations-claim-project-reconcile-20260901`  
 **Production mutation:** `NONE`  
 **Security verification claimed:** `NO`
@@ -24,6 +24,7 @@
 | OPS Alpha Vantage claim | `CAPITAL-AI-OPS-ALPHA-VANTAGE-SECRET-MIGRATION-V2-2026-09-01` is `active/exclusive` on the base although PR #642 is merged and the named branch no longer resolves | stale coordination metadata; terminalization required |
 | PR #642 | merged `2026-09-01T00:20:02Z`; terminal head `642ebc112b2e5756dadc0ea5eba0fe5263d84d09`; merge commit `49bdc0c50ade064d7a00397661551344faacf8b4` | release condition satisfied |
 | PR #648 | merged `2026-09-01T02:16:00Z`; terminal head `f17f69f840c55ca138ca565157e0b2a1433f5c05`; merge commit `8922b2cd9d4fc27ac375298b07cd1fa86ae211e9` | current `PVC-02` branch-lifecycle evidence |
+| Main refresh during work | GOV PR #682 advanced main from `d2bf8782fee4acfeddbef31955e9b01f4a8be0fd` to `9fe9be4e8c1c3b46232d73f87fc5bec75d2242f5` and changed only a GOV claim plus `docs/governance/control-catalog.json` | no OPS overlap; candidate synchronized before final correlation |
 
 ## 3. Current-main project reconciliation
 
@@ -33,6 +34,7 @@ The project documents were stale as a status projection because their recorded b
 2. Branch-lifecycle hardening from PR #648 is merged.
 3. The roadmap single-source registry is now active and explicitly assigns OPS project status to `docs/projects/operations/ROADMAP.md`.
 4. Governance has completed the prerequisite User-Lifecycle decisions and now exposes `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS` as `READY_FOR_HANDOFF` to CAPITAL-AI-OPS.
+5. GOV PR #682 was correlated and incorporated through a current-main synchronization without changing the bounded OPS diff.
 
 Therefore this candidate updates the existing OPS README, ROADMAP, WORK_PACKAGES and CROSS_PROJECT_DEPENDENCIES in place rather than creating a parallel roadmap or execution architecture.
 
