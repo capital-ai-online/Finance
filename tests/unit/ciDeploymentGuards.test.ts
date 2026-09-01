@@ -83,7 +83,8 @@ describe('CI deployment trust chain only runs on verified main', () => {
     const yaml = workflow();
     const buildAndTest = jobBlock(yaml, 'build-and-test');
 
-    expect(yaml).toContain("RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}");
+    expect(yaml).toContain("RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}");
+    expect(yaml).not.toContain('inputs.m10_head_sha');
     expect(buildAndTest).toContain('test "$RELEASE_SOURCE_COMMIT" = "$(git rev-parse HEAD)"');
     expect(buildAndTest).toContain('--build-arg RELEASE_SOURCE_COMMIT="$RELEASE_SOURCE_COMMIT"');
     expect(buildAndTest).toContain('--tag "capital-ai-ci:$RELEASE_SOURCE_COMMIT"');
