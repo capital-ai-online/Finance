@@ -4,27 +4,28 @@
 **Project:** `CAPITAL-AI-GOV`  
 **Project folder:** `docs/projects/governance/`  
 **Primary stage:** `PVC-05`  
-**Execution baseline:** `main@37bf7d954363d99d67083edbf520bd77892888dd`  
-**Initial baseline:** `main@88286e1cfd58b314a818276b5cf61b2ff0b4128d`  
-**Branch:** `agent/governance-user-lifecycle-control-20260901`  
-**Status:** `GOVERNANCE_BOOTSTRAP_IN_CANDIDATE`
+**Current correlation baseline:** `main@190f319ec8026d8141601b69a8bb4d97470ec5ea`  
+**Bootstrap baseline:** `main@37bf7d954363d99d67083edbf520bd77892888dd`  
+**Bootstrap PR:** `#656` — merged  
+**Writer-release PR:** `#661` — merged  
+**Current branch:** `agent/governance-user-lifecycle-recorrelation-20260901`  
+**Status:** `GOV_RECORRELATION_IN_CANDIDATE / OWNER_SEQUENCE_PENDING`
 
 ## Scope boundary
 
-This candidate is Governance coordination only. It does not implement Frontend, Billing, Auth, Stripe, Supabase, Mail, Security or Compliance product logic and does not claim independent Security/Compliance verification.
+This candidate is Governance coordination only. It updates stale current-state projections after the bootstrap and writer-release merges. It does not implement Frontend, Billing, Auth, Stripe, Supabase, Mail, Security or Compliance product logic and does not claim independent Security/Compliance verification.
 
 No deployment, production mutation, live Stripe payment, production Supabase migration, production SMTP/Google-OAuth change or Stripe `automatic_tax` activation is authorized.
 
 ## Current correlation
 
 - Current project resolution is `CAPITAL-AI-GOV / governance / PVC-05`.
-- The historical SHA `d1a69971b3332bfec487b86c6ac210c973034d32` is evidence only, not current authority.
-- Project-surface PRs #652 (Compliance), #653 (Frontend), #654 (SEO) and #655 (Social) merged while this candidate was being prepared; the GOV branch was rebased onto `main@37bf7d954363d99d67083edbf520bd77892888dd`.
-- There are no open pull requests in the repository at the current correlation snapshot.
-- `CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31` remains active/exclusive and blocks overlapping OPS lifecycle work.
-- `CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01` remains active/exclusive after merged PR #653, and `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` remains active/exclusive after merged PR #463. Both must be resolved before overlapping FE lifecycle work.
-- `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` remains active/exclusive after merged PR #652; overlapping COMP lifecycle work remains blocked until that writer is resolved.
-- The earlier SEC stale-writer statement is obsolete: the SEC handoff claim is released and Security project-surface PR #647 is merged.
+- The historical SHA `d1a69971b3332bfec487b86c6ac210c973034d32` remains evidence only, not current authority.
+- PR #656 merged the six non-authorizing Governance bootstrap artifacts.
+- PR #661 released the correlated stale OPS, FE and COMP writer records. On current main, the relevant claims are `released/non-exclusive`.
+- PR #669 is the only open pull request at this snapshot. It changes only `.ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json` and has no file or semantic overlap with this candidate.
+- No owner-specific User-Lifecycle implementation branch or PR exists.
+- The bootstrap documents still projected the pre-#661 blocker state; this candidate corrects that drift without treating historical blocker evidence as current writer authority.
 
 ## Decision gates
 
@@ -40,26 +41,29 @@ No deployment, production mutation, live Stripe payment, production Supabase mig
 
 | Owner | Planned return | Current state |
 |---|---|---|
-| `CAPITAL-AI-OPS` | lifecycle harness/provider evidence | `REFERRED_NOT_EXECUTED / BLOCKED_BY_CORRELATION` |
-| `CAPITAL-AI-FE` | lifecycle/pricing UI projection | `REFERRED_NOT_EXECUTED / BLOCKED_BY_DECISIONS_AND_WRITERS` |
-| `CAPITAL-AI-SEC` | independent Security assurance | `REFERRED_NOT_EXECUTED` |
-| `CAPITAL-AI-COMP` | purchase/cancellation assessment | `REFERRED_NOT_EXECUTED / BLOCKED_BY_STALE_WRITER` |
+| `CAPITAL-AI-OPS` | lifecycle harness/provider evidence | `READY_FOR_OWNER_HANDOFF` |
+| `CAPITAL-AI-FE` | lifecycle/pricing UI projection | `BLOCKED_BY_DECISIONS_AND_OPS_CONTRACT` |
+| `CAPITAL-AI-SEC` | independent Security assurance | `BLOCKED_BY_OPS_FE_EVIDENCE` |
+| `CAPITAL-AI-COMP` | purchase/cancellation assessment | `BLOCKED_BY_OPS_FE_EVIDENCE_AND_APPLICABILITY_REVIEW` |
 | `CAPITAL-AI-GOV` | final evidence closeout | `BLOCKED_BY_OWNER_RETURNS` |
 
-## Bootstrap exit gate
+## Recorrelation exit gate
 
-The GOV bootstrap can become PR-ready only after:
+The current GOV candidate can become PR-ready only after:
 
-1. all six required Governance artifacts are present and structurally readable;
-2. Governance roadmap/task projection is updated without foreign implementation;
-3. scope-specific low-cost validation is recorded;
-4. current `main`, open PRs and work claims are correlated again;
-5. the current PR template and production-baseline rendering contract are read;
-6. exact Base SHA and Head SHA are reported to the Owner;
-7. explicit approval for that exact PR snapshot is received.
+1. stale blocker statements are replaced by current-main release evidence;
+2. bootstrap PR #656 and writer-release PR #661 are represented as merged;
+3. decision gates remain unresolved unless the Human/Owner explicitly decides them;
+4. no foreign implementation or independent verification is claimed;
+5. low-cost structural validation is recorded;
+6. current `main`, open PRs and work claims are correlated again;
+7. the current PR template and production-baseline rendering contract are read;
+8. exact Base SHA and Head SHA are reported to the Owner;
+9. explicit approval for that exact PR snapshot is received.
 
-Until step 7, **no pull request may be created** under the current `/AGENTS.md` rule.
+Until step 9, **no pull request may be created** under the current `/AGENTS.md` rule.
 
 ## Target end state
 
-`EVIDENCE_READY_FOR_HUMAN_CLOSEOUT` is not reachable from this bootstrap alone. It requires merged owner returns from OPS, FE, SEC and COMP, followed by a separate GOV closeout candidate that correlates their exact merged SHAs and preserves independent verification ownership.
+`EVIDENCE_READY_FOR_HUMAN_CLOSEOUT` remains unreachable from this recorrelation alone. It requires merged owner returns from OPS, FE, SEC and COMP, followed by a separate GOV closeout candidate that correlates their exact merged SHAs and preserves independent verification ownership.
+

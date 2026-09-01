@@ -1,6 +1,43 @@
 schema_version: "1.0.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 evidence_policy: "redacted_non_authorizing_index"
+bootstrap_evidence_immutable: true
+
+current_recorrelation:
+  repository_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+  branch: "agent/governance-user-lifecycle-recorrelation-20260901"
+  work_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
+  environment: "GitHub repository current main plus local structural validation"
+  provider_mode: "governance_recorrelation_only"
+  bootstrap:
+    pull_request: 656
+    state: "MERGED"
+    merge_commit_sha: "3935e08a0289be69683b8af9004fc177a99b04c0"
+  writer_release:
+    pull_request: 661
+    state: "MERGED"
+    verified_released_claims:
+      - "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
+      - "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
+      - "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01"
+      - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20"
+      - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
+  open_pr_snapshot:
+    - number: 669
+      changed_scope: ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json only"
+      file_overlap: false
+      semantic_overlap: false
+  owner_implementation_branches_found: []
+  conclusion:
+    operations: "READY_FOR_OWNER_HANDOFF"
+    frontend: "BLOCKED_BY_DECISIONS_AND_OPS_CONTRACT"
+    security: "BLOCKED_BY_OPS_FE_EVIDENCE"
+    compliance: "BLOCKED_BY_OPS_FE_EVIDENCE_AND_APPLICABILITY_REVIEW"
+    governance_closeout: "BLOCKED_BY_OWNER_RETURNS"
+  prohibited_claims:
+    - "No runtime/provider test PASS is produced by this recorrelation."
+    - "No foreign implementation or independent Security/Compliance verification is claimed."
+    - "No production mutation, deployment, live payment or provider configuration is authorized."
 
 baseline:
   repository_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
@@ -11,6 +48,7 @@ baseline:
   provider_mode: "governance_precheck_only"
 
 candidate_scope:
+  evidence_phase: "bootstrap_pr_656"
   changed_files:
     - ".ai/work-claims/CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01.json"
     - "docs/projects/governance/ROADMAP.md"
@@ -28,6 +66,7 @@ candidate_scope:
   workflow_changed: false
 
 precheck_evidence:
+  evidence_phase: "bootstrap_pr_656"
   trust_root:
     path: "/AGENTS.md"
     result: "READ_CURRENT_MAIN"
