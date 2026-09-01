@@ -16,6 +16,16 @@ import {
 
 export const ownerAuthorizationRouter = express.Router();
 
+const isLowercaseHexDigest = (value: string, minLength: number, maxLength: number): boolean => {
+  if (value.length < minLength || value.length > maxLength) return false;
+  for (const character of value) {
+    const isDigit = character >= '0' && character <= '9';
+    const isLowercaseHexLetter = character >= 'a' && character <= 'f';
+    if (!isDigit && !isLowercaseHexLetter) return false;
+  }
+  return true;
+};
+
 async function requireOwner(req: express.Request, res: express.Response): Promise<{ userId: string; actorLabel: string } | null> {
   const authz = await checkAdminAccess(req, 'owner-device-authorization', OWNER_ONLY_ROLES);
   if (!authz.authorized || !authz.userId) {
@@ -71,7 +81,9 @@ ownerAuthorizationRouter.post('/adr-0104/challenge', async (req, res) => {
   const owner = await requireOwner(req, res);
   if (!owner) return;
   const body = req.body as Partial<Adr0104ActivationRequest>;
-  if (!body || !['ADR-0104-S1', 'ADR-0104-S2', 'ADR-0104-S3'].includes(String(body.slotId)) || !Array.isArray(body.projectIds) || typeof body.initialActiveProjectId !== 'string' || typeof body.chatBindingHash !== 'string' || typeof body.currentMainSha !== 'string' || !/^[0-9a-f]{40}$/.test(body.currentMainSha) || !/^[0-9a-f]{32,128}$/i.test(body.chatBindingHash)) {
+  const currentMainShaIsValid = typeof body.currentMainSha === 'string' && /^[0-9a-f]{40}$/.test(body.currentMainSha);
+  const chatBindingHashIsValid = typeof body.chatBindingHash === 'string' && isLowercaseHexDigest(body.chatBindingHash, 32, 128);
+  if (!body || !['ADR-0104-S1', 'ADR-0104-S2', 'ADR-0104-S3'].includes(String(body.slotId)) || !Array.isArray(body.projectIds) || typeof body.initialActiveProjectId !== 'string' || !currentMainShaIsValid || !chatBindingHashIsValid) {
     return res.status(400).json({ error: 'INVALID_ACTIVATION_REQUEST' });
   }
   try {
