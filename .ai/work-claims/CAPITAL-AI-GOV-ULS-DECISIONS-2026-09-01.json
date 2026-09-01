@@ -22,12 +22,12 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01.json",
     ".ai/work-claims/CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01.json",
-    "docs/projects/governance/README.md",
     "docs/projects/governance/ROADMAP.md",
     "docs/projects/governance/TASK_REGISTER.md",
     "docs/projects/governance/user-lifecycle-simulation/DECISION_REGISTER.yaml",
     "docs/projects/governance/user-lifecycle-simulation/EVIDENCE_INDEX.yaml",
     "docs/projects/governance/user-lifecycle-simulation/EXECUTION_MANIFEST.yaml",
+    "docs/projects/governance/user-lifecycle-simulation/FINDINGS_REGISTER.yaml",
     "docs/projects/governance/user-lifecycle-simulation/PR_DEPENDENCY_MAP.yaml",
     "docs/projects/governance/user-lifecycle-simulation/STATUS.md"
   ],
