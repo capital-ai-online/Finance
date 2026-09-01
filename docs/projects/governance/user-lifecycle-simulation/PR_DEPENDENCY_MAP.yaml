@@ -1,7 +1,7 @@
-schema_version: "1.2.0"
+schema_version: "1.3.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 rule: "one_primary_owner_per_pr"
-correlation_baseline: "main@a90dc644fb5c8efacdf25e464f2b20c62474501f"
+correlation_baseline: "main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
 human_merge_only: true
 auto_merge: false
 production_deploy_from_task: false
@@ -26,8 +26,12 @@ pull_requests:
     project_folder: "docs/projects/governance/"
     pvc: "PVC-05"
     branch: "agent/governance-user-lifecycle-decisions-20260901"
+    pull_request: 676
+    terminal_head_sha: "80842461e2caf874622a6002e171b8d4abcc9110"
+    merge_commit_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
+    merged_at: "2026-09-01T13:21:15Z"
     title: "[CAPITAL-AI-GOV][governance] User-Lifecycle-Entscheidungen festschreiben"
-    state: "CANDIDATE_IN_PROGRESS"
+    state: "MERGED"
     productive_code: false
     depends_on:
       - "PR-GOV-ULS-BOOTSTRAP merged"
@@ -37,6 +41,8 @@ pull_requests:
     decisions:
       - "GOV-ULS-DEC-001: 248 EUR annual Pro catalog price"
       - "GOV-ULS-DEC-002: local and global logout, local default"
+    decision_claim_status_after_closure: "released"
+    decision_claim_exclusive_after_closure: false
     production_mutation: false
 
   - sequence: 3
@@ -47,16 +53,21 @@ pull_requests:
     secondary_pvc: "PVC-08"
     branch: "agent/operations-user-lifecycle-simulation-20260901"
     title: "[CAPITAL-AI-OPS][operations] User-Lifecycle-Testsystem implementieren"
-    state: "READY_AFTER_GOV_DECISION_PROJECTION_MERGE"
+    state: "READY_FOR_HANDOFF"
     productive_code: true
+    foreign_project_status: "REFERRED_NOT_EXECUTED"
     depends_on:
       - "PR-GOV-ULS-BOOTSTRAP merged"
       - "PR #675 owner-sequence recorrelation merged"
-      - "PR-GOV-ULS-DECISIONS merged"
+      - "PR #676 GOV decision projection merged"
+      - "GOV post-merge decision-claim closure merged before target PR readiness"
     resolved_correlation_blockers:
       - claim: "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
         status: "released"
         release_pr: 661
+      - claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
+        status: "released_in_GOV_closure_candidate"
+        effect: "No stale Governance writer may be treated as implementation authority"
     owner_scope:
       - "Playwright/provider harness"
       - "Supabase Local Stack and Mailpit"
@@ -75,7 +86,7 @@ pull_requests:
     productive_code: true
     depends_on:
       - "PR-GOV-ULS-BOOTSTRAP merged"
-      - "PR-GOV-ULS-DECISIONS merged"
+      - "PR #676 GOV decision projection merged"
       - "PR-OPS-ULS-HARNESS or stable OPS test contract"
       - "PR #653 project surface merged"
     resolved_correlation_blockers:

@@ -2,8 +2,8 @@
 
 **Project:** `CAPITAL-AI-GOV`  
 **Original consolidation baseline:** `main@1f55340d89178fb5c1ab735242f42c263918b692`  
-**Current project-folder correlation baseline:** `main@a90dc644fb5c8efacdf25e464f2b20c62474501f`  
-**User-Lifecycle orchestration baseline:** `main@a90dc644fb5c8efacdf25e464f2b20c62474501f`  
+**Current project-folder correlation baseline:** `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`  
+**User-Lifecycle orchestration baseline:** `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`  
 **Trust root:** `/AGENTS.md`  
 **Role:** roadmap / execution projection — non-authorizing
 
@@ -96,7 +96,7 @@ The previously stale Compliance, Frontend and OPS writer records were correlated
 
 ### Current-main correlation update
 
-PR #645 materialized Documentary, PR #647 Security, PR #652 Compliance, PR #653 Frontend, PR #654 SEO and PR #655 Social. PR #661 released the correlated stale OPS/FE/COMP writers, and PR #675 merged the User-Lifecycle owner-sequence recorrelation. At `main@a90dc644fb5c8efacdf25e464f2b20c62474501f`, PR #669 is the only open pull request and changes only the separate PVC-claim closure path; it has no file or semantic overlap with this decision candidate.
+PR #645 materialized Documentary, PR #647 Security, PR #652 Compliance, PR #653 Frontend, PR #654 SEO and PR #655 Social. PR #661 released the correlated stale OPS/FE/COMP writers, PR #675 merged the User-Lifecycle owner-sequence recorrelation and PR #676 merged the explicit User-Lifecycle Owner decisions. At `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`, PR #669 is the only open pull request and changes only the separate PVC-claim closure path; it has no file or semantic overlap with the User-Lifecycle post-merge closure.
 
 Exit gate for P6:
 
@@ -109,7 +109,7 @@ Exit gate for P6:
 
 ## P7 — User-Lifecycle Simulation orchestration
 
-**State:** `OWNER_DECISIONS_RECORDED IN CANDIDATE / OPS HANDOFF NEXT`
+**State:** `OWNER_DECISIONS_MERGED / OPS_HANDOFF_READY`
 
 Prompt: `CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01`.
 
@@ -124,20 +124,22 @@ Canonical orchestration artifacts live under `user-lifecycle-simulation/` and ha
 
 Current Owner decisions:
 
-1. `GOV-ULS-DEC-001` — annual Pro price: `248 EUR`, current catalog; no Stripe price migration is authorized;
-2. `GOV-ULS-DEC-002` — both local and global logout are required; local logout is the default and global logout is an explicit confirmed action;
+1. `GOV-ULS-DEC-001` — annual Pro price: `248 EUR`, current catalog; merged via PR #676; no Stripe price migration is authorized;
+2. `GOV-ULS-DEC-002` — both local and global logout are required; local logout is the default and global logout is an explicit confirmed action; merged via PR #676;
 3. `GOV-ULS-DEC-003` — Card-only remains the simulation default; dynamic methods need separate authorization;
 4. `GOV-ULS-DEC-004` — cancellation at period end remains the simulation default;
 5. `GOV-ULS-DEC-005` — Stripe `automatic_tax` stays disabled until tax registrations, Compliance clearance and separate production authorization exist.
 
-Decisions 001/002 originate from the explicit Human/Owner instruction in the current chat. The repository files are non-authorizing projections and become the stable downstream handoff baseline only after Human merge of this scoped decision candidate.
+Decisions 001/002 originate from the explicit Human/Owner instruction and are now represented on current main through merged PR #676. The repository files remain non-authorizing projections and do not authorize live provider mutation.
 
 Current downstream correlation:
 
 - the Governance bootstrap is merged via PR #656, its writer is released via PR #661, and the owner-sequence recorrelation is merged via PR #675;
-- the fulfilled PR #675 writer is released atomically by this decision candidate;
-- the OPS writer blocker is released; `PR-OPS-ULS-HARNESS` is next after Human merge of the stable decision projection;
-- FE project and authority writers are released; the two Owner decisions are resolved, so FE remains blocked only by the stable OPS test contract;
+- PR #676 merged the stable decision projection at `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`;
+- the fulfilled PR #676 decision writer reached its Human-merge release condition and is terminalized by the bounded post-merge closure candidate;
+- `GOV-CHAT-038`, `GOV-CHAT-039` and `GOV-CHAT-050` are substantive `DONE_MAIN` work because the decisions and PR #675 writer release were merged via PR #676;
+- the OPS writer blocker is released; `PR-OPS-ULS-HARNESS` / `GOV-CHAT-040` is the next productive owner handoff to `CAPITAL-AI-OPS`, target folder `docs/projects/operations/`, primary stage `PVC-02` and secondary provider/runtime evidence stage `PVC-08`;
+- FE project and authority writers are released; the two Owner decisions are merged, so FE remains blocked only by the stable OPS test contract;
 - the COMP project writer is released; COMP remains sequenced after OPS/FE evidence and its independent applicability/classification review;
 - SEC verification starts only after OPS/FE evidence is available;
 - GOV closeout starts only after all owner returns are present.
@@ -151,9 +153,9 @@ P7 decision result and next gate:
 1. PR #656 merged all six Governance orchestration artifacts;
 2. PR #661 released the stale owner-writer metadata recorded by the bootstrap;
 3. PR #675 merged the owner-sequence recorrelation;
-4. the Owner selected `248 EUR` annual Pro pricing and local/global logout with local default;
-5. this candidate records those decisions and releases the fulfilled PR #675 writer without runtime or production mutation;
-6. after Human merge, `CAPITAL-AI-OPS` receives the first productive owner handoff;
+4. PR #676 merged `GOV-ULS-DEC-001 = 248 EUR` and `GOV-ULS-DEC-002 = local + global logout, local default`;
+5. the bounded post-merge closure releases the fulfilled PR #676 writer and replaces stale candidate/pending-merge projections with exact merge evidence;
+6. `CAPITAL-AI-OPS / PVC-02` is now the next productive owner handoff for lifecycle harness/provider tests; GOV does not implement that foreign scope;
 7. every future PR still requires current-main recorrelation and exact Base/Head Human/Owner approval.
 
 ## Dependency order
@@ -166,9 +168,10 @@ P1 PVC project model
 P7 User-Lifecycle bootstrap merged through PR #656
   -> stale owner writers released through PR #661
   -> owner sequence recorrelation merged through PR #675
-  -> GOV-ULS-DEC-001 and GOV-ULS-DEC-002 recorded in the scoped decision candidate
-  -> OPS lifecycle harness through an owner-scoped OPS handoff after decision-projection merge
-  -> FE lifecycle projection after decisions + stable OPS contract
+  -> GOV-ULS-DEC-001 and GOV-ULS-DEC-002 merged through PR #676
+  -> PR #676 decision writer post-merge closure
+  -> OPS lifecycle harness through owner-scoped CAPITAL-AI-OPS / PVC-02 handoff
+  -> FE lifecycle projection after stable OPS contract
   -> SEC independent assurance and COMP consumer assessment after their gates
   -> GOV closeout over merged owner SHAs/evidence
 
