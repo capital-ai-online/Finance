@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-ADR0104-SESSION-LIMITS-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Harden ADR-0104 so every delegated supersession activation is bound to exactly one chat and one predeclared canonical project folder, prohibit cross-project execution under that activation, and cap successful ADR-0104 activations at three for the lifetime of the authority.",
+  "workItemDE": "ADR-0104 so härten, dass jede delegierte Supersession-Aktivierung an genau einen Chat und genau einen vorab festgelegten kanonischen Projektordner gebunden ist, projektübergreifende Ausführung unter dieser Aktivierung verboten bleibt und insgesamt höchstens drei erfolgreiche ADR-0104-Aktivierungen über die Lebensdauer der Authority möglich sind.",
+  "startedAt": "2026-09-01T14:17:12Z",
+  "baseBranch": "main",
+  "baseSha": "19b2527de88444b999b7820c5a6712e8d80b60df",
+  "branch": "agent/governance-adr0104-session-limits-20260901",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-ADR0104-SESSION-LIMITS-2026-09-01.json",
+    "docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md",
+    "docs/adr/registry.json",
+    "docs/governance/authority-registry.json",
+    "docs/governance/control-catalog.json"
+  ],
+  "correlationInputs": [
+    "main@19b2527de88444b999b7820c5a6712e8d80b60df after merge of PR #679",
+    "/AGENTS.md v2.2.1@current-main",
+    "docs/projects/README.md resolves CAPITAL-AI-GOV -> docs/projects/governance/ -> PVC-05",
+    "docs/projects/governance/README.md@current-main",
+    "ADR-0104 v1.1.0@current-main",
+    "PR #682 M10 Catalog CI Repair is already contained in current main and preserved by this candidate",
+    "PR #679 Documentary Mermaid Projection is already contained in current main and has zero claimed-path overlap with this Governance work item",
+    "no open Pull Requests observed immediately before this synchronization",
+    "NIST SP 800-63B-4 session-management guidance supports explicit session binding and bounded lifetime",
+    "OWASP LLM06:2025 Excessive Agency recommends minimum necessary extension privileges and execution in the user's authorization context"
+  ],
+  "syncEvidence": {
+    "currentMainSha": "19b2527de88444b999b7820c5a6712e8d80b60df",
+    "candidateRebasedOnCurrentMain": true,
+    "openPrOverlap": "none observed; final correlation still required immediately before PR approval request"
+  },
+  "authorityGuard": "No new AUTH, CTRL, ADR or ESS identity is created. The existing ADR-0104 stable authority is tightened in-place through a semantic version increment. The session may not transfer between chats or project owners, may not execute foreign-project work, and no fourth successful activation is authorized without a new explicit Human Owner authority change.",
+  "securityGuard": "Single-chat/single-project binding, a monotonic lifetime activation quota of three, fail-closed project correlation, preserved provider authentication, technical gates, secret protection, independent assurance and rollback requirements reduce delegated blast radius. Expired or revoked successful sessions still consume their activation ordinal; invalid activation attempts do not.",
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. PR creation requires the then-applicable exact-snapshot Human/Owner gate because this chat does not claim inheritance of the earlier unbound v1.1 bootstrap session."
+}
