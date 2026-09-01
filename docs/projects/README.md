@@ -49,6 +49,18 @@ The `PVC-*` namespace is intentionally distinct from the existing technical fina
 
 Cross-cutting projects such as `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FE`, `CAPITAL-AI-SEO` and `CAPITAL-AI-SOCIAL` own no productive PVC stage solely because they validate, constrain, present or distribute outputs.
 
+## Canonical Primary-Owner project-folder routing
+
+Project-folder routing is an organizational mapping only. It does not create technical Authority, merge authority, deployment authority, Domain Ownership transfer or permission for one project to materialize another project's project surface.
+
+The repository-wide correlation for the previously unresolved Documentary project is:
+
+| Project | Primary PVC stage | Canonical project folder | Branch project-folder slug | Materialization owner |
+|---|---|---|---|---|
+| `CAPITAL-AI-DOC` | `PVC-03` | `docs/projects/documentary/` | `documentary` | `CAPITAL-AI-DOC` |
+
+This mapping is the canonical project-organization input for the `/AGENTS.md` branch-naming rule after the Human-reviewed GOV correlation is merged into `main`. The branch slug is derived from the canonical folder basename `documentary`; it is not inferred from the project name. The absence of `docs/projects/documentary/**` before the owning DOC migration is a migration gap, not a competing folder identity and not permission for CAPITAL-AI-GOV to create that foreign project surface.
+
 ## Standard project surface
 
 Each mature project SHOULD expose under `docs/projects/<project>/`:
