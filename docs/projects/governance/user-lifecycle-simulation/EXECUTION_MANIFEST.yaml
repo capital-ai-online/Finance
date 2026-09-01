@@ -6,7 +6,7 @@ status: "GOVERNANCE_BOOTSTRAP_IN_CANDIDATE"
 repository:
   full_name: "SvenKulessa/Finance"
   default_branch: "main"
-  execution_baseline_sha: "85d821a58851d769fde9c95558c03d9e5608efd7"
+  execution_baseline_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
   initial_execution_baseline_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
   historical_evidence_sha: "d1a69971b3332bfec487b86c6ac210c973034d32"
   historical_evidence_is_authority: false
@@ -43,7 +43,7 @@ work_claim:
 
 precheck:
   result: "PASS_FOR_GOV_BOOTSTRAP"
-  current_main_sha: "85d821a58851d769fde9c95558c03d9e5608efd7"
+  current_main_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
   initial_main_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
   mandatory_sources_read: true
   authority_overlap: "NONE_REQUIRING_NEW_AUTHORITY"
@@ -52,6 +52,20 @@ precheck:
   new_auth_required: false
   new_ctrl_required: false
   gov_target_path_active_writer_overlap: false
+  open_pull_requests: []
+  merged_during_candidate:
+    - number: 652
+      project: "CAPITAL-AI-COMP"
+      effect: "Project surface now present; work claim remains active/exclusive"
+    - number: 653
+      project: "CAPITAL-AI-FE"
+      effect: "Project surface now present; work claim remains active/exclusive"
+    - number: 654
+      project: "CAPITAL-AI-SEO"
+      effect: "Project surface now present"
+    - number: 655
+      project: "CAPITAL-AI-SOCIAL"
+      effect: "Project surface now present"
   known_claims:
     - id: "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
       observed_status: "active"
@@ -60,33 +74,20 @@ precheck:
       observed_status: "active"
       correlated_pr: 463
       pr_state: "merged"
-      effect: "Stale writer metadata finding; no overlap with GOV simulation path"
-    - id: "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31"
-      observed_status: "released"
-      effect: "Previously documented stale SEC blocker is no longer current"
+      effect: "Stale writer metadata; semantically relevant to FE lifecycle scope, no overlap with GOV bootstrap"
+    - id: "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01"
+      observed_status: "active"
+      correlated_pr: 653
+      pr_state: "merged"
+      effect: "Blocks overlapping FE project-surface lifecycle updates until terminalized/resolved"
     - id: "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
       observed_status: "active"
       correlated_pr: 652
       pr_state: "merged"
-      effect: "Compliance project surface is on main; stale exclusive writer must be correlated before overlapping COMP lifecycle work"
-  open_pull_requests:
-    - number: 653
-      project: "CAPITAL-AI-FE"
-      purpose: "frontend project-surface materialization"
-      overlap_with_gov_bootstrap: false
-    - number: 654
-      project: "CAPITAL-AI-SEO"
-      purpose: "seo project-surface materialization"
-      overlap_with_gov_bootstrap: false
-    - number: 655
-      project: "CAPITAL-AI-SOCIAL"
-      purpose: "social-media project-surface materialization"
-      overlap_with_gov_bootstrap: false
-  merged_during_candidate:
-    - number: 652
-      project: "CAPITAL-AI-COMP"
-      merge_commit: "85d821a58851d769fde9c95558c03d9e5608efd7"
-      branch_sync: "included as merge parent before PR readiness"
+      effect: "Blocks overlapping COMP project-surface lifecycle updates until terminalized/resolved"
+    - id: "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31"
+      observed_status: "released"
+      effect: "Previously documented stale SEC blocker is no longer current"
 
 owner_execution:
   governance:
@@ -99,7 +100,8 @@ owner_execution:
   frontend:
     project: "CAPITAL-AI-FE"
     mode: "REFERRED_NOT_EXECUTED"
-    prerequisite: "PR #653 project surface must be resolved; DEC-001 and DEC-002 remain gates"
+    prerequisite: "Project surface is merged via PR #653; DEC-001 and DEC-002 remain gates"
+    blocker: "Active FE project-surface writer plus stale merged Frontend authority writer must be resolved before overlapping FE lifecycle work"
   security:
     project: "CAPITAL-AI-SEC"
     mode: "REFERRED_NOT_EXECUTED"
@@ -107,7 +109,8 @@ owner_execution:
   compliance:
     project: "CAPITAL-AI-COMP"
     mode: "REFERRED_NOT_EXECUTED"
-    prerequisite: "Project surface is merged via PR #652; stale active/exclusive project-surface writer must be correlated before overlapping COMP lifecycle work"
+    prerequisite: "Project surface is merged via PR #652"
+    blocker: "Active/exclusive project-surface writer must be resolved before overlapping COMP lifecycle work"
 
 simulation_contract:
   primary_identity_key: "supabase_auth_user_id"
