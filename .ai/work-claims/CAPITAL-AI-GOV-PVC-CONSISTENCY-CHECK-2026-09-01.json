@@ -22,13 +22,13 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json",
     "scripts/governance/validateProjectValueChain.mjs",
-    "scripts/governance/validateProjectValueChain.test.mjs",
+    "scripts/pr/projectValueChainConsistency.test.mjs",
     ".github/workflows/pr-governance.yml",
-    "package.json",
     "docs/projects/README.md"
   ],
   "reuseInputs": [
     "scripts/governance/**",
+    "scripts/pr/*.test.mjs",
     ".github/workflows/pr-governance.yml",
     ".github/workflows/ci.yml",
     "scripts/pr/classifyPrScope.mjs",
@@ -48,6 +48,6 @@
   "foreignWork": [
     "No foreign project content is rewritten. Existing CLIENT VC-01 transitional wording is explicitly tolerated only while the canonical PROJECT_VALUE_CHAIN transitional exception remains present."
   ],
-  "authorityGuard": "The validator enforces internal consistency of already-declared project/PVC mappings. It creates no AUTH/CTRL/ADR/ESS identity, does not turn project roadmaps into authorization authority, grants no productive PVC ownership, and performs no merge, deployment or external mutation. In the Governance workflow only trusted-main validator code may execute against candidate project metadata.",
+  "authorityGuard": "The validator enforces internal consistency of already-declared project/PVC mappings. It creates no AUTH/CTRL/ADR/ESS identity, does not turn project roadmaps into authorization authority, grants no productive PVC ownership, and performs no merge, deployment or external mutation. In the Governance workflow only trusted-main validator code may execute against candidate project metadata. The test reuses scripts/pr/*.test.mjs so package.json and production/deployment scope stay untouched.",
   "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
 }
