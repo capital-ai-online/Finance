@@ -6,8 +6,8 @@
 **Version:** `2.3.0`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-01`  
-**Repository baseline:** `main@9fe9be4e8c1c3b46232d73f87fc5bec75d2242f5`  
-**Open PR baseline:** PR #679 (`CAPITAL-AI-DOC`) only; no OPS changed-file or semantic overlap at reconciliation  
+**Repository baseline:** `main@19b2527de88444b999b7820c5a6712e8d80b60df`  
+**Open PR baseline:** none at final reconciliation; PR #679 merged during correlation without OPS overlap  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 ## 1. Objective
@@ -54,7 +54,7 @@ PVC-02 Controlled Implementation
 | PR #642 — Alpha Vantage secret/deployment control plane | `MERGED`; repository implementation is on main | stale `active/exclusive` writer is terminalized in this reconciliation candidate; no Production secret/deploy mutation is asserted |
 | PR #648 — one-hour merged-branch cleanup | `MERGED` | retain as `PVC-02` branch-lifecycle hardening evidence |
 | `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS` | `READY_FOR_HANDOFF` on current Governance projection | accept into OPS backlog as a separate `PVC-02` package with secondary `PVC-08` provider/runtime evidence |
-| PR #679 — Documentary Mermaid projection | `OPEN`, foreign `PVC-03` | no OPS changed-file/semantic overlap; preserve foreign writer |
+| PR #679 — Documentary Mermaid projection | `MERGED` during reconciliation, foreign `PVC-03` | no OPS changed-file/semantic overlap; incorporated through main resync without expanding OPS scope |
 
 The reconciliation package changes only OPS claim/project metadata. It does not implement the User-Lifecycle harness, mutate provider/Production state, claim Security verification or absorb Frontend/Compliance work.
 
