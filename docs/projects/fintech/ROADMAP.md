@@ -111,7 +111,7 @@ Frontend, Quality, Security and Compliance do not acquire `PVC-12..17` ownership
 
 | Workstream | PVC | Status | Next exit gate |
 |---|---|---|---|
-| FIN-SYNC-01 Project Surface Sync | PVC-12..17 | IN_PROGRESS | one coherent current-main project surface + current evidence |
+| FIN-SYNC-01 Project Surface Sync | PVC-12..17 | EVIDENCE_READY | final FINTECH-only compare recorded; current-main/open-PR recorrelation required again before PR approval |
 | FIN-SEC-02 Verified Screening Entitlement | PVC-16 | REFERRED_NOT_EXECUTED / P1 HIGH | implementation/evidence ready and Security verification requested |
 | FIN-SEC-03 Financial Analysis Entitlement | PVC-15 | REFERRED_NOT_EXECUTED / P1 HIGH | implementation/evidence ready; required FE handoff issued; Security verification requested |
 | FIN-12 Feature Engineering | PVC-12 | PARTIAL / P1 | explicit DATA input/feature contract mapping |
