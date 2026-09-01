@@ -2,8 +2,6 @@ name: CI
 run-name: >-
   ${{ github.event_name == 'push'
       && format('main – CI-Prüfung für {0}', github.sha)
-      || github.event_name == 'workflow_dispatch'
-      && format('M10 PR #{0} – autorisierte CI für {1}', inputs.m10_pr_number, inputs.m10_head_sha)
       || format('PR #{0} – CI-Prüfung', github.event.pull_request.number) }}
 
 on:
@@ -11,73 +9,24 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-  workflow_dispatch:
-    inputs:
-      m10_consumption_id:
-        description: 'Single-use M10 CI consumption capability'
-        required: true
-        type: string
-      m10_approval_id:
-        description: 'Immutable M10 approval evidence id'
-        required: true
-        type: string
-      m10_pr_number:
-        description: 'Approved pull request number'
-        required: true
-        type: string
-      m10_base_sha:
-        description: 'Approved PR base SHA'
-        required: true
-        type: string
-      m10_head_sha:
-        description: 'Approved exact PR head SHA'
-        required: true
-        type: string
-      m10_authorization_digest:
-        description: 'Canonical M10 authorization digest'
-        required: true
-        type: string
-      m10_action:
-        description: 'M10 action'
-        required: true
-        type: choice
-        options:
-          - AUTHORIZE_PR_CI
 
 permissions:
   contents: read
   pull-requests: read
 
 env:
-  # Owner-authorized operational switch (2026-08-19). The M10 implementation remains in this
-  # workflow for audit/rollback, but normal PR CI no longer consumes or requires an M10 passkey.
-  # Manual workflow_dispatch is still denied while this switch is off, so disabling M10 cannot
-  # become an alternate unreviewed CI/deployment entry point.
-  M10_CI_GATE_ENABLED: 'false'
   # Single exact source identity shared by Quality evidence, release metadata and Docker builds.
   # PR runs bind to the actual PR head, not GitHub's synthetic merge commit.
-  RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+  RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
 
 concurrency:
-  # PR synchronizations may cancel older cheap PR checks. Authorized M10 dispatches use their own
-  # run id so an unrelated event cannot cancel a consumed one-time authorization mid-build.
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# M10 Controlled Cutover implementation is retained but operationally disabled by
-# M10_CI_GATE_ENABLED=false. Human/CODEOWNER merge remains separate and mandatory.
 # Production deployment authority remains verified main CI with inline supply-chain attestation ->
 # production-environment-bound exact-SHA Render deploy -> post-deploy identity verification.
-# Historical rules retained for rollback/audit when M10_CI_GATE_ENABLED=true:
-# - normal PR events fail before checkout/npm/build;
-# - only a successfully redeemed Owner-Passkey M10 consumption may enter expensive PR CI;
-# - workflow-gate redemption additionally requires a short-lived signed GitHub Actions OIDC token;
-# - PR #429 is the unique one-time bootstrap used to validate this cutover before the new endpoint
-#   can exist on the default branch; it has no authority for any future PR after Human merge;
-# - agent/fix-unit-invariants-m10-bypass is a temporary Owner-authorized remediation exception;
-#   the exception is bound to the exact PR head ref and has no production-deploy authority;
-# - main push build/deploy remains separate from PR-head CI authorization;
-# - Human Merge is always separate.
+# Human Merge remains separate and mandatory. Retired M10 passkey authorization has no active
+# workflow trigger, dispatch input, authorization gate or reactivation switch in this workflow.
 jobs:
   build-and-test:
     name: build-and-test
@@ -89,142 +38,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: M10 CI-Autorisierung vor teuren Schritten prüfen
-        id: m10_authorization
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          M10_BOOTSTRAP_PR: '429'
-          M10_FIX_BRANCH: 'agent/fix-unit-invariants-m10-bypass'
-          # SECURITY (2026-08-25 architecture review, finding #10): the fix-branch bypass below used
-          # to trust the PR head ref string alone - any contributor able to open a PR could name a
-          # branch identically and skip the governance checks. Branch names are attacker-choosable and
-          # are not an identity; binding the exception to the exact repo (no fork) and the Owner's
-          # GitHub login closes that without touching the exception's intended, time-boxed scope.
-          M10_FIX_BRANCH_OWNER: 'SvenKulessa'
-          M10_CONSUMPTION_ID: ${{ inputs.m10_consumption_id }}
-          M10_APPROVAL_ID: ${{ inputs.m10_approval_id }}
-          M10_PR_NUMBER: ${{ inputs.m10_pr_number }}
-          M10_BASE_SHA: ${{ inputs.m10_base_sha }}
-          M10_HEAD_SHA: ${{ inputs.m10_head_sha }}
-          M10_AUTHORIZATION_DIGEST: ${{ inputs.m10_authorization_digest }}
-          M10_ACTION: ${{ inputs.m10_action }}
-        run: |
-          set -euo pipefail
-
-          if [ "${M10_CI_GATE_ENABLED:-false}" != 'true' ]; then
-            case "$EVENT_NAME" in
-              push)
-                test "$GITHUB_REF" = 'refs/heads/main'
-                echo 'mode=main-push' >> "$GITHUB_OUTPUT"
-                ;;
-              pull_request)
-                echo 'Owner-authorized operating mode: M10 CI gate is disabled; normal scope-classified PR CI proceeds.'
-                echo 'mode=m10-disabled-owner-override' >> "$GITHUB_OUTPUT"
-                ;;
-              workflow_dispatch)
-                echo 'M10 is operationally disabled: manual workflow_dispatch is not an alternate CI authorization path.' >&2
-                exit 1
-                ;;
-              *)
-                echo "Unsupported CI event while M10 is disabled: $EVENT_NAME" >&2
-                exit 1
-                ;;
-            esac
-            exit 0
-          fi
-
-          case "$EVENT_NAME" in
-            push)
-              test "$GITHUB_REF" = 'refs/heads/main'
-              echo 'mode=main-push' >> "$GITHUB_OUTPUT"
-              ;;
-
-            pull_request)
-              if [ "$PR_HEAD_REF" = "$M10_FIX_BRANCH" ] && [ "$PR_HEAD_REPO" = "$GITHUB_REPOSITORY" ] && [ "$PR_AUTHOR" = "$M10_FIX_BRANCH_OWNER" ]; then
-                echo 'Owner-authorized remediation: exact fix branch, same-repo head and Owner author may run build/test without consuming an M10 passkey.'
-                echo 'mode=fix-branch-bypass' >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
-
-              if [ "$PR_NUMBER" = "$M10_BOOTSTRAP_PR" ]; then
-                echo 'M10 Controlled-Cutover bootstrap: PR #429 darf einmalig den vollständigen Pre-Cutover-CI-Pfad validieren.'
-                echo 'mode=cutover-bootstrap' >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
-
-              echo 'M10 DENY: normaler PR-Event ist keine Autorisierung für teure CI. Owner-Passkey AUTHORIZE_PR_CI erforderlich.' >&2
-              exit 1
-              ;;
-
-            workflow_dispatch)
-              test "$GITHUB_REPOSITORY" = 'SvenKulessa/Finance'
-              test "$M10_ACTION" = 'AUTHORIZE_PR_CI'
-              test -n "$M10_CONSUMPTION_ID"
-              test -n "$M10_APPROVAL_ID"
-              test -n "$M10_PR_NUMBER"
-              test -n "$M10_BASE_SHA"
-              test -n "$M10_HEAD_SHA"
-              test -n "$M10_AUTHORIZATION_DIGEST"
-              test "$GITHUB_SHA" = "$M10_HEAD_SHA"
-              test "$GITHUB_REF_TYPE" = 'branch'
-
-              echo "::add-mask::$M10_CONSUMPTION_ID"
-
-              oidc_separator='?'
-              case "$ACTIONS_ID_TOKEN_REQUEST_URL" in *\?*) oidc_separator='&' ;; esac
-              oidc_response=$(curl --fail-with-body --silent --show-error \
-                --connect-timeout 10 --max-time 30 \
-                --header "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                "${ACTIONS_ID_TOKEN_REQUEST_URL}${oidc_separator}audience=https%3A%2F%2Fcapital-ai.online%2Fm10-workflow-gate")
-              m10_oidc_token=$(python3 -c 'import json,sys; value=json.load(sys.stdin).get("value", ""); print(value)' <<< "$oidc_response")
-              test -n "$m10_oidc_token"
-              echo "::add-mask::$m10_oidc_token"
-              unset oidc_response
-
-              gate_payload="$RUNNER_TEMP/m10-workflow-gate-${GITHUB_RUN_ID}.json"
-              cleanup_gate_payload() { rm -f "$gate_payload"; }
-              trap cleanup_gate_payload EXIT
-              umask 077
-              python3 - <<'PY' > "$gate_payload"
-          import json
-          import os
-          print(json.dumps({
-              'consumptionId': os.environ['M10_CONSUMPTION_ID'],
-              'approvalId': os.environ['M10_APPROVAL_ID'],
-              'repository': os.environ['GITHUB_REPOSITORY'],
-              'prNumber': os.environ['M10_PR_NUMBER'],
-              'baseSha': os.environ['M10_BASE_SHA'],
-              'headSha': os.environ['M10_HEAD_SHA'],
-              'authorizationDigest': os.environ['M10_AUTHORIZATION_DIGEST'],
-              'action': os.environ['M10_ACTION'],
-              'workflowRunId': os.environ['GITHUB_RUN_ID'],
-              'workflowRef': os.environ['GITHUB_REF'],
-          }))
-          PY
-
-              curl --fail-with-body --silent --show-error \
-                --connect-timeout 10 --max-time 30 \
-                --request POST \
-                --header 'Content-Type: application/json' \
-                --header "Authorization: Bearer $m10_oidc_token" \
-                --data-binary "@$gate_payload" \
-                'https://capital-ai.online/api/m10/credential-enrollment/authorize/workflow-gate'
-
-              unset m10_oidc_token
-              echo 'mode=m10-authorized' >> "$GITHUB_OUTPUT"
-              ;;
-
-            *)
-              echo "M10 DENY: unsupported CI event $EVENT_NAME" >&2
-              exit 1
-              ;;
-          esac
-
       - name: P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden
         id: cost_control
         if: github.event_name == 'pull_request'
@@ -247,25 +60,61 @@ jobs:
               run_id: context.runId,
             });
             const workflowId = currentRun.data.workflow_id;
+            const currentAttempt = Number(currentRun.data.run_attempt ?? 1);
 
-            const successfulRuns = await github.paginate(
-              github.rest.actions.listWorkflowRunsForRepo,
-              {
-                owner,
-                repo,
-                event: 'pull_request',
-                head_sha: headSha,
-                status: 'success',
-                per_page: 100,
-              },
-            );
+            let reusable = null;
+            let reusedAttempt = null;
 
-            const reusable = successfulRuns.find((run) => {
-              if (run.id === context.runId || run.workflow_id !== workflowId) return false;
-              const correlatedPr = (run.pull_requests ?? []).find((pr) => pr.number === prNumber);
-              return correlatedPr?.head?.sha === headSha
-                && correlatedPr?.base?.sha === baseSha;
-            });
+            if (currentAttempt > 1) {
+              try {
+                const previousAttempt = await github.request(
+                  'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}',
+                  {
+                    owner,
+                    repo,
+                    run_id: context.runId,
+                    attempt_number: currentAttempt - 1,
+                  },
+                );
+                const previous = previousAttempt.data;
+                const previousCorrelatedPr = (previous.pull_requests ?? []).find((pr) => pr.number === prNumber);
+                if (
+                  previous.conclusion === 'success'
+                  && previous.workflow_id === workflowId
+                  && previous.event === 'pull_request'
+                  && previous.head_sha === headSha
+                  && previousCorrelatedPr?.head?.sha === headSha
+                  && previousCorrelatedPr?.base?.sha === baseSha
+                ) {
+                  reusable = previous;
+                  reusedAttempt = currentAttempt - 1;
+                }
+              } catch (error) {
+                core.warning(`Vorheriger Workflow-Attempt konnte nicht sicher korreliert werden; vollständige CI bleibt aktiv: ${error.message}`);
+              }
+            }
+
+            if (!reusable) {
+              const successfulRuns = await github.paginate(
+                github.rest.actions.listWorkflowRunsForRepo,
+                {
+                  owner,
+                  repo,
+                  event: 'pull_request',
+                  head_sha: headSha,
+                  status: 'success',
+                  per_page: 100,
+                },
+              );
+
+              reusable = successfulRuns.find((run) => {
+                if (run.id === context.runId || run.workflow_id !== workflowId) return false;
+                const correlatedPr = (run.pull_requests ?? []).find((pr) => pr.number === prNumber);
+                return correlatedPr?.head?.sha === headSha
+                  && correlatedPr?.base?.sha === baseSha;
+              }) ?? null;
+              if (reusable) reusedAttempt = Number(reusable.run_attempt ?? 1);
+            }
 
             if (!reusable) {
               core.setOutput('reuse_exact_snapshot', 'false');
@@ -276,23 +125,24 @@ jobs:
             core.setOutput('reuse_exact_snapshot', 'true');
             core.setOutput('reused_run_id', String(reusable.id));
             core.setOutput('reused_run_number', String(reusable.run_number));
-            core.notice(`CI-Cost-Control: exakter PR-Snapshot bereits erfolgreich in CI Run #${reusable.run_number} validiert; Checkout/npm/Test/Build werden nicht erneut ausgeführt.`);
+            core.setOutput('reused_attempt', String(reusedAttempt));
+            core.notice(`CI-Cost-Control: exakter PR-Snapshot bereits erfolgreich in CI Run #${reusable.run_number}, Attempt ${reusedAttempt} validiert; Checkout/npm/Test/Build werden nicht erneut ausgeführt.`);
             await core.summary
               .addHeading('P0 CI Cost Control')
-              .addRaw(`Exakter Snapshot bereits validiert: PR #${prNumber}, head \`${headSha}\`, base \`${baseSha}\`, wiederverwendeter CI Run #${reusable.run_number}.`)
+              .addRaw(`Exakter Snapshot bereits validiert: PR #${prNumber}, head \`${headSha}\`, base \`${baseSha}\`, wiederverwendeter CI Run #${reusable.run_number}, Attempt ${reusedAttempt}.`)
               .write();
 
       - name: Exakten CI-PASS wiederverwenden
         if: steps.cost_control.outputs.reuse_exact_snapshot == 'true'
         run: |
-          echo "P0 Cost-Control: build-and-test PASS wird aus CI Run #${{ steps.cost_control.outputs.reused_run_number }} für denselben PR-Head und dieselbe Base wiederverwendet."
-          echo "M10 bleibt deaktiviert; diese Deduplizierung ist keine Autorisierung und erweitert keine Merge-/Deployment-Rechte."
+          echo "P0 Cost-Control: build-and-test PASS wird aus CI Run #${{ steps.cost_control.outputs.reused_run_number }}, Attempt ${{ steps.cost_control.outputs.reused_attempt }} für denselben PR-Head und dieselbe Base wiederverwendet."
+          echo "Diese Deduplizierung ist keine Autorisierung und erweitert keine Merge-/Deployment-Rechte."
 
       - name: Repository auschecken
         if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+          ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -302,10 +152,10 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_base_sha || github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event.pull_request.head.sha }}
-          PR_BASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_base_sha || github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           node scripts/pr/classifyPrScope.mjs
@@ -313,7 +163,6 @@ jobs:
       - name: Scope-Zusammenfassung
         if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         run: |
-          echo "m10_mode=${{ steps.m10_authorization.outputs.mode }}"
           echo "class=${{ steps.scope.outputs.class }}"
           echo "node=${{ steps.scope.outputs.node }} lint=${{ steps.scope.outputs.lint }} unit=${{ steps.scope.outputs.unit }}"
           echo "build=${{ steps.scope.outputs.build }} audit=${{ steps.scope.outputs.audit }} predeploy=${{ steps.scope.outputs.predeploy }}"

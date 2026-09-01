@@ -9,11 +9,11 @@ describe('CI and Render deployment control plane', () => {
   const ci = source('.github/workflows/ci.yml');
   const render = source('render.yaml');
 
-  it('keeps the M10 implementation auditable but operationally disables the PR gate', () => {
-    expect(ci).toContain("M10_CI_GATE_ENABLED: 'false'");
-    expect(ci).toContain('mode=m10-disabled-owner-override');
-    expect(ci).toContain('normal scope-classified PR CI proceeds');
-    expect(ci).toContain('manual workflow_dispatch is not an alternate CI authorization path');
+  it('does not expose the retired M10 authorization surface in active CI', () => {
+    expect(ci).not.toContain('M10_CI_GATE_ENABLED');
+    expect(ci).not.toContain('AUTHORIZE_PR_CI');
+    expect(ci).not.toContain('workflow_dispatch:');
+    expect(ci).not.toContain('/api/m10/');
   });
 
   it('keeps consolidated production deployment restricted to verified main pushes', () => {

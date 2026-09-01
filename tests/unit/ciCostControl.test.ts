@@ -19,20 +19,20 @@ function stepBlock(yaml: string, stepName: string): string {
 }
 
 describe('P0 GitHub Actions CI cost control', () => {
-  it('keeps the M10 passkey gate operationally disabled', () => {
+  it('contains no retired M10 authorization or manual dispatch surface', () => {
     const yaml = workflow();
-    expect(yaml).toContain("M10_CI_GATE_ENABLED: 'false'");
-    expect(yaml).toContain('M10 is operationally disabled: manual workflow_dispatch is not an alternate CI authorization path.');
+    expect(yaml).not.toContain('M10_CI_GATE_ENABLED');
+    expect(yaml).not.toContain('AUTHORIZE_PR_CI');
+    expect(yaml).not.toContain('workflow_dispatch:');
+    expect(yaml).not.toContain('/api/m10/');
   });
 
-  it('places cost control after the M10 state check but before checkout and expensive work', () => {
+  it('places cost control before checkout and expensive work', () => {
     const yaml = workflow();
-    const m10 = yaml.indexOf('M10 CI-Autorisierung vor teuren Schritten prüfen');
     const cost = yaml.indexOf('P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
     const checkout = yaml.indexOf('Repository auschecken');
 
-    expect(m10).toBeGreaterThan(-1);
-    expect(cost).toBeGreaterThan(m10);
+    expect(cost).toBeGreaterThan(-1);
     expect(checkout).toBeGreaterThan(cost);
   });
 
@@ -56,6 +56,20 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(cost).toContain('pr.number === prNumber');
     expect(cost).toContain('correlatedPr?.head?.sha === headSha');
     expect(cost).toContain('correlatedPr?.base?.sha === baseSha');
+  });
+
+  it('reuses a successful prior attempt only for the same exact PR snapshot', () => {
+    const cost = stepBlock(workflow(), 'P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
+
+    expect(cost).toContain('currentRun.data.run_attempt');
+    expect(cost).toContain("'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}'");
+    expect(cost).toContain('attempt_number: currentAttempt - 1');
+    expect(cost).toContain("previous.conclusion === 'success'");
+    expect(cost).toContain("previous.event === 'pull_request'");
+    expect(cost).toContain('previous.head_sha === headSha');
+    expect(cost).toContain('previousCorrelatedPr?.head?.sha === headSha');
+    expect(cost).toContain('previousCorrelatedPr?.base?.sha === baseSha');
+    expect(cost).toContain('vollständige CI bleibt aktiv');
   });
 
   it('limits snapshot reuse to pull_request events', () => {
