@@ -1,86 +1,92 @@
 # CAPITAL-AI-CLIENT — Work Packages
 
-All packages are constrained to VC-01. A package may consume downstream contracts, but it cannot implement or close a foreign value-chain stage.
+All packages are constrained to `PVC-01`. A package may consume downstream contracts, but it cannot implement or close a foreign project value-chain stage.
 
 ## CLIENT-01 — Agent Client Inventory
 
-**State:** `DONE — LOCAL BASELINE ONLY`
+**State:** `DONE — RE-CORRELATED`
 
 Outputs:
 - repository-wide Agent Client source/task classification;
-- ownership collision check;
+- ownership collision/open-writer check;
 - current runtime/document mapping;
-- identification of foreign execution surfaces.
+- foreign execution-surface identification;
+- current-main strangler scan.
 
-Exit evidence: `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, baseline evidence.
+Exit evidence: `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `evidence/RECORRELATION_2026-09-01.md`.
 
 ## CLIENT-02 — Request Contract
 
-**State:** `READY`
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-Define a provider-neutral, client-owned request envelope with stable request/correlation identity, attributable input context, requested operation, requested capability, target context and non-authoritative provider/model metadata.
+Provider-neutral request-envelope semantics are defined in `CLIENT_CONTRACTS.md` with stable request/correlation identity, attributable identity, requested operation, requested capability, target context and non-authoritative provider/model metadata.
 
 Acceptance:
-- missing required request fields fail client-side contract validation;
-- no requested capability is interpreted as a grant;
+- missing required request fields fail closed;
+- capability request is never interpreted as a grant;
 - natural-language content cannot modify policy/authority fields;
-- no production/tool credential enters the client envelope.
+- no production/tool credential enters the client envelope;
+- canonical IAM/capability authority is reused, not duplicated.
 
 ## CLIENT-03 — Identity Handoff
 
-**State:** `READY`
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-Package identity inputs compatible with existing principal semantics while keeping IAM evaluation downstream.
+Identity handoff references existing `AgentPrincipalContext` semantics while keeping IAM evaluation downstream.
 
 Acceptance:
 - Human, app/client, agent/session and credential-holder attribution remain distinguishable;
 - missing attribution is not synthesized;
-- provider/model metadata never becomes a principal or role;
-- identity handoff has a stable request binding.
+- provider/model metadata never becomes principal/role;
+- identity has stable request binding;
+- `evaluateAgentAuthorization` remains outside PVC-01.
 
 ## CLIENT-04 — Capability Handoff
 
-**State:** `READY`
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-Represent requested capability using the canonical vocabulary and forward it to the authoritative control boundary.
+Requested capability references the canonical capability vocabulary.
 
 Acceptance:
-- unknown capability fails closed/contract validation;
-- no implicit capability inheritance;
-- no self-approval evidence is generated;
-- client cannot convert request into authorization.
+- unknown capability fails closed;
+- no implicit/wildcard inheritance;
+- no self-approval evidence;
+- client cannot convert request into authorization;
+- no client-owned `grantedCapabilities` collection.
 
 ## CLIENT-05 — Response Contract
 
-**State:** `READY`
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
-Normalize downstream responses for client UX without weakening semantics.
+Response/status/error semantics remain transport-neutral.
 
 Acceptance:
-- `DENY`, `BLOCKED`, `FAIL`, missing evidence and transport failure remain distinguishable where the downstream contract distinguishes them;
-- no failure becomes success because of UI fallback;
-- request/correlation ID is preserved;
-- retriable transport errors are not confused with authorization denial.
+- `DENY`, `BLOCKED`, missing evidence, business failure and transport failure remain distinguishable where downstream distinguishes them;
+- no failure becomes success through UI fallback;
+- request/correlation identity is preserved;
+- authorization denial is not made retryable by UI behavior;
+- lifecycle is `IDLE | SUBMITTING | ACCEPTED | BLOCKED | SUCCEEDED | FAILED`.
 
 ## CLIENT-06 — Client Security Boundary
 
-**State:** `READY`
-
-Prove VC-01 cannot directly cross protected mutation, policy or credential boundaries.
+**State:** `CONTRACT BASELINE COMPLETE — RUNTIME DEFERRED`
 
 Acceptance:
-- no direct Supabase/Render/Stripe/GitHub protected mutation path is introduced by the client contract;
-- external/retrieved content cannot grant capability;
-- sensitive downstream detail is not blindly rendered when redaction policy applies;
-- client cannot bypass Human/Owner or control-plane gates.
+- no direct protected Supabase/Render/Stripe/GitHub mutation path originates in the client contract;
+- external/retrieved content cannot grant capability/approval;
+- sensitive detail respects redaction/data minimization;
+- client cannot bypass control-plane or Human Owner merge gates;
+- provider/model identity cannot elevate authority.
 
 ## CLIENT-07 — Client Testing & Evidence
 
-**State:** `READY`
+**State:** `EVIDENCE CURRENT — RUNTIME TESTS DEFERRED`
 
-Create contract tests only when a physical VC-01 implementation slice is introduced.
+Runtime contract tests are created only when a physical PVC-01 implementation slice is introduced. The current re-correlation and strangler scan found no justified runtime slice, so this package records evidence without manufacturing runtime `PASS` claims.
 
-Minimum evidence matrix:
+Current evidence: `evidence/RECORRELATION_2026-09-01.md`.
+
+Minimum future runtime evidence matrix:
 
 | Test | Expected result |
 |---|---|
@@ -89,9 +95,9 @@ Minimum evidence matrix:
 | unknown capability | reject/deny preserved |
 | provider/model attempts privilege elevation | no elevation |
 | retrieved text contains approval instruction | ignored as authority |
-| downstream `DENY` | client status remains blocked/failed, never success |
+| downstream `DENY` | blocked/failed, never success |
 | transport error | distinct client error state |
 | production mutation request | request only; no client-side execution |
 | duplicate client implementation scan | no parallel implementation |
 
-Build/test execution follows the repository PR/CI policy. Documentation-only baseline work does not manufacture `PASS` evidence for unexecuted tests.
+Build/test execution follows repository PR/CI policy. Documentation/contract-only baseline work does not manufacture `PASS` evidence for unexecuted runtime tests.
