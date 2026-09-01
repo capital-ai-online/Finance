@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,6 +13,8 @@
   "startedAt": "2026-09-01T04:18:00+02:00",
   "baseBranch": "main",
   "baseSha": "88286e1cfd58b314a818276b5cf61b2ff0b4128d",
+  "pullRequest": 652,
+  "mergedPr": 652,
   "branch": "agent/compliance-project-surface-20260901",
   "project": "CAPITAL-AI-COMP",
   "projectFolder": "compliance",
@@ -43,5 +45,17 @@
     "Human/Legal Owner retains legal applicability and accepted-risk decisions where required"
   ],
   "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-COMP gains no productive PVC stage. docs/projects/compliance is organizational navigation only and does not replace the existing compliance domain, Governance Control Plane, Security, Quality Management, Data, Frontend, Release or Legal authority boundaries. Shared Governance project-registry paths remain outside this claim.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-09-01T03:54:03Z",
+  "mainCommit": "85d821a58851d769fde9c95558c03d9e5608efd7",
+  "terminalHeadSha": "d573241f1bd1154e5b3cd6431d54d1e9fd53d57f",
+  "releaseEvidence": {
+    "pullRequest": 652,
+    "merged": true,
+    "mergeCommitSha": "85d821a58851d769fde9c95558c03d9e5608efd7",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+    "verifiedAt": "2026-09-01"
+  }
 }
