@@ -34,6 +34,7 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 - `P3_FVC_NAMESPACE_ASSESSMENT.md` — financial namespace assessment/handoffs.
 - `CROSS_PROJECT_HANDOFFS.md` — consolidated owner referrals.
 - `ADMIN_PANEL_PROCESS_GRAPH_HANDOFF.md` — Admin Panel process/dependency visualization handoff.
+- `OWNER_DEVICE_AUTHORIZATION_HANDOFF.md` — M10-independent cryptographic Human Owner device authorization contract for protected GitHub actions and staged ADR-0104 activation cutover.
 
 ## Non-goals
 
