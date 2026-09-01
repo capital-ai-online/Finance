@@ -10,8 +10,9 @@
 **Expiry:** automatic; `SESSION_START + PT8H`  
 **Project scope:** exactly one predeclared canonical CAPITAL-AI project and canonical `docs/projects/<project>/` folder per activation  
 **Activation quota:** maximum `3` successful ADR-0104 activations over the lifetime of this stable authority  
-**Mutation scope:** only Human-directed repository/provider mutations attributable to the project bound to the active session  
-**Supersession type:** temporary, chat-bound, project-bound, quota-limited, self-expiring Human Owner delegation  
+**Merge boundary:** every Pull Request MUST be merged by the Human Owner; merge execution is never delegated by ADR-0104  
+**Mutation scope:** only Human-directed repository/provider mutations attributable to the project bound to the active session, excluding Pull Request merge execution  
+**Supersession type:** temporary, chat-bound, project-bound, quota-limited, self-expiring Human Owner delegation with preserved Owner-only merge  
 
 ## 1. Human Owner decision
 
@@ -31,13 +32,28 @@ No `S4` or later activation is authorized by this ADR. A fourth activation requi
 
 A successful activation consumes its ordinal permanently even if it later expires or is revoked early. An invalid or rejected activation attempt that never becomes authorizing does not consume an ordinal.
 
+### 1.1 Non-delegable Human Owner merge boundary
+
+Every Pull Request governed by CAPITAL-AI, including every Pull Request created or updated during an active ADR-0104 session, MUST be merged by the Human Owner.
+
+ADR-0104 does not delegate, supersede, proxy or automate the Human Owner merge action. The delegated chat MUST NOT:
+
+- invoke a Pull Request merge operation;
+- enable or configure auto-merge for the Pull Request;
+- place the Pull Request into any mechanism whose expected effect is an automatic merge without a distinct Human Owner merge action;
+- treat green CI, approvals, labels, comments, reactions, elapsed time or an active ADR-0104 session as merge authorization or merge execution authority.
+
+The delegated executor may prepare a Pull Request, correlate it, update it, observe checks, report merge readiness and recommend the next action. The actual merge remains an explicit Human Owner action for every Pull Request without exception under ADR-0104.
+
 ## 2. Amendment bootstrap, activation and expiry
 
 ### 2.1 Amendment bootstrap
 
 This v1.2.0 amendment cannot authorize its own merge. Until the Pull Request introducing v1.2.0 is Human-merged into current `main`, ADR-0104 v1.1.0 remains the effective version of this stable authority.
 
-The amendment Pull Request therefore remains subject to the authority that is valid for the chat performing that work. Where no demonstrably valid ADR-0104 session is bound to that exact chat and project, the normal exact-snapshot Human Owner PR-creation and Human merge boundaries remain controlling.
+The amendment Pull Request remains subject to the normal Human Owner merge boundary regardless of any active or prior ADR-0104 session. No ADR-0104 session can merge this amendment on behalf of the Human Owner.
+
+Where no demonstrably valid ADR-0104 session is bound to the exact chat and project performing the work, the normal exact-snapshot Human Owner PR-creation gate also remains controlling.
 
 ### 2.2 Preconditions for every new activation
 
@@ -82,7 +98,7 @@ The Human Merge of PR #678 on `2026-09-01T13:48:30Z` created the original v1.1.0
 
 Because v1.1.0 did not bind S1 to exactly one predeclared canonical project folder, S1 MUST NOT retain repository-wide delegated authority after this v1.2.0 amendment becomes effective. Human Merge of v1.2.0 terminates any remaining unbound v1.1.0 delegated authority immediately. S1 remains consumed, leaving at most `S2` and `S3` for future valid activations.
 
-This transition is fail-closed and does not infer or retroactively guess a project binding for S1.
+This transition is fail-closed and does not infer or retroactively guess a project binding for S1. Any prior v1.1 merge-delegation wording is also terminated by v1.2.0; the Human Owner merge boundary is preserved for every subsequent Pull Request.
 
 ## 3. Project-bound session scope
 
@@ -110,9 +126,9 @@ The executor MUST:
 
 A different project may receive its own ADR-0104 activation only through a separate Human Owner activation in its own exact chat, and only if an unused activation ordinal remains.
 
-## 4. Temporary supersession edges
+## 4. Temporary supersession edges and preserved controls
 
-For the active eight-hour window only, ADR-0104 is the higher Human Owner decision for the bound chat and bound project scope and temporarily replaces the following approval controls to the stated extent.
+For the active eight-hour window only, ADR-0104 is the higher Human Owner decision for the bound chat and bound project scope and temporarily replaces only the approval controls explicitly identified below. The Human Owner merge boundary is explicitly excluded from supersession.
 
 ### 4.1 `CTRL-SDLC-PR-CREATE-001` — repeated exact-snapshot Owner approval
 
@@ -127,21 +143,22 @@ The executor MUST still immediately before PR creation:
 - render the current canonical PR template;
 - stop on unexpected SHA drift, unresolved overlap, project-ownership ambiguity or higher-authority conflict.
 
-A new Human approval message for each Base/Head pair is not required while the valid session remains active and project-bound.
+A new Human approval message for each Base/Head pair is not required while the valid session remains active and project-bound. This standing PR-creation authorization never extends to merge execution.
 
-### 4.2 `CTRL-MERGE-HUMAN-001` — repeated merge decision
+### 4.2 `CTRL-MERGE-HUMAN-001` — explicitly preserved and non-delegable
 
-The Human Owner delegates merge execution for eligible in-scope Pull Requests to the bound chat during the active window.
+`CTRL-MERGE-HUMAN-001` is not superseded by ADR-0104 v1.2.0.
 
-The executor may merge only when:
+For every Pull Request:
 
-- the exact PR/head is still attributable to the bound project and active session;
-- required hosted checks and required reviews/gates are satisfied or validly not applicable under current policy;
-- the branch contains current `main` or is otherwise mergeable under repository policy;
-- no unresolved security/data-integrity/governance blocker exists;
-- session expiry/revocation has not occurred.
+1. required checks/reviews/gates must reach their applicable state;
+2. current `main`, Pull Request head and relevant blockers must be correlated;
+3. the delegated executor may report the Pull Request as technically ready when supported by observed evidence;
+4. the Human Owner alone performs the merge action.
 
-This delegation is not self-approval by the model; it is execution under the Human Owner decision embodied by the valid ADR-0104 activation.
+The delegated executor MUST NOT merge the Pull Request, enable auto-merge, or invoke an equivalent mechanism that causes the Pull Request to merge without a distinct Human Owner merge action.
+
+This rule applies to ordinary in-project PRs, governance PRs, ADR-0104 activation-related PRs, rollback PRs and the ADR-0104 amendment PR itself.
 
 ### 4.3 Protected external-mutation approvals
 
@@ -151,14 +168,14 @@ For the active session, ADR-0104 is standing Human Owner authorization for conne
 - Supabase/database/schema/data mutations;
 - Stripe billing/product/price/entitlement mutations;
 - Render/service/environment/deployment mutations;
-- GitHub repository/settings/workflow mutations exposed by authorized tools;
+- GitHub repository/settings/workflow mutations exposed by authorized tools, except Pull Request merge execution and equivalent auto-merge behavior;
 - production resource creation/update/deletion;
 - DNS/TLS/domain mutations where an authorized execution provider exists;
 - security-control/configuration mutations;
 - destructive production-data mutations;
 - rollback/restore/recovery mutations.
 
-No additional Human approval message is required for each such mutation while the mutation is unambiguously inside the bound project scope.
+No additional Human approval message is required for each such mutation while the mutation is unambiguously inside the bound project scope, unless another applicable authority requires one. Pull Request merge remains excluded and Human Owner-only.
 
 Authorization does not waive technical safety prerequisites. Before a high-impact mutation the executor MUST validate target identity, expected effect, current state, project ownership, dependency/authority constraints and an appropriate rollback, restore, backup or compensating path. If the requested operation is inherently irreversible, that fact must be evident in the session audit record and the executor must fail closed on ambiguity.
 
@@ -166,6 +183,7 @@ Authorization does not waive technical safety prerequisites. Before a high-impac
 
 ADR-0104 v1.2.0 does **not** suspend or weaken:
 
+- `CTRL-MERGE-HUMAN-001` and the requirement that every Pull Request is merged by the Human Owner;
 - `CTRL-SDLC-CHAT-HANDOFF-001 / FOREIGN_PROJECT_HANDOFF` when another project/Primary Owner is required;
 - project-local foreign-execution prohibitions;
 - current-main/open-writer correlation;
@@ -181,16 +199,17 @@ Even full Human Owner delegation cannot and does not bypass constraints outside 
 1. applicable law, regulation, binding contractual obligations and external supervisory constraints;
 2. provider-enforced authentication, authorization, MFA/passkey, confirmation or capability limits that the connected service itself requires;
 3. tool/system safety constraints and capabilities of the execution surface;
-4. protection of reusable secrets and private credentials from model output/evidence;
-5. target and project-ownership verification plus fail-closed behavior on unresolved security-critical ambiguity;
-6. independent Security/Compliance/QM verification where a higher applicable authority requires independence as an assurance property;
-7. truthful evidence: no check, test, deployment or verification may be claimed as PASS unless actually observed.
+4. Human Owner-only Pull Request merge execution;
+5. protection of reusable secrets and private credentials from model output/evidence;
+6. target and project-ownership verification plus fail-closed behavior on unresolved security-critical ambiguity;
+7. independent Security/Compliance/QM verification where a higher applicable authority requires independence as an assurance property;
+8. truthful evidence: no check, test, deployment or verification may be claimed as PASS unless actually observed.
 
-The delegated executor cannot fabricate Human identity, bypass external authentication, grant itself capabilities that the execution provider does not expose or broaden its project scope through tool availability.
+The delegated executor cannot fabricate Human identity, bypass external authentication, grant itself capabilities that the execution provider does not expose, broaden its project scope through tool availability, or convert an active session into merge authority.
 
 ## 6. Branch, PR and audit behavior during the session
 
-The session removes repeated authorization friction inside one project; it does not remove the repository audit trail or project ownership boundaries.
+The session removes repeated authorization friction inside one project; it does not remove the repository audit trail, project ownership boundaries or the Human Owner merge boundary.
 
 Default execution remains:
 
@@ -201,9 +220,10 @@ CURRENT MAIN + OPEN-WRITER + PROJECT-OWNER CORRELATION
 → AVAILABLE LOW-COST PRE-PR VALIDATION
 → FINAL MAIN/HEAD/PROJECT CORRELATION
 → PR CREATION UNDER ACTIVE ADR-0104 SESSION
-→ REQUIRED HOSTED CHECKS
-→ MERGE UNDER ACTIVE ADR-0104 SESSION
-→ IN-PROJECT EXTERNAL MUTATIONS UNDER ACTIVE ADR-0104 SESSION
+→ REQUIRED HOSTED CHECKS / REVIEWS
+→ MERGE-READINESS REPORT
+→ HUMAN OWNER MERGE
+→ IN-PROJECT EXTERNAL MUTATIONS UNDER ACTIVE ADR-0104 SESSION WHERE STILL VALID/APPLICABLE
 → POST-MUTATION VERIFICATION / EVIDENCE
 ```
 
@@ -221,13 +241,14 @@ ADR-0104 v1.2.0 implements a Just-in-Time / Just-Enough privileged execution ses
 - hard `PT8H` time limit;
 - maximum three successful activations over the lifetime of the authority;
 - standing authorization only for Human-directed work inside the bound project;
+- Human Owner-only merge for every Pull Request;
 - per-work-item current-state, owner and target correlation;
 - technical validation and rollback requirements remain risk-proportionate;
 - audit trail remains mandatory;
 - automatic fail-closed expiry and explicit revocation are supported;
 - no in-place transfer of session or project scope.
 
-This design intentionally reduces the blast radius of v1.1.0. It is consistent with the security principles behind bounded session lifetime/session binding in NIST SP 800-63B-4 and minimum-privilege/user-context execution in OWASP LLM06:2025. Those external references are advisory engineering benchmarks and do not create repository authority.
+This design intentionally reduces the blast radius of v1.1.0 and preserves separation of duties at the merge boundary.
 
 ## 8. Mandatory supersession impact package
 
@@ -236,15 +257,15 @@ This design intentionally reduces the blast radius of v1.1.0. It is consistent w
 | Stable authority IDs | replacement version of `AUTH-ADR-HUMAN-OWNER-TIMEBOXED-EXECUTION-2026-09-01`; correlated sources `AUTH-GOV-AGENT-TRUST-ROOT`, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`, `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` |
 | Source artifacts | `/AGENTS.md` v2.2.1 owner-directed; Development Chain Execution Policy v2.1.0 active; Human Owner PR Approval Policy v3.0.0 active; current Governance Control Catalog |
 | Replacement artifact | `docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md` v1.2.0 |
-| Correlation | repeated PR-create approval, Human-only merge execution and repeated protected-mutation approval remain temporarily replaceable only inside one bound project; foreign-project routing is preserved |
-| Authority comparison | source controls are tier-3 governance policy/trust-root controls; ADR-0104 is an explicit Human Owner decision / Accepted ADR tier-2 within its temporary bound scope |
-| Semantic diff | v1.1 repository-wide one-chat delegation → v1.2 exactly-one-chat + exactly-one-project activation with lifetime quota `3` and no foreign-project bypass |
-| Operational impact | one bound chat may create PRs, merge eligible PRs and execute connected-provider mutations for one project without repeated Owner prompts; different chats/projects need separate activations |
-| Security impact | substantially reduced delegated blast radius through chat binding, project binding, lifetime quota, hard expiry, target correlation and fail-closed ownership checks |
+| Correlation | repeated PR-create approval and repeated protected-mutation approval are temporarily replaceable only inside one bound project; Human Owner-only merge and foreign-project routing are preserved |
+| Authority comparison | ADR-0104 is an explicit Human Owner decision / Accepted ADR tier-2 within its temporary bound scope but expressly declines to supersede the Human Owner merge boundary |
+| Semantic diff | v1.1 repository-wide one-chat delegation with merge delegation → v1.2 exactly-one-chat + exactly-one-project activation, lifetime quota `3`, no foreign-project bypass and non-delegable Human Owner merge |
+| Operational impact | one bound chat may create/update PRs and execute eligible connected-provider mutations for one project without repeated Owner prompts; every Pull Request still requires a Human Owner merge action |
+| Security impact | reduced delegated blast radius and restored separation of duties through chat binding, project binding, lifetime quota, hard expiry, target correlation and mandatory Human Owner merge |
 | Regulatory impact | no external legal/contractual obligation is superseded; repository authority cannot waive external requirements |
-| Evidence impact | activation ordinal, chat binding, project/folder binding, start/end, work item, SHAs, validations, mutations and rollback evidence remain traceable |
-| Legacy transition | PR #678 activation counts as S1; any remaining unbound v1.1 authority terminates when v1.2 becomes effective; no project binding is inferred |
-| Rollback | revoke session immediately; repository rollback via fresh branch/revert; provider rollback/restore/compensating action according to target capability |
+| Evidence impact | activation ordinal, chat binding, project/folder binding, start/end, work item, SHAs, validations, Human Owner merge evidence, mutations and rollback evidence remain traceable |
+| Legacy transition | PR #678 activation counts as S1; any remaining unbound v1.1 authority and any v1.1 merge-delegation effect terminate when v1.2 becomes effective |
+| Rollback | revoke session immediately; repository rollback via fresh branch/revert and subsequent Human Owner merge; provider rollback/restore/compensating action according to target capability |
 | Owner decision | this ADR records the Human Owner restriction; v1.2.0 effectiveness requires Human Merge of the amendment PR |
 
 ## 9. Semantic before/after matrix
@@ -256,10 +277,10 @@ This design intentionally reduces the blast radius of v1.1.0. It is consistent w
 | Cross-project implementation | allowed in same chat | prohibited; normal handoff applies | baseline handoff |
 | Activation count | one bootstrap session model | maximum three successful lifetime activations; PR #678 = S1 | consumed ordinal remains consumed |
 | PR creation | standing approval across session scope | standing approval only for bound-project work | per-PR approval restored |
-| Merge | delegated for in-scope PRs | delegated only for eligible bound-project PRs | Human-only merge restored |
-| Provider mutations | broad session scope | only bound-project attributable targets | separate approval restored |
-| Human identity | Human Owner remains principal | Human Owner remains principal | unchanged |
-| Audit / validation | required | required plus chat/project/quota evidence | required |
+| Merge | delegated for in-scope PRs | **Human Owner-only for every PR; never delegated** | Human Owner-only |
+| Provider mutations | broad session scope | only bound-project attributable targets; merge excluded | separate approval restored |
+| Human identity | Human Owner remains principal | Human Owner remains principal and performs every merge | unchanged |
+| Audit / validation | required | required plus chat/project/quota and Human merge evidence | required |
 | External law/provider auth | controlling | controlling | controlling |
 
 ## 10. Operational impact
@@ -270,12 +291,14 @@ Positive:
 - prevents a single privileged chat from roaming across the repository's project ownership model;
 - prevents copied/new chats from silently inheriting delegated authority;
 - caps the total number of successful ADR-0104 privilege windows at three;
+- preserves a mandatory Human Owner control point on every Pull Request merge;
 - preserves current-state correlation, hosted checks, audit evidence and rollback discipline;
 - authority expires automatically instead of becoming persistent agent privilege.
 
 Trade-offs:
 
-- cross-project roadmaps again require the canonical handoff path between project owners;
+- every Pull Request requires a distinct Human Owner merge action even during an active session;
+- cross-project roadmaps require the canonical handoff path between project owners;
 - moving work to a different chat or project consumes a new activation when one remains;
 - after S3, further use requires an explicit new Human Owner governance decision;
 - provider-side controls may still interrupt execution and cannot be superseded by repository policy.
@@ -297,7 +320,8 @@ For each successful activation retain where applicable:
 - session start and computed expiry;
 - Human Owner activation instruction/audit reference;
 - Human-directed work-item identity;
-- current-main SHA and branch/head/PR/merge SHA;
+- current-main SHA and branch/head/PR SHA;
+- Human Owner merge identity/audit reference and merge SHA for each merged Pull Request;
 - affected PVC/VC stages where relevant;
 - open-writer/project-owner correlation result;
 - mutation target and mutation class;
@@ -314,18 +338,19 @@ Before activation: an invalid/missing activation record has no authority and con
 
 During activation: the Human Owner may revoke the session at any time in its bound chat. Revocation terminates future delegated actions immediately. The executor stops any not-yet-committed high-impact operation where technically possible. The consumed ordinal remains used.
 
-Repository rollback uses the normal current-main branch/revert process. External rollback follows target-specific restore, recovery or compensating capabilities. If no safe rollback exists for a proposed mutation, the executor must surface that fact before executing and fail closed on uncertainty about target/effect.
+Repository rollback uses the normal current-main branch/revert process and requires Human Owner merge of the rollback Pull Request. External rollback follows target-specific restore, recovery or compensating capabilities. If no safe rollback exists for a proposed mutation, the executor must surface that fact before executing and fail closed on uncertainty about target/effect.
 
 ## 14. Supersedes / preserves
 
 Temporarily supersedes during a valid active window and only for Human-directed work owned by the bound project:
 
-- `AUTH-GOV-AGENT-TRUST-ROOT` only for repeated PR-create approval, repeated Human merge execution and repeated protected-mutation approval boundaries addressed here;
-- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` only for the repeated approval boundaries addressed here;
-- `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` only for repeated per-PR creation and merge approval during the active session.
+- `AUTH-GOV-AGENT-TRUST-ROOT` only for repeated PR-create approval and repeated protected-mutation approval boundaries addressed here;
+- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` only for those repeated approval boundaries addressed here;
+- `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` only for repeated per-PR creation approval during the active session.
 
-Explicitly preserves:
+Explicitly preserves and does not supersede:
 
+- `CTRL-MERGE-HUMAN-001`: every Pull Request is merged by the Human Owner and never by the delegated executor;
 - `CTRL-SDLC-CHAT-HANDOFF-001 / FOREIGN_PROJECT_HANDOFF` for any other project/Primary Owner;
 - project-local foreign-execution restrictions;
 - current-main/open-writer/project-owner correlation;
@@ -345,10 +370,11 @@ This v1.2.0 amendment is ready for PR creation only when:
 
 1. the existing ADR-0104 stable authority remains uniquely registered and its ADR Registry version is updated to `1.2.0`;
 2. the Authority Registry projects the same `1.2.0` identity/scope;
-3. the Governance Control Catalog represents single-chat/single-project binding, the three-activation lifetime quota and preserved foreign-project handoff;
-4. the known `CTRL-CI-M10-001` catalog regression is not carried forward while this work item touches the Control Catalog;
+3. the Governance Control Catalog represents single-chat/single-project binding, the three-activation lifetime quota, preserved foreign-project handoff and mandatory Human Owner-only merge;
+4. the known `CTRL-CI-M10-001` catalog repair remains preserved while this work item touches the Control Catalog;
 5. current `main` and open Pull Requests/writers are re-correlated immediately before PR creation;
 6. applicable structure/governance validation evidence is available or explicitly deferred to hosted checks according to check class;
 7. the then-applicable Human/Owner PR-creation gate is satisfied for the exact final Base/Head snapshot;
-8. Human Merge of the amendment PR makes v1.2.0 effective;
-9. subsequent S2/S3 activations require a separate explicit Human Owner activation in the exact target chat and exactly one predeclared canonical project folder.
+8. the amendment Pull Request is merged by the Human Owner; no delegated executor merge is permitted;
+9. subsequent S2/S3 activations require a separate explicit Human Owner activation in the exact target chat and exactly one predeclared canonical project folder;
+10. every subsequent Pull Request created under S2/S3 is merged only by the Human Owner.
