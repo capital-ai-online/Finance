@@ -416,12 +416,23 @@ export function DashboardDrawer({
   onChangeAdminTab,
   showAdminNavigation,
 }: DashboardDrawerProps) {
-  const [expandedSection, setExpandedSection] = React.useState<DashboardExpandedSection>('hub');
+  const [expandedSection, setExpandedSection] = React.useState<DashboardExpandedSection | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = React.useState<UniverseId | null>(null);
 
   React.useEffect(() => {
     setExpandedSection(getDashboardSection(activeView));
   }, [activeView]);
+
+  React.useEffect(() => {
+    if (!open) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   const navigate = (view: DashboardView) => {
     onNavigate(view);
@@ -509,7 +520,7 @@ export function DashboardDrawer({
                   label="Hauptzentrale"
                   icon={Orbit}
                   expanded={expandedSection === 'hub'}
-                  onToggle={() => setExpandedSection(expandedSection === 'hub' ? 'analysis' : 'hub')}
+                  onToggle={() => setExpandedSection(expandedSection === 'hub' ? null : 'hub')}
                 >
                   {HUB_ITEMS.map((item) => (
                     <NavItemButton key={item.view} item={item} activeView={activeView} onNavigate={navigate} />
@@ -521,7 +532,7 @@ export function DashboardDrawer({
                   label="Analysetools"
                   icon={TrendingUp}
                   expanded={expandedSection === 'analysis'}
-                  onToggle={() => setExpandedSection(expandedSection === 'analysis' ? 'hub' : 'analysis')}
+                  onToggle={() => setExpandedSection(expandedSection === 'analysis' ? null : 'analysis')}
                 >
                   {ANALYSIS_ITEMS.map((item) => (
                     <NavItemButton key={item.view} item={item} activeView={activeView} onNavigate={navigate} />
@@ -533,7 +544,7 @@ export function DashboardDrawer({
                   label="Asset-Universen"
                   icon={Compass}
                   expanded={expandedSection === 'universes'}
-                  onToggle={() => setExpandedSection(expandedSection === 'universes' ? 'analysis' : 'universes')}
+                  onToggle={() => setExpandedSection(expandedSection === 'universes' ? null : 'universes')}
                 >
                   <div className="space-y-2 pl-1">
                     {UNIVERSES.map((universe) => {
@@ -591,7 +602,7 @@ export function DashboardDrawer({
                     label="Admin-Portal"
                     icon={ShieldAlert}
                     expanded={expandedSection === 'system_admin'}
-                    onToggle={() => setExpandedSection(expandedSection === 'system_admin' ? 'hub' : 'system_admin')}
+                    onToggle={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
                     emphasis
                   >
                     {ADMIN_ITEMS.map(({ tab, label, icon: Icon }) => {
