@@ -23,11 +23,12 @@
 - **source_task:** `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS`
 - **task:** implement the OPS-owned User-Lifecycle/provider harness and stable server-side authentication/billing test contract after the merged Governance decisions.
 - **owner_scope:** Playwright/provider harness; Supabase Local Stack/Mailpit; Stripe Sandbox/Test Clocks; webhook/outbox/subscription projection tests; server-side auth and billing boundaries.
-- **status:** `ACCEPTED_INTO_OPS_PLANNING / NOT_IMPLEMENTED_BY_RECONCILIATION`.
+- **status:** `ACCEPTED_INTO_OPS_PLANNING / IMPLEMENTATION_IN_OPEN_PR_683 / NOT_IMPLEMENTED_BY_RECONCILIATION`.
+- **active_writer:** PR #683 / `agent/operations-user-lifecycle-simulation-20260901`; eight separate Lifecycle implementation/test/evidence paths; no changed-file overlap with this reconciliation candidate.
 - **required_return:** stable executable OPS test contract plus provider/runtime evidence for claims actually exercised; no Production mutation is implied.
 - **authority:** Governance decisions remain Governance-owned; Frontend projection, Security verification and Compliance assessment remain with their respective owners.
 
-The current Governance dependency map places Frontend after the stable OPS contract, and Security/Compliance after returned OPS/FE evidence. OPS therefore records those downstream dependencies but does not execute their foreign work.
+The current Governance dependency map places Frontend after the stable OPS contract, and Security/Compliance after returned OPS/FE evidence. OPS therefore records those downstream dependencies but does not execute their foreign work. An open PR is candidate evidence only and does not satisfy the required return until merged and re-correlated.
 
 ## Inbound — Security
 
@@ -53,7 +54,7 @@ Security does not transfer Security verification authority. Returned evidence us
 - **project_stage:** `PVC-05`
 - **target_project:** `CAPITAL-AI-GOV`
 - **task:** protected Platform Director/Governance decision and policy reconciliation.
-- **status:** dependency.
+- **status:** dependency. Current main includes merged PR #684 Governance hardening; OPS consumes that baseline but does not own its Authority.
 
 ## Conditional outbound — User Lifecycle
 
