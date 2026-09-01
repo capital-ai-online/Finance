@@ -1,13 +1,14 @@
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 artifact_role: "non_authorizing_execution_coordination"
-status: "GOVERNANCE_BOOTSTRAP_IN_CANDIDATE"
+status: "GOV_RECORRELATION_IN_CANDIDATE"
 
 repository:
   full_name: "SvenKulessa/Finance"
   default_branch: "main"
-  execution_baseline_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
-  initial_execution_baseline_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
+  current_correlation_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
+  bootstrap_execution_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
+  bootstrap_merge_sha: "3935e08a0289be69683b8af9004fc177a99b04c0"
   historical_evidence_sha: "d1a69971b3332bfec487b86c6ac210c973034d32"
   historical_evidence_is_authority: false
 
@@ -36,81 +37,81 @@ authorization:
     - "Produktive Google-OAuth-Konfigurationsaenderung"
     - "Stripe automatic_tax Aktivierung"
 
+bootstrap:
+  work_claim: "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
+  pull_request: 656
+  state: "MERGED"
+  merge_commit_sha: "3935e08a0289be69683b8af9004fc177a99b04c0"
+  claim_status: "released"
+  claim_exclusive: false
+
+writer_release:
+  pull_request: 661
+  state: "MERGED"
+  released_claims:
+    - "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
+    - "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
+    - "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01"
+    - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20"
+    - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
+
 work_claim:
-  id: "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
-  branch: "agent/governance-user-lifecycle-control-20260901"
+  id: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
+  branch: "agent/governance-user-lifecycle-recorrelation-20260901"
+  status: "active"
   exclusive: true
 
 precheck:
-  result: "PASS_FOR_GOV_BOOTSTRAP"
-  current_main_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
-  initial_main_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
+  result: "PASS_FOR_GOV_RECORRELATION"
+  current_main_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
   mandatory_sources_read: true
-  authority_overlap: "NONE_REQUIRING_NEW_AUTHORITY"
-  new_adr_required: false
-  new_ess_required: false
-  new_auth_required: false
-  new_ctrl_required: false
+  new_authority_required: false
   gov_target_path_active_writer_overlap: false
-  open_pull_requests: []
-  merged_during_candidate:
-    - number: 652
-      project: "CAPITAL-AI-COMP"
-      effect: "Project surface now present; work claim remains active/exclusive"
-    - number: 653
-      project: "CAPITAL-AI-FE"
-      effect: "Project surface now present; work claim remains active/exclusive"
-    - number: 654
-      project: "CAPITAL-AI-SEO"
-      effect: "Project surface now present"
-    - number: 655
-      project: "CAPITAL-AI-SOCIAL"
-      effect: "Project surface now present"
-  known_claims:
+  open_pull_requests:
+    - number: 669
+      project: "CAPITAL-AI-GOV"
+      scope: ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json only"
+      overlap: "NONE"
+  owner_implementation_branches_found: []
+  current_claim_correlation:
     - id: "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
-      observed_status: "active"
-      effect: "Blocks overlapping OPS follow-up work; does not block GOV bootstrap"
-    - id: "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20"
-      observed_status: "active"
-      correlated_pr: 463
-      pr_state: "merged"
-      effect: "Stale writer metadata; semantically relevant to FE lifecycle scope, no overlap with GOV bootstrap"
-    - id: "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01"
-      observed_status: "active"
-      correlated_pr: 653
-      pr_state: "merged"
-      effect: "Blocks overlapping FE project-surface lifecycle updates until terminalized/resolved"
-    - id: "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
-      observed_status: "active"
-      correlated_pr: 652
-      pr_state: "merged"
-      effect: "Blocks overlapping COMP project-surface lifecycle updates until terminalized/resolved"
-    - id: "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31"
       observed_status: "released"
-      effect: "Previously documented stale SEC blocker is no longer current"
+      exclusive: false
+      effect: "OPS lifecycle handoff no longer writer-blocked"
+    - id: "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01"
+      observed_status: "released"
+      exclusive: false
+      effect: "FE project-surface writer blocker resolved"
+    - id: "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20"
+      observed_status: "released"
+      exclusive: false
+      effect: "FE authority-correlation writer blocker resolved"
+    - id: "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
+      observed_status: "released"
+      exclusive: false
+      effect: "COMP project-surface writer blocker resolved"
 
 owner_execution:
   governance:
     project: "CAPITAL-AI-GOV"
-    mode: "EXECUTE_LOCAL_SCOPE"
+    mode: "EXECUTE_LOCAL_RECORRELATION"
   operations:
     project: "CAPITAL-AI-OPS"
-    mode: "REFERRED_NOT_EXECUTED"
-    blocker: "Active exclusive OPS work claim must be correlated/terminalized before overlapping lifecycle work"
+    mode: "READY_FOR_OWNER_HANDOFF"
+    prerequisite: "Consume merged GOV bootstrap and current recorrelation"
   frontend:
     project: "CAPITAL-AI-FE"
     mode: "REFERRED_NOT_EXECUTED"
-    prerequisite: "Project surface is merged via PR #653; DEC-001 and DEC-002 remain gates"
-    blocker: "Active FE project-surface writer plus stale merged Frontend authority writer must be resolved before overlapping FE lifecycle work"
+    blocker: "GOV-ULS-DEC-001, GOV-ULS-DEC-002 and stable OPS test contract"
   security:
     project: "CAPITAL-AI-SEC"
     mode: "REFERRED_NOT_EXECUTED"
+    blocker: "OPS and FE evidence not yet available"
     verification_independent: true
   compliance:
     project: "CAPITAL-AI-COMP"
     mode: "REFERRED_NOT_EXECUTED"
-    prerequisite: "Project surface is merged via PR #652"
-    blocker: "Active/exclusive project-surface writer must be resolved before overlapping COMP lifecycle work"
+    blocker: "OPS/FE evidence and independent applicability/classification review not yet available"
 
 simulation_contract:
   primary_identity_key: "supabase_auth_user_id"
@@ -127,9 +128,9 @@ simulation_contract:
   duplicate_authorities_prohibited: true
 
 exit_gate:
-  bootstrap_requires:
-    - "Manifest complete"
-    - "All owners resolved"
-    - "All decisions registered"
-    - "PR dependencies documented"
-  current_result: "CANDIDATE_EVIDENCE_PENDING_FINAL_RECORRELATION_AND_EXACT_PR_SNAPSHOT_APPROVAL"
+  current_result: "GOV_CANDIDATE_PENDING_VALIDATION_RECORRELATION_AND_EXACT_PR_SNAPSHOT_APPROVAL"
+  next_foreign_owner: "CAPITAL-AI-OPS"
+  owner_decisions_required_before_frontend:
+    - "GOV-ULS-DEC-001"
+    - "GOV-ULS-DEC-002"
+

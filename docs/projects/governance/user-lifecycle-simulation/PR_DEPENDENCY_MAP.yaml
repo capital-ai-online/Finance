@@ -1,6 +1,7 @@
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 rule: "one_primary_owner_per_pr"
+correlation_baseline: "main@190f319ec8026d8141601b69a8bb4d97470ec5ea"
 human_merge_only: true
 auto_merge: false
 production_deploy_from_task: false
@@ -12,8 +13,10 @@ pull_requests:
     project_folder: "docs/projects/governance/"
     pvc: "PVC-05"
     branch: "agent/governance-user-lifecycle-control-20260901"
+    pull_request: 656
+    merge_commit_sha: "3935e08a0289be69683b8af9004fc177a99b04c0"
     title: "[CAPITAL-AI-GOV][governance] User-Lifecycle-Simulation steuern"
-    state: "CANDIDATE_IN_PROGRESS"
+    state: "MERGED"
     productive_code: false
     depends_on: []
 
@@ -25,12 +28,15 @@ pull_requests:
     secondary_pvc: "PVC-08"
     branch: "agent/operations-user-lifecycle-simulation-20260901"
     title: "[CAPITAL-AI-OPS][operations] User-Lifecycle-Testsystem implementieren"
-    state: "REFERRED_NOT_EXECUTED"
+    state: "READY_FOR_OWNER_HANDOFF"
     productive_code: true
     depends_on:
-      - "PR-GOV-ULS-BOOTSTRAP merged or otherwise accepted as stable handoff baseline"
-    correlation_blockers:
-      - "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31 is active/exclusive on docs/projects/operations/**"
+      - "PR-GOV-ULS-BOOTSTRAP merged"
+      - "Current GOV lifecycle recorrelation consumed"
+    resolved_correlation_blockers:
+      - claim: "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
+        status: "released"
+        release_pr: 661
     owner_scope:
       - "Playwright/provider harness"
       - "Supabase Local Stack and Mailpit"
@@ -45,17 +51,21 @@ pull_requests:
     relationship: "cross_cutting_presentation"
     branch: "agent/frontend-user-lifecycle-projection-20260901"
     title: "[CAPITAL-AI-FE][frontend] Pricing und Lifecycle-UI vereinheitlichen"
-    state: "REFERRED_NOT_EXECUTED"
+    state: "BLOCKED_BY_DECISIONS_AND_OPS_CONTRACT"
     productive_code: true
     depends_on:
-      - "PR-GOV-ULS-BOOTSTRAP"
+      - "PR-GOV-ULS-BOOTSTRAP merged"
       - "GOV-ULS-DEC-001 resolved"
       - "GOV-ULS-DEC-002 resolved"
       - "PR-OPS-ULS-HARNESS or stable OPS test contract"
-      - "PR #653 project surface is merged on main"
-    correlation_blockers:
-      - "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01 remains active/exclusive after merged PR #653"
-      - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20 remains active/exclusive after merged PR #463 and must be semantically correlated before FE lifecycle work"
+      - "PR #653 project surface merged"
+    resolved_correlation_blockers:
+      - claim: "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01"
+        status: "released"
+        release_pr: 661
+      - claim: "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20"
+        status: "released"
+        release_pr: 661
     owner_scope:
       - "Login/registration/OAuth/logout UX"
       - "Pricing and entitlement projection"
@@ -70,11 +80,11 @@ pull_requests:
     relationship: "cross_cutting_security"
     branch: "agent/security-user-lifecycle-assurance-20260901"
     title: "[CAPITAL-AI-SEC][security] User-Lifecycle-Sicherheit verifizieren"
-    state: "REFERRED_NOT_EXECUTED"
+    state: "BLOCKED_BY_OPS_FE_EVIDENCE"
     productive_code: false
     depends_on:
-      - "PR-OPS-ULS-HARNESS"
-      - "PR-FE-ULS-PROJECTION"
+      - "PR-OPS-ULS-HARNESS merged return"
+      - "PR-FE-ULS-PROJECTION merged return"
     verification_owner: "CAPITAL-AI-SEC"
     remediation_routing:
       backend_provider: "CAPITAL-AI-OPS"
@@ -87,14 +97,17 @@ pull_requests:
     relationship: "cross_cutting_compliance"
     branch: "agent/compliance-user-lifecycle-consumer-20260901"
     title: "[CAPITAL-AI-COMP][compliance] Kauf und Kuendigung pruefen"
-    state: "REFERRED_NOT_EXECUTED"
+    state: "BLOCKED_BY_OPS_FE_EVIDENCE_AND_APPLICABILITY_REVIEW"
     productive_code: false
     depends_on:
-      - "PR-FE-ULS-PROJECTION"
-      - "PR-OPS-ULS-HARNESS"
-      - "PR #652 project surface is merged on main"
-    correlation_blockers:
-      - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01 remains active/exclusive after merged PR #652 and must be terminalized or proven non-overlapping before COMP lifecycle work"
+      - "PR-FE-ULS-PROJECTION merged return"
+      - "PR-OPS-ULS-HARNESS merged return"
+      - "BGB 312j/312k applicability/classification reviewed by competent owner"
+      - "PR #652 project surface merged"
+    resolved_correlation_blockers:
+      - claim: "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
+        status: "released"
+        release_pr: 661
     legal_advice_claimed: false
     remediation_routing:
       ui: "CAPITAL-AI-FE"
@@ -121,7 +134,8 @@ execution_rules:
   changed_file_overlap_check: true
   semantic_overlap_check: true
   exact_base_head_snapshot_required: true
-  exact_snapshot_owner_approval_required_if_agents_requires: true
+  exact_snapshot_owner_approval_required: true
   pr_language: "de-DE"
   title_contains_project_name: true
   title_contains_project_folder_slug: true
+

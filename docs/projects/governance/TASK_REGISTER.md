@@ -2,8 +2,8 @@
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-01  
 **Original consolidation baseline:** `main@64a3415781a50177798cbe9404b1855735e5371a`  
-**Current project-folder correlation baseline:** `main@37bf7d954363d99d67083edbf520bd77892888dd`  
-**User-Lifecycle orchestration baseline:** `main@37bf7d954363d99d67083edbf520bd77892888dd`  
+**Current project-folder correlation baseline:** `main@190f319ec8026d8141601b69a8bb4d97470ec5ea`  
+**User-Lifecycle orchestration baseline:** `main@190f319ec8026d8141601b69a8bb4d97470ec5ea`  
 **Role:** execution backlog / traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV` for local rows only
 
@@ -14,6 +14,7 @@
 - `OPEN_GOV` — local GOV follow-up remains after this candidate.
 - `REFERRED_NOT_EXECUTED` — foreign project/Primary Owner must execute.
 - `REFERRED` — foreign work has target-side evidence/acceptance or merged return evidence but remains outside GOV execution authority.
+- `READY_FOR_HANDOFF` — the current correlation allows an atomic foreign-owner handoff; implementation remains foreign.
 - `DEPENDENCY` — cross-cutting participant/evidence dependency.
 - `HISTORICAL_REUSE_ONLY` — old branch/artifact is input, not a current merge source.
 
@@ -51,24 +52,25 @@
 | `GOV-CHAT-028` | Resolve canonical project-folder identities for implemented cross-cutting projects SEC/COMP/FE/SEO/SOCIAL | CAPITAL-AI-GOV | `DONE_MAIN` | target project surfaces now materialized on main |
 | `GOV-CHAT-029` | Terminalize stale merged `CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31` writer metadata | CAPITAL-AI-SEC | `DONE_MAIN` | claim is `released`; preserve PR #631 evidence |
 | `GOV-CHAT-030` | Materialize `docs/projects/security/**` navigation | CAPITAL-AI-SEC | `DONE_MAIN` | merged via PR #647 |
-| `GOV-CHAT-031` | Materialize `docs/projects/compliance/**` navigation | CAPITAL-AI-COMP | `DONE_MAIN` | merged via PR #652; stale project-surface writer remains a separate owner-local integrity task |
-| `GOV-CHAT-032` | Materialize `docs/projects/frontend/**` navigation | CAPITAL-AI-FE | `DONE_MAIN` | merged via PR #653; stale project-surface writer remains a separate owner-local integrity task |
+| `GOV-CHAT-031` | Materialize `docs/projects/compliance/**` navigation | CAPITAL-AI-COMP | `DONE_MAIN` | merged via PR #652; project-surface writer released via PR #661 |
+| `GOV-CHAT-032` | Materialize `docs/projects/frontend/**` navigation | CAPITAL-AI-FE | `DONE_MAIN` | merged via PR #653; project/authority writers released via PR #661 |
 | `GOV-CHAT-033` | Materialize `docs/projects/seo/**` navigation | CAPITAL-AI-SEO | `DONE_MAIN` | merged via PR #654 |
 | `GOV-CHAT-034` | Materialize `docs/projects/social-media/**` navigation | CAPITAL-AI-SOCIAL | `DONE_MAIN` | merged via PR #655 |
 | `GOV-CHAT-035` | Complete canonical Documentary project surface under `docs/projects/documentary/**` | CAPITAL-AI-DOC | `DONE_MAIN` | merged via PR #645 |
 | `GOV-CHAT-036` | Normalize owner-side Handoff target folders after cross-cutting project surfaces merge | referring project owners | `REFERRED_NOT_EXECUTED` | owner-local follow-up where still required |
-| `GOV-CHAT-037` | Bootstrap complete User-Lifecycle-Simulation governance orchestration | CAPITAL-AI-GOV | `IN_CANDIDATE` | six required artifacts + roadmap/task correlation; no productive code |
+| `GOV-CHAT-037` | Bootstrap complete User-Lifecycle-Simulation governance orchestration | CAPITAL-AI-GOV | `DONE_MAIN` | six required artifacts merged via PR #656; no productive code |
 | `GOV-CHAT-038` | Resolve Pro annual-price rule (`248 EUR` vs `313.20 EUR`) | CAPITAL-AI-GOV | `OPEN_GOV` | `GOV-ULS-DEC-001`; blocks FE annual Pro projection |
 | `GOV-CHAT-039` | Resolve logout semantics (local/global/both) | CAPITAL-AI-GOV | `OPEN_GOV` | `GOV-ULS-DEC-002`; recommendation: both with explicit UI |
-| `GOV-CHAT-040` | Implement lifecycle harness and provider tests | CAPITAL-AI-OPS | `REFERRED_NOT_EXECUTED` | first resolve active exclusive `CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31`; then owner-scoped OPS PR |
-| `GOV-CHAT-041` | Unify lifecycle/pricing/entitlement UI projection | CAPITAL-AI-FE | `REFERRED_NOT_EXECUTED` | project surface merged #653; first resolve active FE writers, then decisions 001/002 + stable OPS contract |
+| `GOV-CHAT-040` | Implement lifecycle harness and provider tests | CAPITAL-AI-OPS | `READY_FOR_HANDOFF` | OPS writer released via PR #661; next action is an owner-scoped OPS prompt/branch, not GOV implementation |
+| `GOV-CHAT-041` | Unify lifecycle/pricing/entitlement UI projection | CAPITAL-AI-FE | `REFERRED_NOT_EXECUTED` | FE writers released via PR #661; still blocked by decisions 001/002 + stable OPS contract |
 | `GOV-CHAT-042` | Independently verify User-Lifecycle Security properties | CAPITAL-AI-SEC | `REFERRED_NOT_EXECUTED` | after OPS/FE evidence; Security alone owns final Security verification |
-| `GOV-CHAT-043` | Assess purchase/cancellation consumer-compliance flow | CAPITAL-AI-COMP | `REFERRED_NOT_EXECUTED` | project surface merged #652; first resolve stale COMP writer, then consume OPS/FE evidence; technical evidence is not legal advice |
+| `GOV-CHAT-043` | Assess purchase/cancellation consumer-compliance flow | CAPITAL-AI-COMP | `REFERRED_NOT_EXECUTED` | COMP writer released via PR #661; consume OPS/FE evidence and retain independent applicability review; technical evidence is not legal advice |
 | `GOV-CHAT-044` | Correlate merged owner SHAs/evidence and close User-Lifecycle orchestration | CAPITAL-AI-GOV | `DEPENDENCY` | separate GOV closeout only after OPS/FE/SEC/COMP returns |
-| `GOV-CHAT-045` | Terminalize stale merged `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` writer metadata | CAPITAL-AI-GOV / FE correlation | `OPEN_GOV` | PR #463 merged, claim remains active/exclusive; must be resolved before semantic FE overlap |
-| `GOV-CHAT-046` | Terminalize stale merged `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-COMP | `REFERRED_NOT_EXECUTED` | PR #652 merged, claim remains active/exclusive |
+| `GOV-CHAT-045` | Terminalize stale merged `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` writer metadata | CAPITAL-AI-GOV / FE correlation | `DONE_MAIN` | released with merge evidence via PR #661 |
+| `GOV-CHAT-046` | Terminalize stale merged `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-COMP | `DONE_MAIN` | released with merge evidence via PR #661 |
 | `GOV-CHAT-047` | Determine applicability of BGB §312j/§312k to CAPITAL-AI subscription flow before legal PASS/FAIL gating | CAPITAL-AI-COMP / Human-Legal authority | `REFERRED_NOT_EXECUTED` | official provisions contain financial-services exceptions; GOV keeps technical checks conditional |
-| `GOV-CHAT-048` | Terminalize stale merged `CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-FE | `REFERRED_NOT_EXECUTED` | PR #653 merged, claim remains active/exclusive |
+| `GOV-CHAT-048` | Terminalize stale merged `CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-FE | `DONE_MAIN` | released with merge evidence via PR #661 |
+| `GOV-CHAT-049` | Recorrelate User-Lifecycle owner sequence after PRs #656/#661 | CAPITAL-AI-GOV | `IN_CANDIDATE` | current-main status/findings/dependencies only; no foreign implementation or production mutation |
 
 ## Historical GOV branch disposition
 
@@ -85,7 +87,7 @@
 
 ## Current scoped GOV writer
 
-`agent/governance-user-lifecycle-control-20260901` owns only the paths declared by `.ai/work-claims/CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01.json`: this task register, the Governance roadmap, the claim itself and `docs/projects/governance/user-lifecycle-simulation/**`. It does not own or modify OPS, FE, SEC or COMP productive/project-owned implementation surfaces.
+`agent/governance-user-lifecycle-recorrelation-20260901` owns only the paths declared by `.ai/work-claims/CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01.json`: this task register, the Governance roadmap, the new claim and `docs/projects/governance/user-lifecycle-simulation/**`. It does not own or modify OPS, FE, SEC or COMP productive/project-owned implementation surfaces.
 
 ## Consolidation rule
 
