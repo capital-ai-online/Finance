@@ -67,6 +67,10 @@ async function openPullRequests(owner, repo, name) {
   return github(`/repos/${owner}/${repo}/pulls?state=open&base=${BASE_BRANCH}&head=${head}&per_page=100`);
 }
 
+async function openPullRequestsUsingBase(owner, repo, name) {
+  return github(`/repos/${owner}/${repo}/pulls?state=open&base=${encodeURIComponent(name)}&per_page=100`);
+}
+
 async function closedPullRequests(owner, repo, name) {
   const head = encodeURIComponent(`${owner}:${name}`);
   return github(`/repos/${owner}/${repo}/pulls?state=closed&base=${BASE_BRANCH}&head=${head}&per_page=100&sort=updated&direction=desc`);
@@ -98,6 +102,9 @@ async function validateCandidate(owner, repo, branch, now, graceMinutes) {
   const openPrs = await openPullRequests(owner, repo, name);
   if (openPrs.length > 0) return { eligible: false, reason: `open-pr:#${openPrs[0].number}` };
 
+  const dependentPrs = await openPullRequestsUsingBase(owner, repo, name);
+  if (dependentPrs.length > 0) return { eligible: false, reason: `open-pr-base:#${dependentPrs[0].number}` };
+
   const merged = await mergedIntoMain(owner, repo, name, initialSha);
   if (!merged.eligible) return merged;
   return { eligible: true, reason: merged.reason, sha: initialSha };
@@ -109,6 +116,8 @@ async function revalidateBeforeDelete(owner, repo, name, expectedSha) {
   if (current.commit?.sha !== expectedSha) return { ok: false, reason: 'tip-moved-on-recheck' };
   const openPrs = await openPullRequests(owner, repo, name);
   if (openPrs.length > 0) return { ok: false, reason: `open-pr-on-recheck:#${openPrs[0].number}` };
+  const dependentPrs = await openPullRequestsUsingBase(owner, repo, name);
+  if (dependentPrs.length > 0) return { ok: false, reason: `open-pr-base-on-recheck:#${dependentPrs[0].number}` };
   const merged = await mergedIntoMain(owner, repo, name, expectedSha);
   if (!merged.eligible) return { ok: false, reason: `merge-proof-lost:${merged.reason}` };
   return { ok: true, reason: merged.reason };
