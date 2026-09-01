@@ -3,11 +3,11 @@
 **Project ID:** `CAPITAL-AI-OPS`  
 **Document role:** canonical project execution roadmap / non-authorizing  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
-**Version:** `2.2.0`  
+**Version:** `2.3.0`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
-**Date:** `2026-08-31`  
-**Repository baseline:** `main@b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
-**Open PR baseline:** none at synchronization  
+**Date:** `2026-09-01`  
+**Correlation baseline:** `main@19b2527de88444b999b7820c5a6712e8d80b60df`  
+**Open PR baseline:** none at OPS-02-SEC-06 start correlation  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 ## 1. Objective
@@ -43,12 +43,13 @@ PVC-02 Controlled Implementation
 10. Release does not imply Production deployment.
 11. Production mutation requires separate current authorization.
 12. Security verification remains independent under CAPITAL-AI-SEC.
+13. Browser/local subscription projection is presentation state only and cannot grant a protected capability.
 
 ## 4. Workstreams
 
 | Workstream | PVC | Scope | Current state |
 |---|---|---|---|
-| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE |
+| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE — `OPS-02-SEC-06` parent inventory evidence ready; child remediation open |
 | `OPS-04` Supervisor | `PVC-04` | observation, evaluation, escalation, approved bounded recovery | PARTIAL |
 | `OPS-06` Version Management | `PVC-06` | toolchain/version identity and controlled transition coordination | PARTIAL / BOUNDARY RESOLVED |
 | `OPS-07` Release Management | `PVC-07` | Release candidate evidence, gate execution, rollback contract | PARTIAL |
@@ -75,16 +76,24 @@ No runtime component is moved solely for organizational ownership:
 | `S1-R2-03` Node control-plane convergence | `PVC-06` | converge approved Node identity in target-owned config/control-plane | independent Security identity verification | `REFERRED_NOT_EXECUTED` → OPS remediation |
 | `S1-R2-04` fatal process handling | `PVC-04` + evidence from `PVC-08` | fail-fast implementation/recovery evidence | negative child-process + runtime recovery verification | OPS remediation/evidence |
 | `S1-R2-05` Stripe redirect boundary | `PVC-02` | server-owned redirect policy in affected implementation | open-redirect DENY verification | OPS remediation |
-| `S1-R2-06` entitlement authority | `PVC-02` | parent protected-capability inventory and server-enforcement coordination | escalation/forgery/missing-auth DENY verification | ACTIVE parent package |
+| `S1-R2-06` entitlement authority | `PVC-02` | parent protected-capability inventory and server-enforcement coordination | escalation/forgery/missing-auth/stale-entitlement/alternate-path DENY verification | **PARENT INVENTORY EVIDENCE READY / CHILD REMEDIATION REFERRED / SECURITY VERIFICATION PENDING** |
 | `S1-R2-07` recovery / RPO / RTO | `PVC-08` | approved recovery objectives, recurring off-site backup, isolated measured restore | Security verifies measured/integrity evidence | OPS runtime evidence |
 | `S1-R2-09` strict CSP promotion | `PVC-08` | no strict promotion until compatibility evidence is accepted | Security verifies promotion evidence | WAITING_FOR_EVIDENCE |
 | `S1-R2-10` demo billing isolation | `PVC-08` | production bundle/runtime reachability evidence | Security verifies DEV simulation unreachable | WAITING_FOR_EVIDENCE |
 
 `S1-R2-11` remains primary `CAPITAL-AI-DATA / PVC-10`. OPS accepts only a later secondary code/tooling handoff if DATA/Security identifies an OPS-owned implementation dependency.
 
+### S1-R2-06 parent result
+
+Canonical evidence: `controlled-implementation/OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md`.
+
+The seven canonical subscription capabilities are now classified. Current residuals include canonical verified-score alternate routes without the shared screening quota, paid backtest/Monte-Carlo execution without authoritative paid entitlement, an unbound `full_ai_analysis` product key, public Newsfeed routes conflicting with the accepted paid plan, and a fail-closed Buffett bearer integration gap. The PDF export path is retained as the current server-enforced reference pattern.
+
+OPS does not implement the identified FINTECH/DATA child work on this parent branch.
+
 ## 7. Priority execution queue
 
-1. `OPS-02-SEC-06` — premium/protected capability inventory and child-owner routing (`S1-R2-06`).
+1. `OPS-02-SEC-06` — **parent inventory EVIDENCE_READY**; track child returns and CAPITAL-AI-SEC verification, but do not absorb foreign remediation.
 2. `OPS-06-SEC-03` — Node control-plane convergence (`S1-R2-03`).
 3. `OPS-04-SEC-04` — fatal process handling and recovery contract (`S1-R2-04`).
 4. `OPS-02-SEC-05` — Stripe redirect boundary (`S1-R2-05`).
@@ -102,8 +111,11 @@ No Security finding is marked VERIFIED by this roadmap.
 - `CAPITAL-AI-GOV / PVC-05`: policy/Platform Director decisions, governance authority, project model.
 - `CAPITAL-AI-DOC / PVC-03`: Documentary/evidence handoff.
 - `CAPITAL-AI-SEC`: Security requirements/findings/tests/independent verification; no productive PVC ownership.
+- `CAPITAL-AI-DATA / PVC-09`: R2-06 Newsfeed evidence-ingress child remediation from the protected-capability inventory.
 - `CAPITAL-AI-DATA / PVC-10`: S1-R2-11 primary evidence identity/freshness ownership.
-- `CAPITAL-AI-CLIENT / PVC-01` and `CAPITAL-AI-FINTECH / PVC-12..17`: child entitlement remediation only when the R2-06 inventory identifies their productive code.
+- `CAPITAL-AI-FINTECH / PVC-15`: R2-06 backtest/Monte-Carlo/full-AI/Buffett productive-capability child remediation.
+- `CAPITAL-AI-FINTECH / PVC-16`: R2-06 canonical verified-screening alternate-route child remediation.
+- `CAPITAL-AI-CLIENT / PVC-01`: child entitlement remediation only if a later inventory/implementation step identifies Agent Client productive code; no such productive Client path is claimed by this parent package.
 - SEO/marketing surfaces may supply CSP compatibility evidence but own no Production Operations stage.
 
 ## 9. Validation / Definition of Done
@@ -116,12 +128,13 @@ No Security finding is marked VERIFIED by this roadmap.
 - [x] Security PR #631 handoffs correlated to OPS-owned stages;
 - [x] R2-11 remains DATA-owned unless a secondary OPS handoff is created;
 - [x] Security return contract defined;
+- [x] `OPS-02-SEC-06` parent premium/protected capability inventory completed and child owners routed without foreign implementation;
 - [ ] target-owned technical remediation packages implemented on separate bounded branches where code changes are required;
-- [ ] applicable positive/negative Security tests executed per package;
+- [ ] applicable positive/negative Security tests executed per child package;
 - [ ] runtime/provider evidence collected for runtime claims;
 - [ ] CAPITAL-AI-SEC independent verification completed for returned evidence;
 - [ ] exact-candidate PR validation and Human/CODEOWNER merge completed.
 
 ## 10. PR / production boundary
 
-This roadmap does not authorize PR creation, merge, Release transition or Production mutation. Exact-main/head Owner approval remains mandatory before PR creation; Human/CODEOWNER merge remains separate; Production mutation requires a separate current gate.
+This roadmap does not authorize PR creation, merge, Release transition or Production mutation. Current Authority controls apply to each exact candidate. Production mutation requires a separate current gate.
