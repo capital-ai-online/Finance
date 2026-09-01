@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Menu } from 'lucide-react';
 import type { UserProfile } from '../../features/users/ui';
 import type { UserSession } from '../types/UserSession';
@@ -28,6 +29,7 @@ export interface DashboardNavigationProps {
  */
 export function DashboardNavigation(props: DashboardNavigationProps) {
   const [open, setOpen] = React.useState(false);
+  const drawer = <DashboardDrawer {...props} open={open} onClose={() => setOpen(false)} />;
 
   return (
     <>
@@ -42,7 +44,7 @@ export function DashboardNavigation(props: DashboardNavigationProps) {
         <span className="hidden sm:inline text-[11px] font-mono tracking-widest uppercase pr-1 font-bold">Menü</span>
       </button>
 
-      <DashboardDrawer {...props} open={open} onClose={() => setOpen(false)} />
+      {typeof document === 'undefined' ? drawer : createPortal(drawer, document.body)}
     </>
   );
 }
