@@ -14,6 +14,22 @@
 - **status:** accepted into OPS project planning; implementation evidence is this project surface.
 - **authority:** DevelopmentChain policy remains Governance-owned.
 
+### [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-OPS | VC-02] — User Lifecycle
+
+- **project_namespace:** `PVC`
+- **project_stage:** `PVC-02`
+- **secondary_project_stage:** `PVC-08`
+- **source_project:** `CAPITAL-AI-GOV`
+- **source_task:** `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS`
+- **task:** implement the OPS-owned User-Lifecycle/provider harness and stable server-side authentication/billing test contract after the merged Governance decisions.
+- **owner_scope:** Playwright/provider harness; Supabase Local Stack/Mailpit; Stripe Sandbox/Test Clocks; webhook/outbox/subscription projection tests; server-side auth and billing boundaries.
+- **status:** `ACCEPTED_INTO_OPS_PLANNING / IMPLEMENTATION_IN_OPEN_PR_683 / NOT_IMPLEMENTED_BY_RECONCILIATION`.
+- **active_writer:** PR #683 / `agent/operations-user-lifecycle-simulation-20260901`; eight separate Lifecycle implementation/test/evidence paths; no changed-file overlap with this reconciliation candidate.
+- **required_return:** stable executable OPS test contract plus provider/runtime evidence for claims actually exercised; no Production mutation is implied.
+- **authority:** Governance decisions remain Governance-owned; Frontend projection, Security verification and Compliance assessment remain with their respective owners.
+
+The current Governance dependency map places Frontend after the stable OPS contract, and Security/Compliance after returned OPS/FE evidence. OPS therefore records those downstream dependencies but does not execute their foreign work. An open PR is candidate evidence only and does not satisfy the required return until merged and re-correlated.
+
 ## Inbound — Security
 
 CAPITAL-AI-SEC PR #631 provides direct findings for OPS at PVC-02/04/06/08. Detailed records: `SECURITY_HANDOFFS.md`.
@@ -38,7 +54,18 @@ Security does not transfer Security verification authority. Returned evidence us
 - **project_stage:** `PVC-05`
 - **target_project:** `CAPITAL-AI-GOV`
 - **task:** protected Platform Director/Governance decision and policy reconciliation.
-- **status:** dependency.
+- **status:** dependency. Current main includes merged PR #684 Governance hardening; OPS consumes that baseline but does not own its Authority.
+
+## Conditional outbound — User Lifecycle
+
+After `OPS-02-GOV-040` returns a stable OPS contract/evidence:
+
+- Frontend lifecycle/pricing/entitlement projection remains `CAPITAL-AI-FE` work.
+- Independent User-Lifecycle Security verification remains `CAPITAL-AI-SEC` work.
+- Consumer/compliance assessment remains `CAPITAL-AI-COMP` work and does not become legal advice merely because technical evidence exists.
+- Final owner-return correlation/closeout remains `CAPITAL-AI-GOV / PVC-05` work.
+
+These are dependencies only. This OPS project does not mark them complete or implement them locally.
 
 ## Conditional outbound — R2-06 child remediation
 
