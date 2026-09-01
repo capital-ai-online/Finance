@@ -6,7 +6,7 @@
 **Version:** `2.3.0`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-01`  
-**Repository baseline:** `main@d2bf8782fee4acfeddbef31955e9b01f4a8be0fd`  
+**Repository baseline:** `main@9fe9be4e8c1c3b46232d73f87fc5bec75d2242f5`  
 **Open PR baseline:** PR #679 (`CAPITAL-AI-DOC`) only; no OPS changed-file or semantic overlap at reconciliation  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
