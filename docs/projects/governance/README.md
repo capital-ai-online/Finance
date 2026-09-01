@@ -8,23 +8,27 @@
 
 ## Scope
 
-CAPITAL-AI-GOV owns organizational project architecture, Governance execution coordination and `PVC-05 Platform Director`. It does not replace the existing Governance Control Plane and may not execute foreign PVC stages.
+CAPITAL-AI-GOV owns organizational project architecture, Governance execution coordination and `PVC-05 Platform Director`. It does not replace the existing Governance Control Plane and does not acquire permanent ownership of foreign PVC stages.
 
-Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/Governance`, the Authority Registry and Control Catalog.
+By default, productive work belonging to another Primary Owner is routed through `FOREIGN_PROJECT_HANDOFF`. The bounded exception is an explicitly Human-Owner-activated `GOV_GLOBAL_ROADMAP_SESSION` under `CTRL-GOV-JIT-GLOBAL-ROADMAP-001`: one Governance-governed chat may execute exact pre-approved roadmap work across named project contexts for at most eight hours, while every productive work item retains its target-project branch, work-claim, ownership, validation and PR boundary.
+
+Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, ADR-0104, `src/platform/Governance`, the Authority Registry and Control Catalog.
 
 ## Current program
 
 - **P1 — Project Architecture:** local GOV consolidation; `docs/projects/` + `PVC-*` namespace.
-- **P2 — DevelopmentChain Integration:** target `CAPITAL-AI-OPS`; GOV defines the integration contract and hands execution off.
+- **P2 — DevelopmentChain Integration:** target `CAPITAL-AI-OPS`; GOV defines the integration contract and normally hands execution off. An active exact-scope global-roadmap session may execute an approved OPS work item in the same chat without changing OPS ownership.
 - **P3 — Financial VC Namespace Migration:** multi-owner assessment only; current `SC-MD-SPT-0001` stays unchanged until coordinated authority/owner resolution.
+- **JIT Global Roadmap Execution:** temporary Owner-activated cross-project repository execution under `AUTH-GOV-JIT-GLOBAL-ROADMAP-EXECUTION`; no permanent Global Administrator/IAM role.
 - **Governance chat backlog:** all remaining local tasks and foreign referrals from the current project chat are tracked in `TASK_REGISTER.md`.
 
 ## Navigation
 
 - `../README.md` — repository project execution model.
 - `../PROJECT_VALUE_CHAIN.md` — PVC-01..PVC-18 ownership.
-- `../PROJECT_EXECUTION_MODEL.md` — DevelopmentChain/project lifecycle relationship.
-- `../CROSS_PROJECT_HANDOFF_CONTRACT.md` — qualified handoff contract.
+- `../PROJECT_EXECUTION_MODEL.md` — DevelopmentChain/project lifecycle and temporary global-roadmap execution relationship.
+- `../CROSS_PROJECT_HANDOFF_CONTRACT.md` — qualified handoff contract and exact-scope session context-switch exception.
+- `../../governance/TEMPORARY_GLOBAL_ROADMAP_EXECUTION_POLICY.md` — JIT session activation, expiry and protected-boundary policy.
 - `ROADMAP.md` — local execution state.
 - `TASK_REGISTER.md` — canonical chat-to-repository task register.
 - `AUTHORITY_AND_DECISION_BOUNDARIES.md` — Platform Director / Governance authority separation.
@@ -37,4 +41,4 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 
 ## Non-goals
 
-No parallel Governance Control Plane, no runtime relocation, no foreign-project implementation, no technical financial VC renumbering without coordinated authorization, no release/deploy/provider mutation and no PR creation without the exact-snapshot Human/Owner gate.
+No parallel Governance Control Plane, no runtime relocation, no permanent foreign-project ownership, no real provider/IAM Global Administrator role, no multi-Primary-Owner productive branch/PR, no technical financial VC renumbering without coordinated authorization, no release/deploy/provider mutation from session activation and no PR creation without the exact-snapshot Human/Owner gate.
