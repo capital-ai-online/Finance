@@ -17,11 +17,15 @@ It is deliberately **not** a publishing authority, canonical-content authority, 
 
 Current `main` defines `docs/projects/` as the canonical organizational execution surface and explicitly lists `CAPITAL-AI-SOCIAL` as a cross-cutting project with **no productive PVC ownership**.
 
-A canonical `docs/projects/<social-slug>/` folder is **not present or explicitly resolved on current main**. Therefore this PR does not guess or manufacture one. The current bounded Social domain surface remains:
+The canonical project folder is explicitly resolved as:
+
+`docs/projects/social-media/`
+
+with branch project-folder slug `social-media`. This owner migration materializes that folder only as the non-authorizing project navigation/execution projection. The existing bounded Social domain and detailed execution surface remains:
 
 `docs/social-media/CAPITAL-AI-SOCIAL/`
 
-Any later migration into `docs/projects/<resolved-social-folder>/` requires a fresh current-main correlation and explicit canonical folder resolution.
+The project-folder surface does not relocate, duplicate or supersede the Social domain roadmap, contracts, mappings, handoffs, work packages or reports.
 
 ## Quality Management correlation
 
@@ -69,7 +73,7 @@ The merged CAPITAL-AI-SEC program is consumed from:
 8. No duplicate generator, provider adapter or publishing path is introduced.
 9. Security findings and verification remain CAPITAL-AI-SEC-owned; Social may report `IMPLEMENTED` or `EVIDENCE_READY`, never self-set Security `VERIFIED/CLOSED`.
 10. Foreign PVC work is handed off and remains `REFERRED_NOT_EXECUTED` until the actual Primary Owner executes it.
-11. A missing canonical Social project-folder mapping is `REQUIRES_CORRELATION`, not permission to invent one.
+11. The canonical `docs/projects/social-media/` surface is organizational only and does not create productive PVC, publishing, provider, credential or infrastructure authority.
 
 ## Project contents
 
