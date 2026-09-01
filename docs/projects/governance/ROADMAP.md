@@ -2,8 +2,8 @@
 
 **Project:** `CAPITAL-AI-GOV`  
 **Original consolidation baseline:** `main@1f55340d89178fb5c1ab735242f42c263918b692`  
-**Current project-folder correlation baseline:** `main@22c4b53f83313eb03090ef0867f8f793b98e5fcc`  
-**User-Lifecycle orchestration baseline:** `main@85d821a58851d769fde9c95558c03d9e5608efd7`  
+**Current project-folder correlation baseline:** `main@37bf7d954363d99d67083edbf520bd77892888dd`  
+**User-Lifecycle orchestration baseline:** `main@37bf7d954363d99d67083edbf520bd77892888dd`  
 **Trust root:** `/AGENTS.md`  
 **Role:** roadmap / execution projection — non-authorizing
 
@@ -76,44 +76,36 @@ Exit gate for this roadmap item: GOV may report `IMPLEMENTED` or `EVIDENCE_READY
 
 ## P6 — Cross-cutting project-folder correlation
 
-**State:** `ROUTING MERGED / TARGET-OWNER MATERIALIZATION IN FLIGHT`
+**State:** `ALL TARGET PROJECT SURFACES MATERIALIZED / WRITER CLEANUP REMAINS`
 
-Governance has resolved canonical organizational destinations for the implemented cross-cutting projects. The mapping is organizational and non-authorizing; each target owner materializes or maintains its own project surface.
+Governance resolved canonical organizational destinations for the implemented cross-cutting projects. The mapping is organizational and non-authorizing; each target owner maintains its own project surface.
 
 | Project | Canonical project folder | Branch slug | Current correlation | Productive PVC |
 |---|---|---|---|---|
 | `CAPITAL-AI-SEC` | `docs/projects/security/` | `security` | merged via PR #647 | none |
-| `CAPITAL-AI-COMP` | `docs/projects/compliance/` | `compliance` | merged via PR #652; stale writer cleanup still required | none |
-| `CAPITAL-AI-FE` | `docs/projects/frontend/` | `frontend` | open PR #653 | none |
-| `CAPITAL-AI-SEO` | `docs/projects/seo/` | `seo` | open PR #654 | none |
-| `CAPITAL-AI-SOCIAL` | `docs/projects/social-media/` | `social-media` | open PR #655 | none |
+| `CAPITAL-AI-COMP` | `docs/projects/compliance/` | `compliance` | merged via PR #652; stale active writer remains | none |
+| `CAPITAL-AI-FE` | `docs/projects/frontend/` | `frontend` | merged via PR #653; stale active writer remains | none |
+| `CAPITAL-AI-SEO` | `docs/projects/seo/` | `seo` | merged via PR #654 | none |
+| `CAPITAL-AI-SOCIAL` | `docs/projects/social-media/` | `social-media` | merged via PR #655 | none |
 
 Existing canonical sources stay in place, including `src/platform/Security/`, `docs/compliance/CAPITAL-AI-COMP/`, `docs/frontend/`, `docs/seo/` and `docs/social-media/CAPITAL-AI-SOCIAL/`.
 
-The previously recorded Security writer-integrity blocker is resolved on current main: `.ai/work-claims/CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31.json` is `released`, and Security project-surface PR #647 is merged. Governance must not reintroduce the stale `active` assertion.
+The previously recorded Security writer-integrity blocker is resolved: `.ai/work-claims/CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31.json` is `released`, and Security project-surface PR #647 is merged.
 
-Compliance project navigation is now present on main through PR #652. Its project-surface work claim remains `active/exclusive` after merge, so new COMP work that overlaps the claimed README/ROADMAP paths must remain blocked until the owner terminalizes or otherwise resolves that writer.
+Compliance and Frontend project navigation are now present on main, but their project-surface claims remain `active/exclusive` after merge. Frontend additionally still has the older merged `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` claim active. These writer states must be resolved before overlapping follow-up work; Governance does not terminalize foreign project claims in this branch.
 
 ### Current-main correlation update
 
-PR #645 materialized Documentary, PR #647 Security, and PR #652 Compliance. Frontend, SEO and Social project-surface migrations remain represented by open PRs #653..#655 and therefore remain dependencies until Human merge/closure resolves them.
-
-Artifacts:
-
-- `../README.md` — canonical folder/branch-slug mapping;
-- `P1_PROJECT_ARCHITECTURE_MIGRATION_MATRIX.md` — before/after migration state;
-- `CROSS_PROJECT_HANDOFFS.md` — complete target-owner referrals and return evidence;
-- `TASK_REGISTER.md` — owner/status/exit-gate traceability.
+PR #645 materialized Documentary, PR #647 Security, PR #652 Compliance, PR #653 Frontend, PR #654 SEO and PR #655 Social. At the `main@37bf7d954363d99d67083edbf520bd77892888dd` snapshot there are no open pull requests.
 
 Exit gate for P6:
 
 1. no runtime/authority mutation is introduced by Governance routing;
-2. no open PR or active writer conflicts with GOV-owned routing files;
-3. project-folder mappings remain internally consistent;
-4. cross-cutting targets remain without productive PVC ownership;
-5. each target-owner surface is Human-merged or explicitly terminalized;
-6. stale merged owner claims are terminalized before overlapping follow-up work;
-7. owner-side handoff references are normalized after target navigation exists.
+2. project-folder mappings remain internally consistent;
+3. cross-cutting targets remain without productive PVC ownership;
+4. all target-owner project surfaces are materialized on main;
+5. stale merged owner claims are terminalized before overlapping follow-up work;
+6. owner-side handoff references are normalized where still required.
 
 ## P7 — User-Lifecycle Simulation orchestration
 
@@ -140,9 +132,9 @@ Current decision gates:
 
 Current downstream correlation:
 
-- OPS lifecycle work is blocked from overlapping execution while `CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31` remains active/exclusive on `docs/projects/operations/**`;
-- FE lifecycle work depends on resolved decisions 001/002, stable OPS test contract and resolution of project-surface PR #653;
-- COMP project navigation is merged via #652, but its stale active/exclusive project-surface writer must be resolved before overlapping COMP lifecycle work;
+- OPS lifecycle work is blocked while `CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31` remains active/exclusive on `docs/projects/operations/**`;
+- FE project navigation is merged via #653, but `CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01` and the older `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` remain active/exclusive; FE also depends on decisions 001/002 and a stable OPS test contract;
+- COMP project navigation is merged via #652, but `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` remains active/exclusive and must be resolved before overlapping COMP lifecycle work;
 - SEC verification starts only after OPS/FE evidence is available;
 - GOV closeout starts only after all owner returns are present.
 
@@ -163,18 +155,14 @@ P7 bootstrap exit gate:
 
 ```text
 P1 PVC project model
-  -> DOC project surface materialized via PR #645
-  -> P6 cross-cutting folder routing
-     -> SEC surface merged via PR #647
-     -> COMP surface merged via PR #652
-     -> FE / SEO / SOCIAL project surfaces in owner PRs #653..#655
+  -> cross-cutting project surfaces materialized through PRs #645/#647/#652/#653/#654/#655
+  -> stale writer cleanup before overlapping target-owner work
 
 P7 User-Lifecycle bootstrap
   -> resolve GOV-ULS-DEC-001 and GOV-ULS-DEC-002
   -> OPS lifecycle harness after OPS writer correlation
-  -> FE lifecycle projection after decisions + stable OPS contract + FE project surface
-  -> COMP lifecycle assessment after stale COMP writer resolution
-  -> SEC independent assurance and COMP consumer assessment
+  -> FE lifecycle projection after FE writer cleanup + decisions + stable OPS contract
+  -> SEC independent assurance and COMP consumer assessment after their gates
   -> GOV closeout over merged owner SHAs/evidence
 
 P2 OPS DevelopmentChain project integration is materialized; target-local remediation continues independently.
@@ -188,11 +176,10 @@ P5 consumes the Security PR #631 finding for PVC-05 without transferring Securit
 The GOV consolidation and follow-up projection are complete when:
 
 - one current project roadmap and task register represent the open GOV work;
-- old GOV branches have no active writer claim;
 - stale merged/superseded claims are terminalized or explicitly routed to their owners before overlapping work;
 - P1 remains the canonical PVC project model;
-- every known implemented CAPITAL-AI project has either a materialized canonical project surface or an explicitly resolved owner-migration target;
-- P2/P3/Admin Panel and project-folder foreign work are explicitly handed off and never falsely marked complete;
+- every known implemented CAPITAL-AI project has a materialized canonical project surface or an explicitly resolved owner-migration target;
+- P2/P3/Admin Panel and foreign work are explicitly handed off and never falsely marked complete;
 - the Security handoff for PVC-05 is recorded without shifting Security verification or Accepted Risk authority;
 - P7 reaches `EVIDENCE_READY_FOR_HUMAN_CLOSEOUT` only after independent owner returns are correlated;
 - no parallel Governance, Security, IAM, runtime, scoring, data, release, Frontend, SEO or EventMesh architecture is introduced.
