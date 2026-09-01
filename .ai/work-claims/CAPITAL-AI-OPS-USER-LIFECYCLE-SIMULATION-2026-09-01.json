@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-USER-LIFECYCLE-SIMULATION-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,7 +13,8 @@
   "startedAt": "2026-09-01T15:51:00+02:00",
   "baseBranch": "main",
   "baseSha": "315056a50dc6f779c178c4ff6d06074353d1972a",
-  "pullRequest": null,
+  "pullRequest": 683,
+  "mergedPr": 683,
   "branch": "agent/operations-user-lifecycle-simulation-20260901",
   "project": "CAPITAL-AI-OPS",
   "projectFolder": "operations",
@@ -54,5 +55,17 @@
     "CAPITAL-AI-COMP retains independent applicability/compliance assessment",
     "CAPITAL-AI-GOV retains final cross-owner evidence correlation"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. PR creation remains subject to final exact-snapshot Human/Owner approval under the current CAPITAL-AI-OPS project instructions. Production deployment/mutation is not authorized by this work item."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. PR creation remains subject to final exact-snapshot Human/Owner approval under the current CAPITAL-AI-OPS project instructions. Production deployment/mutation is not authorized by this work item.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-09-01T15:03:06Z",
+  "mainCommit": "f40aeb084675d282a1a188bf05832ce9dc976836",
+  "terminalHeadSha": "b557efcaebc5bdb16e4a220237ed7e7f225f0a62",
+  "releaseEvidence": {
+    "pullRequest": 683,
+    "merged": true,
+    "mergeCommitSha": "f40aeb084675d282a1a188bf05832ce9dc976836",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "f40aeb084675d282a1a188bf05832ce9dc976836",
+    "verifiedAt": "2026-09-01"
+  }
 }
