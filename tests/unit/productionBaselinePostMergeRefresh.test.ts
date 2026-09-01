@@ -36,6 +36,12 @@ describe('production baseline post-merge refresh', () => {
     expect(yaml).toContain("basehead: `${mainSha}...${headSha}`");
   });
 
+  it('retries transient GitHub API failures while keeping client and authorization errors fail-closed', () => {
+    const yaml = workflow();
+    expect(yaml.match(/\n\s+retries: 3/g) ?? []).toHaveLength(3);
+    expect(yaml.match(/\n\s+retry-exempt-status-codes: 400,401,403,404,422/g) ?? []).toHaveLength(3);
+  });
+
   it('executes only trusted-main baseline contracts and no candidate code', () => {
     const yaml = workflow();
     expect(yaml).toContain('node ../policy/scripts/pr/productionPreflight.mjs');

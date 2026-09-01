@@ -42,6 +42,8 @@ jobs:
         id: reconcile
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         with:
+          retries: 3
+          retry-exempt-status-codes: 400,401,403,404,422
           script: |
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
             const fail = (message) => { throw new Error(message); };
@@ -212,6 +214,8 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ matrix.head_sha }}
           EXPECTED_PRODUCTION_SHA: ${{ steps.baseline.outputs.production_sha }}
         with:
+          retries: 3
+          retry-exempt-status-codes: 400,401,403,404,422
           script: |
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
             const prNumber = Number(process.env.PR_NUMBER);
@@ -253,6 +257,8 @@ jobs:
           EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
           EXPECTED_HEAD_SHA: ${{ matrix.head_sha }}
         with:
+          retries: 3
+          retry-exempt-status-codes: 400,401,403,404,422
           script: |
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
             const prNumber = Number(process.env.PR_NUMBER);
