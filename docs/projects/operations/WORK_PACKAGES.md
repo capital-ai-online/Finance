@@ -2,7 +2,15 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Baseline:** `main@b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`
+**Baseline:** `main@d2bf8782fee4acfeddbef31955e9b01f4a8be0fd`
+
+## Current-main inbound package
+
+| Priority | Package | PVC | Source | Scope | Exit evidence |
+|---:|---|---|---|---|---|
+| P1 | `OPS-02-GOV-040` User-Lifecycle Harness & Provider Test Contract | `PVC-02` + `PVC-08` evidence | `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS` | establish the OPS-owned lifecycle/provider test harness and stable server-side auth/billing test contract using isolated provider/test environments; do not implement FE projection, Security verification, Compliance assessment or GOV closeout | stable executable test contract; provider/server lifecycle coverage; webhook/outbox/subscription projection evidence; exact runtime/provider evidence only where actually executed; no Production mutation implied |
+
+The Governance dependency map lists the bounded owner scope as Playwright/provider harness, Supabase Local Stack/Mailpit, Stripe Sandbox/Test Clocks, webhook/outbox/subscription projection tests and server-side auth/billing boundaries. Implementation is not part of the current claim/project-reconciliation package.
 
 ## Security-priority packages
 
@@ -29,6 +37,12 @@
 | P2 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | SLO/SLI/capacity/degradation evidence |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | staleness/identity coverage without authority expansion |
 
+## Merged evidence correlated to the backlog
+
+- PR #642 is merged repository evidence for the OPS-owned Alpha Vantage secret/deployment control-plane consolidation. Its stale post-merge Work Claim is terminalized by the current reconciliation package. This does not prove Production secret presence or authorize a deploy.
+- PR #648 is merged `PVC-02` evidence for fail-closed merged-branch lifecycle cleanup. It contributes to `OPS-02-A` but does not complete the broader Controlled Implementation inventory by itself.
+- PR #632 remains the merged project-surface/Security-handoff baseline; its historical Work Claim is already released.
+
 ## Package rules
 
 1. One bounded work package per fresh compliant branch unless a deliberately coherent package is explicitly correlated.
@@ -36,3 +50,4 @@
 3. Foreign productive code identified during OPS work is handed off and remains `REFERRED_NOT_EXECUTED` locally.
 4. HIGH/CRITICAL protected changes retain all applicable Human/Owner gates.
 5. Runtime mutation and provider mutation are never implied by a documentation or code package.
+6. `OPS-02-SEC-06` and `OPS-02-GOV-040` are semantically adjacent around entitlement/auth/billing boundaries; they remain separate packages unless a fresh correlation proves that one coherent implementation package is safer than parallel work.
