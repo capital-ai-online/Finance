@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://capital-ai.local/schemas/deep-research-evidence.schema.json",
+  "title": "CAPITAL-AI Deep Research Evidence Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["researchId", "mode", "observedAt", "claims", "sources", "evidence", "saturation"],
+  "properties": {
+    "researchId": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["QUICK", "STANDARD", "DEEP", "DECISION_GRADE"]},
+    "observedAt": {"type": "string", "format": "date-time"},
+    "claims": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/claim"}
+    },
+    "sources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/source"}
+    },
+    "evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evidenceObject"}
+    },
+    "contradictions": {
+      "type": "array",
+      "default": [],
+      "items": {"$ref": "#/$defs/contradiction"}
+    },
+    "saturation": {"$ref": "#/$defs/saturation"}
+  },
+  "$defs": {
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimId", "text", "claimType", "major", "confidence"],
+      "properties": {
+        "claimId": {"type": "string", "minLength": 1},
+        "text": {"type": "string", "minLength": 1},
+        "claimType": {"enum": ["FACT", "INFERENCE", "ESTIMATE", "OPINION", "UNKNOWN"]},
+        "major": {"type": "boolean"},
+        "confidence": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+        "assumptions": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "locator", "sourceClass", "retrievedAt", "primaryStatus", "independenceFamily"],
+      "properties": {
+        "sourceId": {"type": "string", "minLength": 1},
+        "locator": {"type": "string", "minLength": 1},
+        "title": {"type": "string"},
+        "publisher": {"type": "string"},
+        "publishedAt": {"type": ["string", "null"], "format": "date-time"},
+        "retrievedAt": {"type": "string", "format": "date-time"},
+        "sourceClass": {"enum": ["PRIMARY", "OFFICIAL", "ACADEMIC", "INDUSTRY", "NEWS", "COMMUNITY", "OTHER"]},
+        "primaryStatus": {"enum": ["PRIMARY", "SECONDARY", "TERTIARY", "UNKNOWN"]},
+        "independenceFamily": {"type": "string", "minLength": 1},
+        "contentHash": {"type": ["string", "null"]},
+        "credibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["authority", "proximity", "methodQuality", "freshness", "relevance", "independence"],
+          "properties": {
+            "authority": {"enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+            "proximity": {"enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+            "methodQuality": {"enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+            "freshness": {"enum": ["LOW", "MEDIUM", "HIGH", "NOT_APPLICABLE", "UNKNOWN"]},
+            "relevance": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+            "independence": {"enum": ["INDEPENDENT", "DEPENDENT", "UNKNOWN"]}
+          }
+        }
+      }
+    },
+    "evidenceObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceId", "claimId", "sourceId", "stance", "supportKind", "validated"],
+      "properties": {
+        "evidenceId": {"type": "string", "minLength": 1},
+        "claimId": {"type": "string", "minLength": 1},
+        "sourceId": {"type": "string", "minLength": 1},
+        "stance": {"enum": ["SUPPORTS", "CONTRADICTS", "CONTEXT_ONLY"]},
+        "supportKind": {"enum": ["DIRECT", "INDIRECT", "METHODOLOGICAL", "ATTRIBUTED_OPINION"]},
+        "excerptOrPointer": {"type": "string"},
+        "validated": {"type": "boolean"},
+        "validationNote": {"type": "string"}
+      }
+    },
+    "contradiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimId", "evidenceIds", "status"],
+      "properties": {
+        "claimId": {"type": "string"},
+        "evidenceIds": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+        "status": {"enum": ["RESOLVED", "BOUNDED", "UNRESOLVED"]},
+        "note": {"type": "string"}
+      }
+    },
+    "saturation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "duplicateYieldHigh", "primaryGapsAttempted", "counterEvidencePassCompleted", "unsupportedMajorClaims"],
+      "properties": {
+        "status": {"enum": ["SATURATED", "BUDGET_EXHAUSTED", "BLOCKED", "NOT_REQUIRED"]},
+        "duplicateYieldHigh": {"type": "boolean"},
+        "primaryGapsAttempted": {"type": "boolean"},
+        "counterEvidencePassCompleted": {"type": "boolean"},
+        "unsupportedMajorClaims": {"type": "integer", "minimum": 0},
+        "note": {"type": "string"}
+      }
+    }
+  }
+}
