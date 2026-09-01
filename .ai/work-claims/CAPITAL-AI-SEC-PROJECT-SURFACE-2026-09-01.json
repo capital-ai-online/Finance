@@ -22,8 +22,7 @@
     ".ai/work-claims/CAPITAL-AI-SEC-PROJECT-SURFACE-2026-09-01.json",
     ".ai/work-claims/CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31.json",
     "docs/projects/security/README.md",
-    "docs/projects/security/ROADMAP.md",
-    "docs/projects/README.md"
+    "docs/projects/security/ROADMAP.md"
   ],
   "reuseInputs": [
     "PR #631 / agent/security-pvc-handoff-correlation-20260831",
@@ -43,9 +42,9 @@
   "foreignWork": [
     "CAPITAL-AI-OPS: productive remediation/evidence for routed Security findings under PVC-02/04/06/08",
     "CAPITAL-AI-DATA: evidence identity/freshness semantics and evidence return under PVC-10",
-    "CAPITAL-AI-GOV: MFA/AAL authority-lifecycle reconciliation under PVC-05",
+    "CAPITAL-AI-GOV: update shared project-registry return evidence after Security project-surface merge and reconcile MFA/AAL authority lifecycle under PVC-05",
     "CAPITAL-AI-CLIENT/CAPITAL-AI-FINTECH: child remediation only where target-owned productive code is identified"
   ],
-  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SEC gains no productive PVC stage. docs/projects/security is organizational navigation only and does not replace src/platform/Security, existing Security roadmaps, Security traceability/evidence, Governance/IAM authorities, EventMesh, data/scoring architecture, Release/Operations authority or target-project implementation ownership.",
+  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SEC gains no productive PVC stage. docs/projects/security is organizational navigation only and does not replace src/platform/Security, existing Security roadmaps, Security traceability/evidence, Governance/IAM authorities, EventMesh, data/scoring architecture, Release/Operations authority or target-project implementation ownership. Shared Governance project-registry paths remain outside this claim while their active GOV writer exists.",
   "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
 }
