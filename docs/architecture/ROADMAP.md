@@ -3,8 +3,8 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `2.6.0`  
 **Status date:** `2026-09-01`  
-**Current repository baseline for this synchronization:** `main@abdee9686825b39f34e5edbe6960e9c20f523618` — includes Human Merge of PR #691 and complete productive M10 retirement  
-**Open PR correlation at this synchronization:** PR #697 is open and changes the governance owner-device-authorization contract/navigation; no overlap with this M10 current-state index mutation was identified.  
+**Current repository baseline for this synchronization:** `main@d049864a70a639d796a7cb618d098e88cfcd8759` — includes Human Merge of PR #691 (productive M10 retirement) and PR #697 (Owner Device Authorization contract)  
+**Open PR correlation at this synchronization:** no open Pull Requests observed after PR #697 merged; its added `docs/projects/governance/**` files were merged into this candidate without overlap with the M10/ADR-0104 governance changes.  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -24,7 +24,7 @@ CURRENT MAIN + OPEN-PR BASELINE
 → SCOPED IMPLEMENTATION
 → AVAILABLE LOW-COST / EXACT-SNAPSHOT PRE-PR VALIDATION
 → FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
-→ EXACT-SNAPSHOT HUMAN/OWNER PR-CREATION APPROVAL
+→ EXACT-SNAPSHOT HUMAN/OWNER PR-CREATION APPROVAL OR VALID EXPLICITLY SCOPED DELEGATION
 → PULL REQUEST
 → INDEPENDENT GOVERNANCE / TECHNICAL CI
 → HUMAN/CODEOWNER MERGE DECISION
@@ -83,8 +83,8 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document v2.6.0; M10 retirement synchronized to `main@abdee9686825b39f34e5edbe6960e9c20f523618` |
-| Open Pull Requests at this synchronization | #697; no identified changed-path overlap with this M10 status update |
+| Current-State Index | this document v2.6.0; M10 retirement synchronized to `main@d049864a70a639d796a7cb618d098e88cfcd8759` |
+| Open Pull Requests at this synchronization | none observed after PR #697 merge |
 | S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
 | S1-R2-02 GitHub main enforcement | governed by current provider/readback controls; `required_signatures` intentionally absent |
 | M10 Passkey PR-CI implementation | **RETIRED / HISTORICAL ONLY — NO CURRENT IMPLEMENTATION EXPECTED** |
@@ -123,8 +123,7 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 
 ## Current next action
 
-1. correlate current main, open PR #697 and this governance candidate before any PR-creation approval request;
-2. keep M10 historical-only and exclude productive M10 implementation discovery from repository/web-application gap analysis;
-3. evaluate any future passkey/PR-CI authorization proposal as a new separately scoped architecture/security/governance work item rather than an M10 reconstruction;
-4. retain Human/CODEOWNER-only merge and current hosted technical validation;
-5. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
+1. keep M10 historical-only and exclude productive M10 implementation discovery from repository/web-application gap analysis;
+2. evaluate any future passkey/PR-CI authorization proposal as a new separately scoped architecture/security/governance work item rather than an M10 reconstruction;
+3. retain Human/CODEOWNER-only merge and current hosted technical validation;
+4. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
