@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.2.1`  
+**Control Plane Version:** `2.3.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-08-31  
+**Effective date:** 2026-09-01  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -121,9 +121,35 @@ For an agent branch with exactly one new `.ai/work-claims/*.json` claim, use the
 
 The PR body contract MUST be checked **before** the external create mutation. Creating a non-conforming PR and relying on CI to repair it afterwards is prohibited because it produces avoidable failing runs and bypasses the intended pre-mutation governance boundary. If the client cannot read the current canonical template or cannot preserve its required markers/sections, PR creation stops fail-closed.
 
+### Owner-activated temporary global roadmap execution (`CTRL-GOV-JIT-GLOBAL-ROADMAP-001`)
+
+The repository may use a temporary `GOV_GLOBAL_ROADMAP_SESSION` when the Human Owner explicitly wants one Governance-governed chat to execute a pre-defined roadmap across multiple canonical project folders.
+
+This is a Just-In-Time **repository execution delegation**, not a Primary-Owner transfer and not a real provider/IAM Global Administrator role. `AUTH-GOV-JIT-GLOBAL-ROADMAP-EXECUTION`, ADR-0104 and `docs/governance/TEMPORARY_GLOBAL_ROADMAP_EXECUTION_POLICY.md` define the complete contract.
+
+A session is active only after the executor has freshly resolved current `main` and this Trust Root, presented a complete activation manifest conforming to `docs/governance/control-plane/global-roadmap-execution-session.schema.json`, and the Human Owner has explicitly approved that exact manifest in the same chat. The manifest MUST bind the canonical roadmap/current-main SHA, associated documents, target projects/folders/PVCs, bounded work items, allowed path prefixes, purpose, `activatedAt` and `expiresAt`. Maximum duration is **8 hours** and the session is chat-bound.
+
+Within an active in-scope session, the same chat MAY switch project execution context using:
+
+`[GLOBAL_ROADMAP_CONTEXT_SWITCH -> <TARGET_PROJECT> | PVC-<NN>]`
+
+Before each productive context switch the executor MUST re-read current `main`, `/AGENTS.md`, the target project surface, open Pull Requests, active/exclusive work claims, changed-file/semantic overlap and applicable Authority/Control state. The target must remain explicitly in session scope.
+
+Session execution remains isolated per Primary Owner and work item:
+
+- one bounded work item per fresh branch;
+- branch name uses the target project's canonical project-folder slug;
+- the work claim identifies the target project and SHOULD reference the session ID;
+- one branch/PR MUST NOT combine productive work owned by different Primary Owners;
+- target domain/project authorities remain controlling.
+
+Session activation does **not** authorize future Pull Requests. Every PR/Draft PR still requires the exact Base/Head approval in `CTRL-SDLC-PR-CREATE-001`. Human/CODEOWNER merge remains separate. Deployment, production/provider mutation, real Owner/Admin IAM elevation, secret disclosure, live billing/money/entitlement mutation, destructive production-data change, DNS/TLS/domain ownership and security-control weakening remain separately protected actions. Independent Security verification, Accepted Risk and competent Legal/Compliance decisions are never delegated by the session.
+
+The session terminates on its expiry, Human Owner revocation, completion, material authority invalidation or unresolved critical scope/writer/security ambiguity. It cannot be implicitly revived. Any target project, work item or path outside the exact active session scope falls back to `FOREIGN_PROJECT_HANDOFF`.
+
 ### Mandatory chat handoffs (`CTRL-SDLC-CHAT-HANDOFF-001`)
 
-This stable control has two explicit triggers: `POST_PR_HANDOFF` and `FOREIGN_PROJECT_HANDOFF`. Both are coordination/transparency controls only and never grant merge, deployment, protected external-mutation, foreign-implementation, Security-verification or Domain-Ownership authority.
+This stable control has two explicit triggers: `POST_PR_HANDOFF` and `FOREIGN_PROJECT_HANDOFF`. Both are coordination/transparency controls only and never grant merge, deployment, protected external-mutation, Security-verification or Domain-Ownership authority.
 
 #### Trigger 1 — `POST_PR_HANDOFF`
 
@@ -137,9 +163,11 @@ After either displayed step is completed, current `main`, open Pull Requests, ch
 
 #### Trigger 2 — `FOREIGN_PROJECT_HANDOFF`
 
-Whenever analysis, planning, implementation or validation determines that the next required productive work step belongs to another canonical project or Primary Owner, the current chat MUST stop local foreign implementation and route the work explicitly rather than silently crossing ownership boundaries.
+Whenever analysis, planning, implementation or validation determines that the next required productive work step belongs to another canonical project or Primary Owner, the current chat MUST normally stop local foreign implementation and route the work explicitly rather than silently crossing ownership boundaries.
 
-The chat MUST resolve the target project and canonical target folder from current repository authority/project surfaces, report the affected VC/PVC and Primary Owner, set the foreign work to `REFERRED_NOT_EXECUTED`, emit `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`, and immediately generate a complete copyable target-project prompt. Unknown target owner or target folder is fail-closed as `REQUIRES_CORRELATION`; the agent MUST NOT guess.
+The sole repository-execution exception is an active `GOV_GLOBAL_ROADMAP_SESSION` under `CTRL-GOV-JIT-GLOBAL-ROADMAP-001` that explicitly covers the exact target project, work item and path scope. Such an in-scope switch uses the global-roadmap context-switch protocol and still preserves target project ownership, per-work-item branch/claim isolation, exact PR approval and all protected-action gates.
+
+Outside that exact active session scope, the chat MUST resolve the target project and canonical target folder from current repository authority/project surfaces, report the affected VC/PVC and Primary Owner, set the foreign work to `REFERRED_NOT_EXECUTED`, emit `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`, and immediately generate a complete copyable target-project prompt. Unknown target owner or target folder is fail-closed as `REQUIRES_CORRELATION`; the agent MUST NOT guess.
 
 The visible handoff block, project-folder resolution order, prompt content contract, optional additive Security marker, multi-owner partitioning and prompt-size rules are canonical in `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Generated handoff prompts MUST preserve all required context and MUST be split only when necessary into parts of at most **400 lines**; required content may not be removed to fit the line limit.
 
@@ -151,7 +179,7 @@ Avoid unnecessary paid GitHub CI/build/test runs before PR creation. After PR cr
 
 Separate explicit Human/Owner authorization remains required for protected external mutations according to applicable Accepted decisions and controls, including security-control weakening, Owner/Admin IAM elevation, secret disclosure, destructive production data changes, live billing/money/entitlement changes, production resource deletion, DNS/TLS/domain ownership and comparable high-impact operations.
 
-No agent may expand its own authority, mandate, permissions or approval scope.
+No agent may expand its own authority, mandate, permissions or approval scope. A global-roadmap session is an explicitly Human-activated bounded execution delegation and MUST NOT be interpreted as agent self-elevation.
 
 ## 7. Current PR-CI and Production Deployment State
 
@@ -242,6 +270,7 @@ Agents working on universe Top/Worst rankings MUST:
 - `docs/governance/authority-registry.json`
 - `docs/governance/control-catalog.json`
 - `docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md`
+- `docs/governance/TEMPORARY_GLOBAL_ROADMAP_EXECUTION_POLICY.md`
 - `docs/adr/registry.json`
 - `.ai/registry/ess-registry.json`
 - `docs/governance/document-registry.json`
