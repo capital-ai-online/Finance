@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,6 +13,8 @@
   "startedAt": "2026-09-01T06:24:00+02:00",
   "baseBranch": "main",
   "baseSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+  "pullRequest": 662,
+  "mergedPr": 662,
   "branch": "agent/governance-pvc-consistency-check-20260901",
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "governance",
@@ -49,5 +51,17 @@
     "No foreign project content is rewritten. Existing CLIENT VC-01 transitional wording is explicitly tolerated only while the canonical PROJECT_VALUE_CHAIN transitional exception remains present."
   ],
   "authorityGuard": "The validator enforces internal consistency of already-declared project/PVC mappings. It creates no AUTH/CTRL/ADR/ESS identity, does not turn project roadmaps into authorization authority, grants no productive PVC ownership, and performs no merge, deployment or external mutation. In the Governance workflow only trusted-main validator code may execute against candidate project metadata. The test reuses scripts/pr/*.test.mjs so package.json and production/deployment scope stay untouched.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-09-01T05:13:11Z",
+  "mainCommit": "57dd3868e06c4ded63371e1347dbd7a64bc0a54a",
+  "terminalHeadSha": "04471f680983ade9622d1ed3e7b54900b051e1c0",
+  "releaseEvidence": {
+    "pullRequest": 662,
+    "merged": true,
+    "mergeCommitSha": "57dd3868e06c4ded63371e1347dbd7a64bc0a54a",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "9be95dd753f962a789312fec77571e2a9778b586",
+    "verifiedAt": "2026-09-01"
+  }
 }
