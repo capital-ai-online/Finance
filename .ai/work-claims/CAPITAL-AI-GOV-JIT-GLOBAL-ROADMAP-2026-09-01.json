@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-JIT-GLOBAL-ROADMAP-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Create an Owner-activated, time-bound Governance rule that permits one chat to execute a pre-defined roadmap across explicitly scoped project folders while preserving Primary Ownership, per-work-item branches, exact-snapshot PR approval, Human merge, independent assurance and separate protected-mutation gates.",
+  "workItemDE": "Eine Human-Owner-aktivierte, zeitlich begrenzte Governance-Regel erstellen, die einem Chat die Ausfuehrung einer vorab definierten Roadmap ueber explizit freigegebene Projektordner hinweg erlaubt, ohne Primary Ownership, Work-Item-Branches, exakte PR-Snapshot-Freigaben, Human Merge, unabhaengige Assurance oder separate Protected-Mutation-Gates aufzuheben.",
+  "startedAt": "2026-09-01T11:30:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "9be95dd753f962a789312fec77571e2a9778b586",
+  "branch": "agent/governance-jit-global-roadmap-20260901",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Repository Governance and Platform Director authority design only; this candidate does not itself activate cross-project execution or grant provider IAM/production authority before Human Merge.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-JIT-GLOBAL-ROADMAP-2026-09-01.json",
+    "AGENTS.md",
+    "docs/governance/TEMPORARY_GLOBAL_ROADMAP_EXECUTION_POLICY.md",
+    "docs/governance/control-plane/global-roadmap-execution-session.schema.json",
+    "docs/governance/authority-registry.json",
+    "docs/governance/control-catalog.json",
+    "docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md",
+    "docs/adr/registry.json",
+    "docs/adr/ADR-0104-owner-activated-global-roadmap-execution.md",
+    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md",
+    "docs/projects/PROJECT_EXECUTION_MODEL.md",
+    "docs/projects/governance/README.md",
+    "tests/unit/governanceAuthorityConsistency.test.ts"
+  ],
+  "correlationInputs": [
+    "main@9be95dd753f962a789312fec77571e2a9778b586",
+    "/AGENTS.md@9be95dd753f962a789312fec77571e2a9778b586",
+    "docs/governance/control-catalog.json@1.8.0",
+    "docs/governance/authority-registry.json@1.38.0",
+    "docs/adr/registry.json@1.25.0",
+    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md",
+    "docs/projects/PROJECT_EXECUTION_MODEL.md",
+    "no open pull requests against main",
+    "agent/governance-post-merge-cleanup-20260901 exists without changed-file overlap; it must re-correlate if this authority change merges first"
+  ],
+  "reuseInputs": [
+    "CTRL-SDLC-CHAT-HANDOFF-001",
+    "CTRL-SDLC-PR-CREATE-001",
+    "CTRL-MERGE-HUMAN-001",
+    "CTRL-SEC-LEASTPRIV-001",
+    "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION",
+    "Microsoft Entra PIM JIT/time-bound/approval principles",
+    "CISA JIT-PAM/least-privilege guidance"
+  ],
+  "nonGoals": [
+    "Create permanent global project ownership",
+    "Create or assign a real provider Global Administrator/IAM role",
+    "Pre-authorize unknown future PR head SHAs",
+    "Authorize Human Merge, deployment or production mutation",
+    "Authorize live billing/money/entitlement changes",
+    "Allow Security self-verification, Accepted Risk self-approval or legal/compliance self-classification",
+    "Bundle multiple Primary Owners into one branch or Pull Request"
+  ],
+  "authorityGuard": "The new rule is a bounded JIT execution delegation, not an ownership transfer. Activation must be explicit, roadmap/document/project/work-item scoped, time-limited and auditable. Every target work item retains its target-project branch slug, work claim and owner boundaries. Exact-snapshot PR creation approval, Human/CODEOWNER merge and separate protected external-mutation approvals remain mandatory. The rule is not effective until Human Merge of its governance PR.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation for this governance candidate remains exact Base/Head snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}
