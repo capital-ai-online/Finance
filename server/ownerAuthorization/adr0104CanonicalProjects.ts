@@ -1,27 +1,24 @@
-import { createHash } from 'node:crypto';
-import type { CanonicalProjectSelection } from './adr0104ProjectSet';
+import { digestAdr0104ProjectSet, type CanonicalProjectSelection } from './adr0104ProjectSet';
 
-export const ADR_0104_CANONICAL_PROJECT_SOURCES: Readonly<Record<string, string>> = {
-  'CAPITAL-AI-CLIENT': 'docs/projects/agent-client/README.md',
-  'CAPITAL-AI-OPS': 'docs/projects/operations/README.md',
-  'CAPITAL-AI-DOC': 'docs/projects/documentary/README.md',
-  'CAPITAL-AI-GOV': 'docs/projects/governance/README.md',
-  'CAPITAL-AI-DATA': 'docs/projects/data/README.md',
-  'CAPITAL-AI-FINTECH': 'docs/projects/fintech/README.md',
-};
+const PROJECT_ROUTING_SOURCE = 'docs/projects/README.md';
+const PROJECT_OWNERSHIP_SOURCE = 'docs/projects/PROJECT_VALUE_CHAIN.md';
 
-function normalizeProjectFolder(path: string): string {
-  return path.replace(/README\.md$/, '');
+function extractProjectFolder(routing: string, projectId: string): string {
+  const row = routing.split('\n').find((line) => line.startsWith(`| \`${projectId}\` |`));
+  const match = row?.match(/`(docs\/projects\/[^`]+\/)`/);
+  if (!match?.[1]) throw new Error('ADR0104_CANONICAL_PROJECT_FOLDER_UNRESOLVED');
+  return match[1];
 }
 
-function parseStages(content: string): string[] {
-  const stages = [...new Set(content.match(/PVC-\d{2}/g) ?? [])];
-  return stages.sort();
-}
-
-function parseProjectId(content: string): string | null {
-  const match = content.match(/\*\*(?:Project ID|Project):\*\*\s*`([^`]+)`/);
-  return match?.[1]?.trim() ?? null;
+function extractOwnedStages(ownership: string, projectId: string): string[] {
+  const stages = ownership.split('\n').flatMap((line) => {
+    const cells = line.split('|').map((cell) => cell.trim());
+    if (cells.length < 4 || cells[3] !== `\`${projectId}\``) return [];
+    const stage = cells[1]?.match(/`(PVC-\d{2})`/)?.[1];
+    return stage ? [stage] : [];
+  });
+  if (stages.length === 0) throw new Error('ADR0104_CANONICAL_PROJECT_STAGE_UNRESOLVED');
+  return [...new Set(stages)].sort();
 }
 
 export async function resolveCanonicalAdr0104ProjectSetFromMain(
@@ -34,29 +31,19 @@ export async function resolveCanonicalAdr0104ProjectSetFromMain(
     throw new Error('ADR0104_PROJECT_SET_INVALID');
   }
 
-  const resolved = await Promise.all(unique.map(async (projectId) => {
-    const source = ADR_0104_CANONICAL_PROJECT_SOURCES[projectId];
-    if (!source) throw new Error('ADR0104_PROJECT_UNKNOWN');
-    const content = await fetchText(source, currentMainSha);
-    const declaredProjectId = parseProjectId(content);
-    if (declaredProjectId !== projectId) throw new Error('ADR0104_CANONICAL_PROJECT_ID_DRIFT');
-    const projectStages = parseStages(content);
-    if (projectStages.length === 0) throw new Error('ADR0104_CANONICAL_PROJECT_STAGE_MISSING');
-    return {
-      projectId,
-      projectFolder: normalizeProjectFolder(source),
-      projectStages,
-      primaryOwner: projectId,
-    };
-  }));
+  const [routing, ownership] = await Promise.all([
+    fetchText(PROJECT_ROUTING_SOURCE, currentMainSha),
+    fetchText(PROJECT_OWNERSHIP_SOURCE, currentMainSha),
+  ]);
 
-  return resolved.sort((a, b) => a.projectId.localeCompare(b.projectId));
+  return unique.map((projectId) => ({
+    projectId,
+    projectFolder: extractProjectFolder(routing, projectId),
+    projectStages: extractOwnedStages(ownership, projectId),
+    primaryOwner: projectId,
+  })).sort((a, b) => a.projectId.localeCompare(b.projectId));
 }
 
 export function digestCanonicalAdr0104ProjectSet(projects: readonly CanonicalProjectSelection[]): string {
-  const canonical = [...projects]
-    .sort((a, b) => a.projectId.localeCompare(b.projectId))
-    .map((project) => [project.projectId, project.projectFolder, [...project.projectStages].sort().join(','), project.primaryOwner].join('|'))
-    .join('\n');
-  return createHash('sha256').update(canonical, 'utf8').digest('hex');
+  return digestAdr0104ProjectSet(projects);
 }
