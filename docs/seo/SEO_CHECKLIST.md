@@ -1,17 +1,18 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project: CAPITAL-AI**  
-**Stand:** 16.08.2026 — WP-D3 Soft-404 VERIFIED; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** (PR #375 + Owner Rich Results Test); **WP-S2 Prerender VERIFIED** (ADR-0084)  
+**Stand:** 01.09.2026 — WP-D3 Soft-404 VERIFIED; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** (PR #375 + Owner Rich Results Test); **WP-S2 Prerender VERIFIED** (ADR-0084); Q1 Public-Route/Sitemap-Konsistenz gehärtet  
 **Umsetzungsplan:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` (SEO-GM-ROADMAP-0002)
 
 ### 1. Crawling & Indexierung
 - [x] robots.txt / sitemap.xml — **Q1** (live `200`)
+- [x] Public-Route ↔ Sitemap-Abdeckung — **Q1 Hardening** (5 kanonische Public-SEO-Routen inkl. `/learning-platform`; Regressionstest `tests/unit/seoPublicRouteSitemap.test.ts`)
 - [x] canonical + Trailing-Slash 301 — **Q2** (canonical + server 301 live; WP-Q-CLOSE rest: GSC)
 - [x] Search-Console-Verifizierung — **Q3 VERIFIED** (Domain `capital-ai.online`, Ownership bestätigt, Sitemap success) → `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`
 - [x] Echte 404 (Soft-404 behoben) — **D3** (PR #360, prod VERIFIED)
 
 ### 3. JSON-LD / Meta
 - [x] JSON-LD Organization/WebSite/SoftwareApplication — **D1 VERIFIED** (PR #375; ImageObject logo + offers/image; Owner Rich Results Test 2026-08-16)
-- [x] Routen-Titles client-side — **D2 VERIFIED** (routeSeo + main.tsx load/popstate; prerender; unique titles live on `/`, `/impressum`, `/agb`, `/datenschutz`)
+- [x] Routen-Titles client-side — **D2 VERIFIED** (routeSeo + main.tsx load/popstate; prerender; unique titles für `/`, `/learning-platform`, `/impressum`, `/agb`, `/datenschutz`)
 - [x] og:image first-party — **Q5**
 
 ### 4. Crawler-Render
