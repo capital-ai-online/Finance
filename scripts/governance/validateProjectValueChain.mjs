@@ -231,14 +231,19 @@ function parseRouting(projectsReadme, errors) {
     } else if (slug !== path.basename(folder)) {
       errors.push(`Project routing ${project}: branch slug ${slug || 'missing'} must equal folder basename ${path.basename(folder)}`);
     }
-    if (!/^present(?:\b|\s)/i.test(state)) {
-      errors.push(`Project routing ${project}: main surface state must be present after materialization, found "${state || 'missing'}"`);
-    }
 
     routes.push({ project, materializationOwner, folder, slug, relationship, state });
   }
 
   return routes;
+}
+
+function isPresentState(value) {
+  return /^present(?:\b|\s)/i.test(cleanCell(value));
+}
+
+function isMigrationGapState(value) {
+  return /(?:migration gap|not materialized|missing|pending)/i.test(cleanCell(value));
 }
 
 export function validateProjectValueChain({ root = process.cwd() } = {}) {
@@ -293,20 +298,45 @@ export function validateProjectValueChain({ root = process.cwd() } = {}) {
 
   let crossCuttingCount = 0;
   for (const route of routes) {
-    const readmePath = `${route.folder}/README.md`;
-    const projectReadme = readRequired(resolvedRoot, readmePath, errors);
-    if (!projectReadme) continue;
-
-    const identity = projectReadme.match(/\*\*(?:Project ID|Project):\*\*\s*`?(CAPITAL-AI-[A-Z0-9-]+)`?/i)?.[1] ?? null;
-    if (identity !== route.project) {
-      errors.push(`${readmePath}: project identity must be ${route.project}, found ${identity ?? 'missing'}`);
-    }
+    const isCrossCutting = /no productive pvc/i.test(route.relationship);
+    if (isCrossCutting) crossCuttingCount += 1;
 
     const expectedPvcs = new Set(
       [...canonicalOwners.entries()]
         .filter(([, owner]) => owner === route.project)
         .map(([pvc]) => pvc),
     );
+
+    if (isCrossCutting && expectedPvcs.size > 0) {
+      errors.push(`${route.project}: routing says cross-cutting/no productive PVC but PROJECT_VALUE_CHAIN assigns ${[...expectedPvcs].join(', ')}`);
+    }
+    if (!isCrossCutting && expectedPvcs.size === 0) {
+      errors.push(`${route.project}: routed as productive owner but owns no canonical PVC stage`);
+    }
+
+    const readmePath = `${route.folder}/README.md`;
+    const absoluteReadmePath = path.join(resolvedRoot, readmePath);
+    const readmeExists = fs.existsSync(absoluteReadmePath);
+
+    if (!readmeExists) {
+      if (isPresentState(route.state)) {
+        errors.push(`${route.project}: routing says "${route.state}" but ${readmePath} is missing`);
+      } else if (!isMigrationGapState(route.state)) {
+        errors.push(`${route.project}: missing project README requires an explicit migration-gap state, found "${route.state || 'missing'}"`);
+      }
+      continue;
+    }
+
+    if (!isPresentState(route.state)) {
+      errors.push(`${route.project}: ${readmePath} exists but routing state is stale/non-present: "${route.state || 'missing'}"`);
+    }
+
+    const projectReadme = fs.readFileSync(absoluteReadmePath, 'utf8');
+    const identity = projectReadme.match(/\*\*(?:Project ID|Project):\*\*\s*`?(CAPITAL-AI-[A-Z0-9-]+)`?/i)?.[1] ?? null;
+    if (identity !== route.project) {
+      errors.push(`${readmePath}: project identity must be ${route.project}, found ${identity ?? 'missing'}`);
+    }
+
     const declarationLines = ownershipDeclarationLines(projectReadme);
     const declaredPvcs = new Set(declarationLines.flatMap(expandPvcRefs));
 
@@ -316,23 +346,13 @@ export function validateProjectValueChain({ root = process.cwd() } = {}) {
       }
     }
 
-    const isCrossCutting = /no productive pvc/i.test(route.relationship);
     if (isCrossCutting) {
-      crossCuttingCount += 1;
-      if (expectedPvcs.size > 0) {
-        errors.push(`${route.project}: routing says cross-cutting/no productive PVC but PROJECT_VALUE_CHAIN assigns ${[...expectedPvcs].join(', ')}`);
-      }
       if (declaredPvcs.size > 0) {
         errors.push(`${readmePath}: cross-cutting project must not declare productive PVC ownership (${[...declaredPvcs].join(', ')})`);
       }
       if (!hasExplicitZeroProductiveOwnership(projectReadme)) {
         errors.push(`${readmePath}: cross-cutting project must explicitly state zero productive PVC ownership`);
       }
-      continue;
-    }
-
-    if (expectedPvcs.size === 0) {
-      errors.push(`${route.project}: routed as productive owner but owns no canonical PVC stage`);
       continue;
     }
 
