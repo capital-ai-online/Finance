@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SOCIAL-PROJECT-SURFACE-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,6 +13,8 @@
   "startedAt": "2026-09-01T04:27:00+02:00",
   "baseBranch": "main",
   "baseSha": "88286e1cfd58b314a818276b5cf61b2ff0b4128d",
+  "pullRequest": 655,
+  "mergedPr": 655,
   "branch": "agent/social-media-project-surface-20260901",
   "project": "CAPITAL-AI-SOCIAL",
   "projectFolder": "social-media",
@@ -48,5 +50,17 @@
     "CAPITAL-AI-COMP owns compliance assessment"
   ],
   "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SOCIAL gains no productive PVC stage and no implicit PVC-19. docs/projects/social-media is organizational navigation only and does not replace docs/social-media/CAPITAL-AI-SOCIAL, content/publishing contracts, Governance, Compliance, Operations, Frontend or SEO authority. Social planning/distribution ownership does not itself authorize external publication, credentials, platform mutation or infrastructure access. Shared Governance project-registry paths remain outside this claim.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-09-01T03:59:03Z",
+  "mainCommit": "37bf7d954363d99d67083edbf520bd77892888dd",
+  "terminalHeadSha": "c63a75cfc190a4063a083021f0bd19b8b311a5cd",
+  "releaseEvidence": {
+    "pullRequest": 655,
+    "merged": true,
+    "mergeCommitSha": "37bf7d954363d99d67083edbf520bd77892888dd",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "9be95dd753f962a789312fec77571e2a9778b586",
+    "verifiedAt": "2026-09-01"
+  }
 }

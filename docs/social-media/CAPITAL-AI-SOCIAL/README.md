@@ -2,9 +2,10 @@
 
 **Display name:** CAPITAL-AI Social Media  
 **Role:** `SOCIAL_MEDIA_DOMAIN`  
-**Roadmap version:** 2.1.2  
-**Synchronized baseline:** `main@1f01120164ba4a3c194a4e0a79292a262a372588`  
+**Roadmap version:** 2.1.3  
+**Synchronized baseline:** `main@9be95dd753f962a789312fec77571e2a9778b586`  
 **Security source merge:** PR #631 / `b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
+**Project-surface merge:** PR #655 / `37bf7d954363d99d67083edbf520bd77892888dd`  
 **Primary Project Value Chain ownership:** `[]`
 
 ## Purpose
@@ -17,11 +18,11 @@ It is deliberately **not** a publishing authority, canonical-content authority, 
 
 Current `main` defines `docs/projects/` as the canonical organizational execution surface and explicitly lists `CAPITAL-AI-SOCIAL` as a cross-cutting project with **no productive PVC ownership**.
 
-The canonical project folder is explicitly resolved as:
+The canonical project folder is explicitly resolved and present on current `main` as:
 
 `docs/projects/social-media/`
 
-with branch project-folder slug `social-media`. This owner migration materializes that folder only as the non-authorizing project navigation/execution projection. The existing bounded Social domain and detailed execution surface remains:
+with branch project-folder slug `social-media`. The project surface is a non-authorizing project navigation/execution projection. The existing bounded Social domain and detailed execution surface remains:
 
 `docs/social-media/CAPITAL-AI-SOCIAL/`
 
@@ -29,14 +30,14 @@ The project-folder surface does not relocate, duplicate or supersede the Social 
 
 ## Quality Management correlation
 
-`CAPITAL-AI-QM` now exists under `docs/projects/quality-management/`. Social reuses the repository's project/assurance separation principles where applicable:
+`CAPITAL-AI-QM` exists under `docs/projects/quality-management/`. Social reuses the repository's project/assurance separation principles where applicable:
 
 - Social owns Social-domain planning/contracts/evidence assessment;
 - QM may independently assess quality and findings under its own authority lifecycle;
 - Social does not self-assert QM verification;
 - QM does not acquire Social publishing, provider or content authority.
 
-No QM file is modified by this Social PR.
+This Social synchronization modifies no QM artifact.
 
 ## Domain boundaries
 
@@ -59,7 +60,7 @@ The merged CAPITAL-AI-SEC program is consumed from:
 - `docs/projects/PROJECT_VALUE_CHAIN.md`;
 - `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`.
 
-`CAPITAL-AI-SOCIAL` owns no `PVC-*` stage. Current Security traceability contains no existing finding routed to Social. Therefore this synchronization does **not** invent a PVC identity or Security finding. The received cross-project Security prompt is retained as `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.yaml` and becomes actionable only when CAPITAL-AI-SEC routes a concrete finding with valid ownership/routing metadata.
+`CAPITAL-AI-SOCIAL` owns no `PVC-*` stage. Current Security traceability contains no existing finding routed to Social. Therefore this synchronization does **not** invent a PVC identity or Security finding. The received cross-project Security prompt is retained as `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.yaml`; its Social target-project-folder metadata now resolves to `docs/projects/social-media/`, while the prompt remains actionable only when CAPITAL-AI-SEC routes a concrete finding with valid ownership/routing metadata.
 
 ## Non-negotiable rules
 
@@ -79,10 +80,10 @@ The merged CAPITAL-AI-SEC program is consumed from:
 
 - `ROADMAP.md` — Social domain execution roadmap candidate.
 - `contracts/SOCIAL_CONTENT_PACKAGE_CONTRACT.md` — target Social package and handoff contract.
-- `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.yaml` — inbound CAPITAL-AI-SEC handoff prompt/boundary synchronized from PR #631.
+- `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.yaml` — inbound CAPITAL-AI-SEC handoff prompt/boundary synchronized from PR #631 with current Social project-folder routing metadata.
 - `mappings/CHANNEL_PROVIDER_MATRIX.md` — evidence-based channel/provider capabilities.
 - `mappings/CROSS_PROJECT_HANDOFFS.md` — foreign-domain handoffs and Security routing rules.
 - `work-packages/SOCIAL_WORK_PACKAGES.md` — SOC-01 through SOC-11.
-- `reports/VALIDATION_REPORT_2026-08-31.md` — V2.1.2 validation and PR-gate state.
+- `reports/VALIDATION_REPORT_2026-08-31.md` — V2.1.2 historical validation and PR-gate state.
 
 `SOC-*` identifiers are workstream labels only. They create no ADR, ESS, AUTH, CTRL or PVC authority.
