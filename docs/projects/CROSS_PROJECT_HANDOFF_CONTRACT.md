@@ -183,7 +183,7 @@ Every part MUST identify that it belongs to the same Cross-Project-Handoff and p
 
 ## Non-authorizing boundary
 
-A full handoff is a routing and context-transfer artifact only. An ADR-0104 in-session project switch is authorizing only to the extent stated by the ACTIVE slot and never beyond its immutable project set. Neither artifact authorizes:
+A full handoff is a routing and context-transfer artifact only. An ADR-0104 in-session project switch is authorizing only to the extent stated by the ACTIVE slot and never beyond its immutable project set. This boundary retains the canonical wording: It does not authorize:
 
 - foreign project mutation;
 - Pull Request or Draft Pull Request creation;
