@@ -52,10 +52,18 @@ CAPITAL-AI-GOV may later return `IMPLEMENTED` or `EVIDENCE_READY` for its own sc
 - **project_namespace:** `PVC`
 - **project_stage:** `PVC-03`
 - **target_project:** `CAPITAL-AI-DOC`
-- **target_roadmap_reference:** `docs/projects/documentary/ROADMAP.md` (target project roadmap)
-- **task:** establish Documentary project navigation and participate in any approved FVC migration while preserving historical evidence.
-- **verification_gate:** Documentary validation and traceability checks.
+- **target_project_folder:** `docs/projects/documentary/`
+- **branch_project_slug:** `documentary`
+- **primary_owner:** `CAPITAL-AI-DOC`
+- **target_roadmap_reference:** `docs/projects/documentary/ROADMAP.md` (target project roadmap; materialization remains DOC-owned)
+- **task:** resume Documentary project migration and PR preparation on a fresh current-main branch, selectively reusing the previously blocked DOC diff only after fresh correlation.
+- **reason:** PVC-05 Governance correlation resolves the previously ambiguous CAPITAL-AI-DOC organizational project folder without transferring Documentary implementation ownership to GOV.
+- **dependency:** first Human-merged `main` snapshot containing the canonical `CAPITAL-AI-DOC -> docs/projects/documentary/` mapping in `docs/projects/README.md`, plus the then-current `/AGENTS.md`.
+- **required_evidence:** fresh current main, compliant DOC branch using the canonical `documentary` project-folder slug, exact candidate diff, open-PR/claim/writer/overlap correlation, and Documentary/Vocabulary validation.
+- **verification_gate:** CAPITAL-AI-DOC project validation and normal repository PR gates.
 - **status:** `REFERRED_NOT_EXECUTED`
+
+The `documentary` slug is valid only after the GOV correlation is Human-merged into `main`; it is derived from the canonical folder basename, not guessed from `CAPITAL-AI-DOC`. CAPITAL-AI-GOV does not create `docs/projects/documentary/**` or execute the Documentary migration.
 
 ## [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-09]
 
@@ -65,6 +73,21 @@ CAPITAL-AI-GOV may later return `IMPLEMENTED` or `EVIDENCE_READY` for its own sc
 - **target_roadmap_reference:** `docs/projects/data/ROADMAP.md` (target project roadmap)
 - **task:** adopt PVC project labels/navigation and assess DATA technical consumers for any approved FVC migration.
 - **verification_gate:** DATA contracts/tests plus cross-project boundary review.
+- **status:** `REFERRED_NOT_EXECUTED`
+
+## [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-09] — stale CAPITAL-AI-DOC folder projection
+
+- **project_namespace:** `PVC`
+- **project_stage:** `PVC-09`
+- **target_project:** `CAPITAL-AI-DATA`
+- **target_project_folder:** `docs/projects/data/`
+- **primary_owner:** `CAPITAL-AI-DATA`
+- **target_roadmap_reference:** `docs/projects/data/ROADMAP.md`
+- **task:** after the GOV correlation is Human-merged, update the DATA-owned `docs/projects/data/HANDOFFS.md` CAPITAL-AI-DOC routing projection from `REQUIRES_CORRELATION` to the merged canonical `docs/projects/documentary/` folder and remove only the now-stale ambiguity wording.
+- **reason:** the stale reference is owned by CAPITAL-AI-DATA and must not be silently mutated from a CAPITAL-AI-GOV branch.
+- **dependency:** first Human-merged `main` snapshot containing the canonical Documentary project-folder mapping, plus current `/AGENTS.md` and `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`.
+- **required_evidence:** fresh current main, DATA-owned exact diff, no competing CAPITAL-AI-DOC folder mapping, preserved PVC/technical-VC namespace separation, and normal DATA project/document validation.
+- **verification_gate:** CAPITAL-AI-DATA project validation and normal repository PR gates.
 - **status:** `REFERRED_NOT_EXECUTED`
 
 ## [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-12]
