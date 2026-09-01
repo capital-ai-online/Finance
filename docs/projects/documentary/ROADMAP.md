@@ -36,7 +36,7 @@ Where older technical roadmap prose conflicts with the current component README,
 
 ## 3. Work packages
 
-### DOC-00 — Canonical project surface
+### WP-DOC-00 — Canonical project surface
 
 **State:** `IN_PROGRESS — candidate`
 
@@ -53,7 +53,7 @@ Exit:
 - no competing CAPITAL-AI-DOC project folder or project identity exists;
 - no technical runtime, registry or authority is duplicated.
 
-### DOC-01 — Current Documentary baseline and document model correlation
+### WP-DOC-01 — Current Documentary baseline and document model correlation
 
 **State:** `READY`
 
@@ -69,7 +69,7 @@ Exit:
 - project planning reflects current Documentary capabilities without creating a second implementation inventory;
 - document identity and lifecycle remain registry-backed and path-independent.
 
-### DOC-02 — Documentary lifecycle, maintenance and Documentation Governance
+### WP-DOC-02 — Documentary lifecycle, maintenance and Documentation Governance
 
 **State:** `ACTIVE BASELINE / CONTINUOUS MAINTENANCE`
 
@@ -85,7 +85,7 @@ Exit:
 - Documentary maintenance remains branch-based, evidence-bound and non-authorizing;
 - no repository-wide Governance authority is introduced under `src/platform/Documentary/Governance`.
 
-### DOC-03 — Vocabulary, Knowledge and Wiki projection
+### WP-DOC-03 — Vocabulary, Knowledge and Wiki projection
 
 **State:** `ACTIVE BASELINE`
 
@@ -101,7 +101,7 @@ Exit:
 - no second Vocabulary Registry, Knowledge Registry, Wiki architecture or back-propagating Wiki authority exists;
 - Documentary remains a consumer/projector under the existing contracts.
 
-### DOC-04 — Technical roadmap ownership reconciliation
+### WP-DOC-04 — Technical roadmap ownership reconciliation
 
 **State:** `READY`
 
