@@ -2,19 +2,37 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Baseline:** `main@b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`
+**Correlation baseline:** `main@6dea22e5b8c4f2b0b9c9fbfb73615738acf57a54`
 
 ## Security-priority packages
 
 | Priority | Package | PVC | Source | Scope | Exit evidence |
 |---:|---|---|---|---|---|
-| P1 | `OPS-02-SEC-06` Entitlement Capability Inventory | `PVC-02` | S1-R2-06 | inventory every premium/protected capability; map server enforcement and actual Primary Owner | complete capability matrix; browser-tier/forged/missing-auth/alternate-path DENY expectations mapped; child handoffs created where foreign code exists |
+| P1 | `OPS-02-SEC-06` Entitlement Capability Inventory | `PVC-02` | S1-R2-06 | inventory every premium/protected capability; map server enforcement and actual Primary Owner | **PARENT EVIDENCE READY** — seven-capability matrix, DENY expectations and FINTECH/DATA child handoffs in `controlled-implementation/OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md`; child remediation and Security verification remain open |
 | P1 | `OPS-06-SEC-03` Node Control-Plane Convergence | `PVC-06` | S1-R2-03 | converge `.nvmrc`, package engine policy and approved control-plane Node identity to Node 24.20.0 | exact-candidate identity checks + CI; runtime identity only if claimed |
 | P1 | `OPS-04-SEC-04` Fatal Process Handling | `PVC-04` | S1-R2-04 | readiness unhealthy on fatal error, stop new work, bounded cleanup, non-zero exit | negative child-process test + `PVC-08` supervisor recovery evidence |
 | P1 | `OPS-02-SEC-05` Stripe Redirect Boundary | `PVC-02` | S1-R2-05 | server-owned canonical redirect origin/destination policy | allowlist positive tests + attacker absolute/open-redirect negative tests |
 | P1 | `OPS-08-SEC-07` Recovery / RPO / RTO | `PVC-08` | S1-R2-07 | approved objectives, recurring encrypted off-site backup, isolated measured restore | integrity-validated restore + measured actual RPO/RTO; runbook alone insufficient |
 | P2 | `OPS-08-SEC-09` Strict CSP Promotion Evidence | `PVC-08` | S1-R2-09 | maintain report-only until protected compatibility window satisfies ADR-0040 | violation/compatibility evidence + protected Stripe/Supabase/Consent/hCaptcha verification |
 | P2 | `OPS-08-SEC-10` Billing Isolation Post-Deploy | `PVC-08` | S1-R2-10 | prove Production cannot reach DEV simulated-success billing logic | exact runtime/bundle evidence, Production fail-closed behavior |
+
+### OPS-02-SEC-06 disposition
+
+The parent inventory is complete for the current candidate. It does **not** close `S1-R2-06`.
+
+Current classifications:
+
+- `verified_screening` — partial server enforcement / canonical alternate-route gap;
+- `backtest` — no paid server entitlement enforcement;
+- `monte_carlo` — browser-local alternate-path gap;
+- `full_ai_analysis` — named plan capability not bound to one productive execution boundary;
+- `realtime_ai_newsfeed` — accepted paid product contract conflicts with public runtime route;
+- `buffett_value_check` — server authority present, current browser bearer integration fails closed;
+- `pdf_compliance_export` — server-enforced reference pattern retained.
+
+Foreign productive remediation is `REFERRED_NOT_EXECUTED`; CAPITAL-AI-SEC remains the independent verifier.
+
+PR #683 is an adjacent OPS User-Lifecycle/Subscription-Identity writer with zero file overlap. Its unmerged candidate is not treated as current implementation evidence for this package.
 
 ## Core OPS packages retained from V2.1
 
