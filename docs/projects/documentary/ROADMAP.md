@@ -103,20 +103,33 @@ Exit:
 
 ### WP-DOC-04 — Technical roadmap ownership reconciliation
 
-**State:** `READY`
+**State:** `IMPLEMENTED — CANDIDATE; HUMAN MERGE + VALIDATION PENDING`
 
-Work:
+Implemented correlation:
 
-- selectively correlate D/E/H workstreams in `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` against current runtime evidence;
-- retain Documentary-owned document/model/generator/maintenance work in CAPITAL-AI-DOC;
-- route EventMesh/Traceability runtime, Platform Version Management, Release and Production implementation to CAPITAL-AI-OPS;
-- retain Platform Director/Governance decisions in CAPITAL-AI-GOV;
-- preserve historical/superseded evidence and avoid physical moves unless justified by a proven architecture defect.
+- correlated `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` against current `src/platform/Documentary/README.md`, component manifest and current governance/project boundaries;
+- replaced stale “mostly target structure” status with the current Partial Implementation baseline;
+- aligned D4/D6/D7 roadmap identities with the current implemented architecture: D4 Review/Lifecycle, D6 Generators/Renderers, D7 Knowledge Integration;
+- retained implemented Documentary-side D0–D7 capabilities as CAPITAL-AI-DOC scope without claiming complete platform implementation;
+- retained D8 Migration and broader D9/Architecture/Mermaid/Plugins work as bounded remaining Documentary work;
+- converted central E-workstream implementation into explicit integration/dependency boundaries rather than Documentary runtime ownership;
+- routed EventMesh/central Traceability runtime, Platform Version Management, Release and Production implementation to CAPITAL-AI-OPS;
+- retained Platform Director/repository Governance decisions in CAPITAL-AI-GOV;
+- reused the canonical Document Registry and existing Vocabulary/Knowledge/Wiki contracts instead of creating parallel registries or authorities;
+- preserved the 2026-08-10 roadmap baseline as historical context rather than silently treating it as current implementation truth.
 
-Exit:
+Exit candidate:
 
-- Documentary roadmaps contain no foreign productive implementation ownership;
-- no second EventMesh, Traceability, Release, Version or Governance architecture is implied.
+- Documentary roadmap contains no foreign productive implementation ownership;
+- no second EventMesh, Traceability, Release, Version or Governance architecture is implied;
+- stale implementation gaps are not reopened when current code/manifests prove them implemented;
+- remaining Documentary-owned work is independently bounded and actionable;
+- applicable documentation/governance validation passes on the exact candidate synchronized with current main;
+- Human/Owner PR-creation approval and Human/CODEOWNER merge remain separate gates.
+
+### WP-DOC-04 evidence note
+
+The reconciliation intentionally does **not** mutate `docs/governance/document-registry.json`: this work changes current roadmap status/ownership projection without moving the registered document, changing its stable identity, creating a second registry entry or executing the ADR-0097 autonomous maintenance-agent patch path. Registry/governance impact remains read-only for this candidate.
 
 ## 4. Dependencies and handoffs
 
@@ -152,14 +165,22 @@ Exact branch/main SHAs and validation outputs are execution evidence and are rep
 
 ## 6. Validation / Definition of Done
 
-For this documentation-only project-surface migration:
+For documentation-only Documentary roadmap/project changes:
 
 - `npm run docs:hygiene:check` passes;
-- `npm run documentary:maintenance:validate` passes where applicable to the current repository baseline;
-- `npm run governance:control-plane` passes;
+- `npm run governance:control-plane` passes where the exact candidate touches or depends on governance/document-registry invariants;
+- `npm run documentary:maintenance:validate` is required only where the ADR-0097 maintenance-claim/branch contract applies; it is not a substitute for generic documentation validation;
 - `npm run vocabulary:governance:check` is run when Vocabulary/Wiki contracts are modified, and may be used as a read-only correlation check for cross-boundary changes;
 - no runtime/build validation is added merely for breadth when the exact diff contains no runtime code;
 - final current-main, open-PR, active-writer, changed-file and semantic-overlap correlation is repeated on the exact candidate before PR-creation approval is requested.
+
+For WP-DOC-04 specifically, validation must additionally confirm:
+
+- the technical roadmap matches current component README/manifest implementation evidence;
+- EventMesh/central Traceability, Platform Version, Release and Production remain foreign productive scope;
+- Platform Director/repository Governance remain GOV-owned;
+- no duplicate document identity/registry or parallel architecture is introduced;
+- the exact diff remains documentation-only.
 
 ## 7. Negative tests
 
