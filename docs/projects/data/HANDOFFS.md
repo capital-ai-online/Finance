@@ -68,17 +68,16 @@ This is an assessment dependency and does not transfer `PVC-11` primary ownershi
 - `project_namespace: PVC`
 - `project_stage: PVC-03`
 - `target_project: CAPITAL-AI-DOC`
-- `target_project_folder: REQUIRES_CORRELATION`
+- `target_project_folder: docs/projects/documentary/`
 - `primary_owner: CAPITAL-AI-DOC`
 - `task: project DATA evidence/status/provenance into documentary surfaces`
 - `reason: documentary projection is a separate primary-owner concern`
-- `dependency: validated DATA evidence; canonical CAPITAL-AI-DOC project folder is not yet present/resolved on current main`
+- `dependency: validated DATA evidence; canonical CAPITAL-AI-DOC project routing in docs/projects/README.md`
 - `required_evidence: read-only projection traceability`
-- `verification_gate: DOC project governance after canonical target-folder resolution`
-- `status: BLOCKED_BY`
-- `routing_state: REQUIRES_CORRELATION`
+- `verification_gate: CAPITAL-AI-DOC project governance`
+- `status: REFERRED_NOT_EXECUTED`
 
-DATA does not guess or create the missing CAPITAL-AI-DOC project folder and does not execute this foreign work.
+DATA uses the current canonical routing only; it does not create `docs/projects/documentary/**` and does not execute this foreign work.
 
 ## OPS — EventMesh / Traceability / PVC-18
 
