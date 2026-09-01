@@ -50,9 +50,7 @@ const REQUIRED = [
   'docs/governance/control-plane/STANDARDS_CROSSWALK.md',
   'docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md',
   'docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md',
-  'docs/governance/control-plane/GOVERNANCE_M10_PREREQUISITES_DIFF_IMPACT_2026-08-19.md',
   'docs/governance/control-plane/pre-pr-build-evidence.schema.json',
-  'docs/roadmaps/work-packages/GOVERNANCE_M10_PREREQUISITES_2026-08-19.md',
   'docs/frontend/FRONTEND_ARCH.md',
   'docs/frontend/COMPONENT_INVENTORY.md',
   'docs/frontend/FRONTEND_ROADMAP.md',
@@ -119,8 +117,14 @@ if (errors.length === 0) {
   if (!currentRoadmap.includes('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS')) {
     fail('CURRENT_ROADMAP_AUTHORITY_MISSING', 'docs/architecture/ROADMAP.md must declare its stable current-state authority ID.');
   }
-  if (!/M10 PR-CI passkey enforcement is currently `SUSPENDED \/ OFF`/i.test(currentRoadmap)) {
-    fail('CURRENT_ROADMAP_M10_STATE_INVALID', 'Current-state roadmap must state that M10 PR-CI passkey enforcement is suspended/off.');
+  if (!/M10 PR-CI passkey runtime is `RETIRED \/ OFF`/i.test(currentRoadmap)) {
+    fail('CURRENT_ROADMAP_M10_STATE_INVALID', 'Current-state roadmap must state that the productive M10 PR-CI passkey runtime is retired/off.');
+  }
+  if (!/No productive M10 implementation is expected in current state/i.test(currentRoadmap)) {
+    fail('CURRENT_ROADMAP_M10_DISCOVERY_BOUNDARY_MISSING', 'Current-state roadmap must explicitly prohibit treating M10 as a missing current implementation.');
+  }
+  if (/Mandatory blockers before M10 reactivation/i.test(currentRoadmap)) {
+    fail('CURRENT_ROADMAP_M10_REACTIVATION_BACKLOG_PRESENT', 'Retired M10 must not retain a current-state reactivation backlog.');
   }
   if (/Current enforced M10 state\s*[—-]\s*COMPLETE\s*\/\s*VERIFIED PASS/i.test(currentRoadmap)) {
     fail('CURRENT_ROADMAP_LEGACY_M10_ENFORCEMENT', 'Current-state roadmap must not present historical M10 VERIFIED PASS as current enforcement.');
@@ -295,12 +299,29 @@ if (errors.length === 0) {
 
   const m10Control = controls.find((item) => item.controlId === 'CTRL-CI-M10-001');
   const m10Requirement = String(m10Control?.requirement ?? '');
-  if (!m10Control || !/suspended|off/i.test(m10Requirement)) {
-    fail('M10_TRANSITION_STATE_MISSING', 'CTRL-CI-M10-001 must explicitly preserve the current suspended/off state.');
+  if (!m10Control || !/retired/i.test(m10Requirement) || !/PR #691/i.test(m10Requirement)) {
+    fail('M10_RETIRED_STATE_MISSING', 'CTRL-CI-M10-001 must bind productive M10 retirement to Human Merge of PR #691.');
   }
-  for (const requiredReactivationTopic of ['ADR', 'Authority', 'Documentary', 'README', 'Hygiene', 'router', 'Version', 'structural', 'hosted CI', 'Owner']) {
-    if (!m10Requirement.toLowerCase().includes(requiredReactivationTopic.toLowerCase())) {
-      fail('M10_REACTIVATION_CRITERIA_INCOMPLETE', `CTRL-CI-M10-001 must cover ${requiredReactivationTopic} before reactivation.`);
+  if (!/MUST NOT search/i.test(m10Requirement) || !/absence of a productive M10 implementation as a gap/i.test(m10Requirement)) {
+    fail('M10_DISCOVERY_BOUNDARY_MISSING', 'CTRL-CI-M10-001 must prohibit current-state M10 implementation discovery/gap reporting.');
+  }
+  if (/reactivation requires|before reactivation/i.test(m10Requirement)) {
+    fail('M10_REACTIVATION_BACKLOG_PRESENT', 'CTRL-CI-M10-001 must not retain a current-state M10 reactivation prerequisite backlog.');
+  }
+
+  const adr0104 = adrs.find((item) => item.displayId === 'ADR-0104');
+  if (!adr0104 || adr0104.version !== '1.3.1') {
+    fail('ADR_0104_RACE_VERSION_MISSING', 'ADR-0104 registry must project the S2/v1.3 race correction as v1.3.1.');
+  } else {
+    const scope = adr0104.supersessionScope;
+    if (!scope || scope.type !== 'conditional-partial') {
+      fail('ADR_0104_SUPERSESSION_SCOPE_MISSING', 'ADR-0104 supersession metadata must be conditional-partial.');
+    }
+    if (!Array.isArray(scope?.targets) || scope.targets.length === 0 || !Array.isArray(scope?.exclusions) || scope.exclusions.length === 0) {
+      fail('ADR_0104_SUPERSESSION_SCOPE_INCOMPLETE', 'ADR-0104 scoped supersession must identify targets and exclusions.');
+    }
+    if (!scope?.exclusions?.includes('CTRL-MERGE-HUMAN-001') || !scope?.exclusions?.includes('FOREIGN_PROJECT_HANDOFF')) {
+      fail('ADR_0104_SUPERSESSION_EXCLUSIONS_INCOMPLETE', 'ADR-0104 scoped supersession must explicitly preserve Human merge and foreign-project handoff.');
     }
   }
 
