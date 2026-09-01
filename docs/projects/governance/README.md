@@ -17,6 +17,7 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 - **P1 — Project Architecture:** local GOV consolidation; `docs/projects/` + `PVC-*` namespace.
 - **P2 — DevelopmentChain Integration:** target `CAPITAL-AI-OPS`; GOV defines the integration contract and hands execution off.
 - **P3 — Financial VC Namespace Migration:** multi-owner assessment only; current `SC-MD-SPT-0001` stays unchanged until coordinated authority/owner resolution.
+- **P7 — User-Lifecycle Simulation:** Owner decisions are captured for `248 EUR` annual Pro pricing and local/global logout with local default; productive implementation remains owner-scoped and starts with the OPS handoff after Human merge of the decision projection.
 - **Governance chat backlog:** all remaining local tasks and foreign referrals from the current project chat are tracked in `TASK_REGISTER.md`.
 
 ## Navigation
@@ -27,6 +28,8 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 - `../CROSS_PROJECT_HANDOFF_CONTRACT.md` — qualified handoff contract.
 - `ROADMAP.md` — local execution state.
 - `TASK_REGISTER.md` — canonical chat-to-repository task register.
+- `user-lifecycle-simulation/STATUS.md` — current User-Lifecycle owner sequence and gates.
+- `user-lifecycle-simulation/DECISION_REGISTER.yaml` — non-authorizing projection of explicit Owner decisions.
 - `AUTHORITY_AND_DECISION_BOUNDARIES.md` — Platform Director / Governance authority separation.
 - `COMPONENT_ARCHITECTURE_MATRIX.md` — Governance component and architecture assessment.
 - `P1_PROJECT_ARCHITECTURE_MIGRATION_MATRIX.md` — project migration matrix.

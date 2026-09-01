@@ -1,7 +1,84 @@
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 evidence_policy: "redacted_non_authorizing_index"
 bootstrap_evidence_immutable: true
+
+current_decision_candidate:
+  repository_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
+  branch: "agent/governance-user-lifecycle-decisions-20260901"
+  work_claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
+  environment: "GitHub current main plus local structural validation"
+  provider_mode: "governance_decision_projection_only"
+  owner_decisions:
+    - id: "GOV-ULS-DEC-001"
+      decision: "Annual Pro price is 248 EUR from the current catalog."
+      source: "current_chat_instruction"
+      production_change_authorized: false
+    - id: "GOV-ULS-DEC-002"
+      decision: "Support local and global logout; local is the default."
+      source: "current_chat_instruction"
+      production_change_authorized: false
+  predecessor_merge:
+    pull_request: 675
+    terminal_head_sha: "b7f647734934b6e723b3db345a41f1725cee11c2"
+    merge_commit_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
+    merged_at: "2026-09-01T12:24:08Z"
+  writer_transition:
+    released_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
+    active_claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
+    atomic: true
+  chat_authorization:
+    mode: "standing_preparatory_roadmap_authorization"
+    exact_pr_snapshot_gate_preserved: true
+    human_merge_only_preserved: true
+    protected_production_mutation_gate_preserved: true
+  open_pr_snapshot:
+    - number: 669
+      changed_scope: ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json only"
+      file_overlap: false
+      semantic_overlap: false
+  changed_files_count: 10
+  productive_code_changed: false
+  runtime_changed: false
+  workflow_changed: false
+  production_mutation: false
+  conclusion:
+    operations: "READY_AFTER_GOV_DECISION_PROJECTION_MERGE"
+    frontend: "BLOCKED_BY_STABLE_OPS_CONTRACT"
+    security: "BLOCKED_BY_OPS_FE_EVIDENCE"
+    compliance: "BLOCKED_BY_OPS_FE_EVIDENCE_AND_APPLICABILITY_REVIEW"
+    governance_closeout: "BLOCKED_BY_OWNER_RETURNS"
+  prohibited_claims:
+    - "No live Billing, Auth, Stripe, Supabase or provider state is changed."
+    - "No runtime/provider test PASS is produced by this decision projection."
+    - "No foreign implementation or independent Security/Compliance verification is claimed."
+
+decision_candidate_validation:
+  scope: "ten Governance documentation/work-claim files only"
+  json_parse:
+    result: "PASS"
+    files:
+      - ".ai/work-claims/CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01.json"
+      - ".ai/work-claims/CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01.json"
+  yaml_parse:
+    result: "PASS"
+    files:
+      - "docs/projects/governance/user-lifecycle-simulation/DECISION_REGISTER.yaml"
+      - "docs/projects/governance/user-lifecycle-simulation/EVIDENCE_INDEX.yaml"
+      - "docs/projects/governance/user-lifecycle-simulation/EXECUTION_MANIFEST.yaml"
+      - "docs/projects/governance/user-lifecycle-simulation/PR_DEPENDENCY_MAP.yaml"
+  invariants:
+    result: "PASS"
+    assertions:
+      - "The PR #675 recorrelation claim is released/non-exclusive with exact merge evidence."
+      - "Exactly one successor claim is active/exclusive and covers all ten changed files."
+      - "GOV-ULS-DEC-001 equals 248.00 EUR and authorizes no production price migration."
+      - "GOV-ULS-DEC-002 supports local/global logout with local default and authorizes no production session mutation."
+      - "The OPS PR depends on Human merge of the GOV decision projection."
+      - "Exact PR-snapshot approval and Human-only merge remain true."
+  production_build:
+    result: "NOT_RUN_BY_SCOPE"
+    reason: "No runtime, dependency, workflow, deployment or production artifact changed."
 
 current_recorrelation:
   repository_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
@@ -9,6 +86,11 @@ current_recorrelation:
   work_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
   environment: "GitHub repository current main plus local structural validation"
   provider_mode: "governance_recorrelation_only"
+  terminal_merge:
+    pull_request: 675
+    state: "MERGED"
+    terminal_head_sha: "b7f647734934b6e723b3db345a41f1725cee11c2"
+    merge_commit_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
   bootstrap:
     pull_request: 656
     state: "MERGED"
@@ -144,7 +226,7 @@ state_of_art_correlation:
     result: "ALIGNED_WITH_PROVIDER_CAPABILITY_NOTE"
     notes:
       - "Supabase Local uses Mailpit for Auth-email testing and exposes DB test/lint workflows."
-      - "signOut supports global default, local and others scopes; GOV-ULS-DEC-002 remains the product decision for local/global/both UX."
+      - "signOut supports global default, local and others scopes; GOV-ULS-DEC-002 selects local/global UX with local as the product default."
       - "Revoked access JWTs can remain valid until expiry; logout tests must document that residual window."
   stripe:
     sources:
