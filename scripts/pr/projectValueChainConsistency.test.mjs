@@ -76,14 +76,35 @@ test('rejects PVC-19 ownership and productive ownership by a cross-cutting proje
   });
 });
 
-test('rejects stale routing state after a project folder is materialized', () => {
+test('rejects stale migration-gap state after a project README is materialized', () => {
   withFixture((root) => {
     const readmePath = path.join(root, 'docs/projects/README.md');
     const readme = fs.readFileSync(readmePath, 'utf8').replace('| `CAPITAL-AI-C` | cross-cutting; no productive PVC | `docs/projects/c/` | `c` | `CAPITAL-AI-C` | present |', '| `CAPITAL-AI-C` | cross-cutting; no productive PVC | `docs/projects/c/` | `c` | `CAPITAL-AI-C` | owner migration gap |');
     fs.writeFileSync(readmePath, readme, 'utf8');
     const result = validateProjectValueChain({ root });
     assert.equal(result.ok, false);
-    assert.match(result.errors.join('\n'), /main surface state must be present/);
+    assert.match(result.errors.join('\n'), /exists but routing state is stale\/non-present/);
+  });
+});
+
+test('allows a pre-resolved owner migration gap while the target project README is absent', () => {
+  withFixture((root) => {
+    fs.rmSync(path.join(root, 'docs/projects/c'), { recursive: true, force: true });
+    const readmePath = path.join(root, 'docs/projects/README.md');
+    const readme = fs.readFileSync(readmePath, 'utf8').replace('| `CAPITAL-AI-C` | cross-cutting; no productive PVC | `docs/projects/c/` | `c` | `CAPITAL-AI-C` | present |', '| `CAPITAL-AI-C` | cross-cutting; no productive PVC | `docs/projects/c/` | `c` | `CAPITAL-AI-C` | owner migration gap |');
+    fs.writeFileSync(readmePath, readme, 'utf8');
+    const result = validateProjectValueChain({ root });
+    assert.equal(result.ok, true, result.errors.join('\n'));
+    assert.equal(result.summary.crossCuttingProjects, 1);
+  });
+});
+
+test('rejects present routing state when the project README is missing', () => {
+  withFixture((root) => {
+    fs.rmSync(path.join(root, 'docs/projects/c'), { recursive: true, force: true });
+    const result = validateProjectValueChain({ root });
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join('\n'), /routing says "present" but docs\/projects\/c\/README\.md is missing/);
   });
 });
 
