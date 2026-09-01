@@ -1,0 +1,282 @@
+name: PR Production Baseline Post-Merge Refresh
+run-name: >-
+  ${{ format('main@{0} – PR-Produktions-Baselines nach Merge-Sync aktualisieren', github.event.workflow_run.head_sha) }}
+
+# Trusted post-merge writer. This workflow never executes candidate code. It reuses only
+# current-main productionPreflight/updatePrProductionBaseline contracts and fails closed on
+# stale main/head/production identities. The later post-deploy refresh remains authoritative
+# for the Production = main state.
+on:
+  workflow_run:
+    workflows: ['Agenten-PR-Branches synchronisieren']
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-production-baseline-post-merge-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    name: Merge-Sync, Production und synchronisierte PRs korrelieren
+    if: >-
+      github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      matrix: ${{ steps.reconcile.outputs.matrix }}
+      count: ${{ steps.reconcile.outputs.count }}
+
+    steps:
+      - name: Current-main, Production und PR-Heads fail-closed korrelieren
+        id: reconcile
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const fail = (message) => { throw new Error(message); };
+            const sourceRun = context.payload.workflow_run;
+            const sourceSha = normalizeSha(sourceRun.head_sha);
+
+            const { data: main } = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main',
+            });
+            const mainSha = normalizeSha(main.commit?.sha);
+            if (!/^[0-9a-f]{40}$/.test(sourceSha) || !/^[0-9a-f]{40}$/.test(mainSha)) {
+              fail('Source- oder current-main-SHA ist ungültig.');
+            }
+            if (sourceSha !== mainSha) {
+              core.notice(`Merge-Sync ${sourceSha.slice(0, 12)} ist nicht mehr current main ${mainSha.slice(0, 12)}; keine Baseline wird geschrieben.`);
+              core.setOutput('matrix', JSON.stringify({ include: [] }));
+              core.setOutput('count', '0');
+              return;
+            }
+
+            const healthResponse = await fetch('https://capital-ai.online/healthz', {
+              headers: { Accept: 'application/json' },
+              signal: AbortSignal.timeout(15_000),
+            });
+            if (!healthResponse.ok) fail(`Production /healthz antwortet mit HTTP ${healthResponse.status}.`);
+            const health = await healthResponse.json();
+            if (health?.status !== 'ok') fail(`Production /healthz meldet status=${String(health?.status)}.`);
+            const payloadSha = normalizeSha(health?.deployment?.commitSha);
+            const headerSha = normalizeSha(healthResponse.headers.get('x-capital-ai-commit'));
+            if (payloadSha && headerSha && payloadSha !== headerSha) {
+              fail(`Production-Commit widerspricht sich zwischen JSON und Header (${payloadSha} != ${headerSha}).`);
+            }
+            const productionSha = payloadSha || headerSha;
+            if (!/^[0-9a-f]{40}$/.test(productionSha)) fail('Production liefert keinen gültigen immutable Commit-SHA.');
+            const productionBranch = String(health?.deployment?.branch || healthResponse.headers.get('x-capital-ai-branch') || '').trim();
+            const productionRepo = String(health?.deployment?.repoSlug || healthResponse.headers.get('x-capital-ai-repo') || '').trim();
+            if (productionBranch !== 'main') fail(`Production meldet Branch ${productionBranch || 'missing'} statt main.`);
+            if (productionRepo !== `${context.repo.owner}/${context.repo.repo}`) fail(`Production meldet Repository ${productionRepo || 'missing'} statt ${context.repo.owner}/${context.repo.repo}.`);
+
+            const lineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${productionSha}...${mainSha}`,
+            });
+            if (lineage.data.status !== 'ahead' && lineage.data.status !== 'identical') {
+              fail(`Production ${productionSha.slice(0, 12)} ist kein Vorfahr von main ${mainSha.slice(0, 12)} (status=${lineage.data.status}).`);
+            }
+
+            const pulls = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              base: 'main',
+              per_page: 100,
+            });
+            const pending = new Map();
+            const skipped = [];
+            for (const pr of pulls) {
+              const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
+              if (!sameRepo || pr.draft === true) {
+                skipped.push(`#${pr.number}:${pr.draft === true ? 'draft' : 'cross-repo'}`);
+                continue;
+              }
+              pending.set(Number(pr.number), pr);
+            }
+
+            const include = [];
+            const maxRounds = 7;
+            for (let round = 0; round < maxRounds && pending.size > 0; round += 1) {
+              for (const [number, initialPr] of [...pending.entries()]) {
+                const pr = round === 0 ? initialPr : (await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: number,
+                })).data;
+                const headSha = normalizeSha(pr.head?.sha);
+                const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
+                if (pr.state !== 'open' || pr.base?.ref !== 'main' || !sameRepo || pr.draft === true || !/^[0-9a-f]{40}$/.test(headSha)) {
+                  skipped.push(`#${number}:boundary-changed`);
+                  pending.delete(number);
+                  continue;
+                }
+                const compare = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  basehead: `${mainSha}...${headSha}`,
+                });
+                if (compare.data.status === 'ahead' || compare.data.status === 'identical') {
+                  include.push({ pr_number: number, head_sha: headSha, base_sha: mainSha });
+                  pending.delete(number);
+                }
+              }
+              if (pending.size > 0 && round < maxRounds - 1) {
+                core.info(`Warte auf ${pending.size} Update-Branch-Head(s), Runde ${round + 1}/${maxRounds}.`);
+                await new Promise((resolve) => setTimeout(resolve, 5_000));
+              }
+            }
+            for (const [number] of pending) skipped.push(`#${number}:sync-timeout`);
+
+            core.setOutput('matrix', JSON.stringify({ include }));
+            core.setOutput('count', String(include.length));
+            core.notice(`Post-Merge-Baseline-Korrelation PASS: production=${productionSha.slice(0, 12)} <= main=${mainSha.slice(0, 12)}; ${include.length} PR(s) synchronisiert; skipped=${skipped.length ? skipped.join(',') : 'keine'}.`);
+
+  refresh:
+    name: PR #${{ matrix.pr_number }} Baseline nach Merge aktualisieren
+    needs: discover
+    if: ${{ needs.discover.result == 'success' && needs.discover.outputs.count != '0' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Trusted-main Policy auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ matrix.base_sha }}
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Kandidaten-Head als Daten auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ matrix.head_sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Exakten Main in Kandidaten-Repository binden
+        working-directory: candidate
+        env:
+          EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags ../policy "$EXPECTED_MAIN_SHA:refs/remotes/origin/main"
+          test "$(git rev-parse refs/remotes/origin/main)" = "$EXPECTED_MAIN_SHA"
+          git merge-base --is-ancestor "$EXPECTED_MAIN_SHA" HEAD
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+
+      - name: Baseline ausschließlich mit trusted-main Policy erzeugen
+        id: baseline
+        working-directory: candidate
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+        run: node ../policy/scripts/pr/productionPreflight.mjs
+
+      - name: Main, Head und Production unmittelbar vor Body-Write erneut binden
+        id: freshness
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+          EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
+          EXPECTED_HEAD_SHA: ${{ matrix.head_sha }}
+          EXPECTED_PRODUCTION_SHA: ${{ steps.baseline.outputs.production_sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const prNumber = Number(process.env.PR_NUMBER);
+            const expectedMain = normalizeSha(process.env.EXPECTED_MAIN_SHA);
+            const expectedHead = normalizeSha(process.env.EXPECTED_HEAD_SHA);
+            const expectedProduction = normalizeSha(process.env.EXPECTED_PRODUCTION_SHA);
+            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+            const { data: main } = await github.rest.repos.getBranch({ owner: context.repo.owner, repo: context.repo.repo, branch: 'main' });
+            const healthResponse = await fetch('https://capital-ai.online/healthz', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15_000) });
+            if (!healthResponse.ok) throw new Error(`Production /healthz antwortet mit HTTP ${healthResponse.status}.`);
+            const health = await healthResponse.json();
+            const payloadSha = normalizeSha(health?.deployment?.commitSha);
+            const headerSha = normalizeSha(healthResponse.headers.get('x-capital-ai-commit'));
+            if (payloadSha && headerSha && payloadSha !== headerSha) throw new Error('Production-Commit widerspricht sich zwischen JSON und Header.');
+            const liveProduction = payloadSha || headerSha;
+            const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
+            const stable = pr.state === 'open' && pr.base?.ref === 'main' && sameRepo &&
+              normalizeSha(pr.head?.sha) === expectedHead && normalizeSha(main.commit?.sha) === expectedMain &&
+              liveProduction === expectedProduction;
+            core.setOutput('stable', stable ? 'true' : 'false');
+            if (!stable) core.notice(`PR #${prNumber}: Snapshot änderte sich vor Baseline-Write; dieser Lauf schreibt nichts. Ein neuer Merge-/Deploy-Lauf übernimmt.`);
+
+      - name: Kanonischen Baseline-Block atomar aktualisieren
+        id: refresh
+        if: steps.freshness.outputs.stable == 'true'
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+        run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
+
+      - name: Geänderte Baseline an exakte Governance binden
+        if: steps.refresh.outputs.changed == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+          EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
+          EXPECTED_HEAD_SHA: ${{ matrix.head_sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const prNumber = Number(process.env.PR_NUMBER);
+            const expectedMain = normalizeSha(process.env.EXPECTED_MAIN_SHA);
+            const expectedHead = normalizeSha(process.env.EXPECTED_HEAD_SHA);
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event: 'pull_request',
+              head_sha: expectedHead,
+              status: 'completed',
+              per_page: 100,
+            });
+            const exactRun = runs
+              .filter((run) => run.path === '.github/workflows/pr-governance.yml')
+              .filter((run) => (run.pull_requests || []).some((item) => Number(item.number) === prNumber && normalizeSha(item.head?.sha) === expectedHead && normalizeSha(item.base?.sha) === expectedMain))
+              .sort((a, b) => Number(b.id) - Number(a.id))[0];
+            if (!exactRun) {
+              core.notice(`PR #${prNumber}: Baseline aktualisiert; noch kein abgeschlossener exact-head/base Governance-Run vorhanden. Der laufende synchronize-Run bzw. dessen bestehender Baseline-Recovery-Pfad übernimmt.`);
+              return;
+            }
+            await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: exactRun.id,
+            });
+            core.notice(`PR #${prNumber}: Baseline nach Merge aktualisiert; Governance Run ${exactRun.id} wird auf exakt head/base erneut ausgeführt.`);
