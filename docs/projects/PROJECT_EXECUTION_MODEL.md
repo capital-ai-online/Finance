@@ -2,11 +2,22 @@
 
 **Role:** project lifecycle projection — non-authorizing  
 **DevelopmentChain Authority:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
-**Current-state Authority:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`
+**Current-state Authority:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
+**Roadmap role registry:** `docs/projects/ROADMAP_REGISTRY.md`
 
 ## Principle
 
 The DevelopmentChain is the repository-wide **delivery lifecycle**. It is not an additional project and does not create a second value chain. `CAPITAL-AI-OPS` is the target organizational execution owner of the recurring DevelopmentChain lifecycle, while each PVC stage retains its Primary Project Owner and Governance retains independent controls.
+
+## Roadmap single-source rule
+
+Project execution/status follows the role model in [`ROADMAP_REGISTRY.md`](./ROADMAP_REGISTRY.md):
+
+- exactly one `docs/projects/<project>/ROADMAP.md` owns the organizational execution/status projection for each canonical project;
+- domain, program, migration and historical roadmaps remain bounded detail/evidence sources and may not create a second project-status truth;
+- bounded technical Authorities remain intact even when their artifact is named `*ROADMAP*`;
+- `docs/architecture/ROADMAP.md` remains the DevelopmentChain current-state Authority and therefore outranks non-authorizing DevelopmentChain/Integrated roadmap projections for that scope;
+- cross-project portfolio indexes derive status from project roadmaps instead of copying fast-changing work-package state.
 
 ## Target lifecycle
 
@@ -51,7 +62,7 @@ The following remain canonical in their existing scopes:
 - `/AGENTS.md`;
 - `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`;
 - `docs/architecture/ROADMAP.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`);
-- Human/Owner PR creation and Human merge controls;
+- Human/Owner PR creation and Human merge controls, including valid active supersessions such as ADR-0104 where applicable;
 - independent hosted CI;
 - separate production-mutation/deployment controls.
 
