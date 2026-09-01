@@ -20,7 +20,7 @@ create table if not exists public.owner_device_credentials (
 create table if not exists public.owner_authorization_challenges (
   id uuid primary key default gen_random_uuid(),
   owner_user_id uuid not null references auth.users(id) on delete cascade,
-  action text not null check (action in ('ACTIVATE_ADR_0104_SESSION', 'AUTHORIZE_GITHUB_OWNER_MUTATION')),
+  action text not null check (action in ('OWNER_DEVICE_ENROLLMENT', 'ACTIVATE_ADR_0104_SESSION', 'AUTHORIZE_GITHUB_OWNER_MUTATION')),
   challenge text not null unique,
   context_digest text not null,
   context jsonb not null,
