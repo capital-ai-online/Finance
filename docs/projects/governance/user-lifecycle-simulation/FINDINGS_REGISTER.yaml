@@ -1,6 +1,6 @@
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
-correlation_baseline: "main@190f319ec8026d8141601b69a8bb4d97470ec5ea"
+correlation_baseline: "main@a90dc644fb5c8efacdf25e464f2b20c62474501f"
 
 allowed_status:
   - "DISCOVERED"
@@ -46,10 +46,19 @@ findings:
     severity: "high"
     reproduction: "Compare observed Pro annual price 248 EUR with stated 10-percent annual-discount logic from 29 EUR/month (348 EUR/year -> 313.20 EUR)."
     expected: "One explicit Governance-approved Pro annual-price rule."
-    actual: "248 EUR and 313.20 EUR are both plausible expectations in the supplied baseline."
-    required_remediation: "Resolve GOV-ULS-DEC-001 before FE annual Pro pricing is implemented or asserted."
-    verification_owner: "CAPITAL-AI-GOV decision owner; downstream owner tests consume the resolved contract"
-    status: "BLOCKED"
+    actual: "The Human/Owner selected the current catalog value of 248 EUR as the annual Pro price; the repository projection records this as the explicit commercial exception without authorizing a live Stripe mutation."
+    required_remediation: "Consume GOV-ULS-DEC-001 = 248 EUR from the canonical runtime pricing source after Human merge of the decision projection; do not derive 313.20 EUR or mutate Stripe from this Governance artifact."
+    resolution_evidence:
+      decision_id: "GOV-ULS-DEC-001"
+      decision_status: "DECIDED"
+      selected_value_eur: 248.00
+      authority_source: "explicit Human/Owner current-chat instruction"
+      catalog_evidence: "src/features/billing/billingContract.ts -> Pro yearly 248"
+      adr_correlation: "ADR-0034 permits explicit closure or documentation as an accepted commercial exception; this projection does not modify ADR authority or production billing state."
+      candidate_branch: "agent/governance-user-lifecycle-decisions-20260901"
+      stable_after: "Human merge of this decision projection"
+    verification_owner: "CAPITAL-AI-GOV decision projection; downstream OPS/FE tests verify consumption of the canonical runtime source"
+    status: "EVIDENCE_READY"
 
   - finding_id: "FINDING-ULS-CORRELATION-001"
     source_pr: "PR-GOV-ULS-BOOTSTRAP"
