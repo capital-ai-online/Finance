@@ -1,8 +1,8 @@
-name: Cleanup merged branches
+name: Cleanup inactive merged branches
 
 on:
   schedule:
-    - cron: '41 3 * * *'
+    - cron: '41 * * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -10,11 +10,11 @@ on:
         required: true
         type: boolean
         default: true
-      grace_days:
-        description: 'Mindestalter des letzten Branch-Commits in Tagen'
+      grace_minutes:
+        description: 'Mindest-Inaktivität des letzten Branch-Commits in Minuten'
         required: true
         type: string
-        default: '14'
+        default: '60'
 
 permissions:
   contents: write
@@ -35,12 +35,12 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Gemergte Branches fail-closed prüfen und bereinigen
+      - name: Inaktive gemergte Branches fail-closed prüfen und bereinigen
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_CLEANUP_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
-          BRANCH_CLEANUP_GRACE_DAYS: ${{ github.event_name == 'workflow_dispatch' && inputs.grace_days || '14' }}
+          BRANCH_CLEANUP_GRACE_MINUTES: ${{ github.event_name == 'workflow_dispatch' && inputs.grace_minutes || '60' }}
         run: |
           node scripts/governance/cleanupMergedBranches.mjs \
             --dry-run="${BRANCH_CLEANUP_DRY_RUN}" \
-            --grace-days="${BRANCH_CLEANUP_GRACE_DAYS}"
+            --grace-minutes="${BRANCH_CLEANUP_GRACE_MINUTES}"
