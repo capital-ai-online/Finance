@@ -38,9 +38,11 @@ Where a technical financial stage is also relevant, add `technical_namespace` an
 
 `CTRL-SDLC-CHAT-HANDOFF-001` has a `FOREIGN_PROJECT_HANDOFF` trigger in addition to its existing `POST_PR_HANDOFF` trigger.
 
-`FOREIGN_PROJECT_HANDOFF` is mandatory when analysis, planning, implementation or validation determines that the next required productive work step belongs to another canonical project or another Primary Owner.
+The default `FOREIGN_PROJECT_HANDOFF` path is mandatory when the next productive work step belongs to another canonical project or Primary Owner. The referring chat MUST NOT silently implement foreign work.
 
-The referring chat MUST NOT silently implement the foreign work. It MUST:
+The only exception is an ACTIVE ADR-0104 v1.4.0 session whose immutable `AUTHORIZED_PROJECT_SET` already contains the target project. The exception replaces the STOP/separate-chat requirement only. It does not transfer ownership, expand the set, extend the session, authorize merge, allow a multi-project branch/PR or bypass fresh correlation.
+
+For every target outside that set, and whenever membership, mapping, chat binding, slot state or time is unresolved, the full handoff remains fail-closed. The referring chat MUST:
 
 1. report the project switch visibly;
 2. name the target project;
@@ -51,7 +53,36 @@ The referring chat MUST NOT silently implement the foreign work. It MUST:
 7. emit the general Cross-Project-Handoff marker;
 8. immediately generate a complete copyable handoff prompt.
 
-If several Primary Owners are affected, partition the work by ownership and emit one separate handoff per target project. Foreign changes MUST NOT be bundled into one local collection branch.
+If several Primary Owners are affected outside the authorized set, partition the work by ownership and emit one separate handoff per target project. Foreign changes MUST NOT be bundled into one local collection branch.
+
+## In-session project switch
+
+When the ADR-0104 exception applies, emit this block before target-project implementation:
+
+```text
+─────────────────────────────────
+IN-SESSION PROJECT SWITCH
+─────────────────────────────────
+Authority: ADR-0104 v1.4.0 / <SLOT_ID>
+Session Chat: EXACT CURRENT CHAT
+Authorized Project Set Digest: <PROJECT_SET_DIGEST>
+Previous Project: <CURRENT_PROJECT>
+Target Project: <TARGET_PROJECT>
+Target Project Folder: <TARGET_FOLDER>
+Affected VC/PVC: <VC-NN / PVC-NN>
+Primary Owner: <TARGET_PROJECT>
+Current Main: <CURRENT_MAIN_SHA>
+Session End: <SESSION_END>
+Set Changed: NO
+Duration Extended: NO
+Branch / PR: NEW TARGET-PROJECT WORK ITEM
+Status: AUTHORIZED_IN_SET / CORRELATION_REQUIRED
+─────────────────────────────────
+```
+
+Before changing `ACTIVE_PROJECT_ID`, re-resolve current main, ADR version, slot/time, target membership, project/folder/owner mapping, open PRs, active writers and file/semantic/namespace overlap. Any failure produces `CORRELATION_REQUIRED` and no target implementation.
+
+Every target project uses a fresh scoped branch from then-current `main` and its own PR; each project/work item uses its own branch and PR. Switching projects does not allow the preceding project claim, branch or PR to absorb target-project changes.
 
 ## Canonical project-folder resolution
 
@@ -152,7 +183,7 @@ Every part MUST identify that it belongs to the same Cross-Project-Handoff and p
 
 ## Non-authorizing boundary
 
-A handoff is a routing and context-transfer artifact only. It does not authorize:
+A full handoff is a routing and context-transfer artifact only. An ADR-0104 in-session project switch is authorizing only to the extent stated by the ACTIVE slot and never beyond its immutable project set. Neither artifact authorizes:
 
 - foreign project mutation;
 - Pull Request or Draft Pull Request creation;
