@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-ULS-WRITER-RELEASE-2026-09-01",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Terminalize stale merged work-claim metadata that blocks the CAPITAL-AI User Lifecycle owner sequence, without modifying foreign productive project files or assuming Security, Compliance, Runtime or Production authority.",
+  "workItemDE": "Veraltete, bereits gemergte Work-Claim-Metadaten terminalisieren, die die CAPITAL-AI-User-Lifecycle-Owner-Kette blockieren, ohne fremde produktive Projektdateien zu veraendern oder Security-, Compliance-, Runtime- oder Production-Authority zu uebernehmen.",
+  "startedAt": "2026-09-01T06:24:34+02:00",
+  "baseBranch": "main",
+  "baseSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
+  "branch": "agent/governance-lifecycle-writer-release-20260901",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Governance integrity and coordination metadata cleanup only; no foreign productive implementation or independent Security/Compliance verification",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-ULS-WRITER-RELEASE-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31.json",
+    ".ai/work-claims/CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01.json",
+    ".ai/work-claims/GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20.json"
+  ],
+  "correlationInputs": [
+    "main@3935e08a0289be69683b8af9004fc177a99b04c0",
+    "PR #656 merged",
+    "PR #632 merged",
+    "PR #653 merged",
+    "PR #652 merged",
+    "PR #463 merged",
+    "/AGENTS.md@3935e08a0289be69683b8af9004fc177a99b04c0"
+  ],
+  "nonGoals": [
+    "Modify docs/projects/operations/**",
+    "Modify docs/projects/frontend/** or docs/frontend/**",
+    "Modify docs/projects/compliance/**",
+    "Implement lifecycle harness or application code",
+    "Perform Security or Compliance verification",
+    "Perform Production, Stripe, Supabase, IAM or deployment mutation"
+  ],
+  "authorityGuard": "This claim changes coordination metadata only. Work-claim metadata paths do not grant ownership over the productive files previously claimed by the released owners. Existing Primary Owner, Security, Compliance, Human Merge and Production gates remain unchanged.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact Base/Head snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}
