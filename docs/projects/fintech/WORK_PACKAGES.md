@@ -18,7 +18,7 @@
 | FIN-SEC-01 | PVC-12..17 | Security Handoff Baseline | ACTIVE | stage Security requirements retained; FINTECH never self-verifies Security |
 | FIN-SEC-02 | PVC-16 | S1-R2-06 verified-screening alternate-route entitlement boundary | REFERRED_NOT_EXECUTED / P1 HIGH | canonical verified-score/context/batch paths consume the accepted server entitlement/quota boundary; return evidence to CAPITAL-AI-SEC |
 | FIN-SEC-03 | PVC-15 | S1-R2-06 financial-analysis entitlement boundary | REFERRED_NOT_EXECUTED / P1 HIGH | Backtest/Monte Carlo/full-AI capability binding is server-authoritative and fail-closed; Buffett server authority preserved; return evidence to CAPITAL-AI-SEC |
-| FIN-SYNC-01 | PVC-12..17 | Project Surface Current-Main Sync | IN_PROGRESS | project docs agree on current main, project routing, provider projection and current Security handoffs |
+| FIN-SYNC-01 | PVC-12..17 | Project Surface Current-Main Sync | EVIDENCE_READY | project docs agree on source main, project routing, provider projection and current Security handoffs; final FINTECH-only compare recorded |
 
 ## Security handoff state after OPS PR #694
 
@@ -29,14 +29,12 @@ Merged OPS PR #694 completed the `OPS-02-SEC-06` parent entitlement-capability i
 
 Both child items remain `REFERRED_NOT_EXECUTED` in this documentation-sync work item. Security finding ownership and independent `VERIFIED/CLOSED` decisions remain with `CAPITAL-AI-SEC`.
 
-## Priority order
+## Priority order after FIN-SYNC-01
 
-1. P1 — finish FIN-SYNC-01 current-main project-surface correlation.
-2. P1/HIGH — FIN-SEC-02 and FIN-SEC-03 as newly triggered Security child remediation.
-3. P1 — FIN-17 ranking authority consolidation / FE consumer boundary.
-4. P1 — FIN-12 explicit DATA contract and fail-closed DQ/evidence boundary.
-5. P2 — FIN-19 provider capability completeness without DATA bypass.
-6. P2 — contract/version drift and legacy compatibility cleanup.
-7. P3 — automated project/PVC/consumer/security-handoff drift checks.
+1. P1/HIGH — FIN-SEC-02 and FIN-SEC-03 as newly triggered Security child remediation.
+2. Recompute then-current main/open PR/Security state after either child completes before promoting FIN-17 or FIN-12.
+3. P2 — FIN-19 provider capability completeness without DATA bypass.
+4. P2 — contract/version drift and legacy compatibility cleanup.
+5. P3 — automated project/PVC/consumer/security-handoff drift checks.
 
 Detailed atomic status is maintained in `TASK_REGISTER.md`.
