@@ -3,11 +3,29 @@ prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 evidence_policy: "redacted_non_authorizing_index"
 
 baseline:
-  repository_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
+  repository_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
+  initial_repository_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
   branch: "agent/governance-user-lifecycle-control-20260901"
   work_claim: "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
   environment: "GitHub repository current main plus ChatGPT connector/sandbox validation"
   provider_mode: "governance_precheck_only"
+
+candidate_scope:
+  changed_files:
+    - ".ai/work-claims/CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01.json"
+    - "docs/projects/governance/ROADMAP.md"
+    - "docs/projects/governance/TASK_REGISTER.md"
+    - "docs/projects/governance/user-lifecycle-simulation/DECISION_REGISTER.yaml"
+    - "docs/projects/governance/user-lifecycle-simulation/EVIDENCE_INDEX.yaml"
+    - "docs/projects/governance/user-lifecycle-simulation/EXECUTION_MANIFEST.yaml"
+    - "docs/projects/governance/user-lifecycle-simulation/FINDINGS_REGISTER.yaml"
+    - "docs/projects/governance/user-lifecycle-simulation/PR_DEPENDENCY_MAP.yaml"
+    - "docs/projects/governance/user-lifecycle-simulation/STATUS.md"
+  productive_code_changed: false
+  runtime_changed: false
+  dependencies_changed: false
+  database_changed: false
+  workflow_changed: false
 
 precheck_evidence:
   trust_root:
@@ -38,13 +56,20 @@ precheck_evidence:
       - "docs/governance/document-registry.json"
     result: "NO_NEW_AUTHORITY_REQUIRED"
   open_pr_snapshot:
-    prs: [652, 653, 654, 655]
-    result: "NO_CHANGED_FILE_OVERLAP_WITH_GOV_BOOTSTRAP"
-  active_claim_snapshot:
-    search_candidates: 52
-    target_gov_shared_path_overlap: false
-    ops_overlap_for_future_owner_pr: true
-    result: "GOV_PASS_WITH_DOWNSTREAM_BLOCKER"
+    prs: []
+    result: "NO_OPEN_PULL_REQUESTS_AT_FINAL_CORRELATION_SNAPSHOT"
+  project_surface_merges_during_candidate:
+    merged_prs: [652, 653, 654, 655]
+    result: "CANDIDATE_REBASED_ONTO_MAIN_CONTAINING_ALL_MERGES"
+  active_writer_snapshot:
+    gov_target_path_overlap: false
+    downstream_blockers:
+      - "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31: active/exclusive, docs/projects/operations/**"
+      - "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01: active/exclusive after merged PR #653"
+      - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20: active/exclusive after merged PR #463"
+      - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01: active/exclusive after merged PR #652"
+    resolved_security_writer: "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31 is released"
+    result: "GOV_PASS_WITH_DOWNSTREAM_OWNER_BLOCKERS"
 
 existing_test_reuse_inventory:
   auth:
@@ -80,7 +105,7 @@ state_of_art_correlation:
     result: "ALIGNED_WITH_PROVIDER_CAPABILITY_NOTE"
     notes:
       - "Supabase Local uses Mailpit for Auth-email testing and exposes DB test/lint workflows."
-      - "signOut supports global (default), local and others scopes; product decision GOV-ULS-DEC-002 intentionally remains local/global/both oriented."
+      - "signOut supports global default, local and others scopes; GOV-ULS-DEC-002 remains the product decision for local/global/both UX."
       - "Revoked access JWTs can remain valid until expiry; logout tests must document that residual window."
   stripe:
     sources:
@@ -102,6 +127,21 @@ state_of_art_correlation:
       - "Both provisions contain exceptions for financial-services websites/contracts."
       - "Governance records technical evidence requirements but must not decide legal applicability."
 
+pr_contract:
+  template:
+    path: ".github/pull_request_template.md"
+    version: "1.5.0"
+    result: "READ_CURRENT_MAIN"
+  rendering_contract:
+    path: "scripts/pr/lib.mjs"
+    production_baseline_schema_version: "1.2.0"
+    required_functions:
+      - "productionBaselineIdentity"
+      - "computeProductionBaselineId"
+      - "renderProductionBaselineBlock"
+    result: "READ_CURRENT_MAIN"
+  exact_snapshot_rule: "Re-read current main and candidate head immediately before PR creation; any SHA change invalidates approval."
+
 pre_pr_validation:
   scope: "documentation/governance only"
   production_build:
@@ -120,14 +160,18 @@ pre_pr_validation:
       - "npm run docs:hygiene:check"
     result: "NOT_AVAILABLE"
     reason: "No executable repository checkout in sandbox; results are not fabricated."
+  yaml_machine_parse:
+    result: "NOT_AVAILABLE"
+    reason: "Connector exposes repository content but not a local executable checkout for repository-integrated parsing; structural content was reviewed without claiming machine parser PASS."
   connector_structural_checks:
     result: "PASS"
     assertions:
-      - "Fresh branch exists from recorded baseline."
-      - "Exclusive work claim exists on branch."
+      - "Candidate is rebased on the current correlated main snapshot."
+      - "Exclusive GOV work claim exists and bounds all candidate files."
       - "Required six governance artifacts are addressable on branch."
-      - "Shared GOV paths had no active writer overlap in precheck."
-      - "No product/runtime/provider code is included in intended candidate scope."
+      - "No active foreign writer overlaps the GOV candidate paths."
+      - "No product/runtime/provider code is included in candidate scope."
+      - "All known project-surface merges were incorporated before PR readiness."
 
 required_future_evidence:
   operations:
