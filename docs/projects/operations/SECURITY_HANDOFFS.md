@@ -64,10 +64,32 @@ This document does not authorize Production mutation, Accepted Risk, Security cl
 - **target_project:** `CAPITAL-AI-OPS` for parent inventory/coordination.
 - **task:** inventory premium/protected capabilities and ensure protected grants resolve verified principal plus authoritative server/provider entitlement state.
 - **reason:** browser/local subscription projection must never grant a protected paid capability.
-- **dependency:** `CAPITAL-AI-CLIENT / PVC-01` and capability-specific Primary Owners become child handoff targets when their productive code is identified.
+- **dependency:** capability-specific Primary Owners become child handoff targets when their productive code is identified.
 - **required_evidence:** browser-tier escalation, forged identity, missing bearer, stale entitlement and alternate-path DENY evidence for each protected boundary.
 - **verification_gate:** CAPITAL-AI-SEC independently verifies each returned capability boundary.
-- **status:** `REFERRED_NOT_EXECUTED / ACTIVE`.
+- **parent_inventory:** `controlled-implementation/OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md`.
+- **parent_result:** all seven canonical subscription feature keys correlated; FINTECH `PVC-15/PVC-16` and DATA `PVC-09` child work identified; PDF retained as server-enforced reference pattern.
+- **status:** `PARENT_INVENTORY_EVIDENCE_READY / CHILD_REMEDIATION_REQUIRED / SECURITY_VERIFICATION_PENDING`.
+
+### S1-R2-06 Security return projection
+
+`[SECURITY_HANDOFF_RETURN -> CAPITAL-AI-SEC]`
+
+- `source_security_finding: S1-R2-06`
+- `target_project: CAPITAL-AI-OPS`
+- `project_stage: PVC-02`
+- `implementation_status: EVIDENCE_READY`
+- `changed_files: OPS-owned inventory/roadmap/handoff/work-package documentation and work claim only`
+- `candidate_sha: exact PR head supplied by repository PR evidence`
+- `runtime_sha_if_applicable: N/A`
+- `security_tests: no child implementation test is claimed PASS by the parent inventory`
+- `negative_tests: browser-tier escalation, forged identity, missing bearer, stale entitlement and alternate-path expectations are mapped for all seven capabilities`
+- `evidence_paths: docs/projects/operations/controlled-implementation/OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md`
+- `known_residual_risk: protected capabilities with unguarded/client-local/alternate paths remain until target owners implement remediation`
+- `unresolved_dependencies: CAPITAL-AI-FINTECH PVC-15/PVC-16; CAPITAL-AI-DATA PVC-09; independent CAPITAL-AI-SEC verification`
+- `verification_requested: true`
+
+This return is evidence for the **parent inventory only**. It is not Security `VERIFIED` or `CLOSED`.
 
 ## SEC-FIND-S1-R2-07 — Recovery / RPO / RTO
 
