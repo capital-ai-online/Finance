@@ -19,8 +19,11 @@ function jobBlock(yaml: string, jobId: string): string {
 }
 
 describe('P2B production CI runner consolidation', () => {
-  it('keeps M10 operationally disabled while changing only production runner topology', () => {
-    expect(workflow()).toContain("M10_CI_GATE_ENABLED: 'false'");
+  it('keeps the retired M10 authorization surface out of active CI', () => {
+    const yaml = workflow();
+    expect(yaml).not.toContain('M10_CI_GATE_ENABLED');
+    expect(yaml).not.toContain('AUTHORIZE_PR_CI');
+    expect(yaml).not.toContain('workflow_dispatch:');
   });
 
   it('keeps exactly two hosted runners in the CI workflow', () => {
