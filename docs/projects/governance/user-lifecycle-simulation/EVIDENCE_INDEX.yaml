@@ -1,22 +1,27 @@
-schema_version: "1.1.0"
+schema_version: "1.2.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 evidence_policy: "redacted_non_authorizing_index"
 bootstrap_evidence_immutable: true
 
-current_decision_candidate:
-  repository_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
+current_decision_merge:
+  repository_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
   branch: "agent/governance-user-lifecycle-decisions-20260901"
   work_claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
-  environment: "GitHub current main plus local structural validation"
   provider_mode: "governance_decision_projection_only"
+  pull_request: 676
+  terminal_head_sha: "80842461e2caf874622a6002e171b8d4abcc9110"
+  merge_commit_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
+  merged_at: "2026-09-01T13:21:15Z"
   owner_decisions:
     - id: "GOV-ULS-DEC-001"
       decision: "Annual Pro price is 248 EUR from the current catalog."
       source: "current_chat_instruction"
+      repository_state: "DECIDED_ON_MAIN"
       production_change_authorized: false
     - id: "GOV-ULS-DEC-002"
       decision: "Support local and global logout; local is the default."
       source: "current_chat_instruction"
+      repository_state: "DECIDED_ON_MAIN"
       production_change_authorized: false
   predecessor_merge:
     pull_request: 675
@@ -24,9 +29,11 @@ current_decision_candidate:
     merge_commit_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
     merged_at: "2026-09-01T12:24:08Z"
   writer_transition:
-    released_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
-    active_claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
-    atomic: true
+    released_predecessor_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
+    released_decision_claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
+    decision_claim_release_trigger: "Human merge of PR #676"
+    closure_branch: "agent/governance-user-lifecycle-decision-closure-20260901"
+    recursive_closure_claim_created: false
   chat_authorization:
     mode: "standing_preparatory_roadmap_authorization"
     exact_pr_snapshot_gate_preserved: true
@@ -37,48 +44,48 @@ current_decision_candidate:
       changed_scope: ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json only"
       file_overlap: false
       semantic_overlap: false
-  changed_files_count: 10
   productive_code_changed: false
   runtime_changed: false
   workflow_changed: false
   production_mutation: false
   conclusion:
-    operations: "READY_AFTER_GOV_DECISION_PROJECTION_MERGE"
+    operations: "READY_FOR_HANDOFF"
     frontend: "BLOCKED_BY_STABLE_OPS_CONTRACT"
     security: "BLOCKED_BY_OPS_FE_EVIDENCE"
     compliance: "BLOCKED_BY_OPS_FE_EVIDENCE_AND_APPLICABILITY_REVIEW"
     governance_closeout: "BLOCKED_BY_OWNER_RETURNS"
   prohibited_claims:
     - "No live Billing, Auth, Stripe, Supabase or provider state is changed."
-    - "No runtime/provider test PASS is produced by this decision projection."
+    - "No runtime/provider test PASS is produced by the Governance closure."
     - "No foreign implementation or independent Security/Compliance verification is claimed."
 
-decision_candidate_validation:
-  scope: "ten Governance documentation/work-claim files only"
+decision_projection_validation:
+  scope: "merged PR #676 decision projection plus bounded post-merge Governance closure"
   json_parse:
-    result: "PASS"
+    result: "PASS_FROM_PR_676_CANDIDATE"
     files:
       - ".ai/work-claims/CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01.json"
       - ".ai/work-claims/CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01.json"
   yaml_parse:
-    result: "PASS"
+    result: "PASS_FROM_PR_676_CANDIDATE"
     files:
       - "docs/projects/governance/user-lifecycle-simulation/DECISION_REGISTER.yaml"
       - "docs/projects/governance/user-lifecycle-simulation/EVIDENCE_INDEX.yaml"
       - "docs/projects/governance/user-lifecycle-simulation/EXECUTION_MANIFEST.yaml"
       - "docs/projects/governance/user-lifecycle-simulation/PR_DEPENDENCY_MAP.yaml"
   invariants:
-    result: "PASS"
+    result: "PASS_FOR_POST_MERGE_CORRELATION"
     assertions:
-      - "The PR #675 recorrelation claim is released/non-exclusive with exact merge evidence."
-      - "Exactly one successor claim is active/exclusive and covers all ten changed files."
+      - "PR #676 is merged with terminal head 80842461e2caf874622a6002e171b8d4abcc9110 and merge commit 57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065."
+      - "The PR #676 decision claim reached its Human-merge release condition and is released/non-exclusive in the closure candidate."
       - "GOV-ULS-DEC-001 equals 248.00 EUR and authorizes no production price migration."
       - "GOV-ULS-DEC-002 supports local/global logout with local default and authorizes no production session mutation."
-      - "The OPS PR depends on Human merge of the GOV decision projection."
+      - "GOV-CHAT-038, GOV-CHAT-039 and GOV-CHAT-050 are substantive DONE_MAIN work after PR #676."
+      - "CAPITAL-AI-OPS / PVC-02 is the next productive owner; GOV local foreign implementation remains NOT_EXECUTED."
       - "Exact PR-snapshot approval and Human-only merge remain true."
   production_build:
     result: "NOT_RUN_BY_SCOPE"
-    reason: "No runtime, dependency, workflow, deployment or production artifact changed."
+    reason: "No runtime, dependency, workflow, deployment or production artifact changed in the post-merge closure."
 
 current_recorrelation:
   repository_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"

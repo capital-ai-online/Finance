@@ -1,9 +1,17 @@
-schema_version: "1.1.0"
+schema_version: "1.2.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 authority_effect: "none"
-projection_baseline: "main@a90dc644fb5c8efacdf25e464f2b20c62474501f"
+projection_baseline: "main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
+projection_state: "MERGED_ON_MAIN"
 projection_branch: "agent/governance-user-lifecycle-decisions-20260901"
 recorded_owner_authority_source: "current_chat_instruction"
+merge_evidence:
+  pull_request: 676
+  terminal_head_sha: "80842461e2caf874622a6002e171b8d4abcc9110"
+  merge_commit_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
+  merged_at: "2026-09-01T13:21:15Z"
+  decision_claim_status_after_closure: "released"
+  decision_claim_exclusive_after_closure: false
 
 status_vocabulary:
   - "UNRESOLVED"
@@ -29,9 +37,11 @@ decisions:
       source: "current_chat_instruction"
       recorded_on: "2026-09-01"
       selection: "248 EUR - aktueller Katalog"
+      merged_via_pr: 676
+      merged_main_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
     rationale: "Preserves the current canonical Billing catalog and does not authorize a Stripe price migration."
     effect:
-      frontend_pr: "PRICE_DECISION_RESOLVED_AFTER_GOV_PROJECTION_MERGE"
+      frontend_pr: "PRICE_DECISION_RESOLVED_ON_MAIN"
       operations_tests: "Use 248.00 EUR as the annual Pro catalog expectation."
       pricing_expectation: "MUST_STILL_DERIVE_FROM_CANONICAL_RUNTIME_SOURCE"
     production_change_authorized: false
@@ -59,11 +69,13 @@ decisions:
       source: "current_chat_instruction"
       recorded_on: "2026-09-01"
       selection: "Beide, lokal als Standard"
+      merged_via_pr: 676
+      merged_main_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
     current_observation:
       function: "supabase.auth.signOut()"
       default_scope: "global"
     effect:
-      frontend_pr: "LOGOUT_DECISION_RESOLVED_AFTER_GOV_PROJECTION_MERGE"
+      frontend_pr: "LOGOUT_DECISION_RESOLVED_ON_MAIN"
       operations_tests: "Verify local default, explicit global action and failure/session invalidation behavior."
     production_change_authorized: false
     owner: "CAPITAL-AI-GOV"

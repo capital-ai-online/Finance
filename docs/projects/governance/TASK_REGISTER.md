@@ -2,8 +2,8 @@
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-01  
 **Original consolidation baseline:** `main@64a3415781a50177798cbe9404b1855735e5371a`  
-**Current project-folder correlation baseline:** `main@a90dc644fb5c8efacdf25e464f2b20c62474501f`  
-**User-Lifecycle orchestration baseline:** `main@a90dc644fb5c8efacdf25e464f2b20c62474501f`  
+**Current project-folder correlation baseline:** `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`  
+**User-Lifecycle orchestration baseline:** `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`  
 **Role:** execution backlog / traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV` for local rows only
 
@@ -59,19 +59,19 @@
 | `GOV-CHAT-035` | Complete canonical Documentary project surface under `docs/projects/documentary/**` | CAPITAL-AI-DOC | `DONE_MAIN` | merged via PR #645 |
 | `GOV-CHAT-036` | Normalize owner-side Handoff target folders after cross-cutting project surfaces merge | referring project owners | `REFERRED_NOT_EXECUTED` | owner-local follow-up where still required |
 | `GOV-CHAT-037` | Bootstrap complete User-Lifecycle-Simulation governance orchestration | CAPITAL-AI-GOV | `DONE_MAIN` | six required artifacts merged via PR #656; no productive code |
-| `GOV-CHAT-038` | Resolve Pro annual-price rule (`248 EUR` vs `313.20 EUR`) | CAPITAL-AI-GOV | `IN_CANDIDATE` | Owner selected current catalog `248 EUR`; projection merge clears the price-decision gate without authorizing a Stripe migration |
-| `GOV-CHAT-039` | Resolve logout semantics (local/global/both) | CAPITAL-AI-GOV | `IN_CANDIDATE` | Owner selected both functions with local as default; projection merge clears the logout-decision gate |
-| `GOV-CHAT-040` | Implement lifecycle harness and provider tests | CAPITAL-AI-OPS | `READY_FOR_HANDOFF` | OPS writer released via PR #661; handoff follows Human merge of the stable GOV decision projection |
-| `GOV-CHAT-041` | Unify lifecycle/pricing/entitlement UI projection | CAPITAL-AI-FE | `REFERRED_NOT_EXECUTED` | FE writers released via PR #661; Owner decisions resolved in this candidate; stable OPS contract remains required |
+| `GOV-CHAT-038` | Resolve Pro annual-price rule (`248 EUR` vs `313.20 EUR`) | CAPITAL-AI-GOV | `DONE_MAIN` | Owner selected current catalog `248 EUR`; decision projection merged via PR #676; no Stripe migration authorized |
+| `GOV-CHAT-039` | Resolve logout semantics (local/global/both) | CAPITAL-AI-GOV | `DONE_MAIN` | Owner selected both functions with local as default; decision projection merged via PR #676 |
+| `GOV-CHAT-040` | Implement lifecycle harness and provider tests | CAPITAL-AI-OPS | `READY_FOR_HANDOFF` | PR #676 decision projection is merged; target `docs/projects/operations/`, `PVC-02` with `PVC-08` provider/runtime evidence; GOV does not execute foreign implementation |
+| `GOV-CHAT-041` | Unify lifecycle/pricing/entitlement UI projection | CAPITAL-AI-FE | `REFERRED_NOT_EXECUTED` | Owner decisions are merged via PR #676; FE remains blocked only by the stable OPS test contract |
 | `GOV-CHAT-042` | Independently verify User-Lifecycle Security properties | CAPITAL-AI-SEC | `REFERRED_NOT_EXECUTED` | after OPS/FE evidence; Security alone owns final Security verification |
-| `GOV-CHAT-043` | Assess purchase/cancellation consumer-compliance flow | CAPITAL-AI-COMP | `REFERRED_NOT_EXECUTED` | COMP writer released via PR #661; consume OPS/FE evidence and retain independent applicability review; technical evidence is not legal advice |
+| `GOV-CHAT-043` | Assess purchase/cancellation consumer-compliance flow | CAPITAL-AI-COMP | `REFERRED_NOT_EXECUTED` | consume OPS/FE evidence and retain independent applicability review; technical evidence is not legal advice |
 | `GOV-CHAT-044` | Correlate merged owner SHAs/evidence and close User-Lifecycle orchestration | CAPITAL-AI-GOV | `DEPENDENCY` | separate GOV closeout only after OPS/FE/SEC/COMP returns |
 | `GOV-CHAT-045` | Terminalize stale merged `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` writer metadata | CAPITAL-AI-GOV / FE correlation | `DONE_MAIN` | released with merge evidence via PR #661 |
 | `GOV-CHAT-046` | Terminalize stale merged `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-COMP | `DONE_MAIN` | released with merge evidence via PR #661 |
 | `GOV-CHAT-047` | Determine applicability of BGB §312j/§312k to CAPITAL-AI subscription flow before legal PASS/FAIL gating | CAPITAL-AI-COMP / Human-Legal authority | `REFERRED_NOT_EXECUTED` | official provisions contain financial-services exceptions; GOV keeps technical checks conditional |
 | `GOV-CHAT-048` | Terminalize stale merged `CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-FE | `DONE_MAIN` | released with merge evidence via PR #661 |
 | `GOV-CHAT-049` | Recorrelate User-Lifecycle owner sequence after PRs #656/#661 | CAPITAL-AI-GOV | `DONE_MAIN` | merged via PR #675; no foreign implementation or production mutation |
-| `GOV-CHAT-050` | Record User-Lifecycle Owner decisions and release the fulfilled PR #675 writer | CAPITAL-AI-GOV | `IN_CANDIDATE` | ten-file GOV-only candidate; `248 EUR`, both logout modes/local default; no live Billing/Auth/production mutation |
+| `GOV-CHAT-050` | Record User-Lifecycle Owner decisions and release the fulfilled PR #675 writer | CAPITAL-AI-GOV | `DONE_MAIN` | decision projection merged via PR #676 at `57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`; post-merge closure terminalizes its own fulfilled writer |
 
 ## Historical GOV branch disposition
 
@@ -85,10 +85,11 @@
 | `agent/governance-chat-pr-20260831` | `released` | historical only |
 | `agent/governance-crosscutting-folder-correlation-20260901` | `superseded` | historical only |
 | `agent/governance-crosscutting-folder-correlation-v2-20260901` | `released` | merged routing/correlation source |
+| `agent/governance-user-lifecycle-decisions-20260901` | `released in closure candidate` | PR #676 merged; decision writer terminalization is the sole stale-writer repair |
 
 ## Current scoped GOV writer
 
-`agent/governance-user-lifecycle-decisions-20260901` owns only the ten paths declared by `.ai/work-claims/CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01.json`. It atomically releases the fulfilled PR #675 writer and updates Governance decision/coordination projections. It does not own or modify OPS, FE, SEC or COMP productive/project-owned implementation surfaces.
+`agent/governance-user-lifecycle-decision-closure-20260901` is a post-merge closure branch over the fulfilled PR #676 decision projection. It creates no new recursive work claim solely to close the merged claim. Its bounded scope is the stale decision-claim lifecycle plus the canonical User-Lifecycle Governance projections required to replace `IN_CANDIDATE`/pending-merge state with exact PR #676 merge evidence and `OPS_HANDOFF_READY`. It does not own or modify OPS, FE, SEC or COMP productive/project-owned implementation surfaces.
 
 ## Consolidation rule
 
