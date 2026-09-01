@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-DOC-WP-DOC-05-MERMAID-PROJECTION-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -44,11 +44,23 @@
     "src/platform/Documentary/manifest.json",
     "tests/unit/documentaryVersionAuthority.test.ts",
     "main movement since a90dc644fb5c8efacdf25e464f2b20c62474501f is Governance-only and does not touch the nine WP-DOC-05 paths",
-    "ADR-0104 timeboxed Human Owner delegated execution session is active; repeated per-PR approval is temporarily replaced while current-main/head/overlap/template/validation gates remain mandatory",
-    "open PRs and active writers re-correlated before PR readiness; no competing Documentary writer found"
+    "historical ADR-0104 execution-session context at work-item time; non-authorizing after claim release",
+    "open PRs and active writers re-correlated before PR readiness; no competing Documentary writer found",
+    "post-merge lifecycle re-correlation against main@910ef70971df036dde3d11197fe5473123de8f8b after Human Merge of PR #699; no open PR or changed-file overlap with this Documentary claim-release path; Control Plane 2.4.0 and ADR-0104 v1.4.0 re-read"
   ],
   "authorityGuard": "ESS-0010 Documentary Engine and the existing D6/D7 contracts are reused. ESS-0012 remains documentation-only and is not expanded. The canonical Document Registry is not mutated. No new AUTH, CTRL, ADR, ESS, Knowledge, Event, Diagram or Version authority is created. Component version may advance locally; document-schema and platform-version authorities remain unchanged. Mermaid output is source text only and cannot authorize execution, merge, release, deployment or production mutation.",
   "securityGuard": "Node aliases are deterministic SHA-256 identifiers; external/evidence labels are escaped and literal URL tokens neutralized. The generator emits no click, URL, HTML, script or external-resource directives and does not execute Mermaid.",
   "foreignWork": [],
-  "releaseCondition": "Release on merge, PR close, supersession or abandonment. During the active ADR-0104 session, PR creation and eligible merge execution use standing Human Owner delegation; technical current-state and hosted-check gates remain mandatory."
+  "releaseCondition": "Release on merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-01T14:29:23Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #679 fulfilled the claim release condition.",
+  "releaseEvidence": {
+    "pullRequest": 679,
+    "result": "merged",
+    "mergeCommit": "19b2527de88444b999b7820c5a6712e8d80b60df",
+    "terminalHeadSha": "2940ca6dcf53d2ecd990f7b1ecdab9dfc8678551",
+    "mergedAt": "2026-09-01T14:29:23Z",
+    "currentMainAtReCorrelation": "910ef70971df036dde3d11197fe5473123de8f8b",
+    "currentMainContainsMerge": true
+  }
 }
