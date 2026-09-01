@@ -2,7 +2,7 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.2.0`  
+**Version:** `2.3.0`  
 **Date:** 2026-08-12  
 **Updated:** 2026-09-01  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
@@ -76,6 +76,7 @@ A step marked REQUIRED for the concrete work package cannot be skipped unless an
 13. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
 14. **Work-claim lifecycle ownership.** A principal that creates an `active`/`exclusive` work claim remains responsible for its conformant release after the correlated work reaches a terminal state, unless responsibility is explicitly and traceably handed off.
 15. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports the correlated snapshot/gates and displays at most the two highest-priority immediately actionable next steps, each with an exit gate; completion of either step triggers a fresh main/open-PR correlation and reprioritization.
+16. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 v1.4.0 session may switch in the same exact chat only to a project already named in its immutable one-to-three-project `AUTHORIZED_PROJECT_SET`. The switch requires fresh project/owner/main/writer/overlap correlation, an audit event and a new project-scoped branch/PR; projects outside the set use full `FOREIGN_PROJECT_HANDOFF`.
 
 ## Pre-PR technical evidence
 
