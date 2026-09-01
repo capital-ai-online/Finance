@@ -23,12 +23,12 @@
 - **source_task:** `GOV-CHAT-040` / `PR-OPS-ULS-HARNESS`
 - **task:** implement the OPS-owned User-Lifecycle/provider harness and stable server-side authentication/billing test contract after the merged Governance decisions.
 - **owner_scope:** Playwright/provider harness; Supabase Local Stack/Mailpit; Stripe Sandbox/Test Clocks; webhook/outbox/subscription projection tests; server-side auth and billing boundaries.
-- **status:** `ACCEPTED_INTO_OPS_PLANNING / IMPLEMENTATION_IN_OPEN_PR_683 / NOT_IMPLEMENTED_BY_RECONCILIATION`.
-- **active_writer:** PR #683 / `agent/operations-user-lifecycle-simulation-20260901`; eight separate Lifecycle implementation/test/evidence paths; no changed-file overlap with this reconciliation candidate.
+- **status:** `REPOSITORY_IMPLEMENTATION_MERGED_PR_683 / PROVIDER_EXECUTION_PARTIAL / NOT_IMPLEMENTED_BY_RECONCILIATION`.
+- **merged_evidence:** PR #683 / merge `f40aeb084675d282a1a188bf05832ce9dc976836`; repository implementation is on main, but unexecuted Supabase Local and Stripe Sandbox scenarios remain `NOT_AVAILABLE` and `EVIDENCE_READY` is not claimed.
 - **required_return:** stable executable OPS test contract plus provider/runtime evidence for claims actually exercised; no Production mutation is implied.
 - **authority:** Governance decisions remain Governance-owned; Frontend projection, Security verification and Compliance assessment remain with their respective owners.
 
-The current Governance dependency map places Frontend after the stable OPS contract, and Security/Compliance after returned OPS/FE evidence. OPS therefore records those downstream dependencies but does not execute their foreign work. An open PR is candidate evidence only and does not satisfy the required return until merged and re-correlated.
+The current Governance dependency map places Frontend after the stable OPS contract, and Security/Compliance after returned OPS/FE evidence. The merged repository implementation from PR #683 is valid implementation evidence, but it does not fabricate provider verification for scenarios that were not executed. OPS therefore preserves the remaining downstream evidence gates.
 
 ## Inbound — Security
 
@@ -58,7 +58,7 @@ Security does not transfer Security verification authority. Returned evidence us
 
 ## Conditional outbound — User Lifecycle
 
-After `OPS-02-GOV-040` returns a stable OPS contract/evidence:
+After `OPS-02-GOV-040` returns sufficient stable OPS contract/provider evidence:
 
 - Frontend lifecycle/pricing/entitlement projection remains `CAPITAL-AI-FE` work.
 - Independent User-Lifecycle Security verification remains `CAPITAL-AI-SEC` work.
