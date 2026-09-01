@@ -25,16 +25,18 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(learning).not.toContain('VOC-BILLING-0001');
   });
 
-  it('wires one Learning tab to the shared LearningVocabulary component', () => {
+  it('wires one Learning tab through the BB-2E drawer to the shared LearningVocabulary component', () => {
     const dashboard = source('src/components/Dashboard.tsx');
+    const drawer = source('src/app/dashboard/DashboardDrawer.tsx');
     const dashboardViews = source('src/app/dashboard/dashboardViews.ts');
 
     expect(dashboard).toContain("import { LearningVocabulary } from '../features/learning/ui';");
     expect(dashboard).toContain('type DashboardView,');
     expect(dashboard).toContain("useState<DashboardView>('dashboard')");
     expect(dashboardViews).toContain("'learning'");
-    expect(dashboard).toContain('title="Learning"');
-    expect(dashboard).toContain("navigateTo('learning')");
+    expect(drawer).toContain("view: 'learning'");
+    expect(drawer).toContain("label: 'Learning'");
+    expect(drawer).toContain('title: \'Learning\'');
     expect(dashboard).toContain("activeView === 'learning' && (");
     expect(dashboard).toContain('<LearningVocabulary />');
   });
