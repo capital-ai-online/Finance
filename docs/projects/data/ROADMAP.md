@@ -5,18 +5,18 @@
 **Current-main baseline:** `7fa5cfddcdb775078e1518bef4908af2e8706415`  
 **Project Value Chain ownership:** `PVC-09`, `PVC-10`, `PVC-11`  
 **Repository trust root:** `/AGENTS.md`  
-**Project-routing authority:** `docs/projects/PROJECT_VALUE_CHAIN.md` + `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`  
+**Project-routing mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`  
 **Current financial-chain authority:** `SC-MD-SPT-0001`  
 **Provider data-plane authority:** `ADR-0041` + `ESS-0016`
 
-Operational DATA state is maintained here only for DATA-owned concerns. Scoring, Ranking, QM assessment, Documentary, OPS and Security verification are handed off rather than absorbed into DATA.
+Operational DATA state is maintained here only for DATA-owned concerns. Scoring, Ranking, QM assessment, Documentary, OPS and Security verification remain owner-scoped and are not absorbed into DATA.
 
 ## Namespace model
 
 - `PVC-*` = organizational project ownership/routing.
 - technical `VC-*` under `SC-MD-SPT-0001` = current financial runtime stages.
 - DATA owns `PVC-09..11`; it does not renumber or supersede technical `VC-*`.
-- `PVC-11 -> PVC-12` is the canonical project handoff from DATA to FINTECH.
+- `PVC-11 -> PVC-12` is the canonical project boundary from DATA to FINTECH.
 
 ## State model
 
@@ -24,7 +24,7 @@ Project work: `PROPOSED | READY | IN_PROGRESS | BLOCKED | DONE | NOT_AVAILABLE`
 
 DATA exit statuses: `PASS | PARTIAL | FAIL | NOT_COMPUTABLE | STALE | MISSING | UNKNOWN`
 
-External cross-project states follow the repository handoff contract and are not promoted to `DONE/VERIFIED/CLOSED` by DATA.
+External owner-scoped work is not promoted to `DONE/VERIFIED/CLOSED` by DATA.
 
 ---
 
@@ -38,13 +38,12 @@ External cross-project states follow the repository handoff contract and are not
 - current main bound to `7fa5cfddcdb775078e1518bef4908af2e8706415`;
 - no open PR at synchronization correlation;
 - `PROJECT_VALUE_CHAIN.md` confirms DATA as Primary Owner for `PVC-09..11`;
-- `CROSS_PROJECT_HANDOFF_CONTRACT.md` separates PVC project routing from technical VC identity and requires explicit target folder/Primary Owner fields;
+- `docs/projects/README.md` is the remaining folder-to-PVC mapping;
 - Security PR #631 is merged and its DATA finding is correlated;
 - Operations PR #632 is merged and supplies the canonical OPS project surface without changed-file overlap with `docs/projects/data/**`;
 - FINTECH PR #635 is merged and supplies `docs/projects/fintech/**`, confirming the downstream `PVC-11 -> PVC-12` project dependency;
 - QM PR #636 is merged and supplies `docs/projects/quality-management/**`, preserving QM as independent read-only assessment;
 - Social PR #637 is merged and adds only `docs/social-media/CAPITAL-AI-SOCIAL/**`; no DATA changed-file or productive PVC ownership overlap is introduced;
-- no canonical CAPITAL-AI-DOC project folder exists on current main, so the documentary foreign target remains `REQUIRES_CORRELATION` rather than guessed;
 - the old non-conforming branch `docs/data-project-consolidation-20260831` is superseded for protected work by `agent/data-security-handoff-sync-20260831`.
 
 ### Exit
@@ -53,7 +52,7 @@ External cross-project states follow the repository handoff contract and are not
 - DATA ownership is non-conflicting;
 - technical financial VC numbering remains unchanged;
 - current-source baseline is documented;
-- current existing target-project folders are correlated; unresolved foreign folder routing remains fail-closed.
+- current existing target-project folders are correlated.
 
 ---
 
@@ -98,10 +97,7 @@ External cross-project states follow the repository handoff contract and are not
 - distinguish evidence absence from neutral/zero evidence;
 - correlate quote, research, on-chain, fundamentals and history evidence contracts.
 
-### Security handoff — S1-R2-11
-
-`[SECURITY_HANDOFF -> CAPITAL-AI-DATA | VC-10]`  
-`[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-10]`
+### Security item — S1-R2-11
 
 - `project_namespace: PVC`
 - `project_stage: PVC-10`
@@ -151,7 +147,7 @@ Required returned evidence must demonstrate `CURRENT`, `STALE`, `CURRENT_AFTER_R
 
 **State:** `READY`
 
-Provenance must survive provider adapter -> gateway -> evidence envelope -> freshness/DQ -> downstream DATA handoff. Provider, feed/source path, evidence reference, timestamps, asset identity and correlation lineage must not be dropped by compatibility facades.
+Provenance must survive provider adapter -> gateway -> evidence envelope -> freshness/DQ -> downstream DATA boundary. Provider, feed/source path, evidence reference, timestamps, asset identity and correlation lineage must not be dropped by compatibility facades.
 
 ### Exit
 
@@ -169,7 +165,7 @@ S1-R2-11 additionally requires immutable-identity-aware refresh/retry evidence. 
 
 ### Exit
 
-One explicit freshness evaluation semantics exists per capability and is carried in the handoff.
+One explicit freshness evaluation semantics exists per capability.
 
 ---
 
@@ -199,7 +195,7 @@ Malformed/ambiguous provider payloads become `FAIL`, `MISSING`, `UNKNOWN` or cap
 - no zero/synthetic fallback;
 - no direct Quality Center dependency in productive DATA hot paths;
 - no score/ranking mutation from DATA modules;
-- downstream handoff rejects non-admissible inputs;
+- downstream FINTECH boundary rejects non-admissible inputs;
 - wrong candidate/baseline identity cannot be treated as `CURRENT`;
 - stale evidence remains stale until a trusted refresh is observed;
 - refresh can produce `CURRENT_AFTER_REFRESH` only with current immutable identity;
@@ -216,7 +212,7 @@ Negative-path tests are first-class evidence, not optional coverage.
 
 **State:** `READY`
 
-Maintain append-only evidence for contract versions, provider matrix state, exact candidate SHA, DQ test outcomes, provenance completeness, compatibility-path retirement and Security handoff returns.
+Maintain append-only evidence for contract versions, provider matrix state, exact candidate SHA, DQ test outcomes, provenance completeness, compatibility-path retirement and Security return packages.
 
 A file's existence is not proof of PASS. Security-return evidence must preserve the exact candidate/runtime identities and must not claim `SECURITY VERIFIED` or `CLOSED`.
 
@@ -225,8 +221,6 @@ A file's existence is not proof of PASS. Security-return evidence must preserve 
 ## Canonical downstream exit — PVC-11 -> PVC-12
 
 DATA exports only validated upstream observations/evidence. Feature engineering and all numeric scoring semantics remain downstream.
-
-`[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-12]`
 
 - `project_namespace: PVC`
 - `project_stage: PVC-12`
@@ -240,15 +234,9 @@ DATA exports only validated upstream observations/evidence. Feature engineering 
 - `verification_gate: FINTECH target-project tests/governance`
 - `status: REFERRED_NOT_EXECUTED`
 
-The compatibility `VC-12` marker is project-routing metadata, not a technical SC-MD-SPT stage claim.
-
 ## Security return boundary
 
-When S1-R2-11 implementation/evidence becomes ready, DATA returns:
-
-`[SECURITY_HANDOFF_RETURN -> CAPITAL-AI-SEC]`
-
-with the fields defined in `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md`. DATA may report `IMPLEMENTED` or `EVIDENCE_READY`; only CAPITAL-AI-SEC independently decides `VERIFIED/CLOSED`.
+When S1-R2-11 implementation/evidence becomes ready, DATA returns the package defined in `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md`. DATA may report `IMPLEMENTED` or `EVIDENCE_READY`; only CAPITAL-AI-SEC independently decides `VERIFIED/CLOSED`.
 
 ## Definition of Done
 
