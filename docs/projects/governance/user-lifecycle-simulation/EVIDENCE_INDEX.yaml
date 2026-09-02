@@ -1,360 +1,76 @@
-schema_version: "1.2.0"
+schema_version: "1.3.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
-evidence_policy: "redacted_non_authorizing_index"
-bootstrap_evidence_immutable: true
+lifecycle: "HISTORICAL_NON_AUTHORIZING_INDEX"
+trust_root: "/AGENTS.md"
+current_navigation:
+  - "docs/projects/PROJECT_VALUE_CHAIN.md"
+  - "docs/projects/governance/ROADMAP.md"
+  - "applicable ADR"
+  - "applicable ESS"
 
-current_decision_merge:
-  repository_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
-  branch: "agent/governance-user-lifecycle-decisions-20260901"
-  work_claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
-  provider_mode: "governance_decision_projection_only"
-  pull_request: 676
-  terminal_head_sha: "80842461e2caf874622a6002e171b8d4abcc9110"
-  merge_commit_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
-  merged_at: "2026-09-01T13:21:15Z"
-  owner_decisions:
-    - id: "GOV-ULS-DEC-001"
-      decision: "Annual Pro price is 248 EUR from the current catalog."
-      source: "current_chat_instruction"
-      repository_state: "DECIDED_ON_MAIN"
-      production_change_authorized: false
-    - id: "GOV-ULS-DEC-002"
-      decision: "Support local and global logout; local is the default."
-      source: "current_chat_instruction"
-      repository_state: "DECIDED_ON_MAIN"
-      production_change_authorized: false
-  predecessor_merge:
-    pull_request: 675
-    terminal_head_sha: "b7f647734934b6e723b3db345a41f1725cee11c2"
-    merge_commit_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
-    merged_at: "2026-09-01T12:24:08Z"
-  writer_transition:
-    released_predecessor_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
-    released_decision_claim: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
-    decision_claim_release_trigger: "Human merge of PR #676"
-    closure_branch: "agent/governance-user-lifecycle-decision-closure-20260901"
-    recursive_closure_claim_created: false
-  chat_authorization:
-    mode: "standing_preparatory_roadmap_authorization"
-    exact_pr_snapshot_gate_preserved: true
-    human_merge_only_preserved: true
-    protected_production_mutation_gate_preserved: true
-  open_pr_snapshot:
-    - number: 669
-      changed_scope: ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json only"
-      file_overlap: false
-      semantic_overlap: false
-  productive_code_changed: false
-  runtime_changed: false
-  workflow_changed: false
-  production_mutation: false
-  conclusion:
-    operations: "READY_FOR_HANDOFF"
-    frontend: "BLOCKED_BY_STABLE_OPS_CONTRACT"
-    security: "BLOCKED_BY_OPS_FE_EVIDENCE"
-    compliance: "BLOCKED_BY_OPS_FE_EVIDENCE_AND_APPLICABILITY_REVIEW"
-    governance_closeout: "BLOCKED_BY_OWNER_RETURNS"
-  prohibited_claims:
-    - "No live Billing, Auth, Stripe, Supabase or provider state is changed."
-    - "No runtime/provider test PASS is produced by the Governance closure."
-    - "No foreign implementation or independent Security/Compliance verification is claimed."
+purpose: >-
+  Compact historical index for the 2026-09-01 user-lifecycle Governance simulation.
+  Detailed decision, finding, execution and dependency evidence remains in the sibling
+  YAML/Markdown artifacts and Git history. This index is not a current project plan,
+  PR approval artifact, runtime verification or production authorization.
 
-decision_projection_validation:
-  scope: "merged PR #676 decision projection plus bounded post-merge Governance closure"
-  json_parse:
-    result: "PASS_FROM_PR_676_CANDIDATE"
-    files:
-      - ".ai/work-claims/CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01.json"
-      - ".ai/work-claims/CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01.json"
-  yaml_parse:
-    result: "PASS_FROM_PR_676_CANDIDATE"
-    files:
-      - "docs/projects/governance/user-lifecycle-simulation/DECISION_REGISTER.yaml"
-      - "docs/projects/governance/user-lifecycle-simulation/EVIDENCE_INDEX.yaml"
-      - "docs/projects/governance/user-lifecycle-simulation/EXECUTION_MANIFEST.yaml"
-      - "docs/projects/governance/user-lifecycle-simulation/PR_DEPENDENCY_MAP.yaml"
-  invariants:
-    result: "PASS_FOR_POST_MERGE_CORRELATION"
-    assertions:
-      - "PR #676 is merged with terminal head 80842461e2caf874622a6002e171b8d4abcc9110 and merge commit 57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065."
-      - "The PR #676 decision claim reached its Human-merge release condition and is released/non-exclusive in the closure candidate."
-      - "GOV-ULS-DEC-001 equals 248.00 EUR and authorizes no production price migration."
-      - "GOV-ULS-DEC-002 supports local/global logout with local default and authorizes no production session mutation."
-      - "GOV-CHAT-038, GOV-CHAT-039 and GOV-CHAT-050 are substantive DONE_MAIN work after PR #676."
-      - "CAPITAL-AI-OPS / PVC-02 is the next productive owner; GOV local foreign implementation remains NOT_EXECUTED."
-      - "Exact PR-snapshot approval and Human-only merge remain true."
-  production_build:
-    result: "NOT_RUN_BY_SCOPE"
-    reason: "No runtime, dependency, workflow, deployment or production artifact changed in the post-merge closure."
+git_identity_terms:
+  current:
+    - "main_sha"
+    - "branch_head_sha"
+    - "pr_head_sha"
+    - "merge_sha"
+  retired_current_work_terms:
+    - "candidate head"
+    - "candidate snapshot"
+    - "candidate sha"
 
-current_recorrelation:
-  repository_sha: "190f319ec8026d8141601b69a8bb4d97470ec5ea"
-  branch: "agent/governance-user-lifecycle-recorrelation-20260901"
-  work_claim: "CAPITAL-AI-GOV-ULS-RECORRELATION-2026-09-01"
-  environment: "GitHub repository current main plus local structural validation"
-  provider_mode: "governance_recorrelation_only"
-  terminal_merge:
-    pull_request: 675
-    state: "MERGED"
-    terminal_head_sha: "b7f647734934b6e723b3db345a41f1725cee11c2"
-    merge_commit_sha: "a90dc644fb5c8efacdf25e464f2b20c62474501f"
-  bootstrap:
+historical_merges:
+  governance_bootstrap:
     pull_request: 656
-    state: "MERGED"
-    merge_commit_sha: "3935e08a0289be69683b8af9004fc177a99b04c0"
-  writer_release:
-    pull_request: 661
-    state: "MERGED"
-    verified_released_claims:
-      - "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
-      - "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
-      - "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01"
-      - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20"
-      - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01"
-  open_pr_snapshot:
-    - number: 669
-      changed_scope: ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json only"
-      file_overlap: false
-      semantic_overlap: false
-  owner_implementation_branches_found: []
-  conclusion:
-    operations: "READY_FOR_OWNER_HANDOFF"
-    frontend: "BLOCKED_BY_DECISIONS_AND_OPS_CONTRACT"
-    security: "BLOCKED_BY_OPS_FE_EVIDENCE"
-    compliance: "BLOCKED_BY_OPS_FE_EVIDENCE_AND_APPLICABILITY_REVIEW"
-    governance_closeout: "BLOCKED_BY_OWNER_RETURNS"
-  prohibited_claims:
-    - "No runtime/provider test PASS is produced by this recorrelation."
-    - "No foreign implementation or independent Security/Compliance verification is claimed."
-    - "No production mutation, deployment, live payment or provider configuration is authorized."
+    merge_sha: "3935e08a0289be69683b8af9004fc177a99b04c0"
+  owner_sequence_recorrelation:
+    pull_request: 675
+    pr_head_sha: "b7f647734934b6e723b3db345a41f1725cee11c2"
+    merge_sha: "a90dc644fb5c8efacdf25e464658626349b3612"
+  owner_decisions:
+    pull_request: 676
+    pr_head_sha: "80842461e2caf874622a6002e171b8d4abcc9110"
+    merge_sha: "57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065"
+    decisions:
+      - id: "GOV-ULS-DEC-001"
+        summary: "Annual Pro price recorded as 248 EUR from the then-current catalog."
+        production_change_authorized: false
+      - id: "GOV-ULS-DEC-002"
+        summary: "Local and global logout supported; local is the product default."
+        production_change_authorized: false
 
-baseline:
-  repository_sha: "37bf7d954363d99d67083edbf520bd77892888dd"
-  initial_repository_sha: "88286e1cfd58b314a818276b5cf61b2ff0b4128d"
-  branch: "agent/governance-user-lifecycle-control-20260901"
-  work_claim: "CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01"
-  environment: "GitHub repository current main plus ChatGPT connector/sandbox validation"
-  provider_mode: "governance_precheck_only"
-
-candidate_scope:
-  evidence_phase: "bootstrap_pr_656"
-  changed_files:
-    - ".ai/work-claims/CAPITAL-AI-GOV-USER-LIFECYCLE-CONTROL-2026-09-01.json"
-    - "docs/projects/governance/ROADMAP.md"
-    - "docs/projects/governance/TASK_REGISTER.md"
-    - "docs/projects/governance/user-lifecycle-simulation/DECISION_REGISTER.yaml"
-    - "docs/projects/governance/user-lifecycle-simulation/EVIDENCE_INDEX.yaml"
-    - "docs/projects/governance/user-lifecycle-simulation/EXECUTION_MANIFEST.yaml"
-    - "docs/projects/governance/user-lifecycle-simulation/FINDINGS_REGISTER.yaml"
-    - "docs/projects/governance/user-lifecycle-simulation/PR_DEPENDENCY_MAP.yaml"
-    - "docs/projects/governance/user-lifecycle-simulation/STATUS.md"
-  productive_code_changed: false
-  runtime_changed: false
-  dependencies_changed: false
-  database_changed: false
-  workflow_changed: false
-
-precheck_evidence:
-  evidence_phase: "bootstrap_pr_656"
-  trust_root:
-    path: "/AGENTS.md"
-    result: "READ_CURRENT_MAIN"
-  project_model:
-    paths:
-      - "docs/projects/README.md"
-      - "docs/projects/PROJECT_VALUE_CHAIN.md"
-      - "docs/projects/PROJECT_EXECUTION_MODEL.md"
-      - "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md"
-    result: "CORRELATED"
-  project_context:
-    paths:
-      - "docs/projects/governance/README.md"
-      - "docs/projects/governance/ROADMAP.md"
-      - "docs/projects/governance/TASK_REGISTER.md"
-      - "docs/projects/governance/CROSS_PROJECT_HANDOFFS.md"
-      - "docs/projects/operations/README.md"
-      - "docs/projects/operations/ROADMAP.md"
-      - "docs/frontend/FRONTEND_ARCH.md"
-    result: "CORRELATED"
-  authority_context:
-    paths:
-      - "docs/adr/registry.json"
-      - "docs/governance/authority-registry.json"
-      - "docs/governance/control-catalog.json"
-      - "docs/governance/document-registry.json"
-    result: "NO_NEW_AUTHORITY_REQUIRED"
-  open_pr_snapshot:
-    prs: []
-    result: "NO_OPEN_PULL_REQUESTS_AT_FINAL_CORRELATION_SNAPSHOT"
-  project_surface_merges_during_candidate:
-    merged_prs: [652, 653, 654, 655]
-    result: "CANDIDATE_REBASED_ONTO_MAIN_CONTAINING_ALL_MERGES"
-  active_writer_snapshot:
-    gov_target_path_overlap: false
-    downstream_blockers:
-      - "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31: active/exclusive, docs/projects/operations/**"
-      - "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01: active/exclusive after merged PR #653"
-      - "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20: active/exclusive after merged PR #463"
-      - "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01: active/exclusive after merged PR #652"
-    resolved_security_writer: "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31 is released"
-    result: "GOV_PASS_WITH_DOWNSTREAM_OWNER_BLOCKERS"
-
-existing_test_reuse_inventory:
-  auth:
-    - "tests/unit/authPrimaryLoginRegression.test.ts"
-    - "tests/unit/sessionCompositionSecurityBoundary.test.ts"
-    - "tests/unit/postMfaSubscriptionHandoffRegression.test.ts"
-    - "tests/unit/publicLandingRoute.test.ts"
-  billing_webhook:
-    - "tests/unit/stripeWebhookInbox.test.ts"
-    - "tests/unit/businessReadiness.test.ts"
-  mail_outbox:
-    - "tests/unit/mailer.test.ts"
-    - "tests/unit/outbox.test.ts"
-  entitlement:
-    - "tests/unit/subscriptionReadbackAuthContract.test.ts"
-    - "tests/unit/s1R2EntitlementAuthority.test.ts"
-  reuse_rule: "Extend these contracts where appropriate; do not create parallel Auth, Stripe inbox, outbox or entitlement authorities."
-
-state_of_art_correlation:
-  checked_on: "2026-09-01"
-  playwright:
-    sources:
-      - "https://playwright.dev/docs/best-practices"
-      - "https://playwright.dev/docs/browser-contexts"
-    result: "ALIGNED"
-    notes:
-      - "Per-test isolated BrowserContexts support deterministic session/device and multi-user testing."
-      - "Shared mutable backend fixtures must be avoided; use unique test data per lifecycle."
-  supabase:
-    sources:
-      - "https://supabase.com/docs/guides/local-development/cli/testing-and-linting"
-      - "https://supabase.com/docs/guides/auth/signout"
-    result: "ALIGNED_WITH_PROVIDER_CAPABILITY_NOTE"
-    notes:
-      - "Supabase Local uses Mailpit for Auth-email testing and exposes DB test/lint workflows."
-      - "signOut supports global default, local and others scopes; GOV-ULS-DEC-002 selects local/global UX with local as the product default."
-      - "Revoked access JWTs can remain valid until expiry; logout tests must document that residual window."
-  stripe:
-    sources:
-      - "https://docs.stripe.com/billing/testing/test-clocks"
-      - "https://docs.stripe.com/webhooks"
-      - "https://docs.stripe.com/customer-management/integrate-customer-portal"
-    result: "ALIGNED"
-    notes:
-      - "Test Clocks/Simulations are appropriate for subscription time transitions in sandbox."
-      - "Webhook signature verification requires the unmodified raw body."
-      - "Duplicate events must be deduplicated; complex processing should be asynchronous and endpoints should return 2xx quickly after durable acceptance."
-      - "Customer Portal supports payment methods, invoices, subscription changes and cancellation according to configured product catalog."
-  consumer_law:
-    sources:
-      - "https://www.gesetze-im-internet.de/bgb/__312j.html"
-      - "https://www.gesetze-im-internet.de/bgb/__312k.html"
-    result: "CONDITIONAL_APPLICABILITY_REQUIRES_COMP_REVIEW"
-    notes:
-      - "Both provisions contain exceptions for financial-services websites/contracts."
-      - "Governance records technical evidence requirements but must not decide legal applicability."
-
-pr_contract:
-  template:
-    path: ".github/pull_request_template.md"
-    version: "1.5.0"
-    result: "READ_CURRENT_MAIN"
-  rendering_contract:
-    path: "scripts/pr/lib.mjs"
-    production_baseline_schema_version: "1.2.0"
-    required_functions:
-      - "productionBaselineIdentity"
-      - "computeProductionBaselineId"
-      - "renderProductionBaselineBlock"
-    result: "READ_CURRENT_MAIN"
-  exact_snapshot_rule: "Re-read current main and candidate head immediately before PR creation; any SHA change invalidates approval."
-
-pre_pr_validation:
-  scope: "documentation/governance only"
-  production_build:
-    result: "NOT_RUN_BY_COST_POLICY"
-    reason: "No runtime/deployment-affecting code changed; full build is reserved for applicable post-PR CI."
-  local_checkout:
-    attempted_command: "git clone --depth=1 --branch agent/governance-user-lifecycle-control-20260901 https://github.com/SvenKulessa/Finance.git"
-    result: "NOT_AVAILABLE"
-    reason: "Sandbox DNS/network resolution unavailable; github.com could not be resolved."
-  repository_scripts:
-    discovered:
-      - "npm run pr:validate-claim"
-      - "npm run pr:governance:test"
-      - "npm run governance:control-plane"
-      - "npm run repository:validate"
-      - "npm run docs:hygiene:check"
-    result: "NOT_AVAILABLE"
-    reason: "No executable repository checkout in sandbox; results are not fabricated."
-  yaml_machine_parse:
-    result: "NOT_AVAILABLE"
-    reason: "Connector exposes repository content but not a local executable checkout for repository-integrated parsing; structural content was reviewed without claiming machine parser PASS."
-  connector_structural_checks:
-    result: "PASS"
-    assertions:
-      - "Candidate is rebased on the current correlated main snapshot."
-      - "Exclusive GOV work claim exists and bounds all candidate files."
-      - "Required six governance artifacts are addressable on branch."
-      - "No active foreign writer overlaps the GOV candidate paths."
-      - "No product/runtime/provider code is included in candidate scope."
-      - "All known project-surface merges were incorporated before PR readiness."
-
-required_future_evidence:
+owner_boundaries:
   operations:
-    status: "NOT_AVAILABLE"
-    required:
-      - "Lifecycle state-machine run"
-      - "Supabase local/RLS negative tests"
-      - "Mailpit delivery/idempotency evidence"
-      - "Stripe Sandbox/Test Clock evidence"
-      - "Webhook idempotency evidence"
+    project: "CAPITAL-AI-OPS"
+    pvc: "PVC-02"
+    role: "productive lifecycle harness / backend/provider implementation"
   frontend:
-    status: "NOT_AVAILABLE"
-    required:
-      - "Canonical pricing/entitlement projection tests"
-      - "Login/OAuth/logout UX tests"
-      - "Checkout synchronization and portal UX tests"
-      - "Accessibility/responsive evidence"
+    project: "CAPITAL-AI-FE"
+    role: "cross-cutting presentation implementation"
   security:
-    status: "NOT_AVAILABLE"
-    required:
-      - "Independent cross-user/RLS/webhook/manipulation assessment"
-      - "Secret leakage review"
-      - "No critical open deviation marked VERIFIED"
+    project: "CAPITAL-AI-SEC"
+    role: "independent Security verification"
   compliance:
-    status: "NOT_AVAILABLE"
-    required:
-      - "Applicability/classification decision for BGB 312j/312k"
-      - "Conditional BGB 312j purchase-flow technical evidence if applicable"
-      - "Conditional BGB 312k cancellation-flow technical evidence if applicable"
-      - "No legal-advice claim"
+    project: "CAPITAL-AI-COMP"
+    role: "independent compliance assessment"
+  governance:
+    project: "CAPITAL-AI-GOV"
+    pvc: "PVC-05"
+    role: "decision/orchestration history and closeout only"
 
-per_test_run_required_fields:
-  - "Repository SHA"
-  - "Branch"
-  - "Work Claim"
-  - "Environment"
-  - "Provider Mode"
-  - "Startzeit"
-  - "Endzeit"
-  - "Testkommando"
-  - "PASS/FAIL/NOT_AVAILABLE"
-  - "Bekannte Einschraenkungen"
+current_use_rule: >-
+  New work must re-read current main and open PRs, resolve the affected PVC/Primary Owner,
+  use that project's current Roadmap and applicable ADR/ESS, then bind repository validation
+  to the exact branch head and PR head. Historical work claims, handoff records and this
+  evidence index do not authorize new work, merge, deployment or production mutation.
 
-forbidden_in_evidence:
-  - "Secrets"
-  - "Access Tokens"
-  - "Refresh Tokens"
-  - "Cookies"
-  - "Webhook Secrets"
-  - "Service-Role Keys"
-  - "Google Credentials"
-  - "Vollstaendige Zahlungsdaten"
-
-quality_semantics:
-  PASS: "Requirement reproducibly satisfied in the documented environment"
-  FAIL: "Requirement reproducibly violated"
-  NOT_AVAILABLE: "Authoritative evidence or required environment unavailable"
-  mock_is_provider_verification: false
+prohibited_claims:
+  - "This historical index does not prove current runtime/provider PASS."
+  - "This historical index does not authorize live Billing, Auth, Stripe, Supabase or provider mutation."
+  - "This historical index does not replace independent Security or Compliance verification."
