@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "1.0.0",
+  "archiveId": "ARCH-GOV-POST-PVC-FOLDER-MAPPING-2026-09-02",
+  "status": "archived",
+  "authorizing": false,
+  "deactivated": true,
+  "archivedAt": "2026-09-02T05:25:00Z",
+  "pvcConnectionCommit": "27050c4d4035e5e0816a4ac84ca7b90c95f6605d",
+  "pvcConnectionDate": "2026-08-31",
+  "currentSurfaces": [
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md"
+  ],
+  "archiveReason": "Owner direction 2026-09-02: archive and deactivate evidence and work-claim files created after connecting project folders to PVC units. After Human Merge only folder-PVC mapping remains current.",
+  "workClaims": [
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-CLIENT-CONTRACT-BASELINE-R2-2026-09-01.json",
+      "claimId": "CAPITAL-AI-CLIENT-CONTRACT-BASELINE-R2-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01.json",
+      "claimId": "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-DATA-SECURITY-HANDOFF-SYNC-2026-08-31.json",
+      "claimId": "CAPITAL-AI-DATA-SECURITY-HANDOFF-SYNC-2026-08-31",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01.json",
+      "claimId": "CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-GOV-ADR0104-CROSS-PROJECT-SCOPE-2026-09-01.json",
+      "claimId": "CAPITAL-AI-GOV-ADR0104-CROSS-PROJECT-SCOPE-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-GOV-CHAT-CONSOLIDATION-2026-08-31.json",
+      "claimId": "CAPITAL-AI-GOV-CHAT-CONSOLIDATION-2026-08-31",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-GOV-CROSSCUTTING-FOLDER-CORRELATION-V2-2026-09-01.json",
+      "claimId": "CAPITAL-AI-GOV-CROSSCUTTING-FOLDER-CORRELATION-V2-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json",
+      "claimId": "CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-GOV-ROADMAP-SINGLE-SOURCE-2026-09-01.json",
+      "claimId": "CAPITAL-AI-GOV-ROADMAP-SINGLE-SOURCE-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-GOV-SECURITY-HANDOFF-2026-08-31.json",
+      "claimId": "CAPITAL-AI-GOV-SECURITY-HANDOFF-2026-08-31",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31.json",
+      "claimId": "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-SEC-PROJECT-SURFACE-2026-09-01.json",
+      "claimId": "CAPITAL-AI-SEC-PROJECT-SURFACE-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31.json",
+      "claimId": "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-SEO-PROJECT-SURFACE-2026-09-01.json",
+      "claimId": "CAPITAL-AI-SEO-PROJECT-SURFACE-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    },
+    {
+      "path": ".ai/work-claims/CAPITAL-AI-SOCIAL-PROJECT-SURFACE-2026-09-01.json",
+      "claimId": "CAPITAL-AI-SOCIAL-PROJECT-SURFACE-2026-09-01",
+      "priorStatus": "released",
+      "lifecycle": "archived",
+      "activeWriter": false
+    }
+  ],
+  "evidenceFiles": [
+    "docs/projects/agent-client/evidence/BASELINE_2026-08-31.md",
+    "docs/projects/agent-client/evidence/RECORRELATION_2026-09-01.md",
+    "docs/projects/data/evidence/CURRENT_MAIN_SECURITY_HANDOFF_RECONCILIATION_2026-09-02.md",
+    "docs/projects/fintech/evidence/PROJECT_SURFACE_CORRELATION_2026-09-01.md",
+    "docs/projects/fintech/evidence/SECURITY_HANDOFF_CORRELATION_2026-08-31.md",
+    "docs/projects/operations/evidence/SECURITY_HANDOFF_CORRELATION_2026-08-31.md"
+  ],
+  "excludedAsIndependentTechnicalWork": [
+    ".ai/work-claims/CAPITAL-AI-DATA-PROVIDER-GATEWAY-HARDENING-2026-08-31.json",
+    ".ai/work-claims/CAPITAL-AI-DATA-ALPHA-RUNTIME-CORRELATION-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-OPS-02-SEC-06-V2-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-ALPHA-VANTAGE-SECRET-MIGRATION-V2-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-USER-LIFECYCLE-SIMULATION-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-ADR0104-S1-RESET-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-ADR0104-SESSION-LIMITS-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-DOC-WP-DOC-05-MERMAID-PROJECTION-2026-09-01.json",
+    "docs/projects/governance/evidence/DEEP_RESEARCH_ESS0019_V1_2_IMPACT_2026-09-02.md",
+    "docs/projects/governance/evidence/DEEP_RESEARCH_INTEGRATION_EVALS_2026-09-02.md",
+    "docs/projects/operations/evidence/M10_PASSKEY_RETIREMENT_2026-09-01.md",
+    "docs/projects/operations/evidence/USER_LIFECYCLE_SIMULATION_2026-09-01.md",
+    "docs/evidence/security/CAPITAL_AI_SEC_OWNER_DEVICE_AUTHORIZATION_STAGE_C_2026-09-02.md",
+    "docs/evidence/security/CAPITAL_AI_SEC_OWNER_DEVICE_AUTHORIZATION_STAGE_C_REVERIFICATION_2026-09-02.md"
+  ]
+}
