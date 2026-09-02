@@ -12,7 +12,7 @@ export const REQUIRED_PR_SECTIONS = Object.freeze([
 // compatible while all newly rendered PRs use the compact headings above.
 export const PR_SECTION_ALIASES = Object.freeze({
   '## 1. Herkunft': Object.freeze(['## 1. Arbeitsauftrag']),
-  '## 2. Projektzuordnung': Object.freeze(['## 6. Architektur- / Governance-Auswirkungen']),
+  '## 2. Projektzuordnung': Object.freeze(['## 4. Umfang / Multi-Agent-Koordination']),
   '## 3. Umsetzung': Object.freeze(['## 5. Änderungszusammenfassung']),
   '## 4. Roadmap': Object.freeze(['## 6. Architektur- / Governance-Auswirkungen']),
   '## 5. PR-Klasse': Object.freeze(['## 9. PR-Checkklasse und auszuführende Checks']),
