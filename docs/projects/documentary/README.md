@@ -89,15 +89,13 @@ CAPITAL-AI-DOC does not absorb:
 - `CAPITAL-AI-FINTECH / PVC-12..PVC-17` feature engineering, scoring, orchestration, domain execution, canonical scoring or ranking;
 - productive Knowledge, Vocabulary, Wiki, Governance, Release or EventMesh architectures that already have canonical owners/contracts.
 
-Foreign implementation is routed through `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md` and remains `REFERRED_NOT_EXECUTED` until handled by its Primary Owner.
+Foreign implementation is not executed here. Ownership is resolved only through [`../README.md`](../README.md) and [`../PROJECT_VALUE_CHAIN.md`](../PROJECT_VALUE_CHAIN.md).
 
 ## Navigation
 
 - [`ROADMAP.md`](./ROADMAP.md) — canonical CAPITAL-AI-DOC organizational roadmap, work packages, dependencies, evidence and Definition of Done.
-- [`../README.md`](../README.md) — canonical project-folder mapping and project execution model.
+- [`../README.md`](../README.md) — canonical project-folder to PVC mapping.
 - [`../PROJECT_VALUE_CHAIN.md`](../PROJECT_VALUE_CHAIN.md) — `PVC-03` ownership.
-- [`../PROJECT_EXECUTION_MODEL.md`](../PROJECT_EXECUTION_MODEL.md) — DevelopmentChain relationship, including `DC-04 Documentary / Evidence`.
-- [`../CROSS_PROJECT_HANDOFF_CONTRACT.md`](../CROSS_PROJECT_HANDOFF_CONTRACT.md) — foreign-project routing contract.
 
 ## Migration rule
 
