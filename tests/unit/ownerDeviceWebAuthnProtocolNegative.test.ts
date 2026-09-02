@@ -28,7 +28,7 @@ const assertionResponse: AuthenticationResponseJSON = {
     authenticatorData: join(['PdxHEOnAiLIp26idVjIguzn3', 'Ipr_RlsKZWsa-5qK-KABAAAAkA==']),
     clientDataJSON: join([
       'eyJjaGFsbGVuZ2UiOiJkRzkwWVd4c2VWVnVhWEYxWlZaaGJIVmxSWFps',
-      'Y25sVWFXMWwiLCJjbGllbnRFeHRlbnNpb25zIjp7fSwiaGFzaEFsZ29yaXRobSI6IlNIQS0yNTYiLA',
+      'Y25sVWFXMWwiLCJjbGllbnRFeHRlbnNpb25zIjp7fSwiaGFzaEFsZ29yaXRobSI6IlNIQS0yNTYiLC',
       'JvcmlnaW4iOiJodHRwczovL2Rldi5kb250bmVlZGEucHciLCJ0eXBlIjoid2ViYXV0aG4uZ2V0In0=',
     ]),
     signature: join([
