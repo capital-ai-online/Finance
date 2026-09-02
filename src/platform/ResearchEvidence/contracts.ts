@@ -1,8 +1,8 @@
 import type { UniversalAssetIdentity } from '../Scoring/contracts';
 
-export const RESEARCH_EVIDENCE_CANDIDATE_CONTRACT_VERSION = 'research-evidence-candidate/1.0.0' as const;
-export const RESEARCH_EVIDENCE_VALIDATION_CONTRACT_VERSION = 'research-evidence-validation/1.0.0' as const;
-export const RESEARCH_EVIDENCE_ADAPTER_CONTRACT_VERSION = 'research-evidence-adapter/1.0.0' as const;
+export const RESEARCH_EVIDENCE_DISCOVERY_CONTRACT_VERSION = 'research-evidence-discovery/1.0.0' as const;
+export const RESEARCH_EVIDENCE_VALIDATION_CONTRACT_VERSION = 'research-evidence-validation/1.1.0' as const;
+export const RESEARCH_EVIDENCE_ADAPTER_CONTRACT_VERSION = 'research-evidence-adapter/1.1.0' as const;
 
 export type ResearchDiscoveryProvider = 'gemini' | 'anthropic' | 'openai' | 'manual';
 export type ResearchDiscoveryMethod = 'google-search' | 'url-context' | 'structured-extraction' | 'manual';
@@ -33,12 +33,12 @@ export interface ResearchClaim {
 }
 
 /**
- * Discovery output only. A candidate is never financial scoring evidence by itself.
+ * Discovery output only. A discovery is never financial scoring evidence by itself.
  * Promotion into a score-bearing feature contract requires a separate validated-evidence step.
  */
-export interface ResearchEvidenceCandidate {
-  contractVersion: typeof RESEARCH_EVIDENCE_CANDIDATE_CONTRACT_VERSION;
-  candidateId: string;
+export interface ResearchEvidenceDiscovery {
+  contractVersion: typeof RESEARCH_EVIDENCE_DISCOVERY_CONTRACT_VERSION;
+  discoveryId: string;
   correlationId: string;
   asset: UniversalAssetIdentity;
   status: 'AI_DISCOVERED_EVIDENCE';
@@ -79,7 +79,7 @@ export interface ResearchEvidenceSourcePolicy {
  */
 export interface ResearchEvidenceValidationResult {
   contractVersion: typeof RESEARCH_EVIDENCE_VALIDATION_CONTRACT_VERSION;
-  candidateId: string;
+  discoveryId: string;
   status: 'VALIDATED_PRIMARY_SOURCE' | 'RESEARCH_ONLY' | 'REJECTED';
   sourceClass: ResearchSourceClass;
   scoreEligible: false;
@@ -102,7 +102,7 @@ export interface ResearchEvidenceDiscoveryResult {
   status: 'DISCOVERED' | 'UNAVAILABLE' | 'REJECTED';
   provider: ResearchDiscoveryProvider;
   model?: string;
-  candidates: readonly ResearchEvidenceCandidate[];
+  discoveries: readonly ResearchEvidenceDiscovery[];
   diagnostics: readonly string[];
 }
 

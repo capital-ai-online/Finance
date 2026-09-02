@@ -3,17 +3,17 @@ import type {
   ResearchDiscoveryMethod,
   ResearchEvidenceAdapter,
   ResearchEvidenceAdapterDescriptor,
-  ResearchEvidenceCandidate,
+  ResearchEvidenceDiscovery,
   ResearchEvidenceDiscoveryRequest,
   ResearchEvidenceDiscoveryResult,
 } from './contracts';
 import {
   RESEARCH_EVIDENCE_ADAPTER_CONTRACT_VERSION,
-  RESEARCH_EVIDENCE_CANDIDATE_CONTRACT_VERSION,
+  RESEARCH_EVIDENCE_DISCOVERY_CONTRACT_VERSION,
 } from './contracts';
 import { validatePublicResearchUrl } from './sourcePolicy';
 
-export const GEMINI_RESEARCH_EVIDENCE_ADAPTER_VERSION = 'gemini-research-evidence-adapter/1.0.0' as const;
+export const GEMINI_RESEARCH_EVIDENCE_ADAPTER_VERSION = 'gemini-research-evidence-adapter/1.1.0' as const;
 export const GEMINI_RESEARCH_MAX_URLS = 20;
 
 /**
@@ -162,7 +162,7 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
         adapterVersion: this.descriptor.version,
         status: 'REJECTED',
         provider: 'gemini',
-        candidates: [],
+        discoveries: [],
         diagnostics: ['correlationId, at least one field and a non-empty query are required.'],
       };
     }
@@ -172,7 +172,7 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
         adapterVersion: this.descriptor.version,
         status: 'REJECTED',
         provider: 'gemini',
-        candidates: [],
+        discoveries: [],
         diagnostics: [`At most ${GEMINI_RESEARCH_MAX_URLS} URLs are accepted per discovery request.`],
       };
     }
@@ -184,7 +184,7 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
         adapterVersion: this.descriptor.version,
         status: 'REJECTED',
         provider: 'gemini',
-        candidates: [],
+        discoveries: [],
         diagnostics: [`Input URL is not an accepted public HTTPS source: ${invalidUrl}`],
       };
     }
@@ -213,14 +213,14 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
         adapterVersion: this.descriptor.version,
         status: 'UNAVAILABLE',
         provider: 'gemini',
-        candidates: [],
+        discoveries: [],
         diagnostics: [error instanceof Error ? error.message : 'Gemini research transport failed.'],
       };
     }
 
     const discoveredAt = this.now().toISOString();
     const diagnostics: string[] = [];
-    const candidates: ResearchEvidenceCandidate[] = [];
+    const discoveries: ResearchEvidenceDiscovery[] = [];
     const citations = response.providerCitations.slice(0, 50);
     const claims = response.claims.slice(0, 100);
 
@@ -247,9 +247,9 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
           return;
         }
         const title = compactText(citation.title, 300);
-        candidates.push({
-          contractVersion: RESEARCH_EVIDENCE_CANDIDATE_CONTRACT_VERSION,
-          candidateId: `${request.correlationId}:gemini:${claimIndex}:${citationIndex}`,
+        discoveries.push({
+          contractVersion: RESEARCH_EVIDENCE_DISCOVERY_CONTRACT_VERSION,
+          discoveryId: `${request.correlationId}:gemini:${claimIndex}:${citationIndex}`,
           correlationId: request.correlationId,
           asset: request.asset,
           status: 'AI_DISCOVERED_EVIDENCE',
@@ -286,10 +286,10 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
     return {
       adapterId: this.descriptor.id,
       adapterVersion: this.descriptor.version,
-      status: candidates.length > 0 ? 'DISCOVERED' : 'UNAVAILABLE',
+      status: discoveries.length > 0 ? 'DISCOVERED' : 'UNAVAILABLE',
       provider: 'gemini',
       model: compactText(response.model, 128),
-      candidates,
+      discoveries,
       diagnostics,
     };
   }
