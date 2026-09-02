@@ -1,6 +1,7 @@
 # CAPITAL-AI Stripe Legacy Webhook Decommission Evidence — 2026-08-30
 
-Status: **DISABLED / PROVIDER-READBACK VERIFIED**
+Status: **DISABLED / PROVIDER-READBACK VERIFIED**  
+Lifecycle: **HISTORICAL EVIDENCE / NON-AUTHORIZING**
 
 ## 1. Scope und Identität
 
@@ -9,9 +10,11 @@ Diese Evidence dokumentiert ausschließlich die kontrollierte produktive Abschal
 - Repository: `SvenKulessa/Finance`
 - Branch: `fix/auth-registration-root-redirect-20260830`
 - Produktions-/Main-Baseline vor der Provider-Mutation: `b8c4757aaa62a2a63745e2f86a777630968f4f5d`
-- Candidate Head vor dieser Evidence: `cde7464b0371577c09e9737db34ad57f2a694368`
+- damaliger Branch-Head vor dieser Evidence: `cde7464b0371577c09e9737db34ad57f2a694368`
 - Stripe-Modus: Live
 - Supabase Project Ref: `ryzywoktpmyhwzxmstyu`
+
+Die dokumentierten SHAs bleiben unveränderte historische Identitäten. Die aktuelle Governance verwendet für Git-Zustände `main SHA`, `branch head SHA`, `PR head SHA` und `merge SHA`.
 
 ## 2. Pre-Change-Verifikation
 
@@ -26,7 +29,7 @@ Vor der Mutation wurden beide Stripe-Webhook-Endpunkte erneut providerseitig gel
 - Managed by: `stripe-sync`
 - Event-Scope umfasst unter anderem Checkout-, Invoice-, Subscription- und PaymentIntent-Lifecycle.
 
-### Legacy Endpoint — Abschaltkandidat
+### Legacy Endpoint — damaliger Abschaltkandidat
 
 - Endpoint-ID: `we_1TlsozPKr4joNbEcI2vik5yO`
 - URL: `https://capital-ai.online/billing/webhook`
@@ -34,6 +37,8 @@ Vor der Mutation wurden beide Stripe-Webhook-Endpunkte erneut providerseitig gel
 - Lifecycle: `legacy-review`
 - Primary Sync laut Provider-Metadaten: `supabase-edge-function`
 - Event-Scope: ausschließlich `checkout.session.completed`
+
+`Abschaltkandidat` ist hier ein fachlicher damaliger Auswahlbegriff, kein Git-/PR-Lifecycle-Status.
 
 Zusätzliche Supabase-Evidence aus `public.stripe_event_inbox` bestätigte den kanonischen Ingress `capital-ai-webhook` für:
 
@@ -45,7 +50,7 @@ Zusätzliche Supabase-Evidence aus `public.stripe_event_inbox` bestätigte den k
 
 Damit ist der Supabase-Ingress die aktive fachliche Authority: Der Legacy-Endpoint kann aufgrund seines Stripe-Event-Scopes weder Invoice- noch Subscription-Lifecycle-Ereignisse empfangen.
 
-Die Supabase Edge-Function-Logs der letzten 24 Stunden zeigen zusätzlich den zugehörigen `stripe-worker` regelmäßig mit HTTP `200`. Es wurde für diese Verifikation **keine synthetische Live-Zahlung** erzeugt.
+Die Supabase Edge-Function-Logs der letzten 24 Stunden zeigten zusätzlich den zugehörigen `stripe-worker` regelmäßig mit HTTP `200`. Es wurde für diese Verifikation **keine synthetische Live-Zahlung** erzeugt.
 
 ## 3. Produktive Mutation
 
@@ -84,11 +89,6 @@ Ein Rollback darf nur erfolgen, wenn neue Evidence zeigt, dass ein produktiver C
 
 ## 6. Exit- und Beobachtungsgate
 
-Die Abschaltung ist providerseitig verifiziert. Für den vollständigen operativen Exit gelten weiterhin:
+Die Abschaltung ist providerseitig verifiziert. Für eine erneute aktuelle Bewertung müssen heutige Provider-/Runtime-Daten neu erhoben werden; diese historische Evidence ist kein aktueller Zustandsnachweis.
 
-- nächstes reales Stripe-Lifecycle-Ereignis über den kanonischen Supabase-Ingress beobachten;
-- `stripe_event_inbox` auf erfolgreiche Verarbeitung ohne `last_error` prüfen;
-- keine Reaktivierung des Legacy-Endpunkts ohne neue fachliche Evidence;
-- Build/Test des Repository-Candidates gemäß DevelopmentChain erst nach PR-Erstellung ausführen.
-
-Diese Evidence dokumentiert eine bestehende Provider-Mutation; sie behauptet keinen durch Repository-Code ausgelösten Stripe-Deploy.
+Für Repository-Arbeit gelten die aktuellen DevelopmentChain-Begriffe: Tests/Evidence werden an den konkreten Branch-/PR-Head gebunden. Diese Evidence dokumentiert eine bestehende Provider-Mutation; sie behauptet keinen durch Repository-Code ausgelösten Stripe-Deploy.

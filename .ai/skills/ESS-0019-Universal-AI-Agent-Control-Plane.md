@@ -1,6 +1,6 @@
 # ESS-0019 — Universal AI Agent Control Plane
 
-Status: ACCEPTED CANDIDATE — EFFECTIVE AFTER HUMAN MERGE
+Status: ACCEPTED
 Version: 1.2.0
 Date: 2026-09-02
 Owner: Platform Director
@@ -67,6 +67,12 @@ Every command/action MUST be attributable through:
 The minimum correlation set is defined by ADR-0059 and the audit schema under `docs/architecture/ai-agent/`.
 
 Research execution SHOULD additionally preserve a stable research/evidence correlation identifier so claims, sources, retrieval observations and downstream decisions can be reconstructed without storing secrets or unrestricted raw prompts.
+
+For repository development, Human-readable navigation remains subordinate to `/AGENTS.md` and follows:
+
+`Project Value Chain / PVC -> project Roadmap -> applicable ADR -> applicable ESS -> code/tests/evidence`.
+
+This ESS supplies a component/capability contract; it does not become the project Roadmap or ownership map.
 
 ## 7. Security invariants
 
@@ -172,6 +178,8 @@ A future productive remote-skill design SHOULD define immutable identity/version
 ## 11. Related authorities and projections
 
 - `/AGENTS.md` — sole repository trust root and protected lifecycle authority
+- `docs/projects/PROJECT_VALUE_CHAIN.md` — Human-readable project ownership map
+- affected project Roadmap — Human-readable work status and next-step source
 - ESS-0002 Supervisor, ESS-0006 Security & Compliance, ESS-0008 AI Agent Framework
 - ADR-0050, ADR-0051, ADR-0056, ADR-0057..ADR-0063 where effective within their lifecycle/scope
 - ADR-0059 — agent execution audit and correlation
@@ -185,5 +193,5 @@ A future productive remote-skill design SHOULD define immutable identity/version
 
 | Version | Date | Status | Change |
 |---|---|---|---|
-| 1.2.0 | 2026-09-02 | Accepted candidate, effective after Human Merge | Adds provider-neutral Research Evidence Contract, source independence, claim typing, contradiction/counter-evidence, saturation, citation integrity and remote-skill untrusted-input boundary under the existing stable authority identity. |
+| 1.2.0 | 2026-09-02 | Accepted | Adds provider-neutral Research Evidence Contract, source independence, claim typing, contradiction/counter-evidence, saturation, citation integrity and remote-skill untrusted-input boundary under the existing stable authority identity. |
 | 1.1.0 | 2026-08-16 | Accepted | Clarified canonical provider set while preserving provider-neutral authority. |

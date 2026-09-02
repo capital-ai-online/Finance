@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.5.0`  
+**Control Plane Version:** `2.6.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-02  
 **Repository:** `SvenKulessa/Finance`
@@ -56,6 +56,22 @@ Canonical registries:
 - `.ai/registry/ess-registry.json`
 - `docs/governance/document-registry.json`
 
+### Human-readable development navigation
+
+For normal single-Owner development, the primary working order is deliberately Human-readable:
+
+```text
+PROJECT VALUE CHAIN / PVC
+→ PROJECT ROADMAP
+→ APPLICABLE ADR
+→ APPLICABLE ESS
+→ CODE / TESTS / EVIDENCE
+```
+
+Use the Project Value Chain to resolve **who owns the work**, the affected project's Roadmap to resolve **what is next and what is done**, ADRs for material architecture decisions, and ESS for component/capability contracts. Code, tests and evidence prove implementation.
+
+`AUTH-*`, `CTRL-*`, registries, work claims, handoff records and other machine-readable metadata remain available for integrity, CI, audit and traceability. They MUST NOT become a parallel day-to-day planning architecture or obscure the PVC/Roadmap/ADR/ESS flow.
+
 ## 4. Governance Before Features
 
 A feature MUST NOT be made merge-ready while a correlated critical governance integrity finding remains unresolved, including duplicate active ADR/ESS identities, conflicting authorities, missing stable identities, stale branch/main state, or an unresolved parallel namespace writer.
@@ -66,19 +82,22 @@ Existing feature branches may remain open while governance remediation proceeds.
 
 ```text
 CURRENT MAIN + OPEN-PR BASELINE
+→ RESOLVE PVC / PRIMARY OWNER
+→ READ PROJECT ROADMAP
+→ READ APPLICABLE ADR / ESS
 → BEST-PRACTICE / SECURITY / COMPLIANCE / REUSE PRE-CHECK
 → FRESH SCOPED BRANCH FROM CURRENT MAIN
 → SCOPED IMPLEMENTATION
 → CHEAP / LOCAL / SANDBOX PRE-PR VALIDATION WHERE ACTUALLY AVAILABLE
 → FINAL MAIN RE-SYNC + CORRELATION REVIEW
-→ EXPLICIT HUMAN/OWNER PR-CREATION APPROVAL
+→ EXPLICIT HUMAN/OWNER PR-CREATION APPROVAL FOR MAIN SHA + BRANCH-HEAD SHA
 → PULL REQUEST
-→ POST-PR CHAT HANDOFF (MAXIMUM TWO NEXT STEPS)
+→ POST-PR CHAT HANDOFF (MAXIMUM TWO NEXT ROADMAP STEPS)
 → INDEPENDENT HOSTED GITHUB CHECKS
 → HUMAN/CODEOWNER MERGE DECISION
 → HUMAN MERGE
 → SEPARATE PRODUCTION-MUTATION / DEPLOYMENT CONTROLS WHERE APPLICABLE
-→ POST-CHANGE EVIDENCE
+→ POST-CHANGE EVIDENCE + ROADMAP SYNC
 ```
 
 Direct edits to `main` are prohibited. One work item uses one scoped branch. Rollback uses a fresh branch from then-current `main`.
@@ -95,21 +114,32 @@ Examples: `agent/governance-chat-consolidation-20260831`, `agent/operations-deve
 
 A newly created branch that omits either project-folder or compact-task identity is non-conforming and MUST be replaced by a fresh current-main branch before protected work or PR readiness proceeds. Branch naming is coordination metadata only and never changes project ownership, Authority, merge authority or production permissions.
 
-Pre-PR evidence is technical evidence only and must be bound to the exact candidate snapshot. Immediately before PR creation, refresh `main`, correlate new merges/open PRs, synchronize, resolve semantic conflicts and repeat necessary low-cost checks.
+Pre-PR evidence is technical evidence only and must be bound to the exact branch state. Immediately before PR creation, refresh `main`, correlate new merges/open PRs, synchronize, resolve semantic conflicts and repeat necessary low-cost checks.
+
+### Git identity terminology
+
+Current work uses normal Git/GitHub terms:
+
+- `main SHA` — current commit on `main`;
+- `branch head SHA` — current commit on the scoped work branch before PR creation;
+- `PR head SHA` — current head commit of an open Pull Request;
+- `merge SHA` — merged commit where applicable.
+
+`Candidate Head`, `candidate snapshot`, `candidate SHA`, `accepted candidate` and equivalent governance lifecycle wording are retired from current development instructions. Historical records may preserve old wording where it is necessary to understand immutable audit history, but current normative documents and newly written evidence use the terms above.
 
 ### Human/Owner gate before PR creation (`CTRL-SDLC-PR-CREATE-001`)
 
-A Pull Request or Draft Pull Request MUST NOT be created until the Human/Owner has explicitly approved that creation for the exact correlated candidate. This applies to every creation surface, including GitHub UI automation, API, MCP, connector, CLI, agent tools and trusted workflows.
+A Pull Request or Draft Pull Request MUST NOT be created until the Human/Owner has explicitly approved that creation for the exact correlated branch state. This applies to every creation surface, including GitHub UI automation, API, MCP, connector, CLI, agent tools and trusted workflows.
 
 The required order is:
 
 1. immediately before approval is requested, refresh current `main` and correlate new merges, open Pull Requests, changed-file overlap, semantic overlap and namespace/authority conflicts;
-2. synchronize the scoped branch with that `main`, resolve conflicts, and repeat the necessary low-cost checks on the exact candidate snapshot;
-3. report the exact `main` SHA, candidate branch/head SHA, intended PR scope, correlation result and available validation evidence to the Human/Owner;
-4. obtain an explicit Human/Owner approval to create the Pull Request or Draft Pull Request for that reported snapshot;
-5. immediately before the external create mutation, re-read `main` and the candidate head; create the PR only if both SHAs are unchanged.
+2. synchronize the scoped branch with that `main`, resolve conflicts, and repeat the necessary low-cost checks on the exact branch state;
+3. report the exact `main` SHA, branch name, branch-head SHA, intended PR scope, correlation result and available validation evidence to the Human/Owner;
+4. obtain an explicit Human/Owner approval to create the Pull Request or Draft Pull Request for that reported branch state;
+5. immediately before the external create mutation, re-read `main` and the branch head; create the PR only if both SHAs are unchanged.
 
-A task request, permission to create a branch or commit, approval to run checks, technical evidence, prior/general approval, reaction, label or checkbox is not PR-creation approval. If `main` or the candidate head changes before creation, the approval expires; correlation, synchronization and required validation MUST be repeated and renewed explicit approval obtained. The agent stops fail-closed before the create mutation while approval is absent or stale.
+A task request, permission to create a branch or commit, approval to run checks, technical evidence, prior/general approval, reaction, label or checkbox is not PR-creation approval. If `main` or the branch head changes before creation, the approval expires; correlation, synchronization and required validation MUST be repeated and renewed explicit approval obtained. The agent stops fail-closed before the create mutation while approval is absent or stale.
 
 PR-creation approval authorizes only creation of the concrete PR or Draft PR. It does not authorize merge, deployment or any protected external mutation.
 
@@ -129,13 +159,13 @@ This stable control has one explicit trigger: `POST_PR_HANDOFF`. It is a coordin
 
 #### Trigger — `POST_PR_HANDOFF`
 
-After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by a prioritized **Nächste Schritte** section.
+After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/PR-head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by a prioritized **Nächste Schritte** section.
 
-The next-step queue MUST be recomputed from the then-current repository and governance state and from relevant current best-practice / state-of-the-art evidence where that materially improves the decision. External guidance remains advisory and MUST NOT create a competing policy hierarchy or silently override canonical CAPITAL-AI authority.
+The next-step queue MUST be recomputed from the then-current Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and relevant current best-practice / state-of-the-art evidence where that materially improves the decision. External guidance remains advisory and MUST NOT create a competing policy hierarchy or silently override canonical CAPITAL-AI authority.
 
 If more than two implementation or follow-up steps are available, the chat MUST display **only the two highest-priority immediately actionable steps**. If one remains, it displays one; if none remain, it states that no additional implementation step is currently identified. Each displayed step MUST be bounded/atomic, name its intended exit gate, and respect this default prioritization unless a higher authority changes it: security/data integrity → governance/compliance → CI/build reliability → architecture/integration consistency → deployment readiness → observability/performance → UX/documentation.
 
-After either displayed step is completed, current `main`, open Pull Requests, changed-file/semantic overlap and applicable governance state MUST be re-read and the queue reprioritized. The previously displayed second step does not automatically become the new first step.
+After either displayed step is completed, current `main`, open Pull Requests, changed-file/semantic overlap, the affected Roadmap and applicable ADR/ESS MUST be re-read and the queue reprioritized. The previously displayed second step does not automatically become the new first step.
 
 #### Project folder and PVC mapping
 
@@ -145,6 +175,8 @@ Canonical organizational mapping between project folders and PVC units is only:
 - `docs/projects/PROJECT_VALUE_CHAIN.md`
 
 Those two files remain the connection surface. Separate post-mapping contracts — including `CROSS_PROJECT_HANDOFF_CONTRACT.md`, `PROJECT_EXECUTION_MODEL.md`, `ROADMAP_REGISTRY.md`, Owner-Device cutover/handoff authorities and foreign-project routing overlays — are withdrawn and MUST NOT be treated as current policy after Human Merge of this remediation.
+
+Work claims and handoff records are coordination/audit metadata only. They do not replace PVC ownership, the project Roadmap, ADR or ESS. Do not create a new post-PVC policy overlay merely to route ordinary single-Owner development.
 
 Avoid unnecessary paid GitHub CI/build/test runs before PR creation. After PR creation, use the smallest sufficient checks first and complete required checks before merge.
 
@@ -247,6 +279,8 @@ Agents working on universe Top/Worst rankings MUST:
 - `docs/governance/document-registry.json`
 - `docs/projects/README.md`
 - `docs/projects/PROJECT_VALUE_CHAIN.md`
+- affected project `ROADMAP.md`
+- applicable accepted ADRs and active ESS
 - `docs/frontend/FRONTEND_ARCH.md`
 - `docs/frontend/COMPONENT_INVENTORY.md`
 - `docs/frontend/design-tokens.json`

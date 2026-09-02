@@ -2,9 +2,9 @@
 
 **Authority ID:** `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL`  
 **Status:** REQUIRED  
-**Version:** `3.2.0`  
+**Version:** `3.3.0`  
 **Effective from:** 2026-08-11  
-**Updated:** 2026-09-01  
+**Updated:** 2026-09-02  
 **Repository Owner:** `SvenKulessa`  
 **Parent trust root:** `/AGENTS.md`
 
@@ -12,13 +12,19 @@
 
 This policy details two separate Human/Owner boundaries for Pull Requests targeting `main`: explicit approval before PR or Draft-PR creation and the later Human-only merge decision. It is subordinate to `/AGENTS.md` and cannot create a second repository agent-governance authority.
 
-AI agents may prepare branches, commits, PR materials, evidence and scoped fixes. They MUST NOT create a PR or Draft PR without the exact-snapshot approval defined below unless an effective explicitly scoped authority conditionally replaces only that approval surface, and they MUST NOT self-approve or autonomously merge.
+AI agents may prepare branches, commits, PR materials, evidence and scoped fixes. They MUST NOT create a PR or Draft PR without the exact branch-state approval defined below unless an effective explicitly scoped authority conditionally replaces only that approval surface, and they MUST NOT self-approve or autonomously merge.
+
+For Human-readable work, the controlling development context is read in this order:
+
+`Project Value Chain / PVC -> project Roadmap -> applicable ADR -> applicable ESS -> code/tests/evidence`.
+
+Machine-readable registries and stable IDs support integrity and traceability; they do not replace that Human-readable navigation model.
 
 ## Current PR / CI state
 
 ```text
 FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
-→ EXACT-SNAPSHOT HUMAN/OWNER PR-CREATION APPROVAL OR VALID SCOPED DELEGATION
+→ EXACT BRANCH-STATE HUMAN/OWNER PR-CREATION APPROVAL OR VALID SCOPED DELEGATION
 → PR OPEN / UPDATE
 → governance / workflow-security checks
 → technical build-and-test according to repository check classification
@@ -36,9 +42,9 @@ Any future passkey/PR-CI authorization mechanism is a new separately scoped Huma
 
 1. The gate applies to every Pull Request and Draft Pull Request, regardless of whether creation uses GitHub UI automation, API, MCP, connector, CLI, an agent tool or a trusted workflow.
 2. Immediately before approval is requested, current `main` is refreshed, open/new writers are correlated, the branch is synchronized, conflicts are resolved and necessary low-cost validation is repeated.
-3. The Owner receives the exact `main` SHA, candidate branch/head SHA, intended scope, correlation outcome and available validation evidence.
-4. PR creation requires explicit Human/Owner approval for that reported snapshot unless a current effective scoped delegation explicitly and conditionally replaces only this approval prompt for the exact work/chat/immutable-project-set/current-project context. Approval for the task, branch, commits, checks or general continuation is otherwise insufficient.
-5. Immediately before creation, `main` and candidate head are read again. Any SHA change invalidates snapshot-bound approval/delegation correlation and requires repeated correlation/synchronization.
+3. The Owner receives the exact `main` SHA, branch name, branch-head SHA, intended scope, correlation outcome and available validation evidence.
+4. PR creation requires explicit Human/Owner approval for that reported branch state unless a current effective scoped delegation explicitly and conditionally replaces only this approval prompt for the exact work/chat/immutable-project-set/current-project context. Approval for the task, branch, commits, checks or general continuation is otherwise insufficient.
+5. Immediately before creation, `main` and the branch head are read again. Any SHA change invalidates branch-state approval/delegation correlation and requires repeated correlation/synchronization.
 6. Agents and connectors stop fail-closed before the external PR-create mutation while required authority is absent, ambiguous or stale.
 
 PR-creation approval or delegated PR-create authority is single-purpose. It never authorizes merge, deployment, production mutation, security weakening or another unrelated Pull Request.
@@ -57,7 +63,9 @@ PR-body checkboxes, Files-Viewed state, `💪`/`okay`, labels, reactions, arbitr
 
 ## PR template and evidence
 
-PR metadata records scope, authority, risk, baseline and validation but does not create authority. Minimum creation-gate evidence includes the reported current-main SHA, candidate head SHA, correlation result and the applicable explicit Human/Owner creation approval or valid explicitly scoped delegation. Minimum merge evidence separately includes final PR head SHA, current-main reconciliation, required final-head checks, unresolved-conflict/review status and the Human/Owner merge decision.
+PR metadata records scope, authority, risk, baseline and validation but does not create authority. Minimum creation-gate evidence includes the reported current-main SHA, branch-head SHA, correlation result and the applicable explicit Human/Owner creation approval or valid explicitly scoped delegation. Minimum merge evidence separately includes final PR-head SHA, current-main reconciliation, required final-head checks, unresolved-conflict/review status and the Human/Owner merge decision.
+
+`Candidate Head`, `candidate snapshot`, `candidate SHA` and equivalent lifecycle wording are retired from current PR-governance terminology. Historical records may preserve the old labels where necessary for audit, but current instructions and new evidence use `branch head`, `PR head`, `main SHA` and `merge SHA`.
 
 ## Owner authentication assurance
 
@@ -70,9 +78,11 @@ Agents may READ, ANALYZE, PLAN, create scoped branches/commits, prepare PR mater
 ## Canonical references
 
 - `/AGENTS.md` / `AUTH-GOV-AGENT-TRUST-ROOT`;
+- `docs/projects/PROJECT_VALUE_CHAIN.md`;
+- the affected project's `ROADMAP.md`;
+- applicable accepted ADRs and active ESS;
 - `docs/governance/control-catalog.json` / `CTRL-SDLC-PR-CREATE-001`, `CTRL-CI-M10-001` and `CTRL-MERGE-HUMAN-001`;
 - `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`;
-- `docs/architecture/ROADMAP.md`;
-- effective Accepted ADRs for the concrete protected scope.
+- `docs/architecture/ROADMAP.md`.
 
 `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md` is historical audit/design evidence only. It is not a current implementation prerequisite, discovery target, reactivation plan or authorization mechanism.
