@@ -100,37 +100,35 @@ describe('governance authority consistency', () => {
     expect(chain).toContain('current `main`, open Pull Requests, changed-file/semantic overlap');
   });
 
-  it('reuses the same chat-handoff control for foreign-project routing and bounded copyable prompts', () => {
+  it('withdraws post-PVC routing contracts and keeps only folder-to-PVC mapping', () => {
     const agents = read('AGENTS.md');
-    const handoffContract = read('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
+    const projectMap = read('docs/projects/README.md');
+    const pvc = read('docs/projects/PROJECT_VALUE_CHAIN.md');
     const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
     const sameIdControls = controlCatalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-CHAT-HANDOFF-001');
 
     expect(sameIdControls).toHaveLength(1);
     expect(handoff.requirement).toContain('POST_PR_HANDOFF');
-    expect(handoff.requirement).toContain('FOREIGN_PROJECT_HANDOFF');
-    expect(handoff.requirement).toContain('REFERRED_NOT_EXECUTED');
-    expect(handoff.requirement).toContain('REQUIRES_CORRELATION');
-    expect(handoff.requirement).toMatch(/at most 400 lines/i);
-    expect(handoff.evidence).toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
+    expect(handoff.requirement).not.toContain('FOREIGN_PROJECT_HANDOFF');
+    expect(handoff.evidence).toContain('docs/projects/README.md');
+    expect(handoff.evidence).toContain('docs/projects/PROJECT_VALUE_CHAIN.md');
+    expect(handoff.evidence).not.toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
 
-    expect(agents).toContain('Trigger 1 — `POST_PR_HANDOFF`');
-    expect(agents).toContain('Trigger 2 — `FOREIGN_PROJECT_HANDOFF`');
-    expect(agents).toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
-    expect(agents).toContain('parts of at most **400 lines**');
+    expect(agents).toContain('POST_PR_HANDOFF');
+    expect(agents).not.toContain('Trigger 2 — `FOREIGN_PROJECT_HANDOFF`');
+    expect(agents).not.toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
+    expect(agents).toContain('docs/projects/PROJECT_VALUE_CHAIN.md');
 
-    expect(handoffContract).toContain('PROJECT HANDOFF REQUIRED');
-    expect(handoffContract).toContain('Target Project Folder: <TARGET_FOLDER>');
-    expect(handoffContract).toContain('Status: REFERRED_NOT_EXECUTED');
-    expect(handoffContract).toContain('[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]');
-    expect(handoffContract).toContain('Maximum: **400 lines per prompt part**');
-    expect(handoffContract).toContain('TEIL 1 VON N');
-    expect(handoffContract).toContain('REQUIRES_CORRELATION');
-    expect(handoffContract).toContain('The Security marker is additive only.');
-    expect(handoffContract).toContain('IN-SESSION PROJECT SWITCH');
-    expect(handoffContract).toContain('AUTHORIZED_PROJECT_SET');
-    expect(handoffContract).toContain('each project/work item uses its own branch and PR');
-    expect(handoffContract).toContain('It does not authorize:');
+    expect(fs.existsSync(path.join(root, 'docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'docs/projects/PROJECT_EXECUTION_MODEL.md'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'docs/projects/ROADMAP_REGISTRY.md'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'docs/governance/OWNER_DEVICE_AUTHORIZATION_CUTOVER_AUTHORITY.md'))).toBe(false);
+
+    expect(projectMap).toContain('Canonical project-folder routing');
+    expect(projectMap).toContain('PVC-01');
+    expect(projectMap).not.toContain('CROSS_PROJECT_HANDOFF_CONTRACT.md');
+    expect(pvc).toContain('PVC-01');
+    expect(pvc).toContain('Primary Project Owner');
   });
 
   it('requires diff and impact analysis before semantic supersession becomes effective', () => {
