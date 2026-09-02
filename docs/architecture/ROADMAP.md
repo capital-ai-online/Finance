@@ -1,130 +1,141 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.7.0`  
+**Version:** `2.8.0`  
 **Status date:** `2026-09-02`  
-**Current repository baseline for this synchronization:** `main@2b9aebf854939f6eedadfb8e16632ee48833ae36` — includes Human Merge of PR #707 (provider-neutral Deep Research Evidence Pipeline), PR #708 (Security Assessment Validator), PR #710 (Owner Device Authorization Stage-D Cutover preparation), PR #711 (Security Assessment Validator canonical CI integration) and PR #712 (Owner Device Authorization Stage-D Remediation)  
-**Open PR correlation at this synchronization:** no open Pull Requests observed; no active PR writer overlaps the ESS-0019 Research Evidence Contract candidate.  
+**Current repository baseline for this synchronization:** `main@5db8062d3062e93f004cf0b75f190a9c649821f8`  
+**Open PR correlation at this synchronization:** no open Pull Requests observed  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
 
 ## Canonical role
 
-This file is the **current-state DevelopmentChain status index**. Historical implementation detail remains in ADR, ESS, runbook and `docs/evidence/**` records. Exact repository SHAs are observations for this status snapshot, not an independent platform-version authority.
+This file is the **repository-wide current-state index**. It is intentionally concise. Project-specific work belongs in the affected `docs/projects/<project>/ROADMAP.md`; architecture decisions belong in ADRs; component/capability contracts belong in ESS; implementation truth is established by code, tests and evidence.
 
-`docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` remains an older implementation-roadmap snapshot and is **historical/non-authorizing for current execution state**. `docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` is likewise a non-authorizing integrated projection and cannot supersede this status authority or ADR-0096.
+Historical implementation detail remains in ADR, ESS, runbooks and `docs/evidence/**`. Exact repository SHAs are observations, not an independent platform-version authority.
 
-## Current governance operating state
+Older integrated DevelopmentChain/Systemadmin roadmap snapshots are historical/non-authorizing where they conflict with this current state.
+
+## Human-readable development model
 
 ```text
-CURRENT MAIN + OPEN-PR BASELINE
-→ AUTHORITY / RISK / SECURITY / COMPLIANCE / REUSE PRE-CHECK
-→ FRESH SCOPED BRANCH FROM CURRENT MAIN
-→ SCOPED IMPLEMENTATION
-→ AVAILABLE LOW-COST / EXACT-SNAPSHOT PRE-PR VALIDATION
-→ FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
-→ EXACT-SNAPSHOT HUMAN/OWNER PR-CREATION APPROVAL OR VALID EXPLICITLY SCOPED DELEGATION
-→ PULL REQUEST
-→ INDEPENDENT GOVERNANCE / TECHNICAL CI
-→ HUMAN/CODEOWNER MERGE DECISION
-→ HUMAN MERGE
-→ SEPARATE PRODUCTION-MUTATION / DEPLOYMENT CONTROLS WHERE APPLICABLE
-→ POST-CHANGE EVIDENCE / TRACEABILITY / DOCUMENTARY SYNCHRONIZATION
+PROJECT VALUE CHAIN / PVC
+→ PROJECT ROADMAP
+→ APPLICABLE ADR
+→ APPLICABLE ESS
+→ CODE / TESTS / EVIDENCE
 ```
 
-Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registries, the Control Catalog, DevelopmentChain Execution Policy, Human Owner PR Approval Policy and effective domain authorities.
+Repository execution then follows:
 
-## S1-R2 security-governance state
+```text
+CURRENT MAIN + OPEN PRS
+→ RESOLVE PVC / PRIMARY OWNER
+→ READ PROJECT ROADMAP
+→ READ APPLICABLE ADR / ESS
+→ SECURITY / COMPLIANCE / REUSE PRE-CHECK
+→ FRESH SCOPED BRANCH
+→ IMPLEMENTATION
+→ AVAILABLE LOW-COST PRE-PR VALIDATION
+→ FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
+→ HUMAN/OWNER PR-CREATION APPROVAL FOR MAIN SHA + BRANCH-HEAD SHA
+→ PULL REQUEST
+→ HOSTED GOVERNANCE / TECHNICAL CHECKS
+→ HUMAN/CODEOWNER MERGE DECISION
+→ HUMAN MERGE
+→ OPTIONAL PRODUCTION-MUTATION CONTROLS
+→ EVIDENCE + ROADMAP SYNC
+```
 
-- `S1-R2-01` workflow startup-failure classification is resolved as historical/obsolete phantom-control evidence; active workflow YAML was not changed.
-- `S1-R2-02` GitHub default-branch enforcement code/docs merged as PR #611 (`dc3dd333`). PR #615 was Human-merged at `main@f714eae6` after Exact-Head-PASS and supplies policy-owned `required_linear_history`, Squash/Rebase-only methods and fail-closed builder/normalizer/floor checks. Provider mutation/readback remains governed separately.
-- `required_signatures` is intentionally absent after the explicit Owner decision dated 2026-08-30. Commit signing is optional and is not a merge-readiness, CI, PR-creation or protected-main prerequisite.
-- The canonical required-check target retains `build-and-test`, `PR Governance (Kosten / Workflow / Vorlage)`, `Hardened image / HIGH+CRITICAL CVE gate` and `GitGuardian Security Checks` where applicable.
-- `Supabase Preview` and `Deployment verifiziert / Render-Produktion` remain intentionally outside the pre-merge required-check set.
+Current Git identity terminology is `main SHA`, `branch head SHA`, `PR head SHA` and `merge SHA`. Candidate-Head/Candidate-Snapshot lifecycle terminology is retired from current work.
 
-## ESS current-state correlation
+## Project Value Chain ownership
 
-| ESS reference | Current repository resolution | Current-state classification |
-|---|---|---|
-| `ESS-0012` | `.ai/skills/ESS-0012-Documentation-Governance.md`; registered as `AUTH-ESS-DOCUMENTATION-GOVERNANCE` v1.0.0 | **RESOLVED / ENTERPRISE-APPROVED**; documentation-only governance, non-authorizing for repository-wide execution |
-| `ESS-0019` | `.ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md`; same stable `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE`, candidate version v1.2.0 | **RESOLVED / ACCEPTED AFTER HUMAN MERGE**; provider-neutral capability/risk/audit plane plus Research Evidence Contract, subordinate to `/AGENTS.md`; no remote-skill activation or production authority |
-| `ESS-0011` | `.ai/skills/ESS-0011-Enterprise-Traceability.md` and `.ai/skills/ESS-0011-Contracts.md`; registered as `AUTH-ESS-ENTERPRISE-TRACEABILITY` | **PATH RESOLVED / AUTHORITY REGISTERED** |
-| `ESS-0001` | `.ai/skills/ESS-0001-Documentary-Architect.md` and `.ai/skills/ESS-0001-Contracts.md` | **NAMESPACE RESOLVED**; distinct stable authority identities |
+The canonical organizational ownership map is:
 
-Reconciliation evidence remains in `docs/governance/ESS_NAMESPACE_RECONCILIATION_2026-08-30.md`.
+- `docs/projects/README.md`
+- `docs/projects/PROJECT_VALUE_CHAIN.md`
 
-## M10 — retired current-state boundary
+Primary productive ownership remains:
 
-M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` has historical verification/evidence. Human Merge of PR #691 subsequently removed the productive M10 runtime and authorization surfaces from the current application architecture.
+| PVC | Project |
+|---|---|
+| `PVC-01` | `CAPITAL-AI-CLIENT` |
+| `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18` | `CAPITAL-AI-OPS` |
+| `PVC-03` | `CAPITAL-AI-DOC` |
+| `PVC-05` | `CAPITAL-AI-GOV` |
+| `PVC-09`, `PVC-10`, `PVC-11` | `CAPITAL-AI-DATA` |
+| `PVC-12`..`PVC-17` | `CAPITAL-AI-FINTECH` |
 
-**M10 PR-CI passkey runtime is `RETIRED / OFF`. No productive M10 implementation is expected in current state.**
+Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social projects validate, constrain or present work but do not acquire productive PVC ownership merely through that role.
 
-Repository-wide and web-application-wide current-state discovery MUST NOT:
-
-- search for or expect an M10 implementation;
-- classify missing M10 runtime/router/UI/workflow components as an implementation gap;
-- reconstruct or recommend restoration of M10 merely from historical documents, evidence or tests;
-- create a reactivation backlog from historical M10 terminology.
-
-Historical M10 artifacts may be inspected only for explicit audit, archaeology, incident-review or historical-traceability tasks. They are non-authorizing.
-
-Any future PR-CI/passkey authorization mechanism is a **new separately scoped architecture and Human/Owner authority decision**. It is not inferred as M10 reactivation and is evaluated against then-current requirements without searching for a retired implementation.
-
-Normal PR technical validation remains governed by current hosted-check controls. Human/CODEOWNER merge remains mandatory.
-
-## Deployment authority — current state
-
-Render native Auto Deploy remains off. Current production promotion authority resolves through verified `main` CI and the existing deployment control plane. A second automatic deployment authority requires a separate architecture/security decision. Repository merge, roadmap status and historical evidence remain non-authorizing for external production mutation.
-
-## DevelopmentChain / Governance status
+## Governance / ESS current state
 
 | Area | Current state |
 |---|---|
-| Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
-| DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document v2.7.0; DR-01 synchronized through `main@2b9aebf854939f6eedadfb8e16632ee48833ae36`; ESS-0019 v1.2.0 Research Evidence Contract projected for effect after Human Merge |
-| Open Pull Requests at this synchronization | none observed; no ESS-0019/registry overlap from an open PR |
-| Owner Device Authorization Stage-D cutover | **EFFECTIVE / HUMAN-MERGED** through PR #712 and `AUTH-GOV-OWNER-DEVICE-AUTHORIZATION-CUTOVER`; preserved by DR-02A registry correlation |
-| S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
-| S1-R2-02 GitHub main enforcement | governed by current provider/readback controls; `required_signatures` intentionally absent |
-| M10 Passkey PR-CI implementation | **RETIRED / HISTORICAL ONLY — NO CURRENT IMPLEMENTATION EXPECTED** |
-| Human/Owner PR creation | **REQUIRED** after final main/open-PR correlation and bound to exact main/head SHAs unless a valid separately activated bounded authority explicitly replaces only that approval prompt |
-| Human/CODEOWNER Merge | **REQUIRED** as a separate decision |
-| GitHub hosted validation | scope-/cost-controlled under current required-check policy |
-| Commit authenticity | Signing remains optional unless a later explicit Human/Owner decision changes it |
-| ESS-0012 | **RESOLVED** through Authority Registry |
-| ESS-0019 | **RESOLVED / v1.2.0 CANDIDATE** through same stable Authority Registry identity; Research Evidence Contract adds no second trust root |
-| ESS-0011 | **PATH RESOLVED / AUTHORITY REGISTERED** |
-| ESS-0001 | **NAMESPACE RESOLVED** |
-| Documentary | read-only evidence sidecar; machine-readable bindings remain non-authorizing projections of current authorities |
+| Agent Trust Root | `/AGENTS.md` is the sole repository-wide agent instruction surface |
+| DevelopmentChain | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active; Human-readable PVC/Roadmap/ADR/ESS model restored |
+| Human PR creation | explicit approval bound to current `main SHA` + `branch head SHA`, unless a valid current scoped delegation applies |
+| Human merge | Human/CODEOWNER-only; never delegated to the agent |
+| ESS-0012 | Documentation Governance; documentation-only scope |
+| ESS-0019 | **v1.2.0 ACCEPTED**; provider-neutral capability/risk/audit + Research Evidence Contract |
+| M10 Passkey PR-CI runtime | **RETIRED / HISTORICAL ONLY**; no current implementation expected |
+| Render native Auto Deploy | OFF; production promotion remains through verified `main` pipeline |
+| Platform version | `package.json#version` remains sole platform-version authority |
 
-## Agent capability architecture
+## Deep Research integration
 
-ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution plane and is subordinate to `/AGENTS.md`. Its v1.2.0 candidate extends that same plane with provider-neutral research-evidence semantics: source provenance, independence, explicit claim typing and uncertainty, citation-support integrity, contradiction/counter-evidence preservation and evidence saturation. It does not authorize remote skill loading, a second agent architecture or production mutation.
+### Completed
+
+- **DR-01** — provider-neutral Deep Research skill/evidence pipeline merged.
+- **DR-02A** — ESS-0019 v1.2.0 Research Evidence Contract merged and accepted.
+
+### Next Governance item — DR-02B
+
+**Owner:** `CAPITAL-AI-GOV / PVC-05`  
+**Roadmap intent:** reconcile ADR-0060 Supply-Chain Authority Drift before productive provider-adapter work.
+
+DR-02B must use a fresh branch from then-current `main` and reconcile:
+
+1. `docs/adr/ADR-0060-software-supply-chain-provenance-and-attestation.md`;
+2. `docs/adr/registry.json`;
+3. `docs/governance/authority-registry.json`;
+4. bounded impact evidence.
+
+Exit gate:
+
+- ADR lifecycle and registry identity agree;
+- existing M6 supply-chain implementation is not duplicated or rewritten unnecessarily;
+- no new parallel Governance/Release/Supply-Chain architecture is created;
+- required validation is bound to the resulting branch/PR head;
+- Human/CODEOWNER merge remains separate.
+
+### After DR-02B — DR-03
+
+Productive provider-adapter work belongs to `CAPITAL-AI-OPS` and must start only after DR-02B reaches a terminal Governance state and current `main` is re-correlated.
+
+DR-03 must reuse the existing provider-neutral control plane, request/orchestration boundaries, ESS-0019 and applicable security/observability contracts. It must not create a direct provider-SDK bypass or second agent architecture.
+
+Remote-skill distribution remains a separate later architecture/security item.
 
 ## Protected current invariants
 
-- no direct agent changes on `main`;
-- one scoped branch/work item per bounded work package where required by the active workflow;
-- final main synchronization and open-PR semantic/namespace correlation before requesting PR-creation approval and again before merge readiness;
-- explicit Human/Owner approval bound to the exact reported main/head SHAs before each PR or Draft-PR creation unless an effective explicitly scoped authority replaces only that approval surface;
-- no fabricated evidence, market data, citations or compliance assertions;
+- no direct agent edits to `main`;
+- one scoped branch/work item;
+- PVC/Primary Owner resolved before implementation;
+- project Roadmap is the normal planning/status surface;
+- ADR used for material architecture decisions;
+- ESS used for component/capability contracts;
+- no fabricated evidence, market data, citations or compliance claims;
 - Human/Owner-only merge;
-- M10 is retired/historical: current-state repository and web-application scans do not seek an M10 implementation or treat its absence as a gap;
-- a future PR-CI/passkey authorization mechanism requires a new explicit Human/Owner architecture/authority decision and is not inferred from M10 history;
-- fail-closed treatment of security-critical ambiguity;
 - no reusable credentials in model-visible evidence;
-- external production mutations remain separately governed;
-- package version remains the platform-version authority;
-- Vocabulary, Documentary, Quality and Skill Engine remain projections/control surfaces and cannot create a second financial runtime authority;
-- historical evidence cannot silently regain current authority;
-- native GitHub protection must not be simulated by a workflow-only substitute;
-- skipped checks must not be made Required without a proven event/applicability contract.
+- external production mutation remains separately governed;
+- machine-readable registries support integrity and traceability but do not replace the Human-readable development chain;
+- historical work claims/handoffs/evidence cannot silently regain authority;
+- M10 remains retired unless a future explicit Human decision creates a new separately scoped mechanism.
 
-## Current next action
+## Current next actions
 
-1. complete Human review and hosted governance validation for the ESS-0019 v1.2.0 Research Evidence Contract candidate;
-2. reconcile ADR-0060 supply-chain authority drift after DR-02A reaches a terminal state, before productive provider/runtime adapter work;
-3. keep remote-skill distribution and productive provider adapter architecture in separate DR-03/DR-04 work items under current ownership/routing controls;
-4. keep M10 historical-only and retain Human/CODEOWNER-only merge plus current hosted technical validation.
+1. Complete this Governance simplification: remove remaining current Candidate-Head terminology and correlate Trust Root / policies / registries / ADR / ESS / Roadmaps.
+2. After Human Merge and fresh current-main correlation, execute **DR-02B — ADR-0060 Supply-Chain Authority Drift Reconciliation**.
