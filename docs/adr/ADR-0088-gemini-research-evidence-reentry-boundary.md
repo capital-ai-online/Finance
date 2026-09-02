@@ -1,14 +1,30 @@
 # ADR-0088: Kontrollierte Gemini-Rückkehr als Research-/Extraction-/Evidence-Discovery-Adapter
 
-- **Status:** Accepted
+- **Status:** Accepted — amended 2026-09-02
 - **Datum:** 2026-08-19
 - **Owner-Entscheidung:** „Research-/Extraction-/Evidence-Discovery-Adapter erstellen um eine Rückkehr der Gemini API möglich zu machen.“
+- **Owner-Amendment 2026-09-02:** Candidate-Zuordnung aus der Webanwendung vollständig entfernen; Discovery-/Evidence-Identität darf nicht als Candidate-Semantik modelliert werden.
 - **Authority:** SC-MD-SPT-0001 + ADR-0087 (eine kanonische Scoring-Architektur)
 - **Bezug zu ADR-0072:** ADR-0072 bleibt für Runtime, Dependencies, Keys und produktive Gemini-Nutzung wirksam. Diese ADR erlaubt zunächst nur die providerneutrale, dormant Re-Entry-Grenze und definiert die Bedingungen einer späteren expliziten Aktivierung.
 
+## Amendment 2026-09-02 — Candidate-Zuordnung retired
+
+Die ursprüngliche Bezeichnung `ResearchEvidenceCandidate`, das Feld `candidateId`, der Contract `research-evidence-candidate/*` und das Ergebnisfeld `candidates` sind für die Webanwendung **RETIRED**. Sie dürfen in `src/`, `server/` oder produktiven API-/UI-Verträgen nicht wieder eingeführt werden.
+
+Die gleiche fail-closed Sicherheits- und Evidence-Semantik wird neutral als Discovery modelliert:
+
+- `ResearchEvidenceDiscovery` statt `ResearchEvidenceCandidate`;
+- `discoveryId` statt `candidateId`;
+- `research-evidence-discovery/*` statt `research-evidence-candidate/*`;
+- `discoveries` statt `candidates`.
+
+`discoveryId` ist reine technische Lineage innerhalb eines Research-Requests. Sie erzeugt weder PR-/Release-Candidate-Semantik noch Ownership, Freigabe, Ranking, Scoring Eligibility oder Governance Authority. Historische Evidence darf die frühere Candidate-Terminologie zur Nachvollziehbarkeit behalten.
+
+Alle übrigen Sicherheitsgrenzen dieser ADR bleiben unverändert: `AI_DISCOVERED_EVIDENCE`, `scoreEligible: false`, provider-owned Citation Binding, Source Validation, SSRF-nahe URL-Grenzen und die getrennte Evidence Promotion bleiben verpflichtend.
+
 ## Kontext
 
-ADR-0072 entfernte Gemini anwendungsweit aus Runtime, Provider-Routing, Governance, Embeddings, UI, Konfiguration und Dependencies. Gleichzeitig fehlen für viele Assets belastbare Eingangsmerkmale, sodass das kanonische Scoring fail-closed `SCORE_NOT_COMPUTABLE` liefert. Ein LLM darf diese Lücke nicht durch geschätzte Finanzwerte schließen, kann aber Primärquellen finden, Dokumente extrahieren und Evidence Candidates mit Quellenbindung liefern.
+ADR-0072 entfernte Gemini anwendungsweit aus Runtime, Provider-Routing, Governance, Embeddings, UI, Konfiguration und Dependencies. Gleichzeitig fehlen für viele Assets belastbare Eingangsmerkmale, sodass das kanonische Scoring fail-closed `SCORE_NOT_COMPUTABLE` liefert. Ein LLM darf diese Lücke nicht durch geschätzte Finanzwerte schließen, kann aber Primärquellen finden, Dokumente extrahieren und Discovery-Evidence mit Quellenbindung liefern.
 
 Die aktuelle Gemini API bietet dafür geeignete Bausteine: Google Search Grounding, URL Context, Structured Outputs und optional Function Calling. Für CAPITAL-AI wird diese Fähigkeit bewusst enger genutzt als technisch möglich: die erste Re-Entry-Stufe erlaubt ausschließlich Search/URL-Context/strukturierte Extraktion; Function Calling und interne Tool-Aktionen bleiben deaktiviert.
 
@@ -24,11 +40,12 @@ Gemini ist eine optionale Acquisition-Komponente vor dem Evidence Gate und weder
 
 ### 2. AI_DISCOVERED_EVIDENCE ist niemals direkt scorebar
 
-Jeder Modellfund wird als `ResearchEvidenceCandidate` mit folgenden harten Eigenschaften ausgegeben:
+Jeder Modellfund wird als `ResearchEvidenceDiscovery` mit folgenden harten Eigenschaften ausgegeben:
 
 - Status `AI_DISCOVERED_EVIDENCE`;
 - `scoreEligible: false`;
 - UAI Asset Identity und correlationId;
+- technische `discoveryId` ausschließlich für Lineage;
 - konkrete Source URL + Hostname;
 - Citation-Bindung;
 - einzelner strukturierter Claim mit Field/Value/Unit/optionalem observedAt;
@@ -104,6 +121,7 @@ Ein separater, explizit Owner-genehmigter Schritt ist erforderlich, bevor Gemini
 - Anthropic/OpenAI Agent Routing bleibt unverändert; Research Evidence ist eine separate Acquisition-Fähigkeit innerhalb derselben Gesamtarchitektur.
 - Die Plattform kann künftig mehrere Research-Provider hinter demselben `ResearchEvidenceAdapter`-Contract evaluieren, ohne deren Modelloutput unmittelbar in Scores zu überführen.
 - Fehlende oder nicht validierte Evidence bleibt weiterhin `SCORE_NOT_COMPUTABLE`.
+- Candidate-Zuordnung ist kein Bestandteil der Webanwendungs-Research-Evidence-Architektur mehr.
 
 ## Referenzen
 
