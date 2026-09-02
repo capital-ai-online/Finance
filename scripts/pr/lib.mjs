@@ -3,8 +3,15 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
-export const PR_TEMPLATE_VERSION = '1.5.0';
+export const PR_TEMPLATE_VERSION = '1.6.0';
 export const PR_TEMPLATE_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${PR_TEMPLATE_VERSION}`;
+export const LEGACY_PR_TEMPLATE_MARKERS = Object.freeze([
+  'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0',
+]);
+export const ACCEPTED_PR_TEMPLATE_MARKERS = Object.freeze([
+  PR_TEMPLATE_MARKER,
+  ...LEGACY_PR_TEMPLATE_MARKERS,
+]);
 export const DEFAULT_PRODUCTION_URL = 'https://capital-ai.online/';
 export const DEFAULT_PRODUCTION_HEALTH_URL = 'https://capital-ai.online/healthz';
 export const MAX_PR_START_DELAY_MS = 15 * 60 * 1000;
@@ -38,96 +45,15 @@ export function tryGit(args) {
 // command output.
 export function gitSucceeds(args, options = {}) {
   try {
-    git(args, options);
+    execFileSync('git', args, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      ...options,
+    });
     return true;
   } catch {
     return false;
   }
-}
-
-export function normalizeRepoPath(value) {
-  return String(value || '')
-    .replace(/\\/g, '/')
-    .replace(/^\.\//, '')
-    .replace(/\/+/g, '/')
-    .trim();
-}
-
-export function globToRegExp(pattern) {
-  const normalized = normalizeRepoPath(pattern);
-  let out = '^';
-
-  for (let i = 0; i < normalized.length; i += 1) {
-    const char = normalized[i];
-    if (char === '*') {
-      if (normalized[i + 1] === '*') {
-        out += '.*';
-        i += 1;
-      } else {
-        out += '[^/]*';
-      }
-    } else if (char === '?') {
-      out += '[^/]';
-    } else if ('\\.^$+{}()|[]'.includes(char)) {
-      out += `\\${char}`;
-    } else {
-      out += char;
-    }
-  }
-
-  out += '$';
-  return new RegExp(out);
-}
-
-export function pathMatchesClaim(filePath, claimedPaths) {
-  const normalizedPath = normalizeRepoPath(filePath);
-  return claimedPaths.some((claim) => globToRegExp(claim).test(normalizedPath));
-}
-
-export function staticGlobPrefix(pattern) {
-  const normalized = normalizeRepoPath(pattern);
-  const wildcardAt = normalized.search(/[?*]/);
-  const prefix = wildcardAt === -1 ? normalized : normalized.slice(0, wildcardAt);
-  return prefix.replace(/\/+$/, '');
-}
-
-export function isClaimMetadataPath(filePath) {
-  const normalized = normalizeRepoPath(filePath);
-  return normalized.startsWith('.ai/work-claims/');
-}
-
-export function claimScopesOverlap(a, b) {
-  const left = normalizeRepoPath(a);
-  const right = normalizeRepoPath(b);
-
-  if (isClaimMetadataPath(left) || isClaimMetadataPath(right)) return false;
-
-  const leftHasWildcard = /[?*]/.test(left);
-  const rightHasWildcard = /[?*]/.test(right);
-
-  if (!leftHasWildcard && !rightHasWildcard) return left === right;
-  if (!leftHasWildcard) return globToRegExp(right).test(left);
-  if (!rightHasWildcard) return globToRegExp(left).test(right);
-
-  const leftPrefix = staticGlobPrefix(left);
-  const rightPrefix = staticGlobPrefix(right);
-  if (!leftPrefix || !rightPrefix) return true;
-
-  return leftPrefix === rightPrefix ||
-    leftPrefix.startsWith(`${rightPrefix}/`) ||
-    rightPrefix.startsWith(`${leftPrefix}/`);
-}
-
-export function findClaimConflicts(currentClaims, otherClaims) {
-  const conflicts = [];
-  for (const current of currentClaims) {
-    for (const other of otherClaims) {
-      if (claimScopesOverlap(current, other)) {
-        conflicts.push({ current, other });
-      }
-    }
-  }
-  return conflicts;
 }
 
 export function readJsonFile(filePath) {
@@ -139,242 +65,242 @@ export function writeJsonFile(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-export function validateClaimShape(claim, claimPath) {
-  const errors = [];
-  if (!claim || typeof claim !== 'object' || Array.isArray(claim)) {
-    return ['claim must be a JSON object'];
+export function parseJsonSafe(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
-
-  if (claim.schemaVersion !== '1.0.0') errors.push('schemaVersion must be 1.0.0');
-  if (!claim.claimId || typeof claim.claimId !== 'string') errors.push('claimId is required');
-  if (claim.status !== 'active') errors.push('status must be active while PR is open');
-  if (claim.exclusive !== true) errors.push('exclusive must be true');
-  if (!claim.workItem || typeof claim.workItem !== 'string') errors.push('workItem is required');
-  if (!claim.startedAt || Number.isNaN(Date.parse(claim.startedAt))) errors.push('startedAt must be an ISO-8601 timestamp');
-  if (claim.baseBranch !== 'main') errors.push('baseBranch must be main');
-  if (!/^[0-9a-f]{40}$/i.test(String(claim.baseSha || ''))) errors.push('baseSha must be a full 40-character Git SHA');
-
-  if (!claim.agent || typeof claim.agent !== 'object') {
-    errors.push('agent object is required');
-  } else {
-    if (!claim.agent.provider) errors.push('agent.provider is required');
-    if (!claim.agent.model) errors.push('agent.model is required');
-    if (!claim.agent.executionSurface) errors.push('agent.executionSurface is required');
-  }
-
-  if (!Array.isArray(claim.claimedPaths) || claim.claimedPaths.length === 0) {
-    errors.push('claimedPaths must be a non-empty array');
-  } else {
-    for (const item of claim.claimedPaths) {
-      if (typeof item !== 'string' || !normalizeRepoPath(item)) {
-        errors.push('every claimedPaths entry must be a non-empty string');
-        break;
-      }
-      if (normalizeRepoPath(item) === '**' || normalizeRepoPath(item) === '*') {
-        errors.push('repository-wide wildcard claims are forbidden; split the work into bounded scopes');
-        break;
-      }
-    }
-  }
-
-  if (!normalizeRepoPath(claimPath).startsWith('.ai/work-claims/')) {
-    errors.push('claim file must live below .ai/work-claims/');
-  }
-
-  return errors;
-}
-
-export function listAddedClaimFiles(baseRef = 'origin/main', headRef = 'HEAD') {
-  const diff = git(['diff', '--name-only', '--diff-filter=A', `${baseRef}...${headRef}`, '--', '.ai/work-claims']);
-  if (!diff) return [];
-  return diff.split(/\r?\n/).map(normalizeRepoPath).filter((entry) => entry.endsWith('.json'));
-}
-
-export function listChangedFiles(baseRef = 'origin/main', headRef = 'HEAD') {
-  const diff = git(['diff', '--name-only', `${baseRef}...${headRef}`]);
-  if (!diff) return [];
-  return diff.split(/\r?\n/).map(normalizeRepoPath).filter(Boolean);
-}
-
-export async function githubJson(url, token, init = {}) {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init.headers || {}),
-    },
-    signal: init.signal || AbortSignal.timeout(15_000),
-  });
-
-  const text = await response.text();
-  let data = null;
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
-  }
-
-  if (!response.ok) {
-    const detail = typeof data === 'object' && data?.message ? data.message : String(data || response.statusText);
-    fail(`GitHub API ${response.status} for ${url}: ${detail}`);
-  }
-
-  return data;
-}
-
-export async function githubPaginated(pathname, token) {
-  const results = [];
-  for (let page = 1; page <= 20; page += 1) {
-    const joiner = pathname.includes('?') ? '&' : '?';
-    const pageData = await githubJson(`https://api.github.com${pathname}${joiner}per_page=100&page=${page}`, token);
-    if (!Array.isArray(pageData)) fail(`Expected array from GitHub pagination endpoint: ${pathname}`);
-    results.push(...pageData);
-    if (pageData.length < 100) break;
-  }
-  return results;
 }
 
 export function appendGithubOutput(values) {
   const outputPath = process.env.GITHUB_OUTPUT;
   if (!outputPath) return;
-  const lines = Object.entries(values).map(([key, value]) => `${key}=${String(value ?? '')}`);
+  const lines = Object.entries(values).map(([key, value]) => `${key}=${String(value)}`);
   fs.appendFileSync(outputPath, `${lines.join('\n')}\n`, 'utf8');
 }
 
-export function semverTuple(version) {
-  const match = String(version || '').trim().match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
-  if (!match) return null;
-  return match.slice(1).map(Number);
+export function listAddedClaimFiles(baseRef, headRef) {
+  const output = git([
+    'diff',
+    '--name-status',
+    '--diff-filter=A',
+    baseRef,
+    headRef,
+    '--',
+    '.ai/work-claims/*.json',
+  ]);
+  if (!output) return [];
+  return output
+    .split(/\r?\n/)
+    .map((line) => line.trim().split(/\s+/).at(-1))
+    .filter(Boolean);
 }
 
-export function compareSemver(a, b) {
-  const left = semverTuple(a);
-  const right = semverTuple(b);
-  if (!left || !right) return null;
-  for (let i = 0; i < 3; i += 1) {
-    if (left[i] > right[i]) return 1;
-    if (left[i] < right[i]) return -1;
-  }
-  return 0;
+export function normalizeProductionUrl(value) {
+  const url = new URL(value);
+  url.hash = '';
+  url.search = '';
+  if (!url.pathname.endsWith('/')) url.pathname += '/';
+  return url.toString();
 }
 
-export function productionBaselineIdentity(baseline) {
+export function normalizeHealthUrl(value) {
+  const url = new URL(value);
+  url.hash = '';
+  url.search = '';
+  return url.toString();
+}
+
+export function canonicalProductionBaselinePayload(baseline) {
   return {
-    schemaVersion: String(baseline?.schemaVersion || ''),
-    productionUrl: String(baseline?.productionUrl || ''),
-    productionHealthUrl: String(baseline?.productionHealthUrl || ''),
-    productionStatus: String(baseline?.production?.status || ''),
-    productionVersion: String(baseline?.production?.version || ''),
-    productionSha: String(baseline?.production?.commitSha || '').toLowerCase(),
-    productionBranch: String(baseline?.production?.branch || ''),
-    productionRepo: String(baseline?.production?.repoSlug || ''),
-    productionProvider: String(baseline?.production?.provider || ''),
-    mainSha: String(baseline?.main?.sha || '').toLowerCase(),
-    headSha: String(baseline?.head?.sha || '').toLowerCase(),
-    headVersion: String(baseline?.head?.version || ''),
-    productionToMainCommits: Number(baseline?.drift?.productionToMainCommits),
-    mainToHeadCommits: Number(baseline?.drift?.mainToHeadCommits),
+    schemaVersion: String(baseline.schemaVersion || PRODUCTION_BASELINE_SCHEMA_VERSION),
+    productionUrl: normalizeProductionUrl(baseline.productionUrl),
+    productionHealthUrl: normalizeHealthUrl(baseline.productionHealthUrl),
+    productionVersion: String(baseline.productionVersion),
+    productionCommit: String(baseline.productionCommit).toLowerCase(),
+    productionBranch: String(baseline.productionBranch),
+    currentMainCommit: String(baseline.currentMainCommit).toLowerCase(),
+    prHeadCommit: String(baseline.prHeadCommit).toLowerCase(),
+    productionToMainDrift: Number(baseline.productionToMainDrift),
+    mainToPrHeadDrift: Number(baseline.mainToPrHeadDrift),
   };
 }
 
+export function productionBaselineIdentity(baseline) {
+  const payload = canonicalProductionBaselinePayload(baseline);
+  return JSON.stringify(payload);
+}
+
 export function computeProductionBaselineId(baseline) {
-  const canonical = JSON.stringify(productionBaselineIdentity(baseline));
-  return `sha256:${createHash('sha256').update(canonical, 'utf8').digest('hex')}`;
+  return `sha256:${createHash('sha256').update(productionBaselineIdentity(baseline)).digest('hex')}`;
 }
 
 export function validateProductionBaselineForPr(baseline) {
   const errors = [];
-  const identity = productionBaselineIdentity(baseline);
-
-  if (identity.schemaVersion !== PRODUCTION_BASELINE_SCHEMA_VERSION) {
-    errors.push(`schemaVersion must be ${PRODUCTION_BASELINE_SCHEMA_VERSION}`);
+  if (!baseline || typeof baseline !== 'object') return ['Baseline ist kein Objekt.'];
+  const required = [
+    'schemaVersion',
+    'baselineId',
+    'productionUrl',
+    'productionHealthUrl',
+    'productionVersion',
+    'productionCommit',
+    'productionBranch',
+    'currentMainCommit',
+    'prHeadCommit',
+    'productionToMainDrift',
+    'mainToPrHeadDrift',
+    'generatedAt',
+  ];
+  for (const key of required) {
+    if (baseline[key] === undefined || baseline[key] === null || String(baseline[key]).trim() === '') {
+      errors.push(`Pflichtfeld fehlt: ${key}`);
+    }
   }
-  if (identity.productionUrl !== DEFAULT_PRODUCTION_URL) {
-    errors.push(`productionUrl must be ${DEFAULT_PRODUCTION_URL}`);
+  if (errors.length > 0) return errors;
+  if (String(baseline.schemaVersion) !== PRODUCTION_BASELINE_SCHEMA_VERSION) {
+    errors.push(`Unerwartete Baseline-Schema-Version: ${baseline.schemaVersion}`);
   }
-  if (identity.productionHealthUrl !== DEFAULT_PRODUCTION_HEALTH_URL) {
-    errors.push(`productionHealthUrl must be ${DEFAULT_PRODUCTION_HEALTH_URL}`);
+  const shaPattern = /^[0-9a-f]{40}$/i;
+  for (const key of ['productionCommit', 'currentMainCommit', 'prHeadCommit']) {
+    if (!shaPattern.test(String(baseline[key]))) errors.push(`Ungültige Commit-SHA: ${key}`);
   }
-  if (identity.productionStatus !== 'ok') errors.push('production.status must be ok');
-  if (!semverTuple(identity.productionVersion)) errors.push('production.version must be semantic x.y.z');
-  if (!/^[0-9a-f]{40}$/i.test(identity.productionSha)) errors.push('production.commitSha must be a full 40-character SHA');
-  if (identity.productionBranch !== 'main') errors.push('production.branch must be main');
-  if (!identity.productionRepo) errors.push('production.repoSlug is required');
-  if (!/^[0-9a-f]{40}$/i.test(identity.mainSha)) errors.push('main.sha must be a full 40-character SHA');
-  if (!/^[0-9a-f]{40}$/i.test(identity.headSha)) errors.push('head.sha must be a full 40-character SHA');
-  if (!semverTuple(identity.headVersion)) errors.push('head.version must be semantic x.y.z');
-  if (!Number.isInteger(identity.productionToMainCommits) || identity.productionToMainCommits < 0) {
-    errors.push('drift.productionToMainCommits must be a non-negative integer');
+  if (!Number.isInteger(Number(baseline.productionToMainDrift)) || Number(baseline.productionToMainDrift) < 0) {
+    errors.push('productionToMainDrift muss eine nichtnegative Ganzzahl sein.');
   }
-  if (!Number.isInteger(identity.mainToHeadCommits) || identity.mainToHeadCommits < 0) {
-    errors.push('drift.mainToHeadCommits must be a non-negative integer');
+  if (!Number.isInteger(Number(baseline.mainToPrHeadDrift)) || Number(baseline.mainToPrHeadDrift) < 0) {
+    errors.push('mainToPrHeadDrift muss eine nichtnegative Ganzzahl sein.');
   }
-  if (!baseline?.generatedAt || Number.isNaN(Date.parse(baseline.generatedAt))) {
-    errors.push('generatedAt must be an ISO-8601 timestamp');
-  } else if (Date.parse(baseline.generatedAt) > Date.now() + 5 * 60 * 1000) {
-    errors.push('generatedAt must not be materially in the future');
+  try {
+    if (normalizeProductionUrl(baseline.productionUrl) !== normalizeProductionUrl(DEFAULT_PRODUCTION_URL)) {
+      errors.push(`Produktions-URL weicht vom kanonischen Wert ab: ${baseline.productionUrl}`);
+    }
+  } catch {
+    errors.push(`Ungültige Produktions-URL: ${baseline.productionUrl}`);
   }
-  if (baseline?.bootstrap === true) errors.push('bootstrap baselines are not valid for normal PRs');
-  if (baseline?.checks?.productionHealthy !== true) errors.push('checks.productionHealthy must be true');
-  if (baseline?.checks?.immutableProductionIdentity !== true) errors.push('checks.immutableProductionIdentity must be true');
-  if (baseline?.checks?.productionBranchIsMain !== true) errors.push('checks.productionBranchIsMain must be true');
-  if (baseline?.checks?.productionIsAncestorOfMain !== true) errors.push('checks.productionIsAncestorOfMain must be true');
-  if (baseline?.checks?.branchContainsCurrentMain !== true) errors.push('checks.branchContainsCurrentMain must be true');
-
+  try {
+    if (normalizeHealthUrl(baseline.productionHealthUrl) !== normalizeHealthUrl(DEFAULT_PRODUCTION_HEALTH_URL)) {
+      errors.push(`Produktions-Health-URL weicht vom kanonischen Wert ab: ${baseline.productionHealthUrl}`);
+    }
+  } catch {
+    errors.push(`Ungültige Produktions-Health-URL: ${baseline.productionHealthUrl}`);
+  }
   const expectedId = computeProductionBaselineId(baseline);
-  if (String(baseline?.baselineId || '') !== expectedId) {
-    errors.push(`baselineId mismatch; expected ${expectedId}`);
+  if (String(baseline.baselineId) !== expectedId) {
+    errors.push(`Baseline-ID stimmt nicht mit dem atomaren Inhalt überein: erwartet ${expectedId}`);
   }
-
+  if (Number.isNaN(Date.parse(String(baseline.generatedAt)))) {
+    errors.push(`Ungültiger generatedAt-Zeitstempel: ${baseline.generatedAt}`);
+  }
   return errors;
 }
 
 export function renderProductionBaselineBlock(baseline) {
   const errors = validateProductionBaselineForPr(baseline);
-  if (errors.length > 0) {
-    fail(`Produktions-Baseline ist nicht PR-renderfähig: ${errors.join('; ')}`);
-  }
-
+  if (errors.length > 0) fail(`Produktions-Baseline kann nicht gerendert werden: ${errors.join('; ')}`);
   return [
     `<!-- ${PRODUCTION_BASELINE_START} -->`,
     `\`${PRODUCTION_BASELINE_START}\``,
     `- **Baseline-ID:** \`${baseline.baselineId}\``,
     `- **Produktions-URL:** \`${baseline.productionUrl}\``,
     `- **Produktions-Health-URL:** \`${baseline.productionHealthUrl}\``,
-    `- **Produktionsversion:** \`${baseline.production.version}\``,
-    `- **Produktions-Commit:** \`${baseline.production.commitSha}\``,
-    `- **Produktions-Branch:** \`${baseline.production.branch}\``,
-    `- **Aktueller main-Commit:** \`${baseline.main.sha}\``,
-    `- **PR-Head-Commit:** \`${baseline.head.sha}\``,
-    `- **Abweichung Produktion → main:** \`${baseline.drift.productionToMainCommits}\` Commit(s)`,
-    `- **Abweichung main → PR-Head:** \`${baseline.drift.mainToHeadCommits}\` Commit(s)`,
+    `- **Produktionsversion:** \`${baseline.productionVersion}\``,
+    `- **Produktions-Commit:** \`${baseline.productionCommit}\``,
+    `- **Produktions-Branch:** \`${baseline.productionBranch}\``,
+    `- **Aktueller main-Commit:** \`${baseline.currentMainCommit}\``,
+    `- **PR-Head-Commit:** \`${baseline.prHeadCommit}\``,
+    `- **Abweichung Produktion → main:** \`${baseline.productionToMainDrift}\` Commit(s)`,
+    `- **Abweichung main → PR-Head:** \`${baseline.mainToPrHeadDrift}\` Commit(s)`,
     `- **Baseline erzeugt am:** \`${baseline.generatedAt}\``,
     `\`${PRODUCTION_BASELINE_END}\``,
     `<!-- ${PRODUCTION_BASELINE_END} -->`,
   ].join('\n');
 }
 
-export function extractProductionBaselineBlock(body) {
-  const text = String(body || '');
-  const start = `<!-- ${PRODUCTION_BASELINE_START} -->`;
-  const end = `<!-- ${PRODUCTION_BASELINE_END} -->`;
-  const startAt = text.indexOf(start);
-  const endAt = text.indexOf(end, startAt + start.length);
-  if (startAt < 0 || endAt < 0) return null;
-  return text.slice(startAt, endAt + end.length);
+export function bodyHasGovernanceId(bodyText, id) {
+  const escaped = String(id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:<!--\\s*${escaped}\\s*-->|\\b${escaped}\\b)`).test(String(bodyText || ''));
 }
 
-export function extractBaselineGeneratedAt(block) {
-  const match = String(block || '').match(/- \*\*Baseline erzeugt am:\*\* `([^`]+)`/);
-  return match ? match[1] : null;
+export function extractProductionBaselineBlock(bodyText) {
+  const text = String(bodyText || '');
+  const startComment = `<!-- ${PRODUCTION_BASELINE_START} -->`;
+  const endComment = `<!-- ${PRODUCTION_BASELINE_END} -->`;
+  const start = text.indexOf(startComment);
+  const end = text.indexOf(endComment);
+  if (start < 0 || end < 0 || end < start) return null;
+  if (text.indexOf(startComment, start + startComment.length) >= 0) return null;
+  if (text.indexOf(endComment, end + endComment.length) >= 0) return null;
+  return text.slice(start, end + endComment.length);
 }
 
-/** True if body contains HTML-comment form and/or visible backtick form of a governance ID. */
-export function bodyHasGovernanceId(body, id) {
-  const text = String(body || '');
-  return text.includes(`<!-- ${id} -->`) || text.includes(`\`${id}\``) || new RegExp(`(^|\\n)\\s*${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*($|\\n)`).test(text);
+export function extractBaselineGeneratedAt(blockText) {
+  const match = String(blockText || '').match(/- \*\*Baseline erzeugt am:\*\* `([^`]+)`/);
+  return match?.[1] || null;
+}
+
+export async function githubJson(url, token, options = {}) {
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'capital-ai-governance',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+  const response = await fetch(url, { ...options, headers });
+  const text = await response.text();
+  const parsed = text ? parseJsonSafe(text) : null;
+  if (!response.ok) {
+    const detail = parsed?.message || text || `HTTP ${response.status}`;
+    fail(`GitHub API ${response.status}: ${detail}`);
+  }
+  return parsed;
+}
+
+export function compareSha(a, b) {
+  return String(a || '').toLowerCase() === String(b || '').toLowerCase();
+}
+
+export function assertExactSha(value, label) {
+  if (!/^[0-9a-f]{40}$/i.test(String(value || ''))) fail(`${label} ist keine vollständige Commit-SHA.`);
+  return String(value).toLowerCase();
+}
+
+export function parseIsoTimestamp(value, label = 'Zeitstempel') {
+  const raw = String(value || '').trim();
+  const parsed = Date.parse(raw);
+  if (!raw || Number.isNaN(parsed)) fail(`${label} ist kein gültiger ISO-Zeitstempel.`);
+  return parsed;
+}
+
+export function assertFreshTimestamp(value, maxAgeMs, label = 'Zeitstempel') {
+  const parsed = parseIsoTimestamp(value, label);
+  const age = Date.now() - parsed;
+  if (age < -60_000) fail(`${label} liegt unzulässig in der Zukunft.`);
+  if (age > maxAgeMs) fail(`${label} ist zu alt (${Math.round(age / 1000)}s).`);
+  return parsed;
+}
+
+export function sanitizeBranchName(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^refs\/heads\//, '')
+    .replace(/[^A-Za-z0-9._\/-]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^[-/]+|[-/]+$/g, '');
+}
+
+export function stableSortObject(value) {
+  if (Array.isArray(value)) return value.map(stableSortObject);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .map((key) => [key, stableSortObject(value[key])]),
+  );
+}
+
+export function stableJson(value) {
+  return JSON.stringify(stableSortObject(value));
 }
