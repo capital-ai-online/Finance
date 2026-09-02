@@ -2,9 +2,9 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.3.0`  
+**Version:** `2.4.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-09-01  
+**Updated:** 2026-09-02  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
@@ -12,6 +12,18 @@
 ## Purpose and boundary
 
 This policy defines the execution sequence that separates repository implementation, Human Merge, external platform mutation and verification. It is subordinate to `/AGENTS.md` and the stable Governance Control Plane and does not independently grant protected mutation authority.
+
+The Human-readable development model is intentionally simple:
+
+```text
+PROJECT VALUE CHAIN / PVC
+→ PROJECT ROADMAP
+→ APPLICABLE ADR
+→ APPLICABLE ESS
+→ CODE / TESTS / EVIDENCE
+```
+
+The Project Value Chain answers **who owns the work**. The project Roadmap answers **what is next and what is done**. ADRs record architecture decisions. ESS records component/capability contracts. Code, tests and evidence prove implementation. Machine-readable registries, stable IDs and validation metadata support these layers but MUST NOT become a parallel day-to-day planning hierarchy.
 
 A concrete external mutation requires the applicable effective Roadmap/ADR/ESS/REM/Owner approval chain.
 
@@ -33,54 +45,67 @@ Historical M10 `VERIFIED PASS` evidence remains audit/history material only. It 
 ## Canonical chain
 
 ```text
-READ-ONLY BASELINE
-→ GAP / ROADMAP PACKAGE
-→ AUTHORITY / RISK / REUSE PRE-CHECK
+READ CURRENT MAIN + OPEN PRS
+→ RESOLVE PVC / PRIMARY OWNER
+→ READ PROJECT ROADMAP
+→ READ APPLICABLE ADR / ESS
+→ SECURITY / COMPLIANCE / REUSE PRE-CHECK
 → FRESH SCOPED BRANCH FROM CURRENT MAIN
 → REPOSITORY IMPLEMENTATION
 → CHEAP / SANDBOX PRE-PR VALIDATION WHERE ACTUALLY AVAILABLE
 → FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
-→ EXACT-SNAPSHOT HUMAN/OWNER PR-CREATION APPROVAL OR VALID SCOPED DELEGATION
+→ HUMAN/OWNER PR-CREATION APPROVAL FOR MAIN SHA + BRANCH-HEAD SHA OR VALID SCOPED DELEGATION
 → PR CREATED
 → POST-PR CHAT HANDOFF (MAXIMUM TWO NEXT STEPS)
 → GOVERNANCE CHECKS / TECHNICAL CI
 → HUMAN MERGE DECISION
 → HUMAN MERGE OR OTHER TERMINAL PR EVENT
-→ WORK-CLAIM RELEASE + BRANCH RETIREMENT
+→ OPTIONAL COORDINATION-RECORD CLEANUP
 → READ-ONLY PRE-MUTATION CHECK (if external mutation is required)
 → EXPLICIT OWNER MUTATION APPROVAL OR VALID SCOPED DELEGATION WHERE APPLICABLE
-→ NON-AUTHORIZING MUTATION HANDOFF
 → AUTHORIZED EXECUTION HOST / MUTATION EXECUTOR
 → POST-MUTATION VERIFICATION
-→ APPEND-ONLY EVIDENCE
+→ EVIDENCE
 → ROADMAP / TRACEABILITY SYNC
-→ NEXT PHASE
+→ NEXT ROADMAP ITEM
 ```
 
 A step marked REQUIRED for the concrete work package cannot be skipped unless an effective higher/scoped authority explicitly replaces that exact approval surface. Such replacement never implies merge authority.
 
 ## Core execution controls
 
-1. **Roadmap/authority before mutation.** No external platform mutation without scope, authority and rollback classification.
-2. **Fresh branch.** Repository edits occur only on a fresh scoped branch from current `main`; direct edits to `main` are prohibited.
-3. **One work item / one branch.** A merged branch is not reused; rollback uses a fresh branch from then-current `main`.
-4. **Final main synchronization.** Immediately before PR-creation approval/delegation correlation, refresh `main`, correlate new merges/open writers, synchronize and adapt/revalidate the exact candidate.
-5. **Concurrent writer control.** Open PR changed-file, semantic, namespace and authority overlap is inspected before new writes and again before PR-create authority is exercised; overlap is sequenced/rescoped rather than silently merged.
-6. **Human/Owner PR-creation approval.** Each PR or Draft PR requires explicit approval for the reported current-main SHA and candidate head SHA unless an effective explicitly scoped authority conditionally replaces only that approval prompt for the exact context. Any pre-creation change to either SHA invalidates snapshot correlation.
-7. **Fail closed.** Missing, stale, conflicting or non-resolvable protected authority or PR-creation authorization causes STOP before the external mutation.
-8. **Human Merge.** PR-creation authority is not merge authority. Agents do not self-merge and technical evidence does not authorize merge.
-9. **Authority is not transport.** ChatGPT, Claude, Grok, MCP, SDK, GitHub Actions and provider identity do not create authority.
-10. **Evidence is not authority.** Test/build logs, PR bodies, labels, reactions and reports cannot grant PR-creation, merge or protected-mutation permission.
-11. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
-12. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
-13. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
-14. **Work-claim lifecycle ownership.** A principal that creates an `active`/`exclusive` work claim remains responsible for its conformant release after the correlated work reaches a terminal state, unless responsibility is explicitly and traceably handed off.
-15. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports the correlated snapshot/gates and displays at most the two highest-priority immediately actionable next steps, each with an exit gate; completion of either step triggers a fresh main/open-PR correlation and reprioritization.
-16. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 v1.4.0 session may switch in the same exact chat only to a project already named in its immutable one-to-three-project `AUTHORIZED_PROJECT_SET`. The switch requires fresh project/owner/main/writer/overlap correlation, an audit event and a new project-scoped branch/PR; projects outside the set use full `FOREIGN_PROJECT_HANDOFF`.
+1. **Value chain and Roadmap first.** Resolve the affected PVC/Primary Owner and current project Roadmap before implementation. Do not create a second planning hierarchy.
+2. **ADR/ESS when applicable.** Architecture decisions are expressed through ADR; component/capability contracts through ESS. Not every code change requires a new ADR or ESS.
+3. **Roadmap/authority before mutation.** No external platform mutation without scope, authority and rollback classification.
+4. **Fresh branch.** Repository edits occur only on a fresh scoped branch from current `main`; direct edits to `main` are prohibited.
+5. **One work item / one branch.** A merged branch is not reused; rollback uses a fresh branch from then-current `main`.
+6. **Final main synchronization.** Immediately before PR-creation approval/delegation correlation, refresh `main`, correlate new merges/open writers, synchronize and revalidate the branch state.
+7. **Concurrent writer control.** Open PR changed-file, semantic, namespace and authority overlap is inspected before new writes and again before PR-create authority is exercised; overlap is sequenced/rescoped rather than silently merged.
+8. **Human/Owner PR-creation approval.** Each PR or Draft PR requires explicit approval for the reported current-main SHA and branch-head SHA unless an effective explicitly scoped authority conditionally replaces only that approval prompt for the exact context. Any pre-creation change to either SHA invalidates that approval.
+9. **Fail closed.** Missing, stale, conflicting or non-resolvable protected authority or PR-creation authorization causes STOP before the external mutation.
+10. **Human Merge.** PR-creation authority is not merge authority. Agents do not self-merge and technical evidence does not authorize merge.
+11. **Authority is not transport.** ChatGPT, Claude, Grok, MCP, SDK, GitHub Actions and provider identity do not create authority.
+12. **Evidence is not authority.** Test/build logs, PR bodies, labels, reactions and reports cannot grant PR-creation, merge or protected-mutation permission.
+13. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
+14. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
+15. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
+16. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports branch/PR-head, main baseline and gates and displays at most the two highest-priority immediately actionable next Roadmap steps.
+17. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
+
+## Git identity terminology
+
+Current development uses normal Git/GitHub terms:
+
+- `main SHA` — current commit on `main`;
+- `branch head SHA` — current commit on the work branch before PR creation;
+- `PR head SHA` — current head commit of an open Pull Request;
+- `merge SHA` — resulting merged commit where applicable.
+
+`Candidate Head`, `candidate snapshot`, `candidate SHA` and similar governance lifecycle wording are retired for current work. Historical evidence may preserve legacy labels when necessary to understand an old record, but new/updated normative instructions and current Roadmaps use the terms above.
 
 ## Pre-PR technical evidence
 
-Branch-local or approved sandbox checks should be used before PR creation when the exact repository snapshot is actually available to that execution environment. A model must not claim PASS for checks it did not execute.
+Branch-local or approved sandbox checks should be used before PR creation when the exact branch state is actually available to that execution environment. A model must not claim PASS for checks it did not execute.
 
 Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/governance/control-plane/pre-pr-build-evidence.schema.json` and is bound to exact base/head SHAs. Before requesting PR-creation approval, the agent reports those SHAs, the current-main/open-writer correlation result and the evidence actually available. Evidence remains non-authorizing.
 
@@ -88,9 +113,9 @@ GitHub hosted `build-and-test` remains the independent technical validation for 
 
 ## Post-PR chat handoff and next-step queue (`CTRL-SDLC-CHAT-HANDOFF-001`)
 
-A chat-governed work item does not end its handoff at successful PR creation. Immediately after creation, the chat MUST expose the PR reference, branch/head, the main baseline used for the final correlation, the correlation result, and the known validation/open-gate state.
+A chat-governed work item does not end its handoff at successful PR creation. Immediately after creation, the chat MUST expose the PR reference, branch/PR-head, the main baseline used for the final correlation, the correlation result, and the known validation/open-gate state.
 
-The chat then recomputes the next-step queue against the current repository and governance state. Relevant current best practices and state-of-the-art guidance MAY be used to improve prioritization, but remain advisory unless adopted by an applicable CAPITAL-AI authority. They MUST NOT create a parallel governance hierarchy.
+The chat then recomputes the next-step queue against the current Project Value Chain, project Roadmap, applicable ADR/ESS, repository state and governance state. Relevant current best practices and state-of-the-art guidance MAY improve prioritization, but remain advisory unless adopted by an applicable CAPITAL-AI authority. They MUST NOT create a parallel governance hierarchy.
 
 When multiple follow-up actions exist, the visible queue is deliberately bounded:
 
@@ -100,65 +125,23 @@ When multiple follow-up actions exist, the visible queue is deliberately bounded
 
 Each displayed step MUST be bounded/atomic and state an exit gate. Default prioritization is security/data integrity → governance/compliance → CI/build reliability → architecture/integration consistency → deployment readiness → observability/performance → UX/documentation, unless a higher authority or a concrete incident requires another order.
 
-After either displayed step is completed, the executor MUST re-read current `main`, open Pull Requests, changed-file/semantic overlap and applicable governance state and then reprioritize. The prior second item is not automatically promoted to first place.
+After either displayed step is completed, the executor MUST re-read current `main`, open Pull Requests, changed-file/semantic overlap, the affected Roadmap and applicable ADR/ESS and then reprioritize. The prior second item is not automatically promoted to first place.
 
 This handoff is non-authorizing. A recommended next step never constitutes PR creation approval, merge approval, deployment approval or protected external-mutation approval.
 
-## Work-claim lifecycle and conformant closure
+## Coordination records and historical work claims
 
-Work claims are coordination records, not permanent locks and not authorization artifacts. Their lifecycle is part of the work item that created them.
+Work claims and handoff records are coordination/audit metadata only. They are not part of the primary Human-readable development hierarchy and do not replace the Project Value Chain, Roadmap, ADR or ESS.
 
-### Creator responsibility
+If a current workflow creates an active/exclusive work claim, its creator remains responsible for release after merge, close, supersession or abandonment. A stale claim after a terminal event is a hygiene finding; it does not revive writer authority. Maintenance whose only purpose is to release terminal claims must not create recursive claims solely for that cleanup.
 
-The agent, automation client or Human principal that successfully creates an `active` and `exclusive` work claim MUST remain responsible for its lifecycle until the claim is released. Responsibility MAY be transferred only by an explicit, traceable handoff or Human/Owner direction; an implicit change of model, chat, tool or provider does not transfer it.
-
-### Terminal events
-
-The following events terminate writer authority for the correlated work claim:
-
-- the correlated Pull Request is merged;
-- the correlated Pull Request is closed without merge;
-- the work is explicitly superseded by a new scoped work item;
-- the branch/work item is explicitly abandoned.
-
-A terminal event releases the claim's effective writer authority immediately. A stale JSON record that still says `status: "active"` after a terminal event MUST NOT continue to block or reserve the claimed paths; instead it is a governance lifecycle finding that requires persistent cleanup.
-
-### Persistent release record
-
-The responsible principal MUST close the persisted claim through normal branch/PR governance as soon as practicable after the terminal event. The original claim file is retained for auditability and MUST NOT be deleted merely because the work ended.
-
-A conformantly released claim uses at least:
-
-```json
-{
-  "status": "released",
-  "exclusive": false,
-  "releasedAt": "<ISO-8601 timestamp>",
-  "releaseReason": "merged | closed | superseded | abandoned"
-}
-```
-
-Where available, the same claim record SHOULD also retain the correlated Pull Request number, terminal PR/head SHA and, for a merged work item, the resulting merge/main SHA. Original identity and scope evidence such as `claimId`, `workItem`, `startedAt`, `baseBranch`, `baseSha`, `agent` and `claimedPaths` remains immutable historical evidence except for an explicitly documented correction of malformed metadata.
-
-### No recursive claim creation
-
-A maintenance change whose only purpose is to transition one or more terminal claims from `active` to `released` MUST NOT create a new work claim solely for that closure operation. This prevents an infinite claim-for-claim lifecycle. The closure change still follows the normal fresh-branch, current-main correlation, PR-body, CI and Human Merge rules applicable to its check class.
-
-### Handoff and failure handling
-
-If the original claim creator can no longer perform the persistent release, it MUST surface the unresolved lifecycle state and hand it off explicitly. The receiving principal may perform the closure under the same repository governance but does not inherit any additional merge, CI, deployment or production-mutation authority.
-
-Failure to persist a release after a terminal event is a governance hygiene finding. It does not revive writer authority and must not be interpreted as a valid reason to block unrelated work indefinitely.
-
-### Authority boundary
-
-Claim creation, claim release and claim-closure evidence never authorize Pull Request creation, CI, merge, deployment or protected external mutation by themselves. Existing Human/Owner and protected-action boundaries remain unchanged.
+Historical claim/handoff documents may remain for audit. New project planning SHOULD reference the affected PVC, Roadmap item and applicable ADR/ESS instead of introducing new post-PVC policy overlays.
 
 ## Human / Owner boundary
 
 Human/Owner retains at least:
 
-- explicit exact-snapshot approval before PR/Draft-PR creation unless a separately effective scoped delegation replaces only that approval prompt;
+- explicit branch-state approval before PR/Draft-PR creation unless a separately effective scoped delegation replaces only that approval prompt;
 - final merge authority as a separate decision;
 - explicit protected external mutation approval unless a separately effective scoped delegation covers that exact mutation class/context;
 - Owner/Admin IAM elevation and recovery/break-glass;
@@ -180,7 +163,7 @@ Active agent tooling must start from `/AGENTS.md`. Provider-specific instruction
 
 External production mutations occur only through an authorized execution host with current authority, explicit approval/delegation where applicable, target/fingerprint verification, audit evidence and rollback definition.
 
-A mutation handoff is an instruction package, not an authorization artifact by itself.
+A mutation instruction package is not an authorization artifact by itself.
 
 ## Deployment authority
 
@@ -209,18 +192,17 @@ Render native Auto Deploy remains off. A second deploy authority requires an exp
 
 Where applicable, retain:
 
-- baseline and candidate SHAs;
+- current-main SHA and branch/PR-head SHA;
 - final main/open-writer correlation plus applicable PR-creation authority evidence;
-- stable authority/control references;
+- applicable PVC/Roadmap/ADR/ESS references;
 - branch / PR / final head / merge SHA;
-- work-claim identity and release state when a claim exists;
 - check class and validation result;
 - mutation class and target;
 - pre/post verification;
 - approval/delegation evidence for protected actions;
 - audit references;
 - rollback state;
-- next gate.
+- next Roadmap gate.
 
 ## Stop / rollback rules
 
@@ -234,4 +216,4 @@ Existing M5–M10 runbooks remain available only for explicit domain/recovery/au
 
 ## Closure rule
 
-A work package closes only when implementation, current authority, required validation/evidence, main correlation, work-claim lifecycle and any external mutation verification are consistent. A PR merge alone is not sufficient closure for work that includes production mutation or leaves an unresolved claim lifecycle finding.
+A work package closes when implementation, current authority, required validation/evidence, main correlation, affected Roadmap status and any external mutation verification are consistent. A PR merge alone is not sufficient closure for work that includes production mutation.
