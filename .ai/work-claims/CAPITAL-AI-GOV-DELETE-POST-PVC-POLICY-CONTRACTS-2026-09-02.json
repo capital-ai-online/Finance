@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-DELETE-POST-PVC-POLICY-CONTRACTS-2026-09-02",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Withdraw the post-PVC policy-contract overlay so that after Human merge only the project-folder to PVC-unit mapping remains current; archive and deactivate the overlay evidence/work-claims, remove dead links, and keep independent technical work untouched.",
+  "workItemDE": "Post-PVC-Richtlinien-Overlay zurueckziehen, sodass nach Human-Merge nur die Verbindungen zwischen Projektordnern und PVC-Einheiten aktuell bleiben; Overlay-Evidence/Work-Claims archivieren und deaktivieren, tote Links entfernen und unabhaengige technische Arbeit unangetastet lassen.",
+  "startedAt": "2026-09-02T05:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "25f7a37a97dcea5c13b1d7b8088b51b48bd0e4f9",
+  "pullRequest": null,
+  "branch": "agent/governance-delete-post-pvc-policy-contracts-20260902",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Primary owner of PVC-05 Platform Director governance surface and project-folder to PVC mapping",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-DELETE-POST-PVC-POLICY-CONTRACTS-2026-09-02.json",
+    ".ai/work-claims/CAPITAL-AI-*-PROJECT-SURFACE-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-CROSSCUTTING-FOLDER-CORRELATION-V2-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-ROADMAP-SINGLE-SOURCE-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31.json",
+    "AGENTS.md",
+    "docs/governance/control-catalog.json",
+    "docs/governance/authority-registry.json",
+    "docs/projects/**",
+    "docs/archive/evidence/post-pvc-folder-mapping/**",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "scripts/governance/validateGovernanceControlPlane.mjs"
+  ],
+  "authorityGuard": "Only folder-to-PVC mapping in docs/projects/README.md and docs/projects/PROJECT_VALUE_CHAIN.md remains current after Human merge. No Self-Merge, no production mutation, no change to independent technical work (ADR-0104 sessions, Deep Research, M10, Device-Stage-C, DATA Gateway, ULS).",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. Merge remains Human Owner-only."
+}
