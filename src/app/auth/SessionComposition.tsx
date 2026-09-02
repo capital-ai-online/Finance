@@ -23,6 +23,7 @@ export interface SessionCompositionValue {
   handleLogin: (email: string, password: string) => Promise<void>;
   handleRegister: (name: string, email: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
+  handleGlobalLogout: () => Promise<void>;
 }
 
 interface SessionCompositionProps {
@@ -44,6 +45,8 @@ const PUBLIC_SHELL_PATHS = new Set([
   '/agb',
   '/learning-platform',
 ]);
+
+const SIGN_OUT_TIMEOUT_MS = 5_000;
 
 function shouldRenderPublicShellImmediately(): boolean {
   if (typeof window === 'undefined') return false;
@@ -87,11 +90,30 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     updateUserSession(null);
   };
 
+  const signOutWithTimeout = async (scope: 'local' | 'global') => {
+    if (!supabase) return;
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([
+        supabase.auth.signOut({ scope }),
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error(`Supabase ${scope} signOut timed out`)),
+            SIGN_OUT_TIMEOUT_MS,
+          );
+        }),
+      ]);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+  };
+
   const rejectAnonymousSession = async () => {
     resetAuthProjection();
     if (supabase) {
       try {
-        await supabase.auth.signOut();
+        await signOutWithTimeout('local');
       } catch (err) {
         console.warn('[Auth] Anonymous session cleanup failed:', err);
       }
@@ -114,10 +136,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       'User';
 
     try {
-      // Always resolve billing through the live Supabase SDK session. MFA verification rotates
-      // session credentials, so reusing the pre-step-up access token here can race the rotation
-      // and temporarily project a paid account as Free. authFetch performs exactly one guarded
-      // refresh/retry and only emits the global unauthorized event when that retry also fails.
       const res = await authFetch('/api/stripe/user-subscription');
       if (res.status === 401) {
         return;
@@ -193,8 +211,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     sessionBootstrapKeyRef.current = key;
     setLoading(true);
 
-    // Supabase documents that async Supabase work from onAuthStateChange can deadlock the client.
-    // A macrotask guarantees the auth callback and its internal lock have returned first.
     window.setTimeout(() => {
       establishSession(session).catch((err) => {
         console.error('[Auth] Deferred session establishment failed:', err);
@@ -207,22 +223,25 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     }, 0);
   };
 
-  const handleLogout = async () => {
+  const performLogout = async (scope: 'local' | 'global') => {
     sessionBootstrapKeyRef.current = null;
-    if (supabase) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {
-        console.warn('Supabase signOut error:', e);
-      }
+    setLoading(true);
+    try {
+      await signOutWithTimeout(scope);
+    } catch (e) {
+      console.warn(`Supabase ${scope} signOut error:`, e);
+    } finally {
+      clearLoginStepUpMarkers();
+      setAuthError(null);
+      resetAuthProjection();
+      setJustLoggedOut(true);
+      setLoading(false);
+      setTimeout(() => setJustLoggedOut(false), 5000);
     }
-
-    clearLoginStepUpMarkers();
-    resetAuthProjection();
-    setJustLoggedOut(true);
-    setLoading(false);
-    setTimeout(() => setJustLoggedOut(false), 5000);
   };
+
+  const handleLogout = async () => performLogout('local');
+  const handleGlobalLogout = async () => performLogout('global');
 
   useEffect(() => {
     const isExplicitLocalDev =
@@ -254,7 +273,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // The callback itself remains synchronous. No Supabase API is awaited here.
       if (event === 'SIGNED_OUT' || !session) {
         sessionBootstrapKeyRef.current = null;
         updateUserSession(null);
@@ -272,9 +290,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   }, []);
 
   const handleLogin = async (_email: string, _password: string) => {
-    // SECURITY: keep the legacy callback for component compatibility, but make it fail closed.
-    // Password authentication is intentionally unavailable in the application even if an old
-    // presentation component still attempts to invoke this callback.
     throw new Error(
       'Passwortbasierte Anmeldung ist deaktiviert. Verwenden Sie den nativen Passkey oder Google.',
     );
@@ -342,8 +357,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
           }
 
           try {
-            // Supabase MFA verification issues/rotates the live session. Never continue the
-            // billing/bootstrap handoff with the pre-MFA session object captured by the gate.
             const {
               data: { session: liveSession },
               error,
@@ -462,5 +475,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     handleLogin,
     handleRegister,
     handleLogout,
+    handleGlobalLogout,
   });
 }

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-LIFECYCLE-RECORRELATION-2026-09-02",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub/Supabase connectors"
+  },
+  "workItem": "Re-correlate the OPS-owned User-Lifecycle evidence contract against current Google OAuth, logout, registration and platform-version behavior; expose foreign Frontend/SEO gaps without implementing foreign project code or mutating Production.",
+  "workItemDE": "Den OPS-eigenen User-Lifecycle-Evidence-Vertrag gegen aktuelles Google-OAuth-, Logout-, Registrierungs- und Plattformversions-Verhalten re-korrelieren und Foreign-Frontend-/SEO-Luecken sichtbar machen, ohne fremden Projektcode oder Production zu mutieren.",
+  "startedAt": "2026-09-02T18:45:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "5db8062d3062e93f004cf0b75f190a9c649821f8",
+  "branch": "agent/operations-auth-lifecycle-recorrelation-20260902",
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "operations",
+  "projectStage": "PVC-02",
+  "secondaryProjectStage": "PVC-08",
+  "ownerRole": "Primary owner of Controlled Implementation correlation and non-authorizing lifecycle/runtime evidence; Frontend/IAM/SEO semantics remain with their canonical owners.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-LIFECYCLE-RECORRELATION-2026-09-02.json",
+    "scripts/operations/authLifecycleCorrelation.ts",
+    "tests/unit/authLifecycleCorrelation.test.ts",
+    "docs/projects/operations/evidence/AUTH_LIFECYCLE_RECORRELATION_2026-09-02.md",
+    "docs/projects/operations/work-packages/AUTH_LIFECYCLE_RECORRELATION_2026-09-02.md"
+  ],
+  "reuseInputs": [
+    "scripts/operations/userLifecycleHarness.ts",
+    "docs/projects/operations/work-packages/USER_LIFECYCLE_SIMULATION.md",
+    "src/features/public/ui/LoginPage.tsx",
+    "src/app/auth/SessionComposition.tsx",
+    "src/app/routing/AppRoutes.tsx",
+    "src/components/RegistrationCompletionGate.tsx",
+    "src/components/Dashboard.tsx",
+    "server/stepUp.ts",
+    "docs/roadmaps/work-packages/AUTH_NORMAL_USER_LOGIN_REGISTRATION_2026-08-29.md",
+    "package.json",
+    "index.html"
+  ],
+  "authorityGuard": "package.json#version remains the sole platform-version authority. Supabase Auth remains the website identity/session authority. This package only observes repository contracts and emits OPS evidence; it creates no Auth, Frontend, SEO, IAM, Governance, Release or Production authority.",
+  "providerGuard": "Connected Supabase and public Google/web state are read-only evidence inputs. No Google Search Console, Google Auth Platform, Supabase, Render, Stripe or Production mutation is authorized by this work item.",
+  "foreignWork": [
+    "CAPITAL-AI-FE owns application composition, authenticated root routing, sidebar interaction and logout UX implementation",
+    "CAPITAL-AI-GOV retains IAM/Auth policy and decision semantics; existing local-default logout decision is consumed, not redefined",
+    "CAPITAL-AI-SEO owns search-engine metadata/indexing remediation and Search Console follow-up",
+    "CAPITAL-AI-SEC retains independent security assurance"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. PR creation requires exact-snapshot Human/Owner approval. No Production/provider mutation is authorized."
+}
