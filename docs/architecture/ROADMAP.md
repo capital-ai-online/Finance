@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `2.7.0`  
 **Status date:** `2026-09-02`  
-**Current repository baseline for this synchronization:** `main@0a7aa85f25fa224c3f2422ed99f60be6ca45630f` — includes Human Merge of PR #707 (provider-neutral Deep Research Evidence Pipeline), PR #708 (Security Assessment Validator), PR #710 (Owner Device Authorization Stage-D Cutover preparation) and PR #711 (Security Assessment Validator canonical CI integration)  
+**Current repository baseline for this synchronization:** `main@2b9aebf854939f6eedadfb8e16632ee48833ae36` — includes Human Merge of PR #707 (provider-neutral Deep Research Evidence Pipeline), PR #708 (Security Assessment Validator), PR #710 (Owner Device Authorization Stage-D Cutover preparation), PR #711 (Security Assessment Validator canonical CI integration) and PR #712 (Owner Device Authorization Stage-D Remediation)  
 **Open PR correlation at this synchronization:** no open Pull Requests observed; no active PR writer overlaps the ESS-0019 Research Evidence Contract candidate.  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
@@ -83,8 +83,9 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document v2.7.0; DR-01 synchronized through `main@0a7aa85f25fa224c3f2422ed99f60be6ca45630f`; ESS-0019 v1.2.0 Research Evidence Contract projected for effect after Human Merge |
+| Current-State Index | this document v2.7.0; DR-01 synchronized through `main@2b9aebf854939f6eedadfb8e16632ee48833ae36`; ESS-0019 v1.2.0 Research Evidence Contract projected for effect after Human Merge |
 | Open Pull Requests at this synchronization | none observed; no ESS-0019/registry overlap from an open PR |
+| Owner Device Authorization Stage-D cutover | **EFFECTIVE / HUMAN-MERGED** through PR #712 and `AUTH-GOV-OWNER-DEVICE-AUTHORIZATION-CUTOVER`; preserved by DR-02A registry correlation |
 | S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
 | S1-R2-02 GitHub main enforcement | governed by current provider/readback controls; `required_signatures` intentionally absent |
 | M10 Passkey PR-CI implementation | **RETIRED / HISTORICAL ONLY — NO CURRENT IMPLEMENTATION EXPECTED** |
