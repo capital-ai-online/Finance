@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-DATA-SECURITY-HANDOFF-SYNC-2026-08-31",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -13,7 +13,8 @@
   "startedAt": "2026-08-31T21:23:00+02:00",
   "baseBranch": "main",
   "baseSha": "7fa5cfddcdb775078e1518bef4908af2e8706415",
-  "pullRequest": null,
+  "pullRequest": 638,
+  "mergedPr": 638,
   "branch": "agent/data-security-handoff-sync-20260831",
   "project": "CAPITAL-AI-DATA",
   "projectFolder": "data",
@@ -40,5 +41,18 @@
     "CAPITAL-AI-QM: independent read-only Quality assessment; QM project surface is current on main"
   ],
   "authorityGuard": "PVC project routing is distinct from technical SC-MD-SPT VC stages. DATA owns target-project implementation/evidence semantics only in PVC-09..11. No Security self-verification, OPS tooling absorption, scoring logic, Quality hot-path dependency, second data plane, second DQ architecture or direct main mutation.",
-  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a fresh exact-snapshot Owner approval; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires a fresh exact-snapshot Owner approval; merge remains Human/CODEOWNER-only.",
+  "releaseReason": "merged",
+  "releasedAt": "2026-08-31T21:35:43Z",
+  "mainCommit": "4368207e364402c9c2ea2c6954977dc74aa96bc8",
+  "terminalHeadSha": "21bb2acd8afa98fc7a4e49a127436d7dc070a3e8",
+  "releaseEvidence": {
+    "pullRequest": 638,
+    "merged": true,
+    "mergeCommitSha": "4368207e364402c9c2ea2c6954977dc74aa96bc8",
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "0a7aa85f25fa224c3f2422ed99f60be6ca45630f",
+    "verifiedAt": "2026-09-02",
+    "reconciledBy": "agent/data-security-handoff-reconciliation-20260902"
+  }
 }
