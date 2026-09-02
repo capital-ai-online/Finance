@@ -4,7 +4,7 @@
 **Project:** `CAPITAL-AI-FINTECH`  
 **Canonical folder:** `docs/projects/fintech/`
 
-All records use `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Foreign implementation remains `REFERRED_NOT_EXECUTED` or another permitted external state; FINTECH does not mark foreign work `DONE`, Security `VERIFIED/CLOSED`, or Accepted Risk. The `primary_owner` field identifies productive PVC ownership and does not transfer Authority through a handoff.
+Ownership is resolved only from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Foreign implementation remains `REFERRED_NOT_EXECUTED` or another permitted external state; FINTECH does not mark foreign work `DONE`, Security `VERIFIED/CLOSED`, or Accepted Risk. The `primary_owner` field identifies productive PVC ownership and does not transfer Authority.
 
 ## Inbound OPS Security child handoffs
 
@@ -33,11 +33,11 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 - target_project: `CAPITAL-AI-FINTECH`
 - target_project_folder: `docs/projects/fintech/`
 - primary_owner: `CAPITAL-AI-FINTECH`
-- task: define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve the existing Buffett server authority while correcting consumer integration through the proper downstream handoff
+- task: define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve the existing Buffett server authority while correcting consumer integration through the proper downstream owner
 - reason: Backtest and Monte Carlo are executable without a paid server grant; `full_ai_analysis` is unbound; Buffett is fail-closed because its current browser caller does not use the bearer-aware client contract
 - dependency: ADR-0034; DATA validated/history inputs where applicable; Frontend remains a consumer and must not invent entitlement semantics
 - required_evidence: verified-principal/server-entitlement decision; Free/Starter DENY; forged/missing-bearer DENY; stale-entitlement DENY; direct/automatic alternate-path DENY; explicit `full_ai_analysis` binding; Buffett authorization success/failure through bearer-aware consumer path
-- verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation and any required downstream consumer handoff
+- verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation and any required downstream consumer work
 - status: `REFERRED_NOT_EXECUTED`
 
 ## Upstream DATA
@@ -159,4 +159,4 @@ Security requirements and return rules are maintained in `SECURITY_HANDOFFS.md`.
 
 ## Cross-domain rule
 
-If a FINTECH task discovers productive work owned by another Primary Owner, FINTECH stops local implementation for that foreign portion and emits the required foreign-project handoff. No project-routing marker transfers underlying Authority.
+If a FINTECH task discovers productive work owned by another Primary Owner, FINTECH stops local implementation for that foreign portion. Ownership is resolved from the folder-to-PVC mapping. No routing marker transfers underlying Authority.
