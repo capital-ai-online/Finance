@@ -5,8 +5,10 @@ import { isAlpacaConfigured } from '../../src/services/alpacaShadowProvider';
 import { isAnthropicConfigured } from '../anthropicClient';
 import { isOpenAIConfigured } from '../openaiClient';
 import { getStripeConfigurationStatus, type StripeConfigurationStatus } from './renderRuntimeSafety';
+import { getProcessHealthSnapshot } from './processHealth';
 
 export interface BusinessReadinessInput {
+  processHealthy: boolean;
   supabaseConfigured: boolean;
   iamSchemaHealthy: boolean;
   stripe: StripeConfigurationStatus;
@@ -22,6 +24,7 @@ export interface BusinessReadinessSnapshot {
   ready: boolean;
   checkedAt: string;
   blockingChecks: {
+    processHealthy: boolean;
     supabaseConfigured: boolean;
     iamSchemaHealthy: boolean;
     stripeCoreConfigured: boolean;
@@ -59,6 +62,7 @@ export function evaluateBusinessReadiness(
   const stripeCatalogConfigured = REQUIRED_STRIPE_CATALOG_KEYS.every((key) => input.stripe[key]);
 
   const blockingChecks = {
+    processHealthy: input.processHealthy,
     supabaseConfigured: input.supabaseConfigured,
     iamSchemaHealthy: input.iamSchemaHealthy,
     stripeCoreConfigured,
@@ -97,8 +101,40 @@ const READINESS_CACHE_MS = 30_000;
  * authorization boundary: the Supabase IAM schema. It does not call market-data or AI providers,
  * because their quotas/outages must degrade the affected capability rather than trigger a Render
  * restart loop. Secret/key values are never returned; diagnostics expose booleans only.
+ *
+ * A latched fatal process event bypasses the normal readiness cache immediately. No new external
+ * dependency probe is started during fatal shutdown; the process is simply projected not-ready
+ * until the existing bounded SIGTERM path terminates it and Render supervision restarts it.
  */
 export async function probeBusinessReadiness(now = Date.now()): Promise<BusinessReadinessSnapshot> {
+  const processHealthy = getProcessHealthSnapshot().healthy;
+  if (!processHealthy) {
+    if (cache) {
+      return {
+        ...cache.snapshot,
+        status: 'not-ready',
+        ready: false,
+        checkedAt: new Date(now).toISOString(),
+        blockingChecks: {
+          ...cache.snapshot.blockingChecks,
+          processHealthy: false,
+        },
+      };
+    }
+
+    return evaluateBusinessReadiness({
+      processHealthy: false,
+      supabaseConfigured: isSupabaseConfigured(),
+      iamSchemaHealthy: false,
+      stripe: getStripeConfigurationStatus(getCleanEnv),
+      optionalProviders: {
+        alpaca: isAlpacaConfigured(),
+        anthropic: isAnthropicConfigured(),
+        openai: isOpenAIConfigured(),
+      },
+    }, new Date(now).toISOString());
+  }
+
   if (cache && cache.expiresAt > now) return cache.snapshot;
 
   const supabaseConfigured = isSupabaseConfigured();
@@ -106,6 +142,7 @@ export async function probeBusinessReadiness(now = Date.now()): Promise<Business
   const stripe = getStripeConfigurationStatus(getCleanEnv);
 
   const snapshot = evaluateBusinessReadiness({
+    processHealthy: true,
     supabaseConfigured,
     iamSchemaHealthy,
     stripe,
