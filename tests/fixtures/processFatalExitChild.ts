@@ -1,4 +1,6 @@
-import '../../server/bootstrap/installProcessLifecycle';
+import { installProcessLifecycleHandlers } from '../../server/bootstrap/processLifecycle';
+
+installProcessLifecycleHandlers({ error() {} });
 
 // Simulate the application's bounded shutdown completing successfully after the fatal
 // handler delegates through SIGTERM. The lifecycle exit hook must still preserve a
