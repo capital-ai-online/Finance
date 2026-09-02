@@ -27,7 +27,7 @@ The project surface deliberately references the existing Security sources instea
 - [Security V2 Validation Evidence](../../evidence/security/CAPITAL_AI_SEC_V2_VALIDATION_2026-08-31.md) — historical exact-candidate validation evidence for PR #631 scope.
 - [Technical Security component](../../../src/platform/Security/README.md) — reusable technical Security implementation boundary under existing authority.
 - [Project Value Chain](../PROJECT_VALUE_CHAIN.md) — canonical `PVC-01..PVC-18` Primary Owners.
-- [Cross-Project Handoff Contract](../CROSS_PROJECT_HANDOFF_CONTRACT.md) — repository handoff and `PVC-*` routing contract.
+- [Project folder mapping](../README.md) — canonical folder-to-PVC connection.
 
 ## Ownership boundary
 
@@ -55,13 +55,11 @@ Security does not own:
 
 ## Current cross-project execution model
 
-Security findings are routed using both markers where applicable:
+Security findings remain routed with the Security marker where applicable:
 
 `[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
 
-`[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
-
-The structured project-routing identity is always explicit as `project_namespace: PVC` and `project_stage: PVC-<NN>`. Existing technical `VC-*` stages remain separately namespaced and never become project ownership by implication.
+Project ownership is resolved only from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Existing technical `VC-*` stages remain separately namespaced and never become project ownership by implication.
 
 Current primary return-evidence dependencies remain with:
 

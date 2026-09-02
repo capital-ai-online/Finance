@@ -52,7 +52,7 @@ When a finding requires changes outside inherently Security-owned code, CAPITAL-
 
 `[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
 
-For current project routing, that marker must additionally carry `project_namespace: PVC` and `project_stage: PVC-<NN>` in accordance with `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Where a technical financial stage is relevant, `technical_namespace` and `technical_stage` are recorded separately. Security remains the requirement and verification owner.
+For current project routing, that marker must additionally carry `project_namespace: PVC` and `project_stage: PVC-<NN>` according to `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Where a technical financial stage is relevant, `technical_namespace` and `technical_stage` are recorded separately. Security remains the requirement and verification owner.
 
 ## Authority boundaries
 

@@ -29,7 +29,7 @@ The project surface references the existing Compliance sources instead of duplic
 - `../../compliance/CAPITAL-AI-COMP/work-packages/` — Compliance work packages.
 - `../../compliance/CAPITAL-AI-COMP/reports/` — assessment/report outputs.
 - [Project Value Chain](../PROJECT_VALUE_CHAIN.md) — canonical `PVC-01..PVC-18` Primary Owners.
-- [Cross-Project Handoff Contract](../CROSS_PROJECT_HANDOFF_CONTRACT.md) — repository handoff and `PVC-*` routing contract.
+- [Project folder mapping](../README.md) — canonical folder-to-PVC connection.
 
 ## Ownership boundary
 
@@ -58,7 +58,7 @@ Compliance does not own:
 
 ## Cross-project execution model
 
-When Compliance identifies remediation outside its local scope, the work is routed to the Primary Owner using the repository cross-project handoff contract. Compliance records the requirement, applicability, evidence and assessment, but the target project implements the remediation and returns evidence for independent reassessment.
+When Compliance identifies remediation outside its local scope, the work is routed to the Primary Owner resolved from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Compliance records the requirement, applicability, evidence and assessment, but the target project implements the remediation and returns evidence for independent reassessment.
 
 Detailed workstream and finding state remains canonical under `docs/compliance/CAPITAL-AI-COMP/**`; this folder does not create a second findings or requirement register.
 

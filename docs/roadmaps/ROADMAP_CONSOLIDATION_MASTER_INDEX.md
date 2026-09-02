@@ -2,7 +2,7 @@
 
 **Document role:** `CROSS_PROJECT_INDEX` / derived navigation / non-authorizing  
 **Status:** `ACTIVE — DERIVED PORTFOLIO INDEX`  
-**Single-source registry:** `docs/projects/ROADMAP_REGISTRY.md`  
+**Folder-to-PVC mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`  
 **Trust root:** `/AGENTS.md`  
 **DevelopmentChain current-state authority:** `docs/architecture/ROADMAP.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`)  
 **Predecessor snapshot:** repository history before the 2026-09-01 single-source consolidation; predecessor blob `7a2c7fd5997bb2406c12bfb0d55cba3ee2a3a2ee`
@@ -13,7 +13,7 @@ This file is a **derived portfolio navigation index**. It no longer maintains an
 
 Organizational project execution/status is maintained exactly once per canonical project in `docs/projects/<project>/ROADMAP.md`. Detailed domain/program roadmaps remain available for bounded architecture, workstream, finding, migration or historical context. Technical and Governance Authority continues to resolve through `/AGENTS.md`, accepted ADR/ESS/AUTH/CTRL identities, current registries and specific registered authorities.
 
-The complete 28-roadmap correlation and role classification is maintained in [`docs/projects/ROADMAP_REGISTRY.md`](../projects/ROADMAP_REGISTRY.md).
+The withdrawn Roadmap Registry policy surface is not current. Folder-to-PVC ownership is defined only in [`docs/projects/README.md`](../projects/README.md) and [`docs/projects/PROJECT_VALUE_CHAIN.md`](../projects/PROJECT_VALUE_CHAIN.md).
 
 ## Canonical project execution roadmaps
 
@@ -41,6 +41,7 @@ The project-roadmap status label is not automatically `ACTIVE`. Proposed or bloc
 | [`docs/architecture/ROADMAP.md`](../architecture/ROADMAP.md) | `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS` — current DevelopmentChain status authority |
 | [`docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md`](./SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md) | `SC-MD-SPT-0001` — bounded technical financial value-chain authority |
 | [`docs/projects/PROJECT_VALUE_CHAIN.md`](../projects/PROJECT_VALUE_CHAIN.md) | organizational PVC ownership/routing model |
+| [`docs/projects/README.md`](../projects/README.md) | canonical folder-to-PVC mapping |
 | [`docs/governance/authority-registry.json`](../governance/authority-registry.json) | stable Authority identities/lifecycle |
 | [`docs/governance/control-catalog.json`](../governance/control-catalog.json) | canonical machine-readable control catalog |
 | [`docs/adr/registry.json`](../adr/registry.json) | ADR lifecycle/identity registry |
@@ -73,11 +74,11 @@ The following are retained as bounded detail, coordination or evidence sources. 
 For a new work item:
 
 1. read `/AGENTS.md` and applicable current Authorities;
-2. resolve the target project using `docs/projects/PROJECT_VALUE_CHAIN.md` / project routing;
+2. resolve the target project using `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`;
 3. read the target `docs/projects/<project>/ROADMAP.md` for organizational execution status;
 4. read any detail/technical roadmap required by that work item;
 5. use this file only for navigation and cross-project orientation.
 
 ## Update rule
 
-When a project changes status, update the owning project roadmap only. Update this portfolio index only when project routing, roadmap-role classification or navigation changes. Do not duplicate fast-changing work-package status here.
+When a project changes status, update the owning project roadmap only. Update this portfolio index only when project routing or navigation changes. Do not duplicate fast-changing work-package status here.

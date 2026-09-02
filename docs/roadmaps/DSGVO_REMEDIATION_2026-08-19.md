@@ -2,7 +2,7 @@
 
 **Portfolio role:** `HISTORICAL_REMEDIATION_WITH_RESIDUALS`  
 **Project execution/status source:** `docs/projects/compliance/ROADMAP.md` plus the roadmap of each affected Primary Owner  
-**Roadmap registry:** `docs/projects/ROADMAP_REGISTRY.md`  
+**Folder-to-PVC mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`  
 **Baseline:** `main` @ `345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`  
 **Branch:** `agent/dsgvo-remediation-controller-rights`  
 **Owner/Controller:** Sven Michael Kulessa, von Lepel Straße 3a, 27259 Freistatt, Deutschland  

@@ -1,7 +1,7 @@
 # CAPITAL-AI-OPS Cross-Project Dependencies
 
 **Project:** `CAPITAL-AI-OPS`  
-**Contract:** `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`
+**Owner mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`
 
 ## Inbound — Governance
 
@@ -102,4 +102,4 @@ OPS records the dependency and does not absorb the implementation merely because
 
 ## R2-11 boundary
 
-`S1-R2-11` is currently `CAPITAL-AI-DATA / PVC-10` primary work. OPS must not implement it unless a separate handoff identifies concrete OPS-owned PR/trace tooling code. Until then it remains an external dependency only.
+`S1-R2-11` is currently `CAPITAL-AI-DATA / PVC-10` primary work. OPS must not implement it unless a separate owner mapping identifies concrete OPS-owned PR/trace tooling code. Until then it remains an external dependency only.

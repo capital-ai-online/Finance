@@ -9,7 +9,7 @@ Project stage: `PVC-01 — Agent Client`
 | Requirement | Authority/source | CAPITAL-AI-CLIENT projection |
 |---|---|---|
 | Trust root | `AGENTS.md` | repository lifecycle and Human Owner merge remain controlling |
-| project ownership | `docs/projects/README.md`, project README | PVC-01 owned by CAPITAL-AI-CLIENT |
+| project ownership | `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md` | PVC-01 owned by CAPITAL-AI-CLIENT |
 | AI Client position | AI Agent target architecture | PVC-01 owns client request/response edge |
 | Human↔Client boundary | AI Agent trust boundary TB1 | OWNED |
 | Client↔Control boundary | TB2 | SHARED; client side only |
@@ -19,7 +19,7 @@ Project stage: `PVC-01 — Agent Client`
 | provider neutrality | provider-profile/ESS-0019 | metadata only; no elevation |
 | protected mutation separation | DevelopmentChain + Human Owner governance | no direct client mutation path |
 | ADR-0104 scoped session | ADR-0104 v1.3 / S1 | standing scoped execution/PR-create authority for this exact chat/project only; never merge authority |
-| cross-project routing | `CROSS_PROJECT_HANDOFF_CONTRACT.md` | foreign implementation stops and is referred |
+| folder-to-PVC routing | `docs/projects/README.md` | foreign implementation is not executed locally |
 
 ## Workstream traceability
 

@@ -18,10 +18,14 @@ Deliverables:
 - one Primary Project Owner per PVC stage;
 - cross-cutting projects excluded from productive PVC ownership unless separately authorized;
 - DevelopmentChain separated from project ownership and technical runtime;
-- cross-project compatibility marker retained while structured `project_stage: PVC-NN` removes ambiguity;
 - no current technical `SC-MD-SPT-0001` stage renumbered by P1.
 
 Current maintenance extends P1 only by resolving missing organizational project-folder identities; it does not create new Authority or relocate runtime/domain artifacts.
+
+Canonical remaining connection surface:
+
+- `docs/projects/README.md`
+- `docs/projects/PROJECT_VALUE_CHAIN.md`
 
 ## P2 — DevelopmentChain Integration
 
@@ -29,27 +33,23 @@ Current maintenance extends P1 only by resolving missing organizational project-
 
 Target project: `CAPITAL-AI-OPS`.
 
-GOV defines the lifecycle and ownership contract in `../PROJECT_EXECUTION_MODEL.md`. `docs/projects/operations/` is present on main and binds the recurring DevelopmentChain lifecycle to OPS organizational execution without replacing existing DevelopmentChain, CI, release, production or Human approval authorities.
+`docs/projects/operations/` is present on main and binds the recurring DevelopmentChain lifecycle to OPS organizational execution without replacing existing DevelopmentChain, CI, release, production or Human approval authorities. Post-PVC execution-model and P2 handoff contracts are withdrawn.
 
 Historical M0-M10 artifacts remain discoverable. M10 remains `SUSPENDED / OFF`. Technical/security remediation in OPS remains owner-scoped and is not completed by GOV.
 
-Handoff: `P2_DEVELOPMENT_CHAIN_HANDOFF.md` plus current `CROSS_PROJECT_HANDOFFS.md` return evidence.
-
 ## P3 — Financial VC Namespace Migration
 
-**State:** `ASSESSED / CROSS_PROJECT DECISION REQUIRED`
+**State:** `ASSESSED / OWNER DECISION REQUIRED`
 
 Current `SC-MD-SPT-0001` remains active with technical financial `VC-01..VC-18`. Recommended target, only if all affected owners approve a coordinated migration: `FVC-01..FVC-18` for the financial technical chain while `PVC-*` remains project ownership/routing.
 
-GOV does not perform foreign technical migration. DATA, FINTECH, DOC, QM and OPS are explicit dependencies/owners.
-
-Assessment: `P3_FVC_NAMESPACE_ASSESSMENT.md`.
+GOV does not perform foreign technical migration. DATA, FINTECH, DOC, QM and OPS are explicit dependencies/owners. The former P3 assessment contract is withdrawn; folder-to-PVC ownership remains in `docs/projects/PROJECT_VALUE_CHAIN.md`.
 
 ## P4 — Governance execution backlog consolidation
 
 **State:** `MERGED VIA PR #630 / MAINTENANCE`
 
-The project-chat and terminal GOV branch consolidation is represented in `TASK_REGISTER.md`. Completed tasks remain traceable; pending local tasks are explicit; foreign work is converted to handoffs. Historical branches are reuse evidence only and are not independent merge sources.
+The project-chat and terminal GOV branch consolidation is represented in `TASK_REGISTER.md`. Completed tasks remain traceable; pending local tasks are explicit. Historical branches are reuse evidence only and are not independent merge sources.
 
 PR #630 established the Owner-directed branch naming convention, consolidated project/PVC artifacts and the Admin Panel handoffs. New work uses one fresh scoped branch and one current claim rather than reopening historical GOV writers.
 
@@ -67,10 +67,10 @@ Required constraints:
 - no second Security, Governance or IAM authority surface;
 - missing/conflicting authority or evidence remains fail-closed;
 - no agent self-approves Accepted Risk or Security VERIFIED/CLOSED;
-- any foreign PVC remediation is handed off rather than implemented by GOV;
+- any foreign PVC remediation is not implemented by GOV;
 - Human/CODEOWNER merge and existing production mutation gates remain unchanged.
 
-Inbound handoff artifact: `SECURITY_HANDOFF_CAPITAL_AI_SEC.md`.
+Inbound artifact: `SECURITY_HANDOFF_CAPITAL_AI_SEC.md`.
 
 Exit gate for this roadmap item: GOV may report `IMPLEMENTED` or `EVIDENCE_READY` only after exact-candidate positive/negative evidence is assembled; Security `VERIFIED/CLOSED` remains exclusively an independent CAPITAL-AI-SEC decision.
 
@@ -105,7 +105,7 @@ Exit gate for P6:
 3. cross-cutting targets remain without productive PVC ownership;
 4. all target-owner project surfaces are materialized on main;
 5. stale merged owner claims are terminalized before overlapping follow-up work;
-6. owner-side handoff references are normalized where still required.
+6. owner-side references point only to living folder-PVC mapping files.
 
 ## P7 — User-Lifecycle Simulation orchestration
 
@@ -138,7 +138,7 @@ Current downstream correlation:
 - PR #676 merged the stable decision projection at `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`;
 - the fulfilled PR #676 decision writer reached its Human-merge release condition and is terminalized by the bounded post-merge closure candidate;
 - `GOV-CHAT-038`, `GOV-CHAT-039` and `GOV-CHAT-050` are substantive `DONE_MAIN` work because the decisions and PR #675 writer release were merged via PR #676;
-- the OPS writer blocker is released; `PR-OPS-ULS-HARNESS` / `GOV-CHAT-040` is the next productive owner handoff to `CAPITAL-AI-OPS`, target folder `docs/projects/operations/`, primary stage `PVC-02` and secondary provider/runtime evidence stage `PVC-08`;
+- the OPS writer blocker is released; `PR-OPS-ULS-HARNESS` / `GOV-CHAT-040` is the next productive owner item for `CAPITAL-AI-OPS`, target folder `docs/projects/operations/`, primary stage `PVC-02` and secondary provider/runtime evidence stage `PVC-08`;
 - FE project and authority writers are released; the two Owner decisions are merged, so FE remains blocked only by the stable OPS test contract;
 - the COMP project writer is released; COMP remains sequenced after OPS/FE evidence and its independent applicability/classification review;
 - SEC verification starts only after OPS/FE evidence is available;
@@ -155,7 +155,7 @@ P7 decision result and next gate:
 3. PR #675 merged the owner-sequence recorrelation;
 4. PR #676 merged `GOV-ULS-DEC-001 = 248 EUR` and `GOV-ULS-DEC-002 = local + global logout, local default`;
 5. the bounded post-merge closure releases the fulfilled PR #676 writer and replaces stale candidate/pending-merge projections with exact merge evidence;
-6. `CAPITAL-AI-OPS / PVC-02` is now the next productive owner handoff for lifecycle harness/provider tests; GOV does not implement that foreign scope;
+6. `CAPITAL-AI-OPS / PVC-02` is now the next productive owner item for lifecycle harness/provider tests; GOV does not implement that foreign scope;
 7. every future PR still requires current-main recorrelation and exact Base/Head Human/Owner approval.
 
 ## Dependency order
@@ -170,14 +170,14 @@ P7 User-Lifecycle bootstrap merged through PR #656
   -> owner sequence recorrelation merged through PR #675
   -> GOV-ULS-DEC-001 and GOV-ULS-DEC-002 merged through PR #676
   -> PR #676 decision writer post-merge closure
-  -> OPS lifecycle harness through owner-scoped CAPITAL-AI-OPS / PVC-02 handoff
+  -> OPS lifecycle harness through owner-scoped CAPITAL-AI-OPS / PVC-02 work
   -> FE lifecycle projection after stable OPS contract
   -> SEC independent assurance and COMP consumer assessment after their gates
   -> GOV closeout over merged owner SHAs/evidence
 
 P2 OPS DevelopmentChain project integration is materialized; target-local remediation continues independently.
 P3 coordinated FVC decision/migration remains separate and only proceeds if approved.
-P4 task register continuously tracks local GOV follow-up and foreign handoff evidence.
+P4 task register continuously tracks local GOV follow-up.
 P5 consumes the Security PR #631 finding for PVC-05 without transferring Security verification authority.
 ```
 
@@ -189,7 +189,7 @@ The GOV consolidation and follow-up projection are complete when:
 - stale merged/superseded claims are terminalized or explicitly routed to their owners before overlapping work;
 - P1 remains the canonical PVC project model;
 - every known implemented CAPITAL-AI project has a materialized canonical project surface or an explicitly resolved owner-migration target;
-- P2/P3/Admin Panel and foreign work are explicitly handed off and never falsely marked complete;
-- the Security handoff for PVC-05 is recorded without shifting Security verification or Accepted Risk authority;
+- P2/P3/Admin Panel and foreign work are never falsely marked complete;
+- the Security item for PVC-05 is recorded without shifting Security verification or Accepted Risk authority;
 - P7 reaches `EVIDENCE_READY_FOR_HUMAN_CLOSEOUT` only after independent owner returns are correlated;
 - no parallel Governance, Security, IAM, runtime, scoring, data, release, Frontend, SEO or EventMesh architecture is introduced.

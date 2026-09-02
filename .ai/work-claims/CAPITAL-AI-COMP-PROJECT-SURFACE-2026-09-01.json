@@ -3,13 +3,19 @@
   "claimId": "CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01",
   "status": "released",
   "exclusive": false,
+  "lifecycle": "archived",
+  "activeWriter": false,
+  "authorizing": false,
+  "archivedAt": "2026-09-02T05:25:00Z",
+  "archiveId": "ARCH-GOV-POST-PVC-FOLDER-MAPPING-2026-09-02",
+  "archivePath": "docs/archive/evidence/post-pvc-folder-mapping/ARCHIVE_MANIFEST.json",
+  "archiveReason": "Owner direction 2026-09-02: post-PVC folder-mapping evidence and work-claim overlay deactivated; only folder-PVC mapping remains current.",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
   "workItem": "Materialize the canonical non-authorizing CAPITAL-AI-COMP project navigation under docs/projects/compliance while preserving existing compliance roadmap, inventories, mappings, traceability and foreign implementation boundaries.",
-  "workItemDE": "Die kanonische non-authorizing CAPITAL-AI-COMP-Projektnavigation unter docs/projects/compliance materialisieren und bestehende Compliance-Roadmap-, Inventar-, Mapping-, Traceability- und Fremdimplementierungsgrenzen erhalten.",
   "startedAt": "2026-09-01T04:18:00+02:00",
   "baseBranch": "main",
   "baseSha": "88286e1cfd58b314a818276b5cf61b2ff0b4128d",
@@ -18,44 +24,12 @@
   "branch": "agent/compliance-project-surface-20260901",
   "project": "CAPITAL-AI-COMP",
   "projectFolder": "compliance",
-  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
-  "ownerRole": "Cross-cutting compliance applicability, requirement mapping, assessment, findings, evidence, regulatory traceability and Legal Review handoff; primary productive PVC ownership none",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01.json",
     "docs/projects/compliance/README.md",
     "docs/projects/compliance/ROADMAP.md"
   ],
-  "reuseInputs": [
-    "docs/compliance/CAPITAL-AI-COMP/README.md",
-    "docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md",
-    "docs/compliance/CAPITAL-AI-COMP/inventory/**",
-    "docs/compliance/CAPITAL-AI-COMP/mappings/**",
-    "docs/compliance/CAPITAL-AI-COMP/traceability/**",
-    "docs/compliance/CAPITAL-AI-COMP/work-packages/**"
-  ],
-  "correlationInputs": [
-    "main@88286e1cfd58b314a818276b5cf61b2ff0b4128d",
-    "docs/projects/README.md",
-    "docs/projects/PROJECT_VALUE_CHAIN.md",
-    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md"
-  ],
-  "foreignWork": [
-    "Primary Owner projects implement technical or organizational remediation for applicable PVC stages",
-    "CAPITAL-AI-GOV owns repository authority/control lifecycle",
-    "Human/Legal Owner retains legal applicability and accepted-risk decisions where required"
-  ],
-  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-COMP gains no productive PVC stage. docs/projects/compliance is organizational navigation only and does not replace the existing compliance domain, Governance Control Plane, Security, Quality Management, Data, Frontend, Release or Legal authority boundaries. Shared Governance project-registry paths remain outside this claim.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only.",
-  "releaseReason": "merged",
-  "releasedAt": "2026-09-01T03:54:03Z",
-  "mainCommit": "85d821a58851d769fde9c95558c03d9e5608efd7",
-  "terminalHeadSha": "d573241f1bd1154e5b3cd6431d54d1e9fd53d57f",
-  "releaseEvidence": {
-    "pullRequest": 652,
-    "merged": true,
-    "mergeCommitSha": "85d821a58851d769fde9c95558c03d9e5608efd7",
-    "mainContainsImplementation": true,
-    "verifiedMainSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
-    "verifiedAt": "2026-09-01"
-  }
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment.",
+  "releaseReason": "merged-then-archived-2026-09-02",
+  "releasedAt": "2026-09-01T03:54:03Z"
 }

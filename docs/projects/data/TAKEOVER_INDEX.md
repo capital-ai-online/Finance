@@ -5,7 +5,7 @@ This is the single mapping table between current-state/runtime/roadmap sources a
 | Source | Source item / context | Classification | DATA portion | DATA-ID | Source state |
 |---|---|---|---|---|---|
 | `docs/projects/PROJECT_VALUE_CHAIN.md` | Canonical project-routing ownership | PROJECT_ROUTING_REFERENCE | `PVC-09..11` DATA ownership and `PVC-11 -> PVC-12` handoff | DATA-0 / DATA-09..11 | AUTHORITY_REFERENCE |
-| `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md` | Cross-project routing contract | PROJECT_ROUTING_REFERENCE | Required markers, target-folder/Primary-Owner fields and status semantics | DATA-0 / DATA-16 | AUTHORITY_REFERENCE |
+| `docs/projects/README.md` | Canonical folder-to-PVC mapping | PROJECT_ROUTING_REFERENCE | Project folder, Primary Owner and PVC unit | DATA-0 / DATA-16 | AUTHORITY_REFERENCE |
 | `docs/projects/fintech/ROADMAP.md` | Current FINTECH project surface merged through PR #635 | DOWNSTREAM_PROJECT_REFERENCE | Canonical target for `PVC-11 -> PVC-12`; Feature Engineering/Scoring/Ranking remain downstream | DATA-0 / DATA-11 / DATA-16 | CORRELATED_DOWNSTREAM |
 | `docs/projects/quality-management/ROADMAP.md` | Current QM project surface merged through PR #636 | CROSS_PROJECT_QM_REFERENCE | Independent read-only DATA assessment; no productive DATA ownership or hot-path dependency | DATA-0 / DATA-15 / DATA-16 | CORRELATED_ASSESSMENT |
 | `docs/projects/operations/ROADMAP.md` | Current OPS project surface merged through PR #632 | CROSS_PROJECT_OPS_REFERENCE | PR/trace/DevelopmentChain tooling and EventMesh/Traceability remain OPS-owned | DATA-0 / DATA-16 | CORRELATED_DEPENDENCY |
@@ -39,7 +39,7 @@ This is the single mapping table between current-state/runtime/roadmap sources a
 
 The codebase already has a strong canonical nucleus (`UniversalAssetAdapter`, UAI contract semantics, `MarketDataGateway`, provider contracts/matrix, `DataQualityService`, `evidenceQualityContracts`) but still contains split capability paths, compatibility ingestion and mixed ownership artifacts.
 
-Current main supplies the explicit PVC routing model plus canonical FINTECH, OPS and QM project surfaces. DATA can therefore own `PVC-09..11`, route downstream/foreign work to existing owners, and preserve technical financial `VC-*` unchanged. The CAPITAL-AI-DOC target folder remains unresolved on current main and is kept fail-closed as `REQUIRES_CORRELATION`.
+Current main supplies the explicit PVC routing model plus canonical FINTECH, OPS and QM project surfaces. DATA can therefore own `PVC-09..11`, route downstream/foreign work to existing owners, and preserve technical financial `VC-*` unchanged.
 
 ## Security dependency rule
 

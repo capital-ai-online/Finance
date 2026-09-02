@@ -14,10 +14,10 @@ Represent the complete CAPITAL-AI project/delivery process chain and its depende
 The visualization should consume/reference:
 
 - `docs/projects/PROJECT_VALUE_CHAIN.md` for project ownership/routing;
-- `docs/projects/PROJECT_EXECUTION_MODEL.md` for DevelopmentChain lifecycle;
+- `docs/projects/README.md` for canonical folder-to-PVC mapping;
 - current Authority/Control/ADR/ESS references where a node displays a decision/gate;
 - approved read-only operational/traceability state for live status;
-- cross-project handoff state where dependencies cross ownership boundaries.
+- existing project-folder dependencies where work crosses ownership boundaries.
 
 ## Required visual model
 
@@ -30,7 +30,6 @@ At minimum, distinguish:
 - evidence/validation gates;
 - Human/Owner decision gates;
 - current state / blocked state / waiting-for-evidence state;
-- cross-project handoff edges;
 - historical/non-authorizing evidence from active control/decision authority.
 
 ## Tooling evaluation before custom build
@@ -55,11 +54,9 @@ The chosen tool is an implementation detail of the CLIENT project and does not b
 - No synthetic process completion, fake evidence or demo state may be presented as real operational evidence.
 - Frontend architecture remains subordinate to `docs/frontend/FRONTEND_ARCH.md`.
 
-## Handoffs
+## Ownership routing
 
-`[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-CLIENT | VC-01]` — implement accessible graph/UI and interaction.
-
-`[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-OPS | VC-18]` — provide/define approved read-only operational/traceability state mapping where live state is required.
+Client graph/UI work belongs to `CAPITAL-AI-CLIENT` / `PVC-01`. Approved read-only operational/traceability state mapping belongs to `CAPITAL-AI-OPS` / `PVC-18`. Ownership is resolved only from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`.
 
 ## Exit gate
 
@@ -70,4 +67,4 @@ CLIENT and OPS return a fresh-main implementation/evidence package showing:
 - no duplicated approval authority;
 - frontend architecture compliance;
 - relevant tests/accessibility checks;
-- Governance semantic review against PVC/DevelopmentChain/current controls.
+- Governance semantic review against PVC mapping and current controls.

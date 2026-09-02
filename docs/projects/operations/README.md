@@ -12,7 +12,7 @@
 
 `docs/projects/operations/` is the canonical organizational execution surface for CAPITAL-AI-OPS. It owns planning, coordination and evidence for the OPS-owned Project Value Chain stages without relocating or duplicating valid runtime components.
 
-This project surface implements the target organization defined by `docs/projects/PROJECT_EXECUTION_MODEL.md` and consumes the Governance handoff in `docs/projects/governance/P2_DEVELOPMENT_CHAIN_HANDOFF.md`.
+Folder-to-PVC ownership is defined only by `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`.
 
 ## Authority boundary
 
@@ -37,7 +37,7 @@ CAPITAL-AI-OPS owns execution, not repository-wide Governance authority.
 | `DEVELOPMENT_CHAIN.md` | DC lifecycle integration and execution ownership |
 | `PVC_OWNERSHIP.md` | exact PVC ownership and boundaries |
 | `WORK_PACKAGES.md` | bounded OPS backlog |
-| `CROSS_PROJECT_DEPENDENCIES.md` | inbound/outbound project handoffs |
+| `CROSS_PROJECT_DEPENDENCIES.md` | inbound/outbound project dependencies |
 | `SECURITY_HANDOFFS.md` | CAPITAL-AI-SEC requirements and return contract |
 | `MIGRATION_MATRIX.md` | previous OPS projection → canonical project surface mapping |
 | `runbooks/` | references to existing operational procedures; no duplicate runbook authority |
@@ -73,4 +73,4 @@ Security owns the findings, threat/control definitions, negative-test expectatio
 
 ## Foreign work rule
 
-Any discovered remediation outside OPS-owned productive scope is not implemented here. It is routed with the repository handoff contract and remains `REFERRED_NOT_EXECUTED` until the actual Primary Owner acts.
+Any discovered remediation outside OPS-owned productive scope is not implemented here. Ownership is resolved from the folder-to-PVC mapping only.
