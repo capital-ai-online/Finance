@@ -9,36 +9,40 @@ import {
   findMissingRequiredSections,
 } from './prBodySectionContract.mjs';
 
-test('canonical PR template contains every required section', () => {
+test('canonical PR template contains every compact required section', () => {
   const template = fs.readFileSync(
     path.join(process.cwd(), '.github/pull_request_template.md'),
     'utf8',
   );
   assert.deepEqual(findMissingRequiredSections(template), []);
+  assert.equal(REQUIRED_PR_SECTIONS.length, 7);
 });
 
-test('legacy merge-authorization heading remains a narrow compatible alias', () => {
-  const body = REQUIRED_PR_SECTIONS.join('\n\n').replace(
-    '## 8. Merge-Autorisierung (vereinfacht)',
-    '## 8. Merge-Autorisierung',
-  );
+test('previous canonical PR headings remain narrowly compatible for open PRs', () => {
+  const legacyBody = [
+    '## 1. Arbeitsauftrag',
+    '## 4. Umfang / Multi-Agent-Koordination',
+    '## 5. Änderungszusammenfassung',
+    '## 6. Architektur- / Governance-Auswirkungen',
+    '## 9. PR-Checkklasse und auszuführende Checks',
+    '## 12. Prüf- und Merge-Bereitschaft',
+    '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
+  ].join('\n\n');
 
-  assert.deepEqual(findMissingRequiredSections(body), []);
-  assert.equal(
-    bodyHasRequiredSection(body, '## 8. Merge-Autorisierung (vereinfacht)'),
-    true,
-  );
+  assert.deepEqual(findMissingRequiredSections(legacyBody), []);
+  assert.equal(bodyHasRequiredSection(legacyBody, '## 1. Herkunft'), true);
 
-  const canonicalized = canonicalizeKnownSectionHeadings(body);
-  assert.match(canonicalized, /^## 8\. Merge-Autorisierung \(vereinfacht\)$/m);
-  assert.doesNotMatch(canonicalized, /^## 8\. Merge-Autorisierung$/m);
+  const canonicalized = canonicalizeKnownSectionHeadings(legacyBody);
+  for (const heading of REQUIRED_PR_SECTIONS) {
+    assert.match(canonicalized, new RegExp(`^${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'm'));
+  }
 });
 
 test('similar but non-contract headings are rejected', () => {
   assert.equal(
     bodyHasRequiredSection(
-      '## 8. Merge-Autorisierung erweitert',
-      '## 8. Merge-Autorisierung (vereinfacht)',
+      '## 5. PR-Klasse erweitert',
+      '## 5. PR-Klasse',
     ),
     false,
   );
