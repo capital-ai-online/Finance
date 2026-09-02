@@ -1,8 +1,15 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEO-PROJECT-SURFACE-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
+  "lifecycle": "archived",
+  "activeWriter": false,
+  "authorizing": false,
+  "archivedAt": "2026-09-02T05:25:00Z",
+  "archiveId": "ARCH-GOV-POST-PVC-FOLDER-MAPPING-2026-09-02",
+  "archivePath": "docs/archive/evidence/post-pvc-folder-mapping/ARCHIVE_MANIFEST.json",
+  "archiveReason": "Owner direction 2026-09-02: post-PVC folder-mapping evidence and work-claim overlay deactivated; only folder-PVC mapping remains current.",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -16,35 +23,12 @@
   "branch": "agent/seo-project-surface-20260901",
   "project": "CAPITAL-AI-SEO",
   "projectFolder": "seo",
-  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
-  "ownerRole": "Cross-cutting SEO and Google Marketing execution/project coordination; primary productive PVC ownership none",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-SEO-PROJECT-SURFACE-2026-09-01.json",
     "docs/projects/seo/README.md",
     "docs/projects/seo/ROADMAP.md"
   ],
-  "reuseInputs": [
-    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
-    "docs/seo/SEO_MANAGEMENT_ROADMAP.md",
-    "docs/seo/SEO_CHECKLIST.md",
-    "docs/seo/S1_SEO_ENGINE.md",
-    "docs/seo/S2_PRERENDER.md",
-    "docs/seo/S3_SEO_DASHBOARD.md",
-    "docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md",
-    "docs/governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md"
-  ],
-  "correlationInputs": [
-    "main@88286e1cfd58b314a818276b5cf61b2ff0b4128d",
-    "docs/projects/README.md",
-    "docs/projects/PROJECT_VALUE_CHAIN.md",
-    "docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md"
-  ],
-  "foreignWork": [
-    "CAPITAL-AI-FE owns productive presentation implementation when SEO requires UI/page changes",
-    "CAPITAL-AI-OPS owns production deployment, DNS/TLS and provider operations",
-    "CAPITAL-AI-GOV owns Governance/publishing-control authority",
-    "CAPITAL-AI-COMP owns compliance assessment where marketing obligations apply"
-  ],
-  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SEO gains no productive PVC stage. docs/projects/seo is organizational navigation only and does not replace docs/seo, the consolidated SEO/Google Marketing roadmap, Frontend, Operations, Governance, Compliance or publishing authority. Marketing/SEO automation never inherits infrastructure or publication authority merely from project ownership. Shared Governance project-registry paths remain outside this claim.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment.",
+  "releaseReason": "archived-and-deactivated-by-owner-direction-2026-09-02",
+  "releasedAt": "2026-09-02T05:25:00Z"
 }

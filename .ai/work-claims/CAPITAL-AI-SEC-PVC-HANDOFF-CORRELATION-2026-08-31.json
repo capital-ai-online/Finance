@@ -3,13 +3,19 @@
   "claimId": "CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31",
   "status": "released",
   "exclusive": false,
+  "lifecycle": "archived",
+  "activeWriter": false,
+  "authorizing": false,
+  "archivedAt": "2026-09-02T05:25:00Z",
+  "archiveId": "ARCH-GOV-POST-PVC-FOLDER-MAPPING-2026-09-02",
+  "archivePath": "docs/archive/evidence/post-pvc-folder-mapping/ARCHIVE_MANIFEST.json",
+  "archiveReason": "Owner direction 2026-09-02: post-PVC folder-mapping evidence and work-claim overlay deactivated; only folder-PVC mapping remains current.",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Consolidate CAPITAL-AI-SEC as a cross-cutting Security requirements, findings, testing and verification domain; correlate all open Security handoffs to the canonical PVC Primary Owners without absorbing foreign implementation ownership; preserve existing Security/Governance authorities and fail-closed boundaries.",
-  "workItemDE": "CAPITAL-AI-SEC als querschnittliche Security-Anforderungs-, Findings-, Test- und Verification-Domain konsolidieren; alle offenen Security-Handoffs gegen die kanonischen PVC-Primary-Owner korrelieren, ohne fremde Implementierungsverantwortung zu uebernehmen; bestehende Security-/Governance-Authorities und Fail-Closed-Grenzen erhalten.",
+  "workItem": "Consolidate CAPITAL-AI-SEC as a cross-cutting Security requirements, findings, testing and verification domain; correlate all open Security handoffs to the canonical PVC Primary Owners without absorbing foreign implementation ownership.",
   "startedAt": "2026-08-31T21:12:00+02:00",
   "baseBranch": "main",
   "baseSha": "8e0e4a541da24ce2e28988e31c9a8bb7e5711a25",
@@ -18,8 +24,6 @@
   "branch": "agent/security-pvc-handoff-correlation-20260831",
   "project": "CAPITAL-AI-SEC",
   "projectFolder": "security",
-  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
-  "ownerRole": "Cross-cutting Security; primary PVC ownership none",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31.json",
     "docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md",
@@ -28,24 +32,7 @@
     "docs/evidence/security/CAPITAL_AI_SEC_V2_VALIDATION_2026-08-31.md",
     "src/platform/Security/README.md"
   ],
-  "foreignWork": [
-    "CAPITAL-AI-OPS: S1-R2-03/04/05/06/07/09/10 productive remediation or runtime evidence as routed by PVC-02/04/06/08",
-    "CAPITAL-AI-DATA: S1-R2-11 Evidence Management remediation/evidence at PVC-10",
-    "CAPITAL-AI-GOV: MFA/AAL authority-lifecycle clarification at PVC-05",
-    "CAPITAL-AI-CLIENT/CAPITAL-AI-FINTECH: child remediation only if target-owned code is identified by the entitlement inventory"
-  ],
-  "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. CAPITAL-AI-SEC owns requirements/findings/testing/verification only, no productive PVC stage. Foreign implementation remains target-project work; no self-accepted risk, autonomous production mutation, duplicate Governance Control Plane, EventMesh, data or scoring architecture.",
-  "releaseCondition": "Released when the resulting pull request is merged, closed, superseded or abandoned. Merge remains Human/CODEOWNER-only.",
-  "releaseReason": "merged",
-  "releasedAt": "2026-08-31T19:16:17Z",
-  "mainCommit": "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6",
-  "terminalHeadSha": "b6f40c19910ddec530fb106f1d4c9d5a5f726989",
-  "releaseEvidence": {
-    "pullRequest": 631,
-    "merged": true,
-    "mergeCommitSha": "b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6",
-    "mainContainsImplementation": true,
-    "verifiedMainSha": "4ead0a3982e78ef3f957fd083e88cd5de943eaf4",
-    "verifiedAt": "2026-09-01"
-  }
+  "releaseCondition": "Released when the resulting pull request is merged, closed, superseded or abandoned.",
+  "releaseReason": "merged-then-archived-2026-09-02",
+  "releasedAt": "2026-08-31T19:16:17Z"
 }

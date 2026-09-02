@@ -3,13 +3,19 @@
   "claimId": "CAPITAL-AI-GOV-PVC-CONSISTENCY-CHECK-2026-09-01",
   "status": "released",
   "exclusive": false,
+  "lifecycle": "archived",
+  "activeWriter": false,
+  "authorizing": false,
+  "archivedAt": "2026-09-02T05:25:00Z",
+  "archiveId": "ARCH-GOV-POST-PVC-FOLDER-MAPPING-2026-09-02",
+  "archivePath": "docs/archive/evidence/post-pvc-folder-mapping/ARCHIVE_MANIFEST.json",
+  "archiveReason": "Owner direction 2026-09-02: post-PVC folder-mapping evidence and work-claim overlay deactivated; only folder-PVC mapping remains current.",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
   "workItem": "Implement a read-only automated consistency validator for the canonical Project Value Chain and project-folder routing, reusing existing Governance/CI paths without creating a parallel authority plane.",
-  "workItemDE": "Eine read-only automatisierte Konsistenzprüfung für die kanonische Project Value Chain und die Projektordner-Zuordnung implementieren und dabei bestehende Governance-/CI-Pfade wiederverwenden, ohne eine parallele Authority-Ebene zu erzeugen.",
   "startedAt": "2026-09-01T06:24:00+02:00",
   "baseBranch": "main",
   "baseSha": "3935e08a0289be69683b8af9004fc177a99b04c0",
@@ -26,12 +32,5 @@
   ],
   "releaseCondition": "Release on Human merge, close, supersession or abandonment.",
   "releasedAt": "2026-09-01T17:52:00Z",
-  "releaseReason": "The PVC consistency implementation was already merged through PR #662; the later claim-closure PR #669 was closed unmerged and left this metadata stale. Current main contains the implementation, so this writer is released without asserting that PR #669 merged.",
-  "releaseEvidence": {
-    "implementationPullRequest": 662,
-    "implementationMergeCommit": "57dd3868e06c4ded63371e1347dbd7a64bc0a54a",
-    "closurePullRequest": 669,
-    "closurePullRequestResult": "closed-unmerged",
-    "terminalImplementationHead": "04471f680983ade9622d1ed3e7b54900b051e1c0"
-  }
+  "releaseReason": "The PVC consistency implementation was already merged through PR #662; this claim is now archived and deactivated as post-PVC overlay metadata."
 }
