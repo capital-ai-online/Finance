@@ -14,7 +14,7 @@
   "workItem": "Owner-directed CI cost-control: PR class R keeps required build-and-test context and scoped validation but skips production artifact build steps; main push remains force-full.",
   "startedAt": "2026-09-02T16:28:35Z",
   "baseBranch": "main",
-  "baseSha": "22183e6152ab740cc3668e09142a72e416d1c4e5",
+  "baseSha": "9f061f9d3518ffff121503c0b3c84b138ad1261f",
   "branch": "agent/operations-r-class-no-build-20260902",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-R-CLASS-NO-PR-BUILD-2026-09-02.json",
