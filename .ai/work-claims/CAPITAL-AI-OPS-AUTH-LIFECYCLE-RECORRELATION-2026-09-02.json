@@ -24,10 +24,11 @@
     "scripts/operations/authLifecycleCorrelation.ts",
     "tests/unit/authLifecycleCorrelation.test.ts",
     "docs/projects/operations/evidence/AUTH_LIFECYCLE_RECORRELATION_2026-09-02.md",
-    "docs/projects/operations/work-packages/USER_LIFECYCLE_SIMULATION.md"
+    "docs/projects/operations/work-packages/AUTH_LIFECYCLE_RECORRELATION_2026-09-02.md"
   ],
   "reuseInputs": [
     "scripts/operations/userLifecycleHarness.ts",
+    "docs/projects/operations/work-packages/USER_LIFECYCLE_SIMULATION.md",
     "src/features/public/ui/LoginPage.tsx",
     "src/app/auth/SessionComposition.tsx",
     "src/app/routing/AppRoutes.tsx",
