@@ -1,8 +1,6 @@
 name: Container Security
 
 on:
-  # Required-Check-Vertrag: der Job-Kontext muss auf jedem PR existieren. Der teure Docker/Trivy-
-  # Pfad wird unten jedoch nur fuer containerrelevante Diffs ausgefuehrt.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
@@ -26,6 +24,7 @@ concurrency:
 
 env:
   SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  TRIVY_VERSION: v0.74.0
 
 jobs:
   image-security:
@@ -77,10 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$SOURCE_SHA" = "$(git rev-parse HEAD)"
-          docker build \
-            --build-arg RELEASE_SOURCE_COMMIT="$SOURCE_SHA" \
-            --tag "capital-ai-security:$SOURCE_SHA" \
-            .
+          docker build --build-arg RELEASE_SOURCE_COMMIT="$SOURCE_SHA" --tag "capital-ai-security:$SOURCE_SHA" .
 
       - name: Runtime-Metadaten und Angriffsfläche fail-closed prüfen
         if: steps.scope.outputs.required == 'true'
@@ -104,16 +100,7 @@ jobs:
             test ! -e /app/node_modules/@tailwindcss
             test ! -e /app/node_modules/tailwindcss
             grep -Fq VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_BUNDLE /app/dist/server.cjs
-            for path in \
-              /usr/local/lib/node_modules/npm \
-              /usr/local/lib/node_modules/corepack \
-              /usr/local/bin/npm \
-              /usr/local/bin/npx \
-              /usr/local/bin/corepack \
-              /usr/local/bin/yarn \
-              /usr/local/bin/yarnpkg \
-              /usr/local/bin/pnpm \
-              /usr/local/bin/pnpx; do
+            for path in /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm /usr/local/bin/pnpx; do
               test ! -e "$path"
               test ! -L "$path"
             done
@@ -151,15 +138,29 @@ jobs:
         if: steps.scope.outputs.required == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          version: ${{ env.TRIVY_VERSION }}
           image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
           format: cyclonedx
           output: artifacts/container-security/runtime-image-sbom.cdx.json
           vuln-type: 'os,library'
 
+      - name: Gepinnte Trivy-CLI-Version fail-closed verifizieren
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(trivy --version | sed -n 's/^Version: //p' | head -n 1)"
+          expected="${TRIVY_VERSION#v}"
+          test -n "$actual"
+          test "$actual" = "$expected"
+          printf 'Verified Trivy CLI %s\n' "$actual"
+
       - name: Fixbare HIGH/CRITICAL Schwachstellen im finalen Image blockieren
         if: steps.scope.outputs.required == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          version: ${{ env.TRIVY_VERSION }}
+          skip-setup-trivy: 'true'
           image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
           format: table
           exit-code: '1'
