@@ -3,7 +3,7 @@
 **Project:** `CAPITAL-AI-GOV`  
 **Project folder:** `governance`  
 **Primary PVC:** `PVC-05 — Platform Director`  
-**Baseline:** `main@0a7aa85f25fa224c3f2422ed99f60be6ca45630f`  
+**Baseline:** `main@2b9aebf854939f6eedadfb8e16632ee48833ae36`  
 **Branch:** `agent/governance-deep-research-evidence-contract-20260902`  
 **Stable authority:** `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE`  
 **ESS:** `ESS-0019`  
@@ -60,7 +60,7 @@ The candidate updates:
 
 - `.ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md` → `1.2.0`;
 - `.ai/registry/ess-registry.json` → Registry `1.6.0`, ESS-0019 `1.2.0`;
-- `docs/governance/authority-registry.json` → same stable `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE`, ESS-0019 `1.2.0`;
+- `docs/governance/authority-registry.json` → Registry `1.47.0`, retaining the Human Owner Device Authorization Stage-D cutover authority and resolving the same stable `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE` to ESS-0019 `1.2.0`;
 - `docs/architecture/ROADMAP.md` → current-state index `2.7.0` with explicit candidate/effective-after-merge semantics.
 
 `CTRL-GOV-AGENT-PLANE-001` already references `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE` and the ESS-0019 document without hard-coding a semantic version. No new control identity is necessary at DR-02A. A later machine-enforced runtime control may be justified only when DR-03/DR-04 exposes a deterministic execution gate.
@@ -112,7 +112,8 @@ Pre-PR validation should confirm at minimum:
 
 - ESS-0019 file, ESS Registry and Authority Registry all resolve `1.2.0` under the same stable authority identity;
 - ESS number `0019` remains unique;
-- no new `AUTH-*`, `CTRL-*` or ADR identity was introduced;
+- no new DR-02A `AUTH-*`, `CTRL-*` or ADR identity was introduced;
+- the already-Human-merged `AUTH-GOV-OWNER-DEVICE-AUTHORIZATION-CUTOVER` remains preserved;
 - current-state index uses effective-after-Human-Merge wording for the candidate;
 - remote skill loading remains explicitly unauthorized;
 - DR-01 structured evidence projection remains subordinate to ESS-0019 and `/AGENTS.md`;
