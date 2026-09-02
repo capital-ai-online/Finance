@@ -30,7 +30,7 @@ The project surface references existing sources instead of duplicating them:
 - `../../seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md` — Search Console verification runbook.
 - [Marketing Agent execution policy](../../governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md) — Governance boundary for marketing automation.
 - [Project Value Chain](../PROJECT_VALUE_CHAIN.md) — canonical `PVC-01..PVC-18` Primary Owners.
-- [Cross-Project Handoff Contract](../CROSS_PROJECT_HANDOFF_CONTRACT.md) — repository handoff and `PVC-*` routing contract.
+- [Project folder mapping](../README.md) — canonical folder-to-PVC connection.
 
 ## Ownership boundary
 
