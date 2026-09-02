@@ -14,7 +14,7 @@
   "workItem": "OPS-04-SEC-04 / S1-R2-04: fatal process handling with immediate readiness denial, bounded shutdown delegation and non-zero supervisor exit evidence.",
   "startedAt": "2026-09-02T07:18:06Z",
   "baseBranch": "main",
-  "baseSha": "643cac29e1cc84b97a4d3ec29b71d1391d0c5dde",
+  "baseSha": "22183e6152ab740cc3668e09142a72e416d1c4e5",
   "branch": "agent/operations-fatal-process-handling-20260902",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-FATAL-PROCESS-HANDLING-2026-09-02.json",

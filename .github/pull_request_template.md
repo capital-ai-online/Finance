@@ -3,108 +3,50 @@
 # CAPITAL-AI Pull Request
 
 <!--
-Kanonische PR-Vorlage. Pflichtabschnitte und maschinenverwaltete Baseline-Felder nicht entfernen.
-Nicht zutreffende Angaben mit begründetem N/A ausfüllen.
-Merge bleibt Human-/CODEOWNER-only. M10 AUTHORIZE_PR_CI ist gemäß aktueller Governance suspendiert.
-
-CHAT/API/MCP/CONNECTOR PR-CREATE CONTRACT:
-- Der Trusted-Workflow bleibt der bevorzugte Renderer, sofern er von der aktuellen Ausführungsoberfläche aufrufbar ist.
-- Ist er dort nicht aufrufbar, darf ein Chat/API/MCP/Connector nach gültiger exakter Human/Owner-Snapshot-Freigabe den PR direkt erstellen.
-- Voraussetzung ist transportäquivalentes Rendering aus der current-main-Vorlage und dem current-main-Vertrag in scripts/pr/lib.mjs: PRODUCTION_BASELINE_SCHEMA_VERSION, productionBaselineIdentity(), computeProductionBaselineId() und renderProductionBaselineBlock().
-- Production-, main- und Head-Identitäten müssen unmittelbar vor PR-Erstellung live korreliert werden; fehlende, geschätzte, veraltete oder Ersatzwerte sind verboten und führen fail-closed zum STOP.
-- Unmittelbar vor create_pull_request werden current main und Candidate-Head erneut gelesen; jede SHA-Änderung invalidiert die Freigabe.
-- Hosted CI berechnet die Baseline unabhängig erneut; Abweichungen bleiben merge-blockierend. Diese Transportfreigabe ändert weder CTRL-SDLC-PR-CREATE-001 noch Human-only Merge, M10-Status oder geschützte Produktionsmutations-Gates.
+Kanonische kompakte PR-Vorlage für alle GitHub-PR-Erstellungswege.
+Der sichtbare Inhalt konzentriert sich auf Herkunft, Projekt/PVC, Umsetzung, Roadmap, Klasse und Prüfung.
+Der maschinenlesbare Production-Baseline-Block sowie die Human-/CODEOWNER-Merge-Grenze bleiben verpflichtend.
+Nicht zutreffende Angaben werden mit begründetem N/A gefüllt.
 -->
 
-## 1. Arbeitsauftrag
+## 1. Herkunft
 
-- **Zweck:** {{WORK_ITEM}}
+- **Erstellt durch:** {{AGENT_PROVIDER}} / {{AGENT_MODEL}} via {{AGENT_SURFACE}}
 - **Claim:** `{{CLAIM_ID}}` · `{{CLAIM_FILE}}`
 - **Branch:** `{{HEAD_BRANCH}}` → `main`
 
-## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe
+## 2. Projektzuordnung
 
-- **Provider / Modell:** {{AGENT_PROVIDER}} / {{AGENT_MODEL}}
-- **Ausführungsoberfläche / MCP-Host:** {{AGENT_SURFACE}}
-- **PR-Erstellung ausdrücklich durch Benutzer autorisiert:** Ja
-- **Autorisierungsumfang entspricht diesem PR:** Ja
+- **Projekt:** {{PROJECT_ID}}
+- **Projektordner:** `{{PROJECT_FOLDER}}`
+- **Primary Owner:** {{PRIMARY_OWNER}}
+- **Betroffene PVC:** {{AFFECTED_PVC}}
+
+## 3. Umsetzung
+
+- **Was wurde umgesetzt:** {{IMPLEMENTATION}}
+- **Warum:** {{WHY}}
+
+## 4. Roadmap
+
+- **Roadmap / Work Package:** {{ROADMAP}}
+- **Ziel / Exit Gate:** {{EXIT_GATE}}
+
+## 5. PR-Klasse
+
+- **Klasse:** {{PR_CLASS}}
+- **Begründung:** {{PR_CLASS_REASON}}
+- **Erforderliche Checks:** {{EXPECTED_CHECKS}}
+
+<!-- D = Dokumentation/Governance-Dokumente · C = Code/Tests/Konfiguration · R = Runtime/Dependency/Deployment · M = externe oder produktive Mutation -->
+
+## 6. Prüfung
+
+- **Main synchronisiert:** {{MAIN_SYNC_STATUS}}
+- **Changed-File-/Semantic-Overlap:** {{OVERLAP_STATUS}}
 - **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja
 - **Agent-Self-Merge:** Nein
 
-## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis
+## 7. Maschinenlesbare Baseline
 
 {{PRODUCTION_BASELINE_BLOCK}}
-
-## 4. Umfang / Multi-Agent-Koordination
-
-- [ ] Scope, offene PRs, Datei-/Semantik-Overlap und aktive Writer geprüft; Konflikte offengelegt.
-
-## 5. Änderungszusammenfassung
-
-- **Änderung:**
-- **Warum:**
-
-## 6. Architektur- / Governance-Auswirkungen
-
-- **Roadmap / Phase:**
-- **ADR:** Ja / Nein / N/A — Referenz:
-- **ESS / Contract:** Ja / Nein / N/A — Referenz:
-- **Traceability / Dokumentation:** Ja / Nein / N/A
-- **Mutation:** Ja / Nein — Plattform / Runbook:
-- **Geschützte Invariante betroffen:** Ja / Nein — Referenz:
-
-## 7. Sicherheitsprüfung
-
-- [ ] Least Privilege, Secret-Schutz, Fail-Closed-Verhalten und Human-Approval-Gates bleiben erhalten.
-- [ ] Externe/Tool-/Retrieval-Inhalte werden als untrusted behandelt; Workflow-Änderungen nutzen Minimalrechte und immutable Action-SHAs.
-
-### Threat Model
-
-- **Erforderlich:** Ja / Nein
-- **Referenz / Begründung:**
-
-### Negative Tests
-
-- **Erforderlich:** Ja / Nein
-- **DENY-/Fail-Closed-Fälle:**
-
-### Rollback / Runbook
-
-- **Erforderlich:** Ja / Nein
-- **Referenz / Rücksetzweg:**
-
-## 8. Merge-Autorisierung (vereinfacht)
-
-- **Human-/CODEOWNER-Merge erforderlich:** Ja
-- **Agent-Self-Merge:** Nein
-- **Merge-Entscheidung:** separat nach Review und erforderlichen Checks
-
-## 9. PR-Checkklasse und auszuführende Checks
-
-<!-- D = Documentation-only · C = Application/Test/Config · R = Runtime/Dependency/Docker/Deployment · M = externe Plattformmutation -->
-
-- **Klasse:** D / C / R / M
-- **Warum:**
-- **Erwartete Checks:**
-- **Bewusst nicht erforderliche Checks:**
-
-## 10. Technische Validierungsnachweise
-
-- [ ] Governance / Security PASS
-- [ ] Dependency / TypeScript / Tests / Build / Runtime PASS oder N/A
-- [ ] `build-and-test` PASS
-- [ ] Mutation Verification PASS oder N/A
-
-## 11. Risiko und Rücksetzung
-
-- **Auswirkungsradius:** Niedrig / Mittel / Hoch / Kritisch
-- **Benutzer / Daten / Billing / IAM:**
-- **Rücksetzverfahren:**
-- **Geschützte Rücksetzungsgenehmigung erforderlich:** Ja / Nein / N/A
-
-## 12. Prüf- und Merge-Bereitschaft
-
-- [ ] Erforderliche Checks sind PASS.
-- [ ] Branch ist gegen aktuellen `main` geprüft und konfliktfrei.
-- [ ] Merge-blockierende Diskussionen/Funde sind gelöst.
-- [ ] Merge erfolgt nur nach separater ausdrücklicher menschlicher Anweisung.

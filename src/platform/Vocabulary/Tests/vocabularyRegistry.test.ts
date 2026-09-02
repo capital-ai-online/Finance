@@ -152,12 +152,31 @@ describe('VocabularyRegistry contracts', () => {
 
   it('uses the canonical ADR-0078 vocabulary authority and covers the complete FinTech baseline', () => {
     const registry = createDefaultVocabularyRegistry();
-    expect(registry.list()).toHaveLength(24);
+    expect(registry.list()).toHaveLength(65);
     for (const item of registry.list()) {
       expect(item.adrReferences).toContain('ADR-0078');
       expect(item.adrReferences).not.toContain('ADR-0046');
     }
     expect(registry.getById('VOC-ANALYTICS-0108')?.canonicalCodeTerm).toBe('CanonicalScoreResult');
     expect(registry.getById('VOC-PRODUCT-0103')?.canonicalCodeTerm).toBe('DeliverySurface');
+  });
+
+  it('provides the canonical AI Development Chat & Execution Terminology category', () => {
+    const registry = createDefaultVocabularyRegistry();
+    const developmentTerms = registry.list().filter((item) => item.category === 'ai-development-chat-execution');
+
+    expect(developmentTerms).toHaveLength(41);
+    expect(registry.resolveTerm('Pre-check')?.canonicalCodeTerm).toBe('PreCheck');
+    expect(registry.resolveTerm('Re-sync')?.canonicalCodeTerm).toBe('MainResync');
+    expect(registry.resolveTerm('Changed-file overlap')?.canonicalCodeTerm).toBe('ChangedFileOverlap');
+    expect(registry.resolveTerm('Head SHA')?.canonicalCodeTerm).toBe('HeadSha');
+    expect(registry.resolveTerm('Stand der Technik')?.canonicalCodeTerm).toBe('StateOfTheArt');
+    expect(registry.resolveTerm('/healthz')?.canonicalCodeTerm).toBe('LivenessEndpoint');
+    expect(registry.resolveTerm('/readyz')?.canonicalCodeTerm).toBe('ReadinessEndpoint');
+    expect(registry.resolveTerm('/healthz/readiness')?.canonicalCodeTerm).toBe('ReadinessProjectionEndpoint');
+    expect(registry.resolveTerm('Production URL')?.canonicalCodeTerm).toBe('ProductionBaseUrl');
+    expect(registry.resolveTerm('Online research')?.canonicalCodeTerm).toBe('ExternalResearchPreCheck');
+    expect(registry.resolveTerm('Candidate')).toBeUndefined();
+    expect(registry.resolveTerm('Main URL')).toBeUndefined();
   });
 });
