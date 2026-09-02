@@ -2,6 +2,7 @@ import type { VocabularyConcept } from '../Domain/VocabularyConcept';
 
 const vocabularyAuthority = ['ADR-0078'];
 const fintechTraceability = ['SC-MD-SPT-0001'];
+const aiDevelopmentCategory: VocabularyConcept['category'] = 'ai-development-chat-execution';
 
 export const seedConcepts: VocabularyConcept[] = [
   {
@@ -80,6 +81,43 @@ export const seedConcepts: VocabularyConcept[] = [
   concept('VOC-ANALYTICS-0111', 'RankingEligibility', 'Ranking-Berechtigung', 'Ranking eligibility', 'Fail-closed Entscheidung, ob ein Ergebnis in ein Ranking aufgenommen werden darf.', 'Fail-closed decision whether a result may enter a ranking.', 'analytics'),
   concept('VOC-PLATFORM-0101', 'TraceabilitySupervisor', 'Traceability und Supervisor', 'Traceability and supervisor', 'Cross-cutting Evidence-, Traceability- und Supervisor-Kontext ohne fachliche Mutationsauthority.', 'Cross-cutting evidence, traceability and supervisor context without domain mutation authority.', 'platform'),
   concept('VOC-PRODUCT-0103', 'DeliverySurface', 'Ausgabeoberfläche', 'Delivery surface', 'Benutzer- oder systemseitige Ausgabeoberfläche für bereits autorisierte Ergebnisse.', 'User- or system-facing delivery surface for already authorized results.', 'product'),
+
+  developmentConcept('VOC-AIDEV-0001', 'PreCheck', 'Vorabprüfung', 'Pre-check', 'Vor der Änderung ausgeführte Prüfung von Scope, Baseline, Sicherheit, Compliance, Reuse und relevanter Best Practice.', 'Pre-change review of scope, baseline, security, compliance, reuse and applicable best practice.', ['Preflight check']),
+  developmentConcept('VOC-AIDEV-0002', 'CurrentMainBaseline', 'Aktuelle Main-Baseline', 'Current main baseline', 'Exakter aktueller Stand des Main-Branches, gegen den Arbeit korreliert und gestartet wird.', 'Exact current state of the main branch against which work is correlated and started.', ['Main baseline']),
+  developmentConcept('VOC-AIDEV-0003', 'Correlation', 'Korrelation', 'Correlation', 'Abgleich eines Arbeitsstands mit Repository-, Authority-, Ownership- und Parallel-Writer-Zuständen.', 'Comparison of a work state with repository, authority, ownership and parallel-writer state.', ['Correlation review']),
+  developmentConcept('VOC-AIDEV-0004', 'ReCorrelation', 'Re-Korrelation', 'Re-correlation', 'Erneuter vollständiger Correlation-Abgleich nach relevanter Zustandsänderung.', 'Repeated full correlation review after a relevant state change.', ['Recorrelation']),
+  developmentConcept('VOC-AIDEV-0005', 'MainResync', 'Main-Re-Sync', 'Main re-sync', 'Synchronisierung eines Scoped Branch mit dem dann aktuellen Main vor einem Gate.', 'Synchronization of a scoped branch with then-current main before a gate.', ['Re-sync', 'Resync']),
+  developmentConcept('VOC-AIDEV-0006', 'ScopedBranch', 'Scope-begrenzter Branch', 'Scoped branch', 'Branch mit genau abgegrenztem Projekt- und Arbeitsumfang, erstellt aus current main.', 'Branch with a bounded project and work scope created from current main.', ['Work branch']),
+  developmentConcept('VOC-AIDEV-0007', 'WorkPackage', 'Arbeitspaket', 'Work package', 'Zusammengehöriger, klar abgegrenzter Lieferumfang mit definiertem Exit Gate.', 'Coherent bounded delivery scope with a defined exit gate.', ['WP']),
+  developmentConcept('VOC-AIDEV-0008', 'AtomicChange', 'Atomare Änderung', 'Atomic change', 'Kleinste sinnvoll unabhängig prüfbare Änderung mit einem klaren Zweck.', 'Smallest meaningfully independently verifiable change with one clear purpose.', ['Atomic change set']),
+  developmentConcept('VOC-AIDEV-0009', 'ChangedFileOverlap', 'Changed-File-Overlap', 'Changed-file overlap', 'Überschneidung von geänderten Dateipfaden zwischen parallelen Arbeitsständen.', 'Overlap of changed file paths between parallel work states.', ['File overlap']),
+  developmentConcept('VOC-AIDEV-0010', 'SemanticOverlap', 'Semantische Überschneidung', 'Semantic overlap', 'Inhaltliche Überschneidung von Änderungen auch ohne identische Dateipfade.', 'Meaning-level overlap between changes even when file paths differ.', ['Semantic conflict scope']),
+  developmentConcept('VOC-AIDEV-0011', 'WriterOverlap', 'Writer-Overlap', 'Writer overlap', 'Gleichzeitige Schreibzuständigkeit mehrerer aktiver Arbeitsstände für denselben geschützten Namespace oder Scope.', 'Concurrent write ownership by multiple active work states for the same protected namespace or scope.', ['Parallel writer overlap']),
+  developmentConcept('VOC-AIDEV-0012', 'Authority', 'Authority', 'Authority', 'Normative Entscheidungs- oder Regelungszuständigkeit mit definierter Scope-Grenze.', 'Normative decision or policy authority with a defined scope boundary.', ['Normative authority']),
+  developmentConcept('VOC-AIDEV-0013', 'PrimaryOwner', 'Primärer Owner', 'Primary owner', 'Projekt oder Rolle mit primärer Zuständigkeit für den betreffenden Scope.', 'Project or role with primary responsibility for the affected scope.', ['Primary project owner']),
+  developmentConcept('VOC-AIDEV-0014', 'ForeignProjectWork', 'Fremdprojekt-Arbeit', 'Foreign project work', 'Arbeit in einem Scope, dessen Primary Owner ein anderes Projekt ist.', 'Work in a scope whose primary owner is another project.', ['Foreign scope work']),
+  developmentConcept('VOC-AIDEV-0015', 'Handoff', 'Übergabe', 'Handoff', 'Explizite Übergabe von Kontext, Scope, Evidence und offenen Gates an den zuständigen Owner.', 'Explicit transfer of context, scope, evidence and open gates to the responsible owner.', ['Project handoff']),
+  developmentConcept('VOC-AIDEV-0016', 'Reuse', 'Wiederverwendung', 'Reuse', 'Bevorzugte Nutzung bestehender geeigneter Repository-, Plattform-, Plugin- oder Open-Source-Fähigkeiten statt paralleler Eigenimplementierung.', 'Preferred use of suitable existing repository, platform, plugin or open-source capabilities instead of parallel custom implementation.', ['Capability reuse']),
+  developmentConcept('VOC-AIDEV-0017', 'ParallelArchitecture', 'Parallele Architektur', 'Parallel architecture', 'Zusätzliche Architektur, Registry, Control Plane oder Runtime, die eine bereits kanonisch vorhandene Funktion dupliziert.', 'Additional architecture, registry, control plane or runtime that duplicates an existing canonical function.', ['Duplicate architecture']),
+  developmentConcept('VOC-AIDEV-0018', 'StranglerPattern', 'Strangler Pattern', 'Strangler pattern', 'Schrittweise Ablösung einer bestehenden Implementierung durch kontrolliertes Umleiten auf neue Komponenten.', 'Incremental replacement of an existing implementation by controlled routing to new components.', ['Strangler Fig pattern']),
+  developmentConcept('VOC-AIDEV-0019', 'Remediation', 'Behebung', 'Remediation', 'Gezielte Korrektur eines bestätigten technischen, Governance-, Security- oder Compliance-Findings.', 'Targeted correction of a confirmed technical, governance, security or compliance finding.', ['Corrective action']),
+  developmentConcept('VOC-AIDEV-0020', 'Drift', 'Drift', 'Drift', 'Abweichung eines erwarteten oder gebundenen Zustands vom aktuellen überprüften Ist-Zustand.', 'Deviation of an expected or bound state from the current verified state.', ['State drift']),
+  developmentConcept('VOC-AIDEV-0021', 'FailClosed', 'Fail-Closed', 'Fail-closed', 'Verhalten, bei dem fehlende oder ungültige Voraussetzungen eine geschützte Aktion blockieren statt implizit zu erlauben.', 'Behavior in which missing or invalid prerequisites block a protected action instead of implicitly allowing it.', ['Closed-by-default failure']),
+  developmentConcept('VOC-AIDEV-0022', 'Gate', 'Gate', 'Gate', 'Explizite Prüf- oder Freigabegrenze, die vor dem nächsten Lifecycle-Schritt erfüllt sein muss.', 'Explicit validation or approval boundary that must be satisfied before the next lifecycle step.', ['Lifecycle gate']),
+  developmentConcept('VOC-AIDEV-0023', 'ValidationEvidence', 'Validierungs-Evidence', 'Validation evidence', 'Nachvollziehbare Evidence, die das Ergebnis einer definierten Validierung belegt.', 'Traceable evidence demonstrating the result of a defined validation.', ['Validation proof']),
+  developmentConcept('VOC-AIDEV-0024', 'ExactSnapshot', 'Exakter Snapshot', 'Exact snapshot', 'Unveränderlich identifizierter Arbeitsstand, typischerweise durch vollständige Commit-SHA gebunden.', 'Immutably identified work state, typically bound to a full commit SHA.', ['Commit-bound snapshot']),
+  developmentConcept('VOC-AIDEV-0025', 'HeadSha', 'Head-SHA', 'Head SHA', 'Exakte Commit-SHA des aktuellen Branch- oder Pull-Request-Heads.', 'Exact commit SHA of the current branch or pull-request head.', ['PR head SHA', 'Exact head']),
+  developmentConcept('VOC-AIDEV-0026', 'PullRequestGate', 'PR-Gate', 'Pull request gate', 'Prüf- oder Freigabegrenze unmittelbar vor Erstellung oder Weiterführung eines Pull Requests.', 'Validation or approval boundary immediately before creating or advancing a pull request.', ['PR gate']),
+  developmentConcept('VOC-AIDEV-0027', 'HostedCI', 'Hosted CI', 'Hosted CI', 'Auf der Repository-Plattform ausgeführte Continuous-Integration-Prüfung eines gebundenen Commit-Stands.', 'Repository-platform continuous-integration validation executed for a bound commit state.', ['GitHub-hosted CI']),
+  developmentConcept('VOC-AIDEV-0028', 'HumanMerge', 'Human Merge', 'Human merge', 'Explizite Merge-Entscheidung und Merge-Aktion durch eine autorisierte Person oder CODEOWNER-Grenze.', 'Explicit merge decision and merge action by an authorized human or CODEOWNER boundary.', ['Human-approved merge']),
+  developmentConcept('VOC-AIDEV-0029', 'ReleaseGate', 'Release-Gate', 'Release gate', 'Kontrollgrenze vor Freigabe eines Artefakts oder Stands für einen Release-Schritt.', 'Control boundary before an artifact or state is admitted to a release step.', ['Release approval gate']),
+  developmentConcept('VOC-AIDEV-0030', 'ProductionMutation', 'Produktionsmutation', 'Production mutation', 'Zustandsverändernde Aktion auf produktiven Systemen, Daten, Konfigurationen oder externen Ressourcen.', 'State-changing action on production systems, data, configuration or external resources.', ['Production change']),
+  developmentConcept('VOC-AIDEV-0031', 'Supervisor', 'Supervisor', 'Supervisor', 'Überwachende oder koordinierende Komponente, die Zustände beobachtet und zulässige Lifecycle-Schritte orchestriert, ohne fremde Domain Authority zu übernehmen.', 'Supervisory or coordinating component that observes state and orchestrates permitted lifecycle steps without taking foreign domain authority.', ['Lifecycle supervisor']),
+  developmentConcept('VOC-AIDEV-0032', 'EventMesh', 'EventMesh', 'EventMesh', 'Kanonische Event-Transport- und Verteilungsstruktur für entkoppelte, nachvollziehbare Zustandsereignisse.', 'Canonical event transport and distribution structure for decoupled, traceable state events.', ['Event mesh']),
+  developmentConcept('VOC-AIDEV-0033', 'Traceability', 'Nachvollziehbarkeit', 'Traceability', 'Nachweisbare Verknüpfung von Anforderungen, Entscheidungen, Änderungen, Validierungen und Ergebnissen.', 'Provable linkage among requirements, decisions, changes, validations and outcomes.', ['End-to-end traceability']),
+  developmentConcept('VOC-AIDEV-0034', 'ControlPlane', 'Control Plane', 'Control plane', 'Kanonische Steuerungs- und Policy-Ebene, die Regeln und zulässige Aktionen vorgibt, ohne unnötige parallele Runtime zu erzeugen.', 'Canonical control and policy layer that defines rules and permitted actions without creating unnecessary parallel runtime.', ['Governance control plane']),
+  developmentConcept('VOC-AIDEV-0035', 'StateOfTheArt', 'Stand der Technik', 'State of the art', 'Aktuell etablierter fortgeschrittener Stand von Methoden, Architektur, Sicherheit oder Engineering in einem relevanten Fachgebiet.', 'Current established advanced state of methods, architecture, security or engineering in a relevant field.', ['SoTA']),
+  developmentConcept('VOC-AIDEV-0036', 'BestPractice', 'Best Practice', 'Best practice', 'Bewährte, allgemein anerkannte Vorgehensweise, die für den konkreten Kontext weiterhin auf Eignung geprüft werden muss.', 'Established generally recognized practice that still requires fit assessment for the concrete context.', ['Good practice']),
 ];
 
 function concept(
@@ -106,5 +144,33 @@ function concept(
     essReferences: ['ESS-0017'],
     adrReferences: vocabularyAuthority,
     traceabilityReferences: fintechTraceability,
+  };
+}
+
+function developmentConcept(
+  id: VocabularyConcept['id'],
+  canonicalCodeTerm: string,
+  displayNameDE: string,
+  displayNameEN: string,
+  definitionDE: string,
+  definitionEN: string,
+  aliases: string[] = [],
+  forbiddenTerms: string[] = [],
+): VocabularyConcept {
+  return {
+    id,
+    canonicalCodeTerm,
+    displayNameDE,
+    displayNameEN,
+    definitionDE,
+    definitionEN,
+    aliases,
+    forbiddenTerms,
+    category: aiDevelopmentCategory,
+    status: 'approved',
+    version: '1.0.0',
+    essReferences: ['ESS-0017', 'ESS-0017-CONTRACTS'],
+    adrReferences: vocabularyAuthority,
+    traceabilityReferences: ['CTRL-SDLC-BRANCH-001', 'CTRL-SDLC-PR-CREATE-001', 'CTRL-SDLC-CHAT-HANDOFF-001'],
   };
 }
