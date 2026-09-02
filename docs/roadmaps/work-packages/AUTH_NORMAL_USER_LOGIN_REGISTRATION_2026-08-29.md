@@ -2,7 +2,9 @@
 
 ## Status
 
-`IMPLEMENTED / PR VALIDATION PENDING`
+`IMPLEMENTED / MERGED`
+
+Human Merge: PR #601. Repository implementation is terminal for this work package. Runtime/E2E lifecycle validation remains separate evidence work and is **not** implied by this status.
 
 ## Baseline
 
@@ -76,6 +78,12 @@ Die aktuelle Owner-Vorgabe ersetzt diese Produktgrenze: normale Nutzer müssen s
 7. Onboarding und AAL/MFA bleiben fail-closed.
 8. Klasse-C-PR-Checks und `build-and-test` müssen vor Merge PASS sein.
 
+## Evidence Boundary
+
+- Repository implementation: **MERGED via PR #601**.
+- Runtime/E2E lifecycle validation: **PENDING SEPARATE EVIDENCE** until exercised against an authorized runtime environment.
+- No runtime/E2E PASS is inferred from merge state alone.
+
 ## Rollback
 
-Repository-only: Human-reviewed `git revert` des späteren Merge-Commits. Es gibt keine externe Plattformmutation zurückzusetzen.
+Repository-only: Human-reviewed `git revert` des Merge-Commits. Es gibt keine externe Plattformmutation zurückzusetzen.
