@@ -26,6 +26,7 @@ const CATEGORY_LABELS: Record<VocabularyCategory, string> = {
   platform: 'Plattform',
   product: 'Produkt',
   release: 'Release',
+  'ai-development-chat-execution': 'AI Development & Execution',
 };
 
 const ALL_CATEGORIES = 'all' as const;
