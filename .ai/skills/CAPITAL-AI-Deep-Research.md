@@ -98,7 +98,7 @@ A large number of sources is never itself proof of saturation or quality.
 
 ## Source independence
 
-Treat two sources as dependent when one republishes, summarizes or cites the other's factual basis without independent evidence; both rely on the same underlying dataset/report; they are syndicated copies; or common authorship/control materially defeats independence. Dependency is recorded in the evidence object and dependent sources count as one evidence family for triangulation.
+Treat two sources as dependent when one republishes, summarizes or cites the other's factual basis without independent evidence; both rely on the same underlying dataset/report; they are syndicated copies; or common authorship/control materially defeats independence. Dependency is recorded in source provenance via `independenceFamily` and credibility metadata; dependent sources count as one evidence family for triangulation.
 
 ## Claim typing
 
