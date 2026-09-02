@@ -1,6 +1,6 @@
 import type {
   ResearchAllowedUse,
-  ResearchEvidenceCandidate,
+  ResearchEvidenceDiscovery,
   ResearchEvidenceSourcePolicy,
   ResearchEvidenceSourcePolicyEntry,
   ResearchEvidenceValidationResult,
@@ -24,7 +24,7 @@ function isIpLiteral(hostname: string): boolean {
 
 /**
  * Research source URLs are data, never authority. Only public HTTPS hostnames are accepted into
- * the candidate-validation layer. Private hosts/IP literals are rejected to keep future provider
+ * the discovery-validation layer. Private hosts/IP literals are rejected to keep future provider
  * transports away from SSRF-style escalation paths.
  */
 export function validatePublicResearchUrl(rawUrl: string): { ok: true; hostname: string } | { ok: false; reason: string } {
@@ -92,27 +92,27 @@ function validClaimValue(value: unknown): boolean {
 }
 
 /**
- * Structural/source-policy validation only. It deliberately cannot make a candidate score-eligible.
+ * Structural/source-policy validation only. It deliberately cannot make a discovery score-eligible.
  * Field-level promotion belongs to the canonical Evidence/Feature contract and requires an explicit
  * follow-up implementation/Owner gate.
  */
-export function validateResearchEvidenceCandidate(
-  candidate: ResearchEvidenceCandidate,
+export function validateResearchEvidenceDiscovery(
+  discovery: ResearchEvidenceDiscovery,
   policy: ResearchEvidenceSourcePolicy = EMPTY_RESEARCH_SOURCE_POLICY,
   now = new Date(),
 ): ResearchEvidenceValidationResult {
   const reasons: string[] = [];
-  const url = validatePublicResearchUrl(candidate.source.url);
+  const url = validatePublicResearchUrl(discovery.source.url);
   if (url.ok === false) reasons.push(url.reason);
-  if (candidate.citation.url !== candidate.source.url) reasons.push('Citation URL does not match candidate source URL.');
-  if (!candidate.claim.field.trim()) reasons.push('Claim field is empty.');
-  if (!validClaimValue(candidate.claim.value)) reasons.push('Claim value is not finite/serializable.');
-  if (!validObservedAt(candidate.claim.observedAt)) reasons.push('Claim observedAt is invalid.');
+  if (discovery.citation.url !== discovery.source.url) reasons.push('Citation URL does not match discovery source URL.');
+  if (!discovery.claim.field.trim()) reasons.push('Claim field is empty.');
+  if (!validClaimValue(discovery.claim.value)) reasons.push('Claim value is not finite/serializable.');
+  if (!validObservedAt(discovery.claim.observedAt)) reasons.push('Claim observedAt is invalid.');
   if (
-    candidate.claim.extractionConfidence !== undefined
-    && (!Number.isFinite(candidate.claim.extractionConfidence)
-      || candidate.claim.extractionConfidence < 0
-      || candidate.claim.extractionConfidence > 1)
+    discovery.claim.extractionConfidence !== undefined
+    && (!Number.isFinite(discovery.claim.extractionConfidence)
+      || discovery.claim.extractionConfidence < 0
+      || discovery.claim.extractionConfidence > 1)
   ) {
     reasons.push('Extraction confidence must be within 0..1.');
   }
@@ -120,7 +120,7 @@ export function validateResearchEvidenceCandidate(
   if (reasons.length > 0) {
     return {
       contractVersion: RESEARCH_EVIDENCE_VALIDATION_CONTRACT_VERSION,
-      candidateId: candidate.candidateId,
+      discoveryId: discovery.discoveryId,
       status: 'REJECTED',
       sourceClass: 'unknown',
       scoreEligible: false,
@@ -130,14 +130,14 @@ export function validateResearchEvidenceCandidate(
     };
   }
 
-  const classified = classifyResearchSource(candidate.source.url, policy);
+  const classified = classifyResearchSource(discovery.source.url, policy);
   const primary = classified.sourceClass === 'regulated-primary'
     || classified.sourceClass === 'official-primary'
     || classified.sourceClass === 'provider-primary';
 
   return {
     contractVersion: RESEARCH_EVIDENCE_VALIDATION_CONTRACT_VERSION,
-    candidateId: candidate.candidateId,
+    discoveryId: discovery.discoveryId,
     status: primary ? 'VALIDATED_PRIMARY_SOURCE' : 'RESEARCH_ONLY',
     sourceClass: classified.sourceClass,
     scoreEligible: false,
