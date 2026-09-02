@@ -45,7 +45,7 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sourceId", "locator", "sourceClass", "retrievedAt", "primaryStatus", "independenceFamily"],
+      "required": ["sourceId", "locator", "sourceClass", "retrievedAt", "primaryStatus", "independenceFamily", "credibility"],
       "properties": {
         "sourceId": {"type": "string", "minLength": 1},
         "locator": {"type": "string", "minLength": 1},
