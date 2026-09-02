@@ -14,7 +14,7 @@
 | `docs/fintech/CAPITAL-AI-FINTECH/reports/FINTECH_V2_VALIDATION_2026-08-31.md` | `docs/projects/fintech/VALIDATION_REPORT.md` | canonical current validation projection; dated historical reports remain evidence |
 | Security PR #631 sources | `docs/projects/fintech/SECURITY_HANDOFFS.md` + historical evidence | baseline Security integration retained without verification takeover |
 | OPS PR #694 / `OPS-02-SEC-06` | `SECURITY_HANDOFFS.md` + `CROSS_PROJECT_DEPENDENCIES.md` + `TASK_REGISTER.md` | newly triggered S1-R2-06 FINTECH child work projected as `REFERRED_NOT_EXECUTED` |
-| Governance project-routing controls | current `/AGENTS.md`, `docs/projects/README.md`, `CROSS_PROJECT_HANDOFF_CONTRACT.md` | target-folder/Primary-Owner routing synchronized to current project surfaces |
+| Governance project-routing controls | current `/AGENTS.md`, `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md` | target-folder/Primary-Owner routing synchronized to current project surfaces |
 | older FinTech `ASSET_PROVIDER_MATRIX.md` | `docs/projects/fintech/PROVIDER_CAPABILITY_MATRIX.md` | provider/capability/fallback findings retained and synchronized to `provider-matrix/1.10.0` |
 | older FinTech cross-roadmap mapping | `CROSS_PROJECT_DEPENDENCIES.md` + this matrix + work packages/task register | semantic ownership/dependencies retained without replaying stale roadmap authority |
 | older FinTech branch as a whole | `BRANCH_CORRELATION_2026-08-31.md` | historical branch correlation retained; stale main-bound assertions are not replayed |
