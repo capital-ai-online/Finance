@@ -1,6 +1,6 @@
 # CAPITAL-AI-DATA — Cross-Project Handoffs
 
-Project routing follows `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. `PVC-*` is the explicit project namespace; legacy `VC-*` markers are retained only for repository compatibility.
+Project routing follows `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. `PVC-*` is the explicit project namespace; legacy `VC-*` markers are retained only for repository compatibility.
 
 Foreign work is not marked `DONE`, `VERIFIED` or `CLOSED` by DATA.
 
@@ -103,4 +103,4 @@ When a DATA implementation/evidence package is ready, return:
 
 `[SECURITY_HANDOFF_RETURN -> CAPITAL-AI-SEC]`
 
-with all fields required by the Security handoff contract. If work is discovered outside DATA ownership, create a separate handoff and leave the foreign implementation `REFERRED_NOT_EXECUTED`.
+with all fields required by the Security handoff contract. If work is discovered outside DATA ownership, leave the foreign implementation unexecuted and resolve the owner from the folder-to-PVC mapping.
