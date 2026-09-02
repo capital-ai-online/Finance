@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-R-CLASS-NO-PR-BUILD-2026-09-02",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "workItem": "Owner-directed CI cost-control: PR class R keeps required build-and-test context and scoped validation but skips production artifact build steps; main push remains force-full.",
+  "startedAt": "2026-09-02T16:28:35Z",
+  "baseBranch": "main",
+  "baseSha": "9f061f9d3518ffff121503c0b3c84b138ad1261f",
+  "branch": "agent/operations-r-class-no-build-20260902",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-R-CLASS-NO-PR-BUILD-2026-09-02.json",
+    "scripts/pr/classifyPrScope.mjs",
+    "scripts/pr/classifyPrScope.test.mjs"
+  ],
+  "securityBoundary": "Preserve the required build-and-test check, trusted-main classification, integrity, dependency audit, lint, unit tests and workflow-security semantics. Only PR-side production artifact build/predeploy/docker-image steps are skipped for class R; force-full main push remains unchanged.",
+  "reuseBoundary": "Reuse existing classifyPrScope outputs and ci.yml conditional steps; do not create a second CI job, workflow, reporter or authority.",
+  "externalMutationScope": "Repository branch commits only. No workflow mutation, merge, deployment, Render, Supabase, Stripe or production mutation.",
+  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or the work item is explicitly abandoned."
+}
