@@ -51,7 +51,9 @@ describe('frontend auth lifecycle remediation', () => {
     expect(loginPage).toContain('const captchaToken = await requestHcaptchaToken()');
     expect(loginPage).toContain('supabase.auth.signUp');
     expect(loginPage).toContain('captchaToken,');
-    expect(registrationGate).toContain('consent');
+    expect(registrationGate).toContain('termsAccepted: true');
+    expect(registrationGate).toContain('privacyAccepted: true');
+    expect(registrationGate).toContain('marketingOptIn');
     expect(sessionComposition).toContain('RegistrationCompletionGate');
     expect(sessionComposition).toContain('LoginStepUpGate');
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
