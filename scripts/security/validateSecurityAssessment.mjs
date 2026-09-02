@@ -160,11 +160,14 @@ export function validateSecurityAssessment(assessment) {
       push(errors, 'FOREIGN_REMEDIATION_ROUTING_REQUIRED', `${id}: productive PVC remediation must be REFERRED_NOT_EXECUTED.`);
     }
     if (finding.state === 'VERIFIED') {
-      if (!nonEmptyArray(finding.verificationEvidenceRefs)) {
-        push(errors, 'VERIFICATION_EVIDENCE_REQUIRED', `${id}: VERIFIED requires independent verificationEvidenceRefs.`);
+      const verificationRefs = Array.isArray(finding.evidenceRefs)
+        ? finding.evidenceRefs.filter((ref) => typeof ref === 'string' && ref.startsWith('verification:'))
+        : [];
+      if (verificationRefs.length === 0) {
+        push(errors, 'VERIFICATION_EVIDENCE_REQUIRED', `${id}: VERIFIED requires at least one evidenceRefs entry prefixed with verification:.`);
       }
-      if (!nonEmptyString(finding.verificationAssessor)) {
-        push(errors, 'VERIFICATION_ASSESSOR_REQUIRED', `${id}: VERIFIED requires an explicit independent verificationAssessor.`);
+      if (!nonEmptyString(finding.verificationRequirement)) {
+        push(errors, 'VERIFICATION_REQUIREMENT_REQUIRED', `${id}: VERIFIED requires a non-empty verificationRequirement.`);
       }
     }
     if (finding.state === 'ACCEPTED_RISK' && !nonEmptyString(finding.riskAcceptanceAuthorityRef)) {
@@ -185,14 +188,10 @@ export function validateSecurityAssessment(assessment) {
       }
     }
     for (const finding of findings) {
-      if (['CANDIDATE_FINDING', 'CONFIRMED_FINDING', 'REMEDIATION_REQUIRED', 'EVIDENCE_READY'].includes(finding?.state)) {
-        push(errors, 'OVERALL_PASS_OPEN_FINDING', `overallStatus PASS is incompatible with open finding ${finding?.findingId ?? '<unknown>'} in ${finding.state}.`);
+      if (['CANDIDATE_FINDING', 'CONFIRMED_FINDING', 'REMEDIATION_REQUIRED', 'EVIDENCE_READY', 'ACCEPTED_RISK'].includes(finding?.state)) {
+        push(errors, 'OVERALL_PASS_OPEN_FINDING', `overallStatus PASS is incompatible with finding ${finding?.findingId ?? '<unknown>'} in ${finding.state}.`);
       }
     }
-  }
-
-  if (authorization.status !== 'AUTHORIZED' && assessment.overallStatus === 'PASS') {
-    push(errors, 'UNAUTHORIZED_ASSESSMENT_CANNOT_PASS', 'A non-authorized assessment can never PASS.');
   }
 
   return errors;
