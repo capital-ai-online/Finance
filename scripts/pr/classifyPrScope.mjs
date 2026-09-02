@@ -10,8 +10,12 @@
  *   R — runtime / dependency / docker / deployment surface
  *
  * Production-scope invariant:
- *   Production Build/CSP/Predeploy/Docker run only when the changed PR scope can
- *   affect buildability, runtime, deployability or production artifacts.
+ *   Pull Requests never perform production mutation. Class R therefore keeps
+ *   scoped integrity, dependency, lint, unit and static runtime/Docker checks,
+ *   but does not build production artifacts, run predeploy preparation or build
+ *   the production Docker image. The Human-merged push to main remains force-full
+ *   and is the only path that performs the complete production build/attestation
+ *   validation before the separately gated deployment job.
  *   Known non-production validation/tooling surfaces receive only their scoped
  *   validators. Unknown non-doc paths remain fail-closed as production-impacting.
  *
@@ -224,11 +228,17 @@ export function classifyChangedFiles(files, options = {}) {
     node = true;
     lint = true;
     unit = true;
-    build = true;
     audit = true;
-    predeploy = true;
     docker = true;
-    docker_image = true;
+
+    // Owner-directed PR cost control: class R describes a runtime-sensitive
+    // repository change, not a production mutation. Keep the required
+    // build-and-test check context and scoped technical verification, but defer
+    // production artifact build/predeploy/image construction to the force-full
+    // Human-merged main push.
+    build = false;
+    predeploy = false;
+    docker_image = false;
   }
 
   return {
