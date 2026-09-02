@@ -1,10 +1,10 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.6.0`  
-**Status date:** `2026-09-01`  
-**Current repository baseline for this synchronization:** `main@d049864a70a639d796a7cb618d098e88cfcd8759` — includes Human Merge of PR #691 (productive M10 retirement) and PR #697 (Owner Device Authorization contract)  
-**Open PR correlation at this synchronization:** no open Pull Requests observed after PR #697 merged; its added `docs/projects/governance/**` files were merged into this candidate without overlap with the M10/ADR-0104 governance changes.  
+**Version:** `2.7.0`  
+**Status date:** `2026-09-02`  
+**Current repository baseline for this synchronization:** `main@2b9aebf854939f6eedadfb8e16632ee48833ae36` — includes Human Merge of PR #707 (provider-neutral Deep Research Evidence Pipeline), PR #708 (Security Assessment Validator), PR #710 (Owner Device Authorization Stage-D Cutover preparation), PR #711 (Security Assessment Validator canonical CI integration) and PR #712 (Owner Device Authorization Stage-D Remediation)  
+**Open PR correlation at this synchronization:** no open Pull Requests observed; no active PR writer overlaps the ESS-0019 Research Evidence Contract candidate.  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -48,7 +48,7 @@ Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registri
 | ESS reference | Current repository resolution | Current-state classification |
 |---|---|---|
 | `ESS-0012` | `.ai/skills/ESS-0012-Documentation-Governance.md`; registered as `AUTH-ESS-DOCUMENTATION-GOVERNANCE` v1.0.0 | **RESOLVED / ENTERPRISE-APPROVED**; documentation-only governance, non-authorizing for repository-wide execution |
-| `ESS-0019` | `.ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md`; registered as `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE` v1.1.0 | **RESOLVED / ACCEPTED**; provider-neutral capability/risk/audit plane subordinate to `/AGENTS.md` |
+| `ESS-0019` | `.ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md`; same stable `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE`, candidate version v1.2.0 | **RESOLVED / ACCEPTED AFTER HUMAN MERGE**; provider-neutral capability/risk/audit plane plus Research Evidence Contract, subordinate to `/AGENTS.md`; no remote-skill activation or production authority |
 | `ESS-0011` | `.ai/skills/ESS-0011-Enterprise-Traceability.md` and `.ai/skills/ESS-0011-Contracts.md`; registered as `AUTH-ESS-ENTERPRISE-TRACEABILITY` | **PATH RESOLVED / AUTHORITY REGISTERED** |
 | `ESS-0001` | `.ai/skills/ESS-0001-Documentary-Architect.md` and `.ai/skills/ESS-0001-Contracts.md` | **NAMESPACE RESOLVED**; distinct stable authority identities |
 
@@ -83,8 +83,9 @@ Render native Auto Deploy remains off. Current production promotion authority re
 |---|---|
 | Agent Trust Root | `/AGENTS.md` remains the repository-wide instruction and governance entrypoint |
 | DevelopmentChain Execution | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active |
-| Current-State Index | this document v2.6.0; M10 retirement synchronized to `main@d049864a70a639d796a7cb618d098e88cfcd8759` |
-| Open Pull Requests at this synchronization | none observed after PR #697 merge |
+| Current-State Index | this document v2.7.0; DR-01 synchronized through `main@2b9aebf854939f6eedadfb8e16632ee48833ae36`; ESS-0019 v1.2.0 Research Evidence Contract projected for effect after Human Merge |
+| Open Pull Requests at this synchronization | none observed; no ESS-0019/registry overlap from an open PR |
+| Owner Device Authorization Stage-D cutover | **EFFECTIVE / HUMAN-MERGED** through PR #712 and `AUTH-GOV-OWNER-DEVICE-AUTHORIZATION-CUTOVER`; preserved by DR-02A registry correlation |
 | S1-R2-01 Workflow phantom-control evidence | **RESOLVED / OBSOLETE HISTORICAL STARTUP-FAILURE EVIDENCE** |
 | S1-R2-02 GitHub main enforcement | governed by current provider/readback controls; `required_signatures` intentionally absent |
 | M10 Passkey PR-CI implementation | **RETIRED / HISTORICAL ONLY — NO CURRENT IMPLEMENTATION EXPECTED** |
@@ -93,14 +94,14 @@ Render native Auto Deploy remains off. Current production promotion authority re
 | GitHub hosted validation | scope-/cost-controlled under current required-check policy |
 | Commit authenticity | Signing remains optional unless a later explicit Human/Owner decision changes it |
 | ESS-0012 | **RESOLVED** through Authority Registry |
-| ESS-0019 | **RESOLVED** through Authority Registry |
+| ESS-0019 | **RESOLVED / v1.2.0 CANDIDATE** through same stable Authority Registry identity; Research Evidence Contract adds no second trust root |
 | ESS-0011 | **PATH RESOLVED / AUTHORITY REGISTERED** |
 | ESS-0001 | **NAMESPACE RESOLVED** |
 | Documentary | read-only evidence sidecar; machine-readable bindings remain non-authorizing projections of current authorities |
 
 ## Agent capability architecture
 
-ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution plane and is subordinate to `/AGENTS.md`. Repository-level provider instruction files are intentionally absent.
+ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution plane and is subordinate to `/AGENTS.md`. Its v1.2.0 candidate extends that same plane with provider-neutral research-evidence semantics: source provenance, independence, explicit claim typing and uncertainty, citation-support integrity, contradiction/counter-evidence preservation and evidence saturation. It does not authorize remote skill loading, a second agent architecture or production mutation.
 
 ## Protected current invariants
 
@@ -123,7 +124,7 @@ ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution p
 
 ## Current next action
 
-1. keep M10 historical-only and exclude productive M10 implementation discovery from repository/web-application gap analysis;
-2. evaluate any future passkey/PR-CI authorization proposal as a new separately scoped architecture/security/governance work item rather than an M10 reconstruction;
-3. retain Human/CODEOWNER-only merge and current hosted technical validation;
-4. treat repository merge, roadmap status and historical evidence as non-authorizing for Render, Supabase, Stripe, provider-console, secret or production mutations.
+1. complete Human review and hosted governance validation for the ESS-0019 v1.2.0 Research Evidence Contract candidate;
+2. reconcile ADR-0060 supply-chain authority drift after DR-02A reaches a terminal state, before productive provider/runtime adapter work;
+3. keep remote-skill distribution and productive provider adapter architecture in separate DR-03/DR-04 work items under current ownership/routing controls;
+4. keep M10 historical-only and retain Human/CODEOWNER-only merge plus current hosted technical validation.
