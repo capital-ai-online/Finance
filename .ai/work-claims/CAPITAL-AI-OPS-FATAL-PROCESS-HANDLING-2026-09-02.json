@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "CAPITAL-AI-OPS-FATAL-PROCESS-HANDLING-2026-09-02",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-04",
+  "workItem": "OPS-04-SEC-04 / S1-R2-04: fatal process handling with immediate readiness denial, bounded shutdown delegation and non-zero supervisor exit evidence.",
+  "startedAt": "2026-09-02T07:18:06Z",
+  "baseBranch": "main",
+  "baseSha": "643cac29e1cc84b97a4d3ec29b71d1391d0c5dde",
+  "branch": "agent/operations-fatal-process-handling-20260902",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-FATAL-PROCESS-HANDLING-2026-09-02.json",
+    "server.ts",
+    "server/bootstrap/installProcessLifecycle.ts",
+    "server/bootstrap/processLifecycle.ts",
+    "server/runtime/processHealth.ts",
+    "server/runtime/businessReadiness.ts",
+    "tests/fixtures/processFatalExitChild.ts",
+    "tests/unit/businessReadiness.test.ts",
+    "tests/unit/processLifecycle.test.ts",
+    "tests/unit/processLifecycleChild.test.ts"
+  ],
+  "securityBoundary": "Fatal uncaught exceptions and unhandled rejections must fail closed: latch readiness unhealthy before shutdown, stop accepting work through the existing SIGTERM server-close path, perform only the existing bounded cleanup, and preserve a non-zero final process exit for Render supervision.",
+  "reuseBoundary": "Reuse the existing server.application.ts SIGTERM/SIGINT shutdown, outbox stop, timer cleanup and HTTP server drain. Do not create a second shutdown authority or modify deployment/provider state.",
+  "externalMutationScope": "Repository branch commits only. No Pull Request without the then-current exact-snapshot Human/Owner gate; no merge, deployment, Render, Supabase, Stripe or production mutation.",
+  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or the work item is explicitly abandoned."
+}

@@ -17,6 +17,7 @@ const completeStripe: StripeConfigurationStatus = {
 
 function input(overrides: Partial<BusinessReadinessInput> = {}): BusinessReadinessInput {
   return {
+    processHealthy: true,
     supabaseConfigured: true,
     iamSchemaHealthy: true,
     stripe: completeStripe,
@@ -32,6 +33,7 @@ describe('business readiness', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.status).toBe('ready');
     expect(snapshot.blockingChecks).toEqual({
+      processHealthy: true,
       supabaseConfigured: true,
       iamSchemaHealthy: true,
       stripeCoreConfigured: true,
@@ -50,6 +52,14 @@ describe('business readiness', () => {
     expect(snapshot.status).toBe('not-ready');
     expect(snapshot.blockingChecks.iamSchemaHealthy).toBe(false);
     expect(snapshot.blockingChecks.stripeCoreConfigured).toBe(false);
+  });
+
+  it('fails readiness immediately after a fatal process state is latched', () => {
+    const snapshot = evaluateBusinessReadiness(input({ processHealthy: false }));
+
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.status).toBe('not-ready');
+    expect(snapshot.blockingChecks.processHealthy).toBe(false);
   });
 
   it('does not make optional AI or market-data-provider availability a restart condition', () => {
