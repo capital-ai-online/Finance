@@ -28,7 +28,7 @@ The project surface references the existing Frontend sources instead of duplicat
 - `../../frontend/PHASE0_ACCESSIBILITY_AUDIT.md` — accessibility baseline.
 - `../../frontend/PHASE0_PERFORMANCE_BASELINE.md` — performance baseline.
 - [Project Value Chain](../PROJECT_VALUE_CHAIN.md) — canonical `PVC-01..PVC-18` Primary Owners.
-- [Cross-Project Handoff Contract](../CROSS_PROJECT_HANDOFF_CONTRACT.md) — repository handoff and `PVC-*` routing contract.
+- [Project folder mapping](../README.md) — canonical folder-to-PVC connection.
 
 ## Ownership boundary
 
