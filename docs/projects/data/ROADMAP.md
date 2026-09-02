@@ -1,254 +1,130 @@
-# CAPITAL-AI-DATA — Canonical Data Roadmap
+# CAPITAL-AI-DATA — Project Roadmap
 
 **Project ID:** `CAPITAL-AI-DATA`  
-**Status:** `PROPOSED — CURRENT-MAIN-SYNCHRONIZED CONSOLIDATION CANDIDATE`  
-**Current-main baseline:** `7fa5cfddcdb775078e1518bef4908af2e8706415`  
+**Status:** `ACTIVE — CANONICAL DATA ROADMAP`  
 **Project Value Chain ownership:** `PVC-09`, `PVC-10`, `PVC-11`  
-**Repository trust root:** `/AGENTS.md`  
-**Project-routing mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`  
-**Current financial-chain authority:** `SC-MD-SPT-0001`  
-**Provider data-plane authority:** `ADR-0041` + `ESS-0016`
+**Repository trust root:** `/AGENTS.md`
 
-Operational DATA state is maintained here only for DATA-owned concerns. Scoring, Ranking, QM assessment, Documentary, OPS and Security verification remain owner-scoped and are not absorbed into DATA.
+## How to use this roadmap
 
-## Namespace model
+```text
+PVC-09..11 / DATA Primary Owner
+→ this Roadmap
+→ applicable ADR
+→ applicable ESS
+→ implementation / tests / evidence
+```
 
-- `PVC-*` = organizational project ownership/routing.
-- technical `VC-*` under `SC-MD-SPT-0001` = current financial runtime stages.
-- DATA owns `PVC-09..11`; it does not renumber or supersede technical `VC-*`.
-- `PVC-11 -> PVC-12` is the canonical project boundary from DATA to FINTECH.
+Current Git terminology is `main SHA`, `branch head SHA`, `PR head SHA` and `merge SHA`. Historical branch/evidence identities remain valid, but Candidate-Head lifecycle terminology is not used for current work.
 
-## State model
+## DATA-09 — UAI / Data Ingestion
 
-Project work: `PROPOSED | READY | IN_PROGRESS | BLOCKED | DONE | NOT_AVAILABLE`
+**State:** `READY / ACTIVE BACKLOG`
 
-DATA exit statuses: `PASS | PARTIAL | FAIL | NOT_COMPUTABLE | STALE | MISSING | UNKNOWN`
+Work:
 
-External owner-scoped work is not promoted to `DONE/VERIFIED/CLOSED` by DATA.
+- maintain one canonical ingress contract per capability;
+- reuse `UniversalAssetAdapter`, `MarketDataGateway`, history gateway and provider registry/router boundaries;
+- validate all external provider payloads before evidence promotion;
+- remove duplicate direct-provider paths only after consumer correlation proves no semantic loss.
 
----
-
-## DATA-0 — Authority & Repository Baseline
-
-**State:** `DONE — candidate correlation`
-
-### Evidence
-
-- current `/AGENTS.md` read from `main`;
-- current main bound to `7fa5cfddcdb775078e1518bef4908af2e8706415`;
-- no open PR at synchronization correlation;
-- `PROJECT_VALUE_CHAIN.md` confirms DATA as Primary Owner for `PVC-09..11`;
-- `docs/projects/README.md` is the remaining folder-to-PVC mapping;
-- Security PR #631 is merged and its DATA finding is correlated;
-- Operations PR #632 is merged and supplies the canonical OPS project surface without changed-file overlap with `docs/projects/data/**`;
-- FINTECH PR #635 is merged and supplies `docs/projects/fintech/**`, confirming the downstream `PVC-11 -> PVC-12` project dependency;
-- QM PR #636 is merged and supplies `docs/projects/quality-management/**`, preserving QM as independent read-only assessment;
-- Social PR #637 is merged and adds only `docs/social-media/CAPITAL-AI-SOCIAL/**`; no DATA changed-file or productive PVC ownership overlap is introduced;
-- the old non-conforming branch `docs/data-project-consolidation-20260831` is superseded for protected work by `agent/data-security-handoff-sync-20260831`.
-
-### Exit
-
-- one explicit project-routing namespace exists;
-- DATA ownership is non-conflicting;
-- technical financial VC numbering remains unchanged;
-- current-source baseline is documented;
-- current existing target-project folders are correlated.
-
----
-
-## DATA-09 — UAI & Data Ingestion / PVC-09
-
-**State:** `READY`
-
-### Canonical candidates
-
-- `src/platform/Scoring/UniversalAssetAdapter.ts` — current UAI construction boundary;
-- `src/platform/MarketData/MarketDataGateway.ts` — canonical snapshot provider ingress;
-- `src/platform/MarketData/MarketDataHistoryGateway.ts` — history ingress;
-- `src/platform/MarketData/ProviderRegistry.ts` / `ProviderRouter.ts` / `ProviderMatrix.ts`;
-- `server/marketData/*` runtime composition;
-- domain provider adapters retained where they satisfy canonical contracts.
-
-### Work
-
-- map ownership without unnecessary source relocation;
-- converge provider/source acquisition on one ingress contract per capability;
-- preserve domain-specific adapters behind that boundary;
-- remove/supersede direct provider paths only after consumer correlation proves no semantic loss;
-- preserve Security requirements for external-input validation, credentials and source-policy boundaries.
-
-### Exit
+Exit:
 
 - UAI identity is distinct from evidence;
 - provider output cannot bypass validation;
-- duplicate ingress paths are removed or explicitly compatibility-only.
+- no provider becomes scoring authority.
 
----
+## DATA-10 — Evidence Management
 
-## DATA-10 — Evidence Management / PVC-10
+**State:** `READY / SECURITY EVIDENCE WORK OPEN`
 
-**State:** `READY — SECURITY HANDOFF ACCEPTED, REMEDIATION/EVIDENCE NOT YET EXECUTED`
+Work:
 
-### Core work
+- generalize evidence identity beyond provider/domain-specific registries;
+- bind evidence to asset, provider, capability/field, observation/retrieval time and correlation identity;
+- preserve explicit `CURRENT`, `STALE`, `MISSING`, `UNKNOWN` and refresh/retry semantics;
+- support independent Security verification for stale/wrong-identity evidence findings.
 
-- generalize evidence identity beyond crypto-specific registries;
-- bind evidence to `assetId`, provider, capability, field, observation time and retrieval time;
-- preserve evidence IDs/refs and correlation IDs end-to-end;
-- distinguish evidence absence from neutral/zero evidence;
-- correlate quote, research, on-chain, fundamentals and history evidence contracts.
+Exit:
 
-### Security item — S1-R2-11
+- one canonical evidence identity/envelope;
+- stale/wrong-identity evidence cannot authorize current state;
+- no Security self-verification by DATA.
 
-- `project_namespace: PVC`
-- `project_stage: PVC-10`
-- `target_project: CAPITAL-AI-DATA`
-- `target_project_folder: docs/projects/data/`
-- `primary_owner: CAPITAL-AI-DATA`
-- `source_security_finding: S1-R2-11`
-- `task: evidence identity and stale-state automation`
-- `reason: stale or wrong-identity evidence must not authorize current state`
-- `dependency: CAPITAL-AI-SEC verification; OPS-owned PR/trace tooling remains foreign`
-- `required_evidence: immutable baseline/head identities plus trusted refresh/retry observations`
-- `verification_gate: CAPITAL-AI-SEC independent verification`
-- `status: REFERRED_NOT_EXECUTED`
-- `source_status: WAITING_FOR_EVIDENCE`
-
-Required returned evidence must demonstrate `CURRENT`, `STALE`, `CURRENT_AFTER_REFRESH` and `STALE_RETRY_REQUIRED` against immutable current identities without candidate self-authorization. Any PR/trace/DevelopmentChain tooling-code remediation belongs to CAPITAL-AI-OPS, not DATA.
-
-### Exit
-
-- one canonical evidence identity/envelope exists;
-- no provider-specific evidence identity becomes scoring authority;
-- missing/stale/wrong-identity evidence is explicit and fail-closed;
-- S1-R2-11 target evidence can be returned to Security without DATA self-verification.
-
----
-
-## DATA-11 — Data Quality / PVC-11
+## DATA-11 — Data Quality
 
 **State:** `READY`
 
-### Work
+Work:
 
-- consolidate snapshot DQ and evidence DQ into one explicit gate model without destroying capability-specific detail;
-- preserve current fail-closed behavior from `DataQualityService` and `evidenceQualityContracts`;
-- separate pure DQ from Confidence/Ranking helpers currently colocated in `CompositeDataQuality.ts`;
-- make `PASS/PARTIAL/FAIL/NOT_COMPUTABLE/STALE/MISSING/UNKNOWN` transitions explicit and tested.
+- keep snapshot/evidence DQ under one explicit gate model while retaining capability-specific checks;
+- preserve `PASS`, `PARTIAL`, `FAIL`, `NOT_COMPUTABLE`, `STALE`, `MISSING`, `UNKNOWN` semantics;
+- keep scoring/ranking outside DATA.
 
-### Exit
+Exit:
 
 - no `FAIL` reaches valid downstream input;
-- stale/missing/unknown semantics cannot be upgraded silently;
-- no scoring or ranking logic remains owned by DATA.
-
----
+- stale/missing/unknown state cannot be silently upgraded;
+- no scoring or ranking logic is owned by DATA.
 
 ## DATA-12 — Provenance
 
 **State:** `READY`
 
-Provenance must survive provider adapter -> gateway -> evidence envelope -> freshness/DQ -> downstream DATA boundary. Provider, feed/source path, evidence reference, timestamps, asset identity and correlation lineage must not be dropped by compatibility facades.
-
-### Exit
-
-Complete provenance is required for every `PASS` record; absence is non-PASS.
-
----
+Provider/source path, evidence reference, timestamps, asset identity and correlation lineage must survive the DATA chain and downstream handoff.
 
 ## DATA-13 — Freshness
 
 **State:** `READY`
 
-Freshness is evaluated from source/observation timestamps against an explicit maximum age at the DATA boundary. `STALE` may be observable/research-usable only when the consumer contract explicitly allows it; it must not silently become fresh or numeric scoring input.
-
-S1-R2-11 additionally requires immutable-identity-aware refresh/retry evidence. A label change without a trusted fresh observation does not establish current state.
-
-### Exit
-
-One explicit freshness evaluation semantics exists per capability.
-
----
+Freshness is evaluated from source/observation time against an explicit capability-specific maximum age. `STALE` never silently becomes fresh or scoring-admissible.
 
 ## DATA-14 — Provider Input Validation
 
 **State:** `READY`
 
-All external provider responses are untrusted. Validate schema, required fields, numeric finiteness/ranges, timestamps, provider identity, symbol/asset binding and capability-specific invariants before evidence promotion.
-
-### Exit
-
-Malformed/ambiguous provider payloads become `FAIL`, `MISSING`, `UNKNOWN` or capability-specific non-admissible states; never synthetic values.
-
----
+Validate schema, required fields, numeric finiteness/ranges, timestamps, provider identity, asset/symbol binding and capability invariants. Malformed/ambiguous input becomes an explicit non-admissible state.
 
 ## DATA-15 — Data Contract Testing
 
 **State:** `READY`
 
-### Minimum contract tests
+Minimum test families:
 
-- UAI identity normalization and unsupported asset classes;
-- provider schema invalid/missing/exception cases;
-- provenance/evidence-ref requirements;
-- stale boundary and clock determinism;
-- DQ status transition table;
+- UAI normalization / unsupported assets;
+- provider invalid/missing/exception cases;
+- provenance/evidence-reference requirements;
+- freshness clock determinism;
+- DQ status transitions;
 - no zero/synthetic fallback;
-- no direct Quality Center dependency in productive DATA hot paths;
-- no score/ranking mutation from DATA modules;
-- downstream FINTECH boundary rejects non-admissible inputs;
-- wrong candidate/baseline identity cannot be treated as `CURRENT`;
-- stale evidence remains stale until a trusted refresh is observed;
-- refresh can produce `CURRENT_AFTER_REFRESH` only with current immutable identity;
-- unavailable/untrusted refresh produces `STALE_RETRY_REQUIRED`;
-- candidate-produced evidence alone cannot self-authorize a Security verification result.
+- no score/ranking mutation from DATA;
+- downstream FINTECH rejects non-admissible inputs;
+- stale/wrong identity remains fail-closed until trusted refresh.
 
-### Exit
+Tests and evidence bind to the actual branch/PR-head identity, not to a separate Candidate lifecycle.
 
-Negative-path tests are first-class evidence, not optional coverage.
+## DATA-16 — Evidence
 
----
+**State:** `READY / CONTINUOUS`
 
-## DATA-16 — Data Evidence
+Retain versioned contract compatibility, provider/DQ outcomes, provenance completeness and Security-return evidence. A file's existence is never proof of PASS.
 
-**State:** `READY`
+## Downstream boundary — PVC-11 → PVC-12
 
-Maintain append-only evidence for contract versions, provider matrix state, exact candidate SHA, DQ test outcomes, provenance completeness, compatibility-path retirement and Security return packages.
+DATA exports only validated upstream observations/evidence. `CAPITAL-AI-FINTECH / PVC-12` owns Feature Engineering and downstream scoring/ranking semantics.
 
-A file's existence is not proof of PASS. Security-return evidence must preserve the exact candidate/runtime identities and must not claim `SECURITY VERIFIED` or `CLOSED`.
+## Security relationship
 
----
-
-## Canonical downstream exit — PVC-11 -> PVC-12
-
-DATA exports only validated upstream observations/evidence. Feature engineering and all numeric scoring semantics remain downstream.
-
-- `project_namespace: PVC`
-- `project_stage: PVC-12`
-- `target_project: CAPITAL-AI-FINTECH`
-- `target_project_folder: docs/projects/fintech/`
-- `primary_owner: CAPITAL-AI-FINTECH`
-- `task: consume ValidatedDataInput and own downstream Feature Engineering/Scoring/Ranking semantics`
-- `reason: DATA remains the validated upstream data boundary only`
-- `dependency: docs/projects/fintech/ROADMAP.md and DATA PVC-11 output`
-- `required_evidence: versioned contract compatibility and preservation of explicit non-numeric states`
-- `verification_gate: FINTECH target-project tests/governance`
-- `status: REFERRED_NOT_EXECUTED`
-
-## Security return boundary
-
-When S1-R2-11 implementation/evidence becomes ready, DATA returns the package defined in `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md`. DATA may report `IMPLEMENTED` or `EVIDENCE_READY`; only CAPITAL-AI-SEC independently decides `VERIFIED/CLOSED`.
+Historical Security routing files are compatibility/audit records only. Current Security-related DATA work is represented directly in this Roadmap and independently verified by `CAPITAL-AI-SEC`.
 
 ## Definition of Done
 
-- CAPITAL-AI-DATA structure exists;
-- ingestion/evidence/DQ roadmaps are correlated in `TAKEOVER_INDEX.md`;
 - `PVC-09..11` ownership is explicit;
-- technical `VC-*` authority remains separate;
-- QM remains an independent read-only assessor;
-- FINTECH receives only the validated DATA contract;
-- Security findings routed to DATA are implemented/evidenced locally but independently verified by Security;
-- duplicate ingestion/DQ architectures are removed or superseded with compatibility boundaries;
+- technical financial `VC-*` authority remains separate;
 - provider output remains untrusted until validated;
 - provenance is complete;
 - DQ is fail-closed;
-- no scoring logic is owned by DATA.
+- no scoring/ranking logic is owned by DATA;
+- applicable ADR/ESS are reused rather than duplicated;
+- required tests/evidence pass on the final PR head;
+- Human/CODEOWNER performs merge.
