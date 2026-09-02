@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.4.0`  
+**Control Plane Version:** `2.5.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-09-01  
+**Effective date:** 2026-09-02  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -125,9 +125,9 @@ The PR body contract MUST be checked **before** the external create mutation. Cr
 
 ### Mandatory chat handoffs (`CTRL-SDLC-CHAT-HANDOFF-001`)
 
-This stable control has two explicit triggers: `POST_PR_HANDOFF` and `FOREIGN_PROJECT_HANDOFF`. Both are coordination/transparency controls only and never grant merge, deployment, protected external-mutation, foreign-implementation, Security-verification or Domain-Ownership authority.
+This stable control has one explicit trigger: `POST_PR_HANDOFF`. It is a coordination/transparency control only and never grants merge, deployment, protected external-mutation, Security-verification or Domain-Ownership authority.
 
-#### Trigger 1 — `POST_PR_HANDOFF`
+#### Trigger — `POST_PR_HANDOFF`
 
 After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by a prioritized **Nächste Schritte** section.
 
@@ -137,15 +137,14 @@ If more than two implementation or follow-up steps are available, the chat MUST 
 
 After either displayed step is completed, current `main`, open Pull Requests, changed-file/semantic overlap and applicable governance state MUST be re-read and the queue reprioritized. The previously displayed second step does not automatically become the new first step.
 
-#### Trigger 2 — `FOREIGN_PROJECT_HANDOFF`
+#### Project folder and PVC mapping
 
-Whenever analysis, planning, implementation or validation determines that the next required productive work step belongs to another canonical project or Primary Owner, the default rule is to stop local foreign implementation and route the work explicitly.
+Canonical organizational mapping between project folders and PVC units is only:
 
-A conditional exception exists only during a valid ACTIVE ADR-0104 v1.4.0 session when the target project is already a member of the activation's immutable `AUTHORIZED_PROJECT_SET`. In that case the same exact chat may continue after a visible `IN_SESSION_PROJECT_SWITCH`, fresh canonical project/folder/Primary-Owner resolution, current-main/open-PR/active-writer/overlap correlation and an audit update. The authorized set and `PT8H` end time cannot change. Each project/work item still requires its own fresh branch and PR.
+- `docs/projects/README.md`
+- `docs/projects/PROJECT_VALUE_CHAIN.md`
 
-A project outside the set, an unresolved mapping, an expired/consumed slot, a different chat or a missing switch record triggers the full handoff. The chat MUST resolve the target project and canonical target folder from current repository authority/project surfaces, report the affected VC/PVC and Primary Owner, set the foreign work to `REFERRED_NOT_EXECUTED`, emit `[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`, and immediately generate a complete copyable target-project prompt. Unknown target owner or target folder is fail-closed as `REQUIRES_CORRELATION`; the agent MUST NOT guess.
-
-The visible handoff/switch blocks, project-folder resolution order, prompt content contract, optional additive Security marker, multi-owner partitioning and prompt-size rules are canonical in `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`. Generated handoff prompts MUST preserve all required context and MUST be split only when necessary into parts of at most **400 lines**; required content may not be removed to fit the line limit.
+Those two files remain the connection surface. Separate post-mapping contracts — including `CROSS_PROJECT_HANDOFF_CONTRACT.md`, `PROJECT_EXECUTION_MODEL.md`, `ROADMAP_REGISTRY.md`, Owner-Device cutover/handoff authorities and foreign-project routing overlays — are withdrawn and MUST NOT be treated as current policy after Human Merge of this remediation.
 
 Avoid unnecessary paid GitHub CI/build/test runs before PR creation. After PR creation, use the smallest sufficient checks first and complete required checks before merge.
 
@@ -246,6 +245,8 @@ Agents working on universe Top/Worst rankings MUST:
 - `docs/adr/registry.json`
 - `.ai/registry/ess-registry.json`
 - `docs/governance/document-registry.json`
+- `docs/projects/README.md`
+- `docs/projects/PROJECT_VALUE_CHAIN.md`
 - `docs/frontend/FRONTEND_ARCH.md`
 - `docs/frontend/COMPONENT_INVENTORY.md`
 - `docs/frontend/design-tokens.json`
