@@ -3,7 +3,7 @@
 **Project:** `CAPITAL-AI-GOV`  
 **Project folder:** `governance`  
 **Primary PVC:** `PVC-05 — Platform Director`  
-**Baseline:** `main@c8c87261120d227dc9132e3ec0e9d27ad6697eda`  
+**Baseline:** `main@0a7aa85f25fa224c3f2422ed99f60be6ca45630f`  
 **Branch:** `agent/governance-deep-research-evidence-contract-20260902`  
 **Stable authority:** `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE`  
 **ESS:** `ESS-0019`  
