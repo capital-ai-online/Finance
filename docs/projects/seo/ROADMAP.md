@@ -24,6 +24,25 @@ Detailed SEO/Marketing state remains canonical in `docs/roadmaps/SEO_GOOGLE_MARK
 | `SEO-PROJ-03` | No duplicate SEO truth | consolidated roadmap and `docs/seo/**` retain their current roles |
 | `SEO-PROJ-04` | Publishing/infrastructure authority remains separated | Marketing Agent/SEO project does not inherit deployment, DNS/TLS or publication authority |
 | `SEO-PROJ-05` | Productive changes remain owner-routed | Frontend/OPS/GOV/COMP changes are executed by those projects |
+| `SEO-PROJ-06` | Public/search version projection uses one authority | `package.json#version` is the sole version authority; metadata/structured-data/search evidence must project it without a second SEO version constant |
+| `SEO-PROJ-07` | Google-visible version is evidence-gated | `GOOGLE_VISIBLE_PASS` requires an identified Google surface and observed current version after refresh/reindex; absence of current evidence never implies PASS |
+
+## Version projection gate
+
+The current package version is read from `package.json#version`; SEO does not define or own another version value. Version-bearing public metadata, prerendered public routes and structured data are verification surfaces only.
+
+Current correlation on 2026-09-02:
+
+- repository package version: `0.6.0`;
+- public website visible version: `0.6.0`;
+- `index.html` description/OpenGraph/Twitter descriptions: `0.6.0`;
+- `SoftwareApplication` JSON-LD: present, but no explicit `softwareVersion` projection;
+- exact Google surface showing stale `0.5.4`: not yet independently identified with available read-only evidence;
+- Google external mutation/reindex request: not performed.
+
+Because `index.html` is a productive Frontend surface, the `SoftwareApplication.softwareVersion` remediation remains `CAPITAL-AI-FE` implementation scope. CAPITAL-AI-SEO owns the requirement, correlation evidence and post-change Google-visible verification gate.
+
+Evidence: `docs/seo/GOOGLE_VISIBLE_VERSION_CORRELATION_2026-09-02.md`.
 
 ## Execution invariants
 
@@ -34,12 +53,13 @@ Detailed SEO/Marketing state remains canonical in `docs/roadmaps/SEO_GOOGLE_MARK
 - Compliance/legal assessment remains Compliance/Human-owned.
 - Productive business/data/scoring semantics remain with their Primary Owners.
 - Merge, deployment and protected external mutations retain existing Human/Owner and repository gates.
+- Historical release/evidence strings such as `0.5.4` are retained for traceability and never promoted to current version authority by search visibility alone.
 
 ## Current project dependencies
 
 | Target | Relationship |
 |---|---|
-| `CAPITAL-AI-FE` | public-page/UI implementation required by SEO |
+| `CAPITAL-AI-FE` | public-page/UI and `index.html` implementation required by SEO, including canonical `SoftwareApplication.softwareVersion` projection |
 | `CAPITAL-AI-OPS` | production deployment, provider, DNS/TLS and operational verification |
 | `CAPITAL-AI-GOV` | publishing/content automation and governance-control boundaries |
 | `CAPITAL-AI-COMP` | marketing/compliance applicability and assessment |
@@ -56,7 +76,9 @@ For project-surface changes, the smallest sufficient validation is:
 5. all references target existing SEO/Marketing/project artifacts;
 6. shared Governance-owned registry paths are not modified by this owner branch;
 7. branch is synchronized with current `main` before PR readiness;
-8. PR creation is separately approved for the exact main/head snapshot.
+8. PR creation is separately approved for the exact main/head snapshot;
+9. version-projection evidence resolves the repository authority, public-site observation, structured-data state and Google-visible state independently;
+10. `GOOGLE_VISIBLE_PASS` is never asserted while the Google surface or post-refresh observation remains unknown.
 
 Documentation-only project-surface work does not by itself require a pre-PR Runtime build; hosted repository checks after PR creation remain authoritative for merge readiness.
 
@@ -69,4 +91,8 @@ The owner-side SEO project-folder migration is complete after Human merge when:
 - existing SEO/Marketing detail sources remain canonical and non-duplicated;
 - required hosted checks for the exact PR candidate have passed.
 
-The shared project registry may then consume the merge as GOV-owned return evidence.
+For the Google-visible version correlation work item, repository-side SEO completion is `REPOSITORY_PASS` when the requirement/evidence gate is merged and the FE-owned structured-data gap is routed. External completion remains separate: `GOOGLE_REFRESH_REQUESTED` → `WAITING_FOR_REINDEX` → `GOOGLE_VISIBLE_PASS`, with `BLOCKED` used whenever the exact Google surface or required authorization is unresolved.
+
+## Non-goals
+
+No duplicate SEO truth, no project-folder-driven relocation of `docs/seo/**`, no productive PVC allocation, no implicit `PVC-19`, no automatic publication authority, no infrastructure authority through marketing ownership and no hidden product/business authority through SEO metadata or content.
