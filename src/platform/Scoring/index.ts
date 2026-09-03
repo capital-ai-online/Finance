@@ -17,3 +17,8 @@ export * from './CommodityHistoricalVintage';
 export * from './CommodityModelPromotion';
 export * from './CommodityP2EvidencePipeline';
 export * from './CommodityShadowObservability';
+export * from './EquityModelContracts';
+export * from './EquityFeatureComposer';
+export * from './EquityFilingDerivedMetrics';
+export * from './EquityComparableFilingMetrics';
+export * from './EquityFilingFeatureComposer';
