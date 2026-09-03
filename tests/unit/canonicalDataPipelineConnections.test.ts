@@ -133,19 +133,33 @@ describe('canonical DATA component connections', () => {
     expect(validated.evidenceRef).toBe('evidence:test-history:AAPL:daily');
   });
 
-  it('fails closed when a provider returns a snapshot for the wrong asset identity', async () => {
+  it('makes wrong provider identity non-admissible at the Gateway and FAIL at the identity boundary', async () => {
     const registry = new ProviderRegistry();
     registry.register(liveProvider({ symbol: 'MSFT' }));
     const gateway = new MarketDataGateway(registry, { nowMs: () => NOW, recordHealth: false });
     const result = await gateway.getSnapshot(buildSnapshotRequestForUniversalAsset(asset, 'corr-wrong-id'));
-    const validated = buildValidatedDataInputFromSnapshot(asset, result.snapshot, { evaluatedAt: '2026-09-03T00:00:00.000Z' });
+    const gatewayValidated = buildValidatedDataInputFromSnapshot(asset, result.snapshot, {
+      evaluatedAt: '2026-09-03T00:00:00.000Z',
+    });
 
-    expect(validated.aggregateStatus).toBe('FAIL');
-    expect(validated.provenanceComplete).toBe(false);
-    expect(validated.nonComputableReasons).toContain('asset identity mismatch');
+    expect(result.snapshot.qualityState).toBe('UNAVAILABLE');
+    expect(gatewayValidated.aggregateStatus).toBe('MISSING');
+    expect(gatewayValidated.observations[0].value).toBeNull();
+
+    const wrongIdentitySnapshot = await liveProvider({ symbol: 'MSFT' }).getSnapshot({
+      symbol: 'AAPL',
+      assetClass: 'stock',
+      correlationId: 'corr-wrong-id-direct',
+    });
+    const identityValidated = buildValidatedDataInputFromSnapshot(asset, wrongIdentitySnapshot, {
+      evaluatedAt: '2026-09-03T00:00:00.000Z',
+    });
+    expect(identityValidated.aggregateStatus).toBe('FAIL');
+    expect(identityValidated.provenanceComplete).toBe(false);
+    expect(identityValidated.nonComputableReasons).toContain('asset identity mismatch');
   });
 
-  it('preserves STALE instead of silently promoting old evidence to PASS', async () => {
+  it('does not silently promote old evidence to PASS', async () => {
     const registry = new ProviderRegistry();
     registry.register(liveProvider({
       sourceTimestamp: '2026-09-02T23:00:00.000Z',
