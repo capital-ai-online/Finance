@@ -310,13 +310,13 @@ if (errors.length === 0) {
   }
 
   const adr0104 = adrs.find((item) => item.displayId === 'ADR-0104');
-  if (!adr0104 || adr0104.version !== '1.4.0') {
-    fail('ADR_0104_PROJECT_SET_VERSION_MISSING', 'ADR-0104 registry must project the bounded project-set amendment as v1.4.0.');
+  if (!adr0104 || adr0104.version !== '1.5.0') {
+    fail('ADR_0104_PROJECT_SET_VERSION_MISSING', 'ADR-0104 registry must project the accepted bounded project-set authority as v1.5.0.');
   } else {
     const scope = adr0104.supersessionScope;
     const projectSet = adr0104.projectSetPolicy;
-    const inSetTarget = scope?.targets?.find((target) =>
-      target.controls?.includes('FOREIGN_PROJECT_HANDOFF:IN_SET_STOP_AND_SEPARATE_CHAT_ONLY')
+    const inSetSwitchTarget = scope?.targets?.find((target) =>
+      target.controls?.includes('IN_SET_PROJECT_SWITCH')
     );
     if (!scope || scope.type !== 'conditional-partial') {
       fail('ADR_0104_SUPERSESSION_SCOPE_MISSING', 'ADR-0104 supersession metadata must be conditional-partial.');
@@ -324,18 +324,22 @@ if (errors.length === 0) {
     if (!Array.isArray(scope?.targets) || scope.targets.length === 0 || !Array.isArray(scope?.exclusions) || scope.exclusions.length === 0) {
       fail('ADR_0104_SUPERSESSION_SCOPE_INCOMPLETE', 'ADR-0104 scoped supersession must identify targets and exclusions.');
     }
-    if (!inSetTarget) {
-      fail('ADR_0104_IN_SET_HANDOFF_TARGET_MISSING', 'ADR-0104 must name the narrowly superseded in-set STOP/separate-chat handoff surface.');
+    if (!inSetSwitchTarget) {
+      fail('ADR_0104_IN_SET_SWITCH_TARGET_MISSING', 'ADR-0104 v1.5 must name the bounded IN_SET_PROJECT_SWITCH approval surface without restoring withdrawn handoff overlays.');
     }
-    if (!scope?.exclusions?.includes('CTRL-MERGE-HUMAN-001') || !scope?.exclusions?.includes('FOREIGN_PROJECT_HANDOFF_OUTSIDE_AUTHORIZED_PROJECT_SET')) {
-      fail('ADR_0104_SUPERSESSION_EXCLUSIONS_INCOMPLETE', 'ADR-0104 must explicitly preserve Human merge and out-of-set foreign-project handoff.');
+    if (!scope?.exclusions?.includes('CTRL-MERGE-HUMAN-001') || !scope?.exclusions?.includes('POST_PR_HANDOFF')) {
+      fail('ADR_0104_SUPERSESSION_EXCLUSIONS_INCOMPLETE', 'ADR-0104 must explicitly preserve Human merge and POST_PR_HANDOFF.');
     }
-    if (projectSet?.mode !== 'immutable-predeclared-bounded-set' || projectSet?.minProjects !== 1 || projectSet?.maxProjects !== 3 || projectSet?.runtimeProjectAdditionAllowed !== false) {
-      fail('ADR_0104_PROJECT_SET_POLICY_INVALID', 'ADR-0104 must bind an immutable predeclared project set of one to three projects and prohibit runtime additions.');
+    if (projectSet?.mode !== 'immutable-predeclared-bounded-set' || projectSet?.minProjects !== 1 || projectSet?.maxProjects !== 3 || projectSet?.runtimeProjectAdditionAllowed !== false || projectSet?.canonicalMappingRequired !== true) {
+      fail('ADR_0104_PROJECT_SET_POLICY_INVALID', 'ADR-0104 must bind an immutable predeclared project set of one to three projects, require canonical mapping and prohibit runtime additions.');
     }
-    const currentS1Projects = projectSet?.currentS1Transition?.projectIdsAfterMerge;
-    if (!Array.isArray(currentS1Projects) || currentS1Projects.join(',') !== 'CAPITAL-AI-GOV,CAPITAL-AI-OPS' || projectSet?.currentS1Transition?.sessionEnd !== '2026-09-02T02:46:32Z' || projectSet?.currentS1Transition?.durationExtended !== false) {
-      fail('ADR_0104_CURRENT_S1_TRANSITION_INVALID', 'ADR-0104 current S1 transition must be exactly GOV+OPS, conditional before the unchanged session end, without duration extension.');
+    const navigation = projectSet?.humanReadableNavigation;
+    if (!Array.isArray(navigation) || navigation.join('|') !== 'docs/projects/PROJECT_VALUE_CHAIN.md|docs/projects/<project>/ROADMAP.md|applicable ADR|applicable ESS') {
+      fail('ADR_0104_NAVIGATION_INVALID', 'ADR-0104 v1.5 must use the Human-readable PVC → project Roadmap → ADR → ESS navigation model.');
+    }
+    const slots = projectSet?.slots;
+    if (slots?.['ADR-0104-S1'] !== 'CONSUMED' || slots?.['ADR-0104-S2'] !== 'CONSUMED' || slots?.['ADR-0104-S3'] !== 'AVAILABLE') {
+      fail('ADR_0104_SLOT_LEDGER_INVALID', 'ADR-0104 v1.5 registry must project S1/S2 consumed and S3 available.');
     }
   }
 
