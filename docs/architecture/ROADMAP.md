@@ -1,10 +1,10 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.8.0`  
-**Status date:** `2026-09-02`  
-**Current repository baseline for this synchronization:** `main@5db8062d3062e93f004cf0b75f190a9c649821f8`  
-**Open PR correlation at this synchronization:** no open Pull Requests observed  
+**Version:** `2.8.1`  
+**Status date:** `2026-09-03`  
+**Current repository baseline for this synchronization:** `main@adba446e8c17676d1064f9a687970c23cb9aa279`  
+**Open PR correlation at this synchronization:** PR #725 (Security) and PR #726 (SEO); no changed-file overlap with this Governance repair  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -15,7 +15,7 @@ This file is the **repository-wide current-state index**. It is intentionally co
 
 Historical implementation detail remains in ADR, ESS, runbooks and `docs/evidence/**`. Exact repository SHAs are observations, not an independent platform-version authority.
 
-Older integrated DevelopmentChain/Systemadmin roadmap snapshots are historical/non-authorizing where they conflict with this current state.
+`docs/architecture/DEVELOPMENT_CHAIN_ROADMAP.md` and older integrated DevelopmentChain/Systemadmin roadmap snapshots are **historical/non-authorizing** where they conflict with this current state.
 
 ## Human-readable development model
 
@@ -80,9 +80,11 @@ Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social projects v
 | Human merge | Human/CODEOWNER-only; never delegated to the agent |
 | ESS-0012 | Documentation Governance; documentation-only scope |
 | ESS-0019 | **v1.2.0 ACCEPTED**; provider-neutral capability/risk/audit + Research Evidence Contract |
-| M10 Passkey PR-CI runtime | **RETIRED / HISTORICAL ONLY**; no current implementation expected |
+| M10 Passkey PR-CI runtime | M10 PR-CI passkey runtime is `RETIRED / OFF`; no current implementation is expected |
 | Render native Auto Deploy | OFF; production promotion remains through verified `main` pipeline |
 | Platform version | `package.json#version` remains sole platform-version authority |
+
+No productive M10 implementation is expected in current state. Current-state discovery, architecture scans, roadmaps and gap analyses must not treat the absence of productive M10 implementation as a missing implementation or reactivation backlog.
 
 ## Deep Research integration
 
