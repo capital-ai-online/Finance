@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-DATA-CANONICAL-CONNECTIONS-2026-09-03",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Audit and connect the canonical DATA chain from UAI through MarketData ingress, Evidence/Provenance/Freshness and DQ to a validated DATA exit, including removal of productive provider-transport bypasses, without adding scoring or a second data plane.",
+  "startedAt": "2026-09-03T03:14:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "adba446e8c17676d1064f9a687970c23cb9aa279",
+  "pullRequest": null,
+  "branch": "agent/data-canonical-connections-20260903",
+  "project": "CAPITAL-AI-DATA",
+  "projectFolder": "data",
+  "ownerRole": "Primary Owner for PVC-09 UAI/Data Ingestion, PVC-10 Evidence Management and PVC-11 Data Quality",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-DATA-CANONICAL-CONNECTIONS-2026-09-03.json",
+    "src/platform/MarketData/ValidatedDataInput.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "server/stockFundamentals.ts",
+    "tests/unit/canonicalDataPipelineConnections.test.ts",
+    "tests/unit/stockFundamentals.test.ts",
+    "tests/unit/providerMatrix.test.ts",
+    "docs/projects/data/evidence/CANONICAL_DATA_CONNECTIONS_2026-09-03.md"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-FINTECH: feature engineering, confidence, scoring and ranking semantics after the validated DATA boundary",
+    "CAPITAL-AI-OPS: production/provider secret and deployment mutation",
+    "CAPITAL-AI-SEC: independent Security verification"
+  ],
+  "correlatedStaleClaims": [
+    "CAPITAL-AI-DATA-PROVIDER-GATEWAY-HARDENING-2026-08-31 — PR #639 merged; historical branch absent",
+    "CAPITAL-AI-DATA-ALPHA-RUNTIME-CORRELATION-2026-09-01 — PR #640 merged; historical branch absent"
+  ],
+  "authorityGuard": "Reuse UniversalAssetAdapter, MarketDataGateway/HistoryGateway, provider registries, ResearchEvidenceProviderHttp, evidenceQualityContracts and DataQualityService. Provider output remains untrusted until validated. Missing data is not zero. STALE/UNKNOWN/FAIL never silently become PASS. No scoring logic and no second data plane.",
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires fresh exact main SHA and branch-head SHA Human/Owner approval; merge remains Human/CODEOWNER-only."
+}
