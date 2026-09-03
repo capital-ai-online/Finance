@@ -146,7 +146,7 @@ describe('governance authority consistency', () => {
     expect(impact).toContain('AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19');
   });
 
-  it('scopes ADR-0104 project-set supersession and preserves S2 consumption', () => {
+  it('projects the accepted ADR-0104 v1.5 bounded project-set authority without restoring withdrawn handoff overlays', () => {
     const registry = JSON.parse(read('docs/adr/registry.json')) as {
       migratedRecords: Array<{
         displayId: string;
@@ -162,11 +162,9 @@ describe('governance authority consistency', () => {
           minProjects?: number;
           maxProjects?: number;
           runtimeProjectAdditionAllowed?: boolean;
-          currentS1Transition?: {
-            sessionEnd?: string;
-            durationExtended?: boolean;
-            projectIdsAfterMerge?: string[];
-          };
+          canonicalMappingRequired?: boolean;
+          humanReadableNavigation?: string[];
+          slots?: Record<string, string>;
         };
         note?: string;
       }>;
@@ -174,25 +172,33 @@ describe('governance authority consistency', () => {
     const adr0104 = registry.migratedRecords.find((item) => item.displayId === 'ADR-0104');
 
     expect(adr0104).toBeDefined();
-    expect(adr0104?.version).toBe('1.4.0');
+    expect(adr0104?.version).toBe('1.5.0');
     expect(adr0104?.supersessionScope?.type).toBe('conditional-partial');
     expect(adr0104?.supersessionScope?.activationCondition).toMatch(/immutable predeclared set/i);
     expect(adr0104?.supersessionScope?.targets?.some((target) =>
-      target.controls?.includes('FOREIGN_PROJECT_HANDOFF:IN_SET_STOP_AND_SEPARATE_CHAT_ONLY')
+      target.controls?.includes('IN_SET_PROJECT_SWITCH')
     )).toBe(true);
     expect(adr0104?.supersessionScope?.exclusions).toContain('CTRL-MERGE-HUMAN-001');
-    expect(adr0104?.supersessionScope?.exclusions).toContain('FOREIGN_PROJECT_HANDOFF_OUTSIDE_AUTHORIZED_PROJECT_SET');
+    expect(adr0104?.supersessionScope?.exclusions).toContain('POST_PR_HANDOFF');
     expect(adr0104?.projectSetPolicy).toMatchObject({
       mode: 'immutable-predeclared-bounded-set',
       minProjects: 1,
       maxProjects: 3,
       runtimeProjectAdditionAllowed: false,
+      canonicalMappingRequired: true,
     });
-    expect(adr0104?.projectSetPolicy?.currentS1Transition).toMatchObject({
-      sessionEnd: '2026-09-02T02:46:32Z',
-      durationExtended: false,
-      projectIdsAfterMerge: ['CAPITAL-AI-GOV', 'CAPITAL-AI-OPS'],
+    expect(adr0104?.projectSetPolicy?.humanReadableNavigation).toEqual([
+      'docs/projects/PROJECT_VALUE_CHAIN.md',
+      'docs/projects/<project>/ROADMAP.md',
+      'applicable ADR',
+      'applicable ESS',
+    ]);
+    expect(adr0104?.projectSetPolicy?.slots).toMatchObject({
+      'ADR-0104-S1': 'CONSUMED',
+      'ADR-0104-S2': 'CONSUMED',
+      'ADR-0104-S3': 'AVAILABLE',
     });
-    expect(adr0104?.note).toContain('S2 remains CONSUMED');
+    expect(adr0104?.note).toContain('v1.5.0');
+    expect(adr0104?.note).toContain('withdrawn post-PVC routing/device-cutover contracts');
   });
 });
