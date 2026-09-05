@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-USER-LIFECYCLE-CLOSEOUT-2026-09-05",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub/Supabase connectors"
+  },
+  "workItem": "Re-correlate and close the remaining OPS-owned User Lifecycle repository/evidence work against current main, current read-only Supabase state and current provider/security boundaries without Production mutation or foreign-owner implementation.",
+  "startedAt": "2026-09-05T12:18:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "0c595dc4f07fc279eabec272ca6046967f3b83e8",
+  "branch": "agent/operations-user-lifecycle-closeout-20260905",
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "operations",
+  "projectStage": "PVC-02",
+  "secondaryProjectStages": ["PVC-08", "PVC-18"],
+  "ownerRole": "Controlled Implementation and Production Operations evidence/traceability coordination only; no Security, Billing, Entitlement, Governance, Release or Production authority expansion.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-USER-LIFECYCLE-CLOSEOUT-2026-09-05.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-LIFECYCLE-RECORRELATION-2026-09-02.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/work-packages/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md",
+    "docs/projects/operations/evidence/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md"
+  ],
+  "reuseInputs": [
+    "scripts/operations/userLifecycleHarness.ts",
+    "scripts/operations/authLifecycleCorrelation.ts",
+    "tests/unit/userLifecycleHarness.test.ts",
+    "tests/provider/userLifecycleProviderContract.test.ts",
+    "tests/unit/userLifecycleSubscriptionProjection.test.ts",
+    "tests/unit/userLifecycleSecurityContract.test.ts",
+    "supabase/migrations/20260901162000_user_lifecycle_subscription_identity_authority.sql",
+    "src/features/billing/billingContract.ts",
+    "src/config/subscriptionEntitlements.ts",
+    "docs/evidence/security/GOV_CHAT_042_LIFECYCLE_SECURITY_2026-09-02.md"
+  ],
+  "authorityGuard": "Verified Supabase Auth user ID remains the required subscription identity. package.json#version remains platform-version authority. Stripe/provider state and existing billing/entitlement contracts are reused. Security verification remains CAPITAL-AI-SEC. No Production mutation, live billing mutation, foreign project code change or new authority is authorized.",
+  "providerGuard": "Connected Supabase is read-only evidence input for this work item. Stripe sandbox execution is not available in this execution surface and must remain NOT_AVAILABLE. Live Stripe keys are not accepted. Production Supabase DDL/migration application requires a separate current Human/Owner approval.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. PR creation requires exact main/head Human/Owner approval. Release and Production mutation remain separate gates."
+}
