@@ -5,7 +5,7 @@
 **Version:** 1.3.0  
 **Date:** 2026-09-05  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Current-main reconciliation baseline:** `main@04258ce9122dd600707aa25feb431282c715d104`  
+**Current-main reconciliation baseline:** `main@313d27e5861390e2704612f7e65b4c1f3d9e7a68`  
 **Status:** COMP-01 EXECUTED AGAINST CURRENT MAIN — OPEN LEGAL/EVIDENCE GATES PRESERVED
 
 This matrix separates an external requirement source from the decision whether it applies to CAPITAL-AI. It is not legal advice. `UNKNOWN` and `REQUIRES_LEGAL_REVIEW` are valid fail-closed outcomes. Repository engineering evidence may support factual scope, but it does not replace competent Human/Legal applicability decisions where legal interpretation is required.
