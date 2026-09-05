@@ -43,7 +43,8 @@ const requiredPaths = [
 ];
 
 const forbiddenParallelRoots = ['src/frontend', 'src/ui'];
-const sharedForbiddenDependencyPattern = /from\s+['"][^'"]*(?:\/features\/|\/components\/|\.\.\/\.\.\/features|\.\.\/\.\.\/components)/;
+const sourceFilePattern = /\.(?:ts|tsx)$/;
+const importSpecifierPattern = /(?:\bfrom\s*|\bimport\s*\()\s*['"]([^'"]+)['"]/g;
 
 function walk(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -56,6 +57,22 @@ function walk(dir: string): string[] {
   return out;
 }
 
+function isWithin(candidate: string, directory: string): boolean {
+  const relative = path.relative(directory, candidate);
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
+
+function relativeImportTargets(file: string, content: string): Array<{ specifier: string; target: string }> {
+  const targets: Array<{ specifier: string; target: string }> = [];
+  importSpecifierPattern.lastIndex = 0;
+  for (let match = importSpecifierPattern.exec(content); match; match = importSpecifierPattern.exec(content)) {
+    const specifier = match[1];
+    if (!specifier.startsWith('.')) continue;
+    targets.push({ specifier, target: path.resolve(path.dirname(file), specifier) });
+  }
+  return targets;
+}
+
 const findings: string[] = [];
 
 for (const relative of requiredPaths) {
@@ -66,10 +83,34 @@ for (const relative of forbiddenParallelRoots) {
   if (fs.existsSync(path.join(ROOT, relative))) findings.push(`parallel frontend root is forbidden: ${relative}`);
 }
 
-for (const file of walk(path.join(ROOT, 'src/shared')).filter((name) => /\.(ts|tsx)$/.test(name))) {
+const appRoot = path.join(ROOT, 'src/app');
+const featuresRoot = path.join(ROOT, 'src/features');
+const sharedRoot = path.join(ROOT, 'src/shared');
+const legacyComponentsRoot = path.join(ROOT, 'src/components');
+
+for (const file of walk(featuresRoot).filter((name) => sourceFilePattern.test(name))) {
   const content = fs.readFileSync(file, 'utf8');
-  if (sharedForbiddenDependencyPattern.test(content)) {
-    findings.push(`shared layer depends on feature/legacy component: ${path.relative(ROOT, file).replace(/\\/g, '/')}`);
+  for (const dependency of relativeImportTargets(file, content)) {
+    if (isWithin(dependency.target, appRoot)) {
+      findings.push(
+        `feature layer depends on app layer: ${path.relative(ROOT, file).replace(/\\/g, '/')} -> ${dependency.specifier}`,
+      );
+    }
+  }
+}
+
+for (const file of walk(sharedRoot).filter((name) => sourceFilePattern.test(name))) {
+  const content = fs.readFileSync(file, 'utf8');
+  for (const dependency of relativeImportTargets(file, content)) {
+    if (
+      isWithin(dependency.target, featuresRoot)
+      || isWithin(dependency.target, appRoot)
+      || isWithin(dependency.target, legacyComponentsRoot)
+    ) {
+      findings.push(
+        `shared layer depends on app/feature/legacy component: ${path.relative(ROOT, file).replace(/\\/g, '/')} -> ${dependency.specifier}`,
+      );
+    }
   }
 }
 

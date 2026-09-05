@@ -16,10 +16,13 @@ const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
 
 describe('canonical landing, login and protected-route boundary', () => {
-  it('uses LandingPage as the canonical public root page', () => {
+  it('uses LandingPage as the canonical public root page with app-owned dashboard composition', () => {
     expect(routes).toContain("if (currentPath === '/')");
     expect(routes).toContain('<LandingPage');
-    expect(landingPage).toContain('<Dashboard');
+    expect(routes).toContain('<Dashboard');
+    expect(routes).toContain('preview={');
+    expect(landingPage).toContain('{preview}');
+    expect(landingPage).not.toContain("from '../../../app");
     expect(dashboard).toContain('<CryptoScoringEnterprise');
   });
 
@@ -79,13 +82,20 @@ describe('canonical landing, login and protected-route boundary', () => {
     expect(landingPage).toContain('href="/impressum/"');
   });
 
-  it('uses only a presentation visitor state and never accepts anonymous Supabase sessions', () => {
-    expect(landingPage).toContain("type: 'guest'");
-    expect(landingPage).toContain("email: ''");
-    expect(landingPage).not.toContain('@capital-ai.online');
-    expect(landingPage).not.toContain('@guest');
+  it('keeps the presentation visitor state in app composition and never accepts anonymous Supabase sessions', () => {
+    expect(routes).toContain("type: 'guest'");
+    expect(routes).toContain("email: ''");
+    expect(routes).not.toContain('@capital-ai.online');
+    expect(routes).not.toContain('@guest');
+    expect(landingPage).not.toContain('UserSession');
     expect(sessionComposition).toContain('session.user.is_anonymous');
     expect(sessionComposition).toContain('rejectAnonymousSession');
+  });
+
+  it('does not allow the public feature to depend back on application composition', () => {
+    expect(landingPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
+    expect(loginPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
+    expect(routes).toContain("import('../dashboard/Dashboard')");
   });
 
   it('removes ambiguous full-page implementation filenames from their former locations', () => {
