@@ -140,3 +140,20 @@ No Security finding is marked VERIFIED by this roadmap.
 ## 10. PR / production boundary
 
 This roadmap does not authorize PR creation, merge, Release transition or Production mutation. Current Authority controls apply to each exact candidate. Under ADR-0104 v1.3.0 every Pull Request merge remains Human Owner-only. Production mutation requires a separate current gate.
+
+## 11. User Lifecycle current-main closeout — 2026-09-05
+
+Current closeout package: `work-packages/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md`; evidence: `evidence/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md`.
+
+Against `main@0c595dc4f07fc279eabec272ca6046967f3b83e8`:
+
+- PR #683 User Lifecycle harness is merged and present;
+- repository stable-user-ID subscription migration is implemented;
+- connected Supabase still runs the pre-migration email-based subscription projection, so Production alignment is `PRODUCTION_GATE_REQUIRED`;
+- checked-in migrations still do not cover the beginning of the hosted migration history, so full clean local application-schema replay is not yet proven;
+- Supabase Local/Mailpit and Stripe sandbox/Test Clock provider E2E remain `NOT_AVAILABLE` in the current connector execution surface;
+- the stale active Auth Lifecycle claim left after merged PR #722 is released by the closeout branch;
+- Annual Pro price drift remains a foreign shared/product-contract concern; OPS does not create or select a second Billing authority;
+- Security re-verification remains exclusively with CAPITAL-AI-SEC.
+
+The User Lifecycle closeout does not claim that all OPS Security backlog is complete: `OPS-02-SEC-05` and the other independently scoped Security-priority packages remain in the queue.
