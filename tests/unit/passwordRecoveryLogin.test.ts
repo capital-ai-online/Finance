@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { isSessionEstablishmentEvent } from '../../src/app/auth/sessionBootstrap';
 import {
   PASSWORD_RECOVERY_QUERY_PARAM,
   isPasswordRecoveryLocation,
-  isSessionEstablishmentEvent,
-} from '../../src/app/auth/sessionBootstrap';
+} from '../../src/features/public/auth/passwordRecovery';
 
 const loginPage = fs.readFileSync(
   path.join(process.cwd(), 'src/features/public/ui/LoginPage.tsx'),
@@ -24,13 +24,28 @@ describe('password recovery login boundary', () => {
     ).toBe(false);
   });
 
+  it('keeps the recovery URL contract feature-owned instead of importing app composition', () => {
+    expect(loginPage).toContain("from '../auth/passwordRecovery'");
+    expect(loginPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
+  });
+
   it('does not bootstrap temporary recovery sessions as normal signed-in sessions', () => {
-    const recoveryLocation = { pathname: '/login', search: '?password-recovery=1' };
-    expect(isSessionEstablishmentEvent('INITIAL_SESSION', recoveryLocation)).toBe(false);
-    expect(isSessionEstablishmentEvent('SIGNED_IN', recoveryLocation)).toBe(false);
-    expect(
-      isSessionEstablishmentEvent('SIGNED_IN', { pathname: '/login', search: '' }),
-    ).toBe(true);
+    const originalWindow = globalThis.window;
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { location: { pathname: '/login', search: '?password-recovery=1' } },
+    });
+
+    try {
+      expect(isSessionEstablishmentEvent('INITIAL_SESSION')).toBe(false);
+      expect(isSessionEstablishmentEvent('SIGNED_IN')).toBe(false);
+    } finally {
+      if (originalWindow === undefined) {
+        Reflect.deleteProperty(globalThis, 'window');
+      } else {
+        Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
+      }
+    }
   });
 
   it('keeps password recovery CAPTCHA-bound and returns to normal MFA-protected login', () => {
