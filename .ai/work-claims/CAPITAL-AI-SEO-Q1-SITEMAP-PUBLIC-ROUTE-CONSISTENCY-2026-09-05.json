@@ -30,8 +30,7 @@
     "public/robots.txt",
     "tests/unit/seoPublicRouteSitemap.test.ts",
     "docs/seo/SEO_CHECKLIST.md",
-    "docs/projects/seo/ROADMAP.md",
-    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
+    "docs/projects/seo/ROADMAP.md"
   ],
   "reuseInputs": [
     "src/lib/routeSeo.ts",
@@ -47,15 +46,17 @@
     "docs/projects/seo/ROADMAP.md",
     "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
   ],
-  "foreignWork": [],
-  "authorityGuard": "SEO changes only public sitemap/robots verification, SEO evidence and owner-side roadmaps. No Frontend source, runtime/deployment, Governance AUTH/CTRL/ADR/ESS, IAM, WIF or Google-write mutation.",
+  "foreignWork": [
+    "agent/seo-roadmap-recorrelation-20260905 already mutates docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md without an open PR; this branch does not claim that file"
+  ],
+  "authorityGuard": "SEO changes only public sitemap/robots verification, SEO evidence and the owner-side project roadmap/checklist. No Frontend source, runtime/deployment, Governance AUTH/CTRL/ADR/ESS, IAM, WIF or Google-write mutation. Consolidated program roadmap left untouched to avoid a parallel writer.",
   "validationPlan": [
     "targeted Vitest: tests/unit/seoPublicRouteSitemap.test.ts",
     "npm run lint",
     "hosted repository checks after Human/Owner PR creation"
   ],
   "validationEvidence": {
-    "repositoryDiff": "Scoped candidate restores /learning-platform in sitemap, documents Allow in robots.txt, adds regression test and updates SEO roadmaps/checklist/claim",
+    "repositoryDiff": "Scoped candidate restores /learning-platform in sitemap, documents Allow in robots.txt, adds regression test and updates owner-side SEO roadmap/checklist/claim",
     "routeCorrelation": "listPublicRouteSeoPaths and prerender ROUTES both expose five public routes including /learning-platform; live production sitemap observed 2026-09-05 still omitted that path",
     "localExecution": "UNAVAILABLE on Grok GitHub Connector for full npm/vitest; targeted file-level consistency reviewed statically"
   },
