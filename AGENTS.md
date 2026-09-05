@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.7.0`  
+**Control Plane Version:** `2.7.1`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-05  
 **Repository:** `SvenKulessa/Finance`
@@ -114,6 +114,18 @@ Examples: `agent/governance-chat-consolidation-20260831`, `agent/operations-deve
 
 A newly created branch that omits either project-folder or compact-task identity is non-conforming and MUST be replaced by a fresh current-main branch before protected work or PR readiness proceeds. Branch naming is coordination metadata only and never changes project ownership, Authority, merge authority or production permissions.
 
+### Pull Request naming (`CTRL-SDLC-PR-CREATE-001`)
+
+Every **new agent-managed** Pull Request or Draft Pull Request MUST be project-qualified and execution-client-qualified using this canonical presentation form:
+
+`[<PROJECT-ID>] [<agent-client>] <compact-title>`
+
+`PROJECT-ID` MUST be the canonical project identifier resolved from the current Project Value Chain/project-folder mapping (for example `CAPITAL-AI-GOV`). `agent-client` MUST factually identify the client that creates the PR; for a PR created through ChatGPT, the label is exactly `ChatGPT`. `compact-title` MUST be concise, Human-readable and specific to the bounded work item; it MUST NOT depend on a PR number that does not exist before creation.
+
+Example: `[CAPITAL-AI-GOV] [ChatGPT] Chat-Freigabe und PR-Naming verankern`.
+
+The intended exact PR title MUST be included in the Human/Owner approval snippet before approval is requested. If a trusted workflow, script, connector or other creation surface would generate a title that does not conform to this rule, that creation path MUST stop fail-closed until the title is made conforming. Existing historical PR titles are not renamed retroactively.
+
 Pre-PR evidence is technical evidence only and must be bound to the exact branch state. Immediately before PR creation, refresh `main`, correlate new merges/open PRs, synchronize, resolve semantic conflicts and repeat necessary low-cost checks.
 
 ### Git identity terminology
@@ -136,8 +148,30 @@ The required order is:
 1. immediately before approval is requested, refresh current `main` and correlate new merges, open Pull Requests, changed-file overlap, semantic overlap and namespace/authority conflicts;
 2. synchronize the scoped branch with that `main`, resolve conflicts, and repeat the necessary low-cost checks on the exact branch state;
 3. report the exact `main` SHA, branch name, branch-head SHA, intended PR scope, correlation result and available validation evidence to the Human/Owner;
-4. obtain an explicit Human/Owner approval to create the Pull Request or Draft Pull Request for that reported branch state;
-5. immediately before the external create mutation, re-read `main` and the branch head; create the PR only if both SHAs are unchanged.
+4. emit the canonical chat approval snippet defined below, including the intended exact PR title;
+5. obtain an explicit Human/Owner approval to create the Pull Request or Draft Pull Request for that reported branch state;
+6. immediately before the external create mutation, re-read `main` and the branch head; create the PR only if both SHAs are unchanged.
+
+For every chat-governed PR creation request, the same chat MUST render this bounded copyable approval snippet after final correlation and before requesting approval:
+
+```text
+PR-CREATION APPROVAL
+Current Project: <PROJECT-ID>
+Current Project Folder: <docs/projects/.../>
+Primary PVC: <PVC-* or justified N/A>
+Primary Owner: <PRIMARY-OWNER>
+Branch: <branch-name>
+main SHA: <40-char SHA>
+branch head SHA: <40-char SHA>
+Changed files / scope: <bounded file list or precise scope>
+Correlation result: <PASS or explicit blocking finding>
+Available validation evidence: <executed checks and truthful NOT-RUN items>
+Intended PR title: [<PROJECT-ID>] [<agent-client>] <compact-title>
+
+Freigabe-Antwort: PR erstellen: freigegeben
+```
+
+The approval phrase `PR erstellen: freigegeben` is valid only when the Human/Owner sends it for the immediately preceding exact snippet and both reported SHAs remain unchanged. Any intervening `main` SHA change, branch-head SHA change, scope/title change, new conflicting writer/PR or correlation result change invalidates the snippet and approval; the branch must be resynchronized/recorrelated as required and a fresh snippet must be emitted before a new approval can be accepted.
 
 A task request, permission to create a branch or commit, approval to run checks, technical evidence, prior/general approval, reaction, label or checkbox is not PR-creation approval. If `main` or the branch head changes before creation, the approval expires; correlation, synchronization and required validation MUST be repeated and renewed explicit approval obtained. The agent stops fail-closed before the create mutation while approval is absent or stale.
 
