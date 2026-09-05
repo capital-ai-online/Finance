@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-USER-LIFECYCLE-CLOSEOUT-2026-09-05",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub/Supabase connectors"
+  },
+  "workItem": "Re-correlate and close the remaining OPS-owned User Lifecycle repository/evidence work against current main and current read-only Supabase state without foreign-owner implementation or protected provider mutation.",
+  "startedAt": "2026-09-05T12:18:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "0c595dc4f07fc279eabec272ca6046967f3b83e8",
+  "latestCorrelationMainSha": "687105ffe90f649c8ada6310976826c9ea625f27",
+  "branch": "agent/operations-user-lifecycle-closeout-20260905",
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "operations",
+  "projectStage": "PVC-02",
+  "secondaryProjectStages": ["PVC-08", "PVC-18"],
+  "ownerRole": "Controlled Implementation and Production Operations evidence/traceability coordination only; no Security, Billing, Entitlement, Governance, Release or Production authority expansion.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-USER-LIFECYCLE-CLOSEOUT-2026-09-05.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-LIFECYCLE-RECORRELATION-2026-09-02.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/work-packages/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md",
+    "docs/projects/operations/evidence/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md"
+  ],
+  "reuseInputs": [
+    "scripts/operations/userLifecycleHarness.ts",
+    "scripts/operations/authLifecycleCorrelation.ts",
+    "tests/unit/userLifecycleHarness.test.ts",
+    "tests/provider/userLifecycleProviderContract.test.ts",
+    "tests/unit/userLifecycleSubscriptionProjection.test.ts",
+    "tests/unit/userLifecycleSecurityContract.test.ts",
+    "supabase/migrations/20260901162000_user_lifecycle_subscription_identity_authority.sql",
+    "src/features/billing/billingContract.ts",
+    "src/config/subscriptionEntitlements.ts",
+    "docs/evidence/security/GOV_CHAT_042_LIFECYCLE_SECURITY_2026-09-02.md"
+  ],
+  "providerCorrelation": {
+    "project": "AIFINANCIAL",
+    "projectRef": "ryzywoktpmyhwzxmstyu",
+    "subscriptionIdentityFunction": "PASS_READ_ONLY_CORRELATION",
+    "identityInvariant": "metadata.user_id -> validated auth.users.id -> public.subscriptions.user_id",
+    "remoteMigrationName": "user_lifecycle_subscription_identity_authority",
+    "remoteMigrationVersion": "20260905103413",
+    "remoteMigrationCount": 70,
+    "remoteMigrationMinimum": "20260709160230",
+    "historicalBaselineReplay": "NOT_PROVEN",
+    "subscriptionsRls": "ENABLED",
+    "leakedPasswordProtection": "WARN_DISABLED"
+  },
+  "authorityGuard": "Verified Supabase Auth user ID remains the required subscription identity. package.json#version remains platform-version authority. Security verification remains CAPITAL-AI-SEC. No live billing mutation, foreign project code change or new authority is authorized.",
+  "providerGuard": "Connected Supabase was used read-only for current-state evidence. No DDL, migration application, Auth configuration change, user mutation, Stripe mutation, Render mutation or other Production mutation was performed. Isolated Supabase Local/Mailpit and Stripe sandbox/Test Clock scenarios remain NOT_AVAILABLE in this execution surface.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. Release and any future provider/Production mutation remain separate gates."
+}
