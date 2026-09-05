@@ -7,7 +7,7 @@ const read = (relativePath: string) =>
 
 const legacyDashboard = read('src/components/Dashboard.tsx');
 
-describe('BB-2B/BB-2C dashboard consumer cutover', () => {
+describe('BB-2B/BB-2C/BB-2D dashboard consumer cutover', () => {
   it('consumes the canonical dashboard view contract without recreating local authority', () => {
     expect(legacyDashboard).toContain("from '../app/dashboard/dashboardViews'");
     expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
@@ -23,5 +23,57 @@ describe('BB-2B/BB-2C dashboard consumer cutover', () => {
   it('keeps the navigation-only universes accordion outside the dashboard view-section authority', () => {
     expect(legacyDashboard).toContain("type DashboardExpandedSection = DashboardSection | 'universes'");
     expect(legacyDashboard).toContain('useState<DashboardExpandedSection | null>');
+  });
+
+  it('routes migrated detail views through the canonical dashboard view router', () => {
+    expect(legacyDashboard).toContain("import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter'");
+    expect(legacyDashboard).toContain('<DashboardViewRouter');
+    expect(legacyDashboard).toContain("{activeView === 'dashboard' && (");
+    expect(legacyDashboard).toContain("{activeView === 'myworkspace' && (");
+
+    for (const routedView of [
+      'learning',
+      'universe-scoring',
+      'buffet-value',
+      'backtest',
+      'market-screener',
+      'heatmap',
+      'charts',
+      'abonnements',
+      'sentiment-dashboard',
+      'profil',
+      'admin-portal',
+      'preis-alarme',
+      'raw-materials',
+      'asset-universe',
+      'defi-orchestration',
+      'social-accounts',
+      'risiko-assessment',
+      'interact',
+      'login',
+    ]) {
+      expect(legacyDashboard).not.toContain(`{activeView === '${routedView}' && (`);
+    }
+
+    for (const projection of [
+      'activeView={activeView}',
+      'selectedSymbol={selectedSymbol}',
+      'onSelectSymbol={setSelectedSymbol}',
+      'onNavigate={navigateTo}',
+      'userSession={userSession}',
+      'profile={profile}',
+      'onUpdateProfile={handleUpdateProfile}',
+      'adminTab={adminTab}',
+      'onChangeAdminTab={setAdminTab}',
+      'triggerAttempt={triggerAttempt}',
+      'searchQuery={searchQuery}',
+      'onSearchQueryChange={setSearchQuery}',
+      'categoryFilter={categoryFilter}',
+      'onCategoryFilterChange={setCategoryFilter}',
+      'onLoginEmail={onLoginEmail}',
+      'onRegisterEmail={onRegisterEmail}',
+    ]) {
+      expect(legacyDashboard).toContain(projection);
+    }
   });
 });
