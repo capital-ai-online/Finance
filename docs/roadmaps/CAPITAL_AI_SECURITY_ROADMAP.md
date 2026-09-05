@@ -2,16 +2,16 @@
 
 **Document ID:** `DOC-ROADMAP-CAPITAL-AI-SEC-2026-08-31`  
 **Project ID:** `CAPITAL-AI-SEC`  
-**Version:** `2.2.1`  
+**Version:** `2.2.2`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
 **Date:** `2026-09-05`  
-**Repository baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
+**Repository baseline:** `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`  
 **Role:** `CROSS_CUTTING_SECURITY`  
 **Primary Project Value Chain ownership:** `[]`  
 **Project coverage:** `PVC-01` through `PVC-18` as Security overlay  
 **Owner:** `CAPITAL-AI-SEC` for Security requirements/findings/testing/verification only  
 **Security component:** `src/platform/Security`  
-**Component specification:** ESS-0006 — Security & Compliance  
+**Component specification:** ESS-0006 v1.1.0 — Security & Compliance  
 **Existing hardening program:** `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md`  
 **Trust root:** `/AGENTS.md`
 
@@ -20,6 +20,8 @@
 ## 1. Current authority and routing model
 
 Current work resolves from `/AGENTS.md` on current `main`, then canonical project/PVC mapping, the Security project roadmap, applicable current ADR/ESS, and finally code/tests/evidence. Post-PVC policy overlays withdrawn by current `/AGENTS.md` are historical/non-authorizing. The former Cross-Project Handoff Contract is therefore not a current routing authority.
+
+Current `ESS-0006` v1.1.0 revalidates the bounded component model: Security requirements/testing/independent verification remain with `CAPITAL-AI-SEC`; productive remediation remains with the affected Primary Owner unless the implementation is inherently reusable Security infrastructure within `src/platform/Security`.
 
 Productive ownership remains:
 
@@ -60,17 +62,18 @@ These IDs are coordination labels only.
 
 The available project-chat work was treated only as a search index. Completion state below is derived from current repository evidence.
 
-| Work item | Current-main result |
+| Work item | Current-main / branch result |
 |---|---|
-| Security project/PVC consolidation | `DONE_MAIN` |
+| Security project/PVC consolidation | `DONE_MAIN`; PR #749 merged |
 | Adversarial Web/Mobile Security Assessment skill/schema/validator | `IMPLEMENTED_MAIN` |
 | Assessment validator in repository raw-test chain | `DONE_MAIN` |
+| Assessment current-authority alignment | `IMPLEMENTED_BRANCH / VALIDATION + PR PENDING` on `agent/security-assess-align-20260905` |
 | Owner Device Authorization Stage-C | initial FAIL followed by independent PASS re-verification; `COMPLETE / HISTORICAL` |
 | User Lifecycle Security integration / GOV-CHAT-042 | `IMPLEMENTED_MAIN / RESIDUALS OPEN` |
 | Fatal Process Handling / S1-R2-04 | productive remediation `IMPLEMENTED_ON_MAIN`; Security/post-deploy verification still open |
 | Entitlement parent inventory / S1-R2-06 | `EVIDENCE_READY`; child remediation + Security verification remain |
 | User Lifecycle stable subscription identity | OPS provider evidence ready; independent Security re-verification remains |
-| OPS roadmap re-correlation PR #747 | merged into this baseline; corroborates OPS-owned S1 status without transferring closure authority to OPS |
+| OPS roadmap re-correlation PR #747 | merged; corroborates OPS-owned S1 status without transferring closure authority to OPS |
 
 Historical Owner Device/WebAuthn evidence does not reactivate retired M10 runtime or withdrawn cutover/handoff overlays.
 
@@ -78,16 +81,22 @@ Historical Owner Device/WebAuthn evidence does not reactivate retired M10 runtim
 
 ### 4.1 `SEC-ASSESS-ALIGN` — current-main alignment of the Security Assessment capability
 
-**State:** `OPEN — SECURITY OWNED`.
+**State:** `IMPLEMENTED_BRANCH / VALIDATION + PR PENDING`.
 
-The implemented skill still references the withdrawn Cross-Project Handoff Contract and lists NIST SP 800-115 as a standards baseline although current `/AGENTS.md` withdrew NIST from the repository Governance baseline.
+Branch `agent/security-assess-align-20260905` updates `.ai/skills/CAPITAL-AI-Security-Assessment.md` from v1.0.0 to v1.0.1 and adds regression coverage in `scripts/security/validateSecurityAssessment.test.mjs`.
 
-Required result:
+Implemented result:
 
-- current routing references use only current repository authority;
-- external security methodologies are clearly advisory/non-authorizing;
-- OWASP assessment methodology remains usable without being promoted to repository Authority;
-- authorization, safe testing defaults, exact evidence, owner/PVC routing, `NOT_TESTED != PASS`, Human risk acceptance and independent verification remain intact.
+- removed the withdrawn Cross-Project Handoff Contract dependency;
+- current routing references `/AGENTS.md`, `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md` for repository/project ownership navigation;
+- removed NIST SP 800-115 from the capability baseline, consistent with current `/AGENTS.md`;
+- retained OWASP WSTG/MASVS/MASTG/ASVS only as explicitly `ADVISORY_NON_AUTHORIZING` assessment methodologies;
+- foreign productive findings remain `REFERRED_NOT_EXECUTED` and route directly to the current Primary Owner without a withdrawn post-PVC overlay;
+- authorization, safe testing defaults, exact evidence, owner/PVC routing, `NOT_TESTED != PASS`, Human risk acceptance and independent verification remain intact;
+- focused regression coverage fails if the withdrawn handoff contract or NIST SP 800-115 reappears in the skill and asserts the current project mappings/advisory methodology marker;
+- current `ESS-0006` v1.1.0 was re-correlated and is semantically compatible with the assessment contract.
+
+Remaining exit gate: exact-head applicable validation where available, explicit Human/Owner PR-creation approval for the exact current main/head/title snapshot, hosted checks, then Human/CODEOWNER merge. The prior local isolated runner could not clone the repository because DNS resolution for `github.com` was unavailable; that execution remains `NOT RUN`, not PASS.
 
 ### 4.2 `SEC-VERIFY-ULS-001` — subscription-identity evidence return
 
@@ -157,7 +166,7 @@ No blanket Security `VERIFIED/CLOSED` result exists for the complete user lifecy
 
 ## 7. Security Assessment capability contract
 
-The adversarial assessment capability remains implemented. Current invariants:
+The adversarial assessment capability remains implemented and the branch alignment preserves these invariants:
 
 - active assessment requires explicit authorization for exact target/scope/test class;
 - default posture is non-destructive assessment-only;
@@ -166,9 +175,11 @@ The adversarial assessment capability remains implemented. Current invariants:
 - `NOT_TESTED != PASS`;
 - productive remediation remains with the Primary Owner;
 - `ACCEPTED_RISK` requires Human/Owner authority;
-- `VERIFIED` requires independently identifiable re-test evidence.
+- `VERIFIED` requires independently identifiable re-test evidence;
+- current project/PVC routing comes from the canonical mapping, not withdrawn post-PVC overlays;
+- external assessment methodologies are advisory/non-authorizing and cannot create repository Authority or mandatory remediation by themselves.
 
-`SEC-ASSESS-ALIGN` fixes stale authority/methodology references; it does not remove the capability.
+After Human merge of `SEC-ASSESS-ALIGN`, the stale authority/methodology-reference gap is closed at the contract level; no separate productive capability is introduced.
 
 ## 8. Finding and verification lifecycle
 
@@ -214,14 +225,16 @@ Where their status/routing language conflicts with current `/AGENTS.md`, canonic
 
 ## 10. Current correlation boundary
 
-This roadmap branch is bound to `main@255a89c532f3589e6d157d4f629a47251bd52670`, which includes merged OPS PR #747. At the resync check there are zero open PRs against `main`.
+This work is based on `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`. The current trust root is `/AGENTS.md` v2.7.1 and the applicable component specification is `ESS-0006` v1.1.0. At the resync check there are zero open PRs against `main`.
 
-PR #747 changed only OPS roadmap/work-package/claim paths. The Security branch changes only:
+The fresh scoped branch `agent/security-assess-align-20260905` changes only:
 
+- `.ai/skills/CAPITAL-AI-Security-Assessment.md`;
+- `scripts/security/validateSecurityAssessment.test.mjs`;
 - `docs/projects/security/ROADMAP.md`;
 - `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`.
 
-Thus changed-file overlap is none. Its formerly parallel S1 semantics are now current-main owner evidence and have been incorporated without turning OPS status into Security verification.
+No foreign project, productive runtime, provider, IAM, billing, deployment or external integration surface is modified.
 
 ## 11. Definition of Done for current Security backlog
 
@@ -237,8 +250,10 @@ CAPITAL-AI-SEC is current when:
 - historical M10/Owner Device evidence remains historical unless new current authority explicitly reopens it;
 - every `VERIFIED/CLOSED` claim records exact applicable identity/evidence.
 
+For `SEC-ASSESS-ALIGN`, implementation is complete on the scoped branch; remaining gates are exact-head validation/correlation, explicit PR-creation approval, hosted checks and Human/CODEOWNER merge.
+
 ## 12. PR / merge / production boundary
 
-Security roadmap/documentation changes remain CAPITAL-AI-SEC scope. Foreign productive remediation belongs to the target project.
+Security roadmap/documentation and Security-owned assessment-contract/test changes remain CAPITAL-AI-SEC scope. Foreign productive remediation belongs to the target project.
 
-PR creation requires separate explicit Human/Owner approval for the exact current-main and branch-head snapshot after final correlation. Merge remains Human/CODEOWNER-only. CI, roadmap status or Security evidence does not itself authorize Release, Production or protected provider mutation.
+PR creation requires separate explicit Human/Owner approval for the exact current-main, branch-head, scope and title snapshot after final correlation. Merge remains Human/CODEOWNER-only. CI, roadmap status or Security evidence does not itself authorize Release, Production or protected provider mutation.
