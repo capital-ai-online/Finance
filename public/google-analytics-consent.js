@@ -10,9 +10,7 @@
   var validPublisherId = /^ca-pub-\d+$/i.test(ADSENSE_PUBLISHER_ID) && ADSENSE_PUBLISHER_ID.indexOf('%') !== 0;
   var gaLoaded = false;
   var adsenseLoaded = false;
-  var firstConsentSync = true;
-  var lastAnalyticsConsent = false;
-  var lastMarketingConsent = false;
+  var privacyReloadScheduled = false;
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function () {
@@ -138,35 +136,48 @@
   }
 
   function schedulePrivacyReload() {
-    if (!window.location || typeof window.location.reload !== 'function') return;
+    if (privacyReloadScheduled || !window.location || typeof window.location.reload !== 'function') return;
+    privacyReloadScheduled = true;
     window.setTimeout(function () {
       window.location.reload();
     }, 0);
   }
 
-  function syncConsent() {
-    var analyticsAllowed = hasConsented('analytics');
-    var marketingAllowed = hasConsented('marketing');
+  function readConsentState() {
+    return {
+      analyticsAllowed: hasConsented('analytics'),
+      marketingAllowed: hasConsented('marketing'),
+    };
+  }
 
-    updateConsent(analyticsAllowed, marketingAllowed);
+  function applyConsentState(consentState) {
+    updateConsent(consentState.analyticsAllowed, consentState.marketingAllowed);
 
-    if (analyticsAllowed) loadGA();
+    if (consentState.analyticsAllowed) loadGA();
     else disableGA();
 
-    if (marketingAllowed) loadAdSense();
+    if (consentState.marketingAllowed) loadAdSense();
+  }
 
-    if (!firstConsentSync && (
-      (lastAnalyticsConsent && !analyticsAllowed) ||
-      (lastMarketingConsent && !marketingAllowed)
-    )) {
-      // Executed third-party scripts cannot be reliably unloaded. Reload after a persisted
-      // revocation so the next document starts in fail-closed Basic Consent Mode.
+  function syncConsent() {
+    applyConsentState(readConsentState());
+  }
+
+  function handleExplicitRevoke() {
+    var consentState = readConsentState();
+    applyConsentState(consentState);
+
+    // Third-party scripts cannot be reliably unloaded after they have executed.
+    // Reload only for CookieHub's explicit revoke lifecycle event and only when
+    // analytics or marketing was actually revoked after its script had loaded.
+    // Generic status-change events also occur while the consent UI is being edited
+    // and must never interrupt the dialog before the user's choice is persisted.
+    if (
+      (gaLoaded && !consentState.analyticsAllowed) ||
+      (adsenseLoaded && !consentState.marketingAllowed)
+    ) {
       schedulePrivacyReload();
     }
-
-    lastAnalyticsConsent = analyticsAllowed;
-    lastMarketingConsent = marketingAllowed;
-    firstConsentSync = false;
   }
 
   function syncWhenCookieHubReady(attempt) {
@@ -187,10 +198,11 @@
 
   setDefaultConsent();
 
-  ['cookiehub_onInitialise', 'cookiehub_onStatusChange', 'cookiehub_onAllow', 'cookiehub_onRevoke']
+  ['cookiehub_onInitialise', 'cookiehub_onStatusChange', 'cookiehub_onAllow']
     .forEach(function (eventName) {
       document.addEventListener(eventName, syncConsent);
     });
+  document.addEventListener('cookiehub_onRevoke', handleExplicitRevoke);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {

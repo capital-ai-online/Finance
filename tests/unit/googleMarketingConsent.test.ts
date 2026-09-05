@@ -98,7 +98,7 @@ function executeConsentRuntime() {
   }, { filename: 'public/google-analytics-consent.js' });
 
   function dispatch(name: string): void {
-    for (const listener of listeners.get(name) || []) listener({});
+    for (const listener of listeners.get(name) || []) listener({ type: name });
   }
 
   return {
@@ -120,6 +120,7 @@ describe('Google marketing consent runtime', () => {
     expect(runtime.scripts).toHaveLength(0);
     expect(runtime.listeners.has('cookiehub_onInitialise')).toBe(true);
     expect(runtime.listeners.has('cookiehub_onStatusChange')).toBe(true);
+    expect(runtime.listeners.has('cookiehub_onRevoke')).toBe(true);
 
     const defaultConsent = runtime.windowObject.dataLayer.find(
       (entry: IArguments) => entry[0] === 'consent' && entry[1] === 'default',
@@ -160,7 +161,7 @@ describe('Google marketing consent runtime', () => {
     expect(runtime.scripts[1].crossOrigin).toBe('anonymous');
   });
 
-  it('fails closed and reloads after a persisted consent revocation', () => {
+  it('does not reload on generic CookieHub status changes while the consent UI is being edited', () => {
     const runtime = executeConsentRuntime();
     runtime.dispatch('cookiehub_onInitialise');
 
@@ -170,6 +171,42 @@ describe('Google marketing consent runtime', () => {
 
     runtime.consent.analytics = false;
     runtime.dispatch('cookiehub_onStatusChange');
+
+    expect(runtime.windowObject['ga-disable-G-TEST123']).toBe(true);
+    expect(runtime.reloads).toBe(0);
+  });
+
+  it('does not reload for an explicit revoke event when analytics and marketing remain allowed', () => {
+    const runtime = executeConsentRuntime();
+    runtime.dispatch('cookiehub_onInitialise');
+
+    runtime.consent.analytics = true;
+    runtime.consent.marketing = true;
+    runtime.dispatch('cookiehub_onStatusChange');
+    expect(runtime.scripts).toHaveLength(2);
+
+    runtime.dispatch('cookiehub_onRevoke');
+
+    expect(runtime.windowObject['ga-disable-G-TEST123']).toBe(false);
+    expect(runtime.reloads).toBe(0);
+  });
+
+  it('fails closed and reloads once after CookieHub emits a relevant explicit revocation', () => {
+    const runtime = executeConsentRuntime();
+    runtime.dispatch('cookiehub_onInitialise');
+
+    runtime.consent.analytics = true;
+    runtime.consent.marketing = true;
+    runtime.dispatch('cookiehub_onStatusChange');
+    expect(runtime.scripts).toHaveLength(2);
+
+    runtime.consent.analytics = false;
+    runtime.consent.marketing = false;
+    runtime.dispatch('cookiehub_onStatusChange');
+    expect(runtime.reloads).toBe(0);
+
+    runtime.dispatch('cookiehub_onRevoke');
+    runtime.dispatch('cookiehub_onRevoke');
 
     expect(runtime.windowObject['ga-disable-G-TEST123']).toBe(true);
     expect(runtime.reloads).toBe(1);
