@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.2.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.33.0",
-  "date": "2026-09-02",
+  "version": "1.34.0",
+  "date": "2026-09-05",
   "canonicalLocation": "docs/adr",
   "rules": {
     "newRecordPattern": "ADR-NNNN-<slug>.md",
@@ -28,7 +28,8 @@
   "lifecycle": ["proposed","accepted","accepted-for-implementation","resolved","suspended","superseded","historical","rejected"],
   "migratedRecords": [
     {"authorityId":"AUTH-ADR-LEGACY-BRANDING-PANEL-0004","displayId":"ADR-0004","version":"1.0.0","date":"2026-07-10","lifecycle":"suspended","path":"docs/adr/suspended/ADR-0004-branding-and-panel-removal.md","legacyAliases":[],"supersedes":[],"note":"Suspended 2026-08-19 because the historical decision embedded obsolete platform-version projection semantics; retained as non-authorizing history."},
-    {"authorityId":"AUTH-ADR-FRONTEND-MODULE-INTEGRATION-0005","displayId":"ADR-0005","version":"1.1.0","date":"2026-08-20","lifecycle":"historical","path":"docs/adr/ADR-0005-frontend-module-integration.md","legacyAliases":[],"supersedes":[],"note":"Code revalidation 2026-08-20 found no active Module Federation remote, iframe/PostMessage integration, URL-token propagation, shared-auth LocalStorage contract or aif- Tailwind namespace. Retained as historical/non-authorizing; current IAM/CSP/CORS and FRONTEND_ARCH authorities govern current behavior."},
+    {"authorityId":"AUTH-ADR-FRONTEND-MODULE-INTEGRATION-0005","displayId":"ADR-0005","version":"1.1.0","date":"2026-08-20","lifecycle":"historical","path":"docs/adr/ADR-0005-frontend-module-integration.md","legacyAliases":[],"supersedes":[],"note":"Code revalidation 2026-08-20 found no active Module Federation remote, iframe/PostMessage integration, URL-token propagation, shared-auth LocalStorage contract or aif- Tailwind namespace. Retained as historical/non-authorizing; current IAM/CSP/CORS and FRONTEND_ARCH authorities govern current behavior. Full historical text is archived under docs/adr/historical/ while this path remains a controlled non-authorizing compatibility redirect."},
+    {"authorityId":"AUTH-ADR-PASSKEY-OWNER-PR-AUTHORIZATION-0066","displayId":"ADR-0066","version":"1.0.0","date":"2026-08-12","lifecycle":"historical","path":"docs/adr/historical/ADR-0066-passkey-only-owner-pr-authorization.md","legacyAliases":[{"displayId":"ADR-0066","path":"docs/adr/ADR-0066-passkey-only-owner-pr-authorization.md","lifecycle":"legacy-redirect","reason":"productive M10 AUTHORIZE_PR_CI was retired on 2026-09-01; former path remains only for historical link compatibility"}],"supersedes":[],"note":"Historical/non-authorizing M10 passkey PR-CI proposal. Productive M10 is RETIRED / ARCHIVED / OFF; future passkey PR authorization requires a new separately scoped Human/Owner decision."},
     {"authorityId":"AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16","displayId":"ADR-0085","version":"1.0.0","date":"2026-08-16","lifecycle":"accepted","path":"docs/adr/ADR-0085-ess-namespace-cleanup-and-registry-backfill.md","legacyAliases":[],"supersedes":[]},
     {"authorityId":"AUTH-ADR-VENDOR-PRIVACY-EVIDENCE-2026-08-19","displayId":"ADR-0086","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0086-vendor-privacy-evidence-governance.md","legacyAliases":[],"supersedes":[]},
     {"authorityId":"AUTH-ADR-PRIVACY-RETENTION-2026-08-19","displayId":"ADR-0092","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0092-privacy-retention-and-lifecycle-hardening.md","legacyAliases":[],"supersedes":[]},
