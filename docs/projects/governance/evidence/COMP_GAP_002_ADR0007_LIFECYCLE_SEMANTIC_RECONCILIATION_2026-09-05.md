@@ -5,8 +5,9 @@
 **Primary PVC:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
 **Work item:** `GOV-CHAT-062 / COMP-GAP-002`  
-**Branch:** `agent/governance-adr0007-lifecycle-semantics-20260905`  
+**Branch:** `agent/governance-adr0007-lifecycle-semantics-v2-20260905`  
 **Initial current-main baseline:** `main@948d0e56036fe9c7132f83212e21116499bb7ae8`  
+**Current re-correlation baseline:** `main@9a30f5cd87c68febdebc99d13447432ed712ab71` after Human merge of Compliance PR #753  
 **Decision state:** implemented on scoped branch; non-authorizing until Human/CODEOWNER merge
 
 ## Finding
@@ -14,6 +15,8 @@
 Legacy `docs/adr/ADR-0007-compliance-value-chain.md` declared `ACCEPTED` but had never been migrated into the current ADR Registry or Authority Registry. Its five-stage "Compliance Value Chain" combined Data ingestion/validation, Privacy/PII, FinTech/scoring, audit/traceability, Documentary/export behavior and broad legal/certification assertions in one omnibus architecture decision.
 
 Current repository ownership and authority no longer support that omnibus boundary. `CAPITAL-AI-COMP` is cross-cutting and owns no productive PVC merely because it assesses those concerns.
+
+Human-merged Compliance PR #753 changed only Compliance mapping/traceability files and remained a foreign assessment consumer. Its merge does not transfer ADR lifecycle authority away from `CAPITAL-AI-GOV / PVC-05` and does not conflict with this six-file Governance scope.
 
 ## Lifecycle decision
 
