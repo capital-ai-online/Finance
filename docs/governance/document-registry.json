@@ -631,11 +631,11 @@
       "documentId": "DOC-RUNBOOK-M10-PASSKEY-OWNER-PR-AUTH",
       "type": "runbook",
       "owner": "CAPITAL-AI Owner",
-      "authority": "ADR-0066 + ESS-0022",
+      "authority": "historical ADR-0066 + ESS-0022 / M10 retired 2026-09-01",
       "version": "1.0.0",
       "language": "mixed",
-      "lifecycle": "approved",
-      "path": "docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md"
+      "lifecycle": "historical",
+      "path": "docs/archive/governance/historical/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md"
     },
     {
       "documentId": "DOC-EVIDENCE-M10-CLOSURE-2026-08-19",
