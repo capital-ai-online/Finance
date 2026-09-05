@@ -2,7 +2,7 @@
 
 **Document ID:** `DOC-COMP-EVIDENCE-REPORT-2026-08-31`  
 **Role:** evidence assessment / non-authorizing  
-**Version:** 1.6.1  
+**Version:** 1.6.2  
 **Date:** 2026-09-05  
 **Baseline:** `main@9bedefa8e1baa55224b11d214b712132b02dd5b8`  
 **Scope:** COMP-04 evidence-based assessment of the 23 `READY_NOW` requirements
@@ -24,7 +24,7 @@ Approved assessment vocabulary:
 - Human-merged PR #754 supplies current Google consent runtime/test evidence.
 - Human-merged PR #755 registered ADR-0007 as `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007`, lifecycle `historical`, explicitly non-authorizing.
 - Human-merged PR #757 revalidated ESS-0006 v1.1.0 as a bounded component specification for the existing Security and Compliance technical boundaries, explicitly preserving separate SEC verification, COMP assessment and foreign Primary Owner remediation.
-- Verified-main workflow `33992951411` successfully built, attested, deployed and post-deploy verified exact `main@a5026e194e243d556c91e2749da8f405e946c025`. PR #757 is a Governance/ESS documentation/registry delta; no separate production conclusion is inferred here without exact current-main deployment evidence.
+- Verified-main workflow `33993594609` successfully completed both `build-and-test` and `Deployment verifiziert / Render-Produktion` for exact current main `9bedefa8e1baa55224b11d214b712132b02dd5b8`, including repository integrity, production dependency audit, TypeScript, unit tests, production build, CSP/predeploy checks, Docker hardening/image, provenance signing/verification, exact-build artifact reuse, Render deployment, deployed-commit identity verification and health verification.
 - The COMP-04 branch is resynchronized with current main before PR readiness and retains only bounded COMP-owned net changes.
 - `CAPITAL-AI-COMP` remains cross-cutting with no productive `PVC-*` ownership.
 
@@ -53,9 +53,9 @@ No `NON_COMPLIANT` status is assigned because no concrete control failure is dem
 | `REQ-COMP-003` | **COMPLIANT** | Work uses `agent/compliance-comp-04-reassessment-baseline-20260905`, a project-qualified scoped branch; no direct-main mutation. | Per-work-item evidence; future work requires its own branch. |
 | `REQ-COMP-004` | **COMPLIANT** | Main, branch merge-base, open PRs and overlap were repeatedly re-correlated through Human merges #754, #755 and #757; the branch is resynchronized to the resulting current main before PR readiness. | Must be repeated immediately before PR creation. |
 | `REQ-COMP-005` | **PARTIALLY_COMPLIANT** | `CTRL-SDLC-PR-CREATE-001` is current; prior repository PR metadata demonstrates exact main/head gate handling; no COMP-04 PR exists yet. | Every future PR needs fresh exact-state Human approval; pre-PR evidence is not approval. |
-| `REQ-COMP-006` | **COMPLIANT** | PR #753 exact-head hosted CI/Governance/Container-Security completed successfully; subsequent main states have independent hosted validation evidence. | Exact-identity evidence only; future COMP-04 PR head requires fresh hosted checks after PR creation. |
+| `REQ-COMP-006` | **COMPLIANT** | PR #753 exact-head hosted CI/Governance/Container-Security completed successfully; exact current main `9bedefa8...` also has successful verified-main hosted validation and deployment evidence. | Exact-identity evidence only; future COMP-04 PR head requires fresh hosted checks after PR creation. |
 | `REQ-COMP-007` | **COMPLIANT** | PR #753, #754, #755 and #757 are Human-merged; `/AGENTS.md` retains Human/CODEOWNER-only merge authority. | Demonstrates observed/current merge boundary, not every historical/future PR. |
-| `REQ-COMP-008` | **COMPLIANT** | Verified-main is the sole production promotion path. Workflow `33992951411` successfully built, attested, deployed and post-deploy verified exact `main@a5026e194e243d556c91e2749da8f405e946c025`; the later PR #757 Governance/ESS delta is not used to invent a new production assertion. | Release-specific; exact current-main production identity must be separately evidenced when material to a later conclusion. |
+| `REQ-COMP-008` | **COMPLIANT** | Verified-main is the sole production promotion path. Workflow `33993594609` successfully built, attested, deployed and post-deploy verified exact current main `9bedefa8e1baa55224b11d214b712132b02dd5b8`. | Release-specific; future main states require their own exact-SHA verified-main evidence. |
 | `REQ-COMP-009` | **PARTIALLY_COMPLIANT** | `CTRL-SEC-LEASTPRIV-001`; repository evidence includes RLS, service-role separation and fail-closed consent/auth patterns. | Current Security/OPS roadmaps retain unresolved findings/evidence, so no blanket least-privilege closure. Foreign remediation stays with actual Primary Owner. |
 | `REQ-COMP-010` | **PARTIALLY_COMPLIANT** | `CTRL-SEC-SECRET-001`; covered flows document encrypted OAuth tokens, service-role-only access and no browser token disclosure. | No fresh repository-wide secret-exposure/scanner result covering every secret-bearing surface. |
 | `REQ-COMP-011` | **PARTIALLY_COMPLIANT** | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001`; COMP artifacts use canonical `docs/compliance/**` placement and stable `DOC-*` identities. | `COMP-GAP-008` persists: Compliance document-registry treatment/ownership is not fully resolved. |
@@ -70,7 +70,7 @@ No `NON_COMPLIANT` status is assigned because no concrete control failure is dem
 | `REQ-COMP-029` | **COMPLIANT** | Current Compliance process requires scope-adequate evidence before positive conclusions; this assessment preserves owner/legal/evidence gaps instead of promoting mappings, merges or roadmap claims into proof. ESS-0006 v1.1.0 independently reinforces that missing/stale Evidence is not PASS and Security/Compliance assurance roles remain separate. | Compliance-process control only; does not prove every underlying domain requirement. |
 | `REQ-COMP-030` | **PARTIALLY_COMPLIANT** | COMP-08 change-impact flow was exercised after each material current-main governance/runtime change, including the final ESS-0006 return from PR #757. | No complete automated proof that every material provider/model/data/market/user/purpose/deployment/content/authority change is detected before evidence stales. |
 | `REQ-COMP-035` | **PARTIALLY_COMPLIANT** | Document controls, stable `DOC-*` identities, privacy request/accountability records and retention metadata provide record/lifecycle evidence. | `COMP-GAP-008` remains; external record-keeping duties remain regime/scope-specific. |
-| `REQ-COMP-036` | **PARTIALLY_COMPLIANT** | Verified-main workflow provides successful exact-SHA release/deployment evidence for `a5026e...`; rollback remains an explicit Release/OPS capability. | No fresh independent rollback execution/test was established; deployment PASS alone is insufficient for full rollback evidence. |
+| `REQ-COMP-036` | **PARTIALLY_COMPLIANT** | Verified-main workflow `33993594609` provides successful exact-SHA release path, provenance, Render deployment and verified production identity for current main `9bedefa8e1baa55224b11d214b712132b02dd5b8`. Rollback remains an explicit Release/OPS capability. | No fresh independent rollback execution/test was established; deployment PASS alone is insufficient for full rollback evidence. |
 
 ## Assessment sets
 
@@ -100,7 +100,7 @@ No unrelated finding closes because ADR-0007 or ESS-0006 was corrected, another 
 
 ## Evidence sources used
 
-`/AGENTS.md` v2.7.1; project/PVC mappings; Compliance requirements/mapping; current control/authority/ADR/ESS registries; ESS-0006 v1.1.0; `STANDARDS_CROSSWALK.md`; `privacyPolicy.ts`; `server/privacy.ts`; privacy migrations and production evidence; relevant GOV/OPS/DATA/FINTECH/SEC/DOC roadmaps; PR #753 evidence; Human-merged PR #754, #755 and #757; verified-main workflow `33992951411` for exact `a5026e...` production evidence.
+`/AGENTS.md` v2.7.1; project/PVC mappings; Compliance requirements/mapping; current control/authority/ADR/ESS registries; ESS-0006 v1.1.0; `STANDARDS_CROSSWALK.md`; `privacyPolicy.ts`; `server/privacy.ts`; privacy migrations and production evidence; relevant GOV/OPS/DATA/FINTECH/SEC/DOC roadmaps; PR #753 evidence; Human-merged PR #754, #755 and #757; verified-main workflow `33993594609` for exact current-main build/test/provenance/deployment/health evidence.
 
 ## Foreign evidence rule
 
