@@ -6,8 +6,8 @@
 **Version:** `2.4.0`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-05`  
-**Correlation baseline:** `main@e96c8d13d9ef3a7d566fb579e93fc680482d07c3`  
-**Open PR baseline:** PR #746 `CAPITAL-AI-COMP` changes only `docs/compliance/CAPITAL-AI-COMP/inventory/COMPLIANCE_REQUIREMENTS_INVENTORY.md`; no changed-file overlap with this OPS work item and no competing OPS authority  
+**Correlation baseline:** `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6`  
+**Open PR baseline:** zero open PRs against `main`; merged PR #746 changed only `docs/compliance/CAPITAL-AI-COMP/inventory/COMPLIANCE_REQUIREMENTS_INVENTORY.md` and is included in this resynchronized baseline without OPS changed-file/authority conflict  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 ## 1. Objective
@@ -116,12 +116,12 @@ No Security finding is marked VERIFIED by this roadmap.
 
 The former Governance dependency is satisfied on current main:
 
-- PR #743 is merged at `main@e96c8d13d9ef3a7d566fb579e93fc680482d07c3`;
+- current `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6` contains Human-merged PR #743;
 - `ADR-0060` is `v1.1.0 ACCEPTED / ACTIVE`;
 - `ESS-0019` is `v1.2.0 ACCEPTED`;
 - repository architecture routes productive DR-03 provider-adapter/execution work to CAPITAL-AI-OPS after terminal DR-02B/GOV-03.
 
-This removes the former Governance block but does not make DR-03 the highest OPS priority. `OPS-06-SEC-03` remains an unresolved P1/HIGH current-main gap and therefore precedes DR-03.
+The subsequent merged PR #746 is confined to the CAPITAL-AI-COMP requirements inventory and introduces no competing OPS owner, execution authority or changed-file overlap. This removes the former Governance block but does not make DR-03 the highest OPS priority. `OPS-06-SEC-03` remains an unresolved P1/HIGH current-main gap and therefore precedes DR-03.
 
 ### DR-03 reuse/gap disposition
 
@@ -164,7 +164,7 @@ The following repository-backed OPS work items referenced by recent OPS executio
 | User Lifecycle OPS closeout | PR #729 merged | DONE_MAIN for OPS repository/read-only-provider closeout; provider E2E unavailable evidence and Security verification remain explicit external/open gates |
 | GOV-03 / DR-02B authority reconciliation | PR #743 merged under CAPITAL-AI-GOV | FOREIGN_DEPENDENCY_TERMINAL; enables DR-03 correlation but transfers no Governance ownership to OPS |
 
-Four OPS claim files still said `active` despite their own merge/close release conditions: Alpha Vantage V2, Fatal Process Handling, R-Class No-PR-Build and User Lifecycle Closeout. This roadmap reconciliation treats them as stale coordination metadata and terminalizes them in the same bounded branch. Work claims are coordination metadata only and do not create repository authority.
+Four OPS claim files still said `active` despite their own merge/close release conditions: Alpha Vantage V2, Fatal Process Handling, R-Class No-PR-Build and User Lifecycle Closeout. This roadmap reconciliation terminalizes those stale coordination records in the bounded OPS branch. Work claims are coordination metadata only and do not create repository authority.
 
 GA4/Consent production verification remains evidence-only: repository code provides the inert `ga-measurement-id` metadata/consent bridge contract, but browser Network/GA4 Realtime behavior is not proven by repository state alone. No completion claim is derived from chat-only/manual runtime observations.
 
