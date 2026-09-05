@@ -25,6 +25,7 @@ import { breakGlassRouter } from '../systemadmin/breakGlassRouter';
 import { ownerAuthorizationRouter } from '../ownerAuthorization/router';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';
+import { realtimeAiNewsfeedEntitlement } from '../middleware/realtimeAiNewsfeedEntitlement';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
 import { createLegacyScoringCompatibilityRouter } from './legacyScoringCompatibilityRoutes';
@@ -110,7 +111,7 @@ export function registerApplicationRoutes(
   app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);
   app.use('/api/systemadmin/break-glass', breakGlassRouter);
   app.use('/api/owner-authorization', ownerAuthorizationRouter);
-  app.use('/api/news', newsRouter);
+  app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);
   app.use('/api/registry', verifiedAssetDisplayRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);
