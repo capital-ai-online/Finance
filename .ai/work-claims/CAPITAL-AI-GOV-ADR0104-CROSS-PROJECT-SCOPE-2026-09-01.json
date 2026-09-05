@@ -1,8 +1,12 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-ADR0104-CROSS-PROJECT-SCOPE-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
+  "lifecycle": "archived",
+  "activeWriter": false,
+  "authorizing": false,
+  "archivedAt": "2026-09-05T15:48:00Z",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -25,7 +29,7 @@
     "sessionEnd": "2026-09-02T02:46:32Z",
     "duration": "PT8H",
     "deviceBound": false,
-    "boundary": "This active v1.3.1 session authorizes only the GOV amendment. GOV+OPS execution becomes effective only after timely Human Merge of v1.4.0."
+    "boundary": "Historical session metadata only. The related PR was merged and later post-PVC/project-routing overlays were withdrawn; this claim is non-authorizing."
   },
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-ADR0104-CROSS-PROJECT-SCOPE-2026-09-01.json",
@@ -42,6 +46,8 @@
     "scripts/governance/validateGovernanceControlPlane.mjs",
     "tests/unit/governanceAuthorityConsistency.test.ts"
   ],
-  "externalMutationScope": "GitHub branch commits and PR creation only; no merge, deployment, OPS runtime, device enrollment or production mutation.",
-  "releaseCondition": "Release when the associated PR is Human-merged, closed, superseded or abandoned."
+  "externalMutationScope": "Historical scope only; no current mutation authority.",
+  "releaseCondition": "Release when the associated PR is Human-merged, closed, superseded or abandoned.",
+  "releasedAt": "2026-09-01T19:38:06Z",
+  "releaseReason": "Release condition was satisfied when PR #699 Human-merged on 2026-09-01. The stale active/exclusive metadata is terminalized; subsequent current-main Governance withdrew the post-PVC/project-routing overlay and this claim remains coordination history only."
 }
