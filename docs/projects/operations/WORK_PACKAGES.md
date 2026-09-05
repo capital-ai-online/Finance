@@ -54,3 +54,21 @@ Current-main recorrelation includes merged PR #683 (User Lifecycle Harness), mer
 3. Foreign productive code identified during OPS work is handed off and remains `REFERRED_NOT_EXECUTED` locally.
 4. HIGH/CRITICAL protected changes retain all applicable Human/Owner gates.
 5. Runtime mutation and provider mutation are never implied by a documentation or code package.
+
+## User Lifecycle current-main closeout — 2026-09-05
+
+`OPS-ULS-CLOSEOUT-2026-09-05` is the current bounded OPS package for the remaining User Lifecycle evidence/coordination work. Canonical package/evidence:
+
+- `work-packages/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md`;
+- `evidence/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md`.
+
+Current disposition against `main@0c595dc4f07fc279eabec272ca6046967f3b83e8`:
+
+- repository User Lifecycle harness and stable-user-ID migration: implemented on main;
+- connected Supabase subscription projection: still old email-based function -> `PRODUCTION_GATE_REQUIRED`;
+- historical Supabase migration baseline: incomplete in repository -> local full schema replay `NOT_AVAILABLE` until safely imported/correlated;
+- Supabase Local/Mailpit and Stripe sandbox/Test Clock E2E: `NOT_AVAILABLE` in the current execution surface;
+- Annual Pro price drift: retained as foreign shared/product-contract work; OPS does not mutate it;
+- Security closure: remains CAPITAL-AI-SEC; no OPS `VERIFIED/CLOSED` assertion.
+
+This closeout does not absorb the separate `OPS-02-SEC-05` Stripe redirect remediation or any foreign `S1-R2-06` child implementation.
