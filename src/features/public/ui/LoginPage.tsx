@@ -5,7 +5,7 @@ import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 import {
   PASSWORD_RECOVERY_QUERY_PARAM,
   isPasswordRecoveryLocation,
-} from '../../../app/auth/sessionBootstrap';
+} from '../auth/passwordRecovery';
 import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
 
 interface LoginPageProps {
