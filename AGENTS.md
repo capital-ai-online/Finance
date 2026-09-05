@@ -188,6 +188,16 @@ Separate explicit Human/Owner authorization remains required for protected exter
 
 No agent may expand its own authority, mandate, permissions or approval scope.
 
+### External tool / connector availability boundary (`CTRL-GOV-TRUST-001`, `CTRL-SEC-LEASTPRIV-001`)
+
+Repository governance MUST NOT install, uninstall, connect, disconnect, enable, disable or modify permissions of ChatGPT apps, MCP hosts, GitHub connectors or other provider execution-host integrations.
+
+For this boundary, **fail closed** means the affected protected repository action stops and the conflict is reported to the Human/Owner. Fail-closed handling MUST NOT be implemented by changing external tool availability, connector state, OAuth state, app permissions or execution-host configuration.
+
+Read-only repository discovery and correlation through an already connected GitHub connector remain permitted and SHOULD continue where required by this trust root.
+
+Any connector/app installation, removal, connection, disconnection, permission change or equivalent execution-host mutation requires a separate explicit Human/Owner request that identifies the exact external integration and the intended mutation. Repository policy, a validator finding, a missing capability or a protected-action conflict does not by itself authorize such a mutation.
+
 ## 7. Current PR-CI and Production Deployment State
 
 The former M10 Passkey `AUTHORIZE_PR_CI` productive runtime is **RETIRED / OFF**. Human Merge of PR #691 removed the productive M10 runtime, router/UI authorization path, workflow gate/bypass surfaces and active production authorization state while retaining historical evidence.
@@ -232,6 +242,8 @@ Standards alignment does not prove ISO certification, legal applicability or reg
 ## 11. Reuse and External Components
 
 Before custom implementation, evaluate in order: existing repository/native capability; existing suitable connected plugin/platform capability; specialized plugin; maintained/security-reviewed/license-compatible open source; then custom implementation only where lower-risk alternatives do not fit.
+
+This reuse order permits discovery and evaluation only. It does not authorize installing, connecting, enabling, disabling or changing permissions of any external app, connector, MCP host or execution-host integration; those mutations remain subject to the explicit boundary in section 6.
 
 ## 12. Development Entry — Screening Ranking Board (homogeneous value chain)
 
