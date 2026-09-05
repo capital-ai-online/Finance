@@ -12,18 +12,20 @@
 
 The production service can be healthy at the HTTP/process layer while the browser application does not become usable. This failure class is already recognized by Accepted ADR-0040: a successful Vite build, healthy Render process and HTTP 200 response do not prove that the React application bootstraps in a real browser.
 
-The PR #736 validation path demonstrated two concrete control gaps:
+The investigation found three concrete startup/control gaps:
 
-1. `src/features/public/ui/LoginPage.tsx` introduced a relative import into `src/app/**`, although the canonical Frontend architecture explicitly prohibits `features -> app` dependencies. The existing architecture validator did not enforce that rule and therefore returned PASS.
-2. Hosted validation executed TypeScript, the unit suite, production build, built-asset/CSP response tests and predeploy checks, but did not execute the built client in Chromium. This does not satisfy ADR-0040's existing browser-render evidence requirement.
+1. `src/features/public/ui/LoginPage.tsx` introduced a relative import into `src/app/**` in PR #736, although the canonical Frontend architecture explicitly prohibits `features -> app` dependencies. The existing architecture validator did not enforce that rule and therefore returned PASS.
+2. The root path already contained an older and more fundamental `features -> app` cycle: `src/app/routing/AppRoutes.tsx` lazy-loaded `LandingPage`, while `src/features/public/ui/LandingPage.tsx` imported the app-owned `Dashboard` and `UserSession` contracts back from `src/app/**`. This coupled the public root feature to its own application-composition caller and made `/` vulnerable to bundle/chunk/bootstrap regressions that the validator could not see.
+3. Hosted validation executed TypeScript, the unit suite, production build, built-asset/CSP response tests and predeploy checks, but did not execute the built client in Chromium. This does not satisfy ADR-0040's existing browser-render evidence requirement.
 
-The incident must therefore be treated as a startup-resilience and validation-drift problem, not as a reason to permanently remove the password-recovery feature.
+The incident must therefore be treated as a startup-resilience, dependency-cycle and validation-drift problem, not as a reason to permanently remove the password-recovery feature.
 
 ## Frontend remediation in this branch
 
 - Password-recovery URL ownership is moved to `src/features/public/auth/passwordRecovery.ts`.
 - `LoginPage.tsx` consumes its own feature contract and no longer depends on `src/app/**`.
 - `src/app/auth/sessionBootstrap.ts` consumes the feature-owned recovery state in the permitted `app -> features` direction while retaining the temporary-recovery-session bootstrap suppression.
+- The public visitor session and Dashboard composition move into `src/app/routing/AppRoutes.tsx`; `LandingPage.tsx` becomes a presentation-only public feature receiving the already-composed preview as a `ReactNode`. This removes the `AppRoutes -> LandingPage -> app/Dashboard` reverse dependency/cycle without changing the public preview behavior.
 - `scripts/automation/validateFrontendArchitecture.ts` now resolves relative imports under `src/features/**` and rejects any dependency into `src/app/**`; shared-layer checks are also resolved against `app`, `features` and legacy `components` targets.
 - `tests/unit/passwordRecoveryLogin.test.ts` locks the recovery dependency boundary and recovery-session behavior.
 - `scripts/automation/verifyFrontendBrowserBootstrap.ts` provides a dependency-free Chromium/Chrome smoke harness for the built `dist` bundle. It checks desktop root, desktop login and Android/mobile login scenarios and fails when the React root remains empty or only the route-loading fallback settles.
