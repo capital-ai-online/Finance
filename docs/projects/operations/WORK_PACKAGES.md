@@ -32,7 +32,7 @@ Current classifications:
 
 Foreign productive remediation is `REFERRED_NOT_EXECUTED`; CAPITAL-AI-SEC remains the independent verifier.
 
-Current-main recorrelation includes merged PR #683 (User Lifecycle Harness), merged PR #688 (terminal claim release) and merged PR #689 (ADR-0104 v1.3 slot reset). None changes the identified productive entitlement entry points or child ownership. Open PR #691 retires the M10 runtime and has zero changed-file/semantic overlap with this package.
+Current-main recorrelation includes merged PR #683 (User Lifecycle Harness), merged PR #688 (terminal claim release) and merged PR #689 (ADR-0104 v1.3 slot reset). None changes the identified productive entitlement entry points or child ownership.
 
 ## Core OPS packages retained from V2.1
 
@@ -54,3 +54,25 @@ Current-main recorrelation includes merged PR #683 (User Lifecycle Harness), mer
 3. Foreign productive code identified during OPS work is handed off and remains `REFERRED_NOT_EXECUTED` locally.
 4. HIGH/CRITICAL protected changes retain all applicable Human/Owner gates.
 5. Runtime mutation and provider mutation are never implied by a documentation or code package.
+
+## User Lifecycle current-main closeout — 2026-09-05
+
+`OPS-ULS-CLOSEOUT-2026-09-05` is the bounded OPS package for the remaining User Lifecycle repository/evidence work. Canonical package/evidence:
+
+- `work-packages/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md`;
+- `evidence/USER_LIFECYCLE_OPS_CLOSEOUT_2026-09-05.md`.
+
+Current disposition against `main@687105ffe90f649c8ada6310976826c9ea625f27`:
+
+- repository User Lifecycle harness: implemented on main;
+- stable-user-ID subscription migration: implemented in repository and now confirmed read-only on connected Supabase Production;
+- remote migration history contains `user_lifecycle_subscription_identity_authority` as `20260905103413`;
+- historical Supabase migration baseline remains incomplete in repository because remote history begins at `20260709160230`, before checked-in migrations;
+- full clean local application-schema replay remains `NOT_AVAILABLE` until that historical baseline is safely correlated;
+- Supabase Local/Mailpit and Stripe sandbox/Test Clock E2E remain `NOT_AVAILABLE` in the current execution surface;
+- `public.subscriptions` RLS is enabled with authenticated own-row SELECT and explicit service-role access;
+- Supabase leaked-password protection remains disabled and requires a separate protected provider-config decision to change;
+- Annual Pro price drift remains foreign shared/product-contract work; OPS does not mutate it;
+- Security closure remains CAPITAL-AI-SEC; no OPS `VERIFIED/CLOSED` assertion.
+
+The stale Auth Lifecycle writer from merged PR #722 is terminalized by this package. This closeout does not absorb the separate `OPS-02-SEC-05` Stripe redirect remediation or any foreign `S1-R2-06` child implementation.
