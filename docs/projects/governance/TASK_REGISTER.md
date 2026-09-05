@@ -1,96 +1,101 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
-**Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-01  
-**Original consolidation baseline:** `main@64a3415781a50177798cbe9404b1855735e5371a`  
-**Current project-folder correlation baseline:** `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`  
-**User-Lifecycle orchestration baseline:** `main@57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`  
-**Role:** execution backlog / traceability projection — non-authorizing  
-**Primary Owner:** `CAPITAL-AI-GOV` for local rows only
+**Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-05, correlated to repository-visible implementation/PR evidence  
+**Current correlation baseline:** `main@e7765c98726d96a79e9fe969cc9a23a2b8f7fa14`  
+**Role:** chat/backlog traceability projection — non-authorizing  
+**Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
+**Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
 
 ## Status vocabulary
 
-- `DONE_MAIN` — implementation is already merged on current main.
-- `IN_CANDIDATE` — local GOV work is part of the current scoped candidate.
-- `OPEN_GOV` — local GOV follow-up remains after this candidate.
-- `REFERRED_NOT_EXECUTED` — foreign project/Primary Owner must execute.
-- `REFERRED` — foreign work has target-side evidence/acceptance or merged return evidence but remains outside GOV execution authority.
-- `READY_FOR_HANDOFF` — the current correlation allows an atomic foreign-owner handoff; implementation remains foreign.
-- `DEPENDENCY` — cross-cutting participant/evidence dependency.
-- `HISTORICAL_REUSE_ONLY` — old branch/artifact is input, not a current merge source.
+- `DONE_MAIN` — implementation/decision is merged and visible on the correlation baseline.
+- `OPEN_GOV` — bounded CAPITAL-AI-GOV work remains.
+- `FOREIGN_PARTIAL` — target owner implemented part; explicit evidence/verification remains.
+- `FOREIGN_OPEN` — target project/Primary Owner still owns execution.
+- `DEPENDENCY` — GOV closeout waits on current-main evidence from another owner/verifier.
+- `DEFERRED_OWNER_DECISION` — no implementation until Human/Owner or multi-owner architecture decision.
+- `SUPERSEDED_CURRENT_MODEL` — historical chat task was replaced/withdrawn by current Authority.
+- `CONTINUOUS` — maintenance/assessment obligation.
+- `HISTORICAL_REUSE_ONLY` — historical branch/evidence is input, not current merge/authority source.
 
 ## Canonical task register
 
-| ID | Task | Owner | Status | Repository treatment / exit gate |
+| ID | Task | Owner | Current status | Current-main treatment / exit gate |
 |---|---|---|---|---|
-| `GOV-CHAT-001` | Establish `docs/projects/` as canonical non-authorizing project execution surface | CAPITAL-AI-GOV | `DONE_MAIN` | established via PR #630; maintained by current project model |
-| `GOV-CHAT-002` | Introduce qualified `PVC-01..PVC-18` Project Value Chain ownership namespace | CAPITAL-AI-GOV | `DONE_MAIN` | `PROJECT_VALUE_CHAIN.md`; no technical `SC-MD-SPT-0001` rewrite |
-| `GOV-CHAT-003` | Consolidate Platform Director `PVC-05` and Governance scope without self-approval/self-elevation | CAPITAL-AI-GOV | `DONE_MAIN` | `AUTHORITY_AND_DECISION_BOUNDARIES.md`; ADR-0096/AGENTS remain controlling |
-| `GOV-CHAT-004` | Integrate DevelopmentChain into project architecture | CAPITAL-AI-OPS | `REFERRED` | `docs/projects/operations/**` present; subsequent OPS remediation remains owner-scoped |
-| `GOV-CHAT-005` | Preserve M0-M10 as historical DevelopmentChain maturity evidence; keep M10 suspended | CAPITAL-AI-OPS / GOV controls | `REFERRED` | OPS project surface preserves DevelopmentChain; no M10 reactivation without separate Owner decision |
-| `GOV-CHAT-006` | Assess financial technical `VC-*` -> `FVC-*` namespace migration | GOV assessment + DATA/FINTECH/DOC/QM/OPS | `REFERRED_NOT_EXECUTED` | P3 assessment complete; coordinated multi-owner decision/test plan required |
-| `GOV-CHAT-007` | Keep stable technical authority identity `SC-MD-SPT-0001` during any future stage-label migration | affected technical owners | `REFERRED_NOT_EXECUTED` | P3 invariant; historical evidence remains immutable |
-| `GOV-CHAT-008` | Migrate CLIENT project label `VC-01` -> `PVC-01` | CAPITAL-AI-CLIENT | `REFERRED_NOT_EXECUTED` | CLIENT-owned docs update; no GOV foreign edit |
-| `GOV-CHAT-009` | Create/migrate `docs/projects/operations/**` | CAPITAL-AI-OPS | `REFERRED` | canonical OPS project surface is present on main |
-| `GOV-CHAT-010` | Converge DATA/DOC/FINTECH and cross-cutting project navigation under `docs/projects/<project>/` | respective project owners | `DONE_MAIN` | Documentary/Security/Compliance/Frontend/SEO/Social project surfaces are materialized; relevant OPS/FE/COMP writers were released via PR #661 |
-| `GOV-CHAT-011` | Graph complete process chain and dependencies in Admin Panel | CAPITAL-AI-CLIENT + CAPITAL-AI-OPS; GOV semantic contract | `REFERRED_NOT_EXECUTED` | `ADMIN_PANEL_PROCESS_GRAPH_HANDOFF.md`; UI/runtime implementation outside GOV |
-| `GOV-CHAT-012` | Maintain compact Governance/application component assessment | CAPITAL-AI-GOV | `OPEN_GOV` | reassess after architecture or authority changes |
-| `GOV-CHAT-013` | Compact PR template and hide explanatory comments from visible PR body | CAPITAL-AI-GOV | `DONE_MAIN` | merged PR #628 |
-| `GOV-CHAT-014` | Restore direct PR creation through Chat/API/MCP/Connector under exact-snapshot rules | CAPITAL-AI-GOV | `DONE_MAIN` | merged PR #629; Human-only merge remains unchanged |
-| `GOV-CHAT-015` | Clean old GOV writer claims / stop parallel GOV merge sources | CAPITAL-AI-GOV | `DONE_MAIN` | historical GOV claims terminalized where completed; new work uses scoped claims |
-| `GOV-CHAT-016` | Close merged PR #629 claim that remained `active` on main | CAPITAL-AI-GOV | `DONE_MAIN` | terminalized in merged GOV follow-up |
-| `GOV-CHAT-017` | Branch names must include project-folder name + compact task | CAPITAL-AI-GOV governance rule owner | `DONE_MAIN` | `/AGENTS.md` 2.2.1 + `CTRL-SDLC-BRANCH-001` enforce convention |
-| `GOV-CHAT-018` | Keep PR titles/bodies in project-qualified German presentation where repository automation does not require fixed machine text | CAPITAL-AI-GOV / relevant project owner | `OPEN_GOV` | capture as versioned PR-convention clarification if repository-wide enforcement is desired |
-| `GOV-CHAT-019` | Build/test only after PR where cost-control policy permits; avoid unnecessary pre-PR paid CI | existing Governance/CI authority | `DONE_MAIN` | `/AGENTS.md` requires smallest sufficient checks and cost control |
-| `GOV-CHAT-020` | Sync candidate against current main and correlate open PRs/writers before PR | existing Governance authority | `DONE_MAIN` | `CTRL-SDLC-SYNC-001` / `CTRL-SDLC-PR-CREATE-001` |
-| `GOV-CHAT-021` | Maintain before/after or migration matrix for GOV structural changes | CAPITAL-AI-GOV | `DONE_MAIN` | P1 matrix plus PR-specific matrix |
-| `GOV-CHAT-022` | Preserve explicit cross-project handoff markers and target-roadmap/evidence gates | CAPITAL-AI-GOV coordination | `DONE_MAIN` | handoff contract remains controlling |
-| `GOV-CHAT-023` | Do not create duplicate ADR/ESS/AUTH/CTRL identities merely for project-folder assignment | CAPITAL-AI-GOV | `DONE_MAIN` | no new authority identity introduced |
-| `GOV-CHAT-024` | Retain old GOV branches as historical/reuse inputs only | CAPITAL-AI-GOV | `DONE_MAIN` | no direct stale-branch merge |
-| `GOV-CHAT-025` | Maintain one canonical current CAPITAL-AI-GOV roadmap/task surface instead of parallel current roadmap variants | CAPITAL-AI-GOV | `DONE_MAIN` | `ROADMAP.md` + this register remain current GOV project surfaces |
-| `GOV-CHAT-026` | Emit bounded post-PR chat handoff with at most two prioritized next steps | existing Governance authority | `DONE_MAIN` | `CTRL-SDLC-CHAT-HANDOFF-001` |
-| `GOV-CHAT-027` | Reuse repository/native/plugin/open-source capability before custom implementation | existing Governance authority + affected owner | `DONE_MAIN` | `/AGENTS.md` reuse order applies |
-| `GOV-CHAT-028` | Resolve canonical project-folder identities for implemented cross-cutting projects SEC/COMP/FE/SEO/SOCIAL | CAPITAL-AI-GOV | `DONE_MAIN` | target project surfaces now materialized on main |
-| `GOV-CHAT-029` | Terminalize stale merged `CAPITAL-AI-SEC-PVC-HANDOFF-CORRELATION-2026-08-31` writer metadata | CAPITAL-AI-SEC | `DONE_MAIN` | claim is `released`; preserve PR #631 evidence |
-| `GOV-CHAT-030` | Materialize `docs/projects/security/**` navigation | CAPITAL-AI-SEC | `DONE_MAIN` | merged via PR #647 |
-| `GOV-CHAT-031` | Materialize `docs/projects/compliance/**` navigation | CAPITAL-AI-COMP | `DONE_MAIN` | merged via PR #652; project-surface writer released via PR #661 |
-| `GOV-CHAT-032` | Materialize `docs/projects/frontend/**` navigation | CAPITAL-AI-FE | `DONE_MAIN` | merged via PR #653; project/authority writers released via PR #661 |
-| `GOV-CHAT-033` | Materialize `docs/projects/seo/**` navigation | CAPITAL-AI-SEO | `DONE_MAIN` | merged via PR #654 |
-| `GOV-CHAT-034` | Materialize `docs/projects/social-media/**` navigation | CAPITAL-AI-SOCIAL | `DONE_MAIN` | merged via PR #655 |
-| `GOV-CHAT-035` | Complete canonical Documentary project surface under `docs/projects/documentary/**` | CAPITAL-AI-DOC | `DONE_MAIN` | merged via PR #645 |
-| `GOV-CHAT-036` | Normalize owner-side Handoff target folders after cross-cutting project surfaces merge | referring project owners | `REFERRED_NOT_EXECUTED` | owner-local follow-up where still required |
-| `GOV-CHAT-037` | Bootstrap complete User-Lifecycle-Simulation governance orchestration | CAPITAL-AI-GOV | `DONE_MAIN` | six required artifacts merged via PR #656; no productive code |
-| `GOV-CHAT-038` | Resolve Pro annual-price rule (`248 EUR` vs `313.20 EUR`) | CAPITAL-AI-GOV | `DONE_MAIN` | Owner selected current catalog `248 EUR`; decision projection merged via PR #676; no Stripe migration authorized |
-| `GOV-CHAT-039` | Resolve logout semantics (local/global/both) | CAPITAL-AI-GOV | `DONE_MAIN` | Owner selected both functions with local as default; decision projection merged via PR #676 |
-| `GOV-CHAT-040` | Implement lifecycle harness and provider tests | CAPITAL-AI-OPS | `READY_FOR_HANDOFF` | PR #676 decision projection is merged; target `docs/projects/operations/`, `PVC-02` with `PVC-08` provider/runtime evidence; GOV does not execute foreign implementation |
-| `GOV-CHAT-041` | Unify lifecycle/pricing/entitlement UI projection | CAPITAL-AI-FE | `REFERRED_NOT_EXECUTED` | Owner decisions are merged via PR #676; FE remains blocked only by the stable OPS test contract |
-| `GOV-CHAT-042` | Independently verify User-Lifecycle Security properties | CAPITAL-AI-SEC | `REFERRED_NOT_EXECUTED` | after OPS/FE evidence; Security alone owns final Security verification |
-| `GOV-CHAT-043` | Assess purchase/cancellation consumer-compliance flow | CAPITAL-AI-COMP | `REFERRED_NOT_EXECUTED` | consume OPS/FE evidence and retain independent applicability review; technical evidence is not legal advice |
-| `GOV-CHAT-044` | Correlate merged owner SHAs/evidence and close User-Lifecycle orchestration | CAPITAL-AI-GOV | `DEPENDENCY` | separate GOV closeout only after OPS/FE/SEC/COMP returns |
-| `GOV-CHAT-045` | Terminalize stale merged `GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20` writer metadata | CAPITAL-AI-GOV / FE correlation | `DONE_MAIN` | released with merge evidence via PR #661 |
-| `GOV-CHAT-046` | Terminalize stale merged `CAPITAL-AI-COMP-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-COMP | `DONE_MAIN` | released with merge evidence via PR #661 |
-| `GOV-CHAT-047` | Determine applicability of BGB §312j/§312k to CAPITAL-AI subscription flow before legal PASS/FAIL gating | CAPITAL-AI-COMP / Human-Legal authority | `REFERRED_NOT_EXECUTED` | official provisions contain financial-services exceptions; GOV keeps technical checks conditional |
-| `GOV-CHAT-048` | Terminalize stale merged `CAPITAL-AI-FE-PROJECT-SURFACE-2026-09-01` writer metadata | CAPITAL-AI-FE | `DONE_MAIN` | released with merge evidence via PR #661 |
-| `GOV-CHAT-049` | Recorrelate User-Lifecycle owner sequence after PRs #656/#661 | CAPITAL-AI-GOV | `DONE_MAIN` | merged via PR #675; no foreign implementation or production mutation |
-| `GOV-CHAT-050` | Record User-Lifecycle Owner decisions and release the fulfilled PR #675 writer | CAPITAL-AI-GOV | `DONE_MAIN` | decision projection merged via PR #676 at `57a5dc6fc7ee4e66419903015b7ba1cd0e1b5065`; post-merge closure terminalizes its own fulfilled writer |
+| `GOV-CHAT-001` | Establish `docs/projects/` as canonical non-authorizing project surface | CAPITAL-AI-GOV | `DONE_MAIN` | canonical project model present |
+| `GOV-CHAT-002` | Introduce `PVC-01..PVC-18` Project Value Chain ownership namespace | CAPITAL-AI-GOV | `DONE_MAIN` | `PROJECT_VALUE_CHAIN.md`; no technical `SC-MD-SPT-0001` rewrite |
+| `GOV-CHAT-003` | Consolidate Platform Director `PVC-05` and Governance scope | CAPITAL-AI-GOV | `DONE_MAIN` | current `/AGENTS.md`, ADR-0096 and project mapping preserve boundary |
+| `GOV-CHAT-004` | Integrate DevelopmentChain into project architecture | CAPITAL-AI-OPS + GOV policy | `DONE_MAIN` | current model uses PVC/Roadmap/ADR/ESS; productive execution stays OPS-owned |
+| `GOV-CHAT-005` | Preserve M0-M10 only as historical DevelopmentChain evidence | CAPITAL-AI-OPS / GOV | `DONE_MAIN` | M10 retired/off in current Trust Root |
+| `GOV-CHAT-006` | Assess financial technical `VC-*` namespace migration | GOV + affected owners | `DEFERRED_OWNER_DECISION` | coordinated multi-owner decision required |
+| `GOV-CHAT-007` | Preserve stable authority `SC-MD-SPT-0001` during any future label migration | affected technical owners | `DEFERRED_OWNER_DECISION` | invariant retained |
+| `GOV-CHAT-008` | Migrate CLIENT organizational label to `PVC-01` where appropriate | CAPITAL-AI-CLIENT | `FOREIGN_OPEN` | CLIENT-owned correlation |
+| `GOV-CHAT-009` | Create/migrate `docs/projects/operations/**` | CAPITAL-AI-OPS | `DONE_MAIN` | canonical OPS surface present |
+| `GOV-CHAT-010` | Converge project navigation under `docs/projects/<project>/` | respective owners | `DONE_MAIN` | canonical project surfaces materialized |
+| `GOV-CHAT-011` | Graph complete process chain/dependencies in Admin Panel | CLIENT / FE / OPS; GOV semantic boundary | `FOREIGN_OPEN` | no current-main React Flow / `ProcessGraphProjection` implementation evidence |
+| `GOV-CHAT-012` | Maintain compact Governance/application component assessment | CAPITAL-AI-GOV | `CONTINUOUS` | refresh after material architecture/authority changes |
+| `GOV-CHAT-013` | Compact PR template | CAPITAL-AI-GOV | `DONE_MAIN` | current template v1.5.0 |
+| `GOV-CHAT-014` | Direct PR creation through Chat/API/MCP/Connector under Human gate | CAPITAL-AI-GOV | `DONE_MAIN` | exact snapshot approval + Human-only merge remain current |
+| `GOV-CHAT-015` | Clean old GOV writer claims / stop parallel merge sources | CAPITAL-AI-GOV | `CONTINUOUS` | two stale merged claims corrected in current branch |
+| `GOV-CHAT-016` | Close merged PR #629 stale claim | CAPITAL-AI-GOV | `DONE_MAIN` | terminalized historically |
+| `GOV-CHAT-017` | Branch names include project-folder slug + compact task + date | GOV policy owner | `DONE_MAIN` | current `/AGENTS.md` convention applies |
+| `GOV-CHAT-018` | Project-qualified PR presentation/naming | GOV / affected owner | `CONTINUOUS` | use current repository/project contracts |
+| `GOV-CHAT-019` | Minimize unnecessary paid CI | existing Governance/CI authority | `DONE_MAIN` | smallest sufficient checks apply |
+| `GOV-CHAT-020` | Sync branch and correlate open PRs/writers before PR | existing Governance authority | `DONE_MAIN` | current protected lifecycle requires it |
+| `GOV-CHAT-021` | Maintain before/after or migration evidence for GOV structural changes | CAPITAL-AI-GOV | `CONTINUOUS` | bounded evidence where material |
+| `GOV-CHAT-022` | Preserve explicit post-PVC handoff policy overlays | historical coordination | `SUPERSEDED_CURRENT_MODEL` | overlays withdrawn; use PVC → target Roadmap |
+| `GOV-CHAT-023` | Do not duplicate ADR/ESS/AUTH/CTRL identities for folder assignment | CAPITAL-AI-GOV | `DONE_MAIN` | stable identities preserved |
+| `GOV-CHAT-024` | Retain old GOV branches as historical/reuse inputs only | CAPITAL-AI-GOV | `DONE_MAIN` | no stale-branch direct merge |
+| `GOV-CHAT-025` | Maintain one canonical current GOV roadmap/task surface | CAPITAL-AI-GOV | `CONTINUOUS` | `ROADMAP.md` planning source; this register traceability projection |
+| `GOV-CHAT-026` | Emit bounded post-PR handoff with max two next steps | existing Governance authority | `DONE_MAIN` | current `/AGENTS.md` rule applies |
+| `GOV-CHAT-027` | Reuse native/plugin/OSS before custom implementation | existing Governance + owner | `DONE_MAIN` | current reuse order applies |
+| `GOV-CHAT-028` | Resolve canonical folders for SEC/COMP/FE/SEO/SOCIAL | GOV + target owners | `DONE_MAIN` | surfaces exist |
+| `GOV-CHAT-029` | Terminalize stale merged Security handoff writer | CAPITAL-AI-SEC | `DONE_MAIN` | released/archived |
+| `GOV-CHAT-030` | Materialize Security project navigation | CAPITAL-AI-SEC | `DONE_MAIN` | present |
+| `GOV-CHAT-031` | Materialize Compliance project navigation | CAPITAL-AI-COMP | `DONE_MAIN` | present |
+| `GOV-CHAT-032` | Materialize Frontend project navigation | CAPITAL-AI-FE | `DONE_MAIN` | present |
+| `GOV-CHAT-033` | Materialize SEO project navigation | CAPITAL-AI-SEO | `DONE_MAIN` | present |
+| `GOV-CHAT-034` | Materialize Social project navigation | CAPITAL-AI-SOCIAL | `DONE_MAIN` | present |
+| `GOV-CHAT-035` | Complete Documentary project surface | CAPITAL-AI-DOC | `DONE_MAIN` | present |
+| `GOV-CHAT-036` | Normalize owner-side handoff target folders under old overlay | historical coordination | `SUPERSEDED_CURRENT_MODEL` | current PVC/Roadmap model replaces overlay |
+| `GOV-CHAT-037` | Bootstrap User-Lifecycle governance orchestration | CAPITAL-AI-GOV | `DONE_MAIN` | governance orchestration/decisions on main |
+| `GOV-CHAT-038` | Resolve Pro annual-price rule | CAPITAL-AI-GOV | `DONE_MAIN` | Owner decision merged |
+| `GOV-CHAT-039` | Resolve logout semantics | CAPITAL-AI-GOV | `DONE_MAIN` | both functions, local default |
+| `GOV-CHAT-040` | Implement User-Lifecycle harness/provider tests | CAPITAL-AI-OPS | `FOREIGN_PARTIAL` | harness/stable-ID exists; isolated provider evidence open |
+| `GOV-CHAT-041` | Unify lifecycle/pricing/entitlement UI projection | CAPITAL-AI-FE | `FOREIGN_OPEN` | PR #736 restores email-login/password-recovery only; broader lifecycle/pricing/entitlement UX remains owner-scoped |
+| `GOV-CHAT-042` | Independently verify User-Lifecycle Security properties | CAPITAL-AI-SEC | `DEPENDENCY` | independent Security evidence remains required |
+| `GOV-CHAT-043` | Assess purchase/cancellation consumer-compliance flow | CAPITAL-AI-COMP / Human-Legal | `DEPENDENCY` | PR #735 improves factual scope; Legal/Evidence gates remain open |
+| `GOV-CHAT-044` | Lifecycle Harness Governance Integration / final orchestration correlation | CAPITAL-AI-GOV | `OPEN_GOV` | close only after required OPS/FE/SEC/COMP returns |
+| `GOV-CHAT-045` | Terminalize stale merged Frontend authority writer | GOV / FE | `DONE_MAIN` | released historically |
+| `GOV-CHAT-046` | Terminalize stale merged Compliance project-surface writer | CAPITAL-AI-COMP | `DONE_MAIN` | released historically |
+| `GOV-CHAT-047` | Determine BGB §312j/§312k applicability before legal PASS/FAIL gating | COMP / Human-Legal | `DEPENDENCY` | PR #735 preserves bounded Legal Review; GOV cannot infer conclusion |
+| `GOV-CHAT-048` | Terminalize stale merged Frontend project-surface writer | CAPITAL-AI-FE | `DONE_MAIN` | released historically |
+| `GOV-CHAT-049` | Recorrelate User-Lifecycle owner sequence | CAPITAL-AI-GOV | `DONE_MAIN` | merged reconciliation retained |
+| `GOV-CHAT-050` | Record User-Lifecycle Owner decisions and close fulfilled writer | CAPITAL-AI-GOV | `DONE_MAIN` | decision evidence retained |
+| `GOV-CHAT-051` | Deactivate/archive Cross-Project-Handoff and post-PVC overlays | CAPITAL-AI-GOV | `DONE_MAIN` | PR #715 withdrew overlay |
+| `GOV-CHAT-052` | Simplify DevelopmentChain to PVC → Roadmap → ADR → ESS → code/tests/evidence | CAPITAL-AI-GOV | `DONE_MAIN` | current normative surfaces use simplified model |
+| `GOV-CHAT-053` | Add provider-neutral Deep Research Evidence Contract to ESS-0019 | CAPITAL-AI-GOV | `DONE_MAIN` | ESS-0019 v1.2.0 accepted |
+| `GOV-CHAT-054` | Reconcile ADR-0060 Supply-Chain authority/lifecycle after implementation | CAPITAL-AI-GOV | `OPEN_GOV` | next atomic GOV item after this consolidation |
+| `GOV-CHAT-055` | Add AI Development Chat & Execution Terminology Vocabulary category | Vocabulary implementation; GOV naming boundary | `DONE_MAIN` | category and tests exist |
+| `GOV-CHAT-056` | Integrate repository-wide Version Manager / version-impact logic | CAPITAL-AI-OPS `PVC-06`; GOV boundary | `FOREIGN_PARTIAL` | package version sole authority; only non-duplicative OPS logic may remain |
+| `GOV-CHAT-057` | Ensure canonical paths/references after overlay removal | CAPITAL-AI-GOV | `CONTINUOUS` | remediate current-authority references within owner scope |
+| `GOV-CHAT-058` | Consolidate all GOV chat tasks and refresh active Roadmap | CAPITAL-AI-GOV | `OPEN_GOV` | current branch `agent/governance-chat-task-consolidation-v3-20260905`; exit after validation, exact PR approval and Human merge |
+| `GOV-CHAT-059` | Terminalize stale merged ADR-0104 cross-project-scope claim | CAPITAL-AI-GOV | `OPEN_GOV` | release condition satisfied by PR #699; metadata corrected here |
+| `GOV-CHAT-060` | Terminalize stale merged post-PVC-overlay claim | CAPITAL-AI-GOV | `OPEN_GOV` | release condition satisfied by PR #715; metadata corrected here |
 
-## Historical GOV branch disposition
+## Current foreign-owner User-Lifecycle return state
 
-| Branch | Claim state | Disposition |
+| Owner | Current return state | GOV interpretation |
 |---|---|---|
-| `docs/capital-ai-gov-consolidation-20260831` | `superseded` | `HISTORICAL_REUSE_ONLY` |
-| `gov/capital-ai-gov-v2-20260831` | `superseded` | `HISTORICAL_REUSE_ONLY` |
-| `gov/capital-ai-gov-vc-integration-20260831` | `superseded` | `HISTORICAL_REUSE_ONLY` |
-| `gov/project-architecture-pvc-20260831` | `superseded` | `HISTORICAL_REUSE_ONLY` |
-| `agent/governance-pvc-architecture-20260831` | `superseded` | final P1 reuse source; replaced by merged consolidation |
-| `agent/governance-chat-pr-20260831` | `released` | historical only |
-| `agent/governance-crosscutting-folder-correlation-20260901` | `superseded` | historical only |
-| `agent/governance-crosscutting-folder-correlation-v2-20260901` | `released` | merged routing/correlation source |
-| `agent/governance-user-lifecycle-decisions-20260901` | `released in closure candidate` | PR #676 merged; decision writer terminalization is the sole stale-writer repair |
+| `CAPITAL-AI-OPS` | harness/stable-user-ID evidence exists; isolated provider scenarios/final hosted validation open | `FOREIGN_PARTIAL` |
+| `CAPITAL-AI-FE` | PR #736 restores email-login/password-recovery; broader lifecycle/pricing/entitlement UX completion is not established | `FOREIGN_OPEN` |
+| `CAPITAL-AI-SEC` | independent verification remains separate/pending where evidence incomplete | `DEPENDENCY` |
+| `CAPITAL-AI-COMP` / Human-Legal | PR #735 completed COMP-01 factual packages; Legal/Evidence gates remain explicit | `DEPENDENCY` |
 
 ## Current scoped GOV writer
 
-`agent/governance-user-lifecycle-decision-closure-20260901` is a post-merge closure branch over the fulfilled PR #676 decision projection. It creates no new recursive work claim solely to close the merged claim. Its bounded scope is the stale decision-claim lifecycle plus the canonical User-Lifecycle Governance projections required to replace `IN_CANDIDATE`/pending-merge state with exact PR #676 merge evidence and `OPS_HANDOFF_READY`. It does not own or modify OPS, FE, SEC or COMP productive/project-owned implementation surfaces.
+`CAPITAL-AI-GOV-CHAT-TASK-CONSOLIDATION-V3-2026-09-05` on `agent/governance-chat-task-consolidation-v3-20260905` owns only this register, the GOV Roadmap refresh, terminalization of the two stale merged GOV claims, and its own claim metadata. PRs #735/#736 and all productive foreign-project files are read-only correlation input.
 
 ## Consolidation rule
 
-This register is the canonical current task inventory for CAPITAL-AI-GOV project execution. It does not supersede `/AGENTS.md`, the control catalog, ADR/ESS authorities, domain roadmaps or foreign project ownership. A foreign row changes state only when its target project returns current-main implementation/evidence; Governance coordination does not itself complete foreign implementation, independent Security verification or Compliance assessment.
+This register is the current chat/backlog inventory for CAPITAL-AI-GOV traceability. `docs/projects/governance/ROADMAP.md` remains the Human-readable planning/status surface. Neither supersedes `/AGENTS.md`, accepted ADR/ESS authorities, canonical registries, project/PVC ownership or foreign project Roadmaps. A task is complete only when current-main evidence supports completion.
