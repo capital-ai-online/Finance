@@ -1,52 +1,20 @@
 import React from 'react';
-import { Dashboard } from '../../../app/dashboard';
-import type { UserSession } from '../../../app/types/UserSession';
 
 interface LandingPageProps {
-  clearJustLoggedOut: () => void;
-  handleLogin: (email: string, password: string) => Promise<void>;
-  handleRegister: (name: string, email: string, password: string) => Promise<void>;
+  preview: React.ReactNode;
 }
-
-/**
- * Presentation-only visitor state for the public landing page.
- *
- * This value is never persisted and never represents a Supabase/IAM session. Keeping the email
- * empty prevents account-, billing- or profile-specific hydration for anonymous visitors.
- */
-const PUBLIC_VISITOR_SESSION: UserSession = {
-  type: 'guest',
-  name: 'Öffentliche Vorschau',
-  email: '',
-  subscriptionTier: 'Free',
-};
 
 /**
  * Canonical public landing page for `/`.
  *
- * Product discovery stays available without authentication. Authentication itself is a separate
- * page at `/login`, reached from the dashboard's lower-left login action.
+ * Product discovery stays available without authentication. Application composition, session
+ * contracts and dashboard wiring remain owned by src/app; this public feature only renders the
+ * preview supplied by that composition layer plus public product/legal information.
  */
-export function LandingPage({
-  clearJustLoggedOut,
-  handleLogin,
-  handleRegister,
-}: LandingPageProps) {
+export function LandingPage({ preview }: LandingPageProps) {
   return (
     <>
-      <Dashboard
-        userSession={PUBLIC_VISITOR_SESSION}
-        onLogout={() => undefined}
-        onRegister={() => undefined}
-        onLoginEmail={async (email, password) => {
-          clearJustLoggedOut();
-          await handleLogin(email, password);
-        }}
-        onRegisterEmail={async (name, email, password) => {
-          clearJustLoggedOut();
-          await handleRegister(name, email, password);
-        }}
-      />
+      {preview}
 
       <footer
         aria-label="CAPITAL-AI Produkt- und Datenschutzinformationen"

@@ -32,6 +32,19 @@ interface AppRoutesProps {
   handleGlobalLogout: () => Promise<void>;
 }
 
+/**
+ * Presentation-only visitor state composed by src/app.
+ *
+ * It is never persisted and is not a Supabase/IAM session. Keeping this composition state out of
+ * the public feature prevents the feature -> app dependency cycle that previously existed on `/`.
+ */
+const PUBLIC_VISITOR_SESSION: UserSession = {
+  type: 'guest',
+  name: 'Öffentliche Vorschau',
+  email: '',
+  subscriptionTier: 'Free',
+};
+
 function RouteLoadingBoundary({ children }: { children: React.ReactNode }) {
   return (
     <Suspense
@@ -197,9 +210,21 @@ export function AppRoutes({
     return (
       <RouteLoadingBoundary>
         <LandingPage
-          clearJustLoggedOut={clearJustLoggedOut}
-          handleLogin={handleLogin}
-          handleRegister={handleRegister}
+          preview={
+            <Dashboard
+              userSession={PUBLIC_VISITOR_SESSION}
+              onLogout={() => undefined}
+              onRegister={() => undefined}
+              onLoginEmail={async (email, password) => {
+                clearJustLoggedOut();
+                await handleLogin(email, password);
+              }}
+              onRegisterEmail={async (name, email, password) => {
+                clearJustLoggedOut();
+                await handleRegister(name, email, password);
+              }}
+            />
+          }
         />
       </RouteLoadingBoundary>
     );
