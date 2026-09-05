@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Correlation baseline:** `main@e96c8d13d9ef3a7d566fb579e93fc680482d07c3`
+**Correlation baseline:** `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6`
 
 ## Security-priority packages
 
@@ -32,7 +32,7 @@ Current classifications:
 
 Foreign productive remediation is `REFERRED_NOT_EXECUTED`; CAPITAL-AI-SEC remains the independent verifier.
 
-Current-main re-correlation includes merged User Lifecycle closeout PR #729 and terminal GOV-03/DR-02B PR #743. Neither changes the actual productive entitlement child ownership.
+Current-main re-correlation includes merged User Lifecycle closeout PR #729, terminal GOV-03/DR-02B PR #743 and merged COMP PR #746. PR #746 changes only the Compliance requirements inventory and does not alter productive entitlement child ownership or OPS execution priority.
 
 ## Core OPS packages retained from V2.1
 
