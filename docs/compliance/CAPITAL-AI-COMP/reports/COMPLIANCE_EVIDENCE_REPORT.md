@@ -4,7 +4,7 @@
 **Role:** evidence assessment / non-authorizing  
 **Version:** 1.2.0  
 **Date:** 2026-09-05  
-**Baseline:** `main@04258ce9122dd600707aa25feb431282c715d104`  
+**Baseline:** `main@313d27e5861390e2704612f7e65b4c1f3d9e7a68`  
 **Scope:** COMP-01 applicability execution evidence refresh
 
 ## Evidence principle
@@ -21,6 +21,8 @@ Runtime / Provider Evidence
 ```
 
 A lower-level claim does not override contradictory higher-quality current evidence. Historical evidence is retained but does not automatically establish current state. Open Pull Requests are correlation input and not merged-main evidence.
+
+Final branch correlation includes the Human merge of PR #734. The delta from the prior execution baseline `main@04258ce9122dd600707aa25feb431282c715d104` to this baseline changes only the canonical Compliance roadmap; the factual source files consumed by the COMP-01 assessment were not changed by that merge.
 
 ## Current evidence sources reused
 
