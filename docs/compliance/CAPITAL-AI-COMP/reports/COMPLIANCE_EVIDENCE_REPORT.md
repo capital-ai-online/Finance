@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-COMP-EVIDENCE-REPORT-2026-08-31`  
 **Role:** evidence assessment / non-authorizing  
-**Version:** 1.2.0  
+**Version:** 1.3.0  
 **Date:** 2026-09-05  
-**Baseline:** `main@313d27e5861390e2704612f7e65b4c1f3d9e7a68`  
-**Scope:** COMP-01 applicability execution evidence refresh
+**Baseline:** `main@9a30f5cd87c68febdebc99d13447432ed712ab71`  
+**Scope:** COMP-04 reassessment baseline and evidence sufficiency partition
 
 ## Evidence principle
 
@@ -20,124 +20,111 @@ Runtime / Provider Evidence
 → Roadmap Claims
 ```
 
-A lower-level claim does not override contradictory higher-quality current evidence. Historical evidence is retained but does not automatically establish current state. Open Pull Requests are correlation input and not merged-main evidence.
+A lower-level claim does not override contradictory higher-quality current evidence. Historical evidence is retained but does not automatically establish current state. Open Pull Requests are correlation input and not merged-main evidence. `EVIDENCE_READY` is not `VERIFIED`.
 
-Final branch correlation includes the Human merge of PR #734. The delta from the prior execution baseline `main@04258ce9122dd600707aa25feb431282c715d104` to this baseline changes only the canonical Compliance roadmap; the factual source files consumed by the COMP-01 assessment were not changed by that merge.
+## Current execution baseline
 
-## Current evidence sources reused
+- Human-merged PR #753 establishes COMP-03 on `main@9a30f5cd87c68febdebc99d13447432ed712ab71`.
+- Current `/AGENTS.md` is Control Plane v2.7.1.
+- Current project mapping keeps `CAPITAL-AI-COMP` cross-cutting with no productive PVC ownership.
+- Open Pull Requests against `main`: 0 at COMP-04 start.
+- No current active COMP parallel writer was identified; matching prior COMP claim evidence is archived/deactivated history.
+- PR #753 exact-head CI, Governance and Container Security checks completed successfully.
+- Current-main CI run for `9a30f5cd87c68febdebc99d13447432ed712ab71` completed successfully.
+- The same exact-main workflow completed verified Render production deployment identity successfully.
 
-| Source class | Current source | Use in COMP-01 | Limitation |
+These CI/deployment facts are scoped technical/release evidence only. They do not prove blanket regulatory compliance, Security closure, Legal applicability, vendor-contract sufficiency or owner remediation closure.
+
+## COMP-04 reassessment universe
+
+The active COMP-02 inventory contains 37 assessment inputs; retired historical `REQ-COMP-026` and `REQ-COMP-027` remain excluded.
+
+| Queue state | Count | Meaning |
+|---|---:|---|
+| `READY_NOW` | 23 | current scoped evidence exists to perform a bounded COMP-04 assessment; result is not pre-decided |
+| `EVIDENCE_OR_OWNER_HELD` | 7 | current evidence or independent owner/verifier return is missing |
+| `LEGAL_OR_SCOPE_HELD` | 7 | competent Human/Legal scope determination is required before substantive conclusion |
+| **Total** | **37** | complete active assessment universe |
+
+### READY_NOW
+
+`REQ-COMP-001`, `002`, `003`, `004`, `005`, `006`, `007`, `008`, `009`, `010`, `011`, `012`, `013`, `014`, `015`, `016`, `024`, `025`, `028`, `029`, `030`, `035`, `036`.
+
+Important evidence bounds:
+
+- `REQ-COMP-008/036`: exact-main build/test/provenance/deployment identity is current for this release baseline only.
+- `REQ-COMP-011`: governed document lifecycle can be assessed while the Compliance document-registry ownership/treatment gap remains separately open.
+- `REQ-COMP-012`: historical-authority handling can be assessed while ADR-0007 and ESS-0006 remain Governance-owned gaps.
+- `REQ-COMP-013..016`: privacy evidence supports only bounded processing/control assessment, never blanket GDPR sufficiency.
+- `REQ-COMP-024/025/028`: benchmark/advisory treatment only; no certification or binding-authority inference.
+
+### EVIDENCE_OR_OWNER_HELD
+
+| Requirement | Evidence state | Current source / limitation | Return source |
 |---|---|---|---|
-| Trust root / ownership | `/AGENTS.md`, `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md` | current authority, ownership and routing boundary | does not decide external legal applicability |
-| Privacy / processing | `src/privacy/privacyPolicy.ts`, `docs/compliance/privacy/**` | factual personal-data, consent, analytics, billing and processing scope | repository statements are not external legal assurance |
-| Vendor / transfers | `docs/compliance/vendor-evidence/**` | provider usage, scoped role/DPA/subprocessor/transfer evidence | several provider/transfer fields remain pending; technical region observations are not contractual commitments |
-| Connected Supabase | read-only project discovery on 2026-09-05 | corroborates one active `AIFINANCIAL` project, ID `ryzywoktpmyhwzxmstyu`, region `eu-west-1`, status `ACTIVE_HEALTHY` | only Supabase scope was independently observed through a current connected platform in this execution; does not prove DPA/transfer sufficiency |
-| AI use cases | `docs/compliance/AI_SYSTEM_INVENTORY_AND_CLASSIFICATION.md` | intended-purpose, use-case, role-hypothesis, high-risk trigger and decision-authority facts | legal provider/deployer classification remains system-specific and partly unresolved |
-| AI transparency | `docs/contracts/AI_CONTENT_TRANSPARENCY_CONTRACT.md`, implementation evidence | AI-origin, provider/model attribution and `financialDecisionAuthority=false` boundary | engineering transparency does not prove legal sufficiency |
-| AI literacy | `docs/compliance/AI_LITERACY_CONTROL.md` | competency/cohort control and current applicability assessment | Human completion evidence is absent until separately supplied by Human/Owner |
-| Entity / public provider facts | `src/components/ImpressumAgb.tsx`, `src/privacy/privacyPolicy.ts` | natural-person provider, project/product status, subscription/contract and no-license-claim facts | no agent conclusion on DORA/financial-services legal status |
-| Consumer contract | `docs/compliance/legal/CONSUMER_CONTRACT_REMEDIATION_2026-08-23.md`, `src/components/ImpressumAgb.tsx` | paid plans, cancellation, withdrawal and checkout remediation facts | prior remediation explicitly leaves legal sufficiency questions open |
-| Consent / TDDDG | privacy policy + consent ADR/implementation evidence | GA4/Ads/CookieHub consent-gated factual surface | exact DDG/TDDDG obligation set remains a legal determination |
-| Financial decision boundary | financial vocabulary/contracts and AI transparency controls | establishes `financialDecisionAuthority=false` / no model-generated execution authority | does not itself determine whether a service is regulated under financial law |
-| Governance standards | `docs/governance/control-plane/STANDARDS_CROSSWALK.md` | ISO/IEC 42001 benchmark status and NIST withdrawal | benchmark alignment is not certification or legal compliance |
-| Development / CI | GitHub branch/main/PR state | exact branch/main correlation and eventual hosted-check evidence | final hosted PR-head evidence exists only after PR creation |
+| `REQ-COMP-017` | `EVIDENCE_MISSING` + possible `LEGAL_REVIEW` | DPA/subprocessor/transfer/TIA/role/contractual-region evidence incomplete | Human/Legal + actual provider/domain owner |
+| `REQ-COMP-019` | `EVIDENCE_MISSING / PARTIAL` | complete AI output-surface inventory and legal sufficiency not established | affected output owner + Human/Legal where required |
+| `REQ-COMP-021` | `EVIDENCE_MISSING` | no attributable Human role/cohort training completion/acknowledgement evidence | Human/Owner organizational records |
+| `REQ-COMP-031` | `EVIDENCE_MISSING / UNKNOWN` | complete binding-contract universe and effective versions not established | Human/Legal + contract owners |
+| `REQ-COMP-032` | `EVIDENCE_MISSING` | OPS keeps measured recovery/RPO/RTO `OPEN / UNVERIFIED` | `CAPITAL-AI-OPS / PVC-08` + Security verification |
+| `REQ-COMP-033` | `EVIDENCE_MISSING / PARTIAL` | end-to-end traceability coverage/freshness not established; ESS-0006 clarification separate | OPS/PVC-18 + DATA/PVC-10 as affected |
+| `REQ-COMP-034` | `EVIDENCE_MISSING / PARTIAL` | DATA→FINTECH provenance/DQ/end-to-end evidence coverage incomplete | DATA/PVC-09..11 + FINTECH/PVC-12..17 |
 
-## COMP-01 evidence execution results
+Missing evidence remains `EVIDENCE_MISSING` or another justified non-positive assessment state. It is not converted to `NON_COMPLIANT` unless failure is actually demonstrated, and never to `COMPLIANT` because an implementation or roadmap entry exists.
 
-### COMP-01-A — Provider / processor / transfer factual scope
+### LEGAL_OR_SCOPE_HELD
 
-**State:** `EXECUTED — EVIDENCE_MISSING / LEGAL_REVIEW`.
-
-Current evidence establishes:
-
-- active-owner-confirmed repository records for Supabase, Render, Stripe, IONOS and Google;
-- planned social-provider records remain distinct from active production use;
-- Supabase current connected evidence corroborates one active project in `eu-west-1`;
-- Supabase/Render/Stripe have some scoped role/contract evidence, while overall evidence remains pending;
-- Google/IONOS role/DPA/transfer evidence remains incomplete;
-- transfer mechanism, TIA, subprocessor and contractual-region completeness is not established for the full provider universe.
-
-**Evidence conclusion:** factual provider scope is materially improved, but no blanket vendor/transfer compliance conclusion is supportable.
-
-### COMP-01-B — AI use-case / legal-role factual package
-
-**State:** `EXECUTED — PARTIALLY_APPLICABLE / NOT_ASSESSED / LEGAL_REVIEW`.
-
-Current evidence establishes:
-
-- material AI use cases and intended purposes;
-- customer-facing AI interaction/explanation surfaces;
-- no model/AI financial decision authority;
-- explicit reclassification triggers for changed purpose/users/decision authority;
-- no repository basis to guess one legal provider/deployer classification across all systems.
-
-**Evidence conclusion:** factual role package is complete enough for competent Legal Review; legal role outcome remains open where required.
-
-### COMP-01-C — DORA entity / business factual package
-
-**State:** `EXECUTED — NOT_ASSESSED / LEGAL_REVIEW`.
-
-Current evidence establishes:
-
-- provider/responsible party is documented as a natural person;
-- CAPITAL-AI is a project/product designation, not asserted as a separate legal entity;
-- paid software subscriptions and financial-analysis functions exist;
-- public content does not assert a regulatory license or official approval;
-- financial analysis tools are described as non-authorizing and do not by themselves establish regulatory status.
-
-**Evidence conclusion:** factual entity/business material is available, but DORA Article-2 scope remains a Human/Legal determination.
-
-### COMP-01-D — AI literacy
-
-**State:** `EXECUTED — EVIDENCE_MISSING`.
-
-Current evidence establishes:
-
-- material AI usage exists;
-- role/cohort competency domains are defined;
-- Article-4 applicability is role-dependent and therefore tied to unresolved system-role classification;
-- no attributable Human role/cohort training completion records are established by repository evidence.
-
-**Evidence conclusion:** control design exists; organizational completion evidence does not.
-
-### COMP-01-E — DDG/TDDDG / consumer / financial-services factual package
-
-**State:** `EXECUTED — REQUIRES_LEGAL_REVIEW / UNKNOWN`.
-
-Current evidence establishes:
-
-- German public provider/imprint surface;
-- paid subscription and Stripe checkout/customer-portal paths;
-- consumer-facing cancellation and withdrawal text;
-- prior remediation leaves concrete cancellation/withdrawal/checkout-evidence gates open;
-- consent-gated analytics/advertising with Google/CookieHub and explicit TDDDG reference;
-- possible referral/partner monetization disclosures;
-- financial scoring/analysis/ranking capability with explicit `financialDecisionAuthority=false`;
-- no regulatory-license claim.
-
-**Evidence conclusion:** concrete legal trigger surfaces are identified. Exact consumer, digital-service, financial-services and supervisory applicability remains a bounded Human/Legal decision.
-
-## Open COMP-01 evidence / decision gates
-
-| Gate | Evidence state | Competent source |
+| Requirement | Current COMP-04 state | Gate |
 |---|---|---|
-| full current provider universe and active usage confirmation beyond Supabase | `EVIDENCE_MISSING` | provider/account owner + current platform evidence |
-| provider role / DPA / subprocessor / transfer / TIA / contractual-region completeness | `EVIDENCE_MISSING / LEGAL_REVIEW` | Human/Legal + provider evidence |
-| AI provider/deployer/other legal role per material system | `NOT_ASSESSED / LEGAL_REVIEW` | Human/Legal using current factual system package |
-| Human AI-literacy completion/acknowledgement evidence | `EVIDENCE_MISSING` | Human/Owner organizational records |
-| DORA entity/activity scope | `NOT_ASSESSED / LEGAL_REVIEW` | Human/Legal |
-| DDG/TDDDG exact obligation set and implementation sufficiency | `LEGAL_REVIEW` | Human/Legal |
-| consumer-contract applicability/sufficiency including cancellation/withdrawal digital-service details | `LEGAL_REVIEW` | Human/Legal |
-| complete contractual obligation universe | `EVIDENCE_MISSING / UNKNOWN` | Human/Legal + contract owners |
-| financial-services / supervisory / licensing classification | `UNKNOWN / LEGAL_REVIEW` | Human/Legal |
-| final exact-PR-head hosted validation | `EVIDENCE_MISSING BY DESIGN PRE-PR` | GitHub hosted checks after authorized PR creation |
+| `REQ-COMP-018` | `NOT_ASSESSED` | AI provider/deployer/other legal role per material system |
+| `REQ-COMP-020` | `NOT_ASSESSED` | AI risk/use-case classification before asserting specific human-oversight obligation |
+| `REQ-COMP-022` | `NOT_ASSESSED` | DORA entity/activity applicability |
+| `REQ-COMP-023` | `NOT_ASSESSED` | consumer/B2C/service/market obligation scope |
+| `REQ-COMP-037` | `NOT_ASSESSED` | DDG/TDDDG provider/digital-service/consent obligation set |
+| `REQ-COMP-038` | `NOT_ASSESSED` | financial-services/supervisory/licensing scope |
+| `REQ-COMP-039` | `NOT_ASSESSED` until trigger/classification | AI Act high-risk classification on actual intended purpose/user/role trigger |
 
-## Requirement-distribution caution
+`LEGAL_REVIEW` is retained as the external decision gate even though the six-value COMP-04 assessment vocabulary uses `NOT_ASSESSED` for unresolved legal/scope conclusions.
 
-The previous report carried requirement-wide totals from an older `main@5d3360c2` snapshot. This COMP-01 refresh does **not** reassert those historical aggregate counts as current truth. Requirement-wide distribution must be recalculated under COMP-02/04 after the stale requirements/mapping matrices are re-correlated to current `main`.
+## Current owner-return evidence constraints
+
+| Domain | Current-main evidence | Compliance consequence |
+|---|---|---|
+| Governance | ADR-0007 registry/semantic gap remains; ESS-0006 stale assumptions remain | no lifecycle/semantic closure by COMP |
+| Operations | recovery/RPO/RTO remains open; other Security evidence gates remain | no positive recovery/continuity conclusion without owner + Security evidence |
+| Data | DATA-10 Security evidence work remains open; stale/wrong-identity must fail closed | no DATA self-verification |
+| FinTech | FIN-SEC-02 and FIN-SEC-03 remain `REFERRED_NOT_EXECUTED / P1 HIGH` | no entitlement closure or Security verification claim by COMP |
+| Security | Security explicitly separates `EVIDENCE_READY` from `VERIFIED` | owner evidence cannot be promoted to independent verification by COMP |
+| Documentary/Governance | document-registry ownership/treatment is unresolved for Compliance document IDs | no shared registry mutation from COMP |
+
+## Current findings retained
+
+- `COMP-GAP-002` ADR-0007: `PARTIALLY_COMPLIANT / OPEN`, Governance/PVC-05.
+- `COMP-GAP-003` ESS-0006: `PARTIALLY_COMPLIANT / OPEN`, Governance/PVC-05 after ADR-0007 decision.
+- `COMP-GAP-004` provider/transfer evidence: `EVIDENCE_MISSING / LEGAL_REVIEW`.
+- `COMP-GAP-005` Human AI-literacy evidence: `EVIDENCE_MISSING`.
+- `COMP-GAP-006` DORA scope: `NOT_ASSESSED / LEGAL_REVIEW`.
+- `COMP-GAP-007` measured backup/restore evidence: `EVIDENCE_MISSING / OPEN`, OPS/PVC-08.
+- `COMP-GAP-008` Compliance document-registry treatment: `PARTIALLY_COMPLIANT / OPEN`, owner boundary requires correlation.
+- DATA realtime-newsfeed entitlement: implementation exists, independent verification remains pending.
+- FINTECH verified-screening and financial-analysis entitlement children remain open under FINTECH ownership.
+
+No finding is closed by PR #753 merge or current-main CI/deployment success alone.
+
+## Evidence sufficiency rules for next COMP-04 slice
+
+A requirement may be assigned `COMPLIANT` only where current scope-adequate evidence supports every material mapped obligation/control for the stated scope. Otherwise use the narrowest justified state:
+
+- `PARTIALLY_COMPLIANT` when current evidence proves only part of the required scope;
+- `NON_COMPLIANT` only when a requirement/control failure is actually demonstrated;
+- `NOT_APPLICABLE` only where the applicability input supports that state for the assessed scope;
+- `NOT_ASSESSED` when competent scope/legal classification or assessment work is still pending;
+- `EVIDENCE_MISSING` when required current evidence is absent or insufficient.
+
+No artifact may claim ISO certification, blanket GDPR/AI Act/DORA compliance, regulated status, Security closure or complete compliance without separate scope-appropriate evidence and competent authority.
 
 ## Foreign evidence rule
 
-Where evidence or remediation belongs to another project/domain, Compliance records the applicable PVC/Primary Owner through the current project mappings and waits for returned evidence. Compliance does not execute source-domain security hardening, runtime remediation, provider contract action, organizational training completion or Legal Review on that owner's behalf.
+Where evidence or remediation belongs to another project/domain, Compliance records the applicable `PVC-*` / Primary Owner and waits for returned evidence. Compliance does not execute source-domain security hardening, runtime remediation, provider contract action, organizational training completion, Registry mutation or Legal Review on that owner's behalf.
 
-For unresolved technical ownership, the state remains `REQUIRES_CORRELATION`; for unresolved legal interpretation, the state remains `LEGAL_REVIEW` or `UNKNOWN` as applicable.
+For unresolved technical ownership, state remains `REQUIRES_CORRELATION`; for unresolved legal interpretation, the assessment remains `NOT_ASSESSED` with explicit `LEGAL_REVIEW` gate as applicable.
