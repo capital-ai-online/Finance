@@ -34,7 +34,7 @@ Project ownership resolves only through `docs/projects/README.md` and `docs/proj
 5. Human-merged PR #754 is current-main Google consent runtime/test evidence.
 6. Human-merged Governance PR #755 migrated ADR-0007 into the ADR/Authority registries with stable ID `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007`, lifecycle `historical`, explicitly non-authorizing.
 7. The COMP-04 branch has been synchronized after both later Human merges and retains only bounded COMP-owned changes in its net diff.
-8. Open Pull Requests against main: **0** at this correlation snapshot.
+8. Final pre-PR correlation sees **1 open Pull Request against main: PR #757 / CAPITAL-AI-GOV**. Its four changed files are `.ai/registry/ess-registry.json`, `.ai/skills/ESS-0006-Security-Compliance.md`, `docs/projects/governance/COMPONENT_ARCHITECTURE_MATRIX.md` and `docs/projects/governance/ROADMAP.md`; there is no changed-file overlap with COMP-04. PR #757 is semantically relevant to `COMP-GAP-003` but remains non-main evidence until Human merge and subsequent reassessment.
 9. Foreign remediation remains with the actual Primary Owner; Security verification remains Security-owned; legal applicability/accepted-risk decisions remain Human/Legal/Owner-controlled.
 
 ## COMP-04 assessment universe
@@ -69,7 +69,7 @@ Current main contains fail-closed Google consent defaults, category-gated GA4/Ad
 
 ### Evidence delta from PR #755
 
-ADR-0007 now has a stable registry identity and `historical` / non-authorizing lifecycle. The lifecycle/authority portion of `COMP-GAP-002` is therefore `RESOLVED_ON_MAIN`, and `REQ-COMP-012` can be assessed `COMPLIANT` for the bounded historical-authority requirement. This does **not** re-authorize legacy legal/certification claims or a parallel Compliance value chain. `COMP-GAP-003` / ESS-0006 remains a separate open Governance clarification gap.
+ADR-0007 now has a stable registry identity and `historical` / non-authorizing lifecycle. The lifecycle/authority portion of `COMP-GAP-002` is therefore `RESOLVED_ON_MAIN`, and `REQ-COMP-012` can be assessed `COMPLIANT` for the bounded historical-authority requirement. This does **not** re-authorize legacy legal/certification claims or a parallel Compliance value chain. `COMP-GAP-003` / ESS-0006 remains a separate open Governance clarification gap on current main; open PR #757 proposes Governance-owned clarification but is not merged-main evidence and does not alter this assessment.
 
 ## Held sets — unchanged
 
@@ -87,15 +87,15 @@ ADR-0007 now has a stable registry identity and `historical` / non-authorizing l
 - `REQ-COMP-011/035`: `COMP-GAP-008` document-registry treatment remains open at the Documentary/Governance boundary.
 - `REQ-COMP-013..016`: privacy, data-subject-request, consent and retention evidence supports bounded partial assessments only; no blanket GDPR sufficiency is claimed.
 - `REQ-COMP-030`: repeated change-impact execution is evidenced, but exhaustive automated trigger coverage is not established.
-- `REQ-COMP-036`: verified exact-SHA deployment evidence exists for the latest application-affecting release; a fresh independent rollback execution/test is not established.
-- `COMP-GAP-003` ESS-0006 remains open despite ADR-0007 lifecycle resolution.
+- `REQ-COMP-036`: verified-main workflow `33992951411` successfully built, attested, deployed and post-deploy verified current `main@a5026e194e243d556c91e2749da8f405e946c025`; a fresh independent rollback execution/test is not established.
+- `COMP-GAP-003` ESS-0006 remains open on current main. Open Governance PR #757 is correlation input only and cannot close the finding before Human merge and Compliance reassessment.
 
 ## Current Compliance findings
 
 | Finding | Current state | Owner / gate |
 |---|---|---|
 | `COMP-GAP-002` ADR-0007 lifecycle/authority ambiguity | `RESOLVED_ON_MAIN` | historical/non-authorizing migration via Human-merged PR #755; no legacy reauthorization |
-| `COMP-GAP-003` ESS-0006 | `PARTIALLY_COMPLIANT / OPEN` | Governance clarification remains |
+| `COMP-GAP-003` ESS-0006 | `PARTIALLY_COMPLIANT / OPEN` | Governance clarification remains; PR #757 is open/non-main and does not yet close the finding |
 | `COMP-GAP-004` vendor/transfer | `EVIDENCE_MISSING / LEGAL_REVIEW` | Human/Legal + actual provider/domain owner |
 | `COMP-GAP-005` AI literacy | `EVIDENCE_MISSING` | Human/Owner evidence |
 | `COMP-GAP-006` DORA | `NOT_ASSESSED / LEGAL_REVIEW` | Human/Legal |
@@ -125,12 +125,12 @@ ISO/IEC 42001:2023 remains a non-certifying Governance benchmark. ISO/IEC 27001,
 
 ## COMP-04 READY_NOW exit gate
 
-**PASS at this branch document state, subject to final main/open-PR correlation before PR readiness:**
+**PASS at this branch document state, subject to final main/open-PR correlation before PR creation:**
 
 - all **23/23** `READY_NOW` requirements have exactly one six-value assessment status;
 - each has named current evidence and explicit limitations in the Evidence Report;
 - `EVIDENCE_MISSING`, `NOT_ASSESSED`, `LEGAL_REVIEW` and foreign-owner gates remain explicit outside the READY_NOW set;
 - returned ADR-0007 evidence closes only its proven lifecycle/authority gap;
 - no foreign implementation, Security verification, Legal Review or shared registry mutation is claimed by Compliance;
-- no open PR is treated as merged-main evidence;
+- open PR #757 is correlated as non-main evidence and is not treated as a merged closure;
 - PR creation remains separately subject to exact main/head Human/Owner approval; merge remains Human/CODEOWNER-only.
