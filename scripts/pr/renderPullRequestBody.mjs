@@ -73,6 +73,14 @@ const projectId = String(claim.projectId || process.env.PR_PROJECT_ID || 'N/A').
 const projectFolder = String(claim.projectFolder || process.env.PR_PROJECT_FOLDER || 'N/A').trim();
 const affectedPvc = String(claim.projectStage || process.env.PR_AFFECTED_PVC || 'N/A').trim();
 const primaryOwner = String(process.env.PR_PRIMARY_OWNER || projectId || 'N/A').trim();
+const agentClient = String(process.env.PR_AGENT_CLIENT || 'ChatGPT').trim();
+
+if (!projectId || projectId === 'N/A') {
+  fail('Kanonischer PR-Titel erfordert eine aufgelöste PROJECT-ID.');
+}
+if (!agentClient) {
+  fail('Kanonischer PR-Titel erfordert einen faktischen Agent-Client.');
+}
 
 const replacements = {
   WORK_ITEM: workItem,
@@ -116,7 +124,7 @@ if (unresolved.length > 0) {
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, body, 'utf8');
 
-const title = `Agenten-Änderung: ${workItem}`.slice(0, 240);
+const title = `[${projectId}] [${agentClient}] ${workItem}`.slice(0, 240);
 appendGithubOutput({
   pr_body_output: outputPath,
   pr_title: title,
