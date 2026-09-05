@@ -4,9 +4,9 @@
 **Role:** `CROSS_CUTTING_COMPLIANCE`  
 **Document ID:** `DOC-COMP-ROADMAP-2026-08-31`  
 **Document role:** roadmap / non-authorizing projection  
-**Version:** 1.6.2  
+**Version:** 1.6.3  
 **Date:** 2026-09-05  
-**Current-main reconciliation baseline:** `main@9bedefa8e1baa55224b11d214b712132b02dd5b8`  
+**Current-main reconciliation baseline:** `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`  
 **Status:** ACTIVE — COMP-04 READY_NOW 23/23 ASSESSED / NON-AUTHORIZING  
 **Primary Project Value Chain ownership:** none (`[]`)
 
@@ -18,14 +18,15 @@ Project ownership resolves only through `docs/projects/README.md` and `docs/proj
 
 ## Current-main reconciliation — 2026-09-05
 
-1. `/AGENTS.md` v2.7.1 and `main@9bedefa8e1baa55224b11d214b712132b02dd5b8` are the current execution baseline.
+1. `/AGENTS.md` v2.7.1 and `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb` are the current execution baseline.
 2. `COMP-02` has 37 active inputs; retired `REQ-COMP-026/027` remain historical and excluded.
 3. Human-merged PR #753 established the 37/37 COMP-03 control/owner mapping without new authority.
 4. Human-merged PR #754 supplies current Google consent runtime/test evidence.
 5. Human-merged PR #755 migrated ADR-0007 to stable historical/non-authorizing registry state, resolving `COMP-GAP-002` for lifecycle/authority.
 6. Human-merged PR #757 revalidated ESS-0006 v1.1.0 as a bounded Security/Compliance component specification with no second Requirement Registry, runtime, IAM/audit/risk/event authority or foreign PVC ownership. This resolves the previously open `COMP-GAP-003` stale-semantics finding on current main.
-7. Verified-main workflow `33993594609` successfully built, attested, deployed and post-deploy verified exact current main `9bedefa8e1baa55224b11d214b712132b02dd5b8`.
-8. Foreign remediation remains with the actual Primary Owner; Security verification remains Security-owned; legal applicability/accepted-risk decisions remain Human/Legal/Owner-controlled.
+7. Human-merged PR #758 aligned the canonical ADR-0007 document itself with the same `HISTORICAL / NON-AUTHORIZING` lifecycle and explicitly rejects current technical, legal, certification, scoring, traceability, documentary, merge, release, deployment or production authority. This strengthens the evidence for the already-resolved `COMP-GAP-002` but does not alter any READY_NOW assessment or close unrelated evidence/legal/owner gaps.
+8. The last exact verified-main production evidence established before this Governance-only ADR document delta is workflow `33993594609` for `main@9bedefa8e1baa55224b11d214b712132b02dd5b8`; no new production conclusion is inferred merely from PR #758.
+9. Foreign remediation remains with the actual Primary Owner; Security verification remains Security-owned; legal applicability/accepted-risk decisions remain Human/Legal/Owner-controlled.
 
 ## COMP-04 assessment universe
 
@@ -40,7 +41,7 @@ Active inputs: **37**. Retired historical inputs excluded: **2**.
 
 ## READY_NOW assessment result
 
-The canonical requirement-by-requirement Evidence + Limitation detail is `reports/COMPLIANCE_EVIDENCE_REPORT.md` v1.6.2.
+The canonical requirement-by-requirement Evidence + Limitation detail is `reports/COMPLIANCE_EVIDENCE_REPORT.md` v1.6.3.
 
 | Assessment | Count | Requirements |
 |---|---:|---|
@@ -57,11 +58,11 @@ The canonical requirement-by-requirement Evidence + Limitation detail is `report
 
 ### ADR-0007
 
-`COMP-GAP-002` is `RESOLVED_ON_MAIN` for lifecycle/authority: ADR-0007 has a stable identity, `historical` lifecycle and explicit non-authorizing treatment. No legacy certification/legal claim or parallel Compliance value chain is restored.
+`COMP-GAP-002` remains `RESOLVED_ON_MAIN`. PR #755 established stable identity and registry lifecycle; Human-merged PR #758 now makes the canonical ADR document itself explicitly `HISTORICAL / NON-AUTHORIZING`. Its former five-stage model is audit context only and creates no current productive PVC ownership, legal conclusion, certification, scoring, traceability, documentary, merge, release, deployment or production authority. No legacy certification/legal claim or parallel Compliance value chain is restored.
 
 ### ESS-0006
 
-`COMP-GAP-003` is now `RESOLVED_ON_MAIN` by Human-merged PR #757. ESS-0006 v1.1.0 explicitly constrains itself to existing `src/platform/Security` and `src/platform/Compliance` component boundaries, preserves independent SEC verification and COMP assessment, and rejects a second Requirement Registry, IAM/audit/risk/event authority, parallel runtime or foreign remediation ownership. This governance return does not close unrelated Security, Evidence, Legal or Owner gaps.
+`COMP-GAP-003` remains `RESOLVED_ON_MAIN` by Human-merged PR #757. ESS-0006 v1.1.0 explicitly constrains itself to existing `src/platform/Security` and `src/platform/Compliance` component boundaries, preserves independent SEC verification and COMP assessment, and rejects a second Requirement Registry, IAM/audit/risk/event authority, parallel runtime or foreign remediation ownership. This governance return does not close unrelated Security, Evidence, Legal or Owner gaps.
 
 ## Held sets — unchanged
 
@@ -79,13 +80,13 @@ The canonical requirement-by-requirement Evidence + Limitation detail is `report
 - `REQ-COMP-011/035`: `COMP-GAP-008` document-registry treatment remains open at the Documentary/Governance boundary.
 - `REQ-COMP-013..016`: privacy, data-subject-request, consent and retention evidence supports bounded partial assessments only; no blanket GDPR sufficiency is claimed.
 - `REQ-COMP-030`: repeated change-impact execution is evidenced, but exhaustive automated trigger coverage is not established.
-- `REQ-COMP-036`: exact current-main release/deployment evidence is verified, but no fresh independent rollback execution/test is established.
+- `REQ-COMP-036`: exact release/deployment evidence exists for the immediately preceding verified main; no fresh independent rollback execution/test is established and the later Governance-only ADR document delta is not itself a deployment assertion.
 
 ## Current Compliance findings
 
 | Finding | Current state | Owner / gate |
 |---|---|---|
-| `COMP-GAP-002` ADR-0007 lifecycle/authority ambiguity | `RESOLVED_ON_MAIN` | Human-merged PR #755; historical/non-authorizing only |
+| `COMP-GAP-002` ADR-0007 lifecycle/authority ambiguity | `RESOLVED_ON_MAIN` | Human-merged PR #755 plus canonical document semantic alignment in Human-merged PR #758; historical/non-authorizing only |
 | `COMP-GAP-003` ESS-0006 stale semantics | `RESOLVED_ON_MAIN` | Human-merged PR #757; bounded v1.1.0 component semantics |
 | `COMP-GAP-004` vendor/transfer | `EVIDENCE_MISSING / LEGAL_REVIEW` | Human/Legal + actual provider/domain owner |
 | `COMP-GAP-005` AI literacy | `EVIDENCE_MISSING` | Human/Owner evidence |
