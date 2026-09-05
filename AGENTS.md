@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.6.0`  
+**Control Plane Version:** `2.7.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-09-02  
+**Effective date:** 2026-09-05  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -110,7 +110,7 @@ Every **new** agent-managed work branch MUST use a permitted execution-prefix an
 
 Examples: `agent/governance-chat-consolidation-20260831`, `agent/operations-development-chain-20260901`, `agent/fintech-fvc-migration-20260901`.
 
-`project-folder` is the canonical project folder/slug for the Primary Owner (for example `governance`, `operations`, `agent-client`, `data`, `fintech`). `compact-task` MUST be short, lowercase kebab-case and specific enough to identify the scoped work item. The approved execution-prefix remains subject to the current trusted branch/workflow policy; this naming rule does not authorize a new provider prefix. Historical, merged, closed or already-terminal branches are not renamed retroactively.
+`project-folder` is the canonical project folder/slug for the Primary Owner (for example `governance`, `operations`, `agent-client`, `data`, `fintech`). `compact-task` MUST be short, lowercase kebab-case and specific enough to identify the bounded work item. The approved execution-prefix remains subject to the current trusted branch/workflow policy; this naming rule does not authorize a new provider prefix. Historical, merged, closed or already-terminal branches are not renamed retroactively.
 
 A newly created branch that omits either project-folder or compact-task identity is non-conforming and MUST be replaced by a fresh current-main branch before protected work or PR readiness proceeds. Branch naming is coordination metadata only and never changes project ownership, Authority, merge authority or production permissions.
 
@@ -230,12 +230,11 @@ Repository documentation structure is enforced by Documentation Hygiene. New arc
 
 Governance design uses:
 
-- **ISO/IEC 42001:2023** as the AI Management System / continual-improvement management benchmark;
-- **NIST SP 800-218 SSDF v1.1** as the current final secure-software-development baseline;
-- **NIST SP 800-218A** as the final AI-specific SSDF community profile/augmentation;
-- **SP 800-218 Rev. 1 / SSDF v1.2 draft** as monitored research input only until finalized or explicitly adopted.
+- **ISO/IEC 42001:2023** as the AI Management System / continual-improvement management benchmark.
 
-The standards are mapped through `docs/governance/control-plane/STANDARDS_CROSSWALK.md`; they do not become a second repository policy hierarchy. A crosswalk maps external outcomes/practices to existing CAPITAL-AI controls and exposes gaps. It does not automatically import every external statement as an enforceable rule.
+`docs/governance/control-plane/STANDARDS_CROSSWALK.md` maps this benchmark to existing CAPITAL-AI controls without creating a second repository policy hierarchy.
+
+NIST publications, frameworks, profiles and mappings are withdrawn from the current repository Governance baseline. They MUST NOT by themselves create a repository requirement, CI gate, compliance finding, mandatory remediation, implementation backlog or authority claim. Historical evidence and foreign-project documents may retain NIST references for traceability, but those references are non-authorizing. Any future NIST adoption requires a new explicit Human/Owner decision naming the exact source, version and scope.
 
 Standards alignment does not prove ISO certification, legal applicability or regulatory status without separate scope and assurance evidence.
 
