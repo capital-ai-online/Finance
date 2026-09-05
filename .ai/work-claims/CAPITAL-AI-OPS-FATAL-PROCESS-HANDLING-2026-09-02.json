@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-FATAL-PROCESS-HANDLING-2026-09-02",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -31,5 +31,10 @@
   "securityBoundary": "Fatal uncaught exceptions and unhandled rejections must fail closed: latch readiness unhealthy before shutdown, stop accepting work through the existing SIGTERM server-close path, perform only the existing bounded cleanup, and preserve a non-zero final process exit for Render supervision.",
   "reuseBoundary": "Reuse the existing server.application.ts SIGTERM/SIGINT shutdown, outbox stop, timer cleanup and HTTP server drain. Do not create a second shutdown authority or modify deployment/provider state.",
   "externalMutationScope": "Repository branch commits only. No Pull Request without the then-current exact-snapshot Human/Owner gate; no merge, deployment, Render, Supabase, Stripe or production mutation.",
-  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or the work item is explicitly abandoned."
+  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or the work item is explicitly abandoned.",
+  "mergedPr": 720,
+  "terminalHeadSha": "a8280b5f9f5b521f1c005009266da16133a5b188",
+  "mainCommit": "9f061f9d3518ffff121503c0b3c84b138ad1261f",
+  "releasedAt": "2026-09-05T18:00:00Z",
+  "releaseReason": "stale coordination metadata reconciled after Human-merged PR #720; implementation is on main while independent Security/post-deploy recovery verification remains separate"
 }
