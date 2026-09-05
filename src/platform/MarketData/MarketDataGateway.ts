@@ -52,6 +52,11 @@ function forCorrelation(result: MarketDataGatewayResult, correlationId: string):
   return { ...result, snapshot: { ...result.snapshot, correlationId } };
 }
 
+function matchesRequestIdentity(snapshot: CanonicalMarketDataSnapshot, request: SnapshotRequest): boolean {
+  return snapshot.symbol.toUpperCase().trim() === request.symbol.toUpperCase().trim()
+    && snapshot.assetClass === request.assetClass;
+}
+
 function unavailable(
   request: SnapshotRequest,
   attemptedProviders: string[],
@@ -124,13 +129,17 @@ export class MarketDataGateway {
     const key = marketDataRequestKey(request);
     const cached = this.cache.get(key);
     if (cached) {
-      const snapshot = this.assess(cached, request);
-      const assessment = assessMarketDataSnapshot(snapshot, this.qualityOptions(request));
-      if (assessment.accepted) {
-        this.telemetry.record('cache_hit', { provider: snapshot.provider, qualityState: snapshot.qualityState });
-        return { snapshot: { ...snapshot, correlationId: request.correlationId }, attemptedProviders: [], skippedProviders: [], source: 'cache' };
+      if (!matchesRequestIdentity(cached, request)) {
+        this.cache.delete(key);
+      } else {
+        const snapshot = this.assess(cached, request);
+        const assessment = assessMarketDataSnapshot(snapshot, this.qualityOptions(request));
+        if (assessment.accepted) {
+          this.telemetry.record('cache_hit', { provider: snapshot.provider, qualityState: snapshot.qualityState });
+          return { snapshot: { ...snapshot, correlationId: request.correlationId }, attemptedProviders: [], skippedProviders: [], source: 'cache' };
+        }
+        this.cache.delete(key);
       }
-      this.cache.delete(key);
     }
 
     const existing = this.coalescer.has(key);
@@ -160,7 +169,14 @@ export class MarketDataGateway {
       attemptedProviders.push(providerId);
       this.telemetry.record('provider_attempt', { provider: providerId, capability: 'snapshot' });
       try {
-        const snapshot = this.assess(await provider.getSnapshot(request), request);
+        const providerSnapshot = await provider.getSnapshot(request);
+        if (!matchesRequestIdentity(providerSnapshot, request)) {
+          this.router.recordFailure(providerId);
+          this.telemetry.record('provider_failure', { provider: providerId, reason: 'identity_mismatch' });
+          this.writeOutcomeHealth(providerId, 'unavailable', 'identity_mismatch');
+          continue;
+        }
+        const snapshot = this.assess(providerSnapshot, request);
         const assessment = assessMarketDataSnapshot(snapshot, this.qualityOptions(request));
         if (assessment.accepted) {
           this.router.recordSuccess(providerId);
