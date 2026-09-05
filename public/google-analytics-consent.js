@@ -151,12 +151,15 @@
   }
 
   function applyConsentState(consentState) {
-    updateConsent(consentState.analyticsAllowed, consentState.marketingAllowed);
+    var analyticsAllowed = consentState.analyticsAllowed;
+    var marketingAllowed = consentState.marketingAllowed;
 
-    if (consentState.analyticsAllowed) loadGA();
+    updateConsent(analyticsAllowed, marketingAllowed);
+
+    if (analyticsAllowed) loadGA();
     else disableGA();
 
-    if (consentState.marketingAllowed) loadAdSense();
+    if (marketingAllowed) loadAdSense();
   }
 
   function syncConsent() {
