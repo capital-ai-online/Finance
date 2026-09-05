@@ -4,17 +4,15 @@
 **Role:** `CROSS_CUTTING_COMPLIANCE`  
 **Document ID:** `DOC-COMP-ROADMAP-2026-08-31`  
 **Document role:** roadmap / non-authorizing projection  
-**Version:** 1.5.0  
+**Version:** 1.6.0  
 **Date:** 2026-09-05  
-**Current-main reconciliation baseline:** `main@611e4c07cd13c146b3a0e0f5e5e5c37117697f0d`  
-**Status:** ACTIVE — COMP-04 READY_NOW ASSESSMENT EXECUTED / NON-AUTHORIZING  
+**Current-main reconciliation baseline:** `main@a5026e194e243d556c91e2749da8f405e946c025`  
+**Status:** ACTIVE — COMP-04 READY_NOW 23/23 ASSESSED / NON-AUTHORIZING  
 **Primary Project Value Chain ownership:** none (`[]`)
 
-## Mission and boundary
+## Mission and ownership boundary
 
 `CAPITAL-AI-COMP` owns applicability, requirement/control mapping, evidence-based assessment, findings, evidence sufficiency, regulatory traceability, remediation handoff and continuous reassessment. It owns no productive `PVC-*` stage, does not implement foreign remediation and does not replace Human/Legal Review.
-
-Human-readable routing remains:
 
 ```text
 Requirement / Finding
@@ -29,14 +27,14 @@ Project ownership resolves only through `docs/projects/README.md` and `docs/proj
 
 ## Current-main reconciliation — 2026-09-05
 
-1. `/AGENTS.md` v2.7.1 and `main@611e4c07cd13c146b3a0e0f5e5e5c37117697f0d` are the current execution baseline.
-2. `COMP-01` applicability work remains executed/continuous with explicit Legal Review and evidence gates.
-3. `COMP-02` has 37 active requirement/assessment inputs; retired `REQ-COMP-026/027` remain historical and excluded.
+1. `/AGENTS.md` v2.7.1 and `main@a5026e194e243d556c91e2749da8f405e946c025` are the current execution baseline.
+2. `COMP-01` remains executed/continuous with explicit Legal Review and evidence gates.
+3. `COMP-02` has 37 active inputs; retired `REQ-COMP-026/027` remain historical and excluded.
 4. Human-merged PR #753 established the 37/37 COMP-03 control/owner mapping without new authority.
-5. Human-merged PR #754 changed only the Google marketing-consent runtime/test surface and is now current-main privacy/consent evidence.
-6. Current-main workflow `33992619427` completed `build-and-test` and `Deployment verifiziert / Render-Produktion` successfully for `611e4c07...`.
-7. The COMP-04 branch was synchronized after PR #754 merged; no FE changed-file overlap is retained in the COMP-owned net diff.
-8. Open PR #755 is Governance-owned ADR-0007 registry migration. It is semantically relevant to `REQ-COMP-012` / `COMP-GAP-002` but remains open and therefore is not current-main evidence.
+5. Human-merged PR #754 is current-main Google consent runtime/test evidence.
+6. Human-merged Governance PR #755 migrated ADR-0007 into the ADR/Authority registries with stable ID `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007`, lifecycle `historical`, explicitly non-authorizing.
+7. The COMP-04 branch has been synchronized after both later Human merges and retains only bounded COMP-owned changes in its net diff.
+8. Open Pull Requests against main: **0** at this correlation snapshot.
 9. Foreign remediation remains with the actual Primary Owner; Security verification remains Security-owned; legal applicability/accepted-risk decisions remain Human/Legal/Owner-controlled.
 
 ## COMP-04 assessment universe
@@ -50,45 +48,54 @@ Active inputs: **37**. Retired historical inputs excluded: **2**.
 | `LEGAL_OR_SCOPE_HELD` | **7** | retained explicitly |
 | **Total active** | **37** | fully partitioned |
 
-### READY_NOW result — 23/23
+## READY_NOW assessment result
 
-The canonical evidence/status detail is `reports/COMPLIANCE_EVIDENCE_REPORT.md` v1.5.0.
+The canonical requirement-by-requirement Evidence + Limitation detail is `reports/COMPLIANCE_EVIDENCE_REPORT.md` v1.6.0.
 
 | Assessment | Count | Requirements |
 |---|---:|---|
-| `COMPLIANT` | **7** | `001`, `003`, `004`, `006`, `007`, `008`, `029` |
-| `PARTIALLY_COMPLIANT` | **13** | `002`, `005`, `009`, `010`, `011`, `012`, `013`, `014`, `015`, `016`, `030`, `035`, `036` |
+| `COMPLIANT` | **8** | `001`, `003`, `004`, `006`, `007`, `008`, `012`, `029` |
+| `PARTIALLY_COMPLIANT` | **12** | `002`, `005`, `009`, `010`, `011`, `013`, `014`, `015`, `016`, `030`, `035`, `036` |
 | `NON_COMPLIANT` | **0** | none demonstrated in this bounded set |
 | `NOT_APPLICABLE` | **3** | `024`, `025`, `028` — binding-authority scope only |
 | `NOT_ASSESSED` | **0** | none inside `READY_NOW` |
-| `EVIDENCE_MISSING` | **0** | none inside `READY_NOW`; evidence-missing inputs remain in the held queue |
+| `EVIDENCE_MISSING` | **0** | none inside `READY_NOW`; evidence-missing inputs remain held |
 
-`COMPLIANT` is bounded to the stated evidence scope only. It is not a certification, blanket legal-compliance statement or permanent future-state claim.
+`COMPLIANT` is bounded to the stated evidence scope only and is not a certification, blanket legal-compliance statement or permanent future-state claim.
 
-### EVIDENCE_OR_OWNER_HELD — unchanged
+### Evidence delta from PR #754
+
+Current main contains fail-closed Google consent defaults, category-gated GA4/AdSense loading, non-disruptive generic status changes and one-time reload on relevant explicit revoke, with unit-test coverage. This strengthens `REQ-COMP-014`, but the status remains `PARTIALLY_COMPLIANT` because complete/current transparency over every processing/public/product surface is not exhaustively proven.
+
+### Evidence delta from PR #755
+
+ADR-0007 now has a stable registry identity and `historical` / non-authorizing lifecycle. The lifecycle/authority portion of `COMP-GAP-002` is therefore `RESOLVED_ON_MAIN`, and `REQ-COMP-012` can be assessed `COMPLIANT` for the bounded historical-authority requirement. This does **not** re-authorize legacy legal/certification claims or a parallel Compliance value chain. `COMP-GAP-003` / ESS-0006 remains a separate open Governance clarification gap.
+
+## Held sets — unchanged
+
+### EVIDENCE_OR_OWNER_HELD — 7
 
 `REQ-COMP-017`, `019`, `021`, `031`, `032`, `033`, `034` remain held because provider/transfer evidence, AI output evidence, Human AI-literacy records, contract-universe evidence, measured recovery or end-to-end traceability/provenance evidence is incomplete or awaiting independent owner/verifier return.
 
-### LEGAL_OR_SCOPE_HELD — unchanged
+### LEGAL_OR_SCOPE_HELD — 7
 
 `REQ-COMP-018`, `020`, `022`, `023`, `037`, `038`, `039` remain `NOT_ASSESSED` with explicit Human/Legal gates where applicable. `LEGAL_REVIEW` is an external decision gate, not an additional COMP-04 assessment status.
 
-## Material assessment limitations retained
+## Material limitations retained
 
-- `REQ-COMP-009/010`: existing Security controls and scoped technical evidence do not close repository-wide Security/secret evidence residuals.
-- `REQ-COMP-011/035`: `COMP-GAP-008` document-registry treatment remains open at Documentary/Governance ownership boundary.
-- `REQ-COMP-012`: ADR-0007 / ESS-0006 gaps remain open. PR #755 cannot be consumed as resolution before Human merge and subsequent COMP reassessment.
-- `REQ-COMP-013..016`: current privacy, data-subject-request, consent and retention evidence supports bounded partial assessments only; no blanket GDPR sufficiency is claimed.
-- `REQ-COMP-014`: PR #754 strengthens fail-closed consent runtime evidence but does not prove every transparency/processing surface complete.
-- `REQ-COMP-030`: change-impact execution is evidenced in this cycle, but exhaustive automated trigger coverage is not established.
-- `REQ-COMP-036`: current exact-SHA deploy evidence exists; a fresh independent rollback execution/test for this release is not established.
+- `REQ-COMP-009/010`: existing Security controls and scoped evidence do not close repository-wide Security/secret residuals.
+- `REQ-COMP-011/035`: `COMP-GAP-008` document-registry treatment remains open at the Documentary/Governance boundary.
+- `REQ-COMP-013..016`: privacy, data-subject-request, consent and retention evidence supports bounded partial assessments only; no blanket GDPR sufficiency is claimed.
+- `REQ-COMP-030`: repeated change-impact execution is evidenced, but exhaustive automated trigger coverage is not established.
+- `REQ-COMP-036`: verified exact-SHA deployment evidence exists for the latest application-affecting release; a fresh independent rollback execution/test is not established.
+- `COMP-GAP-003` ESS-0006 remains open despite ADR-0007 lifecycle resolution.
 
-## Current findings preserved
+## Current Compliance findings
 
 | Finding | Current state | Owner / gate |
 |---|---|---|
-| `COMP-GAP-002` ADR-0007 | `PARTIALLY_COMPLIANT / OPEN` | `CAPITAL-AI-GOV / PVC-05`; PR #755 open only |
-| `COMP-GAP-003` ESS-0006 | `PARTIALLY_COMPLIANT / OPEN` | Governance after ADR-0007 resolution |
+| `COMP-GAP-002` ADR-0007 lifecycle/authority ambiguity | `RESOLVED_ON_MAIN` | historical/non-authorizing migration via Human-merged PR #755; no legacy reauthorization |
+| `COMP-GAP-003` ESS-0006 | `PARTIALLY_COMPLIANT / OPEN` | Governance clarification remains |
 | `COMP-GAP-004` vendor/transfer | `EVIDENCE_MISSING / LEGAL_REVIEW` | Human/Legal + actual provider/domain owner |
 | `COMP-GAP-005` AI literacy | `EVIDENCE_MISSING` | Human/Owner evidence |
 | `COMP-GAP-006` DORA | `NOT_ASSESSED / LEGAL_REVIEW` | Human/Legal |
@@ -110,7 +117,7 @@ DATA realtime-newsfeed entitlement remains implementation evidence with independ
 | `COMP-07` | Remediation assignment | `ACTIVE` — foreign work stays with Primary Owner |
 | `COMP-08` | Continuous Compliance | `ACTIVE` — trigger on material fact/authority/evidence changes |
 
-## Evidence model and standards boundary
+## Evidence and standards boundary
 
 Preferred evidence order remains Runtime/Provider → Code/Configuration → exact-identity Hosted CI → Registry/Control → Approved Documentation → Roadmap Claims. Historical evidence is not automatic current proof and `EVIDENCE_READY` is not `VERIFIED`.
 
@@ -123,6 +130,7 @@ ISO/IEC 42001:2023 remains a non-certifying Governance benchmark. ISO/IEC 27001,
 - all **23/23** `READY_NOW` requirements have exactly one six-value assessment status;
 - each has named current evidence and explicit limitations in the Evidence Report;
 - `EVIDENCE_MISSING`, `NOT_ASSESSED`, `LEGAL_REVIEW` and foreign-owner gates remain explicit outside the READY_NOW set;
+- returned ADR-0007 evidence closes only its proven lifecycle/authority gap;
 - no foreign implementation, Security verification, Legal Review or shared registry mutation is claimed by Compliance;
 - no open PR is treated as merged-main evidence;
 - PR creation remains separately subject to exact main/head Human/Owner approval; merge remains Human/CODEOWNER-only.
