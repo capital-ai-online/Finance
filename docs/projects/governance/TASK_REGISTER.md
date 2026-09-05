@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-05, correlated to repository-visible implementation/PR evidence  
-**Current correlation baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
+**Current correlation baseline:** `main@d69e75b6853f3b56ca313fe3c3256e56bc21c220`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -60,11 +60,11 @@
 | `GOV-CHAT-037` | User-Lifecycle governance bootstrap | GOV | `DONE_MAIN` | decisions/orchestration merged |
 | `GOV-CHAT-038` | Pro annual-price rule | GOV | `DONE_MAIN` | Owner decision merged |
 | `GOV-CHAT-039` | Logout semantics | GOV | `DONE_MAIN` | merged |
-| `GOV-CHAT-040` | User-Lifecycle harness/provider tests | OPS | `FOREIGN_PARTIAL` | provider evidence remains |
+| `GOV-CHAT-040` | User-Lifecycle harness/provider tests | OPS | `FOREIGN_PARTIAL` | provider evidence remains partial |
 | `GOV-CHAT-041` | Lifecycle/pricing/entitlement UX | FE | `FOREIGN_OPEN` | PR #736 auth recovery + PR #745 startup hardening do not close broader UX |
-| `GOV-CHAT-042` | Independent User-Lifecycle Security verification | SEC | `DEPENDENCY` | evidence required |
+| `GOV-CHAT-042` | Independent User-Lifecycle Security verification | SEC | `DEPENDENCY` | PR #749 confirms integration evidence on main, but `SEC-VERIFY-ULS-001` subscription-identity re-verification plus provider/E2E residuals remain open |
 | `GOV-CHAT-043` | Purchase/cancellation consumer-compliance | COMP / Human-Legal | `DEPENDENCY` | Legal/Evidence gates remain |
-| `GOV-CHAT-044` | Final User-Lifecycle governance correlation | GOV | `OPEN_GOV` | wait for required owner returns |
+| `GOV-CHAT-044` | Final User-Lifecycle governance correlation | GOV | `OPEN_GOV` | wait for remaining OPS/FE/SEC/COMP returns; do not close on implementation evidence alone |
 | `GOV-CHAT-045` | Frontend authority stale writer | GOV / FE | `DONE_MAIN` | released historically |
 | `GOV-CHAT-046` | Compliance project-surface stale writer | COMP | `DONE_MAIN` | released historically |
 | `GOV-CHAT-047` | BGB §312j/§312k applicability | COMP / Human-Legal | `DEPENDENCY` | no GOV legal inference |
@@ -91,7 +91,7 @@
 |---|---|---|
 | `CAPITAL-AI-OPS` | User-Lifecycle harness/stable-ID evidence exists with provider evidence still partial; Human-merged PR #747 additionally materializes Deep Research DR-03 in the OPS roadmap but keeps it behind the higher-priority OPS security/data-integrity gate | `FOREIGN_PARTIAL` / foreign roadmap input |
 | `CAPITAL-AI-FE` | PR #736 auth recovery + PR #745 startup hardening merged; broader lifecycle/pricing/entitlement UX not established | `FOREIGN_OPEN` |
-| `CAPITAL-AI-SEC` | independent verification incomplete where evidence is missing | `DEPENDENCY` |
+| `CAPITAL-AI-SEC` | Human-merged PR #749 makes current Security return explicit: User-Lifecycle integration is implemented on main, but independent subscription-identity re-verification and provider/E2E residuals remain open | `DEPENDENCY` |
 | `CAPITAL-AI-COMP` / Human-Legal | COMP-01 evidence and COMP-02 requirements work through Human-merged PR #746 are current-main inputs; Legal/Evidence gates remain | `DEPENDENCY` |
 
 ## Current scoped GOV writer
@@ -108,7 +108,7 @@ No new work claim is invented solely for branch/PR mechanics.
 
 ## Current-main / PR correlation
 
-Human-merged PR #746 advanced Compliance requirements evidence, and Human-merged OPS PR #747 subsequently advanced `main` to `255a89c532f3589e6d157d4f629a47251bd52670`. PR #747 changes OPS roadmap/work-package/claim metadata only; it does not write the three Governance project files and does not reopen GOV-03/DR-02B. Its DR-03 projection is foreign OPS planning evidence only.
+Human-merged PR #746 advanced Compliance requirements evidence, Human-merged OPS PR #747 advanced OPS planning/DR-03 evidence, and Human-merged Security PR #749 advanced Security verification planning. Current `main` is `d69e75b6853f3b56ca313fe3c3256e56bc21c220`. None of those merges writes the three Governance project files. Their semantic returns are reflected here without absorbing foreign execution or independent verification authority.
 
 The earlier attempted Governance PR #748 was closed unmerged after `main` changed between the final pre-create read and the GitHub create mutation, invalidating the exact-SHA Human approval. It is historical execution evidence only and does not satisfy the PR gate for the current branch state.
 

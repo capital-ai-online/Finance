@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Component and Architecture Matrix
 
 **Role:** current project assessment — non-authorizing  
-**Baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
+**Baseline:** `main@d69e75b6853f3b56ca313fe3c3256e56bc21c220`  
 **Correlation date:** `2026-09-05`
 
 | Component / contract | Canonical anchor | GOV relationship | Current architecture assessment | Action |
@@ -22,8 +22,8 @@
 | ESS-0006 Security & Compliance | `.ai/skills/ESS-0006-Security-Compliance.md` | GOV / ESS owner boundary | v1.0.0 combined Security/Compliance assumptions may conflict with current independent assessment/verification and owner boundaries | P2 AFTER ADR-0007 |
 | Compliance assessment | `docs/projects/compliance/**` + `docs/compliance/CAPITAL-AI-COMP/**` | foreign independent assessor; GOV consumes findings | COMP-GAP-002 routes ADR-0007 to GOV; COMP-GAP-003 flags ESS-0006; Human-merged PR #746 updates requirements inventory but does not decide GOV lifecycle semantics | READ-ONLY INPUT / RETURN GOV EVIDENCE TO COMP |
 | Operations roadmap | `docs/projects/operations/ROADMAP.md` + `WORK_PACKAGES.md` | foreign Primary Owner input | PR #747 re-correlates OPS planning and materializes DR-03 without changing PVC-05 or GOV authority; higher-priority OPS security/data-integrity gate remains controlling for OPS execution order | READ-ONLY CORRELATION / NO GOV ABSORPTION |
-| Security verification | Security project/runtime/evidence | foreign independent verifier | GOV cannot self-verify Security findings | KEEP INDEPENDENT |
-| User Lifecycle | GOV decisions + OPS/FE/SEC/COMP returns | GOV orchestration only | decisions merged; provider/Security/UX/Legal evidence remains partially foreign/pending | WAIT FOR OWNER RETURNS |
+| Security verification | `docs/projects/security/ROADMAP.md` + detailed Security roadmap | foreign independent verifier | Human-merged PR #749 confirms User-Lifecycle Security integration evidence on main while `SEC-VERIFY-ULS-001` subscription-identity re-verification and provider/E2E residuals remain open; GOV cannot self-verify or close them | KEEP INDEPENDENT / READ RETURN EVIDENCE |
+| User Lifecycle | GOV decisions + OPS/FE/SEC/COMP returns | GOV orchestration only | decisions merged; provider/UX/Legal evidence remains partial and Security return is `IMPLEMENTED_MAIN / RESIDUAL_VERIFICATION_OPEN`, not blanket closure | WAIT FOR REMAINING OWNER RETURNS |
 | Frontend architecture | `docs/frontend/FRONTEND_ARCH.md` + FE roadmap | foreign cross-cutting owner | PR #745 startup/dependency hardening merged; no GOV ownership transfer | READ-ONLY CORRELATION |
 | Financial technical chain | `SC-MD-SPT-0001` | governance correlation only | current technical `VC-*` remains active | DEFERRED OWNER DECISION |
 | Quality projection | `src/platform/Quality/**` / ESS-0005 | cross-cutting dependency | canonical project surface exists; no Primary PVC ownership | MAINTAIN BOUNDARY |
@@ -35,10 +35,10 @@
 
 ## Current priority assessment
 
-1. **GOV-ROADMAP-RECORRELATE** — synchronize this matrix, Roadmap and Task Register; terminalize GOV-03/DR-02B and reflect current foreign-owner evidence without absorbing it.
+1. **GOV-ROADMAP-RECORRELATE** — synchronize this matrix, Roadmap and Task Register; terminalize GOV-03/DR-02B and reflect current OPS/Security/Compliance return evidence without absorbing it.
 2. **COMP-GAP-002 / ADR-0007** — separate fresh then-current-main Governance branch after step 1 is terminal; correlate Authority, ADR registry, PVC ownership, Compliance facts and runtime before lifecycle/semantic decision.
 3. **COMP-GAP-003 / ESS-0006** — only after ADR-0007; no parallel Security/Compliance architecture or Requirement Registry.
 
 ## Overall assessment
 
-The Governance architecture needs no new control plane or runtime restructuring. The immediate gap is legacy artifact lifecycle/semantic consistency, led by ADR-0007 and then ESS-0006. Project/PVC surfaces, Trust Root, human-readable development navigation, ADR-0060 supply-chain authority and stale-writer hygiene are established on current main. OPS DR-03 is now visible in current-main planning evidence but remains foreign OPS work. Foreign productive work remains with its Primary Owner.
+The Governance architecture needs no new control plane or runtime restructuring. The immediate gap is legacy artifact lifecycle/semantic consistency, led by ADR-0007 and then ESS-0006. Project/PVC surfaces, Trust Root, human-readable development navigation, ADR-0060 supply-chain authority and stale-writer hygiene are established on current main. OPS DR-03 and Security verification work are current-main foreign-owner inputs only. Foreign productive work and independent verification remain with their respective owners.

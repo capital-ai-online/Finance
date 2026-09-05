@@ -2,262 +2,243 @@
 
 **Document ID:** `DOC-ROADMAP-CAPITAL-AI-SEC-2026-08-31`  
 **Project ID:** `CAPITAL-AI-SEC`  
-**Version:** `2.1.2`  
+**Version:** `2.2.1`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
-**Date:** `2026-08-31`  
-**Repository baseline:** `main@8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`  
+**Date:** `2026-09-05`  
+**Repository baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
 **Role:** `CROSS_CUTTING_SECURITY`  
 **Primary Project Value Chain ownership:** `[]`  
-**Project coverage:** `PVC-01` through `PVC-18`  
-**Technical Security coverage:** existing technical `VC-*` stages where applicable; namespace remains separate from `PVC-*`  
-**Owner:** CAPITAL-AI Owner  
+**Project coverage:** `PVC-01` through `PVC-18` as Security overlay  
+**Owner:** `CAPITAL-AI-SEC` for Security requirements/findings/testing/verification only  
 **Security component:** `src/platform/Security`  
 **Component specification:** ESS-0006 — Security & Compliance  
 **Existing hardening program:** `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md`  
-**Trust root:** `AGENTS.md`
+**Trust root:** `/AGENTS.md`
 
-> CAPITAL-AI-SEC owns Security requirements, threat analysis, Security testing, findings and verification. It owns no productive `PVC-*` stage and does not silently convert a Security requirement into implementation ownership of another project.
+> CAPITAL-AI-SEC owns Security requirements, threat analysis, Security testing, finding lifecycle and independent verification. It owns no productive `PVC-*` stage and does not convert a Security requirement into implementation ownership of another project.
 
-## 1. Purpose
+## 1. Current authority and routing model
 
-CAPITAL-AI-SEC is the cross-cutting protection and verification domain for CAPITAL-AI. It provides homogeneous Security requirements across the organizational Project Value Chain (`PVC-01..PVC-18`) and across applicable technical value-chain stages, detects and tracks Security findings, and independently verifies remediation.
+Current work resolves from `/AGENTS.md` on current `main`, then canonical project/PVC mapping, the Security project roadmap, applicable current ADR/ESS, and finally code/tests/evidence. Post-PVC policy overlays withdrawn by current `/AGENTS.md` are historical/non-authorizing. The former Cross-Project Handoff Contract is therefore not a current routing authority.
 
-It does **not** become a second Governance Control Plane, EventMesh, data pipeline, scoring architecture, production authority or hidden domain owner.
+Productive ownership remains:
 
-The current repository project model is defined by:
+| PVC | Primary productive owner | Security role |
+|---|---|---|
+| PVC-01 | CAPITAL-AI-CLIENT | requirements + verification |
+| PVC-02 | CAPITAL-AI-OPS | requirements + verification |
+| PVC-03 | CAPITAL-AI-DOC | requirements + verification |
+| PVC-04 | CAPITAL-AI-OPS | requirements + verification |
+| PVC-05 | CAPITAL-AI-GOV | consume current authority; verify Security properties |
+| PVC-06 | CAPITAL-AI-OPS | requirements + verification |
+| PVC-07 | CAPITAL-AI-OPS | requirements + verification |
+| PVC-08 | CAPITAL-AI-OPS | requirements + verification |
+| PVC-09..11 | CAPITAL-AI-DATA | requirements + verification |
+| PVC-12..17 | CAPITAL-AI-FINTECH | requirements + verification |
+| PVC-18 | CAPITAL-AI-OPS | requirements + verification |
 
-- `docs/projects/README.md`;
-- `docs/projects/PROJECT_VALUE_CHAIN.md`;
-- `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md`.
+No row grants CAPITAL-AI-SEC productive PVC ownership.
 
-`PVC-*` is the organizational project-routing namespace. Existing technical `VC-*` identifiers under `SC-MD-SPT-0001` remain separate and must not be silently interpreted as project ownership.
-
-## 2. Security-owned scope
-
-CAPITAL-AI-SEC owns only the cross-cutting Security functions below:
-
-- Threat Modeling;
-- Security Architecture Requirements;
-- IAM Security requirements and verification;
-- Application/API Security requirements and verification;
-- Secrets Security;
-- Data Security requirements and verification;
-- Supply Chain Security requirements and verification;
-- AI / Agent Security requirements and verification;
-- Security Testing and negative-test design;
-- Security Findings lifecycle;
-- Security Verification.
-
-`src/platform/Security` remains the existing technical Security component for inherently Security-owned reusable implementation such as identity verification helpers, Security middleware/utilities and Security-specific adapters. It is not a destination for unrelated domain remediation code.
-
-## 3. Explicit non-ownership
-
-CAPITAL-AI-SEC has no primary ownership of `PVC-01..PVC-18`.
-
-Security may block a protected operation or a release/security gate when required evidence or a required control is missing. Blocking does not transfer implementation ownership.
-
-Prohibited:
-
-- second Governance Control Plane;
-- second EventMesh;
-- second data pipeline;
-- second scoring architecture;
-- autonomous Production mutation;
-- self-accepted risk;
-- Security requirement used as hidden domain ownership;
-- moving foreign remediation code into `src/platform/Security` merely because the cause is Security-related;
-- duplicating domain-local authorization, scoring, provider, data or runtime architecture inside Security.
-
-## 4. Authority and reuse
-
-CAPITAL-AI-SEC reuses the effective repository authority chain:
-
-1. `AGENTS.md`;
-2. Governance Authority Registry and Control Catalog;
-3. applicable ADR/ESS/IAM/REM/Runbook authorities;
-4. ESS-0006 for the existing Security/Compliance component;
-5. current project-routing contracts under `docs/projects/**`;
-6. existing Security decisions and S1 finding identities;
-7. this roadmap only for non-authorizing Security coordination and verification.
-
-No new ADR, ESS, `AUTH-*` or `CTRL-*` identity is allocated by this synchronization.
-
-Existing controls, middleware, tests, Security evidence and S1 findings are reused before new architecture is proposed.
-
-## 5. Cross-project handoff contract
-
-CAPITAL-AI-SEC retains the Security marker required by the Security work model:
-
-`[SECURITY_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
-
-Current repository project routing also requires the compatibility repository marker:
-
-`[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
-
-Every new or refreshed Security handoff additionally carries:
-
-- `project_namespace: PVC`;
-- `project_stage: PVC-<NN>`;
-- `target_project`;
-- `task`;
-- `reason`;
-- `dependency`;
-- `required_evidence`;
-- `verification_gate`;
-- `status`.
-
-Where an existing technical financial stage is relevant, record it separately as:
-
-- `technical_namespace`;
-- `technical_stage`.
-
-The compatibility marker's `VC-<NN>` must not be treated as a `PVC-*` identity or as a technical `SC-MD-SPT-0001` stage without those explicit namespace fields.
-
-Security-specific finding fields remain:
-
-- `affected_project`;
-- `affected_vc_stage` for legacy/technical traceability where retained;
-- `threat_or_control`;
-- `severity`;
-- `evidence`;
-- `required_remediation`;
-- `verification_gate`;
-- `status`;
-- target-project roadmap reference.
-
-Rules:
-
-- `execute_foreign_work: false`;
-- foreign domain implementation remains target-project work;
-- remediation PR belongs to the target project when implementation is primarily target-project code;
-- HIGH/CRITICAL protected changes retain applicable Human/Owner gates;
-- Security can require, test, reject and verify but cannot silently assume foreign implementation ownership;
-- unclear project/PVC ownership is fail-closed and remains `UNROUTED/BLOCKED` until resolved.
-
-## 6. Workstreams
+## 2. Security workstreams
 
 | ID | Workstream | Security responsibility |
 |---|---|---|
-| SEC-01 | Threat Modeling | threats, attack surfaces, trust boundaries, affected project/stage mapping |
-| SEC-02 | Identity & Access | AuthN/AuthZ/MFA/AAL/least-privilege requirements and verification |
-| SEC-03 | Application/API Security | input/output/API/browser/capability security requirements and verification |
-| SEC-04 | Data & Secrets | confidentiality, integrity, RLS/grants, secrets and credential boundaries |
-| SEC-05 | Infrastructure | runtime/container/network/process/recovery Security requirements |
-| SEC-06 | Supply Chain | dependency/build/artifact/provenance/release-integrity verification |
-| SEC-07 | AI/Agent Security | prompt/tool/agent authority and untrusted-content boundaries |
-| SEC-08 | Security Testing | positive/negative/regression/configuration Security tests |
-| SEC-09 | Security Findings | triage, routing, remediation tracking, residual risk |
-| SEC-10 | Verification | exact-candidate/runtime evidence, stale-evidence and closure verification |
+| `SEC-01` | Threat Modeling | threats, surfaces, trust boundaries, owner/PVC correlation |
+| `SEC-02` | Identity & Access | AuthN/AuthZ/MFA/AAL/session/least-privilege requirements and verification |
+| `SEC-03` | Application/API Security | API/browser/capability/input/output/redirect requirements and verification |
+| `SEC-04` | Data & Secrets | confidentiality, integrity, RLS/grants, provenance, credentials |
+| `SEC-05` | Infrastructure | runtime/container/network/process/recovery assurance |
+| `SEC-06` | Supply Chain | dependency/build/artifact/provenance/release-integrity assurance |
+| `SEC-07` | AI / Agent Security | prompt/tool/agent authority and untrusted-content boundaries |
+| `SEC-08` | Security Testing | positive/negative/regression/configuration Security tests |
+| `SEC-09` | Findings | triage, owner routing, remediation requirement, residual-risk record |
+| `SEC-10` | Verification | independent exact-identity/runtime/provider verification and closure |
 
-SEC IDs are roadmap labels only and create no authority.
+These IDs are coordination labels only.
 
-## 7. Project Value Chain coverage model
+## 3. Chat-to-main consolidation result
 
-Security overlays every organizational stage while primary ownership remains external:
+The available project-chat work was treated only as a search index. Completion state below is derived from current repository evidence.
 
-| Project stage | Primary Project Owner | Security focus |
+| Work item | Current-main result |
+|---|---|
+| Security project/PVC consolidation | `DONE_MAIN` |
+| Adversarial Web/Mobile Security Assessment skill/schema/validator | `IMPLEMENTED_MAIN` |
+| Assessment validator in repository raw-test chain | `DONE_MAIN` |
+| Owner Device Authorization Stage-C | initial FAIL followed by independent PASS re-verification; `COMPLETE / HISTORICAL` |
+| User Lifecycle Security integration / GOV-CHAT-042 | `IMPLEMENTED_MAIN / RESIDUALS OPEN` |
+| Fatal Process Handling / S1-R2-04 | productive remediation `IMPLEMENTED_ON_MAIN`; Security/post-deploy verification still open |
+| Entitlement parent inventory / S1-R2-06 | `EVIDENCE_READY`; child remediation + Security verification remain |
+| User Lifecycle stable subscription identity | OPS provider evidence ready; independent Security re-verification remains |
+| OPS roadmap re-correlation PR #747 | merged into this baseline; corroborates OPS-owned S1 status without transferring closure authority to OPS |
+
+Historical Owner Device/WebAuthn evidence does not reactivate retired M10 runtime or withdrawn cutover/handoff overlays.
+
+## 4. Security-owned priority queue
+
+### 4.1 `SEC-ASSESS-ALIGN` — current-main alignment of the Security Assessment capability
+
+**State:** `OPEN — SECURITY OWNED`.
+
+The implemented skill still references the withdrawn Cross-Project Handoff Contract and lists NIST SP 800-115 as a standards baseline although current `/AGENTS.md` withdrew NIST from the repository Governance baseline.
+
+Required result:
+
+- current routing references use only current repository authority;
+- external security methodologies are clearly advisory/non-authorizing;
+- OWASP assessment methodology remains usable without being promoted to repository Authority;
+- authorization, safe testing defaults, exact evidence, owner/PVC routing, `NOT_TESTED != PASS`, Human risk acceptance and independent verification remain intact.
+
+### 4.2 `SEC-VERIFY-ULS-001` — subscription-identity evidence return
+
+**State:** `READY FOR INDEPENDENT SECURITY REVIEW`.
+
+OPS returned read-only provider evidence for:
+
+`metadata.user_id -> auth.users.id -> public.subscriptions.user_id`.
+
+Security may independently close only the bounded identity-projection aspect if evidence is sufficient. Supabase Local/Mailpit, cross-user provider E2E, Stripe Sandbox/Test Clock and payment/redelivery scenarios remain `NOT_AVAILABLE` and cannot inherit PASS.
+
+### 4.3 `SEC-VERIFY-R2-04` — fatal-process verification
+
+**State:** `READY / PARTIAL EVIDENCE AVAILABLE`.
+
+PR #720 merged the fail-fast/readiness/non-zero-exit implementation and tests. Security verification must distinguish repository negative behavior from post-deploy supervisor/restart evidence. Production/recovery closure requires evidence appropriate to that exact claim.
+
+### 4.4 `SEC-AUTH-LIFECYCLE` — MFA/AAL lifecycle clarity
+
+**State:** `OPEN / CLARIFY`.
+
+ESS-0020 remains proposed. Current Governance evidence intentionally did not unilaterally alter this foreign Security/Auth lifecycle state. M5A implementation evidence and normative lifecycle status remain separate facts. Any promotion/retirement/accepted-risk state requires applicable current authority/Human action.
+
+## 5. Foreign-owner Security return queue
+
+| Finding / residual | Productive owner | Current-main state | Security gate |
+|---|---|---|---|
+| `S1-R2-03` Node convergence | OPS / PVC-06 | `OPEN / HIGHEST EXECUTABLE OPS P1`; `.nvmrc` `24.18.0`, required target `24.20.0` | exact toolchain/control-plane identity after OPS remediation |
+| `S1-R2-04` fatal process | OPS / PVC-04 + PVC-08 evidence | `IMPLEMENTED_ON_MAIN`; verification pending | negative fail-fast + applicable post-deploy supervisor/restart evidence |
+| `S1-R2-05` Stripe redirect | OPS / PVC-02 | `OPEN` | canonical-origin/open-redirect DENY evidence |
+| `S1-R2-06` entitlement authority | OPS parent; FINTECH/DATA children | parent `EVIDENCE_READY`; child remediation open | per-capability forged/missing/stale/alternate-route DENY evidence |
+| `S1-R2-07` recovery/RPO/RTO | OPS / PVC-08 | `OPEN / UNVERIFIED` | measured restore, integrity, actual RPO/RTO |
+| `S1-R2-09` strict CSP | OPS / PVC-08 | `WAITING_FOR_EVIDENCE` | compatibility/violation window + protected-path verification |
+| `S1-R2-10` demo billing isolation | OPS / PVC-08 | `WAITING_FOR_EVIDENCE` | production reachability proof bound to deployed identity |
+| `S1-R2-11` evidence identity/freshness | DATA / PVC-10 | `OPEN — SECURITY EVIDENCE WORK` | current/stale/wrong-identity evidence semantics |
+| User Lifecycle provider E2E | OPS / PVC-08 + applicable provider owner | `NOT_AVAILABLE` for isolated Supabase/Stripe scenarios | reproducible provider evidence |
+| leaked-password protection | OPS / PVC-08 provider config | `OPEN DEFENSE-IN-DEPTH` | separately authorized config action and readback |
+
+### 5.1 S1-R2-06 child map
+
+| Capability | Current classification | Productive remediation owner |
 |---|---|---|
-| PVC-01 Agent Client | CAPITAL-AI-CLIENT | untrusted request/context, client-side authority boundaries |
-| PVC-02 Controlled Implementation | CAPITAL-AI-OPS | controlled mutation, least privilege, secure implementation gates |
-| PVC-03 Documentary Engine | CAPITAL-AI-DOC | untrusted content, evidence integrity, mutation separation |
-| PVC-04 Supervisor | CAPITAL-AI-OPS | fail-fast, health/recovery, supervisory integrity |
-| PVC-05 Platform Director | CAPITAL-AI-GOV | authority resolution, protected-action gates, no self-authorization |
-| PVC-06 Version Management | CAPITAL-AI-OPS | toolchain/version integrity, exact identity |
-| PVC-07 Release Management | CAPITAL-AI-OPS | release integrity, attestation, unverified-promotion denial |
-| PVC-08 Production Operations | CAPITAL-AI-OPS | runtime hardening, production permissions, recovery evidence |
-| PVC-09 UAI / Data Ingestion | CAPITAL-AI-DATA | external-input validation, provenance, credential boundaries |
-| PVC-10 Evidence Management | CAPITAL-AI-DATA | evidence integrity, freshness, exact candidate/runtime identity |
-| PVC-11 Data Quality | CAPITAL-AI-DATA | fail-closed DQ, no synthetic success |
-| PVC-12 Feature Engineering | CAPITAL-AI-FINTECH | feature/input integrity and provenance |
-| PVC-13 Scoring Models | CAPITAL-AI-FINTECH | model/registry integrity and least privilege |
-| PVC-14 Scoring Orchestration | CAPITAL-AI-FINTECH | dispatcher/tool integrity and no bypass |
-| PVC-15 Domain Analysis / Executor | CAPITAL-AI-FINTECH | provider/tool/domain execution boundary |
-| PVC-16 Canonical Scoring | CAPITAL-AI-FINTECH | result integrity and lineage |
-| PVC-17 Ranking / Decision Support | CAPITAL-AI-FINTECH | protected decision-input integrity |
-| PVC-18 EventMesh / Traceability | CAPITAL-AI-OPS | event/evidence integrity; no EventMesh authorization |
+| `verified_screening` | partial server enforcement / alternate route | FINTECH / PVC-16 |
+| `backtest` | no paid entitlement enforcement | FINTECH / PVC-15 |
+| `monte_carlo` | client-local alternate route | FINTECH / PVC-15 |
+| `full_ai_analysis` | unbound productive capability / fail-closed gap | FINTECH / PVC-15 |
+| `realtime_ai_newsfeed` | product-contract/runtime gap | DATA / PVC-09 |
+| `buffett_value_check` | server authority present / client integration gap | FINTECH / PVC-15 |
+| `pdf_compliance_export` | server enforced / evidence present | no new productive remediation identified by parent inventory |
 
-This table is Security coverage, not ownership.
+Security verifies returned evidence; it does not absorb these implementations.
 
-## 8. Technical value-chain coverage
+## 6. User Lifecycle Security state
 
-Security also checks applicable technical `VC-*` stages under their existing technical authority, including identity/entitlement, provider/data integrity, scoring/ranking, API/browser and evidence boundaries. Those identifiers remain governed by their technical architecture and do not become project-routing identities through this roadmap.
+| Area | Current Security state |
+|---|---|
+| Authentication repository contract | `PASS` at repository-contract level; provider abuse controls not comprehensively exercised |
+| Session/revocation | `OPEN`; provider JWT residual window and provider/browser E2E remain |
+| MFA/AAL server boundary | canonical controls exist; application-wide endpoint coverage is not inferred from frontend gating |
+| Subscription identity projection | OPS provider evidence ready; SEC re-verification pending |
+| Protected capabilities | `OPEN` through S1-R2-06 child findings |
+| Supabase Local/Mailpit + cross-user provider E2E | `NOT_AVAILABLE` |
+| Stripe Sandbox/Test Clock + payment failure/redelivery | `NOT_AVAILABLE` |
+| leaked-password protection | warning remains; separate protected config action if changed |
 
-## 9. Current finding routing after final PVC correlation
+No blanket Security `VERIFIED/CLOSED` result exists for the complete user lifecycle at this baseline.
 
-The S1 finding identities remain unchanged. The former branch-local targets (`DC-SA`, `DEVELOPMENT`, `SC-MD-SPT`, `SEO-GM`, `GOV`) are retained only as historical source labels. Current project routing is now bound to the canonical Primary Project Owners from `docs/projects/PROJECT_VALUE_CHAIN.md`.
+## 7. Security Assessment capability contract
 
-Every row below carries the same numeric repository compatibility marker as its explicit `project_stage`, while `project_namespace: PVC` is authoritative for project routing. No row assigns Security primary PVC ownership.
+The adversarial assessment capability remains implemented. Current invariants:
 
-| Finding | Security handoff | project_stage | target_project | target roadmap/reference | Dependency / boundary | External status |
-|---|---|---|---|---|---|---|
-| S1-R2-03 Node control-plane convergence | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-06]` | `PVC-06` Version Management | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md` (target canonical OPS roadmap); source: `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` | Node/runtime version identity; implementation remains OPS-owned | `REFERRED_NOT_EXECUTED` |
-| S1-R2-04 fatal process handling | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-04]` | `PVC-04` Supervisor | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` | `PVC-08` supplies post-deploy runtime/supervisor evidence | `REFERRED_NOT_EXECUTED` |
-| S1-R2-05 Stripe redirect boundary | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-02]` | `PVC-02` Controlled Implementation | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: `DEVELOPMENT_CHAIN_ROADMAP.md` | application/server remediation; Security verifies open-redirect DENY behavior | `REFERRED_NOT_EXECUTED` |
-| S1-R2-06 entitlement authority | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-02]` | `PVC-02` Controlled Implementation | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; Security source: `S1_SECURITY_HARDENING_ROADMAP.md` | parent inventory is OPS-coordinated; `CAPITAL-AI-CLIENT/PVC-01` and capability-specific Primary Owners become child handoffs if their code is affected | `REFERRED_NOT_EXECUTED / ACTIVE` |
-| S1-R2-07 recovery / RPO / RTO | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: current Operations handoff/runbooks | measured restore/RPO/RTO remains Operations evidence, not Security execution | `REFERRED_NOT_EXECUTED` |
-| S1-R2-09 strict CSP promotion | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source context: `SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` | `CAPITAL-AI-SEO` supplies browser/compatibility evidence but owns no productive PVC stage; promotion remains OPS-owned | `WAITING_FOR_EVIDENCE` |
-| S1-R2-10 demo billing isolation post-deploy proof | `[SECURITY_HANDOFF -> CAPITAL-AI-OPS | VC-08]` | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | `docs/projects/operations/ROADMAP.md`; source: `DEVELOPMENT_CHAIN_ROADMAP.md` | Security verifies returned production reachability evidence; failed proof creates a new `PVC-02` implementation handoff | `WAITING_FOR_EVIDENCE` |
-| S1-R2-11 evidence identity/staleness | `[SECURITY_HANDOFF -> CAPITAL-AI-DATA | VC-10]` | `PVC-10` Evidence Management | `CAPITAL-AI-DATA` | `docs/projects/data/ROADMAP.md` (target canonical DATA roadmap); source: S1 + PR baseline tooling | DATA owns evidence identity/freshness semantics; any PR/trace tooling code remediation is a secondary `CAPITAL-AI-OPS` handoff, not implicit DATA ownership | `WAITING_FOR_EVIDENCE` |
-| MFA/AAL authority-lifecycle drift | `[SECURITY_HANDOFF -> CAPITAL-AI-GOV | VC-05]` | `PVC-05` Platform Director | `CAPITAL-AI-GOV` | `docs/projects/governance/ROADMAP.md` | Governance/Owner reconciles ADR/ESS/registry lifecycle; Security must not self-promote authority | `REFERRED_NOT_EXECUTED / CLARIFY` |
+- active assessment requires explicit authorization for exact target/scope/test class;
+- default posture is non-destructive assessment-only;
+- unowned targets, destructive exploitation, credential theft, uncontrolled persistence, denial-of-service and protected production money/IAM mutation are not implicitly authorized;
+- evidence minimizes secrets/PII and binds observation to target/version/snapshot;
+- `NOT_TESTED != PASS`;
+- productive remediation remains with the Primary Owner;
+- `ACCEPTED_RISK` requires Human/Owner authority;
+- `VERIFIED` requires independently identifiable re-test evidence.
 
-For each row, the repository compatibility marker is also recorded as `[CROSS_PROJECT_HANDOFF -> <target_project> | VC-<NN>]` using the same numeric project stage. Target project roadmap paths that do not yet exist are **handoff destinations**, not permission for Security to create the foreign project surface; this matches the current Governance handoff model.
+`SEC-ASSESS-ALIGN` fixes stale authority/methodology references; it does not remove the capability.
 
-S1-R2-00 containment remains merged implementation/history and is not reopened.
-
-## 10. Finding lifecycle
+## 8. Finding and verification lifecycle
 
 ```text
-DISCOVERED → TRIAGED → CONFIRMED → ROUTED/ASSIGNED
-→ target-project REMEDIATING → IMPLEMENTED → EVIDENCE_READY
-→ Security VERIFIED → CLOSED
+DISCOVERED
+-> TRIAGED
+-> CONFIRMED
+-> OWNER/PVC IDENTIFIED
+-> target owner REMEDIATING
+-> IMPLEMENTED
+-> EVIDENCE_READY
+-> independent Security VERIFIED
+-> CLOSED
 ```
 
-Alternative states: `FALSE_POSITIVE`, `ACCEPTED_RISK`, `DEFERRED`, `SUPERSEDED`.
+Rules:
 
-`ACCEPTED_RISK` requires the applicable Human/Owner authority. Security cannot self-accept risk and an implementing agent cannot self-verify its own remediation solely from implementation.
+- `EVIDENCE_READY != VERIFIED`;
+- missing, stale, wrong-identity or `NOT_AVAILABLE` evidence is not PASS;
+- implementing projects do not self-close independent Security findings;
+- Security cannot self-accept risk;
+- roadmap status alone is not evidence of runtime/provider security.
 
-## 11. Security testing and evidence
+Evidence precedence:
 
-Security verification uses the strongest applicable evidence:
-
-1. runtime Security evidence;
+1. exact runtime/provider observation;
 2. provider/security configuration readback;
-3. negative Security tests;
-4. hosted CI Security checks;
-5. code implementation;
-6. scan result;
-7. approved policy/control;
-8. roadmap status.
+3. negative/reproduction tests;
+4. hosted CI bound to exact PR head;
+5. implementation/code;
+6. scanner/static analysis;
+7. current policy/control;
+8. roadmap text.
 
-Missing or stale evidence never silently becomes PASS.
+## 9. Historical / secondary surfaces
 
-## 12. S1 and existing Security architecture
+These dated documents remain audit/history and detailed reference but predate current routing and later merged returns:
 
-S1 remains the existing bounded hardening/findings program and retains all S1-R2 identities. CAPITAL-AI-SEC does not duplicate it. V2 changes the relationship from centralized remediation execution to cross-cutting requirement/routing/verification.
+- `docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md`;
+- `docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md`.
 
-Existing VERIFIED/HISTORICAL Security work remains closed unless new evidence demonstrates regression.
+Where their status/routing language conflicts with current `/AGENTS.md`, canonical project mapping, `docs/projects/security/ROADMAP.md` or this roadmap, current-main sources win. Full normalization is a separate Security documentation-maintenance item and must not reopen already implemented work merely because historical text is stale.
 
-The repository Governance Control Plane, IAM authorities, Secrets mechanisms, EventMesh, scoring/data architecture, Release and Production authorities remain separate and unchanged.
+## 10. Current correlation boundary
 
-## 13. Definition of Done
+This roadmap branch is bound to `main@255a89c532f3589e6d157d4f629a47251bd52670`, which includes merged OPS PR #747. At the resync check there are zero open PRs against `main`.
 
-CAPITAL-AI-SEC V2 is complete when:
+PR #747 changed only OPS roadmap/work-package/claim paths. The Security branch changes only:
 
-- every active Security finding has an affected Primary Project Owner plus explicit `PVC-*` project routing;
-- technical `VC-*` stages are separately namespaced where relevant;
-- cross-project Security dependencies are explicit;
-- no `PVC-01..PVC-18` stage is claimed as Security primary ownership;
-- target-project roadmap references exist for every foreign implementation handoff;
-- Security requirements and verification gates are traceable;
-- no duplicate Security authority or duplicated domain implementation is introduced;
-- critical ambiguity fails closed;
-- no unresolved P0 Security conflict exists;
-- exact-candidate/runtime verification evidence is traceable for VERIFIED claims.
+- `docs/projects/security/ROADMAP.md`;
+- `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`.
 
-## 14. PR boundary
+Thus changed-file overlap is none. Its formerly parallel S1 semantics are now current-main owner evidence and have been incorporated without turning OPS status into Security verification.
 
-Security consolidation/documentation changes use project prefix `CAPITAL-AI-SEC` and remain one-project scope.
+## 11. Definition of Done for current Security backlog
 
-A remediation PR that mainly changes foreign-domain implementation belongs to that target project, not to CAPITAL-AI-SEC.
+CAPITAL-AI-SEC is current when:
 
-PR creation requires a separate explicit Owner approval after final `main`/open-PR correlation and after reporting exact `main` and candidate SHAs. Merge remains Human/CODEOWNER-only. Direct `main` edits are prohibited.
+- current Security capabilities/docs no longer depend on withdrawn authority/routing sources;
+- every active finding has current owner/PVC mapping or is explicitly unresolved/blocked;
+- returned evidence is independently verified only to the scope it proves;
+- foreign productive remediation remains with the actual Primary Owner;
+- no stale/missing/`NOT_AVAILABLE` evidence becomes PASS;
+- Security claims no productive PVC;
+- no second Governance/IAM/Data/Scoring/EventMesh/Release/Production authority is created;
+- historical M10/Owner Device evidence remains historical unless new current authority explicitly reopens it;
+- every `VERIFIED/CLOSED` claim records exact applicable identity/evidence.
+
+## 12. PR / merge / production boundary
+
+Security roadmap/documentation changes remain CAPITAL-AI-SEC scope. Foreign productive remediation belongs to the target project.
+
+PR creation requires separate explicit Human/Owner approval for the exact current-main and branch-head snapshot after final correlation. Merge remains Human/CODEOWNER-only. CI, roadmap status or Security evidence does not itself authorize Release, Production or protected provider mutation.
