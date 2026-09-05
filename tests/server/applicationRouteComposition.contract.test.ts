@@ -24,13 +24,15 @@ const expectedMounts = [
   "app.use('/api/admin/supervisor', supervisorRouter);",
   "app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));",
   "app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);",
-  "app.use('/api/news', newsRouter);",
+  "app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);",
   "app.use('/api/registry', registryRouter);",
   "app.use('/api/social-media', socialMediaRouter);",
   "app.use('/api', aiRouter);",
 ] as const;
 
-describe('ADR-0014 application route composition contract', () => {
+const directNewsMountPattern = /app\.(?:use|get|post|put|patch|delete)\(\s*['"]\/api\/news(?:\/[^'"]*)?['"]/;
+
+describe('ADR-0083 application route composition contract', () => {
   it('keeps the canonical composer aligned with the current production route mounts', () => {
     const composer = fs.readFileSync(composerPath, 'utf8');
     const application = fs.readFileSync(applicationPath, 'utf8');
@@ -46,6 +48,17 @@ describe('ADR-0014 application route composition contract', () => {
         expect(application).toContain(mount);
       }
     }
+  });
+
+  it('keeps every productive /api/news route behind the canonical entitlement parent gate', () => {
+    const composer = fs.readFileSync(composerPath, 'utf8');
+    const application = fs.readFileSync(applicationPath, 'utf8');
+
+    expect(composer).toContain(
+      "app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);",
+    );
+    expect(composer).not.toContain("app.use('/api/news', newsRouter);");
+    expect(application).not.toMatch(directNewsMountPattern);
   });
 
   it('keeps route composition free of Stripe raw-body and global middleware ownership', () => {
