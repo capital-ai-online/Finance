@@ -4,7 +4,7 @@
 **Role:** `CROSS_CUTTING_COMPLIANCE`  
 **Document ID:** `DOC-COMP-ROADMAP-2026-08-31`  
 **Document role:** roadmap / non-authorizing projection  
-**Version:** 1.6.1  
+**Version:** 1.6.2  
 **Date:** 2026-09-05  
 **Current-main reconciliation baseline:** `main@9bedefa8e1baa55224b11d214b712132b02dd5b8`  
 **Status:** ACTIVE — COMP-04 READY_NOW 23/23 ASSESSED / NON-AUTHORIZING  
@@ -24,7 +24,8 @@ Project ownership resolves only through `docs/projects/README.md` and `docs/proj
 4. Human-merged PR #754 supplies current Google consent runtime/test evidence.
 5. Human-merged PR #755 migrated ADR-0007 to stable historical/non-authorizing registry state, resolving `COMP-GAP-002` for lifecycle/authority.
 6. Human-merged PR #757 revalidated ESS-0006 v1.1.0 as a bounded Security/Compliance component specification with no second Requirement Registry, runtime, IAM/audit/risk/event authority or foreign PVC ownership. This resolves the previously open `COMP-GAP-003` stale-semantics finding on current main.
-7. Foreign remediation remains with the actual Primary Owner; Security verification remains Security-owned; legal applicability/accepted-risk decisions remain Human/Legal/Owner-controlled.
+7. Verified-main workflow `33993594609` successfully built, attested, deployed and post-deploy verified exact current main `9bedefa8e1baa55224b11d214b712132b02dd5b8`.
+8. Foreign remediation remains with the actual Primary Owner; Security verification remains Security-owned; legal applicability/accepted-risk decisions remain Human/Legal/Owner-controlled.
 
 ## COMP-04 assessment universe
 
@@ -39,7 +40,7 @@ Active inputs: **37**. Retired historical inputs excluded: **2**.
 
 ## READY_NOW assessment result
 
-The canonical requirement-by-requirement Evidence + Limitation detail is `reports/COMPLIANCE_EVIDENCE_REPORT.md` v1.6.1.
+The canonical requirement-by-requirement Evidence + Limitation detail is `reports/COMPLIANCE_EVIDENCE_REPORT.md` v1.6.2.
 
 | Assessment | Count | Requirements |
 |---|---:|---|
@@ -78,7 +79,7 @@ The canonical requirement-by-requirement Evidence + Limitation detail is `report
 - `REQ-COMP-011/035`: `COMP-GAP-008` document-registry treatment remains open at the Documentary/Governance boundary.
 - `REQ-COMP-013..016`: privacy, data-subject-request, consent and retention evidence supports bounded partial assessments only; no blanket GDPR sufficiency is claimed.
 - `REQ-COMP-030`: repeated change-impact execution is evidenced, but exhaustive automated trigger coverage is not established.
-- `REQ-COMP-036`: current verified-main deployment evidence is exact-SHA, but no fresh independent rollback execution/test is established.
+- `REQ-COMP-036`: exact current-main release/deployment evidence is verified, but no fresh independent rollback execution/test is established.
 
 ## Current Compliance findings
 
