@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-CHAT-TASK-CONSOLIDATION-V3-2026-09-05",
+  "status": "active",
+  "exclusive": true,
+  "activeWriter": true,
+  "authorizing": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV / Platform Director",
+  "branch": "agent/governance-chat-task-consolidation-v3-20260905",
+  "baseBranch": "main",
+  "baseSha": "e7765c98726d96a79e9fe969cc9a23a2b8f7fa14",
+  "startedAt": "2026-09-05T16:29:10Z",
+  "workItem": "Re-correlate the consolidated CAPITAL-AI-GOV chat backlog after main advanced through PR #736, terminalize two already-fulfilled stale GOV claims, refresh the canonical GOV Roadmap and task register, and preserve foreign-project ownership boundaries.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-CHAT-TASK-CONSOLIDATION-V3-2026-09-05.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-ADR0104-CROSS-PROJECT-SCOPE-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-DELETE-POST-PVC-POLICY-CONTRACTS-2026-09-02.json",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/projects/governance/TASK_REGISTER.md"
+  ],
+  "scopeBoundary": "Governance planning, traceability and stale coordination-state cleanup only. PRs #735 and #736 are read-only correlation input. No OPS/FE/SEC/COMP/DATA/FINTECH/CLIENT productive implementation is modified.",
+  "releaseCondition": "Release when the associated branch/PR is Human-merged, closed, superseded or abandoned."
+}
