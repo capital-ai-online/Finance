@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ROADMAP-DR03-RECORRELATION-2026-09-05",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "secondaryProjectStages": ["PVC-04", "PVC-06", "PVC-07", "PVC-08", "PVC-18"],
+  "workItem": "Re-correlate recent OPS chat work against current main, synchronize the canonical OPS roadmap/work-package projection, terminalize stale merged OPS writer metadata and materialize DR-03 after terminal GOV-03 without bypassing higher-priority OPS gates.",
+  "startedAt": "2026-09-05T20:00:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "e96c8d13d9ef3a7d566fb579e93fc680482d07c3",
+  "branch": "agent/operations-roadmap-dr03-reconcile-20260905",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ROADMAP-DR03-RECORRELATION-2026-09-05.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-ALPHA-VANTAGE-SECRET-MIGRATION-V2-2026-09-01.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-FATAL-PROCESS-HANDLING-2026-09-02.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-R-CLASS-NO-PR-BUILD-2026-09-02.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-USER-LIFECYCLE-CLOSEOUT-2026-09-05.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md"
+  ],
+  "authorityGuard": "Current /AGENTS.md and accepted current-main ADR/ESS authority remain controlling. CAPITAL-AI-OPS owns PVC-02/PVC-04/PVC-06/PVC-07/PVC-08/PVC-18 only. PVC-05 Governance is not absorbed. DR-03 correlation may reuse but cannot replace ESS-0019, ADR-0060, existing IAM/capability/policy/audit, Release or Production boundaries.",
+  "priorityGuard": "Security and Data Integrity precede Architecture and Integration. DR-03 remains blocked while the higher-priority OPS-06-SEC-03 Node control-plane convergence gap is open.",
+  "mutationScope": "Repository documentation and coordination metadata only. No DR-03 productive adapter code, provider mutation, Production mutation, Release transition, deployment, remote skill loading or foreign-project implementation is authorized by this work item.",
+  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or this work item is explicitly abandoned. Pull Request creation requires fresh exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only."
+}
