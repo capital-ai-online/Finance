@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-R-CLASS-NO-PR-BUILD-2026-09-02",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -24,5 +24,10 @@
   "securityBoundary": "Preserve the required build-and-test check, trusted-main classification, integrity, dependency audit, lint, unit tests and workflow-security semantics. Only PR-side production artifact build/predeploy/docker-image steps are skipped for class R; force-full main push remains unchanged.",
   "reuseBoundary": "Reuse existing classifyPrScope outputs and ci.yml conditional steps; do not create a second CI job, workflow, reporter or authority.",
   "externalMutationScope": "Repository branch commits only. No workflow mutation, merge, deployment, Render, Supabase, Stripe or production mutation.",
-  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or the work item is explicitly abandoned."
+  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or the work item is explicitly abandoned.",
+  "mergedPr": 721,
+  "terminalHeadSha": "27663f22fbc37f4d6a73322a851a6775eeb96859",
+  "mainCommit": "5db8062d3062e93f004cf0b75f190a9c649821f8",
+  "releasedAt": "2026-09-05T18:00:00Z",
+  "releaseReason": "stale coordination metadata reconciled after Human-merged PR #721; CI cost-control implementation is already on main"
 }
