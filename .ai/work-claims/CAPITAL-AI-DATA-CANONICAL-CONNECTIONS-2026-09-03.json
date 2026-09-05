@@ -20,6 +20,7 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-DATA-CANONICAL-CONNECTIONS-2026-09-03.json",
     "src/platform/MarketData/ValidatedDataInput.ts",
+    "src/platform/MarketData/MarketDataGateway.ts",
     "src/platform/MarketData/ProviderMatrix.ts",
     "server/stockFundamentals.ts",
     "tests/unit/canonicalDataPipelineConnections.test.ts",
@@ -33,6 +34,7 @@
     "CAPITAL-AI-SEC: independent Security verification"
   ],
   "correlatedStaleClaims": [
+    "P2-MARKET-DATA-GATEWAY-RESILIENCE-2026-08-14 — PR #276 merged; release condition satisfied",
     "CAPITAL-AI-DATA-PROVIDER-GATEWAY-HARDENING-2026-08-31 — PR #639 merged; historical branch absent",
     "CAPITAL-AI-DATA-ALPHA-RUNTIME-CORRELATION-2026-09-01 — PR #640 merged; historical branch absent"
   ],
