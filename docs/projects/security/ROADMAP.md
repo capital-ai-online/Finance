@@ -6,7 +6,7 @@
 **Role:** cross-cutting Security requirements, findings, testing and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
 **Date:** `2026-09-05`  
-**Correlation baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
+**Correlation baseline:** `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
 **Trust root:** `/AGENTS.md`
 
@@ -26,22 +26,22 @@ Post-PVC policy overlays withdrawn by current `/AGENTS.md`, including the former
 
 Repository-backed Security work visible from the available project-chat history and current `main` was re-correlated rather than inferred from chat status alone.
 
-| Work item | Main evidence | Current Security disposition |
+| Work item | Main / branch evidence | Current Security disposition |
 |---|---|---|
-| Security project/PVC consolidation | canonical Security project surface present; related SEC claims are released | `DONE_MAIN` |
+| Security project/PVC consolidation | PR #749 merged; canonical Security project and detailed roadmap now on main | `DONE_MAIN` |
 | Adversarial Web/Mobile Security Assessment capability | `.ai/skills/CAPITAL-AI-Security-Assessment.md`, schema/validator and PR #706 | `IMPLEMENTED_MAIN` |
 | Security Assessment validator CI binding | `package.json#test:raw` executes `scripts/security/validateSecurityAssessment.test.mjs`; PR #711 merged | `DONE_MAIN` |
-| Security Assessment trust-root alignment | skill still references withdrawn Cross-Project Handoff metadata and NIST SP 800-115 although current `/AGENTS.md` withdrew NIST from the repository Governance baseline | `OPEN — SECURITY_OWNED_DOC/CONTRACT_ALIGNMENT` |
+| Security Assessment trust-root alignment | branch `agent/security-assess-align-20260905` updates skill v1.0.1 and adds an authority-regression test; current `ESS-0006` v1.1.0 confirms the bounded SEC verification/remediation-owner split | `IMPLEMENTED_BRANCH / VALIDATION + PR PENDING` |
 | Owner Device Authorization Stage-C verification | initial FAIL evidence exists, followed by independent PASS re-verification evidence on main | `COMPLETE / HISTORICAL`; do not reopen or reconstruct retired M10/withdrawn cutover overlays without new current authority |
 | GOV-CHAT-042 User Lifecycle Security integration | PR #725 evidence/test contract present on main | `IMPLEMENTED_MAIN / RESIDUAL_VERIFICATION_OPEN` |
-| OPS Security return correlation | merged PR #747 now records R2-04 implementation, R2-03 priority gap, R2-06 parent evidence and remaining OPS evidence gates | `CORRELATED_MAIN`; no Security closure implied |
+| OPS Security return correlation | merged PR #747 records R2-04 implementation, R2-03 priority gap, R2-06 parent evidence and remaining OPS evidence gates | `CORRELATED_MAIN`; no Security closure implied |
 | S1 hardening findings | current owner roadmaps, code and evidence re-correlated below | mixed; no blanket closure |
 
 ## Priority queue
 
 Security-owned work is separated from foreign productive remediation.
 
-1. **`SEC-ASSESS-ALIGN` — Security Assessment current-main alignment.** Remove withdrawn routing-contract dependency and stop presenting NIST SP 800-115 as a current repository Governance baseline. Preserve OWASP methods only as advisory assessment methodology unless separately authorized by current repository authority.
+1. **`SEC-ASSESS-ALIGN` — Security Assessment current-main alignment.** `IMPLEMENTED_BRANCH / VALIDATION + PR PENDING`: Skill v1.0.1 removes the withdrawn routing dependency, uses only current project/PVC mapping, and marks OWASP methodologies advisory/non-authorizing. A focused regression test prevents reintroduction of the withdrawn handoff contract or NIST SP 800-115 baseline. Exit gate: exact-head applicable checks + Human/Owner PR creation approval + Human/CODEOWNER merge.
 2. **`SEC-VERIFY-ULS-001` — User Lifecycle subscription-identity re-verification.** OPS has read-only provider evidence that the stable `metadata.user_id -> auth.users.id -> public.subscriptions.user_id` contract is deployed; Security must independently verify the returned evidence without closing unrelated provider/E2E gaps.
 3. **`SEC-VERIFY-R2-04` — Fatal-process remediation verification.** PR #720 is merged and implemented; Security closure still requires applicable negative/runtime/post-deploy evidence.
 4. **`SEC-AUTH-LIFECYCLE` — MFA/AAL lifecycle correlation.** ESS-0020 remains proposed; current Governance evidence explicitly declined unilateral foreign-domain disposition. No Security or Governance agent may self-promote or retire it; any lifecycle change follows current authority/Human gates.
@@ -68,9 +68,9 @@ No row above grants CAPITAL-AI-SEC productive implementation ownership.
 
 ## Current correlation state
 
-PR #747 is now merged into `main@255a89c532f3589e6d157d4f629a47251bd52670`. Its OPS-only changes do not overlap either Security roadmap file and now provide current-main corroboration for the OPS-owned S1 dispositions listed above. At the final resync check there are zero open pull requests against `main`.
+Current task baseline is `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`. The intervening main changes include `/AGENTS.md` v2.7.1 and `ESS-0006` v1.1.0. They do not modify the four SEC target files, and the revalidated ESS reinforces rather than conflicts with the Security Assessment ownership boundary. At the resync check there are zero open pull requests against `main`.
 
-The Security branch was rebased logically onto this exact main by rebuilding its tree from the new main and retaining only the two Security roadmap changes. No OPS work-claim or OPS roadmap file is changed by this branch.
+The scoped branch `agent/security-assess-align-20260905` was recreated directly from this exact current main and contains only the Security Assessment skill, its focused validator regression test, and the two Security roadmap projections. No foreign project file or productive runtime/provider surface is changed.
 
 ## Security execution invariants
 
@@ -86,18 +86,20 @@ The Security branch was rebased logically onto this exact main by rebuilding its
 
 ## Secondary-surface status
 
-The dated Security Work Packages and Traceability Matrix from `2026-08-31` remain useful detailed evidence/history but contain pre-current-main routing/status text. Where they conflict with this `2026-09-05` current-main projection, they must not override current `/AGENTS.md`, current project mapping or the detailed Security roadmap. Their full normalization is a separate Security documentation-maintenance task, not foreign productive remediation.
+The dated Security Work Packages and Traceability Matrix from `2026-08-31` remain useful detailed evidence/history but contain pre-current-main routing/status text. Where they conflict with this current-main projection, they must not override current `/AGENTS.md`, current project mapping or the detailed Security roadmap. Their full normalization is a separate Security documentation-maintenance task, not foreign productive remediation.
 
 ## Validation / completion gate
 
-For this roadmap consolidation:
+For `SEC-ASSESS-ALIGN`:
 
-1. current `/AGENTS.md` and current `main` were read and re-correlated;
-2. project/PVC/Primary Owner mapping was resolved from current main;
-3. current code, Security evidence, target-owner roadmaps and relevant merged PRs were correlated;
-4. open PR/writer overlap was rechecked after PR #747 merged; zero open PRs remain at that check;
-5. no foreign productive file is changed;
-6. no non-executed test or missing provider evidence is represented as PASS;
-7. final `main`/open-PR correlation is required again immediately before any PR creation;
-8. PR creation requires separate exact main/head Human/Owner approval;
-9. merge remains Human/CODEOWNER-only.
+1. current `/AGENTS.md` v2.7.1 and current `main` were read and re-correlated;
+2. project/PVC/Primary Owner mapping remains `CAPITAL-AI-SEC`, `docs/projects/security/`, productive PVC `[]`;
+3. current `ESS-0006` v1.1.0 was re-read and is semantically compatible with this work;
+4. zero open PRs existed at the final resync check;
+5. the assessment skill no longer depends on the withdrawn Cross-Project Handoff Contract or NIST SP 800-115 as a repository baseline;
+6. OWASP methodology reuse is explicitly advisory/non-authorizing;
+7. focused regression coverage guards the authority/routing boundary;
+8. no foreign productive file or external platform is mutated;
+9. local test execution remains `NOT RUN` because the isolated runner could not resolve `github.com`; this is not represented as PASS;
+10. final exact main/head re-read is required immediately before PR creation after a fresh valid approval snippet;
+11. merge remains Human/CODEOWNER-only.
