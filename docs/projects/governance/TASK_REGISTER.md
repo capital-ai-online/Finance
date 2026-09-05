@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-05, correlated to repository-visible implementation/PR evidence  
-**Current correlation baseline:** `main@d69e75b6853f3b56ca313fe3c3256e56bc21c220`  
+**Current correlation baseline:** `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -81,9 +81,10 @@
 | `GOV-CHAT-058` | GOV chat/roadmap consolidation | GOV | `DONE_MAIN` | PR #738 merged; writer terminalized by PR #741 |
 | `GOV-CHAT-059` | ADR-0104 cross-project claim terminalization | GOV | `DONE_MAIN` | released/archived |
 | `GOV-CHAT-060` | post-PVC claim terminalization | GOV | `DONE_MAIN` | released/archived |
-| `GOV-CHAT-061` | Recorrelate Roadmap + Task Register + Component Matrix after GOV-03 | GOV | `OPEN_GOV` | current work item; exit after exact-snapshot PR gate, hosted checks and Human merge |
-| `GOV-CHAT-062` | COMP-GAP-002 / ADR-0007 lifecycle-semantic decision | GOV | `OPEN_GOV` | **next fresh-branch task only after GOV-CHAT-061 terminal**; correlate Authority/registry/PVC/Compliance/runtime before decision |
-| `GOV-CHAT-063` | COMP-GAP-003 / ESS-0006 stale assumptions | GOV / ESS boundary | `OPEN_GOV` | after ADR-0007; preserve SEC/COMP independence and no parallel Requirement Registry |
+| `GOV-CHAT-061` | Recorrelate Roadmap + Task Register + Component Matrix after GOV-03 | GOV | `DONE_MAIN` | Human-merged PR #751 |
+| `GOV-CHAT-062` | COMP-GAP-002 / ADR-0007 lifecycle-semantic decision | GOV | `DONE_MAIN` | PR #755 registered the stable historical/non-authorizing identity; PR #758 aligned the visible document semantics |
+| `GOV-CHAT-063` | COMP-GAP-003 / ESS-0006 stale assumptions | GOV / ESS boundary | `DONE_MAIN` | Human-merged PR #757 revalidated ESS-0006 v1.1.0 without parallel registry/runtime authority |
+| `GOV-CHAT-064` | Post-ESS-0006 Roadmap + Task Register + Component Matrix correlation | GOV | `OPEN_GOV` | current bounded documentation work item; no successor promotion without new executable authority/evidence |
 
 ## Current foreign-owner return / dependency state
 
@@ -98,7 +99,7 @@
 
 No historical Governance claim is a current writer. `CAPITAL-AI-GOV-CHAT-TASK-CONSOLIDATION-V3-2026-09-05` is `released / archived / activeWriter:false / exclusive:false` after Human-merged PR #741.
 
-`GOV-ROADMAP-RECORRELATE` is executed on `agent/governance-roadmap-recorrelate-20260905` and is limited to:
+`POST-ESS-0006 RECORRELATION` is executed on `agent/governance-post-ess0006-recorrelate-20260905` and is limited to:
 
 - `docs/projects/governance/ROADMAP.md`
 - `docs/projects/governance/TASK_REGISTER.md`
@@ -108,9 +109,9 @@ No new work claim is invented solely for branch/PR mechanics.
 
 ## Current-main / PR correlation
 
-Human-merged PR #746 advanced Compliance requirements evidence, Human-merged OPS PR #747 advanced OPS planning/DR-03 evidence, and Human-merged Security PR #749 advanced Security verification planning. Current `main` is `d69e75b6853f3b56ca313fe3c3256e56bc21c220`. None of those merges writes the three Governance project files. Their semantic returns are reflected here without absorbing foreign execution or independent verification authority.
+Human-merged PR #751 completed `GOV-CHAT-061`; PRs #755 and #758 completed the ADR-0007 lifecycle/visible-semantic closeout; PR #757 completed ESS-0006 v1.1.0 revalidation. Current `main` is `7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`, with no open PRs at this correlation point.
 
-The earlier attempted Governance PR #748 was closed unmerged after `main` changed between the final pre-create read and the GitHub create mutation, invalidating the exact-SHA Human approval. It is historical execution evidence only and does not satisfy the PR gate for the current branch state.
+The earlier attempted Governance PR #748 and closed/unmerged PR #756 remain historical execution evidence only. Neither is current Authority or an active writer.
 
 ## Consolidation rule
 
