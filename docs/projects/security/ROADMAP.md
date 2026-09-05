@@ -6,7 +6,7 @@
 **Role:** cross-cutting Security requirements, findings, testing and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
 **Date:** `2026-09-05`  
-**Correlation baseline:** `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6`  
+**Correlation baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
 **Trust root:** `/AGENTS.md`
 
@@ -34,6 +34,7 @@ Repository-backed Security work visible from the available project-chat history 
 | Security Assessment trust-root alignment | skill still references withdrawn Cross-Project Handoff metadata and NIST SP 800-115 although current `/AGENTS.md` withdrew NIST from the repository Governance baseline | `OPEN — SECURITY_OWNED_DOC/CONTRACT_ALIGNMENT` |
 | Owner Device Authorization Stage-C verification | initial FAIL evidence exists, followed by independent PASS re-verification evidence on main | `COMPLETE / HISTORICAL`; do not reopen or reconstruct retired M10/withdrawn cutover overlays without new current authority |
 | GOV-CHAT-042 User Lifecycle Security integration | PR #725 evidence/test contract present on main | `IMPLEMENTED_MAIN / RESIDUAL_VERIFICATION_OPEN` |
+| OPS Security return correlation | merged PR #747 now records R2-04 implementation, R2-03 priority gap, R2-06 parent evidence and remaining OPS evidence gates | `CORRELATED_MAIN`; no Security closure implied |
 | S1 hardening findings | current owner roadmaps, code and evidence re-correlated below | mixed; no blanket closure |
 
 ## Priority queue
@@ -41,7 +42,7 @@ Repository-backed Security work visible from the available project-chat history 
 Security-owned work is separated from foreign productive remediation.
 
 1. **`SEC-ASSESS-ALIGN` — Security Assessment current-main alignment.** Remove withdrawn routing-contract dependency and stop presenting NIST SP 800-115 as a current repository Governance baseline. Preserve OWASP methods only as advisory assessment methodology unless separately authorized by current repository authority.
-2. **`SEC-VERIFY-ULS-001` — User Lifecycle subscription-identity re-verification.** OPS now has read-only provider evidence that the stable `metadata.user_id -> auth.users.id -> public.subscriptions.user_id` contract is deployed; Security must independently verify the returned evidence without closing unrelated provider/E2E gaps.
+2. **`SEC-VERIFY-ULS-001` — User Lifecycle subscription-identity re-verification.** OPS has read-only provider evidence that the stable `metadata.user_id -> auth.users.id -> public.subscriptions.user_id` contract is deployed; Security must independently verify the returned evidence without closing unrelated provider/E2E gaps.
 3. **`SEC-VERIFY-R2-04` — Fatal-process remediation verification.** PR #720 is merged and implemented; Security closure still requires applicable negative/runtime/post-deploy evidence.
 4. **`SEC-AUTH-LIFECYCLE` — MFA/AAL lifecycle correlation.** ESS-0020 remains proposed; current Governance evidence explicitly declined unilateral foreign-domain disposition. No Security or Governance agent may self-promote or retire it; any lifecycle change follows current authority/Human gates.
 5. Track foreign-owner S1 remediation/evidence returns without absorbing implementation: `S1-R2-03`, `05`, `06`, `07`, `09`, `10`, `11` and User Lifecycle provider residuals.
@@ -50,8 +51,8 @@ Security-owned work is separated from foreign productive remediation.
 
 | Finding / residual | Primary productive owner | Main-correlated state | Security next gate |
 |---|---|---|---|
-| `S1-R2-03` Node control-plane convergence | `CAPITAL-AI-OPS / PVC-06` | `OPEN / PARTIAL`; `.nvmrc` remains `24.18.0` while approved convergence target is `24.20.0` | verify exact identity after OPS implementation |
-| `S1-R2-04` fatal process handling | `CAPITAL-AI-OPS / PVC-04`, runtime evidence `PVC-08` | `IMPLEMENTED_ON_MAIN` via PR #720; independent verification pending | negative + post-deploy/supervisor evidence |
+| `S1-R2-03` Node control-plane convergence | `CAPITAL-AI-OPS / PVC-06` | `OPEN / HIGHEST EXECUTABLE OPS P1`; `.nvmrc` remains `24.18.0` while required convergence target is `24.20.0` | verify exact identity after OPS implementation |
+| `S1-R2-04` fatal process handling | `CAPITAL-AI-OPS / PVC-04`, runtime evidence `PVC-08` | `IMPLEMENTED_ON_MAIN` via PR #720; independent Security/post-deploy verification pending | negative + post-deploy/supervisor evidence |
 | `S1-R2-05` Stripe redirect boundary | `CAPITAL-AI-OPS / PVC-02` | `OPEN` | open-redirect DENY evidence after OPS remediation |
 | `S1-R2-06` entitlement authority | OPS parent inventory; FINTECH/DATA children by actual capability owner | parent inventory `EVIDENCE_READY`; child remediation + Security verification remain | per-capability server-side DENY verification |
 | `S1-R2-07` recovery / RPO / RTO | `CAPITAL-AI-OPS / PVC-08` | `OPEN / UNVERIFIED` | measured restore/integrity/RPO/RTO evidence |
@@ -65,11 +66,11 @@ Security-owned work is separated from foreign productive remediation.
 
 No row above grants CAPITAL-AI-SEC productive implementation ownership.
 
-## Parallel-work correlation
+## Current correlation state
 
-At branch creation, current `main` is `4e9dedd74aee1f9b3609037d1abb4fef0932a1b6` and open PR #747 is an OPS-only roadmap/work-claim reconciliation. Its changed files are confined to `.ai/work-claims/CAPITAL-AI-OPS-*`, `docs/projects/operations/ROADMAP.md` and `docs/projects/operations/WORK_PACKAGES.md`.
+PR #747 is now merged into `main@255a89c532f3589e6d157d4f629a47251bd52670`. Its OPS-only changes do not overlap either Security roadmap file and now provide current-main corroboration for the OPS-owned S1 dispositions listed above. At the final resync check there are zero open pull requests against `main`.
 
-There is no changed-file overlap with this Security roadmap work. There is semantic overlap around S1 status projection, so unmerged PR #747 is treated as parallel context only; no Security status is promoted solely from that PR. Final PR readiness requires a new `main`/open-PR correlation and resynchronization if #747 or any other relevant work merges.
+The Security branch was rebased logically onto this exact main by rebuilding its tree from the new main and retaining only the two Security roadmap changes. No OPS work-claim or OPS roadmap file is changed by this branch.
 
 ## Security execution invariants
 
@@ -91,12 +92,12 @@ The dated Security Work Packages and Traceability Matrix from `2026-08-31` remai
 
 For this roadmap consolidation:
 
-1. current `/AGENTS.md` and `main` were read first;
+1. current `/AGENTS.md` and current `main` were read and re-correlated;
 2. project/PVC/Primary Owner mapping was resolved from current main;
 3. current code, Security evidence, target-owner roadmaps and relevant merged PRs were correlated;
-4. open PR/writer overlap was checked and PR #747 was isolated as semantic-only parallel work;
+4. open PR/writer overlap was rechecked after PR #747 merged; zero open PRs remain at that check;
 5. no foreign productive file is changed;
 6. no non-executed test or missing provider evidence is represented as PASS;
-7. final `main`/open-PR correlation is required before PR readiness;
+7. final `main`/open-PR correlation is required again immediately before any PR creation;
 8. PR creation requires separate exact main/head Human/Owner approval;
 9. merge remains Human/CODEOWNER-only.
