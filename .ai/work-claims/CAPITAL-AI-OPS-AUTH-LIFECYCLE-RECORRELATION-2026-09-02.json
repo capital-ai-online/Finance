@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-LIFECYCLE-RECORRELATION-2026-09-02",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -47,5 +47,18 @@
     "CAPITAL-AI-SEO owns search-engine metadata/indexing remediation and Search Console follow-up",
     "CAPITAL-AI-SEC retains independent security assurance"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. PR creation requires exact-snapshot Human/Owner approval. No Production/provider mutation is authorized."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. PR creation requires exact-snapshot Human/Owner approval. No Production/provider mutation is authorized.",
+  "mergedPr": 722,
+  "mainCommit": "cabd15e020cdc1ea272836f265bcc02ddb1aacfd",
+  "releasedAt": "2026-09-05T12:18:00+02:00",
+  "releaseReason": "stale coordination metadata reconciled after merged PR and deleted/absent source branch",
+  "terminalHeadSha": "e362bf60513d2def63901c46c2245dc631ab96bc",
+  "releaseEvidence": {
+    "pullRequest": 722,
+    "merged": true,
+    "mergeCommitSha": "cabd15e020cdc1ea272836f265bcc02ddb1aacfd",
+    "terminalHeadSha": "e362bf60513d2def63901c46c2245dc631ab96bc",
+    "branchPresentAtCloseout": false,
+    "verifiedAgainstMain": "0c595dc4f07fc279eabec272ca6046967f3b83e8"
+  }
 }
