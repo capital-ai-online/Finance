@@ -4,13 +4,13 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@e7765c98726d96a79e9fe969cc9a23a2b8f7fa14`  
+**Current correlation baseline:** `main@d69e75b6853f3b56ca313fe3c3256e56bc21c220`  
 **Correlation date:** `2026-09-05`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
 **Status:** ACTIVE
 
-## How to use this roadmap
+## Navigation
 
 ```text
 PVC-05 / Platform Director
@@ -20,123 +20,66 @@ PVC-05 / Platform Director
 → code / tests / evidence
 ```
 
-Machine-readable `AUTH-*`, `CTRL-*`, registries and work claims support integrity and audit. Historical handoff/routing overlays are non-authorizing and do not replace the Project Value Chain plus project Roadmap model. Current Git terminology is `main SHA`, `branch head SHA`, `PR head SHA` and `merge SHA`.
+`AUTH-*`, `CTRL-*`, registries and work claims support integrity/audit only and do not replace this Human-readable sequence.
 
-## Current-main / chat consolidation — 2026-09-05
+## Current-main reconciliation — 2026-09-05
 
-Repository-visible implementation, merged PR evidence, current project roadmaps and the consolidated project-conversation backlog were re-correlated against `main@e7765c98726d96a79e9fe969cc9a23a2b8f7fa14` after Human merges of Compliance PR #735 and Frontend PR #736.
+Current `main@d69e75b6853f3b56ca313fe3c3256e56bc21c220` contains the requested `main@e96c8d13…` GOV-03 merge baseline plus later Human merges of Frontend PR #745, Compliance PR #746, OPS PR #747 and Security PR #749. None of those later merges changes the three Governance project files in this work item.
 
-### Confirmed completed or superseded work
+PR #746 updates the Compliance requirements inventory and is current-main read-only input for later GOV findings; it does not itself resolve ADR-0007 or ESS-0006. PR #747 re-correlates the OPS roadmap/work-package projection and materializes DR-03 under OPS ownership after terminal GOV-03; DR-03 remains behind the higher-priority OPS security/data-integrity gate and does not reopen GOV-03/DR-02B or transfer runtime ownership to Governance. PR #749 re-correlates Security planning and confirms that User-Lifecycle Security integration exists on main while subscription-identity re-verification and unrelated provider/E2E Security evidence remain open; this is a foreign verification return, not a Governance implementation transfer.
 
-- canonical `docs/projects/` / `PVC-*` project ownership architecture is established and maintained;
-- Human-readable DevelopmentChain simplification is implemented in current normative surfaces;
-- post-PVC routing/handoff policy overlays were withdrawn through Human-merged PR #715;
-- Deep Research DR-01 and ESS-0019 v1.2.0 / DR-02A are on current `main`;
-- AI Development Chat & Execution Terminology exists in the Vocabulary runtime and tests;
-- User-Lifecycle Governance decisions are merged and the OPS lifecycle harness/stable-user-ID repository/provider contract exists on current `main`;
-- Compliance PR #735 completed bounded COMP-01 factual applicability work while preserving Legal/Evidence gates;
-- Frontend PR #736 restored the bounded email-login/password-recovery flow without changing Governance ownership or this GOV scope;
-- stale GOV claims tied to Human-merged PR #699 and #715 are terminalized in the current consolidation branch because their release conditions were already satisfied.
+### Completed / terminal
 
-### Confirmed open or externally dependent work
+- `GOV-01` Project Value Chain architecture — `DONE / MAINTAINED`.
+- `GOV-02` Human-readable DevelopmentChain simplification — `DONE / MAINTAINED`.
+- **`GOV-03 / DR-02B` ADR-0060 authority reconciliation — `DONE_MAIN / TERMINAL` via Human-merged PR #743.** ADR-0060 v1.1.0 is `ACCEPTED / ACTIVE`, has stable Authority ID `AUTH-ADR-SOFTWARE-SUPPLY-CHAIN-PROVENANCE-0060`, agrees with ADR/Authority registries, and no longer carries the obsolete current NIST-SSDF binding.
+- `GOV-04` Deep Research Governance boundary — `DR-01 + DR-02A + DR-02B DONE AT GOV BOUNDARY`; productive provider/runtime continuation remains OPS-owned. Human-merged OPS PR #747 now carries the OPS-side DR-03 planning projection without changing the Governance boundary.
+- `GOV-09` Version authority boundary — resolved; productive Version Management remains OPS/PVC-06.
+- `GOV-10` AI development terminology — done/maintained.
+- `GOV-11` stale coordination metadata — previous consolidation writer is released/archived after Human-merged PR #741; maintenance only.
 
-- ADR-0060 remains `PROPOSED` while M6 implementation evidence is already `VERIFIED PASS`; lifecycle/registry/authority remain inconsistent and ADR-0060 still contains withdrawn NIST-binding wording;
-- Compliance `COMP-GAP-002` (ADR-0007 lifecycle ambiguity) and `COMP-GAP-003` (ESS-0006 stale assumptions) remain GOV-relevant open dependencies;
-- User-Lifecycle provider verification remains incomplete: isolated Supabase/Mailpit scenarios, Stripe sandbox/Test Clock evidence and independent Security verification are outside GOV ownership;
-- Frontend, Security, Compliance and other foreign-owner lifecycle follow-up remains governed by those project Roadmaps;
-- Admin Panel process/dependency graph has no current-main React Flow / `ProcessGraphProjection` implementation evidence and remains foreign CLIENT/FE/OPS implementation work;
-- financial technical `VC-*` namespace migration remains an explicit deferred multi-owner decision.
+### Active Governance findings
 
-## GOV-01 — Project Value Chain architecture
+#### GOV-06 / COMP-GAP-002 — ADR-0007
 
-**State:** `DONE / MAINTAINED`
+**State:** `NEXT BOUNDED GOV ARCHITECTURE WORK AFTER THIS RECORRELATION IS TERMINAL`
 
-Canonical project ownership is defined only through `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Governance owns `PVC-05` and does not absorb foreign productive ownership.
+Current facts requiring fresh correlation:
 
-## GOV-02 — Human-readable DevelopmentChain simplification
+- `docs/adr/ADR-0007-compliance-value-chain.md` declares `ACCEPTED`;
+- current `docs/adr/registry.json` does not contain a migrated ADR-0007 record;
+- the ADR mixes legacy Compliance, Data, FinTech, audit/export and legal-claim semantics across current PVC ownership boundaries;
+- Compliance continues to route lifecycle/semantic resolution to `CAPITAL-AI-GOV / PVC-05`;
+- current Compliance requirements evidence, including Human-merged PR #746, is input only and cannot itself decide ADR lifecycle or architecture authority.
 
-**State:** `DONE / MAINTAINED`
+Required decision on a **fresh then-current-main Governance branch**: `clarify / migrate / supersede / archive`. No foreign runtime implementation and no parallel Compliance/Governance authority plane.
 
-Current normative model is `Project Value Chain → project Roadmap → ADR → ESS → implementation / tests / evidence`. Normal Git SHA terminology is active, work claims are coordination/audit metadata only, post-PVC overlays are withdrawn, and Human PR-create / Human-only merge / separate production-mutation controls remain intact.
+#### GOV-06 / COMP-GAP-003 — ESS-0006
 
-## GOV-03 — ADR-0060 Supply-Chain Authority Drift Reconciliation
+**State:** `OPEN AFTER ADR-0007 DECISION`
 
-**State:** `NEXT ACTIVE GOV WORK — REQUIRES FRESH BRANCH AFTER THIS CONSOLIDATION REACHES A TERMINAL STATE`
+ESS-0006 v1.0.0 contains stale Security/Compliance component and collaboration assumptions. Reconcile only after ADR-0007 establishes the correct semantic/authority boundary. Preserve independent Security verification and Compliance assessment; do not create a second Requirement Registry or Security/Compliance runtime architecture.
 
-Goal: reconcile the implemented/verified software supply-chain provenance architecture with its canonical ADR/registry authority state.
+### Other states
 
-Observed drift:
-
-- `docs/adr/ADR-0060-software-supply-chain-provenance-and-attestation.md` is still `PROPOSED`;
-- M6 repository implementation evidence reports `VERIFIED PASS`;
-- ADR-0060 still states a NIST SSDF mapping although current Governance withdrew NIST-derived repository bindings unless explicitly re-adopted;
-- lifecycle, authority-registry and ADR-registry state must be resolved together instead of treating implementation evidence as architecture acceptance.
-
-Expected scope: ADR-0060, `docs/adr/registry.json`, `docs/governance/authority-registry.json`, and bounded impact/evidence references required by current Governance contracts.
-
-Constraints: reuse existing M6/SBOM/provenance/attestation implementation; no second Supply-Chain/Governance/Release/registry architecture; remote-skill loading is not authorized; external standards are advisory unless explicitly adopted; Human merge remains separate.
-
-Exit gate: ADR-0060 lifecycle, stable authority identity and registries agree; withdrawn NIST-derived authority wording is removed or explicitly bounded as historical/advisory; implementation references resolve without implying acceptance from implementation alone; required validation is green on the exact PR head.
-
-## GOV-04 — Deep Research governance boundary
-
-**State:** `DR-01 + DR-02A DONE; DR-02B = GOV-03 OPEN`
-
-DR-01 provider-neutral Deep Research Evidence Pipeline and DR-02A ESS-0019 v1.2.0 are complete. Productive provider-adapter/runtime work remains OPS-owned after GOV-03. Remote-skill distribution remains a separate architecture/security decision.
-
-## GOV-05 — Financial technical namespace decision
-
-**State:** `OWNER DECISION REQUIRED / DEFERRED`
-
-Current technical financial `VC-*` identifiers under `SC-MD-SPT-0001` remain active. Any migration requires affected owners and a separate architecture decision.
-
-## GOV-06 — Security and compliance governance findings
-
-**State:** `CONTINUOUS`
-
-Current GOV-relevant findings include `COMP-GAP-002` (ADR-0007 lifecycle/semantic ambiguity), `COMP-GAP-003` (ESS-0006 stale assumptions), preserved Legal/Evidence gates from PR #735, and foreign independent Security verification for User Lifecycle. No Security self-verification or unsupported compliance/legal claim is allowed.
-
-## GOV-07 — User-Lifecycle governance closeout
-
-**State:** `PARTIAL / OWNER RETURNS PENDING`
-
-GOV decisions for annual Pro pricing and logout semantics are merged. OPS lifecycle harness and stable-user-ID subscription projection evidence are on current `main`. Remaining completion conditions are foreign-owner returns from OPS/provider, Security, Frontend, and Compliance/Human-Legal. PR #736 is relevant Frontend auth evidence but does not by itself close the broader lifecycle/pricing/entitlement UX package.
-
-## GOV-08 — Admin Panel process/dependency graph
-
-**State:** `REFERRED / NOT IMPLEMENTED ON CURRENT MAIN`
-
-Target remains complete process/value-chain visualization in the Admin Panel using existing traceability evidence and the previously selected React Flow-style UI plus `ProcessGraphProjection`. Productive implementation belongs to applicable CLIENT/Frontend/OPS owners.
-
-## GOV-09 — Version authority / Version Manager boundary
-
-**State:** `BOUNDARY RESOLVED / FOREIGN EXECUTION REMAINS`
-
-ADR-0096 establishes `package.json#version` as sole platform-version authority; ESS-0004 is suspended; VersionManager is read-only compatibility; productive Version Management remains `CAPITAL-AI-OPS / PVC-06`.
-
-## GOV-10 — Vocabulary / AI development terminology
-
-**State:** `DONE / MAINTAINED`
-
-The requested `AI Development Chat & Execution Terminology` category exists in the canonical Vocabulary implementation and tests.
-
-## GOV-11 — Historical project/workflow records and stale coordination metadata
-
-**State:** `MAINTENANCE / CURRENT CONSOLIDATION BRANCH`
-
-The current branch terminalizes `CAPITAL-AI-GOV-ADR0104-CROSS-PROJECT-SCOPE-2026-09-01` (PR #699 merged) and `CAPITAL-AI-GOV-DELETE-POST-PVC-POLICY-CONTRACTS-2026-09-02` (PR #715 merged). Historical evidence is preserved; only current coordination-state metadata is corrected.
+- `GOV-05` financial technical `VC-*` namespace — `OWNER DECISION REQUIRED / DEFERRED`.
+- `GOV-07` User-Lifecycle governance closeout — `PARTIAL / OWNER RETURNS PENDING`. OPS/provider evidence remains partial; Frontend broader lifecycle/pricing/entitlement UX remains foreign-open; Human-merged Security PR #749 confirms `GOV-CHAT-042` integration evidence on main but retains `SEC-VERIFY-ULS-001` subscription-identity re-verification plus provider/E2E residuals; Compliance/Human-Legal gates remain separate.
+- `GOV-08` Admin Panel process/dependency graph — `REFERRED / FOREIGN OPEN`; no current-main React Flow / `ProcessGraphProjection` implementation evidence.
 
 ## Current priority
 
-1. **GOV-11 / chat-task consolidation** — validate this refreshed Roadmap/task-register/stale-claim package, obtain exact Human PR-create approval, run Hosted checks after PR creation, then Human/CODEOWNER merge.
-2. **GOV-03** — after Human merge and fresh then-current-main correlation, execute ADR-0060 lifecycle/registry/authority reconciliation and remove obsolete NIST binding on a fresh branch.
+1. **GOV-ROADMAP-RECORRELATE** — synchronize `ROADMAP.md`, `TASK_REGISTER.md` and `COMPONENT_ARCHITECTURE_MATRIX.md` with current main; terminalize GOV-03/DR-02B and stale writer/priority wording. Exit gate: branch synchronized with current main, bounded diff verified, explicit Human PR-create approval for exact SHAs, hosted checks after PR creation, Human/CODEOWNER merge.
+2. **COMP-GAP-002 / ADR-0007** — only after step 1 reaches terminal state, open a fresh then-current-main Governance branch and fully correlate Authority, ADR registry, PVC, Compliance and runtime facts before deciding lifecycle/semantics.
 
 ## Definition of Done for current Governance cycle
 
 - `PVC-05` ownership remains explicit;
-- one readable Governance Roadmap and one consolidated task register represent current GOV planning/traceability;
-- completed chat tasks are not reopened due to historical wording;
-- foreign work remains with its Primary Owner/project Roadmap;
-- withdrawn post-PVC routing and NIST-derived Governance bindings are not silently restored;
+- Roadmap, Task Register and Component/Architecture Matrix agree with current-main evidence;
+- GOV-03/DR-02B cannot be reopened by stale pre-#743 wording;
+- ADR-0007 is identified as the next bounded finding without pre-deciding its outcome;
+- OPS DR-03 planning remains foreign and does not become a Governance runtime work item;
+- Security verification remains independently owned and its residual User-Lifecycle gates are not represented as GOV closure;
+- foreign productive work remains with its Primary Owner;
+- withdrawn post-PVC overlays and NIST-derived Governance bindings are not restored;
 - no parallel Governance/control-plane/runtime/version architecture is introduced;
 - Human PR-create and Human-only merge boundaries remain intact.
