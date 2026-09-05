@@ -1,10 +1,12 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-CHAT-TASK-CONSOLIDATION-V3-2026-09-05",
-  "status": "active",
-  "exclusive": true,
-  "activeWriter": true,
+  "status": "released",
+  "exclusive": false,
+  "lifecycle": "archived",
+  "activeWriter": false,
   "authorizing": false,
+  "archivedAt": "2026-09-05T16:48:20Z",
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -26,6 +28,8 @@
     "docs/projects/governance/ROADMAP.md",
     "docs/projects/governance/TASK_REGISTER.md"
   ],
-  "scopeBoundary": "Governance planning, traceability and stale coordination-state cleanup only. PRs #735 and #736 are read-only correlation input. No OPS/FE/SEC/COMP/DATA/FINTECH/CLIENT productive implementation is modified.",
-  "releaseCondition": "Release when the associated branch/PR is Human-merged, closed, superseded or abandoned."
+  "scopeBoundary": "Historical coordination scope only. PR #738 is Human-merged; this claim no longer owns or authorizes any current repository work.",
+  "releaseCondition": "Release when the associated branch/PR is Human-merged, closed, superseded or abandoned.",
+  "releasedAt": "2026-09-05T16:48:20Z",
+  "releaseReason": "Release condition was satisfied when PR #738 Human-merged on 2026-09-05 at 16:48:20Z. The stale active/exclusive writer metadata is terminalized; the claim is retained only as non-authorizing coordination history."
 }
