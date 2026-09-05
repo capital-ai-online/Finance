@@ -2,9 +2,9 @@
 
 **Document ID:** `DOC-COMP-EVIDENCE-REPORT-2026-08-31`  
 **Role:** evidence assessment / non-authorizing  
-**Version:** 1.6.0  
+**Version:** 1.6.1  
 **Date:** 2026-09-05  
-**Baseline:** `main@a5026e194e243d556c91e2749da8f405e946c025`  
+**Baseline:** `main@9bedefa8e1baa55224b11d214b712132b02dd5b8`  
 **Scope:** COMP-04 evidence-based assessment of the 23 `READY_NOW` requirements
 
 ## Evidence principle
@@ -20,12 +20,12 @@ Approved assessment vocabulary:
 ## Current execution baseline
 
 - Current trust root: `/AGENTS.md` v2.7.1.
-- Current main: `a5026e194e243d556c91e2749da8f405e946c025`, Human merge of Governance PR #755.
-- PR #754 is already on main and supplies current Google consent runtime/test evidence.
-- PR #755 changed only `docs/adr/registry.json` and `docs/governance/authority-registry.json`; ADR-0007 is now registered as `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007`, lifecycle `historical`, explicitly non-authorizing.
-- Current main `a5026e194e243d556c91e2749da8f405e946c025` completed verified-main workflow `33992951411` successfully. `build-and-test` completed repository integrity, production dependency audit, TypeScript, unit tests, production build, CSP/predeploy, Docker, provenance signing/verification and exact-build artifact preparation; `Deployment verifiziert / Render-Produktion` then deployed and verified the exact current-main commit identity and health.
-- The COMP-04 branch has been synchronized with the current main and retains only the bounded COMP-owned net changes.
-- Final pre-PR correlation sees **1 open Pull Request against main: PR #757 / CAPITAL-AI-GOV**. It changes only `.ai/registry/ess-registry.json`, `.ai/skills/ESS-0006-Security-Compliance.md`, `docs/projects/governance/COMPONENT_ARCHITECTURE_MATRIX.md` and `docs/projects/governance/ROADMAP.md`; there is no changed-file overlap with COMP-04. PR #757 is semantically relevant to `COMP-GAP-003` but remains non-main evidence until Human merge and subsequent Compliance reassessment.
+- Current main: `9bedefa8e1baa55224b11d214b712132b02dd5b8`, Human merge of Governance PR #757.
+- Human-merged PR #754 supplies current Google consent runtime/test evidence.
+- Human-merged PR #755 registered ADR-0007 as `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007`, lifecycle `historical`, explicitly non-authorizing.
+- Human-merged PR #757 revalidated ESS-0006 v1.1.0 as a bounded component specification for the existing Security and Compliance technical boundaries, explicitly preserving separate SEC verification, COMP assessment and foreign Primary Owner remediation.
+- Verified-main workflow `33992951411` successfully built, attested, deployed and post-deploy verified exact `main@a5026e194e243d556c91e2749da8f405e946c025`. PR #757 is a Governance/ESS documentation/registry delta; no separate production conclusion is inferred here without exact current-main deployment evidence.
+- The COMP-04 branch is resynchronized with current main before PR readiness and retains only bounded COMP-owned net changes.
 - `CAPITAL-AI-COMP` remains cross-cutting with no productive `PVC-*` ownership.
 
 ## COMP-04 assessment — 23 `READY_NOW` requirements
@@ -51,26 +51,26 @@ No `NON_COMPLIANT` status is assigned because no concrete control failure is dem
 | `REQ-COMP-001` | **COMPLIANT** | Current `/AGENTS.md` v2.7.1 is the assessed trust root; `AUTH-GOV-AGENT-TRUST-ROOT` / `CTRL-GOV-TRUST-001` remain mapped and were re-read before protected work. | Bounded to repository/current-work execution; no claim about every external client or future run. |
 | `REQ-COMP-002` | **PARTIALLY_COMPLIANT** | `CTRL-COMPLIANCE-CLAIM-001` exists; Compliance artifacts prohibit unsupported certification/regulatory claims; `privacyPolicy.ts` explicitly disclaims external DSGVO certification. | No exhaustive scan of every public/product/marketing output surface was executed. |
 | `REQ-COMP-003` | **COMPLIANT** | Work uses `agent/compliance-comp-04-reassessment-baseline-20260905`, a project-qualified scoped branch; no direct-main mutation. | Per-work-item evidence; future work requires its own branch. |
-| `REQ-COMP-004` | **COMPLIANT** | Main, branch merge-base, open PRs and overlap were repeatedly re-correlated as PR #754 and #755 merged; the branch was synchronized to each resulting current main. Final pre-PR correlation additionally accounts for open Governance PR #757 without treating it as main evidence. | Must be repeated immediately before PR creation. |
-| `REQ-COMP-005` | **PARTIALLY_COMPLIANT** | `CTRL-SDLC-PR-CREATE-001` is current; PR #753 repository metadata records exact main/head correlation and Human/Owner gate handling; no COMP-04 PR exists yet. | Human chat approval is not a standalone current-main repository artifact; every future PR needs fresh exact-state approval. |
-| `REQ-COMP-006` | **COMPLIANT** | PR #753 exact-head hosted CI/Governance/Container-Security completed successfully; current main `a5026e...` also has successful verified-main hosted validation/deployment evidence. | Exact-identity evidence only; future COMP-04 PR head requires fresh hosted checks after PR creation. |
-| `REQ-COMP-007` | **COMPLIANT** | PR #753, #754 and #755 are Human-merged; `/AGENTS.md` and `CTRL-MERGE-HUMAN-001` retain Human/CODEOWNER-only merge authority. | Demonstrates observed/current merge boundary, not every historical/future PR. |
-| `REQ-COMP-008` | **COMPLIANT** | Verified-main is the sole production promotion path. Workflow `33992951411` successfully built, attested, deployed and post-deploy verified exact current main `a5026e194e243d556c91e2749da8f405e946c025`. | Release-specific; future main states require their own exact-SHA verified-main evidence. |
+| `REQ-COMP-004` | **COMPLIANT** | Main, branch merge-base, open PRs and overlap were repeatedly re-correlated through Human merges #754, #755 and #757; the branch is resynchronized to the resulting current main before PR readiness. | Must be repeated immediately before PR creation. |
+| `REQ-COMP-005` | **PARTIALLY_COMPLIANT** | `CTRL-SDLC-PR-CREATE-001` is current; prior repository PR metadata demonstrates exact main/head gate handling; no COMP-04 PR exists yet. | Every future PR needs fresh exact-state Human approval; pre-PR evidence is not approval. |
+| `REQ-COMP-006` | **COMPLIANT** | PR #753 exact-head hosted CI/Governance/Container-Security completed successfully; subsequent main states have independent hosted validation evidence. | Exact-identity evidence only; future COMP-04 PR head requires fresh hosted checks after PR creation. |
+| `REQ-COMP-007` | **COMPLIANT** | PR #753, #754, #755 and #757 are Human-merged; `/AGENTS.md` retains Human/CODEOWNER-only merge authority. | Demonstrates observed/current merge boundary, not every historical/future PR. |
+| `REQ-COMP-008` | **COMPLIANT** | Verified-main is the sole production promotion path. Workflow `33992951411` successfully built, attested, deployed and post-deploy verified exact `main@a5026e194e243d556c91e2749da8f405e946c025`; the later PR #757 Governance/ESS delta is not used to invent a new production assertion. | Release-specific; exact current-main production identity must be separately evidenced when material to a later conclusion. |
 | `REQ-COMP-009` | **PARTIALLY_COMPLIANT** | `CTRL-SEC-LEASTPRIV-001`; repository evidence includes RLS, service-role separation and fail-closed consent/auth patterns. | Current Security/OPS roadmaps retain unresolved findings/evidence, so no blanket least-privilege closure. Foreign remediation stays with actual Primary Owner. |
 | `REQ-COMP-010` | **PARTIALLY_COMPLIANT** | `CTRL-SEC-SECRET-001`; covered flows document encrypted OAuth tokens, service-role-only access and no browser token disclosure. | No fresh repository-wide secret-exposure/scanner result covering every secret-bearing surface. |
 | `REQ-COMP-011` | **PARTIALLY_COMPLIANT** | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001`; COMP artifacts use canonical `docs/compliance/**` placement and stable `DOC-*` identities. | `COMP-GAP-008` persists: Compliance document-registry treatment/ownership is not fully resolved. |
-| `REQ-COMP-012` | **COMPLIANT** | `/AGENTS.md`, `CTRL-GOV-HIST-001` and `CTRL-GOV-AUTH-002` prohibit historical/superseded material from regaining authority by citation. On current main, ADR-0007 has stable ID `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007`, lifecycle `historical`, with an explicit note that it is non-authorizing and does not restore legacy certification/legal claims or a parallel Compliance value chain. | This closes the ADR-0007 historical-authority question only. `COMP-GAP-003` / ESS-0006 stale component assumptions remain a separate Governance clarification gap on current main. Open PR #757 proposes a Governance-owned clarification but is not merged evidence and does not silently close the gap. |
+| `REQ-COMP-012` | **COMPLIANT** | `/AGENTS.md`, `CTRL-GOV-HIST-001` and `CTRL-GOV-AUTH-002` prohibit historical/superseded material from regaining authority by citation. ADR-0007 is historical/non-authorizing on current main; ESS-0006 v1.1.0 now explicitly rejects reactivation of the historical ADR-0007 Compliance value chain and limits itself to bounded component semantics. | This status is bounded to historical-authority handling; it does not prove unrelated Security, legal, provider or evidence sufficiency. |
 | `REQ-COMP-013` | **PARTIALLY_COMPLIANT** | `privacyPolicy.ts` enumerates processing purpose, categories, legal basis, recipients, transfer, retention and controls; ADR-0095 provides privacy single-source boundary. | Exact lawful basis, role, provider/transfer facts and legal sufficiency remain processing-specific. |
-| `REQ-COMP-014` | **PARTIALLY_COMPLIANT** | Versioned privacy/accountability records exist. Current main includes PR #754: Google consent defaults fail closed, GA4/AdSense load only after category consent, generic status changes do not force reload, and relevant explicit revocation reloads once; unit tests cover these states. | This strengthens consent/transparency evidence but does not exhaustively prove completeness/currentness of every processing/public/product surface. |
-| `REQ-COMP-015` | **PARTIALLY_COMPLIANT** | `server/privacy.ts` creates/lists `privacy_requests`; migration `20260819010000_privacy_governance_and_requests.sql` establishes table/RLS; production evidence records deployed table/RLS. Request types cover access, rectification, erasure, restriction, objection and portability. | Full end-to-end fulfilment for every type, external-provider deletion and coordinated erasure were not freshly re-executed. |
+| `REQ-COMP-014` | **PARTIALLY_COMPLIANT** | Versioned privacy/accountability records exist. Current main includes PR #754 consent fail-closed behavior and unit-test coverage. | This strengthens consent/transparency evidence but does not exhaustively prove completeness/currentness of every processing/public/product surface. |
+| `REQ-COMP-015` | **PARTIALLY_COMPLIANT** | `server/privacy.ts` creates/lists `privacy_requests`; migration `20260819010000_privacy_governance_and_requests.sql` establishes table/RLS; request types cover access, rectification, erasure, restriction, objection and portability. | Full end-to-end fulfilment for every type, external-provider deletion and coordinated erasure were not freshly re-executed. |
 | `REQ-COMP-016` | **PARTIALLY_COMPLIANT** | ADR-0092, retention migration `20260819103000_privacy_retention_lifecycle_hardening.sql`, production evidence and per-activity retention statements establish concrete lifecycle controls. | Operational purge execution, provider-side retention, every statutory period and hold governance were not independently revalidated now. |
 | `REQ-COMP-024` | **NOT_APPLICABLE** | COMP-01/02 classify ISO/IEC 27001:2022 as not applicable as binding repository/legal authority; existing SoA is dated benchmark evidence only. | Optional benchmark use remains possible; no certification conclusion is inferred. |
 | `REQ-COMP-025` | **NOT_APPLICABLE** | `/AGENTS.md` and `STANDARDS_CROSSWALK.md` treat ISO/IEC 42001:2023 as a non-certifying/non-authorizing management-system benchmark mapped through `CTRL-AIMS-PDCA-001`. | Any future assurance/certification target needs separate Owner scope and evidence. |
 | `REQ-COMP-028` | **NOT_APPLICABLE** | OWASP/CIS remain advisory/security-method inputs only when correlated to current internal controls; citation alone creates no requirement/gap. | Advisory Security use remains permitted; status concerns binding applicability only. |
-| `REQ-COMP-029` | **COMPLIANT** | Current Compliance process requires scope-adequate evidence before positive conclusions; this assessment preserves owner/legal/evidence gaps instead of promoting mappings, merges or roadmap claims into proof. | Compliance-process control only; does not prove every underlying domain requirement. |
-| `REQ-COMP-030` | **PARTIALLY_COMPLIANT** | COMP-08 change-impact flow is evidenced by repeated re-correlation after PR #754 and #755 changed main and by final pre-PR correlation of open PR #757 as a semantic dependency without treating it as merged evidence. | No complete automated proof that every material provider/model/data/market/user/purpose/deployment/content/authority change is detected before evidence stales. |
+| `REQ-COMP-029` | **COMPLIANT** | Current Compliance process requires scope-adequate evidence before positive conclusions; this assessment preserves owner/legal/evidence gaps instead of promoting mappings, merges or roadmap claims into proof. ESS-0006 v1.1.0 independently reinforces that missing/stale Evidence is not PASS and Security/Compliance assurance roles remain separate. | Compliance-process control only; does not prove every underlying domain requirement. |
+| `REQ-COMP-030` | **PARTIALLY_COMPLIANT** | COMP-08 change-impact flow was exercised after each material current-main governance/runtime change, including the final ESS-0006 return from PR #757. | No complete automated proof that every material provider/model/data/market/user/purpose/deployment/content/authority change is detected before evidence stales. |
 | `REQ-COMP-035` | **PARTIALLY_COMPLIANT** | Document controls, stable `DOC-*` identities, privacy request/accountability records and retention metadata provide record/lifecycle evidence. | `COMP-GAP-008` remains; external record-keeping duties remain regime/scope-specific. |
-| `REQ-COMP-036` | **PARTIALLY_COMPLIANT** | Verified-main workflow `33992951411` provides successful current-main release path, exact-SHA provenance, Render deployment and verified production identity for `a5026e194e243d556c91e2749da8f405e946c025`. Rollback remains an explicit Release/OPS capability. | No fresh independent rollback execution/test for the current production release was established; deployment PASS alone is insufficient for full rollback evidence. |
+| `REQ-COMP-036` | **PARTIALLY_COMPLIANT** | Verified-main workflow provides successful exact-SHA release/deployment evidence for `a5026e...`; rollback remains an explicit Release/OPS capability. | No fresh independent rollback execution/test was established; deployment PASS alone is insufficient for full rollback evidence. |
 
 ## Assessment sets
 
@@ -86,8 +86,8 @@ No `NON_COMPLIANT` status is assigned because no concrete control failure is dem
 
 ## Current findings preserved / changed by returned evidence
 
-- `COMP-GAP-002` ADR-0007 lifecycle/semantic ambiguity: **RESOLVED_ON_MAIN for the lifecycle/authority question** by Human-merged PR #755; ADR-0007 is historical/non-authorizing. This does not re-authorize any legacy claim or architecture.
-- `COMP-GAP-003` ESS-0006: `PARTIALLY_COMPLIANT / OPEN` on current main. Open Governance PR #757 is correlated but remains non-main evidence until Human merge and later Compliance reassessment.
+- `COMP-GAP-002` ADR-0007 lifecycle/semantic ambiguity: **RESOLVED_ON_MAIN** for lifecycle/authority by Human-merged PR #755.
+- `COMP-GAP-003` ESS-0006 stale semantics: **RESOLVED_ON_MAIN** by Human-merged PR #757 and ESS-0006 v1.1.0 bounded component semantics.
 - `COMP-GAP-004`: `EVIDENCE_MISSING / LEGAL_REVIEW`.
 - `COMP-GAP-005`: `EVIDENCE_MISSING`.
 - `COMP-GAP-006`: `NOT_ASSESSED / LEGAL_REVIEW`.
@@ -96,11 +96,11 @@ No `NON_COMPLIANT` status is assigned because no concrete control failure is dem
 - DATA realtime-newsfeed entitlement remains implementation evidence with independent verification pending.
 - FINTECH verified-screening and financial-analysis entitlement children remain open under FINTECH ownership.
 
-No unrelated finding closes because ADR-0007 was migrated, another requirement is `COMPLIANT`, CI/deployment passed or an open PR proposes a remediation.
+No unrelated finding closes because ADR-0007 or ESS-0006 was corrected, another requirement is `COMPLIANT`, or CI/deployment passed.
 
 ## Evidence sources used
 
-`/AGENTS.md` v2.7.1; project/PVC mappings; Compliance requirements/mapping; current control/authority/ADR/ESS registries; `STANDARDS_CROSSWALK.md`; `privacyPolicy.ts`; `server/privacy.ts`; privacy migrations and production evidence; relevant GOV/OPS/DATA/FINTECH/SEC/DOC roadmaps; PR #753 evidence; Human-merged PR #754 plus consent runtime/tests; Human-merged PR #755 plus ADR/Authority Registry state; verified-main workflow `33992951411` and its successful `build-and-test` plus `Deployment verifiziert / Render-Produktion` jobs for exact current main; open Governance PR #757 as correlation-only, non-main input.
+`/AGENTS.md` v2.7.1; project/PVC mappings; Compliance requirements/mapping; current control/authority/ADR/ESS registries; ESS-0006 v1.1.0; `STANDARDS_CROSSWALK.md`; `privacyPolicy.ts`; `server/privacy.ts`; privacy migrations and production evidence; relevant GOV/OPS/DATA/FINTECH/SEC/DOC roadmaps; PR #753 evidence; Human-merged PR #754, #755 and #757; verified-main workflow `33992951411` for exact `a5026e...` production evidence.
 
 ## Foreign evidence rule
 
@@ -108,4 +108,4 @@ Compliance records affected `PVC-*` / Primary Owner and waits for returned evide
 
 ## COMP-04 slice exit gate
 
-**PASS at this document state, subject to final branch/main correlation immediately before PR creation:** all 23 `READY_NOW` requirements have exactly one approved assessment status, named evidence and an explicit limitation. Held requirements and foreign/legal gates remain explicit rather than silently closed. Open PRs are correlation inputs only and never treated as merged-main evidence.
+**PASS at this document state, subject to final branch/main correlation immediately before PR creation:** all 23 `READY_NOW` requirements have exactly one approved assessment status, named evidence and an explicit limitation. Held requirements and foreign/legal gates remain explicit rather than silently closed.
