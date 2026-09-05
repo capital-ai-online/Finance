@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-05, correlated to repository-visible implementation/PR evidence  
-**Current correlation baseline:** `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6`  
+**Current correlation baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -85,11 +85,11 @@
 | `GOV-CHAT-062` | COMP-GAP-002 / ADR-0007 lifecycle-semantic decision | GOV | `OPEN_GOV` | **next fresh-branch task only after GOV-CHAT-061 terminal**; correlate Authority/registry/PVC/Compliance/runtime before decision |
 | `GOV-CHAT-063` | COMP-GAP-003 / ESS-0006 stale assumptions | GOV / ESS boundary | `OPEN_GOV` | after ADR-0007; preserve SEC/COMP independence and no parallel Requirement Registry |
 
-## Current foreign-owner User-Lifecycle return state
+## Current foreign-owner return / dependency state
 
 | Owner | Current return state | GOV interpretation |
 |---|---|---|
-| `CAPITAL-AI-OPS` | harness/stable-ID evidence exists; isolated provider scenarios/final validation open | `FOREIGN_PARTIAL` |
+| `CAPITAL-AI-OPS` | User-Lifecycle harness/stable-ID evidence exists with provider evidence still partial; Human-merged PR #747 additionally materializes Deep Research DR-03 in the OPS roadmap but keeps it behind the higher-priority OPS security/data-integrity gate | `FOREIGN_PARTIAL` / foreign roadmap input |
 | `CAPITAL-AI-FE` | PR #736 auth recovery + PR #745 startup hardening merged; broader lifecycle/pricing/entitlement UX not established | `FOREIGN_OPEN` |
 | `CAPITAL-AI-SEC` | independent verification incomplete where evidence is missing | `DEPENDENCY` |
 | `CAPITAL-AI-COMP` / Human-Legal | COMP-01 evidence and COMP-02 requirements work through Human-merged PR #746 are current-main inputs; Legal/Evidence gates remain | `DEPENDENCY` |
@@ -108,7 +108,9 @@ No new work claim is invented solely for branch/PR mechanics.
 
 ## Current-main / PR correlation
 
-Human-merged PR #746 advanced `main` to `4e9dedd74aee1f9b3609037d1abb4fef0932a1b6` and changed only the Compliance Requirements Inventory. This GOV branch is resynchronized to that baseline before PR approval. The COMP-02 result is read-only current-main evidence for future ADR-0007 correlation; it does not silently resolve `COMP-GAP-002`.
+Human-merged PR #746 advanced Compliance requirements evidence, and Human-merged OPS PR #747 subsequently advanced `main` to `255a89c532f3589e6d157d4f629a47251bd52670`. PR #747 changes OPS roadmap/work-package/claim metadata only; it does not write the three Governance project files and does not reopen GOV-03/DR-02B. Its DR-03 projection is foreign OPS planning evidence only.
+
+The earlier attempted Governance PR #748 was closed unmerged after `main` changed between the final pre-create read and the GitHub create mutation, invalidating the exact-SHA Human approval. It is historical execution evidence only and does not satisfy the PR gate for the current branch state.
 
 ## Consolidation rule
 

@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6`  
+**Current correlation baseline:** `main@255a89c532f3589e6d157d4f629a47251bd52670`  
 **Correlation date:** `2026-09-05`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
@@ -24,14 +24,16 @@ PVC-05 / Platform Director
 
 ## Current-main reconciliation — 2026-09-05
 
-Current `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6` contains the requested `main@e96c8d13…` GOV-03 merge baseline plus later Human merges of Frontend PR #745 and Compliance PR #746. Neither later merge changes the three Governance project files in this work item. PR #746 updates the Compliance requirements inventory and is now current-main read-only input for later GOV findings; it does not itself resolve ADR-0007 or ESS-0006.
+Current `main@255a89c532f3589e6d157d4f629a47251bd52670` contains the requested `main@e96c8d13…` GOV-03 merge baseline plus later Human merges of Frontend PR #745, Compliance PR #746 and OPS PR #747. None of those later merges changes the three Governance project files in this work item.
+
+PR #746 updates the Compliance requirements inventory and is current-main read-only input for later GOV findings; it does not itself resolve ADR-0007 or ESS-0006. PR #747 re-correlates the OPS roadmap/work-package projection and materializes DR-03 under OPS ownership after terminal GOV-03; DR-03 remains behind the higher-priority OPS security/data-integrity gate and does not reopen GOV-03/DR-02B or transfer runtime ownership to Governance.
 
 ### Completed / terminal
 
 - `GOV-01` Project Value Chain architecture — `DONE / MAINTAINED`.
 - `GOV-02` Human-readable DevelopmentChain simplification — `DONE / MAINTAINED`.
 - **`GOV-03 / DR-02B` ADR-0060 authority reconciliation — `DONE_MAIN / TERMINAL` via Human-merged PR #743.** ADR-0060 v1.1.0 is `ACCEPTED / ACTIVE`, has stable Authority ID `AUTH-ADR-SOFTWARE-SUPPLY-CHAIN-PROVENANCE-0060`, agrees with ADR/Authority registries, and no longer carries the obsolete current NIST-SSDF binding.
-- `GOV-04` Deep Research Governance boundary — `DR-01 + DR-02A + DR-02B DONE AT GOV BOUNDARY`; productive provider/runtime continuation remains OPS-owned.
+- `GOV-04` Deep Research Governance boundary — `DR-01 + DR-02A + DR-02B DONE AT GOV BOUNDARY`; productive provider/runtime continuation remains OPS-owned. Human-merged OPS PR #747 now carries the OPS-side DR-03 planning projection without changing the Governance boundary.
 - `GOV-09` Version authority boundary — resolved; productive Version Management remains OPS/PVC-06.
 - `GOV-10` AI development terminology — done/maintained.
 - `GOV-11` stale coordination metadata — previous consolidation writer is released/archived after Human-merged PR #741; maintenance only.
@@ -75,6 +77,7 @@ ESS-0006 v1.0.0 contains stale Security/Compliance component and collaboration a
 - Roadmap, Task Register and Component/Architecture Matrix agree with current-main evidence;
 - GOV-03/DR-02B cannot be reopened by stale pre-#743 wording;
 - ADR-0007 is identified as the next bounded finding without pre-deciding its outcome;
+- OPS DR-03 planning remains foreign and does not become a Governance runtime work item;
 - foreign productive work remains with its Primary Owner;
 - withdrawn post-PVC overlays and NIST-derived Governance bindings are not restored;
 - no parallel Governance/control-plane/runtime/version architecture is introduced;
