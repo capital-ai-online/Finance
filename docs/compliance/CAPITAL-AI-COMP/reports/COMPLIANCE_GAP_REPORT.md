@@ -4,7 +4,7 @@
 **Role:** assessment report / non-authorizing  
 **Version:** 1.3.0  
 **Date:** 2026-09-06  
-**Baseline:** `main@7fe061a897f669fd21ca4c46e564351e14f1c7dc`
+**Baseline:** `main@6980b6547229fd2338d94bc1af4e71934cfd5de0`
 
 A finding is not a certification judgment and does not transfer technical, Governance-lifecycle or legal ownership to Compliance. Current ownership uses the canonical `PVC-*` namespace from `docs/projects/PROJECT_VALUE_CHAIN.md`; historical `VC-*` labels are retained only where needed to interpret prior evidence.
 
