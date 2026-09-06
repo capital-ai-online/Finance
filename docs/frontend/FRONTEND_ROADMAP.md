@@ -2,10 +2,10 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.7.2  
-**Stand:** 5. September 2026  
-**Korrelationsbasis:** `main@a5026e194e243d556c91e2749da8f405e946c025`  
-**Candidate:** `agent/frontend-bb2d-router-cutover-20260905`  
+**Version:** 1.7.1  
+**Stand:** 27. August 2026  
+**Korrelationsbasis:** `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`  
+**Candidate:** `refactor/frontend-bb2bc-dashboard-consumer-cutover-main-2026-08-26`  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
 **Bestandsnachweis:** `docs/frontend/COMPONENT_INVENTORY.md`
@@ -39,7 +39,7 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 
 ---
 
-## 2. Verifizierter Ist-Stand auf main + BB-2D Candidate
+## 2. Verifizierter Ist-Stand auf main + BB-2B/BB-2C Candidate
 
 ### 2.1 Erfolgreich abgeschlossene Architekturarbeit
 
@@ -59,18 +59,17 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 ### 2.2 Aktuelle strukturelle Restschuld
 
 - `src/components/Dashboard.tsx` bleibt der größte Presentation-Kopplungspunkt.
-- `Dashboard.tsx` importiert für Dashboard-/Workspace-Composition und Compatibility weiterhin Komponenten direkt aus `./...`; die migrierten Detail-Views werden im BB-2D-Candidate jedoch über den kanonischen `DashboardViewRouter` und dessen Feature-Fassaden gerendert.
-- Navigation, Drawer und Header sind weiterhin gemeinsam im Dashboard-Monolithen gebunden.
+- `Dashboard.tsx` importiert zahlreiche fachliche Komponenten weiterhin direkt aus `./...` statt über Feature-Fassaden.
+- Navigation, Drawer, Header und View-Routing sind noch gemeinsam im Dashboard-Monolithen gebunden.
 - Viele Feature-Implementierungen liegen physisch weiterhin in `src/components/`.
 - `FRONTEND_ARCH.md` und `COMPONENT_INVENTORY.md` müssen nach jeder weiteren Welle erneut mit dem exakten Main-Stand korreliert werden.
 
-Mit dem BB-2D-Candidate gilt zusätzlich:
+Mit dem BB-2B/BB-2C-Candidate gilt zusätzlich:
 
 - die lokale 27er-View-Union ist aus dem Consumer entfernt; `Dashboard.tsx` konsumiert `DashboardView` direkt aus `src/app/dashboard/dashboardViews.ts`,
 - das lokale `getViewCategory()`-Mapping ist entfernt; die Section-Projektion erfolgt über `getDashboardSection(activeView)`,
 - `UserSession` wird direkt aus `src/app/types/UserSession.ts` konsumiert; die Root-Compatibility-Fassade `src/App.tsx` ist keine Session-Type-Authority des Dashboards mehr,
-- der separate Navigation-State `universes` bleibt bewusst außerhalb der fachlichen View→Section-Authority,
-- die 19 migrierten Detail-Views werden vom Legacy-Consumer über `src/app/dashboard/DashboardViewRouter.tsx` projiziert; `dashboard` und `myworkspace` bleiben bewusst Legacy-Composition für die folgenden BB-2-Wellen.
+- der separate Navigation-State `universes` bleibt bewusst außerhalb der fachlichen View→Section-Authority.
 
 ---
 
@@ -81,7 +80,7 @@ Mit dem BB-2D-Candidate gilt zusätzlich:
 | Branding / Design Tokens | **gut** | Dark Black + AIF Gold sind das kanonische Primary Brand Pair; Purple bleibt sekundärer AI-Akzent und Cyan ausschließlich semantische Market-/Data-/Live-/Technical-Visualisierungsfarbe; historische `aif-*`-/`brand-cyan`-Compatibility-Aliase existieren noch | neue UI ausschließlich über kanonische Rollen/semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
 | Typografie | **gut mit Drift-Risiko** | Inter/Poppins/JetBrains Mono sind kanonisch definiert | Headings/Body/Tech-Data in Komponenten automatisiert prüfen |
 | Shared UI | **gut** | Button, Card, Input, Modal, Tooltip, Skeleton, EmptyState und Status-/Evidence-Primitives vorhanden | Nutzung in Legacy-Komponenten erhöhen und Parallelimplementierungen entfernen |
-| Dashboard IA | **kritische Restschuld** | View-/Session-Contracts und Detail-Rendering sind zentralisiert; Navigation, Drawer und Header bleiben im Monolithen gekoppelt | BB-2E priorisieren |
+| Dashboard IA | **kritische Restschuld** | View-/Session-Contracts sind zentralisiert; Rendering, Navigation, Drawer und Header bleiben im Monolithen gekoppelt | BB-2D priorisieren |
 | Screening | **gut** | kanonisches RankingBoard und klare Authority-Grenze | Filter-/Search-UX und progressive Disclosure verbessern |
 | Commodities | **gut** | eigener Feature-Slice, Research/Verified-Grenze explizit | Visual Consistency und gemeinsame Asset-Universe-Navigation prüfen |
 | Learning | **gut** | eigener Slice, Public Route, read-only Vocabulary | Feature-Namespace und gemeinsame Public-Surface-Patterns konsolidieren |
@@ -110,7 +109,6 @@ Der Legacy-Strangler konsumiert Presentation-Contracts direkt aus:
 
 ```text
 src/app/dashboard/dashboardViews.ts
-src/app/dashboard/DashboardViewRouter.tsx
 src/app/types/UserSession.ts
 ```
 
@@ -184,7 +182,7 @@ Arbeitspakete:
 - [x] **BB-2A Namespace-Korrektur:** `LearningUI` in `src/features/index.ts` aufnehmen.
 - [x] **BB-2B View Contract:** `DashboardView` und View→Section-Mapping nach `src/app/dashboard/dashboardViews.ts` extrahieren und Legacy-Consumer auf den kanonischen Contract umstellen.
 - [x] **BB-2C Session Contract:** Dashboard direkt auf `src/app/types/UserSession` umstellen; Root-Compatibility-Import entfernen.
-- [x] **BB-2D View Router:** fachliche Render-Switches nach `DashboardViewRouter.tsx` verschieben und Feature-Fassaden konsumieren.
+- [ ] **BB-2D View Router:** fachliche Render-Switches nach `DashboardViewRouter.tsx` verschieben und Feature-Fassaden konsumieren.
 - [ ] **BB-2E Navigation:** Desktop Navigation und Mobile Drawer aus dem Monolithen lösen.
 - [ ] **BB-2F Header/Shell:** Header, Profil-/Logout-Flächen und globale Shell-Verantwortung extrahieren.
 - [ ] **BB-2G Closure:** `Dashboard.tsx` auf reine Composition reduzieren; Architecture-/Unit-/Build-Gates aktualisieren.
@@ -311,12 +309,13 @@ Vor jedem Frontend-PR:
 
 ## 9. Unmittelbare Reihenfolge
 
-1. **BB-2E:** Navigation und Drawer extrahieren.
-2. **BB-2F:** Header/Shell-Verantwortung extrahieren.
-3. **BB-2G:** Dashboard auf reine Composition reduzieren und Closure-Gates aktualisieren.
-4. Danach Roadmap/Inventory/Architecture erneut gegen den dann aktuellen `main` korrelieren.
-5. Erst anschließend mit BB-3/BB-4 physischen Legacy-Migrationen fortfahren.
+1. **BB-2D:** View Router und Feature-Fassaden aus dem Legacy-Dashboard entkoppeln.
+2. **BB-2E:** Navigation und Drawer extrahieren.
+3. **BB-2F:** Header/Shell-Verantwortung extrahieren.
+4. **BB-2G:** Dashboard auf reine Composition reduzieren und Closure-Gates aktualisieren.
+5. Danach Roadmap/Inventory/Architecture erneut gegen den dann aktuellen `main` korrelieren.
+6. Erst anschließend mit BB-3/BB-4 physischen Legacy-Migrationen fortfahren.
 
 ---
 
-*Version 1.7.2 korreliert die Roadmap mit `main@a5026e194e243d556c91e2749da8f405e946c025` und dokumentiert den BB-2D-Candidate: Der Legacy-Dashboard-Consumer projiziert die 19 migrierten Detail-Views über den kanonischen `DashboardViewRouter`, während `dashboard` und `myworkspace` für die folgenden Composition-Wellen bewusst im Legacy-Strangler verbleiben. Nächster P0-Schritt ist BB-2E.*
+*Version 1.7.1 korreliert die Roadmap mit `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`, übernimmt die gemergten BB-2B-/Composition-Arbeiten aus PR #546 und #548 sowie die Branding-Korrektur aus PR #551 und schließt im aktuellen Candidate den Dashboard-Consumer-Cutover für BB-2B sowie den direkten Session-Contract für BB-2C ab. Nächster P0-Schritt ist BB-2D.*
