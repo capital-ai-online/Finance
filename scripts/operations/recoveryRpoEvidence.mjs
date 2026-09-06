@@ -111,10 +111,8 @@ export function buildRecoveryRunEventMap(value) {
     const id = requireString(String(run.id ?? ''), `run metadata.workflow_runs[${index}].id`);
     const eventName = requireString(run.event, `run metadata.workflow_runs[${index}].event`);
     const status = requireString(run.status, `run metadata.workflow_runs[${index}].status`);
-    const conclusion = requireString(
-      run.conclusion,
-      `run metadata.workflow_runs[${index}].conclusion`,
-    );
+    const conclusion =
+      typeof run.conclusion === 'string' && run.conclusion.trim() !== '' ? run.conclusion : null;
     result.set(id, { eventName, status, conclusion });
   }
   return result;
