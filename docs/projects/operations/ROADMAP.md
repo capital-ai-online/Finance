@@ -3,11 +3,11 @@
 **Project ID:** `CAPITAL-AI-OPS`  
 **Document role:** canonical project execution roadmap / non-authorizing  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
-**Version:** `2.5.0`  
+**Version:** `2.6.0`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-06`  
-**Correlation baseline:** `main@80c30ad2aa469f4552c84f3cc40e997e4ef13ee0`  
-**Open PR baseline:** zero open PRs against `main` at initial correlation; intervening PR #769 merged Governance-only files with no OPS changed-file overlap before v2 resynchronization  
+**Correlation baseline:** `main@6a4a34f1b849763cce0f80b394817d3d83bdf24d`  
+**Open PR baseline:** zero open PRs against `main` at GOV-07 OPS evidence-return initial correlation; stale DR-03 claim traced to Human-merged PR #747 and an absent historical branch, so no live writer overlap remains  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 Canonical current-main Security backlog evidence: `evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`.
@@ -53,7 +53,7 @@ Project ownership is resolved through `docs/projects/README.md` and `docs/projec
 
 | Workstream | PVC | Scope | Current state |
 |---|---|---|---|
-| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE — User Lifecycle closeout is merged/terminal; `OPS-02-SEC-06` parent inventory evidence ready; `OPS-02-SEC-05` implementation is already on main/evidence-ready; independent Security verification and foreign children remain |
+| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE — User Lifecycle closeout is merged/terminal; refreshed GOV-07 OPS owner return is `EVIDENCE_READY` on the scoped branch; provider E2E, independent Security verification and foreign-owner returns remain explicit gates; `OPS-02-SEC-06` parent inventory evidence ready; `OPS-02-SEC-05` implementation is already on main/evidence-ready |
 | `OPS-04` Supervisor | `PVC-04` | observation, evaluation, escalation, approved bounded recovery | IMPLEMENTED / VERIFICATION PENDING — fatal-process fail-fast implementation merged in PR #720; independent post-deploy/Security recovery evidence remains |
 | `OPS-06` Version Management | `PVC-06` | toolchain/version identity and controlled transition coordination | P1 GAP / BLOCKED_BY_AUTHORITY_CONFLICT — roadmap requests Node 24.20.0 while Accepted ADR-0053 still selects 24.18.0; OPS mutation stops pending Governance/ADR resolution |
 | `OPS-07` Release Management | `PVC-07` | Release candidate evidence, gate execution, rollback contract | PARTIAL |
@@ -179,6 +179,7 @@ The following repository-backed OPS work items referenced by recent OPS executio
 | User Lifecycle OPS closeout | PR #729 merged | DONE_MAIN for OPS repository/read-only-provider closeout; provider E2E unavailable evidence and Security verification remain explicit external/open gates |
 | GOV-03 / DR-02B authority reconciliation | PR #743 merged under CAPITAL-AI-GOV | FOREIGN_DEPENDENCY_TERMINAL; enables DR-03 correlation but transfers no Governance ownership to OPS |
 | Stripe Redirect Boundary `OPS-02-SEC-05` | `stripeReturnUrlGuard`, route composition and focused negative tests exist on main; implementation commit `bcefb1b2cdf2ecc56becfa7c5c8fcd6db8cbc43f` | IMPLEMENTED_ON_MAIN / EVIDENCE_READY; Security verification pending |
+| DR-03 roadmap re-correlation metadata | PR #747 Human-merged; historical branch absent | DONE_MAIN; stale `active/exclusive` coordination claim terminalized by GOV-07 evidence-return branch |
 
 The stale `agent/operations-node-toolchain-24-20-20260906` branch is not an active implementation writer: it contained no Node convergence change when correlated. The older `agent/operations-qs-cve-20260905` branch is divergent dependency work with no changed-file overlap with this bounded OPS documentation package.
 
@@ -202,9 +203,11 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [x] `OPS-06-SEC-03` 24.18.0/24.20.0 Accepted-ADR conflict identified and fail-closed at Governance ownership boundary;
 - [x] User Lifecycle harness/repository identity contract present on main;
 - [x] User Lifecycle stable-user-ID projection confirmed read-only on connected Supabase provider by the merged closeout evidence;
+- [x] GOV-07 OPS Owner-Evidence refreshed against `main@6a4a34f1b849763cce0f80b394817d3d83bdf24d` and current connected Supabase read-only state;
+- [x] client `userId`, e-mail, localStorage state and client tier remain explicitly non-authoritative for paid subscription projection;
 - [x] stale merged Auth Lifecycle writer terminalized in PR #729;
+- [x] stale DR-03 roadmap claim terminalized after confirming Human-merged PR #747 and absent historical branch;
 - [x] DR-03 Governance dependency terminalized and DR-03 retained in the queue without priority promotion;
-- [x] intervening PR #769 correlated and v2 branch rebuilt from current main without changed-file overlap;
 - [ ] CAPITAL-AI-GOV resolves the Node baseline authority/supersession before OPS Node mutation;
 - [ ] `OPS-06-SEC-03` Node control-plane convergence implemented/evidenced only after that authority resolution;
 - [ ] `OPS-08-SEC-07` recovery/RPO/RTO implementation/evidence completed;
@@ -214,7 +217,8 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [ ] Stripe sandbox/Test Clock lifecycle evidence executed with verified test-mode fixtures;
 - [ ] CAPITAL-AI-SEC independent verification completed for applicable returned evidence;
 - [ ] DR-03 implementation started only after higher-priority OPS gates permit it;
-- [ ] exact final PR-head hosted validation completed for any future implementation PR;
+- [ ] exact final branch-state validation/correlation completed before PR approval request;
+- [ ] hosted validation completed after PR creation as applicable;
 - [ ] Human Owner merge completed separately.
 
 ## 12. PR / production boundary
@@ -236,3 +240,35 @@ PR #729 is Human-merged and the OPS closeout is terminal on current main. The ev
 - Security re-verification remains exclusively with CAPITAL-AI-SEC.
 
 The User Lifecycle closeout itself did not close `OPS-02-SEC-05`; the separate 2026-09-06 current-main re-correlation now establishes that its implementation is already present/evidence-ready. It does not close `OPS-06-SEC-03`, `OPS-08-SEC-07`, other general OPS Security backlog or foreign-owner work.
+
+## 14. GOV-07 User-Lifecycle Evidence Return — 2026-09-06
+
+**Bounded work item:** `GOV-07 User-Lifecycle Evidence Return`  
+**Canonical evidence:** `evidence/GOV_07_USER_LIFECYCLE_EVIDENCE_RETURN_2026-09-06.md`  
+**OPS status:** `EVIDENCE_READY / BRANCH IMPLEMENTED / PR-CREATION GATE PENDING`  
+**Governance interpretation:** GOV-07 remains `PARTIAL / OWNER RETURNS PENDING` until the remaining foreign-owner and independent-verification gates return.
+
+Fresh current-main and connected-provider correlation reconfirms the stable subscription identity invariant:
+
+```text
+Stripe subscription metadata.user_id
+→ validated auth.users.id
+→ public.subscriptions.user_id
+```
+
+The server subscription readback remains bound to the verified Bearer-token principal through `resolveVerifiedIdentity(req)` and `getSubscription(identity.userId)`. Client-supplied `userId`, request/browser e-mail, localStorage state, cached client tier and checkout redirect/query state do not select the paid subscription subject or grant protected capability authority.
+
+Current provider evidence is deliberately split by evidence class:
+
+- connected Supabase deployed projection function: `PASS` by fresh read-only function-definition correlation;
+- connected Supabase own-row RLS policy: `PASS` by fresh read-only policy correlation;
+- connected Supabase migration presence: `PASS` (`20260905103413 user_lifecycle_subscription_identity_authority`);
+- Supabase Local/Mailpit provider E2E: `NOT_AVAILABLE` in this execution surface;
+- isolated Supabase cross-user replay: `NOT_AVAILABLE`;
+- Stripe sandbox/Test Clock lifecycle: `NOT_AVAILABLE`;
+- new exact-branch Stripe provider redelivery E2E: `NOT_AVAILABLE`;
+- repository source/test contracts: correlated and reusable, but not substituted for provider E2E.
+
+No new OPS runtime defect was identified in the bounded identity/readback paths. The only repository mutation beyond the required Roadmap/evidence integration is release of the stale DR-03 coordination claim whose associated PR #747 is already Human-merged and whose historical branch is absent.
+
+Residual gates remain explicit: clean historical Supabase baseline replay, isolated provider E2E, Stripe test-mode lifecycle evidence, the current Supabase leaked-password-protection provider warning, CAPITAL-AI-SEC independent verification, and the outstanding FE/COMP/Human-Legal/GOV owner returns. No foreign project or Production/provider mutation is authorized by this work item.

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-ROADMAP-DR03-RECORRELATION-2026-09-05",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -32,5 +32,10 @@
   "priorityGuard": "Security and Data Integrity precede Architecture and Integration. DR-03 remains blocked while the higher-priority OPS-06-SEC-03 Node control-plane convergence gap is open.",
   "mutationScope": "Repository documentation and coordination metadata only. No DR-03 productive adapter code, provider mutation, Production mutation, Release transition, deployment, remote skill loading or foreign-project implementation is authorized by this work item.",
   "resyncEvidence": "During pre-PR correlation, PR #746 merged and advanced main from e96c8d13d9ef3a7d566fb579e93fc680482d07c3 to 4e9dedd74aee1f9b3609037d1abb4fef0932a1b6. The branch was merged with the new main; PR #746 changes only the CAPITAL-AI-COMP requirements inventory and creates no OPS changed-file or authority conflict.",
-  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or this work item is explicitly abandoned. Pull Request creation requires fresh exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release when the associated Pull Request is Human-merged, closed, superseded or this work item is explicitly abandoned. Pull Request creation requires fresh exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only. Released after confirming PR #747 is Human-merged and the historical branch no longer exists.",
+  "mergedPr": 747,
+  "terminalHeadSha": "99b025991323f6b9efca9f375a10739f56816018",
+  "mainCommit": "255a89c532f3589e6d157d4f629a47251bd52670",
+  "releasedAt": "2026-09-06T21:21:00+02:00",
+  "releaseReason": "stale coordination metadata reconciled during GOV-07 OPS evidence return; associated PR #747 is Human-merged and branch is absent, so no live writer remains"
 }
