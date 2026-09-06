@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-CLIENT-CONTRACT-BASELINE-R2-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -59,5 +59,18 @@
     "Merge a Pull Request"
   ],
   "authorityGuard": "Project-local and non-authorizing. Existing IAM/capability semantics are referenced and reused. A physical PVC-01 runtime module stays deferred unless the documented strangler trigger is evidenced on a productive client path. ADR-0104-S1 removes repeated PR-create approval only inside this exact chat/project; Human Owner-only merge and foreign-project routing remain preserved.",
-  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. Human Owner-only merge remains mandatory."
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. Human Owner-only merge remains mandatory.",
+  "pullRequest": 693,
+  "mergedPr": 693,
+  "mainCommit": "4e7c6ec68b6c4915c64ac1ee39ac49635ad468f3",
+  "releasedAt": "2026-09-01T15:46:17Z",
+  "releaseEvidence": {
+    "pullRequest": 693,
+    "merged": true,
+    "mainContainsImplementation": true,
+    "verifiedMainSha": "dbdb1d5ed2c93c857ab9de1329b9d4dcbba2fd67",
+    "verifiedAt": "2026-09-06"
+  },
+  "releaseReason": "merged",
+  "terminalHeadSha": "18404b3fd379dc318a2452154e5218b70d655e12"
 }
