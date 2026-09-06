@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-Q1-SITEMAP-PUBLIC-ROUTE-CONSISTENCY-2026-09-05",
+  "status": "active",
+  "exclusive": true,
+  "lifecycle": "active",
+  "activeWriter": true,
+  "authorizing": false,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Restore exact public sitemap coverage against src/lib/routeSeo.ts#listPublicRouteSeoPaths and add a regression test that fails on missing, extra, duplicate or non-canonical public URLs.",
+  "workItemDE": "Die oeffentliche Sitemap exakt auf src/lib/routeSeo.ts#listPublicRouteSeoPaths ausrichten und einen Regressionstest ergaenzen, der fehlende, zusaetzliche, doppelte oder nicht-kanonische Public-URLs erkennt.",
+  "startedAt": "2026-09-05T22:00:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb",
+  "branch": "agent/seo-q1-sitemap-public-route-consistency-20260905",
+  "project": "CAPITAL-AI-SEO",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
+  "ownerRole": "Cross-cutting SEO requirements and verification; no productive PVC ownership",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-Q1-SITEMAP-PUBLIC-ROUTE-CONSISTENCY-2026-09-05.json",
+    "public/sitemap.xml",
+    "public/robots.txt",
+    "tests/unit/seoPublicRouteSitemap.test.ts",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/projects/seo/ROADMAP.md"
+  ],
+  "reuseInputs": [
+    "src/lib/routeSeo.ts",
+    "scripts/seo/prerender-public-routes.mjs",
+    "docs/projects/seo/README.md"
+  ],
+  "correlationInputs": [
+    "main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb",
+    "/AGENTS.md",
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md",
+    "docs/projects/seo/README.md",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
+  ],
+  "foreignWork": [
+    "agent/seo-roadmap-recorrelation-20260905 already mutates docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md without an open PR; this branch does not claim that file"
+  ],
+  "authorityGuard": "SEO changes only public sitemap/robots verification, SEO evidence and the owner-side project roadmap/checklist. No Frontend source, runtime/deployment, Governance AUTH/CTRL/ADR/ESS, IAM, WIF or Google-write mutation. Consolidated program roadmap left untouched to avoid a parallel writer.",
+  "validationPlan": [
+    "targeted Vitest: tests/unit/seoPublicRouteSitemap.test.ts",
+    "npm run lint",
+    "hosted repository checks after Human/Owner PR creation"
+  ],
+  "validationEvidence": {
+    "repositoryDiff": "Scoped candidate restores /learning-platform in sitemap, documents Allow in robots.txt, adds regression test and updates owner-side SEO roadmap/checklist/claim",
+    "routeCorrelation": "listPublicRouteSeoPaths and prerender ROUTES both expose five public routes including /learning-platform; live production sitemap observed 2026-09-05 still omitted that path",
+    "localExecution": "UNAVAILABLE on Grok GitHub Connector for full npm/vitest; targeted file-level consistency reviewed statically"
+  },
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. Claim remains active while a PR is open. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}

@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://capital-ai.online/learning-platform</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://capital-ai.online/impressum</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>

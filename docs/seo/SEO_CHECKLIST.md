@@ -1,10 +1,11 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project: CAPITAL-AI**  
-**Stand:** 02.09.2026 — WP-D3 Soft-404 VERIFIED; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** (PR #375 + Owner Rich Results Test); **WP-S2 Prerender VERIFIED** (ADR-0084); **Version Projection Gate OPEN**  
+**Stand:** 05.09.2026 — WP-D3 Soft-404 VERIFIED; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** (PR #375 + Owner Rich Results Test); **WP-S2 Prerender VERIFIED** (ADR-0084); **WP-Q1-HARDEN sitemap↔routeSeo IN BRANCH**; **Version Projection: IMPLEMENTED_ON_MAIN / GOOGLE_VISIBLE_PASS NOT ENABLED**  
 **Umsetzungsplan:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` (SEO-GM-ROADMAP-0002)
 
 ### 1. Crawling & Indexierung
-- [x] robots.txt / sitemap.xml — **Q1** (live `200`)
+- [x] robots.txt / sitemap.xml — **Q1** (live `200`; robots erlaubt Public Surfaces inkl. `/learning-platform`)
+- [x] Public-Route ↔ Sitemap-Abdeckung — **Q1 Hardening** (kanonische Quelle `src/lib/routeSeo.ts#listPublicRouteSeoPaths()`; fünf Routen inkl. `/learning-platform`; Regression `tests/unit/seoPublicRouteSitemap.test.ts`). Repository-Fix in Branch; Production-Sitemap auf `https://capital-ai.online/sitemap.xml` war am 2026-09-05 noch ohne `/learning-platform` (OPS Deploy-Gate).
 - [x] canonical + Trailing-Slash 301 — **Q2** (canonical + server 301 live; WP-Q-CLOSE rest: GSC)
 - [x] Search-Console-Verifizierung — **Q3 VERIFIED** (Domain `capital-ai.online`, Ownership bestätigt, Sitemap success) → `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`
 - [x] Echte 404 (Soft-404 behoben) — **D3** (PR #360, prod VERIFIED)
@@ -13,14 +14,14 @@
 - [x] **Single version authority:** `package.json#version`; SEO definiert keinen zweiten Versionswert.
 - [x] Public-site visible version korreliert am 02.09.2026 mit `package.json#version = 0.6.0`.
 - [x] `index.html` Meta Description, OpenGraph und Twitter Description projizieren aktuell `0.6.0`.
-- [ ] `SoftwareApplication.softwareVersion` projiziert explizit die kanonische `package.json#version` ohne zweiten Hardcode — **FE-owned implementation gap**; SEO dokumentiert Requirement/Evidence, keine Fremdcode-Umsetzung.
+- [x] `SoftwareApplication.softwareVersion` ist auf current main in `index.html` als `0.6.0` vorhanden — Status: **IMPLEMENTED_ON_MAIN**. Das beweist nicht Google-Cache/Reindex.
 - [ ] Google-visible Version Surface ist exakt identifiziert und nach Refresh/Reindex mit der kanonischen Version korreliert. Bis dahin kein `GOOGLE_VISIBLE_PASS`.
 - [x] Historische/legacy `0.5.4`-Vorkommen bleiben erhalten und werden nicht als current SEO Authority verwendet → `docs/seo/GOOGLE_VISIBLE_VERSION_CORRELATION_2026-09-02.md`.
 
 ### 3. JSON-LD / Meta
 - [x] JSON-LD Organization/WebSite/SoftwareApplication — **D1 VERIFIED** (PR #375; ImageObject logo + offers/image; Owner Rich Results Test 2026-08-16)
-- [ ] JSON-LD `SoftwareApplication.softwareVersion` — muss aus der kanonischen Package-Version projiziert werden; keine zweite Versionsauthority.
-- [x] Routen-Titles client-side — **D2 VERIFIED** (routeSeo + main.tsx load/popstate; prerender; unique titles live auf `/`, `/impressum`, `/agb`, `/datenschutz`)
+- [x] JSON-LD `SoftwareApplication.softwareVersion` — Repository-Projektion `0.6.0` auf current main in `index.html` vorhanden. Keine zweite SEO-Versionsauthority.
+- [x] Routen-Titles client-side — **D2 VERIFIED** (routeSeo + main.tsx load/popstate; prerender; unique titles für `/`, `/learning-platform`, `/impressum`, `/agb`, `/datenschutz`)
 - [x] og:image first-party — **Q5**
 
 ### 4. Crawler-Render
