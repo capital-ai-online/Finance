@@ -15,6 +15,7 @@ Verwandte kanonische Dokumente:
 - `docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md`
 - `docs/security/SECURITY_HARDENING_2026-08-29.md`
 - `.github/workflows/ops-recovery-evidence.yml`
+- `scripts/operations/recoveryDumpIntegrity.mjs`
 
 ## Status
 
@@ -88,6 +89,8 @@ Read-only gegen die aktive Supabase-Organisation und das Projekt verifiziert:
 - Projektstatus: **ACTIVE_HEALTHY**
 - Region: `eu-west-1`
 - Postgres: **17.6.1.127** / Engine 17
+- `auth.users`: **5** Zeilen zum Korrelationszeitpunkt
+- `auth.identities`: **5** Zeilen zum Korrelationszeitpunkt
 - Supabase Storage: **0 Buckets / 0 Objects** zum Korrelationszeitpunkt
 
 Die aktuelle Supabase-Dokumentation unterscheidet klar zwischen den Plänen:
@@ -102,7 +105,27 @@ Die aktuelle Supabase-Dokumentation unterscheidet klar zwischen den Plänen:
 Damit darf CAPITAL-AI unter dem aktuell verifizierten Free-Plan **keine automatische tägliche
 Provider-Retention und kein PITR als Recovery-Garantie behaupten**.
 
-### 2.2 OPS-08-SEC-07 Recovery Objectives
+### 2.2 Supabase-Dump-Semantik und Recovery-Grenze
+
+Der aktuelle Supabase-CLI-Vertrag unterscheidet Schema- und Datensicherung:
+
+- der normale Schema-Dump filtert providerverwaltete Schemas wie `auth` und `storage`, weil deren
+  Struktur vom Ziel-Supabase bereitgestellt wird;
+- der dokumentierte `--data-only --use-copy`-Dump enthält dagegen die relevanten Auth-/Storage-
+  Daten, einschließlich `auth.users`;
+- Supabase Storage **Binärobjekte** liegen außerhalb des logischen Datenbank-Dumps und benötigen
+  einen eigenen Backup-/Transfer-Pfad.
+
+Für CAPITAL-AI folgt daraus ein fail-closed Vertrag:
+
+1. `auth.users` und `auth.identities` müssen im produktionsbezogenen Datendump vorhanden sein;
+2. `storage.buckets` und `storage.objects` müssen als Datenbank-Metadaten vorhanden sein;
+3. solange kein Binärobjekt-Backup implementiert und autorisiert ist, muss der Recovery-Workflow
+   fehlschlagen, sobald `storage.objects` mehr als `0` Zeilen enthält;
+4. ein leerer Storage-Zustand darf als aktueller, eng begrenzter Zustand verwendet werden, aber
+   nicht als dauerhafte Annahme.
+
+### 2.3 OPS-08-SEC-07 Recovery Objectives
 
 Die folgenden Werte sind der owner-directed technische Zielvertrag für den aktuellen Free-Plan-
 Fallback. Sie sind **Ziele**, keine bereits gemessenen Zusicherungen:
@@ -116,18 +139,23 @@ Fallback. Sie sind **Ziele**, keine bereits gemessenen Zusicherungen:
 Ein einmaliger Dump oder ein grün gerenderter Workflow-Code beweist weder RPO noch RTO. Security-
 `VERIFIED/CLOSED` bleibt ausschließlich bei `CAPITAL-AI-SEC`.
 
-### 2.3 Kanonischer Free-Plan Evidence-Harness
+### 2.4 Kanonischer Free-Plan Evidence-Harness
 
 `.github/workflows/ops-recovery-evidence.yml` operationalisiert den bestehenden Runbook-Vertrag,
 ohne eine zweite Recovery-Architektur einzuführen:
 
 - täglicher Schedule `02:17 UTC` plus manueller Drill-Modus;
 - Ausführung ausschließlich auf `main`;
+- exakter Checkout von `github.sha` mit immutable Action-Pin und ohne persistierte Git-Credentials;
 - zusätzliche fail-closed Aktivierung über Repository-Variable
   `OPS_RECOVERY_EXECUTION_ENABLED=true`;
 - Source-Korrelation auf das freigegebene Supabase-Projekt `ryzywoktpmyhwzxmstyu`;
 - Supabase CLI auf eine konkrete Version gepinnt;
 - logischer Export von Rollen, Schema und Daten;
+- pre-encryption Coverage-Gate über `scripts/operations/recoveryDumpIntegrity.mjs`;
+- explizite Auth-Coverage über `auth.users` und `auth.identities`;
+- explizite Storage-Metadaten-Coverage über `storage.buckets` und `storage.objects`;
+- fail-closed Abbruch bei vorhandenen Storage-Objekten, solange kein Binary-Backup existiert;
 - SHA-256-Evidence für Klartextbestandteile vor Löschung;
 - client-seitige `age`-X25519-Verschlüsselung;
 - nur das **verschlüsselte** Backup plus nicht-sensitive JSON-Evidence wird als GitHub-Actions-
@@ -149,7 +177,7 @@ Der Workflow erwartet folgende geschützte Inputs, speichert deren Werte aber ni
 Das Setzen oder Ändern dieser GitHub Secrets/Variablen ist **nicht** durch dieses Repository-Paket
 autorisiert. Es ist eine separate geschützte External-/Execution-Host-Konfiguration.
 
-### 2.4 Backup-Evidence Contract
+### 2.5 Backup-Evidence Contract
 
 Für jeden erfolgreichen produktionsbezogenen Backup-Lauf werden mindestens erfasst:
 
@@ -159,6 +187,10 @@ Für jeden erfolgreichen produktionsbezogenen Backup-Lauf werden mindestens erfa
 - Backup-Dauer;
 - Größe der Klartextbestandteile vor Löschung;
 - SHA-256 von Rollen-, Schema- und Datenexport;
+- Anzahl erfasster `public`-Relationen;
+- Anzahl und Row Counts der recovery-kritischen Auth-Relationen;
+- Anzahl und Row Counts der recovery-kritischen Storage-Metadatenrelationen;
+- expliziter Storage-Binary-Coverage-Status;
 - Größe und SHA-256 des verschlüsselten Artefakts;
 - Verschlüsselungsverfahren;
 - Off-site-Ziel und Retention;
@@ -166,29 +198,33 @@ Für jeden erfolgreichen produktionsbezogenen Backup-Lauf werden mindestens erfa
 - Restore-Drill-Status, sofern angefordert;
 - ausdrückliche Kennzeichnung, dass Security Closure nicht behauptet wird.
 
-### 2.5 Isolierter Restore-Drill
+### 2.6 Isolierter Restore-Drill
 
 Restore niemals ungeprüft direkt über eine produktive Datenbank ausführen. Der kanonische Drill im
 Evidence-Harness:
 
 1. entschlüsselt das Backup nur im kurzlebigen GitHub Runner;
 2. startet eine lokale, isolierte Supabase-Instanz;
-3. spielt Rollen, Schema und Daten mit `ON_ERROR_STOP` ein;
+3. spielt Rollen, Schema und Daten mit `ON_ERROR_STOP` in einer Transaktion ein;
 4. erzeugt erneut einen logischen Datendump des Restore-Ziels;
-5. vergleicht für `public`-Relationen Row-Anzahl und order-unabhängigen SHA-256-Fingerprint;
-6. misst die Restore-Dauer;
-7. failt, wenn Integrität nicht stimmt oder die Datenbank-Restore-Dauer über 3600 Sekunden liegt;
-8. entfernt sensible temporäre Dateien und stoppt die lokale Supabase-Instanz.
+5. vergleicht alle `public`-Relationen sowie `auth.users`, `auth.identities`, `storage.buckets` und
+   `storage.objects` über Row-Anzahl und order-unabhängigen SHA-256-Multiset-Fingerprint;
+6. behandelt andere providerinterne Auth-/Storage-Hilfstabellen nicht als CAPITAL-AI-Vertrag,
+   damit legitime providerseitige Versionsunterschiede keinen falschen Recovery-Fehler erzeugen;
+7. misst die Restore-Dauer;
+8. failt, wenn Integrität/Coverage nicht stimmt oder die Datenbank-Restore-Dauer über 3600 Sekunden
+   liegt;
+9. entfernt sensible temporäre Dateien und stoppt die lokale Supabase-Instanz.
 
 Der Datenbank-Drill deckt **nicht** automatisch ab:
 
-- Supabase Storage-Binaryobjekte (aktuell sind keine Buckets/Objekte vorhanden, der Vertrag bleibt
-  dennoch explizit);
+- Supabase Storage-Binärinhalte — der Workflow bleibt bei vorhandenen Objekten absichtlich
+  fail-closed, bis ein eigener autorisierter Binary-Backup-Pfad existiert;
 - externe Stripe-/AI-/Market-Data-Providerzustände;
 - Render-Konfiguration oder Secrets;
 - vollständige Service-Wiederanlaufzeit.
 
-### 2.6 Strukturelle Wiederherstellung
+### 2.7 Strukturelle Wiederherstellung
 
 `supabase/migrations/*.sql` ist die kanonische Schema-Historie. Sie kann die Struktur
 rekonstruieren, **nicht** die Nutzdaten. Migrationen ersetzen daher kein Backup.
@@ -216,6 +252,8 @@ zusätzlich folgende Gates:
 
 - Main-/Commit-Identität bestätigt;
 - Backup-Evidence vor destruktiver Datenmutation vorhanden;
+- `auth.users` / `auth.identities` im Backup-Coverage-Gate vorhanden;
+- Storage-Binary-Coverage entweder implementiert oder `storage.objects=0`;
 - Restore-Ziel eindeutig vom Produktionsziel getrennt;
 - Secret-Werte nicht in Logs, PRs oder Evidence kopiert;
 - bei Produktionsrestore explizite Owner-Freigabe;
@@ -229,6 +267,7 @@ zusätzlich folgende Gates:
 Provider-Verhalten ist vor einem realen Recovery erneut gegen den aktuellen Stand zu prüfen.
 
 - Supabase Database Backups: `https://supabase.com/docs/guides/platform/backups`
+- Supabase CLI Backup/Restore: `https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore`
 - Supabase Production Checklist: `https://supabase.com/docs/guides/deployment/going-into-prod`
 - Render Deploys: `https://render.com/docs/deploys`
 - Render Rollbacks: `https://render.com/docs/rollbacks`
@@ -242,13 +281,16 @@ Repository-seitig ist der wiederholbare Evidence-Harness implementiert. Das oper
 bleibt bis zur tatsächlichen Execution offen:
 
 - [x] Free-Plan-/Provider-Baseline current-state read-only korreliert;
+- [x] aktuelle Auth- und Storage-Coverage read-only korreliert;
 - [x] RPO-Ziel ≤24 h definiert;
 - [x] Datenbank-Restore-RTO-Ziel ≤60 min definiert;
 - [x] wiederkehrender verschlüsselter Off-site-Backup-Harness implementiert;
+- [x] Auth-Coverage und Storage-Binary-Grenze fail-closed implementiert;
 - [x] isolierter gemessener Restore-Drill im Harness implementiert;
 - [ ] geschützte GitHub Inputs/Execution Switch separat konfiguriert;
 - [ ] mindestens zwei aufeinanderfolgende geplante Backup-Runs erfolgreich und Evidence verfügbar;
-- [ ] mindestens ein isolierter Restore-Drill erfolgreich, Integrität PASS und Dauer gemessen;
+- [ ] mindestens ein isolierter Restore-Drill erfolgreich, Auth/Public/Storage-Integrität PASS und Dauer gemessen;
 - [ ] RPO aus tatsächlichen Backup-Zeitpunkten als `MEASURED/OPERATING` belegt;
+- [ ] bei künftigem Supabase-Storage-Einsatz Binary-Backup vor Aktivierung/Weiterbetrieb des Recovery-Gates gelöst;
 - [ ] Full-Service-RTO bleibt explizit separat oder wird durch eigenen E2E-Drill gemessen;
 - [ ] CAPITAL-AI-SEC unabhängige Verifikation abgeschlossen.
