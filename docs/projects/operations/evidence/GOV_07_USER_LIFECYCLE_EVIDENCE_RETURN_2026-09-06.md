@@ -33,7 +33,7 @@ No lower-precedence roadmap or evidence item is used to override these authoriti
 
 - Open Pull Requests against `main`: **none** at initial correlation.
 - Historical User-Lifecycle closeout claim: `released`; PR #729 is merged/terminal.
-- `CAPITAL-AI-OPS-ROADMAP-DR03-RECORRELATION-2026-09-05` is still marked `active/exclusive` in metadata, but its associated PR #747 is already Human-merged and its branch no longer exists. It is therefore stale coordination metadata, not a live parallel writer, and is terminalized in this bounded branch before Roadmap mutation.
+- `CAPITAL-AI-OPS-ROADMAP-DR03-RECORRELATION-2026-09-05` was still marked `active/exclusive` in current-main metadata, but its associated PR #747 is already Human-merged and its branch no longer exists. It is therefore stale coordination metadata, not a live parallel writer, and is terminalized in this bounded branch before Roadmap mutation.
 - No foreign-project changed-file scope is modified.
 
 ## 4. Correlated code paths
@@ -150,7 +150,8 @@ No `NOT_RUN` or `NOT_AVAILABLE` item is represented as PASS.
 1. Isolated, reproducible Supabase Local/Mailpit provider E2E remains unexecuted.
 2. Stripe sandbox/Test Clock provider E2E remains unexecuted.
 3. Historical Supabase migration-baseline replay remains insufficiently proven for a clean local full-schema reset.
-4. The stale terminal DR-03 coordination claim requires metadata release so it no longer appears as an active Roadmap writer.
+
+The stale terminal DR-03 coordination claim is **resolved in this branch** after confirming Human-merged PR #747 and the absence of its historical branch; it is not an open residual.
 
 No new OPS runtime/code defect requiring custom implementation was identified in the bounded identity/readback paths.
 
