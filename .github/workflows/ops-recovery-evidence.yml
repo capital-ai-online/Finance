@@ -1,0 +1,406 @@
+name: OPS Recovery Evidence
+run-name: >-
+  ${{ github.event_name == 'schedule'
+      && format('OPS-08-SEC-07 – scheduled backup evidence @ {0}', github.sha)
+      || format('OPS-08-SEC-07 – {0} @ {1}', inputs.mode, github.sha) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Recovery evidence mode. Restore drill is isolated and never targets Production.
+        required: true
+        default: backup-only
+        type: choice
+        options:
+          - backup-only
+          - backup-and-restore-drill
+  schedule:
+    - cron: '17 2 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-recovery-evidence
+  cancel-in-progress: false
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+  SOURCE_PROJECT_REF: 'ryzywoktpmyhwzxmstyu'
+  RPO_TARGET_SECONDS: '86400'
+  DATABASE_RESTORE_RTO_TARGET_SECONDS: '3600'
+  ARTIFACT_RETENTION_DAYS: '35'
+
+jobs:
+  backup-and-evidence:
+    name: Encrypted backup and isolated recovery evidence
+    if: ${{ github.ref == 'refs/heads/main' && vars.OPS_RECOVERY_EXECUTION_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Execution boundary prüfen
+        shell: bash
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          AGE_RECIPIENT: ${{ vars.OPS_RECOVERY_AGE_RECIPIENT }}
+          AGE_IDENTITY: ${{ secrets.OPS_RECOVERY_AGE_IDENTITY }}
+          RECOVERY_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'backup-only' }}
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_DB_URL"
+          test -n "$AGE_RECIPIENT"
+          case "$AGE_RECIPIENT" in age1*) ;; *) echo 'OPS_RECOVERY_AGE_RECIPIENT must be an age X25519 recipient.' >&2; exit 1 ;; esac
+          if [ "$RECOVERY_MODE" = 'backup-and-restore-drill' ]; then
+            test -n "$AGE_IDENTITY"
+          fi
+          python3 - <<'PY'
+          import os
+          from urllib.parse import urlparse
+
+          url = os.environ['SUPABASE_DB_URL']
+          ref = os.environ['SOURCE_PROJECT_REF']
+          parsed = urlparse(url)
+          if parsed.scheme not in {'postgres', 'postgresql'}:
+              raise SystemExit('SUPABASE_DB_URL must use postgres/postgresql.')
+          if ref not in url:
+              raise SystemExit('SUPABASE_DB_URL does not correlate to the approved source project ref.')
+          PY
+          echo 'Execution gate is enabled for the current main ref. No Production write operation is defined by this workflow.'
+
+      - name: Supabase CLI einrichten
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Recovery-Werkzeuge einrichten
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y age postgresql-client
+          age --version
+          psql --version
+          supabase --version
+
+      - name: Logisches Backup erzeugen
+        id: dump
+        shell: bash
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          WORK_DIR="$RUNNER_TEMP/ops-recovery-source"
+          mkdir -p "$WORK_DIR"
+          chmod 700 "$WORK_DIR"
+          START_EPOCH="$(date +%s)"
+          STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f "$WORK_DIR/roles.sql" --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f "$WORK_DIR/schema.sql"
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f "$WORK_DIR/data.sql" --use-copy --data-only \
+            -x 'storage.buckets_vectors' -x 'storage.vector_indexes'
+
+          for file in roles.sql schema.sql data.sql; do
+            test -s "$WORK_DIR/$file"
+          done
+
+          COMPLETED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          END_EPOCH="$(date +%s)"
+          DURATION="$((END_EPOCH - START_EPOCH))"
+          ROLES_SHA="$(sha256sum "$WORK_DIR/roles.sql" | awk '{print $1}')"
+          SCHEMA_SHA="$(sha256sum "$WORK_DIR/schema.sql" | awk '{print $1}')"
+          DATA_SHA="$(sha256sum "$WORK_DIR/data.sql" | awk '{print $1}')"
+          TOTAL_BYTES="$(( $(stat -c %s "$WORK_DIR/roles.sql") + $(stat -c %s "$WORK_DIR/schema.sql") + $(stat -c %s "$WORK_DIR/data.sql") ))"
+
+          {
+            echo "work_dir=$WORK_DIR"
+            echo "stamp=$STAMP"
+            echo "started_at=$STARTED_AT"
+            echo "completed_at=$COMPLETED_AT"
+            echo "duration_seconds=$DURATION"
+            echo "roles_sha=$ROLES_SHA"
+            echo "schema_sha=$SCHEMA_SHA"
+            echo "data_sha=$DATA_SHA"
+            echo "plaintext_bytes=$TOTAL_BYTES"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Backup client-seitig verschlüsseln
+        id: encrypt
+        shell: bash
+        env:
+          AGE_RECIPIENT: ${{ vars.OPS_RECOVERY_AGE_RECIPIENT }}
+          WORK_DIR: ${{ steps.dump.outputs.work_dir }}
+          STAMP: ${{ steps.dump.outputs.stamp }}
+        run: |
+          set -euo pipefail
+          ARCHIVE="$RUNNER_TEMP/ops-recovery-$STAMP.tar.gz"
+          ENCRYPTED="$RUNNER_TEMP/ops-recovery-$STAMP.tar.gz.age"
+          tar -C "$WORK_DIR" -czf "$ARCHIVE" roles.sql schema.sql data.sql
+          age -r "$AGE_RECIPIENT" -o "$ENCRYPTED" "$ARCHIVE"
+          test -s "$ENCRYPTED"
+          rm -f "$ARCHIVE"
+          rm -f "$WORK_DIR/roles.sql" "$WORK_DIR/schema.sql" "$WORK_DIR/data.sql"
+          ENCRYPTED_SHA="$(sha256sum "$ENCRYPTED" | awk '{print $1}')"
+          ENCRYPTED_BYTES="$(stat -c %s "$ENCRYPTED")"
+          {
+            echo "encrypted_path=$ENCRYPTED"
+            echo "encrypted_sha=$ENCRYPTED_SHA"
+            echo "encrypted_bytes=$ENCRYPTED_BYTES"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verschlüsseltes Backup für isolierten Drill entschlüsseln
+        id: decrypt
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'backup-and-restore-drill' }}
+        shell: bash
+        env:
+          AGE_IDENTITY: ${{ secrets.OPS_RECOVERY_AGE_IDENTITY }}
+          ENCRYPTED_PATH: ${{ steps.encrypt.outputs.encrypted_path }}
+        run: |
+          set -euo pipefail
+          DRILL_DIR="$RUNNER_TEMP/ops-recovery-drill"
+          IDENTITY_FILE="$RUNNER_TEMP/ops-recovery-age-identity.txt"
+          ARCHIVE="$RUNNER_TEMP/ops-recovery-drill.tar.gz"
+          mkdir -p "$DRILL_DIR"
+          chmod 700 "$DRILL_DIR"
+          umask 077
+          printf '%s\n' "$AGE_IDENTITY" > "$IDENTITY_FILE"
+          age -d -i "$IDENTITY_FILE" -o "$ARCHIVE" "$ENCRYPTED_PATH"
+          rm -f "$IDENTITY_FILE"
+          tar -C "$DRILL_DIR" -xzf "$ARCHIVE"
+          rm -f "$ARCHIVE"
+          for file in roles.sql schema.sql data.sql; do
+            test -s "$DRILL_DIR/$file"
+          done
+          echo "drill_dir=$DRILL_DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Isolierten Supabase-Restore-Drill ausführen
+        id: restore
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'backup-and-restore-drill' }}
+        continue-on-error: true
+        shell: bash
+        env:
+          DRILL_DIR: ${{ steps.decrypt.outputs.drill_dir }}
+        run: |
+          set -euo pipefail
+          TARGET_DIR="$RUNNER_TEMP/ops-recovery-target"
+          mkdir -p "$TARGET_DIR"
+          cd "$TARGET_DIR"
+          supabase init >/dev/null
+          RESTORE_START="$(date +%s)"
+          supabase start >"$RUNNER_TEMP/supabase-local-start.log" 2>&1
+          LOCAL_DB_URL="$(supabase status -o env | sed -n 's/^DB_URL=//p' | tr -d '"')"
+          test -n "$LOCAL_DB_URL"
+
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "$DRILL_DIR/roles.sql" >/dev/null
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "$DRILL_DIR/schema.sql" >/dev/null
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "$DRILL_DIR/data.sql" >/dev/null
+
+          supabase db dump --local -f "$DRILL_DIR/restored-data.sql" --use-copy --data-only \
+            -x 'storage.buckets_vectors' -x 'storage.vector_indexes'
+          test -s "$DRILL_DIR/restored-data.sql"
+
+          python3 - "$DRILL_DIR/data.sql" "$DRILL_DIR/restored-data.sql" > "$DRILL_DIR/integrity-summary.json" <<'PY'
+          import collections
+          import hashlib
+          import json
+          import sys
+
+          def copy_fingerprints(path):
+              result = {}
+              current = None
+              rows = []
+              with open(path, 'r', encoding='utf-8', errors='strict') as handle:
+                  for raw in handle:
+                      line = raw.rstrip('\n')
+                      if current is None and line.startswith('COPY ') and line.endswith(' FROM stdin;'):
+                          current = line[5:-12].strip()
+                          rows = []
+                          continue
+                      if current is not None and line == r'\.':
+                          digest = hashlib.sha256()
+                          for row in sorted(rows):
+                              digest.update(row.encode('utf-8'))
+                              digest.update(b'\n')
+                          result[current] = {'rows': len(rows), 'sha256': digest.hexdigest()}
+                          current = None
+                          rows = []
+                          continue
+                      if current is not None:
+                          rows.append(line)
+              return result
+
+          source = copy_fingerprints(sys.argv[1])
+          restored = copy_fingerprints(sys.argv[2])
+          comparable = {name for name in source if name.startswith('"public".') or name.startswith('public.')}
+          mismatches = sorted(name for name in comparable if source.get(name) != restored.get(name))
+          summary = {
+              'publicRelationsCompared': len(comparable),
+              'mismatchCount': len(mismatches),
+              'integrityMatch': len(comparable) > 0 and not mismatches,
+          }
+          print(json.dumps(summary, separators=(',', ':')))
+          if not summary['integrityMatch']:
+              raise SystemExit('Public-schema row-count/content fingerprint mismatch after isolated restore.')
+          PY
+
+          RESTORE_END="$(date +%s)"
+          RESTORE_DURATION="$((RESTORE_END - RESTORE_START))"
+          INTEGRITY_MATCH="$(python3 -c 'import json,sys; print(str(json.load(open(sys.argv[1]))["integrityMatch"]).lower())' "$DRILL_DIR/integrity-summary.json")"
+          RELATIONS_COMPARED="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["publicRelationsCompared"])' "$DRILL_DIR/integrity-summary.json")"
+          {
+            echo "restore_duration_seconds=$RESTORE_DURATION"
+            echo "integrity_match=$INTEGRITY_MATCH"
+            echo "relations_compared=$RELATIONS_COMPARED"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Maschinenlesbare Recovery-Evidence erzeugen
+        id: evidence
+        if: ${{ always() && steps.encrypt.outcome == 'success' }}
+        shell: bash
+        env:
+          STAMP: ${{ steps.dump.outputs.stamp }}
+          BACKUP_STARTED_AT: ${{ steps.dump.outputs.started_at }}
+          BACKUP_COMPLETED_AT: ${{ steps.dump.outputs.completed_at }}
+          BACKUP_DURATION_SECONDS: ${{ steps.dump.outputs.duration_seconds }}
+          PLAINTEXT_BYTES: ${{ steps.dump.outputs.plaintext_bytes }}
+          ROLES_SHA: ${{ steps.dump.outputs.roles_sha }}
+          SCHEMA_SHA: ${{ steps.dump.outputs.schema_sha }}
+          DATA_SHA: ${{ steps.dump.outputs.data_sha }}
+          ENCRYPTED_SHA: ${{ steps.encrypt.outputs.encrypted_sha }}
+          ENCRYPTED_BYTES: ${{ steps.encrypt.outputs.encrypted_bytes }}
+          RESTORE_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'backup-and-restore-drill' }}
+          RESTORE_OUTCOME: ${{ steps.restore.outcome }}
+          RESTORE_DURATION_SECONDS: ${{ steps.restore.outputs.restore_duration_seconds }}
+          INTEGRITY_MATCH: ${{ steps.restore.outputs.integrity_match }}
+          RELATIONS_COMPARED: ${{ steps.restore.outputs.relations_compared }}
+        run: |
+          set -euo pipefail
+          EVIDENCE="$RUNNER_TEMP/ops-recovery-$STAMP-evidence.json"
+          python3 - "$EVIDENCE" <<'PY'
+          import json
+          import os
+          import sys
+
+          requested = os.environ.get('RESTORE_REQUESTED', 'false').lower() == 'true'
+          restore_outcome = os.environ.get('RESTORE_OUTCOME') or 'not-run'
+          restore_duration = os.environ.get('RESTORE_DURATION_SECONDS')
+          integrity_match = os.environ.get('INTEGRITY_MATCH')
+          evidence = {
+              'schemaVersion': '1.0.0',
+              'workItem': 'OPS-08-SEC-07',
+              'source': {
+                  'provider': 'supabase',
+                  'projectRef': os.environ['SOURCE_PROJECT_REF'],
+                  'readOnlyBackup': True,
+              },
+              'repository': {
+                  'repository': os.environ['GITHUB_REPOSITORY'],
+                  'ref': os.environ['GITHUB_REF'],
+                  'sha': os.environ['GITHUB_SHA'],
+                  'workflowRunId': os.environ['GITHUB_RUN_ID'],
+                  'workflowRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              },
+              'objectives': {
+                  'rpoTargetSeconds': int(os.environ['RPO_TARGET_SECONDS']),
+                  'databaseRestoreRtoTargetSeconds': int(os.environ['DATABASE_RESTORE_RTO_TARGET_SECONDS']),
+                  'rpoStatus': 'TARGET_ONLY_UNTIL_RECURRING_SUCCESSFUL_RUNS_EXIST',
+                  'fullServiceRtoStatus': 'OUT_OF_SCOPE_UNVERIFIED',
+              },
+              'backup': {
+                  'startedAt': os.environ['BACKUP_STARTED_AT'],
+                  'completedAt': os.environ['BACKUP_COMPLETED_AT'],
+                  'durationSeconds': int(os.environ['BACKUP_DURATION_SECONDS']),
+                  'plaintextBytes': int(os.environ['PLAINTEXT_BYTES']),
+                  'plaintextSha256': {
+                      'roles': os.environ['ROLES_SHA'],
+                      'schema': os.environ['SCHEMA_SHA'],
+                      'data': os.environ['DATA_SHA'],
+                  },
+                  'encryptedBytes': int(os.environ['ENCRYPTED_BYTES']),
+                  'encryptedSha256': os.environ['ENCRYPTED_SHA'],
+                  'encryption': 'age-x25519',
+                  'offsiteSink': 'github-actions-artifact',
+                  'retentionDays': int(os.environ['ARTIFACT_RETENTION_DAYS']),
+              },
+              'restoreDrill': {
+                  'requested': requested,
+                  'outcome': restore_outcome if requested else 'not-run',
+                  'durationSeconds': int(restore_duration) if restore_duration else None,
+                  'publicDataIntegrityMatch': integrity_match == 'true' if integrity_match else None,
+                  'publicRelationsCompared': int(os.environ['RELATIONS_COMPARED']) if os.environ.get('RELATIONS_COMPARED') else None,
+                  'target': 'isolated-local-supabase' if requested else None,
+              },
+              'securityClosure': 'NOT_CLAIMED',
+          }
+          with open(sys.argv[1], 'w', encoding='utf-8') as handle:
+              json.dump(evidence, handle, indent=2, sort_keys=True)
+              handle.write('\n')
+          PY
+          echo "evidence_path=$EVIDENCE" >> "$GITHUB_OUTPUT"
+
+      - name: Verschlüsseltes Off-site-Artefakt und Evidence ablegen
+        if: ${{ always() && steps.encrypt.outcome == 'success' && steps.evidence.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ops-recovery-${{ steps.dump.outputs.stamp }}
+          path: |
+            ${{ steps.encrypt.outputs.encrypted_path }}
+            ${{ steps.evidence.outputs.evidence_path }}
+          retention-days: 35
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Recovery-Evidence zusammenfassen
+        if: ${{ always() && steps.evidence.outcome == 'success' }}
+        shell: bash
+        env:
+          EVIDENCE_PATH: ${{ steps.evidence.outputs.evidence_path }}
+        run: |
+          set -euo pipefail
+          python3 - "$EVIDENCE_PATH" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json
+          import sys
+          value = json.load(open(sys.argv[1], encoding='utf-8'))
+          restore = value['restoreDrill']
+          print('## OPS-08-SEC-07 Recovery Evidence')
+          print(f"- Backup duration: {value['backup']['durationSeconds']} s")
+          print(f"- Encrypted artifact: {value['backup']['encryptedBytes']} bytes / SHA-256 `{value['backup']['encryptedSha256']}`")
+          print(f"- RPO target: <= {value['objectives']['rpoTargetSeconds']} s; observed RPO remains unverified until recurring successful runs exist.")
+          if restore['requested']:
+              print(f"- Isolated restore: {restore['outcome']} / {restore['durationSeconds']} s / integrity={restore['publicDataIntegrityMatch']}")
+          else:
+              print('- Isolated restore: not requested in this run.')
+          print('- CAPITAL-AI-SEC verification: not claimed.')
+          PY
+
+      - name: Restore-RTO-Gate auswerten
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.mode == 'backup-and-restore-drill' }}
+        shell: bash
+        env:
+          RESTORE_OUTCOME: ${{ steps.restore.outcome }}
+          RESTORE_DURATION_SECONDS: ${{ steps.restore.outputs.restore_duration_seconds }}
+          INTEGRITY_MATCH: ${{ steps.restore.outputs.integrity_match }}
+        run: |
+          set -euo pipefail
+          test "$RESTORE_OUTCOME" = 'success'
+          test "$INTEGRITY_MATCH" = 'true'
+          test -n "$RESTORE_DURATION_SECONDS"
+          test "$RESTORE_DURATION_SECONDS" -le "$DATABASE_RESTORE_RTO_TARGET_SECONDS"
+
+      - name: Sensitive temporäre Dateien entfernen
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set +e
+          if [ -d "$RUNNER_TEMP/ops-recovery-target" ]; then
+            (cd "$RUNNER_TEMP/ops-recovery-target" && supabase stop >/dev/null 2>&1) || true
+          fi
+          rm -rf \
+            "$RUNNER_TEMP/ops-recovery-source" \
+            "$RUNNER_TEMP/ops-recovery-drill" \
+            "$RUNNER_TEMP/ops-recovery-target" \
+            "$RUNNER_TEMP/ops-recovery-age-identity.txt" \
+            "$RUNNER_TEMP/ops-recovery-drill.tar.gz" \
+            "$RUNNER_TEMP/supabase-local-start.log"
