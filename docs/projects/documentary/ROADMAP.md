@@ -110,7 +110,10 @@ Merged implementation evidence:
 - foreign-project ownership and unsafe/non-documentation paths fail closed as `blocked`;
 - the planner always reports `mutationPerformed=false` and performs no move, delete, rewrite, registry mutation or redirect creation;
 - targeted unit coverage for deterministic planning and negative/fail-closed cases is part of the merged D8 slice;
-- GitHub PR workflows for Governance, CI and Container Security completed successfully before Human/CODEOWNER merge;
+- final validated PR #792 head: `b3f15f9ef6ee92fd420800e539f5ce2f7004ddd2`; final pre-merge main: `993bd2bdf8f9d03f5b59c546c3f6ef1ecfdd7729` (3 ahead / 0 behind);
+- [PR #792 hosted build-and-test](https://github.com/SvenKulessa/Finance/actions/runs/34063736365/job/101568862108): `success` on that exact head; repository integrity, TypeScript, unit tests, production build, CSP and predeploy passed;
+- [PR #792 Governance](https://github.com/SvenKulessa/Finance/actions/runs/34063736332/job/101568834910): `success` on the same head before Human/CODEOWNER merge;
+- these are historical exact-head results for the merged D8 slice, not fresh validation of this roadmap update or a production-deployment claim; the PR deployment check was `skipped`;
 - the technical Documentary roadmap and component metadata project `Migration/` as the implemented read-only planning slice.
 
 Separate remaining boundary:
