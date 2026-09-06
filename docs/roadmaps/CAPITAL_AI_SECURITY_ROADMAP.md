@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-ROADMAP-CAPITAL-AI-SEC-2026-08-31`  
 **Project ID:** `CAPITAL-AI-SEC`  
-**Version:** `2.2.2`  
+**Version:** `2.2.3`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
-**Date:** `2026-09-05`  
-**Repository baseline:** `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`  
+**Date:** `2026-09-06`  
+**Repository baseline:** `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`  
 **Role:** `CROSS_CUTTING_SECURITY`  
 **Primary Project Value Chain ownership:** `[]`  
 **Project coverage:** `PVC-01` through `PVC-18` as Security overlay  
@@ -225,9 +225,11 @@ Where their status/routing language conflicts with current `/AGENTS.md`, canonic
 
 ## 10. Current correlation boundary
 
-This work is based on `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`. The current trust root is `/AGENTS.md` v2.7.1 and the applicable component specification is `ESS-0006` v1.1.0. At the resync check there are zero open PRs against `main`.
+This work is based on `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`. The current trust root is `/AGENTS.md` v2.7.1 and the applicable component specification is `ESS-0006` v1.1.0.
 
-The fresh scoped branch `agent/security-assess-align-20260905` changes only:
+PR #765 is closed and unmerged after its approved PR-creation snapshot was invalidated by concurrent main movement. It is historical and not a merge candidate. The only open PR at this revalidation snapshot is PR #763 (`CAPITAL-AI-FE`), which changes only `src/components/Dashboard.tsx` and `tests/unit/dashboardConsumerCutover.test.ts`; it has no changed-file, semantic, namespace, authority or Primary-Owner overlap with this SEC work.
+
+The scoped branch `agent/security-assess-align-20260905` has exact merge-base current main and changes only:
 
 - `.ai/skills/CAPITAL-AI-Security-Assessment.md`;
 - `scripts/security/validateSecurityAssessment.test.mjs`;
