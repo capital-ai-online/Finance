@@ -1,11 +1,12 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEO-GOOGLE-EVIDENCE-CORRELATION-2026-09-06",
-  "status": "active",
-  "exclusive": true,
-  "lifecycle": "active",
-  "activeWriter": true,
+  "status": "released",
+  "exclusive": false,
+  "lifecycle": "archived",
+  "activeWriter": false,
   "authorizing": false,
+  "archivedAt": "2026-09-06T10:55:52Z",
   "agent": {
     "provider": "xAI",
     "model": "Grok 4.6",
@@ -39,5 +40,7 @@
     "Production identity observed 2026-09-06T10:12Z: commit 076e88e231372b2c9a9191917090388486a6f2f8; live sitemap includes /learning-platform"
   ],
   "authorityGuard": "Documentation, evidence classification and claim lifecycle only. No Frontend runtime, Render/IAM/WIF, DNS, Google-write, publishing or Credential mutation.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only.",
+  "releasedAt": "2026-09-06T10:55:52Z",
+  "releaseReason": "Release condition was satisfied when PR #764 Human-merged on 2026-09-06 at 10:55:52Z."
 }
