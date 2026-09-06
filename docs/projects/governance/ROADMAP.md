@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@a5026e194e243d556c91e2749da8f405e946c025`  
+**Current correlation baseline:** `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`  
 **Correlation date:** `2026-09-05`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
@@ -24,11 +24,14 @@ PVC-05 / Platform Director
 
 ## Current-main reconciliation — 2026-09-05
 
-Current `main@a5026e194e243d556c91e2749da8f405e946c025` includes Human-merged PR #755, which registers ADR-0007 under stable Authority ID `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007` as `historical` / non-authorizing in the canonical ADR and Authority registries. The migration preserves the historical ACCEPTED record for traceability but does not re-authorize its pre-PVC Compliance Value Chain, automated certification language, legal-sufficiency claims or cross-owner runtime assumptions.
+Current `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb` includes the Human-merged Governance sequence:
 
-A later PR #756 attempted additional ADR-0007 archival/path work but was closed unmerged. It is not current Authority and is not an active writer. At the start of `COMP-GAP-003` there are no open PRs against `main`.
+- PR #751 completed the post-GOV-03 Roadmap/Task-Register/Component-Matrix correlation;
+- PR #755 registered ADR-0007 under stable Authority ID `AUTH-ADR-COMPLIANCE-VALUE-CHAIN-0007` as `historical` / non-authorizing;
+- PR #757 revalidated the same ESS-0006 identity to v1.1.0 as a bounded specification for the existing `src/platform/Security` and `src/platform/Compliance` components;
+- PR #758 aligned the visible ADR-0007 document lifecycle with its canonical historical/non-authorizing registry state.
 
-Current Compliance mapping explicitly treats ESS-0006 as a bounded component specification and rejects its historical `ComplianceRequirementRegistry` wording as a second normative registry. Current Security and Compliance project surfaces separately establish independent assurance roles with no productive PVC ownership by virtue of being cross-cutting projects.
+There are no open PRs against `main` at the start of this post-ESS-0006 correlation. PR #756 remains closed/unmerged and non-authorizing. The current Security and Compliance roadmaps remain independent foreign-owner assurance inputs; they do not transfer productive PVC ownership to Governance.
 
 ### Completed / terminal
 
@@ -37,36 +40,27 @@ Current Compliance mapping explicitly treats ESS-0006 as a bounded component spe
 - `GOV-03 / DR-02B` ADR-0060 authority reconciliation — `DONE_MAIN / TERMINAL` via Human-merged PR #743.
 - `GOV-04` Deep Research Governance boundary — `DR-01 + DR-02A + DR-02B DONE AT GOV BOUNDARY`; productive continuation remains OPS-owned.
 - `GOV-06 / COMP-GAP-002 — ADR-0007` — `DONE_MAIN / TERMINAL` via Human-merged PR #755. ADR-0007 is canonical historical/non-authorizing registry state; stale legal/certification/parallel-value-chain semantics are not current Authority.
+- `GOV-06 / COMP-GAP-003 — ESS-0006` — `DONE_MAIN / TERMINAL` via Human-merged PR #757. ESS-0006 v1.1.0 preserves the existing component boundaries and removes stale second-registry/audit/risk/event/orchestration implications.
+- `GOV-06 / ADR-0007 visible semantic closeout` — `DONE_MAIN / TERMINAL` via Human-merged PR #758.
 - `GOV-09` Version authority boundary — resolved; productive Version Management remains OPS/PVC-06.
 - `GOV-10` AI development terminology — done/maintained.
 - `GOV-11` stale coordination metadata — maintenance only.
 
 ### Active Governance finding
 
-#### GOV-06 / COMP-GAP-003 — ESS-0006
+#### POST-ESS-0006 RECORRELATION
 
-**State:** `IN EXECUTION — BOUNDED ESS REVALIDATION`
+**State:** `IN EXECUTION — DOCUMENTATION/GOVERNANCE CORRELATION`
 
-Current facts:
+This bounded work package updates the three Governance project projections to the Human-merged state above. It creates no new ADR, ESS, Authority, Control, runtime component, requirement registry or foreign-owner work item.
 
-- `.ai/skills/ESS-0006-Security-Compliance.md` v1.0.0 is a published component specification for `src/platform/Security` and `src/platform/Compliance`;
-- its v1.0.0 body contains stale central-registry, AuditTrail/RiskRegister, event-list and collaboration assumptions plus the historical `ComplianceRequirementRegistry` concept;
-- `CAPITAL-AI-SEC` currently owns cross-cutting Security requirements, findings, testing and independent verification, but no productive PVC by role;
-- `CAPITAL-AI-COMP` currently owns applicability, requirements inventory, mapping, evidence-based assessment, findings and Legal Review handoff, but no productive PVC by role;
-- canonical Compliance requirement/applicability sources live under `docs/compliance/CAPITAL-AI-COMP/**`; ESS-0006 must not create a second Requirement Registry;
-- `src/platform/Security` and `src/platform/Compliance` are reusable/existing technical component boundaries, not a combined productive Security/Compliance runtime plane;
-- ADR-0012 confirms internal Compliance scanner/report/certificate semantics are not external or legal certification.
+The correlation finds no immediately executable successor inside `PVC-05`:
 
-Current bounded implementation on `agent/governance-ess-0006-semantics-20260905`:
+- `GOV-05` remains an explicit multi-owner/Human decision;
+- `GOV-07` remains blocked on OPS/FE/SEC/COMP/Legal returns;
+- `GOV-08` remains referred to CLIENT/FE/OPS and cannot be implemented by Governance.
 
-1. revalidate the same `ESS-0006` identity as v1.1.0 rather than creating a new ESS;
-2. retain `src/platform/Security` and `src/platform/Compliance` as the only directly specified technical components;
-3. preserve independent SEC verification and COMP assessment;
-4. remove `ComplianceRequirementRegistry`, central Audit/Risk runtime, fixed event list and implicit orchestration as current implementation requirements;
-5. state explicitly that internal Evidence/Reports/Certificates do not establish regulatory, legal or external certification;
-6. synchronize `.ai/registry/ess-registry.json` to the same version/scope.
-
-**Exit Gate:** stale Security-/Compliance-Semantik von ESS-0006 ist geklärt; dieselbe ESS-Identität und die vorhandenen Komponenten bleiben erhalten; keine zweite Compliance Requirement Registry, keine zweite IAM/Audit/Risk/EventMesh-Authority und keine parallele Security-/Compliance-Runtime entsteht; SEC/COMP-Assurance und fremde produktive PVC-Ownership bleiben getrennt; exact-head Governance/Documentation checks und Human/CODEOWNER-Merge bleiben erforderlich.
+**Exit Gate:** Roadmap, Task Register and Component Architecture Matrix consistently record PRs #751/#755/#757/#758 as current-main evidence; no stale queue item is promoted; all deferred, dependent and foreign-owner boundaries remain explicit; exact-head Documentation/Governance checks and Human/CODEOWNER merge remain required.
 
 ### Other states
 
@@ -76,8 +70,8 @@ Current bounded implementation on `agent/governance-ess-0006-semantics-20260905`
 
 ## Current priority
 
-1. **COMP-GAP-003 / ESS-0006** — complete bounded v1.1.0 component/assurance revalidation and registry synchronization. Exit gate: semantic boundaries above satisfied on a branch synchronized with current main, exact-snapshot Human PR-create approval, hosted checks, Human/CODEOWNER merge.
-2. **POST-ESS-0006 RECORRELATION** — only after Human merge, re-read current main, open PRs, Compliance return state and Governance roadmap before choosing any next GOV work item; no stale queue promotion.
+1. **POST-ESS-0006 RECORRELATION** — synchronize the three Governance project projections with `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`; no stale queue promotion.
+2. **WAIT FOR AN AUTHORIZED EXECUTABLE INPUT** — next GOV implementation requires either a resolved `GOV-05` Owner/multi-owner decision or material return evidence for `GOV-07`. `GOV-08` remains foreign-owned.
 
 ## Definition of Done for current Governance cycle
 
