@@ -11,7 +11,7 @@ const REQUIRED_RELATIONS = Object.freeze([
   'storage.buckets',
   'storage.objects',
 ]);
-const RECOVERY_SCHEMAS = new Set(['public', 'auth', 'storage']);
+const REQUIRED_RELATION_SET = new Set(REQUIRED_RELATIONS);
 
 function normalizeIdentifierPart(value) {
   const trimmed = value.trim();
@@ -80,7 +80,9 @@ function assertRequiredRelations(relations, label) {
 
 function recoveryRelations(relations) {
   return [...relations.keys()]
-    .filter((relation) => RECOVERY_SCHEMAS.has(relationSchema(relation)))
+    .filter(
+      (relation) => relationSchema(relation) === 'public' || REQUIRED_RELATION_SET.has(relation),
+    )
     .sort();
 }
 
@@ -166,8 +168,8 @@ export function compareRecoveryDumps(sourceText, restoredText) {
     mismatches,
     dataIntegrityMatch:
       publicRelationsCompared > 0 &&
-      authRelationsCompared > 0 &&
-      storageRelationsCompared > 0 &&
+      authRelationsCompared === 2 &&
+      storageRelationsCompared === 2 &&
       mismatches.length === 0,
     ...criticalRows(source),
   };
