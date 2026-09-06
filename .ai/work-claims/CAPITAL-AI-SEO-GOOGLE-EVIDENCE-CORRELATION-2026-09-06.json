@@ -11,12 +11,12 @@
     "model": "Grok 4.6",
     "executionSurface": "Grok GitHub Connector"
   },
-  "workItem": "Correlate current Google/marketing evidence after PR #760 merge and the subsequent production deploy; keep Q1 claim terminal; classify live sitemap PASS versus non-PASS Google read surfaces without provider mutation.",
-  "workItemDE": "Aktuelle Google-/Marketing-Evidence nach Merge von PR #760 und dem nachfolgenden Production-Deploy korrelieren; Q1-Claim terminal halten; Live-Sitemap-PASS gegen Nicht-PASS-Google-Read-Surfaces ohne Provider-Mutation klassifizieren.",
+  "workItem": "Correlate current Google/marketing evidence after PR #760 production deploy and close the owner-side SEO program roadmap in the same PR so a second roadmap PR is not required.",
+  "workItemDE": "Aktuelle Google-/Marketing-Evidence nach Production-Deploy von PR #760 korrelieren und die owner-seitige SEO-Programm-Roadmap im selben PR schließen, damit kein zweiter Roadmap-PR nötig wird.",
   "startedAt": "2026-09-06T11:58:00+02:00",
-  "lastCorrelatedAt": "2026-09-06T12:01:01+02:00",
+  "lastCorrelatedAt": "2026-09-06T12:12:00+02:00",
   "baseBranch": "main",
-  "baseSha": "076e88e231372b2c9a9191917090388486a6f2f8",
+  "baseSha": "7fe061a897f669fd21ca4c46e564351e14f1c7dc",
   "branch": "agent/seo-google-evidence-correlation-v2-20260906",
   "project": "CAPITAL-AI-SEO",
   "projectId": "CAPITAL-AI-SEO",
@@ -28,14 +28,16 @@
     ".ai/work-claims/CAPITAL-AI-SEO-Q1-SITEMAP-PUBLIC-ROUTE-CONSISTENCY-2026-09-05.json",
     "docs/seo/GOOGLE_MARKETING_EVIDENCE_CORRELATION_2026-09-06.md",
     "docs/seo/SEO_CHECKLIST.md",
-    "docs/projects/seo/ROADMAP.md"
+    "docs/projects/seo/ROADMAP.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
   ],
   "foreignWork": [
-    "PR #762 CAPITAL-AI-GOV is open; no claimed-path overlap",
-    "superseded stale branch agent/seo-google-evidence-correlation-20260906 must not be used for PR creation",
-    "agent/seo-roadmap-recorrelation-20260905 still writes the consolidated program roadmap without an open PR",
-    "Production identity observed 2026-09-06T10:01:01Z: commit d080def271f36b208b85c5272ef863431d386de1 (PR #760); live sitemap includes /learning-platform"
+    "PR #763 CAPITAL-AI-FE is open; Dashboard/router files only; no claimed-path overlap",
+    "PR #762 CAPITAL-AI-GOV Human-merged to main@7fe061a897f669fd21ca4c46e564351e14f1c7dc",
+    "stale branch agent/seo-google-evidence-correlation-20260906 must not be used",
+    "stale branch agent/seo-roadmap-recorrelation-20260905 is superseded by this PR for the consolidated roadmap; do not open a second SEO PR from that branch",
+    "Production identity observed 2026-09-06T10:12Z: commit 076e88e231372b2c9a9191917090388486a6f2f8; live sitemap includes /learning-platform"
   ],
-  "authorityGuard": "Documentation and claim lifecycle only. No Frontend runtime, Render/IAM/WIF, DNS, Google-write or publishing mutation.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+  "authorityGuard": "Documentation, evidence classification and claim lifecycle only. No Frontend runtime, Render/IAM/WIF, DNS, Google-write, publishing or Credential mutation.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only."
 }
