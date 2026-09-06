@@ -6,7 +6,7 @@
 **Document role:** roadmap / non-authorizing projection  
 **Version:** 1.7.0  
 **Date:** 2026-09-06  
-**Current-main reconciliation baseline:** `main@6980b6547229fd2338d94bc1af4e71934cfd5de0`  
+**Current-main reconciliation baseline:** `main@49bf799d0098ba15a86a686401627ee6f658164f`  
 **Status:** ACTIVE — ALL 8 COMPLIANCE WORK PACKAGES PROCESSED LOCALLY; CONTINUOUS / EXTERNAL GATES PRESERVED  
 **Primary Project Value Chain ownership:** none (`[]`)
 
@@ -29,10 +29,10 @@ The objective is to leave the eight canonical work packages in one of four truth
 
 ## Current-main correlation — 2026-09-06
 
-1. `/AGENTS.md` v2.7.1 and `main@6980b6547229fd2338d94bc1af4e71934cfd5de0` are the current execution baseline.
+1. `/AGENTS.md` v2.7.1 and `main@49bf799d0098ba15a86a686401627ee6f658164f` are the current execution baseline.
 2. Human-merged PR #761 placed the COMP-04 READY_NOW assessment baseline on `main`: 23/23 `READY_NOW` requirements are assessed.
-3. Human-merged Governance PR #762, SEO PR #764 and Frontend PR #763 were incorporated through branch resynchronization; none changes the nine Compliance closeout files.
-4. Current open Governance PR #767 changes only `docs/projects/governance/COMPONENT_ARCHITECTURE_MATRIX.md`, `docs/projects/governance/ROADMAP.md` and `docs/projects/governance/TASK_REGISTER.md`; it has no changed-file overlap with this Compliance closeout. Its semantic scope does not transfer productive ownership to Compliance.
+3. Human-merged Governance PR #762, SEO PR #764, Frontend PR #763 and Governance PR #767 were incorporated through branch resynchronization; none changes the nine Compliance closeout files.
+4. There are currently no open Pull Requests, so no open-PR changed-file or semantic overlap exists with this Compliance closeout scope.
 5. `CAPITAL-AI-OPS` still has an active foreign coordination writer for its own Operations roadmap/work-package paths. Compliance does not modify those paths and treats Operations recovery evidence as a return dependency only.
 6. Official-source recheck on 2026-09-06 confirms the already-recorded AI Act consolidated surface dated 27 July 2026 and Regulation (EU) 2026/1744 timing changes. The DORA source remains Regulation (EU) 2022/2554. Current German DDG/TDDDG source pages remain available, including 2026 amendments. This read-only source check does not create a new repository Authority or a new legal-applicability conclusion.
 7. No current evidence supports inventing a new `REQ-COMP-*` input, a new `AUTH-*`/`CTRL-*`, a second Compliance registry or a new productive PVC stage.
