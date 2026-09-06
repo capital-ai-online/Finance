@@ -120,7 +120,8 @@ describe('CV-0 crypto visualization authority contract', () => {
     expect(authority).toContain("MARKET_DATA");
     expect(authority).toContain('text-brand-primary');
     expect(authority).toContain('text-brand-accent');
-    expect(authority).toContain('text-brand-cyan');
+    expect(authority).toContain('text-status-info');
+    expect(authority).not.toContain('text-brand-cyan');
     expect(research).toContain('Score-eligible: nein');
     expect(research).toContain('Execution-eligible: nein');
     expect(research).toContain('data-score-eligible');
