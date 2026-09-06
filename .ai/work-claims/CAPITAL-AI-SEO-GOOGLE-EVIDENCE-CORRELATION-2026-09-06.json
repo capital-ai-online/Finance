@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-GOOGLE-EVIDENCE-CORRELATION-2026-09-06",
+  "status": "active",
+  "exclusive": true,
+  "lifecycle": "active",
+  "activeWriter": true,
+  "authorizing": false,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Correlate current Google/marketing evidence after PR #760 merge; terminalize the completed Q1 claim; document production sitemap lag and non-PASS Google read surfaces without provider mutation.",
+  "workItemDE": "Aktuelle Google-/Marketing-Evidence nach Merge von PR #760 korrelieren; den abgeschlossenen Q1-Claim terminalisieren; Production-Sitemap-Lag und Nicht-PASS-Read-Surfaces ohne Provider-Mutation dokumentieren.",
+  "startedAt": "2026-09-06T11:58:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "076e88e231372b2c9a9191917090388486a6f2f8",
+  "branch": "agent/seo-google-evidence-correlation-v2-20260906",
+  "project": "CAPITAL-AI-SEO",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-GOOGLE-EVIDENCE-CORRELATION-2026-09-06.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-Q1-SITEMAP-PUBLIC-ROUTE-CONSISTENCY-2026-09-05.json",
+    "docs/seo/GOOGLE_MARKETING_EVIDENCE_CORRELATION_2026-09-06.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/projects/seo/ROADMAP.md"
+  ],
+  "foreignWork": [
+    "PR #762 CAPITAL-AI-GOV is open; no claimed-path overlap",
+    "superseded stale branch agent/seo-google-evidence-correlation-20260906 was based on pre-#761 main and must not be used for PR creation",
+    "agent/seo-roadmap-recorrelation-20260905 still writes the consolidated program roadmap without an open PR",
+    "Production deploy of PR #760 remains CAPITAL-AI-OPS"
+  ],
+  "authorityGuard": "Documentation and claim lifecycle only. No Frontend runtime, Render/IAM/WIF, DNS, Google-write or publishing mutation.",
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated; merge remains Human/CODEOWNER-only."
+}
