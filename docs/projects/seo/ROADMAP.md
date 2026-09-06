@@ -23,19 +23,21 @@ Thin owner-side execution surface. Detailed program state remains in the consoli
 | `SEO-PROJ-05` | Owner-routed productive changes | FE/OPS/GOV/COMP |
 | `SEO-PROJ-06` | Single version authority | `package.json#version` |
 | `SEO-PROJ-07` | Google-visible version evidence-gated | no PASS without identified Google surface |
-| `SEO-PROJ-08` | Sitemap equals canonical public SEO routes | PR #760 on main |
+| `SEO-PROJ-08` | Sitemap equals canonical public SEO routes | PR #760 on main **and** live sitemap 2026-09-06 |
 | `SEO-PROJ-09` | Google/marketing evidence classified | `docs/seo/GOOGLE_MARKETING_EVIDENCE_CORRELATION_2026-09-06.md` |
 
 ## Current correlation — 2026-09-06
 
-Against `main@076e88e231372b2c9a9191917090388486a6f2f8` and live production:
+Against `main@076e88e231372b2c9a9191917090388486a6f2f8` and live production at 2026-09-06T10:01:01Z:
 
-- WP-Q1-HARDEN repository: **IMPLEMENTED_ON_MAIN** (PR #760; hosted build-and-test / PR Governance / GitGuardian success).
+- WP-Q1-HARDEN repository: **IMPLEMENTED_ON_MAIN** (PR #760).
 - Q1 claim: terminalisiert (`released`).
-- Production deploy: **offen / CAPITAL-AI-OPS**. Live `/healthz` commit `7c607de0…`; live sitemap ohne `/learning-platform`.
-- Live page version projection `0.6.0`: Seiten-Nachweis vorhanden.
+- Q1 production sitemap/robots: **beobachtet live**. Fünf kanonische URLs inkl. `/learning-platform`; `Allow: /learning-platform` in robots.txt.
+- Production identity: `x-capital-ai-commit=d080def271f36b208b85c5272ef863431d386de1` (PR #760 merge), version `0.6.0`, branch `main`, provider `render`.
+- Current main `076e88e2…` liegt eine COMP-Merge (PR #761) vor Production. Das ist kein offenes Q1-Sitemap-Delta.
+- Live page version projection `0.6.0`: Seiten-Nachweis plus Identity-Header vorhanden.
 - `GOOGLE_VISIBLE_PASS`: **NOT ENABLED**.
-- GA4 Measurement-ID in live HTML vorhanden; das ist kein Data-API-/Realtime-PASS.
+- GA4 Measurement-ID `G-0542DT2HCE` in live HTML vorhanden; das ist kein Data-API-/Realtime-PASS.
 - CookieHub auf der Live-Homepage vorhanden; kein frischer Pre-Opt-in-Netzwerktrace.
 - Search Console MCP: **NOT ENABLED**.
 - `.mcp.json` GA4-Stanza vorhanden; aktueller API-Erfolg **NOT ENABLED**.
@@ -47,16 +49,16 @@ Die konsolidierte Programm-Roadmap wird hier nicht editiert (`agent/seo-roadmap-
 ## Current project dependencies
 
 | Target | Relationship |
-|---|---|
-| `CAPITAL-AI-FE` | public-page / `index.html` |
-| `CAPITAL-AI-OPS` | Production-Deploy der Sitemap/robots aus PR #760 |
+|---|---|---|
+| `CAPITAL-AI-FE` | public-page / `index.html`; optionales WP-D4 |
+| `CAPITAL-AI-OPS` | Production bleibt OPS-owned; Q1-Sitemap ist live beobachtet |
 | `CAPITAL-AI-GOV` | Write-Plane / Publishing-Control |
 | `CAPITAL-AI-COMP` | Consent-/Marketing-Rechtsbewertung |
 
 ## Completion condition
 
 - Q1 repository: complete after PR #760.
-- Q1 production: complete only after OPS deploy observation of five canonical sitemap URLs.
+- Q1 production sitemap coverage: observed 2026-09-06T10:01Z on commit `d080def…`.
 - WP-GOOGLE-EVIDENCE repository correlation: complete after Human merge of this evidence package. External Google PASS remains separate.
 
 ## Non-goals
