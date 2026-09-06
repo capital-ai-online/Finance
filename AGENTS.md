@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.7.1`  
+**Control Plane Version:** `2.8.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-09-05  
+**Effective date:** 2026-09-06  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -189,11 +189,35 @@ The PR body contract MUST be checked **before** the external create mutation. Cr
 
 ### Mandatory chat handoffs (`CTRL-SDLC-CHAT-HANDOFF-001`)
 
-This stable control has one explicit trigger: `POST_PR_HANDOFF`. It is a coordination/transparency control only and never grants merge, deployment, protected external-mutation, Security-verification or Domain-Ownership authority.
+This stable control has two explicit triggers: `CHAT_RUN_HANDOFF` and `POST_PR_HANDOFF`. It is a coordination/transparency control only and never grants merge, deployment, protected external-mutation, Security-verification or Domain-Ownership authority.
+
+For both triggers, the visible **Nächste Schritte** queue MUST be rendered as a fenced `text` code block so the Human/Owner can copy it without reformatting. Whenever the current chat requires a Human/Owner approval, confirmation or other exact response before protected continuation, the exact response text MUST also be rendered in a separate fenced `text` code block. Narrative explanation may remain outside the snippets, but the actionable next-step and approval/response text itself must be copyable.
+
+Canonical next-step presentation:
+
+```text
+NÄCHSTE SCHRITTE
+1. <bounded immediately actionable step>
+   Exit Gate: <objective completion condition>
+2. <optional second bounded immediately actionable step>
+   Exit Gate: <objective completion condition>
+```
+
+When no immediately actionable step remains, the same fenced block states `Keine weiteren unmittelbar umsetzbaren Schritte identifiziert.`. When an exact Human/Owner response is required, use a separate copyable block such as:
+
+```text
+Freigabe-Antwort: <exact response required from the Human/Owner>
+```
+
+#### Trigger — `CHAT_RUN_HANDOFF`
+
+At the end of every chat-governed repository execution pass, before the assistant's final response for that pass closes, the same chat MUST emit a bounded **Nächste Schritte** block using the canonical copyable presentation above. This applies whether the pass completed implementation, reached a validation/correlation gate, is blocked, is awaiting Human/Owner approval, or has no further immediately actionable implementation work.
+
+The queue MUST be derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and any material correlation results established during the pass. Facts that are stale or materially changed MUST be re-read before they are presented as current. If more than two implementation or follow-up steps are available, only the two highest-priority immediately actionable steps are shown. If Human/Owner action is the next gate, its exact response is emitted in the separate copyable approval/response block.
 
 #### Trigger — `POST_PR_HANDOFF`
 
-After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/PR-head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by a prioritized **Nächste Schritte** section.
+After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/PR-head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by the prioritized copyable **Nächste Schritte** block defined above.
 
 The next-step queue MUST be recomputed from the then-current Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and relevant current best-practice / state-of-the-art evidence where that materially improves the decision. External guidance remains advisory and MUST NOT create a competing policy hierarchy or silently override canonical CAPITAL-AI authority.
 
