@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@80c30ad2aa469f4552c84f3cc40e997e4ef13ee0`  
+**Current correlation baseline:** `main@1b9def6d414ee8838e5403bfc9f705bbbe438d2a`  
 **Correlation date:** `2026-09-06`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
@@ -24,16 +24,17 @@ PVC-05 / Platform Director
 
 ## Current-main reconciliation — 2026-09-06
 
-Current `main@80c30ad2aa469f4552c84f3cc40e997e4ef13ee0` includes the Human-merged Governance and material foreign-owner return sequence relevant to current Governance work:
+Current `main@1b9def6d414ee8838e5403bfc9f705bbbe438d2a` includes the Human-merged Governance and material foreign-owner return sequence relevant to current Governance work:
 
 - PR #761 completed the current Compliance COMP-04 `READY_NOW` assessment slice while leaving evidence-/owner-held and Legal-/scope-held requirements explicit;
 - PR #763 completed Frontend BB-2D View Router work; this is architecture progress but does not establish the broader User-Lifecycle pricing/entitlement UX return required by GOV-07;
 - PR #766 completed `SEC-ASSESS-ALIGN`, removing stale Security assessment authority/methodology references; it does not by itself close `SEC-VERIFY-ULS-001` or provider/E2E residuals;
 - PR #767 Human-merged the Owner-confirmed GOV-05 no-migration decision and corresponding Governance project closeout;
 - PR #768 Human-merged the Compliance roadmap closeout and confirms the current `COMP-GAP-008` split: Documentary/PVC-03 owns Documentary lifecycle treatment; Governance/PVC-05 decides and applies any required shared Governance Document Registry treatment;
-- PR #769 Human-merged the post-GOV-05 Owner/Evidence re-correlation and made the prior `POST-GOV-05 OWNER / EVIDENCE RECORRELATION` package terminal on `main`.
+- PR #769 Human-merged the post-GOV-05 Owner/Evidence re-correlation and made the prior `POST-GOV-05 OWNER / EVIDENCE RECORRELATION` package terminal on `main`;
+- PR #771 subsequently updated only CAPITAL-AI-OPS Security-backlog project files; final correlation found no changed-file, namespace or semantic overlap with this Governance work package.
 
-There were no open Pull Requests against `main` when the current copyable-chat-handoff work package started. Closed/unmerged historical PRs and released claims remain non-authorizing evidence only.
+There were no open Pull Requests against `main` at the final current-main correlation for this work package. Closed/unmerged historical PRs and released claims remain non-authorizing evidence only.
 
 ### Completed / terminal
 
