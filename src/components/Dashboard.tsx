@@ -25,6 +25,7 @@ import {
   type DashboardSection,
   type DashboardView,
 } from '../app/dashboard/dashboardViews';
+import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter';
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
 import { AdminPortal } from './AdminPortal';
 import { InteractModule } from './InteractModule';
@@ -1623,157 +1624,25 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               </div>
             )}
 
-            {activeView === 'learning' && (
-              <LearningVocabulary />
-            )}
-
-            {/* Detailed Views */}
-            {activeView === 'universe-scoring' && (
-              <div className="space-y-6">
-                <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
-              </div>
-            )}
-
-            {activeView === 'buffet-value' && (
-              <BuffetValueCheck selectedSymbol={selectedSymbol} triggerAttempt={triggerAttempt} />
-            )}
-
-            {activeView === 'backtest' && (
-              <BacktestEngine selectedSymbol={selectedSymbol} userCapital={profile.capital} triggerAttempt={triggerAttempt} userEmail={profile.email} />
-            )}
-
-            {activeView === 'market-screener' && (
-              <MarketScreener 
-                onSelectSymbol={(sym) => {
-                  setSelectedSymbol(sym);
-                  navigateTo('dashboard');
-                }}
-                selectedSymbol={selectedSymbol}
-                triggerAttempt={triggerAttempt}
-                userSession={userSession}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                categoryFilter={categoryFilter}
-                setCategoryFilter={setCategoryFilter}
-              />
-            )}
-
-            {activeView === 'heatmap' && (
-              <HeatmapCreator 
-                subscriptionTier={profile.subscriptionTier}
-                onUpgradeClick={() => navigateTo('abonnements')}
-                triggerAttempt={triggerAttempt}
-              />
-            )}
-
-            {activeView === 'abonnements' && (
-              <Abonnements 
-                currentTier={profile.subscriptionTier} 
-                onUpdateTier={(tier) => setProfile(prev => ({ ...prev, subscriptionTier: tier }))} 
-                email={profile.email}
-                userId={profile.id}
-              />
-            )}
-
-            {activeView === 'sentiment-dashboard' && (
-              <SentimentDashboard />
-            )}
-
-            {activeView === 'profil' && (
-              <ProfilePage 
-                profile={profile} 
-                onUpdateProfile={handleUpdateProfile} 
-              />
-            )}
-
-            {activeView === 'admin-portal' && (
-              <AdminPortal 
-                currentUserEmail={profile.email} 
-                activeTab={adminTab} 
-                onChangeTab={setAdminTab} 
-              />
-            )}
-
-            {/* Risikoassessment (Value-at-Risk Risiko-Zentrale): DEAKTIVIERT / DEACTIVATED */}
-            {/* HINWEIS: Dieses Modul wurde gemäß System- und Benutzeranweisung deaktiviert und aus der Navigation entfernt. */}
-            {activeView === 'risiko-assessment' && (
-              <div className="bg-black/40 border border-white/10 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 backdrop-blur-md">
-                <h3 className="text-lg font-bold text-rose-400 mb-2 font-display uppercase tracking-wider">Risikoassessment Deaktiviert</h3>
-                <p className="text-sm text-white/60 mb-6 leading-relaxed">
-                  Dieses Modul wurde gemäß Benutzeranweisung deaktiviert und steht derzeit nicht zur Verfügung. Die Rohdaten wurden archiviert.
-                </p>
-                <button 
-                  onClick={() => setActiveView('dashboard')}
-                  className="px-5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
-                >
-                  Zurück zum Dashboard
-                </button>
-              </div>
-            )}
-
-            {/* Interact (Modul 2): DEAKTIVIERT / DEACTIVATED */}
-            {/* HINWEIS: Dieses Modul wurde gemäß System- und Benutzeranweisung deaktiviert und aus der Navigation entfernt. */}
-            {activeView === 'interact' && (
-              <div className="bg-black/40 border border-white/10 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 backdrop-blur-md">
-                <h3 className="text-lg font-bold text-rose-400 mb-2 font-display uppercase tracking-wider">Interact-Workspace Deaktiviert</h3>
-                <p className="text-sm text-white/60 mb-6 leading-relaxed">
-                  Das Interaktions-Modul wurde gemäß Benutzeranweisung deaktiviert und steht derzeit nicht zur Verfügung. Die Rohdaten wurden archiviert.
-                </p>
-                <button 
-                  onClick={() => setActiveView('dashboard')}
-                  className="px-5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
-                >
-                  Zurück zum Dashboard
-                </button>
-              </div>
-            )}
-
-            {activeView === 'charts' && (
-              <Charts 
-                selectedSymbol={selectedSymbol} 
-                onSelectSymbol={(sym) => setSelectedSymbol(sym)}
-              />
-            )}
-
-            {activeView === 'preis-alarme' && (
-              <PriceAlert selectedSymbol={selectedSymbol} userSession={userSession} />
-            )}
-
-            {activeView === 'raw-materials' && (
-              <RawMaterialsDashboard />
-            )}
-
-            {activeView === 'social-accounts' && (
-              <SocialAccountManager />
-            )}
-
-            {activeView === 'asset-universe' && (
-              <AssetUniverseDashboard />
-            )}
-
-            {activeView === 'defi-orchestration' && (
-              <DeFiOrchestration />
-            )}
-
-
-
-            {activeView === 'login' && (
-              <LandingPage 
-                onLoginEmail={async (email, pwd) => {
-                  if (onLoginEmail) {
-                    await onLoginEmail(email, pwd);
-                  }
-                }}
-                onGuestLogin={() => {
-                  setActiveView('dashboard');
-                }}
-                onRegisterEmail={async (name, email, pwd) => {
-                  if (onRegisterEmail) {
-                    await onRegisterEmail(name, email, pwd);
-                  }
-                }}
-              />
-            )}
+            <DashboardViewRouter
+              activeView={activeView}
+              selectedSymbol={selectedSymbol}
+              onSelectSymbol={setSelectedSymbol}
+              onNavigate={navigateTo}
+              userSession={userSession}
+              profile={profile}
+              onUpdateProfile={handleUpdateProfile}
+              adminTab={adminTab}
+              onChangeAdminTab={setAdminTab}
+              onUpdateTier={(tier) => setProfile((prev) => ({ ...prev, subscriptionTier: tier }))}
+              triggerAttempt={triggerAttempt}
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
+              categoryFilter={categoryFilter}
+              onCategoryFilterChange={setCategoryFilter}
+              onLoginEmail={onLoginEmail}
+              onRegisterEmail={onRegisterEmail}
+            />
           </motion.div>
         </AnimatePresence>
 
