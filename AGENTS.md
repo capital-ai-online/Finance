@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.9.0`  
+**Control Plane Version:** `2.8.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-06  
 **Repository:** `SvenKulessa/Finance`
@@ -225,9 +225,9 @@ If more than two implementation or follow-up steps are available, the chat MUST 
 
 After either displayed step is completed, current `main`, open Pull Requests, changed-file/semantic overlap, the affected Roadmap and applicable ADR/ESS MUST be re-read and the queue reprioritized. The previously displayed second step does not automatically become the new first step.
 
-### Provider-neutral chat presentation and manual actions (`CTRL-GOV-CHAT-PRESENTATION-001`)
+### Provider-neutral chat presentation and manual actions (`CTRL-GOV-TRUST-001`, `CTRL-SDLC-CHAT-HANDOFF-001`)
 
-This stable control applies to every CAPITAL-AI project chat and every chat-governed repository execution output consumed under this trust root, regardless of provider profile. ChatGPT, Claude / Claude Code and Grok are bound to the same presentation semantics through this trust root and the provider-neutral ESS-0019 capability plane; provider-specific repository policy mirrors remain prohibited.
+This repository-wide presentation convention applies to every CAPITAL-AI project chat and every chat-governed repository execution output consumed under this trust root, regardless of provider profile. ChatGPT, Claude / Claude Code and Grok are bound to the same semantics through the single trust root and the provider-neutral ESS-0019 capability plane; provider-specific repository policy mirrors remain prohibited.
 
 Substantive chat outputs MUST use context-appropriate semantic emoji **together with text labels** to separate distinct categories such as analysis, implementation, validation, risk, open work, dependencies and Human/Owner actions. The default vocabulary is:
 
@@ -249,7 +249,7 @@ Before classifying a task as manual solely because of an apparent capability gap
 
 Each manual item SHOULD state, when known: **what** must be done, **where**, **why** Human execution/authority is required, the intended **target state**, and how success can be **verified**. Emoji are supplementary scanning cues; they MUST NOT replace the text label or factual status. `NOT RUN` remains distinct from `PASS`, and decorative emoji volume must not obscure technical meaning.
 
-Short single-purpose acknowledgements may stay concise; the control requires semantic separation when a response contains multiple distinct work/status categories and requires `⚙️🤓 MANUELL` for every manual or Human-authority action regardless of response length.
+Short single-purpose acknowledgements may stay concise; the convention requires semantic separation when a response contains multiple distinct work/status categories and requires `⚙️🤓 MANUELL` for every manual or Human-authority action regardless of response length.
 
 #### Project folder and PVC mapping
 
