@@ -57,12 +57,23 @@ A DNS change therefore has two separate reviews:
 
 Current managed entries are limited to:
 
+- Render `www` CNAME;
 - explicit MTA-STS CNAME;
 - TLS-RPT TXT;
 - DMARC monitoring TXT;
 - CAA policy for Render single-host certificates and the existing IONOS/Sectigo wildcard certificate.
 
 SPF, DKIM and MX are intentionally not managed by this path.
+
+## Render `www` target state
+
+`www.capital-ai.online` is an explicit Render subdomain and is managed as a singleton CNAME:
+
+```dns
+www CNAME finance-7clq.onrender.com
+```
+
+The record is added through the same reviewed desired-state lifecycle as other managed DNS records. Do not create a second `www` CNAME or use a conflicting `A`/`AAAA` record for `www` through this automation path. After a successful apply, verify the live IONOS zone and Render custom-domain certificate state separately.
 
 ## CAA target state
 

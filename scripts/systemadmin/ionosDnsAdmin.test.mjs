@@ -53,6 +53,51 @@ test('buildPlan updates singleton, preserves exact TXT and adds all missing CAA 
   assert.match(plan.planSha256, /^sha256:[a-f0-9]{64}$/);
 });
 
+test('managed Render www CNAME is created as a singleton without touching unmanaged records', () => {
+  const live = {
+    id: 'zone-www',
+    name: 'capital-ai.online',
+    records: [
+      { id: 'unmanaged', name: 'capital-ai.online', type: 'TXT', content: 'unmanaged-proof', ttl: 3600, prio: 0, disabled: false },
+    ],
+  };
+  const wwwDesired = {
+    schemaVersion: 1,
+    zone: 'capital-ai.online',
+    deleteUnmanagedRecords: false,
+    records: [
+      {
+        name: 'www',
+        type: 'CNAME',
+        content: 'finance-7clq.onrender.com',
+        ttl: 3600,
+        prio: 0,
+        disabled: false,
+        singleton: true,
+        state: 'present',
+      },
+    ],
+  };
+
+  const plan = buildPlan(live, wwwDesired);
+  assert.equal(plan.mutations.length, 1);
+  assert.deepEqual(plan.mutations[0], {
+    method: 'POST',
+    name: 'www.capital-ai.online',
+    type: 'CNAME',
+    content: 'finance-7clq.onrender.com',
+    body: [{
+      name: 'www.capital-ai.online',
+      type: 'CNAME',
+      content: 'finance-7clq.onrender.com',
+      ttl: 3600,
+      prio: 0,
+      disabled: false,
+    }],
+  });
+  assert.deepEqual(plan.warnings, []);
+});
+
 test('mail policy TXT singletons replace wrong report destinations instead of adding duplicates', () => {
   const live = {
     id: 'zone-mail',
