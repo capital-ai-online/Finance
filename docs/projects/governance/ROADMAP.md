@@ -46,17 +46,17 @@ There are no open PRs against `main` at the start of this post-ESS-0006 correlat
 - `GOV-10` AI development terminology — done/maintained.
 - `GOV-11` stale coordination metadata — maintenance only.
 
-### Active Governance finding
+### Completed post-ESS-0006 correlation
 
 #### POST-ESS-0006 RECORRELATION
 
-**State:** `IN EXECUTION — DOCUMENTATION/GOVERNANCE CORRELATION`
+**State:** `DONE_MAIN` — Human-merged PR #762, merge SHA `7fe061a897f669fd21ca4c46e564351e14f1c7dc`.
 
 This bounded work package updates the three Governance project projections to the Human-merged state above. It creates no new ADR, ESS, Authority, Control, runtime component, requirement registry or foreign-owner work item.
 
 The correlation finds no immediately executable successor inside `PVC-05`:
 
-- `GOV-05` remains an explicit multi-owner/Human decision;
+- `GOV-05` received the Owner no-migration decision recorded below; documentation merge remains pending;
 - `GOV-07` remains blocked on OPS/FE/SEC/COMP/Legal returns;
 - `GOV-08` remains referred to CLIENT/FE/OPS and cannot be implemented by Governance.
 
@@ -64,14 +64,26 @@ The correlation finds no immediately executable successor inside `PVC-05`:
 
 ### Other states
 
-- `GOV-05` financial technical `VC-*` namespace — `OWNER DECISION REQUIRED / DEFERRED`.
+- `GOV-05` financial technical `VC-*` namespace — `OWNER_CONFIRMED / DOCUMENTATION_MERGE_PENDING`; preserve namespace separation, no technical migration.
 - `GOV-07` User-Lifecycle governance closeout — `PARTIAL / OWNER RETURNS PENDING`; independent SEC/COMP/Legal evidence remains separate.
 - `GOV-08` Admin Panel process/dependency graph — `REFERRED / FOREIGN OPEN`.
 
+## GOV-05 Owner decision — 2026-09-06
+
+**Correlation baseline:** `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`  
+**Decision source:** Owner response `bestätige gov 05` to the preceding explicit no-migration proposal in the CAPITAL-AI-GOV chat.  
+**State:** `OWNER_CONFIRMED / DOCUMENTATION_MERGE_PENDING`
+
+The Owner confirmed retaining the existing namespace separation: `PVC-*` denotes organizational project ownership; technical `VC-*` under `SC-MD-SPT-0001` retains its existing meaning. Technical renumbering is not performed within GOV-05. Equal numeric suffixes do not establish equivalent stages.
+
+After Human merge of this decision record and synchronized project projections, GOV-05 is **decision complete — no migration**. This is not a claim that a migration was implemented. A future migration requires a new justified, owner-coordinated request. Existing technical contracts, runtime identities, historical evidence and foreign-owner implementation remain unchanged.
+
+This records an explicit Owner choice consistent with `docs/projects/PROJECT_VALUE_CHAIN.md`; it creates no new ADR/ESS/AUTH/CTRL identity or policy overlay.
+
 ## Current priority
 
-1. **POST-ESS-0006 RECORRELATION** — synchronize the three Governance project projections with `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`; no stale queue promotion.
-2. **WAIT FOR AN AUTHORIZED EXECUTABLE INPUT** — next GOV implementation requires either a resolved `GOV-05` Owner/multi-owner decision or material return evidence for `GOV-07`. `GOV-08` remains foreign-owned.
+1. Complete GOV-05 decision recording and the merged #762 status update together in one bounded GOV change; required hosted checks and Human merge close the documentation gate.
+2. Recorrelate material owner/evidence returns before any further implementation. GOV-07 remains dependent; GOV-08 remains foreign-owned; COMP-GAP-008 remains an unresolved Documentary/Governance ownership correlation. No blanket roadmap closure is claimed.
 
 ## Definition of Done for current Governance cycle
 
