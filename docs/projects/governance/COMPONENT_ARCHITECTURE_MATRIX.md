@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Component and Architecture Matrix
 
 **Role:** current project assessment — non-authorizing  
-**Baseline:** `main@80c30ad2aa469f4552c84f3cc40e997e4ef13ee0`  
+**Baseline:** `main@1b9def6d414ee8838e5403bfc9f705bbbe438d2a`  
 **Correlation date:** `2026-09-06`
 
 | Component / contract | Canonical anchor | GOV relationship | Current architecture assessment | Action |
@@ -24,6 +24,7 @@
 | ESS-0006 Security & Compliance | `.ai/skills/ESS-0006-Security-Compliance.md` | GOV ESS lifecycle / component boundary | bounded component specification after PR #757 | DONE_MAIN / TERMINAL |
 | Security project | `docs/projects/security/README.md` + `src/platform/Security/README.md` | foreign independent verifier | PR #766 aligns assessment authority; ULS re-verification/provider-E2E residuals remain separate | PRESERVE INDEPENDENCE |
 | Compliance project | `docs/projects/compliance/README.md` + `docs/compliance/CAPITAL-AI-COMP/**` | foreign independent assessor | PR #761/#768 provide current assessment/closeout evidence while external Owner/Legal/Evidence gates remain explicit | PRESERVE INDEPENDENCE / NO BLANKET CLOSURE |
+| Operations project | `docs/projects/operations/**` | foreign project owner | PR #771 updated OPS Security-backlog projections only; final correlation found no GOV file, namespace or semantic overlap | CONSUME CURRENT MAIN / NO GOV SCOPE CHANGE |
 | User Lifecycle | GOV decisions + OPS/FE/SEC/COMP returns | GOV orchestration only | remaining foreign verification/provider/UX/Legal gates still prevent GOV-07 closeout | DEPENDENCY / NO SCOPE ABSORPTION |
 | Financial technical chain | `SC-MD-SPT-0001` | governance correlation only | GOV-05 no-migration decision is Human-merged through PR #767 | DONE_MAIN / TERMINAL — NO MIGRATION |
 | Admin Panel process/dependency graph | GOV-08 + CLIENT/FE/OPS project ownership | referral only | no Governance-owned productive implementation authority | REFERRED / FOREIGN OPEN |
@@ -42,7 +43,7 @@ Architecture conclusion:
 2. `CHAT_RUN_HANDOFF` generalizes the existing post-PR coordination rule to every chat-governed repository execution pass without granting new authority.
 3. Fenced `text` blocks make both `NÄCHSTE SCHRITTE` and exact Human/Owner response strings directly copyable; the underlying approval semantics remain unchanged.
 4. Trust Root, DevelopmentChain policy, Control Catalog and Authority Registry are version-correlated, and the existing governance consistency test is extended to cover the new invariant.
-5. PR #769 has already terminalized the prior post-GOV-05 correlation package on main; `COMP-GAP-008` remains the next bounded Governance candidate after this control change reaches main.
+5. PR #769 has already terminalized the prior post-GOV-05 correlation package on main; PR #771 is a disjoint OPS-only merge; `COMP-GAP-008` remains the next bounded Governance candidate after this control change reaches main.
 
 **Exit gate:** the changed Governance surfaces are internally consistent, JSON remains structurally valid, the relevant unit/validator checks are executed when an exact branch checkout/CI becomes available, final current-main/open-PR correlation is clean, exact-head Human PR-create approval is obtained, and hosted checks plus Human/CODEOWNER merge remain separate gates.
 
