@@ -1,73 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-  <rect width="200" height="200" rx="40" fill="#0b0b0b"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" data-brandmark-version="1.0.0-manifest-v6.2">
+  <rect width="200" height="200" rx="40" fill="#08080C"/>
   <defs>
-    <!-- 3D Gold Shading for Spheres -->
-    <radialGradient id="gold-sphere-3d" cx="35%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#FFF4D0" />
-      <stop offset="20%" stop-color="#E5C17C" />
-      <stop offset="55%" stop-color="#BD984E" />
-      <stop offset="85%" stop-color="#87601B" />
-      <stop offset="100%" stop-color="#4A340C" />
-    </radialGradient>
-    
-    <!-- Soft Glow for Lines -->
-    <filter id="glow-line" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="1.5" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    <filter id="brand-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
   </defs>
-
-  <!-- Offset drawing by 10px on x/y to center in 200x200 box (original was 200x180, let's shift down 10px) -->
-  <g transform="translate(0, 10)">
-    <!-- Thin cyan / violet neural background lines -->
-    <g stroke-opacity="0.65" stroke-width="1.2">
-      <!-- Purple / Violet lines -->
-      <line x1="60" y1="50" x2="140" y2="133" stroke="#A78BFA" filter="url(#glow-line)" />
-      <line x1="140" y1="48" x2="60" y2="135" stroke="#8B5CF6" />
-      <line x1="140" y1="48" x2="78" y2="93" stroke="#A78BFA" />
-      <line x1="65" y1="85" x2="140" y2="133" stroke="#8B5CF6" />
-      
-      <!-- Cyan / Blue lines -->
-      <line x1="60" y1="50" x2="140" y2="48" stroke="#06B6D4" />
-      <line x1="60" y1="135" x2="142" y2="90" stroke="#22D3EE" filter="url(#glow-line)" />
-      <line x1="100" y1="145" x2="65" y2="85" stroke="#22D3EE" />
-      <line x1="105" y1="55" x2="65" y2="85" stroke="#06B6D4" />
-      <line x1="65" y1="85" x2="142" y2="90" stroke="#06B6D4" />
-      <line x1="100" y1="100" x2="60" y2="50" stroke="#22D3EE" />
+  <g transform="translate(0 10)">
+    <g stroke="#8D26FF" stroke-width="1" stroke-opacity="0.55">
+      <line x1="60" y1="50" x2="140" y2="133" filter="url(#brand-glow)"/>
+      <line x1="140" y1="48" x2="60" y2="135"/>
+      <line x1="140" y1="48" x2="78" y2="93"/>
+      <line x1="65" y1="85" x2="140" y2="133"/>
+      <line x1="60" y1="50" x2="140" y2="48"/>
+      <line x1="60" y1="135" x2="142" y2="90"/>
+      <line x1="100" y1="145" x2="65" y2="85"/>
+      <line x1="105" y1="55" x2="65" y2="85"/>
+      <line x1="65" y1="85" x2="142" y2="90"/>
+      <line x1="100" y1="100" x2="60" y2="50"/>
     </g>
-
-    <!-- Golden Core framework connections -->
-    <g stroke="#C29D53" stroke-width="2.8" stroke-opacity="0.9">
-      <line x1="60" y1="50" x2="78" y2="93" />
-      <line x1="78" y1="93" x2="60" y2="135" />
-      <line x1="60" y1="135" x2="100" y2="145" />
-      <line x1="100" y1="145" x2="140" y2="133" />
-      <line x1="140" y1="133" x2="142" y2="90" />
-      <line x1="142" y1="90" x2="140" y2="48" />
-      <line x1="140" y1="48" x2="105" y2="55" />
-      <line x1="105" y1="55" x2="100" y2="100" />
-      <line x1="100" y1="100" x2="100" y2="145" />
-      <line x1="100" y1="100" x2="78" y2="93" />
-      <line x1="100" y1="100" x2="142" y2="90" />
+    <g stroke="#F9BF21" stroke-width="2.5" stroke-opacity="0.85">
+      <line x1="60" y1="50" x2="78" y2="93"/>
+      <line x1="78" y1="93" x2="60" y2="135"/>
+      <line x1="60" y1="135" x2="100" y2="145"/>
+      <line x1="100" y1="145" x2="140" y2="133"/>
+      <line x1="140" y1="133" x2="142" y2="90"/>
+      <line x1="142" y1="90" x2="140" y2="48"/>
+      <line x1="140" y1="48" x2="105" y2="55"/>
+      <line x1="105" y1="55" x2="100" y2="100"/>
+      <line x1="100" y1="100" x2="100" y2="145"/>
+      <line x1="100" y1="100" x2="78" y2="93"/>
+      <line x1="100" y1="100" x2="142" y2="90"/>
     </g>
-
-    <!-- 3D Golden spheres -->
-    <g>
-      <!-- Center large sphere -->
-      <circle cx="100" cy="100" r="12" fill="url(#gold-sphere-3d)" />
-
-      <!-- Vertices spheres -->
-      <circle cx="60" cy="50" r="7.5" fill="url(#gold-sphere-3d)" />
-      <circle cx="105" cy="55" r="5.5" fill="url(#gold-sphere-3d)" />
-      <circle cx="140" cy="48" r="8" fill="url(#gold-sphere-3d)" />
-      
-      <circle cx="65" cy="85" r="5" fill="url(#gold-sphere-3d)" />
-      <circle cx="78" cy="93" r="5.5" fill="url(#gold-sphere-3d)" />
-      <circle cx="142" cy="90" r="7" fill="url(#gold-sphere-3d)" />
-      
-      <circle cx="60" cy="135" r="8.5" fill="url(#gold-sphere-3d)" />
-      <circle cx="100" cy="145" r="6.5" fill="url(#gold-sphere-3d)" />
-      <circle cx="140" cy="133" r="9" fill="url(#gold-sphere-3d)" />
+    <g fill="#F9BF21">
+      <circle cx="100" cy="100" r="11"/>
+      <circle cx="60" cy="50" r="6.5"/>
+      <circle cx="105" cy="55" r="4.5"/>
+      <circle cx="140" cy="48" r="7"/>
+      <circle cx="65" cy="85" r="4.5"/>
+      <circle cx="78" cy="93" r="5"/>
+      <circle cx="142" cy="90" r="6"/>
+      <circle cx="60" cy="135" r="7.5"/>
+      <circle cx="100" cy="145" r="5.5"/>
+      <circle cx="140" cy="133" r="8"/>
     </g>
   </g>
 </svg>
