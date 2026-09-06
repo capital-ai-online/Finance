@@ -6,7 +6,7 @@
 **Finding:** `S1-R2-07` Recovery / RPO / RTO  
 **Branch:** `agent/operations-recovery-rpo-rto-20260906`  
 **Implementation-start baseline:** `main@1b9def6d414ee8838e5403bfc9f705bbbe438d2a`  
-**Latest resync/correlation baseline:** `main@169cf96ac4d90ffaacab22d88541b837fd66fe8d`  
+**Latest resync/correlation baseline:** `main@56f196fc034c5514463546ee975ffb83fd50f44a`  
 **Status:** `IMPLEMENTED_BRANCH / EXECUTION_EVIDENCE_PENDING / SECURITY_UNVERIFIED`
 
 ## 1. Purpose
@@ -17,9 +17,9 @@ The current OPS roadmap identifies `OPS-08-SEC-07` as the highest executable OPS
 
 ## 2. Current-main and ownership correlation
 
-At implementation start, `main` was `1b9def6d414ee8838e5403bfc9f705bbbe438d2a`. Before continuing the package on 2026-09-06, the branch was re-correlated and merge-resynced to `main@169cf96ac4d90ffaacab22d88541b837fd66fe8d` without rewriting its prior history.
+At implementation start, `main` was `1b9def6d414ee8838e5403bfc9f705bbbe438d2a`. Before PR creation on 2026-09-06, the branch was re-correlated and merge-resynced to `main@56f196fc034c5514463546ee975ffb83fd50f44a` without rewriting its prior history.
 
-At the latest correlation point:
+At the latest pre-PR correlation point:
 
 - zero open Pull Requests were found against `main`;
 - the `main` commits added since branch start had no changed-file overlap with the Recovery package;
@@ -144,9 +144,9 @@ Changing connector/app permissions or repository execution-host secrets/variable
 Completed during repository implementation/correlation:
 
 - current-main / project / PVC / Primary Owner correlation;
-- zero-open-PR correlation at implementation start and latest continuation point;
+- zero-open-PR correlation at implementation start and immediately before PR creation;
 - changed-file overlap check after main advanced;
-- branch merge-resync to `main@169cf96ac4d90ffaacab22d88541b837fd66fe8d`;
+- branch merge-resync to `main@56f196fc034c5514463546ee975ffb83fd50f44a`;
 - existing runbook and existing workflow capability scan;
 - current Supabase organization/project/plan read-only correlation;
 - current Supabase Auth row-count readback (`5` users / `5` identities);
@@ -154,12 +154,14 @@ Completed during repository implementation/correlation:
 - current Supabase backup/restore documentation lookup;
 - current Supabase CLI dump-source correlation distinguishing schema filtering from data-dump inclusion;
 - workflow action pins resolved to immutable commits;
-- dump-integrity helper syntax/fixture prototyping including positive order-independent comparison and fail-closed Storage-object behavior.
+- dump-integrity helper syntax/fixture prototyping including positive order-independent comparison and fail-closed Storage-object behavior;
+- PR #776 initial hosted CI run #3193: repository integrity and TypeScript checks passed; the Unit stage failed on a brittle raw-text assertion that expected an unquoted `recoveryDumpIntegrity.mjs compare` substring although the workflow correctly invokes the quoted exact workspace path. No successful exact-head hosted result is inferred from that failed run.
 
 Repository/hosted checks must still be reported from actual executions; they are not inferred from code review.
 
 Not yet executed / not represented as PASS:
 
+- successful exact-head PR hosted validation after the assertion repair;
 - scheduled backup workflow;
 - production-source logical dump through GitHub Actions;
 - encrypted artifact upload through the new workflow;
@@ -167,8 +169,7 @@ Not yet executed / not represented as PASS:
 - measured RPO operating interval;
 - measured restore RTO;
 - full-service recovery drill;
-- CAPITAL-AI-SEC independent verification;
-- PR hosted checks for this branch.
+- CAPITAL-AI-SEC independent verification.
 
 ## 8. Exit gate
 

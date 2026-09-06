@@ -43,8 +43,12 @@ describe('OPS recovery evidence', () => {
 
   it('validates source recovery coverage before encryption and compares auth/public/storage metadata after restore', () => {
     const yaml = workflow();
-    expect(yaml).toContain('recoveryDumpIntegrity.mjs inspect');
-    expect(yaml).toContain('recoveryDumpIntegrity.mjs compare');
+    expect(yaml).toMatch(
+      /node\s+(?:"[^"\n]*\/)?scripts\/operations\/recoveryDumpIntegrity\.mjs"?\s+inspect\b/,
+    );
+    expect(yaml).toMatch(
+      /node\s+(?:"[^"\n]*\/)?scripts\/operations\/recoveryDumpIntegrity\.mjs"?\s+compare\b/,
+    );
     expect(yaml).toContain('AUTH_USERS_ROWS');
     expect(yaml).toContain('AUTH_IDENTITIES_ROWS');
     expect(yaml).toContain('STORAGE_OBJECTS_ROWS');
