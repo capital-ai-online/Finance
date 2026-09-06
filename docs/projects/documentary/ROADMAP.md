@@ -97,36 +97,67 @@ Architecture invariants:
 
 ## WP-DOC-06 — D8 Migration planning and legacy compatibility
 
-**State:** `IMPLEMENTED ON BRANCH — VALIDATION / PR / HUMAN MERGE PENDING`
+**State:** `DONE — HUMAN-MERGED / READ-ONLY PLANNING SLICE`
 
-Current branch implementation:
+Merged implementation evidence:
 
-- branch: `agent/documentary-d8-migration-planning-20260906`;
-- baseline: `main@255afed6adbfe44a49f06163f326cb86b1d6972d`;
-- new `Migration/DocumentaryMigrationPlanner.ts` classifies Documentary documentation as `canonical`, `generated`, `evidence`, `legacy`, `archive` or `unknown`;
+- implementation PR: **#792** — D8 Migration Planning;
+- merge SHA: `12b5ec1886984fb6815ba111108f7f353496de7d`;
+- `Migration/DocumentaryMigrationPlanner.ts` classifies Documentary documentation as `canonical`, `generated`, `evidence`, `legacy`, `archive` or `unknown`;
 - planning dispositions are bounded to `retain`, `migration-candidate`, `redirect-candidate`, `owner-review` or `blocked`;
 - generated migration candidates require a known canonical target and proven reproducibility;
 - authority, evidence, referenced, Security/Compliance and archive material remains retained;
 - foreign-project ownership and unsafe/non-documentation paths fail closed as `blocked`;
 - the planner always reports `mutationPerformed=false` and performs no move, delete, rewrite, registry mutation or redirect creation;
-- targeted unit tests cover deterministic planning and negative/fail-closed cases;
-- Documentary component metadata projects `Migration/` as the implemented read-only planning slice while physical/semantic Migration Execution remains planned.
+- targeted unit coverage for deterministic planning and negative/fail-closed cases is part of the merged D8 slice;
+- GitHub PR workflows for Governance, CI and Container Security completed successfully before Human/CODEOWNER merge;
+- the technical Documentary roadmap and component metadata project `Migration/` as the implemented read-only planning slice.
+
+Separate remaining boundary:
+
+- physical/semantic Migration Execution is **not** part of WP-DOC-06 and remains a separately scoped future work item;
+- any execution requires fresh current-main correlation, owner-bounded authorization, applicable lifecycle/governance gates and no foreign-owner mutation by Documentary.
+
+## WP-DOC-07 — ESS-0012 Documentary freshness validation
+
+**State:** `NEXT — PLANNED / OWNER-BOUNDED`
+
+Priority correlation:
+
+- ESS-0012 defines `DocumentationValidator` as a Documentary Governance validation area;
+- ESS-0012-CONTRACTS defines `GOV-DOC-003` — documentation older than the last changed referenced component — with `Medium` severity;
+- `src/platform/Documentary/Governance/Validators/` currently contains no implemented individual validator;
+- the existing `DocumentationHygieneValidator` remains the canonical read-only registry/hygiene service and must not be duplicated;
+- `Discovery/SemanticFreshnessAnalyzer.ts` already provides deterministic, commit/correlation-bound freshness evidence and is therefore the required reuse baseline for this slice.
+
+Bounded implementation scope:
+
+- implement the first canonical `DocumentationValidator` slice for `GOV-DOC-003` under `src/platform/Documentary/Governance/Validators/`;
+- consume the existing semantic-freshness result instead of introducing a second scanner, freshness engine or document registry;
+- emit only evidence-backed Documentary findings with the canonical rule identity and severity required by ESS-0012-CONTRACTS;
+- preserve deterministic ordering and read-only behavior;
+- add targeted unit coverage for positive, negative and deterministic mapping cases;
+- do not activate the broader 57-rule suite, Governance/Repository Health scoring or production-release thresholds as part of this work package;
+- do not acquire global Governance, Supervisor, Platform Director, Version, Release, Production, Security or Compliance decision authority.
 
 Exit gate:
 
-- targeted tests and applicable TypeScript/build/documentation/governance validation PASS on the exact branch/PR head;
-- no foreign-owner mutation, document-registry duplication or implicit migration authorization is introduced;
-- Human/CODEOWNER merge completes;
-- this Roadmap and the technical Documentary roadmap reflect the merged state.
+- `GOV-DOC-003` coverage is implemented and proven on the exact final PR head;
+- freshness evidence is reused from the existing Documentary analyzer without parallel architecture;
+- no finding is emitted without concrete evidence and no mutation is performed;
+- existing Documentation Hygiene behavior remains unchanged;
+- applicable Documentary, TypeScript, unit, documentation and governance checks pass;
+- Human/CODEOWNER merge completes and roadmap/component documentation is synchronized to the resulting state.
 
 ## Remaining Documentary work
 
 The following areas remain separate Roadmap work and must not be bundled merely because prior Documentary slices are complete:
 
+- **next:** WP-DOC-07 incremental ESS-0012 `GOV-DOC-003` Documentary freshness validation;
 - physical/semantic Migration Execution beyond the read-only D8 planning slice, only where separately authorized and owner-bounded;
 - Plugins;
 - broader Documentary architecture/runtime gaps explicitly still marked planned by current component/technical documentation;
-- incremental ESS-0012 validation coverage;
+- additional ESS-0012 validation coverage beyond the bounded WP-DOC-07 slice;
 - ongoing lifecycle/maintenance quality improvements.
 
 Before starting any item, re-read current `main`, this Roadmap, applicable ADR/ESS and the current component README/manifest.
