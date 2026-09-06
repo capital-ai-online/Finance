@@ -2,17 +2,19 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Correlation baseline:** `main@4e9dedd74aee1f9b3609037d1abb4fef0932a1b6`
+**Correlation baseline:** `main@80c30ad2aa469f4552c84f3cc40e997e4ef13ee0`
+
+Canonical current-main correlation evidence: [`evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`](./evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md).
 
 ## Security-priority packages
 
 | Priority | Package | PVC | Source | Scope | Exit evidence / current disposition |
 |---:|---|---|---|---|---|
 | P1 | `OPS-02-SEC-06` Entitlement Capability Inventory | `PVC-02` | S1-R2-06 | inventory every premium/protected capability; map server enforcement and actual Primary Owner | **PARENT EVIDENCE READY** — seven-capability matrix, DENY expectations and FINTECH/DATA child handoffs in `controlled-implementation/OPS_02_SEC_06_ENTITLEMENT_CAPABILITY_INVENTORY.md`; child remediation and Security verification remain open |
-| P1 | `OPS-06-SEC-03` Node Control-Plane Convergence | `PVC-06` | S1-R2-03 | converge `.nvmrc`, package engine policy and approved control-plane Node identity to Node 24.20.0 | **OPEN / HIGHEST EXECUTABLE OPS GAP** — current-main `.nvmrc` remains 24.18.0; exact-candidate identity checks + CI required; runtime identity only if claimed |
+| P1 | `OPS-06-SEC-03` Node Control-Plane Convergence | `PVC-06` | S1-R2-03 | converge `.nvmrc`, package engine policy and approved control-plane Node identity to Node 24.20.0 | **BLOCKED_BY_AUTHORITY_CONFLICT** — current `.nvmrc` remains 24.18.0 and Accepted ADR-0053 still selects Node 24.18.0; the later 24.20.0 supersession remains proposed. Governance/ADR authority must be resolved before OPS mutation |
 | P1 | `OPS-04-SEC-04` Fatal Process Handling | `PVC-04` | S1-R2-04 | readiness unhealthy on fatal error, stop new work, bounded cleanup, non-zero exit | **IMPLEMENTED_ON_MAIN via PR #720** — negative child-process implementation evidence merged; independent Security and post-deploy supervisor recovery verification remain open |
-| P1 | `OPS-02-SEC-05` Stripe Redirect Boundary | `PVC-02` | S1-R2-05 | server-owned canonical redirect origin/destination policy | **OPEN** — allowlist positive tests + attacker absolute/open-redirect negative tests |
-| P1 | `OPS-08-SEC-07` Recovery / RPO / RTO | `PVC-08` | S1-R2-07 | approved objectives, recurring encrypted off-site backup, isolated measured restore | **OPEN / UNVERIFIED** — integrity-validated restore + measured actual RPO/RTO; runbook alone insufficient |
+| P1 | `OPS-02-SEC-05` Stripe Redirect Boundary | `PVC-02` | S1-R2-05 | server-owned canonical redirect origin/destination policy | **IMPLEMENTED_ON_MAIN / EVIDENCE_READY** — `stripeReturnUrlGuard` is mounted before `stripeRouter`; focused allow/deny/open-redirect tests exist on main. CAPITAL-AI-SEC verification remains open |
+| P1 | `OPS-08-SEC-07` Recovery / RPO / RTO | `PVC-08` | S1-R2-07 | approved objectives, recurring encrypted off-site backup, isolated measured restore | **OPEN / HIGHEST EXECUTABLE OPS SECURITY GAP** — integrity-validated restore + measured actual RPO/RTO; runbook alone insufficient; provider/Production mutations remain separately gated |
 | P2 | `OPS-08-SEC-09` Strict CSP Promotion Evidence | `PVC-08` | S1-R2-09 | maintain report-only until protected compatibility window satisfies ADR-0040 | WAITING_FOR_EVIDENCE — violation/compatibility evidence + protected Stripe/Supabase/Consent/hCaptcha verification |
 | P2 | `OPS-08-SEC-10` Billing Isolation Post-Deploy | `PVC-08` | S1-R2-10 | prove Production cannot reach DEV simulated-success billing logic | WAITING_FOR_EVIDENCE — exact runtime/bundle evidence, Production fail-closed behavior |
 
@@ -32,7 +34,15 @@ Current classifications:
 
 Foreign productive remediation is `REFERRED_NOT_EXECUTED`; CAPITAL-AI-SEC remains the independent verifier.
 
-Current-main re-correlation includes merged User Lifecycle closeout PR #729, terminal GOV-03/DR-02B PR #743 and merged COMP PR #746. PR #746 changes only the Compliance requirements inventory and does not alter productive entitlement child ownership or OPS execution priority.
+### OPS-02-SEC-05 disposition
+
+Current main already contains the server-owned redirect boundary and focused negative tests. This corrects the stale backlog projection that still described S1-R2-05 as an unimplemented remediation. OPS records `IMPLEMENTED_ON_MAIN / EVIDENCE_READY` only; Security `VERIFIED/CLOSED` remains exclusively with CAPITAL-AI-SEC.
+
+### OPS-06-SEC-03 disposition
+
+The Node convergence requirement remains P1/HIGH, but it is not currently executable. Accepted ADR-0053 still names Node `24.18.0`, while the OPS/Security roadmap requests `24.20.0` and the existing write-boundary supersession is only proposed. The repository trust-root precedence therefore requires Governance/ADR resolution before OPS changes the Node control plane.
+
+Current-main re-correlation includes merged User Lifecycle closeout PR #729, terminal GOV-03/DR-02B PR #743, merged COMP PR #746, Security alignment work through PR #766, GOV-05 closeout PR #767 and post-GOV-05 Governance re-correlation PR #769. PR #769 changes only Governance project documents and has no changed-file overlap with this OPS package. No foreign merge transfers productive ownership to OPS.
 
 ## Core OPS packages retained from V2.1
 
@@ -40,9 +50,9 @@ Current-main re-correlation includes merged User Lifecycle closeout PR #729, ter
 |---:|---|---|---|---|
 | P1 | `OPS-02-A` Controlled Implementation Inventory | `PVC-02` | correlate active execution paths, claims, branch/pre-PR boundaries | ACTIVE / recurring |
 | P1 | `OPS-04-A` Supervisor Ownership & Gap Closure | `PVC-04` | finding lifecycle, recovery and non-deciding contract | PARTIAL; fatal-process implementation merged, verification remains |
-| P1 | `OPS-06-A` Version Boundary & Drift | `PVC-06` | package authority, compatibility adapter and drift testing | ACTIVE; `OPS-06-SEC-03` is current highest executable gap |
+| P1 | `OPS-06-A` Version Boundary & Drift | `PVC-06` | package authority, compatibility adapter and drift testing | BLOCKED at `OPS-06-SEC-03` authority boundary; no Node mutation until Governance/ADR resolution |
 | P1 | `OPS-07-A` Release Evidence Contract | `PVC-07` | candidate evidence, gate, rollback and handoff completeness | OPEN |
-| P1 | `OPS-08-A` Production Handoff & Recovery | `PVC-08` | readiness, post-deploy health, rollback/recovery and evidence | OPEN / PARTIAL |
+| P1 | `OPS-08-A` Production Handoff & Recovery | `PVC-08` | readiness, post-deploy health, rollback/recovery and evidence | OPEN / PARTIAL; `OPS-08-SEC-07` is the current highest executable OPS Security gap |
 | P1 | `OPS-18-A` EventMesh/Traceability Coverage | `PVC-18` | replay/reliability plus ETM publish/consume/axis gaps | OPEN / PARTIAL |
 | P2 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | SLO/SLI/capacity/degradation evidence | OPEN |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | staleness/identity coverage without authority expansion | OPEN |
@@ -51,7 +61,7 @@ Current-main re-correlation includes merged User Lifecycle closeout PR #729, ter
 
 | Priority | Package | PVC | Source | Scope | Current disposition |
 |---:|---|---|---|---|---|
-| queued after higher-priority OPS gates | `DR-03` Provider Adapter / Execution Integration | primary `PVC-02`; supporting `PVC-04`, `PVC-18`; Release/Production boundaries remain `PVC-07`/`PVC-08` | `docs/architecture/ROADMAP.md`, ADR-0060 v1.1.0, ESS-0019 v1.2.0 | extend the existing provider-neutral Control Plane with the smallest productive provider-adapter execution boundary; preserve Identity/Capability/Policy/Audit/Trace gates; no second control plane or direct SDK bypass | **BLOCKED_BY_HIGHER_PRIORITY_OPS_GATE** — former GOV-03/DR-02B dependency is terminal in PR #743, but `OPS-06-SEC-03` remains an unresolved P1/HIGH OPS gate |
+| queued after higher-priority OPS gates | `DR-03` Provider Adapter / Execution Integration | primary `PVC-02`; supporting `PVC-04`, `PVC-18`; Release/Production boundaries remain `PVC-07`/`PVC-08` | `docs/architecture/ROADMAP.md`, ADR-0060 v1.1.0, ESS-0019 v1.2.0 | extend the existing provider-neutral Control Plane with the smallest productive provider-adapter execution boundary; preserve Identity/Capability/Policy/Audit/Trace gates; no second control plane or direct SDK bypass | **BLOCKED_BY_HIGHER_PRIORITY_OPS_GATE** — former GOV-03/DR-02B dependency is terminal; Node convergence is authority-blocked and `OPS-08-SEC-07` remains an executable P1/HIGH OPS Security gap ahead of DR-03 |
 
 ### DR-03 reuse disposition
 
@@ -63,7 +73,7 @@ Current-main re-correlation includes merged User Lifecycle closeout PR #729, ter
 - Productive OpenAI/Anthropic/xAI adapter layer — current-main scan did not identify a separate completed adapter layer; later DR-03 must implement only the minimal missing boundary behind existing gates.
 - Governance, identity, registry, Release, deployment or Production authority — **DO NOT IMPLEMENT** as DR-03 parallel architecture.
 
-DR-03 is not authorized to start productive adapter code while the higher-priority OPS gate remains open. Its current authorized action is correlation/materialization only.
+DR-03 is not authorized to start productive adapter code while higher-priority OPS gates remain open. Its current authorized action is correlation/materialization only.
 
 ## Package rules
 
@@ -73,10 +83,11 @@ DR-03 is not authorized to start productive adapter code while the higher-priori
 4. HIGH/CRITICAL protected changes retain all applicable Human/Owner gates.
 5. Runtime mutation and provider mutation are never implied by a documentation or code package.
 6. A terminal Governance dependency may unblock correlation without overriding a higher-priority active OPS Security/Data-Integrity gate.
+7. A lower-precedence project roadmap must not silently override an Accepted ADR; unresolved authority divergence is fail-closed.
 
-## Current-main terminal OPS work — 2026-09-05
+## Current-main terminal OPS work — 2026-09-06
 
-The following recent OPS work is already Human-merged and must not remain an executable package or active writer solely because historical coordination metadata was stale:
+The following recent OPS work is already Human-merged or repository-implemented and must not remain an executable implementation package solely because historical coordination/roadmap metadata is stale:
 
 | Work | Terminal repository evidence | Residual boundary |
 |---|---|---|
@@ -87,6 +98,7 @@ The following recent OPS work is already Human-merged and must not remain an exe
 | Auth Lifecycle re-correlation | PR #722 merged; claim released | foreign FE/GOV/SEO/Security work remains with actual owners |
 | User Lifecycle OPS closeout | PR #729 merged | isolated provider E2E unavailable in closeout surface; Security verification remains separate |
 | GOV-03 / DR-02B | PR #743 merged under CAPITAL-AI-GOV | terminal foreign dependency only; no Governance ownership transfer |
+| Stripe Redirect Boundary `OPS-02-SEC-05` | current main contains `stripeReturnUrlGuard`, route composition and focused negative tests; implementation commit `bcefb1b2cdf2ecc56becfa7c5c8fcd6db8cbc43f` | independent CAPITAL-AI-SEC verification remains open |
 
 ## User Lifecycle terminal closeout — 2026-09-05
 
@@ -104,4 +116,4 @@ Bounded residuals remain explicit:
 - Annual Pro price drift remains foreign shared/product-contract work;
 - Security closure remains CAPITAL-AI-SEC.
 
-This terminal closeout does not absorb `OPS-02-SEC-05`, `OPS-06-SEC-03`, DR-03 or foreign productive entitlement work.
+The User Lifecycle closeout itself did not close `OPS-02-SEC-05`; the separate current-main re-correlation above establishes that S1-R2-05 implementation is already present and evidence-ready. `OPS-06-SEC-03`, DR-03 and foreign productive entitlement work remain unresolved as scoped above.
