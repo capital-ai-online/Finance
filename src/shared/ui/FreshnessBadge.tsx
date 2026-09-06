@@ -33,7 +33,7 @@ function toneFor(state?: string | null): FreshnessTone {
     return { text: 'text-status-ready', bg: 'bg-status-ready/5', border: 'border-status-ready/20', Icon: Clock };
   }
   if (normalized === 'HISTORICAL') {
-    return { text: 'text-brand-cyan', bg: 'bg-brand-cyan/5', border: 'border-brand-cyan/20', Icon: Clock };
+    return { text: 'text-status-info', bg: 'bg-status-info/5', border: 'border-status-info/20', Icon: Clock };
   }
   if (['DELAYED', 'STALE', 'DEGRADED', 'PARTIAL'].includes(normalized)) {
     return { text: 'text-score-warning', bg: 'bg-score-warning/5', border: 'border-score-warning/20', Icon: AlertTriangle };

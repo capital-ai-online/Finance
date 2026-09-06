@@ -32,7 +32,7 @@ function resolveTone(status: string): EvidenceTone {
     return { text: 'text-status-reject', dot: 'bg-status-reject', Icon: AlertTriangle };
   }
   if (key === 'HISTORICAL') {
-    return { text: 'text-brand-cyan', dot: 'bg-brand-cyan', Icon: Database };
+    return { text: 'text-status-info', dot: 'bg-status-info', Icon: Database };
   }
   return { text: 'text-text-secondary', dot: 'bg-text-secondary', Icon: Database };
 }
