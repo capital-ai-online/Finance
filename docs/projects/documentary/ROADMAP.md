@@ -102,7 +102,7 @@ Architecture invariants:
 Current branch implementation:
 
 - branch: `agent/documentary-d8-migration-planning-20260906`;
-- baseline: `main@dbdb1d5ed2c93c857ab9de1329b9d4dcbba2fd67`;
+- baseline: `main@6a4a34f1b849763cce0f80b394817d3d83bdf24d`;
 - new `Migration/DocumentaryMigrationPlanner.ts` classifies Documentary documentation as `canonical`, `generated`, `evidence`, `legacy`, `archive` or `unknown`;
 - planning dispositions are bounded to `retain`, `migration-candidate`, `redirect-candidate`, `owner-review` or `blocked`;
 - generated migration candidates require a known canonical target and proven reproducibility;
