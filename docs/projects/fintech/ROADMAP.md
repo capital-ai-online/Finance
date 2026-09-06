@@ -1,9 +1,9 @@
 # CAPITAL-AI-FINTECH — Project Roadmap
 
 **Status:** `ACTIVE — PVC-12..17 PRIMARY OWNER`  
-**Version:** `3.0-consolidated-current-main`  
-**Current-main correlation baseline:** `main@56f196fc034c5514463546ee975ffb83fd50f44a`  
-**Consolidated:** 2026-09-06  
+**Version:** `3.1-owner-drive-architecture-consolidation`  
+**Current-main correlation baseline:** `main@12b5ec1886984fb6815ba111108f7f353496de7d`  
+**Consolidated:** 2026-09-07  
 **Primary PVC ownership:** `PVC-12` through `PVC-17`
 
 ## 1. Objective
@@ -49,6 +49,14 @@ Separate ChatGPT UI chat windows are not repository sources and cannot be enumer
 - the unpublished FINTECH branch was reset to `main@56f196fc034c5514463546ee975ffb83fd50f44a` and the bounded FINTECH document consolidation was replayed;
 - at this resynchronization point there are zero open Pull Requests;
 - older FinTech consolidation/V2 branches remain historical/reuse inputs and are not parallel merge authorities.
+
+### Owner-Drive architecture correlation — 2026-09-07
+
+- this consolidation is based on `main@12b5ec1886984fb6815ba111108f7f353496de7d`; current open Pull Requests were `0` immediately before branch creation;
+- the five Owner-provided Drive documents were correlated against current Registry/Dispatcher contracts, FinTechCore, Commodity/Crypto research models, accepted ADRs and current evidence before roadmap changes;
+- the unpublished branch `agent/fintech-fin-sec-02-verified-screening-20260906` remains a relevant same-file writer for this Roadmap and is intentionally not treated as current authority; its changes must be re-correlated before PR readiness;
+- no current-main `.ai/work-claims` entry for `FIN-SEC-02` was found; the branch itself nevertheless remains a changed-file overlap signal;
+- Source documents are design/evidence inputs only. Current accepted ADR/ESS and current-main code/tests/evidence decide what is retained, adapted, rejected or still open.
 
 ## 3. Current ownership and consolidated state
 
@@ -236,9 +244,10 @@ Add low-cost deterministic checks for project/PVC owner drift, stale current-bas
 | 3 | `FIN-17` | P1 | PARTIAL | one backend FINTECH rank/order authority; FE consumer boundary ready |
 | 4 | `FIN-19` | P2 | PARTIAL | current provider-neutral capability mapping complete |
 | 5 | `FIN-20` | P2 | PARTIAL | exact input-to-rank lineage and return evidence complete |
-| 6 | `FIN-DRIFT-01` | P3 | PLANNED | deterministic drift check implemented |
+| 6 | `FIN-21` | P2 | OPEN | equity taxonomy/profile contract + non-executable subclass challengers ready for governed validation |
+| 7 | `FIN-DRIFT-01` | P3 | PLANNED | deterministic drift check implemented |
 
-`FIN-12` and `FIN-17` intentionally share the same post-Security priority band; order is recomputed after recorrelation.
+`FIN-12` and `FIN-17` intentionally share the same post-Security priority band; order is recomputed after recorrelation. `FIN-21` remains behind the current P1 and cross-domain P2 foundations so equity specialization does not create a parallel feature/lineage architecture.
 
 ## 18. Ownership boundaries
 
@@ -266,7 +275,152 @@ The FINTECH roadmap is complete only when:
 - Frontend consumes authoritative result/ranking contracts only;
 - provider mapping does not bypass DATA ownership;
 - exact score-to-rank lineage and OPS trace handoff are reproducible;
+- equity subclass specialization is versioned/evidence-backed and cannot create a second Registry, Dispatcher, DQ, ranking or execution authority;
 - deterministic drift checks prevent stale projections from silently returning;
 - no foreign work is marked DONE/VERIFIED/CLOSED by FINTECH;
 - exact current `main`, open PRs, overlap and branch head are re-read before PR approval/creation;
 - PR creation, hosted checks, merge and any production mutation follow then-current `/AGENTS.md` controls.
+
+## 21. Owner-Drive architecture consolidation — unified CAPITAL-AI target
+
+The five Owner-provided Drive documents are consolidated as domain design/evidence inputs under current repository authority. Their content is not copied literally where it would create duplicate engines, registries, gates, execution authority or foreign-PVC ownership.
+
+### 21.1 Source disposition
+
+| Owner Drive source | Consolidated disposition | Current repository projection / residual gap |
+|---|---|---|
+| `15Lj6SZJK88xECF-ivozg-CPaSMXrhBKD` — Commodity Orchestrator contracts, weights, gates, backtesting, fundamentals/on-chain | `MATERIALIZED / ADAPTED` | ADR-0101, `CommodityResearchModelContracts`, four commodity challengers and the SC-2 Commodity Roadmap already adapt feature contracts, weights, gates, PIT backtesting/versioning into the single Registry/Dispatcher architecture. Empirical P2/P3 promotion/universe/legacy gates remain in the specialized commodity roadmap; Crypto on-chain remains outside the Commodity module. |
+| `1oydV1IUGJ1HKlnPoikuwFpJq2tZ_NLck` — DeFi and Meme models | `MATERIALIZED AS RESEARCH / PROMOTION OPEN` | `crypto-defi-fundamental@0.3.0` and `crypto-meme-integrity@0.3.0` plus source-backed evaluators/hard gates are present as `scoreEligible=false` challengers. Verified coverage/backtesting/stress/correlation and explicit Owner promotion remain required. |
+| `15TtZwH1be6si8mEuo7Xc6inq_e21brfa` — Enterprise Crypto/FinTech orchestration | `PARTIALLY MATERIALIZED / BOUNDED` | FinTechCore retains workflow identity, deterministic portfolio/risk projections, FT-5 decisions, FT-6 OrderIntent/reconciliation and audit semantics. Autonomous real execution, custody/secrets and legal Compliance policy are not FINTECH scoring authority and remain separately governed/foreign-boundary work. |
+| `1r49r3Eo72wfXlTTorx2uuqNUjaWtNhtm` — Equity taxonomy and subclass scoring | `OPEN / MATERIAL GAP` | Current `traditional-scoring@2.1.0` is a generic stock/forex/index champion with broad technical/value/dividend/quality factors. No current-main versioned equity subclass taxonomy/profile system or subclass challenger family was found. This gap is accepted into `FIN-21`. |
+| `1Dfqwv0oVaCnL34AXHduHY-PpfzjW5Fo8` — Regime, multi-timeframe pattern, sentiment/momentum, L1-L4 kill switch | `MATERIALIZED AS RESEARCH` | Crypto research models already expose sentiment, momentum, regime projection, pattern confluence, signal fusion and read-only L1-L4 kill-switch telemetry. Source `production/live` and autonomous broker/flatten actions are intentionally not adopted as production authority. |
+
+### 21.2 Duplicate/conflict resolution
+
+| Source proposal / overlap | CAPITAL-AI resolution |
+|---|---|
+| Per-domain YAML/model registry or second model router | Rejected as productive authority. `ScoringModelRegistry` remains the only productive registry and `ScoringDispatcher` the only productive model-execution selector under ADR-0087. |
+| Domain Orchestrator/Executor selecting and authorizing final scores | Domain orchestrators remain Research/Evidence composition. A registered Domain Executor Adapter may execute only behind the Dispatcher and cannot create model-selection authority. |
+| Generic domain-local Hard-Gate/DQ service | Domain-specific gates may evaluate feature eligibility, but provider/evidence freshness/DQ remains upstream and governed; no second generic DQ authority is introduced. |
+| Missing-feature weight redistribution across unrelated factors | No synthetic neutral default. Any effective-weight handling must remain versioned, replayable and within accepted model/latent-factor semantics; cross-factor redistribution and double counting require evidence. |
+| Owner weight tables treated as live production configuration | Commodity/Meme/DeFi weights remain research hypotheses where not promoted. Equity subclass/profile weights start non-executable and require PIT/OOS, correlation/double-counting, stress/regime and Owner promotion evidence. |
+| New generic Backtesting service bypassing protected execution | Reuse current validation/evidence contracts where applicable. Any productive Backtest/Monte-Carlo capability remains subject to `FIN-SEC-03` and may not create an alternate client/domain execution boundary. |
+| Crypto on-chain feature set embedded in Commodity Orchestrator | Separated: on-chain evidence belongs to Crypto domain models; Commodity contracts remain commodity-specific. |
+| GICS-style sector taxonomy used as the investment/scoring class itself | External sector/industry classification and internal investment-behavior subclass are orthogonal. FINTECH consumes only provider-authorized/validated taxonomy context and owns the versioned internal research classification/profile semantics. |
+| One independent scoring engine per equity label | Deduplicated into shared factor/model families plus subclass profiles/overlays. A subclass may receive specialized factors/weights without creating twenty parallel scoring engines. |
+| Source kill-switch thresholds/actions treated as production policy | Retained only as research/telemetry until an accepted Risk/Operations/Security authority explicitly owns executable policy/action semantics. |
+| Compliance, custody, settlement or real venue execution absorbed into FINTECH | Rejected at the ownership boundary. FINTECH owns PVC-12..17 financial feature/model/score/rank semantics only and consumes externally governed decisions/evidence where required. |
+
+### 21.3 Unified target architecture
+
+```text
+CAPITAL-AI-DATA / PVC-09..11
+Provider-neutral acquisition
+-> canonical data / identity / provenance
+-> freshness + DQ
+-> ValidatedDataInput
+
+CAPITAL-AI-FINTECH / PVC-12..17
+-> PVC-12 versioned Financial Feature Contracts
+   + bounded domain research classification/context
+-> PVC-13 ScoringModelRegistry
+   champion + governed non-executable challengers/profiles
+-> PVC-14 ScoringDispatcher
+-> PVC-15 registered Domain Executor Adapters / research evaluators
+-> PVC-16 CanonicalScoreResult
+-> PVC-17 one backend Ranking / Decision-Support authority
+
+CAPITAL-AI-OPS / PVC-18
+-> EventMesh / Traceability / operational lifecycle
+```
+
+Cross-cutting Security/Compliance/Quality controls remain external authorities. Entitlement, risk, compliance, suitability, real execution, custody and deployment decisions are consumed through their accepted contracts and do not become hidden score factors or FINTECH-local approval states.
+
+### 21.4 Domain specialization model
+
+The single chain supports domain specialization without parallel architecture:
+
+- **Crypto:** productive technical champion plus Meme/DeFi and sentiment/momentum/regime/pattern research challengers/context;
+- **Commodity:** productive evidence champion plus Energy, Industrial Metals, Precious Metals and Agriculture challengers with source-specific fundamentals and PIT promotion governance;
+- **Equity:** current generic Traditional champion remains productive while `FIN-21` introduces versioned internal subclass research profiles/challengers;
+- **Forex / Index / bounded sovereign benchmark yield:** remain on their current registered productive models until separately justified specialization exists.
+
+No domain research result may silently become `CanonicalScoreResult`, ranking eligibility, portfolio target, Risk/Compliance approval or real execution authorization.
+
+## 22. FIN-21 — Equity subclass research taxonomy and challenger profiles
+
+**Priority:** `P2`  
+**Status:** `OPEN — OWNER-DRIVE GAP NOT YET MATERIALIZED`  
+**Primary PVC:** `PVC-12 / PVC-13 / PVC-15`; productive promotion would additionally affect `PVC-16 / PVC-17`.
+
+The Owner equity document introduces useful specialization beyond current `traditional-scoring@2.1.0`, but its separate taxonomy/engine/YAML-registry proposal is adapted into the existing Single-Scoring architecture.
+
+### 22.1 Versioned internal taxonomy contract
+
+Retain the Owner labels as versioned research classification/profile candidates:
+
+- Mega Cap Compounders;
+- Quality Growth;
+- Profitable Growth;
+- Deep Value;
+- Cyclical Value;
+- Momentum Leaders;
+- Turnaround Stocks;
+- Defensive Cash Generators;
+- Dividend Growth;
+- High Yield Income;
+- Small Cap Growth;
+- Small Cap Deep Value;
+- Asset Plays;
+- Special Situations;
+- Financial Compounders;
+- Platform / Software / Network Effects;
+- Semiconductor / AI Infrastructure;
+- Healthcare Innovators;
+- Industrial Re-Rating Candidates;
+- Commodity / Energy Cash Flow Names.
+
+Classification must be deterministic/replayable from admitted evidence, expose confidence/reasons and support ambiguous/not-computable states rather than forcing a label. Provider-supplied sector/industry taxonomy is input context, not a substitute for internal model-profile semantics and not financial evidence merely because it is catalog metadata.
+
+### 22.2 Deduplicated model-family design
+
+Do not implement twenty independent score engines. Build shared versioned factor/model families and let subclass profiles select/weight only validated factors, for example:
+
+1. **Growth / compounder quality** — revenue/earnings/FCF growth, margin quality, capital efficiency, revisions and valuation discipline;
+2. **Value / cyclical / re-rating** — normalized earnings/cash flow, balance-sheet or asset coverage, cycle position and re-rating evidence;
+3. **Income / defensive quality** — payout sustainability, FCF coverage, leverage, earnings stability and dividend quality;
+4. **Momentum / market structure overlay** — trend, relative strength, breakout/volume persistence and volatility quality without double-counting the same price path;
+5. **Small-cap liquidity/risk overlay** — liquidity, size, balance-sheet resilience and evidence coverage constraints;
+6. **Sector/event overlays** — semiconductor/AI infrastructure, healthcare innovation, financials, software/network effects, industrial and commodity/energy cash-flow specifics only when source-backed evidence warrants them.
+
+The source idea of `Base Score + Subclass Score + Regime Score` remains a **research decomposition**, not three additive productive authorities. Correlated components must be transformed/bounded before any later executable composite is considered.
+
+### 22.3 Registry and execution boundary
+
+- `traditional-scoring@2.1.0` remains the productive stock champion until a separate governed promotion decision changes it;
+- new equity subclass/profile models start as `challenger`, `scoreEligible=false`, `research-only:not-executable` in the existing `ScoringModelRegistry` or an existing non-authorizing research registry contract explicitly subordinate to it;
+- no new YAML registry, dispatcher, ranking engine, DQ service, provider ingestion path or frontend score logic is authorized;
+- subclass classification cannot select a productive champion outside normal Registry resolution;
+- `ValidatedDataInput -> Financial Feature Contract` mapping under `FIN-12` is a prerequisite for productive use of new equity factors.
+
+### 22.4 Validation and promotion evidence
+
+Before any equity subclass/profile can become productive, the evidence package must include at minimum:
+
+- verified/provider-governed feature coverage and freshness/provenance;
+- versioned feature/profile/model semantics and replay/fingerprint lineage;
+- point-in-time out-of-sample / walk-forward validation without lookahead or survivorship leakage;
+- correlation/double-counting analysis across raw features, factor families, Base/Subclass/Regime decomposition and downstream ranking;
+- sensitivity, stress/regime and liquidity/coverage diagnostics appropriate to the profile;
+- protected Backtest execution through the accepted `FIN-SEC-03` boundary where applicable;
+- explicit Owner promotion through the existing `ScoringModelRegistry -> ScoringDispatcher` authority and subsequent canonical/ranking regression evidence.
+
+### 22.5 Ownership boundary
+
+- DATA remains owner for provider acquisition, normalization, evidence identity, freshness and DQ;
+- FINTECH owns the internal financial feature, taxonomy/profile, model and canonical scoring semantics within PVC-12..17;
+- FE may present subclass/profile explanations only after FINTECH exposes stable contracts;
+- Security/Compliance/Quality retain independent controls/assessment and do not become score factors;
+- no real execution, custody, settlement or deployment mutation is introduced by `FIN-21`.
+
+**Exit gate:** one accepted/versioned equity subclass/profile contract covers the Owner taxonomy, shared factor families avoid duplicate score engines, representative challenger profiles are deterministically testable as `scoreEligible=false`, current `traditional-scoring@2.1.0` champion behavior is unchanged, and a promotion-readiness checklist binds verified coverage, PIT/OOS, correlation/stress/lineage and explicit Owner approval without creating any parallel authority.
