@@ -26,8 +26,8 @@
 | `GOV-CHAT-003` | Platform Director `PVC-05` / Governance scope | GOV | `DONE_MAIN` | boundary preserved |
 | `GOV-CHAT-004` | DevelopmentChain integration | OPS + GOV policy | `DONE_MAIN` | PVC → Roadmap → ADR → ESS model active |
 | `GOV-CHAT-005` | M0-M10 historical treatment | OPS / GOV | `DONE_MAIN` | M10 retired/off |
-| `GOV-CHAT-006` | Financial technical `VC-*` migration assessment | GOV + affected owners | `DEFERRED_OWNER_DECISION` | coordinated architecture decision required |
-| `GOV-CHAT-007` | Preserve `SC-MD-SPT-0001` during any future migration | affected owners | `DEFERRED_OWNER_DECISION` | invariant retained |
+| `GOV-CHAT-006` | Financial technical `VC-*` migration assessment | GOV + affected owners | `OWNER_CONFIRMED / DOCUMENTATION_MERGE_PENDING` | Owner confirmed no migration on 2026-09-06; decision record in ROADMAP.md; terminal decision closeout after Human merge |
+| `GOV-CHAT-007` | Preserve `SC-MD-SPT-0001` during any future migration | affected owners | `CONTINUOUS` | existing technical identities retained; GOV-05 does not authorize a migration |
 | `GOV-CHAT-008` | CLIENT organizational `PVC-01` migration | CLIENT | `FOREIGN_OPEN` | CLIENT-owned |
 | `GOV-CHAT-009` | Operations project surface | OPS | `DONE_MAIN` | present |
 | `GOV-CHAT-010` | Project navigation convergence | respective owners | `DONE_MAIN` | canonical surfaces present |
@@ -84,7 +84,7 @@
 | `GOV-CHAT-061` | Recorrelate Roadmap + Task Register + Component Matrix after GOV-03 | GOV | `DONE_MAIN` | Human-merged PR #751 |
 | `GOV-CHAT-062` | COMP-GAP-002 / ADR-0007 lifecycle-semantic decision | GOV | `DONE_MAIN` | PR #755 registered the stable historical/non-authorizing identity; PR #758 aligned the visible document semantics |
 | `GOV-CHAT-063` | COMP-GAP-003 / ESS-0006 stale assumptions | GOV / ESS boundary | `DONE_MAIN` | Human-merged PR #757 revalidated ESS-0006 v1.1.0 without parallel registry/runtime authority |
-| `GOV-CHAT-064` | Post-ESS-0006 Roadmap + Task Register + Component Matrix correlation | GOV | `OPEN_GOV` | current bounded documentation work item; no successor promotion without new executable authority/evidence |
+| `GOV-CHAT-064` | Post-ESS-0006 Roadmap + Task Register + Component Matrix correlation | GOV | `DONE_MAIN` | Human-merged PR #762; merge SHA 7fe061a897f669fd21ca4c46e564351e14f1c7dc |
 
 ## Current foreign-owner return / dependency state
 
@@ -99,7 +99,7 @@
 
 No historical Governance claim is a current writer. `CAPITAL-AI-GOV-CHAT-TASK-CONSOLIDATION-V3-2026-09-05` is `released / archived / activeWriter:false / exclusive:false` after Human-merged PR #741.
 
-`POST-ESS-0006 RECORRELATION` is executed on `agent/governance-post-ess0006-recorrelate-20260905` and is limited to:
+The historical `POST-ESS-0006 RECORRELATION` branch is terminal through PR #762. The current GOV-05 decision-recording work uses `agent/governance-gov05-closeout-20260906` and is limited to:
 
 - `docs/projects/governance/ROADMAP.md`
 - `docs/projects/governance/TASK_REGISTER.md`
@@ -107,7 +107,7 @@ No historical Governance claim is a current writer. `CAPITAL-AI-GOV-CHAT-TASK-CO
 
 No new work claim is invented solely for branch/PR mechanics.
 
-## Current-main / PR correlation
+## Historical pre-#762 correlation
 
 Human-merged PR #751 completed `GOV-CHAT-061`; PRs #755 and #758 completed the ADR-0007 lifecycle/visible-semantic closeout; PR #757 completed ESS-0006 v1.1.0 revalidation. Current `main` is `7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`, with no open PRs at this correlation point.
 
@@ -116,3 +116,7 @@ The earlier attempted Governance PR #748 and closed/unmerged PR #756 remain hist
 ## Consolidation rule
 
 This register is the current chat/backlog inventory for CAPITAL-AI-GOV traceability. `docs/projects/governance/ROADMAP.md` remains the Human-readable planning/status surface. Neither supersedes `/AGENTS.md`, accepted ADR/ESS authorities, canonical registries, project/PVC ownership or foreign project Roadmaps.
+
+## GOV-05 decision correlation — 2026-09-06
+
+Baseline: `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`. Owner confirmation: `bestätige gov 05`. The full bounded decision is recorded in `ROADMAP.md`: retain organizational PVC and technical SC-MD-SPT-0001/VC identities; no technical migration. GOV-05 documentation and #762 status housekeeping share one scoped change. No Security, Compliance, Legal or foreign implementation gap is closed by this decision.
