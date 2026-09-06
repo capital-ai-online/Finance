@@ -2,9 +2,9 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.4.0`  
+**Version:** `2.5.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-09-02  
+**Updated:** 2026-09-06  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
@@ -89,8 +89,9 @@ A step marked REQUIRED for the concrete work package cannot be skipped unless an
 13. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
 14. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
 15. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
-16. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports branch/PR-head, main baseline and gates and displays at most the two highest-priority immediately actionable next Roadmap steps.
-17. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
+16. **Copyable end-of-pass handoff.** At the end of every chat-governed repository execution pass, the same chat emits at most the two highest-priority immediately actionable next steps as a fenced `text` code block. If an exact Human/Owner response is required before continuation, that response is emitted in a separate fenced `text` code block.
+17. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports branch/PR-head, main baseline and gates and displays at most the two highest-priority immediately actionable next Roadmap steps using the copyable handoff format.
+18. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
 
 ## Git identity terminology
 
@@ -111,7 +112,37 @@ Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/gove
 
 GitHub hosted `build-and-test` remains the independent technical validation for the final PR head where applicable.
 
-## Post-PR chat handoff and next-step queue (`CTRL-SDLC-CHAT-HANDOFF-001`)
+## Chat handoff and next-step queue (`CTRL-SDLC-CHAT-HANDOFF-001`)
+
+This control has two triggers: `CHAT_RUN_HANDOFF` and `POST_PR_HANDOFF`. Both use one canonical copyable presentation for actionable next steps and exact Human/Owner responses.
+
+Canonical next-step block:
+
+```text
+NÄCHSTE SCHRITTE
+1. <bounded immediately actionable step>
+   Exit Gate: <objective completion condition>
+2. <optional second bounded immediately actionable step>
+   Exit Gate: <objective completion condition>
+```
+
+When no immediately actionable step remains, the same fenced block states `Keine weiteren unmittelbar umsetzbaren Schritte identifiziert.`. If continuation requires an exact Human/Owner response, render it separately:
+
+```text
+Freigabe-Antwort: <exact response required from the Human/Owner>
+```
+
+Narrative context may remain outside the snippets; the actionable next-step and approval/response text itself is always copyable.
+
+### `CHAT_RUN_HANDOFF`
+
+At the end of every chat-governed repository execution pass, before the assistant's final response closes that pass, the chat MUST render the canonical **Nächste Schritte** code block. This applies after implementation work, correlation/validation work, blocked or dependency-held states, approval waits, and terminal/no-next-step states.
+
+The queue is derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and material correlation results from the pass. Facts that may have materially changed are refreshed before being presented as current. The visible queue remains bounded to at most the two highest-priority immediately actionable steps, each with an objective exit gate.
+
+If Human/Owner action is the next gate, the exact required response MUST additionally be emitted in the separate copyable approval/response block. The block does not itself grant authority; the Human/Owner still must send the required response under the applicable gate.
+
+### `POST_PR_HANDOFF`
 
 A chat-governed work item does not end its handoff at successful PR creation. Immediately after creation, the chat MUST expose the PR reference, branch/PR-head, the main baseline used for the final correlation, the correlation result, and the known validation/open-gate state.
 

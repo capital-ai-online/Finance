@@ -84,7 +84,7 @@ describe('governance authority consistency', () => {
     expect(chain).not.toContain('Google AI Studio ist die Entwicklungsumgebung für Anwendungscode');
   });
 
-  it('bounds every chat-governed post-PR handoff to the next two actionable steps', () => {
+  it('bounds every chat-governed execution-pass handoff and makes next steps and owner responses copyable', () => {
     const agents = read('AGENTS.md');
     const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
     const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
@@ -92,11 +92,21 @@ describe('governance authority consistency', () => {
     expect(handoff.status).toBe('required');
     expect(handoff.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
     expect(handoff.authorityRefs).toContain('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION');
+    expect(handoff.requirement).toContain('CHAT_RUN_HANDOFF');
+    expect(handoff.requirement).toContain('POST_PR_HANDOFF');
     expect(handoff.requirement).toMatch(/at most the two highest-priority/i);
     expect(handoff.requirement).toMatch(/exit gate/i);
+    expect(handoff.requirement).toMatch(/fenced text/i);
     expect(agents).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
+    expect(agents).toContain('CHAT_RUN_HANDOFF');
+    expect(agents).toContain('POST_PR_HANDOFF');
+    expect(agents).toContain('NÄCHSTE SCHRITTE');
+    expect(agents).toContain('Freigabe-Antwort');
     expect(agents).toContain('only the two highest-priority immediately actionable steps');
     expect(chain).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
+    expect(chain).toContain('CHAT_RUN_HANDOFF');
+    expect(chain).toContain('NÄCHSTE SCHRITTE');
+    expect(chain).toContain('Freigabe-Antwort');
     expect(chain).toContain('current `main`, open Pull Requests, changed-file/semantic overlap');
   });
 
@@ -109,12 +119,14 @@ describe('governance authority consistency', () => {
 
     expect(sameIdControls).toHaveLength(1);
     expect(handoff.requirement).toContain('POST_PR_HANDOFF');
+    expect(handoff.requirement).toContain('CHAT_RUN_HANDOFF');
     expect(handoff.requirement).not.toContain('FOREIGN_PROJECT_HANDOFF');
     expect(handoff.evidence).toContain('docs/projects/README.md');
     expect(handoff.evidence).toContain('docs/projects/PROJECT_VALUE_CHAIN.md');
     expect(handoff.evidence).not.toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
 
     expect(agents).toContain('POST_PR_HANDOFF');
+    expect(agents).toContain('CHAT_RUN_HANDOFF');
     expect(agents).not.toContain('Trigger 2 — `FOREIGN_PROJECT_HANDOFF`');
     expect(agents).not.toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
     expect(agents).toContain('docs/projects/PROJECT_VALUE_CHAIN.md');
