@@ -26,23 +26,23 @@ Detailed SEO/Marketing state remains canonical in `docs/roadmaps/SEO_GOOGLE_MARK
 | `SEO-PROJ-05` | Productive changes remain owner-routed | Frontend/OPS/GOV/COMP changes are executed by those projects |
 | `SEO-PROJ-06` | Public/search version projection uses one authority | `package.json#version` is the sole version authority; metadata/structured-data/search evidence must project it without a second SEO version constant |
 | `SEO-PROJ-07` | Google-visible version is evidence-gated | `GOOGLE_VISIBLE_PASS` requires an identified Google surface and observed current version after refresh/reindex; absence of current evidence never implies PASS |
+| `SEO-PROJ-08` | Public sitemap matches canonical public SEO routes | `public/sitemap.xml` loc paths equal `src/lib/routeSeo.ts#listPublicRouteSeoPaths()` exactly; regression `tests/unit/seoPublicRouteSitemap.test.ts` |
 
 ## Version projection gate
 
 The current package version is read from `package.json#version`; SEO does not define or own another version value. Version-bearing public metadata, prerendered public routes and structured data are verification surfaces only.
 
-Current correlation on 2026-09-02:
+Current correlation on 2026-09-05 against `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`:
 
 - repository package version: `0.6.0`;
-- public website visible version: `0.6.0`;
 - `index.html` description/OpenGraph/Twitter descriptions: `0.6.0`;
-- `SoftwareApplication` JSON-LD: present, but no explicit `softwareVersion` projection;
-- exact Google surface showing stale `0.5.4`: not yet independently identified with available read-only evidence;
-- Google external mutation/reindex request: not performed.
+- `SoftwareApplication.softwareVersion` in `index.html`: `0.6.0` — **IMPLEMENTED_ON_MAIN**;
+- `GOOGLE_VISIBLE_PASS`: **NOT ENABLED** — no current Google-surface observation after refresh/reindex is recorded in this work unit;
+- public sitemap on current main and live `https://capital-ai.online/sitemap.xml` omitted `/learning-platform` while `routeSeo` and prerender include it — **WP-Q1-HARDEN** repository remediation is in this owner branch.
 
-Because `index.html` is a productive Frontend surface, the `SoftwareApplication.softwareVersion` remediation remains `CAPITAL-AI-FE` implementation scope. CAPITAL-AI-SEO owns the requirement, correlation evidence and post-change Google-visible verification gate.
+Historical 2026-09-02 evidence file `docs/seo/GOOGLE_VISIBLE_VERSION_CORRELATION_2026-09-02.md` remains evidentiary and is not rewritten as current Google PASS.
 
-Evidence: `docs/seo/GOOGLE_VISIBLE_VERSION_CORRELATION_2026-09-02.md`.
+SEO coordinates the requirement and Google-visible verification gate. Frontend owns `index.html` implementation. Operations owns production deploy of the sitemap artifact.
 
 ## Execution invariants
 
@@ -59,8 +59,8 @@ Evidence: `docs/seo/GOOGLE_VISIBLE_VERSION_CORRELATION_2026-09-02.md`.
 
 | Target | Relationship |
 |---|---|
-| `CAPITAL-AI-FE` | public-page/UI and `index.html` implementation required by SEO, including canonical `SoftwareApplication.softwareVersion` projection |
-| `CAPITAL-AI-OPS` | production deployment, provider, DNS/TLS and operational verification |
+| `CAPITAL-AI-FE` | public-page/UI and `index.html` implementation required by SEO |
+| `CAPITAL-AI-OPS` | production deployment, provider, DNS/TLS and operational verification, including production sitemap publish after repository merge |
 | `CAPITAL-AI-GOV` | publishing/content automation and governance-control boundaries |
 | `CAPITAL-AI-COMP` | marketing/compliance applicability and assessment |
 | Productive domain owners | source facts/contracts used by public content without semantic redefinition |
@@ -78,7 +78,8 @@ For project-surface changes, the smallest sufficient validation is:
 7. branch is synchronized with current `main` before PR readiness;
 8. PR creation is separately approved for the exact main/head snapshot;
 9. version-projection evidence resolves the repository authority, public-site observation, structured-data state and Google-visible state independently;
-10. `GOOGLE_VISIBLE_PASS` is never asserted while the Google surface or post-refresh observation remains unknown.
+10. `GOOGLE_VISIBLE_PASS` is never asserted while the Google surface or post-refresh observation remains unknown;
+11. sitemap loc set equals `listPublicRouteSeoPaths()` with no missing, extra, duplicate or non-canonical URLs.
 
 Documentation-only project-surface work does not by itself require a pre-PR Runtime build; hosted repository checks after PR creation remain authoritative for merge readiness.
 
@@ -91,7 +92,9 @@ The owner-side SEO project-folder migration is complete after Human merge when:
 - existing SEO/Marketing detail sources remain canonical and non-duplicated;
 - required hosted checks for the exact PR candidate have passed.
 
-For the Google-visible version correlation work item, repository-side SEO completion is `REPOSITORY_PASS` when the requirement/evidence gate is merged and the FE-owned structured-data gap is routed. External completion remains separate: `GOOGLE_REFRESH_REQUESTED` → `WAITING_FOR_REINDEX` → `GOOGLE_VISIBLE_PASS`, with `BLOCKED` used whenever the exact Google surface or required authorization is unresolved.
+For WP-Q1-HARDEN, repository completion is `IMPLEMENTED_ON_MAIN` only after Human merge of the sitemap/regression change. Production sitemap coverage remains a separate OPS deploy observation.
+
+For the Google-visible version correlation work item, repository-side structured-data projection is `IMPLEMENTED_ON_MAIN` for `softwareVersion` `0.6.0`. External completion remains separate: `GOOGLE_REFRESH_REQUESTED` → `WAITING_FOR_REINDEX` → `GOOGLE_VISIBLE_PASS`, with `BLOCKED` used whenever the exact Google surface or required authorization is unresolved.
 
 ## Non-goals
 
