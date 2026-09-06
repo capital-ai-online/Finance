@@ -9,8 +9,10 @@ It does not own every productive source change. The affected Primary Owner remai
 
 ## Current Security work
 
-- `S1-R2-05` server-owned Stripe redirect boundary.
-- `S1-R2-06` parent protected-capability inventory and server-enforcement coordination.
+- `S1-R2-05` server-owned Stripe redirect boundary — **IMPLEMENTED_ON_MAIN / EVIDENCE_READY**; current main contains `server/middleware/stripeReturnUrlGuard.ts`, route composition and focused open-redirect negative tests. Independent CAPITAL-AI-SEC verification remains open.
+- `S1-R2-06` parent protected-capability inventory and server-enforcement coordination — **PARENT EVIDENCE_READY**; foreign child remediation and Security verification remain open.
+
+Canonical current-main backlog correlation: [`../evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`](../evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md).
 
 ### S1-R2-06 parent inventory
 
