@@ -3,8 +3,8 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `2.8.2`  
 **Status date:** `2026-09-07`  
-**Current repository baseline for this synchronization:** `main@12b5ec1886984fb6815ba111108f7f353496de7d`  
-**Open PR correlation at this synchronization:** zero open Pull Requests against `main`  
+**Current repository baseline for this synchronization:** `main@4ac4d7574cdf52e9158f5aee2c2563c0f8c8a58a`  
+**Open PR correlation at this synchronization:** no foreign-owner open PR with changed-file, namespace or Authority overlap for this bounded Governance projection; the branch's own delivery PR is not treated as a project dependency  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -105,9 +105,9 @@ Remote-skill distribution remains a separate later architecture/security decisio
 
 ## Current project-state notes
 
-- `CAPITAL-AI-GOV`: GOV-CHAT-070 is merged/terminal; broader GOV-07 User-Lifecycle closeout remains `PARTIAL / OWNER RETURNS PENDING`; GOV-08 Admin Panel graph remains foreign-owned CLIENT/FE/OPS implementation scope.
+- `CAPITAL-AI-GOV`: GOV-CHAT-070 is merged/terminal; broader GOV-07 User-Lifecycle closeout remains `PARTIAL / OWNER RETURNS PENDING`. The refreshed OPS-owned User-Lifecycle return is on current main through Human-merged PR #794 as `EVIDENCE_READY`; provider E2E, independent Security verification and remaining FE/COMP/Legal returns remain explicit dependencies. GOV-08 Admin Panel graph remains foreign-owned CLIENT/FE/OPS implementation scope.
 - `CAPITAL-AI-DOC`: D8 read-only Migration Planning is on current main through PR #792; physical/semantic migration execution remains separate.
-- `CAPITAL-AI-OPS`: Recovery/RPO/RTO repository harness is implemented on main; operational evidence and independent Security verification remain separate gates.
+- `CAPITAL-AI-OPS`: GOV-07 User-Lifecycle owner evidence is current on main through PR #794; Recovery/RPO/RTO repository harness is implemented on main; operational evidence and independent Security verification remain separate gates.
 - `CAPITAL-AI-CLIENT`: contract baseline is complete; physical runtime remains condition-gated; CLIENT-08 Project Skill / Plugin Invocation Contract remains open.
 
 These summaries do not replace the affected project Roadmaps and must be re-correlated when those projects change.
@@ -130,5 +130,5 @@ These summaries do not replace the affected project Roadmaps and must be re-corr
 
 ## Current next actions
 
-1. Resolve next work from the affected project's current Roadmap rather than reopening terminal Governance work; DR-02B requires no further Governance implementation.
+1. Keep GOV-07 dependency-held after consuming the merged OPS return from PR #794; final Governance correlation waits on remaining FE/SEC/COMP/Legal and applicable provider-assurance evidence rather than reopening terminal GOV-CHAT-070 or DR-02B.
 2. Productive DR-03 continuation remains OPS-owned and proceeds only when the current OPS Roadmap promotes it after higher-priority gates.
