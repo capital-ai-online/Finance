@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.8.0`  
+**Control Plane Version:** `2.9.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-06  
 **Repository:** `SvenKulessa/Finance`
@@ -224,6 +224,32 @@ The next-step queue MUST be recomputed from the then-current Project Value Chain
 If more than two implementation or follow-up steps are available, the chat MUST display **only the two highest-priority immediately actionable steps**. If one remains, it displays one; if none remain, it states that no additional implementation step is currently identified. Each displayed step MUST be bounded/atomic, name its intended exit gate, and respect this default prioritization unless a higher authority changes it: security/data integrity → governance/compliance → CI/build reliability → architecture/integration consistency → deployment readiness → observability/performance → UX/documentation.
 
 After either displayed step is completed, current `main`, open Pull Requests, changed-file/semantic overlap, the affected Roadmap and applicable ADR/ESS MUST be re-read and the queue reprioritized. The previously displayed second step does not automatically become the new first step.
+
+### Provider-neutral chat presentation and manual actions (`CTRL-GOV-CHAT-PRESENTATION-001`)
+
+This stable control applies to every CAPITAL-AI project chat and every chat-governed repository execution output consumed under this trust root, regardless of provider profile. ChatGPT, Claude / Claude Code and Grok are bound to the same presentation semantics through this trust root and the provider-neutral ESS-0019 capability plane; provider-specific repository policy mirrors remain prohibited.
+
+Substantive chat outputs MUST use context-appropriate semantic emoji **together with text labels** to separate distinct categories such as analysis, implementation, validation, risk, open work, dependencies and Human/Owner actions. The default vocabulary is:
+
+- `🔍 ANALYSE / CHECK` — analysis, correlation or review;
+- `🏗️ UMSETZUNG / ARCHITEKTUR` — implementation or architecture work;
+- `🧪 VALIDIERUNG / EVIDENCE` — tests, checks or evidence;
+- `⚙️🤓 MANUELL` — action that still requires Human execution or Human/Owner authority;
+- `🟡 OFFEN / WAITING` — unresolved or dependency-held work;
+- `🔴 BLOCKED / FAIL` — blocked or failed state;
+- `🟠 RISIKO / WARNUNG` — material risk or warning;
+- `✅ DONE` / `🟢 PASS` — completed or positively validated state;
+- `🔐 SECURITY / COMPLIANCE` — security, privacy, compliance or permission boundary;
+- `🔗 ABHÄNGIGKEIT / INTEGRATION` — dependency, handoff or integration;
+- `🧭 NÄCHSTE SCHRITTE` — bounded continuation queue.
+
+The exact marker `⚙️🤓 MANUELL` is mandatory whenever the current authorized agent/tool cannot fully execute an action itself **or** applicable Governance requires a Human/Owner decision or protected action. A technically executable action remains `⚙️🤓 MANUELL` when Human/Owner authority is the controlling gate.
+
+Before classifying a task as manual solely because of an apparent capability gap, the agent SHOULD check the existing repository/native capability, already-connected platform/plugin capability and applicable existing workflow in the reuse order from section 11 where that check is relevant and authorized. Missing tool capability never authorizes installation, connection, permission changes or bypass of Human authority.
+
+Each manual item SHOULD state, when known: **what** must be done, **where**, **why** Human execution/authority is required, the intended **target state**, and how success can be **verified**. Emoji are supplementary scanning cues; they MUST NOT replace the text label or factual status. `NOT RUN` remains distinct from `PASS`, and decorative emoji volume must not obscure technical meaning.
+
+Short single-purpose acknowledgements may stay concise; the control requires semantic separation when a response contains multiple distinct work/status categories and requires `⚙️🤓 MANUELL` for every manual or Human-authority action regardless of response length.
 
 #### Project folder and PVC mapping
 
