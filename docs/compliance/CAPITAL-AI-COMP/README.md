@@ -11,7 +11,7 @@
 **Date:** 2026-09-06  
 **Status:** ACTIVE — NON-AUTHORIZING COMPLIANCE ASSESSMENT INDEX  
 **Owner:** CAPITAL-AI Owner / Compliance  
-**Current baseline:** `main@6980b6547229fd2338d94bc1af4e71934cfd5de0`
+**Current baseline:** `main@49bf799d0098ba15a86a686401627ee6f658164f`
 
 ## Purpose
 
