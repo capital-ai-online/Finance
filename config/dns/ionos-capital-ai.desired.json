@@ -40,6 +40,16 @@
       "state": "present"
     },
     {
+      "name": "www",
+      "type": "CNAME",
+      "content": "finance-7clq.onrender.com",
+      "ttl": 3600,
+      "prio": 0,
+      "disabled": false,
+      "singleton": true,
+      "state": "present"
+    },
+    {
       "name": "mta-sts",
       "type": "CNAME",
       "content": "finance-7clq.onrender.com",
