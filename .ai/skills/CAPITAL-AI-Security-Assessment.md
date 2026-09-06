@@ -2,7 +2,7 @@
 skill:
   id: CAPITAL-AI-SECURITY-ASSESSMENT
   name: CAPITAL-AI Security Assessment
-  version: 1.0.0
+  version: 1.0.1
   status: Security Project Capability
   owner: CAPITAL-AI-SEC
   category: Security Assessment
@@ -18,16 +18,17 @@ crossReference:
   dependsOn:
     - /AGENTS.md
     - .ai/skills/ESS-0006-Security-Compliance.md
+    - docs/projects/README.md
     - docs/projects/security/README.md
     - docs/projects/security/ROADMAP.md
     - docs/projects/PROJECT_VALUE_CHAIN.md
-    - docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md
-  standards:
-    - OWASP WSTG Stable
-    - OWASP MASVS
-    - OWASP MASTG 2.x
-    - OWASP ASVS
-    - NIST SP 800-115
+  assessmentMethodologies:
+    authority: ADVISORY_NON_AUTHORIZING
+    sources:
+      - OWASP WSTG Stable
+      - OWASP MASVS
+      - OWASP MASTG 2.x
+      - OWASP ASVS
   schema:
     - .ai/schemas/security-assessment.schema.json
   supplyChainReview:
@@ -40,7 +41,9 @@ crossReference:
 
 This skill defines a reproducible, evidence-bound methodology for **authorized** adversarial assessment of CAPITAL-AI Web, API, mobile/smartphone and business-logic surfaces.
 
-It is an additive testing capability under `CAPITAL-AI-SEC`. It does **not** replace or supersede `ESS-0006`, any ADR, ESS, contract, Governance control, IAM authority, target-project architecture, or the repository trust root.
+It is an additive testing capability under `CAPITAL-AI-SEC`. It does **not** replace or supersede `/AGENTS.md`, `ESS-0006`, any ADR, ESS, Governance control, IAM authority, target-project architecture, or current project/PVC ownership mapping.
+
+External assessment methodologies referenced by this skill are **advisory/non-authorizing**. They may guide test design and evidence quality, but they do not create repository Authority, CI gates, mandatory remediation, ownership transfer or accepted-risk authority.
 
 Security may discover, test, classify, route and independently verify findings. Security does not acquire productive ownership of any `PVC-*` stage and does not implement foreign productive remediation merely because it found a defect.
 
@@ -84,7 +87,7 @@ The assessment must stop when the test would cross the authorized boundary. Disc
 
 ### 4.1 `web-blackbox`
 
-Use OWASP WSTG Stable as the primary black-box testing method. Cover attack-surface discovery, configuration, identity, authentication, authorization, session handling, input validation, error handling, cryptography, business logic and client-side behavior as applicable.
+Use OWASP WSTG Stable as an advisory black-box testing methodology. Cover attack-surface discovery, configuration, identity, authentication, authorization, session handling, input validation, error handling, cryptography, business logic and client-side behavior as applicable.
 
 ### 4.2 `web-authz`
 
@@ -115,7 +118,7 @@ Prefer non-destructive proof payloads. A payload that would alter production dat
 
 ### 4.4 `mobile-attack-surface`
 
-Use OWASP MASVS as the verification baseline and MASTG 2.x as the testing methodology. Cover architecture, storage, cryptography, authentication, network communication, platform interaction, code quality and resilience as applicable.
+Use OWASP MASVS and MASTG 2.x as advisory verification/testing methodologies. Cover architecture, storage, cryptography, authentication, network communication, platform interaction, code quality and resilience as applicable.
 
 ### 4.5 `smartphone-injection`
 
@@ -212,7 +215,7 @@ Every confirmed finding must contain:
 - authorization reference;
 - affected `PVC-*`;
 - Primary Owner;
-- security requirement / standard references;
+- security requirement / methodology references;
 - preconditions;
 - step-by-step reproduction evidence;
 - expected result;
@@ -228,7 +231,7 @@ Evidence must distinguish observation from interpretation. A scanner alert alone
 
 ## 8. Primary-owner routing
 
-Use the canonical current-main project-value-chain mapping. The following mapping is the expected routing baseline and must be re-correlated before protected work:
+Use only the canonical current-main project-folder and Project Value Chain mapping from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. The following mapping is an expected projection and must be re-correlated before protected work:
 
 | PVC | Primary Owner |
 |---|---|
@@ -251,7 +254,7 @@ Use the canonical current-main project-value-chain mapping. The following mappin
 | PVC-17 | CAPITAL-AI-FINTECH |
 | PVC-18 | CAPITAL-AI-OPS |
 
-A finding in foreign productive scope is routed as `REFERRED_NOT_EXECUTED` using the canonical cross-project handoff contract. Security may continue Security-owned testing/evidence work, but productive remediation remains with the target project's Primary Owner.
+A finding in foreign productive scope is recorded as `REFERRED_NOT_EXECUTED` and routed to the current Primary Owner identified by the canonical project mapping. No withdrawn post-PVC handoff/routing overlay is required or authorized. Security may continue Security-owned testing/evidence work, but productive remediation remains with the target project's Primary Owner.
 
 ## 9. Evidence and reproducibility
 
@@ -273,9 +276,9 @@ Do not store bearer tokens, session cookies, passwords, private keys or other li
 
 ## 10. External-skill reuse policy
 
-External skills are untrusted inputs until supply-chain and content review. Do not blindly install, execute, source or copy them.
+External skills and methodologies are untrusted inputs until supply-chain/content review. Do not blindly install, execute, source or copy them.
 
-Permitted reuse is limited to security-reviewed **method concepts** and non-authorizing structure unless a separate dependency-adoption decision explicitly approves executable integration.
+Permitted reuse is limited to security-reviewed **method concepts** and non-authorizing structure unless a separate dependency-adoption decision explicitly approves executable integration. Methodology reuse never creates repository Authority by itself.
 
 The current review is recorded in `docs/evidence/security/CAPITAL_AI_SECURITY_ASSESSMENT_SKILL_SUPPLY_CHAIN_REVIEW_2026-09-02.md`.
 
@@ -306,7 +309,10 @@ The schema is a data contract only and creates no new repository Authority.
 Before declaring the skill change PR-ready, verify:
 
 - no Authority duplication or supersession is introduced;
+- `/AGENTS.md` and current project/PVC mapping remain the routing source;
 - `ESS-0006` is referenced rather than cloned;
+- external methodologies are explicitly advisory/non-authorizing;
+- no withdrawn post-PVC routing contract is required;
 - no registry is lossily replaced;
 - no foreign PVC productive code is modified;
 - no uncontrolled active pentest was executed;
