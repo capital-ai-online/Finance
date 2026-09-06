@@ -30,6 +30,17 @@ function relationSchema(relation) {
   return index > 0 ? relation.slice(0, index) : '';
 }
 
+function relationName(relation) {
+  const index = relation.indexOf('.');
+  return index > 0 ? relation.slice(index + 1) : relation;
+}
+
+function isPgmqRecoveryRelation(relation) {
+  if (relationSchema(relation) !== 'pgmq') return false;
+  const name = relationName(relation);
+  return name === 'meta' || name.startsWith('q_') || name.startsWith('a_');
+}
+
 export function parseCopyDump(text) {
   const relations = new Map();
   let current = null;
@@ -81,7 +92,10 @@ function assertRequiredRelations(relations, label) {
 function recoveryRelations(relations) {
   return [...relations.keys()]
     .filter(
-      (relation) => relationSchema(relation) === 'public' || REQUIRED_RELATION_SET.has(relation),
+      (relation) =>
+        relationSchema(relation) === 'public' ||
+        REQUIRED_RELATION_SET.has(relation) ||
+        isPgmqRecoveryRelation(relation),
     )
     .sort();
 }
@@ -119,10 +133,11 @@ export function inspectRecoveryDump(text) {
   }
 
   return {
-    schemaVersion: '1.0.0',
+    schemaVersion: '1.1.0',
     publicRelations,
     authRelations: countRelations(relations, 'auth'),
     storageRelations: countRelations(relations, 'storage'),
+    pgmqRelations: countRelations(relations, 'pgmq'),
     ...criticalRows(relations),
     storageBinaryCoverage: 'REQUIRES_ZERO_OBJECTS',
   };
@@ -158,12 +173,14 @@ export function compareRecoveryDumps(sourceText, restoredText) {
   const storageRelationsCompared = [...scopedRelations].filter(
     (relation) => relationSchema(relation) === 'storage',
   ).length;
+  const pgmqRelationsCompared = [...scopedRelations].filter(isPgmqRecoveryRelation).length;
 
   const summary = {
-    schemaVersion: '1.0.0',
+    schemaVersion: '1.1.0',
     publicRelationsCompared,
     authRelationsCompared,
     storageRelationsCompared,
+    pgmqRelationsCompared,
     mismatchCount: mismatches.length,
     mismatches,
     dataIntegrityMatch:
