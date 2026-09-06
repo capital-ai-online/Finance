@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-06, correlated to repository-visible implementation/PR evidence  
-**Current correlation baseline:** `main@80c30ad2aa469f4552c84f3cc40e997e4ef13ee0`  
+**Current correlation baseline:** `main@1b9def6d414ee8838e5403bfc9f705bbbe438d2a`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -56,14 +56,14 @@
 
 | Owner | Current return state | GOV interpretation |
 |---|---|---|
-| `CAPITAL-AI-OPS` | User-Lifecycle harness/stable-ID evidence exists with provider evidence still partial | `FOREIGN_PARTIAL` |
+| `CAPITAL-AI-OPS` | User-Lifecycle harness/stable-ID evidence exists with provider evidence still partial; PR #771 updates OPS Security backlog only | `FOREIGN_PARTIAL`; PR #771 has no GOV-file/semantic overlap with GOV-CHAT-068 |
 | `CAPITAL-AI-FE` | PR #736 + #745 + #763 merged | architecture/auth progress; broader lifecycle/pricing/entitlement UX not established |
 | `CAPITAL-AI-SEC` | PR #766 merged | assessment-authority drift closed; independent ULS re-verification/provider-E2E residuals remain |
 | `CAPITAL-AI-COMP` / Human-Legal | PR #761 and #768 merged | bounded assessment/closeout evidence current; external Owner/Legal/Evidence gates remain |
 
 ## Current scoped GOV writer
 
-No historical Governance claim is a current writer. The post-GOV-05 re-correlation branch is terminal through PR #769.
+No historical Governance claim is a current writer. The post-GOV-05 re-correlation branch is terminal through PR #769. Final correlation against `main@1b9def6d414ee8838e5403bfc9f705bbbe438d2a` found no open PR and no changed-file/namespace/semantic overlap from PR #771.
 
 Current bounded work uses `agent/governance-copyable-chat-handoff-20260906` and is limited to the existing Governance instruction/control surfaces, their consistency test and current Governance project projections required to keep the work traceable:
 
