@@ -1,0 +1,49 @@
+{
+  "name": "capital-ai-brandmark",
+  "version": "1.0.0-manifest-v6.2",
+  "manifestVersion": "6.2",
+  "designTokenSource": "docs/frontend/design-tokens.json",
+  "description": "Versioned geometry contract for the CAPITAL-AI network-node brandmark. This file contains geometry and semantic token references only; color and typography values remain exclusively authoritative in docs/frontend/design-tokens.json.",
+  "viewBox": [0, 0, 200, 180],
+  "nodes": [
+    { "id": "core", "cx": 100, "cy": 100, "r": 11, "fillToken": "color.brand.primary" },
+    { "id": "northWest", "cx": 60, "cy": 50, "r": 6.5, "fillToken": "color.brand.primary" },
+    { "id": "northInner", "cx": 105, "cy": 55, "r": 4.5, "fillToken": "color.brand.primary" },
+    { "id": "northEast", "cx": 140, "cy": 48, "r": 7, "fillToken": "color.brand.primary" },
+    { "id": "westMid", "cx": 65, "cy": 85, "r": 4.5, "fillToken": "color.brand.primary" },
+    { "id": "westInner", "cx": 78, "cy": 93, "r": 5, "fillToken": "color.brand.primary" },
+    { "id": "eastMid", "cx": 142, "cy": 90, "r": 6, "fillToken": "color.brand.primary" },
+    { "id": "southWest", "cx": 60, "cy": 135, "r": 7.5, "fillToken": "color.brand.primary" },
+    { "id": "southInner", "cx": 100, "cy": 145, "r": 5.5, "fillToken": "color.brand.primary" },
+    { "id": "southEast", "cx": 140, "cy": 133, "r": 8, "fillToken": "color.brand.primary" }
+  ],
+  "edges": [
+    { "from": "northWest", "to": "westInner", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "westInner", "to": "southWest", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "southWest", "to": "southInner", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "southInner", "to": "southEast", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "southEast", "to": "eastMid", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "eastMid", "to": "northEast", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "northEast", "to": "northInner", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "northInner", "to": "core", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "core", "to": "southInner", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "core", "to": "westInner", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "core", "to": "eastMid", "strokeToken": "color.brand.primary", "width": 2.5, "opacity": 0.85 },
+    { "from": "northWest", "to": "southEast", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "northEast", "to": "southWest", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "northEast", "to": "westInner", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "westMid", "to": "southEast", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "northWest", "to": "northEast", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "southWest", "to": "eastMid", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "southInner", "to": "westMid", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "northInner", "to": "westMid", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "westMid", "to": "eastMid", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 },
+    { "from": "core", "to": "northWest", "strokeToken": "color.brand.accent", "width": 1, "opacity": 0.55 }
+  ],
+  "rules": {
+    "allowBrandCyan": false,
+    "primaryNodeToken": "color.brand.primary",
+    "primaryEdgeToken": "color.brand.primary",
+    "secondaryEdgeToken": "color.brand.accent"
+  }
+}
