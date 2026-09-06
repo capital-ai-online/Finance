@@ -22,6 +22,9 @@ function fixture(overrides: Partial<Record<string, string[]>> = {}) {
     '"auth"."identities"': ['identity-1'],
     '"storage"."buckets"': [],
     '"storage"."objects"': [],
+    '"pgmq"."meta"': ['stripe_sync_work'],
+    '"pgmq"."q_stripe_sync_work"': [],
+    '"pgmq"."a_stripe_sync_work"': [],
     ...overrides,
   };
   return Object.entries(rows)
@@ -41,7 +44,7 @@ describe('OPS recovery evidence', () => {
     expect(yaml).not.toContain('pull_request_target');
   });
 
-  it('validates source recovery coverage before encryption and compares auth/public/storage metadata after restore', () => {
+  it('validates source recovery coverage and materializes PGMQ before isolated restore', () => {
     const yaml = workflow();
     expect(yaml).toMatch(
       /node\s+(?:"[^"\n]*\/)?scripts\/operations\/recoveryDumpIntegrity\.mjs"?\s+inspect\b/,
@@ -49,22 +52,44 @@ describe('OPS recovery evidence', () => {
     expect(yaml).toMatch(
       /node\s+(?:"[^"\n]*\/)?scripts\/operations\/recoveryDumpIntegrity\.mjs"?\s+compare\b/,
     );
+    expect(yaml).toContain('PGMQ_RELATIONS');
+    expect(yaml).toContain('PGMQ_QUEUE_COUNT');
+    expect(yaml).toContain('pgmq-restore-init.sql');
+    expect(yaml).toContain('CREATE EXTENSION IF NOT EXISTS pgmq');
+    expect(yaml).toContain('TRUNCATE TABLE pgmq.meta');
+    expect(yaml).toContain("'pgmqRelationsCompared'");
     expect(yaml).toContain('AUTH_USERS_ROWS');
     expect(yaml).toContain('AUTH_IDENTITIES_ROWS');
     expect(yaml).toContain('STORAGE_OBJECTS_ROWS');
     expect(yaml).toContain("'dataIntegrityMatch'");
-    expect(yaml).toContain("'authRelationsCompared'");
-    expect(yaml).toContain("'storageRelationsCompared'");
   });
 
   it('treats row ordering as non-authoritative while preserving multiset integrity', () => {
-    const source = fixture();
-    const restored = fixture({ '"public"."profiles"': ['profile-a', 'profile-b'] });
+    const source = fixture({ '"pgmq"."q_stripe_sync_work"': ['queue-b', 'queue-a'] });
+    const restored = fixture({
+      '"public"."profiles"': ['profile-a', 'profile-b'],
+      '"pgmq"."q_stripe_sync_work"': ['queue-a', 'queue-b'],
+    });
     const summary = compareRecoveryDumps(source, restored);
     expect(summary.dataIntegrityMatch).toBe(true);
     expect(summary.publicRelationsCompared).toBe(1);
     expect(summary.authRelationsCompared).toBe(2);
     expect(summary.storageRelationsCompared).toBe(2);
+    expect(summary.pgmqRelationsCompared).toBe(3);
+  });
+
+  it('reports PGMQ recovery coverage during source inspection', () => {
+    const summary = inspectRecoveryDump(fixture());
+    expect(summary.pgmqRelations).toBe(3);
+  });
+
+  it('fails when restored PGMQ queue data diverges', () => {
+    expect(() =>
+      compareRecoveryDumps(
+        fixture({ '"pgmq"."q_stripe_sync_work"': ['queue-1'] }),
+        fixture({ '"pgmq"."q_stripe_sync_work"': ['queue-2'] }),
+      ),
+    ).toThrow(/pgmq\.q_stripe_sync_work/);
   });
 
   it('fails when restored auth data diverges', () => {
