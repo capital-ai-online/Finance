@@ -2,10 +2,10 @@
 
 **Status:** ACTIVE — CURRENT-STATE CORRELATED  
 **Initial baseline:** 2026-08-10  
-**Last Documentary correlation:** 2026-09-01  
+**Last Documentary correlation:** 2026-09-06  
 **Primary Authority:** ESS-0010 Documentary Engine  
 **Related Authorities:** ESS-0009 Knowledge, ESS-0011 Traceability, ESS-0012 Documentation Governance, ESS-0017 Vocabulary Governance, ADR-0096 Governance Control Plane, ADR-0097 Documentary Maintenance Control Loop  
-**Project execution surface:** `docs/projects/documentary/ROADMAP.md` / `WP-DOC-05`  
+**Project execution surface:** `docs/projects/documentary/ROADMAP.md` / `WP-DOC-06`  
 **Project routing:** `CAPITAL-AI-DOC / PVC-03`
 
 This roadmap is a non-authorizing Documentary execution projection. Current implementation status is resolved from current code, manifests, registries and accepted authorities before this roadmap. The original 2026-08-10 baseline remains historical context and is not allowed to override newer implementation evidence.
@@ -25,6 +25,7 @@ The productive Documentary component remains `src/platform/Documentary/`. This r
 - Documentation Hygiene implementation inside the documentation-only boundary;
 - Documentary Maintenance Control Loop and its bounded maintenance observability;
 - Documentary-side Knowledge/Vocabulary/Wiki projection contracts;
+- read-only Documentary migration/legacy-compatibility planning;
 - roadmap/evidence correlation for Documentary-owned implementation.
 
 ### Foreign productive ownership retained
@@ -35,7 +36,7 @@ The productive Documentary component remains `src/platform/Documentary/`. This r
 - `CAPITAL-AI-FINTECH / PVC-12..17`: feature engineering, scoring, orchestration, eligibility and ranking;
 - cross-cutting Security/Compliance/Quality owners retain their own requirements, findings and independent verification responsibilities.
 
-Foreign implementation is routed using `docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md` and remains `REFERRED_NOT_EXECUTED` from this Documentary roadmap.
+Foreign implementation remains `REFERRED_NOT_EXECUTED` from this Documentary roadmap and is resolved through the current Project Value Chain, target project Roadmap and target Primary Owner.
 
 ## 2. Current Documentary baseline
 
@@ -43,12 +44,12 @@ The 2026-08-10 roadmap baseline described Documentary as mostly target structure
 
 Current repository evidence on this revision shows:
 
-- Documentary component version `1.14.0` in `src/platform/Documentary/manifest.json` and the component README;
+- Documentary component version `1.15.0` in `src/platform/Documentary/manifest.json` and the component README;
 - component-version authority: `src/platform/Documentary/manifest.json#version`;
 - document-schema-version authority: `src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`;
 - platform-version authority: repository `package.json#version`, consumed through the Release control plane; Documentary does not own platform-version mutation;
-- implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance (documentation-only), Interfaces, Knowledge, Lifecycle, Mermaid, Models, Observability (maintenance slice), Orchestration, Traceability and Versioning;
-- planned/partial areas remain Migration, Plugins, additional Architecture-runtime functions and additional ESS-0012 validators.
+- implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance (documentation-only), Interfaces, Knowledge, Lifecycle, Mermaid, Migration (read-only D8 planning slice), Models, Observability (maintenance slice), Orchestration, Traceability and Versioning;
+- planned/partial areas remain physical/semantic Migration Execution, Plugins, additional Architecture-runtime functions and additional ESS-0012 validators.
 
 The current implementation remains intentionally classified as **Partial Implementation**. “Partial” no longer means “only the bilingual layer exists”; it means the established Documentary baseline is implemented while explicitly listed future slices remain open.
 
@@ -60,7 +61,7 @@ The current implementation remains intentionally classified as **Partial Impleme
 
 Implemented evidence:
 
-- README and manifest agree on Documentary component version `1.14.0`;
+- README and manifest agree on Documentary component version `1.15.0`;
 - component, document-schema and platform versions are semantically separated;
 - Documentary consumes platform version from the existing Release control plane and does not reactivate a second Version Manager authority;
 - `Architecture/documentary-baseline.json` and dedicated D0 evidence remain implementation references.
@@ -113,16 +114,19 @@ The current D7 identity is **Knowledge Integration**. `Knowledge/DocumentaryKnow
 
 ### D8 — Migration & Legacy Compatibility
 
-**State:** PLANNED / PARTIAL SUPPORT ONLY
+**State:** IMPLEMENTED READ-ONLY PLANNING SLICE / MIGRATION EXECUTION PLANNED
 
-Current implementation provides controlled status-drift updates, registry-backed identity and bounded archive-retention planning, but a general Documentary Migration runtime is not implemented. Future work may:
+`Migration/DocumentaryMigrationPlanner.ts` provides deterministic planning for Documentary-owned documentation. It classifies candidates as `canonical`, `generated`, `evidence`, `legacy`, `archive` or `unknown` and emits only `retain`, `migration-candidate`, `redirect-candidate`, `owner-review` or `blocked` dispositions.
 
-- classify canonical/generated/evidence/legacy/archive documents;
-- remove hard-coded paths in favor of stable document identity where justified;
-- preserve redirects/aliases where compatibility requires them;
-- preserve historical evidence without rewriting history.
+The planning slice is deliberately non-mutating:
 
-Compliance-owned documents, foreign runtime paths and foreign project migrations must be handed off to their respective owners rather than moved by Documentary for layout symmetry.
+- every assessment and aggregate plan reports `mutationPerformed=false`;
+- generated migration candidates require a known canonical target and proven reproducibility;
+- authority, evidence, referenced, Security/Compliance and archive material remains retained;
+- unsafe/non-documentation paths and foreign project ownership fail closed as blocked;
+- the planner does not move, delete, rewrite, register, redirect, approve or otherwise mutate repository content.
+
+Physical or semantic Migration Execution remains a separate future work item. Any execution that changes registered identity/path, compatibility redirects or foreign-owner content requires fresh current-main correlation, explicit owner-bounded authorization and the applicable lifecycle/governance gates.
 
 ### D9 — Documentary Observability
 
@@ -134,7 +138,7 @@ Compliance-owned documents, foreign runtime paths and foreign project migrations
 
 The stale 2026-08-10 gap list is replaced by the following current backlog:
 
-1. general Documentary Migration support with safe compatibility handling;
+1. physical/semantic Documentary Migration Execution beyond the read-only D8 planning slice, only when separately authorized and owner-bounded;
 2. plugin extension model without introducing a second provider/agent framework;
 3. additional ESS-0012 documentation-only validators where current policy requires them;
 4. broader Documentary quality/SLO definitions beyond the implemented maintenance observability slice;
@@ -206,8 +210,8 @@ Documentary may detect stale paths and propose document-identity-based repairs. 
 
 The original 2026-08-10 sequence is historical. Current Documentary sequencing is evidence-driven:
 
-1. maintain D0–D7 implemented baselines without reintroducing duplicate authorities;
-2. execute remaining DOC-owned Migration/Plugins/validator work only as separately scoped work packages;
+1. maintain D0–D8 implemented baselines without reintroducing duplicate authorities;
+2. execute remaining DOC-owned Migration Execution/Plugins/validator work only as separately scoped work packages;
 3. extend D9 only inside Documentary scope unless a central observability change is handed off;
 4. treat E0/E2/E3/E5 central runtime work as OPS dependencies/handoffs;
 5. preserve GOV decision boundaries for Platform Director and repository Governance;
@@ -219,7 +223,7 @@ The original 2026-08-10 sequence is historical. Current Documentary sequencing i
 The Documentary roadmap is current when:
 
 - implementation status reflects current code/manifests rather than the 2026-08-10 target-tree snapshot;
-- D4/D6/D7 numbering matches the current implemented Documentary architecture;
+- D4/D6/D7/D8 numbering matches the current implemented Documentary architecture;
 - component/schema/platform version authorities remain separated;
 - Documentary-owned work remains inside CAPITAL-AI-DOC / PVC-03;
 - EventMesh/central Traceability runtime, Platform Version Management, Release and Production are not represented as Documentary implementation work;

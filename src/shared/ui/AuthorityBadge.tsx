@@ -52,9 +52,9 @@ const AUTHORITY_TONES: Record<VisualizationAuthority, AuthorityTone> = {
   MARKET_DATA: {
     label: 'Market Data',
     description: 'Marktdaten-Projektion, getrennt vom Scoring',
-    text: 'text-brand-cyan',
-    bg: 'bg-brand-cyan/10',
-    border: 'border-brand-cyan/30',
+    text: 'text-status-info',
+    bg: 'bg-status-info/10',
+    border: 'border-status-info/30',
     Icon: Activity,
   },
 };

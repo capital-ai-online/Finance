@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.14.0
+Version: 1.15.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
 
 ## Implemented Scope
 
@@ -33,6 +33,7 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Discovery/SemanticFreshnessAnalyzer.ts`
 - `Agents/DocumentaryMaintenanceAgent.ts`
 - `Agents/ArchiveRetentionAgent.ts`
+- `Migration/DocumentaryMigrationPlanner.ts`
 - `Orchestration/DocumentaryMaintenanceOrchestrator.ts`
 - `Observability/DocumentaryMaintenanceObservability.ts`
 - `Models/DocumentaryDocument.ts`
@@ -70,6 +71,12 @@ Die AI-Ausführung verwendet über `server/documentaryMaintenanceAiAdapter.ts` d
 `ArchiveRetentionAgent` erweitert denselben Documentary-Agentenpfad ausschließlich um deterministische Retention-Klassifikation. `archived` bedeutet ausdrücklich **nicht** `delete-authorized`.
 
 Automatisch `delete-eligible` können nur alte, unregistrierte, unreferenzierte und deterministisch reproduzierbare Duplikate unter `docs/archive/generated/**` oder `docs/archive/transient/**` werden. Registrierte Dokumente, Authorities, Evidence, Security-/Compliance-Artefakte und referenzierte Historie bleiben erhalten. Der Agent führt selbst keine Löschung aus; `planDeletion()` liefert nur einen Owner-gated Plan mit `mutationPerformed=false`. Eine spätere physische Löschung muss als normaler, separat autorisierter Maintenance-Patch über Agent IAM, Kill Switch, Branch, PR und Human Merge laufen.
+
+### D8 Migration Planning / Legacy Compatibility
+
+`Migration/DocumentaryMigrationPlanner.ts` klassifiziert Documentary-Dokumentation deterministisch als `canonical`, `generated`, `evidence`, `legacy`, `archive` oder `unknown` und erzeugt ausschließlich read-only Planungsdispositionen (`retain`, `migration-candidate`, `redirect-candidate`, `owner-review`, `blocked`).
+
+Der Planner führt keine Dateioperation, Registry-Mutation, Lifecycle-Transition, Redirect-Erzeugung oder Freigabe aus; `mutationPerformed=false` bleibt Teil jedes Ergebnisses. Fremde Projekt-Owner sowie unsichere oder nicht dokumentationsbezogene Pfade werden fail-closed blockiert. Physische oder semantische Migration Execution bleibt ein separates, künftig zu korrelierendes und zu autorisierendes Work Package.
 
 ### SC-MD-SPT-0001 Wertschöpfungsketten-Anbindung
 
@@ -134,13 +141,13 @@ Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach App
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Migration` (read-only D8 Planning Slice), `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren. Diese Bereiche gehören nicht zum ADR-0097-Maintenance-Work-Package und werden durch WP-DOC-05 nicht berührt.
+Weiterhin geplant: physische/semantische `MigrationExecution`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren. Diese Bereiche werden durch den read-only D8 Planning Slice nicht implizit implementiert oder autorisiert.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
+Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. D8 bleibt read-only Planning; Migration Execution ist nicht Teil dieses Slices. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
 
 ## ESS / ADR
 

@@ -34,6 +34,34 @@ Exit:
 - provider output cannot bypass validation;
 - no provider becomes scoring authority.
 
+### GOV-07 — Newsfeed Entitlement Return
+
+**State:** `PARTIAL — PRODUCT ACCESS GAP CLOSED ON MAIN / AUTHORITY-UNAVAILABLE DISTINCTION OPEN`  
+**Scope:** bounded `PVC-09` evidence/remediation return; no second entitlement, IAM, provider or scoring authority.
+
+Current-main correlation:
+
+- merged PR #730 already placed `realtimeAiNewsfeedEntitlement` on the canonical parent mount `app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter)`, so `/api/news`, `/api/news/sources`, `/api/news/assets` and future productive `/api/news/*` subpaths pass the entitlement boundary before News provider/evidence handlers execute;
+- identity is resolved server-side through `resolveVerifiedIdentity()` and the tier is looked up by verified `userId` through the shared subscription authority; request/body/query tier projections are not authorization input;
+- `subscription-entitlements/1.0.0` denies Free/Starter and allows Pro/Enterprise for `realtime_ai_newsfeed`; focused tests cover 401 unauthenticated, 403 Free/Starter, Pro/Enterprise ALLOW and forged client-tier rejection;
+- the canonical route-composition contract rejects an unguarded `/api/news` mount and rejects direct `/api/news*` declarations in `server.application.ts`; no current alternate productive News route bypass was identified;
+- the entitlement middleware remains outside `newsRoutes.ts`, so DATA provider/evidence/freshness/DQ behavior and the no-scoring boundary remain separate from product entitlement authority;
+- the original public-route runtime gap is therefore closed on current main and MUST NOT be reimplemented as a second DATA authorization path.
+
+Residual / dependency:
+
+- `realtimeAiNewsfeedEntitlement` maps a throwing entitlement dependency to `503 entitlement-authority-unavailable`, but the current shared production `getSubscription()` contract intentionally fails closed to `Free` when the privileged subscription store is unavailable or its lookup fails; `resolveVerifiedIdentity()` likewise returns no verified identity when its authority cannot resolve the bearer;
+- consequently, exact productive differentiation of authority-unavailable from ordinary unauthenticated/Free state is not fully evidenced by the default dependency path even though access remains fail-closed;
+- DATA MUST NOT duplicate or override the shared Subscription/IAM authority merely to manufacture a News-specific 503 distinction. Any exact unavailable-state signal must come from the canonical entitlement/IAM authority and then be consumed at this boundary;
+- `CAPITAL-AI-SEC` retains independent verification of the server-side DENY/ALLOW boundary and any later authority-unavailable semantics; DATA does not self-verify Security closure.
+
+Exit:
+
+- `realtime_ai_newsfeed`: `PARTIAL` until the canonical authority can distinguish unavailable state on the productive path or a higher authority explicitly reclassifies the required status semantics;
+- DATA runtime code delta for the already-closed route bypass: `NO`;
+- alternate-route bypass remains absent and provider I/O remains downstream of the parent entitlement gate;
+- independent Security verification remains required before any Security finding is marked verified/closed.
+
 ## DATA-10 — Evidence Management
 
 **State:** `READY / SECURITY EVIDENCE WORK OPEN`

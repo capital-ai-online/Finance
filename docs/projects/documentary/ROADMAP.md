@@ -95,11 +95,35 @@ Architecture invariants:
 - no browser execution, persistence, approval, deployment or production mutation authority;
 - component/document-schema/platform-version authorities remain separate.
 
+## WP-DOC-06 — D8 Migration planning and legacy compatibility
+
+**State:** `IMPLEMENTED ON BRANCH — VALIDATION / PR / HUMAN MERGE PENDING`
+
+Current branch implementation:
+
+- branch: `agent/documentary-d8-migration-planning-20260906`;
+- baseline: `main@255afed6adbfe44a49f06163f326cb86b1d6972d`;
+- new `Migration/DocumentaryMigrationPlanner.ts` classifies Documentary documentation as `canonical`, `generated`, `evidence`, `legacy`, `archive` or `unknown`;
+- planning dispositions are bounded to `retain`, `migration-candidate`, `redirect-candidate`, `owner-review` or `blocked`;
+- generated migration candidates require a known canonical target and proven reproducibility;
+- authority, evidence, referenced, Security/Compliance and archive material remains retained;
+- foreign-project ownership and unsafe/non-documentation paths fail closed as `blocked`;
+- the planner always reports `mutationPerformed=false` and performs no move, delete, rewrite, registry mutation or redirect creation;
+- targeted unit tests cover deterministic planning and negative/fail-closed cases;
+- Documentary component metadata projects `Migration/` as the implemented read-only planning slice while physical/semantic Migration Execution remains planned.
+
+Exit gate:
+
+- targeted tests and applicable TypeScript/build/documentation/governance validation PASS on the exact branch/PR head;
+- no foreign-owner mutation, document-registry duplication or implicit migration authorization is introduced;
+- Human/CODEOWNER merge completes;
+- this Roadmap and the technical Documentary roadmap reflect the merged state.
+
 ## Remaining Documentary work
 
 The following areas remain separate Roadmap work and must not be bundled merely because prior Documentary slices are complete:
 
-- Migration;
+- physical/semantic Migration Execution beyond the read-only D8 planning slice, only where separately authorized and owner-bounded;
 - Plugins;
 - broader Documentary architecture/runtime gaps explicitly still marked planned by current component/technical documentation;
 - incremental ESS-0012 validation coverage;

@@ -26,6 +26,21 @@ describe('canonical landing, login and protected-route boundary', () => {
     expect(dashboard).toContain('<CryptoScoringEnterprise');
   });
 
+  it('keeps the public landing shell outside the dashboard preview suspense and error boundary', () => {
+    const rootStart = routes.indexOf("if (currentPath === '/')");
+    const loginStart = routes.indexOf("if (currentPath === '/login')");
+    const rootBlock = routes.slice(rootStart, loginStart);
+
+    expect(rootStart).toBeGreaterThanOrEqual(0);
+    expect(loginStart).toBeGreaterThan(rootStart);
+    expect(routes).toContain('class PublicPreviewErrorBoundary');
+    expect(routes).toContain('function PublicPreviewBoundary');
+    expect(routes).toContain('Live-Vorschau vorübergehend nicht verfügbar');
+    expect(rootBlock).toContain('<LandingPage');
+    expect(rootBlock).toContain('<PublicPreviewBoundary>');
+    expect(rootBlock).not.toContain('<RouteLoadingBoundary>');
+  });
+
   it('uses LoginPage exclusively at the dedicated /login route', () => {
     expect(routes).toContain("if (currentPath === '/login')");
     expect(routes).toContain('<LoginPage onLoginEmail={handleLogin}');

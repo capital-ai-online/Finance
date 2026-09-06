@@ -56,6 +56,72 @@ function RouteLoadingBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
+interface PublicPreviewErrorBoundaryState {
+  hasError: boolean;
+}
+
+class PublicPreviewErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  PublicPreviewErrorBoundaryState
+> {
+  state: PublicPreviewErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): PublicPreviewErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('Public dashboard preview failed to render:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className="mx-auto flex min-h-72 max-w-7xl flex-col items-center justify-center gap-4 px-4 py-10 text-center text-white sm:px-6">
+          <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-aif-gold-DEFAULT">
+            Live-Vorschau vorübergehend nicht verfügbar
+          </p>
+          <p className="max-w-2xl text-sm leading-relaxed text-white/60">
+            Die öffentliche CAPITAL-AI-Seite bleibt verfügbar. Die Live-Dashboard-Vorschau konnte in diesem Browser nicht gestartet werden.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/login"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-aif-gold-DEFAULT px-4 py-2 text-xs font-black uppercase tracking-wider text-black"
+            >
+              Zur Anmeldung
+            </a>
+            <a
+              href="/learning-platform"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-white"
+            >
+              Learning öffnen
+            </a>
+          </div>
+        </section>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <PublicPreviewErrorBoundary>
+      <Suspense
+        fallback={
+          <section className="mx-auto flex min-h-72 max-w-7xl items-center justify-center px-4 py-10 text-white sm:px-6">
+            <p className="text-xs font-mono uppercase tracking-widest text-white/45">Live-Vorschau wird geladen…</p>
+          </section>
+        }
+      >
+        {children}
+      </Suspense>
+    </PublicPreviewErrorBoundary>
+  );
+}
+
 function RouteRedirect({ to, label }: { to: string; label: string }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -205,9 +271,9 @@ export function AppRoutes({
     }
 
     return (
-      <RouteLoadingBoundary>
-        <LandingPage
-          preview={
+      <LandingPage
+        preview={
+          <PublicPreviewBoundary>
             <Dashboard
               userSession={PUBLIC_VISITOR_SESSION}
               onLogout={() => undefined}
@@ -221,9 +287,9 @@ export function AppRoutes({
                 await handleRegister(name, email, password);
               }}
             />
-          }
-        />
-      </RouteLoadingBoundary>
+          </PublicPreviewBoundary>
+        }
+      />
     );
   }
 
