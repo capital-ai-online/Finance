@@ -1,8 +1,8 @@
 {
   "component": "Documentary",
   "status": "partial-implementation",
-  "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Generators", "Governance", "Interfaces", "Knowledge", "Lifecycle", "Mermaid", "Models", "Traceability", "Versioning"],
-  "plannedAreas": ["Architecture", "Migration", "Plugins"],
+  "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Generators", "Governance", "Interfaces", "Knowledge", "Lifecycle", "Mermaid", "Migration", "Models", "Traceability", "Versioning"],
+  "plannedAreas": ["Architecture", "MigrationExecution", "Plugins"],
   "versionAuthorities": {
     "componentVersion": "src/platform/Documentary/manifest.json#version",
     "documentSchemaVersion": "src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
@@ -19,6 +19,7 @@
     "D6 implements deterministic document-type-specific DE/EN Markdown artifact rendering from DocumentaryDocument models.",
     "D6 Mermaid projection deterministically renders the existing DocumentaryKnowledgeProjection as Mermaid source text with hashed node aliases and escaped labels; it does not execute Mermaid, emit click/URL directives or persist graph state.",
     "D7 implements deterministic Documentary-to-Knowledge projection evidence with origin, relationships and checksum.",
+    "D8 Migration Planning classifies canonical/generated/evidence/legacy/archive documentation and emits read-only migration, redirect, owner-review or blocked plans without moving, deleting or rewriting repository content.",
     "The authoritative ESS-0009 Knowledge Engine remains a separate specification-only component; D7 does not persist or build the central graph.",
     "Planned areas must not be treated as implemented solely because their directories exist."
   ]
