@@ -5,8 +5,8 @@
 **Primary Productive PVC ownership:** `[]`  
 **Role:** cross-cutting Security requirements, findings, testing and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
-**Date:** `2026-09-05`  
-**Correlation baseline:** `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`  
+**Date:** `2026-09-06`  
+**Correlation baseline:** `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
 **Trust root:** `/AGENTS.md`
 
@@ -22,7 +22,7 @@ Current project routing is resolved only from:
 
 Post-PVC policy overlays withdrawn by current `/AGENTS.md`, including the former Cross-Project Handoff Contract, are historical/non-authorizing and are not current routing inputs.
 
-## Current-main consolidation — 2026-09-05
+## Current-main consolidation — 2026-09-06
 
 Repository-backed Security work visible from the available project-chat history and current `main` was re-correlated rather than inferred from chat status alone.
 
@@ -68,9 +68,11 @@ No row above grants CAPITAL-AI-SEC productive implementation ownership.
 
 ## Current correlation state
 
-Current task baseline is `main@7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb`. The intervening main changes include `/AGENTS.md` v2.7.1 and `ESS-0006` v1.1.0. They do not modify the four SEC target files, and the revalidated ESS reinforces rather than conflicts with the Security Assessment ownership boundary. At the resync check there are zero open pull requests against `main`.
+Current task baseline is `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`. `/AGENTS.md` remains v2.7.1 and `ESS-0006` remains v1.1.0. The current-main delta since the prior `7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb` Security snapshot is Governance/Compliance/SEO/Frontend-adjacent and does not modify the four SEC target files. The branch merge-base is exact current main and the scoped diff remains four Security-owned files.
 
-The scoped branch `agent/security-assess-align-20260905` was recreated directly from this exact current main and contains only the Security Assessment skill, its focused validator regression test, and the two Security roadmap projections. No foreign project file or productive runtime/provider surface is changed.
+PR #765 was closed unmerged after a PR-creation race invalidated its approved snapshot; it is historical and not a merge candidate. The only open PR at this revalidation snapshot is PR #763 (`CAPITAL-AI-FE`), whose changed files are `src/components/Dashboard.tsx` and `tests/unit/dashboardConsumerCutover.test.ts`; it has no changed-file, semantic, namespace, authority or Primary-Owner overlap with `SEC-ASSESS-ALIGN`.
+
+The scoped branch `agent/security-assess-align-20260905` contains only the Security Assessment skill, its focused validator regression test, and the two Security roadmap projections. No foreign project file or productive runtime/provider surface is changed.
 
 ## Security execution invariants
 
@@ -92,10 +94,10 @@ The dated Security Work Packages and Traceability Matrix from `2026-08-31` remai
 
 For `SEC-ASSESS-ALIGN`:
 
-1. current `/AGENTS.md` v2.7.1 and current `main` were read and re-correlated;
+1. current `/AGENTS.md` v2.7.1 and current `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7` were read and re-correlated;
 2. project/PVC/Primary Owner mapping remains `CAPITAL-AI-SEC`, `docs/projects/security/`, productive PVC `[]`;
 3. current `ESS-0006` v1.1.0 was re-read and is semantically compatible with this work;
-4. zero open PRs existed at the final resync check;
+4. PR #765 is closed unmerged; current open PR #763 has no relevant overlap;
 5. the assessment skill no longer depends on the withdrawn Cross-Project Handoff Contract or NIST SP 800-115 as a repository baseline;
 6. OWASP methodology reuse is explicitly advisory/non-authorizing;
 7. focused regression coverage guards the authority/routing boundary;
