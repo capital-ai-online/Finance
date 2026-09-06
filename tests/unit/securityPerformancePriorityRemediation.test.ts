@@ -29,10 +29,13 @@ describe('P1 auth authority cleanup', () => {
 });
 
 describe('P2 public/login bundle boundary', () => {
-  it('loads heavyweight application routes lazily instead of from the login entry graph', () => {
+  it('keeps the public landing shell eager while heavyweight application routes stay lazy', () => {
     expect(routes).toContain("import React, { Suspense, lazy, useEffect, useState } from 'react'");
+    expect(routes).toContain(
+      "import { Datenschutz, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui'",
+    );
     expect(routes).toContain("import('../dashboard/Dashboard')");
-    expect(routes).toContain("import('../../features/public/ui/LandingPage')");
+    expect(routes).not.toContain("import('../../features/public/ui/LandingPage')");
     expect(routes).toContain("import('../../features/learning/ui/LearningVocabulary')");
     expect(routes).toContain("import('../../features/social/ui/MediaStudio')");
     expect(routes).not.toContain("import { Dashboard } from '../dashboard'");

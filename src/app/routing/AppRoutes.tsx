@@ -4,12 +4,9 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Datenschutz, ImpressumAgb, LoginPage } from '../../features/public/ui';
+import { Datenschutz, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
-const LandingPage = lazy(() =>
-  import('../../features/public/ui/LandingPage').then((module) => ({ default: module.LandingPage })),
-);
 const Dashboard = lazy(() =>
   import('../dashboard/Dashboard').then((module) => ({ default: module.Dashboard })),
 );
