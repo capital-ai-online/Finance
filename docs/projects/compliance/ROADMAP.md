@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/compliance/`  
 **Primary Productive PVC ownership:** `[]`  
 **Role:** cross-cutting Compliance assessment and regulatory traceability  
-**Status:** ACTIVE EXECUTION PROJECTION — LOCAL ROADMAP BACKLOG CONSOLIDATED / EXTERNAL GATES PRESERVED  
+**Status:** ACTIVE EXECUTION PROJECTION — LOCAL ROADMAP BACKLOG CONSOLIDATED ON MAIN / EXTERNAL GATES PRESERVED  
 **Detailed roadmap:** `docs/compliance/CAPITAL-AI-COMP/CAPITAL_AI_COMPLIANCE_ROADMAP.md`  
 **Trust root:** `/AGENTS.md`
 
@@ -26,7 +26,7 @@ Detailed Compliance state remains canonical in `docs/compliance/CAPITAL-AI-COMP/
 
 ## Current detailed-roadmap state
 
-The detailed V2.1 model has exactly eight workstreams. The current closeout consolidates their locally executable remainder into one coherent Compliance work item:
+The detailed V2.1 model has exactly eight workstreams. Human-merged PR #768 consolidated their locally executable remainder on main; current correlation baseline is `main@dbdb1d5ed2c93c857ab9de1329b9d4dcbba2fd67`:
 
 | WP | State |
 |---|---|
@@ -39,7 +39,19 @@ The detailed V2.1 model has exactly eight workstreams. The current closeout cons
 | `COMP-07` Remediation Handoff | `EXECUTED_HELD` |
 | `COMP-08` Continuous Compliance | `EXECUTED_CONTINUOUS` |
 
-`EXECUTED_HELD` is a truthful completion of the local Compliance step, not closure of the external dependency. Provider/legal evidence, Human AI-literacy evidence, OPS recovery evidence, Documentary/Governance registry work and DATA/FINTECH/traceability evidence remain with their competent owners/gates.
+`EXECUTED_HELD` is a truthful completion of the local Compliance step, not closure of the external dependency. Provider/legal evidence, Human AI-literacy evidence, measured OPS recovery evidence, Documentary lifecycle work and DATA/FINTECH end-to-end lineage evidence remain with their competent owners/gates.
+
+### Post-merge implementation and evidence correlation
+
+- PR #768 is Human/CODEOWNER-merged as `e61cb294e368135861c95911b8edfeee8b0de471`.
+- Exact PR-head checks for `3f127cb8751d114e60672c9793b1dd6ea60cf33a` completed successfully: CI, Governance and Container Security.
+- Human-merged PR #775 completed the Governance/PVC-05 decision for `COMP-GAP-008`: **NO REGISTRY CHANGE REQUIRED UNDER CURRENT CONTRACT**. `docs/governance/document-registry.json` remains unchanged by design.
+- Documentary/PVC-03 lifecycle treatment remains a separate foreign-owner return; Compliance reassesses `COMP-GAP-008` only when that return/evidence arrives.
+- Human-merged OPS PR #776 implemented the `OPS-08-SEC-07` recovery evidence harness. Its own evidence record remains `EXECUTION_EVIDENCE_PENDING / SECURITY_UNVERIFIED`: scheduled backup runs, encrypted-artifact operating evidence, isolated restore drill, measured RPO/RTO and independent Security verification are not yet established. Therefore `COMP-GAP-007` / `REQ-COMP-032` remain evidence-held.
+- Human-merged FINTECH PR #777 consolidated the FinTech roadmap. DATA `ValidatedDataInput/1.0.0` exists upstream, but FIN-12 remains `PARTIAL — UPSTREAM CONTRACT IMPLEMENTED` and FIN-20 remains `PARTIAL / OPEN`; the tested DATA→FINTECH feature mapping and exact score-to-rank lineage are not complete. Therefore `REQ-COMP-034` remains held/incomplete.
+- No DATA-owned current-main change since the PR #775 baseline closes DATA-10/11 provenance/evidence obligations; current DATA roadmap still treats Evidence Management security evidence as open and provenance as an active requirement.
+- `src/platform/Compliance` remains the implemented ADR-0012 / ESS-0006 technical boundary (scanner, router, store and evidence helpers).
+- No current Compliance roadmap item or active finding authorizes a new local runtime/validator path. `CODE_DELTA_REQUIRED = NO` for this post-merge sync.
 
 ## Execution invariants
 
@@ -55,12 +67,13 @@ The detailed V2.1 model has exactly eight workstreams. The current closeout cons
 
 | Target | Relationship |
 |---|---|
-| `CAPITAL-AI-GOV` | consumes canonical authority/control identities; owns shared Governance-registry decisions |
-| `CAPITAL-AI-DOC` | owns Documentary lifecycle/registry implementation where applicable |
-| `CAPITAL-AI-SEC` | supplies independent Security evidence/findings where compliance-relevant |
+| `CAPITAL-AI-GOV` | Governance/PVC-05 side of `COMP-GAP-008` decided by PR #775: no Document Registry change required under current contract |
+| `CAPITAL-AI-DOC` | owns remaining Documentary lifecycle treatment/evidence for `COMP-GAP-008` where applicable |
+| `CAPITAL-AI-SEC` | supplies independent Security evidence/findings, including recovery-evidence verification where compliance-relevant |
 | `CAPITAL-AI-QM` | supplies independent Quality evidence/findings where compliance-relevant |
-| `CAPITAL-AI-OPS` | owns `PVC-08` recovery/continuity evidence and `PVC-18` traceability transport portions |
-| `CAPITAL-AI-DATA` / `CAPITAL-AI-FINTECH` | return provenance/lineage/quality/scoring-chain evidence within their productive scopes |
+| `CAPITAL-AI-OPS` | owns `PVC-08` recovery/continuity execution evidence and `PVC-18` traceability transport portions |
+| `CAPITAL-AI-DATA` | owns `PVC-09..11` provider ingress, evidence identity, freshness, DQ and provenance upstream |
+| `CAPITAL-AI-FINTECH` | owns `PVC-12..17`; must complete fail-closed DATA→feature mapping and exact scoring/ranking lineage evidence |
 | Human/Legal Owner | decides legal applicability, role/classification and accepted-risk questions where required |
 
 ## Validation
@@ -72,7 +85,7 @@ For project-surface changes, the smallest sufficient validation is:
 3. project folder and branch slug match `docs/projects/README.md`;
 4. no second Compliance or Governance authority introduced;
 5. all references target existing Compliance/project artifacts;
-6. shared Governance-owned registry paths are not modified by this owner branch;
+6. Governance-owned registry paths and foreign OPS/DATA/FINTECH implementation paths are not modified by this owner branch;
 7. branch synchronized with current `main` before PR readiness;
 8. current/historical `PVC-*` vs `VC-*` semantics do not conflict;
 9. PR creation separately approved for the exact main/head snapshot and intended title.
@@ -81,12 +94,14 @@ Documentation-only project-surface work does not by itself require a pre-PR Runt
 
 ## Completion condition
 
-The bounded Compliance roadmap closeout is complete after Human merge when:
+The bounded Compliance roadmap closeout is **complete on main** because:
 
 - the detailed roadmap and project surface agree that all eight local workstream steps have been processed;
-- no locally actionable stale finding/handoff remains mislabeled as current;
+- Human-merged PR #768 placed the consolidated closeout on main and its exact-head CI, Governance and Container Security checks passed;
+- Human-merged PR #775 has been consumed as the Governance decision return for `COMP-GAP-008` without inventing a registry mutation;
+- Human-merged PRs #776 and #777 have been reassessed as foreign evidence returns without falsely promoting pending operational recovery or DATA→FINTECH lineage evidence to PASS;
+- no locally actionable Compliance-owned stale finding/handoff remains mislabeled as current;
 - external evidence/legal/foreign-owner dependencies remain explicit rather than falsely closed;
-- no productive PVC ownership or foreign implementation authority has moved to Compliance;
-- required hosted checks for the exact PR head have passed.
+- no productive PVC ownership or foreign implementation authority moved to Compliance.
 
 Continuous Compliance itself remains active by design; future material changes re-trigger `COMP-08` and the affected upstream workstreams.
