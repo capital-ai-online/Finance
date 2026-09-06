@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 
 import { PVC_OWNER, validateSecurityAssessment } from './validateSecurityAssessment.mjs';
@@ -60,6 +61,17 @@ function validAssessment() {
 function codes(value) {
   return new Set(validateSecurityAssessment(value).map((item) => item.code));
 }
+
+test('Security Assessment skill uses only current project routing and advisory methodologies', () => {
+  const skill = fs.readFileSync(new URL('../../.ai/skills/CAPITAL-AI-Security-Assessment.md', import.meta.url), 'utf8');
+
+  assert.match(skill, /docs\/projects\/README\.md/);
+  assert.match(skill, /docs\/projects\/PROJECT_VALUE_CHAIN\.md/);
+  assert.match(skill, /ADVISORY_NON_AUTHORIZING/);
+  assert.match(skill, /External assessment methodologies referenced by this skill are \*\*advisory\/non-authorizing\*\*/);
+  assert.doesNotMatch(skill, /CROSS_PROJECT_HANDOFF_CONTRACT/);
+  assert.doesNotMatch(skill, /NIST SP 800-115/);
+});
 
 test('synthetic assessment with all PVCs explicitly NOT_TESTED is valid and never PASS', () => {
   const assessment = validAssessment();
