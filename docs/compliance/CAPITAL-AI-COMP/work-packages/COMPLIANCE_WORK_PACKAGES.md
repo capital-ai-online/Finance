@@ -5,7 +5,7 @@
 **Version:** 1.1.0  
 **Date:** 2026-09-06  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Current baseline:** `main@7fe061a897f669fd21ca4c46e564351e14f1c7dc`
+**Current baseline:** `main@6980b6547229fd2338d94bc1af4e71934cfd5de0`
 
 These eight work packages are the complete V2.1 Compliance workstream set. They coordinate assessment work only. None grants technical execution ownership over a foreign productive `PVC-*` stage.
 
