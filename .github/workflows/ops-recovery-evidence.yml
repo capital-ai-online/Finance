@@ -39,6 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Recovery-Vertrag aus exaktem main-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Execution boundary prüfen
         shell: bash
         env:
@@ -82,6 +89,7 @@ jobs:
           age --version
           psql --version
           supabase --version
+          node --version
 
       - name: Logisches Backup erzeugen
         id: dump
@@ -124,6 +132,32 @@ jobs:
             echo "schema_sha=$SCHEMA_SHA"
             echo "data_sha=$DATA_SHA"
             echo "plaintext_bytes=$TOTAL_BYTES"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Recovery-Coverage vor Verschlüsselung prüfen
+        id: coverage
+        shell: bash
+        env:
+          WORK_DIR: ${{ steps.dump.outputs.work_dir }}
+        run: |
+          set -euo pipefail
+          COVERAGE="$WORK_DIR/source-coverage.json"
+          node scripts/operations/recoveryDumpIntegrity.mjs inspect "$WORK_DIR/data.sql" "$COVERAGE"
+          PUBLIC_RELATIONS="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.publicRelations))" "$COVERAGE")"
+          AUTH_RELATIONS="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.authRelations))" "$COVERAGE")"
+          STORAGE_RELATIONS="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.storageRelations))" "$COVERAGE")"
+          AUTH_USERS_ROWS="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.authUsersRows))" "$COVERAGE")"
+          AUTH_IDENTITIES_ROWS="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.authIdentitiesRows))" "$COVERAGE")"
+          STORAGE_BUCKETS_ROWS="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.storageBucketsRows))" "$COVERAGE")"
+          STORAGE_OBJECTS_ROWS="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.storageObjectsRows))" "$COVERAGE")"
+          {
+            echo "public_relations=$PUBLIC_RELATIONS"
+            echo "auth_relations=$AUTH_RELATIONS"
+            echo "storage_relations=$STORAGE_RELATIONS"
+            echo "auth_users_rows=$AUTH_USERS_ROWS"
+            echo "auth_identities_rows=$AUTH_IDENTITIES_ROWS"
+            echo "storage_buckets_rows=$STORAGE_BUCKETS_ROWS"
+            echo "storage_objects_rows=$STORAGE_OBJECTS_ROWS"
           } >> "$GITHUB_OUTPUT"
 
       - name: Backup client-seitig verschlüsseln
@@ -206,57 +240,23 @@ jobs:
             -x 'storage.buckets_vectors' -x 'storage.vector_indexes'
           test -s "$DRILL_DIR/restored-data.sql"
 
-          python3 - "$DRILL_DIR/data.sql" "$DRILL_DIR/restored-data.sql" > "$DRILL_DIR/integrity-summary.json" <<'PY'
-          import hashlib
-          import json
-          import sys
-
-          def copy_fingerprints(path):
-              result = {}
-              current = None
-              rows = []
-              with open(path, 'r', encoding='utf-8', errors='strict') as handle:
-                  for raw in handle:
-                      line = raw.rstrip('\n')
-                      if current is None and line.startswith('COPY ') and line.endswith(' FROM stdin;'):
-                          current = line[5:-12].strip()
-                          rows = []
-                          continue
-                      if current is not None and line == r'\.':
-                          digest = hashlib.sha256()
-                          for row in sorted(rows):
-                              digest.update(row.encode('utf-8'))
-                              digest.update(b'\n')
-                          result[current] = {'rows': len(rows), 'sha256': digest.hexdigest()}
-                          current = None
-                          rows = []
-                          continue
-                      if current is not None:
-                          rows.append(line)
-              return result
-
-          source = copy_fingerprints(sys.argv[1])
-          restored = copy_fingerprints(sys.argv[2])
-          comparable = {name for name in source if name.startswith('"public".') or name.startswith('public.')}
-          mismatches = sorted(name for name in comparable if source.get(name) != restored.get(name))
-          summary = {
-              'publicRelationsCompared': len(comparable),
-              'mismatchCount': len(mismatches),
-              'integrityMatch': len(comparable) > 0 and not mismatches,
-          }
-          print(json.dumps(summary, separators=(',', ':')))
-          if not summary['integrityMatch']:
-              raise SystemExit('Public-schema row-count/content fingerprint mismatch after isolated restore.')
-          PY
+          node "$GITHUB_WORKSPACE/scripts/operations/recoveryDumpIntegrity.mjs" compare \
+            "$DRILL_DIR/data.sql" \
+            "$DRILL_DIR/restored-data.sql" \
+            "$DRILL_DIR/integrity-summary.json"
 
           RESTORE_END="$(date +%s)"
           RESTORE_DURATION="$((RESTORE_END - RESTORE_START))"
-          INTEGRITY_MATCH="$(python3 -c 'import json,sys; print(str(json.load(open(sys.argv[1]))["integrityMatch"]).lower())' "$DRILL_DIR/integrity-summary.json")"
-          RELATIONS_COMPARED="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["publicRelationsCompared"])' "$DRILL_DIR/integrity-summary.json")"
+          INTEGRITY_MATCH="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.dataIntegrityMatch))" "$DRILL_DIR/integrity-summary.json")"
+          PUBLIC_RELATIONS_COMPARED="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.publicRelationsCompared))" "$DRILL_DIR/integrity-summary.json")"
+          AUTH_RELATIONS_COMPARED="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.authRelationsCompared))" "$DRILL_DIR/integrity-summary.json")"
+          STORAGE_RELATIONS_COMPARED="$(node -e "const v=require(process.argv[1]); process.stdout.write(String(v.storageRelationsCompared))" "$DRILL_DIR/integrity-summary.json")"
           {
             echo "restore_duration_seconds=$RESTORE_DURATION"
             echo "integrity_match=$INTEGRITY_MATCH"
-            echo "relations_compared=$RELATIONS_COMPARED"
+            echo "public_relations_compared=$PUBLIC_RELATIONS_COMPARED"
+            echo "auth_relations_compared=$AUTH_RELATIONS_COMPARED"
+            echo "storage_relations_compared=$STORAGE_RELATIONS_COMPARED"
           } >> "$GITHUB_OUTPUT"
 
       - name: Maschinenlesbare Recovery-Evidence erzeugen
@@ -274,11 +274,20 @@ jobs:
           DATA_SHA: ${{ steps.dump.outputs.data_sha }}
           ENCRYPTED_SHA: ${{ steps.encrypt.outputs.encrypted_sha }}
           ENCRYPTED_BYTES: ${{ steps.encrypt.outputs.encrypted_bytes }}
+          PUBLIC_RELATIONS: ${{ steps.coverage.outputs.public_relations }}
+          AUTH_RELATIONS: ${{ steps.coverage.outputs.auth_relations }}
+          STORAGE_RELATIONS: ${{ steps.coverage.outputs.storage_relations }}
+          AUTH_USERS_ROWS: ${{ steps.coverage.outputs.auth_users_rows }}
+          AUTH_IDENTITIES_ROWS: ${{ steps.coverage.outputs.auth_identities_rows }}
+          STORAGE_BUCKETS_ROWS: ${{ steps.coverage.outputs.storage_buckets_rows }}
+          STORAGE_OBJECTS_ROWS: ${{ steps.coverage.outputs.storage_objects_rows }}
           RESTORE_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'backup-and-restore-drill' }}
           RESTORE_OUTCOME: ${{ steps.restore.outcome }}
           RESTORE_DURATION_SECONDS: ${{ steps.restore.outputs.restore_duration_seconds }}
           INTEGRITY_MATCH: ${{ steps.restore.outputs.integrity_match }}
-          RELATIONS_COMPARED: ${{ steps.restore.outputs.relations_compared }}
+          PUBLIC_RELATIONS_COMPARED: ${{ steps.restore.outputs.public_relations_compared }}
+          AUTH_RELATIONS_COMPARED: ${{ steps.restore.outputs.auth_relations_compared }}
+          STORAGE_RELATIONS_COMPARED: ${{ steps.restore.outputs.storage_relations_compared }}
         run: |
           set -euo pipefail
           EVIDENCE="$RUNNER_TEMP/ops-recovery-$STAMP-evidence.json"
@@ -291,8 +300,13 @@ jobs:
           restore_outcome = os.environ.get('RESTORE_OUTCOME') or 'not-run'
           restore_duration = os.environ.get('RESTORE_DURATION_SECONDS')
           integrity_match = os.environ.get('INTEGRITY_MATCH')
+
+          def optional_int(name):
+              value = os.environ.get(name)
+              return int(value) if value else None
+
           evidence = {
-              'schemaVersion': '1.0.0',
+              'schemaVersion': '1.1.0',
               'workItem': 'OPS-08-SEC-07',
               'source': {
                   'provider': 'supabase',
@@ -322,6 +336,16 @@ jobs:
                       'schema': os.environ['SCHEMA_SHA'],
                       'data': os.environ['DATA_SHA'],
                   },
+                  'coverage': {
+                      'publicRelations': int(os.environ['PUBLIC_RELATIONS']),
+                      'authRelations': int(os.environ['AUTH_RELATIONS']),
+                      'storageRelations': int(os.environ['STORAGE_RELATIONS']),
+                      'authUsersRows': int(os.environ['AUTH_USERS_ROWS']),
+                      'authIdentitiesRows': int(os.environ['AUTH_IDENTITIES_ROWS']),
+                      'storageBucketsRows': int(os.environ['STORAGE_BUCKETS_ROWS']),
+                      'storageObjectsRows': int(os.environ['STORAGE_OBJECTS_ROWS']),
+                      'storageBinaryCoverage': 'REQUIRES_ZERO_OBJECTS',
+                  },
                   'encryptedBytes': int(os.environ['ENCRYPTED_BYTES']),
                   'encryptedSha256': os.environ['ENCRYPTED_SHA'],
                   'encryption': 'age-x25519',
@@ -332,8 +356,10 @@ jobs:
                   'requested': requested,
                   'outcome': restore_outcome if requested else 'not-run',
                   'durationSeconds': int(restore_duration) if restore_duration else None,
-                  'publicDataIntegrityMatch': integrity_match == 'true' if integrity_match else None,
-                  'publicRelationsCompared': int(os.environ['RELATIONS_COMPARED']) if os.environ.get('RELATIONS_COMPARED') else None,
+                  'dataIntegrityMatch': integrity_match == 'true' if integrity_match else None,
+                  'publicRelationsCompared': optional_int('PUBLIC_RELATIONS_COMPARED'),
+                  'authRelationsCompared': optional_int('AUTH_RELATIONS_COMPARED'),
+                  'storageRelationsCompared': optional_int('STORAGE_RELATIONS_COMPARED'),
                   'target': 'isolated-local-supabase' if requested else None,
               },
               'securityClosure': 'NOT_CLAIMED',
@@ -367,13 +393,17 @@ jobs:
           import json
           import sys
           value = json.load(open(sys.argv[1], encoding='utf-8'))
+          coverage = value['backup']['coverage']
           restore = value['restoreDrill']
           print('## OPS-08-SEC-07 Recovery Evidence')
           print(f"- Backup duration: {value['backup']['durationSeconds']} s")
           print(f"- Encrypted artifact: {value['backup']['encryptedBytes']} bytes / SHA-256 `{value['backup']['encryptedSha256']}`")
+          print(f"- Auth rows captured: users={coverage['authUsersRows']} / identities={coverage['authIdentitiesRows']}")
+          print(f"- Storage boundary: buckets={coverage['storageBucketsRows']} / objects={coverage['storageObjectsRows']} / binary={coverage['storageBinaryCoverage']}")
           print(f"- RPO target: <= {value['objectives']['rpoTargetSeconds']} s; observed RPO remains unverified until recurring successful runs exist.")
           if restore['requested']:
-              print(f"- Isolated restore: {restore['outcome']} / {restore['durationSeconds']} s / integrity={restore['publicDataIntegrityMatch']}")
+              print(f"- Isolated restore: {restore['outcome']} / {restore['durationSeconds']} s / integrity={restore['dataIntegrityMatch']}")
+              print(f"- Compared relations: public={restore['publicRelationsCompared']} / auth={restore['authRelationsCompared']} / storage={restore['storageRelationsCompared']}")
           else:
               print('- Isolated restore: not requested in this run.')
           print('- CAPITAL-AI-SEC verification: not claimed.')
