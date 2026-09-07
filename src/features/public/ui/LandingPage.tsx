@@ -197,6 +197,10 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
                   ohne persistierte anonyme IAM- oder Supabase-Session nutzbar; geschützte Funktionen behalten ihre
                   bestehenden Login- und Berechtigungsgrenzen.
                 </p>
+                <p className="max-w-3xl text-sm leading-relaxed text-text-secondary sm:text-base">
+                  CAPITAL-AI bündelt Markt-, Bewertungs- und Sentiment-Daten zu erklärbaren KI-Scorings für Aktien,
+                  Indizes, Forex, Kryptowährungen und Rohstoffe.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -353,6 +357,10 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
               Öffentliche Analyse verfügbar
             </span>
           </div>
+
+          <h2 className="text-sm font-black text-text-primary sm:text-base">
+            CAPITAL-AI – quantitative Multi-Asset-Analyse
+          </h2>
 
           <p className="mx-auto max-w-3xl leading-relaxed">
             CAPITAL-AI dient der Analyse und Bildung und stellt keine Anlageberatung dar. Fehlende oder nicht
