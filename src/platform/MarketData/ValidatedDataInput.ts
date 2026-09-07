@@ -8,6 +8,10 @@ import {
   mapEvidenceQualityToDataStatus,
 } from './dataQualityGate';
 import {
+  DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
+  evaluateProvenanceLineage,
+} from './dataProvenanceLineage';
+import {
   MARKET_EVIDENCE_DQ_CONTRACT_VERSION,
   assertMarketEvidenceContract,
   type MarketEvidenceQualityRecord,
@@ -206,12 +210,19 @@ export function buildValidatedDataInputFromSnapshot(
     : 'FAIL';
   const gate = evaluateDataQualityGate([fieldStatus]);
   const status = gate.status;
-  const provenanceComplete = identityMatches
-    && correlationMatches
-    && Boolean(evidence.evidenceRef?.trim())
-    && Boolean(evidence.observedAt)
-    && Boolean(evidence.providerId.trim())
-    && Boolean(evidence.retrievedAt);
+  const lineage = evaluateProvenanceLineage({
+    contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
+    assetId: asset.assetId,
+    providerId: snapshot.provider,
+    providerFeed: snapshot.providerFeed,
+    capability: 'snapshot',
+    field: 'price',
+    evidenceRef: evidence.evidenceRef,
+    observedAt: evidence.observedAt,
+    retrievedAt: evidence.retrievedAt,
+    correlationId: snapshot.correlationId,
+  });
+  const provenanceComplete = identityMatches && lineage.complete;
   const reason = !identityMatches
     ? 'asset identity mismatch'
     : !correlationMatches
@@ -257,11 +268,19 @@ export function buildValidatedHistoryInput(
   const correlationPresent = Boolean(history.correlationId.trim());
   const pointsValid = history.points.length > 0
     && history.points.every(point => Number.isFinite(point.close) && point.close > 0 && Number.isFinite(Date.parse(point.timestamp)));
-  const provenanceComplete = identityMatches
-    && correlationPresent
-    && Boolean(history.provider.trim())
-    && Boolean(history.evidenceId?.trim())
-    && Number.isFinite(Date.parse(history.receivedAt));
+  const lineage = evaluateProvenanceLineage({
+    contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
+    assetId: asset.assetId,
+    providerId: history.provider,
+    providerFeed: history.providerFeed,
+    capability: 'history',
+    field: 'close',
+    evidenceRef: history.evidenceId,
+    observedAt: history.points[0]?.timestamp ?? null,
+    retrievedAt: history.receivedAt,
+    correlationId: history.correlationId,
+  });
+  const provenanceComplete = identityMatches && lineage.complete;
   const status: ValidatedDataStatus = history.qualityState === 'HISTORICAL'
     && pointsValid
     && provenanceComplete
