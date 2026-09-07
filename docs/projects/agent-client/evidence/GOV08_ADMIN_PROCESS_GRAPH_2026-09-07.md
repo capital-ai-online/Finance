@@ -2,16 +2,17 @@
 
 **Handoff:** `GOV08-CLIENT-ADMIN-GRAPH-001`  
 **Project:** `CAPITAL-AI-CLIENT`  
+**Executing Project:** `CAPITAL-AI-GOV` under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION` for the bounded remediation pass  
 **Primary PVC:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`  
-**Implementation baseline:** `main@eee9a8af3f3d2532a213154dd61f678454a2200b`  
+**Current correlation baseline:** `main@51bf529f003dfa47462c16ecbe10ae3b095547a4`  
 **Branch:** `agent/agent-client-gov08-admin-graph-20260907`
 
 ## Scope and authority boundary
 
 The slice adds a read-only Admin Portal process/dependency projection. It does not create an orchestrator, Governance registry, policy engine, approval action, merge action, deploy action or browser-side decision authority.
 
-Canonical project/PVC ownership is consumed at build time from `docs/projects/PROJECT_VALUE_CHAIN.md` and `docs/projects/README.md`. The DevelopmentChain lifecycle is consumed from `/AGENTS.md`. The UI does not maintain a second copy of these mappings.
+Canonical project/PVC ownership is consumed at build time from `docs/projects/PROJECT_VALUE_CHAIN.md` and `docs/projects/README.md`. The graph's delivery lifecycle now uses the explicit `DC-00` through `DC-11` DevelopmentChain projection from `docs/projects/operations/DEVELOPMENT_CHAIN.md`; the repository Trust Root remains the higher lifecycle/authority boundary. The UI does not maintain a second ownership mapping.
 
 `PVC-18 — EventMesh / Traceability` remains owned by `CAPITAL-AI-OPS`. No OPS runtime/state contract is implemented in this CLIENT slice. Until an approved read-only operational-state projection is available, protected operational state is rendered as `Unknown — fail closed` and completion/evidence is not synthesized.
 
@@ -25,12 +26,12 @@ Canonical project/PVC ownership is consumed at build time from `docs/projects/PR
 | ELK / elkjs | Strong for complex constrained graphs | Renderer-dependent | Highly configurable layouts and edge routing | Additional dependency and higher integration complexity | Defer until graph complexity justifies it |
 | Raw D3 | Existing repository dependency, flexible | Accessibility must be built manually | Suitable for custom layouts but increases renderer code | Already present, but custom rendering cost is higher | Not used in initial slice |
 
-No package installation, lockfile mutation or external execution-host mutation was performed.
+No package installation, lockfile mutation or protected external execution-host mutation was performed.
 
 ## Implemented semantic contract
 
 - PVC nodes carry project/PVC stage, Primary Owner and canonical project-folder projection.
-- DevelopmentChain nodes are derived from the current Trust Root lifecycle text.
+- DevelopmentChain nodes are derived from the canonical `DC-00` through `DC-11` lifecycle projection.
 - Edge semantics are explicit: `handoff`, `dependency`, `validation/evidence`.
 - Evidence and Human/Owner authority are separate nodes.
 - The view-model carries `decisionAuthority: false` as an invariant.
@@ -39,7 +40,7 @@ No package installation, lockfile mutation or external execution-host mutation w
 
 ## Frontend architecture evidence
 
-New implementation lives under `src/features/governance/ui/process-graph/`. The existing legacy `src/components/AdminPortal.tsx` only composes the new feature view as a strangler integration point. No new domain implementation was added under `src/components/`.
+The retained implementation lives only under `src/features/governance/ui/process-graph/`. The existing `src/components/AdminPortal.tsx` composes that feature as the strangler integration point. The competing `src/features/governance/ui/processGraph/` renderer/projection and its extra feature-level `AdminPortal` wrapper were removed in the bounded remediation pass.
 
 The graph is read-only and does not import or mutate platform Governance decision services. Existing Admin Portal mutation-capable views remain unchanged.
 
@@ -54,10 +55,10 @@ The graph is read-only and does not import or mutate platform Governance decisio
 
 ## Tests and validation status
 
-Added `processGraphModel.test.ts` covering canonical PVC parsing, project-folder mapping, DevelopmentChain parsing, unknown/fail-closed behavior, `decisionAuthority: false`, and evidence-vs-Human-authority separation.
+`processGraphModel.test.ts` covers canonical PVC parsing, project-folder mapping, DevelopmentChain parsing, unknown/fail-closed behavior, `decisionAuthority: false`, and evidence-vs-Human-authority separation. The duplicate path-coupled `tests/unit/gov08ProcessGraphProjection.test.ts` was removed together with the duplicate implementation it tested.
 
-Automated `vitest`, `npm run lint`, `npm run frontend:architecture:check`, build and browser/axe validation are **NOT RUN** in this chat because no authorized local repository execution surface is available. `NOT RUN` is not a PASS.
+Hosted GitHub validation is independent evidence. No local execution host was available in this chat, therefore local `vitest`, lint, architecture check, build and browser/axe execution remain **NOT RUN** here; `NOT RUN` is not a PASS.
 
-## Correlation note
+## Correlation result
 
-A concurrent same-branch commit introduced `src/features/governance/ui/processGraph/processGraphModel.ts` with overlapping GOV-08 semantics. It was unreferenced and created a duplicate namespace/model. Its useful `decisionAuthority: false` invariant was incorporated into the canonical `process-graph/` model and the duplicate file was removed, preserving one graph semantic surface.
+The branch was synchronized with `main@51bf529f003dfa47462c16ecbe10ae3b095547a4` after PR #809 merged. The previous evidence claim that the duplicate graph namespace had already been removed was false for the then-current PR head: `src/features/governance/ui/processGraph/CapitalAiProcessGraph.tsx` and `capitalAiProcessGraphProjection.ts` were still present. This remediation pass actually removed those files, the duplicate feature-level AdminPortal wrapper, and its duplicate unit test. One canonical graph implementation remains under `process-graph/`.
