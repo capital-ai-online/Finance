@@ -7,10 +7,12 @@ import {
   GOV_DOC_001_RULE,
   GOV_DOC_002_RULE,
   GOV_DOC_003_RULE,
+  GOV_DOC_004_RULE,
   GOV_DOC_006_RULE,
   collectGovDoc001Findings,
   collectGovDoc002Findings,
   collectGovDoc003Findings,
+  collectGovDoc004Findings,
   collectGovDoc006Findings,
 } from '../../src/platform/Documentary/Governance/Validators/DocumentationValidator';
 import type {
@@ -437,6 +439,90 @@ describe('DocumentationValidator GOV-DOC-002', () => {
     ];
     const first = collectGovDoc002Findings({ repoRoot: root, entries });
     const second = collectGovDoc002Findings({ repoRoot: root, entries });
+
+    expect(second).toEqual(first);
+    expect(first.map((item) => item.documentId)).toEqual(['DOC-A', 'DOC-Z']);
+  });
+});
+
+describe('DocumentationValidator GOV-DOC-004', () => {
+  it('emits a Medium finding when a registered classed document has no class structure', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-004-positive-'));
+    write(root, 'docs/architecture/GEN-FOO.md', 'Plain paragraph without a heading or architecture class marker.\n');
+
+    expect(GOV_DOC_004_RULE).toMatchObject({
+      ruleId: 'GOV-DOC-004',
+      area: 'DOC',
+      severity: 'Medium',
+      evidenceType: 'FileReference',
+      version: '1.0.0',
+    });
+    expect(collectGovDoc004Findings({
+      repoRoot: root,
+      entries: [registeredEntry()],
+    })).toEqual([
+      {
+        ruleId: 'GOV-DOC-004',
+        severity: 'Medium',
+        area: 'DOC',
+        documentId: 'DOC-GEN-FOO',
+        documentPath: 'docs/architecture/GEN-FOO.md',
+        message: 'DOC-GEN-FOO: registered architecture document does not match its document-class structure.',
+        evidence: [{
+          type: 'FileReference',
+          path: 'docs/architecture/GEN-FOO.md',
+          line: 1,
+          referencedPath: 'docs/architecture/GEN-FOO.md',
+        }],
+      },
+    ]);
+  });
+
+  it('accepts renderer class headings and skips unknown document types', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-004-marked-'));
+    write(root, 'docs/architecture/A.md', '# Architecture\n\n## Architecture Content\n');
+    write(root, 'docs/architecture/B.md', '# Runbook\n\n## Betriebsanweisung\n');
+    write(root, 'docs/architecture/C.md', '# Policy\n\nNo Documentary class applies.\n');
+    write(root, 'docs/architecture/D.md', '# Title only\n');
+
+    expect(collectGovDoc004Findings({
+      repoRoot: root,
+      entries: [
+        registeredEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md', lifecycle: 'approved' }),
+        registeredEntry({ documentId: 'DOC-B', path: 'docs/architecture/B.md', type: 'runbook' }),
+        registeredEntry({ documentId: 'DOC-C', path: 'docs/architecture/C.md', type: 'policy' }),
+        registeredEntry({ documentId: 'DOC-D', path: 'docs/architecture/D.md' }),
+        registeredEntry({ documentId: 'DOC-MISSING', path: 'docs/architecture/MISSING.md' }),
+      ],
+    })).toEqual([
+      {
+        ruleId: 'GOV-DOC-004',
+        severity: 'Medium',
+        area: 'DOC',
+        documentId: 'DOC-D',
+        documentPath: 'docs/architecture/D.md',
+        message: 'DOC-D: registered architecture document does not match its document-class structure.',
+        evidence: [{
+          type: 'FileReference',
+          path: 'docs/architecture/D.md',
+          line: 1,
+          referencedPath: 'docs/architecture/D.md',
+        }],
+      },
+    ]);
+  });
+
+  it('keeps deterministic ordering for unstructured classed documents', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-004-order-'));
+    write(root, 'docs/architecture/Z.md', 'Z without heading\n');
+    write(root, 'docs/architecture/A.md', 'A without heading\n');
+
+    const entries = [
+      registeredEntry({ documentId: 'DOC-Z', path: 'docs/architecture/Z.md' }),
+      registeredEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md' }),
+    ];
+    const first = collectGovDoc004Findings({ repoRoot: root, entries });
+    const second = collectGovDoc004Findings({ repoRoot: root, entries });
 
     expect(second).toEqual(first);
     expect(first.map((item) => item.documentId)).toEqual(['DOC-A', 'DOC-Z']);

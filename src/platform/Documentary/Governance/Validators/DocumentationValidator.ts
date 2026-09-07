@@ -5,12 +5,13 @@ import type {
   SemanticFreshnessFinding,
   SemanticFreshnessReport,
 } from '../../Discovery/SemanticFreshnessAnalyzer';
+import type { DocumentaryDocumentType } from '../../Models/DocumentaryDocument';
 import type { RegistryEntry } from '../Services/DocumentationHygieneValidator';
 import {
   DOCUMENT_REGISTRY_PATH,
 } from '../Services/DocumentationHygieneValidator';
 
-export const DOCUMENTATION_VALIDATOR_VERSION = 'documentation-validator/1.3.0' as const;
+export const DOCUMENTATION_VALIDATOR_VERSION = 'documentation-validator/1.4.0' as const;
 
 export const GOV_DOC_001_RULE = Object.freeze({
   ruleId: 'GOV-DOC-001',
@@ -48,6 +49,18 @@ export const GOV_DOC_003_RULE = Object.freeze({
   version: '1.0.0',
 } as const);
 
+export const GOV_DOC_004_RULE = Object.freeze({
+  ruleId: 'GOV-DOC-004',
+  name: 'Document class structure',
+  area: 'DOC',
+  description: 'Document does not match the structure of its document class.',
+  severity: 'Medium',
+  rationale: 'Registered documentation must expose a heading and a class marker for its Documentary document type.',
+  essReference: 'ESS-0012-CONTRACTS Chapter 2.5',
+  evidenceType: 'FileReference',
+  version: '1.0.0',
+} as const);
+
 export const GOV_DOC_006_RULE = Object.freeze({
   ruleId: 'GOV-DOC-006',
   name: 'Generated document generator marking',
@@ -64,6 +77,7 @@ export type DocumentationGovernanceRuleId =
   | typeof GOV_DOC_001_RULE.ruleId
   | typeof GOV_DOC_002_RULE.ruleId
   | typeof GOV_DOC_003_RULE.ruleId
+  | typeof GOV_DOC_004_RULE.ruleId
   | typeof GOV_DOC_006_RULE.ruleId;
 
 export type DocumentationGovernanceSeverity =
@@ -90,6 +104,15 @@ export interface DocumentationGovernanceFinding {
   evidence: DocumentationGovernanceFileReferenceEvidence[];
 }
 
+export const DOCUMENT_CLASS_TYPES = [
+  'architecture',
+  'component',
+  'api',
+  'runbook',
+  'release-evidence',
+  'handoff',
+] as const satisfies readonly DocumentaryDocumentType[];
+
 const GENERATOR_MARKERS = [
   /^\s*-\s+generiert am\s*:/i,
   /^\s*-\s+generated at\s*:/i,
@@ -105,6 +128,19 @@ const VERSION_MARKING = new RegExp(
   'i',
 );
 const AUTHORITY_REFERENCE = /\b(?:ESS|ADR)[\s_-]*\d{4}(?:-[A-Z0-9]+)?\b/i;
+
+const DOCUMENT_CLASS_MARKERS: Record<DocumentaryDocumentType, RegExp> = {
+  architecture: /architecture content|architekturinhalt|\barchitecture\b|\barchitektur\b/i,
+  component: /component content|komponenteninhalt|\bcomponent\b|\bkomponente/i,
+  api: /api content|api-inhalt|\bapi\b/i,
+  runbook: /operational runbook|betriebsanweisung|\brunbook\b/i,
+  'release-evidence': /release[ -]?evidence/i,
+  handoff: /handoff content|\u00fcbergabeinhalt|\bhandoff\b|\buebergabe\b|\b\u00fcbergabe/i,
+};
+
+function isDocumentaryDocumentType(value: string): value is DocumentaryDocumentType {
+  return (DOCUMENT_CLASS_TYPES as readonly string[]).includes(value);
+}
 
 function normalizeRepoPath(value: string): string {
   return value.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+/g, '/').trim();
@@ -255,12 +291,23 @@ function normalizeVersionText(value: string): string {
     .replace(/^[-*+]\s+/, '');
 }
 
+function normalizeClassLine(line: string): string {
+  return line.replace(/[*_`~]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 export function documentHasVersionMarking(content: string): boolean {
   return content.split(/\r?\n/).some((line) => VERSION_MARKING.test(normalizeVersionText(line)));
 }
 
 export function documentHasEssOrAdrReference(content: string): boolean {
   return content.split(/\r?\n/).some((line) => AUTHORITY_REFERENCE.test(normalizeVersionText(line)));
+}
+
+export function documentMatchesClassStructure(content: string, documentType: DocumentaryDocumentType): boolean {
+  const lines = content.split(/\r?\n/).map(normalizeClassLine);
+  const hasHeading = lines.some((line) => /^#{1,6}\s+\S/.test(line));
+  const hasClass = lines.some((line) => DOCUMENT_CLASS_MARKERS[documentType].test(line));
+  return hasHeading && hasClass;
 }
 
 function readRegistryEntries(repoRoot: string): RegistryEntry[] {
@@ -378,6 +425,47 @@ export function collectGovDoc002Findings(options: {
       documentId,
       documentPath,
       message: `${documentId}: registered document has no ESS or ADR reference.`,
+      evidence: [{
+        type: 'FileReference',
+        path: documentPath,
+        line: 1,
+        referencedPath: documentPath,
+      }],
+    });
+  }
+
+  return findings.sort((left, right) =>
+    `${left.documentPath}:${left.documentId}:${left.ruleId}`
+      .localeCompare(`${right.documentPath}:${right.documentId}:${right.ruleId}`));
+}
+
+export function collectGovDoc004Findings(options: {
+  repoRoot?: string;
+  entries?: readonly RegistryEntry[];
+}): DocumentationGovernanceFinding[] {
+  const repoRoot = path.resolve(options.repoRoot ?? process.cwd());
+  const entries = options.entries ?? readRegistryEntries(repoRoot);
+  const findings: DocumentationGovernanceFinding[] = [];
+
+  for (const entry of entries) {
+    const documentId = String(entry.documentId ?? '').trim();
+    const documentPath = normalizeRepoPath(String(entry.path ?? ''));
+    const documentType = String(entry.type ?? '').trim();
+    if (!documentId || !documentPath || !isDocumentaryDocumentType(documentType)) continue;
+
+    const absolute = resolveRegularNonSymlinkFile(repoRoot, documentPath);
+    if (!absolute) continue;
+
+    const content = fs.readFileSync(absolute, 'utf8');
+    if (documentMatchesClassStructure(content, documentType)) continue;
+
+    findings.push({
+      ruleId: GOV_DOC_004_RULE.ruleId,
+      severity: GOV_DOC_004_RULE.severity,
+      area: GOV_DOC_004_RULE.area,
+      documentId,
+      documentPath,
+      message: `${documentId}: registered ${documentType} document does not match its document-class structure.`,
       evidence: [{
         type: 'FileReference',
         path: documentPath,
