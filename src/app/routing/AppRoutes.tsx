@@ -10,9 +10,9 @@ import type { UserSession } from '../types/UserSession';
 const Dashboard = lazy(() =>
   import('../dashboard/Dashboard').then((module) => ({ default: module.Dashboard })),
 );
-const PublicEnterpriseScorer = lazy(() =>
-  import('../../features/crypto/ui/public').then((module) => ({
-    default: module.PublicCryptoScoringPreview,
+const PublicAnalysisWorkbench = lazy(() =>
+  import('../public/PublicAnalysisWorkbench').then((module) => ({
+    default: module.PublicAnalysisWorkbench,
   })),
 );
 const LearningVocabulary = lazy(() =>
@@ -63,7 +63,7 @@ class PublicPreviewErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Public Enterprise Scorer preview failed to render:', error, info);
+    console.error('Public analysis workbench failed to render:', error, info);
   }
 
   render() {
@@ -71,10 +71,10 @@ class PublicPreviewErrorBoundary extends React.Component<
       return (
         <section className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface/35 px-4 py-10 text-center text-text-primary sm:px-6">
           <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-brand-primary">
-            Enterprise-Scorer-Vorschau vorübergehend nicht verfügbar
+            Bewertungstools vorübergehend nicht verfügbar
           </p>
           <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">
-            Die öffentliche CAPITAL-AI-Landingpage bleibt verfügbar. Die Analysevorschau konnte in diesem Browser nicht gestartet werden.
+            Die öffentliche CAPITAL-AI-Landingpage bleibt verfügbar. Die Analyse-Workbench konnte in diesem Browser nicht gestartet werden.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
@@ -104,7 +104,7 @@ function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
       <Suspense
         fallback={
           <section className="flex min-h-72 items-center justify-center rounded-2xl border border-border bg-surface/35 px-4 py-10 text-text-primary sm:px-6">
-            <p className="text-xs font-mono uppercase tracking-widest text-text-secondary">Enterprise Scorer wird geladen…</p>
+            <p className="text-xs font-mono uppercase tracking-widest text-text-secondary">Bewertungstools werden geladen…</p>
           </section>
         }
       >
@@ -114,19 +114,10 @@ function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PublicEnterpriseScorerPreview() {
-  const [selectedSymbol, setSelectedSymbol] = useState('BTC');
-  const [timeframe, setTimeframe] = useState('1 tag');
-
+function PublicAnalysisPreview() {
   return (
     <PublicPreviewBoundary>
-      <PublicEnterpriseScorer
-        selectedSymbol={selectedSymbol}
-        onSelectSymbol={setSelectedSymbol}
-        timeframe={timeframe}
-        onChangeTimeframe={setTimeframe}
-        subscriptionTier="Free"
-      />
+      <PublicAnalysisWorkbench />
     </PublicPreviewBoundary>
   );
 }
@@ -282,7 +273,7 @@ export function AppRoutes({
     return (
       <LandingPage
         onLoginNavigate={clearJustLoggedOut}
-        preview={<PublicEnterpriseScorerPreview />}
+        preview={<PublicAnalysisPreview />}
       />
     );
   }
