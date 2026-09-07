@@ -12,6 +12,9 @@
     "esbuild@0.28.1": true,
     "fsevents@2.3.3": false
   },
+  "overrides": {
+    "qs": "6.16.0"
+  },
   "scripts": {
     "dev": "tsx server.ts",
     "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts",
