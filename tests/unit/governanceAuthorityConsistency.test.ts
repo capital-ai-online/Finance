@@ -115,7 +115,7 @@ describe('governance authority consistency', () => {
     expect(agents).toContain('NÄCHSTE SCHRITTE');
     expect(agents).toContain('Freigabe-Antwort: PR erstellen: freigegeben');
     expect(agents).toContain('PR #772');
-    expect(agents).toContain('separate copyable Owner-response requirement is retired');
+    expect(agents).toMatch(/separate copyable Owner-response requirement introduced by PR #772 is \*\*RETIRED\*\*/i);
     expect(agents).toContain('only the two highest-priority immediately actionable steps');
     expect(agents).not.toContain('the exact response text MUST also be rendered in a separate fenced `text` code block');
 
@@ -123,7 +123,7 @@ describe('governance authority consistency', () => {
     expect(chain).toContain('CHAT_RUN_HANDOFF');
     expect(chain).toContain('NÄCHSTE SCHRITTE');
     expect(chain).toContain('PR #772');
-    expect(chain).toContain('separate copyable Owner-response requirement is retired');
+    expect(chain).toMatch(/separate copyable Owner-response requirement introduced (?:through|by) PR #772 is \*\*RETIRED\*\*/i);
     expect(chain).not.toContain('Freigabe-Antwort: <exact response required from the Human/Owner>');
     expect(chain).toContain('current `main`, open Pull Requests, changed-file/semantic overlap');
   });
