@@ -117,12 +117,6 @@ if (errors.length === 0) {
   if (!currentRoadmap.includes('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS')) {
     fail('CURRENT_ROADMAP_AUTHORITY_MISSING', 'docs/architecture/ROADMAP.md must declare its stable current-state authority ID.');
   }
-  if (!/M10 PR-CI passkey runtime is `RETIRED \/ OFF`/i.test(currentRoadmap)) {
-    fail('CURRENT_ROADMAP_M10_STATE_INVALID', 'Current-state roadmap must state that the productive M10 PR-CI passkey runtime is retired/off.');
-  }
-  if (!/No productive M10 implementation is expected in current state/i.test(currentRoadmap)) {
-    fail('CURRENT_ROADMAP_M10_DISCOVERY_BOUNDARY_MISSING', 'Current-state roadmap must explicitly prohibit treating M10 as a missing current implementation.');
-  }
   if (/Mandatory blockers before M10 reactivation/i.test(currentRoadmap)) {
     fail('CURRENT_ROADMAP_M10_REACTIVATION_BACKLOG_PRESENT', 'Retired M10 must not retain a current-state reactivation backlog.');
   }
@@ -299,6 +293,19 @@ if (errors.length === 0) {
 
   const m10Control = controls.find((item) => item.controlId === 'CTRL-CI-M10-001');
   const m10Requirement = String(m10Control?.requirement ?? '');
+  if (!m10Control || m10Control.status !== 'required') {
+    fail('M10_CONTROL_CONTRACT_INVALID', 'CTRL-CI-M10-001 must exist as a required structured control.');
+  } else {
+    for (const requiredAuthority of [
+      'AUTH-GOV-AGENT-TRUST-ROOT',
+      'AUTH-GOV-HUMAN-OWNER-PR-APPROVAL',
+      'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION',
+    ]) {
+      if (!(m10Control.authorityRefs ?? []).includes(requiredAuthority)) {
+        fail('M10_CONTROL_AUTHORITY_REF_MISSING', `CTRL-CI-M10-001 must reference ${requiredAuthority}.`);
+      }
+    }
+  }
   if (!m10Control || !/retired/i.test(m10Requirement) || !/PR #691/i.test(m10Requirement)) {
     fail('M10_RETIRED_STATE_MISSING', 'CTRL-CI-M10-001 must bind productive M10 retirement to Human Merge of PR #691.');
   }
