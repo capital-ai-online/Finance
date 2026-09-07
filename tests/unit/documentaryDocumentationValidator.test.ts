@@ -5,12 +5,15 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   GOV_DOC_003_RULE,
+  GOV_DOC_006_RULE,
   collectGovDoc003Findings,
+  collectGovDoc006Findings,
 } from '../../src/platform/Documentary/Governance/Validators/DocumentationValidator';
 import type {
   SemanticFreshnessFinding,
   SemanticFreshnessReport,
 } from '../../src/platform/Documentary/Discovery/SemanticFreshnessAnalyzer';
+import type { RegistryEntry } from '../../src/platform/Documentary/Governance/Services/DocumentationHygieneValidator';
 
 const SOURCE_SHA = 'a'.repeat(40);
 
@@ -52,6 +55,20 @@ function freshness(findings: SemanticFreshnessFinding[]): SemanticFreshnessRepor
     ],
     findings,
     summary: { registered: findings.length, candidates: findings.filter((item) => item.candidate).length, patchable: 0, reviewOnly: 0, skipped: 0 },
+  };
+}
+
+function generatedEntry(overrides: Partial<RegistryEntry> = {}): RegistryEntry {
+  return {
+    documentId: 'DOC-GEN-FOO',
+    type: 'architecture',
+    owner: 'CAPITAL-AI-DOC',
+    authority: 'ESS-0010',
+    version: '1.0.0',
+    language: 'en',
+    lifecycle: 'generated',
+    path: 'docs/architecture/GEN-FOO.md',
+    ...overrides,
   };
 }
 
@@ -173,5 +190,81 @@ describe('DocumentationValidator GOV-DOC-003', () => {
     report.sourceChanges = [];
 
     expect(collectGovDoc003Findings({ repoRoot: root, freshness: report })).toEqual([]);
+  });
+});
+
+describe('DocumentationValidator GOV-DOC-006', () => {
+  it('emits a Medium finding for a generated document without generator marking', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-006-positive-'));
+    write(root, 'docs/architecture/GEN-FOO.md', '# Generated Foo\n\nNo generator contract is declared.\n');
+
+    expect(GOV_DOC_006_RULE).toMatchObject({
+      ruleId: 'GOV-DOC-006',
+      area: 'DOC',
+      severity: 'Medium',
+      evidenceType: 'FileReference',
+      version: '1.0.0',
+    });
+    expect(collectGovDoc006Findings({
+      repoRoot: root,
+      entries: [generatedEntry()],
+    })).toEqual([
+      {
+        ruleId: 'GOV-DOC-006',
+        severity: 'Medium',
+        area: 'DOC',
+        documentId: 'DOC-GEN-FOO',
+        documentPath: 'docs/architecture/GEN-FOO.md',
+        message: 'DOC-GEN-FOO: generated document has no generator marking.',
+        evidence: [{
+          type: 'FileReference',
+          path: 'docs/architecture/GEN-FOO.md',
+          line: 1,
+          referencedPath: 'docs/architecture/GEN-FOO.md',
+        }],
+      },
+    ]);
+  });
+
+  it('accepts Documentary renderer generator markings and ignores non-generated lifecycles', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-006-marked-'));
+    write(root, 'docs/architecture/GEN-FOO.md', '# Foo\n\n- Generated At: `2026-09-07T00:00:00.000Z`\n');
+    write(root, 'docs/architecture/GEN-BAR.md', '# Bar\n\n- Generiert am: `2026-09-07T00:00:00.000Z`\n');
+    write(root, 'docs/architecture/APPROVED.md', '# Approved\nNo generator line is required.\n');
+
+    expect(collectGovDoc006Findings({
+      repoRoot: root,
+      entries: [
+        generatedEntry(),
+        generatedEntry({ documentId: 'DOC-GEN-BAR', path: 'docs/architecture/GEN-BAR.md' }),
+        generatedEntry({ documentId: 'DOC-APPROVED', path: 'docs/architecture/APPROVED.md', lifecycle: 'approved' }),
+      ],
+    })).toEqual([]);
+  });
+
+  it('fails closed on missing files and keeps deterministic ordering', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-006-failclosed-'));
+    write(root, 'docs/architecture/Z.md', '# Z\n');
+    write(root, 'docs/architecture/A.md', '# A\n');
+
+    const first = collectGovDoc006Findings({
+      repoRoot: root,
+      entries: [
+        generatedEntry({ documentId: 'DOC-Z', path: 'docs/architecture/Z.md' }),
+        generatedEntry({ documentId: 'DOC-MISSING', path: 'docs/architecture/MISSING.md' }),
+        generatedEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md' }),
+      ],
+    });
+    const second = collectGovDoc006Findings({
+      repoRoot: root,
+      entries: [
+        generatedEntry({ documentId: 'DOC-Z', path: 'docs/architecture/Z.md' }),
+        generatedEntry({ documentId: 'DOC-MISSING', path: 'docs/architecture/MISSING.md' }),
+        generatedEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md' }),
+      ],
+    });
+
+    expect(second).toEqual(first);
+    expect(first.map((item) => item.documentId)).toEqual(['DOC-A', 'DOC-Z']);
   });
 });
