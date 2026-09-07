@@ -2,9 +2,9 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.5.0`  
+**Version:** `2.5.1`  
 **Date:** 2026-08-12  
-**Updated:** 2026-09-06  
+**Updated:** 2026-09-07  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
@@ -89,7 +89,7 @@ A step marked REQUIRED for the concrete work package cannot be skipped unless an
 13. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
 14. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
 15. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
-16. **Copyable end-of-pass handoff.** At the end of every chat-governed repository execution pass, the same chat emits at most the two highest-priority immediately actionable next steps as a fenced `text` code block. If an exact Human/Owner response is required before continuation, that response is emitted in a separate fenced `text` code block.
+16. **Copyable end-of-pass handoff.** At the end of every chat-governed repository execution pass, the same chat emits at most the two highest-priority immediately actionable next steps as a fenced `text` code block. If an exact Human/Owner response is required before continuation, that response is emitted in a separate fenced `text` code block and is presented neutrally without the `⚙️🤓 MANUELL` marker.
 17. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports branch/PR-head, main baseline and gates and displays at most the two highest-priority immediately actionable next Roadmap steps using the copyable handoff format.
 18. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
 
@@ -131,6 +131,8 @@ When no immediately actionable step remains, the same fenced block states `Keine
 ```text
 Freigabe-Antwort: <exact response required from the Human/Owner>
 ```
+
+Pure Human/Owner approval, confirmation and exact response blocks are neutral authority prompts and MUST NOT be labeled or headed with `⚙️🤓 MANUELL`. This presentation rule does not weaken or replace the underlying Human/Owner authority gate. If the Owner must additionally perform a distinct external/manual action, that execution step remains subject to the Trust Root's manual-action marker rule.
 
 Narrative context may remain outside the snippets; the actionable next-step and approval/response text itself is always copyable.
 

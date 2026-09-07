@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.8.0`  
+**Control Plane Version:** `2.8.1`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
-**Effective date:** 2026-09-06  
+**Effective date:** 2026-09-07  
 **Repository:** `SvenKulessa/Finance`
 
 ## 1. Single Point of Trust
@@ -234,7 +234,7 @@ Substantive chat outputs MUST use context-appropriate semantic emoji **together 
 - `🔍 ANALYSE / CHECK` — analysis, correlation or review;
 - `🏗️ UMSETZUNG / ARCHITEKTUR` — implementation or architecture work;
 - `🧪 VALIDIERUNG / EVIDENCE` — tests, checks or evidence;
-- `⚙️🤓 MANUELL` — action that still requires Human execution or Human/Owner authority;
+- `⚙️🤓 MANUELL` — action that still requires Human execution outside the current authorized agent/tool surface; pure Human/Owner approval, confirmation or exact response is excluded;
 - `🟡 OFFEN / WAITING` — unresolved or dependency-held work;
 - `🔴 BLOCKED / FAIL` — blocked or failed state;
 - `🟠 RISIKO / WARNUNG` — material risk or warning;
@@ -243,13 +243,15 @@ Substantive chat outputs MUST use context-appropriate semantic emoji **together 
 - `🔗 ABHÄNGIGKEIT / INTEGRATION` — dependency, handoff or integration;
 - `🧭 NÄCHSTE SCHRITTE` — bounded continuation queue.
 
-The exact marker `⚙️🤓 MANUELL` is mandatory whenever the current authorized agent/tool cannot fully execute an action itself **or** applicable Governance requires a Human/Owner decision or protected action. A technically executable action remains `⚙️🤓 MANUELL` when Human/Owner authority is the controlling gate.
+The exact marker `⚙️🤓 MANUELL` is mandatory whenever the current authorized agent/tool cannot fully execute an action itself and the Human must perform an actual external/manual execution step. A technically executable action may also remain `⚙️🤓 MANUELL` when Governance requires the Human to perform that protected action personally.
+
+A **pure Human/Owner authority response** — including PR-creation approval, confirmation, merge decision wording or another exact copyable approval/response required by Governance — MUST NOT be labeled or headed with `⚙️🤓 MANUELL`. The authority gate remains fully mandatory; this exception changes presentation only. Canonical approval snippets and separate `Freigabe-Antwort:` blocks remain neutral copyable blocks. If a Human/Owner gate also requires a distinct manual execution outside the chat, only that execution step receives the `⚙️🤓 MANUELL` marker.
 
 Before classifying a task as manual solely because of an apparent capability gap, the agent SHOULD check the existing repository/native capability, already-connected platform/plugin capability and applicable existing workflow in the reuse order from section 11 where that check is relevant and authorized. Missing tool capability never authorizes installation, connection, permission changes or bypass of Human authority.
 
 Each manual item SHOULD state, when known: **what** must be done, **where**, **why** Human execution/authority is required, the intended **target state**, and how success can be **verified**. Emoji are supplementary scanning cues; they MUST NOT replace the text label or factual status. `NOT RUN` remains distinct from `PASS`, and decorative emoji volume must not obscure technical meaning.
 
-Short single-purpose acknowledgements may stay concise; the convention requires semantic separation when a response contains multiple distinct work/status categories and requires `⚙️🤓 MANUELL` for every manual or Human-authority action regardless of response length.
+Short single-purpose acknowledgements may stay concise; the convention requires semantic separation when a response contains multiple distinct work/status categories. `⚙️🤓 MANUELL` remains mandatory for genuine manual/protected Human execution steps, but MUST NOT be attached to pure approval/confirmation/response gates.
 
 #### Project folder and PVC mapping
 
