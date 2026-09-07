@@ -26,6 +26,7 @@ import { ownerAuthorizationRouter } from '../ownerAuthorization/router';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';
 import { realtimeAiNewsfeedEntitlement } from '../middleware/realtimeAiNewsfeedEntitlement';
+import { verifiedScreeningPathGate } from '../middleware/verifiedScreeningEntitlement';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
 import { createLegacyScoringCompatibilityRouter } from './legacyScoringCompatibilityRoutes';
@@ -65,6 +66,11 @@ export function registerApplicationRoutes(
 
   registerTrailingSlashNormalize(app);
   installProductionSoft404Intercept();
+
+  // FIN-SEC-02: shared verified_screening quota gate for canonical score/context/batch
+  // paths. Installed before productive scoring routers so alternate mounts cannot skip it.
+  // Legacy `/api/crypto-scoring/:symbol` keeps its inline enforceScreeningQuota() call.
+  app.use(verifiedScreeningPathGate);
 
   // DATA-owned external market-data HTTP adapters are mounted here so the canonical
   // fail-closed provider boundary takes precedence over any later compatibility route

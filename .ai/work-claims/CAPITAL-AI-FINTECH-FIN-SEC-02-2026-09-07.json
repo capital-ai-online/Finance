@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-FIN-SEC-02-2026-09-07",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "FIN-SEC-02: attach the accepted verified_screening quota boundary to every productive canonical verified-score/context/batch path without creating a second scoring or entitlement authority.",
+  "startedAt": "2026-09-07T09:13:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "8618326db4d4a5af0fbecd65b83805ea7608109f",
+  "pullRequest": null,
+  "branch": "agent/fintech-fin-sec-02-verified-screening-20260907",
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerRole": "Primary Owner for PVC-12 through PVC-17",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-FIN-SEC-02-2026-09-07.json",
+    "server/middleware/verifiedScreeningEntitlement.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "tests/unit/verifiedScreeningEntitlement.test.ts",
+    "tests/unit/verifiedScreeningRouteWiring.test.ts",
+    "docs/projects/fintech/evidence/FIN_SEC_02_VERIFIED_SCREENING_2026-09-07.md",
+    "docs/projects/fintech/TASK_REGISTER.md",
+    "docs/projects/fintech/WORK_PACKAGES.md"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-SEC: independent Security verification and VERIFIED/CLOSED authority for S1-R2-06",
+    "CAPITAL-AI-FE: presentation consumption of deny/allow payloads",
+    "CAPITAL-AI-DATA: market-data ingress and ValidatedDataInput ownership",
+    "CAPITAL-AI-FINTECH FIN-SEC-03: Backtest / Monte Carlo / full_ai_analysis"
+  ],
+  "correlatedStaleClaims": [],
+  "authorityGuard": "Reuse enforceScreeningQuota and subscription-entitlements/1.0.0. Do not add a second ScoringDispatcher, ScoringModelRegistry or entitlement contract. Browser subscription projections are not grants. FINTECH may report EVIDENCE_READY only.",
+  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires fresh exact main SHA and branch-head SHA Human/Owner approval; merge remains Human/CODEOWNER-only."
+}

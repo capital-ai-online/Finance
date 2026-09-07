@@ -4,8 +4,9 @@
 **Project folder:** `docs/projects/fintech/`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC ownership:** `PVC-12..PVC-17`  
-**Correlation baseline:** `main@56f196fc034c5514463546ee975ffb83fd50f44a`  
+**Correlation baseline:** `main@8618326db4d4a5af0fbecd65b83805ea7608109f`  
 **Consolidated:** 2026-09-06  
+**FIN-SEC-02 implementation branch:** `agent/fintech-fin-sec-02-verified-screening-20260907`  
 **Status:** `ACTIVE`
 
 This register is a supporting execution projection. Current planning priority is maintained in `ROADMAP.md`; Authority remains with `/AGENTS.md`, applicable Accepted ADRs, Active ESS and their delegated contracts. Work claims/handoffs are coordination/audit metadata only.
@@ -14,7 +15,7 @@ This register is a supporting execution projection. Current planning priority is
 
 | ID | Priority | PVC | Task | Status | Dependency / source | Exit gate |
 |---|---|---|---|---|---|---|
-| `FIN-SEC-02` | P1/HIGH | PVC-16 | Make every productive canonical verified-score/context/batch path consume the accepted `verified_screening` entitlement/quota boundary without creating a second scoring or entitlement authority | OPEN / REFERRED_NOT_EXECUTED | ADR-0034; current entitlement inventory; Roadmap | FINTECH implementation/tests evidence-ready; independent CAPITAL-AI-SEC verification requested |
+| `FIN-SEC-02` | P1/HIGH | PVC-16 | Make every productive canonical verified-score/context/batch path consume the accepted `verified_screening` entitlement/quota boundary without creating a second scoring or entitlement authority | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | ADR-0034; current entitlement inventory; Roadmap; `server/middleware/verifiedScreeningEntitlement.ts` | independent CAPITAL-AI-SEC verification; FINTECH does not self-close |
 | `FIN-SEC-03` | P1/HIGH | PVC-15 | Define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve Buffett server authority | OPEN / REFERRED_NOT_EXECUTED | ADR-0034; current entitlement inventory; Roadmap | protected execution has verified-principal/server-entitlement ALLOW/DENY evidence; Security verification requested |
 | `FIN-12` | P1 | PVC-12 | Bind DATA `ValidatedDataInput/1.0.0` to explicit versioned financial feature contracts while preserving non-computable/missing/stale semantics | PARTIAL — UPSTREAM CONTRACT IMPLEMENTED | `src/platform/MarketData/ValidatedDataInput.ts`; DATA PVC-09..11; ADR-0087 | every productive feature builder has a tested fail-closed ValidatedDataInput compatibility boundary |
 | `FIN-17` | P1 | PVC-17 | Consolidate one productive backend ranking authority and expose stable rank/order output for presentation consumers | PARTIAL | existing ranking contracts/services; productive `RankingBoard`; ADR-0087 | one productive FINTECH ranking authority; FE can consume backend ordering only |
@@ -34,10 +35,11 @@ This register is a supporting execution projection. Current planning priority is
 
 ## Current ordering
 
-1. `FIN-SEC-02` and `FIN-SEC-03` are the highest-priority current FINTECH work and remain open.
-2. After either Security child completes, re-read then-current `main`, open PRs, Security state, affected Roadmap and applicable ADR/ESS before promoting another work item.
-3. `FIN-12` and `FIN-17` share the next P1 band; their order is recomputed after that mandatory recorrelation rather than assumed here.
-4. `FIN-19`, `FIN-20`, then `FIN-DRIFT-01` remain lower-priority follow-on work unless current evidence changes the ordering.
+1. `FIN-SEC-02` implementation/tests are `EVIDENCE_READY` on this branch. Independent `CAPITAL-AI-SEC` verification remains open; FINTECH must recorrelate after that return.
+2. `FIN-SEC-03` remains the highest-priority unimplemented FINTECH child.
+3. After either Security child completes merge + recorrelation, re-read then-current `main`, open PRs, Security state, affected Roadmap and applicable ADR/ESS before promoting another work item.
+4. `FIN-12` and `FIN-17` share the next P1 band; their order is recomputed after that mandatory recorrelation rather than assumed here.
+5. `FIN-19`, `FIN-20`, then `FIN-DRIFT-01` remain lower-priority follow-on work unless current evidence changes the ordering.
 
 ## Ownership boundaries
 
