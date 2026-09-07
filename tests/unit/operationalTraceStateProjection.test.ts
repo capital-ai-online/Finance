@@ -65,6 +65,22 @@ describe('GOV08 OPS operational trace-state projection', () => {
     expect(result.failsClosed).toBe(true);
   });
 
+  it('downgrades unknown freshness to UNKNOWN/non-PASS', () => {
+    const result = projectOperationalTraceStateRecord(source({
+      provenance: {
+        source: 'Traceability',
+        sourceTimestamp: null,
+        observedAt: '2026-09-07T04:00:00.000Z',
+        freshness: 'UNKNOWN',
+      },
+    }));
+
+    expect(result.state).toBe('UNKNOWN');
+    expect(result.validation).toBe('UNKNOWN');
+    expect(result.staleOrUnknownFreshness).toBe(true);
+    expect(result.failsClosed).toBe(true);
+  });
+
   it('downgrades missing evidence to UNKNOWN/non-PASS', () => {
     const result = projectOperationalTraceStateRecord(source({ evidence: [] }));
 
@@ -75,8 +91,8 @@ describe('GOV08 OPS operational trace-state projection', () => {
   });
 
   it('does not synthesize trace or correlation identities', () => {
-    const input = source({ trace: undefined });
-    const result = projectOperationalTraceStateRecord(input);
+    const { trace: _trace, ...withoutTrace } = source();
+    const result = projectOperationalTraceStateRecord(withoutTrace);
 
     expect(result.trace).toBeUndefined();
     expect(JSON.stringify(result)).not.toContain('corr-');
