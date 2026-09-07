@@ -6,7 +6,7 @@
 **Primary Owner:** `CAPITAL-AI-FE`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
-**Current-main correlation:** `main@5490a3b1a8d6aa19e2cd955b79267dffa15e5282`  
+**Current-main correlation:** `main@fb3fff1f3959d1c6f87d20228036366848600487`  
 **Detailed roadmap:** `docs/frontend/FRONTEND_ROADMAP.md`  
 **Architecture authority:** `docs/frontend/FRONTEND_ARCH.md`  
 **Component inventory:** `docs/frontend/COMPONENT_INVENTORY.md`  
