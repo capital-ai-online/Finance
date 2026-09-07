@@ -1,0 +1,172 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import type {
+  SemanticFreshnessFinding,
+  SemanticFreshnessReport,
+} from '../../Discovery/SemanticFreshnessAnalyzer';
+
+export const DOCUMENTATION_VALIDATOR_VERSION = 'documentation-validator/1.0.0' as const;
+
+export const GOV_DOC_003_RULE = Object.freeze({
+  ruleId: 'GOV-DOC-003',
+  name: 'Referenced component freshness',
+  area: 'DOC',
+  description: 'Document is older than the last changed referenced component.',
+  severity: 'Medium',
+  rationale: 'Documentation must be revalidated when an explicitly referenced component changes.',
+  essReference: 'ESS-0012-CONTRACTS Chapter 2.5',
+  evidenceType: 'FileReference',
+  version: '1.0.0',
+} as const);
+
+export interface DocumentationGovernanceFileReferenceEvidence {
+  type: 'FileReference';
+  path: string;
+  line: number;
+  referencedPath: string;
+  sourceCommit: string;
+  correlationId: string;
+}
+
+export interface DocumentationGovernanceFinding {
+  ruleId: typeof GOV_DOC_003_RULE.ruleId;
+  severity: typeof GOV_DOC_003_RULE.severity;
+  area: typeof GOV_DOC_003_RULE.area;
+  documentId: string;
+  documentPath: string;
+  message: string;
+  evidence: DocumentationGovernanceFileReferenceEvidence[];
+}
+
+function normalizeRepoPath(value: string): string {
+  return value.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+/g, '/').trim();
+}
+
+function sha256(value: string): string {
+  return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
+function isComponentSourcePath(value: string): boolean {
+  return /^src\/platform\/[^/]+\//i.test(normalizeRepoPath(value));
+}
+
+function resolveRegularNonSymlinkFile(repoRoot: string, relativePath: string): string | null {
+  const normalized = normalizeRepoPath(relativePath);
+  if (!normalized || path.isAbsolute(normalized)) return null;
+
+  const root = path.resolve(repoRoot);
+  const absolute = path.resolve(root, normalized);
+  if (absolute !== root && !absolute.startsWith(`${root}${path.sep}`)) return null;
+  if (!fs.existsSync(absolute)) return null;
+
+  const stat = fs.lstatSync(absolute);
+  if (!stat.isFile() || stat.isSymbolicLink()) return null;
+  return absolute;
+}
+
+function explicitReferenceLine(content: string, referencedPath: string): number | null {
+  const needle = normalizeRepoPath(referencedPath).toLowerCase();
+  if (!needle) return null;
+
+  const lines = content.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const normalizedLine = lines[index].replace(/\\/g, '/').toLowerCase();
+    if (normalizedLine.includes(needle)) return index + 1;
+  }
+  return null;
+}
+
+function verifiedEvidenceForFinding(options: {
+  repoRoot: string;
+  freshness: SemanticFreshnessReport;
+  finding: SemanticFreshnessFinding;
+  changedPaths: ReadonlySet<string>;
+}): DocumentationGovernanceFileReferenceEvidence[] {
+  const { repoRoot, freshness, finding, changedPaths } = options;
+  const documentPath = normalizeRepoPath(finding.path);
+  if (!finding.candidate || finding.mutationClass === 'SKIP' || !finding.contentSha256) return [];
+  if (changedPaths.has(documentPath)) return [];
+
+  const absolute = resolveRegularNonSymlinkFile(repoRoot, documentPath);
+  if (!absolute) return [];
+
+  const content = fs.readFileSync(absolute, 'utf8');
+  if (sha256(content) !== finding.contentSha256) return [];
+
+  const evidence: DocumentationGovernanceFileReferenceEvidence[] = [];
+  for (const sourcePathValue of finding.sourcePaths) {
+    const sourcePath = normalizeRepoPath(sourcePathValue);
+    if (!changedPaths.has(sourcePath) || !isComponentSourcePath(sourcePath)) continue;
+
+    const line = explicitReferenceLine(content, sourcePath);
+    if (line === null) continue;
+
+    evidence.push({
+      type: 'FileReference',
+      path: documentPath,
+      line,
+      referencedPath: sourcePath,
+      sourceCommit: freshness.sourceCommit.toLowerCase(),
+      correlationId: freshness.correlationId,
+    });
+  }
+
+  return evidence
+    .filter((item, index, items) => items.findIndex((candidate) =>
+      candidate.path === item.path
+      && candidate.line === item.line
+      && candidate.referencedPath === item.referencedPath
+      && candidate.sourceCommit === item.sourceCommit
+      && candidate.correlationId === item.correlationId) === index)
+    .sort((left, right) =>
+      `${left.path}:${String(left.line).padStart(10, '0')}:${left.referencedPath}`
+        .localeCompare(`${right.path}:${String(right.line).padStart(10, '0')}:${right.referencedPath}`));
+}
+
+export function collectGovDoc003Findings(options: {
+  repoRoot?: string;
+  freshness: SemanticFreshnessReport;
+}): DocumentationGovernanceFinding[] {
+  const repoRoot = path.resolve(options.repoRoot ?? process.cwd());
+  const { freshness } = options;
+
+  if (!freshness.correlationId.trim()) {
+    throw new Error('[DocumentationValidator] freshness correlationId is required.');
+  }
+  if (!/^[0-9a-f]{40}$/i.test(freshness.sourceCommit)) {
+    throw new Error('[DocumentationValidator] freshness sourceCommit must be a full 40-character SHA.');
+  }
+  if (freshness.fullScan || freshness.sourceChanges.length === 0) return [];
+
+  const changedPaths = new Set(
+    freshness.sourceChanges
+      .map((change) => normalizeRepoPath(change.path))
+      .filter((sourcePath) => sourcePath.length > 0),
+  );
+
+  const findings: DocumentationGovernanceFinding[] = [];
+  for (const freshnessFinding of freshness.findings) {
+    const evidence = verifiedEvidenceForFinding({
+      repoRoot,
+      freshness,
+      finding: freshnessFinding,
+      changedPaths,
+    });
+    if (evidence.length === 0) continue;
+
+    findings.push({
+      ruleId: GOV_DOC_003_RULE.ruleId,
+      severity: GOV_DOC_003_RULE.severity,
+      area: GOV_DOC_003_RULE.area,
+      documentId: freshnessFinding.documentId,
+      documentPath: normalizeRepoPath(freshnessFinding.path),
+      message: `${freshnessFinding.documentId}: document references ${evidence.length} changed component source path(s) while the document itself is unchanged in the correlated freshness evidence.`,
+      evidence,
+    });
+  }
+
+  return findings.sort((left, right) =>
+    `${left.documentPath}:${left.documentId}:${left.ruleId}`
+      .localeCompare(`${right.documentPath}:${right.documentId}:${right.ruleId}`));
+}
