@@ -4,7 +4,7 @@
 **Repository:** SvenKulessa/Finance  
 **Version:** 1.7.3  
 **Stand:** 7. September 2026  
-**Korrelationsbasis:** `main@e7715f542db65e40cca6d39a6dacb0f30ef08b51`  
+**Korrelationsbasis:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e`  
 **Arbeitsstand:** `agent/frontend-public-scorer-landing-r2-20260907` — Public-Enterprise-Scorer-Recovery auf frischem current-main-Branch  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
@@ -63,7 +63,7 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 
 **Status:** IMPLEMENTED ON BRANCH / VALIDATION PENDING  
 **Branch:** `agent/frontend-public-scorer-landing-r2-20260907`  
-**Baseline:** `main@e7715f542db65e40cca6d39a6dacb0f30ef08b51`
+**Baseline:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e`
 
 Die Root-Recovery aus PR #782/#788 hat die öffentliche Shell gegen den schweren Dashboard-Graph abgesichert. Der aktuelle P0-Slice stellt zusätzlich die ursprüngliche Produktlogik wieder her: die Root-Landingpage zeigt **nicht** länger das komplette Legacy-Dashboard als Preview, sondern lädt gezielt den kanonischen Enterprise Scorer als öffentliche Produktvorschau.
 
@@ -393,4 +393,4 @@ Parallel bleibt die **manuelle Production-Observation des zuvor betroffenen Andr
 
 ---
 
-*Version 1.7.3 übernimmt die dokumentbasierte Korrelation aus dem historischen Roadmap-Branch, bindet sie an `main@e7715f542db65e40cca6d39a6dacb0f30ef08b51` und ergänzt den aktuellen P0-Slice zur Wiederherstellung der eigenständigen Landingpage mit kanonischem Enterprise Scorer. ADR-/ESS-Supersession wurde geprüft und ist für diese Presentation-/Routing-Änderung nicht erforderlich.*
+*Version 1.7.3 übernimmt die dokumentbasierte Korrelation aus dem historischen Roadmap-Branch, bindet sie an `main@f8cdc390d47263c845a2f03827d62af429de1c5e` und ergänzt den aktuellen P0-Slice zur Wiederherstellung der eigenständigen Landingpage mit kanonischem Enterprise Scorer. ADR-/ESS-Supersession wurde geprüft und ist für diese Presentation-/Routing-Änderung nicht erforderlich.*
