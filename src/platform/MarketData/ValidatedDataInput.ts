@@ -265,7 +265,6 @@ export function buildValidatedHistoryInput(
 ): ValidatedHistoryInput {
   assertUniversalAssetIdentity(asset);
   const identityMatches = historyMatchesAsset(asset, history);
-  const correlationPresent = Boolean(history.correlationId.trim());
   const pointsValid = history.points.length > 0
     && history.points.every(point => Number.isFinite(point.close) && point.close > 0 && Number.isFinite(Date.parse(point.timestamp)));
   const lineage = evaluateProvenanceLineage({
