@@ -15,13 +15,13 @@ Current `/AGENTS.md` remains Control Plane v2.8.1. Current project mapping assig
 
 Security PR #832 merged earlier in this work and changed only Security documentation/evidence surfaces. Its semantic result for `S1-R2-04` is consumed: repository contracts are independently `REPOSITORY_CONTRACT_VERIFIED`, while exact post-deploy supervisor/restart/readiness evidence remains open.
 
-PR #833 `[CAPITAL-AI-OPS] [ChatGPT] Retired Authorization aus Runtime und Roadmaps entfernen` is now terminal `closed / unmerged`. Its prior shared `docs/projects/operations/ROADMAP.md` writer therefore no longer blocks this branch. No #833 content was imported as current main state.
+PR #833 `[CAPITAL-AI-OPS] [ChatGPT] Retired Authorization aus Runtime und Roadmaps entfernen` is terminal `closed / unmerged`. Its prior shared `docs/projects/operations/ROADMAP.md` writer therefore no longer blocks this branch. No #833 content was imported as current main state.
 
 Main later advanced through PR #834 to `fe27d901a7a505b1e0b87f8970e3f4a33991d968`. The complete delta from the preceding OPS baseline contains only Frontend navigation/test files and no OPS target path. The OPS branch was synchronized to that main via an explicit merge commit while preserving its four bounded documentation/evidence files.
 
-Final open-PR correlation at this synchronization snapshot returns zero open Pull Requests.
+Current PR #836 (`[CAPITAL-AI-OPS] [ChatGPT] zizmor-Workflow-Sicherheitsprüfung integrieren`) changes only `.github/workflows/zizmor.yml`. It has no changed-file overlap with this branch and no material semantic/authority conflict with qs/RPO/Node priority projection. It is disclosed but non-blocking.
 
-Other correlated OPS branches: `agent/operations-roadmap-integrity-sync-20260907` remains stale/diverged and has no PR; the Zizmor evaluation branch had no delta at its correlation snapshot. Neither is an active ROADMAP writer.
+Other correlated OPS branches: `agent/operations-roadmap-integrity-sync-20260907` remains stale/diverged and has no PR; no active ROADMAP writer remains.
 
 ## 2. PR #828 / qs 6.16.0
 
@@ -83,7 +83,8 @@ Read-only checks/correlation executed:
 - Security PR #832 changed-file overlap: **PASS — none with OPS target files**;
 - PR #833 terminal state: **PASS — closed / unmerged**;
 - PR #834 delta: **PASS — Frontend-only; no OPS target-file/semantic overlap**;
-- open PR baseline: **PASS — zero open Pull Requests**;
+- PR #836 changed-file correlation: **PASS — only `.github/workflows/zizmor.yml`; no overlap with this branch**;
+- PR #836 semantic/authority correlation: **PASS — separate C-N workflow-security tooling slice; no material qs/RPO/Node-priority conflict**;
 - branch current-main synchronization: **PASS — current main merged into branch with OPS blobs preserved**;
 - PR #828 merge/final-head identity: **PASS**;
 - PR #828 final hosted CI/Governance/Container Security: **PASS**;
@@ -110,4 +111,4 @@ Not run / not claimed for this documentation-only work:
 
 ## 8. Boundary
 
-This evidence authorizes no PR creation, merge, Release transition, Node supersession, provider/Production mutation or Security closure. The prior PR #833 coordination blocker is terminal; the remaining protected gate for this documentation branch is exact-snapshot Human/Owner PR-creation approval after final main/head/open-PR correlation.
+This evidence authorizes no PR creation, merge, Release transition, Node supersession, provider/Production mutation or Security closure. The prior PR #833 coordination blocker is terminal; PR #836 is non-conflicting. The remaining protected gate for this documentation branch is exact-snapshot Human/Owner PR-creation approval after final main/head/open-PR correlation.
