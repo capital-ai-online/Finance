@@ -4,7 +4,7 @@
 **Authority:** `ESS-0012 — Documentation Governance`  
 **Global governance dependency:** `src/platform/Governance` / `/AGENTS.md`  
 **Version:** `1.5.0`  
-**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-003 freshness, GOV-DOC-006 generator-marking and incremental GOV-DOC-001 document-version validation; broader ESS-0012 rule suite incremental
+**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-003 freshness, GOV-DOC-006 generator-marking and GOV-DOC-001 document-version validation on current main; broader ESS-0012 rule suite incremental
 
 ## Purpose
 
@@ -29,7 +29,7 @@ The CLI adapter is `scripts/automation/validateDocumentationHygiene.ts` and is e
 
 - canonical rule identity `GOV-DOC-003` on current main through Human-merged PR #805;
 - incremental rule identity `GOV-DOC-006` on current main through Human-merged PR #813;
-- incremental rule identity `GOV-DOC-001` for registered documents whose body lacks an explicit numeric `Version` / `Dokumentversion` marking;
+- incremental rule identity `GOV-DOC-001` on current main through Human-merged PR #815;
 - `GOV-DOC-001` is `High`; `GOV-DOC-003` and `GOV-DOC-006` remain `Medium`;
 - consumes the existing `Discovery/SemanticFreshnessAnalyzer.ts` result for freshness rather than scanning the repository again;
 - binds every evidence item to a `FileReference`;
@@ -80,7 +80,7 @@ Documentation Governance consumes global stable identities; it does not own them
 
 The useful hygiene implementation from parked PR #439 is reused as the canonical structural/registry hygiene service. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
 
-WP-DOC-07 added `GOV-DOC-003` through PR #805. WP-DOC-08 added `GOV-DOC-006` through PR #813. WP-DOC-09 adds only `GOV-DOC-001` as the next incremental semantic rule. Targeted unit coverage lives in `tests/unit/documentaryDocumentationValidator.test.ts`.
+WP-DOC-07 added `GOV-DOC-003` through PR #805. WP-DOC-08 added `GOV-DOC-006` through PR #813. WP-DOC-09 added `GOV-DOC-001` through PR #815. Targeted unit coverage lives in `tests/unit/documentaryDocumentationValidator.test.ts`.
 
 This does **not** claim that all historical 57 ESS-0012 rules are implemented. Additional semantic Documentary validators remain separate incremental work unless explicitly brought into scope.
 
