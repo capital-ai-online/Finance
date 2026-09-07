@@ -6,7 +6,7 @@
 **Primary Owner:** `CAPITAL-AI-OPS`  
 **Execution authority:** `/AGENTS.md`; bounded implementation under current OPS project scope  
 **ADR-0104 session:** `ADR-0104-S3`, PT8H, exact-chat activation; Human/CODEOWNER merge remains excluded  
-**Baseline:** `main@96119f958cacbf35614747380a066b87fdb1ee40`
+**Baseline:** `main@619f544f3f281164fb60723fe12b96a82598d0a0`
 
 ## Goal
 
@@ -70,7 +70,7 @@ The optional `--allow-download` path is explicit because executing a freshly dow
 
 ## Validation truth
 
-Repository-level source inspection and branch/open-PR correlation were performed in the connected GitHub surface.
+Repository-level source inspection and branch/open-PR correlation were performed in the connected GitHub surface. The branch was resynchronized after Human merge of PR #839; its merge base is `main@619f544f3f281164fb60723fe12b96a82598d0a0` and the scoped source-patch files remain unchanged by that merge.
 
 The following commands could not be executed in the current chat execution host because no repository checkout/Node toolchain is mounted there:
 
