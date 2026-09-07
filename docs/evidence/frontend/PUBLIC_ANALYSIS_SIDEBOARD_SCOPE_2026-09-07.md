@@ -4,8 +4,8 @@
 **Project:** CAPITAL-AI-FE  
 **Primary Owner:** CAPITAL-AI-FE  
 **Primary Productive PVC:** N/A — cross-cutting presentation project  
-**Baseline:** `main@a7e15f83a7dcfbac386aff3f801000901b99634e`  
-**Working branch:** `agent/frontend-public-analysis-sideboard-20260907`  
+**Baseline:** `main@d423da75e5f43b423d39abd3c4dffbfa0da8a2a5`  
+**Working branch:** `agent/frontend-public-analysis-sideboard-r3-20260907`  
 **Status:** IMPLEMENTED ON BRANCH / HOSTED VALIDATION NOT RUN
 
 ## Owner-directed product requirement
@@ -53,6 +53,7 @@ This requirement changes presentation and discoverability only. It does not auth
 - No simulated/preset value source is presented as verified public market/scoring evidence by this slice.
 - `LandingPage` remains a feature-owned presentation component without a dependency back to `src/app/**`.
 - The authenticated `/dashboard` composition remains separate and lazy.
+- DATA-13 freshness remains an upstream `CAPITAL-AI-DATA` authority consumed by the UI; this Frontend slice does not redefine capability max-age, freshness evaluation, or scoring admissibility.
 
 ## Validation status
 
@@ -68,6 +69,10 @@ Source-contract regression coverage is updated in `tests/unit/publicLandingRoute
 - preserved canonical Enterprise Scorer public-preview guard.
 
 Runtime/TypeScript/Unit/Production Build/CSP/Predeploy checks for this branch are **NOT RUN** before PR creation because no local repository execution environment is available in this chat. They must be provided by the C-P hosted PR checks for the exact PR head before Human/CODEOWNER merge.
+
+## Correlation after DATA-13 merge
+
+PR #822 merged into `main` as `d423da75e5f43b423d39abd3c4dffbfa0da8a2a5`. Its changed scope is limited to `docs/projects/data/**`, `src/platform/MarketData/dataFreshness.ts`, and `tests/unit/dataFreshness.test.ts`. The public Sideboard branch was recreated from that exact main and preserves DATA-13 as an upstream dependency rather than modifying or duplicating it.
 
 ## Roadmap impact
 
