@@ -134,8 +134,11 @@ jobs:
 
       - name: Exakten CI-PASS wiederverwenden
         if: steps.cost_control.outputs.reuse_exact_snapshot == 'true'
+        env:
+          REPORT_REUSED_RUN_NUMBER: ${{ steps.cost_control.outputs.reused_run_number }}
+          REPORT_REUSED_ATTEMPT: ${{ steps.cost_control.outputs.reused_attempt }}
         run: |
-          echo "P0 Cost-Control: build-and-test PASS wird aus CI Run #${{ steps.cost_control.outputs.reused_run_number }}, Attempt ${{ steps.cost_control.outputs.reused_attempt }} für denselben PR-Head und dieselbe Base wiederverwendet."
+          echo "P0 Cost-Control: build-and-test PASS wird aus CI Run #$REPORT_REUSED_RUN_NUMBER, Attempt $REPORT_REUSED_ATTEMPT für denselben PR-Head und dieselbe Base wiederverwendet."
           echo "Diese Deduplizierung ist keine Autorisierung und erweitert keine Merge-/Deployment-Rechte."
 
       - name: Repository auschecken
@@ -162,11 +165,21 @@ jobs:
 
       - name: Scope-Zusammenfassung
         if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
+        env:
+          REPORT_CLASS: ${{ steps.scope.outputs.class }}
+          REPORT_NODE: ${{ steps.scope.outputs.node }}
+          REPORT_LINT: ${{ steps.scope.outputs.lint }}
+          REPORT_UNIT: ${{ steps.scope.outputs.unit }}
+          REPORT_BUILD: ${{ steps.scope.outputs.build }}
+          REPORT_AUDIT: ${{ steps.scope.outputs.audit }}
+          REPORT_PREDEPLOY: ${{ steps.scope.outputs.predeploy }}
+          REPORT_DOCKER: ${{ steps.scope.outputs.docker }}
+          REPORT_DOCKER_IMAGE: ${{ steps.scope.outputs.docker_image }}
         run: |
-          echo "class=${{ steps.scope.outputs.class }}"
-          echo "node=${{ steps.scope.outputs.node }} lint=${{ steps.scope.outputs.lint }} unit=${{ steps.scope.outputs.unit }}"
-          echo "build=${{ steps.scope.outputs.build }} audit=${{ steps.scope.outputs.audit }} predeploy=${{ steps.scope.outputs.predeploy }}"
-          echo "docker=${{ steps.scope.outputs.docker }} docker_image=${{ steps.scope.outputs.docker_image }}"
+          echo "class=$REPORT_CLASS"
+          echo "node=$REPORT_NODE lint=$REPORT_LINT unit=$REPORT_UNIT"
+          echo "build=$REPORT_BUILD audit=$REPORT_AUDIT predeploy=$REPORT_PREDEPLOY"
+          echo "docker=$REPORT_DOCKER docker_image=$REPORT_DOCKER_IMAGE"
 
       - name: Repository-Integrität prüfen
         if: steps.scope.outputs.integrity == 'true'

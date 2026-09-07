@@ -4,6 +4,9 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { analyzeSemanticFreshness } from '../../src/platform/Documentary/Discovery/SemanticFreshnessAnalyzer';
+import {
+  DOCUMENT_LIFECYCLE_POLICY_PATH,
+} from '../../src/platform/Documentary/Governance/Services/DocumentationHygieneValidator';
 import { observeDocumentaryMaintenance } from '../../src/platform/Supervisor/documentaryMaintenanceObservation';
 import {
   applyDocumentaryMaintenancePlan,
@@ -30,7 +33,7 @@ function setupRepo(): string {
   write(root, 'docs/architecture/FOO.md', '# Foo\nImplementation: `src/platform/Foo/service.ts`\nState: old\n');
   write(root, 'docs/governance/document-registry.json', `${JSON.stringify({
     schemaVersion: '1.2.0',
-    authority: 'docs/governance/DOCUMENTATION_HYGIENE_POLICY.md',
+    authority: DOCUMENT_LIFECYCLE_POLICY_PATH,
     entries: [{ documentId: 'DOC-FOO', type: 'architecture', owner: 'CAPITAL-AI', authority: 'ESS-0010', version: '1.2.3', language: 'en', lifecycle: 'approved', path: 'docs/architecture/FOO.md' }],
   }, null, 2)}\n`);
   git(root, ['init', '-b', 'main']);
