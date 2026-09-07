@@ -5,9 +5,11 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   GOV_DOC_001_RULE,
+  GOV_DOC_002_RULE,
   GOV_DOC_003_RULE,
   GOV_DOC_006_RULE,
   collectGovDoc001Findings,
+  collectGovDoc002Findings,
   collectGovDoc003Findings,
   collectGovDoc006Findings,
 } from '../../src/platform/Documentary/Governance/Validators/DocumentationValidator';
@@ -351,6 +353,90 @@ describe('DocumentationValidator GOV-DOC-001', () => {
     ];
     const first = collectGovDoc001Findings({ repoRoot: root, entries });
     const second = collectGovDoc001Findings({ repoRoot: root, entries });
+
+    expect(second).toEqual(first);
+    expect(first.map((item) => item.documentId)).toEqual(['DOC-A', 'DOC-Z']);
+  });
+});
+
+describe('DocumentationValidator GOV-DOC-002', () => {
+  it('emits a Medium finding when a registered document body has no ESS or ADR reference', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-002-positive-'));
+    write(root, 'docs/architecture/GEN-FOO.md', '# Generated Foo\n\nRegistry authority is not an ESS or ADR citation.\n');
+
+    expect(GOV_DOC_002_RULE).toMatchObject({
+      ruleId: 'GOV-DOC-002',
+      area: 'DOC',
+      severity: 'Medium',
+      evidenceType: 'FileReference',
+      version: '1.0.0',
+    });
+    expect(collectGovDoc002Findings({
+      repoRoot: root,
+      entries: [registeredEntry()],
+    })).toEqual([
+      {
+        ruleId: 'GOV-DOC-002',
+        severity: 'Medium',
+        area: 'DOC',
+        documentId: 'DOC-GEN-FOO',
+        documentPath: 'docs/architecture/GEN-FOO.md',
+        message: 'DOC-GEN-FOO: registered document has no ESS or ADR reference.',
+        evidence: [{
+          type: 'FileReference',
+          path: 'docs/architecture/GEN-FOO.md',
+          line: 1,
+          referencedPath: 'docs/architecture/GEN-FOO.md',
+        }],
+      },
+    ]);
+  });
+
+  it('accepts ESS and ADR identities after markdown normalization and ignores empty labels', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-002-marked-'));
+    write(root, 'docs/architecture/A.md', '# A\n\nAuthority: ESS-0012\n');
+    write(root, 'docs/architecture/B.md', '# B\n\n- **ADR:** `ADR-0097`\n');
+    write(root, 'docs/architecture/C.md', '# C\n\nSee [ESS-0012-CONTRACTS](docs/ess/ESS-0012-CONTRACTS.md).\n');
+    write(root, 'docs/architecture/D.md', '# D\n\nESS without a number.\n');
+
+    expect(collectGovDoc002Findings({
+      repoRoot: root,
+      entries: [
+        registeredEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md', lifecycle: 'approved' }),
+        registeredEntry({ documentId: 'DOC-B', path: 'docs/architecture/B.md', lifecycle: 'reviewed' }),
+        registeredEntry({ documentId: 'DOC-C', path: 'docs/architecture/C.md' }),
+        registeredEntry({ documentId: 'DOC-D', path: 'docs/architecture/D.md' }),
+        registeredEntry({ documentId: 'DOC-MISSING', path: 'docs/architecture/MISSING.md' }),
+      ],
+    })).toEqual([
+      {
+        ruleId: 'GOV-DOC-002',
+        severity: 'Medium',
+        area: 'DOC',
+        documentId: 'DOC-D',
+        documentPath: 'docs/architecture/D.md',
+        message: 'DOC-D: registered document has no ESS or ADR reference.',
+        evidence: [{
+          type: 'FileReference',
+          path: 'docs/architecture/D.md',
+          line: 1,
+          referencedPath: 'docs/architecture/D.md',
+        }],
+      },
+    ]);
+  });
+
+  it('keeps deterministic ordering for unreferenced registered documents', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-002-order-'));
+    write(root, 'docs/architecture/Z.md', '# Z\n');
+    write(root, 'docs/architecture/A.md', '# A\n');
+
+    const entries = [
+      registeredEntry({ documentId: 'DOC-Z', path: 'docs/architecture/Z.md' }),
+      registeredEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md' }),
+    ];
+    const first = collectGovDoc002Findings({ repoRoot: root, entries });
+    const second = collectGovDoc002Findings({ repoRoot: root, entries });
 
     expect(second).toEqual(first);
     expect(first.map((item) => item.documentId)).toEqual(['DOC-A', 'DOC-Z']);
