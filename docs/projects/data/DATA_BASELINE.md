@@ -1,36 +1,17 @@
 # CAPITAL-AI-DATA — Repository & Runtime Baseline
 
-**Observed baseline:** `main@a6a62e867749efe80fc05aa175a3dc3fdd183d82`  
-**Observed open PRs at DATA-11 start:** `#804 CAPITAL-AI-CLIENT GOV-08 Admin Process Graph`, `#810 CAPITAL-AI-FINTECH FIN-SEC-02 verified_screening Gate`  
-**Active DATA branch:** `agent/data-11-dq-gate-20260907`
+**Observed baseline:** `main@2a6dfc5246672decd14cd8d0ace8dc2c4db94455`  
+**Observed open PRs at DATA-12 start:** `#813 CAPITAL-AI-DOC WP-DOC-07 Closeout und GOV-DOC-006 Validator`  
+**Active DATA branch:** `agent/data-12-provenance-20260907`
 
 ## Coordination baseline
 
-Current main is the merge of PR #811 (S1-R2-11). Open PRs #804 and #810 have no changed-file overlap with `docs/projects/data/**`, `src/platform/MarketData/dataQualityGate.ts` or `ValidatedDataInput.ts`.
-
-S1-R2-11 remains `EVIDENCE_READY` pending independent `CAPITAL-AI-SEC` verification. OPS owns PR/trace tooling.
-
-## Namespace resolution
-
-- `PVC-09` — UAI / Data Ingestion — `CAPITAL-AI-DATA`
-- `PVC-10` — Evidence Management — `CAPITAL-AI-DATA`
-- `PVC-11` — Data Quality — `CAPITAL-AI-DATA`
-- `PVC-12` — Feature Engineering — `CAPITAL-AI-FINTECH`
+Current main is the Human merge of PR #812 (DATA-11 gate) after #811 (S1-R2-11), #810 (FINTECH) and #804 (CLIENT). Open PR #813 is Documentary-only and has no overlap with `src/platform/MarketData/**` or `docs/projects/data/**`.
 
 ## Runtime inventory additions
 
 | Concern | Current implementation | Baseline assessment |
 |---|---|---|
-| DATA exit gate | `dataQualityGate.ts` | Explicit snapshot/evidence → DATA-status table; fail-closed FINTECH export |
-| Validated snapshot exit | `ValidatedDataInput.ts` | Consumes the DATA-11 gate for field/aggregate status |
-| Evidence identity freshness | `evidenceIdentityFreshness.ts` | S1-R2-11 observer on main after PR #811 |
-| Composite DQ + confidence | `CompositeDataQuality.ts` | Mixed; confidence/ranking remain FINTECH-owned and untouched |
-
-## Remaining DATA-11+ findings
-
-1. Source snapshot/evidence vocabularies are mapped, not collapsed.
-2. Composite confidence/ranking helpers remain colocated and untouched.
-3. Provider paths are only partially homogeneous.
-4. Compatibility fallback rows remain non-evidence.
-5. Correction-version lineage remains open.
-6. S1-R2-11 Security verification remains independent.
+| Provenance lineage | `dataProvenanceLineage.ts` | Required identity/evidence/timestamp/correlation envelope; handoff mutation fails closed |
+| DATA exit gate | `dataQualityGate.ts` | Merged via PR #812 |
+| Evidence identity freshness | `evidenceIdentityFreshness.ts` | Merged via PR #811; Security verification still independent |
