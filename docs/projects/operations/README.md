@@ -16,7 +16,7 @@ Folder-to-PVC ownership is defined only by `docs/projects/README.md` and `docs/p
 
 ## Authority boundary
 
-CAPITAL-AI-OPS owns execution, not repository-wide Governance authority.
+CAPITAL-AI-OPS owns its primary PVC execution, not repository-wide Governance authority. Under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`, OPS may additionally execute bounded work packages whose Target Project / Primary Owner is another canonical CAPITAL-AI project. This execution delegation does not transfer the Target Project's PVC ownership, domain authority, Security/Compliance assurance authority, merge authority or protected-mutation authority to OPS.
 
 - `/AGENTS.md` remains the repository trust root.
 - Governance owns `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` and the DevelopmentChain policy.
@@ -26,7 +26,7 @@ CAPITAL-AI-OPS owns execution, not repository-wide Governance authority.
 - Supervisor observes, evaluates and escalates; it does not make protected decisions.
 - EventMesh transports/validates/routes events; it creates no authority.
 - Traceability links evidence/relationships; it is non-deciding and non-authorizing.
-- Human/Owner PR creation approval and Human/CODEOWNER merge remain separate gates.
+- Human/Owner PR creation approval and Human/CODEOWNER merge remain separate gates unless another effective authority explicitly delegates only the PR-create approval surface.
 - Production mutation requires separate current authorization.
 
 ## Canonical project documents
@@ -73,4 +73,4 @@ Security owns the findings, threat/control definitions, negative-test expectatio
 
 ## Foreign work rule
 
-Any discovered remediation outside OPS-owned productive scope is not implemented here. Ownership is resolved from the folder-to-PVC mapping only.
+OPS may implement bounded foreign-project work under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION` after resolving the Target Project, Target PVC/Primary Owner, target Roadmap scope, applicable ADR/ESS/contracts and current writer/overlap state. Branch and PR identity remain classified by the Target Project, while OPS is recorded as the executor. Missing or conflicting target authority remains fail-closed.
