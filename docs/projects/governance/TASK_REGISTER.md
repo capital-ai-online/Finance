@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-07, correlated to repository-visible implementation/PR evidence  
-**Current correlation baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
+**Current correlation baseline:** `main@8ab11ae749639a67c28b3d685f4943df19b9e72c`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -75,10 +75,11 @@ Current `main` contains Human-merged PR #803. It establishes that pure Human/Own
 
 ## Current writer / correlation state
 
-At `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`:
+At `main@8ab11ae749639a67c28b3d685f4943df19b9e72c`:
 
-- PR #836 is the only open Pull Request observed for the final pre-implementation correlation; it changes only `.github/workflows/zizmor.yml` under `CAPITAL-AI-OPS` and has no changed-file, semantic, namespace, authority or Primary-Owner overlap with `GOV-CHAT-071`;
-- `agent/governance-owner-response-retirement-20260907` is the scoped Governance writer for the current bounded correction;
+- open PR #838 (`CAPITAL-AI-DOC`) changes Documentary hygiene/document-registry surfaces but none of the seven `GOV-CHAT-071` files; no semantic ownership/authority conflict was identified;
+- open PR #839 (`CAPITAL-AI-OPS`) changes workflow/zizmor hardening and OPS evidence only; no changed-file, namespace, authority or Primary-Owner overlap exists;
+- `agent/governance-owner-response-retirement-20260907` is the scoped Governance writer for the current bounded correction and contains current main through an explicit synchronization merge commit;
 - historical/released claims and earlier merged PR branches are non-authorizing and do not reserve current writer authority.
 
 ## GOV-07 Evolution Policy current-main correlation
