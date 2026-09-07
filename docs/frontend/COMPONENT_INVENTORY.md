@@ -1,263 +1,192 @@
 # CAPITAL-AI Frontend – Component Inventory
 
 **Stand:** 7. September 2026  
-**Korrelationsbasis:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e` + `agent/frontend-public-scorer-landing-r2-20260907`  
-**Dokumentrolle:** Ist-Bestand und Migrationsstatus  
-**Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`
+**Korrelationsbasis:** `main@5490a3b1a8d6aa19e2cd955b79267dffa15e5282`  
+**Current Project:** `CAPITAL-AI-FE`  
+**Primary Productive PVC:** `N/A` (`[]`)  
+**Primary Owner:** `CAPITAL-AI-FE`  
+**Dokumentrolle:** Ist-Bestand, Visual-Recovery- und Migrationsstatus  
+**Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
+**Migrations-/Prioritätsauthority:** `docs/frontend/FRONTEND_ROADMAP.md`
 
-Dieses Dokument inventarisiert vorhandene UI-/Feature-Komponenten und ihren Migrationsstatus. Es definiert **keine** eigene Source-Tree-, Dependency-, Market-Data-, Scoring-, Entitlement- oder Governance-Authority.
+Dieses Dokument inventarisiert vorhandene UI-/Feature-Komponenten und ihren realen Migrations-/Contract-Status. Es definiert **keine** Source-Tree-, Dependency-, Market-Data-, Scoring-, Ranking-, Evidence-, Freshness-, Entitlement-, IAM- oder Governance-Authority und erzeugt keine zweite Frontend-Roadmap.
 
-Verbindliche Abgrenzung:
+## Statusmodell
 
-- Architektur- und Zielpfade werden ausschließlich durch `FRONTEND_ARCH.md` normiert.
-- Die Migrationsreihenfolge wird ausschließlich durch `FRONTEND_ROADMAP.md` geplant.
-- Fachliche Financial-Runtime-/Evidence-/Scoring-Regeln werden durch `SC-MD-SPT-0001` und die zuständigen ADR-/ESS-Authorities definiert.
-- Angaben zu fachlichem Verhalten in diesem Inventory sind beschreibend und dürfen keine Parent-Authority überschreiben.
-- Nicht ausdrücklich als kanonisch markierte Dateinamen in den Tabellen liegen derzeit physisch unter `src/components/` und gehören damit zur Legacy-/Compatibility-Zone.
+### Current consumer state
+
+- **CANONICAL_CONNECTED** — produktiver Consumer nutzt einen kanonischen app-/feature-owned Pfad.
+- **COMPATIBILITY_ONLY** — Ziel-Fassade existiert, Implementation oder Alias liegt aber noch in der Legacy-/Compatibility-Zone.
+- **PRODUCTIVE_LEGACY** — produktiv gerendert/erreichbar und physisch weiterhin Legacy.
+- **NOT_PRODUCTIVELY_RENDERED** — Code existiert, ist aber aktuell kein produktiver Consumer.
+- **DISABLED_ARCHIVED** — explizit deaktiviert/archiviert.
+- **BLOCKED_INVALID_OR_MISSING_CONTRACT** — visuelle Idee vorhanden, produktive Aktivierung durch ungültigen/fehlenden Contract blockiert.
+
+### Visual Recovery class
+
+- **A — CANONICALIZE_NOW:** genehmigte produktive Visual-Funktionalität mit production-valid aktuellem Contract.
+- **B — CONTRACT_REMEDIATION_REQUIRED:** nützliche Visual-Funktionalität, aber aktueller Data/Evidence/Authority-Contract ist nicht production-valid. Keine Aktivierung mit synthetischen/fallback Finanzwerten.
+- **C — EXPLICITLY_DISABLED_OR_ARCHIVED:** explizit deaktiviert/archiviert; Reaktivierung nur nach aktueller Owner-Entscheidung und notwendigen Contract-/Architecture-Gates.
+
+### Accessibility / Performance status
+
+- **BASELINE** — bekannte generelle Frontend-Baseline vorhanden, aber keine Surface-spezifische Closure-Evidence.
+- **PARTIAL** — einzelne relevante Mechanismen vorhanden, Closure-Gate nicht vollständig belegt.
+- **REQUIRED** — vor Legacy-Exit bzw. Aktivierung explizit zu validieren.
+- **BLOCKED** — produktive Validierung erst nach Contract-/Activation-Gate sinnvoll.
 
 ---
 
-## Application Composition — BB-1 / BB-2
+## 1. Application Composition — BB-1 / BB-2
 
-| Verantwortung | Kanonischer Pfad | Legacy-/Compatibility-Pfad | Status |
+| Surface | Current physical path | Canonical target path | Current consumer state | Recovery class | Data/authority contract | Supersession | Foreign owner | Legacy removal prerequisite | A11y | Perf |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Application Composition Root | `src/app/App.tsx` | same | CANONICAL_CONNECTED | A | FE composition only | No | N/A | root `src/App.tsx` consumers = 0 before compatibility removal | BASELINE | PARTIAL |
+| Session/Auth Composition | `src/app/auth/SessionComposition.tsx` | same | CANONICAL_CONNECTED | A | consumes IAM/Auth; no FE auth authority | No | CAPITAL-AI-GOV / applicable IAM owner | no session consumer depends on Root compatibility type/path | PARTIAL | BASELINE |
+| Route Composition | `src/app/routing/AppRoutes.tsx` | same | CANONICAL_CONNECTED | A | routing/presentation only | No | N/A | legacy route composition = 0 | PARTIAL | PARTIAL |
+| Dashboard Composition | `src/components/Dashboard.tsx` behind `src/app/dashboard/Dashboard.tsx` | `src/app/dashboard/*` | PRODUCTIVE_LEGACY | A for approved visible functions | must consume feature/domain contracts | No domain supersession by FE | per rendered domain | BB-2E + BB-2F + BB-2G parity; 0 productive Legacy composition | REQUIRED | REQUIRED |
+| DashboardViewRouter | `src/app/dashboard/DashboardViewRouter.tsx` | same | CANONICAL_CONNECTED | A | presentation composition | No | N/A | remaining dashboard switch consumers removed | BASELINE | BASELINE |
+| Public Analysis Workbench | `src/app/public/PublicAnalysisWorkbench.tsx` | same | CANONICAL_CONNECTED | A | preserves public/server-gated/login/disabled states | No | applicable FINTECH/DATA/IAM owners | no fallback to Legacy Dashboard public root | PARTIAL | PARTIAL |
+
+### BB-2G visual-parity inventory gate
+
+Before `src/components/Dashboard.tsx` can be removed, every approved productive Home/MyWorkspace visual capability must be mapped to an app-owned composition consuming feature facades. Physical Legacy implementation is not preservation evidence; functional parity through canonical consumers is.
+
+---
+
+## 2. Shared Presentation / Visualization Primitives
+
+### Existing canonical shared primitives
+
+| Component | Current physical path | State | Contract role |
 |---|---|---|---|
-| Application Composition Root | `src/app/App.tsx` | `src/App.tsx` | BB-1 implementiert; Root-Pfad ist dünne Compatibility-Fassade |
-| Session/Auth Composition | `src/app/auth/SessionComposition.tsx` | zuvor Bestandteil von `src/App.tsx` | BB-1 extrahiert; bestehende Security-Semantik erhalten |
-| Route/Presentation Composition | `src/app/routing/AppRoutes.tsx` | zuvor Bestandteil von `src/App.tsx` | kanonisch; trennt `/`, `/login`, `/dashboard`, Legal, Learning und Media-Studio |
-| Dashboard Composition | `src/app/dashboard/Dashboard.tsx` + `DashboardViewRouter.tsx` | `src/components/Dashboard.tsx` | BB-2D produktiv; Legacy-Dashboard bleibt bounded Strangler für authentifizierte Composition |
-| Presentation Session Type | `src/app/types/UserSession.ts` | zuvor Interface in `src/App.tsx` | BB-1 extrahiert; Root re-exportiert Typ temporär für Legacy-Consumer |
-| App Shell | `src/app/AppShell.tsx` | N/A | kanonisch seit Foundation |
+| StatusBadge | `src/shared/ui/StatusBadge.tsx` | CANONICAL_CONNECTED | presentation-only status role |
+| AuthorityBadge | `src/shared/ui/AuthorityBadge.tsx` | CANONICAL_CONNECTED | projects authority labels; does not create authority |
+| FreshnessBadge | `src/shared/ui/FreshnessBadge.tsx` | CANONICAL_CONNECTED | projects supplied status/timestamps; must not compute DATA freshness policy |
+| EvidenceStateIndicator | `src/shared/ui/EvidenceStateIndicator.tsx` | CANONICAL_CONNECTED | explicit evidence/data state projection |
+| ResearchOnlyBanner | `src/shared/ui/ResearchOnlyBanner.tsx` | CANONICAL_CONNECTED | explicit non-authorizing research state |
+| Button / Card / Input / Modal / Tooltip / Skeleton / EmptyState | `src/shared/ui/*` | CANONICAL_CONNECTED | fachneutrale UI primitives |
+| CapitalAiLogo | `src/shared/branding/CapitalAiLogo.tsx` | CANONICAL_CONNECTED | projects `brandmark.json`; no second geometry authority |
 
-### Öffentliche Root-Composition — Public Enterprise Scorer Recovery
+### Planned shared visualization primitives
 
-Der aktuelle Recovery-Branch materialisiert folgende Composition:
+These are **roadmap targets, not current implementations**: `ChartFrame`, `ResponsiveChartContainer`, `VisualizationToolbar`, `TimeRangeControl`, `VisualizationLegend`, `DataStateOverlay`, `VisualizationSkeleton`, `AccessibleDataSummary`, bounded Crosshair/Tooltip primitives.
 
-```text
-src/app/routing/AppRoutes.tsx
-  → src/features/public/ui/LandingPage.tsx
-  → lazy src/features/crypto/ui/public.ts
-  → PublicCryptoScoringPreview
-  → canonical CryptoScoringEnterprise implementation
-```
-
-Verbindliche Bestandsgrenzen:
-
-- `/` konsumiert **nicht** mehr den vollständigen Legacy-Dashboard-Graph als Produktvorschau.
-- `LandingPage` bleibt feature-owned Presentation und importiert nicht aus `src/app/**`.
-- `/login` bleibt dedizierte Authentifizierungsroute.
-- die Public-Scorer-Projektion erzeugt keine `UserSession` und keine persistierte/anonyme Supabase-Session.
-- `PublicCryptoScoringPreview` ist keine zweite Scorer-Implementierung, sondern ein Presentation-Wrapper um dieselbe kanonische Enterprise-Scorer-Implementierung.
-- `EnterpriseScorerPresentationContext` besitzt keine IAM-/Entitlement-Authority; er blendet im Modus `public-preview` ausschließlich bereits authentifizierungsgebundene UI-Sub-Surfaces aus.
-- `EnterpriseBinanceQuickAnalysis` bleibt an seinen authentifizierten Enterprise-Kontext gebunden; ADR-0038 wird nicht verändert oder superseded.
+They may project only supplied domain/data states. They must not calculate score eligibility, ranking, evidence provenance or freshness policy.
 
 ---
 
-## Kanonische Shared-Primitives
+## 3. Priority Visual Recovery Inventory
 
-| Komponente | Kanonischer Pfad | Legacy-/Compatibility-Pfad | Status |
-|---|---|---|---|
-| StatusBadge | `src/shared/ui/StatusBadge.tsx` | `src/components/StatusBadge.tsx` | migriert; Legacy-Pfad ist Compatibility-Export |
-| AuthorityBadge | `src/shared/ui/AuthorityBadge.tsx` | N/A | CV-0; Presentation-Authority-Label für Canonical/Research/Evidence/MarketData |
-| FreshnessBadge | `src/shared/ui/FreshnessBadge.tsx` | N/A | CV-0; projiziert gelieferten Status/Zeitstempel, berechnet keine Freshness |
-| EvidenceStateIndicator | `src/shared/ui/EvidenceStateIndicator.tsx` | N/A | CV-0; scanbare Evidence-/Data-State-Projektion |
-| ResearchOnlyBanner | `src/shared/ui/ResearchOnlyBanner.tsx` | N/A | CV-0; explizit non-authorizing (`scoreEligible=false`, `executionEligible=false`) |
-| CapitalAiLogo | `src/shared/branding/CapitalAiLogo.tsx` | `src/components/CapitalAiLogo.tsx` | migriert; Landingpage konsumiert die kanonische Brandmark-v6.2-Projektion |
-| Button | `src/shared/ui/Button.tsx` | N/A | kanonisch |
-| Card | `src/shared/ui/Card.tsx` | N/A | kanonisch |
-| Input | `src/shared/ui/Input.tsx` | N/A | kanonisch |
-| Modal | `src/shared/ui/Modal.tsx` | N/A | kanonisch |
-| Tooltip | `src/shared/ui/Tooltip.tsx` | N/A | kanonisch |
-| Skeleton | `src/shared/ui/Skeleton.tsx` | N/A | kanonisch |
-| EmptyState | `src/shared/ui/EmptyState.tsx` | N/A | kanonisch |
-| NeuralBackground | `src/shared/visuals/NeuralBackground.tsx` | N/A | kanonisch |
-
-Die CV-0-Primitives sind **fachneutrale Presentation-Komponenten**. Sie wählen kein Modell, bewerten keine Evidence und erzeugen keine Eligibility.
-
----
-
-## Kern-Dashboard & Cockpit — derzeitige Legacy-/Strangler-Implementierungen
-
-| Komponente | Aktueller Pfad | Ziel-/Ownership-Slice |
-|---|---|---|
-| Dashboard | `src/components/Dashboard.tsx` hinter `src/app/dashboard/Dashboard.tsx` | `src/app/dashboard`; BB-2E/2F/2G verbleiben |
-| DashboardViewRouter | `src/app/dashboard/DashboardViewRouter.tsx` | kanonische app-owned Detail-View-Composition; BB-2D DONE |
-| AssetUniverseDashboard | `src/components/AssetUniverseDashboard.tsx` | `src/features/screening/ui` |
-| RankingBoard | `src/features/screening/ui/RankingBoard.tsx` | **produktive** Ranking-Fläche; ersetzt UniverseBestWorst |
-| UniverseBestWorst | `src/features/screening/ui/UniverseBestWorst.tsx` + Legacy-Bridge | nur Compatibility-Alias → `RankingBoard as UniverseBestWorst` |
-| Screener | `src/components/Screener.tsx` | `src/features/screening/ui` |
-| MarketScreener | `src/components/MarketScreener.tsx` | `src/features/screening/ui` |
-| Watchlist | `src/components/Watchlist.tsx` | `src/features/portfolio/ui` |
-| FavoriteAssetPatternSlots | `src/components/FavoriteAssetPatternSlots.tsx` | `src/features/portfolio/ui` |
-
-Development-Einstieg für Agents: `AGENTS.md` §12 (Screening Ranking Board / homogene Wertschöpfungskette).
+| Surface | Current physical path | Canonical target path | Current consumer state | Class | Data/authority contract status | Supersession required | Owning project if foreign | Legacy removal prerequisite | A11y | Perf |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Enterprise Scorer / CryptoScoringEnterprise | `src/features/crypto/ui/CryptoScoringEnterprise.tsx` + routed workspace/public wrapper; Legacy bridge under `src/components/` | `src/features/crypto/ui` | CANONICAL_CONNECTED | A | canonical Crypto score/evidence consumer; presentation mode adds no authority | No | CAPITAL-AI-FINTECH + CAPITAL-AI-DATA for parent contracts | legacy bridge consumers = 0; authenticated/public presentation parity retained | PARTIAL | PARTIAL |
+| RankingBoard | `src/features/screening/ui/RankingBoard.tsx`; aliases `UniverseBestWorst` | same | CANONICAL_CONNECTED | A | canonical score consumer; backend rank/order authority still FIN-17 partial | Owner-side replacement boundary pending | CAPITAL-AI-FINTECH / PVC-17 | backend rank/order result consumed; FE local ordering semantics eliminated; aliases consumers = 0 | PARTIAL | BASELINE |
+| Realtime AI Newsfeed | `src/components/RealtimeAiNewsfeed.tsx` -> feature facade | `src/features/news/ui/RealtimeAiNewsfeed.tsx` or equivalent | COMPATIBILITY_ONLY | A | evidence-only news API; no fabricated headline/score mutation | No | DATA/News provider contract owner as applicable | physical implementation moved; inbound Legacy imports = 0 | PARTIAL | BASELINE |
+| Market Sentiment | `src/components/MarketSentiment.tsx` | `src/features/news/ui` | PRODUCTIVE_LEGACY / BLOCKED_INVALID_OR_MISSING_CONTRACT | B | missing score currently coerced to `50`, label to `Neutral`; not fail-closed | Consumer remediation; owner contract if nullable/state semantics insufficient | DATA/FINTECH as resolved from current sentiment contract | remove local defaults; consume explicit unavailable/partial/stale state; Legacy imports = 0 | REQUIRED | BASELINE |
+| Watchlist | `src/components/Watchlist.tsx` -> portfolio facade | `src/features/portfolio/ui` | COMPATIBILITY_ONLY | B | local persistence plus registry/market fallback semantics need field-level contract audit | Possibly | DATA for verified market fields; FINTECH for financial semantics if applicable | each displayed financial field mapped to valid contract; fallback fabrication removed; Legacy imports = 0 | REQUIRED | REQUIRED |
+| MarketScreener | `src/components/MarketScreener.tsx` -> screening facade | `src/features/screening/ui` | COMPATIBILITY_ONLY | A/B boundary | verified screening/current score context exists; physical consumer and auxiliary summary paths need contract validation | Possibly for any obsolete compatibility route | FINTECH / DATA | canonical contract validation; physical migration; no local score fabrication | REQUIRED | REQUIRED |
+| Screener | `src/components/Screener.tsx` | `src/features/screening/ui` | PRODUCTIVE_LEGACY or compatibility consumer depending route | A/B boundary | requires current screening/data contract audit | Possibly | FINTECH / DATA | valid canonical contract + physical migration + consumers = 0 | REQUIRED | REQUIRED |
+| Charts | `src/components/Charts.tsx` | `src/features/analytics/ui` + shared chart primitives | PRODUCTIVE_LEGACY / BLOCKED_INVALID_OR_MISSING_CONTRACT | B | uses Recharts but consumes `/api/backtest-history` compatibility and `/api/charts-scoring` NON_PRODUCTION_SIMULATION | **Yes** for simulation/compatibility exit | FINTECH for chart-scoring; DATA for canonical history/evidence | cut over to canonical verified history/OHLCV; remove simulation-only scoring consumer; Legacy imports = 0 | REQUIRED | REQUIRED |
+| Heatmap | `src/components/HeatmapCreator.tsx` | `src/features/analytics/ui` | PRODUCTIVE_LEGACY / BLOCKED_INVALID_OR_MISSING_CONTRACT | B | preset bullish/bearish/volume/pattern values and locally derived analytical semantics | **Yes/owner decision** before productive analytical activation | DATA/FINTECH according to future evidence/analysis contract | verified heatmap inputs/semantics or explicit research/unavailable mode; no preset finance evidence; Legacy imports = 0 | REQUIRED | REQUIRED |
+| RawMaterialsDashboard | `src/features/commodities/ui/RawMaterialsDashboard.tsx`; Legacy bridge | same | CANONICAL_CONNECTED | A | verified commodity score separated from research/sandbox; unavailable remains explicit | No | FINTECH/DATA parent contracts | Legacy bridge consumers = 0 | PARTIAL | PARTIAL |
+| Portfolio Performance | `src/components/PortfolioPerformance.tsx` -> portfolio facade | `src/features/portfolio/ui` | BLOCKED_INVALID_OR_MISSING_CONTRACT | B | deterministic synthetic performance series + fixed Sharpe/Drawdown/Vol/VaR; no verified NAV contract | **Yes / contract creation or replacement required** | resolve from current PVC; DATA for verified time-series evidence, FINTECH for derived financial semantics where applicable | verified NAV/performance series with provenance/asOf/freshness/unavailable states; derived metrics owner-authoritative; synthetic generator removed | BLOCKED | BLOCKED |
+| Backtest Engine | `src/components/BacktestEngine.tsx` -> portfolio facade | `src/features/portfolio/ui` | COMPATIBILITY_ONLY | B | protected execution + canonical history consumer boundary not fully closed | Possibly | FINTECH protected execution; DATA history/evidence | owner-side entitlement/history boundaries valid; compatibility history removed where applicable | REQUIRED | REQUIRED |
+| PortfolioBacktester | `src/components/PortfolioBacktester.tsx` | `src/features/portfolio/ui` | PRODUCTIVE_LEGACY / compatibility | B | same family as Backtest; full dependency audit required | Possibly | FINTECH + DATA | valid protected execution/history contracts; Legacy imports = 0 | REQUIRED | REQUIRED |
+| MonteCarloDetailed | `src/components/MonteCarloDetailed.tsx` | `src/features/portfolio/ui` | PRODUCTIVE_LEGACY / BLOCKED_INVALID_OR_MISSING_CONTRACT | B | authoritative protected-execution binding remains owner-side concern | Possibly | CAPITAL-AI-FINTECH | owner-authoritative execution/entitlement contract; no client-local protected execution bypass | REQUIRED | REQUIRED |
+| RealTimeRiskAssessment / VaR | `src/components/RealTimeRiskAssessment.tsx` | future target unresolved until explicit reactivation | DISABLED_ARCHIVED | C | archived null stub; former implementation intentionally removed from runtime | Only after explicit Owner architecture/contract decision | resolve then-current financial risk owner | explicit current Owner decision + verified risk contract + canonical PDF brand if reporting | BLOCKED | BLOCKED |
 
 ---
 
-## Scoring & Analyse — aktuelle Implementierungen / Migrationsziele
+## 4. Compliance / Reporting / Governance Visuals
 
-| Komponente / Rolle | Aktueller bzw. Compatibility-Pfad | Kanonischer Status / Ownership |
-|---|---|---|
-| Enterprise-Scorer Core | `src/features/crypto/ui/CryptoScoringEnterprise.tsx` | produktive Scorer-UI; konsumiert kanonische Backend-Score-/Evidence-Verträge |
-| CryptoScoringWorkspace | `src/features/crypto/ui/CryptoScoringWorkspace.tsx` | kanonische routed Crypto-Scoring-Composition; Feature-Fassade exportiert sie als `CryptoScoringEnterprise` |
-| Crypto Feature Facade | `src/features/crypto/ui/index.ts` | `CryptoScoringWorkspace as CryptoScoringEnterprise`; aktuelle Naming-Convention für routed Consumer |
-| Public Crypto Facade | `src/features/crypto/ui/public.ts` | schmale Route-Level-Fassade; exportiert ausschließlich `PublicCryptoScoringPreview` |
-| PublicCryptoScoringPreview | `src/features/crypto/ui/PublicCryptoScoringPreview.tsx` | Public-Presentation-Wrapper um denselben Scorer Core; **keine zweite Scoring-Implementation** |
-| EnterpriseScorerPresentationContext | `src/features/crypto/ui/EnterpriseScorerPresentationContext.tsx` | Presentation-only `authenticated | public-preview`; keine IAM-/Scoring-/Entitlement-Authority |
-| Legacy CryptoScoringEnterprise Bridge | `src/components/CryptoScoringEnterprise.tsx` | Compatibility-Pfad; keine neue Implementierung |
-| CryptoVisualizationViewModel | `src/features/crypto/ui/cryptoVisualizationViewModel.ts` | CV-0 read-only Presentation Projection |
-| EnterpriseAsset4hChart | `src/features/crypto/ui/EnterpriseAsset4hChart.tsx` | MARKET_DATA-Projektion |
-| EnterpriseBinanceQuickAnalysis | `src/features/crypto/ui/EnterpriseBinanceQuickAnalysis.tsx` | MARKET_DATA + RESEARCH; im `public-preview` Presentation-Modus ausgeblendet, authentifizierter Endpoint-Vertrag unverändert |
-| Legacy EnterpriseBinanceQuickAnalysis Bridge | `src/components/EnterpriseBinanceQuickAnalysis.tsx` | Compatibility-Pfad |
-| BuffetValueCheck | `src/components/BuffetValueCheck.tsx` | `src/features/stocks/ui`; stock-only Research-/Presentation-Consumer gemäß Parent-Authorities |
-| BacktestEngine | `src/components/BacktestEngine.tsx` | `src/features/portfolio/ui` |
-| PortfolioBacktester | `src/components/PortfolioBacktester.tsx` | `src/features/portfolio/ui` |
-| PortfolioPerformance | `src/components/PortfolioPerformance.tsx` | `src/features/portfolio/ui` |
-| MonteCarloDetailed | `src/components/MonteCarloDetailed.tsx` | `src/features/portfolio/ui` |
-| RealTimeRiskAssessment | `src/components/RealTimeRiskAssessment.tsx` | `src/features/analytics/ui` |
-| EnterpriseAnalysisPanels | `src/components/EnterpriseAnalysisPanels.tsx` | `src/features/analytics/ui` nach Dependency-Audit |
-| LandingBinanceQuickAnalysis | `src/components/LandingBinanceQuickAnalysis.tsx` | historischer/separater Public-Quick-Analysis-Consumer; nicht Teil des neuen Enterprise-Scorer-Preview-Wrappers |
-| HeatmapCreator | `src/components/HeatmapCreator.tsx` | `src/features/analytics/ui` |
-| QuantumGraph | `src/components/QuantumGraph.tsx` | `src/features/analytics/ui` |
-| Charts | `src/components/Charts.tsx` | `src/features/analytics/ui`; generische Chart-Primitives später auf `src/shared` prüfen |
-| PerformanceDashboard | `src/components/PerformanceDashboard.tsx` | `src/features/analytics/ui` |
-| RawMaterialsDashboard | `src/features/commodities/ui/RawMaterialsDashboard.tsx` | Commodity-Domain-Slice; Legacy-Pfad bleibt dünner Compatibility-Export |
-| DeFiOrchestration | `src/components/DeFiOrchestration.tsx` | `src/features/crypto/ui` |
-
-### Fachliche Authority-Referenz
-
-Dieses Inventory definiert **keine** eigene Financial-Data-Consumer-Sequenz. Für Asset Catalog ↔ Market Evidence, Entitlement, Provider-/Evidence-Provenance, Verified Display und Canonical Scoring gelten ausschließlich die jeweils aktuellen Parent-Authorities:
-
-- `ADR-0032` — Asset Catalog ↔ Market Evidence,
-- `ADR-0034` — Buffett Access / Quota,
-- `ADR-0038` — Landing/Enterprise Binance Quick-Analysis-Kontexttrennung,
-- `ADR-0041` + `ESS-0016` — Provider Data Plane / Provenance / Freshness,
-- `SC-MD-SPT-0001` — kanonische Screening-/Scoring-/Market-Data-Wertschöpfungskette,
-- `ADR-0087` — Canonical Scoring.
-
-Die physische Migration oder Presentation-Projektion einer Komponente darf diese Contracts nicht verändern. Für den Public-Enterprise-Scorer-Slice wurde eine ADR-/ESS-Supersession geprüft und verworfen, weil keine fachliche Authority geändert wird.
-
-### CV-0 Presentation Projection
-
-`src/features/crypto/ui/cryptoVisualizationViewModel.ts` stellt ausschließlich Backend-/Platform-Ergebnisse dar. Das View Model darf insbesondere nicht:
-
-- Scores oder Modellgewichte berechnen,
-- `NOT_AVAILABLE`, `STALE`, `PARTIAL` oder `NOT_COMPUTABLE` zu `0`, `50`, READY oder PASS umdeuten,
-- Freshness-Schwellen lokal berechnen,
-- Research-/Evidence-Ergebnisse zu kanonischen Scores hochstufen,
-- Execution-Eligibility erzeugen.
-
-Die Authority-Klassen `CANONICAL_SCORE`, `RESEARCH`, `EVIDENCE_ONLY` und `MARKET_DATA` sind Presentation-Metadaten und keine neue fachliche Registry.
+| Surface | Current physical path | Canonical target | Consumer state | Class | Contract status / blocker | Supersession | Foreign owner | Legacy removal prerequisite | A11y | Perf |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ComplianceExporter | `src/components/ComplianceExporter.tsx` -> reporting facade | `src/features/reporting/ui` | COMPATIBILITY_ONLY | B | canonical PDF branding/server grant, but report contains fixed portfolio/risk KPIs that are not verified financial evidence | owner-side financial metric replacement needed | DATA/FINTECH for financial values; IAM/billing owner for protected grant | fixed KPIs removed/replaced with verified values or explicit unavailable; physical migration | REQUIRED | REQUIRED |
+| PdfExportModal | `src/components/PdfExportModal.tsx` | `src/features/reporting/ui` | PRODUCTIVE_LEGACY | A/B boundary | server-side credit/subscription grant must remain authoritative | No FE supersession | applicable IAM/Billing authority | physical migration without weakening server grant | REQUIRED | BASELINE |
+| AdminPortal | `src/components/AdminPortal.tsx` -> governance facade | `src/features/governance/ui` | COMPATIBILITY_ONLY | A/B boundary | IAM-gated presentation; many subcomponents still Legacy | No FE authority supersession | CAPITAL-AI-GOV for Governance/IAM | physical migration of approved UI; no browser authority; Legacy imports = 0 | REQUIRED | REQUIRED |
+| Admin Process Graph | `src/features/governance/ui/process-graph/AdminProcessGraph.tsx` | same | CANONICAL_CONNECTED | A | read-only PVC/dependency/evidence projection | No | CAPITAL-AI-GOV parent semantics | maintain projection-only boundary | PARTIAL | BASELINE |
+| Audit / Security / Supervisor panels | `src/components/*` via AdminPortal | `src/features/governance/ui` | PRODUCTIVE_LEGACY / COMPATIBILITY_ONLY | A/B boundary | project current Governance/OPS contracts; UI must not become control authority | No FE supersession | GOV / OPS by capability | contract audit + physical migration + Legacy imports = 0 | REQUIRED | REQUIRED |
 
 ---
 
-## Sentiment, News & AI — derzeitige Legacy-Implementierungen
+## 5. Public / User / Billing / Legal Surfaces
 
-| Komponente | Datei unter `src/components/` | Ziel-/Ownership-Slice |
-|---|---|---|
-| SentimentDashboard | `SentimentDashboard.tsx` | `src/features/news/ui` bzw. Analytics nach Dependency-Audit |
-| MarketSentiment | `MarketSentiment.tsx` | `src/features/news/ui` |
-| RealtimeAiNewsfeed | `RealtimeAiNewsfeed.tsx` | `src/features/news/ui` |
-| Newsticker | `Newsticker.tsx` | `src/features/news/ui` |
-| MarkdownOrchestrator | `MarkdownOrchestrator.tsx` | Governance-/Documentary-Consumer; Ziel nach Dependency-Audit |
-| OrchestratorPanel | `OrchestratorPanel.tsx` | Governance-/Orchestration-Consumer; Ziel nach Dependency-Audit |
-| InteractModule | `InteractModule.tsx` | Ziel nach Dependency-Audit |
-| ImageAnalyzer | `ImageAnalyzer.tsx` | Ziel nach Dependency-Audit |
+| Surface | Current path | Canonical target | Consumer state | Class | Notes / removal gate |
+|---|---|---|---|---|---|
+| LandingPage | `src/features/public/ui/LandingPage.tsx` | same | CANONICAL_CONNECTED | A | Legacy bridge only removable at 0 inbound consumers |
+| LoginPage | `src/features/public/ui/LoginPage.tsx` | same | CANONICAL_CONNECTED | A | `/login` remains dedicated auth route; no Public session fabrication |
+| Datenschutz / ImpressumAgb | Legacy components through public facade | `src/features/public/ui` | COMPATIBILITY_ONLY | A | physical migration after dependency audit |
+| Profile / Passkey / TOTP | `src/components/*` | `src/features/settings/ui` | PRODUCTIVE_LEGACY | A/B boundary | IAM contracts remain foreign-authoritative; physical migration only |
+| Subscription / Checkout | `src/components/*` | `src/features/billing/ui` | PRODUCTIVE_LEGACY | A/B boundary | browser tier is not entitlement authority; server/billing contract must remain authoritative |
 
 ---
 
-## Auth, Profile, Billing — derzeitige Legacy-Implementierungen
+## 6. Other Visual / Analytical Components
 
-| Komponente | Datei unter `src/components/` | Ziel-/Ownership-Slice |
-|---|---|---|
-| LoginStepUpGate | `LoginStepUpGate.tsx` | `src/features/users/ui` |
-| StepUpModal | `StepUpModal.tsx` | `src/features/users/ui` |
-| RegistrationCompletionGate | `RegistrationCompletionGate.tsx` | `src/features/users/ui` |
-| ProfilePage | `ProfilePage.tsx` | `src/features/settings/ui` |
-| PasskeySettings | `PasskeySettings.tsx` | `src/features/settings/ui` |
-| TotpSettings | `TotpSettings.tsx` | `src/features/settings/ui` |
-| Abonnements | `Abonnements.tsx` | `src/features/billing/ui` |
-| SubscriptionModal | `SubscriptionModal.tsx` | `src/features/billing/ui` |
-| Checkout | `src/components/Checkout.tsx` | `src/features/billing/ui` |
-| GuestCliffhangerModal | `src/components/GuestCliffhangerModal.tsx` | `src/features/billing/ui` bzw. Public-Consumer nach Dependency-Audit |
-
-Die Auth-Gates selbst bleiben physisch unverändert; ihre globale Composition liegt unter `src/app/auth/SessionComposition.tsx`. Der Public-Scorer-Recovery-Slice verändert keine serverseitige Auth-/IAM-Entscheidung.
+| Surface | Current path | Target | State | Class | Key gate |
+|---|---|---|---|---|---|
+| FavoriteAssetPatternSlots | `src/components/FavoriteAssetPatternSlots.tsx` | `src/features/portfolio/ui` | PRODUCTIVE_LEGACY | A/B boundary | Binance Kline evidence is real/read-only but browser-direct provider path and contract ownership require dependency audit before physical canonicalization |
+| EnterpriseAsset4hChart | `src/features/crypto/ui/EnterpriseAsset4hChart.tsx` | same | CANONICAL_CONNECTED | A | maintain MARKET_DATA projection and fail-closed state semantics |
+| EnterpriseBinanceQuickAnalysis | `src/features/crypto/ui/EnterpriseBinanceQuickAnalysis.tsx` + Legacy bridge | `src/features/crypto/ui` | CANONICAL_CONNECTED | A | authenticated context retained; Legacy bridge consumers = 0 before removal |
+| BuffetValueCheck | Legacy implementation through stocks facade | `src/features/stocks/ui` | COMPATIBILITY_ONLY | A/B boundary | stock-only/server entitlement/evidence contracts remain authoritative |
+| DeFiOrchestration | `src/components/DeFiOrchestration.tsx` | `src/features/crypto/ui` | PRODUCTIVE_LEGACY / research | B unless current productive contract proves otherwise | research/evidence boundary must remain non-score-authoritative |
+| QuantumGraph | `src/components/QuantumGraph.tsx` | `src/features/analytics/ui` | PRODUCTIVE_LEGACY / audit required | B pending dependency audit | no graph framework adoption until true node-edge requirement and contracts verified |
+| PerformanceDashboard | `src/components/PerformanceDashboard.tsx` | analytics/governance target after audit | PRODUCTIVE_LEGACY | A/B boundary | distinguish real operational telemetry from browser-generated metrics; OPS authority preserved |
+| InteractModule | `src/components/InteractModule.tsx` | none while archived | DISABLED_ARCHIVED | C | no reactivation without explicit Owner decision |
 
 ---
 
-## Compliance, Admin, Governance — derzeitige Legacy-Implementierungen
+## 7. Contract / Authority Reference Map
 
-| Komponente | Datei unter `src/components/` | Ziel-/Ownership-Slice |
-|---|---|---|
-| ComplianceBadge | `ComplianceBadge.tsx` | `src/features/governance/ui` oder Shared nur bei nachgewiesener Fachneutralität |
-| ComplianceConsentModal | `ComplianceConsentModal.tsx` | `src/features/governance/ui` |
-| ComplianceExporter | `ComplianceExporter.tsx` | `src/features/reporting/ui` |
-| ComplianceNotifications | `ComplianceNotifications.tsx` | `src/features/governance/ui` |
-| SecurityComplianceAuditor | `SecurityComplianceAuditor.tsx` | `src/features/governance/ui` |
-| SecurityRadarBadge | `SecurityRadarBadge.tsx` | `src/features/governance/ui` |
-| AuditLog | `AuditLog.tsx` | `src/features/governance/ui` |
-| AuditLogs | `AuditLogs.tsx` | `src/features/governance/ui` |
-| AuditLogManager | `AuditLogManager.tsx` | `src/features/governance/ui` |
-| AdminPanel | `AdminPanel.tsx` | `src/features/governance/ui` |
-| AdminPortal | `AdminPortal.tsx` | `src/features/governance/ui` |
-| SupervisorDashboard | `SupervisorDashboard.tsx` | `src/features/governance/ui` |
-| DocumentHygienePanel | `DocumentHygienePanel.tsx` | `src/features/governance/ui` |
-| VersionManagerPanel | `VersionManagerPanel.tsx` | `src/features/governance/ui` |
-| AdrForm | `AdrForm.tsx` | `src/features/governance/ui` |
-| AuthStateDebugger | `AuthStateDebugger.tsx` | Governance/diagnostic; Ziel nach Dependency-Audit |
-| SystemLatencyMonitor | `SystemLatencyMonitor.tsx` | `src/features/governance/ui` bzw. Analytics nach Dependency-Audit |
-| SeoDashboard | `SeoDashboard.tsx` | Governance/Marketing-Slice nach Dependency-Audit |
+This Inventory only points to current parent authorities; it does not restate or supersede them.
+
+| Concern | Current authority / project |
+|---|---|
+| Frontend structure | `docs/frontend/FRONTEND_ARCH.md` / CAPITAL-AI-FE |
+| Frontend sequencing | `docs/frontend/FRONTEND_ROADMAP.md` / CAPITAL-AI-FE |
+| Design roles / brand geometry | `docs/frontend/design-tokens.json`, `docs/frontend/brandmark.json` |
+| Asset Catalog vs Market Evidence | ADR-0032 / DATA ownership |
+| Provider Data Plane / Provenance / Freshness | ADR-0041 + ESS-0016 / CAPITAL-AI-DATA |
+| Canonical Scoring | SC-MD-SPT-0001 + ADR-0087 / CAPITAL-AI-FINTECH technical chain |
+| Ranking / Decision Support | CAPITAL-AI-FINTECH / PVC-17 |
+| Protected financial execution / entitlement integration | current FINTECH + applicable IAM/entitlement authority |
+| Governance / IAM control plane | current CAPITAL-AI-GOV authorities |
+| Runtime / Traceability / Deployment | CAPITAL-AI-OPS where applicable |
+
+Current DATA main now composes provider input validation, freshness and provenance into `ValidatedDataInput` history/snapshot exits. FE consumers must preserve those supplied states and must not substitute local cache age or UI defaults for DATA freshness/evidence status.
 
 ---
 
-## Landing, Legal, Reporting, Social, Utils
+## 8. Legacy Removal Gates
 
-| Komponente | Aktueller Pfad | Status / Ziel |
-|---|---|---|
-| LandingPage | `src/features/public/ui/LandingPage.tsx` | kanonische Public-Landing-Implementierung; `src/components/LandingPage.tsx` ist Compatibility-Bridge |
-| LoginPage | `src/features/public/ui/LoginPage.tsx` | kanonische `/login`-Fläche |
-| AssetLogo | `src/components/AssetLogo.tsx` | Shared nur nach Fachneutralitäts-/Dependency-Prüfung |
-| Datenschutz | `src/components/Datenschutz.tsx` über Public-Fassade | `src/features/public/ui` physisch später konsolidieren |
-| ImpressumAgb | `src/components/ImpressumAgb.tsx` über Public-Fassade | `src/features/public/ui` physisch später konsolidieren |
-| PdfExportModal | `src/components/PdfExportModal.tsx` | `src/features/reporting/ui` |
-| PriceAlert | `src/components/PriceAlert.tsx` | Screening/Portfolio nach Dependency-Audit |
-| SocialAccountManager | `src/components/SocialAccountManager.tsx` | `src/features/social/ui` |
-| SocialDirectPublisherModal | `src/components/SocialDirectPublisherModal.tsx` | `src/features/social/ui` |
-| ErrorBoundary | `src/components/ErrorBoundary.tsx` | `src/app` oder `src/shared` nach Verantwortungsprüfung |
+A Legacy implementation, bridge or alias may be removed only when all applicable conditions are true:
 
----
+1. approved user-visible behavior is available through canonical app/feature consumers, or an explicit current Owner decision disables/archives it;
+2. productive inbound consumer count for the Legacy path is `0`;
+3. any required owner-side API/Data/ADR/ESS supersession is effective;
+4. no Frontend consumer depends on a superseded compatibility API contract;
+5. Accessibility/Performance gates for the replacement are satisfied where required;
+6. architecture/contract tests prove no parallel Frontend/domain authority was introduced;
+7. immutable historical/audit evidence remains preserved.
 
-## Design-Tokens / Patterns
-
-| Token / Pattern | Kanonische Quelle | Bemerkung |
-|---|---|---|
-| Canvas / Surface / Border | `docs/frontend/design-tokens.json` → `src/index.css` | `#08080C` / `#121215` / `#252529` |
-| `brand-primary` / Gold | `docs/frontend/design-tokens.json` | Premium / Primär / Fokus; neue Landingpage nutzt semantische Rolle |
-| `brand-accent` / Purple | `docs/frontend/design-tokens.json` | AI / Intelligence / Research |
-| `brand-cyan` | `docs/frontend/design-tokens.json` | compatibility-only; neue/migrierte UI soll passende semantische Rolle verwenden |
-| `asset-*`, `score-*`, `factor-*`, `status-*` | `docs/frontend/design-tokens.json` | semantische Visual-Rollen; lokale Branding-Hexwerte vermeiden |
-| historische `aif-*`-Namen | Compatibility-Aliase | deprecated; keine neue Verwendung in der Public-Landing-Recovery |
-| Brandmark geometry | `docs/frontend/brandmark.json` | Branding Manifest v6.2; `CapitalAiLogo` projiziert Geometrie |
-| Presentation-/Dependency-Regeln | `docs/frontend/FRONTEND_ARCH.md` | normative Frontend-Authority |
-| Focus Outline | `docs/frontend/design-tokens.json` → `src/index.css` | Gold, 2px, Offset 4px |
-| Fonts | Inter, Poppins, JetBrains Mono | `display` / `sans` / `mono` gemäß Branding-Contract |
-| StatusBadge tones | `src/shared/ui/StatusBadge.tsx` | kanonische Shared-Implementierung |
-| CV-0 Authority/Freshness/Evidence | `src/shared/ui/*Badge.tsx`, `EvidenceStateIndicator.tsx`, `ResearchOnlyBanner.tsx` | Presentation-only; Status zusätzlich über Text/Icon |
+`src/components/` reaches closure only when it contains `0` productive implementations. Compatibility files that remain temporarily must be demonstrably non-productive and have a zero-consumer removal plan; BB-10 target remains `0` required compatibility re-exports.
 
 ---
 
-## Regeln zur Pflege dieses Inventars
+## 9. Inventory Maintenance Rules
 
-1. **Keine neue UI-Komponente wird aufgrund dieses Inventars unter `src/components/` angelegt.** Zielpfade bestimmt ausschließlich `FRONTEND_ARCH.md`.
-2. Neue fachliche UI gehört grundsätzlich in `src/features/<domain>/ui`; Application Composition in `src/app`; fachneutrale wiederverwendbare Basisbausteine in `src/shared`.
-3. `src/components/` ist ausschließlich Legacy-/Compatibility-Zone während der Strangler-Migration.
-4. Dieses Inventory dokumentiert nach jeder Migrationswelle den realen physischen Pfad, Ziel-/Ownership-Slice und Compatibility-Status.
-5. Fachliche Runtime-/Data-/Scoring-Regeln werden nur referenziert und nicht hier erneut normiert.
-6. Ein Legacy-Eintrag darf erst entfernt werden, wenn keine produktive Implementierung bzw. kein erforderlicher Compatibility-Export mehr vorhanden ist.
-7. Application-Composition-Logik darf nicht in die Root-Compatibility-Fassade `src/App.tsx` zurückwandern.
-8. Presentation-Authority-Labels dürfen Backend-/Platform-Authority nur projizieren und niemals neu definieren oder hochstufen.
-9. Public-Presentation-Modi dürfen bestehende authentifizierte Sub-Surfaces ausblenden, aber keine serverseitige IAM-/Entitlement-Entscheidung umdeuten oder umgehen.
-10. Eine neue Public-Fassade darf nur eine schmale Consumer-Grenze sein und keine parallele fachliche Implementierung etablieren.
+1. No new productive UI/domain implementation is created under `src/components/`.
+2. New domain UI belongs in `src/features/<domain>/ui`; app composition in `src/app`; fachneutrale primitives in `src/shared`.
+3. A feature facade re-exporting `src/components/*` is **COMPATIBILITY_ONLY**, not physical migration.
+4. Every priority financial visual records physical path, canonical target, consumer state, Recovery class, contract status, supersession need, foreign owner, Legacy removal prerequisite, Accessibility and Performance status.
+5. `NOT_AVAILABLE`, `STALE`, `PARTIAL`, `INVALID` and `NOT_COMPUTABLE` are never converted to local neutral/default finance values.
+6. Runtime/Data/Scoring/Ranking rules are referenced, not redefined here.
+7. Public presentation modes may hide authenticated UI, but may not reinterpret or bypass server-side authorization.
+8. Class C code is never reactivated solely because historical code exists.
+9. After every relevant migration/contract supersession, Inventory and Roadmap are re-correlated against then-current main.
+10. NOT RUN checks are never represented as PASS.
 
 ---
 
-*Erstellt am 16.08.2026. Am 20.08.2026 auf die `app/features/shared`-Architektur und BB-1 ausgerichtet. Am 23.08.2026 RankingBoard/CV-0 ergänzt. Am 07.09.2026 gegen `main@f8cdc390d47263c845a2f03827d62af429de1c5e` und den Public-Enterprise-Scorer-Recovery-Branch re-korreliert: LandingPage, schmale Public-Crypto-Fassade, PublicCryptoScoringPreview, Presentation-Context, aktuelle Crypto-Scorer-Namenskonvention und Auth-Boundary sind nun explizit inventarisiert.*
+*Version 1.8.0 re-korreliert das bestehende Component Inventory gegen `main@5490a3b1a8d6aa19e2cd955b79267dffa15e5282`. Die Public Enterprise Scorer-/Sideboard-Recovery wird als gemergter Current-Main-Zustand behandelt; Visual-Recovery A/B/C, Contract-/Supersession-Gates, Accessibility-/Performance-Status und absolute Legacy-Exit-Voraussetzungen sind nun explizit inventarisiert. Das Dokument bleibt Bestandsnachweis und erzeugt weder eine parallele Roadmap noch eine neue Frontend-/Financial-Authority.*
