@@ -2,10 +2,10 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.7.1  
-**Stand:** 27. August 2026  
-**Korrelationsbasis:** `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`  
-**Candidate:** `refactor/frontend-bb2bc-dashboard-consumer-cutover-main-2026-08-26`  
+**Version:** 1.7.3  
+**Stand:** 7. September 2026  
+**Korrelationsbasis:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e`  
+**Arbeitsstand:** `agent/frontend-public-scorer-landing-r2-20260907` — Public-Enterprise-Scorer-Recovery auf frischem current-main-Branch  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
 **Bestandsnachweis:** `docs/frontend/COMPONENT_INVENTORY.md`
@@ -39,15 +39,18 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 
 ---
 
-## 2. Verifizierter Ist-Stand auf main + BB-2B/BB-2C Candidate
+## 2. Verifizierter Ist-Stand auf current main + Public-Scorer-Recovery-Branch
 
-### 2.1 Erfolgreich abgeschlossene Architekturarbeit
+### 2.1 Erfolgreich abgeschlossene Architektur- und Recovery-Arbeit auf `main`
 
 - [x] **BB-0 Foundation / PR #459:** `src/app`, `src/features`, `src/shared`, Shared-Primitives und `frontend:architecture:check` etabliert.
 - [x] **BB-1 Application Composition / PR #462:** `src/app/App.tsx`, `SessionComposition`, `AppRoutes` und kanonischer `UserSession`-Vertrag etabliert; `src/App.tsx` ist Compatibility-Fassade.
 - [x] **BB-2 View Contract / PR #546:** `DashboardView`, exhaustive View→Section-Projektion und Regressionstest unter `src/app/dashboard` etabliert.
 - [x] **BB-2 Composition Boundary / PR #548:** `AppRoutes` konsumiert den kanonischen `src/app/dashboard/Dashboard.tsx`-Entry; der Legacy-Monolith ist hinter einer expliziten Strangler-Grenze gebunden.
-- [x] **Branding / PR #551:** Dark Black `#08080C` + AIF Gold `#F9BF21` sind das kanonische Primary Brand Pair; Cyan bleibt ausschließlich semantische Market-/Data-/Live-/Technical-Visualisierungsfarbe und Purple sekundärer AI-/Intelligence-Akzent.
+- [x] **BB-2D View Router / PR #763:** die migrierten Dashboard-Detail-Views werden über `src/app/dashboard/DashboardViewRouter.tsx` und Feature-Fassaden aus dem Legacy-Dashboard projiziert; `dashboard` und `myworkspace` bleiben bewusst als Rest-Composition für die folgenden BB-2-Wellen bestehen.
+- [x] **Browser-Startup-Recovery / PR #782:** die öffentliche `LandingPage` wird am Root-Pfad eager geladen; der schwere Dashboard-Graph bleibt lazy und blockiert damit nicht mehr die initiale Landing-Shell durch eine vorgelagerte Landing-Lazy-Grenze.
+- [x] **Public-Root-Shell-Recovery / PR #788:** die öffentliche Landing-Shell ist von Suspend/Render-Fehlern der Dashboard-Live-Vorschau entkoppelt; nur die Preview besitzt eine lokale `Suspense`-/Error-Boundary mit begrenztem Fallback.
+- [x] **Branding / PR #551 + Branding-v6.2-Konsolidierung / PR #791:** Dark Black + AIF Gold bleiben das kanonische Primary Brand Pair; die v6.2-Projektion nutzt `docs/frontend/design-tokens.json` als Farb-/Typografie-Authority und `docs/frontend/brandmark.json` als versionierten Geometrievertrag.
 - [x] **Crypto Visualization / CV-0:** Authority-/Freshness-/Evidence-Primitives sowie read-only Presentation Projection vorhanden.
 - [x] **Screening:** `RankingBoard` ist produktive kanonische Ranking-Fläche; `UniverseBestWorst` ist Compatibility-Alias.
 - [x] **Commodities / PR #539:** `src/features/commodities/ui/RawMaterialsDashboard.tsx` ist kanonische Commodity-UI; Legacy-Pfad bleibt Compatibility-Export.
@@ -56,20 +59,54 @@ Das Frontend wird schrittweise von einem funktionalen, dichten Dashboard zu eine
 - [x] **Release-Version / PR #542:** Plattformversion wird aus `package.json#version` über die Release Control Plane projiziert.
 - [x] **Frontend-Orchestrator / PR #541, #534, #543:** Admin-Reads, AuthZ-Evidence und Konfigurationsvalidierung wurden fail-closed gehärtet.
 
-### 2.2 Aktuelle strukturelle Restschuld
+### 2.2 P0 — ursprüngliche Public Landing + Enterprise Scorer wiederherstellen
 
-- `src/components/Dashboard.tsx` bleibt der größte Presentation-Kopplungspunkt.
-- `Dashboard.tsx` importiert zahlreiche fachliche Komponenten weiterhin direkt aus `./...` statt über Feature-Fassaden.
-- Navigation, Drawer, Header und View-Routing sind noch gemeinsam im Dashboard-Monolithen gebunden.
+**Status:** IMPLEMENTED ON BRANCH / VALIDATION PENDING  
+**Branch:** `agent/frontend-public-scorer-landing-r2-20260907`  
+**Baseline:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e`
+
+Die Root-Recovery aus PR #782/#788 hat die öffentliche Shell gegen den schweren Dashboard-Graph abgesichert. Der aktuelle P0-Slice stellt zusätzlich die ursprüngliche Produktlogik wieder her: die Root-Landingpage zeigt **nicht** länger das komplette Legacy-Dashboard als Preview, sondern lädt gezielt den kanonischen Enterprise Scorer als öffentliche Produktvorschau.
+
+Kanonische Composition dieses Slices:
+
+```text
+/
+→ src/app/routing/AppRoutes.tsx
+→ src/features/public/ui/LandingPage.tsx
+→ src/features/crypto/ui/public.ts
+→ PublicCryptoScoringPreview
+→ canonical CryptoScoringEnterprise implementation
+```
+
+Dabei gelten folgende Invarianten:
+
+- `LandingPage` bleibt eine reine Public-Presentation-Fläche und hängt nicht zurück von `src/app/**`.
+- Der Enterprise Scorer wird in Sichtnähe lazy geladen; der schwere authentifizierte Dashboard-Graph ist kein Root-Preview-Consumer mehr.
+- `/login` bleibt die einzige Authentifizierungsroute; die Public-Preview erzeugt keine anonyme oder persistierte Supabase-/IAM-Session.
+- Der Scorer konsumiert weiterhin die bestehenden kanonischen Score-/Evidence-Verträge; insbesondere bleibt `POST /api/crypto/score` die Crypto-Scoring-Grenze.
+- Authentifizierte Sub-Surfaces des Scorers werden im Presentation-Modus `public-preview` ausgeblendet, statt deren IAM-/Endpoint-Vertrag zu verändern.
+- `EnterpriseBinanceQuickAnalysis` bleibt im authentifizierten Enterprise-Kontext; ADR-0038 wird dadurch **nicht** superseded.
+- Die Public-Projektion definiert keine zweite Scoring-, Market-Data-, Evidence- oder Entitlement-Authority.
+- Brand-Farben und Brandmark werden ausschließlich aus den kanonischen v6.2-Verträgen projiziert.
+
+**Exit Gate:** Route-/Architecture-/TypeScript-/Unit-/Production-Build-/Browser-Bootstrap-Evidence für den exakten Branch-Head, finaler current-main/open-PR-Abgleich und Human/Owner-PR-Creation-Gate.
+
+### 2.3 Aktuelle strukturelle Restschuld
+
+- `src/components/Dashboard.tsx` bleibt der größte verbleibende Presentation-Kopplungspunkt für den authentifizierten Dashboard-Pfad.
+- Der fachliche Detail-View-Router ist mit BB-2D nach `src/app/dashboard/DashboardViewRouter.tsx` extrahiert und produktiv an den Legacy-Consumer gebunden.
+- Desktop-Navigation, Mobile Drawer, Header und globale Shell-Verantwortung bleiben noch im Dashboard-Monolithen gekoppelt.
+- `src/app/dashboard/DashboardNavigation.tsx` und `DashboardDrawer.tsx` sind auf current main **nicht** materialisiert; der frühere PR #667 wurde geschlossen und nicht gemergt und ist daher keine Current-State-Evidence für BB-2E.
 - Viele Feature-Implementierungen liegen physisch weiterhin in `src/components/`.
-- `FRONTEND_ARCH.md` und `COMPONENT_INVENTORY.md` müssen nach jeder weiteren Welle erneut mit dem exakten Main-Stand korreliert werden.
 
-Mit dem BB-2B/BB-2C-Candidate gilt zusätzlich:
+Auf current main gilt zusätzlich:
 
-- die lokale 27er-View-Union ist aus dem Consumer entfernt; `Dashboard.tsx` konsumiert `DashboardView` direkt aus `src/app/dashboard/dashboardViews.ts`,
-- das lokale `getViewCategory()`-Mapping ist entfernt; die Section-Projektion erfolgt über `getDashboardSection(activeView)`,
+- die lokale View-Union ist aus dem Consumer entfernt; `Dashboard.tsx` konsumiert `DashboardView` direkt aus `src/app/dashboard/dashboardViews.ts`,
+- die Section-Projektion erfolgt über `getDashboardSection(activeView)`,
 - `UserSession` wird direkt aus `src/app/types/UserSession.ts` konsumiert; die Root-Compatibility-Fassade `src/App.tsx` ist keine Session-Type-Authority des Dashboards mehr,
-- der separate Navigation-State `universes` bleibt bewusst außerhalb der fachlichen View→Section-Authority.
+- migrierte Detail-Views werden über `DashboardViewRouter` und die kanonischen Feature-Fassaden geroutet,
+- der separate Navigation-State `universes` bleibt bewusst außerhalb der fachlichen View→Section-Authority,
+- die produktive Root-Shell-Recovery ist implementiert; die tatsächliche Darstellung auf dem zuvor betroffenen Android-Gerät bleibt eine **separate manuelle Production-Observation** und wird ohne Geräte-Evidence nicht als PASS behauptet.
 
 ---
 
@@ -77,17 +114,19 @@ Mit dem BB-2B/BB-2C-Candidate gilt zusätzlich:
 
 | Bereich | Bewertung | Befund | Nächste Qualitätsmaßnahme |
 |---|---|---|---|
-| Branding / Design Tokens | **gut** | Dark Black + AIF Gold sind das kanonische Primary Brand Pair; Purple bleibt sekundärer AI-Akzent und Cyan ausschließlich semantische Market-/Data-/Live-/Technical-Visualisierungsfarbe; historische `aif-*`-/`brand-cyan`-Compatibility-Aliase existieren noch | neue UI ausschließlich über kanonische Rollen/semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
+| Branding / Design Tokens | **gut** | Dark Black + AIF Gold sind das kanonische Primary Brand Pair; Branding v6.2 besitzt eine singuläre Token-/Geometrie-Projektion | neue UI ausschließlich über kanonische Rollen/semantische Tokens; lokale Hex-/Legacy-Aliase weiter abbauen |
 | Typografie | **gut mit Drift-Risiko** | Inter/Poppins/JetBrains Mono sind kanonisch definiert | Headings/Body/Tech-Data in Komponenten automatisiert prüfen |
 | Shared UI | **gut** | Button, Card, Input, Modal, Tooltip, Skeleton, EmptyState und Status-/Evidence-Primitives vorhanden | Nutzung in Legacy-Komponenten erhöhen und Parallelimplementierungen entfernen |
-| Dashboard IA | **kritische Restschuld** | View-/Session-Contracts sind zentralisiert; Rendering, Navigation, Drawer und Header bleiben im Monolithen gekoppelt | BB-2D priorisieren |
+| Dashboard IA | **kritische Restschuld** | View-/Session-Contracts und Detail-Rendering sind zentralisiert; Navigation, Drawer, Header und Shell bleiben im Monolithen gekoppelt | nach Abschluss des Public-P0-Slices BB-2E priorisieren |
+| Public Root | **P0 Recovery implemented on branch** | eigenständige Landing-Shell + lazy kanonischer Enterprise Scorer statt vollständigem Legacy-Dashboard-Preview | exakten Branch technisch und im Browser validieren |
+| Scoring Preview | **architektonisch korreliert** | Public-Projection nutzt denselben kanonischen Scorer und blendet nur authentifizierte Sub-Surfaces presentation-only aus | keine neue Scoring-/IAM-Authority einführen; Regressionstest erhalten |
 | Screening | **gut** | kanonisches RankingBoard und klare Authority-Grenze | Filter-/Search-UX und progressive Disclosure verbessern |
 | Commodities | **gut** | eigener Feature-Slice, Research/Verified-Grenze explizit | Visual Consistency und gemeinsame Asset-Universe-Navigation prüfen |
 | Learning | **gut** | eigener Slice, Public Route, read-only Vocabulary | Feature-Namespace und gemeinsame Public-Surface-Patterns konsolidieren |
 | News / Sentiment | **mittel bis gut** | fachliche Integrity-Härtung stark; Komponenten physisch teils Legacy | BB-5 Migration und einheitliche Loading/Empty/Error-Semantik |
 | Governance / Admin | **funktional, hohe Komplexität** | Security-Grenzen gehärtet, UI-Implementierungen teils Legacy | BB-8; Admin-Navigation und Operational Status konsolidieren |
 | Accessibility | **Baseline vorhanden** | 44px Targets, Focus und Reduced Motion dokumentiert | axe/Lighthouse-Baseline und vollständige Keyboard-/Screenreader-Prüfung |
-| Mobile | **mittel** | responsive Basis vorhanden, Dashboard-Dichte bleibt problematisch | Navigation/Drawer in BB-2E entkoppeln und mobile IA separat prüfen |
+| Mobile | **mittel** | responsive Basis vorhanden; Root-Recovery benötigt reale Android-Observation | Public-P0 in Chromium/Android prüfen; danach mobile Dashboard-IA |
 
 ---
 
@@ -101,15 +140,31 @@ src/main.tsx
   → src/app/App.tsx                     # kanonischer Composition Root
   → src/app/auth/SessionComposition.tsx
   → src/app/routing/AppRoutes.tsx
-  → src/app/dashboard/Dashboard.tsx     # kanonische Dashboard-Composition-Grenze
-  → src/components/Dashboard.tsx        # bounded Legacy-Strangler
+      ├─ / → src/features/public/ui/LandingPage.tsx
+      │      → lazy src/features/crypto/ui/public.ts
+      │      → PublicCryptoScoringPreview
+      │      → canonical CryptoScoringEnterprise
+      └─ /dashboard → src/app/dashboard/Dashboard.tsx
+                      → src/components/Dashboard.tsx
+                      → src/app/dashboard/DashboardViewRouter.tsx
 ```
 
 Der Legacy-Strangler konsumiert Presentation-Contracts direkt aus:
 
 ```text
 src/app/dashboard/dashboardViews.ts
+src/app/dashboard/DashboardViewRouter.tsx
 src/app/types/UserSession.ts
+```
+
+Der Public-Scorer-Pfad konsumiert:
+
+```text
+src/features/public/ui/LandingPage.tsx
+src/features/crypto/ui/public.ts
+src/features/crypto/ui/PublicCryptoScoringPreview.tsx
+src/features/crypto/ui/EnterpriseScorerPresentationContext.tsx
+src/features/crypto/ui/CryptoScoringEnterprise.tsx
 ```
 
 ### 4.2 Feature- und Shared-Richtung
@@ -123,12 +178,14 @@ src/app
 Nicht zulässig:
 
 - `shared → features/app`,
+- `features → app`,
 - `platform → React UI`,
 - neue fachliche Implementierung unter `src/components/`,
 - lokale Neuautorisierung von Scoring, IAM, Evidence oder Entitlements.
 
 ### 4.3 Aktuelle kanonische Feature-Slices
 
+- `features/public/ui`
 - `features/screening/ui`
 - `features/crypto/ui`
 - `features/commodities/ui`
@@ -160,7 +217,7 @@ Nicht zulässig:
 - [x] Public/Root Route Composition.
 - [x] kanonischer Presentation-Session-Vertrag.
 
-### BB-2 — Dashboard Composition — **IN PROGRESS / P0**
+### BB-2 — Dashboard Composition — **IN PROGRESS / P0 after Public Recovery**
 
 **Ziel:** `Dashboard.tsx` als zentralen Kopplungspunkt in kleine Composition-Bausteine zerlegen, ohne fachliche Contracts zu verändern.
 
@@ -182,21 +239,30 @@ Arbeitspakete:
 - [x] **BB-2A Namespace-Korrektur:** `LearningUI` in `src/features/index.ts` aufnehmen.
 - [x] **BB-2B View Contract:** `DashboardView` und View→Section-Mapping nach `src/app/dashboard/dashboardViews.ts` extrahieren und Legacy-Consumer auf den kanonischen Contract umstellen.
 - [x] **BB-2C Session Contract:** Dashboard direkt auf `src/app/types/UserSession` umstellen; Root-Compatibility-Import entfernen.
-- [ ] **BB-2D View Router:** fachliche Render-Switches nach `DashboardViewRouter.tsx` verschieben und Feature-Fassaden konsumieren.
-- [ ] **BB-2E Navigation:** Desktop Navigation und Mobile Drawer aus dem Monolithen lösen.
+- [x] **BB-2D View Router / PR #763:** fachliche Detail-Render-Switches nach `DashboardViewRouter.tsx` verschoben, Legacy-Consumer auf den kanonischen Router umgestellt und Feature-Fassaden konsumiert.
+- [ ] **BB-2E Navigation:** Desktop Navigation und Mobile Drawer aus dem Monolithen lösen. Der geschlossene, nicht gemergte PR #667 ist keine Current-State-Implementierung; ein neuer Slice muss von dann-current main starten.
 - [ ] **BB-2F Header/Shell:** Header, Profil-/Logout-Flächen und globale Shell-Verantwortung extrahieren.
 - [ ] **BB-2G Closure:** `Dashboard.tsx` auf reine Composition reduzieren; Architecture-/Unit-/Build-Gates aktualisieren.
+
+Unterstützende Browser-/Root-Recovery:
+
+- [x] **PR #782 — Browser Bootstrap Recovery:** `LandingPage` eager an die Root-Composition gebunden; Dashboard bleibt lazy.
+- [x] **PR #788 — Public Root Shell Recovery:** Landing-Shell außerhalb der Dashboard-Preview-Suspense-/Error-Grenze.
+- [ ] **Public Enterprise Scorer Recovery:** Branch `agent/frontend-public-scorer-landing-r2-20260907` ersetzt den Root-Dashboard-Preview durch eine schmale, lazy Public-Projektion des kanonischen Enterprise Scorers; technische und Browser-Evidence noch offen.
+- [ ] **Production Android Observation:** nach Human-Merge/Deployment auf dem zuvor betroffenen Gerät bestätigen, dass Landing-Shell und Scorer-Preview korrekt sichtbar sind.
 
 Regeln:
 
 - keine neue Routing-Library in BB-2,
 - keine fachliche Feature-Migration erzwingen,
 - keine Änderung von Scoring-/Market-Data-/Entitlement-/IAM-Contracts,
-- jede Teilwelle separat mergebar und revertierbar.
+- jede Teilwelle separat mergebar und revertierbar,
+- ein geschlossener oder ungemergter früherer Candidate/PR ist keine Current-State-Evidence,
+- Production-/Geräte-Evidence wird nur als PASS markiert, wenn sie tatsächlich erhoben wurde.
 
-### BB-3 — Public / Users / Settings / Billing — **PLANNED**
+### BB-3 — Public / Users / Settings / Billing — **PARTIAL / PLANNED**
 
-Landing, Legal, Login-/Registration-Gates, Profile, Passkey/TOTP und Subscription-/Checkout-Flächen physisch in ihre Slices verschieben.
+`LandingPage` liegt bereits kanonisch unter `src/features/public/ui`. Der Public-Enterprise-Scorer-Recovery-Slice korrigiert Root-Composition und Produktvorschau, nimmt aber nicht die vollständige BB-3-Migration von Legal-, Login-/Registration-, Profile-, Passkey/TOTP- und Subscription-/Checkout-Flächen vorweg.
 
 ### BB-4 — Screening & Discovery — **PARTIAL / PLANNED**
 
@@ -208,7 +274,7 @@ RealtimeAiNewsfeed, Newsticker, MarketSentiment, SentimentDashboard, SocialAccou
 
 ### BB-6 — Analytics / Crypto / Commodities / Visualization — **PARTIAL**
 
-Crypto- und Commodity-Slices sind bereits teilweise kanonisch. Charts, Heatmap, Performance, Risk und verbleibende Analyseflächen nach Dependency-Audit migrieren.
+Crypto- und Commodity-Slices sind bereits teilweise kanonisch. `PublicCryptoScoringPreview` ist eine Presentation-Projektion derselben kanonischen Crypto-Scorer-Implementierung und keine zweite Crypto-Implementation. Charts, Heatmap, Performance, Risk und verbleibende Analyseflächen nach Dependency-Audit migrieren.
 
 ### BB-7 — Portfolio / Risk / Backtesting — **PLANNED**
 
@@ -246,8 +312,9 @@ Architecture-/Authority-Drift, TypeScript, Unit-/Contract-/Architecture-Tests, P
 
 ### Phase B — Information Architecture
 
-- [ ] Progressive Disclosure,
-- [ ] Score → Kurzanalyse → Detail-Matrix als dominante Hierarchie,
+- [x] öffentliche Root-Hierarchie Landing → Enterprise Scorer wiederhergestellt (Branch, Validation pending),
+- [ ] Progressive Disclosure im authentifizierten Dashboard,
+- [ ] Score → Kurzanalyse → Detail-Matrix als dominante Hierarchie weiter konsolidieren,
 - [ ] Asset-Suche und Filter vereinheitlichen,
 - [ ] Secondary Navigation reduzieren,
 - [ ] Command Palette bewerten.
@@ -266,7 +333,8 @@ Architecture-/Authority-Drift, TypeScript, Unit-/Contract-/Architecture-Tests, P
 - [x] Reduced-Motion-Baseline,
 - [ ] mobile Informationsarchitektur,
 - [ ] Screenreader-End-to-End-Prüfung,
-- [ ] Lighthouse Accessibility ≥ 95 und axe-Baseline.
+- [ ] Lighthouse Accessibility ≥ 95 und axe-Baseline,
+- [ ] produktive Android-Root-Observation nach Public-Scorer-Recovery dokumentieren.
 
 ### Phase E — AI-native UX
 
@@ -290,7 +358,11 @@ Vor jedem Frontend-PR:
 7. `COMPONENT_INVENTORY.md`-Korrelation,
 8. `FRONTEND_ARCH.md`-Korrelation,
 9. Design-Token-/Accessibility-Drift,
-10. TypeScript, Unit-/Contract-/Architecture-Tests und Production Build.
+10. TypeScript, Unit-/Contract-/Architecture-Tests und Production Build soweit die aktuelle PR-Klasse sie tatsächlich verlangt.
+
+Eine ADR-/ESS-Supersession erfolgt nur bei tatsächlicher semantischer Authority-Änderung. Eine reine Public-Presentation-Projektion des bestehenden Enterprise Scorers rechtfertigt keine neue oder superseding Scoring-/Market-Data-/IAM-Authority.
+
+Nicht ausgeführte Runtime-/Browser-Checks dürfen nicht als PASS dargestellt werden. Geräte-/Production-Observation bleibt separate Evidence.
 
 ---
 
@@ -299,9 +371,11 @@ Vor jedem Frontend-PR:
 - Lighthouse Performance ≥ 90,
 - Accessibility ≥ 95,
 - sinkende Time-to-First-Score,
+- öffentliche Root-Shell bleibt ohne Legacy-Dashboard-Preview sofort nutzbar,
+- Enterprise-Scorer-Preview bleibt lazy und lokal fehlertolerant,
 - sinkende Anzahl produktiver Implementierungen unter `src/components/`,
 - steigende Nutzung von Shared-Primitives,
-- keine Shared→Feature/App-Abhängigkeiten,
+- keine Shared→Feature/App- oder Feature→App-Abhängigkeiten,
 - keine duplizierten fachlichen Authorities,
 - geringere Dashboard-Komplexität und kleinere Composition-Units.
 
@@ -309,13 +383,14 @@ Vor jedem Frontend-PR:
 
 ## 9. Unmittelbare Reihenfolge
 
-1. **BB-2D:** View Router und Feature-Fassaden aus dem Legacy-Dashboard entkoppeln.
-2. **BB-2E:** Navigation und Drawer extrahieren.
+1. **Public Enterprise Scorer Recovery abschließen:** Route-/Architecture-/TypeScript-/Unit-/Build-/Browser-Gates für `agent/frontend-public-scorer-landing-r2-20260907` erheben und nach finaler current-main-Korrelation durch das PR-Creation-Gate führen.
+2. **BB-2E:** nach Abschluss des Recovery-Slices Navigation und Drawer auf einem frischen dann-current-main-Branch extrahieren; der frühere ungemergte PR #667 wird nicht fortgeschrieben.
 3. **BB-2F:** Header/Shell-Verantwortung extrahieren.
 4. **BB-2G:** Dashboard auf reine Composition reduzieren und Closure-Gates aktualisieren.
 5. Danach Roadmap/Inventory/Architecture erneut gegen den dann aktuellen `main` korrelieren.
-6. Erst anschließend mit BB-3/BB-4 physischen Legacy-Migrationen fortfahren.
+
+Parallel bleibt die **manuelle Production-Observation des zuvor betroffenen Android-Root-Pfads** offen. Sie ist erst nach Human-Merge/Deployment des Recovery-Slices aussagekräftig und verändert keine Ownership oder fachliche Authority.
 
 ---
 
-*Version 1.7.1 korreliert die Roadmap mit `main@f78d9f2838cfc3b2896cb167978a470aeb484f5e`, übernimmt die gemergten BB-2B-/Composition-Arbeiten aus PR #546 und #548 sowie die Branding-Korrektur aus PR #551 und schließt im aktuellen Candidate den Dashboard-Consumer-Cutover für BB-2B sowie den direkten Session-Contract für BB-2C ab. Nächster P0-Schritt ist BB-2D.*
+*Version 1.7.3 übernimmt die dokumentbasierte Korrelation aus dem historischen Roadmap-Branch, bindet sie an `main@f8cdc390d47263c845a2f03827d62af429de1c5e` und ergänzt den aktuellen P0-Slice zur Wiederherstellung der eigenständigen Landingpage mit kanonischem Enterprise Scorer. ADR-/ESS-Supersession wurde geprüft und ist für diese Presentation-/Routing-Änderung nicht erforderlich.*
