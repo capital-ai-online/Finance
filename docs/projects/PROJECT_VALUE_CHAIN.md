@@ -42,15 +42,20 @@ Until a separately authorized multi-project namespace migration is completed:
 ## Boundary invariants
 
 1. Every PVC stage has exactly one Primary Project Owner.
-2. Cross-cutting projects do not acquire Primary ownership by observing or validating a stage.
-3. `PVC-05` does not absorb Supervisor, Version, Release, Production or EventMesh execution.
-4. `PVC-11 -> PVC-12` is the Data-to-FinTech project handoff; missing/failed DQ evidence remains fail-closed.
-5. `PVC-16 -> PVC-17` preserves canonical scoring before ranking/decision support.
-6. `PVC-18` transports/retains traceability; it does not authorize business decisions, merge, release or deployment.
-7. No implicit `PVC-19` is introduced by Governance, Quality, Security, Compliance, Frontend, SEO, Social or Knowledge projections.
+2. Cross-cutting projects do not acquire Primary ownership by observing, validating or executing a delegated work package for a stage.
+3. `PVC-05` does not acquire Supervisor, Version, Release, Production or EventMesh ownership/authority. Under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`, `CAPITAL-AI-GOV` may execute a bounded foreign-project work package while the mapped Target Project/PVC remains the Primary Owner.
+4. `CAPITAL-AI-OPS` may likewise execute bounded work packages for another Target Project under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`; this does not alter the canonical PVC mapping or Target Project authority.
+5. `PVC-11 -> PVC-12` is the Data-to-FinTech project handoff; missing/failed DQ evidence remains fail-closed.
+6. `PVC-16 -> PVC-17` preserves canonical scoring before ranking/decision support.
+7. `PVC-18` transports/retains traceability; it does not authorize business decisions, merge, release or deployment.
+8. No implicit `PVC-19` is introduced by Governance, Quality, Security, Compliance, Frontend, SEO, Social or Knowledge projections.
+
+## Execution delegation vs ownership
+
+The canonical owner in this file answers **who owns the target work/domain**. It does not require that only that project's chat/executor may perform every repository edit.
+
+`CAPITAL-AI-GOV` and `CAPITAL-AI-OPS` may execute bounded foreign-project work under `docs/governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md`. For such work, Target Project/PVC/Primary Owner, target Roadmap scope, applicable ADR/ESS/contracts, branch/PR project identity, assurance authority and protected-action boundaries remain those of the Target Project unless another higher/effective authority explicitly changes them.
 
 ## Transitional repository state
 
-Current main contains `docs/projects/agent-client/**` using an older unqualified `VC-01` project label. That content remains until `CAPITAL-AI-CLIENT` migrates its own project documentation to `PVC-01`. Governance defines the namespace here but does not edit the foreign CLIENT project on its behalf.
-
-The same owner-controlled migration rule applies to OPS, DOC, DATA and FINTECH project surfaces.
+Current main contains project surfaces that may still use older ownership-only routing language or an older unqualified `VC-*` project label. Those surfaces are migrated by their mapped Primary Owner or, for bounded implementation work, may now be migrated by `CAPITAL-AI-GOV` or `CAPITAL-AI-OPS` under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION` while preserving the canonical Target Project identity and contracts.
