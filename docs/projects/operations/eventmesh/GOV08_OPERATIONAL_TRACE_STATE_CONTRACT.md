@@ -5,7 +5,7 @@
 **Primary PVC:** `PVC-18 — EventMesh / Traceability`  
 **Consumer:** `CAPITAL-AI-CLIENT Admin Panel`  
 **Status:** `OPS_GOV08_STATE_CONTRACT_READY` on this branch, pending normal branch/PR/Human-Merge lifecycle  
-**Correlation baseline:** `main@51bf529f003dfa47462c16ecbe10ae3b095547a4`
+**Correlation baseline:** `main@a6a62e867749efe80fc05aa175a3dc3fdd183d82`
 
 ## Purpose
 
@@ -18,6 +18,14 @@ Canonical code surfaces:
 - focused evidence: `tests/unit/operationalTraceStateProjection.test.ts`
 
 The projection is a normalization boundary only. Existing EventMesh, Traceability and source-owned status/evidence surfaces remain the data owners.
+
+## Authority / contract correlation
+
+- Target Project / Primary Owner: `CAPITAL-AI-OPS`.
+- Target PVC: `PVC-18 — EventMesh / Traceability`.
+- Accepted architecture decisions: `ADR-0010` and canonical `ADR-0013` establish the Enterprise Standard/ESS responsibility and ESS-0011 allocation; they do not grant this projection decision authority.
+- Applicable contracts: `ESS-0011` and `ESS-0011-CONTRACTS`.
+- `/AGENTS.md` remains the trust root; Human/CODEOWNER merge and protected Production mutations remain external gates.
 
 ## Reuse result
 
@@ -124,6 +132,7 @@ At this stage the focused test file is **implemented but NOT RUN** in the curren
 | One canonical read-only state contract exists | SATISFIED |
 | CLIENT can consume it without domain duplication | SATISFIED — shared contract/projector boundary; no CLIENT-owned authority required |
 | Evidence vs authority semantics explicit | SATISFIED |
-| Unknown/stale evidence fails closed | SATISFIED by projector semantics and focused tests (tests NOT RUN) |
+| Unknown/stale evidence fails closed | SATISFIED by implementation semantics; focused tests are present but `NOT RUN` |
+| Protected provider/Production mutation required by this package | NO |
 
-No Security verification or Human Merge is claimed by this document.
+No Security verification, test PASS, PR creation or Human Merge is claimed by this document.
