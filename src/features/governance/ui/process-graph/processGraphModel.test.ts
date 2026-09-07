@@ -59,6 +59,7 @@ describe('process graph canonical projection', () => {
     const pvcNodes = graph.nodes.filter((node) => node.kind === 'pvc');
 
     expect(graph.operationalStateAvailable).toBe(false);
+    expect(graph.decisionAuthority).toBe(false);
     expect(pvcNodes).toHaveLength(2);
     expect(pvcNodes.every((node) => node.state === 'unknown')).toBe(true);
     expect(pvcNodes.every((node) => node.authority === 'non-authorizing')).toBe(true);
