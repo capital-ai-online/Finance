@@ -4,8 +4,8 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@8ab11ae749639a67c28b3d685f4943df19b9e72c`  
-**Correlation date:** `2026-09-07`  
+**Current correlation baseline:** `main@29b46dc9131168036a0c067d8e9a14461b411bfe`  
+**Correlation date:** `2026-09-08`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
 **Status:** ACTIVE
@@ -22,15 +22,15 @@ PVC-05 / Platform Director
 
 `AUTH-*`, `CTRL-*`, registries and work claims support integrity/audit only and do not replace this Human-readable sequence.
 
-## Current-state synchronization — 2026-09-07
+## Current-state synchronization — 2026-09-08
 
-Current `main@8ab11ae749639a67c28b3d685f4943df19b9e72c` contains the terminal Governance work and the Owner-approval presentation baseline established through Human-merged PR #803:
+Current `main@29b46dc9131168036a0c067d8e9a14461b411bfe` contains the terminal Governance work and the Owner-approval presentation baseline established through Human-merged PR #803:
 
 - `GOV-03 / DR-02B` — **DONE_MAIN / TERMINAL** through Human-merged PR #743. ADR-0060 v1.1.0 is accepted and its stable Authority/registry projection is current. Productive provider-adapter continuation is not Governance-owned.
 - `GOV-CHAT-070 / GOV-07 Evolution Policy` — **DONE_MAIN / MAINTAINED** through Human-merged PR #790. `CTRL-AIMS-PDCA-001` expresses the accepted baseline-not-ceiling rule.
 - PR #803 is **DONE_MAIN** and establishes neutral presentation for pure Human/Owner approvals, confirmations and exact response prompts: they are authority gates, not `⚙️🤓 MANUELL` execution steps.
 - PR #772 remains historical implementation evidence for the bounded copyable `NÄCHSTE SCHRITTE` handoff. Its separate copyable Owner-response formatting requirement is being retired by the bounded `GOV-CHAT-071` maintenance item below; until Human Merge of that maintenance change, current `main` remains controlling.
-- Open PRs #838 (`CAPITAL-AI-DOC`) and #839 (`CAPITAL-AI-OPS`) have no changed-file overlap with `GOV-CHAT-071`. #838 touches Documentary hygiene/registry surfaces but not the Agent Trust Root, Development-Chain policy, Authority Registry, Control Catalog or Governance project projections changed here; #839 is workflow/zizmor hardening. No Primary-Owner, namespace or governing-authority conflict was identified.
+- Final pre-approval correlation found no open Pull Requests. The branch was synchronized onto `main@29b46dc9131168036a0c067d8e9a14461b411bfe`; no changed-file, semantic, namespace, Primary-Owner or governing-authority conflict is present for `GOV-CHAT-071`.
 
 ## Completed / terminal Governance work
 
