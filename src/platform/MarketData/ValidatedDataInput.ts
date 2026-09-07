@@ -4,9 +4,12 @@ import {
 } from '../Scoring/contracts';
 import { assessMarketDataSnapshot } from './DataQualityService';
 import {
+  evaluateDataQualityGate,
+  mapEvidenceQualityToDataStatus,
+} from './dataQualityGate';
+import {
   MARKET_EVIDENCE_DQ_CONTRACT_VERSION,
   assertMarketEvidenceContract,
-  isAdmissibleMarketEvidence,
   type MarketEvidenceQualityRecord,
 } from './evidenceQualityContracts';
 import type {
@@ -188,21 +191,6 @@ export function snapshotToMarketEvidenceQualityRecord(
   return record;
 }
 
-function evidenceStatusToDataStatus(
-  evidence: MarketEvidenceQualityRecord,
-  hasRequiredValue: boolean,
-): ValidatedDataStatus {
-  if (isAdmissibleMarketEvidence(evidence) && hasRequiredValue) return 'PASS';
-  switch (evidence.qualityStatus) {
-    case 'STALE': return 'STALE';
-    case 'UNAVAILABLE': return 'MISSING';
-    case 'NOT_APPLICABLE': return 'NOT_COMPUTABLE';
-    case 'CONFLICTING': return 'UNKNOWN';
-    case 'INVALID': return 'FAIL';
-    case 'VERIFIED': return hasRequiredValue ? 'PASS' : 'MISSING';
-  }
-}
-
 export function buildValidatedDataInputFromSnapshot(
   asset: UniversalAssetIdentity,
   snapshot: CanonicalMarketDataSnapshot,
@@ -213,9 +201,11 @@ export function buildValidatedDataInputFromSnapshot(
   const identityMatches = snapshotMatchesAsset(asset, snapshot);
   const correlationMatches = Boolean(snapshot.correlationId.trim());
   const hasPrice = typeof snapshot.price === 'number' && Number.isFinite(snapshot.price) && snapshot.price > 0;
-  const status = identityMatches && correlationMatches
-    ? evidenceStatusToDataStatus(evidence, hasPrice)
+  const fieldStatus = identityMatches && correlationMatches
+    ? mapEvidenceQualityToDataStatus(evidence, hasPrice)
     : 'FAIL';
+  const gate = evaluateDataQualityGate([fieldStatus]);
+  const status = gate.status;
   const provenanceComplete = identityMatches
     && correlationMatches
     && Boolean(evidence.evidenceRef?.trim())
@@ -230,7 +220,7 @@ export function buildValidatedDataInputFromSnapshot(
         ? undefined
         : snapshot.reason || `evidence status ${evidence.qualityStatus}`;
   const missingRequiredFields = hasPrice ? [] : ['price'];
-  const nonComputableReasons = status === 'PASS' || status === 'PARTIAL'
+  const nonComputableReasons = gate.admissibleForFintech
     ? []
     : [reason ?? `validated data status ${status}`];
 
