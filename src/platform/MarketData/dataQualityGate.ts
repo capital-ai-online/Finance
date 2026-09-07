@@ -1,9 +1,17 @@
 import type { MarketDataQualityState } from './contracts';
 import type { MarketEvidenceQualityRecord, MarketEvidenceQualityStatus } from './evidenceQualityContracts';
 import { isAdmissibleMarketEvidence } from './evidenceQualityContracts';
-import type { ValidatedDataStatus } from './ValidatedDataInput';
 
 export const DATA_QUALITY_GATE_CONTRACT_VERSION = 'data-quality-gate/1.0.0' as const;
+
+export type DataExitStatus =
+  | 'PASS'
+  | 'PARTIAL'
+  | 'FAIL'
+  | 'NOT_COMPUTABLE'
+  | 'STALE'
+  | 'MISSING'
+  | 'UNKNOWN';
 
 export const DATA_EXIT_STATUSES = [
   'PASS',
@@ -13,13 +21,13 @@ export const DATA_EXIT_STATUSES = [
   'STALE',
   'MISSING',
   'UNKNOWN',
-] as const satisfies readonly ValidatedDataStatus[];
+] as const satisfies readonly DataExitStatus[];
 
 /**
  * Severity rank used only to prevent silent upgrades.
  * Higher rank is more blocking. PASS is never recovered from a worse status.
  */
-const STATUS_RANK: Record<ValidatedDataStatus, number> = {
+const STATUS_RANK: Record<DataExitStatus, number> = {
   PASS: 0,
   PARTIAL: 1,
   NOT_COMPUTABLE: 2,
@@ -31,14 +39,14 @@ const STATUS_RANK: Record<ValidatedDataStatus, number> = {
 
 export type DataQualityExportDecision = {
   readonly contractVersion: typeof DATA_QUALITY_GATE_CONTRACT_VERSION;
-  readonly status: ValidatedDataStatus;
+  readonly status: DataExitStatus;
   readonly admissibleForFintech: boolean;
   readonly reason: string;
 };
 
 export function mapSnapshotQualityToDataStatus(
   state: MarketDataQualityState,
-): ValidatedDataStatus {
+): DataExitStatus {
   switch (state) {
     case 'LIVE':
       return 'PASS';
@@ -59,7 +67,7 @@ export function mapSnapshotQualityToDataStatus(
 export function mapEvidenceQualityToDataStatus(
   evidence: Pick<MarketEvidenceQualityRecord, 'qualityStatus'> | MarketEvidenceQualityStatus,
   hasRequiredValue = true,
-): ValidatedDataStatus {
+): DataExitStatus {
   const qualityStatus: MarketEvidenceQualityStatus =
     typeof evidence === 'string' ? evidence : evidence.qualityStatus;
 
@@ -84,27 +92,27 @@ export function mapEvidenceQualityToDataStatus(
 }
 
 export function aggregateDataStatuses(
-  statuses: readonly ValidatedDataStatus[],
-): ValidatedDataStatus {
+  statuses: readonly DataExitStatus[],
+): DataExitStatus {
   if (statuses.length === 0) return 'MISSING';
   return statuses.reduce((worst, current) => (
     STATUS_RANK[current] > STATUS_RANK[worst] ? current : worst
   ));
 }
 
-export function isAdmissibleFintechInput(status: ValidatedDataStatus): boolean {
+export function isAdmissibleFintechInput(status: DataExitStatus): boolean {
   return status === 'PASS' || status === 'PARTIAL';
 }
 
 export function wouldSilentlyUpgrade(
-  from: ValidatedDataStatus,
-  to: ValidatedDataStatus,
+  from: DataExitStatus,
+  to: DataExitStatus,
 ): boolean {
   return STATUS_RANK[to] < STATUS_RANK[from];
 }
 
 export function evaluateDataQualityGate(
-  statuses: readonly ValidatedDataStatus[],
+  statuses: readonly DataExitStatus[],
 ): DataQualityExportDecision {
   const status = aggregateDataStatuses(statuses);
   const admissibleForFintech = isAdmissibleFintechInput(status);
