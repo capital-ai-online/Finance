@@ -80,7 +80,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = '', userId }: A
       if (!tier) {
         throw new Error('Der Server hat noch keinen verifizierbaren Abonnementstatus geliefert.');
       }
-      onUpdateTier(tier);
+      if (tier !== currentTier) onUpdateTier(tier);
       setSyncState('synchronized');
 
       if (typeof window !== 'undefined') {
@@ -94,7 +94,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = '', userId }: A
       setSyncState('failed');
       setSyncError(err?.message || 'Der Abonnementstatus konnte nicht synchronisiert werden.');
     }
-  }, [onUpdateTier, userId]);
+  }, [currentTier, onUpdateTier, userId]);
 
   useEffect(() => {
     if (userId) void synchronizeTier();
@@ -208,6 +208,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = '', userId }: A
         {PAID_PLANS.map((plan) => {
           const price = SUBSCRIPTION_PRICES_EUR[plan][billingPeriod];
           const isCurrent = currentTier === plan;
+          const selfServiceSupported = !(plan === 'Enterprise' && billingPeriod === 'yearly');
           return (
             <article key={plan} className={`rounded-2xl border p-5 ${isCurrent ? 'border-brand-primary/55 bg-brand-primary/[0.07]' : 'border-white/10 bg-black/35'}`}>
               <div className="flex items-start justify-between gap-4">
@@ -219,6 +220,9 @@ export function Abonnements({ currentTier, onUpdateTier, email = '', userId }: A
               </div>
               <p className="mt-4 font-mono text-2xl font-black text-brand-primary">{formatEuro(price)}</p>
               <p className="mt-1 text-[11px] text-white/40">{billingPeriod === 'monthly' ? 'pro Monat' : 'pro Jahr'}</p>
+              {plan === 'Enterprise' && billingPeriod === 'yearly' ? (
+                <p className="mt-2 text-[11px] leading-relaxed text-amber-200/80">Jährliche Enterprise-Abrechnung ist laut Entitlement-Vertrag kein Self-Service-Checkout und bleibt an den autoritativen Billing-Prozess gebunden.</p>
+              ) : null}
               <ul className="mt-5 space-y-2 border-t border-white/10 pt-4 text-xs text-white/65">
                 {FEATURE_ROWS.map(([label, read]) => (
                   <li key={label} className="flex items-start justify-between gap-3">
@@ -229,11 +233,11 @@ export function Abonnements({ currentTier, onUpdateTier, email = '', userId }: A
               </ul>
               <button
                 type="button"
-                disabled={isCurrent || !userId}
+                disabled={isCurrent || !userId || !selfServiceSupported}
                 onClick={() => setSelectedPlan(plan)}
                 className="mt-5 min-h-11 w-full rounded-xl bg-brand-primary px-4 text-xs font-black uppercase tracking-wider text-black transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40"
               >
-                {isCurrent ? 'Aktueller Tarif' : 'Checkout starten'}
+                {isCurrent ? 'Aktueller Tarif' : !selfServiceSupported ? 'Jahresabo auf Anfrage' : 'Checkout starten'}
               </button>
             </article>
           );
