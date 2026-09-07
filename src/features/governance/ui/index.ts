@@ -3,3 +3,4 @@ export { SecurityRadarBadge } from '../../../components/SecurityRadarBadge';
 export { AdminPortal } from '../../../components/AdminPortal';
 export { SystemLatencyMonitor } from '../../../components/SystemLatencyMonitor';
 export { QualityCenterPanel } from '../../../components/QualityCenterPanel';
+export { AdminProcessGraph } from './process-graph/AdminProcessGraph';
