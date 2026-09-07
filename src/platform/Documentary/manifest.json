@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "status": "development",
   "owner": "CAPITAL-AI-DOC",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, bounded ESS-0012 GOV-DOC-003 Freshness Validation, GOV-DOC-006 generator-marking validation, incremental GOV-DOC-001 document-version validation, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, bounded ESS-0012 GOV-DOC-003 Freshness Validation, GOV-DOC-006 generator-marking validation, GOV-DOC-001 document-version validation, incremental GOV-DOC-002 ESS/ADR-reference validation, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -39,7 +39,7 @@
   "events": {
     "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
     "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
-    "note": "Semantic freshness, GOV-DOC-003, GOV-DOC-006 and GOV-DOC-001 validation, Maintenance Agent, Archive Retention Planner and D8 Migration Planner do not create a new event authority. Supervisor recommendation and PlatformDecisionRecord are evidence/authorization inputs. Existing EventMesh names remain canonical."
+    "note": "Semantic freshness, GOV-DOC-003, GOV-DOC-006, GOV-DOC-001 and GOV-DOC-002 validation, Maintenance Agent, Archive Retention Planner and D8 Migration Planner do not create a new event authority. Supervisor recommendation and PlatformDecisionRecord are evidence/authorization inputs. Existing EventMesh names remain canonical."
   },
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
@@ -155,5 +155,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "DocumentationValidator implements the bounded read-only GOV-DOC-003 freshness slice, the GOV-DOC-006 generator-marking slice and the incremental GOV-DOC-001 document-version slice. Registry metadata version does not satisfy GOV-DOC-001. It creates no second scanner, registry, scoring or decision authority and is not wired into the hygiene CLI gate. ADR-0097 maintenance is branch-only and Draft-PR-bound. ArchiveRetentionAgent classifies retention/deletion candidates but never performs physical deletion. DocumentaryMigrationPlanner classifies canonical/generated/evidence/legacy/archive documentation and emits migration/redirect/owner-review/blocked planning only; it never moves, deletes, rewrites or authorizes foreign-owner paths. AI output is advisory; versions/lifecycle/path boundaries are deterministic. The Mermaid generator is a pure deterministic text projection over the existing Documentary Knowledge projection; it hashes node aliases, escapes evidence labels and does not execute Mermaid, emit click/URL directives, persist graph state or create a second diagram/knowledge registry. SC-MD-SPT-0001 integration is a read-only VC-17 documentation/evidence sidecar over the current 18-stage Quality projection and never a financial runtime stage. No autonomous merge, deploy or production mutation."
+  "note": "DocumentationValidator implements the bounded read-only GOV-DOC-003 freshness slice, the GOV-DOC-006 generator-marking slice, the GOV-DOC-001 document-version slice and the incremental GOV-DOC-002 ESS/ADR-reference slice. Registry metadata authority does not satisfy GOV-DOC-002. It creates no second scanner, registry, scoring or decision authority and is not wired into the hygiene CLI gate. ADR-0097 maintenance is branch-only and Draft-PR-bound. ArchiveRetentionAgent classifies retention/deletion candidates but never performs physical deletion. DocumentaryMigrationPlanner classifies canonical/generated/evidence/legacy/archive documentation and emits migration/redirect/owner-review/blocked planning only; it never moves, deletes, rewrites or authorizes foreign-owner paths. AI output is advisory; versions/lifecycle/path boundaries are deterministic. The Mermaid generator is a pure deterministic text projection over the existing Documentary Knowledge projection; it hashes node aliases, escapes evidence labels and does not execute Mermaid, emit click/URL directives, persist graph state or create a second diagram/knowledge registry. SC-MD-SPT-0001 integration is a read-only VC-17 documentation/evidence sidecar over the current 18-stage Quality projection and never a financial runtime stage. No autonomous merge, deploy or production mutation."
 }

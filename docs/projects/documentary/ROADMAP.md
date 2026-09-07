@@ -6,7 +6,7 @@
 **Primary Owner:** `CAPITAL-AI-DOC`  
 **Repository trust root:** `/AGENTS.md`  
 **Canonical project folder:** `docs/projects/documentary/`  
-**Current main correlation:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e`  
+**Current main correlation:** `main@328309093460389d417f2625143c1447fcec83cf`  
 **Correlation date:** `2026-09-07`
 
 ## How to use this roadmap
@@ -155,27 +155,65 @@ Merged implementation evidence:
 
 - implementation PR: **#815** — WP-DOC-08 Closeout und GOV-DOC-001 Validator;
 - merge SHA: `e7715f542db65e40cca6d39a6dacb0f30ef08b51`;
-- merged at: `2026-09-07T09:02:09Z`;
-- current-main correlation after later DATA merge: `main@f8cdc390d47263c845a2f03827d62af429de1c5e`;
-- hosted `build-and-test` and PR Governance on the merged head were `success`;
+- closeout PR: **#819**;
+- closeout merge SHA: `328309093460389d417f2625143c1447fcec83cf`;
 - `collectGovDoc001Findings()` evaluates registered documents that exist as regular non-symlink files;
 - accepted markings are explicit `Version` / `Document Version` / `Dokumentversion` / `Dokumentenversion` / `Fassung` labels plus a numeric version token after Markdown/HTML/table normalization;
 - registry metadata version alone does not satisfy the rule;
-- empty `Version:` labels, missing files and unregistered paths are discarded or fail closed;
 - the collector is not wired into the hygiene CLI gate;
 - component version on the merged slice is `1.18.0`.
 
-This closeout updates only roadmap/status correlation. It does not reopen WP-DOC-09 implementation and does not activate scoring, events, Migration Execution or Plugins.
+This closeout does not reopen WP-DOC-09 implementation and does not activate scoring, events, Migration Execution or Plugins.
+
+## WP-DOC-10 — ESS-0012 GOV-DOC-002 ESS/ADR reference
+
+**State:** `IMPLEMENTED ON BRANCH — VALIDATION / PR / HUMAN MERGE PENDING`
+
+Priority correlation:
+
+- ESS-0012-CONTRACTS Chapter 2.5 defines `GOV-DOC-002` — document without ESS or ADR reference — with `Medium` severity;
+- next incremental Documentary DocumentationValidator slice after the merged `GOV-DOC-001`/`GOV-DOC-003`/`GOV-DOC-006` baseline;
+- registry `authority` metadata is not treated as a document-body ESS/ADR citation;
+- `DocumentationHygieneValidator` remains the canonical structural/registry hygiene service and is not duplicated.
+
+Current branch implementation:
+
+- branch: `agent/documentary-wp-doc-10-gov-doc-002-20260907`;
+- synchronized baseline: `main@328309093460389d417f2625143c1447fcec83cf`;
+- `collectGovDoc002Findings()` evaluates registered documents that exist as regular non-symlink files;
+- accepted citations are explicit `ESS-NNNN` / `ADR-NNNN` identities, including `ESS-NNNN-CONTRACTS`, after Markdown/HTML/table normalization;
+- empty `ESS` labels without a number, `SC-*` identifiers, missing files and unregistered paths are discarded or fail closed;
+- result ordering is deterministic and the validator performs no mutation;
+- targeted unit coverage extends `tests/unit/documentaryDocumentationValidator.test.ts`.
+
+Explicit non-scope retained:
+
+- no broader 57-rule suite activation;
+- no scoring, production-release thresholds or event publication;
+- no wiring of `GOV-DOC-002` into the hygiene CLI gate;
+- no `GOV-DOC-004` document-class structure check;
+- no physical/semantic Migration Execution;
+- no Plugins architecture.
+
+Exit gate:
+
+- `GOV-DOC-002` coverage is proven on the exact final PR head;
+- registry authority alone cannot suppress the finding;
+- no finding is emitted without FileReference evidence and no mutation is performed;
+- existing Hygiene, `GOV-DOC-001`, `GOV-DOC-003` and `GOV-DOC-006` behavior remain unchanged;
+- applicable Documentary, TypeScript, unit, documentation and governance checks pass;
+- Human/CODEOWNER merge completes and roadmap/component documentation is synchronized to the resulting state.
 
 ## Remaining Documentary work
 
 The following areas remain separate Roadmap work and must not be bundled merely because prior Documentary slices are complete:
 
-- **next incremental DOC rule:** ESS-0012 `GOV-DOC-002` (ESS-/ADR-Referenz) or `GOV-DOC-004` (Dokumentklasse), one rule per slice;
+- **current:** WP-DOC-10 incremental ESS-0012 `GOV-DOC-002` ESS/ADR-reference validation through validation, PR and Human merge;
+- next after WP-DOC-10: ESS-0012 `GOV-DOC-004` (Dokumentklasse), one rule per slice;
 - physical/semantic Migration Execution beyond the read-only D8 planning slice, only where separately authorized and owner-bounded;
 - Plugins;
 - broader Documentary architecture/runtime gaps explicitly still marked planned by current component/technical documentation;
-- additional ESS-0012 validation coverage beyond the bounded WP-DOC-07/WP-DOC-08/WP-DOC-09 slices;
+- additional ESS-0012 validation coverage beyond the bounded WP-DOC-07..WP-DOC-10 slices;
 - ongoing lifecycle/maintenance quality improvements.
 
 Before starting any item, re-read current `main`, this Roadmap, applicable ADR/ESS and the current component README/manifest.
