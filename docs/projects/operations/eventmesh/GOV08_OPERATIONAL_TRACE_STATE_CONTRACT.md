@@ -5,7 +5,7 @@
 **Primary PVC:** `PVC-18 — EventMesh / Traceability`  
 **Consumer:** `CAPITAL-AI-CLIENT Admin Panel`  
 **Status:** `OPS_GOV08_STATE_CONTRACT_READY` on this branch, pending normal branch/PR/Human-Merge lifecycle  
-**Correlation baseline:** `main@eee9a8af3f3d2532a213154dd61f678454a2200b`
+**Correlation baseline:** `main@51bf529f003dfa47462c16ecbe10ae3b095547a4`
 
 ## Purpose
 

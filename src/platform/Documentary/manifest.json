@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "status": "development",
   "owner": "CAPITAL-AI-DOC",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, bounded ESS-0012 GOV-DOC-003 Freshness Validation, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -39,7 +39,7 @@
   "events": {
     "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
     "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
-    "note": "Semantic freshness, Maintenance Agent, Archive Retention Planner and D8 Migration Planner do not create a new event authority. Supervisor recommendation and PlatformDecisionRecord are evidence/authorization inputs. Existing EventMesh names remain canonical."
+    "note": "Semantic freshness, GOV-DOC-003 validation, Maintenance Agent, Archive Retention Planner and D8 Migration Planner do not create a new event authority. Supervisor recommendation and PlatformDecisionRecord are evidence/authorization inputs. Existing EventMesh names remain canonical."
   },
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
@@ -65,6 +65,7 @@
     "Contracts/BilingualDocumentReference.ts",
     "Versioning/DocumentaryVersion.ts",
     "Governance/Services/DocumentationHygieneValidator.ts",
+    "Governance/Validators/DocumentationValidator.ts",
     "Discovery/CodeEvidence.ts",
     "Discovery/StatusEventEvidence.ts",
     "Discovery/StatusEventDriftDetector.ts",
@@ -108,6 +109,7 @@
     "tests/unit/documentaryCodeDiscovery.test.ts",
     "tests/unit/documentaryCoreEngine.test.ts",
     "tests/unit/documentaryDocumentModel.test.ts",
+    "tests/unit/documentaryDocumentationValidator.test.ts",
     "tests/unit/documentaryKnowledgeProjection.test.ts",
     "tests/unit/documentaryLifecycle.test.ts",
     "tests/unit/documentaryMaintenanceAgent.test.ts",
@@ -153,5 +155,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "ADR-0097 maintenance is branch-only and Draft-PR-bound. ArchiveRetentionAgent classifies retention/deletion candidates but never performs physical deletion. DocumentaryMigrationPlanner classifies canonical/generated/evidence/legacy/archive documentation and emits migration/redirect/owner-review/blocked planning only; it never moves, deletes, rewrites or authorizes foreign-owner paths. AI output is advisory; versions/lifecycle/path boundaries are deterministic. The Mermaid generator is a pure deterministic text projection over the existing Documentary Knowledge projection; it hashes node aliases, escapes evidence labels and does not execute Mermaid, emit click/URL directives, persist graph state or create a second diagram/knowledge registry. SC-MD-SPT-0001 integration is a read-only VC-17 documentation/evidence sidecar over the current 18-stage Quality projection and never a financial runtime stage. No autonomous merge, deploy or production mutation."
+  "note": "DocumentationValidator implements only the bounded read-only GOV-DOC-003 ESS-0012 freshness slice and consumes existing SemanticFreshnessAnalyzer evidence; it creates no second scanner, registry, scoring or decision authority. ADR-0097 maintenance is branch-only and Draft-PR-bound. ArchiveRetentionAgent classifies retention/deletion candidates but never performs physical deletion. DocumentaryMigrationPlanner classifies canonical/generated/evidence/legacy/archive documentation and emits migration/redirect/owner-review/blocked planning only; it never moves, deletes, rewrites or authorizes foreign-owner paths. AI output is advisory; versions/lifecycle/path boundaries are deterministic. The Mermaid generator is a pure deterministic text projection over the existing Documentary Knowledge projection; it hashes node aliases, escapes evidence labels and does not execute Mermaid, emit click/URL directives, persist graph state or create a second diagram/knowledge registry. SC-MD-SPT-0001 integration is a read-only VC-17 documentation/evidence sidecar over the current 18-stage Quality projection and never a financial runtime stage. No autonomous merge, deploy or production mutation."
 }
