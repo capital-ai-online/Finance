@@ -7,7 +7,7 @@
 **Role:** cross-cutting Security requirements, findings, testing and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
 **Date:** `2026-09-07`  
-**Correlation baseline:** `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`  
+**Correlation baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
 **SOTA baseline:** `docs/evidence/security/CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md`  
 **Trust root:** `/AGENTS.md`
@@ -16,7 +16,7 @@
 
 This file is the owner-side execution projection required by the canonical `docs/projects/` model. Current work and priority are resolved here and detailed in the canonical Security roadmap. It creates no second finding register, Security authority, IAM plane, release path or productive PVC owner.
 
-Current routing resolves from current `/AGENTS.md`, `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`, followed by applicable accepted ADR/ESS contracts and current code/tests/evidence. External standards are advisory/non-authorizing. Withdrawn post-PVC overlays, including the former Cross-Project Handoff Contract, are historical and are not routing inputs.
+Current routing resolves from current `/AGENTS.md`, `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`, followed by applicable accepted ADR/ESS contracts and current code/tests/evidence. External standards are advisory/non-authorizing. Withdrawn post-PVC overlays are historical and are not routing inputs.
 
 ## Current-main consolidation — 2026-09-07
 
@@ -25,8 +25,8 @@ Current routing resolves from current `/AGENTS.md`, `docs/projects/README.md` an
 | Security project/PVC consolidation | PR #749 merged | `DONE_MAIN` |
 | Security Assessment capability + raw-test binding | current main | `DONE_MAIN` |
 | `SEC-ASSESS-ALIGN` | PR #766 merged; skill v1.0.1 aligned to current authority and advisory OWASP methodology | `DONE_MAIN` |
-| `SEC-SOTA-01` SOTA baseline + roadmap convergence | `CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md` on current branch | `IMPLEMENTED_BRANCH / PR GATE OPEN` |
-| `SEC-VERIFY-R2-04` fatal-process repository re-verification | current-main code/test contract + branch evidence | `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN` |
+| `SEC-SOTA-01` SOTA baseline + roadmap convergence | PR #832 merged as `75c926f12ae514036aa508ea8faf1a82b1a91059`; PR-head hosted Governance, Container Security and CI checks completed `success`; merge-main build/test, supply-chain attestation, exact-SHA Render deployment and post-deployment identity verification completed `success` | `DONE_MAIN` |
+| `SEC-VERIFY-R2-04` fatal-process repository re-verification | repository code/test contract independently verified in merged evidence | `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN` |
 | `SEC-VERIFY-ULS-001` subscription identity | current Security evidence retains provider identity residuals | `PARTIAL / NOT VERIFIED` |
 | Owner Device Authorization Stage-C | independent evidence on main | `COMPLETE / HISTORICAL` |
 | S1 hardening findings | current owner roadmaps/code/evidence | mixed; no blanket closure |
@@ -53,12 +53,12 @@ NIST publications/frameworks remain outside the CURRENT repository governance ba
 ### P0 — Security-owned executable work
 
 1. **`SEC-SOTA-01` — SOTA baseline and roadmap convergence.**  
-   **State:** `IMPLEMENTED_BRANCH / PR GATE OPEN`.  
-   Exit: current-main baseline, advisory source treatment, existing-workstream mapping and synchronized project/detailed/work-package roadmaps.
+   **State:** `DONE_MAIN`.  
+   Merged by PR #832 at merge SHA `75c926f12ae514036aa508ea8faf1a82b1a91059`. Hosted PR checks and the merge-main production identity/deployment pipeline completed successfully. The immutable SOTA evidence may retain its original execution baseline; current status is projected here.
 
 2. **`SEC-VERIFY-R2-04` — fatal-process current-main re-verification.**  
    **State:** `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN`.  
-   Repository-level fail-fast, unhealthy readiness, duplicate-fatal suppression and non-zero-exit intent are independently verified from current-main code/test contracts. Hosted execution was not run in this connector session. Full runtime closure still requires exact post-deploy supervisor/restart/readiness evidence from `CAPITAL-AI-OPS / PVC-08`.
+   Repository-level fail-fast, unhealthy readiness, duplicate-fatal suppression and non-zero-exit intent are independently verified from source/test contracts. The successful main deployment after PR #832 does not by itself prove destructive fatal-process supervisor/restart behavior. Full runtime closure still requires exact post-deploy supervisor/restart/readiness evidence from `CAPITAL-AI-OPS / PVC-08`.
 
 3. **`SEC-SOTA-02` — AI/Agent/MCP control inventory.**  
    **State:** `READY`.  
@@ -111,22 +111,23 @@ No row grants CAPITAL-AI-SEC productive implementation ownership.
 
 ## Correlation state
 
-- Current task baseline after resync: `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`.
-- Open PRs at resync: none.
-- Initial branch baseline `92297059722a92cf934bd85339670c623d618d1a` was invalidated by merged frontend PR #831; the Security slice was therefore re-materialized on a fresh branch rather than treated as current.
-- Current work branch: `agent/security-sota-roadmap-sync-20260907`, freshly created from the exact resync baseline.
-- Stale legacy Security branches have no open PR and were not reused as authority or implementation baseline.
-- Productive runtime/provider/IAM/billing/deployment surfaces are not changed by this Security slice.
+- Current task baseline: `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`.
+- PR #832 is merged; merge SHA `75c926f12ae514036aa508ea8faf1a82b1a91059` is an ancestor of current main.
+- PR #833 is closed without merge and is not an active writer.
+- Open PRs at branch creation: none.
+- Current bounded work branch: `agent/security-post832-roadmap-sync-20260907`, created from the exact current-main baseline.
+- The later PR #834 Frontend merge advanced main after PR #832 without changing Security roadmap/evidence files; its merge commit is the current baseline.
+- Productive runtime/provider/IAM/billing/deployment surfaces are not changed by this documentation sync.
 
 ## Validation / completion gate
 
-1. current `/AGENTS.md`, project/PVC mapping, Security README/roadmaps and `ESS-0006` were re-read;
-2. current main and open PRs were re-correlated; main drift was detected and handled by fresh-branch resync;
-3. external SOTA guidance is advisory/non-authorizing and mapped into existing workstreams;
-4. `SEC-ASSESS-ALIGN` stale state is corrected to merged/DONE_MAIN;
-5. `SEC-SOTA-01` is implemented as Security-owned documentation/evidence;
-6. `SEC-VERIFY-R2-04` repository contract is independently re-verified without claiming missing post-deploy evidence;
+1. current `/AGENTS.md`, project/PVC mapping, Security README/roadmaps, ESS-0006 and ESS-0019 were re-read;
+2. current main and open PRs were re-correlated; no open PR writer exists at branch creation;
+3. PR #832 merge identity and hosted PR check success were re-read from GitHub;
+4. post-merge main pipeline evidence confirms successful build/test, supply-chain/attestation, exact-SHA Render deployment and deployed identity verification for merge SHA `75c926f12ae514036aa508ea8faf1a82b1a91059`;
+5. `SEC-SOTA-01` is now projected as `DONE_MAIN`; obsolete branch/PR-gate wording is removed from current roadmap status;
+6. `SEC-VERIFY-R2-04` remains intentionally open for specific supervisor/restart/readiness runtime evidence and is not overclaimed from generic deployment success;
 7. no foreign productive remediation is included;
-8. hosted/unit/build execution is `NOT RUN` in this connector session and is not represented as PASS;
+8. local/unit/build execution for this docs-only sync is `NOT RUN`; no pre-PR paid CI was triggered;
 9. exact main/head/open-PR re-correlation remains required immediately before PR creation;
 10. PR creation requires explicit Human/Owner approval for the exact snapshot; merge remains Human/CODEOWNER-only.
