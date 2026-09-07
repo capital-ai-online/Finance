@@ -75,8 +75,7 @@ Work:
 
 Current-main / branch correlation:
 
-- merged via PR #811; current main also contains PR #812 and PR #817;
-- S1-R2-11 observation evaluator lives in `src/platform/MarketData/evidenceIdentityFreshness.ts` (`evidence-identity-freshness/1.0.0`);
+- merged via PR #811; later DATA slices #812/#817/#822 are also on current main;
 - DATA does not mark the Security finding `VERIFIED/CLOSED` and does not modify OPS-owned PR/trace tooling.
 
 Exit:
@@ -97,14 +96,7 @@ Work:
 Current-main / branch correlation:
 
 - merged via PR #812;
-- gate contract `data-quality-gate/1.0.0` lives in `src/platform/MarketData/dataQualityGate.ts`;
 - remaining DATA-11 physical split of composite confidence/ranking helpers stays backlog.
-
-Exit:
-
-- no `FAIL` reaches valid downstream input;
-- stale/missing/unknown state cannot be silently upgraded;
-- no scoring or ranking logic is owned by DATA in the merged gate slice.
 
 ## DATA-12 — Provenance
 
@@ -116,15 +108,8 @@ Work:
 
 Current-main / branch correlation:
 
-- merged via PR #817 onto `main@f8cdc390d47263c845a2f03827d62af429de1c5e`;
-- lineage contract `data-provenance-lineage/1.0.0` lives in `src/platform/MarketData/dataProvenanceLineage.ts`;
+- merged via PR #817;
 - correction-version lineage remains an architecture gap.
-
-Exit:
-
-- complete lineage can be evaluated independently of scoring;
-- incomplete or mutated lineage does not survive the FINTECH handoff claim;
-- correction history/versioning stays backlog.
 
 ## DATA-13 — Freshness
 
@@ -136,26 +121,32 @@ Work:
 
 Current-main / branch correlation:
 
+- merged via PR #822 onto `main@d423da75e5f43b423d39abd3c4dffbfa0da8a2a5`;
 - freshness contract `data-freshness/1.0.0` lives in `src/platform/MarketData/dataFreshness.ts`;
-- capability defaults: snapshot `90s`, history `24h`, news `5m`;
-- evaluation uses caller-supplied `evaluatedAt` and does not call `Date.now()`;
-- claimed `FRESH`/`CURRENT` cannot override computed `STALE`/`UNKNOWN`;
-- focused unit evidence: `tests/unit/dataFreshness.test.ts`;
-- slice evidence: `docs/projects/data/evidence/DATA_13_FRESHNESS_2026-09-07.md`;
-- Composite freshness scoring remains FINTECH-owned and untouched.
-
-Exit:
-
-- capability max-age is explicit and deterministic;
-- `STALE`/`UNKNOWN` are not scoring-admissible;
-- silent freshness upgrades are rejected;
 - provider-specific max-age overrides stay backlog.
 
 ## DATA-14 — Provider Input Validation
 
-**State:** `READY`
+**State:** `IMPLEMENTED — CANONICAL ENVELOPE GATE READY / VENDOR DIALECTS OPEN`
 
-Validate schema, required fields, numeric finiteness/ranges, timestamps, provider identity, asset/symbol binding and capability invariants. Malformed/ambiguous input becomes an explicit non-admissible state.
+Work:
+
+- Validate schema, required fields, numeric finiteness/ranges, timestamps, provider identity, asset/symbol binding and capability invariants. Malformed/ambiguous input becomes an explicit non-admissible state.
+
+Current-main / branch correlation:
+
+- input gate `provider-input-validation/1.0.0` lives in `src/platform/MarketData/providerInputValidation.ts`;
+- snapshot and history envelopes fail closed on missing provider/asset/correlation/evidence, non-positive or non-finite numerics, and invalid timestamps;
+- no synthetic zero/default payload is invented;
+- focused unit evidence: `tests/unit/providerInputValidation.test.ts`;
+- slice evidence: `docs/projects/data/evidence/DATA_14_PROVIDER_INPUT_2026-09-07.md`;
+- raw vendor HTTP dialects remain backlog.
+
+Exit:
+
+- malformed/ambiguous provider input is explicitly `NON_ADMISSIBLE`;
+- identity, timestamps and numeric ranges are checked before evidence promotion;
+- per-provider raw-body adapters stay backlog.
 
 ## DATA-15 — Data Contract Testing
 
