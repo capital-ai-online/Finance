@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Check, ExternalLink, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
-import type { SubscriptionTier } from '../../../app/types/UserSession';
+import type { SubscriptionTier } from '../../../config/subscriptionEntitlements';
 import { authFetch } from '../../../lib/authFetch';
 import { readAuthenticatedSubscriptionTier } from '../../../lib/subscriptionReadback';
 import {
