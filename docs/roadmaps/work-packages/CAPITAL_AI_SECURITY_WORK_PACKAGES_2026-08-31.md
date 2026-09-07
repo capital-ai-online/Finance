@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-WP-CAPITAL-AI-SEC-2026-08-31`  
 **Project:** `CAPITAL-AI-SEC`  
-**Version:** `2.2.0`  
+**Version:** `2.2.1`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY BACKLOG / NON-AUTHORIZING`  
 **Date:** `2026-09-07`  
-**Baseline:** `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`  
+**Baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
 **Primary Productive PVC ownership:** `[]`  
 **Project routing namespace:** `PVC-01..PVC-18`  
 **Roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`
@@ -17,7 +17,7 @@
 **Entry:** current `main` and open PRs correlated; affected project and PVC known or explicitly unresolved; current authority/control reused; threat/control and expected evidence defined.  
 **Security action:** define requirement, threat model, test/negative test, finding, owner routing and independent verification gate.  
 **Foreign implementation:** do not execute under CAPITAL-AI-SEC. Route directly to the current Primary Owner using canonical project/PVC mapping and record target project, PVC, task, reason, dependency, required evidence, verification gate and status. Withdrawn post-PVC handoff overlays are not current routing mechanisms.  
-**Verification:** exact candidate/runtime/provider evidence as appropriate; missing/stale/wrong-identity/`NOT_AVAILABLE` evidence is not PASS.  
+**Verification:** exact branch/runtime/provider evidence as appropriate; missing/stale/wrong-identity/`NOT_AVAILABLE` evidence is not PASS.  
 **Closure:** `VERIFIED/CLOSED` requires independent Security evidence; `ACCEPTED_RISK` requires applicable Human/Owner authority.
 
 External standards and guidance are `ADVISORY_NON_AUTHORIZING`. They may inform verification objectives but do not create repository Authority or mandatory controls. Current `/AGENTS.md` excludes NIST publications/frameworks from the CURRENT repository governance baseline.
@@ -28,16 +28,22 @@ External standards and guidance are `ADVISORY_NON_AUTHORIZING`. They may inform 
 
 **Priority:** P0  
 **Owner:** CAPITAL-AI-SEC  
-**State:** `IMPLEMENTED_BRANCH / PR GATE OPEN`
+**State:** `DONE_MAIN`
 
-Implemented:
+Merged by PR #832 at merge SHA `75c926f12ae514036aa508ea8faf1a82b1a91059`.
+
+Completed:
 
 - current external SOTA baseline in `docs/evidence/security/CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md`;
 - OWASP Top 10:2025, ASVS 5.0.0, GenAI/Agentic/ACS/MCP guidance, SLSA v1.2 and CISA Secure by Design mapped to existing `SEC-01..SEC-10` workstreams;
 - external material explicitly advisory/non-authorizing;
 - `SEC-ASSESS-ALIGN` corrected to `DONE_MAIN` after merged PR #766;
 - CRA reporting readiness represented only as a dependency on `CAPITAL-AI-COMP` for applicability/legal scope;
-- project and detailed Security roadmaps synchronized to current main.
+- project and detailed Security roadmaps synchronized;
+- PR-head Governance, Container Security and CI hosted checks completed `success`;
+- merge-main build/test, supply-chain attestation, exact-SHA Render deployment and deployed commit-identity verification completed `success`.
+
+The original SOTA evidence remains an execution-time record; active roadmap/work-package projections carry the current lifecycle state rather than rewriting historical evidence metadata.
 
 ### `SEC-VERIFY-R2-04` — fatal-process current-main re-verification
 
@@ -48,9 +54,9 @@ Implemented:
 
 Evidence: `docs/evidence/security/S1_R2_04_FATAL_PROCESS_CURRENT_MAIN_REVERIFICATION_2026-09-07.md`.
 
-Verified from current-main source/test contract: uncaught exceptions and unhandled rejections latch fatal state; fatal state projects readiness as not-ready; repeated fatal events do not initiate duplicate shutdown; fatal termination preserves non-zero-exit intent; repository tests encode these behaviors.
+Verified from repository source/test contract: uncaught exceptions and unhandled rejections latch fatal state; fatal state projects readiness as not-ready; repeated fatal events do not initiate duplicate shutdown; fatal termination preserves non-zero-exit intent; repository tests encode these behaviors.
 
-Not claimed: hosted tests PASS (`NOT_RUN` in this connector session), exact deployed supervisor/restart behavior or destructive production fault injection. Runtime gates remain OPS/PVC-08.
+Not claimed: exact deployed supervisor/restart behavior or destructive production fault injection. The successful generic main deployment after PR #832 is deployment/identity evidence, not proof of the specific fatal-process runtime behavior. Runtime gates remain OPS/PVC-08.
 
 ### `SEC-SOTA-02` — AI/Agent/MCP control inventory
 
@@ -64,6 +70,8 @@ Required output:
 
 Minimum coverage: prompt/indirect injection; authority/capability expansion; delegated permissions; tool side effects/least privilege; session/context isolation; memory/retrieval poisoning where applicable; inter-agent trust; MCP AuthN/AuthZ/validation/session/tool-chain isolation; inspectability/traceability of actor/model/tool/decision/authorization/runtime identity where applicable.
 
+Current pre-correlation confirms the existing control plane must be reused rather than duplicated: `/AGENTS.md`; ESS-0019; `AI_AGENT_TRUST_BOUNDARIES.md`; `AI_AGENT_THREAT_MODEL.md`; `src/platform/Security/agentIam.ts`; `src/platform/Security/providerProfile.ts`; `src/platform/Compliance/PolicyGate.ts`; `server/agentAudit/authorizedAgentExecution.ts`; Supervisor approved-action path; and actual `src/services/agentTools/*` surfaces. Productive gaps remain routed to the actual Primary Owner/PVC.
+
 ### `SEC-SOTA-03` — supply-chain assurance inventory
 
 **Priority:** P0  
@@ -74,7 +82,7 @@ Required output:
 
 `source/dependency/build/artifact/release surface → existing repository control → exact evidence → advisory SLSA/OWASP theme → actual gap → owner/PVC → verification gate`.
 
-Inventory lockfiles/dependency controls, GitHub Action trust/pinning, source revision identity, build identity, artifact/container provenance/attestations/SBOM where present and release/deployment exact-SHA binding. Reuse existing Development Chain and Release controls; do not create a parallel release/provenance system.
+Inventory lockfiles/dependency controls, GitHub Action trust/pinning, source revision identity, build identity, artifact/container provenance/attestations/SBOM where present and release/deployment exact-SHA binding. Reuse existing Development Chain/Release controls; do not create a parallel release/provenance system.
 
 ### `SEC-SOTA-04` — application/API ASVS 5.0 verification matrix
 
