@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@4ac4d7574cdf52e9158f5aee2c2563c0f8c8a58a`  
+**Current correlation baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
 **Correlation date:** `2026-09-07`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
@@ -24,17 +24,13 @@ PVC-05 / Platform Director
 
 ## Current-state synchronization — 2026-09-07
 
-Current `main@4ac4d7574cdf52e9158f5aee2c2563c0f8c8a58a` contains the terminal Governance work that earlier snapshots still described as branch-local:
+Current `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968` contains the terminal Governance work and the Owner-approval presentation baseline established through Human-merged PR #803:
 
 - `GOV-03 / DR-02B` — **DONE_MAIN / TERMINAL** through Human-merged PR #743. ADR-0060 v1.1.0 is accepted and its stable Authority/registry projection is current. Productive provider-adapter continuation is not Governance-owned.
-- `GOV-CHAT-070 / GOV-07 Evolution Policy` — **DONE_MAIN / MAINTAINED** through Human-merged PR #790. `CTRL-AIMS-PDCA-001` now expresses the accepted baseline-not-ceiling rule: demonstrably superior in-scope variants continue and must be revalidated; equivalent variants prefer lower risk/complexity; inferior or unproven variants retain the validated baseline.
-- PR #793 synchronized the Control Catalog v1.20.0 projection into the Authority Registry.
-- PR #791 and PR #792 are Human-merged and are current-main foreign-owner returns for Frontend Branding v6.2 and Documentary D8 respectively. Their merge does not transfer those owners' productive scope to Governance.
-- PR #794 is Human-merged and provides the refreshed OPS-owned GOV-07 User-Lifecycle Evidence Return as `EVIDENCE_READY`; provider E2E, independent Security verification and remaining foreign-owner/Legal returns are still open and therefore GOV-07 remains partial.
-- No foreign-owner open PR with changed-file, namespace or Authority overlap exists for this bounded Governance projection. This branch's own delivery PR is not treated as a project dependency.
-- No competing Governance writer was identified for this Roadmap/Task-Register/DevelopmentChain current-state correction. Historical/released claims remain non-authorizing evidence only.
-
-The former branch `agent/governance-gov07-evolution-policy-20260906` is terminal historical coordination metadata. It is not a current writer or merge gate.
+- `GOV-CHAT-070 / GOV-07 Evolution Policy` — **DONE_MAIN / MAINTAINED** through Human-merged PR #790. `CTRL-AIMS-PDCA-001` expresses the accepted baseline-not-ceiling rule.
+- PR #803 is **DONE_MAIN** and establishes neutral presentation for pure Human/Owner approvals, confirmations and exact response prompts: they are authority gates, not `⚙️🤓 MANUELL` execution steps.
+- PR #772 remains historical implementation evidence for the bounded copyable `NÄCHSTE SCHRITTE` handoff. Its separate copyable Owner-response formatting requirement is being retired by the bounded `GOV-CHAT-071` maintenance item below; until Human Merge of that maintenance change, current `main` remains controlling.
+- PR #836 is the only currently open Pull Request observed during this correlation; it is `CAPITAL-AI-OPS` and changes only `.github/workflows/zizmor.yml`, with no changed-file, namespace, Primary-Owner or Governance-authority overlap with `GOV-CHAT-071`.
 
 ## Completed / terminal Governance work
 
@@ -46,15 +42,31 @@ The former branch `agent/governance-gov07-evolution-policy-20260906` is terminal
 - `GOV-06 / COMP-GAP-002 — ADR-0007` — `DONE_MAIN / TERMINAL` via PR #755/#758.
 - `GOV-06 / COMP-GAP-003 — ESS-0006` — `DONE_MAIN / TERMINAL` via PR #757.
 - `POST-GOV-05 OWNER / EVIDENCE RECORRELATION` — `DONE_MAIN / TERMINAL` via PR #769.
-- `COPYABLE CHAT HANDOFF / OWNER RESPONSES` — `DONE_MAIN / MAINTAINED` via PR #772.
+- `COPYABLE CHAT NEXT-STEP HANDOFF` — `DONE_MAIN / MAINTAINED` from PR #772 for bounded copyable `NÄCHSTE SCHRITTE` only; the separate Owner-response formatting subrule is not retained as the target policy.
+- `OWNER APPROVAL PRESENTATION` — `DONE_MAIN / MAINTAINED` via PR #803: pure approvals/confirmations are neutral and excluded from the manual-execution marker.
 - `COMP-GAP-008 — GOVERNANCE DOCUMENT REGISTRY TREATMENT DECISION` — `DONE_MAIN / TERMINAL` via PR #775; no forced Document Registry mutation under the current contract.
 - `GOV-CHAT-070 / GOV-07 Evolution Policy` — `DONE_MAIN / MAINTAINED` via PR #790.
-- Governance Control Catalog / Authority Registry projection sync — `DONE_MAIN` via PR #793.
 - `GOV-09` Version authority boundary — resolved; productive Version Management remains OPS/PVC-06.
 - `GOV-10` AI development terminology — done/maintained.
 - `GOV-11` stale coordination metadata — maintenance only.
 
 ## Current open Governance state
+
+### GOV-CHAT-071 — Owner-response handoff consolidation
+
+**State:** `OPEN_GOV / BRANCH_LOCAL`
+
+**Branch:** `agent/governance-owner-response-retirement-20260907`
+
+Bounded objective:
+
+- preserve `CHAT_RUN_HANDOFF` and `POST_PR_HANDOFF` plus the fenced, maximum-two-step `NÄCHSTE SCHRITTE` queue;
+- retire the generic requirement from PR #772 that every exact Human/Owner response be emitted in a separate copyable block;
+- make the PR #803 neutral approval-presentation semantics the single current presentation rule for pure approvals/confirmations;
+- keep the exact-snapshot Human/Owner PR-create gate and Human-only merge boundary unchanged;
+- add regression coverage so the retired separate-response rule cannot silently return.
+
+**Exit gate:** Trust Root, Development-Chain policy, Control Catalog, Authority Registry, project projections and governance regression test are semantically consistent on one exact branch state; required PR-create correlation/approval remains separate and hosted validation remains truthful.
 
 ### GOV-07 — User-Lifecycle governance closeout
 
@@ -71,8 +83,6 @@ The Evolution Policy is complete, but the broader GOV-07 User-Lifecycle closeout
 | `CAPITAL-AI-COMP` / Human-Legal | bounded assessment evidence exists; Legal/Owner gates remain external | `DEPENDENCY` |
 | `CAPITAL-AI-DOC` | Documentary/PVC-03 remains separately owned | no foreign lifecycle implementation is absorbed by GOV |
 
-Governance has consumed the merged OPS return from PR #794. Final GOV-07 correlation remains dependency-held until the remaining FE/SEC/COMP/Legal and applicable provider-assurance gaps are materially resolved.
-
 ### GOV-08 — Admin Panel process/dependency graph
 
 **State:** `REFERRED / FOREIGN OPEN`
@@ -81,24 +91,20 @@ Productive implementation remains split across `CAPITAL-AI-CLIENT`, `CAPITAL-AI-
 
 ## Current priority
 
-1. Maintain GOV-07 as dependency-held after consuming the merged OPS return from PR #794; wait on remaining FE/SEC/COMP/Legal and applicable provider-assurance evidence rather than reopening the already-merged Evolution Policy.
-2. Preserve GOV-08 as foreign-owner work and consume owner-returned evidence only after the relevant CLIENT/FE/OPS roadmaps progress.
+1. Complete `GOV-CHAT-071` as a bounded Governance consistency correction without changing the Human PR-create or Human-only merge gates.
+2. Maintain GOV-07 dependency-held and GOV-08 foreign-owner boundaries after that local consistency correction.
 
 No new local PVC-05 runtime implementation is implied by this synchronization.
 
 ## Definition of Done for the current Governance projection
 
 - `PVC-05` ownership remains explicit and does not absorb SEC/COMP assurance or foreign productive execution;
-- `GOV-CHAT-070` is represented as `DONE_MAIN` consistently with PR #790 and `CTRL-AIMS-PDCA-001`;
-- `DR-02B` is represented as terminal consistently with PR #743 and accepted ADR-0060;
-- the merged OPS GOV-07 return from PR #794 is represented as current foreign-owner evidence without converting residual `NOT_AVAILABLE`/`NOT_RUN` assurance into PASS;
-- better variants require evidence and revalidation before promotion; equivalent variants prefer lower risk/complexity; inferior/unproven variants retain the validated baseline;
-- Security, Compliance, Governance, contract or required-function regressions cannot be traded away for improvement elsewhere;
-- GOV-07 broader closeout remains dependency-held while evidence is missing;
-- GOV-08 remains within CLIENT/FE/OPS productive ownership;
-- M10 remains historical/retired and is not reconstructed as a current gap;
-- no second Requirement Registry, Document Registry, Security/Compliance runtime, IAM/Audit/Risk/EventMesh authority or orchestration plane is introduced;
+- copyable bounded `NÄCHSTE SCHRITTE` handoff remains active;
+- the PR #772 separate copyable Owner-response formatting requirement is retired after Human Merge of `GOV-CHAT-071` and is not reconstructed from historical evidence;
+- pure Human/Owner approvals, confirmations and exact authority prompts follow PR #803 neutral presentation and do not carry `⚙️🤓 MANUELL` unless a distinct actual manual execution step exists;
+- canonical PR-creation approval remains bound to exact current `main` SHA and branch-head SHA;
+- Human-only merge remains intact;
 - missing/stale evidence cannot silently become PASS;
-- Human PR-create and Human-only merge boundaries remain intact.
+- no second Governance, approval, routing, IAM, Security/Compliance or deployment authority is introduced.
 
-Historical correlation SHAs, branches and terminal work remain available through Git history and merged PR evidence; they do not override this current-state projection.
+Historical correlation SHAs, branches, PRs and terminal work remain available through Git history and merged PR evidence; they do not override this current-state projection.
