@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-ROADMAP-CAPITAL-AI-SEC-2026-08-31`  
 **Project ID:** `CAPITAL-AI-SEC`  
-**Version:** `2.3.0`  
+**Version:** `2.3.1`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
 **Date:** `2026-09-07`  
-**Repository baseline:** `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`  
+**Repository baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
 **Role:** `CROSS_CUTTING_SECURITY`  
 **Primary Project Value Chain ownership:** `[]`  
 **Project coverage:** `PVC-01` through `PVC-18` as Security overlay  
@@ -64,7 +64,7 @@ The SOTA layer is integrated into the existing workstreams, not a parallel gover
 | Security project/PVC consolidation | `DONE_MAIN`; PR #749 merged |
 | Security Assessment capability + raw-test binding | `DONE_MAIN` |
 | `SEC-ASSESS-ALIGN` | `DONE_MAIN`; PR #766 merged |
-| `SEC-SOTA-01` | `IMPLEMENTED_BRANCH`; SOTA baseline and synchronized Security roadmap projection created |
+| `SEC-SOTA-01` | `DONE_MAIN`; PR #832 merged at `75c926f12ae514036aa508ea8faf1a82b1a91059`; hosted PR checks and merge-main production identity/deployment verification completed successfully |
 | `SEC-VERIFY-R2-04` | `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN` |
 | Owner Device Authorization Stage-C | `COMPLETE / HISTORICAL` |
 | User Lifecycle Security integration | `IMPLEMENTED_MAIN / RESIDUALS OPEN` |
@@ -75,24 +75,30 @@ The SOTA layer is integrated into the existing workstreams, not a parallel gover
 
 ### P0.1 `SEC-SOTA-01` — SOTA baseline and roadmap convergence
 
-**State:** `IMPLEMENTED_BRANCH / PR GATE OPEN`.
+**State:** `DONE_MAIN`.
 
-Implemented:
+Merged by PR #832 at merge SHA `75c926f12ae514036aa508ea8faf1a82b1a91059`.
+
+Completed:
 
 - current-main SOTA baseline with explicit `ADVISORY_NON_AUTHORIZING` treatment;
 - SOTA references mapped onto existing `SEC-01..SEC-10` workstreams;
 - NIST excluded as a current normative repository baseline;
 - stale `SEC-ASSESS-ALIGN` state corrected to `DONE_MAIN` after merged PR #766;
 - project, detailed and work-package roadmaps synchronized;
-- CRA represented only as Compliance applicability dependency.
+- CRA represented only as Compliance applicability dependency;
+- PR-head Governance, Container Security and CI hosted checks completed successfully;
+- merge-main build/test, supply-chain attestation, exact-SHA Render deployment and post-deployment commit-identity verification completed successfully.
+
+The original SOTA evidence remains an execution-time record and may retain its original baseline/status metadata. Current lifecycle state is projected by the active roadmaps/work packages instead of rewriting historical evidence.
 
 ### P0.2 `SEC-VERIFY-R2-04` — fatal-process current-main re-verification
 
 **State:** `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN`.
 
-Current-main inspection confirms the repository contract for fatal latch on `uncaughtException`/`unhandledRejection`, unhealthy readiness after fatal state, one bounded shutdown initiation and non-zero fatal exit intent. Evidence: `docs/evidence/security/S1_R2_04_FATAL_PROCESS_CURRENT_MAIN_REVERIFICATION_2026-09-07.md`.
+Repository inspection confirms the contract for fatal latch on `uncaughtException`/`unhandledRejection`, unhealthy readiness after fatal state, one bounded shutdown initiation and non-zero fatal exit intent. Evidence: `docs/evidence/security/S1_R2_04_FATAL_PROCESS_CURRENT_MAIN_REVERIFICATION_2026-09-07.md`.
 
-This is not full runtime closure. Exact deployed supervisor/restart/readiness evidence remains `CAPITAL-AI-OPS / PVC-08`. Tests were inspected but not executed in this connector session; `NOT_RUN` is not PASS.
+This is not full runtime closure. A successful generic deployment/identity pipeline after PR #832 does not prove the specific destructive fatal-process supervisor/restart/readiness behavior. Exact deployed supervisor/restart/readiness evidence remains `CAPITAL-AI-OPS / PVC-08`.
 
 ### P0.3 `SEC-SOTA-02` — AI/Agent/MCP control inventory
 
@@ -108,7 +114,7 @@ Inventory dependency lockfiles, action trust/pinning, source identity, build ide
 
 ### P1 `SEC-SOTA-04` — application/API ASVS 5.0 verification matrix
 
-Map repository-relevant ASVS objectives to existing controls/tests/evidence. Framework mapping alone is never PASS. Productive gaps route to actual Primary Owners.
+Map repository-relevant ASVS objectives to existing tests/evidence. Framework mapping alone is never PASS. Productive gaps route to actual Primary Owners.
 
 ### P1 `SEC-AUTH-LIFECYCLE` — MFA/AAL lifecycle clarity
 
@@ -157,17 +163,20 @@ Evidence precedence: runtime/provider observation → provider/security configur
 
 ## 9. Correlation boundary
 
-This slice is based on `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`, current `/AGENTS.md` and `ESS-0006` v1.1.0.
+This post-merge lifecycle sync is based on `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`, current `/AGENTS.md`, `ESS-0006` v1.1.0 and `ESS-0019` v1.2.0.
 
-- Open PRs at resync: none.
-- Initial Security branch was based on `92297059722a92cf934bd85339670c623d618d1a`; PR #831 advanced main without SEC overlap.
-- Per fail-closed branch policy, the slice was re-materialized on fresh `agent/security-sota-roadmap-sync-20260907` from the new exact main baseline.
-- Stale legacy Security branches were not reused.
+- PR #832 merged at `75c926f12ae514036aa508ea8faf1a82b1a91059`; that merge is an ancestor of current main.
+- PR #833 is closed without merge and is not an active writer.
+- Open PRs at branch creation: none.
+- Current branch: `agent/security-post832-roadmap-sync-20260907` from the exact current-main baseline.
+- PR #834 subsequently advanced main after #832 in Frontend scope without changing the Security roadmap/evidence surfaces being synchronized here.
 - No foreign productive runtime/provider/IAM/billing/deployment surface is changed.
 
 ## 10. Definition of Done
 
 CAPITAL-AI-SEC is current when external SOTA sources remain advisory/non-authorizing; every active finding has current owner/PVC routing or explicit unresolved status; returned evidence is independently verified only to the scope it proves; foreign productive remediation remains with the actual owner; no stale/missing evidence becomes PASS; Security claims no productive PVC or parallel authority plane; and every `VERIFIED/CLOSED` claim records exact applicable identity/evidence.
+
+For this post-#832 sync specifically, completion means `SEC-SOTA-01` is projected as `DONE_MAIN`, PR #832 hosted/merge/deployment identity evidence is recorded accurately, stale branch/PR-gate wording is removed from active status projections, and `SEC-VERIFY-R2-04` remains open for the runtime evidence that generic deployment success does not prove.
 
 ## 11. PR / merge / production boundary
 
