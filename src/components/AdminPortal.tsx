@@ -5,6 +5,7 @@ import {
   FileText,
   Gauge,
   KeyRound,
+  Network,
   Search,
   Shield,
   ShieldAlert,
@@ -27,6 +28,7 @@ import { ComplianceNotifications } from './ComplianceNotifications';
 import { SecurityComplianceAuditor } from './SecurityComplianceAuditor';
 import { SeoDashboard } from './SeoDashboard';
 import { SkillEnginePanel } from './SkillEnginePanel';
+import { AdminProcessGraph } from '../features/governance/ui/process-graph/AdminProcessGraph';
 import { isAuthorizedOwnerOrDevAdmin } from '../lib/ownerUtils';
 
 type AdminPortalTab =
@@ -41,7 +43,7 @@ type AdminPortalTab =
   | 'seo'
   | 'compliance';
 
-type PortalViewId = AdminPortalTab | 'skills';
+type PortalViewId = AdminPortalTab | 'skills' | 'process';
 
 interface AdminPortalProps {
   currentUserEmail: string;
@@ -62,6 +64,17 @@ interface PortalTabDefinition {
 }
 
 const tabs: PortalTabDefinition[] = [
+  {
+    id: 'process',
+    label: 'Process Graph',
+    description: 'Read-only PVC-, DevelopmentChain- und Evidence-Projektion',
+    icon: Network,
+    compliance: {
+      adr: 'GOV-08 / PVC-01 / PVC-18',
+      title: 'Read-only Process & Dependency Graph',
+      description: 'Projiziert kanonische Projekt-/PVC- und Lifecycle-Semantik ohne Browser-Autorisierung oder zweite Governance-Registry.',
+    },
+  },
   {
     id: 'users',
     label: 'Admin-Zentrale',
@@ -188,7 +201,7 @@ const tabs: PortalTabDefinition[] = [
 export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminPortalProps) {
   const isAdmin = isAuthorizedOwnerOrDevAdmin(undefined, currentUserEmail);
   const [logSubTab, setLogSubTab] = React.useState<'system' | 'files' | 'gdpr'>('system');
-  const [localView, setLocalView] = React.useState<'skills' | null>(null);
+  const [localView, setLocalView] = React.useState<'skills' | 'process' | null>(null);
   const visibleView: PortalViewId = localView ?? activeTab;
 
   if (!isAdmin) {
@@ -215,8 +228,8 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
   }
 
   const handlePortalTab = (tabId: PortalViewId) => {
-    if (tabId === 'skills') {
-      setLocalView('skills');
+    if (tabId === 'skills' || tabId === 'process') {
+      setLocalView(tabId);
       return;
     }
     setLocalView(null);
@@ -289,7 +302,9 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         transition={{ duration: 0.2 }}
         className="space-y-6"
       >
-        {visibleView === 'skills' ? (
+        {visibleView === 'process' ? (
+          <AdminProcessGraph />
+        ) : visibleView === 'skills' ? (
           <SkillEnginePanel />
         ) : (
           <>
