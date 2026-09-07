@@ -1,6 +1,7 @@
 # CAPITAL-AI Frontend – Component Inventory
 
-**Stand:** 23. August 2026  
+**Stand:** 7. September 2026  
+**Korrelationsbasis:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e` + `agent/frontend-public-scorer-landing-r2-20260907`  
 **Dokumentrolle:** Ist-Bestand und Migrationsstatus  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`
 
@@ -16,17 +17,38 @@ Verbindliche Abgrenzung:
 
 ---
 
-## Application Composition — BB-1
+## Application Composition — BB-1 / BB-2
 
 | Verantwortung | Kanonischer Pfad | Legacy-/Compatibility-Pfad | Status |
 |---|---|---|---|
 | Application Composition Root | `src/app/App.tsx` | `src/App.tsx` | BB-1 implementiert; Root-Pfad ist dünne Compatibility-Fassade |
 | Session/Auth Composition | `src/app/auth/SessionComposition.tsx` | zuvor Bestandteil von `src/App.tsx` | BB-1 extrahiert; bestehende Security-Semantik erhalten |
-| Route/Presentation Composition | `src/app/routing/AppRoutes.tsx` | zuvor Bestandteil von `src/App.tsx` | BB-1 extrahiert; öffentliche Pfade und Landing/Dashboard-Auswahl erhalten |
+| Route/Presentation Composition | `src/app/routing/AppRoutes.tsx` | zuvor Bestandteil von `src/App.tsx` | kanonisch; trennt `/`, `/login`, `/dashboard`, Legal, Learning und Media-Studio |
+| Dashboard Composition | `src/app/dashboard/Dashboard.tsx` + `DashboardViewRouter.tsx` | `src/components/Dashboard.tsx` | BB-2D produktiv; Legacy-Dashboard bleibt bounded Strangler für authentifizierte Composition |
 | Presentation Session Type | `src/app/types/UserSession.ts` | zuvor Interface in `src/App.tsx` | BB-1 extrahiert; Root re-exportiert Typ temporär für Legacy-Consumer |
 | App Shell | `src/app/AppShell.tsx` | N/A | kanonisch seit Foundation |
 
-BB-1 verschiebt keine fachliche Feature-Implementierung. `Dashboard.tsx`, Landing-/Legal-Komponenten sowie Auth-Gates bleiben bis zu ihren jeweiligen Wellen an den bisherigen physischen Pfaden und werden lediglich durch die neue Composition-Schicht konsumiert.
+### Öffentliche Root-Composition — Public Enterprise Scorer Recovery
+
+Der aktuelle Recovery-Branch materialisiert folgende Composition:
+
+```text
+src/app/routing/AppRoutes.tsx
+  → src/features/public/ui/LandingPage.tsx
+  → lazy src/features/crypto/ui/public.ts
+  → PublicCryptoScoringPreview
+  → canonical CryptoScoringEnterprise implementation
+```
+
+Verbindliche Bestandsgrenzen:
+
+- `/` konsumiert **nicht** mehr den vollständigen Legacy-Dashboard-Graph als Produktvorschau.
+- `LandingPage` bleibt feature-owned Presentation und importiert nicht aus `src/app/**`.
+- `/login` bleibt dedizierte Authentifizierungsroute.
+- die Public-Scorer-Projektion erzeugt keine `UserSession` und keine persistierte/anonyme Supabase-Session.
+- `PublicCryptoScoringPreview` ist keine zweite Scorer-Implementierung, sondern ein Presentation-Wrapper um dieselbe kanonische Enterprise-Scorer-Implementierung.
+- `EnterpriseScorerPresentationContext` besitzt keine IAM-/Entitlement-Authority; er blendet im Modus `public-preview` ausschließlich bereits authentifizierungsgebundene UI-Sub-Surfaces aus.
+- `EnterpriseBinanceQuickAnalysis` bleibt an seinen authentifizierten Enterprise-Kontext gebunden; ADR-0038 wird nicht verändert oder superseded.
 
 ---
 
@@ -39,7 +61,7 @@ BB-1 verschiebt keine fachliche Feature-Implementierung. `Dashboard.tsx`, Landin
 | FreshnessBadge | `src/shared/ui/FreshnessBadge.tsx` | N/A | CV-0; projiziert gelieferten Status/Zeitstempel, berechnet keine Freshness |
 | EvidenceStateIndicator | `src/shared/ui/EvidenceStateIndicator.tsx` | N/A | CV-0; scanbare Evidence-/Data-State-Projektion |
 | ResearchOnlyBanner | `src/shared/ui/ResearchOnlyBanner.tsx` | N/A | CV-0; explizit non-authorizing (`scoreEligible=false`, `executionEligible=false`) |
-| CapitalAiLogo | `src/shared/branding/CapitalAiLogo.tsx` | `src/components/CapitalAiLogo.tsx` | migriert; Legacy-Pfad ist Compatibility-Export |
+| CapitalAiLogo | `src/shared/branding/CapitalAiLogo.tsx` | `src/components/CapitalAiLogo.tsx` | migriert; Landingpage konsumiert die kanonische Brandmark-v6.2-Projektion |
 | Button | `src/shared/ui/Button.tsx` | N/A | kanonisch |
 | Card | `src/shared/ui/Card.tsx` | N/A | kanonisch |
 | Input | `src/shared/ui/Input.tsx` | N/A | kanonisch |
@@ -49,22 +71,23 @@ BB-1 verschiebt keine fachliche Feature-Implementierung. `Dashboard.tsx`, Landin
 | EmptyState | `src/shared/ui/EmptyState.tsx` | N/A | kanonisch |
 | NeuralBackground | `src/shared/visuals/NeuralBackground.tsx` | N/A | kanonisch |
 
-Die CV-0-Primitives sind **fachneutrale Presentation-Komponenten**. Sie wählen kein Modell, bewerten keine Evidence und erzeugen keine Eligibility. Ihre Semantik ist in `docs/evidence/frontend/CV0_CRYPTO_VISUALIZATION_AUTHORITY_2026-08-23.md` nachgewiesen.
+Die CV-0-Primitives sind **fachneutrale Presentation-Komponenten**. Sie wählen kein Modell, bewerten keine Evidence und erzeugen keine Eligibility.
 
 ---
 
-## Kern-Dashboard & Cockpit — derzeitige Legacy-Implementierungen
+## Kern-Dashboard & Cockpit — derzeitige Legacy-/Strangler-Implementierungen
 
-| Komponente | Datei unter `src/components/` | Ziel-/Ownership-Slice |
+| Komponente | Aktueller Pfad | Ziel-/Ownership-Slice |
 |---|---|---|
-| Dashboard | `Dashboard.tsx` | `src/app/dashboard` / Dashboard-Composition, in BB-2 zu zerlegen |
-| AssetUniverseDashboard | `AssetUniverseDashboard.tsx` | `src/features/screening/ui` |
-| RankingBoard | N/A (kanonisch unter Feature-Slice) | `src/features/screening/ui/RankingBoard.tsx` — **produktive** Ranking-Fläche (Top/Worst 3, Sentiment, Momentum, Pattern); ersetzt UniverseBestWorst |
-| UniverseBestWorst | `UniverseBestWorst.tsx` | `src/features/screening/ui/UniverseBestWorst.tsx` — **nur noch Compatibility-Alias** → `RankingBoard as UniverseBestWorst` |
-| Screener | `Screener.tsx` | `src/features/screening/ui` |
-| MarketScreener | `MarketScreener.tsx` | `src/features/screening/ui` |
-| Watchlist | `Watchlist.tsx` | `src/features/portfolio/ui` |
-| FavoriteAssetPatternSlots | `FavoriteAssetPatternSlots.tsx` | `src/features/portfolio/ui` |
+| Dashboard | `src/components/Dashboard.tsx` hinter `src/app/dashboard/Dashboard.tsx` | `src/app/dashboard`; BB-2E/2F/2G verbleiben |
+| DashboardViewRouter | `src/app/dashboard/DashboardViewRouter.tsx` | kanonische app-owned Detail-View-Composition; BB-2D DONE |
+| AssetUniverseDashboard | `src/components/AssetUniverseDashboard.tsx` | `src/features/screening/ui` |
+| RankingBoard | `src/features/screening/ui/RankingBoard.tsx` | **produktive** Ranking-Fläche; ersetzt UniverseBestWorst |
+| UniverseBestWorst | `src/features/screening/ui/UniverseBestWorst.tsx` + Legacy-Bridge | nur Compatibility-Alias → `RankingBoard as UniverseBestWorst` |
+| Screener | `src/components/Screener.tsx` | `src/features/screening/ui` |
+| MarketScreener | `src/components/MarketScreener.tsx` | `src/features/screening/ui` |
+| Watchlist | `src/components/Watchlist.tsx` | `src/features/portfolio/ui` |
+| FavoriteAssetPatternSlots | `src/components/FavoriteAssetPatternSlots.tsx` | `src/features/portfolio/ui` |
 
 Development-Einstieg für Agents: `AGENTS.md` §12 (Screening Ranking Board / homogene Wertschöpfungskette).
 
@@ -72,26 +95,33 @@ Development-Einstieg für Agents: `AGENTS.md` §12 (Screening Ranking Board / ho
 
 ## Scoring & Analyse — aktuelle Implementierungen / Migrationsziele
 
-| Komponente | Aktueller bzw. Compatibility-Pfad | Kanonischer Ziel-/Ownership-Slice |
+| Komponente / Rolle | Aktueller bzw. Compatibility-Pfad | Kanonischer Status / Ownership |
 |---|---|---|
-| CryptoScoringEnterprise | `src/components/CryptoScoringEnterprise.tsx` als Compatibility-Pfad | `src/features/crypto/ui/CryptoScoringEnterprise.tsx` |
-| CryptoVisualizationViewModel | N/A | `src/features/crypto/ui/cryptoVisualizationViewModel.ts` — CV-0 read-only Presentation Projection |
-| EnterpriseAsset4hChart | N/A | `src/features/crypto/ui/EnterpriseAsset4hChart.tsx` — MARKET_DATA-Projektion |
-| EnterpriseBinanceQuickAnalysis | `src/components/EnterpriseBinanceQuickAnalysis.tsx` als Compatibility-Pfad | `src/features/crypto/ui/EnterpriseBinanceQuickAnalysis.tsx` — MARKET_DATA + RESEARCH getrennt |
-| BuffetValueCheck | `BuffetValueCheck.tsx` | `src/features/stocks/ui`; stock-only Research-/Presentation-Consumer gemäß zuständigen Parent-Authorities |
-| BacktestEngine | `BacktestEngine.tsx` | `src/features/portfolio/ui` |
-| PortfolioBacktester | `PortfolioBacktester.tsx` | `src/features/portfolio/ui` |
-| PortfolioPerformance | `PortfolioPerformance.tsx` | `src/features/portfolio/ui` |
-| MonteCarloDetailed | `MonteCarloDetailed.tsx` | `src/features/portfolio/ui` |
-| RealTimeRiskAssessment | `RealTimeRiskAssessment.tsx` | `src/features/analytics/ui` |
-| EnterpriseAnalysisPanels | `EnterpriseAnalysisPanels.tsx` | `src/features/analytics/ui` |
-| LandingBinanceQuickAnalysis | `LandingBinanceQuickAnalysis.tsx` | `src/features/crypto/ui` / Public-Consumer zu prüfen |
-| HeatmapCreator | `HeatmapCreator.tsx` | `src/features/analytics/ui` |
-| QuantumGraph | `QuantumGraph.tsx` | `src/features/analytics/ui` |
-| Charts | `Charts.tsx` | `src/features/analytics/ui`; generische Chart-Primitives später auf `src/shared` prüfen |
-| PerformanceDashboard | `PerformanceDashboard.tsx` | `src/features/analytics/ui` |
-| RawMaterialsDashboard | `src/features/commodities/ui/RawMaterialsDashboard.tsx` | Commodity-Domain-Slice; `src/components/RawMaterialsDashboard.tsx` bleibt dünner Compatibility-Export |
-| DeFiOrchestration | `DeFiOrchestration.tsx` | `src/features/crypto/ui` |
+| Enterprise-Scorer Core | `src/features/crypto/ui/CryptoScoringEnterprise.tsx` | produktive Scorer-UI; konsumiert kanonische Backend-Score-/Evidence-Verträge |
+| CryptoScoringWorkspace | `src/features/crypto/ui/CryptoScoringWorkspace.tsx` | kanonische routed Crypto-Scoring-Composition; Feature-Fassade exportiert sie als `CryptoScoringEnterprise` |
+| Crypto Feature Facade | `src/features/crypto/ui/index.ts` | `CryptoScoringWorkspace as CryptoScoringEnterprise`; aktuelle Naming-Convention für routed Consumer |
+| Public Crypto Facade | `src/features/crypto/ui/public.ts` | schmale Route-Level-Fassade; exportiert ausschließlich `PublicCryptoScoringPreview` |
+| PublicCryptoScoringPreview | `src/features/crypto/ui/PublicCryptoScoringPreview.tsx` | Public-Presentation-Wrapper um denselben Scorer Core; **keine zweite Scoring-Implementation** |
+| EnterpriseScorerPresentationContext | `src/features/crypto/ui/EnterpriseScorerPresentationContext.tsx` | Presentation-only `authenticated | public-preview`; keine IAM-/Scoring-/Entitlement-Authority |
+| Legacy CryptoScoringEnterprise Bridge | `src/components/CryptoScoringEnterprise.tsx` | Compatibility-Pfad; keine neue Implementierung |
+| CryptoVisualizationViewModel | `src/features/crypto/ui/cryptoVisualizationViewModel.ts` | CV-0 read-only Presentation Projection |
+| EnterpriseAsset4hChart | `src/features/crypto/ui/EnterpriseAsset4hChart.tsx` | MARKET_DATA-Projektion |
+| EnterpriseBinanceQuickAnalysis | `src/features/crypto/ui/EnterpriseBinanceQuickAnalysis.tsx` | MARKET_DATA + RESEARCH; im `public-preview` Presentation-Modus ausgeblendet, authentifizierter Endpoint-Vertrag unverändert |
+| Legacy EnterpriseBinanceQuickAnalysis Bridge | `src/components/EnterpriseBinanceQuickAnalysis.tsx` | Compatibility-Pfad |
+| BuffetValueCheck | `src/components/BuffetValueCheck.tsx` | `src/features/stocks/ui`; stock-only Research-/Presentation-Consumer gemäß Parent-Authorities |
+| BacktestEngine | `src/components/BacktestEngine.tsx` | `src/features/portfolio/ui` |
+| PortfolioBacktester | `src/components/PortfolioBacktester.tsx` | `src/features/portfolio/ui` |
+| PortfolioPerformance | `src/components/PortfolioPerformance.tsx` | `src/features/portfolio/ui` |
+| MonteCarloDetailed | `src/components/MonteCarloDetailed.tsx` | `src/features/portfolio/ui` |
+| RealTimeRiskAssessment | `src/components/RealTimeRiskAssessment.tsx` | `src/features/analytics/ui` |
+| EnterpriseAnalysisPanels | `src/components/EnterpriseAnalysisPanels.tsx` | `src/features/analytics/ui` nach Dependency-Audit |
+| LandingBinanceQuickAnalysis | `src/components/LandingBinanceQuickAnalysis.tsx` | historischer/separater Public-Quick-Analysis-Consumer; nicht Teil des neuen Enterprise-Scorer-Preview-Wrappers |
+| HeatmapCreator | `src/components/HeatmapCreator.tsx` | `src/features/analytics/ui` |
+| QuantumGraph | `src/components/QuantumGraph.tsx` | `src/features/analytics/ui` |
+| Charts | `src/components/Charts.tsx` | `src/features/analytics/ui`; generische Chart-Primitives später auf `src/shared` prüfen |
+| PerformanceDashboard | `src/components/PerformanceDashboard.tsx` | `src/features/analytics/ui` |
+| RawMaterialsDashboard | `src/features/commodities/ui/RawMaterialsDashboard.tsx` | Commodity-Domain-Slice; Legacy-Pfad bleibt dünner Compatibility-Export |
+| DeFiOrchestration | `src/components/DeFiOrchestration.tsx` | `src/features/crypto/ui` |
 
 ### Fachliche Authority-Referenz
 
@@ -99,11 +129,12 @@ Dieses Inventory definiert **keine** eigene Financial-Data-Consumer-Sequenz. Fü
 
 - `ADR-0032` — Asset Catalog ↔ Market Evidence,
 - `ADR-0034` — Buffett Access / Quota,
+- `ADR-0038` — Landing/Enterprise Binance Quick-Analysis-Kontexttrennung,
 - `ADR-0041` + `ESS-0016` — Provider Data Plane / Provenance / Freshness,
 - `SC-MD-SPT-0001` — kanonische Screening-/Scoring-/Market-Data-Wertschöpfungskette,
 - `ADR-0087` — Canonical Scoring.
 
-Die physische Migration oder Presentation-Projektion einer Komponente darf diese Contracts nicht verändern.
+Die physische Migration oder Presentation-Projektion einer Komponente darf diese Contracts nicht verändern. Für den Public-Enterprise-Scorer-Slice wurde eine ADR-/ESS-Supersession geprüft und verworfen, weil keine fachliche Authority geändert wird.
 
 ### CV-0 Presentation Projection
 
@@ -146,10 +177,10 @@ Die Authority-Klassen `CANONICAL_SCORE`, `RESEARCH`, `EVIDENCE_ONLY` und `MARKET
 | TotpSettings | `TotpSettings.tsx` | `src/features/settings/ui` |
 | Abonnements | `Abonnements.tsx` | `src/features/billing/ui` |
 | SubscriptionModal | `SubscriptionModal.tsx` | `src/features/billing/ui` |
-| Checkout | `Checkout.tsx` | `src/features/billing/ui` |
-| GuestCliffhangerModal | `GuestCliffhangerModal.tsx` | `src/features/billing/ui` bzw. Public-Consumer nach Dependency-Audit |
+| Checkout | `src/components/Checkout.tsx` | `src/features/billing/ui` |
+| GuestCliffhangerModal | `src/components/GuestCliffhangerModal.tsx` | `src/features/billing/ui` bzw. Public-Consumer nach Dependency-Audit |
 
-Die Auth-Gates selbst bleiben in BB-1 physisch unverändert; nur ihre globale Composition wurde aus dem historischen Root-App-Modul nach `src/app/auth/SessionComposition.tsx` verschoben.
+Die Auth-Gates selbst bleiben physisch unverändert; ihre globale Composition liegt unter `src/app/auth/SessionComposition.tsx`. Der Public-Scorer-Recovery-Slice verändert keine serverseitige Auth-/IAM-Entscheidung.
 
 ---
 
@@ -178,21 +209,20 @@ Die Auth-Gates selbst bleiben in BB-1 physisch unverändert; nur ihre globale Co
 
 ---
 
-## Landing, Legal, Reporting, Social, Utils — derzeitige Legacy-Implementierungen
+## Landing, Legal, Reporting, Social, Utils
 
-| Komponente | Datei unter `src/components/` | Ziel-/Ownership-Slice |
+| Komponente | Aktueller Pfad | Status / Ziel |
 |---|---|---|
-| LandingPage | `LandingPage.tsx` | `src/features/public/ui` |
-| AssetLogo | `AssetLogo.tsx` | Shared nur nach Fachneutralitäts-/Dependency-Prüfung |
-| Datenschutz | `Datenschutz.tsx` | `src/features/public/ui` |
-| ImpressumAgb | `ImpressumAgb.tsx` | `src/features/public/ui` |
-| PdfExportModal | `PdfExportModal.tsx` | `src/features/reporting/ui` |
-| PriceAlert | `PriceAlert.tsx` | Screening/Portfolio nach Dependency-Audit |
-| SocialAccountManager | `SocialAccountManager.tsx` | `src/features/social/ui` |
-| SocialDirectPublisherModal | `SocialDirectPublisherModal.tsx` | `src/features/social/ui` |
-| ErrorBoundary | `ErrorBoundary.tsx` | `src/app` oder `src/shared` nach Verantwortungsprüfung |
-
-`CapitalAiLogo` ist nicht mehr in dieser Legacy-Tabelle als produktive Implementierung geführt; der kanonische Pfad liegt unter `src/shared/branding/`.
+| LandingPage | `src/features/public/ui/LandingPage.tsx` | kanonische Public-Landing-Implementierung; `src/components/LandingPage.tsx` ist Compatibility-Bridge |
+| LoginPage | `src/features/public/ui/LoginPage.tsx` | kanonische `/login`-Fläche |
+| AssetLogo | `src/components/AssetLogo.tsx` | Shared nur nach Fachneutralitäts-/Dependency-Prüfung |
+| Datenschutz | `src/components/Datenschutz.tsx` über Public-Fassade | `src/features/public/ui` physisch später konsolidieren |
+| ImpressumAgb | `src/components/ImpressumAgb.tsx` über Public-Fassade | `src/features/public/ui` physisch später konsolidieren |
+| PdfExportModal | `src/components/PdfExportModal.tsx` | `src/features/reporting/ui` |
+| PriceAlert | `src/components/PriceAlert.tsx` | Screening/Portfolio nach Dependency-Audit |
+| SocialAccountManager | `src/components/SocialAccountManager.tsx` | `src/features/social/ui` |
+| SocialDirectPublisherModal | `src/components/SocialDirectPublisherModal.tsx` | `src/features/social/ui` |
+| ErrorBoundary | `src/components/ErrorBoundary.tsx` | `src/app` oder `src/shared` nach Verantwortungsprüfung |
 
 ---
 
@@ -200,15 +230,16 @@ Die Auth-Gates selbst bleiben in BB-1 physisch unverändert; nur ihre globale Co
 
 | Token / Pattern | Kanonische Quelle | Bemerkung |
 |---|---|---|
-| Canvas / Surface / Border | `docs/frontend/design-tokens.json` → `src/index.css` | `#08080C` / `#121215` / `#252529` gemäß Manifest v6.1 |
-| `brand-primary` / Gold | `docs/frontend/design-tokens.json` | Premium / Primär / Fokus |
+| Canvas / Surface / Border | `docs/frontend/design-tokens.json` → `src/index.css` | `#08080C` / `#121215` / `#252529` |
+| `brand-primary` / Gold | `docs/frontend/design-tokens.json` | Premium / Primär / Fokus; neue Landingpage nutzt semantische Rolle |
 | `brand-accent` / Purple | `docs/frontend/design-tokens.json` | AI / Intelligence / Research |
-| `brand-cyan` | `docs/frontend/design-tokens.json` | Market Data / Live / technische Visualisierung |
+| `brand-cyan` | `docs/frontend/design-tokens.json` | compatibility-only; neue/migrierte UI soll passende semantische Rolle verwenden |
 | `asset-*`, `score-*`, `factor-*`, `status-*` | `docs/frontend/design-tokens.json` | semantische Visual-Rollen; lokale Branding-Hexwerte vermeiden |
-| historische `aif-*`-Namen | Compatibility-Aliase | deprecated; keine neue Verwendung |
+| historische `aif-*`-Namen | Compatibility-Aliase | deprecated; keine neue Verwendung in der Public-Landing-Recovery |
+| Brandmark geometry | `docs/frontend/brandmark.json` | Branding Manifest v6.2; `CapitalAiLogo` projiziert Geometrie |
 | Presentation-/Dependency-Regeln | `docs/frontend/FRONTEND_ARCH.md` | normative Frontend-Authority |
 | Focus Outline | `docs/frontend/design-tokens.json` → `src/index.css` | Gold, 2px, Offset 4px |
-| Fonts | Inter, Poppins, JetBrains Mono | `display` / `sans` / `mono` gemäß Manifest v6.1 |
+| Fonts | Inter, Poppins, JetBrains Mono | `display` / `sans` / `mono` gemäß Branding-Contract |
 | StatusBadge tones | `src/shared/ui/StatusBadge.tsx` | kanonische Shared-Implementierung |
 | CV-0 Authority/Freshness/Evidence | `src/shared/ui/*Badge.tsx`, `EvidenceStateIndicator.tsx`, `ResearchOnlyBanner.tsx` | Presentation-only; Status zusätzlich über Text/Icon |
 
@@ -222,9 +253,11 @@ Die Auth-Gates selbst bleiben in BB-1 physisch unverändert; nur ihre globale Co
 4. Dieses Inventory dokumentiert nach jeder Migrationswelle den realen physischen Pfad, Ziel-/Ownership-Slice und Compatibility-Status.
 5. Fachliche Runtime-/Data-/Scoring-Regeln werden nur referenziert und nicht hier erneut normiert.
 6. Ein Legacy-Eintrag darf erst entfernt werden, wenn keine produktive Implementierung bzw. kein erforderlicher Compatibility-Export mehr vorhanden ist.
-7. Application-Composition-Logik darf nach BB-1 nicht wieder in die Root-Compatibility-Fassade `src/App.tsx` zurückwandern.
+7. Application-Composition-Logik darf nicht in die Root-Compatibility-Fassade `src/App.tsx` zurückwandern.
 8. Presentation-Authority-Labels dürfen Backend-/Platform-Authority nur projizieren und niemals neu definieren oder hochstufen.
+9. Public-Presentation-Modi dürfen bestehende authentifizierte Sub-Surfaces ausblenden, aber keine serverseitige IAM-/Entitlement-Entscheidung umdeuten oder umgehen.
+10. Eine neue Public-Fassade darf nur eine schmale Consumer-Grenze sein und keine parallele fachliche Implementierung etablieren.
 
 ---
 
-*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. Am 20.08.2026 auf die `app/features/shared`-Architektur, das Projection-not-Redefinition-Prinzip und BB-1 Application Composition ausgerichtet. Am 23.08.2026 RankingBoard als Ersatz von UniverseBestWorst dokumentiert und mit CV-0 um Authority-/Freshness-/Evidence-Primitives sowie Manifest-v6.1-Iststand ergänzt.*
+*Erstellt am 16.08.2026. Am 20.08.2026 auf die `app/features/shared`-Architektur und BB-1 ausgerichtet. Am 23.08.2026 RankingBoard/CV-0 ergänzt. Am 07.09.2026 gegen `main@f8cdc390d47263c845a2f03827d62af429de1c5e` und den Public-Enterprise-Scorer-Recovery-Branch re-korreliert: LandingPage, schmale Public-Crypto-Fassade, PublicCryptoScoringPreview, Presentation-Context, aktuelle Crypto-Scorer-Namenskonvention und Auth-Boundary sind nun explizit inventarisiert.*

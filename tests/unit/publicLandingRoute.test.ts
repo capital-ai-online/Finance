@@ -7,6 +7,11 @@ const read = (relativePath: string) =>
 
 const routes = read('src/app/routing/AppRoutes.tsx');
 const landingPage = read('src/features/public/ui/LandingPage.tsx');
+const publicCryptoFacade = read('src/features/crypto/ui/public.ts');
+const publicScorerPreview = read('src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
+const scorerPresentationContext = read('src/features/crypto/ui/EnterpriseScorerPresentationContext.tsx');
+const enterpriseScorer = read('src/features/crypto/ui/CryptoScoringEnterprise.tsx');
+const enterpriseQuickAnalysis = read('src/features/crypto/ui/EnterpriseBinanceQuickAnalysis.tsx');
 const loginPage = read('src/features/public/ui/LoginPage.tsx');
 const loginPageRedirect = read('src/features/public/ui/LoginPageRedirect.tsx');
 const legacyLandingBridge = read('src/components/LandingPage.tsx');
@@ -16,29 +21,47 @@ const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
 
 describe('canonical landing, login and protected-route boundary', () => {
-  it('uses LandingPage as the canonical public root page with app-owned dashboard composition', () => {
-    expect(routes).toContain("if (currentPath === '/')");
-    expect(routes).toContain('<LandingPage');
-    expect(routes).toContain('<Dashboard');
-    expect(routes).toContain('preview={');
-    expect(landingPage).toContain('{preview}');
-    expect(landingPage).not.toContain("from '../../../app");
-    expect(dashboard).toContain('<CryptoScoringEnterprise');
-  });
-
-  it('keeps the public landing shell outside the dashboard preview suspense and error boundary', () => {
+  it('uses LandingPage as the canonical public root with a narrow app-owned Enterprise Scorer projection', () => {
     const rootStart = routes.indexOf("if (currentPath === '/')");
     const loginStart = routes.indexOf("if (currentPath === '/login')");
     const rootBlock = routes.slice(rootStart, loginStart);
 
     expect(rootStart).toBeGreaterThanOrEqual(0);
     expect(loginStart).toBeGreaterThan(rootStart);
+    expect(routes).toContain("import('../../features/crypto/ui/public')");
+    expect(routes).toContain('default: module.PublicCryptoScoringPreview');
+    expect(routes).toContain('function PublicEnterpriseScorerPreview()');
+    expect(rootBlock).toContain('<LandingPage');
+    expect(rootBlock).toContain('preview={<PublicEnterpriseScorerPreview />}');
+    expect(rootBlock).not.toContain('<Dashboard');
+    expect(landingPage).toContain('loadPreview ? preview');
+    expect(landingPage).not.toContain("from '../../../app");
+    expect(publicCryptoFacade).toContain("export { PublicCryptoScoringPreview } from './PublicCryptoScoringPreview'");
+    expect(publicScorerPreview).toContain('CanonicalCryptoScoringEnterprise');
+    expect(enterpriseScorer).toContain("fetch('/api/crypto/score'");
+  });
+
+  it('keeps the public landing shell outside the Enterprise Scorer suspense and error boundary', () => {
     expect(routes).toContain('class PublicPreviewErrorBoundary');
     expect(routes).toContain('function PublicPreviewBoundary');
-    expect(routes).toContain('Live-Vorschau vorübergehend nicht verfügbar');
-    expect(rootBlock).toContain('<LandingPage');
-    expect(rootBlock).toContain('<PublicPreviewBoundary>');
-    expect(rootBlock).not.toContain('<RouteLoadingBoundary>');
+    expect(routes).toContain('Enterprise-Scorer-Vorschau vorübergehend nicht verfügbar');
+    expect(routes).toContain('<PublicEnterpriseScorer');
+    expect(landingPage).toContain('IntersectionObserver');
+    expect(landingPage).toContain('id="enterprise-scorer-preview"');
+    expect(landingPage).toContain('loadPreview ? preview');
+  });
+
+  it('omits the authenticated Enterprise quick-analysis sub-surface in public-preview mode', () => {
+    expect(publicScorerPreview).toContain('EnterpriseScorerPresentationProvider mode="public-preview"');
+    expect(scorerPresentationContext).toContain("'authenticated' | 'public-preview'");
+    expect(enterpriseQuickAnalysis).toContain('useEnterpriseScorerPresentationMode');
+
+    const publicGuard = enterpriseQuickAnalysis.indexOf("if (presentationMode === 'public-preview')");
+    const authenticatedEndpoint = enterpriseQuickAnalysis.indexOf('/api/registry/assets/${encodeURIComponent(upper)}/quick-analysis');
+
+    expect(publicGuard).toBeGreaterThanOrEqual(0);
+    expect(authenticatedEndpoint).toBeGreaterThan(publicGuard);
+    expect(enterpriseQuickAnalysis.slice(publicGuard, authenticatedEndpoint)).toContain('return null');
   });
 
   it('uses LoginPage exclusively at the dedicated /login route', () => {
@@ -47,6 +70,7 @@ describe('canonical landing, login and protected-route boundary', () => {
     expect(loginPage).toContain('Canonical authentication page for `/login`');
     expect(loginPage).toContain('href="/"');
     expect(loginPage).toContain('← Zurück zur Landingpage');
+    expect(landingPage).toContain('href="/login"');
   });
 
   it('routes the legacy bottom-left dashboard login action to /login', () => {
@@ -91,15 +115,15 @@ describe('canonical landing, login and protected-route boundary', () => {
   it('keeps the canonical landing page suitable for Google OAuth branding review', () => {
     expect(landingPage).toContain('CAPITAL-AI – quantitative Multi-Asset-Analyse');
     expect(landingPage).toContain('Aktien, Indizes, Forex, Kryptowährungen und Rohstoffe');
-    expect(landingPage).toContain('erklärbaren KI-Scorings');
+    expect(landingPage).toMatch(/erklärbaren\s+KI-Scorings/);
     expect(landingPage).toContain('href="/datenschutz/"');
     expect(landingPage).toContain('href="/agb/"');
     expect(landingPage).toContain('href="/impressum/"');
   });
 
-  it('keeps the presentation visitor state in app composition and never accepts anonymous Supabase sessions', () => {
-    expect(routes).toContain("type: 'guest'");
-    expect(routes).toContain("email: ''");
+  it('does not create a presentation visitor session and still rejects anonymous Supabase sessions', () => {
+    expect(routes).not.toContain("type: 'guest'");
+    expect(routes).not.toContain('PUBLIC_VISITOR_SESSION');
     expect(routes).not.toContain('@capital-ai.online');
     expect(routes).not.toContain('@guest');
     expect(landingPage).not.toContain('UserSession');
@@ -111,6 +135,18 @@ describe('canonical landing, login and protected-route boundary', () => {
     expect(landingPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(loginPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(routes).toContain("import('../dashboard/Dashboard')");
+  });
+
+  it('keeps the authenticated Dashboard separate from the public Enterprise Scorer preview', () => {
+    const rootStart = routes.indexOf("if (currentPath === '/')");
+    const loginStart = routes.indexOf("if (currentPath === '/login')");
+    const rootBlock = routes.slice(rootStart, loginStart);
+
+    expect(rootBlock).not.toContain('userSession=');
+    expect(rootBlock).not.toContain('handleLogin');
+    expect(rootBlock).not.toContain('handleRegister');
+    expect(routes).toContain('const Dashboard = lazy');
+    expect(routes).toContain('const PublicEnterpriseScorer = lazy');
   });
 
   it('removes ambiguous full-page implementation filenames from their former locations', () => {

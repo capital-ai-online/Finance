@@ -10,6 +10,11 @@ import type { UserSession } from '../types/UserSession';
 const Dashboard = lazy(() =>
   import('../dashboard/Dashboard').then((module) => ({ default: module.Dashboard })),
 );
+const PublicEnterpriseScorer = lazy(() =>
+  import('../../features/crypto/ui/public').then((module) => ({
+    default: module.PublicCryptoScoringPreview,
+  })),
+);
 const LearningVocabulary = lazy(() =>
   import('../../features/learning/ui/LearningVocabulary').then((module) => ({
     default: module.LearningVocabulary,
@@ -28,19 +33,6 @@ interface AppRoutesProps {
   handleLogout: () => Promise<void>;
   handleGlobalLogout: () => Promise<void>;
 }
-
-/**
- * Presentation-only visitor state composed by src/app.
- *
- * It is never persisted and is not a Supabase/IAM session. Keeping this composition state out of
- * the public feature prevents the feature -> app dependency cycle that previously existed on `/`.
- */
-const PUBLIC_VISITOR_SESSION: UserSession = {
-  type: 'guest',
-  name: 'Öffentliche Vorschau',
-  email: '',
-  subscriptionTier: 'Free',
-};
 
 function RouteLoadingBoundary({ children }: { children: React.ReactNode }) {
   return (
@@ -71,29 +63,29 @@ class PublicPreviewErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Public dashboard preview failed to render:', error, info);
+    console.error('Public Enterprise Scorer preview failed to render:', error, info);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <section className="mx-auto flex min-h-72 max-w-7xl flex-col items-center justify-center gap-4 px-4 py-10 text-center text-white sm:px-6">
-          <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-aif-gold-DEFAULT">
-            Live-Vorschau vorübergehend nicht verfügbar
+        <section className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface/35 px-4 py-10 text-center text-text-primary sm:px-6">
+          <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-brand-primary">
+            Enterprise-Scorer-Vorschau vorübergehend nicht verfügbar
           </p>
-          <p className="max-w-2xl text-sm leading-relaxed text-white/60">
-            Die öffentliche CAPITAL-AI-Seite bleibt verfügbar. Die Live-Dashboard-Vorschau konnte in diesem Browser nicht gestartet werden.
+          <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">
+            Die öffentliche CAPITAL-AI-Landingpage bleibt verfügbar. Die Analysevorschau konnte in diesem Browser nicht gestartet werden.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
               href="/login"
-              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-aif-gold-DEFAULT px-4 py-2 text-xs font-black uppercase tracking-wider text-black"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-primary px-4 py-2 text-xs font-black uppercase tracking-wider text-background"
             >
               Zur Anmeldung
             </a>
             <a
               href="/learning-platform"
-              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-white"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface/50 px-4 py-2 text-xs font-bold text-text-primary"
             >
               Learning öffnen
             </a>
@@ -111,14 +103,31 @@ function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
     <PublicPreviewErrorBoundary>
       <Suspense
         fallback={
-          <section className="mx-auto flex min-h-72 max-w-7xl items-center justify-center px-4 py-10 text-white sm:px-6">
-            <p className="text-xs font-mono uppercase tracking-widest text-white/45">Live-Vorschau wird geladen…</p>
+          <section className="flex min-h-72 items-center justify-center rounded-2xl border border-border bg-surface/35 px-4 py-10 text-text-primary sm:px-6">
+            <p className="text-xs font-mono uppercase tracking-widest text-text-secondary">Enterprise Scorer wird geladen…</p>
           </section>
         }
       >
         {children}
       </Suspense>
     </PublicPreviewErrorBoundary>
+  );
+}
+
+function PublicEnterpriseScorerPreview() {
+  const [selectedSymbol, setSelectedSymbol] = useState('BTC');
+  const [timeframe, setTimeframe] = useState('1 tag');
+
+  return (
+    <PublicPreviewBoundary>
+      <PublicEnterpriseScorer
+        selectedSymbol={selectedSymbol}
+        onSelectSymbol={setSelectedSymbol}
+        timeframe={timeframe}
+        onChangeTimeframe={setTimeframe}
+        subscriptionTier="Free"
+      />
+    </PublicPreviewBoundary>
   );
 }
 
@@ -272,23 +281,8 @@ export function AppRoutes({
 
     return (
       <LandingPage
-        preview={
-          <PublicPreviewBoundary>
-            <Dashboard
-              userSession={PUBLIC_VISITOR_SESSION}
-              onLogout={() => undefined}
-              onRegister={() => undefined}
-              onLoginEmail={async (email, password) => {
-                clearJustLoggedOut();
-                await handleLogin(email, password);
-              }}
-              onRegisterEmail={async (name, email, password) => {
-                clearJustLoggedOut();
-                await handleRegister(name, email, password);
-              }}
-            />
-          </PublicPreviewBoundary>
-        }
+        onLoginNavigate={clearJustLoggedOut}
+        preview={<PublicEnterpriseScorerPreview />}
       />
     );
   }
