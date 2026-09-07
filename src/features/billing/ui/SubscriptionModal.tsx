@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import type { SubscriptionTier } from '../../../app/types/UserSession';
+import type { SubscriptionTier } from '../../../config/subscriptionEntitlements';
 import { Abonnements } from './Abonnements';
 
 interface SubscriptionModalProps {
