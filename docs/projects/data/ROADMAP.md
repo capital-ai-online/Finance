@@ -75,22 +75,14 @@ Work:
 
 Current-main / branch correlation:
 
-- merged on `main@a6a62e867749efe80fc05aa175a3dc3fdd183d82` via PR #811;
+- merged via PR #811; current main also contains PR #812;
 - S1-R2-11 observation evaluator lives in `src/platform/MarketData/evidenceIdentityFreshness.ts` (`evidence-identity-freshness/1.0.0`);
-- states `CURRENT`, `STALE`, `CURRENT_AFTER_REFRESH` and `STALE_RETRY_REQUIRED` are evaluated against a required immutable identity and the existing `market-evidence-dq/1.0.0` envelope;
-- wrong-identity and stale evidence cannot authorize current state;
-- a freshness-label rewrite is not a trusted refresh;
-- only a trusted refresh bound to the required identity may yield `CURRENT_AFTER_REFRESH`;
-- focused unit evidence: `tests/unit/evidenceIdentityFreshness.test.ts`;
-- Security return evidence: `docs/projects/data/evidence/S1_R2_11_EVIDENCE_IDENTITY_FRESHNESS_2026-09-07.md`;
 - DATA does not mark the Security finding `VERIFIED/CLOSED` and does not modify OPS-owned PR/trace tooling.
 
 Exit:
 
 - one canonical evidence identity/envelope for the S1-R2-11 observation contract: `PASS` for DATA implementation/evidence;
-- stale/wrong-identity evidence cannot authorize current state: covered by unit tests on the merged PR head;
-- no Security self-verification by DATA: preserved;
-- remaining DATA-10 generalization of crypto-specific provider identity maps stays backlog and is not required to return the Security observation evidence.
+- remaining DATA-10 generalization of crypto-specific provider identity maps stays backlog.
 
 ## DATA-11 — Data Quality
 
@@ -104,26 +96,39 @@ Work:
 
 Current-main / branch correlation:
 
+- merged via PR #812 onto `main@2a6dfc5246672decd14cd8d0ace8dc2c4db94455`;
 - gate contract `data-quality-gate/1.0.0` lives in `src/platform/MarketData/dataQualityGate.ts`;
-- snapshot states and evidence statuses map onto the DATA exit vocabulary without collapsing source contracts;
-- `ValidatedDataInput` snapshot aggregation consumes the same gate;
-- `FAIL` / `STALE` / `MISSING` / `UNKNOWN` / `NOT_COMPUTABLE` are not admissible FINTECH export input and cannot silently upgrade to `PASS`/`PARTIAL`;
-- focused unit evidence: `tests/unit/dataQualityGate.test.ts`;
-- slice evidence: `docs/projects/data/evidence/DATA_11_QUALITY_GATE_2026-09-07.md`;
-- `CompositeDataQuality` confidence/ranking helpers remain untouched FINTECH semantics.
+- remaining DATA-11 physical split of composite confidence/ranking helpers stays backlog.
 
 Exit:
 
-- no `FAIL` reaches valid downstream input: covered by the gate export decision;
-- stale/missing/unknown state cannot be silently upgraded: covered by rank/aggregation tests;
-- no scoring or ranking logic is owned by DATA in this slice: preserved;
-- remaining DATA-11 physical split of composite confidence/ranking helpers stays backlog.
+- no `FAIL` reaches valid downstream input;
+- stale/missing/unknown state cannot be silently upgraded;
+- no scoring or ranking logic is owned by DATA in the merged gate slice.
 
 ## DATA-12 — Provenance
 
-**State:** `READY`
+**State:** `IMPLEMENTED — LINEAGE SLICE READY / CORRECTION VERSION OPEN`
 
-Provider/source path, evidence reference, timestamps, asset identity and correlation lineage must survive the DATA chain and downstream handoff.
+Work:
+
+- Provider/source path, evidence reference, timestamps, asset identity and correlation lineage must survive the DATA chain and downstream handoff.
+
+Current-main / branch correlation:
+
+- lineage contract `data-provenance-lineage/1.0.0` lives in `src/platform/MarketData/dataProvenanceLineage.ts`;
+- required fields are assetId, providerId, capability, field, evidenceRef, observedAt, retrievedAt and correlationId;
+- dropped or mutated required fields fail the handoff;
+- `ValidatedDataInput` snapshot/history `provenanceComplete` consumes the same evaluator;
+- focused unit evidence: `tests/unit/dataProvenanceLineage.test.ts`;
+- slice evidence: `docs/projects/data/evidence/DATA_12_PROVENANCE_LINEAGE_2026-09-07.md`;
+- correction-version lineage remains an architecture gap.
+
+Exit:
+
+- complete lineage can be evaluated independently of scoring;
+- incomplete or mutated lineage does not survive the FINTECH handoff claim;
+- correction history/versioning stays backlog.
 
 ## DATA-13 — Freshness
 
