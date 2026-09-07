@@ -1,7 +1,7 @@
 # CAPITAL-AI Frontend – Component Inventory
 
 **Stand:** 7. September 2026  
-**Korrelationsbasis:** `main@e7715f542db65e40cca6d39a6dacb0f30ef08b51` + `agent/frontend-public-scorer-landing-r2-20260907`  
+**Korrelationsbasis:** `main@f8cdc390d47263c845a2f03827d62af429de1c5e` + `agent/frontend-public-scorer-landing-r2-20260907`  
 **Dokumentrolle:** Ist-Bestand und Migrationsstatus  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`
 
@@ -177,8 +177,8 @@ Die Authority-Klassen `CANONICAL_SCORE`, `RESEARCH`, `EVIDENCE_ONLY` und `MARKET
 | TotpSettings | `TotpSettings.tsx` | `src/features/settings/ui` |
 | Abonnements | `Abonnements.tsx` | `src/features/billing/ui` |
 | SubscriptionModal | `SubscriptionModal.tsx` | `src/features/billing/ui` |
-| Checkout | `Checkout.tsx` | `src/features/billing/ui` |
-| GuestCliffhangerModal | `GuestCliffhangerModal.tsx` | `src/features/billing/ui` bzw. Public-Consumer nach Dependency-Audit |
+| Checkout | `src/components/Checkout.tsx` | `src/features/billing/ui` |
+| GuestCliffhangerModal | `src/components/GuestCliffhangerModal.tsx` | `src/features/billing/ui` bzw. Public-Consumer nach Dependency-Audit |
 
 Die Auth-Gates selbst bleiben physisch unverändert; ihre globale Composition liegt unter `src/app/auth/SessionComposition.tsx`. Der Public-Scorer-Recovery-Slice verändert keine serverseitige Auth-/IAM-Entscheidung.
 
@@ -260,4 +260,4 @@ Die Auth-Gates selbst bleiben physisch unverändert; ihre globale Composition li
 
 ---
 
-*Erstellt am 16.08.2026. Am 20.08.2026 auf die `app/features/shared`-Architektur und BB-1 ausgerichtet. Am 23.08.2026 RankingBoard/CV-0 ergänzt. Am 07.09.2026 gegen `main@e7715f542db65e40cca6d39a6dacb0f30ef08b51` und den Public-Enterprise-Scorer-Recovery-Branch re-korreliert: LandingPage, schmale Public-Crypto-Fassade, PublicCryptoScoringPreview, Presentation-Context, aktuelle Crypto-Scorer-Namenskonvention und Auth-Boundary sind nun explizit inventarisiert.*
+*Erstellt am 16.08.2026. Am 20.08.2026 auf die `app/features/shared`-Architektur und BB-1 ausgerichtet. Am 23.08.2026 RankingBoard/CV-0 ergänzt. Am 07.09.2026 gegen `main@f8cdc390d47263c845a2f03827d62af429de1c5e` und den Public-Enterprise-Scorer-Recovery-Branch re-korreliert: LandingPage, schmale Public-Crypto-Fassade, PublicCryptoScoringPreview, Presentation-Context, aktuelle Crypto-Scorer-Namenskonvention und Auth-Boundary sind nun explizit inventarisiert.*
