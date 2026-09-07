@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, AlertCircle, Loader2, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
 import { AuthorityBadge, FreshnessBadge, ResearchOnlyBanner } from '../../../shared/ui';
 import { EnterpriseAsset4hChart } from './EnterpriseAsset4hChart';
+import { useEnterpriseScorerPresentationMode } from './EnterpriseScorerPresentationContext';
 
 type QuickAnalysisResponse = {
   marketData: {
@@ -39,8 +40,13 @@ export interface EnterpriseBinanceQuickAnalysisProps {
  * Canonical crypto feature-slice implementation of the Enterprise Binance quick analysis.
  * The selected symbol comes only from the Enterprise Scorer. The verified 4h chart below the
  * analysis consumes MarketDataHistoryGateway and is deliberately separated from scoring.
+ *
+ * ADR-0038 keeps this analysis endpoint in the authenticated Enterprise context. When the same
+ * canonical scorer is projected as the public landing preview, the presentation context omits
+ * this authenticated sub-surface rather than changing or duplicating the endpoint contract.
  */
 export function EnterpriseBinanceQuickAnalysis({ symbol }: EnterpriseBinanceQuickAnalysisProps) {
+  const presentationMode = useEnterpriseScorerPresentationMode();
   const [result, setResult] = useState<QuickAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +57,10 @@ export function EnterpriseBinanceQuickAnalysis({ symbol }: EnterpriseBinanceQuic
     setResult(null);
     setError(null);
   }, [upper]);
+
+  if (presentationMode === 'public-preview') {
+    return null;
+  }
 
   const runAnalysis = async () => {
     if (!upper) return;

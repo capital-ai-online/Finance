@@ -10,7 +10,7 @@ import {
   DOCUMENT_REGISTRY_PATH,
 } from '../Services/DocumentationHygieneValidator';
 
-export const DOCUMENTATION_VALIDATOR_VERSION = 'documentation-validator/1.2.1' as const;
+export const DOCUMENTATION_VALIDATOR_VERSION = 'documentation-validator/1.3.0' as const;
 
 export const GOV_DOC_001_RULE = Object.freeze({
   ruleId: 'GOV-DOC-001',
@@ -19,6 +19,18 @@ export const GOV_DOC_001_RULE = Object.freeze({
   description: 'Document without version.',
   severity: 'High',
   rationale: 'Registered documentation must declare an explicit document version in the document body.',
+  essReference: 'ESS-0012-CONTRACTS Chapter 2.5',
+  evidenceType: 'FileReference',
+  version: '1.0.0',
+} as const);
+
+export const GOV_DOC_002_RULE = Object.freeze({
+  ruleId: 'GOV-DOC-002',
+  name: 'Document ESS or ADR reference',
+  area: 'DOC',
+  description: 'Document without ESS or ADR reference.',
+  severity: 'Medium',
+  rationale: 'Registered documentation must cite an explicit ESS or ADR identity in the document body.',
   essReference: 'ESS-0012-CONTRACTS Chapter 2.5',
   evidenceType: 'FileReference',
   version: '1.0.0',
@@ -50,11 +62,13 @@ export const GOV_DOC_006_RULE = Object.freeze({
 
 export type DocumentationGovernanceRuleId =
   | typeof GOV_DOC_001_RULE.ruleId
+  | typeof GOV_DOC_002_RULE.ruleId
   | typeof GOV_DOC_003_RULE.ruleId
   | typeof GOV_DOC_006_RULE.ruleId;
 
 export type DocumentationGovernanceSeverity =
   | typeof GOV_DOC_001_RULE.severity
+  | typeof GOV_DOC_002_RULE.severity
   | typeof GOV_DOC_003_RULE.severity;
 
 export interface DocumentationGovernanceFileReferenceEvidence {
@@ -90,6 +104,7 @@ const VERSION_MARKING = new RegExp(
   String.raw`(?:^|[\s,;(\[]+)` + VERSION_LABEL + String.raw`(?:\s*(?:[:|=]|is))?\s*` + VERSION_VALUE + String.raw`\b`,
   'i',
 );
+const AUTHORITY_REFERENCE = /\b(?:ESS|ADR)[\s_-]*\d{4}(?:-[A-Z0-9]+)?\b/i;
 
 function normalizeRepoPath(value: string): string {
   return value.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+/g, '/').trim();
@@ -244,6 +259,10 @@ export function documentHasVersionMarking(content: string): boolean {
   return content.split(/\r?\n/).some((line) => VERSION_MARKING.test(normalizeVersionText(line)));
 }
 
+export function documentHasEssOrAdrReference(content: string): boolean {
+  return content.split(/\r?\n/).some((line) => AUTHORITY_REFERENCE.test(normalizeVersionText(line)));
+}
+
 function readRegistryEntries(repoRoot: string): RegistryEntry[] {
   const registryPath = path.join(repoRoot, DOCUMENT_REGISTRY_PATH);
   if (!fs.existsSync(registryPath)) return [];
@@ -319,6 +338,46 @@ export function collectGovDoc001Findings(options: {
       documentId,
       documentPath,
       message: `${documentId}: registered document has no version marking.`,
+      evidence: [{
+        type: 'FileReference',
+        path: documentPath,
+        line: 1,
+        referencedPath: documentPath,
+      }],
+    });
+  }
+
+  return findings.sort((left, right) =>
+    `${left.documentPath}:${left.documentId}:${left.ruleId}`
+      .localeCompare(`${right.documentPath}:${right.documentId}:${right.ruleId}`));
+}
+
+export function collectGovDoc002Findings(options: {
+  repoRoot?: string;
+  entries?: readonly RegistryEntry[];
+}): DocumentationGovernanceFinding[] {
+  const repoRoot = path.resolve(options.repoRoot ?? process.cwd());
+  const entries = options.entries ?? readRegistryEntries(repoRoot);
+  const findings: DocumentationGovernanceFinding[] = [];
+
+  for (const entry of entries) {
+    const documentId = String(entry.documentId ?? '').trim();
+    const documentPath = normalizeRepoPath(String(entry.path ?? ''));
+    if (!documentId || !documentPath) continue;
+
+    const absolute = resolveRegularNonSymlinkFile(repoRoot, documentPath);
+    if (!absolute) continue;
+
+    const content = fs.readFileSync(absolute, 'utf8');
+    if (documentHasEssOrAdrReference(content)) continue;
+
+    findings.push({
+      ruleId: GOV_DOC_002_RULE.ruleId,
+      severity: GOV_DOC_002_RULE.severity,
+      area: GOV_DOC_002_RULE.area,
+      documentId,
+      documentPath,
+      message: `${documentId}: registered document has no ESS or ADR reference.`,
       evidence: [{
         type: 'FileReference',
         path: documentPath,
