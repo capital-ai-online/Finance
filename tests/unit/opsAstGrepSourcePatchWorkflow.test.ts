@@ -58,6 +58,14 @@ describe('OPS ast-grep BB-2E workflow', () => {
     expect(workflow).not.toContain('persist-credentials: true');
   });
 
+  it('correlates main through a local trusted checkout instead of tokenized shell fetches', () => {
+    expect(workflow).toContain('ref: main');
+    expect(workflow).toContain('path: policy');
+    expect(workflow).toContain('git -C work fetch --no-tags ../policy HEAD:refs/remotes/origin/main');
+    expect(workflow).not.toContain('git fetch --no-tags origin main:refs/remotes/origin/main');
+    expect(workflow).not.toContain('git -C work fetch --no-tags origin main:refs/remotes/origin/main');
+  });
+
   it('executes the trusted runner as a 10-to-0 ast-grep cutover', () => {
     expect(workflow).toContain('cmp "policy/$RUNNER_PATH" "work/$RUNNER_PATH"');
     expect(workflow).toContain('--plan "$PLAN_PATH"');
@@ -88,9 +96,10 @@ describe('OPS ast-grep BB-2E workflow', () => {
 
   it('binds the privileged push to the exact remote head and validated blob', () => {
     expect(workflow).toContain('EXPECTED_PATCHED_BLOB: ${{ needs.patch-and-validate.outputs.patched_blob }}');
-    expect(workflow).toContain('OBSERVED_PATCHED_BLOB="$(git hash-object "$TARGET_FILE")"');
-    expect(workflow).toContain('REMOTE_HEAD="$(git -c http.https://github.com/.extraheader=');
+    expect(workflow).toContain('OBSERVED_PATCHED_BLOB="$(git -C work hash-object "$TARGET_FILE")"');
+    expect(workflow).toContain('REMOTE_HEAD="$(git -C work -c http.https://github.com/.extraheader=');
     expect(workflow).toContain('if [[ "$REMOTE_HEAD" != "$EXPECTED_HEAD_SHA" ]]');
     expect(workflow).toContain('push origin "HEAD:refs/heads/$TARGET_BRANCH"');
+    expect(workflow).toContain('GITHUB_TOKEN: ${{ github.token }}');
   });
 });
