@@ -4,8 +4,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  GOV_DOC_001_RULE,
   GOV_DOC_003_RULE,
   GOV_DOC_006_RULE,
+  collectGovDoc001Findings,
   collectGovDoc003Findings,
   collectGovDoc006Findings,
 } from '../../src/platform/Documentary/Governance/Validators/DocumentationValidator';
@@ -58,7 +60,7 @@ function freshness(findings: SemanticFreshnessFinding[]): SemanticFreshnessRepor
   };
 }
 
-function generatedEntry(overrides: Partial<RegistryEntry> = {}): RegistryEntry {
+function registeredEntry(overrides: Partial<RegistryEntry> = {}): RegistryEntry {
   return {
     documentId: 'DOC-GEN-FOO',
     type: 'architecture',
@@ -70,6 +72,10 @@ function generatedEntry(overrides: Partial<RegistryEntry> = {}): RegistryEntry {
     path: 'docs/architecture/GEN-FOO.md',
     ...overrides,
   };
+}
+
+function generatedEntry(overrides: Partial<RegistryEntry> = {}): RegistryEntry {
+  return registeredEntry(overrides);
 }
 
 describe('DocumentationValidator GOV-DOC-003', () => {
@@ -263,6 +269,88 @@ describe('DocumentationValidator GOV-DOC-006', () => {
         generatedEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md' }),
       ],
     });
+
+    expect(second).toEqual(first);
+    expect(first.map((item) => item.documentId)).toEqual(['DOC-A', 'DOC-Z']);
+  });
+});
+
+describe('DocumentationValidator GOV-DOC-001', () => {
+  it('emits a High finding when a registered document body has no version marking', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-001-positive-'));
+    write(root, 'docs/architecture/GEN-FOO.md', '# Generated Foo\n\nRegistry version is not a document version.\n');
+
+    expect(GOV_DOC_001_RULE).toMatchObject({
+      ruleId: 'GOV-DOC-001',
+      area: 'DOC',
+      severity: 'High',
+      evidenceType: 'FileReference',
+      version: '1.0.0',
+    });
+    expect(collectGovDoc001Findings({
+      repoRoot: root,
+      entries: [registeredEntry()],
+    })).toEqual([
+      {
+        ruleId: 'GOV-DOC-001',
+        severity: 'High',
+        area: 'DOC',
+        documentId: 'DOC-GEN-FOO',
+        documentPath: 'docs/architecture/GEN-FOO.md',
+        message: 'DOC-GEN-FOO: registered document has no version marking.',
+        evidence: [{
+          type: 'FileReference',
+          path: 'docs/architecture/GEN-FOO.md',
+          line: 1,
+          referencedPath: 'docs/architecture/GEN-FOO.md',
+        }],
+      },
+    ]);
+  });
+
+  it('accepts explicit Version and Dokumentversion markings and ignores empty labels', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-001-marked-'));
+    write(root, 'docs/architecture/A.md', '# A\n\nVersion: 1.2.0\n');
+    write(root, 'docs/architecture/B.md', '# B\n\n- **Dokumentversion:** `0.9.1`\n');
+    write(root, 'docs/architecture/C.md', '# C\n\nVersion:\n');
+
+    expect(collectGovDoc001Findings({
+      repoRoot: root,
+      entries: [
+        registeredEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md', lifecycle: 'approved' }),
+        registeredEntry({ documentId: 'DOC-B', path: 'docs/architecture/B.md', lifecycle: 'reviewed' }),
+        registeredEntry({ documentId: 'DOC-C', path: 'docs/architecture/C.md' }),
+        registeredEntry({ documentId: 'DOC-MISSING', path: 'docs/architecture/MISSING.md' }),
+      ],
+    })).toEqual([
+      {
+        ruleId: 'GOV-DOC-001',
+        severity: 'High',
+        area: 'DOC',
+        documentId: 'DOC-C',
+        documentPath: 'docs/architecture/C.md',
+        message: 'DOC-C: registered document has no version marking.',
+        evidence: [{
+          type: 'FileReference',
+          path: 'docs/architecture/C.md',
+          line: 1,
+          referencedPath: 'docs/architecture/C.md',
+        }],
+      },
+    ]);
+  });
+
+  it('keeps deterministic ordering for unversioned registered documents', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-001-order-'));
+    write(root, 'docs/architecture/Z.md', '# Z\n');
+    write(root, 'docs/architecture/A.md', '# A\n');
+
+    const entries = [
+      registeredEntry({ documentId: 'DOC-Z', path: 'docs/architecture/Z.md' }),
+      registeredEntry({ documentId: 'DOC-A', path: 'docs/architecture/A.md' }),
+    ];
+    const first = collectGovDoc001Findings({ repoRoot: root, entries });
+    const second = collectGovDoc001Findings({ repoRoot: root, entries });
 
     expect(second).toEqual(first);
     expect(first.map((item) => item.documentId)).toEqual(['DOC-A', 'DOC-Z']);
