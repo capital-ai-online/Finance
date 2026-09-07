@@ -5,6 +5,11 @@ export {
   type DashboardViewRouterProps,
 } from './DashboardViewRouter';
 export {
+  DASHBOARD_NAVIGATION_ITEMS,
+  getDashboardNavigationItems,
+  type DashboardNavigationItem,
+} from './dashboardNavigation';
+export {
   DASHBOARD_ROUTED_VIEWS,
   isDashboardRoutedView,
   type DashboardRoutedView,

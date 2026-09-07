@@ -18,7 +18,7 @@ const expectedSections: Record<(typeof DASHBOARD_VIEWS)[number], DashboardSectio
   myworkspace: 'hub',
   learning: 'hub',
   'universe-scoring': 'hub',
-  'buffet-value': 'analysis',
+  'buffet-value': 'hub',
   backtest: 'analysis',
   heatmap: 'analysis',
   'market-screener': 'analysis',
@@ -37,13 +37,13 @@ const expectedSections: Record<(typeof DASHBOARD_VIEWS)[number], DashboardSectio
   'raw-materials': 'analysis',
   'asset-universe': 'analysis',
   'defi-orchestration': 'hub',
-  'social-accounts': 'hub',
+  'social-accounts': 'analysis',
   login: 'hub',
   'auth-debugger': 'system_admin',
   'admin-portal': 'system_admin',
 };
 
-describe('BB-2B dashboard view contract', () => {
+describe('BB-2E dashboard view contract', () => {
   it('keeps every dashboard view mapped exhaustively to one presentation section', () => {
     expect(DASHBOARD_VIEWS).toHaveLength(27);
     expect(DASHBOARD_VIEW_SECTION).toEqual(expectedSections);
@@ -53,8 +53,11 @@ describe('BB-2B dashboard view contract', () => {
     }
   });
 
-  it('preserves the legacy default-to-hub semantics while the strangler is in progress', () => {
-    for (const view of ['interact', 'defi-orchestration', 'social-accounts', 'login'] as const) {
+  it('matches active-view auto-expansion with the productive drawer placement', () => {
+    expect(getDashboardSection('buffet-value')).toBe('hub');
+    expect(getDashboardSection('social-accounts')).toBe('analysis');
+
+    for (const view of ['interact', 'defi-orchestration', 'login'] as const) {
       expect(getDashboardSection(view)).toBe('hub');
     }
   });
