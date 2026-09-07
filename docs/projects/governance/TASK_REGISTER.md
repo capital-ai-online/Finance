@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
-**Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-07, correlated to repository-visible implementation/PR evidence  
-**Current correlation baseline:** `main@8ab11ae749639a67c28b3d685f4943df19b9e72c`  
+**Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-08, correlated to repository-visible implementation/PR evidence  
+**Current correlation baseline:** `main@29b46dc9131168036a0c067d8e9a14461b411bfe`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -75,11 +75,11 @@ Current `main` contains Human-merged PR #803. It establishes that pure Human/Own
 
 ## Current writer / correlation state
 
-At `main@8ab11ae749639a67c28b3d685f4943df19b9e72c`:
+At `main@29b46dc9131168036a0c067d8e9a14461b411bfe`:
 
-- open PR #838 (`CAPITAL-AI-DOC`) changes Documentary hygiene/document-registry surfaces but none of the seven `GOV-CHAT-071` files; no semantic ownership/authority conflict was identified;
-- open PR #839 (`CAPITAL-AI-OPS`) changes workflow/zizmor hardening and OPS evidence only; no changed-file, namespace, authority or Primary-Owner overlap exists;
-- `agent/governance-owner-response-retirement-20260907` is the scoped Governance writer for the current bounded correction and contains current main through an explicit synchronization merge commit;
+- no open Pull Requests were returned by the final pre-approval correlation;
+- the branch incorporates current `main` through an explicit synchronization merge commit and retains only the seven bounded `GOV-CHAT-071` changed files relative to that baseline;
+- `agent/governance-owner-response-retirement-20260907` is the scoped Governance writer for the current bounded correction;
 - historical/released claims and earlier merged PR branches are non-authorizing and do not reserve current writer authority.
 
 ## GOV-07 Evolution Policy current-main correlation
