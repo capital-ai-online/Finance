@@ -115,7 +115,7 @@ describe('canonical landing, login and protected-route boundary', () => {
   it('keeps the canonical landing page suitable for Google OAuth branding review', () => {
     expect(landingPage).toContain('CAPITAL-AI – quantitative Multi-Asset-Analyse');
     expect(landingPage).toContain('Aktien, Indizes, Forex, Kryptowährungen und Rohstoffe');
-    expect(landingPage).toContain('erklärbaren KI-Scorings');
+    expect(landingPage).toMatch(/erklärbaren\s+KI-Scorings/);
     expect(landingPage).toContain('href="/datenschutz/"');
     expect(landingPage).toContain('href="/agb/"');
     expect(landingPage).toContain('href="/impressum/"');
