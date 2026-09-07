@@ -7,7 +7,7 @@
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-07`  
 **Correlation baseline:** `main@75c926f12ae514036aa508ea8faf1a82b1a91059`  
-**Open PR baseline:** zero open PRs against current `main`; known parallel OPS branch `agent/operations-legacy-auth-runtime-cleanup-v8-20260907` is diverged (`1 ahead / 6 behind`) and also touches this Roadmap for bounded retired-auth wording; its changes are not imported by this work item  
+**Open PR baseline:** PR #833 `[CAPITAL-AI-OPS] [ChatGPT] Retired Authorization aus Runtime und Roadmaps entfernen` is open and changes this Roadmap; its retired-auth scope is semantically disjoint from qs/RPO/Node priority state but creates a real changed-file coordination gate, so this branch is not PR-ready until #833 reaches a terminal state and final re-correlation/resync is repeated  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 Canonical current-main Security backlog evidence: `evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`.  
@@ -201,7 +201,7 @@ The following repository-backed OPS work items referenced by recent OPS executio
 | RPO measurement evaluator | PR #802 closed unmerged; branch absent; evaluator absent from current main | NOT_IMPLEMENTED_ON_MAIN / FRESH_REINTAKE_REQUIRED / OPERATIONAL_EVIDENCE_PENDING / SECURITY_UNVERIFIED |
 | qs 6.16.0 DoS remediation | PR #828 Human-merged; final hosted CI/Governance/Container Security successful; current live main contains remediation | IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL |
 
-The stale `agent/operations-node-toolchain-24-20-20260906` branch is not an active implementation authority. The older `agent/operations-qs-cve-20260905` branch is historical/divergent dependency work and does not reopen the terminal #828 remediation. `agent/operations-roadmap-integrity-sync-20260907` is stale/diverged with no PR and is non-authorizing. The parallel `agent/operations-legacy-auth-runtime-cleanup-v8-20260907` Roadmap delta is disclosed separately and not imported here.
+The stale `agent/operations-node-toolchain-24-20-20260906` branch is not an active implementation authority. The older `agent/operations-qs-cve-20260905` branch is historical/divergent dependency work and does not reopen the terminal #828 remediation. `agent/operations-roadmap-integrity-sync-20260907` is stale/diverged with no PR and is non-authorizing. PR #833 is the current parallel Roadmap writer and must reach a terminal state before this branch can be re-correlated for PR creation.
 
 GA4/Consent production verification remains evidence-only: repository code provides the inert `ga-measurement-id` metadata/consent bridge contract, but browser Network/GA4 Realtime behavior is not proven by repository state alone. No completion claim is derived from chat-only/manual runtime observations.
 
@@ -230,6 +230,7 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [x] PR #802 verified closed unmerged; former RPO branch and evaluator are absent from current main; stale `IMPLEMENTED_BRANCH` projection removed;
 - [x] PR #828 qs 6.16.0 remediation verified `IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL` and removed from executable backlog;
 - [x] highest actually executable local OPS priority recalculated as `OPS-08-SEC-07`;
+- [x] PR #833 discovered as current changed-file overlap on `ROADMAP.md`; PR creation for this branch is blocked pending #833 terminalization and renewed resync/correlation;
 - [ ] CAPITAL-AI-GOV resolves the Node baseline authority/supersession before OPS Node mutation;
 - [ ] `OPS-06-SEC-03` Node control-plane convergence implemented/evidenced only after that authority resolution;
 - [ ] deterministic RPO evaluator re-intaken on a fresh current-main branch and independently exact-head validated;
@@ -241,7 +242,7 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [ ] Stripe sandbox/Test Clock lifecycle evidence executed with verified test-mode fixtures;
 - [ ] CAPITAL-AI-SEC independent verification completed for applicable returned evidence;
 - [ ] DR-03 implementation started only after higher-priority OPS gates permit it;
-- [ ] exact final branch-state validation/correlation completed before PR approval request;
+- [ ] PR #833 reaches terminal state, then current main/open PRs/changed-file-semantic overlap are re-correlated and this branch is resynchronized before any PR approval request;
 - [ ] hosted validation completed after PR creation as applicable;
 - [ ] Human Owner merge completed separately.
 
