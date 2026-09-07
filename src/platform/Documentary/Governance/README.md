@@ -3,8 +3,8 @@
 **Domain:** Documentary  
 **Authority:** `ESS-0012 — Documentation Governance`  
 **Global governance dependency:** `src/platform/Governance` / `/AGENTS.md`  
-**Version:** `1.3.0`  
-**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-003 freshness validation operational on branch; broader ESS-0012 rule suite incremental
+**Version:** `1.4.0`  
+**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-003 freshness validation on current main and incremental GOV-DOC-006 generator-marking validation on branch; broader ESS-0012 rule suite incremental
 
 ## Purpose
 
@@ -25,15 +25,14 @@ The repository-wide Governance Control Plane is `src/platform/Governance`, resol
 
 The CLI adapter is `scripts/automation/validateDocumentationHygiene.ts` and is exposed as `npm run docs:hygiene:check`.
 
-`Validators/DocumentationValidator.ts` implements the first bounded semantic DocumentationValidator slice from ESS-0012-CONTRACTS:
+`Validators/DocumentationValidator.ts` implements bounded semantic DocumentationValidator slices from ESS-0012-CONTRACTS:
 
-- canonical rule identity `GOV-DOC-003`;
+- canonical rule identity `GOV-DOC-003` on current main through Human-merged PR #805;
 - severity `Medium`;
 - consumes the existing `Discovery/SemanticFreshnessAnalyzer.ts` result rather than scanning the repository again;
-- emits findings only when a current registered document still contains an explicit reference to a changed `src/platform/<Component>/...` source path from the same correlated freshness report and the document itself is unchanged in that correlated change set;
-- binds every evidence item to document path, line, referenced source path, source commit and correlation ID;
-- verifies the analyzer-provided document content hash before converting freshness evidence into a governance finding;
-- discards synchronized documents, semantic-only candidates, stale hashes, missing/unreadable documents and periodic full-scan candidates without concrete changed-component evidence;
+- emits freshness findings only when a current registered document still contains an explicit reference to a changed `src/platform/<Component>/...` source path from the same correlated freshness report and the document itself is unchanged in that correlated change set;
+- incremental rule identity `GOV-DOC-006` for registry entries with lifecycle `generated` that lack a Documentary generator marking;
+- binds every evidence item to a `FileReference`;
 - preserves deterministic finding/evidence ordering and performs no mutation.
 
 The current slice deliberately does **not** implement the remaining ESS-0012 rules, scoring, production thresholds, event publication or Governance decision logic.
@@ -81,7 +80,7 @@ Documentation Governance consumes global stable identities; it does not own them
 
 The useful hygiene implementation from parked PR #439 is reused as the canonical structural/registry hygiene service. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
 
-WP-DOC-07 adds only `GOV-DOC-003` as the first individual semantic rule implementation. Targeted unit coverage lives in `tests/unit/documentaryDocumentationValidator.test.ts` and covers evidence-backed positive mapping, fail-closed negative cases, synchronized-document suppression and deterministic output.
+WP-DOC-07 added `GOV-DOC-003` as the first individual semantic rule implementation and is Human-merged through PR #805. WP-DOC-08 adds only `GOV-DOC-006` as the next incremental semantic rule. Targeted unit coverage lives in `tests/unit/documentaryDocumentationValidator.test.ts`.
 
 This does **not** claim that all historical 57 ESS-0012 rules are implemented. Additional semantic Documentary validators remain separate incremental work unless explicitly brought into scope.
 
