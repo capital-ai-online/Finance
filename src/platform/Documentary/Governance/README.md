@@ -3,8 +3,8 @@
 **Domain:** Documentary  
 **Authority:** `ESS-0012 — Documentation Governance`  
 **Global governance dependency:** `src/platform/Governance` / `/AGENTS.md`  
-**Version:** `1.2.0`  
-**Status:** partial implementation — read-only hygiene service operational; broader ESS-0012 rule suite incremental
+**Version:** `1.3.0`  
+**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-003 freshness validation operational on branch; broader ESS-0012 rule suite incremental
 
 ## Purpose
 
@@ -12,7 +12,7 @@ The Documentation Governance Validator belongs to the Documentary domain. It val
 
 The repository-wide Governance Control Plane is `src/platform/Governance`, resolved from `/AGENTS.md`, `docs/governance/authority-registry.json` and `docs/governance/control-catalog.json`.
 
-## Implemented service
+## Implemented services
 
 `Services/DocumentationHygieneValidator.ts` is the canonical read-only hygiene service. It was adapted from the reusable implementation parked in PR #439 and enforces:
 
@@ -24,6 +24,19 @@ The repository-wide Governance Control Plane is `src/platform/Governance`, resol
 - repository-relative registry target paths and target existence.
 
 The CLI adapter is `scripts/automation/validateDocumentationHygiene.ts` and is exposed as `npm run docs:hygiene:check`.
+
+`Validators/DocumentationValidator.ts` implements the first bounded semantic DocumentationValidator slice from ESS-0012-CONTRACTS:
+
+- canonical rule identity `GOV-DOC-003`;
+- severity `Medium`;
+- consumes the existing `Discovery/SemanticFreshnessAnalyzer.ts` result rather than scanning the repository again;
+- emits findings only when a current registered document still contains an explicit reference to a changed `src/platform/<Component>/...` source path from the same correlated freshness report and the document itself is unchanged in that correlated change set;
+- binds every evidence item to document path, line, referenced source path, source commit and correlation ID;
+- verifies the analyzer-provided document content hash before converting freshness evidence into a governance finding;
+- discards synchronized documents, semantic-only candidates, stale hashes, missing/unreadable documents and periodic full-scan candidates without concrete changed-component evidence;
+- preserves deterministic finding/evidence ordering and performs no mutation.
+
+The current slice deliberately does **not** implement the remaining ESS-0012 rules, scoring, production thresholds, event publication or Governance decision logic.
 
 ## Explicit non-responsibilities
 
@@ -50,6 +63,7 @@ src/platform/Documentary/Governance
   -> document hygiene service
   -> metadata and registry validation
   -> documentary consistency findings
+  -> bounded ESS-0012 DocumentationValidator rules
 ```
 
 Documentation Governance consumes global stable identities; it does not own them.
@@ -60,11 +74,14 @@ Documentation Governance consumes global stable identities; it does not own them
 - `ESS-0012-CONTRACTS`
 - `docs/governance/document-registry.json`
 - `docs/governance/DOCUMENTATION_HYGIENE_POLICY.md`
+- `Discovery/SemanticFreshnessAnalyzer.ts` for correlated Documentary freshness evidence
 - global governance contracts from `src/platform/Governance`
 
 ## Implementation state
 
-The useful hygiene implementation from parked PR #439 is now reused in the current Governance work package. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
+The useful hygiene implementation from parked PR #439 is reused as the canonical structural/registry hygiene service. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
+
+WP-DOC-07 adds only `GOV-DOC-003` as the first individual semantic rule implementation. Targeted unit coverage lives in `tests/unit/documentaryDocumentationValidator.test.ts` and covers evidence-backed positive mapping, fail-closed negative cases, synchronized-document suppression and deterministic output.
 
 This does **not** claim that all historical 57 ESS-0012 rules are implemented. Additional semantic Documentary validators remain separate incremental work unless explicitly brought into scope.
 
