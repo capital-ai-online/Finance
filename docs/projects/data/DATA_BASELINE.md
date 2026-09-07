@@ -1,56 +1,36 @@
 # CAPITAL-AI-DATA — Repository & Runtime Baseline
 
-**Observed baseline:** `main@51bf529f003dfa47462c16ecbe10ae3b095547a4`  
-**Observed open PRs at resync:** `#804 CAPITAL-AI-CLIENT GOV-08 Admin Process Graph`  
-**Active DATA branch:** `agent/data-s1-r2-11-main-sync-20260907`  
-**Superseded working branch:** `agent/data-s1-r2-11-evidence-identity-20260907` — behind current main after PR #809; replaced by the current-main sync branch
+**Observed baseline:** `main@a6a62e867749efe80fc05aa175a3dc3fdd183d82`  
+**Observed open PRs at DATA-11 start:** `#804 CAPITAL-AI-CLIENT GOV-08 Admin Process Graph`, `#810 CAPITAL-AI-FINTECH FIN-SEC-02 verified_screening Gate`  
+**Active DATA branch:** `agent/data-11-dq-gate-20260907`
 
 ## Coordination baseline
 
-Current main at DATA-10 resync is `51bf529f003dfa47462c16ecbe10ae3b095547a4` (merge of PR #809). Open PR #804 has no changed-file overlap with `docs/projects/data/**` or `src/platform/MarketData/evidenceIdentityFreshness.ts`. Merged PR #809 changed only Frontend billing/ULS files.
+Current main is the merge of PR #811 (S1-R2-11). Open PRs #804 and #810 have no changed-file overlap with `docs/projects/data/**`, `src/platform/MarketData/dataQualityGate.ts` or `ValidatedDataInput.ts`.
 
-Security PR #631 remains the source of the S1-R2-11 routing. Security verification remains external to DATA. OPS owns any future PR/trace/DevelopmentChain tooling remediation, including `scripts/pr/updatePrProductionBaseline.mjs`.
+S1-R2-11 remains `EVIDENCE_READY` pending independent `CAPITAL-AI-SEC` verification. OPS owns PR/trace tooling.
 
 ## Namespace resolution
 
-Current main defines:
+- `PVC-09` — UAI / Data Ingestion — `CAPITAL-AI-DATA`
+- `PVC-10` — Evidence Management — `CAPITAL-AI-DATA`
+- `PVC-11` — Data Quality — `CAPITAL-AI-DATA`
+- `PVC-12` — Feature Engineering — `CAPITAL-AI-FINTECH`
 
-- `PVC-09` — UAI / Data Ingestion — `CAPITAL-AI-DATA`;
-- `PVC-10` — Evidence Management — `CAPITAL-AI-DATA`;
-- `PVC-11` — Data Quality — `CAPITAL-AI-DATA`;
-- `PVC-12` — Feature Engineering — `CAPITAL-AI-FINTECH`.
-
-`PVC-*` is organizational project routing only. Existing technical financial `VC-*` identifiers under `SC-MD-SPT-0001` remain unchanged.
-
-## Security correlation
-
-- `S1-R2-11 — Evidence identity and stale-state automation`;
-- target `CAPITAL-AI-DATA` / `PVC-10`;
-- DATA implementation/evidence status `EVIDENCE_READY`;
-- Security verification remains independent and is not closed by DATA.
-
-## Runtime inventory
+## Runtime inventory additions
 
 | Concern | Current implementation | Baseline assessment |
 |---|---|---|
-| Evidence DQ | `evidenceQualityContracts.ts` | Asset-class-neutral evidence/freshness/provenance admissibility contract |
-| Evidence identity freshness | `evidenceIdentityFreshness.ts` | S1-R2-11 observation evaluator; current/stale/refresh/retry against immutable identity |
-| Evidence identity | `CryptoEvidenceIdentityRegistry.ts` | Crypto-specific domain identity map; not retired by this package |
+| DATA exit gate | `dataQualityGate.ts` | Explicit snapshot/evidence → DATA-status table; fail-closed FINTECH export |
+| Validated snapshot exit | `ValidatedDataInput.ts` | Consumes the DATA-11 gate for field/aggregate status |
+| Evidence identity freshness | `evidenceIdentityFreshness.ts` | S1-R2-11 observer on main after PR #811 |
+| Composite DQ + confidence | `CompositeDataQuality.ts` | Mixed; confidence/ranking remain FINTECH-owned and untouched |
 
-## Data-integrity findings still open outside this package
+## Remaining DATA-11+ findings
 
-1. Snapshot and evidence DQ vocabularies are not yet one DATA status contract.
-2. UAI identity and downstream scoring contracts remain physically colocated.
-3. Composite DQ still contains confidence/ranking helpers owned by FINTECH.
-4. Provider paths are only partially homogeneous.
-5. Compatibility fallback rows remain non-evidence.
-6. Correction-version lineage remains an architecture gap.
-7. S1-R2-11 DATA evidence is ready; independent Security verification remains open.
-8. Quality Management must remain outside the productive DATA hot path.
-
-## Migration posture
-
-- return Security evidence without self-setting `VERIFIED/CLOSED`;
-- route PR/trace tooling remediation to OPS rather than absorbing it into DATA;
-- no synthetic fallback during migration;
-- hand off scoring/confidence/ranking work instead of modifying it in DATA.
+1. Source snapshot/evidence vocabularies are mapped, not collapsed.
+2. Composite confidence/ranking helpers remain colocated and untouched.
+3. Provider paths are only partially homogeneous.
+4. Compatibility fallback rows remain non-evidence.
+5. Correction-version lineage remains open.
+6. S1-R2-11 Security verification remains independent.
