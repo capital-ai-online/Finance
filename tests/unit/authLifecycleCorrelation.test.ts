@@ -13,7 +13,6 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
     expect(findings.map((item) => item.id)).toEqual([
       'google_oauth_provider_handoff',
       'authenticated_root_dashboard_handoff',
-      'dashboard_menu_interaction_contract',
       'logout_local_default',
       'logout_explicit_global_action',
       'registration_primary_contract',
@@ -25,19 +24,20 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
     expect(findings.every((item) => ['PASS', 'FAIL', 'NOT_AVAILABLE'].includes(item.result))).toBe(true);
   });
 
+  it('does not inspect legacy dashboard menu implementation details', () => {
+    const findings = byId();
+    expect(findings.has('dashboard_menu_interaction_contract')).toBe(false);
+
+    const surfaces = evaluateAuthLifecycleRepositoryContracts().flatMap((item) => item.surface);
+    expect(surfaces).not.toContain('src/components/Dashboard.tsx');
+  });
+
   it('confirms the already-implemented registration security chain and canonical platform version projection', () => {
     const findings = byId();
     expect(findings.get('registration_primary_contract')?.result).toBe('PASS');
     expect(findings.get('registration_onboarding_contract')?.result).toBe('PASS');
     expect(findings.get('platform_version_projection')?.result).toBe('PASS');
     expect(findings.get('google_oauth_provider_handoff')?.result).toBe('PASS');
-  });
-
-  it('keeps the hamburger interaction contract separate from post-login composition findings', () => {
-    const findings = byId();
-    expect(findings.get('dashboard_menu_interaction_contract')?.result).toBe('PASS');
-    expect(findings.get('dashboard_menu_interaction_contract')?.owner).toBe('CAPITAL-AI-FE');
-    expect(findings.get('authenticated_root_dashboard_handoff')).toBeDefined();
   });
 
   it('routes remediation findings to the owning projects and allows them to turn from FAIL to PASS without changing the OPS inventory', () => {
