@@ -6,7 +6,7 @@ interface LandingPageProps {
   onLoginNavigate?: () => void;
 }
 
-function ScorerLoadingState() {
+function WorkbenchLoadingState() {
   return (
     <div
       className="flex min-h-[420px] items-center justify-center rounded-2xl border border-border bg-surface/35 px-6 text-center"
@@ -15,10 +15,10 @@ function ScorerLoadingState() {
     >
       <div className="max-w-md space-y-3">
         <div className="mx-auto h-8 w-8 animate-pulse rounded-full border border-brand-primary/40 bg-brand-primary/10" />
-        <p className="text-sm font-bold text-text-primary">Enterprise Scorer wird geladen</p>
+        <p className="text-sm font-bold text-text-primary">Bewertungstools werden geladen</p>
         <p className="text-xs leading-relaxed text-text-secondary">
-          Die Analyseoberfläche wird erst in Sichtnähe geladen. Navigation und Anmeldung bleiben
-          dadurch unabhängig vom Scorer-Bundle unmittelbar verfügbar.
+          Die Analyse-Workbench wird erst in Sichtnähe geladen. Navigation und Anmeldung bleiben
+          dadurch unabhängig von den Bewertungs-Bundles unmittelbar verfügbar.
         </p>
       </div>
     </div>
@@ -28,9 +28,9 @@ function ScorerLoadingState() {
 /**
  * Canonical public landing page for `/`.
  *
- * The public feature owns presentation only. Application composition supplies the Enterprise
- * Scorer preview from src/app so the dependency direction remains app -> features. Authentication
- * stays on `/login`; this component creates no session and defines no scoring/data authority.
+ * The public feature owns presentation only. Application composition supplies the public analysis
+ * workbench from src/app so the dependency direction remains app -> features. Authentication stays
+ * on `/login`; this component creates no session and defines no scoring/data authority.
  */
 export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
   const previewRef = React.useRef<HTMLElement | null>(null);
@@ -75,10 +75,10 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
 
           <nav className="flex items-center gap-2" aria-label="Hauptnavigation">
             <a
-              href="#enterprise-scorer-preview"
+              href="#analysis-workbench"
               className="hidden min-h-11 items-center rounded-lg px-3 py-2 text-xs font-bold text-text-secondary transition hover:text-text-primary sm:inline-flex"
             >
-              Enterprise Scorer
+              Bewertungstools
             </a>
             <a
               href="/learning-platform"
@@ -106,20 +106,20 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
                 Evidence-first · Multi-Asset · Explainable
               </p>
               <h1 className="text-4xl font-black leading-tight tracking-tight text-text-primary sm:text-5xl lg:text-6xl">
-                Quantitative Marktanalyse mit nachvollziehbarer Evidence.
+                Quantitative Marktanalyse mit den CAPITAL-AI Bewertungstools.
               </h1>
               <p className="max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg">
                 CAPITAL-AI bündelt Markt-, Bewertungs- und Sentiment-Daten zu erklärbaren
                 KI-Scorings für Aktien, Indizes, Forex, Kryptowährungen und Rohstoffe. Die
-                öffentliche Landingpage zeigt den Enterprise Scorer als limitierte Vorschau ohne
-                Anmeldung.
+                öffentliche Landingpage stellt die produktiven Bewertungstools wieder über ein
+                Sideboard bereit, ohne einen anonymen IAM- oder Supabase-Login zu erzeugen.
               </p>
               <div className="flex flex-wrap gap-3">
                 <a
-                  href="#enterprise-scorer-preview"
+                  href="#analysis-workbench"
                   className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-primary px-5 py-2.5 text-sm font-black text-background transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
                 >
-                  Enterprise Scorer ansehen
+                  Bewertungstools öffnen
                 </a>
                 <a
                   href="/login"
@@ -133,9 +133,9 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
 
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               {[
-                ['Multi-Asset', 'Ein gemeinsamer Analysezugang für mehrere Assetklassen.'],
-                ['Evidence-first', 'Provenienz und Datenqualität bleiben sichtbar statt synthetisch ergänzt zu werden.'],
-                ['Governed Scoring', 'Die UI projiziert kanonische Scoring-Ergebnisse ohne eigene Modell- oder Daten-Authority.'],
+                ['Bewertung & Scoring', 'Enterprise Scorer, Rankings und fachlich freigegebene Bewertungsflächen.'],
+                ['Screening & Analyse', 'Multi-Asset-Screening über vorhandene kanonische Feature- und Evidence-Verträge.'],
+                ['Governed Access', 'Serverseitige Entitlements, Login-Gates und aktuelle Deaktivierungen bleiben unverändert wirksam.'],
               ].map(([title, description]) => (
                 <article key={title} className="rounded-2xl border border-border bg-surface/45 p-5">
                   <h2 className="text-sm font-black text-brand-primary">{title}</h2>
@@ -147,26 +147,27 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
         </section>
 
         <section
-          id="enterprise-scorer-preview"
+          id="analysis-workbench"
           ref={previewRef}
-          aria-labelledby="enterprise-scorer-preview-title"
+          aria-labelledby="analysis-workbench-title"
           className="scroll-mt-20 border-y border-border bg-surface/20 px-4 py-12 sm:py-16"
         >
-          <div className="mx-auto max-w-7xl space-y-6">
-            <div className="max-w-3xl space-y-2">
+          <div className="mx-auto max-w-[1480px] space-y-6">
+            <div className="max-w-4xl space-y-2">
               <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-brand-primary">
-                Öffentliche Produktvorschau
+                Öffentliche Analyse-Workbench
               </p>
-              <h2 id="enterprise-scorer-preview-title" className="text-2xl font-black text-text-primary sm:text-3xl">
-                Enterprise Scorer
+              <h2 id="analysis-workbench-title" className="text-2xl font-black text-text-primary sm:text-3xl">
+                Bewertungstools & Sideboard
               </h2>
               <p className="text-sm leading-relaxed text-text-secondary">
-                Der Scorer konsumiert die aktuellen kanonischen Score-, Market-Data- und Evidence-Verträge.
-                Fehlende oder nicht verifizierbare Daten bleiben als solche sichtbar.
+                Das Sideboard stellt die etablierten Analyse- und Bewertungsflächen wieder auffindbar bereit.
+                Nur fachlich öffentliche Tools werden direkt geladen; serverseitige Entitlements, Login-Gates und
+                explizit deaktivierte Module werden nicht clientseitig umgangen.
               </p>
             </div>
 
-            {loadPreview ? preview : <ScorerLoadingState />}
+            {loadPreview ? preview : <WorkbenchLoadingState />}
           </div>
         </section>
       </main>
@@ -181,7 +182,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
           </h2>
           <p className="max-w-4xl leading-relaxed">
             CAPITAL-AI dient der Analyse und Bildung und stellt keine Anlageberatung dar. Die
-            öffentliche Vorschau erzeugt keine persistierte anonyme Supabase-/IAM-Session.
+            öffentliche Workbench erzeugt keine persistierte anonyme Supabase-/IAM-Session.
           </p>
           <nav
             aria-label="Rechtliche Informationen"
