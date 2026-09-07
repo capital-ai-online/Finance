@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Correlation baseline:** `main@75c926f12ae514036aa508ea8faf1a82b1a91059`
+**Correlation baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`
 
 Canonical current-main correlation evidence: [`evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`](./evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md).  
 Canonical post-PR-#828 correlation evidence: [`evidence/OPS_POST_828_PRIORITY_RECORRELATION_2026-09-07.md`](./evidence/OPS_POST_828_PRIORITY_RECORRELATION_2026-09-07.md).
@@ -50,6 +50,8 @@ PR #776 is the current-main Recovery Evidence Harness implementation baseline. T
 Historical #802 diff/evidence may be reused only as implementation input. A new implementation requires a fresh branch from then-current main and a new exact-head validation cycle. Actual scheduled RPO, restore integrity/database-RTO, full-service RTO and independent CAPITAL-AI-SEC verification remain separate open gates.
 
 Current-main re-correlation also includes Security PR #832. It changes no OPS target file and independently upgrades the R2-04 repository contract state to `REPOSITORY_CONTRACT_VERIFIED`; it does not close the remaining post-deploy evidence gate.
+
+PR #833 is terminal `closed / unmerged`. PR #834 advanced main only through Frontend navigation files; neither creates an OPS work-package or changed-file conflict. Current open-PR baseline is zero.
 
 ## Core OPS packages retained from V2.1
 
@@ -112,6 +114,7 @@ The following recent OPS work is already Human-merged, repository-implemented or
 | GOV-07 OPS evidence return | PR #794 merged | broader provider/foreign-owner/Security gates remain |
 | RPO measurement evaluator | PR #802 closed unmerged; former branch absent; evaluator absent from main | **NOT_IMPLEMENTED_ON_MAIN / FRESH_REINTAKE_REQUIRED** |
 | qs 6.16.0 DoS remediation | PR #828 merged; final hosted CI/Governance/Container Security successful; current live later main contains override/lock/test | **IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL** |
+| retired authorization cleanup PR #833 | PR #833 closed unmerged | historical branch/diff only; no current writer or main-state change |
 
 ## User Lifecycle terminal closeout — 2026-09-05
 
