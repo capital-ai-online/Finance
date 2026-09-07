@@ -1,7 +1,8 @@
 # CAPITAL-AI-FINTECH — Work Packages
 
-**Correlation baseline:** `main@56f196fc034c5514463546ee975ffb83fd50f44a`  
+**Correlation baseline:** `main@8618326db4d4a5af0fbecd65b83805ea7608109f`  
 **Consolidated:** 2026-09-06  
+**FIN-SEC-02 implementation branch:** `agent/fintech-fin-sec-02-verified-screening-20260907`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC ownership:** `PVC-12..PVC-17`
 
@@ -18,7 +19,7 @@ This file is a supporting work-package projection. Current prioritization and co
 | FIN-18 | supporting | Asset Class Inventory | VERIFIED | repository-derived supported classes only |
 | FIN-19 | supporting | Provider Capability Mapping | PARTIAL / P2 | financial feature/model requirements map to provider-neutral DATA contracts and current `provider-matrix/1.10.0` without ingress/DQ takeover |
 | FIN-20 | supporting | End-to-End Scoring Evidence | PARTIAL / P2 | exact `ValidatedDataInput` -> feature -> model -> dispatcher -> executor -> canonical score -> rank lineage plus required Security/OPS evidence |
-| FIN-SEC-02 | PVC-16 | Verified-screening authorization | OPEN / REFERRED_NOT_EXECUTED / P1 HIGH | canonical verified-score/context/batch paths consume accepted `verified_screening` entitlement/quota boundary; FINTECH evidence ready; independent Security verification requested |
+| FIN-SEC-02 | PVC-16 | Verified-screening authorization | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | shared path gate consumes accepted `verified_screening` quota; FINTECH evidence ready; independent Security verification requested; not self-closed |
 | FIN-SEC-03 | PVC-15 | Financial-analysis authorization | OPEN / REFERRED_NOT_EXECUTED / P1 HIGH | Backtest/Monte Carlo/full-AI protected execution is server-authoritative/fail-closed; Buffett authority preserved; FINTECH evidence ready; independent Security verification requested |
 | FIN-DRIFT-01 | supporting | Project / contract drift checks | PLANNED / P3 | deterministic low-cost checks detect stale PVC/baseline/provider/consumer/security-routing projections without creating new Authority |
 | FIN-SYNC-01 | PVC-12..17 | 2026-09-01 Project Surface Current-Main Sync | COMPLETED / HISTORICAL EVIDENCE | retained as merged evidence; current planning correlation is the 2026-09-06 Roadmap baseline |
@@ -31,7 +32,7 @@ This file is a supporting work-package projection. Current prioritization and co
 
 ### Security -> FINTECH / FIN-SEC-02 and FIN-SEC-03
 
-Both entitlement children remain concrete FINTECH implementation gaps. The historical separate FINTECH Security handoff overlay is non-authorizing; current work is selected through affected PVC, `ROADMAP.md`, ADR-0034 and implementation/tests/evidence. Security remains the independent verification owner.
+`FIN-SEC-02` implementation/tests are `EVIDENCE_READY` on `agent/fintech-fin-sec-02-verified-screening-20260907`. Independent Security verification is requested. `FIN-SEC-03` remains an open implementation gap. The historical separate FINTECH Security handoff overlay is non-authorizing.
 
 ### FINTECH -> Frontend / FIN-17 and FIN-SEC-03 consumer integration
 
@@ -43,7 +44,7 @@ Frontend remains a presentation consumer. `RankingBoard` is the productive UI su
 
 ## Priority order
 
-1. P1/HIGH — `FIN-SEC-02` and `FIN-SEC-03`.
+1. P1/HIGH — `FIN-SEC-02` evidence is ready for Security verification; `FIN-SEC-03` remains unimplemented.
 2. Mandatory recorrelation of then-current `main`, open PRs, Security state, affected Roadmap and applicable ADR/ESS after either Security child completes.
 3. P1 — `FIN-12` and `FIN-17` share the next priority band; choose order only after recorrelation.
 4. P2 — `FIN-19`, then `FIN-20` unless current evidence changes the ordering.
