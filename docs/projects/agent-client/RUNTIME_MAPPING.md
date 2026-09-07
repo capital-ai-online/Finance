@@ -1,14 +1,16 @@
 # CAPITAL-AI-CLIENT — Runtime & Architecture Mapping
 
-Baseline: `main@891f3933ac0476b1e7d4fa5cd6f397257ac52e68`
+Baseline: `main@eee9a8af3f3d2532a213154dd61f678454a2200b`  
+Correlation date: `2026-09-07`
 
-Project stage: `PVC-01 — Agent Client`
+Project stage: `PVC-01 — Agent Client`  
+Primary Owner: `CAPITAL-AI-CLIENT`
 
 ## Migration posture
 
 `logical-ownership-before-physical-relocation`
 
-No productive code is moved by this contract-baseline slice. Existing imports, runtime behavior and downstream authority stay in place. Current strangler evidence: [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md).
+No productive code is moved by this documentation-hygiene slice. Existing imports, runtime behavior and downstream authority stay in place. Historical strangler evidence remains at [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md) and is retained as historical evidence rather than current policy.
 
 ## Current-to-PVC-01 mapping
 
@@ -38,6 +40,8 @@ Their current concrete contract is [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md
 | `AgentClientStatusModel` | client lifecycle state | downstream execution ownership |
 | `AgentClientUxContract` | render request/blocked/success/failure | hidden protected mutation path |
 
+These names are logical contract roles. Their presence in project documentation does not prove a physical runtime implementation.
+
 ## Strangler/refactor trigger
 
 Physical migration is permitted only if at least one is evidenced:
@@ -55,10 +59,14 @@ Physical migration is permitted only if at least one is evidenced:
 | inconsistent productive identity/capability handoff | `NOT TRIGGERED` |
 | duplicated divergent response/status mapping | `NOT TRIGGERED` |
 | evidenced productive duplication reduced by shared client module | `NOT TRIGGERED` |
+| productive `requestedCapability` client implementation | `NOT FOUND` |
+| physical Agent Client logical-component implementation | `NOT FOUND` |
 
 Current relocation state: `NO_PHYSICAL_RUNTIME_TRIGGER`.
 
-Repository searches find canonical IAM/control consumers and foreign Operations/Systemadmin execution-host builders, but no productive PVC-01 request/status implementation requiring extraction. Creating an unconsumed Agent Client runtime module now would be parallel implementation rather than strangler/refactor.
+Current-main search on 2026-09-07 finds `requestedCapability` in documentation/contracts and historical coordination metadata, not in a productive PVC-01 runtime implementation. Searches for `AgentClientRequestBuilder` and `AgentClientStatusModel` resolve only to project documentation/Roadmap. No new current-main evidence therefore triggers physical relocation.
+
+Creating an unconsumed Agent Client runtime module now would be parallel implementation rather than strangler/refactor.
 
 ## Prohibited relocation
 

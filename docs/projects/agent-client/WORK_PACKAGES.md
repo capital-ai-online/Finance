@@ -2,18 +2,21 @@
 
 All packages are constrained to `PVC-01`. A package may consume downstream contracts, but it cannot implement or close a foreign project value-chain stage.
 
+Current project-surface correlation: `main@eee9a8af3f3d2532a213154dd61f678454a2200b` on 2026-09-07. Organizational routing is `CAPITAL-AI-CLIENT -> docs/projects/agent-client/ -> PVC-01 -> CAPITAL-AI-CLIENT`. At correlation time there were `0` open Pull Requests, no active CLIENT branch writer, and no evidence changing `NO_PHYSICAL_RUNTIME_TRIGGER`.
+
 ## CLIENT-01 — Agent Client Inventory
 
-**State:** `DONE — RE-CORRELATED`
+**State:** `DONE — CURRENT-MAIN RE-CORRELATED`
 
 Outputs:
 - repository-wide Agent Client source/task classification;
 - ownership collision/open-writer check;
 - current runtime/document mapping;
 - foreign execution-surface identification;
-- current-main strangler scan.
+- current-main strangler search;
+- PVC-01 project-surface hygiene against the canonical mapping and current lifecycle semantics.
 
-Exit evidence: `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `evidence/RECORRELATION_2026-09-01.md`.
+Current project evidence: `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `TRACEABILITY.md` and this work-package surface. Historical scan evidence remains in `evidence/RECORRELATION_2026-09-01.md` and is retained as historical rather than rewritten.
 
 ## CLIENT-02 — Request Contract
 
@@ -82,9 +85,9 @@ Acceptance:
 
 **State:** `EVIDENCE CURRENT — RUNTIME TESTS DEFERRED`
 
-Runtime contract tests are created only when a physical PVC-01 implementation slice is introduced. The current re-correlation and strangler scan found no justified runtime slice, so this package records evidence without manufacturing runtime `PASS` claims.
+Runtime contract tests are created only when a physical PVC-01 implementation slice is introduced. Current-main correlation still finds no justified runtime slice, so this package records documentation/contract evidence without manufacturing runtime `PASS` claims.
 
-Current evidence: `evidence/RECORRELATION_2026-09-01.md`.
+Current evidence is the active project surface correlated on 2026-09-07. `evidence/RECORRELATION_2026-09-01.md` remains historical scan evidence and is not treated as current policy.
 
 Minimum future runtime evidence matrix:
 
@@ -100,4 +103,4 @@ Minimum future runtime evidence matrix:
 | production mutation request | request only; no client-side execution |
 | duplicate client implementation scan | no parallel implementation |
 
-Build/test execution follows repository PR/CI policy. Documentation/contract-only baseline work does not manufacture `PASS` evidence for unexecuted runtime tests.
+Build/test execution follows current repository PR/CI policy. Documentation/contract-only hygiene work does not manufacture `PASS` evidence for unexecuted runtime tests. No standing PR-create/session authority is assumed by these work packages; protected lifecycle semantics are resolved from current `/AGENTS.md` and separately proven applicable authority.
