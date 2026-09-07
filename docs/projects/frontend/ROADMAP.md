@@ -26,6 +26,26 @@ Detailed Frontend migration state remains canonical in `docs/frontend/**`.
 | `FE-PROJ-05` | UX quality remains evidence-backed | accessibility/performance/component inventory evidence remains traceable |
 | `FE-PROJ-06` | Branding Manifest v6.2 has one machine-readable token authority plus one versioned geometry contract | `docs/frontend/design-tokens.json` remains color/type authority; `docs/frontend/brandmark.json` owns brandmark geometry; Web/public projections and downstream renderer consumers must not establish parallel palettes or brandmark geometry authorities |
 
+## Current Owner-directed P0
+
+**Public Analysis Sideboard restoration** — active before BB-2E until merged/closed.
+
+The public `/` surface shall again expose the established CAPITAL-AI assessment-tool Sideboard rather than only a single Enterprise Scorer preview. The implementation must remain an `src/app` composition over existing feature-owned tools and preserve current server/IAM/data-integrity boundaries:
+
+- restore discoverability of the established assessment/analysis tools, including Enterprise Scorer, Universe TOP Rankings, Buffett Value Check, Profi Markt-Screener, Multi-Asset Universum, Ad-Hoc Charts, Preis-Alarme, Backtest, AI Markt-Sentiment, Rohstoff-Bewertung, DeFi and the currently disabled Risk Assessment surface;
+- directly execute only tools whose current public or server-gated contracts are suitable for unauthenticated composition;
+- keep login-required tools login-required and explicitly disabled tools disabled;
+- do not restore the heavy authenticated `src/components/Dashboard.tsx` as the public root;
+- do not create an anonymous/persisted Supabase or IAM visitor session;
+- do not turn simulated/preset/fallback values into verified public evidence;
+- preserve canonical scoring, market-data, evidence and entitlement authorities.
+
+Current implementation/evidence surface: `docs/evidence/frontend/PUBLIC_ANALYSIS_SIDEBOARD_SCOPE_2026-09-07.md`.
+
+**Exit gate:** exact branch is synchronized with current `main`; C-P hosted Governance/Required `build-and-test` scope passes on the exact PR head; no server entitlement, scoring/data authority or authenticated-route boundary is bypassed; Human/CODEOWNER merge remains separate.
+
+After this P0 closes, reprioritize against then-current main; absent a newer Owner direction, BB-2E Navigation/Drawer extraction resumes as the next Frontend migration slice.
+
 ## Execution invariants
 
 - Projection, not redefinition.
