@@ -85,8 +85,8 @@ const GENERATOR_MARKERS = [
 ] as const;
 
 const VERSION_MARKERS = [
-  /^\s*(?:[-*+]\s+)?(?:\*\*)?(?:document\s+)?version(?:\*\*)?\s*[:=]\s*`?[0-9]/i,
-  /^\s*(?:[-*+]\s+)?(?:\*\*)?dokumentversion(?:\*\*)?\s*[:=]\s*`?[0-9]/i,
+  /^(?:[-*+]\s+)?(?:document\s+)?version\s*[:=]\s*[0-9]/i,
+  /^(?:[-*+]\s+)?dokumentversion\s*[:=]\s*[0-9]/i,
 ] as const;
 
 function normalizeRepoPath(value: string): string {
@@ -225,8 +225,13 @@ function hasGeneratorMarking(content: string): boolean {
   return content.split(/\r?\n/).some((line) => GENERATOR_MARKERS.some((marker) => marker.test(line)));
 }
 
+function normalizeVersionLine(line: string): string {
+  return line.replace(/[*`_]/g, '').replace(/\s+/g, ' ').trim();
+}
+
 function hasDocumentVersionMarking(content: string): boolean {
-  return content.split(/\r?\n/).some((line) => VERSION_MARKERS.some((marker) => marker.test(line)));
+  return content.split(/\r?\n/).some((line) =>
+    VERSION_MARKERS.some((marker) => marker.test(normalizeVersionLine(line))));
 }
 
 function readRegistryEntries(repoRoot: string): RegistryEntry[] {
