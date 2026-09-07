@@ -51,7 +51,7 @@ Historical #802 diff/evidence may be reused only as implementation input. A new 
 
 Current-main re-correlation also includes Security PR #832. It changes no OPS target file and independently upgrades the R2-04 repository contract state to `REPOSITORY_CONTRACT_VERIFIED`; it does not close the remaining post-deploy evidence gate.
 
-PR #833 is terminal `closed / unmerged`. PR #834 advanced main only through Frontend navigation files; neither creates an OPS work-package or changed-file conflict. Current open-PR baseline is zero.
+PR #833 is terminal `closed / unmerged`. PR #834 advanced main only through Frontend navigation files and creates no OPS work-package or changed-file conflict. Current PR #836 changes only `.github/workflows/zizmor.yml`; it is a separate C-N workflow-security tooling slice with no changed-file or material semantic overlap with this documentation/prioritization work.
 
 ## Core OPS packages retained from V2.1
 
