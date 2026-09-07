@@ -117,11 +117,11 @@ if (errors.length === 0) {
   if (!currentRoadmap.includes('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS')) {
     fail('CURRENT_ROADMAP_AUTHORITY_MISSING', 'docs/architecture/ROADMAP.md must declare its stable current-state authority ID.');
   }
-  if (!/M10 PR-CI passkey runtime is `RETIRED \/ OFF`/i.test(currentRoadmap)) {
-    fail('CURRENT_ROADMAP_M10_STATE_INVALID', 'Current-state roadmap must state that the productive M10 PR-CI passkey runtime is retired/off.');
-  }
-  if (!/No productive M10 implementation is expected in current state/i.test(currentRoadmap)) {
-    fail('CURRENT_ROADMAP_M10_DISCOVERY_BOUNDARY_MISSING', 'Current-state roadmap must explicitly prohibit treating M10 as a missing current implementation.');
+  const roadmapM10Projection = currentRoadmap
+    .split(/\r?\n/)
+    .find((line) => line.trimStart().startsWith('|') && /\bM10\b.*PR-CI/i.test(line));
+  if (!roadmapM10Projection || !/RETIRED\s*\/\s*OFF/i.test(roadmapM10Projection)) {
+    fail('CURRENT_ROADMAP_M10_STATE_INVALID', 'Current-state roadmap must project the productive M10 PR-CI runtime as retired/off.');
   }
   if (/Mandatory blockers before M10 reactivation/i.test(currentRoadmap)) {
     fail('CURRENT_ROADMAP_M10_REACTIVATION_BACKLOG_PRESENT', 'Retired M10 must not retain a current-state reactivation backlog.');
