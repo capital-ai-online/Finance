@@ -3,105 +3,130 @@
 **Project:** `CAPITAL-AI-SEC`  
 **Project folder:** `docs/projects/security/`  
 **Primary Productive PVC ownership:** `[]`  
+**Primary Owner:** `CAPITAL-AI-SEC`  
 **Role:** cross-cutting Security requirements, findings, testing and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
-**Date:** `2026-09-06`  
-**Correlation baseline:** `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`  
+**Date:** `2026-09-07`  
+**Correlation baseline:** `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
+**SOTA baseline:** `docs/evidence/security/CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md`  
 **Trust root:** `/AGENTS.md`
 
 ## Purpose
 
-This file is the thin owner-side execution projection required by the canonical `docs/projects/` model. Current work and priority are resolved here and then detailed in the canonical Security roadmap. It does not create a second finding register, Security authority, IAM plane, release path or productive PVC owner.
+This file is the owner-side execution projection required by the canonical `docs/projects/` model. Current work and priority are resolved here and detailed in the canonical Security roadmap. It creates no second finding register, Security authority, IAM plane, release path or productive PVC owner.
 
-Current project routing is resolved only from:
+Current routing resolves from current `/AGENTS.md`, `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`, followed by applicable accepted ADR/ESS contracts and current code/tests/evidence. External standards are advisory/non-authorizing. Withdrawn post-PVC overlays, including the former Cross-Project Handoff Contract, are historical and are not routing inputs.
 
-- `/AGENTS.md`;
-- `docs/projects/README.md`;
-- `docs/projects/PROJECT_VALUE_CHAIN.md`.
+## Current-main consolidation — 2026-09-07
 
-Post-PVC policy overlays withdrawn by current `/AGENTS.md`, including the former Cross-Project Handoff Contract, are historical/non-authorizing and are not current routing inputs.
-
-## Current-main consolidation — 2026-09-06
-
-Repository-backed Security work visible from the available project-chat history and current `main` was re-correlated rather than inferred from chat status alone.
-
-| Work item | Main / branch evidence | Current Security disposition |
+| Work item | Current evidence | Security disposition |
 |---|---|---|
-| Security project/PVC consolidation | PR #749 merged; canonical Security project and detailed roadmap now on main | `DONE_MAIN` |
-| Adversarial Web/Mobile Security Assessment capability | `.ai/skills/CAPITAL-AI-Security-Assessment.md`, schema/validator and PR #706 | `IMPLEMENTED_MAIN` |
-| Security Assessment validator CI binding | `package.json#test:raw` executes `scripts/security/validateSecurityAssessment.test.mjs`; PR #711 merged | `DONE_MAIN` |
-| Security Assessment trust-root alignment | branch `agent/security-assess-align-20260905` updates skill v1.0.1 and adds an authority-regression test; current `ESS-0006` v1.1.0 confirms the bounded SEC verification/remediation-owner split | `IMPLEMENTED_BRANCH / VALIDATION + PR PENDING` |
-| Owner Device Authorization Stage-C verification | initial FAIL evidence exists, followed by independent PASS re-verification evidence on main | `COMPLETE / HISTORICAL`; do not reopen or reconstruct retired M10/withdrawn cutover overlays without new current authority |
-| GOV-CHAT-042 User Lifecycle Security integration | PR #725 evidence/test contract present on main | `IMPLEMENTED_MAIN / RESIDUAL_VERIFICATION_OPEN` |
-| OPS Security return correlation | merged PR #747 records R2-04 implementation, R2-03 priority gap, R2-06 parent evidence and remaining OPS evidence gates | `CORRELATED_MAIN`; no Security closure implied |
-| S1 hardening findings | current owner roadmaps, code and evidence re-correlated below | mixed; no blanket closure |
+| Security project/PVC consolidation | PR #749 merged | `DONE_MAIN` |
+| Security Assessment capability + raw-test binding | current main | `DONE_MAIN` |
+| `SEC-ASSESS-ALIGN` | PR #766 merged; skill v1.0.1 aligned to current authority and advisory OWASP methodology | `DONE_MAIN` |
+| `SEC-SOTA-01` SOTA baseline + roadmap convergence | `CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md` on current branch | `IMPLEMENTED_BRANCH / PR GATE OPEN` |
+| `SEC-VERIFY-R2-04` fatal-process repository re-verification | current-main code/test contract + branch evidence | `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN` |
+| `SEC-VERIFY-ULS-001` subscription identity | current Security evidence retains provider identity residuals | `PARTIAL / NOT VERIFIED` |
+| Owner Device Authorization Stage-C | independent evidence on main | `COMPLETE / HISTORICAL` |
+| S1 hardening findings | current owner roadmaps/code/evidence | mixed; no blanket closure |
+
+## State-of-the-art overlay
+
+The external reference set is `ADVISORY_NON_AUTHORIZING` and mapped into existing `SEC-01..SEC-10`; it creates no parallel workstream or repository authority.
+
+Current reference families:
+
+- OWASP Top 10:2025;
+- OWASP ASVS 5.0.0;
+- OWASP GenAI LLM Top 10 2026;
+- OWASP Top 10 for Agentic Applications 2026;
+- OWASP Agent Control Standard and Secure MCP guidance;
+- SLSA v1.2 Source/Build Track;
+- CISA Secure by Design;
+- EU Cyber Resilience Act reporting guidance as a **Compliance dependency only**, subject to `CAPITAL-AI-COMP` applicability determination.
+
+NIST publications/frameworks remain outside the CURRENT repository governance baseline under current `/AGENTS.md` and are not used here as normative or backlog-authorizing sources.
 
 ## Priority queue
 
-Security-owned work is separated from foreign productive remediation.
+### P0 — Security-owned executable work
 
-1. **`SEC-ASSESS-ALIGN` — Security Assessment current-main alignment.** `IMPLEMENTED_BRANCH / VALIDATION + PR PENDING`: Skill v1.0.1 removes the withdrawn routing dependency, uses only current project/PVC mapping, and marks OWASP methodologies advisory/non-authorizing. A focused regression test prevents reintroduction of the withdrawn handoff contract or NIST SP 800-115 baseline. Exit gate: exact-head applicable checks + Human/Owner PR creation approval + Human/CODEOWNER merge.
-2. **`SEC-VERIFY-ULS-001` — User Lifecycle subscription-identity re-verification.** OPS has read-only provider evidence that the stable `metadata.user_id -> auth.users.id -> public.subscriptions.user_id` contract is deployed; Security must independently verify the returned evidence without closing unrelated provider/E2E gaps.
-3. **`SEC-VERIFY-R2-04` — Fatal-process remediation verification.** PR #720 is merged and implemented; Security closure still requires applicable negative/runtime/post-deploy evidence.
-4. **`SEC-AUTH-LIFECYCLE` — MFA/AAL lifecycle correlation.** ESS-0020 remains proposed; current Governance evidence explicitly declined unilateral foreign-domain disposition. No Security or Governance agent may self-promote or retire it; any lifecycle change follows current authority/Human gates.
-5. Track foreign-owner S1 remediation/evidence returns without absorbing implementation: `S1-R2-03`, `05`, `06`, `07`, `09`, `10`, `11` and User Lifecycle provider residuals.
+1. **`SEC-SOTA-01` — SOTA baseline and roadmap convergence.**  
+   **State:** `IMPLEMENTED_BRANCH / PR GATE OPEN`.  
+   Exit: current-main baseline, advisory source treatment, existing-workstream mapping and synchronized project/detailed/work-package roadmaps.
+
+2. **`SEC-VERIFY-R2-04` — fatal-process current-main re-verification.**  
+   **State:** `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN`.  
+   Repository-level fail-fast, unhealthy readiness, duplicate-fatal suppression and non-zero-exit intent are independently verified from current-main code/test contracts. Hosted execution was not run in this connector session. Full runtime closure still requires exact post-deploy supervisor/restart/readiness evidence from `CAPITAL-AI-OPS / PVC-08`.
+
+3. **`SEC-SOTA-02` — AI/Agent/MCP control inventory.**  
+   **State:** `READY`.  
+   Map current agent/tool/MCP surfaces to prompt injection, authority expansion, delegated permissions, session isolation, tool side effects, inspectability and evidence requirements. Route productive gaps to actual owners.
+
+4. **`SEC-SOTA-03` — supply-chain assurance inventory.**  
+   **State:** `READY`.  
+   Correlate current dependency/source/build/provenance/attestation/release controls against repository authority and advisory SLSA 1.2/OWASP supply-chain themes. Reuse existing Development Chain and Release mechanisms.
+
+### P1
+
+5. **`SEC-SOTA-04` — application/API ASVS 5.0 verification matrix.** Repository-relevant controls only; findings route to productive owners.
+6. **`SEC-AUTH-LIFECYCLE` — MFA/AAL lifecycle correlation.** ESS-0020 remains proposed; no unilateral lifecycle promotion/retirement.
+7. Continue independent evidence returns for current S1 and User Lifecycle residuals.
+
+### Compliance dependency
+
+**`SEC-COMP-CRA-01` — CRA applicability/reporting readiness correlation.** External CRA reporting obligations begin `2026-09-11` for in-scope products with digital elements. `CAPITAL-AI-COMP` must determine applicability and legal obligation scope. Security may provide and verify technical vulnerability/incident evidence only after that ownership decision; this roadmap does not make a legal applicability determination.
 
 ## Current finding projection
 
-| Finding / residual | Primary productive owner | Main-correlated state | Security next gate |
+| Finding / residual | Primary productive owner | Current-main state | Security next gate |
 |---|---|---|---|
-| `S1-R2-03` Node control-plane convergence | `CAPITAL-AI-OPS / PVC-06` | `OPEN / HIGHEST EXECUTABLE OPS P1`; `.nvmrc` remains `24.18.0` while required convergence target is `24.20.0` | verify exact identity after OPS implementation |
-| `S1-R2-04` fatal process handling | `CAPITAL-AI-OPS / PVC-04`, runtime evidence `PVC-08` | `IMPLEMENTED_ON_MAIN` via PR #720; independent Security/post-deploy verification pending | negative + post-deploy/supervisor evidence |
-| `S1-R2-05` Stripe redirect boundary | `CAPITAL-AI-OPS / PVC-02` | `OPEN` | open-redirect DENY evidence after OPS remediation |
-| `S1-R2-06` entitlement authority | OPS parent inventory; FINTECH/DATA children by actual capability owner | parent inventory `EVIDENCE_READY`; child remediation + Security verification remain | per-capability server-side DENY verification |
+| `S1-R2-03` Node control-plane convergence | `CAPITAL-AI-OPS / PVC-06` | owner roadmap remains source of productive state | verify exact identity after OPS implementation |
+| `S1-R2-04` fatal process handling | `CAPITAL-AI-OPS / PVC-04`; runtime evidence `PVC-08` | `REPOSITORY_CONTRACT_VERIFIED`; post-deploy evidence open | exact deployed supervisor/restart/readiness evidence |
+| `S1-R2-05` Stripe redirect boundary | `CAPITAL-AI-OPS / PVC-02` | open owner-routed finding | open-redirect DENY evidence after remediation |
+| `S1-R2-06` entitlement authority | OPS parent inventory; FINTECH/DATA children by actual capability owner | parent evidence exists; child remediation + verification remain | per-capability server-side DENY verification |
 | `S1-R2-07` recovery / RPO / RTO | `CAPITAL-AI-OPS / PVC-08` | `OPEN / UNVERIFIED` | measured restore/integrity/RPO/RTO evidence |
-| `S1-R2-09` strict CSP promotion | `CAPITAL-AI-OPS / PVC-08` | `WAITING_FOR_EVIDENCE` | compatibility/violation evidence before strict-state claim |
-| `S1-R2-10` demo billing isolation | `CAPITAL-AI-OPS / PVC-08` | `WAITING_FOR_EVIDENCE` | production reachability proof bound to deployed identity |
-| `S1-R2-11` evidence identity/freshness | `CAPITAL-AI-DATA / PVC-10` | `OPEN`; DATA roadmap says Security evidence work open | current/stale/wrong-identity behavior evidence |
-| User Lifecycle subscription identity | `CAPITAL-AI-OPS / PVC-08` evidence provider | `OPS_PROVIDER_EVIDENCE_READY / SECURITY_REVERIFICATION_REQUIRED` | independent read-only Security verification |
-| User Lifecycle provider E2E | `CAPITAL-AI-OPS / PVC-08` plus applicable provider/runtime owners | `NOT_AVAILABLE` for Supabase Local/Mailpit, cross-user provider E2E, Stripe Sandbox/Test Clock and payment/redelivery scenarios | remain non-PASS until reproducible evidence exists |
-| leaked-password protection | `CAPITAL-AI-OPS / PVC-08` provider configuration | `OPEN DEFENSE-IN-DEPTH`; current advisor warning remains | separate protected config decision/mutation, then Security evidence |
-| MFA/AAL authority lifecycle | no productive Security PVC ownership; current lifecycle requires applicable authority/Human decision | `OPEN / CLARIFY`; ESS-0020 remains `PROPOSED` | current authority correlation; no unilateral promotion/retirement |
+| `S1-R2-09` strict CSP promotion | `CAPITAL-AI-OPS / PVC-08` | evidence-dependent | compatibility/violation evidence before strict-state claim |
+| `S1-R2-10` demo billing isolation | `CAPITAL-AI-OPS / PVC-08` | evidence-dependent | production reachability proof bound to deployed identity |
+| `S1-R2-11` evidence identity/freshness | `CAPITAL-AI-DATA / PVC-10` | open Security evidence semantics | current/stale/wrong-identity behavior evidence |
+| User Lifecycle subscription identity | `CAPITAL-AI-OPS / PVC-08` evidence provider | `PARTIAL / NOT VERIFIED` | remediate/return provider identity evidence, then independent SEC re-verification |
+| User Lifecycle provider E2E | OPS/PVC-08 plus applicable provider/runtime owners | required isolated/provider scenarios remain incomplete | remain non-PASS until reproducible evidence exists |
+| leaked-password protection | `CAPITAL-AI-OPS / PVC-08` provider configuration | defense-in-depth residual | separately authorized configuration action + readback |
+| MFA/AAL authority lifecycle | applicable current authority/Human decision | `OPEN / CLARIFY`; ESS-0020 `PROPOSED` | no unilateral Security lifecycle mutation |
 
-No row above grants CAPITAL-AI-SEC productive implementation ownership.
-
-## Current correlation state
-
-Current task baseline is `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7`. `/AGENTS.md` remains v2.7.1 and `ESS-0006` remains v1.1.0. The current-main delta since the prior `7c607de0dfa12e37b1a4070a2cb65e4d484cc6eb` Security snapshot is Governance/Compliance/SEO/Frontend-adjacent and does not modify the four SEC target files. The branch merge-base is exact current main and the scoped diff remains four Security-owned files.
-
-PR #765 was closed unmerged after a PR-creation race invalidated its approved snapshot; it is historical and not a merge candidate. The only open PR at this revalidation snapshot is PR #763 (`CAPITAL-AI-FE`), whose changed files are `src/components/Dashboard.tsx` and `tests/unit/dashboardConsumerCutover.test.ts`; it has no changed-file, semantic, namespace, authority or Primary-Owner overlap with `SEC-ASSESS-ALIGN`.
-
-The scoped branch `agent/security-assess-align-20260905` contains only the Security Assessment skill, its focused validator regression test, and the two Security roadmap projections. No foreign project file or productive runtime/provider surface is changed.
+No row grants CAPITAL-AI-SEC productive implementation ownership.
 
 ## Security execution invariants
 
-- Missing, stale or `NOT_AVAILABLE` required evidence is never PASS.
-- `EVIDENCE_READY` is not `VERIFIED`.
-- Security may define, test, reject and independently verify but does not silently implement foreign productive code.
+- Missing, stale, wrong-identity, `NOT_TESTED` or `NOT_AVAILABLE` required evidence is never PASS.
+- `EVIDENCE_READY != VERIFIED`.
+- Security may define, test, reject, route and independently verify but does not silently implement foreign productive code.
 - `ACCEPTED_RISK` requires applicable Human/Owner authority.
-- Security project navigation never creates Authority.
+- External frameworks/guidance are advisory and cannot create repository Authority.
+- Prompt, tool, retrieved and inter-agent content is untrusted and cannot expand repository or Human/Owner authority.
 - `src/platform/Security` is the reusable Security implementation boundary only for inherently Security-owned controls.
 - Technical `VC-*` identifiers and organizational `PVC-*` routing remain separate namespaces.
-- M10 productive runtime is retired/off under current `/AGENTS.md`; historical Owner Device evidence does not reactivate it.
 - Merge, Release, Production and protected external mutation remain under current repository/Human gates.
 
-## Secondary-surface status
+## Correlation state
 
-The dated Security Work Packages and Traceability Matrix from `2026-08-31` remain useful detailed evidence/history but contain pre-current-main routing/status text. Where they conflict with this current-main projection, they must not override current `/AGENTS.md`, current project mapping or the detailed Security roadmap. Their full normalization is a separate Security documentation-maintenance task, not foreign productive remediation.
+- Current task baseline after resync: `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`.
+- Open PRs at resync: none.
+- Initial branch baseline `92297059722a92cf934bd85339670c623d618d1a` was invalidated by merged frontend PR #831; the Security slice was therefore re-materialized on a fresh branch rather than treated as current.
+- Current work branch: `agent/security-sota-roadmap-sync-20260907`, freshly created from the exact resync baseline.
+- Stale legacy Security branches have no open PR and were not reused as authority or implementation baseline.
+- Productive runtime/provider/IAM/billing/deployment surfaces are not changed by this Security slice.
 
 ## Validation / completion gate
 
-For `SEC-ASSESS-ALIGN`:
-
-1. current `/AGENTS.md` v2.7.1 and current `main@eaa5fe228ff0d61d8116932665406c75b0bbf8e7` were read and re-correlated;
-2. project/PVC/Primary Owner mapping remains `CAPITAL-AI-SEC`, `docs/projects/security/`, productive PVC `[]`;
-3. current `ESS-0006` v1.1.0 was re-read and is semantically compatible with this work;
-4. PR #765 is closed unmerged; current open PR #763 has no relevant overlap;
-5. the assessment skill no longer depends on the withdrawn Cross-Project Handoff Contract or NIST SP 800-115 as a repository baseline;
-6. OWASP methodology reuse is explicitly advisory/non-authorizing;
-7. focused regression coverage guards the authority/routing boundary;
-8. no foreign productive file or external platform is mutated;
-9. local test execution remains `NOT RUN` because the isolated runner could not resolve `github.com`; this is not represented as PASS;
-10. final exact main/head re-read is required immediately before PR creation after a fresh valid approval snippet;
-11. merge remains Human/CODEOWNER-only.
+1. current `/AGENTS.md`, project/PVC mapping, Security README/roadmaps and `ESS-0006` were re-read;
+2. current main and open PRs were re-correlated; main drift was detected and handled by fresh-branch resync;
+3. external SOTA guidance is advisory/non-authorizing and mapped into existing workstreams;
+4. `SEC-ASSESS-ALIGN` stale state is corrected to merged/DONE_MAIN;
+5. `SEC-SOTA-01` is implemented as Security-owned documentation/evidence;
+6. `SEC-VERIFY-R2-04` repository contract is independently re-verified without claiming missing post-deploy evidence;
+7. no foreign productive remediation is included;
+8. hosted/unit/build execution is `NOT RUN` in this connector session and is not represented as PASS;
+9. exact main/head/open-PR re-correlation remains required immediately before PR creation;
+10. PR creation requires explicit Human/Owner approval for the exact snapshot; merge remains Human/CODEOWNER-only.
