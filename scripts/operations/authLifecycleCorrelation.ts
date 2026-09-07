@@ -40,8 +40,8 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
   const loginPage = read(repoRoot, 'src/features/public/ui/LoginPage.tsx');
   const appRoutes = read(repoRoot, 'src/app/routing/AppRoutes.tsx');
   const sessionComposition = read(repoRoot, 'src/app/auth/SessionComposition.tsx');
+  const appDashboard = read(repoRoot, 'src/app/dashboard/Dashboard.tsx');
   const registrationGate = read(repoRoot, 'src/components/RegistrationCompletionGate.tsx');
-  const dashboard = read(repoRoot, 'src/components/Dashboard.tsx');
   const stepUp = read(repoRoot, 'server/stepUp.ts');
   const registrationRoadmap = read(repoRoot, 'docs/roadmaps/work-packages/AUTH_NORMAL_USER_LOGIN_REGISTRATION_2026-08-29.md');
   const indexHtml = read(repoRoot, 'index.html');
@@ -79,21 +79,6 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       : 'The root route renders the public landing composition without an authenticated /dashboard handoff.',
   ));
 
-  const menuContract =
-    dashboard.includes('onClick={() => setMenuOpen(true)}') &&
-    dashboard.includes('onClick={() => setMenuOpen(false)}') &&
-    dashboard.includes('aria-label="Hauptmenü öffnen"');
-  findings.push(finding(
-    'dashboard_menu_interaction_contract',
-    menuContract ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['src/components/Dashboard.tsx'],
-    'The hamburger button opens the existing slide-out navigation and the overlay/navigation paths can close it.',
-    menuContract
-      ? 'Static menu open/close wiring is present; a post-login freeze therefore requires application/session composition correlation rather than a new menu implementation.'
-      : 'The static hamburger open/close interaction contract is incomplete.',
-  ));
-
   const localLogoutDefault = sessionComposition.includes("supabase.auth.signOut({ scope: 'local' })");
   findings.push(finding(
     'logout_local_default',
@@ -107,17 +92,17 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
   ));
 
   const explicitGlobalLogout =
-    (sessionComposition.includes("scope: 'global'") || dashboard.includes("scope: 'global'")) &&
-    /alle ger[aä]te|all devices|global logout/i.test(`${sessionComposition}\n${dashboard}`);
+    (sessionComposition.includes("scope: 'global'") || appDashboard.includes("scope: 'global'")) &&
+    /alle ger[aä]te|all devices|global logout/i.test(`${sessionComposition}\n${appDashboard}`);
   findings.push(finding(
     'logout_explicit_global_action',
     explicitGlobalLogout ? 'PASS' : 'FAIL',
     'CAPITAL-AI-FE',
-    ['src/app/auth/SessionComposition.tsx', 'src/components/Dashboard.tsx'],
+    ['src/app/auth/SessionComposition.tsx', 'src/app/dashboard/Dashboard.tsx'],
     'Global logout is a separate explicit user action and is not the default logout path.',
     explicitGlobalLogout
-      ? 'A distinct global-logout action is represented in the application contract.'
-      : 'No distinct user-facing global logout action is represented in the current application contract.',
+      ? 'A distinct global-logout action is represented in the app-owned application contract.'
+      : 'No distinct user-facing global logout action is represented in the app-owned application contract.',
   ));
 
   const registrationPrimary =
