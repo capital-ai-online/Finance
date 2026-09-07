@@ -21,7 +21,7 @@ export const GOV_DOC_001_RULE = Object.freeze({
   rationale: 'Registered documentation must declare an explicit document version in the document body.',
   essReference: 'ESS-0012-CONTRACTS Chapter 2.5',
   evidenceType: 'FileReference',
-  version: '1.0.1',
+  version: '1.0.0',
 } as const);
 
 export const GOV_DOC_003_RULE = Object.freeze({
@@ -87,7 +87,7 @@ const GENERATOR_MARKERS = [
 const VERSION_LABEL = String.raw`(?:document(?:ation)?[\s_-]+)?(?:version|dokumentversion|dokumentenversion|fassung)`;
 const VERSION_VALUE = String.raw`(?:v)?\d+(?:\.\d+){0,3}`;
 const VERSION_MARKING = new RegExp(
-  `(?:^|[\\s,;(\\[]+)${VERSION_LABEL}(?:\\s*(?:[:|=]|is))?\\s*${VERSION_VALUE}\\b`,
+  String.raw`(?:^|[\s,;(\[]+)` + VERSION_LABEL + String.raw`(?:\s*(?:[:|=]|is))?\s*` + VERSION_VALUE + String.raw`\b`,
   'i',
 );
 
@@ -220,7 +220,7 @@ export function collectGovDoc003Findings(options: {
 
   return findings.sort((left, right) =>
     `${left.documentPath}:${left.documentId}:${left.ruleId}`
-      .localeCompare(`${right.documentPath}:${right.documentId}:${left.ruleId}`));
+      .localeCompare(`${right.documentPath}:${right.documentId}:${right.ruleId}`));
 }
 
 function hasGeneratorMarking(content: string): boolean {
@@ -234,8 +234,8 @@ function normalizeVersionText(value: string): string {
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/<\/?[^>]+>/g, ' ')
     .replace(/[|#]+/g, ' ')
-    .replace(/["“”„']/g, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/["\u201c\u201d\u201e']/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
     .replace(/^[-*+]\s+/, '');
 }
