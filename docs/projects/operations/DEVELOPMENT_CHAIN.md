@@ -45,20 +45,16 @@ DC-00 PRECHECK
 
 ## Protected gates
 
-- PR creation: exact current-main/candidate Human/Owner approval or a valid current supersession such as a project-bound ADR-0104 session.
+- PR creation: exact current-main/branch-head Human/Owner approval or a valid current scoped delegation.
 - Hosted CI: independent evidence, not approval.
 - Merge: Human/CODEOWNER only.
 - Version transition: controlled Release Version Gate only.
 - Release: does not imply Production deployment.
-- Production mutation: separate current authorization or valid current supersession.
+- Production mutation: separate current authorization or valid current scoped delegation.
 - Security verification: CAPITAL-AI-SEC when a Security finding is involved.
 
-## Historical M0-M10
+## Historical implementation phases
 
-Existing M0-M10 artifacts remain discoverable implementation/maturity evidence. They are not re-created as permanent OPS project stages.
+Historical implementation/maturity artifacts remain discoverable only for audit, incident review and traceability. Retired authorization implementations are not current OPS stages, runtime expectations, discovery targets or restoration backlog.
 
-M10 Passkey authentication and `AUTHORIZE_PR_CI` are **RETIRED / ARCHIVED / OFF** as the OPS operational state from 2026-09-01. The productive M10 server routes, WebAuthn authorization UI, GitHub Actions M10 dispatch/gate and database runtime access are retired; historical database rows and historical repository evidence remain retained for auditability.
-
-This OPS projection does not supersede or rewrite Governance-owned ADR/ESS/policy authority or Security-owned threat-model lifecycle. Those foreign authority/assurance decisions remain separate cross-project work. M10 must not be reactivated through OPS runtime/configuration. Any future phishing-resistant Human/Owner authorization mechanism requires a new current design and the applicable Governance/Owner decision; it is not an implicit M10 reactivation.
-
-Operational retirement evidence: `docs/projects/operations/evidence/M10_PASSKEY_RETIREMENT_2026-09-01.md`.
+Historical database rows, applied migration history and repository evidence remain retained for auditability. This OPS projection does not supersede or rewrite Governance-owned ADR/ESS/policy authority or Security-owned threat-model lifecycle. Any future Human/Owner authorization mechanism requires a new current design and the applicable Governance/Owner decision.

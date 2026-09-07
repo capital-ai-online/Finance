@@ -1,9 +1,11 @@
 # CAPITAL-AI Systemadmin Agent Roadmap
 
-Status: IMPLEMENTATION PHASE
+Status: HISTORICAL / NON-AUTHORIZING EXECUTION HISTORY
 Date: 2026-08-14
 Current repository baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679` (PR #255 merge)
 Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068
+
+**Current-state supersession:** This file preserves the 2026-08-14/15 Systemadmin execution history only. Current work, priority, authorization dependencies and mutation gates resolve from `/AGENTS.md`, `docs/projects/operations/ROADMAP.md`, applicable current ADR/ESS and current Governance controls. Historical phase/gate wording below MUST NOT be used as an active prerequisite, restoration target or discovery dependency.
 
 **Sync 2026-08-14:** SA0-SA4 bleiben `COMPLETE / VERIFIED PASS`; keine Statusänderung durch PR #255
 (M5A wurde direkt implementiert, nicht über den SA4-Pfad — siehe Korrektur im M5A-Abschnitt unten

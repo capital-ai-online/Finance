@@ -3,8 +3,8 @@
 **Document ID:** ROADMAP-INTEGRATED-DC-SA-0001  
 **Document role:** roadmap / non-authorizing projection  
 **Status:** ACTIVE — NON-AUTHORIZING CURRENT-STATE PROJECTION  
-**Version:** 2.0.0  
-**Date:** 2026-08-25  
+**Version:** 2.1.0  
+**Date:** 2026-09-07  
 **Repository:** SvenKulessa/Finance  
 **Current-state authority:** `docs/architecture/ROADMAP.md` / `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Governance authority:** ADR-0096 + `/AGENTS.md` + `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`  
@@ -14,13 +14,16 @@
 
 ## 1. Zweck und Authority-Grenze
 
-Dieses Dokument projiziert den Zusammenhang zwischen DevelopmentChain (M0–M10) und dem
+Dieses Dokument projiziert den Zusammenhang zwischen der aktuellen DevelopmentChain und dem
 Systemadmin-Arbeitsmodell. Es ist **keine eigene Ausführungs-, Merge-, Deployment-, IAM- oder
 Produktions-Mutationsauthority**.
 
-Der frühere Stand bis Version 1.0.24 bezeichnete dieses Dokument als „einzige kanonische
-Ausführungsroadmap". Diese Rollenbehauptung ist durch ADR-0096 und den heutigen Governance
-Control Plane überholt. Die aktuelle Ausführungs- und Statusauflösung erfolgt über:
+Der frühere Stand bis Version 2.0.0 enthielt eine aktive Projektion eines inzwischen stillgelegten
+PR-Autorisierungsmechanismus. Diese Projektion ist nicht Teil des aktuellen Ausführungszustands.
+Historische Details bleiben ausschließlich über die historischen Artefakte und Git-Historie
+nachvollziehbar.
+
+Die aktuelle Ausführungs- und Statusauflösung erfolgt über:
 
 1. `/AGENTS.md` als Repository Trust Root;
 2. `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` für den Branch-/PR-/Sync-Lifecycle;
@@ -36,18 +39,19 @@ Roadmaps, historische Runbooks und Evidence dürfen diese Authority-Reihenfolge 
 
 | Phase | DevelopmentChain | Systemadmin-Bezug | Aktueller Status | Authority-/Mutation-Grenze |
 |---|---|---|---|---|
-| I0 | M0–M7 Baseline | SA0–SA4 Baseline | **VERIFIED PASS** | Erhalten; keine historische Evidence als neue Authority interpretieren |
-| I1 | M8 Agent Cutover | Work-Package-/Provider-Control-Plane | **COMPLETE / VERIFIED PASS** | Provider-/Capability-Erweiterungen nur über aktuelle Governance |
-| I2 | M9 Assurance / Incident / Break-Glass | Assurance Evidence | **COMPLETE / VERIFIED PASS** | Historische Drill-Evidence bleibt Evidence; neue Mutationen benötigen heutigen Scope/Gates |
-| I3 | M10 Passkey Owner PR Authorization | Passkey/WebAuthn-Evidence | **HISTORISCH VERIFIZIERT; CURRENT ENFORCEMENT `SUSPENDED / OFF`** | M10 darf nicht aus alter Evidence reaktiviert werden; neue explizite Owner-Entscheidung + aktuelle Prerequisites erforderlich |
+| I0 | Baseline | SA0–SA4 Baseline | **VERIFIED PASS** | Erhalten; keine historische Evidence als neue Authority interpretieren |
+| I1 | Agent Cutover | Work-Package-/Provider-Control-Plane | **COMPLETE / VERIFIED PASS** | Provider-/Capability-Erweiterungen nur über aktuelle Governance |
+| I2 | Assurance / Incident / Break-Glass | Assurance Evidence | **COMPLETE / VERIFIED PASS** | Historische Drill-Evidence bleibt Evidence; neue Mutationen benötigen heutigen Scope/Gates |
+| I3 | Retired PR-authorization history | historische Owner-Authorization-Evidence | **HISTORICAL / NON-AUTHORIZING** | Kein aktueller Gate, keine Prerequisite und kein Restoration Target; historische Evidence erzeugt keine Authority |
 | I4 | Closure / SA5 external mutation | Bounded External Mutation | **NICHT DURCH DIESE ROADMAP AUTORISIERT** | Separate aktuelle ADR/Owner-Authority und jeweilige Production-Mutation-Gates erforderlich |
 
-### M10-Klarstellung
+### Retired-authorization clarification
 
-M10 besitzt historische Implementierungs-, Incident- und Verification-Evidence. Der aktuelle
-Control Plane setzt `AUTHORIZE_PR_CI` dennoch ausdrücklich auf **`SUSPENDED / OFF`**. Human/
-CODEOWNER-Review und Human Merge bleiben maßgeblich. Dieses Dokument kann den Gate-Zustand nicht
-ändern.
+Der frühere PR-Autorisierungsmechanismus besitzt historische Implementierungs-, Incident- und
+Verification-Evidence. Er ist kein aktueller DevelopmentChain-Gate, keine aktive Runtime- oder
+Discovery-Abhängigkeit und kein Restoration Target. Human/CODEOWNER-Review und Human Merge
+bleiben nach den jeweils aktuellen Governance Controls maßgeblich. Dieses Dokument kann den
+aktuellen Gate-Zustand nicht ändern.
 
 ---
 
@@ -84,8 +88,8 @@ Insbesondere bleiben separat geschützt:
 
 - Produktions-, Deploy-, Secret- und IAM-Mutationen;
 - Provider- oder Capability-Erweiterungen;
-- Passkey-Enrollment und Recovery-Material;
-- M10-Reaktivierung;
+- Owner-Authentifizierungs-, Enrollment- und Recovery-Material;
+- Wiederherstellung stillgelegter Autorisierungsmechanismen;
 - SA5 External Mutation;
 - Änderungen mit HIGH/CRITICAL-Sicherheitswirkung außerhalb eines expliziten aktuellen Scopes.
 
@@ -105,13 +109,13 @@ Insbesondere bleiben separat geschützt:
 ### Projektionen / historische Referenzen
 
 - `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` — **historical/non-authorizing** für den heutigen Ausführungsstatus;
-- `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` — fachliche Roadmap-Projektion, keine Mutationsauthority;
+- `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` — **historical/non-authorizing execution history**;
 - `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md` — Portfolio-/Konsolidierungsprojektion;
 - dieses Dokument — integrierte **non-authorizing** Projektion.
 
-Historische Evidence unter `docs/evidence/**` und `.ai/evidence/**` bleibt erhalten. Der frühere
-Text dieser Roadmap bleibt zusätzlich vollständig über die Git-Historie nachvollziehbar; die
-Konsolidierung auf Version 2.0.0 entfernt keine zugrunde liegenden Evidence-Artefakte.
+Historische Evidence unter `docs/evidence/**` und `.ai/evidence/**` bleibt erhalten. Frühere
+Roadmap-Texte bleiben vollständig über die Git-Historie nachvollziehbar; diese Current-State-
+Konsolidierung entfernt keine zugrunde liegenden Evidence-Artefakte.
 
 ---
 
@@ -122,10 +126,8 @@ Konsolidierung auf Version 2.0.0 entfernt keine zugrunde liegenden Evidence-Arte
 | 1.0.0–1.0.2 | Integration DevelopmentChain/Systemadmin, M8 Abschluss | Evidence-/Projektionshistorie |
 | 1.0.3–1.0.18 | M9 Inventory, Drills, Break-Glass, Independent Review, Closure | M9 **COMPLETE / VERIFIED PASS**; Detail-Evidence unter `docs/evidence/m9/**` |
 | 1.0.19–1.0.24 | M10 Phasen 1–3, Live-Wiring und Produktions-Incident-Fixes | historische M10-Evidence; **keine aktuelle Gate-Autorisierung** |
-| 2.0.0 | Rollen-/Status-Konsolidierung gegen ADR-0096 und aktuellen Control Plane | current non-authorizing projection |
-
-Die vor Version 2.0.0 intern widersprüchlichen Kopf-/Footer-Versionen (`1.0.12`, `1.0.22`) und die
-Version-History bis `1.0.24` werden hiermit auf einen eindeutigen Dokumentstand konsolidiert.
+| 2.0.0 | Rollen-/Status-Konsolidierung gegen ADR-0096 und damaligen Control Plane | historische Current-State-Projektion mit inzwischen stillgelegter Gate-Semantik |
+| 2.1.0 | Current-State-Bereinigung stillgelegter PR-Autorisierungsprojektionen | aktuelle non-authorizing Projektion |
 
 ---
 
@@ -133,12 +135,13 @@ Version-History bis `1.0.24` werden hiermit auf einen eindeutigen Dokumentstand 
 
 - **M9:** formal geschlossen; alte Roadmap-Texte, die M9 als „not yet started" oder „active focus"
   führen, sind nicht current-state-authorizing.
-- **M10:** historisch implementiert/verifiziert, aktuell `SUSPENDED / OFF`; keine Reaktivierung in
-  diesem Dokument.
+- **Retired PR authorization:** historische Implementierung/Evidence bleibt Audit-Kontext; kein
+  aktueller Gate, keine Runtime-/Discovery-Abhängigkeit und kein Restoration Target.
 - **Deployment:** Render native Auto Deploy bleibt OFF; Production Promotion folgt dem aktuellen
   verifizierten-main-/exact-SHA-Deployment-Control-Plane.
-- **AuthN/AuthZ:** Supabase MFA/AAL2 und M10-WebAuthn besitzen eigene Authorities/Evidence; Social
-  Media OAuth wird durch ADR-0026/ADR-0027 und das aktuelle OAuth Threat Model korreliert.
+- **AuthN/AuthZ:** aktuelle Supabase MFA/AAL2- und andere AuthN/AuthZ-Authorities werden ausschließlich
+  aus den jeweils aktuellen ADR/ESS/Governance Controls aufgelöst; historische WebAuthn-Evidence
+  erzeugt keine Authority.
 - **Externe Mutationen:** Repository-Merge, Roadmap-Status oder historische Evidence autorisieren
   keine Render-, Supabase-, Stripe-, Provider-Console- oder Secret-Mutation.
 
@@ -151,10 +154,11 @@ Owner-Prioritäten, Quick Wins oder explizit markierten Folgepunkten abgeleitet.
 Work Package sind current `main`, offene Writer/PRs, Scope-Korrelationen und die wirksamen
 Governance-/Security-Authorities erneut zu prüfen.
 
-Für M10 gilt bis zu einer neuen expliziten Owner-Reaktivierungsentscheidung unverändert:
+Für stillgelegte Autorisierungsmechanismen gilt:
 
 ```text
-AUTHORIZE_PR_CI = SUSPENDED / OFF
+CURRENT EXECUTION DEPENDENCY = NONE
+RESTORATION TARGET = NONE
 HUMAN/CODEOWNER REVIEW = REQUIRED
 HUMAN MERGE = REQUIRED
 ```
@@ -176,12 +180,12 @@ HUMAN MERGE = REQUIRED
 - `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md`
 - `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md`
 - `docs/evidence/m9/M9_CLOSURE_EVIDENCE.md`
-- `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
-- `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`
+- `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md` — historical/non-authorizing redirect
+- `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md` — historical threat-model evidence
 
 ---
 
 **End of Document**  
 ROADMAP-INTEGRATED-DC-SA-0001  
 CAPITAL-AI Integrated Development Chain + Systemadmin Roadmap  
-Version 2.0.0
+Version 2.1.0

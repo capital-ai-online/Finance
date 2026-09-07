@@ -3,7 +3,7 @@
 ## Enterprise Component State
 
 **Status:** Compatibility / read-only  
-**Version:** `1.2.0`  
+**Version:** `1.2.1`  
 **Owner:** CAPITAL-AI  
 **Governance:** ADR-0096 / CTRL-GOV-VERSION-001  
 **Historical specification:** ESS-0004 — `SUSPENDED`
@@ -73,7 +73,7 @@ Commands:
 - `npm run repository:validate:advisory` — advisory mode;
 - it is not the platform-version authority and is not a deployment authorization gate.
 
-A future cleanup may relocate this validator to a more appropriate Governance/Repository namespace, but that move is outside the current M10 prerequisite remediation scope.
+A future cleanup may relocate this validator to a more appropriate Governance/Repository namespace; that relocation is independent from retired authorization history.
 
 ---
 
@@ -96,4 +96,4 @@ There is no dependency on `server/documentHygiene.ts`, `server/systemEvents.ts` 
 - ADR-0020 — repository convention validator capability
 - suspended ESS-0004 — historical/non-authorizing only
 
-This namespace cannot determine a version, approve a release, mutate documentation or reactivate M10.
+This namespace cannot determine a version, approve a release, mutate documentation or restore any retired authorization mechanism.

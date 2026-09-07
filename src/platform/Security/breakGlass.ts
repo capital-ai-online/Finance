@@ -7,8 +7,7 @@
 // other mandate in this codebase already uses (evaluateSystemadminRoadmapAuthorization,
 // authorizeSystemadminAuditedExecution) — break-glass is additive, never a parallel bypass
 // codepath. This module does NOT expose any HTTP endpoint and is not wired into
-// server.application.ts; making it reachable is a separate, separately-authorized step (mirroring
-// M10's own phased sequencing).
+// server.application.ts; making it reachable is a separate, separately-authorized step.
 //
 // Callers MUST verify a fresh Owner AAL2 step-up (server/stepUp.ts, purpose
 // 'break-glass-activation', same pattern as M5A runbook §B4 "Step-up") themselves before calling

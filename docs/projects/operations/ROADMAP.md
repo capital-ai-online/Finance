@@ -157,7 +157,7 @@ This does not make DR-03 the highest OPS priority. The Node P1 gap remains autho
 | production mutation / deployment identity | existing Release/Production gates | DR-03 must not couple execution integration to deploy/provider mutation | CAPITAL-AI-OPS / PVC-07/PVC-08 plus Human gate | DO NOT IMPLEMENT in DR-03 |
 | Governance / release / identity / registry authority | existing repository authorities | no gap belongs to DR-03 | foreign/current canonical owners | DO NOT IMPLEMENT |
 
-When DR-03 becomes executable, its first implementation must be the smallest provider-neutral adapter step behind existing capability/policy/IAM/audit boundaries, with fail-closed provider errors and provider-parity allow/deny evidence. It must not enable remote skill loading, reconstruct M10, create a second Agent Control Plane or grant Production mutation.
+When DR-03 becomes executable, its first implementation must be the smallest provider-neutral adapter step behind existing capability/policy/IAM/audit boundaries, with fail-closed provider errors and provider-parity allow/deny evidence. It must not enable remote skill loading, restore a retired authorization mechanism, create a second Agent Control Plane or grant Production mutation.
 
 ## 9. Cross-project dependencies
 
@@ -178,7 +178,7 @@ The following repository-backed OPS work items referenced by recent OPS executio
 | Work item | Repository result | Current disposition |
 |---|---|---|
 | Alpha Vantage canonical secret/deployment contract | PR #642 merged | DONE_MAIN; Production secret/deploy mutation remains separate and is not implied |
-| M10 Passkey runtime retirement | PR #691 merged; trust root declares M10 runtime retired/off | DONE_MAIN / do not reconstruct |
+| Retired PR-authorization runtime | PR #691 merged; trust root retains retirement history as non-authorizing evidence | DONE_MAIN / historical only; do not restore |
 | Fatal Process Handling `OPS-04-SEC-04` | PR #720 merged | IMPLEMENTED_ON_MAIN; independent Security/post-deploy verification pending |
 | R-Class PR build suppression / CI cost control | PR #721 merged | DONE_MAIN |
 | Auth Lifecycle re-correlation | PR #722 merged; stale claim already released by User Lifecycle closeout | DONE_MAIN |
