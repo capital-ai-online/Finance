@@ -64,7 +64,7 @@ Exit:
 
 ## DATA-10 — Evidence Management
 
-**State:** `READY / SECURITY EVIDENCE WORK OPEN`
+**State:** `IMPLEMENTED — DATA EVIDENCE READY / SECURITY VERIFICATION OPEN`
 
 Work:
 
@@ -73,11 +73,24 @@ Work:
 - preserve explicit `CURRENT`, `STALE`, `MISSING`, `UNKNOWN` and refresh/retry semantics;
 - support independent Security verification for stale/wrong-identity evidence findings.
 
+Current-main / branch correlation:
+
+- correlated onto `main@51bf529f003dfa47462c16ecbe10ae3b095547a4` after merge of PR #809;
+- S1-R2-11 observation evaluator lives in `src/platform/MarketData/evidenceIdentityFreshness.ts` (`evidence-identity-freshness/1.0.0`);
+- states `CURRENT`, `STALE`, `CURRENT_AFTER_REFRESH` and `STALE_RETRY_REQUIRED` are evaluated against a required immutable identity and the existing `market-evidence-dq/1.0.0` envelope;
+- wrong-identity and stale evidence cannot authorize current state;
+- a freshness-label rewrite is not a trusted refresh;
+- only a trusted refresh bound to the required identity may yield `CURRENT_AFTER_REFRESH`;
+- focused unit evidence: `tests/unit/evidenceIdentityFreshness.test.ts`;
+- Security return evidence: `docs/projects/data/evidence/S1_R2_11_EVIDENCE_IDENTITY_FRESHNESS_2026-09-07.md`;
+- DATA does not mark the Security finding `VERIFIED/CLOSED` and does not modify OPS-owned PR/trace tooling.
+
 Exit:
 
-- one canonical evidence identity/envelope;
-- stale/wrong-identity evidence cannot authorize current state;
-- no Security self-verification by DATA.
+- one canonical evidence identity/envelope for the S1-R2-11 observation contract: `PASS` for DATA implementation/evidence;
+- stale/wrong-identity evidence cannot authorize current state: covered by unit tests on the branch head;
+- no Security self-verification by DATA: preserved;
+- remaining DATA-10 generalization of crypto-specific provider identity maps stays backlog and is not required to return the Security observation evidence.
 
 ## DATA-11 — Data Quality
 
