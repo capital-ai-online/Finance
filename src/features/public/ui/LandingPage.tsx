@@ -129,7 +129,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-text-primary selection:bg-brand-primary/30 selection:text-text-primary">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_18%_12%,color-mix(in_srgb,var(--color-brand-primary)_12%,transparent),transparent_34%),radial-gradient(circle_at_82%_26%,color-mix(in_srgb,var(--color-brand-secondary)_10%,transparent),transparent_30%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_18%_12%,color-mix(in_srgb,var(--color-brand-primary)_12%,transparent),transparent_34%),radial-gradient(circle_at_82%_26%,color-mix(in_srgb,var(--color-brand-accent)_10%,transparent),transparent_30%)]" />
 
       <header className="sticky top-0 z-40 border-b border-brand-primary/20 bg-background/90 backdrop-blur-xl shadow-[0_8px_32px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)]">
         <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -148,7 +148,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="hidden items-center gap-2 rounded-lg border border-border bg-surface/45 px-3 py-1.5 lg:flex">
-              <Activity size={14} className="text-market-live" aria-hidden="true" />
+              <Activity size={14} className="text-factor-technical" aria-hidden="true" />
               <span className="text-[10px] font-mono uppercase tracking-wider text-text-secondary">
                 Multi-Asset Intelligence
               </span>
@@ -174,7 +174,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
       </header>
 
       <main className="relative z-10 mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 sm:py-10">
-        <section className="overflow-hidden rounded-2xl border border-brand-primary/25 bg-gradient-to-br from-surface/60 via-background/70 to-brand-secondary/10 p-5 shadow-[0_18px_60px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)] backdrop-blur-xl sm:p-7">
+        <section className="overflow-hidden rounded-2xl border border-brand-primary/25 bg-gradient-to-br from-surface/60 via-background/70 to-brand-accent/10 p-5 shadow-[0_18px_60px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)] backdrop-blur-xl sm:p-7">
           <div className="grid gap-7 lg:grid-cols-[1.4fr_0.6fr] lg:items-start">
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-2">
@@ -182,7 +182,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
                   <span className="h-1.5 w-1.5 rounded-full bg-brand-primary" />
                   Was ist CAPITAL-AI
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-status-success/20 bg-status-success/10 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-status-success">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-success/20 bg-brand-success/10 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-brand-success">
                   <ShieldCheck size={12} /> Öffentliche Analyse aktiv
                 </span>
               </div>
@@ -230,7 +230,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
             <aside className="space-y-3 rounded-2xl border border-border bg-background/55 p-4 sm:p-5" aria-label="CAPITAL-AI Schnellzugriff">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-brand-secondary" />
+                  <Sparkles size={16} className="text-brand-accent" />
                   <h2 className="text-sm font-black text-text-primary">Schnellzugriff</h2>
                 </div>
                 <span className="rounded border border-brand-primary/20 bg-brand-primary/10 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-brand-primary">
@@ -291,7 +291,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 self-start rounded-xl border border-border bg-background/55 px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary lg:self-auto">
-                <Activity size={13} className="text-market-live" />
+                <Activity size={13} className="text-factor-technical" />
                 Lazy-loaded Workbench
               </div>
             </div>
@@ -303,7 +303,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
         <section
           id="product-access"
           aria-labelledby="product-access-title"
-          className="overflow-hidden rounded-2xl border border-brand-primary/30 bg-gradient-to-br from-brand-primary/10 via-surface/35 to-brand-secondary/10 p-5 sm:p-7"
+          className="overflow-hidden rounded-2xl border border-brand-primary/30 bg-gradient-to-br from-brand-primary/10 via-surface/35 to-brand-accent/10 p-5 sm:p-7"
         >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-3xl space-y-3">
@@ -349,7 +349,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
               <CapitalAiLogo size={24} showText={false} />
               <span className="font-black uppercase tracking-[0.14em] text-brand-primary">CAPITAL-AI</span>
             </div>
-            <span className="rounded-xl border border-status-success/20 bg-status-success/10 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wider text-status-success">
+            <span className="rounded-xl border border-brand-success/20 bg-brand-success/10 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wider text-brand-success">
               Öffentliche Analyse verfügbar
             </span>
           </div>
