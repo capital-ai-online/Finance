@@ -211,14 +211,18 @@ jobs:
 
       - name: Branch-only Ergebnis dokumentieren
         shell: bash
+        env:
+          REPORT_BRANCH: ${{ steps.remediation.outputs.branch }}
+          REPORT_HEAD: ${{ steps.remediation.outputs.head }}
+          REPORT_EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
         run: |
           {
             echo '## Node Toolchain Write-Boundary Supersession'
             echo
             echo '- Ergebnis: Remediation-Branch erzeugt'
-            echo "- Branch: \`${{ steps.remediation.outputs.branch }}\`"
-            echo "- Head: \`${{ steps.remediation.outputs.head }}\`"
-            echo "- Base: \`${{ inputs.expected_main_sha }}\`"
+            echo "- Branch: \`$REPORT_BRANCH\`"
+            echo "- Head: \`$REPORT_HEAD\`"
+            echo "- Base: \`$REPORT_EXPECTED_MAIN_SHA\`"
             echo '- Zielbaseline: Node `24.20.0`'
             echo '- Pull Request: **nicht erstellt**'
             echo '- Merge: **nicht durchgeführt**'

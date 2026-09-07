@@ -15,15 +15,15 @@ run-name: >-
 # - Baseline writes and first-attempt stale-baseline races are rebound to an exact completed
 #   PR Governance run for the same PR/head/base. Race recovery is limited to run_attempt == 1,
 #   so a real Governance failure cannot create an automatic rerun loop.
-on:
+# Reviewed privileged completion trigger: exact source path/repository/event guards,
+# trusted-main policy only, no PR code/artifacts/caches executed, isolated output.
+# Regression coverage: scripts/pr/productionBaselineRefreshWorkflow.test.mjs.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: ['PR Governance', 'CI']
     types: [completed]
 
-permissions:
-  actions: write
-  contents: read
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: >-
@@ -32,8 +32,15 @@ concurrency:
 
 jobs:
   refresh-baseline:
+    permissions:
+      actions: write # Re-run exact-head/base PR Governance after a baseline update.
+      contents: read # Read trusted policy and PR Git data; never push.
+      pull-requests: write # Replace only the canonical production-baseline body block.
     name: Atomare Produktions-Baseline vertrauenswürdig nachziehen
     if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.path == '.github/workflows/pr-governance.yml' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.pull_requests[0].number != null
     runs-on: ubuntu-latest
@@ -112,7 +119,7 @@ jobs:
           PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
@@ -124,7 +131,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
         run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
 
       - name: Baseline-Write oder Race-Recovery an exakte PR-Governance binden
@@ -233,6 +240,9 @@ jobs:
   discover_post_deploy_prs:
     name: Verifiziertes Production/Main korrelieren und synchronisierte PRs bestimmen
     if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.path == '.github/workflows/ci.yml' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.conclusion == 'success'
@@ -379,6 +389,10 @@ jobs:
               .write();
 
   refresh_post_deploy_baselines:
+    permissions:
+      actions: write # Re-run exact-head/base PR Governance after a baseline update.
+      contents: read # Read trusted policy and PR Git data; never push.
+      pull-requests: write # Replace only the canonical production-baseline body block.
     name: PR #${{ matrix.pr_number }} nach verifiziertem Production-Deploy nachziehen
     needs: discover_post_deploy_prs
     if: ${{ needs.discover_post_deploy_prs.result == 'success' && needs.discover_post_deploy_prs.outputs.count != '0' }}
@@ -429,7 +443,7 @@ jobs:
           PR_NUMBER: ${{ matrix.pr_number }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
@@ -440,7 +454,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ matrix.pr_number }}
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
         run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
 
       - name: Geänderte Baseline an exakte vorhandene PR-Governance binden und erneut ausführen
@@ -511,4 +525,6 @@ jobs:
 
       - name: Unveränderte Post-Deploy-Baseline bestätigen
         if: steps.refresh.outputs.changed != 'true'
-        run: echo "PR #${{ matrix.pr_number }} Baseline bereits korrekt; kein Body-Write und kein Governance-Re-Run."
+        env:
+          BASELINE_PR_NUMBER: ${{ matrix.pr_number }}
+        run: echo "PR #$BASELINE_PR_NUMBER Baseline bereits korrekt; kein Body-Write und kein Governance-Re-Run."

@@ -6,15 +6,15 @@ run-name: >-
 # current-main productionPreflight/updatePrProductionBaseline contracts and fails closed on
 # stale main/head/production identities. The later post-deploy refresh remains authoritative
 # for the Production = main state.
-on:
+# Reviewed privileged completion trigger: exact source path/repository/event guards,
+# trusted-main policy only, no PR code/artifacts/caches executed, isolated output.
+# Regression coverage: scripts/pr/productionBaselineRefreshWorkflow.test.mjs.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: ['Agenten-PR-Branches synchronisieren']
     types: [completed]
 
-permissions:
-  actions: write
-  contents: read
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: pr-production-baseline-post-merge-${{ github.event.workflow_run.head_sha }}
@@ -24,6 +24,8 @@ jobs:
   discover:
     name: Merge-Sync, Production und synchronisierte PRs korrelieren
     if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'main' &&
@@ -150,6 +152,10 @@ jobs:
             core.notice(`Post-Merge-Baseline-Korrelation PASS: production=${productionSha.slice(0, 12)} <= main=${mainSha.slice(0, 12)}; ${include.length} PR(s) synchronisiert; skipped=${skipped.length ? skipped.join(',') : 'keine'}.`);
 
   refresh:
+    permissions:
+      actions: write # Re-run exact-head/base PR Governance after a baseline update.
+      contents: read # Read trusted policy and PR Git data; never push.
+      pull-requests: write # Replace only the canonical production-baseline body block.
     name: PR #${{ matrix.pr_number }} Baseline nach Merge aktualisieren
     needs: discover
     if: ${{ needs.discover.result == 'success' && needs.discover.outputs.count != '0' }}
@@ -201,7 +207,7 @@ jobs:
           PR_NUMBER: ${{ matrix.pr_number }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
@@ -246,7 +252,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ matrix.pr_number }}
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
         run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
 
       - name: Geänderte Baseline an exakte Governance binden
