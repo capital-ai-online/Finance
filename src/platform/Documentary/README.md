@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.19.0
+Version: 1.20.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, der bounded ESS-0012 `GOV-DOC-003` Documentation-Freshness-Validator, der inkrementelle `GOV-DOC-006` Generator-Marking-Validator, der inkrementelle `GOV-DOC-001` Dokumentversions-Validator, der inkrementelle `GOV-DOC-002` ESS/ADR-Referenz-Validator, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, der bounded ESS-0012 `GOV-DOC-003` Documentation-Freshness-Validator, der inkrementelle `GOV-DOC-006` Generator-Marking-Validator, der inkrementelle `GOV-DOC-001` Dokumentversions-Validator, der inkrementelle `GOV-DOC-002` ESS/ADR-Referenz-Validator, der inkrementelle `GOV-DOC-004` Dokumentklassen-Validator, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
 
 ## Implemented Scope
 
@@ -102,9 +102,9 @@ Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Dif
 
 ## Documentation Governance
 
-Der Namespace `Governance/` bleibt gemäß ADR-0014 / ESS-0012 ausschließlich **Documentation-only**. Der integrierte `DocumentationHygieneValidator` prüft Root-Markdown, Document Registry, Lifecycle-/Sprachwerte und Registry-Zielpfade read-only und fail-closed. Der bounded `DocumentationValidator` implementiert `GOV-DOC-003` (Freshness, `Medium`), `GOV-DOC-006` (Generator-Kennzeichnung für Lifecycle `generated`, `Medium`), `GOV-DOC-001` (Dokument ohne Version im Dokumentkörper, `High`) und inkrementell `GOV-DOC-002` (Dokument ohne ESS-/ADR-Referenz im Dokumentkörper, `Medium`) mit konkreter `FileReference`-Evidence. Eine Registry-Versions- oder Authority-Angabe ersetzt keine Dokumentkörper-Markierung. Die Regeln verwenden bestehende Documentary-Verträge, führen keinen zweiten Scanner ein und verwerfen nicht hinreichend belegte Kandidaten fail-closed.
+Der Namespace `Governance/` bleibt gemäß ADR-0014 / ESS-0012 ausschließlich **Documentation-only**. Der integrierte `DocumentationHygieneValidator` prüft Root-Markdown, Document Registry, Lifecycle-/Sprachwerte und Registry-Zielpfade read-only und fail-closed. Der bounded `DocumentationValidator` implementiert `GOV-DOC-003` (Freshness, `Medium`), `GOV-DOC-006` (Generator-Kennzeichnung für Lifecycle `generated`, `Medium`), `GOV-DOC-001` (Dokument ohne Version im Dokumentkörper, `High`), `GOV-DOC-002` (Dokument ohne ESS-/ADR-Referenz im Dokumentkörper, `Medium`) und inkrementell `GOV-DOC-004` (Dokumentklasse ohne Heading/Klassenmarker, `Medium`) mit konkreter `FileReference`-Evidence. Eine Registry-Versions- oder Authority-Angabe ersetzt keine Dokumentkörper-Markierung. Die Regeln verwenden bestehende Documentary-Verträge, führen keinen zweiten Scanner ein und verwerfen nicht hinreichend belegte Kandidaten fail-closed.
 
-Beide Validatoren sind read-only. Sie definieren keine globale Repository-Authority, keine Merge-Entscheidung und keine Produktionsmutationsberechtigung. Die übrigen ESS-0012-Regeln bleiben separat inkrementell geplant; der historische 57-Regel-Scope wird durch WP-DOC-07/WP-DOC-08/WP-DOC-09/WP-DOC-10 nicht aktiviert.
+Beide Validatoren sind read-only. Sie definieren keine globale Repository-Authority, keine Merge-Entscheidung und keine Produktionsmutationsberechtigung. Die übrigen ESS-0012-Regeln bleiben separat inkrementell geplant; der historische 57-Regel-Scope wird durch WP-DOC-07 bis WP-DOC-11 nicht aktiviert.
 
 Repository-weite Authority-Auflösung verbleibt im Governance Control Plane unter `src/platform/Governance` und ADR-0096. Der ADR-0097 Maintenance Agent konsumiert diese Authorities lediglich und kann sie nicht überschreiben.
 
@@ -144,13 +144,13 @@ Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach App
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service plus bounded `GOV-DOC-003` Freshness Validation, `GOV-DOC-006` Generator Marking, `GOV-DOC-001` Document Version Marking und inkrementelles `GOV-DOC-002` ESS/ADR Reference Marking), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Migration` (read-only D8 Planning Slice), `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service plus bounded `GOV-DOC-003`, `GOV-DOC-006`, `GOV-DOC-001`, `GOV-DOC-002` und inkrementelles `GOV-DOC-004` Document Class Structure), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Migration` (read-only D8 Planning Slice), `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: physische/semantische `MigrationExecution`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren jenseits `GOV-DOC-001`/`GOV-DOC-002`/`GOV-DOC-003`/`GOV-DOC-006`. Diese Bereiche werden durch WP-DOC-10 nicht implizit implementiert oder autorisiert.
+Weiterhin geplant: physische/semantische `MigrationExecution`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren jenseits `GOV-DOC-001`/`GOV-DOC-002`/`GOV-DOC-003`/`GOV-DOC-004`/`GOV-DOC-006`. Diese Bereiche werden durch WP-DOC-11 nicht implizit implementiert oder autorisiert.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability-, Freshness- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. D8 bleibt read-only Planning; Migration Execution ist nicht Teil dieses Slices. `GOV-DOC-001`, `GOV-DOC-002`, `GOV-DOC-003` und `GOV-DOC-006` bleiben read-only Documentary Findings und treffen keine Governance-/Release-Entscheidung. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
+Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability-, Freshness- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. D8 bleibt read-only Planning; Migration Execution ist nicht Teil dieses Slices. `GOV-DOC-001`, `GOV-DOC-002`, `GOV-DOC-003`, `GOV-DOC-004` und `GOV-DOC-006` bleiben read-only Documentary Findings und treffen keine Governance-/Release-Entscheidung. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
 
 ## ESS / ADR
 
