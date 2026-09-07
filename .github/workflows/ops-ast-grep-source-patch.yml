@@ -40,7 +40,7 @@ jobs:
       - name: Trusted main auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ github.sha }}
+          ref: main
           path: policy
           fetch-depth: 1
           persist-credentials: false
@@ -57,8 +57,6 @@ jobs:
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '24.18.0'
-          cache: npm
-          cache-dependency-path: work/package-lock.json
 
       - name: Exakten Head und vertrauenswürdige Ausführungsbasis binden
         env:
@@ -71,13 +69,19 @@ jobs:
             exit 1
           fi
 
+          OBSERVED_POLICY_HEAD="$(git -C policy rev-parse HEAD)"
+          if [[ "$OBSERVED_POLICY_HEAD" != "$TRUSTED_MAIN_SHA" ]]; then
+            echo "trusted main drift: workflow=$TRUSTED_MAIN_SHA policy=$OBSERVED_POLICY_HEAD" >&2
+            exit 1
+          fi
+
           OBSERVED_HEAD="$(git -C work rev-parse HEAD)"
           if [[ "$OBSERVED_HEAD" != "$EXPECTED_HEAD_SHA" ]]; then
             echo "FE-Head drift: expected=$EXPECTED_HEAD_SHA observed=$OBSERVED_HEAD" >&2
             exit 1
           fi
 
-          git -C work fetch --no-tags origin main:refs/remotes/origin/main
+          git -C work fetch --no-tags ../policy HEAD:refs/remotes/origin/main
           OBSERVED_MAIN="$(git -C work rev-parse origin/main)"
           if [[ "$OBSERVED_MAIN" != "$TRUSTED_MAIN_SHA" ]]; then
             echo "main drift: workflow=$TRUSTED_MAIN_SHA observed=$OBSERVED_MAIN" >&2
@@ -172,6 +176,11 @@ jobs:
         id: patch
         run: |
           set -euo pipefail
+          mapfile -t CHANGED < <(git -C work diff --name-only)
+          if [[ "${#CHANGED[@]}" -ne 1 || "${CHANGED[0]}" != "$TARGET_FILE" ]]; then
+            echo 'Patch-Surface hat sich während der Validation verändert.' >&2
+            exit 1
+          fi
           git -C work diff --binary -- "$TARGET_FILE" > "$RUNNER_TEMP/bb2e-dashboard.patch"
           test -s "$RUNNER_TEMP/bb2e-dashboard.patch"
           PATCHED_BLOB="$(git -C work hash-object "$TARGET_FILE")"
@@ -195,10 +204,19 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Trusted main ohne persistente Credentials auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Gebundenen FE-Branch ohne persistente Credentials auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: agent/frontend-dashboard-drawer-strangler-20260907
+          path: work
           fetch-depth: 0
           persist-credentials: false
 
@@ -214,14 +232,20 @@ jobs:
           TRUSTED_MAIN_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          OBSERVED_HEAD="$(git rev-parse HEAD)"
+          OBSERVED_POLICY_HEAD="$(git -C policy rev-parse HEAD)"
+          if [[ "$OBSERVED_POLICY_HEAD" != "$TRUSTED_MAIN_SHA" ]]; then
+            echo "trusted main drift vor Apply: workflow=$TRUSTED_MAIN_SHA policy=$OBSERVED_POLICY_HEAD" >&2
+            exit 1
+          fi
+
+          OBSERVED_HEAD="$(git -C work rev-parse HEAD)"
           if [[ "$OBSERVED_HEAD" != "$EXPECTED_HEAD_SHA" ]]; then
             echo "FE-Head drift vor Apply: expected=$EXPECTED_HEAD_SHA observed=$OBSERVED_HEAD" >&2
             exit 1
           fi
 
-          git fetch --no-tags origin main:refs/remotes/origin/main
-          OBSERVED_MAIN="$(git rev-parse origin/main)"
+          git -C work fetch --no-tags ../policy HEAD:refs/remotes/origin/main
+          OBSERVED_MAIN="$(git -C work rev-parse origin/main)"
           if [[ "$OBSERVED_MAIN" != "$TRUSTED_MAIN_SHA" ]]; then
             echo "main drift vor Apply: workflow=$TRUSTED_MAIN_SHA observed=$OBSERVED_MAIN" >&2
             exit 1
@@ -233,29 +257,29 @@ jobs:
           EXPECTED_PATCHED_BLOB: ${{ needs.patch-and-validate.outputs.patched_blob }}
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git merge --no-edit "$TRUSTED_MAIN_SHA"
+          git -C work config user.name 'github-actions[bot]'
+          git -C work config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C work merge --no-edit "$TRUSTED_MAIN_SHA"
 
           PATCH_FILE="$RUNNER_TEMP/bb2e-dashboard-source-patch/bb2e-dashboard.patch"
-          git apply --check "$PATCH_FILE"
-          git apply "$PATCH_FILE"
+          git -C work apply --check "$PATCH_FILE"
+          git -C work apply "$PATCH_FILE"
 
-          mapfile -t CHANGED < <(git diff --name-only)
+          mapfile -t CHANGED < <(git -C work diff --name-only)
           if [[ "${#CHANGED[@]}" -ne 1 || "${CHANGED[0]}" != "$TARGET_FILE" ]]; then
             printf 'Privileged Apply würde unerwartete Dateien ändern:\n' >&2
             printf ' - %s\n' "${CHANGED[@]}" >&2
             exit 1
           fi
 
-          OBSERVED_PATCHED_BLOB="$(git hash-object "$TARGET_FILE")"
+          OBSERVED_PATCHED_BLOB="$(git -C work hash-object "$TARGET_FILE")"
           if [[ "$OBSERVED_PATCHED_BLOB" != "$EXPECTED_PATCHED_BLOB" ]]; then
             echo "Patch-Blob drift: expected=$EXPECTED_PATCHED_BLOB observed=$OBSERVED_PATCHED_BLOB" >&2
             exit 1
           fi
 
-          git add -- "$TARGET_FILE"
-          git commit -m 'refactor(frontend): cut over dashboard drawer strangler'
+          git -C work add -- "$TARGET_FILE"
+          git -C work commit -m 'refactor(frontend): cut over dashboard drawer strangler'
 
       - name: Exakten FE-Head atomar pushen
         env:
@@ -264,14 +288,14 @@ jobs:
         run: |
           set -euo pipefail
           AUTH_HEADER="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
-          REMOTE_HEAD="$(git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH_HEADER" \
+          REMOTE_HEAD="$(git -C work -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH_HEADER" \
             ls-remote origin "refs/heads/$TARGET_BRANCH" | awk '{print $1}')"
           if [[ "$REMOTE_HEAD" != "$EXPECTED_HEAD_SHA" ]]; then
             echo "Remote FE-Head drift: expected=$EXPECTED_HEAD_SHA observed=${REMOTE_HEAD:-<missing>}" >&2
             exit 1
           fi
 
-          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH_HEADER" \
+          git -C work -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH_HEADER" \
             push origin "HEAD:refs/heads/$TARGET_BRANCH"
 
-          echo "BB-2E pushed: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "BB-2E pushed: $(git -C work rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
