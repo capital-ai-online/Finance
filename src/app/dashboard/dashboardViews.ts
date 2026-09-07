@@ -35,15 +35,16 @@ export type DashboardSection = 'hub' | 'analysis' | 'system_admin';
 /**
  * Presentation-only ownership of the dashboard navigation accordion.
  *
- * This mapping preserves the legacy Dashboard.tsx behaviour exactly. It does
- * not define feature, IAM, entitlement, scoring, or runtime authority.
+ * BB-2E keeps this mapping as the single section contract consumed by the
+ * drawer and by active-view auto-expansion. It does not define feature, IAM,
+ * entitlement, scoring, or runtime authority.
  */
 export const DASHBOARD_VIEW_SECTION = {
   dashboard: 'hub',
   myworkspace: 'hub',
   learning: 'hub',
   'universe-scoring': 'hub',
-  'buffet-value': 'analysis',
+  'buffet-value': 'hub',
   backtest: 'analysis',
   heatmap: 'analysis',
   'market-screener': 'analysis',
@@ -62,7 +63,7 @@ export const DASHBOARD_VIEW_SECTION = {
   'raw-materials': 'analysis',
   'asset-universe': 'analysis',
   'defi-orchestration': 'hub',
-  'social-accounts': 'hub',
+  'social-accounts': 'analysis',
   login: 'hub',
   'auth-debugger': 'system_admin',
   'admin-portal': 'system_admin',
