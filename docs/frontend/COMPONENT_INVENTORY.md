@@ -1,7 +1,7 @@
 # CAPITAL-AI Frontend – Component Inventory
 
 **Stand:** 7. September 2026  
-**Korrelationsbasis:** `main@5490a3b1a8d6aa19e2cd955b79267dffa15e5282`  
+**Korrelationsbasis:** `main@fb3fff1f3959d1c6f87d20228036366848600487`  
 **Current Project:** `CAPITAL-AI-FE`  
 **Primary Productive PVC:** `N/A` (`[]`)  
 **Primary Owner:** `CAPITAL-AI-FE`  
@@ -189,4 +189,4 @@ A Legacy implementation, bridge or alias may be removed only when all applicable
 
 ---
 
-*Version 1.8.0 re-korreliert das bestehende Component Inventory gegen `main@5490a3b1a8d6aa19e2cd955b79267dffa15e5282`. Die Public Enterprise Scorer-/Sideboard-Recovery wird als gemergter Current-Main-Zustand behandelt; Visual-Recovery A/B/C, Contract-/Supersession-Gates, Accessibility-/Performance-Status und absolute Legacy-Exit-Voraussetzungen sind nun explizit inventarisiert. Das Dokument bleibt Bestandsnachweis und erzeugt weder eine parallele Roadmap noch eine neue Frontend-/Financial-Authority.*
+*Version 1.8.0 re-korreliert das bestehende Component Inventory gegen `main@fb3fff1f3959d1c6f87d20228036366848600487`. Die Public Enterprise Scorer-/Sideboard-Recovery wird als gemergter Current-Main-Zustand behandelt; Visual-Recovery A/B/C, Contract-/Supersession-Gates, Accessibility-/Performance-Status und absolute Legacy-Exit-Voraussetzungen sind nun explizit inventarisiert. Das Dokument bleibt Bestandsnachweis und erzeugt weder eine parallele Roadmap noch eine neue Frontend-/Financial-Authority.*
