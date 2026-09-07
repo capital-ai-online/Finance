@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-WP-CAPITAL-AI-SEC-2026-08-31`  
 **Project:** `CAPITAL-AI-SEC`  
-**Version:** `2.2.1`  
+**Version:** `2.3.0`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY BACKLOG / NON-AUTHORIZING`  
 **Date:** `2026-09-07`  
-**Baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
+**Baseline:** `main@96119f958cacbf35614747380a066b87fdb1ee40`  
 **Primary Productive PVC ownership:** `[]`  
 **Project routing namespace:** `PVC-01..PVC-18`  
 **Roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`
@@ -16,7 +16,7 @@
 
 **Entry:** current `main` and open PRs correlated; affected project and PVC known or explicitly unresolved; current authority/control reused; threat/control and expected evidence defined.  
 **Security action:** define requirement, threat model, test/negative test, finding, owner routing and independent verification gate.  
-**Foreign implementation:** do not execute under CAPITAL-AI-SEC. Route directly to the current Primary Owner using canonical project/PVC mapping and record target project, PVC, task, reason, dependency, required evidence, verification gate and status. Withdrawn post-PVC handoff overlays are not current routing mechanisms.  
+**Foreign implementation:** do not execute under CAPITAL-AI-SEC. Route directly to the current Primary Owner using canonical project/PVC mapping and record target project, PVC, task, reason, dependency, required evidence, verification gate and status.  
 **Verification:** exact branch/runtime/provider evidence as appropriate; missing/stale/wrong-identity/`NOT_AVAILABLE` evidence is not PASS.  
 **Closure:** `VERIFIED/CLOSED` requires independent Security evidence; `ACCEPTED_RISK` requires applicable Human/Owner authority.
 
@@ -30,20 +30,7 @@ External standards and guidance are `ADVISORY_NON_AUTHORIZING`. They may inform 
 **Owner:** CAPITAL-AI-SEC  
 **State:** `DONE_MAIN`
 
-Merged by PR #832 at merge SHA `75c926f12ae514036aa508ea8faf1a82b1a91059`.
-
-Completed:
-
-- current external SOTA baseline in `docs/evidence/security/CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md`;
-- OWASP Top 10:2025, ASVS 5.0.0, GenAI/Agentic/ACS/MCP guidance, SLSA v1.2 and CISA Secure by Design mapped to existing `SEC-01..SEC-10` workstreams;
-- external material explicitly advisory/non-authorizing;
-- `SEC-ASSESS-ALIGN` corrected to `DONE_MAIN` after merged PR #766;
-- CRA reporting readiness represented only as a dependency on `CAPITAL-AI-COMP` for applicability/legal scope;
-- project and detailed Security roadmaps synchronized;
-- PR-head Governance, Container Security and CI hosted checks completed `success`;
-- merge-main build/test, supply-chain attestation, exact-SHA Render deployment and deployed commit-identity verification completed `success`.
-
-The original SOTA evidence remains an execution-time record; active roadmap/work-package projections carry the current lifecycle state rather than rewriting historical evidence metadata.
+PR #832 merged the SOTA baseline. PR #837 subsequently synchronized the active Security status projections and passed final-head Governance, Container Security and Class-D `build-and-test` before Human merge. Historical execution evidence is not rewritten to fake a newer verification baseline.
 
 ### `SEC-VERIFY-R2-04` — fatal-process current-main re-verification
 
@@ -54,23 +41,44 @@ The original SOTA evidence remains an execution-time record; active roadmap/work
 
 Evidence: `docs/evidence/security/S1_R2_04_FATAL_PROCESS_CURRENT_MAIN_REVERIFICATION_2026-09-07.md`.
 
-Verified from repository source/test contract: uncaught exceptions and unhandled rejections latch fatal state; fatal state projects readiness as not-ready; repeated fatal events do not initiate duplicate shutdown; fatal termination preserves non-zero-exit intent; repository tests encode these behaviors.
-
-Not claimed: exact deployed supervisor/restart behavior or destructive production fault injection. The successful generic main deployment after PR #832 is deployment/identity evidence, not proof of the specific fatal-process runtime behavior. Runtime gates remain OPS/PVC-08.
+Repository source/test contract is verified; exact deployed supervisor/restart/readiness fault behavior remains open. Generic successful deployment/identity evidence does not close this runtime gate.
 
 ### `SEC-SOTA-02` — AI/Agent/MCP control inventory
 
 **Priority:** P0  
 **Owner:** CAPITAL-AI-SEC for requirements/threats/testing/findings  
-**State:** `READY`
+**State:** `INVENTORY_IMPLEMENTED_BRANCH / FINDINGS_ROUTED / PR GATE OPEN`
 
-Required output:
+Evidence: `docs/evidence/security/CAPITAL_AI_SEC_SOTA02_AI_AGENT_MCP_CONTROL_INVENTORY_2026-09-07.md`.
+
+Required output is materialized as:
 
 `surface → trust boundary → current authority path → untrusted input/tool risk → current control → evidence → gap → productive owner/PVC → verification gate`.
 
-Minimum coverage: prompt/indirect injection; authority/capability expansion; delegated permissions; tool side effects/least privilege; session/context isolation; memory/retrieval poisoning where applicable; inter-agent trust; MCP AuthN/AuthZ/validation/session/tool-chain isolation; inspectability/traceability of actor/model/tool/decision/authorization/runtime identity where applicable.
+Coverage includes prompt/indirect injection, authority/capability expansion, delegated permissions, tool side effects/least privilege, session/context isolation, retrieval poisoning, inter-agent trust, MCP AuthN/AuthZ/session/tool-chain boundaries and inspectability of actor/model/tool/decision/authorization/runtime identity.
 
-Current pre-correlation confirms the existing control plane must be reused rather than duplicated: `/AGENTS.md`; ESS-0019; `AI_AGENT_TRUST_BOUNDARIES.md`; `AI_AGENT_THREAT_MODEL.md`; `src/platform/Security/agentIam.ts`; `src/platform/Security/providerProfile.ts`; `src/platform/Compliance/PolicyGate.ts`; `server/agentAudit/authorizedAgentExecution.ts`; Supervisor approved-action path; and actual `src/services/agentTools/*` surfaces. Productive gaps remain routed to the actual Primary Owner/PVC.
+Existing Control Plane reused rather than duplicated: `/AGENTS.md`, ESS-0019, ADR-0058/0059, AI Agent Trust Boundaries/Threat Model, `agentIam.ts`, `providerProfile.ts`, PolicyGate, audited execution adapters, Supervisor approved-action path and actual `src/services/agentTools/*` surfaces.
+
+#### Routed `SEC-SOTA-02` findings
+
+| ID | Security finding | Primary productive owner / PVC | Required return evidence |
+|---|---|---|---|
+| `SEC-SOTA02-F01` | AI Chat indirect prompt injection: retrieved repository text is appended to trusted system instruction; caller history can manufacture assistant-role context | `CAPITAL-AI-FINTECH / PVC-15`; CLIENT/PVC-01 dependency | data/instruction separation + malicious retrieval/history negative tests + proof no tool/authority escalation |
+| `SEC-SOTA02-F02` | Documentary maintenance control loop can auto-dispatch Draft-PR creation without current exact Human PR-creation approval | `CAPITAL-AI-DOC / PVC-03` | approval-ready stop + exact main/head/scope/title Human approval before dispatch |
+| `SEC-SOTA02-F03` | Documentary real Git mutation path uses synchronous Agent policy checks without durable ADR-0059-grade authorization/outcome evidence at real host | `CAPITAL-AI-DOC / PVC-03` | attributable durable auth/outcome evidence across actor/app/agent/session/request/capability/tool/branch/commit/PR |
+| `SEC-SOTA02-F04` | external MCP/connector host permissions/session isolation are not independently proven; `.mcp.json` executable identity is mutable supply-chain input | `CAPITAL-AI-OPS / PVC-02` | host AuthN/AuthZ/tool-grant/session/read-only readback; executable identity assessed in `SEC-SOTA-03` |
+| `SEC-SOTA02-F05` | current ESS-0018/ADR-0051 retain stale `CLAUDE.md` authority wording | `CAPITAL-AI-GOV / PVC-05` | current Trust Root/stable authority references without semantic control weakening |
+| `SEC-SOTA02-F06` | AI Chat history/session provenance is caller-supplied and not independently attestable | `CAPITAL-AI-CLIENT / PVC-01`; FINTECH/PVC-15 dependency | explicit stateless or server-attested session contract + context-substitution tests |
+
+Explicit non-findings:
+
+- no in-app MCP server is required by current accepted contracts; absence is `NOT_APPLICABLE`, not a backlog gap;
+- no productive direct bypass caller was found for the two Supabase Admin write tools;
+- no direct agent-to-agent capability delegation was found in inspected FinTech parallel orchestrators;
+- Systemadmin replay fields are wired through the real audited caller and are not reopened;
+- retired M10 / `AUTHORIZE_PR_CI` is historical only and is not a current gap.
+
+No foreign productive remediation is included in this Security package.
 
 ### `SEC-SOTA-03` — supply-chain assurance inventory
 
@@ -82,7 +90,7 @@ Required output:
 
 `source/dependency/build/artifact/release surface → existing repository control → exact evidence → advisory SLSA/OWASP theme → actual gap → owner/PVC → verification gate`.
 
-Inventory lockfiles/dependency controls, GitHub Action trust/pinning, source revision identity, build identity, artifact/container provenance/attestations/SBOM where present and release/deployment exact-SHA binding. Reuse existing Development Chain/Release controls; do not create a parallel release/provenance system.
+Inventory lockfiles/dependency controls, GitHub Action trust/pinning, source revision identity, build identity, artifact/container provenance/attestations/SBOM where present and release/deployment exact-SHA binding. Reuse current Development Chain/Release controls. The executable-identity portion of `SEC-SOTA02-F04` is an input here; do not duplicate its external host authorization finding.
 
 ### `SEC-SOTA-04` — application/API ASVS 5.0 verification matrix
 
@@ -96,7 +104,7 @@ Map repository-relevant ASVS objectives to existing tests/evidence. Framework ma
 **Priority:** time-sensitive dependency  
 **Security state:** `WAITING_FOR_COMP_APPLICABILITY_DECISION`
 
-External CRA reporting obligations begin `2026-09-11` for in-scope products with digital elements. `CAPITAL-AI-COMP` owns applicability/legal-obligation determination. Security supplies technical vulnerability/incident evidence requirements after that determination and does not self-authorize Compliance work.
+`CAPITAL-AI-COMP` owns applicability/legal-obligation determination. Security supplies technical vulnerability/incident evidence requirements after that determination and does not self-authorize Compliance work.
 
 ## SEC-01 — Threat Modeling
 
@@ -116,11 +124,11 @@ Owns confidentiality/integrity requirements, RLS/grant verification, provenance,
 
 ## SEC-05 — Infrastructure
 
-Owns runtime/container/network/process/recovery Security requirements and verification. Current routed findings include S1-R2-03, S1-R2-04 and S1-R2-07. Operations retains productive runtime ownership.
+Owns runtime/container/network/process/recovery Security requirements and verification. Operations retains productive runtime ownership.
 
 ## SEC-06 — Supply Chain
 
-Owns assurance for dependencies, source, actions, images, lockfiles, builds, provenance, artifact integrity, attestations and exact-SHA release identity. Reuse current Development Chain/Release controls; advisory SLSA/OWASP themes guide gap analysis only.
+Owns assurance for dependencies, source, actions, images, lockfiles, builds, provenance, artifact integrity, attestations and exact-SHA release identity. Reuse current Development Chain/Release controls.
 
 ## SEC-07 — AI / Agent Security
 
@@ -144,12 +152,18 @@ Owns independent verification and evidence freshness/current-identity checks.
 
 Evidence precedence: `runtime → provider/security configuration → negative tests → hosted CI → code → scan → policy/control → roadmap`.
 
-Current priorities: exact post-deploy S1-R2-04 return, User Lifecycle provider residuals, S1-R2-09/10/11 returns, then SOTA inventory findings.
+Current priorities include exact S1-R2-04 runtime return and the newly routed `SEC-SOTA02-*` owner returns. Inventory completion does not equal finding closure.
 
 ## Current owner-routing register
 
 | Source | PVC | Primary target | Status / Security gate |
 |---|---|---|---|
+| SEC-SOTA02-F01 | PVC-15 (+ PVC-01 dependency) | CAPITAL-AI-FINTECH / CAPITAL-AI-CLIENT | owner remediation → indirect-injection/session negative tests |
+| SEC-SOTA02-F02 | PVC-03 | CAPITAL-AI-DOC | owner remediation → exact Human PR-gate evidence |
+| SEC-SOTA02-F03 | PVC-03 | CAPITAL-AI-DOC | owner remediation → durable mutation audit evidence |
+| SEC-SOTA02-F04 | PVC-02 | CAPITAL-AI-OPS | host readback/evidence → independent SEC verification; executable identity to SOTA-03 |
+| SEC-SOTA02-F05 | PVC-05 | CAPITAL-AI-GOV | authority wording correction → governance/security re-correlation |
+| SEC-SOTA02-F06 | PVC-01 (+ PVC-15 dependency) | CAPITAL-AI-CLIENT / CAPITAL-AI-FINTECH | session/history contract evidence → negative tests |
 | S1-R2-03 | PVC-06 | CAPITAL-AI-OPS | owner remediation → exact toolchain verification |
 | S1-R2-04 | PVC-04 / PVC-08 evidence | CAPITAL-AI-OPS | repository contract verified; post-deploy supervisor/readiness evidence open |
 | S1-R2-05 | PVC-02 | CAPITAL-AI-OPS | owner remediation → redirect DENY verification |
