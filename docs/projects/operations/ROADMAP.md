@@ -7,7 +7,7 @@
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-07`  
 **Correlation baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
-**Open PR baseline:** zero open Pull Requests; PR #833 is terminal `closed / unmerged`; PR #834 merged only Frontend navigation files and has no OPS changed-file or semantic overlap  
+**Open PR baseline:** PR #836 `[CAPITAL-AI-OPS] [ChatGPT] zizmor-Workflow-Sicherheitsprüfung integrieren` is open and changes only `.github/workflows/zizmor.yml`; no changed-file or material semantic/authority overlap with this Roadmap/qs/RPO/Node-priority synchronization. PR #833 is terminal `closed / unmerged`; no unresolved parallel ROADMAP writer remains  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 Canonical current-main Security backlog evidence: `evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`.  
@@ -202,8 +202,9 @@ The following repository-backed OPS work items referenced by recent OPS executio
 | qs 6.16.0 DoS remediation | PR #828 Human-merged; final hosted CI/Governance/Container Security successful; current live main contains remediation | IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL |
 | retired authorization cleanup | PR #833 closed unmerged | TERMINAL / HISTORICAL INPUT ONLY; no current Roadmap writer or main-state change |
 | Frontend navigation consolidation | PR #834 merged | FOREIGN_SCOPE_TERMINAL; only Frontend navigation/test files changed, no OPS overlap |
+| zizmor workflow-security tooling | PR #836 open; only `.github/workflows/zizmor.yml` | NON_CONFLICTING_PARALLEL_PR; no Roadmap/qs/RPO/Node-priority changed-file or semantic conflict |
 
-The stale `agent/operations-node-toolchain-24-20-20260906` branch is not an active implementation authority. The older `agent/operations-qs-cve-20260905` branch is historical/divergent dependency work and does not reopen the terminal #828 remediation. `agent/operations-roadmap-integrity-sync-20260907` is stale/diverged with no PR and is non-authorizing. PR #833 is closed unmerged; current open-PR baseline is zero and there is no unresolved parallel ROADMAP writer at this correlation snapshot.
+The stale `agent/operations-node-toolchain-24-20-20260906` branch is not an active implementation authority. The older `agent/operations-qs-cve-20260905` branch is historical/divergent dependency work and does not reopen the terminal #828 remediation. `agent/operations-roadmap-integrity-sync-20260907` is stale/diverged with no PR and is non-authorizing. PR #833 is closed unmerged; PR #836 is the only current open PR and does not write this Roadmap or conflict with this work item's priority semantics.
 
 GA4/Consent production verification remains evidence-only: repository code provides the inert `ga-measurement-id` metadata/consent bridge contract, but browser Network/GA4 Realtime behavior is not proven by repository state alone. No completion claim is derived from chat-only/manual runtime observations.
 
@@ -234,7 +235,7 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [x] highest actually executable local OPS priority recalculated as `OPS-08-SEC-07`;
 - [x] PR #833 verified terminal `closed / unmerged`; its prior ROADMAP overlap no longer represents an active writer;
 - [x] branch resynchronized to `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`; intervening PR #834 changes only Frontend files and creates no OPS overlap;
-- [x] current open-PR baseline is zero at final synchronization snapshot;
+- [x] PR #836 correlated as non-conflicting parallel C-N tooling work; no unresolved parallel ROADMAP writer remains;
 - [ ] CAPITAL-AI-GOV resolves the Node baseline authority/supersession before OPS Node mutation;
 - [ ] `OPS-06-SEC-03` Node control-plane convergence implemented/evidenced only after that authority resolution;
 - [ ] deterministic RPO evaluator re-intaken on a fresh current-main branch and independently exact-head validated;
