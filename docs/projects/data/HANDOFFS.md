@@ -19,11 +19,14 @@ Foreign work is not marked `DONE`, `VERIFIED` or `CLOSED` by DATA.
 - `dependency: CAPITAL-AI-SEC requirements/verification; CAPITAL-AI-OPS owns future PR/trace/DevelopmentChain tooling-code remediation`
 - `required_evidence: current immutable baseline/head identities and trusted refresh/retry observations`
 - `verification_gate: CAPITAL-AI-SEC independent verification`
-- `status: REFERRED_NOT_EXECUTED`
-- `source_external_status: WAITING_FOR_EVIDENCE`
-- `roadmap_reference: docs/projects/data/ROADMAP.md#data-10--evidence-management--pvc-10`
+- `status: EVIDENCE_READY`
+- `source_external_status: WAITING_FOR_INDEPENDENT_SECURITY_VERIFICATION`
+- `roadmap_reference: docs/projects/data/ROADMAP.md#data-10--evidence-management`
+- `implementation: src/platform/MarketData/evidenceIdentityFreshness.ts`
+- `unit_evidence: tests/unit/evidenceIdentityFreshness.test.ts`
+- `return_evidence: docs/projects/data/evidence/S1_R2_11_EVIDENCE_IDENTITY_FRESHNESS_2026-09-07.md`
 
-DATA may implement/evidence the DATA-owned semantics. It may not set the Security finding `VERIFIED/CLOSED`.
+DATA implemented/evidenced the DATA-owned semantics. It may not set the Security finding `VERIFIED/CLOSED`.
 
 Full resolved handoff: `handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md`.
 
