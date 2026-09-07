@@ -30,17 +30,21 @@ describe('S1-R2-09 strict CSP promotion gate', () => {
 });
 
 describe('S1-R2-10 production billing sandbox isolation', () => {
-  it('permits simulated Stripe success only behind the Vite DEV boundary', () => {
-    const checkoutPath = path.resolve(process.cwd(), 'src/components/Checkout.tsx');
-    const source = fs.readFileSync(checkoutPath, 'utf8');
+  it('keeps canonical Stripe checkout server-backed with no browser success simulation', () => {
+    const compatibilityPath = path.resolve(process.cwd(), 'src/components/Checkout.tsx');
+    const canonicalPath = path.resolve(process.cwd(), 'src/features/billing/ui/Checkout.tsx');
+    const compatibility = fs.readFileSync(compatibilityPath, 'utf8');
+    const source = fs.readFileSync(canonicalPath, 'utf8');
 
-    expect(source).toContain("if ((import.meta as any).env?.DEV === true)");
-    expect(source).toContain('Production checkout denied.');
-    expect(source).toContain('Stripe Checkout ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.');
-    expect(source).toContain('Development-Sandbox aktiv');
-    expect(source).toContain('DEV-Upgrade simulieren');
-    expect(source.match(/setDemoMode\(true\)/g)).toHaveLength(1);
-    expect(source).not.toContain('Switching to sandbox/demo mode.');
+    expect(compatibility).toContain("export { Checkout } from '../features/billing/ui/Checkout'");
+    expect(source).toContain("authFetch('/api/stripe/create-checkout-session'");
+    expect(source).toContain('successUrl: `${window.location.origin}/dashboard?checkout=pending`');
+    expect(source).toContain('window.location.assign(data.checkoutUrl);');
+    expect(source).not.toContain('setDemoMode(');
+    expect(source).not.toContain('Development-Sandbox aktiv');
+    expect(source).not.toContain('DEV-Upgrade simulieren');
     expect(source).not.toContain('Demo-Upgrade simulieren');
+    expect(source).not.toContain('Switching to sandbox/demo mode.');
+    expect(source).not.toContain('onSuccess(planId)');
   });
 });
