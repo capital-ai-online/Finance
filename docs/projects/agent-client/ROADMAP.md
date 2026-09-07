@@ -3,12 +3,14 @@
 **Project ID:** `CAPITAL-AI-CLIENT`  
 **Scope:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`  
-**Status:** `ACTIVE — CONTRACT BASELINE COMPLETE / PHYSICAL RUNTIME GATED / PROJECT-SKILL CONTRACT OPEN`  
-**Correlation date:** `2026-09-06`  
-**Correlation baseline:** `main@dbdb1d5ed2c93c857ab9de1329b9d4dcbba2fd67`  
-**Trust root:** `/AGENTS.md@current main`
+**Status:** `ACTIVE — CONTRACT BASELINE COMPLETE / CLIENT-01+07 DOCUMENTATION HYGIENE TERMINAL ON HUMAN MERGE / PHYSICAL RUNTIME GATED / PROJECT-SKILL CONTRACT OPEN`  
+**Correlation date:** `2026-09-07`  
+**Correlation baseline:** `main@eee9a8af3f3d2532a213154dd61f678454a2200b`  
+**Trust root:** `/AGENTS.md@current main` (`2.8.1` at this correlation)
 
 Operational status for PVC-01 is maintained here. Foreign PVC stages remain dependencies/routing targets and are never executed or completed by this project.
+
+The terminal CLIENT-01/07 documentation-hygiene state recorded in this branch becomes current-main fact only if this branch is Human/CODEOWNER merged. Before merge it is branch-proposed status, not a claim that `main` is already complete.
 
 ## Purpose
 
@@ -16,26 +18,26 @@ Consolidate Agent Client concerns into one traceable client boundary without cre
 
 The project owns the client-side path from attributable Human intent to a structured request handed to the authoritative downstream boundary, plus preservation/rendering of returned response, status and error semantics.
 
-## Current-main correlation — 2026-09-06
+## Current-main correlation — 2026-09-07
 
-The previous Roadmap baseline `main@891f3933ac0476b1e7d4fa5cd6f397257ac52e68` is historical. Current `main` is `dbdb1d5ed2c93c857ab9de1329b9d4dcbba2fd67`, which is `587` commits ahead of that baseline.
+The previous Roadmap baseline `main@dbdb1d5ed2c93c857ab9de1329b9d4dcbba2fd67` is historical. Current `main` for this work package is `eee9a8af3f3d2532a213154dd61f678454a2200b`.
 
 Current correlation resolves:
 
 - `CAPITAL-AI-CLIENT` -> `docs/projects/agent-client/` -> `PVC-01` -> Primary Owner `CAPITAL-AI-CLIENT`;
-- `0` open Pull Requests at correlation time and therefore no current parallel PR writer;
+- open PR `#804` is a parallel CAPITAL-AI-CLIENT GOV-08 Admin Process Graph writer, but its changed files do not overlap this hygiene branch and its productive/frontend graph scope is semantically separate from CLIENT-01/07 documentation correlation;
 - PR `#693` is Human-merged and established the CLIENT-02 through CLIENT-06 provider-neutral contract baseline plus CLIENT-07 evidence;
 - PR `#691` is Human-merged, belongs to `CAPITAL-AI-OPS`, and retired the former M10 productive runtime; M10 is historical and is not a CLIENT implementation gap;
 - historical PR `#668` remains closed/unmerged and non-authorizing;
-- current repository search still finds no productive `requestedCapability` implementation and no physical `AgentClientRequestBuilder`, `AgentClientResponseAdapter` or `AgentClientStatusModel` runtime component;
+- current correlation still shows no physical Agent Client runtime trigger; `NO_PHYSICAL_RUNTIME_TRIGGER` remains in force;
 - `src/platform/Security/agentIam.ts` remains the canonical downstream IAM/capability authority surface consumed by PVC-01; `evaluateAgentAuthorization` remains outside the client boundary;
 - ESS-0019 v1.2.0 remains the provider-neutral Agent Control Plane contract and explicitly does not enable productive remote skill loading;
-- current `/AGENTS.md` Control Plane 2.8.0 requires exact Human/Owner PR-creation approval for the final correlated main/branch-head state; historical standing-session wording does not override that current lifecycle;
+- current `/AGENTS.md` Control Plane 2.8.1 requires exact Human/Owner PR-creation approval for the final correlated main/branch-head state and Human/CODEOWNER-only merge;
 - withdrawn post-PVC routing overlays are not current policy; project routing resolves through `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md`, the project Roadmap, applicable ADR/ESS, then code/tests/evidence.
 
 ### Correlation decision
 
-`NO_PHYSICAL_RUNTIME_TRIGGER` remains the correct PVC-01 runtime decision. The next locally actionable feature work is therefore contract/design work for a reusable project-skill/plugin invocation boundary, not creation of an unconsumed Agent Client runtime stack.
+`NO_PHYSICAL_RUNTIME_TRIGGER` remains the correct PVC-01 runtime decision. CLIENT-01/07 documentation-correlation debt is fully covered by the bounded hygiene branch; the next locally actionable feature work after its merge is CLIENT-08 contract/design work for a reusable project-skill/plugin invocation boundary.
 
 ## Architecture
 
@@ -57,7 +59,7 @@ Authorization policy, capability grants, protected execution, platform decisions
 
 ## CLIENT-01 — Agent Client Inventory / Re-correlation
 
-**State:** `DONE — CONTRACT BASELINE MERGED / CURRENT-MAIN RE-CORRELATED`
+**State:** `DONE — CONTRACT BASELINE MERGED / DOCUMENTATION CORRELATION TERMINAL ON HUMAN MERGE OF THIS BRANCH`
 
 Completed implementation/evidence:
 
@@ -66,12 +68,15 @@ Completed implementation/evidence:
 - current runtime/document mapping;
 - foreign execution-surface classification;
 - PR #693 Human-merged contract-baseline implementation;
-- 2026-09-06 current-main refresh against `dbdb1d5ed2c93c857ab9de1329b9d4dcbba2fd67`;
-- no current open PR writer and no evidenced physical runtime trigger.
+- 2026-09-07 current-main refresh against `eee9a8af3f3d2532a213154dd61f678454a2200b`;
+- supporting active project documents refreshed in `agent/agent-client-pvc01-hygiene-20260907`;
+- no evidenced physical runtime trigger.
 
-### Remaining consistency debt
+### Documentation consistency closure
 
-The supporting files `README.md`, `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `TRACEABILITY.md` and `WORK_PACKAGES.md` still contain historical `main@891f...` correlation metadata and/or superseded writer/session wording. Their semantic contract remains usable, but their correlation metadata must be refreshed in a bounded documentation-consistency slice before they are treated as current-main evidence.
+The active supporting files `README.md`, `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `TRACEABILITY.md` and `WORK_PACKAGES.md` are refreshed in this branch to the current PVC-01 ownership/lifecycle state. Historical evidence remains historical and was not rewritten merely to look current.
+
+On Human/CODEOWNER merge of this branch, the previously recorded CLIENT-01 documentation consistency debt is terminal. No separate Roadmap-only cleanup PR is required.
 
 ---
 
@@ -147,7 +152,7 @@ PVC-01 preserves:
 
 ## CLIENT-07 — Testing & Evidence
 
-**State:** `CONTRACT EVIDENCE COMPLETE — RUNTIME TESTS DEFERRED`
+**State:** `CONTRACT EVIDENCE COMPLETE — DOCUMENTATION CORRELATION TERMINAL ON HUMAN MERGE / RUNTIME TESTS DEFERRED`
 
 The contract/evidence baseline was merged by PR #693. No physical PVC-01 runtime slice exists, so runtime/build/test PASS is not claimed.
 
@@ -163,7 +168,7 @@ Future physical slices must test at minimum:
 - production mutation remaining request-only at PVC-01;
 - duplicate implementation scan.
 
-**Open evidence work:** refresh supporting project-document correlation metadata identified under CLIENT-01. Runtime tests remain condition-gated, not currently actionable.
+**Open evidence work:** no remaining actionable documentation-correlation work after Human/CODEOWNER merge of this branch. Runtime tests remain condition-gated and are not currently actionable because no physical PVC-01 runtime trigger exists.
 
 ---
 
@@ -229,7 +234,7 @@ A physical Agent Client module is permitted only when current-main evidence prov
 - duplicated productive response/status mapping with divergent behavior;
 - a concrete productive consumer would reduce duplication through a shared client module without importing downstream authority.
 
-### 2026-09-06 trigger check
+### 2026-09-07 trigger check
 
 | Trigger | Result |
 |---|---|
@@ -248,43 +253,38 @@ Current relocation state: `NO_PHYSICAL_RUNTIME_TRIGGER`.
 
 | ID | Workstream | Main implementation status | Current open work |
 |---|---|---|---|
-| CLIENT-01 | Inventory / re-correlation | `DONE — PR #693 MERGED` | supporting document correlation metadata refresh |
+| CLIENT-01 | Inventory / re-correlation | `DONE — PR #693 MERGED; DOC HYGIENE TERMINAL ON THIS BRANCH MERGE` | none after Human/CODEOWNER merge of this branch |
 | CLIENT-02 | Request Contract | `CONTRACT BASELINE COMPLETE` | runtime deferred until trigger |
 | CLIENT-03 | Identity Handoff | `CONTRACT BASELINE COMPLETE` | runtime deferred until trigger |
 | CLIENT-04 | Capability Handoff | `CONTRACT BASELINE COMPLETE` | runtime deferred until trigger |
 | CLIENT-05 | Response Contract | `CONTRACT BASELINE COMPLETE` | runtime deferred until trigger |
 | CLIENT-06 | Client Security Boundary | `CONTRACT BASELINE COMPLETE` | runtime deferred until trigger |
-| CLIENT-07 | Testing & Evidence | `CONTRACT EVIDENCE COMPLETE` | project-doc correlation refresh; runtime tests trigger-gated |
+| CLIENT-07 | Testing & Evidence | `CONTRACT EVIDENCE COMPLETE; DOC HYGIENE TERMINAL ON THIS BRANCH MERGE` | runtime tests trigger-gated only |
 | CLIENT-08 | Project Skill / Plugin Invocation Contract | `NOT IMPLEMENTED` | `OPEN — next feature-contract work` |
 
 `COMPLETE` is restricted to the local contract/evidence baseline. It does not claim physical runtime implementation, downstream execution, hosted CI, plugin activation, persistent workflow execution or foreign-project verification.
 
 ---
 
-## Completed implementations consolidated against main
+## Completed implementations consolidated against main / current branch
 
-| Item | Current-main result |
+| Item | Current result |
 |---|---|
 | Initial CLIENT inventory / PVC-01 ownership mapping | implemented and retained |
 | CLIENT-02..CLIENT-06 provider-neutral contract baseline | `MERGED — PR #693` |
 | CLIENT-07 contract/evidence baseline | `MERGED — PR #693` |
+| CLIENT-01/07 supporting-document correlation hygiene | implemented on `agent/agent-client-pvc01-hygiene-20260907`; terminal when this branch is Human/CODEOWNER merged |
 | Physical PVC-01 runtime module | intentionally `NOT IMPLEMENTED`; trigger not met |
 | Historical M10 productive runtime | `RETIRED / OFF` by foreign OPS PR #691; not a CLIENT gap |
 | Historical PR #668 candidate | closed/unmerged; non-authorizing |
 | Old post-PVC routing overlays | withdrawn by current governance; not a CLIENT dependency |
-| Exact PR-create Human approval lifecycle | current `/AGENTS.md` 2.8.0 controls |
+| Exact PR-create Human approval lifecycle | current `/AGENTS.md` 2.8.1 controls |
 
 ---
 
-## Open tasks consolidated against main
+## Open tasks after CLIENT-01/07 hygiene merge
 
-### Priority 1 — CLIENT documentation correlation hygiene
-
-Refresh `README.md`, `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `TRACEABILITY.md` and `WORK_PACKAGES.md` from historical `main@891f...` assumptions to the current-main authority/project state. Remove stale statements such as PR #691 being open and historical standing-session PR-create authority. Do not rewrite immutable historical evidence files merely to look current.
-
-**Exit gate:** all active CLIENT project documents agree on current project/PVC ownership, current lifecycle authority, merged PR #693, merged foreign PR #691 and `NO_PHYSICAL_RUNTIME_TRIGGER`, with historical evidence clearly labeled historical.
-
-### Priority 2 — CLIENT-08 Project Skill / Plugin Invocation Contract
+### Priority 1 — CLIENT-08 Project Skill / Plugin Invocation Contract
 
 Create the provider-neutral PVC-aware client contract described above before any custom runtime, plugin mutation or persistent Skill Market Sync implementation is attempted.
 
