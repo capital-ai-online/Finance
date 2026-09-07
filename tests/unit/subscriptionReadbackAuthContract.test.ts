@@ -18,11 +18,16 @@ describe('authenticated subscription readback contract', () => {
     expect(source).not.toContain('?userId=');
   });
 
-  it('removes legacy unauthenticated subscription readbacks from Dashboard and Abonnements', () => {
-    for (const file of ['src/components/Dashboard.tsx', 'src/components/Abonnements.tsx']) {
-      const source = readRepoFile(file);
+  it('keeps Dashboard and the canonical subscription surface on authenticated readback', () => {
+    const dashboard = readRepoFile('src/components/Dashboard.tsx');
+    const compatibility = readRepoFile('src/components/Abonnements.tsx');
+    const subscriptions = readRepoFile('src/features/billing/ui/Abonnements.tsx');
 
-      expect(source).toContain('readAuthenticatedSubscriptionTier');
+    expect(dashboard).toContain('readAuthenticatedSubscriptionTier');
+    expect(subscriptions).toContain('readAuthenticatedSubscriptionTier');
+    expect(compatibility).toContain("export { Abonnements } from '../features/billing/ui/Abonnements'");
+
+    for (const source of [dashboard, subscriptions, compatibility]) {
       expect(source).not.toContain('user-subscription?email=');
       expect(source).not.toContain('user-subscription?userId=');
       expect(source).not.toContain('fetch(`/api/stripe/user-subscription');
@@ -44,9 +49,11 @@ describe('authenticated subscription readback contract', () => {
 
   it('does not issue authenticated subscription reads for guest sessions', () => {
     const dashboard = readRepoFile('src/components/Dashboard.tsx');
-    const subscriptions = readRepoFile('src/components/Abonnements.tsx');
+    const subscriptions = readRepoFile('src/features/billing/ui/Abonnements.tsx');
 
     expect(dashboard).toContain("userSession.type === 'registered' && userSession.id");
-    expect(subscriptions).toContain('if (!userId) return;');
+    expect(subscriptions).toContain('if (!userId) {');
+    expect(subscriptions).toContain('if (userId) void synchronizeTier();');
+    expect(subscriptions).toContain('if (!checkoutReturn || !userId) return;');
   });
 });

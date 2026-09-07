@@ -24,14 +24,18 @@ function productionSourceFiles(directory: string): string[] {
 }
 
 describe('S1-R2-00 entitlement authority boundary', () => {
-  it('keeps browser checkout simulation development-only', () => {
-    const checkout = read('src/components/Checkout.tsx');
-    const activation = checkout.indexOf('setDemoMode(true)');
-    expect(activation).toBeGreaterThan(-1);
-    const precedingGuard = checkout.slice(Math.max(0, activation - 300), activation);
-    expect(precedingGuard).toContain('(import.meta as any).env?.DEV === true');
-    expect(checkout).toContain('Production checkout denied.');
-    expect(checkout).toContain("setError('Stripe Checkout ist derzeit nicht verfügbar.");
+  it('keeps browser checkout free of simulated subscription activation', () => {
+    const compatibilityCheckout = read('src/components/Checkout.tsx');
+    const checkout = read('src/features/billing/ui/Checkout.tsx');
+
+    expect(compatibilityCheckout).toContain("export { Checkout } from '../features/billing/ui/Checkout'");
+    expect(checkout).toContain("authFetch('/api/stripe/create-checkout-session'");
+    expect(checkout).toContain('successUrl: `${window.location.origin}/dashboard?checkout=pending`');
+    expect(checkout).toContain('window.location.assign(data.checkoutUrl);');
+    expect(checkout).not.toContain('setDemoMode(');
+    expect(checkout).not.toContain('Development-Sandbox');
+    expect(checkout).not.toContain('DEV-Upgrade simulieren');
+    expect(checkout).not.toContain('onSuccess(planId)');
   });
 
   it('projects subscription tier through the rotation-aware authenticated readback contract', () => {
