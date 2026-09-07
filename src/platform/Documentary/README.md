@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.15.0
+Version: 1.16.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, der bounded ESS-0012 `GOV-DOC-003` Documentation-Freshness-Validator, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
 
 ## Implemented Scope
 
@@ -26,6 +26,7 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Documentation/BilingualDocumentaryProjection.ts`
 - `Versioning/DocumentaryVersion.ts`
 - `Governance/Services/DocumentationHygieneValidator.ts`
+- `Governance/Validators/DocumentationValidator.ts`
 - `Discovery/CodeEvidence.ts`
 - `Discovery/StatusEventEvidence.ts`
 - `Discovery/StatusEventDriftDetector.ts`
@@ -101,7 +102,9 @@ Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Dif
 
 ## Documentation Governance
 
-Der Namespace `Governance/` bleibt gemäß ADR-0014 / ESS-0012 ausschließlich **Documentation-only**. Der integrierte `DocumentationHygieneValidator` prüft Root-Markdown, Document Registry, Lifecycle-/Sprachwerte und Registry-Zielpfade read-only und fail-closed. Er definiert keine globale Repository-Authority, keine Merge-Entscheidung und keine Produktionsmutationsberechtigung.
+Der Namespace `Governance/` bleibt gemäß ADR-0014 / ESS-0012 ausschließlich **Documentation-only**. Der integrierte `DocumentationHygieneValidator` prüft Root-Markdown, Document Registry, Lifecycle-/Sprachwerte und Registry-Zielpfade read-only und fail-closed. Der bounded `DocumentationValidator` implementiert als ersten individuellen ESS-0012-Slice ausschließlich `GOV-DOC-003` mit `Medium`-Severity und konkreter `FileReference`-Evidence: ein Befund entsteht nur, wenn ein unverändertes registriertes Dokument eine explizite Referenz auf einen im selben korrelierten Freshness-Report geänderten `src/platform/<Component>/...`-Pfad enthält und der Analyzer-Content-Hash weiterhin stimmt. Er verwendet den bestehenden `SemanticFreshnessAnalyzer`, führt keinen zweiten Freshness-Scan aus und verwirft nicht hinreichend belegte Kandidaten fail-closed.
+
+Beide Validatoren sind read-only. Sie definieren keine globale Repository-Authority, keine Merge-Entscheidung und keine Produktionsmutationsberechtigung. Die übrigen ESS-0012-Regeln bleiben separat inkrementell geplant; der historische 57-Regel-Scope wird durch WP-DOC-07 nicht aktiviert.
 
 Repository-weite Authority-Auflösung verbleibt im Governance Control Plane unter `src/platform/Governance` und ADR-0096. Der ADR-0097 Maintenance Agent konsumiert diese Authorities lediglich und kann sie nicht überschreiben.
 
@@ -141,13 +144,13 @@ Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach App
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Migration` (read-only D8 Planning Slice), `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service plus bounded `GOV-DOC-003` Freshness Validation), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Migration` (read-only D8 Planning Slice), `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: physische/semantische `MigrationExecution`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren. Diese Bereiche werden durch den read-only D8 Planning Slice nicht implizit implementiert oder autorisiert.
+Weiterhin geplant: physische/semantische `MigrationExecution`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren jenseits `GOV-DOC-003`. Diese Bereiche werden durch WP-DOC-07 nicht implizit implementiert oder autorisiert.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. D8 bleibt read-only Planning; Migration Execution ist nicht Teil dieses Slices. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
+Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability-, Freshness- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. D8 bleibt read-only Planning; Migration Execution ist nicht Teil dieses Slices. `GOV-DOC-003` bleibt ein read-only Documentary Finding und trifft keine Governance-/Release-Entscheidung. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
 
 ## ESS / ADR
 
