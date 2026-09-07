@@ -4,7 +4,7 @@
 **Repository:** SvenKulessa/Finance  
 **Version:** 1.8.0  
 **Stand:** 7. September 2026  
-**Korrelationsbasis:** `main@5490a3b1a8d6aa19e2cd955b79267dffa15e5282`  
+**Korrelationsbasis:** `main@fb3fff1f3959d1c6f87d20228036366848600487`  
 **Current Project:** `CAPITAL-AI-FE`  
 **Current Project Folder:** `docs/projects/frontend/`  
 **Primary Productive PVC:** `N/A` (`[]`)  
@@ -503,4 +503,4 @@ BB-2G folgt danach als Visual-Parity-/Composition-Closure. Die Visualization-/Se
 
 ---
 
-*Version 1.8.0 re-korreliert die bestehende kanonische Roadmap gegen `main@5490a3b1a8d6aa19e2cd955b79267dffa15e5282`, übernimmt Public Enterprise Scorer und Public Analysis Sideboard als gemergte Current-Main-Recovery, integriert die Visual-Recovery-A/B/C-Matrix, Contract-Supersession-Lane, state-of-the-art Tooling-Evaluation und messbare Accessibility-/Performance-/Legacy-Exit-Gates. Sie erzeugt weder eine zweite Frontend-Roadmap noch eine parallele Frontend-, Scoring-, Data-, Evidence-, IAM- oder Governance-Architektur.*
+*Version 1.8.0 re-korreliert die bestehende kanonische Roadmap gegen `main@fb3fff1f3959d1c6f87d20228036366848600487`, übernimmt Public Enterprise Scorer und Public Analysis Sideboard als gemergte Current-Main-Recovery, integriert die Visual-Recovery-A/B/C-Matrix, Contract-Supersession-Lane, state-of-the-art Tooling-Evaluation und messbare Accessibility-/Performance-/Legacy-Exit-Gates. Sie erzeugt weder eine zweite Frontend-Roadmap noch eine parallele Frontend-, Scoring-, Data-, Evidence-, IAM- oder Governance-Architektur.*
