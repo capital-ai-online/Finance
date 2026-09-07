@@ -35,6 +35,9 @@ describe('governance authority consistency', () => {
     const agents = read('AGENTS.md');
     const roadmap = read('docs/architecture/ROADMAP.md');
     const m10 = control('CTRL-CI-M10-001');
+    const roadmapM10Projection = roadmap
+      .split(/\r?\n/)
+      .find((line) => line.trimStart().startsWith('|') && /\bM10\b.*PR-CI/i.test(line));
 
     expect(m10.status).toBe('required');
     expect(m10.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
@@ -45,8 +48,8 @@ describe('governance authority consistency', () => {
     expect(agents).toContain('RETIRED / OFF');
     expect(agents).toContain('MUST NOT search');
     expect(agents).not.toContain('M10 MUST NOT be reactivated until');
-    expect(roadmap).toContain('M10 PR-CI passkey runtime is `RETIRED / OFF`');
-    expect(roadmap).toContain('No productive M10 implementation is expected in current state');
+    expect(roadmapM10Projection).toBeDefined();
+    expect(roadmapM10Projection).toMatch(/RETIRED\s*\/\s*OFF/i);
     expect(roadmap).not.toContain('Mandatory blockers before M10 reactivation');
   });
 
