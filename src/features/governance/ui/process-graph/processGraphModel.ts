@@ -24,6 +24,7 @@ export interface ProcessGraphViewModel {
   nodes: ProcessGraphNode[];
   edges: ProcessGraphEdge[];
   operationalStateAvailable: boolean;
+  decisionAuthority: false;
 }
 
 interface PvcRow {
@@ -137,5 +138,6 @@ export function buildProcessGraphViewModel(
     nodes: [...pvcNodes, ...developmentNodes, ...gateNodes],
     edges: [...chainEdges, ...developmentEdges, ...gateEdges],
     operationalStateAvailable: false,
+    decisionAuthority: false,
   };
 }
