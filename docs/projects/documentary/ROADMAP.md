@@ -123,29 +123,39 @@ Separate remaining boundary:
 
 ## WP-DOC-07 — ESS-0012 Documentary freshness validation
 
-**State:** `NEXT — PLANNED / OWNER-BOUNDED`
+**State:** `IMPLEMENTED ON BRANCH — VALIDATION / PR / HUMAN MERGE PENDING`
 
 Priority correlation:
 
 - ESS-0012 defines `DocumentationValidator` as a Documentary Governance validation area;
 - ESS-0012-CONTRACTS defines `GOV-DOC-003` — documentation older than the last changed referenced component — with `Medium` severity;
-- `src/platform/Documentary/Governance/Validators/` currently contains no implemented individual validator;
-- the existing `DocumentationHygieneValidator` remains the canonical read-only registry/hygiene service and must not be duplicated;
-- `Discovery/SemanticFreshnessAnalyzer.ts` already provides deterministic, commit/correlation-bound freshness evidence and is therefore the required reuse baseline for this slice.
+- the existing `DocumentationHygieneValidator` remains the canonical read-only registry/hygiene service and is not duplicated;
+- `Discovery/SemanticFreshnessAnalyzer.ts` remains the single deterministic, commit/correlation-bound freshness discovery source for this slice.
 
-Bounded implementation scope:
+Current branch implementation:
 
-- implement the first canonical `DocumentationValidator` slice for `GOV-DOC-003` under `src/platform/Documentary/Governance/Validators/`;
-- consume the existing semantic-freshness result instead of introducing a second scanner, freshness engine or document registry;
-- emit only evidence-backed Documentary findings with the canonical rule identity and severity required by ESS-0012-CONTRACTS;
-- preserve deterministic ordering and read-only behavior;
-- add targeted unit coverage for positive, negative and deterministic mapping cases;
-- do not activate the broader 57-rule suite, Governance/Repository Health scoring or production-release thresholds as part of this work package;
-- do not acquire global Governance, Supervisor, Platform Director, Version, Release, Production, Security or Compliance decision authority.
+- branch: `agent/documentary-ess0012-gov-doc-003-20260907`;
+- synchronized baseline: `main@eee9a8af3f3d2532a213154dd61f678454a2200b`;
+- `Governance/Validators/DocumentationValidator.ts` implements the canonical `GOV-DOC-003` rule identity with `Medium` severity and `FileReference` evidence;
+- the validator consumes the existing `SemanticFreshnessReport` and does not perform repository-wide freshness discovery itself;
+- findings require a changed `src/platform/<Component>/...` path from the correlated source-change set plus an explicit matching reference in the current document body, while the document itself must be unchanged in the same correlated change set;
+- the analyzer-provided content hash is revalidated before a finding is emitted, providing a fail-closed TOCTOU guard;
+- each evidence item binds document path, line, referenced source path, source commit and correlation ID;
+- synchronized documents, semantic-only candidates, stale hashes, missing/unreadable documents and periodic full-scan candidates without concrete changed-component evidence are discarded rather than promoted to findings;
+- result and evidence ordering are deterministic and the validator performs no mutation;
+- targeted unit coverage in `tests/unit/documentaryDocumentationValidator.test.ts` covers positive, negative/fail-closed, synchronized-document and deterministic mapping cases;
+- `src/platform/Documentary/Governance/README.md` documents the bounded slice and preserves the global Governance boundary.
+
+Explicit non-scope retained:
+
+- no broader 57-rule suite activation;
+- no Governance/Repository Health scoring or production-release thresholds;
+- no second scanner, freshness engine, registry, event authority or Governance runtime;
+- no global Governance, Supervisor, Platform Director, Version, Release, Production, Security or Compliance decision authority.
 
 Exit gate:
 
-- `GOV-DOC-003` coverage is implemented and proven on the exact final PR head;
+- `GOV-DOC-003` coverage is proven on the exact final PR head;
 - freshness evidence is reused from the existing Documentary analyzer without parallel architecture;
 - no finding is emitted without concrete evidence and no mutation is performed;
 - existing Documentation Hygiene behavior remains unchanged;
@@ -156,7 +166,7 @@ Exit gate:
 
 The following areas remain separate Roadmap work and must not be bundled merely because prior Documentary slices are complete:
 
-- **next:** WP-DOC-07 incremental ESS-0012 `GOV-DOC-003` Documentary freshness validation;
+- **current:** WP-DOC-07 incremental ESS-0012 `GOV-DOC-003` Documentary freshness validation through validation, PR and Human merge;
 - physical/semantic Migration Execution beyond the read-only D8 planning slice, only where separately authorized and owner-bounded;
 - Plugins;
 - broader Documentary architecture/runtime gaps explicitly still marked planned by current component/technical documentation;
