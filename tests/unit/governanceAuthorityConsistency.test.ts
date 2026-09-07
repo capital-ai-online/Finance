@@ -37,17 +37,26 @@ describe('governance authority consistency', () => {
     const m10 = control('CTRL-CI-M10-001');
 
     expect(m10.status).toBe('required');
-    expect(m10.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
+    expect(m10.authorityRefs).toEqual(expect.arrayContaining([
+      'AUTH-GOV-AGENT-TRUST-ROOT',
+      'AUTH-GOV-HUMAN-OWNER-PR-APPROVAL',
+      'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION',
+    ]));
     expect(m10.requirement).toMatch(/M10 .*retired/i);
     expect(m10.requirement).toContain('PR #691');
     expect(m10.requirement).toMatch(/MUST NOT search/i);
     expect(m10.requirement).toMatch(/absence of a productive M10 implementation as a gap/i);
+    expect(m10.evidence).toEqual(expect.arrayContaining([
+      'AGENTS.md',
+      'docs/architecture/ROADMAP.md',
+    ]));
     expect(agents).toContain('RETIRED / OFF');
     expect(agents).toContain('MUST NOT search');
     expect(agents).not.toContain('M10 MUST NOT be reactivated until');
-    expect(roadmap).toContain('M10 PR-CI passkey runtime is `RETIRED / OFF`');
-    expect(roadmap).toContain('No productive M10 implementation is expected in current state');
+    expect(roadmap).toContain('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS');
+    expect(roadmap).toMatch(/M10[^\n]*RETIRED \/ OFF/i);
     expect(roadmap).not.toContain('Mandatory blockers before M10 reactivation');
+    expect(roadmap).not.toMatch(/Current enforced M10 state\s*[—-]\s*COMPLETE\s*\/\s*VERIFIED PASS/i);
   });
 
   it('labels the governance library as a historical snapshot with a current-authority annotation', () => {

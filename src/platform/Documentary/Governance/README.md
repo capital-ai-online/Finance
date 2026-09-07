@@ -3,8 +3,8 @@
 **Domain:** Documentary  
 **Authority:** `ESS-0012 — Documentation Governance`  
 **Global governance dependency:** `src/platform/Governance` / `/AGENTS.md`  
-**Version:** `1.2.0`  
-**Status:** partial implementation — read-only hygiene service operational; broader ESS-0012 rule suite incremental
+**Version:** `1.5.0`  
+**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-003 freshness, GOV-DOC-006 generator-marking and incremental GOV-DOC-001 document-version validation; broader ESS-0012 rule suite incremental
 
 ## Purpose
 
@@ -12,7 +12,7 @@ The Documentation Governance Validator belongs to the Documentary domain. It val
 
 The repository-wide Governance Control Plane is `src/platform/Governance`, resolved from `/AGENTS.md`, `docs/governance/authority-registry.json` and `docs/governance/control-catalog.json`.
 
-## Implemented service
+## Implemented services
 
 `Services/DocumentationHygieneValidator.ts` is the canonical read-only hygiene service. It was adapted from the reusable implementation parked in PR #439 and enforces:
 
@@ -24,6 +24,18 @@ The repository-wide Governance Control Plane is `src/platform/Governance`, resol
 - repository-relative registry target paths and target existence.
 
 The CLI adapter is `scripts/automation/validateDocumentationHygiene.ts` and is exposed as `npm run docs:hygiene:check`.
+
+`Validators/DocumentationValidator.ts` implements bounded semantic DocumentationValidator slices from ESS-0012-CONTRACTS:
+
+- canonical rule identity `GOV-DOC-003` on current main through Human-merged PR #805;
+- incremental rule identity `GOV-DOC-006` on current main through Human-merged PR #813;
+- incremental rule identity `GOV-DOC-001` for registered documents whose body lacks an explicit numeric `Version` / `Dokumentversion` marking;
+- `GOV-DOC-001` is `High`; `GOV-DOC-003` and `GOV-DOC-006` remain `Medium`;
+- consumes the existing `Discovery/SemanticFreshnessAnalyzer.ts` result for freshness rather than scanning the repository again;
+- binds every evidence item to a `FileReference`;
+- preserves deterministic finding/evidence ordering and performs no mutation.
+
+The current slice deliberately does **not** implement the remaining ESS-0012 rules, scoring, production thresholds, event publication or Governance decision logic.
 
 ## Explicit non-responsibilities
 
@@ -50,6 +62,7 @@ src/platform/Documentary/Governance
   -> document hygiene service
   -> metadata and registry validation
   -> documentary consistency findings
+  -> bounded ESS-0012 DocumentationValidator rules
 ```
 
 Documentation Governance consumes global stable identities; it does not own them.
@@ -60,11 +73,14 @@ Documentation Governance consumes global stable identities; it does not own them
 - `ESS-0012-CONTRACTS`
 - `docs/governance/document-registry.json`
 - `docs/governance/DOCUMENTATION_HYGIENE_POLICY.md`
+- `Discovery/SemanticFreshnessAnalyzer.ts` for correlated Documentary freshness evidence
 - global governance contracts from `src/platform/Governance`
 
 ## Implementation state
 
-The useful hygiene implementation from parked PR #439 is now reused in the current Governance work package. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
+The useful hygiene implementation from parked PR #439 is reused as the canonical structural/registry hygiene service. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
+
+WP-DOC-07 added `GOV-DOC-003` through PR #805. WP-DOC-08 added `GOV-DOC-006` through PR #813. WP-DOC-09 adds only `GOV-DOC-001` as the next incremental semantic rule. Targeted unit coverage lives in `tests/unit/documentaryDocumentationValidator.test.ts`.
 
 This does **not** claim that all historical 57 ESS-0012 rules are implemented. Additional semantic Documentary validators remain separate incremental work unless explicitly brought into scope.
 
