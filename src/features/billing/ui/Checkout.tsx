@@ -98,8 +98,8 @@ export function Checkout({ planId, price, billingPeriod, onClose }: CheckoutProp
           planId,
           billingPeriod,
           couponId: appliedCoupon?.id,
-          successUrl: `${window.location.origin}/dashboard?payment=success`,
-          cancelUrl: `${window.location.origin}/dashboard?payment=cancelled`,
+          successUrl: `${window.location.origin}/dashboard?checkout=pending`,
+          cancelUrl: `${window.location.origin}/dashboard?checkout=cancelled`,
         }),
       });
       const data = await response.json();
