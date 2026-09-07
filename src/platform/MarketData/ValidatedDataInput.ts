@@ -8,6 +8,10 @@ import {
   mapEvidenceQualityToDataStatus,
 } from './dataQualityGate';
 import {
+  evaluateDataFreshness,
+  maxAgeForCapability,
+} from './dataFreshness';
+import {
   DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
   evaluateProvenanceLineage,
 } from './dataProvenanceLineage';
@@ -16,6 +20,10 @@ import {
   assertMarketEvidenceContract,
   type MarketEvidenceQualityRecord,
 } from './evidenceQualityContracts';
+import {
+  validateProviderHistoryInput,
+  validateProviderSnapshotInput,
+} from './providerInputValidation';
 import type {
   CanonicalMarketDataHistory,
   CanonicalMarketDataSnapshot,
@@ -107,6 +115,36 @@ function historyMatchesAsset(asset: UniversalAssetIdentity, history: CanonicalMa
     && history.assetClass === asset.assetClass;
 }
 
+function latestHistoryObservedAt(
+  points: readonly { readonly timestamp: string }[],
+): string | null {
+  if (points.length === 0) return null;
+  return points[points.length - 1]?.timestamp ?? null;
+}
+
+function evaluatedTimestamp(input: string | undefined, fallback: string): string {
+  const value = input ?? fallback;
+  if (!Number.isFinite(Date.parse(value))) throw new Error('VALIDATED_DATA_EVALUATED_AT_INVALID');
+  return value;
+}
+
+function evidenceAgeMs(observedAt: string | null, evaluatedAt: string): number | null {
+  if (!observedAt || !Number.isFinite(Date.parse(observedAt))) return null;
+  return Math.max(0, Date.parse(evaluatedAt) - Date.parse(observedAt));
+}
+
+function applyFreshnessAndProvenance(
+  status: ValidatedDataStatus,
+  freshnessState: 'FRESH' | 'STALE' | 'UNKNOWN',
+  provenanceComplete: boolean,
+): ValidatedDataStatus {
+  if (status === 'FAIL' || status === 'MISSING') return status;
+  if (!provenanceComplete && (status === 'PASS' || status === 'PARTIAL')) return 'FAIL';
+  if (freshnessState === 'STALE' && (status === 'PASS' || status === 'PARTIAL')) return 'STALE';
+  if (freshnessState === 'UNKNOWN' && (status === 'PASS' || status === 'PARTIAL')) return 'UNKNOWN';
+  return status;
+}
+
 export function buildSnapshotRequestForUniversalAsset(
   asset: UniversalAssetIdentity,
   correlationIdInput: string,
@@ -135,24 +173,13 @@ export function buildHistoryRequestForUniversalAsset(
   };
 }
 
-function evaluatedTimestamp(input: string | undefined, fallback: string): string {
-  const value = input ?? fallback;
-  if (!Number.isFinite(Date.parse(value))) throw new Error('VALIDATED_DATA_EVALUATED_AT_INVALID');
-  return value;
-}
-
-function evidenceAgeMs(observedAt: string | null, evaluatedAt: string): number | null {
-  if (!observedAt || !Number.isFinite(Date.parse(observedAt))) return null;
-  return Math.max(0, Date.parse(evaluatedAt) - Date.parse(observedAt));
-}
-
 export function snapshotToMarketEvidenceQualityRecord(
   asset: UniversalAssetIdentity,
   snapshot: CanonicalMarketDataSnapshot,
   options: { readonly maxAgeMs?: number; readonly evaluatedAt?: string } = {},
 ): MarketEvidenceQualityRecord {
   assertUniversalAssetIdentity(asset);
-  const maxAgeMs = Math.max(0, options.maxAgeMs ?? 90_000);
+  const maxAgeMs = Math.max(0, options.maxAgeMs ?? maxAgeForCapability('snapshot'));
   const evaluatedAt = evaluatedTimestamp(options.evaluatedAt, snapshot.receivedAt);
   const identityMatches = snapshotMatchesAsset(asset, snapshot);
   const correlationPresent = Boolean(snapshot.correlationId.trim());
@@ -205,11 +232,27 @@ export function buildValidatedDataInputFromSnapshot(
   const identityMatches = snapshotMatchesAsset(asset, snapshot);
   const correlationMatches = Boolean(snapshot.correlationId.trim());
   const hasPrice = typeof snapshot.price === 'number' && Number.isFinite(snapshot.price) && snapshot.price > 0;
-  const fieldStatus = identityMatches && correlationMatches
+  const inputGate = validateProviderSnapshotInput({
+    providerId: snapshot.provider,
+    symbol: snapshot.symbol,
+    assetClass: snapshot.assetClass,
+    price: snapshot.price,
+    sourceTimestamp: snapshot.sourceTimestamp,
+    ingestedAt: snapshot.ingestedAt,
+    correlationId: snapshot.correlationId,
+    evidenceRef: snapshot.evidenceId,
+  });
+  const freshness = evaluateDataFreshness({
+    capability: 'snapshot',
+    observedAt: evidence.observedAt,
+    evaluatedAt: evidence.freshness.evaluatedAt,
+  });
+  let fieldStatus = identityMatches && correlationMatches
     ? mapEvidenceQualityToDataStatus(evidence, hasPrice)
     : 'FAIL';
-  const gate = evaluateDataQualityGate([fieldStatus]);
-  const status = gate.status;
+  if (fieldStatus !== 'MISSING' && inputGate.admissibility === 'NON_ADMISSIBLE' && fieldStatus !== 'FAIL') {
+    fieldStatus = 'FAIL';
+  }
   const lineage = evaluateProvenanceLineage({
     contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
     assetId: asset.assetId,
@@ -223,13 +266,18 @@ export function buildValidatedDataInputFromSnapshot(
     correlationId: snapshot.correlationId,
   });
   const provenanceComplete = identityMatches && lineage.complete;
+  fieldStatus = applyFreshnessAndProvenance(fieldStatus, freshness.state, provenanceComplete);
+  const gate = evaluateDataQualityGate([fieldStatus]);
+  const status = gate.status;
   const reason = !identityMatches
     ? 'asset identity mismatch'
     : !correlationMatches
       ? 'correlationId is required'
-      : status === 'PASS'
-        ? undefined
-        : snapshot.reason || `evidence status ${evidence.qualityStatus}`;
+      : inputGate.admissibility === 'NON_ADMISSIBLE' && status !== 'MISSING'
+        ? inputGate.reason
+        : status === 'PASS'
+          ? undefined
+          : snapshot.reason || freshness.reason || `evidence status ${evidence.qualityStatus}`;
   const missingRequiredFields = hasPrice ? [] : ['price'];
   const nonComputableReasons = gate.admissibleForFintech
     ? []
@@ -248,7 +296,11 @@ export function buildValidatedDataInputFromSnapshot(
       evidenceRef: evidence.evidenceRef,
       observedAt: evidence.observedAt,
       retrievedAt: evidence.retrievedAt,
-      freshness: evidence.freshness,
+      freshness: {
+        ageMs: freshness.ageMs,
+        maxAgeMs: freshness.maxAgeMs,
+        evaluatedAt: evidence.freshness.evaluatedAt,
+      },
       status,
       ...(reason ? { reason } : {}),
     }],
@@ -267,6 +319,16 @@ export function buildValidatedHistoryInput(
   const identityMatches = historyMatchesAsset(asset, history);
   const pointsValid = history.points.length > 0
     && history.points.every(point => Number.isFinite(point.close) && point.close > 0 && Number.isFinite(Date.parse(point.timestamp)));
+  const observedAt = latestHistoryObservedAt(history.points);
+  const inputGate = validateProviderHistoryInput({
+    providerId: history.provider,
+    symbol: history.symbol,
+    assetClass: history.assetClass,
+    receivedAt: history.receivedAt,
+    correlationId: history.correlationId,
+    evidenceRef: history.evidenceId,
+    points: history.points,
+  });
   const lineage = evaluateProvenanceLineage({
     contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
     assetId: asset.assetId,
@@ -275,23 +337,29 @@ export function buildValidatedHistoryInput(
     capability: 'history',
     field: 'close',
     evidenceRef: history.evidenceId,
-    observedAt: history.points[0]?.timestamp ?? null,
+    observedAt,
     retrievedAt: history.receivedAt,
     correlationId: history.correlationId,
   });
+  const freshness = evaluateDataFreshness({
+    capability: 'history',
+    observedAt,
+    evaluatedAt: history.receivedAt,
+  });
   const provenanceComplete = identityMatches && lineage.complete;
-  const status: ValidatedDataStatus = history.qualityState === 'HISTORICAL'
-    && pointsValid
-    && provenanceComplete
-    ? 'PASS'
-    : history.qualityState === 'UNAVAILABLE'
-      ? 'MISSING'
+  let status: ValidatedDataStatus = history.qualityState === 'UNAVAILABLE'
+    ? 'MISSING'
+    : history.qualityState === 'HISTORICAL' && pointsValid && provenanceComplete && inputGate.admissibility === 'ADMISSIBLE'
+      ? 'PASS'
       : 'FAIL';
+  status = applyFreshnessAndProvenance(status, freshness.state, provenanceComplete);
   const reason = status === 'PASS'
     ? undefined
     : !identityMatches
       ? 'asset identity mismatch'
-      : history.reason || 'history is not admissible';
+      : inputGate.admissibility === 'NON_ADMISSIBLE'
+        ? inputGate.reason
+        : history.reason || freshness.reason || 'history is not admissible';
 
   return {
     contractVersion: VALIDATED_DATA_INPUT_CONTRACT_VERSION,
