@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.8.1`  
+**Control Plane Version:** `2.9.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-07  
 **Repository:** `SvenKulessa/Finance`
@@ -191,7 +191,9 @@ The PR body contract MUST be checked **before** the external create mutation. Cr
 
 This stable control has two explicit triggers: `CHAT_RUN_HANDOFF` and `POST_PR_HANDOFF`. It is a coordination/transparency control only and never grants merge, deployment, protected external-mutation, Security-verification or Domain-Ownership authority.
 
-For both triggers, the visible **Nächste Schritte** queue MUST be rendered as a fenced `text` code block so the Human/Owner can copy it without reformatting. Whenever the current chat requires a Human/Owner approval, confirmation or other exact response before protected continuation, the exact response text MUST also be rendered in a separate fenced `text` code block. Narrative explanation may remain outside the snippets, but the actionable next-step and approval/response text itself must be copyable.
+For both triggers, the visible **Nächste Schritte** queue MUST be rendered as a fenced `text` code block so the Human/Owner can copy it without reformatting. The separate copyable Owner-response requirement introduced by PR #772 is **RETIRED** and MUST NOT be reconstructed as a current chat-output requirement.
+
+Human/Owner approvals, confirmations and exact response prompts follow the applicable concrete authority contract instead of a generic handoff-formatting rule. PR-creation approval therefore uses the canonical `PR-CREATION APPROVAL` block above, including its embedded `Freigabe-Antwort: PR erstellen: freigegeben` line. Pure approval/confirmation prompts are neutral authority presentation and MUST NOT carry the `⚙️🤓 MANUELL` marker. They MUST NOT be forced into a separate copyable response block merely because a chat handoff trigger applies.
 
 Canonical next-step presentation:
 
@@ -203,17 +205,13 @@ NÄCHSTE SCHRITTE
    Exit Gate: <objective completion condition>
 ```
 
-When no immediately actionable step remains, the same fenced block states `Keine weiteren unmittelbar umsetzbaren Schritte identifiziert.`. When an exact Human/Owner response is required, use a separate copyable block such as:
-
-```text
-Freigabe-Antwort: <exact response required from the Human/Owner>
-```
+When no immediately actionable step remains, the same fenced block states `Keine weiteren unmittelbar umsetzbaren Schritte identifiziert.`.
 
 #### Trigger — `CHAT_RUN_HANDOFF`
 
 At the end of every chat-governed repository execution pass, before the assistant's final response for that pass closes, the same chat MUST emit a bounded **Nächste Schritte** block using the canonical copyable presentation above. This applies whether the pass completed implementation, reached a validation/correlation gate, is blocked, is awaiting Human/Owner approval, or has no further immediately actionable implementation work.
 
-The queue MUST be derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and any material correlation results established during the pass. Facts that are stale or materially changed MUST be re-read before they are presented as current. If more than two implementation or follow-up steps are available, only the two highest-priority immediately actionable steps are shown. If Human/Owner action is the next gate, its exact response is emitted in the separate copyable approval/response block.
+The queue MUST be derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and any material correlation results established during the pass. Facts that are stale or materially changed MUST be re-read before they are presented as current. If more than two implementation or follow-up steps are available, only the two highest-priority immediately actionable steps are shown. If Human/Owner action is the next gate, render that gate in its applicable canonical neutral form; `CHAT_RUN_HANDOFF` does not add a second response-formatting requirement.
 
 #### Trigger — `POST_PR_HANDOFF`
 
@@ -245,7 +243,7 @@ Substantive chat outputs MUST use context-appropriate semantic emoji **together 
 
 The exact marker `⚙️🤓 MANUELL` is mandatory whenever the current authorized agent/tool cannot fully execute an action itself and the Human must perform an actual external/manual execution step. A technically executable action may also remain `⚙️🤓 MANUELL` when Governance requires the Human to perform that protected action personally.
 
-A **pure Human/Owner authority response** — including PR-creation approval, confirmation, merge decision wording or another exact copyable approval/response required by Governance — MUST NOT be labeled or headed with `⚙️🤓 MANUELL`. The authority gate remains fully mandatory; this exception changes presentation only. Canonical approval snippets and separate `Freigabe-Antwort:` blocks remain neutral copyable blocks. If a Human/Owner gate also requires a distinct manual execution outside the chat, only that execution step receives the `⚙️🤓 MANUELL` marker.
+A **pure Human/Owner authority response** — including PR-creation approval, confirmation, merge decision wording or another exact approval/response required by Governance — MUST NOT be labeled or headed with `⚙️🤓 MANUELL`. The authority gate remains fully mandatory; this exception changes presentation only. PR-creation approval uses the canonical approval snapshot defined above. Generic handoff rules MUST NOT add a second copyable Owner-response block. If a Human/Owner gate also requires a distinct manual execution outside the chat, only that execution step receives the `⚙️🤓 MANUELL` marker.
 
 Before classifying a task as manual solely because of an apparent capability gap, the agent SHOULD check the existing repository/native capability, already-connected platform/plugin capability and applicable existing workflow in the reuse order from section 11 where that check is relevant and authorized. Missing tool capability never authorizes installation, connection, permission changes or bypass of Human authority.
 

@@ -93,7 +93,7 @@ describe('governance authority consistency', () => {
     expect(chain).not.toContain('Google AI Studio ist die Entwicklungsumgebung für Anwendungscode');
   });
 
-  it('bounds every chat-governed execution-pass handoff and makes next steps and owner responses copyable', () => {
+  it('bounds chat handoffs while keeping Human/Owner approvals neutral instead of separately copyable', () => {
     const agents = read('AGENTS.md');
     const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
     const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
@@ -106,16 +106,25 @@ describe('governance authority consistency', () => {
     expect(handoff.requirement).toMatch(/at most the two highest-priority/i);
     expect(handoff.requirement).toMatch(/exit gate/i);
     expect(handoff.requirement).toMatch(/fenced text/i);
+    expect(handoff.requirement).toContain('MUST NOT be forced into a separate copyable response block');
+    expect(handoff.requirement).toContain('MUST NOT carry the `⚙️🤓 MANUELL` marker');
+
     expect(agents).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
     expect(agents).toContain('CHAT_RUN_HANDOFF');
     expect(agents).toContain('POST_PR_HANDOFF');
     expect(agents).toContain('NÄCHSTE SCHRITTE');
-    expect(agents).toContain('Freigabe-Antwort');
+    expect(agents).toContain('Freigabe-Antwort: PR erstellen: freigegeben');
+    expect(agents).toContain('PR #772');
+    expect(agents).toMatch(/separate copyable Owner-response requirement introduced by PR #772 is \*\*RETIRED\*\*/i);
     expect(agents).toContain('only the two highest-priority immediately actionable steps');
+    expect(agents).not.toContain('the exact response text MUST also be rendered in a separate fenced `text` code block');
+
     expect(chain).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
     expect(chain).toContain('CHAT_RUN_HANDOFF');
     expect(chain).toContain('NÄCHSTE SCHRITTE');
-    expect(chain).toContain('Freigabe-Antwort');
+    expect(chain).toContain('PR #772');
+    expect(chain).toMatch(/separate copyable Owner-response requirement introduced (?:through|by) PR #772 is \*\*RETIRED\*\*/i);
+    expect(chain).not.toContain('Freigabe-Antwort: <exact response required from the Human/Owner>');
     expect(chain).toContain('current `main`, open Pull Requests, changed-file/semantic overlap');
   });
 

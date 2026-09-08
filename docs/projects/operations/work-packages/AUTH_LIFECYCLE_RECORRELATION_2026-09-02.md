@@ -10,7 +10,7 @@
 
 ## Goal
 
-Extend the existing OPS User-Lifecycle evidence package with a deterministic repository correlation for Google OAuth handoff, authenticated root routing, menu interaction, logout scope semantics, normal-user registration/onboarding and public platform-version metadata.
+Extend the existing OPS User-Lifecycle evidence package with a deterministic repository correlation for Google OAuth handoff, authenticated root routing, logout scope semantics, normal-user registration/onboarding and public platform-version metadata.
 
 The package is evidence/coordination only. It does not implement Frontend, IAM/Governance or SEO/provider mutations on behalf of foreign projects.
 
@@ -25,7 +25,6 @@ The package is evidence/coordination only. It does not implement Frontend, IAM/G
 
 - PASS: Google OAuth provider/root callback contract.
 - FAIL: authenticated `/` has no deterministic `/dashboard` handoff.
-- PASS: hamburger menu open/close wiring exists statically.
 - FAIL: normal logout does not explicitly use `scope: 'local'`.
 - FAIL: no distinct explicit global-logout action is represented.
 - PASS: self-registration is present and hCaptcha-bound.
@@ -36,6 +35,22 @@ The package is evidence/coordination only. It does not implement Frontend, IAM/G
 
 Canonical evidence: `../evidence/AUTH_LIFECYCLE_RECORRELATION_2026-09-02.md`.
 
+## Superseded menu correlation
+
+The former operational finding `dashboard_menu_interaction_contract` is **SUPERSEDED as an active OPS repository correlation**.
+
+This is a bounded work-package supersession only; it has **no Authority effect** and does not supersede any `AUTH-*`, `CTRL-*`, ADR, ESS or Frontend contract. Historical evidence remains unchanged and continues to document the 2026-09-02 repository state.
+
+Reason and scope:
+
+- the former check inspected literal `setMenuOpen(...)` handler strings in `src/components/Dashboard.tsx`;
+- that coupled OPS evidence to a legacy Frontend implementation detail and constrained the BB-2E strangler migration;
+- Frontend navigation/drawer behavior is owned by `CAPITAL-AI-FE` and the canonical app-layer dashboard/navigation contracts;
+- OPS Auth Lifecycle correlation no longer validates menu implementation details, no longer reads `src/components/Dashboard.tsx`, and no longer emits `dashboard_menu_interaction_contract`;
+- no authentication, IAM, logout, onboarding, routing, version or SEO finding is removed by this supersession.
+
+The historical 2026-09-02 finding remains evidence only and must not be interpreted as a current requirement that Frontend preserve the legacy `setMenuOpen` wiring.
+
 ## Foreign return contracts
 
 ### CAPITAL-AI-FE
@@ -45,8 +60,9 @@ Exit gate:
 1. authenticated Google/session return to `/` continues to `/dashboard` after existing onboarding/AAL gates;
 2. standard logout uses Supabase local scope;
 3. global logout is a separate explicit/confirmable action;
-4. hamburger/sidebar interaction remains usable after login;
-5. merged registration work-package state is terminalized without weakening onboarding/MFA.
+4. merged registration work-package state is terminalized without weakening onboarding/MFA.
+
+Navigation/drawer implementation and accessibility are governed by the current Frontend project Roadmap/contracts and are intentionally outside this OPS Auth Lifecycle return contract.
 
 ### CAPITAL-AI-SEO
 

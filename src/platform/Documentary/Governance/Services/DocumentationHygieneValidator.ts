@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const DOCUMENTATION_HYGIENE_VALIDATOR_VERSION = 'documentation-hygiene-validator/1.1.0' as const;
-export const DOCUMENTATION_HYGIENE_POLICY_PATH = 'docs/governance/DOCUMENTATION_HYGIENE_POLICY.md' as const;
+export const DOCUMENTATION_HYGIENE_VALIDATOR_VERSION = 'documentation-hygiene-validator/1.2.0' as const;
+export const DOCUMENT_LIFECYCLE_POLICY_PATH = 'docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md' as const;
+/** @deprecated Historical compatibility alias; use DOCUMENT_LIFECYCLE_POLICY_PATH. */
+export const DOCUMENTATION_HYGIENE_POLICY_PATH = DOCUMENT_LIFECYCLE_POLICY_PATH;
 export const DOCUMENT_REGISTRY_PATH = 'docs/governance/document-registry.json' as const;
 
 export interface RegistryEntry {
@@ -85,8 +87,8 @@ export function collectDocumentationHygieneFindings(repoRoot = process.cwd()): D
   if (!SEMVER.test(String(registry.schemaVersion ?? ''))) {
     findings.push(finding('REGISTRY_SCHEMA_VERSION_INVALID', `Invalid registry schemaVersion: ${String(registry.schemaVersion ?? '')}`, DOCUMENT_REGISTRY_PATH));
   }
-  if (registry.authority !== DOCUMENTATION_HYGIENE_POLICY_PATH) {
-    findings.push(finding('REGISTRY_AUTHORITY_INVALID', `Registry authority must be ${DOCUMENTATION_HYGIENE_POLICY_PATH}`, DOCUMENT_REGISTRY_PATH));
+  if (registry.authority !== DOCUMENT_LIFECYCLE_POLICY_PATH) {
+    findings.push(finding('REGISTRY_AUTHORITY_INVALID', `Registry authority must be ${DOCUMENT_LIFECYCLE_POLICY_PATH}`, DOCUMENT_REGISTRY_PATH));
   }
   if (!Array.isArray(registry.entries)) {
     findings.push(finding('REGISTRY_ENTRIES_INVALID', 'Registry entries must be an array.', DOCUMENT_REGISTRY_PATH));

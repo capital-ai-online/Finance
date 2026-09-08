@@ -1,0 +1,301 @@
+name: OPS ast-grep Source Patch — BB-2E
+run-name: BB-2E ast-grep source patch
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: 'Exakter 40-stelliger Head-SHA von agent/frontend-dashboard-drawer-strangler-20260907'
+        required: true
+        type: string
+      confirm_apply:
+        description: 'Dry-Run, Apply, Validation und Push auf den gebundenen FE-Branch ausführen'
+        required: true
+        default: false
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: ops-ast-grep-source-patch-bb2e
+  cancel-in-progress: false
+
+env:
+  TARGET_BRANCH: agent/frontend-dashboard-drawer-strangler-20260907
+  TARGET_FILE: src/components/Dashboard.tsx
+  PLAN_PATH: scripts/frontend/codemods/bb2e-dashboard-drawer-strangler.json
+  RUNNER_PATH: scripts/operations/sourcePatch/astGrepSourcePatch.ts
+
+jobs:
+  patch-and-validate:
+    name: Read-only Patch und Validation
+    if: github.ref == 'refs/heads/main' && inputs.confirm_apply == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      patched_blob: ${{ steps.patch.outputs.patched_blob }}
+    steps:
+      - name: Trusted main auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Gebundenen FE-Branch auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: agent/frontend-dashboard-drawer-strangler-20260907
+          path: work
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+
+      - name: Exakten Head und vertrauenswürdige Ausführungsbasis binden
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+          TRUSTED_MAIN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'expected_head_sha muss ein 40-stelliger lowercase Git-SHA sein.' >&2
+            exit 1
+          fi
+
+          OBSERVED_POLICY_HEAD="$(git -C policy rev-parse HEAD)"
+          if [[ "$OBSERVED_POLICY_HEAD" != "$TRUSTED_MAIN_SHA" ]]; then
+            echo "trusted main drift: workflow=$TRUSTED_MAIN_SHA policy=$OBSERVED_POLICY_HEAD" >&2
+            exit 1
+          fi
+
+          OBSERVED_HEAD="$(git -C work rev-parse HEAD)"
+          if [[ "$OBSERVED_HEAD" != "$EXPECTED_HEAD_SHA" ]]; then
+            echo "FE-Head drift: expected=$EXPECTED_HEAD_SHA observed=$OBSERVED_HEAD" >&2
+            exit 1
+          fi
+
+          git -C work fetch --no-tags ../policy HEAD:refs/remotes/origin/main
+          OBSERVED_MAIN="$(git -C work rev-parse origin/main)"
+          if [[ "$OBSERVED_MAIN" != "$TRUSTED_MAIN_SHA" ]]; then
+            echo "main drift: workflow=$TRUSTED_MAIN_SHA observed=$OBSERVED_MAIN" >&2
+            exit 1
+          fi
+
+          if ! git -C work diff --quiet "$TRUSTED_MAIN_SHA"...HEAD -- \
+            package.json package-lock.json .npmrc "$RUNNER_PATH"; then
+            echo 'FE-Branch verändert Toolchain-/Runner-Sicherheitsfläche gegenüber trusted main.' >&2
+            exit 1
+          fi
+
+      - name: Current main read-only in den FE-Arbeitsbaum integrieren
+        env:
+          TRUSTED_MAIN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git -C work merge --no-commit --no-ff "$TRUSTED_MAIN_SHA"
+          cmp "policy/$RUNNER_PATH" "work/$RUNNER_PATH"
+          cmp policy/package.json work/package.json
+          cmp policy/package-lock.json work/package-lock.json
+
+      - name: Abhängigkeiten installieren
+        working-directory: work
+        run: npm ci
+
+      - name: ast-grep Dry-Run — exakt 10 Matches
+        working-directory: work
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+          NPM_CONFIG_IGNORE_SCRIPTS: 'true'
+        run: |
+          set -euo pipefail
+          npx --no-install tsx "$RUNNER_PATH" \
+            --plan "$PLAN_PATH" \
+            --allow-download | tee "$RUNNER_TEMP/bb2e-ast-grep-dry-run.json"
+
+      - name: ast-grep Apply — exakt 10 auf 0
+        working-directory: work
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+          NPM_CONFIG_IGNORE_SCRIPTS: 'true'
+        run: |
+          set -euo pipefail
+          npx --no-install tsx "$RUNNER_PATH" \
+            --plan "$PLAN_PATH" \
+            --apply \
+            --allow-download | tee "$RUNNER_TEMP/bb2e-ast-grep-apply.json"
+
+      - name: BB-2E Patch-Grenze und Legacy-Zero prüfen
+        run: |
+          set -euo pipefail
+          mapfile -t CHANGED < <(git -C work diff --name-only)
+          if [[ "${#CHANGED[@]}" -ne 1 || "${CHANGED[0]}" != "$TARGET_FILE" ]]; then
+            printf 'Unerwartete ast-grep Änderungen:\n' >&2
+            printf ' - %s\n' "${CHANGED[@]}" >&2
+            exit 1
+          fi
+
+          if grep -nE 'menuOpen|setMenuOpen|DashboardExpandedSection|getDashboardSection\(activeView\)|Slide-out Retractable Hamburger Drawer Navigation' "work/$TARGET_FILE"; then
+            echo 'Legacy Drawer-Reste sind nach ast-grep Apply noch vorhanden.' >&2
+            exit 1
+          fi
+
+          grep -F "import { DashboardNavigation } from '../app/dashboard/DashboardNavigation';" "work/$TARGET_FILE" >/dev/null
+          grep -F '<DashboardNavigation' "work/$TARGET_FILE" >/dev/null
+
+      - name: Focused Vitest
+        working-directory: work
+        run: >-
+          npx vitest run
+          tests/unit/dashboardDrawerStranglerCodemod.test.ts
+          tests/unit/dashboardNavigation.test.ts
+          tests/unit/dashboardNavigationDrawer.test.ts
+
+      - name: TypeScript
+        working-directory: work
+        run: npm run lint
+
+      - name: Frontend Architecture
+        working-directory: work
+        run: npm run frontend:architecture:check
+
+      - name: Production Build
+        working-directory: work
+        run: npm run build
+
+      - name: Patch-Qualität prüfen
+        run: git -C work diff --check
+
+      - name: Validierten Dashboard-Patch materialisieren
+        id: patch
+        run: |
+          set -euo pipefail
+          mapfile -t CHANGED < <(git -C work diff --name-only)
+          if [[ "${#CHANGED[@]}" -ne 1 || "${CHANGED[0]}" != "$TARGET_FILE" ]]; then
+            echo 'Patch-Surface hat sich während der Validation verändert.' >&2
+            exit 1
+          fi
+          git -C work diff --binary -- "$TARGET_FILE" > "$RUNNER_TEMP/bb2e-dashboard.patch"
+          test -s "$RUNNER_TEMP/bb2e-dashboard.patch"
+          PATCHED_BLOB="$(git -C work hash-object "$TARGET_FILE")"
+          echo "patched_blob=$PATCHED_BLOB" >> "$GITHUB_OUTPUT"
+          echo "Validated patched blob: $PATCHED_BLOB"
+
+      - name: Validierten Patch als kurzlebiges Artefakt speichern
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bb2e-dashboard-source-patch
+          path: ${{ runner.temp }}/bb2e-dashboard.patch
+          if-no-files-found: error
+          retention-days: 1
+
+  apply-and-push:
+    name: Privileged Apply und Push
+    needs: patch-and-validate
+    if: github.ref == 'refs/heads/main' && inputs.confirm_apply == true && needs.patch-and-validate.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Trusted main ohne persistente Credentials auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Gebundenen FE-Branch ohne persistente Credentials auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: agent/frontend-dashboard-drawer-strangler-20260907
+          path: work
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validierten Patch laden
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: bb2e-dashboard-source-patch
+          path: ${{ runner.temp }}/bb2e-dashboard-source-patch
+
+      - name: Head und main vor der Mutation erneut binden
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+          TRUSTED_MAIN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          OBSERVED_POLICY_HEAD="$(git -C policy rev-parse HEAD)"
+          if [[ "$OBSERVED_POLICY_HEAD" != "$TRUSTED_MAIN_SHA" ]]; then
+            echo "trusted main drift vor Apply: workflow=$TRUSTED_MAIN_SHA policy=$OBSERVED_POLICY_HEAD" >&2
+            exit 1
+          fi
+
+          OBSERVED_HEAD="$(git -C work rev-parse HEAD)"
+          if [[ "$OBSERVED_HEAD" != "$EXPECTED_HEAD_SHA" ]]; then
+            echo "FE-Head drift vor Apply: expected=$EXPECTED_HEAD_SHA observed=$OBSERVED_HEAD" >&2
+            exit 1
+          fi
+
+          git -C work fetch --no-tags ../policy HEAD:refs/remotes/origin/main
+          OBSERVED_MAIN="$(git -C work rev-parse origin/main)"
+          if [[ "$OBSERVED_MAIN" != "$TRUSTED_MAIN_SHA" ]]; then
+            echo "main drift vor Apply: workflow=$TRUSTED_MAIN_SHA observed=$OBSERVED_MAIN" >&2
+            exit 1
+          fi
+
+      - name: Exakten current main Stand integrieren und validierten Patch anwenden
+        env:
+          TRUSTED_MAIN_SHA: ${{ github.sha }}
+          EXPECTED_PATCHED_BLOB: ${{ needs.patch-and-validate.outputs.patched_blob }}
+        run: |
+          set -euo pipefail
+          git -C work config user.name 'github-actions[bot]'
+          git -C work config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C work merge --no-edit "$TRUSTED_MAIN_SHA"
+
+          PATCH_FILE="$RUNNER_TEMP/bb2e-dashboard-source-patch/bb2e-dashboard.patch"
+          git -C work apply --check "$PATCH_FILE"
+          git -C work apply "$PATCH_FILE"
+
+          mapfile -t CHANGED < <(git -C work diff --name-only)
+          if [[ "${#CHANGED[@]}" -ne 1 || "${CHANGED[0]}" != "$TARGET_FILE" ]]; then
+            printf 'Privileged Apply würde unerwartete Dateien ändern:\n' >&2
+            printf ' - %s\n' "${CHANGED[@]}" >&2
+            exit 1
+          fi
+
+          OBSERVED_PATCHED_BLOB="$(git -C work hash-object "$TARGET_FILE")"
+          if [[ "$OBSERVED_PATCHED_BLOB" != "$EXPECTED_PATCHED_BLOB" ]]; then
+            echo "Patch-Blob drift: expected=$EXPECTED_PATCHED_BLOB observed=$OBSERVED_PATCHED_BLOB" >&2
+            exit 1
+          fi
+
+          git -C work add -- "$TARGET_FILE"
+          git -C work commit -m 'refactor(frontend): cut over dashboard drawer strangler'
+
+      - name: Exakten FE-Head atomar pushen
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          AUTH_HEADER="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+          REMOTE_HEAD="$(git -C work -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH_HEADER" \
+            ls-remote origin "refs/heads/$TARGET_BRANCH" | awk '{print $1}')"
+          if [[ "$REMOTE_HEAD" != "$EXPECTED_HEAD_SHA" ]]; then
+            echo "Remote FE-Head drift: expected=$EXPECTED_HEAD_SHA observed=${REMOTE_HEAD:-<missing>}" >&2
+            exit 1
+          fi
+
+          git -C work -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH_HEADER" \
+            push origin "HEAD:refs/heads/$TARGET_BRANCH"
+
+          echo "BB-2E pushed: $(git -C work rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"

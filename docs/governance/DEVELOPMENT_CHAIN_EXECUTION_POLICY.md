@@ -2,7 +2,7 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.5.1`  
+**Version:** `2.6.0`  
 **Date:** 2026-08-12  
 **Updated:** 2026-09-07  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
@@ -89,7 +89,7 @@ A step marked REQUIRED for the concrete work package cannot be skipped unless an
 13. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
 14. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
 15. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
-16. **Copyable end-of-pass handoff.** At the end of every chat-governed repository execution pass, the same chat emits at most the two highest-priority immediately actionable next steps as a fenced `text` code block. If an exact Human/Owner response is required before continuation, that response is emitted in a separate fenced `text` code block and is presented neutrally without the `⚙️🤓 MANUELL` marker.
+16. **Copyable bounded next-step handoff.** At the end of every chat-governed repository execution pass, the same chat emits at most the two highest-priority immediately actionable next steps as a fenced `text` code block. The separate copyable Owner-response requirement introduced by PR #772 is retired; Human/Owner approval or confirmation presentation follows the neutral Trust-Root rule established by PR #803 and the concrete gate's own canonical approval form.
 17. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports branch/PR-head, main baseline and gates and displays at most the two highest-priority immediately actionable next Roadmap steps using the copyable handoff format.
 18. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
 
@@ -114,7 +114,7 @@ GitHub hosted `build-and-test` remains the independent technical validation for 
 
 ## Chat handoff and next-step queue (`CTRL-SDLC-CHAT-HANDOFF-001`)
 
-This control has two triggers: `CHAT_RUN_HANDOFF` and `POST_PR_HANDOFF`. Both use one canonical copyable presentation for actionable next steps and exact Human/Owner responses.
+This control has two triggers: `CHAT_RUN_HANDOFF` and `POST_PR_HANDOFF`. Both retain the bounded copyable **Nächste Schritte** presentation. The separate copyable Owner-response requirement introduced through PR #772 is **RETIRED** and MUST NOT be reconstructed as a current chat-output requirement.
 
 Canonical next-step block:
 
@@ -126,15 +126,11 @@ NÄCHSTE SCHRITTE
    Exit Gate: <objective completion condition>
 ```
 
-When no immediately actionable step remains, the same fenced block states `Keine weiteren unmittelbar umsetzbaren Schritte identifiziert.`. If continuation requires an exact Human/Owner response, render it separately:
+When no immediately actionable step remains, the same fenced block states `Keine weiteren unmittelbar umsetzbaren Schritte identifiziert.`.
 
-```text
-Freigabe-Antwort: <exact response required from the Human/Owner>
-```
+Human/Owner approval, confirmation and exact-response prompts are authority presentation, not handoff formatting. They follow the applicable concrete authority contract. In particular, PR-creation approval uses the canonical `PR-CREATION APPROVAL` snapshot defined by `/AGENTS.md`, including its `Freigabe-Antwort: PR erstellen: freigegeben` line. Pure approval/confirmation prompts MUST be presented neutrally and MUST NOT carry the `⚙️🤓 MANUELL` marker. They MUST NOT be forced into a separate copyable response block merely because `CHAT_RUN_HANDOFF` or `POST_PR_HANDOFF` applies.
 
-Pure Human/Owner approval, confirmation and exact response blocks are neutral authority prompts and MUST NOT be labeled or headed with `⚙️🤓 MANUELL`. This presentation rule does not weaken or replace the underlying Human/Owner authority gate. If the Owner must additionally perform a distinct external/manual action, that execution step remains subject to the Trust Root's manual-action marker rule.
-
-Narrative context may remain outside the snippets; the actionable next-step and approval/response text itself is always copyable.
+If the Human must perform an actual external/manual execution step outside the current authorized agent/tool surface, that distinct execution step remains subject to the Trust Root's `⚙️🤓 MANUELL` marker rule.
 
 ### `CHAT_RUN_HANDOFF`
 
@@ -142,7 +138,7 @@ At the end of every chat-governed repository execution pass, before the assistan
 
 The queue is derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and material correlation results from the pass. Facts that may have materially changed are refreshed before being presented as current. The visible queue remains bounded to at most the two highest-priority immediately actionable steps, each with an objective exit gate.
 
-If Human/Owner action is the next gate, the exact required response MUST additionally be emitted in the separate copyable approval/response block. The block does not itself grant authority; the Human/Owner still must send the required response under the applicable gate.
+If Human/Owner action is the next gate, the chat renders the applicable authority prompt in its canonical neutral form. `CHAT_RUN_HANDOFF` does not create an additional response-formatting requirement.
 
 ### `POST_PR_HANDOFF`
 
