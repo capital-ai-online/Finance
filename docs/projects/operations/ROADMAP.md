@@ -3,14 +3,15 @@
 **Project ID:** `CAPITAL-AI-OPS`  
 **Document role:** canonical project execution roadmap / non-authorizing  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
-**Version:** `2.6.1`  
+**Version:** `2.6.2`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-07`  
-**Correlation baseline:** `main@0dd380ee7f78c5206ec24d507257f2a2347a1287`  
-**Open PR baseline:** zero open PRs against current `main`; complementary OPS branch `agent/operations-recovery-rpo-evidence-20260907` is repository-local RPO measurement work with no changed-file overlap on this Roadmap and must resynchronize before any later PR gate  
+**Correlation baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
+**Open PR baseline:** PR #836 `[CAPITAL-AI-OPS] [ChatGPT] zizmor-Workflow-Sicherheitsprüfung integrieren` is open and changes only `.github/workflows/zizmor.yml`; no changed-file or material semantic/authority overlap with this Roadmap/qs/RPO/Node-priority synchronization. PR #833 is terminal `closed / unmerged`; no unresolved parallel ROADMAP writer remains  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
-Canonical current-main Security backlog evidence: `evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`.
+Canonical current-main Security backlog evidence: `evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`.  
+Canonical post-PR-#828 priority evidence: `evidence/OPS_POST_828_PRIORITY_RECORRELATION_2026-09-07.md`.
 
 ## 1. Objective
 
@@ -53,11 +54,11 @@ Project ownership is resolved through `docs/projects/README.md` and `docs/projec
 
 | Workstream | PVC | Scope | Current state |
 |---|---|---|---|
-| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE — User Lifecycle closeout is merged/terminal; GOV-07 OPS owner return is `EVIDENCE_READY / HUMAN-MERGED` via PR #794; provider E2E, independent Security verification and foreign-owner returns remain explicit gates; `OPS-02-SEC-06` parent inventory evidence ready; `OPS-02-SEC-05` implementation is already on main/evidence-ready |
-| `OPS-04` Supervisor | `PVC-04` | observation, evaluation, escalation, approved bounded recovery | IMPLEMENTED / VERIFICATION PENDING — fatal-process fail-fast implementation merged in PR #720; independent post-deploy/Security recovery evidence remains |
+| `OPS-02` Controlled Implementation | `PVC-02` | current-main correlation, branch/claim lifecycle, bounded implementation, pre-PR evidence | ACTIVE — User Lifecycle closeout is merged/terminal; GOV-07 OPS owner return is `EVIDENCE_READY / HUMAN-MERGED` via PR #794; provider E2E, independent Security verification and foreign-owner returns remain explicit gates; `OPS-02-SEC-06` parent inventory evidence ready; `OPS-02-SEC-05` implementation is already on main/evidence-ready; qs `6.16.0` remediation is `IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL` via PR #828 |
+| `OPS-04` Supervisor | `PVC-04` | observation, evaluation, escalation, approved bounded recovery | IMPLEMENTED / POST-DEPLOY VERIFICATION PENDING — fatal-process fail-fast implementation merged in PR #720; Security PR #832 independently re-verified the repository contract as `REPOSITORY_CONTRACT_VERIFIED`; exact deployed supervisor/restart/readiness evidence remains open |
 | `OPS-06` Version Management | `PVC-06` | toolchain/version identity and controlled transition coordination | P1 GAP / BLOCKED_BY_AUTHORITY_CONFLICT — roadmap requests Node 24.20.0 while Accepted ADR-0053 still selects 24.18.0; OPS mutation stops pending Governance/ADR resolution |
 | `OPS-07` Release Management | `PVC-07` | Release candidate evidence, gate execution, rollback contract | PARTIAL |
-| `OPS-08` Production Operations | `PVC-08` | readiness, health, post-deploy verification, incident/recovery, reliability/capacity | PARTIAL — Recovery/RPO/RTO repository harness is `IMPLEMENTED_ON_MAIN` via PR #776; deterministic measured-RPO evaluation is implemented on the complementary OPS evidence branch; actual scheduled operational evidence, restore evidence and independent Security verification remain open |
+| `OPS-08` Production Operations | `PVC-08` | readiness, health, post-deploy verification, incident/recovery, reliability/capacity | PARTIAL — Recovery/RPO/RTO repository harness is `IMPLEMENTED_ON_MAIN` via PR #776; prior deterministic RPO evaluator PR #802 is closed unmerged, its branch is absent and evaluator code is absent from current main; actual scheduled operational evidence, restore evidence and independent Security verification remain open |
 | `OPS-18` EventMesh & Traceability | `PVC-18` | EventMesh reliability plus non-authorizing trace/evidence linkage | PARTIAL |
 
 ## 5. Component placement
@@ -79,10 +80,10 @@ No runtime component is moved solely for organizational ownership:
 | Security finding | Project stage | OPS responsibility | Security gate | Current OPS disposition |
 |---|---|---|---|---|
 | `S1-R2-03` Node control-plane convergence | `PVC-06` | converge approved Node identity in target-owned config/control-plane | independent Security identity verification | **BLOCKED_BY_AUTHORITY_CONFLICT** — `.nvmrc` is 24.18.0; Accepted ADR-0053 selects 24.18.0; later 24.20.0 supersession remains proposed |
-| `S1-R2-04` fatal process handling | `PVC-04` + evidence from `PVC-08` | fail-fast implementation/recovery evidence | negative child-process + runtime recovery verification | **IMPLEMENTED_ON_MAIN via PR #720 / SECURITY + POST-DEPLOY VERIFICATION PENDING** |
+| `S1-R2-04` fatal process handling | `PVC-04` + evidence from `PVC-08` | fail-fast implementation/recovery evidence | exact deployed supervisor/restart/readiness evidence | **IMPLEMENTED_ON_MAIN via PR #720 / REPOSITORY_CONTRACT_VERIFIED via Security PR #832 / POST_DEPLOY_EVIDENCE_OPEN** |
 | `S1-R2-05` Stripe redirect boundary | `PVC-02` | server-owned redirect policy in affected implementation | open-redirect DENY verification | **IMPLEMENTED_ON_MAIN / EVIDENCE_READY / SECURITY VERIFICATION PENDING** |
 | `S1-R2-06` entitlement authority | `PVC-02` | parent protected-capability inventory and server-enforcement coordination | escalation/forgery/missing-auth/stale-entitlement/alternate-path DENY verification | **PARENT INVENTORY EVIDENCE READY / CHILD REMEDIATION REFERRED / SECURITY VERIFICATION PENDING** |
-| `S1-R2-07` recovery / RPO / RTO | `PVC-08` | approved recovery objectives, recurring off-site backup, isolated measured restore | Security verifies measured/integrity evidence | **REPOSITORY HARNESS IMPLEMENTED_ON_MAIN via PR #776 / RPO EVALUATOR IMPLEMENTED_BRANCH / OPERATIONAL_EVIDENCE_PENDING / SECURITY_UNVERIFIED** |
+| `S1-R2-07` recovery / RPO / RTO | `PVC-08` | approved recovery objectives, recurring off-site backup, isolated measured restore | Security verifies measured/integrity evidence | **REPOSITORY HARNESS IMPLEMENTED_ON_MAIN via PR #776 / RPO EVALUATOR NOT_IMPLEMENTED_ON_MAIN / FRESH_REINTAKE_REQUIRED / OPERATIONAL_EVIDENCE_PENDING / SECURITY_UNVERIFIED** |
 | `S1-R2-09` strict CSP promotion | `PVC-08` | no strict promotion until compatibility evidence is accepted | Security verifies promotion evidence | WAITING_FOR_EVIDENCE |
 | `S1-R2-10` demo billing isolation | `PVC-08` | production bundle/runtime reachability evidence | Security verifies DEV simulation unreachable | WAITING_FOR_EVIDENCE |
 
@@ -102,34 +103,42 @@ The seven canonical subscription capabilities are classified against current `ma
 
 ### S1-R2-03 authority result
 
-Current `.nvmrc` remains `24.18.0`. OPS/Security roadmap material requests Node `24.20.0`, and a deterministic transformer plus proposed write-boundary supersession exist. However, `docs/adr/ADR-0053-node24-lts-git255-toolchain.md` remains Accepted and explicitly chooses `24.18.0` for Production, CI and local development. No accepted superseding ADR was found in current-main correlation.
+Current `.nvmrc` remains `24.18.0`. OPS/Security roadmap material requests Node `24.20.0`, and a deterministic transformer plus proposed write-boundary supersession exist. However, `docs/adr/ADR-0053-node24-lts-git255-toolchain.md` remains Accepted and explicitly chooses `24.18.0` for Production, CI and local development. `docs/governance/control-plane/NODE_TOOLCHAIN_WRITE_BOUNDARY_SUPERSESSION_2026-08-29.md` remains `PROPOSED / IMPLEMENTATION IN BRANCH` and explicitly does not become effective until its Human-gated bootstrap/remediation lifecycle completes.
 
 The Node package is therefore **non-executable** until CAPITAL-AI-GOV resolves the authority/supersession. OPS does not alter foreign Governance/ADR authority in this work package.
 
 ### S1-R2-07 recovery evidence result
 
-Human-merged PR #776 provides the existing recurring encrypted off-site backup path, isolated Supabase restore drill, integrity comparison and measured database-restore duration. The complementary branch `agent/operations-recovery-rpo-evidence-20260907` reuses that architecture and adds only a deterministic evaluator for successful scheduled backup intervals against the database RPO target.
+Human-merged PR #776 provides the existing recurring encrypted off-site backup path, isolated Supabase restore drill, integrity comparison and measured database-restore duration.
 
-That branch does not itself prove actual scheduled RPO, restore success or full-service RTO. `S1-R2-07` therefore remains `OPEN / OPERATIONAL_EVIDENCE_PENDING / SECURITY_UNVERIFIED` until real evidence and independent CAPITAL-AI-SEC verification exist.
+The later deterministic RPO evaluator was proposed through PR #802, but PR #802 is now authoritatively `closed` and `merged=false`; its branch `agent/operations-recovery-rpo-evidence-20260907` is absent and `scripts/operations/recoveryRpoEvidence.mjs` is absent from current main. The historical `IMPLEMENTED_BRANCH` projection is therefore retired.
+
+A new repository implementation may reuse the historical #802 diff/evidence only as input and must be re-intaken on a fresh then-current-main branch. Actual scheduled RPO, restore success/database RTO, full-service RTO and independent CAPITAL-AI-SEC verification remain open.
+
+### qs 6.16.0 post-merge result
+
+PR #828 (`[CAPITAL-AI-OPS] [ChatGPT] qs 6.16.0 DoS-Remediation`) is Human-merged with merge SHA `fb3fff1f3959d1c6f87d20228036366848600487`; final PR head was `cb44840771aea4f44b8a810bb0e87e613953a735`.
+
+Current main retains `overrides.qs = 6.16.0`, the synchronized lockfile identity and `tests/unit/qsDosRegression.test.ts`. Final PR-head CI, Governance and Container Security workflows completed successfully. Render deploy history confirms the #828 merge was deployed, and the current live later main contains the remediation.
+
+**OPS disposition:** `IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL`; no qs remediation remains in the executable queue.
 
 ## 7. Priority execution queue
 
-The queue is ordered by the current trust-root priority model: Security/Data Integrity before architecture/integration. Terminal implementation work is removed from the executable queue while external verification remains traceable.
+The queue is ordered by the current trust-root priority model: Security/Data Integrity before architecture/integration. Terminal implementation and return-only verification work remains traceable without outranking executable local remediation.
 
-1. `OPS-02-SEC-06` — **parent inventory EVIDENCE_READY**; coordinate foreign child returns and CAPITAL-AI-SEC verification without absorbing foreign remediation.
+1. `OPS-08-SEC-07` — **HIGHEST EXECUTABLE OPS SECURITY/DATA-INTEGRITY WORK** — re-intake only the bounded deterministic RPO evaluator semantics from closed-unmerged PR #802 onto a fresh current-main branch, preserve the existing PR #776 recovery architecture, obtain exact-head validation, then collect real scheduled-backup/restore evidence without claiming Security closure.
 2. `OPS-06-SEC-03` — **P1/HIGH / BLOCKED_BY_AUTHORITY_CONFLICT** — Node convergence cannot execute until Governance/ADR authority resolves 24.18.0 vs 24.20.0.
-3. `OPS-02-SEC-05` — **IMPLEMENTED_ON_MAIN / EVIDENCE_READY** — no further OPS remediation is planned; return for independent CAPITAL-AI-SEC verification.
-4. `OPS-08-SEC-07` — **REPOSITORY IMPLEMENTATION PRESENT / OPERATIONAL EVIDENCE ACTIVE / SECURITY UNVERIFIED** — resynchronize the complementary RPO measurement branch, complete hosted validation, then collect real scheduled-backup/restore evidence without claiming Security closure.
+3. `OPS-02-SEC-06` — **parent inventory EVIDENCE_READY / RETURN-ONLY**; coordinate foreign child returns and CAPITAL-AI-SEC verification without absorbing foreign remediation.
+4. `OPS-02-SEC-05` — **IMPLEMENTED_ON_MAIN / EVIDENCE_READY / RETURN-ONLY** — no further OPS remediation planned; independent Security verification remains external.
 5. `OPS-08-SEC-09` — WAITING_FOR_EVIDENCE — CSP promotion evidence.
 6. `OPS-08-SEC-10` — WAITING_FOR_EVIDENCE — production billing-isolation evidence.
 7. `OPS-07-A` — Release evidence contract correlation.
 8. `OPS-18-A` — EventMesh/Traceability operational coverage.
-9. `DR-03` — **QUEUED / BLOCKED_BY_HIGHER_PRIORITY_OPS_GATE** — provider-adapter/execution integration after terminal GOV-03/DR-02B and after higher-priority executable OPS Security work permits priority promotion.
+9. `DR-03` — **QUEUED / BLOCKED_BY_HIGHER_PRIORITY_OPS_GATE** — provider-adapter/execution integration remains after higher-priority executable OPS Security work.
 10. reliability/capacity and lower-priority operational evidence packages.
 
-`OPS-04-SEC-04` and `OPS-02-SEC-05` are no longer executable remediation items. Independent Security/post-deploy verification remains external and must not be reported as `VERIFIED/CLOSED` by OPS.
-
-No Security finding is marked VERIFIED by this roadmap.
+`OPS-04-SEC-04` and `OPS-02-SEC-05` are no longer executable remediation items. R2-04 repository-contract verification is current after Security PR #832, but exact post-deploy evidence is still open. No Security finding is marked VERIFIED/CLOSED by this roadmap.
 
 ## 8. DR-03 current-main correlation — 2026-09-07
 
@@ -137,12 +146,11 @@ No Security finding is marked VERIFIED by this roadmap.
 
 The former Governance dependency is satisfied on current main:
 
-- current `main@0dd380ee7f78c5206ec24d507257f2a2347a1287` includes terminal GOV-03/DR-02B work, Governance current-state reconciliation via Human-merged PR #796 and Documentary D8 roadmap synchronization via Human-merged PR #798;
-- `ADR-0060` is `v1.1.0 ACCEPTED / ACTIVE`;
-- `ESS-0019` is `v1.2.0 ACCEPTED`;
+- ADR-0060 is `v1.1.0 ACCEPTED / ACTIVE`;
+- ESS-0019 is `v1.2.0 ACCEPTED`;
 - repository architecture routes productive DR-03 provider-adapter/execution work to CAPITAL-AI-OPS after terminal DR-02B/GOV-03.
 
-This does not make DR-03 the highest OPS priority. The Node P1 gap remains authority-blocked, and `OPS-08-SEC-07` measured operational evidence remains an executable Security/data-integrity gate that precedes DR-03.
+This does not make DR-03 the highest OPS priority. The Node P1 gap remains authority-blocked, and `OPS-08-SEC-07` is the highest executable local Security/Data-Integrity gate that precedes DR-03.
 
 ### DR-03 reuse/gap disposition
 
@@ -157,13 +165,13 @@ This does not make DR-03 the highest OPS priority. The Node P1 gap remains autho
 | production mutation / deployment identity | existing Release/Production gates | DR-03 must not couple execution integration to deploy/provider mutation | CAPITAL-AI-OPS / PVC-07/PVC-08 plus Human gate | DO NOT IMPLEMENT in DR-03 |
 | Governance / release / identity / registry authority | existing repository authorities | no gap belongs to DR-03 | foreign/current canonical owners | DO NOT IMPLEMENT |
 
-When DR-03 becomes executable, its first implementation must be the smallest provider-neutral adapter step behind existing capability/policy/IAM/audit boundaries, with fail-closed provider errors and provider-parity allow/deny evidence. It must not enable remote skill loading, reconstruct M10, create a second Agent Control Plane or grant Production mutation.
+When DR-03 becomes executable, its first implementation must be the smallest provider-neutral adapter step behind existing capability/policy/IAM/audit boundaries, with fail-closed provider errors and provider-parity allow/deny evidence. It must not enable remote skill loading, reconstruct a retired authorization mechanism, create a second Agent Control Plane or grant Production mutation.
 
 ## 9. Cross-project dependencies
 
 - `CAPITAL-AI-GOV / PVC-05`: policy/Platform Director decisions and governance authority; Node 24.18.0/24.20.0 authority reconciliation is an explicit blocking dependency for `OPS-06-SEC-03`; GOV-03/DR-02B dependency for DR-03 is terminal.
-- `CAPITAL-AI-DOC / PVC-03`: Documentary/evidence stage; D8 roadmap synchronization is current-main terminal via Human-merged PR #798.
-- `CAPITAL-AI-SEC`: Security requirements/findings/tests/independent verification; no productive PVC ownership.
+- `CAPITAL-AI-DOC / PVC-03`: Documentary/evidence stage; no OPS ownership transfer.
+- `CAPITAL-AI-SEC`: Security requirements/findings/tests/independent verification; no productive PVC ownership. Security PR #832 independently re-verifies the R2-04 repository contract, while post-deploy evidence remains OPS/PVC-08 input to later Security closure.
 - `CAPITAL-AI-DATA / PVC-09`: R2-06 Newsfeed evidence-ingress child remediation.
 - `CAPITAL-AI-DATA / PVC-10`: S1-R2-11 primary evidence identity/freshness ownership.
 - `CAPITAL-AI-FINTECH / PVC-15`: R2-06 backtest/Monte-Carlo/full-AI/Buffett productive-capability child remediation.
@@ -178,8 +186,8 @@ The following repository-backed OPS work items referenced by recent OPS executio
 | Work item | Repository result | Current disposition |
 |---|---|---|
 | Alpha Vantage canonical secret/deployment contract | PR #642 merged | DONE_MAIN; Production secret/deploy mutation remains separate and is not implied |
-| M10 Passkey runtime retirement | PR #691 merged; trust root declares M10 runtime retired/off | DONE_MAIN / do not reconstruct |
-| Fatal Process Handling `OPS-04-SEC-04` | PR #720 merged | IMPLEMENTED_ON_MAIN; independent Security/post-deploy verification pending |
+| Retired PR-authorization runtime | PR #691 merged; trust root retains retirement history as non-authorizing evidence | DONE_MAIN / historical only; do not restore |
+| Fatal Process Handling `OPS-04-SEC-04` | PR #720 merged; Security PR #832 repository-contract re-verification merged | IMPLEMENTED_ON_MAIN / REPOSITORY_CONTRACT_VERIFIED; exact post-deploy supervisor/restart/readiness evidence remains open |
 | R-Class PR build suppression / CI cost control | PR #721 merged | DONE_MAIN |
 | Auth Lifecycle re-correlation | PR #722 merged; stale claim already released by User Lifecycle closeout | DONE_MAIN |
 | User Lifecycle OPS closeout | PR #729 merged | DONE_MAIN for OPS repository/read-only-provider closeout; provider E2E unavailable evidence and Security verification remain explicit external/open gates |
@@ -190,9 +198,13 @@ The following repository-backed OPS work items referenced by recent OPS executio
 | GOV-07 User-Lifecycle Evidence Return | PR #794 Human-merged | EVIDENCE_READY; broader GOV-07 remains PARTIAL pending provider E2E, independent Security verification and remaining owner returns |
 | Governance current-state reconciliation | PR #796 Human-merged | FOREIGN_DEPENDENCY_TERMINAL; OPS consumes the current projection without Governance ownership transfer |
 | Documentary D8 roadmap synchronization | PR #798 Human-merged | FOREIGN_DEPENDENCY_TERMINAL; no OPS ownership transfer |
-| RPO measurement evaluator | `agent/operations-recovery-rpo-evidence-20260907` | IMPLEMENTED_BRANCH / OPERATIONAL_EVIDENCE_PENDING / SECURITY_UNVERIFIED; no Roadmap changed-file overlap; must resync against current main before PR approval |
+| RPO measurement evaluator | PR #802 closed unmerged; branch absent; evaluator absent from current main | NOT_IMPLEMENTED_ON_MAIN / FRESH_REINTAKE_REQUIRED / OPERATIONAL_EVIDENCE_PENDING / SECURITY_UNVERIFIED |
+| qs 6.16.0 DoS remediation | PR #828 Human-merged; final hosted CI/Governance/Container Security successful; current live main contains remediation | IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL |
+| retired authorization cleanup | PR #833 closed unmerged | TERMINAL / HISTORICAL INPUT ONLY; no current Roadmap writer or main-state change |
+| Frontend navigation consolidation | PR #834 merged | FOREIGN_SCOPE_TERMINAL; only Frontend navigation/test files changed, no OPS overlap |
+| zizmor workflow-security tooling | PR #836 open; only `.github/workflows/zizmor.yml` | NON_CONFLICTING_PARALLEL_PR; no Roadmap/qs/RPO/Node-priority changed-file or semantic conflict |
 
-The stale `agent/operations-node-toolchain-24-20-20260906` branch is not an active implementation writer: it contained no Node convergence change when correlated. The older `agent/operations-qs-cve-20260905` branch is divergent dependency work with no changed-file overlap with this bounded OPS documentation package. Historical Roadmap/GOV-07 branches are non-authorizing coordination history and do not supersede current main.
+The stale `agent/operations-node-toolchain-24-20-20260906` branch is not an active implementation authority. The older `agent/operations-qs-cve-20260905` branch is historical/divergent dependency work and does not reopen the terminal #828 remediation. `agent/operations-roadmap-integrity-sync-20260907` is stale/diverged with no PR and is non-authorizing. PR #833 is closed unmerged; PR #836 is the only current open PR and does not write this Roadmap or conflict with this work item's priority semantics.
 
 GA4/Consent production verification remains evidence-only: repository code provides the inert `ga-measurement-id` metadata/consent bridge contract, but browser Network/GA4 Realtime behavior is not proven by repository state alone. No completion claim is derived from chat-only/manual runtime observations.
 
@@ -207,9 +219,9 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [x] R2-11 remains DATA-owned unless a secondary OPS dependency is created;
 - [x] Security return boundary defined;
 - [x] `OPS-02-SEC-06` parent protected-capability inventory completed without foreign implementation;
-- [x] `OPS-04-SEC-04` fail-fast implementation merged in PR #720 without claiming Security closure;
+- [x] `OPS-04-SEC-04` fail-fast implementation merged in PR #720 and repository contract independently re-verified via Security PR #832 without claiming missing post-deploy evidence;
 - [x] `OPS-02-SEC-05` current-main implementation and focused negative-test evidence correlated without claiming Security closure;
-- [x] `OPS-06-SEC-03` 24.18.0/24.20.0 Accepted-ADR conflict identified and fail-closed at Governance ownership boundary;
+- [x] `OPS-06-SEC-03` 24.18.0/24.20.0 Accepted-ADR conflict revalidated and fail-closed at Governance ownership boundary;
 - [x] User Lifecycle harness/repository identity contract present on main;
 - [x] User Lifecycle stable-user-ID projection confirmed read-only on connected Supabase provider by the merged closeout evidence;
 - [x] GOV-07 OPS Owner-Evidence Human-merged via PR #794 and retained as `EVIDENCE_READY` without claiming provider E2E or Security closure;
@@ -218,9 +230,15 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [x] stale DR-03 roadmap claim terminalized after confirming Human-merged PR #747 and absent historical branch;
 - [x] DR-03 Governance dependency terminalized and DR-03 retained in the queue without priority promotion;
 - [x] `OPS-08-SEC-07` repository recovery/RPO/RTO harness implemented on main via PR #776 without claiming operational or Security closure;
+- [x] PR #802 verified closed unmerged; former RPO branch and evaluator are absent from current main; stale `IMPLEMENTED_BRANCH` projection removed;
+- [x] PR #828 qs 6.16.0 remediation verified `IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL` and removed from executable backlog;
+- [x] highest actually executable local OPS priority recalculated as `OPS-08-SEC-07`;
+- [x] PR #833 verified terminal `closed / unmerged`; its prior ROADMAP overlap no longer represents an active writer;
+- [x] branch resynchronized to `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`; intervening PR #834 changes only Frontend files and creates no OPS overlap;
+- [x] PR #836 correlated as non-conflicting parallel C-N tooling work; no unresolved parallel ROADMAP writer remains;
 - [ ] CAPITAL-AI-GOV resolves the Node baseline authority/supersession before OPS Node mutation;
 - [ ] `OPS-06-SEC-03` Node control-plane convergence implemented/evidenced only after that authority resolution;
-- [ ] `OPS-08-SEC-07` complementary RPO measurement branch resynchronized and independently hosted-validated;
+- [ ] deterministic RPO evaluator re-intaken on a fresh current-main branch and independently exact-head validated;
 - [ ] at least two successful scheduled backup evidence artifacts and corresponding read-only workflow-run metadata establish measured RPO;
 - [ ] isolated restore integrity/DB-RTO evidence completed; full-service RTO remains separately scoped or measured;
 - [ ] CSP and billing-isolation OPS evidence completed as scoped above;
@@ -229,13 +247,12 @@ GA4/Consent production verification remains evidence-only: repository code provi
 - [ ] Stripe sandbox/Test Clock lifecycle evidence executed with verified test-mode fixtures;
 - [ ] CAPITAL-AI-SEC independent verification completed for applicable returned evidence;
 - [ ] DR-03 implementation started only after higher-priority OPS gates permit it;
-- [ ] exact final branch-state validation/correlation completed before PR approval request;
 - [ ] hosted validation completed after PR creation as applicable;
 - [ ] Human Owner merge completed separately.
 
 ## 12. PR / production boundary
 
-This roadmap does not authorize PR merge, Release transition or Production/provider mutation. Current Authority controls apply. Human/CODEOWNER merge remains mandatory. Any future protected provider configuration or Production mutation requires its own current authorization.
+This roadmap does not authorize PR creation, PR merge, Release transition or Production/provider mutation. Current Authority controls apply. Human/CODEOWNER merge remains mandatory. Any future protected provider configuration or Production mutation requires its own current authorization.
 
 ## 13. User Lifecycle terminal closeout — current-main reconciliation
 
@@ -281,4 +298,4 @@ Provider evidence remains deliberately split by evidence class:
 - exact-branch Stripe provider redelivery E2E: `NOT_AVAILABLE`;
 - repository source/test contracts: correlated and reusable, but not substituted for provider E2E.
 
-PR #794 is now current-main evidence, so no branch/PR-creation gate remains for this OPS return. Residual gates remain explicit: clean historical Supabase baseline replay, isolated provider E2E, Stripe test-mode lifecycle evidence, the current Supabase leaked-password-protection provider warning, CAPITAL-AI-SEC independent verification, and the outstanding foreign-owner/Human-Legal returns. No foreign project or Production/provider mutation is authorized by this work item.
+PR #794 is current-main evidence, so no branch/PR-creation gate remains for this OPS return. Residual gates remain explicit: clean historical Supabase baseline replay, isolated provider E2E, Stripe test-mode lifecycle evidence, the current Supabase leaked-password-protection provider warning, CAPITAL-AI-SEC independent verification, and the outstanding foreign-owner/Human-Legal returns. No foreign project or Production/provider mutation is authorized by this work item.

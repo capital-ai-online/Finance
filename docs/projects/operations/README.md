@@ -5,7 +5,7 @@
 **Role:** Primary Project Value Chain Owner  
 **Primary stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`  
 **Status:** ACTIVE — PROJECT EXECUTION SURFACE / NON-AUTHORIZING  
-**Baseline:** `main@b96cf9e32daf53037bf0e28bddfb3ef5dac7cac6`  
+**Baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
 **Trust root:** `/AGENTS.md`
 
 ## Purpose
@@ -70,6 +70,19 @@ CAPITAL-AI-SEC PR #631 routes the following current findings to OPS:
 - `S1-R2-10` → `PVC-08` Production Operations, waiting for post-deploy evidence.
 
 Security owns the findings, threat/control definitions, negative-test expectations and independent Security verification. OPS may report `IMPLEMENTED` or `EVIDENCE_READY`; only CAPITAL-AI-SEC may report Security `VERIFIED/CLOSED`.
+
+## Current execution focus — post-PR #828 correlation
+
+The current Roadmap/Evidence correlation records:
+
+- qs `6.16.0` remediation from PR #828 as `IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL`;
+- fatal-process repository contracts as independently `REPOSITORY_CONTRACT_VERIFIED` through Security PR #832, with exact post-deploy supervisor/restart/readiness evidence still open;
+- `OPS-06-SEC-03` Node convergence as non-executable until effective Governance/ADR authority resolves the accepted 24.18.0 baseline versus proposed 24.20.0 supersession;
+- `OPS-08-SEC-07` Recovery/RPO/RTO as the highest actually executable local OPS Security/Data-Integrity work because RPO evaluator PR #802 is closed unmerged, its branch is absent and its evaluator code is absent from current main.
+
+PR #833 is terminal `closed / unmerged`; PR #834 merged only Frontend navigation files and created no OPS changed-file or semantic overlap. Current PR #836 changes only `.github/workflows/zizmor.yml`; it has no changed-file or material semantic overlap with this documentation/prioritization scope.
+
+Canonical detail: `ROADMAP.md`, `WORK_PACKAGES.md`, `evidence/OPS_POST_828_PRIORITY_RECORRELATION_2026-09-07.md`.
 
 ## Foreign work rule
 
