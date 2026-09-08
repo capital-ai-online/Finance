@@ -33,6 +33,14 @@ describe('OPS ast-grep BB-2E workflow', () => {
     expect(workflow).not.toMatch(/uses:\s+[^\n]+@(v\d+|main|master)\b/);
   });
 
+  it('configures the requested local Git identity before merge operations in both jobs', () => {
+    expect(workflow.split("git -C work config user.name 'SvenKulessa'")).toHaveLength(3);
+    expect(
+      workflow.split("git -C work config user.email 'sven.kulessa@gmx.net'"),
+    ).toHaveLength(3);
+    expect(workflow).not.toContain('github-actions[bot]');
+  });
+
   it('hard-binds the target branch, plan, runner and productive target file', () => {
     expect(workflow).toContain(
       'TARGET_BRANCH: agent/frontend-dashboard-drawer-strangler-20260907',

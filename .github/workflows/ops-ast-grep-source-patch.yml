@@ -53,6 +53,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Git-Identität für FE-Arbeitsbaum setzen
+        run: |
+          set -euo pipefail
+          git -C work config user.name 'SvenKulessa'
+          git -C work config user.email 'sven.kulessa@gmx.net'
+
       - name: Node.js 24 einrichten
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
@@ -220,6 +226,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Git-Identität für FE-Arbeitsbaum setzen
+        run: |
+          set -euo pipefail
+          git -C work config user.name 'SvenKulessa'
+          git -C work config user.email 'sven.kulessa@gmx.net'
+
       - name: Validierten Patch laden
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -257,8 +269,6 @@ jobs:
           EXPECTED_PATCHED_BLOB: ${{ needs.patch-and-validate.outputs.patched_blob }}
         run: |
           set -euo pipefail
-          git -C work config user.name 'github-actions[bot]'
-          git -C work config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git -C work merge --no-edit "$TRUSTED_MAIN_SHA"
 
           PATCH_FILE="$RUNNER_TEMP/bb2e-dashboard-source-patch/bb2e-dashboard.patch"
