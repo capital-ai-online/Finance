@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Correlation baseline:** `main@80c30ad2aa469f4552c84f3cc40e997e4ef13ee0`
+**Correlation baseline:** `main@29b46dc9131168036a0c067d8e9a14461b411bfe`
 
 Canonical current-main correlation evidence: [`evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md`](./evidence/OPS_SECURITY_BACKLOG_RECORRELATION_2026-09-06.md).
 
@@ -54,6 +54,7 @@ Current-main re-correlation includes merged User Lifecycle closeout PR #729, ter
 | P1 | `OPS-07-A` Release Evidence Contract | `PVC-07` | candidate evidence, gate, rollback and handoff completeness | OPEN |
 | P1 | `OPS-08-A` Production Handoff & Recovery | `PVC-08` | readiness, post-deploy health, rollback/recovery and evidence | OPEN / PARTIAL; `OPS-08-SEC-07` is the current highest executable OPS Security gap |
 | P1 | `OPS-18-A` EventMesh/Traceability Coverage | `PVC-18` | replay/reliability plus ETM publish/consume/axis gaps | OPEN / PARTIAL |
+| P2 | `OPS-02-CI-01` Build/Test Cost & Scope Reduction | `PVC-02` | reduce duplicate hosted `build-and-test` work and select fewer tests for safely classifiable PR scopes while preserving Required Check and full-main evidence | **PLANNED / OWNER-REQUESTED** — detailed package: `work-packages/OPS_02_CI_TEST_COST_REDUCTION_2026-09-07.md`; implementation remains queued behind higher-priority Security/Data-Integrity gates unless Owner reprioritizes |
 | P2 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | SLO/SLI/capacity/degradation evidence | OPEN |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | staleness/identity coverage without authority expansion | OPEN |
 
