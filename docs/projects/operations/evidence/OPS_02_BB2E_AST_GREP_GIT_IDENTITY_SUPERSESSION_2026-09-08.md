@@ -9,7 +9,7 @@
 **Target project:** `CAPITAL-AI-FE`  
 **Target branch:** `agent/frontend-dashboard-drawer-strangler-20260907`  
 **Target FE head at correlation:** `6a30788e51ddc4ff8630b123a7d171af6e8cc9da`  
-**Correlation baseline:** `main@f77e3b1219ca02407ee23a2456d1db554d107d1d`
+**Correlation baseline:** `main@851517877d43ee970ce1defba4fa910529e55831`
 
 ## Classification
 
