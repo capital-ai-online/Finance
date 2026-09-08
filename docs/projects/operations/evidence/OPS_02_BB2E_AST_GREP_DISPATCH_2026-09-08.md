@@ -1,5 +1,10 @@
 # OPS-02 — BB-2E ast-grep Workflow Dispatch Evidence
 
+**Status:** `SUPERSEDED — PARTIAL EVIDENCE ONLY`  
+**Superseded by:** `OPS_02_BB2E_AST_GREP_GIT_IDENTITY_SUPERSESSION_2026-09-08.md`  
+**Supersession scope:** execution-readiness and Git-identity assumptions only; architecture, Node 24.18.0 selection, privilege split, FE ownership and Human/CODEOWNER merge boundary remain historical evidence and are not superseded.  
+**Reason:** the first real `workflow_dispatch` reached a Git merge that required commit identity and failed with `fatal: empty ident name`; the replacement evidence records the repository-local Git identity fix and the still-open rerun gates.
+
 **Date:** 2026-09-08  
 **Current Project:** `CAPITAL-AI-OPS`  
 **Current Project Folder:** `docs/projects/operations/`  
