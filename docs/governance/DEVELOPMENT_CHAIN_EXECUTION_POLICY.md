@@ -5,7 +5,7 @@
 **Version:** `2.6.0`  
 **Date:** 2026-08-12  
 **Updated:** 2026-09-07  
-**Scope:** CAPITAL-AI `SvenKulessa/Finance`  
+**Scope:** CAPITAL-AI `capital-ai-online/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
 
