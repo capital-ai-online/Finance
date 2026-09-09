@@ -4,7 +4,7 @@
 **Control Plane Version:** `2.9.0`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-07  
-**Repository:** `SvenKulessa/Finance`
+**Repository:** `capital-ai-online/Finance`
 
 ## 1. Single Point of Trust
 
