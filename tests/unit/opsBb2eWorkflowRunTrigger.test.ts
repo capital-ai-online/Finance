@@ -94,6 +94,6 @@ describe('OPS BB-2E workflow_run trigger', () => {
     expect(workflow).toContain('workflow_id: downstreamWorkflow');
     expect(workflow).toContain("ref: 'main'");
     expect(workflow).toContain('expected_head_sha: feHead');
-    expect(workflow).toContain("confirm_apply: 'true'");
+    expect(workflow).toContain('confirm_apply: true');
   });
 });
