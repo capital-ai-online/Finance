@@ -12,26 +12,62 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Install ggshield
-        shell: bash
-        run: |
-          python3 -m venv "$RUNNER_TEMP/ggshield"
-          "$RUNNER_TEMP/ggshield/bin/python" -m pip install --disable-pip-version-check ggshield==1.54.0
-
-      - name: Check version and API authentication
+      # Permanent audit credential target: sources:read only.
+      # Authentication uses GitGuardian's documented /v1/health endpoint directly so
+      # this workflow does not require ggshield's scan capability.
+      - name: Check API authentication without scan capability
         shell: bash
         env:
           GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
           # Optional repository variable for an EU or self-hosted workspace.
           GITGUARDIAN_INSTANCE: ${{ vars.GITGUARDIAN_INSTANCE || 'https://dashboard.gitguardian.com' }}
-          GITGUARDIAN_DONT_LOAD_ENV: '1'
         run: |
-          test -n "$GITGUARDIAN_API_KEY" || {
-            echo "::error::Repository Secret GITGUARDIAN_API_KEY fehlt."
-            exit 1
+          python3 - <<'PY'
+          import os
+          import urllib.error
+          import urllib.request
+
+          ORIGINS = {
+              "https://dashboard.gitguardian.com": "https://api.gitguardian.com",
+              "https://dashboard.eu1.gitguardian.com": "https://api.eu1.gitguardian.com",
           }
-          "$RUNNER_TEMP/ggshield/bin/ggshield" --version
-          "$RUNNER_TEMP/ggshield/bin/ggshield" api-status --no-check-for-updates
+
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+
+          key = os.environ.get("GITGUARDIAN_API_KEY", "")
+          instance = os.environ.get("GITGUARDIAN_INSTANCE", "").rstrip("/")
+          origin = ORIGINS.get(instance)
+          if not key:
+              print("::error::Repository Secret GITGUARDIAN_API_KEY fehlt.")
+              raise SystemExit(1)
+          if origin is None:
+              print("::error::GITGUARDIAN_INSTANCE ist für den Health-Workflow nicht freigegeben.")
+              raise SystemExit(1)
+
+          request = urllib.request.Request(
+              origin + "/v1/health",
+              headers={"Authorization": "Token " + key, "Accept": "application/json"},
+              method="GET",
+          )
+          opener = urllib.request.build_opener(NoRedirect())
+          try:
+              with opener.open(request, timeout=15) as response:
+                  raw = response.read(16_385)
+                  if response.status != 200 or len(raw) > 16_384:
+                      raise RuntimeError("INVALID_HEALTH_RESPONSE")
+          except urllib.error.HTTPError as exc:
+              print("::error::GitGuardian API authentication failed with HTTP " + str(exc.code) + ".")
+              raise SystemExit(1) from None
+          except (urllib.error.URLError, TimeoutError, OSError, RuntimeError):
+              print("::error::GitGuardian API authentication health request failed.")
+              raise SystemExit(1) from None
+
+          print("GitGuardian API authentication: PASS")
+          PY
 
       # /v1/sources is the required read-only audit surface and uses sources:read.
       # /v1/health-checks is documented, but GitGuardian publishes no dedicated
@@ -52,7 +88,7 @@ jobs:
           import urllib.error
           import urllib.parse
           import urllib.request
-          
+
           TARGET = "capital-ai-online/Finance"
           REPO_ID = "1284319285"
           MAX_AGE = dt.timedelta(hours=24)
@@ -64,17 +100,17 @@ jobs:
           FIELDS = ("monitoring_status", "github_installation", "api_network",
                     "api_access_rights", "check_run_configuration")
           REQUIRED_PASS = ("monitoring_status",)
-          
-          
+
+
           class Unavailable(Exception):
               pass
-          
-          
+
+
           class NoRedirect(urllib.request.HTTPRedirectHandler):
               def redirect_request(self, req, fp, code, msg, headers, newurl):
                   return None
-          
-          
+
+
           def stamp(value):
               if not isinstance(value, str):
                   return None
@@ -83,12 +119,12 @@ jobs:
                   return parsed if parsed.tzinfo else None
               except ValueError:
                   return None
-          
-          
+
+
           def result(status, reason):
               return {"status": status, "reason": reason}
-          
-          
+
+
           def collect(origin, key, path):
               # Only GET; pagination may never send the credential to a different host/path.
               url = origin + path
@@ -128,8 +164,8 @@ jobs:
                       raise Unavailable("INVALID_PAGINATION")
                   url = urllib.parse.urljoin(url, next_links[0])
               raise Unavailable("PAGINATION_LIMIT")
-          
-          
+
+
           def evaluate(origin, key, fetch=collect):
               checks = {name: result("NOT-RUN", "NO_EVIDENCE") for name in FIELDS}
               checks["check_run_configuration"] = result(
@@ -185,8 +221,8 @@ jobs:
                   for kind in ("github_installation", "api_network", "api_access_rights"):
                       checks[kind] = result("NOT-RUN", str(exc))
               return checks, evidence
-          
-          
+
+
           def gate(checks):
               explicit_failures = sorted(
                   name for name, item in checks.items() if item["status"] == "FAIL")
@@ -201,8 +237,8 @@ jobs:
                   "required_not_pass": required_not_pass,
                   "not_run": not_run,
               }
-          
-          
+
+
           def main():
               key = os.environ.get("GITGUARDIAN_API_KEY", "")
               instance = os.environ.get("GITGUARDIAN_INSTANCE", "").rstrip("/")
@@ -235,8 +271,8 @@ jobs:
               # Fail closed for required evidence and every explicit supported FAIL.
               # Deliberate NOT-RUN capability gaps remain visible and are never promoted to PASS.
               return 0 if gate_result["status"] == "PASS" else 1
-          
-          
+
+
           if __name__ == "__main__":
               raise SystemExit(main())
           PY
