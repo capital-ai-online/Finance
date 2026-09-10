@@ -31,9 +31,6 @@
     "store reusable credentials"
   ],
   "standards": [
-    "ISO/IEC 42001:2023 benchmark",
-    "NIST SP 800-218 SSDF v1.1 final",
-    "NIST SP 800-218A final",
-    "NIST SP 800-218 Rev.1 / SSDF v1.2 draft monitored only"
+    "ISO/IEC 42001:2023 benchmark"
   ]
 }
