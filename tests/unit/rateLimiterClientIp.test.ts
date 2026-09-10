@@ -1,50 +1,55 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { EDGE_TRUST_HEADER } from '../../src/platform/Security/edgeTrust';
 import { getClientIp } from '../../src/platform/Security/rateLimiter';
 
-const originalRender = process.env.RENDER;
+const EDGE_SECRET = '0123456789abcdef0123456789abcdef';
 
-afterEach(() => {
-  if (originalRender === undefined) delete process.env.RENDER;
-  else process.env.RENDER = originalRender;
-});
+function trustedRenderRequest(overrides: Record<string, unknown> = {}) {
+  return {
+    headers: {
+      host: 'capital-ai.online',
+      'x-forwarded-proto': 'https',
+      [EDGE_TRUST_HEADER]: EDGE_SECRET,
+      'cf-connecting-ip': '203.0.113.10',
+      'cf-ray': '230b030023ae2822-FRA',
+      'x-forwarded-for': '198.51.100.99',
+      ...overrides,
+    },
+    ip: '10.0.0.1',
+    socket: { remoteAddress: '10.0.0.2' },
+  };
+}
 
 describe('getClientIp security boundary', () => {
-  it('uses a syntactically valid Render edge client IP when running on Render', () => {
-    process.env.RENDER = 'true';
-    expect(getClientIp({
-      headers: {
-        'cf-connecting-ip': '203.0.113.10',
-        'x-forwarded-for': '198.51.100.99',
-      },
-      ip: '10.0.0.1',
-      socket: { remoteAddress: '10.0.0.2' },
+  it('uses the Cloudflare visitor IP only after verified Cloudflare -> Render provenance', () => {
+    expect(getClientIp(trustedRenderRequest(), {
+      isRender: true,
+      sharedSecret: EDGE_SECRET,
     })).toBe('203.0.113.10');
   });
 
   it('never uses raw X-Forwarded-For as the identity source', () => {
-    delete process.env.RENDER;
     expect(getClientIp({
       headers: { 'x-forwarded-for': '198.51.100.99' },
       ip: '10.0.0.1',
       socket: { remoteAddress: '10.0.0.2' },
-    })).toBe('10.0.0.1');
+    }, { isRender: false })).toBe('10.0.0.1');
   });
 
-  it('rejects a malformed Render edge header and falls back to the direct Express peer', () => {
-    process.env.RENDER = 'true';
-    expect(getClientIp({
-      headers: { 'cf-connecting-ip': '203.0.113.10, 198.51.100.2' },
-      ip: '10.0.0.1',
-      socket: { remoteAddress: '10.0.0.2' },
+  it('rejects a malformed Cloudflare client IP even when the remaining edge proof is valid', () => {
+    expect(getClientIp(trustedRenderRequest({
+      'cf-connecting-ip': '203.0.113.10, 198.51.100.2',
+    }), {
+      isRender: true,
+      sharedSecret: EDGE_SECRET,
     })).toBe('10.0.0.1');
   });
 
   it('returns unknown when no syntactically valid trusted IP source exists', () => {
-    delete process.env.RENDER;
     expect(getClientIp({
       headers: { 'x-forwarded-for': '198.51.100.99' },
       ip: 'not-an-ip',
       socket: { remoteAddress: 'also-not-an-ip' },
-    })).toBe('unknown');
+    }, { isRender: false })).toBe('unknown');
   });
 });

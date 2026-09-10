@@ -1,11 +1,9 @@
 import type { Express, Request, Response, NextFunction } from 'express';
 import { getServerSupabase, isSupabaseConfigured } from '../db';
 import { getClientIp } from '../../src/platform/Security/rateLimiter';
+import { CAPITAL_AI_PUBLIC_HOSTS } from '../../src/platform/Security/edgeTrust';
 
-const PRODUCTION_ORIGINS = [
-  'https://capital-ai.online',
-  'https://www.capital-ai.online',
-];
+const PRODUCTION_ORIGINS = CAPITAL_AI_PUBLIC_HOSTS.map((host) => `https://${host}`);
 
 export interface CorsLogger {
   warn(message: string, meta?: Record<string, unknown>): void;
@@ -55,7 +53,7 @@ async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger
 /**
  * ADR-0009 CORS boundary.
  *
- * Production accepts only the two explicit CAPITAL-AI browser origins. Development may
+ * Production accepts only the canonical CAPITAL-AI browser origins. Development may
  * additionally accept localhost/127.0.0.1. A disallowed Origin is rejected server-side for
  * every HTTP method rather than relying on the browser to hide the response. Requests without
  * an Origin remain valid for non-browser integrations such as Stripe webhooks and health probes.

@@ -13,6 +13,10 @@
 // ist das unkritisch, aber bei Skalierung erneut zu prüfen.
 
 import { isIP } from 'node:net';
+import {
+  resolveCloudflareRenderEdgeTrust,
+  type EdgeTrustOptions,
+} from './edgeTrust';
 
 interface Bucket {
   count: number;
@@ -64,19 +68,27 @@ function validatedIp(value: unknown): string | null {
   return isIP(candidate) > 0 ? candidate : null;
 }
 
-export function getClientIp(req: { headers: Record<string, unknown>; socket?: { remoteAddress?: string }; ip?: string }): string {
-  // SECURITY (2026-08-25 architecture review, finding #7): niemals rohes X-Forwarded-For
-  // als Rate-Limit-Identität verwenden. Eine globale numerische Express-`trust proxy`-Regel würde
-  // zusätzlich Host/Proto-Forwarding vertrauen und damit eine breitere Trust Boundary einführen als
-  // für Rate-Limiting/Audit nötig. Auf Render wird deshalb ausschließlich der vom Edge gesetzte
-  // CF-Connecting-IP akzeptiert, und auch dieser nur nach syntaktischer IP-Validierung.
-  if (process.env.RENDER === 'true') {
-    const edgeIp = validatedIp(req.headers['cf-connecting-ip']);
-    if (edgeIp) return edgeIp;
+export interface ClientIpResolutionOptions extends EdgeTrustOptions {}
+
+/**
+ * Resolves the effective client IP without trusting caller-controlled forwarding headers.
+ *
+ * On Render, Cloudflare visitor identity is accepted only after the Cloudflare -> Render
+ * provenance contract passes. Missing/mismatched edge proof fails closed to the direct peer
+ * identity. This deliberately avoids raw X-Forwarded-For and prevents direct-origin callers from
+ * choosing another rate-limit/audit identity by spoofing CF-Connecting-IP.
+ */
+export function getClientIp(
+  req: { headers: Record<string, unknown>; socket?: { remoteAddress?: string }; ip?: string },
+  options: ClientIpResolutionOptions = {},
+): string {
+  const edgeTrust = resolveCloudflareRenderEdgeTrust(req, options);
+  if (edgeTrust.state === 'trusted-cloudflare-render' && edgeTrust.clientIp) {
+    return edgeTrust.clientIp;
   }
 
   // Ohne explizite Proxy-Vertrauensregel entspricht req.ip dem direkten Socket-Peer. Das ist für
-  // lokale/non-Render Umgebungen die engste vertrauenswürdige Quelle.
+  // lokale/non-Render Umgebungen und für fail-closed Edge-Fallbacks die engste verfügbare Quelle.
   const expressIp = validatedIp(req.ip);
   if (expressIp) return expressIp;
 
