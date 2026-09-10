@@ -1,13 +1,18 @@
 // Audit ARCH-AUDIT-0002 (Kapitel 11, S4): zentraler strukturierter Logger und Correlation-ID.
-// O1 Observability Baseline: bestehendes Logging bleibt Authority; Telemetry erweitert es um
-// Redaction, kanonische Wertschöpfungs-Metadaten und Request-Dauer statt ein paralleles
-// Logging-System einzuführen.
+// O1/O4 Observability Baseline: bestehendes Logging bleibt Authority; Telemetry erweitert es um
+// Redaction, kanonische Wertschöpfungs-Metadaten, validierten Trace-Kontext und Edge-Provenance
+// statt ein paralleles Logging-System einzuführen.
 
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { attachSecurityResponseContext } from './securityResponse';
 import { getDeploymentIdentity } from './deploymentIdentity';
-import { redactTelemetryAttributes, TELEMETRY_SCHEMA_VERSION } from '../src/platform/Telemetry';
+import {
+  parseTraceParent,
+  redactTelemetryAttributes,
+  TELEMETRY_SCHEMA_VERSION,
+} from '../src/platform/Telemetry';
+import { resolveCloudflareRenderEdgeTrust } from '../src/platform/Security/edgeTrust';
 import { getClientIp } from '../src/platform/Security/rateLimiter';
 import { buildTelemetryClientContext } from './telemetryClientContext';
 import { classifyProbePath, createReconnaissanceBurstDetector } from './middleware/probeProtection';
@@ -47,6 +52,9 @@ function outcomeForStatus(statusCode: number): 'success' | 'failure' | 'denied' 
 
 export function requestContext(req: Request, res: Response, next: NextFunction) {
   const startedAt = process.hrtime.bigint();
+  const edgeTrust = resolveCloudflareRenderEdgeTrust(req as unknown as { headers: Record<string, unknown> });
+  const traceParent = parseTraceParent(req.headers.traceparent);
+
   req.requestId = resolveRequestId(req);
   res.setHeader('x-request-id', req.requestId);
   const deployment = getDeploymentIdentity();
@@ -71,6 +79,8 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
         burstDetected: detection.burstDetected, technologyEnumerationDetected: detection.technologyEnumerationDetected,
         requestsInBurstWindow: detection.requestsInBurstWindow, distinctFamiliesInEnumerationWindow: detection.distinctFamiliesInEnumerationWindow,
         clientIpHash: client.clientIpHash, clientNetwork: client.clientNetwork, userAgent: client.userAgent,
+        traceId: traceParent?.traceId, parentSpanId: traceParent?.parentSpanId, traceFlags: traceParent?.traceFlags,
+        edgeRayId: edgeTrust.edgeRayId, edgeTrust: edgeTrust.state, edgeTrustReason: edgeTrust.reason,
       });
     }
 
@@ -78,6 +88,8 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
       eventName: 'request.completed', signal: 'metric', stage: 'request-intake', outcome: outcomeForStatus(res.statusCode),
       method: req.method, path: req.path, statusCode: res.statusCode, durationMs: Number(durationMs.toFixed(3)),
       clientIpHash: client.clientIpHash, clientNetwork: client.clientNetwork, userAgent: client.userAgent,
+      traceId: traceParent?.traceId, parentSpanId: traceParent?.parentSpanId, traceFlags: traceParent?.traceFlags,
+      edgeRayId: edgeTrust.edgeRayId, edgeTrust: edgeTrust.state, edgeTrustReason: edgeTrust.reason,
       securitySignal: probeFamily ? 'reconnaissance-probe' : undefined, probeFamily: probeFamily ?? undefined,
       burstDetected: detection?.burstDetected, technologyEnumerationDetected: detection?.technologyEnumerationDetected,
       requestsInBurstWindow: detection?.requestsInBurstWindow, distinctFamiliesInEnumerationWindow: detection?.distinctFamiliesInEnumerationWindow,
