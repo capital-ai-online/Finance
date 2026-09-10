@@ -7,7 +7,7 @@
 **Role:** cross-cutting Security requirements, findings, testing, bounded remediation and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
 **Date:** `2026-09-10`  
-**Correlation baseline:** `main@6ba5fa858a2a45f80d2f5ba1110a08e1734692a4`  
+**Correlation baseline:** `main@2a6909ead7dc4ed3299de3d07d84123ce53f9e46`  
 **Implementation authority:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001`  
 **Component specification:** `ESS-0006 v1.2.0`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
@@ -52,7 +52,7 @@ Implementation and verification may both be performed by CAPITAL-AI-SEC but rema
 | `SEC-ASSESS-ALIGN` | PR #766 merged | `DONE_MAIN` |
 | `SEC-SOTA-01` SOTA baseline + roadmap convergence | PR #832 merged; hosted PR checks and merge-main build/deploy/identity evidence completed | `DONE_MAIN` |
 | Post-#832 Security roadmap sync | PR #837 merged as `8ab11ae749639a67c28b3d685f4943df19b9e72c`; final PR head `d5e77d5fded414931896f4e6781e3dcfffcaed19` passed Governance, Container Security and Class-D `build-and-test` | `DONE_MAIN` |
-| Bounded Security remediation authority | current GOV branch based on `main@6ba5fa858a2a45f80d2f5ba1110a08e1734692a4` | `GOVERNANCE_IMPLEMENTED_BRANCH / VALIDATION OPEN` |
+| Bounded Security remediation authority | current GOV branch based on `main@2a6909ead7dc4ed3299de3d07d84123ce53f9e46` | `GOVERNANCE_IMPLEMENTED_BRANCH / VALIDATION OPEN` |
 | `SEC-VERIFY-R2-04` fatal-process repository re-verification | repository code/test contract independently verified in merged evidence | `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN` |
 | `SEC-SOTA-02` AI/Agent/MCP control inventory | historical 2026-09-07 static/control inspection + routed evidence matrix | `INVENTORY_IMPLEMENTED_BRANCH / FINDINGS_ROUTED / PR GATE OPEN AT THAT BASELINE` |
 | `SEC-VERIFY-ULS-001` subscription identity | current Security evidence retains provider identity residuals | `PARTIAL / NOT VERIFIED` |
@@ -150,7 +150,7 @@ No row grants CAPITAL-AI-SEC the productive owner's business or PVC authority. A
 
 ## Current correlation state for this authority update
 
-- Governance work baseline: `main@6ba5fa858a2a45f80d2f5ba1110a08e1734692a4`.
+- Governance work baseline: `main@2a6909ead7dc4ed3299de3d07d84123ce53f9e46`.
 - Authority-owning project: `CAPITAL-AI-GOV / PVC-05`; Security remains cross-cutting with productive PVC ownership `[]`.
 - Work branch: `agent/governance-security-remediation-authority-20260910`.
 - The active/open PR and stale parallel Governance branches must be re-correlated again immediately before PR-creation approval; no historical branch content is implicitly adopted by this Security roadmap projection.
