@@ -7,7 +7,7 @@
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-10`  
 **Correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
-**Open PR baseline:** none at integrity-sync intake  
+**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #872 open  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 ## 1. Objective
@@ -63,7 +63,8 @@ The earlier OPS roadmap baseline was stale. Current main has advanced through th
 | PR #867 Edge-Trust secret deployment coverage | Human-merged OPS work | server-only secret manifest/deployment coverage is on main; provider provisioning remains separate |
 | PR #868 Governance chat/approval rollout | Human-merged Governance work | consume current lifecycle/approval state |
 | PR #870/#871 Vite security floor + SEC-SOTA-03 sync | Human-merged Security work | consume independent Security state; no OPS ownership transfer |
-| Open PRs | none at integrity-sync intake | no current PR writer |
+| PR #872 `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | OPEN Security PR; current Security Roadmap source state remains `NEXT / EVIDENCE_GAP_CONFIRMED` on main | active bounded Security execution affecting long-term OPS `PVC-02`/`PVC-07` surfaces; no OPS implementation duplication and no changed-file overlap with this integrity sync |
+| Open PRs | PR #872 at current re-correlation | changed-file disjoint from OPS Roadmap/Work Packages/integrity evidence; semantic dependency is explicitly owner-bounded |
 | Active OPS branch | `agent/operations-self-healing-readiness-20260910` | separate Self-Healing readiness slice; 1 ahead / 15 behind current main at intake; no top-level ROADMAP/WORK_PACKAGES file overlap |
 | Current main | `e9839f5e3eccc0ae01d6a10e53d3787435e1379d` | this integrity-sync branch started exactly here |
 
@@ -167,7 +168,23 @@ At this correlation point the branch is **1 commit ahead / 15 commits behind** `
 
 Security remains owner for threat analysis, findings and independent verification. Current bounded Security-remediation delegation affects execution authority only; it does not transfer OPS PVC ownership to Security or Security verification authority to OPS.
 
+### Current foreign Security dependency — `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`
+
+**Source-of-truth state:** `docs/projects/security/ROADMAP.md@current-main` = `NEXT / EVIDENCE_GAP_CONFIRMED` under `SEC-SOTA-03`  
+**Execution metadata:** PR #872 is open on `agent/security-artifact-digest-binding-20260910`  
+**Execution project:** `CAPITAL-AI-SEC` under bounded Security-remediation authority  
+**Long-term technical owner / PVC:** `CAPITAL-AI-OPS / PVC-02` Controlled Implementation and `PVC-07` Release Management  
+**Work package:** `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`
+
+The current Security Roadmap identifies the nearest M6/ADR-0060 continuation gap as deterministic SHA-256 binding of the actual built runtime output into the existing release-manifest/provenance verification chain. PR #872 changes only the Security Roadmap plus existing automation/security/test surfaces; it does not change this OPS Roadmap or Work Packages.
+
+**Exit gate:** the exact hosted build produces deterministic runtime-artifact digests bound to the same source/dependency identity; existing provenance references those digests; changed, missing, duplicate or stale runtime artifacts are rejected fail-closed; focused positive/negative tests and hosted signing/verification pass; no second Release/Deployment authority or protected external mutation is introduced.
+
+**OPS disposition:** do not duplicate the in-flight Security implementation. Consume and re-correlate the resulting current-main evidence only after PR #872 reaches a terminal state; long-term OPS PVC ownership remains unchanged.
+
 ## 10. Current execution queue
+
+Active foreign Security execution is already in flight through PR #872 and is therefore not duplicated as an OPS branch. The local OPS queue remains:
 
 1. `OPS-08-B-SH-01` — resynchronize the existing Self-Healing readiness branch to then-current main and revalidate its exact head before any PR approval; preserve fail-closed SH-R2 Human/Owner gating.
 2. `OPS-08-SEC-07` — obtain measured Recovery/RPO/RTO operational evidence without treating repository harness existence as recovery-performance proof.
@@ -201,6 +218,7 @@ The external GitGuardian `sources:read-only` proof is an Owner/provider least-pr
 | PR #867 Edge-Trust secret deployment coverage | Human-merged OPS deployment-readiness correction |
 | PR #868 Governance chat/approval rollout | Human-merged Governance dependency |
 | PR #870/#871 Vite floor / SEC-SOTA-03 sync | Human-merged Security work; no OPS ownership transfer |
+| PR #872 artifact-digest binding | OPEN Security execution dependency; source state remains Security Roadmap `NEXT / EVIDENCE_GAP_CONFIRMED`; no OPS ownership transfer |
 | GitGuardian Health #34468840264 | exact post-#863 main run; auth + monitoring PASS, denied/unsupported provider evidence NOT-RUN |
 
 ## 12. Integrity-sync validation / Definition of Done
@@ -211,6 +229,7 @@ For this documentation/evidence synchronization:
 - [x] `/AGENTS.md` fully re-read from current main; Trust Root remains Control Plane `2.9.0`;
 - [x] project/PVC mapping, OPS README/Roadmap, ADR-0070, ESS-0019 and current GitGuardian runbook re-read;
 - [x] no open Pull Requests existed at branch creation/intake;
+- [x] current open PR #872 re-correlated after intake; its eight changed files are disjoint from this integrity-sync scope and its Security execution/OPS ownership boundary is explicit;
 - [x] current active OPS branch set checked; Self-Healing branch is path-disjoint from this four-artifact sync;
 - [x] current-main delta since PR #863 reviewed; none of the four integrity-sync target artifacts were changed by those 43 commits;
 - [x] FINTECH/DATA entitlement child returns re-read from current main;
