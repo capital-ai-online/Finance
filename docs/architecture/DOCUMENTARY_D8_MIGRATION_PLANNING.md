@@ -1,15 +1,16 @@
 # Documentary D8 — Migration Planning & Legacy Compatibility
 
-**Status:** IMPLEMENTED ON BRANCH — VALIDATION / PR / HUMAN MERGE PENDING  
+**Status:** DONE — HUMAN-MERGED / READ-ONLY PLANNING SLICE  
 **Project:** `CAPITAL-AI-DOC`  
 **PVC:** `PVC-03 — Documentary Engine`  
 **Primary Authority:** ESS-0010 Documentary Engine  
 **Repository trust root:** `/AGENTS.md`  
-**Implementation:** `src/platform/Documentary/Migration/DocumentaryMigrationPlanner.ts`
+**Implementation:** `src/platform/Documentary/Migration/DocumentaryMigrationPlanner.ts`  
+**Merged evidence:** PR #792 / merge `12b5ec1886984fb6815ba111108f7f353496de7d`
 
 ## Purpose
 
-D8 introduces a bounded, deterministic and read-only migration-planning capability for Documentary-owned documentation. It identifies migration/redirect candidates without performing repository mutations and without acquiring authority over foreign project content.
+D8 provides a bounded, deterministic and read-only migration-planning capability for Documentary-owned documentation. It identifies migration/redirect candidates without performing repository mutations and without acquiring authority over foreign project content.
 
 This slice deliberately separates **planning** from **execution**. A planning result is evidence for later Human/Owner-reviewed work; it is never itself authorization to move, delete, rewrite, register or redirect a document.
 
@@ -81,8 +82,8 @@ Negative tests cover:
 - unknown/ambiguous documentation;
 - deterministic aggregate plans with no mutation side effect.
 
-Applicable repository validation remains required on the exact final branch/PR head before merge readiness. `NOT RUN` must never be reported as PASS.
+The merged D8 planning implementation is historical/current implementation evidence only; it does not authorize the separate physical/semantic Migration Execution work package. Future execution work must be correlated against then-current `main`, applicable ADR/ESS, Project/PVC ownership and protected-mutation gates.
 
 ## Exit boundary
 
-This D8 slice is complete only after targeted tests and applicable repository checks pass on the exact PR head and Human/CODEOWNER merges it. Physical/semantic Migration Execution remains a separate future work item and requires its own current-main correlation, owner boundary and explicit authorization.
+The read-only D8 planning slice is complete on current `main`. Physical/semantic Migration Execution remains a separate future work item and requires its own current-main correlation, owner boundary, dry-run/rollback/verification contract and explicit authorization before any physical mutation is considered.

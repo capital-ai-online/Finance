@@ -8,36 +8,133 @@ export interface DependencyPolicyResult {
   productionDependencyCount: number;
 }
 
+interface SecurityFloor {
+  packageName: string;
+  major: number;
+  minimumVersion: string;
+  advisories: readonly string[];
+}
+
+// Central lockfile floors prevent a patched dependency from silently regressing when
+// package ranges are re-resolved. Keep the mechanism generic and add a floor whenever
+// an advisory requires a minimum patched version for a supported major line.
+const SECURITY_FLOORS: readonly SecurityFloor[] = [
+  {
+    packageName: 'vite',
+    major: 6,
+    minimumVersion: '6.4.3',
+    advisories: ['GHSA-fx2h-pf6j-xcff', 'GHSA-p9ff-h696-f583', 'GHSA-4w7w-66w2-5vf9'],
+  },
+];
+
 function isDisallowedSpecifier(specifier: string): boolean {
   const value = specifier.trim().toLowerCase();
   return value === '*' || value === 'latest' || /^(git\+|git:|https?:|file:|link:)/.test(value);
 }
 
-export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyResult {
-  const violations: string[] = [];
-  const dependencies: Record<string, string> = pkg?.dependencies ?? {};
+interface ParsedSemver {
+  major: number;
+  minor: number;
+  patch: number;
+  prerelease: boolean;
+}
+
+function parseSemver(version: string): ParsedSemver | null {
+  const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/);
+  if (!match) return null;
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+    prerelease: Boolean(match[4]),
+  };
+}
+
+function compareSemver(left: ParsedSemver, right: ParsedSemver): number {
+  if (left.major !== right.major) return left.major - right.major;
+  if (left.minor !== right.minor) return left.minor - right.minor;
+  if (left.patch !== right.patch) return left.patch - right.patch;
+  if (left.prerelease === right.prerelease) return 0;
+  return left.prerelease ? -1 : 1;
+}
+
+function packageNameFromLockPath(packagePath: string): string | null {
+  const marker = 'node_modules/';
+  const markerIndex = packagePath.lastIndexOf(marker);
+  if (markerIndex < 0) return null;
+  const name = packagePath.slice(markerIndex + marker.length);
+  return name || null;
+}
+
+function validateDependencySection(
+  sectionName: 'dependencies' | 'devDependencies',
+  pkg: any,
+  lock: any,
+  violations: string[],
+): void {
+  const dependencies: Record<string, string> = pkg?.[sectionName] ?? {};
   const rootLock = lock?.packages?.[''];
 
   for (const [name, specifier] of Object.entries(dependencies)) {
     if (typeof specifier !== 'string' || isDisallowedSpecifier(specifier)) {
-      violations.push(`${name}: unsicherer/nicht reproduzierbarer Dependency-Specifier '${String(specifier)}'`);
+      violations.push(`${sectionName}.${name}: unsicherer/nicht reproduzierbarer Dependency-Specifier '${String(specifier)}'`);
       continue;
     }
 
-    const rootSpecifier = rootLock?.dependencies?.[name];
+    const rootSpecifier = rootLock?.[sectionName]?.[name];
     if (rootSpecifier !== specifier) {
-      violations.push(`${name}: package.json und package-lock Root-Specifier divergieren`);
+      violations.push(`${sectionName}.${name}: package.json und package-lock Root-Specifier divergieren`);
     }
 
     const locked = lock?.packages?.[`node_modules/${name}`];
     if (!locked || typeof locked.version !== 'string' || !locked.version) {
-      violations.push(`${name}: kein aufgelöster Lockfile-Eintrag mit Version`);
+      violations.push(`${sectionName}.${name}: kein aufgelöster Lockfile-Eintrag mit Version`);
       continue;
     }
     if (!locked.integrity && !locked.resolved?.startsWith('https://registry.npmjs.org/')) {
-      violations.push(`${name}@${locked.version}: weder Integrity-Hash noch verifizierbarer npm-Registry-Ursprung im Lockfile`);
+      violations.push(
+        `${sectionName}.${name}@${locked.version}: weder Integrity-Hash noch verifizierbarer npm-Registry-Ursprung im Lockfile`,
+      );
     }
   }
+}
+
+function validateSecurityFloors(lock: any, violations: string[]): void {
+  for (const [packagePath, entry] of Object.entries<any>(lock?.packages ?? {})) {
+    const packageName = packageNameFromLockPath(packagePath);
+    if (!packageName || !entry || typeof entry.version !== 'string') continue;
+
+    const matchingFloors = SECURITY_FLOORS.filter(floor => floor.packageName === packageName);
+    if (matchingFloors.length === 0) continue;
+
+    const parsedVersion = parseSemver(entry.version);
+    if (!parsedVersion) {
+      violations.push(`${packagePath}: Sicherheitsversion '${entry.version}' ist nicht als SemVer auswertbar`);
+      continue;
+    }
+
+    for (const floor of matchingFloors) {
+      if (parsedVersion.major !== floor.major) continue;
+      const parsedMinimum = parseSemver(floor.minimumVersion);
+      if (!parsedMinimum) {
+        throw new Error(`Ungültiger interner Security Floor ${floor.packageName}@${floor.minimumVersion}`);
+      }
+      if (compareSemver(parsedVersion, parsedMinimum) < 0) {
+        violations.push(
+          `${packagePath}: ${packageName}@${entry.version} unterschreitet Security Floor ${floor.minimumVersion} (${floor.advisories.join(', ')})`,
+        );
+      }
+    }
+  }
+}
+
+export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyResult {
+  const violations: string[] = [];
+  const dependencies: Record<string, string> = pkg?.dependencies ?? {};
+
+  validateDependencySection('dependencies', pkg, lock, violations);
+  validateDependencySection('devDependencies', pkg, lock, violations);
+  validateSecurityFloors(lock, violations);
 
   return { violations, productionDependencyCount: Object.keys(dependencies).length };
 }
