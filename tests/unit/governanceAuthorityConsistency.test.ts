@@ -93,39 +93,72 @@ describe('governance authority consistency', () => {
     expect(chain).not.toContain('Google AI Studio ist die Entwicklungsumgebung für Anwendungscode');
   });
 
-  it('bounds chat handoffs while keeping Human/Owner approvals neutral instead of separately copyable', () => {
+  it('uses one consolidated PR-create approval block and Roadmap-first continuation', () => {
     const agents = read('AGENTS.md');
     const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
+    const approval = read('docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md');
     const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
+    const prCreate = control('CTRL-SDLC-PR-CREATE-001');
 
     expect(handoff.status).toBe('required');
     expect(handoff.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
     expect(handoff.authorityRefs).toContain('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION');
     expect(handoff.requirement).toContain('CHAT_RUN_HANDOFF');
     expect(handoff.requirement).toContain('POST_PR_HANDOFF');
-    expect(handoff.requirement).toMatch(/at most the two highest-priority/i);
-    expect(handoff.requirement).toMatch(/exit gate/i);
-    expect(handoff.requirement).toMatch(/fenced text/i);
-    expect(handoff.requirement).toContain('MUST NOT be forced into a separate copyable response block');
-    expect(handoff.requirement).toContain('MUST NOT carry the `⚙️🤓 MANUELL` marker');
+    expect(handoff.requirement).toMatch(/at most two/i);
+    expect(handoff.requirement).toMatch(/exit gates/i);
+    expect(handoff.requirement).toMatch(/Roadmap-first/i);
+    expect(handoff.requirement).toMatch(/fenced yaml/i);
+    expect(handoff.requirement).toContain('sole Owner-Freigabe');
+    expect(handoff.requirement).toContain('no duplicate NÄCHSTE-SCHRITTE or exact-response block');
 
-    expect(agents).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
-    expect(agents).toContain('CHAT_RUN_HANDOFF');
-    expect(agents).toContain('POST_PR_HANDOFF');
-    expect(agents).toContain('NÄCHSTE SCHRITTE');
-    expect(agents).toContain('Freigabe-Antwort: PR erstellen: freigegeben');
-    expect(agents).toContain('PR #772');
-    expect(agents).toMatch(/separate copyable Owner-response requirement introduced by PR #772 is \*\*RETIRED\*\*/i);
-    expect(agents).toContain('only the two highest-priority immediately actionable steps');
-    expect(agents).not.toContain('the exact response text MUST also be rendered in a separate fenced `text` code block');
+    expect(prCreate.requirement).toContain('bounded Approval Envelope');
+    expect(prCreate.requirement).toContain('APPROVAL_STILL_VALID');
+    expect(prCreate.requirement).toContain('REAPPROVAL_REQUIRED');
+    expect(prCreate.requirement).toContain('BLOCKED');
+    expect(prCreate.requirement).toContain('Human/CODEOWNER merge remains separate');
+
+    expect(agents).toContain('```yaml');
+    expect(agents).toContain('PR-CREATION APPROVAL');
+    expect(agents).toContain('Priorität:');
+    expect(agents).toContain('Roadmap-Fortschritt:');
+    expect(agents).toContain('Roadmap-Bewertung:');
+    expect(agents).toContain('Nächste 2 Schritte');
+    expect(agents).toContain('Owner-Freigabe');
+    expect(agents).toContain('PR Erstellung : Freigegeben');
+    expect(agents).not.toContain('Freigabe-Antwort:');
 
     expect(chain).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
     expect(chain).toContain('CHAT_RUN_HANDOFF');
-    expect(chain).toContain('NÄCHSTE SCHRITTE');
-    expect(chain).toContain('PR #772');
-    expect(chain).toMatch(/separate copyable Owner-response requirement introduced (?:through|by) PR #772 is \*\*RETIRED\*\*/i);
-    expect(chain).not.toContain('Freigabe-Antwort: <exact response required from the Human/Owner>');
-    expect(chain).toContain('current `main`, open Pull Requests, changed-file/semantic overlap');
+    expect(chain).toContain('Roadmap-first');
+    expect(chain).toContain('sole `Owner-Freigabe` response');
+    expect(chain).not.toContain('Freigabe-Antwort:');
+
+    expect(approval).toContain('single PR-creation approval surface');
+    expect(approval).toContain('fenced `yaml` code block');
+    expect(approval).toContain('Priority semantics');
+    expect(approval).toContain('Generic process instructions');
+    expect(approval).toContain('PR Erstellung : Freigegeben');
+  });
+
+  it('requires every main merge to come from a PR correlated against then-current main', () => {
+    const agents = read('AGENTS.md');
+    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
+    const approval = read('docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md');
+    const merge = control('CTRL-MERGE-HUMAN-001');
+
+    expect(merge.status).toBe('required');
+    expect(merge.requirement).toMatch(/Every merge into main originates from a Pull Request/i);
+    expect(merge.requirement).toMatch(/final PR-head\/current-main correlation/i);
+    expect(merge.requirement).toContain('Approval Envelope state');
+    expect(merge.requirement).toContain('auto-merge enablement remain prohibited');
+
+    expect(agents).toContain('FINAL PR-HEAD / CURRENT-MAIN CORRELATION');
+    expect(agents).toMatch(/Every merge into `main` MUST originate from a Pull Request targeting `main`/i);
+    expect(chain).toContain('FINAL PR-HEAD / CURRENT-MAIN CORRELATION');
+    expect(chain).toContain('## Final pre-merge correlation');
+    expect(approval).toContain('## Human Merge control');
+    expect(approval).toContain('Every merge into `main` MUST originate from a Pull Request targeting `main`');
   });
 
   it('withdraws post-PVC routing contracts and keeps only folder-to-PVC mapping', () => {
