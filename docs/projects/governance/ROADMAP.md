@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
+**Current correlation baseline:** `main@d8d91cc5b04f107be28cbbfb13aaab8175305444`  
 **Correlation date:** `2026-09-10`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
@@ -24,19 +24,16 @@ PVC-05 / Platform Director
 
 ## Current-state synchronization — 2026-09-10
 
-The Governance backlog and GOV-CHAT-074 branch were re-correlated against `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`, `/AGENTS.md` Control Plane v2.9.0, the canonical Project/PVC mapping and the current PR set immediately before the renewed PR-create gate.
+The Governance backlog was re-correlated after Human Merge of PR #874 against `main@d8d91cc5b04f107be28cbbfb13aaab8175305444`, `/AGENTS.md` Control Plane v2.9.0, the canonical Project/PVC mapping, current Approval Policy v3.4.0 and the current PR set.
 
-- PR #868 (`GOV-CHAT-076`) is **DONE_MAIN / TERMINAL**, merge SHA `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`.
-- PR #869 (`CAPITAL-AI-DOC` Documentary Roadmap/D8 synchronization) is **DONE_MAIN / TERMINAL** and changed only Documentary planning surfaces; it created no GOV-CHAT-074 changed-file, semantic, namespace or authority conflict.
-- PR #870 (`CAPITAL-AI-SEC` Vite-6 dependency-security floor) is **DONE_MAIN / TERMINAL** and changed only `scripts/automation/dependencySecurity.ts` plus `tests/unit/dependencySecurity.test.ts`; it created no GOV-CHAT-074 changed-file or Governance-authority conflict.
-- PR #871 (`CAPITAL-AI-SEC` SEC-SOTA-03 Roadmap sync) is **DONE_MAIN / TERMINAL** and changed only `docs/projects/security/ROADMAP.md`; it invalidated the prior v3.3 PR-create approval solely by advancing `main`, not by creating scope/semantic overlap with GOV-CHAT-074.
-- `GOV-CHAT-071` remains **DONE_MAIN / TERMINAL** through Human-merged PR #845.
-- `GOV-CHAT-075 / bounded Security-remediation authority` remains **DONE_MAIN / TERMINAL** through Human-merged PR #864, merge SHA `c20bce01f398f58240c69676ede367787bb7251a`.
-- Current open Pull Requests at the renewed GOV-CHAT-074 correlation point: **none**.
+- PR #868 (`GOV-CHAT-076`) is **DONE_MAIN / TERMINAL**, merge SHA `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`; its Hosted Governance, CI and Container-Security workflows completed successfully on exact PR head `89f1a333a9f735ecad455b1ee6ae7e31f20e9305`.
+- `GOV-CHAT-074 / Approval Envelope v3.4` is **DONE_MAIN / TERMINAL** through Human-merged PR #874, merge SHA `d8d91cc5b04f107be28cbbfb13aaab8175305444`. Current `/AGENTS.md` and `HUMAN_OWNER_PR_APPROVAL_POLICY.md` now make the bounded Approval Envelope authoritative for future PR-create flows.
+- PR #874 Hosted Governance, CI and Container-Security workflows completed successfully on exact PR head `7b8c682fbc1962b2b4af844e87b7a967e9e07162` before Human Merge.
+- Current open Pull Requests at this post-merge correlation point: **none**. No current changed-file, semantic, namespace or authority writer blocks the Governance planning closeout.
+- `GOV-CHAT-075 / bounded Security-remediation authority` remains **DONE_MAIN / TERMINAL** through Human-merged PR #864; its Security/PVC/Primary-Owner boundaries are preserved by Approval Envelope v3.4.
 - `M10` remains **RETIRED / OFF** and is not a current implementation gap. `NIST` publications/frameworks remain withdrawn from the repository Governance baseline and do not create a GOV remediation backlog.
-- Historical branch `agent/governance-pr-approval-consolidation-20260910` remains **NON-AUTHORIZING** and is not reused. Its preserved v3.4 payload at `bcbc73672d8f1bf3d2d7120ba0cad6aaaf0b212e` is evidence only.
-- Fresh branch `agent/governance-pr-approval-envelope-20260910` was created from `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`, synchronized to `main@5664332aac99befa819abbbc2cf23c30a8982147` through merge commit `c3d34418e537d59db18f2f98f16071140f417aa0`, and then synchronized to `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d` through merge commit `7829a22877e458e47a8dbd0c8d9f576d8384ca7b`; the imported main changes are disjoint from the bounded Approval-Envelope payload.
-- `GOV-CHAT-072 / Development-Chain chat plugin execution policy` remains **OPEN_GOV / SEQUENCED** after Human/CODEOWNER-terminal GOV-CHAT-074.
+- Historical branches `agent/governance-pr-approval-consolidation-20260910` and `agent/governance-pr-approval-envelope-20260910` are non-authorizing traceability only after Human Merge.
+- `GOV-CHAT-072 / Development-Chain chat plugin execution policy` is now the highest-priority open local Governance item and is no longer sequenced behind GOV-CHAT-074.
 
 ## Completed / terminal Governance work
 
@@ -48,10 +45,11 @@ The Governance backlog and GOV-CHAT-074 branch were re-correlated against `main@
 - `GOV-06 / COMP-GAP-002 — ADR-0007` — `DONE_MAIN / TERMINAL` via PR #755/#758.
 - `GOV-06 / COMP-GAP-003 — ESS-0006` — prior reconciliation `DONE_MAIN`; bounded Security-remediation authority terminal through PR #864.
 - `POST-GOV-05 OWNER / EVIDENCE RECORRELATION` — `DONE_MAIN / TERMINAL` via PR #769.
-- `COPYABLE CHAT NEXT-STEP HANDOFF` — `DONE_MAIN / MAINTAINED`; bounded continuation remains current, with candidate v3.4 proposing one consolidated PR-create approval surface after Human Merge.
+- `COPYABLE CHAT NEXT-STEP HANDOFF` — `DONE_MAIN / MAINTAINED`; bounded continuation remains current and PR-create handoff is consolidated into the v3.4 Approval Envelope.
 - `OWNER APPROVAL PRESENTATION` — `DONE_MAIN / MAINTAINED` via PR #803; pure approvals/confirmations remain neutral authority presentation.
 - `GOV-CHAT-071 / separate Owner-response retirement` — `DONE_MAIN / TERMINAL` via PR #845.
 - `GOV-CHAT-073 / NIST-M10 current-state cleanup` — `DONE_MAIN / TERMINAL`.
+- `GOV-CHAT-074 / Approval Envelope v3.4` — `DONE_MAIN / TERMINAL` via PR #874.
 - `GOV-CHAT-075 / bounded Security-remediation authority` — `DONE_MAIN / TERMINAL` via PR #864.
 - `GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868.
 - `COMP-GAP-008 — Governance Document Registry treatment` — `DONE_MAIN / TERMINAL` via PR #775.
@@ -62,32 +60,13 @@ The Governance backlog and GOV-CHAT-074 branch were re-correlated against `main@
 
 ## Current open Governance state
 
-### GOV-CHAT-074 — PR Approval Envelope / new PR-CREATION-APPROVAL rollout
-
-**State:** `OPEN_GOV / BRANCH_LOCAL / PR_GATE_NEXT / NON-AUTHORIZING`
-
-**Fresh branch:** `agent/governance-pr-approval-envelope-20260910`  
-**Branch origin:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
-**Latest synchronization baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
-**Historical evidence only:** `bcbc73672d8f1bf3d2d7120ba0cad6aaaf0b212e`
-
-**Reason:** The historical v3.4 design improves decision support by binding PR-create approval to a bounded effective change rather than treating incidental Git SHA identity as the sole invariant. The fresh slice selectively rematerializes that design against current authority. It preserves exact Git identities as mandatory evidence, requires deterministic effective-change identity plus material-equivalence review, and evaluates immediate pre-create state as exactly `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED` or `BLOCKED`.
-
-**Current branch implementation:** candidate `HUMAN_OWNER_PR_APPROVAL_POLICY` v3.4.0, Trust-Root Approval-Envelope semantics, Development Chain v2.8.0, Control Catalog v1.23.0, Authority Registry v1.59.0, repository-local `scripts/pr/approvalEnvelope.mjs` evaluator and regression tests/projections. The current `CTRL-SEC-BOUNDED-REMEDIATION-001` contract remains intact. M10 stays retired/off; NIST bindings remain non-authorizing.
-
-**Final correlation:** branch synchronization imported terminal PR #869/#870/#871 main changes without overlap; current open PRs are none; current-main/open-writer/changed-file/semantic/namespace/authority correlation is PASS. The branch remains non-authorizing until Human/CODEOWNER merge.
-
-**No-self-bootstrap:** candidate v3.4.0 policy on this branch **does not authorize its own PR creation**. Until Human Merge, then-current `main` v3.3 approval authority controls creation of this PR. Human/CODEOWNER merge remains a separate Human decision.
-
-**Exit gate:** bounded current-main branch; Approval Policy/evaluator/tests/Authority Registry/Control Catalog/Development Chain/project projections consistent; Security delegation and ownership boundaries retained; no NIST/M10/retired Owner-response regression; necessary low-cost validation PASS or truthfully NOT RUN; branch 0 behind; final open-writer/semantic/namespace/authority correlation PASS; PR-create approval requested under the authority actually current at that moment.
-
 ### GOV-CHAT-072 — Development-Chain / chat plugin execution policy
 
-**State:** `OPEN_GOV / SEQUENCED`
+**State:** `OPEN_GOV / READY_FOR_RECORRELATION`
 
 **Reason:** Current `/AGENTS.md` already requires reuse screening in the order repository/native capability → connected plugin/platform capability → specialized plugin → suitable open source → custom implementation. The broader Owner-directed rule for application-appropriate use of installed/connected plugins in Development-Chain chats is not yet fully projected into current Governance.
 
-**Sequencing:** Materialize only after GOV-CHAT-074 becomes terminal on `main`, avoiding overlapping normative writers.
+**Current sequencing:** GOV-CHAT-074 is terminal on main, so this item may now be freshly correlated and implemented as its own bounded Governance slice. It must not become an instruction to invoke every plugin indiscriminately; relevance, least privilege, tool availability, ownership and protected-mutation controls remain controlling.
 
 **Exit gate:** then-current `/AGENTS.md`, Development-Chain policy, Control Catalog/Authority projection and regression coverage define one bounded plugin-use rule: use connected/installed capabilities application-appropriately when relevant; preserve least privilege, fail-closed protected mutations and existing project/PVC ownership; no unconditional plugin invocation, duplicate orchestration or plugin authority.
 
@@ -118,21 +97,21 @@ OPS, CLIENT, DOC, Security-quality, dependency, GitGuardian, repository-host, Su
 
 ## Current priority
 
-1. Complete `GOV-CHAT-074` on `agent/governance-pr-approval-envelope-20260910`, bind final evidence to then-current main, and pass the **currently effective v3.3** Human/Owner PR-create gate. Candidate v3.4 semantics remain non-authorizing until Human/CODEOWNER merge.
-2. After `GOV-CHAT-074` is terminal on main, freshly correlate and implement `GOV-CHAT-072` as the bounded Development-Chain/plugin execution policy.
+1. Freshly correlate and implement `GOV-CHAT-072` as the bounded Development-Chain/chat plugin execution policy under current Approval Envelope v3.4 and the current Security/ownership boundaries.
+2. Re-correlate the dependency-held `GOV-07` owner-return matrix against then-current DATA/OPS/FE/SEC/COMP evidence before any final Governance closeout assertion.
 
 No new local PVC-05 runtime implementation is implied by this synchronization.
 
 ## Definition of Done for the current Governance projection
 
 - `PVC-05` ownership remains explicit and does not absorb SEC/COMP assurance or foreign productive execution;
-- GOV-CHAT-076 is terminalized consistently with PR #868/current main;
-- GOV-CHAT-074 is a current-main-synchronized candidate with no self-bootstrap;
-- Human Owner PR Approval v3.4, Development Chain v2.8, Control Catalog v1.23 and Authority Registry v1.59 project one stable PR-create authority rather than a second approval plane;
-- deterministic effective-change identity is evidence, not semantic safety proof;
-- synchronization-only SHA movement can preserve approval only with proven material equivalence and full current correlation after v3.4 becomes effective;
+- GOV-CHAT-076 remains terminalized consistently with PR #868/current main;
+- GOV-CHAT-074 is terminalized consistently with Human-merged PR #874/current main;
+- Human Owner PR Approval v3.4, Development Chain v2.8, Control Catalog v1.23 and Authority Registry v1.59 project one effective PR-create authority rather than a second approval plane;
+- deterministic effective-change identity remains evidence, not semantic safety proof;
+- synchronization-only SHA movement may preserve approval only with proven material equivalence and full current correlation;
 - Security remediation delegation and ownership/protected-mutation boundaries from PR #864 remain intact;
 - NIST remains non-authorizing and M10 remains retired/off unless a new explicit Human/Owner decision changes that state;
 - missing/stale validation or evidence cannot silently become PASS;
 - Human/CODEOWNER-only merge remains mandatory;
-- GOV-CHAT-072 remains sequenced after terminal GOV-CHAT-074.
+- GOV-CHAT-072 is the next bounded local Governance implementation item.
