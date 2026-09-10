@@ -12,6 +12,7 @@ describe('OPS BB-2E workflow_run trigger', () => {
     expect(workflow).toContain('workflow_run:');
     expect(workflow).toContain("workflows: ['Agenten-PR-Branches synchronisieren']");
     expect(workflow).toContain('types: [completed]');
+    expect(workflow).toContain('branches: [main]');
     expect(workflow).toContain('github.event.workflow_run.repository.full_name == github.repository');
     expect(workflow).toContain('github.event.workflow_run.head_repository.full_name == github.repository');
     expect(workflow).toContain(
