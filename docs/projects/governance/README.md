@@ -24,13 +24,15 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 
 Post-PVC routing, execution-model, roadmap-registry and Owner-Device cutover contracts remain withdrawn. The foreign-execution policy does not recreate those overlays; it is a narrow implementation delegation with the canonical Target Project/PVC mapping preserved.
 
-## PR-create governance transition
+## PR-create governance current state
 
-The branch-local Governance maintenance `agent/governance-pr-approval-envelope-20260910` selectively rematerializes candidate `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v3.4.0 from historical evidence against `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`. Its bounded Approval Envelope treats approval-base/current Git SHAs as mandatory evidence and correlation anchors while requiring material-equivalence and current-main/open-writer/semantic/namespace/authority/security re-correlation before PR creation.
+Human-merged PR #874 activates `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v3.4.0 on current `main`. The effective Approval Envelope treats approval-base/current Git SHAs as mandatory evidence and correlation anchors while requiring deterministic effective-change identity, material-equivalence review and current-main/open-writer/semantic/namespace/authority/security re-correlation before PR creation.
 
-The branch explicitly preserves the current bounded Security-remediation authority and removes no Security/PVC/Primary-Owner or protected-mutation boundary. It also keeps M10 `RETIRED / OFF` and NIST bindings non-authorizing under the current Trust Root.
+The current rule evaluates the immediate pre-create state as exactly `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED` or `BLOCKED`. SHA equality is not semantic safety proof and SHA inequality alone is not a material scope change. Synchronization-only Git identity movement may preserve approval only when the approved bounded payload remains materially equivalent and all then-current correlation and validation requirements remain satisfied.
 
-This candidate policy cannot authorize its own Pull Request. Until Human Merge, the PR-create rule effective on then-current `main` remains controlling for creation of that exact PR. After Human Merge, only the merged/current version of `/AGENTS.md` and its projected controls governs future PR-create evaluation.
+The current Approval Envelope preserves `CTRL-SEC-BOUNDED-REMEDIATION-001`, existing Security/PVC/Primary-Owner and protected-mutation boundaries, M10 `RETIRED / OFF`, NIST bindings as non-authorizing, and Human/CODEOWNER-only merge. The canonical PR-create response surface is the single embedded `Owner-Freigabe` field with affirmative value `PR Erstellung : Freigegeben`; the retired duplicate `Freigabe-Antwort` presentation is not reconstructed.
+
+Historical branch `agent/governance-pr-approval-envelope-20260910` and pre-merge evidence remain audit/traceability only. Future PR-create evaluation resolves exclusively from then-current `/AGENTS.md` and its effective projected controls.
 
 ## Non-goals
 
