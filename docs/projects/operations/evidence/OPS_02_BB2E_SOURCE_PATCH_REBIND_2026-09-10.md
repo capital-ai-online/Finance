@@ -110,3 +110,17 @@ The rebind does not affect the main-dispatched workflow until the OPS branch is 
 After Human merge, current main/open PRs and the FE target head must be re-read. The workflow must then be dispatched from `main` with `confirm_apply=true` and the exact then-current FE head. A successful run is required before any ast-grep, build, Legacy-zero or accessibility contract result can be recorded as PASS.
 
 The currently connected GitHub execution surface used for this chat exposes workflow/read/rerun inspection but no action for starting a new `workflow_dispatch`. This capability limitation does not authorize another execution path or connector mutation; if it remains true after merge, the dispatch is a Human-executed GitHub Actions step.
+
+## Pre-PR resynchronization — 2026-09-10
+
+The first PR-creation approvals became stale because `main` advanced while the approval gate was open. In accordance with `/AGENTS.md`, no PR create mutation was performed on either stale approval.
+
+The refreshed current-main baseline is `c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`. Since the implementation baseline `8226d522d99623b7a0f4ac2fc4938dabe9bf1d29`, current main advanced by nine commits. The resulting changed-file set is limited to `.github/SECURITY.md`, `.github/dependabot.yml`, and `.github/workflows/gitguardian-health.yml`; none overlaps the BB-2E rebind workflow, regression test, or this evidence file.
+
+PR #855 (`[CAPITAL-AI-OPS] [ChatGPT] GitGuardian API-Health lesend erweitern`) is Human-merged and contributed only `.github/workflows/gitguardian-health.yml`. PR #852 (`[CAPITAL-AI-SEC] [ChatGPT] Dependabot und Security Policy konsolidieren`) is Human-merged and current-main head is its merge commit. The refreshed open-PR list is empty.
+
+The remaining operations-named branches were re-correlated as potential parallel writers. `agent/operations-retired-tooling-cleanup-20260910` differs from current main only in `.env.example`, `.github/workflows/ci.yml`, and `server/security/honeytoken.ts`; `agent/operations-repository-identity-20260909` differs only in repository/deployment identity surfaces. Neither changes the BB-2E workflow/test/evidence paths.
+
+The scoped OPS branch was synchronized by a non-force merge commit with both the previous branch head `23d58c88882e2d2571caed93ee6f7827dac6e9fa` and current main `c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0` as parents. The merge tree is based on the exact current-main tree plus the three pre-existing BB-2E file blobs, so current-main changes are preserved without broadening the bounded work item. Merge commit: `c2820eedf2ef4f142a249ba3eca87314bf64c9f2`.
+
+Post-resync validation remains truthful: exact current-main/AGENTS/project/PVC/Roadmap/open-PR/parallel-writer correlation and static workflow/test readback are **PASS**; actual Vitest, workflow-security hosted checks, runtime workflow dispatch and all FE cutover/build/accessibility gates remain **NOT RUN** until their respective execution surfaces run. Because the branch head changed during resynchronization, a fresh exact-SHA Human/Owner PR-creation approval is required before PR creation.
