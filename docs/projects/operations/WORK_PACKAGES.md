@@ -4,7 +4,7 @@
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
 **Correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
 **Correlation date:** `2026-09-10`  
-**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #872 open
+**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #872, #873 and #874 open
 
 ## Current terminal repository packages
 
@@ -190,20 +190,21 @@ At integrity-sync intake:
 
 Current re-correlation after intake:
 
-- PR #872 is open under `CAPITAL-AI-SEC` for `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`;
-- its changed files are `docs/projects/security/ROADMAP.md`, existing supply-chain automation/security scripts and focused tests; it does not change any of this integrity-sync branch's four target artifacts;
-- its semantic overlap is intentional and owner-bounded: Security executes a bounded hardening slice, while long-term `PVC-02`/`PVC-07` ownership remains OPS;
-- no parallel OPS implementation is created.
+- PR #872 is open under `CAPITAL-AI-SEC` for `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`; its eight Security/provenance/test files are disjoint from this integrity-sync scope and the semantic overlap is intentional and owner-bounded;
+- PR #873 is open under `CAPITAL-AI-GOV` for PVC Vocabulary/Thesaurus and changes only three `src/platform/Vocabulary/**` files; no changed-file or identified OPS semantic/authority conflict exists;
+- PR #874 is open under `CAPITAL-AI-GOV` for Approval Envelope v3.4 and changes Trust Root, Development-Chain approval/policy, Governance project, registry/evaluator/test surfaces; it has no changed-file overlap with this OPS integrity-sync scope, but it is a material semantic/authority writer that must reach a terminal state before a separate DevelopmentChain current-state/milestone matrix is materialized;
+- no parallel OPS implementation of the active Security work is created.
 
 ## Exit gate for current integrity-sync package
 
 - branch starts at exact `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`;
-- current open-PR set is re-correlated; PR #872 is changed-file-disjoint and semantically owner-bounded rather than a conflicting writer;
+- current open-PR set is re-correlated: PR #872/#873/#874 are changed-file disjoint from this branch; known semantic/authority dependencies are explicitly sequenced rather than merged into this scope;
 - current main and current owner returns support the implementation-state projections recorded here;
 - GitGuardian Health run #34468840264 is represented with exact PASS/NOT-RUN semantics and is not promoted to a different SHA;
 - current workflow design supports a `sources:read-only` target contract, while actual provider token scopes remain `NOT-PROVEN`;
 - Self-Healing readiness remains separate and must resync before its own PR approval;
 - `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` remains Security-roadmap-owned while in flight; OPS consumes its evidence only after terminal merge/closure correlation;
+- later DevelopmentChain milestone/current-state work remains sequenced after the active Governance Approval-Envelope writer reaches terminal state;
 - no provider write, credential mutation, connector mutation or Production mutation occurs;
 - branch readback/diff validation must PASS;
 - final main/head/open-PR correlation is repeated before PR approval;
