@@ -4,7 +4,8 @@ import { checkAdminAccess, resolveVerifiedIdentity } from '../src/platform/Secur
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/services/aiUsageTracker';
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
-import { generateTextWithFallback, type ChatTurn } from '../src/services/agentModelRouting';
+import { buildAiChatModelInput } from '../src/services/aiChatTrustBoundary';
+import { generateTextWithFallback } from '../src/services/agentModelRouting';
 import { getPromptGovernanceEntry, recordAiEvaluation, getAiGovernanceInventory, type AiProvider } from '../src/services/aiGovernance';
 import { createAiContentTransparencyEnvelope } from '../src/services/aiContentTransparency';
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
@@ -48,9 +49,6 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
     if (typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'Eine nicht-leere Nachricht ist erforderlich.' });
     }
-    const chatHistory: ChatTurn[] = Array.isArray(history)
-      ? history.map((msg: any) => ({ role: msg.role === 'user' ? 'user' : 'assistant', text: String(msg.text ?? '') }))
-      : [];
 
     const promptEntry = getPromptGovernanceEntry('chat-assistant');
     const retrieval = await retrieveRelevantChunksWithEvidence(message, {
@@ -59,26 +57,19 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
       topK: 5,
       minScore: 0.5,
     });
-
-    let systemInstruction = [
-      'You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis.',
-      'Prioritize clarity and evidence.',
-      'Never invent sources, citations, prices, scores or regulatory claims.',
-      'Separate source-backed facts from analysis and uncertainty.',
-      'Retrieved context alone does not prove claim-level grounding or citation completeness.',
-      'AI explanations have no financial decision, approval, ranking, eligibility, OrderIntent or execution authority.',
-    ].join(' ');
-    if (retrieval.chunks.length > 0) {
-      systemInstruction += `\n\nNutze diese geprüften internen Quellen als Kontext. Zitiere nur Quellen, die die konkrete Aussage tatsächlich stützen; erfinde keine Referenzen:\n\n${formatChunksForPrompt(retrieval.chunks)}`;
-    }
+    const modelInput = buildAiChatModelInput({
+      message,
+      history,
+      retrievedContext: retrieval.chunks.length > 0 ? formatChunksForPrompt(retrieval.chunks) : undefined,
+    });
 
     const result = await generateTextWithFallback({
       anthropic,
       openai,
       promptId: 'chat-assistant',
-      contents: message,
-      history: chatHistory,
-      systemInstruction,
+      contents: modelInput.contents,
+      history: modelInput.history,
+      systemInstruction: modelInput.systemInstruction,
       requestId: req.requestId,
     });
 
