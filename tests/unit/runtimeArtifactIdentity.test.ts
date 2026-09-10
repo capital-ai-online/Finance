@@ -70,13 +70,14 @@ describe('computeRuntimeArtifactIdentity', () => {
     expect(after.subjects[0].digest.sha256).not.toBe(before.subjects[0].digest.sha256);
   });
 
-  it('fails closed when the runtime build tree is missing or empty', () => {
+  it('fails closed when the runtime build tree is missing or contains only excluded evidence', () => {
     const missing = tempRoot();
     expect(() => computeRuntimeArtifactIdentity(missing)).toThrow(/Runtime-Build-Verzeichnis fehlt/);
 
-    const empty = tempRoot();
-    fs.mkdirSync(path.join(empty, 'dist', 'security'), { recursive: true });
-    write(empty, 'dist/security/sbom.cdx.json', '{}');
-    expect(() => computeRuntimeArtifactIdentity(empty)).toThrow(/Keine Runtime-Build-Artefakte/);
+    const evidenceOnly = tempRoot();
+    write(evidenceOnly, 'dist/security/sbom.cdx.json', '{}');
+    write(evidenceOnly, 'dist/control-plane/release-manifest.json', '{}');
+    write(evidenceOnly, 'dist/quality/quality-center-report.json', '{}');
+    expect(() => computeRuntimeArtifactIdentity(evidenceOnly)).toThrow(/Keine Runtime-Build-Artefakte/);
   });
 });
