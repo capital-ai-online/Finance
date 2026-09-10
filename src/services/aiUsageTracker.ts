@@ -19,7 +19,7 @@ export interface PromptRegistryEntry {
 }
 
 export const PROMPT_REGISTRY: Record<string, PromptRegistryEntry> = {
-  'chat-assistant': { id: 'chat-assistant', module: 'server/ai.ts (/api/chat)', description: 'Freier Chat-Assistent fuer quantitative Finanzfragen.', version: '1.0.0' },
+  'chat-assistant': { id: 'chat-assistant', module: 'server/ai.ts (/api/chat)', description: 'Freier Chat-Assistent fuer quantitative Finanzfragen.', version: '1.1.0' },
   'document-hygiene-change-classification': { id: 'document-hygiene-change-classification', module: 'server/documentHygiene.ts (analyzeChangeWithAI)', description: 'Klassifiziert eine Dokumentaenderung (typo/content_update/structural_change/new_section/conflict_candidate).', version: '1.0.0' },
   'document-hygiene-propagation': { id: 'document-hygiene-propagation', module: 'server/documentHygiene.ts (generatePropagatedContent)', description: 'Uebertraegt eine Aenderung semantisch auf ein abhaengiges Dokument.', version: '1.0.0' },
   'server-market-sentiment-shock': { id: 'server-market-sentiment-shock', module: 'server.ts (/api/market-sentiment/simulate-shock)', description: 'Simuliert den Sentiment-Effekt eines makrooekonomischen Schock-Szenarios.', version: '1.0.0' },
