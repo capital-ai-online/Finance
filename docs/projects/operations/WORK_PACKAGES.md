@@ -4,7 +4,7 @@
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
 **Correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
 **Correlation date:** `2026-09-10`  
-**Open PR baseline:** none at integrity-sync intake
+**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #872 open
 
 ## Current terminal repository packages
 
@@ -16,6 +16,18 @@
 | Owner-directed | `OPS-DEP-FLOOR-01` Multer/Nodemailer dependency floors | `PVC-02` | harden direct manifest minimums without unrelated dependency churn | `IMPLEMENTED_ON_MAIN` via PR #865 |
 | Owner-directed | `OPS-EDGE-SECRET-COVERAGE-01` Edge-Trust secret deployment coverage | primary `PVC-02`; supporting `PVC-08` | bind `CAPITAL_AI_EDGE_TRUST_SECRET` to server-only deployment/secret manifest coverage | `IMPLEMENTED_ON_MAIN` via PR #867; provider secret provisioning remains separate |
 | Blocked follow-up | `OPS-POST851-ID-02` Render OIDC/OAuth2.1/MCP | `PVC-02` | external execution-host identity only after Security/Authority re-correlation | `BLOCKED / NOT_IN_CURRENT_SLICE` |
+
+## Current foreign Security dependency — M6 / Supply-Chain continuation
+
+| Package | Source-of-truth state | Execution project | Long-term technical owner / PVC | Current execution metadata |
+|---|---|---|---|---|
+| `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | `docs/projects/security/ROADMAP.md@current-main`: `NEXT / EVIDENCE_GAP_CONFIRMED` under `SEC-SOTA-03` | `CAPITAL-AI-SEC` under bounded Security-remediation authority | `CAPITAL-AI-OPS / PVC-02` + `PVC-07` | PR #872 OPEN on `agent/security-artifact-digest-binding-20260910`; no changed-file overlap with this OPS integrity-sync branch |
+
+The package extends the existing ADR-0060/M6 provenance chain by binding deterministic SHA-256 identity for the actual built runtime output into the existing release-manifest/provenance verification path. It is **not** absorbed as an OPS implementation package while the Security writer is active.
+
+**Exit gate:** the exact hosted build produces deterministic runtime-artifact digests bound to the same source/dependency identity; existing provenance references those digests; changed, missing, duplicate or stale runtime artifacts are rejected fail-closed; focused positive/negative tests and hosted signing/verification pass; no second Release/Deployment authority or protected external mutation is introduced.
+
+**OPS disposition:** wait for the current Security work to become terminal, then consume/re-correlate its merged evidence in the OPS release/controlled-implementation surfaces. Long-term PVC ownership remains OPS; Security execution does not transfer it.
 
 ## GitGuardian least-privilege audit boundary
 
@@ -124,6 +136,8 @@ DR-03 remains separate. No current package activates a provider adapter, modifie
 
 Current Governance permits a bounded Security-primary repository remediation under its accepted Security-remediation control without transferring file, Domain or PVC ownership. CAPITAL-AI-SEC remains independent assurance owner for Security findings. This changes execution eligibility only; it does not let OPS self-close Security findings or let Security absorb OPS long-term ownership.
 
+PR #872 is the current concrete example of that separation: its source status remains the Security Roadmap's `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` item, while the affected long-term Controlled-Implementation/Release ownership remains OPS/PVC-02/PVC-07. OPS does not create a parallel implementation while that Security writer is active.
+
 ## Package rules
 
 1. One bounded coherent work item per fresh compliant branch.
@@ -169,19 +183,27 @@ Current Governance permits a bounded Security-primary repository remediation und
 
 At integrity-sync intake:
 
-- no Pull Request is open;
+- no Pull Request was open;
 - `agent/operations-roadmap-integrity-sync-20260910` owns this bounded four-artifact documentation/evidence sync;
 - `agent/operations-self-healing-readiness-20260910` is the only other active OPS branch detected and is file-disjoint from the four integrity-sync target artifacts;
 - deleted/unmerged earlier integrity branches and their commits are historical input only.
 
+Current re-correlation after intake:
+
+- PR #872 is open under `CAPITAL-AI-SEC` for `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`;
+- its changed files are `docs/projects/security/ROADMAP.md`, existing supply-chain automation/security scripts and focused tests; it does not change any of this integrity-sync branch's four target artifacts;
+- its semantic overlap is intentional and owner-bounded: Security executes a bounded hardening slice, while long-term `PVC-02`/`PVC-07` ownership remains OPS;
+- no parallel OPS implementation is created.
+
 ## Exit gate for current integrity-sync package
 
 - branch starts at exact `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`;
-- no open PR changed-file/semantic/authority writer exists at intake;
+- current open-PR set is re-correlated; PR #872 is changed-file-disjoint and semantically owner-bounded rather than a conflicting writer;
 - current main and current owner returns support the implementation-state projections recorded here;
 - GitGuardian Health run #34468840264 is represented with exact PASS/NOT-RUN semantics and is not promoted to a different SHA;
 - current workflow design supports a `sources:read-only` target contract, while actual provider token scopes remain `NOT-PROVEN`;
 - Self-Healing readiness remains separate and must resync before its own PR approval;
+- `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` remains Security-roadmap-owned while in flight; OPS consumes its evidence only after terminal merge/closure correlation;
 - no provider write, credential mutation, connector mutation or Production mutation occurs;
 - branch readback/diff validation must PASS;
 - final main/head/open-PR correlation is repeated before PR approval;
