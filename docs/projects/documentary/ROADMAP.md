@@ -83,7 +83,7 @@ Implemented on current `main`:
 Implemented on the current WP-DOC-13 branch but **not yet current main**:
 
 - bounded `GOV-DOC-007` unresolved-reference validation;
-- Documentary component projection advances to `1.22.0` only on that branch.
+- component and Documentation Governance version fields deliberately remain at their current values because ESS-0001-CONTRACTS does not permit an AI to autonomously choose the next version; version impact is a separate authority/Human gate.
 
 ## 5. Strategic outcomes
 
@@ -115,7 +115,7 @@ Define Documentary extensions/plugins only where existing provider, agent, lifec
 
 | Horizon | Work package | State | Primary exit signal |
 |---|---|---|---|
-| **NOW** | `WP-DOC-13 — GOV-DOC-007 unresolved reference` | `IMPLEMENTED ON BRANCH — LOCAL VALIDATION PASS / PR + HUMAN MERGE PENDING` | exact-head validation + Human/CODEOWNER merge + main re-correlation |
+| **NOW** | `WP-DOC-13 — GOV-DOC-007 unresolved reference` | `IMPLEMENTED ON BRANCH — LOCAL VALIDATION PASS / VERSION + PR + HUMAN MERGE GATES OPEN` | version impact resolved + exact-head validation + Human/CODEOWNER merge + main re-correlation |
 | **NEXT** | `WP-DOC-14 — D8 Migration Execution contract & dry-run design` | `QUEUED AFTER WP-DOC-13` | owner-bounded dry-run/identity/rollback/verification contract; no bulk migration |
 | **LATER** | `WP-DOC-15 — Documentary quality/SLO model` | `EVIDENCE / CONTRACT CORRELATION REQUIRED` | small measurable DOC-owned health contract |
 | **LATER** | `WP-DOC-16 — Plugin extension model` | `REUSE / SECURITY / OWNERSHIP CORRELATION REQUIRED` | extension model reuses existing frameworks and least privilege |
@@ -124,15 +124,15 @@ Define Documentary extensions/plugins only where existing provider, agent, lifec
 ## 7. WP-DOC-13 — GOV-DOC-007 unresolved reference
 
 **Horizon:** `NOW`  
-**State:** `IMPLEMENTED ON BRANCH — LOCAL VALIDATION PASS / PR + HUMAN MERGE PENDING`  
-**Branch:** `agent/documentary-wp-doc-13-gov-doc-007-20260910`  
-**Branch head at this correlation:** `8852b8e6ddc6f5cee99f1e1acb6148605c4b677e`
+**State:** `IMPLEMENTED ON BRANCH — LOCAL VALIDATION PASS / VERSION + PR + HUMAN MERGE GATES OPEN`  
+**Branch:** `agent/documentary-wp-doc-13-gov-doc-007-20260910`
 
 Authority / contracts:
 
 - `ESS-0012-CONTRACTS` Chapter 2.5: `GOV-DOC-007` — document with unresolved reference — `Low`;
 - `ESS-0012` / ADR-0014: read-only, deterministic findings with concrete evidence;
-- existing Document Registry remains the source set for registered document identities/paths.
+- existing Document Registry remains the source set for registered document identities/paths;
+- ESS-0001-CONTRACTS preserves separate Version authority: implementation does not autonomously choose a new component/document version.
 
 Branch implementation:
 
@@ -144,9 +144,10 @@ Branch implementation:
 - repository escape, missing local files and missing local Markdown fragments emit `Low` `FileReference` findings;
 - missing registered source files are skipped rather than converted into speculative reference findings because Document Hygiene already owns registered-target existence;
 - results are deduplicated/sorted deterministically;
-- no repair, registry mutation, scoring, event publication or hygiene-CLI wiring is added.
+- no repair, registry mutation, scoring, event publication or hygiene-CLI wiring is added;
+- manifest/Governance documentation describe the new branch-local capability without an autonomous version increase.
 
-Validation evidence on the synchronized branch content:
+Validation evidence on synchronized branch content:
 
 - isolated strict TypeScript check for validator + targeted test source: **PASS**;
 - deterministic local resolver smoke test: **PASS**;
@@ -155,6 +156,7 @@ Validation evidence on the synchronized branch content:
 
 Exit gate:
 
+- resolve version impact through the repository's Version authority/Human decision;
 - synchronize again to then-current `main` immediately before PR approval;
 - run all applicable exact-head checks that are available;
 - Human/Owner explicitly approves PR creation for exact main/head SHAs;
@@ -184,13 +186,13 @@ No physical move/delete/rewrite/registry mutation is authorized by the planning 
 
 **State:** `LATER / EVIDENCE + CONTRACT CORRELATION REQUIRED`.
 
-Candidate DOC-owned indicators include registry coverage, freshness ratio, orphan rate, documentation-rule coverage, unresolved-reference rate, deterministic render/reproducibility checks and maintenance funnel counts. Thresholds require evidence and must remain Documentary-local unless a higher authority separately promotes them.
+Candidate DOC-owned indicators include registry coverage, freshness ratio, orphan rate, documentation-rule coverage, unresolved-reference rate, deterministic render/reproducibility checks and maintenance funnel counts. Existing D9 already provides core aggregate freshness/coverage/orphan metrics; this package therefore requires a target/SLO contract rather than a duplicate metrics implementation. Thresholds require evidence and must remain Documentary-local unless a higher authority separately promotes them.
 
 ### WP-DOC-16 — Plugin extension model
 
 **State:** `LATER / REUSE + SECURITY + OWNERSHIP CORRELATION REQUIRED`.
 
-Discovery order is the repository reuse order: existing repository/native capability → already-connected suitable platform/plugin capability → specialized plugin → maintained security-/license-compatible open source → custom implementation only when needed. No connector/app installation, connection, enablement or permission mutation is authorized here.
+Discovery order is the repository reuse order: existing repository/native capability → already-connected suitable platform/plugin capability → specialized plugin → maintained security-/license-compatible open source → custom implementation only when needed. ESS-0001-CONTRACTS already defines enterprise Plugin/Extension contracts and registry expectations, so Documentary must consume those boundaries rather than creating a parallel registry/framework. No connector/app installation, connection, enablement or permission mutation is authorized here.
 
 ### WP-DOC-17 — Consumer retry/idempotency hardening
 
@@ -208,7 +210,7 @@ Add only when an existing Documentary model/provenance/lifecycle contract has a 
 
 **State:** `LATER / SECURITY-COMPLIANCE DEPENDENCY`.
 
-Documentary may consume an existing stable Security/Compliance classification contract when one is correlated for this use. Documentary must not invent classification semantics or acquire Security/Compliance decision authority.
+Documentary may consume an existing stable Security/Compliance classification contract when one is correlated for this use. Current correlation found compliance/security classification material but no Documentary-owned stable document-classification contract that can safely be invented locally. Documentary must not create classification semantics or acquire Security/Compliance decision authority.
 
 ### Continuous maintained work
 
@@ -271,6 +273,7 @@ A Documentary Roadmap item is complete only when:
 - reuse/security/compliance pre-checks are performed where material;
 - measurable exit conditions are satisfied;
 - required tests/evidence pass on the exact final PR head;
+- version impact is resolved through the applicable Version authority rather than invented by an AI;
 - `NOT RUN` checks are reported truthfully;
 - no duplicate registry/runtime/authority or hidden foreign-owner implementation is introduced;
 - Human/CODEOWNER performs merge;
