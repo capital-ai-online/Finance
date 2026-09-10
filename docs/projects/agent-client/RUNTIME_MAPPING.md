@@ -1,14 +1,15 @@
 # CAPITAL-AI-CLIENT — Runtime & Architecture Mapping
 
-Baseline: `main@891f3933ac0476b1e7d4fa5cd6f397257ac52e68`
-
-Project stage: `PVC-01 — Agent Client`
+**Baseline:** `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`  
+**Correlation date:** `2026-09-10`  
+**Project stage:** `PVC-01 — Agent Client`  
+**Primary Owner:** `CAPITAL-AI-CLIENT`
 
 ## Migration posture
 
 `logical-ownership-before-physical-relocation`
 
-No productive code is moved by this contract-baseline slice. Existing imports, runtime behavior and downstream authority stay in place. Current strangler evidence: [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md).
+No productive code is moved by the current correlation-hygiene slice. Existing imports, runtime behavior and downstream authority stay in place. Historical strangler evidence remains under `evidence/`; current runtime-trigger status is maintained in this active mapping and `ROADMAP.md`.
 
 ## Current-to-PVC-01 mapping
 
@@ -24,10 +25,11 @@ No productive code is moved by this contract-baseline slice. Existing imports, r
 | `authorizedAgentExecution.ts` | controlled execution/audit | `NOT-CLIENT` | retain downstream |
 | `src/services/agentTools/**` | tool adapters | `NOT-CLIENT` | retain downstream |
 | `scripts/systemadmin/**` principal/request builders | Operations execution host | `NOT-CLIENT` | foreign; no local refactor |
+| ESS-0019 remote-skill semantics | external skill/tool metadata is untrusted; remote loading not enabled | `CONSUMER` | no activation/runtime introduced |
 
 ## Target logical components
 
-Their current concrete contract is [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md). A physical module is introduced only after an evidenced productive trigger.
+Their concrete non-runtime contract remains [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md). A physical module is introduced only after an evidenced productive trigger.
 
 | Logical component | Responsibility | Must not contain |
 |---|---|---|
@@ -47,7 +49,7 @@ Physical migration is permitted only if at least one is evidenced:
 - duplicated productive response/status mapping with divergent behavior;
 - a concrete productive consumer would reduce duplication through a shared client module without importing authority.
 
-### Current decision
+### Current-main trigger check — 2026-09-10
 
 | Trigger | Result |
 |---|---|
@@ -55,10 +57,12 @@ Physical migration is permitted only if at least one is evidenced:
 | inconsistent productive identity/capability handoff | `NOT TRIGGERED` |
 | duplicated divergent response/status mapping | `NOT TRIGGERED` |
 | evidenced productive duplication reduced by shared client module | `NOT TRIGGERED` |
+| productive `requestedCapability` client implementation | `NOT FOUND` |
+| physical named Agent Client logical-component implementation | `NOT FOUND` |
 
 Current relocation state: `NO_PHYSICAL_RUNTIME_TRIGGER`.
 
-Repository searches find canonical IAM/control consumers and foreign Operations/Systemadmin execution-host builders, but no productive PVC-01 request/status implementation requiring extraction. Creating an unconsumed Agent Client runtime module now would be parallel implementation rather than strangler/refactor.
+Current GitHub code search finds `requestedCapability` and the named logical components only in CLIENT documentation/contract/claim material. `src/platform/Security/agentIam.ts` remains the productive principal/capability/authorization surface. Creating an unconsumed Agent Client runtime module now would therefore be parallel implementation rather than strangler/refactor.
 
 ## Prohibited relocation
 
@@ -71,7 +75,12 @@ Do not relocate into PVC-01 solely because the client calls it:
 - provider/tool credentials;
 - EventMesh/trace retention;
 - deployment/release paths;
-- foreign Operations/Systemadmin execution-host code.
+- foreign Operations/Systemadmin execution-host code;
+- persistent remote-skill or plugin execution infrastructure.
+
+## CLIENT-08 separation
+
+CLIENT-08 may define provider-neutral project-skill/plugin invocation semantics in a later separate fresh branch/PR slice. It does not itself satisfy the physical-runtime trigger and must not introduce remote skill activation, a second routing registry, persistent execution jobs or client-held privileged credentials.
 
 ## Trace continuity
 
