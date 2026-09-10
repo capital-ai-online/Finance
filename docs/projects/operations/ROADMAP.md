@@ -7,7 +7,7 @@
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-10`  
 **Correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
-**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #872 open  
+**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #872, #873 and #874 open  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 ## 1. Objective
@@ -64,7 +64,9 @@ The earlier OPS roadmap baseline was stale. Current main has advanced through th
 | PR #868 Governance chat/approval rollout | Human-merged Governance work | consume current lifecycle/approval state |
 | PR #870/#871 Vite security floor + SEC-SOTA-03 sync | Human-merged Security work | consume independent Security state; no OPS ownership transfer |
 | PR #872 `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | OPEN Security PR; current Security Roadmap source state remains `NEXT / EVIDENCE_GAP_CONFIRMED` on main | active bounded Security execution affecting long-term OPS `PVC-02`/`PVC-07` surfaces; no OPS implementation duplication and no changed-file overlap with this integrity sync |
-| Open PRs | PR #872 at current re-correlation | changed-file disjoint from OPS Roadmap/Work Packages/integrity evidence; semantic dependency is explicitly owner-bounded |
+| PR #873 PVC Vocabulary / Thesaurus | OPEN Governance PR; changes only `src/platform/Vocabulary/**` | no changed-file or identified OPS semantic/authority conflict |
+| PR #874 Approval Envelope v3.4 | OPEN Governance PR; writes Trust Root, Development-Chain approval/policy, Governance project and evaluator surfaces | no changed-file overlap with this OPS integrity sync; material authority writer for any later DevelopmentChain current-state matrix and therefore must be terminal before that separate Governance work starts |
+| Open PRs | PR #872, #873 and #874 at current re-correlation | all are changed-file disjoint from this four-artifact OPS integrity-sync scope; #872 is an owner-bounded Security dependency, #874 is a sequencing dependency for later Governance DevelopmentChain work |
 | Active OPS branch | `agent/operations-self-healing-readiness-20260910` | separate Self-Healing readiness slice; 1 ahead / 15 behind current main at intake; no top-level ROADMAP/WORK_PACKAGES file overlap |
 | Current main | `e9839f5e3eccc0ae01d6a10e53d3787435e1379d` | this integrity-sync branch started exactly here |
 
@@ -219,6 +221,8 @@ The external GitGuardian `sources:read-only` proof is an Owner/provider least-pr
 | PR #868 Governance chat/approval rollout | Human-merged Governance dependency |
 | PR #870/#871 Vite floor / SEC-SOTA-03 sync | Human-merged Security work; no OPS ownership transfer |
 | PR #872 artifact-digest binding | OPEN Security execution dependency; source state remains Security Roadmap `NEXT / EVIDENCE_GAP_CONFIRMED`; no OPS ownership transfer |
+| PR #873 PVC Vocabulary / Thesaurus | OPEN Governance work; no OPS changed-file overlap |
+| PR #874 Approval Envelope v3.4 | OPEN Governance authority work; no OPS changed-file overlap; later DevelopmentChain matrix must sequence after terminal state |
 | GitGuardian Health #34468840264 | exact post-#863 main run; auth + monitoring PASS, denied/unsupported provider evidence NOT-RUN |
 
 ## 12. Integrity-sync validation / Definition of Done
@@ -229,7 +233,7 @@ For this documentation/evidence synchronization:
 - [x] `/AGENTS.md` fully re-read from current main; Trust Root remains Control Plane `2.9.0`;
 - [x] project/PVC mapping, OPS README/Roadmap, ADR-0070, ESS-0019 and current GitGuardian runbook re-read;
 - [x] no open Pull Requests existed at branch creation/intake;
-- [x] current open PR #872 re-correlated after intake; its eight changed files are disjoint from this integrity-sync scope and its Security execution/OPS ownership boundary is explicit;
+- [x] current open PRs #872/#873/#874 re-correlated after intake; all are changed-file disjoint from this four-artifact sync, with #872 retained as a Security/OPS ownership dependency and #874 as a later DevelopmentChain-Governance sequencing dependency;
 - [x] current active OPS branch set checked; Self-Healing branch is path-disjoint from this four-artifact sync;
 - [x] current-main delta since PR #863 reviewed; none of the four integrity-sync target artifacts were changed by those 43 commits;
 - [x] FINTECH/DATA entitlement child returns re-read from current main;
