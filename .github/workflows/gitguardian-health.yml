@@ -1,0 +1,34 @@
+name: GitGuardian Health
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  health:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Install ggshield
+        shell: bash
+        run: |
+          python3 -m venv "$RUNNER_TEMP/ggshield"
+          "$RUNNER_TEMP/ggshield/bin/python" -m pip install --disable-pip-version-check ggshield==1.54.0
+
+      - name: Check version and API authentication
+        shell: bash
+        env:
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+          # Optional repository variable for an EU or self-hosted workspace.
+          GITGUARDIAN_INSTANCE: ${{ vars.GITGUARDIAN_INSTANCE || 'https://dashboard.gitguardian.com' }}
+          GITGUARDIAN_DONT_LOAD_ENV: '1'
+        run: |
+          test -n "$GITGUARDIAN_API_KEY" || {
+            echo "::error::Repository Secret GITGUARDIAN_API_KEY fehlt."
+            exit 1
+          }
+          "$RUNNER_TEMP/ggshield/bin/ggshield" --version
+          "$RUNNER_TEMP/ggshield/bin/ggshield" api-status --no-check-for-updates
