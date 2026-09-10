@@ -83,15 +83,12 @@ describe('converged bounded PR Approval Envelope governance', () => {
     const agents = read('AGENTS.md');
     const ownerPolicy = read('docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md');
     const projectReadme = read('docs/projects/governance/README.md');
-    const roadmap = read('docs/projects/governance/ROADMAP.md');
-    const taskRegister = read('docs/projects/governance/TASK_REGISTER.md');
     const merge = control('CTRL-MERGE-HUMAN-001');
 
     expect(agents).toContain('Candidate branch policy MUST NOT authorize its own PR creation');
     expect(ownerPolicy).toContain('Candidate branch semantics cannot authorize their own PR creation');
-    expect(projectReadme).toContain('This candidate policy cannot authorize its own Pull Request');
-    expect(roadmap).toContain('candidate v3.4.0 policy on this branch **does not authorize its own PR creation**');
-    expect(taskRegister).toContain('current `main` v3.3 remains controlling for this candidate PR until Human Merge');
+    expect(projectReadme).toContain('no candidate-policy self-bootstrap');
+    expect(projectReadme).toContain('Human/CODEOWNER-only merge');
     expect(merge?.requirement).toContain('Approval Envelope state');
     expect(agents).toContain('FINAL PR-HEAD / CURRENT-MAIN CORRELATION');
   });
@@ -126,6 +123,12 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(authority('AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19')?.lifecycle).toBe('accepted');
     expect(roadmap).toContain('`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868');
     expect(taskRegister).toMatch(/`GOV-CHAT-076`[^\n]*`DONE_MAIN`[^\n]*PR #868/i);
-    expect(roadmap).toContain('`GOV-CHAT-072 / Development-Chain chat plugin execution policy` remains **OPEN_GOV / SEQUENCED**');
+    // Project projections follow the merged rollout; bootstrap authority is checked above.
+    expect(roadmap).toMatch(/`GOV-CHAT-074 \/[^`]+` — `DONE_MAIN \/ TERMINAL` via PR #874/);
+    expect(taskRegister).toMatch(/\| `GOV-CHAT-074` \|[^\n]*\| `DONE_MAIN` \|[^\n]*PR #874/);
+    const pluginPolicySection = roadmap.split(/^### GOV-CHAT-072\b/m)[1]?.split(/^### /m)[0];
+    expect(pluginPolicySection).toBeDefined();
+    expect(pluginPolicySection).toContain('**State:** `OPEN_GOV / READY_FOR_RECORRELATION`');
+    expect(taskRegister).toMatch(/\| `GOV-CHAT-072` \|[^\n]*\| `OPEN_GOV \/ READY_FOR_RECORRELATION` \|/);
   });
 });
