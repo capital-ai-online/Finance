@@ -6,8 +6,8 @@
 **Version:** `2.7.1`  
 **Status:** ACTIVE — CANONICAL OPS EXECUTION PROJECTION  
 **Date:** `2026-09-10`  
-**Correlation baseline:** `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`  
-**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #873 and #874 open  
+**Correlation baseline:** `main@5e9be38b5af037f85fab67643043c5be30f87e16`  
+**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #874 open  
 **Primary project stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`
 
 ## 1. Objective
@@ -63,12 +63,12 @@ The earlier OPS roadmap baseline was stale. Current main has advanced through th
 | PR #867 Edge-Trust secret deployment coverage | Human-merged OPS work | server-only secret manifest/deployment coverage is on main; provider provisioning remains separate |
 | PR #868 Governance chat/approval rollout | Human-merged Governance work | consume current lifecycle/approval state |
 | PR #870/#871 Vite security floor + SEC-SOTA-03 sync | Human-merged Security work | consume independent Security state; no OPS ownership transfer |
-| PR #872 `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | Human-merged as current `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; final PR head `e59308599dde3f7cf050601a2b6e64c5a73aaf59`; Hosted CI, Governance and Container Security `success` | implementation is on main; current Security Roadmap on the same main still says `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN`, so Security-owned status synchronization/verification remains open and OPS does not synthesize `VERIFIED/CLOSED` |
-| PR #873 PVC Vocabulary / Thesaurus | OPEN Governance PR; changes only `src/platform/Vocabulary/**` | no changed-file or identified OPS semantic/authority conflict |
+| PR #872 `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | Human-merged as `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; final PR head `e59308599dde3f7cf050601a2b6e64c5a73aaf59`; Hosted CI, Governance and Container Security `success` | implementation is on main; current Security Roadmap still says `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN`, so Security-owned status synchronization/verification remains open and OPS does not synthesize `VERIFIED/CLOSED` |
+| PR #873 PVC Vocabulary / Thesaurus | Human-merged as current `main@5e9be38b5af037f85fab67643043c5be30f87e16` | no OPS ownership transfer; Vocabulary/PVC terminology change is consumed as current-main context |
 | PR #874 Approval Envelope v3.4 | OPEN Governance PR; writes Trust Root, Development-Chain approval/policy, Governance project and evaluator surfaces | no changed-file overlap with this OPS integrity sync; material authority writer for later DevelopmentChain current-state matrix and therefore must be terminal before that separate Governance work starts |
-| Open PRs | PR #873 and #874 at current re-correlation | both are changed-file disjoint from this four-artifact OPS integrity-sync scope; #874 is a sequencing dependency for later Governance DevelopmentChain work |
+| Open PRs | PR #874 only at current re-correlation | changed-file disjoint from this four-artifact OPS integrity-sync scope; semantic dependency is sequenced for later Governance DevelopmentChain work |
 | Active OPS branch | `agent/operations-self-healing-readiness-20260910` | separate Self-Healing readiness slice; requires current-main resync before its own PR gate; no top-level ROADMAP/WORK_PACKAGES file overlap |
-| Current main | `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c` | integrity-sync branch resynchronized by merge after PR #872 entered main |
+| Current main | `5e9be38b5af037f85fab67643043c5be30f87e16` | integrity-sync branch resynchronized after PR #872 and PR #873 entered main |
 
 ## 4. Workstreams
 
@@ -172,8 +172,8 @@ Security remains owner for threat analysis, findings and independent verificatio
 
 ### Current foreign Security dependency — `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`
 
-**Current repository fact:** PR #872 is Human-merged; implementation is on `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`.  
-**Current Security Roadmap state on that same main:** aggregate `SEC-SOTA-03` = `IN_PROGRESS / VITE_FLOOR_VERIFIED_MAIN / ARTIFACT_DIGEST_IMPLEMENTED_BRANCH / INVENTORY_OPEN`; bounded slice = `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN`.  
+**Current repository fact:** PR #872 is Human-merged; implementation is on main from `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c` onward.  
+**Current Security Roadmap state:** aggregate `SEC-SOTA-03` = `IN_PROGRESS / VITE_FLOOR_VERIFIED_MAIN / ARTIFACT_DIGEST_IMPLEMENTED_BRANCH / INVENTORY_OPEN`; bounded slice = `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN`.  
 **Execution project:** `CAPITAL-AI-SEC` under bounded Security-remediation authority.  
 **Long-term technical owner / PVC:** `CAPITAL-AI-OPS / PVC-02` Controlled Implementation and `PVC-07` Release Management.  
 **Work package:** `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`.
@@ -221,7 +221,7 @@ The external GitGuardian `sources:read-only` proof is an Owner/provider least-pr
 | PR #868 Governance chat/approval rollout | Human-merged Governance dependency |
 | PR #870/#871 Vite floor / SEC-SOTA-03 sync | Human-merged Security work; no OPS ownership transfer |
 | PR #872 artifact-digest binding | Human-merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; final PR CI/Governance/Container Security success; Security Roadmap status sync remains open |
-| PR #873 PVC Vocabulary / Thesaurus | OPEN Governance work; no OPS changed-file overlap |
+| PR #873 PVC Vocabulary / Thesaurus | Human-merged as `5e9be38b5af037f85fab67643043c5be30f87e16` |
 | PR #874 Approval Envelope v3.4 | OPEN Governance authority work; no OPS changed-file overlap; later DevelopmentChain matrix must sequence after terminal state |
 | GitGuardian Health #34468840264 | exact post-#863 main run; auth + monitoring PASS, denied/unsupported provider evidence NOT-RUN |
 
@@ -231,12 +231,14 @@ For this documentation/evidence synchronization:
 
 - [x] initial fresh branch started from `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`;
 - [x] after Human merge of PR #872, integrity branch was resynchronized by merge with `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c` without force;
-- [x] current `/AGENTS.md` re-read/identity checked; Trust Root remains Control Plane `2.9.0` and blob unchanged;
+- [x] after Human merge of PR #873, integrity branch was resynchronized again with `main@5e9be38b5af037f85fab67643043c5be30f87e16` without force;
+- [x] current `/AGENTS.md` identity re-read/checked; Trust Root remains Control Plane `2.9.0`;
 - [x] project/PVC mapping, OPS and Security Roadmap state re-correlated;
-- [x] current open PRs #873/#874 are changed-file disjoint from this four-artifact sync; #874 is retained as a later DevelopmentChain-Governance sequencing dependency;
+- [x] current open PR #874 is changed-file disjoint from this four-artifact sync and retained as a later DevelopmentChain-Governance sequencing dependency;
 - [x] PR #872 terminal state and final exact-head Hosted CI/Governance/Container-Security success correlated;
 - [x] current Security Roadmap status drift for the merged artifact-digest slice is explicit and not converted to synthetic Security closure;
 - [x] Post-#851 PR #859 and Edge-Secret PR #867 are no longer represented as ACTIVE_BRANCH work;
+- [x] PR #873 current-main Vocabulary/PVC terminology merge is incorporated without OPS ownership change;
 - [x] current active Self-Healing work remains a separate OPS branch/work item;
 - [x] no provider write, credential mutation, connector mutation or Production mutation performed;
 - [ ] four-artifact branch readback and diff validation completed after final status updates;
