@@ -58,7 +58,7 @@ export interface PrePrCheckEvidence {
 export interface PrePrBuildEvidence {
   schemaVersion: 'pre-pr-build/1.0.0';
   trustClass: 'developer-preflight';
-  repository: 'SvenKulessa/Finance';
+  repository: 'capital-ai-online/Finance';
   baseMainSha: string;
   candidateHeadSha: string;
   executor: {

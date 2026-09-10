@@ -22,7 +22,7 @@
       "const": "developer-preflight"
     },
     "repository": {
-      "const": "SvenKulessa/Finance"
+      "const": "capital-ai-online/Finance"
     },
     "baseMainSha": {
       "type": "string",
