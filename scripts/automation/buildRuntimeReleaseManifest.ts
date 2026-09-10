@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { computeRuntimeArtifactIdentity } from './runtimeArtifactIdentity';
 import { resolveSourceCommit } from './sourceIdentity';
 
 const CONTRACT = 'capital-ai-runtime-release-manifest/1.0.0';
@@ -57,6 +58,7 @@ function main() {
   const sourceCommit = resolveSourceCommit(repoRoot);
   const documentary = hashDocumentaryTree();
   const packageLockSha256 = hashFile(packageLockPath);
+  const runtimeArtifact = computeRuntimeArtifactIdentity(repoRoot);
 
   const identityMaterial = JSON.stringify({
     contract: CONTRACT,
@@ -64,6 +66,8 @@ function main() {
     sourceCommit,
     packageLockSha256,
     documentaryTreeSha256: documentary.sha256,
+    runtimeArtifactAlgorithm: runtimeArtifact.algorithm,
+    runtimeArtifactSha256: runtimeArtifact.sha256,
   });
 
   const manifest = {
@@ -81,6 +85,12 @@ function main() {
       documentaryTreeSha256: documentary.sha256,
       documentaryFileCount: documentary.files,
     },
+    runtimeArtifact: {
+      root: runtimeArtifact.root,
+      algorithm: runtimeArtifact.algorithm,
+      sha256: runtimeArtifact.sha256,
+      files: runtimeArtifact.files,
+    },
   };
 
   const requestedOutput = value('output');
@@ -90,7 +100,10 @@ function main() {
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-  console.log(`[release-manifest] ${path.relative(repoRoot, outputPath)} :: ${manifest.buildIdentity}`);
+  console.log(
+    `[release-manifest] ${path.relative(repoRoot, outputPath)} :: ${manifest.buildIdentity} :: ` +
+    `runtime=${runtimeArtifact.sha256} (${runtimeArtifact.files} files)`,
+  );
 }
 
 try {
