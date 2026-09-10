@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-10, correlated to repository-visible current-main/PR/branch evidence  
-**Current correlation baseline:** `main@5664332aac99befa819abbbc2cf23c30a8982147`  
+**Current correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -60,7 +60,7 @@
 | `GOV-CHAT-071` | Retire separate copyable Owner-response rule; preserve neutral approval presentation | GOV/PVC-05 | `DONE_MAIN` | TERMINAL via Human-merged PR #845 |
 | `GOV-CHAT-072` | Development-Chain/chat plugin execution policy | GOV/PVC-05 | `OPEN_GOV / SEQUENCED` | start only after Human/CODEOWNER-terminal GOV-CHAT-074; preserve relevance, least privilege and protected-mutation gates |
 | `GOV-CHAT-073` | Roadmap-framework NIST/M10 current-state correction | GOV/PVC-05 | `DONE_MAIN` | NIST withdrawn/non-authorizing; M10 retired/off |
-| `GOV-CHAT-074` | New PR-CREATION-APPROVAL / Approval Envelope v3.4 rollout | GOV/PVC-05 | `OPEN_GOV / BRANCH_LOCAL / PR_GATE_NEXT` | branch `agent/governance-pr-approval-envelope-20260910`; created from `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`, synchronized through `main@5664332aac99befa819abbbc2cf23c30a8982147`; historical `bcbc736...` semantics selectively rematerialized; current `main` v3.3 remains controlling for this candidate PR until Human Merge |
+| `GOV-CHAT-074` | New PR-CREATION-APPROVAL / Approval Envelope v3.4 rollout | GOV/PVC-05 | `OPEN_GOV / BRANCH_LOCAL / PR_GATE_NEXT` | branch `agent/governance-pr-approval-envelope-20260910`; created from `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`, synchronized through `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`; historical `bcbc736...` semantics selectively rematerialized; current `main` v3.3 remains controlling for this candidate PR until Human Merge |
 | `GOV-CHAT-075` | Bounded Security-remediation authority | GOV/PVC-05 policy with SEC assurance boundary | `DONE_MAIN` | Human-merged PR #864, merge SHA `c20bce01f398f58240c69676ede367787bb7251a`; preserved unchanged by GOV-CHAT-074 |
 | `GOV-CHAT-076` | Cross-chat current-main consolidation / GOV Roadmap and register sync | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #868, merge SHA `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a` |
 
@@ -68,7 +68,7 @@
 
 ### Authority effective for creation of this candidate PR
 
-Current `main@5664332aac99befa819abbbc2cf23c30a8982147` controls creation of the GOV-CHAT-074 PR. Its `/AGENTS.md` exact-snapshot gate requires final main synchronization/correlation, exact `main SHA`, exact `branch head SHA`, bounded scope, truthful validation evidence and intended exact PR title before explicit Human/Owner approval. Any current-main or branch-head change before create invalidates that **current v3.3 approval**.
+Current `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d` controls creation of the GOV-CHAT-074 PR. Its `/AGENTS.md` exact-snapshot gate requires final main synchronization/correlation, exact `main SHA`, exact `branch head SHA`, bounded scope, truthful validation evidence and intended exact PR title before explicit Human/Owner approval. Any current-main or branch-head change before create invalidates that **current v3.3 approval**.
 
 The branch-local candidate `HUMAN_OWNER_PR_APPROVAL_POLICY` v3.4.0 cannot authorize its own Pull Request. Candidate branch semantics become current only through Human/CODEOWNER merge.
 
@@ -96,14 +96,14 @@ Evaluation states are exactly `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED`, `BL
 
 ## Current writer / correlation state
 
-At the final pre-approval correlation against `main@5664332aac99befa819abbbc2cf23c30a8982147`:
+At the renewed pre-approval correlation against `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`:
 
 - current open Pull Requests: **none**;
-- PR #869 and PR #870 are terminal and their main changes are disjoint from the GOV-CHAT-074 changed-file set;
+- PR #869, PR #870 and PR #871 are terminal; their main changes are disjoint from the GOV-CHAT-074 changed-file set;
 - `agent/governance-pr-approval-consolidation-20260910` is historical/non-authorizing and was not continued;
 - `agent/governance-pr-approval-envelope-20260910` is the sole fresh bounded writer for GOV-CHAT-074;
-- PR #864/#865/#866/#868/#869/#870 are terminal;
-- synchronization commit `c3d34418e537d59db18f2f98f16071140f417aa0` incorporates current-main-only Documentary/dependency-security changes without importing stale Approval/NIST/M10/Owner-response semantics;
+- PR #864/#865/#866/#868/#869/#870/#871 are terminal;
+- synchronization commits `c3d34418e537d59db18f2f98f16071140f417aa0` and `7829a22877e458e47a8dbd0c8d9f576d8384ca7b` incorporate current-main-only Documentary, dependency-security and Security-Roadmap changes without importing stale Approval/NIST/M10/Owner-response semantics;
 - final changed-file/open-writer/semantic/namespace/authority correlation is PASS, subject to the mandatory SHA readback immediately before PR creation.
 
 ## Current foreign-owner dependencies
