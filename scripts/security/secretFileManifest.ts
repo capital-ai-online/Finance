@@ -31,6 +31,9 @@ export const SECRET_FILE_KEYS = [
   'TWELVEDATA_API_KEY',
   'FRED_API_KEY',
   'FMP_API_KEY',
+  // OPS-POST851-EDGE-01: shared proof for the Cloudflare -> Render provenance boundary.
+  // It is server-only and belongs to the canonical Render secret file; never expose it via VITE_*.
+  'CAPITAL_AI_EDGE_TRUST_SECRET',
   // SC-4: Dune is the only previously landed crypto-evidence provider secret. Runtime policy
   // additionally requires Free-Tier attestation + allowlisted saved query IDs; the key alone grants nothing.
   'DUNE_API_KEY',
