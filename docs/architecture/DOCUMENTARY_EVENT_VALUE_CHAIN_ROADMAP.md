@@ -50,7 +50,7 @@ The original 2026-08-10 target snapshot is historical. Current `main@6d2b78b7914
 - platform-version authority: repository `package.json#version`, consumed through the Release control plane;
 - implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance, Interfaces, Knowledge, Lifecycle, Mermaid, Migration planning, Models, Observability maintenance slice, Orchestration, Traceability and Versioning;
 - bounded Documentation Governance rules `GOV-DOC-001` through `GOV-DOC-006` are Human-merged on main;
-- `GOV-DOC-007` is implemented only on `agent/documentary-wp-doc-13-gov-doc-007-20260910`, where the component projection is `1.22.0`; it is not current authority until Human merge;
+- `GOV-DOC-007` is implemented only on `agent/documentary-wp-doc-13-gov-doc-007-20260910`; the branch deliberately keeps component/document version fields unchanged because version advancement requires separate Version authority/Human resolution;
 - planned/partial areas remain physical/semantic Migration Execution, Plugins and evidence-backed additional Architecture/runtime/quality hardening.
 
 The component therefore remains **Partial Implementation**.
@@ -61,7 +61,7 @@ The component therefore remains **Partial Implementation**.
 
 **State:** IMPLEMENTED BASELINE
 
-Component, document-schema and platform versions remain semantically separated. Documentary consumes platform version from Release and does not establish a second Version authority.
+Component, document-schema and platform versions remain semantically separated. Documentary consumes platform version from Release and does not establish a second Version authority. Agent implementation may record version impact but does not autonomously choose a new version.
 
 ### D1 — Code Integration & Discovery
 
@@ -119,7 +119,7 @@ Every result remains `mutationPerformed=false`. Physical/semantic execution is a
 
 **State:** IMPLEMENTED MAINTENANCE SLICE / BROADER QUALITY-SLO MODEL LATER
 
-`Observability/DocumentaryMaintenanceObservability.ts` provides commit/correlation-bound aggregate maintenance metrics. Broader quality/SLO work remains Documentary-local unless separately promoted by higher authority.
+`Observability/DocumentaryMaintenanceObservability.ts` provides commit/correlation-bound aggregate maintenance metrics including freshness, registry coverage and orphan rate. Broader quality/SLO work remains Documentary-local unless separately promoted by higher authority.
 
 ## 4. Workstream H — Documentation Governance and Hygiene
 
@@ -169,7 +169,7 @@ Documentary may detect stale documentation paths and propose identity-based repa
 | `GOV-DOC-004` | DONE | DONE |
 | `GOV-DOC-005` | DONE via PR #866 | DONE |
 | `GOV-DOC-006` | DONE | DONE |
-| `GOV-DOC-007` unresolved reference | OPEN on main | implemented on `agent/documentary-wp-doc-13-gov-doc-007-20260910`; PR/Human merge pending |
+| `GOV-DOC-007` unresolved reference | OPEN on main | implemented on `agent/documentary-wp-doc-13-gov-doc-007-20260910`; version/PR/Human merge gates pending |
 
 The bounded Chapter 2.5 sequence does not implicitly activate the wider historical ESS-0012 rule suite, scoring, production thresholds, event publication or Governance decisions.
 
@@ -191,10 +191,10 @@ Workstream E is an integration/dependency projection. EventMesh and central Trac
 
 Ordered by current project Roadmap:
 
-1. **WP-DOC-13 — GOV-DOC-007 unresolved reference**: implemented on synchronized branch; exact-head repository validation, PR approval, Human merge and main re-correlation remain open.
+1. **WP-DOC-13 — GOV-DOC-007 unresolved reference**: implemented on synchronized branch; version-impact resolution, exact-head repository validation, PR approval, Human merge and main re-correlation remain open.
 2. **WP-DOC-14 — Migration Execution contract & dry-run design**: NEXT after WP-DOC-13; contract-first only, no physical mutation.
-3. **WP-DOC-15 — Documentary quality/SLO model**: LATER; evidence and contract correlation required before thresholds are introduced.
-4. **WP-DOC-16 — Plugin extension model**: LATER; reuse/security/ownership pre-check required; no second provider/agent framework and no connector mutation.
+3. **WP-DOC-15 — Documentary quality/SLO model**: LATER; D9 already exposes the core maintenance ratios, so evidence and a target/SLO contract are required rather than a duplicate metrics subsystem.
+4. **WP-DOC-16 — Plugin extension model**: LATER; ESS-0001-CONTRACTS already defines enterprise Plugin/Extension contracts and registry expectations; reuse/security/ownership pre-check is required and a parallel Documentary plugin registry is prohibited.
 5. **WP-DOC-17 — Consumer retry/idempotency hardening**: LATER / evidence-driven; do not implement speculative retries.
 6. **Additional generator profiles**: demand-driven only when an existing model requires a missing projection.
 7. **Sensitive-document classification consumption**: dependency on a stable Security/Compliance contract; Documentary does not invent classification semantics.
@@ -203,7 +203,7 @@ Continuous maintained baselines remain WP-DOC-02 lifecycle/maintenance/Documenta
 
 ## 7. Current execution order
 
-1. close WP-DOC-13 through exact-head validation, PR gate and Human merge;
+1. close WP-DOC-13 through version-impact resolution, exact-head validation, PR gate and Human merge;
 2. re-correlate then-current main/Roadmap/ADR/ESS;
 3. if still highest priority, execute WP-DOC-14 contract/dry-run slice on a fresh branch;
 4. keep WP-DOC-15/16/17 and conditional generator/security-consumption work behind their explicit evidence/dependency gates;
