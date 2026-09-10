@@ -1,7 +1,7 @@
 # Pull Request Check Classification
 
 Status: ACTIVE  
-Updated: 2026-09-01  
+Updated: 2026-09-10  
 Authority: CAPITAL-AI DevelopmentChain / `CTRL-CI-HOSTED-001`
 
 ## Zweck
@@ -119,4 +119,4 @@ Ein `build-and-test` PASS bei `production_impact=false` bestätigt den erfolgrei
 
 **Nicht erforderlich:** Owner-Body-Checkboxen, Review-Text `💪`/`okay`, Viewed-Attestation als CI-Gate.
 
-M10 `AUTHORIZE_PR_CI` bleibt gemäß current `AGENTS.md` suspendiert/off, bis eine neue explizite Owner-Entscheidung die dort genannten Reaktivierungsbedingungen erfüllt.
+M10 `AUTHORIZE_PR_CI` ist gemäß current `AGENTS.md` **RETIRED / OFF**. Historische Suspendierungs-/Reaktivierungsbedingungen sind nicht mehr current-state-autorisierend; ein zukünftiger PR-CI-/Passkey-Mechanismus erfordert eine neue separat gescopte Human/Owner-Architektur- und Authority-Entscheidung und ist keine M10-Reaktivierung.

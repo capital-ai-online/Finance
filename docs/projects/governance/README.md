@@ -24,6 +24,14 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 
 Post-PVC routing, execution-model, roadmap-registry and Owner-Device cutover contracts remain withdrawn. The foreign-execution policy does not recreate those overlays; it is a narrow implementation delegation with the canonical Target Project/PVC mapping preserved.
 
+## PR-create governance transition
+
+The branch-local Governance maintenance `agent/governance-pr-approval-envelope-20260910` selectively rematerializes candidate `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v3.4.0 from historical evidence against `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`. Its bounded Approval Envelope treats approval-base/current Git SHAs as mandatory evidence and correlation anchors while requiring material-equivalence and current-main/open-writer/semantic/namespace/authority/security re-correlation before PR creation.
+
+The branch explicitly preserves the current bounded Security-remediation authority and removes no Security/PVC/Primary-Owner or protected-mutation boundary. It also keeps M10 `RETIRED / OFF` and NIST bindings non-authorizing under the current Trust Root.
+
+This candidate policy cannot authorize its own Pull Request. Until Human Merge, the PR-create rule effective on then-current `main` remains controlling for creation of that exact PR. After Human Merge, only the merged/current version of `/AGENTS.md` and its projected controls governs future PR-create evaluation.
+
 ## Non-goals
 
-No parallel Governance Control Plane, no runtime relocation, no technical financial VC renumbering without coordinated authorization, no ownership transfer through foreign execution, no release/deploy/provider mutation and no PR creation without the exact-snapshot Human/Owner gate unless another effective authority explicitly delegates that exact approval surface.
+No parallel Governance Control Plane, no runtime relocation, no technical financial VC renumbering without coordinated authorization, no ownership transfer through foreign execution, no release/deploy/provider mutation, no bypass of the then-effective Human/Owner PR-create gate, no candidate-policy self-bootstrap and no weakening of Human/CODEOWNER-only merge.
