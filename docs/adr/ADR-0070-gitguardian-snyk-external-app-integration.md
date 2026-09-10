@@ -97,3 +97,17 @@ wurde entsprechend aktualisiert (`decision_2026-08-15`), und die 3 betroffenen o
 Requests wurden geschlossen und mit identischem Branch/Commit als neue Pull Requests (#298, #299,
 #300) neu eröffnet, um eine saubere Status-Check-Auswertung unter dem aktualisierten Ruleset zu
 erhalten. Siehe `docs/evidence/security/SNYK_REQUIRED_CHECK_DEMOTION_2026-08-15.md`.
+
+## Nachtrag 2026-09-10 — Snyk vollständig retirieren
+
+Der Human/Owner hat am 2026-09-10 entschieden, Snyk nicht mehr zu verwenden. Damit sind **alle Snyk-bezogenen operativen Entscheidungen und Anweisungen dieses ADR ab diesem Datum `RETIRED` und nicht mehr autorisierend**. Die GitGuardian-bezogenen Entscheidungen dieses ADR bleiben davon unberührt und weiterhin wirksam.
+
+Für den aktuellen Repository-Zustand gilt daher:
+
+- keine Snyk-GitHub-Actions-Workflows, Snyk-Tokens, Snyk-Required-Checks, Snyk-UI-Empfehlungen oder aktiven Snyk-Runbooks;
+- keine neue Snyk-Integration oder Reaktivierung ohne eine neue explizite Human/Owner-Entscheidung;
+- historische Snyk-Angaben in diesem ADR, in Evidence, Incident-Records, archivierten Roadmaps und terminalen Work Claims bleiben ausschließlich zur Audit-/Traceability-Erhaltung bestehen und sind `HISTORICAL / NON-AUTHORIZING`;
+- GitGuardian bleibt der externe Secret-Scanning-/Honeytoken-Pfad und wird weiterhin ohne zusätzlichen GitGuardian-Scanner-Workflow unter `.github/workflows/**` betrieben;
+- eine etwa noch installierte externe Snyk-App oder ein anbieterseitiger Snyk-Zugang ist kein Repository-Inhalt und muss, falls vorhanden, als separate explizite Owner-Mutation außerhalb dieses Repository-Branches entfernt bzw. widerrufen werden.
+
+Dieser Nachtrag ersetzt keine historische Evidence und schreibt frühere Zustände nicht rückwirkend um; er beendet ausschließlich die aktuelle und zukünftige Snyk-Nutzung innerhalb des Geltungsbereichs dieses ADR.
