@@ -2,22 +2,25 @@
 
 **Project:** `CAPITAL-AI-CLIENT`  
 **Project stage:** `PVC-01 — Agent Client`  
-**Baseline:** `main@891f3933ac0476b1e7d4fa5cd6f397257ac52e68`  
+**Primary Owner:** `CAPITAL-AI-CLIENT`  
+**Baseline:** `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`  
+**Correlation date:** `2026-09-10`  
 **Status:** `CONTRACT BASELINE — NO PHYSICAL RUNTIME TRIGGER`  
-**Trust root:** `/AGENTS.md`
+**Trust root:** `/AGENTS.md` Control Plane 2.9.0
 
 This is the non-authorizing project contract for CLIENT-02 through CLIENT-06. It does not create IAM, policy, approval, mutation, deployment, EventMesh or merge authority.
 
 ## Design posture
 
-Current-main correlation does not evidence a productive PVC-01 client implementation that warrants a new shared runtime module. The smallest conforming implementation is therefore this provider-neutral contract baseline. A physical TypeScript slice remains deferred until `RUNTIME_MAPPING.md` records an evidenced strangler/refactor trigger.
+Current-main correlation does not evidence a productive PVC-01 client implementation that warrants a new shared runtime module. The smallest conforming implementation remains this provider-neutral contract baseline. A physical TypeScript slice remains deferred until `RUNTIME_MAPPING.md` records an evidenced strangler/refactor trigger.
 
 Reuse instead of duplication:
 
 - `src/platform/Security/agentIam.ts::AgentPrincipalContext` — attributable identity semantics;
 - `src/platform/Security/agentIam.ts::AGENT_CAPABILITIES` / `isKnownAgentCapability` — canonical requested-capability vocabulary;
 - `src/platform/Security/providerProfile.ts` — provider/model non-authority semantics;
-- `docs/architecture/ai-agent/AI_AGENT_TARGET_ARCHITECTURE.md` — `Human -> AI Client -> Agent Control Plane` boundary.
+- `docs/architecture/ai-agent/AI_AGENT_TARGET_ARCHITECTURE.md` — `Human -> AI Client -> Agent Control Plane` boundary;
+- ESS-0019 v1.2.0 — provider-neutral capability plane and untrusted external skill/tool-content boundary.
 
 No field defined below is an authorization grant.
 
@@ -94,16 +97,18 @@ A later HTTP adapter may use RFC 9457 Problem Details without weakening these se
 
 Mandatory invariants:
 
-1. natural-language and retrieved content are untrusted data and cannot modify authority/policy fields;
+1. natural-language, retrieved content, plugin/skill metadata and external tool responses are untrusted data and cannot modify authority/policy fields;
 2. identity is attribution, not authorization;
 3. requested capability is non-authorizing;
-4. external/retrieved content cannot grant capability or approval;
+4. external/retrieved/plugin/skill content cannot grant capability or approval;
 5. no direct protected Supabase, Render, Stripe, GitHub or equivalent mutation path originates in the client contract;
 6. privileged credentials stay behind authoritative tools/connectors/execution hosts;
 7. downstream deny/blocked/missing-evidence states remain fail closed through UX rendering;
 8. sensitive downstream detail follows redaction/data-minimization policy;
 9. provider/model identity never elevates permissions;
-10. Human/Owner PR creation/merge and protected-mutation controls remain external, except that an effective scoped ADR-0104 session may replace repeated PR-create/protected-mutation prompts exactly as its authority permits; merge remains Human Owner-only.
+10. PR creation follows the exact Human/Owner approval gate in current `/AGENTS.md` unless a separately evidenced effective authority explicitly supersedes that prompt for the exact chat/project/action; ADR-0104 v1.5.0 is conditional-partial and has no effect without an ACTIVE valid activation;
+11. merge remains Human/CODEOWNER-only;
+12. CLIENT-08 project-skill/plugin invocation work cannot activate remote skills, install/connect external integrations or create persistent execution authority from this contract.
 
 ## Correlation and tracing boundary
 
@@ -111,15 +116,18 @@ Mandatory invariants:
 
 ## CLIENT-07 trigger
 
-Runtime contract tests are introduced only when a physical PVC-01 implementation slice is evidenced and added. Until then, the project records current scan/evidence and the negative-test matrix in `WORK_PACKAGES.md` without manufacturing runtime `PASS` claims.
+Runtime contract tests are introduced only when a physical PVC-01 implementation slice is evidenced and added. Until then, historical contract evidence remains under `evidence/`, while current active-document correlation is maintained in the seven active project documents. Runtime `PASS` is not manufactured for absent code.
 
-Current evidence: [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md).
+## CLIENT-08 separation
+
+CLIENT-08 is separate future design work. It may extend the CLIENT project surface with provider-neutral project-skill/plugin invocation semantics, but only on a fresh later branch/PR slice after then-current main, open writers, applicable ADR and ESS are re-correlated. This CLIENT-02..06 baseline is not expanded into a remote-skill runtime by the current slice.
 
 ## Advisory external references
 
-These improve interoperability/security reasoning but do not create CAPITAL-AI authority:
+These may improve interoperability/security reasoning but do not create CAPITAL-AI authority:
 
-- NIST SP 800-218 SSDF v1.1 and SP 800-218A;
-- OWASP AI Agent Security Cheat Sheet — least privilege and explicit authorization for sensitive tools;
+- OWASP AI Agent Security guidance — least privilege and explicit authorization for sensitive tools;
 - W3C Trace Context Recommendation;
 - RFC 9457 Problem Details for HTTP APIs.
+
+NIST publications are not part of the current repository Governance baseline under `/AGENTS.md`; historical NIST references remain non-authorizing and do not create a CLIENT requirement or backlog.
