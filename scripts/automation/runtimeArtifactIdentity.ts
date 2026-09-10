@@ -7,6 +7,11 @@ export const RUNTIME_ARTIFACT_ALGORITHM = 'sha256-subject-set-v1';
 export const RUNTIME_ARTIFACT_EXCLUDED_PREFIXES = [
   'dist/control-plane/',
   'dist/security/',
+  // Quality Center materializes this commit-bound sidecar evidence only after the
+  // release manifest has finalized the runtime build identity. It is consumed as
+  // diagnostic evidence at runtime, but is not part of the application/server
+  // artifact set governed by the ADR-0060 build-artifact digest.
+  'dist/quality/',
 ] as const;
 
 export interface RuntimeArtifactSubject {
