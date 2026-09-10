@@ -5,6 +5,7 @@
 **Project value-chain stage:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`  
 **Lifecycle:** `ACTIVE — CONTRACT BASELINE / LOGICAL OWNERSHIP`  
+**Current correlation baseline:** `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`  
 **Canonical execution roadmap:** [`ROADMAP.md`](./ROADMAP.md)
 
 ## Purpose
@@ -18,14 +19,15 @@ The project does **not** authorize itself, execute protected mutations, own the 
 ```text
 Human / Owner
   -> AGENTS.md
-  -> ADR / ESS / Contracts
+  -> PVC / project Roadmap
+  -> applicable ADR / ESS / contracts
   -> CAPITAL-AI-CLIENT PVC-01 request/response contract
   -> authoritative downstream control/execution boundary
   -> response / status / error envelope
   -> CAPITAL-AI-CLIENT UX handling
 ```
 
-Natural-language content, provider/model metadata, correlation IDs and client status never become authorization policy.
+Natural-language content, provider/model metadata, correlation IDs, plugin/skill metadata and client status never become authorization policy.
 
 ## PVC-01 ownership boundary
 
@@ -51,23 +53,24 @@ Explicitly not owned here:
 
 Migration posture is **logical ownership before physical relocation**. Existing productive code remains in place unless a later evidenced strangler/refactor removes real duplication or drift. New duplicate Agent Client implementations are prohibited.
 
-Current re-correlation on `main@891f3933ac0476b1e7d4fa5cd6f397257ac52e68` found no productive PVC-01 runtime path that justifies a physical Agent Client module. CLIENT-02 through CLIENT-06 are therefore implemented first as the provider-neutral contract baseline in [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md). A physical module remains gated by [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md).
+Current re-correlation on `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0` finds no productive PVC-01 runtime path that justifies a physical Agent Client module. Repository search finds `requestedCapability` and the named logical Agent Client components only in documentation/contract material, while `src/platform/Security/agentIam.ts` remains the productive downstream IAM/capability authority surface. `NO_PHYSICAL_RUNTIME_TRIGGER` therefore remains in force.
 
-## Canonical navigation
+CLIENT-02 through CLIENT-06 remain the provider-neutral contract baseline in [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md). A physical module remains gated by [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md). CLIENT-08 is open design work but is intentionally excluded from the current correlation-hygiene slice and must use a separate fresh branch/PR slice.
 
-- [`ROADMAP.md`](./ROADMAP.md) — canonical PVC-01 roadmap/status.
-- [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md) — CLIENT-02 through CLIENT-06 contract baseline.
-- [`AGENT_CLIENT_INVENTORY.md`](./AGENT_CLIENT_INVENTORY.md) — repository-wide relationship inventory.
-- [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md) — current runtime/document mapping and strangler trigger.
-- [`WORK_PACKAGES.md`](./WORK_PACKAGES.md) — CLIENT-01 through CLIENT-07.
-- [`TRACEABILITY.md`](./TRACEABILITY.md) — authority/source/runtime/handoff traceability.
-- [`evidence/RECORRELATION_2026-09-01.md`](./evidence/RECORRELATION_2026-09-01.md) — current-main recorrelation and strangler evidence.
-- [`evidence/BASELINE_2026-08-31.md`](./evidence/BASELINE_2026-08-31.md) — historical initial baseline.
+## Active project documents
+
+The seven active CLIENT project documents are:
+
+- [`README.md`](./README.md) — project identity and ownership boundary;
+- [`ROADMAP.md`](./ROADMAP.md) — canonical PVC-01 status and priorities;
+- [`CLIENT_CONTRACTS.md`](./CLIENT_CONTRACTS.md) — CLIENT-02 through CLIENT-06 contract baseline;
+- [`AGENT_CLIENT_INVENTORY.md`](./AGENT_CLIENT_INVENTORY.md) — repository relationship inventory;
+- [`RUNTIME_MAPPING.md`](./RUNTIME_MAPPING.md) — runtime/document mapping and physical-runtime trigger;
+- [`TRACEABILITY.md`](./TRACEABILITY.md) — authority/source/runtime/dependency traceability;
+- [`WORK_PACKAGES.md`](./WORK_PACKAGES.md) — CLIENT work-package projection.
+
+Files under `evidence/` are historical evidence records for their recorded baselines. They are not rewritten merely to appear current.
 
 ## Cross-project rule
 
-Foreign productive work is routed through the canonical handoff contract and is never implemented or marked `DONE`/`VERIFIED` locally. The compatibility marker remains:
-
-`[CROSS_PROJECT_HANDOFF -> <TARGET_PROJECT> | VC-<NN>]`
-
-Project routing identity uses the canonical `PVC-*` mapping from current main.
+Foreign productive work is not executed or marked `DONE`/`VERIFIED` locally. Routing resolves from the current canonical project/PVC mapping in `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`, then the target project's Roadmap and applicable ADR/ESS. Withdrawn post-PVC handoff overlays and legacy `VC-*` project-routing markers are not current authority.
