@@ -10,6 +10,7 @@ on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: ['Agenten-PR-Branches synchronisieren']
     types: [completed]
+    branches: [main]
 
 permissions: {}
 
