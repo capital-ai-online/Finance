@@ -8,7 +8,7 @@
 **Repository:** `capital-ai-online/Finance`  
 **Repository trust root:** `/AGENTS.md`  
 **Canonical project folder:** `docs/projects/documentary/`  
-**Current main correlation:** `main@12ca12017916990e83ed213be781574c61808949`  
+**Current main correlation:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
 **Correlation date:** `2026-09-10`
 
 ## 1. Navigation and authority boundary
@@ -23,15 +23,24 @@ PVC-03 Documentary Engine
 
 This Roadmap coordinates Documentary-owned execution priority and completion state. It does **not** create a second Documentary runtime, registry, policy hierarchy or Authority. `/AGENTS.md`, accepted ADR/ESS, canonical registries and current code/tests remain authoritative in their respective scopes.
 
-Current Git terminology is `main SHA`, `branch head SHA`, `PR head SHA` and `merge SHA`. Historical branch/PR identities remain evidence only.
+Current Git terminology is `main SHA`, `branch head SHA`, `PR head SHA` and `merge SHA`. Historical branches, PRs and evidence are non-authorizing.
 
-## 2. Roadmap operating model — outcome-driven confidence horizons
+## 2. Current correlation
 
-This Roadmap uses an outcome-driven planning model with confidence horizons instead of a feature calendar:
+Current `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a` contains Human-merged Documentary work through PR #866 and the later Governance planning merge PR #868. The latter does not change Documentary productive files or PVC-03 ownership.
+
+Correlation performed on 2026-09-10:
+
+- open Pull Requests at the checked point: **none**;
+- `WP-DOC-12 / GOV-DOC-005` is **DONE — HUMAN-MERGED** through PR #866 / merge `12ca12017916990e83ed213be781574c61808949`;
+- `agent/documentary-roadmap-blueprint-20260910` is the bounded Documentary roadmap writer and is synchronized with current `main`;
+- `agent/documentary-wp-doc-13-gov-doc-007-20260910` is the bounded implementation branch for `WP-DOC-13`; it is synchronized with current `main` and remains non-authorizing until PR/Human merge;
+- no second Documentary roadmap writer, registry, Governance authority, EventMesh runtime or Knowledge runtime is introduced.
+
+## 3. Outcome-driven planning model
 
 ```text
 Strategic Outcome
-→ Initiative / Workstream
 → bounded Work Package
 → measurable Exit Gate
 → implementation / tests / evidence
@@ -39,297 +48,220 @@ Strategic Outcome
 → roadmap re-correlation
 ```
 
-| Horizon | Meaning | Interpretation |
-|---|---|---|
-| **NOW** | highest-priority Documentary-owned problem with sufficient current evidence to start | correlation permits work to start; it is not merge/deploy authority |
-| **NEXT** | validated likely follow-up whose order may change after NOW evidence | not a date commitment |
-| **LATER** | lower-confidence strategic backlog or discovery area | no implementation commitment |
-| **DEPENDENCY** | useful work owned by another project/PVC | consume/handoff evidence; do not absorb ownership |
-| **DONE** | Human/CODEOWNER merged and correlated into current state | retain as concise evidence ledger |
+| Horizon | Meaning |
+|---|---|
+| **NOW** | highest-priority Documentary-owned problem with sufficient evidence |
+| **NEXT** | validated follow-up whose execution waits for the current NOW slice or a new priority decision |
+| **LATER** | lower-confidence/evidence-dependent backlog |
+| **DEPENDENCY** | useful work owned by another project/PVC |
+| **DONE** | Human/CODEOWNER merged and correlated into current state |
 
-These labels are local Roadmap presentation states only. They do not replace repository lifecycle states, Authority identities, ADR/ESS status, PR state or Human gates.
+These labels are planning projections only. They do not grant merge, deployment or protected-mutation authority.
 
-### Planning principles
+## 4. Current Documentary baseline
 
-1. **Outcome before output.** Planned work states the problem/outcome before the implementation shape.
-2. **Evidence before confidence.** Missing evidence and `NOT RUN` remain explicit and never become PASS through roadmap wording.
-3. **Few active priorities.** Documentary should normally have one primary NOW slice unless non-overlapping work is independently justified.
-4. **Risk-adjusted ordering.** Security/data-integrity/governance and higher-severity contractual gaps outrank convenience work when readiness is comparable.
-5. **Explicit dependencies.** Foreign productive work stays with its mapped Primary Owner/PVC.
-6. **Flexible future.** NEXT/LATER express confidence, not fixed dates.
-7. **Continuous improvement.** Every Human merge or material Authority/contract change triggers re-correlation before priority advances.
+The productive component remains `src/platform/Documentary/` and is `Partial Implementation`.
 
-External roadmapping/documentation frameworks may inform presentation or user-needs analysis, but remain advisory and cannot override CAPITAL-AI Authority or existing Documentary contracts.
+Current-main component version: `1.21.0`.
 
-## 3. Current Documentary baseline
-
-The productive component remains `src/platform/Documentary/` and is currently **Partial Implementation**, version `1.21.0`.
-
-Implemented Documentary baseline includes:
+Implemented on current `main`:
 
 - D0 version-authority separation;
 - D1 discovery / semantic freshness;
 - D2 core engine;
 - D3 document models / provenance;
 - D4 review and lifecycle governance;
-- D5 Documentary-side traceability / event integration;
-- D6 generators / renderers including deterministic Mermaid source projection;
+- D5 Documentary-side traceability / EventMesh adapters;
+- D6 generators/renderers including deterministic Mermaid source projection;
 - D7 Knowledge projection;
 - D8 read-only migration planning;
 - D9 bounded maintenance observability;
 - Documentation Hygiene read-only validation;
-- ESS-0012 documentation rules `GOV-DOC-001`, `002`, `003`, `004`, `005` and `006` as bounded read-only validators;
-- ADR-0097 Documentary Maintenance Control Loop and bounded archive-retention planning.
+- bounded ESS-0012 documentation rules `GOV-DOC-001` through `GOV-DOC-006`;
+- ADR-0097 Documentary Maintenance Control Loop and bounded Archive Retention planning.
 
-Canonical supporting surfaces:
+Implemented on the current WP-DOC-13 branch but **not yet current main**:
 
-- `src/platform/Documentary/README.md` — current productive component scope/status;
-- `src/platform/Documentary/manifest.json` — Documentary component-version authority;
-- `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` — detailed technical workstream projection;
-- `docs/governance/document-registry.json` — canonical document identity/registered path surface;
-- `src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts` — reusable read-only hygiene baseline;
-- `ESS-0010` — Documentary Engine;
-- `ESS-0012` / `ESS-0012-CONTRACTS` — Documentation Governance;
-- `ESS-0017` / `ADR-0078` — Vocabulary Governance;
-- `ESS-0009` — Enterprise Knowledge Platform;
-- `ESS-0011` — Enterprise Traceability;
-- `ADR-0097` — Documentary Maintenance Agent Control Loop.
+- bounded `GOV-DOC-007` unresolved-reference validation;
+- Documentary component projection advances to `1.22.0` only on that branch.
 
-If a secondary technical roadmap or historical evidence contains older status/version wording, current code/manifest plus this current-main-correlated project Roadmap determine execution planning within the applicable Authority model.
-
-## 4. Strategic outcomes and measurable health
+## 5. Strategic outcomes
 
 ### OUTCOME-DOC-01 — Evidence-backed documentation governance coverage
 
-**Intent:** Complete remaining ESS-0012 documentation-only rule coverage incrementally without activating unrelated validator areas, scoring, event publication, release authority or mutation authority.
+Complete the seven Documentation rules from ESS-0012-CONTRACTS Chapter 2.5 incrementally without activating unrelated rule families, scoring, event publication, release authority or mutation authority.
 
-Current measurable baseline:
+Current state:
 
-- implemented Documentary documentation rules: **6 / 7** (`001`, `002`, `003`, `004`, `005`, `006`);
-- remaining documentation rules: **1 / 7** (`007`);
-- findings without permitted evidence: **target 0**;
-- validator mutation of inspected documentation: **target 0**;
-- deterministic result for identical repository state: **required**.
-
-Target state:
-
-- `GOV-DOC-007` has a bounded, deterministic, read-only implementation with targeted evidence/tests;
-- reaching 7/7 documentation-rule coverage does **not** implicitly activate the wider ESS-0012 rule catalog or repository-wide release gates.
+- current main: 6/7 bounded Documentation rules implemented;
+- WP-DOC-13 branch: 7/7 bounded Documentation rules implemented;
+- merge/current-main completion remains pending for the seventh rule.
 
 ### OUTCOME-DOC-02 — Safe migration and lifecycle evolution
 
-**Intent:** Move from D8 read-only migration planning toward a separately authorized execution contract without losing identity, provenance, history or ownership boundaries.
+Move from D8 read-only planning toward a separately authorized execution contract while preserving stable identity, provenance, compatibility, history and Primary Owner boundaries.
 
-Health conditions:
-
-- D8 remains `mutationPerformed=false` until separately authorized execution work exists;
-- Authorities, Evidence, Security/Compliance material and foreign-owner content remain fail-closed;
-- stable document identity survives path changes;
-- dry-run, rollback/abort and verification gates exist before physical mutation.
+Physical/semantic mutation remains prohibited until an execution contract, dry-run evidence, rollback/abort semantics and the applicable Human/Owner gates exist.
 
 ### OUTCOME-DOC-03 — Measurable Documentary quality and operability
 
-**Intent:** Extend bounded D9 maintenance metrics into a small, privacy-preserving Documentary quality/SLO model before adding broad observability complexity.
-
-Candidate Documentary-owned indicators, subject to contract/evidence correlation before implementation:
-
-- registry coverage;
-- freshness ratio;
-- orphan rate;
-- documentation-rule coverage;
-- unresolved-reference rate;
-- deterministic-render / reproducibility checks;
-- maintenance candidate → planned patch → applied document funnel counts.
-
-Document bodies, prompts, secrets and user identifiers are not required for these aggregate metrics.
+Extend current bounded maintenance metrics only where a small, privacy-preserving Documentary-owned quality/SLO model has sufficient evidence. Thresholds must not silently become repository-wide release gates.
 
 ### OUTCOME-DOC-04 — Safe extensibility without parallel frameworks
 
-**Intent:** Define a Documentary plugin/extension model only where it reuses existing provider, agent, event, lifecycle and governance boundaries.
+Define Documentary extensions/plugins only where existing provider, agent, lifecycle, EventMesh, Knowledge and Governance boundaries are reused. No external connector/plugin installation, connection or permission mutation is authorized by this Roadmap.
 
-Target conditions:
+## 6. Current priority board
 
-- no second provider/agent framework;
-- no second EventMesh, Knowledge, Registry or approval plane;
-- extension contract is deterministic, least-privilege and testable;
-- security/ownership boundaries are explicit before productive capability is enabled.
+| Horizon | Work package | State | Primary exit signal |
+|---|---|---|---|
+| **NOW** | `WP-DOC-13 — GOV-DOC-007 unresolved reference` | `IMPLEMENTED ON BRANCH — LOCAL VALIDATION PASS / PR + HUMAN MERGE PENDING` | exact-head validation + Human/CODEOWNER merge + main re-correlation |
+| **NEXT** | `WP-DOC-14 — D8 Migration Execution contract & dry-run design` | `QUEUED AFTER WP-DOC-13` | owner-bounded dry-run/identity/rollback/verification contract; no bulk migration |
+| **LATER** | `WP-DOC-15 — Documentary quality/SLO model` | `EVIDENCE / CONTRACT CORRELATION REQUIRED` | small measurable DOC-owned health contract |
+| **LATER** | `WP-DOC-16 — Plugin extension model` | `REUSE / SECURITY / OWNERSHIP CORRELATION REQUIRED` | extension model reuses existing frameworks and least privilege |
+| **LATER** | `WP-DOC-17 — Consumer retry/idempotency hardening` | `EVIDENCE-DRIVEN / NOT IMPLEMENTATION-READY` | reproducible Documentary-owned failure mode + minimal deterministic remediation |
 
-## 5. Current priority board
-
-| Horizon | Work package | Outcome | Why this priority | Primary exit signal |
-|---|---|---|---|---|
-| **NOW** | `WP-DOC-13 — GOV-DOC-007 unresolved reference` | OUTCOME-DOC-01 | final remaining bounded ESS-0012 documentation rule; closes the documentation-rule sequence | deterministic bounded reference-resolution contract with evidence-backed tests |
-| **NEXT** | `WP-DOC-14 — D8 Migration Execution contract & dry-run design` | OUTCOME-DOC-02 | transforms the known planning gap into a safe execution contract before physical mutation | owner-bounded dry-run/identity/rollback/verification design; no bulk migration implied |
-| **LATER** | `WP-DOC-15 — Documentary quality/SLO model` | OUTCOME-DOC-03 | current D9 metrics exist but broader actionable quality targets remain open | small measurable Documentary-owned health contract |
-| **LATER** | `WP-DOC-16 — Plugin extension model` | OUTCOME-DOC-04 | valuable only after core governance coverage and migration safety are clearer | extension design reuses existing frameworks and passes security/ownership review |
-| **LATER** | `WP-DOC-17 — Consumer retry/idempotency hardening` | OUTCOME-DOC-03 | should be implemented only where Documentary-side failure evidence exists | reproducible failure evidence + minimal deterministic remediation |
-
-## 6. Standard Work Package blueprint
-
-Every new Documentary work package SHOULD be expressed in this compact form before implementation:
-
-```text
-WP-DOC-XX — <problem / outcome>
-Horizon: NOW | NEXT | LATER
-Outcome: OUTCOME-DOC-XX
-State: <current factual state>
-
-Problem / evidence:
-- <current-main evidence proving the gap>
-
-Authority / contracts:
-- <applicable ADR / ESS / policy>
-
-In scope:
-- <bounded Documentary-owned surfaces>
-
-Out of scope:
-- <foreign ownership / non-goals>
-
-Dependencies / decisions:
-- <owner, contract or evidence dependencies>
-
-Success metrics:
-- <measurable conditions>
-
-Validation:
-- <targeted tests / validators / evidence>
-
-Exit gate:
-- <objective completion conditions including Human merge + roadmap sync>
-```
-
-A work package is not implementation-ready merely because it appears in NOW/NEXT. Current `main`, open PRs, changed-file/semantic overlap, applicable ADR/ESS, reuse options and ownership still require re-correlation before protected work.
-
-## 7. NOW detail — WP-DOC-13 GOV-DOC-007
+## 7. WP-DOC-13 — GOV-DOC-007 unresolved reference
 
 **Horizon:** `NOW`  
-**State:** `READY FOR CURRENT-CONTRACT CORRELATION — IMPLEMENTATION NOT STARTED`  
-**Outcome:** `OUTCOME-DOC-01`
+**State:** `IMPLEMENTED ON BRANCH — LOCAL VALIDATION PASS / PR + HUMAN MERGE PENDING`  
+**Branch:** `agent/documentary-wp-doc-13-gov-doc-007-20260910`  
+**Branch head at this correlation:** `8852b8e6ddc6f5cee99f1e1acb6148605c4b677e`
 
-### Problem / evidence
+Authority / contracts:
 
-`ESS-0012-CONTRACTS` defines:
+- `ESS-0012-CONTRACTS` Chapter 2.5: `GOV-DOC-007` — document with unresolved reference — `Low`;
+- `ESS-0012` / ADR-0014: read-only, deterministic findings with concrete evidence;
+- existing Document Registry remains the source set for registered document identities/paths.
 
-- `GOV-DOC-007` — document with unresolved reference — `Low` severity.
+Branch implementation:
 
-Current Documentary code on `main@12ca12017916990e83ed213be781574c61808949` implements `GOV-DOC-001/002/003/004/005/006`; `GOV-DOC-007` remains the only unimplemented bounded Documentation rule in Chapter 2.5.
+- `src/platform/Documentary/Governance/Validators/GovDoc007Validator.ts`;
+- only explicit inline Markdown link/image targets are interpreted as references;
+- repository-local relative/root-relative targets resolve without network access;
+- Markdown fragments resolve against deterministic heading slugs or explicit anchors;
+- intentional external URI schemes are not crawled;
+- repository escape, missing local files and missing local Markdown fragments emit `Low` `FileReference` findings;
+- missing registered source files are skipped rather than converted into speculative reference findings because Document Hygiene already owns registered-target existence;
+- results are deduplicated/sorted deterministically;
+- no repair, registry mutation, scoring, event publication or hygiene-CLI wiring is added.
 
-### Mandatory design questions
+Validation evidence on the synchronized branch content:
 
-Before implementation, resolve explicitly:
+- isolated strict TypeScript check for validator + targeted test source: **PASS**;
+- deterministic local resolver smoke test: **PASS**;
+- full repository Vitest/TypeScript/Documentation Hygiene/Governance/build: **NOT RUN** in the connector-only repository environment;
+- hosted GitHub checks: **NOT RUN** before PR creation.
 
-- which reference schemes are within Documentary scope;
-- which references are repository-local vs intentionally external;
-- whether anchors/fragments, registry IDs and relative paths have distinct resolution semantics;
-- what qualifies as concrete `FileReference` or other permitted evidence;
-- how to avoid network crawling as an implicit validator side effect;
-- how to avoid treating arbitrary prose tokens as references.
+Exit gate:
 
-### In scope
+- synchronize again to then-current `main` immediately before PR approval;
+- run all applicable exact-head checks that are available;
+- Human/Owner explicitly approves PR creation for exact main/head SHAs;
+- Human/CODEOWNER merges;
+- Roadmap is synchronized to resulting current `main`.
 
-- bounded read-only `GOV-DOC-007` implementation using existing Documentary identity/reference contracts;
-- deterministic sorting/deduplication;
-- targeted unit tests for valid, invalid, missing and intentionally external references;
-- component metadata/roadmap synchronization only when implementation is actually merged.
-
-### Out of scope
-
-- autonomous reference repair;
-- external web crawling as a hidden validation dependency;
-- Document Registry mutation;
-- scoring, event publication or release gating;
-- Migration Execution or Plugins;
-- activation of unrelated ESS-0012 rule areas.
-
-### Exit gate
-
-- supported reference schemes and resolution semantics are explicit;
-- every emitted violation carries permitted concrete evidence;
-- identical repository state produces deterministic findings;
-- validator remains read-only;
-- existing Hygiene and `GOV-DOC-001/002/003/004/005/006` behavior does not regress;
-- applicable Documentary/unit/documentation/governance checks pass on the exact final PR head;
-- Human/CODEOWNER merge completes;
-- this Roadmap is synchronized to resulting current `main`.
-
-## 8. NEXT/LATER discovery
+## 8. Remaining Documentary-owned work
 
 ### WP-DOC-14 — D8 Migration Execution contract & dry-run design
 
-**Horizon:** `NEXT` after the bounded documentation-rule sequence unless new risk evidence changes priority.
+**State:** `NEXT / QUEUED AFTER WP-DOC-13`.
 
-The first slice is contract/dry-run design, **not bulk migration**. It must define stable document identity preservation, canonical-target/compatibility rules, owner-boundary checks, protected classes, dry-run evidence, rollback/abort semantics, authorized lifecycle/registry transitions and deterministic verification before physical mutation.
+The first execution slice is contract/dry-run design, **not bulk migration**. It must define:
+
+- stable `DOC-*` identity preservation across path changes;
+- canonical target and compatibility/redirect semantics;
+- exact Primary Owner checks and foreign-owner blocking;
+- protected authority/evidence/Security/Compliance/archive classes;
+- dry-run evidence bound to source/target and content identity;
+- abort and rollback semantics;
+- allowed lifecycle/registry transition proposals without granting mutation authority;
+- deterministic post-condition verification.
+
+No physical move/delete/rewrite/registry mutation is authorized by the planning state.
 
 ### WP-DOC-15 — Documentary quality/SLO model
 
-**Horizon:** `LATER`.
+**State:** `LATER / EVIDENCE + CONTRACT CORRELATION REQUIRED`.
 
-Prefer a small set of actionable Documentary-owned indicators over a large metric catalog. Thresholds require evidence and must not silently become repository-wide release gates.
+Candidate DOC-owned indicators include registry coverage, freshness ratio, orphan rate, documentation-rule coverage, unresolved-reference rate, deterministic render/reproducibility checks and maintenance funnel counts. Thresholds require evidence and must remain Documentary-local unless a higher authority separately promotes them.
 
 ### WP-DOC-16 — Plugin extension model
 
-**Horizon:** `LATER`.
+**State:** `LATER / REUSE + SECURITY + OWNERSHIP CORRELATION REQUIRED`.
 
-Discovery begins with the repository reuse order: existing native capability → existing connected/platform capability → suitable specialized component/plugin → maintained security-/license-compatible open source → custom implementation only if needed. This Roadmap authorizes no install/connect/permission mutation.
+Discovery order is the repository reuse order: existing repository/native capability → already-connected suitable platform/plugin capability → specialized plugin → maintained security-/license-compatible open source → custom implementation only when needed. No connector/app installation, connection, enablement or permission mutation is authorized here.
 
 ### WP-DOC-17 — Consumer retry/idempotency hardening
 
-**Horizon:** `LATER / EVIDENCE-DRIVEN`.
+**State:** `LATER / EVIDENCE-DRIVEN / NOT IMPLEMENTATION-READY`.
 
-Do not add generic retry complexity speculatively. First prove a Documentary-owned consumer failure mode, then implement the smallest deterministic hardening inside the existing EventMesh boundary.
+Do not add speculative retries. Current Documentary consumer contracts already validate supported trigger names and correlation/causation identifiers. A new retry/idempotency mechanism requires reproducible Documentary-owned failure evidence first; EventMesh ordering/replay/DLQ runtime remains CAPITAL-AI-OPS-owned.
 
-## 9. Completed work ledger
+### Additional generator profiles
+
+**State:** `LATER / DEMAND-DRIVEN`.
+
+Add only when an existing Documentary model/provenance/lifecycle contract has a concrete missing projection. Do not create speculative renderer profiles or a second document model.
+
+### Sensitive-document classification consumption
+
+**State:** `LATER / SECURITY-COMPLIANCE DEPENDENCY`.
+
+Documentary may consume an existing stable Security/Compliance classification contract when one is correlated for this use. Documentary must not invent classification semantics or acquire Security/Compliance decision authority.
+
+### Continuous maintained work
+
+- `WP-DOC-02` — lifecycle, maintenance and Documentation Governance: `ACTIVE / CONTINUOUS`;
+- `WP-DOC-03` — Vocabulary, Knowledge and Wiki projection: `ACTIVE BASELINE / CONTINUOUS`.
+
+These are maintenance obligations, not one-off incomplete implementation claims.
+
+## 9. Foreign-owner dependencies — not Documentary implementation work
+
+| Dependency | Owner / PVC | Documentary relationship |
+|---|---|---|
+| Governance / Platform Director | `CAPITAL-AI-GOV / PVC-05` | consume decisions; do not implement GOV scope |
+| Supervisor / Version / Release / Production / EventMesh / central Traceability | `CAPITAL-AI-OPS / PVC-02,04,06,07,08,18` | evidence/integration dependency only |
+| Data ingestion / Evidence / DQ | `CAPITAL-AI-DATA / PVC-09..11` | consume validated evidence where required |
+| Feature Engineering through Ranking | `CAPITAL-AI-FINTECH / PVC-12..17` | read-only documentation/evidence projection |
+| Security / Compliance / Quality | cross-cutting owners | consume stable requirements/findings; no ownership transfer |
+
+E0/E2/E3/E5 central EventMesh/replay/reliability implementation and H3 foreign-domain/runtime path rewiring are therefore not DOC-owned roadmap implementation.
+
+## 10. Completed work ledger
 
 | Work package | State | Primary evidence |
 |---|---|---|
 | `WP-DOC-00` Canonical project surface | `DONE — HUMAN-MERGED` | PR #645 |
-| `WP-DOC-01` Baseline / document model correlation | `DONE — HUMAN-MERGED` | merged Documentary baseline sequence incl. PR #673/#674 |
+| `WP-DOC-01` Baseline / document model correlation | `DONE — HUMAN-MERGED` | PR #673/#674 sequence |
 | `WP-DOC-04` Technical roadmap ownership reconciliation | `DONE — HUMAN-MERGED` | PR #664 |
-| `WP-DOC-05` Deterministic Mermaid projection | `DONE — HUMAN-MERGED / CLAIM RELEASED` | PR #679; claim terminalized by PR #700 |
+| `WP-DOC-05` Deterministic Mermaid projection | `DONE — HUMAN-MERGED / CLAIM RELEASED` | PR #679; closeout #700 |
 | `WP-DOC-06` D8 read-only migration planning | `DONE — HUMAN-MERGED` | PR #792 / merge `12b5ec1886984fb6815ba111108f7f353496de7d` |
-| `WP-DOC-07` `GOV-DOC-003` freshness | `DONE — HUMAN-MERGED` | PR #805 / merge `8618326db4d4a5af0fbecd65b83805ea7608109f` |
-| `WP-DOC-08` `GOV-DOC-006` generator marking | `DONE — HUMAN-MERGED` | PR #813 / merge `0f83646839fcf1e7a6a55a3497bbb8efa81a0765` |
-| `WP-DOC-09` `GOV-DOC-001` document version | `DONE — HUMAN-MERGED` | PR #815 + closeout #819 |
-| `WP-DOC-10` `GOV-DOC-002` ESS/ADR reference | `DONE — HUMAN-MERGED` | PR #821 / merge `d952bd46129b2f86b60e119f6be3ac2b72b98faa` |
-| `WP-DOC-11` `GOV-DOC-004` document class structure | `DONE — HUMAN-MERGED` | PR #826 / merge `8081608a1a14ba0ce6ea5f88e3a81afca8db6410` |
+| `WP-DOC-07` `GOV-DOC-003` freshness | `DONE — HUMAN-MERGED` | PR #805 |
+| `WP-DOC-08` `GOV-DOC-006` generator marking | `DONE — HUMAN-MERGED` | PR #813 |
+| `WP-DOC-09` `GOV-DOC-001` document version | `DONE — HUMAN-MERGED` | PR #815 + #819 |
+| `WP-DOC-10` `GOV-DOC-002` ESS/ADR reference | `DONE — HUMAN-MERGED` | PR #821 |
+| `WP-DOC-11` `GOV-DOC-004` document class structure | `DONE — HUMAN-MERGED` | PR #826 |
 | `WP-DOC-12` `GOV-DOC-005` documentation path exception | `DONE — HUMAN-MERGED` | PR #866 / merge `12ca12017916990e83ed213be781574c61808949` |
-
-Continuous maintained workstreams:
-
-- `WP-DOC-02` lifecycle, maintenance and Documentation Governance; includes merged GOV-RD-01 synchronization evidence from PR #838;
-- `WP-DOC-03` Vocabulary, Knowledge and Wiki projection.
-
-## 10. Dependencies and ownership
-
-| Dependency | Owner / PVC | Documentary relationship |
-|---|---|---|
-| Governance / Platform Director | `CAPITAL-AI-GOV / PVC-05` | consume governance decisions; do not implement GOV scope |
-| Supervisor / Version / Release / Production / EventMesh-Traceability runtime | `CAPITAL-AI-OPS / PVC-02,04,06,07,08,18` | evidence/integration dependency only |
-| Data ingestion / Evidence / DQ | `CAPITAL-AI-DATA / PVC-09..11` | consume validated evidence where required |
-| Feature Engineering through Ranking | `CAPITAL-AI-FINTECH / PVC-12..17` | read-only documentation/evidence projection |
-| Security / Compliance / Quality | cross-cutting owners | requirements/findings/independent verification; no ownership transfer |
-
-Foreign productive implementation stays with the target owner's Project Value Chain stage and Roadmap unless an effective delegated execution authority explicitly applies without ownership transfer.
 
 ## 11. Roadmap health checks
 
-The Roadmap is current only when:
+This Roadmap is current only when:
 
-- correlation baseline is refreshed before starting a Documentary slice;
-- open PRs and overlapping writers are checked;
-- merged work is not left as `pending`;
-- NOW reflects the highest-priority ready Documentary-owned problem;
-- NEXT/LATER do not imply dates or authorization;
-- each remaining gap maps to an outcome and objective exit gate;
-- current component/contract evidence, not historical roadmap text, determines implementation status;
-- foreign-owner dependencies remain explicit;
+- its main baseline reflects the latest correlated main SHA;
+- merged work is not left as branch/PR pending;
+- active branches and open PRs are distinguished from current authority;
+- NOW represents the highest-priority ready Documentary-owned slice;
+- NEXT/LATER do not imply implementation authority or dates;
+- current code/manifests/tests outweigh historical roadmap descriptions;
+- foreign-owner dependencies stay explicit;
 - `NOT RUN` remains distinct from PASS;
 - no duplicate registry/runtime/authority is introduced.
 
-Re-correlation is mandatory after every Human merge affecting Documentary scope, material `/AGENTS.md`/ADR/ESS/registry change, new overlapping PR/writer, evidence that invalidates priority, or completion/blocking of the current NOW item.
+Re-correlation is mandatory after every Human merge affecting Documentary scope, material `/AGENTS.md`/ADR/ESS/registry change, new overlapping PR/writer, or completion/blocking of the current NOW item.
 
-## 12. Definition of Done for a Documentary Roadmap item
+## 12. Definition of Done
 
 A Documentary Roadmap item is complete only when:
 
@@ -337,11 +269,9 @@ A Documentary Roadmap item is complete only when:
 - applicable current ADR/ESS are identified and reused;
 - implementation is bounded to Documentary-owned surfaces;
 - reuse/security/compliance pre-checks are performed where material;
-- measurable success/exit conditions are satisfied;
+- measurable exit conditions are satisfied;
 - required tests/evidence pass on the exact final PR head;
 - `NOT RUN` checks are reported truthfully;
 - no duplicate registry/runtime/authority or hidden foreign-owner implementation is introduced;
 - Human/CODEOWNER performs merge;
 - this Roadmap is updated to the resulting current state.
-
-Detailed branch-local planning text should not remain presented as current active work after the corresponding Human merge; completed items move to the concise evidence ledger.
