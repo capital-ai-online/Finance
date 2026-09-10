@@ -23,12 +23,7 @@ const SECURITY_FLOORS: readonly SecurityFloor[] = [
     packageName: 'vite',
     major: 6,
     minimumVersion: '6.4.3',
-    advisories: [
-      'GHSA-fx2h-pf6j-xcff',
-      'GHSA-p9ff-h696-f583',
-      'GHSA-4w7w-66w2-5vf9',
-      'GHSA-cw47-99h4-q43f',
-    ],
+    advisories: ['GHSA-fx2h-pf6j-xcff', 'GHSA-p9ff-h696-f583', 'GHSA-4w7w-66w2-5vf9'],
   },
 ];
 
