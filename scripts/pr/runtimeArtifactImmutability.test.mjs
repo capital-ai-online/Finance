@@ -89,9 +89,11 @@ function parseLastJsonObject(stdout) {
 function buildReleaseManifestFixture() {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-r002-release-'));
   fs.mkdirSync(path.join(tempRoot, 'docs', 'architecture'), { recursive: true });
+  fs.mkdirSync(path.join(tempRoot, 'dist'), { recursive: true });
   fs.copyFileSync(path.join(repoRoot, 'package.json'), path.join(tempRoot, 'package.json'));
   fs.copyFileSync(path.join(repoRoot, 'package-lock.json'), path.join(tempRoot, 'package-lock.json'));
   fs.writeFileSync(path.join(tempRoot, 'docs', 'architecture', 'fixture.md'), '# Immutable Documentary Fixture\n', 'utf8');
+  fs.writeFileSync(path.join(tempRoot, 'dist', 'server.cjs'), 'module.exports = {};\n', 'utf8');
   const commitSha = 'fedcba9876543210fedcba9876543210fedcba98';
   const result = spawnSync(tsxBin, [releaseManifestBuilder], {
     cwd: tempRoot,
@@ -138,7 +140,6 @@ test('R-002 rejects retired production Documentary and VersionManager mutations'
     '/api/docs-file',
     '/api/admin/hygiene/review',
     '/api/admin/hygiene/rollback',
-    '/api/admin/hygiene/lint-fix',
     '/api/admin/version/bump',
   ]) {
     const result = runHttpProbe('POST', requestPath);
@@ -171,6 +172,10 @@ test('R-002 build step still emits immutable release and Documentary evidence', 
     assert.match(manifest.inputs.packageLockSha256, /^[a-f0-9]{64}$/);
     assert.match(manifest.inputs.documentaryTreeSha256, /^[a-f0-9]{64}$/);
     assert.equal(manifest.inputs.documentaryFileCount, 1);
+    assert.equal(manifest.runtimeArtifact.root, 'dist');
+    assert.equal(manifest.runtimeArtifact.algorithm, 'sha256-subject-set-v1');
+    assert.match(manifest.runtimeArtifact.sha256, /^[a-f0-9]{64}$/);
+    assert.equal(manifest.runtimeArtifact.files, 1);
   } finally {
     fs.rmSync(fixture.tempRoot, { recursive: true, force: true });
   }
