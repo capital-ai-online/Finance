@@ -1,20 +1,17 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { computeRuntimeArtifactIdentity } from './runtimeArtifactIdentity';
 import { resolveSourceCommit } from './sourceIdentity';
 
 // M6 (Supply Chain Provenance, ADR-0060, docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md).
 //
-// Builds an in-toto Statement (https://in-toto.io/Statement/v1) carrying an SLSA Provenance v1.2
-// predicate (https://slsa.dev/spec/v1.2/provenance) binding the exact source commit, the CycloneDX
-// SBOM already written by dependencySecurity.ts, and the release manifest already written by
-// buildRuntimeReleaseManifest.ts into one signable artifact. This script only ASSEMBLES the
-// statement from artifacts that must already exist (fail-closed otherwise) - it does not sign it.
-// Signing happens in CI via cosign keyless signing against the public Sigstore infrastructure
-// (Fulcio/Rekor, GitHub-OIDC-bound identity) - not actions/attest-build-provenance, whose GitHub
-// Attestations API is unavailable for user-owned private repositories; a locally hand-built
-// "signature" would be worthless (no trusted key material belongs on a developer laptop or in this
-// repository).
+// Builds an in-toto Statement carrying an SLSA Provenance v1.2 predicate binding the exact source
+// commit, dependency state, CycloneDX SBOM, immutable release manifest and every actual runtime
+// build file under dist/ (excluding the control-plane/security evidence trees themselves) into one
+// signable provenance artifact. This script only assembles the statement and fails closed when the
+// runtime artifact identity no longer matches the release manifest. Signing remains the existing
+// GitHub-hosted cosign keyless path in ci.yml; no second attestation or Release plane is introduced.
 const SLSA_PREDICATE_TYPE = 'https://slsa.dev/provenance/v1';
 const repoRoot = process.cwd();
 
@@ -35,9 +32,6 @@ function githubBuilder(): { id: string; workflowRef: string | null; runId: strin
   const workflowRef = process.env.GITHUB_WORKFLOW_REF || null;
   const runId = process.env.GITHUB_RUN_ID || null;
   return {
-    // Builder identity per SLSA: the trusted control plane that produced this provenance, NOT any
-    // agent/model/provider identity - a GitHub-hosted Actions runner executing a specific pinned
-    // workflow ref, independently verifiable via the workflow_ref value itself.
     id: `https://github.com/${repo}/.github/workflows/ci.yml`,
     workflowRef,
     runId,
@@ -64,6 +58,22 @@ function main() {
     );
   }
 
+  const runtimeArtifact = computeRuntimeArtifactIdentity(repoRoot);
+  const manifestRuntimeArtifact = releaseManifest.runtimeArtifact ?? null;
+  if (
+    !manifestRuntimeArtifact ||
+    manifestRuntimeArtifact.root !== runtimeArtifact.root ||
+    manifestRuntimeArtifact.algorithm !== runtimeArtifact.algorithm ||
+    manifestRuntimeArtifact.sha256 !== runtimeArtifact.sha256 ||
+    manifestRuntimeArtifact.files !== runtimeArtifact.files
+  ) {
+    throw new Error(
+      `Runtime-Artefakt-Bindung inkonsistent: aktueller Digest=${runtimeArtifact.sha256}, ` +
+      `release-manifest=${manifestRuntimeArtifact?.sha256 ?? 'fehlt'}. ` +
+      'Build-Ausgabe wurde nach der Manifest-Erzeugung veraendert oder das Manifest ist unvollstaendig.',
+    );
+  }
+
   const builder = githubBuilder();
   const releaseManifestDigest = sha256(fs.readFileSync(releaseManifestPath));
   const sbomDigest = sha256(fs.readFileSync(sbomPath));
@@ -71,6 +81,7 @@ function main() {
   const statement = {
     _type: 'https://in-toto.io/Statement/v1',
     subject: [
+      ...runtimeArtifact.subjects,
       { name: 'dist/control-plane/release-manifest.json', digest: { sha256: releaseManifestDigest } },
       { name: 'dist/security/sbom.cdx.json', digest: { sha256: sbomDigest } },
     ],
@@ -84,6 +95,12 @@ function main() {
         },
         internalParameters: {
           buildIdentity: releaseManifest.buildIdentity ?? null,
+          runtimeArtifact: {
+            root: runtimeArtifact.root,
+            algorithm: runtimeArtifact.algorithm,
+            sha256: runtimeArtifact.sha256,
+            files: runtimeArtifact.files,
+          },
         },
         resolvedDependencies: [
           {
@@ -106,10 +123,6 @@ function main() {
           generatedAt: new Date().toISOString(),
           slsaSpecVersion: 'v1.2',
         },
-        // Not a trusted-build attestation by itself - see file header. `builder.id ===
-        // 'local-developer-build'` marks any statement generated outside GitHub Actions as
-        // explicitly untrusted for release purposes; verifySupplyChainProvenance.ts's --require-ci
-        // mode rejects it.
       },
     },
   };
@@ -118,7 +131,10 @@ function main() {
   fs.mkdirSync(outputDir, { recursive: true });
   const outputPath = path.join(outputDir, 'provenance.json');
   fs.writeFileSync(outputPath, `${JSON.stringify(statement, null, 2)}\n`, 'utf8');
-  console.log(`[provenance] ${path.relative(repoRoot, outputPath)} :: source-commit=${sourceCommit}`);
+  console.log(
+    `[provenance] ${path.relative(repoRoot, outputPath)} :: source-commit=${sourceCommit} :: ` +
+    `runtime=${runtimeArtifact.sha256} (${runtimeArtifact.files} subjects)`,
+  );
 }
 
 try {
