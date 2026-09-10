@@ -5,7 +5,11 @@
 import fs from 'fs';
 import path from 'path';
 import { PROMPT_REGISTRY } from '../../src/services/aiUsageTracker';
-import { evaluateDependencyPolicy, writeCycloneDxSbom } from './dependencySecurity';
+import {
+  evaluateDependencyPolicy,
+  evaluatePythonRequirementSecurityPolicy,
+  writeCycloneDxSbom,
+} from './dependencySecurity';
 import { SECRET_FILE_KEYS } from '../security/secretFileManifest';
 
 const REPO_ROOT = process.cwd();
@@ -153,6 +157,22 @@ if (!fs.existsSync(packageLockPath)) {
       for (const violation of policy.violations) fail(`Dependency Policy: ${violation}`);
     } else {
       ok(`${policy.productionDependencyCount} direkte Production-Dependencies erfüllen die Supply-Chain-Policy.`);
+    }
+
+    const pythonRequirementsRelativePath = 'scripts/docs/requirements-notebooklm-pdf.txt';
+    const pythonRequirementsPath = path.join(REPO_ROOT, pythonRequirementsRelativePath);
+    if (!fs.existsSync(pythonRequirementsPath)) {
+      fail(`${pythonRequirementsRelativePath} fehlt - Security Floor der Documentation-PDF-Toolchain nicht prüfbar.`);
+    } else {
+      const pythonRequirementViolations = evaluatePythonRequirementSecurityPolicy(
+        pythonRequirementsRelativePath,
+        fs.readFileSync(pythonRequirementsPath, 'utf8'),
+      );
+      if (pythonRequirementViolations.length > 0) {
+        for (const violation of pythonRequirementViolations) fail(`Dependency Policy: ${violation}`);
+      } else {
+        ok('Documentation-PDF-Python-Dependencies erfüllen die Security-Floor-Policy.');
+      }
     }
 
     try {
