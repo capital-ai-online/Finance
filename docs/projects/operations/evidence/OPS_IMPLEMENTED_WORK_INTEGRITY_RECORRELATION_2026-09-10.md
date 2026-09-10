@@ -152,7 +152,7 @@ Current main already contains PR #859, while the canonical OPS planning surfaces
 
 Roadmap and Work Packages were still bound to `main@e9b2551...` and omitted #862/#863/#865/#867 plus relevant Governance/Security changes.
 
-**Correction:** bind the initial documentation sync to `main@e9839f5...` and explicitly record current terminal dependencies; the later PR #872 main advance is recorded in section 12.
+**Correction:** bind the initial documentation sync to `main@e9839f5...` and explicitly record current terminal dependencies; later main advances are recorded in the resynchronization sections below.
 
 ### D3 — Entitlement child classifications were stale
 
@@ -242,24 +242,38 @@ PR #872 terminal evidence:
 
 The responsible Security Roadmap on the same main still projects the bounded slice as `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN` and aggregate `SEC-SOTA-03` as `IN_PROGRESS / VITE_FLOOR_VERIFIED_MAIN / ARTIFACT_DIGEST_IMPLEMENTED_BRANCH / INVENTORY_OPEN`. Because current project Roadmaps are the status source, this inconsistency is not silently rewritten by OPS. The merged implementation is consumed as technical evidence; Security-owned Roadmap synchronization/verification remains an explicit open dependency.
 
-Current open Pull Requests after the #872 merge:
+At this checkpoint PR #873 and PR #874 were open and file-disjoint from the OPS integrity scope. PR #874 was already identified as a material DevelopmentChain/approval Authority writer for the later M0–M10 matrix.
 
-- PR #873 — Governance PVC Vocabulary/Thesaurus; changed files limited to `src/platform/Vocabulary/**`; no OPS four-artifact overlap;
-- PR #874 — Governance Approval Envelope v3.4; changes Trust Root, Development-Chain approval/policy, Governance project, registry/evaluator/test surfaces; no OPS four-artifact overlap, but it is a material authority writer for the later DevelopmentChain current-state/M0–M10 matrix.
+## 13. Post-PR #873 current-main resynchronization
 
-Current sequencing consequence:
+Governance PR #873 (`PVC Vocabulary / Thesaurus`) was subsequently Human-merged and advanced main to `5e9be38b5af037f85fab67643043c5be30f87e16`.
 
-1. this OPS integrity-sync can proceed to its own final PR-create correlation because #873/#874 are changed-file disjoint and no OPS semantic authority is duplicated;
-2. the separate DevelopmentChain M0–M10 current-state matrix MUST wait until PR #874 is terminal and the responsible project Roadmaps — including the Security status after #872 — are re-read from then-current main.
+The OPS integrity branch was resynchronized again rather than carrying a stale main baseline:
 
-Additional checks executed after resync:
+- previous branch head before this resync: `83c1a659203b66784a483d586de42a3592a22d21`;
+- new main: `5e9be38b5af037f85fab67643043c5be30f87e16`;
+- merge/resync commit: `26c89bc8efd79cb75e8fa6f12cc9d9ce13a431aa`;
+- merge was non-force and incorporated the complete PR #873 main tree while preserving the bounded OPS artifacts.
 
-- current main read: `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`;
-- `/AGENTS.md` identity re-read on new main; blob remains `d38769d0fe15ab971b3b1360ac89068683f597fd`, Control Plane `2.9.0`;
-- PR #872 terminal state and final exact-head workflow evidence correlated;
-- current Security Roadmap read from new main;
-- open PR #873/#874 changed-file and semantic boundaries correlated;
-- OPS Roadmap and Work Packages updated to the new main/status state;
-- provider/credential/connector/Production mutation: `NOT RUN`.
+PR #873 is terminal and creates no OPS ownership transfer. Its PVC/Vocabulary changes are current-main context only.
 
-This addendum supersedes only the final-current-main/open-PR observations from earlier sections; it does not relabel historical evidence that was valid at its recorded SHA.
+Current open-PR set at this checkpoint:
+
+- PR #874 — `[CAPITAL-AI-GOV] [ChatGPT] Approval Envelope v3.4 selektiv rematerialisieren`;
+- current #874 head observed after its own resync: `7b8c682fbc1962b2b4af844e87b7a967e9e07162`;
+- #874 changes Trust Root, Development-Chain execution/approval policy, Governance Roadmap/Register, registries, approval evaluator and tests;
+- no #874 changed-file overlap exists with the four OPS integrity-sync artifacts;
+- #874 is nevertheless a material semantic/Authority writer for the requested DevelopmentChain current-state/M0–M10 matrix, so that separate Governance work remains sequenced until #874 is terminal.
+
+Current Security dependency state remains unchanged by #873: PR #872 implementation is on main and its exact-head hosted checks passed, while the responsible Security Roadmap still contains stale branch/hosted-open wording. OPS preserves this as a foreign-owner status-sync dependency rather than synthesizing closure.
+
+Additional post-resync validation performed:
+
+- current main re-read as `5e9be38b5af037f85fab67643043c5be30f87e16`;
+- current open-PR set reduced to PR #874;
+- #874 changed-file/semantic boundary re-correlated;
+- OPS Roadmap and Work Packages rebound to `main@5e9be38b5af037f85fab67643043c5be30f87e16`;
+- PR #859/#867 remain terminal/current-main rather than `ACTIVE_BRANCH`;
+- provider/credential/connector/Production mutation remains `NOT RUN`.
+
+This section supersedes only the later-current-main/open-PR observations in section 12. Historical observations remain bound to their recorded SHAs.
