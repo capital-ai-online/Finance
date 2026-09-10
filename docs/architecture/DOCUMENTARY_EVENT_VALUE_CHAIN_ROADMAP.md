@@ -2,31 +2,33 @@
 
 **Status:** ACTIVE — CURRENT-STATE CORRELATED  
 **Initial baseline:** 2026-08-10  
-**Last Documentary correlation:** 2026-09-06  
+**Last Documentary correlation:** 2026-09-10  
+**Current main:** `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
 **Primary Authority:** ESS-0010 Documentary Engine  
 **Related Authorities:** ESS-0009 Knowledge, ESS-0011 Traceability, ESS-0012 Documentation Governance, ESS-0017 Vocabulary Governance, ADR-0096 Governance Control Plane, ADR-0097 Documentary Maintenance Control Loop  
-**Project execution surface:** `docs/projects/documentary/ROADMAP.md` / `WP-DOC-06`  
+**Project execution surface:** `docs/projects/documentary/ROADMAP.md`  
 **Project routing:** `CAPITAL-AI-DOC / PVC-03`
 
-This roadmap is a non-authorizing Documentary execution projection. Current implementation status is resolved from current code, manifests, registries and accepted authorities before this roadmap. The original 2026-08-10 baseline remains historical context and is not allowed to override newer implementation evidence.
+This roadmap is a non-authorizing technical Documentary projection. Current implementation status is resolved from current code, manifests, accepted authorities and Human-merged evidence before historical roadmap text.
 
-## 1. Zielbild und Ownership-Grenze
+## 1. Ownership boundary
 
-Documentary derives governed documentation from code, architecture, event, version and release evidence, produces deterministic document models and projections, and continuously evaluates documentation freshness and hygiene.
+Documentary derives governed documentation from code, architecture, event, version and release evidence, produces deterministic document models/projections and evaluates documentation freshness/hygiene.
 
-The productive Documentary component remains `src/platform/Documentary/`. This roadmap does not create a second EventMesh, Traceability, Governance, Knowledge, Vocabulary, Version or Release architecture.
+Productive Documentary implementation remains `src/platform/Documentary/`. This roadmap does not create a second EventMesh, Traceability, Governance, Knowledge, Vocabulary, Version, Release or Registry architecture.
 
 ### Documentary-owned scope — CAPITAL-AI-DOC / PVC-03
 
-- Documentary document identity, models, schemas, provenance and lifecycle;
-- Documentary Code Discovery and semantic freshness analysis;
-- Documentary Core Engine, Documentary event adapters and Documentary traceability records;
-- Documentary renderers/generators and bilingual projection contracts;
+- document identity, models, schema/provenance and lifecycle;
+- Code Discovery and semantic freshness;
+- Documentary Core Engine;
+- Documentary-side EventMesh adapters and traceability records;
+- renderers/generators and bilingual projection contracts;
 - Documentation Hygiene implementation inside the documentation-only boundary;
-- Documentary Maintenance Control Loop and its bounded maintenance observability;
-- Documentary-side Knowledge/Vocabulary/Wiki projection contracts;
-- read-only Documentary migration/legacy-compatibility planning;
-- roadmap/evidence correlation for Documentary-owned implementation.
+- Documentary Maintenance Control Loop and bounded maintenance observability;
+- Documentary-side Knowledge/Vocabulary/Wiki projections;
+- read-only migration planning and separately gated Documentary migration-execution design;
+- Documentary-owned roadmap/evidence correlation.
 
 ### Foreign productive ownership retained
 
@@ -34,24 +36,24 @@ The productive Documentary component remains `src/platform/Documentary/`. This r
 - `CAPITAL-AI-GOV / PVC-05`: Platform Director decisions and repository-wide Governance Control Plane;
 - `CAPITAL-AI-DATA / PVC-09..11`: ingestion, evidence management and Data Quality semantics;
 - `CAPITAL-AI-FINTECH / PVC-12..17`: feature engineering, scoring, orchestration, eligibility and ranking;
-- cross-cutting Security/Compliance/Quality owners retain their own requirements, findings and independent verification responsibilities.
+- Security/Compliance/Quality owners retain requirements, findings and independent verification responsibilities.
 
-Foreign implementation remains `REFERRED_NOT_EXECUTED` from this Documentary roadmap and is resolved through the current Project Value Chain, target project Roadmap and target Primary Owner.
+Foreign productive implementation remains `REFERRED_NOT_EXECUTED` from this roadmap.
 
 ## 2. Current Documentary baseline
 
-The 2026-08-10 roadmap baseline described Documentary as mostly target structure and reported README/manifest version drift. That description is now **historical**.
+The original 2026-08-10 target snapshot is historical. Current `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a` shows:
 
-Current repository evidence on this revision shows:
-
-- Documentary component version `1.15.0` in `src/platform/Documentary/manifest.json` and the component README;
+- Documentary component version `1.21.0` in `src/platform/Documentary/manifest.json` and component README;
 - component-version authority: `src/platform/Documentary/manifest.json#version`;
-- document-schema-version authority: `src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`;
-- platform-version authority: repository `package.json#version`, consumed through the Release control plane; Documentary does not own platform-version mutation;
-- implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance (documentation-only), Interfaces, Knowledge, Lifecycle, Mermaid, Migration (read-only D8 planning slice), Models, Observability (maintenance slice), Orchestration, Traceability and Versioning;
-- planned/partial areas remain physical/semantic Migration Execution, Plugins, additional Architecture-runtime functions and additional ESS-0012 validators.
+- document-schema-version authority: `Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`;
+- platform-version authority: repository `package.json#version`, consumed through the Release control plane;
+- implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance, Interfaces, Knowledge, Lifecycle, Mermaid, Migration planning, Models, Observability maintenance slice, Orchestration, Traceability and Versioning;
+- bounded Documentation Governance rules `GOV-DOC-001` through `GOV-DOC-006` are Human-merged on main;
+- `GOV-DOC-007` is implemented only on `agent/documentary-wp-doc-13-gov-doc-007-20260910`, where the component projection is `1.22.0`; it is not current authority until Human merge;
+- planned/partial areas remain physical/semantic Migration Execution, Plugins and evidence-backed additional Architecture/runtime/quality hardening.
 
-The current implementation remains intentionally classified as **Partial Implementation**. “Partial” no longer means “only the bilingual layer exists”; it means the established Documentary baseline is implemented while explicitly listed future slices remain open.
+The component therefore remains **Partial Implementation**.
 
 ## 3. Workstream D — Documentary Engine
 
@@ -59,177 +61,167 @@ The current implementation remains intentionally classified as **Partial Impleme
 
 **State:** IMPLEMENTED BASELINE
 
-Implemented evidence:
-
-- README and manifest agree on Documentary component version `1.15.0`;
-- component, document-schema and platform versions are semantically separated;
-- Documentary consumes platform version from the existing Release control plane and does not reactivate a second Version Manager authority;
-- `Architecture/documentary-baseline.json` and dedicated D0 evidence remain implementation references.
-
-Remaining Documentary work is maintenance of this separation when component/schema contracts change. Platform Version Management and Release implementation remain OPS-owned.
+Component, document-schema and platform versions remain semantically separated. Documentary consumes platform version from Release and does not establish a second Version authority.
 
 ### D1 — Code Integration & Discovery
 
 **State:** IMPLEMENTED BASELINE
 
-`Discovery/CodeEvidence.ts`, status-event evidence/detection/update contracts and semantic freshness analysis provide the current read-only Documentary discovery baseline. Future discovery expansion must remain read-only and evidence-bound.
+`Discovery/CodeEvidence.ts`, status-event evidence/drift contracts and semantic freshness provide the current read-only discovery baseline.
 
 ### D2 — Documentary Core Engine
 
 **State:** IMPLEMENTED BASELINE
 
-`Engine/DocumentaryEngine.ts` implements structured document-model orchestration and produces the controlled `generated` lifecycle state. It does not approve protected documents or mutate source-code contracts.
+`Engine/DocumentaryEngine.ts` orchestrates structured Documentary models and creates only the governed `generated` state. It does not approve protected documents or mutate source-code contracts.
 
 ### D3 — Document Models, Schemas & Provenance
 
 **State:** IMPLEMENTED BASELINE
 
-`Models/DocumentaryDocument.ts` and `Models/DocumentaryProvenance.ts` provide the current typed model/provenance baseline, including source identity and deterministic fingerprint/provenance relationships.
+`Models/DocumentaryDocument.ts` and `Models/DocumentaryProvenance.ts` provide typed identity, source and deterministic provenance/fingerprint relationships.
 
 ### D4 — Review & Lifecycle Governance
 
 **State:** IMPLEMENTED BASELINE
 
-The current D4 identity is **Review & Lifecycle Governance**, superseding the original roadmap numbering that used D4 for generators. `Lifecycle/DocumentaryLifecycle.ts` implements controlled `generated -> reviewed -> approved` semantics plus supersession/archive transitions. Repository-wide governance authority remains outside Documentary.
+`Lifecycle/DocumentaryLifecycle.ts` implements controlled `generated -> reviewed -> approved` semantics plus supersession/archive transitions. Repository-wide Governance remains outside Documentary.
 
 ### D5 — Documentary Traceability & Event Integration
 
 **State:** IMPLEMENTED DOCUMENTARY SIDE / CENTRAL RUNTIME REUSED
 
-`Traceability/DocumentaryTraceability.ts` and the Documentary event producer/consumer contracts bind document evidence to correlation/causation/provenance data. Documentary uses the existing EventMesh and central Traceability contracts; it does not own those runtimes.
+Documentary traceability/event contracts preserve correlation, causation and provenance while reusing the existing EventMesh and central Traceability surfaces.
 
 ### D6 — Generators & Renderers
 
-**State:** IMPLEMENTED BASELINE
+**State:** IMPLEMENTED BASELINE / ADDITIONAL PROFILES DEMAND-DRIVEN
 
-The current D6 identity is **Generators & Renderers**. `Generators/DocumentaryRenderer.ts` renders governed `DocumentaryDocument` models for supported document profiles. `Mermaid/DocumentaryMermaidRenderer.ts` deterministically projects the existing D7 `DocumentaryKnowledgeProjection` into Mermaid source text with SHA-256 node aliases, stable ordering and escaped labels. It does not execute Mermaid, emit active click/URL/HTML/script directives, grant approval, persist graph state, create a second diagram/Knowledge registry or publish independent event authority.
+`Generators/DocumentaryRenderer.ts` renders supported document profiles. `Mermaid/DocumentaryMermaidRenderer.ts` deterministically renders the existing Knowledge projection into source text with stable ordering and escaped labels; it executes no Mermaid code and creates no second graph/Knowledge registry.
 
-Bilingual rendering continues to reuse the existing Vocabulary/Wording contracts. The Mermaid slice reuses the existing D7 node/relationship contract rather than defining a parallel graph model.
+Additional profiles are not an unconditional backlog item. They require a concrete existing Documentary model/provenance/lifecycle projection need.
 
 ### D7 — Knowledge Integration
 
 **State:** IMPLEMENTED DOCUMENTARY PROJECTION
 
-The current D7 identity is **Knowledge Integration**. `Knowledge/DocumentaryKnowledgeProjection.ts` emits a deterministic projection contract toward the existing Knowledge Engine. It does not persist a second Knowledge Registry or establish back-propagating Wiki authority.
+`Knowledge/DocumentaryKnowledgeProjection.ts` emits a deterministic contract toward the existing Knowledge Engine. It does not persist or authorize a second Knowledge Registry/Wiki authority.
 
 ### D8 — Migration & Legacy Compatibility
 
-**State:** IMPLEMENTED READ-ONLY PLANNING SLICE / MIGRATION EXECUTION PLANNED
+**State:** READ-ONLY PLANNING DONE / MIGRATION EXECUTION NEXT CONTRACT SLICE
 
-`Migration/DocumentaryMigrationPlanner.ts` provides deterministic planning for Documentary-owned documentation. It classifies candidates as `canonical`, `generated`, `evidence`, `legacy`, `archive` or `unknown` and emits only `retain`, `migration-candidate`, `redirect-candidate`, `owner-review` or `blocked` dispositions.
+`Migration/DocumentaryMigrationPlanner.ts` is Human-merged through PR #792 and deterministically classifies Documentary documentation as `canonical`, `generated`, `evidence`, `legacy`, `archive` or `unknown`, emitting `retain`, `migration-candidate`, `redirect-candidate`, `owner-review` or `blocked` dispositions.
 
-The planning slice is deliberately non-mutating:
-
-- every assessment and aggregate plan reports `mutationPerformed=false`;
-- generated migration candidates require a known canonical target and proven reproducibility;
-- authority, evidence, referenced, Security/Compliance and archive material remains retained;
-- unsafe/non-documentation paths and foreign project ownership fail closed as blocked;
-- the planner does not move, delete, rewrite, register, redirect, approve or otherwise mutate repository content.
-
-Physical or semantic Migration Execution remains a separate future work item. Any execution that changes registered identity/path, compatibility redirects or foreign-owner content requires fresh current-main correlation, explicit owner-bounded authorization and the applicable lifecycle/governance gates.
+Every result remains `mutationPerformed=false`. Physical/semantic execution is a separate work package and must first define stable identity, canonical target/compatibility, Primary Owner boundaries, protected classes, dry-run evidence, abort/rollback and deterministic post-condition verification. No bulk migration is implied.
 
 ### D9 — Documentary Observability
 
-**State:** IMPLEMENTED MAINTENANCE SLICE / BROADER OBSERVABILITY OPEN
+**State:** IMPLEMENTED MAINTENANCE SLICE / BROADER QUALITY-SLO MODEL LATER
 
-`Observability/DocumentaryMaintenanceObservability.ts` provides commit/correlation-bound aggregate maintenance health metrics. It intentionally does not claim the central Observability platform or a complete event-runtime observability implementation.
+`Observability/DocumentaryMaintenanceObservability.ts` provides commit/correlation-bound aggregate maintenance metrics. Broader quality/SLO work remains Documentary-local unless separately promoted by higher authority.
 
-## 4. Remaining Documentary-owned improvement backlog
-
-The stale 2026-08-10 gap list is replaced by the following current backlog:
-
-1. physical/semantic Documentary Migration Execution beyond the read-only D8 planning slice, only when separately authorized and owner-bounded;
-2. plugin extension model without introducing a second provider/agent framework;
-3. additional ESS-0012 documentation-only validators where current policy requires them;
-4. broader Documentary quality/SLO definitions beyond the implemented maintenance observability slice;
-5. additional generator profiles only when backed by existing document models, provenance and lifecycle contracts;
-6. further deterministic retry/idempotency hardening inside Documentary-owned consumers where evidence demonstrates a gap;
-7. sensitive-document classification consumption from Security/Compliance contracts without acquiring Security/Compliance decision authority.
-
-The former model-driven Mermaid/architecture-diagram gap is closed on this revision by the deterministic source-text projection in D6. Historical 2026-08-10 gaps such as “Engine fehlt”, “Models fehlen”, “Generators fehlen”, “Knowledge-Projektion fehlt” or README/manifest version drift are closed by current implementation evidence and must not be reopened merely because the original roadmap text remains in Git history.
-
-## 5. Workstream E — Event-Driven Value Chain
-
-Workstream E is retained as an integration/dependency projection. **EventMesh and central Traceability runtime implementation are CAPITAL-AI-OPS-owned.** Documentary only owns its bounded adapters, records and projections.
-
-| Slice | Current state | Documentary responsibility | Foreign-owner boundary |
-|---|---|---|---|
-| E0 Event Contract Inventory | DEPENDENCY | inventory Documentary producer/consumer contracts and evidence | global EventMesh inventory/runtime: OPS |
-| E1 Documentary Event Integration | IMPLEMENTED DOC SIDE | existing Documentary producer/consumer integration, correlation preservation, evidence output | EventMesh transport/runtime: OPS; Platform decisions: GOV |
-| E2 Idempotency / Ordering / Replay | DEPENDENCY | Documentary consumer-side deterministic behavior may be tested/hardened locally | EventMesh ordering/replay/DLQ runtime: OPS |
-| E3 Version-Aware Events | DEPENDENCY | consume existing event/schema/version contracts without creating parallel versions | platform version/release and EventMesh contract runtime: OPS; normative decision where required: GOV |
-| E4 End-to-End Traceability | IMPLEMENTED DOC RECORD SIDE | Documentary traceability record and document linkage | central Traceability runtime/storage: OPS |
-| E5 Reliability & Observability | DEPENDENCY | Documentary maintenance metrics only | EventMesh/central runtime reliability and observability: OPS |
-| E6 Governance Boundaries | REUSED | enforce no autonomous Documentary decision/release/production authority | Platform Director/Governance: GOV; Release/Production: OPS |
-
-The earlier target chain remains a conceptual evidence flow only:
-
-`Code/Architecture Change -> Supervisor Evidence -> Platform Decision -> EventMesh -> Documentary Impact -> Traceability -> Quality/Security/Compliance -> Version/Release Evidence`
-
-It must not be interpreted as Documentary ownership of every node in that chain.
-
-## 6. Workstream H — Documentation Hygiene
+## 4. Workstream H — Documentation Governance and Hygiene
 
 ### H0 — Canonical Folder Policy
 
 **State:** ACTIVE BASELINE / SHARED AUTHORITY BOUNDARY
 
-Documentation Hygiene validates canonical placement and root policy read-only. Repository-wide governance policy remains under the current Governance Control Plane; Documentary implements documentation-domain validation only.
+Documentation Hygiene validates placement and registry/lifecycle policy read-only; repository-wide policy remains Governance-owned.
 
 ### H1 — Continuous Orphan/Stale Detection
 
 **State:** IMPLEMENTED BASELINE
 
-Semantic freshness analysis and Documentation Hygiene provide the current Documentary-side stale/orphan detection baseline. Additional thresholds/SLOs may be added in bounded Documentary work when backed by policy/evidence.
+Semantic freshness analysis and Documentation Hygiene provide Documentary-side stale/orphan evidence.
 
 ### H2 — Archive Lifecycle
 
 **State:** IMPLEMENTED BOUNDED PLANNING
 
-Archive Retention classifies bounded candidates and produces deletion plans without performing physical deletion. Historical/registered/authority/evidence material remains protected according to existing lifecycle contracts.
+Archive Retention classifies candidates and produces owner-gated deletion plans without physical deletion.
 
 ### H3 — Runtime Path Hygiene
 
 **State:** DEPENDENCY / CASE-BY-CASE
 
-Documentary may detect stale paths and propose document-identity-based repairs. Productive foreign-domain moves, Compliance-owned document relocation, runtime-code path rewiring, Release changes or deployment changes remain with their Primary Owner and require handoff.
+Documentary may detect stale documentation paths and propose identity-based repairs. Foreign-domain/runtime rewiring remains with the mapped Primary Owner.
 
 ### H4 — Registry & Index
 
 **State:** REUSED EXISTING REGISTRY
 
-`docs/governance/document-registry.json` is the canonical document identity surface. Documentary must reuse it and must not create a second Document Registry. Registry governance remains subject to repository Governance controls.
+`docs/governance/document-registry.json` remains the canonical document identity/path surface. Documentary creates no second registry.
 
 ### H5 — Hygiene Gate
 
 **State:** IMPLEMENTED VALIDATOR / EXISTING DELIVERY PIPELINE REUSED
 
-`npm run docs:hygiene:check` uses the existing documentation-domain validator. Documentary does not create a second CI pipeline; delivery/CI execution remains within the existing repository lifecycle.
+`npm run docs:hygiene:check` uses the existing Documentation Hygiene service. Documentary creates no second CI pipeline.
+
+### ESS-0012 Chapter 2.5 rule coverage
+
+| Rule | Main state | Branch state |
+|---|---|---|
+| `GOV-DOC-001` | DONE | DONE |
+| `GOV-DOC-002` | DONE | DONE |
+| `GOV-DOC-003` | DONE | DONE |
+| `GOV-DOC-004` | DONE | DONE |
+| `GOV-DOC-005` | DONE via PR #866 | DONE |
+| `GOV-DOC-006` | DONE | DONE |
+| `GOV-DOC-007` unresolved reference | OPEN on main | implemented on `agent/documentary-wp-doc-13-gov-doc-007-20260910`; PR/Human merge pending |
+
+The bounded Chapter 2.5 sequence does not implicitly activate the wider historical ESS-0012 rule suite, scoring, production thresholds, event publication or Governance decisions.
+
+## 5. Workstream E — Event-Driven Value Chain
+
+Workstream E is an integration/dependency projection. EventMesh and central Traceability runtime remain CAPITAL-AI-OPS-owned.
+
+| Slice | Current state | Documentary responsibility | Foreign-owner boundary |
+|---|---|---|---|
+| E0 Event Contract Inventory | DEPENDENCY | inventory Documentary producer/consumer evidence | global EventMesh inventory/runtime: OPS |
+| E1 Documentary Event Integration | IMPLEMENTED DOC SIDE | existing producer/consumer integration and correlation preservation | EventMesh transport/runtime: OPS |
+| E2 Idempotency / Ordering / Replay | DEPENDENCY / DOC HARDENING EVIDENCE-DRIVEN | harden Documentary consumer behavior only after reproducible local failure evidence | ordering/replay/DLQ runtime: OPS |
+| E3 Version-Aware Events | DEPENDENCY | consume existing event/schema/version contracts | platform version/release/EventMesh runtime: OPS; normative decisions: GOV |
+| E4 End-to-End Traceability | IMPLEMENTED DOC RECORD SIDE | Documentary traceability record/document linkage | central runtime/storage: OPS |
+| E5 Reliability & Observability | DEPENDENCY | Documentary maintenance/quality metrics only | central reliability/observability: OPS |
+| E6 Governance Boundaries | REUSED | no autonomous Documentary decision/release/production authority | Platform Director/Governance: GOV; Release/Production: OPS |
+
+## 6. Remaining Documentary-owned backlog
+
+Ordered by current project Roadmap:
+
+1. **WP-DOC-13 — GOV-DOC-007 unresolved reference**: implemented on synchronized branch; exact-head repository validation, PR approval, Human merge and main re-correlation remain open.
+2. **WP-DOC-14 — Migration Execution contract & dry-run design**: NEXT after WP-DOC-13; contract-first only, no physical mutation.
+3. **WP-DOC-15 — Documentary quality/SLO model**: LATER; evidence and contract correlation required before thresholds are introduced.
+4. **WP-DOC-16 — Plugin extension model**: LATER; reuse/security/ownership pre-check required; no second provider/agent framework and no connector mutation.
+5. **WP-DOC-17 — Consumer retry/idempotency hardening**: LATER / evidence-driven; do not implement speculative retries.
+6. **Additional generator profiles**: demand-driven only when an existing model requires a missing projection.
+7. **Sensitive-document classification consumption**: dependency on a stable Security/Compliance contract; Documentary does not invent classification semantics.
+
+Continuous maintained baselines remain WP-DOC-02 lifecycle/maintenance/Documentation Governance and WP-DOC-03 Vocabulary/Knowledge/Wiki projection.
 
 ## 7. Current execution order
 
-The original 2026-08-10 sequence is historical. Current Documentary sequencing is evidence-driven:
+1. close WP-DOC-13 through exact-head validation, PR gate and Human merge;
+2. re-correlate then-current main/Roadmap/ADR/ESS;
+3. if still highest priority, execute WP-DOC-14 contract/dry-run slice on a fresh branch;
+4. keep WP-DOC-15/16/17 and conditional generator/security-consumption work behind their explicit evidence/dependency gates;
+5. treat E0/E2/E3/E5 central runtime work and H3 foreign-runtime moves as owner handoffs, not DOC implementation;
+6. preserve Human/CODEOWNER merge and separate protected production/external-mutation controls.
 
-1. maintain D0–D8 implemented baselines without reintroducing duplicate authorities;
-2. execute remaining DOC-owned Migration Execution/Plugins/validator work only as separately scoped work packages;
-3. extend D9 only inside Documentary scope unless a central observability change is handed off;
-4. treat E0/E2/E3/E5 central runtime work as OPS dependencies/handoffs;
-5. preserve GOV decision boundaries for Platform Director and repository Governance;
-6. keep H3 foreign-domain/runtime moves as owner-specific handoffs;
-7. run applicable Documentary/documentation/governance validation on every exact candidate before PR readiness.
+## 8. Roadmap exit criteria
 
-## 8. Exit criteria for this roadmap projection
+This technical projection is current when:
 
-The Documentary roadmap is current when:
-
-- implementation status reflects current code/manifests rather than the 2026-08-10 target-tree snapshot;
-- D4/D6/D7/D8 numbering matches the current implemented Documentary architecture;
+- implementation status reflects current code/manifests/Human merges rather than the 2026-08-10 target snapshot;
 - component/schema/platform version authorities remain separated;
 - Documentary-owned work remains inside CAPITAL-AI-DOC / PVC-03;
-- EventMesh/central Traceability runtime, Platform Version Management, Release and Production are not represented as Documentary implementation work;
+- EventMesh/central Traceability, Platform Version Management, Release and Production are not represented as Documentary-owned implementation;
 - Platform Director/repository Governance decisions remain CAPITAL-AI-GOV-owned;
 - no second Document, Vocabulary, Knowledge, Wiki, Event, Diagram, Version, Release or Governance registry/authority is introduced;
-- historical baseline information remains traceable and is explicitly non-current;
-- remaining planned Documentary areas are accurately bounded and independently actionable.
+- historical baseline information remains explicitly non-current;
+- planned areas remain bounded by evidence, ownership and objective exit gates;
+- `NOT RUN` is never projected as PASS.
 
 Human/Owner PR-creation approval and Human/CODEOWNER merge remain separate repository lifecycle gates.
