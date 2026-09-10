@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 
-import { PVC_OWNER, validateSecurityAssessment } from './validateSecurityAssessment.mjs';
+import {
+  BOUNDED_SECURITY_REMEDIATION_CONTROL,
+  PVC_OWNER,
+  validateBoundedSecurityRemediation,
+  validateSecurityAssessment,
+} from './validateSecurityAssessment.mjs';
 
 const DIMENSIONS = [
   'blackboxResistance',
@@ -60,6 +65,53 @@ function validAssessment() {
 
 function codes(value) {
   return new Set(validateSecurityAssessment(value).map((item) => item.code));
+}
+
+function boundedDecision(overrides = {}) {
+  return {
+    controlId: BOUNDED_SECURITY_REMEDIATION_CONTROL,
+    primaryPurpose: 'SECURITY_REMEDIATION',
+    confirmedSecurityFinding: true,
+    boundedSlice: true,
+    preservesDomainContracts: true,
+    affectedPaths: ['server/security-example.ts'],
+    changeClasses: ['input-validation'],
+    changesBusinessSemantics: false,
+    changesProductivePvcOwnership: false,
+    changesForeignAuthority: false,
+    protectedExternalMutationRequired: false,
+    weakensSecurityGates: false,
+    createsParallelControlPlane: false,
+    ...overrides,
+  };
+}
+
+function remediationFinding(overrides = {}) {
+  return {
+    findingId: 'SEC-SYNTH-REMEDIATION',
+    title: 'Synthetic bounded remediation',
+    severity: 'HIGH',
+    state: 'REMEDIATION_REQUIRED',
+    mode: 'web-blackbox',
+    pvc: 'PVC-02',
+    primaryOwner: 'CAPITAL-AI-OPS',
+    authorizationRef: 'SYNTHETIC-AUTHORIZATION-NON-PRODUCTION',
+    targetSnapshot: 'fixture@1',
+    securityRequirements: ['synthetic security requirement'],
+    expectedResult: 'deny unsafe input',
+    observedResult: 'unsafe input accepted',
+    evidenceRefs: ['evidence:synthetic'],
+    reproduction: ['synthetic reproduction'],
+    remediationRequirement: 'Apply the minimum sufficient Security remediation.',
+    verificationRequirement: 'Run separate positive and negative Security re-tests.',
+    routingStatus: 'SECURITY_BOUNDED',
+    remediationDecision: boundedDecision(),
+    ...overrides,
+  };
+}
+
+function boundedCodes(decision) {
+  return new Set(validateBoundedSecurityRemediation(decision, 'SEC-SYNTH').map((item) => item.code));
 }
 
 test('Security Assessment skill uses only current project routing and advisory methodologies', () => {
@@ -163,26 +215,50 @@ test('VERIFIED requires independently identifiable verification evidence', () =>
   assert.ok(!codes(assessment).has('VERIFICATION_EVIDENCE_REQUIRED'));
 });
 
-test('foreign productive remediation must be REFERRED_NOT_EXECUTED', () => {
+test('REMEDIATION_REQUIRED accepts eligible SECURITY_BOUNDED execution without changing PVC owner', () => {
   const assessment = validAssessment();
-  assessment.findings.push({
-    findingId: 'SEC-SYNTH-003',
-    title: 'Synthetic routing guard',
-    severity: 'MEDIUM',
-    state: 'REMEDIATION_REQUIRED',
-    mode: 'web-blackbox',
-    pvc: 'PVC-02',
-    primaryOwner: 'CAPITAL-AI-OPS',
-    authorizationRef: assessment.authorization.reference,
-    targetSnapshot: assessment.target.snapshot,
-    securityRequirements: ['synthetic requirement'],
-    expectedResult: 'deny',
-    observedResult: 'allow',
-    evidenceRefs: ['evidence:synthetic'],
-    reproduction: ['synthetic reproduction'],
-    remediationRequirement: 'Target owner must remediate productive behavior.',
-    verificationRequirement: 'Security independently re-tests returned evidence.',
-    routingStatus: 'LOCAL_SECURITY_SCOPE',
-  });
-  assert.ok(codes(assessment).has('FOREIGN_REMEDIATION_ROUTING_REQUIRED'));
+  assessment.findings.push(remediationFinding());
+  assert.deepEqual(validateSecurityAssessment(assessment), []);
+  assert.equal(assessment.findings[0].primaryOwner, 'CAPITAL-AI-OPS');
 });
+
+test('REMEDIATION_REQUIRED accepts explicit OWNER_ROUTED handoff when bounded Security authority is not used', () => {
+  const assessment = validAssessment();
+  assessment.findings.push(remediationFinding({ routingStatus: 'OWNER_ROUTED', remediationDecision: undefined }));
+  assert.deepEqual(validateSecurityAssessment(assessment), []);
+});
+
+test('REFERRED_NOT_EXECUTED remains accepted only as compatibility routing for an owner-routed remainder', () => {
+  const assessment = validAssessment();
+  assessment.findings.push(remediationFinding({ routingStatus: 'REFERRED_NOT_EXECUTED', remediationDecision: undefined }));
+  assert.deepEqual(validateSecurityAssessment(assessment), []);
+});
+
+// PASS matrix required by CTRL-SEC-BOUNDED-REMEDIATION-001.
+for (const [name, affectedPaths, changeClasses] of [
+  ['vulnerable dependency patch', ['package.json', 'package-lock.json'], ['dependency-patch']],
+  ['input validation', ['server/routes/input.ts'], ['input-validation']],
+  ['mail upload URL parser hardening', ['server/mail/parser.ts'], ['parser-hardening']],
+  ['fail-closed guard', ['server/auth/guard.ts'], ['fail-closed-guard']],
+  ['Security negative tests', ['tests/security/parser-negative.test.ts'], ['security-negative-tests']],
+  ['foreign-placed bounded remediation', ['server/domain-owned/handler.ts'], ['input-validation']],
+]) {
+  test(`PASS bounded Security remediation: ${name}`, () => {
+    assert.deepEqual(validateBoundedSecurityRemediation(boundedDecision({ affectedPaths, changeClasses }), name), []);
+  });
+}
+
+// DENY matrix required by CTRL-SEC-BOUNDED-REMEDIATION-001.
+for (const [name, override, expectedCode] of [
+  ['Security finding used for feature development', { primaryPurpose: 'FEATURE_DEVELOPMENT' }, 'SECURITY_BOUNDED_PRIMARY_PURPOSE_REQUIRED'],
+  ['Security takes foreign productive PVC ownership', { changesProductivePvcOwnership: true }, 'SECURITY_BOUNDED_PVC_OWNERSHIP_DENIED'],
+  ['Security changes foreign business or architecture authority', { changesForeignAuthority: true }, 'SECURITY_BOUNDED_FOREIGN_AUTHORITY_DENIED'],
+  ['Security weakens Security gates', { weakensSecurityGates: true }, 'SECURITY_BOUNDED_GATE_WEAKENING_DENIED'],
+  ['Security requires protected production IAM billing or secret mutation', { protectedExternalMutationRequired: true }, 'SECURITY_BOUNDED_PROTECTED_MUTATION_DENIED'],
+  ['Security creates a parallel control plane', { createsParallelControlPlane: true }, 'SECURITY_BOUNDED_PARALLEL_PLANE_DENIED'],
+  ['Security changes business/product semantics', { changesBusinessSemantics: true }, 'SECURITY_BOUNDED_BUSINESS_SEMANTICS_DENIED'],
+]) {
+  test(`DENY bounded Security remediation: ${name}`, () => {
+    assert.ok(boundedCodes(boundedDecision(override)).has(expectedCode));
+  });
+}

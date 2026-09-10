@@ -46,6 +46,8 @@ The `PVC-*` namespace is intentionally distinct from the existing technical fina
 
 Cross-cutting projects such as `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FE`, `CAPITAL-AI-SEO` and `CAPITAL-AI-SOCIAL` own no productive PVC stage solely because they validate, constrain, present or distribute outputs.
 
+Execution authority is separate from long-term PVC ownership. In particular, `CAPITAL-AI-SEC` may implement a pure bounded Security-primary repository remediation under `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001` without acquiring the affected project's PVC, Domain or file ownership. Physical file/PVC placement alone does not prohibit such a Security fix; business semantics, foreign Architecture Authority and protected external mutation remain Owner/Authority boundaries.
+
 ## Canonical project-folder routing
 
 Project-folder routing is an organizational mapping only. It does not create technical Authority, merge authority, deployment authority or Domain Ownership transfer.
@@ -61,13 +63,13 @@ Project-folder routing is an organizational mapping only. It does not create tec
 | `CAPITAL-AI-DATA` | `PVC-09..11` Primary Owner | `docs/projects/data/` | `data` | `CAPITAL-AI-DATA` | present |
 | `CAPITAL-AI-FINTECH` | `PVC-12..17` Primary Owner | `docs/projects/fintech/` | `fintech` | `CAPITAL-AI-FINTECH` | present |
 | `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | `CAPITAL-AI-QM` | present |
-| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | present |
+| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC; bounded Security remediation execution may be delegated without ownership transfer | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | present |
 | `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | `CAPITAL-AI-COMP` | present |
 | `CAPITAL-AI-FE` | cross-cutting; no productive PVC | `docs/projects/frontend/` | `frontend` | `CAPITAL-AI-FE` | present |
 | `CAPITAL-AI-SEO` | cross-cutting; no productive PVC | `docs/projects/seo/` | `seo` | `CAPITAL-AI-SEO` | present |
 | `CAPITAL-AI-SOCIAL` | cross-cutting; no productive PVC | `docs/projects/social-media/` | `social-media` | `CAPITAL-AI-SOCIAL` | present |
 
-The branch slug is always derived from the canonical project-folder basename. Domain/runtime/normative artifacts remain at their existing canonical paths unless a separate, owner-scoped migration proves that relocation is required.
+The branch slug is always derived from the canonical project-folder basename. Domain/runtime/normative artifacts remain at their existing canonical paths unless a separate, owner-scoped migration proves that relocation is required. A bounded Security remediation does not constitute such a relocation.
 
 ## Withdrawn post-mapping contracts
 

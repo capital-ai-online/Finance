@@ -21,6 +21,8 @@ export const PVC_OWNER = Object.freeze({
   'PVC-18': 'CAPITAL-AI-OPS',
 });
 
+export const BOUNDED_SECURITY_REMEDIATION_CONTROL = 'CTRL-SEC-BOUNDED-REMEDIATION-001';
+
 const REQUIRED_DIMENSIONS = Object.freeze([
   'blackboxResistance',
   'injectionResistance',
@@ -45,6 +47,23 @@ const FINDINGS_REQUIRING_EVIDENCE = new Set([
   'ACCEPTED_RISK',
 ]);
 
+const SECURITY_REMEDIATION_CLASSES = new Set([
+  'dependency-patch',
+  'input-validation',
+  'parser-hardening',
+  'fail-closed-guard',
+  'security-negative-tests',
+  'auth-hardening',
+  'secret-protection',
+  'security-headers',
+  'resource-limits',
+  'supply-chain-hardening',
+  'workflow-security',
+  'runtime-security-config',
+  'remove-unsafe-component',
+  'security-evidence',
+]);
+
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -55,6 +74,65 @@ function nonEmptyArray(value) {
 
 function push(errors, code, detail) {
   errors.push({ code, detail });
+}
+
+export function validateBoundedSecurityRemediation(decision, findingId = '<unknown>') {
+  const errors = [];
+  const id = findingId;
+
+  if (!decision || typeof decision !== 'object' || Array.isArray(decision)) {
+    push(errors, 'SECURITY_BOUNDED_DECISION_REQUIRED', `${id}: SECURITY_BOUNDED requires a remediationDecision object.`);
+    return errors;
+  }
+
+  if (decision.controlId !== BOUNDED_SECURITY_REMEDIATION_CONTROL) {
+    push(errors, 'SECURITY_BOUNDED_CONTROL_MISMATCH', `${id}: remediationDecision.controlId must equal ${BOUNDED_SECURITY_REMEDIATION_CONTROL}.`);
+  }
+  if (decision.primaryPurpose !== 'SECURITY_REMEDIATION') {
+    push(errors, 'SECURITY_BOUNDED_PRIMARY_PURPOSE_REQUIRED', `${id}: primary purpose must be SECURITY_REMEDIATION, not feature or domain development.`);
+  }
+  if (decision.confirmedSecurityFinding !== true) {
+    push(errors, 'SECURITY_BOUNDED_CONFIRMED_FINDING_REQUIRED', `${id}: bounded execution requires a confirmed Security finding.`);
+  }
+  if (decision.boundedSlice !== true) {
+    push(errors, 'SECURITY_BOUNDED_SLICE_REQUIRED', `${id}: remediation must remain a bounded Security slice.`);
+  }
+  if (decision.preservesDomainContracts !== true) {
+    push(errors, 'SECURITY_BOUNDED_DOMAIN_CONTRACT_PRESERVATION_REQUIRED', `${id}: existing Domain/Owner/ADR/ESS contracts must be preserved.`);
+  }
+  if (!nonEmptyArray(decision.affectedPaths)) {
+    push(errors, 'SECURITY_BOUNDED_PATHS_REQUIRED', `${id}: affectedPaths must identify the bounded repository surface.`);
+  }
+  if (!nonEmptyArray(decision.changeClasses)) {
+    push(errors, 'SECURITY_BOUNDED_CHANGE_CLASS_REQUIRED', `${id}: changeClasses must identify at least one Security remediation class.`);
+  } else {
+    for (const changeClass of decision.changeClasses) {
+      if (!SECURITY_REMEDIATION_CLASSES.has(changeClass)) {
+        push(errors, 'SECURITY_BOUNDED_CHANGE_CLASS_INVALID', `${id}: unsupported Security remediation class ${String(changeClass)}.`);
+      }
+    }
+  }
+
+  if (decision.changesBusinessSemantics === true) {
+    push(errors, 'SECURITY_BOUNDED_BUSINESS_SEMANTICS_DENIED', `${id}: bounded Security authority cannot change business/product semantics.`);
+  }
+  if (decision.changesProductivePvcOwnership === true) {
+    push(errors, 'SECURITY_BOUNDED_PVC_OWNERSHIP_DENIED', `${id}: remediation execution cannot transfer productive PVC ownership to Security.`);
+  }
+  if (decision.changesForeignAuthority === true) {
+    push(errors, 'SECURITY_BOUNDED_FOREIGN_AUTHORITY_DENIED', `${id}: bounded Security authority cannot redefine foreign Domain/Architecture authority.`);
+  }
+  if (decision.protectedExternalMutationRequired === true) {
+    push(errors, 'SECURITY_BOUNDED_PROTECTED_MUTATION_DENIED', `${id}: protected external mutation requires separate applicable authority.`);
+  }
+  if (decision.weakensSecurityGates === true) {
+    push(errors, 'SECURITY_BOUNDED_GATE_WEAKENING_DENIED', `${id}: Security gates/findings/thresholds cannot be weakened or suppressed.`);
+  }
+  if (decision.createsParallelControlPlane === true) {
+    push(errors, 'SECURITY_BOUNDED_PARALLEL_PLANE_DENIED', `${id}: no parallel Security/IAM/Audit/Release/Governance control plane may be created.`);
+  }
+
+  return errors;
 }
 
 export function validateSecurityAssessment(assessment) {
@@ -91,7 +169,7 @@ export function validateSecurityAssessment(assessment) {
     push(errors, 'TARGET_OUTSIDE_AUTHORIZATION', 'target.identifier must be present in authorization.authorizedTargets.');
   }
   if (scope.assessmentOnly !== true) {
-    push(errors, 'ASSESSMENT_ONLY_REQUIRED', 'Current contract is assessment-only and must fail closed otherwise.');
+    push(errors, 'ASSESSMENT_ONLY_REQUIRED', 'Security Assessment remains assessment-only; repository remediation authority is evaluated separately per finding.');
   }
   if (Array.isArray(scope.modes)) {
     for (const mode of scope.modes) {
@@ -144,7 +222,7 @@ export function validateSecurityAssessment(assessment) {
   for (const finding of findings) {
     const id = nonEmptyString(finding?.findingId) ? finding.findingId : '<unknown>';
     if (Object.hasOwn(PVC_OWNER, finding?.pvc) && finding.primaryOwner !== PVC_OWNER[finding.pvc]) {
-      push(errors, 'FINDING_OWNER_MISMATCH', `${id}: ${finding.pvc} must route to ${PVC_OWNER[finding.pvc]}.`);
+      push(errors, 'FINDING_OWNER_MISMATCH', `${id}: ${finding.pvc} must remain owned by ${PVC_OWNER[finding.pvc]}, not ${String(finding.primaryOwner)}.`);
     }
     if (finding.authorizationRef !== authorization.reference) {
       push(errors, 'FINDING_AUTHORIZATION_MISMATCH', `${id}: authorizationRef must match the assessment authorization reference.`);
@@ -156,8 +234,13 @@ export function validateSecurityAssessment(assessment) {
       if (!nonEmptyArray(finding.evidenceRefs)) push(errors, 'FINDING_EVIDENCE_REQUIRED', `${id}: ${finding.state} requires evidenceRefs.`);
       if (!nonEmptyArray(finding.reproduction)) push(errors, 'FINDING_REPRODUCTION_REQUIRED', `${id}: ${finding.state} requires reproduction steps.`);
     }
-    if (finding.state === 'REMEDIATION_REQUIRED' && finding.routingStatus !== 'REFERRED_NOT_EXECUTED') {
-      push(errors, 'FOREIGN_REMEDIATION_ROUTING_REQUIRED', `${id}: productive PVC remediation must be REFERRED_NOT_EXECUTED.`);
+    if (finding.state === 'REMEDIATION_REQUIRED') {
+      if (!['SECURITY_BOUNDED', 'OWNER_ROUTED', 'REFERRED_NOT_EXECUTED'].includes(finding.routingStatus)) {
+        push(errors, 'REMEDIATION_ROUTING_REQUIRED', `${id}: remediation routingStatus must be SECURITY_BOUNDED or OWNER_ROUTED; REFERRED_NOT_EXECUTED remains accepted as the compatibility marker for an owner-routed remainder.`);
+      }
+      if (finding.routingStatus === 'SECURITY_BOUNDED') {
+        errors.push(...validateBoundedSecurityRemediation(finding.remediationDecision, id));
+      }
     }
     if (finding.state === 'VERIFIED') {
       const verificationRefs = Array.isArray(finding.evidenceRefs)
