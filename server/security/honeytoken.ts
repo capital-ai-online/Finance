@@ -12,7 +12,7 @@
 //   - Dieses Modul plus honeytokenTripwire.ts erkennen die Verwendung *gegen unsere eigene API*.
 //     Diesen Teil sieht GitGuardian nicht.
 //
-// Governance: `docs/runbooks/GITGUARDIAN_SNYK_APP_INTEGRATION.md` untersagt, der GitGuardian-App
+// Governance: `docs/runbooks/GITGUARDIAN_APP_INTEGRATION.md` untersagt, der GitGuardian-App
 // Honeytoken-Schreibrechte zu erteilen. Diese Implementierung haelt das ein: das Token wird
 // ausserhalb der Anwendung erzeugt (GitGuardian-Dashboard/-API durch den Owner) und der Laufzeit
 // ausschliesslich lesend ueber Environment-Variablen bekannt gemacht. Die Anwendung erzeugt,
