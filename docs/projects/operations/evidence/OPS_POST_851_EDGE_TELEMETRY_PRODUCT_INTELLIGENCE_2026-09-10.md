@@ -145,3 +145,26 @@ Immediately before PR creation:
 - obtain the exact Human `PR erstellen: freigegeben` approval for that snapshot.
 
 This evidence does not authorize PR creation or merge.
+
+## 8. Post-PR dependency-audit remediation — 2026-09-10
+
+After PR #859 was re-correlated to `main@a0c73dcb8f17a208aa09b10e3799fbfbdbcd45fa`, hosted Dependency Audit exposed two HIGH production dependency findings in the resolved lockfile: `multer@2.2.0` and `nodemailer@9.0.3`.
+
+The existing `package.json` ranges already permit the upstream patched releases, so no package-policy/range change was required. The bounded remediation updated only the resolved lock identities:
+
+- `multer`: `2.2.0` → `2.3.0`;
+- `nodemailer`: `9.0.3` → `9.1.1`.
+
+Validation on the exact generated lockfile:
+
+- targeted `npm update multer nodemailer --package-lock-only`: `PASS`;
+- package.json remained unchanged: `PASS`;
+- changed dependency surface before commit was exactly `package-lock.json`: `PASS`;
+- exact lock identity `node_modules/multer@2.3.0`: `PASS`;
+- exact lock identity `node_modules/nodemailer@9.1.1`: `PASS`;
+- `npm audit --omit=dev --audit-level=high`: `PASS`;
+- `git diff --check` for the materialized fix: `PASS`.
+
+The temporary branch-bound materialization workflow self-removed in the same dependency-fix commit and is absent from the final PR diff. Dependency-fix commit: `21c558243767f7933b4d31ebc32ad5ece737c7ef`.
+
+Human/CODEOWNER merge authority and the separate Production activation/mutation gates remain unchanged.
