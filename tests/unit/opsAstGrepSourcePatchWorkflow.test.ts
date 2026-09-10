@@ -49,7 +49,7 @@ describe('OPS ast-grep BB-2E workflow', () => {
       'ref: agent/frontend-bb-2e-dashboard-drawer-20260910',
     );
     expect(workflow).toContain(
-      "default: '58f9fadc269874e8f6f7b04195f20fb98d976835'",
+      "default: 'ae85bfbcbf6cee7c4eaeb8b09e7da8106954914b'",
     );
     expect(workflow).not.toContain('agent/frontend-bb2e-drawer-rematerialize-20260910');
     expect(workflow).not.toContain('88dcaa1c671d16caa8dd60d0dd9b4b43c5cb5020');
