@@ -7,7 +7,7 @@
 **Role:** cross-cutting Security requirements, findings, testing, bounded remediation and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
 **Date:** `2026-09-10`  
-**Correlation baseline:** `main@181579df1b4d975379a2b7113ad946da341ed6e2`  
+**Correlation baseline:** `main@256f02ce2972d8432ad02e8fd8bceba907475efb`  
 **Implementation authority:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001`  
 **Component specification:** `ESS-0006 v1.2.0`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
@@ -120,7 +120,7 @@ The following table records the 2026-09-07 routing result. It is not a current p
 |---|---|---|---|
 | `SEC-SOTA02-F01` AI Chat indirect prompt-injection trust boundary | `CAPITAL-AI-FINTECH / PVC-15`; CLIENT/PVC-01 dependency for history contract | `CONFIRMED / OWNER_ROUTED` | malicious retrieved-instruction + history-role-spoof DENY/isolation evidence; model output cannot gain tool/execution authority |
 | `SEC-SOTA02-F02` Documentary automatic Draft-PR dispatch lacks current exact Human PR-creation gate | `CAPITAL-AI-DOC / PVC-03` | `CONFIRMED / OWNER_ROUTED` | control loop terminates at approval-ready handoff; exact main/head/scope/title Human approval precedes every PR dispatch |
-| `SEC-SOTA02-F03` Documentary real mutation path lacks durable ADR-0059-grade execution audit | `CAPITAL-AI-DOC / PVC-03` | `CONFIRMED / OWNER_ROUTED` | actor/app/agent/session/request/capability/policy/tool/branch/commit/PR authorization+outcome evidence; fail-closed audit where required |
+| `SEC-SOTA02-F03` Documentary real Git mutation path lacks durable ADR-0059-grade execution audit | `CAPITAL-AI-DOC / PVC-03` | `CONFIRMED / OWNER_ROUTED` | actor/app/agent/session/request/capability/policy/tool/branch/commit/PR authorization+outcome evidence; fail-closed audit where required |
 | `SEC-SOTA02-F04` external MCP/connector host assurance not independently proven | `CAPITAL-AI-OPS / PVC-02` | `EVIDENCE_GAP / OWNER_ROUTED` | effective host AuthN/AuthZ/tool grant/session isolation/read-only ceiling readback; executable identity additionally assessed in `SEC-SOTA-03` |
 | `SEC-SOTA02-F05` stale `CLAUDE.md` authority references in current ESS-0018/ADR-0051 | `CAPITAL-AI-GOV / PVC-05` | `CONFIRMED / OWNER_ROUTED` | current Trust Root/stable authority replaces provider-specific wording without changing technical semantics |
 | `SEC-SOTA02-F06` AI Chat session/history provenance not independently attestable | `CAPITAL-AI-CLIENT / PVC-01`; FINTECH/PVC-15 server dependency | `EVIDENCE_GAP / OWNER_ROUTED` | explicit stateless contract or server-attested session/history chain; negative cross-session/context-substitution tests |
@@ -163,23 +163,24 @@ No row grants CAPITAL-AI-SEC the productive owner's business or PVC authority. A
 
 ## Current correlation state — post PR #872
 
-- Correlation baseline: `main@181579df1b4d975379a2b7113ad946da341ed6e2`.
+- Correlation baseline: `main@256f02ce2972d8432ad02e8fd8bceba907475efb`.
 - Current Project: `CAPITAL-AI-SEC`; productive PVC ownership remains `[]`; Primary Owner remains `CAPITAL-AI-SEC` for the Security workstream.
 - PR #872 final PR head was `e59308599dde3f7cf050601a2b6e64c5a73aaf59`; Human merge is `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`.
 - Exact main workflow run `34514847089`: `build-and-test` completed `success`; runtime provenance binding, cosign keyless signing and expected workflow-identity verification all completed `success`; the deployment job persisted exact deployment-identity evidence after observing `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c` in production with healthy status. The workflow aggregate concluded `cancelled` after these bounded evidence steps; that aggregate state is retained and is not rewritten as PASS.
-- Current `main@181579df1b4d975379a2b7113ad946da341ed6e2` is 45 commits ahead of `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c` with merge base exactly at the PR #872 merge; intervening current-main changes do not modify the eight PR #872 Security/provenance implementation files.
-- Open Pull Request #876 (`CAPITAL-AI-FINTECH`, `SEC-SOTA02-F01` owner remediation) changes seven FINTECH/runtime/test/evidence files and has no changed-file overlap with this Security-Roadmap-only projection. It is semantically related through the historical F01 return queue, but this branch does not change F01 state or claim its independent Security closure; correlation therefore remains PASS.
-- Fresh projection branch: `agent/security-sota03-postmerge-verification-20260910`, created from exact current main.
+- Current `main@256f02ce2972d8432ad02e8fd8bceba907475efb` is 53 commits ahead of `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c` with merge base exactly at the PR #872 merge; intervening current-main changes do not modify the eight PR #872 Security/provenance implementation files.
+- PR #876 (`CAPITAL-AI-FINTECH`, `SEC-SOTA02-F01` owner remediation) is now Human-merged as `256f02ce2972d8432ad02e8fd8bceba907475efb`. Its seven FINTECH/runtime/test/evidence files have no changed-file overlap with this Security-Roadmap-only projection. F01 implementation evidence is therefore on main, while independent CAPITAL-AI-SEC verification/closure remains separate and is not claimed by this branch.
+- Open Pull Requests at this correlation: `0`.
+- Projection branch `agent/security-sota03-postmerge-verification-20260910` was resynchronized with exact current main after PR #876 merged; the merge introduced no conflict and did not change the bounded Security-Roadmap payload outside current correlation metadata.
 - Long-term Controlled Implementation and Release ownership remains `CAPITAL-AI-OPS / PVC-02` and `PVC-07`; the next MCP executable-identity finding likewise retains OPS/PVC-02 productive ownership while Security remains assurance/bounded-remediation owner.
 - No provider permission, connector, credential, runtime, deployment or protected Production mutation is included in this projection branch.
 
 ## Validation / completion gate
 
-1. current `/AGENTS.md` is fully read from `main@181579df1b4d975379a2b7113ad946da341ed6e2` and current Approval-Envelope/merge-boundary semantics are preserved;
+1. current `/AGENTS.md` is fully read from `main@256f02ce2972d8432ad02e8fd8bceba907475efb` and current Approval-Envelope/merge-boundary semantics are preserved;
 2. project/PVC mapping, Security Roadmap, current work packages, ESS-0006, ADR-0060, PR #872 and exact main workflow evidence are correlated;
 3. `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` is projected `VERIFIED_MAIN / CLOSED` only from exact `a05d75f...` build/provenance/signature/deployment evidence, not from implementation status alone;
 4. the retained workflow-level `cancelled` state is explicitly distinguished from the individually successful bounded exit-gate jobs/steps and persisted evidence artifacts;
-5. current main contains the PR #872 merge in ancestry and no intervening current-main commit modifies the eight bounded artifact-digest implementation files;
+5. current main contains the PR #872 merge in ancestry; subsequent merges including PR #876 do not modify the eight bounded artifact-digest implementation files;
 6. the next `SEC-SOTA-03` repository gap is the mutable `.mcp.json` executable declaration `uvx analytics-mcp`, already routed into SOTA-03 by `SEC-SOTA02-F04`;
 7. external MCP-host AuthN/AuthZ/tool-grant/session isolation remains a separate OPS/PVC-02 evidence dependency and is not claimed verified by repository pinning;
 8. `SEC-SOTA-04` remains queued after the remaining P0 supply-chain inventory rather than being started in parallel without correlation;
