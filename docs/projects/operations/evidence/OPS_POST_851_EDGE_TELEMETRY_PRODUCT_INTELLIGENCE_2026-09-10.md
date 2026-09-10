@@ -93,7 +93,7 @@ None of these fields grants identity, capability, policy, approval or execution 
 
 `src/platform/Telemetry/productIntelligence.ts` adds a vendor-neutral aggregate event contract.
 
-It explicitly rejects identity/credential/request-content property names and does not contain any outbound exporter or vendor SDK. Product Intelligence is evidence/data only and cannot grant entitlement, alter scoring, mutate billing, bypass consent or select an AI/provider execution path.
+It explicitly rejects identity/credential/request-content property names, rejects non-scalar nested payloads at runtime even if a caller bypasses TypeScript, and does not contain any outbound exporter or vendor SDK. Product Intelligence is evidence/data only and cannot grant entitlement, alter scoring, mutate billing, bypass consent or select an AI/provider execution path.
 
 ## 5. Focused negative validation
 
@@ -108,6 +108,7 @@ It explicitly rejects identity/credential/request-content property names and doe
 | valid W3C v00 traceparent | `PASS` | trace/parent-span/flags parsed |
 | malformed/all-zero/unsupported-version traceparent | `PASS` | returns `null` |
 | Product Intelligence identity/credential/request-content properties | `PASS` | rejected for email/user/session/authorization/token/request-body/query families |
+| Product Intelligence nested arbitrary payload via runtime type bypass | `PASS` | rejected at runtime before event creation |
 | non-`product.*` event namespace | `PASS` | rejected |
 | Product Intelligence immutability | `PASS` | event/context/properties frozen |
 | repository-native `vitest` focused test | `NOT-RUN` | GitHub connector surface has no repository checkout/dependency tree |

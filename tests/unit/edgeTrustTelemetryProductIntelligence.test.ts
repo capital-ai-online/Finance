@@ -156,7 +156,22 @@ describe('vendor-neutral Product Intelligence contract', () => {
     }
   });
 
-  it('rejects non-product event namespaces and nested arbitrary payloads at the type boundary', () => {
+  it('rejects nested arbitrary payloads at runtime even if a caller bypasses TypeScript', () => {
+    expect(() => createProductIntelligenceEvent({
+      eventName: 'product.screening.completed',
+      purpose: 'feature-adoption',
+      context: {
+        service: 'capital-ai',
+        environment: 'test',
+        productArea: 'screening',
+      },
+      properties: {
+        metadata: { email: 'person@example.com' } as unknown as string,
+      },
+    })).toThrow(/Invalid Product Intelligence property value/);
+  });
+
+  it('rejects non-product event namespaces', () => {
     expect(() => createProductIntelligenceEvent({
       eventName: 'billing.completed',
       purpose: 'funnel',

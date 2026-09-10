@@ -86,6 +86,10 @@ function validateProperties(
       throw new Error(`Sensitive Product Intelligence property is prohibited: ${key}`);
     }
 
+    const valueType = typeof value;
+    if (value !== null && valueType !== 'string' && valueType !== 'number' && valueType !== 'boolean') {
+      throw new Error(`Invalid Product Intelligence property value: ${key}`);
+    }
     if (typeof value === 'number' && !Number.isFinite(value)) {
       throw new Error(`Invalid Product Intelligence numeric property: ${key}`);
     }
