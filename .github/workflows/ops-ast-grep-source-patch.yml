@@ -7,7 +7,7 @@ on:
       expected_head_sha:
         description: 'Exakter 40-stelliger Head-SHA von agent/frontend-bb-2e-dashboard-drawer-20260910'
         required: true
-        default: '58f9fadc269874e8f6f7b04195f20fb98d976835'
+        default: 'ae85bfbcbf6cee7c4eaeb8b09e7da8106954914b'
         type: string
       confirm_apply:
         description: 'Dry-Run, Apply, Validation und Push auf den gebundenen FE-Branch ausführen'
