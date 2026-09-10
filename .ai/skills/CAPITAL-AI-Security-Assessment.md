@@ -2,7 +2,7 @@
 skill:
   id: CAPITAL-AI-SECURITY-ASSESSMENT
   name: CAPITAL-AI Security Assessment
-  version: 1.0.1
+  version: 1.1.0
   status: Security Project Capability
   owner: CAPITAL-AI-SEC
   category: Security Assessment
@@ -17,6 +17,7 @@ classification:
 crossReference:
   dependsOn:
     - /AGENTS.md
+    - docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md
     - .ai/skills/ESS-0006-Security-Compliance.md
     - docs/projects/README.md
     - docs/projects/security/README.md
@@ -41,11 +42,13 @@ crossReference:
 
 This skill defines a reproducible, evidence-bound methodology for **authorized** adversarial assessment of CAPITAL-AI Web, API, mobile/smartphone and business-logic surfaces.
 
-It is an additive testing capability under `CAPITAL-AI-SEC`. It does **not** replace or supersede `/AGENTS.md`, `ESS-0006`, any ADR, ESS, Governance control, IAM authority, target-project architecture, or current project/PVC ownership mapping.
+It is an additive testing capability under `CAPITAL-AI-SEC`. It does **not** replace or supersede `/AGENTS.md`, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`, `CTRL-SEC-BOUNDED-REMEDIATION-001`, `ESS-0006`, any ADR, ESS, Governance control, IAM authority, target-project architecture, or current project/PVC ownership mapping.
 
 External assessment methodologies referenced by this skill are **advisory/non-authorizing**. They may guide test design and evidence quality, but they do not create repository Authority, CI gates, mandatory remediation, ownership transfer or accepted-risk authority.
 
-Security may discover, test, classify, route and independently verify findings. Security does not acquire productive ownership of any `PVC-*` stage and does not implement foreign productive remediation merely because it found a defect.
+Security may discover, test, classify, route and independently verify findings. Under the separately authoritative `CTRL-SEC-BOUNDED-REMEDIATION-001`, Security may also implement the smallest sufficient Security-primary repository remediation when all eligibility boundaries are met. This assessment skill does not itself grant that implementation authority.
+
+Security does not acquire productive ownership of any `PVC-*` stage by finding, patching or verifying a defect. File/PVC placement alone is not an execution DENY; business semantics, foreign Architecture Authority, protected external mutation and parallel-control-plane creation remain hard ownership/authority boundaries.
 
 `ACCEPTED_RISK` is a finding state that requires the applicable Human/Owner authority. This skill cannot authorize accepted risk.
 
@@ -147,7 +150,7 @@ Assess security invariants that ordinary vulnerability scanning cannot establish
 - stale-token / stale-evidence acceptance;
 - state-machine transitions outside allowed preconditions.
 
-Business-logic findings must describe the intended rule, the bypass path, required preconditions, impact and the owner of the productive invariant.
+Business-logic findings must describe the intended rule, the bypass path, required preconditions, impact and the owner of the productive invariant. A remediation that would alter the intended business rule or productive semantics is not a bounded Security remediation and must be routed to the responsible Primary Owner/Architecture Authority.
 
 ### 4.7 `value-chain-attack`
 
@@ -184,7 +187,7 @@ Allowed assessment states are:
 
 ## 6. Finding lifecycle
 
-Allowed finding states:
+Allowed finding states remain:
 
 1. `NOT_TESTED`
 2. `TESTED_NO_FINDING`
@@ -199,10 +202,12 @@ State rules:
 
 - `CANDIDATE_FINDING` means evidence is suggestive but reproduction or impact is not yet sufficiently proven.
 - `CONFIRMED_FINDING` requires a reproducible procedure and evidence bound to the tested target/version/snapshot.
-- `REMEDIATION_REQUIRED` requires target-owner routing.
-- `EVIDENCE_READY` means remediation evidence is available for independent Security verification; it is not itself verification.
-- `VERIFIED` requires independent re-test of the remediated behavior against the applicable security requirement.
+- `REMEDIATION_REQUIRED` requires explicit remediation execution classification: `SECURITY_BOUNDED` when `CTRL-SEC-BOUNDED-REMEDIATION-001` is satisfied, otherwise `OWNER_ROUTED` for the non-eligible/non-separable portion. The finding-state schema does not itself authorize execution.
+- `EVIDENCE_READY` means remediation evidence is available for a separate Security verification step; it is not itself verification, even when Security authored the patch.
+- `VERIFIED` requires a separated re-test of the remediated behavior against the original applicable Security requirement and reproducible positive/negative evidence; hosted/runtime evidence is additionally required where applicable.
 - `ACCEPTED_RISK` requires Human/Owner authorization. Security may record the decision and its evidence but must not self-authorize it.
+
+`EVIDENCE_READY != VERIFIED` is a hard invariant.
 
 ## 7. Finding contract
 
@@ -223,13 +228,15 @@ Every confirmed finding must contain:
 - impact;
 - confidence;
 - evidence references;
-- remediation requirement, not target-owned implementation code;
+- remediation requirement;
+- remediation execution classification (`SECURITY_BOUNDED` or `OWNER_ROUTED`) with boundary rationale;
+- affected Domain/PVC ownership retained after any Security-authored patch;
 - verification requirement;
 - state and state-transition evidence.
 
 Evidence must distinguish observation from interpretation. A scanner alert alone is not a confirmed finding without sufficient validation.
 
-## 8. Primary-owner routing
+## 8. Primary-owner correlation and remediation execution
 
 Use only the canonical current-main project-folder and Project Value Chain mapping from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. The following mapping is an expected projection and must be re-correlated before protected work:
 
@@ -254,7 +261,14 @@ Use only the canonical current-main project-folder and Project Value Chain mappi
 | PVC-17 | CAPITAL-AI-FINTECH |
 | PVC-18 | CAPITAL-AI-OPS |
 
-A finding in foreign productive scope is recorded as `REFERRED_NOT_EXECUTED` and routed to the current Primary Owner identified by the canonical project mapping. No withdrawn post-PVC handoff/routing overlay is required or authorized. Security may continue Security-owned testing/evidence work, but productive remediation remains with the target project's Primary Owner.
+A finding in a foreign productive file/path is **not automatically** `REFERRED_NOT_EXECUTED`. After current-main/open-writer/authority correlation, classify remediation as follows:
+
+- `SECURITY_BOUNDED`: the primary and immediate purpose is Security; the patch is the smallest sufficient remediation; no business/product semantics, foreign Architecture Authority, productive PVC ownership, protected external mutation, Security-gate weakening or parallel control plane is introduced. CAPITAL-AI-SEC may implement it on a fresh Security branch under `CTRL-SEC-BOUNDED-REMEDIATION-001`, even if the affected file is `server/**`, `.github/workflows/**`, `package.json`, a lockfile or another foreign-located path.
+- `OWNER_ROUTED`: the required change crosses a business/domain/architecture/protected-mutation boundary or is not cleanly separable. Security may implement a separable bounded Security portion and records the remainder as owner dependency.
+
+The compatibility marker `REFERRED_NOT_EXECUTED` is retained for the owner-routed remainder and for Security findings that are not eligible for Security implementation. No withdrawn post-PVC handoff/routing overlay is required or authorized.
+
+A Security-authored remediation never changes the canonical Primary Owner or long-term file/PVC ownership. A pure Security remediation uses `CAPITAL-AI-SEC` project identity and a fresh `security`-slug branch/PR; the affected Primary Owner/PVC and contracts remain explicit evidence inputs.
 
 ## 9. Evidence and reproducibility
 
@@ -268,7 +282,8 @@ A result is evidence-bound only when another qualified reviewer can determine:
 - what was observed;
 - whether state/data changed;
 - how the result maps to a security requirement and PVC owner;
-- how a remediation can be independently verified.
+- how a remediation can be independently re-tested;
+- whether implementation and verification evidence are distinct.
 
 Evidence should prefer deterministic request/response captures, sanitized logs, test output, screenshots where necessary, exact code/commit references for white-box corroboration, and minimal proof artifacts.
 
@@ -290,11 +305,14 @@ Assessment result is not PASS when any required condition is missing, including:
 - required test coverage;
 - required evidence;
 - reproducibility;
-- owner/PVC routing;
+- owner/PVC correlation;
+- remediation-boundary classification when remediation is required;
 - requirement mapping;
-- independent verification for a remediated finding.
+- separated verification for a remediated finding.
 
-`NOT_TESTED != PASS` is a hard invariant.
+A remediation eligibility decision is DENY/owner-routed when Security purpose, ownership/architecture boundary or protected-mutation status is ambiguous.
+
+`NOT_TESTED != PASS` and `EVIDENCE_READY != VERIFIED` are hard invariants.
 
 ## 12. Output schema
 
@@ -302,7 +320,7 @@ Machine-readable assessment/finding output must validate against:
 
 `.ai/schemas/security-assessment.schema.json`
 
-The schema is a data contract only and creates no new repository Authority.
+The schema is a data contract only and creates no new repository Authority. Any additional remediation-execution metadata that is not represented by the current schema remains evidence metadata until separately adopted into that data contract; the schema is not silently widened by this skill.
 
 ## 13. Validation checklist
 
@@ -310,17 +328,22 @@ Before declaring the skill change PR-ready, verify:
 
 - no Authority duplication or supersession is introduced;
 - `/AGENTS.md` and current project/PVC mapping remain the routing source;
-- `ESS-0006` is referenced rather than cloned;
+- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`, `CTRL-SEC-BOUNDED-REMEDIATION-001` and `ESS-0006` are referenced rather than cloned;
 - external methodologies are explicitly advisory/non-authorizing;
 - no withdrawn post-PVC routing contract is required;
 - no registry is lossily replaced;
-- no foreign PVC productive code is modified;
+- Security may modify a foreign-located file only for an eligible bounded Security remediation;
+- file changes do not transfer productive PVC/Domain ownership;
+- a finding cannot be used as a feature/refactor pretext;
+- no protected Production/IAM/Billing/Secret/DNS/destructive mutation is performed without separate Authority;
+- no Security/IAM/Policy/Audit/Release/Deployment/Governance control plane is duplicated;
 - no uncontrolled active pentest was executed;
 - no secret/credential evidence is committed;
 - external-skill supply-chain review exists;
 - PVC mapping covers `PVC-01..PVC-18`;
 - `NOT_TESTED` cannot be treated as PASS;
-- finding → owner → evidence → verification is complete;
+- `EVIDENCE_READY` cannot be treated as `VERIFIED`;
+- finding → remediation classification → implementation/owner dependency → separate evidence → verification is complete;
 - branch and open-PR/writer overlap are re-correlated against current `main` before PR creation;
 - PR creation occurs only after exact-snapshot Human/Owner approval;
 - merge remains Human/CODEOWNER-only.
