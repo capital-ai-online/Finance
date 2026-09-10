@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "status": "development",
   "owner": "CAPITAL-AI-DOC",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, bounded ESS-0012 GOV-DOC-003 Freshness Validation, GOV-DOC-006 generator-marking validation, GOV-DOC-001 document-version validation, GOV-DOC-002 ESS/ADR-reference validation, incremental GOV-DOC-004 document-class validation, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, bounded ESS-0012 GOV-DOC-003 Freshness Validation, GOV-DOC-006 generator-marking validation, GOV-DOC-001 document-version validation, GOV-DOC-002 ESS/ADR-reference validation, GOV-DOC-004 document-class validation, incremental GOV-DOC-005 documentation-path exception validation, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -39,7 +39,7 @@
   "events": {
     "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
     "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
-    "note": "Semantic freshness and bounded GOV-DOC-001/002/003/004/006 validation, Maintenance Agent, Archive Retention Planner and D8 Migration Planner do not create a new event authority. Existing EventMesh names remain canonical."
+    "note": "Semantic freshness and bounded GOV-DOC-001/002/003/004/005/006 validation, Maintenance Agent, Archive Retention Planner and D8 Migration Planner do not create a new event authority. Existing EventMesh names remain canonical."
   },
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
@@ -66,6 +66,7 @@
     "Versioning/DocumentaryVersion.ts",
     "Governance/Services/DocumentationHygieneValidator.ts",
     "Governance/Validators/DocumentationValidator.ts",
+    "Governance/Validators/GovDoc005Validator.ts",
     "Discovery/CodeEvidence.ts",
     "Discovery/StatusEventEvidence.ts",
     "Discovery/StatusEventDriftDetector.ts",
@@ -110,6 +111,7 @@
     "tests/unit/documentaryCoreEngine.test.ts",
     "tests/unit/documentaryDocumentModel.test.ts",
     "tests/unit/documentaryDocumentationValidator.test.ts",
+    "tests/unit/documentaryGovDoc005Validator.test.ts",
     "tests/unit/documentaryKnowledgeProjection.test.ts",
     "tests/unit/documentaryLifecycle.test.ts",
     "tests/unit/documentaryMaintenanceAgent.test.ts",
@@ -155,5 +157,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "DocumentationValidator implements bounded read-only GOV-DOC-001/002/003/004/006 slices. Unknown registry types are skipped by GOV-DOC-004. It creates no second scanner, registry, scoring or decision authority and is not wired into the hygiene CLI gate. No autonomous merge, deploy or production mutation."
+  "note": "Documentation Governance implements bounded read-only GOV-DOC-001/002/003/004/005/006 slices. GOV-DOC-005 consumes an explicit caller-supplied Markdown path set and treats exact Document Registry paths as registered exceptions; it does not scan the repository or wire itself into the hygiene CLI gate. No autonomous merge, deploy or production mutation."
 }

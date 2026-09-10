@@ -3,8 +3,8 @@
 **Domain:** Documentary  
 **Authority:** `ESS-0012 — Documentation Governance`  
 **Global governance dependency:** `src/platform/Governance` / `/AGENTS.md`  
-**Version:** `1.6.0`  
-**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-003 freshness, GOV-DOC-006 generator-marking, GOV-DOC-001 document-version and incremental GOV-DOC-002 ESS/ADR-reference validation; broader ESS-0012 rule suite incremental
+**Version:** `1.7.0`  
+**Status:** partial implementation — read-only hygiene service plus bounded GOV-DOC-001/002/003/004/005/006 validation; broader ESS-0012 rule suite incremental
 
 ## Purpose
 
@@ -14,10 +14,10 @@ The repository-wide Governance Control Plane is `src/platform/Governance`, resol
 
 ## Implemented services
 
-`Services/DocumentationHygieneValidator.ts` is the canonical read-only hygiene service. It was adapted from the reusable implementation parked in PR #439 and enforces:
+`Services/DocumentationHygieneValidator.ts` is the canonical read-only hygiene service. It was adapted from the reusable implementation parked in PR #439 and, after the Human-merged GOV-RD-01 synchronization in PR #838, enforces:
 
 - root Markdown allowlist (`README.md`, `AGENTS.md` only);
-- document-registry schema and authority;
+- document-registry schema and current lifecycle-policy authority;
 - unique document IDs and paths;
 - required type/owner/authority/version/language/lifecycle metadata;
 - `suspended` as an explicit governance lifecycle;
@@ -27,16 +27,27 @@ The CLI adapter is `scripts/automation/validateDocumentationHygiene.ts` and is e
 
 `Validators/DocumentationValidator.ts` implements bounded semantic DocumentationValidator slices from ESS-0012-CONTRACTS:
 
-- canonical rule identity `GOV-DOC-003` on current main through Human-merged PR #805;
-- incremental rule identity `GOV-DOC-006` on current main through Human-merged PR #813;
-- incremental rule identity `GOV-DOC-001` on current main through Human-merged PR #815;
-- incremental rule identity `GOV-DOC-002` for registered documents whose body lacks an explicit `ESS-NNNN` or `ADR-NNNN` citation;
-- `GOV-DOC-001` is `High`; `GOV-DOC-002`, `GOV-DOC-003` and `GOV-DOC-006` remain `Medium`;
-- consumes the existing `Discovery/SemanticFreshnessAnalyzer.ts` result for freshness rather than scanning the repository again;
-- binds every evidence item to a `FileReference`;
-- preserves deterministic finding/evidence ordering and performs no mutation.
+- `GOV-DOC-003` freshness validation on current main through Human-merged PR #805;
+- `GOV-DOC-006` generator-marking validation on current main through Human-merged PR #813;
+- `GOV-DOC-001` document-version validation on current main through Human-merged PR #815;
+- `GOV-DOC-002` explicit ESS/ADR-reference validation on current main through Human-merged PR #821;
+- `GOV-DOC-004` document-class structure validation on current main through Human-merged PR #826;
+- all findings remain deterministic and evidence-backed, and all collectors perform no mutation.
 
-The current slice deliberately does **not** implement the remaining ESS-0012 rules, scoring, production thresholds, event publication or Governance decision logic.
+`Validators/GovDoc005Validator.ts` adds the bounded WP-DOC-12 `GOV-DOC-005` slice:
+
+- `GOV-DOC-005` is `High` severity under ESS-0012-CONTRACTS Chapter 2.5;
+- the collector consumes an explicit caller-supplied set of candidate Markdown paths and therefore does not introduce a second repository scanner;
+- paths under `docs/` are accepted;
+- Markdown outside `docs/` is accepted only when the exact normalized repository-relative path exists in the canonical Document Registry;
+- a verified regular non-symlink Markdown file outside `docs/` without that exact registry exception produces a `FileReference` finding;
+- missing, non-Markdown, path-escaping or otherwise unverifiable candidates do not produce speculative findings;
+- the collector does not mutate the Document Registry or register exceptions;
+- the collector is not wired into the hygiene CLI gate in this slice.
+
+`GOV-DOC-001` and `GOV-DOC-005` are `High`; `GOV-DOC-002`, `GOV-DOC-003`, `GOV-DOC-004` and `GOV-DOC-006` are `Medium`.
+
+The current bounded implementation deliberately does **not** implement `GOV-DOC-007`, the remaining ESS-0012 rule families, scoring, production thresholds, event publication or Governance decision logic.
 
 ## Explicit non-responsibilities
 
@@ -73,15 +84,17 @@ Documentation Governance consumes global stable identities; it does not own them
 - `ESS-0012 — Documentation Governance` — Documentation-only scope under ADR-0096
 - `ESS-0012-CONTRACTS`
 - `docs/governance/document-registry.json`
-- `docs/governance/DOCUMENTATION_HYGIENE_POLICY.md`
+- `docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md`
 - `Discovery/SemanticFreshnessAnalyzer.ts` for correlated Documentary freshness evidence
 - global governance contracts from `src/platform/Governance`
+
+`docs/governance/DOCUMENTATION_HYGIENE_POLICY.md` is retained only as a historical compatibility projection after PR #838 and is not the current lifecycle authority.
 
 ## Implementation state
 
 The useful hygiene implementation from parked PR #439 is reused as the canonical structural/registry hygiene service. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
 
-WP-DOC-07 added `GOV-DOC-003` through PR #805. WP-DOC-08 added `GOV-DOC-006` through PR #813. WP-DOC-09 added `GOV-DOC-001` through PR #815. WP-DOC-10 adds only `GOV-DOC-002` as the next incremental semantic rule. Targeted unit coverage lives in `tests/unit/documentaryDocumentationValidator.test.ts`.
+WP-DOC-07 added `GOV-DOC-003` through PR #805. WP-DOC-08 added `GOV-DOC-006` through PR #813. WP-DOC-09 added `GOV-DOC-001` through PR #815. WP-DOC-10 added `GOV-DOC-002` through PR #821. WP-DOC-11 added `GOV-DOC-004` through Human-merged PR #826. WP-DOC-12 adds only `GOV-DOC-005` as the next bounded rule. Targeted WP-DOC-12 unit coverage lives in `tests/unit/documentaryGovDoc005Validator.test.ts`.
 
 This does **not** claim that all historical 57 ESS-0012 rules are implemented. Additional semantic Documentary validators remain separate incremental work unless explicitly brought into scope.
 
