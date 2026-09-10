@@ -2,9 +2,9 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
 **Status:** ACTIVE  
-**Version:** `2.6.0`  
+**Version:** `2.7.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-09-07  
+**Updated:** 2026-09-10  
 **Scope:** CAPITAL-AI `capital-ai-online/Finance`  
 **Parent trust root:** `/AGENTS.md`  
 **Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
@@ -92,6 +92,74 @@ A step marked REQUIRED for the concrete work package cannot be skipped unless an
 16. **Copyable bounded next-step handoff.** At the end of every chat-governed repository execution pass, the same chat emits at most the two highest-priority immediately actionable next steps as a fenced `text` code block. The separate copyable Owner-response requirement introduced by PR #772 is retired; Human/Owner approval or confirmation presentation follows the neutral Trust-Root rule established by PR #803 and the concrete gate's own canonical approval form.
 17. **Bounded post-PR chat handoff.** After each PR or Draft PR created through chat, the same chat reports branch/PR-head, main baseline and gates and displays at most the two highest-priority immediately actionable next Roadmap steps using the copyable handoff format.
 18. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
+19. **Bounded Security remediation delegation.** `CAPITAL-AI-SEC` may implement a repository change under `CTRL-SEC-BOUNDED-REMEDIATION-001` when the primary and immediate purpose is to eliminate, prevent or technically harden a confirmed Security finding and the change does not introduce product functionality, business semantics, productive PVC ownership, foreign domain authority, protected external mutation or a parallel control plane. File location alone never decides eligibility.
+
+## Delegated Security Implementation Authority (`CTRL-SEC-BOUNDED-REMEDIATION-001`)
+
+### Eligibility
+
+`CAPITAL-AI-SEC` MAY implement a bounded Security remediation itself when **all** of the following are true:
+
+1. the change directly remediates, prevents or technically hardens a confirmed Security finding, vulnerability or equivalent evidence-bound Security defect;
+2. Security is the primary and immediate purpose; feature development is not the primary purpose;
+3. no new business rule, product behavior, productive PVC ownership or foreign domain authority is introduced;
+4. existing target-domain contracts, accepted ADR/ESS decisions and Primary Owner boundaries remain intact;
+5. the change is the smallest sufficient Security remediation slice and avoids unrelated refactoring;
+6. existing reusable Security components/contracts are extended before duplicate Security architecture is introduced;
+7. current-main, open-PR/writer, changed-file, semantic, namespace and authority correlation is conflict-free or explicitly sequenced;
+8. no protected external Production/IAM/Billing/Secret/DNS/data-deletion or equivalent mutation is required by the repository change itself.
+
+The physical repository path is **not** an ownership or authorization boundary by itself. A vulnerable implementation may be fixed where it actually lives. Eligible locations include, without being limited to:
+
+- `src/platform/Security/**`;
+- Security validators and Security test harnesses;
+- `server/**` when the vulnerable implementation is there;
+- `scripts/security/**` and `scripts/automation/**`;
+- `.github/workflows/**` for workflow-security hardening;
+- `package.json` and lockfiles for vulnerability remediation;
+- Docker/runtime Security configuration;
+- Security-relevant tests and evidence instrumentation.
+
+Eligible remediation classes include input validation/sanitization, AuthN/AuthZ hardening within already accepted IAM/policy contracts, secret-leak prevention, Security headers/CSP guardrails/safe defaults, vulnerable dependency and supply-chain remediation, semantically safe library upgrades, fail-closed guards, rate/size/resource limits against abuse or DoS, upload/parser/mail/URL/redirect/SSRF hardening, Security-negative tests, Security audit/evidence instrumentation, workflow hardening, SBOM/provenance/artifact verification controls and removal of clearly unsafe or no-longer-required Security-relevant components.
+
+### Ownership and minimal-change invariant
+
+Execution authority is not ownership transfer. A file changed by `CAPITAL-AI-SEC` retains its canonical long-term Domain/PVC/Primary Owner. For an eligible pure Security remediation, the execution work item uses the `CAPITAL-AI-SEC` project identity and a fresh `security`-slug branch/PR even when the changed file is physically located in another project/domain path. The affected Primary Owner/PVC and applicable domain contracts remain recorded in correlation/evidence.
+
+If a fix requires business semantics, a new architecture decision or another owner's productive domain change beyond Security hardening, Security MUST determine that Primary Owner, implement only the cleanly separable Security portion when possible, document the remaining owner dependency and stop at the ownership boundary. No parallel implementation is created. A Security finding MUST NOT be used as a pretext for broad feature or domain refactoring.
+
+### Explicit DENY boundary
+
+This delegation does **not** authorize `CAPITAL-AI-SEC` to:
+
+- create new product features or unrelated business logic;
+- change business rules except to the minimum extent strictly necessary to close the Security defect without redefining domain semantics;
+- claim or transfer productive PVC ownership;
+- bypass a Domain ADR/ESS, Primary Owner contract or Architecture authority;
+- create a parallel IAM, Policy, Audit, Release, Deployment, Governance, Security-Control or other control plane;
+- independently perform protected external platform mutation, including Production, Billing/money, Entitlement, DNS, IAM-admin, Secret, destructive data or resource mutation without its separate authority;
+- weaken Security gates, suppress findings or lower audit/security thresholds;
+- combine the remediation with broad product/domain refactoring.
+
+Missing or ambiguous eligibility fails closed to Owner routing rather than expanding Security authority.
+
+### Verification separation
+
+Security implementation and Security verification MAY both occur within `CAPITAL-AI-SEC`, but they are separate evidence/review steps. Implementation evidence alone MUST NOT transition a finding to `VERIFIED` or `CLOSED`.
+
+Closure requires reproducible positive and negative tests bound to the remediated branch/PR or deployed identity, plus hosted/runtime evidence when applicable. The verification step MUST independently re-evaluate the original Security invariant and expected DENY/ALLOW behavior; it MUST NOT merely restate that implementation occurred. Where risk, CODEOWNERS, accepted ADR/ESS or target-owner contracts require it, Human/CODEOWNER and/or affected Primary Owner verification remains mandatory. `EVIDENCE_READY != VERIFIED` remains a hard invariant.
+
+### P0/P1 emergency Security remediation
+
+For confirmed `CRITICAL` or `HIGH` findings, Security MAY immediately create a fresh Security branch and implement the bounded repository fix when the remediation is technically unambiguous, existing Domain semantics are not expanded, no protected external mutation is required, and current-main/open-writer correlation is conflict-free.
+
+This prioritization changes neither PR-creation approval nor CI, Human/CODEOWNER merge, deployment or Production gates. A simple vulnerable dependency patch does not require an artificial foreign-project branch solely because `package.json`, a lockfile or affected runtime code is organizationally associated with another productive project.
+
+### Dependency-vulnerability reference case
+
+For a confirmed High/Critical vulnerability in a productive npm package, an eligible Security slice may determine the actually affected dependency, research the safe minimum version, update `package.json` and `package-lock.json`, harden affected runtime configuration, add proportionate defense-in-depth and negative tests, execute available `npm audit`, TypeScript, unit, build and Security checks, and prepare the remediation for a Security PR. The change is not blocked solely because the vulnerable code or manifest is in `server/**`, `package.json` or another foreign-located path.
+
+If that upgrade requires a business-semantic migration, changes a foreign architecture authority, or needs protected Production/IAM/Billing/Secret mutation, only the bounded Security portion remains eligible and the rest is routed to the applicable Primary Owner/authority.
 
 ## Git identity terminology
 
