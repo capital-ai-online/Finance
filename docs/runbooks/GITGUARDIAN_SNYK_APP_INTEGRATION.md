@@ -1,8 +1,11 @@
-# GitGuardian-/Snyk-App-Integration — Owner-Runbook
+# GitGuardian-/Snyk-App-Integration — historisches Owner-Runbook
 
-Status: PRE-MUTATION / OWNER ACTION REQUIRED  
+Status: HISTORICAL / RETIRED / NON-AUTHORIZING  
 Datum: 2026-08-14  
+Retired: 2026-09-10  
 ADR: `docs/adr/ADR-0070-gitguardian-snyk-external-app-integration.md`
+
+> Historischer Record. Die folgenden früheren Betriebsanweisungen sind nicht mehr autorisierend. Für den aktuellen GitGuardian-Betrieb gilt `docs/runbooks/GITGUARDIAN_APP_INTEGRATION.md`.
 
 ## Zielzustand
 
@@ -88,7 +91,7 @@ order by created_at desc;
 **Ein Treffer ist immer ein Vorfall.** Es gibt keinen legitimen Pfad, auf dem dieses Credential
 auftaucht. Genau deshalb wird nichts anderes in diesen Ereignistyp geschrieben: Scanner-Pfade,
 fehlgeschlagene Logins und CORS-Blocks haben eigene Typen. Wuerde der Kanal mit Rauschen geteilt,
-verlaere er seine definierende Eigenschaft.
+verliere er seine definierende Eigenschaft.
 
 ### Rotation
 
