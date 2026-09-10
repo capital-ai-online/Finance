@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@5664332aac99befa819abbbc2cf23c30a8982147`  
+**Current correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
 **Correlation date:** `2026-09-10`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
@@ -24,17 +24,18 @@ PVC-05 / Platform Director
 
 ## Current-state synchronization — 2026-09-10
 
-The Governance backlog and GOV-CHAT-074 branch were re-correlated against `main@5664332aac99befa819abbbc2cf23c30a8982147`, `/AGENTS.md` Control Plane v2.9.0, the canonical Project/PVC mapping and the current PR set immediately before the PR-create gate.
+The Governance backlog and GOV-CHAT-074 branch were re-correlated against `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`, `/AGENTS.md` Control Plane v2.9.0, the canonical Project/PVC mapping and the current PR set immediately before the renewed PR-create gate.
 
 - PR #868 (`GOV-CHAT-076`) is **DONE_MAIN / TERMINAL**, merge SHA `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`.
 - PR #869 (`CAPITAL-AI-DOC` Documentary Roadmap/D8 synchronization) is **DONE_MAIN / TERMINAL** and changed only Documentary planning surfaces; it created no GOV-CHAT-074 changed-file, semantic, namespace or authority conflict.
 - PR #870 (`CAPITAL-AI-SEC` Vite-6 dependency-security floor) is **DONE_MAIN / TERMINAL** and changed only `scripts/automation/dependencySecurity.ts` plus `tests/unit/dependencySecurity.test.ts`; it created no GOV-CHAT-074 changed-file or Governance-authority conflict.
+- PR #871 (`CAPITAL-AI-SEC` SEC-SOTA-03 Roadmap sync) is **DONE_MAIN / TERMINAL** and changed only `docs/projects/security/ROADMAP.md`; it invalidated the prior v3.3 PR-create approval solely by advancing `main`, not by creating scope/semantic overlap with GOV-CHAT-074.
 - `GOV-CHAT-071` remains **DONE_MAIN / TERMINAL** through Human-merged PR #845.
 - `GOV-CHAT-075 / bounded Security-remediation authority` remains **DONE_MAIN / TERMINAL** through Human-merged PR #864, merge SHA `c20bce01f398f58240c69676ede367787bb7251a`.
-- Current open Pull Requests at the final GOV-CHAT-074 correlation point: **none**.
+- Current open Pull Requests at the renewed GOV-CHAT-074 correlation point: **none**.
 - `M10` remains **RETIRED / OFF** and is not a current implementation gap. `NIST` publications/frameworks remain withdrawn from the repository Governance baseline and do not create a GOV remediation backlog.
 - Historical branch `agent/governance-pr-approval-consolidation-20260910` remains **NON-AUTHORIZING** and is not reused. Its preserved v3.4 payload at `bcbc73672d8f1bf3d2d7120ba0cad6aaaf0b212e` is evidence only.
-- Fresh branch `agent/governance-pr-approval-envelope-20260910` was created from `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a` and subsequently synchronized to `main@5664332aac99befa819abbbc2cf23c30a8982147` through merge commit `c3d34418e537d59db18f2f98f16071140f417aa0`; the imported main changes are disjoint from the bounded Approval-Envelope payload.
+- Fresh branch `agent/governance-pr-approval-envelope-20260910` was created from `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`, synchronized to `main@5664332aac99befa819abbbc2cf23c30a8982147` through merge commit `c3d34418e537d59db18f2f98f16071140f417aa0`, and then synchronized to `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d` through merge commit `7829a22877e458e47a8dbd0c8d9f576d8384ca7b`; the imported main changes are disjoint from the bounded Approval-Envelope payload.
 - `GOV-CHAT-072 / Development-Chain chat plugin execution policy` remains **OPEN_GOV / SEQUENCED** after Human/CODEOWNER-terminal GOV-CHAT-074.
 
 ## Completed / terminal Governance work
@@ -67,14 +68,14 @@ The Governance backlog and GOV-CHAT-074 branch were re-correlated against `main@
 
 **Fresh branch:** `agent/governance-pr-approval-envelope-20260910`  
 **Branch origin:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
-**Latest synchronization baseline:** `main@5664332aac99befa819abbbc2cf23c30a8982147`  
+**Latest synchronization baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
 **Historical evidence only:** `bcbc73672d8f1bf3d2d7120ba0cad6aaaf0b212e`
 
 **Reason:** The historical v3.4 design improves decision support by binding PR-create approval to a bounded effective change rather than treating incidental Git SHA identity as the sole invariant. The fresh slice selectively rematerializes that design against current authority. It preserves exact Git identities as mandatory evidence, requires deterministic effective-change identity plus material-equivalence review, and evaluates immediate pre-create state as exactly `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED` or `BLOCKED`.
 
 **Current branch implementation:** candidate `HUMAN_OWNER_PR_APPROVAL_POLICY` v3.4.0, Trust-Root Approval-Envelope semantics, Development Chain v2.8.0, Control Catalog v1.23.0, Authority Registry v1.59.0, repository-local `scripts/pr/approvalEnvelope.mjs` evaluator and regression tests/projections. The current `CTRL-SEC-BOUNDED-REMEDIATION-001` contract remains intact. M10 stays retired/off; NIST bindings remain non-authorizing.
 
-**Final correlation:** branch synchronization imported the terminal PR #869/#870 main changes without overlap; current open PRs are none; current-main/open-writer/changed-file/semantic/namespace/authority correlation is PASS. The branch remains non-authorizing until Human/CODEOWNER merge.
+**Final correlation:** branch synchronization imported terminal PR #869/#870/#871 main changes without overlap; current open PRs are none; current-main/open-writer/changed-file/semantic/namespace/authority correlation is PASS. The branch remains non-authorizing until Human/CODEOWNER merge.
 
 **No-self-bootstrap:** candidate v3.4.0 policy on this branch **does not authorize its own PR creation**. Until Human Merge, then-current `main` v3.3 approval authority controls creation of this PR. Human/CODEOWNER merge remains a separate Human decision.
 
