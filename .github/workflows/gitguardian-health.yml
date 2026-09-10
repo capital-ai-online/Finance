@@ -33,7 +33,9 @@ jobs:
           "$RUNNER_TEMP/ggshield/bin/ggshield" --version
           "$RUNNER_TEMP/ggshield/bin/ggshield" api-status --no-check-for-updates
 
-      # Read-only management endpoints; requires sources:read and health_checks:read.
+      # /v1/sources is the required read-only audit surface and uses sources:read.
+      # /v1/health-checks is documented, but GitGuardian publishes no dedicated
+      # read scope for this endpoint. Permission/entitlement denial remains NOT-RUN.
       # Public API has no documented check-run settings endpoint; report NOT-RUN.
       - name: Read GitGuardian source and installation health
         if: ${{ !cancelled() }}
@@ -61,6 +63,7 @@ jobs:
           }
           FIELDS = ("monitoring_status", "github_installation", "api_network",
                     "api_access_rights", "check_run_configuration")
+          REQUIRED_PASS = ("monitoring_status",)
           
           
           class Unavailable(Exception):
@@ -184,6 +187,22 @@ jobs:
               return checks, evidence
           
           
+          def gate(checks):
+              explicit_failures = sorted(
+                  name for name, item in checks.items() if item["status"] == "FAIL")
+              required_not_pass = sorted(
+                  name for name in REQUIRED_PASS if checks[name]["status"] != "PASS")
+              not_run = sorted(
+                  name for name, item in checks.items() if item["status"] == "NOT-RUN")
+              return {
+                  "status": "PASS" if not explicit_failures and not required_not_pass else "FAIL",
+                  "required_pass": list(REQUIRED_PASS),
+                  "explicit_failures": explicit_failures,
+                  "required_not_pass": required_not_pass,
+                  "not_run": not_run,
+              }
+          
+          
           def main():
               key = os.environ.get("GITGUARDIAN_API_KEY", "")
               instance = os.environ.get("GITGUARDIAN_INSTANCE", "").rstrip("/")
@@ -198,12 +217,13 @@ jobs:
                       # Never serialize exception text, API bodies, headers or credentials.
                       checks = {name: result("NOT-RUN", "UNEXPECTED_SCHEMA_OR_CLIENT_ERROR") for name in FIELDS}
                       evidence = {}
+              gate_result = gate(checks)
               report = {
                   "repository": TARGET, "observed_at": NOW.isoformat(),
                   "run_id": os.environ.get("GITHUB_RUN_ID", ""),
                   "commit": os.environ.get("GITHUB_SHA", ""),
                   "max_health_age_hours": 24,
-                  "checks": checks, "evidence": evidence,
+                  "checks": checks, "gate": gate_result, "evidence": evidence,
                   "limitation": "monitoring_status active alone does not prove reachability; API backend coverage is incomplete.",
               }
               encoded = json.dumps(report, indent=2, sort_keys=True)
@@ -212,8 +232,9 @@ jobs:
               if summary:
                   with open(summary, "a", encoding="utf-8") as handle:
                       handle.write("## GitGuardian API health\n\n```json\n" + encoded + "\n```\n")
-              # Unsupported/missing evidence is never silently promoted to PASS.
-              return 0 if all(x["status"] == "PASS" for x in checks.values()) else 1
+              # Fail closed for required evidence and every explicit supported FAIL.
+              # Deliberate NOT-RUN capability gaps remain visible and are never promoted to PASS.
+              return 0 if gate_result["status"] == "PASS" else 1
           
           
           if __name__ == "__main__":
