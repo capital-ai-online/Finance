@@ -152,7 +152,7 @@ Current main already contains PR #859, while the canonical OPS planning surfaces
 
 Roadmap and Work Packages were still bound to `main@e9b2551...` and omitted #862/#863/#865/#867 plus relevant Governance/Security changes.
 
-**Correction:** bind the current documentation sync to `main@e9839f5...` and explicitly record current terminal dependencies.
+**Correction:** bind the initial documentation sync to `main@e9839f5...` and explicitly record current terminal dependencies; the later PR #872 main advance is recorded in section 12.
 
 ### D3 — Entitlement child classifications were stale
 
@@ -168,13 +168,13 @@ A successful health/source read can establish required capability, but not absen
 
 ### D5 — Self-Healing readiness is current active OPS work but not current-main state
 
-The separate branch `agent/operations-self-healing-readiness-20260910` contains a bounded readiness foundation but is behind current main and has no PR.
+The separate branch `agent/operations-self-healing-readiness-20260910` contains a bounded readiness foundation but is behind its intake main and has no PR.
 
 **Correction:** reflect it as separate active/requires-resync work, not as implemented-on-main and not as part of this integrity branch.
 
 ## 10. Validation performed
 
-Executed during this current pass:
+Executed during the initial current-main pass:
 
 - exact current `main` read immediately before branch creation and before mutation;
 - complete `/AGENTS.md@current-main` read; Control Plane `2.9.0` confirmed;
@@ -219,3 +219,47 @@ Known open gates remain visible:
 - applicable independent Security verification remains open;
 - Node convergence remains authority-blocked;
 - PR creation, hosted CI, Human/CODEOWNER merge and any provider/Production mutation remain separate lifecycle stages.
+
+## 12. Post-PR #872 current-main resynchronization
+
+During final correlation, Security PR #872 (`SEC-SOTA03-ARTIFACT-DIGEST-BINDING`) was Human-merged and advanced `main` from `e9839f5e3eccc0ae01d6a10e53d3787435e1379d` to `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`.
+
+The integrity branch was therefore resynchronized instead of requesting approval on stale SHAs:
+
+- previous integrity branch head: `ab6b2940d81904c40eec2169d3c6356df0185ac8`;
+- new main: `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`;
+- merge/resync commit: `514b7a60dab8d9fa06ca708c865e09f7592ecc1f`;
+- resync used a merge commit without force and preserved the four bounded OPS artifacts while incorporating the complete new main tree.
+
+PR #872 terminal evidence:
+
+- PR state: Human-merged;
+- final PR head: `e59308599dde3f7cf050601a2b6e64c5a73aaf59`;
+- merge SHA/current main at this checkpoint: `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`;
+- PR CI: `success`;
+- Governance: `success`;
+- Container Security: `success`.
+
+The responsible Security Roadmap on the same main still projects the bounded slice as `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN` and aggregate `SEC-SOTA-03` as `IN_PROGRESS / VITE_FLOOR_VERIFIED_MAIN / ARTIFACT_DIGEST_IMPLEMENTED_BRANCH / INVENTORY_OPEN`. Because current project Roadmaps are the status source, this inconsistency is not silently rewritten by OPS. The merged implementation is consumed as technical evidence; Security-owned Roadmap synchronization/verification remains an explicit open dependency.
+
+Current open Pull Requests after the #872 merge:
+
+- PR #873 — Governance PVC Vocabulary/Thesaurus; changed files limited to `src/platform/Vocabulary/**`; no OPS four-artifact overlap;
+- PR #874 — Governance Approval Envelope v3.4; changes Trust Root, Development-Chain approval/policy, Governance project, registry/evaluator/test surfaces; no OPS four-artifact overlap, but it is a material authority writer for the later DevelopmentChain current-state/M0–M10 matrix.
+
+Current sequencing consequence:
+
+1. this OPS integrity-sync can proceed to its own final PR-create correlation because #873/#874 are changed-file disjoint and no OPS semantic authority is duplicated;
+2. the separate DevelopmentChain M0–M10 current-state matrix MUST wait until PR #874 is terminal and the responsible project Roadmaps — including the Security status after #872 — are re-read from then-current main.
+
+Additional checks executed after resync:
+
+- current main read: `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`;
+- `/AGENTS.md` identity re-read on new main; blob remains `d38769d0fe15ab971b3b1360ac89068683f597fd`, Control Plane `2.9.0`;
+- PR #872 terminal state and final exact-head workflow evidence correlated;
+- current Security Roadmap read from new main;
+- open PR #873/#874 changed-file and semantic boundaries correlated;
+- OPS Roadmap and Work Packages updated to the new main/status state;
+- provider/credential/connector/Production mutation: `NOT RUN`.
+
+This addendum supersedes only the final-current-main/open-PR observations from earlier sections; it does not relabel historical evidence that was valid at its recorded SHA.
