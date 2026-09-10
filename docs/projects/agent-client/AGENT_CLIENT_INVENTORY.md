@@ -34,7 +34,7 @@ Current GitHub code search against `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb
 6. Similar Systemadmin/Operations principal builders remain foreign execution-host code and do not establish a PVC-01 refactor target.
 7. No productive request, identity/capability or response/status duplication currently satisfies the strangler trigger.
 8. PR #693 is merged and remains the CLIENT contract-baseline implementation; PR #691 is merged foreign OPS retirement work; historical PR #668 is closed/unmerged and non-authorizing.
-9. There are no open PRs at correlation time. The retained CLIENT work claim is `released`.
+9. Open PR #856 belongs to `CAPITAL-AI-FE`, changes only `src/components/MarkdownOrchestrator.tsx`, and has no changed-file, PVC-ownership or semantic overlap with this CLIENT documentation slice. The retained CLIENT work claim is `released`.
 
 ## Conclusion
 
