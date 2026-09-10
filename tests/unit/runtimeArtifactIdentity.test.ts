@@ -37,7 +37,7 @@ describe('computeRuntimeArtifactIdentity', () => {
     expect(computeRuntimeArtifactIdentity(left)).toEqual(computeRuntimeArtifactIdentity(right));
   });
 
-  it('excludes post-build control-plane and security evidence from runtime identity', () => {
+  it('excludes post-build control-plane, security and quality evidence from runtime identity', () => {
     const root = tempRoot();
     write(root, 'dist/server.cjs', 'server');
     write(root, 'dist/assets/app.js', 'app');
@@ -46,6 +46,9 @@ describe('computeRuntimeArtifactIdentity', () => {
     write(root, 'dist/control-plane/release-manifest.json', '{"changed":true}');
     write(root, 'dist/security/sbom.cdx.json', '{"changed":true}');
     write(root, 'dist/security/provenance.json', '{"changed":true}');
+    // runQualityExecution.ts intentionally materializes this snapshot after the
+    // release manifest. It must not mutate the already finalized runtime digest.
+    write(root, 'dist/quality/quality-center-report.json', '{"sourceCommit":"abc123"}');
     const after = computeRuntimeArtifactIdentity(root);
 
     expect(after).toEqual(before);
