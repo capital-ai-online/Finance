@@ -107,6 +107,20 @@ describe('production runtime secret hardening', () => {
     })).toBe('');
   });
 
+  it('keeps the Cloudflare to Render edge proof in the canonical server secret boundary', () => {
+    expect(SECRET_FILE_KEYS).toContain('CAPITAL_AI_EDGE_TRUST_SECRET');
+
+    expect(resolveEnvironmentValue('CAPITAL_AI_EDGE_TRUST_SECRET', {
+      secretValues: {},
+      environment: { VITE_CAPITAL_AI_EDGE_TRUST_SECRET: 'vite-only-test-value' },
+    })).toBe('');
+
+    expect(resolveEnvironmentValue('VITE_CAPITAL_AI_EDGE_TRUST_SECRET', {
+      secretValues: { CAPITAL_AI_EDGE_TRUST_SECRET: 'server-secret-file-test-value' },
+      environment: { CAPITAL_AI_EDGE_TRUST_SECRET: 'server-env-test-value' },
+    })).toBe('');
+  });
+
   it('keeps Alpha Vantage canonical-only in the server secret manifest and VITE boundary', () => {
     expect(SECRET_FILE_KEYS).toContain('ALPHA_VANTAGE_API_KEY');
     expect(SECRET_FILE_KEYS).not.toContain('ALPHA_VANTAGE_KEY');
