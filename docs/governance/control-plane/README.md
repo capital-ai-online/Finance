@@ -86,7 +86,7 @@ A claim whose release condition has already occurred is stale coordination metad
 
 ## Validation boundary
 
-The structural validator checks stable-ID uniqueness, active ADR/ESS namespace collisions, ADR reservation lifecycle, registry targets, legacy redirects, document roles, projection relationships, exclusive normative scopes, Frontend role invariants, ADR-0005 lifecycle consistency, current M10 suspension state and the absence of repository provider instruction mirrors.
+The structural validator checks stable-ID uniqueness, active ADR/ESS namespace collisions, ADR reservation lifecycle, registry targets, legacy redirects, document roles, projection relationships, exclusive normative scopes, Frontend role invariants, ADR-0005 lifecycle consistency, current M10 retirement state and the absence of repository provider instruction mirrors.
 
 `validateFrontendArchitecture.ts` remains responsible for directories, dependency direction, feature/shared boundaries, legacy compatibility and parallel Frontend roots. Governance role/authority rules are not duplicated into that validator.
 
@@ -94,7 +94,9 @@ Validation is technical evidence only. It does not authorize a Pull Request, Hum
 
 ## M10 state
 
-M10 Passkey PR-CI enforcement remains `SUSPENDED / OFF`. Reactivation is blocked until the documented Governance/Documentary/README/router/versioning correlations are reconciled, structural/hosted validation passes and a new explicit Human/Owner decision is made.
+M10 Passkey PR-CI `AUTHORIZE_PR_CI` productive runtime is `RETIRED / OFF`. Human Merge of PR #691 removed the productive M10 runtime and current authorization path; historical M10 evidence remains non-authorizing.
+
+Current-state discovery, architecture scans, roadmaps and validators must not expect, reconstruct or report a missing M10 implementation as a gap. Any future PR-CI/passkey authorization mechanism is a new separately scoped Human/Owner architecture and authority decision, not a reactivation of retired M10.
 
 ## Standards posture
 

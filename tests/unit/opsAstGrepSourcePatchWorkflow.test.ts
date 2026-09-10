@@ -41,11 +41,20 @@ describe('OPS ast-grep BB-2E workflow', () => {
     expect(workflow).not.toContain('github-actions[bot]');
   });
 
-  it('hard-binds the current FE target branch, plan, runner and productive target file', () => {
+  it('hard-binds the current FE target branch, head, plan, runner and productive target file', () => {
     expect(workflow).toContain(
-      'TARGET_BRANCH: agent/frontend-bb2e-dashboard-drawer-20260910',
+      'TARGET_BRANCH: agent/frontend-bb-2e-dashboard-drawer-20260910',
     );
-    expect(workflow).toContain('ref: agent/frontend-bb2e-dashboard-drawer-20260910');
+    expect(workflow).toContain(
+      'ref: agent/frontend-bb-2e-dashboard-drawer-20260910',
+    );
+    expect(workflow).toContain(
+      "default: 'ae85bfbcbf6cee7c4eaeb8b09e7da8106954914b'",
+    );
+    expect(workflow).not.toContain('agent/frontend-bb2e-drawer-rematerialize-20260910');
+    expect(workflow).not.toContain('88dcaa1c671d16caa8dd60d0dd9b4b43c5cb5020');
+    expect(workflow).not.toContain('agent/frontend-bb2e-dashboard-drawer-20260910');
+    expect(workflow).not.toContain('ab337d52193a8d89f440bfa98265d7f77ff27477');
     expect(workflow).not.toContain('agent/frontend-dashboard-drawer-strangler-20260907');
     expect(workflow).toContain('TARGET_FILE: src/components/Dashboard.tsx');
     expect(workflow).toContain(

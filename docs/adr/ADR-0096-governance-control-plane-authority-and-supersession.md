@@ -5,7 +5,7 @@
 **Status:** `ACCEPTED / ACTIVE` — Governance Control Plane landed through the merged governance-consolidation sequence; revalidated 2026-08-22  
 **Date:** `2026-08-22`  
 **Decision Owner:** CAPITAL-AI Owner  
-**Scope:** repository governance authority, agent trust root, stable identities, ADR/ESS lifecycle, Documentation-only boundaries, document roles/projections, namespace reservations, parallel-writer correlation, platform-version authority, current-state synchronization and M10 prerequisite remediation
+**Scope:** repository governance authority, agent trust root, stable identities, ADR/ESS lifecycle, Documentation-only boundaries, document roles/projections, namespace reservations, parallel-writer correlation, platform-version authority, current-state synchronization and M10 retirement-state normalization
 
 **Legacy alias:** historical governance draft number `ADR-0086`; active ADR-0086 belongs to Vendor Privacy Evidence Governance.
 
@@ -115,11 +115,11 @@ A ChatGPT/local sandbox may execute existing pre-PR checks on a real feature-bra
 
 The profile is defined by `docs/runbooks/CHATGPT_REPOSITORY_SANDBOX.md` and `scripts/automation/runChatGptSandboxPrePr.mjs`.
 
-### 13. M10 state
+### 13. M10 state — current-state synchronization 2026-09-10
 
-M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` remains **SUSPENDED / OFF**. Historical M10 evidence cannot reactivate it.
+M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` productive runtime is **RETIRED / OFF**. Human Merge of PR #691 removed the productive M10 runtime and current authorization path; historical M10 evidence cannot reactivate it.
 
-Reactivation requires then-current architecture/authority cleanup, structural validation, exact-head hosted CI and a new explicit Human/Owner decision.
+Current-state repository, architecture, roadmap, inventory and validation discovery MUST NOT expect, reconstruct or report the absence of a productive M10 implementation as a gap. Any future PR-CI/passkey authorization mechanism requires a new separately scoped architecture and Human/Owner authority decision and is not a reactivation of retired M10.
 
 ### 14. Deployment authority
 
@@ -163,5 +163,5 @@ This decision reduces ambiguous authority, mutable duplicate version state and a
 7. SC-MD-SPT current projection is 18 stages; Documentary binds to VC-17.
 8. current-state indexes do not create separate version/SHA authority.
 9. ChatGPT/local sandbox is non-authorizing and offline-first.
-10. M10 remains suspended until a new Human/Owner reactivation decision.
+10. M10 productive runtime remains RETIRED / OFF and is not discoverable as a current implementation gap; any future PR-CI/passkey mechanism requires a new separately scoped Human/Owner decision.
 11. Human/CODEOWNER merge remains mandatory.
