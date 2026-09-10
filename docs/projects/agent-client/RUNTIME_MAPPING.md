@@ -1,6 +1,6 @@
 # CAPITAL-AI-CLIENT — Runtime & Architecture Mapping
 
-**Baseline:** `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`  
+**Baseline:** `main@e9b2551a4e2e24c5fed3dac72362b8bf1727bf42`  
 **Correlation date:** `2026-09-10`  
 **Project stage:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`
@@ -9,13 +9,13 @@
 
 `logical-ownership-before-physical-relocation`
 
-No productive code is moved by the current correlation-hygiene slice. Existing imports, runtime behavior and downstream authority stay in place. Historical strangler evidence remains under `evidence/`; current runtime-trigger status is maintained in this active mapping and `ROADMAP.md`.
+CLIENT-08 changes project contracts only. No productive code is moved, no client runtime module is introduced, and existing imports/runtime/downstream authority stay in place. Historical strangler evidence remains under `evidence/`; current runtime-trigger status is maintained in this active mapping and `ROADMAP.md`.
 
 ## Current-to-PVC-01 mapping
 
 | Current artifact | Role | PVC-01 relationship | Action now |
 |---|---|---|---|
-| AI Agent target architecture | Human -> AI Client -> Control Plane | canonical architecture input | retain/reference |
+| AI Agent target architecture | Human -> AI Client -> Agent Control Plane | canonical architecture input | retain/reference |
 | AI Agent trust boundaries TB1/TB2 | client trust/handoff boundaries | `OWNED / SHARED` | retain/reference |
 | `AgentPrincipalContext` | principal semantics | `CONSUMER` | retain in Security |
 | `AGENT_CAPABILITIES` / `isKnownAgentCapability` | capability vocabulary | `CONSUMER` | reuse; do not duplicate |
@@ -23,9 +23,10 @@ No productive code is moved by the current correlation-hygiene slice. Existing i
 | `providerProfile.ts` | provider/model security semantics | `CONSUMER` | retain downstream |
 | `PolicyGate.ts` | policy decision integration | `NOT-CLIENT` | retain downstream |
 | `authorizedAgentExecution.ts` | controlled execution/audit | `NOT-CLIENT` | retain downstream |
-| `src/services/agentTools/**` | tool adapters | `NOT-CLIENT` | retain downstream |
+| `src/services/agentTools/**` | tool adapters | `NOT-CLIENT` | no local execution ownership |
 | `scripts/systemadmin/**` principal/request builders | Operations execution host | `NOT-CLIENT` | foreign; no local refactor |
-| ESS-0019 remote-skill semantics | external skill/tool metadata is untrusted; remote loading not enabled | `CONSUMER` | no activation/runtime introduced |
+| ESS-0019 remote-skill semantics | external skill/tool metadata is untrusted; remote loading not enabled | `CONSUMER` | CLIENT-08 consumes contract only; no activation/runtime introduced |
+| `CLIENT_CONTRACTS.md` CLIENT-08 | project-skill/plugin/tool discovery + invocation-request contract | `OWNED CONTRACT` | documentation semantics only; no physical adapter |
 
 ## Target logical components
 
@@ -39,6 +40,9 @@ Their concrete non-runtime contract remains [`CLIENT_CONTRACTS.md`](./CLIENT_CON
 | `AgentClientResponseAdapter` | preserve authoritative response/deny/error | fail-open success rewriting |
 | `AgentClientStatusModel` | client lifecycle state | downstream execution ownership |
 | `AgentClientUxContract` | render request/blocked/success/failure | hidden protected mutation path |
+| `ProjectSkillInvocationContract` | logical discovery/provenance/invocation-request semantics | remote loader, credential store, policy engine, registry authority |
+
+`ProjectSkillInvocationContract` above is a logical documentation contract name only. It is not evidence of a TypeScript/runtime component and does not authorize one.
 
 ## Strangler/refactor trigger
 
@@ -59,10 +63,27 @@ Physical migration is permitted only if at least one is evidenced:
 | evidenced productive duplication reduced by shared client module | `NOT TRIGGERED` |
 | productive `requestedCapability` client implementation | `NOT FOUND` |
 | physical named Agent Client logical-component implementation | `NOT FOUND` |
+| productive remote-skill/plugin invocation implementation | `NOT FOUND / NOT INTRODUCED` |
 
 Current relocation state: `NO_PHYSICAL_RUNTIME_TRIGGER`.
 
-Current GitHub code search finds `requestedCapability` and the named logical components only in CLIENT documentation/contract/claim material. `src/platform/Security/agentIam.ts` remains the productive principal/capability/authorization surface. Creating an unconsumed Agent Client runtime module now would therefore be parallel implementation rather than strangler/refactor.
+Current GitHub code search on the CLIENT-08 branch-start baseline finds `requestedCapability` and named logical CLIENT components only in CLIENT documentation/contract/claim material. `src/platform/Security/agentIam.ts` remains the productive principal/capability/authorization surface. Creating an unconsumed Agent Client runtime or remote-skill loader now would therefore be parallel implementation rather than strangler/refactor.
+
+## CLIENT-08 runtime boundary
+
+CLIENT-08 defines provider-neutral discovery, provenance/integrity/freshness and invocation-request semantics only. It does **not** introduce:
+
+- remote skill loading or code execution;
+- a skill marketplace/registry service;
+- persistent Skill Market Sync;
+- MCP server/client runtime code;
+- OAuth/token storage or scope changes;
+- plugin/app/connector installation, connection or enablement;
+- provider/tool credentials;
+- policy/authorization evaluation;
+- protected mutation execution.
+
+When an already-authorized execution surface exists, a future physical client adapter may only hand an exact invocation request to that surface after an independent productive trigger and then-current architecture/security correlation. Provider-specific protocol mechanics remain adapter concerns and cannot redefine this project contract.
 
 ## Prohibited relocation
 
@@ -77,10 +98,6 @@ Do not relocate into PVC-01 solely because the client calls it:
 - deployment/release paths;
 - foreign Operations/Systemadmin execution-host code;
 - persistent remote-skill or plugin execution infrastructure.
-
-## CLIENT-08 separation
-
-CLIENT-08 may define provider-neutral project-skill/plugin invocation semantics in a later separate fresh branch/PR slice. It does not itself satisfy the physical-runtime trigger and must not introduce remote skill activation, a second routing registry, persistent execution jobs or client-held privileged credentials.
 
 ## Trace continuity
 

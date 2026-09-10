@@ -1,6 +1,6 @@
 # CAPITAL-AI-CLIENT — Work Packages
 
-**Baseline:** `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`  
+**Baseline:** `main@e9b2551a4e2e24c5fed3dac72362b8bf1727bf42`  
 **Correlation date:** `2026-09-10`  
 **Scope:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`
@@ -9,7 +9,7 @@ All packages are constrained to `PVC-01`. A package may consume downstream contr
 
 ## CLIENT-01 — Agent Client Inventory / Re-correlation
 
-**State:** `DONE — CONTRACT BASELINE MERGED / ACTIVE DOCS RE-CORRELATED`
+**State:** `DONE — PR #858 HUMAN-MERGED / POST-MERGE BASELINE CORRELATED`
 
 Outputs:
 - repository-wide Agent Client source/task classification;
@@ -17,7 +17,7 @@ Outputs:
 - current runtime/document mapping;
 - foreign execution-surface identification;
 - current-main strangler scan;
-- seven active CLIENT documents synchronized to the current authority/project baseline.
+- seven active CLIENT documents synchronized through PR #858 and re-correlated to its merge commit.
 
 Current active documents: `README.md`, `ROADMAP.md`, `CLIENT_CONTRACTS.md`, `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `TRACEABILITY.md`, `WORK_PACKAGES.md`.
 
@@ -89,9 +89,9 @@ Acceptance:
 
 ## CLIENT-07 — Client Testing & Evidence
 
-**State:** `CONTRACT EVIDENCE COMPLETE — ACTIVE DOC CORRELATION CURRENT / RUNTIME TESTS DEFERRED`
+**State:** `CONTRACT EVIDENCE COMPLETE — PR #858 CLASS-D HOSTED CHECKS PASS / RUNTIME TESTS DEFERRED`
 
-PR #693 merged the contract/evidence baseline. Historical evidence remains under `evidence/` at its original baselines. The current seven active documents carry the 2026-09-10 correlation metadata.
+PR #693 merged the contract/evidence baseline. PR #858 merged the current-document re-correlation after hosted CI, Governance, Container-scope and GitGuardian checks passed on its final head. Historical evidence remains under `evidence/` at its original baselines.
 
 Runtime contract tests are created only when a physical PVC-01 implementation slice is introduced. The current scan still finds no justified runtime slice, so this package does not manufacture runtime `PASS` claims.
 
@@ -113,23 +113,32 @@ Build/test execution follows repository PR/CI policy. Documentation/contract-onl
 
 ## CLIENT-08 — Project Skill / Plugin Invocation Contract
 
-**State:** `OPEN — SEPARATE FRESH BRANCH/PR SLICE REQUIRED`
+**State:** `CONTRACT IMPLEMENTED ON BRANCH — PR GATE PENDING / NO REMOTE ACTIVATION`
 
-Goal: define a provider-neutral PVC-aware client contract for project-skill/plugin discovery and invocation without creating a second authority plane or activating remote execution.
+Goal: define a provider-neutral PVC-aware client contract for project-skill/plugin/tool discovery and invocation requests without creating a second authority plane or activating remote execution.
 
-Acceptance:
+Implemented in `CLIENT_CONTRACTS.md`:
 - canonical `project -> project folder -> PVC -> Primary Owner` mapping is reused, not duplicated;
-- skill identity/version/provenance expectations are explicit;
+- discovery and invocation are separate phases;
+- exact skill identity, immutable version/revision and digest/integrity expectations are explicit;
+- publisher/source/observation/freshness/license provenance is preserved where available;
 - plugin/skill/tool metadata and returned content remain untrusted input;
+- tool annotations/risk hints are advisory only and never enforcement;
 - capability invocation is request-only and never a grant or approval;
-- missing, ambiguous, stale, untrusted or unauthorized skill metadata fails closed;
+- missing, ambiguous, stale, unavailable or integrity-failed skill metadata fails closed;
+- authenticated discovery metadata uses bounded/private cache semantics and is revalidated at invocation boundaries;
 - fallback uses canonical PVC/Roadmap/ADR/ESS navigation;
 - no client-held privileged credentials or parallel control/routing plane is introduced;
 - ESS-0019 remote-skill loading remains disabled unless a separate later authority/runtime/security decision enables it;
 - persistent Skill Market Sync or equivalent execution is routed to the applicable `CAPITAL-AI-OPS` stage;
 - external plugin/app/connector/MCP installation, connection, enablement or permission changes require a separate explicit Human/Owner request.
 
-Execution boundary: CLIENT-08 is not implemented by the current correlation-hygiene slice. It starts only after this slice completes its PR lifecycle and a fresh then-current-main correlation is performed.
+Validation boundary:
+- documentation/contract diff only;
+- no provider write, OAuth mutation, connector mutation or execution-host permission change;
+- no physical CLIENT runtime module;
+- no new registry/control plane;
+- no runtime test `PASS` claim for absent code.
 
 ## Physical runtime gate
 
