@@ -62,7 +62,7 @@ Current state: `NO_PHYSICAL_RUNTIME_TRIGGER`. Existing Security/Compliance/Serve
 | PVC-01 has exactly one Primary Owner | `PASS — CAPITAL-AI-CLIENT` |
 | canonical project folder | `PASS — docs/projects/agent-client/` |
 | current correlation baseline | `PASS — main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0` |
-| open Pull Requests | `PASS — 0 at correlation time` |
+| open Pull Requests | `PASS — PR #856 only; CAPITAL-AI-FE / src/components/MarkdownOrchestrator.tsx; no CLIENT file/ownership/semantic overlap` |
 | retained CLIENT work claim | `PASS — released / not an active writer` |
 | stale second agent-client branch | `PASS — 0 ahead / 17 behind; no unique unmerged content` |
 | PR #693 contract baseline | `PASS — merged` |
