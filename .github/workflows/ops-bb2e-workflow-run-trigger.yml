@@ -168,7 +168,7 @@ jobs:
               ref: 'main',
               inputs: {
                 expected_head_sha: feHead,
-                confirm_apply: true,
+                confirm_apply: 'true',
               },
             });
 
