@@ -2,9 +2,9 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Correlation baseline:** `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`  
+**Correlation baseline:** `main@5e9be38b5af037f85fab67643043c5be30f87e16`  
 **Correlation date:** `2026-09-10`  
-**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #873 and #874 open
+**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #874 open
 
 ## Current terminal repository packages
 
@@ -21,7 +21,7 @@
 
 | Package | Responsible project Roadmap state | Repository evidence | Long-term technical owner / PVC | OPS disposition |
 |---|---|---|---|---|
-| `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | Security Roadmap on current main: `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN`; aggregate `SEC-SOTA-03` remains `IN_PROGRESS / ... / INVENTORY_OPEN` | PR #872 Human-merged as `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; final head `e59308599dde3f7cf050601a2b6e64c5a73aaf59`; PR CI, Governance and Container Security `success` | `CAPITAL-AI-OPS / PVC-02` + `PVC-07` | consume implementation on main; do not synthesize Security `VERIFIED/CLOSED`; Security-owned Roadmap synchronization remains open |
+| `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | Security Roadmap on current main: `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN`; aggregate `SEC-SOTA-03` remains `IN_PROGRESS / ... / INVENTORY_OPEN` | PR #872 Human-merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; final head `e59308599dde3f7cf050601a2b6e64c5a73aaf59`; PR CI, Governance and Container Security `success` | `CAPITAL-AI-OPS / PVC-02` + `PVC-07` | consume implementation on main; do not synthesize Security `VERIFIED/CLOSED`; Security-owned Roadmap synchronization remains open |
 
 The package extends the existing ADR-0060/M6 provenance chain by binding deterministic SHA-256 identity for the actual built runtime output into the existing release-manifest/provenance verification path.
 
@@ -176,7 +176,8 @@ PR #872 demonstrates that separation: Security executed the bounded implementati
 | PR #867 Edge-Trust secret deployment coverage | merged OPS correction |
 | PR #868 Governance chat/approval rollout | merged Governance dependency |
 | PR #870/#871 Vite security floor / SEC-SOTA-03 sync | merged Security work; no OPS ownership transfer |
-| PR #872 artifact-digest binding | merged as current `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; Security Roadmap synchronization remains open |
+| PR #872 artifact-digest binding | merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; Security Roadmap synchronization remains open |
+| PR #873 PVC Vocabulary / Thesaurus | merged as `5e9be38b5af037f85fab67643043c5be30f87e16` |
 | GitGuardian Health #34468840264 | terminal success on exact post-#863 main; required monitoring PASS; denied/unsupported categories remain NOT-RUN |
 
 ## Active-writer correlation
@@ -188,17 +189,17 @@ At integrity-sync intake:
 - `agent/operations-self-healing-readiness-20260910` is the only other active OPS branch detected and is file-disjoint from the four integrity-sync target artifacts;
 - deleted/unmerged earlier integrity branches and their commits are historical input only.
 
-Current re-correlation after PR #872 merge:
+Current re-correlation after PR #872/#873 merges:
 
-- PR #872 is terminal/Human-merged into current main; its implementation is consumed without claiming Security closure;
-- PR #873 remains open under `CAPITAL-AI-GOV` for PVC Vocabulary/Thesaurus and changes only three `src/platform/Vocabulary/**` files; no changed-file or identified OPS semantic/authority conflict exists;
+- PR #872 is terminal/Human-merged into main; its implementation is consumed without claiming Security closure;
+- PR #873 is terminal/Human-merged into current main; its Vocabulary/PVC terminology changes create no OPS ownership or file conflict;
 - PR #874 remains open under `CAPITAL-AI-GOV` for Approval Envelope v3.4 and changes Trust Root, Development-Chain approval/policy, Governance project, registry/evaluator/test surfaces; it has no changed-file overlap with this OPS integrity-sync scope, but it is a material semantic/authority writer that must reach a terminal state before a separate DevelopmentChain current-state/milestone matrix is materialized;
 - no parallel OPS implementation or Security status overwrite is created.
 
 ## Exit gate for current integrity-sync package
 
-- branch has been resynchronized to `main@a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c` after the PR #872 merge;
-- current open-PR set is re-correlated: PR #873/#874 are changed-file disjoint from this branch; known semantic/authority dependencies are explicitly sequenced rather than merged into this scope;
+- branch has been resynchronized to `main@5e9be38b5af037f85fab67643043c5be30f87e16` after PR #872 and #873 merges;
+- current open-PR set is re-correlated: PR #874 is changed-file disjoint from this branch and its later DevelopmentChain authority dependency is explicitly sequenced;
 - PR #859/#867 are represented as merged/current-main work, not `ACTIVE_BRANCH` work;
 - PR #872 is represented as merged implementation with responsible Security Roadmap status drift still open rather than synthetic closure;
 - GitGuardian Health run #34468840264 is represented with exact PASS/NOT-RUN semantics and is not promoted to a different SHA;
