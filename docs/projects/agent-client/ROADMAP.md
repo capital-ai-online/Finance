@@ -22,7 +22,7 @@ Current correlation resolves:
 
 - `CAPITAL-AI-CLIENT` -> `docs/projects/agent-client/` -> `PVC-01` -> Primary Owner `CAPITAL-AI-CLIENT`;
 - current `main` is `c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`;
-- `0` open Pull Requests at correlation time;
+- open PR `#856` belongs to `CAPITAL-AI-FE`, changes only `src/components/MarkdownOrchestrator.tsx`, and has no changed-file, PVC-ownership or semantic overlap with this CLIENT documentation slice;
 - the retained work claim `CAPITAL-AI-CLIENT-CONTRACT-BASELINE-R2-2026-09-01` is `released`, so it is not an active writer claim;
 - branch `agent/agent-client-snyk-ui-cleanup-20260910` is stale (`0` ahead / `17` behind current main) and therefore does not represent parallel unmerged CLIENT content;
 - PR `#693` is Human-merged and established the CLIENT-02 through CLIENT-06 provider-neutral contract baseline plus CLIENT-07 evidence;
@@ -68,7 +68,7 @@ Completed implementation/evidence:
 - foreign execution-surface classification;
 - PR #693 Human-merged contract-baseline implementation;
 - active CLIENT document refresh against `main@c4d888d8e8491ca447ca0675fd47f9bcfc4e0fb0`;
-- no open PR writer, no active CLIENT work claim, and no evidenced physical runtime trigger.
+- no conflicting CLIENT PR writer, no active CLIENT work claim, and no evidenced physical runtime trigger; open PR #856 is foreign FE scope without overlap.
 
 The seven active project documents are `README.md`, `ROADMAP.md`, `CLIENT_CONTRACTS.md`, `AGENT_CLIENT_INVENTORY.md`, `RUNTIME_MAPPING.md`, `TRACEABILITY.md` and `WORK_PACKAGES.md`. Historical evidence files retain their recorded baselines and are not rewritten merely to look current.
 
