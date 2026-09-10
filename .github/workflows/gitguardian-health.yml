@@ -32,3 +32,190 @@ jobs:
           }
           "$RUNNER_TEMP/ggshield/bin/ggshield" --version
           "$RUNNER_TEMP/ggshield/bin/ggshield" api-status --no-check-for-updates
+
+      # Read-only management endpoints; requires sources:read and health_checks:read.
+      # Public API has no documented check-run settings endpoint; report NOT-RUN.
+      - name: Read GitGuardian source and installation health
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+          GITGUARDIAN_INSTANCE: ${{ vars.GITGUARDIAN_INSTANCE || 'https://dashboard.gitguardian.com' }}
+        run: |
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import re
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          
+          TARGET = "capital-ai-online/Finance"
+          REPO_ID = "1284319285"
+          MAX_AGE = dt.timedelta(hours=24)
+          NOW = dt.datetime.now(dt.timezone.utc)
+          ORIGINS = {
+              "https://dashboard.gitguardian.com": "https://api.gitguardian.com",
+              "https://dashboard.eu1.gitguardian.com": "https://api.eu1.gitguardian.com",
+          }
+          FIELDS = ("monitoring_status", "github_installation", "api_network",
+                    "api_access_rights", "check_run_configuration")
+          
+          
+          class Unavailable(Exception):
+              pass
+          
+          
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          
+          
+          def stamp(value):
+              if not isinstance(value, str):
+                  return None
+              try:
+                  parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+                  return parsed if parsed.tzinfo else None
+              except ValueError:
+                  return None
+          
+          
+          def result(status, reason):
+              return {"status": status, "reason": reason}
+          
+          
+          def collect(origin, key, path):
+              # Only GET; pagination may never send the credential to a different host/path.
+              url = origin + path
+              expected_path = urllib.parse.urlsplit(url).path
+              opener = urllib.request.build_opener(NoRedirect())
+              rows, seen = [], set()
+              for _ in range(20):
+                  parsed = urllib.parse.urlsplit(url)
+                  if (parsed.scheme + "://" + parsed.netloc != origin
+                          or parsed.path != expected_path or parsed.fragment
+                          or parsed.username or parsed.password or url in seen):
+                      raise Unavailable("UNSAFE_OR_REPEATED_PAGINATION")
+                  seen.add(url)
+                  request = urllib.request.Request(
+                      url, headers={"Authorization": "Token " + key,
+                                    "Accept": "application/json"}, method="GET")
+                  try:
+                      with opener.open(request, timeout=15) as response:
+                          raw = response.read(2_000_001)
+                          link = response.headers.get("Link", "")
+                      if len(raw) > 2_000_000:
+                          raise Unavailable("RESPONSE_TOO_LARGE")
+                      page = json.loads(raw)
+                  except urllib.error.HTTPError as exc:
+                      raise Unavailable("HTTP_" + str(exc.code)) from None
+                  except (urllib.error.URLError, TimeoutError, OSError):
+                      raise Unavailable("NETWORK_ERROR") from None
+                  except (ValueError, UnicodeError):
+                      raise Unavailable("INVALID_JSON") from None
+                  if not isinstance(page, list) or any(not isinstance(x, dict) for x in page):
+                      raise Unavailable("INVALID_SCHEMA")
+                  rows.extend(page)
+                  next_links = re.findall(r'<([^>]+)>;\s*rel=["\']?next["\']?', link)
+                  if not next_links:
+                      return rows
+                  if len(next_links) != 1:
+                      raise Unavailable("INVALID_PAGINATION")
+                  url = urllib.parse.urljoin(url, next_links[0])
+              raise Unavailable("PAGINATION_LIMIT")
+          
+          
+          def evaluate(origin, key, fetch=collect):
+              checks = {name: result("NOT-RUN", "NO_EVIDENCE") for name in FIELDS}
+              checks["check_run_configuration"] = result(
+                  "NOT-RUN", "NO_DOCUMENTED_PUBLIC_API_ENDPOINT")
+              evidence = {}
+              try:
+                  sources = fetch(origin, key, "/v1/sources?type=github&external_id=" + REPO_ID)
+                  sources = [s for s in sources if s.get("type") == "github"
+                             and s.get("full_name", "").lower() == TARGET.lower()
+                             and str(s.get("external_id")) == REPO_ID]
+                  if len(sources) != 1:
+                      checks["monitoring_status"] = result("NOT-RUN", "SOURCE_NOT_UNIQUELY_VISIBLE")
+                  else:
+                      source = sources[0]
+                      state = source.get("monitoring_status")
+                      if state in ("active", "disabled", "unreachable", "archived", "deleted_on_remote"):
+                          checks["monitoring_status"] = result(
+                              "PASS" if state == "active" and source.get("deleted") is not True
+                              and source.get("provider_metadata", {}).get("archived") is not True
+                              else "FAIL", state)
+                      if type(source.get("id")) is int:
+                          evidence["source_id"] = source["id"]
+              except Unavailable as exc:
+                  checks["monitoring_status"] = result("NOT-RUN", str(exc))
+              try:
+                  rows = fetch(origin, key, "/v1/health-checks?type=github-installation")
+                  rows = [r for r in rows if r.get("type") == "github-installation"
+                          and isinstance(r.get("instance"), dict)
+                          and r["instance"].get("url", "").rstrip("/").lower()
+                          == "https://github.com/capital-ai-online"]
+                  if len(rows) != 1:
+                      raise Unavailable("INSTALLATION_NOT_UNIQUELY_VISIBLE")
+                  health = rows[0]
+                  checked_at = stamp(health.get("started_at"))
+                  if checked_at is None or not dt.timedelta(0) <= NOW - checked_at <= MAX_AGE:
+                      raise Unavailable("HEALTH_EVIDENCE_STALE_OR_INVALID")
+                  evidence["health_checked_at"] = checked_at.isoformat()
+                  instance = health["instance"]
+                  if type(instance.get("id")) is int:
+                      evidence["installation_id"] = instance["id"]
+                  state = instance.get("status")
+                  if state in ("active", "revoked", "suspended", "deleted"):
+                      checks["github_installation"] = result("PASS" if state == "active" else "FAIL", state)
+                  results = health.get("results")
+                  if not isinstance(results, list) or any(not isinstance(x, dict) for x in results):
+                      raise Unavailable("INVALID_HEALTH_RESULTS")
+                  for kind in ("api_network", "api_access_rights"):
+                      matching = [x for x in results if x.get("kind") == kind]
+                      if len(matching) == 1 and matching[0].get("status") in ("pass", "warn", "fail"):
+                          state = matching[0]["status"]
+                          checks[kind] = result("PASS" if state == "pass" else "FAIL", state)
+              except Unavailable as exc:
+                  for kind in ("github_installation", "api_network", "api_access_rights"):
+                      checks[kind] = result("NOT-RUN", str(exc))
+              return checks, evidence
+          
+          
+          def main():
+              key = os.environ.get("GITGUARDIAN_API_KEY", "")
+              instance = os.environ.get("GITGUARDIAN_INSTANCE", "").rstrip("/")
+              origin = ORIGINS.get(instance)
+              if not key or origin is None:
+                  checks = {name: result("NOT-RUN", "MISSING_KEY_OR_UNSUPPORTED_INSTANCE") for name in FIELDS}
+                  evidence = {}
+              else:
+                  try:
+                      checks, evidence = evaluate(origin, key)
+                  except Exception:
+                      # Never serialize exception text, API bodies, headers or credentials.
+                      checks = {name: result("NOT-RUN", "UNEXPECTED_SCHEMA_OR_CLIENT_ERROR") for name in FIELDS}
+                      evidence = {}
+              report = {
+                  "repository": TARGET, "observed_at": NOW.isoformat(),
+                  "run_id": os.environ.get("GITHUB_RUN_ID", ""),
+                  "commit": os.environ.get("GITHUB_SHA", ""),
+                  "max_health_age_hours": 24,
+                  "checks": checks, "evidence": evidence,
+                  "limitation": "monitoring_status active alone does not prove reachability; API backend coverage is incomplete.",
+              }
+              encoded = json.dumps(report, indent=2, sort_keys=True)
+              print(encoded)
+              summary = os.environ.get("GITHUB_STEP_SUMMARY")
+              if summary:
+                  with open(summary, "a", encoding="utf-8") as handle:
+                      handle.write("## GitGuardian API health\n\n```json\n" + encoded + "\n```\n")
+              # Unsupported/missing evidence is never silently promoted to PASS.
+              return 0 if all(x["status"] == "PASS" for x in checks.values()) else 1
+          
+          
+          if __name__ == "__main__":
+              raise SystemExit(main())
+          PY
