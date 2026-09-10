@@ -41,10 +41,12 @@ describe('OPS ast-grep BB-2E workflow', () => {
     expect(workflow).not.toContain('github-actions[bot]');
   });
 
-  it('hard-binds the target branch, plan, runner and productive target file', () => {
+  it('hard-binds the current FE target branch, plan, runner and productive target file', () => {
     expect(workflow).toContain(
-      'TARGET_BRANCH: agent/frontend-dashboard-drawer-strangler-20260907',
+      'TARGET_BRANCH: agent/frontend-bb2e-dashboard-drawer-20260910',
     );
+    expect(workflow).toContain('ref: agent/frontend-bb2e-dashboard-drawer-20260910');
+    expect(workflow).not.toContain('agent/frontend-dashboard-drawer-strangler-20260907');
     expect(workflow).toContain('TARGET_FILE: src/components/Dashboard.tsx');
     expect(workflow).toContain(
       'PLAN_PATH: scripts/frontend/codemods/bb2e-dashboard-drawer-strangler.json',
