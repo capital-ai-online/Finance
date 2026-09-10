@@ -5,8 +5,9 @@ on:
   workflow_dispatch:
     inputs:
       expected_head_sha:
-        description: 'Exakter 40-stelliger Head-SHA von agent/frontend-bb2e-dashboard-drawer-20260910'
+        description: 'Exakter 40-stelliger Head-SHA von agent/frontend-bb-2e-dashboard-drawer-20260910'
         required: true
+        default: 'ae85bfbcbf6cee7c4eaeb8b09e7da8106954914b'
         type: string
       confirm_apply:
         description: 'Dry-Run, Apply, Validation und Push auf den gebundenen FE-Branch ausführen'
@@ -21,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  TARGET_BRANCH: agent/frontend-bb2e-dashboard-drawer-20260910
+  TARGET_BRANCH: agent/frontend-bb-2e-dashboard-drawer-20260910
   TARGET_FILE: src/components/Dashboard.tsx
   PLAN_PATH: scripts/frontend/codemods/bb2e-dashboard-drawer-strangler.json
   RUNNER_PATH: scripts/operations/sourcePatch/astGrepSourcePatch.ts
@@ -48,7 +49,7 @@ jobs:
       - name: Gebundenen FE-Branch auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: agent/frontend-bb2e-dashboard-drawer-20260910
+          ref: agent/frontend-bb-2e-dashboard-drawer-20260910
           path: work
           fetch-depth: 0
           persist-credentials: false
@@ -221,7 +222,7 @@ jobs:
       - name: Gebundenen FE-Branch ohne persistente Credentials auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: agent/frontend-bb2e-dashboard-drawer-20260910
+          ref: agent/frontend-bb-2e-dashboard-drawer-20260910
           path: work
           fetch-depth: 0
           persist-credentials: false
