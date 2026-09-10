@@ -7,7 +7,7 @@
 **Role:** cross-cutting Security requirements, findings, testing, bounded remediation and independent verification  
 **Status:** ACTIVE EXECUTION PROJECTION — NON-AUTHORIZING  
 **Date:** `2026-09-10`  
-**Correlation baseline:** `main@5664332aac99befa819abbbc2cf23c30a8982147`  
+**Correlation baseline:** `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`  
 **Implementation authority:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001`  
 **Component specification:** `ESS-0006 v1.2.0`  
 **Detailed roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`  
@@ -53,7 +53,8 @@ Implementation and verification may both be performed by CAPITAL-AI-SEC but rema
 | `SEC-SOTA-01` SOTA baseline + roadmap convergence | PR #832 merged; hosted PR checks and merge-main build/deploy/identity evidence completed | `DONE_MAIN` |
 | Post-#832 Security roadmap sync | PR #837 merged as `8ab11ae749639a67c28b3d685f4943df19b9e72c`; final PR head `d5e77d5fded414931896f4e6781e3dcfffcaed19` passed Governance, Container Security and Class-D `build-and-test` | `DONE_MAIN` |
 | Bounded Security remediation authority | current main exposes `CTRL-SEC-BOUNDED-REMEDIATION-001`; Security README and ESS-0006 v1.2.0 project the same bounded-remediation boundary | `DONE_MAIN / ACTIVE` |
-| `SEC-SOTA-03` Vite-6 dependency floor | PR #870 final PR head `83f073d5cc9017f5cf5c8cebb9a2cf44bffeead3`; Hosted `build-and-test`, Governance, Container Security and GitGuardian passed; Human merge is current `main@5664332aac99befa819abbbc2cf23c30a8982147` | `MERGED_MAIN / REPOSITORY_CONTRACT_VERIFIED` |
+| `SEC-SOTA-03` Vite-6 dependency floor | PR #870 final PR head `83f073d5cc9017f5cf5c8cebb9a2cf44bffeead3`; Hosted `build-and-test`, Governance, Container Security and GitGuardian passed; Human merge entered main as `5664332aac99befa819abbbc2cf23c30a8982147` | `MERGED_MAIN / REPOSITORY_CONTRACT_VERIFIED` |
+| Post-#870 `SEC-SOTA-03` roadmap sync | PR #871 final PR head `dbc6b2e1b8a99e0da9b9e1677adc2579c325a300`; Governance, CI, Container Security and GitGuardian passed; Human merge is `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d` | `DONE_MAIN` |
 | `SEC-VERIFY-R2-04` fatal-process repository re-verification | repository code/test contract independently verified in merged evidence | `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN` |
 | `SEC-SOTA-02` AI/Agent/MCP control inventory | historical 2026-09-07 static/control inspection + routed evidence matrix | `INVENTORY_IMPLEMENTED_BRANCH / FINDINGS_ROUTED / PR GATE OPEN AT THAT BASELINE` |
 | `SEC-VERIFY-ULS-001` subscription identity | current Security evidence retains provider identity residuals | `PARTIAL / NOT VERIFIED` |
@@ -87,15 +88,15 @@ The external reference set is `ADVISORY_NON_AUTHORIZING` and mapped into existin
    Evidence: `docs/evidence/security/CAPITAL_AI_SEC_SOTA02_AI_AGENT_MCP_CONTROL_INVENTORY_2026-09-07.md`. Its owner-routing decisions remain historical evidence and are not rewritten. Future remediation eligibility is evaluated under `CTRL-SEC-BOUNDED-REMEDIATION-001` against then-current main and contracts.
 
 5. **`SEC-SOTA-03` — supply-chain assurance inventory.**  
-   **State:** `IN_PROGRESS / VITE_FLOOR_VERIFIED_MAIN / INVENTORY_OPEN`.  
-   PR #870 closed the first bounded dependency-regression slice: current main enforces the Vite-6 Security Floor `>=6.4.3` across root and nested lockfile copies, validates `dependencies` and `devDependencies` against root lock metadata, and passed the final exact-head Hosted CI/Governance/Container-Security/GitGuardian checks before Human merge. This does not close `SEC-SOTA-03` as a whole.
+   **State:** `IN_PROGRESS / VITE_FLOOR_VERIFIED_MAIN / ARTIFACT_DIGEST_IMPLEMENTED_BRANCH / INVENTORY_OPEN`.  
+   PR #870 closed the first bounded dependency-regression slice. PR #871 then synchronized the Security project Roadmap and selected the actual-runtime-artifact digest as the next bounded repository gap. `SEC-SOTA-03` remains open as an aggregate workstream.
 
-   **Next bounded slice — `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`:** `NEXT / EVIDENCE_GAP_CONFIRMED`.  
-   ADR-0060 requires the chain `source SHA → dependency lock → SBOM → build artifact digest → provenance → keyless attestation/signature → deployment identity → runtime identity`. Current main already binds source SHA, lockfile digest and SBOM, signs/verifies the provenance blob through the hosted `main` workflow, and performs exact-SHA deployment identity checks. The remaining nearest repository gap is the **actual built runtime artifact digest**: `buildRuntimeReleaseManifest.ts` derives `buildIdentity` from source/input metadata but does not record the built runtime output digest; `buildSupplyChainProvenance.ts` currently makes the release manifest and SBOM its two subjects; `verifySupplyChainProvenance.ts` therefore verifies those file digests but does not independently reject mutation of the built application artifact itself.
+   **Current bounded slice — `SEC-SOTA03-ARTIFACT-DIGEST-BINDING`:** `IMPLEMENTED_BRANCH / VALIDATION_OPEN / HOSTED_VERIFICATION_OPEN`.  
+   Branch `agent/security-artifact-digest-binding-20260910` is based on `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`. The implementation reuses the existing ADR-0060/M6 chain: `runtimeArtifactIdentity.ts` deterministically enumerates actual runtime build files under `dist/` while excluding only post-build `dist/control-plane/**` and `dist/security/**` evidence surfaces; each runtime file receives a real SHA-256 subject digest and the sorted subject set receives a deterministic aggregate digest. `buildRuntimeReleaseManifest.ts` additively binds that aggregate to the existing `capital-ai-runtime-release-manifest/1.0.0` and its `buildIdentity`; `buildSupplyChainProvenance.ts` emits the real runtime files as in-toto/SLSA subjects; `verifySupplyChainProvenance.ts` recomputes the set fail-closed and rejects changed, missing, duplicate or stale runtime subjects and inconsistent aggregate identity. Existing cosign keyless signing and exact-main deployment paths remain unchanged.
 
-   **Bounded implementation target:** reuse the existing ADR-0060/M6 chain; bind deterministic SHA-256 identity for the actual built runtime output into the release manifest/provenance and extend the existing verifier with positive and tamper/missing-artifact negative tests. Do not create a second provenance, Release or Deployment plane. Long-term Controlled-Implementation/Release ownership remains `CAPITAL-AI-OPS / PVC-02` and `PVC-07`; Security execution remains bounded and does not transfer that ownership.
+   Tests on the branch cover deterministic ordering, exclusion of post-build evidence files, runtime-content mutation, missing/empty runtime trees, missing/stale/mismatched provenance subjects, stale manifest/provenance aggregate identity, source/lock/SBOM drift and untrusted CI builder identity. The existing ADR-0044 R-002 release-manifest contract remains version `1.0.0`; its fixture is extended with a minimal runtime artifact and asserts the new additive digest evidence. These tests are implemented but repository-native execution and Hosted CI remain `NOT RUN` until the applicable validation/PR gates execute.
 
-   **Exit Gate:** the exact hosted build produces a deterministic runtime-artifact digest bound to the same source SHA and dependency state; provenance references that digest; the verifier rejects changed/missing/stale runtime artifacts; focused positive/negative tests pass; hosted CI signs/verifies the same provenance identity; no new Release/Deployment authority or protected external mutation is introduced.
+   **Exit Gate:** the exact hosted build produces a deterministic runtime-artifact digest bound to the same source SHA and dependency state; provenance references the real runtime-file digests; the verifier rejects changed/missing/stale runtime artifacts; focused positive/negative tests pass; hosted main CI signs/verifies the same provenance identity; no new Release/Deployment authority or protected external mutation is introduced.
 
 ### P1
 
@@ -156,26 +157,27 @@ No row grants CAPITAL-AI-SEC the productive owner's business or PVC authority. A
 - Missing in-app MCP runtime is not a gap where current accepted contracts explicitly keep MCP unimplemented.
 - Retired M10 / `AUTHORIZE_PR_CI` remains historical and is not a current implementation gap.
 
-## Current correlation state — post PR #870
+## Current correlation state — post PR #871
 
-- Correlation baseline: `main@5664332aac99befa819abbbc2cf23c30a8982147`.
+- Correlation baseline: `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`.
 - Current Project: `CAPITAL-AI-SEC`; productive PVC ownership remains `[]`; Primary Owner remains `CAPITAL-AI-SEC` for the Security workstream.
-- PR #870 final exact PR head was `83f073d5cc9017f5cf5c8cebb9a2cf44bffeead3`; Hosted `build-and-test`, Governance, Container Security and GitGuardian all concluded `success` before Human merge.
-- PR #870 merge commit is current `main@5664332aac99befa819abbbc2cf23c30a8982147`; the previous Security branch is no longer present.
-- Open Pull Requests at this roadmap-sync baseline: `0`.
-- Current Vite lock resolution remains `6.4.3`; current `dependencySecurity.ts` enforces the Vite-6 floor and the merged tests cover vulnerable root/nested resolutions plus malformed SemVer and root-metadata drift.
-- `SEC-SOTA-03` remains open because ADR-0060's build-artifact-digest link is not yet represented by an actual built-runtime-output digest in the current release-manifest/provenance verifier chain.
-- No provider permission, connector, credential, runtime, deployment or protected Production mutation is included in this roadmap-sync slice.
+- PR #871 final exact PR head was `dbc6b2e1b8a99e0da9b9e1677adc2579c325a300`; Governance, CI, Container Security and GitGuardian all concluded `success` before Human merge.
+- PR #871 merge commit is current `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d` at this branch baseline.
+- Open Pull Requests at branch creation: `0`; searches for relevant `security`, `provenance` and `artifact` parallel branches returned no active match.
+- Branch `agent/security-artifact-digest-binding-20260910` was created directly from that exact main SHA.
+- The bounded branch changes only repository-side release-manifest/provenance/verification/test/Roadmap surfaces; `.github/workflows/ci.yml`, package manifests, provider configuration and production state are unchanged.
+- Long-term Controlled Implementation and Release ownership remains `CAPITAL-AI-OPS / PVC-02` and `PVC-07`; Security executes only the bounded verification/remediation slice.
+- No provider permission, connector, credential, deployment or protected Production mutation is included.
 
 ## Validation / completion gate
 
-1. current `/AGENTS.md` is fully read from then-current main;
-2. project/PVC mapping, Security README/roadmaps, ESS-0006, ADR-0060 and actual affected repository surfaces are correlated;
-3. PR #870 is projected as `MERGED_MAIN / REPOSITORY_CONTRACT_VERIFIED` without closing the aggregate `SEC-SOTA-03` workstream;
-4. the next `SEC-SOTA-03` slice is exactly one bounded repository gap: actual runtime-artifact digest binding into the existing release-manifest/provenance chain;
-5. business/product semantics, foreign Architecture Authority and protected external mutation remain explicit DENY/Owner boundaries;
-6. implementation evidence cannot create `VERIFIED/CLOSED`; separate positive/negative re-test and relevant hosted/runtime evidence remain required;
-7. no parallel Security/IAM/Policy/Audit/Release/Deployment/Governance or Supply-Chain control plane is created;
-8. local/sandbox checks not actually executed remain `NOT RUN` and are not represented as PASS;
+1. current `/AGENTS.md` is fully read from `main@e9839f5e3eccc0ae01d6a10e53d3787435e1379d`;
+2. project/PVC mapping, Security README/Roadmap, ESS-0006, ADR-0044, ADR-0060, M6 and actual affected repository surfaces are correlated;
+3. PR #871 is terminal `DONE_MAIN` and the bounded Artifact-Digest slice starts from its exact merge-main baseline;
+4. the implementation deterministically hashes the actual runtime-file subject set and binds its aggregate identity to the existing release manifest/build identity;
+5. provenance uses the actual runtime-file SHA-256 values as subjects and the existing verifier rejects changed, missing, duplicate or stale runtime subject sets fail-closed;
+6. the existing `capital-ai-runtime-release-manifest/1.0.0`, cosign keyless signing path, Human/CODEOWNER merge boundary and Release/Deployment authorities remain unchanged;
+7. focused positive/negative tests are implemented, while repository-native test execution and Hosted CI remain `NOT RUN` until actually executed;
+8. no parallel Security/IAM/Policy/Audit/Release/Deployment/Governance or Supply-Chain control plane is created;
 9. exact current main/head/open-PR correlation is repeated immediately before PR creation;
 10. PR creation requires explicit Human/Owner approval for the exact snapshot; merge remains Human/CODEOWNER-only.
