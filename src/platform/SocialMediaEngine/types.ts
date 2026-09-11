@@ -167,6 +167,13 @@ export interface PublishRequestPayload {
   hashtags: string[];
   mediaType: 'short_video' | 'podcast_audio' | 'long_video' | 'social_post' | 'thread';
   mediaUrl?: string;
+  /** SOCIAL-P0 canonical package correlation fields. */
+  contentPackageId?: string;
+  sourceContentId?: string;
+  sourceDomain?: string;
+  disclosures?: string[];
+  links?: string[];
+  referralDisclosure?: string;
 }
 
 export interface PublishLogEntry {

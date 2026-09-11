@@ -37,6 +37,21 @@ export interface GenerateSeriesRequest {
   platforms?: Array<'x' | 'facebook' | 'community'>;
   locale?: 'de' | 'en';
   contextNote?: string;
+  /** SOCIAL-P0: canonical source identity/provenance is mandatory for runtime packaging. */
+  sourceContentId: string;
+  sourceDomain: string;
+  evidenceReference: string;
+  disclosureApplicability: 'required' | 'not_applicable';
+  disclosures?: string[];
+  links?: string[];
+  hashtags?: string[];
+  campaignId?: string;
+  tone?: string;
+  referral?: {
+    provider?: string;
+    referral_url?: string;
+    disclosure?: string;
+  };
 }
 
 export interface GeneratedTextVariant {
@@ -109,7 +124,8 @@ export const SocialMediaGeneratorService = {
   },
 
   /**
-   * N1: Text content generation for X / Facebook / community.
+   * N1 / SOCIAL-P0: text generation through the existing endpoint, now with
+   * mandatory canonical provenance/disclosure identity for Social packaging.
    * Does not publish. Does not render media.
    */
   async generateSeries(request: GenerateSeriesRequest): Promise<GenerateSeriesPackage | null> {
