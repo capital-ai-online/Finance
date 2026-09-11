@@ -4,8 +4,8 @@
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain stage:** `PVC-05 — Platform Director`  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director`  
-**Current correlation baseline:** `main@d8d91cc5b04f107be28cbbfb13aaab8175305444`  
-**Correlation date:** `2026-09-10`  
+**Current correlation baseline:** `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9`  
+**Correlation date:** `2026-09-11`  
 **Trust root:** `/AGENTS.md`  
 **Role:** Human-readable project roadmap / non-authorizing execution projection  
 **Status:** ACTIVE
@@ -22,18 +22,18 @@ PVC-05 / Platform Director
 
 `AUTH-*`, `CTRL-*`, registries, branches, Pull Requests and chat history support integrity/audit/traceability only. They do not replace this Human-readable sequence and historical branch content never overrides current `main` authority.
 
-## Current-state synchronization — 2026-09-10
+## Current-state synchronization — 2026-09-11
 
-The Governance backlog was re-correlated after Human Merge of PR #874 against `main@d8d91cc5b04f107be28cbbfb13aaab8175305444`, `/AGENTS.md` Control Plane v2.9.0, the canonical Project/PVC mapping, current Approval Policy v3.4.0 and the current PR set.
+The Governance backlog was freshly correlated for `GOV-CHAT-072` against `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9`, `/AGENTS.md` Control Plane v2.9.0, the canonical Project/PVC mapping, Approval Policy v3.4.0, Accepted ADR-0096, ESS-0019, the merged CLIENT-08 contract and the current PR/writer set.
 
-- PR #868 (`GOV-CHAT-076`) is **DONE_MAIN / TERMINAL**, merge SHA `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`; its Hosted Governance, CI and Container-Security workflows completed successfully on exact PR head `89f1a333a9f735ecad455b1ee6ae7e31f20e9305`.
-- `GOV-CHAT-074 / Approval Envelope v3.4` is **DONE_MAIN / TERMINAL** through Human-merged PR #874, merge SHA `d8d91cc5b04f107be28cbbfb13aaab8175305444`. Current `/AGENTS.md` and `HUMAN_OWNER_PR_APPROVAL_POLICY.md` now make the bounded Approval Envelope authoritative for future PR-create flows.
-- PR #874 Hosted Governance, CI and Container-Security workflows completed successfully on exact PR head `7b8c682fbc1962b2b4af844e87b7a967e9e07162` before Human Merge.
-- Current open Pull Requests at this post-merge correlation point: **none**. No current changed-file, semantic, namespace or authority writer blocks the Governance planning closeout.
-- `GOV-CHAT-075 / bounded Security-remediation authority` remains **DONE_MAIN / TERMINAL** through Human-merged PR #864; its Security/PVC/Primary-Owner boundaries are preserved by Approval Envelope v3.4.
+- PR #868 (`GOV-CHAT-076`) is **DONE_MAIN / TERMINAL**, merge SHA `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`.
+- `GOV-CHAT-074 / Approval Envelope v3.4` is **DONE_MAIN / TERMINAL** through Human-merged PR #874, merge SHA `d8d91cc5b04f107be28cbbfb13aaab8175305444`.
+- PR #877 is **DONE_MAIN / TERMINAL**, merge SHA `7e5f783caa6cb33bca8346582b31ddda33258ed9`; it removed the remaining project-projection gate in front of `GOV-CHAT-072`.
+- `main` is 36 commits ahead of the PR #877 merge and retains it as an ancestor. The intervening MCP executable-identity hardening remains a Security/OPS boundary and does not authorize connector installation, host permission changes or plugin execution.
+- Current open Pull Requests at GOV-CHAT-072 branch creation: **none**. No active changed-file, namespace or authority writer blocks the bounded Governance slice.
+- CLIENT-08 is reused as the provider-neutral discovery/invocation-request contract. It does not become Governance authority and does not activate remote skills or external integrations.
+- `GOV-CHAT-075 / bounded Security-remediation authority` remains **DONE_MAIN / TERMINAL** through Human-merged PR #864; its Security/PVC/Primary-Owner boundaries are preserved.
 - `M10` remains **RETIRED / OFF** and is not a current implementation gap. `NIST` publications/frameworks remain withdrawn from the repository Governance baseline and do not create a GOV remediation backlog.
-- Historical branches `agent/governance-pr-approval-consolidation-20260910` and `agent/governance-pr-approval-envelope-20260910` are non-authorizing traceability only after Human Merge.
-- `GOV-CHAT-072 / Development-Chain chat plugin execution policy` is now the highest-priority open local Governance item and is no longer sequenced behind GOV-CHAT-074.
 
 ## Completed / terminal Governance work
 
@@ -49,7 +49,7 @@ The Governance backlog was re-correlated after Human Merge of PR #874 against `m
 - `OWNER APPROVAL PRESENTATION` — `DONE_MAIN / MAINTAINED` via PR #803; pure approvals/confirmations remain neutral authority presentation.
 - `GOV-CHAT-071 / separate Owner-response retirement` — `DONE_MAIN / TERMINAL` via PR #845.
 - `GOV-CHAT-073 / NIST-M10 current-state cleanup` — `DONE_MAIN / TERMINAL`.
-- `GOV-CHAT-074 / Approval Envelope v3.4` — `DONE_MAIN / TERMINAL` via PR #874.
+- `GOV-CHAT-074 / Approval Envelope v3.4` — `DONE_MAIN / TERMINAL` via PR #874; post-merge projection closeout terminal via PR #877.
 - `GOV-CHAT-075 / bounded Security-remediation authority` — `DONE_MAIN / TERMINAL` via PR #864.
 - `GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868.
 - `COMP-GAP-008 — Governance Document Registry treatment` — `DONE_MAIN / TERMINAL` via PR #775.
@@ -62,13 +62,17 @@ The Governance backlog was re-correlated after Human Merge of PR #874 against `m
 
 ### GOV-CHAT-072 — Development-Chain / chat plugin execution policy
 
-**State:** `OPEN_GOV / READY_FOR_RECORRELATION`
+**State:** `IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT`
 
-**Reason:** Current `/AGENTS.md` already requires reuse screening in the order repository/native capability → connected plugin/platform capability → specialized plugin → suitable open source → custom implementation. The broader Owner-directed rule for application-appropriate use of installed/connected plugins in Development-Chain chats is not yet fully projected into current Governance.
+**Branch:** `agent/governance-gov-chat-072-plugin-use-20260911`
 
-**Current sequencing:** GOV-CHAT-074 is terminal on main, so this item may now be freshly correlated and implemented as its own bounded Governance slice. It must not become an instruction to invoke every plugin indiscriminately; relevance, least privilege, tool availability, ownership and protected-mutation controls remain controlling.
+**Implementation:** The branch evolves the existing trust-root and Development-Chain authorities without creating a plugin-specific `AUTH-*` identity. `CTRL-SDLC-PLUGIN-USE-001` is the single bounded usage control for already installed/connected plugins, apps, MCP tools and connectors: select/invoke only when the capability directly advances the current bounded task and is the least-privileged sufficient available capability. Availability is not authorization; unconditional/all-plugin invocation, invocation merely because a capability is connected, automatic install/connect/enable/permission/OAuth/MCP-host mutation, ownership transfer and protected-gate bypass are prohibited.
 
-**Exit gate:** then-current `/AGENTS.md`, Development-Chain policy, Control Catalog/Authority projection and regression coverage define one bounded plugin-use rule: use connected/installed capabilities application-appropriately when relevant; preserve least privilege, fail-closed protected mutations and existing project/PVC ownership; no unconditional plugin invocation, duplicate orchestration or plugin authority.
+**Reuse:** Accepted ESS-0019 remains the provider-neutral capability/security contract and CLIENT-08 remains the discovery/invocation-request contract. Neither becomes a second trust root, plugin authority, execution host or permission plane.
+
+**Security boundary:** `.mcp.json`, MCP executable identity, external host credentials/tool grants and session isolation remain outside this GOV slice. Existing `CTRL-SEC-LEASTPRIV-001`, PR-create, Human/CODEOWNER merge and protected external-mutation controls remain unchanged in force.
+
+**Exit gate:** branch diff and regression coverage prove exactly one `CTRL-SDLC-PLUGIN-USE-001` control under existing authorities; `/AGENTS.md`, Development-Chain policy, Control Catalog and Authority Registry project the same relevance/least-privilege/no-unconditional-invocation semantics; no new plugin `AUTH-*`, no automatic integration mutation and no weakened protected mutation/ownership/security boundary. Human Merge is required before this branch-local rule becomes current-main authority.
 
 ### GOV-07 — User-Lifecycle governance closeout
 
@@ -97,8 +101,8 @@ OPS, CLIENT, DOC, Security-quality, dependency, GitGuardian, repository-host, Su
 
 ## Current priority
 
-1. Freshly correlate and implement `GOV-CHAT-072` as the bounded Development-Chain/chat plugin execution policy under current Approval Envelope v3.4 and the current Security/ownership boundaries.
-2. Re-correlate the dependency-held `GOV-07` owner-return matrix against then-current DATA/OPS/FE/SEC/COMP evidence before any final Governance closeout assertion.
+1. Carry the bounded `GOV-CHAT-072` branch through exact current-main correlation, Approval Envelope, hosted validation and Human/CODEOWNER merge without expanding its already defined scope.
+2. After GOV-CHAT-072 is terminal on main, re-correlate the dependency-held `GOV-07` owner-return matrix against then-current DATA/OPS/FE/SEC/COMP evidence before any final Governance closeout assertion.
 
 No new local PVC-05 runtime implementation is implied by this synchronization.
 
@@ -106,12 +110,13 @@ No new local PVC-05 runtime implementation is implied by this synchronization.
 
 - `PVC-05` ownership remains explicit and does not absorb SEC/COMP assurance or foreign productive execution;
 - GOV-CHAT-076 remains terminalized consistently with PR #868/current main;
-- GOV-CHAT-074 is terminalized consistently with Human-merged PR #874/current main;
-- Human Owner PR Approval v3.4, Development Chain v2.8, Control Catalog v1.23 and Authority Registry v1.59 project one effective PR-create authority rather than a second approval plane;
+- GOV-CHAT-074 remains terminalized consistently with Human-merged PR #874 and post-merge PR #877;
+- Human Owner PR Approval v3.4 remains unchanged; branch-local Development Chain v2.9, Control Catalog v1.24 and Authority Registry v1.60 evolve their existing stable authorities only;
+- exactly one `CTRL-SDLC-PLUGIN-USE-001` defines relevant least-privilege installed/connected capability use without unconditional invocation or automatic integration mutation;
+- ESS-0019 and CLIENT-08 are reused without creating a second trust root, plugin registry, authorization plane or execution host;
 - deterministic effective-change identity remains evidence, not semantic safety proof;
-- synchronization-only SHA movement may preserve approval only with proven material equivalence and full current correlation;
 - Security remediation delegation and ownership/protected-mutation boundaries from PR #864 remain intact;
 - NIST remains non-authorizing and M10 remains retired/off unless a new explicit Human/Owner decision changes that state;
 - missing/stale validation or evidence cannot silently become PASS;
 - Human/CODEOWNER-only merge remains mandatory;
-- GOV-CHAT-072 is the next bounded local Governance implementation item.
+- GOV-CHAT-072 becomes `DONE_MAIN / TERMINAL` only after Human Merge and exact current-main post-merge correlation.
