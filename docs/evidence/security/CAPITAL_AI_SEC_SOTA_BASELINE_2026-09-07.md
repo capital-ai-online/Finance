@@ -66,14 +66,14 @@ No new parallel workstream family is introduced. The SOTA themes are projected i
 | Security Assessment authority alignment | `DONE_MAIN`; PR #766 merged skill v1.0.1 with advisory OWASP treatment and no NIST baseline | retain regression guard; no reopen |
 | User Lifecycle subscription identity | `PARTIAL / NOT VERIFIED`; Security evidence on main records provider identity residuals | OPS/PVC-08 provider/runtime remediation/evidence return, then independent re-verification |
 | fatal process / exceptional condition `S1-R2-04` | productive code exists on current main; repository behavior re-verification is executed in a sibling evidence document on this branch | remaining post-deploy supervisor/restart evidence from OPS/PVC-08 |
-| AI/Agent/MCP SOTA control coverage | `OPEN — INVENTORY REQUIRED` | produce current-main control/threat matrix before any new implementation proposal |
-| supply-chain SLSA 1.2 alignment | `OPEN — REVIEW REQUIRED`; existing release/provenance controls must be reused | inventory current source/build/provenance/attestation evidence and record only actual gaps |
-| application/API ASVS 5.0 coverage | `OPEN — VERIFICATION MATRIX REQUIRED` | map only repository-relevant requirements to existing tests/evidence and route actual gaps |
+| AI/Agent/MCP SOTA control coverage | `OPEN — INVENTORY REQUIRED` at this historical baseline | use current owner roadmap/current-main evidence; do not infer current state from this historical row alone |
+| supply-chain SLSA 1.2 alignment | historical baseline was `OPEN — REVIEW REQUIRED` | current closeout addendum below records `SEC-SOTA-03 = VERIFIED_MAIN / CLOSED` |
+| application/API ASVS 5.0 coverage | `OPEN — VERIFICATION MATRIX REQUIRED` | `SEC-SOTA-04` is now the next active Security slice after SOTA-03 closeout |
 | CRA reporting applicability/readiness | `REQUIRES_COMP_APPLICABILITY_DECISION` | `CAPITAL-AI-COMP` determines applicability; SEC may then verify technical vulnerability/incident evidence readiness |
 
 ## 5. Prioritized work packages
 
-### P0 — current Security-owned execution
+### P0 — current Security-owned execution at the original baseline
 
 1. **`SEC-SOTA-01` — SOTA baseline and roadmap convergence.** Owner: `CAPITAL-AI-SEC`. Exit: current-main baseline, advisory/non-authorizing source treatment, existing-workstream mapping and synchronized Security roadmaps are explicit.
 2. **`SEC-VERIFY-R2-04` — fatal-process current-main re-verification.** Owner: `CAPITAL-AI-SEC` for independent verification only. Exit: repository behavior disposition evidence-backed; post-deploy/supervisor evidence remains OPS/PVC-08.
@@ -105,3 +105,43 @@ No new parallel workstream family is introduced. The SOTA themes are projected i
 `SEC-SOTA-01` is implemented on branch `agent/security-sota-roadmap-sync-20260907` against `main@09ab297c1fd954c37fa2cb8b2fba718cb58402cb`. The roadmap/work-package synchronization and `SEC-VERIFY-R2-04` evidence are part of the same bounded Security documentation/evidence slice.
 
 Hosted PR checks and Human/CODEOWNER merge are not implied by this document and remain separate gates.
+
+## 8. Current verification addendum — SEC-SOTA-03 closeout (2026-09-11)
+
+This addendum updates only the current evidence disposition of `SEC-SOTA-03` and the sequencing gate into `SEC-SOTA-04`. It does not rewrite the original 2026-09-07 baseline, create new repository authority, or claim external MCP-host assurance.
+
+**Correlation baseline:** `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9`  
+**Current Project:** `CAPITAL-AI-SEC`  
+**Primary Productive PVC ownership:** `[]`  
+**Primary Owner:** `CAPITAL-AI-SEC` for Security assurance/verification  
+**External MCP-host productive owner:** `CAPITAL-AI-OPS / PVC-02`
+
+### 8.1 MCP executable identity verification
+
+- PR #882 final PR head: `1969555c885ea0e5fb5cc1ee30648b1d5950b773`.
+- Human merge: `d67de465c89013f5626a7de8d16569b0017c5ada`.
+- Current `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9` is 14 commits ahead of that merge with merge base exactly `d67de465c89013f5626a7de8d16569b0017c5ada`.
+- Intervening commits do not modify `.mcp.json`, `scripts/security/validateMcpExecutableIdentity.mjs` or `tests/unit/mcpExecutableIdentity.test.ts`.
+- Current `.mcp.json` binds the repository-configured GA4 MCP distribution/executable exactly as `uvx --from analytics-mcp==0.7.0 analytics-mcp`.
+- `scripts/security/validateMcpExecutableIdentity.mjs` validates server, command, distribution, version and executable fail-closed.
+- `tests/unit/mcpExecutableIdentity.test.ts` covers the valid repository declaration and rejects the previous unconstrained declaration, version drift and executable-name drift.
+- Exact PR-head hosted evidence: CI `success`, Container Security `success`, final Governance revalidation `success`. An earlier Governance run failed before the trusted baseline refresh/revalidation; that historical failure remains visible and is not rewritten as PASS.
+- No credential material, external MCP-host permission, tool-grant or session-isolation state is represented as verified by this repository-only evidence.
+
+**Disposition:** `SEC-SOTA03-MCP-EXECUTABLE-IDENTITY = VERIFIED_MAIN / CLOSED`.
+
+### 8.2 SEC-SOTA-03 aggregate closeout
+
+The current Security roadmap identifies the bounded repository-side SOTA-03 inventory through the Vite dependency floor, actual-runtime artifact digest/provenance/signature/deployment binding, and MCP executable identity. Those repository-side slices are now merged and separately evidence-backed.
+
+**Disposition:** `SEC-SOTA-03 = VERIFIED_MAIN / CLOSED`.
+
+This closeout does **not** close `SEC-SOTA02-F04` external MCP/connector host AuthN/AuthZ, tool grants, session isolation or read-only ceiling. That evidence gap remains routed to `CAPITAL-AI-OPS / PVC-02` and is intentionally separate from repository executable-identity verification.
+
+### 8.3 Next Security slice
+
+The prior P0 inventory gate blocking the ASVS work is now satisfied for the repository-owned `SEC-SOTA-03` scope.
+
+**Disposition:** `SEC-SOTA-04 — application/API ASVS 5.0 verification matrix = ACTIVE / NEXT`.
+
+The next slice must remain repository-relevant and evidence-based: map ASVS 5.0.0 objectives to current implementation/tests/evidence, treat framework mapping alone as non-PASS, and route productive gaps to the actual Primary Owner/PVC. No ASVS matrix content is pre-created by this closeout addendum.

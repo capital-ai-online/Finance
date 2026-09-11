@@ -109,7 +109,7 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(manifest.standards).toEqual(['ISO/IEC 42001:2023 benchmark']);
   });
 
-  it('projects the evolved authorities and bounded GOV-CHAT-072 branch state', () => {
+  it('projects the evolved authorities and terminal GOV-CHAT-072 current-main state', () => {
     const roadmap = read('docs/projects/governance/ROADMAP.md');
     const taskRegister = read('docs/projects/governance/TASK_REGISTER.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
@@ -130,10 +130,14 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(taskRegister).toMatch(/`GOV-CHAT-076`[^\n]*`DONE_MAIN`[^\n]*PR #868/i);
     expect(roadmap).toMatch(/`GOV-CHAT-074 \/[^`]+` — `DONE_MAIN \/ TERMINAL` via PR #874/);
     expect(taskRegister).toMatch(/\| `GOV-CHAT-074` \|[^\n]*\| `DONE_MAIN` \|[^\n]*PR #874/);
-    const pluginPolicySection = roadmap.split(/^### GOV-CHAT-072\b/m)[1]?.split(/^### /m)[0];
+    const pluginPolicySection = roadmap.split(/^## GOV-CHAT-072\b/m)[1]?.split(/^## /m)[0];
     expect(pluginPolicySection).toBeDefined();
-    expect(pluginPolicySection).toContain('**State:** `IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT`');
+    expect(pluginPolicySection).toContain('**State:** `DONE_MAIN / TERMINAL`');
+    expect(pluginPolicySection).toContain('PR #886');
+    expect(pluginPolicySection).toContain('0945b7264d6819a57451748888e1fb8c71981762');
     expect(pluginPolicySection).toContain('CTRL-SDLC-PLUGIN-USE-001');
-    expect(taskRegister).toMatch(/\| `GOV-CHAT-072` \|[^\n]*\| `IMPLEMENTED_ON_BRANCH \/ PR_GATE_NEXT` \|/);
+    expect(pluginPolicySection).not.toContain('IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT');
+    expect(taskRegister).toMatch(/\| `GOV-CHAT-072` \|[^\n]*\| `DONE_MAIN` \|[^\n]*PR #886[^\n]*0945b7264d6819a57451748888e1fb8c71981762/i);
+    expect(taskRegister).not.toContain('IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT');
   });
 });

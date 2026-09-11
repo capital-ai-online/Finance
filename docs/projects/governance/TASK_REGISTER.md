@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-11, correlated to repository-visible current-main/PR/branch evidence  
-**Current correlation baseline:** `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9`  
+**Current correlation baseline:** `main@eab5750a481fd68e93a41c409b561dabc4dcbf13`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -11,7 +11,6 @@
 - `DONE_MAIN` — merged/current-main evidence supports completion.
 - `OPEN_GOV` — bounded CAPITAL-AI-GOV work remains.
 - `READY_FOR_RECORRELATION` — a prior sequencing dependency is terminal and work may be freshly correlated under current authority.
-- `IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT` — bounded implementation exists on a current scoped branch; it is not current-main authority and still requires normal PR-create/validation/Human-merge gates.
 - `FOREIGN_PARTIAL` — foreign owner implemented part; evidence/verification remains.
 - `FOREIGN_OPEN` — foreign Primary Owner still owns execution.
 - `DEPENDENCY` — GOV closeout waits on another owner/verifier/Legal or terminal upstream state.
@@ -57,25 +56,25 @@
 | `GOV-CHAT-069` | Post-COMP-GAP-008 owner/dependency re-correlation | GOV/PVC-05 | `DONE_MAIN` | PR #780 |
 | `GOV-CHAT-070` | GOV-07 validated-baseline evolution policy | GOV/PVC-05 policy | `DONE_MAIN` | Human-merged PR #790; broader GOV-07 closeout remains dependency-held |
 | `GOV-CHAT-071` | Retire separate copyable Owner-response rule; preserve neutral approval presentation | GOV/PVC-05 | `DONE_MAIN` | TERMINAL via Human-merged PR #845 |
-| `GOV-CHAT-072` | Development-Chain/chat plugin execution policy | GOV/PVC-05 | `IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT` | branch `agent/governance-gov-chat-072-plugin-use-20260911`; exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing authorities; relevant least-privilege use only, no unconditional invocation, plugin authority, automatic integration mutation, ownership transfer or protected-gate bypass; Human Merge required before current-main authority |
+| `GOV-CHAT-072` | Development-Chain/chat plugin execution policy | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #886, merge SHA `0945b7264d6819a57451748888e1fb8c71981762`; exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing authorities; relevant least-privilege use only, no unconditional invocation, plugin authority, automatic integration mutation, ownership transfer or protected-gate bypass |
 | `GOV-CHAT-073` | Roadmap-framework NIST/M10 current-state correction | GOV/PVC-05 | `DONE_MAIN` | NIST withdrawn/non-authorizing; M10 retired/off |
 | `GOV-CHAT-074` | New PR-CREATION-APPROVAL / Approval Envelope v3.4 rollout | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #874, merge SHA `d8d91cc5b04f107be28cbbfb13aaab8175305444`; post-merge projections terminalized via PR #877, merge SHA `7e5f783caa6cb33bca8346582b31ddda33258ed9` |
 | `GOV-CHAT-075` | Bounded Security-remediation authority | GOV/PVC-05 policy with SEC assurance boundary | `DONE_MAIN` | Human-merged PR #864, merge SHA `c20bce01f398f58240c69676ede367787bb7251a`; preserved by v3.4 |
 | `GOV-CHAT-076` | Cross-chat current-main consolidation / GOV Roadmap and register sync | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #868, merge SHA `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a` |
 
-## GOV-CHAT-072 — branch-local bounded implementation
+## GOV-CHAT-072 — terminal current-main state
 
-At branch baseline `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9`, GOV-CHAT-072 is materialized without creating a plugin-specific authority. The branch evolves the existing `AUTH-GOV-AGENT-TRUST-ROOT`, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`, `AUTH-GOV-CONTROL-CATALOG` and `AUTH-GOV-AUTHORITY-REGISTRY` versions and introduces exactly one control identity: `CTRL-SDLC-PLUGIN-USE-001`.
+Human-merged PR #886, merge SHA `0945b7264d6819a57451748888e1fb8c71981762`, materialized the bounded Development-Chain plugin/connector usage rule. The current main baseline `eab5750a481fd68e93a41c409b561dabc4dcbf13` contains that merge as an ancestor.
 
-The rule requires an already installed/connected plugin, app, MCP tool, connector or equivalent capability to be directly relevant to the current bounded task and the least-privileged sufficient available capability before invocation. Availability never grants authority. Unconditional/all-plugin invocation, invocation solely because an integration is connected, automatic install/connect/enable/permission/OAuth/MCP-host mutation, PVC/Primary-Owner transfer, protected-mutation bypass and trust elevation from retrieved tool content are prohibited.
+Current `/AGENTS.md` v2.10.0, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` v2.9.0, Authority Registry v1.60.0 and Control Catalog v1.24.0 project exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing authorities. No plugin-specific `AUTH-*` identity exists.
 
-ESS-0019 and the Human-merged CLIENT-08 contract are reused as provider-neutral capability and discovery/invocation-request contracts. `.mcp.json`, MCP executable identity, credentials, external host permissions/tool grants and session isolation remain outside the GOV-CHAT-072 mutation scope.
+The rule requires an already installed/connected plugin, app, MCP tool, connector or equivalent capability to be directly relevant to the current bounded task and the least-privileged sufficient available capability before invocation. Availability never grants authority. Unconditional/all-plugin invocation, invocation solely because an integration is connected, automatic install/connect/enable/permission/OAuth/MCP-host mutation, PVC/Primary-Owner transfer, protected-mutation bypass and trust elevation from retrieved tool content remain prohibited.
 
-This branch state is non-authorizing until Human/CODEOWNER Merge. `DONE_MAIN` MUST NOT be projected for GOV-CHAT-072 before that terminal event and post-merge current-main correlation.
+ESS-0019 and the Human-merged CLIENT-08 contract remain provider-neutral capability and discovery/invocation-request contracts. `.mcp.json`, MCP executable identity, credentials, external host permissions/tool grants and session isolation remain outside GOV-CHAT-072 authority.
 
 ## GOV-CHAT-074 — terminal current-main state
 
-Human-merged PR #874 activates `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` / `CTRL-SDLC-PR-CREATE-001` Approval Envelope v3.4; PR #877 subsequently terminalized the three Governance project projections. The PR #877 merge SHA `7e5f783caa6cb33bca8346582b31ddda33258ed9` is an ancestor of the current branch baseline `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9`.
+Human-merged PR #874 activates `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` / `CTRL-SDLC-PR-CREATE-001` Approval Envelope v3.4; PR #877 subsequently terminalized the three Governance project projections. The PR #877 merge SHA `7e5f783caa6cb33bca8346582b31ddda33258ed9` remains an ancestor of current main.
 
 The effective contract binds Project / Project Folder / Primary PVC / Primary Owner, branch and Roadmap or explicit Owner scope, materially relevant changed-file set, intended exact PR title, approval-base Git identities and deterministic effective-change identity. Immediately before PR creation, current main/head/merge-base, open writers, changed-file/semantic/namespace/authority/security overlap and stale validation are re-evaluated fail-closed as exactly `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED` or `BLOCKED`.
 
@@ -83,14 +82,14 @@ The canonical affirmative response remains exactly `PR Erstellung : Freigegeben`
 
 ## Current writer / correlation state
 
-At branch creation from `main@f8335ad7c1c48879e8b53cd4ecc459a1d710dfa9`:
+At `main@eab5750a481fd68e93a41c409b561dabc4dcbf13`:
 
-- current open Pull Requests: **none**;
-- PR #877 is Human-merged and terminal; merge SHA `7e5f783caa6cb33bca8346582b31ddda33258ed9` is contained in current main;
+- PR #886 is Human-merged and terminal; merge SHA `0945b7264d6819a57451748888e1fb8c71981762` is contained in current main;
+- PR #885 was subsequently Human-merged as dependency-security remediation and does not alter GOV-CHAT-072 authority/control semantics;
+- current open PR #887 changes only `docs/evidence/security/CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md`, `docs/projects/security/ROADMAP.md` and `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`; it has no changed-file overlap with this closeout slice;
+- fresh closeout branch `agent/governance-gov-chat-072-closeout-20260911` is scoped only to stale post-merge Governance projections and their regression expectation;
 - the unused historical parallel branch `agent/governance-gov-chat-074-closeout-20260910` is not reused and receives no second PR;
-- fresh branch `agent/governance-gov-chat-072-plugin-use-20260911` is the only writer created by this pass for GOV-CHAT-072;
-- later Security MCP executable-identity work is current-main input only and does not transfer SEC/OPS authority into GOV;
-- no foreign Project/PVC ownership is transferred by this slice.
+- no foreign Project/PVC ownership is transferred by this closeout.
 
 ## Current foreign-owner dependencies
 
