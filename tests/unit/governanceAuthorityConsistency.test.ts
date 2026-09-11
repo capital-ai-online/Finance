@@ -93,6 +93,42 @@ describe('governance authority consistency', () => {
     expect(chain).not.toContain('Google AI Studio ist die Entwicklungsumgebung für Anwendungscode');
   });
 
+  it('defines exactly one bounded relevant plugin-use control without creating plugin authority', () => {
+    const agents = read('AGENTS.md');
+    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
+    const client = read('docs/projects/agent-client/CLIENT_CONTRACTS.md');
+    const authorityRegistry = JSON.parse(read('docs/governance/authority-registry.json')) as {
+      entries: Array<{ authorityId: string }>;
+    };
+    const pluginControls = controlCatalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PLUGIN-USE-001');
+    const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
+
+    expect(pluginControls).toHaveLength(1);
+    expect(pluginUse.status).toBe('required');
+    expect(pluginUse.authorityRefs).toEqual([
+      'AUTH-GOV-AGENT-TRUST-ROOT',
+      'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION',
+      'AUTH-ESS-AI-AGENT-CAPABILITY-PLANE',
+    ]);
+    expect(pluginUse.requirement).toMatch(/only when it directly advances the current bounded task/i);
+    expect(pluginUse.requirement).toMatch(/least-privileged sufficient available capability/i);
+    expect(pluginUse.requirement).toContain('Availability never grants authority');
+    expect(pluginUse.requirement).toContain('Unconditional invocation');
+    expect(pluginUse.requirement).toMatch(/automatic install\/connect\/enable\/disable\/permission\/OAuth\/MCP-host mutation/i);
+    expect(pluginUse.requirement).toContain('Human/CODEOWNER merge');
+    expect(pluginUse.requirement).toContain('protected external-mutation gates');
+    expect(pluginUse.requirement).toContain('untrusted inputs');
+
+    expect(agents).toContain('CTRL-SDLC-PLUGIN-USE-001');
+    expect(agents).toContain('cycling through all available integrations');
+    expect(chain).toContain('CTRL-SDLC-PLUGIN-USE-001');
+    expect(chain).toContain('Availability never grants authority');
+    expect(client).toContain('integration is unavailable/disconnected/not enabled');
+    expect(client).toContain('no automatic connection or enablement');
+
+    expect(authorityRegistry.entries.filter((entry) => /AUTH-.*(?:PLUGIN|CONNECTOR)/i.test(entry.authorityId))).toHaveLength(0);
+  });
+
   it('uses one consolidated PR-create approval block and Roadmap-first continuation', () => {
     const agents = read('AGENTS.md');
     const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
