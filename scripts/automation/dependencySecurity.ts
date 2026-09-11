@@ -15,6 +15,13 @@ interface SecurityFloor {
   advisories: readonly string[];
 }
 
+interface PythonRequirementSecurityFloor {
+  sourcePath: string;
+  packageName: string;
+  minimumVersion: string;
+  advisories: readonly string[];
+}
+
 // Central lockfile floors prevent a patched dependency from silently regressing when
 // package ranges are re-resolved. Keep the mechanism generic and add a floor whenever
 // an advisory requires a minimum patched version for a supported major line.
@@ -24,6 +31,27 @@ const SECURITY_FLOORS: readonly SecurityFloor[] = [
     major: 6,
     minimumVersion: '6.4.3',
     advisories: ['GHSA-fx2h-pf6j-xcff', 'GHSA-p9ff-h696-f583', 'GHSA-4w7w-66w2-5vf9'],
+  },
+  {
+    packageName: 'vitest',
+    major: 4,
+    minimumVersion: '4.1.11',
+    advisories: ['CVE-2026-84373', 'GHSA-82fw-gwwq-j7x9', 'Dependabot#22'],
+  },
+  {
+    packageName: '@vitest/mocker',
+    major: 4,
+    minimumVersion: '4.1.11',
+    advisories: ['CVE-2026-84373', 'GHSA-82fw-gwwq-j7x9', 'Dependabot#21'],
+  },
+];
+
+const PYTHON_REQUIREMENT_SECURITY_FLOORS: readonly PythonRequirementSecurityFloor[] = [
+  {
+    sourcePath: 'scripts/docs/requirements-notebooklm-pdf.txt',
+    packageName: 'WeasyPrint',
+    minimumVersion: '70.0',
+    advisories: ['CVE-2026-55073', 'Dependabot#29'],
   },
 ];
 
@@ -46,6 +74,17 @@ function parseSemver(version: string): ParsedSemver | null {
     major: Number(match[1]),
     minor: Number(match[2]),
     patch: Number(match[3]),
+    prerelease: Boolean(match[4]),
+  };
+}
+
+function parsePythonVersion(version: string): ParsedSemver | null {
+  const match = version.trim().match(/^(\d+)\.(\d+)(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$/);
+  if (!match) return null;
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3] ?? '0'),
     prerelease: Boolean(match[4]),
   };
 }
@@ -126,6 +165,51 @@ function validateSecurityFloors(lock: any, violations: string[]): void {
       }
     }
   }
+}
+
+export function evaluatePythonRequirementSecurityPolicy(sourcePath: string, content: string): string[] {
+  const normalizedSourcePath = sourcePath.replace(/\\/g, '/');
+  const floors = PYTHON_REQUIREMENT_SECURITY_FLOORS.filter(floor => floor.sourcePath === normalizedSourcePath);
+  if (floors.length === 0) return [];
+
+  const violations: string[] = [];
+  const requirementLines = content
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'));
+
+  for (const floor of floors) {
+    const packageLine = requirementLines.find(line => {
+      const match = line.match(/^([A-Za-z0-9_.-]+)\s*(?:==|>=)/);
+      return match?.[1]?.toLowerCase() === floor.packageName.toLowerCase();
+    });
+
+    if (!packageLine) {
+      violations.push(`${normalizedSourcePath}: ${floor.packageName} fehlt trotz Security Floor ${floor.minimumVersion}`);
+      continue;
+    }
+
+    const requirement = packageLine.match(/^([A-Za-z0-9_.-]+)\s*(==|>=)\s*([0-9]+(?:\.[0-9]+){1,2}(?:-[0-9A-Za-z.-]+)?)\s*(?:#.*)?$/);
+    if (!requirement) {
+      violations.push(`${normalizedSourcePath}: ${floor.packageName} hat keinen auswertbaren ==/>=-Versionspin`);
+      continue;
+    }
+
+    const parsedVersion = parsePythonVersion(requirement[3]);
+    const parsedMinimum = parsePythonVersion(floor.minimumVersion);
+    if (!parsedVersion || !parsedMinimum) {
+      violations.push(`${normalizedSourcePath}: ${floor.packageName}-Sicherheitsversion ist nicht auswertbar`);
+      continue;
+    }
+
+    if (compareSemver(parsedVersion, parsedMinimum) < 0) {
+      violations.push(
+        `${normalizedSourcePath}: ${floor.packageName}@${requirement[3]} unterschreitet Security Floor ${floor.minimumVersion} (${floor.advisories.join(', ')})`,
+      );
+    }
+  }
+
+  return violations;
 }
 
 export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyResult {
