@@ -4,24 +4,25 @@
 **Project ID:** `CAPITAL-AI-SEC`  
 **Version:** `2.4.0`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
-**Date:** `2026-09-07`  
-**Repository baseline:** `main@96119f958cacbf35614747380a066b87fdb1ee40`  
+**Date:** `2026-09-11`  
+**Repository baseline:** `main@a7ed0e9139ce9e2899afd863baf2e50f8eed75fb`  
 **Role:** `CROSS_CUTTING_SECURITY`  
 **Primary Project Value Chain ownership:** `[]`  
 **Project coverage:** `PVC-01` through `PVC-18` as Security overlay  
 **Owner:** `CAPITAL-AI-SEC` for Security requirements/findings/testing/verification only  
 **Security component:** `src/platform/Security`  
-**Component specification:** ESS-0006 v1.1.0 — Security & Compliance  
+**Component specification:** ESS-0006 v1.2.0 — Security & Compliance  
 **Existing hardening program:** `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md`  
 **SOTA baseline:** `docs/evidence/security/CAPITAL_AI_SEC_SOTA_BASELINE_2026-09-07.md`  
 **SEC-SOTA-02 evidence:** `docs/evidence/security/CAPITAL_AI_SEC_SOTA02_AI_AGENT_MCP_CONTROL_INVENTORY_2026-09-07.md`  
+**SEC-SOTA-04 matrix:** `docs/evidence/security/CAPITAL_AI_SEC_ASVS_5_VERIFICATION_MATRIX_2026-09-11.md`  
 **Trust root:** `/AGENTS.md`
 
 > CAPITAL-AI-SEC owns Security requirements, threat analysis, Security testing, finding lifecycle and independent verification. It owns no productive `PVC-*` stage and does not convert a Security requirement into implementation ownership of another project.
 
 ## 1. Current authority and routing model
 
-Current work resolves from `/AGENTS.md` on current `main`, canonical project/PVC mapping, this roadmap, applicable accepted ADR/ESS contracts, then code/tests/evidence. Withdrawn post-PVC overlays are historical/non-authorizing. `ESS-0006` preserves the bounded Security component model and `ESS-0019` is the current provider-neutral AI Agent Control Plane. Productive remediation remains with the affected Primary Owner unless implementation is inherently reusable Security infrastructure in `src/platform/Security`.
+Current work resolves from `/AGENTS.md` on current `main`, canonical project/PVC mapping, this roadmap, applicable accepted ADR/ESS contracts, then code/tests/evidence. Withdrawn post-PVC overlays are historical/non-authorizing. `ESS-0006` preserves the bounded Security component model and `ESS-0019` is the current provider-neutral AI Agent Control Plane. Productive remediation remains with the affected Primary Owner except for a cleanly separable bounded Security-primary remediation allowed by `CTRL-SEC-BOUNDED-REMEDIATION-001`; that delegation never transfers long-term file, Domain or PVC ownership.
 
 External standards and guidance are `ADVISORY_NON_AUTHORIZING`. Current `/AGENTS.md` excludes NIST publications/frameworks from the CURRENT repository governance baseline.
 
@@ -40,7 +41,7 @@ External standards and guidance are `ADVISORY_NON_AUTHORIZING`. Current `/AGENTS
 | `SEC-09` | Findings | triage, owner routing, remediation requirement, residual-risk record |
 | `SEC-10` | Verification | independent exact-identity/runtime/provider verification and closure |
 
-## 3. State-of-the-art overlay — 2026-09-07
+## 3. State-of-the-art overlay — 2026-09-11
 
 The SOTA layer is integrated into the existing workstreams, not a parallel governance system. OWASP Top 10:2025, ASVS 5.0.0, GenAI/Agentic/Agent Control Standard/Secure MCP guidance, SLSA v1.2 and CISA Secure by Design remain advisory inputs. CRA readiness remains a Compliance applicability dependency owned by `CAPITAL-AI-COMP`.
 
@@ -54,6 +55,9 @@ The SOTA layer is integrated into the existing workstreams, not a parallel gover
 | `SEC-SOTA-01` | `DONE_MAIN`; PR #832 merged and PR #837 synchronized active status projections |
 | PR #837 Hosted validation | final PR head `d5e77d5fded414931896f4e6781e3dcfffcaed19`: Governance, Container Security and Class-D `build-and-test` `success`; Human merge `8ab11ae749639a67c28b3d685f4943df19b9e72c` |
 | `SEC-SOTA-02` | `INVENTORY_IMPLEMENTED_BRANCH / FINDINGS_ROUTED / PR GATE OPEN` |
+| `SEC-SOTA-03` | `VERIFIED_MAIN / CLOSED`; PR #870 Vite floor, PR #872 artifact digest binding, PR #882 MCP executable identity, PR #887 closeout projection |
+| `SEC-SOTA03-MCP-EXECUTABLE-IDENTITY` | PR #882 final PR head `1969555c885ea0e5fb5cc1ee30648b1d5950b773`; Human merge `d67de465c89013f5626a7de8d16569b0017c5ada`; final Hosted CI, Container Security and Governance revalidation `success` |
+| `SEC-SOTA-04` | `MATRIX_INVENTORIED / VERIFICATION_OPEN`; 17-chapter ASVS 5.0 matrix created on fresh branch from `main@a7ed0e9139ce9e2899afd863baf2e50f8eed75fb` |
 | `SEC-VERIFY-R2-04` | `REPOSITORY_CONTRACT_VERIFIED / POST_DEPLOY_EVIDENCE_OPEN` |
 | Owner Device Authorization Stage-C | `COMPLETE / HISTORICAL` |
 | User Lifecycle Security integration | `IMPLEMENTED_MAIN / RESIDUALS OPEN` |
@@ -100,11 +104,11 @@ Confirmed/evidence gaps are owner-routed as follows:
 | `SEC-SOTA02-F01` | AI Chat puts retrieved repository text into the trusted system-instruction channel and accepts caller-supplied assistant history | `CAPITAL-AI-FINTECH / PVC-15`; CLIENT/PVC-01 dependency | `CONFIRMED / OWNER_ROUTED` |
 | `SEC-SOTA02-F02` | Documentary control loop can automatically dispatch Draft-PR creation without the current exact Human PR-creation approval precondition | `CAPITAL-AI-DOC / PVC-03` | `CONFIRMED / OWNER_ROUTED` |
 | `SEC-SOTA02-F03` | Documentary real Git mutation path uses synchronous Agent policy checks without durable ADR-0059-grade authorization/outcome evidence at the real host | `CAPITAL-AI-DOC / PVC-03` | `CONFIRMED / OWNER_ROUTED` |
-| `SEC-SOTA02-F04` | live external MCP/connector host AuthN/AuthZ/tool-grant/session isolation is not independently proven from repository state; `.mcp.json` executable identity also overlaps supply-chain assurance | `CAPITAL-AI-OPS / PVC-02` | `EVIDENCE_GAP / OWNER_ROUTED` |
+| `SEC-SOTA02-F04` | live external MCP/connector host AuthN/AuthZ/tool-grant/session isolation is not independently proven from repository state; repository `.mcp.json` executable identity is separately closed under `SEC-SOTA-03` | `CAPITAL-AI-OPS / PVC-02` | `EVIDENCE_GAP / OWNER_ROUTED` |
 | `SEC-SOTA02-F05` | current ESS-0018/ADR-0051 retain stale `CLAUDE.md` authority wording despite `/AGENTS.md` being sole Trust Root | `CAPITAL-AI-GOV / PVC-05` | `CONFIRMED / OWNER_ROUTED` |
 | `SEC-SOTA02-F06` | AI Chat history/session continuity is caller-supplied and not independently attested; no cross-user memory leak is claimed | `CAPITAL-AI-CLIENT / PVC-01`; FINTECH/PVC-15 dependency | `EVIDENCE_GAP / OWNER_ROUTED` |
 
-Security does not implement those foreign productive changes in this branch. `VERIFIED/CLOSED` requires owner remediation plus exact return evidence.
+Security does not absorb foreign productive implementation. `VERIFIED/CLOSED` requires owner remediation plus exact return evidence unless the smallest pure Security-primary fix independently qualifies under current bounded Security-remediation authority.
 
 Explicit non-findings:
 
@@ -116,13 +120,21 @@ Explicit non-findings:
 
 ### P0.4 `SEC-SOTA-03` — supply-chain assurance inventory
 
-**State:** `READY`.
+**State:** `VERIFIED_MAIN / CLOSED`.
 
-Inventory lockfiles, action trust/pinning, source/build identity, artifact/container provenance, attestations/SBOM and release exact-SHA evidence. `SEC-SOTA02-F04` contributes only its executable-identity/tool-chain portion; do not duplicate the external host authorization finding.
+The repository-owned bounded SOTA-03 inventory is closed. PR #870 established the Vite dependency floor. PR #872 closed actual-runtime artifact digest/provenance/signature/deployment binding. PR #882 closed the final confirmed MCP executable-identity gap. PR #887 then Human-merged the independent closeout projection as `269ef527a1dbc1a9373deec3c87e86e910d47b34`. Current `main@a7ed0e9139ce9e2899afd863baf2e50f8eed75fb` is 16 commits ahead of that merge with merge base exactly at the #887 merge; intervening work does not modify the three SOTA03 closeout projection files.
+
+External MCP/connector host AuthN/AuthZ, tool grants, session isolation and read-only ceiling remain the separate `CAPITAL-AI-OPS / PVC-02` evidence-return scope from `SEC-SOTA02-F04`. Repository executable identity closure does not claim or require closure of that external host-assurance finding.
 
 ### P1 `SEC-SOTA-04` — application/API ASVS 5.0 verification matrix
 
-Map repository-relevant ASVS objectives to existing tests/evidence. Framework mapping alone is never PASS. Productive gaps route to actual Primary Owners.
+**State:** `MATRIX_INVENTORIED / VERIFICATION_OPEN`.
+
+Evidence: `docs/evidence/security/CAPITAL_AI_SEC_ASVS_5_VERIFICATION_MATRIX_2026-09-11.md`.
+
+The branch-level matrix covers all 17 stable ASVS 5.0.0 chapters at repository applicability/evidence level and maps them to current implementation, tests/evidence and productive ownership without treating framework mapping as PASS. Current strong-evidence areas are Authentication/MFA (V6), Authorization (V8), browser/API response security (V3/V4) and Security logging/error behavior (V16), but they remain `NOT_VERIFIED` until focused independent verification is executed. V5 file handling and V10 OAuth/OIDC are `APPLICABILITY_OPEN`; V17 WebRTC is narrowly `NOT_APPLICABLE_CURRENT_REPO` at this inspected baseline. The concrete runtime dependency `ASVS5-V12-TRANSPORT-EVIDENCE` is `EVIDENCE_GAP / OWNER_ROUTED` to `CAPITAL-AI-OPS / PVC-08`.
+
+This matrix is a coverage/gap-analysis surface only. It is not certification, full ASVS conformance or a second Security standard/control plane.
 
 ### P1 `SEC-AUTH-LIFECYCLE` — MFA/AAL lifecycle clarity
 
@@ -139,7 +151,8 @@ ESS-0020 remains proposed. Implementation evidence and normative lifecycle remai
 | `SEC-SOTA02-F01` | FINTECH / PVC-15; CLIENT/PVC-01 dependency | confirmed / routed | indirect-injection + role-provenance negative tests; no tool/authority escalation |
 | `SEC-SOTA02-F02` | DOC / PVC-03 | confirmed / routed | exact Human approval before PR workflow dispatch |
 | `SEC-SOTA02-F03` | DOC / PVC-03 | confirmed / routed | durable attributable authorization/outcome evidence for real Git mutations |
-| `SEC-SOTA02-F04` | OPS / PVC-02 | evidence gap / routed | external host permission/session/read-only evidence; supply-chain identity in SOTA-03 |
+| `SEC-SOTA02-F04` | OPS / PVC-02 | evidence gap / routed | external host permission/session/read-only evidence; repository executable identity is already `VERIFIED_MAIN / CLOSED` in SOTA-03 |
+| `ASVS5-V12-TRANSPORT-EVIDENCE` | OPS / PVC-08 | `EVIDENCE_GAP / OWNER_ROUTED` | exact deployed TLS/proxy/edge configuration evidence bound to current production identity, then independent SEC verification |
 | `SEC-SOTA02-F05` | GOV / PVC-05 | confirmed / routed | provider-specific authority wording removed under current Trust Root |
 | `SEC-SOTA02-F06` | CLIENT / PVC-01; FINTECH/PVC-15 dependency | evidence gap / routed | stateless/session-bound history contract + negative context-substitution tests |
 | `S1-R2-03` | OPS / PVC-06 | owner-routed | exact toolchain/control-plane identity after OPS remediation |
@@ -174,16 +187,22 @@ Security verifies returned evidence; it does not absorb productive implementatio
 
 ## 9. Correlation boundary
 
-This `SEC-SOTA-02` slice is based on `main@96119f958cacbf35614747380a066b87fdb1ee40`, current `/AGENTS.md`, ESS-0006 v1.1.0, ESS-0019 v1.2.0, ADR-0058/0059 and actual current code/tests/evidence.
+The current SEC-SOTA04 matrix slice is correlated against `main@a7ed0e9139ce9e2899afd863baf2e50f8eed75fb`, `/AGENTS.md` Control Plane v2.10.0, the canonical project/PVC mapping, ESS-0006 v1.2.0, current application/security code/tests/evidence and stable OWASP ASVS 5.0.0 as advisory input.
 
-- PR #837 is merged and its final hosted Class-D checks passed before merge.
-- Current branch: `agent/security-sota02-agent-mcp-inventory-20260907`, freshly created from the exact baseline.
-- Open PR at branch creation: #839 (`CAPITAL-AI-OPS`) workflow/zizmor hardening; no changed-file overlap with this inventory slice.
-- No foreign productive code, provider/MCP host permission, connector, credential, runtime or deployment mutation is included.
+- PR #887 SOTA03 closeout is Human-merged as `269ef527a1dbc1a9373deec3c87e86e910d47b34`; current main descends from it.
+- Current main is 16 commits ahead of the #887 merge with merge base exactly at `269ef527a1dbc1a9373deec3c87e86e910d47b34`; no intervening change modifies the three closeout projection files.
+- Fresh branch: `agent/security-asvs-verification-matrix-20260911`, created from exact current main.
+- Open Pull Requests at branch creation: `0`.
+- The ASVS matrix changes documentation/evidence only and does not modify runtime, provider permissions, credentials or Production configuration.
+- No ASVS chapter or requirement is represented as `VERIFIED` solely from the matrix. Runtime/provider-dependent evidence remains explicitly open/routed.
 
 ## 10. Definition of Done
 
-`SEC-SOTA-02` reaches Security inventory completion when the current matrix is on main, every confirmed/evidence gap has a Primary Owner/PVC and verification gate, explicit non-gaps prevent parallel architecture, and no foreign productive remediation is hidden in the Security slice. Finding closure remains separate and requires returned owner evidence plus independent Security verification.
+`SEC-SOTA-03` is `VERIFIED_MAIN / CLOSED` and remains terminal unless new evidence establishes a regression.
+
+For this bounded `SEC-SOTA-04` matrix slice, completion means all 17 stable ASVS 5.0.0 chapters have an explicit current repository applicability/evidence disposition; applicable areas are mapped to current implementation/tests/evidence or a concrete verification gap; framework mapping alone is never PASS; productive gaps preserve actual Primary Owner/PVC; and no parallel Security control plane is created. That bounded inventory condition is satisfied on the current branch. Full ASVS verification remains open and requires focused independent requirement-level verification plus returned runtime/provider evidence where applicable.
+
+The next Security sequence after this matrix slice completes its normal PR lifecycle is current OPS/provider evidence re-correlation for `SEC-VERIFY-ULS-001`, unless current main/roadmap reprioritizes it.
 
 ## 11. PR / merge / production boundary
 
