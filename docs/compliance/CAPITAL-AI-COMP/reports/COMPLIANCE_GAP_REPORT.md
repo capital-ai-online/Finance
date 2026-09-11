@@ -2,9 +2,9 @@
 
 **Document ID:** `DOC-COMP-GAP-REPORT-2026-08-31`  
 **Role:** assessment report / non-authorizing  
-**Version:** 1.3.0  
-**Date:** 2026-09-06  
-**Baseline:** `main@49bf799d0098ba15a86a686401627ee6f658164f`
+**Version:** 1.3.1  
+**Date:** 2026-09-10  
+**Baseline:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`
 
 A finding is not a certification judgment and does not transfer technical, Governance-lifecycle or legal ownership to Compliance. Current ownership uses the canonical `PVC-*` namespace from `docs/projects/PROJECT_VALUE_CHAIN.md`; historical `VC-*` labels are retained only where needed to interpret prior evidence.
 
@@ -16,16 +16,16 @@ A finding is not a certification judgment and does not transfer technical, Gover
 | COMP-GAP-004 — vendor/transfer evidence incomplete | P1 | REQ-COMP-017 | PARTIALLY_APPLICABLE | Human/Legal + actual provider/domain owner | `REQUIRES_CORRELATION` per actual provider/flow | vendor inventory and partial DPA/subprocessor/transfer evidence; flow-specific role/TIA/contract evidence remains incomplete | EVIDENCE_MISSING | return actual-provider role, contract/DPA/subprocessor/transfer/TIA and region evidence only where applicable | true where legal transfer/role interpretation is required | REMEDIATION_ASSIGNED |
 | COMP-GAP-005 — Human AI-literacy evidence absent | P2 | REQ-COMP-021 | PARTIALLY_APPLICABLE | Human Owner / organizational operator; technical owner only if a separate technical gap is proven | N/A for organizational evidence | `docs/compliance/AI_LITERACY_CONTROL.md` is a control specification; attributable Human completion/acknowledgement evidence is not established | EVIDENCE_MISSING | return competent role/applicability decision plus real training/acknowledgement evidence; do not fabricate records | true where obligation/role interpretation is required | REMEDIATION_ASSIGNED |
 | COMP-GAP-006 — DORA entity/activity scope unresolved | P2 | REQ-COMP-022 | REQUIRES_LEGAL_REVIEW | Human Owner / Legal | unresolved until a concrete applicable obligation is established | FinTech/product functionality is evidenced, but regulated entity/business/activity status is not | NOT_ASSESSED | determine actual legal entity/activity applicability from competent facts; create technical remediation only after a concrete obligation is established | true | LEGAL_REVIEW |
-| COMP-GAP-007 — measured backup/restore evidence missing | P1 | REQ-COMP-032 | APPLICABLE | `CAPITAL-AI-OPS` + independent Security verification | `PVC-08` | current Operations/S1 surfaces still record S1-R2-07 approved RPO/RTO plus recurring encrypted off-site backup and isolated measured restore as open | EVIDENCE_MISSING | return measured backup age/RPO, isolated restore drill, measured RTO and integrity verification; remediate only in OPS/Security-owned scope if the evidence proves a defect | false | REMEDIATION_ASSIGNED |
-| COMP-GAP-008 — Compliance document-registry treatment open | P2 | REQ-COMP-011/035 | APPLICABLE | `CAPITAL-AI-DOC` / `CAPITAL-AI-GOV` | `PVC-03` / `PVC-05` by actual surface | Compliance documents use canonical `docs/compliance/**` placement and stable `DOC-*` IDs; shared `document-registry.json` treatment is not established by Compliance-owned evidence | PARTIALLY_COMPLIANT | Documentary/Governance decides whether registry entries are required and returns evidence; Compliance must not mutate the shared registry in a foreign-owner branch | false | REMEDIATION_ASSIGNED |
+| COMP-GAP-007 — measured backup/restore evidence missing | P1 | REQ-COMP-032 | APPLICABLE | `CAPITAL-AI-OPS` + independent Security verification | `PVC-08` | current Operations/Security surfaces still record S1-R2-07 measured restore/integrity/RPO/RTO evidence as open despite the merged recovery harness | EVIDENCE_MISSING | return measured backup age/RPO, isolated restore drill, measured RTO and integrity verification; remediate only in OPS/Security-owned scope if the evidence proves a defect | false | REMEDIATION_ASSIGNED |
+| COMP-GAP-008 — Compliance document-registry treatment | P2 | REQ-COMP-011/035 | APPLICABLE | `CAPITAL-AI-DOC` / `CAPITAL-AI-GOV` | `PVC-03` / `PVC-05` by actual surface | Compliance artifacts are canonically placed under `docs/compliance/**` with stable `DOC-*` IDs; Governance PR #775 established that no shared Document Registry mutation is required; Documentary PR #838 synchronized Document Registry/Hygiene to `AUTH-GOV-DOCUMENT-LIFECYCLE`; Human-merged PR #866 added the bounded `GOV-DOC-005` rule under which Markdown inside `docs/` is accepted directly and only outside-`docs/` documentation requires an exact registered exception | COMPLIANT for the bounded internal document-placement/identity/lifecycle treatment | no active remediation remains for this finding; reopen only on contradictory current lifecycle/registry evidence or a new material Documentary/Governance change | false | RESOLVED_ON_MAIN |
 
 ## Priority summary — current open findings
 
 - P0 CRITICAL: **0**
 - P1 HIGH: **2** (`COMP-GAP-004`, `COMP-GAP-007`)
-- P2 MEDIUM: **3** (`COMP-GAP-005`, `COMP-GAP-006`, `COMP-GAP-008`)
+- P2 MEDIUM: **2** (`COMP-GAP-005`, `COMP-GAP-006`)
 - P3 LOW: **0 open**
-- Resolved on current main: **3** (`COMP-GAP-001`, `002`, `003`)
+- Resolved on current main: **4** (`COMP-GAP-001`, `002`, `003`, `008`)
 
 No regulatory criticality is inferred solely from the name of a regulation or standard.
 
@@ -38,14 +38,14 @@ The following inputs remain explicitly held and are not promoted to PASS:
 - `REQ-COMP-021` — attributable Human AI-literacy evidence;
 - `REQ-COMP-031` — complete binding contract universe/effective versions;
 - `REQ-COMP-032` — measured recovery/continuity evidence;
-- `REQ-COMP-033` — end-to-end audit/traceability coverage/freshness;
-- `REQ-COMP-034` — end-to-end DATA→FINTECH provenance/lineage/quality evidence.
+- `REQ-COMP-033` — end-to-end audit/traceability coverage/freshness; DATA evidence return is available, but OPS transport and independent Security evidence remain open;
+- `REQ-COMP-034` — end-to-end DATA→FINTECH provenance/lineage/quality evidence; the composed DATA exit is implemented, while downstream FINTECH feature/rank lineage remains open.
 
 `REQ-COMP-018`, `020`, `022`, `023`, `037`, `038`, `039` remain legal/scope-held where competent Human/Legal classification is required.
 
 ## Assignment check
 
-Every currently actionable remediation is outside productive Compliance ownership. `CAPITAL-AI-COMP` may normalize findings, specify return evidence and reassess the returned result, but it does not implement foreign runtime, Security, Documentary/Governance registry, contract/legal or organizational-training work.
+Every currently actionable remediation remains outside productive Compliance ownership. `CAPITAL-AI-COMP` may normalize findings, specify return evidence and reassess returned results, but it does not implement foreign runtime, Security, contract/legal or organizational-training work. The former Documentary/Governance handoff for `COMP-GAP-008` is now terminal because adequate current-main return evidence has been independently reassessed by Compliance.
 
 ## Closure rule
 

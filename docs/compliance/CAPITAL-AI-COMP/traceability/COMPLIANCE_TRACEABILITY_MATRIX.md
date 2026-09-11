@@ -2,11 +2,11 @@
 
 **Document ID:** `DOC-COMP-TRACEABILITY-2026-08-31`  
 **Role:** traceability / non-authorizing  
-**Version:** 1.3.0  
-**Date:** 2026-09-06  
+**Version:** 1.3.1  
+**Date:** 2026-09-10  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Current-main correlation:** `main@076e88e231372b2c9a9191917090388486a6f2f8`  
-**Status:** `COMP-03 TRACEABILITY CURRENT — 37 ACTIVE INPUTS; COMP-05/06/07 CLOSEOUT CORRELATED`
+**Current-main correlation:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
+**Status:** `COMP-03 TRACEABILITY CURRENT — 37 ACTIVE INPUTS; COMP-05/06/07 RETURNS REASSESSED`
 
 This is a navigation/traceability projection. Detailed source wording and applicability remain in `COMPLIANCE_REQUIREMENTS_INVENTORY.md` and `APPLICABILITY_MATRIX.md`; detailed control mapping remains in `REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md`; assessment/evidence status remains in the Compliance reports. Traceability does not create Authority or prove compliance.
 
@@ -19,7 +19,7 @@ Current ownership resolves only through `docs/projects/README.md` and `docs/proj
 | `REQ-COMP-003..007` | SDLC / Human merge | current branch/sync/PR-create/hosted-CI/Human-merge controls | policy `GOV/PVC-05`; controlled implementation/CI `OPS/PVC-02`; Human merge boundary separate | 03→06→04 | current mappings retained; future PR evidence exact-state only |
 | `REQ-COMP-008` | Deployment | `CTRL-DEPLOY-AUTH-001` + verified-main deployment model | `OPS/PVC-07, PVC-08` | 03→06→04 | bounded `COMPLIANT`; release-specific evidence only |
 | `REQ-COMP-009..010` | Security | `CTRL-SEC-LEASTPRIV-001`, `CTRL-SEC-SECRET-001` + applicable domain authority | actual productive owner; SEC independent verifier | 03→06→04→05→07 | both remain `PARTIALLY_COMPLIANT`; no blanket Security closure |
-| `REQ-COMP-011` | Document lifecycle | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001` | `DOC/PVC-03` implementation; `GOV/PVC-05` shared registry/policy | 03→06→04→05→07 | `COMP-GAP-008` open; split DOC/GOV handoff retained |
+| `REQ-COMP-011` | Document lifecycle | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001` | `DOC/PVC-03` implementation; `GOV/PVC-05` shared registry/policy | 03→06→04→05→07 | `COMP-GAP-008` `RESOLVED_ON_MAIN`; bounded internal status `COMPLIANT` after Governance #775 and Documentary #838/#866 returns |
 | `REQ-COMP-012` | Historical authority | `CTRL-GOV-HIST-001`, `CTRL-GOV-AUTH-002`; ADR/ESS registries | `GOV/PVC-05` | 03→06→04→05 | `COMP-GAP-002` + `COMP-GAP-003` `RESOLVED_ON_MAIN`; bounded status `COMPLIANT` |
 | `REQ-COMP-013..016` | GDPR/privacy | ADR-0086/0092/0095 + current privacy/data controls | `CLIENT/PVC-01`, `DATA/PVC-09..10`, OPS where operational execution is affected | 01→02→03→06→04→05/07 | all bounded `PARTIALLY_COMPLIANT`; processing-specific/legal/evidence limits retained |
 | `REQ-COMP-017` | GDPR vendor/transfer | ADR-0086/0095 + vendor-evidence surfaces | Human/Legal + actual provider/domain owner; `PVC-N/A` until flow correlation | 01→02→03→06→04→05→07 | `COMP-GAP-004`; `EVIDENCE_MISSING / LEGAL_REVIEW` |
@@ -36,9 +36,9 @@ Current ownership resolves only through `docs/projects/README.md` and `docs/proj
 | `REQ-COMP-030` | Continuous change impact | COMP-08 + trust-root/PVC routing | dynamically resolved actual owner/PVC | 08→01→02→03→06→04→05→07 | `PARTIALLY_COMPLIANT`; current cycle executed, exhaustive automation not proven |
 | `REQ-COMP-031` | Contract universe | partial vendor/customer contract evidence | Human/Legal + affected owner after correlation; `PVC-N/A` until then | 01→02→06→04/07 | `UNKNOWN / EVIDENCE_MISSING`; active handoff retained |
 | `REQ-COMP-032` | Resilience / continuity | current OPS/Security resilience roadmaps | `OPS/PVC-08`; SEC independent verification | 03→06→04→05→07 | `COMP-GAP-007`; measured restore/RPO/RTO evidence open |
-| `REQ-COMP-033` | Audit / traceability | ESS-0011 + domain audit controls; ESS-0006 bounded component semantics only | `OPS/PVC-18` transport; `DATA/PVC-10` persistence where applicable | 03→06→04→05/07 | evidence-held; active OPS/DATA handoffs retained |
-| `REQ-COMP-034` | Data / scoring provenance & integrity | ADR-0032, ADR-0041/ESS-0016, ADR-0087 + DATA contracts | `DATA/PVC-09..11` upstream; `FINTECH/PVC-12..17` downstream | 03→06→04→05/07 | evidence-held; fail-closed DATA→FINTECH boundary retained |
-| `REQ-COMP-035` | Records / documentation | document lifecycle controls | `DOC/PVC-03`; `GOV/PVC-05` for shared registry; DATA/OPS where record storage/trace transport affected | 03→06→04→05→07 | `PARTIALLY_COMPLIANT`; `COMP-GAP-008` remains relevant |
+| `REQ-COMP-033` | Audit / traceability | ESS-0011 + ADR-0059/domain audit controls; ESS-0006 bounded component semantics only | `OPS/PVC-18` transport; `DATA/PVC-10` persistence where applicable | 03→06→04→05/07 | evidence-held; DATA evidence-identity/freshness and composed exit return consumed as `EVIDENCE_READY`; OPS-18 end-to-end transport and independent Security evidence remain open |
+| `REQ-COMP-034` | Data / scoring provenance & integrity | ADR-0032, ADR-0041/ESS-0016, ADR-0087 + DATA contracts | `DATA/PVC-09..11` upstream; `FINTECH/PVC-12..17` downstream | 03→06→04→05/07 | evidence-held; DATA `ValidatedDataInput/1.0.0` now composes provider validation/freshness/provenance/DQ fail-closed; FIN-12/FIN-17/FIN-20 downstream lineage remains open |
+| `REQ-COMP-035` | Records / documentation | document lifecycle controls | `DOC/PVC-03`; `GOV/PVC-05` for shared registry; DATA/OPS where record storage/trace transport affected | 03→06→04→05→07 | `PARTIALLY_COMPLIANT`; internal `COMP-GAP-008` resolved, external record-keeping duties remain regime/scope-specific |
 | `REQ-COMP-036` | Release / rollback | deploy/hosted-CI controls + ADR-0060 where applicable | `OPS/PVC-07..08` | 03→06→04→05/07 | `PARTIALLY_COMPLIANT`; exact-SHA release evidence exists, fresh rollback drill not established |
 | `REQ-COMP-037` | DDG/TDDDG | current privacy/consent/claim controls only; no invented legal Authority | Human/Legal first; affected `CLIENT/DATA` plus cross-cutting presentation/marketing owners for their own surfaces | 01→02→03→06→04→05→07 | legal/scope-held |
 | `REQ-COMP-038` | Financial-services/supervisory scope | factual decision boundaries only | Human/Legal; `FINTECH/PVC-15..17` supplies facts/owns later technical remediation if required | 01→02→07 | `UNKNOWN`; no pre-emptive regulatory backlog |
@@ -62,7 +62,7 @@ Existing current controls remain current because of their own repository Authori
 | `COMP-GAP-005` | active Human evidence handoff |
 | `COMP-GAP-006` | active Human/Legal gate |
 | `COMP-GAP-007` | active `OPS/PVC-08` evidence handoff |
-| `COMP-GAP-008` | active split `DOC/PVC-03` + `GOV/PVC-05` return dependency |
+| `COMP-GAP-008` | `RESOLVED_ON_MAIN` — Governance #775 plus Documentary #838/#866 returned adequate current internal lifecycle/registry evidence; no active DOC/GOV remediation handoff remains |
 
 ## Traceability invariants
 
