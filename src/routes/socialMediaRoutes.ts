@@ -13,6 +13,7 @@ import { publishToPlatform } from '../../server/socialMedia/platformPublishers';
 import { recordPublishLog, listPublishLogForUser } from '../../server/socialMedia/publishLog';
 import { checkSocialMediaAccess, accessDeniedMessage } from '../../server/socialMedia/accessControl';
 import { generateTextContent } from '../../server/socialMedia/textContentGeneration';
+import { buildSocialContentPackages } from '../../server/socialMedia/socialContentPackage';
 import { buildScriptPackage } from '../../server/socialMedia/scriptTemplates';
 import {
   contentApprovalStore,
@@ -25,6 +26,16 @@ export const socialMediaRouter = Router();
 const logger = createLogger('social-media:router');
 
 const SUPPORTED_PLATFORMS: SupportedAccountPlatform[] = ['youtube', 'tiktok', 'instagram', 'x', 'facebook'];
+
+type CanonicalPublishPayload = PublishRequestPayload & {
+  approvalId?: string;
+  contentPackageId?: string;
+  sourceContentId?: string;
+  sourceDomain?: string;
+  disclosures?: string[];
+  links?: string[];
+  referralDisclosure?: string;
+};
 
 function getRedirectUri(req: Request): string {
   const host = req.get('host') || 'localhost:3000';
@@ -194,6 +205,19 @@ socialMediaRouter.post('/generate', async (req: Request, res: Response) => {
       format: req.body?.format,
     });
 
+    const contentPackages = buildSocialContentPackages(textPackage, {
+      sourceContentId: req.body?.sourceContentId,
+      sourceDomain: req.body?.sourceDomain,
+      evidenceReference: req.body?.evidenceReference,
+      disclosures: req.body?.disclosures,
+      disclosureApplicability: req.body?.disclosureApplicability,
+      links: req.body?.links,
+      hashtags: req.body?.hashtags,
+      campaignId: req.body?.campaignId,
+      tone: req.body?.tone,
+      referral: req.body?.referral,
+    });
+
     let scripts = undefined;
     if (mode === 'full' || mode === 'scripts') {
       scripts = buildScriptPackage({
@@ -211,12 +235,14 @@ socialMediaRouter.post('/generate', async (req: Request, res: Response) => {
       topic: textPackage.topic,
       mode,
       variantCount: textPackage.variants.length,
+      canonicalPackageCount: contentPackages.length,
       hasScripts: !!scripts,
     });
 
     res.json({
       success: true,
       package: textPackage,
+      contentPackages,
       scripts: scripts || null,
       approvalGateEnabled: isApprovalGateEnabled(),
       nextStep: isApprovalGateEnabled()
@@ -261,6 +287,12 @@ socialMediaRouter.post('/approvals', async (req: Request, res: Response) => {
         videoTitle: req.body?.videoTitle,
         mediaUrl: req.body?.mediaUrl,
         mediaType: req.body?.mediaType,
+        contentPackageId: req.body?.contentPackageId,
+        sourceContentId: req.body?.sourceContentId,
+        sourceDomain: req.body?.sourceDomain,
+        disclosures: req.body?.disclosures,
+        links: req.body?.links,
+        referralDisclosure: req.body?.referralDisclosure ?? req.body?.referral?.disclosure,
       },
     });
     logger.info('Content approval created', { userId: identity.userId, id: row.id });
@@ -341,7 +373,7 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
     return res.status(429).json({ success: false, error: 'Zu viele Veroeffentlichungs-Anfragen - bitte kurz warten.' });
   }
 
-  const payload: PublishRequestPayload & { approvalId?: string } = req.body;
+  const payload: CanonicalPublishPayload = req.body;
   if (!payload?.targetPlatforms || payload.targetPlatforms.length === 0) {
     return res.status(400).json({ error: 'Mindestens eine Ziel-Plattform muss ausgewaehlt werden.' });
   }
@@ -391,6 +423,12 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
         videoTitle: payload.videoTitle,
         mediaUrl: payload.mediaUrl,
         mediaType: payload.mediaType,
+        contentPackageId: payload.contentPackageId,
+        sourceContentId: payload.sourceContentId,
+        sourceDomain: payload.sourceDomain,
+        disclosures: payload.disclosures,
+        links: payload.links,
+        referralDisclosure: payload.referralDisclosure,
       });
     } catch (err: any) {
       const message = err?.message || 'Freigabe ungueltig.';
