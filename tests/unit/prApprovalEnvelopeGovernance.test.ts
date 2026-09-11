@@ -114,8 +114,8 @@ describe('converged bounded PR Approval Envelope governance', () => {
     const taskRegister = read('docs/projects/governance/TASK_REGISTER.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
-    expect(authorities.version).toBe('1.60.0');
-    expect(catalog.version).toBe('1.24.0');
+    expect(authorities.version).toBe('1.61.0');
+    expect(catalog.version).toBe('1.25.0');
     expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('2.10.0');
     expect(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.version).toBe('3.4.0');
     expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('2.9.0');
