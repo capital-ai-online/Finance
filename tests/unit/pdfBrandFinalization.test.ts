@@ -144,7 +144,7 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
 
   it('pins the PDF renderer toolchain and supplies an independent render verifier', () => {
     expect(requirements).toContain('Markdown==3.10.2');
-    expect(requirements).toContain('WeasyPrint==69.0');
+    expect(requirements).toContain('WeasyPrint==70.0');
     expect(requirements).toContain('Pygments==2.20.0');
     expect(requirements).not.toMatch(/PyMuPDF|fitz/i);
     expect(verifier).toContain('pdfinfo');

@@ -109,26 +109,31 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(manifest.standards).toEqual(['ISO/IEC 42001:2023 benchmark']);
   });
 
-  it('projects the converged authority versions and terminal Roadmap state', () => {
+  it('projects the evolved authorities and bounded GOV-CHAT-072 branch state', () => {
     const roadmap = read('docs/projects/governance/ROADMAP.md');
     const taskRegister = read('docs/projects/governance/TASK_REGISTER.md');
+    const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
-    expect(authorities.version).toBe('1.59.0');
-    expect(catalog.version).toBe('1.23.0');
-    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('2.9.0');
+    expect(authorities.version).toBe('1.60.0');
+    expect(catalog.version).toBe('1.24.0');
+    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('2.10.0');
     expect(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.version).toBe('3.4.0');
-    expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('2.8.0');
+    expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('2.9.0');
     expect(String(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.scope ?? '')).toContain('incidental synchronization SHA drift alone does not require renewed approval');
     expect(String(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.scope ?? '')).toContain('sole Owner-Freigabe');
+    expect(String(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.scope ?? '')).toContain('CTRL-SDLC-PLUGIN-USE-001');
+    expect(String(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.scope ?? '')).toContain('no unconditional invocation');
     expect(authority('AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19')?.lifecycle).toBe('accepted');
+    expect(pluginUse).toBeDefined();
+    expect(catalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PLUGIN-USE-001')).toHaveLength(1);
     expect(roadmap).toContain('`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868');
     expect(taskRegister).toMatch(/`GOV-CHAT-076`[^\n]*`DONE_MAIN`[^\n]*PR #868/i);
-    // Project projections follow the merged rollout; bootstrap authority is checked above.
     expect(roadmap).toMatch(/`GOV-CHAT-074 \/[^`]+` — `DONE_MAIN \/ TERMINAL` via PR #874/);
     expect(taskRegister).toMatch(/\| `GOV-CHAT-074` \|[^\n]*\| `DONE_MAIN` \|[^\n]*PR #874/);
     const pluginPolicySection = roadmap.split(/^### GOV-CHAT-072\b/m)[1]?.split(/^### /m)[0];
     expect(pluginPolicySection).toBeDefined();
-    expect(pluginPolicySection).toContain('**State:** `OPEN_GOV / READY_FOR_RECORRELATION`');
-    expect(taskRegister).toMatch(/\| `GOV-CHAT-072` \|[^\n]*\| `OPEN_GOV \/ READY_FOR_RECORRELATION` \|/);
+    expect(pluginPolicySection).toContain('**State:** `IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT`');
+    expect(pluginPolicySection).toContain('CTRL-SDLC-PLUGIN-USE-001');
+    expect(taskRegister).toMatch(/\| `GOV-CHAT-072` \|[^\n]*\| `IMPLEMENTED_ON_BRANCH \/ PR_GATE_NEXT` \|/);
   });
 });

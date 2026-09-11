@@ -43,7 +43,7 @@ Der Prozesseinstieg `server.ts` bleibt bewusst dünn. Middleware, Routen, Provid
 | Authentifizierung und Daten | Supabase |
 | Payments | Stripe |
 | Tests und Qualität | Vitest, Node Test Runner, TypeScript, Repository- und Governance-Prüfungen |
-| Dokumente | jsPDF 4.2.1 für Client-Reports; WeasyPrint 69.0 für gebrandete/tagged NotebookLM-PDFs; Poppler für Render-Smoke |
+| Dokumente | jsPDF 4.2.1 für Client-Reports; WeasyPrint 70.0 für gebrandete/tagged NotebookLM-PDFs; Poppler für Render-Smoke |
 | Betrieb | Docker, Render, GitHub Actions |
 
 Google Gemini und `@google/genai` gehören nicht mehr zur aktiven Anwendungsarchitektur.
@@ -53,7 +53,7 @@ Google Gemini und `@google/genai` gehören nicht mehr zur aktiven Anwendungsarch
 PDF-Ausgaben verwenden einen gemeinsamen CAPITAL-AI Brand-/Metadaten-Contract und dieselben Design-Tokens wie das Produktdesign.
 
 - **Client-Reports:** `src/platform/PdfReporting/pdfBrand.ts` + jsPDF. Das Accessibility-Profil `client-jsPDF` setzt Sprache und Metadaten, behauptet aber bewusst keine PDF/UA-/Tagged-PDF-Konformität.
-- **Documentation-as-Code / NotebookLM:** `scripts/docs/export_notebooklm_pdfs.py` + WeasyPrint 69.0. Dieser Pfad erzeugt semantisches, tagged PDF/UA-1 und wird separat über `scripts/docs/verify_pdf_render.py` geprüft.
+- **Documentation-as-Code / NotebookLM:** `scripts/docs/export_notebooklm_pdfs.py` + WeasyPrint 70.0. Dieser Pfad erzeugt semantisches, tagged PDF/UA-1 und wird separat über `scripts/docs/verify_pdf_render.py` geprüft.
 - **Branding Manifest v6.0:** Gold `#F9BF21`, Purple `#8D26FF`, Emerald `#44DE88`, Rose `#F87171`, Background `#08080C`/`#121215`, Inter für Überschriften, Poppins für Body und JetBrains Mono für Tech-/Dateninhalte. Die Runtime-Authority ist `docs/frontend/design-tokens.json`; Cyan/Blau ist keine aktive UI-Brandingfarbe.
 - **Evidence-Gate:** Accessibility- oder regulatorische Konformität wird nicht allein aus Branding oder Renderer-Konfiguration abgeleitet; entsprechende Aussagen benötigen eine eigene Verifikation/Evidence.
 
@@ -87,7 +87,7 @@ python3 scripts/docs/verify_pdf_render.py \
 | Stripe Server SDK | `^22.3.0` | `package.json#dependencies.stripe` |
 | Stripe Browser SDK | `^9.8.0` | `package.json#dependencies.@stripe/stripe-js` |
 | Express | `^4.21.2` | `package.json#dependencies.express` |
-| Vitest | `^4.1.10` | `package.json#devDependencies.vitest` |
+| Vitest | `^4.1.11` | `package.json#devDependencies.vitest` |
 <!-- README_VERSION_MATRIX:END -->
 
 ## Voraussetzungen

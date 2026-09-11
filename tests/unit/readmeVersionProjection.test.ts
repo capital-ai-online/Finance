@@ -22,7 +22,7 @@ const pkg: PackageVersionAuthority = {
     typescript: '~5.8.2',
     vite: '^6.2.3',
     tailwindcss: '^4.1.14',
-    vitest: '^4.1.10',
+    vitest: '^4.1.11',
   },
 };
 
