@@ -71,6 +71,10 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(agents).toContain('Project Presentation:');
     expect(agents).toContain('same current `docs/projects/README.md` routing row');
     expect(agents).toContain('color is supplementary');
+    expect(agents).toContain('Source Project:');
+    expect(agents).toContain('Source Folder:');
+    expect(agents).toContain('Target Project:');
+    expect(agents).toContain('Target Folder:');
     expect(agents).toContain('Priorität:');
     expect(agents).toContain('Roadmap-Fortschritt:');
     expect(agents).toContain('Roadmap-Bewertung:');
@@ -82,32 +86,61 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(handoff?.requirement).toContain('no duplicate NÄCHSTE-SCHRITTE or exact-response block');
   });
 
-  it('renders canonical project name, symbol and color from the single project routing surface', () => {
+  it('renders all canonical project presentations from one routing source and resolves Current, Source and Target independently', () => {
     const mapping = read('docs/projects/README.md');
     const template = read('.github/pull_request_template.md');
     const renderer = read('scripts/pr/renderPullRequestBody.mjs');
 
-    for (const header of ['Display name', 'Symbol', 'Color']) {
-      expect(mapping).toContain(header);
-    }
-    expect(mapping).toContain('`CAPITAL-AI-GOV`');
-    expect(mapping).toContain('Governance');
-    expect(mapping).toContain('🧭');
-    expect(mapping).toContain('`#B45309`');
-    expect(mapping).toContain('Color is supplementary only');
+    const expected = [
+      ['CAPITAL-AI-CLIENT', 'docs/projects/agent-client/', 'Agent Client', '🧪', '#58AC60'],
+      ['CAPITAL-AI-GOV', 'docs/projects/governance/', 'Governance', '🧠', '#A1A1AA'],
+      ['CAPITAL-AI-SEC', 'docs/projects/security/', 'Security', '💻', '#E04C4C'],
+      ['CAPITAL-AI-FE', 'docs/projects/frontend/', 'Frontend', '🎨', '#DC7CA8'],
+      ['CAPITAL-AI-DATA', 'docs/projects/data/', 'Data', '📁', '#8058CC'],
+      ['CAPITAL-AI-QM', 'docs/projects/quality-management/', 'Quality Management', '🩺', '#4480E8'],
+      ['CAPITAL-AI-OPS', 'docs/projects/operations/', 'Operations', '✈️', '#845CDC'],
+      ['CAPITAL-AI-DOC', 'docs/projects/documentary/', 'Documentary', '📋', '#5CB060'],
+      ['CAPITAL-AI-SEO', 'docs/projects/seo/', 'SEO', '✒️', '#E8C464'],
+      ['CAPITAL-AI-COMP', 'docs/projects/compliance/', 'Compliance', '⚖️', '#E84848'],
+      ['CAPITAL-AI-FINTECH', 'docs/projects/fintech/', 'FinTech', '📊', '#E080AC'],
+      ['CAPITAL-AI-SOCIAL', 'docs/projects/social-media/', 'Social Media', '♡', '#E8C45C'],
+    ] as const;
 
-    expect(template).toContain('{{PROJECT_DISPLAY_NAME}}');
-    expect(template).toContain('{{PROJECT_SYMBOL}}');
-    expect(template).toContain('{{PROJECT_COLOR}}');
+    for (const header of ['Canonical project folder', 'Display name', 'Symbol', 'Color']) expect(mapping).toContain(header);
+    for (const [projectId, folder, displayName, symbol, color] of expected) {
+      const matchingLines = mapping.split(/\r?\n/).filter((line) => line.startsWith(`| \`${projectId}\``));
+      expect(matchingLines).toHaveLength(1);
+      expect(matchingLines[0]).toContain(`\`${folder}\``);
+      expect(matchingLines[0]).toContain(displayName);
+      expect(matchingLines[0]).toContain(symbol);
+      expect(matchingLines[0]).toContain(`\`${color}\``);
+      expect(color).toMatch(/^#[0-9A-F]{6}$/);
+    }
+    expect(mapping).toContain('No second project-presentation registry');
+    expect(mapping).toContain('Color is supplementary only');
+    expect(mapping).toContain('Source and Target projects are resolved independently');
+
+    for (const placeholder of [
+      'PROJECT_DISPLAY_NAME', 'PROJECT_SYMBOL', 'PROJECT_COLOR', 'PROJECT_FOLDER',
+      'SOURCE_PROJECT_ID', 'SOURCE_PROJECT_DISPLAY_NAME', 'SOURCE_PROJECT_SYMBOL', 'SOURCE_PROJECT_COLOR', 'SOURCE_PROJECT_FOLDER',
+      'TARGET_PROJECT_ID', 'TARGET_PROJECT_DISPLAY_NAME', 'TARGET_PROJECT_SYMBOL', 'TARGET_PROJECT_COLOR', 'TARGET_PROJECT_FOLDER',
+    ]) expect(template).toContain(`{{${placeholder}}}`);
     expect(template).toContain('Farbe ist nie alleiniger Bedeutungsträger');
+    expect(template).toContain('docs/projects/README.md');
 
     expect(renderer).toContain("const projectMappingPath = process.env.PR_PROJECT_MAPPING_PATH || 'docs/projects/README.md'");
     expect(renderer).toContain('resolveProjectPresentation(projectId)');
-    expect(renderer).toContain('PROJECT_DISPLAY_NAME: projectPresentation.displayName');
-    expect(renderer).toContain('PROJECT_SYMBOL: projectPresentation.symbol');
-    expect(renderer).toContain('PROJECT_COLOR: projectPresentation.color');
+    expect(renderer).toContain("const sourceProjectId = String(process.env.PR_SOURCE_PROJECT_ID || projectId).trim()");
+    expect(renderer).toContain("const targetProjectId = String(process.env.PR_TARGET_PROJECT_ID || projectId).trim()");
+    expect(renderer).toContain('SOURCE_PROJECT_FOLDER: sourcePresentation.folder');
+    expect(renderer).toContain('TARGET_PROJECT_FOLDER: targetPresentation.folder');
+    expect(renderer).toContain('Projectfolder widerspricht der kanonischen Routing-Zeile');
     expect(renderer).toContain('muss genau eine Project-Presentation-Zeile besitzen');
+    expect(renderer).toContain('Canonical project folder ist ungültig');
+    expect(renderer).toContain('Display name fehlt');
+    expect(renderer).toContain('Symbol fehlt');
     expect(renderer).toContain('Color muss #RRGGBB sein');
+    expect(renderer).toContain('PR-Vorlage enthält noch nicht aufgelöste Vorlagenplatzhalter');
   });
 
   it('prevents candidate self-bootstrap and preserves the Human merge boundary', () => {
