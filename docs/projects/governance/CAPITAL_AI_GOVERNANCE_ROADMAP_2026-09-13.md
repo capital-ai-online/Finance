@@ -40,9 +40,9 @@ Decompose monetization/product-expansion proposals into canonical owners; regula
 ### GOV-PR900-07 — Project presentation in PR approval and PR body
 Materialize one canonical presentation projection per project routing row: textual display name, symbol and hexadecimal color. Reuse `docs/projects/README.md` as the single routing source; do not create a second project/PVC registry.
 
-**Current branch state:** PR-body renderer and canonical PR template resolve/display the presentation metadata fail-closed, with textual identity retained and color never used as the sole semantic cue. Regression coverage is materialized in the existing PR Approval Envelope governance test.
+**Current branch state:** PR-body renderer, canonical PR template and the candidate `PR-CREATION APPROVAL` chat block resolve/display the same presentation metadata, while textual Project ID/folder/Owner/PVC identity remains authoritative and color is never the sole semantic cue. Regression coverage is materialized in the existing PR Approval Envelope governance test.
 
-**Open gate:** the authoritative `PR-CREATION APPROVAL` chat block in `/AGENTS.md` still needs the same presentation projection before this work package can be called complete. This branch does not treat the candidate change as current authority before Human Merge.
+**Activation boundary:** the candidate `/AGENTS.md` presentation extension is non-authorizing until Human Merge. Creation of this PR itself remains governed by current-main `/AGENTS.md` v2.10.0 and Approval Policy v3.4.0; candidate semantics cannot self-bootstrap.
 
 **Exit:** PR approval surface and PR body both resolve `Project ID → display name → symbol → color` from the same canonical routing row; missing/duplicate/malformed metadata fails closed; no authority or accessibility decision depends on color alone.
 
