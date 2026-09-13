@@ -22,8 +22,12 @@ Nicht zutreffende Angaben werden mit begründetem N/A gefüllt.
 - **Projektordner:** `{{PROJECT_FOLDER}}`
 - **Primary Owner:** {{PRIMARY_OWNER}}
 - **Betroffene PVC:** {{AFFECTED_PVC}}
+- **Source Project:** {{SOURCE_PROJECT_SYMBOL}} {{SOURCE_PROJECT_DISPLAY_NAME}} · `{{SOURCE_PROJECT_ID}}` · `{{SOURCE_PROJECT_COLOR}}`
+- **Source Projectfolder:** `{{SOURCE_PROJECT_FOLDER}}`
+- **Target Project:** {{TARGET_PROJECT_SYMBOL}} {{TARGET_PROJECT_DISPLAY_NAME}} · `{{TARGET_PROJECT_ID}}` · `{{TARGET_PROJECT_COLOR}}`
+- **Target Projectfolder:** `{{TARGET_PROJECT_FOLDER}}`
 
-> Symbol und Farbe sind ausschließlich ergänzende Präsentationsmetadaten. Projekt-ID, Projektordner, Primary Owner und PVC bleiben die maßgeblichen textuellen Identitäten; Farbe ist nie alleiniger Bedeutungsträger.
+> Symbol und Farbe sind ausschließlich ergänzende Präsentationsmetadaten. Projekt-ID, Projektordner, Primary Owner und PVC bleiben die maßgeblichen textuellen Identitäten; Farbe ist nie alleiniger Bedeutungsträger. Current, Source und Target werden jeweils aus genau derselben kanonischen Routing-Quelle `docs/projects/README.md` aufgelöst.
 
 ## 3. Umsetzung
 
