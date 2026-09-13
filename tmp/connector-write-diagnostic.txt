@@ -1,0 +1,3 @@
+connector-write-diagnostic
+purpose: verify ordinary contents-api write capability
+scope: temporary diagnostic only
