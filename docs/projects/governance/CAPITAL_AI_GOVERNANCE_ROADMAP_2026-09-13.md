@@ -38,13 +38,13 @@ Represent `main/open PRs → AGENTS → capability class → Project/PVC/Roadmap
 Decompose monetization/product-expansion proposals into canonical owners; regulated or money-like/token proposals require COMP/SEC/FINTECH/OPS and Human decision before implementation.
 
 ### GOV-PR900-07 — Project presentation in PR approval and PR body
-Materialize one canonical presentation projection per project routing row: textual display name, symbol and hexadecimal color. Reuse `docs/projects/README.md` as the single routing source; do not create a second project/PVC registry.
+Materialize one canonical presentation projection per project routing row: textual display name, symbol, hexadecimal color and canonical project folder. Reuse `docs/projects/README.md` as the single routing source; do not create a second project/PVC or presentation registry.
 
-**Current branch state:** PR-body renderer, canonical PR template and the candidate `PR-CREATION APPROVAL` chat block resolve/display the same presentation metadata, while textual Project ID/folder/Owner/PVC identity remains authoritative and color is never the sole semantic cue. Regression coverage is materialized in the existing PR Approval Envelope governance test.
+**Current branch state:** the project routing surface contains the canonical presentation values for all projects. The renderer resolves Current, Source and Target independently from that same routing row and treats the canonical project folder as part of the same fail-closed identity projection. Source and Target may be identical for non-cross-project work. The canonical PR template and candidate `PR-CREATION APPROVAL` surface are intended to expose the same Source/Target projection while textual Project ID/folder/Owner/PVC identity remains authoritative and color is never the sole semantic cue.
 
 **Activation boundary:** the candidate `/AGENTS.md` presentation extension is non-authorizing until Human Merge. Creation of this PR itself remains governed by current-main `/AGENTS.md` v2.10.0 and Approval Policy v3.4.0; candidate semantics cannot self-bootstrap.
 
-**Exit:** PR approval surface and PR body both resolve `Project ID → display name → symbol → color` from the same canonical routing row; missing/duplicate/malformed metadata fails closed; no authority or accessibility decision depends on color alone.
+**Exit:** PR approval surface and PR body both resolve Current, Source and Target as `Project ID → canonical project folder → display name → symbol → color` from exactly one canonical `docs/projects/README.md` routing row. Missing, duplicate or malformed project, folder, display name, symbol or color metadata fails closed; Source and Target are independently resolved through the same source; no second registry exists; no authority or accessibility decision depends on color alone.
 
 ## Dependencies
 OPS version/release, QM gates, SEC/COMP assurance, CLIENT runtime only where productive materialization is needed.
