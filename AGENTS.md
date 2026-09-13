@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `2.10.0`  
+**Control Plane Version:** `2.10.1`  
 **Status:** OWNER-DIRECTED — effective after Human Merge of the governance control-plane ADR  
 **Effective date:** 2026-09-11  
 **Repository:** `capital-ai-online/Finance`
@@ -175,6 +175,7 @@ For every chat-governed PR creation request, the same chat MUST render this boun
 PR-CREATION APPROVAL
 
 Current Project: "<PROJECT-ID>"
+Project Presentation: "<SYMBOL> <DISPLAY_NAME> · <#RRGGBB>"
 Current Project Folder: "<docs/projects/.../>"
 Primary PVC: "<PVC-* or justified N/A>"
 Project Owner / Folder: "<PRIMARY-OWNER>" — "<PROJECT_FOLDER>"
@@ -221,6 +222,8 @@ Nächste 2 Schritte
 Owner-Freigabe
 PR Erstellung : Freigegeben
 ```
+
+`Project Presentation` MUST be resolved from the same current `docs/projects/README.md` routing row as the textual Project ID/folder identity. It is non-authorizing presentation metadata: display name and symbol remain visible text, color is supplementary and MUST NOT be the sole semantic cue. A presentation-only metadata change does not by itself change Approval Envelope scope, ownership or authority, but stale/missing/duplicate/malformed presentation metadata MUST be refreshed or fail closed before rendering.
 
 The `Owner-Freigabe` field inside this block is the **single PR-create approval response surface**. No additional `Freigabe-Antwort`, duplicate approval line, separate exact-response block or second copy of the PR-create response is emitted for the same gate.
 
