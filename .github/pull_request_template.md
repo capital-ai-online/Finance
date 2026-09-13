@@ -1,5 +1,5 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->
-`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0`
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0 -->
+`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0`
 # CAPITAL-AI Pull Request
 
 <!--
@@ -18,9 +18,12 @@ Nicht zutreffende Angaben werden mit begründetem N/A gefüllt.
 ## 2. Projektzuordnung
 
 - **Projekt:** {{PROJECT_ID}}
+- **Projektpräsentation:** {{PROJECT_SYMBOL}} {{PROJECT_DISPLAY_NAME}} · `{{PROJECT_COLOR}}`
 - **Projektordner:** `{{PROJECT_FOLDER}}`
 - **Primary Owner:** {{PRIMARY_OWNER}}
 - **Betroffene PVC:** {{AFFECTED_PVC}}
+
+> Symbol und Farbe sind ausschließlich ergänzende Präsentationsmetadaten. Projekt-ID, Projektordner, Primary Owner und PVC bleiben die maßgeblichen textuellen Identitäten; Farbe ist nie alleiniger Bedeutungsträger.
 
 ## 3. Umsetzung
 
