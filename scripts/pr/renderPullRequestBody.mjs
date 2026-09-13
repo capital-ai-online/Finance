@@ -19,9 +19,58 @@ const baselinePath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-
 const templatePath = process.env.PR_TEMPLATE_PATH || '.github/pull_request_template.md';
 const outputPath = process.env.PR_BODY_OUTPUT || 'artifacts/pr/pull-request-body.md';
 const allowClaimless = process.env.PR_ALLOW_CLAIMLESS === 'true';
+const projectMappingPath = process.env.PR_PROJECT_MAPPING_PATH || 'docs/projects/README.md';
 
 if (!fs.existsSync(templatePath)) fail(`PR-Vorlage nicht gefunden: ${templatePath}`);
 if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline nicht gefunden: ${baselinePath}`);
+if (!fs.existsSync(projectMappingPath)) fail(`Projekt-Mapping nicht gefunden: ${projectMappingPath}`);
+
+function cleanCell(value) {
+  return String(value ?? '').replace(/`/g, '').replace(/\*\*/g, '').trim();
+}
+
+function resolveProjectPresentation(projectId) {
+  const markdown = fs.readFileSync(projectMappingPath, 'utf8');
+  const marker = '## Canonical project-folder routing';
+  const sectionStart = markdown.indexOf(marker);
+  if (sectionStart < 0) fail(`${projectMappingPath}: Canonical project-folder routing fehlt.`);
+
+  const lines = markdown.slice(sectionStart + marker.length).split(/\r?\n/);
+  const tableLines = [];
+  let started = false;
+  for (const line of lines) {
+    if (line.trim().startsWith('|')) {
+      started = true;
+      tableLines.push(line);
+    } else if (started) {
+      break;
+    }
+  }
+  if (tableLines.length < 3) fail(`${projectMappingPath}: Project-Routing-Tabelle ist nicht renderfähig.`);
+
+  const splitRow = (line) => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+  const headers = splitRow(tableLines[0]).map(cleanCell);
+  const matches = [];
+
+  for (const line of tableLines.slice(2)) {
+    const cells = splitRow(line);
+    const row = Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? '']));
+    const rowProjectId = cleanCell(row.Project).match(/CAPITAL-AI-[A-Z0-9-]+/)?.[0];
+    if (rowProjectId !== projectId) continue;
+    matches.push({
+      displayName: cleanCell(row['Display name']),
+      symbol: cleanCell(row.Symbol),
+      color: cleanCell(row.Color).toUpperCase(),
+    });
+  }
+
+  if (matches.length !== 1) fail(`${projectMappingPath}: ${projectId} muss genau eine Project-Presentation-Zeile besitzen.`);
+  const presentation = matches[0];
+  if (!presentation.displayName) fail(`${projectMappingPath}: ${projectId} Display name fehlt.`);
+  if (!presentation.symbol) fail(`${projectMappingPath}: ${projectId} Symbol fehlt.`);
+  if (!/^#[0-9A-F]{6}$/.test(presentation.color)) fail(`${projectMappingPath}: ${projectId} Color muss #RRGGBB sein.`);
+  return presentation;
+}
 
 const claims = listAddedClaimFiles(baseRef, headRef);
 if (claims.length > 1) {
@@ -82,6 +131,8 @@ if (!agentClient) {
   fail('Kanonischer PR-Titel erfordert einen faktischen Agent-Client.');
 }
 
+const projectPresentation = resolveProjectPresentation(projectId);
+
 const replacements = {
   WORK_ITEM: workItem,
   CLAIM_ID: claim.claimId,
@@ -92,6 +143,9 @@ const replacements = {
   AGENT_SURFACE: claim.agent?.executionSurface || 'unbekannt',
   PROJECT_ID: projectId,
   PROJECT_FOLDER: projectFolder,
+  PROJECT_DISPLAY_NAME: projectPresentation.displayName,
+  PROJECT_SYMBOL: projectPresentation.symbol,
+  PROJECT_COLOR: projectPresentation.color,
   PRIMARY_OWNER: primaryOwner,
   AFFECTED_PVC: affectedPvc,
   IMPLEMENTATION: process.env.PR_IMPLEMENTATION || workItem,
@@ -111,9 +165,6 @@ for (const [key, value] of Object.entries(replacements)) {
   body = body.split(`{{${key}}}`).join(String(value));
 }
 
-// Keep generated bodies canonical even when a caller supplies an older compatible
-// template through PR_TEMPLATE_PATH. The validator independently accepts only the
-// explicitly registered aliases; arbitrary renamed sections still fail closed.
 body = canonicalizeKnownSectionHeadings(body);
 
 const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
