@@ -109,17 +109,24 @@ No calendar date is invented where the canonical Owner Roadmap does not provide 
 - branch/PR naming must be resolved from current authority rather than invented;
 - previous overlapping/stale version-governance work must remain evidence only where superseded;
 - GOV must consume verified foreign-owner evidence without silently promoting unrelated `PARTIAL`, `FOREIGN_OPEN` or dependency states;
-- previous bounded GOV-07 correlation work used an exact small scope and remained PR-creation approval gated.
+- previous bounded GOV-07 correlation work used an exact small scope and remained PR-creation approval gated;
+- source-chat correlation distinguishes terminalized transition work (`GOV-CHAT-074` Approval Envelope v3.4 and `GOV-CHAT-072` plugin-use policy are `DONE_MAIN`) from still-stale current-state projections; merged transition states must not remain open blockers;
+- the compact pre-command governance flow is staged and lazy: `current main + open PRs → /AGENTS.md → command/capability class → Project/PVC/Roadmap → applicable ADR/ESS/CTRL/AUTH → least-privileged capability/reuse/security decision → ALLOW | ROUTE | REQUIRE_GATE | BLOCK → first execution`; PR-, merge- and protected-mutation-specific artifacts are loaded only when that event class is actually reached.
 
 **Open work:**
 - correlate active Option-C Governance prototype work against current main;
 - verify template/versioning authority after every current-main change;
 - ensure new orchestration prompts do not recreate withdrawn post-PVC routing overlays;
-- retain only current effective governance semantics in the Master Roadmap.
+- retain only current effective governance semantics in the Master Roadmap;
+- refresh stale current-state projections against then-current main, especially `docs/architecture/ROADMAP.md` and any Governance Roadmap/Task-Register writer snapshot before they are presented as current;
+- resolve the current ADR-0069 projection: preserve the valid anti-self-bootstrap / Human-merge invariants, but explicitly reconcile its still-`ACCEPTED` M10/WebAuthn introduction statement with the higher/current Trust Root and controls where productive M10 is `RETIRED / OFF`;
+- reconcile the single stable `AUTH-GOV-CONTROL-PLANE` identity across current projections: Authority Registry currently projects version `1.1.0` at `src/platform/Governance/README.md`, that component README declares `1.2.0`, and `docs/governance/control-plane/README.md` declares `1.3.0`; determine the canonical version semantics and make every projection consistent;
+- extend Governance validation so stale project/task/current-state projections and stable-authority target header/version drift can fail closed instead of only validating path existence, syntax and selected registry/ADR version relationships;
+- materialize the compact staged chat-entry flow under existing GOV authority where it is only a projection/decision contract; any productive Agent Client/runtime resolver belongs to `CAPITAL-AI-CLIENT / PVC-01` or the otherwise canonically resolved runtime owner. Do not create a new ADR merely for restating current authority; use an ADR only if the implementation introduces a material architecture decision, new authority or trust boundary.
 
-**Dependencies:** OPS version/release implementation, QM gate classification, SEC/COMP assurance returns.
+**Dependencies:** OPS version/release implementation, QM gate classification, SEC/COMP assurance returns; `CAPITAL-AI-CLIENT / PVC-01` only if the compact chat-entry contract requires productive client/runtime materialization.
 
-**Exit gate:** No unresolved duplicate authority/namespace writer; applicable Governance Roadmap and current accepted contracts agree; all Master-Roadmap tasks have one Owner/PVC and no chat-only authority remains.
+**Exit gate:** No unresolved duplicate authority/namespace writer; applicable Governance Roadmap and current accepted contracts agree; all Master-Roadmap tasks have one Owner/PVC and no chat-only authority remains; repository-wide current-state projections are re-correlated; ADR-0069/M10 disposition is unambiguous under current authority; `AUTH-GOV-CONTROL-PLANE` version projections converge; validators detect the identified freshness/version-drift classes; the staged pre-command flow is represented without a parallel control plane.
 
 ---
 
@@ -492,7 +499,7 @@ PR-G0  Authority & ownership integrity
 
 | Gate | WPs | Objective | Exit evidence |
 |---|---|---|---|
-| `PR-G0` | WP-01, WP-13 | One current authority model; all chat knowledge owner-routed and preserved. | Trust-root correlation PASS; no duplicate authority; source-chat closure coverage complete for inputs used by the milestone. |
+| `PR-G0` | WP-01, WP-13 | One current authority model; all chat knowledge owner-routed and preserved. | Trust-root correlation PASS; no duplicate authority; source-chat closure coverage complete for inputs used by the milestone; repository-wide current-state projections are fresh enough for the evaluated snapshot; stable authority/version projections are internally consistent or explicitly blocked with owner-routed evidence. |
 | `PR-G1` | WP-02, WP-03, WP-04, WP-06 | Deterministic development chain, PR checks, version/release and Enterprise controls. | Event/handoff evidence; PR-class check mapping; exact-snapshot version/release evidence; capability matrix. |
 | `PR-G2` | WP-05 | Security/compliance evidence is sufficient for the milestone. | No unresolved critical finding; explicit status/owner route for every required control; lifecycle/provider evidence current. |
 | `PR-G3` | WP-08, WP-09 | Product data, scoring, ranking and frontend presentation are coherent and regression-tested. | Verified DQ→scoring→ranking chain; canonical branding/design; exact-head FE/data/fintech validation. |
@@ -531,7 +538,7 @@ Baseline for this artifact: `main@91818c23038e0f4d516b1ce1a26ae0d3962b24c7`.
 
 | Branch | Snapshot disposition |
 |---|---|
-| `agent/documentary-chat-workpackage-consolidation-20260913` | Target branch; initially identical to baseline before this artifact is materialized. |
+| `agent/documentary-chat-workpackage-consolidation-20260913` | Target branch; sole currently discovered Documentary branch in this closure run, 0 behind current main before this delta; exact head is re-resolved per source-chat closure run. |
 | `agent/frontend-universe-branding-consumers-20260913` | Relevant WP-08 source branch from prior correlation; re-check in closure run before treating state as current. |
 | `agent/governance-option-c-prototype-20260913` | Relevant WP-01/WP-02 source branch; re-check before current-state claim. |
 | `agent/operations-project-listener-option-c-20260913` | Relevant WP-02 source branch; re-check before current-state claim. |
@@ -577,6 +584,7 @@ The register is cumulative. `PENDING_CLOSURE_CORRELATION` means the chat must st
 | CHAT-027 | 2026-09-10 | Capital AI Plugin Watch | WP-06, WP-12, WP-15 | OPS/external | Daily Enterprise/readiness extension preserved | PENDING_CLOSURE_CORRELATION |
 | CHAT-028 | 2026-09-10 | Architecture Fluency | WP-15 | external learning | German definitions + English terms + vocabulary rule preserved | PENDING_CLOSURE_CORRELATION |
 | CHAT-029 | 2026-09-10 | Wöchentliche KI Briefings | WP-12, WP-15 | external research | Monday report/readiness/deep-research/quick-win requirements preserved | PENDING_CLOSURE_CORRELATION |
+| CHAT-030 | 2026-09-13 | Governance-Dokumentvergleich & kompakte Ereigniskette bis zur ersten Chatbefehls-Bearbeitung | WP-01 | CAPITAL-AI-GOV / PVC-05; productive client/runtime dependency owner-routed | Current-main correlated; DELTA-016 incorporated | SAFE_TO_CLOSE |
 
 **Coverage rule:** The register is not complete merely because these known chats are listed. Every additional project-folder chat discovered during execution is appended before that folder can be declared closed.
 
@@ -601,6 +609,7 @@ A delta is entered whenever a still-valid material source-chat point was not alr
 | DELTA-013 | CHAT-027 | WP-06/WP-12/WP-15 | Daily integration watch + Enterprise options + readiness/competitor/social topic outputs | OPS/external | Added | INCORPORATED | Automation definition correlated |
 | DELTA-014 | CHAT-028/029 | WP-12/WP-15 | Weekly German architecture fluency + vocabulary; Monday AI/FinTech deep-research/readiness/quick-wins report | external | Added | INCORPORATED | Automation definitions correlated |
 | DELTA-015 | prior GOV-07 context | WP-01 | Verified SEC input must not promote unrelated owner-return states; prior bounded scope remains approval-gated | GOV | Added | INCORPORATED | Current GOV roadmap/authority revalidates or supersedes this constraint |
+| DELTA-016 | CHAT-030 | WP-01 | Preserve the compact staged/lazy pre-command resolution flow; current-main split of resolved GOV-CHAT-074/072 versus still-stale DevelopmentChain/GOV projections; ADR-0069 M10 contradiction; `AUTH-GOV-CONTROL-PLANE` 1.1/1.2/1.3 version drift; validator gaps for projection freshness and authority-target version headers | CAPITAL-AI-GOV / PVC-05; productive client/runtime work remains CLIENT/PVC-01 or canonical runtime owner | Added to WP-01 and PR-G0; source chat registered and terminally classified | INCORPORATED | GOV current-state projections/authority versions are reconciled or explicitly blocked; validator coverage includes these drift classes; compact pre-command flow is represented under existing authority without parallel control plane |
 
 New deltas are appended, never silently folded away.
 
@@ -828,6 +837,7 @@ Populate only from completed source-chat runs.
 | Source Chat ID | Decision | Verified Branch Head | Unique content remaining | Notes |
 |---|---|---|---|---|
 | CHAT-001 | OPEN — current consolidation chat | pending | this revision is being materialized | Do not close until branch write verification completes. |
+| CHAT-030 | SAFE_TO_CLOSE | post-write read verified; exact branch head is reported in the source-chat closure output | NONE | DELTA-016 incorporated; terminalized GOV-CHAT-074/072 separated from still-current drift findings. |
 
 ## 15. Project-Folder Closure Ledger
 
