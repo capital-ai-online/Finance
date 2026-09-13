@@ -68,6 +68,9 @@ describe('converged bounded PR Approval Envelope governance', () => {
 
     expect(agents).toContain('```yaml');
     expect(agents).toContain('PR-CREATION APPROVAL');
+    expect(agents).toContain('Project Presentation:');
+    expect(agents).toContain('same current `docs/projects/README.md` routing row');
+    expect(agents).toContain('color is supplementary');
     expect(agents).toContain('Priorität:');
     expect(agents).toContain('Roadmap-Fortschritt:');
     expect(agents).toContain('Roadmap-Bewertung:');
