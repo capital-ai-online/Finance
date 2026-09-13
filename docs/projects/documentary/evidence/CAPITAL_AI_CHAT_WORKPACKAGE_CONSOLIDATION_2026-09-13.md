@@ -215,7 +215,7 @@ No calendar date is invented where the canonical Owner Roadmap does not provide 
 **Primary Owners:** `CAPITAL-AI-SEC` and `CAPITAL-AI-COMP`, cross-cutting.
 
 **Preserved content:**
-- SEC-SOTA-04 requirement verification must be recreated from current main rather than stale branch state;
+- SEC-SOTA-04 requirement verification must use current-main-correlated evidence; the requested rematerialization already exists on the Security branch as detailed in CHAT-031 / DELTA-017, so do not duplicate that payload;
 - SEC-AUTH-LIFECYCLE requires MFA/AAL/provider evidence correlation and removal/handling of legacy lifecycle mismatch;
 - PostHog and CodeQL integration must fit the existing security architecture;
 - verified Security evidence may be consumed by GOV without upgrading unrelated states;
@@ -232,6 +232,109 @@ No calendar date is invented where the canonical Owner Roadmap does not provide 
 **Exit gate:** No unresolved critical production-readiness security finding; all assessed requirements have reproducible status or explicit owner routing; provider/security evidence is current and exact-snapshot-bound where applicable.
 
 ---
+
+
+### WP-05 source refinement — SEC project-roadmap consolidation (CHAT-031 / DELTA-017)
+
+**Source:** this CAPITAL-AI-SEC conversation of 2026-09-13, beginning with “bitte konsolidieren alle Inhalte und Aufgaben … projekteigenen Roadmap mit Vision und Mission … Freigabe der Löschung aller anderen Chats”; followed by the explicit `CAPITAL-AI-SOURCE-CHAT-CONSOLIDATE-AND-CLOSE` order. No stable ChatGPT conversation URL was exposed. Generic copy-A/B/C titles in CHAT-014..016 are not sufficient to assert that those chats are this source; they remain individually pending.
+
+**Preservation owner:** CAPITAL-AI-DOC / PVC-03, `docs/projects/documentary/`. **Subject owner:** CAPITAL-AI-SEC, `docs/projects/security/`, cross-cutting with no productive PVC. This subsection preserves the semantic delta of `CAPITAL-AI-SEC-Konsolidierte-Projektroadmap-2026-09-13.md`, the 279-line source deliverable, without creating another canonical Security roadmap.
+
+**Owner decisions retained:** consolidate the project contents into categorized tasks, project vision/mission, linked documents and temporal planning; assess deletion only after preservation. The later source-specific order explicitly authorizes only missing valid Documentary deltas in the existing PR #900 branch, requires a readback after each write, prohibits a new branch/PR, merge, runtime/app/production mutation and agent chat deletion, and permits source-chat deletion readiness when all material content is preserved in current main or this branch. It does not require all underlying Security work to be completed before source preservation can close.
+
+**Vision proposal, not an accepted new authority:** CAPITAL-AI soll über eine nachvollziehbare, unabhängig überprüfbare Sicherheitsbasis verfügen, die Identitäten, Finanzdaten, KI-Agenten und die gesamte Entwicklungs- und Betriebskette schützt.
+
+**Mission proposal:** CAPITAL-AI-SEC identifiziert Bedrohungen und konkrete Sicherheitslücken, ordnet sie den bestehenden Verantwortlichen zu, führt zulässige begrenzte Security-Korrekturen aus und prüft die Ergebnisse anhand reproduzierbarer Nachweise. Implementierung, Test, Providerzustand und normative Freigabe bleiben getrennt. Fehlende oder veraltete Evidence bleibt sichtbar.
+
+**Existing category mapping retained:** SEC-01 Threat Modeling; SEC-02 Identity & Access; SEC-03 Application/API; SEC-04 Data & Secrets; SEC-05 Infrastructure; SEC-06 Supply Chain; SEC-07 AI/Agent/MCP; SEC-08 positive/negative tests; SEC-09 finding triage/routing/residual risk; SEC-10 independent exact-identity verification. These are existing coordination labels, not new authority IDs.
+
+#### Current-main and history classification
+
+Correlation baseline for this source run: `main@91818c23038e0f4d516b1ce1a26ae0d3962b24c7`; AGENTS.md v2.10.0 and current canonical mapping remain controlling. The older source instruction's SvenKulessa/Finance name is a historical navigation hint; current Trust Root identifies capital-ai-online/Finance.
+
+| Material source item | Classification before this delta | Preserved disposition / evidence |
+|---|---|---|
+| Project-specific vision/mission and detailed categorized plan | NOT_CONTAINED | Preserved here as proposals, not accepted architecture or execution authority |
+| SEC-SOTA-04 then-current rematerialization request | PARTIALLY_CONTAINED; recreation instruction SUPERSEDED by existing branch evidence | The 17-chapter inventory is already on main. Existing `agent/security-sec-sota04-requirement-verification-20260913` is 1 ahead / 0 behind; only `docs/evidence/security/CAPITAL_AI_SEC_ASVS_5_REQUIREMENT_VERIFICATION_2026-09-13.md` added. Historical observed head `e265a804e20367309b58876e787aba4c449eafe3` is a source evidence anchor, not permanent current-head authority. Do not duplicate that payload. |
+| Focused V3/V4/V6/V8/V16 verification | PARTIALLY_CONTAINED | Branch evidence reports PARTIAL / GAPS_ROUTED; requirement-level PASS_REPOSITORY is scoped contract evidence, not a new executed-test or chapter-wide PASS in this preservation run |
+| PR #896 formerly open | DONE_MAIN; older “open” statement SUPERSEDED | Security Policy merged 2026-09-13 07:06:08 UTC, merge `00699bb58210e35caf083b47af10c58098abd253`; .github/SECURITY.md is on current main |
+| SEC-SOTA-01 / SEC-SOTA-03, #749 / #766 | DONE_MAIN as documented roadmap state | #832/#837 preserve SOTA baseline; #870/#872/#882/#887 document bounded supply-chain closure. This run does not newly verify their production claims |
+| MFA/AAL lifecycle mismatch | PARTIALLY_CONTAINED | ESS-0020 and ADR-0064 remain PROPOSED; ESS registry still projects NOT STARTED — M5A BASELINE COMPLETE. Correlate implementation and current provider evidence separately; GOV/Human retains normative decision |
+| Old work-package/traceability projections | NOT_CONTAINED | Work Packages v2.3.0 still says SOTA03 READY and broadly denies foreign-located implementation; Traceability v2.1.2 still cites withdrawn CROSS_PROJECT_HANDOFF_CONTRACT and older ownership rules. Current Trust Root/SEC README permit eligible bounded Security remediation without productive ownership transfer. SEC must synchronize its projections; DOC does not change authority |
+| ULS provider lineage and S1 runtime residuals | PARTIALLY_CONTAINED | Concrete owners and exit gates preserved below; historical provider measurements are not fresh live state |
+| FINTECH F01 and parallel-branch snapshot | PARTIALLY_CONTAINED / REQUIRES_CORRELATION for later execution | Source inspection found F01 branch 14 ahead / 220 behind, template branch 6 ahead / 8 behind and old listener 13 ahead / 5 behind. These are historical snapshot measurements, not current completion claims |
+| Earlier refusal to delete all SEC project chats | FULLY_CONTAINED principle, NOT_CONTAINED source-specific limitation | Earlier source search had excerpts rather than full project transcripts/attachments; folder-wide coverage remained unknown. This source-specific closure cannot close other chats or the whole SEC folder |
+| Earlier claim of zero open PRs | SUPERSEDED | Current dedicated PR search and PR metadata identify open PR #900. The generic issue-search empty result is not reliable proof of zero PRs |
+| Watches and other-project context | FULLY_CONTAINED / EXTERNAL_ONLY | Existing WP-01..15 retain those topics; no automation was created, changed, executed or newly verified in this source chat |
+
+The initial source inventory observed twelve work branches. The present branch discovery returned nine work branches plus main, with an empty following page. The earlier empty materialization/trusted-capabilities/SEO-return branches are no longer in that live set; their historical existence is not an implementation gap. No uncommitted work in other chats is implied visible.
+
+#### Concrete Security work-package / owner-return preservation
+
+1. **SEC document consistency:** preserve complete source→task→document→status mapping; synchronize `docs/projects/security/ROADMAP.md`, detailed roadmap, Work Packages and Traceability only in the appropriate later Security scope. Retain historical evidence dates; do not rewrite old results as new verification. Exit: no unexplained active projection/authority contradiction and no missing source decision.
+
+2. **SEC-SOTA-04:** continue the existing focused slice; do not recreate its already materialized file. Every reviewed V3/V4/V6/V8/V16 requirement needs reproducible disposition or concrete routing. Wider V5 file-handling and V10 OAuth/OIDC applicability remain open; V17 N/A is baseline-scoped only, not permanent authority. `ASVS5-V12-TRANSPORT-EVIDENCE` remains OPS/PVC-08 for production-identity-bound TLS/proxy/edge readback, followed by independent SEC review. No full ASVS certification/conformance is claimed; advisory mapping alone creates no required runtime change.
+
+| Focused finding | Productive owner | Required return / exit |
+|---|---|---|
+| ASVS5-V34-CORS-COMPOSITION-DRIFT | OPS / PVC-02 | One canonical active CORS composition and disallowed GET/POST/OPTIONS negative evidence |
+| ASVS5-V3-CSP-REPORTING | OPS / PVC-08 | Effective reporting destination/configuration and deployed response evidence |
+| ASVS5-V3-COOP | OPS / PVC-08; bounded SEC fix separately assessable | Decided policy, repository regression checks and required deployed evidence |
+| ASVS5-V4-METHOD-GATE | OPS / PVC-02 | Explicit unsupported-method denial on the active path |
+| ASVS5-V6-APPLICATION-MFA | CLIENT / PVC-01; OPS / PVC-08 provider evidence | Disposition of every productive auth path; framework mapping does not itself impose global MFA |
+| ASVS5-V8-AUTHZ-COVERAGE | Respective route/object/data owner | Complete route/object/field inventory and cross-role/cross-user negative evidence |
+| ASVS5-V16-AUTH-AUDIT-COVERAGE | OPS / PVC-08 plus event-source owners | Durable centralized AuthN/AuthZ audit without credential leakage |
+
+3. **SEC-AUTH-LIFECYCLE:** separate follow-up after the focused slice's normal lifecycle; re-correlate ESS-0020/ADR-0064/registry, native MFA, Legacy-TOTP, purpose-bound step-up and recovery against then-current implementation/provider evidence. Historical factor/session counts from 2026-08-12 are not current provider state. No unilateral lifecycle promotion/retirement, recovery-policy change, cleanup or global MFA requirement. GOV / Human Owner decides normative lifecycle; protected provider/data mutations remain separate. Exit: exact evidence/time/identity and owner for every mismatch and decision.
+
+4. **SEC-VERIFY-ULS-001:** main evidence dated 2026-09-07 reports PARTIAL / NOT VERIFIED. It recorded two active-paid projections missing metadata.user_id; no 2026-09-13 live measurement is inferred. OPS / PVC-08 returns reproducible `Stripe metadata.user_id → auth.users.id → public.subscriptions.user_id` lineage. SEC independently verifies every relevant active-paid projection; e-mail is not entitlement authority. Cross-user/provider E2E, isolated Supabase/Mailpit, Stripe Sandbox/Test Clock, renewal/cancellation/expiry/reactivation, duplicate/redelivery and clean-baseline replay remain separate unclosed gates. Historical leaked-password-protection WARN is separate; today's configuration/plan availability was not checked.
+
+5. **S1 / runtime residuals:**
+
+| Residual | Owner | Exit evidence |
+|---|---|---|
+| S1-R2-03 Node/toolchain convergence | OPS / PVC-06 | Current approved toolchain identity; do not perpetuate an old version as today's requirement |
+| S1-R2-04 fatal process | OPS / PVC-04, runtime PVC-08 | Repository contract documented verified; exact deployed supervisor/restart/readiness fault evidence remains open |
+| S1-R2-05 redirect | OPS / PVC-02 | Canonical-origin/open-redirect DENY evidence |
+| S1-R2-06 entitlement | OPS parent; actual DATA/FINTECH capability owners | Per-capability authorization/negative evidence without changing business entitlement semantics |
+| S1-R2-07 recovery | OPS / PVC-08 | Measured restore, integrity, RPO/RTO; a runbook alone is not PASS |
+| S1-R2-09 strict CSP | OPS / PVC-08 | Compatibility/violation window and protected-path evidence before promotion |
+| S1-R2-10 demo billing isolation | OPS / PVC-08 | Production-identity-bound non-reachability evidence |
+| S1-R2-11 evidence freshness | DATA / PVC-10 | Reproducible current/stale/wrong-identity semantics |
+
+6. **SEC-SOTA02 returns:** F01 indirect prompt injection/history-role spoofing → FINTECH/PVC-15 plus CLIENT/PVC-01, separate data/instructions and prove negative trust tests; F02 automated Draft-PR dispatch → DOC/PVC-03, stop at approved handoff; F03 mutation audit → DOC/PVC-03, durable attributable authorization/outcome evidence; F04 effective external MCP tool grants/session/read-only boundary → OPS/PVC-02, independent live readback (executable pinning closure does not close host permissions); F05 stale provider-specific authority wording → GOV/PVC-05; F06 history/session provenance → CLIENT/PVC-01 plus FINTECH/PVC-15, explicit stateless or attested session contract and substitution tests. Old inventory findings require fresh code/owner correlation before remediation.
+
+**Boundaries already on main and retained:** Security may implement a cleanly separable eligible Security-primary correction under CTRL-SEC-BOUNDED-REMEDIATION-001, even in a foreign-located file, without acquiring productive ownership. Business/architecture/provider/production authority remains separate. Implementation and independent verification are distinct; EVIDENCE_READY != VERIFIED; accepted residual risk remains Human/Owner. No second IAM, Policy, Audit, Security, Release or Governance plane. M10 remains RETIRED/OFF; NIST remains non-authorizing under current baseline. No reusable secrets or unnecessary personal information are copied.
+
+#### Source temporal plan and document map
+
+The source deliverable proposed, but did not commit or obtain Owner acceptance for, the following calendar windows. Preserve them as **historical planning proposals**, not new deadlines or automatic priority changes: 13.09 consolidation; 14.–15.09 source/document consistency; 14.–18.09 focused SOTA04 review; 18.–22.09 MFA/AAL after SOTA04; 21.–25.09 SOTA02/S1 reprioritization; provider-return review target within two working days of receipt, with no promised provider delivery time. Confirmed critical/high findings can supersede this suggested order under current authority. Canonical Roadmaps determine actual sequencing. Readiness/completion percentage was explicitly not defensibly measurable.
+
+The source's canonical document navigation is preserved without duplicating their contents:
+
+- `docs/projects/security/README.md` and `ROADMAP.md`;
+- `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`;
+- `docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md`;
+- `docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md`;
+- `docs/evidence/security/CAPITAL_AI_SEC_ASVS_5_VERIFICATION_MATRIX_2026-09-11.md`;
+- `docs/evidence/security/CAPITAL_AI_SEC_ASVS_5_REQUIREMENT_VERIFICATION_2026-09-13.md` on the existing SEC branch;
+- `.ai/registry/ess-registry.json`, ESS-0006 v1.2.0, ESS-0019 v1.2.0, ESS-0020 and ADR-0064;
+- `docs/evidence/security/CAPITAL_AI_SEC_USER_LIFECYCLE_SUBSCRIPTION_IDENTITY_REVERIFICATION_2026-09-07.md`;
+- `.github/SECURITY.md` / merged PR #896;
+- S1 hardening roadmap, SOTA baseline/SOTA02 inventory of 2026-09-07, M5A runbook and OPS GOV-07 return as follow-up source references, not all newly re-read or executed here.
+
+No new architecture decision/ADR/ESS allocation occurred in this source. Existing WP-01/02/03/04/06/07/08/09/10/11/12/14/15 preserve the contextual Governance, OPS, QM, FE, SEO, gateway, enterprise, social/strategy and watch topics. They are not new SEC implementation assignments. Personal account-session/support statements remain EXTERNAL_ONLY and are not evidence of a repository attack; no private contact/session identifiers are retained. The source created no new watch or schedule, and did not modify existing ones.
+
+#### Source closure and validation boundary
+
+Initial project-wide result was NOT_SAFE because full other-chat transcripts/attachments and the folder denominator were unavailable. That finding remains valid for the **SEC project-folder chat set**, not an automatic reason to retain this individually preserved source after the explicit later source-specific order.
+
+For this source run: Trust Root, canonical mapping, Documentary README/Roadmap, ESS-0010, ESS-0012 and accepted ADR-0096 were read; existing consolidation and its companion CHAT-013 evidence were fully read; main and PR #900 were resolved; dedicated PR search found PR #900; live branch discovery and SEC/documentary comparisons were performed. The earlier Security source reads remain bound to the same immutable main. No new unit/integration/TypeScript/build/hosted-CI/provider/runtime validation was executed: NOT_RUN. Documentary content readback is a preservation check, not Security verification or merge-readiness certification.
+
+Master-roadmap impact: refine existing WP-05 / PR-G2 and WP-13 / PR-G0 only; no new package, changed global gate order or foreign-owner implementation. Remaining source-independent work is SEC evidence/projection synchronization and per-chat/folder coverage, each owner-routed above.
+
+**Closure gate for CHAT-031:** unique_content_not_yet_preserved = NONE only after exact proposed file content is returned by the branch readback. Source-local SAFE_TO_DELETE does not mean Security findings are closed, the project folder is safe, PR #900 is merged, or its post-update CI is PASS. The user explicitly allows preservation in the open PR branch as sufficient. Agent deletion remains prohibited.
+
 
 ### WP-06 — GitHub Enterprise & Developer Platform
 
@@ -586,6 +689,8 @@ The register is cumulative. `PENDING_CLOSURE_CORRELATION` means the chat must st
 | CHAT-029 | 2026-09-10 | Wöchentliche KI Briefings | WP-12, WP-15 | external research | Monday report/readiness/deep-research/quick-win requirements preserved | PENDING_CLOSURE_CORRELATION |
 | CHAT-030 | 2026-09-13 | Governance-Dokumentvergleich & kompakte Ereigniskette bis zur ersten Chatbefehls-Bearbeitung | WP-01 | CAPITAL-AI-GOV / PVC-05; productive client/runtime dependency owner-routed | Current-main correlated; DELTA-016 incorporated | SAFE_TO_CLOSE |
 
+| CHAT-031 | 2026-09-13 | CAPITAL-AI-SEC project-roadmap consolidation source; original project-wide deletion request followed by source-specific PR #900 closure order | WP-05, WP-13 | DOC/PVC-03 preservation; SEC subject owner, no productive PVC | DELTA-017 preserves source semantic delta; readback required | SAFE_TO_DELETE only after verified readback; other SEC chats remain pending |
+
 **Coverage rule:** The register is not complete merely because these known chats are listed. Every additional project-folder chat discovered during execution is appended before that folder can be declared closed.
 
 ## 11. Consolidation Delta Register
@@ -610,6 +715,8 @@ A delta is entered whenever a still-valid material source-chat point was not alr
 | DELTA-014 | CHAT-028/029 | WP-12/WP-15 | Weekly German architecture fluency + vocabulary; Monday AI/FinTech deep-research/readiness/quick-wins report | external | Added | INCORPORATED | Automation definitions correlated |
 | DELTA-015 | prior GOV-07 context | WP-01 | Verified SEC input must not promote unrelated owner-return states; prior bounded scope remains approval-gated | GOV | Added | INCORPORATED | Current GOV roadmap/authority revalidates or supersedes this constraint |
 | DELTA-016 | CHAT-030 | WP-01 | Preserve the compact staged/lazy pre-command resolution flow; current-main split of resolved GOV-CHAT-074/072 versus still-stale DevelopmentChain/GOV projections; ADR-0069 M10 contradiction; `AUTH-GOV-CONTROL-PLANE` 1.1/1.2/1.3 version drift; validator gaps for projection freshness and authority-target version headers | CAPITAL-AI-GOV / PVC-05; productive client/runtime work remains CLIENT/PVC-01 or canonical runtime owner | Added to WP-01 and PR-G0; source chat registered and terminally classified | INCORPORATED | GOV current-state projections/authority versions are reconciled or explicitly blocked; validator coverage includes these drift classes; compact pre-command flow is represented under existing authority without parallel control plane |
+
+| DELTA-017 | CHAT-031 | WP-05/WP-13 | SEC-specific vision/mission proposals, category mapping, existing SOTA04 branch instead of duplicate recreation, concrete verification/provider/owner gates, document drift, historical timing proposals, source-versus-folder deletion distinction and explicit PR #900-only update constraints | DOC/PVC-03 preservation; SEC/GOV/OPS/CLIENT/DATA/FINTECH/COMP retain subject boundaries | Minimal source refinement in WP-05 plus source/delta/closure records; no foreign implementation | INCORPORATED — readback required before closure assertion | Exact branch readback preserves all source decisions/dependencies; no material unique content remains; no folder-wide closure inferred |
 
 New deltas are appended, never silently folded away.
 
@@ -838,6 +945,8 @@ Populate only from completed source-chat runs.
 |---|---|---|---|---|
 | CHAT-001 | OPEN — current consolidation chat | pending | this revision is being materialized | Do not close until branch write verification completes. |
 | CHAT-030 | SAFE_TO_CLOSE | post-write read verified; exact branch head is reported in the source-chat closure output | NONE | DELTA-016 incorporated; terminalized GOV-CHAT-074/072 separated from still-current drift findings. |
+
+| CHAT-031 | SAFE_TO_DELETE conditional on successful exact branch readback | Exact post-write SHA reported by source-chat closure output; immutable commit introducing DELTA-017 | NONE after readback | Source-only preservation; PR #900 remains unmerged; full SEC folder and substantive Security gates remain open. |
 
 ## 15. Project-Folder Closure Ledger
 
