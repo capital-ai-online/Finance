@@ -674,7 +674,7 @@ The register is cumulative. `PENDING_CLOSURE_CORRELATION` means the chat must st
 | CHAT-014 | 2026-09-13 | Projektkonsolidierung und Roadmap — copy A | WP-13 | DOC + all owners | Current consolidation goal preserved | PENDING_CLOSURE_CORRELATION |
 | CHAT-015 | 2026-09-13 | Projektroadmap konsolidieren — copy B | WP-13 | DOC + all owners | Possible duplicate; verify unique approvals | PENDING_CLOSURE_CORRELATION |
 | CHAT-016 | 2026-09-13 | Projektkonsolidierung und Roadmap — copy C | WP-13 | DOC + all owners | Possible duplicate; verify unique approvals | PENDING_CLOSURE_CORRELATION |
-| CHAT-017 | 2026-09-13 | SEC Pull Request / SEC-SOTA-04 / Auth lifecycle | WP-05 | CAPITAL-AI-SEC | Core next slices preserved | PENDING_CLOSURE_CORRELATION |
+| CHAT-017 | 2026-09-13 | SEC Pull Request / SEC-SOTA-04 / Auth lifecycle | WP-05 | CAPITAL-AI-SEC | Visible excerpts correlated; full source unavailable; DELTA-018 | NOT_SAFE_TO_DELETE |
 | CHAT-018 | 2026-09-13 | QM evidence coverage / gate inventory | WP-04 | CAPITAL-AI-QM | Same-SHA gate requirement preserved | PENDING_CLOSURE_CORRELATION |
 | CHAT-019 | 2026-09-13 | FE Bond consumer payload / regressions | WP-08 | CAPITAL-AI-FE | Core presentation boundary preserved | PENDING_CLOSURE_CORRELATION |
 | CHAT-020 | 2026-09-13 | Search Console least-privileged read | WP-10 | CAPITAL-AI-SEO + OPS | Read-integration goal preserved | PENDING_CLOSURE_CORRELATION |
@@ -690,6 +690,8 @@ The register is cumulative. `PENDING_CLOSURE_CORRELATION` means the chat must st
 | CHAT-030 | 2026-09-13 | Governance-Dokumentvergleich & kompakte Ereigniskette bis zur ersten Chatbefehls-Bearbeitung | WP-01 | CAPITAL-AI-GOV / PVC-05; productive client/runtime dependency owner-routed | Current-main correlated; DELTA-016 incorporated | SAFE_TO_CLOSE |
 
 | CHAT-031 | 2026-09-13 | CAPITAL-AI-SEC project-roadmap consolidation source; original project-wide deletion request followed by source-specific PR #900 closure order | WP-05, WP-13 | DOC/PVC-03 preservation; SEC subject owner, no productive PVC | DELTA-017 preserves source semantic delta; readback required | SAFE_TO_DELETE only after verified readback; other SEC chats remain pending |
+
+| CHAT-032 | 2026-09-12 | GitHub Repo Verbindung — source title/time only; no stable conversation ID/URL available | WP-05, WP-13 | SEC subject / DOC-PVC-03 preservation | Visible request correlated; full source unavailable; DELTA-018 | NOT_SAFE_TO_DELETE |
 
 **Coverage rule:** The register is not complete merely because these known chats are listed. Every additional project-folder chat discovered during execution is appended before that folder can be declared closed.
 
@@ -717,6 +719,8 @@ A delta is entered whenever a still-valid material source-chat point was not alr
 | DELTA-016 | CHAT-030 | WP-01 | Preserve the compact staged/lazy pre-command resolution flow; current-main split of resolved GOV-CHAT-074/072 versus still-stale DevelopmentChain/GOV projections; ADR-0069 M10 contradiction; `AUTH-GOV-CONTROL-PLANE` 1.1/1.2/1.3 version drift; validator gaps for projection freshness and authority-target version headers | CAPITAL-AI-GOV / PVC-05; productive client/runtime work remains CLIENT/PVC-01 or canonical runtime owner | Added to WP-01 and PR-G0; source chat registered and terminally classified | INCORPORATED | GOV current-state projections/authority versions are reconciled or explicitly blocked; validator coverage includes these drift classes; compact pre-command flow is represented under existing authority without parallel control plane |
 
 | DELTA-017 | CHAT-031 | WP-05/WP-13 | SEC-specific vision/mission proposals, category mapping, existing SOTA04 branch instead of duplicate recreation, concrete verification/provider/owner gates, document drift, historical timing proposals, source-versus-folder deletion distinction and explicit PR #900-only update constraints | DOC/PVC-03 preservation; SEC/GOV/OPS/CLIENT/DATA/FINTECH/COMP retain subject boundaries | Minimal source refinement in WP-05 plus source/delta/closure records; no foreign implementation | INCORPORATED — readback required before closure assertion | Exact branch readback preserves all source decisions/dependencies; no material unique content remains; no folder-wide closure inferred |
+
+| DELTA-018 | CHAT-031 continuation; incomplete CHAT-017 and CHAT-032 | WP-05/WP-13 | Per-source non-closure evidence, unknown SEC-folder coverage, existing SEC-branch projection corrections and remaining owner/evidence gates | DOC/PVC-03 preservation; SEC subject owner | Section 19 and source/folder ledger refinement | INCORPORATED — readback required | Full source evidence is required for CHAT-017/032; this continuation is preserved after exact readback |
 
 New deltas are appended, never silently folded away.
 
@@ -948,6 +952,9 @@ Populate only from completed source-chat runs.
 
 | CHAT-031 | SAFE_TO_DELETE conditional on successful exact branch readback | Exact post-write SHA reported by source-chat closure output; immutable commit introducing DELTA-017 | NONE after readback | Source-only preservation; PR #900 remains unmerged; full SEC folder and substantive Security gates remain open. |
 
+| CHAT-017 | NOT_SAFE_TO_DELETE | 2026-09-13 current-main / PR900 correlation; Section 19 | UNKNOWN — full transcript missing | Visible next slices preserved; no complete source closure |
+| CHAT-032 | NOT_SAFE_TO_DELETE | 2026-09-13 current-main / PR900 correlation; Section 19 | UNKNOWN — full transcript missing | Visible connection goal preserved; no complete source closure |
+
 ## 15. Project-Folder Closure Ledger
 
 | Project | Folder | Chats discovered | SAFE | NOT SAFE | Folder decision | Last correlated main |
@@ -959,7 +966,7 @@ Populate only from completed source-chat runs.
 | CAPITAL-AI-DATA | `docs/projects/data/` | pending | pending | pending | NOT_YET_RUN | pending |
 | CAPITAL-AI-FINTECH | `docs/projects/fintech/` | pending | pending | pending | NOT_YET_RUN | pending |
 | CAPITAL-AI-QM | `docs/projects/quality-management/` | pending | pending | pending | NOT_YET_RUN | pending |
-| CAPITAL-AI-SEC | `docs/projects/security/` | pending | pending | pending | NOT_YET_RUN | pending |
+| CAPITAL-AI-SEC | `docs/projects/security/` | at least 3; total UNKNOWN | CHAT-031 source-only after readback | at least CHAT-017 and CHAT-032 | PROJECT_FOLDER_CHAT_SET_NOT_CLOSED | 91818c23038e0f4d516b1ce1a26ae0d3962b24c7 |
 | CAPITAL-AI-COMP | `docs/projects/compliance/` | pending | pending | pending | NOT_YET_RUN | pending |
 | CAPITAL-AI-FE | `docs/projects/frontend/` | pending | pending | pending | NOT_YET_RUN | pending |
 | CAPITAL-AI-SEO | `docs/projects/seo/` | pending | pending | pending | NOT_YET_RUN | pending |
@@ -995,3 +1002,55 @@ Historical chat content is evidence, never current truth, until correlated again
 
 2. After all chats of each project folder are safe, execute the Project-Folder Consolidation Prompt and then re-correlate the Production Readiness Master Roadmap candidate.
    **Exit Gate:** all project-folder ledgers are closed and the final Master-Roadmap promotion gate is satisfied.
+## 19. SEC remaining-source continuation — 2026-09-13 (DELTA-018)
+
+**Human continuation retained:** (1) compare every remaining SEC project chat individually, with a verified individual closure decision; (2) continue SEC document contradictions and remaining verification gates in the owning Security project, with consistent Roadmap projections and current owner-correct evidence. The first gate does not permit an individual or folder deletion approval based on topic coverage or another chat's closure.
+
+**Preservation owner:** CAPITAL-AI-DOC / PVC-03, `docs/projects/documentary/`. **Subject owner:** CAPITAL-AI-SEC, `docs/projects/security/`, cross-cutting, productive PVC ownership `[]`.
+
+**Current-main baseline:** `91818c23038e0f4d516b1ce1a26ae0d3962b24c7`. PR #900 remained open/unmerged. Its observed pre-update head was `29ba3e832c74db2c97b9b43c43585818669cb46c`; concurrent companion-file changes are not silently overwritten. This update changes only the parent consolidation evidence in that PR.
+
+### Individual source decisions
+
+| Source | Source completeness / identity | Material correlation | Unique content not yet preserved | Closure decision |
+|---|---|---|---|---|
+| CHAT-017 — SEC Pull Request / SOTA04 / Auth lifecycle; source title reported as “Sec Pull Request beheben”, 2026-09-13 08:49 | Only excerpts were reachable. No stable conversation ID/URL or full transcript/attachments were available. Title/time are source navigation hints, not proof of complete identity/coverage. | Visible request to correlate current main and rematerialize SOTA04 is retained by DELTA-008 and CHAT-031/DELTA-017; focused evidence already exists on the SEC branch. Auth lifecycle remains a separate follow-up. Visible rematerialization request is FULLY_CONTAINED; re-creation is SUPERSEDED. Unseen remainder is REQUIRES_CORRELATION. | UNKNOWN — full source missing; cannot assert NONE | NOT_SAFE_TO_DELETE |
+| CHAT-032 — “GitHub Repo Verbindung”, 2026-09-12 14:49 | Source-local register ID allocated here; it is not a ChatGPT conversation ID. Only a visible/truncated request was reachable; no full transcript, attachments or stable URL. | Visible goal: access the CAPITAL-AI Finance repository. Current read/write connector operations prove repository access in this run, but do not prove the full source's decisions preserved. Visible goal is FULLY_CONTAINED by this record/current access evidence; unseen remainder is REQUIRES_CORRELATION. No connector installation/permission mutation is inferred or authorized. | UNKNOWN — full source missing; cannot assert NONE | NOT_SAFE_TO_DELETE |
+| CHAT-031 — this SEC project-roadmap consolidation source and its current continuation | Source-local original request, explicit PR900 closure order and the two next steps above are available in this conversation; prior DELTA-017 retained | Prior semantic content is FULLY_CONTAINED; the new continuation, individual non-closure decisions and branch-only document-correction result are preserved by DELTA-018. | NONE only after successful exact readback of this update | Source-only closure may remain SAFE_TO_DELETE after readback; no other chat inherits it |
+
+Retrieval through personal context returned excerpts and derived earlier reports, not a complete SEC-project chat inventory or complete source transcripts. No direct chat-list/export/delete capability was established. Additional SEC-topic chats in the portfolio are not silently declared members of this project-folder set; title/topic alone is insufficient. At least these three source records are known; the actual folder denominator remains UNKNOWN.
+
+**SEC folder decision: PROJECT_FOLDER_CHAT_SET_NOT_CLOSED.** Two known sources remain individually NOT_SAFE_TO_DELETE and full folder coverage is not established. Missing source content is an evidence-access blocker, not proof that the unseen content is absent. The Human must provide each complete transcript/export including material attachments, or run the source-closure order inside each original source chat; then re-correlate and verify its own decision. No chat was deleted.
+
+### Security-owned continuation result
+
+The existing `agent/security-sec-sota04-requirement-verification-20260913` branch was continued for its associated Security status/evidence projections. No new branch or PR was created. This was a separate Security-owned documentation update, not an implementation in PR #900.
+
+Observed resulting Security branch head: `3deef9e3f689992de6c11e369e8f2d98593b805f`, 5 commits ahead / 0 behind the main baseline. Its pre-existing focused requirement-verification evidence was retained unchanged.
+
+| Security projection updated | Verified write commit | Result |
+|---|---|---|
+| `docs/projects/security/ROADMAP.md` | `2c6eb642eb137166987665c1256d491a8c7c216e` | Current-main/branch-local inventory distinction; current focused SOTA04 → separate Auth lifecycle sequence; provider/ULS dependencies remain open |
+| `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md` | `8b136a9c39dd6192841c42476bd5b5419d1844eb` | Same sequence/status; historical matrix-creation/PR snapshots explicitly historical |
+| `docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md` | `387ba78f61f2116d87d7bd5f587f495bc37d33d5` | Stale SOTA03 READY corrected to documented VERIFIED_MAIN/CLOSED; SOTA04 inventory distinguished from remaining verification; bounded SEC execution synchronized with current authority |
+| `docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md` | `3deef9e3f689992de6c11e369e8f2d98593b805f` | Withdrawn handoff contract removed as active routing source; execution versus ownership clarified; fatal-process repository/runtime states separated; old detailed handoffs explicitly historical |
+
+Every write was followed immediately by a full branch file read and exact content comparison: MATCH. These checks verify preservation and document changes, not Security runtime correctness. Markdown-fence/current-baseline/ownership/open-verification sanity checks passed; no new test suite was authored.
+
+The main/branch diff contains only the pre-existing focused Security evidence and these four Security projections. Other visible branches had no changed-file overlap with these four paths. Historical FINTECH, template and listener divergence remained separate and was not imported. Uncommitted work in other sessions was not observable.
+
+### Remaining gates and sequencing
+
+- **Chat closure:** complete original source evidence and a complete SEC-folder inventory are still missing.
+- **Document consistency:** the identified projection contradictions are corrected on the SEC branch; they remain on current main until a later permitted PR/Human-merge lifecycle. No main completion is claimed.
+- **Focused SOTA04:** FOCUSED_REQUIREMENT_VERIFICATION_PARTIAL / GAPS_ROUTED; the seven focused findings and their owner/exit mapping remain exactly in the pre-existing SEC evidence and DELTA-017. No chapter-wide or application-wide PASS.
+- **Wider verification:** V5/V10 applicability and OPS/PVC-08 V12 TLS/proxy/edge return remain open. V17 N/A stays baseline-scoped.
+- **Auth lifecycle:** ESS-0020 and ADR-0064 remain PROPOSED. Current provider evidence is not supplied by historical factor/session counts; GOV/Human retains lifecycle authority.
+- **ULS/S1:** OPS/PVC-08 identity-lineage/provider E2E and supervisor/recovery/runtime evidence, plus the other already-routed gates in DELTA-017, remain open.
+- **Executed validation:** current-main/PR/branch correlation, document semantic review and exact file readbacks. Runtime/unit/integration/build/hosted CI/provider verification: NOT_RUN.
+- **Mutation boundary:** no runtime/application/production/provider changes, merge, new PR, new branch, chat deletion, automation/watch creation or integration-permission change.
+- **Temporal disposition:** this continuation was performed 2026-09-13; earlier calendar windows remain planning proposals, not accepted delivery dates. Required evidence, not elapsed time, closes gates.
+
+Master impact remains within WP-05/PR-G2 and WP-13/PR-G0. No new portfolio work package or global gate reordering is introduced. This section preserves the continuation result; canonical Security execution state remains on the Security project branch/Roadmap.
+
+**Readback gate for this update:** the complete updated parent file must match the proposed content before this source's unique-content field may be reported as NONE. The two incomplete source decisions and the folder NOT_CLOSED result do not change on successful write verification.
