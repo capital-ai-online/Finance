@@ -120,7 +120,7 @@ describe('converged bounded PR Approval Envelope governance', () => {
     }
     expect(mapping).toContain('No second project-presentation registry');
     expect(mapping).toContain('Color is supplementary only');
-    expect(mapping).toContain('Source and Target projects are resolved independently');
+    expect(mapping).toContain('Source and Target project presentation MUST each resolve independently through this same mapping source');
 
     for (const placeholder of [
       'PROJECT_DISPLAY_NAME', 'PROJECT_SYMBOL', 'PROJECT_COLOR', 'PROJECT_FOLDER',
