@@ -54,22 +54,26 @@ Project-folder routing is an organizational mapping only. It does not create tec
 
 `Materialization owner` and `Main surface state` are mapping metadata required by the Project Value Chain consistency check. They record which project owns its own folder surface and whether that README currently exists. They do not restore withdrawn post-PVC policy contracts.
 
-| Project | PVC relationship | Canonical project folder | Branch project-folder slug | Materialization owner | Main surface state |
-|---|---|---|---|---|---|
-| `CAPITAL-AI-CLIENT` | `PVC-01` Primary Owner | `docs/projects/agent-client/` | `agent-client` | `CAPITAL-AI-CLIENT` | present |
-| `CAPITAL-AI-OPS` | `PVC-02/04/06/07/08/18` Primary Owner | `docs/projects/operations/` | `operations` | `CAPITAL-AI-OPS` | present |
-| `CAPITAL-AI-DOC` | `PVC-03` Primary Owner | `docs/projects/documentary/` | `documentary` | `CAPITAL-AI-DOC` | present |
-| `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance | `docs/projects/governance/` | `governance` | `CAPITAL-AI-GOV` | present |
-| `CAPITAL-AI-DATA` | `PVC-09..11` Primary Owner | `docs/projects/data/` | `data` | `CAPITAL-AI-DATA` | present |
-| `CAPITAL-AI-FINTECH` | `PVC-12..17` Primary Owner | `docs/projects/fintech/` | `fintech` | `CAPITAL-AI-FINTECH` | present |
-| `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | `CAPITAL-AI-QM` | present |
-| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC; bounded Security remediation execution may be delegated without ownership transfer | `docs/projects/security/` | `security` | `CAPITAL-AI-SEC` | present |
-| `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | `CAPITAL-AI-COMP` | present |
-| `CAPITAL-AI-FE` | cross-cutting; no productive PVC | `docs/projects/frontend/` | `frontend` | `CAPITAL-AI-FE` | present |
-| `CAPITAL-AI-SEO` | cross-cutting; no productive PVC | `docs/projects/seo/` | `seo` | `CAPITAL-AI-SEO` | present |
-| `CAPITAL-AI-SOCIAL` | cross-cutting; no productive PVC | `docs/projects/social-media/` | `social-media` | `CAPITAL-AI-SOCIAL` | present |
+`Display name`, `Symbol` and `Color` are canonical **presentation metadata** for chat approval surfaces and Pull Request presentation. They do not replace `Project`, folder, PVC or Owner identity and MUST NOT be interpreted as Authority. Color is supplementary only; every rendered surface keeps the textual Project ID/name and symbol so no decision depends on color perception alone.
+
+| Project | PVC relationship | Canonical project folder | Branch project-folder slug | Display name | Symbol | Color | Materialization owner | Main surface state |
+|---|---|---|---|---|---|---|---|---|
+| `CAPITAL-AI-CLIENT` | `PVC-01` Primary Owner | `docs/projects/agent-client/` | `agent-client` | Agent Client | 🤝 | `#6D28D9` | `CAPITAL-AI-CLIENT` | present |
+| `CAPITAL-AI-OPS` | `PVC-02/04/06/07/08/18` Primary Owner | `docs/projects/operations/` | `operations` | Operations | ⚙️ | `#1D4ED8` | `CAPITAL-AI-OPS` | present |
+| `CAPITAL-AI-DOC` | `PVC-03` Primary Owner | `docs/projects/documentary/` | `documentary` | Documentary | 📚 | `#0E7490` | `CAPITAL-AI-DOC` | present |
+| `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance | `docs/projects/governance/` | `governance` | Governance | 🧭 | `#B45309` | `CAPITAL-AI-GOV` | present |
+| `CAPITAL-AI-DATA` | `PVC-09..11` Primary Owner | `docs/projects/data/` | `data` | Data | 🗄️ | `#047857` | `CAPITAL-AI-DATA` | present |
+| `CAPITAL-AI-FINTECH` | `PVC-12..17` Primary Owner | `docs/projects/fintech/` | `fintech` | FinTech | 📈 | `#15803D` | `CAPITAL-AI-FINTECH` | present |
+| `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | Quality Management | ✅ | `#4D7C0F` | `CAPITAL-AI-QM` | present |
+| `CAPITAL-AI-SEC` | cross-cutting; no productive PVC; bounded Security remediation execution may be delegated without ownership transfer | `docs/projects/security/` | `security` | Security | 🛡️ | `#B91C1C` | `CAPITAL-AI-SEC` | present |
+| `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | Compliance | ⚖️ | `#7E22CE` | `CAPITAL-AI-COMP` | present |
+| `CAPITAL-AI-FE` | cross-cutting; no productive PVC | `docs/projects/frontend/` | `frontend` | Frontend | 🖥️ | `#BE185D` | `CAPITAL-AI-FE` | present |
+| `CAPITAL-AI-SEO` | cross-cutting; no productive PVC | `docs/projects/seo/` | `seo` | SEO | 🔎 | `#0F766E` | `CAPITAL-AI-SEO` | present |
+| `CAPITAL-AI-SOCIAL` | cross-cutting; no productive PVC | `docs/projects/social-media/` | `social-media` | Social Media | 📣 | `#C2410C` | `CAPITAL-AI-SOCIAL` | present |
 
 The branch slug is always derived from the canonical project-folder basename. Domain/runtime/normative artifacts remain at their existing canonical paths unless a separate, owner-scoped migration proves that relocation is required. A bounded Security remediation does not constitute such a relocation.
+
+Presentation consumers MUST resolve all four values — `Project`, `Display name`, `Symbol`, `Color` — from the same routing row. They MUST fail closed on missing, duplicate or malformed presentation metadata rather than inventing a fallback identity. A renderer may degrade visual color treatment when its output surface cannot display color, but it still emits the canonical hexadecimal value as text metadata.
 
 ## Withdrawn post-mapping contracts
 
