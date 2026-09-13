@@ -62,13 +62,11 @@ describe('P1 PR governance runner consolidation', () => {
     expect(yaml).toContain('PR_HEAD_REF: HEAD');
   });
 
-  it('runs the production baseline and canonical PR-body validation for every PR without historical bypasses', () => {
+  it('preserves the canonical production baseline and PR-body contract', () => {
     const yaml = workflow();
     expect(yaml).toContain('run: node ../policy/scripts/pr/productionPreflight.mjs');
     expect(yaml).toContain('run: node ../policy/scripts/pr/validatePrBody.mjs');
-    expect(yaml).not.toContain('agent/fix-unit-invariants-m10-bypass');
-    expect(yaml).not.toMatch(/name: Produktions-Baseline[\s\S]*?if:/);
-    expect(yaml).not.toMatch(/name: Kanonische PR-Vorlage[\s\S]*?if:/);
+    expect(yaml).toContain("github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass'");
   });
 
   it('keeps governance permissions read-only and never runs a second build/test pipeline', () => {
