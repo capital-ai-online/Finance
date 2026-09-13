@@ -58,6 +58,8 @@ function resolveProjectPresentation(projectId) {
     const rowProjectId = cleanCell(row.Project).match(/CAPITAL-AI-[A-Z0-9-]+/)?.[0];
     if (rowProjectId !== projectId) continue;
     matches.push({
+      projectId: rowProjectId,
+      folder: cleanCell(row['Canonical project folder']),
       displayName: cleanCell(row['Display name']),
       symbol: cleanCell(row.Symbol),
       color: cleanCell(row.Color).toUpperCase(),
@@ -66,6 +68,7 @@ function resolveProjectPresentation(projectId) {
 
   if (matches.length !== 1) fail(`${projectMappingPath}: ${projectId} muss genau eine Project-Presentation-Zeile besitzen.`);
   const presentation = matches[0];
+  if (!presentation.folder || !/^docs\/projects\/[a-z0-9-]+\/$/.test(presentation.folder)) fail(`${projectMappingPath}: ${projectId} Canonical project folder ist ungültig.`);
   if (!presentation.displayName) fail(`${projectMappingPath}: ${projectId} Display name fehlt.`);
   if (!presentation.symbol) fail(`${projectMappingPath}: ${projectId} Symbol fehlt.`);
   if (!/^#[0-9A-F]{6}$/.test(presentation.color)) fail(`${projectMappingPath}: ${projectId} Color muss #RRGGBB sein.`);
@@ -73,20 +76,14 @@ function resolveProjectPresentation(projectId) {
 }
 
 const claims = listAddedClaimFiles(baseRef, headRef);
-if (claims.length > 1) {
-  fail(`Für die PR-Erzeugung ist höchstens ein neuer Work-Claim zulässig; gefunden: ${claims.length}.`);
-}
-if (claims.length === 0 && !allowClaimless) {
-  fail('Für den Agenten-PR-Pfad ist genau ein neuer Work-Claim erforderlich. Claimlose Human/API/Connector-Pfade müssen PR_ALLOW_CLAIMLESS=true explizit setzen.');
-}
+if (claims.length > 1) fail(`Für die PR-Erzeugung ist höchstens ein neuer Work-Claim zulässig; gefunden: ${claims.length}.`);
+if (claims.length === 0 && !allowClaimless) fail('Für den Agenten-PR-Pfad ist genau ein neuer Work-Claim erforderlich. Claimlose Human/API/Connector-Pfade müssen PR_ALLOW_CLAIMLESS=true explizit setzen.');
 
 let claimPath = 'N/A (kein neuer Work-Claim im Diff)';
 let claim;
 if (claims.length === 1) {
   claimPath = claims[0];
-  claim = headRef === 'HEAD'
-    ? readJsonFile(claimPath)
-    : JSON.parse(git(['show', `${headRef}:${claimPath}`]));
+  claim = headRef === 'HEAD' ? readJsonFile(claimPath) : JSON.parse(git(['show', `${headRef}:${claimPath}`]));
 } else {
   claim = {
     claimId: 'N/A (kein neuer Work-Claim im Diff)',
@@ -110,28 +107,23 @@ const headBranch = process.env.PR_HEAD_BRANCH || (() => {
   return value === 'HEAD' ? process.env.GITHUB_REF_NAME || 'detached-head' : value;
 })();
 
-const workItem = String(
-  claim.workItemDE
-  || claim.workItemDe
-  || claim.workItem
-  || claim.titleDE
-  || `Agenten-Arbeitsauftrag ${claim.claimId}`,
-).trim();
-
+const workItem = String(claim.workItemDE || claim.workItemDe || claim.workItem || claim.titleDE || `Agenten-Arbeitsauftrag ${claim.claimId}`).trim();
 const projectId = String(claim.projectId || process.env.PR_PROJECT_ID || 'N/A').trim();
-const projectFolder = String(claim.projectFolder || process.env.PR_PROJECT_FOLDER || 'N/A').trim();
 const affectedPvc = String(claim.projectStage || process.env.PR_AFFECTED_PVC || 'N/A').trim();
 const primaryOwner = String(process.env.PR_PRIMARY_OWNER || projectId || 'N/A').trim();
 const agentClient = String(process.env.PR_AGENT_CLIENT || 'ChatGPT').trim();
 
-if (!projectId || projectId === 'N/A') {
-  fail('Kanonischer PR-Titel erfordert eine aufgelöste PROJECT-ID.');
-}
-if (!agentClient) {
-  fail('Kanonischer PR-Titel erfordert einen faktischen Agent-Client.');
-}
+if (!projectId || projectId === 'N/A') fail('Kanonischer PR-Titel erfordert eine aufgelöste PROJECT-ID.');
+if (!agentClient) fail('Kanonischer PR-Titel erfordert einen faktischen Agent-Client.');
 
 const projectPresentation = resolveProjectPresentation(projectId);
+const claimedProjectFolder = String(claim.projectFolder || process.env.PR_PROJECT_FOLDER || projectPresentation.folder).trim();
+if (claimedProjectFolder !== 'N/A' && claimedProjectFolder !== projectPresentation.folder) fail(`${projectMappingPath}: ${projectId} Projectfolder widerspricht der kanonischen Routing-Zeile.`);
+
+const sourceProjectId = String(process.env.PR_SOURCE_PROJECT_ID || projectId).trim();
+const targetProjectId = String(process.env.PR_TARGET_PROJECT_ID || projectId).trim();
+const sourcePresentation = resolveProjectPresentation(sourceProjectId);
+const targetPresentation = resolveProjectPresentation(targetProjectId);
 
 const replacements = {
   WORK_ITEM: workItem,
@@ -142,10 +134,20 @@ const replacements = {
   AGENT_MODEL: claim.agent?.model || 'unbekannt',
   AGENT_SURFACE: claim.agent?.executionSurface || 'unbekannt',
   PROJECT_ID: projectId,
-  PROJECT_FOLDER: projectFolder,
+  PROJECT_FOLDER: projectPresentation.folder,
   PROJECT_DISPLAY_NAME: projectPresentation.displayName,
   PROJECT_SYMBOL: projectPresentation.symbol,
   PROJECT_COLOR: projectPresentation.color,
+  SOURCE_PROJECT_ID: sourcePresentation.projectId,
+  SOURCE_PROJECT_FOLDER: sourcePresentation.folder,
+  SOURCE_PROJECT_DISPLAY_NAME: sourcePresentation.displayName,
+  SOURCE_PROJECT_SYMBOL: sourcePresentation.symbol,
+  SOURCE_PROJECT_COLOR: sourcePresentation.color,
+  TARGET_PROJECT_ID: targetPresentation.projectId,
+  TARGET_PROJECT_FOLDER: targetPresentation.folder,
+  TARGET_PROJECT_DISPLAY_NAME: targetPresentation.displayName,
+  TARGET_PROJECT_SYMBOL: targetPresentation.symbol,
+  TARGET_PROJECT_COLOR: targetPresentation.color,
   PRIMARY_OWNER: primaryOwner,
   AFFECTED_PVC: affectedPvc,
   IMPLEMENTATION: process.env.PR_IMPLEMENTATION || workItem,
@@ -161,26 +163,15 @@ const replacements = {
 };
 
 let body = template;
-for (const [key, value] of Object.entries(replacements)) {
-  body = body.split(`{{${key}}}`).join(String(value));
-}
-
+for (const [key, value] of Object.entries(replacements)) body = body.split(`{{${key}}}`).join(String(value));
 body = canonicalizeKnownSectionHeadings(body);
 
 const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
-if (unresolved.length > 0) {
-  fail(`PR-Vorlage enthält noch nicht aufgelöste Vorlagenplatzhalter: ${[...new Set(unresolved)].join(', ')}`);
-}
+if (unresolved.length > 0) fail(`PR-Vorlage enthält noch nicht aufgelöste Vorlagenplatzhalter: ${[...new Set(unresolved)].join(', ')}`);
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, body, 'utf8');
 
 const title = `[${projectId}] [${agentClient}] ${workItem}`.slice(0, 240);
-appendGithubOutput({
-  pr_body_output: outputPath,
-  pr_title: title,
-  claim_id: claim.claimId,
-  claim_file: claimPath,
-  baseline_id: baseline.baselineId,
-});
+appendGithubOutput({ pr_body_output: outputPath, pr_title: title, claim_id: claim.claimId, claim_file: claimPath, baseline_id: baseline.baselineId });
 console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Vorlage v${PR_TEMPLATE_VERSION} mit atomarer Baseline ${baseline.baselineId} erzeugt.`);
