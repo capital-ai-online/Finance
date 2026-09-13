@@ -79,6 +79,34 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(handoff?.requirement).toContain('no duplicate NÄCHSTE-SCHRITTE or exact-response block');
   });
 
+  it('renders canonical project name, symbol and color from the single project routing surface', () => {
+    const mapping = read('docs/projects/README.md');
+    const template = read('.github/pull_request_template.md');
+    const renderer = read('scripts/pr/renderPullRequestBody.mjs');
+
+    for (const header of ['Display name', 'Symbol', 'Color']) {
+      expect(mapping).toContain(header);
+    }
+    expect(mapping).toContain('`CAPITAL-AI-GOV`');
+    expect(mapping).toContain('Governance');
+    expect(mapping).toContain('🧭');
+    expect(mapping).toContain('`#B45309`');
+    expect(mapping).toContain('Color is supplementary only');
+
+    expect(template).toContain('{{PROJECT_DISPLAY_NAME}}');
+    expect(template).toContain('{{PROJECT_SYMBOL}}');
+    expect(template).toContain('{{PROJECT_COLOR}}');
+    expect(template).toContain('Farbe ist nie alleiniger Bedeutungsträger');
+
+    expect(renderer).toContain("const projectMappingPath = process.env.PR_PROJECT_MAPPING_PATH || 'docs/projects/README.md'");
+    expect(renderer).toContain('resolveProjectPresentation(projectId)');
+    expect(renderer).toContain('PROJECT_DISPLAY_NAME: projectPresentation.displayName');
+    expect(renderer).toContain('PROJECT_SYMBOL: projectPresentation.symbol');
+    expect(renderer).toContain('PROJECT_COLOR: projectPresentation.color');
+    expect(renderer).toContain('muss genau eine Project-Presentation-Zeile besitzen');
+    expect(renderer).toContain('Color muss #RRGGBB sein');
+  });
+
   it('prevents candidate self-bootstrap and preserves the Human merge boundary', () => {
     const agents = read('AGENTS.md');
     const ownerPolicy = read('docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md');
