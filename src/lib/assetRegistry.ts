@@ -655,7 +655,7 @@ export class AssetRegistry {
       });
       return { points, source: 'live' };
     } catch (err) {
-      console.warn(`[AssetRegistry] CoinGecko-Historie fuer ${coingeckoId} fehlgeschlagen, falle auf Simulation zurueck:`, (err as Error)?.message || err);
+      console.warn('[AssetRegistry] CoinGecko-Historie fehlgeschlagen, falle auf Simulation zurueck:', coingeckoId, (err as Error)?.message || err);
       return null;
     }
   }
@@ -690,7 +690,7 @@ export class AssetRegistry {
       if (points.length === 0) return null;
       return { points, source: 'live' };
     } catch (err) {
-      console.warn(`[AssetRegistry] Stooq-Historie fuer ${displaySymbol} fehlgeschlagen, falle auf Simulation zurueck:`, (err as Error)?.message || err);
+      console.warn('[AssetRegistry] Stooq-Historie fehlgeschlagen, falle auf Simulation zurueck:', displaySymbol, (err as Error)?.message || err);
       return null;
     }
   }
@@ -709,7 +709,9 @@ export class AssetRegistry {
     let currentPrice = startPrice;
     const now = new Date();
 
-    for (let i = limit; i >= 0; i--) {
+    const days = Math.min(Math.max(Number(limit) || 1, 1), 1825);
+
+    for (let i = days; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dateFormatted = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getFullYear()).substring(2)}`;
 
@@ -731,7 +733,7 @@ export class AssetRegistry {
 
   // Deterministic random generation so different backtest runs of same asset match perfectly
   private seededRandom(seed: string, step: number): number {
-    const str = seed + step;
+    const str = `\( {String(seed).slice(0, 64)} \){step}`;
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = (hash << 5) - hash + str.charCodeAt(i);

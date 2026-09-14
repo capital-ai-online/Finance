@@ -257,16 +257,16 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
     const stripe = getStripeInstance();
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err: any) {
-    console.error(`❌ Stripe Webhook signature verification failed:`, err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('Stripe Webhook signature verification failed: %s', err.message);
+    return res.status(400).send('Webhook Error: invalid signature.');
   }
 
   try {
     await handleWebhookEvent(event);
     res.json({ received: true });
   } catch (err: any) {
-    console.error(`❌ Webhook handling error:`, err);
-    res.status(500).json({ error: err.message });
+    console.error('Webhook handling error: %s', err?.message || err);
+    res.status(500).json({ error: 'Webhook handling failed.' });
   }
 };
 
@@ -851,7 +851,7 @@ app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), 
       });
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Interner Serverfehler beim Abruf von Alpha Vantage.' });
+    res.status(500).json({ error: 'Interner Serverfehler beim Abruf von Alpha Vantage.' });
   }
 });
 
@@ -892,7 +892,7 @@ app.post('/api/docs-file', express.json(), (req, res) => {
     fs.writeFileSync(absolutePath, content, 'utf-8');
     res.json({ success: true, path: sanitizedPath });
   } catch (err: any) {
-    res.status(500).json({ error: `Fehler beim Schreiben der Datei: ${err.message || err}` });
+    res.status(500).json({ error: 'Fehler beim Schreiben der Datei.' });
   }
 });
 

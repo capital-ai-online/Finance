@@ -19,12 +19,27 @@ import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
 import { getPromptGovernanceEntry, recordAiEvaluation, type AiProvider } from '../src/services/aiGovernance';
 import { isDocumentHygieneRuntimeWritable } from './runtime/documentHygieneRuntimeMode';
+import {
+  UnsafePathError,
+  rateLimitMiddleware,
+  resolveWithinRoot,
+  resolveWorkspacePath,
+} from '../src/platform/Security/safeIo';
 
 export const hygieneRouter = express.Router();
+hygieneRouter.use(rateLimitMiddleware({ name: 'document-hygiene', maxRequests: 60, windowMs: 60_000 }));
 
 const DOCS_DIR = path.join(process.cwd(), 'docs');
-const HISTORY_DIR = path.join(DOCS_DIR, '.history');
+const HISTORY_DIR = docsPath('.history');
 const HYGIENE_DB_FILE = path.join(process.cwd(), 'uploads', 'document_hygiene.json');
+
+function docsPath(relativeFilePath: string): string {
+  return resolveWithinRoot(DOCS_DIR, relativeFilePath);
+}
+
+function historyPath(relativeFilePath: string): string {
+  return resolveWithinRoot(HISTORY_DIR, relativeFilePath);
+}
 
 // Types & Interfaces
 export type HygieneState =
@@ -197,7 +212,7 @@ export function buildDependencyGraph(): DependencyGraph {
               graph[relativePath] = dependencies;
             }
           } catch (e) {
-            console.error(`Error parsing file ${relativePath} for graph:`, e);
+            console.error('Error parsing file for graph:', relativePath, e);
           }
         }
       }
@@ -231,7 +246,7 @@ export function getAffectedFiles(changedFile: string, graph: DependencyGraph): s
 // Create file backup
 export function backupFile(relativeFilePath: string): string | null {
   try {
-    const srcPath = path.join(DOCS_DIR, relativeFilePath);
+    const srcPath = docsPath(relativeFilePath);
     if (!fs.existsSync(srcPath)) return null;
 
     if (!fs.existsSync(HISTORY_DIR)) {
@@ -241,18 +256,18 @@ export function backupFile(relativeFilePath: string): string | null {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const safeName = relativeFilePath.replace(/[\/\\]/g, '_');
     const backupName = `${timestamp}_${safeName}`;
-    const backupPath = path.join(HISTORY_DIR, backupName);
+    const backupPath = historyPath(backupName);
 
     fs.copyFileSync(srcPath, backupPath);
 
     // Keep history trimmed to latest 100 entries, prune old ones
     const backups = fs.readdirSync(HISTORY_DIR).sort((a, b) => {
-      return fs.statSync(path.join(HISTORY_DIR, b)).mtimeMs - fs.statSync(path.join(HISTORY_DIR, a)).mtimeMs;
+      return fs.statSync(historyPath(b)).mtimeMs - fs.statSync(historyPath(a)).mtimeMs;
     });
     if (backups.length > 100) {
       for (let i = 100; i < backups.length; i++) {
         try {
-          fs.unlinkSync(path.join(HISTORY_DIR, backups[i]));
+          fs.unlinkSync(historyPath(backups[i]));
         } catch (e) {}
       }
     }
@@ -456,7 +471,7 @@ Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${
     });
 
     if (!result) {
-      console.error(`Kein KI-Provider verfuegbar fuer Propagation nach ${dependentFilePath}`);
+      console.error('Kein KI-Provider verfuegbar fuer Propagation nach %s', dependentFilePath);
       return dependentContent;
     }
 
@@ -471,7 +486,7 @@ Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${
     const finalContent = text.trim();
     return ensureBrandingInContent(dependentFilePath, finalContent);
   } catch (err) {
-    console.error(`Failed to propagate change to ${dependentFilePath}:`, err);
+    console.error('Failed to propagate change to %s:', dependentFilePath, err);
     return dependentContent; // Fallback to unchanged
   }
 }
@@ -520,7 +535,7 @@ export async function processFileEvent(
       return;
     }
 
-    const fullPath = path.join(DOCS_DIR, normPath);
+    const fullPath = docsPath(normPath);
     if (!fs.existsSync(fullPath)) {
       throw new Error(`Datei existiert nicht: ${fullPath}`);
     }
@@ -538,10 +553,10 @@ export async function processFileEvent(
     if (fs.existsSync(HISTORY_DIR)) {
       const matchingBackups = fs.readdirSync(HISTORY_DIR)
         .filter(f => f.endsWith(safeName))
-        .sort((a, b) => fs.statSync(path.join(HISTORY_DIR, b)).mtimeMs - fs.statSync(path.join(HISTORY_DIR, a)).mtimeMs);
+        .sort((a, b) => fs.statSync(historyPath(b)).mtimeMs - fs.statSync(historyPath(a)).mtimeMs);
       
       if (matchingBackups.length > 0) {
-        oldContent = fs.readFileSync(path.join(HISTORY_DIR, matchingBackups[0]), 'utf8');
+        oldContent = fs.readFileSync(historyPath(matchingBackups[0]), 'utf8');
       }
     }
 
@@ -700,7 +715,7 @@ hygieneRouter.post('/review', requireAdmin, requireWritableDocumentHygiene, asyn
       backupFile(ticket.filePath);
       
       // Write proposed content
-      const fullPath = path.join(DOCS_DIR, ticket.filePath);
+      const fullPath = docsPath(ticket.filePath);
       const brandedProposedContent = ensureBrandingInContent(ticket.filePath, ticket.proposedContent);
       fs.writeFileSync(fullPath, brandedProposedContent, 'utf8');
 
@@ -710,7 +725,7 @@ hygieneRouter.post('/review', requireAdmin, requireWritableDocumentHygiene, asyn
       const propagatedFiles: string[] = [];
 
       for (const depFile of affected) {
-        const depFullPath = path.join(DOCS_DIR, depFile);
+        const depFullPath = docsPath(depFile);
         if (fs.existsSync(depFullPath)) {
           const currentDepContent = fs.readFileSync(depFullPath, 'utf8');
           const updatedDepContent = await generatePropagatedContent(
@@ -753,7 +768,7 @@ hygieneRouter.post('/review', requireAdmin, requireWritableDocumentHygiene, asyn
       ticket.status = 'DECLINED';
       
       // Revert the file back to old content
-      const fullPath = path.join(DOCS_DIR, ticket.filePath);
+      const fullPath = docsPath(ticket.filePath);
       if (ticket.previousContent) {
         fs.writeFileSync(fullPath, ticket.previousContent, 'utf8');
       } else {
@@ -805,8 +820,8 @@ hygieneRouter.post('/rollback', requireAdmin, requireWritableDocumentHygiene, (r
     return res.status(400).json({ error: 'filePath and backupName are required.' });
   }
 
-  const backupPath = path.join(HISTORY_DIR, backupName);
-  const targetPath = path.join(DOCS_DIR, filePath);
+  const backupPath = historyPath(backupName);
+  const targetPath = docsPath(filePath);
 
   try {
     if (!fs.existsSync(backupPath)) {
@@ -856,7 +871,7 @@ hygieneRouter.get('/history-files', requireAdmin, (req, res) => {
 
     const files = fs.readdirSync(HISTORY_DIR)
       .map(file => {
-        const filePath = path.join(HISTORY_DIR, file);
+        const filePath = historyPath(file);
         const stat = fs.statSync(filePath);
         return {
           name: file,
@@ -1161,13 +1176,13 @@ hygieneRouter.get('/lint', requireAdmin, (req, res) => {
           }
         }
       } catch (err) {
-        console.error(`Error scanning file ${target.relPath}:`, err);
+        console.error('Error scanning file:', target.relPath, err);
       }
     }
 
     res.json({ success: true, diagnostics });
   } catch (err: any) {
-    res.status(500).json({ error: `Fehler beim Lintent des Workspace: ${err.message || err}` });
+    res.status(500).json({ error: 'Fehler beim Linten des Workspace.' });
   }
 });
 
@@ -1178,7 +1193,15 @@ hygieneRouter.post('/lint-fix', requireAdmin, requireWritableDocumentHygiene, (r
     return res.status(400).json({ error: 'filePath and ruleId are required.' });
   }
 
-  const fullPath = path.join(process.cwd(), filePath);
+  let fullPath: string;
+  try {
+    fullPath = resolveWorkspacePath(String(filePath));
+  } catch (err) {
+    if (err instanceof UnsafePathError) {
+      return res.status(403).json({ error: 'Pfad liegt ausserhalb des Workspace.' });
+    }
+    throw err;
+  }
   if (!fs.existsSync(fullPath)) {
     return res.status(404).json({ error: `Datei nicht gefunden: ${filePath}` });
   }
@@ -1257,7 +1280,7 @@ hygieneRouter.post('/trigger', requireAdmin, requireWritableDocumentHygiene, asy
     return res.status(400).json({ error: 'filePath parameter is required.' });
   }
 
-  const fullPath = path.join(DOCS_DIR, filePath);
+  const fullPath = docsPath(filePath);
   if (!fs.existsSync(fullPath)) {
     return res.status(404).json({ error: `Dokument nicht gefunden: ${filePath}` });
   }
