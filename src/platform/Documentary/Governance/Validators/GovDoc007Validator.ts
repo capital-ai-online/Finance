@@ -41,6 +41,14 @@ function normalizeRepoPath(value: string): string {
   return value.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+/g, '/').trim();
 }
 
+function isSafeRepoPath(value: string): boolean {
+  const normalized = normalizeRepoPath(value);
+  return Boolean(normalized)
+    && !normalized.startsWith('/')
+    && !/^[A-Za-z]:\//.test(normalized)
+    && !normalized.split('/').includes('..');
+}
+
 function isExternalOrFragment(value: string): boolean {
   return value.startsWith('#')
     || value.startsWith('//')
@@ -53,7 +61,7 @@ function resolveReference(repoRoot: string, documentPath: string, referencedPath
   if (!target || isExternalOrFragment(referencedPath)) return null;
 
   const root = path.resolve(repoRoot);
-  const sourceDirectory = path.dirname(path.resolve(root, normalizeRepoPath(documentPath)));
+  const sourceDirectory = path.dirname(path.resolve(root, documentPath));
   const absoluteTarget = path.resolve(sourceDirectory, target);
   if (absoluteTarget !== root && !absoluteTarget.startsWith(`${root}${path.sep}`)) return '__INVALID__';
   return normalizeRepoPath(path.relative(root, absoluteTarget));
@@ -77,7 +85,12 @@ export function collectGovDoc007Findings(options: {
       .localeCompare(`${normalizeRepoPath(right.documentPath)}:${String(right.line).padStart(10, '0')}:${right.referencedPath}`));
 
   for (const reference of references) {
+    const documentId = reference.documentId.trim();
     const documentPath = normalizeRepoPath(reference.documentPath);
+    if (!documentId || !isSafeRepoPath(documentPath) || !Number.isInteger(reference.line) || reference.line < 1) {
+      throw new Error('[GovDoc007Validator] reference evidence requires documentId, a safe repository-relative documentPath and a positive integer line.');
+    }
+
     const resolvedPath = resolveReference(repoRoot, documentPath, reference.referencedPath);
     if (resolvedPath === null) continue;
     if (resolvedPath !== '__INVALID__' && targetExists(repoRoot, resolvedPath)) continue;
@@ -87,9 +100,9 @@ export function collectGovDoc007Findings(options: {
       ruleId: GOV_DOC_007_RULE.ruleId,
       severity: GOV_DOC_007_RULE.severity,
       area: GOV_DOC_007_RULE.area,
-      documentId: reference.documentId,
+      documentId,
       documentPath,
-      message: `${reference.documentId}: documentation reference does not resolve: ${referencedPath}.`,
+      message: `${documentId}: documentation reference does not resolve: ${referencedPath}.`,
       evidence: [{
         type: 'FileReference',
         path: documentPath,
