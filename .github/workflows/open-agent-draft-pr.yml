@@ -9,6 +9,14 @@ on:
         description: 'Agenten-Branch mit genau einem neuen .ai/work-claims/*.json-Claim'
         required: true
         type: string
+      approval_envelope_json:
+        description: 'Approval Envelope JSON (capital-ai-pr-approval-envelope/1.0.0)'
+        required: true
+        type: string
+      owner_pr_create_approval:
+        description: 'Exakte Owner-Freigabe. Nur gültig: PR Erstellung : Freigegeben'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,6 +29,7 @@ concurrency:
 jobs:
   preflight-and-open:
     name: Vertrauenswürdige Vorprüfung und Draft-PR-Erstellung
+    if: github.triggering_actor == 'SvenKulessa' && github.actor == 'SvenKulessa'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -73,14 +82,31 @@ jobs:
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
-      - name: Exklusiven Work-Claim und Überschneidungen mit offenen PRs prüfen
+      - name: Exklusiven Work-Claim und Überschneidungen fail-closed prüfen
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
+          PR_HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_CORRELATION_OUTPUT: artifacts/pr/create-correlation.json
+          PR_COORDINATION_FAIL_CLOSED: 'true'
         run: node ../policy/scripts/pr/validateWorkClaim.mjs
+
+      - name: Approval Envelope fail-closed vor Create-Mutation auswerten
+        working-directory: candidate
+        env:
+          APPROVAL_ENVELOPE_JSON: ${{ inputs.approval_envelope_json }}
+          OWNER_PR_CREATE_APPROVAL: ${{ inputs.owner_pr_create_approval }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_HEAD_BRANCH: ${{ inputs.head_branch }}
+          PR_CURRENT_MAIN_SHA: ${{ steps.baseline.outputs.main_sha }}
+          PR_CURRENT_HEAD_SHA: ${{ steps.baseline.outputs.head_sha }}
+          PR_CORRELATION_EVIDENCE_PATH: artifacts/pr/create-correlation.json
+          PR_CREATE_GATE_OUTPUT: artifacts/pr/create-gate.json
+        run: node ../policy/scripts/pr/evaluateApprovalEnvelopeCli.mjs
 
       - name: Kanonischen deutschen PR-Text aus trusted-main Vorlage erzeugen
         id: render
