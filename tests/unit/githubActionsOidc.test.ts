@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateKeyPairSync, sign, type JsonWebKey, type KeyObject } from 'node:crypto';
 import {
+  SYSTEMADMIN_GITHUB_ACTOR,
+  SYSTEMADMIN_GITHUB_ACTOR_ID,
   SYSTEMADMIN_GITHUB_OIDC_AUDIENCE,
   SYSTEMADMIN_GITHUB_OIDC_ISSUER,
-  SYSTEMADMIN_GITHUB_OWNER_ID,
+  SYSTEMADMIN_GITHUB_REPOSITORY,
   SYSTEMADMIN_GITHUB_REPOSITORY_ID,
+  SYSTEMADMIN_GITHUB_REPOSITORY_OWNER,
+  SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID,
   SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
   SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
   SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF,
@@ -29,15 +33,15 @@ function createJwt(
   const payload = encode({
     iss: SYSTEMADMIN_GITHUB_OIDC_ISSUER,
     aud: SYSTEMADMIN_GITHUB_OIDC_AUDIENCE,
-    sub: 'repo:SvenKulessa/Finance:ref:refs/heads/main',
+    sub: `repo:${SYSTEMADMIN_GITHUB_REPOSITORY}:ref:refs/heads/main`,
     exp: NOW_SECONDS + 300,
     nbf: NOW_SECONDS - 5,
     iat: NOW_SECONDS - 5,
-    actor: 'SvenKulessa',
-    actor_id: SYSTEMADMIN_GITHUB_OWNER_ID,
-    repository: 'SvenKulessa/Finance',
+    actor: SYSTEMADMIN_GITHUB_ACTOR,
+    actor_id: SYSTEMADMIN_GITHUB_ACTOR_ID,
+    repository: SYSTEMADMIN_GITHUB_REPOSITORY,
     repository_id: SYSTEMADMIN_GITHUB_REPOSITORY_ID,
-    repository_owner_id: SYSTEMADMIN_GITHUB_OWNER_ID,
+    repository_owner_id: SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID,
     event_name: 'issues',
     ref: 'refs/heads/main',
     sha: '0123456789abcdef0123456789abcdef01234567',
@@ -90,14 +94,19 @@ describe('Systemadmin GitHub Actions OIDC verifier', () => {
   it('accepts a correctly signed token bound to the exact SA3B Finance issue workflow', async () => {
     const identity = await verifyGitHubActionsOidcToken(createJwt(privateKey, kid), NOW);
     expect(identity).toMatchObject({
-      actor: 'SvenKulessa',
-      repository: 'SvenKulessa/Finance',
+      actor: SYSTEMADMIN_GITHUB_ACTOR,
+      actorId: SYSTEMADMIN_GITHUB_ACTOR_ID,
+      repository: SYSTEMADMIN_GITHUB_REPOSITORY,
       repositoryId: SYSTEMADMIN_GITHUB_REPOSITORY_ID,
+      repositoryOwnerId: SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID,
       eventName: 'issues',
       ref: 'refs/heads/main',
       workflowRef: SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
       runId: '31570000000',
     });
+    expect(SYSTEMADMIN_GITHUB_REPOSITORY).toBe('capital-ai-online/Finance');
+    expect(SYSTEMADMIN_GITHUB_REPOSITORY_OWNER).toBe('capital-ai-online');
+    expect(SYSTEMADMIN_GITHUB_ACTOR).toBe('SvenKulessa');
   });
 
   it('accepts only the explicitly allowlisted SA4 workflow as the second host', async () => {
@@ -124,10 +133,11 @@ describe('Systemadmin GitHub Actions OIDC verifier', () => {
 
   it('also accepts the immutable-ID subject form while keeping exact claim checks', async () => {
     const token = createJwt(privateKey, kid, {
-      sub: `repo:SvenKulessa@${SYSTEMADMIN_GITHUB_OWNER_ID}/Finance@${SYSTEMADMIN_GITHUB_REPOSITORY_ID}:ref:refs/heads/main`,
+      sub: `repo:${SYSTEMADMIN_GITHUB_REPOSITORY_OWNER}@${SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID}/Finance@${SYSTEMADMIN_GITHUB_REPOSITORY_ID}:ref:refs/heads/main`,
     });
     await expect(verifyGitHubActionsOidcToken(token, NOW)).resolves.toMatchObject({
       repositoryId: SYSTEMADMIN_GITHUB_REPOSITORY_ID,
+      repositoryOwnerId: SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID,
     });
   });
 
@@ -135,12 +145,18 @@ describe('Systemadmin GitHub Actions OIDC verifier', () => {
     ['wrong audience', { aud: 'other-audience' }],
     ['wrong actor', { actor: 'attacker' }],
     ['wrong actor id', { actor_id: '999' }],
+    ['legacy personal repository identity', { repository: 'SvenKulessa/Finance', sub: 'repo:SvenKulessa/Finance:ref:refs/heads/main' }],
     ['wrong repository id', { repository_id: '999' }],
-    ['wrong owner id', { repository_owner_id: '999' }],
+    ['legacy personal repository owner id', { repository_owner_id: SYSTEMADMIN_GITHUB_ACTOR_ID }],
+    ['wrong repository owner id', { repository_owner_id: '999' }],
     ['wrong event', { event_name: 'workflow_dispatch' }],
     ['wrong ref', { ref: 'refs/heads/feature' }],
-    ['unlisted workflow', { workflow_ref: 'SvenKulessa/Finance/.github/workflows/ci.yml@refs/heads/main' }],
+    ['unlisted workflow', { workflow_ref: 'capital-ai-online/Finance/.github/workflows/ci.yml@refs/heads/main' }],
+    ['legacy personal workflow ref', { workflow_ref: 'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main' }],
     ['expired', { exp: NOW_SECONDS - 120 }],
+    ['legacy personal immutable subject', {
+      sub: `repo:SvenKulessa@${SYSTEMADMIN_GITHUB_ACTOR_ID}/Finance@${SYSTEMADMIN_GITHUB_REPOSITORY_ID}:ref:refs/heads/main`,
+    }],
   ])('fails closed for %s', async (_label, overrides) => {
     await expect(verifyGitHubActionsOidcToken(createJwt(privateKey, kid, overrides), NOW))
       .rejects.toThrow('[SystemadminOIDC][SECURITY]');

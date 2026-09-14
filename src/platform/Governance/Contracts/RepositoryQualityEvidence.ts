@@ -54,7 +54,7 @@ export interface RepositoryQualityObservationSummary {
 export interface RepositoryQualityObservation {
   schemaVersion: typeof REPOSITORY_QUALITY_OBSERVATION_SCHEMA;
   trustClass: typeof REPOSITORY_QUALITY_TRUST_CLASS;
-  repository: 'SvenKulessa/Finance';
+  repository: 'capital-ai-online/Finance';
   checkedAt: string;
   sourceCommit: string | null;
   overallStatus: RepositoryQualityStatus;
