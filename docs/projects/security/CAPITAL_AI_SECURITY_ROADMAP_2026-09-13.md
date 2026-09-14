@@ -39,6 +39,13 @@ Verify roles, least privilege, data minimization, provider permissions and separ
 ### SEC-PR900-06 — Prompt/MCP trust findings
 Verify F01/F06 prompt/history provenance returns and F04 external MCP effective grants/session/read-only boundaries with live/effective evidence where applicable.
 
+### SEC-LICENSE-01 — Repository license identity for GitHub License Compliance
+Observed on PR #904: GitHub Enterprise `License compliance check` failed in 0s. The repository had no root `LICENSE` file and `package.json` had no `license` field. This package records the proprietary identity (`UNLICENSED` + `LICENSE`) without changing dependencies and without granting an open-source license.
+
+**Current branch state:** repository license identity is declared. The Enterprise policy, allowed-license list, and any package exception remain a Human/Owner console decision and are not authorized by this roadmap item.
+
+**Exit:** `LICENSE` exists; `package.json#license` is exactly `UNLICENSED`; no lockfile/dependency mutation; no OSI license is inferred; residual Enterprise-policy pass/fail is an Owner-visible provider result, not a silent PASS.
+
 ## Dependencies
 Productive owners CLIENT/OPS/DATA/FINTECH; GOV normative decisions; COMP legal judgments; QM exact-snapshot evidence.
 
