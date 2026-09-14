@@ -47,6 +47,12 @@ jobs:
         with:
           node-version: '24.18.0'
 
+      - name: Autofix-Guard vor jeder Write-Mutation testen
+        run: |
+          set -euo pipefail
+          node --check scripts/security/runCodeScanningAutofix.mjs
+          node --test tests/unit/codeScanningAutofixPolicy.test.mjs
+
       - name: Controlled CodeQL Autofix erzeugen
         id: autofix
         env:
