@@ -1,5 +1,5 @@
-const MAIN_API = 'https://api.github.com/repos/SvenKulessa/Finance/commits/main';
-const CONTENT_API = 'https://api.github.com/repos/SvenKulessa/Finance/contents';
+const MAIN_API = 'https://api.github.com/repos/capital-ai-online/Finance/commits/main';
+const CONTENT_API = 'https://api.github.com/repos/capital-ai-online/Finance/contents';
 
 function githubHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
