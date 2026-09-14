@@ -2,6 +2,7 @@ import express from 'express';
 import type { AuthenticationResponseJSON, RegistrationResponseJSON } from '@simplewebauthn/server';
 import { checkAdminAccess } from '../../src/platform/Security/authMiddleware';
 import { OWNER_ONLY_ROLES } from '../../src/platform/Security/types';
+import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
 import { ADR_0104_PROJECT_OPTIONS } from './adr0104ProjectSet';
 import {
   createAdr0104AuthenticationChallenge,
@@ -15,6 +16,7 @@ import {
 } from './ownerDeviceEnrollment';
 
 export const ownerAuthorizationRouter = express.Router();
+ownerAuthorizationRouter.use(rateLimitMiddleware({ name: 'owner-authorization', maxRequests: 30, windowMs: 60_000 }));
 
 const isLowercaseHexDigest = (value: string, minLength: number, maxLength: number): boolean => {
   if (value.length < minLength || value.length > maxLength) return false;
