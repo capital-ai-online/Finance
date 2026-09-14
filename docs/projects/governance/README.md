@@ -30,7 +30,7 @@ Human-merged PR #874 activates `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v3.4.0 on curr
 
 The current rule evaluates the immediate pre-create state as exactly `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED` or `BLOCKED`. SHA equality is not semantic safety proof and SHA inequality alone is not a material scope change. Synchronization-only Git identity movement may preserve approval only when the approved bounded payload remains materially equivalent and all then-current correlation and validation requirements remain satisfied.
 
-The current Approval Envelope preserves `CTRL-SEC-BOUNDED-REMEDIATION-001`, existing Security/PVC/Primary-Owner and protected-mutation boundaries, M10 `RETIRED / OFF`, NIST bindings as non-authorizing, and Human/CODEOWNER-only merge. The canonical PR-create response surface is the single embedded `Owner-Freigabe` field with affirmative value `PR Erstellung : Freigegeben`; the retired duplicate `Freigabe-Antwort` presentation is not reconstructed.
+The current Approval Envelope preserves `CTRL-SEC-BOUNDED-REMEDIATION-001`, existing Security/PVC/Primary-Owner and protected-mutation boundaries, M10 `RETIRED / OFF`, and Human/CODEOWNER-only merge. The canonical PR-create response surface is the single embedded `Owner-Freigabe` field with affirmative value `PR Erstellung : Freigegeben`; the retired duplicate `Freigabe-Antwort` presentation is not reconstructed.
 
 Historical branch `agent/governance-pr-approval-envelope-20260910` and pre-merge evidence remain audit/traceability only. Future PR-create evaluation resolves exclusively from then-current `/AGENTS.md` and its effective projected controls.
 
