@@ -27,10 +27,6 @@ function assertNoNul(value: string): void {
   }
 }
 
-/**
- * Resolve candidate against root and reject any path that escapes the root.
- * CodeQL js/path-injection sanitizer: path.resolve + startsWith(root prefix).
- */
 export function resolveWithinRoot(rootDir: string, candidate: string): string {
   if (typeof candidate !== 'string' || candidate.length === 0 || candidate.length > 2048) {
     throw new UnsafePathError('invalid-path');
@@ -47,9 +43,6 @@ export function resolveWithinRoot(rootDir: string, candidate: string): string {
 
 const DEFAULT_WORKSPACE_ROOTS = ['docs', 'src', 'server', 'tests'] as const;
 
-/**
- * Resolve a repository-relative path against cwd, allowing only declared roots.
- */
 export function resolveWorkspacePath(
   candidate: string,
   allowedRoots: readonly string[] = DEFAULT_WORKSPACE_ROOTS,
@@ -75,9 +68,6 @@ export function resolveWorkspacePath(
   return resolved;
 }
 
-/**
- * Same-origin relative Location only. Rejects protocol-relative and off-site URLs.
- */
 export function safeRelativeRedirectLocation(pathname: string, query = ''): string {
   if (typeof pathname !== 'string' || pathname.length === 0 || pathname.length > 2048) {
     throw new UnsafeRedirectError('invalid-redirect');
@@ -95,7 +85,6 @@ export function safeRelativeRedirectLocation(pathname: string, query = ''): stri
   return pathname + safeQuery;
 }
 
-/** Strip trailing slashes without a quantified regex (js/polynomial-redos). */
 export function stripTrailingSlashes(pathname: string): string {
   if (!pathname || pathname === '/') return '/';
   let end = pathname.length;
@@ -105,7 +94,6 @@ export function stripTrailingSlashes(pathname: string): string {
   return pathname.slice(0, end) || '/';
 }
 
-/** Bounded email syntax check without nested-quantifier ReDoS. */
 export function isSimpleEmail(value: string): boolean {
   if (typeof value !== 'string' || value.length < 3 || value.length > 254) return false;
   const at = value.indexOf('@');
@@ -118,9 +106,6 @@ export function isSimpleEmail(value: string): boolean {
   return dot > 0 && dot < domain.length - 1;
 }
 
-/**
- * HTML to plain text without `/<[^>]+>/` (incomplete sanitization + ReDoS).
- */
 export function htmlToPlainText(html: string): string {
   const source = String(html ?? '');
   const parts: string[] = [];
@@ -141,24 +126,18 @@ export function htmlToPlainText(html: string): string {
   return parts.join(' ').replace(/\s+/g, ' ').trim();
 }
 
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '\u0026amp;',
+  '<': '\u0026lt;',
+  '>': '\u0026gt;',
+  '"': '\u0026quot;',
+  "'": '\u0026#39;',
+};
+
 export function escapeHtml(value: unknown): string {
-  return String(value ?? '').replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case '&':
-        return '&';
-      case '<':
-        return '<';
-      case '>':
-        return '>';
-      case '"':
-        return '"';
-      default:
-        return '&#39;';
-    }
-  });
+  return String(value ?? '').replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char);
 }
 
-/** Markdown table cell: escape backslash first, then pipe and newlines. */
 export function escapeMarkdownTableCell(value: string): string {
   return String(value ?? '')
     .replace(/\\/g, '\\\\')
@@ -183,10 +162,6 @@ export function capLength(value: string, max = 256): string {
   return typeof value === 'string' ? value.slice(0, max) : '';
 }
 
-/**
- * Express middleware using the existing in-process limiter.
- * Attaches to routers that perform filesystem or authorization work.
- */
 export function rateLimitMiddleware(options: {
   name: string;
   maxRequests: number;
