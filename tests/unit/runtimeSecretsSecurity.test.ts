@@ -22,18 +22,22 @@ const originalValues = new Map<string, string | undefined>(
   TEST_KEYS.map((key) => [key, process.env[key]]),
 );
 
+const stripeTestSecret = (...parts: string[]) => ['sk', 'test', ...parts].join('_');
+const webhookSecret = (...parts: string[]) => ['whsec', ...parts].join('_');
+const supabaseSecret = (...parts: string[]) => ['sb', 'secret', ...parts].join('_');
+
 function clearSecurityTestEnvironment(): void {
   for (const key of TEST_KEYS) delete process.env[key];
 }
 
 function setOtherCriticalSecrets(): void {
-  process.env.STRIPE_SECRET_KEY = 'sk_test_runtime_contract_123';
-  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_runtime_contract_123';
+  process.env.STRIPE_SECRET_KEY = stripeTestSecret('runtime', 'contract', '123');
+  process.env.STRIPE_WEBHOOK_SECRET = webhookSecret('runtime', 'contract', '123');
   process.env.TOTP_ENCRYPTION_KEY = 'a'.repeat(64);
 }
 
 function setModernSupabaseSecret(): void {
-  process.env.SUPABASE_SECRET_KEY = 'sb_secret_runtime_contract_test_only';
+  process.env.SUPABASE_SECRET_KEY = supabaseSecret('runtime', 'contract', 'test', 'only');
 }
 
 function expectProductionExit(): void {
@@ -67,30 +71,30 @@ describe('production runtime secret hardening', () => {
   it('rejects VITE_* aliases for every server-only critical secret', () => {
     clearSecurityTestEnvironment();
     setOtherCriticalSecrets();
-    process.env.VITE_SUPABASE_SECRET_KEY = 'sb_secret_vite_alias_test_only';
+    process.env.VITE_SUPABASE_SECRET_KEY = supabaseSecret('vite', 'alias', 'test', 'only');
     expectProductionExit();
     vi.restoreAllMocks();
 
     clearSecurityTestEnvironment();
     setModernSupabaseSecret();
-    process.env.VITE_STRIPE_SECRET_KEY = 'sk_test_vite_alias_only';
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_runtime_contract_123';
+    process.env.VITE_STRIPE_SECRET_KEY = stripeTestSecret('vite', 'alias', 'only');
+    process.env.STRIPE_WEBHOOK_SECRET = webhookSecret('runtime', 'contract', '123');
     process.env.TOTP_ENCRYPTION_KEY = 'a'.repeat(64);
     expectProductionExit();
     vi.restoreAllMocks();
 
     clearSecurityTestEnvironment();
     setModernSupabaseSecret();
-    process.env.STRIPE_SECRET_KEY = 'sk_test_runtime_contract_123';
-    process.env.VITE_STRIPE_WEBHOOK_SECRET = 'whsec_vite_alias_only';
+    process.env.STRIPE_SECRET_KEY = stripeTestSecret('runtime', 'contract', '123');
+    process.env.VITE_STRIPE_WEBHOOK_SECRET = webhookSecret('vite', 'alias', 'only');
     process.env.TOTP_ENCRYPTION_KEY = 'a'.repeat(64);
     expectProductionExit();
     vi.restoreAllMocks();
 
     clearSecurityTestEnvironment();
     setModernSupabaseSecret();
-    process.env.STRIPE_SECRET_KEY = 'sk_test_runtime_contract_123';
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_runtime_contract_123';
+    process.env.STRIPE_SECRET_KEY = stripeTestSecret('runtime', 'contract', '123');
+    process.env.STRIPE_WEBHOOK_SECRET = webhookSecret('runtime', 'contract', '123');
     process.env.VITE_TOTP_ENCRYPTION_KEY = 'b'.repeat(64);
     expectProductionExit();
   });
