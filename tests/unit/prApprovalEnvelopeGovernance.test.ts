@@ -112,10 +112,10 @@ describe('converged bounded PR Approval Envelope governance', () => {
     for (const [projectId, folder, displayName, symbol, color] of expected) {
       const matchingLines = String(routingSection).split(/\r?\n/).filter((line) => line.startsWith(`| \`${projectId}\``));
       expect(matchingLines).toHaveLength(1);
-      expect(matchingLines[0]).toContain(`\`${folder}\``);
+      expect(matchingLines[0]).toContain(`\`${folder}\`);
       expect(matchingLines[0]).toContain(displayName);
       expect(matchingLines[0]).toContain(symbol);
-      expect(matchingLines[0]).toContain(`\`${color}\``);
+      expect(matchingLines[0]).toContain(`\`${color}\`);
       expect(color).toMatch(/^#[0-9A-F]{6}$/);
     }
     expect(mapping).toContain('No second project-presentation registry');
@@ -197,7 +197,7 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(canonicalRoadmap).toContain('### GOV-PR900-07 — Project presentation in PR approval and PR body');
     expect(canonicalRoadmap).toContain('DONE_MAIN / TERMINAL');
     expect(canonicalRoadmap).toContain('Human-merged PR #904');
-    expect(canonicalRoadmap).toContain('candidate-branch semantics cannot self-bootstrap');
+    expect(canonicalRoadmap).toContain('Candidate-branch semantics cannot self-bootstrap');
     expect(canonicalRoadmap).not.toContain('POINTER — NOT AN INDEPENDENT ACTIVE ROADMAP');
     expect(canonicalRoadmap).not.toContain('CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md');
     expect(fs.existsSync(path.join(root, 'docs/projects/governance/CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md'))).toBe(false);
