@@ -110,12 +110,12 @@ describe('converged bounded PR Approval Envelope governance', () => {
     const routingSection = mapping.split(/^## Canonical project-folder routing\s*$/m)[1]?.split(/^## /m)[0];
     expect(routingSection).toBeDefined();
     for (const [projectId, folder, displayName, symbol, color] of expected) {
-      const matchingLines = String(routingSection).split(/\r?\n/).filter((line) => line.startsWith(`| \`${projectId}\``));
+      const matchingLines = String(routingSection).split(/\r?\n/).filter((line) => line.startsWith('| `' + projectId + '`'));
       expect(matchingLines).toHaveLength(1);
-      expect(matchingLines[0]).toContain(`\`${folder}\``);
+      expect(matchingLines[0]).toContain('`' + folder + '`');
       expect(matchingLines[0]).toContain(displayName);
       expect(matchingLines[0]).toContain(symbol);
-      expect(matchingLines[0]).toContain(`\`${color}\``);
+      expect(matchingLines[0]).toContain('`' + color + '`');
       expect(color).toMatch(/^#[0-9A-F]{6}$/);
     }
     expect(mapping).toContain('No second project-presentation registry');
@@ -126,7 +126,7 @@ describe('converged bounded PR Approval Envelope governance', () => {
       'PROJECT_DISPLAY_NAME', 'PROJECT_SYMBOL', 'PROJECT_COLOR', 'PROJECT_FOLDER',
       'SOURCE_PROJECT_ID', 'SOURCE_PROJECT_DISPLAY_NAME', 'SOURCE_PROJECT_SYMBOL', 'SOURCE_PROJECT_COLOR', 'SOURCE_PROJECT_FOLDER',
       'TARGET_PROJECT_ID', 'TARGET_PROJECT_DISPLAY_NAME', 'TARGET_PROJECT_SYMBOL', 'TARGET_PROJECT_COLOR', 'TARGET_PROJECT_FOLDER',
-    ]) expect(template).toContain(`{{${placeholder}}}`);
+    ]) expect(template).toContain('{{' + placeholder + '}}');
     expect(template).toContain('Farbe ist nie alleiniger Bedeutungsträger');
     expect(template).toContain('docs/projects/README.md');
 
@@ -175,10 +175,8 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(manifest.standards).toEqual(['ISO/IEC 42001:2023 benchmark']);
   });
 
-  it('projects the evolved authorities, roadmap pointer and active Governance roadmap state', () => {
-    const roadmapPointer = read('docs/projects/governance/ROADMAP.md');
-    const activeRoadmapPath = 'docs/projects/governance/CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md';
-    const activeRoadmap = read(activeRoadmapPath);
+  it('projects the evolved authorities and canonical GOV ROADMAP.md as the only active execution source', () => {
+    const canonicalRoadmap = read('docs/projects/governance/ROADMAP.md');
     const supersededRoadmap = read('docs/projects/governance/archive/CAPITAL_AI_GOVERNANCE_ROADMAP_SUPERSEDED_2026-09-13.md');
     const taskRegister = read('docs/projects/governance/TASK_REGISTER.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
@@ -195,14 +193,14 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(authority('AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19')?.lifecycle).toBe('accepted');
     expect(pluginUse).toBeDefined();
     expect(catalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PLUGIN-USE-001')).toHaveLength(1);
-    expect(roadmapPointer).toContain('POINTER — NOT AN INDEPENDENT ACTIVE ROADMAP');
-    expect(roadmapPointer).toContain('CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md');
-    expect(roadmapPointer).toContain('CAPITAL_AI_GOVERNANCE_ROADMAP_SUPERSEDED_2026-09-13.md');
-    expect(roadmapPointer).toContain('Execution truth is the dated active roadmap above');
-    expect(activeRoadmap).toContain('ACTIVE — CANONICAL DATED ROADMAP');
-    expect(activeRoadmap).toContain('### GOV-PR900-07 — Project presentation in PR approval and PR body');
-    expect(activeRoadmap).toContain('candidate `/AGENTS.md` presentation extension is non-authorizing until Human Merge');
-    expect(activeRoadmap).toContain('candidate semantics cannot self-bootstrap');
+    expect(canonicalRoadmap).toContain('ACTIVE — CANONICAL PROJECT ROADMAP');
+    expect(canonicalRoadmap).toContain('### GOV-PR900-07 — Project presentation in PR approval and PR body');
+    expect(canonicalRoadmap).toContain('DONE_MAIN / TERMINAL');
+    expect(canonicalRoadmap).toContain('Human-merged PR #904');
+    expect(canonicalRoadmap).toContain('Candidate-branch semantics cannot self-bootstrap');
+    expect(canonicalRoadmap).not.toContain('POINTER — NOT AN INDEPENDENT ACTIVE ROADMAP');
+    expect(canonicalRoadmap).not.toContain('CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md');
+    expect(fs.existsSync(path.join(root, 'docs/projects/governance/CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md'))).toBe(false);
     expect(supersededRoadmap).toContain('`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868');
     expect(taskRegister).toMatch(/`GOV-CHAT-076`[^\n]*`DONE_MAIN`[^\n]*PR #868/i);
     expect(supersededRoadmap).toMatch(/`GOV-CHAT-074 \/[^`]+` — `DONE_MAIN \/ TERMINAL` via PR #874/);
