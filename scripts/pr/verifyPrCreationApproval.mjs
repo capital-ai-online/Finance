@@ -6,6 +6,7 @@ import {
   APPROVAL_STILL_VALID,
   BLOCKED,
   REAPPROVAL_REQUIRED,
+  buildApprovalScopeBinding,
   collectGitEffectiveChangeIdentity,
   createApprovalEnvelope,
   evaluateApprovalEnvelope,
@@ -184,15 +185,7 @@ if (isDirectCli) {
     cwd: process.cwd(),
     baseRef,
     headRef,
-    scopeBinding: {
-      projectId: envelope.projectId,
-      projectFolder: envelope.projectFolder,
-      primaryPvc: envelope.primaryPvc,
-      primaryOwner: envelope.primaryOwner,
-      branchName,
-      roadmapItemOrExplicitOwnerScope: envelope.roadmapItemOrExplicitOwnerScope,
-      approvedScope: envelope.approvedScope,
-    },
+    scopeBinding: buildApprovalScopeBinding({ ...envelope, branchName }),
     titleBinding: intendedPrTitle,
   });
 
