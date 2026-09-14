@@ -13,6 +13,14 @@ function countMatches(value: string, pattern: RegExp): number {
   return [...value.matchAll(pattern)].length;
 }
 
+function workflowStep(yaml: string, name: string): string {
+  const marker = `      - name: ${name}\n`;
+  const start = yaml.indexOf(marker);
+  if (start < 0) return '';
+  const next = yaml.indexOf('\n      - name:', start + marker.length);
+  return yaml.slice(start, next < 0 ? yaml.length : next);
+}
+
 describe('P1 PR governance runner consolidation', () => {
   it('uses exactly one Ubuntu runner job for pull-request governance', () => {
     const yaml = workflow();
@@ -62,10 +70,15 @@ describe('P1 PR governance runner consolidation', () => {
     expect(yaml).toContain('PR_HEAD_REF: HEAD');
   });
 
-  it('preserves the canonical production baseline and PR-body contract without retired M10 bypass', () => {
+  it('preserves the canonical production baseline and PR-body contract without any retired M10 bypass condition', () => {
     const yaml = workflow();
-    expect(yaml).toContain('run: node ../policy/scripts/pr/productionPreflight.mjs');
-    expect(yaml).toContain('run: node ../policy/scripts/pr/validatePrBody.mjs');
+    const preflightStep = workflowStep(yaml, 'Produktions-Baseline über trusted-main Policy erzeugen');
+    const bodyStep = workflowStep(yaml, 'Kanonische PR-Vorlage fail-closed prüfen');
+
+    expect(preflightStep).toContain('run: node ../policy/scripts/pr/productionPreflight.mjs');
+    expect(bodyStep).toContain('run: node ../policy/scripts/pr/validatePrBody.mjs');
+    expect(preflightStep).not.toMatch(/^\s*if:/m);
+    expect(bodyStep).not.toMatch(/^\s*if:/m);
     expect(yaml).not.toContain('agent/fix-unit-invariants-m10-bypass');
   });
 
