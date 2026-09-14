@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEC-REPOSITORY-IDENTITY-HARDENING-2026-09-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Bind current-state repository identity to capital-ai-online/Finance and separate Human actor from repository owner in OIDC/current-main/quality surfaces.",
+  "startedAt": "2026-09-14T12:00:00.000Z",
+  "baseBranch": "main",
+  "baseSha": "9da67c406abc89d7595c1ee14a75c4038232948b",
+  "branch": "agent/security-repository-identity-hardening-20260914",
+  "project": "CAPITAL-AI-SEC",
+  "projectId": "CAPITAL-AI-SEC",
+  "projectFolder": "docs/projects/security/",
+  "projectStage": "N/A",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEC-REPOSITORY-IDENTITY-HARDENING-2026-09-14.json",
+    "server/ownerAuthorization/currentMain.ts",
+    "server/systemadmin/githubActionsOidc.ts",
+    "src/platform/Governance/Contracts/RepositoryQualityEvidence.ts",
+    "src/platform/Quality/RepositoryQuality/RepositoryQualityCoordinator.ts",
+    "tests/unit/githubActionsOidc.test.ts"
+  ],
+  "releaseCondition": "Release after the identity-hardening PR is merged, closed, superseded or abandoned."
+}
