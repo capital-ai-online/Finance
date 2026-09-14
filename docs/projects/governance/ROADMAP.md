@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #900/#901 folded; dated 2026-09-13 archive absorbed and deleted  
-**Baseline:** `main@9da67c406abc89d7595c1ee14a75c4038232948b`  
+**Reconciliation:** 2026-09-14 — PR #909 merged; historical-framework purge continues  
+**Baseline:** `main@66f8b15e0dfe88084cf1fdbe022955b3e8d30257`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -49,7 +49,7 @@ Materialize one canonical presentation projection per project routing row: textu
 ### GOV-PR908-01 — External-framework purge
 Remove withdrawn external-framework bindings from Trust Root, Control Plane, Compliance inventories, runtime evidence labels, ADRs, skills, evidence and roadmaps. ISO/IEC 42001 remains the only adopted external Governance benchmark. No deleted binding may re-enter as a requirement, gate, finding or backlog.
 
-**State:** `IN IMPLEMENTATION` on this branch.
+**State:** `IN IMPLEMENTATION` after Human-merged PR #909 (`main@66f8b15e0dfe88084cf1fdbe022955b3e8d30257`). Current surfaces and 2026-09-13 archives are closed. Remaining work is Trust-Root §10 wording, registry/catalog phrasing, GOV-CHAT-073 wording and historical Evidence/ADR/Compliance mentions.
 
 ### GOV-SOTA02-F05 — Stale provider-instruction references
 Replace remaining provider-specific trust-root wording in ESS-0018/ADR-0051 projections with current `/AGENTS.md` authority. Routed from SEC-SOTA-02 historical inventory; GOV-owned.
@@ -83,4 +83,4 @@ Human-merged PR #886, merge SHA `0945b7264d6819a57451748888e1fb8c71981762`, mate
 OPS version/release, QM gates, SEC/COMP assurance, CLIENT runtime only where productive materialization is needed.
 
 ## Project exit gate
-One active GOV roadmap; no duplicate authority namespace/writer; current projections agree with effective authority or expose a deterministic blocker; dated 2026-09-13 GOV archive is deleted.
+One active GOV roadmap; no duplicate authority namespace/writer; current projections agree with effective authority or expose a deterministic blocker; dated 2026-09-13 GOV archive is deleted; current Trust Root and registries name no withdrawn external framework.
