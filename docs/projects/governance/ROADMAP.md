@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #909 merged; historical-framework purge continues  
-**Baseline:** `main@66f8b15e0dfe88084cf1fdbe022955b3e8d30257`  
+**Reconciliation:** 2026-09-14 — Universe Branding Owner decision correlated and routed to CAPITAL-AI-FE  
+**Baseline:** `main@c6d36c216801f16788d205664ab4cfdf0c970dca`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -45,6 +45,28 @@ Materialize one canonical presentation projection per project routing row: textu
 **State:** `DONE_MAIN / TERMINAL` via Human-merged PR #904 (`main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`). Current, Source and Target resolve independently from the same routing row. Textual Project ID/folder/Owner/PVC identity remains authoritative; color is never the sole semantic cue. Candidate-branch semantics cannot self-bootstrap.
 
 **Exit:** PR approval surface and PR body both resolve Current, Source and Target as `Project ID → canonical project folder → display name → symbol → color` from exactly one canonical `docs/projects/README.md` routing row. Missing, duplicate or malformed metadata fails closed; no second registry exists.
+
+### GOV-UNIVERSE-BRANDING-01 — Owner decision and Frontend routing
+
+Materialize the 2026-09-14 Owner decision for one application-wide CAPITAL-AI Universe branding contract without creating a Governance-side design architecture.
+
+**State:** `GOV SCOPE READY / CAPITAL-AI-FE HANDOFF OPEN`.
+
+Current-main correlation confirms that `docs/frontend/design-tokens.json` is already the single machine-readable Branding-/Design-Token authority and `docs/frontend/brandmark.json` the geometry contract. `docs/frontend/FRONTEND_ARCH.md` explicitly prohibits parallel presentation/design authority. Suspended legacy ADR-0004 is non-authorizing; current Accepted PDF/Media ADRs consume the canonical token source. The Owner decision therefore changes values/naming/presentation policy inside the existing Frontend authority boundary and requires **no new ADR/ESS or ADR/ESS supersession** in this GOV slice.
+
+Owner-directed active state routed to FE:
+
+- primary brand: Vader Black `#08080C` + Capital Gold `#F9BF21`;
+- Krypto Purple `#8D26FF`, Deadly Green `#44DE88`, Pluto Blue `#60A5FA`, StarTroops Magenta `#E879F9`;
+- Meteor Amber `#FF9F1C` remains `OWNER-DESIGN-PROPOSAL` and is not silently activated;
+- Bond/Anleihen is `DISABLED` for productive Frontend Universe navigation/filter/ranking/presentation/selectability, without deleting DATA/FINTECH/API contracts or stable technical identifiers;
+- Pattern direction is independent from Asset-Class color; BUY derives from `color.score.best`, SELL from `color.score.worst`;
+- `strong|medium|weak` use deterministic base-derived foreground/background/border intensity while preserving accessible text/icon semantics;
+- `renderWhenMissing=false` / `missingState=omit` remains mandatory and missing Pattern evidence never synthesizes a signal.
+
+Decision evidence and the directly executable CAPITAL-AI-FE handoff prompt are preserved at `docs/projects/governance/evidence/UNIVERSE_BRANDING_OWNER_DECISION_2026-09-14.md`.
+
+**GOV exit:** exactly one existing Frontend Branding-/Design-Token authority remains; Owner state and foreign-owner boundary are explicit; no GOV runtime/design implementation is introduced. Productive token/consumer materialization remains CAPITAL-AI-FE-owned.
 
 ### GOV-PR908-01 — External-framework purge
 Remove withdrawn external-framework bindings from Trust Root, Control Plane, Compliance inventories, runtime evidence labels, ADRs, skills, evidence and roadmaps. ISO/IEC 42001 remains the only adopted external Governance benchmark. No deleted binding may re-enter as a requirement, gate, finding or backlog.
