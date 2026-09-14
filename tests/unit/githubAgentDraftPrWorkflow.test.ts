@@ -34,6 +34,30 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml.match(/persist-credentials: false/g)?.length).toBe(2);
   });
 
+  it('restricts dispatch mutation to the repository owner and requires the Approval Envelope', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("github.triggering_actor == 'SvenKulessa'");
+    expect(yaml).toContain("github.actor == 'SvenKulessa'");
+    expect(yaml).toContain('approval_envelope_json:');
+    expect(yaml).toContain('owner_pr_create_approval:');
+    expect(yaml).toContain('node ../policy/scripts/pr/evaluateApprovalEnvelopeCli.mjs');
+    expect(yaml).toContain("PR_COORDINATION_FAIL_CLOSED: 'true'");
+  });
+
+  it('does not hardcode envelope correlation PASS flags in the create workflow', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('PR_CORRELATION_EVIDENCE_PATH: artifacts/pr/create-correlation.json');
+    expect(yaml).toContain('PR_CORRELATION_OUTPUT: artifacts/pr/create-correlation.json');
+    expect(yaml).toContain('PR_CREATE_GATE_OUTPUT: artifacts/pr/create-gate.json');
+    expect(yaml).not.toContain('PR_CORRELATION_RESULT: PASS');
+    expect(yaml).not.toContain("PR_AUTHORITY_RESOLVED: 'true'");
+    expect(yaml).not.toContain("PR_OPEN_WRITER_PASS: 'true'");
+    expect(yaml).not.toContain("PR_SEMANTIC_PASS: 'true'");
+    expect(yaml).not.toContain("PR_NAMESPACE_PASS: 'true'");
+    expect(yaml).not.toContain("PR_SECURITY_PASS: 'true'");
+    expect(yaml).not.toContain('PR_VALIDATION_STATUS: PASS');
+  });
+
   it('derives policy and PR body from trusted current main before mutation', () => {
     const yaml = workflow();
     expect(yaml).toContain('ref: main');
