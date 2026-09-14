@@ -110,7 +110,10 @@ describe('converged bounded PR Approval Envelope governance', () => {
   });
 
   it('projects the evolved authorities and terminal GOV-CHAT-072 current-main state', () => {
-    const roadmap = read('docs/projects/governance/ROADMAP.md');
+    const roadmapPointer = read('docs/projects/governance/ROADMAP.md');
+    const activeRoadmapPath = 'docs/projects/governance/CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md';
+    const activeRoadmap = read(activeRoadmapPath);
+    const supersededRoadmap = read('docs/projects/governance/archive/CAPITAL_AI_GOVERNANCE_ROADMAP_SUPERSEDED_2026-09-13.md');
     const taskRegister = read('docs/projects/governance/TASK_REGISTER.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
@@ -126,11 +129,14 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(authority('AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19')?.lifecycle).toBe('accepted');
     expect(pluginUse).toBeDefined();
     expect(catalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PLUGIN-USE-001')).toHaveLength(1);
-    expect(roadmap).toContain('`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868');
+    expect(roadmapPointer).toContain('POINTER — NOT AN INDEPENDENT ACTIVE ROADMAP');
+    expect(roadmapPointer).toContain('CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md');
+    expect(activeRoadmap).toContain('ACTIVE — CANONICAL DATED ROADMAP');
+    expect(supersededRoadmap).toContain('`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868');
     expect(taskRegister).toMatch(/`GOV-CHAT-076`[^\n]*`DONE_MAIN`[^\n]*PR #868/i);
-    expect(roadmap).toMatch(/`GOV-CHAT-074 \/[^`]+` — `DONE_MAIN \/ TERMINAL` via PR #874/);
+    expect(supersededRoadmap).toMatch(/`GOV-CHAT-074 \/[^`]+` — `DONE_MAIN \/ TERMINAL` via PR #874/);
     expect(taskRegister).toMatch(/\| `GOV-CHAT-074` \|[^\n]*\| `DONE_MAIN` \|[^\n]*PR #874/);
-    const pluginPolicySection = roadmap.split(/^## GOV-CHAT-072\b/m)[1]?.split(/^## /m)[0];
+    const pluginPolicySection = supersededRoadmap.split(/^## GOV-CHAT-072\b/m)[1]?.split(/^## /m)[0];
     expect(pluginPolicySection).toBeDefined();
     expect(pluginPolicySection).toContain('**State:** `DONE_MAIN / TERMINAL`');
     expect(pluginPolicySection).toContain('PR #886');
