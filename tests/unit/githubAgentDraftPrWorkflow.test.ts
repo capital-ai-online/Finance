@@ -34,6 +34,16 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml.match(/persist-credentials: false/g)?.length).toBe(2);
   });
 
+  it('restricts dispatch mutation to the repository owner and requires the Approval Envelope', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("github.triggering_actor == 'SvenKulessa'");
+    expect(yaml).toContain("github.actor == 'SvenKulessa'");
+    expect(yaml).toContain('approval_envelope_json:');
+    expect(yaml).toContain('owner_pr_create_approval:');
+    expect(yaml).toContain('node ../policy/scripts/pr/evaluateApprovalEnvelopeCli.mjs');
+    expect(yaml).toContain("PR_COORDINATION_FAIL_CLOSED: 'true'");
+  });
+
   it('derives policy and PR body from trusted current main before mutation', () => {
     const yaml = workflow();
     expect(yaml).toContain('ref: main');
