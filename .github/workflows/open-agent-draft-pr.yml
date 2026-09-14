@@ -88,7 +88,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
+          PR_HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_CORRELATION_OUTPUT: artifacts/pr/create-correlation.json
           PR_COORDINATION_FAIL_CLOSED: 'true'
         run: node ../policy/scripts/pr/validateWorkClaim.mjs
 
@@ -102,13 +104,8 @@ jobs:
           PR_HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_CURRENT_MAIN_SHA: ${{ steps.baseline.outputs.main_sha }}
           PR_CURRENT_HEAD_SHA: ${{ steps.baseline.outputs.head_sha }}
-          PR_CORRELATION_RESULT: PASS
-          PR_AUTHORITY_RESOLVED: 'true'
-          PR_OPEN_WRITER_PASS: 'true'
-          PR_SEMANTIC_PASS: 'true'
-          PR_NAMESPACE_PASS: 'true'
-          PR_SECURITY_PASS: 'true'
-          PR_VALIDATION_STATUS: PASS
+          PR_CORRELATION_EVIDENCE_PATH: artifacts/pr/create-correlation.json
+          PR_CREATE_GATE_OUTPUT: artifacts/pr/create-gate.json
         run: node ../policy/scripts/pr/evaluateApprovalEnvelopeCli.mjs
 
       - name: Kanonischen deutschen PR-Text aus trusted-main Vorlage erzeugen

@@ -8,8 +8,10 @@ import {
   createApprovalEnvelope,
   evaluateApprovalEnvelope,
 } from './approvalEnvelope.mjs';
+import { writeJsonFile } from './lib.mjs';
 
 export const OWNER_PR_CREATE_APPROVAL_PHRASE = 'PR Erstellung : Freigegeben';
+export const CREATE_CORRELATION_SCHEMA = 'capital-ai-pr-create-correlation/1.0.0';
 
 function fail(message) {
   console.error(`[PR-APPROVAL][DENY] ${message}`);
@@ -43,6 +45,17 @@ export function resolveApprovalEnvelope(input) {
     return input;
   }
   return createApprovalEnvelope(input);
+}
+
+export function loadCreateCorrelationEvidence(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) {
+    throw new Error(`Create-correlation evidence file is required: ${filePath || '<missing path>'}`);
+  }
+  const evidence = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  if (evidence?.schemaVersion !== CREATE_CORRELATION_SCHEMA) {
+    throw new Error(`Create-correlation evidence schema must be ${CREATE_CORRELATION_SCHEMA}`);
+  }
+  return evidence;
 }
 
 export function resolveCreateGateCurrent(envelope, overrides = {}) {
@@ -118,9 +131,32 @@ function compactIdentity(gitIdentity) {
   };
 }
 
+function correlationOverridesFromEvidence(evidence) {
+  return {
+    correlationResult: evidence.correlationResult,
+    authorityResolved: evidence.authorityResolved === true,
+    openWriterCorrelationPass: evidence.openWriterCorrelationPass === true,
+    semanticCorrelationPass: evidence.semanticCorrelationPass === true,
+    namespaceCorrelationPass: evidence.namespaceCorrelationPass === true,
+    securityCorrelationPass: evidence.securityCorrelationPass === true,
+    validationStatus: evidence.validationStatus,
+  };
+}
+
 const isDirectCli = process.argv[1] && process.argv[1].endsWith('evaluateApprovalEnvelopeCli.mjs');
 if (isDirectCli) {
   const envelopeInput = loadEnvelopeInput();
+  const evidencePath = process.env.PR_CORRELATION_EVIDENCE_PATH;
+  if (!evidencePath) {
+    fail('PR_CORRELATION_EVIDENCE_PATH is required; correlation PASS may not be supplied as a workflow literal');
+  }
+  let evidence;
+  try {
+    evidence = loadCreateCorrelationEvidence(evidencePath);
+  } catch (error) {
+    fail(error instanceof Error ? error.message : String(error));
+  }
+
   const computeGitIdentity = process.env.PR_COMPUTE_GIT_IDENTITY !== 'false';
   const gitIdentity = computeGitIdentity
     ? collectGitEffectiveChangeIdentity({
@@ -155,21 +191,27 @@ if (isDirectCli) {
       effectiveChangeIdentity: compactIdentity(gitIdentity),
       currentCorrelationMainSha: mainSha,
       currentBranchHeadSha: headSha,
-      correlationResult: process.env.PR_CORRELATION_RESULT || 'UNRESOLVED',
-      authorityResolved: envFlag('PR_AUTHORITY_RESOLVED'),
-      openWriterCorrelationPass: envFlag('PR_OPEN_WRITER_PASS'),
-      semanticCorrelationPass: envFlag('PR_SEMANTIC_PASS'),
-      namespaceCorrelationPass: envFlag('PR_NAMESPACE_PASS'),
-      securityCorrelationPass: envFlag('PR_SECURITY_PASS'),
-      validationStatus: process.env.PR_VALIDATION_STATUS || 'UNRESOLVED',
+      ...correlationOverridesFromEvidence(evidence),
       materialChangedFileSetEquivalent: envFlag('PR_FILESET_EQUIVALENT'),
       effectivePayloadEquivalent: envFlag('PR_PAYLOAD_EQUIVALENT'),
     },
+  });
+
+  const outputPath = process.env.PR_CREATE_GATE_OUTPUT || 'artifacts/pr/create-gate.json';
+  writeJsonFile(outputPath, {
+    schemaVersion: 'capital-ai-pr-create-gate/1.0.0',
+    state: result.state,
+    reasons: result.reasons ?? [],
+    mainSha,
+    headSha,
+    correlationEvidencePath: evidencePath,
+    correlationResult: evidence.correlationResult,
+    evaluatedAt: new Date().toISOString(),
   });
 
   if (result.state !== APPROVAL_STILL_VALID) {
     fail(`${result.state}: ${(result.reasons || []).join('; ') || 'approval envelope is not valid for PR creation'}`);
   }
 
-  console.log(`[PR-APPROVAL] ${APPROVAL_STILL_VALID} | main=${mainSha.slice(0, 12)} head=${headSha.slice(0, 12)}`);
+  console.log(`[PR-APPROVAL] ${APPROVAL_STILL_VALID} | main=${mainSha.slice(0, 12)} head=${headSha.slice(0, 12)} evidence=${evidencePath}`);
 }
