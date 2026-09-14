@@ -67,6 +67,18 @@ Open:
 
 M10 remains `RETIRED / OFF`. Human/CODEOWNER-only merge remains mandatory.
 
+## Terminal chat ledger (absorbed from 2026-09-13 archive)
+
+`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868
+
+`GOV-CHAT-074 / Approval Envelope v3.4 rollout` — `DONE_MAIN / TERMINAL` via PR #874
+
+## GOV-CHAT-072
+
+**State:** `DONE_MAIN / TERMINAL`
+
+Human-merged PR #886, merge SHA `0945b7264d6819a57451748888e1fb8c71981762`, materialized exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing Development-Chain authority. No unconditional plugin invocation is authorized.
+
 ## Dependencies
 OPS version/release, QM gates, SEC/COMP assurance, CLIENT runtime only where productive materialization is needed.
 
