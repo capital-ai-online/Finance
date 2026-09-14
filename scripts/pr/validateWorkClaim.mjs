@@ -21,12 +21,18 @@ const prNumber = process.env.PR_NUMBER ? Number(process.env.PR_NUMBER) : null;
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
 const baselinePath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
+const failClosed = process.env.PR_COORDINATION_FAIL_CLOSED === 'true';
 
 if (!repository) throw new Error('GITHUB_REPOSITORY is required for the advisory overlap report.');
 if (!token) throw new Error('GITHUB_TOKEN/GH_TOKEN is required for read-only PR inspection.');
 
 function warn(message) {
   console.warn(`[PR-COORDINATION][ADVISORY] ${message}`);
+}
+
+function deny(message) {
+  console.error(`[PR-COORDINATION][DENY] ${message}`);
+  process.exit(1);
 }
 
 function readClaimAtRef(claimPath) {
@@ -84,13 +90,17 @@ let claim = null;
 let claimPath = null;
 
 if (addedClaimFiles.length > 1) {
-  warn(`Multiple work claims found: ${addedClaimFiles.join(', ')}. Treat claim metadata as ambiguous.`);
+  const message = `Multiple work claims found: ${addedClaimFiles.join(', ')}. Treat claim metadata as ambiguous.`;
+  if (failClosed) deny(message);
+  warn(message);
 } else if (addedClaimFiles.length === 1) {
   claimPath = addedClaimFiles[0];
   claim = readClaimAtRef(claimPath);
   const shapeErrors = validateClaimShape(claim, claimPath);
   if (shapeErrors.length > 0) {
-    warn(`Work claim ${claimPath} is malformed: ${shapeErrors.join('; ')}`);
+    const message = `Work claim ${claimPath} is malformed: ${shapeErrors.join('; ')}`;
+    if (failClosed) deny(message);
+    warn(message);
     claim = null;
   }
 } else {
@@ -128,11 +138,9 @@ const openPullByNumber = new Map(openPulls.map((pr) => [Number(pr.number), pr]))
 const openPullByBranch = new Map(openPulls.map((pr) => [String(pr.head?.ref ?? ''), pr]));
 const otherPulls = openPulls.filter((pr) => !prNumber || pr.number !== prNumber);
 const warnings = [];
+const blocking = [];
 const currentChangedFiles = changedFiles.filter((file) => !isClaimMetadataPath(file));
 
-// Existing work claims are the single path-writer coordination mechanism. A claim that is still
-// active/exclusive on main after its PR was merged/closed is stale coordination metadata; this
-// live preflight reports it, while deterministic CI remains independent of GitHub API state.
 for (const baseClaimPath of listWorkClaimsAtRef(baseRef)) {
   let baseClaim;
   try {
@@ -162,8 +170,6 @@ for (const baseClaimPath of listWorkClaimsAtRef(baseRef)) {
   }
 }
 
-// ADR namespace reservations are not path locks. They are correlated here against live PR heads,
-// but their merge-gating state is validated separately and deterministically from docs/adr/registry.json.
 try {
   const adrRegistry = readJsonAtRef(headRef, 'docs/adr/registry.json');
   const activeReservations = (adrRegistry.parallelNamespaceReservations ?? []).filter((entry) => entry.state === 'active');
@@ -197,7 +203,9 @@ for (const other of otherPulls) {
   const directOverlap = currentChangedFiles.filter((file) => otherFileSet.has(file));
 
   if (directOverlap.length > 0) {
-    warnings.push(`PR #${other.number} changes the same file(s): ${directOverlap.join(', ')}`);
+    const message = `PR #${other.number} changes the same file(s): ${directOverlap.join(', ')}`;
+    warnings.push(message);
+    blocking.push(message);
   }
 
   if (otherState.error) {
@@ -217,13 +225,18 @@ for (const other of otherPulls) {
       const formatted = claimConflicts
         .map(({ current, other: otherScope }) => `${current} <-> ${otherScope}`)
         .join('; ');
-      warnings.push(`PR #${other.number} has overlapping advisory scope: ${formatted}`);
+      const message = `PR #${other.number} has overlapping advisory scope: ${formatted}`;
+      warnings.push(message);
+      blocking.push(message);
     }
   }
 }
 
 if (warnings.length > 0) {
   for (const message of warnings) warn(message);
+  if (failClosed && blocking.length > 0) {
+    deny(`Create-time writer overlap blocked Draft-PR creation (${blocking.length} overlap finding(s)).`);
+  }
   console.log('[PR-COORDINATION] Conflicts are advisory. Report them to the user before PR creation or merge; do not treat them as sandbox/build failures.');
 } else {
   console.log('[PR-COORDINATION] No changed-file, claim-lifecycle, ADR-reservation or advisory-claim overlap detected against current open PRs.');
