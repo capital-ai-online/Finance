@@ -13,6 +13,7 @@ import type {
   SeoRankSnapshot,
 } from '../types';
 import type { ISeoEngineStore } from './ISeoEngineStore';
+import { stripTrailingSlashes } from '../../Security/safeIo';
 
 export class MemorySeoEngineStore implements ISeoEngineStore {
   private keywords: SeoKeyword[] = [];
@@ -83,8 +84,7 @@ export class MemorySeoEngineStore implements ISeoEngineStore {
   }
 
   private normalizePath(pathname: string): string {
-    if (!pathname || pathname === '/') return '/';
-    return pathname.replace(/\/+$/, '') || '/';
+    return stripTrailingSlashes(pathname);
   }
 
   async listKeywords(activeOnly = true): Promise<SeoKeyword[]> {
