@@ -75,7 +75,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(publicWorkbench).toContain('<ProtectedToolNotice tool={activeDefinition} />');
     expect(publicWorkbench).toContain('Anmelden und Tool öffnen');
 
-    expect(buffetValueCheck).toContain("fetch('/api/entitlements/warren-buffett/authorize'");
+    expect(buffetValueCheck).toContain("authFetch('/api/entitlements/warren-buffett/authorize'");
     expect(dashboardViewRouter).toContain('Risikoassessment Deaktiviert');
     expect(publicWorkbench).not.toContain('<BacktestEngine');
     expect(publicWorkbench).not.toContain('<SentimentDashboard');
