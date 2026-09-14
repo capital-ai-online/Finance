@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-HISTORICAL-FRAMEWORK-PURGE-2026-09-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Remove remaining framework wording from AGENTS.md, authority registry, control catalog, GOV task register and historical evidence/ADR/compliance surfaces.",
+  "startedAt": "2026-09-14T12:19:00.000Z",
+  "baseBranch": "main",
+  "baseSha": "66f8b15e0dfe88084cf1fdbe022955b3e8d30257",
+  "branch": "agent/governance-historical-framework-purge-20260914",
+  "project": "CAPITAL-AI-GOV",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-HISTORICAL-FRAMEWORK-PURGE-2026-09-14.json",
+    "AGENTS.md",
+    "docs/governance/authority-registry.json",
+    "docs/governance/control-catalog.json",
+    "docs/projects/governance/TASK_REGISTER.md",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/compliance/**",
+    "docs/evidence/**",
+    "docs/adr/**",
+    "docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md"
+  ],
+  "releaseCondition": "Release after the historical-framework-purge PR is merged, closed, superseded or abandoned."
+}
