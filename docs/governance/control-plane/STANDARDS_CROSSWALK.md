@@ -2,8 +2,8 @@
 
 **Document ID:** `DOC-GOV-STANDARDS-CROSSWALK-2026-08-19`  
 **Authority ID:** `AUTH-GOV-STANDARDS-CROSSWALK`  
-**Version:** `1.2.0`  
-**Date:** `2026-09-05`  
+**Version:** `1.3.0`  
+**Date:** `2026-09-14`  
 **Status:** governance benchmark / non-certification evidence
 
 ## Purpose
@@ -42,11 +42,7 @@ This therefore **reduces**, rather than increases, governance duplication when m
 
 - **ISO/IEC 42001:2023** — published AI management-system standard; used for AIMS structure and continual-improvement/PDCA concepts.
 
-### Withdrawn NIST bindings
-
-NIST publications, frameworks, profiles and historical mappings are **not a current CAPITAL-AI standards baseline, control source, mandatory benchmark, required evidence source or gap authority**.
-
-Existing NIST references in historical evidence, prior reports, proposed ADRs, foreign-project documentation, skills or implementation notes remain traceable where needed but are advisory/non-authorizing for current repository Governance. They MUST NOT by themselves create a blocking requirement, implementation task, CI gate, compliance finding or mandatory remediation. A future NIST adoption requires a new explicit Human/Owner decision identifying the exact source, version and scope.
+No other external framework is a current CAPITAL-AI standards baseline, control source, mandatory benchmark, required evidence source or gap authority.
 
 ## Crosswalk
 
@@ -107,7 +103,7 @@ A crosswalk becomes harmful if copied external clauses are treated as independen
 
 ## Secure-development minimums
 
-The current control plane independently requires least privilege, separation of authority from evidence, source/identity/version traceability, supply-chain evidence, secure defaults/fail-closed ambiguity, independent final-head validation, explicit security-finding treatment, and validation of AI/model/tool outputs as untrusted inputs. These are CAPITAL-AI controls and do not depend on a NIST mapping for their authority.
+The current control plane independently requires least privilege, separation of authority from evidence, source/identity/version traceability, supply-chain evidence, secure defaults/fail-closed ambiguity, independent final-head validation, explicit security-finding treatment, and validation of AI/model/tool outputs as untrusted inputs. These are CAPITAL-AI controls.
 
 ## Applicability warning
 
