@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import type { IVocabularyRegistry } from '../Interfaces/IVocabularyRegistry';
 import type { UiMessageCatalog } from '../Messages/UiMessageCatalog';
 import type { FintechValueChainWordingBinding } from '../ValueChain/FintechWordingBinding';
+import { escapeMarkdownTableCell } from '../../Security/safeIo';
 
 export const VOCABULARY_WIKI_SCHEMA = 'vocabulary-wiki-projection/1.0.0' as const;
 export const VOCABULARY_WIKI_AUTHORITY = 'ESS-0017' as const;
@@ -32,7 +33,7 @@ function stableUnique(values: readonly string[]): string[] {
 }
 
 function escapeCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>');
+  return escapeMarkdownTableCell(value);
 }
 
 function page(filename: string, title: string, body: string, sourceCommit: string): VocabularyWikiPage {
