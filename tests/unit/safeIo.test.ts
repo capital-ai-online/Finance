@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
   UnsafePathError,
   UnsafeRedirectError,
+  escapeHtml,
   escapeMarkdownTableCell,
   hostEquals,
   htmlToPlainText,
@@ -46,6 +47,10 @@ describe('safeIo guards', () => {
   it('converts HTML to text without leaving script tags', () => {
     expect(htmlToPlainText('<p>Hallo</p><script>alert(1)</script>')).toBe('Hallo alert(1)');
     expect(htmlToPlainText('<script\n>payload')).toBe('');
+  });
+
+  it('encodes HTML meta characters', () => {
+    expect(escapeHtml('<script>&"\'')).toBe('\u0026lt;script\u0026gt;\u0026amp;\u0026quot;\u0026#39;');
   });
 
   it('escapes backslashes before pipes in markdown cells', () => {
