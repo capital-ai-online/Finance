@@ -4,9 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 const root = path.resolve(__dirname, '../..');
 const workflowPath = path.join(root, '.github/workflows/open-agent-draft-pr.yml');
+const verifierPath = path.join(root, 'scripts/pr/verifyPrCreationApproval.mjs');
 
 function workflow(): string {
   return fs.readFileSync(workflowPath, 'utf8');
+}
+
+function verifier(): string {
+  return fs.readFileSync(verifierPath, 'utf8');
 }
 
 describe('GitHub agent draft PR bot governance', () => {
@@ -28,18 +33,20 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).not.toContain('copilot/*');
   });
 
-  it('keeps least privilege and does not persist checkout credentials', () => {
+  it('keeps least privilege and never persists checkout credentials', () => {
     const yaml = workflow();
     expect(yaml).toContain('permissions:\n  contents: read\n  pull-requests: write');
-    expect(yaml.match(/persist-credentials: false/g)?.length).toBe(2);
+    expect(yaml.match(/persist-credentials: false/g)?.length).toBe(3);
+    expect(yaml).not.toContain('contents: write');
   });
 
-  it('restricts dispatch mutation to the repository owner and requires the Approval Envelope', () => {
+  it('restricts dispatch mutation to the repository owner and requires explicit Approval Envelope evidence', () => {
     const yaml = workflow();
     expect(yaml).toContain("github.triggering_actor == 'SvenKulessa'");
     expect(yaml).toContain("github.actor == 'SvenKulessa'");
     expect(yaml).toContain('approval_envelope_json:');
     expect(yaml).toContain('owner_pr_create_approval:');
+    expect(yaml).toContain("description: 'Exakte Owner-Freigabe. Nur gültig: PR Erstellung : Freigegeben'");
     expect(yaml).toContain('node ../policy/scripts/pr/evaluateApprovalEnvelopeCli.mjs');
     expect(yaml).toContain("PR_COORDINATION_FAIL_CLOSED: 'true'");
   });
@@ -66,6 +73,41 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).toContain('node ../policy/scripts/pr/validateWorkClaim.mjs');
     expect(yaml).toContain('node ../policy/scripts/pr/renderPullRequestBody.mjs');
     expect(yaml).toContain('PR_TEMPLATE_PATH: ../policy/.github/pull_request_template.md');
+  });
+
+  it('refreshes trusted main and reruns correlation immediately before the external create mutation', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('path: create-policy');
+    expect(yaml).toContain('live_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq \' .object.sha\'')"'.replace("' .object.sha'", "'.object.sha'"));
+    expect(yaml).toContain('git fetch --no-tags ../create-policy main:refs/remotes/origin/main');
+    expect(yaml).toContain('node ../create-policy/scripts/pr/productionPreflight.mjs');
+    expect(yaml).toContain('node ../create-policy/scripts/pr/validateWorkClaim.mjs');
+    expect(yaml).toContain('PR_CORRELATION_EVIDENCE_PATH: artifacts/pr/final-create-correlation.json');
+    expect(yaml).toContain('PR_EXPECTED_CURRENT_MAIN_SHA="$live_main_sha"');
+  });
+
+  it('binds the actual rendered title and live refs through trusted-main verifier directly before gh pr create', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('PR_TITLE: ${{ steps.render.outputs.pr_title }}');
+    expect(yaml).toContain('PR_INTENDED_TITLE="$PR_TITLE"');
+    expect(yaml).toContain('node ../create-policy/scripts/pr/verifyPrCreationApproval.mjs');
+    expect(yaml).not.toContain('node scripts/pr/verifyPrCreationApproval.mjs');
+
+    const verifyIndex = yaml.lastIndexOf('node ../create-policy/scripts/pr/verifyPrCreationApproval.mjs');
+    const createIndex = yaml.lastIndexOf('gh pr create');
+    expect(verifyIndex).toBeGreaterThan(-1);
+    expect(createIndex).toBeGreaterThan(verifyIndex);
+    expect(yaml.slice(verifyIndex, createIndex)).not.toContain('run:');
+  });
+
+  it('final verifier has explicit negative gates for missing, stale and divergent approval evidence', () => {
+    const source = verifier();
+    expect(source).toContain('Approval Envelope evidence is missing');
+    expect(source).toContain('final create-correlation evidence is stale or has an invalid timestamp');
+    expect(source).toContain('live main SHA changed after the final local refresh');
+    expect(source).toContain('live branch head SHA differs from the locally verified branch head');
+    expect(source).toContain('actual rendered PR title differs from the approved title');
+    expect(source).toContain('result.state !== APPROVAL_STILL_VALID');
   });
 
   it('prevents duplicate open PR creation and always opens as draft', () => {
