@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEC-LICENSE-COMPLIANCE-IDENTITY-2026-09-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Declare the proprietary CAPITAL-AI repository license identity so GitHub/npm license scanners no longer treat the source tree as missing-license. Do not change dependencies, do not grant an open-source license, and do not self-authorize Enterprise license-policy exceptions.",
+  "workItemDE": "Proprietäre Repository-Lizenzidentität setzen; keine Dependency-Änderung, keine Open-Source-Lizenz, keine Enterprise-Policy-Ausnahme durch den Agenten.",
+  "startedAt": "2026-09-14T10:57:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "5dfdfbd4bad088777c48434e65fd7a7ec9921e36",
+  "pullRequest": null,
+  "branch": "agent/security-license-compliance-identity-20260914",
+  "projectId": "CAPITAL-AI-SEC",
+  "project": "CAPITAL-AI-SEC",
+  "projectFolder": "docs/projects/security/",
+  "ownerRole": "Cross-cutting Security; no productive PVC",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEC-LICENSE-COMPLIANCE-IDENTITY-2026-09-14.json",
+    "LICENSE",
+    "package.json",
+    "docs/projects/security/CAPITAL_AI_SECURITY_ROADMAP_2026-09-13.md"
+  ],
+  "foreignWork": [
+    "CAPITAL-AI-GOV: PR #904 remains the separate project-presentation writer",
+    "Human/Owner: Enterprise License Compliance policy and exception decisions stay outside this repository PR"
+  ],
+  "correlatedStaleClaims": [],
+  "authorityGuard": "Bounded Security supply-chain identity only. Do not invent an OSI license, do not mutate lockfile/dependencies, do not merge, and do not treat a GitHub Enterprise policy console change as authorized by this claim.",
+  "releaseCondition": "Release on merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only."
+}
