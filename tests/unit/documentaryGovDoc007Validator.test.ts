@@ -8,7 +8,6 @@ function fixture(run: (repoRoot: string) => void): void {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gov-doc-007-'));
   try {
     fs.mkdirSync(path.join(repoRoot, 'docs'), { recursive: true });
-    fs.writeFileSync(path.join(repoRoot, 'docs', 'source.md'), '# Source\n');
     fs.writeFileSync(path.join(repoRoot, 'docs', 'target.md'), '# Target\n');
     run(repoRoot);
   } finally {
@@ -19,6 +18,11 @@ function fixture(run: (repoRoot: string) => void): void {
 describe('GOV-DOC-007', () => {
   it('reports missing local references and accepts existing targets', () => {
     fixture((repoRoot) => {
+      fs.writeFileSync(
+        path.join(repoRoot, 'docs', 'source.md'),
+        '[target](./target.md)\n[missing](./missing.md#section)\n',
+      );
+
       const findings = collectGovDoc007Findings({
         repoRoot,
         references: [
@@ -40,6 +44,19 @@ describe('GOV-DOC-007', () => {
 
   it('reports repository escapes and keeps deterministic ordering', () => {
     fixture((repoRoot) => {
+      const lines = [
+        '# Source',
+        '[a](./a.md)',
+        '[escape](../../../outside.md)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '[z](./z.md)',
+      ];
+      fs.writeFileSync(path.join(repoRoot, 'docs', 'source.md'), `${lines.join('\n')}\n`);
+
       const findings = collectGovDoc007Findings({
         repoRoot,
         references: [
@@ -57,7 +74,7 @@ describe('GOV-DOC-007', () => {
     });
   });
 
-  it('rejects unsafe source evidence fail-closed', () => {
+  it('rejects unsafe or unverifiable source evidence fail-closed', () => {
     fixture((repoRoot) => {
       expect(() => collectGovDoc007Findings({
         repoRoot,
@@ -68,6 +85,17 @@ describe('GOV-DOC-007', () => {
           referencedPath: './target.md',
         }],
       })).toThrow('reference evidence requires');
+
+      fs.writeFileSync(path.join(repoRoot, 'docs', 'source.md'), '[target](./target.md)\n');
+      expect(() => collectGovDoc007Findings({
+        repoRoot,
+        references: [{
+          documentId: 'DOC-SOURCE',
+          documentPath: 'docs/source.md',
+          line: 1,
+          referencedPath: './not-on-line.md',
+        }],
+      })).toThrow('must match an existing regular source document line');
     });
   });
 });
