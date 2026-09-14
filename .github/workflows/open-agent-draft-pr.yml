@@ -94,7 +94,7 @@ jobs:
           PR_COORDINATION_FAIL_CLOSED: 'true'
         run: node ../policy/scripts/pr/validateWorkClaim.mjs
 
-      - name: Approval Envelope fail-closed vor Create-Mutation auswerten
+      - name: Approval Envelope fail-closed vor Create-Vorbereitung auswerten
         working-directory: candidate
         env:
           APPROVAL_ENVELOPE_JSON: ${{ inputs.approval_envelope_json }}
@@ -120,19 +120,60 @@ jobs:
           PR_BODY_OUTPUT: artifacts/pr/pull-request-body.md
         run: node ../policy/scripts/pr/renderPullRequestBody.mjs
 
-      - name: Draft-PR öffnen, sofern noch keiner existiert
+      - name: Trusted main unmittelbar vor externer Create-Mutation neu auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: main
+          path: create-policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Final korrelieren, Approval Envelope binden und Draft-PR öffnen
         working-directory: candidate
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_TITLE: ${{ steps.render.outputs.pr_title }}
+          PR_APPROVAL_ENVELOPE_JSON: ${{ inputs.approval_envelope_json }}
+          OWNER_PR_CREATE_APPROVAL: ${{ inputs.owner_pr_create_approval }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_HEAD_BRANCH: ${{ inputs.head_branch }}
+          PR_BASELINE_OUTPUT: artifacts/pr/final-production-baseline.json
+          PR_CORRELATION_OUTPUT: artifacts/pr/final-create-correlation.json
+          PR_CORRELATION_EVIDENCE_PATH: artifacts/pr/final-create-correlation.json
+          PR_CREATE_GATE_OUTPUT: artifacts/pr/final-create-gate.json
+          PR_COORDINATION_FAIL_CLOSED: 'true'
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: |
           set -euo pipefail
+
           existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --head "$HEAD_BRANCH" --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
             echo "Für $HEAD_BRANCH existiert bereits der offene PR #$existing; es wird kein Duplikat erzeugt."
             exit 0
           fi
+
+          live_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          trusted_main_sha="$(git -C ../create-policy rev-parse HEAD)"
+          if [ "$live_main_sha" != "$trusted_main_sha" ]; then
+            echo "Trusted-main Checkout ist bereits stale: checkout=$trusted_main_sha live=$live_main_sha" >&2
+            exit 1
+          fi
+
+          git fetch --no-tags ../create-policy main:refs/remotes/origin/main
+          if [ "$(git rev-parse origin/main)" != "$live_main_sha" ]; then
+            echo "Lokaler origin/main stimmt nicht mit dem unmittelbar gelesenen GitHub-main überein." >&2
+            exit 1
+          fi
+
+          node ../create-policy/scripts/pr/productionPreflight.mjs
+          node ../create-policy/scripts/pr/validateWorkClaim.mjs
+
+          PR_EXPECTED_CURRENT_MAIN_SHA="$live_main_sha" \
+          PR_INTENDED_TITLE="$PR_TITLE" \
+            node ../create-policy/scripts/pr/verifyPrCreationApproval.mjs
 
           gh pr create \
             --repo "$GITHUB_REPOSITORY" \

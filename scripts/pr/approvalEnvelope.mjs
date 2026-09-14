@@ -32,6 +32,18 @@ export function digestScope(value) {
   return `sha256:${sha256(stableStringify(value))}`;
 }
 
+export function buildApprovalScopeBinding(input = {}) {
+  return {
+    projectId: input.projectId,
+    projectFolder: input.projectFolder,
+    primaryPvc: input.primaryPvc,
+    primaryOwner: input.primaryOwner,
+    branchName: input.branchName,
+    roadmapItemOrExplicitOwnerScope: input.roadmapItemOrExplicitOwnerScope,
+    approvedScope: input.approvedScope,
+  };
+}
+
 export function buildEffectiveChangeIdentity({ changedFiles, normalizedDiff, scopeBinding, titleBinding = null }) {
   const files = normalizeChangedFiles(changedFiles);
   const diff = Buffer.isBuffer(normalizedDiff) ? normalizedDiff : Buffer.from(String(normalizedDiff ?? ''), 'utf8');

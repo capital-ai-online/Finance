@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {
   APPROVAL_STILL_VALID,
   BLOCKED,
+  buildApprovalScopeBinding,
   collectGitEffectiveChangeIdentity,
   createApprovalEnvelope,
   evaluateApprovalEnvelope,
@@ -157,17 +158,14 @@ if (isDirectCli) {
     fail(error instanceof Error ? error.message : String(error));
   }
 
+  const branchName = process.env.PR_HEAD_BRANCH || envelopeInput.branchName;
   const computeGitIdentity = process.env.PR_COMPUTE_GIT_IDENTITY !== 'false';
   const gitIdentity = computeGitIdentity
     ? collectGitEffectiveChangeIdentity({
         cwd: process.cwd(),
         baseRef: process.env.PR_BASE_REF || 'origin/main',
         headRef: process.env.PR_HEAD_REF || 'HEAD',
-        scopeBinding: {
-          projectId: envelopeInput.projectId,
-          approvedScope: envelopeInput.approvedScope,
-          branchName: process.env.PR_HEAD_BRANCH || envelopeInput.branchName,
-        },
+        scopeBinding: buildApprovalScopeBinding({ ...envelopeInput, branchName }),
         titleBinding: process.env.PR_INTENDED_TITLE || envelopeInput.intendedPrTitle,
       })
     : null;
