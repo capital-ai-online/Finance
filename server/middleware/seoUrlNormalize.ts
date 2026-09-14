@@ -1,4 +1,5 @@
 import type { Express, Request, Response, NextFunction } from 'express';
+import { safeRelativeRedirectLocation, stripTrailingSlashes } from '../../src/platform/Security/safeIo';
 
 /**
  * SEO-ROADMAP-0001 / Q2 + D3 helpers.
@@ -24,8 +25,7 @@ export const APPLICATION_SPA_PATHS = new Set([
 ]);
 
 export function stripTrailingSlashPath(pathname: string): string {
-  if (!pathname || pathname === '/') return '/';
-  return pathname.replace(/\/+$/, '') || '/';
+  return stripTrailingSlashes(pathname);
 }
 
 export function isPublicSpaPath(pathname: string): boolean {
@@ -45,8 +45,7 @@ export function isApplicationSpaPath(pathname: string): boolean {
 export function shouldRedirectTrailingSlash(pathname: string): boolean {
   if (!pathname || pathname === '/') return false;
   if (!pathname.endsWith('/')) return false;
-  // Never redirect asset-like paths (e.g. /assets/foo.js/)
-  const withoutSlash = pathname.replace(/\/+$/, '');
+  const withoutSlash = stripTrailingSlashes(pathname);
   if (/\.[a-zA-Z0-9]{1,8}$/.test(withoutSlash)) return false;
   if (withoutSlash.startsWith('/api')) return false;
   return true;
@@ -59,7 +58,7 @@ export function trailingSlashRedirectLocation(
   const original = req.originalUrl || req.url || '';
   const qIndex = original.indexOf('?');
   const query = qIndex >= 0 ? original.slice(qIndex) : '';
-  return path + query;
+  return safeRelativeRedirectLocation(path, query);
 }
 
 export function registerTrailingSlashNormalize(app: Express): void {
