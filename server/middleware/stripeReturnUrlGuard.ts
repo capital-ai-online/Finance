@@ -50,17 +50,20 @@ export function normalizeStripeReturnUrl(value: unknown, isProduction: boolean):
 export function stripeReturnUrlGuard(req: Request, res: Response, next: NextFunction) {
   if (req.method !== 'POST') return next();
 
+  // Match the downstream Express Router defaults: case-insensitive paths and
+  // one optional trailing slash. Keep the actual request URL unchanged.
+  const routePath = req.path.replace(/\/$/, '').toLowerCase();
   const isProduction = process.env.NODE_ENV === 'production';
   const body = req.body && typeof req.body === 'object' ? req.body : {};
 
   try {
-    if (req.path === '/create-checkout-session') {
+    if (routePath === '/create-checkout-session') {
       req.body = {
         ...body,
         successUrl: normalizeStripeReturnUrl(body.successUrl, isProduction),
         cancelUrl: normalizeStripeReturnUrl(body.cancelUrl, isProduction),
       };
-    } else if (req.path === '/create-portal-session') {
+    } else if (routePath === '/create-portal-session') {
       req.body = {
         ...body,
         returnUrl: normalizeStripeReturnUrl(body.returnUrl, isProduction),
