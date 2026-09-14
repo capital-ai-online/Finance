@@ -7,6 +7,7 @@ import express, {
 } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { checkRateLimit, getClientIp } from '../../src/platform/Security/rateLimiter';
 import { isApplicationSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNormalize';
 
 /**
@@ -56,6 +57,9 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
     fs.existsSync(candidate) ? candidate : files.root;
 
   app.get('*', (req: Request, res: Response) => {
+    if (!checkRateLimit(`spa-fallback:${getClientIp(req as any)}`, 240, 60_000)) {
+      return res.status(429).type('text/plain').send('Too Many Requests');
+    }
     // The untrusted request value controls only this finite branch selection.
     // Every sendFile argument below was precomputed from trusted literals.
     switch (stripTrailingSlashPath(req.path)) {
