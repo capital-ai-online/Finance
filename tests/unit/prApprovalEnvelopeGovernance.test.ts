@@ -110,12 +110,12 @@ describe('converged bounded PR Approval Envelope governance', () => {
     const routingSection = mapping.split(/^## Canonical project-folder routing\s*$/m)[1]?.split(/^## /m)[0];
     expect(routingSection).toBeDefined();
     for (const [projectId, folder, displayName, symbol, color] of expected) {
-      const matchingLines = String(routingSection).split(/\r?\n/).filter((line) => line.startsWith(`| \`${projectId}\``));
+      const matchingLines = String(routingSection).split(/\r?\n/).filter((line) => line.startsWith('| `' + projectId + '`'));
       expect(matchingLines).toHaveLength(1);
-      expect(matchingLines[0]).toContain(`\`${folder}\`);
+      expect(matchingLines[0]).toContain('`' + folder + '`');
       expect(matchingLines[0]).toContain(displayName);
       expect(matchingLines[0]).toContain(symbol);
-      expect(matchingLines[0]).toContain(`\`${color}\`);
+      expect(matchingLines[0]).toContain('`' + color + '`');
       expect(color).toMatch(/^#[0-9A-F]{6}$/);
     }
     expect(mapping).toContain('No second project-presentation registry');
@@ -126,7 +126,7 @@ describe('converged bounded PR Approval Envelope governance', () => {
       'PROJECT_DISPLAY_NAME', 'PROJECT_SYMBOL', 'PROJECT_COLOR', 'PROJECT_FOLDER',
       'SOURCE_PROJECT_ID', 'SOURCE_PROJECT_DISPLAY_NAME', 'SOURCE_PROJECT_SYMBOL', 'SOURCE_PROJECT_COLOR', 'SOURCE_PROJECT_FOLDER',
       'TARGET_PROJECT_ID', 'TARGET_PROJECT_DISPLAY_NAME', 'TARGET_PROJECT_SYMBOL', 'TARGET_PROJECT_COLOR', 'TARGET_PROJECT_FOLDER',
-    ]) expect(template).toContain(`{{${placeholder}}}`);
+    ]) expect(template).toContain('{{' + placeholder + '}}');
     expect(template).toContain('Farbe ist nie alleiniger Bedeutungsträger');
     expect(template).toContain('docs/projects/README.md');
 
