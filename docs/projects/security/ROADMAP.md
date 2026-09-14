@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/security/`  
 **Role:** cross-cutting Security requirements, findings, bounded remediation and independent verification  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #900/#901 folded; dated 2026-09-13 archive and S1/SOTA open items absorbed  
-**Baseline:** `main@9da67c406abc89d7595c1ee14a75c4038232948b`  
+**Reconciliation:** 2026-09-14 — PR #900/#901 folded; S1-R2-06 independent inventory and PR #918 branch verification added  
+**Baseline:** `main@627f46b8164a13f8d635d92dc1a9c6a87fae741b`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -50,8 +50,8 @@ Verify F01/F06 prompt/history provenance returns and F04 external MCP effective 
 | SEC-AUTH-LIFECYCLE | GOV/Human + OPS evidence | `OPEN / CLARIFY`; ESS-0020 `PROPOSED` | no unilateral lifecycle mutation |
 | SEC-COMP-CRA-01 | COMP first | COMP applicability | SEC supplies technical evidence only after COMP scope |
 | S1-R2-03 Node control-plane 24.20.0 | OPS PVC-06 | `OPEN / PARTIAL` | converge engines/policy; exact-head CI |
-| S1-R2-05 Stripe redirect boundary | OPS PVC-02 | `OPEN / CONFIRMED` | server-owned origins + negative open-redirect tests |
-| S1-R2-06 entitlement authority | OPS parent; FINTECH/DATA children | `ACTIVE / REMEDIATION REQUIRED` | complete paid-capability inventory; browser tier never authorizes |
+| S1-R2-05 Stripe redirect boundary | OPS PVC-02 | `OPEN / PR918_VERIFIED_BRANCH / PRODUCTION_VERIFY_OPEN` | Human/CODEOWNER merge then exact deployed negative open-redirect verification |
+| S1-R2-06 entitlement authority | OPS parent; FINTECH/DATA children | `ACTIVE / INVENTORY_REVERIFIED / PARTIAL_BRANCH_REMEDIATION` | PR #918 screening alias fix remains off-main; Buffett bearer consumer fix on Security branch; FIN-SEC-03 Backtest/Monte Carlo/full_ai_analysis remain owner-open |
 | S1-R2-07 recovery / RPO / RTO | OPS PVC-08 | `OPEN / UNVERIFIED` | measured restore drill |
 | S1-R2-08 leaked-password | OPS PVC-08 | `OWNER-ACCEPTED / TIER EXCEPTION` | reassess if provider tier changes |
 | S1-R2-09 strict CSP promotion | OPS PVC-08 | `PARTIAL / REPORT-ONLY` | ADR-0040 promotion evidence |
@@ -63,6 +63,18 @@ Verify F01/F06 prompt/history provenance returns and F04 external MCP effective 
 | SEC-SOTA02-F04 external MCP host | OPS PVC-02 | `EVIDENCE_GAP / OWNER_ROUTED` | effective host grant/session/read-only readback |
 | SEC-SOTA02-F05 stale provider docs | GOV PVC-05 | `CONFIRMED / OWNER_ROUTED` | current Trust Root wording |
 | SEC-SOTA02-F06 chat history provenance | CLIENT PVC-01 + FINTECH | `EVIDENCE_GAP / OWNER_ROUTED` | attested session/history + negative tests |
+
+### S1-R2-06 verification delta — 2026-09-14
+
+Independent Security re-correlation is recorded in `docs/evidence/security/S1_R2_06_ENTITLEMENT_INDEPENDENT_VERIFICATION_2026-09-14.md`.
+
+- `verified_screening`: server authority exists; confirmed case/trailing-slash alias remediation is independently verified on PR #918 exact head but remains off-main and not Production-verified.
+- `realtime_ai_newsfeed`: current repository boundary resolves verified principal plus server subscription state and fails closed; Production verification remains separate.
+- `pdf_compliance_export`: authenticated server ledger path remains the repository reference boundary; Production verification remains separate.
+- `buffett_value_check`: server authority exists; the remaining bearer-less Frontend consumer transport is a cleanly separable bounded Security fix using existing `authFetch` and does not alter entitlement semantics.
+- `backtest`, `monte_carlo`, `full_ai_analysis`: remain `FIN-SEC-03` owner work under `CAPITAL-AI-FINTECH / PVC-15`; this Security slice does not implement that foreign business/domain architecture.
+
+S1-R2-06 is **not** `VERIFIED` or `CLOSED` as a whole.
 
 `EVIDENCE_READY != VERIFIED`. Implementation and verification remain separate steps. PR #905 (license identity) is Human-merged on current main.
 
