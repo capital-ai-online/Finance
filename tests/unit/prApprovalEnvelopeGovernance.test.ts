@@ -177,7 +177,9 @@ describe('converged bounded PR Approval Envelope governance', () => {
 
   it('projects the evolved authorities, roadmap pointer and active Governance roadmap state', () => {
     const roadmapPointer = read('docs/projects/governance/ROADMAP.md');
-    const activeRoadmap = read('docs/projects/governance/CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md');
+    const activeRoadmapPath = 'docs/projects/governance/CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md';
+    const activeRoadmap = read(activeRoadmapPath);
+    const supersededRoadmap = read('docs/projects/governance/archive/CAPITAL_AI_GOVERNANCE_ROADMAP_SUPERSEDED_2026-09-13.md');
     const taskRegister = read('docs/projects/governance/TASK_REGISTER.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
@@ -193,7 +195,6 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(authority('AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19')?.lifecycle).toBe('accepted');
     expect(pluginUse).toBeDefined();
     expect(catalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PLUGIN-USE-001')).toHaveLength(1);
-
     expect(roadmapPointer).toContain('POINTER — NOT AN INDEPENDENT ACTIVE ROADMAP');
     expect(roadmapPointer).toContain('CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md');
     expect(roadmapPointer).toContain('CAPITAL_AI_GOVERNANCE_ROADMAP_SUPERSEDED_2026-09-13.md');
@@ -202,9 +203,17 @@ describe('converged bounded PR Approval Envelope governance', () => {
     expect(activeRoadmap).toContain('### GOV-PR900-07 — Project presentation in PR approval and PR body');
     expect(activeRoadmap).toContain('candidate `/AGENTS.md` presentation extension is non-authorizing until Human Merge');
     expect(activeRoadmap).toContain('candidate semantics cannot self-bootstrap');
-
+    expect(supersededRoadmap).toContain('`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868');
     expect(taskRegister).toMatch(/`GOV-CHAT-076`[^\n]*`DONE_MAIN`[^\n]*PR #868/i);
+    expect(supersededRoadmap).toMatch(/`GOV-CHAT-074 \/[^`]+` — `DONE_MAIN \/ TERMINAL` via PR #874/);
     expect(taskRegister).toMatch(/\| `GOV-CHAT-074` \|[^\n]*\| `DONE_MAIN` \|[^\n]*PR #874/);
+    const pluginPolicySection = supersededRoadmap.split(/^## GOV-CHAT-072\b/m)[1]?.split(/^## /m)[0];
+    expect(pluginPolicySection).toBeDefined();
+    expect(pluginPolicySection).toContain('**State:** `DONE_MAIN / TERMINAL`');
+    expect(pluginPolicySection).toContain('PR #886');
+    expect(pluginPolicySection).toContain('0945b7264d6819a57451748888e1fb8c71981762');
+    expect(pluginPolicySection).toContain('CTRL-SDLC-PLUGIN-USE-001');
+    expect(pluginPolicySection).not.toContain('IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT');
     expect(taskRegister).toMatch(/\| `GOV-CHAT-072` \|[^\n]*\| `DONE_MAIN` \|[^\n]*PR #886[^\n]*0945b7264d6819a57451748888e1fb8c71981762/i);
     expect(taskRegister).not.toContain('IMPLEMENTED_ON_BRANCH / PR_GATE_NEXT');
   });
