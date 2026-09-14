@@ -6,16 +6,14 @@ import { validateOrchestratorConfigPatch } from '../src/lib/orchestratorConfigPo
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
 import { getCleanEnv } from './env';
+import { rateLimitMiddleware } from '../src/platform/Security/safeIo';
 
 export const orchestratorRouter = express.Router();
+orchestratorRouter.use(rateLimitMiddleware({ name: 'orchestrator-admin', maxRequests: 30, windowMs: 60_000 }));
 
 async function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   const authz = await checkAdminAccess(req, 'orchestrator-config', SUPERVISOR_ZONE_ROLES);
   if (!authz.authorized) {
-    // HTTP-Semantik ist Teil des Session-Vertrags: ein gültig authentifizierter Nutzer mit
-    // unzureichender IAM-Rolle ist 403 (Forbidden), nicht 401 (Unauthenticated). authFetch()
-    // darf nur bei tatsächlich ungültigen Credentials eine Session-Reparatur bzw. einen Logout
-    // anstoßen. Rate-Limits bleiben 429.
     const status = authz.reason === 'rate-limited'
       ? 429
       : authz.reason === 'insufficient-role'
@@ -62,8 +60,6 @@ orchestratorRouter.post('/config', requireOrchestratorAdmin, (req, res) => {
     });
   }
 
-  // FO-03: erst nach vollständiger Validierung mutieren. Dadurch kann ein gemischter Payload
-  // niemals teilweise angewandt werden.
   orchestrator.updateConfig(validation.value);
   return res.json({ success: true, stats: orchestrator.getStats() });
 });
@@ -93,19 +89,11 @@ orchestratorRouter.get('/audit-files', requireOrchestratorAdmin, (_req, res) => 
     return res.json({ files });
   } catch (error) {
     return res.status(500).json({
-      error: `Fehler beim Auflisten der Audit-Dateien: ${error instanceof Error ? error.message : String(error)}`,
+      error: 'Fehler beim Auflisten der Audit-Dateien.',
     });
   }
 });
 
-/**
- * ARCH-AUDIT-0004 / AUD4-F-001 (P0)
- *
- * Legacy compatibility tombstone. The previous route persisted client-supplied/defaulted
- * "audit" scores into docs/reports and made simulated records indistinguishable from real
- * evidence. Enterprise audit evidence must originate from an instrumented control/runtime
- * event and must never be manufactured by a UI or default value.
- */
 orchestratorRouter.post('/create-simulated-audit', requireOrchestratorAdmin, (_req, res) => {
   return res.status(410).json({
     status: 'SIMULATED_AUDIT_DISABLED',
