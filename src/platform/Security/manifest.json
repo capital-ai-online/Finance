@@ -1,9 +1,9 @@
 {
   "name": "Security",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "IAM-Kern: Identitaetsverifikation (E-Mail-basiert, konsistent mit Subscriptions), rollenbasierte Admin-/Supervisor-Autorisierung (fail-closed), In-Memory-Rate-Limiting fuer Admin-/Auth-Zonen, TOTP-Erzeugung/-Verifikation (RFC 6238) und AES-256-GCM-Verschluesselung ruhender Secrets.",
+  "description": "Wiederverwendbare Security-Komponente unter ESS-0006 v1.2.0: provider-gestützte Identitätsverifikation, fail-closed IAM-/Rollenautorisierung, native MFA/AAL2- und purpose-bound Step-up-Prüfung, Security-Rate-Limiting, vertrauenswürdige Edge-/Client-IP-Auswertung sowie kryptographische Hilfen für geschützte Secrets und Token-Fingerprints; Legacy-TOTP bleibt nur für weiterhin referenzierte Verträge erhalten.",
   "category": "platform",
   "ess": [
     "ESS-0001",
