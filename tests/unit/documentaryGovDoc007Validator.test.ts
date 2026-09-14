@@ -56,4 +56,18 @@ describe('GOV-DOC-007', () => {
       ]);
     });
   });
+
+  it('rejects unsafe source evidence fail-closed', () => {
+    fixture((repoRoot) => {
+      expect(() => collectGovDoc007Findings({
+        repoRoot,
+        references: [{
+          documentId: 'DOC-SOURCE',
+          documentPath: '../outside.md',
+          line: 1,
+          referencedPath: './target.md',
+        }],
+      })).toThrow('reference evidence requires');
+    });
+  });
 });
