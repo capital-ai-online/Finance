@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/documentary/`  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #900/#901 contents folded into this file  
-**Baseline:** `main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`  
+**Reconciliation:** 2026-09-14 — PR #900/#901 contents folded; WP-DOC-13 re-correlated  
+**Baseline:** `main@c6d36c216801f16788d205664ab4cfdf0c970dca`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -57,7 +57,7 @@ After the 2026-09-14 fold, dated *active* project roadmaps and pointer-only rout
 
 | Horizon | Work package | State |
 |---|---|---|
-| NOW | WP-DOC-13 GOV-DOC-007 unresolved reference | implemented on historical branch; merge/version gates were open at last correlation |
+| NOW | WP-DOC-13 GOV-DOC-007 unresolved reference | fresh current-main reimplementation on `agent/documentary-gov-doc-007-20260914`; validation/PR/Human-merge gates remain open |
 | NEXT | WP-DOC-14 D8 Migration Execution contract & dry-run | queued; no bulk migration |
 | LATER | WP-DOC-15 Documentary quality/SLO model | evidence/contract correlation required |
 | LATER | WP-DOC-16 Plugin extension model | reuse existing frameworks; no connector mutation |
@@ -65,6 +65,8 @@ After the 2026-09-14 fold, dated *active* project roadmaps and pointer-only rout
 | CONTINUOUS | WP-DOC-02 lifecycle/maintenance | ACTIVE |
 | CONTINUOUS | WP-DOC-03 Vocabulary/Knowledge/Wiki | ACTIVE BASELINE |
 | DONE | WP-DOC-00..12 | HUMAN-MERGED (PRs #645–#866 sequence) |
+
+WP-DOC-13 current-main decision: the former `agent/documentary-wp-doc-13-gov-doc-007-20260910` branch is historical evidence, not an active execution surface. Current main did not contain GOV-DOC-007, so the work is reimplemented from current main. This Documentary slice does not change component, document-schema or platform version; the historical version gate is not carried forward as authorization for a version mutation.
 
 Component `src/platform/Documentary/` remains Partial Implementation. Documentary preserves/correlates evidence and does not acquire foreign implementation authority.
 
