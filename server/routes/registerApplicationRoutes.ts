@@ -131,7 +131,7 @@ export function registerApplicationRoutes(
     socialMediaRouter,
   );
   app.use('/api/seo', seoEngineRouter);
-  app.use('/api/api', aiRouter);
+  app.use('/api', aiRouter);
   // Router-Anbindung (2026-08-25): bis dahin definiert, aber nirgends eingebunden (toter Code,
   // siehe docs/security/FULL_ARCHITECTURE_SECURITY_REVIEW_2026-08-25.md, "Nebenbefund"). Die
   // Frontend-Aufrufer (MarketSentiment.tsx, SentimentDashboard.tsx, PortfolioBacktester.tsx)
