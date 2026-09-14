@@ -20,8 +20,10 @@ import { resolveVerifiedIdentity, logIamEvent, requireVerifiedAal2 } from '../sr
 import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
 import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from '../src/platform/Security/secretCrypto';
 import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../src/platform/Security/totp';
+import { rateLimitMiddleware } from '../src/platform/Security/safeIo';
 
 export const stepUpRouter = express.Router();
+stepUpRouter.use(rateLimitMiddleware({ name: 'step-up', maxRequests: 40, windowMs: 60_000 }));
 
 // Owner-Anweisung 2026-08-14: DSGVO-Nachweispflicht (Art. 7 Abs. 1 DSGVO) fuer AGB-/
 // Datenschutz-/Marketing-Zustimmungen bei der Registrierung. Versionsstempel wird server-seitig
@@ -56,7 +58,7 @@ async function logSecurityEvent(fields: {
     // security_events existiert produktiv (20260731000400_security_events_stepup_totp.sql);
     // Request bleibt trotzdem unblockiert, aber der Fehler wird jetzt sichtbar geloggt
     // (Audit ARCH-AUDIT-0002, AUD2-F-020).
-    console.error(`[STEP-UP][ERROR] security_events-Insert fehlgeschlagen: ${err?.message || err}`);
+    console.error('[STEP-UP][ERROR] security_events-Insert fehlgeschlagen: %s', err?.message || err);
   }
 }
 
@@ -73,7 +75,7 @@ function requireAuth(handler: (req: express.Request, res: express.Response, iden
     try {
       await handler(req, res, identity);
     } catch (err: any) {
-      console.error(`[STEP-UP][ERROR] ${req.method} ${req.originalUrl}:`, err?.message || err);
+      console.error('[STEP-UP][ERROR] %s %s:', req.method, req.originalUrl, err?.message || err);
       if (!res.headersSent) {
         res.status(500).json({ error: 'Interner Serverfehler.' });
       }
@@ -188,7 +190,7 @@ stepUpRouter.post('/register/complete', requireAuth(async (req, res, identity) =
   ];
   const { error: consentErr } = await supabase.from('user_consents').insert(consentRows);
   if (consentErr) {
-    console.error(`[STEP-UP][ERROR] user_consents-Insert fehlgeschlagen: ${consentErr.message}`);
+    console.error('[STEP-UP][ERROR] user_consents-Insert fehlgeschlagen: %s', consentErr.message);
     return res.status(500).json({ error: 'Zustimmungen konnten nicht protokolliert werden.' });
   }
 
