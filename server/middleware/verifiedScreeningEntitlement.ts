@@ -16,17 +16,18 @@ export type ScreeningQuotaEnforcer = (req: Request) => Promise<QuotaResult>;
 
 /**
  * Productive canonical verified-score / context / batch HTTP paths.
+ * Case-insensitive matching follows the productive Express Router defaults.
  * Legacy `/api/crypto-scoring/:symbol` stays on its existing inline
  * `enforceScreeningQuota()` call so quota is not consumed twice.
  */
 export const VERIFIED_SCREENING_PATH_PATTERNS: readonly RegExp[] = Object.freeze([
-  /^\/api\/registry\/assets\/verified-scores\/?$/,
-  /^\/api\/registry\/assets\/[^/]+\/verified-context\/?$/,
-  /^\/api\/registry\/assets\/[^/]+\/verified-score\/?$/,
-  /^\/api\/raw-materials\/verified-score\/[^/]+\/?$/,
-  /^\/api\/crypto\/list\/?$/,
-  /^\/api\/crypto\/score\/?$/,
-  /^\/api\/crypto\/top10\/?$/,
+  /^\/api\/registry\/assets\/verified-scores\/?$/i,
+  /^\/api\/registry\/assets\/[^/]+\/verified-context\/?$/i,
+  /^\/api\/registry\/assets\/[^/]+\/verified-score\/?$/i,
+  /^\/api\/raw-materials\/verified-score\/[^/]+\/?$/i,
+  /^\/api\/crypto\/list\/?$/i,
+  /^\/api\/crypto\/score\/?$/i,
+  /^\/api\/crypto\/top10\/?$/i,
 ]);
 
 export function requestPath(req: Request): string {
