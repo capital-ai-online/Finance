@@ -175,10 +175,16 @@ For every chat-governed PR creation request, the same chat MUST render this boun
 PR-CREATION APPROVAL
 
 Current Project: "<PROJECT-ID>"
+Project Presentation: "<SYMBOL> <DISPLAY_NAME> · <#RRGGBB>"
 Current Project Folder: "<docs/projects/.../>"
 Primary PVC: "<PVC-* or justified N/A>"
 Project Owner / Folder: "<PRIMARY-OWNER>" — "<PROJECT_FOLDER>"
-Quellordner: "<SOURCE_FOLDER>"
+
+Source Project: "<SOURCE_SYMBOL> <SOURCE_DISPLAY_NAME> · <SOURCE_PROJECT_ID> · <SOURCE_COLOR>"
+Source Folder: "<SOURCE_PROJECT_FOLDER>"
+Target Project: "<TARGET_SYMBOL> <TARGET_DISPLAY_NAME> · <TARGET_PROJECT_ID> · <TARGET_COLOR>"
+Target Folder: "<TARGET_PROJECT_FOLDER>"
+
 Roadmap: "<ROADMAP_PATH>"
 Roadmap-Ziel: "<CURRENT_ROADMAP_OBJECTIVE>"
 Roadmap / Owner Scope: "<BOUNDED_WORK_ITEM_OR_EXPLICIT_OWNER_SCOPE>"
@@ -221,6 +227,8 @@ Nächste 2 Schritte
 Owner-Freigabe
 PR Erstellung : Freigegeben
 ```
+
+`Project Presentation`, Current Project, Source Project and Target Project MUST each be resolved fail-closed from the same current `docs/projects/README.md` routing row, including canonical project folder, display name, symbol and color. Source and Target may be identical to Current for a non-cross-project change. Presentation metadata is non-authorizing: textual Project ID/folder identity remains authoritative and color is supplementary and MUST NOT be the sole semantic cue. Missing, duplicate or malformed project presentation or folder metadata MUST fail closed before rendering.
 
 The `Owner-Freigabe` field inside this block is the **single PR-create approval response surface**. No additional `Freigabe-Antwort`, duplicate approval line, separate exact-response block or second copy of the PR-create response is emitted for the same gate.
 
