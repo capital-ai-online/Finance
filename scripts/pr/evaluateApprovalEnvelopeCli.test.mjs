@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {
   APPROVAL_STILL_VALID,
   BLOCKED,
@@ -8,8 +11,10 @@ import {
   createApprovalEnvelope,
 } from './approvalEnvelope.mjs';
 import {
+  CREATE_CORRELATION_SCHEMA,
   OWNER_PR_CREATE_APPROVAL_PHRASE,
   evaluateCreateApprovalGate,
+  loadCreateCorrelationEvidence,
   parseOwnerPrCreateApproval,
 } from './evaluateApprovalEnvelopeCli.mjs';
 
@@ -109,4 +114,30 @@ test('unresolved open-writer correlation blocks create', () => {
     currentOverrides: current({ openWriterCorrelationPass: false }),
   });
   assert.equal(result.state, BLOCKED);
+});
+
+test('create-correlation evidence must exist and use the canonical schema', () => {
+  const missingPath = path.join(os.tmpdir(), `missing-correlation-${Date.now()}.json`);
+  assert.throws(() => loadCreateCorrelationEvidence(missingPath), /required/);
+
+  const evidencePath = path.join(os.tmpdir(), `correlation-${Date.now()}.json`);
+  fs.writeFileSync(evidencePath, JSON.stringify({ schemaVersion: 'wrong' }), 'utf8');
+  assert.throws(() => loadCreateCorrelationEvidence(evidencePath), /schema/);
+
+  fs.writeFileSync(
+    evidencePath,
+    JSON.stringify({
+      schemaVersion: CREATE_CORRELATION_SCHEMA,
+      correlationResult: 'PASS',
+      authorityResolved: true,
+      openWriterCorrelationPass: true,
+      semanticCorrelationPass: true,
+      namespaceCorrelationPass: true,
+      securityCorrelationPass: true,
+      validationStatus: 'PASS',
+    }),
+    'utf8',
+  );
+  const evidence = loadCreateCorrelationEvidence(evidencePath);
+  assert.equal(evidence.correlationResult, 'PASS');
 });
