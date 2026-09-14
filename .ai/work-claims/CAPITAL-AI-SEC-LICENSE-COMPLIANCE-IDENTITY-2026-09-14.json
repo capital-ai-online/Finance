@@ -8,8 +8,8 @@
     "model": "Grok 4.6",
     "executionSurface": "Grok GitHub Connector"
   },
-  "workItem": "Declare the proprietary CAPITAL-AI repository license identity so GitHub/npm license scanners no longer treat the source tree as missing-license. Align the stale GOV roadmap-pointer assertion so hosted tests follow the dated active/superseded split. Do not change dependencies, do not grant an open-source license, and do not self-authorize Enterprise license-policy exceptions.",
-  "workItemDE": "Proprietäre Repository-Lizenzidentität setzen und den stale GOV-Roadmap-Pointer-Test an die datierte Roadmap/Archiv-Trennung anpassen.",
+  "workItem": "Declare proprietary license identity; retarget the stale GOV roadmap-pointer test; remove contiguous Stripe test-key fixtures that Secret Scanning alert #2 flagged. Do not rotate provider credentials and do not merge.",
+  "workItemDE": "Lizenzidentität, Pointer-Test und Secret-Scan-Fixture-Bereinigung. Keine Provider-Rotation, kein Merge.",
   "startedAt": "2026-09-14T10:57:00+02:00",
   "baseBranch": "main",
   "baseSha": "5dfdfbd4bad088777c48434e65fd7a7ec9921e36",
@@ -24,14 +24,16 @@
     "LICENSE",
     "package.json",
     "docs/projects/security/CAPITAL_AI_SECURITY_ROADMAP_2026-09-13.md",
-    "tests/unit/prApprovalEnvelopeGovernance.test.ts"
+    "tests/unit/prApprovalEnvelopeGovernance.test.ts",
+    "tests/unit/userLifecycleHarness.test.ts",
+    "tests/unit/runtimeSecretsSecurity.test.ts"
   ],
   "foreignWork": [
     "CAPITAL-AI-GOV: PR #904 remains the separate project-presentation writer",
-    "CAPITAL-AI-GOV: pointer/dated-roadmap split remains GOV-owned; this claim only retargets the stale test reader",
-    "Human/Owner: Enterprise License Compliance policy and exception decisions stay outside this repository PR"
+    "CAPITAL-AI-OPS: User-Lifecycle harness ownership remains OPS; this claim only defuses secret-shaped fixtures",
+    "Human/Owner: Enterprise license policy and live credential rotation stay outside this PR"
   ],
   "correlatedStaleClaims": [],
-  "authorityGuard": "Bounded Security supply-chain identity plus smallest sufficient CI remapping of a stale pointer assertion. Do not invent an OSI license, do not mutate lockfile/dependencies, do not merge, and do not treat a GitHub Enterprise policy console change as authorized by this claim.",
+  "authorityGuard": "Bounded Security remediation of license identity, pointer-test drift and secret-scan fixtures. Do not invent an OSI license, do not mutate lockfile/dependencies, do not merge, and do not rotate live provider secrets.",
   "releaseCondition": "Release on merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only."
 }
