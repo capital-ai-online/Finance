@@ -12,7 +12,7 @@ function observation(): RepositoryQualityObservation {
   return {
     schemaVersion: 'repository-quality-observation/1.1.0',
     trustClass: 'read-only-governance-observation',
-    repository: 'SvenKulessa/Finance',
+    repository: 'capital-ai-online/Finance',
     checkedAt: CHECKED_AT,
     sourceCommit: SOURCE_COMMIT,
     overallStatus: 'PASS',

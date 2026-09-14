@@ -2,14 +2,20 @@ import { createPublicKey, verify as verifySignature, type JsonWebKey } from 'nod
 
 export const SYSTEMADMIN_GITHUB_OIDC_ISSUER = 'https://token.actions.githubusercontent.com';
 export const SYSTEMADMIN_GITHUB_OIDC_AUDIENCE = 'capital-ai-systemadmin-execution';
-export const SYSTEMADMIN_GITHUB_REPOSITORY = 'SvenKulessa/Finance';
+export const SYSTEMADMIN_GITHUB_REPOSITORY = 'capital-ai-online/Finance';
 export const SYSTEMADMIN_GITHUB_REPOSITORY_ID = '1284319285';
-export const SYSTEMADMIN_GITHUB_OWNER = 'SvenKulessa';
-export const SYSTEMADMIN_GITHUB_OWNER_ID = '84307769';
+export const SYSTEMADMIN_GITHUB_REPOSITORY_OWNER = 'capital-ai-online';
+export const SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID = '313205484';
+export const SYSTEMADMIN_GITHUB_ACTOR = 'SvenKulessa';
+export const SYSTEMADMIN_GITHUB_ACTOR_ID = '84307769';
+/** @deprecated Use SYSTEMADMIN_GITHUB_ACTOR. Kept as an explicit actor alias, not as repository owner. */
+export const SYSTEMADMIN_GITHUB_OWNER = SYSTEMADMIN_GITHUB_ACTOR;
+/** @deprecated Use SYSTEMADMIN_GITHUB_ACTOR_ID. Kept as an explicit actor alias, not as repository owner. */
+export const SYSTEMADMIN_GITHUB_OWNER_ID = SYSTEMADMIN_GITHUB_ACTOR_ID;
 export const SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF =
-  'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main';
+  'capital-ai-online/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main';
 export const SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF =
-  'SvenKulessa/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main';
+  'capital-ai-online/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main';
 /**
  * Generalized, catalog-driven work-package host (ADR-0074). Unlike SA3B/SA4, this single
  * workflow can be bound to many different REM mandates — but only ones whose mandateId carries
@@ -18,7 +24,7 @@ export const SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF =
  * scripts/systemadmin/workPackages/ — this workflow never executes untrusted issue content.
  */
 export const SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF =
-  'SvenKulessa/Finance/.github/workflows/systemadmin-work-package-runner.yml@refs/heads/main';
+  'capital-ai-online/Finance/.github/workflows/systemadmin-work-package-runner.yml@refs/heads/main';
 /** @deprecated Use the explicit stage-specific workflow ref. */
 export const SYSTEMADMIN_GITHUB_WORKFLOW_REF = SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF;
 export const SYSTEMADMIN_GITHUB_ALLOWED_WORKFLOW_REFS = Object.freeze([
@@ -150,7 +156,7 @@ function requireString(claims: RawClaims, key: keyof RawClaims): string {
 function subjectMatchesRepository(subject: string): boolean {
   return subject.startsWith(`repo:${SYSTEMADMIN_GITHUB_REPOSITORY}:`)
     || subject.startsWith(
-      `repo:${SYSTEMADMIN_GITHUB_OWNER}@${SYSTEMADMIN_GITHUB_OWNER_ID}/Finance@${SYSTEMADMIN_GITHUB_REPOSITORY_ID}:`,
+      `repo:${SYSTEMADMIN_GITHUB_REPOSITORY_OWNER}@${SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID}/Finance@${SYSTEMADMIN_GITHUB_REPOSITORY_ID}:`,
     );
 }
 
@@ -183,11 +189,11 @@ function validateClaims(claims: RawClaims, nowSeconds: number): VerifiedGitHubAc
   const workflowSha = requireString(claims, 'workflow_sha');
   const runId = requireString(claims, 'run_id');
 
-  if (actor !== SYSTEMADMIN_GITHUB_OWNER) fail('OIDC actor ist nicht der kanonische Owner.');
-  if (claims.actor_id && claims.actor_id !== SYSTEMADMIN_GITHUB_OWNER_ID) fail('OIDC actor_id ist nicht der kanonische Owner.');
-  if (repository !== SYSTEMADMIN_GITHUB_REPOSITORY) fail('OIDC repository ist nicht Finance.');
+  if (actor !== SYSTEMADMIN_GITHUB_ACTOR) fail('OIDC actor ist nicht der kanonische Human Actor.');
+  if (claims.actor_id && claims.actor_id !== SYSTEMADMIN_GITHUB_ACTOR_ID) fail('OIDC actor_id ist nicht der kanonische Human Actor.');
+  if (repository !== SYSTEMADMIN_GITHUB_REPOSITORY) fail('OIDC repository ist nicht das kanonische Finance-Repository.');
   if (repositoryId !== SYSTEMADMIN_GITHUB_REPOSITORY_ID) fail('OIDC repository_id ist nicht Finance.');
-  if (repositoryOwnerId !== SYSTEMADMIN_GITHUB_OWNER_ID) fail('OIDC repository_owner_id ist nicht der kanonische Owner.');
+  if (repositoryOwnerId !== SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID) fail('OIDC repository_owner_id ist nicht der kanonische Repository Owner.');
   if (eventName !== 'issues') fail('Nur ein issues-Execution-Host darf den Broker aufrufen.');
   if (ref !== 'refs/heads/main') fail('Execution Host muss aus main laufen.');
   if (!ALLOWED_WORKFLOW_REF_SET.has(workflowRef)) {

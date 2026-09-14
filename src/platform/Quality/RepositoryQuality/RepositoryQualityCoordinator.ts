@@ -159,7 +159,7 @@ export class RepositoryQualityCoordinator {
     return Object.freeze({
       schemaVersion: REPOSITORY_QUALITY_OBSERVATION_SCHEMA,
       trustClass: REPOSITORY_QUALITY_TRUST_CLASS,
-      repository: 'SvenKulessa/Finance' as const,
+      repository: 'capital-ai-online/Finance' as const,
       checkedAt,
       sourceCommit,
       overallStatus,
