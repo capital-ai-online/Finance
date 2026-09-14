@@ -38,6 +38,7 @@ import { createMtaStsRouter } from './mtaStsRoutes';
 import { createBusinessReadinessRouter } from './businessReadinessRoutes';
 import { registerMarketDataAdapters } from './registerMarketDataAdapters';
 import { assetRegistry } from '../../src/lib/assetRegistry';
+import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -101,7 +102,11 @@ export function registerApplicationRoutes(
   // Checkout or Billing Portal session can be created.
   app.use('/api/stripe', stripeReturnUrlGuard, stripeRouter);
   app.use('/api/orchestrator', orchestratorRouter);
-  app.use('/api/admin/hygiene', hygieneRouter);
+  app.use(
+    '/api/admin/hygiene',
+    rateLimitMiddleware({ name: 'document-hygiene', maxRequests: 60, windowMs: 60_000 }),
+    hygieneRouter,
+  );
   app.use('/api/admin', systemEventsRouter);
   app.use('/api/admin', versionManagerRouter);
   app.use('/api/auth', stepUpRouter);
@@ -120,9 +125,13 @@ export function registerApplicationRoutes(
   app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);
   app.use('/api/registry', verifiedAssetDisplayRouter);
   app.use('/api/registry', registryRouter);
-  app.use('/api/social-media', socialMediaRouter);
+  app.use(
+    '/api/social-media',
+    rateLimitMiddleware({ name: 'social-media', maxRequests: 60, windowMs: 60_000 }),
+    socialMediaRouter,
+  );
   app.use('/api/seo', seoEngineRouter);
-  app.use('/api', aiRouter);
+  app.use('/api/api', aiRouter);
   // Router-Anbindung (2026-08-25): bis dahin definiert, aber nirgends eingebunden (toter Code,
   // siehe docs/security/FULL_ARCHITECTURE_SECURITY_REVIEW_2026-08-25.md, "Nebenbefund"). Die
   // Frontend-Aufrufer (MarketSentiment.tsx, SentimentDashboard.tsx, PortfolioBacktester.tsx)
