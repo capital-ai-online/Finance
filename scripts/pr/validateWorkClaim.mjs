@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import {
+  appendGithubOutput,
   findClaimConflicts,
   git,
   githubJson,
@@ -13,6 +14,7 @@ import {
   pathMatchesClaim,
   readJsonFile,
   validateClaimShape,
+  writeJsonFile,
 } from './lib.mjs';
 
 const repository = process.env.GITHUB_REPOSITORY;
@@ -22,6 +24,7 @@ const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
 const baselinePath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
 const failClosed = process.env.PR_COORDINATION_FAIL_CLOSED === 'true';
+const correlationOutput = process.env.PR_CORRELATION_OUTPUT || 'artifacts/pr/create-correlation.json';
 
 if (!repository) throw new Error('GITHUB_REPOSITORY is required for the advisory overlap report.');
 if (!token) throw new Error('GITHUB_TOKEN/GH_TOKEN is required for read-only PR inspection.');
@@ -84,6 +87,71 @@ async function fetchClaimForOtherPr(pr) {
   return { claim, claimPath, files, error: null };
 }
 
+function approvedAgentBranch(branch) {
+  return /^(agent|claude|grok|ai)\//.test(String(branch || '').trim());
+}
+
+function writeCreateCorrelationEvidence({ blocking, uncoveredFiles }) {
+  const branchName = String(process.env.PR_HEAD_BRANCH || process.env.HEAD_BRANCH || '').trim();
+  const actor = String(process.env.GITHUB_ACTOR || '').trim();
+  const triggeringActor = String(process.env.GITHUB_TRIGGERING_ACTOR || actor).trim();
+  const baseline = fs.existsSync(baselinePath) ? readJsonFile(baselinePath) : null;
+  const namespaceCorrelationPass = approvedAgentBranch(branchName);
+  const authorityResolved = actor === 'SvenKulessa' && triggeringActor === 'SvenKulessa';
+  const openWriterCorrelationPass = blocking.length === 0;
+  const semanticCorrelationPass = !claim || uncoveredFiles.length === 0;
+  const validationStatus =
+    baseline &&
+    baseline.bootstrap !== true &&
+    baseline.checks?.branchContainsCurrentMain === true &&
+    baseline.checks?.productionHealthy === true &&
+    baseline.checks?.immutableProductionIdentity === true
+      ? 'PASS'
+      : 'UNRESOLVED';
+  const securityCorrelationPass = failClosed === true && openWriterCorrelationPass && authorityResolved;
+  const correlationResult =
+    namespaceCorrelationPass &&
+    authorityResolved &&
+    openWriterCorrelationPass &&
+    semanticCorrelationPass &&
+    securityCorrelationPass &&
+    validationStatus === 'PASS'
+      ? 'PASS'
+      : 'FAIL';
+
+  const evidence = {
+    schemaVersion: 'capital-ai-pr-create-correlation/1.0.0',
+    generatedAt: new Date().toISOString(),
+    branchName,
+    actor,
+    triggeringActor,
+    failClosed,
+    correlationResult,
+    authorityResolved,
+    openWriterCorrelationPass,
+    semanticCorrelationPass,
+    namespaceCorrelationPass,
+    securityCorrelationPass,
+    validationStatus,
+    blockingCount: blocking.length,
+    uncoveredFileCount: uncoveredFiles.length,
+  };
+
+  writeJsonFile(correlationOutput, evidence);
+  appendGithubOutput({
+    correlation_result: evidence.correlationResult,
+    authority_resolved: String(evidence.authorityResolved),
+    open_writer_pass: String(evidence.openWriterCorrelationPass),
+    semantic_pass: String(evidence.semanticCorrelationPass),
+    namespace_pass: String(evidence.namespaceCorrelationPass),
+    security_pass: String(evidence.securityCorrelationPass),
+    validation_status: evidence.validationStatus,
+    correlation_output: correlationOutput,
+  });
+  console.log(`[PR-COORDINATION] create-correlation ${evidence.correlationResult} written to ${correlationOutput}`);
+  return evidence;
+}
+
 const changedFiles = listChangedFiles(baseRef, headRef);
 const addedClaimFiles = listAddedClaimFiles(baseRef, headRef);
 let claim = null;
@@ -107,13 +175,14 @@ if (addedClaimFiles.length > 1) {
   warn('No work claim present. This is allowed under ADR-0039; overlap analysis will use changed files only.');
 }
 
+let uncoveredFiles = [];
 if (claim) {
   const mainSha = git(['rev-parse', baseRef]);
   if (String(claim.baseSha).toLowerCase() !== mainSha.toLowerCase()) {
     warn(`Work claim baseSha ${claim.baseSha} differs from current main ${mainSha}. Refresh evidence before merge/release if relevant.`);
   }
 
-  const uncoveredFiles = changedFiles.filter((file) => {
+  uncoveredFiles = changedFiles.filter((file) => {
     if (file === claimPath) return false;
     return !pathMatchesClaim(file, claim.claimedPaths);
   });
@@ -240,6 +309,11 @@ if (warnings.length > 0) {
   console.log('[PR-COORDINATION] Conflicts are advisory. Report them to the user before PR creation or merge; do not treat them as sandbox/build failures.');
 } else {
   console.log('[PR-COORDINATION] No changed-file, claim-lifecycle, ADR-reservation or advisory-claim overlap detected against current open PRs.');
+}
+
+const evidence = writeCreateCorrelationEvidence({ blocking, uncoveredFiles });
+if (failClosed && evidence.correlationResult !== 'PASS') {
+  deny(`Create-correlation evidence is ${evidence.correlationResult}; Draft-PR creation remains fail-closed.`);
 }
 
 console.log(`[PR-COORDINATION] ${changedFiles.length} changed file(s) inspected. No PR creation deadline applies.`);
