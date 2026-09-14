@@ -13,6 +13,9 @@ test('blocks governance and protected security-sensitive paths', () => {
   assert.ok(protectedAutofixReason('supabase/migrations/001.sql'));
   assert.ok(protectedAutofixReason('server/stripe.ts'));
   assert.ok(protectedAutofixReason('src/platform/Security/authMiddleware.ts'));
+  assert.ok(protectedAutofixReason('server/providers/openai.ts'));
+  assert.ok(protectedAutofixReason('prisma/schema.prisma'));
+  assert.ok(protectedAutofixReason('infra/production.tf'));
 });
 
 test('allows ordinary bounded application source paths', () => {
@@ -23,7 +26,7 @@ test('allows ordinary bounded application source paths', () => {
 
 test('derives supported CodeQL languages deterministically', () => {
   assert.deepEqual(
-    codeqlLanguagesForFiles(['server/index.ts', 'scripts/check.py', 'README.md']),
+    codeqlLanguagesForFiles(['server/index.ts', 'scripts/worker.mts', 'scripts/check.py', 'README.md']),
     ['javascript-typescript', 'python'],
   );
   assert.deepEqual(codeqlLanguagesForFiles(['README.md']), []);
