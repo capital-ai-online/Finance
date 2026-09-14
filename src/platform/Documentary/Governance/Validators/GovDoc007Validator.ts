@@ -56,6 +56,19 @@ function isExternalOrFragment(value: string): boolean {
     || /^[A-Za-z][A-Za-z0-9+.-]*:/.test(value);
 }
 
+function sourceEvidenceMatches(repoRoot: string, documentPath: string, line: number, referencedPath: string): boolean {
+  const root = path.resolve(repoRoot);
+  const absolute = path.resolve(root, documentPath);
+  if (absolute !== root && !absolute.startsWith(`${root}${path.sep}`)) return false;
+  if (!fs.existsSync(absolute)) return false;
+
+  const stat = fs.lstatSync(absolute);
+  if (!stat.isFile() || stat.isSymbolicLink()) return false;
+
+  const sourceLine = fs.readFileSync(absolute, 'utf8').split(/\r?\n/)[line - 1];
+  return typeof sourceLine === 'string' && sourceLine.includes(referencedPath);
+}
+
 function resolveReference(repoRoot: string, documentPath: string, referencedPath: string): string | null {
   const target = referencedPath.split(/[?#]/, 1)[0].trim();
   if (!target || isExternalOrFragment(referencedPath)) return null;
@@ -89,6 +102,9 @@ export function collectGovDoc007Findings(options: {
     const documentPath = normalizeRepoPath(reference.documentPath);
     if (!documentId || !isSafeRepoPath(documentPath) || !Number.isInteger(reference.line) || reference.line < 1) {
       throw new Error('[GovDoc007Validator] reference evidence requires documentId, a safe repository-relative documentPath and a positive integer line.');
+    }
+    if (!sourceEvidenceMatches(repoRoot, documentPath, reference.line, reference.referencedPath)) {
+      throw new Error('[GovDoc007Validator] reference evidence must match an existing regular source document line.');
     }
 
     const resolvedPath = resolveReference(repoRoot, documentPath, reference.referencedPath);
