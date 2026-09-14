@@ -11,7 +11,7 @@ const expectedMounts = [
   "app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));",
   "app.use('/api/stripe', stripeReturnUrlGuard, stripeRouter);",
   "app.use('/api/orchestrator', orchestratorRouter);",
-  "app.use('/api/admin/hygiene', hygieneRouter);",
+  "app.use(\n    '/api/admin/hygiene',\n    rateLimitMiddleware({ name: 'document-hygiene', maxRequests: 60, windowMs: 60_000 }),\n    hygieneRouter,\n  );",
   "app.use('/api/admin', systemEventsRouter);",
   "app.use('/api/admin', versionManagerRouter);",
   "app.use('/api/auth', stepUpRouter);",
@@ -26,7 +26,7 @@ const expectedMounts = [
   "app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);",
   "app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);",
   "app.use('/api/registry', registryRouter);",
-  "app.use('/api/social-media', socialMediaRouter);",
+  "app.use(\n    '/api/social-media',\n    rateLimitMiddleware({ name: 'social-media', maxRequests: 60, windowMs: 60_000 }),\n    socialMediaRouter,\n  );",
   "app.use('/api', aiRouter);",
 ] as const;
 
@@ -38,6 +38,7 @@ describe('ADR-0083 application route composition contract', () => {
     const application = fs.readFileSync(applicationPath, 'utf8');
 
     expect(composer).toContain("import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';");
+    expect(composer).toContain("import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';");
 
     for (const mount of expectedMounts) {
       expect(composer).toContain(mount);

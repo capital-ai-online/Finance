@@ -91,7 +91,7 @@ export function createHistoryRouter(): express.Router {
       const history = await assetRegistry.getHistory(rawSymbol, limit);
       return res.json({ data: history.points, source: history.source });
     } catch (err: any) {
-      console.error(`[Backtest Error] Failed to get history for ${rawSymbol} from registry:`, err.message || err);
+      console.error('[Backtest Error] Failed to get history from registry:', rawSymbol, err.message || err);
       return res.status(500).json({ error: 'Fehler beim Laden der historischen Daten aus der Asset-Registry.' });
     }
   });
