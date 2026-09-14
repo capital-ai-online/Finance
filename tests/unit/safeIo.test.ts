@@ -46,7 +46,8 @@ describe('safeIo guards', () => {
 
   it('converts HTML to text without leaving script tags', () => {
     expect(htmlToPlainText('<p>Hallo</p><script>alert(1)</script>')).toBe('Hallo alert(1)');
-    expect(htmlToPlainText('<script\n>payload')).toBe('');
+    expect(htmlToPlainText('<script\n>payload')).toBe('payload');
+    expect(htmlToPlainText('<script')).toBe('');
   });
 
   it('encodes HTML meta characters', () => {
