@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-NIST-PURGE-ROADMAP-FOLD-2026-09-14",
+  "status": "active",
+  "exclusive": false,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Purge remaining external-framework bindings from current authority, runtime evidence and historical documents; absorb dated 2026-09-13 project-roadmap archives into canonical project ROADMAP.md files; delete those dated archives.",
+  "startedAt": "2026-09-14T11:36:00Z",
+  "baseBranch": "main",
+  "baseSha": "9da67c406abc89d7595c1ee14a75c4038232948b",
+  "branch": "agent/governance-nist-purge-roadmap-fold-20260914",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-NIST-PURGE-ROADMAP-FOLD-2026-09-14.json",
+    "AGENTS.md",
+    "docs/governance/control-plane/STANDARDS_CROSSWALK.md",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/projects/security/ROADMAP.md",
+    "docs/projects/fintech/ROADMAP.md",
+    "src/platform/Compliance/aiGovernanceEvidence.ts"
+  ],
+  "releaseCondition": "Release after the purge/fold PR is merged, closed, superseded or abandoned."
+}
