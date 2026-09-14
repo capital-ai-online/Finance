@@ -4,13 +4,13 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #900/#901 contents folded into this file; GOV-PR900-07 correlated after Human-Merge #904  
-**Baseline:** `main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`  
+**Reconciliation:** 2026-09-14 — PR #900/#901 folded; dated 2026-09-13 archive absorbed and deleted  
+**Baseline:** `main@9da67c406abc89d7595c1ee14a75c4038232948b`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
 
-This file is the single active project execution projection. Dated active sidecar roadmaps and pointer-only `ROADMAP.md` files are removed after this fold. Archive/superseded copies remain as historical ledger and are not an execution source. Non-terminal pre-2026-09-13 work packages remain in force with their existing IDs, constraints, dependencies and exit gates unless a later section explicitly replaces them. Terminal `DONE/CLOSED/VERIFIED/RETIRED/SUPERSEDED` history is retained as ledger, not reopened. PR #900 remains a derived documentary source only.
+This file is the single active project execution projection. Dated 2026-09-13 sidecar/archive roadmaps are absorbed here and deleted. Non-terminal pre-2026-09-13 work packages remain in force with their existing IDs, constraints, dependencies and exit gates unless a later section explicitly replaces them. Terminal `DONE/CLOSED/VERIFIED/RETIRED/SUPERSEDED` history is retained as ledger, not reopened. PR #900 remains a derived documentary source only.
 
 ## PR #900 / #901 work packages
 
@@ -46,6 +46,14 @@ Materialize one canonical presentation projection per project routing row: textu
 
 **Exit:** PR approval surface and PR body both resolve Current, Source and Target as `Project ID → canonical project folder → display name → symbol → color` from exactly one canonical `docs/projects/README.md` routing row. Missing, duplicate or malformed metadata fails closed; no second registry exists.
 
+### GOV-PR908-01 — External-framework purge
+Remove withdrawn external-framework bindings from Trust Root, Control Plane, Compliance inventories, runtime evidence labels, ADRs, skills, evidence and roadmaps. ISO/IEC 42001 remains the only adopted external Governance benchmark. No deleted binding may re-enter as a requirement, gate, finding or backlog.
+
+**State:** `IN IMPLEMENTATION` on this branch.
+
+### GOV-SOTA02-F05 — Stale provider-instruction references
+Replace remaining provider-specific trust-root wording in ESS-0018/ADR-0051 projections with current `/AGENTS.md` authority. Routed from SEC-SOTA-02 historical inventory; GOV-owned.
+
 ## Carried-forward baseline (pre-2026-09-13)
 
 Terminal / maintained: GOV-01..GOV-06, GOV-09..GOV-11, GOV-CHAT-070..076, COMP-GAP-008 Governance treatment, copyable chat handoff, owner-approval presentation.
@@ -57,10 +65,22 @@ Open:
 | GOV-07 User-Lifecycle closeout | `PARTIAL / OWNER RETURNS PENDING` — DATA/OPS/FE/SEC/COMP returns incomplete; GOV consumes read-only |
 | GOV-08 Admin Panel process graph | `REFERRED / FOREIGN OPEN` — CLIENT/FE/OPS |
 
-M10 remains `RETIRED / OFF`. NIST remains non-authorizing. Human/CODEOWNER-only merge remains mandatory.
+M10 remains `RETIRED / OFF`. Human/CODEOWNER-only merge remains mandatory.
+
+## Terminal chat ledger (absorbed from 2026-09-13 archive)
+
+`GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868
+
+`GOV-CHAT-074 / Approval Envelope v3.4 rollout` — `DONE_MAIN / TERMINAL` via PR #874
+
+## GOV-CHAT-072
+
+**State:** `DONE_MAIN / TERMINAL`
+
+Human-merged PR #886, merge SHA `0945b7264d6819a57451748888e1fb8c71981762`, materialized exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing Development-Chain authority. No unconditional plugin invocation is authorized.
 
 ## Dependencies
 OPS version/release, QM gates, SEC/COMP assurance, CLIENT runtime only where productive materialization is needed.
 
 ## Project exit gate
-One active GOV roadmap; no duplicate authority namespace/writer; current projections agree with effective authority or expose a deterministic blocker.
+One active GOV roadmap; no duplicate authority namespace/writer; current projections agree with effective authority or expose a deterministic blocker; dated 2026-09-13 GOV archive is deleted.

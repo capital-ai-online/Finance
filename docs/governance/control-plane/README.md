@@ -1,8 +1,8 @@
 # CAPITAL-AI Governance Control Plane
 
 **Authority ID:** `AUTH-GOV-CONTROL-PLANE`  
-**Version:** `1.3.0`  
-**Date:** `2026-09-05`
+**Version:** `1.3.1`  
+**Date:** `2026-09-14`
 
 This directory documents the repository-wide Governance Control Plane. It does not replace domain ADR/ESS content; it defines how authorities, controls, versions, evidence, document roles, projections and agent instructions are resolved consistently.
 
@@ -100,4 +100,4 @@ Current-state discovery, architecture scans, roadmaps and validators must not ex
 
 ## Standards posture
 
-`STANDARDS_CROSSWALK.md` maps CAPITAL-AI controls to ISO/IEC 42001:2023 as the currently adopted external governance benchmark. NIST publications, frameworks and profiles are withdrawn from the current Governance standards baseline and do not create repository requirements, gates or mandatory remediation. Historical or foreign-project NIST references remain non-authorizing unless a future explicit Human/Owner decision adopts a specific source/version/scope. Standards alignment does not constitute certification or a legal-compliance claim.
+`STANDARDS_CROSSWALK.md` maps CAPITAL-AI controls to ISO/IEC 42001:2023 as the currently adopted external governance benchmark. Standards alignment does not constitute certification or a legal-compliance claim.
