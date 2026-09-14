@@ -2,9 +2,10 @@
 
 **Work item:** `SEC-SOTA-04`  
 **Project:** `CAPITAL-AI-SEC`  
-**Status:** `IMPLEMENTED_ON_BRANCH / MATRIX_INVENTORIED / VERIFICATION_OPEN`  
-**Inspection baseline:** `main@a7ed0e9139ce9e2899afd863baf2e50f8eed75fb`  
-**Branch:** `agent/security-asvs-verification-matrix-20260911`  
+**Status:** `MAIN_RECORRELATED / MATRIX_INVENTORIED / VERIFICATION_OPEN`  
+**Original inspection baseline:** `main@a7ed0e9139ce9e2899afd863baf2e50f8eed75fb`  
+**Re-correlation baseline:** `main@963628af2804d47b1e9a55072a3d6dc5ef98f239` — 2026-09-14  
+**Re-correlation branch:** `agent/security-consistency-asvs-disposition-20260914`  
 **Primary Productive PVC ownership:** `[]`  
 **Primary Owner:** `CAPITAL-AI-SEC` for Security assessment and verification  
 **Component contract:** `ESS-0006 v1.2.0`  
@@ -13,7 +14,7 @@
 
 ## 1. Purpose and authority boundary
 
-This document implements the first repository-correlated `ASVSVerificationMatrix` for `SEC-SOTA-04`. It maps the current CAPITAL-AI application/API surface to the stable OWASP ASVS 5.0.0 verification objectives and to current implementation, tests, evidence and productive ownership.
+This document implements the repository-correlated `ASVSVerificationMatrix` for `SEC-SOTA-04`. It maps the current CAPITAL-AI application/API surface to the stable OWASP ASVS 5.0.0 verification objectives and to current implementation, tests, evidence and productive ownership.
 
 OWASP ASVS is an external verification standard and does not authorize repository behavior. `/AGENTS.md`, the canonical Project Value Chain, accepted ADR/ESS contracts and current repository controls remain authoritative. This matrix creates no second Security control plane, compliance registry, IAM authority, runtime or productive PVC owner.
 
@@ -27,6 +28,8 @@ The matrix is intentionally conservative. **Mapping is not verification.** A cha
 | `PARTIAL_EVIDENCE` | Relevant implementation/tests/evidence exist, but the complete applicable ASVS objective set has not been independently verified. |
 | `EVIDENCE_GAP` | The objective is applicable or materially relevant, but required evidence is missing, stale, wrong-identity or externally dependent. |
 | `APPLICABILITY_OPEN` | Current repository evidence is insufficient to decide whether the objective is applicable to the productive application surface. |
+| `CURRENT_FILE_PROCESSING_DISABLED` | A previously or visibly file-oriented application surface exists, but current server behavior rejects file processing fail-closed before accepted server-side upload/storage. This is a current-state disposition, not a V5 PASS claim. |
+| `APPLICABLE_PROVIDER_MANAGED` | A concrete productive OAuth/OIDC-style application handoff exists, while protocol/configuration controls are materially delegated to an external identity provider and still require exact provider evidence. |
 | `NOT_APPLICABLE_CURRENT_REPO` | No corresponding current application surface was found at this exact repository baseline; this must be re-evaluated when architecture changes. |
 | `NOT_VERIFIED` | No positive verification claim is made. |
 
@@ -41,6 +44,8 @@ The current repository exposes reusable evidence anchors rather than a new ASVS-
 - `server.application.ts` and `server/securityResponse.ts` — centralized CORS/origin controls and response-security headers including nonce-based CSP and `X-Content-Type-Options: nosniff`.
 - `src/platform/Security/rateLimiter.ts` and trusted edge/client-IP handling — reusable anti-abuse boundary.
 - `src/platform/Security/secretCrypto.ts` as consumed by IAM token fingerprinting — cryptographic helper evidence, without claiming complete ASVS cryptography coverage.
+- `src/features/public/ui/LoginPage.tsx` — productive Google authentication handoff through `supabase.auth.signInWithOAuth({ provider: 'google' })`; provider-managed OAuth/OIDC configuration remains external evidence.
+- `src/components/ImageAnalyzer.tsx` plus `server/ai.ts` — client file selection/preview remains present, while `/api/analyze-image` is intentionally server-side fail-closed with HTTP 410 and does not accept/store uploads until an approved replacement provider exists.
 - current dependency/security floors, provenance and deployment evidence from the completed `SEC-SOTA-03` workstream.
 - existing Security finding lifecycle and evidence under `docs/evidence/security/`, including provider-backed MFA/AAL evidence and fatal-process repository verification.
 
@@ -52,12 +57,12 @@ The current repository exposes reusable evidence anchors rather than a new ASVS-
 | **V2 — Validation and Business Logic** | Trusted server-side validation, documented constraints, sequence/state integrity and anti-automation/business-limit enforcement. | `authMiddleware.ts` strictly validates bearer/step-up token shape and bounds; multiple domain services expose separate validation contracts, but no complete business-logic validation inventory has been independently correlated here. | `PARTIAL_EVIDENCE / NOT_VERIFIED` | Domain owner of each flow; PVC depends on affected capability. | Map externally writable API inputs and high-value state transitions to current validators, limits, transaction/locking behavior and negative tests. |
 | **V3 — Web Frontend Security** | Browser-origin controls, CSP, cookie/client-side protections, safe redirects and supported client technologies. | `server.application.ts` applies an explicit CORS allowlist and central security headers; CSP is emitted through `server/securityResponse.ts` with nonce-based restrictions, `object-src 'none'`, `base-uri 'none'` and form-action controls; `nosniff` is set. | `PARTIAL_EVIDENCE / NOT_VERIFIED` | `CAPITAL-AI-FE` for productive frontend behavior; `CAPITAL-AI-OPS / PVC-08` for productive edge/TLS evidence where applicable. | Bind applicable V3 requirements to browser response tests, cookie/session behavior, redirect controls and deployed-header evidence. |
 | **V4 — API and Web Service** | Correct content types, trusted intermediary headers, allowed HTTP methods, robust HTTP message handling and API security boundaries. Representative requirements include `V4.1.1` and `V4.1.3`. | Express application middleware centralizes security response handling and hardened client-IP/edge-trust interpretation; authorization gates reuse `checkAdminAccess()` on privileged APIs. Complete route/method/content-type/message-boundary coverage is not yet proven. | `PARTIAL_EVIDENCE / NOT_VERIFIED` | Productive API owner by route; shared runtime/edge behavior `CAPITAL-AI-OPS / PVC-08`. | Inventory externally reachable routes/methods and bind applicable V4 controls to integration tests plus exact deployed proxy/header behavior. |
-| **V5 — File Handling** | Safe upload/download/storage paths, filename handling, limits, malicious-file controls and path traversal/zip-slip prevention. Representative requirement `V5.3.2` requires trusted/generated paths or strict filename validation. | `multer` dependency floor is hardened on main (`^2.3.0`), but dependency safety does not prove upload policy. Current repository correlation did not establish complete upload size/MIME/path/storage/antivirus behavior. | `APPLICABILITY_OPEN / EVIDENCE_GAP` | Owner of each actual upload/file capability; runtime controls commonly `CAPITAL-AI-OPS / PVC-02` or affected domain owner after concrete surface resolution. | Discover every productive file ingest/download surface; map limits, MIME/content validation, path generation, storage execution policy and malware scanning. Do not mark PASS from Multer version alone. |
+| **V5 — File Handling** | Safe upload/download/storage paths, filename handling, limits, malicious-file controls and path traversal/zip-slip prevention. Representative requirement `V5.3.2` requires trusted/generated paths or strict filename validation. | `ImageAnalyzer.tsx` can select/preview an image and construct `FormData`, but current `server/ai.ts` intentionally returns HTTP 410 for `/api/analyze-image` before accepted server-side file parsing/storage; the prior provider-specific vision path is removed. The hardened `multer` floor (`^2.3.0`) remains supporting dependency evidence only, and other repository file-ingest/download surfaces are not yet exhaustively inventoried. | `CURRENT_FILE_PROCESSING_DISABLED / NOT_VERIFIED` | Current disabled UI surface: `CAPITAL-AI-FE`; any reintroduced server-side ingest/storage path must resolve its actual productive owner, commonly `CAPITAL-AI-OPS / PVC-02` plus affected domain owner. | Inventory any other productive file ingest/download surfaces. If image/file processing is reintroduced, require explicit size/MIME/content validation, generated/trusted paths, storage policy and malware controls before verification. |
 | **V6 — Authentication** | Provider-backed authentication, anti-brute-force controls, consistent authentication strength and MFA. Stable `V6.3.3` requires MFA or an allowed combination of authentication mechanisms for application access, subject to its level/rationale semantics. | Supabase token identity is verified server-side with `auth.getUser(token)`; malformed/oversized bearer tokens fail closed; privileged flows use provider `getAuthenticatorAssuranceLevel(token)` and accept only `aal2`; unit/integration tests cover AAL1/AAL2 boundaries; provider session evidence exists in M5A closure evidence. Password/provider policy details are not fully repository-verifiable. | `PARTIAL_EVIDENCE_STRONG / NOT_VERIFIED` | Auth provider/runtime implementation boundary spans Security verification and productive IAM/application owners; provider configuration evidence remains externally sourced. | Map all applicable V6 requirements, including password/provider configuration, alternate auth paths, recovery and notification semantics; bind provider readback where repository state cannot prove them. |
 | **V7 — Session Management** | Secure session lifecycle, renewal, invalidation, concurrency/timeout semantics and protection against session misuse. | Current architecture delegates session/refresh/sign-out semantics to Supabase Auth; repository IAM resolves identity from live provider tokens rather than client identity claims. Existing provider/AAL evidence covers a subset only. | `PARTIAL_EVIDENCE / NOT_VERIFIED` | Productive identity/session boundary plus provider configuration; Security verifies. | Correlate session creation/refresh/logout/revocation/timeout behavior with provider configuration and negative stale/revoked/cross-session tests. |
 | **V8 — Authorization** | Server-side access control, object/function authorization, least privilege and denial of unauthorized privileged actions. | `checkAdminAccess()` resolves verified provider identity then `profiles.iam_role`, fails closed on missing provider/schema/credentials, rate-limits privileged zones and logs grants/denials; `requireVerifiedAal2()` and `requireStepUp()` gate stronger actions. Multiple privileged routes reuse this boundary. Full route/object/RLS coverage is not yet proven. | `PARTIAL_EVIDENCE_STRONG / NOT_VERIFIED` | Productive domain owner per protected capability; shared authorization component under current Security/IAM contracts. | Build route/object authorization inventory, correlate RLS/server checks and add negative cross-role/cross-user tests for all applicable privileged/data paths. |
 | **V9 — Self-contained Tokens** | Safe token parsing, validation, claim trust, algorithm/key lifecycle and replay/expiry handling for JWT or similar self-contained tokens. | Bearer parsing is strict and token identity is resolved through Supabase `auth.getUser(token)` instead of trusting caller claims; step-up tokens are hashed, purpose-bound, expiring and single-use. Provider JWT signing/key lifecycle is not proven by repository inspection. | `PARTIAL_EVIDENCE / EVIDENCE_GAP` | Provider/runtime identity owner; Security verification. | Bind provider JWT validation/key-rotation/claim/expiry configuration and negative malformed/expired/replayed-token evidence to current deployment identity. |
-| **V10 — OAuth and OIDC** | Secure authorization-code/redirect/state/nonce/PKCE/client/token-endpoint behavior where OAuth/OIDC is used. | No explicit application-owned OAuth/OIDC authorization flow was established by the current repository search. Supabase/provider internals must not be inferred as repository implementation. | `APPLICABILITY_OPEN / NOT_VERIFIED` | Owner of any concrete OAuth/OIDC integration once resolved. | Determine whether productive login/provider integrations expose OAuth/OIDC flows in application scope; if yes, map exact flows and provider configuration. If absent, document bounded N/A evidence rather than assuming it. |
+| **V10 — OAuth and OIDC** | Secure authorization-code/redirect/state/nonce/PKCE/client/token-endpoint behavior where OAuth/OIDC is used. | Productive login code invokes `supabase.auth.signInWithOAuth({ provider: 'google' })` with a same-origin redirect target and account-selection prompt. This establishes concrete application-scope OAuth/OIDC applicability, but protocol semantics and provider/client configuration must not be inferred from the browser call alone. | `APPLICABLE_PROVIDER_MANAGED / NOT_VERIFIED` | Productive authentication surface plus Supabase/Google provider configuration; Security verifies while provider/runtime ownership remains unchanged. | Bind exact allowed redirect URLs, provider/client configuration and effective PKCE/state/nonce/token behavior to current production identity; add negative redirect/session-flow evidence where repository tests can exercise it. |
 | **V11 — Cryptography** | Approved cryptographic primitives, secure randomness, key lifecycle, secret protection and avoidance of custom/insecure crypto. | IAM uses `hashOpaqueToken()` from `src/platform/Security/secretCrypto.ts`; MFA cryptographic assurance is provider-backed. ESS-0006 recognizes existing secret cryptography as a reusable Security surface. Complete algorithm/key/rotation inventory is not mapped in this slice. | `PARTIAL_EVIDENCE / NOT_VERIFIED` | Productive secret/provider owner by use; Security component for reusable crypto helpers. | Inventory cryptographic uses, algorithms, key sources/rotation/retention and provider guarantees; bind tests/evidence without exposing reusable secrets. |
 | **V12 — Secure Communication** | TLS and transport protection between users, application, proxies and dependent services, including certificate/protocol assurance. | Repository security headers and edge-trust code are supporting evidence only. End-to-end live TLS/proxy/provider configuration is external runtime state and is not proven by source inspection. | `EVIDENCE_GAP / OWNER_ROUTED` | `CAPITAL-AI-OPS / PVC-08` for productive runtime/edge transport. | `ASVS5-V12-TRANSPORT-EVIDENCE`: return exact deployed TLS/proxy/edge configuration evidence bound to current production identity; Security independently verifies applicable V12 objectives. |
 | **V13 — Configuration** | Secure defaults, unnecessary feature reduction, production-safe configuration, dependency/runtime hardening and secret/config separation. | Fail-closed IAM configuration, centralized security headers, dependency security floors, current provenance/deployment controls and server-only secret/deployment contracts provide evidence. Full ASVS configuration inventory remains open. | `PARTIAL_EVIDENCE / NOT_VERIFIED` | `CAPITAL-AI-OPS` for productive configuration stages (`PVC-02/06/07/08`) plus affected component owner. | Map production configuration requirements to current repo/provider state, identify debug/default/unused surfaces and bind exact deployment readback where needed. |
@@ -68,12 +73,13 @@ The current repository exposes reusable evidence anchors rather than a new ASVS-
 
 ## 5. Focused evidence already strong enough for requirement-level follow-up
 
-The following areas have sufficiently concrete current evidence to justify requirement-level verification work next, but this branch does **not** upgrade them to `VERIFIED` without executing that independent verification:
+The following areas have sufficiently concrete current evidence to justify requirement-level verification work next, but this matrix does **not** upgrade them to `VERIFIED` without executing that independent verification:
 
 1. **Authentication / MFA (`V6`)** — provider-backed user resolution and AAL2 enforcement, plus unit/integration and prior provider evidence.
 2. **Authorization (`V8`)** — fail-closed role verification, AAL2/step-up gating, rate limits and audited privileged-route reuse.
 3. **Browser/API response security (`V3`/`V4`)** — centralized CORS/CSP/header handling and trusted edge/client-IP controls.
 4. **Security logging/error handling (`V16`)** — IAM audit evidence plus existing fatal-process repository verification.
+5. **OAuth/OIDC (`V10`)** — application applicability is now proven by the Google/Supabase login handoff, but provider-level configuration evidence remains open.
 
 These are prioritized because verification can reuse existing implementation and evidence without creating new runtime controls.
 
@@ -87,13 +93,17 @@ These are prioritized because verification can reuse existing implementation and
 - **Required return:** exact production-identity-bound readback for the relevant transport controls, followed by independent CAPITAL-AI-SEC verification.
 - **Boundary:** no provider mutation is authorized by this matrix.
 
-### File handling / OAuth-OIDC applicability
+### File handling disposition
 
-V5 and V10 remain `APPLICABILITY_OPEN` until concrete productive surfaces are inventoried. Absence of a code-search hit is not converted into `NOT_APPLICABLE` except for the narrowly searched current WebRTC surface in V17.
+The current image-analysis file path is not an active server-side upload pipeline: `/api/analyze-image` returns HTTP 410 before accepted file processing/storage. `ImageAnalyzer.tsx` still exposes client selection/preview and a request attempt, so the state is recorded as `CURRENT_FILE_PROCESSING_DISABLED / NOT_VERIFIED` rather than a permanent V5 N/A or PASS. Other file ingest/download surfaces remain subject to inventory.
+
+### OAuth/OIDC disposition
+
+V10 is no longer `APPLICABILITY_OPEN`. The current login surface concretely delegates Google OAuth to Supabase via `signInWithOAuth`. The correct disposition is `APPLICABLE_PROVIDER_MANAGED / NOT_VERIFIED`; provider/client configuration, redirect allowlists and effective PKCE/state/nonce/token behavior remain evidence gates.
 
 ## 7. Verification and closure rule
 
-`SEC-SOTA-04` is **not closed by creation of this matrix**. The matrix establishes an evidence-based current-state inventory and the next verification gates.
+`SEC-SOTA-04` is **not closed by this re-correlation**. The matrix establishes an evidence-based current-state inventory and the next verification gates.
 
 Closure requires:
 
@@ -108,6 +118,6 @@ Closure requires:
 
 **`SEC-SOTA-04 = MATRIX_INVENTORIED / VERIFICATION_OPEN`.**
 
-This is a deliberate intermediate state. It improves coverage visibility and owner routing without claiming full OWASP ASVS 5.0.0 conformance, certification or application-wide verification.
+This is a deliberate intermediate state. The 2026-09-14 re-correlation closes the V5/V10 applicability ambiguity without claiming full OWASP ASVS 5.0.0 conformance, certification or application-wide verification.
 
-The next highest-value Security action after this inventory is focused requirement-level verification of the strongest existing V6/V8/V3/V4/V16 evidence, while the single concrete runtime dependency `ASVS5-V12-TRANSPORT-EVIDENCE` is returned by `CAPITAL-AI-OPS / PVC-08`.
+The next highest-value Security action is focused requirement-level verification of the strongest existing V6/V8/V3/V4/V16 evidence plus provider-backed V10 verification, while the concrete runtime dependency `ASVS5-V12-TRANSPORT-EVIDENCE` is returned by `CAPITAL-AI-OPS / PVC-08`.
