@@ -2,7 +2,7 @@ services:
   - type: web
     name: Finance
     runtime: docker
-    repo: https://github.com/SvenKulessa/Finance
+    repo: https://github.com/capital-ai-online/Finance
     branch: main
     region: frankfurt
     plan: starter
