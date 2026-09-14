@@ -12,7 +12,7 @@ function observation(): RepositoryQualityObservation {
     ['repository-conventions', 'PASS'], ['vocabulary', 'PASS'], ['compliance', 'PASS'],
   ].map(([domain, status]) => ({ domain, status, blocking: false, checkedAt, source: 'fixture', authorityRefs: ['fixture'], findings: [] })) as RepositoryQualityObservation['checks'];
   return {
-    schemaVersion: 'repository-quality-observation/1.1.0', trustClass: 'read-only-governance-observation', repository: 'SvenKulessa/Finance',
+    schemaVersion: 'repository-quality-observation/1.1.0', trustClass: 'read-only-governance-observation', repository: 'capital-ai-online/Finance',
     checkedAt, sourceCommit: 'a'.repeat(40), overallStatus: 'PASS', blocking: false, checks,
     summary: { checks: 6, passed: 6, warnings: 0, failed: 0, notAvailable: 0, findings: 0, errors: 0, warningFindings: 0, infoFindings: 0 },
     nonAuthorizingStatement: 'Repository quality evidence is read-only technical evidence. It does not authorize merge, release, deployment, production mutation, policy changes or privilege elevation.',
