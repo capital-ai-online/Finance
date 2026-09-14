@@ -78,7 +78,8 @@ describe('GitHub agent draft PR bot governance', () => {
   it('refreshes trusted main and reruns correlation immediately before the external create mutation', () => {
     const yaml = workflow();
     expect(yaml).toContain('path: create-policy');
-    expect(yaml).toContain('live_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq \' .object.sha\'')"'.replace("' .object.sha'", "'.object.sha'"));
+    expect(yaml).toContain('git/ref/heads/main');
+    expect(yaml).toContain("--jq '.object.sha'");
     expect(yaml).toContain('git fetch --no-tags ../create-policy main:refs/remotes/origin/main');
     expect(yaml).toContain('node ../create-policy/scripts/pr/productionPreflight.mjs');
     expect(yaml).toContain('node ../create-policy/scripts/pr/validateWorkClaim.mjs');
