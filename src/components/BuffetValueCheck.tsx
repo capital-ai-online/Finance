@@ -11,6 +11,7 @@ import {
   Search,
   ShieldCheck,
 } from 'lucide-react';
+import { authFetch } from '../lib/authFetch';
 
 export function formatBuffettMetric(value: unknown): string {
   if (value === null || value === undefined || value === '') return 'Nicht verfügbar';
@@ -219,7 +220,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
 
     const authorizeAndHydrate = async () => {
       try {
-        const authorizationResponse = await fetch('/api/entitlements/warren-buffett/authorize', {
+        const authorizationResponse = await authFetch('/api/entitlements/warren-buffett/authorize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ symbol: activeSymbol }),
