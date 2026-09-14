@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "returnId": "CAPITAL-AI-OPS-WP-SEO-SCHEMA-PRODUCTION-RETURN-2026-09-11",
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "workPackage": "WP-SEO-SCHEMA",
+  "consumerProject": "CAPITAL-AI-SEO",
+  "sourceProject": "CAPITAL-AI-FE",
+  "sourceHandoff": "docs/seo/SEO_TECH_GATE_SCHEMA_HANDOFF_2026-09-11.md",
+  "baseline": {
+    "mainSha": "dd70a8d795ea6c13641dcec1702ff375468ac7b5",
+    "openPullRequests": 0
+  },
+  "deployment": {
+    "provider": "render",
+    "deployId": "dep-daho0gh42hec739od59g",
+    "workflowRunId": 34561200509,
+    "deploymentJobId": 103144922126,
+    "expectedCommitSha": "dd70a8d795ea6c13641dcec1702ff375468ac7b5",
+    "observedCommitSha": "dd70a8d795ea6c13641dcec1702ff375468ac7b5",
+    "branch": "main",
+    "healthUrl": "https://capital-ai.online/healthz",
+    "identityResult": "PASS",
+    "identityEvidenceArtifact": {
+      "artifactId": 10184486764,
+      "sha256": "9c33b1ae0587a4542421a209d364ba6fe5b0828527a8a7670718f3e91a275a81",
+      "result": "VERIFIED PASS"
+    }
+  },
+  "build": {
+    "workflowRunId": 34561200509,
+    "buildJobId": 103144111085,
+    "sourceCommitSha": "dd70a8d795ea6c13641dcec1702ff375468ac7b5",
+    "result": "PASS",
+    "prerenderResult": "PASS",
+    "prerenderedRoutes": [
+      "/",
+      "/learning-platform",
+      "/impressum",
+      "/agb",
+      "/datenschutz"
+    ],
+    "supplyChainArtifact": {
+      "artifactId": 10184445421,
+      "sha256": "ca1cce196cdbd98cf71f009131586ffed8cd7c1567df5eba9e2555f9613bc503",
+      "releaseManifestBuildIdentity": "b359edee25da1a80cc6ae72163bd4e0e527294cd2294eadd724c30781a180421",
+      "runtimeArtifactSha256": "4147e61913ef5062f988c1066b005c3821cf8c5034156cc1bc64b167a86c41f8",
+      "runtimeFileCount": 49,
+      "containsGeneratedHtml": false
+    }
+  },
+  "repositorySchemaRegression": {
+    "test": "tests/unit/seoStructuredDataLifecycle.test.ts",
+    "result": "PASS",
+    "scope": "source index.html JSON-LD lifecycle invariants",
+    "generatedOutputCovered": false
+  },
+  "productionArtifactSchemaVerification": {
+    "requiredInvariant": "generated/prerendered production HTML preserves the intended JSON-LD graph",
+    "directGeneratedHtmlEvidenceAvailable": false,
+    "liveHtmlScriptEvidenceAvailable": false,
+    "result": "FAIL",
+    "reason": "The verified CI artifacts prove exact source/deployment identity and successful prerender, but the retained artifacts do not contain generated dist HTML. The available public HTML extraction omits script elements, so it cannot directly prove JSON-LD preservation. Repository source regression is not substituted for production-artifact evidence."
+  },
+  "driftStatus": "FAIL",
+  "driftClassification": "EVIDENCE_INCOMPLETE_NOT_CONTENT_ABSENCE",
+  "exitGate": "BLOCKED",
+  "providerReadGate": "NOT_RELEASED",
+  "providerReadReason": "CAPITAL-AI-SEO external provider read is permitted by this handoff only after production-artifact JSON-LD preservation is directly evidenced and driftStatus becomes PASS.",
+  "requiredNextEvidence": {
+    "owner": "CAPITAL-AI-OPS",
+    "requirement": "Capture or retain exact-SHA generated/prerendered HTML (or equivalent raw production response preserving script content) and verify the intended application/ld+json graph without using repository-test PASS as production/provider PASS."
+  }
+}
