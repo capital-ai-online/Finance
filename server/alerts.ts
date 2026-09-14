@@ -26,6 +26,7 @@ import { getCleanEnv } from './env';
 import { sendMail } from './mailer';
 import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
 import { createLogger } from './logger';
+import { escapeHtml, isSimpleEmail, rateLimitMiddleware } from '../src/platform/Security/safeIo';
 
 const alertsLogger = createLogger('alerts');
 
@@ -33,11 +34,7 @@ const ALERT_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 Stunden
 const ALLOWED_CONDITIONS = ['score_above', 'score_below'] as const;
 export type AlertCondition = (typeof ALLOWED_CONDITIONS)[number];
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 function getBaseUrl(): string {
-  // RENDER_EXTERNAL_URL wird von Render automatisch gesetzt (kein render.yaml-Eintrag
-  // noetig, kein Secret) - siehe scripts/automation/verifyDeploymentReadiness.ts.
   const renderUrl = getCleanEnv('RENDER_EXTERNAL_URL');
   if (renderUrl) return renderUrl.replace(/\/$/, '');
   return `http://localhost:${getCleanEnv('PORT') || '3000'}`;
@@ -55,42 +52,32 @@ export interface AlertConfirmationEmailInput {
   confirmToken: string;
 }
 
-/**
- * Extracted so ESS-0018's admin resend-confirmation write capability
- * (src/services/agentTools/supabaseAdminDiagnosticsTool.ts) can re-send the identical
- * confirmation mail for an existing, still-unconfirmed subscription without duplicating this
- * template. Behavior-preserving refactor - the original POST / handler below now calls this
- * instead of building the mail inline.
- */
 export async function sendAlertConfirmationEmail(input: AlertConfirmationEmailInput): Promise<{ success: boolean; error?: string }> {
-  const confirmUrl = `${getBaseUrl()}/api/alerts/confirm?token=${input.confirmToken}`;
+  const confirmUrl = `${getBaseUrl()}/api/alerts/confirm?token=${encodeURIComponent(input.confirmToken)}`;
   const conditionLabel = input.condition === 'score_above' ? `über ${input.threshold}` : `unter ${input.threshold}`;
+  const safeSymbol = escapeHtml(input.symbol);
   return sendMail({
     to: input.email,
     subject: `Bitte bestätigen: Alert für ${input.symbol}`,
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2>Alert-Anmeldung bestätigen</h2>
-        <p>Sie (oder jemand mit dieser E-Mail-Adresse) haben einen Alert für <strong>${input.symbol}</strong> eingerichtet: Benachrichtigung, wenn der Score ${conditionLabel} liegt.</p>
-        <p><a href="${confirmUrl}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">Alert bestätigen</a></p>
+        <p>Sie (oder jemand mit dieser E-Mail-Adresse) haben einen Alert für <strong>${safeSymbol}</strong> eingerichtet: Benachrichtigung, wenn der Score ${escapeHtml(conditionLabel)} liegt.</p>
+        <p><a href="${escapeHtml(confirmUrl)}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">Alert bestätigen</a></p>
         <p style="color:#666;font-size:12px;">Falls Sie diesen Alert nicht angefordert haben, ignorieren Sie diese E-Mail einfach - ohne Bestätigung wird kein Alert aktiv.</p>
       </div>
     `,
   });
 }
 
-// --- Erstellung + Double-Opt-In -----------------------------------------------------------
-
 export const alertsRouter = express.Router();
+alertsRouter.use(rateLimitMiddleware({ name: 'alerts', maxRequests: 30, windowMs: 60_000 }));
 
 alertsRouter.post('/', async (req, res) => {
   if (!isSupabaseConfigured()) {
     return res.status(503).json({ error: 'Alerting ist derzeit nicht verfuegbar.' });
   }
 
-  // Eigene, engere Grenze zusaetzlich zum globalen Rate-Limit (server.ts) - dieser
-  // Endpunkt versendet E-Mails an vom Aufrufer angegebene Adressen, daher eine eigene,
-  // deutlich engere Schranke gegen Missbrauch (E-Mail-Bombing fremder Adressen).
   const ip = getClientIp(req as any);
   if (!checkRateLimit(`alerts-create:${ip}`, 10, 60 * 60 * 1000)) {
     return res.status(429).json({ error: 'Zu viele Alert-Anmeldungen. Bitte spaeter erneut versuchen.' });
@@ -102,7 +89,7 @@ alertsRouter.post('/', async (req, res) => {
   const condition = req.body?.condition;
   const thresholdRaw = Number(req.body?.threshold);
 
-  if (!EMAIL_PATTERN.test(email)) {
+  if (!isSimpleEmail(email)) {
     return res.status(400).json({ error: 'Ungueltige E-Mail-Adresse.' });
   }
   if (!symbol) {
@@ -207,21 +194,14 @@ alertsRouter.get('/unsubscribe', async (req, res) => {
 function renderStatusPage(message: string): string {
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>CAPITAL-AI Alerts</title></head>` +
     `<body style="font-family: sans-serif; max-width: 480px; margin: 80px auto; text-align: center;">` +
-    `<h2>${message}</h2></body></html>`;
+    `<h2>${escapeHtml(message)}</h2></body></html>`;
 }
-
-// --- Auswertung (aus server.ts, fetchLiveMarketData) ---------------------------------------
 
 export interface AlertEvaluationInput {
   symbol: string;
   score: number;
 }
 
-/**
- * Prueft alle bestaetigten, aktiven Abos gegen die aktuellen Scores und versendet faellige
- * Alert-Mails. Best-effort: ein Fehler hier darf den aufrufenden Request (/api/market-data)
- * nicht scheitern lassen - gleiches Muster wie recordDailySnapshots() in scoreValidation.ts.
- */
 export async function evaluateAlerts(assets: AlertEvaluationInput[]): Promise<void> {
   if (!isSupabaseConfigured() || assets.length === 0) return;
 
@@ -272,26 +252,24 @@ async function sendAlertNotification(
   sub: { id: string; email: string; symbol: string; condition: AlertCondition; threshold: number; unsubscribe_token: string },
   currentScore: number
 ): Promise<void> {
-  const unsubscribeUrl = `${getBaseUrl()}/api/alerts/unsubscribe?token=${sub.unsubscribe_token}`;
+  const unsubscribeUrl = `${getBaseUrl()}/api/alerts/unsubscribe?token=${encodeURIComponent(sub.unsubscribe_token)}`;
   const conditionLabel = sub.condition === 'score_above' ? `über ${sub.threshold}` : `unter ${sub.threshold}`;
+  const safeSymbol = escapeHtml(sub.symbol);
 
   const result = await sendMail({
     to: sub.email,
     subject: `CAPITAL-AI Alert: ${sub.symbol} — Score ${currentScore.toFixed(1)}`,
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2>${sub.symbol}: Score ${conditionLabel}</h2>
-        <p>Der aktuelle Score für <strong>${sub.symbol}</strong> beträgt <strong>${currentScore.toFixed(1)}</strong> und erfüllt damit Ihre Alert-Bedingung (${conditionLabel}).</p>
+        <h2>${safeSymbol}: Score ${escapeHtml(conditionLabel)}</h2>
+        <p>Der aktuelle Score für <strong>${safeSymbol}</strong> beträgt <strong>${escapeHtml(currentScore.toFixed(1))}</strong> und erfüllt damit Ihre Alert-Bedingung (${escapeHtml(conditionLabel)}).</p>
         <p style="color:#666;font-size:12px;">
-          <a href="${unsubscribeUrl}">Diesen Alert abmelden</a>
+          <a href="${escapeHtml(unsubscribeUrl)}">Diesen Alert abmelden</a>
         </p>
       </div>
     `,
   });
 
-  // Cooldown erst NACH tatsaechlich erfolgreichem Versand setzen - schlaegt der Versand fehl
-  // (z.B. SMTP voruebergehend nicht erreichbar), soll der naechste Auswertungszyklus (60s)
-  // es erneut versuchen, statt den Nutzer bis zu 6 Stunden ohne Benachrichtigung zu lassen.
   if (result.success) {
     try {
       const supabase = getServerSupabase();

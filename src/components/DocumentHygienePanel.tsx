@@ -1087,7 +1087,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
                       // Extract target path from backup safe name (safe timestamp_safefilename format)
                       const parts = file.name.split('_');
                       parts.shift(); // remove timestamp
-                      const originalPath = parts.join('/').replace('.md', '.md').replace('.json', '.json');
+                      const originalPath = parts.join('/');
 
                       return (
                         <tr key={file.name} className="border-b border-white/5 hover:bg-white/5 transition-all">

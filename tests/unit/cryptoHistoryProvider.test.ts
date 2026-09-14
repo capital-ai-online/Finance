@@ -3,6 +3,7 @@ import {
   getVerifiedCryptoHistory,
   resetCryptoHistoryProviderState,
 } from '../../src/services/cryptoHistoryProvider';
+import { hostnameOf } from '../../src/platform/Security/safeIo';
 
 function coinGeckoPayload(count = 30) {
   const start = Date.UTC(2026, 6, 4);
@@ -20,6 +21,12 @@ function binancePayload(count = 30) {
     start + index * 24 * 60 * 60 * 1000,
     '3000', '3100', '2950', String(3050 + index * 10), '1000',
   ]);
+}
+
+function hostEndsWith(url: string, host: string): boolean {
+  const hostname = hostnameOf(url);
+  if (!hostname) return false;
+  return hostname === host || hostname.endsWith(`.${host}`);
 }
 
 afterEach(() => {
@@ -72,8 +79,8 @@ describe('cryptoHistoryProvider resilience', () => {
   it('falls back to verified Binance history when CoinGecko is unavailable on a cold start', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes('coingecko.com')) return new Response('rate limited', { status: 429 });
-      if (url.includes('binance.com')) {
+      if (hostEndsWith(url, 'coingecko.com')) return new Response('rate limited', { status: 429 });
+      if (hostEndsWith(url, 'binance.com')) {
         return new Response(JSON.stringify(binancePayload()), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },

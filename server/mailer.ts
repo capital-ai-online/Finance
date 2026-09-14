@@ -11,6 +11,7 @@ import nodemailer from 'nodemailer';
 import { getCleanEnv } from './env';
 import { getServerSupabase, isSupabaseConfigured } from './db';
 import { enqueueOutboxJob } from './outbox';
+import { escapeHtml, htmlToPlainText } from '../src/platform/Security/safeIo';
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
 
@@ -24,7 +25,6 @@ function getTransporter() {
     transporter = nodemailer.createTransport({
       host: getCleanEnv('SMTP_HOST'),
       port,
-      // Port 465 = implizites TLS von Anfang an; 587 = STARTTLS nach Verbindungsaufbau.
       secure: port === 465,
       auth: {
         user: getCleanEnv('SMTP_USER'),
@@ -35,18 +35,10 @@ function getTransporter() {
   return transporter;
 }
 
-/**
- * Privacy-safe operational correlation. Raw checkout session IDs and recipient addresses are
- * deliberately excluded from logs; a short SHA-256 reference is sufficient to correlate retries.
- */
 function logCorrelationRef(value: string): string {
   return crypto.createHash('sha256').update(value).digest('hex').slice(0, 12);
 }
 
-/**
- * Mail/SMTP provider errors can echo recipient addresses or provider payload fragments. Keep
- * application logs on a stable error taxonomy instead of copying provider error messages.
- */
 function mailerErrorCode(err: unknown): string {
   if (err && typeof err === 'object') {
     const code = (err as { code?: unknown }).code;
@@ -64,11 +56,6 @@ export interface SendMailParams {
   text?: string;
 }
 
-/**
- * Versendet eine System-E-Mail ueber das konfigurierte SMTP-Konto. Wirft NIE eine
- * Exception nach aussen - ein fehlgeschlagener E-Mail-Versand darf niemals die
- * Subscription-Projektion in Supabase beeinflussen.
- */
 export async function sendMail(params: SendMailParams): Promise<{ success: boolean; error?: string }> {
   if (!isMailerConfigured()) {
     console.warn('[Mailer] SMTP_HOST/SMTP_USER/SMTP_PASSWORD nicht vollstaendig gesetzt - E-Mail-Versand übersprungen.');
@@ -81,7 +68,7 @@ export async function sendMail(params: SendMailParams): Promise<{ success: boole
       to: params.to,
       subject: params.subject,
       html: params.html,
-      text: params.text || params.html.replace(/<[^>]+>/g, ''),
+      text: params.text || htmlToPlainText(params.html),
     });
     console.log('[Mailer] E-Mail erfolgreich versendet.');
     return { success: true };
@@ -90,25 +77,6 @@ export async function sendMail(params: SendMailParams): Promise<{ success: boole
     console.error(`[Mailer] Versand fehlgeschlagen (${error}).`);
     return { success: false, error };
   }
-}
-
-/**
- * Stripe's checkout email field and application metadata (plan_id, session/user identifiers)
- * are attacker-influenceable inputs that end up interpolated into HTML e-mail bodies below.
- * RFC 5322 permits a quoted local-part such as `"<script>..."@example.com`, so an unescaped
- * template would let a crafted checkout e-mail inject markup into the owner/customer inbox.
- * Every dynamic value in the templates below MUST go through this before interpolation.
- */
-function escapeHtml(value: unknown): string {
-  return String(value ?? '').replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case '&': return '&amp;';
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '"': return '&quot;';
-      default: return '&#39;';
-    }
-  });
 }
 
 export function buildSubscriptionActivatedEmail(planId: string, email: string): { subject: string; html: string } {
@@ -128,13 +96,7 @@ export function buildSubscriptionActivatedEmail(planId: string, email: string): 
 }
 
 export interface SubscriptionConfirmationData {
-  /** Stripe Plan-/Preis-Bezeichner aus session.metadata.plan_id. */
   planId: string;
-  /**
-   * Stripe Checkout Session ID (session.id). Dient als Idempotenz-Schluessel -
-   * derselbe Checkout-Abschluss darf niemals zwei E-Mail-Paare ausloesen, auch
-   * wenn Stripe denselben Webhook mehrfach zustellt oder manuell erneut sendet.
-   */
   sessionId: string;
   userId?: string;
   amountTotal?: number | null;
@@ -150,9 +112,6 @@ export function buildOwnerSubscriptionNotificationEmail(
       ? `${(data.amountTotal / 100).toFixed(2)} ${escapeHtml(data.currency.toUpperCase())}`
       : 'unbekannt';
   return {
-    // Do not put customer identifiers into the subject: SMTP/provider logs commonly retain it.
-    // planId is constrained upstream to a known plan constant (see stripe.ts price-ID lookup),
-    // but the subject is plain text/no HTML context, so no escaping is required here.
     subject: `Neues Abo aktiviert: ${data.planId}`,
     html: `
       <div style="font-family: sans-serif;">
@@ -169,18 +128,6 @@ export function buildOwnerSubscriptionNotificationEmail(
   };
 }
 
-// --- Atomic reservation fuer sendSubscriptionConfirmation() -------------------
-//
-// ADR-0045 / R-003: Die fruehere Supabase-Sequenz SELECT -> UPSERT war nicht atomar.
-// Zwei parallele Webhook-Aufrufe konnten beide "noch nicht gesendet" lesen und danach
-// beide senden. public.claim_subscription_confirmation(session_id) fuehrt jetzt ein
-// einziges INSERT ... ON CONFLICT DO NOTHING in PostgreSQL aus und liefert zurueck,
-// welcher Aufrufer die Reservation gewonnen hat.
-//
-// Die lokale Datei bleibt ausschliesslich fuer Entwicklung ohne Supabase erhalten.
-// In Produktion darf ein fehlender/fehlerhafter Supabase-Claim NICHT auf Renders
-// ephemeres Dateisystem zurueckfallen, weil dadurch horizontale/redeploy-sichere
-// Idempotenz wieder verloren ginge.
 const SUBSCRIPTION_CONFIRMATIONS_FILE = path.join(process.cwd(), 'uploads', 'subscription_confirmations_sent.json');
 const MAX_TRACKED_CONFIRMATIONS = 1000;
 
@@ -243,15 +190,6 @@ async function claimSubscriptionConfirmation(sessionId: string): Promise<Confirm
   }
 }
 
-// --- ADR-0054 / R-101: outbox-backed retry for a failed confirmation-mail send ---------------
-//
-// OPS-001 (2026-08-10) showed the gap this closes: claimSubscriptionConfirmation() reserves the
-// Checkout Session BEFORE the SMTP attempt, so a subsequent SMTP failure (e.g. rotated
-// SMTP_PASSWORD) permanently consumes the reservation with no automated retry -- the customer
-// confirmation mail could never be sent again through the direct-send path alone. Scheduling
-// this job is best-effort and mirrors sendMail()'s own contract: it must never throw into the
-// webhook response path, and it never re-attempts the reservation itself (already won above).
-
 export type ConfirmationMailRecipientKind = 'customer' | 'owner';
 
 export interface SubscriptionConfirmationMailJobPayload {
@@ -284,12 +222,6 @@ async function scheduleConfirmationMailRetry(
   }
 }
 
-/**
- * Handler for the 'subscription_confirmation_mail' outbox job type
- * (server/outboxWorker.ts / ADR-0054). Re-attempts the SMTP send from the stored payload; the
- * reservation itself is not re-checked here since it was already won before the job was
- * scheduled. Throws on failure so the worker records a backoff retry / eventual dead-letter.
- */
 export async function processSubscriptionConfirmationMailJob(
   payload: Record<string, unknown>
 ): Promise<void> {
@@ -304,17 +236,11 @@ export async function processSubscriptionConfirmationMailJob(
 }
 
 export interface SubscriptionConfirmationResult {
-  /** true, wenn dieser Aufruf wegen bereits erfolgter/in-flight Zustellung uebersprungen wurde. */
   skippedAsDuplicate: boolean;
   customer: { attempted: boolean; success: boolean; error?: string };
   owner: { attempted: boolean; success: boolean; error?: string };
 }
 
-/**
- * Versendet die Abo-Bestaetigung an den Kunden und die interne Benachrichtigung
- * an den Owner. Die Reservation erfolgt VOR SMTP und atomar je Checkout Session.
- * SMTP-Fehler werden als Ergebnis zurueckgegeben, aber nicht geworfen.
- */
 export async function sendSubscriptionConfirmation(
   customerEmail: string,
   ownerEmail: string,

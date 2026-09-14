@@ -273,7 +273,7 @@ export async function getVerifiedCryptoSnapshot(
       };
       cache.set(s, { value, cachedAtMs: nowMs() });
       breaker.success(PROVIDER_ID);
-      writeHealth(options, 'healthy', `Verified multi-field crypto snapshot received for ${s}.`);
+      writeHealth(options, 'healthy', 'Verified multi-field crypto snapshot received.');
       return { ...value, cacheMode: 'fresh', degraded: false };
     } catch (error) {
       lastError = error;
@@ -283,12 +283,12 @@ export async function getVerifiedCryptoSnapshot(
 
   breaker.failure(PROVIDER_ID);
   if (lastError) {
-    console.warn(`[CryptoSnapshotProvider] ${s}: verified CoinGecko snapshot unavailable.`, (lastError as Error)?.message || lastError);
+    console.warn('[CryptoSnapshotProvider] verified CoinGecko snapshot unavailable for %s.', s, (lastError as Error)?.message || lastError);
   }
   writeHealth(
     options,
     'unavailable',
-    lastError instanceof Error ? lastError.message : `No verified multi-field crypto snapshot available for ${s}.`,
+    lastError instanceof Error ? lastError.message : 'No verified multi-field crypto snapshot available.',
     'provider_error',
     breaker.openedUntilIso(PROVIDER_ID),
   );
