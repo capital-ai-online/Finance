@@ -2,8 +2,8 @@
 
 **Status:** ACTIVE — CURRENT-STATE CORRELATED  
 **Initial baseline:** 2026-08-10  
-**Last Documentary correlation:** 2026-09-10  
-**Current main:** `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
+**Last Documentary correlation:** 2026-09-14  
+**Current main:** `c6d36c216801f16788d205664ab4cfdf0c970dca`  
 **Primary Authority:** ESS-0010 Documentary Engine  
 **Related Authorities:** ESS-0009 Knowledge, ESS-0011 Traceability, ESS-0012 Documentation Governance, ESS-0017 Vocabulary Governance, ADR-0096 Governance Control Plane, ADR-0097 Documentary Maintenance Control Loop  
 **Project execution surface:** `docs/projects/documentary/ROADMAP.md`  
@@ -42,7 +42,7 @@ Foreign productive implementation remains `REFERRED_NOT_EXECUTED` from this road
 
 ## 2. Current Documentary baseline
 
-The original 2026-08-10 target snapshot is historical. Current `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a` shows:
+The original 2026-08-10 target snapshot is historical. Current `main@c6d36c216801f16788d205664ab4cfdf0c970dca` shows:
 
 - Documentary component version `1.21.0` in `src/platform/Documentary/manifest.json` and component README;
 - component-version authority: `src/platform/Documentary/manifest.json#version`;
@@ -50,7 +50,8 @@ The original 2026-08-10 target snapshot is historical. Current `main@6d2b78b7914
 - platform-version authority: repository `package.json#version`, consumed through the Release control plane;
 - implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance, Interfaces, Knowledge, Lifecycle, Mermaid, Migration planning, Models, Observability maintenance slice, Orchestration, Traceability and Versioning;
 - bounded Documentation Governance rules `GOV-DOC-001` through `GOV-DOC-006` are Human-merged on main;
-- `GOV-DOC-007` is implemented only on `agent/documentary-wp-doc-13-gov-doc-007-20260910`; the branch deliberately keeps component/document version fields unchanged because version advancement requires separate Version authority/Human resolution;
+- `GOV-DOC-007` is absent from current main and is being reimplemented on the fresh current-main branch `agent/documentary-gov-doc-007-20260914` after the historical branch became unavailable;
+- the fresh WP-DOC-13 slice keeps component, document-schema and platform version fields unchanged; no prior historical version gate is reused as version-mutation authority;
 - planned/partial areas remain physical/semantic Migration Execution, Plugins and evidence-backed additional Architecture/runtime/quality hardening.
 
 The component therefore remains **Partial Implementation**.
@@ -61,7 +62,7 @@ The component therefore remains **Partial Implementation**.
 
 **State:** IMPLEMENTED BASELINE
 
-Component, document-schema and platform versions remain semantically separated. Documentary consumes platform version from Release and does not establish a second Version authority. Agent implementation may record version impact but does not autonomously choose a new version.
+Component, document-schema and platform versions remain semantically separated. Documentary consumes platform version from Release and does not establish a second Version authority. Documentary implementation records version authority and impact boundaries but does not invent a version change outside an applicable current authority.
 
 ### D1 — Code Integration & Discovery
 
@@ -169,7 +170,7 @@ Documentary may detect stale documentation paths and propose identity-based repa
 | `GOV-DOC-004` | DONE | DONE |
 | `GOV-DOC-005` | DONE via PR #866 | DONE |
 | `GOV-DOC-006` | DONE | DONE |
-| `GOV-DOC-007` unresolved reference | OPEN on main | implemented on `agent/documentary-wp-doc-13-gov-doc-007-20260910`; version/PR/Human merge gates pending |
+| `GOV-DOC-007` unresolved reference | OPEN on main | fresh bounded implementation on `agent/documentary-gov-doc-007-20260914`; validation/PR/Human merge pending |
 
 The bounded Chapter 2.5 sequence does not implicitly activate the wider historical ESS-0012 rule suite, scoring, production thresholds, event publication or Governance decisions.
 
@@ -191,7 +192,7 @@ Workstream E is an integration/dependency projection. EventMesh and central Trac
 
 Ordered by current project Roadmap:
 
-1. **WP-DOC-13 — GOV-DOC-007 unresolved reference**: implemented on synchronized branch; version-impact resolution, exact-head repository validation, PR approval, Human merge and main re-correlation remain open.
+1. **WP-DOC-13 — GOV-DOC-007 unresolved reference**: fresh current-main reimplementation exists on `agent/documentary-gov-doc-007-20260914`; exact-head repository validation, PR approval, Human merge and main re-correlation remain open.
 2. **WP-DOC-14 — Migration Execution contract & dry-run design**: NEXT after WP-DOC-13; contract-first only, no physical mutation.
 3. **WP-DOC-15 — Documentary quality/SLO model**: LATER; D9 already exposes the core maintenance ratios, so evidence and a target/SLO contract are required rather than a duplicate metrics subsystem.
 4. **WP-DOC-16 — Plugin extension model**: LATER; ESS-0001-CONTRACTS already defines enterprise Plugin/Extension contracts and registry expectations; reuse/security/ownership pre-check is required and a parallel Documentary plugin registry is prohibited.
@@ -203,7 +204,7 @@ Continuous maintained baselines remain WP-DOC-02 lifecycle/maintenance/Documenta
 
 ## 7. Current execution order
 
-1. close WP-DOC-13 through version-impact resolution, exact-head validation, PR gate and Human merge;
+1. close WP-DOC-13 through exact-head validation, PR gate and Human merge;
 2. re-correlate then-current main/Roadmap/ADR/ESS;
 3. if still highest priority, execute WP-DOC-14 contract/dry-run slice on a fresh branch;
 4. keep WP-DOC-15/16/17 and conditional generator/security-consumption work behind their explicit evidence/dependency gates;
