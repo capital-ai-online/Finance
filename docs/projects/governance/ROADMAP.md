@@ -1,8 +1,66 @@
-# CAPITAL-AI-GOV — Roadmap Pointer
+# CAPITAL-AI-GOV — Canonical Roadmap
 
-**Status:** `POINTER — NOT AN INDEPENDENT ACTIVE ROADMAP`  
-**Active roadmap:** [`CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md`](./CAPITAL_AI_GOVERNANCE_ROADMAP_2026-09-13.md)  
-**Superseded baseline:** [`archive/CAPITAL_AI_GOVERNANCE_ROADMAP_SUPERSEDED_2026-09-13.md`](./archive/CAPITAL_AI_GOVERNANCE_ROADMAP_SUPERSEDED_2026-09-13.md)  
-**Updated:** `2026-09-13`
+**Project:** `CAPITAL-AI-GOV`  
+**Folder:** `docs/projects/governance/`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
+**Reconciliation:** 2026-09-14 — PR #900/#901 contents folded into this file; GOV-PR900-07 correlated after Human-Merge #904  
+**Baseline:** `main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`  
+**Trust root:** `/AGENTS.md@current-main`
 
-This stable path preserves repository routing. Execution truth is the dated active roadmap above.
+## Reconciliation rule
+
+This file is the single active project execution projection. Dated active sidecar roadmaps and pointer-only `ROADMAP.md` files are removed after this fold. Archive/superseded copies remain as historical ledger and are not an execution source. Non-terminal pre-2026-09-13 work packages remain in force with their existing IDs, constraints, dependencies and exit gates unless a later section explicitly replaces them. Terminal `DONE/CLOSED/VERIFIED/RETIRED/SUPERSEDED` history is retained as ledger, not reopened. PR #900 remains a derived documentary source only.
+
+## PR #900 / #901 work packages
+
+### GOV-CARRY-01 — Existing non-terminal GOV backlog
+Carry forward every non-terminal Governance work package, writer/gate dependency and validation obligation.
+
+### GOV-PR900-01 — Option-C/current-main correlation
+Correlate active Option-C Governance prototype work against current main and current writers. Remove stale transition blockers that are already DONE_MAIN without erasing their evidence.
+
+### GOV-PR900-02 — Current-state projection integrity
+Refresh stale repository-wide current-state projections; reconcile ADR-0069's historical M10/WebAuthn statement with current Trust Root where productive M10 is retired/off.
+
+**Exit:** no active projection contradicts current authority without an explicit owner-routed blocker.
+
+### GOV-PR900-03 — Stable authority version convergence
+Resolve `AUTH-GOV-CONTROL-PLANE` version/target drift across Authority Registry and control-plane/component projections.
+
+**Exit:** one stable identity has consistent version semantics and target projections.
+
+### GOV-PR900-04 — Fail-closed freshness/version validators
+Extend Governance validation so stale project/task/current-state projections and authority target/version drift can fail closed rather than only validating syntax/path existence.
+
+### GOV-PR900-05 — Staged pre-command flow
+Represent `main/open PRs → AGENTS → capability class → Project/PVC/Roadmap → ADR/ESS/CTRL/AUTH → least-privileged decision → ALLOW|ROUTE|REQUIRE_GATE|BLOCK → execution` without creating another authority plane. Productive client materialization remains CLIENT-owned.
+
+### GOV-PR900-06 — Cross-owner strategy routing
+Decompose monetization/product-expansion proposals into canonical owners; regulated or money-like/token proposals require COMP/SEC/FINTECH/OPS and Human decision before implementation.
+
+### GOV-PR900-07 — Project presentation in PR approval and PR body
+Materialize one canonical presentation projection per project routing row: textual display name, symbol, hexadecimal color and canonical project folder. Reuse `docs/projects/README.md` as the single routing source; do not create a second project/PVC or presentation registry.
+
+**State:** `DONE_MAIN / TERMINAL` via Human-merged PR #904 (`main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`). Current, Source and Target resolve independently from the same routing row. Textual Project ID/folder/Owner/PVC identity remains authoritative; color is never the sole semantic cue. Candidate-branch semantics cannot self-bootstrap.
+
+**Exit:** PR approval surface and PR body both resolve Current, Source and Target as `Project ID → canonical project folder → display name → symbol → color` from exactly one canonical `docs/projects/README.md` routing row. Missing, duplicate or malformed metadata fails closed; no second registry exists.
+
+## Carried-forward baseline (pre-2026-09-13)
+
+Terminal / maintained: GOV-01..GOV-06, GOV-09..GOV-11, GOV-CHAT-070..076, COMP-GAP-008 Governance treatment, copyable chat handoff, owner-approval presentation.
+
+Open:
+
+| ID | State |
+|---|---|
+| GOV-07 User-Lifecycle closeout | `PARTIAL / OWNER RETURNS PENDING` — DATA/OPS/FE/SEC/COMP returns incomplete; GOV consumes read-only |
+| GOV-08 Admin Panel process graph | `REFERRED / FOREIGN OPEN` — CLIENT/FE/OPS |
+
+M10 remains `RETIRED / OFF`. NIST remains non-authorizing. Human/CODEOWNER-only merge remains mandatory.
+
+## Dependencies
+OPS version/release, QM gates, SEC/COMP assurance, CLIENT runtime only where productive materialization is needed.
+
+## Project exit gate
+One active GOV roadmap; no duplicate authority namespace/writer; current projections agree with effective authority or expose a deterministic blocker.
