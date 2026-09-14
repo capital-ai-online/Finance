@@ -37,6 +37,12 @@ describe('Buffett verified-data contract', () => {
     expect(componentSource).toContain("method: 'POST'");
   });
 
+  it('verwendet für die geschützte Buffett-Autorisierung den bearer-aware authFetch-Transport', () => {
+    expect(componentSource).toContain("import { authFetch } from '../lib/authFetch';");
+    expect(componentSource).toContain("authFetch('/api/entitlements/warren-buffett/authorize'");
+    expect(componentSource).not.toContain("fetch('/api/entitlements/warren-buffett/authorize'");
+  });
+
   it('hydratisiert die freigegebene Aktie über den verifizierten Display-Contract', () => {
     expect(componentSource).toContain('/verified-display');
     expect(componentSource).toContain('verified-asset-display/1.0.0');
