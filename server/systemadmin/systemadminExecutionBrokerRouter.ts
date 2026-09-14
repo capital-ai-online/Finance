@@ -199,7 +199,7 @@ router.post('/outcome', async (req, res) => {
       ...(typeof req.body.branchName === 'string' ? { branchName: req.body.branchName } : {}),
       ...(typeof req.body.commitSha === 'string' ? { commitSha: req.body.commitSha } : {}),
       ...(positiveInteger(req.body.pullRequestNumber)
-        ? { pullRequestNumber: req.body.pullNumber }
+        ? { pullRequestNumber: req.body.pullRequestNumber }
         : {}),
       workflowRunId: identity.runId,
       policyId: policyIdForMandate(mandateId),
