@@ -1,5 +1,6 @@
 import express from 'express';
 import { createLogger } from '../logger';
+import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
 import {
   authorizeSystemadminAuditedExecution,
   recordSystemadminAuditedOutcome,
@@ -17,6 +18,7 @@ import {
 
 const logger = createLogger('systemadmin-execution-broker');
 const router = express.Router();
+router.use(rateLimitMiddleware({ name: 'systemadmin-execution-broker', maxRequests: 30, windowMs: 60_000 }));
 
 const SA3B_MANDATE = 'REM-SA3B-PROBE-001';
 const SA4_MANDATE = 'REM-SA4-PILOT-001';
@@ -197,7 +199,7 @@ router.post('/outcome', async (req, res) => {
       ...(typeof req.body.branchName === 'string' ? { branchName: req.body.branchName } : {}),
       ...(typeof req.body.commitSha === 'string' ? { commitSha: req.body.commitSha } : {}),
       ...(positiveInteger(req.body.pullRequestNumber)
-        ? { pullRequestNumber: req.body.pullRequestNumber }
+        ? { pullRequestNumber: req.body.pullNumber }
         : {}),
       workflowRunId: identity.runId,
       policyId: policyIdForMandate(mandateId),
