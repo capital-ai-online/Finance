@@ -11,7 +11,7 @@ import nodemailer from 'nodemailer';
 import { getCleanEnv } from './env';
 import { getServerSupabase, isSupabaseConfigured } from './db';
 import { enqueueOutboxJob } from './outbox';
-import { htmlToPlainText } from '../src/platform/Security/safeIo';
+import { escapeHtml, htmlToPlainText } from '../src/platform/Security/safeIo';
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
 
@@ -77,18 +77,6 @@ export async function sendMail(params: SendMailParams): Promise<{ success: boole
     console.error(`[Mailer] Versand fehlgeschlagen (${error}).`);
     return { success: false, error };
   }
-}
-
-function escapeHtml(value: unknown): string {
-  return String(value ?? '').replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case '&': return '&';
-      case '<': return '<';
-      case '>': return '>';
-      case '"': return '"';
-      default: return '&#39;';
-    }
-  });
 }
 
 export function buildSubscriptionActivatedEmail(planId: string, email: string): { subject: string; html: string } {
