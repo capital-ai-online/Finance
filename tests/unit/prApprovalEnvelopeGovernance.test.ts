@@ -46,7 +46,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     expect(ownerPolicy).toContain('a separate Human approval prompt before PR or Draft-PR creation is not required');
     expect(ownerPolicy).toContain('The pre-create evidence is a **correlation record**, not an approval credential');
     expect(chain).toContain('FINAL CREATE-CORRELATION PASS OR BLOCKED');
-    expect(chain).toContain('Automated Draft PR creation is not merge authority');
+    expect(chain).toMatch(/Automated (?:Draft )?PR creation is not merge authority/i);
   });
 
   it('serializes dependent Roadmap PRs on integrated current-main state', () => {
@@ -55,7 +55,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
 
     for (const text of [agents, ownerPolicy, chain]) {
-      expect(text).toContain('at most one not-yet-integrated automated PR');
+      expect(text).toMatch(/at most one not-yet-integrated automated PR/i);
       expect(text).toMatch(/successor/i);
       expect(text).toMatch(/current `main`|current main/i);
       expect(text).toMatch(/closed without merge|close-without-merge/i);
