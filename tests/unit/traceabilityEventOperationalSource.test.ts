@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { EventContract } from '../../src/platform/EventMesh/Contracts/EventContract';
 import type { EventMetadata } from '../../src/platform/EventMesh/Contracts/EventMetadata';
+import { EventBus } from '../../src/platform/EventMesh/Core/EventBus';
 import { projectOperationalTraceStateRecord } from '../../src/platform/Traceability/Services/OperationalTraceStateProjection';
 import {
   buildPublishedTraceabilityEventOperationalSource,
   classifyTraceabilityEventFreshness,
 } from '../../src/platform/Traceability/Services/TraceabilityEventOperationalSource';
+
+const RUN_ID = '2026-09-15T17:39:59.000Z';
 
 function traceEvent(overrides: Partial<EventMetadata> = {}): EventContract {
   return {
@@ -14,38 +17,62 @@ function traceEvent(overrides: Partial<EventMetadata> = {}): EventContract {
       name: 'TraceabilityBuildCompletedEvent',
       timestamp: '2026-09-15T17:40:00.000Z',
       sourceComponent: 'src/platform/Traceability',
-      correlationId: '2026-09-15T17:39:59.000Z',
+      correlationId: RUN_ID,
       essReferences: ['ESS-0011'],
       adrReferences: ['ADR-0015', 'ADR-0018'],
       ...overrides,
     },
     version: { major: 1, minor: 0, patch: 0 },
-    payload: { runId: '2026-09-15T17:39:59.000Z' },
+    payload: { runId: RUN_ID },
   };
 }
 
+function publishTraceEvent(): EventContract {
+  const bus = new EventBus();
+  bus.registry.registerEvent({
+    name: 'TraceabilityBuildCompletedEvent',
+    category: 'Traceability Events',
+    version: '1.0.0',
+    producers: [],
+    consumers: [],
+    essReferences: ['ESS-0011'],
+    adrReferences: ['ADR-0015', 'ADR-0018'],
+  });
+  return bus.publish(
+    'TraceabilityBuildCompletedEvent',
+    { runId: RUN_ID },
+    {
+      sourceComponent: 'src/platform/Traceability',
+      correlationId: RUN_ID,
+      essReferences: ['ESS-0011'],
+      adrReferences: ['ADR-0015', 'ADR-0018'],
+    },
+  );
+}
+
 describe('Traceability EventMesh operational source binding', () => {
-  it('copies published EventMesh identity/correlation/timestamp into one strict bound record', () => {
+  it('binds the actual EventBus publisher return into one strict operational record', () => {
+    const published = publishTraceEvent();
     const source = buildPublishedTraceabilityEventOperationalSource(
-      traceEvent(),
-      '2026-09-15T17:40:01.000Z',
+      published,
+      published.metadata.timestamp,
     );
     const projected = projectOperationalTraceStateRecord(source);
 
     expect(source.identity).toEqual({
       projectId: 'CAPITAL-AI-OPS',
       pvcId: 'PVC-18',
-      statusId: 'event:traceability:1',
+      statusId: published.metadata.eventId,
     });
     expect(source.evidence).toEqual([{
-      ref: 'event:traceability:1',
+      ref: published.metadata.eventId,
       kind: 'trace',
       label: 'TraceabilityBuildCompletedEvent',
-      identityRef: 'event:traceability:1',
-      correlationId: '2026-09-15T17:39:59.000Z',
+      identityRef: published.metadata.eventId,
+      correlationId: RUN_ID,
     }]);
-    expect(source.trace?.correlationId).toBe('2026-09-15T17:39:59.000Z');
-    expect(source.provenance.sourceTimestamp).toBe('2026-09-15T17:40:00.000Z');
+    expect(source.trace?.correlationId).toBe(RUN_ID);
+    expect(source.provenance.sourceTimestamp).toBe(published.metadata.timestamp);
     expect(source.provenance.freshness).toBe('FRESH');
     expect(projected.state).toBe('CURRENT');
     expect(projected.validation).toBe('PASS');
