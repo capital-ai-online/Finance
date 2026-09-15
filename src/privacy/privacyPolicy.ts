@@ -1,4 +1,4 @@
-export const PRIVACY_NOTICE_VERSION = '2026-08-19';
+export const PRIVACY_NOTICE_VERSION = '2026-09-15';
 
 export const CONTROLLER = {
   name: 'Sven Michael Kulessa',
@@ -113,17 +113,17 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
   },
   {
     id: 'analytics-advertising',
-    title: 'Reichweitenmessung und Werbung',
+    title: 'Reichweitenmessung und Cookie-Auswahl',
     lifecycle: 'conditional',
-    purpose: 'Optionale Nutzungsstatistik und optionale Werbeauslieferung.',
+    purpose: 'Optionale Nutzungsstatistik nach Einwilligung; Google AdSense ist derzeit deaktiviert.',
     dataCategories: ['Online-Kennungen', 'Cookie-/Consent-Informationen', 'Nutzungs- und Geräteinformationen', 'gekürzte/technisch verarbeitete IP-Informationen beim Provider'],
     legalBasis:
-      'Art. 6 Abs. 1 lit. a DSGVO und § 25 TDDDG für einwilligungspflichtige Endgerätezugriffe. Ohne passende Einwilligung werden GA4/AdSense nicht geladen.',
-    recipients: ['Google für Google Analytics 4 und AdSense', 'CookieHub als Consent-Management-Plattform'],
+      'Art. 6 Abs. 1 lit. a DSGVO und § 25 TDDDG für einwilligungspflichtige Endgerätezugriffe. Ohne passende Einwilligung wird GA4 nicht geladen. AdSense bleibt auch nach einer Einwilligung deaktiviert.',
+    recipients: ['Google für Google Analytics 4; CookieConsent wird selbst gehostet und übermittelt keine Consent-Daten an seinen Entwickler'],
     transfer:
       'Bei Google-Diensten kann eine Verarbeitung außerhalb des EWR stattfinden. Der konkrete Transfermechanismus ist anhand der aktuellen Providerverträge zu dokumentieren.',
     retention:
-      'Gemäß aktueller Analytics-/Consent-Konfiguration und bis zum Widerruf; First-Party-GA-Cookies werden bei Widerruf durch die Anwendung entfernt, soweit technisch verfügbar.',
+      'Die Cookie-Auswahl wird lokal höchstens 182 Tage gespeichert. Analytics-Aufbewahrung richtet sich nach der Provider-Konfiguration; erreichbare First-Party-GA-Cookies werden bei Widerruf gelöscht.',
     technicalControls: ['Basic Consent Mode v2', 'default denied', 'dynamisches Laden erst nach Opt-in', 'Widerrufs-Reload'],
   },
   {
