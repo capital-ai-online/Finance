@@ -616,8 +616,9 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
           (row) =>
             row.status !== 'READY' ||
             row.score === null ||
-            row.backendRanking?.rank === null ||
-            row.backendRanking?.cohortKey === null ||
+            row.backendRanking === null ||
+            row.backendRanking.rank === null ||
+            row.backendRanking.cohortKey === null ||
             rankingCohortConflict,
         );
         const projection = buildUniverseAvailabilityProjection(
@@ -807,7 +808,7 @@ function AssetBlock({
           <div className="rounded-lg border border-border bg-surface/40 p-3 text-[9px] text-text-secondary">
             {pending
               ? 'Verifizierte Scores werden nachgeladen…'
-              : 'Kein eindeutiges backend-autoritativen Ranking für diese Kohorte verfügbar'}
+              : 'Kein eindeutiges backend-autoritatives Ranking für diese Kohorte verfügbar'}
           </div>
         )}
       </div>
