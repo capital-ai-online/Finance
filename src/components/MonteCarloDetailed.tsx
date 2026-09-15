@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Play, Cpu, TrendingUp, TrendingDown, RefreshCw, Info, HelpCircle, CheckCircle } from 'lucide-react';
+import { authFetch } from '../lib/authFetch';
 
 interface MonteCarloDetailedProps {
   selectedSymbol: string;
@@ -25,6 +26,7 @@ export function MonteCarloDetailed({ selectedSymbol, triggerAttempt }: MonteCarl
   const [simulating, setSimulating] = useState<boolean>(false);
   const [result, setResult] = useState<SimResult | null>(null);
   const [assets, setAssets] = useState<any[]>([]);
+  const [authorizationError, setAuthorizationError] = useState<string | null>(null);
 
   React.useEffect(() => {
     fetch('/api/market-data')
@@ -76,16 +78,45 @@ export function MonteCarloDetailed({ selectedSymbol, triggerAttempt }: MonteCarl
     setVolatility(vol);
   }, [selectedSymbol, assets]);
 
-  const runSimulation = (bypassTrigger = false) => {
-    const execute = () => {
+  const runSimulation = () => {
+    const execute = async () => {
       setSimulating(true);
       setResult(null);
+      setAuthorizationError(null);
+
+      try {
+        const authorizationResponse = await authFetch('/api/entitlements/monte-carlo/authorize', {
+          method: 'POST',
+        });
+
+        if (!authorizationResponse.ok) {
+          const body = await authorizationResponse.json().catch(() => ({}));
+          const reason = String(body?.reason || `HTTP_${authorizationResponse.status}`);
+          setAuthorizationError(
+            reason === 'quota-limit-reached'
+              ? 'Das Monte-Carlo-Tageskontingent ist ausgeschöpft.'
+              : reason === 'feature-not-entitled'
+                ? 'Monte Carlo ist für dieses Abonnement nicht freigeschaltet.'
+                : reason === 'authentication-required'
+                  ? 'Anmeldung erforderlich, um Monte Carlo auszuführen.'
+                  : 'Die serverseitige Entitlement-Prüfung ist derzeit nicht verfügbar.',
+          );
+          setSimulating(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Monte Carlo authorization failed:', error);
+        setAuthorizationError('Die serverseitige Entitlement-Prüfung ist derzeit nicht verfügbar.');
+        setSimulating(false);
+        return;
+      }
 
       setTimeout(() => {
-        // Simulate paths
+        // Simulate paths only after the authoritative server ALLOW decision.
         const pathsCountToRender = 15; // Number of visual paths to show on chart
         const yearsCount = years;
         const stepSize = 1; // 1 year intervals
+        void stepSize;
         
         const simulatedPaths: number[][] = [];
         const finalValues: number[] = [];
@@ -140,17 +171,15 @@ export function MonteCarloDetailed({ selectedSymbol, triggerAttempt }: MonteCarl
       }, 1500);
     };
 
-    if (triggerAttempt && !bypassTrigger) {
+    if (triggerAttempt) {
       triggerAttempt('Monte Carlo Simulation', execute);
     } else {
-      execute();
+      void execute();
     }
   };
 
-  // Pre-run automatically when selectedSymbol or parameters change
-  React.useEffect(() => {
-    runSimulation(true);
-  }, [selectedSymbol, expectedReturn, volatility, years, initialCapital, simPathsCount]);
+  // FIN-SEC-03: there is intentionally no automatic simulation effect. Every execution is
+  // user-triggered and must receive a fresh server-authoritative ALLOW decision first.
 
   // SVG dimensions for chart
   const chartWidth = 600;
@@ -274,13 +303,19 @@ export function MonteCarloDetailed({ selectedSymbol, triggerAttempt }: MonteCarl
             </div>
 
             <button
-              onClick={() => runSimulation(false)}
+              onClick={runSimulation}
               disabled={simulating}
               className="w-full py-3 bg-aif-neon-cyan hover:bg-aif-neon-cyan/80 text-black font-black text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(13,221,221,0.3)] transition-all disabled:opacity-50"
             >
               {simulating ? <RefreshCw className="animate-spin" size={14} /> : <Play fill="currentColor" size={12} />}
               {simulating ? 'Berechne Pfade...' : 'Simulation starten'}
             </button>
+
+            {authorizationError && (
+              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-[10px] text-red-300 font-mono leading-relaxed">
+                {authorizationError}
+              </div>
+            )}
           </div>
         </div>
 

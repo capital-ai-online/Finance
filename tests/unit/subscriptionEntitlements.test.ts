@@ -29,12 +29,24 @@ describe('subscription-entitlements/1.0.0', () => {
     expect(getWindowedFeatureLimit('Enterprise', 'buffett_value_check')).toBe('unlimited');
   });
 
-  it('keeps backtest and Monte Carlo behind Pro', () => {
+  it('keeps backtest and Monte Carlo behind the canonical paid tiers', () => {
     expect(SUBSCRIPTION_ENTITLEMENTS.Free.backtest).toBe(false);
     expect(SUBSCRIPTION_ENTITLEMENTS.Starter.backtest).toBe(false);
     expect(SUBSCRIPTION_ENTITLEMENTS.Pro.backtest).toBe(true);
+    expect(SUBSCRIPTION_ENTITLEMENTS.Enterprise.backtest).toBe(true);
+    expect(SUBSCRIPTION_ENTITLEMENTS.Free.monteCarlo).toBe('none');
+    expect(SUBSCRIPTION_ENTITLEMENTS.Starter.monteCarlo).toBe('none');
     expect(SUBSCRIPTION_ENTITLEMENTS.Pro.monteCarlo).toEqual({ limit: 1, windowDays: 1 });
     expect(SUBSCRIPTION_ENTITLEMENTS.Enterprise.monteCarlo).toBe('unlimited');
+  });
+
+  it('keeps full_ai_analysis preview-only or quota-bound until Pro', () => {
+    expect(getWindowedFeatureLimit('Free', 'full_ai_analysis')).toBe('preview_only');
+    expect(getWindowedFeatureLimit('Starter', 'full_ai_analysis')).toEqual({ limit: 1, windowDays: 1 });
+    expect(getWindowedFeatureLimit('Pro', 'full_ai_analysis')).toBe('unlimited');
+    expect(getWindowedFeatureLimit('Enterprise', 'full_ai_analysis')).toBe('unlimited');
+    expect(canUseFeature('registered', 'Free', 'full_ai_analysis')).toBe(false);
+    expect(canUseFeature('registered', 'Starter', 'full_ai_analysis')).toBe(true);
   });
 
   it('calculates the documented 10% annual preview only where annual self-service is supported', () => {

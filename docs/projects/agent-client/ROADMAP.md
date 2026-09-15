@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/agent-client/`  
 **Owner/PVC:** `CAPITAL-AI-CLIENT / PVC-01`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — roadmap structure normalized against current main; generic carry-forward removed  
-**Baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Reconciliation:** 2026-09-15 — roadmap structure normalized and re-correlated against current main; generic carry-forward removed; physical runtime trigger remains absent  
+**Baseline:** `main@103689c2f30536e573b7958f63b503ca428f69cf`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Vision

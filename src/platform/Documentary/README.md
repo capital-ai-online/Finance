@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, der bounded ESS-0012 `GOV-DOC-003` Documentation-Freshness-Validator, der inkrementelle `GOV-DOC-006` Generator-Marking-Validator, der inkrementelle `GOV-DOC-001` Dokumentversions-Validator, der inkrementelle `GOV-DOC-002` ESS/ADR-Referenz-Validator, der inkrementelle `GOV-DOC-004` Dokumentklassen-Validator, der bounded `GOV-DOC-005` Documentation-Path-Exception-Validator, der bounded `GOV-DOC-007` Unresolved-Reference-Validator, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, der bounded ESS-0012 `GOV-DOC-003` Documentation-Freshness-Validator, der inkrementelle `GOV-DOC-006` Generator-Marking-Validator, der inkrementelle `GOV-DOC-001` Dokumentversions-Validator, der inkrementelle `GOV-DOC-002` ESS/ADR-Referenz-Validator, der inkrementelle `GOV-DOC-004` Dokumentklassen-Validator, der bounded `GOV-DOC-005` Documentation-Path-Exception-Validator, der bounded `GOV-DOC-007` Unresolved-Reference-Validator, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning, der bounded WP-DOC-14 Migration-Execution-Readiness-Dry-Run sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
 
 ## Implemented Scope
 
@@ -37,6 +37,7 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Agents/DocumentaryMaintenanceAgent.ts`
 - `Agents/ArchiveRetentionAgent.ts`
 - `Migration/DocumentaryMigrationPlanner.ts`
+- `Migration/DocumentaryMigrationDryRun.ts`
 - `Orchestration/DocumentaryMaintenanceOrchestrator.ts`
 - `Observability/DocumentaryMaintenanceObservability.ts`
 - `Models/DocumentaryDocument.ts`
@@ -79,7 +80,11 @@ Automatisch `delete-eligible` können nur alte, unregistrierte, unreferenzierte 
 
 `Migration/DocumentaryMigrationPlanner.ts` klassifiziert Documentary-Dokumentation deterministisch als `canonical`, `generated`, `evidence`, `legacy`, `archive` oder `unknown` und erzeugt ausschließlich read-only Planungsdispositionen (`retain`, `migration-candidate`, `redirect-candidate`, `owner-review`, `blocked`).
 
-Der Planner führt keine Dateioperation, Registry-Mutation, Lifecycle-Transition, Redirect-Erzeugung oder Freigabe aus; `mutationPerformed=false` bleibt Teil jedes Ergebnisses. Fremde Projekt-Owner sowie unsichere oder nicht dokumentationsbezogene Pfade werden fail-closed blockiert. Physische oder semantische Migration Execution bleibt ein separates, künftig zu korrelierendes und zu autorisierendes Work Package.
+Der Planner führt keine Dateioperation, Registry-Mutation, Lifecycle-Transition, Redirect-Erzeugung oder Freigabe aus; `mutationPerformed=false` bleibt Teil jedes Ergebnisses. Fremde Projekt-Owner sowie unsichere oder nicht dokumentationsbezogene Pfade werden fail-closed blockiert.
+
+`Migration/DocumentaryMigrationDryRun.ts` ergänzt WP-DOC-14 als separate, weiterhin read-only Execution-Readiness-Grenze. Der Dry-Run kann eine Planner-Disposition niemals erweitern und liefert ausschließlich `OWNER_REVIEW_REQUIRED` oder `BLOCKED`. Stable Identity/Fingerprint, Source-/Target-Owner, Protected-Class-/Target-Kollision, Compatibility, Impact/Risk, Equivalence, Sequence/Prerequisites, Validation/Test, ADR-/Version- sowie vollständige Rollback-Evidence werden fail-closed geprüft.
+
+Auch beim vollständig belegten Dry-Run bleiben `executionAuthorized=false`, `mutationPerformed=false`, `registryMutationPerformed=false`, `lifecycleMutationPerformed=false` und `filesystemMutationPerformed=false`. Physische oder semantische Migration Execution bleibt ein separates, künftig neu zu korrelierendes und zu autorisierendes Mutations-Work-Package.
 
 ### SC-MD-SPT-0001 Wertschöpfungsketten-Anbindung
 
@@ -146,13 +151,13 @@ Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach App
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service plus bounded `GOV-DOC-001`, `GOV-DOC-002`, `GOV-DOC-003`, `GOV-DOC-004`, `GOV-DOC-005`, `GOV-DOC-006` und `GOV-DOC-007`), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Migration` (read-only D8 Planning Slice), `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service plus bounded `GOV-DOC-001`, `GOV-DOC-002`, `GOV-DOC-003`, `GOV-DOC-004`, `GOV-DOC-005`, `GOV-DOC-006` und `GOV-DOC-007`), `Interfaces`, `Knowledge`, `Lifecycle`, `Mermaid`, `Migration` (read-only D8 Planning plus WP-DOC-14 Execution-Readiness-Dry-Run), `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: physische/semantische `MigrationExecution`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren jenseits `GOV-DOC-001` bis `GOV-DOC-007`. Diese Bereiche werden durch WP-DOC-13 nicht implizit implementiert oder autorisiert.
+Weiterhin geplant: physische/semantische `MigrationExecution`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren jenseits `GOV-DOC-001` bis `GOV-DOC-007`. Der WP-DOC-14-Dry-Run implementiert oder autorisiert keine physische/semantische Migration.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability-, Freshness- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. D8 bleibt read-only Planning; Migration Execution ist nicht Teil dieses Slices. `GOV-DOC-001` bis `GOV-DOC-007` bleiben read-only Documentary Findings und treffen keine Governance-/Release-Entscheidung. `GOV-DOC-005` scannt das Repository nicht selbst und registriert keine Ausnahme; `GOV-DOC-007` konsumiert nur explizite Referenz-Evidence und führt keinen eigenen Markdown-Scan aus. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
+Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Diagramm-, Governance-, Observability-, Freshness- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die Mermaid-Projektion bleibt pure/read-only und erzeugt keine aktiven Mermaid-Direktiven aus Evidence. D8 Planning und WP-DOC-14 Dry-Run bleiben read-only; physische/semantische Migration Execution ist nicht Teil dieses Slices. `GOV-DOC-001` bis `GOV-DOC-007` bleiben read-only Documentary Findings und treffen keine Governance-/Release-Entscheidung. `GOV-DOC-005` scannt das Repository nicht selbst und registriert keine Ausnahme; `GOV-DOC-007` konsumiert nur explizite Referenz-Evidence und führt keinen eigenen Markdown-Scan aus. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
 
 ## ESS / ADR
 
