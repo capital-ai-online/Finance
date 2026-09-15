@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Cross-Project Dependencies
 
-**Baseline:** `main@6ace37bffa7912ec4f224feb69dd62ff9c629192`  
+**Baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
 **Project:** `CAPITAL-AI-FINTECH`  
 **Canonical folder:** `docs/projects/fintech/`
 
@@ -19,11 +19,11 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 - target_project_folder: `docs/projects/fintech/`
 - primary_owner: `CAPITAL-AI-FINTECH`
 - task: make every productive canonical verified-score/context/batch path consume the accepted `verified_screening` entitlement/quota boundary without creating a second scoring or entitlement authority
-- reason: canonical registry score routes currently bypass `enforceScreeningQuota()` while legacy guarded scoring routes consume it
+- reason: canonical registry score routes required the accepted server-side entitlement boundary
 - dependency: ADR-0034; existing ScoringModelRegistry/ScoringDispatcher/CanonicalScoreResult chain; server quota contract
 - required_evidence: Free/Starter/Pro/Enterprise quota-positive cases plus browser-tier escalation, forged identity, missing/invalid identity where applicable, stale-entitlement and direct alternate-route DENY evidence
 - verification_gate: CAPITAL-AI-SEC independent verification of returned S1-R2-06 boundary
-- status: `REFERRED_NOT_EXECUTED`
+- status: `IMPLEMENTED / EVIDENCE_READY / SECURITY_VERIFICATION_REQUESTED`
 
 ### PVC-15 — financial analysis entitlement boundary
 
@@ -33,12 +33,16 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 - target_project: `CAPITAL-AI-FINTECH`
 - target_project_folder: `docs/projects/fintech/`
 - primary_owner: `CAPITAL-AI-FINTECH`
-- task: define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve the existing Buffett server authority while correcting consumer integration through the proper downstream owner
-- reason: Backtest and Monte Carlo are executable without a paid server grant; `full_ai_analysis` is unbound; Buffett is fail-closed because its current browser caller does not use the bearer-aware client contract
+- task: define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve the existing Buffett server authority
+- reason: S1-R2-06 confirmed Backtest and Monte Carlo lacked a paid server grant and `full_ai_analysis` lacked an explicit productive entitlement binding
 - dependency: ADR-0034; DATA validated/history inputs where applicable; Frontend remains a consumer and must not invent entitlement semantics
-- required_evidence: verified-principal/server-entitlement decision; Free/Starter DENY; forged/missing-bearer DENY; stale-entitlement DENY; direct/automatic alternate-path DENY; explicit `full_ai_analysis` binding; Buffett authorization success/failure through bearer-aware consumer path
-- verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation and any required downstream consumer work
-- status: `REFERRED_NOT_EXECUTED`
+- required_evidence: verified-principal/server-entitlement decision; Free/Starter DENY; forged/missing-bearer DENY; direct/automatic alternate-path DENY; explicit `full_ai_analysis` binding; fail-closed executor-unavailable behavior
+- implementation: `server/middleware/paidAnalysisEntitlement.ts`; `server/quota.ts`; protected Backtest/Monte Carlo/full-AI consumers and routes
+- return_evidence: `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md`
+- verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation
+- status: `IMPLEMENTED / EVIDENCE_READY / SECURITY_VERIFICATION_REQUESTED`
+
+FINTECH does not set the parent Security finding to `VERIFIED` or `CLOSED`.
 
 ## Upstream DATA
 
@@ -87,6 +91,8 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 - verification_gate: no FINTECH score path may bypass failed DQ
 - status: `REFERRED_NOT_EXECUTED`
 
+Current DATA-to-FINTECH handoff evidence confirms `ValidatedDataInput/1.0.0` exists and PVC-12 consumption belongs to FINTECH. This makes FIN-12 implementable, but does not move DATA ownership into FINTECH.
+
 ## Downstream OPS
 
 ### PVC-18 — EventMesh / Traceability
@@ -119,7 +125,7 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 - verification_gate: FINTECH contract compatibility plus FE project validation
 - status: `REFERRED_NOT_EXECUTED`
 
-Additional downstream consumer work may be required by FIN-SEC-03 for bearer-aware Buffett integration. That consumer implementation belongs to `CAPITAL-AI-FE` if/when FINTECH defines the exact contract and routing; this document does not pre-claim foreign implementation.
+Current-main recorrelation after FIN-SEC-03 makes `FIN-17` the single next FINTECH P1 slice because `RankingBoard` still performs browser-local READY-score ordering while a backend `CrossAssetRanking` implementation already exists.
 
 ## Quality
 
