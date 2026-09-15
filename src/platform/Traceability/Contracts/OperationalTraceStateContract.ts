@@ -4,7 +4,7 @@
 // This contract transports evidence. It never grants approval, merge, release, deployment or
 // business-decision authority, and it does not create a second EventMesh or trace store.
 
-export const OPERATIONAL_TRACE_STATE_SCHEMA_VERSION = '1.0' as const;
+export const OPERATIONAL_TRACE_STATE_SCHEMA_VERSION = '1.1' as const;
 
 export type OperationalTraceState = 'CURRENT' | 'BLOCKED' | 'WAITING' | 'UNKNOWN';
 export type OperationalTraceValidationState = 'PASS' | 'FAIL' | 'PENDING' | 'NOT_RUN' | 'UNKNOWN';
@@ -39,6 +39,22 @@ export interface OperationalTraceEvidenceReference {
   ref: string;
   kind: OperationalTraceEvidenceKind;
   label?: string;
+  /** Optional source-owned immutable identity. Never synthesized by this projection. */
+  identityRef?: string;
+  /** Optional source-owned correlation identity for this exact evidence reference. */
+  correlationId?: string;
+}
+
+/**
+ * Optional bounded integrity requirement for records that must prove one exact source-owned
+ * evidence identity/correlation pair. Generic operational records remain backward-compatible and
+ * do not acquire this stricter requirement unless the source explicitly opts in.
+ */
+export interface OperationalTraceStrictEvidenceBinding {
+  mode: 'STRICT_IDENTITY_CORRELATION';
+  evidenceIdentityRef: string;
+  evidenceRef: string;
+  correlationId: string;
 }
 
 /**
@@ -61,18 +77,24 @@ export interface OperationalTraceStateSourceRecord {
   evidence: readonly OperationalTraceEvidenceReference[];
   provenance: OperationalTraceProvenance;
   trace?: OperationalTraceCorrelationIdentity;
+  strictEvidenceBinding?: OperationalTraceStrictEvidenceBinding;
 }
 
 /**
  * Normalized record exposed to read-only consumers.
  * `state` and `validation` are fail-closed effective values; reported values remain visible only
- * so a consumer can explain why stale/missing evidence was downgraded to UNKNOWN.
+ * so a consumer can explain why stale/missing or strictly unbound evidence was downgraded to UNKNOWN.
  */
 export interface OperationalTraceStateRecord extends OperationalTraceStateSourceRecord {
   state: OperationalTraceState;
   validation: OperationalTraceValidationState;
   missingEvidence: boolean;
   staleOrUnknownFreshness: boolean;
+  strictEvidenceBindingRequired: boolean;
+  missingCorrelation: boolean;
+  missingEvidenceIdentity: boolean;
+  missingSourceTimestamp: boolean;
+  evidenceBindingMismatch: boolean;
   failsClosed: boolean;
 }
 
