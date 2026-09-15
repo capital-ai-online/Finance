@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `2.9.0`  
 **Status date:** `2026-09-15`  
-**Current repository baseline for this synchronization:** `main@698e0bc26e28899ddf2429fb298f74d54e35b3b0`  
+**Current repository baseline for this synchronization:** `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
 **Open PR correlation at this synchronization:** PR #951 (`CAPITAL-AI-FE`, FIN-17 RankingBoard consumer) changes only `src/features/screening/ui/RankingBoard.tsx` and `tests/unit/fin17RankingBoardConsumer.test.ts`; no changed-file, namespace, Governance-authority or lifecycle-workflow overlap with GOV-CHAT-077  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
