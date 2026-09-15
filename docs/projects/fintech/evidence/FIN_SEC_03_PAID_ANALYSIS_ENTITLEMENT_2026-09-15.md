@@ -6,7 +6,7 @@
 **Authority:** `/AGENTS.md@current-main`, ADR-0034, `subscription-entitlements/1.0.0`  
 **FINTECH status:** `IMPLEMENTED / EVIDENCE_READY`  
 **Security status:** `VERIFICATION REQUESTED` — not `VERIFIED`, not `CLOSED`  
-**Correlation baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Correlation baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
 **Branch:** `agent/fintech-fin-sec-03-analysis-entitlement-20260915`
 
 ## 1. Scope and invariant
@@ -80,7 +80,7 @@ The execution order is fail-closed:
 → structured portfolio analysis result
 ```
 
-If no productive provider exists, all configured providers fail, or the executor throws, the route returns `503 FULL_AI_ANALYSIS_UNAVAILABLE`. The extracted productive route no longer fabricates a deterministic heuristic review as a substitute for an unavailable AI executor.
+If no productive provider exists, all configured providers fail, or the executor throws, the route returns `503 FULL_AI_ANALYSIS_UNAVAILABLE`. Provider availability is checked before entitlement/quota consumption. The extracted productive route no longer fabricates a deterministic heuristic review as a substitute for an unavailable AI executor.
 
 A later legacy inline `/api/portfolio-review` declaration remains in `server.application.ts` as compatibility residue. Current application composition mounts `registerApplicationRoutes(...)` and its extracted portfolio-review router first, so the canonical protected handler has precedence. `tests/unit/finSec03PaidAnalysisWiring.test.ts` records that route-order invariant. Retirement of the shadowed legacy declaration is separate decomposition debt and is not used as productive FIN-SEC-03 authority.
 
@@ -106,7 +106,7 @@ Focused regression artifacts are prepared and source-correlated:
   - Backtest gate precedes history/provider execution;
   - every current Backtest compatibility consumer uses bearer-aware transport;
   - Monte Carlo requires fresh server authorization and has no automatic/bypass execution;
-  - `full_ai_analysis` is bound to the real structured provider executor and fails closed;
+  - `full_ai_analysis` requires a productive provider before entitlement/quota consumption, is bound to the real structured provider executor and fails closed;
   - canonical extracted route precedes the legacy inline compatibility residue.
 - `tests/unit/subscriptionEntitlements.test.ts`
   - exact Backtest, Monte Carlo and `full_ai_analysis` ADR-0034 plan matrix.
@@ -121,7 +121,7 @@ Executed/read back in this ChatGPT GitHub-connector session:
 - project/PVC/Owner and FINTECH Roadmap correlation;
 - ADR-0034 plan/entitlement semantics;
 - open-PR and changed-file overlap correlation;
-- branch/main compare after synchronization: merge base equals `main@833b0184c9b61d2341a22f434b408b1cc0416def`, branch is `0 behind`;
+- branch synchronized after the Documentary-only PR #927 merge; final current-main merge base is `main@8f11a360ce598100396562ad0eced04ca13b7372` and no FINTECH semantic overlap was introduced;
 - source-level readback of the paid-analysis middleware, quota functions, route ordering, all current compatibility consumers and focused regression test definitions;
 - source-level compatibility review against the existing domain-decomposition and analysis-route extraction contracts.
 
