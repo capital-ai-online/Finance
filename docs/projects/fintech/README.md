@@ -5,7 +5,7 @@
 **Canonical project path:** `docs/projects/fintech/`  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
 **Primary Project Value Chain ownership:** `PVC-12` through `PVC-17`  
-**Current-main synchronization baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
+**Current-main synchronization baseline:** `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`  
 **Trust root:** `/AGENTS.md`  
 **Project model:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`
 
@@ -71,14 +71,14 @@ Merged OPS PR #694 completed `OPS-02-SEC-06`, the parent inventory for Security 
 
 `CAPITAL-AI-SEC` retains independent Security verification and `VERIFIED/CLOSED` authority. FINTECH does not self-close `S1-R2-06`. FIN-SEC-03 details are recorded in `evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md`.
 
-The bounded post-merge project-surface synchronization is materialized on `agent/fintech-fin-sec-03-post-merge-sync-20260915`. `FIN-17` remains selected as the next FINTECH P1 slice but is held until Human merge of this post-merge sync and a fresh then-current-main/open-writer recorrelation.
+The bounded post-merge project-surface synchronization was Human-merged through PR #942 from `agent/fintech-fin-sec-03-post-merge-sync-20260915`. `FIN-17` remains selected as the next FINTECH P1 slice and is now `READY` after fresh `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3` / open-writer recorrelation found no open Pull Request writers.
 
 See `SECURITY_HANDOFFS.md`, `CROSS_PROJECT_DEPENDENCIES.md` and `TASK_REGISTER.md`.
 
 ## Current execution priorities
 
 1. Independent Security verification remains open for FIN-SEC-02 and FIN-SEC-03; their FINTECH implementation/test artifacts are `EVIDENCE_READY`.
-2. Keep `FIN-17` selected as the single next FINTECH P1 slice, but `HELD` until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915`; after merge, re-read then-current main/open writers before beginning ranking-authority work.
+2. `FIN-17` is the single next FINTECH P1 slice and is `READY`; the required Human merge of PR #942 and fresh current-main/open-writer recorrelation are complete, so ranking-authority work may begin from the current baseline.
 3. Re-correlate and continue `FIN-12` immediately after FIN-17; DATA has already provided the upstream `ValidatedDataInput` handoff.
 4. Keep `FIN-19` provider capability projection synchronized to the canonical DATA/provider surface without taking over provider ingress.
 5. Continue `FIN-20` end-to-end lineage after the P1 band unless current evidence changes the order.
