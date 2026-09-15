@@ -50,8 +50,9 @@ A planner result must already be `migration-candidate` or `redirect-candidate`. 
 
 The execution-evidence envelope is fail-closed and includes:
 
-- stable `migrationId` and `documentId`;
-- source fingerprint plus independently expected source fingerprint;
+- stable `migrationId`;
+- observed and expected `documentId` values that must match exactly;
+- observed and expected source fingerprints that must be valid SHA-256 values and match;
 - source and target Primary Owner evidence;
 - target protected-class, compatibility, collision and duplicate checks;
 - explicit source and target state;
@@ -79,7 +80,7 @@ Every dry-run result declares:
 
 ## Stable identity and canonical target
 
-WP-DOC-14 reuses the existing Documentary identity model rather than introducing a second registry or identifier plane. Stable identity is represented by the existing `documentId` and source fingerprint evidence. A dry run is blocked when the document identity is absent, the SHA-256 fingerprint is malformed, or observed and expected fingerprints differ.
+WP-DOC-14 reuses the existing Documentary identity model rather than introducing a second registry or identifier plane. Stable identity is bound by an observed-vs-expected `documentId` comparison plus observed-vs-expected SHA-256 fingerprint comparison. A dry run is blocked when either identity value is absent, the IDs differ, a fingerprint is malformed, or observed and expected fingerprints differ.
 
 The canonical target must already be known to the planner, remain Documentary-owned, not be classified by the caller as protected, be explicitly compatibility-safe, and be free of target collision or duplicate-artifact evidence.
 
@@ -117,9 +118,9 @@ Missing rollback evidence blocks the dry run. Because WP-DOC-14 performs no migr
 
 A later physical migration must still define and validate an executable rollback implementation under then-current authority before any mutation can occur.
 
-## Deterministic post-condition verification contract
+## Deterministic dry-run post-conditions
 
-Every dry-run result carries the same required post-condition identifiers for a later separately authorized execution:
+Every dry-run result carries the same invariant identifiers:
 
 - `document-id-preserved`;
 - `source-fingerprint-unchanged`;
@@ -131,7 +132,7 @@ Every dry-run result carries the same required post-condition identifiers for a 
 - `lifecycle-unchanged`;
 - `filesystem-unchanged`.
 
-These identifiers are verification requirements, not claims that a future physical migration has occurred or passed. WP-DOC-14 itself leaves all referenced state unchanged.
+These identifiers describe the required state of this **read-only dry run itself**. They are not claims about a future physical migration and do not define its post-mutation filesystem state. Any later physical/semantic execution must define its own separately authorized post-migration verification contract while preserving stable identity, compatibility, ownership and protected-class boundaries.
 
 ## Duplicate prevention
 
@@ -144,7 +145,8 @@ Planning regression coverage remains `tests/unit/documentaryMigrationPlanner.tes
 WP-DOC-14 focused coverage is `tests/unit/documentaryMigrationDryRun.test.ts` and covers:
 
 - a complete evidence envelope resulting only in `OWNER_REVIEW_REQUIRED`;
-- stable-identity/fingerprint drift;
+- observed-vs-expected document identity and fingerprint drift;
+- missing stable identity evidence;
 - foreign target ownership;
 - protected target class;
 - target incompatibility/collision and duplicate evidence;
