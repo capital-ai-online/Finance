@@ -1,0 +1,16 @@
+{
+  "name": "CookieConsent",
+  "npmPackage": "vanilla-cookieconsent",
+  "version": "3.1.0",
+  "license": "MIT",
+  "repository": "https://github.com/orestbida/cookieconsent",
+  "tag": "v3.1.0",
+  "commit": "e6279509aab5b96be198297b0283b321ad76b0a9",
+  "files": {
+    "cookieconsent.umd.js": { "upstreamPath": "dist/cookieconsent.umd.js", "gitBlobSha": "7f85a316a121b854e7647ad39a6b894e7f950b10" },
+    "cookieconsent.css": { "upstreamPath": "dist/cookieconsent.css", "gitBlobSha": "fdcc6ba6cb636090661685d4c3d4f831d6cd19ff" },
+    "LICENSE": { "upstreamPath": "LICENSE", "gitBlobSha": "cac51b2d15105cbc66135ced5e8c9bdd01aecff8" }
+  },
+  "modifications": "None; upstream bytes preserved. First-party configuration/theme live outside this directory.",
+  "updates": "Review upstream release and license, update pinned assets and integrity checks together. No runtime CDN or automatic update."
+}

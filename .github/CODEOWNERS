@@ -9,6 +9,10 @@
 
 /index.html @SvenKulessa
 /public/cookiehub-init.js @SvenKulessa
+/public/cookieconsent-init.js @SvenKulessa
+/public/cookieconsent-theme.css @SvenKulessa
+/public/vendor/cookieconsent/ @SvenKulessa
+/scripts/security/cookieConsentRuntime.test.mjs @SvenKulessa
 /public/google-analytics-consent.js @SvenKulessa
 /server/securityResponse.ts @SvenKulessa
 /server/logger.ts @SvenKulessa

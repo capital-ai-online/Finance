@@ -1,12 +1,13 @@
 // ADR-0035 / ESS-0014 / ADR-0040 / ADR-0042 — deployment-time protected-change guard.
 //
-// The guard protects both security intent and availability. It must reject silent removal of
-// CookieHub/consent/nonce controls, but it must also reject reintroducing AMP hooks into the
+// Owner-approved FE-CONSENT-V3 Variant A replaces only the provider binding.
+// The guard protects consent/nonce controls and the explicit AdSense pause, but it must also reject reintroducing AMP hooks into the
 // non-AMP SPA, loading Google tags before opt-in, or removing the report-only promotion boundary.
 //
 // This repository guard does not replace IAM authorization or human/CODEOWNER approval.
 
 import fs from 'fs';
+import crypto from 'node:crypto';
 import path from 'path';
 
 interface InvariantCheck {
@@ -30,16 +31,16 @@ function read(relativePath: string): string {
 
 const checks: InvariantCheck[] = [
   {
-    id: 'GMG-001',
-    file: 'index.html',
-    description: 'CookieHub production SDK must remain present',
-    includes: 'https://cdn.cookiehub.eu/c2/75f66920.js',
+    id: "GMG-001",
+    file: "index.html",
+    description: "Pinned self-hosted CookieConsent SDK must remain present",
+    includes: "/vendor/cookieconsent/3.1.0/cookieconsent.umd.js",
   },
   {
-    id: 'GMG-002',
-    file: 'index.html',
-    description: 'CSP-compliant first-party CookieHub initializer must remain present',
-    includes: '/cookiehub-init.js',
+    id: "GMG-002",
+    file: "index.html",
+    description: "First-party CookieConsent initializer must remain present",
+    includes: "/cookieconsent-init.js",
   },
   {
     id: 'GMG-003',
@@ -66,10 +67,10 @@ const checks: InvariantCheck[] = [
     pattern: /nonce="__CSP_NONCE__"/,
   },
   {
-    id: 'GMG-007',
-    file: 'public/google-analytics-consent.js',
-    description: 'Analytics must remain gated by CookieHub analytics consent',
-    includes: "hasConsented('analytics')",
+    id: "GMG-007",
+    file: "public/google-analytics-consent.js",
+    description: "Analytics requires an accepted CookieConsent category",
+    includes: "consent.acceptedCategory('analytics') === true",
   },
   {
     id: 'GMG-008',
@@ -96,28 +97,28 @@ const checks: InvariantCheck[] = [
     pattern: /randomBytes\((1[6-9]|[2-9][0-9])\)/,
   },
   {
-    id: 'GMG-012',
-    file: 'server/securityResponse.ts',
-    description: 'CookieHub data endpoint must remain allowed by the strict CSP',
-    includes: 'https://ds.cookiehub.net',
+    id: "GMG-012",
+    file: "index.html",
+    description: "No CookieHub third-party SDK may be reintroduced",
+    excludes: "cdn.cookiehub.eu",
   },
   {
-    id: 'GMG-013',
-    file: 'server/securityResponse.ts',
-    description: 'CookieHub consent endpoint must remain allowed by the strict CSP',
-    includes: 'https://consent.cookiehub.net',
+    id: "GMG-013",
+    file: "public/cookieconsent-init.js",
+    description: "Consent must remain opt-in",
+    includes: "mode: 'opt-in'",
   },
   {
-    id: 'GMG-014',
-    file: 'server/securityResponse.ts',
-    description: 'CookieHub EU region endpoint must remain allowed by the strict CSP',
-    includes: 'https://region-eu.cookiehub.net',
+    id: "GMG-014",
+    file: "public/cookieconsent-init.js",
+    description: "Legacy CookieHub consents must not be imported",
+    includes: "name: 'capital_ai_consent_v3'",
   },
   {
-    id: 'GMG-015',
-    file: 'server/securityResponse.ts',
-    description: 'CookieHub EU consent endpoint must remain allowed by the strict CSP',
-    includes: 'https://consent-eu.cookiehub.net',
+    id: "GMG-015",
+    file: "public/google-analytics-consent.js",
+    description: "Expired or invalid consent must fail closed",
+    includes: "consent.validConsent() === true",
   },
   {
     id: 'GMG-016',
@@ -186,10 +187,10 @@ const checks: InvariantCheck[] = [
     includes: 'Report-Only Promotion Gate',
   },
   {
-    id: 'GMG-027',
-    file: 'public/google-analytics-consent.js',
-    description: 'CookieHub runtime events must be observed on document, per vendor API',
-    includes: 'document.addEventListener(eventName, syncConsent)',
+    id: "GMG-027",
+    file: "public/google-analytics-consent.js",
+    description: "Saved CookieConsent lifecycle must be observed on window",
+    includes: "window.addEventListener('cc:onChange', handleSavedChange)",
   },
   {
     id: 'GMG-028',
@@ -198,10 +199,10 @@ const checks: InvariantCheck[] = [
     pattern: /consent', 'default'[\s\S]*?ad_storage: 'denied'[\s\S]*?analytics_storage: 'denied'/,
   },
   {
-    id: 'GMG-029',
-    file: 'public/google-analytics-consent.js',
-    description: 'AdSense must remain gated by CookieHub marketing consent',
-    pattern: /hasConsented\('marketing'\)[\s\S]*?if \(marketingAllowed\) loadAdSense\(\)/,
+    id: "GMG-029",
+    file: "public/google-analytics-consent.js",
+    description: "Variant A forbids an AdSense loader even after consent",
+    excludes: "pagead2.googlesyndication.com",
   },
   {
     id: 'GMG-030',
@@ -256,9 +257,26 @@ for (const check of checks) {
   }
 }
 
+// Immutable upstream assets: verify actual Git blob identities, including MIT license.
+const vendorBlobs: Record<string, string> = {
+  'cookieconsent.umd.js': '7f85a316a121b854e7647ad39a6b894e7f950b10',
+  'cookieconsent.css': 'fdcc6ba6cb636090661685d4c3d4f831d6cd19ff',
+  LICENSE: 'cac51b2d15105cbc66135ced5e8c9bdd01aecff8',
+};
+for (const [name, expected] of Object.entries(vendorBlobs)) {
+  const file = 'public/vendor/cookieconsent/3.1.0/' + name;
+  try {
+    const bytes = fs.readFileSync(path.join(root, file));
+    const actual = crypto.createHash('sha1').update('blob ' + bytes.length + '\0').update(bytes).digest('hex');
+    if (actual !== expected) failures.push({ id: 'GMG-VENDOR', file, description: 'Pinned upstream blob mismatch' });
+  } catch {
+    failures.push({ id: 'GMG-VENDOR', file, description: 'Pinned upstream asset missing' });
+  }
+}
+
 if (failures.length > 0) {
   console.error('\n[PROTECTED_CHANGE_GUARD] DEPLOYMENT BLOCKED\n');
-  console.error('A protected CookieHub / Google Marketing / CSP invariant is missing or unsafe.');
+  console.error('A protected CookieConsent / Google Marketing / CSP invariant is missing or unsafe.');
   console.error('Do not bypass this guard as a generic build fix.');
   console.error('Changes require ESS-0014 / ADR-0035 / ADR-0040 / ADR-0042 impact disclosure, review and evidence.\n');
 
@@ -270,3 +288,4 @@ if (failures.length > 0) {
 }
 
 console.log(`[PROTECTED_CHANGE_GUARD] ${checks.length} Google Marketing invariants verified.`);
+
