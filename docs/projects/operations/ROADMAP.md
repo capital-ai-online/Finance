@@ -32,6 +32,26 @@ Complete read/write capability coverage for Enterprise controls, custom properti
 
 **Exit:** capability matrix distinguishes available, unavailable, read-only and protected-mutation paths with evidence.
 
+#### OPS-PR900-03A — GitHub Work-Management Inventory & Package Materialization
+Inventory the currently connected GitHub work-management surfaces and materialize the coordination-only contract without duplicating Roadmap, Project/PVC, platform-version, Governance, Security, Release, Deployment, PR or merge authority.
+
+**State:** `MATERIALIZED_BRANCH / PRE_PR_CORRELATION_READY` on `agent/operations-github-work-management-20260915`.
+
+**Current inventory:** Issues are `AVAILABLE`; Labels and Milestones expose only partial Issue-association surfaces and cannot be completely enumerated/managed as object classes; Issue Types, Organization Issue Fields, Organization Projects/Project Fields and Wiki Pages/Navigation are `NOT_AVAILABLE_ON_CURRENT_CONNECTOR`. `NOT_AVAILABLE_ON_CURRENT_CONNECTOR` is a connector-capability statement only and never proof that an object does not exist.
+
+**Exit:** each requested metadata category has a reproducible capability classification; Roadmap, work-package register, detail contract and package index are consistent; no parallel valid content is lost; final main/head/open-writer correlation is PASS before PR approval.
+
+Detail: `work-packages/OPS_PR900_03A_GITHUB_WORK_MANAGEMENT_2026-09-15.md`.
+
+#### OPS-PR900-03B — GitHub Work-Management Pilot
+Sequence: `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -> Done -> Wiki Navigation`.
+
+**State:** `BLOCKED / NOT_STARTED`.
+
+03B starts only after 03A is completed against then-current main, all required object/mutation/readback surfaces are available through an authorized execution path, and the pilot can preserve the coordination-only authority boundary. No partial pilot counts as success.
+
+**Exit:** one real Roadmap work package traverses Issue -> Project -> PR -> Done with a non-versioned delivery-cohort Milestone and navigation-only Wiki backlinks, without creating a second Roadmap/version/Governance/Security/Release/Deployment authority.
+
 ### OPS-PR900-04 — Multi-LLM gateway / OAuth2 / MCP convergence
 Correlate existing gateway foundations; select/reuse one canonical architecture; retire or justify duplicates. Protected provider operations must be least-privileged, attributable and auditable; migration requires rollback/compatibility evidence.
 

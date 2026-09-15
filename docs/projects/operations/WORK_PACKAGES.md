@@ -131,6 +131,21 @@ Its changed files do not include top-level `ROADMAP.md`, top-level `WORK_PACKAGE
 
 DR-03 remains separate. No current package activates a provider adapter, modifies provider grants, creates a second Agent Control Plane, enables remote skill loading, creates an MCP server or performs Release/Production mutation.
 
+## OPS-PR900-03A / 03B — GitHub Work Management
+
+| Package | PVC | Current disposition | Bounded scope / gate |
+|---|---|---|---|
+| `OPS-PR900-03A` GitHub Work-Management Inventory & Package Materialization | `PVC-02` | `MATERIALIZED_BRANCH / PRE_PR_CORRELATION_READY` | inventory current connected GitHub work-management capabilities and materialize coordination-only repository contracts |
+| `OPS-PR900-03B` GitHub Work-Management Pilot | `PVC-02` | `BLOCKED / NOT_STARTED` | `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -> Done -> Wiki Navigation`; starts only when required object/mutation/readback surfaces are available and 03A is completed against then-current main |
+
+Current 03A provider classification is recorded in `work-packages/OPS_PR900_03A_GITHUB_WORK_MANAGEMENT_2026-09-15.md`: Issues are `AVAILABLE`; Labels and Milestones are `PARTIAL_SURFACE`; Issue Types, Organization Issue Fields, Organization Projects/Project Fields and Wiki Pages/Navigation are `NOT_AVAILABLE_ON_CURRENT_CONNECTOR`.
+
+`NOT_AVAILABLE_ON_CURRENT_CONNECTOR` is never equivalent to "object does not exist". No `EMPTY_VERIFIED` state is synthesized where complete enumeration is unavailable.
+
+Taxonomy preference is native Issue Types -> Organization Issue Fields -> residual Labels -> non-versioned delivery-cohort Milestone -> Project Status as workflow state. A future milestone may be named `GitHub Work Management Pilot`, but it cannot represent platform version, Release or Deployment state. Wiki content is limited to navigation/backlinks and cannot duplicate normative Roadmap/ADR/ESS/Governance/Security/Release content.
+
+03B remains blocked because the current connected surface cannot safely enumerate/manage Organization Projects/Project Fields, Milestone objects and Wiki navigation. No partial pilot counts as successful completion.
+
 ## Security / execution-delegation boundary
 
 Current Governance permits a bounded Security-primary repository remediation under its accepted Security-remediation control without transferring file, Domain or PVC ownership. CAPITAL-AI-SEC remains independent assurance owner for Security findings. This changes execution eligibility only; it does not let OPS self-close Security findings or let Security absorb OPS long-term ownership.
@@ -151,6 +166,7 @@ PR #872 demonstrates that separation: Security executed the bounded implementati
 10. External credential capability observed by successful reads does not prove absence of unobserved provider scopes.
 11. Productive M10 remains retired/off and is not reconstructed as a current package.
 12. Self-Healing readiness cannot convert SH-R2 protected actions into automatic remediation.
+13. GitHub Work Management remains coordination/navigation only; Issue/Project/Milestone/Wiki metadata cannot become a parallel Roadmap, version, Governance, Security, Release, Deployment, PR or merge authority.
 
 ## Current terminal references
 
