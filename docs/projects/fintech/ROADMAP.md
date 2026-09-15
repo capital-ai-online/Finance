@@ -5,7 +5,7 @@
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-12..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-15 — FIN-SEC-03 implementation/evidence and FIN-12 vs FIN-17 P1 reprioritization correlated to current main  
-**Baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
