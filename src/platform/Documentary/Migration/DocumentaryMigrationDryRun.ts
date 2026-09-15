@@ -13,6 +13,7 @@ export interface DocumentaryMigrationExecutionEvidence {
   migrationId: string;
   migrationCategory: DocumentaryMigrationExecutionCategory;
   documentId: string;
+  expectedDocumentId: string;
   sourceFingerprint: string;
   expectedSourceFingerprint: string;
   targetOwnerProject: string;
@@ -69,20 +70,27 @@ const REQUIRED_POST_CONDITIONS = Object.freeze([
   'filesystem-unchanged',
 ]);
 
-function hasItems(values: readonly string[]): boolean {
-  return values.some((value) => value.trim().length > 0);
+const VALID_MIGRATION_CATEGORIES = Object.freeze<readonly DocumentaryMigrationExecutionCategory[]>([
+  'Documentation Migration',
+  'Legacy Migration',
+]);
+
+function normalizeScalar(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
-function hasValue(value: string): boolean {
-  return value.trim().length > 0;
+function hasItems(values: unknown): boolean {
+  return Array.isArray(values)
+    && values.some((value) => typeof value === 'string' && value.trim().length > 0);
 }
 
-function isSha256(value: string): boolean {
-  return /^[0-9a-f]{64}$/i.test(value.trim());
+function isSha256(value: unknown): boolean {
+  return /^[0-9a-f]{64}$/i.test(normalizeScalar(value));
 }
 
-function hasAdrReference(values: readonly string[]): boolean {
-  return values.some((value) => /^ADR-[0-9]{4}(?:\b|[-_])/i.test(value.trim()));
+function hasAdrReference(values: unknown): boolean {
+  return Array.isArray(values)
+    && values.some((value) => typeof value === 'string' && /^ADR-[0-9]{4}(?:\b|[-_])/i.test(value.trim()));
 }
 
 function freezeResult(
@@ -94,8 +102,8 @@ function freezeResult(
   return Object.freeze({
     schemaVersion: DOCUMENTARY_MIGRATION_DRY_RUN_SCHEMA,
     status,
-    migrationId: evidence.migrationId.trim(),
-    documentId: evidence.documentId.trim(),
+    migrationId: normalizeScalar(evidence.migrationId),
+    documentId: normalizeScalar(evidence.documentId),
     sourcePath: assessment.path,
     targetPath: assessment.targetPath,
     plannerAssessment: assessment,
@@ -123,28 +131,38 @@ export class DocumentaryMigrationDryRun {
   ): DocumentaryMigrationDryRunResult {
     const assessment = this.planner.assess(candidate);
     const reasons: string[] = [];
+    const documentId = normalizeScalar(evidence.documentId);
+    const expectedDocumentId = normalizeScalar(evidence.expectedDocumentId);
+    const sourceFingerprint = normalizeScalar(evidence.sourceFingerprint);
+    const expectedSourceFingerprint = normalizeScalar(evidence.expectedSourceFingerprint);
 
     if (!['migration-candidate', 'redirect-candidate'].includes(assessment.disposition)) {
       reasons.push('planner-not-execution-candidate');
     }
 
-    if (!hasValue(evidence.migrationId)) reasons.push('migration-id-missing');
-    if (!hasValue(evidence.documentId)) reasons.push('document-id-missing');
+    if (!normalizeScalar(evidence.migrationId)) reasons.push('migration-id-missing');
+    if (!VALID_MIGRATION_CATEGORIES.includes(evidence.migrationCategory)) reasons.push('migration-category-invalid');
 
-    if (!isSha256(evidence.sourceFingerprint) || !isSha256(evidence.expectedSourceFingerprint)) {
+    if (!documentId || !expectedDocumentId) {
+      reasons.push('document-id-missing');
+    } else if (documentId !== expectedDocumentId) {
+      reasons.push('document-id-mismatch');
+    }
+
+    if (!isSha256(sourceFingerprint) || !isSha256(expectedSourceFingerprint)) {
       reasons.push('source-fingerprint-invalid');
-    } else if (evidence.sourceFingerprint.toLowerCase() !== evidence.expectedSourceFingerprint.toLowerCase()) {
+    } else if (sourceFingerprint.toLowerCase() !== expectedSourceFingerprint.toLowerCase()) {
       reasons.push('source-fingerprint-mismatch');
     }
 
     if (candidate.ownerProject !== 'CAPITAL-AI-DOC') reasons.push('source-owner-not-documentary');
-    if (evidence.targetOwnerProject !== 'CAPITAL-AI-DOC') reasons.push('target-owner-not-documentary');
-    if (evidence.targetProtectedClass) reasons.push('protected-target-class');
-    if (!evidence.canonicalTargetCompatible) reasons.push('canonical-target-incompatible');
-    if (evidence.targetCollisionDetected) reasons.push('canonical-target-collision');
-    if (evidence.duplicateArtifactDetected) reasons.push('duplicate-artifact-detected');
+    if (normalizeScalar(evidence.targetOwnerProject) !== 'CAPITAL-AI-DOC') reasons.push('target-owner-not-documentary');
+    if (evidence.targetProtectedClass !== false) reasons.push('protected-target-class');
+    if (evidence.canonicalTargetCompatible !== true) reasons.push('canonical-target-incompatible');
+    if (evidence.targetCollisionDetected !== false) reasons.push('canonical-target-collision');
+    if (evidence.duplicateArtifactDetected !== false) reasons.push('duplicate-artifact-detected');
 
-    if (!hasValue(evidence.sourceState) || !hasValue(evidence.targetState)) reasons.push('state-boundary-incomplete');
+    if (!normalizeScalar(evidence.sourceState) || !normalizeScalar(evidence.targetState)) reasons.push('state-boundary-incomplete');
     if (!hasItems(evidence.affectedComponents)) reasons.push('affected-components-missing');
     if (!hasItems(evidence.affectedData)) reasons.push('affected-data-missing');
     if (!hasItems(evidence.sequence)) reasons.push('migration-sequence-missing');
@@ -160,12 +178,12 @@ export class DocumentaryMigrationDryRun {
       || !hasItems(evidence.rollbackPrerequisites)
       || !hasItems(evidence.rollbackRisks)
       || !hasItems(evidence.rollbackTests)
-      || !hasValue(evidence.rollbackVersion)
+      || !normalizeScalar(evidence.rollbackVersion)
     ) {
       reasons.push('rollback-strategy-incomplete');
     }
 
-    if (!hasValue(evidence.migrationVersion)) reasons.push('migration-version-missing');
+    if (!normalizeScalar(evidence.migrationVersion)) reasons.push('migration-version-missing');
     if (!hasAdrReference(evidence.adrReferences)) reasons.push('adr-reference-missing');
 
     const status: DocumentaryMigrationDryRunStatus = reasons.length === 0
