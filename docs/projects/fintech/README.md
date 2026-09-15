@@ -5,7 +5,7 @@
 **Canonical project path:** `docs/projects/fintech/`  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
 **Primary Project Value Chain ownership:** `PVC-12` through `PVC-17`  
-**Current-main synchronization baseline:** `main@6ace37bffa7912ec4f224feb69dd62ff9c629192`  
+**Current-main synchronization baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
 **Trust root:** `/AGENTS.md`  
 **Project model:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`
 
@@ -64,22 +64,22 @@ Project organization does not relocate runtime merely to match `docs/projects/fi
 
 ## Current Security handoff state
 
-Merged OPS PR #694 completed `OPS-02-SEC-06`, the parent inventory for Security finding `S1-R2-06 — Entitlement authority`. The former conditional dependency is now concrete FINTECH work:
+Merged OPS PR #694 completed `OPS-02-SEC-06`, the parent inventory for Security finding `S1-R2-06 — Entitlement authority`. The two FINTECH children now have target-local implementation evidence:
 
-- `FIN-SEC-02 / PVC-16` — canonical verified-score/context/batch routes must consume the accepted `verified_screening` server entitlement/quota boundary;
-- `FIN-SEC-03 / PVC-15` — Backtest and Monte Carlo need authoritative protected-execution decisions, `full_ai_analysis` needs an explicit productive binding, and the existing Buffett server authority must be preserved while consumer integration is corrected through the proper downstream handoff.
+- `FIN-SEC-02 / PVC-16` — `IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED` for the canonical `verified_screening` server entitlement/quota boundary;
+- `FIN-SEC-03 / PVC-15` — `IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED` on `agent/fintech-fin-sec-03-analysis-entitlement-20260915`: Backtest and Monte Carlo resolve server-authoritative protected-execution decisions, `full_ai_analysis` is bound to the real structured portfolio-review executor and fails closed when unavailable, and the existing Buffett server authority is preserved.
 
-Both remain `REFERRED_NOT_EXECUTED` until separately implemented on scoped FINTECH work items. `CAPITAL-AI-SEC` retains independent Security verification and `VERIFIED/CLOSED` authority.
+`CAPITAL-AI-SEC` retains independent Security verification and `VERIFIED/CLOSED` authority. FINTECH does not self-close `S1-R2-06`. FIN-SEC-03 details are recorded in `evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md`.
 
 See `SECURITY_HANDOFFS.md`, `CROSS_PROJECT_DEPENDENCIES.md` and `TASK_REGISTER.md`.
 
 ## Current execution priorities
 
-1. Finish the current-main project-surface sync (`FIN-SYNC-01`).
-2. Execute the newly triggered `FIN-SEC-02` / `FIN-SEC-03` Security child remediations as separate P1/HIGH work items.
-3. Continue `FIN-17` ranking-authority consolidation.
-4. Continue `FIN-12` validated DATA → feature-contract boundary.
-5. Keep `FIN-19` provider capability projection synchronized to the canonical DATA/provider surface without taking over provider ingress.
+1. Independent Security verification remains open for FIN-SEC-02 and FIN-SEC-03; their FINTECH implementation/test artifacts are `EVIDENCE_READY`.
+2. Execute `FIN-17` as the single next FINTECH P1 slice: consolidate backend rank/order authority and remove productive browser-local Top/Worst business ordering.
+3. Re-correlate and continue `FIN-12` immediately after FIN-17; DATA has already provided the upstream `ValidatedDataInput` handoff.
+4. Keep `FIN-19` provider capability projection synchronized to the canonical DATA/provider surface without taking over provider ingress.
+5. Continue `FIN-20` end-to-end lineage after the P1 band unless current evidence changes the order.
 
 ## Canonical project documents
 
