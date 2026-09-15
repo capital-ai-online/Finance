@@ -90,11 +90,21 @@ jobs:
               return;
             }
 
-            const { data: target } = await github.rest.repos.getBranch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              branch: targetBranch,
-            });
+            let target;
+            try {
+              ({ data: target } = await github.rest.repos.getBranch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: targetBranch,
+              }));
+            } catch (error) {
+              const status = Number(error?.status || error?.response?.status || 0);
+              if (status === 404) {
+                core.notice(`BB-2E Zielbranch ${targetBranch} existiert nicht mehr; terminaler No-op, kein Dispatch.`);
+                return;
+              }
+              throw error;
+            }
             const feHead = normalizeSha(target.commit?.sha);
             if (!/^[0-9a-f]{40}$/.test(feHead)) fail('FE-Branch liefert keinen gültigen exakten Head-SHA.');
 
