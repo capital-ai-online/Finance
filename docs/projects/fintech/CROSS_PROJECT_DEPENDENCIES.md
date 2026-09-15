@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Cross-Project Dependencies
 
-**Baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
+**Baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
 **Project:** `CAPITAL-AI-FINTECH`  
 **Canonical folder:** `docs/projects/fintech/`
 
@@ -39,6 +39,7 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 - required_evidence: verified-principal/server-entitlement decision; Free/Starter DENY; forged/missing-bearer DENY; direct/automatic alternate-path DENY; explicit `full_ai_analysis` binding; fail-closed executor-unavailable behavior
 - implementation: `server/middleware/paidAnalysisEntitlement.ts`; `server/quota.ts`; protected Backtest/Monte Carlo/full-AI consumers and routes
 - return_evidence: `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md`
+- merge_evidence: `PR #929`; merge SHA `103689c2f30536e573b7958f63b503ca428f69cf`; historical implementation branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`
 - verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation
 - status: `IMPLEMENTED / EVIDENCE_READY / SECURITY_VERIFICATION_REQUESTED`
 
@@ -125,7 +126,7 @@ Current DATA-to-FINTECH handoff evidence confirms `ValidatedDataInput/1.0.0` exi
 - verification_gate: FINTECH contract compatibility plus FE project validation
 - status: `REFERRED_NOT_EXECUTED`
 
-Current-main recorrelation after FIN-SEC-03 makes `FIN-17` the single next FINTECH P1 slice because `RankingBoard` still performs browser-local READY-score ordering while a backend `CrossAssetRanking` implementation already exists.
+Current-main recorrelation after FIN-SEC-03 keeps `FIN-17` selected as the single next FINTECH P1 slice because `RankingBoard` still performs browser-local READY-score ordering while a backend `CrossAssetRanking` implementation already exists. FIN-17 execution is `HELD` until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915`; only after that merge and a fresh then-current-main/open-writer recorrelation may FIN-17 begin.
 
 ## Quality
 
