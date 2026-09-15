@@ -94,7 +94,7 @@ The ordered automated Roadmap lane permits at most one not-yet-integrated automa
 
 At `main@698e0bc26e28899ddf2429fb298f74d54e35b3b0`:
 
-- the GitHub open-PR query returned no open Pull Requests at the latest correlation;
+- open PR #951 (`CAPITAL-AI-FE`, FIN-17 RankingBoard consumer) changes only `src/features/screening/ui/RankingBoard.tsx` and `tests/unit/fin17RankingBoardConsumer.test.ts`; there is no changed-file, namespace, Governance-authority or PR-lifecycle-workflow overlap with GOV-CHAT-077;
 - parallel branch `agent/governance-pr900-04-freshness-version-validators-20260915` changes exactly four validator/test files: `scripts/governance/controlPlaneFreshnessRules.mjs`, `scripts/governance/controlPlaneStructuralValidatorCore.mjs`, `scripts/governance/validateGovernanceControlPlane.mjs`, and `tests/unit/governanceControlPlaneFreshness.test.ts`; none overlaps the GOV-CHAT-077 changed-file set at this correlation;
 - historical branch `agent/governance-gov07-recorrelation-20260911` no longer exists and therefore does not constitute a current writer;
 - branch `agent/governance-autonomous-pr-chain-20260915` is the bounded current writer for GOV-CHAT-077;
