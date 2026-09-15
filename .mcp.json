@@ -7,6 +7,13 @@
         "GOOGLE_APPLICATION_CREDENTIALS": "${HOME}/.capital-ai/ga4-mcp-credentials.json",
         "GOOGLE_PROJECT_ID": "${GA4_MCP_PROJECT_ID:-}"
       }
+    },
+    "search-console": {
+      "command": "npx",
+      "args": ["-y", "@vmandic/searchconsole-mcp@1.1.1"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "${HOME}/.capital-ai/gsc-mcp-credentials.json"
+      }
     }
   }
 }
