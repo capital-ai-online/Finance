@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — PR #944 Human-merge and authority-version convergence correlated; GOV-PR900-04 synchronized after Human-merged PR #946  
-**Baseline:** `main@c8a88afc7f9cfad367b592e9567654451f81e436`  
+**Reconciliation:** 2026-09-15 — PR #944 Human-merge and authority-version convergence correlated; GOV-PR900-04 synchronized after Human-merged PR #946
+**Baseline:** `main@c8a88afc7f9cfad367b592e9567654451f81e436`
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
