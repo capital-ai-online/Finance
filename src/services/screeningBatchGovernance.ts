@@ -1,3 +1,8 @@
+import type { CanonicalScoreResult } from '../types/scoringIntegrity';
+import {
+  buildBackendRankingProjection,
+  type BackendRankingProjectionInput,
+} from '../platform/Ranking';
 import type { ProviderRoutingTelemetry } from './marketDataProviderRouter';
 import { evaluateScreeningEligibility } from './screeningEligibility';
 import { buildScreeningOperationsReport } from './screeningOperations';
@@ -28,6 +33,42 @@ export interface ScreeningBatchGovernanceOptions {
   nowMs?: number;
   /** Optional policy override; defaults to the screening-eligibility contract's 24-hour limit. */
   maxEvidenceAgeMs?: number;
+}
+
+function rankingInputFromGovernedItem(
+  item: ScreeningBatchItem & {
+    screeningEligibility: ReturnType<typeof evaluateScreeningEligibility>;
+    screeningOperations: ReturnType<typeof buildScreeningOperationsReport>;
+  },
+): BackendRankingProjectionInput | null {
+  if (!item.symbol || !isUniverseAssetClass(item.assetType)) return null;
+  if (!item.integrity || typeof item.integrity !== 'object') return null;
+
+  const canonical: CanonicalScoreResult = {
+    status: String(item.status ?? 'SCORE_NOT_COMPUTABLE') as CanonicalScoreResult['status'],
+    score: typeof item.score === 'number' && Number.isFinite(item.score) ? item.score : null,
+    final_score:
+      typeof item.final_score === 'number' && Number.isFinite(item.final_score)
+        ? item.final_score
+        : null,
+    integrity: item.integrity as CanonicalScoreResult['integrity'],
+  };
+
+  return {
+    symbol: item.symbol,
+    name: typeof item.name === 'string' ? item.name : undefined,
+    assetClass: item.assetType,
+    subtype: typeof item.subtype === 'string' ? item.subtype : undefined,
+    instrumentKind: typeof item.instrumentKind === 'string' ? item.instrumentKind : undefined,
+    source: 'catalog',
+    canonical,
+    governance: {
+      eligible: item.screeningEligibility.eligible,
+      eligibilityStatus: item.screeningEligibility.status,
+      operationsState: item.screeningOperations.state,
+      sourceConflict: item.screeningEligibility.status === 'SOURCE_CONFLICT',
+    },
+  };
 }
 
 export function decorateScreeningBatchWithGovernance(
@@ -62,6 +103,26 @@ export function decorateScreeningBatchWithGovernance(
     return { ...item, screeningEligibility: eligibility, screeningOperations, screeningSloEvidence };
   });
 
+  const backendRankingProjection = buildBackendRankingProjection(
+    governedResults
+      .map(rankingInputFromGovernedItem)
+      .filter((item): item is BackendRankingProjectionInput => item !== null),
+  );
+  const rankedByAssetId = new Map(
+    backendRankingProjection.result.cohorts.flatMap(cohort =>
+      cohort.entries.map(entry => [entry.assetId, {
+        cohortKey: cohort.key,
+        comparisonBasis: cohort.comparisonBasis,
+        crossCohortOrder: cohort.crossCohortOrder,
+        rank: entry.rank,
+        rankingValue: entry.rankingValue,
+      }] as const),
+    ),
+  );
+  const excludedByAssetId = new Map(
+    backendRankingProjection.result.excluded.map(entry => [entry.assetId, entry] as const),
+  );
+
   const universeAvailability = buildUniverseAvailabilityProjection(
     governedResults.map(item => ({ symbol: item.symbol, type: item.assetType })),
     governedResults.map(item => ({
@@ -74,17 +135,44 @@ export function decorateScreeningBatchWithGovernance(
     })),
   );
   const universeByClass = new Map(universeAvailability.classes.map(entry => [entry.assetClass, entry.topLevel]));
-  const results = governedResults.map(item => ({
-    ...item,
-    universeSla: isUniverseAssetClass(item.assetType)
-      ? universeByClass.get(item.assetType) ?? null
-      : null,
-  }));
+  const results = governedResults.map(item => {
+    const assetId = item.symbol && isUniverseAssetClass(item.assetType)
+      ? `${item.assetType}:${item.symbol.trim().toUpperCase().replace(/\s+/g, '')}`
+      : null;
+    const ranked = assetId ? rankedByAssetId.get(assetId) ?? null : null;
+    const excluded = assetId ? excludedByAssetId.get(assetId) ?? null : null;
+
+    return {
+      ...item,
+      universeSla: isUniverseAssetClass(item.assetType)
+        ? universeByClass.get(item.assetType) ?? null
+        : null,
+      backendRanking: {
+        projectionContractVersion: backendRankingProjection.contractVersion,
+        rankingContractVersion: backendRankingProjection.result.contractVersion,
+        authority: backendRankingProjection.authority,
+        mode: backendRankingProjection.mode,
+        status: backendRankingProjection.result.status,
+        ...(ranked ?? {
+          cohortKey: null,
+          comparisonBasis: null,
+          crossCohortOrder: false as const,
+          rank: null,
+          rankingValue: null,
+        }),
+        exclusionReason: excluded?.reason ?? null,
+        exclusionDetail: excluded?.detail ?? null,
+      },
+    };
+  });
 
   return {
     screeningOperationsContractVersion: 'screening-operations/1.0.0' as const,
     screeningSloEvidenceContractVersion: 'screening-slo-evidence/1.0.0' as const,
     universeAvailabilityContractVersion: universeAvailability.contractVersion,
+    backendRankingProjectionContractVersion: backendRankingProjection.contractVersion,
+    backendRankingContractVersion: backendRankingProjection.result.contractVersion,
+    backendRankingAuthority: backendRankingProjection.authority,
     providerSlaState: sla.state,
     eligible: results.filter(item => item.screeningEligibility.eligible).length,
     universeAvailability,
