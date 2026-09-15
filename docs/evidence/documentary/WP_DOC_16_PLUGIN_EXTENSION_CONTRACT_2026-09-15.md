@@ -111,20 +111,28 @@ The byte-identical unit suite covers:
 
 ## Validation truth
 
-Fresh validation for the current branch is recorded separately in the execution pass. Historical validation is not promoted to current PASS merely because code/test blobs are identical.
+Fresh focused validation was executed after the current-main reproduction:
 
-Until freshly executed, the following remain `NOT RUN` for this current branch:
+- TypeScript 5.8.3 `tsc --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext`: `PASS` for the contract plus a type-neutral behavior harness;
+- Node.js 22.16.0 type-stripped behavior smoke: `PASS`;
+- valid Documentary-local descriptor: `VALID_FOR_REGISTRATION_REQUEST`;
+- duplicate-ID, declared network access, Restricted-without-Security-Review and missing required ESS references: `BLOCKED`;
+- every observed result preserved `registryMutationPerformed=false`, `activationAuthorized=false`, `externalCapabilityAuthorized=false`.
 
-- repository Vitest suite;
-- repository project-wide TypeScript compiler/configuration;
-- Documentation Hygiene;
-- hosted GitHub CI;
-- production/provider verification (`NOT APPLICABLE / NOT RUN`).
+An initial harness-only TypeScript invocation referenced Node's global `process` without local `@types/node` and therefore was **not** counted as PASS. The harness was replaced with type-neutral throw assertions and the full focused check was rerun successfully.
+
+Still not run / not claimed for this current branch:
+
+- repository Vitest suite: `NOT RUN`;
+- repository project-wide TypeScript compiler/configuration: `NOT RUN`;
+- Documentation Hygiene: `NOT RUN`;
+- hosted GitHub CI: `NOT RUN`;
+- production/provider verification: `NOT APPLICABLE / NOT RUN`.
 
 `NOT RUN` is never represented as PASS.
 
 ## Exit-gate assessment
 
-WP-DOC-16 resynchronization is complete when the fresh branch is verified `0 behind` current main, the four-file diff remains bounded, fresh focused validation passes, and no new open-writer/authority overlap appears before any PR-create gate.
+At the post-implementation branch readback, WP-DOC-16 is `4 files / 0 behind` relative to its creation baseline and the focused validation is `PASS`. A final current-main/open-writer correlation is still required before any PR-create gate.
 
 Even after this resync, `DONE_MAIN=false` until a separately approved PR is Human/CODEOWNER merged and then-current main is re-read.
