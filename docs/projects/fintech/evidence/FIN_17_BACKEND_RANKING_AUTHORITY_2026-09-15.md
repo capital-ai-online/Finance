@@ -4,12 +4,13 @@
 **Primary PVC:** `PVC-17 — Ranking / Decision Support`  
 **Primary Owner:** `CAPITAL-AI-FINTECH`  
 **Implementation baseline:** `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`  
+**Current correlation baseline after PR #943 Human merge:** `main@dc9d8ca1f241052c4ef9ae0a9e62b14bbe3077c3`  
 **Branch:** `agent/fintech-fin17-ranking-authority-20260915`  
 **Status:** `BACKEND IMPLEMENTED / VALIDATION NOT RUN / FE HANDOFF REQUIRED`
 
 ## Trigger and authority
 
-The FIN-17 roadmap trigger is satisfied by the Human merge of PR #942. The current Owner instruction to continue with the next FINTECH step selects FIN-17's productive backend rank/order authority work.
+The FIN-17 roadmap trigger is satisfied by the Human merge of PR #942. The current Owner instruction to continue with the next FINTECH step selects FIN-17's productive backend rank/order authority work. PR #943 subsequently Human-merged the FIN-17 `HELD -> READY` project-surface update; this implementation branch was then resynchronized against that current main without importing those project-surface files into its net diff.
 
 SC-7 previously kept `CrossAssetRanking` shadow-only pending a separate Owner impact decision and runtime validation. This FIN-17 slice proposes that impact activation for **backend order projection only**. Merge remains Human/CODEOWNER-only and is not authorized by this evidence file.
 
