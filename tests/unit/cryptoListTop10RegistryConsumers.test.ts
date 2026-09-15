@@ -19,20 +19,26 @@ describe('SC-2 crypto list/top10 dispatcher consumers', () => {
     expect(listRoute).toContain("if (dispatch.status !== 'DISPATCHED')");
   });
 
-  it('wires GET /top10 through the canonical dispatcher and excludes failed dispatches before ranking', () => {
+  it('routes GET /top10 through the dispatcher helper and the shared backend ranking authority', () => {
     const source = readFileSync(new URL('../../src/routes/cryptoRoutes.ts', import.meta.url), 'utf8');
+    const helperStart = source.indexOf('async function evaluateCryptoScorePayload');
+    const routerStart = source.indexOf('export function createCryptoRouter', helperStart);
+    const helper = source.slice(helperStart, routerStart);
     const top10Start = source.indexOf("router.get('/top10'");
     const routerEnd = source.indexOf('return router;', top10Start);
     const top10Route = source.slice(top10Start, routerEnd);
 
+    expect(helperStart).toBeGreaterThanOrEqual(0);
+    expect(routerStart).toBeGreaterThan(helperStart);
     expect(top10Start).toBeGreaterThanOrEqual(0);
     expect(routerEnd).toBeGreaterThan(top10Start);
-    expect(top10Route).toContain('dispatchCanonicalScore');
-    expect(top10Route).toContain("source: 'registry'");
-    expect(top10Route).toContain("if (dispatch.status !== 'DISPATCHED') return null;");
-    expect(top10Route).toContain('dispatch.asset.assetId');
-    expect(top10Route).toContain('model: registeredModel');
-    expect(top10Route).toContain('modelRegistry');
+    expect(helper).toContain('dispatchCanonicalScore');
+    expect(helper).toContain("assetClass: 'crypto'");
+    expect(top10Route).toContain('evaluateCryptoScorePayload');
+    expect(top10Route).toContain("'registry'");
+    expect(top10Route).toContain('buildBackendRankingProjection');
+    expect(top10Route).toContain('RANKING_COHORT_AMBIGUOUS');
+    expect(top10Route).not.toContain('.sort(');
   });
 
   it('keeps productive crypto routes free of direct domain-scorer imports', () => {
