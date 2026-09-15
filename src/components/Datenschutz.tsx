@@ -12,7 +12,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { authFetch } from '../lib/authFetch';
-import { openCookieHubSettings } from '../services/cookieHubConsentBridge';
+import { openCookieConsentSettings } from '../services/cookieHubConsentBridge';
 import {
   CONTROLLER,
   PRIVACY_COMPLIANCE_STATUS,
@@ -257,11 +257,11 @@ export function Datenschutz() {
               <Cookie size={14} className="text-amber-300" /> Cookie- und Analytics-Einstellungen
             </div>
             <p className="text-[11px] text-white/50 leading-relaxed">
-              Google Analytics und AdSense werden erst nach der jeweils passenden CookieHub-Einwilligung geladen. Eine bereits erteilte Entscheidung kann hier erneut geöffnet und widerrufen werden.
+              Google Analytics wird nur nach deiner Zustimmung zur Reichweitenmessung geladen. Deine Auswahl wird mit CookieConsent auf dieser Website gespeichert und kann hier geändert oder widerrufen werden. Google AdSense ist derzeit deaktiviert.
             </p>
             <button
               type="button"
-              onClick={() => openCookieHubSettings()}
+              onClick={() => openCookieConsentSettings()}
               className="text-xs text-amber-200 underline underline-offset-4 cursor-pointer"
             >
               Cookie-Einstellungen ändern

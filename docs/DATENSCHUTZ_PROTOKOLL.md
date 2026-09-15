@@ -48,7 +48,7 @@ Die nachfolgende Matrix bildet den im Repository identifizierten Kern der person
 | Abonnement/Billing | Nutzer; E-Mail, User-ID, Tarif, Stripe-IDs, Transaktionsmetadaten | Leistung, Abrechnung, Berechtigungen | Art. 6 Abs. 1 lit. b; gesetzliche Nachweise ggf. lit. c | Stripe, Supabase | Vertragsdauer; abrechnungsrelevante Daten nach anwendbarer gesetzlicher Aufbewahrung |
 | Consent-/Notice-Evidence | Nutzer; Dokumentversion, Zeitstempel, Entscheidung, IP-Hash | Nachweis von Vertragsannahme, Privacy-Notice-Kenntnisnahme und optionalem Marketing | Nachweiszwecke ggf. Art. 6 Abs. 1 lit. c; Marketingverarbeitung lit. a | Supabase | solange Nachweis erforderlich; bei Löschung ggf. Einschränkung nach Rechtslage |
 | Security/IAM | Nutzer/Besucher; User-ID, IP, User-Agent, Geräte-/Endpoint-/Eventdaten, Auditwerte | Missbrauchserkennung, Zugriffssicherheit, Audit | Art. 6 Abs. 1 lit. f i. V. m. Art. 32 | autorisierte Admin-/Security-Prozesse, Supabase | Security Events Standard-Maximum 180 Tage; Incident-Evidence muss vor Purge separat gesichert werden |
-| Analytics/Ads | Besucher nach Opt-in; Online-Kennungen, Cookies, Nutzungs-/Geräteinformationen | optionale Reichweitenmessung/Werbung | Art. 6 Abs. 1 lit. a + § 25 TDDDG | Google, CookieHub; Drittlandbezug möglich | nach Consent-/Provider-Konfiguration; Widerruf jederzeit; lokale GA-Cookies werden soweit technisch möglich entfernt |
+| Analytics/Ads | Besucher nach Opt-in; Online-Kennungen, Cookies, Nutzungs-/Geräteinformationen | optionale Reichweitenmessung; AdSense pausiert | Art. 6 Abs. 1 lit. a + § 25 TDDDG | Google Analytics; CookieConsent selbst gehostet; Drittlandbezug bei Google möglich | nach Consent-/Provider-Konfiguration; Widerruf jederzeit; lokale GA-Cookies werden soweit technisch möglich entfernt |
 | Social Publishing | Nutzer mit verknüpftem Konto; Handle, Avatar, Scopes, externe IDs, verschlüsselte OAuth-Tokens, Publish-Historie | angeforderte Social-Media-Verknüpfung und Veröffentlichung | Art. 6 Abs. 1 lit. b | verbundene Plattform, Supabase; Drittland je Plattform möglich | bis Trennung/Kontolöschung; OAuth-State kurzlebig und automatisierbar bereinigt |
 | E-Mail-Alerts | Abonnenten; E-Mail, Symbol, Regel, Schwellenwert, Status | angeforderte Benachrichtigungen | Art. 6 Abs. 1 lit. b | Mail-Infrastruktur, Supabase | bis Abmeldung; unbestätigte Anmeldungen nach 14 Tagen bereinigbar |
 | Quota/Nutzungssteuerung | Nutzer; E-Mail, Quota-Typ, Zähler, Zeitfenster | tarifabhängige Limits/Missbrauchsschutz | Art. 6 Abs. 1 lit. b / lit. f | Supabase | nach 90 Tagen ohne Aktualisierung bereinigbar |
@@ -72,7 +72,7 @@ Die Legacy-Tabelle `user_consents` bleibt aus Kompatibilitätsgründen bestehen.
 
 Neue Privacy-Notice-Evidence wird ab diesem Release mit Dokumentversion `2026-08-19` gespeichert. Bestehende historische Datensätze behalten ihre tatsächliche frühere Dokumentversion.
 
-Cookie-/Analytics-Einwilligung wird davon getrennt über CookieHub und die First-Party-Consent-Bridge verwaltet. `public/google-analytics-consent.js` setzt Google Consent Mode standardmäßig auf `denied` und lädt GA4/AdSense erst nach passender Kategorie-Einwilligung.
+Cookie-/Analytics-Einwilligung wird davon getrennt über selbst gehostetes CookieConsent v3 und die First-Party-Consent-Bridge verwaltet. Die Auswahl liegt im Cookie `capital_ai_consent_v3` (Revision 1, maximal 182 Tage). Alte CookieHub-Entscheidungen werden nicht übernommen. `public/google-analytics-consent.js` startet mit `denied` und lädt nur GA4 nach gültigem Analytics-Opt-in. AdSense bleibt gemäß Owner-Variante A pausiert. Diese Migration implementiert keine zentrale anonyme Consent-Log-API; lokale Auswahl ist keine serverseitige Audit-Evidence.
 
 ## 5. Betroffenenrechte
 
@@ -125,7 +125,7 @@ Die Anfrage wird in `public.privacy_requests` mit Status und Bearbeitungsfrist g
 
 - Google Consent Mode Defaults: denied,
 - GA4 erst nach Analytics-Opt-in,
-- AdSense erst nach Marketing-Opt-in,
+- AdSense pausiert, auch nach „Alle akzeptieren“,
 - Widerruf deaktiviert GA, bereinigt First-Party-GA-Cookies soweit möglich und lädt den Dokumentkontext neu, wenn bereits Drittanbieterskripte ausgeführt wurden.
 
 ### 6.4 Retention-as-Code
@@ -148,7 +148,7 @@ Im Code identifizierte relevante Anbieter/Provider umfassen unter anderem:
 - Supabase,
 - Stripe,
 - Google (Analytics/AdSense und AI-Funktionen),
-- CookieHub,
+- CookieConsent v3 als selbst gehostete Bibliothek (kein externer CMP-Empfänger),
 - vom Nutzer verbundene Social-Media-Plattformen,
 - konfigurierte Mail-Infrastruktur.
 
@@ -190,3 +190,4 @@ Nicht zulässig ohne externe Evidence sind insbesondere Aussagen wie:
 7. Tests für Controller-Identity und öffentliche Compliance-Claims.
 
 Vor Merge eines Privacy-Branches ist der Branch erneut gegen den aktuellen `main` zu vergleichen. Neue Main-Änderungen an Auth, Logging, Datenbank, Billing, Social, Analytics oder Legal UI sind auf Konflikte mit diesem Datenschutzmodell zu bewerten.
+

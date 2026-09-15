@@ -49,8 +49,8 @@ export function buildBaselineProductionCsp(nonce: string): string {
     "default-src 'self'",
     "object-src 'none'",
     "base-uri 'none'",
-    `script-src 'self' 'nonce-${nonce}' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com https://pagead2.googlesyndication.com https://hcaptcha.com https://*.hcaptcha.com`,
-    "style-src 'self' https://fonts.googleapis.com https://cookiehub.net https://cdn.cookiehub.eu https://hcaptcha.com https://*.hcaptcha.com",
+    `script-src 'self' 'nonce-${nonce}' https://*.stripe.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://hcaptcha.com https://*.hcaptcha.com`,
+    "style-src 'self' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
     "connect-src 'self' https: https://hcaptcha.com https://*.hcaptcha.com",
@@ -74,10 +74,10 @@ export function buildStrictProductionCsp(nonce: string): string {
     // SECURITY (2026-08-25 architecture review, finding #8): 'unsafe-eval' removed, see the note
     // in buildBaselineProductionCsp above (verified-empty of eval()/new Function() call sites).
     `script-src 'nonce-${nonce}' 'unsafe-inline' 'strict-dynamic' https: http:`,
-    "style-src 'self' https://fonts.googleapis.com https://cookiehub.net https://cdn.cookiehub.eu https://hcaptcha.com https://*.hcaptcha.com",
+    "style-src 'self' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://ds.cookiehub.net https://consent.cookiehub.net https://region-eu.cookiehub.net https://consent-eu.cookiehub.net https://cookiehub.net https://cdn.cookiehub.eu https://hcaptcha.com https://*.hcaptcha.com https:",
+    "connect-src 'self' https://hcaptcha.com https://*.hcaptcha.com https:",
     "frame-src 'self' https: https://hcaptcha.com https://*.hcaptcha.com",
     "worker-src 'self' blob:",
     "form-action 'self' https:",
