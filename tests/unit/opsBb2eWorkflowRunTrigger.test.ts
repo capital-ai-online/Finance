@@ -56,6 +56,14 @@ describe('OPS BB-2E workflow_run trigger', () => {
     expect(workflow).toContain('kein BB-2E Dispatch');
   });
 
+  it('treats only a missing historical target branch as a terminal no-op', () => {
+    expect(workflow).toContain('catch (error)');
+    expect(workflow).toContain('const status = Number(error?.status || error?.response?.status || 0);');
+    expect(workflow).toContain('if (status === 404)');
+    expect(workflow).toContain('terminaler No-op, kein Dispatch');
+    expect(workflow).toContain('throw error;');
+  });
+
   it('re-reads and validates the exact FE head instead of trusting a stored SHA', () => {
     expect(workflow).toContain('branch: targetBranch');
     expect(workflow).toContain('const feHead = normalizeSha(target.commit?.sha);');
