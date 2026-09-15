@@ -44,3 +44,15 @@ DATA/FINTECH verified scoring/data, QM checks, SEO technical handoffs, SOCIAL re
 
 ## Project exit gate
 One active FE roadmap; design tokens are canonical/consumed consistently, disabled Bond presentation stays absent and required exact-head checks are evidenced.
+
+
+## FE-CONSENT-V3 — CookieHub ablösen / Owner-Variante A
+
+**Priorität:** 5/5. **Owner:** CAPITAL-AI-FE, kein eigener produktiver PVC. **Executor:** CAPITAL-AI-OPS.
+**Owner-Freigabe:** „Variante A freigegeben“ (2026-09-15). **Status:** IMPLEMENTED_ON_BRANCH / VALIDATION_PARTIAL / PRODUCTION_NOT_PROVEN.
+
+CookieConsent v3.1.0 lokal ausliefern, Konfiguration versionieren, neue Einwilligung verlangen, GA4 nur nach gültigem Opt-in laden und AdSense vollständig pausieren. Einstellungen müssen auf jeder Route wieder geöffnet werden können. Bestehende Login-/Landing-Consumer behalten den kompatiblen Settings-Aufruf. Der Providerwechsel ersetzt keine Security-/Compliance-Assurance.
+
+**Evidence:** `evidence/COOKIECONSENT_V3_MIGRATION_2026-09-15.md`.
+**Exit:** geschützte Invarianten und Verhaltenstests bestanden; TypeScript/Build/FE-Gates auf dem endgültigen Head; Browserprüfung für Mobile, Pointer/Overlay, Speichern, Wiederöffnung, Reload-Persistenz und Widerruf; COMP-Bewertung des Consent-Nachweises. Keine Production Acceptance aus Repositorytests.
+**Folgeschritt:** AdSense-CMP-/TCF-Eignung separat klären; bis zur separaten Freigabe bleiben Anzeigen aus.

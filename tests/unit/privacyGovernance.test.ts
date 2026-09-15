@@ -69,9 +69,9 @@ describe('ADR-0095 privacy governance', () => {
   });
 
   it('keeps privacy-notice evidence version aligned with the database deployment guard', () => {
-    expect(PRIVACY_NOTICE_VERSION).toBe('2026-08-19');
-    const migration = read('supabase/migrations/20260819010000_privacy_governance_and_requests.sql');
-    expect(migration).toContain("new.document_version := '2026-08-19'");
+    expect(PRIVACY_NOTICE_VERSION).toBe('2026-09-15');
+    const migration = read('supabase/migrations/20260915172400_privacy_notice_version_guard.sql');
+    expect(migration).toContain(`new.document_version := '${PRIVACY_NOTICE_VERSION}'`);
     expect(migration).toContain("new.evidence_kind := 'acknowledgement'");
     expect(migration).toContain("new.evidence_kind := 'contract_acceptance'");
     expect(migration).toContain("new.evidence_kind := 'consent'");

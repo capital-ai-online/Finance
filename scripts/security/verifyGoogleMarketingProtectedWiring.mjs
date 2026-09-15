@@ -9,7 +9,10 @@ function normalizePath(value) {
 
 const EXACT_PROTECTED_PATHS = new Set([
   'index.html',
-  'public/cookiehub-init.js',
+  'public/cookiehub-init.js', // historical path remains protected against reintroduction
+  'public/cookieconsent-init.js',
+  'public/cookieconsent-theme.css',
+  'scripts/security/cookieConsentRuntime.test.mjs',
   'public/google-analytics-consent.js',
   'server/securityResponse.ts',
   'server/logger.ts',
@@ -33,6 +36,7 @@ const EXACT_PROTECTED_PATHS = new Set([
 ]);
 
 const PROTECTED_PREFIXES = [
+  'public/vendor/cookieconsent/',
   '.ai/skills/ESS-0014-',
   'docs/adr/ADR-0035-',
   'docs/adr/ADR-0040-',
