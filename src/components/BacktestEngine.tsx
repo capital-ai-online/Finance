@@ -31,6 +31,7 @@ import {
 } from '../platform/PdfReporting/pdfBrand';
 import { PdfExportModal } from './PdfExportModal';
 import { PortfolioBacktester } from './PortfolioBacktester';
+import { authFetch } from '../lib/authFetch';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -197,7 +198,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
       setSimulationProgress(15);
 
       try {
-        const response = await fetch(`/api/backtest-history?symbol=${ticker}&range=${timeRange}`);
+        const response = await authFetch(`/api/backtest-history?symbol=${ticker}&range=${timeRange}`);
         if (!response.ok) {
           throw new Error('NO_DATA');
         }
