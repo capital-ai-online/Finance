@@ -6,8 +6,10 @@
 **Authority:** `/AGENTS.md@current-main`, ADR-0034, `subscription-entitlements/1.0.0`  
 **FINTECH status:** `IMPLEMENTED / EVIDENCE_READY`  
 **Security status:** `VERIFICATION REQUESTED` — not `VERIFIED`, not `CLOSED`  
-**Correlation baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
-**Branch:** `agent/fintech-fin-sec-03-analysis-entitlement-20260915`
+**Implementation correlation baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
+**Post-merge sync baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
+**Historical implementation branch:** `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
+**Merge provenance:** `PR #929` · PR head `aca0da9e67b35bd712d894fefbf149a3485dadb2` · merge `103689c2f30536e573b7958f63b503ca428f69cf`
 
 ## 1. Scope and invariant
 
@@ -115,23 +117,25 @@ Focused regression artifacts are prepared and source-correlated:
 
 ## 7. Validation truth
 
-Executed/read back in this ChatGPT GitHub-connector session:
+Executed/read back in the FIN-SEC-03 implementation ChatGPT GitHub-connector session:
 
-- exact current-main SHA and full `/AGENTS.md` correlation;
+- exact then-current-main SHA and full `/AGENTS.md` correlation;
 - project/PVC/Owner and FINTECH Roadmap correlation;
 - ADR-0034 plan/entitlement semantics;
 - open-PR and changed-file overlap correlation;
-- branch synchronized after the Documentary-only PR #927 merge; final current-main merge base is `main@8f11a360ce598100396562ad0eced04ca13b7372` and no FINTECH semantic overlap was introduced;
+- implementation branch synchronized after the Documentary-only PR #927 merge; the implementation pre-PR merge base was `main@8f11a360ce598100396562ad0eced04ca13b7372` and no FINTECH semantic overlap was introduced;
 - source-level readback of the paid-analysis middleware, quota functions, route ordering, all current compatibility consumers and focused regression test definitions;
 - source-level compatibility review against the existing domain-decomposition and analysis-route extraction contracts.
 
-Not run / not claimed as PASS in this connector session:
+Post-merge readback for this documentation synchronization confirms PR #929 is Human-merged as `103689c2f30536e573b7958f63b503ca428f69cf`, the implementation is present on `main`, and the six-document FINTECH sync is based on `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`. This post-merge readback does not convert any previously unexecuted check into PASS.
+
+Not run / not claimed as PASS in the implementation connector session:
 
 - focused Vitest execution;
 - full Vitest suite;
 - TypeScript `tsc --noEmit` / `npm run lint`;
 - production build;
-- hosted GitHub CI (no workflow run exists for this branch before PR creation);
+- hosted GitHub CI (no workflow run existed for the implementation branch before PR creation);
 - Production runtime entitlement verification;
 - Supabase/Stripe/provider mutation.
 
@@ -139,7 +143,7 @@ Not run / not claimed as PASS in this connector session:
 
 ## 8. FIN-12 vs FIN-17 P1 reprioritization
 
-Re-correlation against the same current main produces one next FINTECH P1 slice: **`FIN-17 — Ranking / Decision Support`**.
+Re-correlation keeps one next FINTECH P1 slice selected: **`FIN-17 — Ranking / Decision Support`**. Its execution is `HELD` until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915`; only after that merge may then-current main/open writers be re-correlated and FIN-17 begin.
 
 Reasoning:
 
@@ -148,7 +152,7 @@ Reasoning:
 3. The current trust-root ranking invariant requires backend ordering and forbids a Frontend-local ranking authority. Closing that live authority split is narrower and more immediate than broadening the DATA-to-feature mapping in the same next slice.
 4. FIN-12 remains P1 and follows after FIN-17 unless then-current main or DATA/Security evidence changes the queue.
 
-**Next P1:** `FIN-17`  
+**Next P1 after post-merge-sync Human merge + fresh recorrelation:** `FIN-17`  
 **FIN-12 disposition:** `P1 / NEXT AFTER FIN-17 RECORRELATION`.
 
 ## 9. Verification request
