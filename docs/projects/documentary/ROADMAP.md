@@ -4,19 +4,19 @@
 **Folder:** `docs/projects/documentary/`  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — current-main re-correlation after PR #926; open PR inventory empty; valid WP-DOC-13 timeline delta folded; WP-DOC-16/17 resync dispositions synchronized  
-**Baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Reconciliation:** 2026-09-15 — post-merge current-main readback after PR #938; WP-DOC-14/15/16 Human-merge states normalized; WP-DOC-17 revalidated dependency-held; subsequent current-main drift through PR #943 semantically non-Documentary; open PR inventory empty  
+**Baseline:** `main@dc9d8ca1f241052c4ef9ae0a9e62b14bbe3077c3`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
 
 This file is the single active project execution projection. Dated active sidecar roadmaps and pointer-only `ROADMAP.md` files are removed after this fold. Archive/superseded copies remain as historical ledger and are not an execution source. Non-terminal pre-2026-09-13 work packages remain in force with their existing IDs, constraints, dependencies and exit gates unless a later section explicitly replaces them. Terminal `DONE/CLOSED/VERIFIED/RETIRED/SUPERSEDED` history is retained as ledger, not reopened. PR #900 remains a derived documentary source only. PR #902 closed with zero effective diff and contributes no executable Documentary work package.
 
-The historical branch `agent/documentary-roadmap-timeline-20260914` is `STALE / SUPERSEDED_AS_EXECUTION_WRITER` for current execution because it is based on an older main and carries only a Documentary Roadmap delta. Its valid WP-DOC-13 semantic correction is folded into this fresh current-main branch. The historical branch is not deleted or rewritten and remains evidentiary only.
+The historical branch `agent/documentary-roadmap-timeline-20260914` is `STALE / SUPERSEDED_AS_EXECUTION_WRITER` for current execution because it is based on an older main and carries only a Documentary Roadmap delta. Its valid WP-DOC-13 semantic correction is folded into the canonical Roadmap. The historical branch is not deleted or rewritten and remains evidentiary only.
 
-The pre-sync branches `agent/documentary-plugin-extension-contract-20260915`, `agent/documentary-consumer-idempotency-evidence-20260915` and `agent/documentary-roadmap-wp16-wp17-status-20260915` are also evidentiary only after main advanced. Current PR-readiness uses the fresh resync branches named below.
+Historical WP-DOC-14/15/16 implementation or resync branches are evidence only after their Human/CODEOWNER merges. Current status is determined from current `main`, merge provenance and the materialized repository files, not from historical branch refs. Historical WP-DOC-17 evidence branches are likewise non-authorizing and do not activate retry/idempotency implementation.
 
-Current-pass drift from `main@86952c6ff3d6a287fa20d6d7f1ed5cf9b0d71a04` to `main@833b0184c9b61d2341a22f434b408b1cc0416def` consists of the OPS-owned PR #925 merge followed by the Social-owned PR #926 merge. Neither merge changes Documentary-owned implementation, project mapping, applicable Documentary ADR/ESS contracts or PR-approval authority. The current open Pull Request inventory is empty. `agent/documentary-roadmap-status-recorrelation-20260915` is synchronized to this current main; the separate WP-DOC-16 and WP-DOC-17 resync branches remain on their earlier Git baseline and therefore require their own current-main resync before any PR-readiness claim.
+Current-main readback confirms Human-merged PR #928 (WP-DOC-14), PR #935 (WP-DOC-15) and PR #938 (WP-DOC-16). PR #938 merge commit `fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b` remains the Documentary status provenance anchor; the current repository baseline for this reconciliation is `main@dc9d8ca1f241052c4ef9ae0a9e62b14bbe3077c3`. Subsequent drift from PR #938 through PR #943 changes Security/FinTech/OPS Traceability surfaces but no Documentary-owned implementation, project/PVC mapping, applicable Documentary authority or WP-DOC-17 activation evidence. The current open Pull Request inventory is empty. WP-DOC-17 was reassessed against current Documentary consumer/EventMesh evidence and remains dependency-held because no reproducible Documentary-local retry/idempotency failure is established.
 
 ## PR #900 / #901 normalized work packages
 
@@ -100,10 +100,10 @@ Timeline semantics: `NOW` = executable on current evidence, `NEXT` = after the n
 | Horizon | Work package | State |
 |---|---|---|
 | NOW | WP-DOC-13 GOV-DOC-007 unresolved reference | `IMPLEMENTED_ON_MAIN / ROADMAP_RECORRELATED / CURRENT-PASS TEST EXECUTION NOT RUN` |
-| NEXT | WP-DOC-14 D8 Migration Execution contract & dry-run | branch-level evidence exists; main/PR status must be independently correlated before projection changes |
-| LATER | WP-DOC-15 Documentary quality/SLO model | branch-level evidence exists; main/PR status must be independently correlated before projection changes |
-| LATER | WP-DOC-16 Plugin extension model | `EVIDENCE_READY_ON_RESYNC_BRANCH / CURRENT-MAIN_RESYNC_REQUIRED_BEFORE_PR-CREATION`; existing Enterprise framework reused; no connector/registry mutation |
-| CONDITIONAL | WP-DOC-17 Consumer retry/idempotency | `DEPENDENCY_HELD / NOT_APPLICABLE_FOR_IMPLEMENTATION`; evidence branch Git baseline is stale but no reproducible Documentary-local failure evidence exists; EventMesh remains OPS |
+| DONE | WP-DOC-14 D8 Migration Execution contract & dry-run | `IMPLEMENTED_ON_MAIN / HUMAN-MERGED PR #928 / POST-MERGE READBACK VERIFIED` |
+| DONE | WP-DOC-15 Documentary quality/SLO model | `IMPLEMENTED_ON_MAIN / HUMAN-MERGED PR #935 / POST-MERGE READBACK VERIFIED` |
+| DONE | WP-DOC-16 Plugin extension model | `IMPLEMENTED_ON_MAIN / HUMAN-MERGED PR #938 / POST-MERGE READBACK VERIFIED`; existing Enterprise framework reused; no connector/registry mutation |
+| CONDITIONAL | WP-DOC-17 Consumer retry/idempotency | `DEPENDENCY_HELD / NOT_APPLICABLE_FOR_IMPLEMENTATION`; no reproducible Documentary-local failure evidence exists; EventMesh remains OPS |
 | CONTINUOUS | WP-DOC-02 lifecycle/maintenance | ACTIVE |
 | CONTINUOUS | WP-DOC-03 Vocabulary/Knowledge/Wiki | ACTIVE BASELINE |
 | DONE | WP-DOC-00..12 | HUMAN-MERGED (PRs #645–#866 sequence) |
@@ -130,41 +130,78 @@ Current-main evidence at this baseline:
 
 This Documentary slice changes no component version, document-schema version, platform version, productive validator code or foreign authority.
 
+### WP-DOC-14 — D8 Migration Execution Contract & Dry-Run
+
+**Goal:** Preserve the Human-merged fail-closed migration execution-readiness/dry-run boundary without projecting it as physical migration authority.  
+**Scope:** current-main Documentary migration dry-run contract, focused unit coverage and Documentary architecture/component projections materialized by PR #928.  
+**Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`.  
+**Dependencies:** existing Documentary Migration Planner, Stable Identity, compatibility, Owner boundaries, rollback/post-condition evidence and applicable Documentary authorities.  
+**Timeline:** `DONE`.  
+**Gate:** Human/CODEOWNER merge plus current-main readback; no migration, Registry/Lifecycle mutation or production mutation may be inferred from the dry-run result.  
+**Exit criterion:** current main contains the bounded dry-run contract and its focused evidence while all execution/mutation authorization flags remain fail-closed.  
+**State:** `IMPLEMENTED_ON_MAIN / HUMAN-MERGED / POST-MERGE_READBACK_VERIFIED`.
+
+Current-main provenance:
+
+- PR #928 Human-merged at commit `d153de067f62c01bdbc7f7dbb9ab2a0e15badc73`.
+- The merge materialized `DocumentaryMigrationDryRun`, focused unit coverage and the associated Documentary projections.
+- The contract does not authorize physical migration, Registry/Lifecycle mutation, filesystem mutation, provider mutation or production mutation.
+- No fresh runtime/test PASS is synthesized by this roadmap-only reconciliation; prior PR evidence remains attributable evidence.
+
+### WP-DOC-15 — Documentary Quality / SLO Model
+
+**Goal:** Preserve the Human-merged read-only quality/SLO evaluation boundary over the existing D9 Documentary SLIs without creating a second Metrics/Observability/Quality authority.  
+**Scope:** current-main `DocumentaryQualitySlo`, architecture contract, focused unit coverage and Documentary manifest registration materialized by PR #935.  
+**Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`.  
+**Dependencies:** existing D9 `freshnessRatio`, `registryCoverageRatio`, `orphanRate` and Documentary observability correlation evidence.  
+**Timeline:** `DONE`.  
+**Gate:** Human/CODEOWNER merge plus current-main readback; point-in-time SLO target conformance must remain distinct from temporal SLO proof and must not grant decision/mutation authority.  
+**Exit criterion:** current main deterministically projects `MEETS_SLO`, `SLO_BREACH` or fail-closed `BLOCKED` from existing D9 evidence without a parallel Quality/Observability stack.  
+**State:** `IMPLEMENTED_ON_MAIN / HUMAN-MERGED / POST-MERGE_READBACK_VERIFIED`.
+
+Current-main provenance:
+
+- PR #935 Human-merged at commit `0b7ffb3bf06c1165a3b73f9d4d6e0933dee971f2`.
+- `DocumentaryQualitySlo` evaluates the approved starter target `freshnessRatio >= 0.95`, integrity invariant `registryCoverageRatio == 1.0` and `orphanRate == 0.0` using existing D9 input only.
+- `temporalSloVerified`, decision/mutation authority and Quality-Center/Observability mutation remain false; the slice does not modify `src/platform/Quality/**` or D9 measurement authority.
+- No fresh runtime/test PASS is synthesized by this roadmap-only reconciliation; prior PR evidence remains attributable evidence.
+
 ### WP-DOC-16 — Documentary Plugin Extension Model
 
-**Goal:** Materialize only the Documentary-local validation/projection boundary required by the existing Enterprise Plugin & Extension contracts, without introducing a second plugin registry, loader, provider or connector plane.  
-**Scope:** `agent/documentary-plugin-extension-contract-resync-20260915` at head `28a219a6c5659a47167b3e185c587c5667b2edf2`; four changed files covering the Documentary extension contract, focused tests, architecture note and current-main evidence.  
+**Goal:** Maintain the Documentary-local validation/projection boundary required by the existing Enterprise Plugin & Extension contracts without introducing a second plugin registry, loader, provider or connector plane.  
+**Scope:** current-main `DocumentaryExtensionContract`, focused tests, architecture contract and Documentary evidence materialized by PR #938. Historical implementation/resync branches are evidence only.  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`.  
 **Dependencies:** `ESS-0001-CONTRACTS` Chapter 13, `ADR-0010`, `ESS-0010`, existing Enterprise Registry and current reuse/plugin-use controls.  
-**Timeline:** `LATER -> PR-CREATION GATE AFTER RESYNC`.  
-**Gate:** the WP-DOC-16 branch must first be resynchronized against then-current main; effective-change identity must then be reproduced, no parallel registry/provider/connector system may be introduced, and separate Owner approval is required before PR creation.  
-**Exit criterion:** bounded contract/evidence is Human/CODEOWNER merged and then-current main is re-read; until then `DONE_MAIN=false`.  
-**State:** `EVIDENCE_READY_ON_RESYNC_BRANCH / CURRENT-MAIN_RESYNC_REQUIRED_BEFORE_PR-CREATION`.
+**Timeline:** `DONE`.  
+**Gate:** satisfied by bounded implementation, Human/CODEOWNER merge in PR #938 and post-merge readback from current main; no parallel registry/provider/connector system may be inferred or introduced.  
+**Exit criterion:** current main contains the bounded contract/evidence and preserves Enterprise Registry, activation, provider and connector authority outside Documentary.  
+**State:** `IMPLEMENTED_ON_MAIN / HUMAN-MERGED / POST-MERGE_READBACK_VERIFIED`.
 
-Branch evidence states:
+Current-main evidence:
 
+- PR #938 Human-merged at commit `fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`.
+- `src/platform/Documentary/Plugins/DocumentaryExtensionContract.ts`, `tests/unit/documentaryExtensionContract.test.ts`, `docs/architecture/DOCUMENTARY_PLUGIN_EXTENSION_CONTRACT.md` and `docs/evidence/documentary/WP_DOC_16_PLUGIN_EXTENSION_CONTRACT_2026-09-15.md` are present on current main.
 - only `VALID_FOR_REGISTRATION_REQUEST` or `BLOCKED` can be returned;
-- `registryMutationPerformed=false`;
-- `activationAuthorized=false`;
-- `externalCapabilityAuthorized=false`;
+- `registryMutationPerformed=false`, `activationAuthorized=false`, `externalCapabilityAuthorized=false`;
 - duplicate identity, unsafe path, foreign/dynamic code, implicit network/database capability and missing Security Review evidence fail closed;
-- focused local TypeScript/behavior validation remains applicable to the byte-identical code/test payload, but the branch Git baseline predates current main; repository Vitest, project-wide TypeScript, Documentation Hygiene and hosted CI remain `NOT RUN` and are not represented as PASS.
+- historical branch baselines remain provenance only and do not override current-main state;
+- no fresh runtime/test PASS is synthesized by this roadmap-only reconciliation; focused implementation evidence remains attributable to the merged work.
 
 ### WP-DOC-17 — Documentary Consumer Retry / Idempotency
 
 **Goal:** Add Documentary-local retry/idempotency hardening only when a reproducible Documentary-local failure justifies it; otherwise remain dependency-held without speculative retry logic.  
-**Scope:** `agent/documentary-consumer-idempotency-evidence-resync-20260915` at head `4ff8a3bed1debf346030a9ad67c9f67ea80ed8bc`; two Documentary evidence/assessment documents only.  
+**Scope:** current-main Documentary consumer behavior and EventMesh evidence; historical WP-DOC-17 evidence branches are evidentiary only and do not create an active execution writer.  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`; EventMesh replay/delivery runtime remains `CAPITAL-AI-OPS / PVC-18`.  
 **Dependencies:** current Documentary consumer behavior, EventMesh replay guard and reproducible failure evidence.  
 **Timeline:** `CONDITIONAL / DEPENDENCY_HELD`.  
-**Gate:** implementation may reopen only with deterministic Documentary-local failure evidence including exact consumer path, event/correlation identity, side-effect/replay outcome and proof that bounded retry is safe and Documentary-owned. Any future PR-readiness use of the evidence branch first requires then-current-main resync.  
+**Gate:** implementation may reopen only with deterministic Documentary-local failure evidence including exact consumer path, event/correlation identity, side-effect/replay outcome and proof that bounded retry is safe and Documentary-owned.  
 **Exit criterion:** current evidence baseline is correctly recorded as not requiring a retry implementation; no second EventMesh/retry queue/replay registry is introduced.  
 **State:** `DEPENDENCY_HELD / NOT_APPLICABLE_FOR_IMPLEMENTATION`.
 
 Current evidence establishes:
 
 - `DocumentaryEventConsumer.ts` validates/projects event metadata and has no evidenced mutating side effect, retry loop, queue or local replay state;
-- no current call site for `consumeDocumentaryTrigger` was found beyond its definition on the correlated relevant payload;
+- no current call site for `consumeDocumentaryTrigger` was found beyond its definition on the correlated current-main evidence;
 - `EventReplayGuard.ts` already owns EventMesh duplicate/stale classification using `eventId`/`correlationId` under OPS/PVC-18;
 - the generic EventMesh test fixture naming Documentary does not reproduce the Documentary consumer and is not sufficient local failure evidence;
 - repository Vitest, TypeScript, Documentation Hygiene, hosted CI and production/runtime failure probes remain truthfully `NOT RUN` or `NOT AVAILABLE`, not PASS.
@@ -173,4 +210,4 @@ Current evidence establishes:
 All projects as evidence sources; GOV authority; OPS execution; SEC/QM verification where applicable.
 
 ## Project exit gate
-One active Documentary roadmap; chat-preservation work is terminalized or explicitly routed; stale branch references are re-correlated before being presented as current; WP-DOC-16 and WP-DOC-17 states are projected without claiming unmerged branch work as current-main implementation; EventMesh/Traceability runtime ownership remains with OPS; current open-writer inventory is empty and no Documentary roadmap conflict is present.
+One active Documentary roadmap; chat-preservation work is terminalized or explicitly routed; stale branch references are evidentiary rather than execution-authoritative; WP-DOC-14/15/16 Human-merged current-main states are projected correctly; WP-DOC-17 remains dependency-held without speculative implementation; EventMesh/Traceability runtime ownership remains with OPS; current open-writer inventory is empty and no Documentary roadmap conflict is present.
