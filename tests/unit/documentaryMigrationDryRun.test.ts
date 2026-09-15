@@ -25,6 +25,7 @@ function evidence(overrides: Partial<DocumentaryMigrationExecutionEvidence> = {}
     migrationId: 'MIG-DOC-001',
     migrationCategory: 'Documentation Migration',
     documentId: 'DOC-ARCH-CANONICAL',
+    expectedDocumentId: 'DOC-ARCH-CANONICAL',
     sourceFingerprint: 'a'.repeat(64),
     expectedSourceFingerprint: 'a'.repeat(64),
     targetOwnerProject: 'CAPITAL-AI-DOC',
@@ -70,16 +71,27 @@ describe('DocumentaryMigrationDryRun', () => {
     expect(result.requiredPostConditions).toContain('filesystem-unchanged');
   });
 
-  it('blocks fingerprint drift and missing stable identity evidence', () => {
+  it('blocks document identity and fingerprint drift', () => {
     const dryRun = new DocumentaryMigrationDryRun();
     const result = dryRun.evaluate(candidate(), evidence({
-      documentId: '',
+      expectedDocumentId: 'DOC-ARCH-DIFFERENT',
       expectedSourceFingerprint: 'b'.repeat(64),
     }));
 
     expect(result.status).toBe('BLOCKED');
-    expect(result.reasons).toContain('document-id-missing');
+    expect(result.reasons).toContain('document-id-mismatch');
     expect(result.reasons).toContain('source-fingerprint-mismatch');
+  });
+
+  it('blocks missing stable identity evidence', () => {
+    const dryRun = new DocumentaryMigrationDryRun();
+    const result = dryRun.evaluate(candidate(), evidence({
+      documentId: '',
+      expectedDocumentId: '',
+    }));
+
+    expect(result.status).toBe('BLOCKED');
+    expect(result.reasons).toContain('document-id-missing');
   });
 
   it('blocks foreign ownership, protected targets, incompatibility, collisions and duplicates', () => {
