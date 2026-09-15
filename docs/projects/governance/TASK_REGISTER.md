@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
 **Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-15, correlated to repository-visible current-main/PR/branch evidence  
-**Current correlation baseline:** `main@698e0bc26e28899ddf2429fb298f74d54e35b3b0`  
+**Current correlation baseline:** `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -92,7 +92,7 @@ The ordered automated Roadmap lane permits at most one not-yet-integrated automa
 
 ## Current writer / correlation state
 
-At `main@698e0bc26e28899ddf2429fb298f74d54e35b3b0`:
+At `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`:
 
 - open PR #951 (`CAPITAL-AI-FE`, FIN-17 RankingBoard consumer) changes only `src/features/screening/ui/RankingBoard.tsx` and `tests/unit/fin17RankingBoardConsumer.test.ts`; there is no changed-file, namespace, Governance-authority or PR-lifecycle-workflow overlap with GOV-CHAT-077;
 - parallel branch `agent/governance-pr900-04-freshness-version-validators-20260915` changes exactly four validator/test files: `scripts/governance/controlPlaneFreshnessRules.mjs`, `scripts/governance/controlPlaneStructuralValidatorCore.mjs`, `scripts/governance/validateGovernanceControlPlane.mjs`, and `tests/unit/governanceControlPlaneFreshness.test.ts`; none overlaps the GOV-CHAT-077 changed-file set at this correlation;
