@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — Universe Branding Owner decision correlated and routed to CAPITAL-AI-FE  
-**Baseline:** `main@c6d36c216801f16788d205664ab4cfdf0c970dca`  
+**Reconciliation:** 2026-09-15 — PR #944 Human-merge and authority-version convergence correlated; GOV-PR900-04 synchronized after Human-merged PR #946  
+**Baseline:** `main@c8a88afc7f9cfad367b592e9567654451f81e436`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -28,10 +28,16 @@ Refresh stale repository-wide current-state projections; reconcile ADR-0069's hi
 ### GOV-PR900-03 — Stable authority version convergence
 Resolve `AUTH-GOV-CONTROL-PLANE` version/target drift across Authority Registry and control-plane/component projections.
 
+**State:** `DONE_MAIN / TERMINAL` via Human-merged PR #944 (`main@cda972b2def5a2449b96cde774942364ae1fa697`). Authority Registry, `src/platform/Governance` README/manifest and the control-plane documentation projection now resolve `AUTH-GOV-CONTROL-PLANE` to authority version `1.2.0`; documentation projection version `1.3.1` remains explicitly non-authorizing version metadata.
+
 **Exit:** one stable identity has consistent version semantics and target projections.
 
 ### GOV-PR900-04 — Fail-closed freshness/version validators
 Extend Governance validation so stale project/task/current-state projections and authority target/version drift can fail closed rather than only validating syntax/path existence.
+
+**State:** `IN IMPLEMENTATION` on `agent/governance-pr900-04-freshness-version-validators-20260915`, synchronized from `main@c8a88afc7f9cfad367b592e9567654451f81e436` after Human merge of FINTECH PR #946. The existing `governance:control-plane` entrypoint remains the single canonical repository Governance validator; implementation is additive inside that execution path and does not create a second Governance authority or command surface.
+
+**Exit:** the canonical validator rejects mismatched declared authority target/projection identity or version for `AUTH-GOV-CONTROL-PLANE` and rejects any changed canonical current-state/project Roadmap or Task Register whose recognized `main@<sha>` baseline is missing or differs from then-current main. Negative regression tests prove both fail-closed paths.
 
 ### GOV-PR900-05 — Staged pre-command flow
 Represent `main/open PRs → AGENTS → capability class → Project/PVC/Roadmap → ADR/ESS/CTRL/AUTH → least-privileged decision → ALLOW|ROUTE|REQUIRE_GATE|BLOCK → execution` without creating another authority plane. Productive client materialization remains CLIENT-owned.
