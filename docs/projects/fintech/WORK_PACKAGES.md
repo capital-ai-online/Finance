@@ -1,8 +1,8 @@
 # CAPITAL-AI-FINTECH — Work Packages
 
-**Correlation baseline:** `main@8618326db4d4a5af0fbecd65b83805ea7608109f`  
-**Consolidated:** 2026-09-06  
-**FIN-SEC-02 implementation branch:** `agent/fintech-fin-sec-02-verified-screening-20260907`  
+**Correlation baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Consolidated:** 2026-09-15  
+**FIN-SEC-03 implementation branch:** `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC ownership:** `PVC-12..PVC-17`
 
@@ -10,33 +10,33 @@ This file is a supporting work-package projection. Current prioritization and co
 
 | ID | PVC | Work package | Consolidated status | Exit gate |
 |---|---|---|---|---|
-| FIN-12 | PVC-12 | Validated DATA -> Financial Feature Contract | PARTIAL / P1 — upstream `ValidatedDataInput/1.0.0` exists; FINTECH mapping open | explicit tested `ValidatedDataInput` -> versioned feature-contract mapping; failed/missing/stale/non-computable evidence stays fail-closed |
+| FIN-12 | PVC-12 | Validated DATA -> Financial Feature Contract | PARTIAL / P1 — DATA handoff ready; FINTECH mapping open; sequenced after FIN-17 | explicit tested `ValidatedDataInput` -> versioned feature-contract mapping; failed/missing/stale/non-computable evidence stays fail-closed |
 | FIN-13 | PVC-13 | Scoring Models | VERIFIED CORE / DRIFT WATCH | one `ScoringModelRegistry`; unique canonical/champion productive scopes; challengers non-productive until governed promotion |
 | FIN-14 | PVC-14 | Scoring Orchestration | VERIFIED CORE | one productive `ScoringDispatcher`; no alternate productive dispatcher/model-selection path |
-| FIN-15 | PVC-15 | Domain Executors / Financial Analysis | VERIFIED/PARTIAL | every productive scope maps to an explicit registered executor and `FIN-SEC-03` protected-execution boundary is remediated |
+| FIN-15 | PVC-15 | Domain Executors / Financial Analysis | VERIFIED/PARTIAL + FIN-SEC-03 IMPLEMENTED / EVIDENCE_READY | every productive scope maps to an explicit registered executor; protected Backtest/Monte Carlo/full-AI boundary is server-authoritative/fail-closed; independent Security verification remains open |
 | FIN-16 | PVC-16 | Canonical Scoring | VERIFIED/PARTIAL | `CanonicalScoreResult` compatibility/lineage preserved and `FIN-SEC-02` verified-screening alternate paths use the canonical server entitlement boundary |
-| FIN-17 | PVC-17 | Ranking / Decision Support | PARTIAL / P1 | one productive FINTECH backend rank/order authority; FE consumes authoritative ordering only |
+| FIN-17 | PVC-17 | Ranking / Decision Support | PARTIAL / P1 — NEXT FINTECH SLICE | one productive FINTECH backend rank/order authority; productive FE surface consumes authoritative backend ordering only |
 | FIN-18 | supporting | Asset Class Inventory | VERIFIED | repository-derived supported classes only |
 | FIN-19 | supporting | Provider Capability Mapping | PARTIAL / P2 | financial feature/model requirements map to provider-neutral DATA contracts and current `provider-matrix/1.10.0` without ingress/DQ takeover |
 | FIN-20 | supporting | End-to-End Scoring Evidence | PARTIAL / P2 | exact `ValidatedDataInput` -> feature -> model -> dispatcher -> executor -> canonical score -> rank lineage plus required Security/OPS evidence |
 | FIN-SEC-02 | PVC-16 | Verified-screening authorization | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | shared path gate consumes accepted `verified_screening` quota; FINTECH evidence ready; independent Security verification requested; not self-closed |
-| FIN-SEC-03 | PVC-15 | Financial-analysis authorization | OPEN / REFERRED_NOT_EXECUTED / P1 HIGH | Backtest/Monte Carlo/full-AI protected execution is server-authoritative/fail-closed; Buffett authority preserved; FINTECH evidence ready; independent Security verification requested |
+| FIN-SEC-03 | PVC-15 | Financial-analysis authorization | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | Backtest and Monte Carlo have server ALLOW/DENY; full-AI is bound to a real structured provider executor and fails closed; Buffett authority preserved; independent Security verification requested |
 | FIN-DRIFT-01 | supporting | Project / contract drift checks | PLANNED / P3 | deterministic low-cost checks detect stale PVC/baseline/provider/consumer/security-routing projections without creating new Authority |
-| FIN-SYNC-01 | PVC-12..17 | 2026-09-01 Project Surface Current-Main Sync | COMPLETED / HISTORICAL EVIDENCE | retained as merged evidence; current planning correlation is the 2026-09-06 Roadmap baseline |
+| FIN-SYNC-01 | PVC-12..17 | 2026-09-01 Project Surface Current-Main Sync | COMPLETED / HISTORICAL EVIDENCE | retained as merged evidence; current planning correlation is the 2026-09-15 Roadmap baseline |
 
 ## Consolidated dependency state
 
 ### DATA -> FINTECH / FIN-12
 
-`CAPITAL-AI-DATA` has implemented upstream `ValidatedDataInput/1.0.0` with identity, provenance, freshness and explicit non-computable/missing/stale states. FINTECH still owns the explicit versioned mapping into registered financial feature contracts.
+`CAPITAL-AI-DATA` has implemented upstream `ValidatedDataInput/1.0.0` with identity, provenance, freshness and explicit non-computable/missing/stale states and has routed consumption to FINTECH/PVC-12. FINTECH still owns the explicit versioned mapping into registered financial feature contracts. This work remains P1, sequenced immediately after FIN-17 on the current evidence.
 
 ### Security -> FINTECH / FIN-SEC-02 and FIN-SEC-03
 
-`FIN-SEC-02` implementation/tests are `EVIDENCE_READY` on `agent/fintech-fin-sec-02-verified-screening-20260907`. Independent Security verification is requested. `FIN-SEC-03` remains an open implementation gap. The historical separate FINTECH Security handoff overlay is non-authorizing.
+`FIN-SEC-02` and `FIN-SEC-03` implementation/test artifacts are `EVIDENCE_READY`; independent Security verification is requested for both. FIN-SEC-03 evidence is `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md`. The historical separate FINTECH Security handoff overlay remains non-authorizing.
 
-### FINTECH -> Frontend / FIN-17 and FIN-SEC-03 consumer integration
+### FINTECH -> Frontend / FIN-17
 
-Frontend remains a presentation consumer. `RankingBoard` is the productive UI surface, but stable business rank/order semantics must originate from FINTECH. Any downstream presentation migration is executed by `CAPITAL-AI-FE`.
+Frontend remains a presentation consumer. `RankingBoard` is the productive UI surface but still performs local READY-score sorting/Top-Worst slicing. `FIN-17` is therefore the single next P1 slice: backend FINTECH rank/order authority must become the productive source before downstream FE presentation-only consumption is complete.
 
 ### FINTECH -> OPS / FIN-20
 
@@ -44,9 +44,9 @@ Frontend remains a presentation consumer. `RankingBoard` is the productive UI su
 
 ## Priority order
 
-1. P1/HIGH — `FIN-SEC-02` evidence is ready for Security verification; `FIN-SEC-03` remains unimplemented.
-2. Mandatory recorrelation of then-current `main`, open PRs, Security state, affected Roadmap and applicable ADR/ESS after either Security child completes.
-3. P1 — `FIN-12` and `FIN-17` share the next priority band; choose order only after recorrelation.
+1. Security return — `FIN-SEC-02` and `FIN-SEC-03` are FINTECH `EVIDENCE_READY`; independent Security verification remains open.
+2. P1 / NEXT — `FIN-17` backend ranking authority consolidation.
+3. P1 / AFTER FIN-17 — `FIN-12` ValidatedDataInput → versioned feature-contract mapping.
 4. P2 — `FIN-19`, then `FIN-20` unless current evidence changes the ordering.
 5. P3 — `FIN-DRIFT-01`.
 
