@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/fintech/`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-12..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — FIN-SEC-03 implementation/evidence and FIN-12 vs FIN-17 P1 reprioritization correlated to current main  
-**Baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
+**Reconciliation:** 2026-09-15 — PR #929 merge provenance and FIN-SEC-03 post-merge project-surface sync correlated to current main; FIN-17 remains selected but held pending Human merge of this sync  
+**Baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -43,7 +43,7 @@ Treat money-like/token or monetization concepts as proposals only until GOV/COMP
 | FIN-14 Scoring Orchestration | `VERIFIED CORE` | no second dispatcher |
 | FIN-15 Domain executors | `VERIFIED/PARTIAL` + FIN-SEC-03 `IMPLEMENTED / EVIDENCE_READY`; SEC verification open | independent Security return for protected analysis boundary |
 | FIN-16 Canonical scoring | `VERIFIED/PARTIAL` + FIN-SEC-02 `EVIDENCE_READY` / SEC verification open | independent SEC return |
-| FIN-17 Ranking / Decision Support | `PARTIAL / P1 — NEXT FINTECH SLICE` | one backend rank/order authority; FE consumes backend ordering only |
+| FIN-17 Ranking / Decision Support | `PARTIAL / P1 — NEXT / HELD UNTIL POST-MERGE-SYNC HUMAN MERGE` | after Human merge of this sync, re-correlate then-current main/open writers; then consolidate one backend rank/order authority and keep FE on backend ordering only |
 | FIN-18 Asset-class inventory | `VERIFIED` | no inferred new class |
 | FIN-19 Provider capability mapping | `PARTIAL / OPEN` | map to DATA `provider-matrix` without owning ingress/DQ |
 | FIN-20 End-to-end scoring evidence | `PARTIAL / OPEN` | exact lineage through OPS trace |
@@ -60,7 +60,7 @@ No synthetic score fallback. Frontend is presentation-only. `ScoringDispatcher` 
 
 ## FIN-SEC-03 implementation disposition
 
-`FIN-SEC-03 / PVC-15` is implemented on `agent/fintech-fin-sec-03-analysis-entitlement-20260915` and source-correlated to the current-main baseline above:
+`FIN-SEC-03 / PVC-15` was Human-merged through PR #929 (`merge 103689c2f30536e573b7958f63b503ca428f69cf`; historical implementation branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`) and is post-merge-correlated to the current-main baseline above:
 
 - Backtest compatibility execution is gated server-side before history/provider work by the canonical subscription authority; current browser consumers use bearer-aware transport.
 - Monte Carlo requires a fresh server-authoritative authorization/quota decision for every user-triggered execution; automatic/bypass execution is removed.
@@ -71,7 +71,7 @@ No synthetic score fallback. Frontend is presentation-only. `ScoringDispatcher` 
 
 ## P1 reprioritization after FIN-SEC-03
 
-Exactly one next FINTECH P1 slice is selected: **`FIN-17 — Ranking / Decision Support`**.
+Exactly one next FINTECH P1 slice remains selected: **`FIN-17 — Ranking / Decision Support`**. Execution is `HELD` until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915`; only after that merge may a fresh then-current-main/open-writer recorrelation start FIN-17.
 
 Current evidence supports FIN-17 before FIN-12 because DATA has already provided the `ValidatedDataInput` handoff for FIN-12, while the productive `RankingBoard` still derives Top/Worst ordering by browser-local sorting even though FINTECH already has a backend `CrossAssetRanking` implementation. Closing that live ranking-authority split is the narrower current-main authority correction. FIN-12 remains P1 and is re-correlated immediately after FIN-17.
 
