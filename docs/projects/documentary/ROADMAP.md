@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/documentary/`  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — current-main re-correlation after PR #924; valid WP-DOC-13 timeline delta folded; WP-DOC-16/17 resync dispositions synchronized  
-**Baseline:** `main@86952c6ff3d6a287fa20d6d7f1ed5cf9b0d71a04`  
+**Reconciliation:** 2026-09-15 — current-main re-correlation after PR #925; open PR #926 checked; valid WP-DOC-13 timeline delta folded; WP-DOC-16/17 resync dispositions synchronized  
+**Baseline:** `main@7ba58670eec6d1a7bc7de8e850b1fee390c1e0c2`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -15,6 +15,8 @@ This file is the single active project execution projection. Dated active sideca
 The historical branch `agent/documentary-roadmap-timeline-20260914` is `STALE / SUPERSEDED_AS_EXECUTION_WRITER` for current execution because it is based on an older main and carries only a Documentary Roadmap delta. Its valid WP-DOC-13 semantic correction is folded into this fresh current-main branch. The historical branch is not deleted or rewritten and remains evidentiary only.
 
 The pre-sync branches `agent/documentary-plugin-extension-contract-20260915`, `agent/documentary-consumer-idempotency-evidence-20260915` and `agent/documentary-roadmap-wp16-wp17-status-20260915` are also evidentiary only after main advanced. Current PR-readiness uses the fresh resync branches named below.
+
+Current-pass drift from `main@86952c6ff3d6a287fa20d6d7f1ed5cf9b0d71a04` to `main@7ba58670eec6d1a7bc7de8e850b1fee390c1e0c2` is the OPS-owned PR #925 merge. No Documentary-owned implementation, project mapping, applicable Documentary ADR/ESS contract or PR-approval authority changed in that drift. Open PR #926 changes only the two Social Media roadmap surfaces and has no changed-file, Documentary semantic, namespace, authority or security overlap with this roadmap branch. `agent/documentary-roadmap-status-recorrelation-20260915` is synchronized to this current main; the separate WP-DOC-16 and WP-DOC-17 resync branches remain on their earlier Git baseline and therefore require their own current-main resync before any PR-readiness claim.
 
 ## PR #900 / #901 normalized work packages
 
@@ -100,8 +102,8 @@ Timeline semantics: `NOW` = executable on current evidence, `NEXT` = after the n
 | NOW | WP-DOC-13 GOV-DOC-007 unresolved reference | `IMPLEMENTED_ON_MAIN / ROADMAP_RECORRELATED / CURRENT-PASS TEST EXECUTION NOT RUN` |
 | NEXT | WP-DOC-14 D8 Migration Execution contract & dry-run | branch-level evidence exists; main/PR status must be independently correlated before projection changes |
 | LATER | WP-DOC-15 Documentary quality/SLO model | branch-level evidence exists; main/PR status must be independently correlated before projection changes |
-| LATER | WP-DOC-16 Plugin extension model | `EVIDENCE_READY_ON_RESYNC_BRANCH / PR-HUMAN-MERGE PENDING`; existing Enterprise framework reused; no connector/registry mutation |
-| CONDITIONAL | WP-DOC-17 Consumer retry/idempotency | `DEPENDENCY_HELD / NOT_APPLICABLE_FOR_IMPLEMENTATION`; no reproducible Documentary-local failure evidence; EventMesh remains OPS |
+| LATER | WP-DOC-16 Plugin extension model | `EVIDENCE_READY_ON_RESYNC_BRANCH / CURRENT-MAIN_RESYNC_REQUIRED_BEFORE_PR-CREATION`; existing Enterprise framework reused; no connector/registry mutation |
+| CONDITIONAL | WP-DOC-17 Consumer retry/idempotency | `DEPENDENCY_HELD / NOT_APPLICABLE_FOR_IMPLEMENTATION`; evidence branch Git baseline is stale but no reproducible Documentary-local failure evidence exists; EventMesh remains OPS |
 | CONTINUOUS | WP-DOC-02 lifecycle/maintenance | ACTIVE |
 | CONTINUOUS | WP-DOC-03 Vocabulary/Knowledge/Wiki | ACTIVE BASELINE |
 | DONE | WP-DOC-00..12 | HUMAN-MERGED (PRs #645–#866 sequence) |
@@ -134,10 +136,10 @@ This Documentary slice changes no component version, document-schema version, pl
 **Scope:** `agent/documentary-plugin-extension-contract-resync-20260915` at head `28a219a6c5659a47167b3e185c587c5667b2edf2`; four changed files covering the Documentary extension contract, focused tests, architecture note and current-main evidence.  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`.  
 **Dependencies:** `ESS-0001-CONTRACTS` Chapter 13, `ADR-0010`, `ESS-0010`, existing Enterprise Registry and current reuse/plugin-use controls.  
-**Timeline:** `LATER -> PR-CREATION GATE`.  
-**Gate:** branch remains current-main-correlated, effective-change identity is reproducible, no parallel registry/provider/connector system is introduced, and separate Owner approval is obtained before PR creation.  
+**Timeline:** `LATER -> PR-CREATION GATE AFTER RESYNC`.  
+**Gate:** the WP-DOC-16 branch must first be resynchronized against then-current main; effective-change identity must then be reproduced, no parallel registry/provider/connector system may be introduced, and separate Owner approval is required before PR creation.  
 **Exit criterion:** bounded contract/evidence is Human/CODEOWNER merged and then-current main is re-read; until then `DONE_MAIN=false`.  
-**State:** `EVIDENCE_READY_ON_RESYNC_BRANCH / PR-HUMAN-MERGE PENDING`.
+**State:** `EVIDENCE_READY_ON_RESYNC_BRANCH / CURRENT-MAIN_RESYNC_REQUIRED_BEFORE_PR-CREATION`.
 
 Branch evidence states:
 
@@ -146,7 +148,7 @@ Branch evidence states:
 - `activationAuthorized=false`;
 - `externalCapabilityAuthorized=false`;
 - duplicate identity, unsafe path, foreign/dynamic code, implicit network/database capability and missing Security Review evidence fail closed;
-- focused local TypeScript/behavior validation remains applicable to the byte-identical code/test payload; repository Vitest, project-wide TypeScript, Documentation Hygiene and hosted CI remain `NOT RUN` and are not represented as PASS.
+- focused local TypeScript/behavior validation remains applicable to the byte-identical code/test payload, but the branch Git baseline predates current main; repository Vitest, project-wide TypeScript, Documentation Hygiene and hosted CI remain `NOT RUN` and are not represented as PASS.
 
 ### WP-DOC-17 — Documentary Consumer Retry / Idempotency
 
@@ -155,7 +157,7 @@ Branch evidence states:
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`; EventMesh replay/delivery runtime remains `CAPITAL-AI-OPS / PVC-18`.  
 **Dependencies:** current Documentary consumer behavior, EventMesh replay guard and reproducible failure evidence.  
 **Timeline:** `CONDITIONAL / DEPENDENCY_HELD`.  
-**Gate:** implementation may reopen only with deterministic Documentary-local failure evidence including exact consumer path, event/correlation identity, side-effect/replay outcome and proof that bounded retry is safe and Documentary-owned.  
+**Gate:** implementation may reopen only with deterministic Documentary-local failure evidence including exact consumer path, event/correlation identity, side-effect/replay outcome and proof that bounded retry is safe and Documentary-owned. Any future PR-readiness use of the evidence branch first requires then-current-main resync.  
 **Exit criterion:** current evidence baseline is correctly recorded as not requiring a retry implementation; no second EventMesh/retry queue/replay registry is introduced.  
 **State:** `DEPENDENCY_HELD / NOT_APPLICABLE_FOR_IMPLEMENTATION`.
 
@@ -171,4 +173,4 @@ Current evidence establishes:
 All projects as evidence sources; GOV authority; OPS execution; SEC/QM verification where applicable.
 
 ## Project exit gate
-One active Documentary roadmap; chat-preservation work is terminalized or explicitly routed; stale branch references are re-correlated before being presented as current; WP-DOC-16 and WP-DOC-17 states are projected without claiming unmerged branch work as current-main implementation; EventMesh/Traceability runtime ownership remains with OPS.
+One active Documentary roadmap; chat-preservation work is terminalized or explicitly routed; stale branch references are re-correlated before being presented as current; WP-DOC-16 and WP-DOC-17 states are projected without claiming unmerged branch work as current-main implementation; EventMesh/Traceability runtime ownership remains with OPS; current open-writer correlation is clean against PR #926 for this Documentary roadmap scope.
