@@ -14,9 +14,15 @@ import { getLiveCryptoSnapshotConsensus } from '../services/liveCryptoSnapshotCo
 import { evaluateCryptoSnapshotIntegrity } from '../services/cryptoSnapshotIntegrity';
 import { recordMarketIntegrityObservation } from '../platform/Supervisor/marketIntegrityRuntime';
 import {
+  buildBackendRankingProjection,
+  type BackendRankingProjectionInput,
+} from '../platform/Ranking';
+import {
   dispatchCanonicalScore,
   type ScoringModelDescriptor,
 } from '../platform/Scoring';
+
+const CRYPTO_SCORE_BATCH_LIMIT = 24;
 
 function requestCorrelationId(req: express.Request): string {
   const incoming = req.header('x-correlation-id');
@@ -34,6 +40,199 @@ function modelRegistryView(model: ScoringModelDescriptor) {
     featureContractVersion: model.featureContractVersion,
     resultContractVersion: model.resultContractVersion,
     evidencePolicy: model.evidencePolicy,
+  };
+}
+
+interface CryptoScoreEvaluation {
+  httpStatus: number;
+  response: Record<string, unknown>;
+  rankingInput: BackendRankingProjectionInput | null;
+}
+
+function rankingTier(value: unknown): 1 | 2 | 3 | null {
+  return value === 1 || value === 2 || value === 3 ? value : null;
+}
+
+async function evaluateCryptoScorePayload(
+  payload: any,
+  correlationId: string,
+  source: 'request' | 'registry' = 'request',
+  subtype?: string,
+): Promise<CryptoScoreEvaluation> {
+  if (!payload?.symbol || !payload?.asset_name) {
+    return {
+      httpStatus: 400,
+      response: { correlationId, error: '"symbol" and "asset_name" are required in payload.' },
+      rankingInput: null,
+    };
+  }
+  if (payload.scores) {
+    return {
+      httpStatus: 422,
+      response: {
+        status: 'SOURCE_UNAVAILABLE',
+        score: null,
+        final_score: null,
+        correlationId,
+        error: 'Caller-provided financial scores are not accepted by the production scoring endpoint because provenance cannot be verified.',
+      },
+      rankingInput: null,
+    };
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'classification')) {
+    return {
+      httpStatus: 422,
+      response: {
+        status: 'CALLER_CLASSIFICATION_NOT_ALLOWED',
+        score: null,
+        final_score: null,
+        correlationId,
+        error: 'Caller-provided classification has no productive score, ranking, tier, confidence or eligibility authority.',
+      },
+      rankingInput: null,
+    };
+  }
+
+  const symbol = String(payload.symbol).toUpperCase().trim();
+  const assetName = String(payload.asset_name);
+  const classification = ClassificationService.classifyAsset(symbol);
+  const dispatch = await dispatchCanonicalScore({
+    symbol,
+    name: assetName,
+    assetClass: 'crypto',
+    subtype,
+    source,
+  });
+
+  if (dispatch.status !== 'DISPATCHED') {
+    const response = {
+      asset_name: assetName,
+      symbol,
+      assetId: dispatch.asset.assetId,
+      model: null,
+      modelRegistry: dispatch.model ? modelRegistryView(dispatch.model) : null,
+      classification,
+      ...dispatch.canonical,
+      correlationId,
+      reason: dispatch.reason,
+      rank_score: null,
+      eligible_for_top10: false,
+      scoreBasis: 'unavailable' as const,
+    };
+    return {
+      httpStatus: 422,
+      response,
+      rankingInput: {
+        symbol,
+        name: assetName,
+        assetClass: 'crypto',
+        subtype,
+        source,
+        canonical: dispatch.canonical,
+        category: classification.category_main,
+        tier: rankingTier(classification.tier),
+        governance: {
+          eligible: false,
+          eligibilityStatus: dispatch.reason,
+        },
+      },
+    };
+  }
+
+  const registeredModel = dispatch.model;
+  const modelRegistry = modelRegistryView(registeredModel);
+  const assessment = dispatch.assessment;
+  const canonical = dispatch.canonical;
+  const lineage = buildScoringLineage({
+    correlationId,
+    assetId: dispatch.asset.assetId,
+    model: registeredModel,
+    canonical,
+    scoringInputs: assessment.inputs,
+    fieldProvenance: assessment.fieldProvenance,
+    providerState: assessment.providerState,
+  });
+  const rankingInput: BackendRankingProjectionInput = {
+    symbol,
+    name: assetName,
+    assetClass: 'crypto',
+    subtype,
+    source,
+    canonical,
+    category: classification.category_main,
+    tier: rankingTier(classification.tier),
+    governance: {
+      eligible: assessment.rankingEvidenceReady,
+      eligibilityStatus: assessment.rankingEvidenceReady
+        ? 'RANKING_EVIDENCE_READY'
+        : 'RANKING_EVIDENCE_UNAVAILABLE',
+    },
+  };
+
+  if (canonical.status !== 'READY' || !assessment.analysis) {
+    return {
+      httpStatus: 422,
+      response: {
+        asset_name: assetName,
+        symbol,
+        assetId: dispatch.asset.assetId,
+        model: 'technical-provenance',
+        modelRegistry,
+        classification,
+        ...canonical,
+        correlationId,
+        rank_score: null,
+        eligible_for_top10: false,
+        provenance: assessment.fieldProvenance,
+        providerState: assessment.providerState,
+        lineage,
+        scoreBasis: 'unavailable' as const,
+      },
+      rankingInput,
+    };
+  }
+
+  const rankPayload = {
+    asset_name: assetName,
+    symbol,
+    classification,
+    scores: assessment.analysis.scores,
+    data_quality: { level: canonical.integrity.dataQuality },
+  } as any;
+  const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
+  const tradeSetup = assessment.priceStats ? computeTradeSetupLevels(assessment.priceStats) : null;
+
+  return {
+    httpStatus: 200,
+    response: {
+      asset_name: assetName,
+      symbol,
+      assetId: dispatch.asset.assetId,
+      model: 'technical-provenance',
+      modelRegistry,
+      classification,
+      ...canonical,
+      correlationId,
+      inputs: assessment.inputs,
+      scores: assessment.analysis.scores,
+      decision: assessment.analysis.decision,
+      decisionName: assessment.analysis.decisionName,
+      decisionDesc: assessment.analysis.decisionDesc,
+      risk_level: assessment.analysis.risk_level,
+      reasoning: assessment.analysis.reasoning,
+      alerts: assessment.analysis.alerts,
+      rank_score: calculateRankScore(rankPayload, canonical.final_score, {
+        compositeLevel: canonical.integrity.dataQuality,
+      }),
+      eligible_for_top10: eligible,
+      priceStats: assessment.priceStats,
+      tradeSetup,
+      provenance: assessment.fieldProvenance,
+      providerState: assessment.providerState,
+      lineage,
+      scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
+    },
+    rankingInput,
   };
 }
 
@@ -295,122 +494,40 @@ export function createCryptoRouter(
       const correlationId = requestCorrelationId(req);
       res.setHeader('x-correlation-id', correlationId);
       const payload = req.body;
-      if (!payload.symbol || !payload.asset_name) {
-        return res.status(400).json({ error: '"symbol" and "asset_name" are required in payload.' });
-      }
-      if (payload.scores) {
-        return res.status(422).json({
-          status: 'SOURCE_UNAVAILABLE',
-          score: null,
-          final_score: null,
+
+      if (Array.isArray(payload?.assets)) {
+        if (payload.assets.length === 0 || payload.assets.length > CRYPTO_SCORE_BATCH_LIMIT) {
+          return res.status(400).json({
+            correlationId,
+            status: 'INVALID_REQUEST',
+            reason: `assets must contain between 1 and ${CRYPTO_SCORE_BATCH_LIMIT} candidates.`,
+            results: [],
+          });
+        }
+
+        const evaluations = await Promise.all(
+          payload.assets.map((asset: unknown, index: number) =>
+            evaluateCryptoScorePayload(asset, `${correlationId}:${index + 1}`),
+          ),
+        );
+        const backendRanking = buildBackendRankingProjection(
+          evaluations
+            .map(evaluation => evaluation.rankingInput)
+            .filter((item): item is BackendRankingProjectionInput => item !== null),
+        );
+
+        return res.json({
           correlationId,
-          error: 'Caller-provided financial scores are not accepted by the production scoring endpoint because provenance cannot be verified.',
-        });
-      }
-      if (Object.prototype.hasOwnProperty.call(payload, 'classification')) {
-        return res.status(422).json({
-          status: 'CALLER_CLASSIFICATION_NOT_ALLOWED',
-          score: null,
-          final_score: null,
-          correlationId,
-          error: 'Caller-provided classification has no productive score, ranking, tier, confidence or eligibility authority.',
+          status: 'BATCH_COMPLETE',
+          requested: evaluations.length,
+          ready: evaluations.filter(evaluation => evaluation.httpStatus === 200).length,
+          backendRanking,
+          results: evaluations.map(evaluation => evaluation.response),
         });
       }
 
-      const symbol = String(payload.symbol).toUpperCase().trim();
-      const classification = ClassificationService.classifyAsset(symbol);
-      const dispatch = await dispatchCanonicalScore({
-        symbol,
-        name: String(payload.asset_name),
-        assetClass: 'crypto',
-        source: 'request',
-      });
-      if (dispatch.status !== 'DISPATCHED') {
-        return res.status(422).json({
-          asset_name: payload.asset_name,
-          symbol,
-          assetId: dispatch.asset.assetId,
-          model: null,
-          modelRegistry: dispatch.model ? modelRegistryView(dispatch.model) : null,
-          classification,
-          ...dispatch.canonical,
-          correlationId,
-          reason: dispatch.reason,
-          rank_score: null,
-          eligible_for_top10: false,
-          scoreBasis: 'unavailable' as const,
-        });
-      }
-
-      const registeredModel = dispatch.model;
-      const modelRegistry = modelRegistryView(registeredModel);
-      const assessment = dispatch.assessment;
-      const canonical = dispatch.canonical;
-      const lineage = buildScoringLineage({
-        correlationId,
-        assetId: dispatch.asset.assetId,
-        model: registeredModel,
-        canonical,
-        scoringInputs: assessment.inputs,
-        fieldProvenance: assessment.fieldProvenance,
-        providerState: assessment.providerState,
-      });
-
-      if (canonical.status !== 'READY' || !assessment.analysis) {
-        return res.status(422).json({
-          asset_name: payload.asset_name,
-          symbol,
-          assetId: dispatch.asset.assetId,
-          model: 'technical-provenance',
-          modelRegistry,
-          classification,
-          ...canonical,
-          rank_score: null,
-          eligible_for_top10: false,
-          provenance: assessment.fieldProvenance,
-          providerState: assessment.providerState,
-          lineage,
-          scoreBasis: 'unavailable' as const,
-        });
-      }
-
-      const rankPayload = {
-        asset_name: payload.asset_name,
-        symbol,
-        classification,
-        scores: assessment.analysis.scores,
-        data_quality: { level: canonical.integrity.dataQuality },
-      } as any;
-      const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
-      const tradeSetup = assessment.priceStats ? computeTradeSetupLevels(assessment.priceStats) : null;
-
-      res.json({
-        asset_name: payload.asset_name,
-        symbol,
-        assetId: dispatch.asset.assetId,
-        model: 'technical-provenance',
-        modelRegistry,
-        classification,
-        ...canonical,
-        inputs: assessment.inputs,
-        scores: assessment.analysis.scores,
-        decision: assessment.analysis.decision,
-        decisionName: assessment.analysis.decisionName,
-        decisionDesc: assessment.analysis.decisionDesc,
-        risk_level: assessment.analysis.risk_level,
-        reasoning: assessment.analysis.reasoning,
-        alerts: assessment.analysis.alerts,
-        rank_score: calculateRankScore(rankPayload, canonical.final_score, {
-          compositeLevel: canonical.integrity.dataQuality,
-        }),
-        eligible_for_top10: eligible,
-        priceStats: assessment.priceStats,
-        tradeSetup,
-        provenance: assessment.fieldProvenance,
-        providerState: assessment.providerState,
-        lineage,
-        scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
-      });
+      const evaluation = await evaluateCryptoScorePayload(payload, correlationId);
+      return res.status(evaluation.httpStatus).json(evaluation.response);
     } catch (error: any) {
       console.error('[CryptoRouter] Error calculating deterministic score:', error);
       res.status(500).json({ error: error.message || 'Internal Server Error' });
@@ -422,65 +539,48 @@ export function createCryptoRouter(
       const rootCorrelationId = requestCorrelationId(req);
       res.setHeader('x-correlation-id', rootCorrelationId);
       const cryptoAssets = assetRegistry.getAssets().filter((asset) => asset.type === 'crypto');
-      const evaluated = await Promise.all(cryptoAssets.map(async (asset) => {
-        const correlationId = `${rootCorrelationId}:${asset.symbol}`;
-        const classification = ClassificationService.classifyAsset(asset.symbol);
-        const dispatch = await dispatchCanonicalScore({
-          symbol: asset.symbol,
-          name: asset.name,
-          assetClass: 'crypto',
-          subtype: asset.subtype,
-          source: 'registry',
+      const evaluations = await Promise.all(
+        cryptoAssets.map(asset =>
+          evaluateCryptoScorePayload(
+            { symbol: asset.symbol, asset_name: asset.name },
+            `${rootCorrelationId}:${asset.symbol}`,
+            'registry',
+            asset.subtype,
+          ),
+        ),
+      );
+      const top10Eligible = evaluations.filter(evaluation =>
+        evaluation.rankingInput !== null && evaluation.response.eligible_for_top10 === true,
+      );
+      const backendRanking = buildBackendRankingProjection(
+        top10Eligible.map(evaluation => ({
+          ...(evaluation.rankingInput as BackendRankingProjectionInput),
+          governance: {
+            ...(evaluation.rankingInput as BackendRankingProjectionInput).governance,
+            eligible: true,
+            eligibilityStatus: 'TOP10_ELIGIBLE',
+          },
+        })),
+      );
+
+      if (backendRanking.result.cohorts.length > 1) {
+        return res.status(409).json({
+          correlationId: rootCorrelationId,
+          status: 'RANKING_COHORT_AMBIGUOUS',
+          reason: 'Top-10 cannot merge incomparable ranking cohorts.',
+          backendRanking,
+          results: [],
         });
-        if (dispatch.status !== 'DISPATCHED') return null;
+      }
 
-        const registeredModel = dispatch.model;
-        const modelRegistry = modelRegistryView(registeredModel);
-        const assessment = dispatch.assessment;
-        const canonical = dispatch.canonical;
-        if (canonical.status !== 'READY' || !assessment.analysis) return null;
-
-        const rankPayload = {
-          asset_name: asset.name,
-          symbol: asset.symbol,
-          classification,
-          scores: assessment.analysis.scores,
-          data_quality: { level: canonical.integrity.dataQuality },
-        } as any;
-        const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
-        const lineage = buildScoringLineage({
-          correlationId,
-          assetId: dispatch.asset.assetId,
-          model: registeredModel,
-          canonical,
-          scoringInputs: assessment.inputs,
-          fieldProvenance: assessment.fieldProvenance,
-          providerState: assessment.providerState,
-        });
-
-        return {
-          symbol: asset.symbol,
-          name: asset.name,
-          assetId: dispatch.asset.assetId,
-          modelRegistry,
-          classification,
-          final_score: canonical.final_score,
-          rank_score: calculateRankScore(rankPayload, canonical.final_score, {
-            compositeLevel: canonical.integrity.dataQuality,
-          }),
-          eligible,
-          integrity: canonical.integrity,
-          provenance: assessment.fieldProvenance,
-          providerState: assessment.providerState,
-          lineage,
-          scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
-        };
-      }));
-
-      const top10 = evaluated
-        .filter((item): item is NonNullable<typeof item> => item !== null && item.eligible)
-        .sort((a, b) => b.rank_score - a.rank_score)
-        .slice(0, 10);
+      const responseByAssetId = new Map(
+        top10Eligible.map(evaluation => [String(evaluation.response.assetId), evaluation.response]),
+      );
+      const ordered = backendRanking.result.cohorts[0]?.entries ?? [];
+      const top10 = ordered
+        .slice(0, 10)
+        .map(entry => responseByAssetId.get(entry.assetId))
+        .filter((item): item is Record<string, unknown> => item !== undefined);
 
       res.json(top10);
     } catch (error: any) {
