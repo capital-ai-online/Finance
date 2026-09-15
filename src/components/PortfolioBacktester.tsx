@@ -252,10 +252,11 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
       setSimulatedSymbols([]);
 
       try {
-        // Fetch historical data for all assets in the portfolio over the maximum range (5 years)
-        // Using Promise.all for fast parallel execution
+        // Fetch historical data for all assets in the portfolio over the maximum range (5 years).
+        // FIN-SEC-03: bearer-aware authFetch is required because the server performs the
+        // authoritative paid Backtest entitlement decision before history/provider I/O.
         const fetchPromises = allocations.map(item =>
-          fetch(`/api/backtest-history?symbol=${item.symbol}&range=5Y`)
+          authFetch(`/api/backtest-history?symbol=${item.symbol}&range=5Y`)
             .then(res => {
               if (!res.ok) throw new Error(`HTTP_${res.status}`);
               return res.json();
