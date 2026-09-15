@@ -59,9 +59,11 @@ describe('FIN-SEC-03 paid analysis wiring', () => {
   });
 
   it('binds full_ai_analysis to the productive structured provider executor and fails closed', () => {
+    const providerGuardIndex = portfolioReview.indexOf('if (!anthropic && !openai)');
     const accessIndex = portfolioReview.indexOf("evaluatePaidAnalysisAccess(req, 'full_ai_analysis')");
     const executorIndex = portfolioReview.indexOf('generateStructuredWithFallback({');
-    expect(accessIndex).toBeGreaterThanOrEqual(0);
+    expect(providerGuardIndex).toBeGreaterThanOrEqual(0);
+    expect(accessIndex).toBeGreaterThan(providerGuardIndex);
     expect(executorIndex).toBeGreaterThan(accessIndex);
     expect(portfolioReview).toContain("error: 'FULL_AI_ANALYSIS_UNAVAILABLE'");
     expect(portfolioReview).toContain('return res.status(503)');
