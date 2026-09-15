@@ -139,6 +139,7 @@ async function setDefaultOutputs() {
     output('candidate_created', 'false'), output('candidate_safe', 'false'),
     output('branch', ''), output('commit_sha', ''), output('base_sha', ''),
     output('alert_number', ''), output('languages', ''),
+    output('decision', 'NO_DECISION'), output('reason', 'not-evaluated'),
   ]);
 }
 
@@ -153,6 +154,7 @@ async function main() {
       || Number(a?.number || 0) - Number(b?.number || 0));
 
   if (!alerts.length) {
+    await Promise.all([output('decision', 'NO_ELIGIBLE_ALERT'), output('reason', 'no-open-high-critical-codeql-alert-on-main')]);
     await summary('## Controlled CodeQL Autofix\n\nKeine offenen `CRITICAL`/`HIGH` CodeQL-Alerts auf `main` gefunden.');
     return;
   }
@@ -180,6 +182,7 @@ async function main() {
 
     const baseSha = await currentMainSha(api, repo);
     if (baseSha !== generationBase) {
+      await Promise.all([output('alert_number', number), output('base_sha', baseSha), output('decision', 'QUARANTINED'), output('reason', 'main-drift-during-generation')]);
       await summary(`- Alert #${number}: main driftete während der Generierung; kein Branch/Commit.`);
       return;
     }
@@ -223,11 +226,16 @@ async function main() {
       && Number(compare?.ahead_by || 0) >= 1
       && files.length > 0;
     const safe = relationSafe && blocked.length === 0 && languages.length > 0;
+    const reason = safe ? 'safe-for-validation'
+      : !relationSafe ? 'unsafe-commit-relation-or-empty-diff'
+      : blocked.length > 0 ? `protected-path:${blocked[0].reason}`
+      : 'unsupported-codeql-language';
 
     await Promise.all([
       output('candidate_created', 'true'), output('candidate_safe', safe ? 'true' : 'false'),
       output('branch', branch), output('commit_sha', commitSha), output('base_sha', baseSha),
       output('alert_number', number), output('languages', languages.join(',')),
+      output('decision', safe ? 'SAFE_FOR_VALIDATION' : 'QUARANTINED'), output('reason', reason),
     ]);
 
     const changed = files.map((file) => `- \`${clean(file)}\``).join('\n') || '- none';
@@ -247,6 +255,7 @@ async function main() {
     return;
   }
 
+  await Promise.all([output('decision', 'NO_VALIDATABLE_CANDIDATE'), output('reason', 'eligible-alerts-exhausted-or-not-autofixable')]);
   await summary('## Controlled CodeQL Autofix\n\nKein neuer validierbarer Autofix-Kandidat in diesem Lauf.');
 }
 

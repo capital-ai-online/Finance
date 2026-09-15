@@ -34,6 +34,8 @@ jobs:
       base_sha: ${{ steps.autofix.outputs.base_sha }}
       alert_number: ${{ steps.autofix.outputs.alert_number }}
       languages: ${{ steps.autofix.outputs.languages }}
+      decision: ${{ steps.autofix.outputs.decision }}
+      reason: ${{ steps.autofix.outputs.reason }}
 
     steps:
       - name: Trusted main auschecken
@@ -59,6 +61,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/security/runCodeScanningAutofix.mjs
+
+      - name: Nicht-sensitive Entscheidungs-Evidence materialisieren
+        if: always()
+        env:
+          CANDIDATE_CREATED: ${{ steps.autofix.outputs.candidate_created }}
+          CANDIDATE_SAFE: ${{ steps.autofix.outputs.candidate_safe }}
+          BRANCH: ${{ steps.autofix.outputs.branch }}
+          COMMIT_SHA: ${{ steps.autofix.outputs.commit_sha }}
+          BASE_SHA: ${{ steps.autofix.outputs.base_sha }}
+          ALERT_NUMBER: ${{ steps.autofix.outputs.alert_number }}
+          LANGUAGES: ${{ steps.autofix.outputs.languages }}
+          DECISION: ${{ steps.autofix.outputs.decision }}
+          REASON: ${{ steps.autofix.outputs.reason }}
+        run: |
+          set -euo pipefail
+          mkdir -p .autofix-evidence
+          node scripts/security/writeCodeScanningAutofixEvidence.mjs .autofix-evidence/decision.json
+
+      - name: Entscheidungs-Evidence hochladen
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: controlled-autofix-decision-${{ github.run_id }}
+          path: .autofix-evidence/decision.json
+          if-no-files-found: error
+          retention-days: 30
 
   validate:
     name: Autofix technisch validieren
