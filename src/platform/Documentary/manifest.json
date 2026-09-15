@@ -3,7 +3,7 @@
   "version": "1.21.0",
   "status": "development",
   "owner": "CAPITAL-AI-DOC",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, bounded ESS-0012 GOV-DOC-003 Freshness Validation, GOV-DOC-006 generator-marking validation, GOV-DOC-001 document-version validation, GOV-DOC-002 ESS/ADR-reference validation, GOV-DOC-004 document-class validation, incremental GOV-DOC-005 documentation-path exception validation, bounded GOV-DOC-007 unresolved-reference validation, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, bounded WP-DOC-14 Migration Execution Readiness Dry-Run, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, bounded ESS-0012 GOV-DOC-003 Freshness Validation, GOV-DOC-006 generator-marking validation, GOV-DOC-001 document-version validation, GOV-DOC-002 ESS/ADR-reference validation, GOV-DOC-004 document-class validation, incremental GOV-DOC-005 documentation-path exception validation, bounded GOV-DOC-007 unresolved-reference validation, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, read-only D8 Migration Planning, bounded WP-DOC-14 Migration Execution Readiness Dry-Run, D9 Maintenance Observability, bounded WP-DOC-15 Documentary Quality/SLO snapshot evaluation, Supervisor/Platform-Director-Orchestrierung, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Markdown-/Mermaid-Renderer und Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -39,7 +39,7 @@
   "events": {
     "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
     "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
-    "note": "Semantic freshness and bounded GOV-DOC-001/002/003/004/005/006/007 validation, Maintenance Agent, Archive Retention Planner, D8 Migration Planner and WP-DOC-14 Migration Dry-Run do not create a new event authority. Existing EventMesh names remain canonical."
+    "note": "Semantic freshness and bounded GOV-DOC-001/002/003/004/005/006/007 validation, Maintenance Agent, Archive Retention Planner, D8 Migration Planner, WP-DOC-14 Migration Dry-Run and WP-DOC-15 Quality/SLO snapshot evaluation do not create a new event authority. Existing EventMesh names remain canonical."
   },
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
@@ -79,6 +79,7 @@
     "Migration/DocumentaryMigrationDryRun.ts",
     "Orchestration/DocumentaryMaintenanceOrchestrator.ts",
     "Observability/DocumentaryMaintenanceObservability.ts",
+    "Observability/DocumentaryQualitySlo.ts",
     "Models/DocumentaryDocument.ts",
     "Models/DocumentaryProvenance.ts",
     "Interfaces/IDocumentaryEngine.ts",
@@ -104,7 +105,8 @@
     "../../../../docs/architecture/DOCUMENTARY_D4_REVIEW_LIFECYCLE_GOVERNANCE.md",
     "../../../../docs/architecture/DOCUMENTARY_D6_GENERATORS_RENDERERS.md",
     "../../../../docs/architecture/DOCUMENTARY_D7_KNOWLEDGE_INTEGRATION.md",
-    "../../../../docs/architecture/DOCUMENTARY_D8_MIGRATION_PLANNING.md"
+    "../../../../docs/architecture/DOCUMENTARY_D8_MIGRATION_PLANNING.md",
+    "../../../../docs/architecture/DOCUMENTARY_QUALITY_SLO_MODEL.md"
   ],
   "tests": [
     "tests/unit/archiveRetentionAgent.test.ts",
@@ -120,6 +122,7 @@
     "tests/unit/documentaryMaintenanceAgent.test.ts",
     "tests/unit/documentaryMaintenanceGitHost.test.ts",
     "tests/unit/documentaryMaintenanceObservability.test.ts",
+    "tests/unit/documentaryQualitySlo.test.ts",
     "tests/unit/documentaryMaintenanceOrchestrator.test.ts",
     "tests/unit/documentaryMermaidRenderer.test.ts",
     "tests/unit/documentaryMigrationPlanner.test.ts",
@@ -161,5 +164,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "Documentation Governance implements bounded read-only GOV-DOC-001/002/003/004/005/006/007 slices. GOV-DOC-005 consumes an explicit caller-supplied Markdown path set and treats exact Document Registry paths as registered exceptions. GOV-DOC-007 consumes explicit caller-supplied reference evidence and validates repository-local targets without introducing a second scanner. WP-DOC-14 adds only a fail-closed, read-only migration execution-readiness dry run; physical MigrationExecution remains planned and separately authorized. Component, document-schema and platform version fields remain unchanged. No autonomous merge, deploy, registry/lifecycle mutation or production mutation."
+  "note": "Documentation Governance implements bounded read-only GOV-DOC-001/002/003/004/005/006/007 slices. GOV-DOC-005 consumes an explicit caller-supplied Markdown path set and treats exact Document Registry paths as registered exceptions. GOV-DOC-007 consumes explicit caller-supplied reference evidence and validates repository-local targets without introducing a second scanner. WP-DOC-14 adds only a fail-closed, read-only migration execution-readiness dry run; physical MigrationExecution remains planned and separately authorized. WP-DOC-15 adds only point-in-time evaluation of existing D9 ratios against the Owner-approved starter target; temporal SLO verification remains false and no Quality Center/Observability mutation or decision authority is introduced. Component, document-schema and platform version fields remain unchanged. No autonomous merge, deploy, registry/lifecycle mutation or production mutation."
 }
