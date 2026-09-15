@@ -7,7 +7,7 @@
 **Finding:** `S1-R2-11 — Evidence identity and stale-state automation`  
 **Branch:** `agent/security-s1r211-verification-20260915`  
 **Implementation baseline:** `main@ed584e36138427bb637af523df6e8ead994f6bda`  
-**Status:** `IMPLEMENTED_BRANCH / HOSTED_PR_HEAD_VERIFICATION_PENDING`  
+**Status:** `IMPLEMENTED_BRANCH / PRE_PR_EVIDENCE_READY / HOSTED_PR_HEAD_VERIFICATION_PENDING`  
 **Trust root:** `/AGENTS.md@ed584e36138427bb637af523df6e8ead994f6bda`  
 **Security component contract:** `ESS-0006 v1.2.0`
 
@@ -39,7 +39,7 @@ The verification is bound to the then-current repository baseline and immutable 
 | DATA evaluator | `src/platform/MarketData/evidenceIdentityFreshness.ts` · blob `062d68e05dca7d90c5de19ebb83e4d69d5294ab8` |
 | DATA DQ envelope | `src/platform/MarketData/evidenceQualityContracts.ts` · blob `d384872324d57a4ff34ed8b4d7d51d386f8ca672` |
 | DATA owner unit test | `tests/unit/evidenceIdentityFreshness.test.ts` · blob `44544cd5ba4c9af835b160deff419ae669fa37fc` |
-| independent SEC test | `tests/unit/securityS1R211IndependentVerification.test.ts` · blob `9adef6798f86627e692f2e33fca4fb17ec2e561b` |
+| independent SEC test | `tests/unit/securityS1R211IndependentVerification.test.ts` · blob `a05ce6696149c8bdacf057bbc8a0b2118260c4b0` |
 
 The DATA evaluator contract remains exactly `evidence-identity-freshness/1.0.0` over the existing `market-evidence-dq/1.0.0` envelope.
 
@@ -71,7 +71,9 @@ The current-main evaluator/test blobs are unchanged from that owner-return paylo
 
 This test is Security-owned verification evidence. It does not alter or duplicate DATA's implementation contract.
 
-## Validation truth at branch materialization
+## Pre-PR validation
+
+Executed in an isolated local TypeScript harness using the exact re-read current-main evaluator/DQ source shapes and the final Security-test payload:
 
 | Check | State |
 |---|---|
@@ -79,12 +81,22 @@ This test is Security-owned verification evidence. It does not alter or duplicat
 | Initial branch diff before materialization | `0 ahead / 0 behind / 0 files` |
 | Exact DATA evaluator / DQ / owner-test blobs re-read from current main | `PASS` |
 | DATA PR #811 exact-head hosted runs re-read | `PASS` |
-| Independent Security test file materialized | `PASS` |
-| New independent Security test executed locally | `NOT RUN` — GitHub connector surface provides no local repository runner |
-| Hosted PR-head execution of new Security test | `NOT RUN` — no PR exists yet |
+| Independent Security test final blob materialized | `PASS` |
+| Isolated strict TypeScript compile of evaluator + DQ contract + Security test | `PASS` |
+| Executable evaluator harness | `PASS — 10/10` |
+| Exact fresh identity → CURRENT | `PASS` |
+| Wrong asset/provider/capability/field → STALE/non-current | `PASS — 4/4` |
+| Stale clock rewrite → non-current | `PASS` |
+| Untrusted refresh → STALE_RETRY_REQUIRED/non-current | `PASS` |
+| Trusted wrong-identity refresh → STALE/non-current | `PASS` |
+| Trusted exact refresh → CURRENT_AFTER_REFRESH/current | `PASS` |
+| Missing observation → STALE_RETRY_REQUIRED/non-current | `PASS` |
+| Repository Vitest runner | `NOT RUN` |
+| Repository-wide TypeScript/lint/build/predeploy | `NOT RUN` |
+| Hosted PR-head execution | `NOT RUN` — no PR exists yet |
 | Security Roadmap promoted to `VERIFIED/CLOSED` | `NO` — intentionally remains `MERGED / VERIFY PENDING` until hosted PR-head evidence exists |
 
-`NOT RUN` is not treated as PASS.
+`NOT RUN` is not treated as PASS. The isolated harness is focused pre-PR evidence only and does not replace repository-hosted validation.
 
 ## Verification gate
 
