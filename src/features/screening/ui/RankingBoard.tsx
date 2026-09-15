@@ -692,7 +692,8 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
           <p className="text-xs text-text-secondary mt-2 max-w-2xl leading-relaxed">
             Bis zu {RANKING_CANDIDATE_LIMIT} priorisierte Kandidaten je Assetklasse. Anzeige von Score,
             Sentiment, Momentum und führendem Pattern. Nur READY-Assets mit Provider- und
-            Evidence-Nachweis; die Reihenfolge folgt ausschließlich backend-autoritativen Rank-Werten.
+            Evidence-Nachweis; fehlende Werte werden nie aufgefüllt; die Reihenfolge folgt ausschließlich
+            backend-autoritativen Rank-Werten.
           </p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2">
@@ -821,7 +822,7 @@ function UnavailableBlock({ rows, pending }: { rows: AssetRow[]; pending: boolea
   return (
     <div>
       <div className="mb-2.5 text-[9px] font-mono font-black uppercase text-score-warning">
-        Nicht rankbar / berechenbar · {rows.length}
+        Nicht berechenbar / nicht rankbar · {rows.length}
       </div>
       <div className="space-y-2">
         {rows.slice(0, 4).map((row) => (
