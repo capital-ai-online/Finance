@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/documentary/`  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — current-main re-correlation after PR #925; open PR #926 checked; valid WP-DOC-13 timeline delta folded; WP-DOC-16/17 resync dispositions synchronized  
-**Baseline:** `main@7ba58670eec6d1a7bc7de8e850b1fee390c1e0c2`  
+**Reconciliation:** 2026-09-15 — current-main re-correlation after PR #926; open PR inventory empty; valid WP-DOC-13 timeline delta folded; WP-DOC-16/17 resync dispositions synchronized  
+**Baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -16,7 +16,7 @@ The historical branch `agent/documentary-roadmap-timeline-20260914` is `STALE / 
 
 The pre-sync branches `agent/documentary-plugin-extension-contract-20260915`, `agent/documentary-consumer-idempotency-evidence-20260915` and `agent/documentary-roadmap-wp16-wp17-status-20260915` are also evidentiary only after main advanced. Current PR-readiness uses the fresh resync branches named below.
 
-Current-pass drift from `main@86952c6ff3d6a287fa20d6d7f1ed5cf9b0d71a04` to `main@7ba58670eec6d1a7bc7de8e850b1fee390c1e0c2` is the OPS-owned PR #925 merge. No Documentary-owned implementation, project mapping, applicable Documentary ADR/ESS contract or PR-approval authority changed in that drift. Open PR #926 changes only the two Social Media roadmap surfaces and has no changed-file, Documentary semantic, namespace, authority or security overlap with this roadmap branch. `agent/documentary-roadmap-status-recorrelation-20260915` is synchronized to this current main; the separate WP-DOC-16 and WP-DOC-17 resync branches remain on their earlier Git baseline and therefore require their own current-main resync before any PR-readiness claim.
+Current-pass drift from `main@86952c6ff3d6a287fa20d6d7f1ed5cf9b0d71a04` to `main@833b0184c9b61d2341a22f434b408b1cc0416def` consists of the OPS-owned PR #925 merge followed by the Social-owned PR #926 merge. Neither merge changes Documentary-owned implementation, project mapping, applicable Documentary ADR/ESS contracts or PR-approval authority. The current open Pull Request inventory is empty. `agent/documentary-roadmap-status-recorrelation-20260915` is synchronized to this current main; the separate WP-DOC-16 and WP-DOC-17 resync branches remain on their earlier Git baseline and therefore require their own current-main resync before any PR-readiness claim.
 
 ## PR #900 / #901 normalized work packages
 
@@ -173,4 +173,4 @@ Current evidence establishes:
 All projects as evidence sources; GOV authority; OPS execution; SEC/QM verification where applicable.
 
 ## Project exit gate
-One active Documentary roadmap; chat-preservation work is terminalized or explicitly routed; stale branch references are re-correlated before being presented as current; WP-DOC-16 and WP-DOC-17 states are projected without claiming unmerged branch work as current-main implementation; EventMesh/Traceability runtime ownership remains with OPS; current open-writer correlation is clean against PR #926 for this Documentary roadmap scope.
+One active Documentary roadmap; chat-preservation work is terminalized or explicitly routed; stale branch references are re-correlated before being presented as current; WP-DOC-16 and WP-DOC-17 states are projected without claiming unmerged branch work as current-main implementation; EventMesh/Traceability runtime ownership remains with OPS; current open-writer inventory is empty and no Documentary roadmap conflict is present.
