@@ -4,7 +4,7 @@
 **Version:** `2.9.0`  
 **Status date:** `2026-09-15`  
 **Current repository baseline for this synchronization:** `main@698e0bc26e28899ddf2429fb298f74d54e35b3b0`  
-**Open PR correlation at this synchronization:** no open Pull Request at correlation time; known parallel Governance validator branch changes four validator/test paths outside this bounded PR lifecycle slice  
+**Open PR correlation at this synchronization:** PR #951 (`CAPITAL-AI-FE`, FIN-17 RankingBoard consumer) changes only `src/features/screening/ui/RankingBoard.tsx` and `tests/unit/fin17RankingBoardConsumer.test.ts`; no changed-file, namespace, Governance-authority or lifecycle-workflow overlap with GOV-CHAT-077  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
