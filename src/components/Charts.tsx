@@ -17,6 +17,7 @@ import {
   PriceAlertItem 
 } from '../lib/alertStore';
 import { assetRegistry } from '../lib/assetRegistry';
+import { authFetch } from '../lib/authFetch';
 
 interface ChartsProps {
   selectedSymbol: string;
@@ -184,13 +185,14 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
       });
   }, [activeSymbol]);
 
-  // Fetch historical data
+  // Fetch historical data. `/api/backtest-history` is a paid Backtest compatibility boundary,
+  // so this legacy chart consumer must also send the verified bearer rather than bypassing it.
   useEffect(() => {
     setLoading(true);
     setError(null);
     setScoreResult(null);
     setHistorySource(null);
-    fetch(`/api/backtest-history?symbol=${activeSymbol}&range=${range === '1Y' ? '365' : '3Y'}`)
+    authFetch(`/api/backtest-history?symbol=${activeSymbol}&range=${range === '1Y' ? '365' : '3Y'}`)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         return res.json();

@@ -6,6 +6,7 @@ import { HistoryProviderRegistry } from '../../src/platform/MarketData/HistoryPr
 import { MarketDataHistoryGateway } from '../../src/platform/MarketData/MarketDataHistoryGateway';
 import { BinanceCryptoBarsProvider } from '../../src/platform/MarketData/providers/BinanceCryptoBarsProvider';
 import type { MarketDataBarInterval } from '../../src/platform/MarketData/contracts';
+import { backtestEntitlement } from '../middleware/paidAnalysisEntitlement';
 
 const SUPPORTED_BAR_INTERVALS = new Set<MarketDataBarInterval>(['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w']);
 
@@ -70,7 +71,7 @@ export function createHistoryRouter(): express.Router {
     });
   });
 
-  router.get('/api/backtest-history', orchestrator.handle('Backtest Download'), async (req, res) => {
+  router.get('/api/backtest-history', backtestEntitlement, orchestrator.handle('Backtest Download'), async (req, res) => {
     const { symbol, range } = req.query;
     if (!symbol) {
       return res.status(400).json({ error: 'Symbol parameter is required.' });

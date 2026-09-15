@@ -6,6 +6,10 @@ import {
   type SubscriptionTier,
 } from '../src/config/subscriptionEntitlements';
 import { enforceBuffettValueCheckQuota } from './quota';
+import {
+  evaluatePaidAnalysisAccess,
+  paidAnalysisDecisionBody,
+} from './middleware/paidAnalysisEntitlement';
 
 export const entitlementsRouter = express.Router();
 
@@ -18,6 +22,11 @@ entitlementsRouter.get('/plans', (_req, res) => {
       rule: 'Guest users have no Warren Buffett Value Check access.',
     },
   });
+});
+
+entitlementsRouter.post('/monte-carlo/authorize', async (req, res) => {
+  const decision = await evaluatePaidAnalysisAccess(req, 'monte_carlo');
+  return res.status(decision.status).json(paidAnalysisDecisionBody(decision));
 });
 
 entitlementsRouter.post('/warren-buffett/authorize', express.json(), async (req, res) => {
