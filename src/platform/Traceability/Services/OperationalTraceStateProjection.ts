@@ -16,7 +16,18 @@ function copySourceRecord(source: OperationalTraceStateSourceRecord): Operationa
     evidence: source.evidence.map((reference) => ({ ...reference })),
     provenance: { ...source.provenance },
     ...(source.trace ? { trace: { ...source.trace } } : {}),
+    ...(source.strictEvidenceBinding
+      ? { strictEvidenceBinding: { ...source.strictEvidenceBinding } }
+      : {}),
   };
+}
+
+function normalized(value: string | undefined): string {
+  return value?.trim() ?? '';
+}
+
+function isValidTimestamp(value: string | null): boolean {
+  return Boolean(value && Number.isFinite(Date.parse(value)));
 }
 
 export function projectOperationalTraceStateRecord(
@@ -25,7 +36,41 @@ export function projectOperationalTraceStateRecord(
   const source = copySourceRecord(sourceRecord);
   const missingEvidence = source.evidence.length === 0;
   const staleOrUnknownFreshness = source.provenance.freshness !== 'FRESH';
-  const failsClosed = missingEvidence || staleOrUnknownFreshness;
+  const strictEvidenceBindingRequired = source.strictEvidenceBinding?.mode === 'STRICT_IDENTITY_CORRELATION';
+
+  const requiredIdentity = normalized(source.strictEvidenceBinding?.evidenceIdentityRef);
+  const requiredEvidenceRef = normalized(source.strictEvidenceBinding?.evidenceRef);
+  const requiredCorrelation = normalized(source.strictEvidenceBinding?.correlationId);
+  const traceCorrelation = normalized(source.trace?.correlationId);
+
+  const evidenceHasIdentity = source.evidence.some((reference) => Boolean(normalized(reference.identityRef)));
+  const evidenceHasCorrelation = source.evidence.some((reference) => Boolean(normalized(reference.correlationId)));
+
+  const missingCorrelation = strictEvidenceBindingRequired
+    && (!requiredCorrelation || !traceCorrelation || !evidenceHasCorrelation);
+  const missingEvidenceIdentity = strictEvidenceBindingRequired
+    && (!requiredIdentity || !evidenceHasIdentity);
+  const missingSourceTimestamp = strictEvidenceBindingRequired
+    && !isValidTimestamp(source.provenance.sourceTimestamp);
+
+  const hasExactBoundEvidence = !strictEvidenceBindingRequired || source.evidence.some((reference) => (
+    normalized(reference.ref) === requiredEvidenceRef
+    && normalized(reference.identityRef) === requiredIdentity
+    && normalized(reference.correlationId) === requiredCorrelation
+  ));
+
+  const evidenceBindingMismatch = strictEvidenceBindingRequired
+    && !missingCorrelation
+    && !missingEvidenceIdentity
+    && !missingSourceTimestamp
+    && (!requiredEvidenceRef || traceCorrelation !== requiredCorrelation || !hasExactBoundEvidence);
+
+  const failsClosed = missingEvidence
+    || staleOrUnknownFreshness
+    || missingCorrelation
+    || missingEvidenceIdentity
+    || missingSourceTimestamp
+    || evidenceBindingMismatch;
 
   return {
     ...source,
@@ -33,6 +78,11 @@ export function projectOperationalTraceStateRecord(
     validation: failsClosed ? 'UNKNOWN' : source.reportedValidation,
     missingEvidence,
     staleOrUnknownFreshness,
+    strictEvidenceBindingRequired,
+    missingCorrelation,
+    missingEvidenceIdentity,
+    missingSourceTimestamp,
+    evidenceBindingMismatch,
     failsClosed,
   };
 }

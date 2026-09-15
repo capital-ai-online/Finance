@@ -4,8 +4,8 @@
 **Project:** `CAPITAL-AI-OPS`  
 **Primary PVC:** `PVC-18 — EventMesh / Traceability`  
 **Consumer:** `CAPITAL-AI-CLIENT Admin Panel`  
-**Status:** `OPS_GOV08_STATE_CONTRACT_READY` on this branch, pending normal branch/PR/Human-Merge lifecycle  
-**Correlation baseline:** `main@a6a62e867749efe80fc05aa175a3dc3fdd183d82`
+**Status:** `OPS_GOV08_STATE_CONTRACT_READY / STRICT_BINDING_EXTENSION_IMPLEMENTED_BRANCH`  
+**Correlation baseline:** `main@0b7ffb3bf06c1165a3b73f9d4d6e0933dee971f2`
 
 ## Purpose
 
@@ -23,8 +23,9 @@ The projection is a normalization boundary only. Existing EventMesh, Traceabilit
 
 - Target Project / Primary Owner: `CAPITAL-AI-OPS`.
 - Target PVC: `PVC-18 — EventMesh / Traceability`.
-- Accepted architecture decisions: `ADR-0010` and canonical `ADR-0013` establish the Enterprise Standard/ESS responsibility and ESS-0011 allocation; they do not grant this projection decision authority.
-- Applicable contracts: `ESS-0011` and `ESS-0011-CONTRACTS`.
+- Accepted architecture decision: `ADR-0015` defines the existing Traceability platform component and forbids invented relations.
+- Applicable specifications/contracts: `ESS-0011` and `ESS-0011-CONTRACTS`.
+- `ESS-0011-CONTRACTS` requires source-owned correlation propagation for ETM events and prohibits origin-less/assumed links.
 - `/AGENTS.md` remains the trust root; Human/CODEOWNER merge and protected Production mutations remain external gates.
 
 ## Reuse result
@@ -36,13 +37,16 @@ No new transport or persistence subsystem is introduced.
 | trace/correlation identity | EventMesh `EventMetadata` / delivery records | copy only when source-supplied; never synthesize |
 | timestamps | EventMesh event metadata and source-owned status/evidence | keep `sourceTimestamp` distinct from projection `observedAt` |
 | evidence references | Traceability/repository/runtime/validation source references | preserve opaque source-owned reference and kind |
+| source-owned evidence identity | upstream owner evidence | copy as opaque `identityRef`; never infer DATA/FINTECH semantics |
 | trace relationships | Traceability ETM and EventMesh correlation identity | read-only linkage only |
 | operational status | existing owner-supplied status surfaces | normalize only; projection is not status authority |
-| validation | existing owner-supplied validation evidence | preserve reported value but fail closed if evidence/freshness is insufficient |
+| validation | existing owner-supplied validation evidence | preserve reported value but fail closed if required evidence/freshness/binding is insufficient |
 
 The existing `OperationalSystemEventJournal` remains an ephemeral diagnostic read model and is not promoted into trace/audit authority by this contract.
 
 ## Contract
+
+Schema version `1.1` is an additive extension of the existing read-only state contract.
 
 Each record contains:
 
@@ -54,9 +58,11 @@ Each record contains:
 - `reportedValidation`: `PASS | FAIL | PENDING | NOT_RUN | UNKNOWN`
 - effective `validation`: forced to `UNKNOWN` when fail-closed conditions apply
 - source-owned `evidence[]`
+- optional source-owned `evidence[].identityRef` and `evidence[].correlationId`
 - optional source-owned `correlationId`, `traceId`, `spanId`
-- `provenance.source`, optional source reference, optional authoritative source timestamp, projection observation time and freshness
-- explicit `missingEvidence`, `staleOrUnknownFreshness`, `failsClosed`
+- `provenance.source`, optional source reference, authoritative source timestamp when available, projection observation time and freshness
+- optional `strictEvidenceBinding`
+- explicit diagnostics for missing/stale/binding-invalid inputs and `failsClosed`
 
 The envelope fixes the semantics:
 
@@ -69,9 +75,9 @@ deploymentAuthority = false
 missingStateSemantics = UNKNOWN_NON_PASS
 ```
 
-## Fail-closed semantics
+## Default fail-closed semantics
 
-The projector computes effective state as follows:
+Generic operational records retain their existing behavior:
 
 ```text
 missing evidence OR freshness != FRESH
@@ -88,6 +94,32 @@ A missing graph record is not materialized synthetically. CLIENT must interpret 
 
 `STALE` and freshness `UNKNOWN` therefore cannot surface as effective PASS. A source can still report its prior observation, but the UI receives a distinct effective value that is fail-closed.
 
+## Bounded strict evidence binding
+
+Records that require an exact integrity chain may opt into:
+
+```text
+strictEvidenceBinding.mode = STRICT_IDENTITY_CORRELATION
+```
+
+The strict requirement is source-owned and contains exactly:
+
+- `evidenceIdentityRef` — opaque immutable identity supplied by the authoritative source;
+- `evidenceRef` — exact evidence reference expected for that identity;
+- `correlationId` — exact source correlation identity expected across trace and evidence.
+
+A strict record is effective `CURRENT/PASS` only when all default requirements pass **and**:
+
+1. the declared strict identity, evidence reference and correlation are non-empty;
+2. `trace.correlationId` is present and exactly equals the declared correlation;
+3. at least one evidence reference carries the exact declared `ref + identityRef + correlationId` triplet;
+4. `provenance.sourceTimestamp` is present and a valid timestamp;
+5. `provenance.freshness` is `FRESH`.
+
+Missing or mismatching strict data forces `state=UNKNOWN`, `validation=UNKNOWN` and `failsClosed=true`.
+
+This is deliberately **not** a global correlation requirement. Generic records remain backward-compatible and may omit trace/correlation identity when their source does not authoritatively provide one. The projector never creates identity, evidence or correlation values.
+
 ## Authority boundary
 
 This projection is evidence-only. It cannot:
@@ -97,7 +129,8 @@ This projection is evidence-only. It cannot:
 - convert EventMesh delivery into a protected decision;
 - convert a Traceability relationship into approval;
 - create a synthetic completion state;
-- create or mutate trace/correlation identities;
+- create or mutate evidence/trace/correlation identities;
+- infer DATA/FINTECH business semantics from opaque identity references;
 - write to EventMesh, Traceability, audit, Security, Release or Production state.
 
 Human/CODEOWNER merge, Governance decisions, Security verification, Release transition and Production mutation remain with their existing canonical authorities.
@@ -108,31 +141,46 @@ CLIENT may import/use the contract shape and render the effective fields. CLIENT
 
 1. use `state`, not `reportedState`, for graph status rendering;
 2. use `validation`, not `reportedValidation`, for PASS/non-PASS rendering;
-3. preserve `evidence` and `provenance` for drill-down/explanation;
-4. show absence/staleness as unknown/non-PASS;
+3. preserve `evidence`, `provenance` and strict-binding diagnostics for drill-down/explanation;
+4. show absence/staleness/strict-binding failure as unknown/non-PASS;
 5. never map `CURRENT` or `PASS` to approval, mergeability, releasability or deployability.
 
 ## Validation evidence
 
-Focused unit coverage is added for:
+Focused coverage now includes:
 
-- fresh evidenced state preserved without authority expansion;
-- stale evidence downgraded to `UNKNOWN`/non-PASS;
-- missing evidence downgraded to `UNKNOWN`/non-PASS;
-- no synthesized trace/correlation identity;
+- generic fresh evidenced state preserved without authority expansion;
+- fully bound strict identity/correlation/freshness evidence preserved;
+- missing strict correlation fails closed;
+- wrong strict correlation fails closed;
+- missing strict evidence identity fails closed;
+- wrong strict evidence identity fails closed;
+- missing authoritative source timestamp fails closed;
+- stale evidence fails closed;
+- missing evidence fails closed;
+- generic records without trace identity remain backward-compatible and do not receive synthetic identities;
 - no synthetic records for absent graph nodes;
-- envelope authority flags fixed to false.
+- envelope authority flags remain fixed to false.
 
-At this stage the focused test file is **implemented but NOT RUN** in the current GitHub connector execution surface. `NOT RUN` is not reported as PASS. Hosted checks, if applicable, occur only after an authorized PR is created according to `/AGENTS.md`.
+Pre-PR sandbox evidence on the exact implementation payload:
+
+- strict TypeScript compile of contract + projector + focused test shape: `PASS`;
+- isolated executable decision harness: `9/9 PASS` for strict positive/negative and backward-compatibility cases;
+- repository Vitest suite: `NOT RUN` in the current connector execution surface;
+- hosted GitHub checks: `NOT RUN` before PR creation.
+
+`NOT RUN` is not reported as PASS.
 
 ## Exit-gate assessment
 
 | Condition | Branch result |
 |---|---|
 | One canonical read-only state contract exists | SATISFIED |
-| CLIENT can consume it without domain duplication | SATISFIED — shared contract/projector boundary; no CLIENT-owned authority required |
-| Evidence vs authority semantics explicit | SATISFIED |
-| Unknown/stale evidence fails closed | SATISFIED by implementation semantics; focused tests are present but `NOT RUN` |
+| No second EventMesh/trace store/authority created | SATISFIED |
+| Generic records remain backward-compatible | SATISFIED by bounded opt-in semantics |
+| Strict record requires exact identity + evidenceRef + correlation + source timestamp + fresh provenance | SATISFIED by implementation + sandbox harness |
+| Missing/wrong/stale strict inputs fail closed to `UNKNOWN/non-PASS` | SATISFIED by implementation + sandbox harness |
 | Protected provider/Production mutation required by this package | NO |
+| Repository-wide/hosted validation | OPEN / NOT RUN |
 
-No Security verification, test PASS, PR creation or Human Merge is claimed by this document.
+No Security closure, Compliance PASS, PR creation or Human Merge is claimed by this document.
