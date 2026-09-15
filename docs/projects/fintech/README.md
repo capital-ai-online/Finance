@@ -5,7 +5,7 @@
 **Canonical project path:** `docs/projects/fintech/`  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
 **Primary Project Value Chain ownership:** `PVC-12` through `PVC-17`  
-**Current-main synchronization baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Current-main synchronization baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
 **Trust root:** `/AGENTS.md`  
 **Project model:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`
 
