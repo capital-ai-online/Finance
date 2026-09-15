@@ -10,6 +10,7 @@ const historyRoutes = read('server/routes/historyRoutes.ts');
 const entitlements = read('server/entitlements.ts');
 const portfolioReview = read('server/routes/portfolioReviewRoutes.ts');
 const backtestEngine = read('src/components/BacktestEngine.tsx');
+const charts = read('src/components/Charts.tsx');
 const portfolioBacktester = read('src/components/PortfolioBacktester.tsx');
 const monteCarlo = read('src/components/MonteCarloDetailed.tsx');
 const aiRouter = read('server/ai.ts');
@@ -29,8 +30,8 @@ describe('FIN-SEC-03 paid analysis wiring', () => {
     expect(migration).toContain("'full_ai_analysis'");
   });
 
-  it('gates Backtest server-side before history/provider execution and sends bearer from both consumers', () => {
-    const gateIndex = historyRoutes.indexOf('backtestEntitlement');
+  it('gates Backtest server-side before history/provider execution and sends bearer from every compatibility consumer', () => {
+    const gateIndex = historyRoutes.indexOf("router.get('/api/backtest-history', backtestEntitlement");
     const historyExecutionIndex = historyRoutes.indexOf("orchestrator.handle('Backtest Download')");
     expect(gateIndex).toBeGreaterThanOrEqual(0);
     expect(historyExecutionIndex).toBeGreaterThan(gateIndex);
@@ -38,6 +39,10 @@ describe('FIN-SEC-03 paid analysis wiring', () => {
     expect(backtestEngine).toContain("import { authFetch } from '../lib/authFetch';");
     expect(backtestEngine).toContain('authFetch(`/api/backtest-history?symbol=${ticker}&range=${timeRange}`)');
     expect(backtestEngine).not.toContain('fetch(`/api/backtest-history?symbol=${ticker}&range=${timeRange}`)');
+
+    expect(charts).toContain("import { authFetch } from '../lib/authFetch';");
+    expect(charts).toContain('authFetch(`/api/backtest-history?symbol=${activeSymbol}&range=${range === \'1Y\' ? \'365\' : \'3Y\'}`)');
+    expect(charts).not.toContain('fetch(`/api/backtest-history?symbol=${activeSymbol}&range=${range === \'1Y\' ? \'365\' : \'3Y\'}`)');
 
     expect(portfolioBacktester).toContain('authFetch(`/api/backtest-history?symbol=${item.symbol}&range=5Y`)');
     expect(portfolioBacktester).not.toContain('fetch(`/api/backtest-history?symbol=${item.symbol}&range=5Y`)');
