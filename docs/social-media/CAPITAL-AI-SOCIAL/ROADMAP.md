@@ -3,17 +3,17 @@
 **Project ID:** `CAPITAL-AI-SOCIAL`  
 **Document role:** roadmap / non-authorizing domain projection  
 **Status:** `ACTIVE — CANONICAL SOCIAL DOMAIN ROADMAP`  
-**Version:** 2.3.0  
-**Date:** 2026-09-05  
+**Version:** 2.4.0  
+**Date:** 2026-09-14  
 **Primary Project Value Chain ownership:** `[]`  
 **Trust root:** `/AGENTS.md`  
-**Current-main correlation snapshot:** `main@691deee485a53ee53dadf4fbdbea89fefb7ccdb3`
+**Current-main correlation snapshot:** `main@963628af2804d47b1e9a55072a3d6dc5ef98f239`
 
 ## Purpose
 
 Social owns channel-specific content packaging, adaptation, publishing preparation, evidence and performance assessment. It owns no productive PVC stage and does not create publishing, Security, Compliance, Quality, merge or production authority.
 
-This version consolidates the currently available Owner chat work for Social against repository evidence on the current-main correlation snapshot. A chat artifact, generated image/audio/video, historical branch or older report is not treated as implemented repository state unless current `main` contains matching code, contract, test or evidence.
+This version reconciles the currently available Owner work and the Social execution queue against repository evidence on the current-main correlation snapshot. A chat artifact, generated image/audio/video, historical branch or older report is not treated as implemented repository state unless current `main` contains matching code, contract, test or evidence.
 
 ## Human-readable workflow
 
@@ -64,8 +64,13 @@ Canonical Source Content
 | `/AGENTS.md` | repository trust root and lifecycle authority |
 | `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md` | canonical project/PVC mapping; Social is cross-cutting with no productive PVC |
 | `docs/adr/ADR-0026-social-media-direct-publishing-real-integration.md` | `ACCEPTED`; current publishing/OAuth integration authority and content-generation integration boundary |
-| `contracts/SOCIAL_CONTENT_PACKAGE_CONTRACT.md` | canonical Social content-package target contract; current runtime mapping is partial |
-| `work-packages/SOCIAL_WORK_PACKAGES.md` | detailed Social work-package disposition |
+| `contracts/SOCIAL_CONTENT_PACKAGE_CONTRACT.md` | canonical Social content-package target contract; its older implementation-status prose is superseded for execution planning by the verified current-main runtime/tests below |
+| `server/socialMedia/socialContentPackage.ts` + `tests/unit/socialContentPackage.test.ts` | implemented deterministic canonical package mapping with provenance/disclosure fail-closed behavior |
+| `src/routes/socialMediaRoutes.ts` + `tests/unit/socialContentApprovalMetadata.test.ts` | `/generate` runtime integration plus approval-hash binding for canonical package/source/disclosure/link/referral metadata |
+| `contracts/SOCIAL_TTS_VOICE_CONTRACT.md` | provider-neutral TTS/voice contract; merged on current `main`, no provider/model-host authority |
+| `server/socialMedia/voiceContract.ts` + `tests/unit/socialVoiceContract.test.ts` | implemented request/result validation, multilingual voice-profile semantics and fail-closed tests for SOCIAL-P1 |
+| `reports/SOCIAL_P1_TTS_BENCHMARK_2026-09-11.md` | adapter selection + benchmark method; acoustic runtime benchmark explicitly `NOT RUN` |
+| `work-packages/SOCIAL_WORK_PACKAGES.md` | detailed Social work-package disposition; older status rows are evidence inputs, not stronger than current-main code/tests |
 | `docs/adr/ADR-0098-media-project-v2-timeline-contract.md` | `PROPOSED`; design input only, not implementation authority |
 | `docs/architecture/AUTONOMOUS_CONTENT_ENGINE_ARCHITECTURE.md` | `DRAFT — IMPLEMENTATION NOT AUTHORIZED`; advisory architecture input only |
 | `docs/governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md` | `DRAFT / NOT ACTIVE`; does not authorize autonomous repository or publishing mutation |
@@ -78,28 +83,28 @@ Canonical Source Content
 - `OWNER_ROUTED` — the request materially belongs to another canonical project owner; Social may specify/consume the dependency but does not implement across that ownership boundary.
 - `EVIDENCE_GAP` — an artifact/result may have existed in chat or a historical branch, but current repository evidence is insufficient to claim completion.
 
-## Current-main chat consolidation — 2026-09-05
+## Current-main chat consolidation — reconciled 2026-09-14
 
 | ID | Consolidated Owner request | Current-main status | Evidence / finding | Roadmap disposition |
 |---|---|---|---|---|
 | `SOC-CHAT-01` | Marketing emoji semantics including 🚀 for Aufwind/Hype/bullish patterns, 🏦 Governance/Geschäftsführer, 🔐 MFA/Security, 🥳, 💯, 💥, 🍀🪽🍀 and a CAPITAL-AI brand emoji | `MAIN_IMPLEMENTED` | `server/socialMedia/marketingEmojiLexicon.ts`; consumed by `server/socialMedia/scriptTemplates.ts`; covered by `tests/unit/scriptTemplates.test.ts` | keep under `SOCIAL-02`; no parallel emoji engine |
 | `SOC-CHAT-02` | Platform-specific description/character limits for LinkedIn, X, Instagram, TikTok, YouTube and Facebook | `MAIN_IMPLEMENTED` | `server/socialMedia/platformCharacterLimits.ts`; enforced by script templates; `tests/unit/platformCharacterLimits.test.ts` verifies generated defaults | maintain one central limit registry and re-verify provider drift under `SOCIAL-06` |
-| `SOC-CHAT-03` | Final platform-ready title/description/hashtags/support/legal package including No-Demo-Data messaging, website and Kraken referral/disclosure | `PARTIAL` | deterministic multi-platform marketing pack, support contact, disclaimer, hashtags and limits exist; Kraken referral copy exists in a package-specific content-creator artifact, but the reusable Social package does not model every requested reusable legal/referral/website field | extend the canonical Social Content Package rather than embedding a second template path; resolve authoritative referral/disclosure source before central reuse |
-| `SOC-CHAT-04` | Short marketing video around 20 seconds using repository assets, prompts and voice-over; preserve/restore original images and remove unintended AIF branding where sourced from the repository | `PARTIAL` / `EVIDENCE_GAP` | open-source media evidence records deterministic Pillow + FFmpeg short rendering and an 18 s developer smoke; current Social router still states `No media rendering (N3)`; no current Social mockup/source inventory proves the requested original-image/AIF-logo cleanup end-to-end | integrate only through the existing media/publishing boundary; inventory exact asset/template source before any deletion or branding change |
-| `SOC-CHAT-05` | Evaluate and implement high-quality TTS/voice-over with Qwen and Chatterbox, compare against stronger suitable OSS options and a paid reference package, including real listening samples | `OPEN` | no Qwen or Chatterbox adapter/implementation found on current `main`; existing media evidence explicitly leaves TTS/voice-over as a residual gap | new provider-neutral TTS workstream slice; benchmark first, then implement only the selected adapters without granting publish authority |
-| `SOC-CHAT-06` | Multilingual podcasts with multiple speakers and flexible voice assignment | `PARTIAL` | podcast/script structures and host/cohost roles exist; current template locale is limited to `de | en`; no synthesized podcast-audio path is current-main proven | extend language/speaker/voice-profile contracts in Social; protected runtime/model execution is owner-routed where operational infrastructure is required |
-| `SOC-CHAT-07` | Stable voice personas: creative/frech female marketing voice, realistic male IT-architecture voice, with domain-skill attachment and reproducible samples/weights | `OPEN` | current contracts expose speaker/SSML-style fields but no canonical voice-profile registry, acoustic model binding, skill-to-voice mapping, model weights or reproducible TTS sample evidence | define a voice-profile/sample manifest contract; keep acoustic identity separate from domain expertise/prompt skills; model-weight provisioning remains a protected runtime/artifact concern |
+| `SOC-CHAT-03` | Final platform-ready title/description/hashtags/support/legal package including No-Demo-Data messaging, website and Kraken referral/disclosure | `PARTIAL` | canonical package runtime now models source/provenance, links, disclosures, referral metadata, deterministic package/content identity and approval metadata binding; applicability/content of a concrete referral or legal disclosure still requires its authoritative source and applicable Compliance decision | structural `SOCIAL-P0` runtime is complete; keep concrete referral/disclosure applicability under `SOCIAL-03`/COMP rather than creating a second template path |
+| `SOC-CHAT-04` | Short marketing video around 20 seconds using repository assets, prompts and voice-over; preserve/restore original images and remove unintended AIF branding where sourced from the repository | `PARTIAL` / `EVIDENCE_GAP` | deterministic short-renderer evidence exists, but the current Social runtime has no end-to-end TTS/audio adapter integration and no current Social source inventory proves the requested original-image/AIF-logo cleanup | keep under `SOCIAL-P2`; require validated source assets, immutable hashes, brand/logo validation and a real `TtsSynthesisResult` before integration |
+| `SOC-CHAT-05` | Evaluate and implement high-quality TTS/voice-over with Qwen and Chatterbox, compare against stronger suitable OSS options and a paid reference package, including real listening samples | `PARTIAL` | provider-neutral TTS contract, `server/socialMedia/voiceContract.ts`, unit tests, sample manifest and benchmark decision are merged; Qwen3-TTS VoiceDesign is selected primary and Chatterbox Multilingual V3 fallback, but acoustic runtime/listening/latency/audio-hash evidence is explicitly `NOT RUN` | Social-owned P1 contract/code/selection work is implemented; protected runtime/model provisioning and acoustic benchmark evidence remain owner-routed before P2 can consume real audio |
+| `SOC-CHAT-06` | Multilingual podcasts with multiple speakers and flexible voice assignment | `PARTIAL` | `voiceContract.ts` implements an extensible language registry, required `de-DE`/`en-US`/`en-GB`, multi-speaker assignment and tests; no synthesized podcast-audio path is current-main proven | preserve provider-neutral contract; real synthesis remains dependent on authorized runtime evidence |
+| `SOC-CHAT-07` | Stable voice personas: creative/frech female marketing voice, realistic male IT-architecture voice, with domain-skill attachment and reproducible samples/weights | `PARTIAL` | current `VoiceProfile` contract now models stable roles, designed/preset/cloned/reference modes and fail-closed license/consent evidence; tests contain marketing-host and IT-architect designed profiles; no acoustic model binding, generated samples, model weights or listening evidence is present | voice-profile semantics are implemented; model/runtime artifacts and acoustic sample evidence remain protected-runtime dependencies |
 | `SOC-CHAT-08` | Social Media Kit UI/mockups, image replacement and frontend visual presentation | `OWNER_ROUTED` | product UI implementation is explicitly outside Social ownership | `CAPITAL-AI-FE` owns product/UI implementation; Social supplies approved copy/media requirements only |
 | `SOC-CHAT-09` | LinkedIn/social PDF/report presentation derived from Social content | `OWNER_ROUTED` / `PARTIAL` | Social can own channel adaptation/copy, but canonical document/PDF implementation belongs to Documentary; chat-generated PDFs alone are not repository completion evidence | route PDF renderer/document implementation to `CAPITAL-AI-DOC / PVC-03`; retain Social distribution package requirements here |
 
 ### Consolidated findings
 
 1. **Emoji mapping and platform character-limit work are complete on current `main`.** They should be maintained and drift-tested, not reimplemented.
-2. **Text/script generation exists and is useful, but the canonical Social Content Package remains runtime-partial.** Provenance, reusable legal/referral fields and complete approval/evidence identity still need consolidation through the existing contract.
-3. **Short-video rendering exists as an isolated deterministic renderer/evidence slice, but Social runtime wiring is not end-to-end.** The current Social router still explicitly excludes media rendering.
-4. **Voice-over is the clearest current media gap.** Qwen and Chatterbox are not implemented on current `main`; TTS remains open in existing media evidence.
-5. **Podcast generation is not German-only, but it is currently only bilingual (`de`/`en`) at the template-contract level and has no proven real TTS output path.**
-6. **Repository model weights and listening samples must not be inferred from chat generation.** If operational model weights are required, the applicable owner must provision them as licensed/checksummed artifacts; committing large model weights to Git is not the default Social implementation path.
+2. **SOCIAL-P0 is implemented on current `main` according to its defined exit gate.** The deterministic package schema/runtime mapping, required provenance/disclosure fail-closed behavior, `/generate` integration and approval-metadata hash binding are present with targeted tests. Publication/analytics evidence completeness remains separate `SOCIAL-P3` work.
+3. **SOCIAL-P1 is materially further along than the previous roadmap snapshot stated.** Provider-neutral TTS request/result code, voice-profile semantics, tests, sample manifest and adapter-selection benchmark are merged on current `main`.
+4. **Acoustic TTS runtime evidence is still open.** Qwen3-TTS and Chatterbox have no repository-proven generated audio, listening review, measured latency or output hashes; the benchmark report correctly marks these `NOT RUN` pending protected runtime/model provisioning.
+5. **Multilingual/multi-speaker contract support now exists beyond a simple `de | en` template flag.** The current TTS contract requires `de-DE`, `en-US`, `en-GB` and supports explicit registry extension, but no real synthesized podcast/audio path is proven.
+6. **Repository model weights and listening samples must not be inferred from contract code or chat generation.** Operational model weights remain licensed/checksummed artifacts provisioned by the applicable protected runtime owner.
 7. **Frontend mockups and product visual changes are not Social-owned implementation work.** Social may define content/media requirements; `CAPITAL-AI-FE` owns the product surface.
 
 ## External boundaries
@@ -117,18 +122,18 @@ Canonical Source Content
 ## Workstreams
 
 ### SOCIAL-01 — Content package contract
-**State:** `PARTIAL — CONTRACT DEFINED / RUNTIME PARTIAL`
+**State:** `MAIN_IMPLEMENTED — P0 EXIT GATE SATISFIED`
 
-Maintain one canonical Social content package with source/provenance, channel, copy/media references, required disclosures and approval/evidence identity.
+One canonical Social content package carries source/provenance, channel, copy/media requirements, disclosures, links/referral metadata, approval/publish status and immutable content identity. `POST /api/social-media/generate` returns this package by reusing the existing text generator; approval hashing binds package/source/disclosure/link/referral metadata and rejects material drift.
 
-Current priority is compatibility-first completion of the existing package model: do not create a parallel generator. Add reusable channel/legal/referral/website metadata only when its authoritative source and applicability are resolved.
+Concrete legal/referral wording and applicability still consume the applicable Compliance/source authority; this does not reopen the package runtime implementation.
 
 ### SOCIAL-02 — Channel adaptation
-**State:** `PARTIAL — TEXT ADAPTATION IMPLEMENTED / MEDIA-LANGUAGE EXTENSION OPEN`
+**State:** `PARTIAL — TEXT + TTS CONTRACT ADAPTATION IMPLEMENTED / MEDIA RUNTIME EXTENSION OPEN`
 
 Adapt content to provider/channel constraints without altering canonical financial meaning or fabricating platform capabilities.
 
-Current-main completed slices include marketing emoji semantics and central platform character limits. Remaining Social-owned adaptation includes richer multilingual contracts, voice-profile selection metadata, media-format requirements and disclosure-preserving adaptation.
+Current-main completed slices include marketing emoji semantics, central platform character limits, multilingual TTS language/profile semantics and multi-speaker assignment. Remaining Social-owned adaptation includes media-format requirements and disclosure-preserving media integration; actual TTS/provider execution remains outside Social authority.
 
 ### SOCIAL-03 — Security / Compliance / Quality consumption
 **State:** `ACTIVE — DEPENDENCY-BOUND`
@@ -159,30 +164,36 @@ Detect stale copy, policy drift, provider-contract drift, platform-limit drift, 
 ## Prioritized execution queue
 
 ### `SOCIAL-P0` — Canonical content-package completion
+**State:** `MAIN_IMPLEMENTED — EXIT GATE SATISFIED`
 
-**Scope:** complete the existing Social Content Package runtime mapping for provenance, content identity, disclosure/referral metadata, approval reference and evidence correlation without creating a second generator/publisher path.
+**Verified current-main evidence:** `server/socialMedia/socialContentPackage.ts`; `tests/unit/socialContentPackage.test.ts`; `/api/social-media/generate` integration in `src/routes/socialMediaRoutes.ts`; approval metadata/hash binding in `server/socialMedia/contentApproval.ts`; negative coverage in `tests/unit/socialContentApprovalMetadata.test.ts`.
 
-**Exit gate:** package schema/types + compatibility mapping + targeted tests prove required fields and fail-closed behavior for missing mandatory provenance/disclosure identity.
+**Exit gate result:** package schema/types + compatibility mapping + targeted tests prove required identity/provenance fields and fail-closed behavior for missing mandatory provenance/disclosure identity. No second generator/publisher path was introduced.
 
 ### `SOCIAL-P1` — TTS / multilingual voice contract and benchmark
+**State:** `PARTIAL — CONTRACT/CODE/TESTS/ADAPTER DECISION COMPLETE; ACOUSTIC RUNTIME NOT RUN`
 
-**Scope:** define a provider-neutral TTS request/result and voice-profile/sample-manifest contract; benchmark Qwen and Chatterbox against suitable maintained OSS alternatives plus one paid quality reference. Cover at minimum German and English plus an extensible language registry, multi-speaker assignment, finance/IT terminology, numbers/percentages/asset names, latency, reproducibility, licensing and failure behavior.
+**Completed on current main:** provider-neutral request/result contract; voice-profile semantics; multilingual registry; multi-speaker assignment; immutable request/result evidence validation; fail-closed unit tests; sample manifest; benchmark method; primary Qwen3-TTS VoiceDesign and fallback Chatterbox Multilingual V3 selection.
 
-**Ownership boundary:** Social owns requirements, provider-neutral contracts, voice roles and benchmark evidence. Operational model-weight/service provisioning is routed to the applicable protected runtime owner, commonly `CAPITAL-AI-OPS`.
+**Remaining scope:** authorized acoustic/runtime benchmark using exact licensed model/provider artifacts, real output hashes, listening/transcript evidence, measured latency/throughput and failure behavior.
 
-**Exit gate:** reproducible benchmark matrix + licensed sample manifest + selected adapter decision + Social-owned contract/tests; no autonomous publication and no secret/model-host authority added.
+**Ownership boundary:** Social owns requirements, provider-neutral contracts, voice roles, fixtures and benchmark acceptance semantics. Operational model-weight/service provisioning and protected runtime execution remain routed to the applicable owner, commonly `CAPITAL-AI-OPS`.
+
+**Exit gate:** reproducible real-audio benchmark evidence + exact artifact-license inventory + output hashes + Social acceptance decision; no autonomous publication and no secret/model-host authority added.
 
 ### `SOCIAL-P2` — Short-video + voice-over integration
+**State:** `BLOCKED — REQUIRES VALIDATED SOCIAL-P1 RUNTIME RESULT`
 
 **Scope:** connect approved script + validated assets + selected TTS output to the existing deterministic short renderer and asset/publishing preparation boundary. Preserve original source assets, brand validation, hashes, duration metadata and explicit `publishReady=false` until existing approval/execution gates are satisfied.
 
 **Exit gate:** deterministic approximately-20-second fixture render with exact input/asset hashes, voice manifest, brand/logo validation, negative tests, and no direct publishing side effect. Productive FFmpeg licensing/build profile must be independently acceptable before production use.
 
 ### `SOCIAL-P3` — Publication/analytics evidence completion
+**State:** `NOW — HIGHEST-PRIORITY SOCIAL-OWNED UNBLOCKED FOLLOW-UP`
 
-**Scope:** complete evidence correlation and canonical analytics consumption without fabricated metrics.
+**Scope:** complete publication evidence correlation and canonical analytics consumption without fabricated metrics. Preserve content/package/approval/provider-post correlation and source/metric/window provenance; do not treat provider analytics as repository authority.
 
-**Exit gate:** provider post identity + content/asset/approval correlation + canonical metric source/window provenance + repeatable drift checks.
+**Exit gate:** provider post identity + content/package/asset/approval correlation + canonical metric source/window provenance + repeatable drift checks.
 
 ## Security compatibility artifact
 
