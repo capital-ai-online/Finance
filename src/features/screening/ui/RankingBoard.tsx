@@ -21,10 +21,23 @@ import { buildUniverseAvailabilityProjection } from '../../../services/universeA
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
 
+type BackendRankingMeta = {
+  authority: 'CrossAssetRanking';
+  status: string;
+  cohortKey: string | null;
+  comparisonBasis: string | null;
+  crossCohortOrder: false;
+  rank: number | null;
+  rankingValue: number | null;
+  exclusionReason: string | null;
+  exclusionDetail: string | null;
+};
+
 type AssetRow = {
   symbol: string;
   name: string;
   type: AssetType;
+  assetId?: string;
   score: number | null;
   status: string;
   providers: string[];
@@ -39,6 +52,7 @@ type AssetRow = {
   leadingPattern: string;
   patternDirection: 'BULLISH' | 'BEARISH' | 'NEUTRAL' | null;
   patternStrength: 'strong' | 'medium' | 'weak' | null;
+  backendRanking: BackendRankingMeta | null;
 };
 
 type CatalogAsset = {
@@ -156,6 +170,14 @@ function finite0to100(value: unknown): number | null {
   return Number(n.toFixed(1));
 }
 
+function finitePositiveInteger(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null;
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
 function stringList(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
@@ -174,6 +196,68 @@ function reasoningList(value: unknown): string[] {
   return value
     .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
     .slice(0, 3);
+}
+
+function extractAttachedBackendRanking(value: any): BackendRankingMeta | null {
+  if (!value || value.authority !== 'CrossAssetRanking' || value.crossCohortOrder !== false) {
+    return null;
+  }
+
+  return {
+    authority: 'CrossAssetRanking',
+    status: typeof value.status === 'string' ? value.status : 'NO_RANKABLE_ASSETS',
+    cohortKey: typeof value.cohortKey === 'string' && value.cohortKey.length > 0 ? value.cohortKey : null,
+    comparisonBasis:
+      typeof value.comparisonBasis === 'string' && value.comparisonBasis.length > 0
+        ? value.comparisonBasis
+        : null,
+    crossCohortOrder: false,
+    rank: finitePositiveInteger(value.rank),
+    rankingValue: finiteNumber(value.rankingValue),
+    exclusionReason: typeof value.exclusionReason === 'string' ? value.exclusionReason : null,
+    exclusionDetail: typeof value.exclusionDetail === 'string' ? value.exclusionDetail : null,
+  };
+}
+
+function buildBackendRankingLookup(projection: any): Map<string, BackendRankingMeta> {
+  const lookup = new Map<string, BackendRankingMeta>();
+  const result = projection?.result;
+  if (projection?.authority !== 'CrossAssetRanking' || !result) return lookup;
+
+  for (const cohort of Array.isArray(result.cohorts) ? result.cohorts : []) {
+    if (cohort?.crossCohortOrder !== false || typeof cohort?.key !== 'string') continue;
+    for (const entry of Array.isArray(cohort.entries) ? cohort.entries : []) {
+      if (typeof entry?.assetId !== 'string') continue;
+      lookup.set(entry.assetId, {
+        authority: 'CrossAssetRanking',
+        status: typeof result.status === 'string' ? result.status : 'READY',
+        cohortKey: cohort.key,
+        comparisonBasis: typeof cohort.comparisonBasis === 'string' ? cohort.comparisonBasis : null,
+        crossCohortOrder: false,
+        rank: finitePositiveInteger(entry.rank),
+        rankingValue: finiteNumber(entry.rankingValue),
+        exclusionReason: null,
+        exclusionDetail: null,
+      });
+    }
+  }
+
+  for (const excluded of Array.isArray(result.excluded) ? result.excluded : []) {
+    if (typeof excluded?.assetId !== 'string' || lookup.has(excluded.assetId)) continue;
+    lookup.set(excluded.assetId, {
+      authority: 'CrossAssetRanking',
+      status: typeof result.status === 'string' ? result.status : 'NO_RANKABLE_ASSETS',
+      cohortKey: null,
+      comparisonBasis: null,
+      crossCohortOrder: false,
+      rank: null,
+      rankingValue: null,
+      exclusionReason: typeof excluded.reason === 'string' ? excluded.reason : null,
+      exclusionDetail: typeof excluded.detail === 'string' ? excluded.detail : null,
+    });
+  }
+
+  return lookup;
 }
 
 function extractSentiment(body: any): { score: number | null; label: string } {
@@ -318,6 +402,7 @@ function toAssetRow(
   type: AssetType,
   body: any,
   statusOverride?: string,
+  rankingOverride?: BackendRankingMeta | null,
 ): AssetRow {
   const status =
     typeof body?.status === 'string'
@@ -327,18 +412,22 @@ function toAssetRow(
   const sentiment = extractSentiment(body);
   const momentum = extractMomentum(body);
   const pattern = extractLeadingPattern(body);
+  const backendRanking =
+    rankingOverride === undefined ? extractAttachedBackendRanking(body?.backendRanking) : rankingOverride;
+  const rankingReason = backendRanking?.exclusionDetail ?? backendRanking?.exclusionReason ?? undefined;
 
   return {
     symbol,
     name,
     type,
+    assetId: typeof body?.assetId === 'string' ? body.assetId : undefined,
     score: status === 'READY' ? score : null,
     status,
     providers: stringList(body?.integrity?.providers ?? body?.providers),
     evidenceIds: evidenceIdList(body?.integrity?.evidence ?? body?.evidenceIds),
     screeningEligible: status === 'READY' && (body?.screeningEligibility?.eligible !== false),
     reasoning: reasoningList(body?.reasoning),
-    reason: typeof body?.reason === 'string' ? body.reason : undefined,
+    reason: typeof body?.reason === 'string' ? body.reason : rankingReason,
     sentiment: sentiment.score,
     sentimentLabel: sentiment.label,
     momentum: momentum.score,
@@ -346,6 +435,7 @@ function toAssetRow(
     leadingPattern: pattern.name,
     patternDirection: pattern.direction,
     patternStrength: pattern.strength,
+    backendRanking,
   };
 }
 
@@ -386,28 +476,56 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
     const traditional = candidates.filter((asset) => asset.type !== 'crypto');
     const next: Record<string, AssetRow> = {};
 
-    await Promise.allSettled(
-      crypto.map(async (asset) => {
-        if (!asset.symbol || !asset.name) return;
-        try {
-          const result = await fetchJsonWithStatus('/api/crypto/score', {
+    if (crypto.length > 0) {
+      try {
+        const result = await fetchJsonWithStatus(
+          '/api/crypto/score',
+          {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ symbol: asset.symbol, asset_name: asset.name }),
+            body: JSON.stringify({
+              assets: crypto.map((asset) => ({ symbol: asset.symbol, asset_name: asset.name })),
+            }),
+          },
+          18000,
+        );
+        if (!result.ok || !Array.isArray(result.body?.results)) {
+          throw new Error(`HTTP ${result.status}`);
+        }
+
+        const rankingByAssetId = buildBackendRankingLookup(result.body?.backendRanking);
+        const seen = new Set<string>();
+        for (const row of result.body.results) {
+          const rowSymbol = typeof row?.symbol === 'string' ? row.symbol.toUpperCase() : '';
+          const asset = crypto.find((item) => item.symbol?.toUpperCase() === rowSymbol);
+          if (!asset?.symbol || !asset.name) continue;
+          seen.add(asset.symbol);
+          const ranking =
+            typeof row?.assetId === 'string' ? rankingByAssetId.get(row.assetId) ?? null : null;
+          next[asset.symbol] = toAssetRow(asset.symbol, asset.name, 'crypto', row, undefined, ranking);
+        }
+
+        for (const asset of crypto) {
+          if (!asset.symbol || !asset.name || seen.has(asset.symbol)) continue;
+          next[asset.symbol] = toAssetRow(asset.symbol, asset.name, 'crypto', {
+            status: 'SCORE_NOT_COMPUTABLE',
+            reason: 'Kein Ergebnis im verifizierten Crypto-Batch-Scoring zurückgegeben.',
           });
+        }
+      } catch (err: any) {
+        for (const asset of crypto) {
+          if (!asset.symbol || !asset.name) continue;
           next[asset.symbol] = toAssetRow(
             asset.symbol,
             asset.name,
             'crypto',
-            result.body,
-            result.ok ? undefined : `HTTP_${result.status}`,
+            {},
+            err?.name === 'AbortError' ? 'PROVIDER_TIMEOUT' : 'PROVIDER_UNAVAILABLE',
           );
-        } catch (err: any) {
-          next[asset.symbol] = toAssetRow(asset.symbol, asset.name, 'crypto', {}, err?.name === 'AbortError' ? 'PROVIDER_TIMEOUT' : 'PROVIDER_UNAVAILABLE');
-          next[asset.symbol].reason = err?.message || 'Crypto-Scoring konnte nicht geladen werden.';
+          next[asset.symbol].reason = err?.message || 'Crypto-Batch-Scoring konnte nicht geladen werden.';
         }
-      }),
-    );
+      }
+    }
 
     for (const batch of chunkVerifiedScoreCandidates(traditional)) {
       const seen = new Set<string>();
@@ -471,10 +589,38 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
       GROUPS.map((group) => {
         const candidates = selectRankingCandidates(catalog, group.type);
         const allRows = Object.values(scores).filter((row) => row.type === group.type);
-        const readyRows = allRows
-          .filter((row) => row.status === 'READY' && row.score !== null)
-          .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-        const unavailable = allRows.filter((row) => row.status !== 'READY' || row.score === null);
+        const readyRows = allRows.filter((row) => row.status === 'READY' && row.score !== null);
+        const rankableRows = readyRows.filter(
+          (row) =>
+            row.backendRanking?.authority === 'CrossAssetRanking' &&
+            row.backendRanking.crossCohortOrder === false &&
+            row.backendRanking.rank !== null &&
+            row.backendRanking.cohortKey !== null,
+        );
+        const cohortKeys = Array.from(
+          new Set(
+            rankableRows
+              .map((row) => row.backendRanking?.cohortKey)
+              .filter((key): key is string => typeof key === 'string' && key.length > 0),
+          ),
+        );
+        const rankingCohortConflict = cohortKeys.length > 1;
+        const backendOrderedRows = rankingCohortConflict
+          ? []
+          : [...rankableRows].sort(
+              (a, b) =>
+                (a.backendRanking?.rank ?? Number.MAX_SAFE_INTEGER) -
+                (b.backendRanking?.rank ?? Number.MAX_SAFE_INTEGER),
+            );
+        const unavailable = allRows.filter(
+          (row) =>
+            row.status !== 'READY' ||
+            row.score === null ||
+            row.backendRanking === null ||
+            row.backendRanking.rank === null ||
+            row.backendRanking.cohortKey === null ||
+            rankingCohortConflict,
+        );
         const projection = buildUniverseAvailabilityProjection(
           candidates,
           allRows.map((row) => ({
@@ -491,8 +637,11 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
         const subcategories = universe?.subcategories ?? [];
         return {
           ...group,
-          best: readyRows.slice(0, 3),
-          worst: readyRows.length >= 6 ? readyRows.slice(-3).reverse() : readyRows.slice(3, 6).reverse(),
+          best: backendOrderedRows.slice(0, 3),
+          worst:
+            backendOrderedRows.length >= 6
+              ? backendOrderedRows.slice(-3).reverse()
+              : backendOrderedRows.slice(3, 6).reverse(),
           readyCount: readyRows.length,
           candidatesInGroup: candidates.length,
           unavailable,
@@ -543,7 +692,8 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
           <p className="text-xs text-text-secondary mt-2 max-w-2xl leading-relaxed">
             Bis zu {RANKING_CANDIDATE_LIMIT} priorisierte Kandidaten je Assetklasse. Anzeige von Score,
             Sentiment, Momentum und führendem Pattern. Nur READY-Assets mit Provider- und
-            Evidence-Nachweis; fehlende Werte werden nie aufgefüllt.
+            Evidence-Nachweis; fehlende Werte werden nie aufgefüllt; die Reihenfolge folgt ausschließlich
+            backend-autoritativen Rank-Werten.
           </p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2">
@@ -659,7 +809,7 @@ function AssetBlock({
           <div className="rounded-lg border border-border bg-surface/40 p-3 text-[9px] text-text-secondary">
             {pending
               ? 'Verifizierte Scores werden nachgeladen…'
-              : 'Nicht genügend READY-Scores für dieses Ranking'}
+              : 'Kein eindeutiges backend-autoritatives Ranking für diese Kohorte verfügbar'}
           </div>
         )}
       </div>
@@ -672,7 +822,7 @@ function UnavailableBlock({ rows, pending }: { rows: AssetRow[]; pending: boolea
   return (
     <div>
       <div className="mb-2.5 text-[9px] font-mono font-black uppercase text-score-warning">
-        Nicht berechenbar · {rows.length}
+        Nicht berechenbar / nicht rankbar · {rows.length}
       </div>
       <div className="space-y-2">
         {rows.slice(0, 4).map((row) => (
@@ -690,7 +840,7 @@ function UnavailableBlock({ rows, pending }: { rows: AssetRow[]; pending: boolea
         ))}
         {rows.length > 4 && (
           <div className="text-[8px] font-mono text-text-secondary">
-            + {rows.length - 4} weitere nicht berechenbare Assets
+            + {rows.length - 4} weitere nicht rankbare / berechenbare Assets
           </div>
         )}
       </div>
