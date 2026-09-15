@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Cross-Project Dependencies
 
-**Baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
+**Baseline:** `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`  
 **Project:** `CAPITAL-AI-FINTECH`  
 **Canonical folder:** `docs/projects/fintech/`
 
@@ -126,7 +126,7 @@ Current DATA-to-FINTECH handoff evidence confirms `ValidatedDataInput/1.0.0` exi
 - verification_gate: FINTECH contract compatibility plus FE project validation
 - status: `REFERRED_NOT_EXECUTED`
 
-Current-main recorrelation after FIN-SEC-03 keeps `FIN-17` selected as the single next FINTECH P1 slice because `RankingBoard` still performs browser-local READY-score ordering while a backend `CrossAssetRanking` implementation already exists. FIN-17 execution is `HELD` until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915`; only after that merge and a fresh then-current-main/open-writer recorrelation may FIN-17 begin.
+Current-main recorrelation after FIN-SEC-03 keeps `FIN-17` selected as the single next FINTECH P1 slice because `RankingBoard` still performs browser-local READY-score ordering while a backend `CrossAssetRanking` implementation already exists. FIN-17 is now `READY`: PR #942 Human-merged `agent/fintech-fin-sec-03-post-merge-sync-20260915`, and the required fresh `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3` / open-writer recorrelation found no open Pull Request writers.
 
 ## Quality
 

@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/fintech/`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC ownership:** `PVC-12..PVC-17`  
-**Correlation baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
+**Correlation baseline:** `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`  
 **Consolidated:** 2026-09-15  
 **FIN-SEC-03 merge provenance:** `PR #929` · `103689c2f30536e573b7958f63b503ca428f69cf` · historical branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
 **Status:** `ACTIVE`
@@ -17,7 +17,7 @@ This register is a supporting execution projection. Current planning priority is
 |---|---|---|---|---|---|---|
 | `FIN-SEC-02` | P1/HIGH | PVC-16 | Make every productive canonical verified-score/context/batch path consume the accepted `verified_screening` entitlement/quota boundary without creating a second scoring or entitlement authority | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | ADR-0034; current entitlement inventory; Roadmap; `server/middleware/verifiedScreeningEntitlement.ts` | independent CAPITAL-AI-SEC verification; FINTECH does not self-close |
 | `FIN-SEC-03` | P1/HIGH | PVC-15 | Define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve Buffett server authority | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | ADR-0034; PR #929 / merge `103689c2f30536e573b7958f63b503ca428f69cf`; `server/middleware/paidAnalysisEntitlement.ts`; `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md` | independent CAPITAL-AI-SEC verification; pre-PR/hosted execution evidence remains separate; FINTECH does not self-close |
-| `FIN-17` | P1 / NEXT / HELD | PVC-17 | Consolidate one productive backend ranking authority and expose stable rank/order output for presentation consumers | PARTIAL / NEXT FINTECH SLICE — HELD UNTIL POST-MERGE-SYNC HUMAN MERGE | existing `CrossAssetRanking`; productive `RankingBoard` still performs browser-local Top/Worst sorting; ADR-0087; `agent/fintech-fin-sec-03-post-merge-sync-20260915` | Human merge of post-merge sync, then fresh main/open-writer recorrelation; one productive FINTECH backend ranking authority; FE consumes backend ordering only |
+| `FIN-17` | P1 / NEXT | PVC-17 | Consolidate one productive backend ranking authority and expose stable rank/order output for presentation consumers | PARTIAL / NEXT FINTECH SLICE — READY | existing `CrossAssetRanking`; productive `RankingBoard` still performs browser-local Top/Worst sorting; ADR-0087; PR #942 / `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3` | fresh main/open-writer recorrelation complete; one productive FINTECH backend ranking authority; FE consumes backend ordering only |
 | `FIN-12` | P1 / AFTER FIN-17 | PVC-12 | Bind DATA `ValidatedDataInput/1.0.0` to explicit versioned financial feature contracts while preserving non-computable/missing/stale semantics | PARTIAL — DATA HANDOFF READY / FINTECH MAPPING OPEN | `src/platform/MarketData/ValidatedDataInput.ts`; DATA PVC-09..11 handoff; ADR-0087 | every productive feature builder has a tested fail-closed ValidatedDataInput compatibility boundary |
 | `FIN-19` | P2 | supporting | Keep asset/model requirements mapped to canonical DATA capability contracts and current `ProviderMatrix` without provider-ingress takeover | PARTIAL | `src/platform/MarketData/ProviderMatrix.ts` `provider-matrix/1.10.0`; ADR-0041 / ESS-0016 | financial requirements map to provider-neutral DATA capabilities/current matrix with no direct DATA bypass normalized |
 | `FIN-20` | P2 | supporting | Complete `ValidatedDataInput` → feature → model → dispatcher → executor → canonical score → backend rank evidence lineage | PARTIAL | FIN-12..17; OPS traceability; Security evidence return | exact current Git/runtime lineage and required return paths are evidenced |
@@ -36,7 +36,7 @@ This register is a supporting execution projection. Current planning priority is
 ## Current ordering
 
 1. `FIN-SEC-02` and `FIN-SEC-03` implementation/test artifacts are `EVIDENCE_READY`; FIN-SEC-03 is Human-merged through PR #929, while independent `CAPITAL-AI-SEC` verification remains open and FINTECH does not self-close either Security finding.
-2. `FIN-17` is the single next P1 FINTECH implementation slice because the current `RankingBoard` still owns browser-local score ordering while backend `CrossAssetRanking` exists. Execution is `HELD` until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915`; after that merge, then-current main/open writers must be re-read before work begins.
+2. `FIN-17` is the single next P1 FINTECH implementation slice because the current `RankingBoard` still owns browser-local score ordering while backend `CrossAssetRanking` exists. Execution is `READY`: PR #942 Human-merged `agent/fintech-fin-sec-03-post-merge-sync-20260915`, and then-current `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3` / open writers were re-read with no open Pull Request writers present.
 3. `FIN-12` remains P1 immediately after FIN-17. DATA has already provided the upstream `ValidatedDataInput` handoff; FINTECH feature-contract mapping remains open.
 4. `FIN-19`, `FIN-20`, then `FIN-DRIFT-01` remain lower-priority follow-on work unless current evidence changes the ordering.
 
