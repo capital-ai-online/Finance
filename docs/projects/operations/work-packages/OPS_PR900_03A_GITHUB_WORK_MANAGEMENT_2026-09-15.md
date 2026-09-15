@@ -7,6 +7,7 @@
 **Parent:** `OPS-PR900-03 — GitHub Enterprise capability matrix`  
 **Status:** `MATERIALIZED_BRANCH / PRE_PR_CORRELATION_READY`  
 **Inventory baseline:** `main@ed584e36138427bb637af523df6e8ead994f6bda`  
+**Current correlation baseline:** `main@c8a88afc7f9cfad367b592e9567654451f81e436`  
 **Branch:** `agent/operations-github-work-management-20260915`  
 **Trust root:** `/AGENTS.md@current-main`
 
@@ -70,37 +71,46 @@ Against `main@ed584e36138427bb637af523df6e8ead994f6bda`:
 - changed-file overlap with the four OPS target documentation surfaces: none observed;
 - no current semantic/namespace/authority conflict was identified for this bounded coordination-only package.
 
-Historical work-management writer statements are search hints only; no matching active branch or open PR exists on this snapshot.
+Historical work-management writer statements are search hints only.
 
-## Current-main readback after synchronization
+## Current-main readback after final synchronization
 
-The bounded branch was synchronized after the inventory baseline and re-read against `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`.
+The bounded branch was synchronized again after later Human merges to `main@c8a88afc7f9cfad367b592e9567654451f81e436`. The synchronization commit is `d5db2258a0d05a9a8392d4055cc2d316e7193444` and has current main as a parent. The approved 03A/03B material payload was carried forward without importing unmerged parallel-branch content.
 
-Pre-evidence-update branch head `4ac23c8c827b2c545b46f9542432ecd0c309c57c` had:
+Immediately after that synchronization:
 
-- merge base: `5ae0fdd80b085740f92a5530c5561a06f760c7a3`;
+- merge base: `c8a88afc7f9cfad367b592e9567654451f81e436`;
 - branch status: `ahead`;
-- ahead: `5` commits;
+- ahead: `7` commits;
 - behind: `0` commits;
-- open Pull Requests: `0`;
 - exactly four net changed files relative to the merge base:
   - `docs/projects/operations/ROADMAP.md`;
   - `docs/projects/operations/WORK_PACKAGES.md`;
   - `docs/projects/operations/work-packages/OPS_PR900_03A_GITHUB_WORK_MANAGEMENT_2026-09-15.md`;
   - `docs/projects/operations/work-packages/README.md`.
 
-Repository metadata on the same current-state pass reports `has_issues=true`, `has_projects=true` and `has_wiki=true`. These flags are retained separately from connector object-level capability, so enabled provider features are not misreported as fully inventoried object state.
+Current open Pull Request correlation identifies PR `#947` (`CAPITAL-AI-DOC`) changing only `docs/projects/documentary/evidence/CAPITAL_AI_SOURCE_CHAT_004_MULTI_LLM_GATEWAY_WATCH_CLOSURE_2026-09-15.md`; it is changed-file and authority disjoint from this package.
 
-Current branch discovery shows this branch as the only `operations` GitHub-work-management writer. Other visible non-main branches are scoped to FinTech, Governance/QM or Security work; no open PR writer exists for this package. No evidence was found that would transfer ownership or create a competing work-management authority.
+Current active-branch correlation identifies two same-file OPS Roadmap writers that require explicit stronger semantic correlation:
+
+- `agent/operations-ops18-main-projection-20260915` changes `docs/projects/operations/ROADMAP.md` only to synchronize OPS-18 merged EventMesh/Traceability evidence and independent SEC/COMP gates;
+- `agent/operations-social-p1-tts-runtime-20260915` changes `docs/projects/operations/ROADMAP.md` to add the separate `OPS-02-SOCIAL-P1-TTS` package and changes its own TTS package/runtime/test surfaces.
+
+Both are materially separate from `OPS-PR900-03A/03B`: neither edits the 03A/03B namespace, GitHub Work-Management taxonomy contract, provider inventory, package register or package index. Their unmerged content is not imported into this branch. The shared Roadmap path remains a merge-time correlation trigger and must be re-read if either writer changes or merges before Human merge of this package.
+
+Repository metadata on the current-state pass reports `has_issues=true`, `has_projects=true` and `has_wiki=true`. These flags remain separate from connector object-level capability, so enabled provider features are not misreported as fully inventoried object state.
 
 ## Validation
 
 - requested metadata categories: capability-classified with explicit unavailable/partial states;
-- current Project/PVC/Owner mapping: resolved to `CAPITAL-AI-OPS / PVC-02` with `PVC-18` supporting traceability;
+- current Project/PVC/Owner mapping: resolved to `CAPITAL-AI-OPS / PVC-02` with other OPS PVCs unchanged;
+- current `/AGENTS.md` v2.10.0 re-read from `main@c8a88afc7f9cfad367b592e9567654451f81e436`;
+- Governance drift since the prior snapshot was reviewed: Control-Plane authority version/projection metadata was corrected without expanding PR-create, merge, release, deployment or protected-mutation authority;
 - authority boundary: Roadmap/ADR/ESS/version/PR/merge authority remains outside GitHub work-management metadata;
-- current-main synchronization: verified `behind=0` before this evidence-only update;
-- changed-file scope: four OPS documentation/package surfaces only before this evidence-only update; this update changes only the existing package-detail file and does not broaden the material scope;
-- open Pull Requests: `0` at current correlation;
+- current-main synchronization: merge base equals current main and `behind=0` before this evidence-only update;
+- changed-file scope: four OPS documentation/package surfaces only; this evidence update changes only the existing package-detail file and does not broaden the material scope;
+- open Pull Request `#947`: file-/authority-disjoint;
+- same-file active OPS Roadmap writers: present and semantically disjoint at current readback; merge-time re-correlation remains mandatory;
 - runtime/build/hosted checks: `NOT_RUN` because this is documentation/coordination-only pre-PR work and no runtime source is changed.
 
-Before any PR approval request, re-read then-current main and branch head, recompute the exact changed-file set and `capital-ai-effective-change/v1`, refresh open writers and re-check semantic/namespace/authority/Security overlap. `NOT_RUN` remains distinct from `PASS`.
+Before PR creation, re-read then-current main and branch head, recompute the exact changed-file set and `capital-ai-effective-change/v1`, refresh open writers and re-check semantic/namespace/authority/Security overlap. `NOT_RUN` remains distinct from `PASS`.
