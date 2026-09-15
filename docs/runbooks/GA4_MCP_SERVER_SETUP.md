@@ -6,25 +6,22 @@ RUNBOOK-0004
 
 ## Bezug
 
-- `.mcp.json` (Server-Definition), `.claude/hooks/ga4-mcp-credentials.sh`, `.claude/settings.json`
-- `.ai/skills/ESS-0014-Google-Marketing-MCP-Governance.md` (normativ)
-- `docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_TOPOLOGY.md` (Ebene ④ der Topologie)
-- `docs/runbooks/GOOGLE_ANALYTICS_SETUP.md` (Tag-/Consent-Seite, davon unabhängig)
+- `.codex/config.toml` — aktiver OpenAI-Codex-MCP-Hostadapter
+- `.codex/setup-google-mcp-credentials.sh` — Codex-Cloud-Setup-only Credential-Materialisierung
+- `.mcp.json` — bestehende Security-validierte Executable-Identity-Manifestoberfläche; nicht der aktive Codex-Hostadapter
+- `.ai/skills/ESS-0014-Google-Marketing-MCP-Governance.md` — normative hostneutrale Architektur
+- `docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_TOPOLOGY.md` — Ebene ④ der Topologie
+- `docs/runbooks/GOOGLE_ANALYTICS_SETUP.md` — Tag-/Consent-Seite, davon unabhängig
 
 ## Status
 
-Aktiv. Der Server ist im Repository konfiguriert; die Inbetriebnahme erfordert einmalige,
-manuelle Schritte in der Google Cloud Console und in Google Analytics, die nur der
-Repository-Owner ausführen kann (Abschnitt 2).
+Aktiv als OpenAI-Codex-Cloud-Read-Pfad. Die frühere Claude-Code-SessionStart-Integration ist nicht mehr die aktive Execution-Host-Mechanik. Provider-/Credential-/Property-Zugriff bleibt bis zu einem echten Google-Read evidence-basiert offen.
 
 ## Zweck
 
-Lesender Zugriff auf echte GA4-Berichtsdaten (Besucherzahlen, Ereignisse, Realtime) direkt aus
-Claude-Code-Sitzungen — statt manueller Ablesung im GA4-Dashboard.
+Lesender Zugriff auf echte GA4-Berichtsdaten über den offiziellen `analytics-mcp`, ohne Google-Credentials im Repository oder in der Agentenphase als Secret-Environment-Variable vorzuhalten.
 
-**Abgrenzung.** Ausschließlich lesend. ESS-0014 behandelt den offiziellen Google-Analytics-MCP als
-Read-/Evidence-Plane; Schreibzugriffe dürfen niemals am MCP hängen, sondern nur über die
-vollständige Gate-Kette des Write-Gateways erfolgen (heute nicht implementiert).
+**Abgrenzung:** Ausschließlich lesend. ESS-0014 behandelt den Google-Analytics-MCP als Read-/Evidence-Plane; Schreibzugriffe bleiben außerhalb dieses MCP-Pfads.
 
 ---
 
@@ -32,139 +29,103 @@ vollständige Gate-Kette des Write-Gateways erfolgen (heute nicht implementiert)
 
 | | |
 |---|---|
-| Paket | `analytics-mcp` (PyPI), Version 0.7.0 zum Prüfstichtag |
-| Herkunft | **offiziell**, GitHub-Organisation `googleanalytics` — https://github.com/googleanalytics/google-analytics-mcp |
-| Laufzeit | Python ≥ 3.10, gestartet über `uvx` |
-| Authentifizierung | Application Default Credentials über `GOOGLE_APPLICATION_CREDENTIALS` |
-| Property-Auswahl | **pro Werkzeugaufruf**, nicht über eine Umgebungsvariable |
+| Execution Host | OpenAI Codex Cloud |
+| Project-Konfiguration | `.codex/config.toml` |
+| Paket | `analytics-mcp==0.7.0` |
+| Laufzeit | `uvx` |
+| Authentifizierung | Application Default Credentials über eine materialisierte JSON-Datei |
+| Credential-Datei | `~/.capital-ai/ga4-mcp-credentials.json` (`0600`) |
+| Secret | `GA4_MCP_SERVICE_ACCOUNT_KEY_JSON`, nur während Codex-Cloud-Setup |
 
-**Warum der offizielle Server.** ESS-0014 benennt ausdrücklich den „Official Google Analytics MCP"
-als Read-Plane. Zuvor war hier ein npm-Paket `google-analytics-mcp` konfiguriert, das auf der
-npm-Registry **nicht existiert** — der Server hätte nie starten können. Geprüfte Alternativen:
-`ruchernchong/mcp-server-google-analytics` (npm, seit Oktober 2025 archiviert/unmaintained) und
-`surendranb/google-analytics-mcp` (Python, Community). Beide sind gegenüber dem offiziellen Paket
-nachrangig.
-
-**Warum `uvx` statt `pipx`.** Die Projekt-Dokumentation von Google zeigt `pipx run analytics-mcp`.
-In der hier verwendeten Claude-Code-Umgebung ist `pipx` nicht installiert, `uv`/`uvx` dagegen schon.
-`uvx analytics-mcp` ist das direkte Äquivalent und wurde in dieser Umgebung erfolgreich gestartet.
-Wer lokal mit `pipx` arbeitet, kann in `.mcp.json` auf `"command": "pipx", "args": ["run",
-"analytics-mcp"]` wechseln — funktional identisch.
+Codex Cloud stellt Secrets nur während des Setup-Skripts bereit und entfernt sie vor der Agentenphase. Das Repository-Setupskript nutzt genau dieses Sicherheitsmodell: Secret validieren, außerhalb des Arbeitsbaums mit restriktiven Rechten materialisieren, Roh-Secret nicht ausgeben oder weiterexportieren.
 
 ---
 
 ## 2. Einmalige Einrichtung durch den Repository-Owner
 
-Diese Schritte erfordern Zugriff auf das Google-Cloud- und das Google-Analytics-Konto und können
-nicht automatisiert werden.
-
 ### 2.1 Google Cloud
 
-1. [console.cloud.google.com](https://console.cloud.google.com) → Projekt wählen oder anlegen.
-   Die **Projekt-ID** notieren (nicht den Anzeigenamen).
-2. **APIs & Services → Library** → beide APIs aktivieren:
-   - **Google Analytics Data API**
-   - **Google Analytics Admin API**
-3. **IAM & Admin → Service Accounts → Create Service Account**, z. B. `ga4-mcp-reader`.
-   **Keine** Projekt-IAM-Rolle vergeben — der Zugriff wird in Schritt 2.2 direkt auf der
-   GA4-Property erteilt (Least Privilege).
-4. Auf dem Service Account → **Keys → Add Key → Create new key → JSON** → Datei herunterladen.
-   Diese Datei ist ein Geheimnis: **niemals committen, niemals in einen Chat einfügen.**
+1. Google-Cloud-Projekt wählen oder anlegen und Projekt-ID notieren.
+2. **Google Analytics Data API** und **Google Analytics Admin API** aktivieren.
+3. Dedizierten Service Account anlegen, z. B. `ga4-mcp-reader`.
+4. Keine unnötige Projekt-IAM-Rolle vergeben.
+5. JSON-Key nur für diesen Machine Principal erzeugen und sicher speichern; niemals committen oder in Chats einfügen.
 
 ### 2.2 Google Analytics
 
-5. GA4 → **Verwaltung → Property → Property-Zugriffsverwaltung** → **Nutzer hinzufügen**:
-   - E-Mail: die `client_email` aus der JSON-Datei (endet auf `.iam.gserviceaccount.com`)
-   - Rolle: **Betrachter / Viewer** — mehr wird nicht benötigt
+6. GA4 → **Verwaltung → Property → Property-Zugriffsverwaltung → Nutzer hinzufügen**.
+7. `client_email` des Service Accounts mit Rolle **Betrachter / Viewer** hinzufügen.
 
-### 2.3 Claude-Code-Umgebung
+### 2.3 OpenAI Codex Cloud
 
-6. In den Umgebungs-/Secret-Einstellungen der Claude-Code-Umgebung setzen (**nicht** in `.env`,
-   **nicht** in Render — das hier ist Agenten-Tooling, nicht die deployte Anwendung):
+8. ChatGPT/Codex → **Codex-Einstellungen → Umgebungen** → die Umgebung für `capital-ai-online/Finance` öffnen oder anlegen.
+9. Unter **Secrets** setzen:
+
+   | Secret | Wert |
+   |---|---|
+   | `GA4_MCP_SERVICE_ACCOUNT_KEY_JSON` | vollständiger unveränderter Inhalt der Google-Service-Account-JSON-Datei |
+
+10. Unter **Umgebungsvariablen** setzen, sofern vom GA4-MCP benötigt:
 
    | Variable | Wert |
    |---|---|
-   | `GA4_MCP_SERVICE_ACCOUNT_KEY_JSON` | vollständiger Inhalt der JSON-Schlüsseldatei |
-   | `GA4_MCP_PROJECT_ID` | Google-Cloud-Projekt-ID aus Schritt 1 |
+   | `GA4_MCP_PROJECT_ID` | Google-Cloud-Projekt-ID |
 
-7. **Neue** Claude-Code-Sitzung starten. Bestehende Sitzungen lesen weder `.mcp.json`-Änderungen
-   noch neue Umgebungsvariablen nach.
+11. Als **Setup-Skript** konfigurieren:
+
+```bash
+bash .codex/setup-google-mcp-credentials.sh
+```
+
+12. Agenten-Internetzugang auf die für den Read-Pfad erforderlichen Google-Endpunkte begrenzen. Keine pauschale Netzwerkfreigabe nur für diesen MCP-Pfad erteilen.
+13. Neue Codex-Cloud-Session für das Repository starten. Änderungen an Secrets oder Setup-Skript invalidieren den Environment-Cache gemäß Codex-Cloud-Verhalten.
 
 ---
 
 ## 3. Funktionsweise
 
 ```text
-GA4_MCP_SERVICE_ACCOUNT_KEY_JSON  (Secret der Umgebung, String)
+Codex Cloud Secret (nur Setup-Phase)
+GA4_MCP_SERVICE_ACCOUNT_KEY_JSON
         │
-        ▼  SessionStart-Hook (.claude/hooks/ga4-mcp-credentials.sh)
-~/.capital-ai/ga4-mcp-credentials.json   (0600, Verzeichnis 0700, außerhalb des Repos)
+        ▼
+.codex/setup-google-mcp-credentials.sh
+        │  validiert Service-Account-JSON
+        ▼
+~/.capital-ai/ga4-mcp-credentials.json
+        │  mode 0600; außerhalb Repository
+        ▼
+.codex/config.toml
+        │  setzt GOOGLE_APPLICATION_CREDENTIALS nur für ga4-analytics
+        ▼
+uvx --from analytics-mcp==0.7.0 analytics-mcp
         │
-        ▼  GOOGLE_APPLICATION_CREDENTIALS (fester Pfad in .mcp.json)
-uvx analytics-mcp  ──►  Google Analytics Data/Admin API  (nur lesend)
+        ▼
+Google Analytics Read APIs
 ```
 
-Der Hook existiert, weil der MCP-Server einen **Dateipfad** erwartet, das Secret aber als
-**String** in der Umgebung ankommt.
+Das GSC-Credential nutzt einen separaten Pfad. GA4 und Search Console erben nicht stillschweigend denselben Principal.
 
-Der Pfad ist in Hook und `.mcp.json` fest verdrahtet statt über eine Variable geführt: MCP-Server
-werden unabhängig vom Hook gestartet, eine per Hook exportierte Variable könnte zu spät kommen.
-Eine Datei an einem bekannten Ort hat dieses Timing-Problem nicht.
-
-**Fail-closed.** Fehlt das Secret, schreibt der Hook nichts und beendet sich mit Code 0; der
-MCP-Server startet, kann sich aber nicht authentifizieren und meldet einen Auth-Fehler — statt
-stillschweigend leere oder falsche Zahlen zu liefern. Ist das Secret gesetzt, aber kein gültiges
-JSON oder keine Google-Credentials-Struktur, bricht der Hook mit Code 1 ab und schreibt **keine**
-Datei.
+**Fail-closed:** Fehlt oder scheitert die Validierung eines konfigurierten Secrets, wird kein gültiger Credential-Handoff behauptet. Ein echter Google-Read ist die Provider-Evidence; Konfiguration oder MCP-Liveness allein sind kein Provider-PASS.
 
 ---
 
 ## 4. Verifikation
 
-Nach dem Start einer neuen Sitzung:
+Nach dem Start einer neuen Codex-Cloud-Session:
 
-1. **Hook gelaufen?** Erwartete Ausgabe:
-   `[ga4-mcp] Anmeldedaten bereitgestellt unter …/ga4-mcp-credentials.json (0600).`
-2. **Rechte korrekt?**
-   ```bash
-   ls -ld ~/.capital-ai && ls -l ~/.capital-ai/ga4-mcp-credentials.json
-   # erwartet: drwx------ und -rw-------
-   ```
-3. **Server erreichbar?** Die Werkzeuge des Servers `ga4-analytics` müssen in der Sitzung
-   verfügbar sein. Ein Aufruf, der die Kontenübersicht liest, muss die erwartete GA4-Property
-   zurückgeben.
-4. **Least Privilege belegt?** Ein Schreibversuch muss fehlschlagen — der Server bietet keine
-   Schreibwerkzeuge, und die Rolle ist Viewer.
-
-**Manueller Servertest ohne Anmeldedaten** (prüft nur, dass Paket und Laufzeit auflösbar sind):
-```bash
-uvx analytics-mcp --help
-# erwartet u. a.: "Starting MCP Stdio Server: Google Analytics MCP Server"
-```
+1. Setup-Ausgabe enthält nur den Materialisierungsstatus, niemals Schlüsselinhalte.
+2. Credential-Datei besitzt `0600`, Verzeichnis `~/.capital-ai` `0700`.
+3. `ga4-analytics` ist als MCP-Server in Codex verfügbar.
+4. Ein echter Read liefert die erwartete Property oder einen expliziten Google-Auth-/Providerfehler.
+5. `NOT RUN` oder MCP-Liveness wird nicht als erfolgreicher Google-Read klassifiziert.
 
 ---
 
-## 5. Sicherheitshinweise
+## 5. Sicherheit / Rotation
 
-- Die Schlüsseldatei liegt unter `~/.capital-ai/` — **außerhalb** des Arbeitsbaums. Sie kann daher
-  nicht versehentlich committed werden und taucht in `git status` nicht auf.
-- Der Hook gibt zu keinem Zeitpunkt Schlüsselinhalte aus; Fehlermeldungen enthalten ausschließlich
-  Metadaten (Fehlertyp, fehlendes Feld).
-- Der Service Account erhält **keine** Projekt-IAM-Rolle, sondern ausschließlich Viewer-Rechte auf
-  der einzelnen GA4-Property.
-- Schlüsselrotation: neuen Key erzeugen, `GA4_MCP_SERVICE_ACCOUNT_KEY_JSON` ersetzen, alten Key in
-  der Cloud Console löschen, neue Sitzung starten. Die alte Datei wird beim nächsten Hook-Lauf
-  überschrieben.
-
----
-
-## 6. Fehlerdiagnose
-
-| Symptom | Ursache | Abhilfe |
-|---|---|---|
-| Hook meldet „nicht gesetzt" | `GA4_MCP_SERVICE_ACCOUNT_KEY_JSON` fehlt in der Umgebung | Schritt 2.3, danach **neue** Sitzung |
-| Hook bricht mit „kein gueltiges JSON" ab | Secret abgeschnitten oder mit Zeilenumbrüchen zerstört | Dateiinhalt vollständig und unverändert einfügen |
-| Server startet, jede Abfrage liefert 403 | Service Account nicht auf der Property berechtigt | Schritt 2.2 |
-| Server startet, Abfragen melden fehlende API | Data- oder Admin-API nicht aktiviert | Schritt 2.1 |
-| `uvx: command not found` | `uv` fehlt in der Umgebung | `uv` installieren oder in `.mcp.json` auf `pipx run` wechseln |
-| Werkzeuge fehlen trotz korrektem Setup | Sitzung liest `.mcp.json` nicht nach | neue Sitzung starten |
+- JSON niemals in Repository, Issue, PR, Log oder Chat einfügen.
+- Das JSON gehört in **Codex-Einstellungen → Umgebung → Secrets**, nicht in GitHub Secrets für diesen Cloud-Hostpfad.
+- Bei Rotation neuen Google-Key erstellen, Codex-Secret ersetzen und alten Key bei Google widerrufen/löschen.
+- Danach neue Codex-Cloud-Session starten bzw. Environment-Cache invalidieren lassen.
+- Machine Identity und Human-Owner-Rechte bleiben getrennt; keine Owner-/Editor-Eskalation für den Service Account.
