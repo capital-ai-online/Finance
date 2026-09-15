@@ -6,10 +6,7 @@ on:
     - cron: '17 */3 * * *'
   workflow_dispatch:
 
-permissions:
-  actions: read
-  contents: write
-  security-events: write
+permissions: {}
 
 concurrency:
   group: code-scanning-controlled-autofix
@@ -25,6 +22,10 @@ jobs:
        (github.event_name == 'workflow_dispatch' && github.actor == 'SvenKulessa'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+      security-events: write
     outputs:
       candidate_created: ${{ steps.autofix.outputs.candidate_created }}
       candidate_safe: ${{ steps.autofix.outputs.candidate_safe }}
