@@ -5,7 +5,7 @@
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-15 — Owner-directed automated PR creation and ordered Roadmap PR lane correlated against current main  
-**Baseline:** `main@698e0bc26e28899ddf2429fb298f74d54e35b3b0`  
+**Baseline:** `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -50,7 +50,7 @@ Materialize one canonical presentation projection per project routing row: textu
 
 Materialize the 2026-09-15 Owner decision that ordinary bounded agent-managed Pull Requests are created automatically after successful final repository correlation, while Human/Owner authority moves to post-create review and Human/CODEOWNER-only merge.
 
-**State:** `IMPLEMENTED_ON_BRANCH / CURRENT-MAIN PR-CREATE GATE` on `agent/governance-autonomous-pr-chain-20260915` from `main@698e0bc26e28899ddf2429fb298f74d54e35b3b0`.
+**State:** `IMPLEMENTED_ON_BRANCH / CURRENT-MAIN PR-CREATE GATE` on `agent/governance-autonomous-pr-chain-20260915` synchronized to `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`.
 
 The branch evolves the existing stable authorities instead of creating a second Governance or approval plane:
 
