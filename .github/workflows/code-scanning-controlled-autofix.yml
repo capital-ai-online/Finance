@@ -133,13 +133,41 @@ jobs:
       - name: Production Build prüfen
         run: npm run build
 
-      - name: Kanonische CodeQL-Provider-Authority verifizieren
-        id: codeql_provider
+      - name: Exakte CodeQL-Candidate-Evidence lesen
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          CANDIDATE_REF: refs/heads/${{ needs.generate.outputs.branch }}
+          ALERT_NUMBER: ${{ needs.generate.outputs.alert_number }}
+        run: |
+          set -euo pipefail
+          mkdir -p .autofix-provider
+          if ! gh api --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            "repos/${REPOSITORY}/code-scanning/alerts/${ALERT_NUMBER}" \
+            > .autofix-provider/alert.json; then
+            : > .autofix-provider/alert.json
+          fi
+          if ! gh api --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            -f "ref=${CANDIDATE_REF}" \
+            -F per_page=100 \
+            "repos/${REPOSITORY}/code-scanning/alerts/${ALERT_NUMBER}/instances" \
+            > .autofix-provider/instances.json; then
+            : > .autofix-provider/instances.json
+          fi
+
+      - name: Kanonische CodeQL-Provider-Authority verifizieren
+        id: codeql_provider
+        env:
+          CANDIDATE_REF: refs/heads/${{ needs.generate.outputs.branch }}
+          CANDIDATE_SHA: ${{ needs.generate.outputs.commit_sha }}
           BASE_SHA: ${{ needs.generate.outputs.base_sha }}
           ALERT_NUMBER: ${{ needs.generate.outputs.alert_number }}
+          CODEQL_ALERT_JSON: .autofix-provider/alert.json
+          CODEQL_INSTANCES_JSON: .autofix-provider/instances.json
         run: node scripts/security/verifyControlledAutofixCodeqlProvider.mjs
 
       - name: Ergebnis zusammenfassen
@@ -147,6 +175,7 @@ jobs:
           ALERT_NUMBER: ${{ needs.generate.outputs.alert_number }}
           BRANCH: ${{ needs.generate.outputs.branch }}
           COMMIT_SHA: ${{ needs.generate.outputs.commit_sha }}
+          BASE_SHA: ${{ needs.generate.outputs.base_sha }}
           CODEQL_STATUS: ${{ steps.codeql_provider.outputs.codeql_status }}
           CODEQL_REASON: ${{ steps.codeql_provider.outputs.codeql_reason }}
         run: |
@@ -154,8 +183,9 @@ jobs:
             echo "## Controlled CodeQL Autofix — technische Validierung"
             echo
             echo "- Alert: #${ALERT_NUMBER}"
-            echo "- Branch: \`${BRANCH}\`"
-            echo "- Head: \`${COMMIT_SHA}\`"
+            echo "- Provider Evidence Authority Ref: \`refs/heads/${BRANCH}\`"
+            echo "- Provider Evidence Authority SHA: \`${COMMIT_SHA}\`"
+            echo "- Provenance Base SHA: \`${BASE_SHA}\`"
             echo "- TypeScript/Lint: **PASS**"
             echo "- Unit Tests: **PASS**"
             echo "- Production Build: **PASS**"
