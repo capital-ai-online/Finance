@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Work Packages
 
-**Correlation baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Correlation baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
 **Consolidated:** 2026-09-15  
 **FIN-SEC-03 implementation branch:** `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
