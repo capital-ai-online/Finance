@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Work Packages
 
-**Correlation baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
+**Correlation baseline:** `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`  
 **Consolidated:** 2026-09-15  
 **FIN-SEC-03 merge provenance:** `PR #929` · `103689c2f30536e573b7958f63b503ca428f69cf` · historical branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
@@ -15,7 +15,7 @@ This file is a supporting work-package projection. Current prioritization and co
 | FIN-14 | PVC-14 | Scoring Orchestration | VERIFIED CORE | one productive `ScoringDispatcher`; no alternate productive dispatcher/model-selection path |
 | FIN-15 | PVC-15 | Domain Executors / Financial Analysis | VERIFIED/PARTIAL + FIN-SEC-03 IMPLEMENTED / EVIDENCE_READY | every productive scope maps to an explicit registered executor; protected Backtest/Monte Carlo/full-AI boundary is server-authoritative/fail-closed; independent Security verification remains open |
 | FIN-16 | PVC-16 | Canonical Scoring | VERIFIED/PARTIAL | `CanonicalScoreResult` compatibility/lineage preserved and `FIN-SEC-02` verified-screening alternate paths use the canonical server entitlement boundary |
-| FIN-17 | PVC-17 | Ranking / Decision Support | PARTIAL / P1 — NEXT / HELD UNTIL POST-MERGE-SYNC HUMAN MERGE | after Human merge of the post-merge sync and fresh then-current-main/open-writer recorrelation, establish one productive FINTECH backend rank/order authority; productive FE surface consumes authoritative backend ordering only |
+| FIN-17 | PVC-17 | Ranking / Decision Support | PARTIAL / P1 — NEXT / READY | fresh current-main/open-writer recorrelation complete; establish one productive FINTECH backend rank/order authority; productive FE surface consumes authoritative backend ordering only |
 | FIN-18 | supporting | Asset Class Inventory | VERIFIED | repository-derived supported classes only |
 | FIN-19 | supporting | Provider Capability Mapping | PARTIAL / P2 | financial feature/model requirements map to provider-neutral DATA contracts and current `provider-matrix/1.10.0` without ingress/DQ takeover |
 | FIN-20 | supporting | End-to-End Scoring Evidence | PARTIAL / P2 | exact `ValidatedDataInput` -> feature -> model -> dispatcher -> executor -> canonical score -> rank lineage plus required Security/OPS evidence |
@@ -36,7 +36,7 @@ This file is a supporting work-package projection. Current prioritization and co
 
 ### FINTECH -> Frontend / FIN-17
 
-Frontend remains a presentation consumer. `RankingBoard` is the productive UI surface but still performs local READY-score sorting/Top-Worst slicing. `FIN-17` remains the single next P1 slice, but execution is held until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915` and a fresh then-current-main/open-writer recorrelation. Only then may backend FINTECH rank/order authority become the productive source before downstream FE presentation-only consumption is completed.
+Frontend remains a presentation consumer. `RankingBoard` is the productive UI surface but still performs local READY-score sorting/Top-Worst slicing. `FIN-17` remains the single next P1 slice and is now `READY`: PR #942 Human-merged `agent/fintech-fin-sec-03-post-merge-sync-20260915`, and the required fresh `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3` / open-writer recorrelation found no open Pull Request writers. Backend FINTECH rank/order authority may now proceed before downstream FE presentation-only consumption is completed.
 
 ### FINTECH -> OPS / FIN-20
 
@@ -45,7 +45,7 @@ Frontend remains a presentation consumer. `RankingBoard` is the productive UI su
 ## Priority order
 
 1. Security return — `FIN-SEC-02` and `FIN-SEC-03` are FINTECH `EVIDENCE_READY`; independent Security verification remains open.
-2. P1 / NEXT / HELD — `FIN-17` backend ranking authority consolidation begins only after Human merge of the FIN-SEC-03 post-merge sync and fresh then-current-main/open-writer recorrelation.
+2. P1 / NEXT / READY — `FIN-17` backend ranking authority consolidation may begin from the current correlated baseline.
 3. P1 / AFTER FIN-17 — `FIN-12` ValidatedDataInput → versioned feature-contract mapping.
 4. P2 — `FIN-19`, then `FIN-20` unless current evidence changes the ordering.
 5. P3 — `FIN-DRIFT-01`.
