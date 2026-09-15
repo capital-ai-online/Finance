@@ -44,15 +44,29 @@ function rankingInputFromGovernedItem(
   if (!item.symbol || !isUniverseAssetClass(item.assetType)) return null;
   if (!item.integrity || typeof item.integrity !== 'object') return null;
 
-  const canonical: CanonicalScoreResult = {
-    status: String(item.status ?? 'SCORE_NOT_COMPUTABLE') as CanonicalScoreResult['status'],
-    score: typeof item.score === 'number' && Number.isFinite(item.score) ? item.score : null,
-    final_score:
-      typeof item.final_score === 'number' && Number.isFinite(item.final_score)
-        ? item.final_score
-        : null,
-    integrity: item.integrity as CanonicalScoreResult['integrity'],
-  };
+  const integrity = item.integrity as CanonicalScoreResult['integrity'];
+  const score = typeof item.score === 'number' && Number.isFinite(item.score) ? item.score : null;
+  const finalScore =
+    typeof item.final_score === 'number' && Number.isFinite(item.final_score)
+      ? item.final_score
+      : null;
+
+  let canonical: CanonicalScoreResult;
+  switch (item.status) {
+    case 'READY':
+      if (score === null || finalScore === null) return null;
+      canonical = { status: 'READY', score, final_score: finalScore, integrity };
+      break;
+    case 'DATA_UNAVAILABLE':
+    case 'SOURCE_UNAVAILABLE':
+    case 'INSUFFICIENT_HISTORY':
+    case 'STALE_DATA':
+    case 'SCORE_NOT_COMPUTABLE':
+      canonical = { status: item.status, score: null, final_score: null, integrity };
+      break;
+    default:
+      return null;
+  }
 
   return {
     symbol: item.symbol,
