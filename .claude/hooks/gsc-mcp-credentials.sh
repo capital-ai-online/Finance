@@ -7,7 +7,7 @@
 #
 # Das Secret wird ausschliesslich aus GSC_MCP_SERVICE_ACCOUNT_KEY_JSON gelesen und in eine
 # lokale Datei ausserhalb des Repositories geschrieben. Die .mcp.json bindet nur diesen Pfad
-# an den search-console MCP-Prozess. Es erfolgt bewusst KEIN globaler Export in CLAUDE_ENV_FILE.
+# an den search-console MCP-Prozess. Es erfolgt bewusst kein globaler Session-Environment-Export.
 #
 # Fail-closed: fehlt oder ist das Secret ungueltig, wird eine eventuell vorhandene lokale
 # GSC-Credential-Datei entfernt, damit keine veralteten Credentials weiterverwendet werden.
