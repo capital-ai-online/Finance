@@ -37,6 +37,16 @@ function evidence(
   };
 }
 
+const WRONG_IDENTITY_CASES: ReadonlyArray<readonly [
+  string,
+  Partial<MarketEvidenceQualityRecord>,
+]> = [
+  ['assetId', { assetId: 'asset:equity:US:MSFT' }],
+  ['providerId', { providerId: 'provider.other' }],
+  ['capability', { capability: 'bars' }],
+  ['field', { field: 'close' }],
+];
+
 describe('CAPITAL-AI-SEC independent S1-R2-11 verification', () => {
   it('authorizes CURRENT only for fresh verified evidence bound to the exact required identity', () => {
     const result = evaluateEvidenceIdentityFreshness({
@@ -50,21 +60,18 @@ describe('CAPITAL-AI-SEC independent S1-R2-11 verification', () => {
     expect(result.reason).toBe('identity-bound-fresh-verified-evidence');
   });
 
-  it.each([
-    ['assetId', { assetId: 'asset:equity:US:MSFT' }],
-    ['providerId', { providerId: 'provider.other' }],
-    ['capability', { capability: 'bars' }],
-    ['field', { field: 'close' }],
-  ] as const)('rejects wrong immutable identity dimension %s', (_dimension, mutation) => {
-    const result = evaluateEvidenceIdentityFreshness({
-      requiredIdentity: REQUIRED,
-      observation: evidence(mutation),
-    });
+  for (const [dimension, mutation] of WRONG_IDENTITY_CASES) {
+    it(`rejects wrong immutable identity dimension ${dimension}`, () => {
+      const result = evaluateEvidenceIdentityFreshness({
+        requiredIdentity: REQUIRED,
+        observation: evidence(mutation),
+      });
 
-    expect(result.state).toBe('STALE');
-    expect(result.authorizesCurrent).toBe(false);
-    expect(result.reason).toBe('wrong-identity');
-  });
+      expect(result.state).toBe('STALE');
+      expect(result.authorizesCurrent).toBe(false);
+      expect(result.reason).toBe('wrong-identity');
+    });
+  }
 
   it('keeps stale evidence non-current even when freshness clocks are rewritten to look fresh', () => {
     const rewritten = evidence({
