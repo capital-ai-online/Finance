@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Cross-Project Dependencies
 
-**Baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Baseline:** `main@8f11a360ce598100396562ad0eced04ca13b7372`  
 **Project:** `CAPITAL-AI-FINTECH`  
 **Canonical folder:** `docs/projects/fintech/`
 
