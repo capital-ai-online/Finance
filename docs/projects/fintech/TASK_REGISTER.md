@@ -4,9 +4,9 @@
 **Project folder:** `docs/projects/fintech/`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC ownership:** `PVC-12..PVC-17`  
-**Correlation baseline:** `main@8618326db4d4a5af0fbecd65b83805ea7608109f`  
-**Consolidated:** 2026-09-06  
-**FIN-SEC-02 implementation branch:** `agent/fintech-fin-sec-02-verified-screening-20260907`  
+**Correlation baseline:** `main@833b0184c9b61d2341a22f434b408b1cc0416def`  
+**Consolidated:** 2026-09-15  
+**FIN-SEC-03 implementation branch:** `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
 **Status:** `ACTIVE`
 
 This register is a supporting execution projection. Current planning priority is maintained in `ROADMAP.md`; Authority remains with `/AGENTS.md`, applicable Accepted ADRs, Active ESS and their delegated contracts. Work claims/handoffs are coordination/audit metadata only.
@@ -16,9 +16,9 @@ This register is a supporting execution projection. Current planning priority is
 | ID | Priority | PVC | Task | Status | Dependency / source | Exit gate |
 |---|---|---|---|---|---|---|
 | `FIN-SEC-02` | P1/HIGH | PVC-16 | Make every productive canonical verified-score/context/batch path consume the accepted `verified_screening` entitlement/quota boundary without creating a second scoring or entitlement authority | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | ADR-0034; current entitlement inventory; Roadmap; `server/middleware/verifiedScreeningEntitlement.ts` | independent CAPITAL-AI-SEC verification; FINTECH does not self-close |
-| `FIN-SEC-03` | P1/HIGH | PVC-15 | Define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve Buffett server authority | OPEN / REFERRED_NOT_EXECUTED | ADR-0034; current entitlement inventory; Roadmap | protected execution has verified-principal/server-entitlement ALLOW/DENY evidence; Security verification requested |
-| `FIN-12` | P1 | PVC-12 | Bind DATA `ValidatedDataInput/1.0.0` to explicit versioned financial feature contracts while preserving non-computable/missing/stale semantics | PARTIAL — UPSTREAM CONTRACT IMPLEMENTED | `src/platform/MarketData/ValidatedDataInput.ts`; DATA PVC-09..11; ADR-0087 | every productive feature builder has a tested fail-closed ValidatedDataInput compatibility boundary |
-| `FIN-17` | P1 | PVC-17 | Consolidate one productive backend ranking authority and expose stable rank/order output for presentation consumers | PARTIAL | existing ranking contracts/services; productive `RankingBoard`; ADR-0087 | one productive FINTECH ranking authority; FE can consume backend ordering only |
+| `FIN-SEC-03` | P1/HIGH | PVC-15 | Define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve Buffett server authority | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | ADR-0034; `server/middleware/paidAnalysisEntitlement.ts`; `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md` | independent CAPITAL-AI-SEC verification; pre-PR/hosted execution evidence remains separate; FINTECH does not self-close |
+| `FIN-17` | P1 / NEXT | PVC-17 | Consolidate one productive backend ranking authority and expose stable rank/order output for presentation consumers | PARTIAL / NEXT FINTECH SLICE | existing `CrossAssetRanking`; productive `RankingBoard` still performs browser-local Top/Worst sorting; ADR-0087 | one productive FINTECH backend ranking authority; FE consumes backend ordering only |
+| `FIN-12` | P1 / AFTER FIN-17 | PVC-12 | Bind DATA `ValidatedDataInput/1.0.0` to explicit versioned financial feature contracts while preserving non-computable/missing/stale semantics | PARTIAL — DATA HANDOFF READY / FINTECH MAPPING OPEN | `src/platform/MarketData/ValidatedDataInput.ts`; DATA PVC-09..11 handoff; ADR-0087 | every productive feature builder has a tested fail-closed ValidatedDataInput compatibility boundary |
 | `FIN-19` | P2 | supporting | Keep asset/model requirements mapped to canonical DATA capability contracts and current `ProviderMatrix` without provider-ingress takeover | PARTIAL | `src/platform/MarketData/ProviderMatrix.ts` `provider-matrix/1.10.0`; ADR-0041 / ESS-0016 | financial requirements map to provider-neutral DATA capabilities/current matrix with no direct DATA bypass normalized |
 | `FIN-20` | P2 | supporting | Complete `ValidatedDataInput` → feature → model → dispatcher → executor → canonical score → backend rank evidence lineage | PARTIAL | FIN-12..17; OPS traceability; Security evidence return | exact current Git/runtime lineage and required return paths are evidenced |
 | `FIN-DRIFT-01` | P3 | supporting | Add low-cost deterministic drift checks for project/PVC/baseline/provider/consumer/security-routing projections | PLANNED | current Roadmap and project surface | representative stale projections fail deterministically without creating new Authority/policy overlay |
@@ -27,7 +27,7 @@ This register is a supporting execution projection. Current planning priority is
 
 | ID / capability | Status | Current treatment |
 |---|---|---|
-| `FIN-SYNC-01` | COMPLETED / historical evidence-ready | merged project-surface sync retained as 2026-09-01 evidence; current planning baseline is superseded by the 2026-09-06 Roadmap correlation |
+| `FIN-SYNC-01` | COMPLETED / historical evidence-ready | merged project-surface sync retained as 2026-09-01 evidence; current planning baseline is superseded by the 2026-09-15 Roadmap correlation |
 | `FIN-13` Scoring Models | VERIFIED CORE / DRIFT WATCH | one `ScoringModelRegistry`; canonical/champion resolution; challengers non-productive until promotion |
 | `FIN-14` Scoring Orchestration | VERIFIED CORE | one productive `ScoringDispatcher`; no alternate productive dispatcher |
 | `FIN-18` Asset Inventory | VERIFIED | repository-derived supported classes only |
@@ -35,11 +35,10 @@ This register is a supporting execution projection. Current planning priority is
 
 ## Current ordering
 
-1. `FIN-SEC-02` implementation/tests are `EVIDENCE_READY` on this branch. Independent `CAPITAL-AI-SEC` verification remains open; FINTECH must recorrelate after that return.
-2. `FIN-SEC-03` remains the highest-priority unimplemented FINTECH child.
-3. After either Security child completes merge + recorrelation, re-read then-current `main`, open PRs, Security state, affected Roadmap and applicable ADR/ESS before promoting another work item.
-4. `FIN-12` and `FIN-17` share the next P1 band; their order is recomputed after that mandatory recorrelation rather than assumed here.
-5. `FIN-19`, `FIN-20`, then `FIN-DRIFT-01` remain lower-priority follow-on work unless current evidence changes the ordering.
+1. `FIN-SEC-02` and `FIN-SEC-03` implementation/test artifacts are `EVIDENCE_READY`; independent `CAPITAL-AI-SEC` verification remains open and FINTECH does not self-close either Security finding.
+2. `FIN-17` is the single next P1 FINTECH implementation slice: current `RankingBoard` still owns browser-local score ordering while backend `CrossAssetRanking` exists, so the active ranking-authority split is the narrower immediate correction.
+3. `FIN-12` remains P1 immediately after FIN-17. DATA has already provided the upstream `ValidatedDataInput` handoff; FINTECH feature-contract mapping remains open.
+4. `FIN-19`, `FIN-20`, then `FIN-DRIFT-01` remain lower-priority follow-on work unless current evidence changes the ordering.
 
 ## Ownership boundaries
 
