@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import {
   AlertTriangle,
   Award,
@@ -193,6 +193,20 @@ function WorkbenchLoadingState() {
   );
 }
 
+function DeferredToolRuntimeState({ tool }: { tool: ToolDefinition }) {
+  return (
+    <div className="flex min-h-[320px] items-center justify-center rounded-2xl border border-brand-primary/20 bg-surface/25 px-6 py-10 text-center" role="status" aria-live="polite">
+      <div className="max-w-xl space-y-3">
+        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-asset-crypto/25 bg-asset-crypto/[0.07] px-3 py-1 font-mono text-[10px] font-black uppercase tracking-wider text-asset-crypto">
+          <Gauge size={13} aria-hidden="true" /> BTC · Public Enterprise Scorer
+        </div>
+        <p className="text-lg font-black text-text-primary">{tool.label} ist bereit</p>
+        <p className="text-sm leading-relaxed text-text-secondary">Cockpit, Sideboard und Bewertungstools sind sofort sichtbar. Die rechenintensive Analyse wird direkt nach dem ersten Browser-Paint aktiviert, damit der initiale Seitenaufbau nicht vom Scoring-Bundle blockiert wird.</p>
+      </div>
+    </div>
+  );
+}
+
 class PublicToolErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
@@ -241,8 +255,27 @@ export function PublicAnalysisWorkbench() {
   const [activeTool, setActiveTool] = useState<PublicToolId>('enterprise-scorer');
   const [sideboardExpanded, setSideboardExpanded] = useState(false);
   const [timeframe, setTimeframe] = useState('1 tag');
+  const [runtimeReady, setRuntimeReady] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const frameId = window.requestAnimationFrame(() => {
+      timeoutId = setTimeout(() => setRuntimeReady(true), 0);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      if (timeoutId !== null) clearTimeout(timeoutId);
+    };
+  }, []);
 
   const activeDefinition = TOOL_BY_ID.get(activeTool) ?? TOOL_BY_ID.get('enterprise-scorer')!;
+
+  const activateTool = (toolId: PublicToolId) => {
+    setRuntimeReady(true);
+    setActiveTool(toolId);
+    setSideboardExpanded(false);
+  };
 
   const renderActiveTool = () => {
     switch (activeTool) {
@@ -256,11 +289,11 @@ export function PublicAnalysisWorkbench() {
           />
         );
       case 'ranking-board':
-        return <RankingBoard onSelectAsset={() => setActiveTool('enterprise-scorer')} />;
+        return <RankingBoard onSelectAsset={() => activateTool('enterprise-scorer')} />;
       case 'buffett-value':
         return <ProtectedToolNotice tool={activeDefinition} />;
       case 'market-screener':
-        return <MarketScreener selectedSymbol={PUBLIC_FIXED_SYMBOL} onSelectSymbol={() => setActiveTool('enterprise-scorer')} />;
+        return <MarketScreener selectedSymbol={PUBLIC_FIXED_SYMBOL} onSelectSymbol={() => activateTool('enterprise-scorer')} />;
       case 'raw-materials':
         return <RawMaterialsDashboard />;
       default:
@@ -329,7 +362,7 @@ export function PublicAnalysisWorkbench() {
                       <button
                         key={tool.id}
                         type="button"
-                        onClick={() => { setActiveTool(tool.id); setSideboardExpanded(false); }}
+                        onClick={() => activateTool(tool.id)}
                         aria-current={selected ? 'page' : undefined}
                         aria-label={tool.label}
                         title={!sideboardExpanded ? tool.label : undefined}
@@ -367,7 +400,11 @@ export function PublicAnalysisWorkbench() {
           </header>
 
           <PublicToolErrorBoundary key={activeTool}>
-            <Suspense fallback={<WorkbenchLoadingState />}>{renderActiveTool()}</Suspense>
+            {runtimeReady ? (
+              <Suspense fallback={<WorkbenchLoadingState />}>{renderActiveTool()}</Suspense>
+            ) : (
+              <DeferredToolRuntimeState tool={activeDefinition} />
+            )}
           </PublicToolErrorBoundary>
         </section>
       </div>

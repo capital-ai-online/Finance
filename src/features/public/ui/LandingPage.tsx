@@ -113,7 +113,23 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 sm:py-10">
+      <main className="relative z-10 mx-auto max-w-7xl space-y-8 px-4 py-4 sm:px-6 sm:py-6">
+        <section id="analysis-workbench" aria-labelledby="analysis-workbench-title" className="scroll-mt-24 rounded-2xl border border-brand-primary/30 bg-surface/20 p-4 shadow-[0_18px_60px_color-mix(in_srgb,var(--color-brand-primary)_7%,transparent)] backdrop-blur-md sm:p-6">
+          <div className="space-y-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-4xl space-y-2">
+                <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-brand-primary">Public Universe Analysefläche</p>
+                <h1 id="analysis-workbench-title" className="text-2xl font-black text-text-primary sm:text-3xl">Enterprise Scorer & Bewertungstools</h1>
+                <p className="text-sm leading-relaxed text-text-secondary">Der öffentliche Enterprise Scorer ist sofort Teil der Landingpage. Das Sideboard startet schmal, lässt sich ausklappen und hält den Public-Scorer auf BTC fixiert. Die sichtbare Cockpit-Shell erscheint zuerst; rechenintensive Analyse-Bundles starten direkt nach dem ersten Browser-Paint oder sofort bei einer Tool-Interaktion.</p>
+              </div>
+              <div className="inline-flex items-center gap-2 self-start rounded-xl border border-asset-crypto/25 bg-asset-crypto/[0.07] px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary lg:self-auto">
+                <Activity size={13} className="text-asset-crypto" /> BTC · Public Fixed
+              </div>
+            </div>
+            {preview}
+          </div>
+        </section>
+
         <section className="overflow-hidden rounded-2xl border border-brand-primary/25 bg-gradient-to-br from-surface/60 via-background/70 to-brand-accent/10 p-5 shadow-[0_18px_60px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)] backdrop-blur-xl sm:p-7">
           <div className="grid gap-7 lg:grid-cols-[1.4fr_0.6fr] lg:items-start">
             <div className="space-y-5">
@@ -127,9 +143,9 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
               </div>
 
               <div className="space-y-3">
-                <h1 className="max-w-4xl text-3xl font-black leading-tight tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
+                <h2 className="max-w-4xl text-3xl font-black leading-tight tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
                   Quantitative Finanzanalyse im CAPITAL-AI Universe Cockpit.
-                </h1>
+                </h2>
                 <p className="max-w-3xl text-sm leading-relaxed text-text-secondary sm:text-base">
                   Die Startseite zeigt den öffentlichen Enterprise Scorer und die freigegebenen Bewertungstools bereits ohne Anmeldung. Die öffentliche Asset-Auswahl ist bewusst auf BTC fixiert; persönliche Workspaces, weitere Assets und geschützte Funktionen behalten ihre bestehenden Login- und Berechtigungsgrenzen.
                 </p>
@@ -141,7 +157,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {CAPABILITY_CARDS.map(({ title, description, icon: Icon }) => (
                   <article key={title} className="rounded-xl border border-border bg-background/45 p-3.5">
-                    <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-brand-primary"><Icon size={13} aria-hidden="true" /><h2>{title}</h2></div>
+                    <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-brand-primary"><Icon size={13} aria-hidden="true" /><h3>{title}</h3></div>
                     <p className="text-[11px] leading-relaxed text-text-secondary">{description}</p>
                   </article>
                 ))}
@@ -173,22 +189,6 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
               </a>
               <p className="pt-1 text-[11px] leading-relaxed text-text-secondary">Die öffentliche Oberfläche zeigt nur freigegebene Inhalte. Login-Pflichten, deaktivierte Module und serverseitige Entitlements werden durch diese Landingpage nicht verändert.</p>
             </aside>
-          </div>
-        </section>
-
-        <section id="analysis-workbench" aria-labelledby="analysis-workbench-title" className="scroll-mt-24 rounded-2xl border border-border bg-surface/20 p-4 backdrop-blur-md sm:p-6">
-          <div className="space-y-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-4xl space-y-2">
-                <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-brand-primary">Public Universe Analysefläche</p>
-                <h2 id="analysis-workbench-title" className="text-2xl font-black text-text-primary sm:text-3xl">Enterprise Scorer & Bewertungstools</h2>
-                <p className="text-sm leading-relaxed text-text-secondary">Der öffentliche Enterprise Scorer ist direkt Teil der Landingpage. Das Sideboard startet schmal, lässt sich ausklappen und hält den Public-Scorer auf BTC fixiert. Weitere Tools bleiben lazy und behalten ihre aktuellen Zugangsgrenzen.</p>
-              </div>
-              <div className="inline-flex items-center gap-2 self-start rounded-xl border border-asset-crypto/25 bg-asset-crypto/[0.07] px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary lg:self-auto">
-                <Activity size={13} className="text-asset-crypto" /> BTC · Public Fixed
-              </div>
-            </div>
-            {preview}
           </div>
         </section>
 
