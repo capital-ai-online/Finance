@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/seo/`  
 **Role:** cross-cutting SEO and Google Marketing execution/project coordination  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — post-PR #954 Codex-host correlation and SEO automation lane reactivation  
-**Baseline:** `main@5e6bc0c7cc502ac0650c0063bd5c0b1f06088e8a`  
+**Reconciliation:** 2026-09-16 — post-PR #959 automation reactivation plus merged FE owner-return correlation for WP-SEO-TECH-GATE / WP-SEO-SCHEMA  
+**Baseline:** `main@5ae2b371da45a5c07304fd704a7026eded976f1b`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -19,7 +19,7 @@ A provider-dependent `WAITING`, `BLOCKED` or `NOT RUN` state applies only to the
 **Executing Project:** `CAPITAL-AI-GOV` under bounded foreign-project execution.  
 **Target Project / Primary Owner:** `CAPITAL-AI-SEO`.  
 **Target productive PVC:** `N/A — cross-cutting; no productive PVC`.  
-**Activation evidence:** Human-merged PR #954, merge SHA `7ff5a519e43c551e4bb07800c763f05e2bcbd45a`, is reproducibly contained in `main@5e6bc0c7cc502ac0650c0063bd5c0b1f06088e8a`.  
+**Activation evidence:** Human-merged PR #954, merge SHA `7ff5a519e43c551e4bb07800c763f05e2bcbd45a`, is reproducibly contained in current main. Human-merged PR #959 subsequently reactivated SEO as a lane-specific automated Roadmap target on `main@5ae2b371da45a5c07304fd704a7026eded976f1b`.  
 **Routing state:** `ACTIVE_IN_ROADMAP_EXECUTION`.
 
 The nine-file PR #954 host migration replaces the active Claude-Code-specific host mechanics with the Codex project-scoped host contract. Current main contains `.codex/config.toml` and `.codex/setup-google-mcp-credentials.sh`; the Search Console executable identity remains pinned to `@vmandic/searchconsole-mcp@1.1.1`, while GA4 remains a separate `analytics-mcp==0.7.0` lane. Repository host configuration or MCP liveness alone is never Google provider evidence.
@@ -75,6 +75,15 @@ When `GSC-01` returns `READ_VERIFIED` for `sc-domain:capital-ai.online`:
 
 `WP-SEO-TOPICS`, `WP-SEO-REFRESH`, `WP-SEO-AUTHORITY` and any other work package whose exit gate actually depends on query/traffic/index/visibility evidence remain condition-gated until the specific required provider evidence exists. `WP-SEO-CONTENT` remains gated by its required topic evidence. This does not block unrelated repository-executable SEO packages.
 
+## Merged FE owner returns — current-main correlation 2026-09-16
+
+The dated SEO handoff `docs/seo/SEO_TECH_GATE_SCHEMA_HANDOFF_2026-09-11.md` remains historical evidence for the ownership boundary, but its `NOT STARTED IN SEO BRANCH` wording is no longer the current repository state.
+
+- **WP-SEO-TECH-GATE:** Human-merged PR #893 (`[CAPITAL-AI-FE] [ChatGPT] SEO Public-Route-Regression erweitern`) added the FE-owned repository regression. Current main contains `tests/unit/seoPublicRouteSitemap.test.ts`, which compares the canonical route inventory with sitemap, prerender literals, `PUBLIC_SPA_PATHS` and public HTML fallback branches; it also excludes application routes and checks canonical, initial-indexability and real-404 invariants. The PR-head CI, Governance and Container Security workflows all concluded `success`. Current-main rerun in this reconciliation pass: `NOT RUN`; post-deploy/provider evidence remains separate.
+- **WP-SEO-SCHEMA:** Human-merged PR #894 (`[CAPITAL-AI-FE] [ChatGPT] SEO Structured-Data-Regression ergänzen`) added `tests/unit/seoStructuredDataLifecycle.test.ts`. Current main parses the JSON-LD graph and checks the stable entity inventory, canonical URLs, publisher references, `softwareVersion == package.json#version`, explicit zero-price EUR Offer semantics and exclusion of `FAQPage`/unexpected top-level types. The PR-head CI, Governance and Container Security workflows all concluded `success`. Current-main rerun in this reconciliation pass: `NOT RUN`; generated-output, production and Google-provider evidence remain separate.
+
+These owner returns close the previously missing **repository-regression implementation** portion of the two handoffs. They do not by themselves prove deployed HTML behavior, Google indexing, Rich Results eligibility or Search Console state.
+
 ## PR #900 / #901 work packages
 
 ### SEO-CARRY-01 — Existing non-terminal SEO backlog
@@ -97,7 +106,9 @@ Inspect every then-current canonical SEO URL through a real Search Console provi
 ### SEO-PR900-02 — Technical SEO owner returns
 Complete FE/OPS technical-gate returns for robots, sitemap, canonical, 404, JSON-LD, prerender, SeoEngine/dashboard and deployed behavior where applicable.
 
-**Lane:** `REPOSITORY_EXECUTABLE` for repository checks and owner-return correlation; provider-only acceptance remains condition-gated where explicitly required.
+**State:** `FE_OWNER_RETURNS_MERGED / REPOSITORY_REGRESSIONS_PRESENT / POST_DEPLOY_EVIDENCE_OPEN`.
+
+**Evidence:** PR #893 and PR #894 are Human-merged and their current-main tests materially implement the previously missing `WP-SEO-TECH-GATE` and `WP-SEO-SCHEMA` repository regressions. Remaining work is limited to still-unproven deployed/generated-output/provider acceptance and any independent OPS return whose exit gate explicitly requires it.
 
 ### SEO-PR900-03 — Roadmap/document consolidation
 Use this roadmap as the single project execution projection; retain legacy documents only as superseded/evidence references until their unique content is demonstrably preserved.
@@ -105,7 +116,9 @@ Use this roadmap as the single project execution projection; retain legacy docum
 ### SEO-PR900-04 — Measurable acceptance criteria
 Define production-readiness SEO acceptance criteria from reproducible repository/provider evidence rather than estimated visibility.
 
-**Lane:** repository acceptance-contract work is executable; external measurements remain condition-gated until real evidence exists.
+**State:** `REPOSITORY_ACCEPTANCE_PARTIALLY_MATERIALIZED / PROVIDER_MEASUREMENTS_OPEN`.
+
+**Lane:** repository acceptance-contract work is executable; the merged route/schema regressions now provide deterministic repository gates, while external/deployed measurements remain condition-gated until real evidence exists.
 
 ## Carried-forward baseline (pre-2026-09-13)
 
@@ -115,8 +128,8 @@ Program detail remains in `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADM
 |---|---|
 | WP-SEO-METRICS | READ_CONTRACT_READY / GSC+GA4 CONDITION_GATED |
 | WP-SEO-AI-VIS | READ_CONTRACT_READY / GSC CONDITION_GATED |
-| WP-SEO-TECH-GATE | REPOSITORY_EXECUTABLE / HANDOFF_READY / STARTED_AT_BOUNDARY |
-| WP-SEO-SCHEMA | REPOSITORY_EXECUTABLE / HANDOFF_READY / STARTED_AT_BOUNDARY |
+| WP-SEO-TECH-GATE | FE OWNER RETURN MERGED / REPOSITORY REGRESSION PRESENT / POST-DEPLOY EVIDENCE OPEN |
+| WP-SEO-SCHEMA | FE OWNER RETURN MERGED / REPOSITORY REGRESSION PRESENT / GENERATED-OUTPUT + PROVIDER EVIDENCE OPEN |
 | WP-SEO-TOPICS | CONDITION_GATED — requires its concrete provider/topic evidence |
 | WP-SEO-CONTENT | CONDITION_GATED — requires topic evidence |
 | WP-SEO-SPAM | REPOSITORY_EXECUTABLE — apply existing negative gates |
