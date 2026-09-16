@@ -1,0 +1,110 @@
+capital_ai_top_layer_quality_gates:
+  schema_version: "1.0.0"
+  policy_id: "GOV-TOP-LAYER-QUALITY-GATES-01"
+  suite_id: "GOV-AUTONOMOUS-DEVELOPMENT-SUITE-01"
+  status: "ACTIVE_AFTER_HUMAN_MERGE"
+  language: "de"
+
+  trust_root:
+    source: "/AGENTS.md"
+    resolution: "CURRENT_MAIN_ONLY"
+    fail_closed: true
+
+  objective: >
+    Ein Arbeitspaket gilt nur dann als abgeschlossen, wenn alle fuer seinen
+    realen Impact anwendbaren Gates objektiv belegt sind. Nicht anwendbare
+    Gates werden begruendet als NOT_APPLICABLE markiert; fehlende Evidence ist
+    niemals impliziter PASS.
+
+  gates:
+    USER_VALUE_GATE:
+      applies_to: "ALL_NON_EXCEPTION_PROJECTS_WITH_USER_VISIBLE_IMPACT"
+      require:
+        - before_after_user_journey
+        - understandable_result
+        - no_unexplained_user_visible_regression
+
+    FRONTEND_INTEGRATION_GATE:
+      applies_when:
+        - user_interface_change
+        - navigation_change
+        - interaction_change
+      require:
+        - responsive_behavior
+        - accessibility_relevant_checks
+        - loading_empty_error_states
+        - design_system_conformance
+
+    SCORING_QUALITY_GATE:
+      applies_when:
+        - scoring_tool
+        - valuation_tool
+        - ranking_tool
+        - recommendation_engine
+        - financial_analysis
+        - ai_generated_assessment
+      require:
+        - parent_methodology_authority
+        - input_provenance
+        - freshness
+        - correctness
+        - reproducibility_where_applicable
+        - explainability
+        - missing_and_extreme_value_behavior
+        - uncertainty_or_limitation_surface
+      synthetic_score_fill: "DENY"
+
+    PVC_CHAIN_GATE:
+      applies_when: "CROSS_PROJECT_OR_PRODUCTIVE_PVC_DEPENDENCY"
+      require:
+        - canonical_owner_mapping
+        - dependency_input_output
+        - owner_correct_handoff
+        - no_invented_pvc
+
+    PLATFORM_GATE:
+      applies_when:
+        - api_change
+        - database_change
+        - cache_change
+        - auth_change
+        - provider_change
+        - runtime_change
+      require:
+        - contract_conformance
+        - failure_behavior
+        - observability_where_material
+        - no_parallel_platform_authority
+
+    SECURITY_COMPLIANCE_GATE:
+      applies_when: "SECURITY_OR_COMPLIANCE_IMPACT"
+      require:
+        - applicable_exception_policy_resolved
+        - relevant_control_or_requirement_evidence
+        - no_unapproved_weakening
+        - residual_risk_or_open_finding_truthfully_recorded
+
+    PRODUCTION_READINESS_GATE:
+      applies_when: "PRODUCTION_IMPACT"
+      require:
+        - required_tests_or_checks
+        - deployment_boundary_resolved
+        - rollback_or_recovery_considered_where_material
+        - post_change_identity_or_health_evidence_when_applicable
+
+  aggregate_gate:
+    name: "TOP_LAYER_END_TO_END_GATE"
+    pass_when: "ALL_APPLICABLE_REQUIRED_GATES_ARE_PASS"
+    allowed_non_pass:
+      - FAIL
+      - BLOCKED
+      - NOT_RUN
+      - REQUIRES_CORRELATION
+      - REQUIRES_HANDOVER
+    completion_on_not_run: "DENY"
+
+  evidence_contract:
+    before_after_required_when_state_changes: true
+    exact_sha_or_version_when_relevant: true
+    evidence_must_match_current_branch_or_pr_head: true
+    historical_evidence_as_current_proof: false

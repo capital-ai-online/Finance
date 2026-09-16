@@ -1,0 +1,123 @@
+capital_ai_top_layer_execution:
+  schema_version: "1.0.0"
+  policy_id: "GOV-TOP-LAYER-EXECUTION-01"
+  suite_id: "GOV-AUTONOMOUS-DEVELOPMENT-SUITE-01"
+  status: "ACTIVE_AFTER_HUMAN_MERGE"
+  language: "de"
+
+  trust_root:
+    source: "/AGENTS.md"
+    resolution: "CURRENT_MAIN_ONLY"
+    fail_closed: true
+
+  mission: >
+    Repository-Arbeit wird projektlokal, ereignisgetrieben, autonom und
+    selbstheilend ausgefuehrt. Autonomie endet an Human-, Owner-, Security-,
+    Compliance-, Domain- und Protected-Mutation-Grenzen.
+
+  trigger:
+    any_of:
+      - explicit_owner_scope
+      - roadmap_item
+      - defect
+      - regression
+      - governance_drift
+      - security_finding
+      - quality_finding
+      - dependency_change
+      - pull_request_terminal_event
+      - production_evidence_gap
+
+  mandatory_sequence:
+    - resolve_current_main
+    - resolve_project_folder_owner_and_pvc_relationship
+    - resolve_applicable_general_or_exception_policy
+    - resolve_roadmap_or_explicit_owner_scope
+    - resolve_applicable_adr_ess_domain_and_supply_chain_contracts
+    - correlate_open_prs_and_active_writers_where_observable
+    - inspect_best_practice_security_compliance_and_reuse_options_when_material
+    - define_bounded_work_package_and_exit_gate
+    - create_or_continue_one_scoped_branch
+    - implement_all_immediately_executable_in_scope_steps
+    - run_available_low_cost_validation
+    - detect_and_repair_authorized_drift
+    - resync_with_then_current_main
+    - repeat_semantic_and_authority_correlation
+    - create_or_update_one_reviewable_pull_request
+    - run_required_hosted_checks_after_pr_exists
+    - stop_before_human_merge
+    - after_human_merge_recompute_successor_from_new_current_main
+
+  branch_contract:
+    direct_main_write: "DENY"
+    branch_required: true
+    one_coherent_work_package_per_branch: true
+    fresh_branch_required_when:
+      - project_or_primary_owner_changes
+      - work_becomes_semantically_unrelated
+      - independent_assurance_boundary_requires_separation
+      - protected_external_mutation_requires_separate_authority
+      - unresolved_writer_conflict_exists
+    branch_name: "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>"
+
+  pull_request_contract:
+    required: true
+    title: "[<PROJECT-ID>] [<agent-client>] <compact-title>"
+    draft_on_agent_creation: true
+    canonical_template_required: true
+    human_codeowner_merge_only: true
+    self_merge: "DENY"
+    auto_merge_enablement: "DENY"
+    final_main_and_pr_head_correlation_required: true
+
+  cost_control:
+    paid_or_expensive_build_test_before_pr: "AVOID_UNLESS_REQUIRED_FOR_SAFETY"
+    hosted_checks: "AFTER_PR_EXISTS"
+    smallest_sufficient_check_set_first: true
+    not_run_is_pass: false
+
+  autonomous_continuation:
+    after_successful_substep: "CONTINUE_WITHIN_SAME_WORK_PACKAGE_IF_EXIT_GATE_NOT_REACHED"
+    after_pr_merge: "REBASE_DECISION_ON_NEW_CURRENT_MAIN"
+    after_pr_closed_unmerged: "RECOMPUTE_WITHOUT_PREDECESSOR_PAYLOAD"
+    stale_second_step_auto_promote: false
+
+  self_healing_loop:
+    enabled: true
+    stages:
+      - detect_drift
+      - classify_drift
+      - verify_repair_authority
+      - apply_smallest_reversible_repair
+      - revalidate
+      - recorrelate_current_main
+      - continue_or_stop
+    repairable_without_new_human_decision:
+      - stale_repository_reference
+      - deterministic_formatting_drift
+      - branch_main_drift_without_semantic_conflict
+      - generated_evidence_drift
+      - owner_correct_handoff_metadata_drift
+      - deterministic_registry_projection_drift_when_no_authority_semantics_change
+      - test_or_documentation_mismatch_caused_by_the_same_in_scope_change
+    must_stop:
+      - unresolved_authority_conflict
+      - ownership_transfer
+      - security_control_weakening
+      - legal_or_compliance_ambiguity
+      - secret_or_credential_exposure
+      - destructive_production_data_mutation
+      - live_billing_money_or_entitlement_mutation
+      - production_resource_deletion
+      - dns_tls_or_domain_ownership_mutation
+      - human_merge_decision
+
+  validation_states:
+    allowed:
+      - PASS
+      - FAIL
+      - NOT_RUN
+      - BLOCKED
+      - NOT_APPLICABLE
+      - REQUIRES_CORRELATION
+    inference_to_pass: "DENY"

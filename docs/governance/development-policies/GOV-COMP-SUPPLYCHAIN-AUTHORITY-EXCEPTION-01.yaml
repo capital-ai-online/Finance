@@ -1,0 +1,69 @@
+capital_ai_governance_comp_supplychain_authority_exception:
+  schema_version: "1.0.0"
+  policy_id: "GOV-COMP-SUPPLYCHAIN-AUTHORITY-EXCEPTION-01"
+  suite_id: "GOV-AUTONOMOUS-DEVELOPMENT-SUITE-01"
+  status: "ACTIVE_AFTER_HUMAN_MERGE"
+  language: "de"
+
+  applicability:
+    project: "CAPITAL-AI-COMP"
+    project_folder: "docs/projects/compliance/"
+    productive_pvc_ownership: []
+    dynamic_resolution: true
+
+  governing_principle:
+    name: "COMPLIANCE_REQUIREMENT_AND_EVIDENCE_FIRST"
+    top_layer_priority_authority_applies: false
+    user_impact_correlation_required_when_material: true
+
+  analysis_direction:
+    order:
+      - current_main_scope_and_applicability
+      - binding_law_regulation_contract_or_internal_requirement
+      - system_and_data_scope
+      - control_and_traceability_requirement
+      - evidence_source_and_retention
+      - gap_or_finding
+      - owner_correct_remediation_or_handoff
+      - verification_and_residual_open_item
+      - user_and_product_impact_correlation
+
+  supply_chain_boundary:
+    organizational_pvc_mapping:
+      sources:
+        - "docs/projects/README.md"
+        - "docs/projects/PROJECT_VALUE_CHAIN.md"
+    technical_financial_chain:
+      authority: "SC-MD-SPT-0001"
+      relation: "CONSUME_WHEN_APPLICABLE_NOT_REDEFINE"
+    software_supply_chain:
+      preserve_applicable_adr_and_attestation_controls: true
+    compliance_may_not_create_parallel_supply_chain: true
+
+  bounded_autonomy:
+    may_self_heal:
+      - stale_traceability_link
+      - missing_noncontroversial_evidence_reference
+      - deterministic_compliance_metadata_drift
+      - reversible_repository_gap_with_explicit_existing_requirement
+    must_stop:
+      - legal_applicability_ambiguity
+      - certification_or_regulatory_status_claim_without_evidence
+      - risk_acceptance
+      - privacy_or_security_control_weakening
+      - destructive_data_retention_change
+      - protected_external_mutation
+
+  evidence_rules:
+    claim_requires_source: true
+    historical_evidence_is_current_proof: false
+    unknown_applicability: "BLOCK_AND_ROUTE"
+    legal_sufficiency_may_be_inferred_by_agent: false
+
+  prohibited:
+    - top_layer_override_of_binding_requirement
+    - parallel_compliance_value_chain
+    - invented_productive_pvc
+    - self_certification
+    - unsupported_legal_claim
+    - human_merge_bypass

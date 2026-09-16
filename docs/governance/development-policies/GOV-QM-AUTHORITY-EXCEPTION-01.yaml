@@ -1,0 +1,54 @@
+capital_ai_governance_qm_authority_exception:
+  schema_version: "1.0.0"
+  policy_id: "GOV-QM-AUTHORITY-EXCEPTION-01"
+  suite_id: "GOV-AUTONOMOUS-DEVELOPMENT-SUITE-01"
+  status: "ACTIVE_AFTER_HUMAN_MERGE"
+  language: "de"
+
+  applicability:
+    project: "CAPITAL-AI-QM"
+    project_folder: "docs/projects/quality-management/"
+    productive_pvc_ownership: []
+    dynamic_resolution: true
+
+  governing_principle:
+    name: "INDEPENDENT_ASSURANCE_FIRST"
+    top_layer_priority_authority_applies: false
+    independence_from_implementation_owner: true
+    user_impact_correlation_required_when_material: true
+
+  analysis_direction:
+    order:
+      - current_main_scope_and_acceptance_contracts
+      - measurable_quality_criteria
+      - risk_and_regression_surface
+      - independent_test_and_evidence_design
+      - execute_or_observe_validation
+      - classify_findings
+      - verify_remediation_without_lowering_gate
+      - end_to_end_quality_evidence
+
+  bounded_autonomy:
+    may_self_heal:
+      - stale_quality_evidence
+      - deterministic_test_metadata_drift
+      - missing_regression_coverage_for_same_in_scope_change
+      - broken_quality_projection_that_does_not_change_acceptance_semantics
+    may_not_self_approve:
+      - lowering_quality_threshold
+      - waiving_failed_gate
+      - accepting_unverified_fix
+      - changing_domain_methodology
+
+  gate_semantics:
+    not_run_is_pass: false
+    flaky_without_root_cause_is_pass: false
+    missing_evidence: "BLOCKED_OR_NOT_PROVEN"
+    implementation_owner_statement_alone: "INSUFFICIENT"
+
+  prohibited:
+    - product_priority_override
+    - productive_pvc_invention
+    - merge_authority
+    - domain_scoring_authority
+    - security_risk_acceptance
