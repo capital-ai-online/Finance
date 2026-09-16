@@ -26,16 +26,16 @@ Post-PVC routing, execution-model, roadmap-registry and Owner-Device cutover con
 
 ## PR-create governance current state
 
-Current `main` remains governed by Human-merged PR #874 and `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v3.4.0 until a later Human/CODEOWNER merge changes that authority. The current effective rule therefore still requires its bounded Approval Envelope for the PR that introduces the next model; candidate-branch semantics cannot self-bootstrap.
+Human-merged PR #952 activated `/AGENTS.md` v2.11.0, `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v4.0.0 and `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` v3.0.0 on current `main`. Ordinary bounded agent-managed Draft Pull Request creation no longer requires a separate pre-create Human/Owner approval prompt.
 
-Owner-directed `GOV-CHAT-077` materializes the successor model on `agent/governance-autonomous-pr-chain-20260915`. After Human Merge activates `/AGENTS.md` v2.11.0, `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v4.0.0 and `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` v3.0.0, ordinary bounded agent-managed Draft PR creation no longer requires a separate pre-create Owner prompt. Creation instead requires a fail-closed final create-correlation `PASS` covering current main/head/merge-base, Project/PVC/Owner/Roadmap scope, open writers, changed-file/semantic/namespace/authority/ownership/security overlap, truthful validation state and complete current-main PR-body rendering.
+PR creation is now correlation-gated. Immediately before creation, the executor refreshes current `main`, resolves Project/PVC/Owner/Roadmap scope and applicable authority, correlates open writers plus changed-file/semantic/namespace/authority/ownership/security overlap, records truthful validation state, reads the current-main PR template and creates a Draft only for a final create-correlation `PASS`.
 
-Human authority is preserved after creation: the Owner reviews the concrete PR, required hosted checks remain technical evidence, final PR-head/current-main correlation is repeated before merge readiness, and `MERGE` remains Human/CODEOWNER-only. Agents do not self-merge or enable auto-merge.
+Human authority is preserved after creation: the Owner reviews the concrete Pull Request, required hosted checks remain technical evidence, final PR-head/current-main correlation is repeated before merge readiness, and `MERGE` remains Human/CODEOWNER-only. Agents do not self-merge or enable auto-merge.
 
-Automated Roadmap PRs use a serial integration lane after activation: at most one not-yet-integrated automated PR is active; the successor is created only after its predecessor reaches a terminal outcome. A Human-merged predecessor causes the next work item to start on a fresh branch from the resulting then-current `main`; a predecessor closed without merge contributes no assumed payload and the queue is recomputed. Stacked unmerged dependency branches do not bypass this sequencing rule.
+Automated Roadmap PRs use a serial integration lane: at most one not-yet-integrated automated PR is active. A successor is created only after the predecessor reaches a terminal outcome. After Human Merge, the successor starts on a fresh branch from the resulting then-current `main`; close-without-merge forces queue recomputation without assuming predecessor payload. Stacked unmerged dependency branches do not bypass this sequencing rule.
 
-Historical Approval Envelope helpers and v3.4 evidence remain traceability/compatibility material after activation and do not become future create credentials.
+Historical Approval Envelope helpers and v3.4 evidence remain traceability/compatibility material only and are not current PR-create credentials.
 
 ## Non-goals
 
-No parallel Governance Control Plane, no runtime relocation, no technical financial VC renumbering without coordinated authorization, no ownership transfer through foreign execution, no release/deploy/provider mutation, no bypass of then-effective create-correlation or bootstrap rules, no candidate-policy self-bootstrap and no weakening of Human/CODEOWNER-only merge.
+No parallel Governance Control Plane, no runtime relocation, no technical financial VC renumbering without coordinated authorization, no ownership transfer through foreign execution, no release/deploy/provider mutation, no bypass of then-effective create-correlation or Human/CODEOWNER merge rules, and no reconstruction of retired pre-create approval semantics as a current requirement.
