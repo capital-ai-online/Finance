@@ -1,7 +1,7 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project:** CAPITAL-AI  
 **Stand:** 16.09.2026 — current-main owner-return reconciliation  
-**Korrelationsbasis:** `main@5ae2b371da45a5c07304fd704a7026eded976f1b`  
+**Korrelationsbasis:** `main@f81e596b66c37d418c126451f1520f02b2bbdf7e`  
 **Repository:** `capital-ai-online/Finance`  
 **GOOGLE_VISIBLE_PASS:** **NOT RUN / CONDITION_GATED — kein frischer Google-Provider-Read in diesem Pass**
 
@@ -110,13 +110,14 @@
 
 ## 14. Repository Correlation
 - [x] current repository `capital-ai-online/Finance`
-- [x] synchronisierte Arbeitsbaseline `main@5ae2b371da45a5c07304fd704a7026eded976f1b`
-- [x] current `/AGENTS.md` Control Plane **2.11.0** vollständig gelesen
+- [x] synchronisierte Arbeitsbaseline `main@f81e596b66c37d418c126451f1520f02b2bbdf7e`
+- [x] current `/AGENTS.md` Control Plane **2.11.0** vollständig gelesen; der Main-Drift durch PR #960 änderte `/AGENTS.md` und die SEO-Authority-Surfaces nicht
 - [x] PR #954 Human-gemerged; Codex-MCP-Hostvertrag liegt auf main
 - [x] PR #959 Human-gemerged; SEO-Automation ist lane-spezifisch wieder in der Roadmap-Ausführung aktiv
+- [x] PR #960 Human-gemerged; BB-2E änderte ausschließlich FE-/FE-Test-Surfaces und wurde vor diesem Handoff in den SEO-Branch resynchronisiert
 - [x] PR #893 Human-gemerged; Public-Route-Regression liegt auf current main; PR-head CI/Governance/Container-Security waren erfolgreich
 - [x] PR #894 Human-gemerged; Structured-Data-Lifecycle-Regression liegt auf current main; PR-head CI/Governance/Container-Security waren erfolgreich
-- [x] offene PRs #961 (Compliance) und #962 (Operations) geprüft; kein Changed-File-/Owner-/Authority-Overlap mit diesem SEO-Dokument-Slice
+- [x] offene Fremd-PRs #961 (Compliance), #962 (Operations) und #963 (Governance) geprüft; kein Changed-File-/Owner-/Authority-Overlap mit diesem SEO-Dokument-Slice
 - [x] ADR-0035, ESS-0014, ADR-0082 und ADR-0084 bleiben für die betroffenen SEO-/Google-/Prerender-Grenzen maßgeblich; keine fremde Runtime-/Provider-Authority übernommen
 - [x] frühere Tech-Gate-Lücke „nur routeSeo ↔ sitemap“ ist durch PR #893 als Repository-Regression geschlossen; deployed/browser/provider Acceptance bleibt offen
 - [x] frühere Schema-Lücke „kein dedizierter vollständiger Graph-Lifecycle-Test“ ist durch PR #894 als Repository-Regression geschlossen; generated-output/provider Acceptance bleibt offen
