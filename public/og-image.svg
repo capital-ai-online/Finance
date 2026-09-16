@@ -47,8 +47,8 @@
     </g>
   </g>
 
-  <text x="475" y="270" fill="#F5C453" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="68" font-weight="800" letter-spacing="2">CAPITAL-AI</text>
-  <text x="475" y="329" fill="#FFFFFF" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="29" font-weight="600">AI-Driven Market Intelligence</text>
+  <text x="475" y="270" fill="#F5C453" font-family="Montserrat, ui-sans-serif, system-ui, sans-serif" font-size="68" font-weight="800" letter-spacing="2">CAPITAL-AI</text>
+  <text x="475" y="329" fill="#FFFFFF" font-family="Montserrat, ui-sans-serif, system-ui, sans-serif" font-size="29" font-weight="600">AI-Driven Market Intelligence</text>
   <text x="475" y="384" fill="#A1A1AA" font-family="Poppins, ui-sans-serif, system-ui, sans-serif" font-size="25">Quantitative Analysis · Compliance · Asset Scoring</text>
   <line x1="475" y1="420" x2="1050" y2="420" stroke="#252529" stroke-width="2"/>
   <text x="475" y="463" fill="#A1A1AA" font-family="JetBrains Mono, ui-monospace, monospace" font-size="19" letter-spacing="1">capital-ai.online · Branding Manifest v6.2</text>
