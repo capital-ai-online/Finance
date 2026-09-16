@@ -25,7 +25,9 @@ The inventory discovers, deterministically sorts and version-binds:
 2. every direct `src/platform/*` component;
 3. every direct `src/features/*` feature slice;
 4. every other direct `src/*` module root;
-5. the `server/` backend root when present.
+5. the root backend entrypoint (`server.ts`, with `server/` compatibility fallback) when present.
+
+The capability is registered in `src/platform/Release/manifest.json`. Because it is a new backward-compatible Release-component capability, the independent Release component version advances from `1.2.0` to `1.3.0`. This component-version change is deliberately separate from the CAPITAL-AI platform version and does not mutate `package.json#version`.
 
 ### Version authority resolution
 
@@ -88,11 +90,11 @@ The JSON output is a projection only. No generated repository registry is persis
 
 ## Platform-version materialization boundary
 
-This slice adds a new backward-compatible version-reporting capability. ADR-0105 classifies a new capability as version-relevant, but platform-version mutation is allowed only through the canonical deterministic Decision Evidence + Release Version Gate path.
+This slice adds a new backward-compatible version-reporting capability. ADR-0105 classifies a new capability as version-relevant for the **platform**, but platform-version mutation is allowed only through the canonical deterministic Decision Evidence + Release Version Gate path.
 
-The connected GitHub file-mutation surface does not execute that canonical local Release gate. Therefore this implementation **does not manually edit** `package.json#version`, lockfile/version mirrors, Release Candidate evidence or production state. Platform version remains governed exclusively by `package.json#version` until a valid deterministic materialization pass executes on an authorized host.
+The connected GitHub file-mutation surface does not execute that canonical local Release gate. Therefore this implementation **does not manually edit** `package.json#version`, lockfile/platform-version mirrors, Release Candidate evidence or production state. Platform version remains governed exclusively by `package.json#version` until a valid deterministic materialization pass executes on an authorized host.
 
-This is fail-closed behavior, not a `NONE` version decision.
+This is fail-closed behavior, not a `NONE` platform-version decision. The independent Release component version `1.3.0` does not imply platform version `0.7.0` and is not a platform-version mirror.
 
 ## Pre-write correlation
 
@@ -102,7 +104,7 @@ At branch creation:
 - open PR `#1021` was Frontend Admin Process Graph / PVC-18 presentation work;
 - open PR `#1022` was Governance `/AGENTS.md` Security authority-exception work;
 - open PR `#1023` was Frontend auth/session perceived-performance work;
-- none of those PRs wrote the new Release service, version-management project README, focused version test or this evidence path;
+- none of those PRs wrote the Release inventory service/manifest/README, version-management project README, focused version test or this evidence path;
 - PR #1022 does change the trust root, so final PR creation requires a fresh main/open-writer/authority correlation and branch resynchronization if that PR or another authority-relevant change lands.
 
 ## Validation status
@@ -131,7 +133,8 @@ This slice is repository-ready for create-correlation only when:
 5. the inventory remains read-only and commit-bound;
 6. unresolved ownership is reported, not guessed;
 7. no second version registry or mutation path is created;
-8. the canonical PR body can be rendered from then-current `.github/pull_request_template.md`;
-9. available validation is reported truthfully.
+8. the Release component manifest/README consistently expose the new `1.3.0` component version and `versioned-unit-inventory/1.0.0` contract;
+9. the canonical PR body can be rendered from then-current `.github/pull_request_template.md`;
+10. available validation is reported truthfully.
 
 After Human/CODEOWNER merge, the successor `CAPITAL-AI-DOC / PVC-03` slice may consume this exact JSON projection from fresh then-current `main` for documentation hygiene, catalog and branded report generation.
