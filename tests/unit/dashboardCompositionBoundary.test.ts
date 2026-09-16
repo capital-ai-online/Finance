@@ -8,8 +8,9 @@ const read = (relativePath: string) =>
 const appRoutes = read('src/app/routing/AppRoutes.tsx');
 const dashboardEntry = read('src/app/dashboard/Dashboard.tsx');
 const dashboardIndex = read('src/app/dashboard/index.ts');
+const legacyDashboard = read('src/components/Dashboard.tsx');
 
-describe('BB-2 dashboard composition boundary', () => {
+describe('BB-2G dashboard composition boundary', () => {
   it('routes application composition lazily through the canonical app dashboard entry', () => {
     expect(appRoutes).toContain('const Dashboard = lazy(() =>');
     expect(appRoutes).toContain("import('../dashboard/Dashboard')");
@@ -17,16 +18,25 @@ describe('BB-2 dashboard composition boundary', () => {
     expect(appRoutes).not.toContain("../../components/Dashboard");
   });
 
-  it('keeps the legacy dashboard behind one bounded strangler entry', () => {
-    expect(dashboardEntry).toContain("import { Dashboard as LegacyDashboard } from '../../components/Dashboard'");
-    expect(dashboardEntry).toContain("import type { UserSession } from '../types/UserSession'");
-    expect(dashboardEntry).toContain('<LegacyDashboard');
-    expect(dashboardEntry).toContain('{...props}');
-    expect(dashboardEntry).toContain('onGlobalLogout={onGlobalLogout ? handleGlobalLogoutClick : undefined}');
-    expect(dashboardEntry).not.toContain('fixed bottom-4 right-4');
+  it('owns productive dashboard composition in the app layer', () => {
+    expect(dashboardEntry).toContain("import { DashboardHome");
+    expect(dashboardEntry).toContain("import { MyWorkspaceView } from './MyWorkspaceView'");
+    expect(dashboardEntry).toContain('<DashboardHeader');
+    expect(dashboardEntry).toContain('<DashboardHome');
+    expect(dashboardEntry).toContain('<MyWorkspaceView');
+    expect(dashboardEntry).toContain('<DashboardViewRouter');
+    expect(dashboardEntry).not.toContain("from '../../components/Dashboard'");
   });
 
-  it('exports the canonical dashboard entry from the dashboard namespace', () => {
+  it('keeps the old component path as a compatibility export only', () => {
+    expect(legacyDashboard).toContain("export { Dashboard, type DashboardProps } from '../app/dashboard/Dashboard'");
+    expect(legacyDashboard).not.toContain('useState');
+    expect(legacyDashboard).not.toContain('DashboardHeader');
+  });
+
+  it('exports the canonical dashboard composition namespace', () => {
     expect(dashboardIndex).toContain("export { Dashboard, type DashboardProps } from './Dashboard'");
+    expect(dashboardIndex).toContain("from './DashboardHome'");
+    expect(dashboardIndex).toContain("from './MyWorkspaceView'");
   });
 });
