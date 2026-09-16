@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 const read = (relativePath: string) => fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const transport = read('src/features/news/authenticatedNewsFetch.ts');
-const feed = read('src/components/VerifiedNewsFeed.tsx');
-const viewer = read('src/components/RealtimeAiNewsfeed.tsx');
+const feed = read('src/features/news/ui/VerifiedNewsFeed.tsx');
+const viewer = read('src/features/news/ui/RealtimeAiNewsfeed.tsx');
 const authMiddleware = read('src/platform/Security/authMiddleware.ts');
 const routeComposition = read('server/routes/registerApplicationRoutes.ts');
 const newsRoutes = read('src/features/news/newsRoutes.ts');
