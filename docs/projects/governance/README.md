@@ -1,7 +1,7 @@
 # CAPITAL-AI Governance
 
 **Project ID:** `CAPITAL-AI-GOV`  
-**Primary PVC:** `PVC-05 — Platform Director`  
+**Primary Project Value Chain ownership:** `PVC-05 — Platform Director`  
 **Trust root:** `/AGENTS.md`
 
 ## Current development policy
