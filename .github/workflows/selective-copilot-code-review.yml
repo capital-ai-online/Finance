@@ -2,7 +2,9 @@ name: Selective Copilot Code Review
 run-name: >-
   CI #${{ github.event.workflow_run.run_number }} – selektive Copilot-Review-Entscheidung
 
-on:
+# Privileged post-CI trigger. It never checks out or executes PR-controlled code;
+# the job is additionally bound to the same repository and the canonical CI path.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI]
     types: [completed]
@@ -19,7 +21,12 @@ concurrency:
 jobs:
   request-review:
     name: Trusted-base Review-Selektion
-    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.path == '.github/workflows/ci.yml' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -17,8 +17,12 @@ test('selective CodeQL is activation-safe while GitHub Default Setup is active',
 
 test('selective Copilot review runs only after successful CI from trusted workflow_run', async () => {
   const workflow = await fs.readFile('.github/workflows/selective-copilot-code-review.yml', 'utf8');
+  assert.match(workflow, /on:\s*# zizmor: ignore\[dangerous-triggers\]/);
   assert.match(workflow, /\bworkflow_run\s*:/);
   assert.match(workflow, /workflows:\s*\[CI\]/);
+  assert.match(workflow, /workflow_run\.repository\.full_name == github\.repository/);
+  assert.match(workflow, /workflow_run\.head_repository\.full_name == github\.repository/);
+  assert.match(workflow, /workflow_run\.path == '\.github\/workflows\/ci\.yml'/);
   assert.match(workflow, /workflow_run\.conclusion == 'success'/);
   assert.match(workflow, /copilot-pull-request-reviewer\[bot\]/);
   assert.match(workflow, /scripts\/pr\/planPrValidation\.mjs/);
