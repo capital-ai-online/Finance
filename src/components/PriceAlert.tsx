@@ -193,7 +193,10 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
       .then((data) => {
         const catalog = Array.isArray(data)
           ? data.filter((item): item is CatalogAsset =>
-              typeof item?.symbol === 'string' && typeof item?.name === 'string' && typeof item?.type === 'string')
+              typeof item?.symbol === 'string'
+              && typeof item?.name === 'string'
+              && typeof item?.type === 'string'
+              && item.type !== 'bond')
           : [];
         setAssets(catalog);
         const preferred = selectedSymbol?.toUpperCase();
@@ -354,7 +357,7 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
           <div className="rounded-2xl border border-white/10 bg-black/40 p-5"><h3 className="text-sm font-black uppercase text-white">Alert Evidence Log</h3><div className="mt-4 space-y-2">{notifications.length === 0 && <div className="text-xs text-white/35">Noch keine ausgelösten Alarme.</div>}{notifications.slice(0, 10).map((entry) => <div key={entry.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-[10px] text-white/55"><span className="font-mono font-bold text-white/75">{entry.time} · {entry.symbol}</span><div className="mt-1">{entry.message}</div></div>)}</div></div>
         </div>
       </div>
-      <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4 text-[10px] text-amber-100/65"><AlertCircle size={15} className="mt-0.5 shrink-0" /><div><strong>FinTech Data Policy:</strong> Crypto-Alarme verwenden Multi-Provider-Consensus; Stock/Forex nutzen den serverseitigen Twelve-Data-Quote-Contract und Indizes den FMP-Quote-Contract. Rohstoffe und Bonds bleiben bis zu einem freigegebenen Quote-Contract deaktiviert. Keine Registry-Bootstrappreise und keine Browser-Simulation.</div></div>
+      <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4 text-[10px] text-amber-100/65"><AlertCircle size={15} className="mt-0.5 shrink-0" /><div><strong>FinTech Data Policy:</strong> Crypto-Alarme verwenden Multi-Provider-Consensus; Stock/Forex nutzen den serverseitigen Twelve-Data-Quote-Contract und Indizes den FMP-Quote-Contract. Nicht quote-fähige oder produktseitig deaktivierte Assetklassen bleiben aus der Frontend-Auswahl entfernt. Keine Registry-Bootstrappreise und keine Browser-Simulation.</div></div>
     </section>
   );
 }

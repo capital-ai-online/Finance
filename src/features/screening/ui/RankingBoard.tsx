@@ -7,7 +7,6 @@ import {
   Compass,
   Layers,
   Orbit,
-  Percent,
   RefreshCw,
   ShieldCheck,
   TrendingUp,
@@ -20,6 +19,7 @@ import { StatusBadge } from '../../../shared/ui/StatusBadge';
 import { buildUniverseAvailabilityProjection } from '../../../services/universeAvailability';
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
+type ProductiveAssetType = Exclude<AssetType, 'bond'>;
 
 type BackendRankingMeta = {
   authority: 'CrossAssetRanking';
@@ -36,7 +36,7 @@ type BackendRankingMeta = {
 type AssetRow = {
   symbol: string;
   name: string;
-  type: AssetType;
+  type: ProductiveAssetType;
   assetId?: string;
   score: number | null;
   status: string;
@@ -64,6 +64,12 @@ type CatalogAsset = {
   origin?: string;
 };
 
+type RankingCandidate = CatalogAsset & {
+  symbol: string;
+  name: string;
+  type: ProductiveAssetType;
+};
+
 interface RankingBoardProps {
   onSelectAsset?: (symbol: string) => void;
 }
@@ -72,14 +78,14 @@ const RANKING_CANDIDATE_LIMIT = 24;
 const VERIFIED_SCORE_BATCH_LIMIT = 50;
 
 const ASSET_CLASS_STYLE: Record<
-  AssetType,
+  ProductiveAssetType,
   { text: string; border: string; bg: string; label: string }
 > = {
   crypto: {
     text: 'text-asset-crypto',
     border: 'border-asset-crypto/25',
     bg: 'bg-asset-crypto/[0.05]',
-    label: 'Crypto',
+    label: 'Krypto',
   },
   stock: {
     text: 'text-asset-stock',
@@ -104,12 +110,6 @@ const ASSET_CLASS_STYLE: Record<
     border: 'border-asset-commodity/25',
     bg: 'bg-asset-commodity/[0.05]',
     label: 'Rohstoffe',
-  },
-  bond: {
-    text: 'text-asset-bond',
-    border: 'border-asset-bond/25',
-    bg: 'bg-asset-bond/[0.05]',
-    label: 'Anleihen',
   },
 };
 
@@ -148,13 +148,6 @@ const GROUPS = [
     type: 'commodity' as const,
     icon: Layers,
     description: 'Edelmetalle & Ressourcen',
-  },
-  {
-    id: 'bond',
-    name: 'Bond Horizon',
-    type: 'bond' as const,
-    icon: Percent,
-    description: 'Staatsanleihen & Sovereign-Benchmarks',
   },
 ];
 
@@ -298,7 +291,7 @@ function extractLeadingPattern(body: any): {
     (typeof body?.leading_pattern === 'string' && body.leading_pattern) ||
     (typeof body?.leadingPattern === 'string' && body.leadingPattern) ||
     (typeof body?.dominant_pattern === 'string' && body.dominant_pattern) ||
-    (typeof body?.research?.pattern?.direction === 'string' && body.research.pattern.direction) ||
+    (typeof body?.research?.pattern?.name === 'string' && body.research.pattern.name) ||
     (typeof body?.pattern?.name === 'string' && body.pattern.name) ||
     null;
 
@@ -319,8 +312,6 @@ function extractLeadingPattern(body: any): {
   if (dirRaw.includes('BULL')) direction = 'BULLISH';
   else if (dirRaw.includes('BEAR')) direction = 'BEARISH';
   else if (dirRaw.includes('NEUT')) direction = 'NEUTRAL';
-  else if (/engulfing|hammer|morning|bullish/i.test(name)) direction = 'BULLISH';
-  else if (/shooting|evening|bearish|hanging/i.test(name)) direction = 'BEARISH';
 
   const strengthRaw = (body?.pattern_strength || body?.patternStrength || body?.pattern?.strength || '')
     .toString()
@@ -337,20 +328,30 @@ function extractLeadingPattern(body: any): {
   return { name: String(name).slice(0, 28), direction, strength };
 }
 
-function selectRankingCandidates(sourceCatalog: CatalogAsset[], type: AssetType): CatalogAsset[] {
+function selectRankingCandidates(
+  sourceCatalog: CatalogAsset[],
+  type: ProductiveAssetType,
+): RankingCandidate[] {
   return sourceCatalog
-    .filter((asset) => asset.type === type && asset.symbol && asset.name)
+    .filter(
+      (asset): asset is RankingCandidate =>
+        asset.type === type &&
+        typeof asset.symbol === 'string' &&
+        asset.symbol.length > 0 &&
+        typeof asset.name === 'string' &&
+        asset.name.length > 0,
+    )
     .sort((a, b) => {
       const aRank = a.origin === 'legacy-registry' ? 0 : 1;
       const bRank = b.origin === 'legacy-registry' ? 0 : 1;
       if (aRank !== bRank) return aRank - bRank;
-      return String(a.symbol).localeCompare(String(b.symbol));
+      return a.symbol.localeCompare(b.symbol);
     })
     .slice(0, RANKING_CANDIDATE_LIMIT);
 }
 
-function chunkVerifiedScoreCandidates(candidates: CatalogAsset[]): CatalogAsset[][] {
-  const chunks: CatalogAsset[][] = [];
+function chunkVerifiedScoreCandidates<T extends CatalogAsset>(candidates: T[]): T[][] {
+  const chunks: T[][] = [];
   for (let index = 0; index < candidates.length; index += VERIFIED_SCORE_BATCH_LIMIT) {
     chunks.push(candidates.slice(index, index + VERIFIED_SCORE_BATCH_LIMIT));
   }
@@ -399,7 +400,7 @@ function relativeTime(date: Date | null): string {
 function toAssetRow(
   symbol: string,
   name: string,
-  type: AssetType,
+  type: ProductiveAssetType,
   body: any,
   statusOverride?: string,
   rankingOverride?: BackendRankingMeta | null,
@@ -459,7 +460,8 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
           (item: any) =>
             typeof item?.symbol === 'string' &&
             typeof item?.name === 'string' &&
-            typeof item?.type === 'string',
+            typeof item?.type === 'string' &&
+            item.type !== 'bond',
         ),
       );
     } catch (err: any) {
@@ -497,8 +499,8 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
         const seen = new Set<string>();
         for (const row of result.body.results) {
           const rowSymbol = typeof row?.symbol === 'string' ? row.symbol.toUpperCase() : '';
-          const asset = crypto.find((item) => item.symbol?.toUpperCase() === rowSymbol);
-          if (!asset?.symbol || !asset.name) continue;
+          const asset = crypto.find((item) => item.symbol.toUpperCase() === rowSymbol);
+          if (!asset) continue;
           seen.add(asset.symbol);
           const ranking =
             typeof row?.assetId === 'string' ? rankingByAssetId.get(row.assetId) ?? null : null;
@@ -506,7 +508,7 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
         }
 
         for (const asset of crypto) {
-          if (!asset.symbol || !asset.name || seen.has(asset.symbol)) continue;
+          if (seen.has(asset.symbol)) continue;
           next[asset.symbol] = toAssetRow(asset.symbol, asset.name, 'crypto', {
             status: 'SCORE_NOT_COMPUTABLE',
             reason: 'Kein Ergebnis im verifizierten Crypto-Batch-Scoring zurückgegeben.',
@@ -514,7 +516,6 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
         }
       } catch (err: any) {
         for (const asset of crypto) {
-          if (!asset.symbol || !asset.name) continue;
           next[asset.symbol] = toAssetRow(
             asset.symbol,
             asset.name,
@@ -530,10 +531,7 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
     for (const batch of chunkVerifiedScoreCandidates(traditional)) {
       const seen = new Set<string>();
       try {
-        const symbols = batch
-          .map((asset) => asset.symbol)
-          .filter(Boolean)
-          .join(',');
+        const symbols = batch.map((asset) => asset.symbol).join(',');
         const body = await fetchJson(
           `/api/registry/assets/verified-scores?symbols=${encodeURIComponent(symbols)}`,
           undefined,
@@ -541,12 +539,12 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
         );
         for (const row of body?.results ?? []) {
           const asset = batch.find((item) => item.symbol === row?.symbol);
-          if (!asset?.symbol || !asset.name || !asset.type) continue;
+          if (!asset) continue;
           seen.add(asset.symbol);
           next[asset.symbol] = toAssetRow(asset.symbol, asset.name, asset.type, row);
         }
         for (const asset of batch) {
-          if (!asset.symbol || !asset.name || !asset.type || seen.has(asset.symbol)) continue;
+          if (seen.has(asset.symbol)) continue;
           next[asset.symbol] = toAssetRow(asset.symbol, asset.name, asset.type, {
             status: 'SCORE_NOT_COMPUTABLE',
             reason: 'Kein Ergebnis im verifizierten Batch-Scoring zurückgegeben.',
@@ -554,7 +552,6 @@ export function RankingBoard({ onSelectAsset }: RankingBoardProps) {
         }
       } catch (err: any) {
         for (const asset of batch) {
-          if (!asset.symbol || !asset.name || !asset.type) continue;
           next[asset.symbol] = toAssetRow(
             asset.symbol,
             asset.name,
@@ -861,20 +858,38 @@ function PatternBadge({
   // placeholder badge or infer a BUY/SELL signal from missing data.
   if (name === 'NO PATTERN' || !name) return null;
 
+  const intensity =
+    strength === 'strong'
+      ? { border: '[0.45]', background: '[0.18]' }
+      : strength === 'medium'
+        ? { border: '30', background: '10' }
+        : strength === 'weak'
+          ? { border: '[0.18]', background: '[0.05]' }
+          : null;
   const dirColor =
-    direction === 'BULLISH'
-      ? 'text-score-best border-score-best/30 bg-score-best/10'
-      : direction === 'BEARISH'
-        ? 'text-score-worst border-score-worst/30 bg-score-worst/10'
+    intensity && direction === 'BULLISH'
+      ? `text-score-best border-score-best/${intensity.border} bg-score-best/${intensity.background}`
+      : intensity && direction === 'BEARISH'
+        ? `text-score-worst border-score-worst/${intensity.border} bg-score-worst/${intensity.background}`
         : 'text-text-secondary border-border bg-surface/60';
+  const directionLabel =
+    intensity && direction === 'BULLISH'
+      ? 'BUY'
+      : intensity && direction === 'BEARISH'
+        ? 'SELL'
+        : direction === 'NEUTRAL'
+          ? 'NEUTRAL'
+          : null;
+
   return (
     <span
       className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase ${dirColor}`}
       title={strength ? `Strength: ${strength}` : undefined}
     >
       <GitBranch size={9} />
-      {name}
-      {strength && <span className="opacity-70">·{strength[0].toUpperCase()}</span>}
+      {directionLabel && <span>{directionLabel}</span>}
+      <span>{name}</span>
+      {strength && <span className="opacity-80">· {strength}</span>}
     </span>
   );
 }

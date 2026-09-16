@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Poppins:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
+/* Pattern direction x strength classes are assembled from verified state at runtime.
+   Keep the finite approved variants explicit so Tailwind emits them deterministically. */
+@source inline("border-score-best/[0.45] bg-score-best/[0.18] border-score-best/30 bg-score-best/10 border-score-best/[0.18] bg-score-best/[0.05] border-score-worst/[0.45] bg-score-worst/[0.18] border-score-worst/30 bg-score-worst/10 border-score-worst/[0.18] bg-score-worst/[0.05]");
+
 @theme {
   /* Branding Manifest v6.2 — canonical web projection */
   --color-background: #08080C;
@@ -10,18 +14,18 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A1A1AA;
 
-  /* Primary brand pair: Dark Black canvas + AIF Gold. */
+  /* Primary brand pair: Vader Black canvas + Capital Gold. */
   --color-brand-primary: #F9BF21;
   /* Secondary AI accent; not a primary brand color. */
   --color-brand-accent: #8D26FF;
   --color-brand-success: #44DE88;
   --color-brand-danger: #F87171;
 
-  /* Semantic visualization roles. Renderers and components consume roles, not literals. */
-  --color-asset-crypto: #22D3EE;
+  /* Productive Universe presentation roles. Bond remains compatibility-only and is not selectable. */
+  --color-asset-crypto: #8D26FF;
   --color-asset-stock: #44DE88;
   --color-asset-index: #60A5FA;
-  --color-asset-forex: #8D26FF;
+  --color-asset-forex: #E879F9;
   --color-asset-commodity: #F9BF21;
   --color-asset-bond: #E879F9;
 
