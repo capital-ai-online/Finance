@@ -12,6 +12,8 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const legacyDashboard = read('src/components/Dashboard.tsx');
+const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
+const dashboardNavigationModel = read('src/app/dashboard/dashboardNavigation.ts');
 
 const expectedSections: Record<(typeof DASHBOARD_VIEWS)[number], DashboardSection> = {
   dashboard: 'hub',
@@ -60,21 +62,34 @@ describe('BB-2E dashboard view contract', () => {
     for (const view of ['interact', 'defi-orchestration', 'login'] as const) {
       expect(getDashboardSection(view)).toBe('hub');
     }
+
+    expect(dashboardNavigation).toContain(
+      "getDashboardSection, type DashboardSection, type DashboardView } from './dashboardViews'",
+    );
+    expect(dashboardNavigation).toContain('setExpandedSection(getDashboardSection(activeView))');
   });
 
-  it('keeps every legacy dashboard navigation target covered by the extracted contract', () => {
-    expect(legacyDashboard).toContain('type DashboardView,');
-    expect(legacyDashboard).toContain('getDashboardSection,');
+  it('keeps residual dashboard targets and app-owned navigation bound to the canonical view contract', () => {
+    expect(legacyDashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
     expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(legacyDashboard).toContain('<DashboardNavigation');
+    expect(dashboardNavigationModel).toContain('satisfies readonly DashboardNavigationItem[]');
+    expect(dashboardNavigation).toContain('onClick={() => navigate(item.view)}');
 
-    const navigationTargets = Array.from(
+    const residualDashboardTargets = Array.from(
       legacyDashboard.matchAll(/(?:navigateTo|setActiveView)\('([^']+)'\)/g),
+      match => match[1],
+    );
+    const declaredNavigationTargets = Array.from(
+      dashboardNavigationModel.matchAll(/view: '([^']+)'/g),
       match => match[1],
     );
     const knownViews = new Set<string>(DASHBOARD_VIEWS);
 
-    expect(navigationTargets.length).toBeGreaterThan(0);
-    for (const view of navigationTargets) {
+    expect(residualDashboardTargets.length).toBeGreaterThan(0);
+    expect(declaredNavigationTargets.length).toBeGreaterThan(0);
+
+    for (const view of [...residualDashboardTargets, ...declaredNavigationTargets]) {
       expect(knownViews.has(view), view).toBe(true);
     }
   });
