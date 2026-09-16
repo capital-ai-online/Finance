@@ -60,24 +60,22 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
       expect(tokenValue(tokens, ...tokenPath)).toBe(cssThemeValue(css, variable));
     }
 
-    expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
-    expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F9BF21');
+    expect(tokenValue(tokens, 'color', 'background')).toBe('#18181B');
+    expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F5C453');
     expect(tokenValue(tokens, 'color', 'brand', 'accent')).toBe('#8D26FF');
-    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe('#F9BF21');
+    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe('#F5C453');
     expect(tokenValue(tokens, 'color', 'brand', 'success')).toBe('#44DE88');
     expect(tokenValue(tokens, 'color', 'brand', 'danger')).toBe('#F87171');
     expect(tokenValue(tokens, 'color', 'surface', 'elevated')).toBe('#121215');
   });
 
-  it('keeps Vader Black + Capital Gold as the primary brand pair and Cyan semantic-only', () => {
-    expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
-    expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F9BF21');
+  it('keeps charcoal + Capital Gold as the primary brand pair and Cyan semantic/decorative only', () => {
+    expect(tokenValue(tokens, 'color', 'background')).toBe('#18181B');
+    expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F5C453');
     expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe(
       tokenValue(tokens, 'color', 'brand', 'primary'),
     );
-    expect(tokenValue(tokens, 'color', 'aif', 'neon', 'cyan')).toBe(
-      tokenValue(tokens, 'color', 'brand', 'primary'),
-    );
+    expect(tokenValue(tokens, 'color', 'aif', 'neon', 'cyan')).toBe('#0DDDDD');
     expect(tokenValue(tokens, 'color', 'semantic', 'info')).toBe('#22D3EE');
     expect(tokenValue(tokens, 'color', 'assetClass', 'crypto')).toBe('#8D26FF');
     expect(tokenValue(tokens, 'color', 'assetClass', 'crypto')).not.toBe(
@@ -86,13 +84,12 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
     expect(tokenValue(tokens, 'color', 'factor', 'technical')).toBe('#22D3EE');
   });
 
-  it('uses Inter headings, Poppins body and JetBrains Mono data typography', () => {
-    expect(tokenValue(tokens, 'font', 'display')).toContain('Inter');
+  it('uses Montserrat headings, Poppins body and JetBrains Mono data typography', () => {
+    expect(tokenValue(tokens, 'font', 'display')).toContain('Montserrat');
     expect(tokenValue(tokens, 'font', 'sans')).toContain('Poppins');
     expect(tokenValue(tokens, 'font', 'mono')).toContain('JetBrains Mono');
-    expect(css).toContain('--font-display: "Inter"');
+    expect(css).toContain('--font-display: "Montserrat"');
     expect(css).toContain('h1,');
-    expect(css).not.toContain('Montserrat');
   });
 
   it('derives the PDF renderer adapter from canonical design-token roles', () => {
@@ -107,7 +104,7 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
     expect(pdfBrand).not.toContain('canvas: [24, 24, 27]');
   });
 
-  it('renders the canonical shared mark with Gold as the brand anchor', () => {
+  it('renders the canonical shared mark with Gold plus restrained decorative Cyan/Purple atmosphere', () => {
     expect(pdfBrand).toContain('drawCapitalAiEmblem');
     expect(pdfBrand).toContain('drawCapitalAiWordmark');
     expect(pdfBrand).toContain('EMBLEM_NODES');
@@ -118,7 +115,8 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
     expect(logo).toContain('var(--color-brand-accent)');
     expect(logo).not.toContain('var(--color-aif-neon-cyan)');
     expect(neuralBackground).toContain('var(--color-brand-primary)');
-    expect(neuralBackground).toContain('var(--color-brand-accent)');
+    expect(neuralBackground).toContain('var(--color-decorative-cyan)');
+    expect(neuralBackground).toContain('var(--color-decorative-purple)');
     expect(neuralBackground).not.toContain('bg-aif-neon-cyan');
   });
 

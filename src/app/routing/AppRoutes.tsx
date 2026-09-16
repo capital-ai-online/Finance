@@ -26,6 +26,7 @@ const MediaStudio = lazy(() =>
 
 interface AppRoutesProps {
   userSession: UserSession | null;
+  authBootstrapPending: boolean;
   justLoggedOut: boolean;
   clearJustLoggedOut: () => void;
   handleLogin: (email: string, password: string) => Promise<void>;
@@ -45,6 +46,24 @@ function RouteLoadingBoundary({ children }: { children: React.ReactNode }) {
     >
       {children}
     </Suspense>
+  );
+}
+
+function AuthRouteResolution() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-white">
+      <div className="max-w-md text-center">
+        <p className="text-xs font-mono uppercase tracking-widest text-white/55">
+          Sichere Sitzung wird synchronisiert
+        </p>
+        <a
+          href="/"
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10"
+        >
+          Zur öffentlichen Landingpage
+        </a>
+      </div>
+    </div>
   );
 }
 
@@ -143,6 +162,7 @@ function RouteRedirect({ to, label }: { to: string; label: string }) {
 
 export function AppRoutes({
   userSession,
+  authBootstrapPending,
   justLoggedOut,
   clearJustLoggedOut,
   handleLogin,
@@ -158,6 +178,7 @@ export function AppRoutes({
 
   const renderAuthenticatedDashboard = () => {
     if (!userSession) {
+      if (authBootstrapPending) return <AuthRouteResolution />;
       return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
     }
 
@@ -291,6 +312,7 @@ export function AppRoutes({
 
   if (currentPath === '/media-studio') {
     if (!userSession) {
+      if (authBootstrapPending) return <AuthRouteResolution />;
       return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
     }
 
@@ -318,6 +340,10 @@ export function AppRoutes({
 
   if (userSession) {
     return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
+  }
+
+  if (authBootstrapPending) {
+    return <AuthRouteResolution />;
   }
 
   return <RouteRedirect to="/" label="Zur Landingpage" />;
