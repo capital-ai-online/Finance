@@ -29,8 +29,8 @@ Synchronisationsbasis: 0b7ffb3bf06c1165a3b73f9d4d6e0933dee971f2. Der Commit dies
 ## Mobile CSS-Readiness-Remediation 2026-09-16
 Auslöser: reale Smartphone-Evidence meldete, dass die Cookie-Auswahl nicht zuverlässig bedienbar war und die Seite bei der Auswahl einfrieren konnte.
 
-Branch: `agent/frontend-consent-style-readiness-20260916`.
-Branch-Basis: `main@3d3f928d91e2cdd9a818bdfd6ae8d065db9f697f`.
+Branch: `agent/frontend-mobile-consent-readiness-20260916`.
+Branch-Basis: `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`.
 
 Materialisierte technische Änderung:
 - `index.html` kennzeichnet die vendorte CookieConsent-CSS und das CAPITAL-AI-Consent-Theme mit stabilen Readiness-IDs.
@@ -57,11 +57,10 @@ Cloudbrowser: wiederholt CDP refresh tabs timeout nach 20000 ms. Keine erfolgrei
 
 ## Korrelation
 Seit ursprünglicher Basis 27 Commits auf main, 15 betroffene Dateien: Documentary-SLO, Social-Publication-Evidence, Security-Autofix sowie Agent-Client-/Security-Roadmaps. Kein Dateioverlap mit dieser Migration, keine Änderung an AGENTS oder anwendbaren Provider-/CSP-Authorities im Compare.
-Aktuelle Open-PR-Abfrage: keine offenen PRs. Aktuelle Branch-Liste: frühere Frontend-Consent-Login- und Roadmap-Normalisierungsbranches nicht mehr vorhanden; frühere semantische Prüfung bleibt historische Evidence. Kompatibilitätsalias und begrenztes Roadmap-Append vermeiden Überschreiben ihrer früheren Änderungen.
-Der zuvor angelegte Migrationsbranch war beim Refresh nicht mehr vorhanden (404). Er wurde vom aktuellen main neu angelegt. Keine fremden Änderungen überschrieben.
+Aktuelle Branch-/PR-Historie aus der ursprünglichen Migration bleibt historische Evidence; sie autorisiert die Mobile-Remediation nicht.
 Keine Governance-/ADR-Nummern oder produktiven PVC-Namespaces neu vergeben.
 
-Hinweis 2026-09-16: Diese historische Korrelation bleibt als damalige Evidence bestehen. Für die Mobile-Readiness-Remediation wurde separat gegen `main@3d3f928d91e2cdd9a818bdfd6ae8d065db9f697f` korreliert; zum Schreibzeitpunkt war PR #1001 als Governance-Writer offen, ohne File-/Runtime-Overlap zu den FE-Consent-Dateien. Vor PR-Erstellung ist current main erneut zu lesen und jede zwischenzeitliche Authority-/Writer-Änderung erneut zu korrelieren.
+Hinweis 2026-09-16: Während der Mobile-Readiness-Umsetzung wurde PR #1001 gemergt und `main` wechselte von `3d3f928d91e2cdd9a818bdfd6ae8d065db9f697f` auf `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`. Die neue Authority wurde vollständig re-korreliert. Der Merge änderte ausschließlich `AGENTS.md`, `docs/projects/governance/ROADMAP.md` und GOV-CHAT-078-Evidence; es besteht kein File-/Runtime-Overlap zu den fünf FE-Consent-Dateien. Der aktive Remediation-Branch wurde deshalb frisch von `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc` neu aufgebaut. Unmittelbar vor dieser Evidence-Korrektur waren keine offenen Pull Requests vorhanden.
 
 ## Offene Exit Gates
 1. Auf einer ausgelieferten HTTPS-Vorschau und anschließend nach autorisierter Promotion: Erstbesuch, Nur notwendige, Analytics an/aus, Speichern, Wiederöffnen, Reload-Persistenz, Widerruf, erneute Zustimmung sowie Login/Landing/Datenschutz prüfen. Browser-Cookie- und Netzwerk-Evidence muss Zero Google vor Opt-in, GA nur nach Zustimmung und Zero AdSense in allen Zuständen belegen. Aktuell NOT RUN.
