@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 
 const MAX_ATTEMPTS = 2;
+const AGENT_BRANCH_PREFIXES = ['agent/', 'claude/', 'gemini/', 'copilot/', 'ai/'];
 
 export function normalizePath(value) {
   return String(value || '')
@@ -18,6 +19,17 @@ export function parseStringArray(value, label) {
     throw new TypeError(`${label} must be a JSON array of strings`);
   }
   return parsed.map((entry) => String(entry)).filter(Boolean);
+}
+
+export function isDocumentationPath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('docs/') || p.endsWith('.md');
+}
+
+export function isBoundedAgenticSourcePath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('src/')
+    && !/\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(p);
 }
 
 export function isProtectedAutofixPath(filePath) {
@@ -147,6 +159,9 @@ export function planAutofix({
   if (!headRef || headRef === 'main') {
     return { eligible: false, engine: 'none', reason: 'invalid-head-branch', failure_class: 'identity', attempt: count + 1 };
   }
+  if (!AGENT_BRANCH_PREFIXES.some((prefix) => headRef.startsWith(prefix))) {
+    return { eligible: false, engine: 'none', reason: 'head-branch-is-not-agent-managed', failure_class: 'identity', attempt: count + 1 };
+  }
   if (!repository || !headRepo || repository !== headRepo) {
     return { eligible: false, engine: 'none', reason: 'fork-or-foreign-head-repository', failure_class: 'identity', attempt: count + 1 };
   }
@@ -166,6 +181,22 @@ export function planAutofix({
   }
 
   const failure = classifyFailure(failedSteps, failureLog);
+  if (failure.engine === 'copilot') {
+    const nonDocumentation = normalized.filter((file) => !isDocumentationPath(file));
+    if (
+      nonDocumentation.length === 0
+      || nonDocumentation.some((file) => !isBoundedAgenticSourcePath(file))
+    ) {
+      return {
+        eligible: false,
+        engine: 'none',
+        failure_class: 'unbounded-agentic-scope',
+        reason: 'agentic-patch-requires-source-only-original-pr-scope',
+        attempt: count + 1,
+      };
+    }
+  }
+
   return {
     ...failure,
     attempt: count + 1,
