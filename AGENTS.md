@@ -210,19 +210,28 @@ The separate copyable Owner-response requirement introduced by PR #772 remains *
 
 The queue is Roadmap-first. If the current Roadmap provides no immediately executable item because it is blocked, dependency-held or terminal, use the highest-priority evidence-backed workaround/remediation recommendations. At most two items are shown, each with an objective exit gate. Generic merge/approval/hosted-CI/test instructions remain gate/evidence status and do not replace project continuation work.
 
-The `NÄCHSTE SCHRITTE` continuation queue is a **repository- and web-application-wide chat presentation invariant**. Whenever it is shown in any CAPITAL-AI project chat, it MUST be rendered inside a fenced plaintext `text` code block and MUST use semantic emoji in the heading, each numbered step, each project-folder line and each exit-gate label. Markdown tables, Writing Blocks, cards or other rich UI containers MUST NOT replace this copyable plaintext block. Within this specific block the emoji markers are mandatory scanning cues, while the accompanying text remains the authoritative meaning.
+The `NÄCHSTE SCHRITTE` continuation queue is a **repository- and web-application-wide chat presentation invariant**. Every displayed continuation item is rendered as one presentation unit consisting of a Markdown H3 scope heading immediately followed by exactly one fenced plaintext `text` code block. The required scope heading format is `### 📂 **SCOPE / ZIELORDNER: <canonical-project-folder>**`; the canonical folder is therefore larger than normal body text, bold and marked with the additional `📂` symbol. This H3 supplements but never replaces the copyable plaintext block. Markdown tables, Writing Blocks, cards or other rich UI containers MUST NOT replace the block.
 
-Every displayed continuation item MUST resolve and show exactly one canonical project folder from `docs/projects/README.md` / `docs/projects/PROJECT_VALUE_CHAIN.md` using the line `📁 Projektfolder: <canonical-project-folder>`. For bounded GOV/OPS foreign-project execution, this is the Target Project's canonical folder, not merely the executor's folder. Missing or ambiguous folder resolution is fail-closed; an agent MUST NOT guess a folder.
+Within each fenced plaintext block, semantic emoji remain mandatory in the `🧭 NÄCHSTE SCHRITTE` heading, the numbered step, the project-folder line and the exit-gate label. The accompanying text remains authoritative.
 
-Continuation items are grouped by canonical project folder for presentation. If both displayed steps resolve to the same folder, they MAY share one fenced plaintext `text` block. If the two displayed steps resolve to different folders, they MUST be rendered as **two separate fenced plaintext `text` blocks**, one step per block; combining different project folders in one `NÄCHSTE SCHRITTE` snippet is prohibited. Each split block repeats the `🧭 NÄCHSTE SCHRITTE` heading and global step numbering remains `1.` then `2.`.
+Every displayed continuation item MUST resolve and show exactly one canonical project folder from `docs/projects/README.md` / `docs/projects/PROJECT_VALUE_CHAIN.md`. The same resolved folder MUST appear both in the H3 scope heading and inside the plaintext block using the existing line `📁 Projektfolder: <canonical-project-folder>`. For bounded GOV/OPS foreign-project execution, this is the Target Project's canonical folder, not merely the executor's folder. Missing, ambiguous or inconsistent folder resolution is fail-closed; an agent MUST NOT guess a folder.
+
+Each displayed continuation step MUST use its own H3 scope heading and its own fenced plaintext `text` block, even when both displayed steps resolve to the same canonical project folder. Combining two steps into one continuation block is prohibited. Global numbering remains `1.` then `2.`, and each block repeats the `🧭 NÄCHSTE SCHRITTE` heading.
+
+After all displayed continuation-step blocks, every `CHAT_RUN_HANDOFF` and `POST_PR_HANDOFF` MUST end with one additional fenced plaintext `text` status snippet reporting how many chat workers are currently and actively implementing tasks. The count MUST be factual and contemporaneous: count only workers whose `ACTIVE` / `IMPLEMENTING` state is directly observable from the current authenticated chat/orchestration context. Open Pull Requests, branches, work claims, recent commits or historical chat activity alone are not proof that a chat worker is currently active and MUST NOT be counted by inference. If an exact global live-chat worker count is unavailable, the snippet MUST report `UNBEKANNT — keine globale Live-Chat-Worker-Evidence verfügbar` rather than inventing a number. This worker-status snippet is informational only, creates no execution or ownership authority, and is always the final handoff snippet.
 
 The same rule is expressed machine-readably below. This YAML is a projection of the existing stable control `CTRL-SDLC-CHAT-HANDOFF-001`; it creates no second authority, roadmap or routing registry.
 
 ```yaml
 chat_handoff_presentation:
   control_id: "CTRL-SDLC-CHAT-HANDOFF-001"
-  schema_version: "1.0"
+  schema_version: "1.1"
   max_items: 2
+  scope_heading:
+    required_per_step: true
+    render_container: "markdown_heading_h3"
+    line_format: "### 📂 **SCOPE / ZIELORDNER: <canonical-project-folder>**"
+    placement: "immediately_before_step_text_block"
   render_container: "fenced_plaintext_text_block"
   heading: "🧭 NÄCHSTE SCHRITTE"
   project_folder:
@@ -232,32 +241,29 @@ chat_handoff_presentation:
       - "docs/projects/PROJECT_VALUE_CHAIN.md"
     line_format: "📁 Projektfolder: <canonical-project-folder>"
     foreign_execution_folder: "target_project_folder"
+    must_match_scope_heading: true
     unresolved: "FAIL_CLOSED"
   grouping:
-    key: "canonical_project_folder"
-    same_folder: "MAY_SHARE_ONE_TEXT_BLOCK"
-    different_folders: "MUST_SPLIT_ONE_TEXT_BLOCK_PER_FOLDER"
+    key: "continuation_step"
+    same_folder: "MUST_SPLIT_ONE_TEXT_BLOCK_PER_STEP"
+    different_folders: "MUST_SPLIT_ONE_TEXT_BLOCK_PER_STEP"
     heading_per_block: true
     preserve_global_step_numbering: true
   exit_gate:
     required_per_step: true
+  worker_status:
+    required_after_handoff: true
+    placement: "final_handoff_snippet"
+    render_container: "fenced_plaintext_text_block"
+    heading: "👷 AKTIVE CHAT-WORKER"
+    exact_count_when_observable: true
+    infer_from_open_pr_branch_claim_or_history: false
+    unavailable_value: "UNBEKANNT — keine globale Live-Chat-Worker-Evidence verfügbar"
 ```
 
-For one step, or for two steps that share the same canonical project folder, use this presentation shape:
+For two displayed steps, including two steps that share the same canonical project folder, use two separate presentation units:
 
-```text
-🧭 NÄCHSTE SCHRITTE
-
-1. 🔹 <highest-priority Roadmap item or evidence-backed workaround>
-   📁 Projektfolder: docs/projects/<project>/
-   🎯 Exit Gate: <objective completion condition>
-
-2. 🔹 <optional second Roadmap item or workaround in the same project folder>
-   📁 Projektfolder: docs/projects/<project>/
-   🎯 Exit Gate: <objective completion condition>
-```
-
-For two steps with different canonical project folders, use two separate snippets:
+### 📂 **SCOPE / ZIELORDNER: docs/projects/<project-a>/**
 
 ```text
 🧭 NÄCHSTE SCHRITTE
@@ -267,6 +273,8 @@ For two steps with different canonical project folders, use two separate snippet
    🎯 Exit Gate: <objective completion condition>
 ```
 
+### 📂 **SCOPE / ZIELORDNER: docs/projects/<project-b>/**
+
 ```text
 🧭 NÄCHSTE SCHRITTE
 
@@ -275,7 +283,21 @@ For two steps with different canonical project folders, use two separate snippet
    🎯 Exit Gate: <objective completion condition>
 ```
 
-When no immediately actionable Roadmap/workaround item remains, the same fenced plaintext block uses the `🧭 NÄCHSTE SCHRITTE` heading and states `✅ Keine weiteren unmittelbar umsetzbaren Roadmap-/Workaround-Schritte identifiziert.`.
+After the final continuation item, append exactly one worker-status snippet. When an exact count is observable:
+
+```text
+👷 AKTIVE CHAT-WORKER
+Anzahl: <integer>
+```
+
+When the global live state is not observable:
+
+```text
+👷 AKTIVE CHAT-WORKER
+Anzahl: UNBEKANNT — keine globale Live-Chat-Worker-Evidence verfügbar
+```
+
+When no immediately actionable Roadmap/workaround item remains, the normal fenced plaintext block uses the `🧭 NÄCHSTE SCHRITTE` heading and states `✅ Keine weiteren unmittelbar umsetzbaren Roadmap-/Workaround-Schritte identifiziert.`. Because no continuation item is displayed in that case, no scope-folder H3 is required; the worker-status snippet is still mandatory afterwards.
 
 When a protected continuation requires an exact Human/Owner response, it may be rendered in its own neutral copyable `text` block. Pure Human/Owner approval or confirmation MUST NOT be marked `⚙️🤓 MANUELL`.
 
@@ -283,13 +305,13 @@ PR creation is not a Human-response gate after this version is effective. When a
 
 #### Trigger — `CHAT_RUN_HANDOFF`
 
-At the end of every chat-governed repository execution pass, before the assistant's final response for that pass closes, the same chat MUST emit the bounded **Nächste Schritte** block unless a `POST_PR_HANDOFF` just created and reports the PR. This applies whether the pass completed implementation, reached a validation/correlation gate, is blocked, is awaiting Human/Owner post-create review/merge, or has no further immediately actionable implementation work.
+At the end of every chat-governed repository execution pass, before the assistant's final response for that pass closes, the same chat MUST emit the bounded **Nächste Schritte** presentation followed by the final worker-status snippet unless a `POST_PR_HANDOFF` just created and reports the PR. This applies whether the pass completed implementation, reached a validation/correlation gate, is blocked, is awaiting Human/Owner post-create review/merge, or has no further immediately actionable implementation work.
 
-The queue MUST be derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and any material correlation results established during the pass. Facts that are stale or materially changed MUST be re-read before they are presented as current.
+The queue MUST be derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and any material correlation results established during the pass. Facts that are stale or materially changed MUST be re-read before they are presented as current. The worker count is independently truth-bound to directly observable live chat/orchestration state and MUST NOT be inferred from repository activity.
 
 #### Trigger — `POST_PR_HANDOFF`
 
-After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/PR-head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by at most the two highest-priority Roadmap/workaround steps.
+After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/PR-head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by at most the two highest-priority Roadmap/workaround steps and then the final worker-status snippet.
 
 For an ordered automated Roadmap lane, the next dependent PR remains held until the predecessor reaches a terminal PR outcome. If it is Human-merged, the next work item starts from the resulting then-current `main`; if it closes unmerged, the Roadmap queue is recomputed without assuming its payload.
 
