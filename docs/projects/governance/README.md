@@ -2,31 +2,20 @@
 
 **Project ID:** `CAPITAL-AI-GOV`  
 **Primary Project Value Chain ownership:** `PVC-05 — Platform Director`  
-**Trust root:** `/AGENTS.md@CURRENT_MAIN`
+**Trust root / only repository-wide AI-development instruction surface:** `/AGENTS.md`
 
-## Current development policy
+## Instruction boundary
 
-After Human/CODEOWNER merge of PR #1022, `/AGENTS.md` resolves exactly eight YAML policies that jointly form `CAPITAL_AI_AUTONOMOUS_DEVELOPMENT_GUIDELINE`:
+After Human/CODEOWNER merge of PR #1022, `/AGENTS.md@CURRENT_MAIN` is the complete and sole ChatGPT/AI/development guideline. This project folder, its Roadmap, evidence and registries are non-authorizing planning/index/evidence surfaces and cannot add chat or development instructions.
 
-1. `GOV-AUTONOMOUS-TRUST-ROOT-01`
-2. `GOV-DYNAMIC-SCOPE-RESOLUTION-02`
-3. `GOV-AUTONOMOUS-WORK-GRAPH-03`
-4. `GOV-ATOMIC-BRANCH-EXECUTION-04`
-5. `GOV-SELF-HEALING-CONVERGENCE-05`
-6. `GOV-CI-COST-VALIDATION-06`
-7. `GOV-EVIDENCE-EVENTMESH-HANDOVER-07`
-8. `GOV-PR-CLOSURE-AUTHORITY-08`
+The intermediate eight-file YAML policy suite is removed. The former standalone DevelopmentChain, Human/Owner PR and GOV/OPS foreign-execution policy files are removed. Stable historical IDs resolve through the Authority Registry back to `AGENTS.md` only.
 
-They are the sole repository development-execution guideline. Previous DevelopmentChain, Top-Layer execution suite, standalone foreign-execution/PR/CI/handoff procedures and stale procedural `CTRL-*` projections have no execution/fallback authority after activation.
-
-Subject-matter ADR/ESS/domain/security/compliance/data/scoring/provider controls remain constraints where the eight policies resolve them from current main.
-
-The existing project symbols, colors, semantic emoji, `🧭 NÄCHSTE SCHRITTE` visual block structure and worker-status rendering remain presentation-only conventions and create no Authority.
+SEC, QM, FINTECH and COMP/Supply-Chain direction rules are embedded directly in `AGENTS.md`; there is no project-local instruction overlay.
 
 ## Navigation
 
-- `../README.md` — canonical project-folder mapping and presentation metadata.
-- `../PROJECT_VALUE_CHAIN.md` — canonical PVC ownership.
-- `ROADMAP.md` — Governance work graph/Roadmap projection.
+- `../../AGENTS.md` — sole AI/chat/development instruction surface.
+- `../README.md` — canonical project-folder mapping; organizational metadata only.
+- `../PROJECT_VALUE_CHAIN.md` — canonical PVC ownership; organizational metadata only.
+- `ROADMAP.md` — Governance planning/status; non-authorizing.
 - `evidence/GOV_AUTONOMOUS_DEVELOPMENT_POLICY_MIGRATION_2026-09-16.md` — migration evidence.
-- `../../governance/development-policies/` — exact eight-policy development suite.
