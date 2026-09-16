@@ -2,6 +2,7 @@
 export { CryptoScoringWorkspace as CryptoScoringEnterprise } from './CryptoScoringWorkspace';
 export type { CryptoScoringEnterpriseProps } from './CryptoScoringWorkspace';
 export { PublicCryptoScoringPreview } from './PublicCryptoScoringPreview';
+export { CryptoCategoryWorkspace } from './CryptoCategoryWorkspace';
 export { CryptoCategoryResearchLenses } from './CryptoCategoryResearchLenses';
 export { CryptoResearchVisualizationSuite } from './CryptoResearchVisualizationSuite';
 export { DeFiOrchestration } from '../../../components/DeFiOrchestration';
