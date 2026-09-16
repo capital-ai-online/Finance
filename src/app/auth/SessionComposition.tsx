@@ -9,7 +9,7 @@ import { LoginStepUpGate } from '../../components/LoginStepUpGate';
 import { RegistrationCompletionGate } from '../../components/RegistrationCompletionGate';
 import { authFetch } from '../../lib/authFetch';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
-import { needsOnboarding } from '../../lib/onboarding';
+import { needsOnboarding as readNeedsOnboarding } from '../../lib/onboarding';
 import {
   getSessionBootstrapKey,
   isSessionEstablishmentEvent,
@@ -47,6 +47,28 @@ const PUBLIC_SHELL_PATHS = new Set([
 ]);
 
 const SIGN_OUT_TIMEOUT_MS = 5_000;
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 8_000;
+const SESSION_STAGE_TIMEOUT_MS = 10_000;
+
+function withSessionStageTimeout<T>(operation: Promise<T>, stage: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  return Promise.race([
+    operation,
+    new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
+        () => reject(new Error(`Supabase session stage timed out: ${stage}`)),
+        SESSION_STAGE_TIMEOUT_MS,
+      );
+    }),
+  ]).finally(() => {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  });
+}
+
+function needsOnboarding(session: { user: any }): Promise<boolean> {
+  return withSessionStageTimeout(readNeedsOnboarding(session), 'onboarding status');
+}
 
 function shouldRenderPublicShellImmediately(): boolean {
   if (typeof window === 'undefined') return false;
@@ -62,7 +84,9 @@ function shouldRenderPublicShellImmediately(): boolean {
  * the listener is registered, so running getSession() in parallel with onAuthStateChange creates a
  * redundant lock/race during OAuth callback recovery. All post-auth Supabase work is deferred until
  * the synchronous auth callback has returned and duplicate INITIAL_SESSION/SIGNED_IN events are
- * collapsed by a non-secret session key.
+ * collapsed by a non-secret session key. A bounded watchdog ends the loading projection if the
+ * expected initial auth event never arrives; it does not create a second session source or bypass
+ * onboarding/AAL checks.
  */
 export function SessionComposition({ children }: SessionCompositionProps) {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
@@ -136,7 +160,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       'User';
 
     try {
-      const res = await authFetch('/api/stripe/user-subscription');
+      const res = await withSessionStageTimeout(
+        authFetch('/api/stripe/user-subscription'),
+        'subscription handoff',
+      );
       if (res.status === 401) {
         return;
       }
@@ -270,9 +297,28 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
+    let bootstrapTimeoutId: number | null = window.setTimeout(() => {
+      console.warn(
+        `[Auth] Supabase auth-state bootstrap timed out after ${AUTH_BOOTSTRAP_TIMEOUT_MS}ms; continuing fail-closed.`,
+      );
+      bootstrapTimeoutId = null;
+      resetAuthProjection();
+      setLoading(false);
+    }, AUTH_BOOTSTRAP_TIMEOUT_MS);
+
+    const clearBootstrapTimeout = () => {
+      if (bootstrapTimeoutId === null) return;
+      window.clearTimeout(bootstrapTimeoutId);
+      bootstrapTimeoutId = null;
+    };
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        clearBootstrapTimeout();
+      }
+
       if (event === 'SIGNED_OUT' || !session) {
         sessionBootstrapKeyRef.current = null;
         updateUserSession(null);
@@ -286,7 +332,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       scheduleSessionEstablishment(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearBootstrapTimeout();
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = async (_email: string, _password: string) => {
@@ -360,7 +409,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
             const {
               data: { session: liveSession },
               error,
-            } = await supabase.auth.getSession();
+            } = await withSessionStageTimeout(
+              supabase.auth.getSession(),
+              'post-MFA session read',
+            );
 
             const expectedUserId = expectedSession?.user?.id || '';
             const receivedUserId = liveSession?.user?.id || '';
@@ -434,7 +486,12 @@ export function SessionComposition({ children }: SessionCompositionProps) {
                     return;
                   }
                   try {
-                    const { data: { session } } = await supabase.auth.getSession();
+                    const {
+                      data: { session },
+                    } = await withSessionStageTimeout(
+                      supabase.auth.getSession(),
+                      'auth recovery session read',
+                    );
                     if (session) {
                       sessionBootstrapKeyRef.current = null;
                       await establishSession(session);
