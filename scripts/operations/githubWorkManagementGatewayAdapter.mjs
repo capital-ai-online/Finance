@@ -24,6 +24,7 @@ export const GATEWAY_CAPABILITIES = Object.freeze([
 
 const CAPABILITY_SET = new Set(GATEWAY_CAPABILITIES);
 const ALLOWED_MILESTONE_STATES = new Set(['open', 'closed']);
+const MAX_MILESTONE_PAGES = 100;
 
 export const WIKI_NAVIGATION_PAGES = Object.freeze({
   Home: [
@@ -143,9 +144,26 @@ async function readMilestone(githubRest, owner, repo, number) {
   return normalizeMilestone(raw);
 }
 
+async function listMilestones(githubRest, owner, repo) {
+  const milestones = [];
+
+  for (let page = 1; page <= MAX_MILESTONE_PAGES; page += 1) {
+    const raw = await githubRest({
+      method: 'GET',
+      path: `/repos/${owner}/${repo}/milestones?state=all&per_page=100&page=${page}`,
+    });
+    if (!Array.isArray(raw)) fail('milestone list response must be an array');
+
+    milestones.push(...raw.map(normalizeMilestone));
+    if (raw.length < 100) return Object.freeze(milestones);
+  }
+
+  fail(`milestone pagination exceeded safety limit of ${MAX_MILESTONE_PAGES} pages`);
+}
+
 export function createGitHubWorkManagementGatewayAdapter({
-  githubRest,
-  wikiTransport,
+  githubRest = undefined,
+  wikiTransport = undefined,
   owner = CANONICAL_GITHUB_OWNER,
   repo = CANONICAL_GITHUB_REPOSITORY,
 } = {}) {
@@ -167,12 +185,7 @@ export function createGitHubWorkManagementGatewayAdapter({
       assertCapability(capability);
 
       if (capability === 'github.work_management.milestones.list') {
-        const raw = await githubRest({
-          method: 'GET',
-          path: `/repos/${owner}/${repo}/milestones?state=all&per_page=100`,
-        });
-        if (!Array.isArray(raw)) fail('milestone list response must be an array');
-        return Object.freeze(raw.map(normalizeMilestone));
+        return listMilestones(githubRest, owner, repo);
       }
 
       if (capability === 'github.work_management.milestones.get') {
@@ -198,6 +211,10 @@ export function createGitHubWorkManagementGatewayAdapter({
       if (capability === 'github.work_management.milestones.update_pilot') {
         assertPositiveInteger(input.number, 'milestone number');
         assertMilestoneState(input.state);
+
+        const existing = await readMilestone(githubRest, owner, repo, input.number);
+        assertCanonicalMilestone(existing);
+
         const updated = normalizeMilestone(await githubRest({
           method: 'PATCH',
           path: `/repos/${owner}/${repo}/milestones/${input.number}`,
