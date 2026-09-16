@@ -21,7 +21,8 @@ const loginPage = read('src/features/public/ui/LoginPage.tsx');
 const loginPageRedirect = read('src/features/public/ui/LoginPageRedirect.tsx');
 const legacyLandingBridge = read('src/components/LandingPage.tsx');
 const sessionComposition = read('src/app/auth/SessionComposition.tsx');
-const dashboard = read('src/components/Dashboard.tsx');
+const dashboard = read('src/app/dashboard/Dashboard.tsx');
+const legacyDashboardBridge = read('src/components/Dashboard.tsx');
 const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
 
@@ -133,6 +134,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(dashboardHeader).toContain('<DashboardNavigation');
     expect(dashboardNavigation).toContain('Login (Anmelden)');
     expect(dashboardNavigation).toContain("navigate('login')");
+    expect(legacyDashboardBridge).toContain("from '../app/dashboard/Dashboard'");
     expect(legacyLandingBridge).toContain('LoginPageRedirect');
     expect(loginPageRedirect).toContain("window.location.assign('/login')");
     expect(loginPageRedirect).toContain('href="/login"');
