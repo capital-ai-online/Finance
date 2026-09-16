@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/compliance/`  
 **Role:** cross-cutting Compliance assessment and regulatory traceability  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — REQ-COMP-033 OPS/Security owner returns reassessed  
-**Baseline:** `main@f6fccf64f78a1a29c3f98a9aa3adc8634d51b80d`  
+**Reconciliation:** 2026-09-16 — PR #973 terminalized; six held inputs re-prioritized against current main  
+**Baseline:** `main@7e083b6c99327884fbc4169525bf8646519d06a7`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -16,7 +16,7 @@ This file is the single active project execution projection. Dated active sideca
 
 ### COMP-REQ-033 — Audit / traceability current-return reassessment
 
-**State:** `MATERIALIZED_ON_BRANCH / MERGE_PENDING` on `agent/compliance-req-comp-033-reassessment-20260916`.
+**State:** `DONE_MAIN / TERMINAL` via Human-merged PR #973 (`merge aaf246511cc75c525a56ec13728504ee5516b6c3`).
 
 Human-merged OPS PR #937 supplies strict source-owned evidence identity/correlation/freshness binding for `PVC-18`; Human-merged OPS PR #939 binds the productive Traceability → EventMesh returned event into that strict projection. Human-merged Security PR #956 independently verifies the unchanged DATA evidence-identity/freshness contract with fail-closed negative tests. Exact PR-head CI/Governance/Container Security evidence for #939 and #956 is successful.
 
@@ -24,7 +24,22 @@ The previously retained `OPS-18 transport open` and `independent Security verifi
 
 Assessment evidence: `../../compliance/CAPITAL-AI-COMP/reports/REQ_COMP_033_CURRENT_RETURN_REASSESSMENT_2026-09-16.md`.
 
-**Exit:** OPS #937/#939 and SEC #956 are consumed in canonical COMP assessment/traceability surfaces; stale OPS/Security open-return gates are removed; foreign PVC/Domain/Security authority remains unchanged; no Compliance runtime/code delta is introduced.
+**Exit:** `DONE_MAIN` — OPS #937/#939 and SEC #956 are consumed in canonical COMP assessment/traceability surfaces through PR #973; stale OPS/Security open-return gates are removed; foreign PVC/Domain/Security authority remains unchanged; no Compliance runtime/code delta was introduced.
+
+## Current execution order — EVIDENCE_OR_OWNER_HELD
+
+This order is an **execution-readiness order, not a legal-risk or severity ranking**. It prioritizes concrete owner-routable returns and current dependency readiness. The seven `LEGAL_OR_SCOPE_HELD` inputs remain a separate Human/Legal queue and are not promoted by engineering evidence.
+
+| Order | Requirement | Current evidence state | Concrete owner / required return | Objective exit gate |
+|---:|---|---|---|---|
+| 1 | `REQ-COMP-032` / `COMP-GAP-007` | `EVIDENCE_MISSING / OPEN` — PR #776 placed the fail-closed Recovery harness on main; PR #802 was closed without merge, and measured operating evidence remains absent | `CAPITAL-AI-OPS / PVC-08` returns measured scheduled backup age/RPO, isolated restore, measured RTO and integrity evidence; `CAPITAL-AI-SEC` independently verifies the returned evidence | At least two successful scheduled backup evidence records, measured DB RPO `<= 24h`, one isolated restore with integrity match and measured DB RTO `<= 60 min`, followed by independent Security verification; no Production/provider mutation inferred from documentation |
+| 2 | `REQ-COMP-034` | `EVIDENCE_OR_OWNER_HELD` — DATA validation/freshness/provenance/DQ is composed fail-closed; FIN-12 and FIN-20 remain open | `CAPITAL-AI-FINTECH / PVC-12..17` returns current-main FIN-12 feature-contract mapping and FIN-20 exact DATA→feature→score→rank→trace lineage; `CAPITAL-AI-DATA / PVC-09..11` returns only independently proven correction-version-lineage residuals | Accepted DATA evidence remains identity-linked through feature, scoring and ranking into required OPS trace/evidence transport; stale/diverged branch evidence is not accepted as a current return |
+| 3 | `REQ-COMP-017` / `COMP-GAP-004` | `EVIDENCE_MISSING / LEGAL_REVIEW` | Human/Legal plus the actual provider/domain owner returns provider role, effective DPA/contract, subprocessors, transfer mechanism/TIA and region evidence where applicable; `PVC-N/A` remains until the concrete flow is correlated | Each material provider flow has an evidence-linked role/contract/subprocessor/transfer disposition and competent Legal interpretation where required; no PVC or legal conclusion is guessed |
+| 4 | `REQ-COMP-019` | `EVIDENCE_OR_OWNER_HELD / SCOPE_SPECIFIC` | `CAPITAL-AI-CLIENT / PVC-01`, `CAPITAL-AI-DOC / PVC-03` and/or `CAPITAL-AI-FINTECH / PVC-17` return evidence only for actual material generated-output surfaces; Human/Legal supplies any required legal-sufficiency decision | Material customer-facing/generated-content surfaces are inventoried and each applicable surface has evidence for the existing transparency/claim boundary or an owner-routed remediation; no blanket AI-transparency PASS is inferred |
+| 5 | `REQ-COMP-021` / `COMP-GAP-005` | `EVIDENCE_MISSING` | Human Owner / organizational operator returns attributable AI-literacy training/completion/acknowledgement evidence; no productive PVC is created | Dated, attributable completion/acknowledgement evidence identifies the applicable training/control version and covered Human role(s); Compliance does not fabricate organizational records |
+| 6 | `REQ-COMP-031` | `EVIDENCE_OR_OWNER_HELD / CONTRACT_UNIVERSE_UNKNOWN` | Human/Legal plus each affected owner after correlation returns the complete binding customer/provider/partner contract universe and effective versions; `PVC-N/A` until correlation | Binding-contract inventory is complete for the assessed scope, effective versions are identifiable, and each material obligation is routed to the actual affected owner/PVC or retained as a competent Legal gate |
+
+The currently known FIN-12 branch `agent/fintech-fin12-validated-feature-contract-20260916` is **not** a current owner return: against this baseline it is `56 behind / 3 ahead` with merge base `683dc08b5079ee41e736b5073e52ef62c4105cf3`. It must be rematerialized/re-correlated from then-current main before its payload can count as current `REQ-COMP-034` evidence.
 
 ## PR #900 / #901 work packages
 
