@@ -1,0 +1,100 @@
+prompt:
+  id: "CAPITAL-AI-GOV-CHAT-HANDOFF-PROJECT-FOLDER-SPLIT-01"
+  version: "1.0.0"
+  mode: "CURRENT_MAIN_CHAT_PRESENTATION_CONTROL_MATERIALIZATION"
+  repository: "capital-ai-online/Finance"
+
+  executing_project:
+    project: "CAPITAL-AI-GOV"
+    project_folder: "docs/projects/governance/"
+    primary_pvc: "PVC-05"
+    primary_owner: "CAPITAL-AI-GOV"
+
+  authority:
+    trust_root: "/AGENTS.md@current-main"
+    stable_control: "CTRL-SDLC-CHAT-HANDOFF-001"
+    accepted_adr: "ADR-0096"
+    new_authority_id: false
+    role: "execution_prompt_non_authorizing"
+
+  objective:
+    summary: >
+      Materialisiere die Owner-Regel fuer die Darstellung der maximal zwei
+      Roadmap-/Workaround-Fortsetzungsschritte so, dass jeder Schritt seinen
+      kanonischen Projektfolder nennt und Schritte verschiedener Projektfolder
+      niemals in demselben Plain-Text-Snippet erscheinen.
+
+  canonical_sources:
+    project_folder_mapping:
+      - "docs/projects/README.md"
+      - "docs/projects/PROJECT_VALUE_CHAIN.md"
+    queue_control: "CTRL-SDLC-CHAT-HANDOFF-001"
+
+  rules:
+    max_next_steps: 2
+    project_folder_required_per_step: true
+    project_folder_line_format: "📁 Projektfolder: <canonical-project-folder>"
+    exit_gate_required_per_step: true
+    render_container: "fenced_plaintext_text_block"
+    heading: "🧭 NÄCHSTE SCHRITTE"
+    group_by_canonical_project_folder: true
+    same_project_folder:
+      behavior: "MAY_SHARE_ONE_SNIPPET"
+      requirement: >
+        Wenn beide Schritte denselben kanonischen Projektfolder besitzen, duerfen
+        sie gemeinsam in einem einzigen fenced plaintext text block stehen.
+    different_project_folders:
+      behavior: "MUST_SPLIT_SNIPPETS"
+      requirement: >
+        Wenn die zwei Schritte unterschiedliche kanonische Projektfolder besitzen,
+        MUSS jeder Schritt in einem eigenen fenced plaintext text block ausgegeben
+        werden. Ein gemeinsames Snippet fuer unterschiedliche Projektfolder ist verboten.
+      heading_per_snippet: true
+      preserve_global_step_numbering: true
+    foreign_project_execution:
+      requirement: >
+        Angezeigt wird der kanonische Target-Project-Folder des jeweiligen Schritts,
+        nicht lediglich der GOV-/OPS-Executor-Folder.
+    unresolved_project_folder:
+      behavior: "FAIL_CLOSED"
+      requirement: >
+        Bei fehlender oder mehrdeutiger Projektfolder-Aufloesung darf der Schritt
+        nicht mit einem geratenen Folder ausgegeben werden; die Unaufloesbarkeit ist
+        stattdessen als Blocker zu benennen.
+
+  required_shapes:
+    single_or_same_folder: |
+      🧭 NÄCHSTE SCHRITTE
+
+      1. 🔹 <Schritt>
+         📁 Projektfolder: docs/projects/<project>/
+         🎯 Exit Gate: <objektive Abschlussbedingung>
+
+      2. 🔹 <optionaler Schritt desselben Projektfolders>
+         📁 Projektfolder: docs/projects/<project>/
+         🎯 Exit Gate: <objektive Abschlussbedingung>
+    different_folders_first_snippet: |
+      🧭 NÄCHSTE SCHRITTE
+
+      1. 🔹 <Schritt A>
+         📁 Projektfolder: docs/projects/<project-a>/
+         🎯 Exit Gate: <objektive Abschlussbedingung>
+    different_folders_second_snippet: |
+      🧭 NÄCHSTE SCHRITTE
+
+      2. 🔹 <Schritt B>
+         📁 Projektfolder: docs/projects/<project-b>/
+         🎯 Exit Gate: <objektive Abschlussbedingung>
+
+  implementation_target:
+    file: "AGENTS.md"
+    section: "Mandatory chat handoffs (CTRL-SDLC-CHAT-HANDOFF-001)"
+    representation: "yaml_code_snippet_plus_normative_prose"
+
+  validation:
+    - "Every displayed next step resolves exactly one canonical project folder."
+    - "Every displayed step contains the project-folder line and an objective exit gate."
+    - "Two different project folders produce two separate fenced plaintext snippets."
+    - "Two same-folder steps may remain in one fenced plaintext snippet."
+    - "At most two continuation items are rendered in total."
+    - "No second authority, roadmap, routing registry or presentation control is created."
