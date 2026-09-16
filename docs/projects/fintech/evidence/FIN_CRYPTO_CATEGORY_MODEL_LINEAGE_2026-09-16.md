@@ -93,7 +93,7 @@ Canonical result metadata mismatches (asset, model ID/version or feature version
 
 ## Plugin / provider precheck disposition
 
-GitHub was used for current-main contracts, tests, history, branch and writer correlation. Supabase, Binance, Alpaca, QuickNode and Render were not invoked merely because they are available: no direct provider truth is required to materialize this bounded contract, and doing so would not satisfy the missing DATA-owned contract. QuickNode/Binance/Alpaca cannot bypass DATA; Render runtime evidence is a post-integration concern; no persistence mutation is needed.
+GitHub was used for current-main contracts, tests, history, branch and writer correlation. Render was invoked read-only during final PR correlation solely to verify the current Finance production deployment identity required by the canonical Production-Baseline block; the live deployment is `main@bea9373811202aef98f3ad8ffd53dba99d37c453`. Supabase, Binance, Alpaca and QuickNode were not invoked merely because they are available: direct provider truth is not required to materialize this bounded contract and would not satisfy the missing DATA-owned contract. QuickNode/Binance/Alpaca cannot bypass DATA; no persistence or external platform mutation is performed.
 
 ## Validation classification
 
