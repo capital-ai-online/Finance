@@ -43,12 +43,14 @@ describe('S1-R2-00 entitlement authority boundary', () => {
     const readback = read('src/lib/subscriptionReadback.ts');
 
     expect(session).toContain("import { authFetch } from '../../lib/authFetch'");
-    expect(session).toContain("() => authFetch('/api/stripe/user-subscription')");
+    expect(session).toContain("void authFetch('/api/stripe/user-subscription')");
     expect(session).not.toContain('/api/stripe/user-subscription?userId=');
     expect(session).not.toContain('Authorization: `Bearer ${session.access_token}`');
     expect(session).toContain("subscriptionTier: 'Free'");
     expect(session).toContain("const tier: SubscriptionTier = data?.subscriptionTier || 'Free';");
-    expect(session).toContain('void withSessionStageTimeout(');
+    expect(session).not.toContain('withSessionStageTimeout(');
+    expect(session).not.toContain('SESSION_STAGE_TIMEOUT_MS');
+    expect(session).not.toContain('Promise.race([');
 
     expect(readback).toContain("authFetch('/api/stripe/user-subscription')");
     expect(readback).not.toContain('?email=');
