@@ -53,13 +53,17 @@ A mismatch is classified as a stale event and terminates on a cheap no-op path. 
 | `.github/workflows/pr-governance.yml` | PR + head + base + action | yes | policy/candidate checkout, Node/npm and governance validation |
 | `.github/workflows/zizmor.yml` | PR + head + base | yes | checkout and zizmor analysis |
 
-The manually dispatched `capital-ai-ci-shadow.yml` has no automatic `pull_request` trigger and is therefore not part of the stale automatic-PR-event race surface.
+The other PR-number-related concurrency surfaces were correlated rather than mechanically rewritten:
+
+- `.github/workflows/sync-agent-pr-branches.yml` has its own isolated sync concurrency group and cannot cancel CI/Container/Governance/zizmor. Its `ready_for_review` path reads the live `headRefOid` before mutation and sends that SHA as `expected_head_sha` to GitHub's Update-Branch API. A stale/changed head is already handled as `422` without a second sync path, which is exactly what the PR #989 race demonstrated.
+- `.github/workflows/capital-ai-ci-shadow.yml` has no automatic `pull_request` trigger and runs only through `workflow_dispatch`, so it is outside the stale automatic-PR-event race surface.
+- trusted `workflow_run` baseline refresh paths have separate live PR/head/base correlation and do not share the Required Check concurrency groups addressed here; they are not widened into this bounded fix.
 
 ## 4. Preserved invariants
 
 - `build-and-test` remains the canonical technical Required Check; no synthetic reporter or replacement context is introduced.
 - `Hardened image / HIGH+CRITICAL CVE gate` and `PR Governance (Kosten / Workflow / Vorlage)` retain their existing check identities.
-- Same-snapshot duplicate runs may still be cancelled by `cancel-in-progress: true`.
+- Same-snapshot duplicate runs within the same workflow concurrency group may still be cancelled by `cancel-in-progress: true`.
 - Exact-snapshot PASS reuse in `ci.yml` remains bound to workflow, PR number, head SHA, base SHA and prior success.
 - A changed live head or base cannot reuse old evidence and cannot be cancelled by a stale older snapshot.
 - `push` to `main` remains on the existing full CI/build/attestation/deployment path.
@@ -76,6 +80,7 @@ The manually dispatched `capital-ai-ci-shadow.yml` has no automatic `pull_reques
 4. Governance includes event action identity in addition to head/base.
 5. existing Required Check names and `cancel-in-progress: true` remain present.
 6. the previous PR-number-only concurrency strings are absent from the protected automatic surfaces.
+7. the separate branch-sync workflow retains live `headRefOid` + `expected_head_sha` protection and the shadow CI remains manual-only.
 
 Because this slice changes `.github/workflows/ci.yml` and other workflow-control surfaces, the trusted-base planner must classify its hosted validation fail-closed rather than allowing the candidate to self-demote its checks.
 
