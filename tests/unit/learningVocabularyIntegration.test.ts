@@ -14,7 +14,8 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(learning).toContain('normalizeVocabularyTerm');
     expect(learning).toContain("from '../../../platform/Vocabulary'");
     expect(learning).toContain("concept.status === 'approved'");
-    expect(learning).toContain('Capital-AI Learning Platform');
+    expect(learning).toContain('CAPITAL-AI Vocabulary Universe');
+    expect(learning).toContain('Read-only Knowledge Projection.');
     expect(learning).toContain('CATEGORY_LABELS');
     expect(learning).not.toContain('function normalizeSearch');
     expect(learning).not.toContain("platform/Vocabulary/node");
