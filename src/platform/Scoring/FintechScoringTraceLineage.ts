@@ -167,7 +167,7 @@ export function buildFintechScoringTraceLineage(input: {
     if (ranked.entry.modelVersion !== integrity.modelVersion) reasons.push('rank-model-version-mismatch');
     if (ranked.entry.executorKey !== integrity.executorKey) reasons.push('rank-executor-mismatch');
     if (ranked.entry.resultContractVersion !== integrity.resultContractVersion) reasons.push('rank-result-contract-version-mismatch');
-    if (canonical.status === 'READY' && ranked.entry.canonicalScore !== canonical.final_score) {
+    if (canonical.status === 'READY' && ranked.entry.canonicalScore !== canonical.score) {
       reasons.push('rank-canonical-score-mismatch');
     }
   }
