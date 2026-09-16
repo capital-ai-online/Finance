@@ -4,6 +4,8 @@ export { SessionComposition, type SessionCompositionValue } from './auth/Session
 export {
   Dashboard,
   type DashboardProps,
+  DashboardHeader,
+  type DashboardHeaderProps,
   DashboardNavigation,
   type DashboardNavigationAdminTab,
   type DashboardNavigationProfile,

@@ -21,7 +21,7 @@ import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { SecurityRadarBadge } from './SecurityRadarBadge';
 import type { UserSession } from '../app/types/UserSession';
 import type { DashboardView } from '../app/dashboard/dashboardViews'
-import { DashboardNavigation } from '../app/dashboard/DashboardNavigation';
+import { DashboardHeader } from '../app/dashboard/DashboardHeader';
 import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter'
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
 import { AdminPortal } from './AdminPortal';
@@ -86,6 +86,7 @@ import { motion, AnimatePresence } from 'motion/react';
 interface DashboardProps {
   userSession: UserSession;
   onLogout: () => void;
+  onGlobalLogout?: () => void | Promise<void>;
   onRegister: (name: string, email: string) => void;
   onLoginEmail?: (email: string, password: string) => Promise<void>;
   onRegisterEmail?: (name: string, email: string, password: string) => Promise<void>;
@@ -129,7 +130,7 @@ function SidebarTooltip({ title, text, children }: { title: string; text: string
   );
 }
 
-export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onRegisterEmail }: DashboardProps) {
+export function Dashboard({ userSession, onLogout, onGlobalLogout, onRegister, onLoginEmail, onRegisterEmail }: DashboardProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   // Drawer open state is owned by DashboardNavigation.
   const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
@@ -415,89 +416,23 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
         <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-aif-neon-cyan/15 blur-[150px] rounded-full" />
       </div>
 
-      {/* Navigation rendering is delegated to DashboardNavigation. */}
-      {/* Drawer composition is owned by DashboardNavigation. */}
-
-      {/* Sticky Main Navigation */}
-      <nav className="relative z-10 border-b border-aif-gold-DEFAULT/20 bg-black/70 backdrop-blur-xl sticky top-0 shadow-[0_4px_30px_rgba(245,196,83,0.15)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
-          
-          <div className="flex items-center gap-4 sm:gap-6">
-            
-            {/* Elegant Hamburger menu button */}
-            <DashboardNavigation
-              activeView={activeView}
-              profile={profile}
-              isGuest={userSession.type === 'guest'}
-              isAdmin={profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net'}
-              onNavigate={navigateTo}
-              onLogout={onLogout}
-              onSelectSymbol={setSelectedSymbol}
-              onCategoryFilterChange={setCategoryFilter}
-              onAdminNavigate={(tab) => {
-                setActiveView('admin-portal');
-                setAdminTab(tab);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-
-            {/* Logo and Brand */}
-            <div className="relative">
-              <div 
-                className="flex items-center gap-3 p-2 rounded-xl"
-              >
-                <CapitalAiLogo size={44} showText={false} />
-                <div className="flex flex-col items-start leading-none">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase">PRODUCTION RELEASE</span>
-                    <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono tracking-widest">
-                      AKTIV
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Thread Activity Indicator */}
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-              <Activity className="text-aif-neon-cyan animate-pulse" size={14} />
-              <span className="text-[11px] font-mono text-white/80 tracking-widest uppercase">8 Worker-Threads / Parallel API-Querying</span>
-            </div>
-          </div>
-
-          {/* Top right area cleaned of duplicate navigation buttons */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Global Support E-Mail Link */}
-            <a 
-              href="mailto:support@capital-ai.online" 
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 text-xs font-mono text-white/70 hover:text-white transition-all"
-              title="Support per E-Mail kontaktieren"
-            >
-              <Mail size={12} className="text-aif-gold-DEFAULT" />
-              <span>support@capital-ai.online</span>
-            </a>
-
-            {profile.subscriptionTier !== 'Enterprise' ? (
-              <button
-                onClick={() => setIsSubscriptionModalOpen(true)}
-                className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-black text-[11px] sm:text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 shadow-[0_0_15px_rgba(245,196,83,0.3)] cursor-pointer"
-              >
-                <Sparkles size={12} className="animate-pulse" />
-                <span className="hidden sm:inline">Premium freischalten</span>
-                <span className="sm:hidden">Premium</span>
-              </button>
-            ) : (
-              <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center gap-1.5">
-                <ShieldCheck size={14} />
-                <span>Enterprise Aktiv</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
+      <DashboardHeader
+        activeView={activeView}
+        profile={profile}
+        isGuest={userSession.type === 'guest'}
+        isAdmin={profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net'}
+        onNavigate={navigateTo}
+        onLogout={onLogout}
+        onGlobalLogout={onGlobalLogout}
+        onSelectSymbol={setSelectedSymbol}
+        onCategoryFilterChange={setCategoryFilter}
+        onAdminNavigate={(tab) => {
+          setActiveView('admin-portal');
+          setAdminTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onUpgradeClick={() => setIsSubscriptionModalOpen(true)}
+      />
 
       {/* Main Content Area */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">

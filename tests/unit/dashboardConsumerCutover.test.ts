@@ -5,10 +5,12 @@ import { describe, expect, it } from 'vitest';
 const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
+const appDashboard = read('src/app/dashboard/Dashboard.tsx');
+const dashboardHeader = read('src/app/dashboard/DashboardHeader.tsx');
 const legacyDashboard = read('src/components/Dashboard.tsx');
 const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
 
-describe('BB-2B/BB-2C/BB-2D dashboard consumer cutover', () => {
+describe('BB-2B/BB-2C/BB-2D/BB-2F dashboard consumer cutover', () => {
   it('consumes the canonical dashboard view contract without recreating local authority', () => {
     expect(legacyDashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
     expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
@@ -35,7 +37,6 @@ describe('BB-2B/BB-2C/BB-2D dashboard consumer cutover', () => {
   it('routes migrated detail views through the canonical dashboard view router', () => {
     expect(legacyDashboard).toContain("import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter'");
     expect(legacyDashboard).toContain('<DashboardViewRouter');
-    expect(legacyDashboard).toContain('<DashboardNavigation');
     expect(legacyDashboard).toContain("{activeView === 'dashboard' && (");
     expect(legacyDashboard).toContain("{activeView === 'myworkspace' && (");
 
@@ -83,5 +84,32 @@ describe('BB-2B/BB-2C/BB-2D dashboard consumer cutover', () => {
     ]) {
       expect(legacyDashboard).toContain(projection);
     }
+  });
+
+  it('extracts productive header/workspace chrome into the app-owned BB-2F boundary', () => {
+    expect(legacyDashboard).toContain("import { DashboardHeader } from '../app/dashboard/DashboardHeader'");
+    expect(legacyDashboard).toContain('<DashboardHeader');
+    expect(legacyDashboard).not.toContain('<DashboardNavigation');
+    expect(legacyDashboard).not.toContain('Sticky Main Navigation');
+    expect(legacyDashboard).not.toContain('8 Worker-Threads / Parallel API-Querying');
+
+    expect(dashboardHeader).toContain('data-testid="dashboard-app-header"');
+    expect(dashboardHeader).toContain("import { CapitalAiLogo } from '../../shared/branding/CapitalAiLogo'");
+    expect(dashboardHeader).toContain('<DashboardNavigation');
+    expect(dashboardHeader).toContain('min-h-11');
+    expect(dashboardHeader).not.toContain('SessionComposition');
+    expect(dashboardHeader).not.toContain('supabase');
+    expect(dashboardHeader).not.toContain('readAuthenticatedSubscriptionTier');
+  });
+
+  it('projects local and global logout callbacks without moving IAM/session authority into the header', () => {
+    expect(appDashboard).toContain('onGlobalLogout={onGlobalLogout ? handleGlobalLogoutClick : undefined}');
+    expect(appDashboard).toContain('await onGlobalLogout();');
+    expect(appDashboard).not.toContain('fixed bottom-4 right-4');
+
+    expect(dashboardNavigation).toContain('onGlobalLogout?: () => void | Promise<void>;');
+    expect(dashboardNavigation).toContain('Von allen Geräten abmelden');
+    expect(dashboardHeader).toContain('onGlobalLogout={onGlobalLogout}');
+    expect(dashboardHeader).not.toContain('window.confirm');
   });
 });
