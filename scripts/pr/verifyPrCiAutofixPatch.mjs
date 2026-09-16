@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import {
+  isBoundedAgenticSourcePath,
   isProtectedAutofixPath,
   normalizePath,
   parseStringArray,
@@ -21,13 +22,6 @@ function git(args, cwd = process.cwd()) {
 
 function fail(message) {
   throw new Error(`[pr-ci-autofix-patch] ${message}`);
-}
-
-export function isCodePatchPath(filePath) {
-  const p = normalizePath(filePath);
-  return p.startsWith('src/')
-    || p.startsWith('tests/')
-    || /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(p);
 }
 
 function parseNameStatus(raw) {
@@ -98,8 +92,8 @@ export function verifyPatch({
   } else if (engine === 'copilot') {
     const original = new Set(originalChangedFiles.map(normalizePath).filter(Boolean));
     for (const file of files) {
-      if (!isCodePatchPath(file)) {
-        fail(`agentic patch path is outside bounded source/test scope: ${file}`);
+      if (!isBoundedAgenticSourcePath(file)) {
+        fail(`agentic patch path is outside bounded source scope: ${file}`);
       }
       if (!original.has(file)) {
         fail(`agentic patch may modify only files already changed by the PR: ${file}`);
