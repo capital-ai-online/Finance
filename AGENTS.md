@@ -101,6 +101,10 @@ After PR creation, run only the checks required by the changed scope and protect
 
 A skipped/not-applicable check is reported as such; it is never PASS. Technical checks establish technical evidence only and never merge authority.
 
+### Retired M10 PR-CI path
+
+The former productive `M10 AUTHORIZE_PR_CI` runtime remains **RETIRED / OFF** following Human Merge of PR #691. Current-state work **MUST NOT search** for, reconstruct, or report the absence of that retired productive M10 implementation as a gap. Historical M10 material is evidence only. Any future passkey/PR-CI authorization mechanism requires a new explicit Owner decision and the normal branch, validation, review and Human/CODEOWNER merge boundaries above.
+
 ## 8. Evidence, EventMesh and handover
 
 Relevant mutations require:
