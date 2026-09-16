@@ -2,9 +2,9 @@
 
 **Projektbezeichnung:** CAPITAL-AI  
 **Dokumenttyp:** technisches Verzeichnis / Accountability-Artefakt für DSGVO-relevante Verarbeitung  
-**Version:** 2.0.0  
-**Datenschutzhinweis-Version:** 2026-08-19  
-**Stand:** 19. August 2026  
+**Version:** 2.1.0  
+**Datenschutzhinweis-Version:** 2026-09-15  
+**Stand:** 16. September 2026  
 **Status:** intern dokumentiert; **keine behördliche, gerichtliche oder externe DSGVO-Zertifizierung**
 
 > Dieses Dokument ist ein technisches Arbeits- und Nachweisartefakt. Es ersetzt weder eine externe Zertifizierung noch eine individuelle juristische Prüfung. Aussagen über AVV/DPA, Standardvertragsklauseln, Angemessenheitsbeschlüsse, Hosting-Regionen oder Subprozessoren gelten nur dann als bestätigt, wenn die zugehörige aktuelle Vendor-Evidence separat vorliegt.
@@ -36,7 +36,7 @@ Die technische Umsetzung orientiert sich an den folgenden Grundsätzen:
 - Privacy by Design / Privacy by Default,
 - Least Privilege und fail-closed Sicherheitskontrollen.
 
-Die aktuelle Privacy-Governance-Entscheidung ist in `docs/adr/ADR-0085-privacy-governance-single-source-of-truth.md` dokumentiert. Die Remediation-Roadmap liegt unter `docs/roadmaps/DSGVO_REMEDIATION_2026-08-19.md`.
+Die aktuelle Privacy-Governance-Entscheidung ist in `docs/adr/ADR-0095-privacy-governance-single-source-of-truth.md` dokumentiert. Die Remediation-Roadmap liegt unter `docs/roadmaps/DSGVO_REMEDIATION_2026-08-19.md`.
 
 ## 3. Verarbeitungstätigkeiten (technisches VVT)
 
@@ -70,9 +70,53 @@ Die Legacy-Tabelle `user_consents` bleibt aus Kompatibilitätsgründen bestehen.
 | `terms` | `contract_acceptance` | Vertrags-/AGB-Annahme |
 | `marketing` | `consent` | optionale Einwilligung |
 
-Neue Privacy-Notice-Evidence wird ab diesem Release mit Dokumentversion `2026-08-19` gespeichert. Bestehende historische Datensätze behalten ihre tatsächliche frühere Dokumentversion.
+Neue Privacy-Notice-Evidence verwendet gemäß `src/privacy/privacyPolicy.ts` und Migration `20260915172400_privacy_notice_version_guard.sql` die Dokumentversion `2026-09-15`. Bestehende historische Datensätze behalten ihre tatsächliche frühere Dokumentversion.
 
 Cookie-/Analytics-Einwilligung wird davon getrennt über selbst gehostetes CookieConsent v3 und die First-Party-Consent-Bridge verwaltet. Die Auswahl liegt im Cookie `capital_ai_consent_v3` (Revision 1, maximal 182 Tage). Alte CookieHub-Entscheidungen werden nicht übernommen. `public/google-analytics-consent.js` startet mit `denied` und lädt nur GA4 nach gültigem Analytics-Opt-in. AdSense bleibt gemäß Owner-Variante A pausiert. Diese Migration implementiert keine zentrale anonyme Consent-Log-API; lokale Auswahl ist keine serverseitige Audit-Evidence.
+
+### 4.1 Analytics-Einwilligungsnachweis — konkretisierter Entwurf
+
+**Stand:** 2026-09-16; Repository-Basis `5ae2b371da45a5c07304fd704a7026eded976f1b`.  
+**Zuordnung:** CAPITAL-AI-COMP / `docs/projects/compliance/`, COMP-PR900-03; cross-cutting ohne produktive PVC.  
+**Status:** DESIGN_READY / IMPLEMENTATION_NOT_STARTED / LEGAL_REVIEW_PENDING. Dieser Abschnitt beschreibt den prüfbaren Zielzustand; er behauptet weder eine bestehende Logging-API noch eine rechtliche Abnahme. Die bestehende Variante A bleibt unverändert.
+
+Der Nachweis betrifft ausschließlich die optionale Analytics-Entscheidung. Registrierungsnachweise in `user_consents` bleiben getrennt. Eine pseudonyme Browserkennung ist keine verifizierte Personenidentität und wird nicht als anonym bezeichnet.
+
+| Nachweisaspekt | Vorgeschlagene technische Festlegung |
+| --- | --- |
+| Entscheidung | `analytics: granted/denied`, `action: grant/change/withdraw`; notwendige Funktionen sind keine optionale Einwilligung, AdSense bleibt gesperrt. |
+| Zeitpunkt | Serverseitiges `received_at` in UTC; optionaler Client-Zeitpunkt separat als nicht vertrauenswürdige Angabe. Keine Rückdatierung bei späterer Übermittlung. |
+| Hinweisversion | Servergeprüfte Kombination aus `notice_version`, `consent_revision`, `ui_artifact_sha256` und Sprache. Der Hash verweist auf den aufbewahrten damaligen Banner-/Hinweistext und die ausgelieferte Konfiguration; ein Hash allein ersetzt diese Inhalte nicht. |
+| Zuordnung | Zufällige, ausschließlich First-Party verwendete `consent_id`; serverseitig validiertes, an den Browser gebundenes Receipt. Keine Verknüpfung mit Konto, GA-Client-ID oder anderen Websites. Kein Fingerprinting. Verlust der Kennung führt zu neuer Auswahl; keine Rekonstruktion über IP/Device. |
+| Ereignisfolge | Servergenerierte `event_id`, monotone Sequenz je Receipt und Idempotenzschlüssel. Neue Entscheidungen ergänzen die Historie, statt frühere Ereignisse zu überschreiben. Ein verspäteter Grant darf einen neueren Widerruf nicht reaktivieren. |
+| Widerruf | Messung sofort lokal stoppen, erreichbare GA-Cookies entfernen, erforderlichen Reload auslösen; unabhängig vom Erfolg des Logging-Endpunkts. Widerruf idempotent protokollieren. Fehlgeschlagene Übermittlung nicht als gespeichert anzeigen; begrenzter erneuter Versuch ohne zusätzliche Kennungen. |
+| Minimierung | Keine Roh-IP, IP-Hashes, User-Agent, vollständige URL/Query, Referrer, E-Mail oder Auth-Tokens im fachlichen Nachweis. Infrastruktur-/Proxy-Logs separat auf Cookie-/Body-/Header-Redaktion prüfen. |
+| Zugriff/Integrität | First-Party-Endpunkt mit striktem Schema, Größenlimit, Origin-Prüfung, Rate-Limit und Replay-Schutz; privilegierter Serverwrite, keine direkten öffentlichen Datenbankwrites/Listenabfragen. Receipt schützt Zuordnung, beweist aber allein keine menschliche Handlung. |
+| Fehlerfall | Neuer Analytics-Grant wird erst nach bestätigtem Receipt wirksam. Fehler führen zu gesperrter Messung. Widerruf bleibt jederzeit möglich; kein Konto und keine Anmeldung erforderlich. |
+
+Wiederverwendung: CookieConsent `onFirstConsent` / `onChange`, vorhandene First-Party-Bridge, Backend-Validierung und vorhandenes Retention-/Berechtigungsmodell prüfen. Kein weiterer CMP-Anbieter und keine zweite Consent-Quelle. Eine erstmalige Ablehnung benötigt keinen zentralen personenbezogenen Nachweis; sie bleibt lokal. Ablehnung nach früherem Grant zählt als Widerruf. Aufrufe beim bloßen Seitenreload erzeugen kein neues Entscheidungsereignis. Ein historischer lokaler Grant ohne Receipt darf nicht nachträglich als nachgewiesene Einwilligung importiert werden; der Umstieg benötigt eine neue, ausdrücklich gespeicherte Entscheidung.
+
+### 4.2 Löschregel und Aufbewahrungsbegründung — Entwurf
+
+| Datenklasse | Frist / Auslöser | Begründung und Grenze |
+| --- | --- | --- |
+| Lokale Cookie-Auswahl | Bestehend: höchstens 182 Tage; bei relevanter Revision erneute Auswahl. | Bedienungszustand; keine gesetzliche Pauschalfrist und keine Frist für serverseitige Nachweise. |
+| Pseudonyme Analytics-Ereignisse | Bis zum belegten Ende der zugehörigen einwilligungsbasierten Verarbeitung; anschließend nächster täglicher Löschlauf, Ziel höchstens 24 Stunden. | Der Nachweis muss die tatsächliche Verarbeitung abdecken. Das Verarbeitungsende umfasst ggf. noch aufbewahrte personenbezogene GA-Daten; Widerruf oder Cookie-Ablauf allein belegen dieses Ende nicht. Die 24 Stunden sind ein vorgeschlagenes technisches Ausführungsziel, keine gesetzliche Nachfrist. |
+| Begründete Aufbewahrungsausnahme | Nur mit konkretem Rechts-/Nachweiszweck, verantwortlicher Freigabe, Referenz, begrenztem `hold_until` und Review vor Verlängerung. Löschung nach Ende aller belegten Zwecke im nächsten täglichen Lauf. | Keine pauschale Übernahme der drei Jahre für Datenschutzanfragen, keine automatische unbegrenzte Rechtsverteidigungsfrist. |
+| Versionierte Texte / Konfiguration ohne Besucherdaten | Solange darauf verweisende Nachweise vorhanden sind; danach normale Repository-/Dokumenthistorie. | Reproduziert den damaligen Informationsstand, ohne personenbezogene Ereignisse dauerhaft aufzubewahren. |
+| Löschlauf-Nachweis | Nur aggregierte Anzahl, Laufzeitpunkt und Ergebnis. | Keine Kopie gelöschter Receipts oder Kennungen im Löschprotokoll. Backup-/Restore-Pfade müssen abgelaufene Datensätze vor Wiederverwendung erneut bereinigen. |
+
+Vor Aktivierung muss SEO/OPS die tatsächliche GA4-Retention einschließlich Reset-Verhalten, betroffener Datenarten, Exporte und Löschmöglichkeiten providerbasiert liefern. DATA/OPS bildet daraus eine endliche, versionierte `processing_end_at`-/`delete_after`-Regel mit Testfällen; unbekannte Retention blockiert die Aktivierung des neuen Nachweisdienstes und darf nicht zu unbegrenzter Speicherung als Default werden. COMP/Verantwortlicher prüft Rechtsgrundlage und etwaige fallbezogene Aufbewahrungsausnahmen. Dieses Dokument setzt weder GA4-Einstellungen noch einen produktiven Purge um.
+
+### 4.3 Abnahme und offene Rückgaben
+
+- FE: Speichern, Wiederöffnen, Reload, Widerruf und erneuter Grant; Vergleich Auswahl/Receipt; falsche oder alte Revision bleibt gesperrt.
+- DATA/OPS: Write-/Read-Berechtigungen, Idempotenz, Reihenfolge, manipulierter Receipt, Endpoint-Ausfall, Löschung nach Frist, begrenzter Hold und Restore ohne Wiederbelebung abgelaufener Nachweise.
+- SEO/OPS: Zero Google vor gültigem Opt-in und nach Widerruf, GA ausschließlich nach Grant, Zero AdSense in allen Zuständen; tatsächliche GA-Aufbewahrung und providerbezogene Löschung separat belegen.
+- COMP: damaliger Text und Entscheidung nachvollziehbar, datensparsame Zuordnung, Rechtsgrundlage/Retention und Google-Vertrags-/Transfernachweise für den konkreten Flow bewertet.
+- Browserversuch am 2026-09-16: bestehender Cloudbrowser, Tab-Abfrage erneut `CDP operation refresh tabs timed out after 20000ms`. Keine Consent-Aktion ausgeführt. Bedienungs-/Netzwerk-Gates bleiben BLOCKED / NOT_PROVEN.
+
+Quellen: [EDPB Guidelines 05/2020, Abschnitte 5.1–5.2](https://www.edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf) verlangen Nachweisbarkeit bei datensparsamer Ausgestaltung, zweckgebundene Aufbewahrung und einfachen Widerruf; sie schreiben keine konkrete Logging-Datenbank vor. [CookieConsent Consent Logging](https://cookieconsent.orestbida.com/advanced/consent-logging.html) dokumentiert die API-/Event-Anknüpfung, aber keinen eingebauten Logging-Dienst. Abruf: 2026-09-16. Die vorgeschlagenen Felder, Receipt-Regeln und Löschläufe sind eine daraus abgeleitete technische Gestaltung, keine wörtlichen gesetzlichen Vorgaben.
 
 ## 5. Betroffenenrechte
 
