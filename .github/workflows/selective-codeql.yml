@@ -74,8 +74,16 @@ jobs:
               defaultSetupActive = true;
             }
 
+            // JSON is authoritative for the JSON-capable planner. The legacy
+            // shadow keeps the first migration PR compatible with its trusted
+            // pre-JSON base planner and is fail-closed for delimiter-bearing names.
+            if (files.some((file) => /[\r\n]/.test(file))) {
+              throw new Error('Changed-file name contains CR/LF; legacy trusted-base planner compatibility cannot encode it safely.');
+            }
+
             core.setOutput('default_setup_active', String(defaultSetupActive));
             core.setOutput('changed_files_json', JSON.stringify(files));
+            core.setOutput('changed_files_legacy', files.join('\n'));
 
       - name: Trusted Policy-Snapshot aus PR-Base bzw. aktuellem main auschecken
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -97,6 +105,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           CI_FORCE_FULL: ${{ github.event_name == 'pull_request' && 'false' || 'true' }}
           CHANGED_FILES_JSON: ${{ steps.provider.outputs.changed_files_json }}
+          CHANGED_FILES: ${{ steps.provider.outputs.changed_files_legacy }}
         run: node scripts/pr/planPrValidation.mjs
 
       - name: Sprachmatrix materialisieren
