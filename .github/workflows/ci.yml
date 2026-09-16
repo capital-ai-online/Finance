@@ -149,6 +149,27 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Vertrauenswürdige PR-Policy aus Base-Snapshot vorbereiten
+        id: trusted_policy
+        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true' && github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          policy_dir="$RUNNER_TEMP/capital-ai-pr-policy"
+          mkdir -p "$policy_dir"
+          git show "$PR_BASE_SHA:scripts/pr/classifyPrScope.mjs" > "$policy_dir/classifyPrScope.mjs"
+          echo "classifier_path=$policy_dir/classifyPrScope.mjs" >> "$GITHUB_OUTPUT"
+          if git cat-file -e "$PR_BASE_SHA:scripts/pr/planPrValidation.mjs" 2>/dev/null; then
+            git show "$PR_BASE_SHA:scripts/pr/planPrValidation.mjs" > "$policy_dir/planPrValidation.mjs"
+            echo "planner_available=true" >> "$GITHUB_OUTPUT"
+            echo "planner_path=$policy_dir/planPrValidation.mjs" >> "$GITHUB_OUTPUT"
+          else
+            echo "planner_available=false" >> "$GITHUB_OUTPUT"
+            echo "Base-Snapshot enthält den Planner noch nicht; Bootstrap läuft fail-closed mit vollständiger Test-/Analyseentscheidung."
+          fi
+
       - name: Prüfumfang klassifizieren (D/C/R)
         id: scope
         if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
@@ -159,9 +180,45 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          TRUSTED_CLASSIFIER_PATH: ${{ steps.trusted_policy.outputs.classifier_path }}
         run: |
           set -euo pipefail
-          node scripts/pr/classifyPrScope.mjs
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            node "$TRUSTED_CLASSIFIER_PATH"
+          else
+            node scripts/pr/classifyPrScope.mjs
+          fi
+
+      - name: Diff-basierten Test-/CodeQL-/Review-Plan bestimmen
+        id: validation_plan
+        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          TRUSTED_PLANNER_AVAILABLE: ${{ steps.trusted_policy.outputs.planner_available }}
+          TRUSTED_PLANNER_PATH: ${{ steps.trusted_policy.outputs.planner_path }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "push" ]; then
+            node scripts/pr/planPrValidation.mjs --force-full
+          elif [ "$TRUSTED_PLANNER_AVAILABLE" = "true" ]; then
+            node "$TRUSTED_PLANNER_PATH"
+          else
+            {
+              echo 'vitest_mode=full'
+              echo 'node_pr_tests=true'
+              echo 'node_systemadmin_tests=true'
+              echo 'node_security_assessment_tests=true'
+              echo 'codeql_mode=full'
+              echo 'codeql_languages=actions,javascript-typescript,python'
+              echo 'automated_code_review_mode=full'
+              echo 'reason=bootstrap-base-without-trusted-planner'
+            } >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Scope-Zusammenfassung
         if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
@@ -175,11 +232,21 @@ jobs:
           REPORT_PREDEPLOY: ${{ steps.scope.outputs.predeploy }}
           REPORT_DOCKER: ${{ steps.scope.outputs.docker }}
           REPORT_DOCKER_IMAGE: ${{ steps.scope.outputs.docker_image }}
+          REPORT_VITEST: ${{ steps.validation_plan.outputs.vitest_mode }}
+          REPORT_CODEQL: ${{ steps.validation_plan.outputs.codeql_mode }}
+          REPORT_CODEQL_LANGUAGES: ${{ steps.validation_plan.outputs.codeql_languages }}
+          REPORT_REVIEW: ${{ steps.validation_plan.outputs.automated_code_review_mode }}
+          REPORT_REASON: ${{ steps.validation_plan.outputs.reason }}
         run: |
           echo "class=$REPORT_CLASS"
           echo "node=$REPORT_NODE lint=$REPORT_LINT unit=$REPORT_UNIT"
           echo "build=$REPORT_BUILD audit=$REPORT_AUDIT predeploy=$REPORT_PREDEPLOY"
           echo "docker=$REPORT_DOCKER docker_image=$REPORT_DOCKER_IMAGE"
+          echo "vitest_mode=$REPORT_VITEST"
+          echo "codeql_mode=$REPORT_CODEQL codeql_languages=$REPORT_CODEQL_LANGUAGES"
+          echo "automated_code_review_mode=$REPORT_REVIEW"
+          echo "selection_reason=$REPORT_REASON"
+          echo "CodeQL/automated-code-review outputs are provider-neutral decisions only; provider execution remains separately governed."
 
       - name: Repository-Integrität prüfen
         if: steps.scope.outputs.integrity == 'true'
@@ -213,9 +280,36 @@ jobs:
         if: steps.scope.outputs.lint == 'true'
         run: npm run lint
 
-      - name: Unit-Tests ausführen
-        if: steps.scope.outputs.unit == 'true'
+      - name: Vollständige Test-Suite ausführen
+        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode == 'full'
         run: npm test
+
+      - name: Nur vom PR-Diff betroffene Vitest-Tests ausführen
+        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode == 'changed'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: npx vitest run --changed "$PR_BASE_SHA" --passWithNoTests
+
+      - name: PR-/CI-Validator-Tests gezielt ausführen
+        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode != 'full' && steps.validation_plan.outputs.node_pr_tests == 'true'
+        run: node --test scripts/pr/*.test.mjs
+
+      - name: Systemadmin-Validator-Tests gezielt ausführen
+        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode != 'full' && steps.validation_plan.outputs.node_systemadmin_tests == 'true'
+        run: node --test scripts/systemadmin/*.test.mjs
+
+      - name: Security-Assessment-Validator gezielt ausführen
+        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode != 'full' && steps.validation_plan.outputs.node_security_assessment_tests == 'true'
+        run: node --test scripts/security/validateSecurityAssessment.test.mjs
+
+      - name: Keine Unit-Testgruppe für diesen Scope erforderlich
+        if: >-
+          steps.scope.outputs.unit == 'true'
+          && steps.validation_plan.outputs.vitest_mode == 'none'
+          && steps.validation_plan.outputs.node_pr_tests != 'true'
+          && steps.validation_plan.outputs.node_systemadmin_tests != 'true'
+          && steps.validation_plan.outputs.node_security_assessment_tests != 'true'
+        run: echo "Der trusted-base Planner hat für diesen Scope keine Unit-Testgruppe ausgewählt."
 
       - name: Produktions-Build erstellen
         if: steps.scope.outputs.build == 'true'
