@@ -11,7 +11,7 @@ export interface AppShellProps {
 
 export function AppShell({ header, navigation, children, className, contentClassName }: AppShellProps) {
   return (
-    <div className={clsx('min-h-screen bg-background text-foreground', className)}>
+    <div className={clsx('app-shell-frame min-h-screen bg-background text-foreground', className)}>
       {header}
       <div className="flex min-h-0 flex-1">
         {navigation}

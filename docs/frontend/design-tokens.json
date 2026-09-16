@@ -1,32 +1,36 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
-  "version": "0.6.0-brand-manifest-v6.2",
-  "description": "Canonical CAPITAL-AI design-token registry. Vader Black and Capital Gold are the primary brand pair. Cyan remains available only for semantic market/data visualization roles; external design documents are provenance inputs, not runtime authorities.",
+  "version": "0.7.0-1608-appearance",
+  "description": "Canonical CAPITAL-AI design-token registry. The Owner-approved 16.08 appearance language restores the charcoal/Capital-Gold visual hierarchy while current asset, score, status and evidence semantics remain unchanged. Historical design material is provenance input only; this file remains runtime token authority.",
   "provenance": {
     "brandManifestVersion": "6.2",
     "sourceType": "owner-supplied-google-drive-artifact-plus-owner-amendments",
     "sourceFileId": "1k57e2jFpMnJMVjWK2tB8vSvZM7rUrwcP",
     "sourceSha256": "e4a6f4247fc8dd4aae9414bb3a5964bd248328592b7f3907eb04899d537d88de",
-    "ownerAmendment": "2026-09-14: Universe presentation palette materialized: Krypto Purple (#8D26FF), Deadly Green (#44DE88), Pluto Blue (#60A5FA), StarTroops Magenta (#E879F9); Bond presentation disabled while technical compatibility identifiers remain; Meteor Amber remains proposal-only.",
+    "ownerAmendment": "2026-09-14: Universe presentation palette materialized: Krypto Purple (#8D26FF), Deadly Green (#44DE88), Pluto Blue (#60A5FA), StarTroops Magenta (#E879F9); Bond presentation disabled while technical compatibility identifiers remain; Meteor Amber remains proposal-only. 2026-09-16: GOV-CHAT-079 Owner direction restores the 16.08 appearance language (charcoal canvas, historical Capital Gold hierarchy, Montserrat display typography, glass surfaces and restrained cyan/purple decoration) without changing current semantic asset/score/status roles.",
     "ingestedAt": "2026-08-26",
     "runtimeAuthority": "docs/frontend/design-tokens.json",
     "webProjection": "src/index.css @theme"
   },
   "color": {
-    "background": { "value": "#08080C", "type": "color", "css": "--color-background", "note": "Vader Black / primary brand canvas" },
+    "background": { "value": "#18181B", "type": "color", "css": "--color-background", "note": "Owner-approved 16.08 primary charcoal canvas" },
     "foreground": { "value": "#FFFFFF", "type": "color", "css": "--color-foreground" },
-    "border": { "value": "#252529", "type": "color", "css": "--color-border" },
+    "border": { "value": "rgba(255, 255, 255, 0.08)", "type": "color", "css": "--color-border", "note": "Owner-approved 16.08 generic light border" },
     "text": {
       "primary": { "value": "#FFFFFF", "type": "color", "css": "--color-text-primary" },
       "secondary": { "value": "#A1A1AA", "type": "color", "css": "--color-text-secondary" }
     },
     "brand": {
-      "primary": { "value": "#F9BF21", "type": "color", "css": "--color-brand-primary", "note": "Capital Gold / primary focus, premium brand anchor and primary brand color" },
-      "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Secondary AI/intelligence accent; not a primary brand color" },
-      "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-brand-cyan", "deprecated": true, "note": "Deprecated compatibility alias. Cyan is no longer a brand color; legacy brand-cyan resolves to Capital Gold. Use semantic.info or other explicit semantic roles for cyan data visualization." },
+      "primary": { "value": "#F5C453", "type": "color", "css": "--color-brand-primary", "note": "Capital Gold / Owner-approved 16.08 premium visual anchor" },
+      "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Current secondary AI/intelligence semantic accent; preserved from Branding Manifest v6.2" },
+      "cyan": { "value": "#F5C453", "type": "color", "css": "--color-brand-cyan", "deprecated": true, "note": "Deprecated compatibility alias. New code must use explicit brand/semantic/decorative roles." },
       "success": { "value": "#44DE88", "type": "color", "css": "--color-brand-success", "note": "Semantic compatibility role; not a primary brand color" },
       "danger": { "value": "#F87171", "type": "color", "css": "--color-brand-danger", "note": "Semantic compatibility role; not a primary brand color" }
+    },
+    "decorative": {
+      "cyan": { "value": "#0DDDDD", "type": "color", "css": "--color-decorative-cyan", "note": "16.08 decorative intelligence/data atmosphere only; no financial semantics" },
+      "purple": { "value": "#B026FF", "type": "color", "css": "--color-decorative-purple", "note": "16.08 decorative intelligence atmosphere only; current semantic AI/asset colors remain unchanged" }
     },
     "assetClass": {
       "crypto": { "value": "#8D26FF", "type": "color", "css": "--color-asset-crypto", "note": "Krypto Purple / productive Crypto Universe presentation" },
@@ -51,16 +55,16 @@
       "generic": { "value": "#A1A1AA", "type": "color", "css": "--color-factor-generic" }
     },
     "aif": {
-      "note": "Deprecated compatibility namespace. Do not use for new code; values project canonical semantic/brand tokens.",
+      "note": "Deprecated compatibility namespace. Do not use for new code; values mirror current canonical visual roles only for legacy consumers.",
       "gold": {
-        "light": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-light", "deprecated": true },
-        "DEFAULT": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-DEFAULT", "deprecated": true },
-        "dark": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-dark", "deprecated": true },
-        "muted": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-muted", "deprecated": true }
+        "light": { "value": "#FFF2B2", "type": "color", "css": "--color-aif-gold-light", "deprecated": true },
+        "DEFAULT": { "value": "#F5C453", "type": "color", "css": "--color-aif-gold-DEFAULT", "deprecated": true },
+        "dark": { "value": "#D4A017", "type": "color", "css": "--color-aif-gold-dark", "deprecated": true },
+        "muted": { "value": "#8A640F", "type": "color", "css": "--color-aif-gold-muted", "deprecated": true }
       },
       "neon": {
-        "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Legacy branding alias now resolves to Capital Gold. Cyan remains available only through semantic data-visualization roles." },
-        "purple": { "value": "#8D26FF", "type": "color", "css": "--color-aif-neon-purple", "deprecated": true }
+        "cyan": { "value": "#0DDDDD", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Legacy decorative compatibility only; no brand or financial semantics." },
+        "purple": { "value": "#B026FF", "type": "color", "css": "--color-aif-neon-purple", "deprecated": true, "note": "Legacy decorative compatibility only; use explicit decorative.purple for new presentation work." }
       }
     },
     "semantic": {
@@ -68,7 +72,7 @@
       "danger": { "value": "#F87171", "type": "color", "note": "REJECT / error / SELL semantics" },
       "warning": { "value": "#F9BF21", "type": "color", "note": "observe / partial" },
       "info": { "value": "#22D3EE", "type": "color", "note": "Market/data/live informational state. Semantic visualization only; never primary branding." },
-      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent; secondary to the Vader Black + Capital Gold brand pair" },
+      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent; preserved independently from 16.08 decorative purple" },
       "muted": { "value": "#A1A1AA", "type": "color", "note": "secondary text" },
       "status": {
         "ready": { "value": "#44DE88", "type": "color" },
@@ -78,8 +82,8 @@
       }
     },
     "surface": {
-      "glass": { "value": "rgba(18, 18, 21, 0.72)", "type": "color", "note": "Glass surface projection" },
-      "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Secondary dark surface" }
+      "glass": { "value": "rgba(10, 10, 10, 0.40)", "type": "color", "note": "Owner-approved 16.08 glass panel surface" },
+      "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Secondary dark elevated surface; semantic roles remain unchanged" }
     },
     "print": {
       "textPrimary": { "value": "#1D2430", "type": "color", "note": "Primary text on light PDF surfaces" },
@@ -91,7 +95,7 @@
   },
   "font": {
     "sans": { "value": "\"Poppins\", ui-sans-serif, system-ui, sans-serif", "css": "--font-sans", "role": "body" },
-    "display": { "value": "\"Inter\", ui-sans-serif, system-ui, sans-serif", "css": "--font-display", "role": "headings" },
+    "display": { "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif", "css": "--font-display", "role": "headings" },
     "mono": { "value": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, monospace", "css": "--font-mono", "role": "tech-data" }
   },
   "fontSize": {
@@ -115,23 +119,23 @@
     "10": { "value": "2.5rem" },
     "12": { "value": "3rem" },
     "16": { "value": "4rem" },
-    "card": { "value": "1.5rem", "note": "p-6 default card padding" },
-    "section": { "value": "2rem", "note": "recommended inter-card gap" }
+    "card": { "value": "1.5rem", "note": "16.08 default card/panel padding" },
+    "section": { "value": "2rem", "note": "16.08 section gap" }
   },
   "radius": {
     "sm": { "value": "0.375rem" },
     "md": { "value": "0.5rem" },
     "lg": { "value": "0.75rem" },
-    "xl": { "value": "0.75rem", "note": "rounded-xl — primary card" },
+    "xl": { "value": "1rem", "note": "Owner-approved 16.08 primary glass-card radius" },
     "2xl": { "value": "1rem" },
     "full": { "value": "9999px" }
   },
   "shadow": {
-    "glass": { "value": "0 0 0 1px rgba(37,37,41,1)" },
-    "goldGlow": { "value": "0 0 20px rgba(249,191,33,0.55)" },
-    "purpleGlow": { "value": "0 0 15px rgba(141,38,255,0.65)" },
-    "cyanGlow": { "value": "0 0 15px rgba(249,191,33,0.55)", "deprecated": true, "note": "Legacy branding shadow alias; resolves to Gold under Branding Manifest v6.2" },
-    "brandPulse": { "value": "0 0 25px rgba(249,191,33,0.25), 0 0 35px rgba(249,191,33,0.16), 0 0 22px rgba(249,191,33,0.10)" }
+    "glass": { "value": "0 0 0 1px rgba(255,255,255,0.10)" },
+    "goldGlow": { "value": "0 0 20px rgba(245,196,83,0.45)" },
+    "purpleGlow": { "value": "0 0 15px rgba(176,38,255,0.42)", "note": "Decorative 16.08 atmosphere only" },
+    "cyanGlow": { "value": "0 0 15px rgba(13,221,221,0.35)", "deprecated": true, "note": "Legacy decorative compatibility only" },
+    "brandPulse": { "value": "0 0 25px rgba(245,196,83,0.25), 0 0 35px rgba(13,221,221,0.12), 0 0 22px rgba(176,38,255,0.10)" }
   },
   "motion": {
     "duration": {
@@ -151,7 +155,7 @@
   },
   "accessibility": {
     "focusRing": {
-      "color": { "value": "#F9BF21" },
+      "color": { "value": "#F5C453" },
       "width": { "value": "2px" },
       "offset": { "value": "4px" }
     },
@@ -160,7 +164,7 @@
   },
   "patterns": {
     "glassCard": {
-      "class": "bg-surface/70 border border-border backdrop-blur-md rounded-xl p-6"
+      "class": "ui-panel"
     },
     "patternBadge": {
       "renderWhenMissing": false,
