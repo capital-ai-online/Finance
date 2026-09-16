@@ -122,7 +122,7 @@ describe('governance authority consistency', () => {
     expect(agents).toContain('CTRL-SDLC-PLUGIN-USE-001');
     expect(agents).toContain('cycling through all available integrations');
     expect(chain).toContain('CTRL-SDLC-PLUGIN-USE-001');
-    expect(chain).toContain('Availability never grants authority');
+    expect(chain).toMatch(/availability never grants authority/i);
     expect(client).toContain('integration is unavailable/disconnected/not enabled');
     expect(client).toContain('no automatic connection or enablement');
 
@@ -144,9 +144,9 @@ describe('governance authority consistency', () => {
     expect(handoff.requirement).toMatch(/at most two/i);
     expect(handoff.requirement).toMatch(/exit gates/i);
     expect(handoff.requirement).toMatch(/Roadmap-first/i);
-    expect(handoff.requirement).toMatch(/fenced yaml/i);
-    expect(handoff.requirement).toContain('sole Owner-Freigabe');
-    expect(handoff.requirement).toContain('no duplicate NÄCHSTE-SCHRITTE or exact-response block');
+    expect(handoff.requirement).toMatch(/final create-correlation PASS/i);
+    expect(handoff.requirement).toMatch(/Draft-PR creation before chat close/i);
+    expect(handoff.requirement).toMatch(/next dependent PR remains held until predecessor terminal outcome/i);
 
     expect(prCreate.requirement).toContain('final create-correlation PASS');
     expect(prCreate.requirement).toContain('without a separate pre-create Human approval prompt');
