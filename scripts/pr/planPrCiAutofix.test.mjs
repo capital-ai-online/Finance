@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   classifyFailure,
+  isBoundedAgenticSourcePath,
   isProtectedAutofixPath,
   planAutofix,
 } from './planPrCiAutofix.mjs';
@@ -75,7 +76,13 @@ test('protects workflow, governance, auth, billing and CI-planner surfaces', () 
     assert.equal(isProtectedAutofixPath(path), true, path);
   }
   assert.equal(isProtectedAutofixPath('src/features/example.ts'), false);
-  assert.equal(isProtectedAutofixPath('tests/unit/example.test.ts'), false);
+});
+
+test('agentic patches are restricted to non-test src paths', () => {
+  assert.equal(isBoundedAgenticSourcePath('src/features/example.ts'), true);
+  assert.equal(isBoundedAgenticSourcePath('src/features/example.test.ts'), false);
+  assert.equal(isBoundedAgenticSourcePath('tests/unit/example.test.ts'), false);
+  assert.equal(isBoundedAgenticSourcePath('scripts/automation/example.ts'), false);
 });
 
 test('blocks fork or foreign-head pull requests', () => {
@@ -87,6 +94,15 @@ test('blocks fork or foreign-head pull requests', () => {
   assert.equal(result.reason, 'fork-or-foreign-head-repository');
 });
 
+test('blocks non-agent-managed branch mutation', () => {
+  const result = planAutofix({
+    ...base,
+    headRef: 'feature/human-owned-change',
+  });
+  assert.equal(result.eligible, false);
+  assert.equal(result.reason, 'head-branch-is-not-agent-managed');
+});
+
 test('blocks protected original PR scope before failure classification', () => {
   const result = planAutofix({
     ...base,
@@ -94,6 +110,27 @@ test('blocks protected original PR scope before failure classification', () => {
   });
   assert.equal(result.eligible, false);
   assert.equal(result.failure_class, 'protected-scope');
+});
+
+test('blocks Copilot spend for test-only or tooling-only original PR scope', () => {
+  for (const changedFiles of [
+    ['tests/unit/example.test.ts'],
+    ['scripts/automation/example.ts'],
+    ['vite.config.ts'],
+  ]) {
+    const result = planAutofix({ ...base, changedFiles });
+    assert.equal(result.eligible, false);
+    assert.equal(result.reason, 'agentic-patch-requires-source-only-original-pr-scope');
+  }
+});
+
+test('allows documentation alongside bounded source scope without granting docs mutation', () => {
+  const result = planAutofix({
+    ...base,
+    changedFiles: ['src/features/example.ts', 'docs/notes.md'],
+  });
+  assert.equal(result.eligible, true);
+  assert.equal(result.engine, 'copilot');
 });
 
 test('enforces a maximum of two autofix attempts', () => {
