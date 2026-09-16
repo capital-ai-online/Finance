@@ -44,8 +44,10 @@ describe('SC-2 crypto research/enrichment boundary', () => {
     expect(source).not.toContain("from '../services/scoring.service'");
     expect(source).not.toContain('calculateDefiScore');
     expect(source).not.toContain('generateCryptoScores');
-    expect(source).toContain("fetch('/api/crypto/score'");
+    expect(source).toContain("import { authFetch } from '../lib/authFetch'");
+    expect(source).toContain("authFetch('/api/crypto/score'");
     expect(source).toContain("fetch('/api/crypto/analyze'");
+    expect(source).not.toContain("fetch('/api/crypto/score'");
     expect(source).not.toContain('setScores(data.scores)');
   });
 });

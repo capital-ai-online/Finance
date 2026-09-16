@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, Info, Newspaper, ShieldCheck } from 'lucide-react';
+import { fetchAuthenticatedNews } from '../features/news/authenticatedNewsFetch';
+import { authFetch } from '../lib/authFetch';
 import { AssetLogo } from './AssetLogo';
 
 interface NewstickerProps {
@@ -39,6 +41,19 @@ function finite(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function canonicalEvidenceIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const id = 'id' in item ? (item as { id?: unknown }).id : undefined;
+    return typeof id === 'string' && id.trim() ? [id] : [];
+  });
+}
+
 export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
   const [asset, setAsset] = useState<CatalogAsset | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -69,20 +84,27 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
 
         if (current.type === 'crypto') {
           const [scoreResponse, quoteResponse] = await Promise.all([
-            fetch(`/api/crypto/score?symbol=${encodeURIComponent(symbol)}`),
+            authFetch('/api/crypto/score', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ symbol, asset_name: current.name }),
+            }),
             fetch(`/api/crypto/price-consensus/${encodeURIComponent(symbol)}`),
           ]);
           const scoreBody = await scoreResponse.json().catch(() => ({}));
           const quoteBody = await quoteResponse.json().catch(() => ({}));
-          score = scoreBody?.status === 'READY' ? finite(scoreBody?.score) : null;
+          const integrity = scoreBody?.integrity ?? {};
+          score = scoreBody?.status === 'READY' ? finite(scoreBody?.score ?? scoreBody?.final_score) : null;
           quote = quoteBody?.status === 'CONSENSUS' ? finite(quoteBody?.canonicalValue) : null;
           quoteUnit = typeof quoteBody?.unit === 'string' ? quoteBody.unit : 'USD';
-          providers = Array.isArray(scoreBody?.providers) ? scoreBody.providers : [];
-          evidenceIds = Array.isArray(scoreBody?.evidenceIds) ? scoreBody.evidenceIds : [];
-          reason = scoreBody?.status === 'READY' ? null : (scoreBody?.reason ?? 'Score-Evidence nicht verfügbar.');
+          providers = stringArray(integrity?.providers);
+          evidenceIds = canonicalEvidenceIds(integrity?.evidence);
+          reason = scoreBody?.status === 'READY'
+            ? null
+            : (scoreBody?.reason ?? integrity?.reason ?? scoreBody?.error ?? 'Score-Evidence nicht verfügbar.');
         } else if (current.type === 'stock' || current.type === 'forex' || current.type === 'index') {
           const [contextResponse, quoteResponse] = await Promise.all([
-            fetch(`/api/registry/assets/${encodeURIComponent(symbol)}/verified-context`),
+            authFetch(`/api/registry/assets/${encodeURIComponent(symbol)}/verified-context`),
             fetch(`/api/registry/assets/${encodeURIComponent(symbol)}/verified-quote`),
           ]);
           const contextBody = await contextResponse.json().catch(() => ({}));
@@ -91,8 +113,8 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
           score = scoreBody?.status === 'READY' ? finite(scoreBody?.score) : null;
           quote = quoteBody?.status === 'READY' ? finite(quoteBody?.price) : null;
           quoteUnit = typeof quoteBody?.currency === 'string' ? quoteBody.currency : null;
-          providers = Array.isArray(scoreBody?.providers) ? scoreBody.providers : [];
-          evidenceIds = Array.isArray(scoreBody?.evidenceIds) ? scoreBody.evidenceIds : [];
+          providers = stringArray(scoreBody?.providers);
+          evidenceIds = stringArray(scoreBody?.evidenceIds);
           reason = scoreBody?.status === 'READY' ? null : (scoreBody?.reason ?? 'Score-Evidence nicht verfügbar.');
         } else {
           reason = 'Für diese Assetklasse ist noch kein freigegebener kanonischer Scoring-/Quote-Contract aktiv.';
@@ -100,7 +122,7 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
 
         if (!cancelled) setEvidence({ score, quote, quoteUnit, providers, evidenceIds, reason });
 
-        const newsResponse = await fetch(`/api/news?symbol=${encodeURIComponent(symbol)}`);
+        const newsResponse = await fetchAuthenticatedNews(`/api/news?symbol=${encodeURIComponent(symbol)}`);
         const newsBody = newsResponse.ok ? await newsResponse.json() : [];
         if (!cancelled) setNews(Array.isArray(newsBody) ? newsBody : Array.isArray(newsBody?.items) ? newsBody.items : []);
       } catch (error) {

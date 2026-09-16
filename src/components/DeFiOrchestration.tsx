@@ -25,6 +25,7 @@ import {
   Droplet,
   PieChart
 } from 'lucide-react';
+import { authFetch } from '../lib/authFetch';
 
 interface DeFiPoolData {
   name: string;
@@ -75,7 +76,7 @@ export function DeFiOrchestration() {
     setAnalyzing(true);
     try {
       const assetName = DEFI_TOKENS.find(t => t.symbol === symbol)?.name || symbol;
-      const response = await fetch('/api/crypto/score', {
+      const response = await authFetch('/api/crypto/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbol, asset_name: assetName }),
