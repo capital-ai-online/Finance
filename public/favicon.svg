@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" data-brandmark-version="1.0.0-manifest-v6.2">
-  <rect width="200" height="200" rx="40" fill="#08080C"/>
+  <rect width="200" height="200" rx="40" fill="#18181B"/>
   <defs>
     <filter id="brand-glow" x="-10%" y="-10%" width="120%" height="120%">
       <feGaussianBlur stdDeviation="1.5" result="blur"/>
@@ -19,7 +19,7 @@
       <line x1="65" y1="85" x2="142" y2="90"/>
       <line x1="100" y1="100" x2="60" y2="50"/>
     </g>
-    <g stroke="#F9BF21" stroke-width="2.5" stroke-opacity="0.85">
+    <g stroke="#F5C453" stroke-width="2.5" stroke-opacity="0.85">
       <line x1="60" y1="50" x2="78" y2="93"/>
       <line x1="78" y1="93" x2="60" y2="135"/>
       <line x1="60" y1="135" x2="100" y2="145"/>
@@ -32,7 +32,7 @@
       <line x1="100" y1="100" x2="78" y2="93"/>
       <line x1="100" y1="100" x2="142" y2="90"/>
     </g>
-    <g fill="#F9BF21">
+    <g fill="#F5C453">
       <circle cx="100" cy="100" r="11"/>
       <circle cx="60" cy="50" r="6.5"/>
       <circle cx="105" cy="55" r="4.5"/>

@@ -112,7 +112,6 @@ describe('website primary login regression boundary', () => {
     expect(passkeySettings).not.toContain('.auth.passkey.list(');
     expect(passkeySettings).not.toContain('.auth.passkey.delete(');
     expect(passkeySettings).not.toContain('.auth.signInWithPasskey(');
-
     expect(mfaLastFactorGuard).toContain('listVerifiedNativeMfaFactors');
     expect(mfaLastFactorGuard).not.toContain('supabase.auth.passkey.list');
   });
@@ -138,7 +137,7 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
   });
 
-  it('uses one synchronous Supabase auth-state bootstrap and queues follow-up work without a timer delay', () => {
+  it('keeps the Supabase auth callback synchronous and resolves persisted state directly without a watchdog', () => {
     expect(sessionComposition).toContain('supabase.auth.onAuthStateChange((event, session) =>');
     expect(sessionComposition).not.toContain('onAuthStateChange(async');
     expect(sessionComposition).toContain('isSessionEstablishmentEvent(event)');
@@ -152,7 +151,9 @@ describe('website primary login regression boundary', () => {
 
     expect(bootstrapStart).toBeGreaterThan(-1);
     expect(bootstrapEnd).toBeGreaterThan(bootstrapStart);
-    expect(bootstrapEffect).not.toContain('supabase.auth.getSession()');
+    expect(bootstrapEffect).toContain('supabase.auth.getSession()');
+    expect(bootstrapEffect).not.toContain('setTimeout(');
+    expect(bootstrapEffect).not.toContain('Promise.race([');
   });
 
   it('only establishes sessions for initial/sign-in events and uses a non-secret key', () => {

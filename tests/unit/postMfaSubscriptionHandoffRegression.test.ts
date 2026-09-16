@@ -9,7 +9,7 @@ function readRepoFile(relativePath: string): string {
 }
 
 describe('Post-MFA subscription handoff regression boundary', () => {
-  it('projects the already verified gate session without a second blocking getSession read', () => {
+  it('revalidates the verified gate identity against the live Supabase session without a watchdog', () => {
     const source = readRepoFile('src/app/auth/SessionComposition.tsx');
     const gateStart = source.indexOf('if (pendingStepUpSession)');
     const errorStart = source.indexOf('if (authError)', gateStart);
@@ -17,9 +17,13 @@ describe('Post-MFA subscription handoff regression boundary', () => {
 
     expect(gateStart).toBeGreaterThan(-1);
     expect(gate).toContain('const verifiedSession = pendingStepUpSession');
-    expect(gate).not.toContain('supabase.auth.getSession()');
+    expect(gate).toContain('await supabase.auth.getSession()');
+    expect(gate).toContain('liveSession.user.id !== verifiedSession.user.id');
     expect(gate).toContain("code: 'POST_MFA_SESSION_HANDOFF_FAILED'");
-    expect(gate).toContain('await handleSupabaseSession(verifiedSession)');
+    expect(gate).toContain("code: 'IDENTITY_MISMATCH_DETECTED'");
+    expect(gate).toContain('await handleSupabaseSession(liveSession)');
+    expect(gate).not.toContain('setTimeout(');
+    expect(gate).not.toContain('Promise.race([');
   });
 
   it('uses the rotation-aware authFetch path for non-blocking subscription enrichment', () => {
@@ -29,7 +33,7 @@ describe('Post-MFA subscription handoff regression boundary', () => {
     const handler = source.slice(start, end);
 
     expect(source).toContain("import { authFetch } from '../../lib/authFetch'");
-    expect(handler).toContain("() => authFetch('/api/stripe/user-subscription')");
+    expect(handler).toContain("void authFetch('/api/stripe/user-subscription')");
     expect(handler).toContain("subscriptionTier: 'Free'");
     expect(handler).not.toContain('session.access_token');
     expect(handler).not.toContain('?userId=');

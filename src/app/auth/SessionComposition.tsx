@@ -38,40 +38,14 @@ interface AuthErrorState {
   receivedId?: string;
 }
 
-const SIGN_OUT_TIMEOUT_MS = 5_000;
-const SESSION_STAGE_TIMEOUT_MS = 10_000;
-
-/**
- * Safety ceiling only. This never delays a successful operation; it prevents a provider/network
- * call from hanging forever after the UI has already remained interactive.
- */
-function withSessionStageTimeout<T>(operation: () => Promise<T>, stage: string): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(
-      () => reject(new Error(`Supabase session stage timed out: ${stage}`)),
-      SESSION_STAGE_TIMEOUT_MS,
-    );
-  });
-
-  return Promise.race([Promise.resolve().then(operation), timeout]).finally(() => {
-    if (timeoutId !== undefined) clearTimeout(timeoutId);
-  });
-}
-
 function needsOnboarding(session: { user: any }): Promise<boolean> {
-  return withSessionStageTimeout(() => readNeedsOnboarding(session), 'onboarding status');
+  return readNeedsOnboarding(session);
 }
 
 /**
- * Supabase Auth is the sole website authentication authority. Every restored or newly issued
- * non-anonymous session must pass onboarding and the native AAL/TOTP gate before private access.
- *
- * The public/browser shell never waits for Supabase initialization. `onAuthStateChange` remains the
- * sole bootstrap source and the callback stays synchronous. Follow-up work is queued as a microtask
- * so the auth callback returns before another Supabase operation begins, avoiding a callback lock
- * without introducing an artificial timer delay. Private routes receive only a boolean resolution
- * state so they do not redirect a valid restored session before the mandatory auth gates resolve.
+ * Supabase Auth is the sole website authentication authority. Public routes render independently
+ * from auth bootstrap. Private routes wait only for the actual Supabase session resolution and the
+ * mandatory onboarding/AAL gates; there are no timer/watchdog based session states.
  */
 export function SessionComposition({ children }: SessionCompositionProps) {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
@@ -98,35 +72,14 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     updateUserSession(null);
   };
 
-  const signOutWithTimeout = async (scope: 'local' | 'global') => {
-    if (!supabase) return;
-
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    try {
-      await Promise.race([
-        supabase.auth.signOut({ scope }),
-        new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(
-            () => reject(new Error(`Supabase ${scope} signOut timed out`)),
-            SIGN_OUT_TIMEOUT_MS,
-          );
-        }),
-      ]);
-    } finally {
-      if (timeoutId) clearTimeout(timeoutId);
-    }
-  };
-
   const rejectAnonymousSession = async () => {
     resetAuthProjection();
     setAuthBootstrapPending(false);
-    if (supabase) {
-      try {
-        await signOutWithTimeout('local');
-      } catch (err) {
-        console.warn('[Auth] Anonymous session cleanup failed:', err);
-      }
-    }
+    if (!supabase) return;
+
+    void supabase.auth.signOut({ scope: 'local' }).catch((err) => {
+      console.warn('[Auth] Anonymous session cleanup failed:', err);
+    });
   };
 
   const handleSupabaseSession = async (session: any) => {
@@ -143,8 +96,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       email.split('@')[0] ||
       'User';
 
-    // Render the authenticated application immediately with the least-privileged tier. The Stripe
-    // subscription lookup is enrichment, not authentication authority, and must never hold the UI.
     const baseSession: UserSession = {
       type: 'registered',
       name,
@@ -156,42 +107,42 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     setAuthBootstrapPending(false);
     setJustLoggedOut(false);
 
-    void withSessionStageTimeout(
-      () => authFetch('/api/stripe/user-subscription'),
-      'subscription handoff',
-    ).then(async (res) => {
-      if (res.status === 401 || !res.ok) return;
+    // Entitlement enrichment is deliberately detached from the render/auth bootstrap path.
+    void authFetch('/api/stripe/user-subscription')
+      .then(async (res) => {
+        if (res.status === 401 || !res.ok) return;
 
-      const data = await res.json();
-      if (data && data.userId && data.userId !== user.id) {
-        console.error(
-          'CRITICAL SECURITY MISMATCH: Expected User ID',
-          user.id,
-          'but received',
-          data.userId,
-        );
-        resetAuthProjection();
-        setAuthBootstrapPending(false);
-        setAuthError({
-          message:
-            'Sicherheits-Fehler: Es wurde eine Diskrepanz zwischen Ihrer lokalen Benutzer-ID und der Server-ID festgestellt. Um Ihre Daten zu schützen, wurde der Zugriff vorübergehend gesperrt.',
-          code: 'IDENTITY_MISMATCH_DETECTED',
-          expectedId: user.id,
-          receivedId: data.userId,
+        const data = await res.json();
+        if (data && data.userId && data.userId !== user.id) {
+          console.error(
+            'CRITICAL SECURITY MISMATCH: Expected User ID',
+            user.id,
+            'but received',
+            data.userId,
+          );
+          resetAuthProjection();
+          setAuthBootstrapPending(false);
+          setAuthError({
+            message:
+              'Sicherheits-Fehler: Es wurde eine Diskrepanz zwischen Ihrer lokalen Benutzer-ID und der Server-ID festgestellt. Um Ihre Daten zu schützen, wurde der Zugriff vorübergehend gesperrt.',
+            code: 'IDENTITY_MISMATCH_DETECTED',
+            expectedId: user.id,
+            receivedId: data.userId,
+          });
+          return;
+        }
+
+        const tier: SubscriptionTier = data?.subscriptionTier || 'Free';
+        setUserSession((current) => {
+          if (!current || current.type !== 'registered' || current.id !== user.id) return current;
+          const next = { ...current, subscriptionTier: tier };
+          localStorage.setItem('mcc_user_session', JSON.stringify(next));
+          return next;
         });
-        return;
-      }
-
-      const tier: SubscriptionTier = data?.subscriptionTier || 'Free';
-      setUserSession((current) => {
-        if (!current || current.type !== 'registered' || current.id !== user.id) return current;
-        const next = { ...current, subscriptionTier: tier };
-        localStorage.setItem('mcc_user_session', JSON.stringify(next));
-        return next;
+      })
+      .catch((err) => {
+        console.warn('[Auth] Subscription enrichment failed; keeping least-privileged Free tier:', err);
       });
-    }).catch((err) => {
-      console.warn('[Auth] Subscription enrichment failed; keeping least-privileged Free tier:', err);
-    });
   };
 
   const establishSession = async (session: any) => {
@@ -207,7 +158,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
-    // SECURITY: Google OAuth and native passkey both converge on this exact gate.
     setPendingStepUpSession(session);
     setAuthBootstrapPending(false);
   };
@@ -239,10 +189,11 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     setAuthBootstrapPending(false);
     setJustLoggedOut(true);
 
+    if (!supabase) return;
     try {
-      await signOutWithTimeout(scope);
-    } catch (e) {
-      console.warn(`Supabase ${scope} signOut error:`, e);
+      await supabase.auth.signOut({ scope });
+    } catch (err) {
+      console.warn(`Supabase ${scope} signOut error:`, err);
     }
   };
 
@@ -276,23 +227,49 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
+    let active = true;
+    const clearResolvedSession = () => {
+      sessionBootstrapKeyRef.current = null;
+      updateUserSession(null);
+      setPendingStepUpSession(null);
+      setPendingOnboardingSession(null);
+      setAuthBootstrapPending(false);
+    };
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        sessionBootstrapKeyRef.current = null;
-        updateUserSession(null);
-        setPendingStepUpSession(null);
-        setPendingOnboardingSession(null);
-        setAuthBootstrapPending(false);
+      if (!active) return;
+      if (event === 'SIGNED_OUT') {
+        clearResolvedSession();
         return;
       }
-
-      if (!isSessionEstablishmentEvent(event)) return;
+      if (!session || !isSessionEstablishmentEvent(event)) return;
       scheduleSessionEstablishment(session);
     });
 
-    return () => subscription.unsubscribe();
+    // Resolve persisted Supabase auth state directly. This runs outside the auth callback so there
+    // is no callback lock and no watchdog/timer is required to make progress.
+    void supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!active) return;
+        if (session) {
+          scheduleSessionEstablishment(session);
+        } else {
+          clearResolvedSession();
+        }
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.error('[Auth] Initial Supabase session resolution failed:', err);
+        clearResolvedSession();
+      });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = async (_email: string, _password: string) => {
@@ -339,21 +316,63 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         session={pendingStepUpSession}
         onVerified={async () => {
           const verifiedSession = pendingStepUpSession;
+          setAuthBootstrapPending(true);
           setPendingStepUpSession(null);
 
-          if (!verifiedSession?.user?.id) {
+          if (!verifiedSession?.user?.id || !supabase) {
             resetAuthProjection();
             setAuthBootstrapPending(false);
             setAuthError({
               message:
                 'Die verifizierte Sitzung konnte nicht eindeutig übernommen werden. Bitte bauen Sie die Sitzung erneut auf.',
               code: 'POST_MFA_SESSION_HANDOFF_FAILED',
-              expectedId: 'unknown',
+              expectedId: verifiedSession?.user?.id || 'unknown',
             });
             return;
           }
 
-          await handleSupabaseSession(verifiedSession);
+          try {
+            const {
+              data: { session: liveSession },
+            } = await supabase.auth.getSession();
+
+            if (!liveSession?.user?.id) {
+              resetAuthProjection();
+              setAuthBootstrapPending(false);
+              setAuthError({
+                message:
+                  'Nach der MFA-Verifikation ist keine aktive Supabase-Sitzung verfügbar. Bitte melden Sie sich erneut an.',
+                code: 'POST_MFA_SESSION_HANDOFF_FAILED',
+                expectedId: verifiedSession.user.id,
+              });
+              return;
+            }
+
+            if (liveSession.user.id !== verifiedSession.user.id) {
+              resetAuthProjection();
+              setAuthBootstrapPending(false);
+              setAuthError({
+                message:
+                  'Die nach MFA aktive Supabase-Identität stimmt nicht mit der verifizierten Identität überein. Der Zugriff wurde gesperrt.',
+                code: 'IDENTITY_MISMATCH_DETECTED',
+                expectedId: verifiedSession.user.id,
+                receivedId: liveSession.user.id,
+              });
+              return;
+            }
+
+            await handleSupabaseSession(liveSession);
+          } catch (err) {
+            console.error('[Auth] Post-MFA session handoff failed:', err);
+            resetAuthProjection();
+            setAuthBootstrapPending(false);
+            setAuthError({
+              message:
+                'Die aktive Supabase-Sitzung konnte nach MFA nicht bestätigt werden. Bitte melden Sie sich erneut an.',
+              code: 'POST_MFA_SESSION_HANDOFF_FAILED',
+              expectedId: verifiedSession.user.id,
+            });
+          }
         }}
         onAbort={async () => {
           setPendingStepUpSession(null);
@@ -398,14 +417,12 @@ export function SessionComposition({ children }: SessionCompositionProps) {
                     setAuthBootstrapPending(false);
                     return;
                   }
+
                   setAuthBootstrapPending(true);
                   try {
                     const {
                       data: { session },
-                    } = await withSessionStageTimeout(
-                      () => supabase.auth.getSession(),
-                      'auth recovery session read',
-                    );
+                    } = await supabase.auth.getSession();
                     if (session) {
                       sessionBootstrapKeyRef.current = null;
                       await establishSession(session);

@@ -10,19 +10,23 @@ const navigationModel = read('src/app/dashboard/dashboardNavigation.ts');
 const dashboardHeader = read('src/app/dashboard/DashboardHeader.tsx');
 
 describe('public landing cockpit recovery', () => {
-  it('opens the public analysis sideboard on first mobile render with explicit touch controls', () => {
-    expect(workbench).toContain('const [sideboardOpen, setSideboardOpen] = useState(true)');
+  it('starts with the compact public sideboard and exposes explicit touch controls', () => {
+    expect(workbench).toContain('const [sideboardExpanded, setSideboardExpanded] = useState(false)');
     expect(workbench).toContain("'Analysetools einklappen'");
     expect(workbench).toContain("'Analysetools aufklappen'");
-    expect(workbench).toContain('Analysetools schließen');
-    expect(workbench).toContain('Analysetools öffnen');
+    expect(workbench).toContain('Sideboard schließen');
+    expect(workbench).toContain('Sideboard öffnen');
     expect(workbench).toContain('ui-hit inline-flex min-h-11 min-w-11');
+    expect(workbench).toContain("'lg:grid-cols-[300px_minmax(0,1fr)]'");
+    expect(workbench).toContain("'lg:grid-cols-[88px_minmax(0,1fr)]'");
   });
 
-  it('keeps Enterprise Scorer as the default public analysis surface without bypassing gates', () => {
+  it('keeps Enterprise Scorer as the default BTC-fixed public analysis surface without weakening protected tools', () => {
     expect(workbench).toContain("useState<PublicToolId>('enterprise-scorer')");
+    expect(workbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
     expect(workbench).toContain("label: 'Enterprise Scorer'");
-    expect(workbench).toContain("availability: 'server-gated'");
+    expect(workbench).toContain("availability: 'public'");
+    expect(workbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
     expect(workbench).toContain("availability: 'login-required'");
     expect(workbench).toContain("availability: 'disabled'");
     expect(workbench).toContain('Anmelden und Tool öffnen');

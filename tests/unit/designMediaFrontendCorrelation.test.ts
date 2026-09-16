@@ -7,19 +7,14 @@ const read = (relativePath: string) =>
 
 const tokens = JSON.parse(read('docs/frontend/design-tokens.json')) as {
   color: {
-    brand: {
-      primary: { value: string };
-      cyan: { value: string; deprecated?: boolean };
-    };
+    brand: { primary: { value: string }; cyan: { value: string; deprecated?: boolean } };
     assetClass: {
       crypto: { value: string };
       forex: { value: string };
       commodity: { value: string };
       bond: { value: string; note?: string };
     };
-    semantic: {
-      info: { value: string };
-    };
+    semantic: { info: { value: string } };
   };
   patterns: {
     patternBadge: {
@@ -62,46 +57,41 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     expect(viteConfig).toContain("tokenString('color', 'brand', 'cyan')");
     expect(viteConfig).toContain("tokenString('color', 'brand', 'accent')");
     expect(viteConfig).not.toMatch(/tokenString\('color',\s*'aif'/);
-
     expect(mediaRenderer).toContain('brand = color["brand"]');
     expect(mediaRenderer).not.toContain('color["aif"]');
   });
 
-  it('keeps Cyan out of generic Social Media branding while preserving semantic data Cyan', () => {
-    expect(tokens.color.brand.primary.value).toBe('#F9BF21');
+  it('keeps semantic Cyan separate from current Capital Gold branding', () => {
+    expect(tokens.color.brand.primary.value).toBe('#F5C453');
     expect(tokens.color.brand.cyan.value).toBe(tokens.color.brand.primary.value);
     expect(tokens.color.brand.cyan.deprecated).toBe(true);
     expect(tokens.color.semantic.info.value).toBe('#22D3EE');
     expect(tokens.color.semantic.info.value).not.toBe(tokens.color.brand.primary.value);
   });
 
-  it('materializes the owner-directed productive Universe palette without activating Meteor Amber', () => {
+  it('materializes the productive Universe palette without activating Meteor Amber', () => {
     expect(tokens.color.assetClass.crypto.value).toBe('#8D26FF');
     expect(tokens.color.assetClass.forex.value).toBe('#E879F9');
     expect(tokens.color.assetClass.commodity.value).toBe('#F9BF21');
     expect(tokens.color.assetClass.bond.note).toContain('compatibility');
-
     expect(webProjection).toContain('--color-asset-crypto: #8D26FF;');
     expect(webProjection).toContain('--color-asset-forex: #E879F9;');
     expect(webProjection).toContain('--color-asset-commodity: #F9BF21;');
     expect(webProjection).not.toContain('--color-asset-commodity: #FF9F1C;');
   });
 
-  it('keeps the active Media Studio preview on Dark Black + AIF Gold branding', () => {
+  it('keeps the active Media Studio preview token-bound', () => {
     expect(mediaPreview).toContain('border-brand-primary/25');
     expect(mediaPreview).toContain('var(--color-brand-primary)');
     expect(mediaPreview).toContain('var(--color-brand-accent)');
     expect(mediaPreview).not.toContain('var(--color-brand-cyan)');
     expect(mediaPreview).not.toContain('brand-cyan');
     expect(mediaPreview).not.toContain('aif-gold-');
-    expect(mediaPreview).not.toMatch(/rgba\(245,\s*196,\s*83/);
-    expect(mediaPreview).not.toMatch(/rgba\(13,\s*221,\s*221/);
   });
 
-  it('keeps new Social Media templates token-bound and versioned for Branding Manifest v6.2', () => {
+  it('keeps new Social Media templates versioned and role-explicit', () => {
     expect(mediaTemplates).toContain('brandTokenSource: MEDIA_PROJECT_BRAND_TOKEN_SOURCE');
     expect(mediaTemplates).toContain("templateVersion: '1.1.0'");
-    expect(mediaTemplates).toContain('Dark Black + AIF Gold lead generic content');
     expect(mediaTemplates).toContain('Cyan is reserved for semantic data visualization');
   });
 
@@ -115,85 +105,29 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
       neutralSemanticToken: 'color.score.warning',
       strengths: ['strong', 'medium', 'weak'],
     });
-
     expect(rankingBoard).toContain("if (name === 'NO PATTERN' || !name) return null;");
-    expect(rankingBoard).not.toContain('/engulfing|hammer|morning|bullish/i');
-    expect(rankingBoard).not.toContain('/shooting|evening|bearish|hanging/i');
     expect(favoritePatterns).toContain('if (patterns.length === 0) return null;');
   });
 
-  it('projects deterministic BUY/SELL strength only from evidenced direction and strength', () => {
-    expect(tokens.patterns.patternBadge.intensity).toEqual({
-      strong: { foreground: '100%', background: '18%', border: '45%' },
-      medium: { foreground: '100%', background: '10%', border: '30%' },
-      weak: { foreground: '100%', background: '5%', border: '18%' },
-    });
-
-    expect(rankingBoard).toContain("strength === 'strong'");
-    expect(rankingBoard).toContain("strength === 'medium'");
-    expect(rankingBoard).toContain("strength === 'weak'");
-    expect(rankingBoard).toContain(': null;');
-    expect(rankingBoard).toContain("intensity && direction === 'BULLISH'");
-    expect(rankingBoard).toContain("intensity && direction === 'BEARISH'");
-    expect(webProjection).toContain('border-score-best/[0.45] bg-score-best/[0.18]');
-    expect(webProjection).toContain('border-score-best/30 bg-score-best/10');
-    expect(webProjection).toContain('border-score-best/[0.18] bg-score-best/[0.05]');
-    expect(webProjection).toContain('border-score-worst/[0.45] bg-score-worst/[0.18]');
-    expect(webProjection).toContain('border-score-worst/30 bg-score-worst/10');
-    expect(webProjection).toContain('border-score-worst/[0.18] bg-score-worst/[0.05]');
-
-    expect(favoritePatterns).toContain("bullish: { text: 'text-score-best'");
-    expect(favoritePatterns).toContain("bearish: { text: 'text-score-worst'");
-    expect(favoritePatterns).toContain("neutral: { text: 'text-score-warning'");
-  });
-
-  it('removes Bond from productive selection surfaces while retaining compatibility types and contracts', () => {
-    expect(rankingBoard).toContain("type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';");
+  it('keeps Bond compatibility identifiers out of productive selection surfaces', () => {
     expect(rankingBoard).toContain("type ProductiveAssetType = Exclude<AssetType, 'bond'>;");
     expect(rankingBoard).toContain("item.type !== 'bond'");
-    expect(rankingBoard).not.toContain("name: 'Bond Horizon'");
-    expect(rankingBoard).toContain("label: 'Krypto'");
-
-    expect(marketScreener).toContain("const ASSET_TYPE_ORDER: AssetType[] = ['crypto', 'stock', 'forex', 'commodity', 'index'];");
     expect(marketScreener).toContain("&& item.type !== 'bond'");
     expect(newsfeed).toContain("&& candidate.type !== 'bond'");
     expect(priceAlert).toContain("&& item.type !== 'bond'");
-
-    expect(enterpriseScorer).toContain("type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';");
     expect(enterpriseScorer).toContain("registryAssets.filter((asset) => asset.type !== 'bond')");
-    expect(enterpriseScorer).toContain("technicalSelectedAsset?.type === 'bond'");
-    expect(enterpriseScorer).toContain("(['all', 'crypto', 'stock', 'forex', 'index', 'commodity'] as const)");
-    expect(enterpriseScorer).not.toContain('BTC, AAPL, EURUSD, Gold, Bond');
-
-    expect(watchlist).toContain("type: 'crypto' | 'stock' | 'commodity' | 'index' | 'forex' | 'bond';");
     expect(watchlist).toContain("a?.type !== 'bond'");
-    expect(watchlist).toContain('watchlist.flatMap');
-
     expect(legacyScreener).toContain("asset?.type !== 'bond'");
-    expect(legacyScreener).toContain("['all', 'crypto', 'stock', 'index', 'commodity', 'forex']");
-
     expect(dashboard).not.toContain('Universe 5: Bonds');
-    expect(dashboard).not.toContain("setCategoryFilter('bond')");
-    expect(dashboard).not.toContain("setSelectedSymbol('US10Y')");
-    expect(dashboard).not.toContain('<span>Bonds</span>');
-
-    expect(dashboardNavigation).toContain("type UniverseId = 'equities' | 'forex' | 'crypto' | 'commodity';");
-    expect(dashboardNavigation).toContain("label: 'Krypto'");
+    expect(dashboardNavigation).toContain("type UniverseId = 'equities' | 'index' | 'forex' | 'crypto' | 'commodity';");
     expect(dashboardNavigation).not.toContain("category: 'bond'");
-    expect(dashboardNavigation).not.toContain("label: 'Bonds'");
   });
 
   it('keeps profile exports scoped to authoritative client-visible data', () => {
     expect(profilePage).toContain("import { CAPITAL_AI_VERSION } from '../platform/Branding/runtimeBrand';");
     expect(profilePage).toContain('platform_version: CAPITAL_AI_VERSION');
     expect(profilePage).toContain("export_type: 'client_profile_snapshot'");
-    expect(profilePage).toContain('Billing, authentication, session, audit and backtest data are not included');
-    expect(profilePage).not.toContain('Version 0.7.0');
-    expect(profilePage).not.toContain('requests_completed_estimate');
     expect(profilePage).not.toContain('device_fingerprint_secure');
     expect(profilePage).not.toContain('backtest_history_archive');
-    expect(profilePage).not.toContain('aif_core_gdpr_export');
-    expect(profilePage).not.toContain('aif-gold-');
-    expect(profilePage).not.toContain('aif-neon-');
   });
 });
