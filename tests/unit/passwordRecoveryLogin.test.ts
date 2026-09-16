@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isSessionEstablishmentEvent } from '../../src/app/auth/sessionBootstrap';
+import {
+  getSessionBootstrapKey,
+  isSessionEstablishmentEvent,
+} from '../../src/app/auth/sessionBootstrap';
 import {
   PASSWORD_RECOVERY_QUERY_PARAM,
   isPasswordRecoveryLocation,
@@ -39,6 +42,12 @@ describe('password recovery login boundary', () => {
     try {
       expect(isSessionEstablishmentEvent('INITIAL_SESSION')).toBe(false);
       expect(isSessionEstablishmentEvent('SIGNED_IN')).toBe(false);
+      expect(
+        getSessionBootstrapKey({
+          expires_at: 1_800_000_000,
+          user: { id: 'recovery-user', is_anonymous: false },
+        }),
+      ).toBe('');
     } finally {
       if (originalWindow === undefined) {
         Reflect.deleteProperty(globalThis, 'window');

@@ -30,10 +30,14 @@ export function isSessionEstablishmentEvent(event: string): boolean {
 }
 
 /**
- * Non-secret in-memory deduplication key for auth bootstrap. Access/refresh tokens are never used
- * in the key, logged or persisted by this helper.
+ * Non-secret in-memory eligibility/deduplication key for auth bootstrap. Access/refresh tokens are
+ * never used in the key, logged or persisted by this helper. Password-recovery sessions return no
+ * key so direct persisted-session resolution cannot promote a temporary recovery session into the
+ * normal onboarding/AAL application flow.
  */
 export function getSessionBootstrapKey(session: BootstrapSessionLike | null | undefined): string {
+  if (isPasswordRecoveryLocation()) return '';
+
   const userId = session?.user?.id?.trim();
   if (!userId || session?.user?.is_anonymous) return '';
   const expiresAt = Number.isFinite(session?.expires_at) ? String(session?.expires_at) : 'no-expiry';
