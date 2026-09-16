@@ -4,58 +4,79 @@
 **Project:** `CAPITAL-AI-GOV`  
 **Project folder:** `docs/projects/governance/`  
 **Primary Project Value Chain ownership:** `PVC-05 — Platform Director`  
-**Baseline:** `main@7c177a86fae05efc95bafee5967a9e4b3cb0ff3c`  
+**Migration-start baseline:** `main@7c177a86fae05efc95bafee5967a9e4b3cb0ff3c`  
+**Latest correlated main before this projection commit:** `main@360347948cd4a05e00432ccdd06e1c60442916e7`  
+**Pre-projection branch head:** `13d682813022c28d7592f94a161857de8b3cf6d3`  
 **Branch:** `agent/governance-sec-authority-exception-20260916`  
 **Pull Request:** `#1022`
 
 ## Owner decision
 
-The original DevelopmentChain is dissolved as current development authority and replaced by the autonomous/self-healing policy model. Exactly eight YAML policies form the new and sole repository development-policy set after Human/CODEOWNER merge.
+All previous repository development-execution rules across the Project Value Chain are superseded by exactly eight autonomous/self-healing YAML policies. The only explicit preservation is **stylistic and graphical chat/PR presentation**, which remains non-authorizing.
 
-## After-state
+The exact development suite is:
 
-`/AGENTS.md` is a compact trust-root/bootstrap document rather than a development lifecycle. It resolves exactly:
+1. `GOV-AUTONOMOUS-TRUST-ROOT-01`
+2. `GOV-DYNAMIC-SCOPE-RESOLUTION-02`
+3. `GOV-AUTONOMOUS-WORK-GRAPH-03`
+4. `GOV-ATOMIC-BRANCH-EXECUTION-04`
+5. `GOV-SELF-HEALING-CONVERGENCE-05`
+6. `GOV-CI-COST-VALIDATION-06`
+7. `GOV-EVIDENCE-EVENTMESH-HANDOVER-07`
+8. `GOV-PR-CLOSURE-AUTHORITY-08`
 
-1. `GOV-TOP-LAYER-APPLICATION-01`
-2. `GOV-TOP-LAYER-EXECUTION-01`
-3. `GOV-TOP-LAYER-QUALITY-GATES-01`
-4. `GOV-TOP-LAYER-AUTHORITY-HARDENING-01`
-5. `GOV-SEC-AUTHORITY-EXCEPTION-01`
-6. `GOV-QM-AUTHORITY-EXCEPTION-01`
-7. `GOV-FINTECH-AUTHORITY-EXCEPTION-01`
-8. `GOV-COMP-SUPPLYCHAIN-AUTHORITY-EXCEPTION-01`
+Together they are `CAPITAL_AI_AUTONOMOUS_DEVELOPMENT_GUIDELINE`.
 
-The execution policy contains project-local autonomous continuation and bounded self-healing. Authority-Hardening globally retires DevelopmentChain procedure and prevents stale references from reactivating it.
+## Superseded development procedure
 
-## Project directions
+After Human/CODEOWNER merge of PR #1022:
 
-- General project folders: `USER_VISIBLE_TOP_LAYER_FIRST`.
-- `CAPITAL-AI-SEC`: `SECURITY_FOUNDATION_FIRST`.
-- `CAPITAL-AI-QM`: `INDEPENDENT_ASSURANCE_FIRST`.
-- `CAPITAL-AI-FINTECH`: `DOMAIN_SCORING_VALUE_CHAIN_FIRST`.
-- `CAPITAL-AI-COMP`: `COMPLIANCE_REQUIREMENT_AND_EVIDENCE_FIRST`.
+- the former DevelopmentChain has no authority, execution role or fallback role;
+- the earlier Top-Layer eight-policy proposal is replaced by the exact eight autonomous policies above;
+- standalone DevelopmentChain lifecycle/branch/phase/runbook/contract/roadmap/traceability procedure is retired/removed or retained only as a historical tombstone;
+- standalone GOV/OPS foreign-project implementation delegation is retired;
+- standalone Human/Owner PR lifecycle procedure is retired as a duplicate development-procedure surface while Human/CODEOWNER review/merge authority remains preserved;
+- stale procedural `CTRL-*` rows/references are migration metadata only and cannot override `/AGENTS.md@CURRENT_MAIN` plus the eight-policy suite.
 
-These directions do not transfer productive PVC ownership or create parallel domain authorities.
+## Preserved non-development authorities
 
-## DevelopmentChain retirement
+The migration does not erase subject-matter constraints. Applicable law/regulation/contracts, canonical PVC ownership, accepted ADR/ESS/domain/data/scoring contracts, Security/Compliance/Supply-Chain controls, provider-required checks and protected external-mutation boundaries remain enforceable where dynamically resolved by the eight policies.
 
-The former procedural bodies are removed from the current tree for branch lifecycle, responsibility matrix, documentation freeze, OPS DevelopmentChain projection, phase execution runbook, mutation-handoff contract/schema, DevelopmentChain roadmap, traceability matrix and phase evidence template.
+## Preserved presentation-only surface
 
-`docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` remains only as a minimal `RETIRED / HISTORICAL / NON_AUTHORIZING` compatibility tombstone so the stable historical authority ID and old audit/registry references resolve without a broken path. It contains no executable development procedure and is explicitly not a ninth development guideline. Git history retains the former full text.
+The following visual conventions remain intentionally available and **non-authorizing**:
 
-## Non-delegable boundaries preserved
+- canonical project Display name / Symbol / Color from `docs/projects/README.md`;
+- semantic emoji plus textual status labels;
+- `### 📂 **SCOPE / ZIELORDNER: ...**` + fenced `🧭 NÄCHSTE SCHRITTE` presentation blocks with `📁 Projektfolder:` and `🎯 Exit Gate:`;
+- `👷 AKTIVE CHAT-WORKER` status rendering when such a status surface is used;
+- PR presentation metadata such as project symbol/color.
 
-- current `main` is the authoritative repository baseline;
-- no direct `main` mutation;
-- scoped branch and Pull Request boundary;
-- Human/CODEOWNER-only merge;
-- no self-merge or auto-merge enablement;
-- protected external mutations retain applicable Human/Owner authority gates;
-- security, compliance, domain, supply-chain and ownership boundaries remain fail-closed;
-- `NOT RUN` never equals `PASS`.
+These visual rules do not define item count, priority, lifecycle triggers, ownership, PR authority, waiting or gate results.
 
-## Self-healing evidence
+## Owner-correct PVC convergence
 
-The first post-migration Governance check identified one deterministic project-metadata regression: the shortened `docs/projects/governance/README.md` no longer contained the canonical PVC ownership declaration expected by the trusted-main `validateProjectValueChain.mjs` validator. The branch repair restores `Primary Project Value Chain ownership: PVC-05 — Platform Director` without changing project/PVC ownership.
+Active organizational projections are aligned so that `PVC-01..18` ownership remains unchanged, while old GOV/OPS/SEC foreign implementation delegation is replaced by owner-correct correlation-ID handover semantics. `PVC-18` EventMesh remains a read-only runtime/evidence/handover projection without approval/merge/governance authority.
 
-The normal PR CI and Container Security runs for migration head `4a9924061492bb611610ec612a8bda7c0cd3911f` passed; the Governance run failed only on that README ownership projection before later steps executed. This repair is therefore classified as an authorized reversible metadata/self-healing correction, not a change of development authority.
+## Before → After matrix
+
+| Area | Before | After |
+|---|---|---|
+| Trust root | monolithic development lifecycle in `/AGENTS.md` | `/AGENTS.md@CURRENT_MAIN` bootstraps exact eight-policy suite |
+| Development model | DevelopmentChain + multiple procedural overlays | one dependency/event-driven autonomous Work Graph |
+| Branch/PR | separate legacy controls/policies | `GOV-ATOMIC-BRANCH-EXECUTION-04` + `GOV-PR-CLOSURE-AUTHORITY-08` |
+| Self-healing | fragmented/implicit | bounded root-cause convergence with readback |
+| CI cost | legacy mixed sequencing | costly hosted checks only after PR; docs-only classification |
+| Cross-project work | legacy delegated foreign implementation | owner-correct handover; no silent Owner takeover |
+| EventMesh | structural/traceability role | explicit read-only PVC runtime/evidence projection |
+| Chat visuals | mixed with lifecycle semantics | visuals retained; lifecycle semantics removed |
+
+## Validation truth
+
+- exact eight new YAML files present at pre-projection branch head: `PASS` by repository readback;
+- old Top-Layer YAML names absent from policy directory: `PASS` by repository readback;
+- latest main correlated and merged into the branch before the authority-suite commit: `PASS` (`main@360347948cd4a05e00432ccdd06e1c60442916e7` is parent of branch merge `bec81c20061302706580d19acc25b05c77ed1247`);
+- hosted checks for the final projection head: `NOT_RUN / PENDING` at evidence-write time;
+- Human/CODEOWNER merge: `NOT_RUN` and remains external repository authority.
+
+`NOT_RUN` is never `PASS`.
