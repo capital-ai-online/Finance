@@ -7,6 +7,7 @@ import { safeRelativeRedirectLocation, stripTrailingSlashes } from '../../src/pl
  */
 export const PUBLIC_SPA_PATHS = new Set([
   '/',
+  '/universe',
   '/learning-platform',
   '/impressum',
   '/agb',
