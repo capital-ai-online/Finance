@@ -20,7 +20,12 @@ env:
   RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Keep duplicate suppression inside one exact PR snapshot. A late stale PR event must never cancel
+  # validation for a newer head/base snapshot of the same pull request.
+  group: >-
+    ${{ github.event_name == 'pull_request'
+        && format('{0}-pr-{1}-{2}-{3}', github.workflow, github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)
+        || format('{0}-{1}', github.workflow, github.ref) }}
   cancel-in-progress: true
 
 # Production deployment authority remains verified main CI with inline supply-chain attestation ->
@@ -51,8 +56,28 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const prNumber = Number(process.env.CURRENT_PR_NUMBER);
-            const headSha = process.env.CURRENT_HEAD_SHA;
-            const baseSha = process.env.CURRENT_BASE_SHA;
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const headSha = normalizeSha(process.env.CURRENT_HEAD_SHA);
+            const baseSha = normalizeSha(process.env.CURRENT_BASE_SHA);
+
+            const { data: livePr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+            const liveHeadSha = normalizeSha(livePr.head?.sha);
+            const liveBaseSha = normalizeSha(livePr.base?.sha);
+            const currentSnapshot = livePr.state === 'open'
+              && liveHeadSha === headSha
+              && liveBaseSha === baseSha;
+            core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false');
+            if (!currentSnapshot) {
+              core.setOutput('reuse_exact_snapshot', 'false');
+              core.notice(
+                `Stale PR event ignored before checkout/npm/test work: event head/base=${headSha.slice(0, 12)}/${baseSha.slice(0, 12)}, live=${liveHeadSha.slice(0, 12)}/${liveBaseSha.slice(0, 12)}.`,
+              );
+              return;
+            }
 
             const currentRun = await github.rest.actions.getWorkflowRun({
               owner,
@@ -82,9 +107,9 @@ jobs:
                   previous.conclusion === 'success'
                   && previous.workflow_id === workflowId
                   && previous.event === 'pull_request'
-                  && previous.head_sha === headSha
-                  && previousCorrelatedPr?.head?.sha === headSha
-                  && previousCorrelatedPr?.base?.sha === baseSha
+                  && normalizeSha(previous.head_sha) === headSha
+                  && normalizeSha(previousCorrelatedPr?.head?.sha) === headSha
+                  && normalizeSha(previousCorrelatedPr?.base?.sha) === baseSha
                 ) {
                   reusable = previous;
                   reusedAttempt = currentAttempt - 1;
@@ -110,8 +135,8 @@ jobs:
               reusable = successfulRuns.find((run) => {
                 if (run.id === context.runId || run.workflow_id !== workflowId) return false;
                 const correlatedPr = (run.pull_requests ?? []).find((pr) => pr.number === prNumber);
-                return correlatedPr?.head?.sha === headSha
-                  && correlatedPr?.base?.sha === baseSha;
+                return normalizeSha(correlatedPr?.head?.sha) === headSha
+                  && normalizeSha(correlatedPr?.base?.sha) === baseSha;
               }) ?? null;
               if (reusable) reusedAttempt = Number(reusable.run_attempt ?? 1);
             }
@@ -132,8 +157,12 @@ jobs:
               .addRaw(`Exakter Snapshot bereits validiert: PR #${prNumber}, head \`${headSha}\`, base \`${baseSha}\`, wiederverwendeter CI Run #${reusable.run_number}, Attempt ${reusedAttempt}.`)
               .write();
 
+      - name: Stale PR-Event vor teurer CI beenden
+        if: github.event_name == 'pull_request' && steps.cost_control.outputs.current_snapshot == 'false'
+        run: echo 'Stale PR-Snapshot erkannt; kein Checkout, npm ci, TypeScript, Test oder Build für veraltete Event-Evidence.'
+
       - name: Exakten CI-PASS wiederverwenden
-        if: steps.cost_control.outputs.reuse_exact_snapshot == 'true'
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot == 'true'
         env:
           REPORT_REUSED_RUN_NUMBER: ${{ steps.cost_control.outputs.reused_run_number }}
           REPORT_REUSED_ATTEMPT: ${{ steps.cost_control.outputs.reused_attempt }}
@@ -142,7 +171,7 @@ jobs:
           echo "Diese Deduplizierung ist keine Autorisierung und erweitert keine Merge-/Deployment-Rechte."
 
       - name: Repository auschecken
-        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
@@ -151,7 +180,7 @@ jobs:
 
       - name: Vertrauenswürdige PR-Policy aus Base-Snapshot vorbereiten
         id: trusted_policy
-        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true' && github.event_name == 'pull_request'
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true' && github.event_name == 'pull_request'
         shell: bash
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -172,7 +201,7 @@ jobs:
 
       - name: Prüfumfang klassifizieren (D/C/R)
         id: scope
-        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -191,7 +220,7 @@ jobs:
 
       - name: Diff-basierten Test-/CodeQL-/Review-Plan bestimmen
         id: validation_plan
-        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -221,7 +250,7 @@ jobs:
           fi
 
       - name: Scope-Zusammenfassung
-        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         env:
           REPORT_CLASS: ${{ steps.scope.outputs.class }}
           REPORT_NODE: ${{ steps.scope.outputs.node }}

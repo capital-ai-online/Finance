@@ -17,9 +17,14 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
-  group: container-security-${{ github.event.pull_request.number || github.ref }}
+  # PR cancellation is scoped to the exact event snapshot so a late stale event cannot cancel a newer head/base run.
+  group: >-
+    ${{ github.event_name == 'pull_request'
+        && format('container-security-pr-{0}-{1}-{2}', github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)
+        || format('container-security-{0}', github.ref) }}
   cancel-in-progress: true
 
 env:
@@ -32,7 +37,39 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: PR-Snapshot gegen Live-Head/Base korrelieren
+        id: snapshot
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const prNumber = Number(process.env.EVENT_PR_NUMBER);
+            const eventHead = normalizeSha(process.env.EVENT_HEAD_SHA);
+            const eventBase = normalizeSha(process.env.EVENT_BASE_SHA);
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const liveHead = normalizeSha(pr.head?.sha);
+            const liveBase = normalizeSha(pr.base?.sha);
+            const currentSnapshot = pr.state === 'open' && liveHead === eventHead && liveBase === eventBase;
+            core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false');
+            if (!currentSnapshot) {
+              core.notice(`Stale PR event ignored before checkout/container work: event head/base=${eventHead.slice(0, 12)}/${eventBase.slice(0, 12)}, live=${liveHead.slice(0, 12)}/${liveBase.slice(0, 12)}.`);
+            }
+
+      - name: Stale PR-Event kostensparend beenden
+        if: github.event_name == 'pull_request' && steps.snapshot.outputs.current_snapshot == 'false'
+        run: echo 'Stale PR-Snapshot erkannt; kein Checkout, Docker-Build oder Trivy-Scan für veraltete Evidence.'
+
       - name: Repository auschecken
+        if: github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: ${{ env.SOURCE_SHA }}
@@ -41,6 +78,7 @@ jobs:
 
       - name: Container-Security-Scope kostensparend bestimmen
         id: scope
+        if: github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true'
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -63,7 +101,7 @@ jobs:
           echo "Container security heavy path required=$required"
 
       - name: Kostensparpfad — kein Container-Scope
-        if: steps.scope.outputs.required != 'true'
+        if: (github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true') && steps.scope.outputs.required != 'true'
         run: echo 'Kein containerrelevanter Diff; Required-Check-Kontext bleibt PASS ohne Docker-Build/Trivy-Scan.'
 
       - name: Docker-Hardening-Invarianten prüfen
