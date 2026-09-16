@@ -336,23 +336,23 @@ describe('roadmapNextTarget', () => {
     expect(result.blockers).toEqual([{ id: 'SHARED-AUTO-01', reason: 'DUPLICATE_WORK_ITEM_ID' }]);
   });
 
-  it('fails closed on the current twelve-project snapshot because DATA-09 is non-unique', async () => {
+  it('selects DATA-09 on the current twelve-project snapshot after DATA work-item identities are unique', async () => {
     const result = await buildCanonicalRoadmapNextTarget();
 
     expect(result.projectCount).toBe(12);
-    expect(result).toEqual(
-      expect.objectContaining({
-        status: 'NO_EXECUTABLE_TARGET',
-        target: null,
-        reason: 'DUPLICATE_WORK_ITEM_ID',
-        eligibleCount: 0,
-      }),
-    );
-    expect(result.blockers).toEqual(
+    expect(result.status).toBe('TARGET_SELECTED');
+    expect(result.reason).toBeNull();
+    expect(result.target).toMatchObject({
+      project: 'CAPITAL-AI-DATA',
+      folder: 'docs/projects/data/',
+      branchSlug: 'data',
+      roadmapPath: 'docs/projects/data/ROADMAP.md',
+      workItemId: 'DATA-09',
+      state: 'READY / ACTIVE BACKLOG',
+    });
+    expect(result.blockers).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          project: 'CAPITAL-AI-DATA',
-          roadmapPath: 'docs/projects/data/ROADMAP.md',
           id: 'DATA-09',
           reason: 'DUPLICATE_WORK_ITEM_ID',
         }),
