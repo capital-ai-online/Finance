@@ -42,7 +42,7 @@ const WORK_ITEM_ID_PATTERN = /^`?([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)`?(?=\s|—|–|
 function stripInlineMarkdown(value) {
   return value
     .trim()
-    .replace(/^`+|`+$/g, '')
+    .replace(/`([^`\r\n]+)`/g, '$1')
     .replace(/^\*\*|\*\*$/g, '')
     .trim();
 }
