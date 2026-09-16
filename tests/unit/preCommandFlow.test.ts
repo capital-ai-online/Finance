@@ -137,19 +137,23 @@ describe('evaluatePreCommandFlow', () => {
     });
   });
 
-  it('projects a missing Human or protected-action gate as REQUIRE_GATE', () => {
+  it('projects an unresolved PR-create gate as REQUIRE_GATE without granting it', () => {
     const input = validInput();
+    input.capability = {
+      ...input.capability,
+      requestedCapability: 'PR',
+    };
     input.leastPrivilege = {
       verdict: 'REQUIRE_GATE',
-      gateId: 'CTRL-MERGE-HUMAN-001',
-      reason: 'The requested transition remains Human/CODEOWNER-only.',
-      sourceRefs: ['CTRL-MERGE-HUMAN-001', 'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION'],
+      gateId: 'CTRL-SDLC-PR-CREATE-001',
+      reason: 'Final create-correlation must pass before the PR capability may execute.',
+      sourceRefs: ['CTRL-SDLC-PR-CREATE-001', 'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION'],
     };
 
     expect(evaluatePreCommandFlow(input)).toMatchObject({
       verdict: 'REQUIRE_GATE',
       stoppedAt: 'least-privilege',
-      requiredGateId: 'CTRL-MERGE-HUMAN-001',
+      requiredGateId: 'CTRL-SDLC-PR-CREATE-001',
       readyForAuthorizedExecution: false,
     });
   });
