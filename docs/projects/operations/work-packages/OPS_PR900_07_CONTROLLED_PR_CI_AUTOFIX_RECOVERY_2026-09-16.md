@@ -4,6 +4,8 @@
 **Project folder:** `docs/projects/operations/`  
 **Primary PVC:** `PVC-02 — Controlled Implementation`  
 **Primary Owner:** `CAPITAL-AI-OPS`  
+**Current parent package:** `OPS-02-CI-01 — Build/Test Cost & Scope Reduction`  
+**Execution authority:** explicit Owner-directed bounded recovery scope  
 **State:** `MATERIALIZED_BRANCH / DETERMINISTIC_ONLY / PROVIDER_CONTROLLER_HELD`  
 **Trust root:** `/AGENTS.md@current-main`  
 **Recovery baseline:** `main@779d7b5feb7f1dd9acbca803fb9af3c20f109421`  
@@ -12,6 +14,8 @@
 ## Owner-directed scope
 
 This package is the fresh-current-main recovery of the closed/unmerged PR #976 design. The historical branch `agent/operations-pr-ci-autofix-20260916` is search input only and is not used as an integration base or validation authority.
+
+`OPS-PR900-07` is a bounded execution child of the current `OPS-02-CI-01 — Build/Test Cost & Scope Reduction` package. It does not replace or reorder the canonical OPS Roadmap priority established after PR #978; `OPS-PR900-05` and `OPS-PR900-06` remain the Roadmap's normal next-priority sequence outside this explicit Owner-directed recovery scope.
 
 The bounded objective is to prove one safe automatic PR-CI remediation path:
 
