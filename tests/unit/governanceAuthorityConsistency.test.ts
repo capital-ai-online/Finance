@@ -122,14 +122,14 @@ describe('governance authority consistency', () => {
     expect(agents).toContain('CTRL-SDLC-PLUGIN-USE-001');
     expect(agents).toContain('cycling through all available integrations');
     expect(chain).toContain('CTRL-SDLC-PLUGIN-USE-001');
-    expect(chain).toContain('Availability never grants authority');
+    expect(chain).toMatch(/availability never grants authority/i);
     expect(client).toContain('integration is unavailable/disconnected/not enabled');
     expect(client).toContain('no automatic connection or enablement');
 
     expect(authorityRegistry.entries.filter((entry) => /AUTH-.*(?:PLUGIN|CONNECTOR)/i.test(entry.authorityId))).toHaveLength(0);
   });
 
-  it('uses one consolidated PR-create approval block and Roadmap-first continuation', () => {
+  it('uses correlation-gated PR creation and Roadmap-first continuation', () => {
     const agents = read('AGENTS.md');
     const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
     const approval = read('docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md');
@@ -144,37 +144,36 @@ describe('governance authority consistency', () => {
     expect(handoff.requirement).toMatch(/at most two/i);
     expect(handoff.requirement).toMatch(/exit gates/i);
     expect(handoff.requirement).toMatch(/Roadmap-first/i);
-    expect(handoff.requirement).toMatch(/fenced yaml/i);
-    expect(handoff.requirement).toContain('sole Owner-Freigabe');
-    expect(handoff.requirement).toContain('no duplicate NÄCHSTE-SCHRITTE or exact-response block');
+    expect(handoff.requirement).toMatch(/final create-correlation PASS/i);
+    expect(handoff.requirement).toMatch(/Draft-PR creation before chat close/i);
+    expect(handoff.requirement).toMatch(/next dependent PR remains held until predecessor terminal outcome/i);
 
-    expect(prCreate.requirement).toContain('bounded Approval Envelope');
-    expect(prCreate.requirement).toContain('APPROVAL_STILL_VALID');
-    expect(prCreate.requirement).toContain('REAPPROVAL_REQUIRED');
-    expect(prCreate.requirement).toContain('BLOCKED');
+    expect(prCreate.requirement).toContain('final create-correlation PASS');
+    expect(prCreate.requirement).toContain('without a separate pre-create Human approval prompt');
+    expect(prCreate.requirement).toContain('BLOCKED or unresolved state stops creation');
+    expect(prCreate.requirement).toContain('at most one not-yet-integrated automated PR');
+    expect(prCreate.requirement).toContain('Candidate branch semantics cannot self-bootstrap');
     expect(prCreate.requirement).toContain('Human/CODEOWNER merge remains separate');
+    expect(prCreate.requirement).toContain('auto-merge is prohibited');
 
-    expect(agents).toContain('```yaml');
-    expect(agents).toContain('PR-CREATION APPROVAL');
-    expect(agents).toContain('Priorität:');
-    expect(agents).toContain('Roadmap-Fortschritt:');
-    expect(agents).toContain('Roadmap-Bewertung:');
-    expect(agents).toContain('Nächste 2 Schritte');
-    expect(agents).toContain('Owner-Freigabe');
-    expect(agents).toContain('PR Erstellung : Freigegeben');
+    expect(agents).toContain('Correlation gate before automated PR creation');
+    expect(agents).toContain('final create-correlation state as exactly `PASS` or `BLOCKED`');
+    expect(agents).toContain('The correlation record binds at minimum');
+    expect(agents).toContain('POST_PR_HANDOFF');
     expect(agents).not.toContain('Freigabe-Antwort:');
 
     expect(chain).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
     expect(chain).toContain('CHAT_RUN_HANDOFF');
     expect(chain).toContain('Roadmap-first');
-    expect(chain).toContain('sole `Owner-Freigabe` response');
+    expect(chain).toContain('FINAL CREATE-CORRELATION PASS OR BLOCKED');
+    expect(chain).toContain('AUTOMATED DRAFT PR CREATION FOR PASS');
+    expect(chain).toContain('POST-PR HUMAN/OWNER REVIEW / APPROVAL BOUNDARY');
     expect(chain).not.toContain('Freigabe-Antwort:');
 
-    expect(approval).toContain('single PR-creation approval surface');
-    expect(approval).toContain('fenced `yaml` code block');
-    expect(approval).toContain('Priority semantics');
-    expect(approval).toContain('Generic process instructions');
-    expect(approval).toContain('PR Erstellung : Freigegeben');
+    expect(approval).toContain('Correlation-gated automated PR creation');
+    expect(approval).toContain('The pre-create evidence is a **correlation record**, not an approval credential');
+    expect(approval).toMatch(/at most one not-yet-integrated automated PR/i);
+    expect(approval).toContain('Only after Human/CODEOWNER Merge may this post-create Owner model govern later PR-creation flows');
   });
 
   it('requires every main merge to come from a PR correlated against then-current main', () => {
@@ -186,7 +185,8 @@ describe('governance authority consistency', () => {
     expect(merge.status).toBe('required');
     expect(merge.requirement).toMatch(/Every merge into main originates from a Pull Request/i);
     expect(merge.requirement).toMatch(/final PR-head\/current-main correlation/i);
-    expect(merge.requirement).toContain('Approval Envelope state');
+    expect(merge.requirement).toContain('distinct Human/CODEOWNER merge decision');
+    expect(merge.requirement).toContain('never constitute merge authority');
     expect(merge.requirement).toContain('auto-merge enablement remain prohibited');
 
     expect(agents).toContain('FINAL PR-HEAD / CURRENT-MAIN CORRELATION');
