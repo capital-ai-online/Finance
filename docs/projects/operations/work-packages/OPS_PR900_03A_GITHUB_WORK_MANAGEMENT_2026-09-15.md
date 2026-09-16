@@ -5,35 +5,43 @@
 **Primary PVC:** `PVC-02 — Controlled Implementation`  
 **Primary Owner:** `CAPITAL-AI-OPS`  
 **Parent:** `OPS-PR900-03 — GitHub Enterprise capability matrix`  
-**Status:** `MATERIALIZED_BRANCH / PRE_PR_CORRELATION_READY`  
+**Status:** `MERGED / CAPABILITY_GAP_VERIFIED`  
 **Inventory baseline:** `main@ed584e36138427bb637af523df6e8ead994f6bda`  
-**Current correlation baseline:** `main@f45017abb3e74e3efad1f75f8a50d701a7a47691`  
-**Branch:** `agent/operations-github-work-management-20260915`  
+**Merged PR:** `#950`  
+**Merge SHA:** `1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
+**Post-merge verification baseline:** `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`  
+**Original branch:** `agent/operations-github-work-management-20260915`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Purpose and authority boundary
 
 GitHub Work Management is coordination/navigation only. It does not become a second authority for Roadmap, Project/PVC ownership, platform version, Governance, Security, Release, Deployment, PR creation or merge decisions.
 
-Current-main correlation uses `/AGENTS.md`, `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md`, the OPS Roadmap/Work-Package register, accepted `ESS-0019`, and accepted `ADR-0030`. `ADR-0062` is `PROPOSED` on the inventory baseline and is not used as authority.
+Current-main correlation uses `/AGENTS.md`, `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md`, the OPS Roadmap/Work-Package register and accepted `ESS-0019`. The provider/model/connector remains an execution surface, never a trust root or authority source.
+
+## Provider capability vs connected execution surface
+
+The post-merge verification deliberately separates three evidence classes:
+
+1. **GitHub-native repository feature state** — provider metadata reports `has_issues=true`, `has_projects=true` and `has_wiki=true`; repository metadata also exposes the canonical Milestones URL and Issue update supports association to a known milestone number.
+2. **Connected ChatGPT GitHub connector capability** — only operations actually exposed by the connected connector are treated as executable/readable through this chat surface.
+3. **Object-level proof** — feature-enabled metadata is not promoted to proof that Organization Projects, Project Fields, Milestone objects, Issue Types, Organization Issue Fields or Wiki pages can be fully enumerated, mutated and read back through the connected connector.
+
+`NOT_AVAILABLE_ON_CURRENT_CONNECTOR` therefore means only that the current execution surface does not expose the required capability. It never means the GitHub-native object or feature does not exist.
 
 ## Current connected GitHub capability inventory
 
-`NOT_AVAILABLE_ON_CURRENT_CONNECTOR` means only that the current execution surface does not expose the required capability. It never means the GitHub object does not exist. Repository feature flags likewise prove only that a feature is enabled; they do not enumerate Organization-level objects, fields or Wiki pages.
+| Category | GitHub-native/provider evidence | Connected connector classification | Reproducible evidence |
+|---|---|---|---|
+| Issues | repository feature enabled | `AVAILABLE` | Finance metadata reports `has_issues=true`; Issue search/read and create/update actions are exposed. No Issue mutation was executed during the post-merge verification. |
+| Labels | native Issue/PR metadata surface exists | `PARTIAL_SURFACE — ISSUE_LABEL_ASSIGNMENT_AVAILABLE / ENUMERATION_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Issue/PR label assignment actions are exposed; no complete label-object inventory/create surface is exposed by the connector. |
+| Milestones | repository exposes milestone relationship/URL semantics; Issue mutation accepts a known milestone number | `PARTIAL_SURFACE — ISSUE_MILESTONE_ASSIGNMENT_AVAILABLE / OBJECT_ENUMERATION_MUTATION_READBACK_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | A known milestone number can be associated to an Issue, but complete milestone object list/create/edit/readback is not exposed through the connected connector. |
+| Issue Types | GitHub-native object existence is not denied | `NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Issue create/update schemas expose no native Issue Type field and no Issue-Type inventory/mutation/readback action is present. |
+| Organization Issue Fields | GitHub-native object existence is not denied | `NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | No organization Issue-field inventory/mutation/readback action is exposed. |
+| Organization Projects / Project Fields | repository reports `has_projects=true` | `REPOSITORY_FEATURE_ENABLED / OBJECT_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Feature-enabled metadata is visible, but Organization Projects/Project Fields cannot be completely inventoried, mutated and read back through the current connector. |
+| Wiki Pages / Navigation | repository reports `has_wiki=true` | `REPOSITORY_FEATURE_ENABLED / PAGE_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Feature-enabled metadata is visible, but Wiki pages/navigation cannot be inventoried, mutated and read back through the current connector. |
 
-| Category | Classification | Reproducible evidence |
-|---|---|---|
-| Issues | `AVAILABLE` | Finance Issue search returned real Issues including `#499`, `#500`, `#564`, `#565`; create/update Issue actions are exposed. Repository metadata reports `has_issues=true`. No Issue mutation was executed. |
-| Labels | `PARTIAL_SURFACE — ISSUE_LABEL_ASSIGNMENT_AVAILABLE / ENUMERATION_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Issue/PR label assignment actions are exposed; repository-label enumeration via generic fetch is rejected and no dedicated label inventory/create action is exposed. |
-| Milestones | `PARTIAL_SURFACE — ISSUE_MILESTONE_ASSIGNMENT_AVAILABLE / OBJECT_ENUMERATION_MUTATION_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Issue update can set a milestone number; milestone enumeration via generic fetch is rejected and no dedicated milestone object create/list/edit action is exposed. |
-| Issue Types | `NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Issue create/update schemas expose no native Issue Type field and no Issue-Type inventory/mutation action is present. |
-| Organization Issue Fields | `NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | No organization Issue-field inventory/mutation action is exposed. |
-| Organization Projects / Project Fields | `REPOSITORY_FEATURE_ENABLED / OBJECT_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Repository metadata reports `has_projects=true`; no Organization Projects/Project Fields inventory or mutation action is exposed by the connector. |
-| Wiki Pages / Navigation | `REPOSITORY_FEATURE_ENABLED / PAGE_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR` | Repository metadata reports `has_wiki=true`; no Wiki page inventory/mutation action is exposed by the connector. |
-
-No category is `EMPTY_VERIFIED`: unavailable object classes cannot be completely enumerated from this surface, so absence is not claimed.
-
-Current `main` also contains no `.github/ISSUE_TEMPLATE/` entry. This proves only that a repository-resident Issue Template/Form surface is not materialized on this snapshot; it does not describe Organization-level defaults or provider objects that the connector cannot enumerate.
+No category is `EMPTY_VERIFIED`: unavailable object classes cannot be completely enumerated from this execution surface, so absence is not claimed.
 
 ## Taxonomy preference
 
@@ -43,9 +51,7 @@ Current `main` also contains no `.github/ISSUE_TEMPLATE/` entry. This proves onl
 4. Milestone only as a non-versioned delivery cohort;
 5. Project Status only as workflow state.
 
-This follows current GitHub capability design: Issue Types identify work kind, Organization Issue Fields provide shared structured metadata across projects, and project-local duplicates of the same semantic field are avoided. Built-in Project workflows are preferred over custom automation where they satisfy the required lifecycle.
-
-If later required, the intended milestone is `GitHub Work Management Pilot`. It must not represent a platform, Release or Deployment version. Platform version remains governed by `package.json#version` and the Release Version Gate.
+If later required, the intended milestone is `GitHub Work Management Pilot`. It must not represent a platform, Release or Deployment version. Platform version remains governed outside Work Management.
 
 ## Wiki contract
 
@@ -55,61 +61,63 @@ Intended navigation only:
 
 Wiki pages may contain navigation/backlinks only and must not duplicate normative Roadmap/ADR/ESS/Governance/Security/Release content.
 
+## OPS-PR900-03A post-merge result
+
+**State:** `MERGED / CAPABILITY_GAP_VERIFIED`
+
+PR #950 was Human/CODEOWNER merged into main with merge SHA `1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`. The current post-merge verification was then repeated against `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619` under `/AGENTS.md` v2.11.0.
+
+03A is complete because the requested work-management categories now have an explicit provider-versus-connector classification and the remaining gap is bounded to the currently available execution surface. 03A completion does **not** imply that missing connector capabilities are provider/product gaps, and it does not authorize connector, OAuth, permission or GitHub-provider configuration changes.
+
 ## OPS-PR900-03B
 
 **Flow:** `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -> Done -> Wiki Navigation`  
-**State:** `BLOCKED / NOT_STARTED`
+**State:** `BLOCKED / NOT_STARTED`  
+**Blocker:** `CONNECTOR / EXECUTION-SURFACE GAP`
 
-03B may execute only after 03A is completed against then-current main and the required object/mutation/readback surfaces are actually available. Because Organization Project/Project Fields, milestone object management and Wiki navigation are not safely available on the current connector, no partial pilot is represented as success.
+03B may execute only when the already authorized execution path exposes all required object/mutation/readback surfaces. The minimum unblock set is:
 
-## Writer correlation at branch creation
+- Organization Projects V2 and Project Fields: inventory + mutation + readback;
+- Milestone objects: inventory + create/edit/association + readback;
+- Wiki navigation/pages: inventory + write + readback;
+- the resulting Project Status transition to `Done` must be reproducibly observed rather than inferred.
 
-Against `main@ed584e36138427bb637af523df6e8ead994f6bda`:
+Because the current connected connector does not expose that complete set, no partial Issue/Project/Milestone/Wiki pilot is created and no partial flow counts as success.
+
+## Historical writer correlation for original 03A branch
+
+At original branch creation against `main@ed584e36138427bb637af523df6e8ead994f6bda`:
 
 - open Pull Requests: `0`;
-- active non-main branches: `agent/fintech-fin-sec-03-post-merge-sync-20260915`, `agent/security-codeql-autofix-alert-8-20260915`, `agent/security-fin-sec-03-independent-verification-20260915`, `agent/security-uls-stable-id-reverification-20260915`;
-- changed-file overlap with the four OPS target documentation surfaces: none observed;
-- no current semantic/namespace/authority conflict was identified for this bounded coordination-only package.
+- no changed-file overlap with the four original OPS target documentation surfaces was observed;
+- no semantic/namespace/authority conflict was identified for the bounded coordination-only package.
 
-Historical work-management writer statements are search hints only.
+During later synchronization, two same-file OPS Roadmap writers were observed:
 
-## Current-main readback after synchronization passes
+- `agent/operations-ops18-main-projection-20260915` — OPS-18 evidence projection;
+- `agent/operations-social-p1-tts-runtime-20260915` — separate Social/TTS package/runtime/test scope.
 
-The bounded branch was synchronized repeatedly as `main` advanced through unrelated Human merges. The latest synchronization baseline is `main@f45017abb3e74e3efad1f75f8a50d701a7a47691`; synchronization commit `140f5dc76eaf2273e88c4482d3bb6c87f19a22ad` has that current-main snapshot as a parent. The 03A/03B material payload was carried forward without importing unmerged parallel-branch content.
+They were semantically separate from the `OPS-PR900-03A/03B` namespace and their unmerged content was never imported into the 03A branch.
 
-Immediately after that synchronization:
+## Post-merge current-writer correlation
 
-- merge base: `f45017abb3e74e3efad1f75f8a50d701a7a47691`;
-- branch status: `ahead`;
-- ahead: `9` commits;
-- behind: `0` commits;
-- exactly four net changed files relative to the merge base:
-  - `docs/projects/operations/ROADMAP.md`;
-  - `docs/projects/operations/WORK_PACKAGES.md`;
-  - `docs/projects/operations/work-packages/OPS_PR900_03A_GITHUB_WORK_MANAGEMENT_2026-09-15.md`;
-  - `docs/projects/operations/work-packages/README.md`.
+Against `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`:
 
-PR `#947` (`CAPITAL-AI-DOC`) was observed as an open, file-/authority-disjoint writer during the preceding `main@c8a88afc7f9cfad367b592e9567654451f81e436` correlation pass. It was subsequently Human-merged and produced `main@f45017abb3e74e3efad1f75f8a50d701a7a47691`; its changed file remains outside the OPS scope. It is therefore historical merge input for this synchronization, not a current parallel writer.
+- open Pull Requests: `0` at the post-merge verification pass;
+- `agent/operations-ops18-main-projection-20260915` remains a stale/diverged same-file Roadmap writer limited to OPS-18 projection changes;
+- `agent/operations-social-p1-tts-runtime-20260915` remains a stale/diverged same-file Roadmap writer for the separate Social/TTS namespace plus its own runtime/test surfaces;
+- `agent/operations-consent-migration-ledger-20260916` is file-disjoint from the 03A/03B Roadmap/Work-Package/detail targets;
+- none of these writers changes the 03A/03B GitHub Work-Management namespace or authorizes provider/connector mutation.
 
-Current active-branch correlation identifies two same-file OPS Roadmap writers that require explicit stronger semantic correlation:
-
-- `agent/operations-ops18-main-projection-20260915` changes `docs/projects/operations/ROADMAP.md` only to synchronize OPS-18 merged EventMesh/Traceability evidence and independent SEC/COMP gates;
-- `agent/operations-social-p1-tts-runtime-20260915` changes `docs/projects/operations/ROADMAP.md` to add the separate `OPS-02-SOCIAL-P1-TTS` package and changes its own TTS package/runtime/test surfaces.
-
-Both are materially separate from `OPS-PR900-03A/03B`: neither edits the 03A/03B namespace, GitHub Work-Management taxonomy contract, provider inventory, package register or package index. Their unmerged content is not imported into this branch. The shared Roadmap path remains a merge-time correlation trigger and must be re-read if either writer changes or merges before Human merge of this package.
-
-Repository metadata on the current-state pass reports `has_issues=true`, `has_projects=true` and `has_wiki=true`. These flags remain separate from connector object-level capability, so enabled provider features are not misreported as fully inventoried object state.
+Same-file Roadmap writers remain a final correlation trigger before any later Human merge decision, but they do not convert the current 03A/03B post-merge documentation slice into a semantic conflict.
 
 ## Validation
 
-- requested metadata categories: capability-classified with explicit unavailable/partial states;
-- current Project/PVC/Owner mapping: resolved to `CAPITAL-AI-OPS / PVC-02` with other OPS PVCs unchanged;
-- current `/AGENTS.md` v2.10.0 re-read during the current-main correlation sequence;
-- Governance drift was reviewed: Control-Plane authority version/projection metadata was corrected without expanding PR-create, merge, release, deployment or protected-mutation authority;
-- authority boundary: Roadmap/ADR/ESS/version/PR/merge authority remains outside GitHub work-management metadata;
-- current-main synchronization: merge base equals the latest synchronization baseline and `behind=0` before this evidence-only update;
-- changed-file scope: four OPS documentation/package surfaces only; this evidence update changes only the existing package-detail file and does not broaden the material scope;
-- same-file active OPS Roadmap writers: present and semantically disjoint at current readback; merge-time re-correlation remains mandatory;
-- runtime/build/hosted checks: `NOT_RUN` because this is documentation/coordination-only pre-PR work and no runtime source is changed.
-
-Immediately before PR creation, then-current main and branch head, exact changed-file set, `capital-ai-effective-change/v1`, open writers and semantic/namespace/authority/Security overlap must be re-read in the execution surface. `NOT_RUN` remains distinct from `PASS`.
+- Project/PVC/Owner: `CAPITAL-AI-OPS / PVC-02 — Controlled Implementation`;
+- Trust root: `/AGENTS.md` v2.11.0 at post-merge verification baseline;
+- accepted capability contract: `ESS-0019` v1.2.0, including provider-not-trust-root and read/mutation separation;
+- 03A: `MERGED / CAPABILITY_GAP_VERIFIED`;
+- 03B: `BLOCKED / NOT_STARTED` due connector/execution-surface gap;
+- provider feature flags are not misreported as object-level connector capability;
+- no Issue, Project, Milestone, Wiki, OAuth, permission, connector or provider mutation was executed by the capability verification;
+- runtime/build validation remains `NOT_RUN` for this documentation-only post-merge status synchronization; `NOT_RUN` is not `PASS`.
