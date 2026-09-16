@@ -29,10 +29,10 @@ export interface VersionedUnit {
   sourceCommit: string;
   manifestPath: string | null;
   ownerProject: string | null;
-  primaryPVC: string[];
+  primaryPVC: readonly string[];
   ownershipResolution: 'resolved' | 'unresolved';
-  documentationRefs: string[];
-  dependencies: string[];
+  documentationRefs: readonly string[];
+  dependencies: readonly string[];
 }
 
 export interface VersionedUnitInventory {
@@ -42,7 +42,7 @@ export interface VersionedUnitInventory {
   sourceCommit: string;
   readOnly: true;
   mutationPerformed: false;
-  units: VersionedUnit[];
+  units: readonly VersionedUnit[];
   coverage: {
     totalUnits: number;
     versionAuthorityResolvedUnits: number;
@@ -105,6 +105,7 @@ function resolveOwner(owner: unknown): { ownerProject: string | null; primaryPVC
 
   const defaults: Record<string, string[]> = {
     'CAPITAL-AI-CLIENT': ['PVC-01'],
+    'CAPITAL-AI-OPS': ['PVC-02', 'PVC-04', 'PVC-06', 'PVC-07', 'PVC-08', 'PVC-18'],
     'CAPITAL-AI-DOC': ['PVC-03'],
     'CAPITAL-AI-GOV': ['PVC-05'],
     'CAPITAL-AI-DATA': ['PVC-09', 'PVC-10', 'PVC-11'],
@@ -140,10 +141,10 @@ function inheritedUnit(
     sourceCommit,
     manifestPath: null,
     ownerProject: null,
-    primaryPVC: [],
+    primaryPVC: Object.freeze([] as string[]),
     ownershipResolution: 'unresolved' as const,
-    documentationRefs: [],
-    dependencies: [],
+    documentationRefs: Object.freeze([] as string[]),
+    dependencies: Object.freeze([] as string[]),
   });
 }
 
@@ -169,10 +170,10 @@ function componentUnit(
       sourceCommit,
       manifestPath: null,
       ownerProject: null,
-      primaryPVC: [],
+      primaryPVC: Object.freeze([] as string[]),
       ownershipResolution: 'unresolved' as const,
-      documentationRefs: [],
-      dependencies: [],
+      documentationRefs: Object.freeze([] as string[]),
+      dependencies: Object.freeze([] as string[]),
     });
   }
 
@@ -193,14 +194,14 @@ function componentUnit(
     sourceCommit,
     manifestPath,
     ownerProject: resolvedOwner.ownerProject,
-    primaryPVC: resolvedOwner.primaryPVC,
+    primaryPVC: Object.freeze(resolvedOwner.primaryPVC),
     ownershipResolution: resolvedOwner.ownerProject ? 'resolved' as const : 'unresolved' as const,
-    documentationRefs: asStringArray(manifest.documentation),
-    dependencies: asStringArray(manifest.dependencies),
+    documentationRefs: Object.freeze(asStringArray(manifest.documentation)),
+    dependencies: Object.freeze(asStringArray(manifest.dependencies)),
   });
 }
 
-function assertUniqueUnitIds(units: VersionedUnit[]): void {
+function assertUniqueUnitIds(units: readonly VersionedUnit[]): void {
   const seen = new Set<string>();
   for (const unit of units) {
     if (seen.has(unit.unitId)) {
@@ -229,10 +230,10 @@ export function buildVersionedUnitInventory(
     sourceCommit: commit,
     manifestPath: null,
     ownerProject: 'CAPITAL-AI-OPS',
-    primaryPVC: ['PVC-06'],
+    primaryPVC: Object.freeze(['PVC-06']),
     ownershipResolution: 'resolved' as const,
-    documentationRefs: [],
-    dependencies: [],
+    documentationRefs: Object.freeze([] as string[]),
+    dependencies: Object.freeze([] as string[]),
   }));
 
   for (const component of listDirectories(path.join(repoRoot, 'src', 'platform'))) {
@@ -267,7 +268,7 @@ export function buildVersionedUnitInventory(
     sourceCommit: commit,
     readOnly: true as const,
     mutationPerformed: false as const,
-    units: Object.freeze(units) as unknown as VersionedUnit[],
+    units: Object.freeze(units),
     coverage: Object.freeze({
       totalUnits: units.length,
       versionAuthorityResolvedUnits: units.length,
