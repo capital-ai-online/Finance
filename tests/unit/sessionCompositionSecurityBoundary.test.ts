@@ -14,24 +14,26 @@ describe('SessionComposition authentication boundary', () => {
     expect(source).not.toContain('using authenticated local cache state');
   });
 
-  it('fails closed when Supabase auth bootstrap is unavailable or deferred establishment fails', () => {
+  it('fails closed without making Supabase initialization a global UI wait state', () => {
     expect(source).toContain('const resetAuthProjection = () => {');
     expect(source).toContain(
-      'if (!supabase) {\n      resetAuthProjection();\n      setLoading(false);\n      return;',
+      'if (!supabase) {\n      resetAuthProjection();\n      setAuthBootstrapPending(false);\n      return;',
     );
+    expect(source).not.toContain('const [loading, setLoading]');
+    expect(source).not.toContain('Lade Sicherheits-Modul...');
 
-    const deferredFailureHandler =
+    const failureHandler =
       source.match(
         /establishSession\(session\)\.catch\(\(err\) => \{([\s\S]*?)\n      \}\);/,
       )?.[1] ?? '';
 
-    expect(deferredFailureHandler).toContain(
-      "console.error('[Auth] Deferred session establishment failed:', err);",
+    expect(failureHandler).toContain(
+      "console.error('[Auth] Session establishment failed:', err);",
     );
-    expect(deferredFailureHandler).toContain('updateUserSession(null);');
-    expect(deferredFailureHandler).toContain('setPendingStepUpSession(null);');
-    expect(deferredFailureHandler).toContain('setPendingOnboardingSession(null);');
-    expect(deferredFailureHandler).toContain('setLoading(false);');
+    expect(failureHandler).toContain('updateUserSession(null);');
+    expect(failureHandler).toContain('setPendingStepUpSession(null);');
+    expect(failureHandler).toContain('setPendingOnboardingSession(null);');
+    expect(failureHandler).toContain('setAuthBootstrapPending(false);');
   });
 
   it('does not persist a Supabase access token in the application UserSession projection', () => {

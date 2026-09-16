@@ -160,6 +160,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
   it('protects dashboard/application deep links and redirects authenticated login sessions', () => {
     expect(routes).toContain("if (currentPath === '/dashboard')");
     expect(routes).toContain("if (currentPath === '/media-studio')");
+    expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution />;');
     expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
     expect(routes).toContain('<RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />');
   });
@@ -175,13 +176,15 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(spaFallback).toContain('isApplicationSpaPath(req.path)');
   });
 
-  it('keeps unauthenticated root hydration non-blocking but never suppresses an authenticated gate', () => {
-    expect(sessionComposition).toContain("'/'");
-    expect(sessionComposition).toContain('if (loading && !renderPublicShellImmediately)');
+  it('keeps public hydration independent from Supabase bootstrap while retaining authenticated gates', () => {
+    expect(sessionComposition).toContain('authBootstrapPending');
+    expect(sessionComposition).not.toContain('AUTH_BOOTSTRAP_TIMEOUT_MS');
+    expect(sessionComposition).not.toContain('Lade Sicherheits-Modul...');
+    expect(sessionComposition).not.toContain('if (loading && !renderPublicShellImmediately)');
     expect(sessionComposition).toContain('if (pendingOnboardingSession)');
     expect(sessionComposition).toContain('if (pendingStepUpSession)');
-    expect(sessionComposition).not.toContain('if (pendingOnboardingSession && !renderPublicShellImmediately)');
-    expect(sessionComposition).not.toContain('if (pendingStepUpSession && !renderPublicShellImmediately)');
+    expect(routes).toContain("if (currentPath === '/')");
+    expect(routes).toContain("if (currentPath === '/login')");
   });
 
   it('keeps the canonical landing page suitable for Google OAuth branding review', () => {

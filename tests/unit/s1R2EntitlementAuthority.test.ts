@@ -38,16 +38,17 @@ describe('S1-R2-00 entitlement authority boundary', () => {
     expect(checkout).not.toContain('onSuccess(planId)');
   });
 
-  it('projects subscription tier through the rotation-aware authenticated readback contract', () => {
+  it('projects subscription tier through the rotation-aware authenticated readback contract without blocking UI', () => {
     const session = read('src/app/auth/SessionComposition.tsx');
     const readback = read('src/lib/subscriptionReadback.ts');
 
     expect(session).toContain("import { authFetch } from '../../lib/authFetch'");
-    expect(session).toContain("await authFetch('/api/stripe/user-subscription')");
+    expect(session).toContain("() => authFetch('/api/stripe/user-subscription')");
     expect(session).not.toContain('/api/stripe/user-subscription?userId=');
     expect(session).not.toContain('Authorization: `Bearer ${session.access_token}`');
-    expect(session).toContain("let tier: SubscriptionTier = 'Free';");
-    expect(session).toContain('if (data?.subscriptionTier) tier = data.subscriptionTier;');
+    expect(session).toContain("subscriptionTier: 'Free'");
+    expect(session).toContain("const tier: SubscriptionTier = data?.subscriptionTier || 'Free';");
+    expect(session).toContain('void withSessionStageTimeout(');
 
     expect(readback).toContain("authFetch('/api/stripe/user-subscription')");
     expect(readback).not.toContain('?email=');

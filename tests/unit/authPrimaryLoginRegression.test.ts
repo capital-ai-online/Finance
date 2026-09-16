@@ -138,12 +138,12 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
   });
 
-  it('uses one synchronous Supabase auth-state bootstrap without forbidding bounded post-auth session reads', () => {
+  it('uses one synchronous Supabase auth-state bootstrap and queues follow-up work without a timer delay', () => {
     expect(sessionComposition).toContain('supabase.auth.onAuthStateChange((event, session) =>');
     expect(sessionComposition).not.toContain('onAuthStateChange(async');
     expect(sessionComposition).toContain('isSessionEstablishmentEvent(event)');
     expect(sessionComposition).toContain('scheduleSessionEstablishment(session)');
-    expect(sessionComposition).toContain('window.setTimeout(() =>');
+    expect(sessionComposition).toContain('queueMicrotask(() => {');
     expect(sessionComposition).toContain('getSessionBootstrapKey(session)');
 
     const bootstrapStart = sessionComposition.indexOf('useEffect(() => {');
@@ -173,11 +173,9 @@ describe('website primary login regression boundary', () => {
     expect(getSessionBootstrapKey({ user: { id: 'anon', is_anonymous: true } })).toBe('');
   });
 
-  it('renders the login shell immediately while preserving authenticated onboarding/AAL gates', () => {
-    expect(sessionComposition).toMatch(
-      /const PUBLIC_SHELL_PATHS = new Set\(\[[\s\S]*'\/login',[\s\S]*\]\);/,
-    );
-    expect(sessionComposition).toContain('if (loading && !renderPublicShellImmediately)');
+  it('keeps the application shell interactive while preserving authenticated onboarding/AAL gates', () => {
+    expect(sessionComposition).not.toContain('const [loading, setLoading]');
+    expect(sessionComposition).not.toContain('Lade Sicherheits-Modul...');
     expect(sessionComposition).toContain('if (pendingOnboardingSession)');
     expect(sessionComposition).toContain('if (pendingStepUpSession)');
   });
