@@ -3,20 +3,22 @@
 ## Enterprise Component
 
 **Status:** Development  
-**Component Version:** `1.2.0`  
+**Component Version:** `1.3.0`  
 **Owner:** `CAPITAL-AI-OPS / PVC-06 Version Management / PVC-07 Release Management`  
 **Governance:** ADR-0030 + ADR-0105 + ADR-0096 / CTRL-GOV-VERSION-001 + CTRL-GOV-VERSION-002  
-**Runtime Contract:** `release-version-gate/1.1.0` + `deterministic-version-materialization/1.0.0` + `platform-version-control-plane/1.0.0`
+**Runtime Contract:** `release-version-gate/1.1.0` + `deterministic-version-materialization/1.0.0` + `platform-version-control-plane/1.0.0` + `versioned-unit-inventory/1.0.0`
 
 ---
 
 ## Purpose
 
-The Release component governs CAPITAL-AI platform-version advancement, read-only platform-version projection and release-candidate evidence.
+The Release component governs CAPITAL-AI platform-version advancement, read-only platform-version projection, read-only versioned-unit inventory and release-candidate evidence.
 
 `package.json#version` is the **single platform-version authority**. The Release component reads that value at execution time; this document intentionally does not pin a separate current platform version.
 
-ADR-0105 partially supersedes the discretionary version-selection semantics of ADR-0030: when accepted deterministic Decision Evidence is used, target version and PATCH/MINOR/MAJOR classification are derived from that evidence and cannot be freely supplied. Productive mutation still runs only through this existing Release Version Gate. ADR-0096 keeps legacy VersionManager authority/state semantics suspended/non-authorizing.
+The Release component itself has the independent component-version authority `src/platform/Release/manifest.json#version`. The new backward-compatible `versioned-unit-inventory/1.0.0` capability advances that component version from `1.2.0` to `1.3.0`; this does not advance or mirror the CAPITAL-AI platform version.
+
+ADR-0105 partially supersedes the discretionary version-selection semantics of ADR-0030: when accepted deterministic Decision Evidence is used, target version and PATCH/MINOR/MAJOR classification are derived from that evidence and cannot be freely supplied. Productive platform-version mutation still runs only through this existing Release Version Gate. ADR-0096 keeps legacy VersionManager authority/state semantics suspended/non-authorizing.
 
 ---
 
@@ -31,10 +33,14 @@ ADR-0105 deterministic Decision Evidence
                     v
 package.json#version                         <- sole platform-version authority
         |
-        +--> releaseVersionGate.ts           <- controlled mutation + decision binding
+        +--> releaseVersionGate.ts           <- controlled platform mutation + decision binding
         +--> readmeVersionProjection.ts      <- deterministic documentation projection
         +--> platformVersionControlPlane.ts  <- read-only runtime/admin projection
         |         +--> VersionManager GET /api/admin/version (compatibility adapter)
+        |
+        +--> versionedUnitInventory.ts       <- read-only unit/version/provenance projection
+        |         +--> existing component manifest versions where present
+        |         +--> package.json#version inheritance otherwise
         |
         +--> vite.config.ts
                   +--> __CAPITAL_AI_VERSION__
@@ -42,12 +48,41 @@ package.json#version                         <- sole platform-version authority
                                       +--> UI / PDF / client-visible exports
                                       +--> Branding/runtimeBrand.ts (compatibility re-export)
 
+src/platform/Release/manifest.json#version  <- independent Release component version
 AGENTS.md Control Plane Version              <- independent Governance metadata
 ```
 
 `AGENTS.md` is never a product-version mirror. README is never an authority. `uploads/version_manager.json` and `/api/admin/version/bump` are retired legacy paths and cannot determine or mutate the platform version.
 
-Client code must not pin a second platform SemVer literal. Browser-visible platform-version text is projected through `src/platform/Release/clientVersion.ts`; historical/model/schema/provider contract versions remain independent version domains and must not be rewritten to the platform version merely because they are SemVer-shaped.
+Client code must not pin a second platform SemVer literal. Browser-visible platform-version text is projected through `src/platform/Release/clientVersion.ts`; historical/model/schema/provider/component contract versions remain independent version domains and must not be rewritten to the platform version merely because they are SemVer-shaped.
+
+---
+
+## Versioned Unit Inventory
+
+`src/platform/Release/Services/versionedUnitInventory.ts` exposes the deterministic `versioned-unit-inventory/1.0.0` contract.
+
+It is a **read-only projection**, not a new version registry or mutation engine. For one exact Git commit it discovers the repository/platform root, direct `src/platform/*` components, direct `src/features/*` slices, remaining direct `src/*` module roots and the root backend entrypoint (`server.ts` or `server/`).
+
+Version authority is resolved fail-closed:
+
+- platform root -> `package.json#version`;
+- platform component with an existing valid manifest -> `src/platform/<component>/manifest.json#version`;
+- platform component without a manifest -> inherited `package.json#version` plus unresolved ownership rather than invented component metadata;
+- feature/application/backend units -> inherited `package.json#version` plus exact Git `sourceCommit` provenance.
+
+An existing component manifest with malformed SemVer is rejected; the inventory never silently falls back to the platform version when a component has already declared its own authority. Duplicate deterministic Unit IDs are rejected.
+
+Existing manifest `owner`, `documentation` and `dependencies` metadata are consumed where available. Canonical `CAPITAL-AI-*` owner/PVC metadata is projected only from existing declarations; missing ownership remains explicitly unresolved and path placement alone cannot transfer Domain or PVC ownership.
+
+The automation entrypoint is:
+
+```bash
+npx tsx scripts/automation/validateVersionedUnitInventory.ts
+npx tsx scripts/automation/validateVersionedUnitInventory.ts --json
+```
+
+The JSON projection is the intended OPS/PVC-06 handoff surface for Documentary/report generation after Human merge. Documentary may consume it but cannot mutate platform/component versions or become another Version Management authority.
 
 ---
 
@@ -110,7 +145,7 @@ The adapter returns either an explicit no-mutation result or constructs the `Rel
 
 ## Versioned artifacts
 
-### Authority
+### Platform authority
 
 1. `package.json#version`
 
@@ -132,14 +167,15 @@ The adapter returns either an explicit no-mutation result or constructs the `Rel
 9. `README.md`, regenerated through `npm run readme:sync`
 10. `__CAPITAL_AI_VERSION__`, injected by Vite from `package.json#version`
 11. `src/platform/Release/clientVersion.ts`, validated browser-safe projection consumed by UI/PDF code
+12. `versioned-unit-inventory/1.0.0`, which references but never replaces existing component-version authorities
 
-`README.md` is included in the atomic rollback set but is not rewritten by generic mirror logic. `AGENTS.md` is excluded from both product-version mutation and consistency projection. Client components are consumers of the injected projection and therefore do not require direct string rewrites during a release.
+`README.md` is included in the atomic platform-version rollback set but is not rewritten by generic mirror logic. `AGENTS.md` is excluded from both product-version mutation and consistency projection. Client components are consumers of the injected projection and therefore do not require direct string rewrites during a release.
 
 ---
 
 ## Fail-closed rules
 
-The gate rejects a request when, among other conditions:
+The platform Release gate rejects a request when, among other conditions:
 
 - the target is not strict `MAJOR.MINOR.PATCH` SemVer;
 - the target is not greater than the current release;
@@ -154,7 +190,9 @@ The gate rejects a request when, among other conditions:
 - Documentation Hygiene or Governance Control Plane validation fails;
 - TypeScript, targeted version tests, build or predeploy gates fail.
 
-There is no best-effort or partial version bump. On apply-stage failure the gate restores the complete authority/projection rollback set.
+The Versioned Unit Inventory independently fails closed on malformed platform/component SemVer, malformed source SHA or duplicate Unit IDs. It performs no best-effort component-version substitution where a manifest already exists.
+
+There is no best-effort or partial platform version bump. On apply-stage failure the Release gate restores the complete authority/projection rollback set.
 
 ---
 
@@ -204,6 +242,7 @@ The record is evidence, not production acceptance. This component deliberately d
 - `tests/unit/platformVersionConsistency.test.ts` — `package.json` SemVer and current projection consistency; independent Governance Control Plane version contract for AGENTS.
 - `tests/unit/clientPlatformVersionProjection.test.ts` — build-time client projection and audited runtime UI paths may not pin a stale platform version.
 - `tests/unit/readmeVersionProjection.test.ts` — deterministic/idempotent README projection and malformed-input failure.
+- `tests/unit/versionedUnitInventory.test.ts` — unit discovery, component-authority precedence, inherited platform projection, owner/PVC consumption, determinism and fail-closed malformed-version/source-identity behavior.
 - `scripts/pr/runtimeArtifactImmutability.test.mjs` — retired write denial and proof that admin version GET is not intercepted before Express authorization.
 
 ---
@@ -214,10 +253,11 @@ The record is evidence, not production acceptance. This component deliberately d
 - `docs/adr/ADR-0105-deterministic-autonomous-versioning.md`
 - `docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md`
 - `docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json`
+- `docs/projects/operations/version-management/README.md`
 - `ESS-0001`
 - `ESS-0001-CONTRACTS`
 - `ESS-0007` — Enterprise Release Center
 - suspended historical `ESS-0004` under `docs/archive/governance/suspended/`
 - `src/platform/Traceability`
 
-A version increase remains a controlled Release operation. Deterministic ADR-0105 materialization removes free target/classification choice for that path; it does not authorize PR creation, merge, Release Acceptance, final tagging, deployment or any protected production/provider mutation.
+A platform-version increase remains a controlled Release operation. Deterministic ADR-0105 materialization removes free target/classification choice for that path; it does not authorize PR creation, merge, Release Acceptance, final tagging, deployment or any protected production/provider mutation.
