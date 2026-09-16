@@ -50,24 +50,22 @@ const SIGN_OUT_TIMEOUT_MS = 5_000;
 const AUTH_BOOTSTRAP_TIMEOUT_MS = 8_000;
 const SESSION_STAGE_TIMEOUT_MS = 10_000;
 
-function withSessionStageTimeout<T>(operation: Promise<T>, stage: string): Promise<T> {
+function withSessionStageTimeout<T>(operation: () => Promise<T>, stage: string): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error(`Supabase session stage timed out: ${stage}`)),
+      SESSION_STAGE_TIMEOUT_MS,
+    );
+  });
 
-  return Promise.race([
-    operation,
-    new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(
-        () => reject(new Error(`Supabase session stage timed out: ${stage}`)),
-        SESSION_STAGE_TIMEOUT_MS,
-      );
-    }),
-  ]).finally(() => {
+  return Promise.race([Promise.resolve().then(operation), timeout]).finally(() => {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
   });
 }
 
 function needsOnboarding(session: { user: any }): Promise<boolean> {
-  return withSessionStageTimeout(readNeedsOnboarding(session), 'onboarding status');
+  return withSessionStageTimeout(() => readNeedsOnboarding(session), 'onboarding status');
 }
 
 function shouldRenderPublicShellImmediately(): boolean {
@@ -161,7 +159,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
     try {
       const res = await withSessionStageTimeout(
-        authFetch('/api/stripe/user-subscription'),
+        async () => {
+          const response = await authFetch('/api/stripe/user-subscription');
+          return response;
+        },
         'subscription handoff',
       );
       if (res.status === 401) {
@@ -410,7 +411,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
               data: { session: liveSession },
               error,
             } = await withSessionStageTimeout(
-              supabase.auth.getSession(),
+              async () => {
+                const result = await supabase.auth.getSession();
+                return result;
+              },
               'post-MFA session read',
             );
 
@@ -489,7 +493,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
                     const {
                       data: { session },
                     } = await withSessionStageTimeout(
-                      supabase.auth.getSession(),
+                      async () => {
+                        const result = await supabase.auth.getSession();
+                        return result;
+                      },
                       'auth recovery session read',
                     );
                     if (session) {
