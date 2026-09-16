@@ -151,7 +151,7 @@ describe('website primary login regression boundary', () => {
 
     expect(bootstrapStart).toBeGreaterThan(-1);
     expect(bootstrapEnd).toBeGreaterThan(bootstrapStart);
-    expect(bootstrapEffect).toContain('supabase.auth.getSession()');
+    expect(bootstrapEffect).toMatch(/supabase\.auth\s*\.\s*getSession\(\)/);
     expect(bootstrapEffect).not.toContain('setTimeout(');
     expect(bootstrapEffect).not.toContain('Promise.race([');
   });

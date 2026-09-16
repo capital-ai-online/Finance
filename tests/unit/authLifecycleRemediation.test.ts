@@ -32,12 +32,13 @@ describe('frontend auth lifecycle remediation', () => {
     expect(routes).toContain('<LandingPage');
   });
 
-  it('uses explicit bounded local and global Supabase logout scopes', () => {
+  it('uses explicit local and global Supabase logout scopes without a generic watchdog', () => {
     expect(sessionComposition).toContain("const handleLogout = async () => performLogout('local')");
     expect(sessionComposition).toContain("const handleGlobalLogout = async () => performLogout('global')");
-    expect(sessionComposition).toContain('supabase.auth.signOut({ scope })');
-    expect(sessionComposition).toContain('SIGN_OUT_TIMEOUT_MS = 5_000');
-    expect(sessionComposition).toContain('Promise.race([');
+    expect(sessionComposition).toContain('await supabase.auth.signOut({ scope });');
+    expect(sessionComposition).not.toContain('SIGN_OUT_TIMEOUT_MS');
+    expect(sessionComposition).not.toContain('signOutWithTimeout');
+    expect(sessionComposition).not.toContain('Promise.race([');
     expect(sessionComposition).toContain('resetAuthProjection()');
   });
 
