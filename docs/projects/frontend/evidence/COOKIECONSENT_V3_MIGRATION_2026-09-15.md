@@ -26,6 +26,25 @@ Synchronisationsbasis: 0b7ffb3bf06c1165a3b73f9d4d6e0933dee971f2. Der Commit dies
 - Geschützte Pfade, CODEOWNERS und bestehende CI-Anbindung bleiben erhalten und erfassen die neuen Assets.
 - Begrenzte Owner-Zusätze in ADR/ESS/Architektur dokumentieren nur den Providerwechsel und die Anzeigenpause; Aktivierung erst mit Human Merge und autorisierter Promotion.
 
+## Mobile CSS-Readiness-Remediation 2026-09-16
+Auslöser: reale Smartphone-Evidence meldete, dass die Cookie-Auswahl nicht zuverlässig bedienbar war und die Seite bei der Auswahl einfrieren konnte.
+
+Branch: `agent/frontend-mobile-consent-readiness-20260916`.
+Branch-Basis: `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`.
+
+Materialisierte technische Änderung:
+- `index.html` kennzeichnet die vendorte CookieConsent-CSS und das CAPITAL-AI-Consent-Theme mit stabilen Readiness-IDs.
+- `public/cookieconsent-init.js` startet `CookieConsent.run()` erst, wenn beide erforderlichen Stylesheets nachweislich mit einem `StyleSheet` assoziiert sind oder ihr `load`-Event erfolgreich eingetroffen ist.
+- Fehlende oder fehlerhaft ladende Consent-Stylesheets führen fail-closed dazu, dass CookieConsent nicht gestartet wird; optionale Google-Dienste bleiben dadurch weiterhin deaktiviert.
+- Das Readiness-Gate schließt den Race-Zustand zwischen erstem `sheet`-Check und Listener-Registrierung durch einen zweiten `sheet`-Check.
+- `public/cookieconsent-theme.css` behält 44px Touch-Ziele bei und setzt für Consent-Buttons sowie den globalen Settings-Button `touch-action: manipulation`.
+- `tests/unit/cookieConsentStyleReadiness.test.ts` deckt bereits-ready, verzögert geladen, fehlend und CSS-load-error ab und prüft die beiden Readiness-Marker im HTML.
+
+Unverändert bleiben die geschützten Invarianten: Basic Consent Mode v2, Zero-Google-before-opt-in, GA4 ausschließlich nach gültigem Analytics-Opt-in, AdSense vollständig pausiert, Nonce/CSP-Grenzen und gespeicherter Widerruf.
+
+Pre-PR-Ausführung der neuen Vitest-Suite: NOT RUN — in diesem Chat steht kein vollständiger Repository-Checkout mit installierten Dependencies zur Verfügung. Der Test ist für die reguläre Hosted-PR-Testausführung materialisiert; NOT RUN wird nicht als PASS gewertet.
+Reale Mobile-Browser-Evidence nach dieser Remediation: NOT RUN / weiterhin erforderlich.
+
 ## Tatsächlich ausgeführte Prüfungen
 Node v24.19.0, partielle dateibasierte Arbeitskopie; kein vollständiger installierter Repository-Checkout.
 - node --test scripts/security/cookieConsentRuntime.test.mjs: PASS, 18 Tests, 0 Fehler.
@@ -38,12 +57,13 @@ Cloudbrowser: wiederholt CDP refresh tabs timeout nach 20000 ms. Keine erfolgrei
 
 ## Korrelation
 Seit ursprünglicher Basis 27 Commits auf main, 15 betroffene Dateien: Documentary-SLO, Social-Publication-Evidence, Security-Autofix sowie Agent-Client-/Security-Roadmaps. Kein Dateioverlap mit dieser Migration, keine Änderung an AGENTS oder anwendbaren Provider-/CSP-Authorities im Compare.
-Aktuelle Open-PR-Abfrage: keine offenen PRs. Aktuelle Branch-Liste: frühere Frontend-Consent-Login- und Roadmap-Normalisierungsbranches nicht mehr vorhanden; frühere semantische Prüfung bleibt historische Evidence. Kompatibilitätsalias und begrenztes Roadmap-Append vermeiden Überschreiben ihrer früheren Änderungen.
-Der zuvor angelegte Migrationsbranch war beim Refresh nicht mehr vorhanden (404). Er wurde vom aktuellen main neu angelegt. Keine fremden Änderungen überschrieben.
+Aktuelle Branch-/PR-Historie aus der ursprünglichen Migration bleibt historische Evidence; sie autorisiert die Mobile-Remediation nicht.
 Keine Governance-/ADR-Nummern oder produktiven PVC-Namespaces neu vergeben.
+
+Hinweis 2026-09-16: Während der Mobile-Readiness-Umsetzung wurde PR #1001 gemergt und `main` wechselte von `3d3f928d91e2cdd9a818bdfd6ae8d065db9f697f` auf `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`. Die neue Authority wurde vollständig re-korreliert. Der Merge änderte ausschließlich `AGENTS.md`, `docs/projects/governance/ROADMAP.md` und GOV-CHAT-078-Evidence; es besteht kein File-/Runtime-Overlap zu den fünf FE-Consent-Dateien. Der aktive Remediation-Branch wurde deshalb frisch von `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc` neu aufgebaut. Unmittelbar vor dieser Evidence-Korrektur waren keine offenen Pull Requests vorhanden.
 
 ## Offene Exit Gates
 1. Auf einer ausgelieferten HTTPS-Vorschau und anschließend nach autorisierter Promotion: Erstbesuch, Nur notwendige, Analytics an/aus, Speichern, Wiederöffnen, Reload-Persistenz, Widerruf, erneute Zustimmung sowie Login/Landing/Datenschutz prüfen. Browser-Cookie- und Netzwerk-Evidence muss Zero Google vor Opt-in, GA nur nach Zustimmung und Zero AdSense in allen Zuständen belegen. Aktuell NOT RUN.
 2. COMP bewertet Nachweis-/Aufbewahrungsanforderungen: CookieConsent besitzt hier ausschließlich lokalen Consent-Speicher, keinen zentralen anonymen Consent-Log-Dienst. Bestehende Registrierungsnachweise bleiben separat. Keine Compliance- oder Google-CMP-/TCF-Zertifizierung behauptet. SEO/COMP-Providerinventare bei Aktivierung durch ihre Owner abgleichen; AdSense-Reaktivierung ist ein separates freizugebendes Arbeitspaket.
 
-Kein PR erstellt, kein Merge, kein Deployment, keine Änderung/Löschung des CookieHub-Kontos oder seiner historischen Nachweise in diesem Durchlauf. Merge-Readiness und Production Acceptance werden nicht behauptet.
+Kein Merge, kein Deployment und keine Änderung/Löschung des CookieHub-Kontos oder seiner historischen Nachweise in diesem Durchlauf. Merge-Readiness und Production Acceptance werden nicht behauptet.

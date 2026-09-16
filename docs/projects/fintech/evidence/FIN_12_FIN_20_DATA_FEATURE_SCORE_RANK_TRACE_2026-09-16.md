@@ -1,104 +1,55 @@
-# FIN-12 / FIN-20 — DATA → Feature → Score → Rank → OPS Trace Handoff Evidence
+# FIN-12 / FIN-20 — preparatory DATA → Feature → Score → Rank lineage evidence
 
 **Date:** 2026-09-16  
 **Project:** `CAPITAL-AI-FINTECH`  
 **Project folder:** `docs/projects/fintech/`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Owned PVC:** `PVC-12..PVC-17`  
-**Source baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
+**Current-main correlation baseline:** `main@8d2c0c2b5cc815f332f184c2927940406bbc132a`  
 **Branch:** `agent/fintech-fin12-fin20-lineage-20260916`  
-**Requirement return:** `REQ-COMP-034`  
-**Disposition:** `IMPLEMENTED_BRANCH / PRE_PR_EVIDENCE_READY / OPS RETURN REQUIRED`
+**Requirement:** `REQ-COMP-034`  
+**Disposition:** `PREPARATORY_ONLY / DATA_RETURN_REQUIRED / NOT_EXIT_EVIDENCE`
 
-## Scope and authority
+## Current-main correction
 
-This package rematerializes the FINTECH owner return from fresh current main. The historical `agent/fintech-fin12-validated-feature-contract-20260916` branch that Compliance recorded as substantially behind/diverged is **not** used as current implementation or current evidence.
+PR #1004 was Human-merged after this branch was originally created. Current main now records FIN-12 as `PARTIAL / P1 — SELECTED / DATA CONTRACT RETURN REQUIRED` and explicitly holds productive FINTECH continuation until `CAPITAL-AI-DATA / PVC-09..11` returns complete validated field/history semantics for the productive champion feature inputs.
 
-Authority remains unchanged:
+Accordingly, this branch no longer claims that FIN-12, FIN-20 or REQ-COMP-034 is complete. The canonical `README.md`, `ROADMAP.md`, `TASK_REGISTER.md` and `WORK_PACKAGES.md` remain exactly at current-main state. The older branch-local state that marked FIN-12/FIN-20 `IMPLEMENTED_BRANCH` is superseded by the current-main correlation and is not merge evidence.
 
-- DATA/PVC-09..11 owns provider ingress, evidence identity, freshness, provenance and Data Quality.
-- FINTECH/PVC-12..17 owns feature mapping, model resolution, scoring, canonical score semantics and ranking.
-- OPS/PVC-18 owns EventMesh publication and the operational trace projection.
-- Compliance owns `REQ-COMP-034` reassessment and does not receive a synthetic PASS from this package.
+## Preparatory implementation retained
 
-Relevant architecture is the accepted ADR-0087 single scoring chain:
+`src/platform/Scoring/ValidatedFinancialFeatureContract.ts` defines a fail-closed mapping helper for DATA observations that are already admitted by the existing DATA-owned `FintechDataHandoff`. It performs no provider normalization, Data Quality decision, feature estimation or synthetic fallback. A successful mapping preserves asset/correlation identity, provider/feed, evidence identity, timestamps, freshness and the target model feature-contract version. Missing, stale, ambiguous or reused observations fail closed.
 
-`UAI → Evidence/Quality Gate → Feature Contract → ScoringModelRegistry → ScoringDispatcher → Domain Executor → CanonicalScoreResult → Ranking → EventMesh/Traceability`.
+`src/platform/Scoring/FintechScoringTraceLineage.ts` defines a fail-closed lineage checker that verifies one already-admitted feature mapping against `CanonicalScoreResult` and the existing FIN-17 backend ranking projection. It emits only an `EVIDENCE_ONLY` OPS handoff descriptor; it does not publish EventMesh events, create `OperationalTraceStateSourceRecord`, or take PVC-18 authority.
 
-## FIN-12 implementation
+These modules are intentionally **not exported from the canonical `src/platform/Scoring/index.ts` barrel in this correction** and no productive scoring/ranking route is wired to them. They remain bounded preparatory code until the required DATA return is integrated and FIN-12 is re-correlated from then-current main.
 
-`src/platform/Scoring/ValidatedFinancialFeatureContract.ts` adds `validated-financial-feature-mapping/1.0.0`.
+## Validation scope
 
-The mapping consumes the existing DATA-owned `projectValidatedDataInputForFintech()` boundary rather than recreating provider/DQ logic. A successful feature contract preserves:
+`tests/unit/fintechValidatedFeatureLineage.test.ts` is fixture-level negative/positive contract coverage only. It demonstrates that the preparatory helpers:
 
-- exact `assetId`;
-- exact `correlationId`;
-- `validated-data-input/1.0.0` source contract identity;
-- target `ScoringModelRegistry` model and existing `featureContractVersion`;
-- provider and provider-feed identity;
-- source evidence ID;
-- observed/retrieved/freshness timestamps;
-- admitted DATA status.
+- preserve exact identity/correlation/evidence for an already-valid numeric observation;
+- fail closed for stale DATA;
+- reject silent reuse of one source observation as multiple features;
+- preserve evidence through canonical score and backend ranking fixtures;
+- fail closed when scoring drops the required DATA evidence identity; and
+- fail closed when the exact backend rank is absent.
 
-The mapping creates no calculated substitute value. It is one-to-one from one accepted DATA numeric observation to one explicitly named financial feature. The boundary fails closed for stale/missing/unknown/non-computable/incomplete provenance, missing/ambiguous source fields, duplicate feature keys and duplicate reuse of one source field.
+The tests do **not** prove complete productive champion feature coverage. In particular, they do not satisfy the current-main DATA-return requirements for crypto market-cap/volume/supply, traditional fundamentals, productive crypto/traditional validated-history semantics, or signed sovereign-yield semantics.
 
-## FIN-20 implementation
+## Owner boundaries
 
-`src/platform/Scoring/FintechScoringTraceLineage.ts` adds `fintech-scoring-trace-lineage/1.0.0`.
+- `CAPITAL-AI-DATA / PVC-09..11` remains owner of ingress, evidence/provenance, freshness and Data Quality semantics.
+- `CAPITAL-AI-FINTECH / PVC-12..17` remains owner of feature/scoring/ranking processing after accepted DATA input exists.
+- `CAPITAL-AI-OPS / PVC-18` remains owner of EventMesh / operational traceability.
+- `CAPITAL-AI-COMP` remains owner of REQ-COMP-034 reassessment.
 
-A lineage is `READY` only when all of the following are true:
-
-1. FIN-12 produced an admitted, provenance-complete feature mapping.
-2. `CanonicalScoreResult` is `READY` for the exact same `assetId`.
-3. Score `featureVersion` equals the FIN-12 target feature-contract version.
-4. Registry/model/executor identifiers equal the FIN-12 resolved model.
-5. Every FIN-12 source evidence ID is still present in canonical scoring evidence.
-6. Dispatcher, result-contract and scoring versions are explicit.
-7. FIN-17 backend ranking contains exactly one entry for the same asset.
-8. Ranked feature/scoring/dispatcher/registry/model/executor/result metadata exactly matches the canonical score.
-9. Ranked canonical score equals the canonical score value used by `CrossAssetRanking`.
-
-Any mismatch returns `LINEAGE_NOT_COMPUTABLE`; no best-effort or inferred lineage is emitted.
-
-## OPS boundary
-
-The FIN-20 output contains an evidence-only `opsTraceHandoff` with:
-
-- `targetProject = CAPITAL-AI-OPS`;
-- `targetPvc = PVC-18`;
-- exact FINTECH correlation ID;
-- stable FINTECH source-lineage identity;
-- source evidence IDs retained from DATA/scoring;
-- source timestamp;
-- explicit `STRICT_IDENTITY_CORRELATION` binding requirement.
-
-This is deliberately not an `OperationalTraceStateSourceRecord` and it does not publish EventMesh events. The existing OPS contract requires the actual returned EventContract identity/correlation/timestamp before the operational projection can become current. That provider/runtime step remains owner-correct OPS work.
-
-## Negative-path evidence encoded in tests
-
-`tests/unit/fintechValidatedFeatureLineage.test.ts` covers:
-
-- successful current DATA identity/provenance → target feature-contract mapping;
-- stale DATA fails closed and emits no feature contract;
-- one source observation cannot be silently double-counted under two feature names;
-- exact DATA evidence/correlation survives feature → canonical score → rank → OPS handoff;
-- canonical scoring that drops the DATA evidence identity fails closed;
-- missing exact backend rank fails closed.
-
-## Changed implementation surface
-
-- `src/platform/Scoring/ValidatedFinancialFeatureContract.ts`
-- `src/platform/Scoring/FintechScoringTraceLineage.ts`
-- `src/platform/Scoring/index.ts`
-- `tests/unit/fintechValidatedFeatureLineage.test.ts`
-- `docs/projects/fintech/ROADMAP.md`
-- `docs/projects/fintech/TASK_REGISTER.md`
-- this evidence file
+No foreign-owner work is marked complete by this evidence.
 
 ## Validation truth
 
-Pre-PR TypeScript/Vitest execution is `NOT RUN` on the current ChatGPT GitHub-connector surface because it exposes repository mutations/reads but no dependency-complete local execution host. `NOT RUN` is not treated as PASS. The focused unit test and independent hosted repository checks are intended to execute only after correlation-gated Draft PR creation, consistent with the repository cost/CI lifecycle.
+The original PR head `2e146d8b78227b237018cd0b8e96b6cd62f4d05a` completed its hosted CI, Governance and Container Security workflows successfully. Those checks predate the current-main merge correction and are not reused as exact-head PASS for the corrected head. New exact-head hosted status must be read after the branch update; `NOT RUN` or pending is never reported as `PASS`.
 
-## Owner-return conclusion
+## Exit condition for future FIN-12 / FIN-20 continuation
 
-FINTECH has a current-main-rematerialized, fail-closed contract for preserving accepted DATA identity/provenance into a versioned feature mapping and verifying that the same evidence reaches canonical score and backend ranking. The resulting handoff carries the exact source identities/correlation needed by the existing OPS strict-binding surface without assuming PVC-18 authority. Compliance reassessment remains downstream of integration plus the owner-correct OPS trace/evidence return.
+FIN-12 productive binding resumes only after the DATA-owned return described on current main is integrated. Then-current correlation must prove that every productive champion feature input can consume canonical validated DATA semantics without FINTECH-local provider/DQ bypass. FIN-20 can then be reassessed against the actual FIN-12 bindings and owner-correct OPS trace return. Until that point, this file is preparatory evidence only and MUST NOT be used to close REQ-COMP-034.

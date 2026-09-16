@@ -4,15 +4,15 @@
 **Folder:** `docs/projects/fintech/`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-12..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — FIN-17 is `DONE_MAIN` via PR #946; REQ-COMP-034 return is rematerialized from fresh current main as FIN-12 + FIN-20 without consuming the stale historical FIN-12 branch as evidence  
+**Reconciliation:** 2026-09-16 — FIN-17 is terminal on main via PR #946 + #951; FIN-12 selected and re-correlated to the DATA ownership boundary  
 **Baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
 
-This file is the single active FINTECH execution projection. Dated archive content and remaining FT-CORE-CRYPTO / SC-MD-SPT work are represented here. `docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md` and `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md` are detail/evidence only.
+This file is the single active FINTECH execution projection. Dated 2026-09-13 archive content and remaining FT-CORE-CRYPTO / SC-MD-SPT work are represented here. `docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md` and `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md` are detail/evidence only.
 
-Canonical chain: Validated DATA → Feature Contract → ScoringModelRegistry → ScoringDispatcher → Domain Executor → CanonicalScoreResult → Ranking / Decision Support → OPS EventMesh / Traceability evidence surface.
+Canonical chain: Validated DATA → Feature Contract → ScoringModelRegistry → ScoringDispatcher → Domain Executor → CanonicalScoreResult → Ranking / Decision Support.
 
 ## PR #900 / #901 work packages
 
@@ -34,19 +34,19 @@ Re-correlate the exact current technical financial-stage boundary; no frontend-l
 ### FIN-PR900-05 — Regulated expansion proposals
 Treat money-like/token or monetization concepts as proposals only until GOV/COMP/SEC/OPS/Human routing is complete.
 
-## Absorbed open FINTECH work
+## Absorbed open FINTECH work (from 2026-09-13 archive + FT-CORE-CRYPTO)
 
 | ID | State | Next gate |
 |---|---|---|
-| FIN-12 Validated DATA → Feature Contract | `IMPLEMENTED_BRANCH / PRE_PR_EVIDENCE_READY / P1` — rematerialized from `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc` | exact-head CI after Draft PR; Human merge required before `DONE_MAIN` |
+| FIN-12 Validated DATA → Feature Contract | `PARTIAL / P1 — SELECTED / DATA CONTRACT RETURN REQUIRED` | DATA/PVC-09..11 returns complete validated field/history semantics needed by productive crypto/traditional/commodity/sovereign feature inputs; then FINTECH binds every champion feature contract fail-closed |
 | FIN-13 Scoring Models | `VERIFIED CORE / DRIFT WATCH` | no second registry |
 | FIN-14 Scoring Orchestration | `VERIFIED CORE` | no second dispatcher |
 | FIN-15 Domain executors | `VERIFIED/PARTIAL` + FIN-SEC-03 `IMPLEMENTED / EVIDENCE_READY`; SEC verification open | independent Security return for protected analysis boundary |
 | FIN-16 Canonical scoring | `VERIFIED/PARTIAL` + FIN-SEC-02 `EVIDENCE_READY` / SEC verification open | independent SEC return |
-| FIN-17 Ranking / Decision Support | `DONE_MAIN` — PR #946 / merge `c8a88afc7f9cfad367b592e9567654451f81e436` | preserve one backend rank/order authority; FE remains presentation-only |
+| FIN-17 Ranking / Decision Support | `DONE_MAIN / TERMINAL` | backend authority PR #946 + FE backend-order consumer PR #951 are Human-merged; retain drift watch only |
 | FIN-18 Asset-class inventory | `VERIFIED` | no inferred new class |
 | FIN-19 Provider capability mapping | `PARTIAL / OPEN` | map to DATA `provider-matrix` without owning ingress/DQ |
-| FIN-20 End-to-end scoring evidence | `IMPLEMENTED_BRANCH / FINTECH EVIDENCE_READY / OPS RETURN OPEN` | exact DATA evidence/correlation is bound through FIN-12 feature mapping, canonical score metadata and FIN-17 backend rank; actual EventMesh publication/operational trace projection remains OPS/PVC-18 |
+| FIN-20 End-to-end scoring evidence | `PARTIAL / OPEN` | exact lineage through OPS trace after FIN-12 contract binding |
 | FIN-DRIFT-01 Deterministic drift checks | `PLANNED` | stale projections fail closed |
 | FIN-SEC-02 verified_screening | `IMPLEMENTED / EVIDENCE_READY`; SEC not self-closed | independent SEC verification |
 | FIN-SEC-03 analysis entitlement | `IMPLEMENTED / EVIDENCE_READY`; SEC not self-closed | independent SEC verification; pre-PR/hosted tests remain truthfully separate |
@@ -58,19 +58,9 @@ Treat money-like/token or monetization concepts as proposals only until GOV/COMP
 
 No synthetic score fallback. Frontend is presentation-only. `ScoringDispatcher` remains the only productive scoring execution authority. Research/challenger models stay `scoreEligible=false` until governed promotion.
 
-## REQ-COMP-034 / FIN-12 + FIN-20 owner return
-
-The stale historical branch `agent/fintech-fin12-validated-feature-contract-20260916` is explicitly **not** accepted as current evidence. The owner return is newly materialized from the current baseline on `agent/fintech-fin12-fin20-lineage-20260916`.
-
-FIN-12 now adds a FINTECH-owned `validated-financial-feature-mapping/1.0.0` boundary on top of the DATA-owned `ValidatedDataInput/1.0.0` / `FintechDataHandoff` gate. It maps admitted numeric observations one-to-one into the target model's existing `featureContractVersion`, preserves provider/feed/evidence/timestamps/freshness/correlation, rejects duplicate source reuse, and creates no new model registry or feature-estimation authority.
-
-FIN-20 adds `fintech-scoring-trace-lineage/1.0.0`. It succeeds only when the FIN-12 source evidence IDs remain present in `CanonicalScoreResult`, model/dispatcher/executor/result/feature metadata matches, and exactly one FIN-17 `CrossAssetRanking` entry carries the same scoring lineage. The resulting handoff preserves the exact correlation and evidence identities required by the existing OPS strict-binding surface while leaving EventMesh publication and `OperationalTraceStateSourceRecord` creation to `CAPITAL-AI-OPS / PVC-18`.
-
-Target-local evidence: `docs/projects/fintech/evidence/FIN_12_FIN_20_DATA_FEATURE_SCORE_RANK_TRACE_2026-09-16.md`.
-
 ## FIN-SEC-03 implementation disposition
 
-`FIN-SEC-03 / PVC-15` was Human-merged through PR #929 (`merge 103689c2f30536e573b7958f63b503ca428f69cf`; historical implementation branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`):
+`FIN-SEC-03 / PVC-15` was Human-merged through PR #929 (`merge 103689c2f30536e573b7958f63b503ca428f69cf`):
 
 - Backtest compatibility execution is gated server-side before history/provider work by the canonical subscription authority; current browser consumers use bearer-aware transport.
 - Monte Carlo requires a fresh server-authoritative authorization/quota decision for every user-triggered execution; automatic/bypass execution is removed.
@@ -79,15 +69,33 @@ Target-local evidence: `docs/projects/fintech/evidence/FIN_12_FIN_20_DATA_FEATUR
 - focused positive/negative regression tests and evidence are materialized in `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md`.
 - FINTECH does not self-assign Security `VERIFIED/CLOSED`; independent `CAPITAL-AI-SEC` verification remains required.
 
-## Current ordering
+## FIN-17 terminal disposition
 
-1. `FIN-12 + FIN-20 / REQ-COMP-034 owner return` is the active bounded FINTECH package. FIN-17 is already merged and no longer blocks it.
-2. `FIN-SEC-02` and `FIN-SEC-03` remain FINTECH `EVIDENCE_READY`; independent Security verification remains foreign-owner work and is not reopened locally.
-3. `FIN-19` is the next ordinary FINTECH provider-capability follow-on after the current owner return reaches its integration/return boundary, unless then-current evidence changes priority.
-4. `FIN-DRIFT-01` remains P3.
+FIN-17 is complete for the bounded authority split that previously blocked FIN-12:
+
+- PR #946 Human-merged the productive FINTECH backend rank/order authority based on `CrossAssetRanking` (`merge c8a88afc7f9cfad367b592e9567654451f81e436`).
+- PR #951 Human-merged the FE consumer cutover so `RankingBoard` consumes authoritative backend ordering instead of browser-local score sorting (`merge 3aa41faa2742dfc2601339b000e660f271380cf1`).
+- Supporting implementation evidence remains in `evidence/FIN_17_BACKEND_RANKING_AUTHORITY_2026-09-15.md`.
+
+FIN-17 is therefore `DONE_MAIN / TERMINAL`; it is no longer an executable next slice.
+
+## P1 selection after FIN-17
+
+The selected FINTECH P1 item is now **`FIN-12 — Validated DATA → Feature Contract`**.
+
+Current-main correlation proves the DATA handoff is necessary but not yet sufficient for the full FIN-12 exit gate. `ValidatedDataInput/1.0.0` currently provides the canonical validated snapshot/price boundary and `ValidatedHistoryInput` provides price-oriented history validation, while productive FINTECH feature builders also require:
+
+- crypto market-cap/volume/supply fields with canonical provenance/freshness/DQ;
+- traditional fundamentals with field-level validated provenance;
+- validated history semantics for productive crypto/traditional consumers; and
+- sovereign benchmark values that may legitimately be negative and therefore cannot be forced through positive-price-only history validation.
+
+Those contract/provider/DQ semantics belong to `CAPITAL-AI-DATA / PVC-09..11`. FINTECH must not create a parallel provider-normalization or Data Quality plane. The exact current finding and required DATA return are recorded in `evidence/FIN_12_VALIDATED_FEATURE_BOUNDARY_RECORRELATION_2026-09-16.md`.
+
+FINTECH runtime continuation resumes after the DATA return is integrated into then-current `main`, at which point every productive champion feature contract can be bound to the canonical validated input with focused positive/negative compatibility tests.
 
 ## Dependencies
-DATA PVC-09..11, SEC verification, CLIENT trust boundary, OPS runtime/provider evidence, QM exact-head tests.
+DATA PVC-09..11 validated feature-input return, SEC verification, CLIENT trust boundary, OPS runtime/provider evidence, QM exact-head tests.
 
 ## Project exit gate
-One active FINTECH roadmap; canonical scoring/ranking and entitlement evidence are owner-correct; DATA identity/provenance is fail-closed through the FINTECH feature/score/rank lineage and handed to OPS without taking PVC-18 authority.
+One active FINTECH roadmap; canonical scoring/ranking and entitlement evidence are owner-correct; FIN-12 consumes complete fail-closed DATA contracts without parallel provider/DQ authority; dated 2026-09-13 FINTECH archive is deleted.

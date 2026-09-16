@@ -1,10 +1,10 @@
 # CAPITAL-AI-FINTECH — Cross-Project Dependencies
 
-**Baseline:** `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`  
+**Baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
 **Project:** `CAPITAL-AI-FINTECH`  
 **Canonical folder:** `docs/projects/fintech/`
 
-Ownership is resolved only from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Foreign implementation remains `REFERRED_NOT_EXECUTED` or another permitted external state; FINTECH does not mark foreign work `DONE`, Security `VERIFIED/CLOSED`, or Accepted Risk. The `primary_owner` field identifies productive PVC ownership and does not transfer Authority.
+Ownership is resolved only from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Foreign implementation remains outside FINTECH execution authority; FINTECH does not mark foreign work `DONE`, Security `VERIFIED/CLOSED`, or Accepted Risk. The `primary_owner` field identifies productive PVC ownership and does not transfer Authority.
 
 ## Inbound OPS Security child handoffs
 
@@ -39,13 +39,15 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 - required_evidence: verified-principal/server-entitlement decision; Free/Starter DENY; forged/missing-bearer DENY; direct/automatic alternate-path DENY; explicit `full_ai_analysis` binding; fail-closed executor-unavailable behavior
 - implementation: `server/middleware/paidAnalysisEntitlement.ts`; `server/quota.ts`; protected Backtest/Monte Carlo/full-AI consumers and routes
 - return_evidence: `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md`
-- merge_evidence: `PR #929`; merge SHA `103689c2f30536e573b7958f63b503ca428f69cf`; historical implementation branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`
+- merge_evidence: `PR #929`; merge SHA `103689c2f30536e573b7958f63b503ca428f69cf`
 - verification_gate: CAPITAL-AI-SEC independent verification after FINTECH-owned implementation
 - status: `IMPLEMENTED / EVIDENCE_READY / SECURITY_VERIFICATION_REQUESTED`
 
 FINTECH does not set the parent Security finding to `VERIFIED` or `CLOSED`.
 
-## Upstream DATA
+## Upstream DATA — FIN-12 current return required
+
+Current DATA-to-FINTECH evidence confirms that the validated exit exists and PVC-12 consumption belongs to FINTECH. The 2026-09-16 current-main re-correlation in `evidence/FIN_12_VALIDATED_FEATURE_BOUNDARY_RECORRELATION_2026-09-16.md` narrows the remaining dependency: the existing snapshot/history contracts are necessary but do not yet cover every productive champion feature input.
 
 ### PVC-09 — UAI / Data Ingestion
 
@@ -55,12 +57,12 @@ FINTECH does not set the parent Security finding to `VERIFIED` or `CLOSED`.
 - target_project: `CAPITAL-AI-DATA`
 - target_project_folder: `docs/projects/data/`
 - primary_owner: `CAPITAL-AI-DATA`
-- task: provide canonical asset identity and validated ingress required by FINTECH feature contracts
-- reason: provider-specific ingress must not become FINTECH-owned bypass logic
-- dependency: existing UAI/provider authorities
-- required_evidence: exact input identity, provider provenance and contract validation
-- verification_gate: DATA-owned input contract; FINTECH consumes only accepted output
-- status: `REFERRED_NOT_EXECUTED`
+- task: preserve the existing canonical ingress and add/return only the provider-neutral field/history capability needed to express all productive FINTECH feature inputs; no FINTECH-owned provider adapter or direct provider-schema bypass
+- reason: productive crypto snapshot dimensions, traditional fundamentals and productive history consumers cannot be made fully validated by inventing normalization inside PVC-12
+- dependency: existing UAI/provider authorities; ADR-0041 / ESS-0016
+- required_evidence: exact input identity, provider provenance, correlation, contract validation and capability semantics for the returned fields/history
+- verification_gate: DATA-owned validated contract on then-current main; FINTECH consumes accepted output only
+- status: `RETURN_REQUIRED_FOR_FIN-12`
 
 ### PVC-10 — Evidence Management
 
@@ -70,12 +72,12 @@ FINTECH does not set the parent Security finding to `VERIFIED` or `CLOSED`.
 - target_project: `CAPITAL-AI-DATA`
 - target_project_folder: `docs/projects/data/`
 - primary_owner: `CAPITAL-AI-DATA`
-- task: preserve evidence identity, provenance and freshness supplied to scoring
-- reason: scoring cannot infer or manufacture missing evidence
+- task: preserve evidence identity, field-level provenance and freshness for the additional productive crypto/traditional fields and validated history/value contracts supplied to FINTECH
+- reason: scoring/feature engineering cannot infer or manufacture missing evidence
 - dependency: existing Evidence contracts and provider data plane
-- required_evidence: evidence IDs, timestamps and provider lineage
-- verification_gate: DATA evidence contract
-- status: `REFERRED_NOT_EXECUTED`
+- required_evidence: evidence IDs, timestamps, provider lineage, correlation and explicit missing/stale/conflicting disposition
+- verification_gate: DATA evidence contract; no missing evidence promoted to numeric FINTECH feature input
+- status: `RETURN_REQUIRED_FOR_FIN-12`
 
 ### PVC-11 — Data Quality
 
@@ -85,14 +87,21 @@ FINTECH does not set the parent Security finding to `VERIFIED` or `CLOSED`.
 - target_project: `CAPITAL-AI-DATA`
 - target_project_folder: `docs/projects/data/`
 - primary_owner: `CAPITAL-AI-DATA`
-- task: supply explicit DQ result/gate before FINTECH feature/scoring execution
-- reason: missing/failed DQ must remain fail-closed
-- dependency: DATA DQ authority
-- required_evidence: DQ status and negative evidence for failed/insufficient inputs
-- verification_gate: no FINTECH score path may bypass failed DQ
-- status: `REFERRED_NOT_EXECUTED`
+- task: extend/return canonical validated semantics so productive crypto market-cap/volume/supply fields, traditional fundamentals and productive history consumers are explicit; distinguish positive price-series validation from legitimate signed observations such as sovereign benchmark yields
+- reason: the current positive-price history validation cannot safely represent valid negative government yields, while FINTECH must not weaken DATA DQ locally
+- dependency: DATA DQ authority; current `ValidatedDataInput/1.0.0` and validated-history boundary
+- required_evidence: fail-closed DQ status and negative tests for missing/stale/conflicting/invalid inputs; signed value semantics where the domain permits negative values
+- verification_gate: no FINTECH feature/score path bypasses failed DQ and no legitimate signed yield is rejected merely by price-only semantics
+- status: `RETURN_REQUIRED_FOR_FIN-12`
 
-Current DATA-to-FINTECH handoff evidence confirms `ValidatedDataInput/1.0.0` exists and PVC-12 consumption belongs to FINTECH. This makes FIN-12 implementable, but does not move DATA ownership into FINTECH.
+Required DATA return for FIN-12, without prescribing foreign implementation details:
+
+1. canonical validated coverage for productive crypto snapshot dimensions used by `crypto-technical-features/0.7.0`, including market-cap/volume and supply fields;
+2. canonical validated fundamentals coverage for the productive traditional stock fields used by `traditional-features/2.1.0`;
+3. a canonical validated-history bridge or equivalent accepted DATA contract for productive crypto/traditional history consumers; and
+4. explicit value/history semantics capable of preserving legitimate signed sovereign-yield observations.
+
+No synthetic/default values, second provider plane or FINTECH-local DQ authority is permitted as a workaround.
 
 ## Downstream OPS
 
@@ -106,12 +115,12 @@ Current DATA-to-FINTECH handoff evidence confirms `ValidatedDataInput/1.0.0` exi
 - primary_owner: `CAPITAL-AI-OPS`
 - task: transport and retain FINTECH score/ranking traceability through existing EventMesh/Traceability contracts
 - reason: transport/operations must remain separate from financial decision authority
-- dependency: existing EventMesh, Traceability and Supervisor authorities
+- dependency: existing EventMesh, Traceability and Supervisor authorities; complete FIN-12/FIN-20 lineage
 - required_evidence: correlation/result lineage references and runtime evidence where applicable
 - verification_gate: OPS transport/operations validation
 - status: `REFERRED_NOT_EXECUTED`
 
-## Frontend consumer work
+## Frontend consumer work — FIN-17 terminal
 
 - repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FE | VC-17]`
 - project_namespace: `PVC`
@@ -119,14 +128,11 @@ Current DATA-to-FINTECH handoff evidence confirms `ValidatedDataInput/1.0.0` exi
 - target_project: `CAPITAL-AI-FE`
 - target_project_folder: `docs/projects/frontend/`
 - primary_owner: `CAPITAL-AI-FINTECH`
-- task: remove browser-owned Top/Worst business ordering once FINTECH exposes the canonical rank/order result
-- reason: FE is a presentation consumer and must not become a second productive Ranking authority
-- dependency: FINTECH FIN-17 result contract/endpoint first
-- required_evidence: FE consumes backend ordering; no local score/rank/comparability/eligibility calculation
-- verification_gate: FINTECH contract compatibility plus FE project validation
-- status: `REFERRED_NOT_EXECUTED`
-
-Current-main recorrelation after FIN-SEC-03 keeps `FIN-17` selected as the single next FINTECH P1 slice because `RankingBoard` still performs browser-local READY-score ordering while a backend `CrossAssetRanking` implementation already exists. FIN-17 is now `READY`: PR #942 Human-merged `agent/fintech-fin-sec-03-post-merge-sync-20260915`, and the required fresh `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3` / open-writer recorrelation found no open Pull Request writers.
+- task: consume the canonical FINTECH backend rank/order result without browser-local score/rank/comparability/eligibility authority
+- result: Human-merged PR #951 consumes backend ordering in `RankingBoard`; prerequisite FINTECH backend authority was Human-merged through PR #946
+- merge_evidence: FINTECH PR #946 `c8a88afc7f9cfad367b592e9567654451f81e436`; FE PR #951 `3aa41faa2742dfc2601339b000e660f271380cf1`
+- verification_gate: bounded FIN-17 authority split complete; retain drift watch
+- status: `DONE_MAIN / TERMINAL`
 
 ## Quality
 
@@ -142,8 +148,6 @@ Current-main recorrelation after FIN-SEC-03 keeps `FIN-17` selected as the singl
 - required_evidence: read-only structure/contract validation
 - verification_gate: QM independent quality validation
 - status: `REFERRED_NOT_EXECUTED`
-
-The QM project surface is present on current `main`; it is no longer treated as an unmaterialized migration gap.
 
 ## Security
 
