@@ -49,6 +49,21 @@ function stripInlineMarkdown(value) {
     .trim();
 }
 
+function normalizeWorkPackageTableHeaderAliases(roadmapText) {
+  return roadmapText
+    .split(/\r?\n/)
+    .map((line) => {
+      if (
+        /^\s*\|\s*WP\s*\|/i.test(line)
+        && /\|\s*(?:State|Status)\s*\|/i.test(line)
+      ) {
+        return line.replace(/^(\s*\|\s*)WP(\s*\|)/i, '$1ID$2');
+      }
+      return line;
+    })
+    .join('\n');
+}
+
 function extractHeadingSections(roadmapText) {
   const lines = roadmapText.split(/\r?\n/);
   const headings = [];
@@ -184,13 +199,20 @@ function evaluateDependencies({ item, sectionText, workItemIndex }) {
   };
 }
 
+function hasRepeatedSourceEvidence(item) {
+  const sources = (item.evidence ?? []).map((entry) => entry.source);
+  return sources.some((source, index) => sources.indexOf(source) !== index);
+}
+
 function normalizeProjectRoadmap(entry, projectOrder) {
   const roadmapText = entry.roadmapText ?? '';
+  const normalizedRoadmapText = normalizeWorkPackageTableHeaderAliases(roadmapText);
   const sections = extractHeadingSections(roadmapText);
-  const items = extractRoadmapItems(roadmapText).map((item) => ({
+  const items = extractRoadmapItems(normalizedRoadmapText).map((item) => ({
     ...item,
     sourceOrder: roadmapText.indexOf(item.id),
     sectionText: sections.get(item.id) ?? null,
+    ambiguousIdentity: hasRepeatedSourceEvidence(item),
   }));
 
   return {
@@ -209,12 +231,34 @@ export function selectNextRoadmapTarget(projectRoadmaps) {
   const projects = projectRoadmaps.map((entry, index) => normalizeProjectRoadmap(entry, index));
   const workItemIndex = new Map();
   const duplicateIds = new Set();
+  const ambiguousItems = [];
 
   for (const project of projects) {
     for (const item of project.items) {
+      if (item.ambiguousIdentity) {
+        ambiguousItems.push({
+          project: project.project,
+          roadmapPath: project.roadmapPath,
+          id: item.id,
+          reason: 'DUPLICATE_WORK_ITEM_ID',
+          evidence: item.evidence ?? [],
+        });
+      }
       if (workItemIndex.has(item.id)) duplicateIds.add(item.id);
       else workItemIndex.set(item.id, { project, item });
     }
+  }
+
+  if (ambiguousItems.length > 0) {
+    return {
+      schemaVersion: '1.0.0',
+      status: 'NO_EXECUTABLE_TARGET',
+      target: null,
+      reason: 'DUPLICATE_WORK_ITEM_ID',
+      blockers: ambiguousItems.sort((left, right) =>
+        left.project.localeCompare(right.project) || left.id.localeCompare(right.id)),
+      eligibleCount: 0,
+    };
   }
 
   if (duplicateIds.size > 0) {
