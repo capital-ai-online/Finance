@@ -210,17 +210,68 @@ The separate copyable Owner-response requirement introduced by PR #772 remains *
 
 The queue is Roadmap-first. If the current Roadmap provides no immediately executable item because it is blocked, dependency-held or terminal, use the highest-priority evidence-backed workaround/remediation recommendations. At most two items are shown, each with an objective exit gate. Generic merge/approval/hosted-CI/test instructions remain gate/evidence status and do not replace project continuation work.
 
-The `NÄCHSTE SCHRITTE` continuation queue is a **repository- and web-application-wide chat presentation invariant**. Whenever it is shown in any CAPITAL-AI project chat, it MUST be rendered inside a fenced plaintext `text` code block and MUST use semantic emoji in the heading, each numbered step and each exit-gate label. Markdown tables, Writing Blocks, cards or other rich UI containers MUST NOT replace this copyable plaintext block. Within this specific block the emoji markers are mandatory scanning cues, while the accompanying text remains the authoritative meaning.
+The `NÄCHSTE SCHRITTE` continuation queue is a **repository- and web-application-wide chat presentation invariant**. Whenever it is shown in any CAPITAL-AI project chat, it MUST be rendered inside a fenced plaintext `text` code block and MUST use semantic emoji in the heading, each numbered step, each project-folder line and each exit-gate label. Markdown tables, Writing Blocks, cards or other rich UI containers MUST NOT replace this copyable plaintext block. Within this specific block the emoji markers are mandatory scanning cues, while the accompanying text remains the authoritative meaning.
 
-Use exactly this presentation shape:
+Every displayed continuation item MUST resolve and show exactly one canonical project folder from `docs/projects/README.md` / `docs/projects/PROJECT_VALUE_CHAIN.md` using the line `📁 Projektfolder: <canonical-project-folder>`. For bounded GOV/OPS foreign-project execution, this is the Target Project's canonical folder, not merely the executor's folder. Missing or ambiguous folder resolution is fail-closed; an agent MUST NOT guess a folder.
+
+Continuation items are grouped by canonical project folder for presentation. If both displayed steps resolve to the same folder, they MAY share one fenced plaintext `text` block. If the two displayed steps resolve to different folders, they MUST be rendered as **two separate fenced plaintext `text` blocks**, one step per block; combining different project folders in one `NÄCHSTE SCHRITTE` snippet is prohibited. Each split block repeats the `🧭 NÄCHSTE SCHRITTE` heading and global step numbering remains `1.` then `2.`.
+
+The same rule is expressed machine-readably below. This YAML is a projection of the existing stable control `CTRL-SDLC-CHAT-HANDOFF-001`; it creates no second authority, roadmap or routing registry.
+
+```yaml
+chat_handoff_presentation:
+  control_id: "CTRL-SDLC-CHAT-HANDOFF-001"
+  schema_version: "1.0"
+  max_items: 2
+  render_container: "fenced_plaintext_text_block"
+  heading: "🧭 NÄCHSTE SCHRITTE"
+  project_folder:
+    required_per_step: true
+    source:
+      - "docs/projects/README.md"
+      - "docs/projects/PROJECT_VALUE_CHAIN.md"
+    line_format: "📁 Projektfolder: <canonical-project-folder>"
+    foreign_execution_folder: "target_project_folder"
+    unresolved: "FAIL_CLOSED"
+  grouping:
+    key: "canonical_project_folder"
+    same_folder: "MAY_SHARE_ONE_TEXT_BLOCK"
+    different_folders: "MUST_SPLIT_ONE_TEXT_BLOCK_PER_FOLDER"
+    heading_per_block: true
+    preserve_global_step_numbering: true
+  exit_gate:
+    required_per_step: true
+```
+
+For one step, or for two steps that share the same canonical project folder, use this presentation shape:
 
 ```text
 🧭 NÄCHSTE SCHRITTE
 
 1. 🔹 <highest-priority Roadmap item or evidence-backed workaround>
+   📁 Projektfolder: docs/projects/<project>/
    🎯 Exit Gate: <objective completion condition>
 
-2. 🔹 <optional second Roadmap item or workaround>
+2. 🔹 <optional second Roadmap item or workaround in the same project folder>
+   📁 Projektfolder: docs/projects/<project>/
+   🎯 Exit Gate: <objective completion condition>
+```
+
+For two steps with different canonical project folders, use two separate snippets:
+
+```text
+🧭 NÄCHSTE SCHRITTE
+
+1. 🔹 <highest-priority Roadmap item or evidence-backed workaround>
+   📁 Projektfolder: docs/projects/<project-a>/
+   🎯 Exit Gate: <objective completion condition>
+```
+
+```text
+🧭 NÄCHSTE SCHRITTE
+
+2. 🔹 <second Roadmap item or evidence-backed workaround>
+   📁 Projektfolder: docs/projects/<project-b>/
    🎯 Exit Gate: <objective completion condition>
 ```
 
