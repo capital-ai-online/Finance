@@ -26,6 +26,14 @@ Review compliance implications of MFA/AAL, recovery, authentication lifecycle an
 ### COMP-PR900-03 — Analytics/marketing/social privacy boundary
 Assess provider analytics, PostHog/telemetry, SEO/marketing and social distribution flows for applicable data-minimization/privacy/compliance obligations without creating provider mutations.
 
+#### Consent-Nachweis / FE-CONSENT-V3 — Owner-Fortsetzung 2026-09-16
+
+Status: `DESIGN_READY / IMPLEMENTATION_NOT_STARTED / LEGAL_REVIEW_PENDING`.
+Der konkrete datensparsame Entwurf steht im bestehenden [Datenschutzprotokoll, Abschnitte 4.1–4.3](../../DATENSCHUTZ_PROTOKOLL.md): Entscheidung, serverseitiger Zeitpunkt, versionierter Informationstext, pseudonyme Zuordnung, Widerrufsfolge und zweckgebundene Löschregel. Die Hinweisversion wird auf `2026-09-15` korrigiert; historische Datensätze bleiben unverändert.
+
+Owner-Rückgaben: FE liefert UI-/Netzwerk-Evidence; SEO/OPS tatsächliche GA4-Retention und Provider-Nachweise; DATA/OPS spätere Persistenz-/Purge-Evidence; COMP/Verantwortlicher bewertet Nachweis- und Aufbewahrungsausnahmen. Keine produktive PVC-Ownership wird an COMP übertragen.
+Exit: Entwurf geprüft, tatsächliches Verarbeitungsende/Retention endlich abgebildet, implementierte Nachweis-/Löschpfade getestet und Browserbedienung belegt. Cloudbrowser aktuell `BLOCKED` durch erneuten CDP-Timeout; kein Runtime- oder Legal-PASS aus Dokumentation.
+
 ### COMP-PR900-04 — Monetization/token/regulatory proposals
 Before any regulated, entitlement, money-like or crypto-token implementation, classify applicable compliance/legal constraints and route required Human decisions.
 
