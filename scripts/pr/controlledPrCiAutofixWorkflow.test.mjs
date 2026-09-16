@@ -28,8 +28,9 @@ test('keeps patch generation and candidate execution out of the write-capable jo
   const apply = jobSection(yaml, 'apply-and-push');
   assert.match(apply, /contents: write/);
   assert.match(apply, /git -C work write-tree/);
-  assert.match(apply, /--force-with-lease=/);
   assert.match(apply, /current main drift/);
+  assert.match(apply, /push origin "HEAD:refs\/heads\/\$HEAD_REF"/);
+  assert.doesNotMatch(apply, /--force(?:-with-lease)?/);
   assert.doesNotMatch(apply, /\bnpm (?:ci|test|run)\b/);
   assert.doesNotMatch(apply, /\bnpx\b/);
   assert.doesNotMatch(apply, /copilot\s+-p/);
@@ -37,7 +38,7 @@ test('keeps patch generation and candidate execution out of the write-capable jo
 
 test('keeps Copilot provider execution explicitly cost-gated and non-writing', async () => {
   const yaml = await workflow();
-  const copilot = jobSection(yaml, 'copilot-patch', 'validate');
+  const copilot = jobSection(yaml, 'copilot-patch', 'bind-tree');
   assert.match(copilot, /CAPITAL_AI_CI_AUTOFIX_COPILOT_ENABLED == 'true'/);
   assert.match(copilot, /copilot-requests: write/);
   assert.match(copilot, /contents: read/);
@@ -47,14 +48,20 @@ test('keeps Copilot provider execution explicitly cost-gated and non-writing', a
   assert.match(copilot, /--deny-tool='shell'/);
   assert.match(copilot, /--deny-tool='url'/);
   assert.match(copilot, /--deny-tool='memory'/);
+  assert.match(copilot, /never modify tests or assertions/);
 });
 
-test('revalidates the exact patch tree before the privileged write', async () => {
+test('binds the exact patch tree in a clean job separate from candidate-code validation', async () => {
   const yaml = await workflow();
+  const bind = jobSection(yaml, 'bind-tree', 'validate');
   const validate = jobSection(yaml, 'validate', 'apply-and-push');
   const apply = jobSection(yaml, 'apply-and-push');
+  assert.match(bind, /verifyPrCiAutofixPatch\.mjs/);
+  assert.match(bind, /git -C work write-tree/);
+  assert.doesNotMatch(bind, /\bnpm (?:ci|test|run)\b/);
   assert.match(validate, /verifyPrCiAutofixPatch\.mjs/);
-  assert.match(validate, /git -C work write-tree/);
+  assert.match(validate, /ACTIONS_RUNTIME_TOKEN/);
+  assert.doesNotMatch(validate, /cache:\s*npm/);
   assert.match(apply, /verifyPrCiAutofixPatch\.mjs/);
   assert.match(apply, /EXPECTED_VALIDATED_TREE/);
   assert.match(apply, /observed_tree/);
