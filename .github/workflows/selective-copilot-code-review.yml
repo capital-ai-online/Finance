@@ -3,24 +3,21 @@ run-name: >-
   CI #${{ github.event.workflow_run.run_number }} – selektive Copilot-Review-Entscheidung
 
 # Privileged post-CI trigger. It never checks out or executes PR-controlled code;
-# the job is additionally bound to the same repository and the canonical CI path.
+# the planner is read-only and the mutating review request lives in a separate job.
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI]
     types: [completed]
 
-permissions:
-  actions: read
-  contents: read
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: selective-copilot-review-${{ github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 jobs:
-  request-review:
-    name: Trusted-base Review-Selektion
+  plan:
+    name: Trusted-base Review-Plan
     if: >-
       github.event.workflow_run.repository.full_name == github.repository &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
@@ -29,6 +26,14 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      skip: ${{ steps.pr.outputs.skip }}
+      pr_number: ${{ steps.pr.outputs.pr_number }}
+      head_sha: ${{ steps.pr.outputs.head_sha }}
+      review_mode: ${{ steps.validation_plan.outputs.automated_code_review_mode }}
     steps:
       - name: Exakten offenen PR und File Changes read-only auflösen
         id: pr
@@ -72,16 +77,25 @@ jobs:
               github.rest.pulls.listFiles,
               { owner, repo, pull_number: pr.number, per_page: 100 },
             );
+            const files = changed.map((entry) => entry.filename);
+
+            // JSON is authoritative for the JSON-capable planner. The legacy
+            // shadow keeps the first migration PR compatible with its trusted
+            // pre-JSON base planner and is fail-closed for delimiter-bearing names.
+            if (files.some((file) => /[\r\n]/.test(file))) {
+              throw new Error('Changed-file name contains CR/LF; legacy trusted-base planner compatibility cannot encode it safely.');
+            }
 
             core.setOutput('skip', 'false');
             core.setOutput('pr_number', String(pr.number));
             core.setOutput('base_sha', pr.base.sha);
             core.setOutput('head_sha', pr.head.sha);
-            core.setOutput('changed_files', changed.map((entry) => entry.filename).join('\n'));
+            core.setOutput('changed_files_json', JSON.stringify(files));
+            core.setOutput('changed_files_legacy', files.join('\n'));
 
       - name: Trusted Planner aus exaktem PR-Base-Snapshot auschecken
         if: steps.pr.outputs.skip != 'true'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ steps.pr.outputs.base_sha }}
           path: policy
@@ -100,16 +114,32 @@ jobs:
         working-directory: policy
         env:
           EVENT_NAME: pull_request
-          CHANGED_FILES: ${{ steps.pr.outputs.changed_files }}
+          CHANGED_FILES_JSON: ${{ steps.pr.outputs.changed_files_json }}
+          CHANGED_FILES: ${{ steps.pr.outputs.changed_files_legacy }}
         run: node scripts/pr/planPrValidation.mjs
 
-      - name: Copilot-Review nur bei relevantem Scope und fehlender äquivalenter Review anfordern
-        if: steps.pr.outputs.skip != 'true' && steps.validation_plan.outputs.automated_code_review_mode != 'none'
+      - name: Kein automatisiertes Code Review für diesen Scope
+        if: steps.pr.outputs.skip != 'true' && steps.validation_plan.outputs.automated_code_review_mode == 'none'
+        run: echo "automated_code_review_mode=none — kein Copilot-Review-Request für Docs/Test-only Scope."
+
+  request-review:
+    name: Copilot Review anfordern
+    needs: [plan]
+    if: >-
+      needs.plan.result == 'success' &&
+      needs.plan.outputs.skip != 'true' &&
+      needs.plan.outputs.review_mode != 'none'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Copilot-Review nur bei fehlender äquivalenter Review anfordern
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
-          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
-          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
-          REVIEW_MODE: ${{ steps.validation_plan.outputs.automated_code_review_mode }}
+          PR_NUMBER: ${{ needs.plan.outputs.pr_number }}
+          HEAD_SHA: ${{ needs.plan.outputs.head_sha }}
+          REVIEW_MODE: ${{ needs.plan.outputs.review_mode }}
         with:
           script: |
             const owner = context.repo.owner;
@@ -156,7 +186,3 @@ jobs:
               }
               throw error;
             }
-
-      - name: Kein automatisiertes Code Review für diesen Scope
-        if: steps.pr.outputs.skip != 'true' && steps.validation_plan.outputs.automated_code_review_mode == 'none'
-        run: echo "automated_code_review_mode=none — kein Copilot-Review-Request für Docs/Test-only Scope."
