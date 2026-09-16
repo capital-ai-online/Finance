@@ -101,7 +101,24 @@ CURRENT MAIN + OPEN-PR BASELINE
 → POST-CHANGE EVIDENCE + ROADMAP SYNC
 ```
 
-Direct edits to `main` are prohibited. One work item uses one scoped branch. Rollback uses a fresh branch from then-current `main`.
+Direct edits to `main` are prohibited. One coherent work item / work package uses one scoped branch. Rollback uses a fresh branch from then-current `main`.
+
+### Work-package granularity on one branch
+
+For branch lifecycle purposes, a **work item** MAY be a larger coherent Roadmap work package containing multiple dependent implementation processes, substeps and commits. There is no fixed numeric cap on the number of in-scope processes or commits that may be completed before PR creation.
+
+The same scoped branch SHOULD continue through all immediately executable substeps until the shared work-package exit gate is reached, rather than opening a Pull Request merely because one internal or atomic substep completed, when all of the following remain true:
+
+1. Current Project, canonical project folder and Primary Owner remain unchanged;
+2. the substeps share one bounded objective and one reviewable work-package exit gate;
+3. applicable ADR/ESS/CTRL/AUTH scope remains compatible;
+4. no separate ownership, authority, independent-assurance, protected-mutation or serial-integration boundary must be crossed;
+5. current-main/open-writer correlation remains resolvable and the branch can be synchronized safely; and
+6. the resulting diff remains semantically coherent and reviewable as one Pull Request.
+
+A new work item / branch / PR boundary is REQUIRED when continuing would cross the canonical Project or Primary-Owner boundary, require a separate Human/Owner or architecture authority decision, depend on an unintegrated predecessor, require a separately authorized protected external mutation, create an independently reviewable risk/assurance boundary, encounter unresolved writer/correlation conflict, or become semantically unrelated to the original work-package objective.
+
+This work-package aggregation changes PR granularity only. It does not relax atomic implementation quality, truthful validation, final current-main synchronization, create-correlation, Human/CODEOWNER merge, ownership, Security/Compliance or protected-mutation boundaries.
 
 ### Branch naming (`CTRL-SDLC-BRANCH-001`)
 
@@ -182,7 +199,8 @@ For one ordered automated Roadmap lane:
 3. after Human/CODEOWNER Merge, the successor uses a fresh scoped branch from the resulting then-current `main` and repeats the complete Project/PVC/Owner/Roadmap and correlation sequence;
 4. if the predecessor is closed without merge, the successor MUST NOT assume its payload and the queue is recomputed from then-current `main`;
 5. unrelated changes merged between ordered PRs are incorporated through fresh current-main correlation;
-6. stacked unmerged dependency branches are not used to bypass this serial integration rule unless later explicit Human/Owner authority replaces this exact constraint.
+6. stacked unmerged dependency branches are not used to bypass this serial integration rule unless later explicit Human/Owner authority replaces this exact constraint; and
+7. before creating the PR, the executor SHOULD complete all immediately executable substeps that still belong to the same coherent work package under the work-package granularity rule above. Serial PR integration is not a reason to fragment one reviewable package into avoidable micro-PRs.
 
 This sequencing makes automated creation order and intended integration order deterministic and minimizes avoidable changed-file, semantic, namespace, authority and baseline correlations created by the automation itself.
 
@@ -309,11 +327,23 @@ At the end of every chat-governed repository execution pass, before the assistan
 
 The queue MUST be derived from the current known Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and any material correlation results established during the pass. Facts that are stale or materially changed MUST be re-read before they are presented as current. The worker count is independently truth-bound to directly observable live chat/orchestration state and MUST NOT be inferred from repository activity.
 
+When `CHAT_RUN_HANDOFF` is entered automatically after a watched PR reaches a terminal outcome, the originating chat MUST first refresh then-current `main`, open Pull Requests/active writers, Project/PVC/Primary-Owner mapping, the affected project Roadmap and applicable ADR/ESS/controls. A Human-merged predecessor permits continuation only from the resulting then-current `main`; a closed-unmerged predecessor requires queue recomputation without assuming its payload.
+
 #### Trigger — `POST_PR_HANDOFF`
 
 After every Pull Request or Draft Pull Request created through a chat-governed workflow, the same chat MUST emit a bounded handoff before moving to another work item. The handoff MUST report the PR reference, branch/PR-head, current-main baseline used for correlation, known validation/open-gate status and the correlation result, followed by at most the two highest-priority Roadmap/workaround steps and then the final worker-status snippet.
 
 For an ordered automated Roadmap lane, the next dependent PR remains held until the predecessor reaches a terminal PR outcome. If it is Human-merged, the next work item starts from the resulting then-current `main`; if it closes unmerged, the Roadmap queue is recomputed without assuming its payload.
+
+The same originating chat MUST register a terminal-PR continuation watch at `POST_PR_HANDOFF` whenever the current authorized execution host exposes an already-connected event/automation capability that can bind the concrete repository and PR without installing, connecting, enabling or permission-expanding an external integration. The watch is coordination only and MUST bind at least repository identity, PR number, Current Project, canonical project folder and the observed PR-head/branch identity.
+
+When that watched PR is Human/CODEOWNER-merged, the watch automatically resumes the originating chat by entering a fresh `CHAT_RUN_HANDOFF` execution pass. After the mandatory then-current re-correlation, the chat continues the highest-priority immediately executable work for the same canonical project folder; it creates a fresh successor branch only when the recomputed next coherent work package requires repository changes. The watch MUST NOT self-merge, enable auto-merge, assume stale Roadmap state or bypass any protected-action gate.
+
+If the watched PR closes without merge, the originating chat may resume automatically only to recompute the project-folder-specific queue from then-current `main`; predecessor payload is never assumed.
+
+Execution-host-local chat/session identifiers, provider credentials, webhook secrets or access tokens MUST NOT be persisted into repository evidence or PR bodies merely to implement this continuation. Repository governance MUST NOT create provider credentials, change OAuth/connector permissions, install integrations or build a parallel repository queue to manufacture a missing wake-up transport.
+
+If the active execution host cannot register a terminal-PR continuation event for the origin chat, `POST_PR_HANDOFF` MUST report `AUTOMATIC_CONTINUATION_UNAVAILABLE` truthfully rather than claim that a trigger exists. Missing execution-host capability does not authorize polling that violates provider rules, self-merge, permission changes or another authority bypass.
 
 The queue MUST be recomputed from the then-current Project Value Chain, affected project Roadmap, applicable ADR/ESS, repository/governance state and relevant current best-practice / state-of-the-art evidence where that materially improves the decision. External guidance remains advisory and MUST NOT create a competing policy hierarchy or silently override canonical CAPITAL-AI authority.
 

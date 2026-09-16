@@ -77,6 +77,18 @@ The ordered automated Roadmap lane permits at most one not-yet-integrated automa
 
 **Exit:** `PASS / DONE_MAIN` — v2.11/v4.0/v3.0 are current-main authority; the trusted Draft-PR workflow contains no active pre-create Owner-approval credential path; final create correlation remains fail-closed; ordered successor work cannot be created before predecessor terminal outcome; required hosted checks and final Human merge boundary remain intact.
 
+### GOV-CHAT-078 — Coherent branch work packages and origin-chat post-merge continuation
+
+Materialize the 2026-09-16 Owner decision that one scoped branch may complete a larger coherent work package with multiple dependent implementation processes, substeps and commits before creating the bounded Pull Request, and that a chat which created a PR should resume project-folder-specific continuation after that PR reaches a terminal outcome when the current authorized execution host exposes a suitable already-connected event capability.
+
+**State:** `IMPLEMENTED_ON_BRANCH / PR_PENDING` on `agent/governance-workpackage-continuation-20260916`.
+
+**Materialization:** `/AGENTS.md` defines work-package granularity without a fixed numeric process/commit cap while preserving one Project/folder/Primary Owner, a shared bounded objective/exit gate, compatible ADR/ESS/CTRL/AUTH scope, reviewability and all ownership/authority/assurance/protected-mutation/serial-integration split boundaries. `POST_PR_HANDOFF` reuses the existing `CTRL-SDLC-CHAT-HANDOFF-001` trigger surface to register an origin-chat terminal-PR continuation watch only when the execution host already exposes the required authorized capability. Human merge resumes the same chat through a fresh `CHAT_RUN_HANDOFF` pass after then-current re-correlation; close-without-merge recomputes the queue without predecessor payload. Missing host wake-up capability is reported as `AUTOMATIC_CONTINUATION_UNAVAILABLE` and does not authorize connector installation, OAuth/permission changes, polling bypass, self-merge or a parallel repository queue.
+
+**Evidence:** `docs/projects/governance/evidence/GOV_CHAT_078_BRANCH_WORKPACKAGE_AND_POST_MERGE_CONTINUATION_2026-09-16.md`.
+
+**Exit:** one coherent branch can finish all immediately executable in-scope work-package substeps before its Draft PR; micro-PR fragmentation is not required merely because an internal step completed; true Project/Owner/authority/risk/integration boundaries still split work. After PR creation, origin-chat terminal-outcome continuation is registered when factually available, Human/CODEOWNER-only merge remains unchanged, and every automatic continuation starts by recomputing project-folder-specific work from then-current repository truth.
+
 ### GOV-UNIVERSE-BRANDING-01 — Owner decision and Frontend routing
 
 Materialize the 2026-09-14 Owner decision for one application-wide CAPITAL-AI Universe branding contract without creating a Governance-side design architecture.
