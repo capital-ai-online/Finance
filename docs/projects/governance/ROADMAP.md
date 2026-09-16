@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — PR #952 PR-create lifecycle activation and PR #953 freshness/version validators correlated against current main  
-**Baseline:** `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`  
+**Reconciliation:** 2026-09-16 — GOV-PR900-05 staged pre-command flow correlated against current main  
+**Baseline:** `main@770756209b6248395ce4eedce63981355728004f`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -40,6 +40,12 @@ Extend Governance validation so stale project/task/current-state projections and
 ### GOV-PR900-05 — Staged pre-command flow
 Represent `main/open PRs → AGENTS → capability class → Project/PVC/Roadmap → ADR/ESS/CTRL/AUTH → least-privileged decision → ALLOW|ROUTE|REQUIRE_GATE|BLOCK → execution` without creating another authority plane. Productive client materialization remains CLIENT-owned.
 
+**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING` on `agent/governance-pr900-05-staged-pre-command-20260916`.
+
+**Materialization:** `src/platform/Governance/Contracts/PreCommandFlow.ts` defines a provider-neutral, non-authorizing pre-command projection. It consumes already-resolved current-main/open-writer state, `/AGENTS.md`, capability grant/classification, Project/PVC/Roadmap routing, applicable ADR/ESS/CTRL/AUTH and the existing least-privileged IAM/policy result. It does not discover authority, grant capabilities, execute commands or duplicate Agent IAM. `tests/unit/preCommandFlow.test.ts` covers ALLOW, ROUTE, REQUIRE_GATE and fail-closed BLOCK paths; `src/platform/Governance/index.ts` exposes the contract.
+
+**Exit:** exact current-main trust-root binding, explicit capability grant, owner-correct project routing, complete authority resolution and an authoritative least-privilege projection deterministically yield `ALLOW|ROUTE|REQUIRE_GATE|BLOCK`; only `ALLOW` is ready for an already-authorized execution host. The contract carries an explicit non-authorizing statement, creates no new `AUTH-*`/`CTRL-*`, leaves Agent IAM/PolicyGate semantics unchanged and leaves productive CLIENT materialization with `CAPITAL-AI-CLIENT`.
+
 ### GOV-PR900-06 — Cross-owner strategy routing
 Decompose monetization/product-expansion proposals into canonical owners; regulated or money-like/token proposals require COMP/SEC/FINTECH/OPS and Human decision before implementation.
 
@@ -65,7 +71,7 @@ The merged change evolved the existing stable authorities instead of creating a 
 - Authority Registry `1.61.0 → 1.62.0` while retaining stable `AUTH-*` identities;
 - `.github/workflows/open-agent-draft-pr.yml` removes pre-create approval inputs and uses fail-closed current-main/open-writer/create-correlation before Draft PR creation.
 
-The ordered automated Roadmap lane permits at most one not-yet-integrated automated PR at a time. A successor is created only after predecessor terminal outcome; after merge it starts from a fresh branch on the resulting current `main`, while close-without-merge forces queue recomputation without predecessor payload. Stacked unmerged dependency branches cannot bypass this rule. Final PR-head/current-main correlation and Human/CODEOWNER merge remain mandatory; auto-merge remains prohibited.
+The ordered automated Roadmap lane permits at most one not-yet-integrated automated PR at a time. A successor is created only after predecessor terminal outcome; after merge it starts from a fresh branch on the resulting current `main`, while close-without-merge forces queue recomputation without predecessor payload. Stacked unmerged dependency branches cannot bypass this sequencing rule. Final PR-head/current-main correlation and Human/CODEOWNER merge remain mandatory; auto-merge remains prohibited.
 
 **Historical bootstrap boundary:** PR #952 itself correctly used the then-effective v3.4 pre-create Approval Envelope before Human Merge. That bootstrap requirement is historical evidence for the introducing PR and is not a current credential for successor PR creation.
 
