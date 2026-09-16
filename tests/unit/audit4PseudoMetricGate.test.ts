@@ -26,7 +26,7 @@ describe('ARCH-AUDIT-0004 pseudo-metric regression gate', () => {
   it('keeps previously remediated runtime and market displays evidence-backed', () => {
     const latency = read('src/components/SystemLatencyMonitor.tsx');
     const performance = read('src/components/PerformanceDashboard.tsx');
-    const news = read('src/components/Newsticker.tsx');
+    const news = read('src/features/news/ui/Newsticker.tsx');
 
     expect(latency).not.toContain('Math.random');
     expect(performance).not.toContain('Math.random');
