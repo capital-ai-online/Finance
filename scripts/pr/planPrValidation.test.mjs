@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { planChangedFiles } from './planPrValidation.mjs';
+import { parseChangedFilesJson, planChangedFiles } from './planPrValidation.mjs';
 
 describe('planChangedFiles', () => {
   it('skips software tests, CodeQL and automated review for docs-only changes', () => {
@@ -78,5 +78,26 @@ describe('planChangedFiles', () => {
     assert.equal(plan.node_pr_tests, true);
     assert.equal(plan.node_systemadmin_tests, true);
     assert.equal(plan.node_security_assessment_tests, true);
+  });
+
+  it('preserves embedded newlines as data in structured changed-file JSON', () => {
+    const files = parseChangedFilesJson(JSON.stringify(['.github/workflows/odd\nname.yml']));
+    assert.deepEqual(files, ['.github/workflows/odd\nname.yml']);
+
+    const plan = planChangedFiles(files);
+    assert.equal(plan.codeql_mode, 'targeted');
+    assert.equal(plan.codeql_languages, 'actions');
+    assert.equal(plan.automated_code_review_mode, 'full');
+  });
+
+  it('rejects non-array or non-string changed-file JSON fail-closed', () => {
+    assert.throws(
+      () => parseChangedFilesJson('{"filename":"src/app.ts"}'),
+      /CHANGED_FILES_JSON must be a JSON array of strings/,
+    );
+    assert.throws(
+      () => parseChangedFilesJson('["src/app.ts",42]'),
+      /CHANGED_FILES_JSON must be a JSON array of strings/,
+    );
   });
 });
