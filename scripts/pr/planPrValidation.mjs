@@ -28,6 +28,12 @@ export function isDocsPath(filePath) {
   return !p || p.startsWith('docs/') || p.startsWith('.ai/') || p.endsWith('.md');
 }
 
+export function isTestPath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('tests/')
+    || /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(p);
+}
+
 export function isVitestTestPath(filePath) {
   const p = normalizePath(filePath);
   return p.startsWith('tests/') && /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(p);
@@ -90,7 +96,7 @@ function inferCodeqlLanguages(files) {
   const languages = new Set();
   for (const file of files) {
     if (isWorkflowPath(file)) languages.add('actions');
-    if (isJavaScriptTypeScriptPath(file) && !isVitestTestPath(file)) languages.add('javascript-typescript');
+    if (isJavaScriptTypeScriptPath(file) && !isTestPath(file)) languages.add('javascript-typescript');
     if (isPythonPath(file)) languages.add('python');
   }
   return [...languages].sort();
@@ -138,6 +144,7 @@ export function planChangedFiles(files, options = {}) {
   }
 
   const nonDocs = normalized.filter((file) => !isDocsPath(file));
+  const onlyTests = nonDocs.every(isTestPath);
   const onlyVitestTests = nonDocs.every(isVitestTestPath);
   const onlyFocusedNodeValidation = nonDocs.every(isFocusedNodeValidationPath);
   const onlyNonDeployWorkflow = nonDocs.every((file) => isWorkflowPath(file) && file !== '.github/workflows/ci.yml');
@@ -149,7 +156,7 @@ export function planChangedFiles(files, options = {}) {
   const hasVitestTests = nonDocs.some(isVitestTestPath);
 
   const knownSelective = nonDocs.every((file) =>
-    isVitestTestPath(file)
+    isTestPath(file)
     || isFocusedNodeValidationPath(file)
     || isWorkflowPath(file)
     || file.startsWith('src/')
@@ -180,12 +187,12 @@ export function planChangedFiles(files, options = {}) {
   let codeqlMode = 'none';
   let codeqlLanguages = inferCodeqlLanguages(nonDocs);
   const sourceChangedForCodeql = nonDocs.some((file) =>
-    !isVitestTestPath(file)
+    !isTestPath(file)
     && !isDependencyPath(file)
     && (isJavaScriptTypeScriptPath(file) || isPythonPath(file) || isWorkflowPath(file)),
   );
 
-  if (!dependencyOnly && !onlyVitestTests && sourceChangedForCodeql) {
+  if (!dependencyOnly && !onlyTests && sourceChangedForCodeql) {
     codeqlMode = hasHighRisk || hasGlobalTestTrigger || hasUnknown ? 'full' : 'targeted';
   } else if (hasUnknown) {
     codeqlMode = 'full';
@@ -196,7 +203,7 @@ export function planChangedFiles(files, options = {}) {
     codeqlLanguages = allCurrentRepositoryCodeqlLanguages();
   }
 
-  let automatedReviewMode = 'targeted';
+  let automatedReviewMode = onlyTests ? 'none' : 'targeted';
   if (hasHighRisk || hasGlobalTestTrigger || hasWorkflow || hasUnknown) {
     automatedReviewMode = 'full';
   } else if (dependencyOnly) {
@@ -215,7 +222,7 @@ export function planChangedFiles(files, options = {}) {
       hasUnknown ? 'unknown-non-doc-fail-closed'
         : hasHighRisk ? 'high-risk-change'
           : hasGlobalTestTrigger ? 'global-test-trigger'
-            : onlyVitestTests ? 'test-only'
+            : onlyTests ? 'test-only'
               : onlyFocusedNodeValidation ? 'focused-node-validation'
                 : onlyNonDeployWorkflow ? 'workflow-only'
                   : dependencyOnly ? 'dependency-only'

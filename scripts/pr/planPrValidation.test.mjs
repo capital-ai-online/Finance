@@ -10,11 +10,18 @@ describe('planChangedFiles', () => {
     assert.equal(plan.automated_code_review_mode, 'none');
   });
 
-  it('uses changed Vitest only for test-only changes and skips CodeQL', () => {
+  it('uses changed Vitest only for test-only changes and skips CodeQL/review', () => {
     const plan = planChangedFiles(['tests/unit/foo.test.ts']);
     assert.equal(plan.vitest_mode, 'changed');
     assert.equal(plan.codeql_mode, 'none');
-    assert.equal(plan.automated_code_review_mode, 'targeted');
+    assert.equal(plan.automated_code_review_mode, 'none');
+  });
+
+  it('treats non-Vitest *.test files as test-only for provider cost control', () => {
+    const plan = planChangedFiles(['scripts/pr/example.test.mjs']);
+    assert.equal(plan.node_pr_tests, true);
+    assert.equal(plan.codeql_mode, 'none');
+    assert.equal(plan.automated_code_review_mode, 'none');
   });
 
   it('uses changed Vitest plus targeted JavaScript/TypeScript CodeQL for normal app source', () => {
@@ -48,7 +55,7 @@ describe('planChangedFiles', () => {
     assert.equal(plan.automated_code_review_mode, 'full');
   });
 
-  it('runs focused Node PR tests without the Vitest suite for scripts/pr-only changes', () => {
+  it('runs focused Node PR tests without the Vitest suite for scripts/pr source changes', () => {
     const plan = planChangedFiles(['scripts/pr/validatePrBody.mjs']);
     assert.equal(plan.vitest_mode, 'none');
     assert.equal(plan.node_pr_tests, true);
