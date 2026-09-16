@@ -5,7 +5,7 @@
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-16 — GOV-PR900-05 staged pre-command flow correlated against current main  
-**Baseline:** `main@5ae2b371da45a5c07304fd704a7026eded976f1b`  
+**Baseline:** `main@770756209b6248395ce4eedce63981355728004f`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -71,7 +71,7 @@ The merged change evolved the existing stable authorities instead of creating a 
 - Authority Registry `1.61.0 → 1.62.0` while retaining stable `AUTH-*` identities;
 - `.github/workflows/open-agent-draft-pr.yml` removes pre-create approval inputs and uses fail-closed current-main/open-writer/create-correlation before Draft PR creation.
 
-The ordered automated Roadmap lane permits at most one not-yet-integrated automated PR at a time. A successor is created only after predecessor terminal outcome; after merge it starts from a fresh branch on the resulting current `main`, while close-without-merge forces queue recomputation without predecessor payload. Stacked unmerged dependency branches cannot bypass this rule. Final PR-head/current-main correlation and Human/CODEOWNER merge remain mandatory; auto-merge remains prohibited.
+The ordered automated Roadmap lane permits at most one not-yet-integrated automated PR at a time. A successor is created only after predecessor terminal outcome; after merge it starts from a fresh branch on the resulting current `main`, while close-without-merge forces queue recomputation without predecessor payload. Stacked unmerged dependency branches cannot bypass this sequencing rule. Final PR-head/current-main correlation and Human/CODEOWNER merge remain mandatory; auto-merge remains prohibited.
 
 **Historical bootstrap boundary:** PR #952 itself correctly used the then-effective v3.4 pre-create Approval Envelope before Human Merge. That bootstrap requirement is historical evidence for the introducing PR and is not a current credential for successor PR creation.
 
