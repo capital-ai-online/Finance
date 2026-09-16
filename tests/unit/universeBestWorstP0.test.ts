@@ -41,10 +41,12 @@ describe('RankingBoard P0 ranking coverage (replaces UniverseBestWorst)', () => 
     expect(code).toContain('/api/registry/assets/verified-scores');
   });
 
-  it('uses semantic asset-class and score roles; UniverseBestWorst is alias-only; components path is compatibility export', () => {
-    for (const token of ['asset-crypto', 'asset-stock', 'asset-index', 'asset-forex', 'asset-commodity', 'asset-bond']) {
+  it('uses productive semantic asset-class and score roles; UniverseBestWorst is alias-only; components path is compatibility export', () => {
+    for (const token of ['asset-crypto', 'asset-stock', 'asset-index', 'asset-forex', 'asset-commodity']) {
       expect(code).toContain(token);
     }
+    expect(code).toContain("type ProductiveAssetType = Exclude<AssetType, 'bond'>;");
+    expect(code).not.toContain('text-asset-bond');
     expect(code).toContain('text-score-best');
     expect(code).toContain('text-score-worst');
     expect(alias).toContain("from './RankingBoard'");
