@@ -238,7 +238,7 @@ export function evaluatePreCommandFlow(input: Readonly<PreCommandFlowInput>): Pr
     input.capability.classificationRef,
     input.project.sourceRef,
     input.authority.sourceRef,
-    ...('authorityRefs' in input.authority ? input.authority.authorityRefs : []),
+    ...(input.authority.authorityRefs ?? []),
   ]);
   if (input.authority.state === 'BLOCKED') {
     return decide('BLOCK', 'authority', input.authority.reason, authorityRefs);
@@ -270,10 +270,5 @@ export function evaluatePreCommandFlow(input: Readonly<PreCommandFlowInput>): Pr
     return decide('BLOCK', 'least-privilege', input.leastPrivilege.reason, leastPrivilegeRefs);
   }
 
-  return decide(
-    'ALLOW',
-    'execution',
-    input.leastPrivilege.reason,
-    leastPrivilegeRefs,
-  );
+  return decide('ALLOW', 'execution', input.leastPrivilege.reason, leastPrivilegeRefs);
 }

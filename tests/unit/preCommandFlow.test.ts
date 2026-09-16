@@ -70,7 +70,7 @@ describe('evaluatePreCommandFlow', () => {
 
   it('blocks stale repository state before any downstream routing', () => {
     const input = validInput();
-    input.repository.isCurrent = false;
+    input.repository = { ...input.repository, isCurrent: false };
 
     expect(evaluatePreCommandFlow(input)).toMatchObject({
       verdict: 'BLOCK',
@@ -81,7 +81,10 @@ describe('evaluatePreCommandFlow', () => {
 
   it('blocks when AGENTS is not bound to the exact current-main SHA', () => {
     const input = validInput();
-    input.trustRoot.sha = '1111111111111111111111111111111111111111';
+    input.trustRoot = {
+      ...input.trustRoot,
+      sha: '1111111111111111111111111111111111111111',
+    };
 
     expect(evaluatePreCommandFlow(input)).toMatchObject({
       verdict: 'BLOCK',
@@ -92,7 +95,7 @@ describe('evaluatePreCommandFlow', () => {
 
   it('blocks an unresolved or non-granted capability', () => {
     const input = validInput();
-    input.capability.explicitlyGranted = false;
+    input.capability = { ...input.capability, explicitlyGranted: false };
 
     expect(evaluatePreCommandFlow(input)).toMatchObject({
       verdict: 'BLOCK',
