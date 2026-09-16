@@ -109,12 +109,18 @@ At branch creation:
 
 ## Validation status
 
-The current GitHub connector provides repository read/write primitives but not an installed full repository checkout for running Node/Vitest/TypeScript locally.
+The current GitHub connector provides repository read/write primitives but not an installed full repository checkout for running the project toolchain against the exact branch head.
 
-Therefore at this evidence point:
+A separate isolated harness was therefore used only for low-cost source-shape validation of the fetched Inventory service and CLI adapter:
+
+- isolated TypeScript compile against the repository compiler target/module shape with Node/platform stubs: `PASS`;
+- isolated fixture smoke: `PASS` for Documentary component authority `1.21.0`, `CAPITAL-AI-DOC / PVC-03` owner projection, feature platform-version inheritance, `server.ts` backend discovery and malformed source-SHA denial;
+- this isolated harness is **not** repository Vitest, full `tsc --noEmit`, Documentation Hygiene, Governance validation, build or hosted CI.
+
+Exact-repository validation remains:
 
 - focused Vitest: `NOT RUN`;
-- TypeScript: `NOT RUN`;
+- repository TypeScript (`npm run lint`): `NOT RUN`;
 - repository quality: `NOT RUN`;
 - Documentation Hygiene: `NOT RUN`;
 - Governance Control Plane validation: `NOT RUN`;
