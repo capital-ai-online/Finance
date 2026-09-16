@@ -19,7 +19,8 @@ describe('BB-2G dashboard composition boundary', () => {
   });
 
   it('owns productive dashboard composition in the app layer', () => {
-    expect(dashboardEntry).toContain("import { DashboardHome");
+    expect(dashboardEntry).toContain('  DashboardHome,');
+    expect(dashboardEntry).toContain("} from './DashboardHome'");
     expect(dashboardEntry).toContain("import { MyWorkspaceView } from './MyWorkspaceView'");
     expect(dashboardEntry).toContain('<DashboardHeader');
     expect(dashboardEntry).toContain('<DashboardHome');
