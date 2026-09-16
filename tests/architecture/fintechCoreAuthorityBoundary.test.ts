@@ -18,6 +18,7 @@ const FOUNDATION_FILES = [
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryProfileResolver.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryScoringBinding.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/Adapters/VerifiedCryptoSnapshotFeatureAdapter.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternDetectionContracts.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternReliabilityRegistry.ts',
