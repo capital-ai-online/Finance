@@ -133,6 +133,15 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     expect(robots.toLowerCase()).not.toContain('noindex');
   });
 
+  it('keeps the learning platform discoverable from prerendered static HTML without hydration', () => {
+    const source = fs.readFileSync(prerenderPath, 'utf8');
+    const noscriptTemplate = source.match(/const noscriptBlock = `([\s\S]*?)`;/)?.[1] ?? '';
+
+    expect(noscriptTemplate).toContain(
+      '<a href="${ORIGIN}/learning-platform">Learning Platform</a>',
+    );
+  });
+
   it('returns a real HTTP 404 for an unknown route', () => {
     const handler = captureProductionFallbackHandler();
     let statusCode: number | undefined;
