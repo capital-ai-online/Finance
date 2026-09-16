@@ -95,6 +95,28 @@ describe('roadmapNextTarget', () => {
     });
   });
 
+  it('accepts the canonical WP table header as a read-only work-package ID alias', () => {
+    const result = selectNextRoadmapTarget([
+      projectRoadmap({
+        project: 'CAPITAL-AI-SEO',
+        folder: 'docs/projects/seo/',
+        branchSlug: 'seo',
+        roadmapText: `
+| WP | State |
+|---|---|
+| WP-SEO-SPAM | REPOSITORY_EXECUTABLE — apply existing negative gates |
+`,
+      }),
+    ]);
+
+    expect(result.status).toBe('TARGET_SELECTED');
+    expect(result.target).toMatchObject({
+      project: 'CAPITAL-AI-SEO',
+      workItemId: 'WP-SEO-SPAM',
+      state: 'REPOSITORY_EXECUTABLE — apply existing negative gates',
+    });
+  });
+
   it('uses Roadmap source order before work-item ID inside the same project', () => {
     const result = selectNextRoadmapTarget([
       projectRoadmap({
@@ -222,6 +244,65 @@ describe('roadmapNextTarget', () => {
     );
   });
 
+  it('fails closed when the same work-item ID occurs twice in one State table', () => {
+    const result = selectNextRoadmapTarget([
+      projectRoadmap({
+        project: 'CAPITAL-AI-DATA',
+        folder: 'docs/projects/data/',
+        branchSlug: 'data',
+        roadmapText: `
+| ID | State |
+|---|---|
+| DATA-09 UAI / Data Ingestion | READY / ACTIVE BACKLOG |
+| DATA-09 GOV-07 Newsfeed entitlement | PARTIAL — product access closed |
+| DATA-15 Data Contract Testing | READY |
+`,
+      }),
+    ]);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'NO_EXECUTABLE_TARGET',
+        target: null,
+        reason: 'DUPLICATE_WORK_ITEM_ID',
+        eligibleCount: 0,
+      }),
+    );
+    expect(result.blockers).toEqual([
+      expect.objectContaining({
+        project: 'CAPITAL-AI-DATA',
+        roadmapPath: 'docs/projects/data/ROADMAP.md',
+        id: 'DATA-09',
+        reason: 'DUPLICATE_WORK_ITEM_ID',
+        evidence: [
+          { source: 'table', state: 'READY / ACTIVE BACKLOG' },
+          { source: 'table', state: 'PARTIAL — product access closed' },
+        ],
+      }),
+    ]);
+  });
+
+  it('allows one heading plus one table projection of the same work-item ID', () => {
+    const result = selectNextRoadmapTarget([
+      projectRoadmap({
+        project: 'CAPITAL-AI-GOV',
+        folder: 'docs/projects/governance/',
+        branchSlug: 'governance',
+        roadmapText: `
+### GOV-AUTO-01 — canonical section
+**State:** READY
+
+| ID | State |
+|---|---|
+| GOV-AUTO-01 | READY |
+`,
+      }),
+    ]);
+
+    expect(result.status).toBe('TARGET_SELECTED');
+    expect(result.target?.workItemId).toBe('GOV-AUTO-01');
+  });
+
   it('fails closed when the same work-item ID exists in more than one canonical project', () => {
     const result = selectNextRoadmapTarget([
       projectRoadmap({
@@ -255,11 +336,28 @@ describe('roadmapNextTarget', () => {
     expect(result.blockers).toEqual([{ id: 'SHARED-AUTO-01', reason: 'DUPLICATE_WORK_ITEM_ID' }]);
   });
 
-  it('classifies the current twelve-project repository into one target or an explicit no-target state', async () => {
+  it('fails closed on the current twelve-project snapshot because DATA-09 is non-unique', async () => {
     const result = await buildCanonicalRoadmapNextTarget();
 
     expect(result.projectCount).toBe(12);
-    expect(['TARGET_SELECTED', 'NO_EXECUTABLE_TARGET']).toContain(result.status);
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'NO_EXECUTABLE_TARGET',
+        target: null,
+        reason: 'DUPLICATE_WORK_ITEM_ID',
+        eligibleCount: 0,
+      }),
+    );
+    expect(result.blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          project: 'CAPITAL-AI-DATA',
+          roadmapPath: 'docs/projects/data/ROADMAP.md',
+          id: 'DATA-09',
+          reason: 'DUPLICATE_WORK_ITEM_ID',
+        }),
+      ]),
+    );
     expect(result.authorityBoundary).toEqual({
       sourceOfTruth: 'canonical docs/projects/<project>/ROADMAP.md files',
       ownership: 'preserved from docs/projects/README.md / PROJECT_VALUE_CHAIN.md',
@@ -267,18 +365,5 @@ describe('roadmapNextTarget', () => {
       mutation: 'none',
       shadowQueue: false,
     });
-
-    if (result.status === 'TARGET_SELECTED') {
-      expect(result.target).not.toBeNull();
-      expect(result.target?.project).toMatch(/^CAPITAL-AI-/);
-      expect(result.target?.folder).toMatch(/^docs\/projects\/[a-z0-9-]+\/$/);
-      expect(result.target?.workItemId).toMatch(/^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$/);
-      expect(result.eligibleCount).toBeGreaterThan(0);
-    } else {
-      expect(result.target).toBeNull();
-      expect(result.reason).toBeTruthy();
-      expect(result.blockers.length).toBeGreaterThan(0);
-      expect(result.eligibleCount).toBe(0);
-    }
   });
 });
