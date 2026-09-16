@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/data/`  
 **Owner/PVC:** `CAPITAL-AI-DATA / PVC-09, PVC-10, PVC-11`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — DATA automation intake re-correlated after terminal PR #969 and merged DATA PR #974  
-**Baseline:** `main@a793c86136c56f82f065c07f854c7c588e1ff7db`  
+**Reconciliation:** 2026-09-16 — DATA automation intake and work-item identity re-correlated after terminal PR #995  
+**Baseline:** `main@cf1d8b84f2455c0859f61407773ad9022dff00fa`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -50,7 +50,7 @@ The ordered DATA lane reuses `/AGENTS.md` sequencing and remains owned by `CAPIT
    - **Evidence:** current main contains `FintechDataHandoff.ts` and `dataFintechHandoff.test.ts`; PASS path preserves UAI/provider/evidence/freshness/correlation lineage, while `STALE`, `MISSING`, `UNKNOWN`, wrong-identity, incomplete-provenance and aggregate-status mismatch export zero numeric FINTECH observations.
    - **Continuation:** do not reopen or reimplement this slice unless later current-main evidence proves regression.
 
-2. **`DATA-09` + `DATA-14` + remaining DATA-owned GOV-07 portion — PVC-09 ingress completion.** Continue canonical provider-ingress convergence without bypassing `MarketDataGateway`; close only the DATA-owned authority-unavailable distinction and vendor-dialect normalization/validation that fits behind the existing canonical provider envelope.
+2. **`DATA-09` + `DATA-14` + `DATA-09-GOV-07` — PVC-09 ingress completion.** Continue canonical provider-ingress convergence without bypassing `MarketDataGateway`; close only the DATA-owned authority-unavailable distinction and vendor-dialect normalization/validation that fits behind the existing canonical provider envelope. `DATA-09-GOV-07` is the unique DATA work-item identity for the remaining DATA-owned GOV-07 newsfeed-entitlement return and is distinct from the general `DATA-09` UAI/ingress item.
    - **Trigger:** current-main repository evidence identifies an unresolved DATA-owned ingress gap and no protected provider/credential/entitlement mutation is required.
    - **Exit:** provider-specific dialects terminate at validated DATA ingress; unsupported/unauthorized/unavailable conditions remain explicit and cannot become synthetic observations or DQ PASS.
 
@@ -79,7 +79,7 @@ The ordered DATA lane reuses `/AGENTS.md` sequencing and remains owned by `CAPIT
 | ID | State |
 |---|---|
 | DATA-09 UAI / Data Ingestion | READY / ACTIVE BACKLOG |
-| DATA-09 GOV-07 Newsfeed entitlement | PARTIAL — product access closed; authority-unavailable distinction open |
+| DATA-09-GOV-07 Newsfeed entitlement | PARTIAL — product access closed; authority-unavailable distinction open |
 | DATA-10 Evidence Management | IMPLEMENTED — DATA evidence ready / SEC verification open |
 | DATA-11 Data Quality | IMPLEMENTED — gate slice ready / source vocabularies retained |
 | DATA-12 Provenance | IMPLEMENTED — lineage slice ready / correction version open |
