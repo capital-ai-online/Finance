@@ -135,16 +135,18 @@ DR-03 remains separate. No current package activates a provider adapter, modifie
 
 | Package | PVC | Current disposition | Bounded scope / gate |
 |---|---|---|---|
-| `OPS-PR900-03A` GitHub Work-Management Inventory & Package Materialization | `PVC-02` | `MATERIALIZED_BRANCH / PRE_PR_CORRELATION_READY` | inventory current connected GitHub work-management capabilities and materialize coordination-only repository contracts |
-| `OPS-PR900-03B` GitHub Work-Management Pilot | `PVC-02` | `BLOCKED / NOT_STARTED` | `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -> Done -> Wiki Navigation`; starts only when required object/mutation/readback surfaces are available and 03A is completed against then-current main |
+| `OPS-PR900-03A` GitHub Work-Management Inventory & Package Materialization | `PVC-02` | `MERGED / CAPABILITY_GAP_VERIFIED` via PR #950 (`1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`) | provider-versus-connector inventory complete; coordination-only repository contract materialized and post-merge reverified |
+| `OPS-PR900-03B` GitHub Work-Management Pilot | `PVC-02` | `BLOCKED / NOT_STARTED — CONNECTOR / EXECUTION-SURFACE GAP` | `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -> Done -> Wiki Navigation`; starts only when required object/mutation/readback surfaces are available through an already authorized execution path |
 
-Current 03A provider classification is recorded in `work-packages/OPS_PR900_03A_GITHUB_WORK_MANAGEMENT_2026-09-15.md`: Issues are `AVAILABLE`; Labels and Milestones are `PARTIAL_SURFACE`; Issue Types, Organization Issue Fields, Organization Projects/Project Fields and Wiki Pages/Navigation are `NOT_AVAILABLE_ON_CURRENT_CONNECTOR`.
+Post-merge verification against `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619` distinguishes GitHub-native provider state from connected connector capability. Finance metadata reports `has_issues=true`, `has_projects=true` and `has_wiki=true`, and Issue updates support association to an already known milestone number. Those provider facts do not prove complete object-level inventory, mutation and readback through the current connector.
+
+Current connected classification: Issues are `AVAILABLE`; Labels and Milestones are `PARTIAL_SURFACE`; Issue Types and Organization Issue Fields are `NOT_AVAILABLE_ON_CURRENT_CONNECTOR`; Organization Projects/Project Fields are `REPOSITORY_FEATURE_ENABLED / OBJECT_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR`; Wiki Pages/Navigation are `REPOSITORY_FEATURE_ENABLED / PAGE_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR`.
 
 `NOT_AVAILABLE_ON_CURRENT_CONNECTOR` is never equivalent to "object does not exist". No `EMPTY_VERIFIED` state is synthesized where complete enumeration is unavailable.
 
 Taxonomy preference is native Issue Types -> Organization Issue Fields -> residual Labels -> non-versioned delivery-cohort Milestone -> Project Status as workflow state. A future milestone may be named `GitHub Work Management Pilot`, but it cannot represent platform version, Release or Deployment state. Wiki content is limited to navigation/backlinks and cannot duplicate normative Roadmap/ADR/ESS/Governance/Security/Release content.
 
-03B remains blocked because the current connected surface cannot safely enumerate/manage Organization Projects/Project Fields, Milestone objects and Wiki navigation. No partial pilot counts as successful completion.
+03B remains blocked until the already authorized execution path exposes Organization Projects V2 + Project Fields, Milestone object management and Wiki navigation with both mutation and reproducible readback. Project Status `Done` must likewise be observed rather than inferred. No partial pilot counts as successful completion, and this package does not authorize connector, OAuth, permission or provider integration mutation.
 
 ## Security / execution-delegation boundary
 
@@ -194,6 +196,7 @@ PR #872 demonstrates that separation: Security executed the bounded implementati
 | PR #870/#871 Vite security floor / SEC-SOTA-03 sync | merged Security work; no OPS ownership transfer |
 | PR #872 artifact-digest binding | merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; Security Roadmap synchronization remains open |
 | PR #873 PVC Vocabulary / Thesaurus | merged as `5e9be38b5af037f85fab67643043c5be30f87e16` |
+| PR #950 GitHub Work-Management inventory/materialization | merged as `1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`; 03A `MERGED / CAPABILITY_GAP_VERIFIED`, 03B remains blocked by connector/execution-surface gap |
 | GitGuardian Health #34468840264 | terminal success on exact post-#863 main; required monitoring PASS; denied/unsupported categories remain NOT-RUN |
 
 ## Active-writer correlation
