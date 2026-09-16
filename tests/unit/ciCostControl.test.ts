@@ -46,7 +46,7 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(block).not.toContain('actions: write');
   });
 
-  it('reuses a PASS only for the same workflow, PR number, head SHA and base SHA', () => {
+  it('reuses a PASS only for the same workflow, PR number, normalized head SHA and normalized base SHA', () => {
     const cost = stepBlock(workflow(), 'P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
 
     expect(cost).toContain("event: 'pull_request'");
@@ -54,11 +54,11 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(cost).toContain("status: 'success'");
     expect(cost).toContain('run.workflow_id !== workflowId');
     expect(cost).toContain('pr.number === prNumber');
-    expect(cost).toContain('correlatedPr?.head?.sha === headSha');
-    expect(cost).toContain('correlatedPr?.base?.sha === baseSha');
+    expect(cost).toContain('normalizeSha(correlatedPr?.head?.sha) === headSha');
+    expect(cost).toContain('normalizeSha(correlatedPr?.base?.sha) === baseSha');
   });
 
-  it('reuses a successful prior attempt only for the same exact PR snapshot', () => {
+  it('reuses a successful prior attempt only for the same exact normalized PR snapshot', () => {
     const cost = stepBlock(workflow(), 'P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
 
     expect(cost).toContain('currentRun.data.run_attempt');
@@ -66,31 +66,35 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(cost).toContain('attempt_number: currentAttempt - 1');
     expect(cost).toContain("previous.conclusion === 'success'");
     expect(cost).toContain("previous.event === 'pull_request'");
-    expect(cost).toContain('previous.head_sha === headSha');
-    expect(cost).toContain('previousCorrelatedPr?.head?.sha === headSha');
-    expect(cost).toContain('previousCorrelatedPr?.base?.sha === baseSha');
+    expect(cost).toContain('normalizeSha(previous.head_sha) === headSha');
+    expect(cost).toContain('normalizeSha(previousCorrelatedPr?.head?.sha) === headSha');
+    expect(cost).toContain('normalizeSha(previousCorrelatedPr?.base?.sha) === baseSha');
     expect(cost).toContain('vollständige CI bleibt aktiv');
   });
 
-  it('limits snapshot reuse to pull_request events', () => {
+  it('limits snapshot reuse to pull_request events and validates the event snapshot against the live PR first', () => {
     const cost = stepBlock(workflow(), 'P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
     expect(cost).toContain("if: github.event_name == 'pull_request'");
+    expect(cost).toContain('github.rest.pulls.get');
+    expect(cost).toContain("core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false')");
+    expect(cost).toContain("core.setOutput('reuse_exact_snapshot', 'false')");
   });
 
-  it('skips checkout and scope classification only after an exact successful snapshot match', () => {
+  it('skips checkout and scope classification for stale snapshots or after an exact successful snapshot match', () => {
     const yaml = workflow();
     const checkout = stepBlock(yaml, 'Repository auschecken');
     const scope = stepBlock(yaml, 'Prüfumfang klassifizieren (D/C/R)');
+    const guardedHeavyWork = "if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'";
 
-    expect(checkout).toContain("if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'");
-    expect(scope).toContain("if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'");
+    expect(checkout).toContain(guardedHeavyWork);
+    expect(scope).toContain(guardedHeavyWork);
   });
 
-  it('does not reuse PR validation for the production main-push chain', () => {
+  it('does not reuse PR validation for stale snapshots or the production main-push chain', () => {
     const yaml = workflow();
     const reuse = stepBlock(yaml, 'Exakten CI-PASS wiederverwenden');
 
-    expect(reuse).toContain("if: steps.cost_control.outputs.reuse_exact_snapshot == 'true'");
+    expect(reuse).toContain("if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot == 'true'");
     expect(yaml).toContain("github.event_name == 'push' && github.ref == 'refs/heads/main'");
   });
 });
