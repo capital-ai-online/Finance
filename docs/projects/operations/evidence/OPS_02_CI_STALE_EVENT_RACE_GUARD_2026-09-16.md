@@ -6,7 +6,8 @@
 **Primary Owner:** `CAPITAL-AI-OPS`  
 **Parent work package:** `OPS-02-CI-01 — Build/Test Cost & Scope Reduction`  
 **State:** `IMPLEMENTED_ON_BRANCH / HOSTED_RACE_EVIDENCE_PENDING`  
-**Correlation baseline:** `main@a5604cd9a42c89874168abb6fa27790245f1f07b`  
+**Implementation-start baseline:** `main@d25132f61588839b0741fd3579ec63709102ce06`  
+**Final create baseline:** recorded in the canonical PR body and required to equal then-current `main` at CREATE-CORRELATION  
 **Branch:** `agent/operations-ci-stale-head-guard-20260916`  
 **Authority:** `/AGENTS.md@current-main`, ADR-0073, ESS-0001-CONTRACTS Chapter 12  
 **Production mutation:** none
