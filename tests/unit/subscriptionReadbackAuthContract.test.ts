@@ -19,7 +19,7 @@ describe('authenticated subscription readback contract', () => {
   });
 
   it('keeps Dashboard and the canonical subscription surface on authenticated readback', () => {
-    const dashboard = readRepoFile('src/components/Dashboard.tsx');
+    const dashboard = readRepoFile('src/app/dashboard/Dashboard.tsx');
     const compatibility = readRepoFile('src/components/Abonnements.tsx');
     const subscriptions = readRepoFile('src/features/billing/ui/Abonnements.tsx');
 
@@ -35,7 +35,7 @@ describe('authenticated subscription readback contract', () => {
   });
 
   it('keeps cached Dashboard entitlement subordinate to the live authenticated UserSession', () => {
-    const source = readRepoFile('src/components/Dashboard.tsx');
+    const source = readRepoFile('src/app/dashboard/Dashboard.tsx');
     const cacheStart = source.indexOf('if (savedStr)');
     const cacheEnd = source.indexOf('const handleUpdateProfile', cacheStart);
     const cacheBlock = source.slice(cacheStart, cacheEnd);
@@ -48,7 +48,7 @@ describe('authenticated subscription readback contract', () => {
   });
 
   it('does not issue authenticated subscription reads for guest sessions', () => {
-    const dashboard = readRepoFile('src/components/Dashboard.tsx');
+    const dashboard = readRepoFile('src/app/dashboard/Dashboard.tsx');
     const subscriptions = readRepoFile('src/features/billing/ui/Abonnements.tsx');
 
     expect(dashboard).toContain("userSession.type === 'registered' && userSession.id");

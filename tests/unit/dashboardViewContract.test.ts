@@ -11,6 +11,7 @@ import {
 const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
+const dashboard = read('src/app/dashboard/Dashboard.tsx');
 const legacyDashboard = read('src/components/Dashboard.tsx');
 const dashboardHeader = read('src/app/dashboard/DashboardHeader.tsx');
 const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
@@ -46,7 +47,7 @@ const expectedSections: Record<(typeof DASHBOARD_VIEWS)[number], DashboardSectio
   'admin-portal': 'system_admin',
 };
 
-describe('BB-2E dashboard view contract', () => {
+describe('BB-2G dashboard view contract', () => {
   it('keeps every dashboard view mapped exhaustively to one presentation section', () => {
     expect(DASHBOARD_VIEWS).toHaveLength(27);
     expect(DASHBOARD_VIEW_SECTION).toEqual(expectedSections);
@@ -70,17 +71,20 @@ describe('BB-2E dashboard view contract', () => {
     expect(dashboardNavigation).toContain('setExpandedSection(getDashboardSection(activeView))');
   });
 
-  it('keeps residual dashboard targets and app-owned navigation bound to the canonical view contract', () => {
-    expect(legacyDashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
-    expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
-    expect(legacyDashboard).toContain('<DashboardHeader');
-    expect(legacyDashboard).not.toContain('<DashboardNavigation');
+  it('binds app-owned composition and navigation to the canonical view contract', () => {
+    expect(dashboard).toContain("import type { DashboardView } from './dashboardViews'");
+    expect(dashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(dashboard).toContain('<DashboardHeader');
+    expect(dashboard).toContain('<DashboardHome');
+    expect(dashboard).toContain('<MyWorkspaceView');
+    expect(dashboard).not.toContain('<DashboardNavigation');
     expect(dashboardHeader).toContain('<DashboardNavigation');
+    expect(legacyDashboard).toContain("from '../app/dashboard/Dashboard'");
     expect(dashboardNavigationModel).toContain('satisfies readonly DashboardNavigationItem[]');
     expect(dashboardNavigation).toContain('onClick={() => navigate(item.view)}');
 
     const residualDashboardTargets = Array.from(
-      legacyDashboard.matchAll(/(?:navigateTo|setActiveView)\('([^']+)'\)/g),
+      dashboard.matchAll(/(?:navigateTo|setActiveView)\('([^']+)'\)/g),
       match => match[1],
     );
     const declaredNavigationTargets = Array.from(
