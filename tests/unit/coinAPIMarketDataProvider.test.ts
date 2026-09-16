@@ -19,6 +19,7 @@ describe('CoinAPIMarketDataProvider', () => {
       symbol: 'BTC',
       currency: 'USD',
       price: 61234.5,
+      sourceTimestamp: '2026-08-16T00:00:30.000Z',
       qualityState: 'LIVE',
       isRealtime: true,
       isDelayed: false,
@@ -56,7 +57,7 @@ describe('CoinAPIMarketDataProvider', () => {
   it('schlägt bei ungültiger Rate ohne synthetischen Preis fehl', async () => {
     const provider = new CoinAPIMarketDataProvider({
       apiKey: 'test-key',
-      fetchImpl: vi.fn(async () => new Response(JSON.stringify({ rate: 0 }), {
+      fetchImpl: vi.fn(async () => new Response(JSON.stringify({ rate: 0, time: '2026-08-16T00:00:30Z' }), {
         status: 200, headers: { 'Content-Type': 'application/json' },
       })) as unknown as typeof fetch,
     });
@@ -66,5 +67,25 @@ describe('CoinAPIMarketDataProvider', () => {
     expect(snapshot.qualityState).toBe('UNAVAILABLE');
     expect(snapshot.price).toBeNull();
     expect(snapshot.reason).toMatch(/no valid USD rate/);
+  });
+
+  it('erfindet bei fehlender Provider-Zeit keinen sourceTimestamp', async () => {
+    const provider = new CoinAPIMarketDataProvider({
+      apiKey: 'test-key',
+      nowMs: () => Date.parse('2026-08-16T00:01:00Z'),
+      fetchImpl: vi.fn(async () => new Response(JSON.stringify({ rate: 61234.5 }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      })) as unknown as typeof fetch,
+    });
+    const snapshot = await provider.getSnapshot({
+      symbol: 'BTC', assetClass: 'crypto', correlationId: 'corr-missing-time',
+    });
+    expect(snapshot).toMatchObject({
+      qualityState: 'UNAVAILABLE',
+      price: null,
+      sourceTimestamp: null,
+      evidenceId: null,
+    });
+    expect(snapshot.reason).toMatch(/no valid source timestamp/);
   });
 });

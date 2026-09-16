@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/data/`  
 **Owner/PVC:** `CAPITAL-AI-DATA / PVC-09, PVC-10, PVC-11`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — DATA automation intake and work-item identity re-correlated after terminal PR #995  
-**Baseline:** `main@cf1d8b84f2455c0859f61407773ad9022dff00fa`  
+**Reconciliation:** 2026-09-16 — DATA-09 PVC-09 ingress re-correlated after terminal PR #998; provider source-timestamp validation materialized from current-main evidence  
+**Baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -50,9 +50,20 @@ The ordered DATA lane reuses `/AGENTS.md` sequencing and remains owned by `CAPIT
    - **Evidence:** current main contains `FintechDataHandoff.ts` and `dataFintechHandoff.test.ts`; PASS path preserves UAI/provider/evidence/freshness/correlation lineage, while `STALE`, `MISSING`, `UNKNOWN`, wrong-identity, incomplete-provenance and aggregate-status mismatch export zero numeric FINTECH observations.
    - **Continuation:** do not reopen or reimplement this slice unless later current-main evidence proves regression.
 
-2. **`DATA-09` + `DATA-14` + `DATA-09-GOV-07` — PVC-09 ingress completion.** Continue canonical provider-ingress convergence without bypassing `MarketDataGateway`; close only the DATA-owned authority-unavailable distinction and vendor-dialect normalization/validation that fits behind the existing canonical provider envelope. `DATA-09-GOV-07` is the unique DATA work-item identity for the remaining DATA-owned GOV-07 newsfeed-entitlement return and is distinct from the general `DATA-09` UAI/ingress item.
+2. **`DATA-09` + `DATA-14` + `DATA-09-GOV-07` — PVC-09 ingress completion.** Continue canonical provider-ingress convergence without bypassing `MarketDataGateway`; close only DATA-owned authority-unavailable distinctions and vendor-dialect normalization/validation that fit behind the existing canonical provider envelope. `DATA-09-GOV-07` is the unique DATA work-item identity for the DATA-owned GOV-07 newsfeed-entitlement return and is distinct from the general `DATA-09` UAI/ingress item.
+   - **Current-main correlation:** `cryptoSpotConsensus.ts` already consumes CoinAPI/TwelveData/EODHD through `MarketDataGateway`; the historical SC-5 text that described raw direct consensus fetchers is stale context and is not execution authority. `realtimeAiNewsfeedEntitlement.ts` already represents authoritative lookup failure as `503 / entitlement-authority-unavailable`; DATA records that repository evidence without claiming GOV/SEC verification authority.
    - **Trigger:** current-main repository evidence identifies an unresolved DATA-owned ingress gap and no protected provider/credential/entitlement mutation is required.
    - **Exit:** provider-specific dialects terminate at validated DATA ingress; unsupported/unauthorized/unavailable conditions remain explicit and cannot become synthetic observations or DQ PASS.
+
+### DATA-09-TS-01 — Provider source-timestamp provenance hardening
+
+**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING`  
+**Baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
+**Evidence:** `docs/projects/data/evidence/DATA_09_PROVIDER_TIMESTAMP_VALIDATION_2026-09-16.md`
+
+Current-main inspection found that the canonical gateway/DQ layer already rejects a priced snapshot without a valid source timestamp, but CoinAPI, TwelveData and CoinGecko adapters could replace a missing provider timestamp with local retrieval time, and EODHD could replace a missing source date while not strictly rejecting invalid calendar dates. This slice removes those substitutions at the provider-dialect boundary. A valid price with absent/malformed provider time now yields `UNAVAILABLE`, `price=null`, `sourceTimestamp=null` and no evidence ID.
+
+This package does not alter provider roles, routing, credentials, entitlements, rate limits, provider activation, deployment, execution eligibility, scoring or ranking. `DATA-09` remains `READY / ACTIVE BACKLOG` because broader ingress convergence is intentionally not declared complete by this bounded remediation.
 
 3. **`DATA-10` + `DATA-12` + `DATA-13` + `DATA-PR900-02` — PVC-10 evidence/provenance/freshness completion.** Reuse the implemented evidence-identity, provenance-lineage and capability-max-age nucleus; close only still-open DATA-owned correction-version/provider-override semantics and provide current evidence for independent Security verification.
    - **Trigger:** an unresolved DATA-owned semantic gap remains after current-main re-read; SEC-only verification remains dependency-held rather than reimplemented by DATA.
@@ -79,12 +90,12 @@ The ordered DATA lane reuses `/AGENTS.md` sequencing and remains owned by `CAPIT
 | ID | State |
 |---|---|
 | DATA-09 UAI / Data Ingestion | READY / ACTIVE BACKLOG |
-| DATA-09-GOV-07 Newsfeed entitlement | PARTIAL — product access closed; authority-unavailable distinction open |
+| DATA-09-GOV-07 Newsfeed entitlement | IMPLEMENTED / EVIDENCE_READY — authority-unavailable behavior present; GOV/SEC reassessment external |
 | DATA-10 Evidence Management | IMPLEMENTED — DATA evidence ready / SEC verification open |
 | DATA-11 Data Quality | IMPLEMENTED — gate slice ready / source vocabularies retained |
 | DATA-12 Provenance | IMPLEMENTED — lineage slice ready / correction version open |
 | DATA-13 Freshness | IMPLEMENTED — capability max-age ready / provider overrides open |
-| DATA-14 Provider Input Validation | IMPLEMENTED — canonical envelope ready / vendor dialects open |
+| DATA-14 Provider Input Validation | IMPLEMENTED / PARTIAL — canonical envelope ready; provider source-time dialect hardening materialized; broader vendor dialects open |
 | DATA-15 Data Contract Testing | READY |
 | DATA-16 Evidence | READY / CONTINUOUS |
 

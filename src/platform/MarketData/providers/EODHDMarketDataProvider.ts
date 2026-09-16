@@ -1,10 +1,8 @@
 /**
  * SC-5 Phase D — EODHD crypto adapter for MarketDataGateway.
  * EOD-only reference observation: intentionally labelled HISTORICAL (never LIVE/DELAYED) so it
- * cannot silently masquerade as a current execution price. Registers EODHD as a gateway-hardened
- * (matrix RL/CB/cache) crypto snapshot source for a later, explicitly Owner-gated quorum step. Does
- * not itself change executionPriceEligible, scoring formulas or eligibility thresholds, and is not
- * yet consumed by cryptoQuoteEvidence (which still pins allowedProviderIds to ['coingecko']).
+ * cannot silently masquerade as a current execution price. Vendor timestamps are validated
+ * fail-closed before entering the canonical gateway contract.
  */
 
 import {
@@ -65,8 +63,17 @@ export class EODHDMarketDataProvider implements MarketDataProvider {
       const price = Number(row?.adjusted_close ?? row?.close);
       if (!Number.isFinite(price) || price <= 0) throw new Error('EODHD returned no valid latest EOD close.');
 
-      const observedAt =
-        typeof row?.date === 'string' ? `${row.date.slice(0, 10)}T23:59:59.000Z` : retrievedAt;
+      const sourceDate = typeof row?.date === 'string' ? row.date.trim() : '';
+      const observedMs = /^\d{4}-\d{2}-\d{2}$/.test(sourceDate)
+        ? Date.parse(`${sourceDate}T23:59:59.000Z`)
+        : Number.NaN;
+      if (
+        !Number.isFinite(observedMs)
+        || new Date(observedMs).toISOString().slice(0, 10) !== sourceDate
+      ) {
+        throw new Error('EODHD returned no valid source date.');
+      }
+      const observedAt = new Date(observedMs).toISOString();
 
       return {
         contractVersion: MARKET_DATA_CONTRACT_VERSION,
@@ -78,7 +85,7 @@ export class EODHDMarketDataProvider implements MarketDataProvider {
         sourceTimestamp: observedAt,
         ingestedAt: retrievedAt,
         receivedAt: retrievedAt,
-        freshnessMs: Math.max(0, nowMs - Date.parse(observedAt)),
+        freshnessMs: Math.max(0, nowMs - observedMs),
         // EOD close, not a live/delayed feed — must never be mistaken for a current execution price.
         qualityState: 'HISTORICAL',
         isRealtime: false,
