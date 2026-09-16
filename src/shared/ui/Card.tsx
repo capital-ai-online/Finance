@@ -12,11 +12,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(function Card(
   return (
     <div
       ref={ref}
-      className={clsx(
-        'rounded-xl border border-white/10 bg-neutral-950/40 p-6 backdrop-blur-md',
-        elevated && 'bg-neutral-900/85 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]',
-        className,
-      )}
+      className={clsx('ui-panel', elevated && 'ui-panel--elevated', className)}
       {...props}
     />
   );
