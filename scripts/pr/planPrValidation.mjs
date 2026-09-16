@@ -23,6 +23,14 @@ export function normalizePath(value) {
     .trim();
 }
 
+export function parseChangedFilesJson(value) {
+  const parsed = JSON.parse(String(value ?? ''));
+  if (!Array.isArray(parsed) || !parsed.every((entry) => typeof entry === 'string')) {
+    throw new TypeError('CHANGED_FILES_JSON must be a JSON array of strings');
+  }
+  return parsed.map(normalizePath).filter(Boolean);
+}
+
 export function isDocsPath(filePath) {
   const p = normalizePath(filePath);
   return !p || p.startsWith('docs/') || p.startsWith('.ai/') || p.endsWith('.md');
@@ -260,7 +268,11 @@ function main() {
     const head = process.env.PR_HEAD_SHA || process.env.HEAD_SHA || 'HEAD';
     if (base) {
       files = listChangedFiles(base, head);
+    } else if (process.env.CHANGED_FILES_JSON) {
+      files = parseChangedFilesJson(process.env.CHANGED_FILES_JSON);
     } else if (process.env.CHANGED_FILES) {
+      // Backwards-compatible fallback for current callers that still provide
+      // newline-delimited paths. Security-sensitive provider workflows use JSON.
       files = process.env.CHANGED_FILES.split(/\r?\n/).map(normalizePath).filter(Boolean);
     }
   }
