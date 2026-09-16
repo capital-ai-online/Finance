@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { UniversePathBoundary } from '../features/universe/ui/UniversePathBoundary';
 import { SessionComposition } from './auth/SessionComposition';
 import { ProductVocabularyBoundary } from './presentation/ProductVocabularyBoundary';
 import { AppRoutes } from './routing/AppRoutes';
@@ -18,9 +19,11 @@ import { AppRoutes } from './routing/AppRoutes';
 export default function App() {
   return (
     <ProductVocabularyBoundary>
-      <SessionComposition>
-        {(session) => <AppRoutes {...session} />}
-      </SessionComposition>
+      <UniversePathBoundary>
+        <SessionComposition>
+          {(session) => <AppRoutes {...session} />}
+        </SessionComposition>
+      </UniversePathBoundary>
     </ProductVocabularyBoundary>
   );
 }
