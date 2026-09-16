@@ -258,7 +258,9 @@ function ProtectedToolNotice({ tool }: { tool: ToolDefinition }) {
 
 export function PublicAnalysisWorkbench() {
   const [activeTool, setActiveTool] = useState<PublicToolId>('enterprise-scorer');
-  const [sideboardOpen, setSideboardOpen] = useState(false);
+  // Mobile recovery: the historical cockpit exposed the tool navigation immediately.
+  // Keep it expanded on first render so touch users never receive a lone, inert-looking label.
+  const [sideboardOpen, setSideboardOpen] = useState(true);
   const [selectedSymbol, setSelectedSymbol] = useState('BTC');
   const [timeframe, setTimeframe] = useState('1 tag');
 
@@ -310,12 +312,13 @@ export function PublicAnalysisWorkbench() {
         <button
           type="button"
           onClick={() => setSideboardOpen((open) => !open)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-black uppercase tracking-wider text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+          className="ui-hit inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl border border-brand-primary/30 bg-brand-primary/10 px-3 py-2 text-xs font-black uppercase tracking-wider text-text-primary transition hover:bg-brand-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
           aria-expanded={sideboardOpen}
           aria-controls="public-analysis-sideboard"
+          aria-label={sideboardOpen ? 'Analysetools einklappen' : 'Analysetools aufklappen'}
         >
-          {sideboardOpen ? <X size={16} /> : <Menu size={16} />}
-          Sideboard
+          {sideboardOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
+          <span>{sideboardOpen ? 'Analysetools schließen' : 'Analysetools öffnen'}</span>
         </button>
         <span className="truncate text-xs font-bold text-brand-primary">{activeDefinition.label}</span>
       </div>
@@ -328,11 +331,11 @@ export function PublicAnalysisWorkbench() {
         >
           <div className="mb-5 space-y-2 rounded-2xl border border-brand-primary/20 bg-brand-primary/5 p-4">
             <div className="flex items-center gap-2 text-brand-primary">
-              <ShieldCheck size={16} />
+              <ShieldCheck size={16} aria-hidden="true" />
               <span className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">Public Analysis Sideboard</span>
             </div>
             <p className="text-xs leading-relaxed text-text-secondary">
-              Wiederhergestellte Tool-Navigation ohne Rückkehr des schweren Legacy-Dashboards. Server-Gates und aktuelle Deaktivierungen bleiben wirksam.
+              Cockpit-Navigation mit Enterprise Scorer und allen aktuell freigegebenen Analyseflächen. Server-Gates, Login-Pflichten und aktuelle Deaktivierungen bleiben wirksam.
             </p>
           </div>
 
@@ -355,20 +358,20 @@ export function PublicAnalysisWorkbench() {
                           setSideboardOpen(false);
                         }}
                         aria-current={selected ? 'page' : undefined}
-                        className={`flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary ${
+                        className={`ui-hit flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary ${
                           selected
                             ? 'border-brand-primary/35 bg-brand-primary/10 text-text-primary'
                             : 'border-transparent text-text-secondary hover:border-border hover:bg-surface/60 hover:text-text-primary'
                         }`}
                       >
-                        <Icon size={16} className={selected ? 'text-brand-primary' : 'text-text-secondary'} />
+                        <Icon size={16} className={selected ? 'text-brand-primary' : 'text-text-secondary'} aria-hidden="true" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-xs font-bold">{tool.label}</span>
                           <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-text-secondary">
                             {availabilityLabel(tool.availability)}
                           </span>
                         </span>
-                        <ChevronRight size={14} className="shrink-0 text-text-secondary" />
+                        <ChevronRight size={14} className="shrink-0 text-text-secondary" aria-hidden="true" />
                       </button>
                     );
                   })}
