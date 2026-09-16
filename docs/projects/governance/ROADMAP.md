@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — PR #952 PR-create lifecycle activation and PR #953 freshness/version validators correlated against current main  
-**Baseline:** `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`  
+**Reconciliation:** 2026-09-16 — GOV-PR900-05 staged pre-command flow correlated against current main  
+**Baseline:** `main@5ae2b371da45a5c07304fd704a7026eded976f1b`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
