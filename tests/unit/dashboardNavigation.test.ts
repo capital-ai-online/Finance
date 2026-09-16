@@ -24,6 +24,7 @@ describe('BB-2E dashboard navigation model', () => {
       'learning',
       'universe-scoring',
       'buffet-value',
+      'profil',
       'abonnements',
     ]);
 
@@ -37,5 +38,13 @@ describe('BB-2E dashboard navigation model', () => {
       'raw-materials',
       'social-accounts',
     ]);
+  });
+
+  it('keeps profile settings explicitly reachable from the restored cockpit navigation', () => {
+    expect(getDashboardNavigationItems('hub')).toContainEqual({
+      view: 'profil',
+      label: 'Profil & Einstellungen',
+      section: 'hub',
+    });
   });
 });
