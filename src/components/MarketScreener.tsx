@@ -67,7 +67,7 @@ const INTERVAL_OPTIONS = [
   { value: '1Y', label: '1 Jahr' },
 ];
 
-const ASSET_TYPE_ORDER: AssetType[] = ['crypto', 'stock', 'forex', 'commodity', 'index', 'bond'];
+const ASSET_TYPE_ORDER: AssetType[] = ['crypto', 'stock', 'forex', 'commodity', 'index'];
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   crypto: 'Krypto',
   stock: 'Aktien',
@@ -215,7 +215,10 @@ export function MarketScreener({
       .then((data) => {
         const list = Array.isArray(data)
           ? data.filter((item): item is CatalogAsset =>
-              typeof item?.symbol === 'string' && typeof item?.name === 'string' && typeof item?.type === 'string')
+              typeof item?.symbol === 'string'
+              && typeof item?.name === 'string'
+              && typeof item?.type === 'string'
+              && item.type !== 'bond')
           : [];
         setAssets(list);
         const preferred = ['BTC', 'AAPL', 'EURUSD']
@@ -484,7 +487,7 @@ export function MarketScreener({
       </div>
 
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 text-[10px] text-emerald-100/65">
-        <strong>Data Integrity:</strong> Katalogbestand und Marktbeobachtung sind getrennt. Ein gelistetes Asset erhält weder Preis noch Score allein durch seine Registry-Zugehörigkeit; READY erfordert Provider-Evidence und die jeweiligen Provenance-/Freshness-Gates. Indizes nutzen das versionierte Provider-Mapping, Rohstoffe den freigegebenen Commodity-Market-Evidence-Contract und Government-Benchmark-Anleihen ausschließlich den Sovereign-Yield-Contract; allgemeines Einzelanleihen-Scoring bleibt gesperrt.
+        <strong>Data Integrity:</strong> Katalogbestand und Marktbeobachtung sind getrennt. Ein gelistetes Asset erhält weder Preis noch Score allein durch seine Registry-Zugehörigkeit; READY erfordert Provider-Evidence und die jeweiligen Provenance-/Freshness-Gates. Indizes nutzen das versionierte Provider-Mapping und Rohstoffe den freigegebenen Commodity-Market-Evidence-Contract. Deaktivierte Assetklassen bleiben aus der produktiven Frontend-Auswahl entfernt; technische Domain-Contracts werden dadurch nicht verändert.
         {effectiveEmail ? '' : ' Nutzerkontext ist derzeit nicht angemeldet.'}
       </div>
     </section>

@@ -91,7 +91,8 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
               const candidate = item as Record<string, unknown>;
               return typeof candidate.symbol === 'string'
                 && typeof candidate.name === 'string'
-                && ['crypto', 'stock', 'forex', 'commodity', 'index', 'bond'].includes(String(candidate.type));
+                && candidate.type !== 'bond'
+                && ['crypto', 'stock', 'forex', 'commodity', 'index'].includes(String(candidate.type));
             })
           : [];
         setAssets(nextAssets);

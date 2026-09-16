@@ -479,8 +479,12 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
   const [assetTypeFilter, setAssetTypeFilter] = useState<'all' | AssetType>('all');
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const assets = useMemo(() => assetRegistry.getAssets(), []);
+  // Preserve the technical Bond type in registry/domain contracts, but exclude it
+  // from the productive Frontend asset-selection surface.
+  const registryAssets = useMemo(() => assetRegistry.getAssets(), []);
+  const assets = useMemo(() => registryAssets.filter((asset) => asset.type !== 'bond'), [registryAssets]);
   const selectedAsset = useMemo(() => assets.find((asset) => asset.symbol.toUpperCase() === symbol), [assets, symbol]);
+  const technicalSelectedAsset = useMemo(() => registryAssets.find((asset) => asset.symbol.toUpperCase() === symbol), [registryAssets, symbol]);
   const selectedTimeframe = TIMEFRAMES.find((item) => item.value === timeframe) ?? null;
   const scoreTimeframeBound = selectedTimeframe?.scoreBound === true;
 
@@ -496,6 +500,12 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
     setLoading(true);
     setRequestError(null);
     try {
+      if (technicalSelectedAsset?.type === 'bond') {
+        setResult(null);
+        setRequestError('Dieses Asset ist in der produktiven Frontend-Auswahl deaktiviert.');
+        return;
+      }
+
       const assetType = (selectedAsset?.type ?? 'crypto') as AssetType;
       const assetName = selectedAsset?.name ?? symbol;
 
@@ -589,7 +599,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               value={searchValue}
               onChange={(event) => { setSearchValue(event.target.value); setSearchOpen(true); }}
               onFocus={() => setSearchOpen(true)}
-              placeholder="Symbol oder Asset suchen: BTC, AAPL, EURUSD, Gold, Bond …"
+              placeholder="Symbol oder Asset suchen: BTC, AAPL, EURUSD, Gold …"
               className="min-h-11 w-full rounded-xl border border-border bg-background/50 py-3 pl-9 pr-3 text-sm text-text-primary outline-none focus:border-brand-primary/50"
             />
             {searchOpen && (
@@ -617,7 +627,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {(['all', 'crypto', 'stock', 'forex', 'index', 'commodity', 'bond'] as const).map((type) => (
+            {(['all', 'crypto', 'stock', 'forex', 'index', 'commodity'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
