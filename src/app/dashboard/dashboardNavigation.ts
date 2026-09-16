@@ -18,6 +18,7 @@ export const DASHBOARD_NAVIGATION_ITEMS = [
   { view: 'learning', label: 'Learning', section: 'hub' },
   { view: 'universe-scoring', label: 'Universe TOP Rankings', section: 'hub' },
   { view: 'buffet-value', label: 'Buffet Value Check', section: 'hub' },
+  { view: 'profil', label: 'Profil & Einstellungen', section: 'hub' },
   { view: 'abonnements', label: 'Abonnements', section: 'hub' },
   { view: 'asset-universe', label: 'Multi-Asset Universum', section: 'analysis' },
   { view: 'market-screener', label: 'Profi Markt-Screener', section: 'analysis' },
