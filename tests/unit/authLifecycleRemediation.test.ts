@@ -8,6 +8,7 @@ const read = (relativePath: string) =>
 const routes = read('src/app/routing/AppRoutes.tsx');
 const sessionComposition = read('src/app/auth/SessionComposition.tsx');
 const dashboard = read('src/app/dashboard/Dashboard.tsx');
+const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
 const loginPage = read('src/features/public/ui/LoginPage.tsx');
 const registrationGate = read('src/components/RegistrationCompletionGate.tsx');
 const loginStepUpGate = read('src/components/LoginStepUpGate.tsx');
@@ -44,7 +45,9 @@ describe('frontend auth lifecycle remediation', () => {
     expect(dashboard).toContain('Von allen Geräten abmelden');
     expect(dashboard).toContain('window.confirm(');
     expect(dashboard).toContain('Access-Tokens können bis zu ihrem Ablauf gültig bleiben');
-    expect(dashboard).toContain('data-testid="global-logout-action"');
+    expect(dashboard).toContain('onGlobalLogout={onGlobalLogout ? handleGlobalLogoutClick : undefined}');
+    expect(dashboardNavigation).toContain('Von allen Geräten abmelden');
+    expect(dashboardNavigation).toContain('onClick={() => void onGlobalLogout()}');
   });
 
   it('keeps registration CAPTCHA, consent/onboarding and MFA gates intact', () => {

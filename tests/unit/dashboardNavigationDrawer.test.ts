@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 const read = (relativePath: string) => fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const navigationSource = read('src/app/dashboard/DashboardNavigation.tsx');
+const headerSource = read('src/app/dashboard/DashboardHeader.tsx');
 const drawerSource = read('src/app/dashboard/DashboardNavigationDrawer.tsx');
 const legacyDashboardSource = read('src/components/Dashboard.tsx');
 
@@ -18,9 +19,12 @@ describe('BB-2E app-owned dashboard navigation', () => {
     expect(navigationSource).not.toContain("from '../../../components");
   });
 
-  it('removes the productive legacy inline drawer from the dashboard monolith', () => {
-    expect(legacyDashboardSource).toContain("import { DashboardNavigation } from '../app/dashboard/DashboardNavigation';");
-    expect(legacyDashboardSource).toContain('<DashboardNavigation');
+  it('keeps the productive navigation behind the app-owned BB-2F header boundary', () => {
+    expect(legacyDashboardSource).toContain("import { DashboardHeader } from '../app/dashboard/DashboardHeader';");
+    expect(legacyDashboardSource).toContain('<DashboardHeader');
+    expect(legacyDashboardSource).not.toContain('<DashboardNavigation');
+    expect(headerSource).toContain('DashboardNavigation,');
+    expect(headerSource).toContain('<DashboardNavigation');
     expect(legacyDashboardSource).not.toContain('const [menuOpen, setMenuOpen]');
     expect(legacyDashboardSource).not.toContain('setMenuOpen(');
     expect(legacyDashboardSource).not.toContain('DashboardExpandedSection');
