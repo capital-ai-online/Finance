@@ -75,10 +75,10 @@ jobs:
             }
 
             core.setOutput('default_setup_active', String(defaultSetupActive));
-            core.setOutput('changed_files', files.join('\n'));
+            core.setOutput('changed_files_json', JSON.stringify(files));
 
       - name: Trusted Policy-Snapshot aus PR-Base bzw. aktuellem main auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}
           path: policy
@@ -96,7 +96,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           CI_FORCE_FULL: ${{ github.event_name == 'pull_request' && 'false' || 'true' }}
-          CHANGED_FILES: ${{ steps.provider.outputs.changed_files }}
+          CHANGED_FILES_JSON: ${{ steps.provider.outputs.changed_files_json }}
         run: node scripts/pr/planPrValidation.mjs
 
       - name: Sprachmatrix materialisieren
@@ -140,7 +140,7 @@ jobs:
       security-events: write
     steps:
       - name: Exakten Analyse-Snapshot auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 1
