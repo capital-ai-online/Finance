@@ -10,6 +10,7 @@ const card = read('src/shared/ui/Card.tsx');
 const button = read('src/shared/ui/Button.tsx');
 const shell = read('src/app/AppShell.tsx');
 const neural = read('src/shared/visuals/NeuralBackground.tsx');
+const landing = read('src/features/public/ui/LandingPage.tsx');
 
 describe('GOV-CHAT-079 16.08 appearance contract', () => {
   it('projects the Owner-approved visual values through the canonical token authority', () => {
@@ -59,6 +60,16 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
     expect(button).toContain("secondary: 'ui-button-secondary'");
     expect(button).toContain("sm: 'min-h-11");
     expect(shell).toContain('app-shell-frame');
+  });
+
+  it('keeps the active public landing consumer token-driven while preserving PR-1010 on-demand behavior', () => {
+    expect(landing).toContain('bg-background');
+    expect(landing).toContain('text-brand-primary');
+    expect(landing).toContain('border-border');
+    expect(landing).toContain('const [loadPreview, setLoadPreview] = React.useState(false)');
+    expect(landing).toContain('const activatePreview = React.useCallback(() => setLoadPreview(true), [])');
+    expect(landing).toContain('{loadPreview ? preview : <WorkbenchActivationState onActivate={activatePreview} />}');
+    expect(landing).not.toContain('IntersectionObserver');
   });
 
   it('keeps the decorative neural layer non-interactive and separate from semantic asset colors', () => {
