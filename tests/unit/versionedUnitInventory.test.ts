@@ -44,7 +44,7 @@ describe('VersionedUnitInventory', () => {
     fs.mkdirSync(path.join(root, 'src/features/crypto'), { recursive: true });
     fs.mkdirSync(path.join(root, 'src/app'), { recursive: true });
     fs.mkdirSync(path.join(root, 'src/shared'), { recursive: true });
-    fs.mkdirSync(path.join(root, 'server'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'server.ts'), 'export {};\n', 'utf8');
 
     const inventory = buildVersionedUnitInventory(root, SHA);
 
@@ -92,7 +92,10 @@ describe('VersionedUnitInventory', () => {
 
     expect(inventory.units.find((unit) => unit.unitId === 'UNIT-MODULE-APP')).toBeDefined();
     expect(inventory.units.find((unit) => unit.unitId === 'UNIT-MODULE-SHARED')).toBeDefined();
-    expect(inventory.units.find((unit) => unit.unitId === 'UNIT-BACKEND-SERVER')).toBeDefined();
+    expect(inventory.units.find((unit) => unit.unitId === 'UNIT-BACKEND-SERVER')).toMatchObject({
+      sourcePath: 'server.ts',
+      versionAuthority: 'package.json#version',
+    });
   });
 
   it('fails closed when an existing component manifest declares an invalid component version', () => {
