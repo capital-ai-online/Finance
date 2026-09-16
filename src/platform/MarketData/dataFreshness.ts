@@ -1,12 +1,15 @@
-export const DATA_FRESHNESS_CONTRACT_VERSION = 'data-freshness/1.0.0' as const;
+export const DATA_FRESHNESS_CONTRACT_VERSION = 'data-freshness/1.1.0' as const;
 
-export type DataFreshnessCapability = 'snapshot' | 'history' | 'news';
+export type DataFreshnessCapability = 'snapshot' | 'history' | 'fundamentals' | 'news';
 
 export type DataFreshnessState = 'FRESH' | 'STALE' | 'UNKNOWN';
 
 export const CAPABILITY_MAX_AGE_MS = Object.freeze({
   snapshot: 90_000,
   history: 86_400_000,
+  // Fundamental source periods are normally quarterly; 180 days is deliberately conservative
+  // and can later be narrowed through provider-specific DATA-13 overrides without FINTECH forks.
+  fundamentals: 180 * 24 * 60 * 60 * 1000,
   news: 300_000,
 } as const satisfies Record<DataFreshnessCapability, number>);
 

@@ -32,7 +32,7 @@ import type {
   SnapshotRequest,
 } from './contracts';
 
-export const VALIDATED_DATA_INPUT_CONTRACT_VERSION = 'validated-data-input/1.0.0' as const;
+export const VALIDATED_DATA_INPUT_CONTRACT_VERSION = 'validated-data-input/1.1.0' as const;
 
 export type ValidatedDataStatus =
   | 'PASS'
@@ -44,6 +44,22 @@ export type ValidatedDataStatus =
   | 'UNKNOWN';
 
 export type ValidatedHistoryValueSemantics = ProviderHistoryValueSemantics;
+
+export type ValidatedSnapshotField =
+  | 'price'
+  | 'marketCapUsd'
+  | 'volume24hUsd'
+  | 'circulatingSupply'
+  | 'maxSupply'
+  | 'totalSupply';
+
+export type ValidatedFundamentalsField =
+  | 'peRatio'
+  | 'dividendYieldPct'
+  | 'profitMarginPct'
+  | 'debtToEquity'
+  | 'epsTtm'
+  | 'freeCashFlowPerShare';
 
 export interface ValidatedDataObservation {
   readonly field: string;
@@ -60,6 +76,8 @@ export interface ValidatedDataObservation {
     readonly evaluatedAt: string;
   };
   readonly status: ValidatedDataStatus;
+  /** Optional observations never block otherwise-valid required DATA at the PVC-11 -> PVC-12 handoff. */
+  readonly required?: boolean;
   readonly reason?: string;
 }
 
@@ -88,6 +106,42 @@ export interface ValidatedHistoryInput {
   readonly provenanceComplete: boolean;
   readonly reason?: string;
 }
+
+/** Provider-neutral normalized fundamentals candidate. Provider dialects must terminate before this boundary. */
+export interface FundamentalsObservationCandidate {
+  readonly field: ValidatedFundamentalsField;
+  readonly value: number | null;
+  readonly currency?: string | null;
+  readonly providerId: string;
+  readonly providerFeed: string | null;
+  readonly evidenceRef: string | null;
+  /** Source reporting/observation period; must never be synthesized from retrieval time. */
+  readonly observedAt: string | null;
+  readonly retrievedAt: string;
+}
+
+const CRYPTO_EXTENDED_SNAPSHOT_FIELDS = [
+  'marketCapUsd',
+  'volume24hUsd',
+  'circulatingSupply',
+  'maxSupply',
+  'totalSupply',
+] as const satisfies readonly Exclude<ValidatedSnapshotField, 'price'>[];
+
+export const PRODUCTIVE_TRADITIONAL_FUNDAMENTAL_FIELDS = [
+  'peRatio',
+  'dividendYieldPct',
+  'profitMarginPct',
+] as const satisfies readonly ValidatedFundamentalsField[];
+
+const ALL_TRADITIONAL_FUNDAMENTAL_FIELDS = [
+  'peRatio',
+  'dividendYieldPct',
+  'profitMarginPct',
+  'debtToEquity',
+  'epsTtm',
+  'freeCashFlowPerShare',
+] as const satisfies readonly ValidatedFundamentalsField[];
 
 function normalizeSymbol(value: string): string {
   return String(value || '').trim().toUpperCase().replace(/\s+/g, '');
@@ -155,6 +209,50 @@ function historyPointValueIsValid(value: number, semantics: ValidatedHistoryValu
   return semantics === 'POSITIVE_PRICE' && value > 0;
 }
 
+function snapshotFieldValue(snapshot: CanonicalMarketDataSnapshot, field: ValidatedSnapshotField): number | null {
+  const value = field === 'price' ? snapshot.price : snapshot[field] ?? null;
+  return typeof value === 'number' ? value : null;
+}
+
+function snapshotFieldValueIsValid(field: ValidatedSnapshotField, value: number | null): boolean {
+  if (value === null || !Number.isFinite(value)) return false;
+  return value > 0;
+}
+
+function snapshotFieldCurrency(
+  snapshot: CanonicalMarketDataSnapshot,
+  field: ValidatedSnapshotField,
+): string | null {
+  if (field === 'price') return snapshot.currency;
+  if (field === 'marketCapUsd' || field === 'volume24hUsd') return 'USD';
+  return null;
+}
+
+function fundamentalsFieldValueIsValid(field: ValidatedFundamentalsField, value: number | null): boolean {
+  if (value === null || !Number.isFinite(value)) return false;
+  switch (field) {
+    case 'peRatio':
+      return value > 0;
+    case 'dividendYieldPct':
+      return value >= 0;
+    case 'profitMarginPct':
+    case 'debtToEquity':
+    case 'epsTtm':
+    case 'freeCashFlowPerShare':
+      return true;
+  }
+}
+
+function requiredObservation(observation: ValidatedDataObservation): boolean {
+  return observation.required !== false;
+}
+
+function aggregateRequiredObservations(observations: readonly ValidatedDataObservation[]): ReturnType<typeof evaluateDataQualityGate> {
+  return evaluateDataQualityGate(
+    observations.filter(requiredObservation).map(observation => observation.status),
+  );
+}
+
 export function buildSnapshotRequestForUniversalAsset(
   asset: UniversalAssetIdentity,
   correlationIdInput: string,
@@ -183,9 +281,10 @@ export function buildHistoryRequestForUniversalAsset(
   };
 }
 
-export function snapshotToMarketEvidenceQualityRecord(
+function snapshotFieldToMarketEvidenceQualityRecord(
   asset: UniversalAssetIdentity,
   snapshot: CanonicalMarketDataSnapshot,
+  field: ValidatedSnapshotField,
   options: { readonly maxAgeMs?: number; readonly evaluatedAt?: string } = {},
 ): MarketEvidenceQualityRecord {
   assertUniversalAssetIdentity(asset);
@@ -216,7 +315,7 @@ export function snapshotToMarketEvidenceQualityRecord(
     assetId: asset.assetId,
     providerId: snapshot.provider,
     capability: 'snapshot',
-    field: 'price',
+    field,
     observedAt: snapshot.sourceTimestamp,
     retrievedAt: snapshot.ingestedAt,
     freshness: {
@@ -232,16 +331,22 @@ export function snapshotToMarketEvidenceQualityRecord(
   return record;
 }
 
+export function snapshotToMarketEvidenceQualityRecord(
+  asset: UniversalAssetIdentity,
+  snapshot: CanonicalMarketDataSnapshot,
+  options: { readonly maxAgeMs?: number; readonly evaluatedAt?: string } = {},
+): MarketEvidenceQualityRecord {
+  return snapshotFieldToMarketEvidenceQualityRecord(asset, snapshot, 'price', options);
+}
+
 export function buildValidatedDataInputFromSnapshot(
   asset: UniversalAssetIdentity,
   snapshot: CanonicalMarketDataSnapshot,
   options: { readonly maxAgeMs?: number; readonly evaluatedAt?: string } = {},
 ): ValidatedDataInput {
   assertUniversalAssetIdentity(asset);
-  const evidence = snapshotToMarketEvidenceQualityRecord(asset, snapshot, options);
   const identityMatches = snapshotMatchesAsset(asset, snapshot);
   const correlationMatches = Boolean(snapshot.correlationId.trim());
-  const hasPrice = typeof snapshot.price === 'number' && Number.isFinite(snapshot.price) && snapshot.price > 0;
   const inputGate = validateProviderSnapshotInput({
     providerId: snapshot.provider,
     symbol: snapshot.symbol,
@@ -252,55 +357,66 @@ export function buildValidatedDataInputFromSnapshot(
     correlationId: snapshot.correlationId,
     evidenceRef: snapshot.evidenceId,
   });
-  const freshness = evaluateDataFreshness({
-    capability: 'snapshot',
-    observedAt: evidence.observedAt,
-    evaluatedAt: evidence.freshness.evaluatedAt,
-  });
-  let fieldStatus = identityMatches && correlationMatches
-    ? mapEvidenceQualityToDataStatus(evidence, hasPrice)
-    : 'FAIL';
-  if (fieldStatus !== 'MISSING' && inputGate.admissibility === 'NON_ADMISSIBLE' && fieldStatus !== 'FAIL') {
-    fieldStatus = 'FAIL';
-  }
-  const lineage = evaluateProvenanceLineage({
-    contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
-    assetId: asset.assetId,
-    providerId: snapshot.provider,
-    providerFeed: snapshot.providerFeed,
-    capability: 'snapshot',
-    field: 'price',
-    evidenceRef: evidence.evidenceRef,
-    observedAt: evidence.observedAt,
-    retrievedAt: evidence.retrievedAt,
-    correlationId: snapshot.correlationId,
-  });
-  const provenanceComplete = identityMatches && lineage.complete;
-  fieldStatus = applyFreshnessAndProvenance(fieldStatus, freshness.state, provenanceComplete);
-  const gate = evaluateDataQualityGate([fieldStatus]);
-  const status = gate.status;
-  const reason = !identityMatches
-    ? 'asset identity mismatch'
-    : !correlationMatches
-      ? 'correlationId is required'
-      : inputGate.admissibility === 'NON_ADMISSIBLE' && status !== 'MISSING'
-        ? inputGate.reason
-        : status === 'PASS'
-          ? undefined
-          : snapshot.reason || freshness.reason || `evidence status ${evidence.qualityStatus}`;
-  const missingRequiredFields = hasPrice ? [] : ['price'];
-  const nonComputableReasons = gate.admissibleForFintech
-    ? []
-    : [reason ?? `validated data status ${status}`];
 
-  return {
-    contractVersion: VALIDATED_DATA_INPUT_CONTRACT_VERSION,
-    assetIdentity: asset,
-    correlationId: snapshot.correlationId,
-    observations: [{
-      field: 'price',
-      value: hasPrice ? snapshot.price : null,
-      currency: snapshot.currency,
+  const fields: ValidatedSnapshotField[] = ['price'];
+  if (snapshot.assetClass === 'crypto') fields.push(...CRYPTO_EXTENDED_SNAPSHOT_FIELDS);
+
+  const observationStates = fields.map((field) => {
+    const required = field === 'price';
+    const rawValue = snapshotFieldValue(snapshot, field);
+    const hasValue = rawValue !== null;
+    const valueValid = snapshotFieldValueIsValid(field, rawValue);
+    const evidence = snapshotFieldToMarketEvidenceQualityRecord(asset, snapshot, field, options);
+    const freshness = evaluateDataFreshness({
+      capability: 'snapshot',
+      observedAt: evidence.observedAt,
+      evaluatedAt: evidence.freshness.evaluatedAt,
+    });
+    const lineage = evaluateProvenanceLineage({
+      contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
+      assetId: asset.assetId,
+      providerId: snapshot.provider,
+      providerFeed: snapshot.providerFeed,
+      capability: 'snapshot',
+      field,
+      evidenceRef: evidence.evidenceRef,
+      observedAt: evidence.observedAt,
+      retrievedAt: evidence.retrievedAt,
+      correlationId: snapshot.correlationId,
+    });
+    const provenanceComplete = identityMatches && lineage.complete;
+
+    let status: ValidatedDataStatus = identityMatches && correlationMatches
+      ? mapEvidenceQualityToDataStatus(evidence, hasValue)
+      : 'FAIL';
+    if (hasValue && !valueValid) status = 'FAIL';
+    if (
+      status !== 'MISSING'
+      && inputGate.admissibility === 'NON_ADMISSIBLE'
+      && status !== 'FAIL'
+    ) {
+      status = 'FAIL';
+    }
+    status = applyFreshnessAndProvenance(status, freshness.state, provenanceComplete);
+
+    const reason = !identityMatches
+      ? 'asset identity mismatch'
+      : !correlationMatches
+        ? 'correlationId is required'
+        : hasValue && !valueValid
+          ? `invalid ${field} value`
+          : inputGate.admissibility === 'NON_ADMISSIBLE' && status !== 'MISSING'
+            ? inputGate.reason
+            : status === 'PASS' || status === 'PARTIAL'
+              ? undefined
+              : !hasValue
+                ? `${field} unavailable from provider snapshot`
+                : snapshot.reason || freshness.reason || `evidence status ${evidence.qualityStatus}`;
+
+    const observation: ValidatedDataObservation = {
+      field,
+      value: valueValid ? rawValue : null,
+      currency: snapshotFieldCurrency(snapshot, field),
       providerId: snapshot.provider,
       providerFeed: snapshot.providerFeed,
       evidenceRef: evidence.evidenceRef,
@@ -312,11 +428,187 @@ export function buildValidatedDataInputFromSnapshot(
         evaluatedAt: evidence.freshness.evaluatedAt,
       },
       status,
+      required,
       ...(reason ? { reason } : {}),
-    }],
-    aggregateStatus: status,
+    };
+
+    return { observation, provenanceComplete };
+  });
+
+  const observations = observationStates.map(item => item.observation);
+  const gate = aggregateRequiredObservations(observations);
+  const missingRequiredFields = observations
+    .filter(requiredObservation)
+    .filter(observation => observation.status === 'MISSING')
+    .map(observation => observation.field);
+  const requiredFailures = observations
+    .filter(requiredObservation)
+    .filter(observation => observation.status !== 'PASS' && observation.status !== 'PARTIAL')
+    .map(observation => observation.reason ?? `${observation.field}:${observation.status}`);
+  const provenanceComplete = observationStates
+    .filter(item => requiredObservation(item.observation))
+    .every(item => item.provenanceComplete);
+
+  return {
+    contractVersion: VALIDATED_DATA_INPUT_CONTRACT_VERSION,
+    assetIdentity: asset,
+    correlationId: snapshot.correlationId,
+    observations,
+    aggregateStatus: gate.status,
     missingRequiredFields,
-    nonComputableReasons,
+    nonComputableReasons: gate.admissibleForFintech ? [] : requiredFailures,
+    provenanceComplete,
+  };
+}
+
+function selectFundamentalsCandidate(
+  candidates: readonly FundamentalsObservationCandidate[],
+): { selected: FundamentalsObservationCandidate | null; conflicting: boolean } {
+  const validCandidates = candidates.filter(candidate => candidate.value !== null && Number.isFinite(candidate.value));
+  const uniqueValues = [...new Set(validCandidates.map(candidate => Number(candidate.value)))];
+  if (uniqueValues.length > 1) return { selected: null, conflicting: true };
+  if (validCandidates.length === 0) return { selected: null, conflicting: false };
+
+  const selected = [...validCandidates].sort((left, right) => {
+    const leftComplete = Number(Boolean(left.observedAt && left.evidenceRef && Number.isFinite(Date.parse(left.retrievedAt))));
+    const rightComplete = Number(Boolean(right.observedAt && right.evidenceRef && Number.isFinite(Date.parse(right.retrievedAt))));
+    if (leftComplete !== rightComplete) return rightComplete - leftComplete;
+    return left.providerId.localeCompare(right.providerId);
+  })[0] ?? null;
+  return { selected, conflicting: false };
+}
+
+export function buildValidatedDataInputFromFundamentals(
+  asset: UniversalAssetIdentity,
+  correlationIdInput: string,
+  candidates: readonly FundamentalsObservationCandidate[],
+  options: {
+    readonly evaluatedAt?: string;
+    readonly requiredFields?: readonly ValidatedFundamentalsField[];
+  } = {},
+): ValidatedDataInput {
+  assertUniversalAssetIdentity(asset);
+  if (asset.assetClass !== 'stock') throw new Error('VALIDATED_FUNDAMENTALS_STOCK_ASSET_REQUIRED');
+  const correlationId = requireCorrelationId(correlationIdInput);
+  const evaluatedAt = evaluatedTimestamp(options.evaluatedAt, new Date().toISOString());
+  const requiredFields = new Set<ValidatedFundamentalsField>(
+    options.requiredFields ?? PRODUCTIVE_TRADITIONAL_FUNDAMENTAL_FIELDS,
+  );
+
+  const observationStates = ALL_TRADITIONAL_FUNDAMENTAL_FIELDS.map((field) => {
+    const required = requiredFields.has(field);
+    const fieldCandidates = candidates.filter(candidate => candidate.field === field);
+    const { selected, conflicting } = selectFundamentalsCandidate(fieldCandidates);
+
+    if (conflicting) {
+      const observation: ValidatedDataObservation = {
+        field,
+        value: null,
+        currency: null,
+        providerId: 'multiple',
+        providerFeed: null,
+        evidenceRef: null,
+        observedAt: null,
+        retrievedAt: '',
+        freshness: { ageMs: null, maxAgeMs: maxAgeForCapability('fundamentals'), evaluatedAt },
+        status: 'UNKNOWN',
+        required,
+        reason: 'conflicting provider values',
+      };
+      return { observation, provenanceComplete: false };
+    }
+
+    if (!selected) {
+      const observation: ValidatedDataObservation = {
+        field,
+        value: null,
+        currency: null,
+        providerId: 'none',
+        providerFeed: null,
+        evidenceRef: null,
+        observedAt: null,
+        retrievedAt: '',
+        freshness: { ageMs: null, maxAgeMs: maxAgeForCapability('fundamentals'), evaluatedAt },
+        status: 'MISSING',
+        required,
+        reason: `${field} unavailable from fundamentals providers`,
+      };
+      return { observation, provenanceComplete: false };
+    }
+
+    const valueValid = fundamentalsFieldValueIsValid(field, selected.value);
+    const lineage = evaluateProvenanceLineage({
+      contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
+      assetId: asset.assetId,
+      providerId: selected.providerId,
+      providerFeed: selected.providerFeed,
+      capability: 'fundamentals',
+      field,
+      evidenceRef: selected.evidenceRef,
+      observedAt: selected.observedAt,
+      retrievedAt: selected.retrievedAt,
+      correlationId,
+    });
+    const freshness = evaluateDataFreshness({
+      capability: 'fundamentals',
+      observedAt: selected.observedAt,
+      evaluatedAt,
+    });
+    const provenanceComplete = lineage.complete;
+    let status: ValidatedDataStatus = valueValid ? 'PASS' : 'FAIL';
+    status = applyFreshnessAndProvenance(status, freshness.state, provenanceComplete);
+
+    const reason = status === 'PASS' || status === 'PARTIAL'
+      ? undefined
+      : !valueValid
+        ? `invalid ${field} value`
+        : !provenanceComplete
+          ? lineage.reason
+          : freshness.reason;
+
+    const observation: ValidatedDataObservation = {
+      field,
+      value: valueValid ? selected.value : null,
+      currency: selected.currency ?? null,
+      providerId: selected.providerId,
+      providerFeed: selected.providerFeed,
+      evidenceRef: selected.evidenceRef,
+      observedAt: selected.observedAt,
+      retrievedAt: selected.retrievedAt,
+      freshness: {
+        ageMs: freshness.ageMs,
+        maxAgeMs: freshness.maxAgeMs,
+        evaluatedAt,
+      },
+      status,
+      required,
+      ...(reason ? { reason } : {}),
+    };
+    return { observation, provenanceComplete };
+  });
+
+  const observations = observationStates.map(item => item.observation);
+  const gate = aggregateRequiredObservations(observations);
+  const missingRequiredFields = observations
+    .filter(requiredObservation)
+    .filter(observation => observation.status === 'MISSING')
+    .map(observation => observation.field);
+  const requiredFailures = observations
+    .filter(requiredObservation)
+    .filter(observation => observation.status !== 'PASS' && observation.status !== 'PARTIAL')
+    .map(observation => observation.reason ?? `${observation.field}:${observation.status}`);
+  const provenanceComplete = observationStates
+    .filter(item => requiredObservation(item.observation))
+    .every(item => item.provenanceComplete);
+
+  return {
+    contractVersion: VALIDATED_DATA_INPUT_CONTRACT_VERSION,
+    assetIdentity: asset,
+    correlationId,
+    observations,
+    aggregateStatus: gate.status,
+    missingRequiredFields,
+    nonComputableReasons: gate.admissibleForFintech ? [] : requiredFailures,
     provenanceComplete,
   };
 }
