@@ -6,117 +6,120 @@
 **Primary Owner:** `CAPITAL-AI-FE`  
 **Work package:** `GOV-CHAT-079 — 16.08 Mockup Visual Target / CAPITAL-AI-FE Foreign Execution`  
 **Branch:** `agent/frontend-1608-mockup-appearance-20260916`  
-**Initial baseline:** `main@c58f662deee989f270d6968881644d284435d5bd`  
-**Current resync baseline:** `main@bea9373811202aef98f3ad8ffd53dba99d37c453`  
+**Current baseline:** `main@bea9373811202aef98f3ad8ffd53dba99d37c453`  
 **Historical appearance provenance:** `src/index.css@c08a68bdfdeaa91cb8ba974b5a1829bf00fe61bb`  
-**State:** `IMPLEMENTED_ON_BRANCH / CREATE_CORRELATION_PENDING`
+**State:** `IMPLEMENTED_ON_DRAFT_PR / HOSTED_VALIDATION_IN_PROGRESS`
 
 ## Scope
 
-This slice implements the Owner-approved 16.08 **appearance only** through the current canonical Frontend token and shared-presentation surfaces. It does not restore historical application code and does not change Auth, Consent, DATA, FINTECH, IAM, provider, billing, routing, scoring or production behavior.
+The original slice materialized the Owner-approved 16.08 appearance through the current canonical Frontend token and shared-presentation surfaces. A subsequent explicit Human/Owner direction expanded the same coherent Frontend presentation package to restore current Universe-platform presentation surfaces without restoring historical application authority or inventing DATA/FINTECH semantics.
 
-Current-main remains the functional preservation floor. PR #1010's on-demand Public Analysis activation remains untouched in `src/features/public/ui/LandingPage.tsx`; the consumer inherits the canonical appearance through its existing `bg-background`, `brand-primary`, `border-border` and related token classes.
+The expanded Frontend-owned scope now includes:
 
-PR #1011 was initially an independent open Crypto Category/Subclass workspace and was never used as this branch's base or unmerged dependency. During this run, Human/CODEOWNER merge of #1011 advanced `main` to `bea9373811202aef98f3ad8ffd53dba99d37c453`. This branch was then re-synchronized onto that new main while preserving #1011's integrated payload. The final diff contains no #1011 workspace files.
+- the 16.08 visual contract through the existing token authority;
+- Vocabulary as a modern `Universe Knowledge Grid`, still read-only over the canonical Vocabulary registry;
+- visible asset-class identities for Aktien, Indizes, Forex, Krypto and Rohstoffe in the current dashboard sideboard;
+- preservation of evidence-backed Pattern badges and their text-plus-color semantics;
+- continued Profile-page and IAM-gated Admin-Portal integration through their existing facades;
+- an immediately visible unauthenticated public Enterprise Scorer on `/`, with public asset state fixed to BTC;
+- a compact 88px desktop public sideboard that expands to 300px and retains the existing mobile toggle contract;
+- Buffett Value Check presentation only under the Aktien universe;
+- a disabled `Satoshi Universe Check` placement under Krypto as an explicit FINTECH handoff, with no Frontend-local valuation formula, model or score authority.
+
+This package does **not** implement the Satoshi valuation/scoring contract, activate Gemini/DeepSeek providers, create a second LLM gateway, change provider credentials, modify Supabase, or change protected external infrastructure. Those are foreign-owner boundaries.
 
 ## Before → After
 
 | Surface | Current-main before | Branch after | Semantic impact |
 |---|---|---|---|
 | Primary canvas | `#08080C` | `#18181B` | visual only |
-| Generic border | `#252529` | `rgba(255,255,255,0.08)` | visual only |
-| Capital Gold visual anchor | `#F9BF21` | `#F5C453` | visual hierarchy only; score-warning/commodity semantics stay current |
+| Capital Gold visual anchor | `#F9BF21` | `#F5C453` | visual hierarchy only |
 | Display font | Inter | Montserrat | typography only |
-| Glass background | token `rgba(18,18,21,0.72)` / mixed runtime | `rgba(10,10,10,0.40)` | visual only |
-| Glass border | generic border | `rgba(255,255,255,0.10)` | visual only |
-| Glass blur | 12px | 12px | unchanged target |
-| Panel radius | mixed `.75rem`/1rem | canonical 1rem glass radius | visual only |
-| Decorative cyan | no explicit decorative role | `#0DDDDD` | decoration only |
-| Decorative purple | semantic accent reused | `#B026FF` separate decorative role | decoration only |
-| Min shared button target | `sm` = 36px | `sm` = 44px | accessibility/presentation only |
-| Reduced motion | supported | preserved | no behavior regression |
+| Glass surface | mixed runtime | `rgba(10,10,10,0.40)`, 12px blur | visual only |
+| Vocabulary | canonical registry with conventional card presentation | canonical registry rendered as Universe Knowledge Grid | presentation only |
+| Asset sideboard | generic universe icon; no explicit Indizes entry | differentiated canonical asset colors/icons plus Indizes | presentation/navigation only |
+| Buffett navigation | appeared under multiple universe menus | rendered only under Aktien | owner-correct presentation boundary |
+| Krypto value counterpart | absent | disabled Satoshi Universe Check FINTECH-handoff slot | no business logic created |
+| Public analysis | PR #1010 required explicit activation | explicit Owner direction renders public workbench directly | presentation/runtime-composition change |
+| Public symbol | mutable workbench state | fixed `BTC` public state | bounded public presentation choice |
+| Public desktop sideboard | broad expanded cockpit | 88px collapsed / 300px expanded | presentation only |
+| Pattern badges | evidence-backed direction/intensity with labels | preserved | no financial semantic change |
+| Profile / Admin | existing routed/facaded surfaces | preserved and contract-guarded | no IAM authority change |
 
 ## Semantic preservation
 
-The following current-main values deliberately remain unchanged even though they differ from historical 16.08 colors:
+The following current semantic values deliberately remain unchanged:
 
-- Crypto asset semantic: `#8D26FF`;
-- Stock asset semantic: `#44DE88`;
-- Index asset semantic: `#60A5FA`;
-- Forex asset semantic: `#E879F9`;
+- Crypto asset: `#8D26FF`;
+- Stock asset: `#44DE88`;
+- Index asset: `#60A5FA`;
+- Forex asset: `#E879F9`;
 - score best: `#44DE88`;
 - score worst: `#F87171`;
 - semantic info/data: `#22D3EE`;
-- missing pattern evidence remains omitted (`noPlaceholder=true`).
+- missing Pattern evidence remains omitted (`noPlaceholder=true`).
 
-This prevents a visual restoration from becoming a financial/domain semantic rollback.
+Pattern direction continues to be communicated by text (`BUY` / `SELL`) in addition to color. Decorative Cyan/Purple are not reused as financial truth.
 
-## Shared appearance projection
+## Public landing boundary
 
-- `docs/frontend/design-tokens.json` remains the only token authority.
-- `src/index.css` projects that authority into runtime CSS variables and shared glass/button/shell classes.
-- `Card` consumes `ui-panel` / `ui-panel--elevated` instead of its own neutral palette.
-- `Button` consumes shared variant classes and raises the small control target to 44px.
-- `AppShell` consumes `app-shell-frame`; its component API and composition behavior are unchanged.
-- `NeuralBackground` consumes explicit decorative Gold/Cyan/Purple variables and remains `pointer-events-none` / `aria-hidden`.
-- the active Public Landing consumer remains source-unchanged and therefore preserves PR #1010 event logic while inheriting the updated canonical token projection.
+PR #1010 previously removed eager public analysis activation because that composition could pull scorer-heavy code and begin the default BTC scoring request before explicit analysis intent. The later Human/Owner direction in this work package explicitly chooses an immediately visible public Enterprise Scorer again, but narrows public asset selection to BTC and keeps the public sideboard compact.
 
-## Responsive / accessibility boundary
+Therefore the PR #1010 **on-demand activation behavior is intentionally superseded only for this public presentation composition**. Existing Auth, anonymous-session rejection, DATA/FINTECH score authority, server gates, login-required tools, error boundaries and no-synthetic-data behavior remain current.
 
-- mobile panel padding/gaps tighten under `max-width: 640px` without changing component behavior;
-- no horizontal-overflow rule is loosened;
-- body background attachment falls back to normal scrolling on mobile;
-- all shared Button sizes now meet the 44px target;
-- focus outline remains 2px with 4px offset, now using the Owner-approved Capital Gold;
-- reduced-motion disables decorative animations/transitions as before;
-- decorative network layers remain pointer-transparent.
+This explicit trade-off must be validated with browser/mobile and production performance evidence before any claim that the new landing composition improves performance.
+
+## Vocabulary / Profile / Admin / Pattern boundaries
+
+- `LearningVocabulary` continues to consume `createDefaultVocabularyRegistry()`; no parallel vocabulary registry is introduced.
+- `ProfilePage` remains routed through the current dashboard view router.
+- `AdminPortal` remains exposed through the current governance facade and `isAdmin`-gated dashboard navigation.
+- `RankingBoard` retains the current PatternBadge evidence behavior; no missing Pattern placeholder is manufactured.
+- the disabled Satoshi slot explicitly states that a FINTECH feature contract is required.
+
+## Consent observation
+
+The Human/Owner reported on 2026-09-16 that cookie selection was visible/usable for the first time during live use. This is recorded only as:
+
+`HUMAN_OBSERVATION / POSITIVE_SIGNAL / NOT_INDEPENDENTLY_VERIFIED`
+
+It does not by itself prove the full FE-CONSENT-V3 exit gate, mobile persistence, revocation, analytics network behavior, CMP/TCF suitability or Compliance acceptance. No Consent source/configuration is changed by this branch.
 
 ## Validation
 
-Materialized focused guard:
+Focused guards now include:
 
-`tests/unit/frontend1608AppearanceContract.test.ts`
+- `tests/unit/frontend1608AppearanceContract.test.ts`;
+- `tests/unit/frontendUniversePresentation.test.ts`;
+- updated `tests/unit/publicLandingRoute.test.ts`.
 
-It verifies:
+Hosted exact-head validation for head `bbb89bef4cbffa064cd36318dd802842639350a2` produced:
 
-1. exact Owner-approved appearance tokens;
-2. preserved current financial semantic colors;
-3. runtime CSS projection and mobile/reduced-motion gates;
-4. shared Card/Button/AppShell use the shared appearance layer;
-5. the active Public Landing page retains PR #1010 on-demand activation and no `IntersectionObserver`;
-6. neural decoration cannot become financial semantic authority.
+- Repository integrity: PASS;
+- dependency installation / npm audit at install: PASS (`0 vulnerabilities` reported by the run);
+- TypeScript (`npm run lint` / `tsc --noEmit`): PASS;
+- `tests/unit/publicLandingRoute.test.ts`: PASS, 17/17;
+- `tests/unit/frontendUniversePresentation.test.ts`: PASS, 5/5;
+- `tests/unit/frontend1608AppearanceContract.test.ts`: 5/6 PASS, 1 FAIL because the test still asserted the superseded PR #1010 `loadPreview` contract;
+- Container Security: PASS;
+- PR Governance: PASS;
+- build/predeploy were not reached because focused Vitest failed.
 
-### Truthful execution state
+The failing assertion is a stale guard, not evidence that the new explicit Owner-directed public composition is correct by itself. The guard is updated in the next branch head to assert the new fixed-BTC/direct-preview contract, after which exact-head hosted validation must run again. `NOT RUN` and skipped checks are never reported as PASS.
 
-- focused test: `NOT RUN` pre-PR — the available local sandbox has no GitHub network checkout and the GitHub connector exposes repository mutation/readback rather than a dependency-complete test runner;
-- TypeScript: `NOT RUN` pre-PR;
-- Frontend architecture validator: `NOT RUN` pre-PR;
-- Production build: `NOT RUN` pre-PR;
-- browser/mobile visual evidence: `NOT RUN` pre-PR;
-- hosted checks: intentionally deferred until after Draft PR creation according to the current lifecycle and cost policy.
+## Production / external boundaries
 
-`NOT RUN` is not classified as `PASS`.
+The current production baseline used for this PR remains `main@bea9373811202aef98f3ad8ffd53dba99d37c453` with production-to-main drift `0` at the last validated baseline readback. This branch performs no Render deployment, Supabase mutation, provider activation, credential change or billing mutation.
 
-## Production and Supabase readback
+## Correlation
 
-Render production `Finance` is live on `main@bea9373811202aef98f3ad8ffd53dba99d37c453`, so production-to-current-main commit drift is `0` at final correlation time.
-
-This appearance slice performs no Supabase mutation. Read-only correlation confirmed project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`) is `ACTIVE_HEALTHY` in `eu-west-1` and exposes API URL `https://ryzywoktpmyhwzxmstyu.supabase.co`. The connected Supabase action surface does not expose the project's Auth Site URL / Redirect URL allow-list, so those settings are not claimed as VERIFIED here and are not modified.
-
-## Re-sync and correlation
-
-After #1011 merged:
-
-- trust-root blob remained unchanged (`AGENTS.md` blob `197ea507ee112e450cf24ebaae26cd2103077b84`);
-- branch was re-synchronized to `main@bea9373811202aef98f3ad8ffd53dba99d37c453`;
-- merge base equals current main;
-- branch was `0 behind` after re-sync;
-- current open-PR search returned no open Pull Requests;
-- changed-file scope remains only canonical FE tokens/shared appearance/evidence/test files;
-- no Auth, Consent, DATA, FINTECH, Supabase, Render, provider, billing or routing source file is in the diff.
+- current trust-root baseline: `/AGENTS.md@main@bea9373811202aef98f3ad8ffd53dba99d37c453`;
+- branch merge base equals current main;
+- branch was `0 behind` before this evidence/test correction;
+- PR #1012 is an open FINTECH-only writer and is not used as an unmerged dependency of this FE PR;
+- no DATA, FINTECH runtime, provider, Supabase, Docker, deployment, Billing, Auth or Consent source file is in this FE diff;
+- the Satoshi domain implementation and LLM-provider/gateway work are explicitly held at their owner boundaries.
 
 ## Exit status
 
-Repository materialization and main re-sync are complete. Final Draft-PR creation remains gated on one last exact-head readback after this evidence refresh plus current PR-template/production-baseline rendering.
-
-Human/CODEOWNER-only merge and separate production/deployment authority remain unchanged.
+The Frontend materialization is on Draft PR #1013. Human/CODEOWNER merge remains the only merge authority. Exact-head hosted validation must be green after this stale-test correction; browser/mobile and deployed performance evidence remain separate post-build/post-deploy evidence and are not fabricated here.

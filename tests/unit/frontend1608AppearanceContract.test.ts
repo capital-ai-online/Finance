@@ -11,6 +11,7 @@ const button = read('src/shared/ui/Button.tsx');
 const shell = read('src/app/AppShell.tsx');
 const neural = read('src/shared/visuals/NeuralBackground.tsx');
 const landing = read('src/features/public/ui/LandingPage.tsx');
+const publicWorkbench = read('src/app/public/PublicAnalysisWorkbench.tsx');
 
 describe('GOV-CHAT-079 16.08 appearance contract', () => {
   it('projects the Owner-approved visual values through the canonical token authority', () => {
@@ -62,14 +63,19 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
     expect(shell).toContain('app-shell-frame');
   });
 
-  it('keeps the active public landing consumer token-driven while preserving PR-1010 on-demand behavior', () => {
+  it('keeps the public landing token-driven while applying the Owner-directed fixed-BTC Universe surface', () => {
     expect(landing).toContain('bg-background');
     expect(landing).toContain('text-brand-primary');
     expect(landing).toContain('border-border');
-    expect(landing).toContain('const [loadPreview, setLoadPreview] = React.useState(false)');
-    expect(landing).toContain('const activatePreview = React.useCallback(() => setLoadPreview(true), [])');
-    expect(landing).toContain('{loadPreview ? preview : <WorkbenchActivationState onActivate={activatePreview} />}');
+    expect(landing).toContain('{preview}');
+    expect(landing).toContain('BTC · Public Fixed');
+    expect(landing).not.toContain('loadPreview');
+    expect(landing).not.toContain('WorkbenchActivationState');
     expect(landing).not.toContain('IntersectionObserver');
+    expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
+    expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
+    expect(publicWorkbench).toContain("lg:grid-cols-[88px_minmax(0,1fr)]");
+    expect(publicWorkbench).toContain("lg:grid-cols-[300px_minmax(0,1fr)]");
   });
 
   it('keeps the decorative neural layer non-interactive and separate from semantic asset colors', () => {
