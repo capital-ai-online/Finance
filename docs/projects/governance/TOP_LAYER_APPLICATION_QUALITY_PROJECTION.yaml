@@ -1,5 +1,5 @@
 capital_ai_top_layer_projection:
-  schema_version: "1.1.0"
+  schema_version: "1.2.0"
   projection_id: "GOV-TOP-LAYER-APPLICATION-QUALITY-PROJECTION-01"
   language: "de"
   document_role: "projection"
@@ -10,6 +10,7 @@ capital_ai_top_layer_projection:
   authority_boundary:
     trust_root: "/AGENTS.md"
     trust_root_resolution: "CURRENT_MAIN_ONLY"
+    development_chain_authority: "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
     governance_architecture: "ADR-0096"
     project_mapping:
       - "docs/projects/README.md"
@@ -25,22 +26,80 @@ capital_ai_top_layer_projection:
       Diese Datei ist eine nicht-autorisierende Produkt-, Ausfuehrungs- und
       Qualitaetsprojektion. Sie erzeugt keine neue AUTH-*, CTRL-*, PVC-,
       Frontend-, Scoring-, Daten-, Security-, Compliance- oder Runtime-Authority
-      und darf keine kanonische Registry oder Parent-Authority ersetzen.
+      und darf keine kanonische Registry, Supply-Chain- oder Parent-Authority
+      ersetzen. /AGENTS.md@current-main bleibt der repository-weite Trust Root.
 
   applicability:
-    scope: "ALL_PROJECT_FOLDERS"
+    scope: "ALL_CANONICAL_PROJECT_FOLDERS_EXCEPT_EXPLICIT_EXCLUSIONS"
     execution_mode: "PROJECT_LOCAL_DYNAMIC"
     reusable: true
     project_folder_parameter: "<CURRENT_PROJECT_FOLDER>"
+    resolve_project_set_from:
+      - "docs/projects/README.md"
+      - "docs/projects/PROJECT_VALUE_CHAIN.md"
     local_copy_required: false
     second_registry_allowed: false
 
+    excluded_projects:
+      CAPITAL-AI-SEC:
+        project_folder: "docs/projects/security/"
+        top_layer_governing_principle_applies: false
+        local_direction: "SECURITY_FOUNDATION_FIRST"
+        reason: >
+          Security priorisiert Schutzbedarf, Trust Boundaries, Threats,
+          Controls, Verifikation und sichere Capability-Integration nach der
+          current-main Security-/Development-Chain-Authority.
+      CAPITAL-AI-QM:
+        project_folder: "docs/projects/quality-management/"
+        top_layer_governing_principle_applies: false
+        local_direction: "INDEPENDENT_ASSURANCE_FIRST"
+        reason: >
+          Quality Management bleibt unabhaengige Assurance-Funktion fuer
+          Quality Criteria, Gates, Findings, Regression und Verification und
+          uebernimmt keine Produktpriorisierung aus der User-Surface.
+      CAPITAL-AI-FINTECH:
+        project_folder: "docs/projects/fintech/"
+        top_layer_governing_principle_applies: false
+        local_direction: "DOMAIN_SCORING_VALUE_CHAIN_FIRST"
+        reason: >
+          FinTech ist Primary Owner fuer PVC-12..17 und folgt der kanonischen
+          Financial-/Scoring-Authority sowie der technischen Finanzkette
+          SC-MD-SPT-0001. User-visible Wirkung bleibt Korrelationsergebnis,
+          ersetzt aber keine fachliche oder Scoring-Authority.
+      CAPITAL-AI-COMP:
+        project_folder: "docs/projects/compliance/"
+        top_layer_governing_principle_applies: false
+        local_direction: "COMPLIANCE_REQUIREMENT_AND_EVIDENCE_FIRST"
+        reason: >
+          Compliance priorisiert Applicability, Requirements, Traceability,
+          Evidence, Findings und erforderliche Legal-/Owner-Handoffs innerhalb
+          seiner current-main Authority-Grenzen.
+
+    excluded_project_behavior:
+      user_visible_impact_correlation_allowed: true
+      end_to_end_dependency_correlation_allowed: true
+      top_layer_priority_override_allowed: false
+      top_layer_local_authority_override_allowed: false
+      resolve_local_authority_from:
+        - "/AGENTS.md@current-main"
+        - "docs/projects/README.md"
+        - "docs/projects/PROJECT_VALUE_CHAIN.md"
+        - "docs/projects/<CURRENT_PROJECT_FOLDER>/README.md"
+        - "docs/projects/<CURRENT_PROJECT_FOLDER>/ROADMAP.md"
+        - "applicable ADR/ESS/AUTH/CTRL"
+        - "SC-MD-SPT-0001 when the technical financial chain is affected"
+      rule: >
+        Ein ausgeschlossener Projektordner bleibt Teil der gemeinsamen
+        Wertketten-, Dependency- und User-Impact-Korrelation, wird aber nicht
+        durch USER_VISIBLE_TOP_LAYER_FIRST gesteuert oder priorisiert.
+
   purpose: >
-    CAPITAL-AI-Arbeit wird aus Sicht des tatsaechlich wahrnehmbaren
-    Nutzerwerts bewertet. Die User-visible Application Surface bestimmt den
-    Ausgangspunkt fuer Produktqualitaet, Priorisierung und End-to-End-
-    Korrelation. Technische Authority, Ownership und Execution bleiben jedoch
-    vollstaendig in den kanonischen PVC-, ADR-, ESS-, AUTH- und CTRL-Grenzen.
+    Fuer anwendbare CAPITAL-AI-Projektordner wird Arbeit aus Sicht des
+    tatsaechlich wahrnehmbaren Nutzerwerts bewertet. Die User-visible
+    Application Surface bestimmt dort den Ausgangspunkt fuer Produktqualitaet,
+    Priorisierung und End-to-End-Korrelation. Technische Authority, Ownership
+    und Execution bleiben vollstaendig in den kanonischen PVC-, Supply-Chain-,
+    ADR-, ESS-, AUTH- und CTRL-Grenzen.
 
   active_baseline:
     authoritative_baseline: "CURRENT_MAIN_ONLY"
@@ -60,6 +119,7 @@ capital_ai_top_layer_projection:
       - active_writers_if_observable
       - current_project
       - current_project_folder
+      - top_layer_applicability
       - primary_pvc_if_productive_owner
       - primary_owner
       - project_scope
@@ -67,6 +127,7 @@ capital_ai_top_layer_projection:
       - applicable_adr
       - applicable_ess
       - applicable_ctrl_auth
+      - applicable_supply_chain_contracts
       - affected_capabilities
     unresolved:
       state: "REQUIRES_CORRELATION"
@@ -84,6 +145,7 @@ capital_ai_top_layer_projection:
     required_output:
       - current_project
       - current_project_folder
+      - top_layer_applicability
       - primary_owner
       - productive_pvc_relationship
       - project_scope
@@ -91,14 +153,18 @@ capital_ai_top_layer_projection:
       Cross-cutting Projekte ohne produktive PVC-Stufe erhalten niemals eine
       erfundene primary_pvc. Ihre Beziehung wird als Cross-cutting Consumer,
       Presentation, Assurance, Constraint oder Distribution Overlay erfasst.
+      Die Top-Layer-Anwendbarkeit wird ausschliesslich aus dem kanonisch
+      aufgeloesten Projekt und der expliziten Ausschlussliste bestimmt.
 
   governing_principle:
     name: "USER_VISIBLE_TOP_LAYER_FIRST"
+    applies_when: "top_layer_applicability == APPLICABLE"
     interpretation: >
-      Top-Layer-first ist eine Produktsteuerungs- und Bewertungsrichtung, keine
-      Authority-Richtung. Untere technische Layer ermoeglichen und schuetzen
-      den Nutzerwert; die kanonischen Domain Authorities entscheiden weiterhin
-      ueber fachliche Semantik, Daten, Scoring, IAM, Security und Governance.
+      Top-Layer-first ist fuer anwendbare Projektordner eine Produktsteuerungs-
+      und Bewertungsrichtung, keine Authority-Richtung. Untere technische Layer
+      ermoeglichen und schuetzen den Nutzerwert; die kanonischen Domain
+      Authorities entscheiden weiterhin ueber fachliche Semantik, Daten,
+      Scoring, IAM, Security, Compliance und Governance.
 
     hierarchy:
       layer_1:
@@ -172,6 +238,7 @@ capital_ai_top_layer_projection:
       require_end_to_end_context: true
       require_pvc_correlation: true
       require_authority_resolution: true
+      require_applicability_resolution: true
     isolated_technical_optimization:
       allowed: false
       exception:
@@ -212,12 +279,24 @@ capital_ai_top_layer_projection:
     - "User-visible Regression zugunsten lokaler technischer Optimierung akzeptieren"
     - "parallele Architektur ausserhalb bestehender Contracts erzeugen"
     - "diese Projektion als eigenstaendige Governance- oder Scoring-Authority verwenden"
+    - "USER_VISIBLE_TOP_LAYER_FIRST auf SEC, QM, FINTECH oder COMP als lokale Priorisierungs-Authority anwenden"
 
 capital_ai_top_layer_execution:
-  schema_version: "1.1.0"
+  schema_version: "1.2.0"
   projection_id: "GOV-TOP-LAYER-EXECUTION-PROJECTION-01"
   document_role: "projection"
   authorizing: false
+  applicability: "INHERIT:capital_ai_top_layer_projection.applicability"
+
+  excluded_project_action:
+    state: "TOP_LAYER_PROJECTION_NOT_APPLICABLE"
+    continue_with:
+      - "/AGENTS.md@current-main"
+      - "canonical project README/ROADMAP"
+      - "applicable ADR/ESS/AUTH/CTRL"
+      - "canonical PVC mapping"
+      - "SC-MD-SPT-0001 if the technical financial chain is affected"
+    user_impact_correlation: "INFORMATIONAL_AND_INTEGRATION_ONLY"
 
   execution_contract:
     trigger:
@@ -237,6 +316,7 @@ capital_ai_top_layer_execution:
     mandatory_sequence:
       - resolve_current_main_and_open_writer_correlation
       - resolve_project_and_productive_pvc_relationship
+      - resolve_top_layer_applicability
       - resolve_parent_authorities
       - identify_user_visible_effect
       - identify_affected_capabilities
@@ -396,6 +476,7 @@ capital_ai_top_layer_execution:
     canonical_sources:
       project_routing: "docs/projects/README.md"
       productive_pvc_chain: "docs/projects/PROJECT_VALUE_CHAIN.md"
+      technical_financial_chain: "SC-MD-SPT-0001"
 
     productive_pvc_stages:
       required: true
@@ -425,7 +506,9 @@ capital_ai_top_layer_execution:
       rule: >
         Cross-cutting Projekte duerfen produktive PVC-Ergebnisse praesentieren,
         pruefen, absichern, beschraenken oder verteilen, erwerben dadurch aber
-        keine produktive PVC-Ownership.
+        keine produktive PVC-Ownership. SEC, QM und COMP bleiben zusaetzlich von
+        der lokalen USER_VISIBLE_TOP_LAYER_FIRST-Priorisierungsrichtung
+        ausgenommen.
 
     capability_resolution_examples:
       user_interface:
@@ -437,6 +520,8 @@ capital_ai_top_layer_execution:
       financial_scoring_and_ranking:
         productive_owner: "CAPITAL-AI-FINTECH"
         productive_pvc_range: "PVC-12..PVC-17"
+        top_layer_local_priority: "NOT_APPLICABLE"
+        technical_financial_chain: "SC-MD-SPT-0001"
       governance_direction:
         productive_owner: "CAPITAL-AI-GOV"
         productive_pvc: "PVC-05"
@@ -483,11 +568,11 @@ capital_ai_top_layer_execution:
     authoritative_for_security: false
     authoritative_for_governance: false
     principle: >
-      Die User-visible Application Surface ist der primaere Ausgangspunkt fuer
-      Produktbewertung, Nutzerwert, End-to-End-Korrelation und
-      Qualitaetspriorisierung. Sie konsumiert und komponiert ausschliesslich
-      Zustaende und Ergebnisse der jeweils kanonisch zustaendigen Domain-,
-      Data-, Scoring-, AI-, Security- und Governance-Authorities.
+      Die User-visible Application Surface ist fuer anwendbare Projektordner der
+      primaere Ausgangspunkt fuer Produktbewertung, Nutzerwert, End-to-End-
+      Korrelation und Qualitaetspriorisierung. Sie konsumiert und komponiert
+      ausschliesslich Zustaende und Ergebnisse der jeweils kanonisch zustaendigen
+      Domain-, Data-, Scoring-, AI-, Security- und Governance-Authorities.
     must_reflect:
       - capability_state
       - data_state
@@ -527,16 +612,18 @@ capital_ai_top_layer_execution:
       Projektion erzeugt keine zweite Design-Token- oder Frontend-Authority.
 
 capital_ai_top_layer_quality_gates:
-  schema_version: "1.1.0"
+  schema_version: "1.2.0"
   projection_id: "GOV-TOP-LAYER-QUALITY-GATES-PROJECTION-01"
   document_role: "projection"
   authorizing: false
   enforcement_mode: "EVIDENCE_PROJECTION_ONLY"
   merge_blocking_by_itself: false
+  applicability: "INHERIT:capital_ai_top_layer_projection.applicability"
 
   objective: >
-    Produkt- und Implementierungsqualitaet werden gemeinsam nachgewiesen, ohne
-    bestehende enforceable CTRL-* Controls oder Domain Authorities zu duplizieren.
+    Produkt- und Implementierungsqualitaet werden fuer anwendbare
+    Projektordner gemeinsam nachgewiesen, ohne bestehende enforceable CTRL-*
+    Controls, Supply-Chain- oder Domain Authorities zu duplizieren.
 
   activation_rule: >
     Ein Gate dieser Projektion wird erst dann technisch merge-blocking, wenn ein
@@ -547,6 +634,7 @@ capital_ai_top_layer_quality_gates:
     require:
       - repository_baseline_resolved
       - project_ownership_resolved
+      - top_layer_applicability_resolved
       - parent_authorities_resolved
       - user_visible_effect_defined
       - capability_chain_mapped
@@ -656,6 +744,7 @@ capital_ai_top_layer_quality_gates:
       - current_main_sha
       - current_project
       - current_project_folder
+      - top_layer_applicability
       - primary_owner
       - productive_pvc_relationship
       - branch_if_applicable
@@ -706,8 +795,12 @@ capital_ai_top_layer_quality_gates:
       allein genuegen nicht.
 
   roadmap_integration:
-    every_project_folder:
+    applicable_project_folders:
       require_top_layer_context: true
+    excluded_project_folders:
+      require_top_layer_context: false
+      require_project_local_authority_context: true
+      preserve_user_impact_correlation: true
     roadmap_item_should_define:
       - user_value
       - capability
@@ -720,8 +813,9 @@ capital_ai_top_layer_quality_gates:
       - evidence
       - next_owner_correct_step
     rule: >
-      Dies ist eine Qualitaetserwartung fuer Roadmap-Projektionen und keine
-      zweite Roadmap Registry oder Routing Authority.
+      Dies ist eine Qualitaetserwartung fuer anwendbare Roadmap-Projektionen
+      und keine zweite Roadmap Registry oder Routing Authority. Ausgeschlossene
+      Projektordner verwenden ihre canonical project-local Authority Chain.
 
   dependency_evidence:
     when_dependency_exists:
@@ -758,6 +852,7 @@ capital_ai_top_layer_quality_gates:
       project:
         - current_project
         - current_project_folder
+        - top_layer_applicability
         - primary_owner
         - productive_pvc_relationship
       product:
@@ -779,9 +874,15 @@ capital_ai_top_layer_quality_gates:
         - next_owner_correct_step
 
   final_rule: >
-    Kein Projektordner wird ausschliesslich anhand seiner lokalen technischen
-    Qualitaet bewertet. Die Produktbetrachtung verlaeuft vom Nutzererlebnis
-    ueber sichtbare Capabilities zu fachlicher Qualitaet, Domain-/AI-Logik,
-    Daten/Plattform und Security/Compliance/Operations und wird anschliessend
-    gegen die kanonische PVC- und Projekt-Ownership korreliert. Diese Richtung
-    beschreibt Produktqualitaet; sie veraendert keine bestehende Authority.
+    Kein Projektordner, fuer den diese Projektion gilt, wird ausschliesslich
+    anhand seiner lokalen technischen Qualitaet bewertet. Die Produktbetrachtung
+    verlaeuft vom Nutzererlebnis ueber sichtbare Capabilities zu fachlicher
+    Qualitaet, Domain-/AI-Logik, Daten/Plattform und Security/Compliance/
+    Operations und wird anschliessend gegen die kanonische PVC-, Supply-Chain-
+    und Projekt-Ownership korreliert. Fuer CAPITAL-AI-SEC, CAPITAL-AI-QM,
+    CAPITAL-AI-FINTECH und CAPITAL-AI-COMP ist USER_VISIBLE_TOP_LAYER_FIRST
+    keine lokale Steuerungs- oder Priorisierungs-Authority; deren kanonische
+    project-local Authority Chain bleibt fuehrend. User-Impact- und
+    End-to-End-Korrelation bleiben zulaessig und erforderlich, wo sie fuer
+    Integration, Evidence oder Auswirkungen auf andere Projektordner relevant
+    sind.
