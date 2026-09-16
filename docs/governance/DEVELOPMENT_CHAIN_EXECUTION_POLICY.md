@@ -4,10 +4,10 @@
 **Status:** ACTIVE  
 **Version:** `3.0.0`  
 **Date:** 2026-08-12  
-**Updated:** 2026-09-15  
+**Updated:** 2026-09-16  
 **Scope:** CAPITAL-AI `capital-ai-online/Finance`  
 **Parent trust root:** `/AGENTS.md`  
-**Decision references:** effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`, Human/Owner direction 2026-09-15 for correlation-gated PR creation and ordered Roadmap PR execution
+**Decision references:** effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`, Human/Owner direction 2026-09-15 for correlation-gated PR creation and ordered Roadmap PR execution, Human/Owner direction 2026-09-16 for the Security foundation-first analysis-direction exception
 
 ## Purpose and boundary
 
@@ -41,6 +41,7 @@ After Human Merge activates version `3.0.0` together with `/AGENTS.md` Control P
 - automated Roadmap PR work is serially integrated so a successor starts from the resulting current `main` only after its predecessor reaches a terminal PR outcome;
 - the introducing PR itself remains governed by the pre-existing current-main PR-create approval rule and cannot self-bootstrap;
 - bounded Security remediation remains governed by `CTRL-SEC-BOUNDED-REMEDIATION-001` and does not change ownership/protected-mutation boundaries;
+- within eligible Security-primary work, `GOV-SEC-AUTHORITY-EXCEPTION-01` requires the `SECURITY_FOUNDATION_FIRST` analysis direction instead of a user-visible-top-layer-first analysis direction, without broadening execution authority;
 - Render native Auto Deploy remains off;
 - verified `main` CI remains the production deployment authority.
 
@@ -108,7 +109,7 @@ A step marked REQUIRED for the concrete work package cannot be skipped unless an
 25. **Copyable end-of-pass handoff.** At the end of every chat-governed execution pass, report at most the two highest-priority Roadmap/workaround continuation items with objective exit gates. The `NÄCHSTE SCHRITTE` queue is always a fenced plaintext `text` code block with semantic emoji in its heading, numbered items and exit-gate labels; generic merge/approval/CI boilerplate remains gate/evidence status.
 26. **Post-PR handoff.** After each created PR/Draft PR, report branch/PR-head, main baseline, correlation and validation/open-gate state. The next dependent automated PR stays held until predecessor terminal outcome.
 27. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
-28. **Bounded Security remediation delegation.** `CAPITAL-AI-SEC` may implement under `CTRL-SEC-BOUNDED-REMEDIATION-001` when the immediate purpose is Security remediation and no foreign business/domain authority or protected mutation is assumed.
+28. **Bounded Security remediation delegation.** `CAPITAL-AI-SEC` may implement under `CTRL-SEC-BOUNDED-REMEDIATION-001` when the immediate purpose is Security remediation and no foreign business/domain authority or protected mutation is assumed. Eligible Security-primary analysis and prioritization follow `GOV-SEC-AUTHORITY-EXCEPTION-01` / `SECURITY_FOUNDATION_FIRST` rather than `USER_VISIBLE_TOP_LAYER_FIRST`.
 29. **Relevant installed/connected capability use.** Under `CTRL-SDLC-PLUGIN-USE-001`, already available external capabilities are invoked only when they directly advance the bounded task and are least-privileged sufficient; availability never grants authority.
 
 ## Relevant installed/connected capability use (`CTRL-SDLC-PLUGIN-USE-001`)
@@ -124,6 +125,45 @@ If the required capability is unavailable, disconnected, disabled or would requi
 This rule transfers no PVC or Primary Ownership, creates no Security/Compliance verification authority, grants no merge/deployment/production-mutation authority, and does not weaken `CTRL-SEC-LEASTPRIV-001`, `CTRL-SDLC-PR-CREATE-001`, `CTRL-MERGE-HUMAN-001` or any target-domain contract.
 
 ## Delegated Security Implementation Authority (`CTRL-SEC-BOUNDED-REMEDIATION-001`)
+
+### Security authority-direction exception (`GOV-SEC-AUTHORITY-EXCEPTION-01`)
+
+`GOV-SEC-AUTHORITY-EXCEPTION-01` is an Owner-directed interpretation of the existing Development Chain and `CTRL-SEC-BOUNDED-REMEDIATION-001`; it does **not** create a second Security authority, a new productive PVC stage or broader repository mutation rights.
+
+It applies when the resolved project class is `SECURITY`, including `docs/projects/security/`, and Security is the primary and immediate purpose of the work. Within that scope, `CAPITAL-AI-SEC` is excluded from any `USER_VISIBLE_TOP_LAYER_FIRST` steering rule for:
+
+- prioritization authority;
+- analysis direction;
+- Security design authority;
+- control selection;
+- threat response; and
+- remediation order.
+
+The governing Security analysis principle is `SECURITY_FOUNDATION_FIRST`. Security works from protection need and technical risk toward the user surface rather than deriving required controls from desired UX. The mandatory analysis order is:
+
+```text
+CURRENT MAIN / PROJECT / OWNER / CONTRACTS
+→ ASSETS + PROTECTION NEED
+→ TRUST BOUNDARIES + IDENTITY / AUTHN / AUTHZ / SECRETS / DATA CLASSIFICATION
+→ THREATS + ATTACK PATHS + ABUSE CASES + VULNERABILITIES
+→ RISK / IMPACT / LIKELIHOOD
+→ REQUIRED PREVENTIVE / DETECTIVE / RESPONSIVE / RECOVERY CONTROLS
+→ PLATFORM / API / DATABASE / RUNTIME / AI / PROVIDER ENFORCEMENT
+→ SECURE CAPABILITY + USER-SURFACE INTEGRATION
+→ MINIMIZE UNNECESSARY USER FRICTION
+→ CONTROL-EFFECTIVENESS + END-TO-END VALIDATION
+→ EVIDENCE
+```
+
+This direction remains bound by repository governance, current-main authority, supply-chain contracts, project/PVC ownership, branch and PR policy, architecture contracts, ADR, ESS, evidence requirements, handover boundaries, Human/CODEOWNER merge, and protected external-mutation controls.
+
+A proportionate and evidenced Security requirement MAY take precedence over user-experience preference, visual simplicity, interaction convenience, performance optimization or feature-delivery priority only when at least one of the following is true: material Security risk exists, an applicable compliance requirement requires the control, a trust boundary requires the control, or production protection requires the control. Security may not use this exception to bypass repository authority, owner boundaries, supply-chain integrity, mandatory evidence or change traceability.
+
+A user-visible/top-layer projection MAY correlate Security work for user impact, integration quality and visible regressions, but it has no authority to weaken or remove a necessary Security control solely for UX, product or convenience reasons. Security MUST explain user impact, expose required constraints, preserve owner-correct contracts, document residual risk and provide validation evidence. Product/Frontend integration MUST consume those constraints, preserve their Security semantics and avoid parallel Security architecture.
+
+When Security and product preference conflict, the Security constraint prevails only when the control is owner-correct, the risk is documented, the control is proportionate and evidence exists. Otherwise the conflict is routed to Governance/Human-Owner review. Repository authority always prevails over Security project preference.
+
+This exception changes **analysis and prioritization direction only**. It does not relax the bounded-remediation eligibility, ownership, deny, verification, PR-create, merge, release, deployment or protected-mutation rules below.
 
 ### Eligibility
 
