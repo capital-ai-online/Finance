@@ -6,13 +6,18 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const legacyDashboard = read('src/components/Dashboard.tsx');
+const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
 
 describe('BB-2B/BB-2C/BB-2D dashboard consumer cutover', () => {
   it('consumes the canonical dashboard view contract without recreating local authority', () => {
-    expect(legacyDashboard).toContain("from '../app/dashboard/dashboardViews'");
+    expect(legacyDashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
     expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
-    expect(legacyDashboard).toContain('getDashboardSection(activeView)');
+    expect(dashboardNavigation).toContain(
+      "getDashboardSection, type DashboardSection, type DashboardView } from './dashboardViews'",
+    );
+    expect(dashboardNavigation).toContain('setExpandedSection(getDashboardSection(activeView))');
     expect(legacyDashboard).not.toContain('const getViewCategory =');
+    expect(legacyDashboard).not.toContain('getDashboardSection(activeView)');
   });
 
   it('consumes the canonical session contract directly instead of the root compatibility entry', () => {
@@ -21,13 +26,16 @@ describe('BB-2B/BB-2C/BB-2D dashboard consumer cutover', () => {
   });
 
   it('keeps the navigation-only universes accordion outside the dashboard view-section authority', () => {
-    expect(legacyDashboard).toContain("type DashboardExpandedSection = DashboardSection | 'universes'");
-    expect(legacyDashboard).toContain('useState<DashboardExpandedSection | null>');
+    expect(dashboardNavigation).toContain("type ExpandedSection = DashboardSection | 'universes' | null");
+    expect(dashboardNavigation).toContain('useState<ExpandedSection>');
+    expect(legacyDashboard).not.toContain('DashboardExpandedSection');
+    expect(legacyDashboard).not.toContain('expandedUniverse');
   });
 
   it('routes migrated detail views through the canonical dashboard view router', () => {
     expect(legacyDashboard).toContain("import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter'");
     expect(legacyDashboard).toContain('<DashboardViewRouter');
+    expect(legacyDashboard).toContain('<DashboardNavigation');
     expect(legacyDashboard).toContain("{activeView === 'dashboard' && (");
     expect(legacyDashboard).toContain("{activeView === 'myworkspace' && (");
 

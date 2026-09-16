@@ -25,17 +25,21 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(learning).not.toContain('VOC-BILLING-0001');
   });
 
-  it('wires one Learning tab through the shared dashboard view router', () => {
+  it('wires one Learning tab through the app-owned navigation and shared dashboard view router', () => {
     const dashboard = source('src/components/Dashboard.tsx');
+    const dashboardNavigation = source('src/app/dashboard/DashboardNavigation.tsx');
+    const dashboardNavigationModel = source('src/app/dashboard/dashboardNavigation.ts');
     const dashboardViewRouter = source('src/app/dashboard/DashboardViewRouter.tsx');
     const dashboardViews = source('src/app/dashboard/dashboardViews.ts');
 
-    expect(dashboard).toContain("import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter';");
-    expect(dashboard).toContain('type DashboardView,');
+    expect(dashboard).toContain("import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter'");
+    expect(dashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
     expect(dashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(dashboard).toContain('<DashboardNavigation');
     expect(dashboardViews).toContain("'learning'");
-    expect(dashboard).toContain('title="Learning"');
-    expect(dashboard).toContain("navigateTo('learning')");
+    expect(dashboardNavigationModel).toContain("{ view: 'learning', label: 'Learning', section: 'hub' }");
+    expect(dashboardNavigation).toContain('getDashboardNavigationItems(section).map');
+    expect(dashboardNavigation).toContain('onClick={() => navigate(item.view)}');
     expect(dashboard).not.toContain("activeView === 'learning' && (");
     expect(dashboardViewRouter).toContain("case 'learning':");
     expect(dashboardViewRouter).toContain('return <LearningUI.LearningVocabulary />;');
