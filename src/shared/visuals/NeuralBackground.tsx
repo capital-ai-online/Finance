@@ -36,7 +36,10 @@ export function NeuralBackground({ intensity = 'subtle', className = '' }: Neura
         <circle cx="520" cy="610" r="5" fill="var(--color-decorative-purple)" className="animate-neural-pulse" />
         <circle cx="1080" cy="610" r="6" fill="var(--color-brand-primary)" className="animate-gold-pulse" />
       </svg>
-      <div className="absolute -top-24 right-0 h-80 w-80 rounded-full bg-[color-mix(in_srgb,var(--color-decorative-purple)_9%,transparent)] blur-[120px]" />
+      <div
+        className="absolute -top-24 right-0 h-80 w-80 rounded-full blur-[120px]"
+        style={{ backgroundColor: 'color-mix(in srgb, var(--color-decorative-purple) 9%, transparent)' }}
+      />
       <div className="absolute -bottom-24 left-0 h-80 w-80 rounded-full bg-brand-primary/5 blur-[120px]" />
     </div>
   );
