@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, ExternalLink, Newspaper, RefreshCw, ShieldCheck } from 'lucide-react';
+import { fetchAuthenticatedNews } from '../features/news/authenticatedNewsFetch';
 
 export interface VerifiedNewsItem {
   id: string;
@@ -71,7 +72,7 @@ export function VerifiedNewsFeed({
         const params = new URLSearchParams({ limit: String(Math.max(1, Math.min(20, limit))) });
         if (symbol.trim()) params.set('asset', symbol.trim().toUpperCase());
         if (source.trim()) params.set('source', source.trim());
-        const response = await fetch(`/api/news?${params.toString()}`, { signal: controller.signal });
+        const response = await fetchAuthenticatedNews(`/api/news?${params.toString()}`, { signal: controller.signal });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(body?.reason ?? `News-Evidence nicht verfügbar (HTTP ${response.status}).`);
