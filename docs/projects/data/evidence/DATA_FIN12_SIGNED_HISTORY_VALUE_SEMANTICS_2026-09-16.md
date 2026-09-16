@@ -70,7 +70,9 @@ Post-resync correlation established:
 - trust-root blob unchanged (`AGENTS.md` blob `197ea507ee112e450cf24ebaae26cd2103077b84`);
 - merge base equals current main;
 - branch was `0 behind` after re-sync;
-- current open-PR search returned no open Pull Requests;
+- open Draft PR #1012 is `CAPITAL-AI-FINTECH` and changes FINTECH category/model/scoring-lineage surfaces; it consumes existing `ValidatedDataInput`/`FintechDataHandoff`, explicitly leaves missing real category observations with DATA/PVC-09..11, and does not modify this package's DATA files;
+- open Draft PR #1013 is `CAPITAL-AI-FE` and changes only Frontend appearance/token/shared-UI surfaces; it has no DATA file, provider, DQ or schema overlap with this package;
+- the bounded semantic overlap with #1012 is upstream/downstream compatible: this DATA package adds explicit history value semantics while #1012 does not create a provider adapter, DATA validation fork or provider truth;
 - diff remains limited to two DATA MarketData contract files, one focused test and this DATA evidence file;
 - no FINTECH runtime, Frontend, Supabase, provider credential, Render configuration, Auth, billing or entitlement file is modified.
 
