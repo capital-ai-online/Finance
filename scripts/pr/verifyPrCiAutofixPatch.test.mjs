@@ -14,9 +14,11 @@ function git(cwd, args) {
 function createRepo() {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-ci-autofix-'));
   fs.mkdirSync(path.join(cwd, 'src/features'), { recursive: true });
+  fs.mkdirSync(path.join(cwd, 'tests/unit'), { recursive: true });
   fs.mkdirSync(path.join(cwd, '.github/workflows'), { recursive: true });
   fs.writeFileSync(path.join(cwd, 'src/features/example.ts'), 'export const value = 1;\n');
   fs.writeFileSync(path.join(cwd, 'src/features/other.ts'), 'export const other = 1;\n');
+  fs.writeFileSync(path.join(cwd, 'tests/unit/example.test.ts'), 'export const expected = 1;\n');
   fs.writeFileSync(path.join(cwd, 'README.md'), '# Example\n');
   fs.writeFileSync(path.join(cwd, '.github/workflows/ci.yml'), 'name: CI\n');
   git(cwd, ['init']);
@@ -56,6 +58,20 @@ test('rejects agentic modifications outside the original PR changed-file set', (
       engine: 'copilot',
       originalChangedFiles: ['src/features/example.ts'],
     }), /only files already changed by the PR/);
+  } finally {
+    cleanup(cwd);
+  }
+});
+
+test('rejects agentic test-file mutation even when the test is in original PR scope', () => {
+  const cwd = createRepo();
+  try {
+    fs.writeFileSync(path.join(cwd, 'tests/unit/example.test.ts'), 'export const expected = 2;\n');
+    assert.throws(() => verifyPatch({
+      cwd,
+      engine: 'copilot',
+      originalChangedFiles: ['tests/unit/example.test.ts'],
+    }), /outside bounded source scope/);
   } finally {
     cleanup(cwd);
   }
