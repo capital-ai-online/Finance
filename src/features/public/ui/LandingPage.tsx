@@ -43,26 +43,34 @@ const CAPABILITY_CARDS = [
   },
 ] as const;
 
-function WorkbenchLoadingState() {
+function WorkbenchActivationState({ onActivate }: { onActivate: () => void }) {
   return (
     <div
       className="flex min-h-[420px] items-center justify-center rounded-2xl border border-border bg-surface/35 px-6 text-center"
-      role="status"
-      aria-live="polite"
+      aria-label="Analyse-Workbench auf Abruf"
     >
-      <div className="max-w-md space-y-3">
-        <div className="mx-auto h-8 w-8 animate-pulse rounded-full border border-brand-primary/40 bg-brand-primary/10" />
-        <p className="text-sm font-bold text-text-primary">Bewertungstools werden geladen</p>
+      <div className="max-w-md space-y-4">
+        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-brand-primary/40 bg-brand-primary/10 text-brand-primary">
+          <Gauge size={18} aria-hidden="true" />
+        </div>
+        <p className="text-sm font-bold text-text-primary">Bewertungstools auf Abruf</p>
         <p className="text-xs leading-relaxed text-text-secondary">
-          Die Analyse-Workbench wird erst in Sichtnähe geladen. Navigation und Anmeldung bleiben
-          dadurch unabhängig von den Bewertungs-Bundles unmittelbar verfügbar.
+          Die rechenintensive Analyse-Workbench und ihre Scoring-Anfragen starten erst nach Ihrer Auswahl.
+          Navigation, Anmeldung und die Landingpage bleiben dadurch unabhängig von Analyse-Bundles unmittelbar verfügbar.
         </p>
+        <button
+          type="button"
+          onClick={onActivate}
+          className="ui-hit inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-2.5 text-xs font-black uppercase tracking-wider text-background transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+        >
+          <Gauge size={14} aria-hidden="true" /> Analyse-Workbench starten
+        </button>
       </div>
     </div>
   );
 }
 
-function DashboardJumpNav() {
+function DashboardJumpNav({ onAnalysisNavigate }: { onAnalysisNavigate: () => void }) {
   return (
     <nav
       className="flex flex-wrap items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider"
@@ -70,6 +78,7 @@ function DashboardJumpNav() {
     >
       <a
         href="#analysis-workbench"
+        onClick={onAnalysisNavigate}
         className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface/45 px-3 py-2 text-text-secondary transition hover:border-brand-primary/40 hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
       >
         <Gauge size={12} /> Analyse
@@ -101,31 +110,8 @@ function DashboardJumpNav() {
  * authenticated Dashboard composition, browser-side entitlement logic, or legacy financial fallbacks.
  */
 export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
-  const previewRef = React.useRef<HTMLElement | null>(null);
   const [loadPreview, setLoadPreview] = React.useState(false);
-
-  React.useEffect(() => {
-    const element = previewRef.current;
-    if (!element || loadPreview) return;
-
-    if (typeof IntersectionObserver === 'undefined') {
-      setLoadPreview(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setLoadPreview(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '320px 0px' },
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [loadPreview]);
+  const activatePreview = React.useCallback(() => setLoadPreview(true), []);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-text-primary selection:bg-brand-primary/30 selection:text-text-primary">
@@ -227,7 +213,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
                     No-Demo-Data-Policy
                   </span>
                 </div>
-                <DashboardJumpNav />
+                <DashboardJumpNav onAnalysisNavigate={activatePreview} />
               </div>
             </div>
 
@@ -244,6 +230,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
 
               <a
                 href="#analysis-workbench"
+                onClick={activatePreview}
                 className="group flex min-h-11 items-center justify-between rounded-xl border border-border bg-surface/45 p-3 text-xs font-bold text-text-primary transition hover:border-brand-primary/35 hover:bg-surface"
               >
                 <span>Bewertungstools öffnen</span>
@@ -275,7 +262,6 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
 
         <section
           id="analysis-workbench"
-          ref={previewRef}
           aria-labelledby="analysis-workbench-title"
           className="scroll-mt-24 rounded-2xl border border-border bg-surface/20 p-4 backdrop-blur-md sm:p-6"
         >
@@ -296,11 +282,11 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
               </div>
               <div className="inline-flex items-center gap-2 self-start rounded-xl border border-border bg-background/55 px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary lg:self-auto">
                 <Activity size={13} className="text-factor-technical" />
-                Lazy-loaded Workbench
+                On-demand Workbench
               </div>
             </div>
 
-            {loadPreview ? preview : <WorkbenchLoadingState />}
+            {loadPreview ? preview : <WorkbenchActivationState onActivate={activatePreview} />}
           </div>
         </section>
 
