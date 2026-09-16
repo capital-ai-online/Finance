@@ -7,8 +7,9 @@
 **Primary PVC:** `PVC-09..PVC-11`  
 **Roadmap scope:** `DATA-14` provider validation + `DATA-15` data-contract testing; upstream return for FINTECH `FIN-12`  
 **Branch:** `agent/data-fin12-history-semantics-20260916`  
-**Baseline:** `main@c58f662deee989f270d6968881644d284435d5bd`  
-**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING`
+**Initial baseline:** `main@c58f662deee989f270d6968881644d284435d5bd`  
+**Current resync baseline:** `main@bea9373811202aef98f3ad8ffd53dba99d37c453`  
+**State:** `IMPLEMENTED_ON_BRANCH / CREATE_CORRELATION_PENDING`
 
 ## Current-main finding
 
@@ -46,6 +47,8 @@ There is no asset-class heuristic that automatically turns Bond or Macro history
 
 Existing positive-price history consumers remain covered by their current tests and continue to call `buildValidatedHistoryInput(asset, history)` without a semantics override.
 
+Fresh current-main type correlation confirms `CanonicalMarketDataHistory.currency` is `string | null`, `bond` is a canonical `MarketDataAssetClass`, and current Scoring contracts contain productive bond handling; the focused fixture therefore does not require a parallel data shape.
+
 ## FINTECH handoff impact
 
 This closes only one of the four current FIN-12 upstream requirements: explicit validated value semantics for legitimate signed observations such as sovereign yields.
@@ -58,9 +61,24 @@ Still DATA-owned and open before FIN-12 can be fully released:
 
 FINTECH remains prohibited from creating local provider normalization or Data Quality logic while these returns are pending.
 
+## Re-sync and production correlation
+
+During this run, Human/CODEOWNER merge of FE PR #1011 advanced current `main` from `c58f662deee989f270d6968881644d284435d5bd` to `bea9373811202aef98f3ad8ffd53dba99d37c453`. The DATA branch was re-synchronized onto that new main; #1011 changes are unrelated to the DATA MarketData paths in this package.
+
+Post-resync correlation established:
+
+- trust-root blob unchanged (`AGENTS.md` blob `197ea507ee112e450cf24ebaae26cd2103077b84`);
+- merge base equals current main;
+- branch was `0 behind` after re-sync;
+- current open-PR search returned no open Pull Requests;
+- diff remains limited to two DATA MarketData contract files, one focused test and this DATA evidence file;
+- no FINTECH runtime, Frontend, Supabase, provider credential, Render configuration, Auth, billing or entitlement file is modified.
+
+Render production `Finance` is live on the same `main@bea9373811202aef98f3ad8ffd53dba99d37c453`, so production-to-current-main commit drift is `0` at correlation time.
+
 ## Validation truth
 
-- focused Vitest: `NOT RUN` pre-PR — no dependency-complete repository test runner is exposed in this chat surface;
+- focused Vitest: `NOT RUN` pre-PR — the available local sandbox has no GitHub network checkout and the GitHub connector does not expose a dependency-complete repository test executor;
 - TypeScript: `NOT RUN` pre-PR;
 - full DATA contract suite: `NOT RUN` pre-PR;
 - Production Build: `NOT RUN` pre-PR;
@@ -79,3 +97,5 @@ No provider credentials, provider activation, Supabase schema, Auth configuratio
 - all identity/evidence/provenance/freshness gates remain active;
 - focused positive/negative tests are materialized;
 - exact-head correlation and hosted validation remain required before Human/CODEOWNER merge.
+
+Repository materialization and main re-sync are complete. Final Draft-PR creation remains gated on one last exact-head readback after this evidence refresh plus current PR-template/production-baseline rendering.
