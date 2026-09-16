@@ -33,8 +33,9 @@ The controller reacts only to a completed `CI` workflow run when all of the foll
 4. exactly one open PR resolves to the source `head_sha`;
 5. PR base is `main`;
 6. head repository is exactly `capital-ai-online/Finance` — forks/foreign repositories are denied;
-7. `build-and-test` is the failed job;
-8. the PR is below the two-attempt autofix ceiling.
+7. the head branch uses an approved agent-managed prefix (`agent/`, `claude/`, `gemini/`, `copilot/`, `ai/`); Human-owned arbitrary branches are not mutated;
+8. `build-and-test` is the failed job;
+9. the PR is below the two-attempt autofix ceiling.
 
 Missing, ambiguous or stale identity evidence is a hard stop.
 
@@ -48,13 +49,15 @@ The first deterministic repair contract recognizes the repository-owned README p
 [readme-sync] README projection drift detected. Run: npm run readme:sync
 ```
 
-For that exact signature the workflow may run the trusted repository projection, but the resulting patch must modify **only `README.md`** and must pass the generic patch guard before revalidation.
+For that exact signature the workflow executes the **trusted PR-base version** of the repository projection against the PR worktree. The resulting patch must modify **only `README.md`** and must pass the generic patch guard before revalidation.
 
 This is deliberately narrow. Additional deterministic fixers may be added only when their input signature, mutation surface and revalidation command are reproducible and bounded.
 
 ### Copilot engine — explicit cost/policy gate
 
-TypeScript, test and Production-Build failures can be classified as candidates for GitHub Copilot CLI repair, but provider execution occurs only when repository variable:
+TypeScript, test and Production-Build failures can be classified as candidates for GitHub Copilot CLI repair only when the original non-documentation PR scope consists exclusively of bounded non-test `src/**` production-source files. Test-only, tooling, workflow, configuration or other non-source PR scopes stop before provider spend.
+
+Provider execution occurs only when repository variable:
 
 ```text
 CAPITAL_AI_CI_AUTOFIX_COPILOT_ENABLED=true
@@ -64,7 +67,7 @@ is already set through an independently authorized repository/provider path.
 
 The workflow does **not** create, enable or purchase a Copilot subscription/license and does not change repository variables. Missing/false configuration means `HELD_BY_COST_POLICY`, not failure and not PASS.
 
-The CLI is pinned to `@github/copilot@1.0.83` for this slice. The agentic job owns only `actions:read`, `contents:read`, `pull-requests:read` and `copilot-requests:write`. It has no repository content-write permission. Tool access is restricted to file view/search/edit; shell, URL and memory tools are denied. The prompt treats repository content and CI logs as untrusted data.
+The CLI is pinned to `@github/copilot@1.0.83` for this slice. The agentic job owns only `actions:read`, `contents:read`, `pull-requests:read` and `copilot-requests:write`. It has no repository content-write permission. Tool access is restricted to file view/search/edit; shell, URL and memory tools are denied. The prompt treats repository content and CI logs as untrusted data and explicitly forbids test/assertion edits.
 
 ## Protected scope — fail closed
 
@@ -92,10 +95,11 @@ A candidate patch must satisfy all of these conditions before it can advance:
 - `git diff --check` PASS;
 - no recognized private-key/token-like material in the diff;
 - deterministic README engine: only `README.md` may change;
-- Copilot engine: every modified file must already be in the original PR changed-file set and must be a bounded source/test path;
+- Copilot engine: every modified file must already be in the original PR changed-file set and must be a non-test `src/**` production-source path;
+- tests/assertions are never modified by the agentic engine;
 - protected paths are denied even if an agent attempts to write them.
 
-The same trusted-base verifier runs before artifact creation, after patch application in the read-only validation job and again in the privileged apply job.
+The same trusted-base verifier runs before artifact creation, in a clean tree-binding job, in the read-only revalidation path and again in the privileged apply job.
 
 ## Privilege separation
 
@@ -114,16 +118,22 @@ read-only plan
         v
 short-lived patch artifact + SHA-256
         |
-        v
-read-only validation
-(apply patch -> guard -> selected lint/test/build -> exact git tree)
-        |
-        v
+        +--------------------+
+        |                    |
+        v                    v
+clean tree binding       read-only revalidation
+(no PR-code execution)   (selected lint/test/build)
+        |                    |
+        +---------+----------+
+                  |
+                  v
 write-only apply/push
 (contents/write; no npm/test/build/PR-code execution)
 ```
 
-The privileged writer re-reads the open PR, exact head SHA/ref/repository, PR base SHA and current `main` immediately before mutation. Any drift stops the write. It then verifies the artifact hash, applies the patch, re-runs the trusted guard, compares the resulting `git write-tree` with the read-only validated tree, commits and pushes with an exact-head `--force-with-lease`.
+Candidate-code execution is isolated from the job that computes the authoritative patched Git tree. Revalidation explicitly removes GitHub/Actions runtime-token environment variables before `npm ci`, lint, test or build commands and does not use an Actions dependency cache.
+
+The privileged writer re-reads the open PR, exact head SHA/ref/repository, PR base SHA and current `main` immediately before mutation. Any drift stops the write. It then verifies the artifact hash, applies the patch, re-runs the trusted guard, compares the resulting `git write-tree` with the independently bound tree and creates one commit. The final push is a normal fast-forward push after exact remote-head verification; no force/force-with-lease path is used.
 
 ## Loop and cost control
 
@@ -132,6 +142,7 @@ The privileged writer re-reads the open PR, exact head SHA/ref/repository, PR ba
 - existing CI exact-snapshot/cost classification remains unchanged;
 - deterministic fixers run before any AI-provider engine;
 - Copilot requests are disabled unless the explicit repository variable is already `true`;
+- impossible agentic scopes are rejected before Copilot spend;
 - no extra CodeQL, Docker or Production chain is started by the autofix controller itself;
 - the validation job reruns only the failure-relevant class selected by the planner.
 
@@ -148,12 +159,17 @@ Until such a controller identity is explicitly authorized and proven, the reposi
 Primary threats addressed:
 
 - **fork/untrusted PR obtains privileged token** -> same-repository-only identity gate;
+- **Human-owned branch changed silently** -> only approved agent-managed branch prefixes are eligible;
 - **prompt injection from code/test/log** -> untrusted-data prompt + restricted tools + post-agent deterministic patch guard;
 - **AI pushes directly** -> agentic job has no contents-write and no shell/Git tool;
+- **test weakening to manufacture green CI** -> agentic engine cannot edit tests/assertions at all;
 - **privileged job executes malicious PR code** -> apply job performs only trusted guard/Git operations;
-- **stale head/base overwrite** -> exact SHA/ref/repository/current-main re-read + force-with-lease;
+- **candidate code tampers with validation identity** -> exact tree is bound in a separate clean job that does not execute candidate code;
+- **cache poisoning from post-CI candidate execution** -> no Actions dependency cache is used in candidate-code validation;
+- **runtime token abuse during revalidation** -> GitHub/Actions runtime-token environment variables are removed from candidate-code commands;
+- **stale head/base overwrite** -> exact SHA/ref/repository/current-main re-read followed by normal fast-forward push only;
 - **failure fan-out / endless repair loop** -> max two attempts and one concurrency group per source head;
-- **test weakening or scope escape** -> only existing originally changed source/test files, size ceiling and full failure-class revalidation;
+- **scope escape** -> only existing originally changed bounded source files, size ceiling and failure-class revalidation;
 - **secret material copied into patch** -> bounded log redaction plus secret-like diff denial;
 - **synthetic CI green state** -> prohibited; final hosted `build-and-test` remains authoritative.
 
@@ -161,14 +177,14 @@ Primary threats addressed:
 
 Repository implementation is not considered proven merely because these files exist. Required evidence for this package is:
 
-1. Node syntax/tests for both trusted planners/guards;
+1. Node syntax/tests for both trusted planners/guards and the workflow-invariant test;
 2. changed-workflow security validation;
 3. YAML parse/readback;
 4. hosted PR `build-and-test` and Governance/Security checks on the exact PR head;
 5. at least one subsequent controlled failure exercise demonstrating either:
    - deterministic patch -> revalidation -> exact-tree write, or
    - an evidence-backed fail-closed/held outcome;
-6. no automatic merge and no Direct-Main mutation.
+6. no automatic merge, no force-push and no Direct-Main mutation.
 
 `NOT RUN` is never represented as PASS.
 
