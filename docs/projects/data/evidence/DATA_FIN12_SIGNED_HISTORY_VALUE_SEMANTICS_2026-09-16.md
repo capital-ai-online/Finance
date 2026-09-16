@@ -8,7 +8,7 @@
 **Roadmap scope:** `DATA-14` provider validation + `DATA-15` data-contract testing; upstream return for FINTECH `FIN-12`  
 **Branch:** `agent/data-fin12-history-semantics-20260916`  
 **Initial baseline:** `main@c58f662deee989f270d6968881644d284435d5bd`  
-**Current resync baseline:** `main@bea9373811202aef98f3ad8ffd53dba99d37c453`  
+**Current resync baseline:** `main@1780264d567f307c31fab149433969a8c359bcd1`  
 **State:** `IMPLEMENTED_ON_BRANCH / CREATE_CORRELATION_PENDING`
 
 ## Current-main finding
@@ -63,24 +63,23 @@ FINTECH remains prohibited from creating local provider normalization or Data Qu
 
 ## Re-sync and production correlation
 
-During this run, Human/CODEOWNER merge of FE PR #1011 advanced current `main` from `c58f662deee989f270d6968881644d284435d5bd` to `bea9373811202aef98f3ad8ffd53dba99d37c453`. The DATA branch was re-synchronized onto that new main; #1011 changes are unrelated to the DATA MarketData paths in this package.
+During this run, Human/CODEOWNER merge of FE PR #1011 first advanced `main` to `bea9373811202aef98f3ad8ffd53dba99d37c453`. During final create-correlation, Human/CODEOWNER merge of FINTECH PR #1012 then advanced current `main` again to `1780264d567f307c31fab149433969a8c359bcd1`. The DATA branch was re-synchronized after both changes and consumes #1012 only as current-main upstream/downstream contract state.
 
-Post-resync correlation established:
+Final post-resync correlation established:
 
-- trust-root blob unchanged (`AGENTS.md` blob `197ea507ee112e450cf24ebaae26cd2103077b84`);
-- merge base equals current main;
-- branch was `0 behind` after re-sync;
-- open Draft PR #1012 is `CAPITAL-AI-FINTECH` and changes FINTECH category/model/scoring-lineage surfaces; it consumes existing `ValidatedDataInput`/`FintechDataHandoff`, explicitly leaves missing real category observations with DATA/PVC-09..11, and does not modify this package's DATA files;
-- open Draft PR #1013 is `CAPITAL-AI-FE` and changes only Frontend appearance/token/shared-UI surfaces; it has no DATA file, provider, DQ or schema overlap with this package;
-- the bounded semantic overlap with #1012 is upstream/downstream compatible: this DATA package adds explicit history value semantics while #1012 does not create a provider adapter, DATA validation fork or provider truth;
-- diff remains limited to two DATA MarketData contract files, one focused test and this DATA evidence file;
-- no FINTECH runtime, Frontend, Supabase, provider credential, Render configuration, Auth, billing or entitlement file is modified.
+- trust-root blob remains unchanged (`AGENTS.md` blob `197ea507ee112e450cf24ebaae26cd2103077b84`, Control Plane `2.11.0`);
+- merge base equals current main `1780264d567f307c31fab149433969a8c359bcd1` and the branch is `0 behind`;
+- PR #1012 is `MERGED / CURRENT_MAIN`; its FINTECH category/model/scoring-lineage implementation consumes DATA contracts and explicitly retains missing real category observations as a DATA/PVC-09..11 dependency; no #1012 file is overwritten by this branch;
+- PR #1013 remains open and FE-owned; its appearance/token/shared-UI files have no DATA MarketData, provider, DQ, schema or ownership overlap with this package;
+- the semantic relationship to merged #1012 is owner-compatible: DATA supplies validated value semantics while FINTECH remains downstream and does not gain provider/DQ authority;
+- diff remains limited to two DATA MarketData contract files, one focused DATA test and this DATA evidence file;
+- no FINTECH runtime file, Frontend file, Supabase schema, provider credential, Render configuration, Auth, billing or entitlement file is modified.
 
-Render production `Finance` is live on the same `main@bea9373811202aef98f3ad8ffd53dba99d37c453`, so production-to-current-main commit drift is `0` at correlation time.
+At the final correlation point, production `Finance` still reports `main@bea9373811202aef98f3ad8ffd53dba99d37c453` while current main is `1780264d567f307c31fab149433969a8c359bcd1`; the production commit is an ancestor of current main and the canonical PR production baseline records the exact drift rather than treating undeployed main commits as production evidence.
 
 ## Validation truth
 
-- focused Vitest: `NOT RUN` pre-PR — the available local sandbox has no GitHub network checkout and the GitHub connector does not expose a dependency-complete repository test executor;
+- focused Vitest: `NOT RUN` pre-PR — the GitHub connector does not expose a dependency-complete repository test executor;
 - TypeScript: `NOT RUN` pre-PR;
 - full DATA contract suite: `NOT RUN` pre-PR;
 - Production Build: `NOT RUN` pre-PR;
@@ -100,4 +99,4 @@ No provider credentials, provider activation, Supabase schema, Auth configuratio
 - focused positive/negative tests are materialized;
 - exact-head correlation and hosted validation remain required before Human/CODEOWNER merge.
 
-Repository materialization and main re-sync are complete. Final Draft-PR creation remains gated on one last exact-head readback after this evidence refresh plus current PR-template/production-baseline rendering.
+Repository materialization and current-main re-sync are complete. Draft-PR creation is permitted only if the immediately following exact-head/current-main/open-PR readback remains unchanged and the canonical Production-Baseline block is valid.
