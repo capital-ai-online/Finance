@@ -74,6 +74,21 @@ Correlate existing gateway foundations; select/reuse one canonical architecture;
 
 **Exit:** no parallel gateway/control plane; OAuth/MCP/provider activation remains explicitly gated.
 
+#### OPS-PR900-04A — GitHub App / MCP Reader Setup
+Materialize the least-privileged Reader contract for durable GitHub Enterprise, Organization, Repository and Security readback through the existing Codex/MCP convergence path without enabling Controller authority or creating a second credential/control plane.
+
+**State:** `MATERIALIZED_BRANCH / READER_CONTRACT_READY / PROVIDER_MUTATION_HELD` on `agent/operations-github-reader-setup-20260916`, based on `main@3e755873078b5f6fd3e2213960d0d83eea7c4a83` after Human-merged PR #962.
+
+**Reader boundary:** normal target identity is a GitHub App with short-lived installation tokens behind the CAPITAL-AI MCP gateway. Reader capabilities are explicitly allowlisted and limited to required Enterprise/Organization/Repository settings inventory plus Actions, Code Scanning, Secret Scanning and Dependabot readback. No Controller/write grant, universal admin PAT, GitHub credential in model context or speculative `.codex` GitHub endpoint is introduced.
+
+**Provider gaps:** effective GitHub App grants remain `NOT_PROVEN` until a separately authorized App/gateway setup exists. Enterprise audit-log token support remains `DOC_CONTRADICTION_LIVE_VERIFY`; Enterprise code-security configuration remains `PAT_COMPATIBILITY_REQUIRED`. Current connector rejection of those endpoint families is classified as execution-surface evidence, not provider permission denial. Secret Scanning readback requires `hide_secret=true` wherever supported and forbids literal secret output.
+
+**Protected setup gate:** GitHub App creation/installation, permission grants, repository selection, OAuth/MCP connection changes, Vault credential creation and any PAT provisioning require a separate explicit Human/Owner request under current `/AGENTS.md`; this repository slice performs none of those mutations.
+
+**Exit:** Reader permission ceiling, allowlisted MCP capabilities, credential boundaries and provider-readback evidence contract are reproducible; no write capability is inferred from read access; unresolved provider grants/contradictions remain fail-closed; independent Security verification stays separate after real provider readback.
+
+Detail: `work-packages/OPS_PR900_04A_GITHUB_APP_MCP_READER_SETUP_2026-09-16.md`.
+
 ### OPS-PR900-05 — Production observability/readiness
 Define measurable SLI/SLO, incident, release, post-deploy and telemetry evidence; integrate vendor export/readback only when authorized. PostHog/provider telemetry must respect SEC/privacy constraints.
 
