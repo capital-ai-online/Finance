@@ -45,7 +45,7 @@ Until a separately authorized multi-project namespace migration is completed:
 1. Every PVC stage has exactly one Primary Project Owner.
 2. Cross-cutting projects do not acquire Primary ownership by observing, validating, constraining, presenting or handing off work for a stage.
 3. Project/PVC ownership is resolved from current main; no executor, chat, branch, PR, EventMesh state or presentation metadata may invent or transfer ownership.
-4. Work whose Authority or implementation belongs to another project creates an owner-correct handover under `GOV-DYNAMIC-SCOPE-RESOLUTION-02` and `GOV-EVIDENCE-EVENTMESH-HANDOVER-07`; it is not silently taken over by GOV, OPS, SEC or another foreign project.
+4. Work whose Authority or implementation belongs to another project creates the owner-correct handover required by `/AGENTS.md@CURRENT_MAIN`; it is not silently taken over by GOV, OPS, SEC or another foreign project.
 5. `CAPITAL-AI-SEC` owns no productive PVC stage and evaluates Security `SECURITY_FOUNDATION_FIRST`; Security findings/requirements remain cross-cutting constraints and foreign implementation is handed to the resolved owner unless the implementation itself is canonically SEC-owned.
 6. `CAPITAL-AI-QM` remains independent Quality authority; product-layer priority cannot override its Quality verdict.
 7. `CAPITAL-AI-FINTECH` retains Domain/Scoring authority for its stages; Frontend cannot define FinTech truth.
@@ -59,10 +59,10 @@ Until a separately authorized multi-project namespace migration is completed:
 
 The PVC defines ownership and routing only. It is **not** a development lifecycle.
 
-All development execution across `PVC-01..18` resolves exclusively through the exact eight YAML policies enumerated in `/AGENTS.md` as `CAPITAL_AI_AUTONOMOUS_DEVELOPMENT_GUIDELINE`. Historical DevelopmentChain, bounded foreign-execution delegation, standalone PR/CI sequencing and other procedural overlays have no execution/fallback role after activation.
+All development execution across `PVC-01..18` resolves exclusively through `/AGENTS.md@CURRENT_MAIN`. Historical DevelopmentChain, bounded foreign-execution delegation, standalone PR/CI sequencing and other procedural overlays have no execution or fallback role.
 
-A relationship may be classified as `primary_pvc`, `cross_cutting` or `foreign_execution`. `foreign_execution` is a relationship classification, not permission to seize foreign Owner scope. If implementation/Authority belongs elsewhere, the current project emits an owner-correct correlation-ID handover with dependencies, evidence, exit gate and continuation condition.
+A relationship may be classified as `primary_pvc`, `cross_cutting` or `foreign_execution`. `foreign_execution` is a relationship classification, not permission to seize foreign Owner scope. If implementation/Authority belongs elsewhere, the current project emits an owner-correct correlation-ID handover with dependencies, evidence, exit gate and continuation condition as required by the trust root.
 
 ## Transitional repository state
 
-Historical/current documents may temporarily contain stale references to superseded procedure. Such text is migration drift only and cannot override `/AGENTS.md@CURRENT_MAIN` or the exact eight-policy suite. Documentation hygiene reconciles those references without rewriting immutable historical evidence.
+Historical/current documents may temporarily contain stale references to superseded procedure. Such text is migration drift only and cannot override `/AGENTS.md@CURRENT_MAIN`. Documentation hygiene reconciles those references without rewriting immutable historical evidence.

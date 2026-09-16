@@ -11,11 +11,11 @@
 
 `docs/projects/operations/` is the canonical organizational execution surface for CAPITAL-AI-OPS. It owns planning, coordination and evidence for the OPS-owned Project Value Chain stages without relocating or duplicating valid runtime components.
 
-Folder-to-PVC ownership is defined only by `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Development procedure is defined only by the exact eight-policy `CAPITAL_AI_AUTONOMOUS_DEVELOPMENT_GUIDELINE` resolved through `/AGENTS.md@CURRENT_MAIN`.
+Folder-to-PVC ownership is defined only by `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Development procedure is defined only by `/AGENTS.md@CURRENT_MAIN`; project documents remain non-authorizing planning/evidence projections.
 
 ## Authority boundary
 
-CAPITAL-AI-OPS owns implementation for its mapped Primary PVC scope. It has no generic foreign-project implementation authority. When OPS detects work whose implementation/Authority belongs to another project, it emits an owner-correct handover under `GOV-DYNAMIC-SCOPE-RESOLUTION-02` and `GOV-EVIDENCE-EVENTMESH-HANDOVER-07`.
+CAPITAL-AI-OPS owns implementation for its mapped Primary PVC scope. It has no generic foreign-project implementation authority. When OPS detects work whose implementation/Authority belongs to another project, it emits the owner-correct handover required by `/AGENTS.md@CURRENT_MAIN`.
 
 - `package.json#version` remains the sole platform-version authority where applicable contracts say so.
 - `src/platform/VersionManager/**` remains read-only compatibility unless a later authoritative contract changes it.

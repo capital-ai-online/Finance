@@ -10,12 +10,12 @@
 
 `docs/projects/` answers **which project folder owns which PVC unit**. It does not create technical Authority, replace ADR/ESS/control identities, or relocate working runtime components.
 
-Development execution resolves through `/AGENTS.md@CURRENT_MAIN` and the exact eight-policy `CAPITAL_AI_AUTONOMOUS_DEVELOPMENT_GUIDELINE`. Accepted ADR/ESS/domain/security/compliance/data/scoring and provider controls remain subject-matter constraints consumed by that guideline; they do not create a second development lifecycle.
+Development execution resolves only through `/AGENTS.md@CURRENT_MAIN`. Accepted ADR/ESS/domain/security/compliance/data/scoring and provider controls remain subject-matter constraints when required by that trust root; they do not create a second development lifecycle or instruction surface.
 
 ## Mandatory separation
 
 ```text
-/AGENTS.md@CURRENT_MAIN + exact eight development policies
+/AGENTS.md@CURRENT_MAIN
   -> how development execution is resolved
 
 docs/projects/<project>/ + PROJECT_VALUE_CHAIN.md
@@ -49,7 +49,7 @@ The `PVC-*` namespace is intentionally distinct from the existing technical fina
 
 Cross-cutting projects such as `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FE`, `CAPITAL-AI-SEO` and `CAPITAL-AI-SOCIAL` own no productive PVC stage solely because they validate, constrain, present or distribute outputs.
 
-Execution is owner-correct. `GOV-DYNAMIC-SCOPE-RESOLUTION-02` may classify a relationship as `foreign_execution`, but work whose Authority or implementation belongs to another project is not silently taken over locally; it produces the owner-correct handover defined by `GOV-EVIDENCE-EVENTMESH-HANDOVER-07`. No handover transfers Primary PVC or Domain ownership.
+Execution remains owner-correct under `/AGENTS.md@CURRENT_MAIN`. Work whose Authority or implementation belongs to another project is not silently taken over locally; it produces the owner-correct handover defined by the trust root. No handover transfers Primary PVC or Domain ownership.
 
 ## Canonical project-folder routing
 
@@ -74,10 +74,10 @@ Project-folder routing is an organizational mapping only. It does not create tec
 | `CAPITAL-AI-SEO` | cross-cutting; no productive PVC | `docs/projects/seo/` | `seo` | SEO | ✒️ | `#E8C464` | `CAPITAL-AI-SEO` | present |
 | `CAPITAL-AI-SOCIAL` | cross-cutting; no productive PVC | `docs/projects/social-media/` | `social-media` | Social Media | ♡ | `#E8C45C` | `CAPITAL-AI-SOCIAL` | present |
 
-The branch slug is derived from the canonical project-folder basename where a development policy requires project-identifiable branch metadata. Domain/runtime/normative artifacts remain at their existing canonical paths unless an owner-scoped migration proves relocation is required.
+The branch slug is derived from the canonical project-folder basename where `/AGENTS.md@CURRENT_MAIN` requires project-identifiable branch metadata. Domain/runtime/normative artifacts remain at their existing canonical paths unless an owner-scoped migration proves relocation is required.
 
 Presentation consumers MUST resolve `Project`, `Canonical project folder`, `Display name`, `Symbol` and `Color` from exactly one routing row in this file. Source and Target project presentation MUST each resolve independently through this same mapping source. Consumers fail closed on missing/duplicate project rows or malformed presentation metadata. Color MUST use exact `#RRGGBB` form and MUST never be the sole semantic cue. No second project-presentation registry may be introduced.
 
 ## Procedural authority boundary
 
-Historical post-PVC routing, DevelopmentChain, foreign-execution, PR/CI and handoff overlays are non-authorizing for development execution after activation of the eight-policy suite. This file plus `PROJECT_VALUE_CHAIN.md` remains the organizational mapping surface; execution procedure comes only from `/AGENTS.md` and the exact eight policies.
+Historical post-PVC routing, DevelopmentChain, foreign-execution, PR/CI and handoff overlays are non-authorizing for development execution. This file plus `PROJECT_VALUE_CHAIN.md` remains the organizational mapping surface; execution procedure comes only from `/AGENTS.md@CURRENT_MAIN`.

@@ -7,7 +7,7 @@
 **Primary Productive PVC ownership:** `[]`  
 **Coverage:** `PVC-01` through `PVC-18` as Security overlay only  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Development policy:** `GOV-DYNAMIC-SCOPE-RESOLUTION-02` (`SECURITY_FOUNDATION_FIRST`) plus the remaining exact eight-policy suite  
+**Project direction:** `SECURITY_FOUNDATION_FIRST` from `/AGENTS.md` section 3  
 **Component contract:** `ESS-0006 v1.2.0`  
 **Status:** ACTIVE PROJECT EXECUTION PROJECTION — NON-AUTHORIZING
 
@@ -27,7 +27,7 @@ Threat
 → User
 ```
 
-This is the `SECURITY_FOUNDATION_FIRST` exception defined by `GOV-DYNAMIC-SCOPE-RESOLUTION-02`. User-visible Top-Layer prioritization cannot override Security controls or Security Authority.
+This is the `SECURITY_FOUNDATION_FIRST` project-direction rule defined by `/AGENTS.md@CURRENT_MAIN`. User-visible Top-Layer prioritization cannot override Security controls or Security Authority.
 
 CAPITAL-AI-SEC owns **no productive `PVC-*` stage**. A Security finding does not transfer the affected project's PVC, Domain or implementation ownership to Security. If remediation implementation belongs to another project, SEC creates an owner-correct handover rather than silently taking over the foreign implementation.
 
@@ -39,9 +39,9 @@ CAPITAL-AI-SEC owns **no productive `PVC-*` stage**. A Security finding does not
 - [Technical Security component](../../../src/platform/Security/README.md) — reusable technical Security implementation boundary under ESS-0006.
 - [Project Value Chain](../PROJECT_VALUE_CHAIN.md) — canonical `PVC-01..PVC-18` Primary Owners.
 - [Project folder mapping](../README.md) — canonical folder-to-PVC connection and preserved presentation metadata.
-- [Development policies](../../governance/development-policies/) — sole repository development-execution guideline.
+- [Agent trust root](../../../AGENTS.md) — sole repository-wide AI/chat/development instruction surface.
 
-`docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` and `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` are historical compatibility identities only and grant no current Security remediation delegation after activation of the eight-policy suite.
+The former standalone DevelopmentChain execution policy and its stable historical authority identity are compatibility/history only and grant no current Security remediation delegation outside `/AGENTS.md@CURRENT_MAIN`.
 
 ## Ownership and implementation boundary
 
@@ -74,11 +74,11 @@ Security finding / requirement
 → Threat + Risk + Trust + Control analysis
 → resolve CURRENT_MAIN project / PVC / Primary Owner / applicable contracts
 → is implementation canonically SEC-owned?
-  → YES: execute as an atomic SEC work package under the eight-policy suite
+  → YES: execute as an atomic SEC work package under /AGENTS.md@CURRENT_MAIN
   → NO: materialize owner-correct handover to the implementation owner
 → implementation evidence
 → independent Security verification / evidence
-→ PR/review/merge gates from GOV-PR-CLOSURE-AUTHORITY-08
+→ PR/review/merge gates from /AGENTS.md@CURRENT_MAIN
 ```
 
 The handover is correlation-ID-based and includes exact trigger, completed Security scope, remaining implementation scope, dependencies, evidence, exit gate and continuation condition. A foreign-located file alone neither transfers ownership to SEC nor blocks SEC from analyzing/verifying it.
