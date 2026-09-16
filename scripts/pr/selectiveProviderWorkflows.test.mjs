@@ -5,19 +5,19 @@ import test from 'node:test';
 const CHECKOUT_ACTION_SHA = 'fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09';
 const OLD_CHECKOUT_ACTION_SHA = '08c6903cd8c0fde910a37f88322edcfb5dd907a8';
 const CODEQL_ACTION_SHA = 'b96794f015dfd88f77b49b1c93e0fa7110f94c63';
-const LEGACY_GUARD = 'Changed-file name contains CR/LF; legacy trusted-base planner compatibility cannot encode it safely.';
+const GITHUB_SCRIPT_SHA = '3a2844b7e9c422d3c10d287c895573f7108da1b3';
 
-test('selective CodeQL is activation-safe while GitHub Default Setup is active', async () => {
+test('selective CodeQL has no automatic PR/push/schedule fan-out', async () => {
   const workflow = await fs.readFile('.github/workflows/selective-codeql.yml', 'utf8');
+
+  assert.match(workflow, /\bon:\s*\n\s+workflow_dispatch\s*:/);
+  assert.doesNotMatch(workflow, /^\s{2}pull_request\s*:/m);
+  assert.doesNotMatch(workflow, /^\s{2}push\s*:/m);
+  assert.doesNotMatch(workflow, /^\s{2}schedule\s*:/m);
   assert.match(workflow, /dynamic\/github-code-scanning\/codeql/);
   assert.match(workflow, /default_setup_active != 'true'/);
   assert.match(workflow, /scripts\/pr\/planPrValidation\.mjs/);
-  assert.match(workflow, /github\.event\.pull_request\.base\.sha/);
-  assert.match(workflow, /changed_files_json/);
-  assert.match(workflow, /CHANGED_FILES_JSON:/);
-  assert.match(workflow, /changed_files_legacy/);
-  assert.match(workflow, /CHANGED_FILES:/);
-  assert.match(workflow, new RegExp(LEGACY_GUARD.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(workflow, /CI_FORCE_FULL:\s*'true'/);
   assert.doesNotMatch(workflow, /\bpull_request_target\s*:/);
   assert.equal(
     workflow.match(new RegExp(`actions/checkout@${CHECKOUT_ACTION_SHA}`, 'g'))?.length,
@@ -28,53 +28,44 @@ test('selective CodeQL is activation-safe while GitHub Default Setup is active',
   assert.match(workflow, new RegExp(`github/codeql-action/analyze@${CODEQL_ACTION_SHA}`));
 });
 
-test('selective Copilot review plans only after successful CI from trusted workflow_run', async () => {
+test('Copilot code review has no automatic workflow-run or PR fan-out', async () => {
   const workflow = await fs.readFile('.github/workflows/selective-copilot-code-review.yml', 'utf8');
-  assert.match(workflow, /on:\s*# zizmor: ignore\[dangerous-triggers\]/);
-  assert.match(workflow, /\bworkflow_run\s*:/);
-  assert.match(workflow, /workflows:\s*\[CI\]/);
-  assert.match(workflow, /workflow_run\.repository\.full_name == github\.repository/);
-  assert.match(workflow, /workflow_run\.head_repository\.full_name == github\.repository/);
-  assert.match(workflow, /workflow_run\.path == '\.github\/workflows\/ci\.yml'/);
-  assert.match(workflow, /workflow_run\.conclusion == 'success'/);
-  assert.match(workflow, /copilot-pull-request-reviewer\[bot\]/);
-  assert.match(workflow, /scripts\/pr\/planPrValidation\.mjs/);
-  assert.match(workflow, /changed_files_json/);
-  assert.match(workflow, /CHANGED_FILES_JSON:/);
-  assert.match(workflow, /changed_files_legacy/);
-  assert.match(workflow, /CHANGED_FILES:/);
-  assert.match(workflow, new RegExp(LEGACY_GUARD.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  assert.match(workflow, /ref:\s*\$\{\{\s*steps\.pr\.outputs\.base_sha\s*\}\}/);
-  assert.match(workflow, new RegExp(`actions/checkout@${CHECKOUT_ACTION_SHA}`));
-  assert.doesNotMatch(workflow, new RegExp(OLD_CHECKOUT_ACTION_SHA));
+
+  assert.match(workflow, /\bon:\s*\n\s+workflow_dispatch\s*:/);
+  assert.match(workflow, /pr_number:/);
+  assert.doesNotMatch(workflow, /^\s{2}workflow_run\s*:/m);
+  assert.doesNotMatch(workflow, /^\s{2}pull_request\s*:/m);
+  assert.doesNotMatch(workflow, /^\s{2}push\s*:/m);
   assert.doesNotMatch(workflow, /\bpull_request_target\s*:/);
-  assert.doesNotMatch(workflow, /ref:\s*\$\{\{\s*steps\.pr\.outputs\.head_sha\s*\}\}/);
+  assert.doesNotMatch(workflow, /scripts\/pr\/planPrValidation\.mjs/);
+  assert.doesNotMatch(workflow, /actions\/checkout@/);
+  assert.match(workflow, /copilot-pull-request-reviewer\[bot\]/);
+  assert.match(workflow, new RegExp(`actions/github-script@${GITHUB_SCRIPT_SHA}`));
 });
 
-test('selective Copilot review separates read-only planning from write authority', async () => {
+test('manual Copilot workflow validates exact open same-repo main PR before write authority', async () => {
   const workflow = await fs.readFile('.github/workflows/selective-copilot-code-review.yml', 'utf8');
-  const planStart = workflow.indexOf('  plan:');
-  const requestStart = workflow.indexOf('  request-review:');
 
-  assert.ok(planStart >= 0, 'plan job missing');
-  assert.ok(requestStart > planStart, 'request-review job missing or precedes plan');
   assert.match(workflow, /permissions:\s*\{\}/);
+  assert.match(workflow, /pull-requests:\s*write/);
+  assert.doesNotMatch(workflow, /contents:\s*write/);
+  assert.match(workflow, /pr\.state !== 'open'/);
+  assert.match(workflow, /pr\.base\.ref !== 'main'/);
+  assert.match(workflow, /pr\.head\.repo\?\.full_name !== context\.payload\.repository\.full_name/);
+  assert.match(workflow, /review\.commit_id === pr\.head\.sha/);
+  assert.match(workflow, /github\.rest\.pulls\.requestReviewers/);
+});
 
-  const plan = workflow.slice(planStart, requestStart);
-  const request = workflow.slice(requestStart);
+test('planner exposes repository-wide NONE FOCUSED FULL profiles and keeps provider controls self-protecting', async () => {
+  const planner = await fs.readFile('scripts/pr/planPrValidation.mjs', 'utf8');
 
-  assert.match(plan, /contents:\s*read/);
-  assert.match(plan, /pull-requests:\s*read/);
-  assert.doesNotMatch(plan, /pull-requests:\s*write/);
-  assert.match(plan, /scripts\/pr\/planPrValidation\.mjs/);
-  assert.match(plan, /actions\/checkout@/);
-
-  assert.match(request, /needs:\s*\[plan\]/);
-  assert.match(request, /pull-requests:\s*write/);
-  assert.doesNotMatch(request, /contents:\s*write/);
-  assert.doesNotMatch(request, /scripts\/pr\/planPrValidation\.mjs/);
-  assert.doesNotMatch(request, /actions\/checkout@/);
-  assert.doesNotMatch(workflow, /permissions:\s*write-all/);
+  assert.match(planner, /validation_profile:\s*'none'/);
+  assert.match(planner, /validation_profile:\s*'full'/);
+  assert.match(planner, /const validationProfile =/);
+  assert.match(planner, /\? 'full'\s*:\s*'focused'/);
+  assert.match(planner, /\.github\/workflows\/selective-codeql\.yml/);
+  assert.match(planner, /\.github\/workflows\/selective-copilot-code-review\.yml/);
+  assert.match(planner, /Exact-snapshot reuse is intentionally owned by ci\.yml/);
 });
 
 test('trusted-base migration keeps JSON authoritative with a bounded legacy shadow', async () => {

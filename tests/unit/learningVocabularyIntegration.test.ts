@@ -27,6 +27,7 @@ describe('Capital-AI Learning Platform integration', () => {
 
   it('wires one Learning tab through the app-owned navigation and shared dashboard view router', () => {
     const dashboard = source('src/components/Dashboard.tsx');
+    const dashboardHeader = source('src/app/dashboard/DashboardHeader.tsx');
     const dashboardNavigation = source('src/app/dashboard/DashboardNavigation.tsx');
     const dashboardNavigationModel = source('src/app/dashboard/dashboardNavigation.ts');
     const dashboardViewRouter = source('src/app/dashboard/DashboardViewRouter.tsx');
@@ -35,7 +36,9 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(dashboard).toContain("import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter'");
     expect(dashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
     expect(dashboard).toContain("useState<DashboardView>('dashboard')");
-    expect(dashboard).toContain('<DashboardNavigation');
+    expect(dashboard).toContain('<DashboardHeader');
+    expect(dashboard).not.toContain('<DashboardNavigation');
+    expect(dashboardHeader).toContain('<DashboardNavigation');
     expect(dashboardViews).toContain("'learning'");
     expect(dashboardNavigationModel).toContain("{ view: 'learning', label: 'Learning', section: 'hub' }");
     expect(dashboardNavigation).toContain('getDashboardNavigationItems(section).map');

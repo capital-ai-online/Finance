@@ -7,6 +7,14 @@
  * repository test scope plus advisory CodeQL / automated-code-review modes.
  * Human/CODEOWNER review and merge authority are never reduced by this file.
  *
+ * Repository-wide execution profile contract:
+ *   none    — no software-test execution is required for the proven scope.
+ *   focused — execute only the deterministically impacted validation groups.
+ *   full    — execute the complete fail-closed validation scope.
+ * Exact-snapshot reuse is intentionally owned by ci.yml and is not a fourth
+ * planner state: REUSE is valid only for an already successful identical
+ * (workflow, PR, head SHA, base SHA) snapshot.
+ *
  * A PR must execute the planner from its trusted base/main policy revision.
  * Unknown non-documentary paths fail closed to full tests/review and full
  * CodeQL scope. Pushes to main remain force-full.
@@ -97,7 +105,9 @@ export function isGlobalTestTrigger(filePath) {
     || p === 'scripts/automation/runQualityExecution.ts'
     || p === 'scripts/pr/classifyPrScope.mjs'
     || p === 'scripts/pr/planPrValidation.mjs'
-    || p === '.github/workflows/ci.yml';
+    || p === '.github/workflows/ci.yml'
+    || p === '.github/workflows/selective-codeql.yml'
+    || p === '.github/workflows/selective-copilot-code-review.yml';
 }
 
 function inferCodeqlLanguages(files) {
@@ -127,6 +137,7 @@ export function planChangedFiles(files, options = {}) {
 
   if (options.forceFull) {
     return {
+      validation_profile: 'full',
       vitest_mode: 'full',
       node_pr_tests: true,
       node_systemadmin_tests: true,
@@ -140,6 +151,7 @@ export function planChangedFiles(files, options = {}) {
 
   if (normalized.length === 0 || normalized.every(isDocsPath)) {
     return {
+      validation_profile: 'none',
       vitest_mode: 'none',
       node_pr_tests: false,
       node_systemadmin_tests: false,
@@ -173,6 +185,10 @@ export function planChangedFiles(files, options = {}) {
     || isPythonPath(file),
   );
   const hasUnknown = !knownSelective;
+
+  const validationProfile = hasGlobalTestTrigger || hasHighRisk || hasUnknown
+    ? 'full'
+    : 'focused';
 
   let vitestMode = 'none';
   if (hasGlobalTestTrigger || hasHighRisk || hasUnknown) {
@@ -219,6 +235,7 @@ export function planChangedFiles(files, options = {}) {
   }
 
   return {
+    validation_profile: validationProfile,
     vitest_mode: vitestMode,
     node_pr_tests: nodePrTests,
     node_systemadmin_tests: nodeSystemadminTests,
@@ -278,7 +295,7 @@ function main() {
   }
 
   const plan = planChangedFiles(files, { forceFull });
-  console.log(`[planPrValidation] vitest=${plan.vitest_mode} codeql=${plan.codeql_mode} review=${plan.automated_code_review_mode} files=${forceFull ? '(force-full)' : files.length}`);
+  console.log(`[planPrValidation] profile=${plan.validation_profile} vitest=${plan.vitest_mode} codeql=${plan.codeql_mode} review=${plan.automated_code_review_mode} files=${forceFull ? '(force-full)' : files.length}`);
   console.log(JSON.stringify(plan, null, 2));
   writeGithubOutput(plan);
 }
