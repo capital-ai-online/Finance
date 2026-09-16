@@ -105,7 +105,7 @@ A step marked REQUIRED for the concrete work package cannot be skipped unless an
 22. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
 23. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
 24. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
-25. **Copyable end-of-pass handoff.** At the end of every chat-governed execution pass, report at most the two highest-priority Roadmap/workaround continuation items with objective exit gates; generic merge/approval/CI boilerplate remains gate/evidence status.
+25. **Copyable end-of-pass handoff.** At the end of every chat-governed execution pass, report at most the two highest-priority Roadmap/workaround continuation items with objective exit gates. The `NÄCHSTE SCHRITTE` queue is always a fenced plaintext `text` code block with semantic emoji in its heading, numbered items and exit-gate labels; generic merge/approval/CI boilerplate remains gate/evidence status.
 26. **Post-PR handoff.** After each created PR/Draft PR, report branch/PR-head, main baseline, correlation and validation/open-gate state. The next dependent automated PR stays held until predecessor terminal outcome.
 27. **Bounded ADR-0104 project-set switching.** An ACTIVE ADR-0104 session may switch only within its valid bounded project set and still uses one project-scoped branch/PR per work item; Human merge remains separate.
 28. **Bounded Security remediation delegation.** `CAPITAL-AI-SEC` may implement under `CTRL-SEC-BOUNDED-REMEDIATION-001` when the immediate purpose is Security remediation and no foreign business/domain authority or protected mutation is assumed.
@@ -230,17 +230,21 @@ The continuation queue is derived first from the affected project's current Road
 
 The queue MUST NOT be filled with generic lifecycle boilerplate such as `merge the PR`, `approve the PR`, `run hosted CI` or `run tests`. Those remain visible where relevant as authority, validation or open-gate status.
 
-Use:
+The `NÄCHSTE SCHRITTE` queue is repository- and web-application-wide chat presentation. Whenever it is shown, it MUST use a fenced plaintext `text` code block with semantic emoji in the heading, every numbered step and every exit-gate label. Rich UI/editor blocks, cards or tables MUST NOT replace this copyable plaintext representation.
+
+Use exactly this presentation shape:
 
 ```text
-NÄCHSTE SCHRITTE
-1. <highest-priority Roadmap item or evidence-backed workaround>
-   Exit Gate: <objective completion condition>
-2. <optional second Roadmap item or workaround>
-   Exit Gate: <objective completion condition>
+🧭 NÄCHSTE SCHRITTE
+
+1. 🔹 <highest-priority Roadmap item or evidence-backed workaround>
+   🎯 Exit Gate: <objective completion condition>
+
+2. 🔹 <optional second Roadmap item or workaround>
+   🎯 Exit Gate: <objective completion condition>
 ```
 
-When no immediately actionable Roadmap/workaround item remains, the block states `Keine weiteren unmittelbar umsetzbaren Roadmap-/Workaround-Schritte identifiziert.`.
+When no immediately actionable Roadmap/workaround item remains, the same fenced plaintext block uses the `🧭 NÄCHSTE SCHRITTE` heading and states `✅ Keine weiteren unmittelbar umsetzbaren Roadmap-/Workaround-Schritte identifiziert.`.
 
 When a protected continuation requires an exact Human/Owner response, that response may be rendered in its own neutral copyable code block. Pure Owner authority responses MUST NOT be labeled `⚙️🤓 MANUELL`.
 
