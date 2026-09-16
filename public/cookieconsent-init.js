@@ -5,6 +5,47 @@
     console.error('[Consent] CookieConsent unavailable; optional services remain disabled.');
     return;
   }
+
+  var requiredStyleIds = [
+    'cookieconsent-vendor-style',
+    'cookieconsent-theme-style',
+  ];
+
+  function waitForStylesheet(id) {
+    var link = document.getElementById(id);
+    if (!link) {
+      return Promise.reject(new Error('[Consent] Required stylesheet missing: ' + id));
+    }
+    if (link.sheet) return Promise.resolve();
+
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      function finish(error) {
+        if (settled) return;
+        settled = true;
+        link.removeEventListener('load', onLoad);
+        link.removeEventListener('error', onError);
+        if (error) reject(error);
+        else resolve();
+      }
+      function onLoad() { finish(); }
+      function onError() {
+        finish(new Error('[Consent] Required stylesheet failed to load: ' + id));
+      }
+
+      link.addEventListener('load', onLoad);
+      link.addEventListener('error', onError);
+
+      // Close the race where the sheet becomes ready between the first check
+      // and listener registration.
+      if (link.sheet) finish();
+    });
+  }
+
+  function waitForConsentStyles() {
+    return Promise.all(requiredStyleIds.map(waitForStylesheet));
+  }
+
   // FE-CONSENT-V3: new cookie/revision never imports a CookieHub choice.
   var configuration = {
     mode: 'opt-in',
@@ -84,12 +125,15 @@
     document.body.appendChild(button);
   }
   try {
-    Promise.resolve(consent.run(configuration)).then(function () {
-      installSettingsButton();
-      window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
-    }).catch(function (error) {
-      console.error('[Consent] Initialization failed; optional services remain disabled.', error);
-    });
+    waitForConsentStyles()
+      .then(function () { return consent.run(configuration); })
+      .then(function () {
+        installSettingsButton();
+        window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
+      })
+      .catch(function (error) {
+        console.error('[Consent] Initialization failed; optional services remain disabled.', error);
+      });
   } catch (error) {
     console.error('[Consent] Initialization failed; optional services remain disabled.', error);
   }

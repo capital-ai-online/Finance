@@ -18,7 +18,11 @@
   --cc-toggle-on-bg: var(--color-brand-primary, Highlight);
   --cc-toggle-readonly-bg: var(--color-text-secondary, GrayText);
 }
-#cc-main button { min-height: 44px; }
+#cc-main button,
+#capital-ai-cookie-settings {
+  min-height: 44px;
+  touch-action: manipulation;
+}
 #cc-main button:focus-visible, #capital-ai-cookie-settings:focus-visible {
   outline: 3px solid var(--color-brand-primary, Highlight);
   outline-offset: 3px;
@@ -28,7 +32,6 @@
   right: max(12px, env(safe-area-inset-right));
   bottom: max(12px, env(safe-area-inset-bottom));
   z-index: 1000;
-  min-height: 44px;
   padding: 10px 14px;
   border: 1px solid var(--color-border, ButtonBorder);
   border-radius: 8px;
