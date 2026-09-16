@@ -2,19 +2,19 @@
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
   "version": "0.6.0-brand-manifest-v6.2",
-  "description": "Canonical CAPITAL-AI design-token registry. Dark Black and AIF Gold are the primary brand pair. Cyan is not a primary branding color and remains available only for semantic market/data visualization roles; external design documents are provenance inputs, not runtime authorities.",
+  "description": "Canonical CAPITAL-AI design-token registry. Vader Black and Capital Gold are the primary brand pair. Cyan remains available only for semantic market/data visualization roles; external design documents are provenance inputs, not runtime authorities.",
   "provenance": {
     "brandManifestVersion": "6.2",
     "sourceType": "owner-supplied-google-drive-artifact-plus-owner-amendments",
     "sourceFileId": "1k57e2jFpMnJMVjWK2tB8vSvZM7rUrwcP",
     "sourceSha256": "e4a6f4247fc8dd4aae9414bb3a5964bd248328592b7f3907eb04899d537d88de",
-    "ownerAmendment": "2026-08-26: Dark Black (#08080C) and AIF Gold (#F9BF21) are the primary brand pair. Cyan is removed from primary branding and retained only for semantic market/data visualization.",
+    "ownerAmendment": "2026-09-14: Universe presentation palette materialized: Krypto Purple (#8D26FF), Deadly Green (#44DE88), Pluto Blue (#60A5FA), StarTroops Magenta (#E879F9); Bond presentation disabled while technical compatibility identifiers remain; Meteor Amber remains proposal-only.",
     "ingestedAt": "2026-08-26",
     "runtimeAuthority": "docs/frontend/design-tokens.json",
     "webProjection": "src/index.css @theme"
   },
   "color": {
-    "background": { "value": "#08080C", "type": "color", "css": "--color-background", "note": "Dark Black / primary brand canvas" },
+    "background": { "value": "#08080C", "type": "color", "css": "--color-background", "note": "Vader Black / primary brand canvas" },
     "foreground": { "value": "#FFFFFF", "type": "color", "css": "--color-foreground" },
     "border": { "value": "#252529", "type": "color", "css": "--color-border" },
     "text": {
@@ -22,19 +22,19 @@
       "secondary": { "value": "#A1A1AA", "type": "color", "css": "--color-text-secondary" }
     },
     "brand": {
-      "primary": { "value": "#F9BF21", "type": "color", "css": "--color-brand-primary", "note": "AIF Gold / primary focus, premium brand anchor and primary brand color" },
+      "primary": { "value": "#F9BF21", "type": "color", "css": "--color-brand-primary", "note": "Capital Gold / primary focus, premium brand anchor and primary brand color" },
       "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Secondary AI/intelligence accent; not a primary brand color" },
-      "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-brand-cyan", "deprecated": true, "note": "Deprecated compatibility alias. Cyan is no longer a brand color; legacy brand-cyan resolves to AIF Gold. Use semantic.info, assetClass.crypto, factor.technical or status info roles for cyan data visualization." },
+      "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-brand-cyan", "deprecated": true, "note": "Deprecated compatibility alias. Cyan is no longer a brand color; legacy brand-cyan resolves to Capital Gold. Use semantic.info or other explicit semantic roles for cyan data visualization." },
       "success": { "value": "#44DE88", "type": "color", "css": "--color-brand-success", "note": "Semantic compatibility role; not a primary brand color" },
       "danger": { "value": "#F87171", "type": "color", "css": "--color-brand-danger", "note": "Semantic compatibility role; not a primary brand color" }
     },
     "assetClass": {
-      "crypto": { "value": "#22D3EE", "type": "color", "css": "--color-asset-crypto", "note": "Crypto / digital-asset visualization; semantic only, not branding" },
-      "stock": { "value": "#44DE88", "type": "color", "css": "--color-asset-stock" },
-      "index": { "value": "#60A5FA", "type": "color", "css": "--color-asset-index" },
-      "forex": { "value": "#8D26FF", "type": "color", "css": "--color-asset-forex" },
-      "commodity": { "value": "#F9BF21", "type": "color", "css": "--color-asset-commodity" },
-      "bond": { "value": "#E879F9", "type": "color", "css": "--color-asset-bond" }
+      "crypto": { "value": "#8D26FF", "type": "color", "css": "--color-asset-crypto", "note": "Krypto Purple / productive Crypto Universe presentation" },
+      "stock": { "value": "#44DE88", "type": "color", "css": "--color-asset-stock", "note": "Deadly Green / productive Stock Universe presentation" },
+      "index": { "value": "#60A5FA", "type": "color", "css": "--color-asset-index", "note": "Pluto Blue / productive Index Universe presentation" },
+      "forex": { "value": "#E879F9", "type": "color", "css": "--color-asset-forex", "note": "StarTroops Magenta / productive Forex Universe presentation" },
+      "commodity": { "value": "#F9BF21", "type": "color", "css": "--color-asset-commodity", "note": "Current productive compatibility value; Meteor Amber #FF9F1C remains OWNER-DESIGN-PROPOSAL and is not activated" },
+      "bond": { "value": "#E879F9", "type": "color", "css": "--color-asset-bond", "note": "Technical compatibility token only; Bond/Anleihen productive Frontend presentation is disabled" }
     },
     "score": {
       "best": { "value": "#44DE88", "type": "color", "css": "--color-score-best" },
@@ -59,7 +59,7 @@
         "muted": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-muted", "deprecated": true }
       },
       "neon": {
-        "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Legacy branding alias now resolves to AIF Gold. Cyan remains available only through semantic data-visualization roles." },
+        "cyan": { "value": "#F9BF21", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Legacy branding alias now resolves to Capital Gold. Cyan remains available only through semantic data-visualization roles." },
         "purple": { "value": "#8D26FF", "type": "color", "css": "--color-aif-neon-purple", "deprecated": true }
       }
     },
@@ -68,7 +68,7 @@
       "danger": { "value": "#F87171", "type": "color", "note": "REJECT / error / SELL semantics" },
       "warning": { "value": "#F9BF21", "type": "color", "note": "observe / partial" },
       "info": { "value": "#22D3EE", "type": "color", "note": "Market/data/live informational state. Semantic visualization only; never primary branding." },
-      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent; secondary to the Dark Black + AIF Gold brand pair" },
+      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent; secondary to the Vader Black + Capital Gold brand pair" },
       "muted": { "value": "#A1A1AA", "type": "color", "note": "secondary text" },
       "status": {
         "ready": { "value": "#44DE88", "type": "color" },
@@ -169,7 +169,12 @@
       "buySemanticToken": "color.score.best",
       "sellSemanticToken": "color.score.worst",
       "neutralSemanticToken": "color.score.warning",
-      "strengths": ["strong", "medium", "weak"]
+      "strengths": ["strong", "medium", "weak"],
+      "intensity": {
+        "strong": { "foreground": "100%", "background": "18%", "border": "45%" },
+        "medium": { "foreground": "100%", "background": "10%", "border": "30%" },
+        "weak": { "foreground": "100%", "background": "5%", "border": "18%" }
+      }
     }
   }
 }

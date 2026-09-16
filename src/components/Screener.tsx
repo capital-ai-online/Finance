@@ -84,7 +84,13 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
       })
       .then(data => {
         if (data && Array.isArray(data)) {
-          const nonVariants = data.filter((asset: any) => asset?.name && !asset.name.toLowerCase().includes('variant'));
+          // Bond remains available to technical/domain contracts, but is disabled at
+          // the productive Frontend presentation boundary.
+          const nonVariants = data.filter((asset: any) =>
+            asset?.name &&
+            asset?.type !== 'bond' &&
+            !asset.name.toLowerCase().includes('variant'),
+          );
           setAssets(nonVariants);
         } else {
           console.warn('Screener: received invalid non-array market data');
