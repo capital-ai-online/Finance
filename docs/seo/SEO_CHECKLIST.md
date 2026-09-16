@@ -1,9 +1,9 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project:** CAPITAL-AI  
-**Stand:** 16.09.2026 — current-main owner-return reconciliation  
-**Korrelationsbasis:** `main@0c65ebc5c9d685f29db2a3e8a9f9a44e7aa619b5`  
+**Stand:** 16.09.2026 — GSC provider-read + URL-Inspection reconciliation  
+**Korrelationsbasis:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`  
 **Repository:** `capital-ai-online/Finance`  
-**GOOGLE_VISIBLE_PASS:** **NOT RUN / CONDITION_GATED — kein frischer Google-Provider-Read in diesem Pass**
+**GOOGLE_VISIBLE_PASS:** **PARTIAL — GSC READ_VERIFIED + URL INSPECTION 5/5 VERIFIED; `/learning-platform` laut Google noch nicht indexiert; Search Analytics/GA4/GenAI-Metriken weiter offen**
 
 ## 1. Crawling & Indexierung
 - [x] robots.txt / sitemap.xml Repository-Baseline vorhanden
@@ -11,14 +11,17 @@
 - [x] echte 404 für unbekannte URLs vorhanden
 - [x] **SoTA Handoff spezifiziert:** Public-Route-Inventar = Sitemap = Canonical-/Prerender-/Server-Allowlist als deterministisches Regression-Gate — `SEO_TECH_GATE_SCHEMA_HANDOFF_2026-09-11.md`
 - [x] Owner-Implementierung beweist exakte Set-Gleichheit von `routeSeo`, Sitemap, Prerender und `PUBLIC_SPA_PATHS` — Human-merged PR #893; `tests/unit/seoPublicRouteSitemap.test.ts` liegt auf current main
-- [ ] keine widersprüchlichen Canonicals vor/nach JavaScript-Rendering — deployed/browser/provider Evidence offen
+- [ ] keine widersprüchlichen Canonicals vor/nach JavaScript-Rendering — deployed/browser readback offen; Google URL Inspection liegt für 5/5 Sitemap-URLs vor
 - [ ] Sitemap enthält ausschließlich kanonische, indexierbare HTTP-200-URLs — Repository-Set-Gleichheit belegt; frischer deployed HTTP-200 Readback offen
 - [ ] robots blockiert keine für Rendering/Indexierung nötigen First-party-Ressourcen — frischer deployed Readback offen
 - [x] Application-only Routen (`/login`, `/dashboard`, `/media-studio`) gelangen nie in Sitemap/Public-Prerender — durch current-main Regression abgedeckt
+- [x] reale Google URL Inspection für alle 5/5 then-current Sitemap-URLs ausgeführt; jeder Aufruf lieferte einen echten Provider-Response
+- [ ] `/learning-platform` indexiert — reale Google-Antwort: Verdict `NEUTRAL`, Coverage `Discovered - currently not indexed`; als Indexierungsfinding weiter offen
 
 ## 2. Search Console + GA4 Measurement
 - [x] reproduzierbarer GSC-/GA4-Read-Vertrag materialisiert — `SEO_METRICS_AI_VIS_READ_BASELINE_2026-09-11.md`
-- [ ] read-only GSC-Snapshot: Clicks, Impressions, CTR, Queries, Pages, Country, Device — `NOT RUN / CONDITION_GATED`
+- [x] Search Console Property Read: `READ_VERIFIED` für `sc-domain:capital-ai.online`; `gsc_list_sites` bestätigte `siteRestrictedUser`
+- [ ] read-only GSC-Snapshot: Clicks, Impressions, CTR, Queries, Pages, Country, Device — `NOT RUN / CONDITION_GATED`; Property Read + URL Inspection ersetzen keine Search-Analytics-Abfrage
 - [ ] GA4 Organic Search Sessions / Key Events / Landingpages aus echter Read-Evidence — `CONFIGURATION_NOT_OBSERVED / NOT RUN`
 - [x] GSC/GA4-Korrelationsregel definiert: Trends gemeinsam bewerten; absolute Zahlen nicht künstlich angleichen
 - [ ] Search Console Generative-AI Performance Report lesen — `NOT RUN / CONDITION_GATED`
@@ -35,12 +38,12 @@
 - [ ] Structured Data nur bei sichtbarem, echtem Inhalt einsetzen — fachliche Surface-Prüfung bleibt bei jeder Erweiterung erforderlich
 - [ ] Product/Article/Video/etc. nur bei passender Surface — aktuell nicht Teil des beabsichtigten Top-Level-Graphen; künftige Erweiterungen owner-/surface-spezifisch prüfen
 - [x] `FAQPage` **nicht** als künftiges Google-Rich-Result-Ziel führen (2026 deprecated); aktuelle Regression schließt `FAQPage` aus
-- [ ] Post-Deploy Rich-Results-/URL-Inspection-Evidence dokumentieren, ohne Erscheinungsgarantie zu behaupten
+- [x] URL-Inspection-Evidence für alle 5/5 Sitemap-URLs liegt als echte Providerantwort vor; Rich-Results-/Mobile-/Canonical-Detailfelder werden nur dort als belegt behandelt, wo sie im jeweiligen Google-Response tatsächlich zurückgegeben wurden
 
 ## 4. Content / Topic System
 - [x] Seed Topic Map in 0002.16 angelegt
 - [x] Content-Brief-Contract: Intent, Ziel-URL, first-party Evidence, Who/How/Why, Reviewer, interne Links, Media, Messgröße, Refresh-Gate
-- [ ] echte GSC-/Keyword-Daten zur Priorisierung einlesen
+- [ ] echte GSC-/Keyword-Daten zur Priorisierung einlesen — Property Read und URL Inspection allein reichen dafür nicht
 - [ ] erstes Pilot-Brief nach Business Value + Search Intent + Evidence priorisieren
 - [ ] Content Decay / Cannibalization / Merge-Refresh-Prune-Backlog aus echten Daten
 
@@ -101,25 +104,29 @@
 - [ ] höchstens zwei unmittelbar priorisierte Folgeaktionen ausgeben
 
 ## 13. Provider / Governance Gates
-- [ ] Search Console Read: `NOT RUN / CONDITION_GATED` bis ein echter least-privileged Google-Response auf dem tatsächlichen Execution Host vorliegt
+- [x] Search Console Property Read: `READ_VERIFIED` auf realem Codex-Cloud-Host über direkten STDIO-MCP-Pfad; `sc-domain:capital-ai.online` gefunden
+- [x] Search Console URL Inspection: `SEO-CHAT-02 = VERIFIED`; 5/5 then-current kanonische Sitemap-URLs lieferten echte Google-Responses
+- [x] MCP Prozess-/Protokoll-Liveness: `PASS` via `gsc_mcp_server_ping` → `pong`; native Codex-Cloud-MCP-Tool-Injection bleibt separat `NOT_VERIFIED`
 - [ ] GA4 Read: `CONFIGURATION_NOT_OBSERVED / NOT RUN`; GSC-PASS darf keinen GA4-PASS implizieren
 - [x] Repository `.mcp.json` / Codex-Hostvertrag hält die gepinnte Google-MCP-Executable-Identität; Config != Provider-PASS
 - [x] Read-/Write-Plane getrennt (ESS-0014)
 - [x] Consent Source of Truth und Analytics-/AdSense-Grenzen bleiben durch die then-current Privacy-/Consent-Authority bestimmt; Human-merged PR #961 konkretisiert den datensparsamen Consent-Nachweis als Design/Evidence-Handoff, ohne diese SEO-Synchronisierung zu einer Consent- oder Provider-Mutation zu erweitern
 - [x] externe Google-Write-/Publish-/IAM-Mutationen nicht durch SEO-Roadmap autorisiert
+- [x] Credential-Verzeichnis `~/.capital-ai` Mode `0700`; GSC-Credential-Datei Mode `0600`; Inhalte/`private_key`/`client_email` im Providerlauf weder gelesen noch ausgegeben
 
 ## 14. Repository Correlation
 - [x] current repository `capital-ai-online/Finance`
-- [x] synchronisierte Arbeitsbaseline `main@0c65ebc5c9d685f29db2a3e8a9f9a44e7aa619b5`
-- [x] current `/AGENTS.md` Control Plane **2.11.0** vollständig gelesen; die Main-Drifts durch PR #960/#961 änderten `/AGENTS.md` und die SEO-Authority-Surfaces nicht
+- [x] synchronisierte Arbeitsbaseline `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`
+- [x] current `/AGENTS.md` Control Plane **2.11.0** vollständig gelesen
+- [x] `CAPITAL-AI-SEO` / `docs/projects/seo/` / Primary Owner `CAPITAL-AI-SEO`; cross-cutting, kein produktives PVC
+- [x] vor diesem Slice keine offenen Pull Requests auf GitHub
+- [x] historische Claim `SEO-D-BLOCK-2026-08-15` verweist auf Checklist/Runbook, aber der dort genannte Branch existiert nicht mehr; kein reproduzierbarer aktiver Writer
 - [x] PR #954 Human-gemerged; Codex-MCP-Hostvertrag liegt auf main
 - [x] PR #959 Human-gemerged; SEO-Automation ist lane-spezifisch wieder in der Roadmap-Ausführung aktiv
-- [x] PR #960 Human-gemerged; BB-2E änderte ausschließlich FE-/FE-Test-Surfaces und wurde in den SEO-Branch resynchronisiert
-- [x] PR #961 Human-gemerged; Consent-Evidence-Design änderte ausschließlich Compliance-Dokumente, wurde semantisch auf Analytics/Consent korreliert und anschließend in den SEO-Branch resynchronisiert
 - [x] PR #893 Human-gemerged; Public-Route-Regression liegt auf current main; PR-head CI/Governance/Container-Security waren erfolgreich
 - [x] PR #894 Human-gemerged; Structured-Data-Lifecycle-Regression liegt auf current main; PR-head CI/Governance/Container-Security waren erfolgreich
-- [x] offene Fremd-PRs #962 (Operations) und #963 (Governance) geprüft; kein Changed-File-/Owner-/Authority-Overlap mit diesem SEO-Dokument-Slice
 - [x] ADR-0035, ESS-0014, ADR-0082 und ADR-0084 bleiben für die betroffenen SEO-/Google-/Prerender-Grenzen maßgeblich; keine fremde Runtime-/Provider-Authority übernommen
-- [x] frühere Tech-Gate-Lücke „nur routeSeo ↔ sitemap“ ist durch PR #893 als Repository-Regression geschlossen; deployed/browser/provider Acceptance bleibt offen
-- [x] frühere Schema-Lücke „kein dedizierter vollständiger Graph-Lifecycle-Test“ ist durch PR #894 als Repository-Regression geschlossen; generated-output/provider Acceptance bleibt offen
+- [x] CODEX-02 `PASS`, CODEX-03 `PASS`, CODEX-04 direkte STDIO MCP-Liveness `PASS`, GSC-01 `READ_VERIFIED`, SEO-CHAT-02 `VERIFIED`
+- [x] `/learning-platform` als reales Providerfinding erhalten: Verdict `NEUTRAL`, Coverage `Discovered - currently not indexed`
+- [x] keine Detailwerte für die übrigen vier URL-Inspection-Responses synthetisiert; belegt ist 5/5 realer Provider-Response
 - [x] produktive FE/OPS-Änderungen bleiben außerhalb dieses SEO-owned Status-/Acceptance-Synchronisierungsslices
