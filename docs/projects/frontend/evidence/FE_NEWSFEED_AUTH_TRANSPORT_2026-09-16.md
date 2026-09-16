@@ -7,8 +7,9 @@
 **Primary Owner:** `CAPITAL-AI-FE`  
 **Upstream DATA owner:** `CAPITAL-AI-DATA / PVC-09..11`  
 **Branch:** `agent/frontend-newsfeed-auth-20260916`  
-**Start baseline:** `main@bea9373811202aef98f3ad8ffd53dba99d37c453`  
-**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING`
+**Initial baseline:** `main@bea9373811202aef98f3ad8ffd53dba99d37c453`  
+**Final correlation baseline:** `main@47a245be78b60494c0f57518f742bbb7923b70fa`  
+**State:** `IMPLEMENTED_ON_BRANCH / EXACT_HEAD_VALIDATION_PENDING`
 
 ## Finding
 
@@ -41,7 +42,7 @@ The article feed and both filter-metadata endpoints consume this helper. No enti
 
 ## REST provider coverage
 
-Current-main DATA already contains the complete currently authorized productive Newsfeed REST set:
+Current main already contains the complete currently authorized productive Newsfeed REST set:
 
 - `free-crypto-news` -> `cryptocurrency.cv` public/keyless REST article metadata;
 - `gdelt` -> GDELT DOC 2.0 keyless article discovery/provenance.
@@ -70,11 +71,16 @@ These URLs match current repository behavior: Google OAuth and email confirmatio
 
 The Google Cloud OAuth client itself remains an external provider-side verification surface: it should contain production origin `https://capital-ai.online` as an authorized JavaScript origin and the exact Supabase callback URL as an authorized redirect URI. This branch does not claim that Google-side state as independently verified and performs no Google/Supabase mutation.
 
-## Parallel-writer boundary
+## Parallel-writer / resync boundary
 
-Open FE Draft PR #1013 owns 16.08 appearance/Universe presentation surfaces including LandingPage, DashboardNavigation, PublicAnalysisWorkbench and LearningVocabulary. This branch does not modify any of those files. The Newsfeed change is a separate functional transport slice and does not assume or overwrite #1013.
+During implementation, FE PR #1013 and FINTECH PR #1012 were Human-merged. The branch was therefore resynchronized onto `main@47a245be78b60494c0f57518f742bbb7923b70fa` before final correlation. Their merged diffs do not touch `RealtimeAiNewsfeed`, `VerifiedNewsFeed`, the new authenticated news transport, its focused test or this evidence file.
 
-Open FINTECH Draft PR #1012 is likewise not a dependency and no FINTECH file is changed.
+Current open writers at the resync checkpoint are:
+
+- #1014 `CAPITAL-AI-SOCIAL` — documentary/evidence-only Social scope;
+- #1015 `CAPITAL-AI-DATA` — signed-history/value-semantics scope.
+
+Neither has file, namespace, provider-news, Frontend transport or Primary-Owner overlap with this slice.
 
 ## Regression guard
 
@@ -99,10 +105,10 @@ Open FINTECH Draft PR #1012 is likewise not a dependency and no FINTECH file is 
 
 ## Exit gate
 
-This bounded slice is ready for final current-main/open-writer correlation when:
+This bounded slice is ready for final exact-head PR correlation when:
 
 - all protected Newsfeed REST calls carry the same verified Supabase session token expected by the server;
 - no backend entitlement/security boundary is weakened;
 - all currently authorized news REST providers remain connected behind the existing evidence boundary;
 - no retired/paid provider is silently reactivated;
-- no files from the active GOV/FE design package are overwritten.
+- no parallel writer owns the changed transport files.
