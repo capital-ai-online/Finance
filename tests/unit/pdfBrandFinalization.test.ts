@@ -69,7 +69,7 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
     expect(tokenValue(tokens, 'color', 'surface', 'elevated')).toBe('#121215');
   });
 
-  it('keeps Dark Black + AIF Gold as the primary brand pair and Cyan semantic-only', () => {
+  it('keeps Vader Black + Capital Gold as the primary brand pair and Cyan semantic-only', () => {
     expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
     expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F9BF21');
     expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe(
@@ -79,7 +79,10 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
       tokenValue(tokens, 'color', 'brand', 'primary'),
     );
     expect(tokenValue(tokens, 'color', 'semantic', 'info')).toBe('#22D3EE');
-    expect(tokenValue(tokens, 'color', 'assetClass', 'crypto')).toBe('#22D3EE');
+    expect(tokenValue(tokens, 'color', 'assetClass', 'crypto')).toBe('#8D26FF');
+    expect(tokenValue(tokens, 'color', 'assetClass', 'crypto')).not.toBe(
+      tokenValue(tokens, 'color', 'semantic', 'info'),
+    );
     expect(tokenValue(tokens, 'color', 'factor', 'technical')).toBe('#22D3EE');
   });
 
