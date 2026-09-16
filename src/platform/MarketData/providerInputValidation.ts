@@ -1,8 +1,15 @@
-export const PROVIDER_INPUT_VALIDATION_CONTRACT_VERSION = 'provider-input-validation/1.0.0' as const;
+export const PROVIDER_INPUT_VALIDATION_CONTRACT_VERSION = 'provider-input-validation/1.1.0' as const;
 
 export type ProviderInputCapability = 'snapshot' | 'history';
 
 export type ProviderInputAdmissibility = 'ADMISSIBLE' | 'NON_ADMISSIBLE';
+
+/**
+ * Explicit history-value semantics prevent a price-only positivity rule from being
+ * weakened implicitly for signed financial observations such as sovereign yields.
+ * Callers must opt into SIGNED_VALUE; the default remains fail-closed POSITIVE_PRICE.
+ */
+export type ProviderHistoryValueSemantics = 'POSITIVE_PRICE' | 'SIGNED_VALUE';
 
 const ASSET_CLASSES = new Set([
   'crypto',
@@ -33,6 +40,7 @@ export interface ProviderHistoryInput {
   readonly correlationId: string | null;
   readonly evidenceRef: string | null;
   readonly points: readonly { readonly timestamp: string | null; readonly close: number | null }[] | null;
+  readonly valueSemantics?: ProviderHistoryValueSemantics;
 }
 
 export interface ProviderInputValidationResult {
@@ -51,8 +59,19 @@ function isIsoTimestamp(value: string | null | undefined): boolean {
   return present(value) && Number.isFinite(Date.parse(value as string));
 }
 
+function isFiniteNumber(value: number | null | undefined): boolean {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 function isPositiveFinite(value: number | null | undefined): boolean {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+  return isFiniteNumber(value) && Number(value) > 0;
+}
+
+function validHistoryValue(
+  value: number | null | undefined,
+  valueSemantics: ProviderHistoryValueSemantics,
+): boolean {
+  return valueSemantics === 'SIGNED_VALUE' ? isFiniteNumber(value) : isPositiveFinite(value);
 }
 
 function normalizeSymbol(value: string | null | undefined): string {
@@ -98,12 +117,18 @@ export function validateProviderHistoryInput(
   input: ProviderHistoryInput,
 ): ProviderInputValidationResult {
   const violations = identityViolations(input);
+  const valueSemantics = input.valueSemantics ?? 'POSITIVE_PRICE';
+  if (valueSemantics !== 'POSITIVE_PRICE' && valueSemantics !== 'SIGNED_VALUE') {
+    violations.push('valueSemantics');
+  }
   if (!isIsoTimestamp(input.receivedAt)) violations.push('receivedAt');
   if (!present(input.evidenceRef)) violations.push('evidenceRef');
   if (!Array.isArray(input.points) || input.points.length === 0) {
     violations.push('points');
-  } else {
-    const pointsValid = input.points.every((point) => isIsoTimestamp(point.timestamp) && isPositiveFinite(point.close));
+  } else if (valueSemantics === 'POSITIVE_PRICE' || valueSemantics === 'SIGNED_VALUE') {
+    const pointsValid = input.points.every(
+      (point) => isIsoTimestamp(point.timestamp) && validHistoryValue(point.close, valueSemantics),
+    );
     if (!pointsValid) violations.push('points');
   }
 
@@ -113,6 +138,8 @@ export function validateProviderHistoryInput(
     capability: 'history',
     admissibility: admissible ? 'ADMISSIBLE' : 'NON_ADMISSIBLE',
     violations,
-    reason: admissible ? 'provider-history-admissible' : `provider-history-invalid:${violations.join(',')}`,
+    reason: admissible
+      ? `provider-history-admissible:${valueSemantics.toLowerCase()}`
+      : `provider-history-invalid:${violations.join(',')}`,
   };
 }
