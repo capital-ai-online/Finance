@@ -4,13 +4,27 @@
 **Folder:** `docs/projects/compliance/`  
 **Role:** cross-cutting Compliance assessment and regulatory traceability  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #900/#901 contents folded into this file  
-**Baseline:** `main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`  
+**Reconciliation:** 2026-09-16 — REQ-COMP-033 OPS/Security owner returns reassessed  
+**Baseline:** `main@f6fccf64f78a1a29c3f98a9aa3adc8634d51b80d`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
 
 This file is the single active project execution projection. Dated active sidecar roadmaps and pointer-only `ROADMAP.md` files are removed after this fold. Archive/superseded copies remain as historical ledger and are not an execution source. Non-terminal pre-2026-09-13 work packages remain in force with their existing IDs, constraints, dependencies and exit gates unless a later section explicitly replaces them. Terminal `DONE/CLOSED/VERIFIED/RETIRED/SUPERSEDED` history is retained as ledger, not reopened. PR #900 remains a derived documentary source only.
+
+## Current return reassessment — REQ-COMP-033
+
+### COMP-REQ-033 — Audit / traceability current-return reassessment
+
+**State:** `MATERIALIZED_ON_BRANCH / MERGE_PENDING` on `agent/compliance-req-comp-033-reassessment-20260916`.
+
+Human-merged OPS PR #937 supplies strict source-owned evidence identity/correlation/freshness binding for `PVC-18`; Human-merged OPS PR #939 binds the productive Traceability → EventMesh returned event into that strict projection. Human-merged Security PR #956 independently verifies the unchanged DATA evidence-identity/freshness contract with fail-closed negative tests. Exact PR-head CI/Governance/Container Security evidence for #939 and #956 is successful.
+
+The previously retained `OPS-18 transport open` and `independent Security verification open` gates are therefore terminal for this bounded reassessment. Compliance records exactly one current status: `REQ-COMP-033 = PARTIALLY_COMPLIANT` for the evidenced repository path. The remaining limitation is exhaustive coverage: current evidence does not prove every protected action, every compliance-relevant event, every provider/runtime event or every future state. No new foreign remediation is invented from that limitation.
+
+Assessment evidence: `../../compliance/CAPITAL-AI-COMP/reports/REQ_COMP_033_CURRENT_RETURN_REASSESSMENT_2026-09-16.md`.
+
+**Exit:** OPS #937/#939 and SEC #956 are consumed in canonical COMP assessment/traceability surfaces; stale OPS/Security open-return gates are removed; foreign PVC/Domain/Security authority remains unchanged; no Compliance runtime/code delta is introduced.
 
 ## PR #900 / #901 work packages
 
@@ -47,11 +61,11 @@ Detailed Compliance state remains canonical in `docs/compliance/CAPITAL-AI-COMP/
 |---|---|
 | COMP-01 Applicability | EXECUTED_CONTINUOUS |
 | COMP-02 Requirements | DONE_ON_MAIN / CONTINUOUS |
-| COMP-03 Control Mapping | DONE_ON_MAIN |
-| COMP-04 Assessment | DONE_ON_MAIN |
+| COMP-03 Control Mapping | DONE_ON_MAIN / REQ-COMP-033 RETURNS RECORRELATED |
+| COMP-04 Assessment | DONE_ON_MAIN / CURRENT RETURN REASSESSED — REQ-COMP-033 PARTIALLY_COMPLIANT |
 | COMP-05 Findings | EXECUTED_CURRENT — COMP-GAP-008 resolved on main |
-| COMP-06 Evidence | EXECUTED_HELD — external gates retained |
-| COMP-07 Remediation Handoff | EXECUTED_HELD |
+| COMP-06 Evidence | EXECUTED_HELD — 6 evidence/owner-held inputs remain after REQ-COMP-033 reassessment |
+| COMP-07 Remediation Handoff | EXECUTED_HELD — REQ-COMP-033 OPS/Security return gates terminalized; other active handoffs retained |
 | COMP-08 Continuous Compliance | EXECUTED_CONTINUOUS |
 
 Missing legal/regulatory evidence is routed, never inferred as PASS.
