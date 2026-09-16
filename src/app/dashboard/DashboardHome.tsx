@@ -36,6 +36,7 @@ export interface DashboardPushNotificationInput {
 export interface DashboardHomeProps {
   userSession: UserSession;
   subscriptionTier: SubscriptionTier;
+  platformVersion: string;
   capital: number;
   preferredAssetClass: string;
   selectedSymbol: string;
@@ -73,11 +74,12 @@ function OrientationJumpNav({ onBuffetValueClick }: { onBuffetValueClick: () => 
  * BB-2G app-owned composition for the productive Dashboard Home surface.
  *
  * This component only composes existing feature facades and callbacks. It does
- * not own scoring, evidence, entitlement, IAM, or routing authority.
+ * not own scoring, evidence, entitlement, IAM, release-version or routing authority.
  */
 export function DashboardHome({
   userSession,
   subscriptionTier,
+  platformVersion,
   capital,
   preferredAssetClass,
   selectedSymbol,
@@ -125,7 +127,7 @@ export function DashboardHome({
             <div className="flex flex-wrap gap-2">
               <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-mono text-white/45">DSGVO-konform</span>
               <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-mono text-white/45">Keine Anlageberatung</span>
-              <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-mono text-white/45">Beta · Version 0.7.0</span>
+              <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-mono text-white/45">Beta · Version {platformVersion}</span>
             </div>
             <OrientationJumpNav onBuffetValueClick={() => onNavigate('buffet-value')} />
           </div>
