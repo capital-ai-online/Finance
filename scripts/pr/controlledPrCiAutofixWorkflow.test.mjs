@@ -23,16 +23,33 @@ test('runs only as a post-CI workflow_run controller and never uses pull_request
   assert.match(yaml, /^permissions: \{\}$/m);
 });
 
-test('contains no agentic provider execution or ad-hoc package installation', async () => {
+test('uses the existing Codex GitHub integration without installing an agentic runtime or API key', async () => {
   const yaml = await workflow();
-  assert.doesNotMatch(yaml, /copilot-requests/);
+  assert.match(yaml, /@codex fix the CI failures/);
+  assert.match(yaml, /needs\.plan\.outputs\.engine == 'codex-cloud'/);
+  assert.match(yaml, /needs\.plan\.outputs\.failure_class == 'typescript'/);
+  assert.doesNotMatch(yaml, /openai\/codex-action/);
+  assert.doesNotMatch(yaml, /OPENAI_API_KEY/);
   assert.doesNotMatch(yaml, /@github\/copilot/);
+  assert.doesNotMatch(yaml, /copilot-requests/);
   assert.doesNotMatch(yaml, /\bnpm install\b/);
-  assert.doesNotMatch(yaml, /CAPITAL_AI_CI_AUTOFIX_COPILOT_ENABLED/);
-  assert.match(yaml, /productive fixer: `deterministic-readme` only/);
 });
 
-test('keeps the write-capable job free of PR checkout and PR code execution', async () => {
+test('keeps Codex handoff free of PR checkout, dependency execution and repository write permission', async () => {
+  const yaml = await workflow();
+  const codex = jobSection(yaml, 'codex-handoff', 'deterministic-patch');
+  assert.match(codex, /issues: write/);
+  assert.doesNotMatch(codex, /contents: write/);
+  assert.doesNotMatch(codex, /actions\/checkout@/);
+  assert.doesNotMatch(codex, /\bnpm (?:ci|install|test|run)\b/);
+  assert.doesNotMatch(codex, /\bnpx\b/);
+  assert.match(codex, /PR head drift/);
+  assert.match(codex, /current main drift/);
+  assert.match(codex, /CAPITAL_AI_CI_AUTOFIX_CODEX_ATTEMPT/);
+  assert.match(codex, /no duplicate task created/);
+});
+
+test('keeps the deterministic write-capable job free of PR checkout and PR code execution', async () => {
   const yaml = await workflow();
   const apply = jobSection(yaml, 'apply-and-push');
   assert.match(apply, /contents: write/);
@@ -47,7 +64,7 @@ test('keeps the write-capable job free of PR checkout and PR code execution', as
   assert.match(apply, /force: false/);
 });
 
-test('binds patch, README blob and exact validated tree before privileged write', async () => {
+test('binds deterministic patch, README blob and exact validated tree before privileged write', async () => {
   const yaml = await workflow();
   const validate = jobSection(yaml, 'validate', 'apply-and-push');
   const apply = jobSection(yaml, 'apply-and-push');
@@ -59,6 +76,15 @@ test('binds patch, README blob and exact validated tree before privileged write'
   assert.match(apply, /EXPECTED_VALIDATED_BLOB/);
   assert.match(apply, /current main drift/);
   assert.match(apply, /PR head drift/);
+});
+
+test('counts deterministic and Codex attempts under one two-attempt loop guard', async () => {
+  const yaml = await workflow();
+  const plan = jobSection(yaml, 'plan', 'codex-handoff');
+  assert.match(plan, /deterministicAttempts/);
+  assert.match(plan, /codexAttempts/);
+  assert.match(plan, /const attempts = deterministicAttempts \+ codexAttempts/);
+  assert.match(plan, /CAPITAL_AI_CI_AUTOFIX_CODEX_ATTEMPT/);
 });
 
 test('pins every external action to a full immutable commit SHA', async () => {
@@ -77,5 +103,5 @@ test('never fabricates required CI or merge authority', async () => {
   assert.doesNotMatch(yaml, /statuses\.create/);
   assert.doesNotMatch(yaml, /gh\s+pr\s+merge/);
   assert.doesNotMatch(yaml, /auto-merge/);
-  assert.match(yaml, /no synthetic `build-and-test` PASS was created/);
+  assert.match(yaml, /No synthetic build-and-test result is created|No synthetic `build-and-test` PASS was created/);
 });
