@@ -364,7 +364,7 @@ export function PublicAnalysisWorkbench() {
                             : 'border-transparent text-text-secondary hover:border-border hover:bg-surface/60 hover:text-text-primary'
                         }`}
                       >
-                        <Icon size={16} className={selected ? 'text-brand-primary' : 'text-text-secondary'} aria-hidden="true" />
+                        <Icon size={16} className={selected ? 'text-brand-primary' : 'text-text-secondary'} aria-hidden={true} />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-xs font-bold">{tool.label}</span>
                           <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-text-secondary">
