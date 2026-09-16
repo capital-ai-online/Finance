@@ -27,7 +27,7 @@ const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
 
 describe('canonical landing, public analysis workbench, login and protected-route boundary', () => {
-  it('uses LandingPage as the canonical public root with a lazy app-owned analysis workbench', () => {
+  it('uses LandingPage as the canonical public root with the app-owned analysis workbench visible', () => {
     const rootStart = routes.indexOf("if (currentPath === '/')");
     const loginStart = routes.indexOf("if (currentPath === '/login')");
     const rootBlock = routes.slice(rootStart, loginStart);
@@ -40,14 +40,16 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(rootBlock).toContain('<LandingPage');
     expect(rootBlock).toContain('preview={<PublicAnalysisPreview />}');
     expect(rootBlock).not.toContain('<Dashboard');
-    expect(landingPage).toContain('loadPreview ? preview');
+    expect(landingPage).toContain('{preview}');
     expect(landingPage).toContain('id="analysis-workbench"');
-    expect(landingPage).toContain('Bewertungstools & Sideboard');
+    expect(landingPage).toContain('Enterprise Scorer & Bewertungstools');
+    expect(landingPage).not.toContain('WorkbenchActivationState');
+    expect(landingPage).not.toContain('loadPreview');
     expect(landingPage).not.toContain("from '../../../app");
   });
 
-  it('restores the established assessment-tool sideboard without importing the legacy Dashboard', () => {
-    expect(publicWorkbench).toContain('Public Analysis Sideboard');
+  it('restores a compact expandable assessment-tool sideboard without importing the legacy Dashboard', () => {
+    expect(publicWorkbench).toContain('Universe Sideboard');
     expect(publicWorkbench).toContain('Enterprise Scorer');
     expect(publicWorkbench).toContain('Universe TOP Rankings');
     expect(publicWorkbench).toContain('Buffett Value Check');
@@ -60,19 +62,23 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(publicWorkbench).toContain('DeFi Orchestration');
     expect(publicWorkbench).toContain('Backtest Engine');
     expect(publicWorkbench).toContain('Value-at-Risk Assessment');
+    expect(publicWorkbench).toContain('const [sideboardExpanded, setSideboardExpanded] = useState(false)');
+    expect(publicWorkbench).toContain("lg:grid-cols-[88px_minmax(0,1fr)]");
+    expect(publicWorkbench).toContain("lg:grid-cols-[300px_minmax(0,1fr)]");
     expect(publicWorkbench).not.toMatch(/from\s+['"][^'"]*components\/Dashboard/);
     expect(publicWorkbench).not.toContain('PUBLIC_VISITOR_SESSION');
     expect(publicWorkbench).not.toContain("type: 'guest'");
   });
 
-  it('loads only public or server-gated productive tools while preserving current access boundaries', () => {
+  it('keeps the public Enterprise Scorer fixed to BTC while preserving server/login boundaries', () => {
+    expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
+    expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
+    expect(publicWorkbench).not.toContain('onSelectSymbol={setSelectedSymbol}');
+    expect(publicWorkbench).toContain('Public Asset:');
+    expect(publicWorkbench).toContain('fixiert');
     expect(publicWorkbench).toContain("id: 'enterprise-scorer'");
     expect(publicWorkbench).toContain("id: 'ranking-board'");
     expect(publicWorkbench).toContain("id: 'buffett-value'");
-    expect(publicWorkbench).toContain("id: 'market-screener'");
-    expect(publicWorkbench).toContain("id: 'raw-materials'");
-    expect(publicWorkbench).toContain("id: 'price-alerts'");
-    expect(publicWorkbench).toContain("availability: 'server-gated'");
     expect(publicWorkbench).toContain("availability: 'login-required'");
     expect(publicWorkbench).toContain("availability: 'disabled'");
     expect(publicWorkbench).toContain('<ProtectedToolNotice tool={activeDefinition} />');
@@ -87,6 +93,16 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(publicWorkbench).not.toContain('<DeFiOrchestration');
   });
 
+  it('keeps Buffett stock-only in navigation and reserves a non-executable Satoshi FINTECH handoff in Crypto', () => {
+    expect(dashboardNavigation).toContain("universe.id === 'equities'");
+    expect(dashboardNavigation).toContain('Buffett Value Check');
+    expect(dashboardNavigation).toContain("navigateAsset(universe.symbol, universe.category, 'buffet-value')");
+    expect(dashboardNavigation).toContain("universe.id === 'crypto'");
+    expect(dashboardNavigation).toContain('Satoshi Universe Check · FINTECH-Handoff offen');
+    expect(dashboardNavigation).toContain('FINTECH-Feature-Contract erforderlich');
+    expect(dashboardNavigation).toContain('disabled');
+  });
+
   it('keeps the canonical Enterprise Scorer implementation and public presentation guard', () => {
     expect(publicWorkbench).toContain("import('../../features/crypto/ui/public')");
     expect(publicCryptoFacade).toContain("export { PublicCryptoScoringPreview } from './PublicCryptoScoringPreview'");
@@ -96,27 +112,17 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(enterpriseScorer).toContain("fetch('/api/crypto/score'");
   });
 
-  it('keeps the landing shell outside workbench and tool suspense/error boundaries', () => {
+  it('keeps the landing shell outside tool suspense/error boundaries while rendering the public workbench directly', () => {
     expect(routes).toContain('class PublicPreviewErrorBoundary');
     expect(routes).toContain('function PublicPreviewBoundary');
     expect(routes).toContain('Bewertungstools vorübergehend nicht verfügbar');
     expect(routes).toContain('<PublicAnalysisWorkbench />');
     expect(landingPage).toContain('id="analysis-workbench"');
-    expect(landingPage).toContain('loadPreview ? preview');
-    expect(landingPage).toContain('WorkbenchActivationState');
-    expect(landingPage).toContain('activatePreview');
-    expect(landingPage).toContain('Analyse-Workbench starten');
+    expect(landingPage).toContain('{preview}');
     expect(landingPage).not.toContain('IntersectionObserver');
+    expect(landingPage).not.toContain('Analyse-Workbench starten');
     expect(publicWorkbench).toContain('class PublicToolErrorBoundary');
     expect(publicWorkbench).toContain('<Suspense fallback={<WorkbenchLoadingState />}>');
-  });
-
-  it('requires explicit public analysis intent before mounting the scorer runtime', () => {
-    expect(landingPage).toContain('const [loadPreview, setLoadPreview] = React.useState(false)');
-    expect(landingPage).toContain('const activatePreview = React.useCallback(() => setLoadPreview(true), [])');
-    expect(landingPage).toContain('onClick={activatePreview}');
-    expect(landingPage).toContain('{loadPreview ? preview : <WorkbenchActivationState onActivate={activatePreview} />}');
-    expect(landingPage).not.toContain("rootMargin: '320px 0px'");
   });
 
   it('omits the authenticated Enterprise quick-analysis sub-surface in public-preview mode', () => {
@@ -174,12 +180,8 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(sessionComposition).toContain('if (loading && !renderPublicShellImmediately)');
     expect(sessionComposition).toContain('if (pendingOnboardingSession)');
     expect(sessionComposition).toContain('if (pendingStepUpSession)');
-    expect(sessionComposition).not.toContain(
-      'if (pendingOnboardingSession && !renderPublicShellImmediately)',
-    );
-    expect(sessionComposition).not.toContain(
-      'if (pendingStepUpSession && !renderPublicShellImmediately)',
-    );
+    expect(sessionComposition).not.toContain('if (pendingOnboardingSession && !renderPublicShellImmediately)');
+    expect(sessionComposition).not.toContain('if (pendingStepUpSession && !renderPublicShellImmediately)');
   });
 
   it('keeps the canonical landing page suitable for Google OAuth branding review', () => {
