@@ -20,9 +20,10 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 - `TASK_REGISTER.md` — canonical chat-to-repository task register.
 - `AUTHORITY_AND_DECISION_BOUNDARIES.md` — Platform Director / Governance authority separation.
 - `COMPONENT_ARCHITECTURE_MATRIX.md` — Governance component and architecture assessment.
+- `TOP_LAYER_APPLICATION_QUALITY_PROJECTION.yaml` — non-authorizing Top-Layer product-quality, execution and evidence projection; resolves productive PVC stages from the canonical mapping and keeps cross-cutting projects separate.
 - `../../governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md` — bounded GOV/OPS foreign-project execution authority.
 
-Post-PVC routing, execution-model, roadmap-registry and Owner-Device cutover contracts remain withdrawn. The foreign-execution policy does not recreate those overlays; it is a narrow implementation delegation with the canonical Target Project/PVC mapping preserved.
+Post-PVC routing, execution-model, roadmap-registry and Owner-Device cutover contracts remain withdrawn. The Top-Layer projection and the foreign-execution policy do not recreate those overlays. The Top-Layer projection is product-quality/evidence guidance only; canonical Authority remains in `/AGENTS.md`, ADR/ESS/AUTH/CTRL and their registries, while project/PVC routing remains exclusively in `../README.md` and `../PROJECT_VALUE_CHAIN.md`.
 
 ## PR-create governance current state
 
