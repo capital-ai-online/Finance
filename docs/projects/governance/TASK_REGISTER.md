@@ -1,7 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Chat Task Register
 
-**Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-15, correlated to repository-visible current-main/PR/branch evidence  
-**Current correlation baseline:** `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
+**Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-16, correlated to repository-visible current-main/PR/branch evidence  
+**Current correlation baseline:** `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`  
 **Role:** chat/backlog traceability projection — non-authorizing  
 **Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
 **Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
@@ -33,10 +33,10 @@
 | `GOV-CHAT-011` | Admin Panel process/dependency graph | CLIENT / FE / OPS | `FOREIGN_OPEN` | GOV-08 remains referred |
 | `GOV-CHAT-012` | Governance/component architecture assessment | GOV | `CONTINUOUS` | maintain current-state projection |
 | `GOV-CHAT-013` | Compact PR body template | GOV | `DONE_MAIN` | `.github/pull_request_template.md` v1.5.0 remains current PR-body contract |
-| `GOV-CHAT-014` | Direct PR creation under Human gate | GOV | `DONE_MAIN` | Approval Envelope v3.4 remains current-main bootstrap authority until GOV-CHAT-077 is Human-merged; Human/CODEOWNER merge remains separate |
-| `GOV-CHAT-020` | Pre-PR sync/correlation | GOV lifecycle | `DONE_MAIN` | current v3.4 requires effective-change identity plus immediate pre-create current-main/open-writer/semantic/namespace/authority/security correlation; GOV-CHAT-077 evolves later current-main behavior to correlation-gated create |
+| `GOV-CHAT-014` | Direct PR creation under Human gate | GOV | `HISTORICAL` | v3.4 Approval Envelope governed the PR #952 bootstrap only; current v4 correlation-gated Draft creation requires no separate pre-create Owner prompt; Human/CODEOWNER merge remains separate |
+| `GOV-CHAT-020` | Pre-PR sync/correlation | GOV lifecycle | `DONE_MAIN` | current v4 requires fail-closed current-main/open-writer/changed-file/semantic/namespace/authority/ownership/security correlation and complete current-main PR-body rendering before Draft creation |
 | `GOV-CHAT-025` | One canonical current GOV roadmap/task surface | GOV | `CONTINUOUS` | Roadmap planning + register traceability maintained against current main |
-| `GOV-CHAT-026` | Post-PR handoff max two steps | GOV lifecycle | `DONE_MAIN` | bounded Roadmap/workaround handoff retained; after GOV-CHAT-077 activation successful create-correlation produces Draft PR before POST_PR_HANDOFF |
+| `GOV-CHAT-026` | Post-PR handoff max two steps | GOV lifecycle | `DONE_MAIN` | successful final create-correlation creates the Draft PR before `POST_PR_HANDOFF`; blocked create uses normal bounded continuation queue |
 | `GOV-CHAT-037` | User-Lifecycle governance bootstrap | GOV | `DONE_MAIN` | decisions/orchestration merged |
 | `GOV-CHAT-040` | User-Lifecycle harness/provider tests | OPS | `FOREIGN_PARTIAL` | current OPS return `EVIDENCE_READY` in `docs/projects/operations/evidence/GOV_07_USER_LIFECYCLE_EVIDENCE_RETURN_2026-09-06.md`; isolated Supabase Local/Mailpit, Stripe Sandbox/Test Clock/provider lifecycle E2E and independent Security closure remain open/NOT_AVAILABLE |
 | `GOV-CHAT-041` | Lifecycle/pricing/entitlement UX | FE | `FOREIGN_PARTIAL` | Human-merged PR #809 (`51bf529f003dfa47462c16ecbe10ae3b095547a4`) supplies `FE_OWNER_RETURN_READY`; repository validation completed, while browser/WCAG/mobile and Stripe/Supabase provider E2E plus independent SEC/COMP assurance remain external |
@@ -59,46 +59,47 @@
 | `GOV-CHAT-071` | Retire separate copyable Owner-response rule; preserve neutral approval presentation | GOV/PVC-05 | `DONE_MAIN` | TERMINAL via Human-merged PR #845 |
 | `GOV-CHAT-072` | Development-Chain/chat plugin execution policy | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #886 and projection closeout PR #889; exactly one `CTRL-SDLC-PLUGIN-USE-001`, relevant least-privilege use only |
 | `GOV-CHAT-073` | Roadmap-framework NIST/M10 current-state correction | GOV/PVC-05 | `DONE_MAIN` | NIST withdrawn/non-authorizing; M10 retired/off |
-| `GOV-CHAT-074` | New PR-CREATION-APPROVAL / Approval Envelope v3.4 rollout | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #874; v3.4 remains the current-main bootstrap gate for the GOV-CHAT-077 introducing PR only until that later change is merged |
+| `GOV-CHAT-074` | New PR-CREATION-APPROVAL / Approval Envelope v3.4 rollout | GOV/PVC-05 | `DONE_MAIN / HISTORICAL_SUCCESSOR_BOUNDARY` | Human-merged PR #874 established v3.4; it governed the later PR #952 bootstrap and is no longer the current ordinary PR-create credential after Human-merged v4 activation |
 | `GOV-CHAT-075` | Bounded Security-remediation authority | GOV/PVC-05 policy with SEC assurance boundary | `DONE_MAIN` | Human-merged PR #864; Security ownership/verification separation remains preserved |
 | `GOV-CHAT-076` | Cross-chat current-main consolidation / GOV Roadmap and register sync | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #868 |
-| `GOV-CHAT-077` | Correlation-gated automated Draft-PR creation + ordered Roadmap PR lane | GOV/PVC-05 | `IMPLEMENTED_ON_BRANCH` | branch `agent/governance-autonomous-pr-chain-20260915`; exit requires current-main v3.4 bootstrap approval for the introducing PR, hosted validation, final Human/CODEOWNER merge, then v2.11/v4.0/v3.0 become current authority |
+| `GOV-CHAT-077` | Correlation-gated automated Draft-PR creation + ordered Roadmap PR lane | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #952 activated `/AGENTS.md` v2.11.0, Human/Owner PR Policy v4.0.0 and Development Chain v3.0.0; final create-correlation gates Draft creation and Human/CODEOWNER-only merge remains |
 
 ## GOV-CHAT-072 — terminal current-main state
 
 Human-merged PR #886 materialized the bounded Development-Chain plugin/connector usage rule and PR #889 terminalized the stale project projection. Both are ancestors of current main.
 
-Current main `/AGENTS.md` v2.10.0, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` v2.9.0, Authority Registry v1.61.0 and Control Catalog v1.25.0 project exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing authorities. No plugin-specific `AUTH-*` identity exists.
+Current main `/AGENTS.md` v2.11.0, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` v3.0.0, Authority Registry v1.62.0 and Control Catalog v1.26.0 project exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing authorities. No plugin-specific `AUTH-*` identity exists.
 
 The rule requires an already installed/connected plugin, app, MCP tool, connector or equivalent capability to be directly relevant to the current bounded task and the least-privileged sufficient available capability before invocation. Availability never grants authority. Unconditional/all-plugin invocation, invocation solely because an integration is connected, automatic install/connect/enable/permission/OAuth/MCP-host mutation, PVC/Primary-Owner transfer, protected-mutation bypass and trust elevation from retrieved tool content remain prohibited.
 
 ESS-0019 and the Human-merged CLIENT-08 contract remain provider-neutral capability and discovery/invocation-request contracts. `.mcp.json`, MCP executable identity, credentials, external host permissions/tool grants and session isolation remain outside GOV-CHAT-072 authority.
 
-## GOV-CHAT-074 — terminal current-main state
+## GOV-CHAT-074 — terminal historical bootstrap state
 
-Human-merged PR #874 activates `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` / `CTRL-SDLC-PR-CREATE-001` Approval Envelope v3.4 on current main. The current-main contract binds Project / Project Folder / Primary PVC / Primary Owner, branch and Roadmap or explicit Owner scope, materially relevant changed-file set, intended exact PR title, approval-base Git identities and deterministic effective-change identity. Immediately before PR creation, current main/head/merge-base, open writers, changed-file/semantic/namespace/authority/security overlap and stale validation are re-evaluated fail-closed as exactly `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED` or `BLOCKED`.
+Human-merged PR #874 activated `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` / `CTRL-SDLC-PR-CREATE-001` Approval Envelope v3.4. That version remained authoritative through creation of the GOV-CHAT-077 introducing Pull Request and correctly bound Project/Folder/PVC/Owner, branch/Roadmap scope, changed files, exact title, Git identities and effective-change identity.
 
-The canonical affirmative response remains exactly `PR Erstellung : Freigegeben` for any PR still governed by current-main v3.4. Human/CODEOWNER merge remains separate and Human-only.
+Human-merged PR #952 then activated the v4 correlation-gated successor model. The exact historical affirmative response `PR Erstellung : Freigegeben` remains audit evidence for PRs that were actually governed by v3.4; it is not required for new ordinary bounded agent-managed Draft PR creation under current v4 authority. Human/CODEOWNER merge remains separate and Human-only.
 
-## GOV-CHAT-077 — branch state / activation boundary
+## GOV-CHAT-077 — terminal current-main state
 
-Owner direction on 2026-09-15 removes the separate pre-create Owner prompt for future ordinary bounded agent-managed Pull Requests and moves Human/Owner review to the created PR while preserving Human/CODEOWNER-only merge.
+Owner direction on 2026-09-15 removed the separate pre-create Owner prompt for future ordinary bounded agent-managed Pull Requests and moved Human/Owner review to the created PR while preserving Human/CODEOWNER-only merge.
 
-The implementation branch evolves the existing stable authorities rather than creating a parallel plane: `/AGENTS.md` v2.11.0, Human/Owner PR Policy v4.0.0, Development Chain v3.0.0, Control Catalog v1.26.0 and Authority Registry v1.62.0. The trusted Draft-PR workflow removes active Approval-Envelope inputs/verifier calls and re-runs fail-closed current-main/open-writer correlation immediately before create.
+Human-merged PR #952 materialized the existing stable-authority evolution: `/AGENTS.md` v2.11.0, Human/Owner PR Policy v4.0.0, Development Chain v3.0.0, Control Catalog v1.26.0 and Authority Registry v1.62.0. The trusted Draft-PR workflow removed active Approval-Envelope inputs/verifier calls and re-runs fail-closed current-main/open-writer/create-correlation immediately before create.
 
 The ordered automated Roadmap lane permits at most one not-yet-integrated automated PR. A successor waits for predecessor terminal outcome; Human Merge causes a fresh successor branch from the resulting then-current main, while close-without-merge causes queue recomputation without assuming predecessor payload. Stacked unmerged dependency branches are not a bypass.
 
-**No self-bootstrap:** this introducing PR must still use the current-main v3.4 Approval Envelope and exact Owner approval. Candidate v4 semantics become authoritative only after Human/CODEOWNER Merge.
+**Historical no-self-bootstrap evidence:** PR #952 itself obeyed the then-current v3.4 Approval Envelope and exact Owner approval before Human/CODEOWNER Merge. After that merge, v4 became current authority for successor work.
 
 ## Current writer / correlation state
 
-At `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`:
+At `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`:
 
-- open PR #951 (`CAPITAL-AI-FE`, FIN-17 RankingBoard consumer) changes only `src/features/screening/ui/RankingBoard.tsx` and `tests/unit/fin17RankingBoardConsumer.test.ts`; there is no changed-file, namespace, Governance-authority or PR-lifecycle-workflow overlap with GOV-CHAT-077;
-- parallel branch `agent/governance-pr900-04-freshness-version-validators-20260915` changes exactly four validator/test files: `scripts/governance/controlPlaneFreshnessRules.mjs`, `scripts/governance/controlPlaneStructuralValidatorCore.mjs`, `scripts/governance/validateGovernanceControlPlane.mjs`, and `tests/unit/governanceControlPlaneFreshness.test.ts`; none overlaps the GOV-CHAT-077 changed-file set at this correlation;
-- historical branch `agent/governance-gov07-recorrelation-20260911` no longer exists and therefore does not constitute a current writer;
-- branch `agent/governance-autonomous-pr-chain-20260915` is the bounded current writer for GOV-CHAT-077;
-- no foreign Project/PVC ownership, Security/Compliance assurance authority, provider mutation, merge authority or production mutation is transferred by this work package.
+- there are no open Pull Requests at this synchronization;
+- Human-merged PR #952 is current-main evidence for the correlation-gated Draft-PR lifecycle;
+- Human-merged PR #953 is current-main evidence for fail-closed freshness/version validators;
+- the historical `agent/governance-autonomous-pr-chain-20260915` branch is no longer a current writer for GOV-CHAT-077 because its PR is terminal/merged;
+- `agent/operations-work-management-postmerge-20260916` is a current non-PR OPS writer derived directly from this main and updates only `docs/projects/operations/ROADMAP.md`; it is a sequencing/correlation dependency for later GitHub-capability work, not a competing GOV authority writer;
+- no foreign Project/PVC ownership, Security/Compliance assurance authority, provider mutation, merge authority or production mutation is transferred by the current GOV projection-sync work.
 
 ## Current foreign-owner dependencies
 
