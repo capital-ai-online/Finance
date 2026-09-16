@@ -11,6 +11,8 @@ const ci = workflow('.github/workflows/ci.yml');
 const container = workflow('.github/workflows/container-security.yml');
 const governance = workflow('.github/workflows/pr-governance.yml');
 const zizmor = workflow('.github/workflows/zizmor.yml');
+const branchSync = workflow('.github/workflows/sync-agent-pr-branches.yml');
+const shadow = workflow('.github/workflows/capital-ai-ci-shadow.yml');
 
 test('build-and-test cancellation is isolated by exact PR head/base snapshot', () => {
   assert.ok(ci.includes("format('{0}-pr-{1}-{2}-{3}'"));
@@ -52,4 +54,12 @@ test('zizmor workflow analysis is isolated by exact PR head/base snapshot', () =
   assert.ok(zizmor.indexOf('Stale PR-Event vor Workflow-Analyse beenden') < zizmor.indexOf('Repository auschecken'));
   assert.ok(zizmor.includes('cancel-in-progress: true'));
   assert.ok(!zizmor.includes('group: zizmor-${{ github.event.pull_request.number || github.ref }}'));
+});
+
+test('remaining PR-number concurrency surfaces are already bounded or non-automatic', () => {
+  assert.ok(branchSync.includes('headRefOid'));
+  assert.ok(branchSync.includes('-f "expected_head_sha=$head_sha"'));
+  assert.ok(branchSync.includes('Head inzwischen geaendert oder Update laeuft schon (422)'));
+  assert.ok(shadow.includes('on:\n  workflow_dispatch:'));
+  assert.ok(!shadow.includes('on:\n  pull_request:'));
 });
