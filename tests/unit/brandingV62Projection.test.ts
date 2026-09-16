@@ -30,16 +30,8 @@ const freshnessBadge = read('src/shared/ui/FreshnessBadge.tsx');
 const evidenceState = read('src/shared/ui/EvidenceStateIndicator.tsx');
 
 const forbiddenLegacyColors = [
-  '#0B0B0B',
-  '#C29D53',
-  '#E5C17C',
-  '#BD984E',
-  '#87601B',
-  '#4A340C',
-  '#06B6D4',
-  '#22D3EE',
-  '#A78BFA',
-  '#8B5CF6',
+  '#0B0B0B', '#C29D53', '#E5C17C', '#BD984E', '#87601B', '#4A340C',
+  '#06B6D4', '#22D3EE', '#A78BFA', '#8B5CF6',
 ];
 
 describe('Branding Manifest v6.2 projection contract', () => {
@@ -64,7 +56,7 @@ describe('Branding Manifest v6.2 projection contract', () => {
     expect(logo).not.toContain('brand-cyan');
   });
 
-  it('keeps OpenGraph and favicon projections on Dark Black + AIF Gold + Purple only', () => {
+  it('keeps OpenGraph and favicon projections synchronized to the current 16.08 brand tokens', () => {
     for (const asset of [og, favicon]) {
       expect(asset).toContain(`data-brandmark-version="${brandmark.version}"`);
       expect(asset).toContain(tokens.color.background.value);
@@ -74,7 +66,7 @@ describe('Branding Manifest v6.2 projection contract', () => {
         expect(asset.toUpperCase()).not.toContain(forbidden);
       }
     }
-    expect(og).toContain('font-family="Inter, ui-sans-serif, system-ui, sans-serif"');
+    expect(og).toContain('font-family="Montserrat, ui-sans-serif, system-ui, sans-serif"');
     expect(og).toContain('font-family="Poppins, ui-sans-serif, system-ui, sans-serif"');
     expect(og).toContain('font-family="JetBrains Mono, ui-monospace, monospace"');
   });

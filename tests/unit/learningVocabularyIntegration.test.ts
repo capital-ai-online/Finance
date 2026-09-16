@@ -3,10 +3,8 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = process.cwd();
-
-function source(relativePath: string): string {
-  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
-}
+const source = (relativePath: string): string =>
+  fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
 describe('Capital-AI Learning Platform integration', () => {
   it('projects the canonical browser-safe Vocabulary registry without defining a second source', () => {
@@ -16,10 +14,10 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(learning).toContain('normalizeVocabularyTerm');
     expect(learning).toContain("from '../../../platform/Vocabulary'");
     expect(learning).toContain("concept.status === 'approved'");
-    expect(learning).toContain('Read-only Lernprojektion.');
-    expect(learning).toContain('Capital-AI Learning Platform');
+    expect(learning).toContain('CAPITAL-AI Vocabulary Universe');
+    expect(learning).toContain('Read-only Knowledge Projection.');
+    expect(learning).toContain('CATEGORY_LABELS');
     expect(learning).not.toContain('function normalizeSearch');
-
     expect(learning).not.toContain("platform/Vocabulary/node");
     expect(learning).not.toContain('node:crypto');
     expect(learning).not.toContain('VOC-BILLING-0001');
