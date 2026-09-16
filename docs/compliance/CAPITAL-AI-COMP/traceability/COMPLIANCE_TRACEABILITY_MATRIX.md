@@ -2,11 +2,11 @@
 
 **Document ID:** `DOC-COMP-TRACEABILITY-2026-08-31`  
 **Role:** traceability / non-authorizing  
-**Version:** 1.3.1  
-**Date:** 2026-09-10  
+**Version:** 1.3.2  
+**Date:** 2026-09-16  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Current-main correlation:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
-**Status:** `COMP-03 TRACEABILITY CURRENT — 37 ACTIVE INPUTS; COMP-05/06/07 RETURNS REASSESSED`
+**Current-main correlation:** `main@f6fccf64f78a1a29c3f98a9aa3adc8634d51b80d`  
+**Status:** `COMP-03 TRACEABILITY CURRENT — 37 ACTIVE INPUTS; REQ-COMP-033 OPS/SEC RETURNS REASSESSED`
 
 This is a navigation/traceability projection. Detailed source wording and applicability remain in `COMPLIANCE_REQUIREMENTS_INVENTORY.md` and `APPLICABILITY_MATRIX.md`; detailed control mapping remains in `REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md`; assessment/evidence status remains in the Compliance reports. Traceability does not create Authority or prove compliance.
 
@@ -36,8 +36,8 @@ Current ownership resolves only through `docs/projects/README.md` and `docs/proj
 | `REQ-COMP-030` | Continuous change impact | COMP-08 + trust-root/PVC routing | dynamically resolved actual owner/PVC | 08→01→02→03→06→04→05→07 | `PARTIALLY_COMPLIANT`; current cycle executed, exhaustive automation not proven |
 | `REQ-COMP-031` | Contract universe | partial vendor/customer contract evidence | Human/Legal + affected owner after correlation; `PVC-N/A` until then | 01→02→06→04/07 | `UNKNOWN / EVIDENCE_MISSING`; active handoff retained |
 | `REQ-COMP-032` | Resilience / continuity | current OPS/Security resilience roadmaps | `OPS/PVC-08`; SEC independent verification | 03→06→04→05→07 | `COMP-GAP-007`; measured restore/RPO/RTO evidence open |
-| `REQ-COMP-033` | Audit / traceability | ESS-0011 + ADR-0059/domain audit controls; ESS-0006 bounded component semantics only | `OPS/PVC-18` transport; `DATA/PVC-10` persistence where applicable | 03→06→04→05/07 | evidence-held; DATA evidence-identity/freshness and composed exit return consumed as `EVIDENCE_READY`; OPS-18 end-to-end transport and independent Security evidence remain open |
-| `REQ-COMP-034` | Data / scoring provenance & integrity | ADR-0032, ADR-0041/ESS-0016, ADR-0087 + DATA contracts | `DATA/PVC-09..11` upstream; `FINTECH/PVC-12..17` downstream | 03→06→04→05/07 | evidence-held; DATA `ValidatedDataInput/1.0.0` now composes provider validation/freshness/provenance/DQ fail-closed; FIN-12/FIN-17/FIN-20 downstream lineage remains open |
+| `REQ-COMP-033` | Audit / traceability | ESS-0011 + ADR-0059/domain audit controls; ESS-0006 bounded component semantics only | `OPS/PVC-18` transport; `DATA/PVC-10` persistence where applicable | 03→06→04 | `PARTIALLY_COMPLIANT`; DATA return plus Human-merged OPS #937/#939 and independent SEC #956 are consumed; exact OPS/Security return handoffs are terminal, while exhaustive all-surface/runtime/provider traceability coverage is not established |
+| `REQ-COMP-034` | Data / scoring provenance & integrity | ADR-0032, ADR-0041/ESS-0016, ADR-0087 + DATA contracts | `DATA/PVC-09..11` upstream; `FINTECH/PVC-12..17` downstream | 03→06→04→05/07 | evidence-held; DATA `ValidatedDataInput/1.0.0` composes provider validation/freshness/provenance/DQ fail-closed; FIN-12 feature-contract mapping and FIN-20 exact end-to-end lineage remain open |
 | `REQ-COMP-035` | Records / documentation | document lifecycle controls | `DOC/PVC-03`; `GOV/PVC-05` for shared registry; DATA/OPS where record storage/trace transport affected | 03→06→04→05→07 | `PARTIALLY_COMPLIANT`; internal `COMP-GAP-008` resolved, external record-keeping duties remain regime/scope-specific |
 | `REQ-COMP-036` | Release / rollback | deploy/hosted-CI controls + ADR-0060 where applicable | `OPS/PVC-07..08` | 03→06→04→05/07 | `PARTIALLY_COMPLIANT`; exact-SHA release evidence exists, fresh rollback drill not established |
 | `REQ-COMP-037` | DDG/TDDDG | current privacy/consent/claim controls only; no invented legal Authority | Human/Legal first; affected `CLIENT/DATA` plus cross-cutting presentation/marketing owners for their own surfaces | 01→02→03→06→04→05→07 | legal/scope-held |
@@ -57,7 +57,7 @@ Existing current controls remain current because of their own repository Authori
 |---|---|
 | `COMP-GAP-001` | `RESOLVED_ON_MAIN` — canonical QM project structure exists; no authority activation inferred |
 | `COMP-GAP-002` | `RESOLVED_ON_MAIN` — ADR-0007 historical/non-authorizing lifecycle aligned |
-| `COMP-GAP-003` | `RESOLVED_ON_MAIN` — ESS-0006 v1.1.0 bounded semantics |
+| `COMP-GAP-003` | `RESOLVED_ON_MAIN` — ESS-0006 v1.2.0 bounded semantics |
 | `COMP-GAP-004` | active evidence/legal handoff, provider/PVC correlation unresolved |
 | `COMP-GAP-005` | active Human evidence handoff |
 | `COMP-GAP-006` | active Human/Legal gate |
@@ -70,6 +70,6 @@ Existing current controls remain current because of their own repository Authori
 2. A mapped internal Authority/Control is not proof of implementation or compliance.
 3. Foreign technical remediation is routed only to the current Primary Owner from the canonical `PVC-*` mapping; unresolved legal/provider-specific ownership remains `REQUIRES_CORRELATION` rather than guessed.
 4. ADR-0007 is historical/non-authorizing and may not be used as current Compliance value-chain authority.
-5. ESS-0006 v1.1.0 is a bounded component specification, not a second Compliance Requirement Registry or audit/risk/event authority.
-6. Compliance independently reassesses returned evidence before any `VERIFIED` or `CLOSED` finding state.
+5. ESS-0006 v1.2.0 is a bounded component specification, not a second Compliance Requirement Registry or audit/risk/event authority.
+6. Compliance independently reassesses returned evidence before any positive assessment or handoff terminalization; returned Security evidence never self-assigns Compliance status.
 7. Active mapping coverage remains `37 / 37`; retired IDs excluded `2 / 2`; new Authority/Controls created by COMP `0`.

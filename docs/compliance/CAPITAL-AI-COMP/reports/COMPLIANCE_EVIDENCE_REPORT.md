@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-COMP-EVIDENCE-REPORT-2026-08-31`  
 **Role:** evidence assessment / non-authorizing  
-**Version:** 1.8.4  
-**Date:** 2026-09-10  
-**Baseline:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`  
-**Scope:** COMP-04 current assessment plus COMP-06 held-evidence review and current Documentary/DATA return reassessment
+**Version:** 1.8.5  
+**Date:** 2026-09-16  
+**Baseline:** `main@f6fccf64f78a1a29c3f98a9aa3adc8634d51b80d`  
+**Scope:** COMP-04 current assessment plus COMP-06 held-evidence review and current OPS/Security return reassessment for `REQ-COMP-033`
 
 ## Evidence principle
 
@@ -15,57 +15,54 @@ Approved assessment vocabulary:
 
 `COMPLIANT` · `PARTIALLY_COMPLIANT` · `NON_COMPLIANT` · `NOT_APPLICABLE` · `NOT_ASSESSED` · `EVIDENCE_MISSING`.
 
-`COMPLIANT` is bounded to the explicitly evidenced scope and is not a certification, blanket legal-compliance conclusion or permanent future-state assertion.
+`COMPLIANT` and `PARTIALLY_COMPLIANT` are bounded to the explicitly evidenced scope and are not certification, blanket legal-compliance conclusions or permanent future-state assertions.
 
 ## Current execution baseline
 
-- Current trust root: `/AGENTS.md` v2.9.0.
-- Current main at reassessment start: `6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`.
+- Current trust root: `/AGENTS.md` Control Plane `2.11.0`.
+- Current main at reassessment start: `f6fccf64f78a1a29c3f98a9aa3adc8634d51b80d`.
 - `CAPITAL-AI-COMP` remains cross-cutting with productive PVC ownership `[]`; the canonical project folder is `docs/projects/compliance/`.
-- Human-merged PR #761 retains the 23/23 `READY_NOW` COMP-04 assessment baseline.
-- Human-merged PR #768 retains the bounded local Compliance roadmap closeout and exact-head hosted CI/Governance/Container Security evidence.
-- Governance PR #775 provides the Governance-side decision for `COMP-GAP-008`: **NO REGISTRY CHANGE REQUIRED UNDER CURRENT CONTRACT**.
-- Documentary PR #838, merged as `96119f958cacbf35614747380a066b87fdb1ee40`, synchronized the Document Registry/Hygiene projection with `docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md`.
-- Documentary PR #866, merged as `12ca12017916990e83ed213be781574c61808949`, returned the bounded `GOV-DOC-005` implementation. Current code accepts Markdown under `docs/` directly and requires an exact registered exception only for documentation outside `docs/`.
-- Compliance artifacts remain under the canonical `docs/compliance/**` domain and carry stable `DOC-*` identities. The combined Governance/Documentary return is therefore adequate to resolve the bounded internal `COMP-GAP-008` finding.
-- DATA PR #811 provides evidence-identity/freshness implementation evidence with DATA status `EVIDENCE_READY`; independent Security verification remains separate.
-- DATA PRs #812, #817, #822 and #824 provide Data Quality, provenance, capability freshness and provider-input validation slices. Human-merged PR #827 composes those gates into the current `ValidatedDataInput/1.0.0` exit.
-- Current `src/platform/MarketData/ValidatedDataInput.ts` invokes provider-input validation, capability freshness, provenance-lineage evaluation and the Data Quality gate; incomplete provenance/freshness cannot silently remain admissible PASS state.
-- Current OPS roadmap still marks `OPS-18` EventMesh/Traceability `PARTIAL` and recovery/RPO/RTO operational evidence open.
-- Current Security roadmap keeps `S1-R2-11` evidence identity/freshness semantics open for independent verification and does not equate returned DATA evidence with Security closure.
-- Current FINTECH roadmap retains FIN-12 `PARTIAL — UPSTREAM EXIT COMPOSED / FINTECH MAPPING OPEN`, FIN-17 `PARTIAL / OPEN`, and FIN-20 `PARTIAL / OPEN`.
-- `src/platform/Compliance` remains the existing ADR-0012 / ESS-0006 technical boundary. No current roadmap item or finding requires a new local Compliance code path; `CODE_DELTA_REQUIRED = NO` for this reassessment.
+- No open Pull Request was present when the current reassessment branch was created.
+- Human-merged PR #761 retains the original 23-input COMP-04 assessment baseline; this reassessment adds returned `REQ-COMP-033` to the currently assessed set.
+- Human-merged PR #768 retains the bounded local Compliance roadmap closeout and its exact-head hosted evidence.
+- Governance PR #775 plus Documentary PR #838/#866 continue to provide the already-consumed evidence for terminal `COMP-GAP-008`; that finding is not reopened.
+- DATA PR #811 supplies the owner-side evidence-identity/freshness implementation; DATA PRs #812/#817/#822/#824 plus Human-merged PR #827 compose Data Quality, provenance, capability freshness and provider-input validation into `ValidatedDataInput/1.0.0`.
+- Human-merged OPS PR #937 (`merge 8203e17940287cdd4ba0bd630f43c84bb701e96c`) supplies the strict identity/correlation/freshness binding for `REQ-COMP-033` within `PVC-18`.
+- Human-merged OPS PR #939 (`merge 51981a7eb8ced509f5acedc165e1dab7fb7f5eeb`) supplies productive Traceability → EventMesh source binding. On exact PR head `bc7a3ba9baab06fbbd52b144b0f4ef8652316f66`, CI, Governance and Container Security all concluded `success`.
+- Human-merged Security PR #956 (`merge 8b2fc1805bdbf27523460ec41243ee32cb7e7609`) independently verifies the unchanged DATA `evidence-identity-freshness/1.0.0` contract. On exact PR head `c730ca539dc7a14c39d3066190105405390bd646`, CI, Governance and Container Security all concluded `success`.
+- Security #956 explicitly routes its result to later CAPITAL-AI-COMP reassessment and does not self-promote a Compliance status.
+- `src/platform/Compliance` remains the existing ADR-0012 / ESS-0006 technical boundary. No current requirement or finding needs a new local Compliance code path; `CODE_DELTA_REQUIRED = NO` for this reassessment.
 
-## COMP-04 assessment — 23 `READY_NOW` requirements
+## COMP-04 assessment — 24 currently assessed requirements
 
 ### Result distribution
 
 | Assessment | Count |
 |---|---:|
 | `COMPLIANT` | **9** |
-| `PARTIALLY_COMPLIANT` | **11** |
+| `PARTIALLY_COMPLIANT` | **12** |
 | `NON_COMPLIANT` | **0** |
 | `NOT_APPLICABLE` | **3** |
 | `NOT_ASSESSED` | **0** |
 | `EVIDENCE_MISSING` | **0** |
-| **Total assessed** | **23** |
+| **Total assessed** | **24** |
 
 ### Requirement-by-requirement assessment
 
 | Requirement | Assessment | Evidence | Limitation / retained gate |
 |---|---|---|---|
-| `REQ-COMP-001` | **COMPLIANT** | Current `/AGENTS.md` v2.9.0 is the assessed trust root; `AUTH-GOV-AGENT-TRUST-ROOT` / `CTRL-GOV-TRUST-001` remain mapped. | Bounded to repository/current-work execution; no claim about every external client or future run. |
+| `REQ-COMP-001` | **COMPLIANT** | Current `/AGENTS.md` is the assessed trust root; `AUTH-GOV-AGENT-TRUST-ROOT` / `CTRL-GOV-TRUST-001` remain mapped. | Bounded to repository/current-work execution; no claim about every external client or future run. |
 | `REQ-COMP-002` | **PARTIALLY_COMPLIANT** | `CTRL-COMPLIANCE-CLAIM-001` exists; Compliance artifacts prohibit unsupported certification/regulatory claims; privacy policy evidence includes bounded claim language. | No exhaustive scan of every public/product/marketing output surface. |
 | `REQ-COMP-003` | **COMPLIANT** | Current work uses a project-qualified `agent/compliance-...` branch; no direct-main mutation. | Per-work-item evidence; future work requires its own current branch state. |
 | `REQ-COMP-004` | **COMPLIANT** | Main/open-PR/writer/overlap correlation is required and was repeated at this reassessment baseline before branch creation. | Must be repeated immediately before PR creation for the exact head. |
-| `REQ-COMP-005` | **PARTIALLY_COMPLIANT** | `CTRL-SDLC-PR-CREATE-001` remains current and requires exact `main SHA` + `branch head SHA` Human approval. | Every future PR needs fresh exact-state Human approval; technical evidence is not authorization. |
-| `REQ-COMP-006` | **COMPLIANT** | PR #768 exact-head hosted CI, Governance and Container Security checks completed successfully for the bounded local closeout. | This reassessment branch requires its own hosted checks after PR creation if applicable. |
-| `REQ-COMP-007` | **COMPLIANT** | PR #768 and the returned evidence PRs cited here are Human-merged; `/AGENTS.md` retains Human/CODEOWNER-only merge authority. | Does not prove every historical/future PR; merge remains a separate Human action. |
+| `REQ-COMP-005` | **PARTIALLY_COMPLIANT** | `CTRL-SDLC-PR-CREATE-001` remains current; PR creation is correlation-gated and Human/CODEOWNER merge authority remains separate. | Every future PR still needs its own exact-state correlation and later Human merge decision. |
+| `REQ-COMP-006` | **COMPLIANT** | Hosted CI evidence exists for the cited bounded returns and remains exact-head specific. | This reassessment branch requires its own hosted checks after PR creation if applicable. |
+| `REQ-COMP-007` | **COMPLIANT** | Cited return PRs are Human-merged; `/AGENTS.md` retains Human/CODEOWNER-only merge authority. | Does not prove every historical/future PR; merge remains a separate Human action. |
 | `REQ-COMP-008` | **COMPLIANT** | Verified-main deployment model and exact-SHA workflow evidence exist for cited release baselines. | Release-specific; no blanket production assertion is inferred from documentation-only evidence. |
-| `REQ-COMP-009` | **PARTIALLY_COMPLIANT** | `CTRL-SEC-LEASTPRIV-001`; repository evidence includes fail-closed auth/consent and role-separation patterns. | Current Security/OPS findings remain open; no blanket least-privilege closure. |
+| `REQ-COMP-009` | **PARTIALLY_COMPLIANT** | `CTRL-SEC-LEASTPRIV-001`; repository evidence includes fail-closed auth/consent and role-separation patterns. | No blanket least-privilege closure across every surface. |
 | `REQ-COMP-010` | **PARTIALLY_COMPLIANT** | `CTRL-SEC-SECRET-001`; covered flows document secret/token handling controls. | No fresh repository-wide scanner result covering every secret-bearing surface. |
-| `REQ-COMP-011` | **COMPLIANT** | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001`; Compliance artifacts use canonical `docs/compliance/**` placement and stable `DOC-*` identities; Governance #775 requires no registry mutation; Documentary #838 synchronizes lifecycle/registry authority; #866 implements the bounded path-exception rule under which `docs/` content is accepted directly. | Bounded to the internal repository document-placement/identity/lifecycle requirement; external record obligations remain separate under `REQ-COMP-035`. |
-| `REQ-COMP-012` | **COMPLIANT** | Historical-authority controls plus PR #755/#758 and ESS-0006 bounded semantics prevent ADR-0007 historical content from regaining current authority by citation. | Bounded to historical-authority handling; unrelated evidence/legal/security gaps remain separate. |
+| `REQ-COMP-011` | **COMPLIANT** | `AUTH-GOV-DOCUMENT-LIFECYCLE`, `CTRL-GOV-DOC-001`, `CTRL-GOV-DOC-ROLE-001`; Compliance artifacts use canonical `docs/compliance/**` placement and stable `DOC-*` identities; Governance #775 and Documentary #838/#866 provide the consumed lifecycle/path evidence. | Bounded to the internal repository document-placement/identity/lifecycle requirement; external record obligations remain separate under `REQ-COMP-035`. |
+| `REQ-COMP-012` | **COMPLIANT** | Historical-authority controls plus PR #755/#758 and current ESS-0006 bounded semantics prevent historical ADR-0007 content from regaining current authority by citation. | Bounded to historical-authority handling; unrelated evidence/legal/security gaps remain separate. |
 | `REQ-COMP-013` | **PARTIALLY_COMPLIANT** | Privacy policy and ADR-0095 provide documented processing-purpose/category/legal-basis/recipient/retention context. | Exact lawful basis, role, provider/transfer facts and legal sufficiency remain processing-specific. |
 | `REQ-COMP-014` | **PARTIALLY_COMPLIANT** | Versioned privacy/accountability records and consent fail-closed runtime/test evidence exist. | Does not exhaustively prove every processing/public/product surface. |
 | `REQ-COMP-015` | **PARTIALLY_COMPLIANT** | Existing privacy request implementation/migration evidence covers rights-request workflow surfaces. | Full end-to-end fulfilment for every request type/provider was not freshly re-executed. |
@@ -74,13 +71,14 @@ Approved assessment vocabulary:
 | `REQ-COMP-025` | **NOT_APPLICABLE** | `/AGENTS.md` treats ISO/IEC 42001:2023 as a non-certifying/non-authorizing Governance benchmark. | Any future certification target needs separate Owner scope/evidence. |
 | `REQ-COMP-028` | **NOT_APPLICABLE** | OWASP/CIS remain advisory inputs only when correlated to current internal controls. | Advisory Security use remains permitted; status concerns binding applicability only. |
 | `REQ-COMP-029` | **COMPLIANT** | Current Compliance process requires scope-adequate evidence before positive conclusions; held/legal sets remain explicit. | Process-control status does not prove every underlying domain requirement. |
-| `REQ-COMP-030` | **PARTIALLY_COMPLIANT** | COMP-08 change-impact flow has now consumed material returns through Documentary #838/#866 and DATA #827. | No complete automated proof that every material future change is detected before evidence stales. |
-| `REQ-COMP-035` | **PARTIALLY_COMPLIANT** | Internal document lifecycle/identity/path evidence is now adequate and `COMP-GAP-008` is resolved. | External or regime-specific record-keeping, retention and evidentiary duties remain conditional on competent applicability/scope determination and actual operating evidence. |
+| `REQ-COMP-030` | **PARTIALLY_COMPLIANT** | COMP-08 change-impact flow has consumed current returned evidence and preserves unresolved gates. | No complete automated proof that every material future change is detected before evidence stales. |
+| `REQ-COMP-033` | **PARTIALLY_COMPLIANT** | DATA identity/freshness evidence plus OPS #937 strict binding, OPS #939 productive EventMesh source binding and independent Security #956 verification establish one fail-closed repository chain. | No exhaustive proof that every protected action, every compliance-relevant event, every provider/runtime event or every future state traverses an equivalent traceable path. |
+| `REQ-COMP-035` | **PARTIALLY_COMPLIANT** | Internal document lifecycle/identity/path evidence is adequate and `COMP-GAP-008` is resolved. | External or regime-specific record-keeping, retention and evidentiary duties remain conditional on competent applicability/scope determination and actual operating evidence. |
 | `REQ-COMP-036` | **PARTIALLY_COMPLIANT** | Verified-main workflow evidence provides exact-SHA release/deploy/provenance evidence for cited release baselines. | No fresh independent rollback execution/test established. |
 
 ## COMP-06 — evidence/owner-held review
 
-All seven held inputs were rechecked against current-main repository evidence. The current DATA return materially narrows `REQ-COMP-033/034`, but it does not satisfy remaining OPS/Security/FINTECH end-to-end gates.
+Six inputs remain evidence/owner-held after this reassessment. `REQ-COMP-033` is removed from the held queue because its previously named OPS/Security return gates have been returned and independently reassessed.
 
 | Requirement | Current evidence state | Why still held | Required return / owner boundary |
 |---|---|---|---|
@@ -89,8 +87,26 @@ All seven held inputs were rechecked against current-main repository evidence. T
 | `REQ-COMP-021` | `EVIDENCE_MISSING` | `AI_LITERACY_CONTROL.md` is a specification; attributable Human completion/acknowledgement evidence is absent | Human Owner/organizational operator; Compliance does not fabricate training records |
 | `REQ-COMP-031` | `UNKNOWN / EVIDENCE_MISSING` | complete binding customer/provider/partner contract universe and effective versions are not established | Human/Legal + affected owner after contract correlation |
 | `REQ-COMP-032` | `EVIDENCE_MISSING` | the recovery harness is implemented on main, but successful operating backups, encrypted-artifact evidence, isolated restore drill, measured RPO/RTO/integrity evidence and independent Security verification remain open | `CAPITAL-AI-OPS / PVC-08` + independent `CAPITAL-AI-SEC` verification |
-| `REQ-COMP-033` | held / DATA return consumed | DATA evidence-identity/freshness is `EVIDENCE_READY`; DATA-11/12/13/14 and #827 compose quality/freshness/provenance/input validation at the DATA exit. However OPS-18 remains `PARTIAL`, and independent Security evidence for relevant freshness/identity semantics remains open | `CAPITAL-AI-OPS / PVC-18` transport plus `CAPITAL-AI-SEC` verification; DATA residuals only where independently proven |
-| `REQ-COMP-034` | held / DATA upstream evidence ready | `ValidatedDataInput/1.0.0` now composes provider validation, freshness, provenance lineage and DQ fail-closed. Downstream FINTECH FIN-12/FIN-17/FIN-20 remain open, so exact feature/model/score/rank/trace lineage is not reproducible end to end; DATA correction-version lineage remains a residual | `CAPITAL-AI-FINTECH / PVC-12..17` downstream; DATA/PVC-09..11 only for remaining proven upstream residuals; OPS/PVC-18 for final trace transport where applicable |
+| `REQ-COMP-034` | held / DATA upstream evidence ready | `ValidatedDataInput/1.0.0` composes provider validation, freshness, provenance lineage and DQ fail-closed. FIN-12 feature-contract mapping and FIN-20 exact end-to-end lineage remain open; DATA correction-version lineage remains a residual where independently proven | `CAPITAL-AI-FINTECH / PVC-12..17` downstream; DATA/PVC-09..11 only for remaining proven upstream residuals; OPS/PVC-18 for final trace transport where applicable |
+
+## REQ-COMP-033 current-return reassessment
+
+The current evidence supports the following bounded chain:
+
+```text
+DATA evidence identity/freshness
+→ independent Security verification (#956)
+→ Traceability run
+→ canonical EventMesh publish/returned EventContract (#939)
+→ exact source-owned identity/correlation/timestamp
+→ strict fail-closed operational projection (#937)
+```
+
+The prior active return statements `OPS-18 remains PARTIAL for this return` and `S1-R2-11 independent verification remains open` are stale for the exact `REQ-COMP-033` return gate and are removed from current Compliance projections.
+
+This does not convert the broader OPS roadmap, every Security requirement or every audit/traceability surface to terminal state. It only terminalizes the exact return dependencies previously retained by Compliance for this assessment.
+
+Detailed evidence: `REQ_COMP_033_CURRENT_RETURN_REASSESSMENT_2026-09-16.md`.
 
 ## Legal/scope-held review
 
@@ -107,32 +123,34 @@ All seven held inputs were rechecked against current-main repository evidence. T
 - `COMP-GAP-007`: `EVIDENCE_MISSING / OPEN`; recovery-harness implementation exists while operational execution evidence, measured RPO/RTO/integrity and independent Security verification remain pending.
 - `COMP-GAP-008`: **RESOLVED_ON_MAIN**; Governance #775 plus Documentary #838/#866 return adequate bounded internal lifecycle/registry/path evidence, and Compliance independently reassesses the finding as closed. This does not close regime-specific record-keeping scope under `REQ-COMP-035`.
 
-No unrelated finding closes because another requirement is compliant, a target PR merged, or CI/deployment passed.
+No unrelated finding closes because another requirement is compliant, a target PR merged or CI/deployment passed. No new finding is invented solely from the remaining exhaustive-coverage limitation of `REQ-COMP-033`.
 
 ## Current code/evidence correlation
 
 The reassessment explicitly checked current code/contracts rather than treating roadmap claims as implementation proof.
 
 - Existing authorized Compliance component: `src/platform/Compliance/**` under ADR-0012 / ESS-0006.
-- Documentary evidence used for `COMP-GAP-008`: current `DOCUMENT_LIFECYCLE_POLICY.md`; Human-merged #838 registry/hygiene synchronization; current `GOV-DOC-005` implementation from Human-merged #866; current ESS-0012/ESS-0012-CONTRACTS path/lifecycle boundaries.
-- DATA evidence used for `REQ-COMP-033/034`: `src/platform/MarketData/ValidatedDataInput.ts`; DATA evidence-identity/freshness, Data Quality, provenance and current DATA roadmap/evidence; Human-merged #827 exit composition.
-- OPS evidence retained: current `OPS-18` remains `PARTIAL`; recovery evidence remains operationally incomplete.
-- Security evidence retained: `S1-R2-11` remains independently unverified; `EVIDENCE_READY != VERIFIED`.
-- FINTECH evidence retained: FIN-12, FIN-17 and FIN-20 remain partial/open.
+- DATA evidence used for `REQ-COMP-033/034`: existing evidence-identity/freshness and `ValidatedDataInput/1.0.0` composition under DATA ownership.
+- OPS evidence consumed for `REQ-COMP-033`: Human-merged #937 strict identity/correlation/freshness binding and Human-merged #939 productive Traceability/EventMesh source binding.
+- Security evidence consumed for `REQ-COMP-033`: Human-merged #956 independent negative verification of the unchanged DATA identity/freshness contract; exact-head hosted CI/Governance/Container Security succeeded.
+- FINTECH evidence for `REQ-COMP-034`: FIN-12 and FIN-20 remain the material downstream open lineage work; FIN-17 is not retained as the missing predecessor in this reassessment.
 - New Compliance-owned code requirement: **none identified**.
 - Therefore `CODE_DELTA_REQUIRED = NO`; this is a positive scope determination, not a skipped implementation.
 
 ## Foreign evidence rule
 
-Compliance records the affected `PVC-*` / Primary Owner and waits for returned evidence. It does not execute foreign Security hardening, runtime remediation, recovery workflow configuration/runs, provider contracts, organizational training, DATA/FINTECH technical remediation or Legal Review. Returned evidence is independently reassessed; a target-owned `EVIDENCE_READY` state can narrow or terminalize a handoff without automatically converting the parent Compliance requirement to PASS.
+Compliance records the affected `PVC-*` / Primary Owner and waits for returned evidence. It does not execute foreign Security hardening, runtime remediation, recovery workflow configuration/runs, provider contracts, organizational training, DATA/FINTECH technical remediation or Legal Review. Returned evidence is independently reassessed; target-owned implementation evidence never transfers foreign authority into Compliance.
+
+The `REQ-COMP-033` OPS/Security returns have now been consumed. Their terminalization in the Compliance handoff lifecycle does not make Compliance the owner of EventMesh, DATA evidence or Security verification.
 
 ## Closeout exit gate
 
 The current reassessment is evidence-complete for the requested scope:
 
-- `COMP-GAP-008` has adequate current-main Documentary/Governance evidence and is terminalized as `RESOLVED_ON_MAIN` for the bounded internal lifecycle/registry treatment;
-- current DATA returns are consumed for `REQ-COMP-033/034` and the DATA handoff is recognized as `EVIDENCE_READY`;
-- OPS/Security/FINTECH end-to-end gates remain explicitly held and are not promoted to PASS;
-- no local Compliance runtime/code backlog is created by these returns.
+- OPS #937/#939 and Security #956 are consumed as returned current-main evidence for `REQ-COMP-033`;
+- the stale OPS/Security open-return gates are terminalized;
+- `REQ-COMP-033` has exactly one current bounded assessment: **`PARTIALLY_COMPLIANT`**;
+- the remaining limitation is exhaustive all-surface/runtime/provider coverage rather than an inferred active defect;
+- no local Compliance runtime/code backlog, productive PVC ownership or foreign authority is created.
 
 That is completion of the local evidence reassessment, not proof that all external Compliance dependencies are closed.

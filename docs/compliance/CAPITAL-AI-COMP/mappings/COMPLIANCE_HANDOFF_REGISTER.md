@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-COMP-HANDOFF-REGISTER-2026-08-31`  
 **Role:** traceability / non-authorizing  
-**Version:** 1.3.1  
-**Date:** 2026-09-10  
+**Version:** 1.3.2  
+**Date:** 2026-09-16  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Baseline:** `main@6d2b78b7914f9771c5fa8a88c6e6bcd40019114a`
+**Baseline:** `main@f6fccf64f78a1a29c3f98a9aa3adc8634d51b80d`
 
 `CAPITAL-AI-COMP` records and assesses findings but does not execute foreign technical, Governance-lifecycle, organizational or legal remediation. Current owner routing uses only the canonical `PVC-*` namespace from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`.
 
@@ -27,11 +27,10 @@ When no productive PVC can truthfully be assigned before a Human/Legal/provider-
 | `[COMPLIANCE_HANDOFF -> CAPITAL-AI-DOC | PVC-03]` | `REQ-COMP-019` where documentary/generated-content gap is confirmed | PARTIALLY_APPLICABLE | `CAPITAL-AI-DOC` | `PVC-03` | documentary AI-output evidence remains scope-specific / held evidence | implement only a confirmed Documentary-owned transparency/record gap and return evidence | depends on legal scope | DEFERRED_TRIGGER | current Documentary roadmap; `docs/contracts/AI_CONTENT_TRANSPARENCY_CONTRACT.md` |
 | `[COMPLIANCE_HANDOFF -> CAPITAL-AI-FINTECH | PVC-17]` | `REQ-COMP-019/020/039` when ranking/decision-support trigger is confirmed | conditional / legal-gated | `CAPITAL-AI-FINTECH` | `PVC-17` | current decision boundary is factual evidence, not legal classification | preserve/remediate target-owned ranking/decision boundary only after a concrete Compliance/Legal trigger; return evidence | required where classification/obligation is legal | DEFERRED_TRIGGER | `docs/projects/fintech/ROADMAP.md`; ADR-0087 / ESS-0019 |
 | `[COMPLIANCE_HANDOFF -> HUMAN-LEGAL-CONTRACT | PVC-N/A]` | `REQ-COMP-031` | UNKNOWN | Human/Legal + affected owner after contract correlation | `PVC-N/A — REQUIRES_CORRELATION` | complete binding customer/provider/partner contract universe and effective versions not established / held evidence | provide complete binding-contract universe/effective versions and identify affected owner/PVC only after correlation | as required | REMEDIATION_ASSIGNED | current contract/vendor/customer evidence surfaces |
-| `[COMPLIANCE_HANDOFF -> CAPITAL-AI-OPS | PVC-18]` | `REQ-COMP-033` traceability transport portion | APPLICABLE | `CAPITAL-AI-OPS` | `PVC-18` | OPS-18 remains `PARTIAL`; existing trace/evidence architecture and current telemetry correlation are present, but end-to-end protected-action/compliance-event transport coverage and freshness are not fully evidenced | return end-to-end transport/traceability evidence; remediate only proven OPS-owned defects | false | REMEDIATION_ASSIGNED | `docs/projects/operations/ROADMAP.md`; ESS-0011 / ADR-0059 |
-| `[COMPLIANCE_HANDOFF -> CAPITAL-AI-DATA | PVC-10]` | `REQ-COMP-033/034` evidence persistence/provenance portion | APPLICABLE | `CAPITAL-AI-DATA` | `PVC-10` plus `PVC-09..11` as actually affected | DATA-10 evidence identity is `EVIDENCE_READY`; DATA-11 quality gate, DATA-12 provenance, DATA-13 freshness and DATA-14 provider-input validation are implemented, and PR #827 composes those gates into `ValidatedDataInput/1.0.0`; correction-version lineage and independent Security verification remain explicit residuals | Compliance has consumed the current DATA return; retain Security verification and any proven DATA residual separately without reopening already returned DATA-10..14 slices | false | EVIDENCE_READY | `docs/projects/data/ROADMAP.md`; `docs/projects/data/evidence/**`; ADR-0032; ADR-0041 / ESS-0016 |
-| `[COMPLIANCE_HANDOFF -> CAPITAL-AI-FINTECH | PVC-12]` | `REQ-COMP-034` downstream provenance/integrity portion | APPLICABLE | `CAPITAL-AI-FINTECH` | `PVC-12..17` as actually affected | composed DATA fail-closed exit is available upstream, but FIN-12 remains mapping-open, FIN-17 backend ranking authority remains partial/open and FIN-20 exact end-to-end scoring/ranking lineage remains partial/open | return evidence that accepted DATA evidence remains linked through feature/scoring/ranking stages and reaches required OPS trace/evidence transport; remediate only proven FINTECH-owned gaps | false | REMEDIATION_ASSIGNED | `docs/projects/fintech/ROADMAP.md`; ADR-0087 |
+| `[COMPLIANCE_HANDOFF -> CAPITAL-AI-DATA | PVC-10]` | `REQ-COMP-034` evidence persistence/provenance residuals | APPLICABLE | `CAPITAL-AI-DATA` | `PVC-10` plus `PVC-09..11` as actually affected | DATA-10..14 and PR #827 have been consumed as positive upstream evidence; independent Security #956 closes the previously retained REQ-COMP-033 identity/freshness verification return; correction-version lineage remains a possible REQ-COMP-034 residual where independently proven | retain only independently proven DATA residuals for `REQ-COMP-034`; do not reopen already returned DATA-10..14 or the terminal REQ-COMP-033 Security gate | false | RETURN_CONSUMED / RESIDUAL_ONLY | `docs/projects/data/ROADMAP.md`; `docs/projects/data/evidence/**`; ADR-0032; ADR-0041 / ESS-0016 |
+| `[COMPLIANCE_HANDOFF -> CAPITAL-AI-FINTECH | PVC-12]` | `REQ-COMP-034` downstream provenance/integrity portion | APPLICABLE | `CAPITAL-AI-FINTECH` | `PVC-12..17` as actually affected | composed DATA fail-closed exit is available upstream; FIN-17 ranking authority/consumer return is no longer the missing predecessor, while FIN-12 feature-contract mapping and FIN-20 exact end-to-end scoring/ranking lineage remain open | return evidence that accepted DATA evidence remains linked through feature/scoring/ranking stages and reaches required OPS trace/evidence transport; remediate only proven FINTECH-owned gaps | false | REMEDIATION_ASSIGNED | `docs/projects/fintech/ROADMAP.md`; ADR-0087 |
 
-## Resolved historical handoffs
+## Resolved / terminal historical handoffs
 
 The former ADR-0007 (`COMP-GAP-002`) and ESS-0006 (`COMP-GAP-003`) Governance handoffs are `RESOLVED_ON_MAIN` after Human-merged PR #755/#758 and #757 respectively. They are not active remediation rows and must not be re-promoted by stale historical `VC-*` entries.
 
@@ -39,12 +38,14 @@ The former `COMP-GAP-001` structural QM handoff is also `RESOLVED_ON_MAIN` becau
 
 The former split Documentary/Governance handoff for `REQ-COMP-011/035` / `COMP-GAP-008` is `RESOLVED_ON_MAIN`. Governance PR #775 established that no shared Document Registry mutation is required under the current contract; Documentary PR #838 synchronized Document Registry/Hygiene with the current lifecycle authority; Human-merged PR #866 implemented the bounded `GOV-DOC-005` path rule, under which Markdown inside `docs/` is accepted directly and only outside-`docs/` documentation needs an exact registered exception. Compliance independently reassessed those returns against the canonically placed `docs/compliance/**` artifacts and stable `DOC-*` identities. This closes only the internal document-registry/lifecycle finding and does not decide external regime-specific record-keeping obligations.
 
+The former active `[COMPLIANCE_HANDOFF -> CAPITAL-AI-OPS | PVC-18]` for the `REQ-COMP-033` traceability transport portion is `RETURN_CONSUMED / TERMINAL`. Human-merged OPS #937 supplied strict source-owned identity/correlation/freshness binding, OPS #939 supplied productive Traceability → EventMesh returned-event source binding, and independent Security #956 verified the unchanged DATA identity/freshness contract. CAPITAL-AI-COMP independently reassessed these returns as bounded `REQ-COMP-033 = PARTIALLY_COMPLIANT`. No active OPS/Security remediation handoff remains for that exact return. The remaining exhaustive-coverage limitation is not treated as a concrete defect until an uncovered surface is evidenced and owner-correlated.
+
 ## Handoff rules
 
 1. `execute_foreign_work = false`.
 2. Handoff status never means target implementation is complete.
 3. `IMPLEMENTED`/`EVIDENCE_READY` are set only after target-owned work returns evidence.
-4. Compliance independently reassesses returned evidence before `VERIFIED` or `CLOSED`.
+4. Compliance independently reassesses returned evidence before positive assessment or handoff terminalization.
 5. `LEGAL_REVIEW` remains fail-closed and does not encode a predetermined legal answer.
 6. Deferred trigger-based handoffs do not imply a current defect.
 7. Productive ownership is resolved only from current `PVC-*` mappings; cross-cutting COMP/SEC/QM/FE/SEO/SOCIAL roles do not acquire productive PVC ownership by assessment or verification.
