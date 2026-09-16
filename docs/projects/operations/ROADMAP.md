@@ -4,13 +4,22 @@
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #900/#901 contents folded into this file  
-**Baseline:** `main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`  
+**Reconciliation:** 2026-09-16 — post-PR #977 exact-SHA Production correlation and priority sync  
+**Baseline:** `main@c89add85ca43a31bff61a27b33eef49f891ffba4`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
 
 This file is the single active project execution projection. Dated active sidecar roadmaps and pointer-only `ROADMAP.md` files are removed after this fold. Archive/superseded copies remain as historical ledger and are not an execution source. Non-terminal pre-2026-09-13 work packages remain in force with their existing IDs, constraints, dependencies and exit gates unless a later section explicitly replaces them. Terminal `DONE/CLOSED/VERIFIED/RETIRED/SUPERSEDED` history is retained as ledger, not reopened. PR #900 remains a derived documentary source only.
+
+## Current execution priority — post-PR #977
+
+1. `OPS-PR900-05 — Production observability/readiness` is the next executable OPS Roadmap slice. It consumes the now-verified exact-SHA main→Render→post-deploy identity chain and turns remaining operational readiness gaps into measurable SLI/SLO, incident, release, post-deploy and telemetry evidence without requiring protected provider activation.
+2. `OPS-PR900-06 — Security owner returns` follows as the next evidence-return slice where OPS-owned exact-identity/time/snapshot evidence is available; independent Security `VERIFIED/CLOSED` authority remains with `CAPITAL-AI-SEC`.
+3. `OPS-PR900-03B` remains `BLOCKED / NOT_STARTED` because the complete Projects V2 + Project Fields + Milestone object-management + Wiki mutation/readback execution surface is still unavailable through an already authorized path.
+4. Historical unmerged OPS branches, including `agent/operations-pr-ci-autofix-20260916` and `agent/operations-ops18-main-projection-20260915`, are stale/diverged search input only. They are not current Roadmap authority and are not successor bases.
+
+No open Pull Request existed at this reconciliation point. A successor implementation starts from then-current `main` and repeats current-main, Project/PVC/Owner, Roadmap, ADR/ESS and writer/overlap correlation.
 
 ## PR #900 / #901 work packages
 
@@ -25,7 +34,13 @@ Correlate the Option-C/project-listener work against current main and applicable
 ### OPS-PR900-02 — Deterministic version/release/deploy identity
 Complete Stage-2 PVC-06/PVC-07 validation, reconcile version-rule and Release Version Gate semantics, and prove exact-SHA promotion plus post-deploy identity. Render native Auto Deploy remains off unless separately authorized.
 
-**Exit:** one exact snapshot has truthful PASS/FAIL/NOT_AVAILABLE checks, deterministic version/release agreement and production identity evidence.
+**State:** `MERGED / IMPLEMENTED_ON_MAIN / EXACT_SHA_PRODUCTION_IDENTITY_VERIFIED` via Human-merged PR #977 (`merge SHA c89add85ca43a31bff61a27b33eef49f891ffba4`).
+
+**Current result:** current `main`, the successful main CI/build/test/supply-chain workflow, the exact-SHA Render deploy-hook target, the live Render deployment and post-deploy commit/health verification all bind to `c89add85ca43a31bff61a27b33eef49f891ffba4`. The workflow produced both `supply-chain-provenance-c89add85ca43a31bff61a27b33eef49f891ffba4` and `deployment-identity-evidence-c89add85ca43a31bff61a27b33eef49f891ffba4`. `package.json#version` remains `0.6.0`; this package integrated deterministic materialization capability and did not itself create a platform-version bump.
+
+**Authority boundary:** the verified promotion/readback proves identity and health for the executed main pipeline. It does not grant automatic Release Acceptance, tag, merge, future deployment or other protected production-mutation authority.
+
+**Exit:** `PASS` — one exact snapshot has truthful successful checks, deterministic version/release agreement and production identity evidence.
 
 ### OPS-PR900-03 — GitHub Enterprise capability matrix
 Complete read/write capability coverage for Enterprise controls, custom properties, efficient Actions/artifact/cache usage and repository integration. Governance/Security/QM constraints remain authoritative.
@@ -57,7 +72,7 @@ Sequence: `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -
 #### OPS-PR900-03C — GitHub Enterprise API Authority & Capability Matrix
 Re-correlate the previously materialized GitHub Enterprise API/permission design against the Human-merged 03A/03B state and then-current repository authority before any productive credential or provider mutation.
 
-**State:** `MATERIALIZED_BRANCH / REVALIDATED / PROVIDER_MUTATION_NOT_AUTHORIZED` on `agent/operations-github-api-authority-recorrelation-20260916`, based on `main@5ae2b371da45a5c07304fd704a7026eded976f1b` after PR #955 reached terminal Human-merged state.
+**State:** `MERGED / REVALIDATED / PROVIDER_MUTATION_NOT_AUTHORIZED` via Human-merged PR #962 (`merge SHA 770756209b6248395ce4eedce63981355728004f`).
 
 **Current result:** provider-native API capability, connected ChatGPT GitHub connector capability and effective credential grants are separate evidence classes. Repository ruleset readback is `CURRENT_CONNECTOR_READ_AVAILABLE` and reproduced the active `main-production-protection` ruleset. Enterprise-ruleset and Organization-Actions endpoints are `CURRENT_CONNECTOR_NOT_EXPOSED` on this connector even though official GitHub APIs exist. Effective Enterprise/Organization admin grants remain `NOT_PROVEN`.
 
@@ -65,7 +80,7 @@ Re-correlate the previously materialized GitHub Enterprise API/permission design
 
 **03B dependency:** 03C documentation does not unblock 03B. Projects V2 + Project Fields, Milestone object management and Wiki navigation still require an already authorized Write + reproducible Readback execution path before any pilot starts.
 
-**Exit:** API/token/permission and connector-exposure classifications are reproducible; Reader/Controller and PAT-compatibility boundaries are explicit; ambiguous or unavailable paths fail closed; downstream provider grant/readback and Controller mutation remain separately gated.
+**Exit:** `PASS` for the repository capability/authority matrix; downstream provider grant/readback and Controller mutation remain separately gated.
 
 Detail: `work-packages/OPS_PR900_03C_GITHUB_API_AUTHORITY_MATRIX_2026-09-16.md`.
 
@@ -77,7 +92,7 @@ Correlate existing gateway foundations; select/reuse one canonical architecture;
 #### OPS-PR900-04A — GitHub App / MCP Reader Setup
 Materialize the least-privileged Reader contract for durable GitHub Enterprise, Organization, Repository and Security readback through the existing Codex/MCP convergence path without enabling Controller authority or creating a second credential/control plane.
 
-**State:** `MATERIALIZED_BRANCH / READER_CONTRACT_READY / PROVIDER_MUTATION_HELD` on `agent/operations-github-reader-setup-20260916`, based on `main@3e755873078b5f6fd3e2213960d0d83eea7c4a83` after Human-merged PR #962.
+**State:** `MERGED / READER_CONTRACT_READY / PROVIDER_MUTATION_HELD` via Human-merged PR #970 (`merge SHA 7f680c432dbf172a5b672ae0a3bd521b36b11dbe`).
 
 **Reader boundary:** normal target identity is a GitHub App with short-lived installation tokens behind the CAPITAL-AI MCP gateway. Reader capabilities are explicitly allowlisted and limited to required Enterprise/Organization/Repository settings inventory plus Actions, Code Scanning, Secret Scanning and Dependabot readback. No Controller/write grant, universal admin PAT, GitHub credential in model context or speculative `.codex` GitHub endpoint is introduced.
 
@@ -85,17 +100,23 @@ Materialize the least-privileged Reader contract for durable GitHub Enterprise, 
 
 **Protected setup gate:** GitHub App creation/installation, permission grants, repository selection, OAuth/MCP connection changes, Vault credential creation and any PAT provisioning require a separate explicit Human/Owner request under current `/AGENTS.md`; this repository slice performs none of those mutations.
 
-**Exit:** Reader permission ceiling, allowlisted MCP capabilities, credential boundaries and provider-readback evidence contract are reproducible; no write capability is inferred from read access; unresolved provider grants/contradictions remain fail-closed; independent Security verification stays separate after real provider readback.
+**Exit:** `PASS` for the repository Reader contract; unresolved provider grants/contradictions remain fail-closed and independent Security verification stays separate after real provider readback.
 
 Detail: `work-packages/OPS_PR900_04A_GITHUB_APP_MCP_READER_SETUP_2026-09-16.md`.
 
 ### OPS-PR900-05 — Production observability/readiness
 Define measurable SLI/SLO, incident, release, post-deploy and telemetry evidence; integrate vendor export/readback only when authorized. PostHog/provider telemetry must respect SEC/privacy constraints.
 
+**State:** `NEXT_EXECUTABLE / PRIORITY_1` after terminal `OPS-PR900-02` exact-SHA production-identity verification.
+
+**Execution boundary:** start with repository-native and already available production/readback evidence. Do not activate a new vendor export, provider integration, paid capability, connector permission or production mutation merely to satisfy this package.
+
 **Exit:** readiness is evidence-derived, not estimated; no synthetic percentage or synthetic PASS.
 
 ### OPS-PR900-06 — Security owner returns
 Return reproducible evidence for CORS composition, CSP reporting/strict-CSP promotion, unsupported-method denial, auth audit coverage, deployed supervisor behavior, ULS Stripe→auth.users→subscriptions lineage, recovery/RPO/RTO and demo-billing isolation where owned by OPS.
+
+**State:** `QUEUED / PRIORITY_2` after the production-readiness evidence slice, with independent Security verification retained.
 
 **Exit:** each return is exact-identity/time/snapshot bound and ready for independent SEC verification.
 
@@ -105,8 +126,8 @@ Return reproducible evidence for CORS composition, CSP reporting/strict-CSP prom
 |---|---|---|
 | OPS-02 Controlled Implementation | PVC-02 | ACTIVE |
 | OPS-04 Supervisor | PVC-04 | PARTIAL — post-deploy evidence open |
-| OPS-06 Version Management | PVC-06 | BLOCKED_BY_AUTHORITY_CONFLICT |
-| OPS-07 Release Management | PVC-07 | PARTIAL |
+| OPS-06 Version Management | PVC-06 | deterministic materialization integrated; unrelated Node authority conflict remains separately blocked |
+| OPS-07 Release Management | PVC-07 | PARTIAL — deterministic Stage-2 path integrated; broader release evidence remains open |
 | OPS-08 Production Operations | PVC-08 | PARTIAL — measured operational evidence open |
 | OPS-18 EventMesh / Traceability | PVC-18 | PARTIAL |
 | OPS-POST851-EDGE-01 | PVC-02/08 | IMPLEMENTED_ON_MAIN / EVIDENCE_READY |
@@ -116,7 +137,7 @@ Return reproducible evidence for CORS composition, CSP reporting/strict-CSP prom
 | OPS-08-SEC-07 Recovery / RPO / RTO | PVC-08 | harness on main; measured evidence open |
 | OPS-02-SEC-06 Entitlement inventory | PVC-02 | parent complete; child returns + SEC verification open |
 | DR-03 | — | BLOCKED_BY_HIGHER_PRIORITY_OPS_GATE |
-| OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | separate branch; fail-closed; not merged |
+| OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | separate historical branch; requires fresh current-main correlation before any continuation |
 
 Invariants: Render native Auto Deploy remains off; productive M10 is `RETIRED / OFF`; provider/production mutation requires separate authorization; GitGuardian health/audit is `sources:read` management evidence, not a second scanner.
 
