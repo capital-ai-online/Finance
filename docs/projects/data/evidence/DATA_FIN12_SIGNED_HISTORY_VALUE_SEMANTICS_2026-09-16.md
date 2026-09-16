@@ -7,8 +7,8 @@
 **Primary PVC:** `PVC-09..PVC-11`  
 **Roadmap scope:** `DATA-14` provider validation + `DATA-15` data-contract testing; upstream return for FINTECH `FIN-12`  
 **Branch:** `agent/data-fin12-signed-history-20260916`  
-**Current-main baseline:** `main@1780264d567f307c31fab149433969a8c359bcd1`  
-**State:** `IMPLEMENTED_ON_FRESH_CURRENT_MAIN_BRANCH / CREATE_CORRELATION_PENDING`
+**Current-main baseline:** `main@47a245be78b60494c0f57518f742bbb7923b70fa`  
+**State:** `IMPLEMENTED_ON_BRANCH / POST-CREATE_RACE_RESYNC`
 
 ## Current-main finding
 
@@ -48,28 +48,21 @@ Existing positive-price history consumers continue to call `buildValidatedHistor
 
 ## FINTECH handoff impact
 
-This closes one bounded upstream FIN-12 requirement: explicit validated value semantics for legitimate signed observations such as sovereign yields.
+Human-merged PR #1012 is part of current main. Its FINTECH Crypto Category / Model / Scoring Lineage contract consumes DATA-admitted observations, preserves DATA provenance and leaves missing/stale/conflicting evidence `NOT_COMPUTABLE`; it does not introduce a provider adapter or FINTECH-local DQ authority. The signed-history change therefore extends DATA semantics without overwriting or duplicating the integrated FINTECH contract.
 
-Human-merged PR #1012 is part of this branch baseline. Its FINTECH Crypto Category / Model / Scoring Lineage contract consumes DATA-admitted observations, preserves DATA provenance and leaves missing/stale/conflicting evidence `NOT_COMPUTABLE`; it does not introduce a provider adapter or FINTECH-local DQ authority. The signed-history change therefore extends DATA semantics without overwriting or duplicating the integrated FINTECH contract.
+This bounded slice closes the explicit signed-value semantics requirement. Still DATA-owned and open before FIN-12 can be globally released are, at minimum:
 
-Still DATA-owned and open before FIN-12 can be globally released are, at minimum:
-
-1. validated crypto category/champion snapshot dimensions with field-level provider/feed/evidence/freshness/DQ lineage;
+1. validated crypto category/champion observations with field-level provider/feed/evidence/freshness/DQ lineage;
 2. validated traditional fundamentals with field-level provenance;
 3. a canonical validated-history bridge/contract for productive crypto/traditional history consumers.
 
-FINTECH remains prohibited from creating local provider normalization or Data Quality logic while these returns are pending.
+## Post-create race correlation
 
-## Current writer correlation
+The first Draft-PR create request raced with Human/CODEOWNER merge of PR #1013. GitHub therefore created PR #1015 against the newer base while its initial body still described the immediately preceding main snapshot. Per `/AGENTS.md`, that invalidated the prior correlation and required an immediate resync rather than treating the stale snapshot as valid.
 
-At this materialization baseline:
+The branch is re-materialized on `main@47a245be78b60494c0f57518f742bbb7923b70fa`, which includes both terminal PR #1012 and terminal PR #1013. Their changed files remain disjoint from this DATA package. PR #1014 remains a separate SOCIAL docs/evidence writer outside `docs/projects/data/**` and `src/platform/MarketData/**`.
 
-- PR #1012 is `MERGED` and consumed through `main@1780264d567f307c31fab149433969a8c359bcd1`;
-- PR #1013 is an open `CAPITAL-AI-FE` Appearance/Presentation writer and changes Frontend/UI/test/evidence surfaces, not `src/platform/MarketData/**`, this DATA evidence path or the focused DATA test;
-- PR #1014 is an open `CAPITAL-AI-SOCIAL` detection/evidence writer and is docs-only outside `docs/projects/data/**`;
-- no same-file, DATA namespace, Primary-Owner or provider-validation Authority conflict is identified by this snapshot.
-
-Every later main/head/writer change invalidates this snapshot and requires final create-correlation again before Draft PR creation.
+Every later main/head/writer change invalidates this snapshot and requires another exact-head correlation before Human/CODEOWNER merge.
 
 ## Validation truth
 
@@ -77,7 +70,7 @@ Every later main/head/writer change invalidates this snapshot and requires final
 - TypeScript: `NOT RUN` pre-PR;
 - full DATA contract suite: `NOT RUN` pre-PR;
 - Production Build: `NOT RUN` pre-PR;
-- hosted CI: intentionally deferred until after Draft PR creation according to current lifecycle/cost policy.
+- hosted CI: post-PR exact-head execution is required.
 
 `NOT RUN` is not `PASS`.
 

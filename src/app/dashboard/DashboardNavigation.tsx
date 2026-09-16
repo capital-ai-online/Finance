@@ -62,7 +62,7 @@ export interface DashboardNavigationProps {
 }
 
 type ExpandedSection = DashboardSection | 'universes' | null;
-type UniverseId = 'equities' | 'forex' | 'crypto' | 'commodity';
+type UniverseId = 'equities' | 'index' | 'forex' | 'crypto' | 'commodity';
 
 const ITEM_ICON: Partial<Record<DashboardView, LucideIcon>> = {
   dashboard: LayoutDashboard,
@@ -86,11 +86,14 @@ const UNIVERSES: ReadonlyArray<{
   label: string;
   symbol: string;
   category: string;
+  icon: LucideIcon;
+  tone: string;
 }> = [
-  { id: 'equities', label: 'Aktien', symbol: 'AAPL', category: 'stock' },
-  { id: 'forex', label: 'Forex', symbol: 'EURUSD', category: 'forex' },
-  { id: 'crypto', label: 'Krypto', symbol: 'BTC', category: 'crypto' },
-  { id: 'commodity', label: 'Rohstoffe', symbol: 'GLD', category: 'commodity' },
+  { id: 'equities', label: 'Aktien', symbol: 'AAPL', category: 'stock', icon: TrendingUp, tone: 'text-asset-stock' },
+  { id: 'index', label: 'Indizes', symbol: 'DAX', category: 'index', icon: BarChart3, tone: 'text-asset-index' },
+  { id: 'forex', label: 'Forex', symbol: 'EURUSD', category: 'forex', icon: Activity, tone: 'text-asset-forex' },
+  { id: 'crypto', label: 'Krypto', symbol: 'BTC', category: 'crypto', icon: Zap, tone: 'text-asset-crypto' },
+  { id: 'commodity', label: 'Rohstoffe', symbol: 'GLD', category: 'commodity', icon: Orbit, tone: 'text-asset-commodity' },
 ];
 
 const ADMIN_ITEMS: ReadonlyArray<{ tab: DashboardNavigationAdminTab; label: string }> = [
@@ -202,10 +205,8 @@ export function DashboardNavigation({
           <div className="flex-1 overflow-y-auto">
             <header className="flex items-center justify-between border-b border-white/10 p-6">
               <div>
-                <h2 id="dashboard-navigation-title" className="text-sm font-black uppercase tracking-widest text-aif-gold-DEFAULT">
-                  Capital-AI
-                </h2>
-                <p className="mt-0.5 text-[11px] uppercase tracking-widest text-white/50">Production Release</p>
+                <h2 id="dashboard-navigation-title" className="text-sm font-black uppercase tracking-widest text-aif-gold-DEFAULT">Capital-AI</h2>
+                <p className="mt-0.5 text-[11px] uppercase tracking-widest text-white/50">Universe Platform</p>
               </div>
               <button
                 type="button"
@@ -286,29 +287,56 @@ export function DashboardNavigation({
                 />
                 {expandedSection === 'universes' ? (
                   <div id="dashboard-nav-universes" className="mt-1 space-y-2 border-l border-white/5 pl-2">
-                    {UNIVERSES.map((universe) => (
-                      <div key={universe.id} className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => setExpandedUniverse(expandedUniverse === universe.id ? null : universe.id)}
-                          className="ui-hit flex min-h-11 w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-3 text-[11px] font-bold uppercase tracking-wider text-white/80 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"
-                          aria-expanded={expandedUniverse === universe.id}
-                        >
-                          <span className="flex items-center gap-2"><Layers size={12} aria-hidden="true" />{universe.label}</span>
-                          <ChevronDown size={12} aria-hidden="true" className={`transition-transform ${expandedUniverse === universe.id ? 'rotate-180' : ''}`} />
-                        </button>
-                        {expandedUniverse === universe.id ? (
-                          <div className="space-y-1 rounded-lg border border-white/5 bg-black/40 p-1">
-                            <button type="button" className="ui-hit min-h-11 w-full rounded p-2 text-left text-[10px] text-white/70 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT" onClick={() => navigateAsset(universe.symbol, universe.category, 'sentiment-dashboard')}>1. Sentiment Analysis</button>
-                            <button type="button" className="ui-hit min-h-11 w-full rounded p-2 text-left text-[10px] text-white/70 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT" onClick={() => navigateAsset(universe.symbol, universe.category, 'buffet-value')}>2. Graham Valuation</button>
-                            <button type="button" className="ui-hit min-h-11 w-full rounded p-2 text-left text-[10px] text-white/70 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT" onClick={() => navigateAsset(universe.symbol, universe.category, 'risiko-assessment')}>3. Risk Assessment</button>
-                            {universe.id === 'crypto' ? (
-                              <button type="button" className="ui-hit flex min-h-11 w-full items-center gap-2 rounded p-2 text-left text-[10px] font-bold text-purple-300 hover:bg-purple-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT" onClick={() => navigateAsset('AAVE', 'crypto', 'defi-orchestration')}><Zap size={10} aria-hidden="true" />DeFi Orchestration</button>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
+                    {UNIVERSES.map((universe) => {
+                      const UniverseIcon = universe.icon;
+                      return (
+                        <div key={universe.id} className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedUniverse(expandedUniverse === universe.id ? null : universe.id)}
+                            className="ui-hit flex min-h-11 w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 text-[11px] font-bold uppercase tracking-wider text-white/80 transition hover:border-white/15 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"
+                            aria-expanded={expandedUniverse === universe.id}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-black/30">
+                                <UniverseIcon size={15} className={universe.tone} aria-hidden="true" />
+                              </span>
+                              {universe.label}
+                            </span>
+                            <ChevronDown size={12} aria-hidden="true" className={`transition-transform ${expandedUniverse === universe.id ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {expandedUniverse === universe.id ? (
+                            <div className="space-y-1 rounded-xl border border-white/5 bg-black/40 p-1.5">
+                              <button type="button" className="ui-hit min-h-11 w-full rounded-lg p-2 text-left text-[10px] text-white/70 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT" onClick={() => navigateAsset(universe.symbol, universe.category, 'sentiment-dashboard')}>1. Sentiment Analysis</button>
+
+                              {universe.id === 'equities' ? (
+                                <button type="button" className="ui-hit min-h-11 w-full rounded-lg p-2 text-left text-[10px] font-bold text-asset-stock hover:bg-asset-stock/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asset-stock" onClick={() => navigateAsset(universe.symbol, universe.category, 'buffet-value')}>
+                                  2. Buffett Value Check
+                                </button>
+                              ) : null}
+
+                              {universe.id === 'crypto' ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled
+                                    aria-disabled="true"
+                                    title="FINTECH-Feature-Contract erforderlich; Frontend erzeugt keine Krypto-Value-Formel."
+                                    className="ui-hit min-h-11 w-full cursor-not-allowed rounded-lg border border-asset-crypto/15 bg-asset-crypto/[0.04] p-2 text-left text-[10px] font-bold text-asset-crypto/60"
+                                  >
+                                    2. Satoshi Universe Check · FINTECH-Handoff offen
+                                  </button>
+                                  <button type="button" className="ui-hit flex min-h-11 w-full items-center gap-2 rounded-lg p-2 text-left text-[10px] font-bold text-asset-crypto hover:bg-asset-crypto/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asset-crypto" onClick={() => navigateAsset('AAVE', 'crypto', 'defi-orchestration')}><Zap size={10} aria-hidden="true" />DeFi Orchestration</button>
+                                </>
+                              ) : null}
+
+                              <button type="button" className="ui-hit min-h-11 w-full rounded-lg p-2 text-left text-[10px] text-white/70 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT" onClick={() => navigateAsset(universe.symbol, universe.category, 'risiko-assessment')}>3. Risk Assessment</button>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : null}
               </section>
@@ -328,10 +356,7 @@ export function DashboardNavigation({
                         <button
                           key={item.tab}
                           type="button"
-                          onClick={() => {
-                            onAdminNavigate(item.tab);
-                            setOpen(false);
-                          }}
+                          onClick={() => { onAdminNavigate(item.tab); setOpen(false); }}
                           className="ui-hit flex min-h-11 w-full items-center gap-3 rounded-xl border border-aif-gold-DEFAULT/20 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT transition hover:bg-aif-gold-DEFAULT/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"
                         >
                           <Activity size={14} aria-hidden="true" />
