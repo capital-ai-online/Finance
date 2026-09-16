@@ -2,9 +2,9 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Correlation baseline:** `main@5e9be38b5af037f85fab67643043c5be30f87e16`  
-**Correlation date:** `2026-09-10`  
-**Open PR baseline:** none at integrity-sync intake; current re-correlation: PR #874 open
+**Correlation baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
+**Correlation date:** `2026-09-16`  
+**Open PR baseline:** none at post-PR #996 / post-PR #1001 current-main sync
 
 ## Current terminal repository packages
 
@@ -14,20 +14,18 @@
 | Owner-directed | `OPS-POST851-OBS-01` Telemetry correlation extension | primary `PVC-02`; supporting `PVC-18` | extend existing logger/Telemetry with validated W3C context and edge provenance | `IMPLEMENTED_ON_MAIN / EVIDENCE_READY` via PR #859; no second logger/collector/audit plane |
 | Owner-directed | `OPS-POST851-PI-01` Product Intelligence contract | primary `PVC-02`; supporting `PVC-18` | vendor-neutral aggregate-safe product event schema | `IMPLEMENTED_ON_MAIN / EVIDENCE_READY` via PR #859; consumer ownership unchanged |
 | Owner-directed | `OPS-DEP-FLOOR-01` Multer/Nodemailer dependency floors | `PVC-02` | harden direct manifest minimums without unrelated dependency churn | `IMPLEMENTED_ON_MAIN` via PR #865 |
-| Owner-directed | `OPS-EDGE-SECRET-COVERAGE-01` Edge-Trust secret deployment coverage | primary `PVC-02`; supporting `PVC-08` | bind `CAPITAL_AI_EDGE_TRUST_SECRET` to server-only deployment/secret manifest coverage | `IMPLEMENTED_ON_MAIN` via PR #867; provider secret provisioning remains separate |
+| Owner-directed | `OPS-EDGE-SECRET-COVERAGE-01` Edge-Trust secret deployment coverage | primary `PVC-02`; supporting `PVC-08` | bind `CAPITAL_AI_EDGE_TRUST_SECRET` to server-only deployment/secret manifest coverage | `IMPLEMENTED_ON_MAIN` via PR #867; provider secret provisioning separate |
 | Blocked follow-up | `OPS-POST851-ID-02` Render OIDC/OAuth2.1/MCP | `PVC-02` | external execution-host identity only after Security/Authority re-correlation | `BLOCKED / NOT_IN_CURRENT_SLICE` |
 
 ## Current foreign Security dependency — M6 / Supply-Chain continuation
 
 | Package | Responsible project Roadmap state | Repository evidence | Long-term technical owner / PVC | OPS disposition |
 |---|---|---|---|---|
-| `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | Security Roadmap on current main: `IMPLEMENTED_BRANCH / CI_REMEDIATION_COMMITTED / HOSTED_REVALIDATION_OPEN`; aggregate `SEC-SOTA-03` remains `IN_PROGRESS / ... / INVENTORY_OPEN` | PR #872 Human-merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; final head `e59308599dde3f7cf050601a2b6e64c5a73aaf59`; PR CI, Governance and Container Security `success` | `CAPITAL-AI-OPS / PVC-02` + `PVC-07` | consume implementation on main; do not synthesize Security `VERIFIED/CLOSED`; Security-owned Roadmap synchronization remains open |
+| `SEC-SOTA03-ARTIFACT-DIGEST-BINDING` | Security Roadmap status is owned by CAPITAL-AI-SEC and must be read from its then-current Roadmap before any closure assertion | PR #872 Human-merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; final head `e59308599dde3f7cf050601a2b6e64c5a73aaf59`; PR CI, Governance and Container Security were successful for that exact head | `CAPITAL-AI-OPS / PVC-02` + `PVC-07` | consume implementation on main; do not synthesize Security `VERIFIED/CLOSED` |
 
 The package extends the existing ADR-0060/M6 provenance chain by binding deterministic SHA-256 identity for the actual built runtime output into the existing release-manifest/provenance verification path.
 
-The responsible Security Roadmap has not yet caught up with the Human merge and exact-head hosted results. That status drift is kept explicit. Under the current project-status model, the derived M6 continuation therefore remains **CURRENT OPEN** until `CAPITAL-AI-SEC` re-correlates its own Roadmap and records the current bounded-slice/aggregate state.
-
-**Owner exit gate:** Security Roadmap is synchronized to then-current main and final exact-head evidence; the merged runtime-artifact digest path is classified without stale `IMPLEMENTED_BRANCH`/`HOSTED_REVALIDATION_OPEN` wording, while `SEC-SOTA-03` remains open or closes only according to Security-owned residual inventory and verification evidence.
+Responsible Security status remains Security-owned. OPS consumes merged implementation evidence without manufacturing an independent Security closure state.
 
 ## GitGuardian least-privilege audit boundary
 
@@ -44,8 +42,6 @@ Current repository contract after Human-merged PR #863:
 - no API-key value, token payload, Secret value or provider response body is emitted.
 
 Post-merge workflow run `#34468840264` executed on exact `main@2a6909ead7dc4ed3299de3d07d84123ce53f9e46` and completed successfully: API authentication PASS, `monitoring_status=active/PASS`, no explicit FAILs. `github_installation`, `api_network` and `api_access_rights` remained `NOT-RUN` due HTTP 403; `check_run_configuration` remained `NOT-RUN` because the current workflow has no documented public endpoint for that evidence.
-
-GitGuardian's current API documentation defines `sources:read` as view-only source access, `sources:write` as view/edit source access and `scan` as the separate scanning capability required for ggshield. The target credential contract is therefore `sources:read-only` for this permanent health/audit use case.
 
 The current repository evidence does **not** enumerate the complete scope set attached to the existing `GITGUARDIAN_API_KEY`. Successful authentication and source reads prove the required capability, not the absence of additional provider scopes. Exact configured credential scope is therefore `NOT-PROVEN`. Provider-side readback or a separately authorized replacement/rotation is required to close that external least-privilege evidence gate. This repository package performs no token, permission or provider mutation.
 
@@ -90,7 +86,7 @@ Vendor export remains a future owner-specific adapter and cannot be activated by
 | P2 | `OPS-08-SEC-09` Strict CSP Promotion | `PVC-08` | `WAITING_FOR_EVIDENCE` |
 | P2 | `OPS-08-SEC-10` Billing Isolation | `PVC-08` | `WAITING_FOR_EVIDENCE` |
 
-The current integrity sync does not close, downgrade or absorb Security findings.
+This projection does not close, downgrade or absorb Security findings.
 
 ### `OPS-02-SEC-06` current owner-return projection
 
@@ -110,18 +106,16 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 | P1 | `OPS-07-A` Release Evidence Contract | `PVC-07` | OPEN |
 | P1 | `OPS-08-A` Production Handoff & Recovery | `PVC-08` | OPEN / PARTIAL |
 | P1 | `OPS-18-A` EventMesh/Traceability Coverage | `PVC-18` | OPEN / PARTIAL; Post-#851 trace-correlation slice implemented |
-| P2 | `OPS-02-CI-01` Build/Test Cost & Scope Reduction | `PVC-02` | PLANNED |
-| P2 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / PARTIAL; `OPS-08-B-SH-01` exists on separate Self-Healing readiness branch and requires current-main resync |
+| P2 | `OPS-02-CI-01` Build/Test Cost & Scope Reduction | `PVC-02` | `IMPLEMENTED_ON_MAIN / COST_PROFILE_AND_STALE_EVENT_GUARD_MERGED` via PR #988 + PR #996; hosted cost/race evidence remains open and real-evidence-only |
+| P2 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / PARTIAL; any historical Self-Healing branch requires fresh current-main correlation before continuation |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | OPEN / PARTIAL |
 
 ## `OPS-08-B-SH-01` — Self-Healing Readiness Foundation
 
-**Branch:** `agent/operations-self-healing-readiness-20260910`  
+**Historical branch reference:** `agent/operations-self-healing-readiness-20260910`  
 **Primary PVC:** `PVC-08`; supporting `PVC-04`, `PVC-18`, `PVC-02`
 
-The package extends existing Supervisor/Telemetry surfaces with Observe→Detect→Diagnose readiness and a bounded remediation contract. It does not authorize productive autonomous recovery. SH-R2 actions remain Human/Owner-gated. The branch must be resynchronized and its exact head revalidated before any renewed PR-creation approval.
-
-Its changed files do not include top-level `ROADMAP.md`, top-level `WORK_PACKAGES.md`, the entitlement inventory or the current integrity evidence file, so it is kept separate rather than combined with this documentation sync.
+The package extends existing Supervisor/Telemetry surfaces with Observe→Detect→Diagnose readiness and a bounded remediation contract. It does not authorize productive autonomous recovery. SH-R2 actions remain Human/Owner-gated. Any continuation must first be re-correlated from then-current main; historical branch state is not current execution authority.
 
 ## DR-03 — Provider Adapter / Execution Integration
 
@@ -131,32 +125,33 @@ Its changed files do not include top-level `ROADMAP.md`, top-level `WORK_PACKAGE
 
 DR-03 remains separate. No current package activates a provider adapter, modifies provider grants, creates a second Agent Control Plane, enables remote skill loading, creates an MCP server or performs Release/Production mutation.
 
-## OPS-PR900-03A / 03B — GitHub Work Management
+## OPS-PR900 GitHub / MCP / Readiness sequence
 
 | Package | PVC | Current disposition | Bounded scope / gate |
 |---|---|---|---|
-| `OPS-PR900-03A` GitHub Work-Management Inventory & Package Materialization | `PVC-02` | `MERGED / CAPABILITY_GAP_VERIFIED` via PR #950 (`1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`) | provider-versus-connector inventory complete; coordination-only repository contract materialized and post-merge reverified |
-| `OPS-PR900-03B` GitHub Work-Management Pilot | `PVC-02` | `BLOCKED / NOT_STARTED — CONNECTOR / EXECUTION-SURFACE GAP` | `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -> Done -> Wiki Navigation`; starts only when required object/mutation/readback surfaces are available through an already authorized execution path |
+| `OPS-PR900-03A` GitHub Work-Management Inventory & Package Materialization | `PVC-02` | `MERGED / CAPABILITY_GAP_VERIFIED` via PR #950 (`1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`) | provider-versus-connector inventory complete; coordination-only repository contract materialized |
+| `OPS-PR900-03B` GitHub Work-Management Pilot | `PVC-02` | `BLOCKED / NOT_STARTED — PROVIDER_HOST / EFFECTIVE-GRANT / READBACK GAP` | starts only when Organization Projects/Fields, Issue Types/Fields, Milestone object management and Wiki navigation are available through one separately authorized Finance-only path with real mutation + reproducible readback |
+| `OPS-PR900-03C` GitHub Enterprise API Authority & Capability Matrix | `PVC-02` | `MERGED / REVALIDATED / PROVIDER_MUTATION_NOT_AUTHORIZED` via PR #962 (`770756209b6248395ce4eedce63981355728004f`) | provider API, connected execution surface and effective credential grants remain separate evidence classes |
+| `OPS-PR900-04A` GitHub App / MCP Reader Setup | `PVC-02` | `MERGED / READER_CONTRACT_READY / PROVIDER_MUTATION_HELD` via PR #970 (`7f680c432dbf172a5b672ae0a3bd521b36b11dbe`) | least-privileged Reader contract only; GitHub App/OAuth/permission/Vault/PAT setup remains separately Human/Owner-authorized |
+| `OPS-PR900-04B` GitHub Work-Management Gateway Adapter | `PVC-02` | `MERGED / REPOSITORY_ADAPTER_READY / PROVIDER_HOST_HELD` via PR #982 (`89d10a14830285ca8d7abd344f6f0da7b3b4c399`) | official GitHub MCP reused; bounded Finance-only Milestone + navigation-only Wiki complement on main; real gateway/Vault host and provider readback remain held |
+| `OPS-PR900-05` Production Observability / Readiness | primary `PVC-08`; supporting `PVC-07`, `PVC-18` | `MERGED / EVIDENCE_CONTRACT_READY / LIVE_MEASUREMENT_OPEN` via PR #980 (`b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`) | deterministic readiness evidence contract on main; numerical SLO/incident/RPO/RTO/vendor measurements remain real-evidence-only |
+| `OPS-PR900-06` Security Owner Returns | OPS-owned return surfaces | `NEXT_EXECUTABLE / PRIORITY_1` | exact-identity/time/snapshot evidence only; independent Security `VERIFIED/CLOSED` remains with CAPITAL-AI-SEC |
 
-Post-merge verification against `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619` distinguishes GitHub-native provider state from connected connector capability. Finance metadata reports `has_issues=true`, `has_projects=true` and `has_wiki=true`, and Issue updates support association to an already known milestone number. Those provider facts do not prove complete object-level inventory, mutation and readback through the current connector.
+Provider/native feature availability, connected execution-surface capability and effective credential grants are distinct facts. Repository adapters or contracts never prove provider grants by themselves.
 
-Current connected classification: Issues are `AVAILABLE`; Labels and Milestones are `PARTIAL_SURFACE`; Issue Types and Organization Issue Fields are `NOT_AVAILABLE_ON_CURRENT_CONNECTOR`; Organization Projects/Project Fields are `REPOSITORY_FEATURE_ENABLED / OBJECT_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR`; Wiki Pages/Navigation are `REPOSITORY_FEATURE_ENABLED / PAGE_SURFACE_NOT_AVAILABLE_ON_CURRENT_CONNECTOR`.
+For 03B specifically, the merged 04A/04B repository prerequisites narrow the blocker but do not remove it. The remaining exit evidence is one separately authorized provider-host setup with metadata-only effective-grant readback, Finance-only scope and real `Read -> Write -> Readback` across the required GitHub work-management surfaces.
 
-`NOT_AVAILABLE_ON_CURRENT_CONNECTOR` is never equivalent to "object does not exist". No `EMPTY_VERIFIED` state is synthesized where complete enumeration is unavailable.
-
-Taxonomy preference is native Issue Types -> Organization Issue Fields -> residual Labels -> non-versioned delivery-cohort Milestone -> Project Status as workflow state. A future milestone may be named `GitHub Work Management Pilot`, but it cannot represent platform version, Release or Deployment state. Wiki content is limited to navigation/backlinks and cannot duplicate normative Roadmap/ADR/ESS/Governance/Security/Release content.
-
-03B remains blocked until the already authorized execution path exposes Organization Projects V2 + Project Fields, Milestone object management and Wiki navigation with both mutation and reproducible readback. Project Status `Done` must likewise be observed rather than inferred. No partial pilot counts as successful completion, and this package does not authorize connector, OAuth, permission or provider integration mutation.
+No partial pilot counts as successful completion, and this package does not authorize connector, OAuth, permission, GitHub App, Vault, PAT or provider integration mutation.
 
 ## Security / execution-delegation boundary
 
 Current Governance permits a bounded Security-primary repository remediation under its accepted Security-remediation control without transferring file, Domain or PVC ownership. CAPITAL-AI-SEC remains independent assurance owner for Security findings. This changes execution eligibility only; it does not let OPS self-close Security findings or let Security absorb OPS long-term ownership.
 
-PR #872 demonstrates that separation: Security executed the bounded implementation, while long-term Controlled-Implementation/Release ownership remains OPS/PVC-02/PVC-07. The merged technical result is consumed by OPS, but the stale Security Roadmap state is left to the responsible Security owner to reconcile.
+PR #872 demonstrates that separation: Security executed the bounded implementation, while long-term Controlled-Implementation/Release ownership remains OPS/PVC-02/PVC-07. The merged technical result is consumed by OPS without manufacturing Security closure.
 
 ## Package rules
 
-1. One bounded coherent work item per fresh compliant branch.
+1. One bounded coherent work item/work package per fresh compliant branch; under current `/AGENTS.md`, immediately executable dependent substeps may remain on that branch while Project/folder/Primary Owner, objective, authority scope and reviewability stay coherent and no separate protected-mutation/assurance/integration boundary is crossed.
 2. Security-relevant implementation may become `IMPLEMENTED`/`EVIDENCE_READY`; `VERIFIED/CLOSED` remains with the current independent Security authority unless a higher effective authority states otherwise.
 3. Foreign productive work is not absorbed by this OPS parent inventory.
 4. Runtime/provider/credential mutation is never implied by repository code or documentation.
@@ -194,38 +189,34 @@ PR #872 demonstrates that separation: Security executed the bounded implementati
 | PR #867 Edge-Trust secret deployment coverage | merged OPS correction |
 | PR #868 Governance chat/approval rollout | merged Governance dependency |
 | PR #870/#871 Vite security floor / SEC-SOTA-03 sync | merged Security work; no OPS ownership transfer |
-| PR #872 artifact-digest binding | merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; Security Roadmap synchronization remains open |
+| PR #872 artifact-digest binding | merged as `a05d75f27fdd0c3bea5321a23cbf2de24bdbc56c`; Security status remains Security-owned |
 | PR #873 PVC Vocabulary / Thesaurus | merged as `5e9be38b5af037f85fab67643043c5be30f87e16` |
-| PR #950 GitHub Work-Management inventory/materialization | merged as `1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`; 03A `MERGED / CAPABILITY_GAP_VERIFIED`, 03B remains blocked by connector/execution-surface gap |
+| PR #950 GitHub Work-Management inventory/materialization | merged as `1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`; 03A complete |
+| PR #970 GitHub App / MCP Reader Setup | merged as `7f680c432dbf172a5b672ae0a3bd521b36b11dbe`; repository Reader contract ready, provider setup held |
+| PR #980 Production Readiness Evidence | merged as `b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`; evidence contract ready, live measurement open |
+| PR #982 GitHub Work-Management Gateway Adapter | merged as `89d10a14830285ca8d7abd344f6f0da7b3b4c399`; repository adapter ready, provider host held |
+| PR #988 CI cost profiles | merged as `741cdaccb2b2236d626de13c9293d604f48c53e7`; cost-profile policy on main |
+| PR #996 stale PR-event guard | merged as `60ae94a07ab19c497e841fce48e4e96c81cdfcf1`; snapshot-bound stale-event/concurrency hardening on main |
+| PR #1001 branch work-package / post-merge continuation | merged as current-main Authority update; `/AGENTS.md` re-read before this sync |
 | GitGuardian Health #34468840264 | terminal success on exact post-#863 main; required monitoring PASS; denied/unsupported categories remain NOT-RUN |
 
-## Active-writer correlation
+## Current writer correlation — 2026-09-16
 
-At integrity-sync intake:
+- current main: `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`;
+- PR #996 is terminal/Human-merged and its OPS-02-CI-01 payload is consumed as main state;
+- PR #1001 is terminal/Human-merged and its `/AGENTS.md` Authority update is consumed from current main; no current open Pull Request exists at this reconciliation point;
+- the new work-package aggregation semantics do not aggregate the separately protected Provider-Host mutation into this repository-only documentation package;
+- historical OPS status/integrity branches are search input only and are not used as successor bases;
+- no provider write, credential mutation, connector mutation, OAuth/permission change, Vault/secret mutation or Production mutation occurs in this status sync.
 
-- no Pull Request was open;
-- `agent/operations-roadmap-integrity-sync-20260910` owns this bounded four-artifact documentation/evidence sync;
-- `agent/operations-self-healing-readiness-20260910` is the only other active OPS branch detected and is file-disjoint from the four integrity-sync target artifacts;
-- deleted/unmerged earlier integrity branches and their commits are historical input only.
+## Exit gate for current post-PR #996 sync
 
-Current re-correlation after PR #872/#873 merges:
-
-- PR #872 is terminal/Human-merged into main; its implementation is consumed without claiming Security closure;
-- PR #873 is terminal/Human-merged into current main; its Vocabulary/PVC terminology changes create no OPS ownership or file conflict;
-- PR #874 remains open under `CAPITAL-AI-GOV` for Approval Envelope v3.4 and changes Trust Root, Development-Chain approval/policy, Governance project, registry/evaluator/test surfaces; it has no changed-file overlap with this OPS integrity-sync scope, but it is a material semantic/authority writer that must reach a terminal state before a separate DevelopmentChain current-state/milestone matrix is materialized;
-- no parallel OPS implementation or Security status overwrite is created.
-
-## Exit gate for current integrity-sync package
-
-- branch has been resynchronized to `main@5e9be38b5af037f85fab67643043c5be30f87e16` after PR #872 and #873 merges;
-- current open-PR set is re-correlated: PR #874 is changed-file disjoint from this branch and its later DevelopmentChain authority dependency is explicitly sequenced;
-- PR #859/#867 are represented as merged/current-main work, not `ACTIVE_BRANCH` work;
-- PR #872 is represented as merged implementation with responsible Security Roadmap status drift still open rather than synthetic closure;
-- GitGuardian Health run #34468840264 is represented with exact PASS/NOT-RUN semantics and is not promoted to a different SHA;
-- current workflow design supports a `sources:read-only` target contract, while actual provider token scopes remain `NOT-PROVEN`;
-- Self-Healing readiness remains separate and must resync before its own PR approval;
-- later DevelopmentChain milestone/current-state work remains sequenced after the active Governance Approval-Envelope writer reaches terminal state and responsible project Roadmaps are re-read;
-- no provider write, credential mutation, connector mutation or Production mutation occurs;
-- branch readback/diff validation must PASS;
-- final main/head/open-PR correlation is repeated before PR approval;
-- PR creation remains separately Human/Owner-approved.
+- this projection is bound to current main `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`;
+- PR #996 is represented as merged/current-main work, not active-branch work;
+- PR #1001 current Authority is consumed and does not weaken provider-mutation separation;
+- PR #970/#980/#982/#988/#996 terminal states are consumed without reopening completed repository materialization;
+- `OPS-PR900-03B` stays blocked until separately authorized provider-host/effective-grant/Finance-only `Read -> Write -> Readback` evidence exists;
+- `OPS-PR900-06` is the next normal executable OPS Roadmap slice;
+- Security closure remains with CAPITAL-AI-SEC and live readiness/provider evidence remains unsynthesized;
+- final main/head/open-PR and Authority correlation is repeated before PR creation;
+- Human/CODEOWNER merge remains separate and provider setup remains separately Human/Owner-authorized.
