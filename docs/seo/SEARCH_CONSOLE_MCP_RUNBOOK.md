@@ -2,7 +2,8 @@
 
 **Status:** `READ_VERIFIED` für Property Read und URL Inspection auf Codex Cloud (2026-09-16)  
 **Bezug:** `docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_TOPOLOGY.md`, `docs/projects/seo/ROADMAP.md`, ESS-0014  
-**Baseline:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`
+**Provider-Evidence-Baseline:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`  
+**Repository-Rekorrelation:** `main@afa259fc786479386a6ea0e165c3d8dc3363aae8`; PR #981 änderte ausschließlich `docs/projects/social-media/ROADMAP.md` und berührt den Search-Console-Host-/SEO-Read-Vertrag nicht.
 
 ## Ziel
 

@@ -1,7 +1,8 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project:** CAPITAL-AI  
 **Stand:** 16.09.2026 — GSC provider-read + URL-Inspection reconciliation  
-**Korrelationsbasis:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`  
+**Korrelationsbasis:** `main@afa259fc786479386a6ea0e165c3d8dc3363aae8`  
+**Provider-Evidence-Snapshot:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`  
 **Repository:** `capital-ai-online/Finance`  
 **GOOGLE_VISIBLE_PASS:** **PARTIAL — GSC READ_VERIFIED + URL INSPECTION 5/5 VERIFIED; `/learning-platform` laut Google noch nicht indexiert; Search Analytics/GA4/GenAI-Metriken weiter offen**
 
@@ -116,10 +117,11 @@
 
 ## 14. Repository Correlation
 - [x] current repository `capital-ai-online/Finance`
-- [x] synchronisierte Arbeitsbaseline `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`
-- [x] current `/AGENTS.md` Control Plane **2.11.0** vollständig gelesen
+- [x] synchronisierte Arbeitsbaseline `main@afa259fc786479386a6ea0e165c3d8dc3363aae8`
+- [x] Provider-Evidence wurde auf `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489` erzeugt; danach wurde PR #981 Human-gemergt und änderte ausschließlich `docs/projects/social-media/ROADMAP.md`, ohne SEO-/MCP-/Google-Read-Semantik zu verändern
+- [x] current `/AGENTS.md` Control Plane **2.11.0** vollständig gelesen; PR #981 änderte die Trust Root nicht
 - [x] `CAPITAL-AI-SEO` / `docs/projects/seo/` / Primary Owner `CAPITAL-AI-SEO`; cross-cutting, kein produktives PVC
-- [x] vor diesem Slice keine offenen Pull Requests auf GitHub
+- [x] unmittelbar vor Final-Correlation keine offenen Pull Requests auf GitHub
 - [x] historische Claim `SEO-D-BLOCK-2026-08-15` verweist auf Checklist/Runbook, aber der dort genannte Branch existiert nicht mehr; kein reproduzierbarer aktiver Writer
 - [x] PR #954 Human-gemerged; Codex-MCP-Hostvertrag liegt auf main
 - [x] PR #959 Human-gemerged; SEO-Automation ist lane-spezifisch wieder in der Roadmap-Ausführung aktiv

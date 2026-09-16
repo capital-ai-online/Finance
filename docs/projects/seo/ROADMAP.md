@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/seo/`  
 **Role:** cross-cutting SEO and Google Marketing execution/project coordination  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — GSC provider read and SEO-CHAT-02 URL Inspection verified on Codex Cloud; native Codex MCP tool injection remains separately not verified  
-**Baseline:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`  
+**Reconciliation:** 2026-09-16 — GSC provider read and SEO-CHAT-02 URL Inspection verified on Codex Cloud; subsequent Social-only main drift via PR #981 correlated without SEO overlap; native Codex MCP tool injection remains separately not verified  
+**Baseline:** `main@afa259fc786479386a6ea0e165c3d8dc3363aae8`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -39,7 +39,7 @@ The following work remains dependency-ready according to its own Roadmap/Owner b
 
 ### Provider-dependent lane — GSC VERIFIED / REMAINING LANES CONDITION_GATED
 
-The Search Console property-read gate and URL Inspection gate have real provider evidence from a Codex Cloud execution on `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`. GA4 reads, Search Analytics/query-performance reads, Generative-AI visibility reads and any work package whose exit gate depends on those measurements remain independently condition-gated.
+The Search Console property-read gate and URL Inspection gate have real provider evidence from a Codex Cloud execution on `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`. The subsequent Human-merged PR #981 advanced current main to `afa259fc786479386a6ea0e165c3d8dc3363aae8` but changed only `docs/projects/social-media/ROADMAP.md`; its changed-file, owner and semantic scope does not invalidate the SEO provider evidence. GA4 reads, Search Analytics/query-performance reads, Generative-AI visibility reads and any work package whose exit gate depends on those measurements remain independently condition-gated.
 
 Allowed GSC read classifications remain:
 
