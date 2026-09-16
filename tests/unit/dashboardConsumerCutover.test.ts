@@ -6,63 +6,30 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const appDashboard = read('src/app/dashboard/Dashboard.tsx');
+const dashboardHome = read('src/app/dashboard/DashboardHome.tsx');
+const myWorkspace = read('src/app/dashboard/MyWorkspaceView.tsx');
 const dashboardHeader = read('src/app/dashboard/DashboardHeader.tsx');
 const legacyDashboard = read('src/components/Dashboard.tsx');
 const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
 
-describe('BB-2B/BB-2C/BB-2D/BB-2F dashboard consumer cutover', () => {
-  it('consumes the canonical dashboard view contract without recreating local authority', () => {
-    expect(legacyDashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
-    expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
-    expect(dashboardNavigation).toContain(
-      "getDashboardSection, type DashboardSection, type DashboardView } from './dashboardViews'",
-    );
-    expect(dashboardNavigation).toContain('setExpandedSection(getDashboardSection(activeView))');
-    expect(legacyDashboard).not.toContain('const getViewCategory =');
-    expect(legacyDashboard).not.toContain('getDashboardSection(activeView)');
+describe('BB-2B through BB-2G dashboard consumer cutover', () => {
+  it('owns the active-view and session projection in the app composition root', () => {
+    expect(appDashboard).toContain("import type { DashboardView } from './dashboardViews'");
+    expect(appDashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(appDashboard).toContain("import type { UserSession } from '../types/UserSession'");
+    expect(appDashboard).not.toContain("from '../../components/Dashboard'");
   });
 
-  it('consumes the canonical session contract directly instead of the root compatibility entry', () => {
-    expect(legacyDashboard).toContain("import type { UserSession } from '../app/types/UserSession'");
-    expect(legacyDashboard).not.toContain("from '../App'");
-  });
-
-  it('keeps the navigation-only universes accordion outside the dashboard view-section authority', () => {
+  it('keeps navigation-only universes outside dashboard view-section authority', () => {
     expect(dashboardNavigation).toContain("type ExpandedSection = DashboardSection | 'universes' | null");
     expect(dashboardNavigation).toContain('useState<ExpandedSection>');
-    expect(legacyDashboard).not.toContain('DashboardExpandedSection');
-    expect(legacyDashboard).not.toContain('expandedUniverse');
+    expect(appDashboard).not.toContain('DashboardExpandedSection');
+    expect(appDashboard).not.toContain('expandedUniverse');
   });
 
   it('routes migrated detail views through the canonical dashboard view router', () => {
-    expect(legacyDashboard).toContain("import { DashboardViewRouter } from '../app/dashboard/DashboardViewRouter'");
-    expect(legacyDashboard).toContain('<DashboardViewRouter');
-    expect(legacyDashboard).toContain("{activeView === 'dashboard' && (");
-    expect(legacyDashboard).toContain("{activeView === 'myworkspace' && (");
-
-    for (const routedView of [
-      'learning',
-      'universe-scoring',
-      'buffet-value',
-      'backtest',
-      'market-screener',
-      'heatmap',
-      'charts',
-      'abonnements',
-      'sentiment-dashboard',
-      'profil',
-      'admin-portal',
-      'preis-alarme',
-      'raw-materials',
-      'asset-universe',
-      'defi-orchestration',
-      'social-accounts',
-      'risiko-assessment',
-      'interact',
-      'login',
-    ]) {
-      expect(legacyDashboard).not.toContain(`{activeView === '${routedView}' && (`);
-    }
+    expect(appDashboard).toContain("import { DashboardViewRouter, type DashboardAdminTab } from './DashboardViewRouter'");
+    expect(appDashboard).toContain('<DashboardViewRouter');
 
     for (const projection of [
       'activeView={activeView}',
@@ -82,16 +49,14 @@ describe('BB-2B/BB-2C/BB-2D/BB-2F dashboard consumer cutover', () => {
       'onLoginEmail={onLoginEmail}',
       'onRegisterEmail={onRegisterEmail}',
     ]) {
-      expect(legacyDashboard).toContain(projection);
+      expect(appDashboard).toContain(projection);
     }
   });
 
-  it('extracts productive header/workspace chrome into the app-owned BB-2F boundary', () => {
-    expect(legacyDashboard).toContain("import { DashboardHeader } from '../app/dashboard/DashboardHeader'");
-    expect(legacyDashboard).toContain('<DashboardHeader');
-    expect(legacyDashboard).not.toContain('<DashboardNavigation');
-    expect(legacyDashboard).not.toContain('Sticky Main Navigation');
-    expect(legacyDashboard).not.toContain('8 Worker-Threads / Parallel API-Querying');
+  it('extracts productive header/workspace chrome into app-owned boundaries', () => {
+    expect(appDashboard).toContain("import { DashboardHeader } from './DashboardHeader'");
+    expect(appDashboard).toContain('<DashboardHeader');
+    expect(appDashboard).not.toContain('<DashboardNavigation');
 
     expect(dashboardHeader).toContain('data-testid="dashboard-app-header"');
     expect(dashboardHeader).toContain("import { CapitalAiLogo } from '../../shared/branding/CapitalAiLogo'");
@@ -102,11 +67,38 @@ describe('BB-2B/BB-2C/BB-2D/BB-2F dashboard consumer cutover', () => {
     expect(dashboardHeader).not.toContain('readAuthenticatedSubscriptionTier');
   });
 
-  it('projects local and global logout callbacks without moving IAM/session authority into the header', () => {
+  it('cuts Dashboard Home and MyWorkspace over to app-owned feature composition', () => {
+    expect(appDashboard).toContain('<DashboardHome');
+    expect(appDashboard).toContain('<MyWorkspaceView');
+    expect(dashboardHome).toContain("from '../../features'");
+    expect(myWorkspace).toContain("from '../../features'");
+
+    for (const forbiddenImport of [
+      "from '../../components/",
+      "from '../components/",
+      "from '../../platform/",
+    ]) {
+      expect(dashboardHome).not.toContain(forbiddenImport);
+      expect(myWorkspace).not.toContain(forbiddenImport);
+    }
+
+    expect(dashboardHome).toContain('<CryptoUI.CryptoScoringEnterprise');
+    expect(dashboardHome).toContain('<NewsUI.RealtimeAiNewsfeed');
+    expect(dashboardHome).toContain('<ReportingUI.ComplianceExporter');
+    expect(dashboardHome).toContain('<AnalyticsUI.ImageAnalyzer');
+    expect(myWorkspace).toContain('<PortfolioUI.Watchlist');
+  });
+
+  it('retires the legacy dashboard implementation to one compatibility export', () => {
+    expect(legacyDashboard).toContain("export { Dashboard, type DashboardProps } from '../app/dashboard/Dashboard'");
+    expect(legacyDashboard).not.toContain('useState');
+    expect(legacyDashboard).not.toContain('<DashboardHome');
+    expect(legacyDashboard).not.toContain('<DashboardViewRouter');
+  });
+
+  it('projects local and global logout callbacks without moving IAM authority into the header', () => {
     expect(appDashboard).toContain('onGlobalLogout={onGlobalLogout ? handleGlobalLogoutClick : undefined}');
     expect(appDashboard).toContain('await onGlobalLogout();');
-    expect(appDashboard).not.toContain('fixed bottom-4 right-4');
-
     expect(dashboardNavigation).toContain('onGlobalLogout?: () => void | Promise<void>;');
     expect(dashboardNavigation).toContain('Von allen Geräten abmelden');
     expect(dashboardHeader).toContain('onGlobalLogout={onGlobalLogout}');

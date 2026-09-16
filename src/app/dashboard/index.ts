@@ -1,4 +1,9 @@
 export { Dashboard, type DashboardProps } from './Dashboard';
+export {
+  DashboardHome,
+  type DashboardHomeProps,
+  type DashboardPushNotificationInput,
+} from './DashboardHome';
 export { DashboardHeader, type DashboardHeaderProps } from './DashboardHeader';
 export {
   DashboardNavigation,
@@ -15,6 +20,7 @@ export {
   type DashboardAdminTab,
   type DashboardViewRouterProps,
 } from './DashboardViewRouter';
+export { MyWorkspaceView, type MyWorkspaceViewProps } from './MyWorkspaceView';
 export {
   DASHBOARD_NAVIGATION_ITEMS,
   getDashboardNavigationItems,

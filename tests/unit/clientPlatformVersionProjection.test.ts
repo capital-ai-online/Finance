@@ -14,7 +14,9 @@ const versionManagerReadme = read('src/platform/VersionManager/README.md');
 const routeSeo = read('src/lib/routeSeo.ts');
 const prerender = read('scripts/seo/prerender-public-routes.mjs');
 const documentary = read('src/components/DocumentHygienePanel.tsx');
-const dashboard = read('src/components/Dashboard.tsx');
+const dashboard = read('src/app/dashboard/Dashboard.tsx');
+const dashboardHome = read('src/app/dashboard/DashboardHome.tsx');
+const legacyDashboard = read('src/components/Dashboard.tsx');
 
 const auditedRuntimePaths = [
   'src/components/AuditLogs.tsx',
@@ -48,12 +50,13 @@ describe('client platform version projection', () => {
     }
   });
 
-  it('keeps the Dashboard monolith behind one bounded build-time version strangler', () => {
-    expect(dashboard).toContain('Beta · Version 0.7.0');
-    expect(vite).toContain('capital-ai-platform-version-projection');
-    expect(vite).toContain('DASHBOARD_PLATFORM_VERSION_PATTERN');
-    expect(vite).toContain('Beta · Version ${packageMetadata.version}');
-    expect(vite).toContain("endsWith('/src/components/Dashboard.tsx')");
+  it('projects the canonical release version through the app-owned Dashboard Home', () => {
+    expect(dashboard).toContain("import { CAPITAL_AI_VERSION } from '../../platform/Branding/runtimeBrand'");
+    expect(dashboard).toContain('platformVersion={CAPITAL_AI_VERSION}');
+    expect(dashboardHome).toContain('platformVersion: string;');
+    expect(dashboardHome).toContain('Beta · Version {platformVersion}');
+    expect(dashboardHome).not.toContain('Beta · Version 0.7.0');
+    expect(legacyDashboard).not.toContain('Beta · Version 0.7.0');
   });
 
   it('keeps SEO client and prerender projections on the same authority', () => {

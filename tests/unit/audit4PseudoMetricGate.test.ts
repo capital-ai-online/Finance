@@ -7,7 +7,7 @@ const read = (relative: string) => fs.readFileSync(path.join(root, relative), 'u
 
 describe('ARCH-AUDIT-0004 pseudo-metric regression gate', () => {
   it('keeps production score test events fail-closed', () => {
-    const code = read('src/components/Dashboard.tsx');
+    const code = read('src/app/dashboard/Dashboard.tsx');
     expect(code).toContain('Synthetic score test events are disabled in production');
     expect(code).not.toContain('7.1 + Math.random() * 2.5');
     expect(code).not.toContain('1.2 + Math.random() * 1.5');
