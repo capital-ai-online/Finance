@@ -1,5 +1,6 @@
 import React from 'react';
 import { Filter, RotateCcw, ShieldCheck } from 'lucide-react';
+import { fetchAuthenticatedNews } from '../features/news/authenticatedNewsFetch';
 import { VerifiedNewsFeed } from './VerifiedNewsFeed';
 
 interface RealtimeAiNewsfeedProps {
@@ -69,7 +70,7 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
     const controller = new AbortController();
 
     const fetchMetadata = async (url: string): Promise<unknown> => {
-      const response = await fetch(url, { signal: controller.signal });
+      const response = await fetchAuthenticatedNews(url, { signal: controller.signal });
       if (!response.ok) throw new Error(`News filter metadata unavailable: ${url}`);
       return response.json();
     };
