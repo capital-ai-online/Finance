@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/fintech/`  
 **Primary Owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC:** `PVC-12..PVC-17`  
-**Baseline:** `main@c58f662deee989f270d6968881644d284435d5bd`  
+**Baseline:** `main@bea9373811202aef98f3ad8ffd53dba99d37c453`  
 **Branch:** `agent/fintech-crypto-category-lineage-20260916`  
 **Roadmap:** `FIN-12`, `FIN-19`, `FIN-20`  
 **Authorities:** `/AGENTS.md@current-main`, ADR-0087, ADR-0099, ADR-0041 + ESS-0016
@@ -35,6 +35,7 @@ Current main already contains the required architectural nuclei:
 - `ScoringModelRegistry` contains exactly one productive crypto champion: `crypto-technical-provenance@0.7.0`.
 - `crypto-meme-integrity@0.3.0` and `crypto-defi-fundamental@0.3.0` remain `challenger`, `research-only`, `scoreEligible=false` and non-executable.
 - `ScoringDispatcher` remains the only productive model-execution boundary.
+- Former FE PR #1011 is merged into the baseline and provides a category/subclass workspace that consumes existing FINTECH contracts. This FINTECH package does not modify FE files and does not create frontend-local scoring authority.
 
 The FINTECH Roadmap still correctly records a DATA dependency: current generic validated snapshot construction exports `price` only, while category-specific feature contracts need additional governed observations. This branch therefore does not declare FIN-12 globally complete.
 
@@ -86,7 +87,7 @@ Canonical result metadata mismatches (asset, model ID/version or feature version
 
 - `CAPITAL-AI-DATA / PVC-09..11`: additional category-specific provider observations, provenance/freshness/DQ semantics and any provider normalization remain DATA work.
 - `CAPITAL-AI-OPS / PVC-18`: durable/runtime trace transport and production lineage evidence remain OPS work.
-- `CAPITAL-AI-FE`: presentation consumption remains FE work. Open PR #1011 changes the Crypto category workspace; this FINTECH branch deliberately does not modify FE files.
+- `CAPITAL-AI-FE`: presentation consumption remains FE work. PR #1011 is now part of current main; direct consumption of the new FINTECH projection is a separate FE-owned integration and is not implemented on this FINTECH branch.
 - Dedicated model promotion remains a separate governed FINTECH decision after adequate evidence, validation and review.
 - CEX live trading, DEX/bridge execution, wallet mutation and order submission are not authorized or changed.
 
