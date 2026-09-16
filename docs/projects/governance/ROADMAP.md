@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — Owner-directed automated PR creation and ordered Roadmap PR lane correlated against current main  
-**Baseline:** `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
+**Reconciliation:** 2026-09-16 — PR #952 PR-create lifecycle activation and PR #953 freshness/version validators correlated against current main  
+**Baseline:** `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -23,6 +23,8 @@ Correlate active Option-C Governance prototype work against current main and cur
 ### GOV-PR900-02 — Current-state projection integrity
 Refresh stale repository-wide current-state projections; reconcile ADR-0069's historical M10/WebAuthn statement with current Trust Root where productive M10 is retired/off.
 
+**Current slice:** synchronize the PR-create lifecycle projections after Human-merged PR #952 activated `/AGENTS.md` v2.11.0 and the correlation-gated Draft-PR path on current main. Historical v3.4 bootstrap evidence remains traceability only.
+
 **Exit:** no active projection contradicts current authority without an explicit owner-routed blocker.
 
 ### GOV-PR900-03 — Stable authority version convergence
@@ -32,6 +34,8 @@ Resolve `AUTH-GOV-CONTROL-PLANE` version/target drift across Authority Registry 
 
 ### GOV-PR900-04 — Fail-closed freshness/version validators
 Extend Governance validation so stale project/task/current-state projections and authority target/version drift can fail closed rather than only validating syntax/path existence.
+
+**State:** `DONE_MAIN / TERMINAL` via Human-merged PR #953 (`main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`).
 
 ### GOV-PR900-05 — Staged pre-command flow
 Represent `main/open PRs → AGENTS → capability class → Project/PVC/Roadmap → ADR/ESS/CTRL/AUTH → least-privileged decision → ALLOW|ROUTE|REQUIRE_GATE|BLOCK → execution` without creating another authority plane. Productive client materialization remains CLIENT-owned.
@@ -50,9 +54,9 @@ Materialize one canonical presentation projection per project routing row: textu
 
 Materialize the 2026-09-15 Owner decision that ordinary bounded agent-managed Pull Requests are created automatically after successful final repository correlation, while Human/Owner authority moves to post-create review and Human/CODEOWNER-only merge.
 
-**State:** `IMPLEMENTED_ON_BRANCH / CURRENT-MAIN PR-CREATE GATE` on `agent/governance-autonomous-pr-chain-20260915` synchronized to `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`.
+**State:** `DONE_MAIN / TERMINAL` via Human-merged PR #952 (`merge SHA fe5c8ff06a3f0a7171ba9bc4f8f52bf71c6a3388`). `/AGENTS.md` v2.11.0, `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` v4.0.0 and `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` v3.0.0 are current-main authority.
 
-The branch evolves the existing stable authorities instead of creating a second Governance or approval plane:
+The merged change evolved the existing stable authorities instead of creating a second Governance or approval plane:
 
 - `/AGENTS.md` `2.10.0 → 2.11.0`;
 - `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` `3.4.0 → 4.0.0`;
@@ -61,11 +65,11 @@ The branch evolves the existing stable authorities instead of creating a second 
 - Authority Registry `1.61.0 → 1.62.0` while retaining stable `AUTH-*` identities;
 - `.github/workflows/open-agent-draft-pr.yml` removes pre-create approval inputs and uses fail-closed current-main/open-writer/create-correlation before Draft PR creation.
 
-After Human Merge activates the new authority, the ordered automated Roadmap lane permits at most one not-yet-integrated automated PR at a time. A successor is created only after predecessor terminal outcome; after merge it starts from a fresh branch on the resulting current `main`, while close-without-merge forces queue recomputation without predecessor payload. Stacked unmerged dependency branches cannot bypass this rule. Final PR-head/current-main correlation and Human/CODEOWNER merge remain mandatory; auto-merge remains prohibited.
+The ordered automated Roadmap lane permits at most one not-yet-integrated automated PR at a time. A successor is created only after predecessor terminal outcome; after merge it starts from a fresh branch on the resulting current `main`, while close-without-merge forces queue recomputation without predecessor payload. Stacked unmerged dependency branches cannot bypass this rule. Final PR-head/current-main correlation and Human/CODEOWNER merge remain mandatory; auto-merge remains prohibited.
 
-**Bootstrap boundary:** this introducing PR itself remains governed by the current-main v3.4 pre-create Approval Envelope and exact Owner approval. Candidate-branch v4 semantics cannot authorize their own PR creation.
+**Historical bootstrap boundary:** PR #952 itself correctly used the then-effective v3.4 pre-create Approval Envelope before Human Merge. That bootstrap requirement is historical evidence for the introducing PR and is not a current credential for successor PR creation.
 
-**Exit:** Human/CODEOWNER merge makes v2.11/v4.0/v3.0 current-main authority; the trusted Draft-PR workflow contains no active pre-create Owner-approval credential path; final create correlation remains fail-closed; ordered successor work cannot be created before predecessor terminal outcome; required hosted checks and final Human merge boundary remain intact.
+**Exit:** `PASS / DONE_MAIN` — v2.11/v4.0/v3.0 are current-main authority; the trusted Draft-PR workflow contains no active pre-create Owner-approval credential path; final create correlation remains fail-closed; ordered successor work cannot be created before predecessor terminal outcome; required hosted checks and final Human merge boundary remain intact.
 
 ### GOV-UNIVERSE-BRANDING-01 — Owner decision and Frontend routing
 
