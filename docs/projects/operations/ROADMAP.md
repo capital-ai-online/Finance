@@ -54,6 +54,21 @@ Sequence: `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -
 
 **Exit:** one real Roadmap work package traverses Issue -> Project -> PR -> Done with a non-versioned delivery-cohort Milestone and navigation-only Wiki backlinks, with each mutable provider step reproducibly read back, without creating a second Roadmap/version/Governance/Security/Release/Deployment authority.
 
+#### OPS-PR900-03C — GitHub Enterprise API Authority & Capability Matrix
+Re-correlate the previously materialized GitHub Enterprise API/permission design against the Human-merged 03A/03B state and then-current repository authority before any productive credential or provider mutation.
+
+**State:** `MATERIALIZED_BRANCH / REVALIDATED / PROVIDER_MUTATION_NOT_AUTHORIZED` on `agent/operations-github-api-authority-recorrelation-20260916`, based on `main@5ae2b371da45a5c07304fd704a7026eded976f1b` after PR #955 reached terminal Human-merged state.
+
+**Current result:** provider-native API capability, connected ChatGPT GitHub connector capability and effective credential grants are separate evidence classes. Repository ruleset readback is `CURRENT_CONNECTOR_READ_AVAILABLE` and reproduced the active `main-production-protection` ruleset. Enterprise-ruleset and Organization-Actions endpoints are `CURRENT_CONNECTOR_NOT_EXPOSED` on this connector even though official GitHub APIs exist. Effective Enterprise/Organization admin grants remain `NOT_PROVEN`.
+
+**Authority boundary:** Reader and Controller capabilities remain separate and deny-by-default. GitHub App short-lived installation identity is the normal target; PAT-only compatibility surfaces are explicit exceptions. Enterprise audit-log token support remains `DOC_CONTRADICTION_LIVE_VERIFY`. No GitHub App install, PAT creation, OAuth/connector permission change, secret/IAM mutation or provider write is authorized by this slice.
+
+**03B dependency:** 03C documentation does not unblock 03B. Projects V2 + Project Fields, Milestone object management and Wiki navigation still require an already authorized Write + reproducible Readback execution path before any pilot starts.
+
+**Exit:** API/token/permission and connector-exposure classifications are reproducible; Reader/Controller and PAT-compatibility boundaries are explicit; ambiguous or unavailable paths fail closed; downstream provider grant/readback and Controller mutation remain separately gated.
+
+Detail: `work-packages/OPS_PR900_03C_GITHUB_API_AUTHORITY_MATRIX_2026-09-16.md`.
+
 ### OPS-PR900-04 — Multi-LLM gateway / OAuth2 / MCP convergence
 Correlate existing gateway foundations; select/reuse one canonical architecture; retire or justify duplicates. Protected provider operations must be least-privileged, attributable and auditable; migration requires rollback/compatibility evidence.
 
