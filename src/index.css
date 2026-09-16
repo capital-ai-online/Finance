@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Poppins:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@700;800&family=Poppins:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 /* Pattern direction x strength classes are assembled from verified state at runtime.
@@ -6,22 +6,25 @@
 @source inline("border-score-best/[0.45] bg-score-best/[0.18] border-score-best/30 bg-score-best/10 border-score-best/[0.18] bg-score-best/[0.05] border-score-worst/[0.45] bg-score-worst/[0.18] border-score-worst/30 bg-score-worst/10 border-score-worst/[0.18] bg-score-worst/[0.05]");
 
 @theme {
-  /* Branding Manifest v6.2 — canonical web projection */
-  --color-background: #08080C;
+  /* GOV-CHAT-079 / Owner-approved 16.08 appearance projection.
+     Product/domain semantic colors remain current-main contract values. */
+  --color-background: #18181B;
   --color-foreground: #FFFFFF;
-  --color-border: #252529;
+  --color-border: rgba(255, 255, 255, 0.08);
   --color-surface: #121215;
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A1A1AA;
 
-  /* Primary brand pair: Vader Black canvas + Capital Gold. */
-  --color-brand-primary: #F9BF21;
-  /* Secondary AI accent; not a primary brand color. */
+  /* Primary visual hierarchy: charcoal canvas + historical Capital Gold. */
+  --color-brand-primary: #F5C453;
+  /* Current AI/intelligence semantic accent remains distinct from decorative purple. */
   --color-brand-accent: #8D26FF;
   --color-brand-success: #44DE88;
   --color-brand-danger: #F87171;
+  --color-decorative-cyan: #0DDDDD;
+  --color-decorative-purple: #B026FF;
 
-  /* Productive Universe presentation roles. Bond remains compatibility-only and is not selectable. */
+  /* Productive Universe semantic roles are intentionally preserved. */
   --color-asset-crypto: #8D26FF;
   --color-asset-stock: #44DE88;
   --color-asset-index: #60A5FA;
@@ -48,17 +51,17 @@
   --color-status-info: #22D3EE;
   --color-status-ai: #8D26FF;
 
-  /* Compatibility aliases only. Cyan is no longer a branding role. */
-  --color-brand-cyan: #F9BF21;
-  --color-aif-gold-light: #F9BF21;
-  --color-aif-gold-DEFAULT: #F9BF21;
-  --color-aif-gold-dark: #F9BF21;
-  --color-aif-gold-muted: #F9BF21;
-  --color-aif-neon-cyan: #F9BF21;
-  --color-aif-neon-purple: #8D26FF;
+  /* Compatibility aliases only. New code uses explicit canonical roles above. */
+  --color-brand-cyan: #F5C453;
+  --color-aif-gold-light: #FFF2B2;
+  --color-aif-gold-DEFAULT: #F5C453;
+  --color-aif-gold-dark: #D4A017;
+  --color-aif-gold-muted: #8A640F;
+  --color-aif-neon-cyan: #0DDDDD;
+  --color-aif-neon-purple: #B026FF;
 
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --animate-neural-pulse: neuralPulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -87,7 +90,7 @@
     50% {
       opacity: 0.45;
       transform: scale(1.03);
-      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--color-brand-accent) 45%, transparent));
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--color-decorative-cyan) 40%, transparent));
     }
   }
 
@@ -103,6 +106,11 @@
   --ui-section-gap: 2rem;
   --ui-card-gap: 1.5rem;
   --ui-hit-min: 44px;
+  --ui-glass-bg: rgba(10, 10, 10, 0.40);
+  --ui-glass-border: rgba(255, 255, 255, 0.10);
+  --ui-glass-blur: 12px;
+  --ui-panel-radius: 1rem;
+  --ui-panel-padding: 1.5rem;
 }
 
 html {
@@ -117,6 +125,14 @@ body,
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 12% 4%, color-mix(in srgb, var(--color-brand-primary) 11%, transparent) 0, transparent 34rem),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--color-decorative-purple) 5%, transparent) 0, transparent 30rem),
+    radial-gradient(circle at 54% 100%, color-mix(in srgb, var(--color-decorative-cyan) 3%, transparent) 0, transparent 34rem);
+  background-attachment: fixed;
 }
 
 h1,
@@ -138,28 +154,37 @@ h6 {
     transform: scale(1);
     box-shadow:
       0 0 18px color-mix(in srgb, var(--color-brand-primary) 18%, transparent),
-      0 0 24px color-mix(in srgb, var(--color-brand-primary) 10%, transparent),
-      0 0 18px color-mix(in srgb, var(--color-brand-primary) 8%, transparent);
+      0 0 24px color-mix(in srgb, var(--color-decorative-cyan) 8%, transparent),
+      0 0 18px color-mix(in srgb, var(--color-decorative-purple) 8%, transparent);
   }
   50% {
     transform: scale(1.01);
     box-shadow:
       0 0 28px color-mix(in srgb, var(--color-brand-primary) 32%, transparent),
-      0 0 32px color-mix(in srgb, var(--color-brand-primary) 20%, transparent),
-      0 0 24px color-mix(in srgb, var(--color-brand-primary) 14%, transparent);
+      0 0 32px color-mix(in srgb, var(--color-decorative-cyan) 14%, transparent),
+      0 0 24px color-mix(in srgb, var(--color-decorative-purple) 12%, transparent);
   }
 }
 
 .animate-brand-border-rotate { animation: brandBorderRotate 4s linear infinite; }
 .animate-brand-border-pulse { animation: brandBorderPulse 3.5s ease-in-out infinite; }
 
-/* Shared glass panel stack + BFSG hit targets */
+/* Shared 16.08 glass primitives. Presentation only: no behavior/data semantics live here. */
 .ui-panel {
-  background-color: color-mix(in srgb, var(--color-surface) 72%, transparent);
-  border: 1px solid var(--color-border);
-  backdrop-filter: blur(12px);
-  border-radius: 1rem;
-  padding: 1.5rem;
+  background-color: var(--ui-glass-bg);
+  border: 1px solid var(--ui-glass-border);
+  -webkit-backdrop-filter: blur(var(--ui-glass-blur));
+  backdrop-filter: blur(var(--ui-glass-blur));
+  border-radius: var(--ui-panel-radius);
+  padding: var(--ui-panel-padding);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+
+.ui-panel--elevated {
+  background-color: color-mix(in srgb, var(--color-surface) 84%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, white 4%, transparent),
+    0 22px 60px rgba(0, 0, 0, 0.24);
 }
 
 .ui-stack {
@@ -173,6 +198,66 @@ h6 {
   min-width: var(--ui-hit-min);
 }
 
+.ui-button-primary,
+.ui-button-secondary,
+.ui-button-ghost,
+.ui-button-danger {
+  min-height: var(--ui-hit-min);
+  border-radius: 0.75rem;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.ui-button-primary {
+  color: #0A0A0A;
+  background: var(--color-brand-primary);
+  border: 1px solid var(--color-brand-primary);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--color-brand-primary) 13%, transparent);
+}
+
+.ui-button-primary:hover {
+  background: #FFF2B2;
+  border-color: #FFF2B2;
+}
+
+.ui-button-secondary {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, white 5%, transparent);
+  border: 1px solid var(--ui-glass-border);
+}
+
+.ui-button-secondary:hover {
+  background: color-mix(in srgb, white 9%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-primary) 32%, var(--ui-glass-border));
+}
+
+.ui-button-ghost {
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.ui-button-ghost:hover {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, white 5%, transparent);
+}
+
+.ui-button-danger {
+  color: var(--color-brand-danger);
+  background: color-mix(in srgb, var(--color-brand-danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-brand-danger) 25%, transparent);
+}
+
+.ui-button-danger:hover {
+  background: color-mix(in srgb, var(--color-brand-danger) 17%, transparent);
+}
+
+.app-shell-frame {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--color-brand-primary) 9%, transparent) 0, transparent 30rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-background) 96%, black) 0%, var(--color-background) 100%);
+}
+
 .neural-decor {
   opacity: 0.4;
   pointer-events: none;
@@ -181,6 +266,18 @@ h6 {
 *:focus-visible {
   outline: 2px solid var(--color-brand-primary) !important;
   outline-offset: 4px !important;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --ui-panel-padding: 1.25rem;
+    --ui-section-gap: 1.5rem;
+    --ui-card-gap: 1rem;
+  }
+
+  body {
+    background-attachment: scroll;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -195,6 +292,13 @@ h6 {
   .animate-spin,
   .animate-pulse {
     animation: none !important;
+    transition: none !important;
+  }
+
+  .ui-button-primary,
+  .ui-button-secondary,
+  .ui-button-ghost,
+  .ui-button-danger {
     transition: none !important;
   }
 
