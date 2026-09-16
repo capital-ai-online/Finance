@@ -101,11 +101,22 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(routes).toContain('function PublicPreviewBoundary');
     expect(routes).toContain('Bewertungstools vorübergehend nicht verfügbar');
     expect(routes).toContain('<PublicAnalysisWorkbench />');
-    expect(landingPage).toContain('IntersectionObserver');
     expect(landingPage).toContain('id="analysis-workbench"');
     expect(landingPage).toContain('loadPreview ? preview');
+    expect(landingPage).toContain('WorkbenchActivationState');
+    expect(landingPage).toContain('activatePreview');
+    expect(landingPage).toContain('Analyse-Workbench starten');
+    expect(landingPage).not.toContain('IntersectionObserver');
     expect(publicWorkbench).toContain('class PublicToolErrorBoundary');
     expect(publicWorkbench).toContain('<Suspense fallback={<WorkbenchLoadingState />}>');
+  });
+
+  it('requires explicit public analysis intent before mounting the scorer runtime', () => {
+    expect(landingPage).toContain('const [loadPreview, setLoadPreview] = React.useState(false)');
+    expect(landingPage).toContain('const activatePreview = React.useCallback(() => setLoadPreview(true), [])');
+    expect(landingPage).toContain('onClick={activatePreview}');
+    expect(landingPage).toContain('{loadPreview ? preview : <WorkbenchActivationState onActivate={activatePreview} />}');
+    expect(landingPage).not.toContain("rootMargin: '320px 0px'");
   });
 
   it('omits the authenticated Enterprise quick-analysis sub-surface in public-preview mode', () => {
