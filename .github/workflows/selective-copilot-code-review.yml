@@ -77,12 +77,21 @@ jobs:
               github.rest.pulls.listFiles,
               { owner, repo, pull_number: pr.number, per_page: 100 },
             );
+            const files = changed.map((entry) => entry.filename);
+
+            // JSON is authoritative for the JSON-capable planner. The legacy
+            // shadow keeps the first migration PR compatible with its trusted
+            // pre-JSON base planner and is fail-closed for delimiter-bearing names.
+            if (files.some((file) => /[\r\n]/.test(file))) {
+              throw new Error('Changed-file name contains CR/LF; legacy trusted-base planner compatibility cannot encode it safely.');
+            }
 
             core.setOutput('skip', 'false');
             core.setOutput('pr_number', String(pr.number));
             core.setOutput('base_sha', pr.base.sha);
             core.setOutput('head_sha', pr.head.sha);
-            core.setOutput('changed_files_json', JSON.stringify(changed.map((entry) => entry.filename)));
+            core.setOutput('changed_files_json', JSON.stringify(files));
+            core.setOutput('changed_files_legacy', files.join('\n'));
 
       - name: Trusted Planner aus exaktem PR-Base-Snapshot auschecken
         if: steps.pr.outputs.skip != 'true'
@@ -106,6 +115,7 @@ jobs:
         env:
           EVENT_NAME: pull_request
           CHANGED_FILES_JSON: ${{ steps.pr.outputs.changed_files_json }}
+          CHANGED_FILES: ${{ steps.pr.outputs.changed_files_legacy }}
         run: node scripts/pr/planPrValidation.mjs
 
       - name: Kein automatisiertes Code Review für diesen Scope
