@@ -59,7 +59,7 @@ interface ToolDefinition {
   label: string;
   description: string;
   availability: ToolAvailability;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>;
 }
 
 interface ToolGroup {
