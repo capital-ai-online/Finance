@@ -96,9 +96,9 @@ function growth(value: number, comparisonKey = 'total-return-pct:30d:v1'): Growt
 }
 
 describe('SC-7 cross-asset ranking generalization', () => {
-  it('is shadow-only and keeps both ranking impact switches disabled', () => {
-    expect(CROSS_ASSET_RANKING_CONTRACT_VERSION).toBe('cross-asset-ranking/1.0.0');
-    expect(CROSS_ASSET_RANKING_IMPACT_ENABLED).toBe(false);
+  it('activates FIN-17 backend order projection without activating the legacy ranking-score experiment', () => {
+    expect(CROSS_ASSET_RANKING_CONTRACT_VERSION).toBe('cross-asset-ranking/1.1.0');
+    expect(CROSS_ASSET_RANKING_IMPACT_ENABLED).toBe(true);
     expect(RANKING_SCORE_IMPACT_ENABLED).toBe(false);
   });
 

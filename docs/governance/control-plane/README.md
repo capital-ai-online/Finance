@@ -1,10 +1,11 @@
 # CAPITAL-AI Governance Control Plane
 
 **Authority ID:** `AUTH-GOV-CONTROL-PLANE`  
-**Version:** `1.3.1`  
-**Date:** `2026-09-14`
+**Authority version:** `1.2.0` — canonical target: `src/platform/Governance/README.md` / `src/platform/Governance/manifest.json`  
+**Projection version:** `1.3.1`  
+**Projection date:** `2026-09-14`
 
-This directory documents the repository-wide Governance Control Plane. It does not replace domain ADR/ESS content; it defines how authorities, controls, versions, evidence, document roles, projections and agent instructions are resolved consistently.
+This directory documents the repository-wide Governance Control Plane as a current documentation projection of `AUTH-GOV-CONTROL-PLANE`. Its projection version does not create or advance a second authority version. It does not replace domain ADR/ESS content; it defines how authorities, controls, versions, evidence, document roles, projections and agent instructions are resolved consistently.
 
 ## Canonical roles
 

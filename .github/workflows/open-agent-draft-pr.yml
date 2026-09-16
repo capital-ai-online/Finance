@@ -1,20 +1,12 @@
 name: Agenten-Draft-PR öffnen
 run-name: >-
-  Agenten-Draft-PR für ${{ inputs.head_branch }} vorbereiten
+  Agenten-Draft-PR für ${{ inputs.head_branch }} korrelieren und öffnen
 
 on:
   workflow_dispatch:
     inputs:
       head_branch:
         description: 'Agenten-Branch mit genau einem neuen .ai/work-claims/*.json-Claim'
-        required: true
-        type: string
-      approval_envelope_json:
-        description: 'Approval Envelope JSON (capital-ai-pr-approval-envelope/1.0.0)'
-        required: true
-        type: string
-      owner_pr_create_approval:
-        description: 'Exakte Owner-Freigabe. Nur gültig: PR Erstellung : Freigegeben'
         required: true
         type: string
 
@@ -28,7 +20,7 @@ concurrency:
 
 jobs:
   preflight-and-open:
-    name: Vertrauenswürdige Vorprüfung und Draft-PR-Erstellung
+    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung
     if: github.triggering_actor == 'SvenKulessa' && github.actor == 'SvenKulessa'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -59,7 +51,7 @@ jobs:
             *) echo "Agenten-Branch muss einen freigegebenen Präfix verwenden: agent/, claude/, grok/, ai/" >&2; exit 1 ;;
           esac
 
-      - name: Kandidaten ohne persistierte Zugangsdaten auschecken
+      - name: Angeforderten Agenten-Branch auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: ${{ inputs.head_branch }}
@@ -94,20 +86,6 @@ jobs:
           PR_COORDINATION_FAIL_CLOSED: 'true'
         run: node ../policy/scripts/pr/validateWorkClaim.mjs
 
-      - name: Approval Envelope fail-closed vor Create-Vorbereitung auswerten
-        working-directory: candidate
-        env:
-          APPROVAL_ENVELOPE_JSON: ${{ inputs.approval_envelope_json }}
-          OWNER_PR_CREATE_APPROVAL: ${{ inputs.owner_pr_create_approval }}
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
-          PR_HEAD_BRANCH: ${{ inputs.head_branch }}
-          PR_CURRENT_MAIN_SHA: ${{ steps.baseline.outputs.main_sha }}
-          PR_CURRENT_HEAD_SHA: ${{ steps.baseline.outputs.head_sha }}
-          PR_CORRELATION_EVIDENCE_PATH: artifacts/pr/create-correlation.json
-          PR_CREATE_GATE_OUTPUT: artifacts/pr/create-gate.json
-        run: node ../policy/scripts/pr/evaluateApprovalEnvelopeCli.mjs
-
       - name: Kanonischen deutschen PR-Text aus trusted-main Vorlage erzeugen
         id: render
         working-directory: candidate
@@ -128,22 +106,18 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Final korrelieren, Approval Envelope binden und Draft-PR öffnen
+      - name: Final korrelieren, geordnete Agenten-Lane prüfen und Draft-PR öffnen
         working-directory: candidate
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
           HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_TITLE: ${{ steps.render.outputs.pr_title }}
-          PR_APPROVAL_ENVELOPE_JSON: ${{ inputs.approval_envelope_json }}
-          OWNER_PR_CREATE_APPROVAL: ${{ inputs.owner_pr_create_approval }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
           PR_HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_BASELINE_OUTPUT: artifacts/pr/final-production-baseline.json
           PR_CORRELATION_OUTPUT: artifacts/pr/final-create-correlation.json
-          PR_CORRELATION_EVIDENCE_PATH: artifacts/pr/final-create-correlation.json
-          PR_CREATE_GATE_OUTPUT: artifacts/pr/final-create-gate.json
           PR_COORDINATION_FAIL_CLOSED: 'true'
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: |
@@ -153,6 +127,26 @@ jobs:
           if [ -n "$existing" ]; then
             echo "Für $HEAD_BRANCH existiert bereits der offene PR #$existing; es wird kein Duplikat erzeugt."
             exit 0
+          fi
+
+          blocking=""
+          while IFS=$'\t' read -r number head; do
+            [ -z "${number:-}" ] && continue
+            if [ "$head" != "$HEAD_BRANCH" ]; then
+              blocking="#${number} (${head})"
+              break
+            fi
+          done < <(gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --base main \
+            --limit 100 \
+            --json number,headRefName \
+            --jq '.[] | select(.headRefName | test("^(agent|claude|grok|ai)/")) | [.number,.headRefName] | @tsv')
+
+          if [ -n "$blocking" ]; then
+            echo "Geordnete Agenten-PR-Lane blockiert: älterer aktiver Agenten-PR $blocking muss zuerst terminal werden." >&2
+            exit 1
           fi
 
           live_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
@@ -170,10 +164,6 @@ jobs:
 
           node ../create-policy/scripts/pr/productionPreflight.mjs
           node ../create-policy/scripts/pr/validateWorkClaim.mjs
-
-          PR_EXPECTED_CURRENT_MAIN_SHA="$live_main_sha" \
-          PR_INTENDED_TITLE="$PR_TITLE" \
-            node ../create-policy/scripts/pr/verifyPrCreationApproval.mjs
 
           gh pr create \
             --repo "$GITHUB_REPOSITORY" \

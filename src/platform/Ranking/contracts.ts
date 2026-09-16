@@ -2,11 +2,12 @@ import type { UniversalAssetIdentity } from '../Scoring/contracts';
 import type { CanonicalScoreResult, DataQualityLevel } from '../../types/scoringIntegrity';
 
 /**
- * SC-7 cross-asset ranking contract.
+ * FIN-17 productive backend ranking contract.
  * Ranks canonical results only; never executes a model or invents comparability.
+ * Productive impact is limited to backend order projection inside explicit comparable cohorts.
  */
-export const CROSS_ASSET_RANKING_CONTRACT_VERSION = 'cross-asset-ranking/1.0.0' as const;
-export const CROSS_ASSET_RANKING_IMPACT_ENABLED = false as const;
+export const CROSS_ASSET_RANKING_CONTRACT_VERSION = 'cross-asset-ranking/1.1.0' as const;
+export const CROSS_ASSET_RANKING_IMPACT_ENABLED = true as const;
 
 export type CrossAssetRankingMode = 'overall' | 'category' | 'tier' | 'growth';
 export type RankingOperationsState = 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'NO_RUNTIME_EVIDENCE';

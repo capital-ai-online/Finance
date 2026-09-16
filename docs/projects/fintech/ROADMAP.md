@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/fintech/`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-12..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — PR #929 merge provenance and FIN-SEC-03 post-merge project-surface sync correlated to current main; FIN-17 remains selected but held pending Human merge of this sync  
-**Baseline:** `main@fd854e01843bdfd1ff84154dc6c8a63e79f2ba7b`  
+**Reconciliation:** 2026-09-15 — PR #942 Human-merged the FIN-SEC-03 post-merge project-surface sync; FIN-17 hold cleared after fresh current-main/open-writer recorrelation  
+**Baseline:** `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -43,7 +43,7 @@ Treat money-like/token or monetization concepts as proposals only until GOV/COMP
 | FIN-14 Scoring Orchestration | `VERIFIED CORE` | no second dispatcher |
 | FIN-15 Domain executors | `VERIFIED/PARTIAL` + FIN-SEC-03 `IMPLEMENTED / EVIDENCE_READY`; SEC verification open | independent Security return for protected analysis boundary |
 | FIN-16 Canonical scoring | `VERIFIED/PARTIAL` + FIN-SEC-02 `EVIDENCE_READY` / SEC verification open | independent SEC return |
-| FIN-17 Ranking / Decision Support | `PARTIAL / P1 — NEXT / HELD UNTIL POST-MERGE-SYNC HUMAN MERGE` | after Human merge of this sync, re-correlate then-current main/open writers; then consolidate one backend rank/order authority and keep FE on backend ordering only |
+| FIN-17 Ranking / Decision Support | `PARTIAL / P1 — NEXT / READY` | begin from the current baseline; consolidate one backend rank/order authority and keep FE on backend ordering only |
 | FIN-18 Asset-class inventory | `VERIFIED` | no inferred new class |
 | FIN-19 Provider capability mapping | `PARTIAL / OPEN` | map to DATA `provider-matrix` without owning ingress/DQ |
 | FIN-20 End-to-end scoring evidence | `PARTIAL / OPEN` | exact lineage through OPS trace |
@@ -71,7 +71,7 @@ No synthetic score fallback. Frontend is presentation-only. `ScoringDispatcher` 
 
 ## P1 reprioritization after FIN-SEC-03
 
-Exactly one next FINTECH P1 slice remains selected: **`FIN-17 — Ranking / Decision Support`**. Execution is `HELD` until Human merge of `agent/fintech-fin-sec-03-post-merge-sync-20260915`; only after that merge may a fresh then-current-main/open-writer recorrelation start FIN-17.
+Exactly one next FINTECH P1 slice remains selected: **`FIN-17 — Ranking / Decision Support`**. Execution is now `READY`: PR #942 Human-merged `agent/fintech-fin-sec-03-post-merge-sync-20260915`, and the required fresh current-main/open-writer recorrelation against `main@5ae0fdd80b085740f92a5530c5561a06f760c7a3` found no open Pull Request writers.
 
 Current evidence supports FIN-17 before FIN-12 because DATA has already provided the `ValidatedDataInput` handoff for FIN-12, while the productive `RankingBoard` still derives Top/Worst ordering by browser-local sorting even though FINTECH already has a backend `CrossAssetRanking` implementation. Closing that live ranking-authority split is the narrower current-main authority correction. FIN-12 remains P1 and is re-correlated immediately after FIN-17.
 

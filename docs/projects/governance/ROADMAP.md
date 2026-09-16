@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — Universe Branding Owner decision correlated and routed to CAPITAL-AI-FE  
-**Baseline:** `main@c6d36c216801f16788d205664ab4cfdf0c970dca`  
+**Reconciliation:** 2026-09-15 — Owner-directed automated PR creation and ordered Roadmap PR lane correlated against current main  
+**Baseline:** `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -45,6 +45,27 @@ Materialize one canonical presentation projection per project routing row: textu
 **State:** `DONE_MAIN / TERMINAL` via Human-merged PR #904 (`main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`). Current, Source and Target resolve independently from the same routing row. Textual Project ID/folder/Owner/PVC identity remains authoritative; color is never the sole semantic cue. Candidate-branch semantics cannot self-bootstrap.
 
 **Exit:** PR approval surface and PR body both resolve Current, Source and Target as `Project ID → canonical project folder → display name → symbol → color` from exactly one canonical `docs/projects/README.md` routing row. Missing, duplicate or malformed metadata fails closed; no second registry exists.
+
+### GOV-CHAT-077 — Correlation-gated automated PR creation and ordered Roadmap PR lane
+
+Materialize the 2026-09-15 Owner decision that ordinary bounded agent-managed Pull Requests are created automatically after successful final repository correlation, while Human/Owner authority moves to post-create review and Human/CODEOWNER-only merge.
+
+**State:** `IMPLEMENTED_ON_BRANCH / CURRENT-MAIN PR-CREATE GATE` on `agent/governance-autonomous-pr-chain-20260915` synchronized to `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`.
+
+The branch evolves the existing stable authorities instead of creating a second Governance or approval plane:
+
+- `/AGENTS.md` `2.10.0 → 2.11.0`;
+- `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` `3.4.0 → 4.0.0`;
+- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` `2.9.0 → 3.0.0`;
+- Control Catalog `1.25.0 → 1.26.0` while retaining stable `CTRL-SDLC-PR-CREATE-001`;
+- Authority Registry `1.61.0 → 1.62.0` while retaining stable `AUTH-*` identities;
+- `.github/workflows/open-agent-draft-pr.yml` removes pre-create approval inputs and uses fail-closed current-main/open-writer/create-correlation before Draft PR creation.
+
+After Human Merge activates the new authority, the ordered automated Roadmap lane permits at most one not-yet-integrated automated PR at a time. A successor is created only after predecessor terminal outcome; after merge it starts from a fresh branch on the resulting current `main`, while close-without-merge forces queue recomputation without predecessor payload. Stacked unmerged dependency branches cannot bypass this rule. Final PR-head/current-main correlation and Human/CODEOWNER merge remain mandatory; auto-merge remains prohibited.
+
+**Bootstrap boundary:** this introducing PR itself remains governed by the current-main v3.4 pre-create Approval Envelope and exact Owner approval. Candidate-branch v4 semantics cannot authorize their own PR creation.
+
+**Exit:** Human/CODEOWNER merge makes v2.11/v4.0/v3.0 current-main authority; the trusted Draft-PR workflow contains no active pre-create Owner-approval credential path; final create correlation remains fail-closed; ordered successor work cannot be created before predecessor terminal outcome; required hosted checks and final Human merge boundary remain intact.
 
 ### GOV-UNIVERSE-BRANDING-01 — Owner decision and Frontend routing
 

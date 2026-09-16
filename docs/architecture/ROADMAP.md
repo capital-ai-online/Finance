@@ -1,10 +1,10 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.8.2`  
-**Status date:** `2026-09-07`  
-**Current repository baseline for this synchronization:** `main@4ac4d7574cdf52e9158f5aee2c2563c0f8c8a58a`  
-**Open PR correlation at this synchronization:** no foreign-owner open PR with changed-file, namespace or Authority overlap for this bounded Governance projection; the branch's own delivery PR is not treated as a project dependency  
+**Version:** `2.9.0`  
+**Status date:** `2026-09-15`  
+**Current repository baseline for this synchronization:** `main@1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`  
+**Open PR correlation at this synchronization:** PR #951 (`CAPITAL-AI-FE`, FIN-17 RankingBoard consumer) changes only `src/features/screening/ui/RankingBoard.tsx` and `tests/unit/fin17RankingBoardConsumer.test.ts`; no changed-file, namespace, Governance-authority or lifecycle-workflow overlap with GOV-CHAT-077  
 **Platform version authority:** `package.json#version`  
 **Repository Agent Trust Root:** `/AGENTS.md`  
 **Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
@@ -27,7 +27,7 @@ PROJECT VALUE CHAIN / PVC
 → CODE / TESTS / EVIDENCE
 ```
 
-Repository execution then follows:
+After Human Merge activates the 2026-09-15 Governance evolution, repository execution follows:
 
 ```text
 CURRENT MAIN + OPEN PRS
@@ -38,17 +38,22 @@ CURRENT MAIN + OPEN PRS
 → FRESH SCOPED BRANCH
 → IMPLEMENTATION
 → AVAILABLE LOW-COST PRE-PR VALIDATION
-→ FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
-→ HUMAN/OWNER PR-CREATION APPROVAL FOR MAIN SHA + BRANCH-HEAD SHA
-→ PULL REQUEST
+→ FINAL MAIN RE-SYNC + OPEN-PR / SEMANTIC / AUTHORITY CORRELATION
+→ FINAL CREATE-CORRELATION PASS OR BLOCKED
+→ AUTOMATED DRAFT PULL REQUEST FOR PASS
+→ POST-PR HUMAN/OWNER REVIEW BOUNDARY
 → HOSTED GOVERNANCE / TECHNICAL CHECKS
+→ FINAL PR-HEAD / CURRENT-MAIN CORRELATION
 → HUMAN/CODEOWNER MERGE DECISION
-→ HUMAN MERGE
+→ HUMAN MERGE OR OTHER TERMINAL PR OUTCOME
+→ ORDERED SUCCESSOR STARTS FROM THEN-CURRENT MAIN
 → OPTIONAL PRODUCTION-MUTATION CONTROLS
 → EVIDENCE + ROADMAP SYNC
 ```
 
 Current Git identity terminology is `main SHA`, `branch head SHA`, `PR head SHA` and `merge SHA`. Candidate-Head/Candidate-Snapshot lifecycle terminology is retired from current work.
+
+The Pull Request introducing this lifecycle is itself governed by the pre-existing current-main v3.4 Approval Envelope. Candidate policy cannot self-bootstrap. Only after Human/CODEOWNER Merge does the correlation-gated create path become current authority.
 
 ## Project Value Chain ownership
 
@@ -74,10 +79,11 @@ Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social projects v
 
 | Area | Current state |
 |---|---|
-| Agent Trust Root | `/AGENTS.md` is the sole repository-wide agent instruction surface |
-| DevelopmentChain | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` active; Human-readable PVC/Roadmap/ADR/ESS model current |
-| Human PR creation | explicit approval bound to current `main SHA` + `branch head SHA`, unless a valid current scoped delegation applies |
-| Human merge | Human/CODEOWNER-only; never delegated to the agent |
+| Agent Trust Root | `/AGENTS.md` is the sole repository-wide agent instruction surface; candidate v2.11.0 activates only after Human Merge |
+| DevelopmentChain | candidate `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` v3.0.0 preserves Human-readable PVC/Roadmap/ADR/ESS model and activates only after Human Merge |
+| Pull Request creation | after activation, bounded agent-managed Draft PR creation requires final fail-closed create-correlation `PASS`; no separate pre-create Owner prompt |
+| Ordered Roadmap PR lane | at most one not-yet-integrated automated PR; successor starts from resulting current main only after predecessor terminal outcome |
+| Human merge | Human/CODEOWNER-only; never delegated to the agent; auto-merge prohibited |
 | ESS-0012 | Documentation Governance; documentation-only scope |
 | ESS-0019 | **v1.2.0 ACCEPTED**; provider-neutral capability/risk/audit + Research Evidence Contract |
 | GOV-07 Evolution Policy | **DONE_MAIN / MAINTAINED** via PR #790; baseline-not-ceiling semantics in `CTRL-AIMS-PDCA-001` |
@@ -105,10 +111,10 @@ Remote-skill distribution remains a separate later architecture/security decisio
 
 ## Current project-state notes
 
-- `CAPITAL-AI-GOV`: GOV-CHAT-070 is merged/terminal; broader GOV-07 User-Lifecycle closeout remains `PARTIAL / OWNER RETURNS PENDING`. The refreshed OPS-owned User-Lifecycle return is on current main through Human-merged PR #794 as `EVIDENCE_READY`; provider E2E, independent Security verification and remaining FE/COMP/Legal returns remain explicit dependencies. GOV-08 Admin Panel graph remains foreign-owned CLIENT/FE/OPS implementation scope.
-- `CAPITAL-AI-DOC`: D8 read-only Migration Planning is on current main through PR #792; physical/semantic migration execution remains separate.
-- `CAPITAL-AI-OPS`: GOV-07 User-Lifecycle owner evidence is current on main through PR #794; Recovery/RPO/RTO repository harness is implemented on main; operational evidence and independent Security verification remain separate gates.
-- `CAPITAL-AI-CLIENT`: contract baseline is complete; physical runtime remains condition-gated; CLIENT-08 Project Skill / Plugin Invocation Contract remains open.
+- `CAPITAL-AI-GOV`: `GOV-CHAT-077` is implemented on `agent/governance-autonomous-pr-chain-20260915` and is waiting on the then-current v3.4 PR-create gate; broader GOV-07 User-Lifecycle closeout remains dependency-held. `GOV-PR900-04` freshness/version validator work exists on a separate branch and currently has no changed-file overlap with this PR lifecycle slice.
+- `CAPITAL-AI-DOC`: Documentary/PVC-03 remains separately owned; documentary preservation work does not authorize Governance runtime or PR lifecycle changes.
+- `CAPITAL-AI-OPS`: productive provider/runtime and version/release work remains OPS-owned; this Governance change does not transfer deployment or production-mutation authority.
+- `CAPITAL-AI-CLIENT`: provider-neutral agent capability contracts remain subordinate to `/AGENTS.md`; this change does not create a second client execution authority.
 
 These summaries do not replace the affected project Roadmaps and must be re-correlated when those projects change.
 
@@ -118,10 +124,12 @@ These summaries do not replace the affected project Roadmaps and must be re-corr
 - one scoped branch/work item;
 - PVC/Primary Owner resolved before implementation;
 - project Roadmap is the normal planning/status surface;
-- ADR used for material architecture decisions;
+- ADR used for material architecture decisions where applicable;
 - ESS used for component/capability contracts;
 - no fabricated evidence, market data, citations or compliance claims;
-- Human/Owner-only merge;
+- create-correlation and validation state remain fail-closed; `NOT RUN` is never `PASS`;
+- automated Roadmap successors do not assume unmerged predecessor payload;
+- Human/Owner-only merge and no auto-merge;
 - no reusable credentials in model-visible evidence;
 - external production mutation remains separately governed;
 - machine-readable registries support integrity and traceability but do not replace the Human-readable development chain;
@@ -130,5 +138,5 @@ These summaries do not replace the affected project Roadmaps and must be re-corr
 
 ## Current next actions
 
-1. Keep GOV-07 dependency-held after consuming the merged OPS return from PR #794; final Governance correlation waits on remaining FE/SEC/COMP/Legal and applicable provider-assurance evidence rather than reopening terminal GOV-CHAT-070 or DR-02B.
-2. Productive DR-03 continuation remains OPS-owned and proceeds only when the current OPS Roadmap promotes it after higher-priority gates.
+1. Complete current-main v3.4 pre-create correlation and Human/Owner approval for the `GOV-CHAT-077` introducing PR; after Human Merge, all later bounded agent-managed PRs use the new correlation-gated Draft-PR path rather than this bootstrap approval surface.
+2. Keep the next dependent automated Roadmap PR held until the predecessor reaches a terminal outcome; after merge, recalculate the Roadmap queue and create its fresh branch from the resulting then-current `main`.
