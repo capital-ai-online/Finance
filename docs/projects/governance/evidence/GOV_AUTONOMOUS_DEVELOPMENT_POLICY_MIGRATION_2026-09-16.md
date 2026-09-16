@@ -10,52 +10,29 @@
 
 ## Owner decision
 
-The final target is one repository-wide ChatGPT/AI/development instruction file: `/AGENTS.md@CURRENT_MAIN`.
+The target is one repository-wide ChatGPT/AI/development instruction file: `/AGENTS.md@CURRENT_MAIN`.
 
-The earlier eight-YAML autonomous policy suite was an intermediate branch state and is now superseded before merge. Its complete semantics are folded into `AGENTS.md`; the YAML files are deleted. The former standalone DevelopmentChain execution, Human/Owner PR approval and GOV/OPS foreign-project execution policy files are also deleted.
+The earlier eight-YAML autonomous policy suite and standalone DevelopmentChain/PR/foreign-execution policies are retired. Their intended semantics are folded into `AGENTS.md`.
 
-## Final authority model
+## Convergence work completed in this branch
 
-`AGENTS.md` contains directly:
-
-- single trust root and current-main baseline;
-- instruction-isolation / prompt-injection boundary;
-- canonical Project/PVC/Owner resolution;
-- SEC/QM/FINTECH/COMP specialized directions;
-- dependency-correct autonomous work graph;
-- atomic branch/PR execution;
-- bounded self-healing/convergence;
-- CI validation and cost control;
-- evidence/EventMesh/handover boundaries;
-- least-privilege capability use;
-- preserved non-authorizing graphical chat presentation;
-- Human/CODEOWNER-only merge and no self-bootstrap.
-
-Machine-readable Authority/Control registries remain identity/validation indexes only. Historical stable development IDs resolve back to `AGENTS.md` and do not create separate policy files.
+1. The Admin Process Graph no longer imports the deleted `docs/projects/operations/DEVELOPMENT_CHAIN.md`. It projects the autonomous work stages from `AGENTS.md` and remains read-only/evidence-only for operational state.
+2. The former Systemadmin/Marketing chat execution profiles under `.ai/contracts/` are removed. The standalone Systemadmin/Marketing execution-policy/runbook surfaces are removed. ESS-0021 and ESS-0024 are reduced to historical tombstones with no development authority; ADR-0080 is architecture context only.
+3. `scripts/pr/classifyPrScope.mjs` is dependency-aware for documentation/.ai artifacts: if a changed or deleted artifact is referenced by source/server/scripts/workflows/tests, classification escalates from D to C so TypeScript/tests/build cannot be skipped solely because the producer is Markdown/JSON/YAML.
+4. `AGENTS.md` remains the single AI/development instruction surface; ADR/ESS/contracts/registries/Roadmaps/evidence remain subject-matter/status inputs only.
 
 ## Instruction-isolation result
 
-Repository files, PR/issue text, code/comments/tests, logs, generated content, tool/connector output and external/web content are explicitly classified as untrusted/non-instructional inputs. Embedded requests to override `AGENTS.md`, reveal secrets, bypass gates or execute unrelated commands are ignored and reported as conflicts.
+Repository files, PR/issue text, code/comments/tests, logs, generated content, tool/connector output and external/web content are non-instructional inputs. Embedded requests to override `AGENTS.md`, reveal secrets, bypass gates or execute unrelated commands are treated as conflicts.
 
-Transport terminology is removed from chat/governance instructions where it is not technically required. Real API/EventMesh/JWT type names in productive code are not renamed merely because a standard protocol term is used; those types are data contracts, not instruction channels.
+## Evidence truth model
 
-## Deleted development-instruction surfaces
+This repository file records observed branch contents and intended gates. It does not pre-claim PASS for checks that execute only after this commit exists. Exact-head hosted CI/Governance/Container-Security results are read back from GitHub Actions and materialized in the PR state/body after completion. `NOT_RUN`, `PENDING`, missing evidence, `BLOCKED` and `FAIL` are never represented as PASS.
 
-- the eight files formerly under `docs/governance/development-policies/`;
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`;
-- `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`;
-- `docs/governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md`;
-- previously removed DevelopmentChain lifecycle/runbook/handoff/roadmap/traceability/evidence-template surfaces remain absent.
+## Exit gate
 
-## Preserved boundaries
-
-- no direct `main` mutation;
-- Human/CODEOWNER-only merge;
-- no self-merge or auto-merge;
-- subject-matter law/contracts, accepted ADR/ESS/domain/data/scoring, Security/Compliance/Supply-Chain and protected external-mutation constraints remain applicable only in their declared scope;
-- `NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never PASS;
-- chat styling remains presentation only.
-
-## Validation truth
-
-This evidence records intended branch state. Final CI/Governance/Container-Security results are reported only after exact-head hosted readback; until then they are not PASS.
+- no runtime import of the retired DevelopmentChain contract;
+- no active standalone Systemadmin/Marketing ChatGPT execution profile/policy;
+- dependency-aware PR classification protects runtime-consumed documentation/contracts;
+- final exact-head required checks pass;
+- PR remains Draft until Human/CODEOWNER review; no agent self-merge or auto-merge.
