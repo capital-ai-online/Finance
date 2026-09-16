@@ -55,6 +55,7 @@ export interface DashboardNavigationProps {
   isAdmin: boolean;
   onNavigate: (view: DashboardView) => void;
   onLogout: () => void;
+  onGlobalLogout?: () => void | Promise<void>;
   onSelectSymbol: (symbol: string) => void;
   onCategoryFilterChange: (category: string) => void;
   onAdminNavigate: (tab: DashboardNavigationAdminTab) => void;
@@ -156,6 +157,7 @@ export function DashboardNavigation({
   isAdmin,
   onNavigate,
   onLogout,
+  onGlobalLogout,
   onSelectSymbol,
   onCategoryFilterChange,
   onAdminNavigate,
@@ -350,6 +352,9 @@ export function DashboardNavigation({
               <>
                 <button type="button" onClick={onLogout} className="ui-hit flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"><LogIn size={14} aria-hidden="true" />Konto wechseln</button>
                 <button type="button" onClick={onLogout} className="ui-hit flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 text-xs font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"><LogOut size={14} aria-hidden="true" />Abmelden (Logout)</button>
+                {onGlobalLogout ? (
+                  <button type="button" onClick={() => void onGlobalLogout()} className="ui-hit flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-400/30 bg-red-950/40 px-3 text-xs font-bold uppercase tracking-widest text-red-200 hover:bg-red-950/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"><ShieldAlert size={14} aria-hidden="true" />Von allen Geräten abmelden</button>
+                ) : null}
               </>
             )}
           </footer>
