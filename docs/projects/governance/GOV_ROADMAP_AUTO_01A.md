@@ -4,7 +4,7 @@
 **Current Project Folder:** `docs/projects/governance/`  
 **Primary PVC / Owner:** `PVC-05 — Platform Director / CAPITAL-AI-GOV`  
 **Priority:** `5/5 — strategic`  
-**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING`  
+**State:** `IMPLEMENTED_ON_BRANCH / CLASSIFICATION_EVIDENCE_CAPTURED / VALIDATION_PENDING`  
 **Baseline:** `main@89924f0b913198b8af39f70cd9666ad7980e20cb`  
 **Authority:** `/AGENTS.md@current-main`, `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`, `CTRL-GOV-OPS-FOREIGN-EXEC-001`
 
@@ -47,7 +47,29 @@ This projection is derived evidence only. It does not write Roadmap state and do
 - open Pull Requests at resynchronization: `0`;
 - canonical project mapping still contains exactly 12 projects;
 - the three 01A paths do not exist on the resynchronization baseline, so the merge snapshot introduces no same-file overwrite of current-main payload;
-- exact reporter/test execution remains `NOT RUN` until an execution host or hosted PR CI runs it; `NOT RUN` is not `PASS`.
+- merge-base after resynchronization is exactly `main@89924f0b913198b8af39f70cd9666ad7980e20cb` and the branch is `0 behind`;
+- exact repository-native reporter/test execution remains `NOT RUN` until an execution host or hosted PR CI runs it; `NOT RUN` is not `PASS`.
+
+## 12-project classification snapshot
+
+The reporter semantics were applied to all twelve canonical `ROADMAP.md` files from the resynchronized repository snapshot. No percentage is emitted where any explicit work-item state remains unresolved.
+
+| Project | Canonical folder | Result | Reproducible blocker example |
+|---|---|---|---|
+| `CAPITAL-AI-CLIENT` | `docs/projects/agent-client/` | `NOT_PROVEN` | `CLIENT-RUNTIME-01 = DEPENDENCY_HELD` is not an explicitly classified terminal/non-terminal reporter state; other legacy ledger wording is likewise not guessed |
+| `CAPITAL-AI-OPS` | `docs/projects/operations/` | `NOT_PROVEN` | `OPS-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-DOC` | `docs/projects/documentary/` | `NOT_PROVEN` | `DOC-CARRY-01 = ACTIVE CARRY-FORWARD` is not mapped to a completion class |
+| `CAPITAL-AI-GOV` | `docs/projects/governance/` | `NOT_PROVEN` | `GOV-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-DATA` | `docs/projects/data/` | `NOT_PROVEN` | `DATA-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-FINTECH` | `docs/projects/fintech/` | `NOT_PROVEN` | `FIN-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-QM` | `docs/projects/quality-management/` | `NOT_PROVEN` | `QM-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-SEC` | `docs/projects/security/` | `NOT_PROVEN` | `SEC-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-COMP` | `docs/projects/compliance/` | `NOT_PROVEN` | `COMP-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-FE` | `docs/projects/frontend/` | `NOT_PROVEN` | `FE-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-SEO` | `docs/projects/seo/` | `NOT_PROVEN` | `SEO-CARRY-01` has no explicit `State`/`Status` |
+| `CAPITAL-AI-SOCIAL` | `docs/projects/social-media/` | `NOT_PROVEN` | `SOCIAL-CARRY-01 = ACTIVE CARRY-FORWARD` is not mapped to a completion class |
+
+This snapshot intentionally does **not** normalize those Roadmap states inside 01A. Doing so would mutate owner Roadmaps merely to obtain a percentage and would turn the measurement slice into a status-authority migration. Future owner-correct Roadmap normalization may make individual percentages provable, but `NOT_PROVEN` is the correct 01A result for the current snapshot.
 
 ## Exit gate
 
