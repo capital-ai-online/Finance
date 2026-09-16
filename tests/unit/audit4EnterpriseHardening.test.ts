@@ -21,13 +21,16 @@ describe('ARCH-AUDIT-0004 enterprise hardening', () => {
     expect(code).toContain('keine Demo-, Seed- oder Random-Metriken');
   });
 
-  it('removes fabricated market metrics and headlines from Newsticker', () => {
-    const code = source('src/components/Newsticker.tsx');
+  it('removes fabricated market metrics and headlines from the canonical Newsticker', () => {
+    const code = source('src/features/news/ui/Newsticker.tsx');
+    const bridge = source('src/components/Newsticker.tsx');
     expect(code).not.toContain('Math.random');
     expect(code).not.toContain('regAsset.price');
     expect(code).toContain('/verified-context');
     expect(code).toContain('/verified-quote');
     expect(code).toContain('keine synthetischen Kurs-, Volumen- oder Momentumwerte');
+    expect(bridge).toContain("export { Newsticker } from '../features/news/ui/Newsticker'");
+    expect(bridge).not.toContain('/api/');
   });
 
   it('declares every active external market-data key for Render deployment without values', () => {
