@@ -1,4 +1,5 @@
 export { Dashboard, type DashboardProps } from './Dashboard';
+export { DashboardHeader, type DashboardHeaderProps } from './DashboardHeader';
 export {
   DashboardNavigation,
   type DashboardNavigationAdminTab,
