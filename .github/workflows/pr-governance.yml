@@ -16,7 +16,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-governance-${{ github.event.pull_request.number || github.ref }}
+  # Event action is part of the key so a body-only `edited` run cannot cancel code-validation for the same snapshot.
+  group: >-
+    ${{ github.event_name == 'pull_request'
+        && format('pr-governance-pr-{0}-{1}-{2}-{3}', github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha, github.event.action)
+        || format('pr-governance-{0}', github.ref) }}
   cancel-in-progress: true
 
 # Kostenrichtlinie:
@@ -37,7 +41,38 @@ jobs:
       pull-requests: read
 
     steps:
+      - name: PR-Snapshot gegen Live-Head/Base korrelieren
+        id: snapshot
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const prNumber = Number(process.env.EVENT_PR_NUMBER);
+            const eventHead = normalizeSha(process.env.EVENT_HEAD_SHA);
+            const eventBase = normalizeSha(process.env.EVENT_BASE_SHA);
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const liveHead = normalizeSha(pr.head?.sha);
+            const liveBase = normalizeSha(pr.base?.sha);
+            const currentSnapshot = pr.state === 'open' && liveHead === eventHead && liveBase === eventBase;
+            core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false');
+            if (!currentSnapshot) {
+              core.notice(`Stale Governance event ignored before checkout/npm work: event head/base=${eventHead.slice(0, 12)}/${eventBase.slice(0, 12)}, live=${liveHead.slice(0, 12)}/${liveBase.slice(0, 12)}.`);
+            }
+
+      - name: Stale PR-Event kostensparend beenden
+        if: steps.snapshot.outputs.current_snapshot == 'false'
+        run: echo 'Stale PR-Snapshot erkannt; keine Candidate-/Policy-Checkouts oder npm-Arbeit für veraltete Evidence.'
+
       - name: Vertrauenswürdigen Policy-Stand aus main auschecken
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: main
@@ -46,6 +81,7 @@ jobs:
           persist-credentials: false
 
       - name: Kandidaten-Head ohne Credentials auschecken
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -54,17 +90,19 @@ jobs:
           persist-credentials: false
 
       - name: Aktuellen main-Stand in Kandidaten-Repository importieren
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         working-directory: candidate
         run: git fetch --no-tags ../policy main:refs/remotes/origin/main
 
       - name: Node.js einmalig für Governance-Prüfungen einrichten
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
         with:
           node-version: '24.18.0'
 
       - name: PR-Scope mit trusted-main Klassifikator bestimmen
         id: scope
-        if: github.event.action != 'edited'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited'
         working-directory: candidate
         env:
           EVENT_NAME: pull_request
@@ -73,6 +111,7 @@ jobs:
         run: node ../policy/scripts/pr/classifyPrScope.mjs
 
       - name: Project Value Chain und Projektordner mit trusted-main Validator prüfen
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         working-directory: candidate
         shell: bash
         run: |
@@ -86,7 +125,7 @@ jobs:
 
       - name: Kosten-Gate für optionales Repository-Advisory prüfen
         id: cost_gate
-        if: github.event.action != 'edited'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
           BUDGET_MINUTES: '3000'
@@ -119,11 +158,11 @@ jobs:
             core.setOutput('gate_active', usedMinutes >= budgetMinutes ? 'true' : 'false');
 
       - name: Keine Workflow-Änderung — Workflow-Security entfällt
-        if: github.event.action != 'edited' && steps.scope.outputs.workflow_security != 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.scope.outputs.workflow_security != 'true'
         run: echo "Keine .github/workflows/**-Änderung im Diff — Workflow-Security-Validierung ist nicht erforderlich."
 
       - name: Sicherheit geänderter Workflows gegen trusted main validieren
-        if: github.event.action != 'edited' && steps.scope.outputs.workflow_security == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.scope.outputs.workflow_security == 'true'
         working-directory: candidate
         env:
           POLICY_ROOT: ../policy
@@ -132,7 +171,7 @@ jobs:
         run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
 
       - name: Google-Marketing Schutzverdrahtung im bestehenden Governance-Runner prüfen
-        if: github.event.action != 'edited'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited'
         working-directory: candidate
         env:
           PR_BASE_REF: origin/main
@@ -147,15 +186,15 @@ jobs:
           fi
 
       - name: Repository-Konventionen — Advisory wegen Kostenpolicy überspringen
-        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active == 'true'
         run: echo "Repository-Advisory ist durch die bestehende Kostenpolicy pausiert; Pflicht-Governance und build-and-test bleiben unberührt."
 
       - name: Repository-Konventionen — Docs-/No-App-Fast-Path
-        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory != 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory != 'true'
         run: 'echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."'
 
       - name: Repository-Advisory Abhängigkeiten installieren
-        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ''
@@ -163,7 +202,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Repository-Konventionen beratend prüfen
-        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
         working-directory: candidate
         continue-on-error: true
         env:
@@ -172,6 +211,7 @@ jobs:
         run: npm run repository:validate:advisory
 
       - name: Produktions-Baseline über trusted-main Policy erzeugen
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -184,6 +224,7 @@ jobs:
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
       - name: Kanonische PR-Vorlage fail-closed prüfen
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
