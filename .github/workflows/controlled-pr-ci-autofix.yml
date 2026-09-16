@@ -1,11 +1,12 @@
 name: Controlled PR CI Autofix
 run-name: >-
-  CI #${{ github.event.workflow_run.run_number }} – deterministic PR autofix
+  CI #${{ github.event.workflow_run.run_number }} – controlled PR autofix
 
-# Privileged post-CI controller. The productive slice is intentionally limited
-# to one deterministic repository-owned repair. Untrusted PR code is never
-# executed in the contents:write job. The historical self-heal workflow stays
-# suspended and no agentic/provider fixer is installed at runtime.
+# Privileged post-CI controller. Untrusted PR code is never executed in a job
+# that owns repository write permission. Deterministic README repair stays
+# exact-tree bound. Eligible TypeScript failures are delegated to the already
+# connected Codex GitHub integration by a bounded PR task comment; no Codex CLI,
+# OpenAI API key, ad-hoc package install, auto-merge or synthetic CI result is used.
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI]
@@ -31,6 +32,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      issues: read
       pull-requests: read
     outputs:
       skip: ${{ steps.pr.outputs.skip }}
@@ -121,9 +123,18 @@ jobs:
               github.rest.pulls.listCommits,
               { owner, repo, pull_number: pr.number, per_page: 100 },
             );
-            const attempts = commits.filter((entry) =>
+            const deterministicAttempts = commits.filter((entry) =>
               String(entry.commit?.message ?? '').startsWith('fix(ci-autofix): attempt '),
             ).length;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number: pr.number, per_page: 100 },
+            );
+            const codexAttempts = comments.filter((entry) =>
+              String(entry.body ?? '').includes('<!-- CAPITAL_AI_CI_AUTOFIX_CODEX_ATTEMPT:'),
+            ).length;
+            const attempts = deterministicAttempts + codexAttempts;
 
             core.setOutput('skip', 'false');
             core.setOutput('pr_number', String(pr.number));
@@ -205,11 +216,92 @@ jobs:
             echo "- failure_class: \`$FAILURE_CLASS\`"
             echo "- attempt: \`$ATTEMPT\` / 2"
             echo "- reason: \`$REASON\`"
-            echo '- productive fixer: `deterministic-readme` only'
-            echo '- agentic/provider fixer: `NOT_MATERIALIZED / HELD`'
+            echo '- deterministic fixer: `deterministic-readme`'
+            echo '- bounded agentic handoff: `codex-cloud` for TypeScript only'
+            echo '- Codex runner/API key: `NOT USED`; existing GitHub integration only'
+            echo '- test/build/infrastructure/protected-scope failures: `HELD / FAIL-CLOSED`'
             echo
             echo 'Human/CODEOWNER merge authority is unchanged. No synthetic build-and-test result is created.'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  codex-handoff:
+    name: Codex Cloud TypeScript-Handoff
+    needs: [plan]
+    if: >-
+      needs.plan.result == 'success' &&
+      needs.plan.outputs.skip != 'true' &&
+      needs.plan.outputs.eligible == 'true' &&
+      needs.plan.outputs.engine == 'codex-cloud' &&
+      needs.plan.outputs.failure_class == 'typescript'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Exact-Head revalidieren und bounded Codex-Task anfordern
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ needs.plan.outputs.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ needs.plan.outputs.head_sha }}
+          EXPECTED_HEAD_REF: ${{ needs.plan.outputs.head_ref }}
+          EXPECTED_BASE_SHA: ${{ needs.plan.outputs.base_sha }}
+          EXPECTED_HEAD_REPO: ${{ needs.plan.outputs.head_repo }}
+          CHANGED_FILES_JSON: ${{ needs.plan.outputs.changed_files_json }}
+          ATTEMPT: ${{ needs.plan.outputs.attempt }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const repository = `${owner}/${repo}`;
+            const pullNumber = Number(process.env.PR_NUMBER);
+            const expectedHead = process.env.EXPECTED_HEAD_SHA;
+            const expectedBase = process.env.EXPECTED_BASE_SHA;
+            const expectedHeadRef = process.env.EXPECTED_HEAD_REF;
+            const expectedHeadRepo = process.env.EXPECTED_HEAD_REPO;
+            const sourceRunId = process.env.SOURCE_RUN_ID;
+            const attempt = process.env.ATTEMPT;
+            const changedFiles = JSON.parse(process.env.CHANGED_FILES_JSON || '[]');
+
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: pullNumber });
+            const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            if (pr.state !== 'open' || pr.base.ref !== 'main') throw new Error('PR is no longer open against main.');
+            if (pr.head.sha !== expectedHead) throw new Error(`PR head drift: expected=${expectedHead} observed=${pr.head.sha}`);
+            if (pr.head.ref !== expectedHeadRef) throw new Error('PR head branch changed.');
+            if (pr.head.repo?.full_name !== expectedHeadRepo || expectedHeadRepo !== repository) throw new Error('PR head repository changed.');
+            if (pr.base.sha !== expectedBase) throw new Error(`PR base snapshot drift: expected=${expectedBase} observed=${pr.base.sha}`);
+            if (main.commit.sha !== expectedBase) throw new Error(`current main drift: expected=${expectedBase} observed=${main.commit.sha}`);
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number: pullNumber, per_page: 100 },
+            );
+            const sourceMarker = `SOURCE_RUN:${sourceRunId}`;
+            if (comments.some((entry) => String(entry.body ?? '').includes(sourceMarker))) {
+              core.notice(`Codex handoff already exists for source run ${sourceRunId}; no duplicate task created.`);
+              return;
+            }
+
+            const marker = `<!-- CAPITAL_AI_CI_AUTOFIX_CODEX_ATTEMPT:${attempt} ${sourceMarker} HEAD:${expectedHead} -->`;
+            const fileList = changedFiles.map((file) => `- \`${file}\``).join('\n');
+            const body = `${marker}\n@codex fix the CI failures\n\n` +
+              `Controlled CAPITAL-AI TypeScript autofix request for PR #${pullNumber}.\n\n` +
+              `Exact identity:\n- expected PR head: \`${expectedHead}\`\n- expected base/main: \`${expectedBase}\`\n- source CI run: \`${sourceRunId}\`\n- attempt: \`${attempt}\` / 2\n\n` +
+              `Original safe-scope files:\n${fileList}\n\n` +
+              `Constraints:\n` +
+              `- Fix only the TypeScript failure from the cited CI snapshot and keep the patch minimal.\n` +
+              `- Work only on the existing PR branch \`${expectedHeadRef}\`; do not create or merge another PR.\n` +
+              `- Do not modify AGENTS.md, .github/**, .ai/**, docs/governance/**, docs/adr/**, docs/projects/**, scripts/pr/**, scripts/security/**, scripts/governance/**, server/**, supabase/**, Auth, Security, Billing, Entitlement, IAM, secrets, credentials, dependencies, lockfiles, Docker or Render surfaces.\n` +
+              `- Do not add dependencies, secrets, provider credentials or permissions.\n` +
+              `- Re-read the applicable AGENTS.md and preserve current repository authority.\n` +
+              `- Run \`npm run lint\` and the smallest directly affected tests before pushing.\n` +
+              `- Push only a bounded fix commit to this same PR branch. Never merge and never fabricate CI/check results.\n` +
+              `- If the requested fix cannot be completed inside these constraints, report the blocker and make no repository changes.`;
+
+            await github.rest.issues.createComment({ owner, repo, issue_number: pullNumber, body });
+            core.notice(`Bounded Codex Cloud task requested for PR #${pullNumber}, source run ${sourceRunId}.`);
 
   deterministic-patch:
     name: Deterministic Patch erzeugen
@@ -470,5 +562,5 @@ jobs:
             echo '- privileged job: no PR checkout and no PR/dependency code execution'
             echo '- merge: still Human/CODEOWNER-only'
             echo '- required check: no synthetic `build-and-test` PASS was created'
-            echo '- autonomous CI retrigger: not claimed; `GITHUB_TOKEN` recursion behavior remains a separate controller concern'
+            echo '- deterministic GITHUB_TOKEN write may not retrigger CI; the Codex handoff path uses the existing external GitHub integration and requires post-merge live evidence.'
           } >> "$GITHUB_STEP_SUMMARY"
