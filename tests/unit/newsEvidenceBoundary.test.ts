@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 const newsRoutes = readFileSync('src/features/news/newsRoutes.ts', 'utf8');
-const realtimeViewer = readFileSync('src/components/RealtimeAiNewsfeed.tsx', 'utf8');
-const verifiedViewer = readFileSync('src/components/VerifiedNewsFeed.tsx', 'utf8');
+const realtimeViewer = readFileSync('src/features/news/ui/RealtimeAiNewsfeed.tsx', 'utf8');
+const verifiedViewer = readFileSync('src/features/news/ui/VerifiedNewsFeed.tsx', 'utf8');
 const providerMatrix = readFileSync('src/platform/MarketData/ProviderMatrix.ts', 'utf8');
 const freeCryptoProvider = readFileSync('src/platform/MarketData/providers/FreeCryptoNewsEvidenceProvider.ts', 'utf8');
 const secretManifest = readFileSync('scripts/security/secretFileManifest.ts', 'utf8');
