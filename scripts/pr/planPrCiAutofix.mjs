@@ -60,7 +60,20 @@ function heldFailure(failureClass) {
     run_tests: false,
     run_build: false,
     run_readme_check: false,
-    reason: 'agentic-engine-not-materialized-in-deterministic-slice',
+    reason: 'agentic-engine-not-materialized-for-this-failure-class',
+  };
+}
+
+function codexCloudFailure(failureClass) {
+  return {
+    eligible: true,
+    engine: 'codex-cloud',
+    failure_class: failureClass,
+    run_lint: true,
+    run_tests: true,
+    run_build: false,
+    run_readme_check: false,
+    reason: 'existing-codex-github-pr-task-eligible',
   };
 }
 
@@ -104,7 +117,7 @@ export function classifyFailure(failedSteps, failureLog = '') {
     };
   }
 
-  if (steps.some((step) => step.includes('typescript prüfen'))) return heldFailure('typescript');
+  if (steps.some((step) => step.includes('typescript prüfen'))) return codexCloudFailure('typescript');
   if (steps.some((step) => step.includes('test-suite') || step.includes('vitest') || step.includes('validator-tests gezielt') || step.includes('validator gezielt'))) return heldFailure('test');
   if (steps.some((step) => step.includes('produktions-build erstellen') || step.includes('produktions-csp-auslieferung nach build prüfen'))) return heldFailure('build');
 
