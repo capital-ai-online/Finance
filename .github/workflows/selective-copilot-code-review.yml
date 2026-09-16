@@ -1,0 +1,162 @@
+name: Selective Copilot Code Review
+run-name: >-
+  CI #${{ github.event.workflow_run.run_number }} – selektive Copilot-Review-Entscheidung
+
+# Privileged post-CI trigger. It never checks out or executes PR-controlled code;
+# the job is additionally bound to the same repository and the canonical CI path.
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: selective-copilot-review-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  request-review:
+    name: Trusted-base Review-Selektion
+    if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.path == '.github/workflows/ci.yml' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Exakten offenen PR und File Changes read-only auflösen
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headSha = context.payload.workflow_run.head_sha;
+
+            let candidates = context.payload.workflow_run.pull_requests ?? [];
+            if (candidates.length === 0) {
+              candidates = await github.paginate(
+                github.rest.repos.listPullRequestsAssociatedWithCommit,
+                { owner, repo, commit_sha: headSha, per_page: 100 },
+              );
+            }
+
+            const open = [];
+            for (const candidate of candidates) {
+              const number = candidate.number;
+              if (!number) continue;
+              const { data: pr } = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: number,
+              });
+              if (pr.state === 'open' && pr.base.ref === 'main' && pr.head.sha === headSha) {
+                open.push(pr);
+              }
+            }
+
+            if (open.length !== 1) {
+              core.notice(`Selektive Copilot-Review übersprungen: exakt ein offener PR für head=${headSha} erwartet, gefunden=${open.length}.`);
+              core.setOutput('skip', 'true');
+              return;
+            }
+
+            const pr = open[0];
+            const changed = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number: pr.number, per_page: 100 },
+            );
+
+            core.setOutput('skip', 'false');
+            core.setOutput('pr_number', String(pr.number));
+            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('changed_files', changed.map((entry) => entry.filename).join('\n'));
+
+      - name: Trusted Planner aus exaktem PR-Base-Snapshot auschecken
+        if: steps.pr.outputs.skip != 'true'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ steps.pr.outputs.base_sha }}
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js für den kanonischen Planner einrichten
+        if: steps.pr.outputs.skip != 'true'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+
+      - name: Diff-basierten Review-Plan aus trusted base bestimmen
+        id: validation_plan
+        if: steps.pr.outputs.skip != 'true'
+        working-directory: policy
+        env:
+          EVENT_NAME: pull_request
+          CHANGED_FILES: ${{ steps.pr.outputs.changed_files }}
+        run: node scripts/pr/planPrValidation.mjs
+
+      - name: Copilot-Review nur bei relevantem Scope und fehlender äquivalenter Review anfordern
+        if: steps.pr.outputs.skip != 'true' && steps.validation_plan.outputs.automated_code_review_mode != 'none'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          REVIEW_MODE: ${{ steps.validation_plan.outputs.automated_code_review_mode }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pullNumber = Number(process.env.PR_NUMBER);
+            const headSha = process.env.HEAD_SHA;
+            const mode = process.env.REVIEW_MODE;
+            const bot = 'copilot-pull-request-reviewer[bot]';
+
+            const reviews = await github.paginate(
+              github.rest.pulls.listReviews,
+              { owner, repo, pull_number: pullNumber, per_page: 100 },
+            );
+            const requested = await github.rest.pulls.listRequestedReviewers({
+              owner,
+              repo,
+              pull_number: pullNumber,
+            });
+
+            const copilotReviews = reviews.filter((review) => review.user?.login === bot);
+            const copilotPending = (requested.data.users ?? []).some((user) => user.login === bot);
+
+            const alreadyCovered = mode === 'full'
+              ? copilotPending || copilotReviews.some((review) => review.commit_id === headSha)
+              : copilotPending || copilotReviews.length > 0;
+
+            if (alreadyCovered) {
+              core.notice(`Copilot-Review nicht erneut angefordert: mode=${mode}, PR #${pullNumber}, head=${headSha}.`);
+              return;
+            }
+
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner,
+                repo,
+                pull_number: pullNumber,
+                reviewers: [bot],
+              });
+              core.notice(`Copilot-Code-Review angefordert: mode=${mode}, PR #${pullNumber}, head=${headSha}.`);
+            } catch (error) {
+              if (error.status === 403 || error.status === 404 || error.status === 422) {
+                core.warning(`Copilot-Code-Review ist auf dem aktuellen Provider-/Lizenzzustand nicht anforderbar; keine Review-Evidence wird behauptet: ${error.message}`);
+                return;
+              }
+              throw error;
+            }
+
+      - name: Kein automatisiertes Code Review für diesen Scope
+        if: steps.pr.outputs.skip != 'true' && steps.validation_plan.outputs.automated_code_review_mode == 'none'
+        run: echo "automated_code_review_mode=none — kein Copilot-Review-Request für Docs/Test-only Scope."
