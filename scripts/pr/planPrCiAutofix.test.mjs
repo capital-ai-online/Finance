@@ -29,9 +29,18 @@ test('recognizes deterministic README projection drift before generic failure cl
   assert.equal(result.run_readme_check, true);
 });
 
-test('holds TypeScript, test and build failures instead of invoking an agentic engine', () => {
+test('routes TypeScript failures to the existing Codex Cloud PR task path', () => {
+  const result = classifyFailure(['TypeScript prüfen']);
+  assert.equal(result.eligible, true);
+  assert.equal(result.engine, 'codex-cloud');
+  assert.equal(result.failure_class, 'typescript');
+  assert.equal(result.reason, 'existing-codex-github-pr-task-eligible');
+  assert.equal(result.run_lint, true);
+  assert.equal(result.run_tests, true);
+});
+
+test('continues to hold test and build failures outside the first Codex slice', () => {
   for (const [step, expectedClass] of [
-    ['TypeScript prüfen', 'typescript'],
     ['Vollständige Test-Suite ausführen', 'test'],
     ['Produktions-Build erstellen', 'build'],
   ]) {
@@ -39,7 +48,7 @@ test('holds TypeScript, test and build failures instead of invoking an agentic e
     assert.equal(result.eligible, false);
     assert.equal(result.engine, 'none');
     assert.equal(result.failure_class, expectedClass);
-    assert.equal(result.reason, 'agentic-engine-not-materialized-in-deterministic-slice');
+    assert.equal(result.reason, 'agentic-engine-not-materialized-for-this-failure-class');
   }
 });
 
@@ -96,7 +105,7 @@ test('blocks protected original PR scope before failure classification', () => {
   const result = planAutofix({
     ...base,
     changedFiles: ['.github/workflows/ci.yml'],
-    failureLog: '[readme-sync] README projection drift detected. Run: npm run readme:sync',
+    failedSteps: ['TypeScript prüfen'],
   });
   assert.equal(result.eligible, false);
   assert.equal(result.failure_class, 'protected-scope');
@@ -108,7 +117,7 @@ test('enforces a maximum of two autofix attempts', () => {
   assert.equal(result.reason, 'autofix-attempt-limit-reached');
 });
 
-test('permits only the deterministic README repair on a safe same-repository PR', () => {
+test('permits the deterministic README repair on a safe same-repository PR', () => {
   const result = planAutofix({
     ...base,
     failedSteps: ['Repository-Integrität prüfen'],
@@ -116,5 +125,16 @@ test('permits only the deterministic README repair on a safe same-repository PR'
   });
   assert.equal(result.eligible, true);
   assert.equal(result.engine, 'deterministic-readme');
+  assert.equal(result.attempt, 1);
+});
+
+test('permits a bounded Codex handoff for TypeScript on a safe same-repository PR', () => {
+  const result = planAutofix({
+    ...base,
+    failedSteps: ['TypeScript prüfen'],
+  });
+  assert.equal(result.eligible, true);
+  assert.equal(result.engine, 'codex-cloud');
+  assert.equal(result.failure_class, 'typescript');
   assert.equal(result.attempt, 1);
 });
