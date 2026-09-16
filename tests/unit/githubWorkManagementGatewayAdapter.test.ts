@@ -103,6 +103,9 @@ describe('GitHub Work-Management Gateway Adapter', () => {
     const { adapter, calls } = harness();
     const result = await adapter.execute('github.work_management.milestones.create_pilot');
 
+    if (!('operation' in result) || result.operation !== 'create_pilot') {
+      throw new Error('expected create_pilot result');
+    }
     expect(result.readback.title).toBe(PILOT_MILESTONE_TITLE);
     expect(result.readback.description).toBe(PILOT_MILESTONE_DESCRIPTION);
     expect(result.readback).not.toHaveProperty('token');
@@ -123,6 +126,9 @@ describe('GitHub Work-Management Gateway Adapter', () => {
       state: 'closed',
     });
 
+    if (!('operation' in result) || result.operation !== 'update_pilot') {
+      throw new Error('expected update_pilot result');
+    }
     expect(result.readback.state).toBe('closed');
     expect(calls.slice(0, 3).map((call) => call.method)).toEqual(['GET', 'PATCH', 'GET']);
     await expect(adapter.execute('github.work_management.milestones.update_pilot', {
@@ -164,6 +170,9 @@ describe('GitHub Work-Management Gateway Adapter', () => {
       page: 'OPS-PR900-03B',
     });
 
+    if (!('readback' in result) || result.readback !== 'PASS' || !('contentDigest' in result)) {
+      throw new Error('expected wiki write result');
+    }
     expect(result.readback).toBe('PASS');
     expect(store.get('OPS-PR900-03B')).toBe(WIKI_NAVIGATION_PAGES['OPS-PR900-03B']);
     expect(result.contentDigest).toMatch(/^sha256:[a-f0-9]{64}$/);
