@@ -9,6 +9,8 @@ const orchestratorPanel = read('src/components/OrchestratorPanel.tsx');
 const orchestratorApi = read('src/features/governance/ui/orchestrator/orchestratorApi.ts');
 const supervisorDashboard = read('src/components/SupervisorDashboard.tsx');
 const systemEvents = read('server/systemEvents.ts');
+const qualityCenter = read('src/components/QualityCenterPanel.tsx');
+const qualityCenterRoute = read('server/qualityCenter.ts');
 const defi = read('src/components/DeFiOrchestration.tsx');
 const rawMaterials = read('src/features/commodities/ui/RawMaterialsDashboard.tsx');
 const newsticker = read('src/components/Newsticker.tsx');
@@ -29,6 +31,16 @@ describe('Frontend orchestrator graphical wiring', () => {
     expect(systemEvents).toContain("id: 'rawmaterials_orchestrator'");
     expect(systemEvents).toContain('latency: null');
     expect(systemEvents).not.toContain("id: 'meme_orchestrator'");
+  });
+
+  it('projects QualityCenterOrchestrator build evidence through the read-only QualityCenterPanel rather than executing it in the request path', () => {
+    expect(qualityCenter).toContain("fetch('/api/admin/quality-center'");
+    expect(qualityCenter).toContain('Read-only Projektion des bestehenden QualityCenterReport');
+    expect(routeComposition).toContain("app.use('/api/admin/quality-center', qualityCenterRouter)");
+    expect(qualityCenterRoute).toContain("qualityCenterRouter.get('/'");
+    expect(qualityCenterRoute).toContain("checkAdminAccess(req, 'quality-center:read', DIAGNOSTIC_ZONE_ROLES)");
+    expect(qualityCenterRoute).not.toContain('QualityCenterOrchestrator');
+    expect(qualityCenterRoute).not.toMatch(/qualityCenterRouter\.(post|put|patch|delete)\(/);
   });
 
   it('keeps CryptoOrchestrator research separate from the authenticated canonical DeFi score', () => {
