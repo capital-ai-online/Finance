@@ -2,195 +2,159 @@
 
 **Authority ID:** `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL`  
 **Status:** REQUIRED  
-**Version:** `3.4.0`  
-**Effective from:** 2026-08-11  
-**Updated:** 2026-09-07  
+**Version:** `4.0.0`  
+**Effective from:** Human Merge of the introducing governance change  
+**Updated:** 2026-09-15  
 **Repository Owner:** `SvenKulessa`  
 **Parent trust root:** `/AGENTS.md`
 
 ## Purpose and boundary
 
-This policy defines the Human/Owner boundaries for Pull Requests targeting `main`: bounded approval before PR or Draft-PR creation and the later Human-only merge decision. It is subordinate to `/AGENTS.md` and cannot create a second repository agent-governance authority.
+This policy defines the Human/Owner boundary for Pull Requests targeting `main` after the PR has been created. It evolves the same stable authority from pre-create Human approval to correlation-gated automated PR creation followed by Human/Owner review and Human/CODEOWNER-only merge.
 
-AI agents may prepare branches, commits, PR materials, validation evidence and scoped fixes. They MUST NOT create a PR or Draft PR without the bounded Approval Envelope defined below unless an effective explicitly scoped authority conditionally replaces only that approval surface, and they MUST NOT self-approve or autonomously merge.
+AI agents may prepare scoped branches, commits, validation evidence, PR metadata and the Pull Request or Draft Pull Request itself when the pre-create correlation gate defined below passes. They MUST NOT self-approve, self-merge, enable auto-merge, release, deploy or perform a protected external mutation merely because PR creation is permitted.
 
-For Human-readable work, the controlling development context is read in this order:
+For Human-readable work, the controlling development context remains:
 
 `Project Value Chain / PVC -> project Roadmap -> applicable ADR -> applicable ESS -> code/tests/evidence`.
 
 Machine-readable registries and stable IDs support integrity and traceability; they do not replace that Human-readable navigation model.
 
-## Current PR / CI state
+## Current PR / CI state after activation
 
 ```text
 FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
-→ BOUNDED HUMAN/OWNER PR-CREATION APPROVAL ENVELOPE OR VALID SCOPED DELEGATION
-→ IMMEDIATE PRE-CREATE RE-CORRELATION + ENVELOPE EVALUATION
-→ PR OPEN / UPDATE
+→ PRE-CREATE CORRELATION GATE
+→ AUTOMATED DRAFT PR CREATION FOR PASS
+→ POST-PR HUMAN/OWNER REVIEW / APPROVAL BOUNDARY
 → governance / workflow-security checks
 → technical build-and-test according to repository check classification
 → FINAL PR-HEAD / CURRENT-MAIN CORRELATION
-→ separate Human/Owner merge decision
+→ separate Human/CODEOWNER merge decision
 → Human Merge
+→ SUCCESSOR ROADMAP PR MAY START FROM NEW CURRENT MAIN
 ```
 
-The former M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` productive runtime is **RETIRED / OFF** after Human Merge of PR #691. Normal PR technical CI does not require or expect an M10 implementation.
+The former M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` productive runtime remains **RETIRED / OFF** after Human Merge of PR #691. Normal PR technical CI does not require or expect an M10 implementation.
 
 Repository-wide and web-application-wide current-state discovery MUST NOT search for, expect, reconstruct or report missing M10 runtime/router/UI/workflow components as a gap. Historical M10 evidence remains non-authorizing and may be inspected only when an explicit audit/history task requires it.
 
-Any future passkey/PR-CI authorization mechanism is a new separately scoped Human/Owner architecture/security/governance decision. It is not an M10 reactivation backlog.
+## Correlation-gated automated PR creation
 
-## Human/Owner PR creation control
+After this version is effective through Human Merge, a separate Human approval prompt before PR or Draft-PR creation is not required.
 
-1. The gate applies to every Pull Request and Draft Pull Request, regardless of whether creation uses GitHub UI automation, API, MCP, connector, CLI, an agent tool or a trusted workflow.
-2. Immediately before approval is requested, current `main` is refreshed, open/new writers are correlated, the branch is synchronized, conflicts are resolved and necessary low-cost validation is repeated.
-3. The Owner receives the exact current Project/PVC/Owner mapping, project/source folder, Roadmap and current Roadmap objective, priority, `main` SHA, branch name, branch-head SHA, intended PR title/scope, materially relevant changed-file set, effective-change identity, branch work, available validation evidence, bounded Roadmap progress, Roadmap assessment, current-main/open-writer correlation result and the two highest-priority Roadmap/workaround continuation items.
-4. The canonical PR-CREATION APPROVAL block from `/AGENTS.md` is the single PR-creation approval surface. Its embedded `Owner-Freigabe` field replaces every additional `Freigabe-Antwort`, duplicate approval line or second exact-response block for that PR-create gate.
-5. The exact affirmative Human/Owner response is `PR Erstellung : Freigegeben`. A rejection may be expressed as `PR Erstellung : Nicht freigegeben`. Approval for the task, branch, commits, checks or general continuation is otherwise insufficient.
-6. Immediately before creation, current `main`, branch head and merge base are read again; the changed-file set and effective-change identity are recomputed; new/open writers and changed-file, semantic, namespace, authority and security overlap are re-correlated; validation made stale by synchronization is repeated.
-7. The Approval Envelope is then evaluated fail-closed as `APPROVAL_STILL_VALID`, `REAPPROVAL_REQUIRED` or `BLOCKED`. The PR is created only for `APPROVAL_STILL_VALID` under then-effective authority.
-8. Agents and connectors stop fail-closed before the external PR-create mutation while required authority is absent, ambiguous, materially stale or blocked.
+A PR creation surface — GitHub workflow, API, MCP, connector, CLI or agent tool — may create the bounded PR only after all of the following are true:
 
-PR-creation approval or delegated PR-create authority is single-purpose. It never authorizes merge, deployment, production mutation, security weakening or another unrelated Pull Request.
+1. Current Project, project folder, Primary PVC and Primary Owner are resolved from then-current canonical project mapping.
+2. The applicable project Roadmap item or explicit Owner scope is resolved and remains bounded.
+3. The branch is a fresh scoped branch created from a known current-main baseline and has been synchronized with then-current `main` before creation.
+4. Current `main`, branch head and merge base are read immediately before the create mutation.
+5. Open Pull Requests and active writers are re-read.
+6. Changed-file, semantic, namespace, authority, ownership and security overlap is correlated fail-closed.
+7. Any required pre-create validation is current and truthful. `NOT RUN` is never represented as `PASS`; validation that is intentionally post-PR is reported as `NOT RUN` / pending hosted checks rather than fabricated pre-create evidence.
+8. The intended PR title conforms to the current project/client naming rule.
+9. The current-main canonical PR template can be rendered completely before the external create mutation.
+10. The final create-correlation result is `PASS`.
 
-## Approval Envelope
+If any required authority, ownership, correlation or create-safety fact is missing, stale, conflicting or unresolved, creation is `BLOCKED`.
 
-Human approval authorizes the bounded intended change. Repository correlation proves that the approved change remains safe against the repository state that exists immediately before PR creation.
+The pre-create evidence is a **correlation record**, not an approval credential. It binds at minimum the current `main` SHA, branch-head SHA, merge base, deterministic changed-file set, intended title, project/PVC/Owner/Roadmap scope, material overlap result and the truthful validation status available at creation time.
 
-The Approval Envelope binds at minimum:
+PR creation does not authorize merge, deployment, release acceptance, production mutation, security weakening or another unrelated Pull Request.
 
-- project ID and project folder;
-- Primary PVC and Primary Owner;
-- branch name;
-- Roadmap item or explicit Owner scope;
-- approved PR scope;
-- approved materially relevant changed-file set;
-- approved effective-change identity;
-- intended PR title;
-- approval timestamp or exact chat evidence;
-- approval-base `main SHA` and approval branch-head SHA.
+## Ordered automated Roadmap PR lane
 
-Approval-base and current `main`/branch-head SHAs are mandatory evidence and correlation anchors. **SHA equality is not semantic safety proof and SHA inequality is not by itself a material scope change.**
+Automated Roadmap execution MUST preserve predecessor order so that later work cannot silently depend on an unintegrated predecessor.
 
-### Effective-change identity
+For one ordered automated Roadmap execution lane:
 
-The effective-change identity is a deterministic representation of the branch change relative to the relevant merge base. The repository helper `scripts/pr/approvalEnvelope.mjs` may combine the deterministically sorted changed-file set, normalized diff digest, scope binding and title binding.
+1. At most one not-yet-integrated automated PR is active at a time.
+2. A successor PR is not created while its predecessor remains open and unmerged.
+3. After the predecessor is Human/CODEOWNER-merged, the successor starts from the resulting then-current `main`, repeats Project/PVC/Owner/Roadmap resolution and all pre-create correlation, and receives its own fresh scoped branch.
+4. If the predecessor is closed without merge, the successor MUST NOT assume its payload. The queue is recomputed from then-current `main` and the Roadmap before new implementation proceeds.
+5. If unrelated Human or parallel work changes `main` between ordered PRs, the successor is correlated against that new state; creation order does not waive overlap review.
+6. Stacked unmerged dependency branches MUST NOT be used as a substitute for this serial integration rule unless a later explicit Human/Owner authority replaces this exact sequencing rule.
 
-No fingerprint, patch-id or digest is sufficient by itself. Equality cannot prove semantic safety; inequality cannot by itself prove a material change. Current-main, open-writer, semantic, namespace, authority, ownership, security and required validation checks remain controlling.
+This makes the automated creation order and intended integration order deterministic while minimizing avoidable changed-file, semantic, namespace, authority and baseline correlations created by the automation itself.
 
-### Approval Envelope evaluation
+## Post-create Human/Owner boundary
 
-Immediately before PR creation, evaluation resolves to exactly one of these states:
+Human authority begins at the created Pull Request rather than at a separate pre-create approval prompt.
 
-- `APPROVAL_STILL_VALID` — approved project/PVC/Owner, Roadmap or explicit Owner scope, PR purpose/title, materially relevant changed-file set and effective payload remain equivalent; final current-main/open-writer/semantic/namespace/authority/security correlation is `PASS`; and required validation is still valid or has been truthfully repeated.
-- `REAPPROVAL_REQUIRED` — any material approved invariant changed, conflict resolution changed the approved payload, a material semantic dependency changed, the effective payload changed, or material equivalence cannot be established with sufficient confidence.
-- `BLOCKED` — correlation, authority, ownership, validation, mergeability or security state conflicts, fails or remains unresolved.
+The created PR MUST expose enough information for Owner review, including:
 
-A `NOT RUN`, `NOT_AVAILABLE`, missing or stale validation result is never represented as `PASS`.
+- project, folder, Primary PVC and Primary Owner;
+- source and target project identity where relevant;
+- bounded Roadmap/work-package scope and exit gate;
+- branch and PR-head identity;
+- current-main baseline used for pre-create correlation;
+- materially relevant changed files and implementation summary;
+- correlation result and known open risks;
+- required hosted checks and truthful `NOT RUN` / pending states;
+- the explicit Human/CODEOWNER merge boundary.
+
+The Owner may request changes, reject/close the PR, approve review readiness or merge after the final merge correlation and required checks. No exact chat phrase is required merely to create the PR after this version is effective.
 
 ## Main and branch-head drift
 
-A `main` SHA movement requires re-reading then-current main authority, new merges, open PRs/writers and all relevant overlap. Approval may be preserved without another Human prompt only when the approved bounded change and effective payload remain materially equivalent and final correlation remains `PASS`.
+Before PR creation, any `main` or branch-head movement makes prior correlation stale and requires fresh correlation against the exact state that will be used for creation.
 
-A branch-head movement must distinguish synchronization-only Git identity changes from implementation payload changes. Rebase, permitted merge of current `main`, or another deterministic synchronization may preserve approval when the effective approved patch remains materially equivalent. New implementation content, scope expansion, changed business behavior, materially relevant file-set changes, dependency/configuration changes outside approved scope or conflict resolution that alters the approved payload require renewed approval.
+After PR creation, any PR-head or `main` movement that is material to merge readiness makes the previous pre-merge correlation stale. The final PR-head/current-main correlation MUST be repeated before Human merge readiness is asserted.
 
-Changed-file overlap is a correlation trigger, not automatic proof of safety or failure. Same-file, same-symbol/API/schema, authority/control, dependency/configuration and namespace overlap require stronger semantic review. Approval survives only with demonstrable material equivalence and `PASS` evidence; uncertainty requires reapproval or blocking.
-
-## Authority drift
-
-If then-current `main` changes `/AGENTS.md`, an applicable ADR, ESS, Control Catalog entry, Owner/PVC mapping or another authority relevant to PR creation, current authority is re-resolved first. Approval is preserved only when the then-effective authority still explicitly permits it. Otherwise renewed approval is required or execution stops fail-closed.
-
-## Approval-block presentation and decision support
-
-The canonical block is rendered as a fenced `yaml` code block so it is visually separated and syntax-highlightable in capable chat clients. Visual treatment is presentation only and never authority.
-
-The block MUST include:
-
-- Current Project and Primary PVC;
-- Project Owner / Project Folder and affected source folder (`Quellordner`);
-- Roadmap path and current Roadmap objective;
-- priority `1/5` through `5/5` with a short relevance rationale;
-- branch, approval-base/current `main` SHA, branch-head SHA, materially relevant changed-file set, effective-change identity and intended exact PR title;
-- bounded work performed on the branch plus truthful validation/evidence, including `NOT RUN` where applicable;
-- Roadmap progress as `before% -> after%` plus delta and an explicit measurement basis; if no defensible percentage can be derived, the block MUST state that limitation rather than fabricate progress;
-- Roadmap assessment `/10`, State-of-the-Art assessment, Best-Practice assessment and open deviations;
-- current-main/open-PR/parallel-writer and changed-file/semantic/namespace/authority/security correlation result;
-- exactly the two highest-priority immediately actionable Roadmap items, or when the Roadmap provides no executable item, the two highest-priority evidence-backed workaround/remediation items, each with an exit gate;
-- the single embedded `Owner-Freigabe` decision field, whose affirmative value is exactly `PR Erstellung : Freigegeben`.
-
-Generic process instructions such as `merge the PR`, `run hosted CI`, `run tests` or `approve the PR` are reported, when relevant, as gate/evidence status and MUST NOT be emitted as the two Roadmap/workaround continuation items.
-
-Priority semantics are:
-
-- `1/5` — low relevance / local presentation or hygiene effect;
-- `2/5` — limited project effect;
-- `3/5` — material project/process effect;
-- `4/5` — high cross-component or governance relevance;
-- `5/5` — critical or strategic integrity/authority relevance.
-
-## Mandatory reapproval triggers
-
-Renewed explicit Owner approval is required when any of the following occurs:
-
-- Current Project, Primary Owner or materially applicable Primary PVC changes;
-- Roadmap item or explicit Owner scope changes;
-- approved PR purpose or approval-bound intended title changes materially;
-- effective branch payload changes;
-- materially relevant changed-file set expands or changes without proven approved equivalence;
-- conflict resolution modifies the approved implementation;
-- a new semantic dependency changes the meaning of the approved patch;
-- a new authority, namespace or security conflict appears;
-- a governing ADR/ESS/control changes materially to the work and does not explicitly preserve the approval;
-- required validation fails or becomes stale and cannot be repeated;
-- final correlation is not `PASS`;
-- payload equivalence cannot be established;
-- approval evidence is missing, ambiguous or cannot be linked to the Approval Envelope.
-
-The following do **not** require renewed approval by themselves: an unrelated main commit, an unrelated Human-merged PR, a `main` SHA change with no material interaction, a branch-head change caused solely by safe synchronization, merge-base movement with materially equivalent approved payload, or refresh of correlation evidence without approved-scope change.
-
-## Bootstrap / activation boundary
-
-A Pull Request that introduces or materially changes Approval Envelope semantics MUST itself follow the PR-creation approval rules effective on then-current `main` before that change is Human-merged. Candidate branch semantics cannot authorize their own PR creation. Only after Human/CODEOWNER Merge may the new semantics govern later PR-creation flows.
-
-## Retired authorization signals
-
-PR-body checkboxes, Files-Viewed state, `💪`/`okay`, labels, reactions, arbitrary review text and successful CI are non-authorizing as Human identity/merge credentials. Historical evidence may retain them as history.
-
-A separate chat line named `Freigabe-Antwort` is retired for the canonical PR-creation gate. The `Owner-Freigabe` field inside the canonical PR-CREATION APPROVAL block is the sole PR-create response surface.
+Changed-file overlap is a correlation trigger, not automatic proof of safety or failure. Same-file, same-symbol/API/schema, authority/control, dependency/configuration and namespace overlap require stronger semantic review. Uncertainty blocks the protected step rather than being converted to `PASS`.
 
 ## Human Merge control
 
-1. Every merge into `main` MUST originate from a Pull Request targeting `main`; direct-to-`main` repository edits and merge paths that bypass the PR boundary remain prohibited.
-2. `MERGE` remains Human/Owner-only. Agents, chats, connectors and delegated execution sessions do not perform the merge, enable auto-merge or manufacture merge authority.
-3. Immediately before the Human merge decision, the current `main` SHA and current PR-head SHA MUST be re-read and the PR MUST be correlated against then-current `main`. The final correlation covers merge-base/current-main drift plus relevant changed-file, semantic, namespace, authority and concurrent-writer conflicts.
-4. If `main` or the PR head changed after the last valid pre-merge correlation, that correlation is stale and MUST be repeated. A PR may not be treated as merge-ready on an obsolete main baseline.
-5. Required CI is technical evidence, never sufficient authorization. Required final-head checks and unresolved conflict/review status remain part of merge evidence where applicable.
-6. The concrete PR requires a separate explicit Human merge decision after final current-main correlation.
-7. Protected external mutations remain separate and use their own approval controls.
+1. Every merge into `main` MUST originate from a Pull Request targeting `main`; direct-to-`main` edits and merge paths that bypass the PR boundary remain prohibited.
+2. `MERGE` remains Human/Owner-only. Agents, chats, connectors and delegated execution sessions do not perform the merge or enable auto-merge.
+3. Immediately before the Human merge decision, the current `main` SHA and current PR-head SHA MUST be re-read and the PR MUST be correlated against then-current `main`.
+4. Final correlation covers merge-base/current-main drift plus relevant changed-file, semantic, namespace, authority, security and concurrent-writer conflicts.
+5. If `main` or the PR head changed after the last valid pre-merge correlation, that correlation is stale and MUST be repeated.
+6. Required CI is technical evidence, never sufficient authorization. Required final-head checks and unresolved conflict/review status remain part of merge evidence where applicable.
+7. The concrete PR requires a distinct Human/CODEOWNER merge decision.
+8. Protected external mutations remain separate and use their own approval controls.
 
-## PR template and evidence
+## Canonical PR body and evidence
 
-PR metadata records scope, authority, risk, baseline and validation but does not create authority. Minimum creation-gate evidence includes the bounded Approval Envelope, approval-base and current main/head SHAs, current merge base/effective-change identity, final correlation result and the applicable explicit Human/Owner creation approval or valid explicitly scoped delegation. Minimum merge evidence separately includes final PR-head SHA, then-current-main SHA, final PR-head/current-main correlation, required final-head checks, unresolved-conflict/review status and the Human/Owner merge decision.
+Every creation surface MUST read `.github/pull_request_template.md` from then-current `main` and preserve its complete required structure, template version marker, production-baseline governance IDs and Human/CODEOWNER merge boundary. Unresolved placeholders block creation.
 
-`Candidate Head`, `candidate snapshot`, `candidate SHA` and equivalent lifecycle wording are retired from current PR-governance terminology. Historical records may preserve the old labels where necessary for audit, but current instructions and new evidence use `branch head`, `PR head`, `main SHA` and `merge SHA`.
+For an agent branch with exactly one new `.ai/work-claims/*.json` claim, the trusted agent Draft-PR workflow/rendering path is preferred where available. For an authorized connector/API path without a new claim, claim-only fields use justified `N/A`; no claim is invented solely for PR creation.
+
+The PR body and correlation evidence do not create merge authority.
+
+## Bootstrap / activation boundary
+
+**No self-bootstrap:** the Pull Request introducing version `4.0.0` MUST itself obey the PR-creation approval rules effective on then-current `main` before Human Merge. Candidate branch semantics cannot authorize their own PR creation.
+
+Only after Human/CODEOWNER Merge may this post-create Owner model govern later PR-creation flows. Until then, the effective `3.4.0` pre-create Approval Envelope remains controlling for the introducing PR.
+
+## Retired pre-create approval surface after activation
+
+After version `4.0.0` becomes effective:
+
+- the canonical `PR-CREATION APPROVAL` chat block is no longer a required pre-create authorization surface;
+- the exact phrase `PR Erstellung : Freigegeben` is no longer required before future PR creation;
+- `APPROVAL_STILL_VALID` / `REAPPROVAL_REQUIRED` are retained only as historical/helper compatibility vocabulary and MUST NOT be treated as active future create credentials;
+- Approval Envelope fingerprints, reactions, labels, checkboxes, reviews and successful CI remain non-authorizing for merge;
+- old approval helpers may remain temporarily for historical compatibility but MUST NOT be invoked by the effective trusted PR-create path.
 
 ## Owner authentication assurance
 
-GitHub review text does not prove strong authentication. Where a protected action requires WebAuthn/TOTP/break-glass assurance, the corresponding current effective control must be used. Retired M10 material is not a current authentication mechanism and is never inferred from historical documentation.
+GitHub review text does not by itself prove strong authentication. Where a protected action requires WebAuthn/TOTP/break-glass assurance, the corresponding then-current effective control must be used. Retired M10 material is not a current authentication mechanism.
 
 ## Agent capability restriction
 
-Agents may READ, ANALYZE, PLAN, create scoped branches/commits, prepare PR materials, evidence and scoped fixes according to current Roadmap/authority and `/AGENTS.md`. They may open a concrete PR or Draft PR only after the applicable creation authority is satisfied and the immediate pre-create Approval Envelope evaluation permits it. They stop before Human Merge and may not expand their own authority.
+Agents may READ, ANALYZE, PLAN, create scoped branches/commits, prepare PR materials/evidence and, after this version is effective, create the bounded PR or Draft PR when the final pre-create correlation gate is `PASS`. They stop before Human Merge and may not expand their own authority.
 
 ## Canonical references
 
 - `/AGENTS.md` / `AUTH-GOV-AGENT-TRUST-ROOT`;
 - `docs/projects/PROJECT_VALUE_CHAIN.md`;
-- the affected project's `ROADMAP.md`;
+- affected project `ROADMAP.md`;
 - applicable accepted ADRs and active ESS;
 - `docs/governance/control-catalog.json` / `CTRL-SDLC-PR-CREATE-001`, `CTRL-SDLC-CHAT-HANDOFF-001`, `CTRL-CI-M10-001` and `CTRL-MERGE-HUMAN-001`;
 - `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`;
-- `scripts/pr/approvalEnvelope.mjs` and `scripts/pr/approvalEnvelope.test.mjs`;
-- `docs/architecture/ROADMAP.md`.
+- `.github/workflows/open-agent-draft-pr.yml`;
+- `.github/pull_request_template.md`.
 
-`docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md` is historical audit/design evidence only. It is not a current implementation prerequisite, discovery target, reactivation plan or authorization mechanism.
+`docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md` remains historical audit/design evidence only. It is not a current implementation prerequisite, discovery target, reactivation plan or authorization mechanism.

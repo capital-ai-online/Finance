@@ -84,6 +84,6 @@ describe('ADR / ESS lifecycle archive invariants', () => {
     const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
     expect(agents).toContain('RETIRED / OFF');
     expect(chain).toContain('RETIRED / OFF');
-    expect(chain).toContain('Any future passkey/PR-CI authorization mechanism is a new separately scoped Human/Owner architecture/security/governance decision.');
+    expect(chain).toMatch(/future .*passkey\/PR-CI.*authorization architecture/i);
   });
 });
