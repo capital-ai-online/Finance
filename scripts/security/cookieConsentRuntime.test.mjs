@@ -158,8 +158,12 @@ test('initialization config keeps opt-in and reopens the vendor preferences', as
   let config;
   let reopened = 0;
   const buttons = [];
+  const readyStyles = new Map([
+    ['cookieconsent-vendor-style', { sheet: {} }],
+    ['cookieconsent-theme-style', { sheet: {} }],
+  ]);
   const document = {
-    getElementById: (id) => buttons.find((b) => b.id === id),
+    getElementById: (id) => readyStyles.get(id) || buttons.find((b) => b.id === id),
     createElement: () => ({ addEventListener(name, fn) { this[name] = fn; } }),
     body: { appendChild: (button) => buttons.push(button) },
   };
