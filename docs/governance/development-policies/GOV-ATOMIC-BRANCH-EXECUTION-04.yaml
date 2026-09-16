@@ -1,0 +1,93 @@
+capital_ai_atomic_branch_execution:
+  schema_version: "1.0.0"
+  policy_id: "GOV-ATOMIC-BRANCH-EXECUTION-04"
+  language: "de"
+
+  depends_on:
+    - "GOV-AUTONOMOUS-WORK-GRAPH-03"
+
+  branch_policy:
+    required: true
+    direct_write_to_main: "DENY"
+    branch_base:
+      source: "CURRENT_MAIN"
+      exact_sha_required: true
+    branch_pattern:
+      preferred: "agent/<project>-<workpackage>-<date-or-correlation>"
+
+  mutation_protocol:
+    sequence:
+      - READ
+      - CORRELATE
+      - PLAN_ATOMIC_DELTA
+      - CREATE_BRANCH
+      - MUTATE
+      - LOCAL_READBACK
+      - VERIFY_SCOPE
+      - CREATE_CORRELATION
+      - CREATE_DRAFT_PR
+      - HOSTED_VALIDATION
+      - EVIDENCE
+      - REVIEW
+      - MERGE_GATE
+
+  pre_mutation_guard:
+    required:
+      - exact_current_main_sha
+      - owner_check
+      - affected_file_check
+      - concurrent_writer_check
+      - stale_head_check
+      - authority_check
+
+  atomicity:
+    one_workpackage_one_coherent_delta: true
+    unrelated_changes: "DENY"
+    opportunistic_refactor: "DENY_UNLESS_REQUIRED"
+    hidden_scope_expansion: "DENY"
+
+  stale_head_guard:
+    enabled: true
+    before_each_material_mutation:
+      compare:
+        - branch_base_sha
+        - current_main_sha
+    changed_main:
+      action:
+        - stop_current_mutation
+        - correlate_new_main
+        - determine_semantic_conflict
+        - rebase_or_reconstruct_safely
+        - rerun_readback
+
+  create_correlation_gate:
+    required_before_pr: true
+    verifies:
+      - branch_based_on_valid_baseline
+      - no_duplicate_active_writer
+      - no_owner_violation
+      - intended_files_only
+      - no_unresolved_conflict
+      - expected_contracts_still_current
+
+  mutation_permissions:
+    default: "LEAST_PRIVILEGE"
+    privileged_mutation:
+      requires:
+        - explicit_authority
+        - exact_scope
+        - immediate_readback
+
+  read_write_readback:
+    required_for_external_mutation: true
+    pattern:
+      - read_before
+      - write_authorized_delta
+      - read_after
+      - compare_expected_state
+
+  invariants:
+    - "Nie direkt auf main arbeiten."
+    - "Mutation erfolgt nur gegen frischen, verifizierten Baseline-State."
+    - "Jede Änderung bleibt atomar und scope-begrenzt."
+    - "Externe Mutation verlangt unmittelbares Readback."

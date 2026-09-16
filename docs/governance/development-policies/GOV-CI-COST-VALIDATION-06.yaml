@@ -1,0 +1,105 @@
+capital_ai_ci_cost_validation:
+  schema_version: "1.0.0"
+  policy_id: "GOV-CI-COST-VALIDATION-06"
+  language: "de"
+
+  depends_on:
+    - "GOV-SELF-HEALING-CONVERGENCE-05"
+
+  objective: >
+    Validierung risikoadäquat steuern, unnötige kostenpflichtige
+    GitHub-/Render-Ausführungen vermeiden und gleichzeitig
+    erforderliche Quality Gates vollständig erhalten.
+
+  validation_layers:
+    pre_pr:
+      allowed:
+        - static_inspection
+        - syntax_validation
+        - schema_validation
+        - targeted_local_checks
+        - dependency_analysis
+        - scope_readback
+        - create_correlation
+      expensive_hosted_checks: false
+    post_pr:
+      enabled: true
+      may_run:
+        - required_github_checks
+        - build
+        - unit_tests
+        - integration_tests
+        - codeql
+        - security_scans
+        - render_preview
+        - deployment_validation
+
+  cost_control:
+    costly_github_checks_before_pr: "DENY"
+    costly_build_before_pr: "DENY"
+    costly_render_deploy_before_pr: "DENY"
+    rationale: >
+      Kostenverursachende Hosted-Checks werden erst nach
+      Erstellung des Pull Requests ausgelöst.
+
+  change_classification:
+    required: true
+    profiles:
+      docs_only:
+        build: "SKIP_UNLESS_REQUIRED_BY_CONTROL"
+        render_deploy: "SKIP"
+        application_test_suite: "SKIP_UNLESS_CORRELATED"
+        documentation_validation: "RUN"
+      code:
+        targeted_tests: "RUN"
+        build: "RUN_POST_PR"
+        required_security_checks: "RUN_POST_PR"
+      security_sensitive:
+        security_controls: "RUN"
+        codeql: "RUN_IF_APPLICABLE"
+        owner_review: "REQUIRED"
+      infrastructure:
+        configuration_validation: "RUN"
+        runtime_readback: "REQUIRED"
+        deployment_validation: "AS_APPLICABLE"
+
+  quality_status:
+    allowed_values:
+      - PASS
+      - FAIL
+      - NOT_RUN
+      - BLOCKED
+      - NOT_APPLICABLE
+    missing_evidence_must_not_be_pass: true
+    not_run_must_not_be_pass: true
+
+  enforcement:
+    evaluation_projection_alone_is_merge_blocking: false
+    merge_blocking_requires:
+      - mapping_to_active_repository_control
+      - or_existing_required_check
+      - or_explicit_repository_contract
+    canonical_control_catalog:
+      preferred_path: "docs/governance/control-catalog.json"
+      resolve_from_current_main: true
+
+  failure_handling:
+    failing_test:
+      sequence:
+        - reproduce
+        - classify_failure
+        - determine_regression_or_stale_expectation
+        - identify_root_cause
+        - repair_smallest_valid_scope
+        - rerun_relevant_validation
+    forbidden:
+      - delete_test_to_make_green
+      - blanket_skip
+      - weaken_assertion_without_contract_evidence
+      - increase_timeout_as_default_fix
+
+  invariants:
+    - "Hosted-Kosten erst nach PR-Erstellung."
+    - "Docs-only darf nicht automatisch Render-Builds auslösen."
+    - "Quality-Gates werden aus Repository-Controls abgeleitet."
+    - "NOT_RUN ist niemals PASS."

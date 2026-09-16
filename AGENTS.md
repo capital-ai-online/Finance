@@ -1,108 +1,90 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `3.0.0`  
+**Control Plane Version:** `3.1.0`  
 **Status:** OWNER-DIRECTED — effective after Human/CODEOWNER merge  
 **Effective date:** 2026-09-16  
 **Repository:** `capital-ai-online/Finance`
 
 ## 1. Single Point of Trust
 
-`/AGENTS.md` is the single repository-wide trust root for every AI model, coding agent, MCP host and automation client working on CAPITAL-AI.
+`/AGENTS.md@CURRENT_MAIN` is the single repository-wide trust root for every AI model, coding agent, MCP host and automation client working on CAPITAL-AI.
 
-This file is intentionally **not** a development lifecycle, phase model or DevelopmentChain. It only bootstraps authority, resolves the sole development-policy suite and preserves non-delegable Human/Owner boundaries.
+`CURRENT_MAIN` is the sole repository baseline. Open Pull Requests, branches, previous chat outputs, stale evidence and unmerged payloads are correlation/search inputs only and never become repository authority by themselves.
 
-Provider-specific repository instruction mirrors are prohibited. If an execution host cannot resolve this trust root and the eight YAML policies below from `CURRENT_MAIN`, protected work stops fail-closed.
+## 2. Sole Development Guideline
 
-## 2. Sole Development Policy Suite
+After Human/CODEOWNER merge of the introducing Pull Request, the **only repository development-execution guideline** is the combined `CAPITAL_AI_AUTONOMOUS_DEVELOPMENT_GUIDELINE`, consisting of exactly these eight YAML policies:
 
-After Human/CODEOWNER merge of the introducing Pull Request, the **only repository development guidelines** are exactly these eight YAML policies:
+1. `docs/governance/development-policies/GOV-AUTONOMOUS-TRUST-ROOT-01.yaml`
+2. `docs/governance/development-policies/GOV-DYNAMIC-SCOPE-RESOLUTION-02.yaml`
+3. `docs/governance/development-policies/GOV-AUTONOMOUS-WORK-GRAPH-03.yaml`
+4. `docs/governance/development-policies/GOV-ATOMIC-BRANCH-EXECUTION-04.yaml`
+5. `docs/governance/development-policies/GOV-SELF-HEALING-CONVERGENCE-05.yaml`
+6. `docs/governance/development-policies/GOV-CI-COST-VALIDATION-06.yaml`
+7. `docs/governance/development-policies/GOV-EVIDENCE-EVENTMESH-HANDOVER-07.yaml`
+8. `docs/governance/development-policies/GOV-PR-CLOSURE-AUTHORITY-08.yaml`
 
-1. `docs/governance/development-policies/GOV-TOP-LAYER-APPLICATION-01.yaml`
-2. `docs/governance/development-policies/GOV-TOP-LAYER-EXECUTION-01.yaml`
-3. `docs/governance/development-policies/GOV-TOP-LAYER-QUALITY-GATES-01.yaml`
-4. `docs/governance/development-policies/GOV-TOP-LAYER-AUTHORITY-HARDENING-01.yaml`
-5. `docs/governance/development-policies/GOV-SEC-AUTHORITY-EXCEPTION-01.yaml`
-6. `docs/governance/development-policies/GOV-QM-AUTHORITY-EXCEPTION-01.yaml`
-7. `docs/governance/development-policies/GOV-FINTECH-AUTHORITY-EXCEPTION-01.yaml`
-8. `docs/governance/development-policies/GOV-COMP-SUPPLYCHAIN-AUTHORITY-EXCEPTION-01.yaml`
+No ninth lifecycle, DevelopmentChain, routing overlay, agent-specific mirror, PR/CI procedure, handoff procedure or equivalent parallel development-execution authority is permitted unless a later explicit Human/Owner decision changes this exact set.
 
-No ninth development-policy document, lifecycle, phase contract, routing overlay, DevelopmentChain, agent-specific mirror or equivalent parallel development authority may be created without a later explicit Human/Owner decision that changes this exact set.
+## 3. Global procedural supersession
 
-ADRs, ESS, domain contracts, security controls, legal/compliance obligations, project Roadmaps and evidence remain authoritative inside their delegated subject matter, but they are **inputs and constraints**, not additional repository development guidelines.
+The eight policies replace **all previous repository development-procedure rules across the Project Value Chain `PVC-01..18`**. This includes the former DevelopmentChain and prior rules for sequencing, branch execution, PR creation/closure, CI ordering, autonomous continuation, cross-project execution, development handoffs, retry/wait behavior and development prioritization.
 
-## 3. Global DevelopmentChain Retirement
+`AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`, `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL`, `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION` and associated procedural `CTRL-*` rows survive only as historical/correlation identities where needed. They do not create a fallback, parallel lane or additional execution authority after activation of this version.
 
-The former DevelopmentChain is dissolved as current repository development authority.
+Stale registry/control-catalog rows, historical documents, old code comments or evidence that still describe a superseded development procedure are non-authorizing for execution. They are reconciled through documentation/governance hygiene but MUST NOT override the exact eight-policy suite.
 
-`AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` and every DevelopmentChain lifecycle, phase, branch-lifecycle, mutation-handoff, documentation-freeze, responsibility-matrix, roadmap, runbook, evidence-template or equivalent procedural artifact are `RETIRED / HISTORICAL / NON_AUTHORIZING` after Human Merge of this change.
+## 4. Subject-matter constraints remain
 
-This supersession is global for repository development procedure. A stale reference, registry row, old roadmap, code comment, historical evidence or archived document cannot reactivate DevelopmentChain authority. Git history remains the audit source for retired material.
+The eight policies do **not** erase subject-matter authority. They dynamically consume applicable constraints from current main: law/regulation/contracts, canonical Project/PVC ownership, accepted ADR/ESS/domain/data/scoring contracts, Security/Compliance controls, supply-chain/provider controls, required checks, Human/CODEOWNER review and separately authorized protected external mutations.
 
-The eight YAML policies supersede DevelopmentChain procedure while preserving applicable domain authorities, architecture decisions, security/compliance constraints, supply-chain contracts, Human/CODEOWNER merge authority and protected external-mutation controls.
+These sources constrain development through the eight policies; they do not form an additional repository development lifecycle.
 
-## 4. Authority Resolution
+## 5. Canonical scope and owner resolution
 
-Authority precedence is:
+Canonical organizational resolution starts from `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`.
 
-1. applicable law, regulation, supervisory or binding contractual obligation;
-2. explicit Human/Owner decision and effective Accepted ADR within its scope;
-3. this trust root plus the eight YAML development policies, and applicable active domain/security/compliance authorities within their delegated scope;
-4. project Roadmaps, contracts, runbooks and evidence implementing higher authority;
-5. proposed/draft/not-enabled material;
-6. historical/evidence/archive material.
+Every work package resolves Current Project, project folder, Primary Owner, PVC relationship, affected domains and applicable controls from `CURRENT_MAIN`. Missing or conflicting authority fails closed. No PVC or Owner is invented.
 
-For development procedure, section 2 is exclusive. If another artifact attempts to define repository development sequencing, branch policy, PR lifecycle, self-healing execution, project routing or development prioritization outside the eight YAML files, that procedural portion is ignored and reported as governance drift.
+When work belongs to another Owner/Project, the detecting project creates an owner-correct handover instead of silently taking over foreign implementation.
 
-## 5. Canonical Project and Domain Inputs
+SEC, QM, FINTECH and COMP/Supply-Chain preserve the specialized directions in `GOV-DYNAMIC-SCOPE-RESOLUTION-02`; no user-visible Top-Layer priority may override those authorities.
 
-Project and PVC resolution is canonical only from:
+## 6. Execution boundaries
 
-- `docs/projects/README.md`
-- `docs/projects/PROJECT_VALUE_CHAIN.md`
+Repository mutations are branch-only and based on an exact fresh `CURRENT_MAIN` SHA. Direct writes to `main` are denied.
 
-Each project consumes its own current `README.md`, `ROADMAP.md`, applicable ADR/ESS and domain contracts. Technical financial/scoring work additionally preserves `SC-MD-SPT-0001` and applicable FINTECH authorities. Cross-cutting projects never gain a productive PVC merely by validating, constraining, presenting or distributing another project's work.
+Work is decomposed into atomic, dependency-correct work packages. Independent packages may run in parallel when there is no shared mutation/authority boundary. Blocked work records the exact unblock condition and does not create artificial waits, sleep steps or arbitrary polling delays.
 
-## 6. Non-delegable Human and Repository Boundaries
+Self-Healing means bounded root-cause repair inside existing authority. It never permits test suppression, fabricated evidence, owner override, Security/Compliance weakening, silent public-contract change, self-approval or auto-merge.
 
-The YAML suite may automate and self-heal repository work only inside these immutable boundaries:
+Costly hosted validation is deferred until a Pull Request exists. `NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`.
 
-- direct writes to `main` are prohibited;
-- repository changes use a scoped branch;
-- every merge into `main` originates from a Pull Request;
-- `MERGE` is Human/CODEOWNER-only;
-- agents do not self-merge or enable auto-merge;
-- protected external mutations require the applicable explicit Human/Owner authorization;
-- no agent may expand its own authority, ownership, permissions or approval scope;
-- credentials, secrets, raw tokens and private keys are never written to repository evidence;
-- `NOT RUN`, `UNKNOWN`, `BLOCKED` and `FAIL` are never converted into `PASS` by inference;
-- current `main` is the only authoritative repository baseline; open PRs and branches are correlation inputs only.
+Every repository change uses a Pull Request. Human/CODEOWNER review and external repository merge authority are preserved; agents do not self-approve, self-merge, enable auto-merge, remove protection or weaken required checks.
 
-## 7. Fail-closed Bootstrap
+## 7. Evidence and EventMesh
 
-Before protected repository work, the executor MUST resolve from current `main`:
+Relevant mutations require observed Before state, intended delta, observed/read-back After state, truthful validation state and evidence references. Inferred/fabricated After state is prohibited.
 
-- current main SHA;
-- the canonical project, project folder, Primary Owner and productive PVC relationship;
-- applicability of the general Top-Layer policies versus one of the four explicit exceptions;
-- project Roadmap or explicit Owner scope;
-- applicable ADR/ESS/domain/security/compliance/supply-chain constraints;
-- relevant open PR and active-writer overlap where observable.
+EventMesh is a **read-only runtime projection** for PVC state/evidence/handover correlation. It has no approval, merge, mutation or governance authority and cannot replace `/AGENTS.md` or create missing PVC state.
 
-If any of these are materially ambiguous, contradictory or unavailable, protected mutation stops until the eight-policy suite can resolve or route the conflict.
+Cross-project handovers are owner-correct, correlation-ID-based and carry source/target owner, completed/remaining scope, dependencies, evidence, exit gate and continuation condition.
 
-## 8. Self-healing Boundary
+## 8. Preserved chat presentation — non-authorizing
 
-Self-healing means bounded detection, correction and revalidation of repository drift that is already authorized by the eight YAML policies. It does not mean self-approval.
+The Owner explicitly preserves the existing **stylistic and graphical chat presentation only**. These conventions survive procedural supersession but create no execution, routing, prioritization, approval or merge authority.
 
-Automatic repair may normalize stale references, branch drift, generated evidence, owner-correct handoff metadata, deterministic formatting and other reversible repository inconsistencies when policy conditions are satisfied. It MUST stop on unresolved authority conflict, owner transfer, security-control weakening, compliance/legal ambiguity, destructive production mutation, secret exposure, live billing/money/entitlement mutation, DNS/TLS/domain ownership or any other protected action requiring Human authority.
+Preserved visual conventions are:
 
-## 9. Historical DevelopmentChain References
+- project display name, symbol and color from `docs/projects/README.md`;
+- semantic emoji with textual labels: `🔍 ANALYSE / CHECK`, `🏗️ UMSETZUNG / ARCHITEKTUR`, `🧪 VALIDIERUNG / EVIDENCE`, `⚙️🤓 MANUELL`, `🟡 OFFEN / WAITING`, `🔴 BLOCKED / FAIL`, `🟠 RISIKO / WARNUNG`, `✅ DONE` / `🟢 PASS`, `🔐 SECURITY / COMPLIANCE`, `🔗 ABHÄNGIGKEIT / INTEGRATION`, `🧭 NÄCHSTE SCHRITTE`;
+- visual continuation units using `### 📂 **SCOPE / ZIELORDNER: <canonical-project-folder>**` followed by a fenced plaintext `text` block containing the step, `📁 Projektfolder:` and `🎯 Exit Gate:`;
+- the final `👷 AKTIVE CHAT-WORKER` plaintext status snippet when a handoff/status surface is rendered;
+- existing Pull-Request project presentation metadata such as symbol/color while textual Project/Owner/PVC identity remains primary.
 
-Historical documents may retain the term `DevelopmentChain` only to explain past repository state. Such references are non-authorizing even when an older artifact still says `ACTIVE`. The effective current state is this trust root plus the exact eight YAML policies.
+Presentation stays truthful; color is never the sole cue. Visual rules MUST NOT determine work selection, item limits, triggers, waiting, PR authority, ownership or gate results. Those decisions come only from the eight policies plus the applicable subject-matter constraints resolved from current main.
 
-## 10. Conflict Rule
+## 9. No self-bootstrap
 
-If a supporting artifact conflicts with this trust root or the applicable YAML policy, execution stops fail-closed unless the conflict is a repair class explicitly allowed by `GOV-TOP-LAYER-AUTHORITY-HARDENING-01`.
-
-The introducing Pull Request cannot bootstrap its own authority. Until Human/CODEOWNER merge, the current-main rules that existed before this change continue to govern creation, review and merge of that Pull Request.
+The Pull Request introducing this version cannot authorize itself. Until Human/CODEOWNER merge, the rules on then-current `main` govern creation, validation, review and merge of that Pull Request. After merge, the exact eight-policy suite is the single development-execution model.

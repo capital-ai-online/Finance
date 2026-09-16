@@ -1,0 +1,83 @@
+capital_ai_autonomous_development_trust_root:
+  schema_version: "1.0.0"
+  policy_id: "GOV-AUTONOMOUS-TRUST-ROOT-01"
+  language: "de"
+
+  status:
+    canonical: true
+    development_chain:
+      legacy_chain_active: false
+      superseded_by:
+        - "GOV-AUTONOMOUS-TRUST-ROOT-01"
+        - "GOV-DYNAMIC-SCOPE-RESOLUTION-02"
+        - "GOV-AUTONOMOUS-WORK-GRAPH-03"
+        - "GOV-ATOMIC-BRANCH-EXECUTION-04"
+        - "GOV-SELF-HEALING-CONVERGENCE-05"
+        - "GOV-CI-COST-VALIDATION-06"
+        - "GOV-EVIDENCE-EVENTMESH-HANDOVER-07"
+        - "GOV-PR-CLOSURE-AUTHORITY-08"
+
+  repository:
+    repository: "CURRENT_REPOSITORY"
+    expected_repository: "capital-ai-online/Finance"
+
+  trust_root:
+    source: "/AGENTS.md"
+    resolution: "CURRENT_MAIN_ONLY"
+    fail_closed: true
+
+  baseline_resolution:
+    required_before_execution:
+      - resolve_current_main_sha
+      - read_AGENTS_md_from_current_main
+      - resolve_current_project
+      - resolve_current_project_folder
+      - resolve_owner
+      - resolve_pvc_relationship
+      - resolve_repository_controls
+      - correlate_open_pull_requests
+      - correlate_active_writers
+
+    authoritative_sources:
+      - "/AGENTS.md@CURRENT_MAIN"
+      - "repository contracts reachable from CURRENT_MAIN"
+      - "active CTRL controls"
+      - "canonical registries reachable from CURRENT_MAIN"
+
+    non_authoritative_sources:
+      open_pull_requests: "CORRELATION_ONLY"
+      previous_chat_outputs: "SEARCH_HINT_ONLY"
+      old_branches: "CORRELATION_ONLY"
+      stale_evidence: "NON_AUTHORITATIVE"
+      unmerged_payloads: "MUST_NOT_BE_ASSUMED_PRESENT"
+
+  authority_boundary:
+    policy_role: "PROJECT_EXECUTION_GUIDANCE"
+    repository_authority: "/AGENTS.md@CURRENT_MAIN"
+    may_override_repository_contracts: false
+    may_create_parallel_authority: false
+    may_invent_missing_authority: false
+    may_promote_chat_state_to_authority: false
+
+  conflicts:
+    repository_vs_chat:
+      winner: "REPOSITORY_CURRENT_MAIN"
+    current_main_vs_open_pr:
+      winner: "CURRENT_MAIN"
+    unresolved_authority:
+      action: "FAIL_CLOSED"
+
+  freshness:
+    exact_head_required: true
+    stale_head_execution: "DENY"
+    before_mutation:
+      - resolve_current_main_sha
+      - compare_with_last_resolved_main_sha
+      - refresh_scope_if_changed
+
+  invariants:
+    - "CURRENT_MAIN ist die einzige Repository-Baseline."
+    - "Open PRs verändern die Baseline nicht."
+    - "Keine ungemergte Änderung darf als bereits vorhanden behandelt werden."
+    - "Keine Chat-Antwort erzeugt Repository-Authority."
+    - "Fehlende Authority wird nicht erfunden."

@@ -1,0 +1,104 @@
+capital_ai_dynamic_scope_resolution:
+  schema_version: "1.0.0"
+  policy_id: "GOV-DYNAMIC-SCOPE-RESOLUTION-02"
+  language: "de"
+
+  depends_on:
+    - "GOV-AUTONOMOUS-TRUST-ROOT-01"
+
+  execution_model:
+    scope: "PROJECT_LOCAL_DYNAMIC"
+    reusable: true
+    project_folder_parameter: "<CURRENT_PROJECT_FOLDER>"
+
+  project_resolution:
+    source: "/AGENTS.md@CURRENT_MAIN"
+    dynamic: true
+    fail_closed: true
+    required:
+      - current_project
+      - current_project_folder
+      - primary_owner
+      - repository_boundary
+      - affected_domains
+      - applicable_controls
+
+  pvc_resolution:
+    source: "CURRENT_MAIN_CANONICAL_PVC_MODEL"
+    invent_missing_pvc: false
+    force_primary_pvc: false
+    allowed_relationships:
+      - primary_pvc
+      - cross_cutting
+      - foreign_execution
+    required_output:
+      relationship: "RESOLVE"
+      pvc_ids: "RESOLVE_FROM_CURRENT_MAIN"
+      owner: "RESOLVE_FROM_CURRENT_MAIN"
+
+  ownership:
+    owner_correct_execution: true
+    foreign_project_execution_supported: true
+    rule: >
+      Erkennt ein Projekt Arbeit, deren Authority oder Implementierung
+      einem anderen Projekt gehört, darf es die Änderung nicht lokal
+      übernehmen. Es erzeugt stattdessen ein owner-korrektes Handover.
+
+  top_layer_evaluation_overlay:
+    policy: "GOV-TOP-LAYER-APPLICATION-01"
+    default_applicability:
+      mode: "ENABLED"
+    purpose: >
+      Für normale Projektfolder beginnt Produktbewertung beim
+      tatsächlich nutzerwirksamen Layer und wird von dort entlang
+      der Wertschöpfungskette korreliert.
+    frontend_role:
+      role: "PRIMARY_PRODUCT_EVALUATION_SURFACE"
+      authority: false
+    frontend_must_not_override:
+      - domain_contracts
+      - scoring_authority
+      - security_controls
+      - data_contracts
+      - compliance_controls
+
+  specialized_authority_exceptions:
+    source: "/AGENTS.md@CURRENT_MAIN"
+    resolution: "DYNAMIC"
+    excluded_from_top_layer_authority:
+      - SEC
+      - QM
+      - FINTECH
+      - COMP_SUPPLYCHAIN
+    SEC:
+      mode: "SECURITY_FOUNDATION_FIRST"
+      evaluation_direction:
+        - Threat
+        - Risk
+        - Trust
+        - Controls
+        - Platform_or_Domain
+        - Capability
+        - User
+      top_layer_may_prioritize_security: false
+      top_layer_may_override_security: false
+    QM:
+      mode: "INDEPENDENT_QUALITY_AUTHORITY"
+      product_layer_may_override_quality_verdict: false
+    FINTECH:
+      mode: "DOMAIN_AND_SCORING_AUTHORITY"
+      frontend_may_define_fintech_truth: false
+      canonical_scoring_contract_required: true
+    COMP_SUPPLYCHAIN:
+      mode: "OBLIGATION_CONTROL_FIRST"
+      product_layer_may_override_compliance: false
+
+  AGENTS_md:
+    classification: "TRUST_ROOT"
+    subject_to_top_layer_governance: false
+
+  invariants:
+    - "Keine PVC wird erfunden."
+    - "Keine Owner-Grenze wird stillschweigend überschritten."
+    - "Frontend ist Integrations- und Beobachtungsebene, keine universelle Authority."
+    - "SEC, QM, FINTECH und COMP_SUPPLYCHAIN behalten ihre spezialisierte Denkrichtung."
