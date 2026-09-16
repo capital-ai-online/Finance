@@ -19,6 +19,7 @@ import { isApplicationSpaPath, stripTrailingSlashPath } from '../middleware/seoU
 
 interface PublicHtmlFiles {
   root: string;
+  universe: string;
   learningPlatform: string;
   impressum: string;
   agb: string;
@@ -38,6 +39,7 @@ function buildPublicHtmlFiles(distPath: string): PublicHtmlFiles {
   const root = path.resolve(rootDir, 'index.html');
   const candidates: PublicHtmlFiles = {
     root,
+    universe: path.resolve(rootDir, 'universe', 'index.html'),
     learningPlatform: path.resolve(rootDir, 'learning-platform', 'index.html'),
     impressum: path.resolve(rootDir, 'impressum', 'index.html'),
     agb: path.resolve(rootDir, 'agb', 'index.html'),
@@ -69,6 +71,8 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
       case '/dashboard':
       case '/media-studio':
         return res.sendFile(files.root);
+      case '/universe':
+        return res.sendFile(existingOrRoot(files.universe));
       case '/learning-platform':
         return res.sendFile(existingOrRoot(files.learningPlatform));
       case '/impressum':
