@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildCanonicalRoadmapProgress,
   calculateRoadmapProgress,
   classifyRoadmapState,
   extractRoadmapItems,
@@ -143,5 +144,21 @@ describe('roadmapProgress', () => {
     expect(result.status).toBe('NOT_PROVEN');
     expect(result.reason).toBe('UNRESOLVED_WORK_ITEM_STATE');
     expect(result.unresolvedItems).toEqual(['GOV-AUTO-01']);
+  });
+
+  it('classifies every canonical current-repository project without inventing a percentage', async () => {
+    const report = await buildCanonicalRoadmapProgress();
+
+    expect(report.projectCount).toBe(12);
+    expect(report.projects).toHaveLength(12);
+    expect(new Set(report.projects.map((project) => project.project)).size).toBe(12);
+    expect(report.projects.every((project) => ['PROVEN', 'NOT_PROVEN'].includes(project.status))).toBe(true);
+    expect(
+      report.projects.every((project) =>
+        project.status === 'PROVEN'
+          ? typeof project.progressPercent === 'number' && Number.isInteger(project.numerator) && Number.isInteger(project.denominator)
+          : project.progressPercent === null,
+      ),
+    ).toBe(true);
   });
 });
