@@ -68,7 +68,7 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
   });
 
   it('keeps Cyan out of generic Social Media branding while preserving semantic data Cyan', () => {
-    expect(tokens.color.brand.primary.value).toBe('#F9BF21');
+    expect(tokens.color.brand.primary.value).toBe('#F5C453');
     expect(tokens.color.brand.cyan.value).toBe(tokens.color.brand.primary.value);
     expect(tokens.color.brand.cyan.deprecated).toBe(true);
     expect(tokens.color.semantic.info.value).toBe('#22D3EE');
@@ -177,7 +177,8 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     expect(dashboard).not.toContain("setSelectedSymbol('US10Y')");
     expect(dashboard).not.toContain('<span>Bonds</span>');
 
-    expect(dashboardNavigation).toContain("type UniverseId = 'equities' | 'forex' | 'crypto' | 'commodity';");
+    expect(dashboardNavigation).toContain("type UniverseId = 'equities' | 'index' | 'forex' | 'crypto' | 'commodity';");
+    expect(dashboardNavigation).toContain("label: 'Indizes'");
     expect(dashboardNavigation).toContain("label: 'Krypto'");
     expect(dashboardNavigation).not.toContain("category: 'bond'");
     expect(dashboardNavigation).not.toContain("label: 'Bonds'");
