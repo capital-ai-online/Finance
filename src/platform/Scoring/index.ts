@@ -4,6 +4,8 @@ export * from './ScoringExecutorAdapters';
 export * from './ScoringModelRegistry';
 export * from './ScoringDispatcher';
 export * from './scoringFingerprint';
+export * from './ValidatedFinancialFeatureContract';
+export * from './FintechScoringTraceLineage';
 export * from './UniverseSla';
 export * from './CryptoResearchModelContracts';
 export * from './CryptoCategoryResearchScoring';
