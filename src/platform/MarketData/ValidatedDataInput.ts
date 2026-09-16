@@ -23,6 +23,7 @@ import {
 import {
   validateProviderHistoryInput,
   validateProviderSnapshotInput,
+  type ProviderHistoryValueSemantics,
 } from './providerInputValidation';
 import type {
   CanonicalMarketDataHistory,
@@ -41,6 +42,8 @@ export type ValidatedDataStatus =
   | 'STALE'
   | 'MISSING'
   | 'UNKNOWN';
+
+export type ValidatedHistoryValueSemantics = ProviderHistoryValueSemantics;
 
 export interface ValidatedDataObservation {
   readonly field: string;
@@ -79,6 +82,7 @@ export interface ValidatedHistoryInput {
   readonly providerFeed: string | null;
   readonly evidenceRef: string | null;
   readonly receivedAt: string;
+  readonly valueSemantics: ValidatedHistoryValueSemantics;
   readonly points: readonly { readonly timestamp: string; readonly close: number }[];
   readonly status: ValidatedDataStatus;
   readonly provenanceComplete: boolean;
@@ -143,6 +147,12 @@ function applyFreshnessAndProvenance(
   if (freshnessState === 'STALE' && (status === 'PASS' || status === 'PARTIAL')) return 'STALE';
   if (freshnessState === 'UNKNOWN' && (status === 'PASS' || status === 'PARTIAL')) return 'UNKNOWN';
   return status;
+}
+
+function historyPointValueIsValid(value: number, semantics: ValidatedHistoryValueSemantics): boolean {
+  if (!Number.isFinite(value)) return false;
+  if (semantics === 'SIGNED_VALUE') return true;
+  return semantics === 'POSITIVE_PRICE' && value > 0;
 }
 
 export function buildSnapshotRequestForUniversalAsset(
@@ -314,11 +324,15 @@ export function buildValidatedDataInputFromSnapshot(
 export function buildValidatedHistoryInput(
   asset: UniversalAssetIdentity,
   history: CanonicalMarketDataHistory,
+  options: { readonly valueSemantics?: ValidatedHistoryValueSemantics } = {},
 ): ValidatedHistoryInput {
   assertUniversalAssetIdentity(asset);
+  const valueSemantics = options.valueSemantics ?? 'POSITIVE_PRICE';
   const identityMatches = historyMatchesAsset(asset, history);
   const pointsValid = history.points.length > 0
-    && history.points.every(point => Number.isFinite(point.close) && point.close > 0 && Number.isFinite(Date.parse(point.timestamp)));
+    && history.points.every(
+      point => historyPointValueIsValid(point.close, valueSemantics) && Number.isFinite(Date.parse(point.timestamp)),
+    );
   const observedAt = latestHistoryObservedAt(history.points);
   const inputGate = validateProviderHistoryInput({
     providerId: history.provider,
@@ -328,6 +342,7 @@ export function buildValidatedHistoryInput(
     correlationId: history.correlationId,
     evidenceRef: history.evidenceId,
     points: history.points,
+    valueSemantics,
   });
   const lineage = evaluateProvenanceLineage({
     contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
@@ -369,6 +384,7 @@ export function buildValidatedHistoryInput(
     providerFeed: history.providerFeed,
     evidenceRef: history.evidenceId,
     receivedAt: history.receivedAt,
+    valueSemantics,
     points: history.points,
     status,
     provenanceComplete,
