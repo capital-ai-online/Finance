@@ -5,7 +5,7 @@
 **Primary PVC / Owner:** `PVC-05 — Platform Director / CAPITAL-AI-GOV`  
 **Priority:** `5/5 — strategic`  
 **State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING`  
-**Baseline:** `main@afa259fc786479386a6ea0e165c3d8dc3363aae8`  
+**Baseline:** `main@89924f0b913198b8af39f70cd9666ad7980e20cb`  
 **Authority:** `/AGENTS.md@current-main`, `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`, `CTRL-GOV-OPS-FOREIGN-EXEC-001`
 
 ## Objective
@@ -39,6 +39,15 @@ This projection is derived evidence only. It does not write Roadmap state and do
   - proves terminal classification and non-terminal precedence;
   - proves unknown/conflicting states produce `NOT_PROVEN`;
   - integrates against the repository mapping and requires exactly the current 12 canonical projects to be classified.
+
+## Current-main resynchronization
+
+- predecessor PR `#982`: `MERGED`;
+- resynchronization baseline: `main@89924f0b913198b8af39f70cd9666ad7980e20cb`;
+- open Pull Requests at resynchronization: `0`;
+- canonical project mapping still contains exactly 12 projects;
+- the three 01A paths do not exist on the resynchronization baseline, so the merge snapshot introduces no same-file overwrite of current-main payload;
+- exact reporter/test execution remains `NOT RUN` until an execution host or hosted PR CI runs it; `NOT RUN` is not `PASS`.
 
 ## Exit gate
 
