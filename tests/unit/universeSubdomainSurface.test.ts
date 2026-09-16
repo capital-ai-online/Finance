@@ -6,8 +6,8 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const app = read('src/app/App.tsx');
-const pathBoundary = read('src/features/universe/ui/UniversePathBoundary.tsx');
-const portal = read('src/features/universe/ui/UniversePortal.tsx');
+const pathBoundary = read('src/app/universe/ui/UniversePathBoundary.tsx');
+const portal = read('src/app/universe/ui/UniversePortal.tsx');
 const seoRoutes = read('src/lib/routeSeo.ts');
 const serverRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
