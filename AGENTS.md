@@ -210,17 +210,21 @@ The separate copyable Owner-response requirement introduced by PR #772 remains *
 
 The queue is Roadmap-first. If the current Roadmap provides no immediately executable item because it is blocked, dependency-held or terminal, use the highest-priority evidence-backed workaround/remediation recommendations. At most two items are shown, each with an objective exit gate. Generic merge/approval/hosted-CI/test instructions remain gate/evidence status and do not replace project continuation work.
 
-Use:
+The `NÄCHSTE SCHRITTE` continuation queue is a **repository- and web-application-wide chat presentation invariant**. Whenever it is shown in any CAPITAL-AI project chat, it MUST be rendered inside a fenced plaintext `text` code block and MUST use semantic emoji in the heading, each numbered step and each exit-gate label. Markdown tables, Writing Blocks, cards or other rich UI containers MUST NOT replace this copyable plaintext block. Within this specific block the emoji markers are mandatory scanning cues, while the accompanying text remains the authoritative meaning.
+
+Use exactly this presentation shape:
 
 ```text
-NÄCHSTE SCHRITTE
-1. <highest-priority Roadmap item or evidence-backed workaround>
-   Exit Gate: <objective completion condition>
-2. <optional second Roadmap item or workaround>
-   Exit Gate: <objective completion condition>
+🧭 NÄCHSTE SCHRITTE
+
+1. 🔹 <highest-priority Roadmap item or evidence-backed workaround>
+   🎯 Exit Gate: <objective completion condition>
+
+2. 🔹 <optional second Roadmap item or workaround>
+   🎯 Exit Gate: <objective completion condition>
 ```
 
-When no immediately actionable Roadmap/workaround item remains, the same fenced block states `Keine weiteren unmittelbar umsetzbaren Roadmap-/Workaround-Schritte identifiziert.`.
+When no immediately actionable Roadmap/workaround item remains, the same fenced plaintext block uses the `🧭 NÄCHSTE SCHRITTE` heading and states `✅ Keine weiteren unmittelbar umsetzbaren Roadmap-/Workaround-Schritte identifiziert.`.
 
 When a protected continuation requires an exact Human/Owner response, it may be rendered in its own neutral copyable `text` block. Pure Human/Owner approval or confirmation MUST NOT be marked `⚙️🤓 MANUELL`.
 
