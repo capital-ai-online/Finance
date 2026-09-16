@@ -24,6 +24,7 @@ import {
   Plus
 } from 'lucide-react';
 import { RAW_MATERIALS_DATABASE } from '../../../config/rawMaterialsConfig';
+import { authFetch } from '../../../lib/authFetch';
 import { AnalysisPayload, RawMaterialInput } from '../../../types/rawMaterials';
 
 interface RawMaterialListItem {
@@ -148,12 +149,10 @@ export function buildRawMaterialFallbackList() {
 }
 
 export function RawMaterialsDashboard() {
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [materialsList, setMaterialsList] = useState<RawMaterialListItem[]>([]);
 
-  // Active Analysis Payload
   const [selectedMaterial, setSelectedMaterial] = useState<string>('Kupfer');
   const [payload, setPayload] = useState<RawMaterialResearchPayload | null>(null);
   const [loading, setLoading] = useState(false);
@@ -165,7 +164,6 @@ export function RawMaterialsDashboard() {
   // Terminkurven werden nur mit verifizierten Laufzeitdaten dargestellt.
   // Der bisherige symbolbasierte Generator wurde entfernt, weil er keine Marktevidence war.
 
-  // Manual Sandbox Tuning State
   const [sandboxMode, setSandboxMode] = useState(false);
   const [sandboxInput, setSandboxInput] = useState<Partial<RawMaterialInput>>({
     market_liquidity: 75,
@@ -188,12 +186,10 @@ export function RawMaterialsDashboard() {
     industrial_importance: 90
   });
 
-  // Load the initial list of materials from our API or static registry
   useEffect(() => {
     fetchMaterials();
   }, []);
 
-  // Whenever selected material changes, run the orchestrated analysis
   useEffect(() => {
     if (selectedMaterial && !sandboxMode) {
       triggerAnalysis(selectedMaterial);
@@ -213,7 +209,7 @@ export function RawMaterialsDashboard() {
       setCanonicalLoading(true);
       setCanonicalError(null);
       try {
-        const res = await fetch(`/api/raw-materials/verified-score/${encodeURIComponent(selected.symbol)}`, {
+        const res = await authFetch(`/api/raw-materials/verified-score/${encodeURIComponent(selected.symbol)}`, {
           signal: controller.signal,
         });
         const body: unknown = await res.json();
@@ -342,7 +338,6 @@ export function RawMaterialsDashboard() {
     }
   };
 
-  // Filter materials based on search query
   const filteredMaterials = materialsList.filter(m => 
     m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.category_sub.toLowerCase().includes(searchQuery.toLowerCase())
@@ -367,7 +362,6 @@ export function RawMaterialsDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Module Title Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-neutral-950 to-black p-6 rounded-2xl border border-white/10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-aif-gold-DEFAULT/5 rounded-full filter blur-[80px] -z-10" />
         <div>
@@ -387,7 +381,6 @@ export function RawMaterialsDashboard() {
           </p>
         </div>
 
-        {/* Worker Threads Stats Card */}
         <div className="bg-white/5 border border-white/10 px-5 py-3 rounded-xl flex items-center gap-4">
           <div className="p-2.5 rounded-lg bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20">
             <Cpu className="text-aif-gold-DEFAULT animate-spin" size={20} style={{ animationDuration: '6s' }} />
@@ -399,7 +392,6 @@ export function RawMaterialsDashboard() {
         </div>
       </div>
 
-      {/* Autocomplete Search Bar & Hotkeys */}
       <div className="relative">
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
           <div className="relative flex-1">
@@ -417,8 +409,6 @@ export function RawMaterialsDashboard() {
               onFocus={() => setShowDropdown(true)}
               className="w-full bg-black/60 border border-white/15 focus:border-aif-gold-DEFAULT rounded-xl py-3.5 pl-12 pr-4 text-sm text-white placeholder-white/30 tracking-wide font-sans focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-aif-gold-DEFAULT/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
             />
-            
-            {/* Real Autocomplete Dropdown */}
             <AnimatePresence>
               {showDropdown && searchQuery && (
                 <motion.div
@@ -463,7 +453,6 @@ export function RawMaterialsDashboard() {
             </AnimatePresence>
           </div>
 
-          {/* Quick Select Buttons */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             {['Lithium', 'Kupfer', 'Gold', 'Erdgas'].map((name) => (
               <button
@@ -482,7 +471,6 @@ export function RawMaterialsDashboard() {
         </div>
       </div>
 
-      {/* Canonical market-evidence score — separate from all orchestrator research output. */}
       <section className="ui-panel space-y-5" aria-labelledby="canonical-commodity-score-title">
         <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
@@ -575,10 +563,7 @@ export function RawMaterialsDashboard() {
         )}
       </section>
 
-      {/* Main Scoring Cockpit Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Input Panel / Tuning Sandbox */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-gradient-to-br from-neutral-950 to-black rounded-2xl border border-white/10 p-6 space-y-5 relative">
             <div className="flex justify-between items-center border-b border-white/10 pb-4">
@@ -611,7 +596,6 @@ export function RawMaterialsDashboard() {
                 </div>
 
                 <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 scrollbar-thin">
-                  {/* Section: Market */}
                   <div>
                     <h4 className="text-[10px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider mb-2">1. Markt & Liquidität</h4>
                     <div className="space-y-2">
@@ -627,7 +611,6 @@ export function RawMaterialsDashboard() {
                     </div>
                   </div>
 
-                  {/* Section: Fundamentals */}
                   <div className="pt-2 border-t border-white/5">
                     <h4 className="text-[10px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider mb-2">2. Geologie & Physische Daten</h4>
                     <div className="space-y-2">
@@ -665,7 +648,6 @@ export function RawMaterialsDashboard() {
                     </div>
                   </div>
 
-                  {/* Section: Risks */}
                   <div className="pt-2 border-t border-white/5">
                     <h4 className="text-[10px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider mb-2">3. Risiken & ESG (100 = Maximales Risiko)</h4>
                     <div className="space-y-2">
@@ -703,7 +685,6 @@ export function RawMaterialsDashboard() {
                     </div>
                   </div>
 
-                  {/* Section: Strategic */}
                   <div className="pt-2 border-t border-white/5">
                     <h4 className="text-[10px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider mb-2">4. Strategische Relevanz</h4>
                     <div className="space-y-2">
@@ -740,7 +721,6 @@ export function RawMaterialsDashboard() {
                 </button>
               </div>
             ) : (
-              // Agent / Predefined Mode Summary Details
               <div className="space-y-4 text-xs">
                 <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1">
                   <span className="text-[10px] font-mono text-white/40 uppercase">Rohstoffname</span>
@@ -784,7 +764,6 @@ export function RawMaterialsDashboard() {
           </div>
         </div>
 
-        {/* Middle & Right Columns: Interactive Score Display & Bento Grid */}
         <div className="lg:col-span-2 space-y-6">
           {loading ? (
             <div className="bg-black/40 border border-white/10 rounded-2xl p-24 text-center flex flex-col items-center justify-center gap-4 backdrop-blur-md">
@@ -805,11 +784,7 @@ export function RawMaterialsDashboard() {
             </div>
           ) : payload ? (
             <div className="space-y-6">
-              
-              {/* Score Header Indicator Widget */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
-                {/* Score Gauge Block */}
                 <div className={`p-6 rounded-2xl border ${getScoreBg(payload.scores.final_score)} md:col-span-1 flex flex-col items-center justify-center text-center relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
                    <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Struktureller Research-Score · nicht kanonisch</span>
@@ -827,7 +802,6 @@ export function RawMaterialsDashboard() {
                    <span className="text-[10px] font-mono text-white/50 mt-2">Legacy Research-Modell {payload.metadata.scoring_version} · scoreEligible=false</span>
                 </div>
 
-                {/* Score Summary Metrics */}
                 <div className="p-6 rounded-2xl bg-gradient-to-b from-neutral-950 to-black border border-white/10 md:col-span-2 grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-[10px] font-mono text-white/40 uppercase">Sicherheitskonfidenz</span>
@@ -864,10 +838,7 @@ export function RawMaterialsDashboard() {
                 </div>
               </div>
 
-              {/* Bento Grid: 5 Dimension Subscores */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* 1. Markt & Liquidität */}
                 <div className="p-5 rounded-xl bg-black/60 border border-white/10 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider">1. Markt & Liquidität</span>
@@ -882,7 +853,6 @@ export function RawMaterialsDashboard() {
                   </div>
                 </div>
 
-                {/* 2. Fundamentaldaten */}
                 <div className="p-5 rounded-xl bg-black/60 border border-white/10 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider">2. Geologie & Fundamente</span>
@@ -897,7 +867,6 @@ export function RawMaterialsDashboard() {
                   </div>
                 </div>
 
-                {/* 3. Förderbarkeit & Prozessierung */}
                 <div className="p-5 rounded-xl bg-black/60 border border-white/10 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider">3. Gewinnung & Komplexität</span>
@@ -912,7 +881,6 @@ export function RawMaterialsDashboard() {
                   </div>
                 </div>
 
-                {/* 4. Risiko & Resilienz */}
                 <div className="p-5 rounded-xl bg-black/60 border border-white/10 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider">4. Risiko & Resilienz</span>
@@ -927,7 +895,6 @@ export function RawMaterialsDashboard() {
                   </div>
                 </div>
 
-                {/* 5. Strategische Bedeutung */}
                 <div className="p-5 rounded-xl bg-black/60 border border-white/10 space-y-3 md:col-span-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider">5. Strategische Relevanz</span>
@@ -942,10 +909,8 @@ export function RawMaterialsDashboard() {
                     <div>Substitutions-Hürde: {100 - payload.inputs.substitution_potential}%</div>
                   </div>
                 </div>
-
               </div>
 
-              {/* Forward curves require verified contract-level market data. */}
               <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-start gap-3">
                 <AlertTriangle className="text-amber-300 shrink-0 mt-0.5" size={18} />
                 <div>
@@ -956,7 +921,6 @@ export function RawMaterialsDashboard() {
                 </div>
               </div>
 
-              {/* Traceable Reasoning Logs (Agent Reasoning outputs) */}
               <div className="p-5 rounded-2xl bg-[#080808] border border-white/10 space-y-4">
                 <div className="flex items-center gap-2 border-b border-white/10 pb-3">
                   <Cpu className="text-aif-gold-DEFAULT animate-pulse" size={16} />
@@ -974,14 +938,11 @@ export function RawMaterialsDashboard() {
                   ))}
                 </div>
               </div>
-
             </div>
           ) : null}
-
         </div>
       </div>
 
-      {/* Database Registry Catalog Overview */}
       <div className="bg-gradient-to-br from-neutral-950 to-black rounded-2xl border border-white/10 p-6 space-y-4">
         <div className="flex justify-between items-center border-b border-white/10 pb-4">
           <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider flex items-center gap-2">
