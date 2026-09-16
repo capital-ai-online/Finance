@@ -1,9 +1,8 @@
 /**
  * SC-5 Phase D — CoinAPI crypto adapter for MarketDataGateway.
- * Registers CoinAPI as a gateway-hardened (matrix RL/CB/cache) crypto snapshot source so a later,
- * explicitly Owner-gated step can form a multi-provider execution quorum. Does not itself change
- * executionPriceEligible, scoring formulas or eligibility thresholds, and is not yet consumed by
- * cryptoQuoteEvidence (which still pins allowedProviderIds to ['coingecko']).
+ * Registers CoinAPI as a gateway-hardened (matrix RL/CB/cache) crypto snapshot source. Provider
+ * dialect fields are normalized fail-closed before they reach the canonical gateway contract.
+ * This adapter does not change executionPriceEligible, scoring formulas or eligibility thresholds.
  */
 
 import {
@@ -64,10 +63,11 @@ export class CoinAPIMarketDataProvider implements MarketDataProvider {
       const price = Number(data?.rate);
       if (!Number.isFinite(price) || price <= 0) throw new Error('CoinAPI returned no valid USD rate.');
 
-      const observedAt =
-        typeof data?.time === 'string' && Number.isFinite(Date.parse(data.time))
-          ? new Date(data.time).toISOString()
-          : retrievedAt;
+      const observedMs = typeof data?.time === 'string' ? Date.parse(data.time) : Number.NaN;
+      if (!Number.isFinite(observedMs)) {
+        throw new Error('CoinAPI returned no valid source timestamp.');
+      }
+      const observedAt = new Date(observedMs).toISOString();
 
       return {
         contractVersion: MARKET_DATA_CONTRACT_VERSION,
@@ -79,7 +79,7 @@ export class CoinAPIMarketDataProvider implements MarketDataProvider {
         sourceTimestamp: observedAt,
         ingestedAt: retrievedAt,
         receivedAt: retrievedAt,
-        freshnessMs: Math.max(0, nowMs - Date.parse(observedAt)),
+        freshnessMs: Math.max(0, nowMs - observedMs),
         qualityState: 'LIVE',
         isRealtime: true,
         isDelayed: false,

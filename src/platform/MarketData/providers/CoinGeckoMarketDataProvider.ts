@@ -108,12 +108,14 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
           : finitePositive(maxSupplyRaw) ?? null;
       const totalSupply = finitePositive(md?.total_supply) ?? null;
 
-      const observedCandidate =
-        typeof md?.last_updated === 'string' ? Date.parse(md.last_updated) : Number.NaN;
-      const observedAt = Number.isFinite(observedCandidate)
-        ? new Date(observedCandidate).toISOString()
-        : retrievedAt;
-      const freshnessMs = Math.max(0, nowMs - Date.parse(observedAt));
+      const observedMs = typeof md?.last_updated === 'string'
+        ? Date.parse(md.last_updated)
+        : Number.NaN;
+      if (!Number.isFinite(observedMs)) {
+        throw new Error('CoinGecko returned no valid source timestamp.');
+      }
+      const observedAt = new Date(observedMs).toISOString();
+      const freshnessMs = Math.max(0, nowMs - observedMs);
 
       return {
         contractVersion: MARKET_DATA_CONTRACT_VERSION,

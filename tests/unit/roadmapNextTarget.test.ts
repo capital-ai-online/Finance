@@ -336,7 +336,7 @@ describe('roadmapNextTarget', () => {
     expect(result.blockers).toEqual([{ id: 'SHARED-AUTO-01', reason: 'DUPLICATE_WORK_ITEM_ID' }]);
   });
 
-  it('selects DATA-09 on the current twelve-project snapshot after DATA work-item identities are unique', async () => {
+  it('keeps DATA-09 selected on the current twelve-project snapshot while bounded ingress remediation is validation-pending', async () => {
     const result = await buildCanonicalRoadmapNextTarget();
 
     expect(result.projectCount).toBe(12);
@@ -350,6 +350,7 @@ describe('roadmapNextTarget', () => {
       workItemId: 'DATA-09',
       state: 'READY / ACTIVE BACKLOG',
     });
+    expect(result.target?.workItemId).not.toBe('DATA-09-TS-01');
     expect(result.blockers).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
