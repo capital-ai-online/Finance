@@ -1,173 +1,91 @@
 name: Selective Copilot Code Review
 run-name: >-
-  CI #${{ github.event.workflow_run.run_number }} – selektive Copilot-Review-Entscheidung
+  PR #${{ inputs.pr_number }} – manuelles Copilot Code Review
 
-# Privileged post-CI trigger. It never checks out or executes PR-controlled code;
-# the planner is read-only and the mutating review request lives in a separate job.
-on: # zizmor: ignore[dangerous-triggers]
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+# OPS-02-CI-01 cost invariant:
+# Automatic post-CI Copilot fan-out is intentionally retired. Copilot Code
+# Review is optional provider work and must not allocate a hosted planning
+# runner for every successful PR CI merely to discover review_mode=none.
+# A Human may explicitly dispatch this workflow for one concrete open PR.
+# No repository checkout, candidate execution, API key, provider permission or
+# license mutation occurs here.
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Open Finance PR number targeting main'
+        required: true
+        type: number
 
 permissions: {}
 
 concurrency:
-  group: selective-copilot-review-${{ github.event.workflow_run.head_sha }}
+  group: selective-copilot-review-${{ inputs.pr_number }}
   cancel-in-progress: true
 
 jobs:
-  plan:
-    name: Trusted-base Review-Plan
-    if: >-
-      github.event.workflow_run.repository.full_name == github.repository &&
-      github.event.workflow_run.head_repository.full_name == github.repository &&
-      github.event.workflow_run.path == '.github/workflows/ci.yml' &&
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      skip: ${{ steps.pr.outputs.skip }}
-      pr_number: ${{ steps.pr.outputs.pr_number }}
-      head_sha: ${{ steps.pr.outputs.head_sha }}
-      review_mode: ${{ steps.validation_plan.outputs.automated_code_review_mode }}
-    steps:
-      - name: Exakten offenen PR und File Changes read-only auflösen
-        id: pr
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const headSha = context.payload.workflow_run.head_sha;
-
-            let candidates = context.payload.workflow_run.pull_requests ?? [];
-            if (candidates.length === 0) {
-              candidates = await github.paginate(
-                github.rest.repos.listPullRequestsAssociatedWithCommit,
-                { owner, repo, commit_sha: headSha, per_page: 100 },
-              );
-            }
-
-            const open = [];
-            for (const candidate of candidates) {
-              const number = candidate.number;
-              if (!number) continue;
-              const { data: pr } = await github.rest.pulls.get({
-                owner,
-                repo,
-                pull_number: number,
-              });
-              if (pr.state === 'open' && pr.base.ref === 'main' && pr.head.sha === headSha) {
-                open.push(pr);
-              }
-            }
-
-            if (open.length !== 1) {
-              core.notice(`Selektive Copilot-Review übersprungen: exakt ein offener PR für head=${headSha} erwartet, gefunden=${open.length}.`);
-              core.setOutput('skip', 'true');
-              return;
-            }
-
-            const pr = open[0];
-            const changed = await github.paginate(
-              github.rest.pulls.listFiles,
-              { owner, repo, pull_number: pr.number, per_page: 100 },
-            );
-            const files = changed.map((entry) => entry.filename);
-
-            // JSON is authoritative for the JSON-capable planner. The legacy
-            // shadow keeps the first migration PR compatible with its trusted
-            // pre-JSON base planner and is fail-closed for delimiter-bearing names.
-            if (files.some((file) => /[\r\n]/.test(file))) {
-              throw new Error('Changed-file name contains CR/LF; legacy trusted-base planner compatibility cannot encode it safely.');
-            }
-
-            core.setOutput('skip', 'false');
-            core.setOutput('pr_number', String(pr.number));
-            core.setOutput('base_sha', pr.base.sha);
-            core.setOutput('head_sha', pr.head.sha);
-            core.setOutput('changed_files_json', JSON.stringify(files));
-            core.setOutput('changed_files_legacy', files.join('\n'));
-
-      - name: Trusted Planner aus exaktem PR-Base-Snapshot auschecken
-        if: steps.pr.outputs.skip != 'true'
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        with:
-          ref: ${{ steps.pr.outputs.base_sha }}
-          path: policy
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Node.js für den kanonischen Planner einrichten
-        if: steps.pr.outputs.skip != 'true'
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: '24.18.0'
-
-      - name: Diff-basierten Review-Plan aus trusted base bestimmen
-        id: validation_plan
-        if: steps.pr.outputs.skip != 'true'
-        working-directory: policy
-        env:
-          EVENT_NAME: pull_request
-          CHANGED_FILES_JSON: ${{ steps.pr.outputs.changed_files_json }}
-          CHANGED_FILES: ${{ steps.pr.outputs.changed_files_legacy }}
-        run: node scripts/pr/planPrValidation.mjs
-
-      - name: Kein automatisiertes Code Review für diesen Scope
-        if: steps.pr.outputs.skip != 'true' && steps.validation_plan.outputs.automated_code_review_mode == 'none'
-        run: echo "automated_code_review_mode=none — kein Copilot-Review-Request für Docs/Test-only Scope."
-
   request-review:
-    name: Copilot Review anfordern
-    needs: [plan]
-    if: >-
-      needs.plan.result == 'success' &&
-      needs.plan.outputs.skip != 'true' &&
-      needs.plan.outputs.review_mode != 'none'
+    name: Copilot Review manuell anfordern
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       pull-requests: write
     steps:
-      - name: Copilot-Review nur bei fehlender äquivalenter Review anfordern
+      - name: Exakten offenen PR validieren und Copilot-Review dedupliziert anfordern
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
-          PR_NUMBER: ${{ needs.plan.outputs.pr_number }}
-          HEAD_SHA: ${{ needs.plan.outputs.head_sha }}
-          REVIEW_MODE: ${{ needs.plan.outputs.review_mode }}
+          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const pullNumber = Number(process.env.PR_NUMBER);
-            const headSha = process.env.HEAD_SHA;
-            const mode = process.env.REVIEW_MODE;
-            const bot = 'copilot-pull-request-reviewer[bot]';
+            if (!Number.isSafeInteger(pullNumber) || pullNumber <= 0) {
+              core.setFailed(`Ungueltige PR-Nummer: ${process.env.PR_NUMBER}`);
+              return;
+            }
 
-            const reviews = await github.paginate(
-              github.rest.pulls.listReviews,
-              { owner, repo, pull_number: pullNumber, per_page: 100 },
-            );
-            const requested = await github.rest.pulls.listRequestedReviewers({
+            const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
               pull_number: pullNumber,
             });
 
-            const copilotReviews = reviews.filter((review) => review.user?.login === bot);
-            const copilotPending = (requested.data.users ?? []).some((user) => user.login === bot);
+            if (pr.state !== 'open') {
+              core.setFailed(`PR #${pullNumber} ist nicht offen.`);
+              return;
+            }
+            if (pr.base.ref !== 'main') {
+              core.setFailed(`PR #${pullNumber} zielt auf ${pr.base.ref} statt main.`);
+              return;
+            }
+            if (pr.head.repo?.full_name !== context.payload.repository.full_name) {
+              core.setFailed(`PR #${pullNumber} stammt nicht aus demselben Repository.`);
+              return;
+            }
 
-            const alreadyCovered = mode === 'full'
-              ? copilotPending || copilotReviews.some((review) => review.commit_id === headSha)
-              : copilotPending || copilotReviews.length > 0;
+            const bot = 'copilot-pull-request-reviewer[bot]';
+            const [reviews, requested] = await Promise.all([
+              github.paginate(
+                github.rest.pulls.listReviews,
+                { owner, repo, pull_number: pullNumber, per_page: 100 },
+              ),
+              github.rest.pulls.listRequestedReviewers({
+                owner,
+                repo,
+                pull_number: pullNumber,
+              }),
+            ]);
 
-            if (alreadyCovered) {
-              core.notice(`Copilot-Review nicht erneut angefordert: mode=${mode}, PR #${pullNumber}, head=${headSha}.`);
+            const alreadyReviewed = reviews.some(
+              (review) => review.user?.login === bot && review.commit_id === pr.head.sha,
+            );
+            const alreadyPending = (requested.data.users ?? []).some(
+              (user) => user.login === bot,
+            );
+
+            if (alreadyReviewed || alreadyPending) {
+              core.notice(`Copilot-Review nicht erneut angefordert: PR #${pullNumber}, head=${pr.head.sha}.`);
               return;
             }
 
@@ -178,10 +96,10 @@ jobs:
                 pull_number: pullNumber,
                 reviewers: [bot],
               });
-              core.notice(`Copilot-Code-Review angefordert: mode=${mode}, PR #${pullNumber}, head=${headSha}.`);
+              core.notice(`Copilot-Code-Review manuell angefordert: PR #${pullNumber}, head=${pr.head.sha}.`);
             } catch (error) {
               if (error.status === 403 || error.status === 404 || error.status === 422) {
-                core.warning(`Copilot-Code-Review ist auf dem aktuellen Provider-/Lizenzzustand nicht anforderbar; keine Review-Evidence wird behauptet: ${error.message}`);
+                core.warning(`Copilot-Code-Review ist im aktuellen Provider-/Lizenzzustand nicht anforderbar; keine Review-Evidence wird behauptet: ${error.message}`);
                 return;
               }
               throw error;
