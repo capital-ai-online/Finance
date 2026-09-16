@@ -26,9 +26,6 @@ const RankingBoard = lazy(() =>
     default: module.RankingBoard,
   })),
 );
-const BuffetValueCheck = lazy(() =>
-  import('../../features/stocks/ui').then((module) => ({ default: module.BuffetValueCheck })),
-);
 const MarketScreener = lazy(() =>
   import('../../features/screening/ui').then((module) => ({ default: module.MarketScreener })),
 );
@@ -67,6 +64,8 @@ interface ToolGroup {
   tools: ToolDefinition[];
 }
 
+const PUBLIC_FIXED_SYMBOL = 'BTC' as const;
+
 const TOOL_GROUPS: ToolGroup[] = [
   {
     label: 'Bewertung & Scoring',
@@ -74,7 +73,7 @@ const TOOL_GROUPS: ToolGroup[] = [
       {
         id: 'enterprise-scorer',
         label: 'Enterprise Scorer',
-        description: 'Kanonisches Crypto-Scoring mit Evidence- und Market-Data-Projektion.',
+        description: 'Kanonisches Crypto-Scoring mit Evidence- und Market-Data-Projektion. Auf der öffentlichen Landingpage bleibt die Asset-Auswahl fest auf BTC.',
         availability: 'public',
         icon: Gauge,
       },
@@ -88,8 +87,8 @@ const TOOL_GROUPS: ToolGroup[] = [
       {
         id: 'buffett-value',
         label: 'Buffett Value Check',
-        description: 'Graham-/DCF-Bewertung; Zugriff wird ausschließlich serverseitig autorisiert.',
-        availability: 'server-gated',
+        description: 'Aktien-only Graham-/DCF-Bewertung. Sie bleibt aus der BTC-fixierten Public-Workbench heraus und wird im Aktien-Universum angeboten.',
+        availability: 'login-required',
         icon: Percent,
       },
       {
@@ -175,14 +174,10 @@ const TOOL_BY_ID = new Map(
 
 function availabilityLabel(availability: ToolAvailability): string {
   switch (availability) {
-    case 'public':
-      return 'Öffentlich';
-    case 'server-gated':
-      return 'Server-Gate';
-    case 'login-required':
-      return 'Login';
-    case 'disabled':
-      return 'Deaktiviert';
+    case 'public': return 'Öffentlich';
+    case 'server-gated': return 'Server-Gate';
+    case 'login-required': return 'Login';
+    case 'disabled': return 'Deaktiviert';
   }
 }
 
@@ -192,9 +187,7 @@ function WorkbenchLoadingState() {
       <div className="max-w-md space-y-3">
         <div className="mx-auto h-8 w-8 animate-pulse rounded-full border border-brand-primary/40 bg-brand-primary/10" />
         <p className="text-sm font-bold text-text-primary">Bewertungstool wird geladen</p>
-        <p className="text-xs leading-relaxed text-text-secondary">
-          Nur das ausgewählte Tool wird nachgeladen. Die Landingpage selbst bleibt vom jeweiligen Analyse-Bundle getrennt.
-        </p>
+        <p className="text-xs leading-relaxed text-text-secondary">Nur das ausgewählte Tool wird nachgeladen. Die Landing-Shell bleibt von weiteren Analyse-Bundles getrennt.</p>
       </div>
     </div>
   );
@@ -206,9 +199,7 @@ class PublicToolErrorBoundary extends React.Component<
 > {
   state = { hasError: false };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
+  static getDerivedStateFromError() { return { hasError: true }; }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('Public analysis tool failed to render:', error, info);
@@ -220,13 +211,10 @@ class PublicToolErrorBoundary extends React.Component<
         <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-status-reject/30 bg-status-reject/5 px-6 text-center">
           <AlertTriangle size={22} className="text-status-reject" />
           <p className="text-sm font-black text-text-primary">Dieses Bewertungstool konnte nicht gestartet werden.</p>
-          <p className="max-w-xl text-xs leading-relaxed text-text-secondary">
-            Das Sideboard und die übrige Landingpage bleiben verfügbar. Es werden keine Ersatzwerte oder synthetischen Scores erzeugt.
-          </p>
+          <p className="max-w-xl text-xs leading-relaxed text-text-secondary">Das Sideboard und die übrige Landingpage bleiben verfügbar. Es werden keine Ersatzwerte oder synthetischen Scores erzeugt.</p>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
@@ -235,20 +223,13 @@ function ProtectedToolNotice({ tool }: { tool: ToolDefinition }) {
   const disabled = tool.availability === 'disabled';
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface/30 px-6 text-center">
-      {disabled ? (
-        <AlertTriangle size={24} className="text-status-warning" />
-      ) : (
-        <LockKeyhole size={24} className="text-brand-primary" />
-      )}
+      {disabled ? <AlertTriangle size={24} className="text-status-warning" /> : <LockKeyhole size={24} className="text-brand-primary" />}
       <div className="max-w-2xl space-y-2">
         <h3 className="text-lg font-black text-text-primary">{tool.label}</h3>
         <p className="text-sm leading-relaxed text-text-secondary">{tool.description}</p>
       </div>
       {!disabled && (
-        <a
-          href="/login"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-primary px-5 py-2.5 text-sm font-black text-background transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-        >
+        <a href="/login" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-primary px-5 py-2.5 text-sm font-black text-background transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
           Anmelden und Tool öffnen
         </a>
       )}
@@ -258,10 +239,7 @@ function ProtectedToolNotice({ tool }: { tool: ToolDefinition }) {
 
 export function PublicAnalysisWorkbench() {
   const [activeTool, setActiveTool] = useState<PublicToolId>('enterprise-scorer');
-  // Mobile recovery: the historical cockpit exposed the tool navigation immediately.
-  // Keep it expanded on first render so touch users never receive a lone, inert-looking label.
-  const [sideboardOpen, setSideboardOpen] = useState(true);
-  const [selectedSymbol, setSelectedSymbol] = useState('BTC');
+  const [sideboardExpanded, setSideboardExpanded] = useState(false);
   const [timeframe, setTimeframe] = useState('1 tag');
 
   const activeDefinition = TOOL_BY_ID.get(activeTool) ?? TOOL_BY_ID.get('enterprise-scorer')!;
@@ -271,34 +249,18 @@ export function PublicAnalysisWorkbench() {
       case 'enterprise-scorer':
         return (
           <PublicEnterpriseScorer
-            selectedSymbol={selectedSymbol}
-            onSelectSymbol={setSelectedSymbol}
+            selectedSymbol={PUBLIC_FIXED_SYMBOL}
             timeframe={timeframe}
             onChangeTimeframe={setTimeframe}
             subscriptionTier="Free"
           />
         );
       case 'ranking-board':
-        return (
-          <RankingBoard
-            onSelectAsset={(symbol) => {
-              setSelectedSymbol(symbol);
-              setActiveTool('enterprise-scorer');
-            }}
-          />
-        );
+        return <RankingBoard onSelectAsset={() => setActiveTool('enterprise-scorer')} />;
       case 'buffett-value':
-        return <BuffetValueCheck selectedSymbol={selectedSymbol} />;
+        return <ProtectedToolNotice tool={activeDefinition} />;
       case 'market-screener':
-        return (
-          <MarketScreener
-            selectedSymbol={selectedSymbol}
-            onSelectSymbol={(symbol) => {
-              setSelectedSymbol(symbol);
-              setActiveTool('enterprise-scorer');
-            }}
-          />
-        );
+        return <MarketScreener selectedSymbol={PUBLIC_FIXED_SYMBOL} onSelectSymbol={() => setActiveTool('enterprise-scorer')} />;
       case 'raw-materials':
         return <RawMaterialsDashboard />;
       default:
@@ -311,40 +273,54 @@ export function PublicAnalysisWorkbench() {
       <div className="flex items-center justify-between gap-3 border-b border-border bg-surface/40 px-4 py-3 lg:hidden">
         <button
           type="button"
-          onClick={() => setSideboardOpen((open) => !open)}
+          onClick={() => setSideboardExpanded((expanded) => !expanded)}
           className="ui-hit inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl border border-brand-primary/30 bg-brand-primary/10 px-3 py-2 text-xs font-black uppercase tracking-wider text-text-primary transition hover:bg-brand-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-          aria-expanded={sideboardOpen}
+          aria-expanded={sideboardExpanded}
           aria-controls="public-analysis-sideboard"
-          aria-label={sideboardOpen ? 'Analysetools einklappen' : 'Analysetools aufklappen'}
+          aria-label={sideboardExpanded ? 'Analysetools einklappen' : 'Analysetools aufklappen'}
         >
-          {sideboardOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
-          <span>{sideboardOpen ? 'Analysetools schließen' : 'Analysetools öffnen'}</span>
+          {sideboardExpanded ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
+          <span>{sideboardExpanded ? 'Sideboard schließen' : 'Sideboard öffnen'}</span>
         </button>
         <span className="truncate text-xs font-bold text-brand-primary">{activeDefinition.label}</span>
       </div>
 
-      <div className="grid lg:grid-cols-[300px_minmax(0,1fr)]">
+      <div className={`grid transition-[grid-template-columns] duration-200 ${sideboardExpanded ? 'lg:grid-cols-[300px_minmax(0,1fr)]' : 'lg:grid-cols-[88px_minmax(0,1fr)]'}`}>
         <aside
           id="public-analysis-sideboard"
           aria-label="Öffentliche Bewertungstools"
-          className={`${sideboardOpen ? 'block' : 'hidden'} border-b border-border bg-surface/25 p-4 lg:block lg:border-b-0 lg:border-r`}
+          className={`${sideboardExpanded ? 'block' : 'hidden lg:block'} border-b border-border bg-surface/25 p-3 lg:border-b-0 lg:border-r`}
         >
-          <div className="mb-5 space-y-2 rounded-2xl border border-brand-primary/20 bg-brand-primary/5 p-4">
-            <div className="flex items-center gap-2 text-brand-primary">
-              <ShieldCheck size={16} aria-hidden="true" />
-              <span className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">Public Analysis Sideboard</span>
+          <button
+            type="button"
+            onClick={() => setSideboardExpanded((expanded) => !expanded)}
+            className="ui-hit mb-3 hidden min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-primary/25 bg-brand-primary/[0.07] px-2 text-brand-primary transition hover:bg-brand-primary/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary lg:flex"
+            aria-expanded={sideboardExpanded}
+            aria-controls="public-analysis-sideboard"
+            aria-label={sideboardExpanded ? 'Public Sideboard einklappen' : 'Public Sideboard ausklappen'}
+          >
+            {sideboardExpanded ? <X size={16} aria-hidden="true" /> : <Menu size={17} aria-hidden="true" />}
+            {sideboardExpanded ? <span className="text-[10px] font-black uppercase tracking-wider">Einklappen</span> : null}
+          </button>
+
+          {sideboardExpanded ? (
+            <div className="mb-5 space-y-2 rounded-2xl border border-brand-primary/20 bg-brand-primary/5 p-4">
+              <div className="flex items-center gap-2 text-brand-primary">
+                <ShieldCheck size={16} aria-hidden="true" />
+                <span className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">Universe Sideboard</span>
+              </div>
+              <p className="text-xs leading-relaxed text-text-secondary">Schmale Cockpit-Navigation mit ausklappbaren Bewertungstools. Der öffentliche Enterprise Scorer bleibt auf BTC fixiert.</p>
             </div>
-            <p className="text-xs leading-relaxed text-text-secondary">
-              Cockpit-Navigation mit Enterprise Scorer und allen aktuell freigegebenen Analyseflächen. Server-Gates, Login-Pflichten und aktuelle Deaktivierungen bleiben wirksam.
-            </p>
-          </div>
+          ) : (
+            <div className="mb-4 flex items-center justify-center rounded-xl border border-asset-crypto/20 bg-asset-crypto/[0.06] py-2 font-mono text-[9px] font-black text-asset-crypto" title="Public Asset fixiert auf BTC">
+              BTC
+            </div>
+          )}
 
           <div className="space-y-5">
             {TOOL_GROUPS.map((group) => (
               <section key={group.label} aria-label={group.label}>
-                <h3 className="mb-2 px-2 font-mono text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary">
-                  {group.label}
-                </h3>
+                {sideboardExpanded ? <h3 className="mb-2 px-2 font-mono text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary">{group.label}</h3> : null}
                 <div className="space-y-1">
                   {group.tools.map((tool) => {
                     const Icon = tool.icon;
@@ -353,25 +329,22 @@ export function PublicAnalysisWorkbench() {
                       <button
                         key={tool.id}
                         type="button"
-                        onClick={() => {
-                          setActiveTool(tool.id);
-                          setSideboardOpen(false);
-                        }}
+                        onClick={() => { setActiveTool(tool.id); setSideboardExpanded(false); }}
                         aria-current={selected ? 'page' : undefined}
-                        className={`ui-hit flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary ${
-                          selected
-                            ? 'border-brand-primary/35 bg-brand-primary/10 text-text-primary'
-                            : 'border-transparent text-text-secondary hover:border-border hover:bg-surface/60 hover:text-text-primary'
-                        }`}
+                        aria-label={tool.label}
+                        title={!sideboardExpanded ? tool.label : undefined}
+                        className={`ui-hit flex min-h-11 w-full items-center rounded-xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary ${sideboardExpanded ? 'gap-3' : 'justify-center'} ${selected ? 'border-brand-primary/35 bg-brand-primary/10 text-text-primary' : 'border-transparent text-text-secondary hover:border-border hover:bg-surface/60 hover:text-text-primary'}`}
                       >
-                        <Icon size={16} className={selected ? 'text-brand-primary' : 'text-text-secondary'} aria-hidden={true} />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-xs font-bold">{tool.label}</span>
-                          <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-text-secondary">
-                            {availabilityLabel(tool.availability)}
-                          </span>
-                        </span>
-                        <ChevronRight size={14} className="shrink-0 text-text-secondary" aria-hidden="true" />
+                        <Icon size={17} className={selected ? 'text-brand-primary' : 'text-text-secondary'} aria-hidden={true} />
+                        {sideboardExpanded ? (
+                          <>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-bold">{tool.label}</span>
+                              <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-text-secondary">{availabilityLabel(tool.availability)}</span>
+                            </span>
+                            <ChevronRight size={14} className="shrink-0 text-text-secondary" aria-hidden="true" />
+                          </>
+                        ) : null}
                       </button>
                     );
                   })}
@@ -384,16 +357,12 @@ export function PublicAnalysisWorkbench() {
         <section className="min-w-0 p-4 sm:p-6" aria-labelledby="public-active-tool-title">
           <header className="mb-5 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-3xl">
-              <p className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary">
-                Bewertungstool · {availabilityLabel(activeDefinition.availability)}
-              </p>
-              <h2 id="public-active-tool-title" className="mt-1 text-2xl font-black text-text-primary">
-                {activeDefinition.label}
-              </h2>
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary">Bewertungstool · {availabilityLabel(activeDefinition.availability)}</p>
+              <h2 id="public-active-tool-title" className="mt-1 text-2xl font-black text-text-primary">{activeDefinition.label}</h2>
               <p className="mt-2 text-sm leading-relaxed text-text-secondary">{activeDefinition.description}</p>
             </div>
-            <div className="rounded-xl border border-border bg-surface/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-text-secondary">
-              Symbol: <span className="font-black text-text-primary">{selectedSymbol}</span>
+            <div className="rounded-xl border border-asset-crypto/25 bg-asset-crypto/[0.07] px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-text-secondary">
+              Public Asset: <span className="font-black text-asset-crypto">{PUBLIC_FIXED_SYMBOL} · fixiert</span>
             </div>
           </header>
 
