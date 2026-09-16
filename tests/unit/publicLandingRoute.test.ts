@@ -16,6 +16,7 @@ const enterpriseQuickAnalysis = read('src/features/crypto/ui/EnterpriseBinanceQu
 const buffetValueCheck = read('src/components/BuffetValueCheck.tsx');
 const dashboardViewRouter = read('src/app/dashboard/DashboardViewRouter.tsx');
 const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
+const dashboardHeader = read('src/app/dashboard/DashboardHeader.tsx');
 const loginPage = read('src/features/public/ui/LoginPage.tsx');
 const loginPageRedirect = read('src/features/public/ui/LoginPageRedirect.tsx');
 const legacyLandingBridge = read('src/components/LandingPage.tsx');
@@ -127,7 +128,9 @@ describe('canonical landing, public analysis workbench, login and protected-rout
   });
 
   it('routes the app-owned dashboard login action to /login', () => {
-    expect(dashboard).toContain('<DashboardNavigation');
+    expect(dashboard).toContain('<DashboardHeader');
+    expect(dashboard).not.toContain('<DashboardNavigation');
+    expect(dashboardHeader).toContain('<DashboardNavigation');
     expect(dashboardNavigation).toContain('Login (Anmelden)');
     expect(dashboardNavigation).toContain("navigate('login')");
     expect(legacyLandingBridge).toContain('LoginPageRedirect');

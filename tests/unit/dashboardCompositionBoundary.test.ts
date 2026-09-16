@@ -20,7 +20,10 @@ describe('BB-2 dashboard composition boundary', () => {
   it('keeps the legacy dashboard behind one bounded strangler entry', () => {
     expect(dashboardEntry).toContain("import { Dashboard as LegacyDashboard } from '../../components/Dashboard'");
     expect(dashboardEntry).toContain("import type { UserSession } from '../types/UserSession'");
-    expect(dashboardEntry).toContain('<LegacyDashboard {...props} />');
+    expect(dashboardEntry).toContain('<LegacyDashboard');
+    expect(dashboardEntry).toContain('{...props}');
+    expect(dashboardEntry).toContain('onGlobalLogout={onGlobalLogout ? handleGlobalLogoutClick : undefined}');
+    expect(dashboardEntry).not.toContain('fixed bottom-4 right-4');
   });
 
   it('exports the canonical dashboard entry from the dashboard namespace', () => {
