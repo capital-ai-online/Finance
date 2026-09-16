@@ -12,6 +12,8 @@ CAPITAL-AI-GOV owns `PVC-05 Platform Director` and repository Governance coordin
 
 Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/Governance`, the Authority Registry and Control Catalog. The GOV/OPS foreign-execution policy is the bounded execution-routing contract for this exception.
 
+The non-authorizing Top-Layer product-quality projection is resolved dynamically from current-main project routing. `USER_VISIBLE_TOP_LAYER_FIRST` applies to canonical project folders except `CAPITAL-AI-SEC / docs/projects/security/`, `CAPITAL-AI-QM / docs/projects/quality-management/`, `CAPITAL-AI-FINTECH / docs/projects/fintech/` and `CAPITAL-AI-COMP / docs/projects/compliance/`. Those four remain governed by their project-local current-main authority direction; they still participate in dependency, evidence and user-impact correlation where applicable. `/AGENTS.md`, canonical PVC routing and `SC-MD-SPT-0001` where the technical financial chain is affected remain higher/parent inputs and are not replaced by the projection.
+
 ## Navigation
 
 - `../README.md` — canonical project-folder to PVC mapping.
@@ -20,7 +22,7 @@ Canonical Governance authority remains in `/AGENTS.md`, ADR-0096, `src/platform/
 - `TASK_REGISTER.md` — canonical chat-to-repository task register.
 - `AUTHORITY_AND_DECISION_BOUNDARIES.md` — Platform Director / Governance authority separation.
 - `COMPONENT_ARCHITECTURE_MATRIX.md` — Governance component and architecture assessment.
-- `TOP_LAYER_APPLICATION_QUALITY_PROJECTION.yaml` — non-authorizing Top-Layer product-quality, execution and evidence projection; resolves productive PVC stages from the canonical mapping and keeps cross-cutting projects separate.
+- `TOP_LAYER_APPLICATION_QUALITY_PROJECTION.yaml` — non-authorizing Top-Layer product-quality, execution and evidence projection; applies to all canonical project folders except SEC, QM, FINTECH and COMP, resolves productive PVC stages from the canonical mapping and keeps cross-cutting projects separate.
 - `../../governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md` — bounded GOV/OPS foreign-project execution authority.
 
 Post-PVC routing, execution-model, roadmap-registry and Owner-Device cutover contracts remain withdrawn. The Top-Layer projection and the foreign-execution policy do not recreate those overlays. The Top-Layer projection is product-quality/evidence guidance only; canonical Authority remains in `/AGENTS.md`, ADR/ESS/AUTH/CTRL and their registries, while project/PVC routing remains exclusively in `../README.md` and `../PROJECT_VALUE_CHAIN.md`.
