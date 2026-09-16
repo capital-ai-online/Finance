@@ -5,7 +5,7 @@
   "primary_pvc": "PVC-02",
   "primary_owner": "CAPITAL-AI-OPS",
   "repository": "capital-ai-online/Finance",
-  "repository_baseline": "7ff5a519e43c551e4bb07800c763f05e2bcbd45a",
+  "repository_baseline": "5b93207cfa163ddd883870a11a422f96d0128d6c",
   "supabase_project_ref": "ryzywoktpmyhwzxmstyu",
   "classification_policy": {
     "EXACT_MATCH": "Remote version equals a current local migration timestamp. The local migration file is recorded.",
@@ -14,13 +14,13 @@
   },
   "summary": {
     "remote_total": 71,
-    "local_total": 54,
+    "local_total": 55,
     "exact_match": 15,
     "timestamp_alias": 30,
     "remote_only_history": 26,
     "unknown": 0,
     "mapped_current_local": 45,
-    "local_only": 9
+    "local_only": 10
   },
   "remote_migrations": [
     {"remote_version":"20260709160230","remote_name":"subscriptions_allow_null_stripe_id","classification":"REMOTE_ONLY_HISTORY","local_version":null,"local_path":null},
@@ -104,6 +104,7 @@
     {"local_version":"20260810110642","local_name":"pdf_credit_ledger","local_path":"supabase/migrations/20260810110642_pdf_credit_ledger.sql"},
     {"local_version":"20260815140000","local_name":"social_media_content_approvals","local_path":"supabase/migrations/20260815140000_social_media_content_approvals.sql"},
     {"local_version":"20260901220000","local_name":"owner_device_authorization","local_path":"supabase/migrations/20260901220000_owner_device_authorization.sql"},
-    {"local_version":"20260902000000","local_name":"owner_device_authorization_atomic_activation","local_path":"supabase/migrations/20260902000000_owner_device_authorization_atomic_activation.sql"}
+    {"local_version":"20260902000000","local_name":"owner_device_authorization_atomic_activation","local_path":"supabase/migrations/20260902000000_owner_device_authorization_atomic_activation.sql"},
+    {"local_version":"20260916160000","local_name":"security_definer_least_privilege","local_path":"supabase/migrations/20260916160000_security_definer_least_privilege.sql"}
   ]
 }
