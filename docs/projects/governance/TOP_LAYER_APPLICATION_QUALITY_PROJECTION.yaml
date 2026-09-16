@@ -1,0 +1,787 @@
+capital_ai_top_layer_projection:
+  schema_version: "1.1.0"
+  projection_id: "GOV-TOP-LAYER-APPLICATION-QUALITY-PROJECTION-01"
+  language: "de"
+  document_role: "projection"
+  authorizing: false
+  enforcement_authority: false
+  runtime_impact: false
+
+  authority_boundary:
+    trust_root: "/AGENTS.md"
+    trust_root_resolution: "CURRENT_MAIN_ONLY"
+    governance_architecture: "ADR-0096"
+    project_mapping:
+      - "docs/projects/README.md"
+      - "docs/projects/PROJECT_VALUE_CHAIN.md"
+    frontend_authority: "docs/frontend/FRONTEND_ARCH.md"
+    financial_value_chain: "SC-MD-SPT-0001"
+    scoring_authority: "ADR-0087"
+    asset_evidence_authority: "ADR-0032"
+    provider_data_authority:
+      - "ADR-0041"
+      - "ESS-0016"
+    rule: >
+      Diese Datei ist eine nicht-autorisierende Produkt-, Ausfuehrungs- und
+      Qualitaetsprojektion. Sie erzeugt keine neue AUTH-*, CTRL-*, PVC-,
+      Frontend-, Scoring-, Daten-, Security-, Compliance- oder Runtime-Authority
+      und darf keine kanonische Registry oder Parent-Authority ersetzen.
+
+  applicability:
+    scope: "ALL_PROJECT_FOLDERS"
+    execution_mode: "PROJECT_LOCAL_DYNAMIC"
+    reusable: true
+    project_folder_parameter: "<CURRENT_PROJECT_FOLDER>"
+    local_copy_required: false
+    second_registry_allowed: false
+
+  purpose: >
+    CAPITAL-AI-Arbeit wird aus Sicht des tatsaechlich wahrnehmbaren
+    Nutzerwerts bewertet. Die User-visible Application Surface bestimmt den
+    Ausgangspunkt fuer Produktqualitaet, Priorisierung und End-to-End-
+    Korrelation. Technische Authority, Ownership und Execution bleiben jedoch
+    vollstaendig in den kanonischen PVC-, ADR-, ESS-, AUTH- und CTRL-Grenzen.
+
+  active_baseline:
+    authoritative_baseline: "CURRENT_MAIN_ONLY"
+    historical_state:
+      authority: false
+      usage: "SEARCH_HINT_ONLY"
+    open_pull_requests:
+      role: "CORRELATION_INPUT_ONLY"
+      may_replace_main_baseline: false
+      selection_rule: "SEMANTIC_RELEVANCE_NOT_PR_NUMBER"
+    active_branches:
+      role: "WRITER_CORRELATION_INPUT_ONLY"
+      may_replace_main_baseline: false
+    resolve_before_execution:
+      - current_main_sha
+      - open_pull_requests
+      - active_writers_if_observable
+      - current_project
+      - current_project_folder
+      - primary_pvc_if_productive_owner
+      - primary_owner
+      - project_scope
+      - project_roadmap_or_explicit_owner_scope
+      - applicable_adr
+      - applicable_ess
+      - applicable_ctrl_auth
+      - affected_capabilities
+    unresolved:
+      state: "REQUIRES_CORRELATION"
+      action: "STOP"
+
+  project_resolution:
+    dynamic: true
+    guess_allowed: false
+    canonical_sources:
+      - "docs/projects/README.md"
+      - "docs/projects/PROJECT_VALUE_CHAIN.md"
+    project_local_sources:
+      - "docs/projects/<CURRENT_PROJECT_FOLDER>/README.md"
+      - "docs/projects/<CURRENT_PROJECT_FOLDER>/ROADMAP.md"
+    required_output:
+      - current_project
+      - current_project_folder
+      - primary_owner
+      - productive_pvc_relationship
+      - project_scope
+    rule: >
+      Cross-cutting Projekte ohne produktive PVC-Stufe erhalten niemals eine
+      erfundene primary_pvc. Ihre Beziehung wird als Cross-cutting Consumer,
+      Presentation, Assurance, Constraint oder Distribution Overlay erfasst.
+
+  governing_principle:
+    name: "USER_VISIBLE_TOP_LAYER_FIRST"
+    interpretation: >
+      Top-Layer-first ist eine Produktsteuerungs- und Bewertungsrichtung, keine
+      Authority-Richtung. Untere technische Layer ermoeglichen und schuetzen
+      den Nutzerwert; die kanonischen Domain Authorities entscheiden weiterhin
+      ueber fachliche Semantik, Daten, Scoring, IAM, Security und Governance.
+
+    hierarchy:
+      layer_1:
+        name: "USER_EXPERIENCE"
+        includes:
+          - landing_page
+          - authenticated_application
+          - navigation
+          - responsive_behavior
+          - visual_hierarchy
+          - accessibility
+          - interaction_quality
+          - feedback_states
+          - perceived_performance
+      layer_2:
+        name: "USER_VISIBLE_CAPABILITIES"
+        includes:
+          - scoring_tools
+          - valuation_tools
+          - analytics
+          - portfolio_features
+          - learning_features
+          - vocabulary
+          - explainability
+          - recommendations
+          - reports
+      layer_3:
+        name: "DOMAIN_AND_AI_LOGIC"
+        includes:
+          - scoring_engines
+          - financial_models
+          - ai_orchestration
+          - llm_gateway
+          - market_data_logic
+          - business_rules
+      layer_4:
+        name: "DATA_AND_PLATFORM"
+        includes:
+          - databases
+          - apis
+          - data_pipelines
+          - caching
+          - authentication
+          - authorization
+          - observability
+      layer_5:
+        name: "FOUNDATION_AND_GOVERNANCE"
+        includes:
+          - security
+          - compliance
+          - infrastructure
+          - operations
+          - deployment
+          - documentation
+          - governance
+
+  top_layer_questions:
+    mandatory:
+      - "Was sieht der Benutzer?"
+      - "Was kann der Benutzer damit erreichen?"
+      - "Ist die Funktion verstaendlich und konsistent?"
+      - "Ist das Ergebnis nachvollziehbar und vertrauenswuerdig?"
+      - "Ist der Scoring- oder Analysewert fachlich belastbar?"
+      - "Ist die Anwendung schnell und stabil?"
+      - "Greift die Funktion konsistent in angrenzende Capabilities ein?"
+      - "Welche produktiven PVC-Stufen und cross-cutting Projekte tragen zum Nutzerwert bei?"
+
+  decision_rule:
+    before_project_change:
+      require_user_value_context: true
+      require_end_to_end_context: true
+      require_pvc_correlation: true
+      require_authority_resolution: true
+    isolated_technical_optimization:
+      allowed: false
+      exception:
+        priority_override_allowed: true
+        lifecycle_bypass_allowed: false
+        ownership_transfer_allowed: false
+        protected_mutation_bypass_allowed: false
+        rule: >
+          Kritische Security-, Compliance-, Reliability- oder
+          Produktionsschutzmassnahmen duerfen gegenueber normaler
+          Produktpriorisierung vorgezogen werden. Alle Authority-, Ownership-,
+          Branch-, PR-, Human-Merge- und Protected-External-Mutation-Grenzen
+          bleiben unveraendert bindend.
+
+  ownership:
+    work_inside_resolved_project: true
+    foreign_project_work: "DENY_BY_DEFAULT"
+    cross_project_dependency:
+      rule: >
+        Cross-project Dependencies werden gegen die kanonische Projekt-/PVC-
+        Zuordnung aufgeloest. Diese Projektion erzeugt keinen eigenstaendigen
+        Handover-Router und keine zweite Handover-Registry.
+      action:
+        - identify_primary_owner
+        - identify_target_project_folder
+        - define_required_input
+        - define_expected_output
+        - define_exit_gate
+        - record_owner_local_evidence
+        - stop_local_implementation_at_owner_boundary
+
+  prohibited:
+    - "Frontend isoliert ohne Domain- und Datenkorrelation veraendern"
+    - "Backend optimieren ohne User Impact zu pruefen"
+    - "Scoring UI und Scoring Engine unabhaengig voneinander bewerten"
+    - "PVC-Einheiten als voneinander unabhaengige Silos behandeln"
+    - "Cross-cutting Projekte als erfundene produktive PVC-Stufen modellieren"
+    - "User-visible Regression zugunsten lokaler technischer Optimierung akzeptieren"
+    - "parallele Architektur ausserhalb bestehender Contracts erzeugen"
+    - "diese Projektion als eigenstaendige Governance- oder Scoring-Authority verwenden"
+
+capital_ai_top_layer_execution:
+  schema_version: "1.1.0"
+  projection_id: "GOV-TOP-LAYER-EXECUTION-PROJECTION-01"
+  document_role: "projection"
+  authorizing: false
+
+  execution_contract:
+    trigger:
+      any_of:
+        - roadmap_task
+        - explicit_owner_scope
+        - pull_request
+        - architecture_change
+        - scoring_change
+        - frontend_change
+        - backend_change
+        - ai_change
+        - data_change
+        - security_change
+        - operations_change
+        - production_issue
+    mandatory_sequence:
+      - resolve_current_main_and_open_writer_correlation
+      - resolve_project_and_productive_pvc_relationship
+      - resolve_parent_authorities
+      - identify_user_visible_effect
+      - identify_affected_capabilities
+      - map_end_to_end_value_chain
+      - evaluate_scoring_quality_if_applicable
+      - identify_cross_project_dependencies
+      - define_acceptance_and_evidence
+      - implement_inside_owner_boundary
+      - validate_end_to_end
+      - materialize_owner_correct_evidence
+
+  top_down_analysis:
+    step_1_user_surface:
+      inspect:
+        - visible_component
+        - page_or_route
+        - user_action
+        - expected_result
+        - loading_state
+        - empty_state
+        - error_state
+        - mobile_behavior
+        - desktop_behavior
+        - accessibility
+        - visual_consistency
+      output:
+        - current_user_journey
+        - desired_user_journey
+        - identified_gap
+
+    step_2_capability:
+      inspect:
+        - capability_name
+        - purpose
+        - input
+        - output
+        - dependencies
+        - adjacent_capabilities
+        - user_value
+      requirement: >
+        Jede Capability wird als Teil eines zusammenhaengenden Nutzerflusses
+        betrachtet, ohne ihre fachliche Authority in diese Projektion zu
+        verschieben.
+
+    step_3_domain_logic:
+      inspect:
+        - business_rules
+        - financial_logic
+        - scoring_logic
+        - model_logic
+        - transformations
+        - constraints
+        - explainability
+      authority_rule: >
+        Normative Finanz-, Scoring- und Eligibility-Regeln werden aus den
+        jeweils kanonischen Parent-Authorities konsumiert und hier nicht
+        nachdefiniert.
+
+    step_4_platform:
+      inspect:
+        - api
+        - database
+        - cache
+        - authn
+        - authz
+        - telemetry
+        - secrets
+        - deployment
+        - provider_dependencies
+
+    step_5_governance:
+      inspect:
+        - security
+        - compliance
+        - privacy
+        - architecture_contracts
+        - ownership
+        - evidence
+        - documentation
+
+  scoring_quality_projection:
+    applies_when:
+      - scoring_tool
+      - valuation_tool
+      - ranking_tool
+      - recommendation_engine
+      - ai_generated_assessment
+      - financial_analysis
+    parent_authorities_must_be_resolved: true
+    may_define_new_formula_authority: false
+    mandatory_dimensions:
+      correctness:
+        verify:
+          - input_correctness
+          - formula_or_model_contract_conformance
+          - transformation_correctness
+          - output_correctness
+      data_quality:
+        verify:
+          - provenance
+          - freshness
+          - completeness
+          - consistency
+          - fallback_behavior
+      reproducibility:
+        verify:
+          - deterministic_components
+          - model_version_if_applicable
+          - calculation_version_if_applicable
+          - timestamp
+          - input_snapshot
+      explainability:
+        verify:
+          - score_components_if_exposed_by_parent_contract
+          - weighting_if_exposed_by_parent_contract
+          - assumptions
+          - limitations
+          - user_explanation
+      calibration:
+        verify:
+          - score_scale
+          - thresholds
+          - category_boundaries
+          - confidence
+          - uncertainty
+      robustness:
+        verify:
+          - missing_data
+          - extreme_values
+          - stale_data
+          - provider_failure
+          - malformed_inputs
+      usability:
+        verify:
+          - understandable_output
+          - actionable_context
+          - clear_labels
+          - consistent_visual_language
+      governance:
+        verify:
+          - parent_methodology_identity
+          - documented_owner
+          - evidence
+          - change_history
+    quality_rule: >
+      Eine hochwertige Oberflaeche darf keine fachlich schwache oder
+      unbewiesene Scoring-Qualitaet verdecken. Eine hochwertige Scoring Engine
+      darf zugleich keine unverstaendliche oder inkonsistente Benutzeroberflaeche
+      erzeugen. Die gemeinsame Capability bleibt dennoch aus getrennten,
+      kanonisch autorisierten Domain- und Presentation-Verantwortungen aufgebaut.
+
+  value_chain_binding:
+    principle: >
+      Jede relevante Benutzerfunktion wird Ende-zu-Ende betrachtet. Produktive
+      PVC-Stufen und cross-cutting Projekte werden getrennt modelliert.
+
+    canonical_sources:
+      project_routing: "docs/projects/README.md"
+      productive_pvc_chain: "docs/projects/PROJECT_VALUE_CHAIN.md"
+
+    productive_pvc_stages:
+      required: true
+      resolve_dynamically: true
+      static_duplicate_registry_allowed: false
+      for_each_affected_stage:
+        resolve:
+          - pvc_id
+          - stage_name
+          - primary_project
+          - primary_owner
+          - input_contract_if_applicable
+          - output_contract_if_applicable
+          - exit_gate_if_applicable
+          - evidence_pointer_if_applicable
+
+    cross_cutting_projects:
+      productive_pvc_ownership: false
+      resolve_from_project_mapping: true
+      known_roles:
+        CAPITAL-AI-FE: "PRESENTATION_AND_INTERACTION"
+        CAPITAL-AI-QM: "QUALITY_ASSURANCE"
+        CAPITAL-AI-SEC: "SECURITY_ASSURANCE_AND_BOUNDED_REMEDIATION"
+        CAPITAL-AI-COMP: "COMPLIANCE_CONSTRAINT_AND_ASSURANCE"
+        CAPITAL-AI-SEO: "DISCOVERY_AND_DISTRIBUTION"
+        CAPITAL-AI-SOCIAL: "SOCIAL_DISTRIBUTION"
+      rule: >
+        Cross-cutting Projekte duerfen produktive PVC-Ergebnisse praesentieren,
+        pruefen, absichern, beschraenken oder verteilen, erwerben dadurch aber
+        keine produktive PVC-Ownership.
+
+    capability_resolution_examples:
+      user_interface:
+        primary_projection: "CAPITAL-AI-FE"
+        productive_pvc: "RESOLVE_FROM_UNDERLYING_CAPABILITY"
+      data_ingestion_and_quality:
+        productive_owner: "CAPITAL-AI-DATA"
+        productive_pvc_range: "PVC-09..PVC-11"
+      financial_scoring_and_ranking:
+        productive_owner: "CAPITAL-AI-FINTECH"
+        productive_pvc_range: "PVC-12..PVC-17"
+      governance_direction:
+        productive_owner: "CAPITAL-AI-GOV"
+        productive_pvc: "PVC-05"
+      operations_delivery_and_traceability:
+        productive_owner: "CAPITAL-AI-OPS"
+        productive_pvc_set: "PVC-02,PVC-04,PVC-06,PVC-07,PVC-08,PVC-18"
+      documentary_engine:
+        productive_owner: "CAPITAL-AI-DOC"
+        productive_pvc: "PVC-03"
+      agent_client:
+        productive_owner: "CAPITAL-AI-CLIENT"
+        productive_pvc: "PVC-01"
+
+    canonical_flow:
+      - user_intent
+      - frontend_interaction
+      - application_orchestration
+      - domain_logic
+      - scoring_or_ai_engine_if_applicable
+      - data_access
+      - security_and_policy
+      - result_generation
+      - frontend_presentation
+      - explanation
+      - telemetry
+      - feedback
+      - continuous_improvement
+
+    chain_quality:
+      require:
+        - semantic_consistency
+        - terminology_consistency
+        - data_contract_consistency
+        - design_consistency
+        - scoring_consistency
+        - version_consistency
+        - telemetry_consistency
+
+  user_visible_integration_surface:
+    role: "PRODUCT_COMPOSITION_AND_EVALUATION_PROJECTION"
+    authoritative_for_domain_logic: false
+    authoritative_for_scoring: false
+    authoritative_for_data: false
+    authoritative_for_security: false
+    authoritative_for_governance: false
+    principle: >
+      Die User-visible Application Surface ist der primaere Ausgangspunkt fuer
+      Produktbewertung, Nutzerwert, End-to-End-Korrelation und
+      Qualitaetspriorisierung. Sie konsumiert und komponiert ausschliesslich
+      Zustaende und Ergebnisse der jeweils kanonisch zustaendigen Domain-,
+      Data-, Scoring-, AI-, Security- und Governance-Authorities.
+    must_reflect:
+      - capability_state
+      - data_state
+      - scoring_state_if_applicable
+      - confidence_state_if_available
+      - authentication_state
+      - authorization_state
+      - loading_state
+      - failure_state
+      - provider_state_if_applicable
+    must_not:
+      - fake_backend_success
+      - hide_quality_degradation
+      - hide_missing_data
+      - hide_scoring_uncertainty
+      - expose_inconsistent_domain_states
+      - create_frontend_local_domain_authority
+
+  design_consistency:
+    application_wide: true
+    parent_authority: "docs/frontend/FRONTEND_ARCH.md"
+    shared_system:
+      require:
+        - design_tokens
+        - typography
+        - spacing
+        - iconography
+        - badges
+        - state_patterns
+        - chart_patterns
+        - scoring_patterns
+        - navigation_patterns
+        - responsive_patterns
+    project_rule: >
+      Projektordner duerfen neue UI-Muster nur innerhalb der bestehenden
+      Frontend-Authority und des kanonischen Designsystems einfuehren. Diese
+      Projektion erzeugt keine zweite Design-Token- oder Frontend-Authority.
+
+capital_ai_top_layer_quality_gates:
+  schema_version: "1.1.0"
+  projection_id: "GOV-TOP-LAYER-QUALITY-GATES-PROJECTION-01"
+  document_role: "projection"
+  authorizing: false
+  enforcement_mode: "EVIDENCE_PROJECTION_ONLY"
+  merge_blocking_by_itself: false
+
+  objective: >
+    Produkt- und Implementierungsqualitaet werden gemeinsam nachgewiesen, ohne
+    bestehende enforceable CTRL-* Controls oder Domain Authorities zu duplizieren.
+
+  activation_rule: >
+    Ein Gate dieser Projektion wird erst dann technisch merge-blocking, wenn ein
+    bestehender oder ordnungsgemaess registrierter kanonischer CTRL-* Control
+    genau dieses Verhalten innerhalb seines gueltigen Scopes durchsetzt.
+
+  completion_definition:
+    require:
+      - repository_baseline_resolved
+      - project_ownership_resolved
+      - parent_authorities_resolved
+      - user_visible_effect_defined
+      - capability_chain_mapped
+      - affected_productive_pvc_units_correlated
+      - cross_cutting_projects_correlated
+      - scoring_quality_verified_if_applicable
+      - frontend_behavior_verified_if_applicable
+      - technical_contracts_verified
+      - security_and_compliance_checked
+      - cross_project_dependencies_completed_or_explicitly_held
+      - evidence_materialized
+
+  gates:
+    gate_01_user_value:
+      name: "USER_VALUE_EVIDENCE"
+      pass_when:
+        - user_goal_is_defined
+        - user_flow_is_coherent
+        - visible_result_is_understandable
+        - no_known_critical_user_regression
+      fail_state: "USER_VALUE_NOT_PROVEN"
+
+    gate_02_frontend:
+      name: "FRONTEND_INTEGRATION_EVIDENCE"
+      inspect:
+        - navigation
+        - rendering
+        - responsive_behavior
+        - interaction
+        - loading
+        - errors
+        - accessibility
+        - visual_consistency
+      pass_when:
+        - states_are_correctly_represented
+        - mobile_and_desktop_are_consistent_if_applicable
+        - frontend_parent_contract_is_preserved
+
+    gate_03_scoring:
+      name: "SCORING_QUALITY_EVIDENCE"
+      conditional: true
+      required_when:
+        - score_changed
+        - financial_model_changed
+        - data_source_changed
+        - weighting_changed
+        - threshold_changed
+        - ai_assessment_changed
+      evidence:
+        - parent_methodology_identity
+        - inputs
+        - outputs
+        - formula_or_model_contract_reference
+        - version
+        - edge_cases
+        - explainability
+        - regression_comparison
+      fail_state: "SCORING_QUALITY_NOT_PROVEN"
+
+    gate_04_value_chain:
+      name: "PVC_CHAIN_EVIDENCE"
+      require:
+        - all_affected_productive_pvc_units_identified
+        - cross_cutting_projects_not_misclassified_as_productive_pvc
+        - owner_boundaries_respected
+        - interfaces_or_dependencies_identified
+        - no_parallel_architecture
+      fail_state: "VALUE_CHAIN_INCOMPLETE"
+
+    gate_05_platform:
+      name: "PLATFORM_EVIDENCE"
+      inspect:
+        - api_contracts
+        - database_contracts
+        - performance
+        - reliability
+        - caching
+        - telemetry
+        - provider_dependencies
+
+    gate_06_security:
+      name: "SECURITY_COMPLIANCE_EVIDENCE"
+      inspect:
+        - authn
+        - authz
+        - secrets
+        - data_protection
+        - consent
+        - attack_surface
+        - compliance_requirements
+      rule: >
+        Diese Evidenz ersetzt keine Security- oder Compliance-Authority und
+        autorisiert keine Protected External Mutation.
+
+    gate_07_production:
+      name: "PRODUCTION_READINESS_EVIDENCE"
+      require:
+        - deployability
+        - observability
+        - rollback_or_recovery
+        - error_handling
+        - production_configuration
+        - no_unresolved_critical_blocker
+
+  evidence_model:
+    mandatory_fields:
+      - current_main_sha
+      - current_project
+      - current_project_folder
+      - primary_owner
+      - productive_pvc_relationship
+      - branch_if_applicable
+      - branch_head_sha_if_applicable
+      - changed_files
+      - affected_capabilities
+      - affected_productive_pvc_units
+      - affected_cross_cutting_projects
+      - user_visible_before
+      - user_visible_after
+      - executed_checks
+      - not_run_checks
+      - validation_results
+      - remaining_findings
+    scoring_evidence:
+      conditional: true
+      include:
+        - scoring_tool
+        - parent_scoring_authority
+        - scoring_version_if_applicable
+        - methodology_version_if_applicable
+        - input_sources
+        - calculation_path_reference
+        - before_output
+        - after_output
+        - explainability_result
+        - regression_result
+
+  before_after_contract:
+    mandatory_for_user_visible_changes: true
+    before:
+      capture:
+        - behavior
+        - design
+        - functionality
+        - scoring_output_if_applicable
+        - performance_if_relevant
+    after:
+      capture:
+        - behavior
+        - design
+        - functionality
+        - scoring_output_if_applicable
+        - performance_if_relevant
+    rule: >
+      Der Nachweis beschreibt die Aenderung aus Nutzersicht und verweist fuer
+      fachliche Semantik auf die jeweilige Parent-Authority; geaenderte Dateien
+      allein genuegen nicht.
+
+  roadmap_integration:
+    every_project_folder:
+      require_top_layer_context: true
+    roadmap_item_should_define:
+      - user_value
+      - capability
+      - owning_project
+      - productive_pvc_relationship
+      - cross_cutting_projects_if_applicable
+      - trigger
+      - dependencies
+      - exit_gate
+      - evidence
+      - next_owner_correct_step
+    rule: >
+      Dies ist eine Qualitaetserwartung fuer Roadmap-Projektionen und keine
+      zweite Roadmap Registry oder Routing Authority.
+
+  dependency_evidence:
+    when_dependency_exists:
+      require:
+        - source_project
+        - target_project
+        - source_owner
+        - target_owner
+        - productive_pvc_relationship_if_applicable
+        - required_input
+        - expected_output
+        - exit_gate
+        - evidence_pointer
+    rule: >
+      Dependency Evidence wird owner-lokal materialisiert und darf keinen
+      separaten Cross-Project-Handover-Control-Plane-Layer rekonstruieren.
+
+  regression_policy_projection:
+    detect:
+      - user_experience_regression_without_explicit_reason
+      - scoring_quality_regression
+      - unexplained_methodology_change
+      - inconsistent_design_language
+      - broken_owner_dependency
+      - hidden_provider_failure
+      - undocumented_contract_change
+
+  project_local_output:
+    required_summary:
+      repository:
+        - main_sha
+        - branch_if_applicable
+        - branch_head_sha_if_applicable
+      project:
+        - current_project
+        - current_project_folder
+        - primary_owner
+        - productive_pvc_relationship
+      product:
+        - affected_user_journey
+        - affected_capabilities
+        - frontend_impact
+        - scoring_impact
+      value_chain:
+        - affected_productive_pvc_units
+        - affected_cross_cutting_projects
+        - dependencies
+      validation:
+        - executed_checks
+        - not_run_checks
+        - open_findings
+      continuation:
+        - current_item_or_explicit_owner_scope
+        - completed_evidence_gate
+        - next_owner_correct_step
+
+  final_rule: >
+    Kein Projektordner wird ausschliesslich anhand seiner lokalen technischen
+    Qualitaet bewertet. Die Produktbetrachtung verlaeuft vom Nutzererlebnis
+    ueber sichtbare Capabilities zu fachlicher Qualitaet, Domain-/AI-Logik,
+    Daten/Plattform und Security/Compliance/Operations und wird anschliessend
+    gegen die kanonische PVC- und Projekt-Ownership korreliert. Diese Richtung
+    beschreibt Produktqualitaet; sie veraendert keine bestehende Authority.
