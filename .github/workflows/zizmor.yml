@@ -9,9 +9,13 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
-  group: zizmor-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ${{ github.event_name == 'pull_request'
+        && format('zizmor-pr-{0}-{1}-{2}', github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)
+        || format('zizmor-{0}', github.ref) }}
   cancel-in-progress: true
 
 jobs:
@@ -20,12 +24,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: PR-Snapshot gegen Live-Head/Base korrelieren
+        id: snapshot
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const prNumber = Number(process.env.EVENT_PR_NUMBER);
+            const eventHead = normalizeSha(process.env.EVENT_HEAD_SHA);
+            const eventBase = normalizeSha(process.env.EVENT_BASE_SHA);
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const liveHead = normalizeSha(pr.head?.sha);
+            const liveBase = normalizeSha(pr.base?.sha);
+            const currentSnapshot = pr.state === 'open' && liveHead === eventHead && liveBase === eventBase;
+            core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false');
+            if (!currentSnapshot) {
+              core.notice(`Stale workflow-security event ignored: event head/base=${eventHead.slice(0, 12)}/${eventBase.slice(0, 12)}, live=${liveHead.slice(0, 12)}/${liveBase.slice(0, 12)}.`);
+            }
+
+      - name: Stale PR-Event vor Workflow-Analyse beenden
+        if: github.event_name == 'pull_request' && steps.snapshot.outputs.current_snapshot == 'false'
+        run: echo 'Stale PR-Snapshot erkannt; zizmor wird für die veraltete Event-Evidence nicht gestartet.'
+
       - name: Repository auschecken
+        if: github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
 
       - name: GitHub-Actions-Workflows mit zizmor prüfen
+        if: github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true'
         uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
         with:
           inputs: .github/workflows/
