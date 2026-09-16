@@ -40,6 +40,12 @@ Extend Governance validation so stale project/task/current-state projections and
 ### GOV-PR900-05 — Staged pre-command flow
 Represent `main/open PRs → AGENTS → capability class → Project/PVC/Roadmap → ADR/ESS/CTRL/AUTH → least-privileged decision → ALLOW|ROUTE|REQUIRE_GATE|BLOCK → execution` without creating another authority plane. Productive client materialization remains CLIENT-owned.
 
+**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING` on `agent/governance-pr900-05-staged-pre-command-20260916`.
+
+**Materialization:** `src/platform/Governance/Contracts/PreCommandFlow.ts` defines a provider-neutral, non-authorizing pre-command projection. It consumes already-resolved current-main/open-writer state, `/AGENTS.md`, capability grant/classification, Project/PVC/Roadmap routing, applicable ADR/ESS/CTRL/AUTH and the existing least-privileged IAM/policy result. It does not discover authority, grant capabilities, execute commands or duplicate Agent IAM. `tests/unit/preCommandFlow.test.ts` covers ALLOW, ROUTE, REQUIRE_GATE and fail-closed BLOCK paths; `src/platform/Governance/index.ts` exposes the contract.
+
+**Exit:** exact current-main trust-root binding, explicit capability grant, owner-correct project routing, complete authority resolution and an authoritative least-privilege projection deterministically yield `ALLOW|ROUTE|REQUIRE_GATE|BLOCK`; only `ALLOW` is ready for an already-authorized execution host. The contract carries an explicit non-authorizing statement, creates no new `AUTH-*`/`CTRL-*`, leaves Agent IAM/PolicyGate semantics unchanged and leaves productive CLIENT materialization with `CAPITAL-AI-CLIENT`.
+
 ### GOV-PR900-06 — Cross-owner strategy routing
 Decompose monetization/product-expansion proposals into canonical owners; regulated or money-like/token proposals require COMP/SEC/FINTECH/OPS and Human decision before implementation.
 
