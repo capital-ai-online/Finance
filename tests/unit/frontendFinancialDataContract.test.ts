@@ -24,7 +24,8 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('Ranking Board');
     expect(code).toContain('AbortController');
     expect(code).toContain('text-asset-crypto');
-    expect(code).toContain('text-asset-bond');
+    expect(code).toContain("type ProductiveAssetType = Exclude<AssetType, 'bond'>;");
+    expect(code).not.toContain('text-asset-bond');
     expect(code).toContain('extractSentiment');
     expect(code).toContain('extractMomentum');
     expect(code).toContain('extractLeadingPattern');
