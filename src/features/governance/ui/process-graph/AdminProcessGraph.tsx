@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowRight, CheckCircle2, History, ShieldCheck } from 'l
 import pvcMarkdown from '../../../../../docs/projects/PROJECT_VALUE_CHAIN.md?raw';
 import projectMappingMarkdown from '../../../../../docs/projects/README.md?raw';
 import developmentChainMarkdown from '../../../../../docs/projects/operations/DEVELOPMENT_CHAIN.md?raw';
+import type { OperationalTraceStateEnvelope } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
 import { buildProcessGraphViewModel, type ProcessGraphNode, type ProcessGraphState } from './processGraphModel';
 
 const stateLabel: Record<ProcessGraphState, string> = {
@@ -21,6 +22,15 @@ const stateIcon: Record<ProcessGraphState, React.ComponentType<{ size?: number; 
   unknown: ShieldCheck,
 };
 
+export interface AdminProcessGraphProps {
+  /**
+   * Effective, evidence-only state envelope produced by the canonical PVC-18 Traceability contract.
+   * The component never accepts source records or reportedState directly so normalization and
+   * fail-closed semantics stay owned by OPS/Traceability rather than the browser.
+   */
+  operationalState?: OperationalTraceStateEnvelope | null;
+}
+
 function GraphNodeCard({ node }: { node: ProcessGraphNode }) {
   const Icon = stateIcon[node.state];
   return (
@@ -38,6 +48,23 @@ function GraphNodeCard({ node }: { node: ProcessGraphNode }) {
         <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">{stateLabel[node.state]}</span>
         <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">{node.authority}</span>
       </div>
+      {node.stateEvidence && (
+        <details className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-2 text-[10px] text-white/55">
+          <summary className="cursor-pointer font-mono font-bold uppercase tracking-wider text-white/70">
+            Trace / Evidence · {node.stateEvidence.statusIds.length} record(s)
+          </summary>
+          <div className="mt-2 space-y-1.5 break-all">
+            <p><span className="font-semibold text-white/70">Projection:</span> {node.stateEvidence.generatedAt}</p>
+            <p><span className="font-semibold text-white/70">Validation:</span> {node.stateEvidence.validations.join(', ') || 'UNKNOWN'}</p>
+            <p><span className="font-semibold text-white/70">Source:</span> {node.stateEvidence.provenanceSources.join(', ')}</p>
+            <p><span className="font-semibold text-white/70">Status IDs:</span> {node.stateEvidence.statusIds.join(', ')}</p>
+            <p><span className="font-semibold text-white/70">Evidence:</span> {node.stateEvidence.evidenceRefs.join(', ') || 'none'}</p>
+            {node.stateEvidence.ambiguous && (
+              <p className="font-semibold text-amber-200">Conflicting effective records — status remains Unknown / fail closed.</p>
+            )}
+          </div>
+        </details>
+      )}
       <p className="mt-3 text-[10px] leading-relaxed text-white/35">Source: {node.source}</p>
     </article>
   );
@@ -61,10 +88,15 @@ function HorizontalChain({ nodes, label }: { nodes: ProcessGraphNode[]; label: s
   );
 }
 
-export function AdminProcessGraph() {
+export function AdminProcessGraph({ operationalState = null }: AdminProcessGraphProps) {
   const graph = React.useMemo(
-    () => buildProcessGraphViewModel(pvcMarkdown, projectMappingMarkdown, developmentChainMarkdown),
-    [],
+    () => buildProcessGraphViewModel(
+      pvcMarkdown,
+      projectMappingMarkdown,
+      developmentChainMarkdown,
+      operationalState,
+    ),
+    [operationalState],
   );
   const pvcNodes = graph.nodes.filter((node) => node.kind === 'pvc');
   const developmentNodes = graph.nodes.filter((node) => node.kind === 'development');
@@ -75,11 +107,16 @@ export function AdminProcessGraph() {
       <header className="rounded-2xl border border-white/10 bg-[#121215] p-5">
         <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-aif-gold-DEFAULT">Read-only governance projection</p>
         <h2 className="mt-1 text-xl font-black uppercase tracking-tight text-white">Process & Dependency Graph</h2>
-        <p className="mt-2 max-w-4xl text-xs leading-relaxed text-white/55">Canonical PVC/project ownership and the DC-00…DC-11 DevelopmentChain are projected from repository contracts. The browser does not approve, merge, deploy, infer completion, or convert trace/evidence into authorization.</p>
-        {!graph.operationalStateAvailable && (
+        <p className="mt-2 max-w-4xl text-xs leading-relaxed text-white/55">Canonical PVC/project ownership and the DC-00…DC-11 DevelopmentChain are projected from repository contracts. Visible operational status is accepted only from the effective PVC-18 OperationalTraceStateEnvelope. The browser does not approve, merge, deploy, infer completion, aggregate conflicting evidence, or convert trace/evidence into authorization.</p>
+        {graph.operationalStateAvailable ? (
+          <div role="status" className="mt-4 flex gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3 text-xs text-emerald-100/80">
+            <CheckCircle2 size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p>PVC-18 operational / trace evidence is connected{graph.operationalStateGeneratedAt ? ` · projection ${graph.operationalStateGeneratedAt}` : ''}. Missing nodes and conflicting effective records remain <strong>Unknown — fail closed</strong>.</p>
+          </div>
+        ) : (
           <div role="status" className="mt-4 flex gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100/80">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-            <p>Live operational / PVC-18 trace state is not yet connected. Protected current-state fields therefore remain <strong>Unknown — fail closed</strong>; no completion or approval is synthesized.</p>
+            <p>No PVC-18 OperationalTraceStateEnvelope has been supplied to this presentation consumer. All protected status fields therefore remain <strong>Unknown — fail closed</strong>; no completion, waiting, blocked or historical state is synthesized.</p>
           </div>
         )}
       </header>
