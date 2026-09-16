@@ -52,6 +52,7 @@ const newsfeed = read('src/components/RealtimeAiNewsfeed.tsx');
 const priceAlert = read('src/components/PriceAlert.tsx');
 const watchlist = read('src/components/Watchlist.tsx');
 const dashboard = read('src/components/Dashboard.tsx');
+const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
 const favoritePatterns = read('src/components/FavoriteAssetPatternSlots.tsx');
 const profilePage = read('src/components/ProfilePage.tsx');
 
@@ -116,10 +117,12 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     });
 
     expect(rankingBoard).toContain("if (name === 'NO PATTERN' || !name) return null;");
+    expect(rankingBoard).not.toContain('/engulfing|hammer|morning|bullish/i');
+    expect(rankingBoard).not.toContain('/shooting|evening|bearish|hanging/i');
     expect(favoritePatterns).toContain('if (patterns.length === 0) return null;');
   });
 
-  it('projects deterministic BUY/SELL strength without inventing missing pattern evidence', () => {
+  it('projects deterministic BUY/SELL strength only from evidenced direction and strength', () => {
     expect(tokens.patterns.patternBadge.intensity).toEqual({
       strong: { foreground: '100%', background: '18%', border: '45%' },
       medium: { foreground: '100%', background: '10%', border: '30%' },
@@ -127,9 +130,11 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     });
 
     expect(rankingBoard).toContain("strength === 'strong'");
+    expect(rankingBoard).toContain("strength === 'medium'");
     expect(rankingBoard).toContain("strength === 'weak'");
-    expect(rankingBoard).toContain("direction === 'BULLISH' ? 'BUY'");
-    expect(rankingBoard).toContain("direction === 'BEARISH' ? 'SELL'");
+    expect(rankingBoard).toContain(': null;');
+    expect(rankingBoard).toContain("intensity && direction === 'BULLISH'");
+    expect(rankingBoard).toContain("intensity && direction === 'BEARISH'");
     expect(webProjection).toContain('border-score-best/[0.45] bg-score-best/[0.18]');
     expect(webProjection).toContain('border-score-best/30 bg-score-best/10');
     expect(webProjection).toContain('border-score-best/[0.18] bg-score-best/[0.05]');
@@ -171,6 +176,11 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     expect(dashboard).not.toContain("setCategoryFilter('bond')");
     expect(dashboard).not.toContain("setSelectedSymbol('US10Y')");
     expect(dashboard).not.toContain('<span>Bonds</span>');
+
+    expect(dashboardNavigation).toContain("type UniverseId = 'equities' | 'forex' | 'crypto' | 'commodity';");
+    expect(dashboardNavigation).toContain("label: 'Krypto'");
+    expect(dashboardNavigation).not.toContain("category: 'bond'");
+    expect(dashboardNavigation).not.toContain("label: 'Bonds'");
   });
 
   it('keeps profile exports scoped to authoritative client-visible data', () => {
