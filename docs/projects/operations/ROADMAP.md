@@ -35,11 +35,11 @@ Complete read/write capability coverage for Enterprise controls, custom properti
 #### OPS-PR900-03A — GitHub Work-Management Inventory & Package Materialization
 Inventory the currently connected GitHub work-management surfaces and materialize the coordination-only contract without duplicating Roadmap, Project/PVC, platform-version, Governance, Security, Release, Deployment, PR or merge authority.
 
-**State:** `MATERIALIZED_BRANCH / PRE_PR_CORRELATION_READY` on `agent/operations-github-work-management-20260915`.
+**State:** `MERGED / CAPABILITY_GAP_VERIFIED` via Human-merged PR #950 (`merge SHA 1ef0b91ca6b3f61f23f8f1e449ae0deadf6b1ff3`). Post-merge capability re-correlation was performed against `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619` under `/AGENTS.md` v2.11.0.
 
-**Current inventory:** Issues are `AVAILABLE`; Labels and Milestones expose only partial Issue-association surfaces and cannot be completely enumerated/managed as object classes; Issue Types, Organization Issue Fields, Organization Projects/Project Fields and Wiki Pages/Navigation are `NOT_AVAILABLE_ON_CURRENT_CONNECTOR`. `NOT_AVAILABLE_ON_CURRENT_CONNECTOR` is a connector-capability statement only and never proof that an object does not exist.
+**Provider vs connector capability:** Finance repository metadata confirms the GitHub-native repository features `has_issues=true`, `has_projects=true` and `has_wiki=true`, and the Issue surface supports association to an already known milestone number. Those provider facts do not prove that the currently connected ChatGPT GitHub connector exposes complete object-level inventory, mutation and readback. On the current connector, Issues are `AVAILABLE`; Labels and Milestones remain `PARTIAL_SURFACE`; Issue Types, Organization Issue Fields, Organization Projects/Project Fields and Wiki Pages/Navigation remain `NOT_AVAILABLE_ON_CURRENT_CONNECTOR`. This is an execution-surface gap, not proof that the corresponding GitHub-native object or feature does not exist.
 
-**Exit:** each requested metadata category has a reproducible capability classification; Roadmap, work-package register, detail contract and package index are consistent; no parallel valid content is lost; final main/head/open-writer correlation is PASS before PR approval.
+**Exit:** `PASS` for 03A — each requested metadata category has a reproducible provider-versus-connector classification; Roadmap, work-package register and detail contract distinguish GitHub-native feature state from connected execution-surface capability; no partial 03B pilot is represented as success.
 
 Detail: `work-packages/OPS_PR900_03A_GITHUB_WORK_MANAGEMENT_2026-09-15.md`.
 
@@ -48,9 +48,11 @@ Sequence: `Taxonomy -> Issue Intake -> Organization Project -> Milestone -> PR -
 
 **State:** `BLOCKED / NOT_STARTED`.
 
-03B starts only after 03A is completed against then-current main, all required object/mutation/readback surfaces are available through an authorized execution path, and the pilot can preserve the coordination-only authority boundary. No partial pilot counts as success.
+**Current blocker:** `CONNECTOR / EXECUTION-SURFACE GAP`. 03B requires Organization Projects V2 + Project Fields, Milestone object management and Wiki navigation to be available through an already authorized execution path with both mutation and readback. The current connected connector does not expose that complete capability set, so no Issue/Project/Milestone/Wiki partial pilot is created.
 
-**Exit:** one real Roadmap work package traverses Issue -> Project -> PR -> Done with a non-versioned delivery-cohort Milestone and navigation-only Wiki backlinks, without creating a second Roadmap/version/Governance/Security/Release/Deployment authority.
+03B starts only after all required object/mutation/readback surfaces are available through an authorized execution path and the pilot can preserve the coordination-only authority boundary. No connector, OAuth, permission or provider integration mutation is implied by this Roadmap state.
+
+**Exit:** one real Roadmap work package traverses Issue -> Project -> PR -> Done with a non-versioned delivery-cohort Milestone and navigation-only Wiki backlinks, with each mutable provider step reproducibly read back, without creating a second Roadmap/version/Governance/Security/Release/Deployment authority.
 
 ### OPS-PR900-04 — Multi-LLM gateway / OAuth2 / MCP convergence
 Correlate existing gateway foundations; select/reuse one canonical architecture; retire or justify duplicates. Protected provider operations must be least-privileged, attributable and auditable; migration requires rollback/compatibility evidence.
