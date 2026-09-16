@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/security/`  
 **Role:** cross-cutting Security requirements, findings, bounded remediation and independent verification  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — project-chat deltas plus PR #922/#923/#924/#929/#931 current-main state correlated; no unmaterialized chat return promoted to VERIFIED  
-**Baseline:** `main@da8cdfd715bdffda0dc8e2bb463898455a920399`  
+**Reconciliation:** 2026-09-16 — current-main provider-boundary readback plus PR #956/#967/#969 outcome correlation materialized; PR #992 Trust-Root merge and subsequent DATA/QM Roadmap merges re-correlated; no unobserved provider state or chat return promoted to VERIFIED  
+**Baseline:** `main@cf1d8b84f2455c0859f61407773ad9022dff00fa`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -53,13 +53,14 @@ Human-merged PR #929 materializes the FINTECH/PVC-15 `FIN-SEC-03` owner return f
 Verify roles, least privilege, data minimization, provider permissions and separation from authority.
 
 - **Controlled CodeQL Autofix:** Human-merged PR #923 is `DONE_MAIN` and contains the bounded GitHub-native runner/workflow/test slice for suitable open HIGH/CRITICAL CodeQL alerts, with fail-closed quarantine for Governance/IAM/Billing/Entitlement/Secrets/Provider/DB/Infra/`.github` scope and without automatic PR creation, merge, auto-merge or alert dismissal. Human-merged PR #931 adds explicit decision/reason outputs plus bounded non-sensitive `decision.json` artifact evidence and focused unit coverage so alert selection, quarantine and no-candidate outcomes can be reproduced from hosted-run evidence. These merges prove repository implementation/observability only; they do not independently verify effective provider permissions, a successful safe-candidate run, or finding closure.
-- **GH-READ-01 — GitHub security settings readback:** project-chat returns report later Code Scanning verification plus additional `security_events` / `read:audit_log` access, while SSO remained not configured, Audit Streaming was not conclusively evidenced, and an Environment endpoint produced an unresolved HTTP 404/root-cause gap. Current disposition: `CHAT_RETURN / PROVIDER_STATE_NOT_PROVEN`. Re-read the exact current GitHub organization/repository security state through authorized read-only surfaces and record what is actually observable. No PAT/SSO/audit-streaming/environment/provider permission mutation is authorized by this Roadmap item.
+- **Selective provider workflows / terminal #969:** PR #967 is Human-merged and established selective CodeQL/Copilot repository controls. PR #969 is terminal `CLOSED / NOT MERGED`; its payload is not assumed. Current `main@cf1d8b84f2455c0859f61407773ad9022dff00fa` is authoritative and independently contains a manual-dispatch Selective CodeQL fallback using immutable checkout v5.1.0 with `persist-credentials: false`, a manual Copilot review-request workflow with no repository checkout and job-bounded `pull-requests: write`, and strict JSON changed-file parsing in the canonical PR planner. No work is reopened merely because #969 itself was not merged.
+- **GH-READ-01 — GitHub security settings readback:** `docs/evidence/security/SEC_PR900_05_GITHUB_PROVIDER_READBACK_2026-09-16.md` materializes a current read-only repository/provider boundary. Live ruleset `20849710` (`main-production-protection`) is active, has `current_user_can_bypass=never`, `require_code_owner_review=false`, Code Quality at `warnings`, License Compliance Scanning enabled, and exactly four Required Status Checks: `GitGuardian Security Checks`, `Hardened image / HIGH+CRITICAL CVE gate`, `PR Governance (Kosten / Workflow / Vorlage)`, and `build-and-test`. CodeQL is not a Required Status Check. The connected repository surface does not expose the direct Code Scanning Default Setup endpoint, so effective Default Setup, SSO, Audit Streaming, Environment/provider-permission and Secret-Protection state remain `NOT_FULLY_PROVEN`; unsupported readback is never converted into provider PASS/FAIL. Current disposition: `PARTIAL_VERIFIED / PROVIDER_STATE_NOT_FULLY_PROVEN`. No PAT/SSO/audit-streaming/environment/provider permission mutation is authorized by this Roadmap item.
 - **PostHog / telemetry:** continue vendor-neutral least-privilege, data-minimization and authority-separation verification; repository implementation or documentary closure does not substitute for effective provider-role/readback evidence where provider state is material.
 
 ### SEC-PR900-06 — Prompt/MCP trust findings
 Verify F01/F06 prompt/history provenance returns and F04 external MCP effective grants/session/read-only boundaries with live/effective evidence where applicable.
 
-## Project-chat reconciliation ledger — 2026-09-15
+## Project-chat reconciliation ledger — 2026-09-16
 
 This compact ledger records the disposition of materially relevant Security project-chat themes against current main. It is a reconciliation aid inside the canonical Roadmap, not a second task registry or authority layer.
 
@@ -70,7 +71,9 @@ This compact ledger records the disposition of materially relevant Security proj
 | PR #924 — Supabase migration ledger | `FOREIGN_OWNER DONE_MAIN / SUPPORTING_EVIDENCE` | OPS/PVC-02 evidence may support ULS/migration correlation; no Security closure inferred |
 | PR #929 — FIN-SEC-03 Paid Analysis Entitlement | `FOREIGN_OWNER DONE_MAIN / IMPLEMENTED / EVIDENCE_READY / SECURITY_VERIFICATION_REQUESTED` | FINTECH/PVC-15 implementation is on main; independent Security ALLOW/DENY, bypass and fail-closed executor verification remains open |
 | PR #931 — Controlled CodeQL Autofix Decision Evidence | `DONE_MAIN / OBSERVABILITY_IMPLEMENTED` | decision/reason outputs and bounded non-sensitive run artifact support reproducible subsequent verification; no successful safe-candidate run or provider-permission verification is inferred |
-| GH-READ-01 / GitHub Enterprise security settings | `CHAT_RETURN / NOT_PROVEN_CURRENT_PROVIDER` | bounded read-only verification under `SEC-PR900-05`; mutations remain separately authorized |
+| PR #956 — S1-R2-11 independent Security verification | `DONE_MAIN / VERIFIED_REPOSITORY_SCOPE` | exact PR-head hosted TypeScript + Unit PASS and unchanged DATA/SEC contract/test blobs satisfy repository-scoped Security verification; downstream Compliance reassessment remains separate |
+| PR #967 / #969 — selective provider workflow lineage | `#967 DONE_MAIN / #969 CLOSED_UNMERGED` | current main is authoritative; do not assume #969 payload, and do not reopen already-materialized current-main hardening |
+| GH-READ-01 / GitHub Enterprise security settings | `PARTIAL_VERIFIED / PROVIDER_STATE_NOT_FULLY_PROVEN` | live ruleset/repository workflow boundary materialized under `SEC-PR900-05`; unobservable Default Setup/SSO/Audit/Environment/provider state remains open; no mutation |
 | SEC-VERIFY-ULS-001 later 3/3 lineage chat return | `CHAT_RETURN / CONFLICTS_WITH_CURRENT_MAIN_EVIDENCE` | reproduce exact provider state and materialize fresh independent Security evidence before any status promotion |
 | SEC-SOTA-04 / ASVS 5 verification | `ACTIVE / VERIFICATION_OPEN` | V3/V4/V6/V8/V16 plus provider/runtime-dependent V5/V10/V12 evidence continue |
 | SEC-AUTH-LIFECYCLE / ESS-0020 / ADR-0064 / MFA | `OPEN / CLARIFY` | no unilateral lifecycle/provider mutation; current authority and provider evidence required |
@@ -78,7 +81,7 @@ This compact ledger records the disposition of materially relevant Security proj
 | S1-R2-03..S1-R2-11 Security hardening | `MIXED — see absorbed-work table` | preserve owner routing and exact open verification gates; do not duplicate foreign-owner implementation |
 | S1-R2-06 / FIN-SEC-03 entitlement children | `ACTIVE / OWNER_RETURN_IMPLEMENTED / SEC_VERIFICATION_OPEN` | screening/Buffett remediations and PR #929 paid-analysis implementation are on main; independent SEC verification remains open |
 | SEC-SOTA02 F01-F06 prompt/MCP trust | `ACTIVE / OWNER_ROUTED` | continue under `SEC-PR900-06` and absorbed-work table; live grants/provenance require effective evidence |
-| CodeQL/PostHog provider boundary discussion | `PARTIAL` | CodeQL automation plus decision-evidence observability are on main; least-privilege/effective-provider and successful-run verification remain open |
+| CodeQL/PostHog provider boundary discussion | `PARTIAL_VERIFIED` | current GitHub ruleset/workflow boundary is reproduced; effective provider roles/states and PostHog provider evidence remain open where not directly observable |
 | Historical documentary/source-chat preservation work | `NON_AUTHORIZING / NO EXECUTION DELTA` | do not create Security work merely to preserve or close a source chat |
 | Foreign project chats (OPS/QM/FE/SEO/SOCIAL/DOC/GOV) | `DEPENDENCY_ONLY unless Security return exists` | do not copy foreign-owner work into SEC; reference only Security verification/evidence dependencies |
 
@@ -101,7 +104,7 @@ This compact ledger records the disposition of materially relevant Security proj
 | S1-R2-08 leaked-password | OPS PVC-08 | `OWNER-ACCEPTED / TIER EXCEPTION` | reassess if provider tier changes |
 | S1-R2-09 strict CSP promotion | OPS PVC-08 | `PARTIAL / REPORT-ONLY` | ADR-0040 promotion evidence |
 | S1-R2-10 demo billing isolation | OPS PVC-08 | `MERGED / POST-DEPLOY VERIFY PENDING` | production cannot reach DEV simulation |
-| S1-R2-11 evidence identity/freshness | DATA PVC-10 | `MERGED / VERIFY PENDING` | deterministic current/stale/wrong-identity |
+| S1-R2-11 evidence identity/freshness | DATA PVC-10 | `VERIFIED_MAIN / CLOSED — repository scope` via PR #956 | downstream Compliance reassessment only; reopen Security verification only on relevant contract/evidence drift |
 | SEC-SOTA02-F01 prompt-injection trust | FINTECH PVC-15 + CLIENT | `CONFIRMED / OWNER_ROUTED` | malicious retrieved-instruction + history-role-spoof DENY |
 | SEC-SOTA02-F02 Draft-PR dispatch gate | DOC PVC-03 | `CONFIRMED / OWNER_ROUTED` | stop at approval-ready handoff |
 | SEC-SOTA02-F03 mutation audit | DOC PVC-03 | `CONFIRMED / OWNER_ROUTED` | durable authorization/outcome evidence |
@@ -121,7 +124,7 @@ Independent Security re-correlation is recorded in `docs/evidence/security/S1_R2
 
 S1-R2-06 is **not** `VERIFIED` or `CLOSED` as a whole.
 
-`EVIDENCE_READY != VERIFIED`. Implementation and verification remain separate steps. PR #905 (license identity), PR #918 (route-guard hardening), PR #919 (PR-governance/Render identity), PR #920 (Buffett bearer transport), PR #922 (Security consistency/ASVS dispositions), PR #923 (controlled CodeQL autofix), PR #924 (OPS Supabase migration ledger), PR #929 (FINTECH paid-analysis entitlement), and PR #931 (controlled CodeQL autofix decision evidence) are Human-merged on current main. Their merge state does not promote unrelated provider/runtime gates to PASS.
+`EVIDENCE_READY != VERIFIED`. Implementation and verification remain separate steps. PR #905 (license identity), PR #918 (route-guard hardening), PR #919 (PR-governance/Render identity), PR #920 (Buffett bearer transport), PR #922 (Security consistency/ASVS dispositions), PR #923 (controlled CodeQL autofix), PR #924 (OPS Supabase migration ledger), PR #929 (FINTECH paid-analysis entitlement), PR #931 (controlled CodeQL autofix decision evidence), PR #956 (S1-R2-11 independent verification), and PR #967 (selective provider execution) are Human-merged on current main. Their merge state does not promote unrelated provider/runtime gates to PASS. PR #969 is closed without merge and is not treated as integrated evidence.
 
 ## Dependencies
 Productive owners CLIENT/OPS/DATA/FINTECH; GOV normative decisions; COMP legal judgments; QM exact-snapshot evidence.
