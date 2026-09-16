@@ -12,6 +12,7 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const legacyDashboard = read('src/components/Dashboard.tsx');
+const dashboardHeader = read('src/app/dashboard/DashboardHeader.tsx');
 const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
 const dashboardNavigationModel = read('src/app/dashboard/dashboardNavigation.ts');
 
@@ -72,7 +73,9 @@ describe('BB-2E dashboard view contract', () => {
   it('keeps residual dashboard targets and app-owned navigation bound to the canonical view contract', () => {
     expect(legacyDashboard).toContain("import type { DashboardView } from '../app/dashboard/dashboardViews'");
     expect(legacyDashboard).toContain("useState<DashboardView>('dashboard')");
-    expect(legacyDashboard).toContain('<DashboardNavigation');
+    expect(legacyDashboard).toContain('<DashboardHeader');
+    expect(legacyDashboard).not.toContain('<DashboardNavigation');
+    expect(dashboardHeader).toContain('<DashboardNavigation');
     expect(dashboardNavigationModel).toContain('satisfies readonly DashboardNavigationItem[]');
     expect(dashboardNavigation).toContain('onClick={() => navigate(item.view)}');
 

@@ -1,17 +1,14 @@
 name: Selective CodeQL
-run-name: >-
-  ${{ github.event_name == 'pull_request'
-      && format('PR #{0} – selektive CodeQL-Analyse', github.event.pull_request.number)
-      || format('{0} – vollständige CodeQL-Analyse', github.event_name) }}
+run-name: Manuelle CodeQL-Analyse
 
+# OPS-02-CI-01 cost invariant:
+# Automatic PR/push/schedule fan-out is intentionally retired. CodeQL is not a
+# Required Check in the live main ruleset. Repository CI must not allocate an
+# optional hosted runner merely to discover `codeql_mode=none` or an already
+# active GitHub Default Setup. A Human may explicitly dispatch this fallback;
+# provider-side Code Security/Default Setup state remains a separate protected
+# setting and is not mutated by this workflow.
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
-  push:
-    branches: [main]
-  schedule:
-    - cron: '19 3 1 * *'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +17,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: selective-codeql-${{ github.event.pull_request.number || github.ref }}
+  group: selective-codeql-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,24 +32,13 @@ jobs:
       default_setup_active: ${{ steps.provider.outputs.default_setup_active }}
       reason: ${{ steps.validation_plan.outputs.reason }}
     steps:
-      - name: PR-Dateien und GitHub-Default-Setup read-only korrelieren
+      - name: GitHub-Default-Setup read-only korrelieren
         id: provider
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const isPr = context.eventName === 'pull_request';
-            let files = [];
-
-            if (isPr) {
-              const prNumber = context.payload.pull_request.number;
-              const changed = await github.paginate(
-                github.rest.pulls.listFiles,
-                { owner, repo, pull_number: prNumber, per_page: 100 },
-              );
-              files = changed.map((entry) => entry.filename);
-            }
 
             let defaultSetupActive = true;
             try {
@@ -67,28 +53,19 @@ jobs:
               core.info(
                 dynamicCodeql
                   ? `GitHub CodeQL Default Setup: path=${dynamicCodeql.path} state=${dynamicCodeql.state}`
-                  : 'Kein dynamischer GitHub-CodeQL-Workflow gefunden; Advanced Setup darf nach Planner-Entscheidung laufen.',
+                  : 'Kein dynamischer GitHub-CodeQL-Workflow gefunden; manueller Advanced-Setup-Fallback darf nach Planner-Entscheidung laufen.',
               );
             } catch (error) {
               core.warning(`Default-Setup-State nicht reproduzierbar lesbar; Advanced CodeQL bleibt fail-closed gesperrt: ${error.message}`);
               defaultSetupActive = true;
             }
 
-            // JSON is authoritative for the JSON-capable planner. The legacy
-            // shadow keeps the first migration PR compatible with its trusted
-            // pre-JSON base planner and is fail-closed for delimiter-bearing names.
-            if (files.some((file) => /[\r\n]/.test(file))) {
-              throw new Error('Changed-file name contains CR/LF; legacy trusted-base planner compatibility cannot encode it safely.');
-            }
-
             core.setOutput('default_setup_active', String(defaultSetupActive));
-            core.setOutput('changed_files_json', JSON.stringify(files));
-            core.setOutput('changed_files_legacy', files.join('\n'));
 
-      - name: Trusted Policy-Snapshot aus PR-Base bzw. aktuellem main auschecken
+      - name: Trusted Policy-Snapshot aus aktuellem main auschecken
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}
+          ref: main
           path: policy
           fetch-depth: 1
           persist-credentials: false
@@ -98,15 +75,13 @@ jobs:
         with:
           node-version: '24.18.0'
 
-      - name: Diff-basierten CodeQL-Plan aus trusted base bestimmen
+      - name: Manuellen vollständigen CodeQL-Plan bestimmen
         id: validation_plan
         working-directory: policy
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          CI_FORCE_FULL: ${{ github.event_name == 'pull_request' && 'false' || 'true' }}
-          CHANGED_FILES_JSON: ${{ steps.provider.outputs.changed_files_json }}
-          CHANGED_FILES: ${{ steps.provider.outputs.changed_files_legacy }}
-        run: node scripts/pr/planPrValidation.mjs
+          EVENT_NAME: workflow_dispatch
+          CI_FORCE_FULL: 'true'
+        run: node scripts/pr/planPrValidation.mjs --force-full
 
       - name: Sprachmatrix materialisieren
         id: matrix
@@ -130,7 +105,7 @@ jobs:
           echo "default_setup_active=$DEFAULT_SETUP_ACTIVE"
           echo "reason=$PLAN_REASON"
           if [ "$DEFAULT_SETUP_ACTIVE" = "true" ]; then
-            echo "GitHub Default Setup ist aktiv; Advanced CodeQL bleibt für diesen Lauf absichtlich deaktiviert."
+            echo "GitHub Default Setup ist aktiv; manueller Advanced CodeQL bleibt für diesen Lauf absichtlich deaktiviert."
           fi
 
   analyze:
@@ -148,10 +123,10 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - name: Exakten Analyse-Snapshot auschecken
+      - name: Exakten main-Snapshot auschecken
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          ref: main
           fetch-depth: 1
           persist-credentials: false
 
@@ -163,4 +138,4 @@ jobs:
       - name: CodeQL analysieren
         uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4 @ 2026-09-09
         with:
-          category: /language:${{ matrix.language }}/scope:${{ needs.plan.outputs.codeql_mode }}
+          category: /language:${{ matrix.language }}/scope:manual-full
