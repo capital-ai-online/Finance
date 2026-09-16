@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/seo/`  
 **Role:** cross-cutting SEO and Google Marketing execution/project coordination  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — post-PR #959 automation reactivation plus merged FE owner-return correlation for WP-SEO-TECH-GATE / WP-SEO-SCHEMA  
-**Baseline:** `main@5ae2b371da45a5c07304fd704a7026eded976f1b`  
+**Reconciliation:** 2026-09-16 — post-PR #959 automation reactivation plus merged FE owner-return correlation for WP-SEO-TECH-GATE / WP-SEO-SCHEMA; resynchronized after Human-merged PR #960  
+**Baseline:** `main@f81e596b66c37d418c126451f1520f02b2bbdf7e`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
