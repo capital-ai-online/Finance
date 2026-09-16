@@ -1,5 +1,15 @@
 export { Dashboard, type DashboardProps } from './Dashboard';
 export {
+  DashboardNavigation,
+  type DashboardNavigationAdminTab,
+  type DashboardNavigationProfile,
+  type DashboardNavigationProps,
+} from './DashboardNavigation';
+export {
+  DashboardNavigationDrawer,
+  type DashboardNavigationDrawerProps,
+} from './DashboardNavigationDrawer';
+export {
   DashboardViewRouter,
   type DashboardAdminTab,
   type DashboardViewRouterProps,
