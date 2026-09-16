@@ -250,8 +250,16 @@ export function buildVersionedUnitInventory(
     units.push(inheritedUnit('application-module', moduleName, normalizeSlashes(path.join('src', moduleName)), platformVersion, commit));
   }
 
-  if (fs.existsSync(path.join(repoRoot, 'server')) && fs.statSync(path.join(repoRoot, 'server')).isDirectory()) {
-    units.push(inheritedUnit('backend-service', 'server', 'server', platformVersion, commit));
+  const serverEntry = path.join(repoRoot, 'server.ts');
+  const serverDirectory = path.join(repoRoot, 'server');
+  if (fs.existsSync(serverEntry) || (fs.existsSync(serverDirectory) && fs.statSync(serverDirectory).isDirectory())) {
+    units.push(inheritedUnit(
+      'backend-service',
+      'server',
+      fs.existsSync(serverEntry) ? 'server.ts' : 'server',
+      platformVersion,
+      commit,
+    ));
   }
 
   units.sort((a, b) => a.unitId.localeCompare(b.unitId));
