@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-14 — PR #900/#901 contents folded into this file  
-**Baseline:** `main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`  
+**Reconciliation:** 2026-09-16 — current-main terminal PR state plus Controlled PR CI Autofix slice correlated  
+**Baseline:** `main@aaf246511cc75c525a56ec13728504ee5516b6c3`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -77,7 +77,7 @@ Correlate existing gateway foundations; select/reuse one canonical architecture;
 #### OPS-PR900-04A — GitHub App / MCP Reader Setup
 Materialize the least-privileged Reader contract for durable GitHub Enterprise, Organization, Repository and Security readback through the existing Codex/MCP convergence path without enabling Controller authority or creating a second credential/control plane.
 
-**State:** `MATERIALIZED_BRANCH / READER_CONTRACT_READY / PROVIDER_MUTATION_HELD` on `agent/operations-github-reader-setup-20260916`, based on `main@3e755873078b5f6fd3e2213960d0d83eea7c4a83` after Human-merged PR #962.
+**State:** `MERGED / READER_CONTRACT_READY / PROVIDER_MUTATION_HELD` via Human-merged PR #970 (`merge SHA 7f680c432dbf172a5b672ae0a3bd521b36b11dbe`).
 
 **Reader boundary:** normal target identity is a GitHub App with short-lived installation tokens behind the CAPITAL-AI MCP gateway. Reader capabilities are explicitly allowlisted and limited to required Enterprise/Organization/Repository settings inventory plus Actions, Code Scanning, Secret Scanning and Dependabot readback. No Controller/write grant, universal admin PAT, GitHub credential in model context or speculative `.codex` GitHub endpoint is introduced.
 
@@ -99,6 +99,21 @@ Return reproducible evidence for CORS composition, CSP reporting/strict-CSP prom
 
 **Exit:** each return is exact-identity/time/snapshot bound and ready for independent SEC verification.
 
+### OPS-PR900-07 — Controlled PR CI Autofix
+Replace the unsafe historical automatic Self-Heal pattern with an exact-head, least-privileged control loop for failed PR `build-and-test` runs under `PVC-02 — Controlled Implementation`.
+
+**State:** `MATERIALIZED_BRANCH / PROVIDER-COST-GATED / FINAL_REQUIRED-CHECK-AUTHORITATIVE` on `agent/operations-pr-ci-autofix-20260916`, based on `main@aaf246511cc75c525a56ec13728504ee5516b6c3` after PR #969 became terminal closed/unmerged and PR #970 became Human-merged.
+
+**Current slice:** failed `build-and-test` runs are correlated to exactly one open same-repository PR and exact base/head identity; protected/fork/unknown/infrastructure/deployment cases fail closed; at most two repair attempts are allowed. A deterministic README projection repair is available without AI-provider spend. TypeScript/test/build repairs can use pinned GitHub Copilot CLI only when the existing repository variable `CAPITAL_AI_CI_AUTOFIX_COPILOT_ENABLED` is explicitly `true`; this slice does not create a subscription, license, variable or provider entitlement.
+
+**Privilege boundary:** read-only plan and patch generation are separated from the write-capable apply job. Candidate PR code is never executed in the repository-write job. Patch SHA-256, trusted-base patch guards and exact `git write-tree` bind the write to the tree that passed read-only revalidation. Current main and PR head/base/ref/repository are re-read immediately before write; drift blocks mutation.
+
+**CI/Merge boundary:** the controller never synthesizes or reports `build-and-test`. The new PR head still requires authoritative hosted CI and Human/CODEOWNER merge. The historical `.github/workflows/self-heal-ci.yml` remains suspended/read-only; productive M10 remains retired/off.
+
+**Exit:** safe/reproducible failures can enter `detect -> classify -> patch -> revalidate -> write`; protected or ambiguous cases stop fail-closed; cost/loop ceilings hold; no privileged job executes untrusted PR code; no Direct-Main or auto-merge path exists; final hosted Required Check remains authoritative.
+
+Detail: `work-packages/OPS_PR900_07_CONTROLLED_PR_CI_AUTOFIX_2026-09-16.md`.
+
 ## Carried-forward baseline (pre-2026-09-13)
 
 | Workstream | PVC | State |
@@ -116,7 +131,7 @@ Return reproducible evidence for CORS composition, CSP reporting/strict-CSP prom
 | OPS-08-SEC-07 Recovery / RPO / RTO | PVC-08 | harness on main; measured evidence open |
 | OPS-02-SEC-06 Entitlement inventory | PVC-02 | parent complete; child returns + SEC verification open |
 | DR-03 | — | BLOCKED_BY_HIGHER_PRIORITY_OPS_GATE |
-| OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | separate branch; fail-closed; not merged |
+| OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | separate historical readiness branch; fail-closed; not merged; not reactivated by OPS-PR900-07 |
 
 Invariants: Render native Auto Deploy remains off; productive M10 is `RETIRED / OFF`; provider/production mutation requires separate authorization; GitGuardian health/audit is `sources:read` management evidence, not a second scanner.
 
