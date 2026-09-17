@@ -6,9 +6,7 @@
 
 | Component / contract | Canonical anchor | GOV relationship | Current architecture assessment | Action |
 |---|---|---|---|---|
-| Agent Trust Root | `/AGENTS.md` | consume / maintain within authority | single repository-wide trust root; Control Plane v2.8.0 | KEEP SINGLE |
-| DevelopmentChain execution policy | `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` | governance policy | exact-snapshot PR gate and copyable chat-run/post-PR handoffs remain current | KEEP CURRENT |
-| Chat handoff control | `CTRL-SDLC-CHAT-HANDOFF-001` | existing lifecycle control | `CHAT_RUN_HANDOFF` + `POST_PR_HANDOFF` active after PR #772 | DONE_MAIN / MAINTAIN |
+| Agent Trust Root | `/AGENTS.md` | consume / maintain within authority | single repository-wide trust root; execution semantics resolve only from current main | KEEP SINGLE |
 | Governance Control Plane | ADR-0096 + `docs/governance/**` + `src/platform/Governance` | cross-cutting owner | current controlling Governance architecture | KEEP / NO PARALLEL PLANE |
 | Control Catalog | `docs/governance/control-catalog.json` | owner / validator input | current merged controls remain authoritative within scope | KEEP SINGLE |
 | Authority Registry | `docs/governance/authority-registry.json` | owner / resolution | current merged authority/version projection | KEEP SINGLE |

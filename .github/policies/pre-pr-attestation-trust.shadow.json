@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "authorityId": "AUTH-GOV-HOSTED-VALIDATION-COST-SUPERSESSION-2026-08-21",
   "state": "SHADOW_ONLY",
-  "repository": "SvenKulessa/Finance",
+  "repository": "capital-ai-online/Finance",
   "maxAgeSeconds": 3600,
   "requiredToolchain": {
     "node": "24.18.0",
@@ -12,5 +12,5 @@
   "signers": [],
   "authorizesRequiredCheck": false,
   "authorizesMerge": false,
-  "note": "No signer is trusted during S4-S6. Provisioning a signer or consuming this evidence for CI requires a separate Owner-approved cutover."
+  "note": "SHADOW_ONLY evidence projection. It creates no AI/chat/development instruction, task-status, ownership, dependency, required-check, merge or deployment authority. /AGENTS.md@CURRENT_MAIN is the sole repository-wide AI/development trust root. No signer is trusted during S4-S6; provisioning a signer or consuming this evidence for CI requires a separate Owner-approved cutover."
 }
