@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.1.0`  
+**Control Plane Version:** `4.3.0`  
 **Status:** OWNER-DIRECTED — effective after Human/CODEOWNER merge  
 **Effective date:** 2026-09-17  
 **Repository:** `capital-ai-online/Finance`
@@ -64,6 +64,16 @@ For every work item resolve from `CURRENT_MAIN`:
 
 Missing, contradictory or ambiguous authority fails closed. Never invent a PVC, Owner, approval or project assignment.
 
+### DATA → FINTECH ownership supersession invariant
+
+Effective with Human/CODEOWNER merge of this control-plane update, `CAPITAL-AI-DATA` is **superseded as an independent Project Owner and execution source**. `PVC-09`, `PVC-10` and `PVC-11` resolve to `CAPITAL-AI-FINTECH`; the FINTECH productive ownership range is therefore `PVC-09..PVC-17`. `docs/projects/data/` is retained only as a historical/compatibility surface and MUST NOT advertise active Primary ownership, create executable tasks or act as a current project-routing source.
+
+All current organizational projections — including `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md`, project `PVC_OWNERSHIP.md` files, ROADMAP/TASK_REGISTER projections, generated reports and current machine-readable ownership indexes — MUST converge on that mapping. A current projection that still assigns `PVC-09..11` to `CAPITAL-AI-DATA` is stale drift and MUST be treated fail-closed until corrected.
+
+Historical evidence may preserve the former DATA ownership text verbatim for audit provenance. Historical `.ai/work-claims/*` records that still identify DATA as owner or retain `status=active` / `exclusive=true` after their associated work has merged, closed, been superseded or abandoned are stale coordination metadata; they MUST be released (`status=released`, `exclusive=false`) when touched and MUST NOT be interpreted as an active writer.
+
+This supersession changes organizational ownership only. It MUST NOT create a second provider-ingress, provenance, Data Quality, scoring, registry, dispatcher or technical `VC-*` authority; existing accepted technical/domain contracts remain the subject-matter source for those semantics.
+
 Work that belongs to another canonical Owner is handed over with source/target Owner, completed and remaining scope, dependency, evidence reference, exit gate, continuation condition and correlation ID. Detection of foreign work never transfers ownership and never silently authorizes implementation outside the resolved scope.
 
 ### Project-direction rules
@@ -119,6 +129,21 @@ Every repository change is delivered through a Pull Request. PR creation may be 
 Human/CODEOWNER review and merge remain separate external authority. Agents MUST NOT self-approve, self-merge, enable auto-merge, remove protection, weaken required checks or infer merge authority from green CI, reviews, labels, comments, elapsed time or metadata.
 
 Protected Production, IAM, Billing, Secret, DNS, destructive-data and equivalent external mutations require their separately applicable authority; repository scope alone does not grant them.
+
+### Post-merge production correlation SLA
+
+Every Human/CODEOWNER merge into `main` creates a mandatory post-merge correlation obligation for the chat or execution context that created or materially advanced the merged Pull Request. That originating context MUST, when it is next active and has the required capabilities, read back the merged Pull Request, the then-current `main` SHA, the related open dependent Pull Requests and the production deployment identity. It MUST report the correlation in that same originating chat/context rather than silently relying on CI status alone.
+
+For the canonical GitHub→Render production path, the post-merge SLA is:
+
+1. the merge commit SHA and then-current `main` SHA MUST be read back and compared;
+2. the `deploy-production` path for that exact SHA MUST be observed as triggered no later than five minutes after the merge commit timestamp; the GitHub Actions deploy-hook step timestamp is valid trigger evidence when Render provider timing is not directly readable;
+3. production MUST be verified against the exact then-current `main` SHA through the canonical deployment-identity surface (`/healthz` deployment headers or a stronger provider readback); branch/repository identity and health MUST remain consistent;
+4. a missing deploy trigger, trigger later than five minutes, failed deployment verification, or production SHA different from then-current `main` is `PRODUCTION_DRIFT` and MUST NOT be represented as PASS;
+5. every dependent/open Pull Request whose base, ancestry, production baseline, owner projection or semantic assumptions changed because of the merge MUST be re-correlated in dependency order before it is treated merge-ready;
+6. the repository automation SHOULD create or update one deduplicated production-drift issue containing expected SHA, observed production SHA, detection time, workflow/deploy evidence and current remediation state; after exact convergence is proven, that issue SHOULD be automatically annotated and closed.
+
+The five-minute value is an operational SLA for observing the deploy trigger, not permission to bypass required pre-deploy validation. If required CI prevents a safe deployment from starting within the SLA, the condition is reported as an SLA breach with its blocking evidence; controls are never weakened merely to meet the clock.
 
 ## 6. Bounded self-healing and convergence
 
