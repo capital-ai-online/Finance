@@ -12,7 +12,7 @@ export interface FintechHistoryPoint {
 }
 
 /**
- * DATA-owned projection of the existing canonical ValidatedHistoryInput across
+ * FINTECH-owned validated-data projection of the existing canonical ValidatedHistoryInput across
  * PVC-11 -> PVC-12. It does not create a second history authority: callers must
  * first use buildValidatedHistoryInput(), which remains responsible for provider
  * input validation, provenance and signed-vs-price value semantics.
