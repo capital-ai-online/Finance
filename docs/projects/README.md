@@ -67,7 +67,7 @@ Project-folder routing is an organizational mapping only. It does not create tec
 | `CAPITAL-AI-DOC` | `PVC-03` Primary Owner | `docs/projects/documentary/` | `documentary` | Documentary | 📋 | `#5CB060` | `CAPITAL-AI-DOC` | present |
 | `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance | `docs/projects/governance/` | `governance` | Governance | 🧠 | `#A1A1AA` | `CAPITAL-AI-GOV` | present |
 | `CAPITAL-AI-FINTECH` | `PVC-09..17` Primary Owner | `docs/projects/fintech/` | `fintech` | FinTech | 📊 | `#E080AC` | `CAPITAL-AI-FINTECH` | present |
-| `CAPITAL-AI-DATA` | superseded; no productive PVC | `docs/projects/data/` | `data` | Data (historical) | 📁 | `#8058CC` | `CAPITAL-AI-DATA` | historical compatibility surface |
+| `CAPITAL-AI-DATA` | superseded; no productive PVC | `docs/projects/data/` | `data` | Data (historical) | 📁 | `#8058CC` | `CAPITAL-AI-DATA` | present — historical compatibility surface |
 | `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | Quality Management | 🩺 | `#4480E8` | `CAPITAL-AI-QM` | present |
 | `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | Security | 💻 | `#E04C4C` | `CAPITAL-AI-SEC` | present |
 | `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | Compliance | ⚖️ | `#E84848` | `CAPITAL-AI-COMP` | present |
