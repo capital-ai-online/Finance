@@ -45,8 +45,8 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(core).not.toContain('httpx.');
   });
 
-  it('projects generic Social Media rendering to Dark Black + AIF Gold under Branding Manifest v6.2', () => {
-    expect(designTokens.color.brand.primary.value).toBe('#F9BF21');
+  it('projects generic Social Media rendering to the current charcoal + Capital Gold contract', () => {
+    expect(designTokens.color.brand.primary.value).toBe('#F5C453');
     expect(designTokens.color.brand.cyan.value).toBe(designTokens.color.brand.primary.value);
     expect(designTokens.color.brand.cyan.deprecated).toBe(true);
     expect(designTokens.color.semantic.info.value).toBe('#22D3EE');

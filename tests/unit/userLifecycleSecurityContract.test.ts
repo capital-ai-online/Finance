@@ -52,16 +52,22 @@ describe('GOV-CHAT-042 user lifecycle security contract', () => {
     expect(session).toContain('<RegistrationCompletionGate');
     expect(session).toContain('<LoginStepUpGate');
     expect(session).toContain('await supabase.auth.getSession();');
-    expect(session).toContain('receivedUserId !== expectedUserId');
+    expect(session).toContain('liveSession.user.id !== verifiedSession.user.id');
+    expect(session).toContain("code: 'IDENTITY_MISMATCH_DETECTED'");
+    expect(session).toContain('expectedId: verifiedSession.user.id');
+    expect(session).toContain('receivedId: liveSession.user.id');
     expect(session).toContain('await handleSupabaseSession(liveSession);');
   });
 
-  it('keeps local/global logout explicit and clears browser lifecycle projection', () => {
+  it('keeps local/global logout explicit and clears browser lifecycle projection before direct sign-out', () => {
     const session = read('src/app/auth/SessionComposition.tsx');
 
     expect(session).toContain("const handleLogout = async () => performLogout('local');");
     expect(session).toContain("const handleGlobalLogout = async () => performLogout('global');");
-    expect(session).toContain('await signOutWithTimeout(scope);');
+    expect(session).toContain('await supabase.auth.signOut({ scope });');
+    expect(session).not.toContain('signOutWithTimeout');
+    expect(session).not.toContain('SIGN_OUT_TIMEOUT_MS');
+    expect(session).not.toContain('Promise.race([');
     expect(session).toContain('clearLoginStepUpMarkers();');
     expect(session).toContain('resetAuthProjection();');
     expect(session).toContain("localStorage.removeItem('mcc_user_session')");
