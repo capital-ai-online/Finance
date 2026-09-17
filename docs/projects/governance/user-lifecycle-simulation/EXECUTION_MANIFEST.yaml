@@ -1,7 +1,7 @@
 schema_version: "1.3.0"
 prompt_id: "CAPITAL-AI-USER-LIFECYCLE-SIMULATION-2026-09-01"
 artifact_role: "non_authorizing_execution_coordination"
-status: "GOV_DECISIONS_MERGED_OPS_HANDOFF_READY"
+status: "GOV_DECISIONS_MERGED_OPS_ROUTING_READY"
 
 repository:
   full_name: "SvenKulessa/Finance"
@@ -98,7 +98,7 @@ precheck:
     - id: "CAPITAL-AI-OPS-SECURITY-HANDOFF-SYNC-2026-08-31"
       observed_status: "released"
       exclusive: false
-      effect: "OPS lifecycle handoff is not writer-blocked"
+      effect: "historical OPS lifecycle routing claim is not writer-blocking"
     - id: "CAPITAL-AI-GOV-ULS-DECISIONS-2026-09-01"
       observed_status: "released_after_pr_676_closure_candidate"
       exclusive: false
@@ -113,8 +113,8 @@ owner_execution:
     project_folder: "docs/projects/operations/"
     project_stage: "PVC-02"
     secondary_stage: "PVC-08"
-    mode: "READY_FOR_FOREIGN_PROJECT_HANDOFF"
-    prerequisite: "Consume merged GOV bootstrap, recorrelation and PR #676 decision projection"
+    mode: "READY_FOR_OWNER_ROUTING"
+    prerequisite: "Resolve current owner/scope from AGENTS.md and current repository state before execution"
     local_foreign_implementation: "NOT_EXECUTED"
   frontend:
     project: "CAPITAL-AI-FE"
@@ -163,11 +163,11 @@ owner_decisions:
     production_session_mutation_authorized: false
 
 exit_gate:
-  current_result: "GOV_DECISIONS_MERGED_OPS_HANDOFF_READY"
+  current_result: "GOV_DECISIONS_MERGED_OPS_ROUTING_READY"
   next_foreign_owner: "CAPITAL-AI-OPS"
   next_foreign_project_folder: "docs/projects/operations/"
   next_project_stage: "PVC-02"
   owner_decisions_resolved_on_main:
     - "GOV-ULS-DEC-001"
     - "GOV-ULS-DEC-002"
-  next_owner_handoff_gate: "FOREIGN_PROJECT_HANDOFF under CTRL-SDLC-CHAT-HANDOFF-001"
+  next_owner_routing_rule: "resolve from AGENTS.md@CURRENT_MAIN; historical coordination state is non-authorizing"
