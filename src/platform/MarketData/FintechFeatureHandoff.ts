@@ -7,7 +7,7 @@ import type { ValidatedDataInput } from './ValidatedDataInput';
 export type FintechComputability = 'COMPUTABLE' | 'NOT_COMPUTABLE';
 
 /**
- * Thin DATA-owned FIN-12 projection over the canonical PVC-11 -> PVC-12 handoff.
+ * Thin FINTECH-owned FIN-12 validated-data projection over the canonical PVC-11 -> PVC-12 handoff.
  * It does not add another DQ decision: the existing handoff remains authoritative
  * and this surface only makes the downstream computability state explicit.
  */
