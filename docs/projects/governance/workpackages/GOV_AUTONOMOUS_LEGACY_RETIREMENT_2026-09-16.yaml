@@ -1,0 +1,222 @@
+schema_version: "1.0.0"
+workpackage_id: "GOV-AUTONOMOUS-LEGACY-RETIREMENT-01"
+project: "CAPITAL-AI-GOV"
+project_folder: "docs/projects/governance/"
+primary_pvc: "PVC-05"
+execution_mode: "AUTONOMOUS_BOUNDED_STEPWISE"
+status: "READY_AFTER_AUTHORITY_MERGE"
+language: "de"
+
+non_authorizing_notice: >
+  Dieses Arbeitspaket ist eine ausfuehrbare Planungs- und Evidence-Projektion.
+  Es erzeugt keine eigene Entwicklungs- oder Chat-Authority. Repository-weite
+  AI-/Development-Instruktionen werden ausschliesslich aus /AGENTS.md@CURRENT_MAIN
+  aufgeloest.
+
+objective: >
+  Alle aktiven Altlasten der abgeloesten DevelopmentChain-, PR-, Handoff- und
+  parallelen Chat-Richtlinien schrittweise erkennen, klassifizieren und durch die
+  kanonische autonome/self-healing Steuerung aus /AGENTS.md ersetzen, ohne
+  historische Evidence, stabile Traceability-IDs oder echte technische
+  Runtime-Vertraege faelschlich zu loeschen.
+
+trust_root:
+  source: "/AGENTS.md"
+  resolution: "CURRENT_MAIN_ONLY"
+  fail_closed: true
+
+baseline:
+  repository: "capital-ai-online/Finance"
+  current_main: "RESOLVE_AT_EXECUTION"
+  initial_observed_main: "54ebcc122400f17cd2c33ab47edd703df9055179"
+  open_writers: "RESOLVE_AT_EXECUTION"
+  branch_only: true
+  direct_main_mutation: false
+
+retired_instruction_surfaces:
+  paths:
+    - "docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md"
+    - "docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md"
+    - "docs/governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md"
+    - "docs/governance/development-policies/"
+  expected_state: "ABSENT"
+  restore_on_enoent: false
+
+classification_model:
+  - id: "ACTIVE_INSTRUCTION_SURFACE"
+    action: "REMOVE_OR_MIGRATE_TO_AGENTS"
+    rule: >
+      Aktive Texte, Tests, Skripte oder Konfigurationen duerfen keine retired
+      Datei als aktuelle AI-/Development-Instruktionsquelle verwenden.
+
+  - id: "ACTIVE_REFERENCE_TO_RETIRED_PATH"
+    action: "REWRITE_TO_CURRENT_CONTRACT"
+    rule: >
+      Runtime-/Testzugriffe auf entfernte Policy-Pfade werden auf AGENTS.md oder
+      auf einen weiterhin gueltigen Subject-Matter-Vertrag umgestellt. ENOENT
+      fuehrt niemals zur Wiederherstellung der retired Policy.
+
+  - id: "HISTORICAL_EVIDENCE"
+    action: "KEEP_NON_AUTHORIZING"
+    rule: >
+      Historische ADR/ESS/Runbook/Evidence-Artefakte duerfen erhalten bleiben,
+      wenn Lifecycle und Kennzeichnung eindeutig historical/non-authorizing sind.
+
+  - id: "STABLE_IDENTITY_ALIAS"
+    action: "KEEP_AS_INDEX_ONLY"
+    rule: >
+      Historische AUTH-/CTRL-IDs duerfen fuer Traceability erhalten bleiben,
+      muessen aber auf /AGENTS.md oder ihren gueltigen Subject-Matter-Kontext
+      aufloesen und duerfen keine zweite Authority erzeugen.
+
+  - id: "TECHNICAL_RUNTIME_CONTRACT"
+    action: "OWNER_CORRECT_REVIEW"
+    rule: >
+      Technische Event-, API-, Schema- oder Runtime-Bezeichner werden nicht allein
+      wegen historischer Namensgleichheit entfernt. Erst pruefen, ob ein echter
+      produktiver Vertrag existiert. Falls ja, owner-korrekt migrieren oder
+      beibehalten; falls nein, als Altlaste behandeln.
+
+  - id: "GENERATED_OR_TEST_PROJECTION"
+    action: "REGENERATE_OR_UPDATE"
+    rule: >
+      Tests, Fixtures, generierte Dokumente und Projektionen werden gegen den
+      kanonischen aktuellen Zustand aktualisiert. Erwartungen duerfen nicht nur
+      zur Gruenfaerbung abgeschwaecht werden.
+
+steps:
+  - id: "LEGACY-01-BASELINE"
+    title: "Fresh baseline und Writer-Korrelation"
+    depends_on: []
+    actions:
+      - "resolve CURRENT_MAIN SHA"
+      - "resolve open PRs/branches touching governance authority"
+      - "resolve merge-base and stale-head drift"
+      - "fail closed on unresolved authority overlap"
+    exit_gate:
+      - "exact main SHA recorded"
+      - "writer overlap classified"
+      - "target branch is current and branch-only"
+
+  - id: "LEGACY-02-INVENTORY"
+    title: "Repository-weites Altlasten-Inventar erzeugen"
+    depends_on: ["LEGACY-01-BASELINE"]
+    actions:
+      - "scan active source, tests, scripts, workflows, docs and registries for retired paths"
+      - "scan for obsolete DevelopmentChain/POST_PR_HANDOFF/CHAT_RUN_HANDOFF instruction semantics"
+      - "scan for duplicate provider instruction mirrors"
+      - "scan for ENOENT-prone reads of retired files"
+      - "record file, line, owner, classification and replacement target"
+    automation_hints:
+      commands:
+        - "rg -n \"DEVELOPMENT_CHAIN_EXECUTION_POLICY|HUMAN_OWNER_PR_APPROVAL_POLICY|GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY|docs/governance/development-policies\" ."
+        - "rg -n \"POST_PR_HANDOFF|CHAT_RUN_HANDOFF|FOREIGN_PROJECT_HANDOFF\" ."
+        - "find . -name 'CLAUDE.md' -o -path '*/.github/copilot-instructions.md'"
+    exit_gate:
+      - "every hit classified"
+      - "no unclassified active reference remains"
+
+  - id: "LEGACY-03-ACTIVE-REFERENCE-MIGRATION"
+    title: "Aktive Referenzen atomar migrieren"
+    depends_on: ["LEGACY-02-INVENTORY"]
+    actions:
+      - "replace active reads of retired policy files with AGENTS.md or valid subject-matter contracts"
+      - "convert chat handoff rules to informational projection where applicable"
+      - "remove duplicate procedural text that recreates repository-wide authority"
+      - "preserve stable IDs only as machine-verification aliases"
+      - "do not restore deleted policy files to satisfy tests"
+    self_healing:
+      enoent_retired_policy:
+        remediation: "rewrite_consumer"
+        forbidden: "restore_retired_file"
+      duplicate_authority:
+        remediation: "collapse_to_AGENTS"
+      stale_test_expectation:
+        remediation: "correlate_expected_state_with_canonical_source"
+    exit_gate:
+      - "no active consumer opens a retired instruction path"
+      - "AGENTS.md remains the only repository-wide instruction surface"
+
+  - id: "LEGACY-04-HISTORICAL-HYGIENE"
+    title: "Historische Artefakte und Registry-Eintraege bereinigen"
+    depends_on: ["LEGACY-03-ACTIVE-REFERENCE-MIGRATION"]
+    actions:
+      - "verify historical lifecycle metadata"
+      - "verify NON-AUTHORIZING markings where compatibility redirects remain"
+      - "remove dead redirects without traceability value"
+      - "verify registries do not point to missing active authority files"
+    exit_gate:
+      - "historical evidence remains distinguishable from current authority"
+      - "no registry entry can bootstrap a second instruction hierarchy"
+
+  - id: "LEGACY-05-TECHNICAL-CONTRACT-REVIEW"
+    title: "Namensgleiche technische Vertraege getrennt behandeln"
+    depends_on: ["LEGACY-02-INVENTORY"]
+    actions:
+      - "inspect DevelopmentChain-named schemas/events/contracts for real runtime use"
+      - "map each retained technical contract to its canonical Owner/PVC"
+      - "rename/remove only through owner-correct atomic work when technically justified"
+    exit_gate:
+      - "no technical runtime contract was deleted solely because of naming"
+      - "every retained contract has a current owner and consumer"
+
+  - id: "LEGACY-06-VALIDATION"
+    title: "Gezielte und anschliessend gehostete Validierung"
+    depends_on:
+      - "LEGACY-03-ACTIVE-REFERENCE-MIGRATION"
+      - "LEGACY-04-HISTORICAL-HYGIENE"
+      - "LEGACY-05-TECHNICAL-CONTRACT-REVIEW"
+    actions:
+      - "run governance authority consistency tests"
+      - "run ADR/ESS lifecycle archive tests"
+      - "run impacted projection tests"
+      - "after PR exists, run required hosted CI for final head"
+      - "record NOT_RUN/SKIPPED truthfully and never as PASS"
+    prohibited_remediation:
+      - "skip failing tests"
+      - "delete assertions without a canonical replacement contract"
+      - "recreate retired policies"
+      - "weaken Security/Compliance/Owner boundaries"
+    exit_gate:
+      - "all applicable targeted tests PASS"
+      - "required hosted checks PASS on final PR head"
+
+  - id: "LEGACY-07-CONVERGENCE-READBACK"
+    title: "Finale Konvergenz und Evidence"
+    depends_on: ["LEGACY-06-VALIDATION"]
+    actions:
+      - "re-scan repository for retired active references"
+      - "re-read actual deleted/retained paths"
+      - "compare observed state with workpackage exit gates"
+      - "emit before/after matrix and residual backlog"
+    exit_gate:
+      - "retired instruction surfaces absent"
+      - "no active ENOENT consumer of retired paths"
+      - "no duplicate repository-wide AI/development authority"
+      - "historical references are explicitly non-authorizing"
+      - "technical contracts are owner-correct and justified"
+      - "final evidence binds exact main/head identities"
+
+continuation_logic:
+  on_pass: "advance_to_next_dependency_ready_step"
+  on_safe_drift: "apply_bounded_self_healing_then_revalidate"
+  on_owner_boundary: "create_owner_correct_handover_and_continue_independent_steps"
+  on_protected_external_mutation: "BLOCKED_PENDING_SEPARATE_AUTHORITY"
+  on_ambiguous_authority: "FAIL_CLOSED"
+
+final_outputs:
+  - "machine-readable legacy inventory"
+  - "atomic migration commits"
+  - "updated tests/projections"
+  - "before_after_matrix"
+  - "residual_owner_handoffs"
+  - "final convergence evidence"
+
+workpackage_exit_gate: >
+  Der aktive Repository-Zustand enthaelt keine zweite DevelopmentChain-/PR-/Handoff-
+  Instruktionsflaeche mehr. /AGENTS.md@CURRENT_MAIN ist die einzige repository-weite
+  AI-/Development-Authority; alle aktiven Konsumenten, Tests und Projektionen sind
+  darauf oder auf explizit gueltige Subject-Matter-Vertraege korreliert. Historische
+  Artefakte sind eindeutig non-authorizing, echte technische Vertraege bleiben nur
+  mit aktuellem Owner/Consumer erhalten, und der finale PR-Head ist durch die
+  anwendbaren gehosteten Checks reproduzierbar validiert.

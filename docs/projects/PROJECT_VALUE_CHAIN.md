@@ -3,7 +3,8 @@
 **Namespace:** `PVC-*`  
 **Role:** organizational project ownership projection — non-authorizing  
 **Runtime impact:** none  
-**Authority impact:** none
+**Authority impact:** none  
+**Development trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Namespace contract
 
@@ -42,23 +43,26 @@ Until a separately authorized multi-project namespace migration is completed:
 ## Boundary invariants
 
 1. Every PVC stage has exactly one Primary Project Owner.
-2. Cross-cutting projects do not acquire Primary ownership by observing, validating or executing a delegated work package for a stage.
-3. `PVC-05` does not acquire Supervisor, Version, Release, Production or EventMesh ownership/authority. Under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`, `CAPITAL-AI-GOV` may execute a bounded foreign-project work package while the mapped Target Project/PVC remains the Primary Owner.
-4. `CAPITAL-AI-OPS` may likewise execute bounded work packages for another Target Project under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`; this does not alter the canonical PVC mapping or Target Project authority.
-5. `CAPITAL-AI-SEC` owns no productive PVC stage. Under `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001`, Security may execute a bounded Security-primary repository remediation without acquiring the affected file, Domain or PVC ownership. File placement alone is not an ownership-transfer event or an execution prohibition.
-6. `PVC-11 -> PVC-12` is the Data-to-FinTech project handoff; missing/failed DQ evidence remains fail-closed.
-7. `PVC-16 -> PVC-17` preserves canonical scoring before ranking/decision support.
-8. `PVC-18` transports/retains traceability; it does not authorize business decisions, merge, release or deployment.
-9. No implicit `PVC-19` is introduced by Governance, Quality, Security, Compliance, Frontend, SEO, Social or Knowledge projections.
+2. Cross-cutting projects do not acquire Primary ownership by observing, validating, constraining, presenting or handing off work for a stage.
+3. Project/PVC ownership is resolved from current main; no executor, chat, branch, PR, EventMesh state or presentation metadata may invent or transfer ownership.
+4. Work whose Authority or implementation belongs to another project creates the owner-correct handover required by `/AGENTS.md@CURRENT_MAIN`; it is not silently taken over by GOV, OPS, SEC or another foreign project.
+5. `CAPITAL-AI-SEC` owns no productive PVC stage and evaluates Security `SECURITY_FOUNDATION_FIRST`; Security findings/requirements remain cross-cutting constraints and foreign implementation is handed to the resolved owner unless the implementation itself is canonically SEC-owned.
+6. `CAPITAL-AI-QM` remains independent Quality authority; product-layer priority cannot override its Quality verdict.
+7. `CAPITAL-AI-FINTECH` retains Domain/Scoring authority for its stages; Frontend cannot define FinTech truth.
+8. COMP/Supply-Chain remains obligation/control-first; product-layer priority cannot override Compliance obligations.
+9. `PVC-11 -> PVC-12` is the Data-to-FinTech project handoff; missing/failed DQ evidence remains fail-closed.
+10. `PVC-16 -> PVC-17` preserves canonical scoring before ranking/decision support.
+11. `PVC-18` is a read-only Runtime/Evidence/Traceability projection for development handover visibility; it does not approve, merge, mutate Authority, replace `/AGENTS.md` or authorize business/release/deployment decisions.
+12. No implicit `PVC-19` is introduced by Governance, Quality, Security, Compliance, Frontend, SEO, Social or Knowledge projections.
 
-## Execution delegation vs ownership
+## Development execution model
 
-The canonical owner in this file answers **who owns the target work/domain**. It does not require that only that project's chat/executor may perform every repository edit.
+The PVC defines ownership and routing only. It is **not** a development lifecycle.
 
-`CAPITAL-AI-GOV` and `CAPITAL-AI-OPS` may execute bounded foreign-project work under `docs/governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md`. For such work, Target Project/PVC/Primary Owner, target Roadmap scope, applicable ADR/ESS/contracts, branch/PR project identity, assurance authority and protected-action boundaries remain those of the Target Project unless another higher/effective authority explicitly changes them.
+All development execution across `PVC-01..18` resolves exclusively through `/AGENTS.md@CURRENT_MAIN`. Historical DevelopmentChain, bounded foreign-execution delegation, standalone PR/CI sequencing and other procedural overlays have no execution or fallback role.
 
-`CAPITAL-AI-SEC` follows the Security-specific delegation in `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001`. A pure bounded Security remediation may use the Security project identity even when the affected repository file belongs to another project's technical area. The canonical Primary Owner, PVC mapping and long-term Domain ownership remain unchanged. Work that exceeds the bounded Security criteria is split at the ownership boundary and the non-Security remainder stays with its canonical owner.
+A relationship may be classified as `primary_pvc`, `cross_cutting` or `foreign_execution`. `foreign_execution` is a relationship classification, not permission to seize foreign Owner scope. If implementation/Authority belongs elsewhere, the current project emits an owner-correct correlation-ID handover with dependencies, evidence, exit gate and continuation condition as required by the trust root.
 
 ## Transitional repository state
 
-Current main contains project surfaces that may still use older ownership-only routing language or an older unqualified `VC-*` project label. Those surfaces are migrated by their applicable owner/authority while preserving this canonical mapping. Delegated repository execution does not create a second PVC mapping or implicit ownership transfer.
+Historical/current documents may temporarily contain stale references to superseded procedure. Such text is migration drift only and cannot override `/AGENTS.md@CURRENT_MAIN`. Documentation hygiene reconciles those references without rewriting immutable historical evidence.

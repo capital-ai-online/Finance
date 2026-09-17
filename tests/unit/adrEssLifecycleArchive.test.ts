@@ -15,6 +15,7 @@ const RUNBOOK_ARCHIVE = 'docs/archive/governance/historical/M10_PASSKEY_OWNER_PR
 const RUNBOOK_REDIRECT = 'docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md';
 const ADR_AUTHORITY = 'AUTH-ADR-PASSKEY-OWNER-PR-AUTHORIZATION-0066';
 const RUNBOOK_DOCUMENT_ID = 'DOC-RUNBOOK-M10-PASSKEY-OWNER-PR-AUTH';
+const RETIRED_CHAIN_POLICY = 'docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md';
 
 describe('ADR / ESS lifecycle archive invariants', () => {
   it('keeps retired M10 ADR-0066 historical and non-authorizing', () => {
@@ -79,11 +80,20 @@ describe('ADR / ESS lifecycle archive invariants', () => {
     expect(redirect).toContain(RUNBOOK_ARCHIVE);
   });
 
-  it('keeps current DevelopmentChain authority explicit about M10 retirement', () => {
+  it('keeps M10 retirement in the single AGENTS trust root without restoring DevelopmentChain policy', () => {
     const agents = read('AGENTS.md');
-    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
+    const controlCatalog = json('docs/governance/control-catalog.json');
+    const m10 = controlCatalog.controls.find((item: { controlId?: string }) => item.controlId === 'CTRL-CI-M10-001');
+
+    expect(exists(RETIRED_CHAIN_POLICY)).toBe(false);
+    expect(agents).toContain('M10 AUTHORIZE_PR_CI');
     expect(agents).toContain('RETIRED / OFF');
-    expect(chain).toContain('RETIRED / OFF');
-    expect(chain).toMatch(/future .*passkey\/PR-CI.*authorization architecture/i);
+    expect(agents).toContain('MUST NOT search');
+    expect(m10).toMatchObject({
+      controlId: 'CTRL-CI-M10-001',
+      status: 'required',
+    });
+    expect(m10.requirement).toContain('PR #691');
+    expect(m10.requirement).toMatch(/MUST NOT search/i);
   });
 });

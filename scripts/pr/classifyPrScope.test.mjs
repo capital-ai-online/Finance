@@ -45,15 +45,25 @@ describe('isKnownNonProductionValidationPath', () => {
 });
 
 describe('classifyChangedFiles', () => {
-  it('class D for docs-only without production impact', () => {
+  it('class D for docs-only without a runtime consumer', () => {
     const s = classifyChangedFiles(['docs/a.md', '.ai/x.json']);
     assert.equal(s.class, 'D');
     assert.equal(s.production_impact, false);
     assert.equal(s.node, false);
     assert.equal(s.unit, false);
     assert.equal(s.build, false);
-    assert.equal(s.docker, false);
-    assert.equal(s.workflow_security, false);
+    assert.equal(s.consumer_escalation, false);
+  });
+
+  it('escalates a docs deletion/change to class C when runtime code consumes it', () => {
+    const path = 'docs/projects/operations/DEVELOPMENT_CHAIN.md';
+    const s = classifyChangedFiles([path], { runtimeConsumedPaths: [path] });
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, true);
+    assert.equal(s.node, true);
+    assert.equal(s.unit, true);
+    assert.equal(s.build, true);
+    assert.equal(s.consumer_escalation, true);
   });
 
   it('class C for src changes with production impact but without docker', () => {
@@ -113,10 +123,7 @@ describe('classifyChangedFiles', () => {
   });
 
   it('governance tooling skips production build/predeploy', () => {
-    const s = classifyChangedFiles([
-      'scripts/governance/validateGovernanceControlPlane.mjs',
-      'docs/governance/PR_CHECK_CLASSIFICATION.md',
-    ]);
+    const s = classifyChangedFiles(['scripts/governance/validateGovernanceControlPlane.mjs', 'docs/governance/PR_CHECK_CLASSIFICATION.md']);
     assert.equal(s.class, 'C');
     assert.equal(s.production_impact, false);
     assert.equal(s.node, true);
@@ -175,10 +182,7 @@ describe('classifyChangedFiles', () => {
   });
 
   it('mixed governance tooling+src cannot downgrade production impact', () => {
-    const s = classifyChangedFiles([
-      'scripts/governance/validateGovernanceControlPlane.mjs',
-      'src/x.ts',
-    ]);
+    const s = classifyChangedFiles(['scripts/governance/validateGovernanceControlPlane.mjs', 'src/x.ts']);
     assert.equal(s.class, 'C');
     assert.equal(s.production_impact, true);
     assert.equal(s.build, true);

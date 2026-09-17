@@ -5,43 +5,40 @@
 **Role:** Primary Project Value Chain Owner  
 **Primary stages:** `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18`  
 **Status:** ACTIVE — PROJECT EXECUTION SURFACE / NON-AUTHORIZING  
-**Baseline:** `main@fe27d901a7a505b1e0b87f8970e3f4a33991d968`  
-**Trust root:** `/AGENTS.md`
+**Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Purpose
 
 `docs/projects/operations/` is the canonical organizational execution surface for CAPITAL-AI-OPS. It owns planning, coordination and evidence for the OPS-owned Project Value Chain stages without relocating or duplicating valid runtime components.
 
-Folder-to-PVC ownership is defined only by `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`.
+Folder-to-PVC ownership is defined only by `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`. Development procedure is defined only by `/AGENTS.md@CURRENT_MAIN`; project documents remain non-authorizing planning/evidence projections.
 
 ## Authority boundary
 
-CAPITAL-AI-OPS owns its primary PVC execution, not repository-wide Governance authority. Under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION`, OPS may additionally execute bounded work packages whose Target Project / Primary Owner is another canonical CAPITAL-AI project. This execution delegation does not transfer the Target Project's PVC ownership, domain authority, Security/Compliance assurance authority, merge authority or protected-mutation authority to OPS.
+CAPITAL-AI-OPS owns implementation for its mapped Primary PVC scope. It has no generic foreign-project implementation authority. When OPS detects work whose implementation/Authority belongs to another project, it emits the owner-correct handover required by `/AGENTS.md@CURRENT_MAIN`.
 
-- `/AGENTS.md` remains the repository trust root.
-- Governance owns `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` and the DevelopmentChain policy.
-- `package.json#version` remains the sole platform-version authority.
-- `src/platform/VersionManager/**` remains read-only compatibility.
-- `src/platform/Release/**` remains the canonical Release implementation and contains the controlled Release Version Gate.
-- Supervisor observes, evaluates and escalates; it does not make protected decisions.
-- EventMesh transports/validates/routes events; it creates no authority.
+- `package.json#version` remains the sole platform-version authority where applicable contracts say so.
+- `src/platform/VersionManager/**` remains read-only compatibility unless a later authoritative contract changes it.
+- `src/platform/Release/**` remains the canonical Release implementation boundary.
+- Supervisor observes/evaluates/escalates; it does not manufacture protected decision authority.
+- EventMesh is a read-only runtime projection for development state/evidence/handover and creates no approval/merge authority.
 - Traceability links evidence/relationships; it is non-deciding and non-authorizing.
-- Human/Owner PR creation approval and Human/CODEOWNER merge remain separate gates unless another effective authority explicitly delegates only the PR-create approval surface.
-- Production mutation requires separate current authorization.
+- Protected production mutation requires its own applicable authorization.
 
 ## Canonical project documents
 
 | Document | Role |
 |---|---|
-| `ROADMAP.md` | canonical OPS execution projection |
-| `DEVELOPMENT_CHAIN.md` | DC lifecycle integration and execution ownership |
+| `ROADMAP.md` | canonical OPS work graph / roadmap projection |
 | `PVC_OWNERSHIP.md` | exact PVC ownership and boundaries |
-| `WORK_PACKAGES.md` | bounded OPS backlog |
-| `CROSS_PROJECT_DEPENDENCIES.md` | inbound/outbound project dependencies |
-| `SECURITY_HANDOFFS.md` | CAPITAL-AI-SEC requirements and return contract |
+| `WORK_PACKAGES.md` | bounded OPS work packages |
+| `CROSS_PROJECT_DEPENDENCIES.md` | inbound/outbound dependencies |
+| `SECURITY_HANDOFFS.md` | Security requirements and owner-correct returns |
 | `MIGRATION_MATRIX.md` | previous OPS projection → canonical project surface mapping |
-| `runbooks/` | references to existing operational procedures; no duplicate runbook authority |
+| `runbooks/` | operational procedures within delegated subject scope; no development-policy authority |
 | `evidence/` | project-local correlation/evidence records |
+
+The former `DEVELOPMENT_CHAIN.md` execution projection is retired/removed by the governance migration and is not a canonical OPS development document.
 
 ## Bounded subdomains
 
@@ -55,35 +52,12 @@ CAPITAL-AI-OPS owns its primary PVC execution, not repository-wide Governance au
 - `evidence/`
 - `work-packages/`
 
-These are organizational boundaries. Existing runtime components stay in their canonical `src/platform/**` locations unless a separate architecture package proves relocation is necessary.
+These are organizational/runtime boundaries. They do not create additional development governance.
 
 ## Security handoff integration
 
-CAPITAL-AI-SEC PR #631 routes the following current findings to OPS:
+Security owns Security requirements, findings, negative-test expectations and independent Security verification. OPS implements OPS-owned remediation returned through an owner-correct handover. `IMPLEMENTED`/`EVIDENCE_READY` do not become Security `VERIFIED/CLOSED` without the required independent verification evidence.
 
-- `S1-R2-03` → `PVC-06` Version Management;
-- `S1-R2-04` → `PVC-04` Supervisor, with `PVC-08` runtime recovery evidence;
-- `S1-R2-05` → `PVC-02` Controlled Implementation;
-- `S1-R2-06` → `PVC-02` parent entitlement inventory/coordination;
-- `S1-R2-07` → `PVC-08` Production Operations;
-- `S1-R2-09` → `PVC-08` Production Operations, waiting for promotion evidence;
-- `S1-R2-10` → `PVC-08` Production Operations, waiting for post-deploy evidence.
+## Cross-project rule
 
-Security owns the findings, threat/control definitions, negative-test expectations and independent Security verification. OPS may report `IMPLEMENTED` or `EVIDENCE_READY`; only CAPITAL-AI-SEC may report Security `VERIFIED/CLOSED`.
-
-## Current execution focus — post-PR #828 correlation
-
-The current Roadmap/Evidence correlation records:
-
-- qs `6.16.0` remediation from PR #828 as `IMPLEMENTED_ON_MAIN / DEPLOYED / TERMINAL`;
-- fatal-process repository contracts as independently `REPOSITORY_CONTRACT_VERIFIED` through Security PR #832, with exact post-deploy supervisor/restart/readiness evidence still open;
-- `OPS-06-SEC-03` Node convergence as non-executable until effective Governance/ADR authority resolves the accepted 24.18.0 baseline versus proposed 24.20.0 supersession;
-- `OPS-08-SEC-07` Recovery/RPO/RTO as the highest actually executable local OPS Security/Data-Integrity work because RPO evaluator PR #802 is closed unmerged, its branch is absent and its evaluator code is absent from current main.
-
-PR #833 is terminal `closed / unmerged`; PR #834 merged only Frontend navigation files and created no OPS changed-file or semantic overlap. Current PR #836 changes only `.github/workflows/zizmor.yml`; it has no changed-file or material semantic overlap with this documentation/prioritization scope.
-
-Canonical detail: `ROADMAP.md`, `WORK_PACKAGES.md`, `evidence/OPS_POST_828_PRIORITY_RECORRELATION_2026-09-07.md`.
-
-## Foreign work rule
-
-OPS may implement bounded foreign-project work under `AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION` after resolving the Target Project, Target PVC/Primary Owner, target Roadmap scope, applicable ADR/ESS/contracts and current writer/overlap state. Branch and PR identity remain classified by the Target Project, while OPS is recorded as the executor. Missing or conflicting target authority remains fail-closed.
+OPS may discover and correlate foreign work but MUST NOT silently implement foreign-owner scope merely because it has repository access or an older delegation document exists. The owner-correct handover carries Source/Target Project and Owner, correlation ID, completed/remaining scope, dependencies, evidence, exit gate and continuation condition. Missing/conflicting target authority remains fail-closed.
