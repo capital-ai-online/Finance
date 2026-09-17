@@ -1,5 +1,7 @@
 # CAPITAL-AI-CLIENT — Canonical Roadmap
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Project:** `CAPITAL-AI-CLIENT`  
 **Folder:** `docs/projects/agent-client/`  
 **Owner/PVC:** `CAPITAL-AI-CLIENT / PVC-01`  
