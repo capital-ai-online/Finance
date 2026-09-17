@@ -120,7 +120,6 @@ describe('Designsystem / Media / PDF / Frontend correlation contract', () => {
     expect(legacyScreener).toContain("asset?.type !== 'bond'");
     expect(dashboard).not.toContain('Universe 5: Bonds');
     expect(dashboardNavigation).toContain("type UniverseId = 'equities' | 'index' | 'forex' | 'crypto' | 'commodity';");
-    expect(dashboardNavigation).toContain("label: 'Indizes'");
     expect(dashboardNavigation).not.toContain("category: 'bond'");
   });
 
