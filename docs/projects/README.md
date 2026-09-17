@@ -46,7 +46,7 @@ The `PVC-*` namespace is intentionally distinct from the existing technical fina
 | `CAPITAL-AI-GOV` | `PVC-05` | Platform Director plus cross-cutting Governance |
 | `CAPITAL-AI-FINTECH` | `PVC-09`..`PVC-17` | Data ingestion/evidence/Data Quality through Ranking/Decision Support |
 
-`CAPITAL-AI-DATA` is superseded as an independent Primary Owner. `docs/projects/data/` remains only as a historical/compatibility surface during migration and does not own a productive PVC stage.
+`CAPITAL-AI-DATA` is superseded as an independent **productive PVC owner**. `docs/projects/data/` remains materialized by `CAPITAL-AI-DATA` as a historical/compatibility project surface so provenance, navigation and migration evidence retain a stable project identity; that materialization metadata does not grant productive PVC ownership, task authority or execution authority.
 
 Cross-cutting projects such as `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FE`, `CAPITAL-AI-SEO` and `CAPITAL-AI-SOCIAL` own no productive PVC stage solely because they validate, constrain, present or distribute outputs.
 
@@ -56,7 +56,7 @@ Execution remains owner-correct under `/AGENTS.md@CURRENT_MAIN`. Work whose Auth
 
 Project-folder routing is an organizational mapping only. It does not create technical Authority, merge authority, deployment authority or Domain Ownership transfer.
 
-`Materialization owner` and `Main surface state` are mapping metadata required by the Project Value Chain consistency check. They record which project owns its own folder surface and whether that README currently exists.
+`Materialization owner` and `Main surface state` are mapping metadata required by the Project Value Chain consistency check. They record which project identity materializes its own folder surface and whether that README currently exists. **Materialization ownership is not productive PVC ownership.** A superseded compatibility folder may therefore retain its historical project identity while declaring no productive PVC stages.
 
 `Display name`, `Symbol` and `Color` are canonical **presentation metadata** for chat and Pull Request presentation. They are explicitly preserved by `/AGENTS.md` as non-authorizing style/graphics. They do not replace `Project`, canonical project folder, PVC or Owner identity. Color is supplementary only.
 
@@ -67,7 +67,7 @@ Project-folder routing is an organizational mapping only. It does not create tec
 | `CAPITAL-AI-DOC` | `PVC-03` Primary Owner | `docs/projects/documentary/` | `documentary` | Documentary | 📋 | `#5CB060` | `CAPITAL-AI-DOC` | present |
 | `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance | `docs/projects/governance/` | `governance` | Governance | 🧠 | `#A1A1AA` | `CAPITAL-AI-GOV` | present |
 | `CAPITAL-AI-FINTECH` | `PVC-09..17` Primary Owner | `docs/projects/fintech/` | `fintech` | FinTech | 📊 | `#E080AC` | `CAPITAL-AI-FINTECH` | present |
-| `CAPITAL-AI-DATA` | superseded; no productive PVC | `docs/projects/data/` | `data` | Data (historical) | 📁 | `#8058CC` | `CAPITAL-AI-FINTECH` | historical compatibility surface |
+| `CAPITAL-AI-DATA` | superseded; no productive PVC | `docs/projects/data/` | `data` | Data (historical) | 📁 | `#8058CC` | `CAPITAL-AI-DATA` | historical compatibility surface |
 | `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | Quality Management | 🩺 | `#4480E8` | `CAPITAL-AI-QM` | present |
 | `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | Security | 💻 | `#E04C4C` | `CAPITAL-AI-SEC` | present |
 | `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | Compliance | ⚖️ | `#E84848` | `CAPITAL-AI-COMP` | present |
