@@ -4,18 +4,18 @@
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-16 — GOV-PR900-05 staged pre-command flow correlated against current main  
-**Baseline:** `main@770756209b6248395ce4eedce63981355728004f`  
+**Reconciliation:** 2026-09-17 — historical task activation and origin-chat continuation superseded  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
 
-This file is the single active project execution projection. Dated 2026-09-13 sidecar/archive roadmaps are absorbed here and deleted. Non-terminal pre-2026-09-13 work packages remain in force with their existing IDs, constraints, dependencies and exit gates unless a later section explicitly replaces them. Terminal `DONE/CLOSED/VERIFIED/RETIRED/SUPERSEDED` history is retained as ledger, not reopened. PR #900 remains a derived documentary source only.
+`historical/non-terminal != active`
+
+This file remains a temporary project status projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Historical, pre-consolidation, non-terminal, branch-only, chat-derived or superseded entries are ledger/evidence only and are not executable merely because they were previously open.
+
+A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical repository/project/Roadmap identity, or when the Human/Owner freshly defines or re-authorizes it in the current interaction. Terminal history remains ledger only and is not reopened.
 
 ## PR #900 / #901 work packages
-
-### GOV-CARRY-01 — Existing non-terminal GOV backlog
-Carry forward every non-terminal Governance work package, writer/gate dependency and validation obligation.
 
 ### GOV-PR900-01 — Option-C/current-main correlation
 Correlate active Option-C Governance prototype work against current main and current writers. Remove stale transition blockers that are already DONE_MAIN without erasing their evidence.
@@ -77,18 +77,6 @@ The ordered automated Roadmap lane permits at most one not-yet-integrated automa
 
 **Exit:** `PASS / DONE_MAIN` — v2.11/v4.0/v3.0 are current-main authority; the trusted Draft-PR workflow contains no active pre-create Owner-approval credential path; final create correlation remains fail-closed; ordered successor work cannot be created before predecessor terminal outcome; required hosted checks and final Human merge boundary remain intact.
 
-### GOV-CHAT-078 — Coherent branch work packages and origin-chat post-merge continuation
-
-Materialize the 2026-09-16 Owner decision that one scoped branch may complete a larger coherent work package with multiple dependent implementation processes, substeps and commits before creating the bounded Pull Request, and that a chat which created a PR should resume project-folder-specific continuation after that PR reaches a terminal outcome when the current authorized execution host exposes a suitable already-connected event capability.
-
-**State:** `IMPLEMENTED_ON_BRANCH / PR_PENDING` on `agent/governance-workpackage-continuation-20260916`.
-
-**Materialization:** `/AGENTS.md` defines work-package granularity without a fixed numeric process/commit cap while preserving one Project/folder/Primary Owner, a shared bounded objective/exit gate, compatible ADR/ESS/CTRL/AUTH scope, reviewability and all ownership/authority/assurance/protected-mutation/serial-integration split boundaries. `POST_PR_HANDOFF` reuses the existing `CTRL-SDLC-CHAT-HANDOFF-001` trigger surface to register an origin-chat terminal-PR continuation watch only when the execution host already exposes the required authorized capability. Human merge resumes the same chat through a fresh `CHAT_RUN_HANDOFF` pass after then-current re-correlation; close-without-merge recomputes the queue without predecessor payload. Missing host wake-up capability is reported as `AUTOMATIC_CONTINUATION_UNAVAILABLE` and does not authorize connector installation, OAuth/permission changes, polling bypass, self-merge or a parallel repository queue.
-
-**Evidence:** `docs/projects/governance/evidence/GOV_CHAT_078_BRANCH_WORKPACKAGE_AND_POST_MERGE_CONTINUATION_2026-09-16.md`.
-
-**Exit:** one coherent branch can finish all immediately executable in-scope work-package substeps before its Draft PR; micro-PR fragmentation is not required merely because an internal step completed; true Project/Owner/authority/risk/integration boundaries still split work. After PR creation, origin-chat terminal-outcome continuation is registered when factually available, Human/CODEOWNER-only merge remains unchanged, and every automatic continuation starts by recomputing project-folder-specific work from then-current repository truth.
-
 ### GOV-UNIVERSE-BRANDING-01 — Owner decision and Frontend routing
 
 Materialize the 2026-09-14 Owner decision for one application-wide CAPITAL-AI Universe branding contract without creating a Governance-side design architecture.
@@ -119,20 +107,18 @@ Remove withdrawn external-framework bindings from Trust Root, Control Plane, Com
 ### GOV-SOTA02-F05 — Stale provider-instruction references
 Replace remaining provider-specific trust-root wording in ESS-0018/ADR-0051 projections with current `/AGENTS.md` authority. Routed from SEC-SOTA-02 historical inventory; GOV-owned.
 
-## Carried-forward baseline (pre-2026-09-13)
+## Historical baseline (pre-2026-09-13) — non-active ledger
 
-Terminal / maintained: GOV-01..GOV-06, GOV-09..GOV-11, GOV-CHAT-070..076, COMP-GAP-008 Governance treatment, copyable chat handoff, owner-approval presentation.
+The former baseline is historical evidence only. A prior non-terminal marker does not imply present activity.
 
-Open:
-
-| ID | State |
+| ID | Historical state |
 |---|---|
-| GOV-07 User-Lifecycle closeout | `PARTIAL / OWNER RETURNS PENDING` — DATA/OPS/FE/SEC/COMP returns incomplete; GOV consumes read-only |
-| GOV-08 Admin Panel process graph | `REFERRED / FOREIGN OPEN` — CLIENT/FE/OPS |
+| GOV-07 User-Lifecycle closeout | `PARTIAL / OWNER RETURNS PENDING` — historical dependency state only |
+| GOV-08 Admin Panel process graph | `REFERRED / FOREIGN OPEN` — historical routing state only |
 
 M10 remains `RETIRED / OFF`. Human/CODEOWNER-only merge remains mandatory.
 
-## Terminal chat ledger (absorbed from 2026-09-13 archive)
+## Terminal chat ledger
 
 `GOV-CHAT-076 / cross-chat current-main consolidation` — `DONE_MAIN / TERMINAL` via PR #868
 
@@ -148,4 +134,4 @@ Human-merged PR #886, merge SHA `0945b7264d6819a57451748888e1fb8c71981762`, mate
 OPS version/release, QM gates, SEC/COMP assurance, CLIENT runtime only where productive materialization is needed.
 
 ## Project exit gate
-One active GOV roadmap; no duplicate authority namespace/writer; current projections agree with effective authority or expose a deterministic blocker; dated 2026-09-13 GOV archive is deleted; current Trust Root and registries name no withdrawn external framework.
+One active GOV roadmap; no duplicate authority namespace/writer; current projections agree with effective authority or expose a deterministic blocker; historical task state never self-activates; current Trust Root and registries name no withdrawn external framework.
