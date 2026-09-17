@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.1.0`  
+**Control Plane Version:** `4.2.0`  
 **Status:** OWNER-DIRECTED — effective after Human/CODEOWNER merge  
 **Effective date:** 2026-09-17  
 **Repository:** `capital-ai-online/Finance`
@@ -63,6 +63,16 @@ For every work item resolve from `CURRENT_MAIN`:
 5. exact exit evidence required.
 
 Missing, contradictory or ambiguous authority fails closed. Never invent a PVC, Owner, approval or project assignment.
+
+### DATA → FINTECH ownership supersession invariant
+
+Effective with Human/CODEOWNER merge of this control-plane update, `CAPITAL-AI-DATA` is **superseded as an independent Project Owner and execution source**. `PVC-09`, `PVC-10` and `PVC-11` resolve to `CAPITAL-AI-FINTECH`; the FINTECH productive ownership range is therefore `PVC-09..PVC-17`. `docs/projects/data/` is retained only as a historical/compatibility surface and MUST NOT advertise active Primary ownership, create executable tasks or act as a current project-routing source.
+
+All current organizational projections — including `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md`, project `PVC_OWNERSHIP.md` files, ROADMAP/TASK_REGISTER projections, generated reports and current machine-readable ownership indexes — MUST converge on that mapping. A current projection that still assigns `PVC-09..11` to `CAPITAL-AI-DATA` is stale drift and MUST be treated fail-closed until corrected.
+
+Historical evidence may preserve the former DATA ownership text verbatim for audit provenance. Historical `.ai/work-claims/*` records that still identify DATA as owner or retain `status=active` / `exclusive=true` after their associated work has merged, closed, been superseded or abandoned are stale coordination metadata; they MUST be released (`status=released`, `exclusive=false`) when touched and MUST NOT be interpreted as an active writer.
+
+This supersession changes organizational ownership only. It MUST NOT create a second provider-ingress, provenance, Data Quality, scoring, registry, dispatcher or technical `VC-*` authority; existing accepted technical/domain contracts remain the subject-matter source for those semantics.
 
 Work that belongs to another canonical Owner is handed over with source/target Owner, completed and remaining scope, dependency, evidence reference, exit gate, continuation condition and correlation ID. Detection of foreign work never transfers ownership and never silently authorizes implementation outside the resolved scope.
 
