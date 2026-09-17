@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-DATA-ALPHA-RUNTIME-CORRELATION-2026-09-01",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -18,7 +18,7 @@
   "project": "CAPITAL-AI-DATA",
   "projectFolder": "data",
   "branchConvention": "<approved-agent-prefix>/<project-folder>-<compact-task>-<YYYYMMDD>",
-  "ownerRole": "Primary Project Value Chain owner for PVC-09 UAI/Data Ingestion, PVC-10 Evidence Management and PVC-11 Data Quality",
+  "ownerRole": "Historical former owner for PVC-09..11; current owner is CAPITAL-AI-FINTECH",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-DATA-ALPHA-RUNTIME-CORRELATION-2026-09-01.json",
     "server/marketData/alphaVantageCredential.ts",
@@ -34,9 +34,11 @@
   "foreignWork": [
     "CAPITAL-AI-OPS: scripts/security/secretFileManifest.ts, Render/production secret provisioning/removal and production deployment mutation",
     "CAPITAL-AI-CLIENT or frontend owner: user-facing legacy Alpha Vantage wording in src/components/Charts.tsx",
-    "CAPITAL-AI-FINTECH: scoring/ranking semantics beyond credential-safe DATA input",
+    "Historical DATA→FINTECH boundary text retained for provenance only",
     "CAPITAL-AI-SEC: independent Security verification and CLOSED/VERIFIED lifecycle decisions"
   ],
-  "authorityGuard": "ALPHA_VANTAGE_API_KEY is the sole productive credential identity. ALPHA_VANTAGE_KEY remains non-authorizing and must never satisfy effective runtime readiness. No alias fallback, synthetic data, zero substitution, fabricated evidence, silent DQ PASS, scoring migration, second data plane, direct main mutation or foreign production mutation.",
-  "releaseCondition": "Release on merge, close, supersession or abandonment. PR creation requires fresh exact-snapshot Human/Owner approval; merge remains Human/CODEOWNER-only."
+  "authorityGuard": "Historical coordination metadata only. Current PVC-09..11 ownership resolves to CAPITAL-AI-FINTECH. ALPHA_VANTAGE_API_KEY remains the sole productive credential identity; no alias fallback, synthetic data, fabricated evidence, silent DQ PASS, direct main mutation or foreign production mutation.",
+  "releaseCondition": "Released because the historical work is terminal/superseded and CAPITAL-AI-DATA is no longer an independent owner.",
+  "releasedAt": "2026-09-17",
+  "releaseReason": "stale active/exclusive claim normalized after DATA→FINTECH ownership supersession"
 }
