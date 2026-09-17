@@ -51,7 +51,7 @@ function feature(
   };
 }
 
-describe('DATA FIN-12 field-level owner return', () => {
+describe('FINTECH FIN-12 validated-data field-level owner return', () => {
   it('admits crypto market-cap, volume and supply only with field-level evidence', () => {
     const asset = createUniversalAssetIdentity({ symbol: 'BTC', assetClass: 'crypto' });
     const validated = buildValidatedFeatureDataInput(asset, [
