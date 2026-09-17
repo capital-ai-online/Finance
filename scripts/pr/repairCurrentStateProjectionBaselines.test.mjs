@@ -11,23 +11,27 @@ import {
 
 const MAIN_SHA = 'a'.repeat(40);
 
+function baselinePattern(label = 'Baseline') {
+  return new RegExp(`\\*\\*${label}:\\*\\* \\x60main@${MAIN_SHA}\\x60`);
+}
+
 test('replaces a stale recognized Baseline field with exact current main', () => {
   const before = `# Roadmap\n\n**Baseline:** \`main@${'b'.repeat(40)}\`\n\nBody\n`;
   const after = repairProjectionText(before, MAIN_SHA);
-  assert.match(after, new RegExp(`\\*\\*Baseline:\\*\\* \\`main@${MAIN_SHA}\\``));
+  assert.match(after, baselinePattern());
   assert.equal(after.includes('b'.repeat(40)), false);
 });
 
 test('inserts a recognized Baseline field when missing', () => {
   const after = repairProjectionText('# Roadmap\n\nBody\n', MAIN_SHA);
-  assert.match(after, new RegExp(`\\*\\*Baseline:\\*\\* \\`main@${MAIN_SHA}\\``));
+  assert.match(after, baselinePattern());
   assert.match(after, /^# Roadmap\n\n\*\*Baseline:/);
 });
 
 test('preserves an existing recognized alternative baseline label', () => {
   const before = `# Roadmap\n\n**Correlation baseline:** \`main@${'c'.repeat(40)}\`\n`;
   const after = repairProjectionText(before, MAIN_SHA);
-  assert.match(after, new RegExp(`\\*\\*Correlation baseline:\\*\\* \\`main@${MAIN_SHA}\\``));
+  assert.match(after, baselinePattern('Correlation baseline'));
 });
 
 test('accepts only project ROADMAP/TASK_REGISTER targets', () => {
