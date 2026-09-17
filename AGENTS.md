@@ -86,9 +86,11 @@ Artificial sleeps, fixed waiting periods and arbitrary polling loops are prohibi
 
 ### Project-local task selection and idle behavior
 
-For the current canonical project folder, evaluate the current repository state, project Roadmap/work packages, known project-related chat/work context and blockers before selecting work.
+For the current canonical project folder, evaluate the current repository state, canonical project Roadmap/work packages and blockers before selecting work. Previous chat/work context, historical evidence, closed or superseded tasks, old reports, generated chats, branches and unmerged Pull Requests are correlation/evidence inputs only.
 
-If no active task is available, produce a project-folder-scoped report of the current task/Roadmap/blocker state. A taskless, completed or idle chat uses the same report behavior. After that report, execution continues only when an already-defined work item is owner-correct, dependency-ready, blocker-free and within the resolved scope; otherwise wait for a real unblock condition or Human/Owner input. Never manufacture work merely to avoid an idle state.
+Previous chat/work context or historical evidence MUST NOT create, restore, reopen, reactivate, continue or make executable any work item. A work item is executable only when it has either (a) a currently active canonical repository/project/Roadmap identity resolved from `CURRENT_MAIN`, or (b) fresh Human/Owner direction in the current interaction that explicitly defines or re-authorizes the work; all normal ownership, dependency, security, validation and scope gates still apply.
+
+If no active canonical task is available, produce a project-folder-scoped report of the current task/Roadmap/blocker state. A taskless, completed or idle chat uses the same report behavior. After that report, execution continues only for a work item meeting the canonical-identity or fresh-Human/Owner-direction rule above and only when it is owner-correct, dependency-ready, blocker-free and within the resolved scope. A completed, closed, superseded, abandoned or otherwise inactive work item MUST NOT be revived from historical chat/work context. Never manufacture or resurrect work merely to avoid an idle state.
 
 The default autonomous lifecycle is:
 
