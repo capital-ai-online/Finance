@@ -236,8 +236,15 @@ export function loadGeminiResearchShadowConfig(
   });
 }
 
-function utcDay(nowMs: number): string {
-  return new Date(nowMs).toISOString().slice(0, 10);
+function pacificDay(nowMs: number): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(nowMs));
+  const value = (type: string): string => parts.find((part) => part.type === type)?.value ?? '00';
+  return `${value('year')}-${value('month')}-${value('day')}`;
 }
 
 class GeminiResearchShadowBudget {
@@ -250,7 +257,7 @@ class GeminiResearchShadowBudget {
     private readonly config: GeminiResearchShadowConfig,
     private readonly nowMs: () => number,
   ) {
-    this.daily = { day: utcDay(this.nowMs()), requests: 0, tokens: 0, estimatedCostUsd: 0 };
+    this.daily = { day: pacificDay(this.nowMs()), requests: 0, tokens: 0, estimatedCostUsd: 0 };
     this.rateBudget = new RateLimitBudget({
       capacity: config.requestsPerMinute,
       windowMs: 60_000,
@@ -259,7 +266,7 @@ class GeminiResearchShadowBudget {
   }
 
   private rollDay(): void {
-    const today = utcDay(this.nowMs());
+    const today = pacificDay(this.nowMs());
     if (today !== this.daily.day) {
       this.daily = { day: today, requests: 0, tokens: 0, estimatedCostUsd: 0 };
     }
@@ -496,7 +503,7 @@ function nextPacificQuotaResetMs(nowMs: number): number {
     month: '2-digit',
     day: '2-digit',
   }).formatToParts(new Date(nowMs));
-  const value = (type: Intl.DateTimeFormatPartTypes): number =>
+  const value = (type: string): number =>
     Number(parts.find((part) => part.type === type)?.value ?? '0');
   const localDate = new Date(Date.UTC(value('year'), value('month') - 1, value('day')));
   localDate.setUTCDate(localDate.getUTCDate() + 1);
@@ -685,7 +692,12 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
     try {
       this.budget.reserveRequest();
     } catch (error) {
-      if (error instanceof GeminiResearchShadowError) return this.recordDenied(request, error, startedAtMs);
+      if (error instanceof GeminiResearchShadowError) {
+        if (error.code === 'DAILY_BUDGET_EXCEEDED') {
+          this.quotaDormantUntilMs = nextPacificQuotaResetMs(startedAtMs);
+        }
+        return this.recordDenied(request, error, startedAtMs);
+      }
       throw error;
     }
 
@@ -811,7 +823,9 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
               ? 'Gemini research shadow request timed out.'
               : 'Gemini research shadow transport failed.',
           );
-      this.circuit.failure(PROVIDER_ID);
+      if (normalized.code !== 'PROVIDER_RATE_LIMITED' && normalized.code !== 'FREE_TIER_QUOTA_DORMANT') {
+        this.circuit.failure(PROVIDER_ID);
+      }
       return this.recordDenied(request, normalized, startedAtMs);
     } finally {
       clearTimeout(timeout);
