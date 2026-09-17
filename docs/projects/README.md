@@ -44,8 +44,9 @@ The `PVC-*` namespace is intentionally distinct from the existing technical fina
 | `CAPITAL-AI-OPS` | `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18` | Controlled implementation and operations lifecycle |
 | `CAPITAL-AI-DOC` | `PVC-03` | Documentary Engine |
 | `CAPITAL-AI-GOV` | `PVC-05` | Platform Director plus cross-cutting Governance |
-| `CAPITAL-AI-DATA` | `PVC-09`, `PVC-10`, `PVC-11` | Data ingestion, evidence and Data Quality |
-| `CAPITAL-AI-FINTECH` | `PVC-12`..`PVC-17` | Feature Engineering through Ranking/Decision Support |
+| `CAPITAL-AI-FINTECH` | `PVC-09`..`PVC-17` | Data ingestion/evidence/Data Quality through Ranking/Decision Support |
+
+`CAPITAL-AI-DATA` is superseded as an independent Primary Owner. `docs/projects/data/` remains only as a historical/compatibility surface during migration and does not own a productive PVC stage.
 
 Cross-cutting projects such as `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FE`, `CAPITAL-AI-SEO` and `CAPITAL-AI-SOCIAL` own no productive PVC stage solely because they validate, constrain, present or distribute outputs.
 
@@ -65,8 +66,8 @@ Project-folder routing is an organizational mapping only. It does not create tec
 | `CAPITAL-AI-OPS` | `PVC-02/04/06/07/08/18` Primary Owner | `docs/projects/operations/` | `operations` | Operations | ✈️ | `#845CDC` | `CAPITAL-AI-OPS` | present |
 | `CAPITAL-AI-DOC` | `PVC-03` Primary Owner | `docs/projects/documentary/` | `documentary` | Documentary | 📋 | `#5CB060` | `CAPITAL-AI-DOC` | present |
 | `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance | `docs/projects/governance/` | `governance` | Governance | 🧠 | `#A1A1AA` | `CAPITAL-AI-GOV` | present |
-| `CAPITAL-AI-DATA` | `PVC-09..11` Primary Owner | `docs/projects/data/` | `data` | Data | 📁 | `#8058CC` | `CAPITAL-AI-DATA` | present |
-| `CAPITAL-AI-FINTECH` | `PVC-12..17` Primary Owner | `docs/projects/fintech/` | `fintech` | FinTech | 📊 | `#E080AC` | `CAPITAL-AI-FINTECH` | present |
+| `CAPITAL-AI-FINTECH` | `PVC-09..17` Primary Owner | `docs/projects/fintech/` | `fintech` | FinTech | 📊 | `#E080AC` | `CAPITAL-AI-FINTECH` | present |
+| `CAPITAL-AI-DATA` | superseded; no productive PVC | `docs/projects/data/` | `data` | Data (historical) | 📁 | `#8058CC` | `CAPITAL-AI-FINTECH` | historical compatibility surface |
 | `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | Quality Management | 🩺 | `#4480E8` | `CAPITAL-AI-QM` | present |
 | `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | Security | 💻 | `#E04C4C` | `CAPITAL-AI-SEC` | present |
 | `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | Compliance | ⚖️ | `#E84848` | `CAPITAL-AI-COMP` | present |
