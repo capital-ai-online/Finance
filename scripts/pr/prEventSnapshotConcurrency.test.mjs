@@ -27,6 +27,14 @@ test('build-and-test cancellation is isolated by exact PR head/base snapshot', (
   assert.ok(!ci.includes('group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}'));
 });
 
+test('autofix workflow_dispatch snapshot mismatch fails closed while stale PR events remain cheap no-ops', () => {
+  assert.ok(ci.includes("github.event_name == 'workflow_dispatch'"));
+  assert.ok(ci.includes('Invalid autofix workflow_dispatch snapshot'));
+  assert.ok(ci.includes('exit 1'));
+  assert.ok(ci.includes('Stale PR-Snapshot erkannt; kein Checkout, npm ci, TypeScript, Test oder Build für veraltete Event-Evidence.'));
+  assert.ok(ci.indexOf('Invalid autofix workflow_dispatch snapshot') < ci.indexOf('Repository auschecken'));
+});
+
 test('container required check rejects stale PR snapshots before checkout and heavy work', () => {
   assert.ok(container.includes("format('container-security-pr-{0}-{1}-{2}'"));
   assert.ok(container.includes('github.rest.pulls.get'));
