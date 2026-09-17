@@ -76,6 +76,17 @@ function fieldName(value: string): string {
   return requireNonEmpty(value, 'VALIDATED_FEATURE_INPUT_FIELD_REQUIRED');
 }
 
+const NON_NEGATIVE_FIELDS = new Set([
+  'marketCapUsd',
+  'volume24hUsd',
+  'circulatingSupply',
+]);
+
+function fieldValueDomainValid(field: string, value: number | null): boolean {
+  if (value === null || !Number.isFinite(value)) return true;
+  return !NON_NEGATIVE_FIELDS.has(field) || value >= 0;
+}
+
 function reasonForStatus(status: ValidatedDataStatus): string {
   switch (status) {
     case 'PASS':
@@ -137,6 +148,7 @@ function buildObservation(
   const fieldMatches = evidence.field === field;
   const evaluationMatches = evidence.freshness.evaluatedAt === evaluatedAt;
   const valueFinite = input.value === null || Number.isFinite(input.value);
+  const valueDomainValid = fieldValueDomainValid(field, input.value);
   const lineage = evaluateProvenanceLineage({
     contractVersion: DATA_PROVENANCE_LINEAGE_CONTRACT_VERSION,
     assetId: evidence.assetId,
@@ -174,6 +186,9 @@ function buildObservation(
   } else if (!valueFinite) {
     status = 'FAIL';
     reason = 'field-value-non-finite';
+  } else if (!valueDomainValid) {
+    status = 'FAIL';
+    reason = 'field-value-domain-invalid';
   } else if (isAdmissibleFintechInput(status) && !lineage.complete) {
     status = 'FAIL';
     reason = lineage.reason;
@@ -189,7 +204,7 @@ function buildObservation(
   return {
     observation: {
       field,
-      value: valueFinite ? input.value : null,
+      value: valueFinite && valueDomainValid ? input.value : null,
       currency: input.currency ?? null,
       providerId: evidence.providerId,
       providerFeed: input.providerFeed ?? null,
