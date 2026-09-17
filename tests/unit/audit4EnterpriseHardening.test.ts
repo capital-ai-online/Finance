@@ -22,7 +22,7 @@ describe('ARCH-AUDIT-0004 enterprise hardening', () => {
   });
 
   it('removes fabricated market metrics and headlines from Newsticker', () => {
-    const code = source('src/components/Newsticker.tsx');
+    const code = source('src/features/news/ui/Newsticker.tsx');
     expect(code).not.toContain('Math.random');
     expect(code).not.toContain('regAsset.price');
     expect(code).toContain('/verified-context');

@@ -18,21 +18,23 @@ const control = (id: string) => catalog.controls.find((item) => item.controlId =
 const authority = (id: string) => authorities.entries.find((item) => item.authorityId === id);
 
 describe('correlation-gated PR creation and post-create Owner governance', () => {
-  it('evolves the stable PR-create control without creating a parallel authority', () => {
+  it('projects the stable PR-create control without creating a parallel authority', () => {
     const prCreate = control('CTRL-SDLC-PR-CREATE-001');
+    const agents = read('AGENTS.md');
+
     expect(prCreate).toBeDefined();
     expect(catalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PR-CREATE-001')).toHaveLength(1);
-    expect(prCreate?.title).toContain('Correlation-gated automated Pull Request creation');
-    expect(prCreate?.requirement).toContain('final create-correlation PASS');
-    expect(prCreate?.requirement).toContain('without a separate pre-create Human approval prompt');
-    expect(prCreate?.requirement).toContain('at most one not-yet-integrated automated PR');
-    expect(prCreate?.requirement).toContain('Candidate branch semantics cannot self-bootstrap');
-    expect(prCreate?.requirement).toContain('Human/CODEOWNER merge remains separate');
-    expect(prCreate?.requirement).toContain('auto-merge is prohibited');
+    expect(prCreate?.title).toBe('Pull Request creation projection');
+    expect(prCreate?.requirement).toContain('defined only in AGENTS.md');
+    expect(prCreate?.requirement).toContain('Unmerged predecessor change content is never assumed to be current main');
     expect(prCreate?.evidence).toEqual(expect.arrayContaining([
+      'AGENTS.md',
       '.github/workflows/open-agent-draft-pr.yml',
       'tests/unit/githubAgentDraftPrWorkflow.test.ts',
     ]));
+    expect(agents).toContain('PR creation may be automated after final correlation PASS');
+    expect(agents).toContain('unresolved or blocked correlation stops creation');
+    expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
   });
 
   it('requires fresh current-main correlation and truthful validation rather than a pre-create credential', () => {
@@ -125,25 +127,25 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
 
     expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
     expect(agents).toContain('Agents MUST NOT self-approve, self-merge, enable auto-merge');
-    expect(merge?.requirement).toContain('Automated PR creation');
-    expect(merge?.requirement).toContain('auto-merge enablement remain prohibited');
-    expect(security?.requirement).toContain('smallest sufficient repository remediation');
-    expect(security?.requirement).toContain('does not transfer long-term ownership');
+    expect(merge?.requirement).toContain('Every main merge is a distinct Human/CODEOWNER decision');
+    expect(merge?.requirement).toContain('Agent self-merge and auto-merge remain prohibited');
+    expect(security?.requirement).toContain('bounded by ownership');
+    expect(security?.requirement).toContain('protected-action gates');
+    expect(agents).toContain('ownership remains unchanged');
     expect(agents).toContain('Protected Production, IAM, Billing, Secret, DNS, destructive-data');
   });
 
-  it('projects the evolved authority versions without changing stable IDs', () => {
+  it('projects the consolidated authority versions without changing stable IDs', () => {
     const canonicalRoadmap = read('docs/projects/governance/ROADMAP.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
-    expect(authorities.version).toBe('1.62.0');
-    expect(catalog.version).toBe('1.26.0');
-    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('2.11.0');
+    expect(authorities.version).toBe('1.63.0');
+    expect(catalog.version).toBe('1.27.0');
+    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('4.0.0');
     expect(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.version).toBe('4.0.0');
-    expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('3.0.0');
-    expect(String(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.scope ?? '')).toContain('no separate pre-create Owner prompt');
-    expect(String(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.scope ?? '')).toContain('Human/CODEOWNER review and merge remain separate');
-    expect(String(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.scope ?? '')).toContain('ordered serial Roadmap PR integration');
+    expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('4.0.0');
+    expect(String(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.scope ?? '')).toContain('resolved exclusively through AGENTS.md');
+    expect(String(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.scope ?? '')).toContain('resolved exclusively through AGENTS.md');
     expect(pluginUse).toBeDefined();
     expect(catalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PLUGIN-USE-001')).toHaveLength(1);
     expect(canonicalRoadmap).toContain('ACTIVE — CANONICAL PROJECT ROADMAP');
