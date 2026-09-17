@@ -2,7 +2,8 @@
 
 **Namespace:** `PVC-*`  
 **Project:** `CAPITAL-AI-OPS`  
-**Role:** organizational ownership projection / non-authorizing
+**Role:** organizational ownership projection / non-authorizing  
+**Baseline:** `main@2358642ff80f128e271e02ae88401008663578b7`
 
 ## Primary ownership
 
@@ -20,8 +21,9 @@
 - `PVC-01` → CAPITAL-AI-CLIENT
 - `PVC-03` → CAPITAL-AI-DOC
 - `PVC-05` → CAPITAL-AI-GOV
-- `PVC-09..PVC-11` → CAPITAL-AI-DATA
-- `PVC-12..PVC-17` → CAPITAL-AI-FINTECH
+- `PVC-09..PVC-17` → CAPITAL-AI-FINTECH
+
+`CAPITAL-AI-DATA` is superseded as an independent owner; former DATA references are historical evidence only.
 
 Security, Quality, Compliance, Frontend, SEO and Social are cross-cutting/consumer projects and gain no productive PVC ownership solely by validating or presenting work.
 
