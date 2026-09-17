@@ -3,52 +3,214 @@ name: Container Security
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'server/runtime/viteProductionDisabled.ts'
+      - 'scripts/security/verifyDockerHardening.mjs'
+      - '.github/workflows/container-security.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pull-requests: read
 
 concurrency:
-  group: dependency-readme-finalizer-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+  # PR cancellation is scoped to the exact event snapshot so a late stale event cannot cancel a newer head/base run.
+  group: >-
+    ${{ github.event_name == 'pull_request'
+        && format('container-security-pr-{0}-{1}-{2}', github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)
+        || format('container-security-{0}', github.ref) }}
   cancel-in-progress: true
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  TRIVY_VERSION: v0.74.0
 
 jobs:
   image-security:
-    if: github.head_ref == 'agent/operations-runtime-deps-20260917'
-    name: Temporary README dependency projection finalizer
+    name: Hardened image / HIGH+CRITICAL CVE gate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Checkout exact PR branch
+      - name: PR-Snapshot gegen Live-Head/Base korrelieren
+        id: snapshot
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const prNumber = Number(process.env.EVENT_PR_NUMBER);
+            const eventHead = normalizeSha(process.env.EVENT_HEAD_SHA);
+            const eventBase = normalizeSha(process.env.EVENT_BASE_SHA);
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const liveHead = normalizeSha(pr.head?.sha);
+            const liveBase = normalizeSha(pr.base?.sha);
+            const currentSnapshot = pr.state === 'open' && liveHead === eventHead && liveBase === eventBase;
+            core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false');
+            if (!currentSnapshot) {
+              core.notice(`Stale PR event ignored before checkout/container work: event head/base=${eventHead.slice(0, 12)}/${eventBase.slice(0, 12)}, live=${liveHead.slice(0, 12)}/${liveBase.slice(0, 12)}.`);
+            }
+
+      - name: Stale PR-Event kostensparend beenden
+        if: github.event_name == 'pull_request' && steps.snapshot.outputs.current_snapshot == 'false'
+        run: echo 'Stale PR-Snapshot erkannt; kein Checkout, Docker-Build oder Trivy-Scan für veraltete Evidence.'
+
+      - name: Repository auschecken
+        if: github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ env.SOURCE_SHA }}
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
 
-      - name: Configure Node 24
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: '24.20.0'
-          cache: npm
-
-      - name: Synchronize deterministic README projection
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm ci --ignore-scripts
-          npm run readme:sync
-          npm run readme:check
-
-      - name: Restore workflow and commit README projection
+      - name: Container-Security-Scope kostensparend bestimmen
+        id: scope
+        if: github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true'
         shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          git show "$BASE_SHA:.github/workflows/container-security.yml" > .github/workflows/container-security.yml
-          git add README.md .github/workflows/container-security.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m '[CAPITAL-AI-OPS] sync dependency version projection'
-          git push origin "HEAD:$HEAD_BRANCH"
+          required=true
+          if [ "$EVENT_NAME" = 'pull_request' ]; then
+            required=false
+            while IFS= read -r path; do
+              case "$path" in
+                Dockerfile|.dockerignore|package.json|package-lock.json|server/runtime/viteProductionDisabled.ts|scripts/security/verifyDockerHardening.mjs|.github/workflows/container-security.yml)
+                  required=true
+                  break
+                  ;;
+              esac
+            done < <(git diff --name-only "$BASE_SHA...$SOURCE_SHA")
+          fi
+          echo "required=$required" >> "$GITHUB_OUTPUT"
+          echo "Container security heavy path required=$required"
+
+      - name: Kostensparpfad — kein Container-Scope
+        if: (github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true') && steps.scope.outputs.required != 'true'
+        run: echo 'Kein containerrelevanter Diff; Required-Check-Kontext bleibt PASS ohne Docker-Build/Trivy-Scan.'
+
+      - name: Docker-Hardening-Invarianten prüfen
+        if: steps.scope.outputs.required == 'true'
+        run: node scripts/security/verifyDockerHardening.mjs
+
+      - name: Produktionsimage aus exakt diesem Commit bauen
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$SOURCE_SHA" = "$(git rev-parse HEAD)"
+          docker build --build-arg RELEASE_SOURCE_COMMIT="$SOURCE_SHA" --tag "capital-ai-security:$SOURCE_SHA" .
+
+      - name: Runtime-Metadaten und Angriffsfläche fail-closed prüfen
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="capital-ai-security:$SOURCE_SHA"
+          test "$(docker image inspect "$image" --format '{{.Config.User}}')" = 'capitalai'
+          test "$(docker image inspect "$image" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          test "$(docker image inspect "$image" --format '{{json .Config.ExposedPorts}}')" = '{"10000/tcp":{}}'
+          docker image inspect "$image" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep -Fxq 'NODE_ENV=production'
+          docker image inspect "$image" --format '{{json .Config.Healthcheck.Test}}' | grep -Fq '${PORT:-10000}/healthz'
+          docker run --rm --entrypoint sh "$image" -c '
+            set -eu
+            test "$(id -u)" != "0"
+            test ! -e /app/dist/server.cjs.map
+            test ! -e /app/node_modules/esbuild
+            test ! -e /app/node_modules/@esbuild
+            test ! -e /app/node_modules/vite
+            test ! -e /app/node_modules/@vitejs
+            test ! -e /app/node_modules/@tailwindcss
+            test ! -e /app/node_modules/tailwindcss
+            grep -Fq VITE_DEV_SERVER_DISABLED_IN_PRODUCTION_BUNDLE /app/dist/server.cjs
+            for path in /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm /usr/local/bin/pnpx; do
+              test ! -e "$path"
+              test ! -L "$path"
+            done
+          '
+
+      - name: Backend-Sourcemap aus allen finalen Image-Layern ausschließen
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="capital-ai-security:$SOURCE_SHA"
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          docker image save "$image" -o "$tmpdir/image.tar"
+          tar -xf "$tmpdir/image.tar" -C "$tmpdir"
+          mapfile -t layers < <(jq -r '.[0].Layers[]' "$tmpdir/manifest.json")
+          for layer in "${layers[@]}"; do
+            if tar -tf "$tmpdir/$layer" | grep -Eq '(^|/)app/dist/server\.cjs\.map$'; then
+              echo "::error::Backend source map is recoverable from final image layer $layer"
+              exit 1
+            fi
+          done
+
+      - name: Finale Image-ID als Supply-Chain-Evidence erfassen
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/container-security
+          image="capital-ai-security:$SOURCE_SHA"
+          docker image inspect "$image" --format '{{.Id}}' > artifacts/container-security/image-id.txt
+          printf '%s\n' "$SOURCE_SHA" > artifacts/container-security/source-sha.txt
+
+      - name: CycloneDX-SBOM aus dem finalen Runtime-Image erzeugen
+        if: steps.scope.outputs.required == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
+          format: cyclonedx
+          output: artifacts/container-security/runtime-image-sbom.cdx.json
+          vuln-type: 'os,library'
+
+      - name: Gepinnte Trivy-CLI-Version fail-closed verifizieren
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(trivy --version | sed -n 's/^Version: //p' | head -n 1)"
+          expected="${TRIVY_VERSION#v}"
+          test -n "$actual"
+          test "$actual" = "$expected"
+          printf 'Verified Trivy CLI %s\n' "$actual"
+
+      - name: Fixbare HIGH/CRITICAL Schwachstellen im finalen Image blockieren
+        if: steps.scope.outputs.required == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          skip-setup-trivy: 'true'
+          image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Container-Security-Evidence unveränderlich zum Run ablegen
+        if: always() && steps.scope.outputs.required == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: container-security-${{ env.SOURCE_SHA }}
+          path: artifacts/container-security/
+          retention-days: 90
+          if-no-files-found: error
