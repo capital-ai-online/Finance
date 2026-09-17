@@ -27,6 +27,7 @@ export type GeminiResearchShadowState =
   | 'READY'
   | 'RATE_LIMITED'
   | 'BUDGET_EXHAUSTED'
+  | 'QUOTA_DORMANT'
   | 'CIRCUIT_OPEN'
   | 'UNAVAILABLE';
 
@@ -38,6 +39,7 @@ export type GeminiResearchShadowErrorCode =
   | 'CIRCUIT_OPEN'
   | 'AUTH_ERROR'
   | 'PROVIDER_RATE_LIMITED'
+  | 'FREE_TIER_QUOTA_DORMANT'
   | 'SCHEMA_ERROR'
   | 'TRANSPORT_ERROR'
   | 'PROVIDER_ERROR';
@@ -96,6 +98,7 @@ export interface GeminiResearchShadowStatus {
   lastFailureAt: string | null;
   lastErrorCode: GeminiResearchShadowErrorCode | null;
   lastErrorMessage: string | null;
+  quotaDormantUntil: string | null;
 }
 
 export type GeminiResearchTelemetrySink = (record: TelemetryRecord) => void;
@@ -478,6 +481,43 @@ function classifyHttpFailure(status: number): GeminiResearchShadowErrorCode {
   return status >= 500 ? 'TRANSPORT_ERROR' : 'PROVIDER_ERROR';
 }
 
+function parseRetryAfterMs(value: string | null, nowMs: number): number | null {
+  if (!value?.trim()) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return nowMs + Math.ceil(seconds * 1_000);
+  const absolute = Date.parse(value);
+  return Number.isFinite(absolute) && absolute > nowMs ? absolute : null;
+}
+
+function nextPacificQuotaResetMs(nowMs: number): number {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(nowMs));
+  const value = (type: Intl.DateTimeFormatPartTypes): number =>
+    Number(parts.find((part) => part.type === type)?.value ?? '0');
+  const localDate = new Date(Date.UTC(value('year'), value('month') - 1, value('day')));
+  localDate.setUTCDate(localDate.getUTCDate() + 1);
+
+  const year = localDate.getUTCFullYear();
+  const month = localDate.getUTCMonth();
+  const day = localDate.getUTCDate();
+  const probe = new Date(Date.UTC(year, month, day, 8));
+  const offsetPart = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    timeZoneName: 'shortOffset',
+    hour: '2-digit',
+  }).formatToParts(probe).find((part) => part.type === 'timeZoneName')?.value ?? 'GMT-8';
+  const match = /^GMT([+-])(\d{1,2})(?::(\d{2}))?$/.exec(offsetPart);
+  const sign = match?.[1] === '+' ? 1 : -1;
+  const hours = Number(match?.[2] ?? 8);
+  const minutes = Number(match?.[3] ?? 0);
+  const offsetMs = sign * (hours * 60 + minutes) * 60_000;
+  return Date.UTC(year, month, day) - offsetMs;
+}
+
 export class GeminiResearchServerTransport implements GeminiResearchTransport {
   private readonly fetchImpl: typeof fetch;
   private readonly nowMs: () => number;
@@ -488,6 +528,7 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
   private lastFailureAt: string | null = null;
   private lastErrorCode: GeminiResearchShadowErrorCode | null = null;
   private lastErrorMessage: string | null = null;
+  private quotaDormantUntilMs: number | null = null;
 
   public constructor(
     public readonly config: GeminiResearchShadowConfig,
@@ -509,6 +550,7 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
     let state: GeminiResearchShadowState = 'READY';
     if (!this.config.enabled) state = 'DISABLED';
     else if (!this.config.ready) state = 'NOT_CONFIGURED';
+    else if (this.quotaDormantUntilMs !== null && this.nowMs() < this.quotaDormantUntilMs) state = 'QUOTA_DORMANT';
     else if (this.circuit.state(PROVIDER_ID) === 'OPEN') state = 'CIRCUIT_OPEN';
     return {
       runtimeVersion: GEMINI_RESEARCH_SHADOW_RUNTIME_VERSION,
@@ -523,6 +565,7 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
       lastFailureAt: this.lastFailureAt,
       lastErrorCode: this.lastErrorCode,
       lastErrorMessage: this.lastErrorMessage,
+      quotaDormantUntil: this.quotaDormantUntilMs === null ? null : new Date(this.quotaDormantUntilMs).toISOString(),
     };
   }
 
@@ -572,7 +615,7 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
     this.lastErrorCode = error.code;
     this.lastErrorMessage = error.message;
     const budget = this.budget.snapshot();
-    const diagnosticCode = error.code === 'RATE_BUDGET_EXCEEDED' || error.code === 'PROVIDER_RATE_LIMITED'
+    const diagnosticCode = error.code === 'RATE_BUDGET_EXCEEDED' || error.code === 'PROVIDER_RATE_LIMITED' || error.code === 'FREE_TIER_QUOTA_DORMANT'
       ? 'rate_limited'
       : error.code === 'AUTH_ERROR'
         ? 'auth_error'
@@ -584,7 +627,7 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
     recordProviderHealth({
       provider: PROVIDER_ID,
       capability: CAPABILITY,
-      state: error.code === 'RATE_BUDGET_EXCEEDED' || error.code === 'DAILY_BUDGET_EXCEEDED' || error.code === 'CIRCUIT_OPEN'
+      state: error.code === 'RATE_BUDGET_EXCEEDED' || error.code === 'DAILY_BUDGET_EXCEEDED' || error.code === 'FREE_TIER_QUOTA_DORMANT' || error.code === 'CIRCUIT_OPEN'
         ? 'degraded'
         : 'unavailable',
       diagnosticCode,
@@ -594,7 +637,7 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
     });
     this.emitTelemetry({
       request,
-      outcome: error.code === 'FEATURE_DISABLED' || error.code === 'NOT_CONFIGURED' || error.code === 'RATE_BUDGET_EXCEEDED' || error.code === 'DAILY_BUDGET_EXCEEDED' || error.code === 'CIRCUIT_OPEN'
+      outcome: error.code === 'FEATURE_DISABLED' || error.code === 'NOT_CONFIGURED' || error.code === 'RATE_BUDGET_EXCEEDED' || error.code === 'DAILY_BUDGET_EXCEEDED' || error.code === 'FREE_TIER_QUOTA_DORMANT' || error.code === 'CIRCUIT_OPEN'
         ? 'denied'
         : 'failure',
       severity: error.code === 'AUTH_ERROR' || error.code === 'SCHEMA_ERROR' ? 'error' : 'warn',
@@ -621,6 +664,20 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
         new GeminiResearchShadowError('NOT_CONFIGURED', this.config.configurationErrors.join(' ') || 'Gemini research shadow configuration is incomplete.'),
         startedAtMs,
       );
+    }
+    if (this.quotaDormantUntilMs !== null) {
+      if (startedAtMs < this.quotaDormantUntilMs) {
+        return this.recordDenied(
+          request,
+          new GeminiResearchShadowError(
+            'FREE_TIER_QUOTA_DORMANT',
+            `Gemini Free-Tier quota is dormant until ${new Date(this.quotaDormantUntilMs).toISOString()}.`,
+            429,
+          ),
+          startedAtMs,
+        );
+      }
+      this.quotaDormantUntilMs = null;
     }
     if (!this.circuit.allow(PROVIDER_ID)) {
       return this.recordDenied(request, new GeminiResearchShadowError('CIRCUIT_OPEN', 'Gemini research circuit breaker is open.'), startedAtMs);
@@ -666,6 +723,15 @@ export class GeminiResearchServerTransport implements GeminiResearchTransport {
 
       if (!response.ok) {
         const code = classifyHttpFailure(response.status);
+        if (code === 'PROVIDER_RATE_LIMITED') {
+          this.quotaDormantUntilMs = parseRetryAfterMs(response.headers.get('retry-after'), this.nowMs())
+            ?? nextPacificQuotaResetMs(this.nowMs());
+          throw new GeminiResearchShadowError(
+            code,
+            `Gemini Free-Tier quota/rate limit reached; provider is dormant until ${new Date(this.quotaDormantUntilMs).toISOString()}.`,
+            response.status,
+          );
+        }
         throw new GeminiResearchShadowError(code, `Gemini Interactions API returned HTTP ${response.status}.`, response.status);
       }
 
