@@ -97,7 +97,9 @@ jobs:
           if ! gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > "$raw" 2>/dev/null; then
             : > "$raw"
           fi
-          tail -n 700 "$raw" | head -c 120000 | \
+          bounded="$RUNNER_TEMP/current-state-baseline-failed.bounded.log"
+          tail -n 700 "$raw" > "$bounded"
+          head -c 120000 "$bounded" | \
             perl -pe 's/\e\[[0-9;]*[A-Za-z]//g; s/(gh[pousr]_|github_pat_)[A-Za-z0-9_]{20,}/[REDACTED_GITHUB_TOKEN]/g; s/sk-(?:proj-)?[A-Za-z0-9_-]{20,}/[REDACTED_API_TOKEN]/g' \
             > "$safe"
           echo "path=$safe" >> "$GITHUB_OUTPUT"
@@ -238,6 +240,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      actions: write
       contents: write
       pull-requests: read
     steps:
@@ -306,13 +309,28 @@ jobs:
               parents: [process.env.EXPECTED_HEAD_SHA],
             });
             await github.rest.git.updateRef({ owner, repo, ref: `heads/${pr.head.ref}`, sha: commit.sha, force: false });
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: 'ci.yml',
+              ref: pr.head.ref,
+              inputs: {
+                pr_number: String(prNumber),
+                expected_head_sha: commit.sha,
+                expected_head_ref: pr.head.ref,
+                expected_base_sha: process.env.EXPECTED_BASE_SHA,
+                source_autofix_run_id: String(context.runId),
+              },
+            });
             core.setOutput('new_head_sha', commit.sha);
+            core.setOutput('ci_dispatched', 'true');
 
       - name: Ergebnis zusammenfassen
         env:
           PREVIOUS_HEAD: ${{ needs.plan.outputs.head_sha }}
           NEW_HEAD: ${{ steps.write.outputs.new_head_sha }}
           TARGETS: ${{ needs.plan.outputs.targets_json }}
+          CI_DISPATCHED: ${{ steps.write.outputs.ci_dispatched }}
         shell: bash
         run: |
           {
@@ -324,5 +342,6 @@ jobs:
             echo '- source: exact CI baseline freshness errors only'
             echo '- policy/runtime: trusted current-main checkout only'
             echo '- write: exact validated Git tree, force=false'
+            echo "- CI revalidation: workflow_dispatch for exact new head (`$CI_DISPATCHED`)"
             echo '- merge authority: unchanged, Human/CODEOWNER only'
           } >> "$GITHUB_STEP_SUMMARY"
