@@ -5,7 +5,7 @@ import { getCleanEnv } from './env';
 
 // Issue #92 / ADR-0043: privileged server access and RLS-bound access are separate contracts.
 // A privileged client may ONLY use a Supabase secret/service-role credential. It must never
-// silently downgrade to a publishable/anon key because that makes authorization semantics
+// silently downgrade to a publishable key because that makes authorization semantics
 // environment-dependent and can turn privileged writes into partial/fallback behavior.
 let privilegedSupabaseClient: any = null;
 let rlsSupabaseClient: any = null;
@@ -20,9 +20,7 @@ function getPrivilegedSupabaseKey(): string {
 
 function getPublishableSupabaseKey(): string {
   return getCleanEnv('SUPABASE_PUBLISHABLE_KEY')
-    || getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY')
-    || getCleanEnv('SUPABASE_ANON_KEY')
-    || getCleanEnv('VITE_SUPABASE_ANON_KEY');
+    || getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY');
 }
 
 function isProduction(): boolean {
@@ -52,7 +50,7 @@ export function assertPrivilegedSupabaseConfigured(context = 'privileged Supabas
   if (!getPrivilegedSupabaseKey()) {
     throw new Error(
       `[Supabase][SECURITY] ${context} blocked: SUPABASE_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY is missing; `
-      + 'publishable/anon fallback is forbidden for privileged operations.'
+      + 'publishable fallback is forbidden for privileged operations.'
     );
   }
 }
@@ -81,14 +79,15 @@ export function getPrivilegedServerSupabase() {
 
 /**
  * Low-privilege/RLS-bound client for server code that deliberately wants anon/authenticated RLS
- * semantics. No service-role/secret fallback is allowed in this direction either.
+ * semantics. Modern Supabase publishable credentials are required; the legacy JWT anon-key
+ * compatibility path is intentionally removed.
  */
 export function getRlsServerSupabase() {
   if (!rlsSupabaseClient) {
     const url = getSupabaseUrl();
     const key = getPublishableSupabaseKey();
     if (!url || !key) {
-      throw new Error('[Supabase][SECURITY] RLS-bound client unavailable: publishable/anon credentials are missing.');
+      throw new Error('[Supabase][SECURITY] RLS-bound client unavailable: SUPABASE_PUBLISHABLE_KEY/VITE_SUPABASE_PUBLISHABLE_KEY is missing.');
     }
     rlsSupabaseClient = createClient(url, key, {
       auth: {
