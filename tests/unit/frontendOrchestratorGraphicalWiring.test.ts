@@ -13,7 +13,7 @@ const qualityCenter = read('src/components/QualityCenterPanel.tsx');
 const qualityCenterRoute = read('server/qualityCenter.ts');
 const defi = read('src/components/DeFiOrchestration.tsx');
 const rawMaterials = read('src/features/commodities/ui/RawMaterialsDashboard.tsx');
-const newsticker = read('src/components/Newsticker.tsx');
+const newsticker = read('src/features/news/ui/Newsticker.tsx');
 const cryptoRoutes = read('src/routes/cryptoRoutes.ts');
 const rawMaterialsRoutes = read('src/routes/rawMaterialsRoutes.ts');
 
@@ -66,8 +66,8 @@ describe('Frontend orchestrator graphical wiring', () => {
   });
 
   it('binds the intelligence ticker to canonical score, provenance and authenticated news contracts', () => {
-    expect(newsticker).toContain("import { authFetch } from '../lib/authFetch'");
-    expect(newsticker).toContain("import { fetchAuthenticatedNews } from '../features/news/authenticatedNewsFetch'");
+    expect(newsticker).toContain("import { authFetch } from '../../../lib/authFetch'");
+    expect(newsticker).toContain("import { fetchAuthenticatedNews } from '../authenticatedNewsFetch'");
     expect(newsticker).toContain("authFetch('/api/crypto/score'");
     expect(newsticker).toContain("method: 'POST'");
     expect(newsticker).toContain('asset_name: current.name');
