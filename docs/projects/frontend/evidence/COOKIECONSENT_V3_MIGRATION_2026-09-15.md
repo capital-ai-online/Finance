@@ -6,7 +6,7 @@ Status: IMPLEMENTED_ON_BRANCH / VALIDATION_PARTIAL / PRODUCTION_NOT_PROVEN
 Owner-Anweisung: „Löse Cookiehub durch cookieconsent v3 ab“, anschließend „Variante A freigegeben“ (im Chat zweimal bestätigt).
 Variante A: CookieHub ersetzen, GA4 nur nach Analytics-Opt-in, AdSense vollständig pausieren.
 Target/Primary Owner: CAPITAL-AI-FE, docs/projects/frontend/, cross-cutting ohne produktive PVC.
-Executor: CAPITAL-AI-OPS gemäß GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY; keine Übertragung von FE-, SEC-, COMP- oder Produktionsautorität.
+Executor: CAPITAL-AI-OPS innerhalb der aktuellen `/AGENTS.md@CURRENT_MAIN` Owner-/Scope-Grenzen; keine Übertragung von FE-, SEC-, COMP- oder Produktionsautorität.
 Roadmap: docs/projects/frontend/ROADMAP.md, FE-CONSENT-V3, Priorität 5/5.
 Branch: agent/frontend-cookieconsent-v3-20260915.
 Ursprünglicher Main: 103689c2f30536e573b7958f63b503ca428f69cf.
@@ -60,7 +60,7 @@ Seit ursprünglicher Basis 27 Commits auf main, 15 betroffene Dateien: Documenta
 Aktuelle Branch-/PR-Historie aus der ursprünglichen Migration bleibt historische Evidence; sie autorisiert die Mobile-Remediation nicht.
 Keine Governance-/ADR-Nummern oder produktiven PVC-Namespaces neu vergeben.
 
-Hinweis 2026-09-16: Während der Mobile-Readiness-Umsetzung wurde PR #1001 gemergt und `main` wechselte von `3d3f928d91e2cdd9a818bdfd6ae8d065db9f697f` auf `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`. Die neue Authority wurde vollständig re-korreliert. Der Merge änderte ausschließlich `AGENTS.md`, `docs/projects/governance/ROADMAP.md` und GOV-CHAT-078-Evidence; es besteht kein File-/Runtime-Overlap zu den fünf FE-Consent-Dateien. Der aktive Remediation-Branch wurde deshalb frisch von `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc` neu aufgebaut. Unmittelbar vor dieser Evidence-Korrektur waren keine offenen Pull Requests vorhanden.
+Hinweis 2026-09-16: Während der Mobile-Readiness-Umsetzung wurde PR #1001 gemergt und `main` wechselte von `3d3f928d91e2cdd9a818bdfd6ae8d065db9f697f` auf `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`. Die danach gültige Trust-Root-Änderung wurde vollständig re-korreliert. Historische Governance-Chat-/Continuation-Artefakte aus diesem Merge sind seit der Supersession vom 2026-09-17 nicht aktivierbar und werden nicht als Task- oder Autoritätsquelle verwendet; es besteht kein File-/Runtime-Overlap zu den fünf FE-Consent-Dateien. Der aktive Remediation-Branch wurde deshalb frisch von `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc` neu aufgebaut. Unmittelbar vor dieser Evidence-Korrektur waren keine offenen Pull Requests vorhanden.
 
 ## Offene Exit Gates
 1. Auf einer ausgelieferten HTTPS-Vorschau und anschließend nach autorisierter Promotion: Erstbesuch, Nur notwendige, Analytics an/aus, Speichern, Wiederöffnen, Reload-Persistenz, Widerruf, erneute Zustimmung sowie Login/Landing/Datenschutz prüfen. Browser-Cookie- und Netzwerk-Evidence muss Zero Google vor Opt-in, GA nur nach Zustimmung und Zero AdSense in allen Zuständen belegen. Aktuell NOT RUN.
