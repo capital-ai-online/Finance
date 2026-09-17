@@ -124,7 +124,7 @@ jobs:
           fi
 
           targets_json="$(jq -R -s -c 'split("\n") | map(select(length > 0))' < "$targets")"
-          node - <<'NODE'
+          TARGETS_JSON="$targets_json" node - <<'NODE'
           const changed = new Set(JSON.parse(process.env.CHANGED_FILES_JSON));
           const targets = JSON.parse(process.env.TARGETS_JSON);
           const exact = /^docs\/projects\/[^/]+\/(?:ROADMAP|TASK_REGISTER)\.md$/;
@@ -134,10 +134,6 @@ jobs:
           echo 'eligible=true' >> "$GITHUB_OUTPUT"
           echo 'reason=exact-current-state-baseline-failure' >> "$GITHUB_OUTPUT"
           echo "targets_json=$targets_json" >> "$GITHUB_OUTPUT"
-        env:
-          FAILURE_LOG: ${{ steps.failure_log.outputs.path }}
-          CHANGED_FILES_JSON: ${{ steps.pr.outputs.changed_files_json }}
-          TARGETS_JSON: ${{ steps.targets.outputs.targets_json }}
 
   patch:
     name: Baseline-Patch read-only erzeugen und validieren
