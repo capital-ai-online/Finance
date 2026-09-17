@@ -9,11 +9,13 @@ describe('CI and Render deployment control plane', () => {
   const ci = source('.github/workflows/ci.yml');
   const render = source('render.yaml');
 
-  it('does not expose the retired M10 authorization surface in active CI', () => {
+  it('does not expose retired M10 authorization while allowing exact-head CI revalidation', () => {
     expect(ci).not.toContain('M10_CI_GATE_ENABLED');
     expect(ci).not.toContain('AUTHORIZE_PR_CI');
-    expect(ci).not.toContain('workflow_dispatch:');
     expect(ci).not.toContain('/api/m10/');
+    expect(ci).toContain('workflow_dispatch:');
+    expect(ci).toContain('source_autofix_run_id:');
+    expect(ci).toContain("dispatchShaBound = context.eventName !== 'workflow_dispatch' || runSha === headSha");
   });
 
   it('keeps consolidated production deployment restricted to verified main pushes', () => {
