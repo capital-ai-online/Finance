@@ -5,7 +5,7 @@
 **Project folder:** `docs/projects/frontend/`  
 **Primary productive PVC:** `N/A` — Frontend remains presentation/interaction only  
 **Primary Owner:** `CAPITAL-AI-FE`  
-**Roadmap:** `FE-PR900-01 — Universe branding consumers` / `FE-CARRY-01`  
+**Roadmap:** `FE-PR900-01 — Universe branding consumers`  
 **Baseline:** `main@4310fa4007278e925272c23149337d0b90c7a061`  
 **Branch:** `agent/frontend-universe-subdomain-20260917`  
 **Canonical URL:** `https://capital-ai.online/universe`  
@@ -13,7 +13,7 @@
 
 ## Objective
 
-Expose the CAPITAL-AI Universe surface at the canonical same-origin path `https://capital-ai.online/universe` using the existing 16.08 branding contract, canonical asset-catalog metadata, FINTECH orchestration boundaries and public analysis workbench without creating a second scoring, provider, DATA, IAM or execution authority.
+Expose the CAPITAL-AI Universe surface at the canonical same-origin path `https://capital-ai.online/universe` using the existing 16.08 branding contract, canonical asset-catalog metadata, FINTECH orchestration boundaries and public analysis workbench without creating a second scoring, provider, data-quality, IAM or execution authority.
 
 The earlier subdomain design in this branch has been superseded before merge. No custom-domain, DNS, TLS or cross-origin setup is required for the requested route.
 
@@ -27,15 +27,15 @@ The earlier subdomain design in this branch has been superseded before merge. No
 6. The existing `PublicAnalysisWorkbench` remains the interactive tool surface. The public Enterprise Scorer stays BTC-fixed and existing protected/disabled tools preserve their gates.
 7. No direct API, provider, scoring or entitlement logic is added to `UniversePortal`.
 
-## FINTECH / DATA boundary
+## FINTECH data boundary
 
-The page keeps the three canonical data concerns separate:
+The page keeps the three canonical concerns separate:
 
 - **Asset Catalog:** descriptive discovery metadata only;
 - **Verified Observation / Display Evidence:** provider-backed values with provenance/freshness;
 - **Canonical Score:** FINTECH-owned scoring output projected read-only into Frontend.
 
-`CryptoOrchestrator`, `RawMaterialsOrchestrator` and FINTECH Registry/Dispatcher/Scoring remain upstream authorities. The Universe route is a presentation consumer only.
+`CryptoOrchestrator`, `RawMaterialsOrchestrator` and FINTECH Registry/Dispatcher/Scoring remain upstream authorities. PVC-09..11 data-ingress/evidence/DQ ownership is part of `CAPITAL-AI-FINTECH` under the current ownership supersession. The Universe route is a presentation consumer only.
 
 ## Production route wiring
 
@@ -80,6 +80,10 @@ Because `/universe` is same-origin with `capital-ai.online`, no cross-subdomain 
 - TypeScript: `NOT RUN` locally;
 - production build/prerender: `NOT RUN` locally;
 - production/browser readback at `https://capital-ai.online/universe`: pending integration and deployment.
+
+## Historical activation boundary
+
+This evidence does not activate or preserve a work item by itself. `historical/non-terminal != active`. Any continuation requires a currently active canonical identity from `CURRENT_MAIN` or fresh Human/Owner direction in the current interaction.
 
 ## Exit gate
 

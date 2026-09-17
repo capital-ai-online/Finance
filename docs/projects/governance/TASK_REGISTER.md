@@ -1,118 +1,30 @@
-# CAPITAL-AI-GOV — Canonical Chat Task Register
+# CAPITAL-AI-GOV — Historical Chat Task Ledger
 
-**Source:** Owner-directed CAPITAL-AI-GOV project conversations through 2026-09-16, correlated to repository-visible current-main/PR/branch evidence  
-**Current correlation baseline:** `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`  
-**Role:** chat/backlog traceability projection — non-authorizing  
-**Primary Owner:** `CAPITAL-AI-GOV / Platform Director` for local rows only  
-**Canonical planning surface:** `docs/projects/governance/ROADMAP.md`
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
 
-## Status vocabulary
+**Role:** historical traceability only — non-authorizing, non-executable  
+**Trust root:** `/AGENTS.md@CURRENT_MAIN`  
+**Supersession:** `CAPITAL-AI-GOV-HISTORICAL-TASK-ACTIVATION-SUPERSESSION-2026-09-17`
 
-- `DONE_MAIN` — merged/current-main evidence supports completion.
-- `OPEN_GOV` — bounded CAPITAL-AI-GOV work remains.
-- `IMPLEMENTED_ON_BRANCH` — bounded implementation exists on a correlated scoped branch but is not current-main authority.
-- `READY_FOR_RECORRELATION` — a prior sequencing dependency is terminal and work may be freshly correlated under current authority.
-- `FOREIGN_PARTIAL` — foreign owner implemented part; evidence/verification remains.
-- `FOREIGN_OPEN` — foreign Primary Owner still owns execution.
-- `DEPENDENCY` — GOV closeout waits on another owner/verifier/Legal or terminal upstream state.
-- `CONTINUOUS` — maintenance/assessment obligation.
-- `HISTORICAL` — terminal coordination state retained only for traceability.
+## Canonical rule
 
-## Canonical task register
+`historical/non-terminal != active`
 
-| ID | Task | Owner | Status | Current-main treatment / exit gate |
-|---|---|---|---|---|
-| `GOV-CHAT-001` | Canonical `docs/projects/` surface | GOV | `DONE_MAIN` | project model present |
-| `GOV-CHAT-002` | `PVC-01..PVC-18` ownership namespace | GOV | `DONE_MAIN` | canonical Project Value Chain present |
-| `GOV-CHAT-003` | Platform Director `PVC-05` / Governance scope | GOV | `DONE_MAIN` | boundary preserved |
-| `GOV-CHAT-004` | DevelopmentChain integration | OPS + GOV policy | `DONE_MAIN` | PVC → Roadmap → ADR → ESS model active |
-| `GOV-CHAT-005` | M0-M10 historical treatment | OPS / GOV | `DONE_MAIN` | M10 retired/off; no current implementation gap |
-| `GOV-CHAT-006` | Financial technical `VC-*` migration assessment | GOV + affected owners | `DONE_MAIN` | Owner confirmed no migration; PR #767 terminalized GOV-05 |
-| `GOV-CHAT-007` | Preserve `SC-MD-SPT-0001` during any future migration | affected owners | `CONTINUOUS` | existing technical identities retained |
-| `GOV-CHAT-008` | CLIENT organizational `PVC-01` migration | CLIENT | `FOREIGN_OPEN` | CLIENT-owned; do not absorb into GOV |
-| `GOV-CHAT-011` | Admin Panel process/dependency graph | CLIENT / FE / OPS | `FOREIGN_OPEN` | GOV-08 remains referred |
-| `GOV-CHAT-012` | Governance/component architecture assessment | GOV | `CONTINUOUS` | maintain current-state projection |
-| `GOV-CHAT-013` | Compact PR body template | GOV | `DONE_MAIN` | `.github/pull_request_template.md` v1.5.0 remains current PR-body contract |
-| `GOV-CHAT-014` | Direct PR creation under Human gate | GOV | `HISTORICAL` | v3.4 Approval Envelope governed the PR #952 bootstrap only; current v4 correlation-gated Draft creation requires no separate pre-create Owner prompt; Human/CODEOWNER merge remains separate |
-| `GOV-CHAT-020` | Pre-PR sync/correlation | GOV lifecycle | `DONE_MAIN` | current v4 requires fail-closed current-main/open-writer/changed-file/semantic/namespace/authority/ownership/security correlation and complete current-main PR-body rendering before Draft creation |
-| `GOV-CHAT-025` | One canonical current GOV roadmap/task surface | GOV | `CONTINUOUS` | Roadmap planning + register traceability maintained against current main |
-| `GOV-CHAT-026` | Post-PR handoff max two steps | GOV lifecycle | `DONE_MAIN` | successful final create-correlation creates the Draft PR before `POST_PR_HANDOFF`; blocked create uses normal bounded continuation queue |
-| `GOV-CHAT-037` | User-Lifecycle governance bootstrap | GOV | `DONE_MAIN` | decisions/orchestration merged |
-| `GOV-CHAT-040` | User-Lifecycle harness/provider tests | OPS | `FOREIGN_PARTIAL` | current OPS return `EVIDENCE_READY` in `docs/projects/operations/evidence/GOV_07_USER_LIFECYCLE_EVIDENCE_RETURN_2026-09-06.md`; isolated Supabase Local/Mailpit, Stripe Sandbox/Test Clock/provider lifecycle E2E and independent Security closure remain open/NOT_AVAILABLE |
-| `GOV-CHAT-041` | Lifecycle/pricing/entitlement UX | FE | `FOREIGN_PARTIAL` | Human-merged PR #809 (`51bf529f003dfa47462c16ecbe10ae3b095547a4`) supplies `FE_OWNER_RETURN_READY`; repository validation completed, while browser/WCAG/mobile and Stripe/Supabase provider E2E plus independent SEC/COMP assurance remain external |
-| `GOV-CHAT-042` | Independent User-Lifecycle Security verification | SEC | `DEPENDENCY` | `SEC-VERIFY-ULS-001 = PARTIAL / NOT VERIFIED`; deployed contract/RLS bounded checks pass, but live active-paid identity lineage remains partial and requires OPS/PVC-08 evidence/remediation followed by independent Security re-verification |
-| `GOV-CHAT-043` | Purchase/cancellation consumer-compliance | COMP / Human-Legal | `DEPENDENCY` | Human-merged PR #895/current main completes the latest local COMP reassessment; external Legal applicability/accepted-risk and remaining Owner/provider/Security evidence gates remain held; GOV makes no BGB §312j/§312k applicability inference |
-| `GOV-CHAT-044` | Final User-Lifecycle governance correlation | GOV | `OPEN_GOV` | final closure remains dependency-held on OPS/provider evidence, independent Security re-verification and competent Human-Legal/Compliance decisions where applicable |
-| `GOV-CHAT-047` | BGB §312j/§312k applicability | COMP / Human-Legal | `DEPENDENCY` | no GOV legal inference; competent Human/Legal scope decision remains required where applicable |
-| `GOV-CHAT-053` | Deep Research Evidence Contract | GOV | `DONE_MAIN` | ESS-0019 v1.2.0 accepted |
-| `GOV-CHAT-054` | ADR-0060 authority/lifecycle reconciliation | GOV | `DONE_MAIN` | GOV-03/DR-02B terminal via PR #743 |
-| `GOV-CHAT-061` | Recorrelate after GOV-03 | GOV | `DONE_MAIN` | PR #751 |
-| `GOV-CHAT-062` | COMP-GAP-002 / ADR-0007 | GOV | `DONE_MAIN` | PR #755/#758 |
-| `GOV-CHAT-063` | COMP-GAP-003 / ESS-0006 | GOV | `DONE_MAIN` | prior reconciliation via PR #757; bounded Security-remediation extension terminal through PR #864 |
-| `GOV-CHAT-064` | Post-ESS-0006 project correlation | GOV | `DONE_MAIN` | PR #762 |
-| `GOV-CHAT-065` | GOV-05 no-migration decision closeout | GOV | `DONE_MAIN` | PR #767 |
-| `GOV-CHAT-066` | Post-GOV-05 owner/evidence re-correlation | GOV/PVC-05 | `DONE_MAIN` | PR #769 |
-| `GOV-CHAT-067` | COMP-GAP-008 Document Registry treatment | GOV/PVC-05 with DOC/PVC-03 input | `DONE_MAIN` | PR #775; latest COMP reassessment through Human-merged PR #895 records bounded finding `RESOLVED_ON_MAIN` while broader external recordkeeping scope remains separate |
-| `GOV-CHAT-068` | Copyable bounded next-step handoff | GOV lifecycle | `DONE_MAIN` | PR #772 remains historical implementation evidence; separate generic Owner-response formatting retired |
-| `GOV-CHAT-069` | Post-COMP-GAP-008 owner/dependency re-correlation | GOV/PVC-05 | `DONE_MAIN` | PR #780 |
-| `GOV-CHAT-070` | GOV-07 validated-baseline evolution policy | GOV/PVC-05 policy | `DONE_MAIN` | Human-merged PR #790; broader GOV-07 closeout remains dependency-held |
-| `GOV-CHAT-071` | Retire separate copyable Owner-response rule; preserve neutral approval presentation | GOV/PVC-05 | `DONE_MAIN` | TERMINAL via Human-merged PR #845 |
-| `GOV-CHAT-072` | Development-Chain/chat plugin execution policy | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #886 and projection closeout PR #889; exactly one `CTRL-SDLC-PLUGIN-USE-001`, relevant least-privilege use only |
-| `GOV-CHAT-073` | Roadmap-framework NIST/M10 current-state correction | GOV/PVC-05 | `DONE_MAIN` | NIST withdrawn/non-authorizing; M10 retired/off |
-| `GOV-CHAT-074` | New PR-CREATION-APPROVAL / Approval Envelope v3.4 rollout | GOV/PVC-05 | `DONE_MAIN / HISTORICAL_SUCCESSOR_BOUNDARY` | Human-merged PR #874 established v3.4; it governed the later PR #952 bootstrap and is no longer the current ordinary PR-create credential after Human-merged v4 activation |
-| `GOV-CHAT-075` | Bounded Security-remediation authority | GOV/PVC-05 policy with SEC assurance boundary | `DONE_MAIN` | Human-merged PR #864; Security ownership/verification separation remains preserved |
-| `GOV-CHAT-076` | Cross-chat current-main consolidation / GOV Roadmap and register sync | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #868 |
-| `GOV-CHAT-077` | Correlation-gated automated Draft-PR creation + ordered Roadmap PR lane | GOV/PVC-05 | `DONE_MAIN` | Human-merged PR #952 activated `/AGENTS.md` v2.11.0, Human/Owner PR Policy v4.0.0 and Development Chain v3.0.0; final create-correlation gates Draft creation and Human/CODEOWNER-only merge remains |
+This file is not a backlog, queue, work selector, continuation source, dependency authority or execution registry. Previous chat IDs, statuses, branches, Pull Requests, reports, evidence and historical work-item labels are retained only through Git history and other evidence surfaces.
 
-## GOV-CHAT-072 — terminal current-main state
+No row or historical state formerly contained in this file may create, preserve, restore, reopen, reactivate, continue or make executable a work item.
 
-Human-merged PR #886 materialized the bounded Development-Chain plugin/connector usage rule and PR #889 terminalized the stale project projection. Both are ancestors of current main.
+A work item is executable only when either:
 
-Current main `/AGENTS.md` v2.11.0, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` v3.0.0, Authority Registry v1.62.0 and Control Catalog v1.26.0 project exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing authorities. No plugin-specific `AUTH-*` identity exists.
+1. `CURRENT_MAIN` contains a currently active canonical repository/project/Roadmap identity for that exact work item; or
+2. the Human/Owner gives fresh direction in the current interaction that explicitly defines or re-authorizes it.
 
-The rule requires an already installed/connected plugin, app, MCP tool, connector or equivalent capability to be directly relevant to the current bounded task and the least-privileged sufficient available capability before invocation. Availability never grants authority. Unconditional/all-plugin invocation, invocation solely because an integration is connected, automatic install/connect/enable/permission/OAuth/MCP-host mutation, PVC/Primary-Owner transfer, protected-mutation bypass and trust elevation from retrieved tool content remain prohibited.
+All normal Project/PVC/Owner, dependency, Security/Compliance, validation, branch and Human/CODEOWNER merge gates remain required.
 
-ESS-0019 and the Human-merged CLIENT-08 contract remain provider-neutral capability and discovery/invocation-request contracts. `.mcp.json`, MCP executable identity, credentials, external host permissions/tool grants and session isolation remain outside GOV-CHAT-072 authority.
+## Historical lookup
 
-## GOV-CHAT-074 — terminal historical bootstrap state
+Prior chat-task mappings remain available through Git history for audit/evidence purposes. They MUST NOT be reconstructed into an active task queue or used to infer unfinished work merely because a former state was non-terminal.
 
-Human-merged PR #874 activated `AUTH-GOV-HUMAN-OWNER-PR-APPROVAL` / `CTRL-SDLC-PR-CREATE-001` Approval Envelope v3.4. That version remained authoritative through creation of the GOV-CHAT-077 introducing Pull Request and correctly bound Project/Folder/PVC/Owner, branch/Roadmap scope, changed files, exact title, Git identities and effective-change identity.
+## Transition
 
-Human-merged PR #952 then activated the v4 correlation-gated successor model. The exact historical affirmative response `PR Erstellung : Freigegeben` remains audit evidence for PRs that were actually governed by v3.4; it is not required for new ordinary bounded agent-managed Draft PR creation under current v4 authority. Human/CODEOWNER merge remains separate and Human-only.
-
-## GOV-CHAT-077 — terminal current-main state
-
-Owner direction on 2026-09-15 removed the separate pre-create Owner prompt for future ordinary bounded agent-managed Pull Requests and moved Human/Owner review to the created PR while preserving Human/CODEOWNER-only merge.
-
-Human-merged PR #952 materialized the existing stable-authority evolution: `/AGENTS.md` v2.11.0, Human/Owner PR Policy v4.0.0, Development Chain v3.0.0, Control Catalog v1.26.0 and Authority Registry v1.62.0. The trusted Draft-PR workflow removed active Approval-Envelope inputs/verifier calls and re-runs fail-closed current-main/open-writer/create-correlation immediately before create.
-
-The ordered automated Roadmap lane permits at most one not-yet-integrated automated PR. A successor waits for predecessor terminal outcome; Human Merge causes a fresh successor branch from the resulting then-current main, while close-without-merge causes queue recomputation without assuming predecessor payload. Stacked unmerged dependency branches are not a bypass.
-
-**Historical no-self-bootstrap evidence:** PR #952 itself obeyed the then-current v3.4 Approval Envelope and exact Owner approval before Human/CODEOWNER Merge. After that merge, v4 became current authority for successor work.
-
-## Current writer / correlation state
-
-At `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`:
-
-- there are no open Pull Requests at this synchronization;
-- Human-merged PR #952 is current-main evidence for the correlation-gated Draft-PR lifecycle;
-- Human-merged PR #953 is current-main evidence for fail-closed freshness/version validators;
-- the historical `agent/governance-autonomous-pr-chain-20260915` branch is no longer a current writer for GOV-CHAT-077 because its PR is terminal/merged;
-- `agent/operations-work-management-postmerge-20260916` is a current non-PR OPS writer derived directly from this main and updates only `docs/projects/operations/ROADMAP.md`; it is a sequencing/correlation dependency for later GitHub-capability work, not a competing GOV authority writer;
-- no foreign Project/PVC ownership, Security/Compliance assurance authority, provider mutation, merge authority or production mutation is transferred by the current GOV projection-sync work.
-
-## Current foreign-owner dependencies
-
-| Owner | Current return state | GOV interpretation / exact evidence |
-|---|---|---|
-| `CAPITAL-AI-DATA` | `PARTIAL — PRODUCT ACCESS GAP CLOSED ON MAIN / AUTHORITY-UNAVAILABLE DISTINCTION OPEN` | `FOREIGN_PARTIAL`; `docs/projects/data/ROADMAP.md`. Productive route bypass is closed; unavailable-state distinction and independent Security verification remain open. |
-| `CAPITAL-AI-OPS` | `EVIDENCE_READY` | `FOREIGN_PARTIAL`; `docs/projects/operations/evidence/GOV_07_USER_LIFECYCLE_EVIDENCE_RETURN_2026-09-06.md`. Stable-ID/readback return exists; isolated Supabase/Stripe provider lifecycle E2E and Security closure remain open/NOT_AVAILABLE. |
-| `CAPITAL-AI-FE` | `FE_OWNER_RETURN_READY` through Human-merged PR #809 | `FOREIGN_PARTIAL / REPOSITORY_IMPLEMENTED`; repository validation completed; browser/provider E2E and independent SEC/COMP assurance remain external. |
-| `CAPITAL-AI-SEC` | `PARTIAL / NOT VERIFIED` | `DEPENDENCY / NOT_VERIFIED`; live active-paid identity lineage is incomplete and routes productive evidence/remediation to OPS/PVC-08 before Security re-verification. |
-| `CAPITAL-AI-COMP` / Human-Legal | `LOCAL_COMP_REASSESSED / EXTERNAL_GATES_HELD` through Human-merged PR #895 | `DEPENDENCY`; local Compliance processing is current while legal applicability/accepted-risk and external Owner/provider/Security evidence remain held. |
-| `CAPITAL-AI-DOC` | Documentary/PVC-03 remains separately owned | no foreign implementation absorbed by GOV |
-| `CAPITAL-AI-CLIENT` / FE / OPS | Admin Panel/process/dependency work remains split | `FOREIGN_OPEN` |
-
-## Consolidation rule
-
-This register is the current chat/backlog inventory for CAPITAL-AI-GOV traceability. `docs/projects/governance/ROADMAP.md` remains the Human-readable planning/status surface. Neither supersedes `/AGENTS.md`, accepted ADR/ESS authorities, canonical registries, project/PVC ownership or foreign project Roadmaps.
+Canonical project Roadmaps remain temporarily present until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Until then, their historical/non-terminal markers are ledger text only unless the exact task is currently active under the rule above.
