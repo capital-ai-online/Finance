@@ -23,7 +23,7 @@ import {
 } from './ValidatedDataInput';
 
 /**
- * DATA/PVC-09..11 field-level input used to close FIN-12 upstream gaps without
+ * FINTECH/PVC-09..12 field-level validated-data input used to close FIN-12 gaps without
  * introducing a second provider, provenance, freshness or Data Quality plane.
  *
  * Each field arrives with the canonical MarketEvidenceQualityRecord. This
