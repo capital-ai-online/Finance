@@ -30,6 +30,15 @@ const ROUTES = [
       'CAPITAL-AI Portal: quantitative Analysen, Compliance und Asset-Scoring. Bildungsorientiert — keine Anlageberatung.',
   },
   {
+    routePath: '/universe',
+    file: 'universe/index.html',
+    title: 'CAPITAL-AI Universe – Multi-Asset Intelligence',
+    description:
+      'CAPITAL-AI Universe verbindet Multi-Asset Discovery, verifizierte Evidence und kanonische Scoring-Projektionen für Krypto, Aktien, Indizes, Forex und Rohstoffe.',
+    noscript:
+      'CAPITAL-AI Universe: Multi-Asset Discovery, verifizierte Evidence und kanonische Scoring-Projektionen. Bildungsorientiert — keine Anlageberatung.',
+  },
+  {
     routePath: '/learning-platform',
     file: 'learning-platform/index.html',
     title: 'Capital-AI Learning Platform – Canonical Vocabulary',
@@ -144,7 +153,7 @@ function injectMeta(html, route) {
       <main>
         <h1>${escapeAttr(title)}</h1>
         <p>${escapeAttr(route.noscript)}</p>
-        <p><a href="${ORIGIN}/learning-platform">Learning Platform</a></p>
+        <p><a href="${ORIGIN}/universe">Universe</a> · <a href="${ORIGIN}/learning-platform">Learning Platform</a></p>
         <p><a href="${ORIGIN}/impressum">Impressum</a> ·
            <a href="${ORIGIN}/agb">AGB</a> ·
            <a href="${ORIGIN}/datenschutz">Datenschutz</a></p>

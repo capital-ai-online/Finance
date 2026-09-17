@@ -7,6 +7,7 @@ import React from 'react';
 import { SessionComposition } from './auth/SessionComposition';
 import { ProductVocabularyBoundary } from './presentation/ProductVocabularyBoundary';
 import { AppRoutes } from './routing/AppRoutes';
+import { UniversePathBoundary } from './universe/ui/UniversePathBoundary';
 
 /**
  * Canonical BB-1 application composition root.
@@ -18,9 +19,11 @@ import { AppRoutes } from './routing/AppRoutes';
 export default function App() {
   return (
     <ProductVocabularyBoundary>
-      <SessionComposition>
-        {(session) => <AppRoutes {...session} />}
-      </SessionComposition>
+      <UniversePathBoundary>
+        <SessionComposition>
+          {(session) => <AppRoutes {...session} />}
+        </SessionComposition>
+      </UniversePathBoundary>
     </ProductVocabularyBoundary>
   );
 }
