@@ -4,18 +4,20 @@
 **Project folder:** `fintech`  
 **Canonical project path:** `docs/projects/fintech/`  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
-**Primary Project Value Chain ownership:** `PVC-12` through `PVC-17`  
-**Current-main synchronization baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
+**Primary Project Value Chain ownership:** `PVC-09` through `PVC-17`  
+**Current-main synchronization baseline:** `main@2358642ff80f128e271e02ae88401008663578b7`  
 **Trust root:** `/AGENTS.md`  
 **Project model:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`
 
 ## Purpose
 
-CAPITAL-AI-FINTECH owns the organizational execution chain from Financial Feature Engineering through Ranking / Decision Support. It reuses the existing technical scoring authorities and does not create a second registry, dispatcher, score-result contract, entitlement authority or ranking architecture.
+CAPITAL-AI-FINTECH owns the organizational chain from provider/data ingestion through Ranking / Decision Support. It reuses the existing technical provider, evidence, Data Quality and scoring authorities and does not create a second registry, dispatcher, score-result contract, entitlement authority, provider-ingress plane or ranking architecture.
 
 ```text
-CAPITAL-AI-DATA / PVC-09..11
-  -> validated input / evidence / DQ
+CAPITAL-AI-FINTECH / PVC-09..11
+  -> provider/data ingestion
+  -> evidence / provenance / freshness
+  -> Data Quality / validated input
 CAPITAL-AI-FINTECH / PVC-12..17
   -> Feature Contract
   -> ScoringModelRegistry
@@ -27,10 +29,15 @@ CAPITAL-AI-OPS / PVC-18
   -> EventMesh / Traceability
 ```
 
+`CAPITAL-AI-DATA` is superseded as an independent Project Owner. Historical DATA documents/evidence remain traceable, but current work for PVC-09..11 is routed inside FINTECH.
+
 ## Primary PVC ownership
 
 | Stage | Capability |
 |---|---|
+| `PVC-09` | UAI / Data Ingestion |
+| `PVC-10` | Evidence Management |
+| `PVC-11` | Data Quality |
 | `PVC-12` | Feature Engineering |
 | `PVC-13` | Scoring Models |
 | `PVC-14` | Scoring Orchestration |
@@ -56,7 +63,7 @@ Project organization does not relocate runtime merely to match `docs/projects/fi
 
 ## Boundaries
 
-- `CAPITAL-AI-DATA` retains `PVC-09..11`: UAI / Data Ingestion, Evidence Management and Data Quality. FINTECH consumes validated exits but does not extend provider-specific normalization, provenance or DQ locally.
+- `PVC-09..11` are FINTECH-owned organizational stages for provider/data ingress, evidence/provenance/freshness and Data Quality. Existing technical contracts remain canonical; the ownership migration does not duplicate them.
 - `CAPITAL-AI-OPS` retains `PVC-18`: EventMesh / Traceability and repository delivery/operations lifecycle.
 - `CAPITAL-AI-FE` is a presentation consumer. Its canonical project folder is `docs/projects/frontend/`; the FIN-17 backend-order consumer cutover is Human-merged and terminal for the current ranking-authority split.
 - `CAPITAL-AI-QM`, `CAPITAL-AI-SEC` and `CAPITAL-AI-COMP` are cross-cutting validation/requirement/assessment projects and acquire no FINTECH PVC ownership through those roles.
@@ -84,10 +91,10 @@ FIN-17 is `DONE_MAIN / TERMINAL` for this bounded authority split and is not reo
 ## Current execution priorities
 
 1. Independent Security verification remains open for FIN-SEC-02 and FIN-SEC-03; their FINTECH implementation/test artifacts are `EVIDENCE_READY`.
-2. `FIN-12` is the selected FINTECH P1 item. Current-main correlation found that the existing DATA validated exit is necessary but not yet sufficient for every productive champion feature input.
-3. FINTECH is dependency-held at the `CAPITAL-AI-DATA / PVC-09..11` ownership boundary until canonical validated coverage exists for productive crypto market-cap/volume/supply fields, traditional fundamentals, productive crypto/traditional history consumers and signed sovereign-yield value semantics. Exact evidence: `evidence/FIN_12_VALIDATED_FEATURE_BOUNDARY_RECORRELATION_2026-09-16.md`.
-4. After the DATA return lands on then-current main, complete FIN-12 feature-contract bindings and focused fail-closed compatibility tests, then continue `FIN-20` end-to-end lineage.
-5. Keep `FIN-19` provider capability projection synchronized to the canonical DATA/provider surface without taking over provider ingress.
+2. `FIN-12` remains the selected FINTECH P1 item, but all former DATA return requirements are now internal FINTECH `PVC-09..11 -> PVC-12` dependencies rather than a foreign-project handoff.
+3. PR #1037 contains the bounded FIN-12 validated-data contract work and must be re-correlated against the post-supersession main before merge; this project-surface migration does not duplicate its code changes.
+4. PR #1046 contains startup/provider/promo-retirement work and must likewise be re-correlated against the post-supersession main before merge.
+5. Keep `FIN-19` provider capability projection synchronized to the single FINTECH-owned provider/data-quality plane; `FIN-20` follows validated FIN-12 lineage.
 
 ## Canonical project documents
 
