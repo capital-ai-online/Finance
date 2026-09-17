@@ -140,7 +140,7 @@ jobs:
   patch:
     name: Baseline-Patch read-only erzeugen und validieren
     needs: [plan]
-    if: needs.plan.result == 'success' && needs.plan.outputs.eligible == 'true'
+    if: ${{ needs.plan.result == 'success' && fromJSON(needs.plan.outputs.eligible || 'false') }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
