@@ -29,7 +29,7 @@ function history(
   };
 }
 
-describe('DATA FIN-12 canonical history handoff', () => {
+describe('FINTECH FIN-12 validated-data canonical history handoff', () => {
   it('projects validated crypto history without creating a second history authority', () => {
     const asset = createUniversalAssetIdentity({ symbol: 'BTC', assetClass: 'crypto' });
     const validated = buildValidatedHistoryInput(asset, history('BTC', 'crypto', [
