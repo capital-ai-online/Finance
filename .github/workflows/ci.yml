@@ -2,13 +2,35 @@ name: CI
 run-name: >-
   ${{ github.event_name == 'push'
       && format('main – CI-Prüfung für {0}', github.sha)
-      || format('PR #{0} – CI-Prüfung', github.event.pull_request.number) }}
+      || format('PR #{0} – CI-Prüfung', github.event.pull_request.number || inputs.pr_number) }}
 
 on:
   push:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Open same-repository pull request number
+        required: true
+        type: string
+      expected_head_sha:
+        description: Exact repaired pull request head SHA
+        required: true
+        type: string
+      expected_head_ref:
+        description: Exact repaired pull request head branch
+        required: true
+        type: string
+      expected_base_sha:
+        description: Exact current-main pull request base SHA
+        required: true
+        type: string
+      source_autofix_run_id:
+        description: Correlated Current-State Baseline Autofix run ID
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -17,14 +39,14 @@ permissions:
 env:
   # Single exact source identity shared by Quality evidence, release metadata and Docker builds.
   # PR runs bind to the actual PR head, not GitHub's synthetic merge commit.
-  RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+  RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha || inputs.expected_head_sha }}
 
 concurrency:
   # Keep duplicate suppression inside one exact PR snapshot. A late stale PR event must never cancel
   # validation for a newer head/base snapshot of the same pull request.
   group: >-
-    ${{ github.event_name == 'pull_request'
-        && format('{0}-pr-{1}-{2}-{3}', github.workflow, github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)
+    ${{ github.event_name != 'push'
+        && format('{0}-pr-{1}-{2}-{3}', github.workflow, github.event.pull_request.number || inputs.pr_number, github.event.pull_request.head.sha || inputs.expected_head_sha, github.event.pull_request.base.sha || inputs.expected_base_sha)
         || format('{0}-{1}', github.workflow, github.ref) }}
   cancel-in-progress: true
 
@@ -45,12 +67,14 @@ jobs:
     steps:
       - name: P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden
         id: cost_control
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
-          CURRENT_PR_NUMBER: ${{ github.event.pull_request.number }}
-          CURRENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          CURRENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CURRENT_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          CURRENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
+          CURRENT_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
+          CURRENT_HEAD_REF: ${{ github.event.pull_request.head.ref || inputs.expected_head_ref }}
+          CURRENT_RUN_SHA: ${{ github.sha }}
         with:
           script: |
             const owner = context.repo.owner;
@@ -59,17 +83,29 @@ jobs:
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
             const headSha = normalizeSha(process.env.CURRENT_HEAD_SHA);
             const baseSha = normalizeSha(process.env.CURRENT_BASE_SHA);
+            const headRef = String(process.env.CURRENT_HEAD_REF || '').trim();
+            const runSha = normalizeSha(process.env.CURRENT_RUN_SHA);
+            if (!/^[0-9a-f]{40}$/.test(headSha) || !/^[0-9a-f]{40}$/.test(baseSha) || !headRef) {
+              throw new Error('Invalid exact PR dispatch/event identity.');
+            }
 
             const { data: livePr } = await github.rest.pulls.get({
               owner,
               repo,
               pull_number: prNumber,
             });
+            const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
             const liveHeadSha = normalizeSha(livePr.head?.sha);
             const liveBaseSha = normalizeSha(livePr.base?.sha);
+            const dispatchShaBound = context.eventName !== 'workflow_dispatch' || runSha === headSha;
             const currentSnapshot = livePr.state === 'open'
+              && livePr.base?.ref === 'main'
+              && livePr.head?.repo?.full_name === `${owner}/${repo}`
+              && livePr.head?.ref === headRef
               && liveHeadSha === headSha
-              && liveBaseSha === baseSha;
+              && liveBaseSha === baseSha
+              && normalizeSha(main.commit?.sha) === baseSha
+              && dispatchShaBound;
             core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false');
             if (!currentSnapshot) {
               core.setOutput('reuse_exact_snapshot', 'false');
@@ -158,7 +194,7 @@ jobs:
               .write();
 
       - name: Stale PR-Event vor teurer CI beenden
-        if: github.event_name == 'pull_request' && steps.cost_control.outputs.current_snapshot == 'false'
+        if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.cost_control.outputs.current_snapshot == 'false'
         run: echo 'Stale PR-Snapshot erkannt; kein Checkout, npm ci, TypeScript, Test oder Build für veraltete Event-Evidence.'
 
       - name: Exakten CI-PASS wiederverwenden
@@ -174,16 +210,16 @@ jobs:
         if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+          ref: ${{ env.RELEASE_SOURCE_COMMIT }}
           fetch-depth: 0
           persist-credentials: false
 
       - name: Vertrauenswürdige PR-Policy aus Base-Snapshot vorbereiten
         id: trusted_policy
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true' && github.event_name == 'pull_request'
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
         shell: bash
         env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
         run: |
           set -euo pipefail
           policy_dir="$RUNNER_TEMP/capital-ai-pr-policy"
@@ -205,14 +241,14 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
           TRUSTED_CLASSIFIER_PATH: ${{ steps.trusted_policy.outputs.classifier_path }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "pull_request" ]; then
+          if [ "$EVENT_NAME" != "push" ]; then
             node "$TRUSTED_CLASSIFIER_PATH"
           else
             node scripts/pr/classifyPrScope.mjs
@@ -224,10 +260,10 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
           TRUSTED_PLANNER_AVAILABLE: ${{ steps.trusted_policy.outputs.planner_available }}
           TRUSTED_PLANNER_PATH: ${{ steps.trusted_policy.outputs.planner_path }}
         run: |
@@ -316,7 +352,7 @@ jobs:
       - name: Nur vom PR-Diff betroffene Vitest-Tests ausführen
         if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode == 'changed'
         env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
         run: npx vitest run --changed "$PR_BASE_SHA" --passWithNoTests
 
       - name: PR-/CI-Validator-Tests gezielt ausführen
