@@ -21,6 +21,12 @@ const DEFAULT: RouteSeo = {
 
 const ROUTES: Record<string, RouteSeo> = {
   '/': DEFAULT,
+  '/universe': {
+    title: 'CAPITAL-AI Universe – Multi-Asset Intelligence',
+    description:
+      'CAPITAL-AI Universe verbindet Multi-Asset Discovery, verifizierte Evidence und kanonische Scoring-Projektionen für Krypto, Aktien, Indizes, Forex und Rohstoffe.',
+    canonicalPath: '/universe',
+  },
   '/learning-platform': {
     title: 'Capital-AI Learning Platform – Canonical Vocabulary',
     description:
@@ -73,6 +79,7 @@ export function applyRouteSeo(pathname: string): void {
     'content',
     `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`,
   );
+  setMeta('meta[property="twitter:url"]', 'content', `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`);
   setMeta('meta[property="twitter:title"]', 'content', seo.title);
   setMeta('meta[property="twitter:description"]', 'content', seo.description);
 

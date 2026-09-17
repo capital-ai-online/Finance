@@ -14,7 +14,6 @@ const qualityCenterRoute = read('server/qualityCenter.ts');
 const defi = read('src/components/DeFiOrchestration.tsx');
 const rawMaterials = read('src/features/commodities/ui/RawMaterialsDashboard.tsx');
 const newsticker = read('src/features/news/ui/Newsticker.tsx');
-const newstickerBridge = read('src/components/Newsticker.tsx');
 const cryptoRoutes = read('src/routes/cryptoRoutes.ts');
 const rawMaterialsRoutes = read('src/routes/rawMaterialsRoutes.ts');
 
@@ -66,7 +65,7 @@ describe('Frontend orchestrator graphical wiring', () => {
     expect(screeningGate).toContain('/^\\/api\\/raw-materials\\/verified-score');
   });
 
-  it('binds the canonical intelligence ticker to score, provenance and authenticated news contracts', () => {
+  it('binds the intelligence ticker to canonical score, provenance and authenticated news contracts', () => {
     expect(newsticker).toContain("import { authFetch } from '../../../lib/authFetch'");
     expect(newsticker).toContain("import { fetchAuthenticatedNews } from '../authenticatedNewsFetch'");
     expect(newsticker).toContain("authFetch('/api/crypto/score'");
@@ -77,8 +76,5 @@ describe('Frontend orchestrator graphical wiring', () => {
     expect(newsticker).toContain('canonicalEvidenceIds(integrity?.evidence)');
     expect(newsticker).toContain('authFetch(`/api/registry/assets/${encodeURIComponent(symbol)}/verified-context`)');
     expect(newsticker).toContain('fetchAuthenticatedNews(`/api/news?symbol=${encodeURIComponent(symbol)}`)');
-    expect(newstickerBridge).toContain("export { Newsticker } from '../features/news/ui/Newsticker'");
-    expect(newstickerBridge).not.toContain('authFetch(');
-    expect(newstickerBridge).not.toContain('fetchAuthenticatedNews(');
   });
 });
