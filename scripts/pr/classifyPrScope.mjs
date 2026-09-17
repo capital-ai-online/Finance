@@ -5,21 +5,13 @@
  * Source of truth for which expensive CI steps must run (fail-closed).
  *
  * Classes (aligned with .github/pull_request_template.md):
- *   D — documentation / .ai / markdown only
- *   C — application, tests, scripts, non-deploy config
+ *   D — documentation / .ai / markdown only with no runtime consumer
+ *   C — application, tests, scripts, runtime-consumed docs/contracts, non-deploy config
  *   R — runtime / dependency / docker / deployment surface
  *
- * Production-scope invariant:
- *   Pull Requests never perform production mutation. Class R therefore keeps
- *   scoped integrity, dependency, lint, unit and static runtime/Docker checks,
- *   but does not build production artifacts, run predeploy preparation or build
- *   the production Docker image. The Human-merged push to main remains force-full
- *   and is the only path that performs the complete production build/attestation
- *   validation before the separately gated deployment job.
- *   Known non-production validation/tooling surfaces receive only their scoped
- *   validators. Unknown non-doc paths remain fail-closed as production-impacting.
- *
- * Highest class among changed paths wins. Unknown non-doc paths escalate to C.
+ * A file extension or directory never proves docs-only safety. If a changed/deleted
+ * documentation or .ai artifact is referenced by source, server, scripts, tests or workflows,
+ * the change escalates to class C so TypeScript/tests/build cannot be skipped accidentally.
  */
 
 import fs from 'node:fs';
@@ -47,7 +39,6 @@ export function isWorkflowPath(filePath) {
   return p.startsWith('.github/workflows/');
 }
 
-/** Runtime / deploy / dependency surface → class R */
 export function isRuntimeDeployPath(filePath) {
   const p = normalizePath(filePath);
   if (
@@ -58,9 +49,7 @@ export function isRuntimeDeployPath(filePath) {
     p === 'server.ts' ||
     p === 'render.yaml' ||
     p === 'render.yml'
-  ) {
-    return true;
-  }
+  ) return true;
   if (p.startsWith('server/')) return true;
   if (p.startsWith('scripts/security/') && /docker|runtime/i.test(p)) return true;
   if (p === '.github/workflows/ci.yml') return true;
@@ -68,17 +57,11 @@ export function isRuntimeDeployPath(filePath) {
   return false;
 }
 
-/** Dependency lock / package manifest → audit + build */
 export function isDependencyManifest(filePath) {
   const p = normalizePath(filePath);
   return p === 'package.json' || p === 'package-lock.json';
 }
 
-/**
- * Paths that are deterministically validation/tooling-only and therefore do not
- * require a production artifact build by themselves. Runtime/deploy workflow
- * paths are intentionally excluded and continue to fail closed as class R.
- */
 export function isKnownNonProductionValidationPath(filePath) {
   const p = normalizePath(filePath);
   if (isDocsPath(p)) return true;
@@ -89,48 +72,50 @@ export function isKnownNonProductionValidationPath(filePath) {
   return false;
 }
 
-/**
- * @param {string[]} files
- * @param {{ forceFull?: boolean }} [options]
- */
+export function findRuntimeConsumedPaths(files, headRef = 'HEAD') {
+  const roots = ['src', 'server', 'scripts', '.github/workflows', 'tests'];
+  const consumed = [];
+
+  for (const rawFile of files || []) {
+    const file = normalizePath(rawFile);
+    if (!file || !isDocsPath(file)) continue;
+    try {
+      const out = execFileSync(
+        'git',
+        ['grep', '-F', '-l', '-e', file, headRef, '--', ...roots],
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+      ).trim();
+      if (out) consumed.push(file);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'status' in error && error.status === 1) continue;
+      throw error;
+    }
+  }
+
+  return Array.from(new Set(consumed));
+}
+
+/** @param {string[]} files @param {{ forceFull?: boolean, runtimeConsumedPaths?: string[] }} [options] */
 export function classifyChangedFiles(files, options = {}) {
   const integrity = true;
 
   if (options.forceFull) {
     return {
-      class: 'R',
-      production_impact: true,
-      node: true,
-      lint: true,
-      unit: true,
-      build: true,
-      audit: true,
-      predeploy: true,
-      docker: true,
-      docker_image: true,
-      workflow_security: true,
-      integrity,
-      npm_advisory: true,
+      class: 'R', production_impact: true, node: true, lint: true, unit: true,
+      build: true, audit: true, predeploy: true, docker: true, docker_image: true,
+      workflow_security: true, integrity, npm_advisory: true, consumer_escalation: false,
     };
   }
 
   const normalized = (files || []).map(normalizePath).filter(Boolean);
+  const runtimeConsumed = new Set((options.runtimeConsumedPaths || []).map(normalizePath));
+  const consumerEscalation = normalized.some((file) => runtimeConsumed.has(file));
 
   if (normalized.length === 0) {
     return {
-      class: 'D',
-      production_impact: false,
-      node: false,
-      lint: false,
-      unit: false,
-      build: false,
-      audit: false,
-      predeploy: false,
-      docker: false,
-      docker_image: false,
-      workflow_security: false,
-      integrity,
-      npm_advisory: false,
+      class: 'D', production_impact: false, node: false, lint: false, unit: false,
+      build: false, audit: false, predeploy: false, docker: false, docker_image: false,
+      workflow_security: false, integrity, npm_advisory: false, consumer_escalation: false,
     };
   }
 
@@ -147,46 +132,23 @@ export function classifyChangedFiles(files, options = {}) {
     if (isWorkflowPath(file)) hasWorkflow = true;
     if (isDependencyManifest(file)) hasDependency = true;
 
-    const isScript =
-      file.startsWith('scripts/') ||
-      file.startsWith('.github/') ||
-      isDocsPath(file);
+    const isScript = file.startsWith('scripts/') || file.startsWith('.github/') || isDocsPath(file);
     if (!isScript && !isDocsPath(file)) hasScriptOnly = false;
-
     if (
-      file.startsWith('src/') ||
-      file.startsWith('tests/') ||
-      file.endsWith('.ts') ||
-      file.endsWith('.tsx') ||
-      file.endsWith('.js') ||
-      file.endsWith('.mjs') ||
-      file.endsWith('.cjs')
-    ) {
-      hasAppOrTest = true;
-    }
+      file.startsWith('src/') || file.startsWith('tests/') || file.endsWith('.ts') ||
+      file.endsWith('.tsx') || file.endsWith('.js') || file.endsWith('.mjs') || file.endsWith('.cjs')
+    ) hasAppOrTest = true;
   }
 
-  if (!hasNonDocs) {
+  if (!hasNonDocs && !consumerEscalation) {
     return {
-      class: 'D',
-      production_impact: false,
-      node: false,
-      lint: false,
-      unit: false,
-      build: false,
-      audit: false,
-      predeploy: false,
-      docker: false,
-      docker_image: false,
-      workflow_security: false,
-      integrity,
-      npm_advisory: false,
+      class: 'D', production_impact: false, node: false, lint: false, unit: false,
+      build: false, audit: false, predeploy: false, docker: false, docker_image: false,
+      workflow_security: false, integrity, npm_advisory: false, consumer_escalation: false,
     };
   }
 
   const klass = hasRuntime ? 'R' : 'C';
-
-  // Class C defaults fail closed: unknown non-doc changes may affect the production artifact.
   let productionImpact = true;
   let node = true;
   let lint = true;
@@ -199,26 +161,20 @@ export function classifyChangedFiles(files, options = {}) {
   const workflow_security = hasWorkflow;
   const npm_advisory = true;
 
-  // Narrow C: only tests → test the scope, but do not rebuild production artifacts.
-  const onlyTests = normalized.every(
-    (f) => isDocsPath(f) || f.startsWith('tests/') || f.startsWith('.ai/'),
-  );
-  if (klass === 'C' && onlyTests) {
+  const onlyTests = normalized.every((f) => isDocsPath(f) || f.startsWith('tests/') || f.startsWith('.ai/'));
+  if (klass === 'C' && onlyTests && !consumerEscalation) {
     productionImpact = false;
     build = false;
     predeploy = false;
     audit = false;
   }
 
-  // Narrow C: deterministic non-production validation/tooling surface.
   const onlyNonProductionValidation = normalized.every(isKnownNonProductionValidationPath);
-  if (klass === 'C' && onlyNonProductionValidation && !hasRuntime) {
+  if (klass === 'C' && onlyNonProductionValidation && !hasRuntime && !consumerEscalation) {
     productionImpact = false;
     build = false;
     predeploy = false;
     audit = false;
-    // Keep Node/Lint/Unit validation for tooling code; these are scoped technical
-    // validators, not production artifact Build/CSP/Predeploy checks.
     unit = true;
     lint = true;
   }
@@ -230,12 +186,6 @@ export function classifyChangedFiles(files, options = {}) {
     unit = true;
     audit = true;
     docker = true;
-
-    // Owner-directed PR cost control: class R describes a runtime-sensitive
-    // repository change, not a production mutation. Keep the required
-    // build-and-test check context and scoped technical verification, but defer
-    // production artifact build/predeploy/image construction to the force-full
-    // Human-merged main push.
     build = false;
     predeploy = false;
     docker_image = false;
@@ -257,13 +207,13 @@ export function classifyChangedFiles(files, options = {}) {
     npm_advisory,
     hasAppOrTest,
     hasScriptOnly,
+    consumer_escalation: consumerEscalation,
   };
 }
 
 export function listChangedFiles(baseRef, headRef) {
   const out = execFileSync('git', ['diff', '--name-only', `${baseRef}...${headRef}`], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
+    encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
   }).trim();
   if (!out) return [];
   return out.split(/\r?\n/).map(normalizePath).filter(Boolean);
@@ -285,39 +235,32 @@ export function writeGithubOutput(scope) {
     `workflow_security=${scope.workflow_security}`,
     `integrity=${scope.integrity}`,
     `npm_advisory=${scope.npm_advisory}`,
-    // Back-compat with previous ci.yml flags
+    `consumer_escalation=${scope.consumer_escalation === true}`,
     `full=${scope.node && scope.unit && scope.build}`,
   ];
   const text = `${lines.join('\n')}\n`;
-  if (outputPath) {
-    fs.appendFileSync(outputPath, text, 'utf8');
-  }
+  if (outputPath) fs.appendFileSync(outputPath, text, 'utf8');
   return text;
 }
 
 function main() {
-  const forceFull =
-    process.env.EVENT_NAME === 'push' ||
-    process.env.CI_FORCE_FULL === 'true' ||
-    process.argv.includes('--force-full');
+  const forceFull = process.env.EVENT_NAME === 'push' || process.env.CI_FORCE_FULL === 'true' || process.argv.includes('--force-full');
 
   let files = [];
+  let runtimeConsumedPaths = [];
   if (!forceFull) {
     const base = process.env.PR_BASE_SHA || process.env.BASE_SHA || '';
     const head = process.env.PR_HEAD_SHA || process.env.HEAD_SHA || 'HEAD';
-    if (base) {
-      files = listChangedFiles(base, head);
-    } else if (process.env.CHANGED_FILES) {
-      files = process.env.CHANGED_FILES.split(/\r?\n/).map(normalizePath).filter(Boolean);
-    }
+    if (base) files = listChangedFiles(base, head);
+    else if (process.env.CHANGED_FILES) files = process.env.CHANGED_FILES.split(/\r?\n/).map(normalizePath).filter(Boolean);
+    runtimeConsumedPaths = findRuntimeConsumedPaths(files, head);
   }
 
-  const scope = classifyChangedFiles(files, { forceFull });
-  console.log(`[classifyPrScope] class=${scope.class} production_impact=${scope.production_impact} files=${forceFull ? '(force-full)' : files.length}`);
+  const scope = classifyChangedFiles(files, { forceFull, runtimeConsumedPaths });
+  console.log(`[classifyPrScope] class=${scope.class} production_impact=${scope.production_impact} consumer_escalation=${scope.consumer_escalation} files=${forceFull ? '(force-full)' : files.length}`);
+  if (runtimeConsumedPaths.length > 0) console.log(`[classifyPrScope] runtime-consumed changed artifacts: ${runtimeConsumedPaths.join(', ')}`);
   console.log(JSON.stringify(scope, null, 2));
   writeGithubOutput(scope);
 }
 
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('classifyPrScope.mjs')) {
-  main();
-}
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('classifyPrScope.mjs')) main();

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const root = process.cwd();
 const read = (repoPath: string) => fs.readFileSync(path.join(root, repoPath), 'utf8');
+const exists = (repoPath: string) => fs.existsSync(path.join(root, repoPath));
 
 interface GovernanceControl {
   controlId: string;
@@ -23,8 +24,14 @@ const control = (controlId: string): GovernanceControl => {
   return found as GovernanceControl;
 };
 
+const retiredStandalonePolicies = [
+  'docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md',
+  'docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md',
+  'docs/governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md',
+];
+
 describe('governance authority consistency', () => {
-  it('uses the Accepted ADR-0069 2026-08-16 addendum as the current PR-gate authority', () => {
+  it('keeps the Accepted ADR-0069 2026-08-16 addendum as subject-matter evidence', () => {
     const adr0069 = read('docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md');
     expect(adr0069).toContain('Status:** ACCEPTED');
     expect(adr0069).toContain('NACHTRAG 2026-08-16');
@@ -46,17 +53,11 @@ describe('governance authority consistency', () => {
     expect(m10.requirement).toContain('PR #691');
     expect(m10.requirement).toMatch(/MUST NOT search/i);
     expect(m10.requirement).toMatch(/absence of a productive M10 implementation as a gap/i);
-    expect(m10.evidence).toEqual(expect.arrayContaining([
-      'AGENTS.md',
-      'docs/architecture/ROADMAP.md',
-    ]));
     expect(agents).toContain('RETIRED / OFF');
     expect(agents).toContain('MUST NOT search');
-    expect(agents).not.toContain('M10 MUST NOT be reactivated until');
-    expect(roadmap).toContain('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS');
+    expect(agents).toContain('PR #691');
     expect(roadmap).toMatch(/M10[^\n]*RETIRED \/ OFF/i);
     expect(roadmap).not.toContain('Mandatory blockers before M10 reactivation');
-    expect(roadmap).not.toMatch(/Current enforced M10 state\s*[—-]\s*COMPLETE\s*\/\s*VERIFIED PASS/i);
   });
 
   it('labels the governance library as a historical snapshot with a current-authority annotation', () => {
@@ -82,20 +83,26 @@ describe('governance authority consistency', () => {
     expect(workflow).not.toContain('full');
   });
 
-  it('does not assign provider-specific profiles repository authority in the active DevelopmentChain', () => {
-    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
+  it('uses AGENTS.md as the single repository-wide instruction surface', () => {
+    const agents = read('AGENTS.md');
     const trustRoot = control('CTRL-GOV-TRUST-001');
 
     expect(trustRoot.status).toBe('required');
-    expect(trustRoot.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
+    expect(trustRoot.authorityRefs).toEqual(['AUTH-GOV-AGENT-TRUST-ROOT']);
+    expect(trustRoot.requirement).toMatch(/AGENTS\.md is the only repository-wide AI\/chat\/development instruction surface/i);
     expect(trustRoot.evidence).toContain('AGENTS.md');
-    expect(fs.existsSync(path.join(root, 'CLAUDE.md'))).toBe(false);
-    expect(chain).not.toContain('Google AI Studio ist die Entwicklungsumgebung für Anwendungscode');
+    expect(agents).toContain('single repository-wide trust root and repository instruction surface');
+    expect(agents).toContain('There is no second repository-wide or chat-specific development guideline');
+    expect(agents).toContain('standalone DevelopmentChain/PR/foreign-execution policy files are retired and removed');
+    expect(exists('CLAUDE.md')).toBe(false);
+    expect(exists('.github/copilot-instructions.md')).toBe(false);
+    for (const policy of retiredStandalonePolicies) {
+      expect(exists(policy), `${policy} must remain retired`).toBe(false);
+    }
   });
 
-  it('defines exactly one bounded relevant plugin-use control without creating plugin authority', () => {
+  it('defines exactly one bounded capability-use projection without creating plugin authority', () => {
     const agents = read('AGENTS.md');
-    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
     const client = read('docs/projects/agent-client/CLIENT_CONTRACTS.md');
     const authorityRegistry = JSON.parse(read('docs/governance/authority-registry.json')) as {
       entries: Array<{ authorityId: string }>;
@@ -107,97 +114,54 @@ describe('governance authority consistency', () => {
     expect(pluginUse.status).toBe('required');
     expect(pluginUse.authorityRefs).toEqual([
       'AUTH-GOV-AGENT-TRUST-ROOT',
-      'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION',
       'AUTH-ESS-AI-AGENT-CAPABILITY-PLANE',
     ]);
-    expect(pluginUse.requirement).toMatch(/only when it directly advances the current bounded task/i);
-    expect(pluginUse.requirement).toMatch(/least-privileged sufficient available capability/i);
-    expect(pluginUse.requirement).toContain('Availability never grants authority');
-    expect(pluginUse.requirement).toContain('Unconditional invocation');
-    expect(pluginUse.requirement).toMatch(/automatic install\/connect\/enable\/disable\/permission\/OAuth\/MCP-host mutation/i);
-    expect(pluginUse.requirement).toContain('Human/CODEOWNER merge');
-    expect(pluginUse.requirement).toContain('protected external-mutation gates');
-    expect(pluginUse.requirement).toContain('untrusted inputs');
-
-    expect(agents).toContain('CTRL-SDLC-PLUGIN-USE-001');
-    expect(agents).toContain('cycling through all available integrations');
-    expect(chain).toContain('CTRL-SDLC-PLUGIN-USE-001');
-    expect(chain).toMatch(/availability never grants authority/i);
+    expect(pluginUse.requirement).toMatch(/tools, not authority/i);
+    expect(pluginUse.requirement).toMatch(/least-privilege/i);
+    expect(agents).toContain('Connected plugins, apps, MCP tools and connectors are capabilities, not authority');
+    expect(agents).toContain('least-privileged sufficient option');
+    expect(agents).toContain('Do not cycle through integrations speculatively');
+    expect(agents).toContain('Do not install, connect, enable, disable or change OAuth/permissions merely because a capability exists');
     expect(client).toContain('integration is unavailable/disconnected/not enabled');
     expect(client).toContain('no automatic connection or enablement');
-
     expect(authorityRegistry.entries.filter((entry) => /AUTH-.*(?:PLUGIN|CONNECTOR)/i.test(entry.authorityId))).toHaveLength(0);
   });
 
-  it('uses correlation-gated PR creation and Roadmap-first continuation', () => {
+  it('keeps PR creation correlation-gated while Human/CODEOWNER merge remains separate', () => {
     const agents = read('AGENTS.md');
-    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
-    const approval = read('docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md');
-    const handoff = control('CTRL-SDLC-CHAT-HANDOFF-001');
     const prCreate = control('CTRL-SDLC-PR-CREATE-001');
 
-    expect(handoff.status).toBe('required');
-    expect(handoff.authorityRefs).toContain('AUTH-GOV-AGENT-TRUST-ROOT');
-    expect(handoff.authorityRefs).toContain('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION');
-    expect(handoff.requirement).toContain('CHAT_RUN_HANDOFF');
-    expect(handoff.requirement).toContain('POST_PR_HANDOFF');
-    expect(handoff.requirement).toMatch(/at most two/i);
-    expect(handoff.requirement).toMatch(/exit gates/i);
-    expect(handoff.requirement).toMatch(/Roadmap-first/i);
-    expect(handoff.requirement).toMatch(/final create-correlation PASS/i);
-    expect(handoff.requirement).toMatch(/Draft-PR creation before chat close/i);
-    expect(handoff.requirement).toMatch(/next dependent PR remains held until predecessor terminal outcome/i);
-
-    expect(prCreate.requirement).toContain('final create-correlation PASS');
-    expect(prCreate.requirement).toContain('without a separate pre-create Human approval prompt');
-    expect(prCreate.requirement).toContain('BLOCKED or unresolved state stops creation');
-    expect(prCreate.requirement).toContain('at most one not-yet-integrated automated PR');
-    expect(prCreate.requirement).toContain('Candidate branch semantics cannot self-bootstrap');
-    expect(prCreate.requirement).toContain('Human/CODEOWNER merge remains separate');
-    expect(prCreate.requirement).toContain('auto-merge is prohibited');
-
-    expect(agents).toContain('Correlation gate before automated PR creation');
-    expect(agents).toContain('final create-correlation state as exactly `PASS` or `BLOCKED`');
-    expect(agents).toContain('The correlation record binds at minimum');
-    expect(agents).toContain('POST_PR_HANDOFF');
-    expect(agents).not.toContain('Freigabe-Antwort:');
-
-    expect(chain).toContain('CTRL-SDLC-CHAT-HANDOFF-001');
-    expect(chain).toContain('CHAT_RUN_HANDOFF');
-    expect(chain).toContain('Roadmap-first');
-    expect(chain).toContain('FINAL CREATE-CORRELATION PASS OR BLOCKED');
-    expect(chain).toContain('AUTOMATED DRAFT PR CREATION FOR PASS');
-    expect(chain).toContain('POST-PR HUMAN/OWNER REVIEW / APPROVAL BOUNDARY');
-    expect(chain).not.toContain('Freigabe-Antwort:');
-
-    expect(approval).toContain('Correlation-gated automated PR creation');
-    expect(approval).toContain('The pre-create evidence is a **correlation record**, not an approval credential');
-    expect(approval).toMatch(/at most one not-yet-integrated automated PR/i);
-    expect(approval).toContain('Only after Human/CODEOWNER Merge may this post-create Owner model govern later PR-creation flows');
+    expect(prCreate.status).toBe('required');
+    expect(prCreate.authorityRefs).toEqual(expect.arrayContaining([
+      'AUTH-GOV-AGENT-TRUST-ROOT',
+      'AUTH-GOV-HUMAN-OWNER-PR-APPROVAL',
+      'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION',
+    ]));
+    expect(prCreate.requirement).toMatch(/defined only in AGENTS\.md/i);
+    expect(prCreate.requirement).toMatch(/Unmerged predecessor change content is never assumed to be current main/i);
+    expect(agents).toContain('PR creation may be automated after final correlation PASS');
+    expect(agents).toContain('unresolved or blocked correlation stops creation');
+    expect(agents).toContain('`NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`');
+    expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
+    expect(agents).toContain('Agents MUST NOT self-approve, self-merge, enable auto-merge');
+    for (const policy of retiredStandalonePolicies) {
+      expect(exists(policy)).toBe(false);
+    }
   });
 
-  it('requires every main merge to come from a PR correlated against then-current main', () => {
+  it('requires every main merge to remain a distinct Human/CODEOWNER decision', () => {
     const agents = read('AGENTS.md');
-    const chain = read('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md');
-    const approval = read('docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md');
     const merge = control('CTRL-MERGE-HUMAN-001');
 
     expect(merge.status).toBe('required');
-    expect(merge.requirement).toMatch(/Every merge into main originates from a Pull Request/i);
-    expect(merge.requirement).toMatch(/final PR-head\/current-main correlation/i);
-    expect(merge.requirement).toContain('distinct Human/CODEOWNER merge decision');
-    expect(merge.requirement).toContain('never constitute merge authority');
-    expect(merge.requirement).toContain('auto-merge enablement remain prohibited');
-
-    expect(agents).toContain('FINAL PR-HEAD / CURRENT-MAIN CORRELATION');
-    expect(agents).toMatch(/Every merge into `main` MUST originate from a Pull Request targeting `main`/i);
-    expect(chain).toContain('FINAL PR-HEAD / CURRENT-MAIN CORRELATION');
-    expect(chain).toContain('## Final pre-merge correlation');
-    expect(approval).toContain('## Human Merge control');
-    expect(approval).toContain('Every merge into `main` MUST originate from a Pull Request targeting `main`');
+    expect(merge.requirement).toMatch(/Every main merge is a distinct Human\/CODEOWNER decision/i);
+    expect(merge.requirement).toMatch(/self-merge and auto-merge remain prohibited/i);
+    expect(agents).toContain('Every repository change is delivered through a Pull Request');
+    expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
+    expect(agents).toContain('Agents MUST NOT self-approve, self-merge, enable auto-merge');
   });
 
-  it('withdraws post-PVC routing contracts and keeps only folder-to-PVC mapping', () => {
+  it('keeps chat handoff/status formatting informational and owner-correct', () => {
     const agents = read('AGENTS.md');
     const projectMap = read('docs/projects/README.md');
     const pvc = read('docs/projects/PROJECT_VALUE_CHAIN.md');
@@ -205,23 +169,19 @@ describe('governance authority consistency', () => {
     const sameIdControls = controlCatalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-CHAT-HANDOFF-001');
 
     expect(sameIdControls).toHaveLength(1);
-    expect(handoff.requirement).toContain('POST_PR_HANDOFF');
-    expect(handoff.requirement).toContain('CHAT_RUN_HANDOFF');
-    expect(handoff.requirement).not.toContain('FOREIGN_PROJECT_HANDOFF');
-    expect(handoff.evidence).toContain('docs/projects/README.md');
-    expect(handoff.evidence).toContain('docs/projects/PROJECT_VALUE_CHAIN.md');
-    expect(handoff.evidence).not.toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
-
-    expect(agents).toContain('POST_PR_HANDOFF');
-    expect(agents).toContain('CHAT_RUN_HANDOFF');
+    expect(handoff.status).toBe('informational');
+    expect(handoff.authorityRefs).toEqual(['AUTH-GOV-AGENT-TRUST-ROOT']);
+    expect(handoff.requirement).toContain('Chat handover/status formatting is presentation only');
+    expect(handoff.requirement).toContain('resolved solely by AGENTS.md');
+    expect(agents).toContain('Cross-project handovers are owner-correct and correlation-ID-based');
+    expect(agents).toContain('Handover text is status/evidence, not an instruction surface');
     expect(agents).not.toContain('Trigger 2 — `FOREIGN_PROJECT_HANDOFF`');
     expect(agents).not.toContain('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md');
-    expect(agents).toContain('docs/projects/PROJECT_VALUE_CHAIN.md');
 
-    expect(fs.existsSync(path.join(root, 'docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md'))).toBe(false);
-    expect(fs.existsSync(path.join(root, 'docs/projects/PROJECT_EXECUTION_MODEL.md'))).toBe(false);
-    expect(fs.existsSync(path.join(root, 'docs/projects/ROADMAP_REGISTRY.md'))).toBe(false);
-    expect(fs.existsSync(path.join(root, 'docs/governance/OWNER_DEVICE_AUTHORIZATION_CUTOVER_AUTHORITY.md'))).toBe(false);
+    expect(exists('docs/projects/CROSS_PROJECT_HANDOFF_CONTRACT.md')).toBe(false);
+    expect(exists('docs/projects/PROJECT_EXECUTION_MODEL.md')).toBe(false);
+    expect(exists('docs/projects/ROADMAP_REGISTRY.md')).toBe(false);
+    expect(exists('docs/governance/OWNER_DEVICE_AUTHORIZATION_CUTOVER_AUTHORITY.md')).toBe(false);
 
     expect(projectMap).toContain('Canonical project-folder routing');
     expect(projectMap).toContain('PVC-01');
@@ -240,12 +200,12 @@ describe('governance authority consistency', () => {
     expect(authorityPolicy).toContain('A bare `supersedes: ["AUTH-..."]` entry is a relation anchor only');
     expect(supersession.status).toBe('required');
     expect(supersession.authorityRefs).toContain('AUTH-GOV-SUPERSESSION-POLICY');
-    expect(supersession.evidence).toContain(impactPath);
+    expect(supersession.evidence).toContain('docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md');
     expect(impact).toContain('DOC-GOV-CONTROL-PLANE-IMPACT-2026-08-19');
     expect(impact).toContain('AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19');
   });
 
-  it('projects the accepted ADR-0104 v1.5 bounded project-set authority without restoring withdrawn handoff overlays', () => {
+  it('projects the accepted ADR-0104 v1.5 bounded project-set authority without restoring withdrawn overlays', () => {
     const registry = JSON.parse(read('docs/adr/registry.json')) as {
       migratedRecords: Array<{
         displayId: string;
@@ -278,7 +238,6 @@ describe('governance authority consistency', () => {
       target.controls?.includes('IN_SET_PROJECT_SWITCH')
     )).toBe(true);
     expect(adr0104?.supersessionScope?.exclusions).toContain('CTRL-MERGE-HUMAN-001');
-    expect(adr0104?.supersessionScope?.exclusions).toContain('POST_PR_HANDOFF');
     expect(adr0104?.projectSetPolicy).toMatchObject({
       mode: 'immutable-predeclared-bounded-set',
       minProjects: 1,

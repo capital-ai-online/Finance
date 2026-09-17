@@ -6,7 +6,7 @@ import type {
 import {
   buildProcessGraphViewModel,
   mapOperationalTraceState,
-  parseDevelopmentLifecycle,
+  parseAutonomousWorkStages,
   parseProjectFolders,
   parsePvcRows,
 } from './processGraphModel';
@@ -25,23 +25,14 @@ const projects = `
 | \`CAPITAL-AI-OPS\` | \`PVC-18\` Primary Owner | \`docs/projects/operations/\` | \`operations\` |
 `;
 
-const developmentChain = `
-## Durable lifecycle
-
-\`\`\`text
-DC-00 PRECHECK
-→ DC-01 PLAN / SCOPE
-→ DC-02 CLAIM / BRANCH
-→ DC-03 CONTROLLED IMPLEMENTATION
-→ DC-04 DOCUMENTARY / EVIDENCE
-→ DC-05 SUPERVISOR VALIDATION
-→ DC-06 PLATFORM / GOVERNANCE DECISION
-→ DC-07 VERSION
-→ DC-08 RELEASE
-→ DC-09 PRODUCTION
-→ DC-10 EVENTMESH / TRACEABILITY
-→ DC-11 CLOSE / POST-CHANGE EVIDENCE
-\`\`\`
+const agentTrustRoot = `
+## 3. Canonical scope and ownership resolution
+## 4. Autonomous work graph
+## 5. Branch and Pull Request execution
+## 6. Bounded self-healing and convergence
+## 7. Validation and cost control
+## 8. Evidence, EventMesh and handover
+## 9. Capability and tool boundary
 `;
 
 function record(overrides: Partial<OperationalTraceStateRecord> = {}): OperationalTraceStateRecord {
@@ -112,25 +103,39 @@ describe('process graph canonical projection', () => {
     expect(folders.get('CAPITAL-AI-OPS')).toBe('docs/projects/operations/');
   });
 
-  it('projects exactly DC-00 through DC-11 from the DevelopmentChain contract', () => {
-    const lifecycle = parseDevelopmentLifecycle(developmentChain);
-    expect(lifecycle).toHaveLength(12);
-    expect(lifecycle[0]).toBe('DC-00 PRECHECK');
-    expect(lifecycle[11]).toBe('DC-11 CLOSE / POST-CHANGE EVIDENCE');
+  it('projects autonomous work stages from AGENTS.md headings instead of the retired DevelopmentChain', () => {
+    const stages = parseAutonomousWorkStages(agentTrustRoot);
+    expect(stages.map((stage) => stage.id)).toEqual([
+      'GOV-SCOPE',
+      'GOV-WORK-GRAPH',
+      'GOV-BRANCH-PR',
+      'GOV-CONVERGENCE',
+      'GOV-VALIDATION',
+      'GOV-EVIDENCE',
+      'GOV-CAPABILITY',
+    ]);
   });
 
   it('fails closed for every graph node when no operational state envelope is connected', () => {
-    const graph = buildProcessGraphViewModel(pvc, projects, developmentChain);
+    const graph = buildProcessGraphViewModel(pvc, projects, agentTrustRoot);
     const pvcNodes = graph.nodes.filter((node) => node.kind === 'pvc');
-    const developmentNodes = graph.nodes.filter((node) => node.kind === 'development');
+    const workStageNodes = graph.nodes.filter((node) => node.kind === 'work-stage');
     const gateNodes = graph.nodes.filter((node) => node.kind === 'evidence-gate' || node.kind === 'owner-gate');
 
     expect(graph.operationalStateAvailable).toBe(false);
     expect(graph.decisionAuthority).toBe(false);
     expect(pvcNodes).toHaveLength(2);
-    expect(developmentNodes).toHaveLength(12);
-    expect(developmentNodes.map((node) => node.id)).toEqual(['DC-00','DC-01','DC-02','DC-03','DC-04','DC-05','DC-06','DC-07','DC-08','DC-09','DC-10','DC-11']);
-    expect([...pvcNodes, ...developmentNodes, ...gateNodes].every((node) => node.state === 'unknown')).toBe(true);
+    expect(workStageNodes).toHaveLength(7);
+    expect(workStageNodes.map((node) => node.id)).toEqual([
+      'GOV-SCOPE',
+      'GOV-WORK-GRAPH',
+      'GOV-BRANCH-PR',
+      'GOV-CONVERGENCE',
+      'GOV-VALIDATION',
+      'GOV-EVIDENCE',
+      'GOV-CAPABILITY',
+    ]);
+    expect([...pvcNodes, ...workStageNodes, ...gateNodes].every((node) => node.state === 'unknown')).toBe(true);
   });
 
   it('maps only effective PVC-18 operational states into presentation states', () => {
@@ -141,7 +146,7 @@ describe('process graph canonical projection', () => {
   });
 
   it('projects one fresh evidenced PVC-18 CURRENT record without changing PVC structure', () => {
-    const graph = buildProcessGraphViewModel(pvc, projects, developmentChain, envelope([record()]));
+    const graph = buildProcessGraphViewModel(pvc, projects, agentTrustRoot, envelope([record()]));
     const pvcNodes = graph.nodes.filter((node) => node.kind === 'pvc');
     const pvc18 = pvcNodes.find((node) => node.id === 'PVC-18');
     const pvc01 = pvcNodes.find((node) => node.id === 'PVC-01');
@@ -168,10 +173,10 @@ describe('process graph canonical projection', () => {
     const blocked = record({ state: 'BLOCKED', reportedState: 'BLOCKED', identity: { projectId: 'CAPITAL-AI-OPS', pvcId: 'PVC-18', statusId: 'blocked-1' } });
     const waiting = record({ state: 'WAITING', reportedState: 'WAITING', identity: { projectId: 'CAPITAL-AI-OPS', pvcId: 'PVC-18', statusId: 'evidence-gate' } });
 
-    const blockedGraph = buildProcessGraphViewModel(pvc, projects, developmentChain, envelope([blocked]));
+    const blockedGraph = buildProcessGraphViewModel(pvc, projects, agentTrustRoot, envelope([blocked]));
     expect(blockedGraph.nodes.find((node) => node.id === 'PVC-18')?.state).toBe('blocked');
 
-    const waitingGraph = buildProcessGraphViewModel(pvc, projects, developmentChain, envelope([waiting]));
+    const waitingGraph = buildProcessGraphViewModel(pvc, projects, agentTrustRoot, envelope([waiting]));
     expect(waitingGraph.nodes.find((node) => node.id === 'PVC-18')?.state).toBe('waiting-for-evidence');
     expect(waitingGraph.nodes.find((node) => node.id === 'evidence-gate')?.state).toBe('waiting-for-evidence');
   });
@@ -179,7 +184,7 @@ describe('process graph canonical projection', () => {
   it('keeps agreeing records deterministic but refuses to aggregate conflicting effective states', () => {
     const currentA = record({ identity: { projectId: 'CAPITAL-AI-OPS', pvcId: 'PVC-18', statusId: 'trace-a' } });
     const currentB = record({ identity: { projectId: 'CAPITAL-AI-OPS', pvcId: 'PVC-18', statusId: 'trace-b' } });
-    const agreeing = buildProcessGraphViewModel(pvc, projects, developmentChain, envelope([currentA, currentB]));
+    const agreeing = buildProcessGraphViewModel(pvc, projects, agentTrustRoot, envelope([currentA, currentB]));
     expect(agreeing.nodes.find((node) => node.id === 'PVC-18')).toMatchObject({ state: 'current' });
     expect(agreeing.nodes.find((node) => node.id === 'PVC-18')?.stateEvidence?.ambiguous).toBe(false);
 
@@ -188,7 +193,7 @@ describe('process graph canonical projection', () => {
       reportedState: 'BLOCKED',
       state: 'BLOCKED',
     });
-    const conflicting = buildProcessGraphViewModel(pvc, projects, developmentChain, envelope([currentA, blocked]));
+    const conflicting = buildProcessGraphViewModel(pvc, projects, agentTrustRoot, envelope([currentA, blocked]));
     expect(conflicting.nodes.find((node) => node.id === 'PVC-18')).toMatchObject({ state: 'unknown' });
     expect(conflicting.nodes.find((node) => node.id === 'PVC-18')?.stateEvidence?.ambiguous).toBe(true);
   });
@@ -209,7 +214,7 @@ describe('process graph canonical projection', () => {
       staleOrUnknownFreshness: true,
       failsClosed: true,
     });
-    const graph = buildProcessGraphViewModel(pvc, projects, developmentChain, envelope([stale]));
+    const graph = buildProcessGraphViewModel(pvc, projects, agentTrustRoot, envelope([stale]));
     const pvc18 = graph.nodes.find((node) => node.id === 'PVC-18');
 
     expect(pvc18?.state).toBe('unknown');
@@ -218,7 +223,7 @@ describe('process graph canonical projection', () => {
   });
 
   it('keeps evidence and Human authority as distinct gates without assigning local gate state', () => {
-    const graph = buildProcessGraphViewModel(pvc, projects, developmentChain);
+    const graph = buildProcessGraphViewModel(pvc, projects, agentTrustRoot);
     expect(graph.nodes.find((node) => node.id === 'evidence-gate')).toMatchObject({ authority: 'evidence-only', state: 'unknown' });
     expect(graph.nodes.find((node) => node.id === 'owner-gate')).toMatchObject({ authority: 'authorizing', state: 'unknown' });
     expect(graph.decisionAuthority).toBe(false);
