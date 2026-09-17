@@ -1,6 +1,11 @@
 # 🔒 Developer Security Guidelines & Compliance Standards
 **Project: CAPITAL-AI**  
 **Classification:** Confidential / Internal Developer Scope  
+**Role:** `SECURITY_SUBJECT_MATTER_CONSTRAINT`  
+**Instruction authority:** `NONE`  
+**Repository AI/development trust root:** `/AGENTS.md@CURRENT_MAIN`
+
+This document constrains Security outcomes within its subject-matter scope. It does **not** define Chat/agent execution, task selection, task status, ownership, dependency authority, branch/PR/merge authority, continuation logic or a second DevelopmentChain. Repository-wide AI/development execution semantics resolve only through `/AGENTS.md@CURRENT_MAIN`.
 
 ---
 
@@ -16,7 +21,7 @@ CAPITAL-AI is engineered using a **"Security-by-Design"** approach to mitigate r
 
 ---
 
-## 🛠️ Mandatory Security Rules for Developers
+## 🛠️ Security Subject-Matter Constraints
 
 ### 1. Absolute Secret Isolation (No Frontend Keys)
 * Never embed API keys, secrets, or database credentials within the frontend source code. This applies directly to the `GEMINI_API_KEY`, `STRIPE_SECRET_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.

@@ -334,8 +334,11 @@ if (errors.length === 0) {
     if (!inSetSwitchTarget) {
       fail('ADR_0104_IN_SET_SWITCH_TARGET_MISSING', 'ADR-0104 v1.5 must name the bounded IN_SET_PROJECT_SWITCH approval surface without restoring withdrawn handoff overlays.');
     }
-    if (!scope?.exclusions?.includes('CTRL-MERGE-HUMAN-001') || !scope?.exclusions?.includes('POST_PR_HANDOFF')) {
-      fail('ADR_0104_SUPERSESSION_EXCLUSIONS_INCOMPLETE', 'ADR-0104 must explicitly preserve Human merge and POST_PR_HANDOFF.');
+    if (!scope?.exclusions?.includes('CTRL-MERGE-HUMAN-001')) {
+      fail('ADR_0104_SUPERSESSION_EXCLUSIONS_INCOMPLETE', 'ADR-0104 must explicitly preserve the Human merge boundary.');
+    }
+    if ((scope?.exclusions ?? []).some((item) => /CHAT_RUN|POST_PR|HANDOFF/i.test(String(item)))) {
+      fail('ADR_0104_RETIRED_CHAT_CONTINUATION_PRESENT', 'ADR-0104 supersession metadata must not preserve retired chat-continuation mechanisms.');
     }
     if (projectSet?.mode !== 'immutable-predeclared-bounded-set' || projectSet?.minProjects !== 1 || projectSet?.maxProjects !== 3 || projectSet?.runtimeProjectAdditionAllowed !== false || projectSet?.canonicalMappingRequired !== true) {
       fail('ADR_0104_PROJECT_SET_POLICY_INVALID', 'ADR-0104 must bind an immutable predeclared project set of one to three projects, require canonical mapping and prohibit runtime additions.');
@@ -414,7 +417,7 @@ if (errors.length === 0) {
     fail('DUPLICATE_ACTIVE_ESS_ID', `${id}: ${files}`);
   }
 
-  const forbiddenActiveLegacySkill = '.ai/skills/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md';
+  const forbiddenActiveLegacySkill = '.ai/skills/ESS-0012-Enterprise-Version-Manager.md';
   if (exists(forbiddenActiveLegacySkill)) fail('LEGACY_ACTIVE_ESS_COLLISION_REMAINS', forbiddenActiveLegacySkill);
 
   if (!exists('docs/archive/governance/superseded/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md')) {
