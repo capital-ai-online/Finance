@@ -42,7 +42,7 @@ As of 2026-09-02 after the previously recorded PT8H windows have elapsed:
 | `ADR-0104-S2` | `CONSUMED` | consumed by PR #691 under effective prior authority |
 | `ADR-0104-S3` | `AVAILABLE` | unused unless separate later evidence proves otherwise |
 
-Historical activation evidence remains audit material. It does not reactivate an expired session.
+Historical activation evidence remains audit material. It does not reactivate an expired session or any historical work item.
 
 ## 1.2 Human merge remains separate
 
@@ -149,7 +149,6 @@ A project outside `AUTHORIZED_PROJECT_SET` is not authorized by the active ADR-0
 This ADR does not supersede:
 
 - `CTRL-MERGE-HUMAN-001`;
-- `POST_PR_HANDOFF`;
 - project/PVC/Primary-Owner ownership;
 - project Roadmap scope;
 - applicable ADR/ESS authority;
