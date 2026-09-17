@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const root = path.resolve(__dirname, '../..');
 const workflowPath = path.join(root, '.github/workflows/ci.yml');
+const baselineAutofixWorkflowPath = path.join(root, '.github/workflows/current-state-baseline-autofix.yml');
 
 function workflow(): string {
   return fs.readFileSync(workflowPath, 'utf8');
@@ -19,12 +20,34 @@ function stepBlock(yaml: string, stepName: string): string {
 }
 
 describe('P0 GitHub Actions CI cost control', () => {
-  it('contains no retired M10 authorization or manual dispatch surface', () => {
+  it('contains no retired M10 authorization and binds revalidation dispatch to an exact PR snapshot', () => {
     const yaml = workflow();
     expect(yaml).not.toContain('M10_CI_GATE_ENABLED');
     expect(yaml).not.toContain('AUTHORIZE_PR_CI');
-    expect(yaml).not.toContain('workflow_dispatch:');
     expect(yaml).not.toContain('/api/m10/');
+    expect(yaml).toContain('workflow_dispatch:');
+    expect(yaml).toContain('expected_head_sha:');
+    expect(yaml).toContain('expected_head_ref:');
+    expect(yaml).toContain('expected_base_sha:');
+    expect(yaml).toContain("context.eventName !== 'workflow_dispatch' || runSha === headSha");
+    expect(yaml).toContain("livePr.base?.ref === 'main'");
+    expect(yaml).toContain('livePr.head?.repo?.full_name === `${owner}/${repo}`');
+    expect(yaml).toContain('normalizeSha(main.commit?.sha) === baseSha');
+  });
+
+  it('dispatches CI only after the validated non-force branch write and avoids pipefail SIGPIPE truncation', () => {
+    const yaml = fs.readFileSync(baselineAutofixWorkflowPath, 'utf8');
+    const write = yaml.indexOf('await github.rest.git.updateRef');
+    const dispatch = yaml.indexOf('await github.rest.actions.createWorkflowDispatch');
+
+    expect(write).toBeGreaterThan(-1);
+    expect(dispatch).toBeGreaterThan(write);
+    expect(yaml).toContain('force: false');
+    expect(yaml).toContain('expected_head_sha: commit.sha');
+    expect(yaml).toContain('expected_head_ref: pr.head.ref');
+    expect(yaml).toContain('expected_base_sha: process.env.EXPECTED_BASE_SHA');
+    expect(yaml).toContain('tail -n 700 "$raw" > "$bounded"');
+    expect(yaml).not.toContain('tail -n 700 "$raw" | head -c 120000');
   });
 
   it('places cost control before checkout and expensive work', () => {
@@ -72,10 +95,11 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(cost).toContain('vollständige CI bleibt aktiv');
   });
 
-  it('limits snapshot reuse to pull_request events and validates the event snapshot against the live PR first', () => {
+  it('limits snapshot reuse to exact PR validation events and validates the event snapshot against live PR and main first', () => {
     const cost = stepBlock(workflow(), 'P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden');
-    expect(cost).toContain("if: github.event_name == 'pull_request'");
+    expect(cost).toContain("if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'");
     expect(cost).toContain('github.rest.pulls.get');
+    expect(cost).toContain("github.rest.repos.getBranch({ owner, repo, branch: 'main' })");
     expect(cost).toContain("core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false')");
     expect(cost).toContain("core.setOutput('reuse_exact_snapshot', 'false')");
   });
