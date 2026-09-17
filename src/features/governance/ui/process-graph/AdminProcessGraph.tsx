@@ -1,8 +1,8 @@
 import React from 'react';
 import { AlertTriangle, ArrowRight, CheckCircle2, History, ShieldCheck } from 'lucide-react';
+import agentTrustRootMarkdown from '../../../../../AGENTS.md?raw';
 import pvcMarkdown from '../../../../../docs/projects/PROJECT_VALUE_CHAIN.md?raw';
 import projectMappingMarkdown from '../../../../../docs/projects/README.md?raw';
-import developmentChainMarkdown from '../../../../../docs/projects/operations/DEVELOPMENT_CHAIN.md?raw';
 import type { OperationalTraceStateEnvelope } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
 import { buildProcessGraphViewModel, type ProcessGraphNode, type ProcessGraphState } from './processGraphModel';
 
@@ -93,13 +93,13 @@ export function AdminProcessGraph({ operationalState = null }: AdminProcessGraph
     () => buildProcessGraphViewModel(
       pvcMarkdown,
       projectMappingMarkdown,
-      developmentChainMarkdown,
+      agentTrustRootMarkdown,
       operationalState,
     ),
     [operationalState],
   );
   const pvcNodes = graph.nodes.filter((node) => node.kind === 'pvc');
-  const developmentNodes = graph.nodes.filter((node) => node.kind === 'development');
+  const workStageNodes = graph.nodes.filter((node) => node.kind === 'work-stage');
   const gateNodes = graph.nodes.filter((node) => node.kind === 'evidence-gate' || node.kind === 'owner-gate');
 
   return (
@@ -107,7 +107,7 @@ export function AdminProcessGraph({ operationalState = null }: AdminProcessGraph
       <header className="rounded-2xl border border-white/10 bg-[#121215] p-5">
         <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-aif-gold-DEFAULT">Read-only governance projection</p>
         <h2 className="mt-1 text-xl font-black uppercase tracking-tight text-white">Process & Dependency Graph</h2>
-        <p className="mt-2 max-w-4xl text-xs leading-relaxed text-white/55">Canonical PVC/project ownership and the DC-00…DC-11 DevelopmentChain are projected from repository contracts. Visible operational status is accepted only from the effective PVC-18 OperationalTraceStateEnvelope. The browser does not approve, merge, deploy, infer completion, aggregate conflicting evidence, or convert trace/evidence into authorization.</p>
+        <p className="mt-2 max-w-4xl text-xs leading-relaxed text-white/55">Canonical PVC/project ownership and the autonomous work graph are projected from current repository sources, with <code>/AGENTS.md</code> as the single AI/development instruction surface. Visible operational status is accepted only from the effective PVC-18 OperationalTraceStateEnvelope. The browser does not approve, merge, deploy, infer completion, aggregate conflicting evidence, or convert trace/evidence into authorization.</p>
         {graph.operationalStateAvailable ? (
           <div role="status" className="mt-4 flex gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3 text-xs text-emerald-100/80">
             <CheckCircle2 size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -121,7 +121,7 @@ export function AdminProcessGraph({ operationalState = null }: AdminProcessGraph
         )}
       </header>
       <HorizontalChain nodes={pvcNodes} label="Project Value Chain" />
-      <HorizontalChain nodes={developmentNodes} label="DevelopmentChain lifecycle" />
+      <HorizontalChain nodes={workStageNodes} label="Autonomous work graph" />
       <section aria-label="Authority and evidence gates" className="space-y-3">
         <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-white/60">Authority / evidence distinction</h3>
         <div className="grid gap-3 md:grid-cols-2">{gateNodes.map((node) => <GraphNodeCard key={node.id} node={node} />)}</div>

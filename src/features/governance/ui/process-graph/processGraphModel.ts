@@ -6,7 +6,7 @@ import type {
 } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
 
 export type ProcessGraphState = 'current' | 'blocked' | 'waiting-for-evidence' | 'historical' | 'unknown';
-export type ProcessGraphNodeKind = 'pvc' | 'development' | 'evidence-gate' | 'owner-gate';
+export type ProcessGraphNodeKind = 'pvc' | 'work-stage' | 'evidence-gate' | 'owner-gate';
 
 export interface ProcessGraphStateEvidence {
   generatedAt: string;
@@ -46,7 +46,19 @@ export interface ProcessGraphViewModel {
 }
 
 interface PvcRow { pvc: string; stage: string; owner: string; }
+interface WorkStageDefinition { id: string; heading: string; label: string; }
+
 const stripTicks = (value: string) => value.replace(/`/g, '').trim();
+
+const WORK_STAGE_DEFINITIONS: readonly WorkStageDefinition[] = [
+  { id: 'GOV-SCOPE', heading: '## 3. Canonical scope and ownership resolution', label: 'Scope / Owner / PVC resolution' },
+  { id: 'GOV-WORK-GRAPH', heading: '## 4. Autonomous work graph', label: 'Autonomous work graph' },
+  { id: 'GOV-BRANCH-PR', heading: '## 5. Branch and Pull Request execution', label: 'Atomic branch / Pull Request' },
+  { id: 'GOV-CONVERGENCE', heading: '## 6. Bounded self-healing and convergence', label: 'Self-healing / convergence' },
+  { id: 'GOV-VALIDATION', heading: '## 7. Validation and cost control', label: 'Validation / CI cost control' },
+  { id: 'GOV-EVIDENCE', heading: '## 8. Evidence, EventMesh and handover', label: 'Evidence / EventMesh / handover' },
+  { id: 'GOV-CAPABILITY', heading: '## 9. Capability and tool boundary', label: 'Capability / tool boundary' },
+];
 
 export function parsePvcRows(markdown: string): PvcRow[] {
   return markdown.split('\n').map((line) => line.trim()).filter((line) => /^\|\s*`PVC-\d{2}`\s*\|/.test(line)).map((line) => {
@@ -67,10 +79,10 @@ export function parseProjectFolders(markdown: string): Map<string, string> {
   return folders;
 }
 
-export function parseDevelopmentLifecycle(markdown: string): string[] {
-  const section = markdown.match(/## Durable lifecycle[\s\S]*?```text\n([\s\S]*?)```/);
-  if (!section) return [];
-  return section[1].split(/\n|→/).map((step) => step.trim()).filter((step) => /^DC-\d{2}\b/.test(step));
+export function parseAutonomousWorkStages(agentTrustRootMarkdown: string): Array<{ id: string; label: string }> {
+  return WORK_STAGE_DEFINITIONS
+    .filter((stage) => agentTrustRootMarkdown.includes(stage.heading))
+    .map(({ id, label }) => ({ id, label }));
 }
 
 function isOperationalEnvelopeTrustedForProjection(
@@ -121,9 +133,6 @@ function resolveStateFromOperationalProjection(
     return { state: 'unknown', stateEvidence: undefined };
   }
 
-  // The UI never resolves conflicting operational facts. It may project one effective state only
-  // when every matching PVC-18 record already agrees on that effective state. Any disagreement is
-  // fail-closed to unknown rather than becoming a frontend-local aggregation/decision rule.
   const effectiveStates = Array.from(new Set(records.map((record) => record.state)));
   const state = effectiveStates.length === 1
     ? mapOperationalTraceState(effectiveStates[0])
@@ -145,12 +154,12 @@ function resolveStateFromOperationalProjection(
 export function buildProcessGraphViewModel(
   pvcMarkdown: string,
   projectMappingMarkdown: string,
-  developmentChainMarkdown: string,
+  agentTrustRootMarkdown: string,
   operationalState?: OperationalTraceStateEnvelope | null,
 ): ProcessGraphViewModel {
   const rows = parsePvcRows(pvcMarkdown);
   const folders = parseProjectFolders(projectMappingMarkdown);
-  const lifecycle = parseDevelopmentLifecycle(developmentChainMarkdown);
+  const workStages = parseAutonomousWorkStages(agentTrustRootMarkdown);
   const operationalStateAvailable = isOperationalEnvelopeTrustedForProjection(operationalState)
     && operationalState.records.length > 0;
 
@@ -165,17 +174,14 @@ export function buildProcessGraphViewModel(
     source: 'docs/projects/PROJECT_VALUE_CHAIN.md + docs/projects/README.md; state: PVC-18 OperationalTraceStateEnvelope',
   }));
 
-  const developmentNodes: ProcessGraphNode[] = lifecycle.map((label) => {
-    const id = label.match(/^DC-\d{2}/)?.[0] ?? label;
-    return {
-      id,
-      kind: 'development',
-      label,
-      ...resolveStateFromOperationalProjection(id, 'development', operationalState),
-      authority: 'non-authorizing',
-      source: 'docs/projects/operations/DEVELOPMENT_CHAIN.md — Durable lifecycle; state: PVC-18 OperationalTraceStateEnvelope',
-    };
-  });
+  const workStageNodes: ProcessGraphNode[] = workStages.map((stage) => ({
+    id: stage.id,
+    kind: 'work-stage',
+    label: stage.label,
+    ...resolveStateFromOperationalProjection(stage.id, 'work-stage', operationalState),
+    authority: 'non-authorizing',
+    source: 'AGENTS.md — autonomous development work graph; state: PVC-18 OperationalTraceStateEnvelope',
+  }));
 
   const gateNodes: ProcessGraphNode[] = [
     {
@@ -184,25 +190,25 @@ export function buildProcessGraphViewModel(
       label: 'Evidence / validation gate',
       ...resolveStateFromOperationalProjection('evidence-gate', 'evidence-gate', operationalState),
       authority: 'evidence-only',
-      source: 'GOV-08 Admin Panel graph handoff; state: PVC-18 OperationalTraceStateEnvelope',
+      source: 'AGENTS.md — Evidence, EventMesh and handover; state: PVC-18 OperationalTraceStateEnvelope',
     },
     {
       id: 'owner-gate',
       kind: 'owner-gate',
-      label: 'Human / Owner decision gate',
+      label: 'Human / CODEOWNER merge gate',
       ...resolveStateFromOperationalProjection('owner-gate', 'owner-gate', operationalState),
       authority: 'authorizing',
-      source: 'AGENTS.md — Human Authority; state display: PVC-18 OperationalTraceStateEnvelope only',
+      source: 'AGENTS.md — Human/CODEOWNER authority; state display: PVC-18 OperationalTraceStateEnvelope only',
     },
   ];
 
   const chainEdges: ProcessGraphEdge[] = pvcNodes.slice(1).map((node, index) => ({ id: `handoff-${pvcNodes[index].id}-${node.id}`, source: pvcNodes[index].id, target: node.id, relation: 'handoff' }));
-  const developmentEdges: ProcessGraphEdge[] = developmentNodes.slice(1).map((node, index) => ({ id: `dependency-${developmentNodes[index].id}-${node.id}`, source: developmentNodes[index].id, target: node.id, relation: 'dependency' }));
+  const workStageEdges: ProcessGraphEdge[] = workStageNodes.slice(1).map((node, index) => ({ id: `dependency-${workStageNodes[index].id}-${node.id}`, source: workStageNodes[index].id, target: node.id, relation: 'dependency' }));
   const gateEdges: ProcessGraphEdge[] = [{ id: 'evidence-owner', source: 'evidence-gate', target: 'owner-gate', relation: 'validation/evidence' }];
 
   return {
-    nodes: [...pvcNodes, ...developmentNodes, ...gateNodes],
-    edges: [...chainEdges, ...developmentEdges, ...gateEdges],
+    nodes: [...pvcNodes, ...workStageNodes, ...gateNodes],
+    edges: [...chainEdges, ...workStageEdges, ...gateEdges],
     operationalStateAvailable,
     ...(isOperationalEnvelopeTrustedForProjection(operationalState)
       ? { operationalStateGeneratedAt: operationalState.generatedAt }

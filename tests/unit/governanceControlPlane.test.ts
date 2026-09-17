@@ -198,10 +198,11 @@ describe('Governance Control Plane', () => {
     ).toEqual([]);
   });
 
-  it('keeps ADR-0099 v1.9 accepted and synchronized after the P1 portfolio-allocation extension', () => {
+  it('keeps ADR-0099 v1.9 accepted and its P1 semantics in the canonical ADR', () => {
     const fixture = readFixture();
     const adr0099 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0099');
     const authority0099 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20');
+    const adr0099Text = fs.readFileSync(path.join(root, 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md'), 'utf8');
 
     expect(adr0099).toMatchObject({
       authorityId: 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20',
@@ -214,15 +215,17 @@ describe('Governance Control Plane', () => {
       version: '1.9.0',
       lifecycle: 'accepted',
       path: 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md',
+      scope: 'FinTech Core financial workflow and research allocation architecture',
     });
-    expect(String(authority0099?.scope ?? '')).toContain('portfolio allocation');
-    expect(String(authority0099?.scope ?? '')).toContain('FT-5 remains sole Risk/Compliance approval authority');
+    expect(adr0099Text).toContain('P1 Deterministic Portfolio Allocation / Position Sizing');
+    expect(adr0099Text).toContain('FT-5 bleibt einzige Risk-/Compliance-Approval-Quelle');
   });
 
-  it('keeps ADR-0100 v1.1 accepted and evidence-only after DeFi Supersession B', () => {
+  it('keeps ADR-0100 v1.1 accepted and evidence-only in the canonical ADR', () => {
     const fixture = readFixture();
     const adr0100 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0100');
     const authority0100 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-DEFILLAMA-DEFI-EVIDENCE-PROVIDER-2026-08-21');
+    const adr0100Text = fs.readFileSync(path.join(root, 'docs/adr/ADR-0100-defillama-defi-evidence-provider.md'), 'utf8');
 
     expect(adr0100).toMatchObject({
       authorityId: 'AUTH-ADR-DEFILLAMA-DEFI-EVIDENCE-PROVIDER-2026-08-21',
@@ -235,8 +238,9 @@ describe('Governance Control Plane', () => {
       version: '1.1.0',
       lifecycle: 'accepted',
       path: 'docs/adr/ADR-0100-defillama-defi-evidence-provider.md',
+      scope: 'DeFiLlama evidence-only provider authority',
     });
-    expect(String(authority0100?.scope ?? '')).toContain('evidence-only');
-    expect(String(authority0100?.scope ?? '')).toContain('scoreEligible=false');
+    expect(adr0100Text).toContain('scoreEligible=false');
+    expect(adr0100Text).toContain('DeFiLlama bleibt Evidence-only');
   });
 });

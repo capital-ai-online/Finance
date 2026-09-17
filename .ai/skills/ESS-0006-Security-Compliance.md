@@ -48,6 +48,25 @@ crossReference:
   dependsOn:
     - ESS-0001
     - ESS-0001-CONTRACTS
+  instructionTrustRoot: AUTH-GOV-AGENT-TRUST-ROOT
+  executionControl: CTRL-SEC-BOUNDED-REMEDIATION-001
+  projectDirection: SECURITY_FOUNDATION_FIRST
+  correlationProjection:
+    requiredFields:
+      - correlation_id
+      - current_main_sha
+      - branch_or_pr_head_sha
+      - security_requirement_or_finding
+      - affected_primary_project
+      - affected_primary_owner
+      - affected_pvc_relationship
+      - before_state
+      - intended_delta
+      - after_state
+      - validation_state
+      - independent_security_verification
+      - evidence_references
+      - handover_state
   relatedEss:
     - ESS-0005
     - ESS-0011
@@ -71,7 +90,7 @@ crossReference:
     - docs/compliance/CAPITAL-AI-COMP/
 
 created: 2026-07-31
-revalidated: 2026-09-10
+revalidated: 2026-09-16
 ---
 
 # Security & Compliance
@@ -91,8 +110,10 @@ getrennte cross-cutting Assurance-Domaenen.
 Verbindliche globale Security-/Compliance-Regeln stammen weiterhin aus den jeweils aktuellen
 Contracts, ADRs, Controls und dem Trust Root. ESS-0006 beschreibt die technische Komponentengrenze,
 die zulässige Evidence-Beziehung und die Einbindung des Security-Komponentenmodells in die durch
-`AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001` geregelte bounded
-Security-Remediation.
+`AUTH-GOV-AGENT-TRUST-ROOT` und `CTRL-SEC-BOUNDED-REMEDIATION-001` korrelierte bounded
+Security-Remediation. `/AGENTS.md@CURRENT_MAIN` bleibt dabei die einzige repository-weite
+AI-/Development-Instruktionsquelle; ESS-0006 ist ausschliesslich eine subject-matter
+Komponentenspezifikation und erzeugt keine parallele Entwicklungsrichtlinie.
 
 ADR-0007 ist in der kanonischen ADR Registry als `historical` / non-authorizing registriert. Seine
 legacy Compliance Value Chain darf deshalb weder durch ESS-0006 noch durch Implementierungsdetails
@@ -125,6 +146,10 @@ Sobald ein Fix fachliche Produktsemantik, neue Architecture Authority oder fremd
 Implementierung jenseits der trennbaren Security-Haertung erfordert, endet die Delegation. Security
 setzt nur den sauber trennbaren Security-Anteil um und dokumentiert/routet den verbleibenden Anteil
 an den kanonischen Primary Owner.
+
+Die Security-Richtung bleibt `SECURITY_FOUNDATION_FIRST`: Schutzbedarf, Threat Model, Trust Boundary
+und Security Controls bestimmen die Remediation-Grenze. Nutzerwirksame oder Frontend-Prioritaet darf
+diese Security-Authority weder umkehren noch abschwaechen.
 
 ### CAPITAL-AI-COMP
 
@@ -193,6 +218,12 @@ Ownership zu uebernehmen. Reine Security-Remediation verwendet die `CAPITAL-AI-S
 und einen frischen `security`-Branch/PR; der betroffene Primary Owner/PVC und seine Contracts bleiben
 in Correlation/Evidence sichtbar.
 
+Jede Security-Remediation wird mit derselben `correlation_id` ueber Requirement/Finding, Current-Main-
+Baseline, Branch-/PR-Head, betroffenen Primary Project/Owner/PVC, Before-State, intended Delta,
+read-back After-State, Validation, unabhaengige Security-Verifikation, Evidence-Referenzen und
+Handover-State verbunden. Diese Korrelation uebertraegt weder Ownership noch Approval- oder
+Merge-Authority.
+
 ---
 
 ## 5. Compliance-Komponente
@@ -220,20 +251,23 @@ jeweils aktuellen Requirement-/Applicability-Kontexts bewertet.
 Security- und Compliance-Evidence duerfen korreliert werden, aber die Rollen bleiben getrennt:
 
 ```text
-Security requirement / test / finding
+correlation_id
+        -> Security requirement / test / finding
         -> bounded Security remediation OR owner-routed domain remainder
+        -> observed Before -> intended delta -> read-back After
         -> implementation evidence
         -> EVIDENCE_READY
         -> separate Security re-test / verification evidence
         -> VERIFIED / CLOSED only when all required gates are satisfied
 
-Compliance requirement / applicability
+same correlation_id
+        -> Compliance requirement / applicability
         -> Control-/Owner-Mapping
         -> Evidence aus Security, Runtime, Tests, Docs oder anderen Primary Ownern
-        -> unabhängige Compliance assessment
+        -> unabhaengige Compliance assessment
 ```
 
-Daraus folgen fuenf Invarianten:
+Daraus folgen sechs Invarianten:
 
 1. Security Evidence ist Input fuer Compliance Assessment, aber kein automatischer Compliance-PASS.
 2. Compliance Assessment ersetzt keine getrennte Security Verification.
@@ -245,6 +279,8 @@ Daraus folgen fuenf Invarianten:
    Reproduzierbare positive und negative Tests sowie, wo relevant, Hosted-/Runtime-Evidence sind
    erforderlich. Human/CODEOWNER- oder betroffene Owner-Verifikation bleibt zusaetzlich erforderlich,
    wenn Risiko oder bestehende Contracts dies verlangen.
+6. Eine `correlation_id` verbindet Evidence und Handover, ist aber niemals Approval-, Ownership-,
+   Merge-, Deployment- oder Risk-Acceptance-Credential.
 
 ---
 
@@ -258,6 +294,10 @@ ESS-0006 darf vorhandene Audit-/Risk-/Traceability-Evidence konsumieren oder tec
 erzeugen, aber weder eine zweite Append-only Audit Authority noch ein zweites Risk Register oder eine
 zweite EventMesh-/Traceability-Plane einfuehren.
 
+Security-Korrelation verwendet die vorhandene read-only EventMesh-/Traceability-Projektion fuer
+`correlation_id`, State, Evidence und Handover. Die Projektion darf keine fehlende Security Evidence
+erfinden, keinen Finding-Status autonom schliessen und keine Authority erzeugen.
+
 ---
 
 ## 8. Events und Integration
@@ -269,6 +309,11 @@ Implementierungsanforderung.
 Wo Security- oder Compliance-Code Events publiziert oder konsumiert, gelten die aktuellen bestehenden
 EventMesh-/Traceability-Contracts. Nicht implementierte historische Events duerfen nicht allein wegen
 dieser ESS neu geschaffen werden.
+
+Security-Events oder Evidence-Projektionen muessen, sofern ein bestehender Contract dies unterstuetzt,
+die bestehende `correlation_id` fortfuehren statt eine parallele Security-Korrelations- oder
+Orchestrierungsplane zu erzeugen. EventMesh bleibt read-only hinsichtlich Approval, Merge,
+Deployment und Governance Authority.
 
 Direkte Abhaengigkeiten oder Zusammenarbeit mit Supervisor, Platform Director, Version Manager,
 Release Center oder Documentary Engine werden nur ueber die jeweils aktuellen Contracts/PVC-Owner-
@@ -306,6 +351,11 @@ keine geschuetzte externe Mutation erforderlich ist und die current-main-/Writer
 konfliktfrei oder explizit sequenziert ist. PR-Creation-, Hosted-CI-, Human/CODEOWNER-Merge-, Release-
 und Production-Gates bleiben unveraendert.
 
+Vor Mutation und erneut vor PR-Readiness wird dieselbe Security-Korrelation gegen aktuellen `main`,
+Branch-/PR-Head, offene Writer, affected Primary Owner/PVC und bestehende Security Controls erneuert.
+Bewegt sich ein relevanter Head oder aendert sich eine Security-/Authority-Grenze, ist die vorherige
+Korrelation stale und muss vor Fortsetzung neu gelesen werden.
+
 Bei einer bestaetigten High/Critical npm-Schwachstelle darf Security insbesondere die tatsaechlich
 betroffene Dependency und sichere Mindestversion bestimmen, `package.json`/`package-lock.json`
 aktualisieren, Runtime-Haertung/Defense-in-Depth und Negative Tests ergaenzen sowie verfuegbare
@@ -324,11 +374,16 @@ zustaendigen Owner geroutet.
 ESS-0006 ist semantisch konsistent, wenn:
 
 - dieselbe stabile ESS-Identitaet als bounded Komponentenspezifikation erhalten bleibt;
+- `/AGENTS.md@CURRENT_MAIN` die einzige AI-/Development-Instruktionsquelle bleibt und ESS-0006 nur
+  subject-matter Security-/Compliance-Grenzen beschreibt;
 - `src/platform/Security` und `src/platform/Compliance` die einzigen von ESS-0006 direkt
   spezifizierten technischen Komponenten sind;
 - Security Requirements/Testing/Verification bei `CAPITAL-AI-SEC` bleiben;
+- `SECURITY_FOUNDATION_FIRST` als Security-Projektrichtung erhalten bleibt;
 - reine bounded Security-Remediation nach `CTRL-SEC-BOUNDED-REMEDIATION-001` durch
   `CAPITAL-AI-SEC` implementierbar ist, auch in fremd platzierten Dateien;
+- Security-Remediation, Primary Project/Owner/PVC, Before/After, Validation, Verification, Evidence und
+  Handover ueber dieselbe `correlation_id` verbunden werden, ohne Authority zu uebertragen;
 - diese Ausfuehrung keine fachliche Authority/PVC-Ownership uebertraegt und an Business-/Architecture-
   oder Protected-Mutation-Grenzen stoppt;
 - `EVIDENCE_READY != VERIFIED` und Closure einen getrennten Re-Test/Evidence-Schritt erfordert;
@@ -344,9 +399,16 @@ ESS-0006 ist semantisch konsistent, wenn:
 
 ESS-0006 v1.2.0 ersetzt innerhalb derselben ESS-Identitaet die v1.1.0-Einschraenkung, nach der
 fremd platzierte produktive Security-Remediation grundsaetzlich beim Primary Owner verbleiben musste.
-Die neue Semantik ist eng: `CAPITAL-AI-SEC` darf nur bounded Security-primaere Repository-Remediation
-nach `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001` implementieren.
+Die aktuelle Semantik ist eng: `CAPITAL-AI-SEC` darf nur bounded Security-primaere Repository-
+Remediation nach `AUTH-GOV-AGENT-TRUST-ROOT` / `CTRL-SEC-BOUNDED-REMEDIATION-001` implementieren.
+`AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` ist nur noch eine historische Identity-Alias in der
+maschinenlesbaren Registry und keine eigenstaendige Security- oder Development-Authority.
 Datei- oder PVC-Zuordnung allein ist kein DENY-Kriterium und erzeugt keinen Ownership-Transfer.
+
+Die Korrelation zu `/AGENTS.md@CURRENT_MAIN` verbindet Scope-/Owner-/PVC-Aufloesung, bounded
+Self-Healing, Branch-/PR-State, Validation, Evidence/EventMesh und Handover mit der Security-
+Assurance-Kette. Sie veraendert weder die unabhaengige SEC-Verifikation noch Human/CODEOWNER-Merge-
+oder geschuetzte External-Mutation-Gates.
 
 Historische Texte/Evidence duerfen fuer Traceability erhalten bleiben, sind aber keine zusaetzliche
 aktuelle Authority. Laufende Security-Verifikation und Compliance-Bewertung bleiben von der
@@ -360,7 +422,7 @@ Implementierung als getrennte Evidence-/Review-Schritte erhalten.
 |---|---|---|
 | 1.0.0 | Historical baseline | Initiale kombinierte Komponentenspezifikation mit heute stale Registry-/Audit-/Risk-/Event-/Collaboration-Annahmen |
 | 1.1.0 | Revalidated | Bounded Security-/Compliance-Komponentengrenze; getrennte SEC/COMP-Assurance-Rollen; keine zweite Requirement Registry oder parallele Runtime |
-| 1.2.0 | Revalidated | Delegated bounded Security-Remediation auch in fremd platzierten Repository-Dateien; keine PVC-/Domain-Ownership-Uebertragung; Verification bleibt getrennt |
+| 1.2.0 | Revalidated 2026-09-16 | Delegated bounded Security-Remediation auch in fremd platzierten Repository-Dateien; keine PVC-/Domain-Ownership-Uebertragung; Verification bleibt getrennt; Korrelation auf `AUTH-GOV-AGENT-TRUST-ROOT`, `CTRL-SEC-BOUNDED-REMEDIATION-001`, `SECURITY_FOUNDATION_FIRST` und correlation-ID-basierte Evidence-/Handover-Projektion konsolidiert |
 
 ---
 
