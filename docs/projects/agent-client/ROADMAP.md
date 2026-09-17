@@ -3,10 +3,17 @@
 **Project:** `CAPITAL-AI-CLIENT`  
 **Folder:** `docs/projects/agent-client/`  
 **Owner/PVC:** `CAPITAL-AI-CLIENT / PVC-01`  
-**Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-15 — roadmap structure normalized and re-correlated against current main; generic carry-forward removed; physical runtime trigger remains absent  
-**Baseline:** `main@103689c2f30536e573b7958f63b503ca428f69cf`  
-**Trust root:** `/AGENTS.md@current-main`
+**Status:** `ACTIVE — TEMPORARY CANONICAL PROJECT ROADMAP`  
+**Reconciliation:** 2026-09-17 — historical task activation removed; physical runtime trigger remains absent  
+**Trust root:** `/AGENTS.md@CURRENT_MAIN`
+
+## Reconciliation rule
+
+`historical/non-terminal != active`
+
+This Roadmap remains temporarily present until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Historical task states, chat context, old branches and prior planning containers are evidence only and cannot preserve, restore, reopen or activate work.
+
+Execution requires a currently active canonical identity from `CURRENT_MAIN` or fresh Human/Owner direction in the current interaction.
 
 ## Vision
 
@@ -29,7 +36,7 @@ Own the complete `PVC-01` client boundary from request construction through iden
 
 Current main contains the complete provider-neutral CLIENT-02 through CLIENT-06 contract baseline, CLIENT-07 contract evidence and the Human-merged CLIENT-08 project-skill/plugin invocation contract. There is still no current-main-evidenced physical PVC-01 runtime trigger. `NO_PHYSICAL_RUNTIME_TRIGGER` therefore remains the operative state.
 
-The former generic `CLIENT-CARRY-01` container is removed from active planning. Terminal baseline work is retained in the ledger below; future work is represented only by the concrete packages that can reopen after an evidenced trigger.
+No generic historical planning container is an active task source. Terminal baseline work is retained in the ledger below; future work is represented only by concrete packages that meet the current activation rule.
 
 ## Work packages
 
@@ -40,12 +47,14 @@ The former generic `CLIENT-CARRY-01` container is removed from active planning. 
 | `CLIENT-PR900-03` | 4/5 | `CONDITIONAL / NO_PHYSICAL_RUNTIME_TRIGGER` | Client session/history/request-provenance boundary | deterministic session/history/request provenance reaches the downstream consumer without retrieved/history content being reinterpreted as authority |
 | `CLIENT-RUNTIME-01` | 3/5 | `DEPENDENCY_HELD` | Physical runtime trigger assessment | `RUNTIME_MAPPING.md` records a concrete current-main-evidenced PVC-01 strangler/refactor trigger before implementation begins |
 
+The status values above do not activate a package by themselves. A package is executable only after the current activation rule is satisfied.
+
 ### CLIENT-PR900-01 — Staged client request/response boundary
 
 **Goal:** materialize the client-side path from attributable Human intent to a structured request only when a physical runtime trigger exists.  
 **Scope:** request construction, identity handoff, requested-capability handoff and preservation/rendering of returned response/status/error semantics.  
 **Dependencies:** authoritative downstream authorization/execution boundary.  
-**Gate:** `CLIENT-RUNTIME-01` is satisfied.  
+**Gate:** `CLIENT-RUNTIME-01` is satisfied on then-current main.  
 **Exit:** the client boundary preserves attributable intent and deterministic request/identity/capability/response semantics without creating authority or a protected execution path.
 
 ### CLIENT-PR900-02 — Provider-neutral discovery / invocation-request boundary
@@ -60,31 +69,24 @@ The former generic `CLIENT-CARRY-01` container is removed from active planning. 
 
 **Goal:** preserve attributable session/request identity and history-role/source metadata as data.  
 **Scope:** client-side provenance and fail-closed downstream handoff only.  
-**Dependencies:** `FIN-PR900-02` for FINTECH consumer trust processing and `SEC-PR900-06` for independent Security verification.  
+**Dependencies:** FINTECH consumer trust processing and independent Security verification where applicable.  
 **Gate:** a physical CLIENT consumer path exists.  
-**Exit:** deterministic provenance is preserved; FINTECH prompt/history processing and Security negative verification remain owner-correct dependencies.
+**Exit:** deterministic provenance is preserved; downstream prompt/history processing and Security negative verification remain owner-correct dependencies.
 
 ### CLIENT-RUNTIME-01 — Physical runtime trigger assessment
 
 **Goal:** prevent speculative physical Client architecture.  
 **Scope:** current-main inventory and `RUNTIME_MAPPING.md`.  
-**Timeline:** `CONTINUOUS / EVENT-DRIVEN`.  
-**Exit:** either a concrete duplication/drift/refactor trigger is evidenced and routed into the exact affected CLIENT package, or `NO_PHYSICAL_RUNTIME_TRIGGER` remains explicitly current.
+**Exit:** either a concrete duplication/drift/refactor trigger is evidenced and freshly activated into the exact affected CLIENT package, or `NO_PHYSICAL_RUNTIME_TRIGGER` remains explicitly current.
 
 ## Dependency-held work
 
 | Concern | Owner projection | CLIENT disposition |
 |---|---|---|
-| OAuth/MCP/provider activation, permission mutation, protected or persistent provider execution | `CAPITAL-AI-OPS` — `OPS-PR900-04` | `DEPENDENCY_ONLY` |
-| F01/F06 consumer prompt/history processing and negative trust tests | `CAPITAL-AI-FINTECH` — `FIN-PR900-02` | `DEPENDENCY_ONLY` |
-| F01/F06 and external MCP independent verification | `CAPITAL-AI-SEC` — `SEC-PR900-06` | `DEPENDENCY_ONLY` |
+| OAuth/MCP/provider activation, permission mutation, protected or persistent provider execution | `CAPITAL-AI-OPS` | `DEPENDENCY_ONLY` |
+| Consumer prompt/history processing and negative trust tests | `CAPITAL-AI-FINTECH` | `DEPENDENCY_ONLY` |
+| Prompt/history and external MCP independent verification | `CAPITAL-AI-SEC` | `DEPENDENCY_ONLY` |
 | Application MFA/AAL lifecycle and independent verification | GOV/Human + OPS evidence + SEC verification | `DEPENDENCY_ONLY` |
-
-## Continuous obligations
-
-- Re-correlate `RUNTIME_MAPPING.md` when a new CLIENT consumer or strangler/refactor trigger appears.
-- Maintain request/identity/capability/provenance/response contracts against then-current authority.
-- Keep foreign execution and verification owner-routed.
 
 ## Terminal ledger
 
@@ -96,8 +98,10 @@ The former generic `CLIENT-CARRY-01` container is removed from active planning. 
 | `CLIENT-04` | `CONTRACT BASELINE COMPLETE` | capability handoff |
 | `CLIENT-05` | `CONTRACT BASELINE COMPLETE` | response contract |
 | `CLIENT-06` | `CONTRACT BASELINE COMPLETE` | client security boundary |
-| `CLIENT-07` | `CONTRACT EVIDENCE COMPLETE` | runtime tests reopen only with physical implementation |
+| `CLIENT-07` | `CONTRACT EVIDENCE COMPLETE` | runtime tests require a new physical implementation trigger |
 | `CLIENT-08` | `CONTRACT IMPLEMENTED — PR #861 HUMAN-MERGED` | provider-neutral project-skill/plugin invocation contract |
+
+Terminal ledger entries are evidence only and never reopen themselves.
 
 ## Dependencies
 
@@ -105,4 +109,4 @@ OPS runtime/provider evidence and execution; FINTECH consumer prompt/history tru
 
 ## Project exit gate
 
-Exactly one canonical CLIENT roadmap exists; all PVC-01 work is represented by concrete packages; no generic carry-forward entry remains; terminal contract/evidence work is not reopened; foreign-owner work remains dependency-only; and physical CLIENT runtime stays inactive until `RUNTIME_MAPPING.md` records a reproducible current-main trigger.
+Exactly one temporary CLIENT roadmap exists; all PVC-01 work is represented by concrete packages; historical/non-terminal state never self-activates; terminal contract/evidence work is not reopened; foreign-owner work remains dependency-only; physical CLIENT runtime stays inactive until `RUNTIME_MAPPING.md` records a reproducible current-main trigger and the task is freshly active.
