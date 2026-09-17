@@ -46,7 +46,7 @@ export function repairProjectionText(text, expectedMainSha) {
   const lines = source.split(/\r?\n/);
   let insertAt = 1;
   while (insertAt < lines.length && lines[insertAt].trim() === '') insertAt += 1;
-  lines.splice(insertAt, 0, '', `**Baseline:** \`main@${sha}\``);
+  lines.splice(insertAt, 0, `**Baseline:** \`main@${sha}\``, '');
   return lines.join('\n');
 }
 
