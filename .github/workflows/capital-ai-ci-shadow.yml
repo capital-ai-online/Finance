@@ -1,54 +1,142 @@
 name: CAPITAL-AI CI Shadow
-run-name: dependency lock resolver – PR #${{ github.event.pull_request.number }}
+run-name: capital-ai-ci Shadow (stillgelegt) – ${{ github.sha }}
 
-# TEMPORARY branch-only resolver for PR #1043. This file is restored to the exact
-# current-main shadow workflow before PR readiness; it is never intended to merge.
+# Stillgelegt gemäß ADR-0073: Die technische PR-CI ist auf `build-and-test`
+# in ci.yml konsolidiert. Dieser Workflow erzeugt bewusst keinen automatischen
+# `capital-ai-ci`-Check mehr für Pull Requests und läuft ausschließlich noch
+# manuell per workflow_dispatch als Rollback-/Vergleichspfad.
+#
+# Die Datei wird absichtlich NICHT gelöscht:
+# `scripts/security/verifyChangedWorkflowSecurity.mjs` behandelt jede
+# Workflow-Löschung als Verstoß gegen die Workflow-Sicherheitsrichtlinie.
+# Die Stilllegung über die Trigger-Fläche erreicht dasselbe Kostenziel, ohne
+# diese Invariante aufzuweichen, und hält den Rollback aus ADR-0073
+# (Shadow-Pfad wiederherstellen) unmittelbar verfügbar.
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: dependency-lock-resolver-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+  group: capital-ai-ci-shadow-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   capital-ai-ci:
-    if: github.head_ref == 'agent/operations-runtime-deps-20260917'
-    name: dependency-lock-resolver
+    name: capital-ai-ci
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Repository auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Node.js einrichten
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: '24.20.0'
-          cache: npm
+      - name: Prüfumfang bestimmen
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
 
-      - name: Lockfile deterministisch neu auflösen
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "full=true" >> "$GITHUB_OUTPUT"
+            echo "docker=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git cat-file -e "${BASE_SHA}^{commit}"
+          git cat-file -e "${HEAD_SHA}^{commit}"
+          changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          printf '%s\n' "$changed_files"
+
+          full=false
+          docker=false
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              docs/*|.ai/*|*.md)
+                ;;
+              *)
+                full=true
+                ;;
+            esac
+            case "$file" in
+              Dockerfile|.dockerignore|package.json|package-lock.json|server.ts|server/*|render.yaml|render.yml|scripts/security/*Docker*|scripts/security/*docker*|scripts/security/*Runtime*|scripts/security/*runtime*|.github/workflows/*)
+                docker=true
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "docker=$docker" >> "$GITHUB_OUTPUT"
+
+      - name: Repository-Integrität prüfen
         shell: bash
         run: |
           set -euo pipefail
-          npm install --package-lock-only --ignore-scripts
-          npm ci --ignore-scripts
-          npm ls --all
-          npm run lint
-          npm run build:raw
+          git rev-parse --verify 'HEAD^{commit}' >/dev/null
+          git fsck --strict --no-dangling
 
-      - name: Aufgelösten Lockfile als Evidence hochladen
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Dokumentations-Fast-Path
+        if: steps.scope.outputs.full != 'true'
+        run: echo "Nur Dokumentation betroffen; Software-Build und Tests sind nicht erforderlich."
+
+      - name: Node.js einrichten
+        if: steps.scope.outputs.full == 'true'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
-          name: dependency-lock-slice-1-${{ github.event.pull_request.head.sha }}
-          path: package-lock.json
-          retention-days: 1
-          if-no-files-found: error
+          node-version: '24.18.0'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        if: steps.scope.outputs.full == 'true'
+        run: npm ci
+
+      - name: Produktionsabhängigkeiten prüfen
+        if: steps.scope.outputs.full == 'true'
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: TypeScript prüfen
+        if: steps.scope.outputs.full == 'true'
+        run: npm run lint
+
+      - name: Unit-Tests ausführen
+        if: steps.scope.outputs.full == 'true'
+        run: npm test
+
+      - name: Produktions-Build erstellen
+        if: steps.scope.outputs.full == 'true'
+        run: npm run build
+
+      - name: Produktions-CSP-Auslieferung nach Build prüfen
+        if: steps.scope.outputs.full == 'true'
+        env:
+          NODE_ENV: production
+          CSP_MODE: report-only
+        run: npx vitest run tests/unit/securityResponse.production.test.ts
+
+      - name: Produktionskonfiguration und Deployment-Bereitschaft prüfen
+        if: steps.scope.outputs.full == 'true'
+        run: |
+          npx tsx scripts/security/verifyProductionConfigInvariants.ts
+          npm run predeploy:check
+
+      - name: Docker-Hardening prüfen
+        if: steps.scope.outputs.docker == 'true'
+        run: node scripts/security/verifyDockerHardening.mjs
+
+      - name: Produktions-Docker-Image bauen und prüfen
+        if: steps.scope.outputs.docker == 'true'
+        run: |
+          docker build --tag capital-ai-ci-shadow:${{ github.sha }} .
+          test "$(docker image inspect capital-ai-ci-shadow:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
+          test "$(docker image inspect capital-ai-ci-shadow:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          docker image inspect capital-ai-ci-shadow:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
