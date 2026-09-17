@@ -198,6 +198,35 @@ describe('GeminiResearch server-only shadow transport', () => {
     expect(costLimitedFetch).toHaveBeenCalledTimes(1);
   });
 
+  it('rests the provider after Free-Tier quota exhaustion and resumes after the quota reset', async () => {
+    let now = Date.parse('2026-09-18T06:30:00.000Z');
+    let calls = 0;
+    const fetchImpl = vi.fn(async () => {
+      calls += 1;
+      if (calls === 1) return new Response('', { status: 429 });
+      return new Response(JSON.stringify(successfulInteraction()), { status: 200 });
+    });
+    const transport = new GeminiResearchServerTransport(enabledConfig({ requestsPerMinute: 10 }), {
+      fetchImpl: fetchImpl as typeof fetch,
+      nowMs: () => now,
+    });
+
+    await expect(transport.discover(request)).rejects.toMatchObject({ code: 'PROVIDER_RATE_LIMITED' });
+    expect(transport.status()).toMatchObject({
+      state: 'QUOTA_DORMANT',
+      quotaDormantUntil: '2026-09-18T07:00:00.000Z',
+    });
+
+    now = Date.parse('2026-09-18T06:59:59.000Z');
+    await expect(transport.discover(request)).rejects.toMatchObject({ code: 'FREE_TIER_QUOTA_DORMANT' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+    now = Date.parse('2026-09-18T07:00:01.000Z');
+    await expect(transport.discover(request)).resolves.toMatchObject({ model: 'gemini-test-model' });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(transport.status().quotaDormantUntil).toBeNull();
+  });
+
   it('keeps an audit-safe canonical telemetry ledger when using the default sink', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify(successfulInteraction()), { status: 200 }));
     const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
