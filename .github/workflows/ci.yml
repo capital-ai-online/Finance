@@ -193,8 +193,15 @@ jobs:
               .addRaw(`Exakter Snapshot bereits validiert: PR #${prNumber}, head \`${headSha}\`, base \`${baseSha}\`, wiederverwendeter CI Run #${reusable.run_number}, Attempt ${reusedAttempt}.`)
               .write();
 
+      - name: Ungültigen Autofix-Dispatch fail-closed beenden
+        if: github.event_name == 'workflow_dispatch' && steps.cost_control.outputs.current_snapshot == 'false'
+        shell: bash
+        run: |
+          echo 'Invalid autofix workflow_dispatch snapshot' >&2
+          exit 1
+
       - name: Stale PR-Event vor teurer CI beenden
-        if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.cost_control.outputs.current_snapshot == 'false'
+        if: github.event_name == 'pull_request' && steps.cost_control.outputs.current_snapshot == 'false'
         run: echo 'Stale PR-Snapshot erkannt; kein Checkout, npm ci, TypeScript, Test oder Build für veraltete Event-Evidence.'
 
       - name: Exakten CI-PASS wiederverwenden
