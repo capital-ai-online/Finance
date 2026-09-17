@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/frontend/`  
 **Primary Owner:** `CAPITAL-AI-FE`  
 **Productive PVC:** `N/A — cross-cutting Frontend presentation / perceived performance`  
-**Roadmap:** `FE-CARRY-01`  
+**Work item:** `FE Public Scorer Critical Path`  
 **Baseline:** `main@28579c54f2bf70fd79330c96bad4551dd29b64b8`  
 **Production at start:** Render `Finance` live on the same commit `28579c54f2bf70fd79330c96bad4551dd29b64b8`  
 **Status:** `IMPLEMENTED_ON_BRANCH / HOSTED_VALIDATION_PENDING`
@@ -17,7 +17,7 @@ Continue the automated perceived-performance remediation after merged and deploy
 
 `PublicCryptoScoringPreview.tsx` statically imported `CryptoScoringEnterprise.tsx`. The canonical scorer itself statically imports Motion, Recharts, `EnterpriseAnalysisPanels`, `EnterpriseBinanceQuickAnalysis` and the surrounding scorer UI graph. Because `PublicAnalysisWorkbench` defaults to the Enterprise Scorer, entering the public workbench can make this complete graph part of the first scorer render path even before the browser has painted the lightweight public scorer frame.
 
-The scorer additionally starts the canonical `/api/crypto/score` request from its own mount/symbol effect. That request behavior and every FINTECH/DATA/scoring contract remain outside this bounded bundle-split change.
+The scorer additionally starts the canonical `/api/crypto/score` request from its own mount/symbol effect. That request behavior and every FINTECH scoring/data contract remain outside this bounded bundle-split change.
 
 ## Implemented remediation
 
@@ -33,21 +33,14 @@ The scorer additionally starts the canonical `/api/crypto/score` request from it
 
 ## Best-practice correlation
 
-The implementation follows the current React-supported client code-splitting primitives:
-
-- `React.lazy`: component code is deferred until the lazy component is first rendered — https://react.dev/reference/react/lazy
-- `Suspense`: a lightweight fallback remains visible while lazy code resolves — https://react.dev/reference/react/Suspense
-- `startTransition`: the scorer activation state update is marked non-blocking so urgent interactions remain responsive — https://react.dev/reference/react/startTransition
-
-No new dependency is required; the repository's existing React/Vite stack is reused.
+The implementation follows the existing React-supported client code-splitting primitives `React.lazy`, `Suspense` and `startTransition`. No new dependency is required; the repository's existing React/Vite stack is reused.
 
 ## Authority / security boundary
 
 This slice changes only public Frontend composition and loading behavior. It does **not** change:
 
 - `/api/crypto/score` route or scoring dispatch;
-- FINTECH model, ranking, eligibility or scoring authority;
-- DATA/provider evidence semantics;
+- FINTECH model, ranking, eligibility, data-quality or scoring authority;
 - Supabase AuthN/AuthZ, onboarding or MFA;
 - entitlements or subscription authority;
 - Render, Supabase, Stripe, credentials, secrets or provider configuration.
@@ -66,11 +59,15 @@ Focused regression coverage in `tests/unit/publicScorerCriticalPath.test.ts` gua
 - retained public-preview presentation provider;
 - retained Suspense shell and canonical scorer component.
 
-Existing `publicLandingRoute.test.ts` continues to protect the direct-visible public workbench contract. This work does not restore the retired explicit activation state.
+Existing `publicLandingRoute.test.ts` continues to protect the direct-visible public workbench contract. This work does not restore a retired activation state.
+
+## Historical activation boundary
+
+This evidence is not an active task source. `historical/non-terminal != active`. The branch/status recorded here cannot create, preserve, restore or continue work by itself. Any future execution requires a currently active canonical identity from `CURRENT_MAIN` or fresh Human/Owner direction in the current interaction.
 
 ## Exit gate
 
-This bounded slice is ready for Human review when the exact PR head proves:
+This bounded slice is ready for Human review only when the exact PR head proves:
 
 - current `main` is the branch merge-base and open-writer correlation is clean;
 - the public scorer wrapper no longer statically imports the heavy scorer implementation at runtime;
@@ -80,6 +77,6 @@ This bounded slice is ready for Human review when the exact PR head proves:
 - Governance/Security hosted checks pass;
 - no server/scoring/provider authority changed.
 
-## Successor finding
+## Historical successor finding
 
-A separate remaining FE-consumer risk is already identified: `CryptoScoringEnterprise.loadEvaluation()` performs scorer/verified-score fetches without per-request cancellation or stale-response suppression. A provider/network request can therefore leave the local tool loading state pending until the underlying stack settles, and overlapping symbol requests can race. That remediation is intentionally **not** mixed into this first-paint bundle split unless the then-current owner/correlation gate keeps it in the same coherent review boundary; otherwise it starts only after this ordered Frontend PR reaches a terminal outcome.
+A separate FE-consumer risk was identified in the original evidence: `CryptoScoringEnterprise.loadEvaluation()` can perform scorer/verified-score fetches without per-request cancellation or stale-response suppression. That observation is evidence only. It MUST NOT become a successor task from this document or from the former branch state. A future remediation requires a fresh current-main canonical work-item identity or fresh Human/Owner direction.

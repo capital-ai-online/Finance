@@ -176,6 +176,6 @@ function developmentConcept(
     version: '1.0.0',
     essReferences: ['ESS-0017', 'ESS-0017-CONTRACTS'],
     adrReferences: vocabularyAuthority,
-    traceabilityReferences: ['CTRL-SDLC-BRANCH-001', 'CTRL-SDLC-PR-CREATE-001', 'CTRL-SDLC-CHAT-HANDOFF-001'],
+    traceabilityReferences: ['CTRL-SDLC-BRANCH-001', 'CTRL-SDLC-PR-CREATE-001'],
   };
 }
