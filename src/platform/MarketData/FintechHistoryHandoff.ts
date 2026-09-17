@@ -92,9 +92,16 @@ export function projectValidatedHistoryInputForFintech(
   if (input.points.length === 0) {
     addReason(blockingReasons, 'history-points-required');
   } else {
+    let previousTimestampMs: number | null = null;
     for (const [index, point] of input.points.entries()) {
       if (!validTimestamp(point.timestamp)) {
         addReason(blockingReasons, `point:${index}:timestamp-invalid`);
+      } else {
+        const timestampMs = Date.parse(point.timestamp);
+        if (previousTimestampMs !== null && timestampMs <= previousTimestampMs) {
+          addReason(blockingReasons, 'history-points-not-strictly-ascending');
+        }
+        previousTimestampMs = timestampMs;
       }
       if (!pointValueValid(point.close, input.valueSemantics)) {
         addReason(blockingReasons, `point:${index}:value-invalid`);
