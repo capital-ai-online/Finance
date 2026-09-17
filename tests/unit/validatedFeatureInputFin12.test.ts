@@ -198,4 +198,29 @@ describe('FINTECH FIN-12 validated-data field-level owner return', () => {
     expect(handoff.computability).toBe('NOT_COMPUTABLE');
     expect(handoff.numericObservations).toEqual([]);
   });
+  it('fails closed on negative market-cap, volume and supply fields', () => {
+    const asset = createUniversalAssetIdentity({ symbol: 'BTC', assetClass: 'crypto' });
+
+    for (const field of ['marketCapUsd', 'volume24hUsd', 'circulatingSupply']) {
+      const validated = buildValidatedFeatureDataInput(asset, [
+        feature(asset.assetId, field, -1),
+      ], {
+        correlationId: `corr-fin12-negative-${field}`,
+        evaluatedAt: EVALUATED_AT,
+        requiredFields: [field],
+      });
+
+      expect(validated.aggregateStatus).toBe('FAIL');
+      expect(validated.observations[0]).toMatchObject({
+        field,
+        value: null,
+        status: 'FAIL',
+        reason: 'field-value-domain-invalid',
+      });
+      const handoff = projectValidatedFeatureDataForFintech(validated);
+      expect(handoff.computability).toBe('NOT_COMPUTABLE');
+      expect(handoff.numericObservations).toEqual([]);
+    }
+  });
+
 });
