@@ -1,5 +1,7 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  

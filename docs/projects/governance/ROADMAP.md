@@ -1,5 +1,7 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  

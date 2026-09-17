@@ -1,5 +1,7 @@
 # CAPITAL-AI-DOC — Canonical Roadmap
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Project:** `CAPITAL-AI-DOC`  
 **Folder:** `docs/projects/documentary/`  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`  

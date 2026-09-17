@@ -5,7 +5,7 @@
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-17 — historical task activation superseded  
-**Baseline:** `main@7f06828841546aa07a9ddca63ec8a7eca77e92d6`  
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule

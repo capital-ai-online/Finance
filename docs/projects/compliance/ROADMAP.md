@@ -1,5 +1,7 @@
 # CAPITAL-AI-COMP — Canonical Roadmap
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Project:** `CAPITAL-AI-COMP`  
 **Folder:** `docs/projects/compliance/`  
 **Role:** cross-cutting Compliance assessment and regulatory traceability  

@@ -1,5 +1,7 @@
 # CAPITAL-AI-DATA — Superseded Project Roadmap
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Project:** `CAPITAL-AI-DATA`  
 **Folder:** `docs/projects/data/`  
 **Status:** `SUPERSEDED — NON-EXECUTABLE TRANSITION STUB`  

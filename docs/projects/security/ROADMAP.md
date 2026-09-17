@@ -1,5 +1,7 @@
 # CAPITAL-AI-SEC — Canonical Roadmap
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Project:** `CAPITAL-AI-SEC`  
 **Folder:** `docs/projects/security/`  
 **Role:** cross-cutting Security requirements, findings, bounded remediation and independent verification  

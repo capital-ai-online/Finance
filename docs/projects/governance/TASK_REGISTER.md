@@ -1,5 +1,7 @@
 # CAPITAL-AI-GOV — Historical Chat Task Ledger
 
+**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+
 **Role:** historical traceability only — non-authorizing, non-executable  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Supersession:** `CAPITAL-AI-GOV-HISTORICAL-TASK-ACTIVATION-SUPERSESSION-2026-09-17`
