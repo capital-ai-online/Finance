@@ -4,10 +4,10 @@
  */
 
 import React from 'react';
+import { UniversePathBoundary } from '../features/universe/ui/UniversePathBoundary';
 import { SessionComposition } from './auth/SessionComposition';
 import { ProductVocabularyBoundary } from './presentation/ProductVocabularyBoundary';
 import { AppRoutes } from './routing/AppRoutes';
-import { UniversePathBoundary } from './universe/ui/UniversePathBoundary';
 
 /**
  * Canonical BB-1 application composition root.
