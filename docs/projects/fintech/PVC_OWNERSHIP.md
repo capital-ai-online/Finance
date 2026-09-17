@@ -1,14 +1,14 @@
 # CAPITAL-AI-FINTECH — PVC Ownership
 
-**Baseline:** `main@6ace37bffa7912ec4f224feb69dd62ff9c629192`
+**Baseline:** `main@2358642ff80f128e271e02ae88401008663578b7`
 
 ## Canonical organizational ownership
 
 | Project stage | Meaning | Primary Owner |
 |---|---|---|
-| `PVC-09` | UAI / Data Ingestion | CAPITAL-AI-DATA |
-| `PVC-10` | Evidence Management | CAPITAL-AI-DATA |
-| `PVC-11` | Data Quality | CAPITAL-AI-DATA |
+| `PVC-09` | UAI / Data Ingestion | CAPITAL-AI-FINTECH |
+| `PVC-10` | Evidence Management | CAPITAL-AI-FINTECH |
+| `PVC-11` | Data Quality | CAPITAL-AI-FINTECH |
 | `PVC-12` | Feature Engineering | CAPITAL-AI-FINTECH |
 | `PVC-13` | Scoring Models | CAPITAL-AI-FINTECH |
 | `PVC-14` | Scoring Orchestration | CAPITAL-AI-FINTECH |
@@ -17,7 +17,7 @@
 | `PVC-17` | Ranking / Decision Support | CAPITAL-AI-FINTECH |
 | `PVC-18` | EventMesh / Traceability | CAPITAL-AI-OPS |
 
-This mapping is derived from current `docs/projects/PROJECT_VALUE_CHAIN.md` / `docs/projects/README.md` and is an organizational routing projection only.
+This mapping is derived from current `docs/projects/PROJECT_VALUE_CHAIN.md` / `docs/projects/README.md` and is an organizational routing projection only. `CAPITAL-AI-DATA` is retained only as historical/compatibility terminology; it has no current Primary PVC ownership.
 
 ## Namespace separation
 
@@ -39,6 +39,6 @@ The marker must be interpreted together with the explicit project namespace/stag
 
 ## FINTECH boundary
 
-FINTECH owns business semantics and productive implementation for PVC-12..17 only. DATA remains upstream; OPS remains downstream; Security/Quality/Compliance/Frontend remain cross-cutting or consumer roles and receive no Primary PVC ownership through this mapping.
+FINTECH owns productive organizational routing for PVC-09..17. PVC-09..11 retain their existing provider-ingress, evidence/provenance/freshness and Data Quality semantics; ownership consolidation does not create a second provider or DQ plane. PVC-12..17 retain Feature/Scoring/Domain/Canonical-Score/Ranking semantics. OPS remains downstream at PVC-18; Security/Quality/Compliance/Frontend remain cross-cutting or consumer roles and receive no Primary PVC ownership through this mapping.
 
 The S1-R2-06 child handoffs currently routed to FINTECH affect PVC-15 and PVC-16, but they do not change this ownership model or transfer Security verification authority.
