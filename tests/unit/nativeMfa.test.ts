@@ -10,10 +10,7 @@ import {
   enrollTotpFactor,
   challengeTotpFactor,
   verifyTotpChallenge,
-  registerWebauthnMfaFactor,
-  authenticateWebauthnMfaFactor,
   getCurrentAssuranceLevel,
-  listVerifiedNativeMfaFactors,
   listVerifiedTotpFactors,
   unenrollTotpFactor,
 } from '../../src/platform/Security/nativeMfa';
@@ -25,10 +22,6 @@ function fakeClient() {
         enroll: vi.fn(),
         challenge: vi.fn(),
         verify: vi.fn(),
-        webauthn: {
-          register: vi.fn(),
-          authenticate: vi.fn(),
-        },
         getAuthenticatorAssuranceLevel: vi.fn(),
         listFactors: vi.fn(),
         unenroll: vi.fn(),
@@ -96,7 +89,7 @@ describe('nativeMfa.verifyTotpChallenge', () => {
 
   it('liefert bei erfolgreicher Verifikation und tatsächlicher AAL2-Sitzung den Assurance Level', async () => {
     const client = fakeClient();
-    client.auth.mfa.verify.mockResolvedValue({ data: { access_token: 'test-access-token' }, error: null });
+    client.auth.mfa.verify.mockResolvedValue({ data: { access_token: 'tok' }, error: null });
     client.auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
       data: { currentLevel: 'aal2', nextLevel: 'aal2' },
       error: null,
@@ -115,61 +108,12 @@ describe('nativeMfa.verifyTotpChallenge', () => {
 
   it('meldet KEINEN Erfolg, wenn verify() zwar ok ist, die Session danach aber trotzdem nicht aal2 zeigt (unverified factor kein Erfolg)', async () => {
     const client = fakeClient();
-    client.auth.mfa.verify.mockResolvedValue({ data: { access_token: 'test-access-token' }, error: null });
+    client.auth.mfa.verify.mockResolvedValue({ data: { access_token: 'tok' }, error: null });
     client.auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
       data: { currentLevel: 'aal1', nextLevel: 'aal2' },
       error: null,
     });
     await expect(verifyTotpChallenge(client, 'factor-1', 'challenge-1', '123456')).rejects.toThrow(NativeMfaError);
-  });
-});
-
-describe('nativeMfa WebAuthn MFA', () => {
-  it('registriert einen WebAuthn-MFA-Faktor und akzeptiert ihn nur bei tatsächlichem AAL2', async () => {
-    const client = fakeClient();
-    client.auth.mfa.webauthn.register.mockResolvedValue({ data: { id: 'webauthn-1' }, error: null });
-    client.auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
-      data: { currentLevel: 'aal2', nextLevel: 'aal2' },
-      error: null,
-    });
-
-    await expect(registerWebauthnMfaFactor(client, 'Owner Passkey')).resolves.toEqual({
-      currentLevel: 'aal2',
-      nextLevel: 'aal2',
-    });
-    expect(client.auth.mfa.webauthn.register).toHaveBeenCalledWith({ friendlyName: 'Owner Passkey' });
-  });
-
-  it('meldet Registrierung nicht als Erfolg, wenn WebAuthn danach kein AAL2 erreicht', async () => {
-    const client = fakeClient();
-    client.auth.mfa.webauthn.register.mockResolvedValue({ data: { id: 'webauthn-1' }, error: null });
-    client.auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
-      data: { currentLevel: 'aal1', nextLevel: 'aal2' },
-      error: null,
-    });
-
-    await expect(registerWebauthnMfaFactor(client, 'Owner Passkey')).rejects.toThrow(NativeMfaError);
-  });
-
-  it('authentifiziert einen vorhandenen WebAuthn-MFA-Faktor und bestätigt danach AAL2', async () => {
-    const client = fakeClient();
-    client.auth.mfa.webauthn.authenticate.mockResolvedValue({ data: { verified: true }, error: null });
-    client.auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
-      data: { currentLevel: 'aal2', nextLevel: 'aal2' },
-      error: null,
-    });
-
-    await expect(authenticateWebauthnMfaFactor(client, 'webauthn-1')).resolves.toEqual({
-      currentLevel: 'aal2',
-      nextLevel: 'aal2',
-    });
-    expect(client.auth.mfa.webauthn.authenticate).toHaveBeenCalledWith({ factorId: 'webauthn-1' });
-  });
-
-  it('lehnt eine leere WebAuthn-factorId ohne Provider-Aufruf ab', async () => {
-    const client = fakeClient();
-    await expect(authenticateWebauthnMfaFactor(client, '')).rejects.toThrow(NativeMfaError);
-    expect(client.auth.mfa.webauthn.authenticate).not.toHaveBeenCalled();
   });
 });
 
@@ -190,46 +134,17 @@ describe('nativeMfa.getCurrentAssuranceLevel', () => {
   });
 });
 
-describe('nativeMfa.listVerifiedNativeMfaFactors', () => {
-  it('liefert ausschließlich verifizierte TOTP- und WebAuthn-Faktoren aus data.all', async () => {
-    const client = fakeClient();
-    client.auth.mfa.listFactors.mockResolvedValue({
-      data: {
-        all: [
-          { id: 'totp-1', friendly_name: 'Owner Phone', factor_type: 'totp', status: 'verified' },
-          { id: 'webauthn-1', friendly_name: 'Owner Passkey', factor_type: 'webauthn', status: 'verified' },
-          { id: 'totp-pending', friendly_name: 'Pending TOTP', factor_type: 'totp', status: 'unverified' },
-          { id: 'phone-1', friendly_name: 'Phone', factor_type: 'phone', status: 'verified' },
-        ],
-      },
-      error: null,
-    });
-
-    await expect(listVerifiedNativeMfaFactors(client)).resolves.toEqual([
-      { id: 'totp-1', friendlyName: 'Owner Phone', factorType: 'totp' },
-      { id: 'webauthn-1', friendlyName: 'Owner Passkey', factorType: 'webauthn' },
-    ]);
-  });
-});
-
 describe('nativeMfa.listVerifiedTotpFactors', () => {
-  it('bildet id/friendlyName/type aus verifizierten totp-Faktoren in data.all ab', async () => {
+  it('bildet id/friendlyName aus den verifizierten totp-Faktoren ab', async () => {
     const client = fakeClient();
     client.auth.mfa.listFactors.mockResolvedValue({
-      data: {
-        all: [
-          { id: 'factor-1', friendly_name: 'Owner Phone', factor_type: 'totp', status: 'verified' },
-          { id: 'factor-2', friendly_name: 'Pending Phone', factor_type: 'totp', status: 'unverified' },
-        ],
-      },
+      data: { all: [], totp: [{ id: 'factor-1', friendly_name: 'Owner Phone' }] },
       error: null,
     });
-    await expect(listVerifiedTotpFactors(client)).resolves.toEqual([
-      { id: 'factor-1', friendlyName: 'Owner Phone', factorType: 'totp' },
-    ]);
+    await expect(listVerifiedTotpFactors(client)).resolves.toEqual([{ id: 'factor-1', friendlyName: 'Owner Phone' }]);
   });
 
-  it('liefert eine leere Liste, wenn kein verifizierter totp-Faktor existiert', async () => {
+  it('liefert eine leere Liste, wenn kein totp-Faktor existiert', async () => {
     const client = fakeClient();
     client.auth.mfa.listFactors.mockResolvedValue({ data: { all: [] }, error: null });
     await expect(listVerifiedTotpFactors(client)).resolves.toEqual([]);

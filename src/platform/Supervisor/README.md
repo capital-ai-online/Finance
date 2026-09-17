@@ -2,9 +2,9 @@
 
 ## Enterprise Component
 
-Status: Implemented (extended 2026-08-20)
+Status: Implemented (extended 2026-08-16)
 
-Version: 1.3.0
+Version: 1.2.0
 
 Owner: CAPITAL-AI
 
@@ -12,26 +12,15 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-`supervisor.ts` is the real Supervisor component. The Supervisor observes, evaluates and escalates; it never becomes the deciding authority.
+`supervisor.ts` is the real Supervisor component.
 
 **Implemented:**
 
 - **Task Routing / Tool Selection** — `routeTask()`
 - **Execution Control / Retry / Recovery / Self-Healing** — `executeSupervised()`
 - **Approved write path** — `executeApprovedSupervisedAction()` (Policy → Approval → Apply → Audit)
-- **Agent Provider Chain Observation** — ChatGPT, Claude, Grok via `observeAgentProviderChain()`
-- **Findings** — evidence-based findings from failed supervised executions and provider inventory
-- **Documentary Maintenance Observation** — `documentaryMaintenanceObservation.ts` converts Documentary freshness/hygiene evidence into deterministic `RECOMMENDED`, `NO_ACTION` or `BLOCKED` recommendation evidence. It never applies patches or approves the task.
-
-## Documentary Maintenance boundary
-
-ADR-0097 preserves the ESS-0002 separation:
-
-`Documentary freshness evidence -> Supervisor recommendation -> Platform Director decision -> Documentary Maintenance Orchestrator`.
-
-The Supervisor evidence identity binds correlation ID, source commit, patchable paths, review-only paths and hygiene finding codes. A Platform Director decision must reference the exact current Supervisor `evidenceId` before the Maintenance Agent may plan a semantic patch.
-
-Protected documents remain review-only; the Supervisor does not downgrade that boundary. Merge, release and production mutation remain outside Supervisor authority.
+- **Agent Provider Chain Observation** (2026-08-16) — ChatGPT, Claude, Grok via `observeAgentProviderChain()`; Google AI Studio/NotebookLM/Gemini = RETIRED
+- **Findings** — lightweight findings from failed supervised executions and provider inventory (ESS-0002 spirit; Supervisor does not decide)
 
 **Not implemented:**
 
@@ -42,4 +31,4 @@ Protected documents remain review-only; the Supervisor does not downgrade that b
 
 ## ESS / ADR
 
-ESS-0001, ESS-0001-CONTRACTS, ESS-0002, ESS-0010, ESS-0019; ADR-0018, ADR-0051, ADR-0062, ADR-0097
+ESS-0001, ESS-0001-CONTRACTS, ESS-0002; ADR-0018, ADR-0051, ADR-0062

@@ -29,7 +29,7 @@ export const STANDARD_EVENT_CATALOG: StandardEventDefinition[] = [
   // gekennzeichnet, statt einen Katalogeintrag ohne Producer vorzutaeuschen.
   { name: 'TraceabilityBuildStartedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'TraceabilityBuildFailedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
-  { name: 'CoverageCalculatedEvent', category: 'Traceability Events', essReferences: ['ESS-0011', 'ESS-0005'], adrReferences: ['ADR-0015', 'ADR-0018'] },
+  { name: 'CoverageCalculatedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'OrphanDetectedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'TraceabilityReportGeneratedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'KnowledgeUpdatedEvent', category: 'Knowledge Events', essReferences: ['ESS-0001-CONTRACTS', 'ESS-0009'], adrReferences: ['ADR-0018'] },
@@ -62,16 +62,6 @@ export const STANDARD_EVENT_CATALOG: StandardEventDefinition[] = [
   { name: 'KnowledgeRelationCreatedEvent', category: 'Knowledge Events', essReferences: ['ESS-0009'], adrReferences: ['ADR-0018'] },
   { name: 'KnowledgeValidationCompletedEvent', category: 'Knowledge Events', essReferences: ['ESS-0009'], adrReferences: ['ADR-0018'] },
 
-  // --- ESS-0005 Quality Center Lifecycle Events -----------------------------------
-  { name: 'ValidationStartedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-  { name: 'ValidationCompletedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-  { name: 'ValidationFailedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-  { name: 'QualityGatePassedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-  { name: 'QualityGateFailedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-  { name: 'QualityScoreChangedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-  { name: 'TechnicalDebtDetectedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-  { name: 'TechnicalDebtResolvedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
-
   // --- EventMesh-eigene operative Meta-Events (manifest.json, events.produces) ---
   { name: 'EventRegisteredEvent', category: 'System Events', essReferences: ['ESS-0013'], adrReferences: ['ADR-0018'] },
   { name: 'EventRoutingFailedEvent', category: 'System Events', essReferences: ['ESS-0013-CONTRACTS'], adrReferences: ['ADR-0018'] },
@@ -80,8 +70,7 @@ export const STANDARD_EVENT_CATALOG: StandardEventDefinition[] = [
   { name: 'ConsumerUnsubscribedEvent', category: 'System Events', essReferences: ['ESS-0013'], adrReferences: ['ADR-0018'] },
   { name: 'EventSchemaIncompatibleEvent', category: 'System Events', essReferences: ['ESS-0013-CONTRACTS'], adrReferences: ['ADR-0018'] },
 
-  // --- Legacy event name retained for compatibility with the former system-events bridge.
-  //     The event is now an operational in-process signal only. Durable audit/security authority
-  //     belongs to ADR-0059 / agent_audit_events and public.security_events, not Event Mesh. ---
+  // --- Bruecken-Event fuer den bestehenden Audit-Log-Mechanismus (ADR-0018,
+  //     Folgeentscheidung 3) - additiv, ersetzt server/systemEvents.ts nicht. ------
   { name: 'SystemAuditEvent', category: 'System Events', essReferences: ['ESS-0013'], adrReferences: ['ADR-0018'] },
 ];

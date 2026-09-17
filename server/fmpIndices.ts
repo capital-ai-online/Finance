@@ -56,13 +56,13 @@ export async function ensureIndexQuoteFresh(symbol: string): Promise<void> {
     const url = `${FMP_BASE_URL}/quote?symbol=${encodeURIComponent(fmpTicker)}&apikey=${key}`;
     const res = await fetch(url);
     if (!res.ok) {
-      recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'degraded', message: 'FMP quote HTTP error.' });
+      recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'degraded', message: `HTTP ${res.status} for ${s}.` });
       return;
     }
     const data: any = await res.json();
     const entry = Array.isArray(data) ? data[0] : undefined;
     if (!entry || typeof entry.price !== 'number') {
-      recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'degraded', message: 'No usable FMP quote payload.' });
+      recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'degraded', message: `No usable quote payload for ${s}.` });
       return;
     }
     quoteCache.set(s, {
@@ -70,10 +70,10 @@ export async function ensureIndexQuoteFresh(symbol: string): Promise<void> {
       change24h: typeof entry.changePercentage === 'number' ? entry.changePercentage : 0,
       fetchedAt: Date.now(),
     });
-    recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'healthy', cacheMode: 'fresh', message: 'Quote received.' });
+    recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'healthy', cacheMode: 'fresh', message: `Quote received for ${s}.` });
   } catch (err: any) {
-    recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'unavailable', message: 'FMP quote request failed.' });
-    console.warn('[FMPIndices] Quote-Abruf fehlgeschlagen:', s, fmpTicker, err?.message || err);
+    recordProviderHealth({ provider: 'FMP', capability: 'index-quote', state: 'unavailable', message: err?.message || String(err) });
+    console.warn(`[FMPIndices] Quote-Abruf fuer ${s} (${fmpTicker}) fehlgeschlagen:`, err?.message || err);
   }
 }
 
@@ -96,12 +96,12 @@ export async function ensureIndexHistoryFresh(symbol: string): Promise<void> {
     const url = `${FMP_BASE_URL}/historical-price-eod/light?symbol=${encodeURIComponent(fmpTicker)}&from=${fmt(from)}&to=${fmt(to)}&apikey=${key}`;
     const res = await fetch(url);
     if (!res.ok) {
-      recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'degraded', message: 'FMP history HTTP error.' });
+      recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'degraded', message: `HTTP ${res.status} for ${s}.` });
       return;
     }
     const data: any = await res.json();
     if (!Array.isArray(data) || data.length === 0) {
-      recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'degraded', message: 'No usable FMP history payload.' });
+      recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'degraded', message: `No usable history payload for ${s}.` });
       return;
     }
     const points: IndexHistoryPoint[] = data
@@ -109,13 +109,13 @@ export async function ensureIndexHistoryFresh(symbol: string): Promise<void> {
       .map((d: any) => ({ date: d.date, close: d.price }))
       .sort((a: IndexHistoryPoint, b: IndexHistoryPoint) => a.date.localeCompare(b.date));
     if (points.length === 0) {
-      recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'degraded', message: 'History payload contained no valid points.' });
+      recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'degraded', message: `History payload contained no valid points for ${s}.` });
       return;
     }
     historyCache.set(s, { points, fetchedAt: Date.now() });
-    recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'healthy', cacheMode: 'fresh', message: 'History points received.' });
+    recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'healthy', cacheMode: 'fresh', message: `${points.length} history points received for ${s}.` });
   } catch (err: any) {
-    recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'unavailable', message: 'FMP history request failed.' });
-    console.warn('[FMPIndices] Historie-Abruf fehlgeschlagen:', s, fmpTicker, err?.message || err);
+    recordProviderHealth({ provider: 'FMP', capability: 'index-history', state: 'unavailable', message: err?.message || String(err) });
+    console.warn(`[FMPIndices] Historie-Abruf fuer ${s} (${fmpTicker}) fehlgeschlagen:`, err?.message || err);
   }
 }

@@ -13,21 +13,16 @@
  * renderer WP-N3 eventually selects (make-or-buy is an Owner decision), its
  * output passes through here before any platform call.
  *
- * SECURITY (2026-08-25 architecture review, finding #9): DNS used to be resolved only here for
- * the up-front validation, while the actual connection was opened later by a plain `fetch(url)` in
- * platformPublishers.ts, which re-resolves DNS independently. A hostile authoritative resolver with
- * a short TTL could answer a public address for this first lookup and a private/metadata address
- * for the second (DNS rebinding), turning the validated `mediaUrl` fetch into SSRF against internal
- * services or the cloud metadata endpoint. `fetchValidatedMediaAsset` below closes that TOCTOU
- * window by resolving and validating the hostname again immediately before connecting, and pinning
- * the TCP connection to that freshly-validated address via a custom `lookup` - the connection can no
- * longer answer differently than what was just validated. Host header and TLS SNI still use the
- * original hostname (only the DNS step is overridden), so certificate validation is unaffected.
+ * Residual limitation, deliberately not hidden: DNS is resolved here and the
+ * connection is opened later by `fetch`, so a hostile resolver could answer
+ * differently for the second lookup (DNS rebinding). Closing that fully means
+ * pinning the resolved address into the socket. Blocking IP literals and
+ * rejecting names that resolve into private space removes the cheap attacks;
+ * the rebinding case is tracked as a follow-up rather than claimed as solved.
  */
 
 import { isIP } from 'node:net';
 import { promises as dns } from 'node:dns';
-import https from 'node:https';
 
 export type MediaAssetDenyCode =
   | 'media_url_malformed'
@@ -221,76 +216,4 @@ export async function validateMediaAssetUrl(
   }
 
   return { ok: true };
-}
-
-export interface PinnedMediaFetchResult {
-  ok: boolean;
-  status: number;
-  body?: Buffer;
-  error?: string;
-}
-
-/**
- * Fetches an already-validated `mediaUrl`, re-resolving and re-validating the hostname
- * immediately before opening the connection and pinning the socket to that address (see the
- * file-level note above). Use this instead of a bare `fetch(mediaUrl)` for any server-side
- * download of a caller-supplied media asset.
- */
-export async function fetchValidatedMediaAsset(
-  rawUrl: string,
-  resolver: AddressResolver = defaultResolver,
-  timeoutMs = 30_000,
-): Promise<PinnedMediaFetchResult> {
-  const revalidated = await validateMediaAssetUrl(rawUrl, resolver);
-  if (!revalidated.ok) {
-    return { ok: false, status: 0, error: revalidated.reason || 'mediaUrl hat die Validierung nicht bestanden.' };
-  }
-
-  const url = new URL(rawUrl);
-  const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
-
-  let pinnedAddress: string;
-  let pinnedFamily: 4 | 6;
-  if (isIP(hostname)) {
-    pinnedAddress = hostname;
-    pinnedFamily = isIP(hostname) === 6 ? 6 : 4;
-  } else {
-    const addresses = await resolver(hostname);
-    const publicAddress = addresses.find((address) => !isPrivateAddress(address));
-    if (!publicAddress) {
-      return { ok: false, status: 0, error: `mediaUrl-Host loest auf keine oeffentliche Adresse mehr auf (${hostname}).` };
-    }
-    pinnedAddress = publicAddress;
-    pinnedFamily = isIP(publicAddress) === 6 ? 6 : 4;
-  }
-
-  return new Promise<PinnedMediaFetchResult>((resolve) => {
-    const req = https.request(
-      {
-        hostname,
-        // Host header + TLS SNI stay bound to the original hostname (Node derives both from
-        // `hostname` by default); `lookup` is the only overridden step, pinning the actual TCP
-        // connection to the address that was just validated above.
-        servername: hostname,
-        path: `${url.pathname}${url.search}`,
-        method: 'GET',
-        timeout: timeoutMs,
-        lookup: (_hostname: string, _options: unknown, callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void) => {
-          callback(null, pinnedAddress, pinnedFamily);
-        },
-      } as https.RequestOptions,
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
-        res.on('end', () => {
-          const status = res.statusCode || 0;
-          resolve({ ok: status >= 200 && status < 300, status, body: Buffer.concat(chunks) });
-        });
-        res.on('error', (err) => resolve({ ok: false, status: 0, error: err.message }));
-      },
-    );
-    req.on('timeout', () => req.destroy(new Error('Zeitueberschreitung beim Abruf des mediaUrl-Assets.')));
-    req.on('error', (err) => resolve({ ok: false, status: 0, error: err.message }));
-    req.end();
-  });
 }

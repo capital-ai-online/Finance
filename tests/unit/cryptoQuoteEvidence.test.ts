@@ -49,7 +49,6 @@ describe('SC-5 CoinGeckoMarketDataProvider', () => {
     expect(snapshot.currency).toBe('USD');
     expect(snapshot.provider).toBe('CoinGecko');
     expect(snapshot.providerFeed).toBe('coins/market_data');
-    expect(snapshot.sourceTimestamp).toBe('2024-08-18T12:00:00.000Z');
     expect(snapshot.evidenceId).toContain('coingecko');
     expect(snapshot.marketCapUsd).toBe(1_280_000_000_000);
     expect(snapshot.volume24hUsd).toBe(32_000_000_000);
@@ -123,30 +122,6 @@ describe('SC-5 CoinGeckoMarketDataProvider', () => {
     expect(snapshot.qualityState).toBe('UNAVAILABLE');
     expect(snapshot.price).toBeNull();
     expect(snapshot.reason).toMatch(/missing market_data/);
-  });
-
-  it('erfindet bei fehlender Provider-Zeit keinen sourceTimestamp', async () => {
-    const fetchImpl = vi.fn(async () => ({
-      ok: true,
-      json: async () => coinsPayload({ last_updated: undefined }),
-    })) as unknown as typeof fetch;
-
-    const provider = new CoinGeckoMarketDataProvider({
-      fetchImpl,
-      nowMs: () => Date.parse('2024-08-18T12:00:10.000Z'),
-    });
-    const snapshot = await provider.getSnapshot({
-      symbol: 'BTC',
-      assetClass: 'crypto',
-      correlationId: 't-missing-time',
-    });
-    expect(snapshot).toMatchObject({
-      qualityState: 'UNAVAILABLE',
-      price: null,
-      sourceTimestamp: null,
-      evidenceId: null,
-    });
-    expect(snapshot.reason).toMatch(/no valid source timestamp/);
   });
 });
 

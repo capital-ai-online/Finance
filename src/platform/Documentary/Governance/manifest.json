@@ -1,16 +1,14 @@
 {
   "name": "DocumentationGovernanceValidator",
-  "version": "1.1.0",
-  "status": "specified",
+  "version": "1.0.0",
+  "status": "unspecified",
   "owner": "Documentary Engine",
-  "description": "Documentation-domain governance validator for document placement, metadata, registry structure, versioning and documentary consistency. It produces findings only and is not the repository-wide authorization control plane.",
+  "description": "Documentation Governance Validator. Prueft saemtliche Dokumentation, ESS-Regeln, ADR-Bezuege, Contracts, Metadaten, Traceability, Knowledge Graph und Digital Twin automatisch auf Konsistenz, Vollstaendigkeit und Governance-Konformitaet. Erzeugt ausschliesslich Befunde und Berichte, niemals Entscheidungen.",
   "category": "platform",
   "layer": "Documentary",
-  "lifecycle": "Specified",
+  "lifecycle": "Unspecified",
   "health": "Unknown",
   "repository": "Finance",
-  "globalGovernanceDependency": "src/platform/Governance",
-  "trustRoot": "AGENTS.md",
   "ess": [
     "ESS-0001",
     "ESS-0001-CONTRACTS",
@@ -26,7 +24,6 @@
     "ADR-0014"
   ],
   "dependencies": [
-    "src/platform/Governance",
     "src/platform/Core",
     "src/platform/Shared",
     "src/platform/Registry",
@@ -37,14 +34,6 @@
     "src/platform/VersionManager",
     "src/platform/Supervisor",
     "src/platform/PlatformDirector"
-  ],
-  "forbiddenResponsibilities": [
-    "repository-wide agent authority",
-    "global control catalog ownership",
-    "Human merge authorization",
-    "production mutation authorization",
-    "IAM or billing authorization",
-    "global CI/deployment policy ownership"
   ],
   "events": {
     "produces": [
@@ -76,15 +65,45 @@
   "knowledge": [
     ".ai/knowledge/governance/"
   ],
+  "quality": {
+    "documentationScore": null,
+    "testScore": null,
+    "architectureScore": null,
+    "securityScore": null,
+    "knowledgeScore": null,
+    "metadataScore": null,
+    "twinScore": null,
+    "note": "Kennzahlen werden ausschliesslich berechnet, niemals manuell gesetzt (ESS-0001-CONTRACTS Chapter 12)."
+  },
   "security": {
     "classification": "Internal",
-    "sensitivity": "Repository metadata and documentation only; no reusable credentials or personal-data payloads are required.",
-    "authorization": "No protected-action authority; findings only."
+    "sensitivity": "Keine personenbezogenen Daten. Verarbeitet ausschliesslich Repository-Metadaten und Dokumentation.",
+    "authentication": "nicht anwendbar",
+    "authorization": "nicht anwendbar",
+    "encryption": "nicht anwendbar",
+    "audit": "Saemtliche Validierungslaeufe werden protokolliert",
+    "compliance": [
+      "ESS-0001-CONTRACTS Chapter 11"
+    ],
+    "lastSecurityReview": null
+  },
+  "ai": {
+    "aiOwner": "Documentary Engine",
+    "aiGenerated": true,
+    "aiReviewed": false,
+    "aiValidated": false,
+    "aiCompatible": true,
+    "supportedAiSystems": [
+      "Claude Code",
+      "Google AI Studio",
+      "ChatGPT",
+      "Future Enterprise AI"
+    ]
   },
   "documentation": [
     "README.md"
   ],
   "tests": [],
   "conformanceLevel": null,
-  "note": "Global governance authority and stable identity resolution belong to src/platform/Governance. This component remains scoped to ESS-0012 documentation governance and may reuse the hygiene implementation from parked PR #439 after reconciliation."
+  "note": "Manifest erfuellt den vollstaendigen Metadata Contract aus ESS-0001-CONTRACTS Chapter 7 einschliesslich layer, lifecycle, health, quality, security, ai und repository. Die 22 Bestandsmanifeste fuehren diese Felder noch nicht (GAP-015). Korrektur: 'status'/'lifecycle' waren zuvor 'development' gesetzt, obwohl null Code existiert (0 .ts-Dateien unter src/platform/Documentary/Governance/, nur .gitkeep-Platzhalter) - das README dokumentiert bereits ehrlich 'spezifiziert, nicht implementiert'. Auf 'unspecified' korrigiert, analog zur Begruendung in src/platform/Core/manifest.json, um keinen aktiven Entwicklungsstand vorzutaeuschen. Die vollstaendige fachliche Spezifikation (ESS-0012, README.md) bleibt davon unberuehrt gueltig - 'unspecified' bezieht sich hier ausschliesslich auf den Code-/Implementierungsstand, nicht auf den Spezifikationsstand."
 }

@@ -64,11 +64,9 @@ export class TwelveDataMarketDataProvider implements MarketDataProvider {
       const price = Number(data?.close ?? data?.price);
       if (!Number.isFinite(price) || price <= 0) throw new Error('Twelve Data returned no valid quote price.');
 
-      const observedMs = typeof data?.datetime === 'string' ? Date.parse(data.datetime) : Number.NaN;
-      if (!Number.isFinite(observedMs)) {
-        throw new Error('Twelve Data returned no valid source timestamp.');
-      }
-      const observedAt = new Date(observedMs).toISOString();
+      const observedAt = typeof data?.datetime === 'string' && Number.isFinite(Date.parse(data.datetime))
+        ? new Date(data.datetime).toISOString()
+        : retrievedAt;
       const currency = typeof data?.currency === 'string'
         ? data.currency
         : request.assetClass === 'forex' || request.assetClass === 'crypto'
@@ -84,7 +82,7 @@ export class TwelveDataMarketDataProvider implements MarketDataProvider {
         sourceTimestamp: observedAt,
         ingestedAt: retrievedAt,
         receivedAt: retrievedAt,
-        freshnessMs: Math.max(0, nowMs - observedMs),
+        freshnessMs: Math.max(0, nowMs - Date.parse(observedAt)),
         qualityState: 'DELAYED',
         isRealtime: false,
         isDelayed: true,

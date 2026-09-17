@@ -1,6 +1,5 @@
-import { getVerifiedCryptoSnapshot, type VerifiedFieldProvenance } from './cryptoSnapshotProvider';
+import { getVerifiedCryptoSnapshot } from './cryptoSnapshotProvider';
 import { evaluateCryptoSnapshotConsensus, type CryptoSnapshotConsensusResult, type SnapshotFieldProvenance } from './cryptoSnapshotConsensus';
-import type { SnapshotField } from './marketSnapshotConsensus';
 
 export interface LiveCryptoSnapshotConsensusOptions {
   fetchImpl?: typeof fetch;
@@ -8,18 +7,11 @@ export interface LiveCryptoSnapshotConsensusOptions {
   timeoutMs?: number;
 }
 
-function isQuorumComparableProvenance(
-  item: VerifiedFieldProvenance,
-): item is VerifiedFieldProvenance & { field: SnapshotField; unit: 'USD' | 'token' } {
-  return item.field !== 'change24hPct' && item.unit !== 'percent';
-}
-
 function semanticScopeFor(field: SnapshotFieldProvenance['field']): string {
   if (field === 'marketCapUsd') return 'global-circulating-supply-market-cap-usd';
   if (field === 'volume24hUsd') return 'global-aggregate-24h-volume-usd';
   if (field === 'circulatingSupply') return 'circulating-token-supply';
   if (field === 'maxSupply') return 'maximum-token-supply';
-  if (field === 'priceUsd') return 'spot-price-usd';
   return 'total-token-supply';
 }
 
@@ -31,8 +23,8 @@ function semanticScopeFor(field: SnapshotFieldProvenance['field']): string {
  * marketSnapshotConsensus.ts), so with only CoinGecko remaining this now consistently evaluates
  * to INSUFFICIENT_SOURCES rather than CONSENSUS. That is the correct fail-closed outcome for this
  * codebase's No-Demo-Data policy, not a bug: a canonical value must never be synthesized from a
- * single, uncorroborated source. Display-only percentage-change provenance is not promoted into
- * this quorum because no cross-provider consensus policy exists for that field.
+ * single, uncorroborated source. Wire in a second independent crypto snapshot provider here if
+ * real quorum evaluation is needed again.
  */
 export async function getLiveCryptoSnapshotConsensus(
   symbol: string,
@@ -44,7 +36,7 @@ export async function getLiveCryptoSnapshotConsensus(
   const provenance: SnapshotFieldProvenance[] = [];
   if (coinGecko) {
     for (const item of Object.values(coinGecko.provenance)) {
-      if (!item || !isQuorumComparableProvenance(item)) continue;
+      if (!item) continue;
       provenance.push({
         ...item,
         provider: 'CoinGecko',

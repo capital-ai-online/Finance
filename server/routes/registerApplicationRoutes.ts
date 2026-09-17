@@ -8,7 +8,6 @@ import { hygieneRouter } from '../documentHygiene';
 import { systemEventsRouter } from '../systemEvents';
 import { versionManagerRouter } from '../../src/platform/VersionManager/versionManager';
 import { stepUpRouter } from '../stepUp';
-import { privacyRouter } from '../privacy';
 import { complianceRouter } from '../../src/platform/Compliance/router';
 import { scoreValidationRouter } from '../scoreValidation';
 import { alertsRouter } from '../alerts';
@@ -16,29 +15,14 @@ import { supervisorRouter } from '../supervisorRouter';
 import { createAgentEvaluationRouter } from '../agentEvaluationRouter';
 import { createScoreExplainabilityRouter } from '../scoreExplainability';
 import { adminDiagnosticsRouter } from '../adminDiagnostics';
-import { qualityCenterRouter } from '../qualityCenter';
 import { newsRouter } from '../../src/features/news/newsRoutes';
 import { registryRouter } from '../../src/features/registry/registryRoutes';
 import { aiRouter } from '../ai';
 import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
 import { breakGlassRouter } from '../systemadmin/breakGlassRouter';
-import { ownerAuthorizationRouter } from '../ownerAuthorization/router';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
-import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';
-import { realtimeAiNewsfeedEntitlement } from '../middleware/realtimeAiNewsfeedEntitlement';
-import { verifiedScreeningPathGate } from '../middleware/verifiedScreeningEntitlement';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
-import { createLegacyScoringCompatibilityRouter } from './legacyScoringCompatibilityRoutes';
-import { verifiedAssetDisplayRouter } from './verifiedAssetDisplayRoutes';
-import { cryptoEvidenceRouter } from './cryptoEvidenceRoutes';
-import { createMarketSentimentRouter } from './marketSentimentRoutes';
-import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
-import { createMtaStsRouter } from './mtaStsRoutes';
-import { createBusinessReadinessRouter } from './businessReadinessRoutes';
-import { registerMarketDataAdapters } from './registerMarketDataAdapters';
-import { assetRegistry } from '../../src/lib/assetRegistry';
-import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -50,7 +34,7 @@ export interface ApplicationRouteProviders {
  * Canonical route composition for the production Express application.
  *
  * This module intentionally owns only router mounting and prefixes. It does not
- * own Stripe raw-body ingress, global middleware ordering, provider construction,
+ * own Stripe raw-body ingress, global middleware ordering, provider creation,
  * scoring semantics or runtime lifecycle. Those remain separate architecture
  * boundaries under ADR-0014.
  *
@@ -65,78 +49,40 @@ export function registerApplicationRoutes(
 ): void {
   const { ai, anthropic, openai } = providers;
 
+  // SEO Q2: normalize /path/ → /path before domain routers handle the request.
   registerTrailingSlashNormalize(app);
+
+  // SEO D3: wrap production SPA catch-all (registered later in startServer) so
+  // unknown paths return real 404 instead of the SPA shell.
   installProductionSoft404Intercept();
 
-  // FIN-SEC-02: shared verified_screening quota gate for canonical score/context/batch
-  // paths. Installed before productive scoring routers so alternate mounts cannot skip it.
-  // Legacy `/api/crypto-scoring/:symbol` keeps its inline enforceScreeningQuota() call.
-  app.use(verifiedScreeningPathGate);
-
-  // DATA-owned external market-data HTTP adapters are mounted here so the canonical
-  // fail-closed provider boundary takes precedence over any later compatibility route
-  // declarations that still remain in server.application.ts.
-  registerMarketDataAdapters(app);
-
-  // Operations readiness: `/healthz` remains the platform liveness contract owned by
-  // server.application.ts. This router adds the full non-secret projection under
-  // `/healthz/readiness` and a strict 200/503 business gate under `/readyz`.
-  app.use(createBusinessReadinessRouter());
-
-  // RFC 8461 policy endpoint. DNS discovery and the mta-sts custom domain remain
-  // separately owner-managed; the application only serves the static policy body.
-  app.use(createMtaStsRouter());
-
-  // SC-2 Phase C3: intercept historical Crypto scoring endpoints before the legacy declarations
-  // in server.application.ts. Standard- and Meme-Crypto terminate at the canonical dispatcher;
-  // caller-indicator chart scoring remains explicitly simulation-only.
-  app.use(createLegacyScoringCompatibilityRouter());
-
+  // Domain route factories keep the exact provider contract currently used by
+  // server.application.ts. Missing AI providers remain fail-open where the
+  // underlying route factories already define deterministic fallbacks.
   app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic, openai));
-  // Specific read-only evidence projection is mounted before the general crypto router.
-  app.use('/api/crypto/evidence', cryptoEvidenceRouter);
   app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));
 
-  // Security boundary: client-supplied Stripe return targets are normalized and
-  // validated against the existing ADR-0009/CORS origin authority before any
-  // Checkout or Billing Portal session can be created.
-  app.use('/api/stripe', stripeReturnUrlGuard, stripeRouter);
+  // Existing production prefixes are intentionally preserved byte-for-byte at
+  // the HTTP-contract level. No alias or compatibility route is introduced here.
+  app.use('/api/stripe', stripeRouter);
   app.use('/api/orchestrator', orchestratorRouter);
-  app.use(
-    '/api/admin/hygiene',
-    rateLimitMiddleware({ name: 'document-hygiene', maxRequests: 60, windowMs: 60_000 }),
-    hygieneRouter,
-  );
+  app.use('/api/admin/hygiene', hygieneRouter);
   app.use('/api/admin', systemEventsRouter);
   app.use('/api/admin', versionManagerRouter);
   app.use('/api/auth', stepUpRouter);
-  app.use('/api/privacy', privacyRouter);
   app.use('/api/compliance', complianceRouter);
   app.use('/api/scoring', scoreValidationRouter);
   app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));
   app.use('/api/admin/diagnostics', adminDiagnosticsRouter);
-  app.use('/api/admin/quality-center', qualityCenterRouter);
   app.use('/api/alerts', alertsRouter);
   app.use('/api/admin/supervisor', supervisorRouter);
   app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
   app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);
   app.use('/api/systemadmin/break-glass', breakGlassRouter);
-  app.use('/api/owner-authorization', ownerAuthorizationRouter);
-  app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);
-  app.use('/api/registry', verifiedAssetDisplayRouter);
+  app.use('/api/news', newsRouter);
   app.use('/api/registry', registryRouter);
-  app.use(
-    '/api/social-media',
-    rateLimitMiddleware({ name: 'social-media', maxRequests: 60, windowMs: 60_000 }),
-    socialMediaRouter,
-  );
+  app.use('/api/social-media', socialMediaRouter);
+  // SEO S1: keyword register, content inventory, rank snapshots (admin-only).
   app.use('/api/seo', seoEngineRouter);
   app.use('/api', aiRouter);
-  // Router-Anbindung (2026-08-25): bis dahin definiert, aber nirgends eingebunden (toter Code,
-  // siehe docs/security/FULL_ARCHITECTURE_SECURITY_REVIEW_2026-08-25.md, "Nebenbefund"). Die
-  // Frontend-Aufrufer (MarketSentiment.tsx, SentimentDashboard.tsx, PortfolioBacktester.tsx)
-  // riefen diese Pfade bereits auf und erhielten dadurch immer 404 - keine neue Fläche, sondern
-  // eine bereits im Frontend vorhandene, bisher nie erreichbare Funktion.
-  app.use('/api', createMarketSentimentRouter({ ai, anthropic, openai, assetRegistry, fallbackAssets: [] }));
-  app.use('/api', createPortfolioReviewRouter({ ai, anthropic, openai }));
 }

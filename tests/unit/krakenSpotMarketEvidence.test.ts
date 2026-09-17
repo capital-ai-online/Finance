@@ -50,28 +50,23 @@ describe('Kraken spot market evidence', () => {
 });
 
 describe('crypto scoring provider weights', () => {
-  it('keeps the canonical scoring weights normalized after removing exchange-local liquidity authority', () => {
+  it('keeps the scoring weights normalized after adding Kraken exchange liquidity', () => {
     const total = Object.values(CRYPTO_SCORING_WEIGHTS).reduce((sum, weight) => sum + weight, 0);
     expect(total).toBeCloseTo(1, 10);
   });
 
-  it('keeps Kraken exchange liquidity as evidence without giving it Crypto 0.7 score authority', () => {
-    const baseInput = {
+  it('uses exchange liquidity as a real factor without requiring a global-volume estimate', () => {
+    const result = CryptoScoringService.scoreCrypto({
       coin: 'BTC',
       trend: 0.7,
       momentum: 0.7,
-      data_quality_risk: 0.05,
-    } as const;
-    const baseline = CryptoScoringService.scoreCrypto(baseInput);
-    const withExchangeEvidence = CryptoScoringService.scoreCrypto({
-      ...baseInput,
       exchange_liquidity: 0.9,
+      data_quality_risk: 0.05,
     });
 
-    expect(withExchangeEvidence.inputs.exchange_liquidity).toBe(0.9);
-    expect(withExchangeEvidence.data_quality.missing_fields).toContain('avg_daily_volume');
-    expect(withExchangeEvidence.data_quality.missing_fields).not.toContain('exchange_liquidity');
-    expect(withExchangeEvidence.scores.liquidity).toBe(0);
-    expect(withExchangeEvidence.final_score).toBe(baseline.final_score);
+    expect(result.inputs.exchange_liquidity).toBe(0.9);
+    expect(result.data_quality.missing_fields).toContain('avg_daily_volume');
+    expect(result.data_quality.missing_fields).not.toContain('exchange_liquidity');
+    expect(result.scores.liquidity).toBe(90);
   });
 });

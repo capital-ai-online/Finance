@@ -8,7 +8,6 @@ import {
   enrollTotpFactor,
   challengeTotpFactor,
   verifyTotpChallenge,
-  registerWebauthnMfaFactor,
 } from '../platform/Security/nativeMfa';
 
 interface RegistrationCompletionGateProps {
@@ -32,12 +31,11 @@ type MfaMode = 'choice' | 'totp-setup' | 'totp-verify' | 'passkey';
  * protokolliert mit Zeitstempel + Dokumentversion + gehashter IP (Art. 7 Abs. 1 DSGVO,
  * server/stepUp.ts: POST /api/auth/register/complete).
  *
- * Schritt 2 (mfa): mindestens ein verifizierter Supabase-MFA-Faktor (natives TOTP ODER
- * WebAuthn-MFA/Passkey) MUSS eingerichtet werden, bevor onboarding_required serverseitig auf
- * false gesetzt wird. POST /api/auth/mfa/enrollment-complete verlangt eine echte, unabhaengig
- * re-validierte AAL2-Sitzung - kein Client-Claim wird blind vertraut. Ein Primaerlogin-Passkey
- * (`auth.registerPasskey`) ist davon bewusst getrennt und ersetzt keinen AAL2-MFA-Faktor.
- * Kein Ueberspringen moeglich, nur Abmelden.
+ * Schritt 2 (mfa): mindestens ein Faktor (natives TOTP ODER Passkey) MUSS eingerichtet werden,
+ * bevor onboarding_required serverseitig auf false gesetzt wird (POST
+ * /api/auth/mfa/enrollment-complete, verlangt eine echte, unabhaengig re-validierte
+ * AAL2-Sitzung - kein Client-Claim wird blind vertraut). Kein Ueberspringen moeglich, nur
+ * Abmelden.
  */
 export function RegistrationCompletionGate({ session, onComplete, onAbort }: RegistrationCompletionGateProps) {
   const [step, setStep] = useState<Step>('profile');
@@ -145,14 +143,11 @@ export function RegistrationCompletionGate({ session, onComplete, onAbort }: Reg
     setMfaError(null);
     setMfaLoading(true);
     try {
-      await registerWebauthnMfaFactor(supabase, 'CAPITAL-AI WebAuthn MFA');
+      const { error } = await supabase.auth.registerPasskey();
+      if (error) throw error;
       await completeOnboarding();
     } catch (err: any) {
-      setMfaError(
-        err instanceof NativeMfaError
-          ? err.message
-          : (err?.message || 'WebAuthn-MFA-Registrierung fehlgeschlagen oder abgebrochen.'),
-      );
+      setMfaError(err?.message || 'Passkey-Registrierung fehlgeschlagen oder abgebrochen.');
       setMfaMode('choice');
     } finally {
       setMfaLoading(false);
@@ -231,8 +226,8 @@ export function RegistrationCompletionGate({ session, onComplete, onAbort }: Reg
         {step === 'mfa' && (
           <div className="space-y-4">
             <p className="text-xs text-white/60 leading-relaxed text-center">
-              Zum Abschluss: richte native 2FA per Authenticator-App oder WebAuthn-Passkey als
-              verifizierten MFA-Faktor ein. Mindestens einer davon ist erforderlich.
+              Zum Abschluss: richte native 2FA (Authenticator-App) oder einen Passkey ein. Mindestens
+              eines von beiden ist erforderlich, um dich künftig anmelden zu können.
             </p>
 
             {mfaError && (
@@ -255,7 +250,7 @@ export function RegistrationCompletionGate({ session, onComplete, onAbort }: Reg
                   className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 text-white hover:bg-white/15 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <Fingerprint size={16} />
-                  Passkey als WebAuthn-MFA einrichten
+                  Passkey registrieren
                 </button>
               </div>
             )}
@@ -305,7 +300,7 @@ export function RegistrationCompletionGate({ session, onComplete, onAbort }: Reg
             )}
 
             {mfaMode === 'passkey' && (
-              <p className="text-xs text-white/40 text-center animate-pulse">Warte auf WebAuthn-MFA-Bestätigung…</p>
+              <p className="text-xs text-white/40 text-center animate-pulse">Warte auf Passkey-Bestätigung…</p>
             )}
           </div>
         )}

@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.1",
+  "repository": "SvenKulessa/Finance",
+  "target": "refs/heads/main",
+  "ruleset_name": "main-production-protection",
+  "required": {
+    "pull_request": true,
+    "required_status_checks": [
+      "build-and-test",
+      "GitGuardian Security Checks"
+    ],
+    "strict_required_status_checks_policy": true,
+    "deletion_protection": false,
+    "non_fast_forward_protection": true,
+    "require_code_owner_review": true,
+    "bypass_actors": []
+  },
+  "promotion": {
+    "state": "pending_owner_ruleset_cutover",
+    "current_server_ruleset": "active",
+    "shadow_check": null,
+    "promotion_gate": "COMPLETED: real head-bound parallel PASS on PR #308 and PR #309; Shadow retirement authorized by Owner selection 1 on 2026-08-15.",
+    "rollback": "Disable or edit the ruleset if any required check becomes missing, ambiguous, skipped unexpectedly, or failing without a documented cause. Preserve normal PR workflow and repair on a fresh branch.",
+    "decision_2026-08-14": "Owner decided both capital-ai-ci and build-and-test are required, not capital-ai-ci alone, so the existing Human/Owner comment-gate (checkbox attestations + head-bound review in ci.yml owner-gate/build-and-test) remains a server-enforced merge condition and is not silently dropped by the capital-ai-ci-shadow.yml migration. See docs/evidence/security/SECURITY_AUDIT_2026-08-14_ADR0069_DEVELOPMENT_CHAIN.md, Befund P1-1.",
+    "decision_2026-08-14b": "Owner created the live ruleset with deletion_protection deliberately left disabled: in the current single-owner topology, enabling it forced a bypass actor entry to remain administrable, which would itself reintroduce a bypass exception. Accepted residual risk: main can currently be deleted without a ruleset block. Revisit once a second trusted reviewer identity exists (see single_owner_topology.promotion_condition). Owner also enabled require_code_owner_review; .github/CODEOWNERS received a `* @SvenKulessa` catch-all the same day so the rule covers paths beyond the previously explicit list.",
+    "decision_2026-08-14c": "GitHub Advanced Security CodeQL was evaluated against the already-active Snyk Code check (context code/snyk) and found redundant for SAST coverage (both do semantic source-code vulnerability analysis; Snyk Code needs no GitHub Actions runtime, matching ADR-0070's no-new-workflow design). Owner decided against CodeQL as a required check. GitGuardian Security Checks and both Snyk contexts (security/snyk, code/snyk) passed on three independent head-bound pull requests (#249, #250, #251), exceeding ADR-0070's two-head promotion gate, and were promoted to required checks with Owner approval. See docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md.",
+    "decision_2026-08-15": "Snyk's private-test quota was exhausted (external Snyk-side account limit, both security/snyk and code/snyk contexts started reporting 'error'/'You have used your limit of private tests' regardless of actual scan outcome), permanently blocking merge on at least 3 concurrently open pull requests (#295, #296, #297) despite ADR-0070's Rollback step 1 ('Anbietercheck aus Required Checks entfernen, sofern später promoviert'). Owner removed both security/snyk and code/snyk from the live main-production-protection ruleset on 2026-08-15; this expected-policy file is updated to match. GitGuardian Security Checks remains required and unaffected. See docs/adr/ADR-0070-gitguardian-snyk-external-app-integration.md Nachtrag 2026-08-15 and docs/evidence/security/SNYK_REQUIRED_CHECK_DEMOTION_2026-08-15.md.",
+    "decision_2026_08_15_ci_consolidation": "Owner selected consolidation option 1: build-and-test remains the sole repository-hosted technical Required Check; capital-ai-ci is removed after successful parallel evidence on PR #308 and PR #309. The live Ruleset must remove capital-ai-ci before the workflow-removal PR is merged. Human/Owner head-bound gate in ci.yml remains unchanged. GitGuardian remains required."
+  },
+  "single_owner_topology": {
+    "observed_collaborators": 1,
+    "required_approving_review_count": 0,
+    "rationale": "A mandatory independent GitHub approval would deadlock the current single-owner repository. HIGH/CRITICAL agent actions remain subject to CAPITAL-AI capability, approval and step-up controls until an independent reviewer exists.",
+    "promotion_condition": "Enable at least one independent approving review, deletion_protection and a bypass-free enforcement posture when a distinct trusted reviewer identity is available."
+  },
+  "desired_when_supported_without_deadlock": {
+    "required_review_thread_resolution": true,
+    "require_last_push_approval": true,
+    "dismiss_stale_reviews_on_push": true
+  },
+  "production_environment": {
+    "canonical_name": "production",
+    "required": true,
+    "deployment_branch": "main",
+    "protection_required": true,
+    "status": "owner-admin-handoff-required"
+  },
+  "policy": {
+    "deny_direct_main_push_for_agents": true,
+    "agent_branch_prefixes": [
+      "agent/",
+      "claude/",
+      "gemini/",
+      "copilot/",
+      "ai/"
+    ],
+    "no_agent_self_approval_high_critical": true,
+    "break_glass_must_be_attributable_and_time_limited": true,
+    "synthetic_check_must_not_reuse_required_context": true,
+    "ruleset_promotion_requires_shadow_pass": false,
+    "workflow_retirement_requires_ruleset_cutover": true
+  }
+}

@@ -38,41 +38,7 @@ vi.mock('../../server/outbox', () => ({
   enqueueOutboxJob: state.enqueueOutboxJob,
 }));
 
-import {
-  sendSubscriptionConfirmation,
-  buildOwnerSubscriptionNotificationEmail,
-  buildSubscriptionActivatedEmail,
-} from '../../server/mailer';
-
-// Stripe checkout email/metadata is attacker-influenceable input (RFC 5322 permits a quoted
-// local-part such as `"<script>..."@example.com`) that reaches these HTML e-mail templates.
-// Guards against regressing the escapeHtml() fix in buildOwnerSubscriptionNotificationEmail /
-// buildSubscriptionActivatedEmail.
-describe('mailer HTML templates escape attacker-influenceable Stripe input', () => {
-  it('escapes a crafted customer e-mail/user-id in the owner notification', () => {
-    const { html } = buildOwnerSubscriptionNotificationEmail('"<img src=x onerror=alert(1)>"@evil.com', {
-      planId: 'PRO',
-      sessionId: 'cs_test_<script>',
-      userId: '<b>injected</b>',
-      amountTotal: 2900,
-      currency: 'eur',
-    });
-
-    expect(html).not.toContain('<img src=x onerror=alert(1)>');
-    expect(html).not.toContain('<script>');
-    expect(html).not.toContain('<b>injected</b>');
-    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
-    expect(html).toContain('&lt;script&gt;');
-    expect(html).toContain('&lt;b&gt;injected&lt;/b&gt;');
-  });
-
-  it('escapes a crafted plan label in the customer activation e-mail', () => {
-    const { html } = buildSubscriptionActivatedEmail('<script>alert(1)</script>', 'kunde@example.com');
-
-    expect(html).not.toContain('<script>alert(1)</script>');
-    expect(html).toContain('&lt;script&gt;');
-  });
-});
+import { sendSubscriptionConfirmation } from '../../server/mailer';
 
 describe('mailer atomic confirmation reservation (ADR-0045)', () => {
   beforeEach(() => {

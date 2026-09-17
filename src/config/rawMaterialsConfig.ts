@@ -18,12 +18,11 @@ export interface ScoringVersion {
   };
 }
 
-/** Historical, non-canonical structural research versions retained for sandbox compatibility. */
 export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
   'v0.5.4': {
     version: '0.5.4',
     releasedAt: '2026-07-02',
-    description: 'CAPITAL-AI Legacy Commodities Structural Research v0.5.4 (superseded)',
+    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.5.4 (Beta-Phase)',
     weights: {
       fundamentals: 0.35,  // 35%
       risk: 0.20,          // 20% (inverted)
@@ -35,7 +34,7 @@ export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
   'v0.6.0': {
     version: '0.6.0',
     releasedAt: '2026-07-03',
-    description: 'CAPITAL-AI Legacy Commodities Structural Research v0.6.0 (compatibility-only)',
+    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.6.0 (Production Beta)',
     weights: {
       fundamentals: 0.35,  // 35%
       risk: 0.20,          // 20% (inverted)
@@ -46,13 +45,11 @@ export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
   }
 };
 
-/** Latest historical compatibility version. Productive Commodity scoring does not use this value. */
-export const ACTIVE_VERSION = 'v0.6.0';
+export const ACTIVE_VERSION = 'v0.5.4';
 
 /**
- * Historical structural research registry for the RawMaterials dashboard/sandbox.
- * It is not provider evidence, UAI identity authority or a productive scoring source.
- * `substitution_potential`: 100 = easy to substitute, 0 = no practical substitute.
+ * Standard database for commodities (Single Source of Truth)
+ * Maps raw material names/symbols to detailed attributes
  */
 export const RAW_MATERIALS_DATABASE: Record<string, RawMaterialInput & { symbol: string; category_sub: string; market_type: string; is_critical: boolean }> = {
   'lithium': {
@@ -68,7 +65,7 @@ export const RAW_MATERIALS_DATABASE: Record<string, RawMaterialInput & { symbol:
     ore_grade: 82,
     tonnage: 78,
     tonnage_reserve: 85,
-    substitution_potential: 35, // hard to substitute (100 = easy to substitute)
+    substitution_potential: 35, // 35 means hard to substitute (high value for fundamentals)
     recyclability: 45,          // currently medium recyclability
     processing_complexity: 75,  // complex processing
     infrastructure_availability: 55,
@@ -146,7 +143,7 @@ export const RAW_MATERIALS_DATABASE: Record<string, RawMaterialInput & { symbol:
     ore_grade: 50,
     tonnage: 60,
     tonnage_reserve: 55,
-    substitution_potential: 30, // difficult to substitute in reserve/jewelry roles
+    substitution_potential: 30, // central bank reserve & jewelry (emotional/strategic)
     recyclability: 95,          // near 100% recyclable
     processing_complexity: 35,
     infrastructure_availability: 95,
@@ -198,7 +195,7 @@ export const RAW_MATERIALS_DATABASE: Record<string, RawMaterialInput & { symbol:
     ore_grade: 90,              // quartz is abundant, but high purity silicon is limited
     tonnage: 88,
     tonnage_reserve: 92,
-    substitution_potential: 20, // no practical substitute in modern semiconductor wafers
+    substitution_potential: 20, // no substitute in modern semiconductor wafers
     recyclability: 40,
     processing_complexity: 82,  // extreme energy required for high-purity polysilicon
     infrastructure_availability: 70,
@@ -250,7 +247,7 @@ export const RAW_MATERIALS_DATABASE: Record<string, RawMaterialInput & { symbol:
     ore_grade: 95,              // pure metallic content
     tonnage: 85,
     tonnage_reserve: 90,
-    substitution_potential: 70, // steel is highly versatile and more substitutable than critical metals
+    substitution_potential: 70, // steel is highly versatile
     recyclability: 100,         // infinitely recyclable
     processing_complexity: 25,  // electric arc furnace is very efficient
     infrastructure_availability: 90,

@@ -229,16 +229,6 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
     Branch (jeder M9-PR wurde bereits bei Merge automatisch bereinigt). **M9-Exit-Gate-Punkte 1, 6,
     7, 9, 10 jetzt vollständig erfüllt; Punkte 2, 3, 4, 5, 8 bleiben laut Independent Review
     teilweise erfüllt — M9 als Ganzes weiterhin nicht formal `COMPLETE / VERIFIED PASS`.**
-12. ~~**F2-Fix und M9-Closure**~~ — **erledigt 2026-08-17**, siehe
-    `docs/evidence/m9/M9_STEPUP_PURPOSE_FILTER_FIX_2026-08-17.md` und
-    `docs/evidence/m9/M9_CLOSURE_EVIDENCE.md`. Owner-Wahl „F2 beheben, dann M9 formal COMPLETE
-    erklären (empfohlen)" via `AskUserQuestion`, nach einem erneuten (und erneut bestätigten)
-    M9-Gate-Check gegen eine M10-Anfrage. Der einzige tatsächlich behebbare Fund (F2,
-    `requireStepUp()`-`purpose`-Filter) ist geschlossen: `purpose` ist jetzt Pflichtparameter,
-    gegen den bei Ausstellung gespeicherten Wert geprüft, betrifft alle drei realen Aufrufer
-    (`adminDiagnostics.ts`, `breakGlassRouter.ts`, `versionManager.ts`); 3 neue Tests. **M9 ist
-    formal `COMPLETE / VERIFIED PASS`** (alle 10 Exit-Gate-Punkte erfüllt — 5 vollständig, 5 via
-    explizite Owner-Akzeptanz dokumentierter struktureller Residuen). M10-Prerequisite-Gate erfüllt.
 
 Dieses Dokument trifft selbst keine Auswahl unter diesen Optionen — das ist Owner-Entscheidung.
 

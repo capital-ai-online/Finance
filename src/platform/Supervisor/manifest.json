@@ -1,12 +1,12 @@
 {
   "name": "Supervisor",
-  "version": "1.3.0",
+  "version": "1.2.0",
   "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "Task Routing/Tool Selection, Execution Control/Retry, approved write path, agent provider chain observation, lightweight findings and Documentary maintenance recommendation evidence.",
+  "description": "Task Routing/Tool Selection, Execution Control/Retry, approved write path, agent provider chain observation (ChatGPT/Claude/Grok), lightweight findings.",
   "category": "platform",
-  "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0002", "ESS-0010", "ESS-0019"],
-  "adr": ["ADR-0018", "ADR-0051", "ADR-0062", "ADR-0097"],
+  "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0002"],
+  "adr": ["ADR-0018", "ADR-0051", "ADR-0062"],
   "dependencies": ["EventMesh"],
   "events": {
     "produces": ["SupervisorAlertEvent", "CriticalArchitectureViolationEvent", "SupervisorApprovedActionApplied"],
@@ -16,13 +16,6 @@
   "tests": [
     "tests/unit/supervisor.test.ts",
     "tests/unit/supervisorApprovedAction.test.ts",
-    "tests/unit/providerProfile.test.ts",
-    "tests/unit/documentaryMaintenanceOrchestrator.test.ts"
-  ],
-  "documentaryMaintenance": {
-    "observation": "documentaryMaintenanceObservation.ts",
-    "decisionAuthority": false,
-    "mutationAuthority": false,
-    "evidenceBinding": "PlatformDecisionRecord.prerequisites.supervisorAssessment.evidenceId"
-  }
+    "tests/unit/providerProfile.test.ts"
+  ]
 }

@@ -2,9 +2,9 @@
 
 ## Enterprise Component
 
-Status: Implemented Core Registry
+Status: Unspecified
 
-Version: 1.1.0
+Version: 1.0.0
 
 Owner: CAPITAL-AI
 
@@ -12,42 +12,39 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-`src/platform/Validators` stellt die zentrale, regelneutrale Validator Registry und die maschinenlesbare Chapter-12-Pflichtvalidator-Abdeckung fuer das Quality Center bereit.
+Fuer diese Komponente existiert keine funktionale Spezifikation. Der urspruengliche, vom
+Enterprise Bootstrapper generierte Platzhaltertext ("Describe the responsibility of the
+Validators component.") wurde entfernt, um keine nicht existierende Spezifikation vorzutaeuschen
+(No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
 
-Die Komponente besitzt **keine fachliche Rule-Authority**. Sie registriert vorhandene Validatoren und weist aus, welche der exakt 16 Pflichtvalidatoren aus ESS-0001-CONTRACTS Chapter 12 bereits durch autoritative Codepfade abgedeckt sind. Fachregeln verbleiben insbesondere in Governance/Documentary, EventMesh, Release sowie Security & Compliance.
-
-## Implemented
-
-- `ValidatorRegistry.ts` — deterministische Registrierung und Aufloesung je Repository-Quality-Domaene;
-- Duplicate-Domain-DENY;
-- kanonische Reihenfolge gemaess `REPOSITORY_QUALITY_REQUIRED_DOMAINS`;
-- `MandatoryValidatorCatalog.ts` — exakter Katalog der 16 Chapter-12-Pflichtvalidatoren;
-- Status je Pflichtvalidator: `AVAILABLE`, `PARTIAL` oder `NOT_AVAILABLE`;
-- Source- und Authority-Referenzen je Binding;
-- fehlende fachliche Evidence wird niemals zu PASS oder AVAILABLE hochgestuft.
-
-## Chapter-12 Coverage Baseline
-
-Der aktuelle Code-Stand weist deterministisch aus:
-
-- **5 AVAILABLE** — Naming, Documentation, Version, Security, Compliance;
-- **3 PARTIAL** — Repository Structure, Manifest, Event;
-- **8 NOT_AVAILABLE** — fehlende dedizierte/reusable Runtime-Evidence fuer die verbleibenden Pflichtvalidatoren.
-
-`PARTIAL` bedeutet ausdruecklich nicht bestanden. Es bedeutet nur, dass bereits relevante autoritative Teil-Evidence existiert, aber noch kein vollstaendiger Pflichtvalidator-Vertrag erfuellt ist.
+---
 
 ## ESS Reference
 
-- ESS-0001
-- ESS-0001-CONTRACTS Chapter 12
-- ESS-0005 — Quality Center
-- ESS-0006 — Security & Compliance
-- ESS-0013 — Enterprise Event Mesh
+ESS-0001
+
+ESS-0001-CONTRACTS
+
+---
+
+## ADR References
+
+None
+
+---
 
 ## Dependencies
 
-- `src/platform/Governance/Contracts/RepositoryQualityEvidence.ts`
+Keine - es existiert kein Code.
 
-## Authority Boundary
+---
 
-Die Registry und der Pflichtvalidator-Katalog duerfen weder Regeln, Severity-Stufen oder Schwellwerte definieren noch Merge, Release, Deployment oder Produktionsmutationen autorisieren. Neue fachliche Validator-Implementierungen werden nur in der jeweils zustaendigen Authority oder als duenne Adapter darauf angebunden.
+## Events
+
+Keine - es existiert kein Code.
+
+---
+
+## Notes
+
+ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden.

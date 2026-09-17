@@ -9,10 +9,6 @@
 
 /index.html @SvenKulessa
 /public/cookiehub-init.js @SvenKulessa
-/public/cookieconsent-init.js @SvenKulessa
-/public/cookieconsent-theme.css @SvenKulessa
-/public/vendor/cookieconsent/ @SvenKulessa
-/scripts/security/cookieConsentRuntime.test.mjs @SvenKulessa
 /public/google-analytics-consent.js @SvenKulessa
 /server/securityResponse.ts @SvenKulessa
 /server/logger.ts @SvenKulessa
@@ -55,9 +51,8 @@
 /docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md @SvenKulessa
 /docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md @SvenKulessa
 
-# Catch-all ownership mapping. CODEOWNERS uses last-matching-pattern precedence; since every rule
-# above also maps to @SvenKulessa, this entry only extends ownership coverage to paths not listed
-# explicitly. CODEOWNERS by itself does not require an approving review. Live ruleset readback on
-# 2026-09-14 reports require_code_owner_review=false; any future enforcement change is a separate
-# Owner-controlled GitHub Ruleset mutation and must be verified independently after that mutation.
+# Catch-all — 2026-08-14: "Require code owner review" is active on the main ruleset. CODEOWNERS
+# uses last-matching-pattern precedence; since every rule above also maps to @SvenKulessa, this
+# entry only extends owner-review coverage to paths not explicitly listed above. It does not
+# change who the owner is anywhere in this file.
 * @SvenKulessa

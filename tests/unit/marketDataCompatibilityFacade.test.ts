@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { runMarketDataCompatibilityRefresh } from '../../server/marketData/marketDataCompatibilityFacade';
-import type { MarketDataAsset } from '../../server/marketData/marketDataCoordinator';
 
 const fallbackAssets = [
   { symbol: 'BTC', type: 'crypto', price: 1, change24h: 0, dataSource: 'fallback' as const },
@@ -8,11 +7,10 @@ const fallbackAssets = [
 ];
 
 describe('marketDataCompatibilityFacade', () => {
-  it('enriches only provider-observed assets and leaves appended catalog fallbacks untouched', async () => {
+  it('keeps provider assets, appends missing registry assets as fallback and enriches all assets', async () => {
     const providerStages = [
       { name: 'test-live', load: async () => [{ symbol: 'BTC', type: 'crypto', price: 2, change24h: 1, dataSource: 'live' as const }] },
     ];
-    const enrichAsset = vi.fn(async asset => ({ ...asset, enriched: true }));
 
     const result = await runMarketDataCompatibilityRefresh({
       fallbackAssets,
@@ -21,48 +19,20 @@ describe('marketDataCompatibilityFacade', () => {
       commodityTickers: [],
       providerStages,
       registryAssets: () => fallbackAssets,
-      enrichAsset,
+      enrichAsset: async asset => ({ ...asset, enriched: true }),
     });
 
     expect(result).toEqual([
       expect.objectContaining({ symbol: 'BTC', dataSource: 'live', enriched: true }),
-      expect.objectContaining({ symbol: 'AAPL', dataSource: 'fallback', status: 'Fallback' }),
+      expect.objectContaining({ symbol: 'AAPL', dataSource: 'fallback', status: 'Fallback', enriched: true }),
     ]);
-    expect(result.find(asset => asset.symbol === 'AAPL')).not.toHaveProperty('enriched');
-    expect(enrichAsset).toHaveBeenCalledTimes(1);
   });
 
-  it('runs snapshot and alert side effects only for provider-observed rows', async () => {
-    const persistSnapshots = vi.fn(async (_assets: MarketDataAsset[]) => undefined);
-    const evaluateAlerts = vi.fn(async (_assets: MarketDataAsset[]) => undefined);
+  it('keeps snapshot and alert side effects best-effort', async () => {
+    const persistSnapshots = vi.fn(async () => { throw new Error('snapshot unavailable'); });
+    const evaluateAlerts = vi.fn(async () => { throw new Error('alerts unavailable'); });
 
     await expect(runMarketDataCompatibilityRefresh({
-      fallbackAssets,
-      stockTickers: [],
-      forexTickers: [],
-      commodityTickers: [],
-      providerStages: [{ name: 'test', load: async () => [{ symbol: 'BTC', type: 'crypto', price: 2, change24h: 1, dataSource: 'live' as const }] }],
-      registryAssets: () => fallbackAssets,
-      enrichAsset: async asset => asset,
-      persistSnapshots,
-      evaluateAlerts,
-    })).resolves.toHaveLength(2);
-
-    expect(persistSnapshots).toHaveBeenCalledTimes(1);
-    expect(evaluateAlerts).toHaveBeenCalledTimes(1);
-    expect(persistSnapshots.mock.calls[0][0]).toEqual([
-      expect.objectContaining({ symbol: 'BTC', dataSource: 'live' }),
-    ]);
-    expect(evaluateAlerts.mock.calls[0][0]).toEqual([
-      expect.objectContaining({ symbol: 'BTC', dataSource: 'live' }),
-    ]);
-  });
-
-  it('does not run snapshot/alert side effects when a refresh contains only fallbacks', async () => {
-    const persistSnapshots = vi.fn();
-    const evaluateAlerts = vi.fn();
-
-    const result = await runMarketDataCompatibilityRefresh({
       fallbackAssets,
       stockTickers: [],
       forexTickers: [],
@@ -72,11 +42,10 @@ describe('marketDataCompatibilityFacade', () => {
       enrichAsset: async asset => asset,
       persistSnapshots,
       evaluateAlerts,
-    });
+    })).resolves.toHaveLength(2);
 
-    expect(result).toHaveLength(2);
-    expect(persistSnapshots).not.toHaveBeenCalled();
-    expect(evaluateAlerts).not.toHaveBeenCalled();
+    expect(persistSnapshots).toHaveBeenCalledTimes(1);
+    expect(evaluateAlerts).toHaveBeenCalledTimes(1);
   });
 
   it('continues after a provider stage fails', async () => {

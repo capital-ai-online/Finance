@@ -1,11 +1,11 @@
-// ADR-0018 compatibility bridge from the bounded operational system-event projection to the
-// in-process Enterprise Event Mesh.
-//
-// IMPORTANT: `SystemAuditEvent` is a legacy catalog name. Neither this bridge nor Event Mesh is an
-// audit authority, durable evidence store, authorization source or compliance ledger. Durable
-// security denials remain owned by public.security_events; agent/action audit evidence remains
-// owned by ADR-0059 / agent_audit_events. The bridge intentionally carries no actor email or IP so
-// operational telemetry does not duplicate PII held by those canonical authorities.
+// ADR-0018, Folgeentscheidung 3 — additive Bruecke zwischen dem bestehenden,
+// produktiven Audit-Log-Mechanismus (server/systemEvents.ts) und der Enterprise
+// Event Mesh. Der bestehende Mechanismus (dateibasiertes Log + SSE-Broadcast an das
+// Admin-Portal) bleibt vollstaendig unveraendert und ist die einzige Quelle, auf die
+// sich Aufrufer verlassen duerfen. Diese Bruecke ergaenzt eine zusaetzliche,
+// bestmoegliche Veroeffentlichung ueber den Event Bus - ein Fehler hier darf niemals
+// den Audit-Log-Schreibvorgang selbst gefaehrden, weshalb server/systemEvents.ts
+// diese Funktion in einem eigenen try/catch aufruft.
 
 import { eventMeshBus } from '../Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from './EventMeshService';
@@ -21,11 +21,16 @@ export type SystemAuditEventType =
 export interface SystemAuditPayload {
   type: SystemAuditEventType;
   action: string;
+  userEmail: string;
   details: string;
   status: 'SUCCESS' | 'WARNING' | 'FAILED';
+  ip?: string;
 }
 
-/** Publishes a best-effort, non-authorizing operational signal to the in-process Event Mesh. */
+/**
+ * Veroeffentlicht ein SystemAuditEvent ueber die Enterprise Event Mesh. Bootstrapped
+ * die Mesh beim ersten Aufruf (Katalog-Seed + Discovery), danach idempotent.
+ */
 export function publishSystemAuditEvent(payload: SystemAuditPayload): void {
   if (!isBootstrapped()) {
     bootstrapEventMesh(eventMeshBus);

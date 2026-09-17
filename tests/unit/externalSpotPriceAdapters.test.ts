@@ -1,57 +1,51 @@
-import { describe, expect, it } from 'vitest';
-import { marketObservationFromCanonicalSnapshot } from '../../src/services/externalSpotPriceAdapters';
-import { MARKET_DATA_CONTRACT_VERSION, type CanonicalMarketDataSnapshot } from '../../src/platform/MarketData/contracts';
+import { describe, expect, it, vi } from 'vitest';
+import { fetchCryptoSpotObservation } from '../../src/services/externalSpotPriceAdapters';
 
-function snapshot(overrides: Partial<CanonicalMarketDataSnapshot> = {}): CanonicalMarketDataSnapshot {
-  return {
-    contractVersion: MARKET_DATA_CONTRACT_VERSION,
-    provider: 'CoinAPI',
-    providerFeed: 'test',
-    symbol: 'BTC',
-    assetClass: 'crypto',
-    currency: 'USD',
-    sourceTimestamp: '2026-08-31T18:00:00.000Z',
-    ingestedAt: '2026-08-31T18:00:01.000Z',
-    receivedAt: '2026-08-31T18:00:01.000Z',
-    freshnessMs: 1_000,
-    qualityState: 'LIVE',
-    isRealtime: true,
-    isDelayed: false,
-    correlationId: 'spot-test',
-    price: 65_000,
-    evidenceId: 'quote:coinapi:BTC:USD:test',
-    ...overrides,
-  };
+function jsonResponse(data: unknown): Response {
+  return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
 }
 
-describe('gateway-governed crypto spot observation conversion', () => {
-  it('converts LIVE canonical snapshots while preserving provenance', () => {
-    expect(marketObservationFromCanonicalSnapshot(snapshot())).toEqual({
-      provider: 'CoinAPI',
-      value: 65_000,
-      observedAt: '2026-08-31T18:00:00.000Z',
-      retrievedAt: '2026-08-31T18:00:01.000Z',
-      unit: 'USD',
-      evidenceId: 'quote:coinapi:BTC:USD:test',
+describe('external crypto spot price adapters', () => {
+  it('normalizes CoinAPI USD exchange rate with provider timestamp', async () => {
+    const fetchImpl = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      expect(new Headers(init?.headers).get('X-CoinAPI-Key')).toBe('coin-key');
+      return jsonResponse({ time: '2026-08-02T08:00:00Z', asset_id_base: 'BTC', asset_id_quote: 'USD', rate: 65000 });
+    }) as unknown as typeof fetch;
+    const observation = await fetchCryptoSpotObservation('CoinAPI', 'BTC', {
+      fetchImpl,
+      apiKeys: { CoinAPI: 'coin-key' },
+      nowMs: () => Date.parse('2026-08-02T08:00:10Z'),
     });
+    expect(observation.value).toBe(65000);
+    expect(observation.unit).toBe('USD');
+    expect(observation.observedAt).toBe('2026-08-02T08:00:00.000Z');
   });
 
-  it('accepts DELAYED evidence but rejects HISTORICAL and STALE evidence for current consensus', () => {
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ qualityState: 'DELAYED', isRealtime: false, isDelayed: true }))).not.toBeNull();
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ qualityState: 'HISTORICAL', isRealtime: false }))).toBeNull();
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ qualityState: 'STALE', isRealtime: false }))).toBeNull();
+  it('normalizes Twelve Data /price response', async () => {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toContain('symbol=ETH%2FUSD');
+      expect(new Headers(init?.headers).get('Authorization')).toBe('apikey twelve-key');
+      return jsonResponse({ price: '3200.50' });
+    }) as unknown as typeof fetch;
+    const observation = await fetchCryptoSpotObservation('TwelveData', 'ETH', {
+      fetchImpl,
+      apiKeys: { TwelveData: 'twelve-key' },
+      nowMs: () => Date.parse('2026-08-02T08:01:00Z'),
+    });
+    expect(observation.value).toBe(3200.5);
+    expect(observation.provider).toBe('TwelveData');
   });
 
-  it('fails closed when price or provenance is missing', () => {
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ price: null }))).toBeNull();
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ evidenceId: null }))).toBeNull();
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ sourceTimestamp: null }))).toBeNull();
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ currency: null }))).toBeNull();
-  });
-
-  it('fails closed for invalid numeric values rather than coercing to zero', () => {
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ price: 0 }))).toBeNull();
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ price: Number.NaN }))).toBeNull();
-    expect(marketObservationFromCanonicalSnapshot(snapshot({ price: Number.POSITIVE_INFINITY }))).toBeNull();
+  it('treats EODHD as dated EOD evidence rather than current timestamp', async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse([
+      { date: '2026-08-01', close: 64000, adjusted_close: 64100 },
+    ])) as unknown as typeof fetch;
+    const observation = await fetchCryptoSpotObservation('EODHD', 'BTC', {
+      fetchImpl,
+      apiKeys: { EODHD: 'eod-key' },
+      nowMs: () => Date.parse('2026-08-02T08:02:00Z'),
+    });
+    expect(observation.value).toBe(64100);
+    expect(observation.observedAt).toBe('2026-08-01T23:59:59.000Z');
   });
 });

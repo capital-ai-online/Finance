@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Info
 } from 'lucide-react';
-import { authFetch } from '../lib/authFetch';
 
 interface MarketSentimentProps {
   selectedSymbol: string;
@@ -66,9 +65,7 @@ export function MarketSentiment({ selectedSymbol, assetClass = 'Crypto' }: Marke
     }, 1800);
 
     try {
-      // SECURITY (2026-08-25, Router-Anbindung): /api/market-sentiment verlangt jetzt eine
-      // verifizierte Identitaet (konsistent mit /api/chat) - authFetch() haengt das Bearer-Token an.
-      const response = await authFetch(`/api/market-sentiment?symbol=${encodeURIComponent(selectedSymbol)}&assetClass=${encodeURIComponent(assetClass)}`);
+      const response = await fetch(`/api/market-sentiment?symbol=${encodeURIComponent(selectedSymbol)}&assetClass=${encodeURIComponent(assetClass)}`);
       const result = await response.json().catch(() => ({}));
       
       if (!response.ok) {

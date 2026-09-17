@@ -97,9 +97,7 @@ export function Watchlist({
     }
   };
 
-  // Fetch all productive presentation assets for adding to the watchlist.
-  // Bond remains a technical/domain compatibility type but is intentionally
-  // absent from user-selectable Frontend presentation.
+  // Fetch all assets for adding to watchlist
   useEffect(() => {
     fetch('/api/market-data')
       .then(res => {
@@ -108,11 +106,7 @@ export function Watchlist({
       })
       .then(data => {
         if (data && Array.isArray(data)) {
-          const clean = data.filter((a: any) =>
-            a?.name &&
-            a?.type !== 'bond' &&
-            !a.name.toLowerCase().includes('variant'),
-          );
+          const clean = data.filter((a: any) => a?.name && !a.name.toLowerCase().includes('variant'));
           setAllAssets(clean);
         }
         setLoading(false);
@@ -146,13 +140,21 @@ export function Watchlist({
     })
     .slice(0, 5);
 
-  // Only productive assets returned by the presentation-filtered catalog are rendered.
-  // This also prevents a previously persisted Bond symbol from falling back to a fake
-  // crypto card when Bond presentation is disabled.
-  const watchedAssetsData = watchlist.flatMap(symbol => {
-    const live = allAssets.find(a => a.symbol === symbol);
-    return live ? [live] : [];
-  });
+  // Filtered watched assets with live data
+  const watchedAssetsData = watchlist
+    .map(symbol => {
+      const live = allAssets.find(a => a.symbol === symbol);
+      if (live) return live;
+      // Fallback if not loaded yet
+      return {
+        symbol,
+        name: symbol,
+        type: 'crypto' as const,
+        price: 0,
+        change24h: 0,
+        score: 5.0
+      };
+    });
 
   const handleAddAsset = (symbol: string) => {
     onAdd(symbol);

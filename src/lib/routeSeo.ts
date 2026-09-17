@@ -4,8 +4,6 @@
  * Full prerender remains S2 (scripts/seo/prerender-public-routes.mjs).
  */
 
-import { CAPITAL_AI_VERSION } from '../platform/Release/clientVersion';
-
 export interface RouteSeo {
   title: string;
   description: string;
@@ -15,24 +13,12 @@ export interface RouteSeo {
 const DEFAULT: RouteSeo = {
   title: 'CAPITAL-AI Portal',
   description:
-    `Offizielles CAPITAL-AI Portal (Version ${CAPITAL_AI_VERSION}) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.`,
+    'Offizielles CAPITAL-AI Portal (Version 0.6.0) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.',
   canonicalPath: '/',
 };
 
 const ROUTES: Record<string, RouteSeo> = {
   '/': DEFAULT,
-  '/universe': {
-    title: 'CAPITAL-AI Universe – Multi-Asset Intelligence',
-    description:
-      'CAPITAL-AI Universe verbindet Multi-Asset Discovery, verifizierte Evidence und kanonische Scoring-Projektionen für Krypto, Aktien, Indizes, Forex und Rohstoffe.',
-    canonicalPath: '/universe',
-  },
-  '/learning-platform': {
-    title: 'Capital-AI Learning Platform – Canonical Vocabulary',
-    description:
-      'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen read-only bereit.',
-    canonicalPath: '/learning-platform',
-  },
   '/impressum': {
     title: 'Impressum – CAPITAL-AI',
     description: 'Impressum und Anbieterkennzeichnung gemäß TMG §5 für CAPITAL-AI (Sven Kulessa).',
@@ -79,7 +65,6 @@ export function applyRouteSeo(pathname: string): void {
     'content',
     `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`,
   );
-  setMeta('meta[property="twitter:url"]', 'content', `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`);
   setMeta('meta[property="twitter:title"]', 'content', seo.title);
   setMeta('meta[property="twitter:description"]', 'content', seo.description);
 

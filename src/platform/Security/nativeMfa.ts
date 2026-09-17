@@ -1,9 +1,10 @@
-// ADR-0064 / ESS-0020 — Supabase Native MFA (TOTP + WebAuthn).
+// ADR-0064 / ESS-0020 — Supabase Native TOTP MFA (enroll -> challenge -> verify).
 //
 // Dünner, testbarer Wrapper um `supabase.auth.mfa.*`. Der Supabase-Client wird bewusst als
 // Parameter injiziert statt fest importiert, damit Tests ohne echten Browser/echte Supabase-
 // Verbindung laufen (Mock-Client) und damit dieselben Funktionen sowohl für die Erstregistrierung
-// als auch für den Login-Challenge-Pfad wiederverwendbar sind.
+// (TotpSettings.tsx) als auch für den Login-Challenge-Pfad (LoginStepUpGate.tsx) wiederverwendbar
+// sind.
 //
 // WICHTIG: Das Ergebnis dieser Funktionen (insbesondere `currentLevel`/`aal`) ist ausschließlich
 // eine UI-Komfortinformation. Es ist NIEMALS eine Autorisierungsentscheidung. Jede privilegierte
@@ -27,12 +28,9 @@ export interface NativeMfaAssuranceLevel {
   nextLevel: string | null;
 }
 
-export type NativeMfaFactorType = 'totp' | 'webauthn';
-
 export interface NativeMfaFactor {
   id: string;
   friendlyName?: string;
-  factorType: NativeMfaFactorType;
 }
 
 function messageOf(error: unknown, fallback: string): string {
@@ -80,8 +78,10 @@ export async function challengeTotpFactor(client: SupabaseClient, factorId: stri
 
 /**
  * Verifiziert einen 6-stelligen TOTP-Code gegen eine bestehende Challenge. Bei Erfolg hebt
- * Supabase die aktuelle Client-Session selbst auf `aal2`. Diese Funktion bestätigt das zusätzlich
- * lokal, bevor sie Erfolg meldet.
+ * Supabase die aktuelle Client-Session selbst auf `aal2` (und beendet alle anderen Sessions).
+ * Diese Funktion bestätigt das zusätzlich lokal, bevor sie Erfolg meldet - eine erfolgreiche
+ * `verify()`-Antwort ohne tatsächliche AAL2-Sitzung zählt NICHT als Erfolg (Slice-B-Exit:
+ * "unverified factor kein Erfolg").
  */
 export async function verifyTotpChallenge(
   client: SupabaseClient,
@@ -96,45 +96,11 @@ export async function verifyTotpChallenge(
   if (error || !data) {
     throw new NativeMfaError(messageOf(error, 'Code ungültig oder Challenge abgelaufen.'));
   }
-  return requireCurrentAal2(client, 'Verifikation hat keine gültige AAL2-Sitzung erzeugt.');
-}
-
-/**
- * Registriert und verifiziert einen echten Supabase-WebAuthn-MFA-Faktor. Das ist bewusst NICHT
- * `auth.registerPasskey()`: jener Passkey gehört zum Primärlogin und erfüllt allein nicht den
- * serverseitigen AAL2-Vertrag des MFA-Onboardings.
- */
-export async function registerWebauthnMfaFactor(
-  client: SupabaseClient,
-  friendlyName: string,
-): Promise<NativeMfaAssuranceLevel> {
-  const { data, error } = await client.auth.mfa.webauthn.register({ friendlyName });
-  if (error || !data) {
-    throw new NativeMfaError(messageOf(error, 'WebAuthn-MFA-Registrierung fehlgeschlagen.'));
+  const level = await getCurrentAssuranceLevel(client);
+  if (level.currentLevel !== 'aal2') {
+    throw new NativeMfaError('Verifikation hat keine gültige AAL2-Sitzung erzeugt.');
   }
-  return requireCurrentAal2(
-    client,
-    'WebAuthn-MFA-Registrierung hat keine gültige AAL2-Sitzung erzeugt.',
-  );
-}
-
-/**
- * Verifiziert einen bereits registrierten Supabase-WebAuthn-MFA-Faktor und bestätigt danach
- * explizit, dass die laufende Session wirklich AAL2 erreicht hat.
- */
-export async function authenticateWebauthnMfaFactor(
-  client: SupabaseClient,
-  factorId: string,
-): Promise<NativeMfaAssuranceLevel> {
-  if (!factorId) throw new NativeMfaError('factorId fehlt.');
-  const { data, error } = await client.auth.mfa.webauthn.authenticate({ factorId });
-  if (error || !data) {
-    throw new NativeMfaError(messageOf(error, 'WebAuthn-MFA-Verifikation fehlgeschlagen.'));
-  }
-  return requireCurrentAal2(
-    client,
-    'WebAuthn-MFA-Verifikation hat keine gültige AAL2-Sitzung erzeugt.',
-  );
+  return level;
 }
 
 /**
@@ -150,47 +116,21 @@ export async function getCurrentAssuranceLevel(client: SupabaseClient): Promise<
   return { currentLevel: data.currentLevel, nextLevel: data.nextLevel };
 }
 
-async function requireCurrentAal2(
-  client: SupabaseClient,
-  failureMessage: string,
-): Promise<NativeMfaAssuranceLevel> {
-  const level = await getCurrentAssuranceLevel(client);
-  if (level.currentLevel !== 'aal2') {
-    throw new NativeMfaError(failureMessage);
-  }
-  return level;
-}
-
-/** Listet verifizierte native TOTP- und WebAuthn-MFA-Faktoren der aktuellen Session. */
-export async function listVerifiedNativeMfaFactors(client: SupabaseClient): Promise<NativeMfaFactor[]> {
+/** Listet die verifizierten nativen TOTP-Faktoren der aktuellen Session (für den Login-Challenge-Pfad). */
+export async function listVerifiedTotpFactors(client: SupabaseClient): Promise<NativeMfaFactor[]> {
   const { data, error } = await client.auth.mfa.listFactors();
   if (error || !data) {
     throw new NativeMfaError(messageOf(error, 'Faktorenliste konnte nicht geladen werden.'));
   }
-
-  return data.all
-    .filter(
-      (factor) =>
-        factor.status === 'verified' &&
-        (factor.factor_type === 'totp' || factor.factor_type === 'webauthn'),
-    )
-    .map((factor) => ({
-      id: factor.id,
-      friendlyName: factor.friendly_name,
-      factorType: factor.factor_type as NativeMfaFactorType,
-    }));
-}
-
-/** Listet die verifizierten nativen TOTP-Faktoren der aktuellen Session. */
-export async function listVerifiedTotpFactors(client: SupabaseClient): Promise<NativeMfaFactor[]> {
-  const factors = await listVerifiedNativeMfaFactors(client);
-  return factors.filter((factor) => factor.factorType === 'totp');
+  const totp = (data as { totp?: Array<{ id: string; friendly_name?: string }> }).totp ?? [];
+  return totp.map((factor) => ({ id: factor.id, friendlyName: factor.friendly_name }));
 }
 
 /**
  * Entfernt einen nativen Faktor. Owner-Aufruf ausschließlich clientseitig auf den eigenen
  * Faktor der aktuellen Session (Self-Service-Reset). Ein serverseitiger, Owner-kontrollierter
- * Recovery-Pfad für Fremdzurücksetzung ist nicht Teil dieses Work-Packages.
+ * Recovery-Pfad für Fremdzurücksetzung ist nicht Teil dieses Work-Packages (siehe Roadmap
+ * "Verbotene Operationen": keine Faktor-Reset-Operation für andere Nutzer/ohne Owner-Kontrolle).
  */
 export async function unenrollTotpFactor(client: SupabaseClient, factorId: string): Promise<void> {
   if (!factorId) throw new NativeMfaError('factorId fehlt.');

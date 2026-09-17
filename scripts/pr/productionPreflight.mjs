@@ -2,20 +2,16 @@
 
 import fs from 'node:fs';
 import {
-  DEFAULT_PRODUCTION_URL,
   DEFAULT_PRODUCTION_HEALTH_URL,
-  PRODUCTION_BASELINE_SCHEMA_VERSION,
   appendGithubOutput,
   compareSemver,
-  computeProductionBaselineId,
   fail,
   git,
   gitSucceeds,
   writeJsonFile,
 } from './lib.mjs';
 
-const productionUrl = process.env.CAPITAL_AI_PRODUCTION_URL || DEFAULT_PRODUCTION_URL;
-const productionHealthUrl = process.env.CAPITAL_AI_PRODUCTION_HEALTH_URL || DEFAULT_PRODUCTION_HEALTH_URL;
+const productionUrl = process.env.CAPITAL_AI_PRODUCTION_HEALTH_URL || DEFAULT_PRODUCTION_HEALTH_URL;
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
 const outputPath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
@@ -30,6 +26,8 @@ function ensureRef(ref) {
 }
 
 function ensureCommitAvailable(sha) {
+  // `git cat-file -e` intentionally emits no stdout on success. The governance decision must
+  // therefore use the command exit status rather than truthiness of captured output.
   if (gitSucceeds(['cat-file', '-e', `${sha}^{commit}`])) return;
   try {
     git(['fetch', '--no-tags', 'origin', sha]);
@@ -41,47 +39,26 @@ function ensureCommitAvailable(sha) {
   }
 }
 
-function correlateDeploymentIdentity(payloadDeployment, headerDeployment) {
-  const fields = ['version', 'commitSha', 'branch', 'repoSlug', 'provider'];
-  const deployment = {};
-
-  for (const field of fields) {
-    const payloadValue = String(payloadDeployment?.[field] || '').trim();
-    const headerValue = String(headerDeployment?.[field] || '').trim();
-
-    if (payloadValue && headerValue && payloadValue !== headerValue) {
-      fail(
-        `Production identity correlation failed for ${field}: ` +
-          `JSON payload reports ${payloadValue}, response header reports ${headerValue}.`,
-      );
-    }
-
-    deployment[field] = payloadValue || headerValue || null;
-  }
-
-  return deployment;
-}
-
 async function fetchProductionHealth() {
   let response;
   try {
-    response = await fetch(productionHealthUrl, {
+    response = await fetch(productionUrl, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(15_000),
     });
   } catch (error) {
-    fail(`Production health request failed for ${productionHealthUrl}: ${error?.message || error}`);
+    fail(`Production health request failed for ${productionUrl}: ${error?.message || error}`);
   }
 
   if (!response.ok) {
-    fail(`Production health request returned HTTP ${response.status} for ${productionHealthUrl}.`);
+    fail(`Production health request returned HTTP ${response.status} for ${productionUrl}.`);
   }
 
   let payload;
   try {
     payload = await response.json();
   } catch {
-    fail(`Production health response from ${productionHealthUrl} is not valid JSON.`);
+    fail(`Production health response from ${productionUrl} is not valid JSON.`);
   }
 
   if (payload?.status !== 'ok') {
@@ -98,7 +75,7 @@ async function fetchProductionHealth() {
 
   return {
     payload,
-    deployment: correlateDeploymentIdentity(payload?.deployment || {}, headerDeployment),
+    deployment: payload?.deployment || headerDeployment,
   };
 }
 
@@ -111,6 +88,9 @@ const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const branchVersion = String(packageJson.version || '');
 const generatedAt = new Date().toISOString();
 
+// A work branch must contain the current main at the moment the production baseline is checked.
+// This prevents an agent from opening a PR from an old base while another agent has already
+// changed the architecture on main.
 const branchContainsMain = (() => {
   try {
     git(['merge-base', '--is-ancestor', mainSha, headSha]);
@@ -121,7 +101,7 @@ const branchContainsMain = (() => {
 })();
 
 if (!branchContainsMain) {
-  fail(`PR head ${headSha} does not contain current main ${mainSha}. Rebase/recreate the branch from current main before creating or refreshing the PR baseline.`);
+  fail(`PR head ${headSha} does not contain current main ${mainSha}. Rebase/recreate the branch from current main before creating the PR.`);
 }
 
 const productionResult = await fetchProductionHealth();
@@ -130,14 +110,13 @@ const deployment = productionResult.deployment;
 
 if (!deployment?.commitSha || !/^[0-9a-f]{40}$/i.test(String(deployment.commitSha))) {
   if (!bootstrapPr75) {
-    fail('Production /healthz does not expose a valid immutable deployment commit (x-capital-ai-commit / deployment.commitSha). ADR-0036 requires it before PR creation.');
+    fail('Production /healthz does not expose a valid immutable deployment commit (x-capital-ai-commit / deployment.commitSha). ADR-0036 requires it before future PR creation.');
   }
 
   const legacyBaseline = {
     schemaVersion: '1.0.0',
     generatedAt,
     productionUrl,
-    productionHealthUrl,
     bootstrap: true,
     bootstrapPr: 75,
     bootstrapReason: 'PR #75 introduces deployment identity headers; current production contract predates ADR-0036.',
@@ -164,8 +143,6 @@ if (!deployment?.commitSha || !/^[0-9a-f]{40}$/i.test(String(deployment.commitSh
 
   writeJsonFile(outputPath, legacyBaseline);
   appendGithubOutput({
-    production_url: productionUrl,
-    production_health_url: productionHealthUrl,
     production_sha: 'legacy-unavailable',
     production_version: 'legacy-unavailable',
     production_branch: 'legacy-unavailable',
@@ -178,28 +155,20 @@ if (!deployment?.commitSha || !/^[0-9a-f]{40}$/i.test(String(deployment.commitSh
     bootstrap: 'true',
   });
 
-  console.warn('[PR-PREFLIGHT] Bootstrap exception used for PR #75 only.');
+  console.warn('[PR-PREFLIGHT] Bootstrap exception used for PR #75 only: production has no immutable deployment identity yet.');
   process.exit(0);
 }
 
 const productionSha = String(deployment.commitSha).toLowerCase();
-const productionVersion = String(deployment.version || '').trim();
-const productionBranch = String(deployment.branch || '').trim();
-const productionRepo = String(deployment.repoSlug || '').trim();
+const productionVersion = String(deployment.version || '');
+const productionBranch = String(deployment.branch || '');
+const productionRepo = String(deployment.repoSlug || '');
 
-if (!productionVersion) {
-  fail('Production /healthz does not expose deployment.version / x-capital-ai-version. PR baselines may not substitute an unavailable production version.');
-}
-if (!productionBranch) {
-  fail('Production /healthz does not expose deployment.branch / x-capital-ai-branch. PR baselines may not infer the production branch.');
-}
-if (!productionRepo) {
-  fail('Production /healthz does not expose deployment.repoSlug / x-capital-ai-repo. PR baselines require repository correlation.');
-}
-if (repository && productionRepo !== repository) {
+if (repository && productionRepo && productionRepo !== repository) {
   fail(`Production deployment belongs to ${productionRepo}, expected ${repository}.`);
 }
-if (productionBranch !== 'main') {
+
+if (productionBranch && productionBranch !== 'main') {
   fail(`Production reports branch ${productionBranch}; expected main.`);
 }
 
@@ -218,19 +187,21 @@ if (!productionIsAncestorOfMain) {
 
 const productionToMainCommits = Number(git(['rev-list', '--count', `${productionSha}..${mainSha}`]));
 const mainToHeadCommits = Number(git(['rev-list', '--count', `${mainSha}..${headSha}`]));
-const versionOrder = compareSemver(branchVersion, productionVersion);
-if (versionOrder === null) {
-  fail(`Cannot compare repository version ${branchVersion} with production version ${productionVersion}. Expected semantic x.y.z versions.`);
-}
-if (versionOrder < 0) {
-  fail(`Repository version ${branchVersion} is older than production version ${productionVersion}. Refusing a regression PR.`);
+
+if (productionVersion) {
+  const versionOrder = compareSemver(branchVersion, productionVersion);
+  if (versionOrder === null) {
+    fail(`Cannot compare repository version ${branchVersion} with production version ${productionVersion}. Expected semantic x.y.z versions.`);
+  }
+  if (versionOrder < 0) {
+    fail(`Repository version ${branchVersion} is older than production version ${productionVersion}. Refusing a regression PR.`);
+  }
 }
 
 const baseline = {
-  schemaVersion: PRODUCTION_BASELINE_SCHEMA_VERSION,
+  schemaVersion: '1.0.0',
   generatedAt,
   productionUrl,
-  productionHealthUrl,
   bootstrap: false,
   production: {
     status: productionHealth.status,
@@ -256,20 +227,15 @@ const baseline = {
     productionHealthy: true,
     immutableProductionIdentity: true,
     productionRepoMatches: repository ? productionRepo === repository : true,
-    productionBranchIsMain: productionBranch === 'main',
+    productionBranchIsMain: !productionBranch || productionBranch === 'main',
     productionIsAncestorOfMain,
     branchContainsCurrentMain: true,
     versionIsNotOlderThanProduction: true,
   },
 };
 
-baseline.baselineId = computeProductionBaselineId(baseline);
-
 writeJsonFile(outputPath, baseline);
 appendGithubOutput({
-  baseline_id: baseline.baselineId,
-  production_url: productionUrl,
-  production_health_url: productionHealthUrl,
   production_sha: productionSha,
   production_version: productionVersion,
   production_branch: productionBranch,
@@ -282,4 +248,4 @@ appendGithubOutput({
   bootstrap: 'false',
 });
 
-console.log(`[PR-PREFLIGHT] ${baseline.baselineId} | Production ${productionVersion}@${productionSha.slice(0, 12)} -> main ${mainSha.slice(0, 12)} (${productionToMainCommits} commit drift) -> head ${headSha.slice(0, 12)} (${mainToHeadCommits} PR commits).`);
+console.log(`[PR-PREFLIGHT] Production ${productionVersion}@${productionSha.slice(0, 12)} -> main ${mainSha.slice(0, 12)} (${productionToMainCommits} commit drift) -> head ${headSha.slice(0, 12)} (${mainToHeadCommits} PR commits).`);

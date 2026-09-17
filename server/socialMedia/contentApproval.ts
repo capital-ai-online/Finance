@@ -7,8 +7,8 @@
  * was granted for (ESS-0024 §10, ADR-0080 security invariant 5). Without that
  * binding an approval is a bare token: the Owner approves one text and the
  * publish call may carry a different one under the same approvalId. Any
- * material change to caption, title, hashtags, media asset, disclosures,
- * provenance identity, links or platform set therefore invalidates the approval.
+ * material change to caption, title, hashtags, media asset or platform set
+ * therefore invalidates the approval.
  */
 
 import { createHash } from 'node:crypto';
@@ -25,13 +25,6 @@ export interface ApprovalContentDescriptor {
   /** Asset URL — a swapped media file is a material change (ESS-0024 §10). */
   mediaUrl?: string;
   mediaType?: string;
-  /** SOCIAL-P0 canonical package/provenance correlation fields. */
-  contentPackageId?: string;
-  sourceContentId?: string;
-  sourceDomain?: string;
-  disclosures?: string[];
-  links?: string[];
-  referralDisclosure?: string;
 }
 
 function normalizeText(value: unknown): string {
@@ -66,12 +59,6 @@ export function computeContentHash(input: ApprovalContentDescriptor): string {
     videoTitle: normalizeText(input.videoTitle),
     mediaUrl: normalizeText(input.mediaUrl),
     mediaType: normalizeText(input.mediaType),
-    contentPackageId: normalizeText(input.contentPackageId),
-    sourceContentId: normalizeText(input.sourceContentId),
-    sourceDomain: normalizeText(input.sourceDomain),
-    disclosures: normalizeList(input.disclosures),
-    links: normalizeList(input.links),
-    referralDisclosure: normalizeText(input.referralDisclosure),
   });
 
   return createHash('sha256').update(canonical).digest('hex');
@@ -205,7 +192,7 @@ class ContentApprovalStore {
     const publishHash = computeContentHash(content || {});
     if (publishHash !== row.contentHash) {
       throw new Error(
-        'content does not match the approved version (caption, title, hashtags, media asset, disclosures, provenance, links or platform set changed) - re-approval required',
+        'content does not match the approved version (caption, title, hashtags, media asset or platform set changed) - re-approval required',
       );
     }
 

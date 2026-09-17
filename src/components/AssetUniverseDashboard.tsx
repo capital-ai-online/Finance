@@ -24,7 +24,6 @@ import {
   TrendingDown,
   Percent
 } from 'lucide-react';
-import { CommodityEvaluationWorkspace } from '../features/commodities/ui';
 
 interface AssetClassConfig {
   id: string;
@@ -37,7 +36,7 @@ interface AssetClassConfig {
     description: string;
     institutionTool: string;
     metricLabel: string;
-    initialValue: number | null;
+    initialValue: number;
     unit: string;
   }[];
   weights: {
@@ -197,53 +196,48 @@ export function AssetUniverseDashboard() {
     },
     {
       id: 'commodities',
-      name: 'Commodities',
+      name: 'Rohstoffe',
       icon: <Orbit size={16} />,
-      description: 'Kombiniert den verifizierten Commodity-Markt-Score mit klar getrennten Research-, Klassifizierungs- und Sandbox-Werkzeugen des Rohstoff-Orchestrators.',
-      scoringEngineName: 'ScoringDispatcher + Rohstoff-Orchestrator (Research)',
+      description: 'Analysiere physische, fossile und kritische Rohstoffe nach Geopolitik, Spot/Forward Curves, Angebot/Nachfrage-Zyklen und Hedging-Effizienz.',
+      scoringEngineName: 'Rohstoff-Orchestrator v0.7.0 Multi-Agenten Scoring',
       weights: {
-        'trend': 0.30,
-        'momentum': 0.25,
-        'breakout_quality': 0.20,
-        'volatility_quality': 0.25
+        'curve': 0.30,
+        'supplyDemand': 0.35,
+        'hedgeRisk': 0.35
       },
-      formulaText: 'Canonical Market Score = Trend × 0.30 + Momentum × 0.25 + Breakout Quality × 0.20 + Volatility Quality × 0.25',
-      valuationLogic: 'Der produktive Markt-Score nutzt ausschließlich verifizierte Preis-Historie. Strukturelle Rohstoff-, Risiko- und Kritikalitätswerte bleiben davon getrennte, nicht kanonische Research-Projektionen.',
+      formulaText: 'Score = (ForwardCurveStructure * 0.30) + (SupplyDemandSeasonality * 0.35) + (HedgeRiskScore * 0.35)',
+      valuationLogic: 'Koppelt das physische Multi-Agenten-Scoring an Terminmarktdaten. Analysiert, ob sich der Markt in Contango oder Backwardation befindet, berechnet Ernte- und Förderzyklen und quantifiziert geopolitische Blockaderisiken.',
       features: [
         {
-          title: 'Trend',
-          description: 'Verifizierter Trendfaktor aus realen täglichen Schlusskursen.',
-          institutionTool: 'Commodity Evidence Scoring',
-          metricLabel: 'Trendfaktor',
-          initialValue: null,
+          title: 'Spot / Forward Curve',
+          description: 'Berechnet die Spanne zwischen Spot- und Future-Preisen. Backwardation signalisiert akute Knappheit (Bullish), Contango zeigt Überangebot.',
+          institutionTool: 'Forward Curve Analyzer',
+          metricLabel: 'Backwardation Stärke',
+          initialValue: 88,
           unit: '/ 100'
         },
         {
-          title: 'Momentum',
-          description: 'Verifiziertes Preis-Momentum aus derselben evidenzgebundenen Historie.',
-          institutionTool: 'Commodity Evidence Scoring',
-          metricLabel: 'Momentumfaktor',
-          initialValue: null,
+          title: 'Supply / Demand / Seasonality',
+          description: 'Konsolidiert Lagerbestände (LME Warehouses), Förderdaten der Bergbaukonzerne und saisonale Ernte- und Kältezyklen.',
+          institutionTool: 'Global Warehouse Tracker',
+          metricLabel: 'Nachfrageüberhang',
+          initialValue: 70,
           unit: '/ 100'
         },
         {
-          title: 'Breakout Quality',
-          description: 'Position des letzten verifizierten Kurses innerhalb der beobachteten Handelsspanne.',
-          institutionTool: 'Commodity Evidence Scoring',
-          metricLabel: 'Breakout-Qualität',
-          initialValue: null,
-          unit: '/ 100'
-        },
-        {
-          title: 'Volatility Quality',
-          description: 'Qualitätsfaktor auf Basis der realisierten täglichen Renditevolatilität.',
-          institutionTool: 'Commodity Evidence Scoring',
-          metricLabel: 'Volatilitätsqualität',
-          initialValue: null,
+          title: 'Hedge-Risk (Orchestrator)',
+          description: 'Greift auf die Capital-AI Multi-Agenten-Risikoresilienz-Scores zu, um Transportwege, ESG-Restriktionen und Produzentenmonopole zu überwachen.',
+          institutionTool: 'Rohstoff-Orchestrator Engine',
+          metricLabel: 'Lieferketten-Resilienz',
+          initialValue: 62,
           unit: '/ 100'
         }
       ],
-      exampleValues: []
+      exampleValues: [
+        { asset: 'Kupfer (CU)', score: 71.5, signal: 'WATCH', metrics: { 'Kurve': 'Backwardation', 'Inventar': 'Kritisch Niedrig', 'Länderrisiko': 'Chilenische Streiks' } },
+        { asset: 'Lithium (LI)', score: 42.1, signal: 'AVOID', metrics: { 'Kurve': 'Contango (Überfluss)', 'Inventar': 'Hoch', 'Länderrisiko': 'China Konzentration' } },
+        { asset: 'Gold (AU)', score: 86.8, signal: 'BUY', metrics: { 'Kurve': 'Stabile Basis', 'Inventar': 'Hohe Zentralbank-Käufe', 'Länderrisiko': 'Sehr Sicher' } }
+      ]
     },
     {
       id: 'forex',
@@ -303,6 +297,9 @@ export function AssetUniverseDashboard() {
     'indices-breadth': 67,
     'indices-regime': 72,
     'indices-volFilter': 85,
+    'commodities-curve': 88,
+    'commodities-supplyDemand': 70,
+    'commodities-hedgeRisk': 62,
     'forex-macro': 65,
     'forex-rotation': 78,
     'forex-hedgeEfficiency': 82
@@ -332,6 +329,11 @@ export function AssetUniverseDashboard() {
       if (cleanTitle.includes('regime')) return 'indices-regime';
       return 'indices-volFilter';
     }
+    if (assetClassId === 'commodities') {
+      if (cleanTitle.includes('curve')) return 'commodities-curve';
+      if (cleanTitle.includes('seasonality') || cleanTitle.includes('demand')) return 'commodities-supplyDemand';
+      return 'commodities-hedgeRisk';
+    }
     if (assetClassId === 'forex') {
       if (cleanTitle.includes('zins') || cleanTitle.includes('macro')) return 'forex-macro';
       if (cleanTitle.includes('rotation') || cleanTitle.includes('volatilität')) return 'forex-rotation';
@@ -357,6 +359,10 @@ export function AssetUniverseDashboard() {
       score = sliderValues['indices-breadth'] * config.weights.breadth + 
               sliderValues['indices-regime'] * config.weights.regime + 
               sliderValues['indices-volFilter'] * config.weights.volFilter;
+    } else if (config.id === 'commodities') {
+      score = sliderValues['commodities-curve'] * config.weights.curve + 
+              sliderValues['commodities-supplyDemand'] * config.weights.supplyDemand + 
+              sliderValues['commodities-hedgeRisk'] * config.weights.hedgeRisk;
     } else if (config.id === 'forex') {
       score = sliderValues['forex-macro'] * config.weights.macro + 
               sliderValues['forex-rotation'] * config.weights.rotation + 
@@ -391,7 +397,7 @@ export function AssetUniverseDashboard() {
         label: f.title,
         description: f.description,
         tool: f.institutionTool,
-        initial_value: sliderValues[getFeatureSliderId(ac.id, f.title)] ?? f.initialValue
+        initial_value: sliderValues[getFeatureSliderId(ac.id, f.title)] || f.initialValue
       }))
     }))
   }, null, 2);
@@ -457,10 +463,7 @@ export function AssetUniverseDashboard() {
         ))}
       </div>
 
-      {activeTab === 'commodities' ? (
-        <CommodityEvaluationWorkspace />
-      ) : (
-      /* Main Tab View Card Grid — Phase 1: gap-6 section rhythm */
+      {/* Main Tab View Card Grid — Phase 1: gap-6 section rhythm */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left Side: Overview & Features */}
@@ -520,7 +523,7 @@ export function AssetUniverseDashboard() {
                           type="range"
                           min="0"
                           max="100"
-                          value={sliderValues[getFeatureSliderId(activeConfig.id, feat.title)] ?? feat.initialValue ?? 0}
+                          value={sliderValues[getFeatureSliderId(activeConfig.id, feat.title)] ?? feat.initialValue}
                           onChange={(e) => {
                             const mapId = getFeatureSliderId(activeConfig.id, feat.title);
                             handleSliderChange(mapId, parseInt(e.target.value));
@@ -528,7 +531,7 @@ export function AssetUniverseDashboard() {
                           className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-aif-gold-DEFAULT"
                         />
                         <span className="font-mono text-xs font-bold text-white shrink-0 min-w-[45px] text-right">
-                          {sliderValues[getFeatureSliderId(activeConfig.id, feat.title)] ?? feat.initialValue ?? 0} {feat.unit}
+                          {sliderValues[getFeatureSliderId(activeConfig.id, feat.title)] ?? feat.initialValue} {feat.unit}
                         </span>
                       </div>
                     </div>
@@ -702,7 +705,6 @@ export function AssetUniverseDashboard() {
         </div>
 
       </div>
-      )}
 
     </div>
   );

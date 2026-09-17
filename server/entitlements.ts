@@ -6,10 +6,6 @@ import {
   type SubscriptionTier,
 } from '../src/config/subscriptionEntitlements';
 import { enforceBuffettValueCheckQuota } from './quota';
-import {
-  evaluatePaidAnalysisAccess,
-  paidAnalysisDecisionBody,
-} from './middleware/paidAnalysisEntitlement';
 
 export const entitlementsRouter = express.Router();
 
@@ -22,11 +18,6 @@ entitlementsRouter.get('/plans', (_req, res) => {
       rule: 'Guest users have no Warren Buffett Value Check access.',
     },
   });
-});
-
-entitlementsRouter.post('/monte-carlo/authorize', async (req, res) => {
-  const decision = await evaluatePaidAnalysisAccess(req, 'monte_carlo');
-  return res.status(decision.status).json(paidAnalysisDecisionBody(decision));
 });
 
 entitlementsRouter.post('/warren-buffett/authorize', express.json(), async (req, res) => {
@@ -46,20 +37,6 @@ entitlementsRouter.post('/warren-buffett/authorize', express.json(), async (req,
       symbol,
       reason: 'asset-not-found',
       contractVersion: 'subscription-entitlements/1.0.0',
-    });
-  }
-
-  // ADR-0034 + ADR-0032 revalidation: Buffett is a stock-only domain consumer.
-  // Reject an ineligible catalog asset before quota enforcement so invalid asset classes cannot
-  // consume quota or reach downstream verified-display/provider hydration.
-  if (asset.type !== 'stock') {
-    return res.status(422).json({
-      allowed: false,
-      symbol,
-      assetType: asset.type,
-      reason: 'asset-not-eligible',
-      contractVersion: 'subscription-entitlements/1.0.0',
-      rule: 'Warren Buffett Value Check is available for stocks only.',
     });
   }
 

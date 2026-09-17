@@ -4,14 +4,12 @@
 // dort bereits ueber Jahre gegen reale SMTP-Server gehaertet) statt einer eigenen
 // Protokoll-Implementierung. Alle Zugangsdaten ausschliesslich ueber Umgebungsvariablen.
 
-import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import { getCleanEnv } from './env';
 import { getServerSupabase, isSupabaseConfigured } from './db';
 import { enqueueOutboxJob } from './outbox';
-import { escapeHtml, htmlToPlainText } from '../src/platform/Security/safeIo';
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
 
@@ -25,6 +23,7 @@ function getTransporter() {
     transporter = nodemailer.createTransport({
       host: getCleanEnv('SMTP_HOST'),
       port,
+      // Port 465 = implizites TLS von Anfang an; 587 = STARTTLS nach Verbindungsaufbau.
       secure: port === 465,
       auth: {
         user: getCleanEnv('SMTP_USER'),
@@ -35,20 +34,6 @@ function getTransporter() {
   return transporter;
 }
 
-function logCorrelationRef(value: string): string {
-  return crypto.createHash('sha256').update(value).digest('hex').slice(0, 12);
-}
-
-function mailerErrorCode(err: unknown): string {
-  if (err && typeof err === 'object') {
-    const code = (err as { code?: unknown }).code;
-    if (typeof code === 'string' && /^[A-Z0-9_-]{1,64}$/i.test(code)) {
-      return code;
-    }
-  }
-  return 'mail-operation-failed';
-}
-
 export interface SendMailParams {
   to: string;
   subject: string;
@@ -56,6 +41,11 @@ export interface SendMailParams {
   text?: string;
 }
 
+/**
+ * Versendet eine System-E-Mail ueber das konfigurierte SMTP-Konto. Wirft NIE eine
+ * Exception nach aussen - ein fehlgeschlagener E-Mail-Versand darf niemals die
+ * Subscription-Projektion in Supabase beeinflussen.
+ */
 export async function sendMail(params: SendMailParams): Promise<{ success: boolean; error?: string }> {
   if (!isMailerConfigured()) {
     console.warn('[Mailer] SMTP_HOST/SMTP_USER/SMTP_PASSWORD nicht vollstaendig gesetzt - E-Mail-Versand übersprungen.');
@@ -68,19 +58,18 @@ export async function sendMail(params: SendMailParams): Promise<{ success: boole
       to: params.to,
       subject: params.subject,
       html: params.html,
-      text: params.text || htmlToPlainText(params.html),
+      text: params.text || params.html.replace(/<[^>]+>/g, ''),
     });
-    console.log('[Mailer] E-Mail erfolgreich versendet.');
+    console.log(`[Mailer] E-Mail an ${params.to} gesendet: "${params.subject}"`);
     return { success: true };
-  } catch (err: unknown) {
-    const error = mailerErrorCode(err);
-    console.error(`[Mailer] Versand fehlgeschlagen (${error}).`);
-    return { success: false, error };
+  } catch (err: any) {
+    console.error(`[Mailer] Versand an ${params.to} fehlgeschlagen:`, err?.message || err);
+    return { success: false, error: err?.message || 'unknown' };
   }
 }
 
 export function buildSubscriptionActivatedEmail(planId: string, email: string): { subject: string; html: string } {
-  const planLabel = escapeHtml(String(planId).charAt(0).toUpperCase() + String(planId).slice(1).toLowerCase());
+  const planLabel = String(planId).charAt(0).toUpperCase() + String(planId).slice(1).toLowerCase();
   return {
     subject: `Ihr CAPITAL-AI ${planLabel}-Abonnement ist aktiv`,
     html: `
@@ -96,38 +85,56 @@ export function buildSubscriptionActivatedEmail(planId: string, email: string): 
 }
 
 export interface SubscriptionConfirmationData {
+  /** Stripe Plan-/Preis-Bezeichner aus session.metadata.plan_id. */
   planId: string;
+  /**
+   * Stripe Checkout Session ID (session.id). Dient als Idempotenz-Schluessel -
+   * derselbe Checkout-Abschluss darf niemals zwei E-Mail-Paare ausloesen, auch
+   * wenn Stripe denselben Webhook mehrfach zustellt oder manuell erneut sendet.
+   */
   sessionId: string;
   userId?: string;
   amountTotal?: number | null;
   currency?: string | null;
 }
 
-export function buildOwnerSubscriptionNotificationEmail(
+function buildOwnerSubscriptionNotificationEmail(
   customerEmail: string,
   data: SubscriptionConfirmationData
 ): { subject: string; html: string } {
   const amount =
     typeof data.amountTotal === 'number' && data.currency
-      ? `${(data.amountTotal / 100).toFixed(2)} ${escapeHtml(data.currency.toUpperCase())}`
+      ? `${(data.amountTotal / 100).toFixed(2)} ${data.currency.toUpperCase()}`
       : 'unbekannt';
   return {
-    subject: `Neues Abo aktiviert: ${data.planId}`,
+    subject: `Neues Abo aktiviert: ${data.planId} (${customerEmail || data.userId || 'unbekannt'})`,
     html: `
       <div style="font-family: sans-serif;">
         <h3>Neue Abo-Aktivierung</h3>
         <ul>
-          <li><strong>Plan:</strong> ${escapeHtml(data.planId)}</li>
-          <li><strong>E-Mail:</strong> ${customerEmail ? escapeHtml(customerEmail) : '(unbekannt)'}</li>
-          <li><strong>User-ID:</strong> ${data.userId ? escapeHtml(data.userId) : '(unbekannt)'}</li>
+          <li><strong>Plan:</strong> ${data.planId}</li>
+          <li><strong>E-Mail:</strong> ${customerEmail || '(unbekannt)'}</li>
+          <li><strong>User-ID:</strong> ${data.userId || '(unbekannt)'}</li>
           <li><strong>Betrag:</strong> ${amount}</li>
-          <li><strong>Stripe Checkout Session:</strong> ${escapeHtml(data.sessionId)}</li>
+          <li><strong>Stripe Checkout Session:</strong> ${data.sessionId}</li>
         </ul>
       </div>
     `,
   };
 }
 
+// --- Atomic reservation fuer sendSubscriptionConfirmation() -------------------
+//
+// ADR-0045 / R-003: Die fruehere Supabase-Sequenz SELECT -> UPSERT war nicht atomar.
+// Zwei parallele Webhook-Aufrufe konnten beide "noch nicht gesendet" lesen und danach
+// beide senden. public.claim_subscription_confirmation(session_id) fuehrt jetzt ein
+// einziges INSERT ... ON CONFLICT DO NOTHING in PostgreSQL aus und liefert zurueck,
+// welcher Aufrufer die Reservation gewonnen hat.
+//
+// Die lokale Datei bleibt ausschliesslich fuer Entwicklung ohne Supabase erhalten.
+// In Produktion darf ein fehlender/fehlerhafter Supabase-Claim NICHT auf Renders
+// ephemeres Dateisystem zurueckfallen, weil dadurch horizontale/redeploy-sichere
+// Idempotenz wieder verloren ginge.
 const SUBSCRIPTION_CONFIRMATIONS_FILE = path.join(process.cwd(), 'uploads', 'subscription_confirmations_sent.json');
 const MAX_TRACKED_CONFIRMATIONS = 1000;
 
@@ -183,12 +190,20 @@ async function claimSubscriptionConfirmation(sessionId: string): Promise<Confirm
     });
     if (error) throw error;
     return data === true ? { status: 'claimed' } : { status: 'duplicate' };
-  } catch (err: unknown) {
-    const error = mailerErrorCode(err);
-    console.error(`[Mailer] Atomic confirmation reservation in Supabase failed; mail send blocked (${error}).`);
+  } catch (err: any) {
+    console.error('[Mailer] Atomic confirmation reservation in Supabase failed; mail send blocked:', err?.message || err);
     return { status: 'unavailable', error: 'confirmation-reservation-failed' };
   }
 }
+
+// --- ADR-0054 / R-101: outbox-backed retry for a failed confirmation-mail send ---------------
+//
+// OPS-001 (2026-08-10) showed the gap this closes: claimSubscriptionConfirmation() reserves the
+// Checkout Session BEFORE the SMTP attempt, so a subsequent SMTP failure (e.g. rotated
+// SMTP_PASSWORD) permanently consumes the reservation with no automated retry -- the customer
+// confirmation mail could never be sent again through the direct-send path alone. Scheduling
+// this job is best-effort and mirrors sendMail()'s own contract: it must never throw into the
+// webhook response path, and it never re-attempts the reservation itself (already won above).
 
 export type ConfirmationMailRecipientKind = 'customer' | 'owner';
 
@@ -206,7 +221,6 @@ async function scheduleConfirmationMailRetry(
   to: string,
   message: { subject: string; html: string }
 ): Promise<void> {
-  const ref = logCorrelationRef(sessionId);
   try {
     const result = await enqueueOutboxJob({
       jobType: 'subscription_confirmation_mail',
@@ -214,14 +228,19 @@ async function scheduleConfirmationMailRetry(
       payload: { kind, to, subject: message.subject, html: message.html, sessionId },
     });
     if (result.enqueued) {
-      console.log(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail eingeplant (Ref ${ref}, Job ${result.jobId}).`);
+      console.log(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail eingeplant (Session ${sessionId}, Job ${result.jobId}).`);
     }
-  } catch (err: unknown) {
-    const error = mailerErrorCode(err);
-    console.error(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail konnte nicht eingeplant werden (Ref ${ref}, ${error}).`);
+  } catch (err: any) {
+    console.error(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail konnte nicht eingeplant werden (Session ${sessionId}):`, err?.message || err);
   }
 }
 
+/**
+ * Handler for the 'subscription_confirmation_mail' outbox job type
+ * (server/outboxWorker.ts / ADR-0054). Re-attempts the SMTP send from the stored payload; the
+ * reservation itself is not re-checked here since it was already won before the job was
+ * scheduled. Throws on failure so the worker records a backoff retry / eventual dead-letter.
+ */
 export async function processSubscriptionConfirmationMailJob(
   payload: Record<string, unknown>
 ): Promise<void> {
@@ -231,16 +250,22 @@ export async function processSubscriptionConfirmationMailJob(
   }
   const result = await sendMail({ to, subject, html });
   if (!result.success) {
-    throw new Error(result.error || `send failed for ${kind} confirmation mail (Ref ${logCorrelationRef(sessionId || 'missing')})`);
+    throw new Error(result.error || `send failed for ${kind} confirmation mail (Session ${sessionId})`);
   }
 }
 
 export interface SubscriptionConfirmationResult {
+  /** true, wenn dieser Aufruf wegen bereits erfolgter/in-flight Zustellung uebersprungen wurde. */
   skippedAsDuplicate: boolean;
   customer: { attempted: boolean; success: boolean; error?: string };
   owner: { attempted: boolean; success: boolean; error?: string };
 }
 
+/**
+ * Versendet die Abo-Bestaetigung an den Kunden und die interne Benachrichtigung
+ * an den Owner. Die Reservation erfolgt VOR SMTP und atomar je Checkout Session.
+ * SMTP-Fehler werden als Ergebnis zurueckgegeben, aber nicht geworfen.
+ */
 export async function sendSubscriptionConfirmation(
   customerEmail: string,
   ownerEmail: string,
@@ -257,10 +282,9 @@ export async function sendSubscriptionConfirmation(
     };
   }
 
-  const ref = logCorrelationRef(sessionId);
   const reservation = await claimSubscriptionConfirmation(sessionId);
   if (reservation.status === 'duplicate') {
-    console.log(`[Mailer] Abo-Bestaetigung bereits reserviert/versendet - Duplikat uebersprungen (Ref ${ref}).`);
+    console.log(`[Mailer] Abo-Bestaetigung fuer Session ${sessionId} bereits reserviert/versendet - Duplikat uebersprungen.`);
     return {
       skippedAsDuplicate: true,
       customer: { attempted: false, success: false },
@@ -286,17 +310,17 @@ export async function sendSubscriptionConfirmation(
   const customerResult =
     customerOutcome.status === 'fulfilled'
       ? customerOutcome.value
-      : { success: false, error: mailerErrorCode(customerOutcome.reason) };
+      : { success: false, error: customerOutcome.reason?.message || 'unknown' };
   const ownerResult =
     ownerOutcome.status === 'fulfilled'
       ? ownerOutcome.value
-      : { success: false, error: mailerErrorCode(ownerOutcome.reason) };
+      : { success: false, error: ownerOutcome.reason?.message || 'unknown' };
 
   if (customerAttempted) {
     console.log(
       customerResult.success
-        ? `[Mailer] Abo-Bestaetigung an Kunden gesendet (Ref ${ref}).`
-        : `[Mailer] Abo-Bestaetigung an Kunden fehlgeschlagen (Ref ${ref}, ${customerResult.error}).`
+        ? `[Mailer] Abo-Bestaetigung an Kunde ${customerEmail} gesendet (Session ${sessionId}).`
+        : `[Mailer] Abo-Bestaetigung an Kunde ${customerEmail} fehlgeschlagen (Session ${sessionId}): ${customerResult.error}`
     );
     if (!customerResult.success) {
       await scheduleConfirmationMailRetry(
@@ -307,12 +331,12 @@ export async function sendSubscriptionConfirmation(
       );
     }
   } else {
-    console.warn(`[Mailer] Keine Kunden-E-Mail fuer Abo-Bestaetigung vorhanden; Owner-Benachrichtigung erfolgt trotzdem (Ref ${ref}).`);
+    console.warn(`[Mailer] Keine Kunden-E-Mail fuer Session ${sessionId} bekannt - Bestaetigung nicht versendet, Owner-Benachrichtigung erfolgt trotzdem.`);
   }
   console.log(
     ownerResult.success
-      ? `[Mailer] Owner-Benachrichtigung gesendet (Ref ${ref}).`
-      : `[Mailer] Owner-Benachrichtigung fehlgeschlagen (Ref ${ref}, ${ownerResult.error}).`
+      ? `[Mailer] Owner-Benachrichtigung an ${ownerEmail} gesendet (Session ${sessionId}).`
+      : `[Mailer] Owner-Benachrichtigung an ${ownerEmail} fehlgeschlagen (Session ${sessionId}): ${ownerResult.error}`
   );
   if (!ownerResult.success) {
     await scheduleConfirmationMailRetry(

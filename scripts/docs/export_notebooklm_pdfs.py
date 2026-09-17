@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Bundle repository Markdown into branded, tagged NotebookLM source PDFs.
+"""Bundle every Markdown document of this repository into thematic PDFs.
 
-The Documentation-as-Code export uses semantic HTML and WeasyPrint PDF/UA-1
-output with tags. It intentionally remains separate from client-side jsPDF
-reports, whose accessibility profile is metadata-only.
+The PDFs are meant as hand-over sources for NotebookLM (podcast / video
+generation). NotebookLM ingests text-based PDFs, so the output is plain,
+selectable text with a cover page, a linked table of contents and a visible
+repository path for every embedded document.
 
-Install the pinned toolchain with:
+Dependencies (not part of the Node toolchain of this repository):
 
-    pip install -r scripts/docs/requirements-notebooklm-pdf.txt
+    pip install markdown weasyprint pygments
 
 Usage:
 
     python3 scripts/docs/export_notebooklm_pdfs.py
     python3 scripts/docs/export_notebooklm_pdfs.py --only 04
     python3 scripts/docs/export_notebooklm_pdfs.py --out-dir /tmp/pdf
-    python3 scripts/docs/export_notebooklm_pdfs.py --smoke --out-dir /tmp/pdf
 
 Every Markdown file below the scanned roots must be claimed by exactly one
 bundle. The script fails loudly when a file is unassigned or claimed twice, so
-new documentation cannot silently disappear from the export.
+newly added documentation cannot silently drop out of the export.
 """
 
 from __future__ import annotations
@@ -26,35 +26,38 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import html
-import json
 import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
 try:
     import markdown as markdown_lib
-    import weasyprint
     from weasyprint import HTML
 except ModuleNotFoundError as exc:  # pragma: no cover - environment guard
     sys.exit(
         f"Missing dependency: {exc.name}\n"
-        "Install with: pip install -r scripts/docs/requirements-notebooklm-pdf.txt"
+        "Install with: pip install markdown weasyprint pygments"
     )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUT_DIR = REPO_ROOT / "docs" / "exports" / "notebooklm"
-DESIGN_TOKENS_PATH = REPO_ROOT / "docs" / "frontend" / "design-tokens.json"
-PDF_VARIANT = "pdf/ua-1"
-PDF_TAGS = True
 
+# Markdown below these roots is exported. Everything else (node_modules, build
+# output, ...) is ignored.
 SCAN_ROOTS = ("docs", ".ai", "src", "scripts", "tests", ".github")
 SCAN_ROOT_FILES = ("README.md", "AGENTS.md", "CLAUDE.md")
+
 EXCLUDED_DIR_NAMES = {"node_modules", "dist", "build", "coverage", ".git"}
+
+# The export folder holds this script's own output, including a generated
+# manifest. Re-ingesting it would duplicate content into the bundles.
 EXCLUDED_PREFIXES = ("docs/exports/",)
 
+# The architecture folder is the largest single cluster in the repository and is
+# split by subject instead of by an arbitrary alphabetical cut. Names are
+# matched against the file name inside docs/architecture/.
 ARCHITECTURE_ENTERPRISE_CORE = {
     "AI_VALUE_CHAIN_VALIDATION.md",
     "ARCHITECTURE_GAP_REPORT.md",
@@ -80,6 +83,8 @@ ARCHITECTURE_ENTERPRISE_CORE = {
     "ROADMAP.md",
 }
 
+# Google Marketing / Analytics / Consent documents live in several folders but
+# form one protected subject area (see ESS-0014 and ADR-0035).
 GOOGLE_MARKETING_FILES = {
     "docs/architecture/CAPITAL_AI_ENTERPRISE_GOOGLE_ANALYTICS_MCP_IMPLEMENTATION.md",
     "docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md",
@@ -89,11 +94,15 @@ GOOGLE_MARKETING_FILES = {
 
 @dataclass
 class Bundle:
+    """One output PDF."""
+
     key: str
     title: str
     subtitle: str
     summary: str
-    matches: Callable[[str], bool]
+    matches: object  # Callable[[str], bool]
+    # Repository-relative paths that should lead the bundle, in this order.
+    # Everything else follows sorted by path.
     lead: tuple[str, ...] = ()
     documents: list[Path] = field(default_factory=list)
 
@@ -112,20 +121,29 @@ class Bundle:
         return f"{self.key}_{slug}.pdf"
 
 
-def under(*prefixes: str) -> Callable[[str], bool]:
+def under(*prefixes: str):
+    """Match repository-relative paths below one of the given prefixes."""
+
     def matcher(rel: str) -> bool:
         return any(rel == p or rel.startswith(p.rstrip("/") + "/") for p in prefixes)
 
     return matcher
 
 
-def exact(*paths: str) -> Callable[[str], bool]:
+def exact(*paths: str):
     wanted = set(paths)
-    return lambda rel: rel in wanted
+
+    def matcher(rel: str) -> bool:
+        return rel in wanted
+
+    return matcher
 
 
-def any_of(*matchers: Callable[[str], bool]) -> Callable[[str], bool]:
-    return lambda rel: any(matcher(rel) for matcher in matchers)
+def any_of(*matchers):
+    def matcher(rel: str) -> bool:
+        return any(m(rel) for m in matchers)
+
+    return matcher
 
 
 def architecture_core(rel: str) -> bool:
@@ -136,7 +154,9 @@ def architecture_core(rel: str) -> bool:
 
 
 def architecture_rest(rel: str) -> bool:
-    if not rel.startswith("docs/architecture/") or rel in GOOGLE_MARKETING_FILES:
+    if not rel.startswith("docs/architecture/"):
+        return False
+    if rel in GOOGLE_MARKETING_FILES:
         return False
     return not architecture_core(rel)
 
@@ -150,7 +170,9 @@ def build_bundles() -> list[Bundle]:
             summary=(
                 "Der Einstiegspunkt in die CAPITAL-AI Plattform: Produktüberblick, "
                 "Agenten- und Claude-Leitplanken, Executive Summary sowie die "
-                "übergreifenden Berichte und das Datenschutzprotokoll."
+                "übergreifenden Berichte und das Datenschutzprotokoll. Dieses "
+                "Bündel beantwortet die Frage, was die Plattform ist, wer sie "
+                "betreibt und nach welchen Regeln an ihr gearbeitet wird."
             ),
             matches=any_of(
                 exact("README.md", "AGENTS.md", "CLAUDE.md"),
@@ -159,7 +181,12 @@ def build_bundles() -> list[Bundle]:
                 under("docs/ceo", "docs/reports"),
                 under("tests"),
             ),
-            lead=("README.md", "docs/ceo/EXECUTIVE_SUMMARY.md", "AGENTS.md", "CLAUDE.md"),
+            lead=(
+                "README.md",
+                "docs/ceo/EXECUTIVE_SUMMARY.md",
+                "AGENTS.md",
+                "CLAUDE.md",
+            ),
         ),
         Bundle(
             key="02",
@@ -167,8 +194,10 @@ def build_bundles() -> list[Bundle]:
             subtitle="Fintech-Kernarchitektur, Screening, Scoring und Reifegrad-Audits",
             summary=(
                 "Die tragende Architektur der Plattform: Enterprise-Fintech-Audits, "
-                "Screening und Scoring, Datenqualität, Marktdaten-Provider sowie "
-                "Reifegrad- und Lücken-Berichte."
+                "die Master-Architektur für Screening und Scoring, Datenqualität, "
+                "Marktdaten-Provider sowie Reifegrad- und Lücken-Berichte. Hier "
+                "steht, wie Finanzdaten bewertet werden und wie belastbar die "
+                "Architektur dafür ist."
             ),
             matches=architecture_core,
         ),
@@ -177,9 +206,11 @@ def build_bundles() -> list[Bundle]:
             title="Architektur Subsysteme und Plattformdesign",
             subtitle="Documentary Engine, Event Mesh, Vocabulary Governance, AI-Agent-Architektur",
             summary=(
-                "Die Subsysteme hinter der Kernarchitektur: Documentary Engine, "
-                "Enterprise Event Mesh, Vocabulary Governance, AI-Agent-Zielbild, "
-                "IAM sowie Render- und Server-Modularisierung."
+                "Die Subsysteme hinter der Kernarchitektur: die Documentary Engine, "
+                "das Enterprise Event Mesh, die Vocabulary Governance, das "
+                "AI-Agent-Zielbild mit Bedrohungsmodell und IAM sowie die Render- "
+                "und Server-Modularisierung. Dieses Bündel erklärt, wie die "
+                "Plattform intern aufgebaut und entkoppelt ist."
             ),
             matches=architecture_rest,
         ),
@@ -188,8 +219,11 @@ def build_bundles() -> list[Bundle]:
             title="Architecture Decision Records",
             subtitle="Vollständige ADR-Historie inklusive Revalidierungen",
             summary=(
-                "Sämtliche Architekturentscheidungen der Plattform: aktive ADRs, "
-                "aufgelöste ADRs und zugehörige Revalidierungs-Nachweise."
+                "Sämtliche Architekturentscheidungen der Plattform in "
+                "chronologischer Form: aktive ADRs, aufgelöste ADRs und die "
+                "zugehörigen Revalidierungs-Nachweise. Jede Entscheidung nennt "
+                "Kontext, Alternativen und Konsequenzen und eignet sich als "
+                "Erzählgrundlage für die Entwicklungsgeschichte des Systems."
             ),
             matches=under("docs/adr"),
         ),
@@ -198,8 +232,11 @@ def build_bundles() -> list[Bundle]:
             title="ESS Skills und Contracts",
             subtitle="Enterprise Standard Skills als normative Systembeschreibung",
             summary=(
-                "Die Enterprise Standard Skills und Contracts definieren normativ, "
-                "welche Rolle jede Plattformkomponente hat und welche Governance gilt."
+                "Die Enterprise Standard Skills (ESS-0001 bis ESS-0023) mit ihren "
+                "Contracts. Sie definieren normativ, welche Rolle jede "
+                "Plattformkomponente hat, welche Zusagen sie gibt und welche "
+                "Governance für sie gilt. Das ist die verbindlichste Ebene der "
+                "Systembeschreibung."
             ),
             matches=under(".ai"),
         ),
@@ -208,8 +245,11 @@ def build_bundles() -> list[Bundle]:
             title="Governance Compliance und Security",
             subtitle="Richtlinien, ISO-27001-Anwendbarkeit, Sicherheitsausnahmen, Qualitätsstandards",
             summary=(
-                "Der Regelrahmen der Plattform: Governance-Policies, Compliance, "
-                "Security, QA, Code-Quality und technische Contracts."
+                "Der Regelrahmen der Plattform: Governance-Policies für "
+                "Entwicklungskette, PR-Freigaben und Branch-Schutz, die ISO-27001 "
+                "Statement of Applicability, akzeptierte Sicherheitsrisiken sowie "
+                "Code-Quality- und QA-Standards. Hier steht, wer was freigeben darf "
+                "und warum."
             ),
             matches=under(
                 "docs/governance",
@@ -223,10 +263,13 @@ def build_bundles() -> list[Bundle]:
         Bundle(
             key="07",
             title="Roadmaps und Arbeitspakete",
-            subtitle="Meilensteinplanung, Arbeitspakete und Backlog",
+            subtitle="Meilensteinplanung M0 bis M9, Arbeitspakete und Backlog",
             summary=(
-                "Die Planungsebene: konsolidierte Roadmaps, Arbeitspakete, Backlog "
-                "und Koordinations-Claims."
+                "Die Planungsebene: konsolidierte Roadmaps für AI-Agent, "
+                "SystemAdmin, Marketing, Security-Hardening und Marktdaten, die "
+                "geschnittenen Arbeitspakete sowie Backlog und Koordinations-Claims. "
+                "Dieses Bündel erzählt, wohin sich die Plattform entwickelt und in "
+                "welcher Reihenfolge."
             ),
             matches=under("docs/roadmaps", "docs/backlog", "docs/coordination"),
             lead=("docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",),
@@ -236,18 +279,25 @@ def build_bundles() -> list[Bundle]:
             title="Runbooks Betrieb und Release",
             subtitle="Betriebsanleitungen, Produktionskonfiguration, Release und Migration",
             summary=(
-                "Die operative Ebene: Runbooks, Produktionsnachweise, Deployment- "
-                "Verifikation, Release-Prozess und Migrationsleitfäden."
+                "Die operative Ebene: Runbooks für Betrieb und Incident-Handling, "
+                "Produktionsnachweise und Deployment-Verifikation, Release-Prozess "
+                "und Migrationsleitfäden. Hier steht, wie das System tatsächlich "
+                "betrieben, ausgerollt und im Fehlerfall stabilisiert wird."
             ),
-            matches=under("docs/runbooks", "docs/production", "docs/release", "docs/migration"),
+            matches=under(
+                "docs/runbooks", "docs/production", "docs/release", "docs/migration"
+            ),
         ),
         Bundle(
             key="09",
             title="Traceability und Evidence",
-            subtitle="Nachweisketten der Meilensteine und Audit-Belege",
+            subtitle="Nachweisketten der Meilensteine M0 bis M9 und Audit-Belege",
             summary=(
-                "Die Beweisebene: Traceability-Berichte und Evidence zu CI, "
-                "Sicherheit, Provider-Cutovers und umgesetzten Arbeitspaketen."
+                "Die Beweisebene: Traceability-Berichte und die vollständige "
+                "Evidence-Sammlung zu Meilensteinen, CI-Härtung, Supabase- und "
+                "Stripe-Sicherheit, Kill-Switch-Drills und Provider-Cutovers. Jeder "
+                "Eintrag belegt, dass eine geplante Massnahme tatsächlich "
+                "umgesetzt und geprüft wurde."
             ),
             matches=under("docs/traceability", "docs/evidence"),
         ),
@@ -256,8 +306,11 @@ def build_bundles() -> list[Bundle]:
             title="Frontend Backend und Plattformmodule",
             subtitle="Komponenteninventar, Design Tokens, Accessibility und Modul-READMEs",
             summary=(
-                "Die Implementierungsebene: Frontend- und Backend-Dokumentation, "
-                "Design Tokens, Accessibility sowie Plattformmodule unter src."
+                "Die Implementierungsebene: Frontend-Architektur mit "
+                "Komponenteninventar, Design Tokens, Performance-Baseline und "
+                "Accessibility-Audit, dazu die READMEs und Changelogs aller "
+                "Plattformmodule unter src/platform. Hier steht, woraus die "
+                "Anwendung konkret gebaut ist."
             ),
             matches=under("docs/frontend", "docs/backend", "src"),
         ),
@@ -266,8 +319,12 @@ def build_bundles() -> list[Bundle]:
             title="Marketing SEO und Google Consent",
             subtitle="SEO-Programm, Content-Pakete, Social Media und Google-Marketing-Integration",
             summary=(
-                "Die Wachstumsebene: SEO, Content-Strategie, Social-Media-Publishing "
-                "sowie Google-Marketing-, Analytics- und Consent-Integration."
+                "Die Wachstumsebene: SEO-Maßnahmen und Soft-404-Analysen, die "
+                "Content-Strategie mit fertigen Content-Paketen inklusive "
+                "Voiceover- und Thread-Vorlagen, Social-Media-Publishing sowie die "
+                "geschützte Google-Marketing-, Analytics- und Consent-Integration. "
+                "Dieses Bündel eignet sich besonders als Vorlage für Podcast- und "
+                "Video-Formate."
             ),
             matches=any_of(
                 under("docs/seo", "docs/social-media", "docs/content-creator"),
@@ -279,39 +336,15 @@ def build_bundles() -> list[Bundle]:
             title="Archiv und Historie",
             subtitle="Abgelöste Dokumente, Rohmaterial und historische Audits",
             summary=(
-                "Der historische Kontext: abgelöste Architektur-Reviews, Guides, "
-                "Entwürfe und archivierte Compliance-/Security-Audits."
+                "Der historische Kontext: abgelöste Architektur-Reviews, alte "
+                "Deployment-Guides, frühe Agenten- und Modellentwürfe sowie "
+                "archivierte Compliance- und Security-Audits. Diese Dokumente sind "
+                "nicht mehr normativ, erklären aber, wie die heutige Lösung "
+                "entstanden ist."
             ),
             matches=under("docs/archive"),
         ),
     ]
-
-
-def load_design_tokens() -> dict[str, object]:
-    return json.loads(DESIGN_TOKENS_PATH.read_text(encoding="utf-8"))
-
-
-def token_value(tokens: dict[str, object], *path_segments: str) -> object:
-    current: object = tokens
-    for segment in path_segments:
-        if not isinstance(current, dict) or segment not in current:
-            raise KeyError(f"Missing design token: {'.'.join(path_segments)}")
-        current = current[segment]
-    if isinstance(current, dict):
-        if "$value" in current:
-            return current["$value"]
-        if "value" in current:
-            return current["value"]
-    return current
-
-
-def token_string(tokens: dict[str, object], *path_segments: str) -> str:
-    value = token_value(tokens, *path_segments)
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict) and isinstance(value.get("hex"), str):
-        return str(value["hex"])
-    raise TypeError(f"Design token must resolve to a string: {'.'.join(path_segments)}")
 
 
 def discover_markdown_files() -> list[Path]:
@@ -344,21 +377,28 @@ def assign_documents(bundles: list[Bundle], files: list[Path]) -> None:
 
     for path in files:
         rel = str(path.relative_to(REPO_ROOT))
-        owners = [bundle for bundle in bundles if bundle.matches(rel)]
+        owners = [b for b in bundles if b.matches(rel)]
         if not owners:
             unassigned.append(rel)
         elif len(owners) > 1:
-            duplicates.append(f"{rel} -> {', '.join(bundle.key for bundle in owners)}")
+            duplicates.append(f"{rel} -> {', '.join(b.key for b in owners)}")
         else:
             owners[0].documents.append(path)
 
-    problems: list[str] = []
+    problems = []
     if unassigned:
-        problems.append("Not assigned to any bundle:\n  " + "\n  ".join(unassigned))
+        problems.append(
+            "Not assigned to any bundle:\n  " + "\n  ".join(unassigned)
+        )
     if duplicates:
-        problems.append("Claimed by more than one bundle:\n  " + "\n  ".join(duplicates))
+        problems.append(
+            "Claimed by more than one bundle:\n  " + "\n  ".join(duplicates)
+        )
     if problems:
-        sys.exit("Bundle rules do not cover the repository cleanly.\n\n" + "\n\n".join(problems))
+        sys.exit(
+            "Bundle rules do not cover the repository cleanly.\n\n"
+            + "\n\n".join(problems)
+        )
 
     for bundle in bundles:
         bundle.sort_documents()
@@ -381,10 +421,15 @@ HEADING_RE = re.compile(r"^(#{1,5})(\s+)")
 
 
 def demote_headings(raw: str) -> str:
-    """Shift Markdown headings one level down outside fenced code blocks."""
+    """Shift Markdown headings one level down, ignoring fenced code blocks.
+
+    The bundle injects the document title as ``<h1>``, so the document's own
+    headings must start at ``<h2>`` for a coherent outline.
+    """
 
     out: list[str] = []
     fence: str | None = None
+
     for line in raw.splitlines():
         fence_match = FENCE_RE.match(line)
         if fence_match:
@@ -395,13 +440,19 @@ def demote_headings(raw: str) -> str:
                 fence = None
             out.append(line)
             continue
-        if fence is None and HEADING_RE.match(line):
-            line = "#" + line
+
+        if fence is None:
+            heading = HEADING_RE.match(line)
+            if heading:
+                line = "#" + line
         out.append(line)
+
     return "\n".join(out)
 
 
 def strip_front_matter(raw: str) -> tuple[str, str | None]:
+    """Split off a leading YAML front-matter block, if present."""
+
     if not raw.startswith("---"):
         return raw, None
     lines = raw.splitlines()
@@ -413,8 +464,15 @@ def strip_front_matter(raw: str) -> tuple[str, str | None]:
 
 def render_markdown(raw: str) -> str:
     converter = markdown_lib.Markdown(
-        extensions=["extra", "sane_lists", "admonition", "codehilite"],
-        extension_configs={"codehilite": {"noclasses": True, "pygments_style": "friendly"}},
+        extensions=[
+            "extra",
+            "sane_lists",
+            "admonition",
+            "codehilite",
+        ],
+        extension_configs={
+            "codehilite": {"noclasses": True, "pygments_style": "friendly"}
+        },
     )
     return converter.convert(raw)
 
@@ -438,178 +496,214 @@ def git_revision() -> str:
         return "unbekannt"
 
 
-def brand_svg() -> str:
-    """Decorative print-safe network-node emblem aligned with the product logo."""
-
-    return """
-<svg class="brand-emblem" viewBox="0 0 100 90" aria-hidden="true">
-  <g class="accent-lines">
-    <line x1="16" y1="14" x2="84" y2="80" class="purple" />
-    <line x1="84" y1="13" x2="16" y2="82" class="purple" />
-    <line x1="16" y1="14" x2="84" y2="13" class="cyan" />
-    <line x1="20" y1="42" x2="86" y2="46" class="cyan" />
-  </g>
-  <g class="gold-lines">
-    <line x1="16" y1="14" x2="34" y2="48" />
-    <line x1="34" y1="48" x2="16" y2="82" />
-    <line x1="16" y1="82" x2="50" y2="90" />
-    <line x1="50" y1="90" x2="84" y2="80" />
-    <line x1="84" y1="80" x2="86" y2="46" />
-    <line x1="86" y1="46" x2="84" y2="13" />
-    <line x1="84" y1="13" x2="54" y2="18" />
-    <line x1="54" y1="18" x2="50" y2="54" />
-    <line x1="50" y1="54" x2="50" y2="90" />
-    <line x1="50" y1="54" x2="34" y2="48" />
-    <line x1="50" y1="54" x2="86" y2="46" />
-  </g>
-  <g class="nodes">
-    <circle cx="50" cy="54" r="7" />
-    <circle cx="16" cy="14" r="4" />
-    <circle cx="54" cy="18" r="3" />
-    <circle cx="84" cy="13" r="4.5" />
-    <circle cx="20" cy="42" r="3" />
-    <circle cx="34" cy="48" r="3.5" />
-    <circle cx="86" cy="46" r="4" />
-    <circle cx="16" cy="82" r="4.5" />
-    <circle cx="50" cy="90" r="3.5" />
-    <circle cx="84" cy="80" r="5" />
-  </g>
-</svg>
-"""
-
-
-def build_stylesheet(tokens: dict[str, object]) -> str:
-    colors = {
-        "__CANVAS__": token_string(tokens, "color", "background"),
-        "__FOREGROUND__": token_string(tokens, "color", "foreground"),
-        "__GOLD_LIGHT__": token_string(tokens, "color", "aif", "gold", "light"),
-        "__GOLD__": token_string(tokens, "color", "aif", "gold", "DEFAULT"),
-        "__GOLD_DARK__": token_string(tokens, "color", "aif", "gold", "dark"),
-        "__CYAN__": token_string(tokens, "color", "aif", "neon", "cyan"),
-        "__PURPLE__": token_string(tokens, "color", "aif", "neon", "purple"),
-        "__TEXT__": token_string(tokens, "color", "print", "textPrimary"),
-        "__MUTED__": token_string(tokens, "color", "print", "textSecondary"),
-        "__SURFACE__": token_string(tokens, "color", "print", "surfaceLight"),
-        "__BORDER__": token_string(tokens, "color", "print", "borderLight"),
-        "__LINK__": token_string(tokens, "color", "print", "link"),
-    }
-
-    stylesheet = r"""
+STYLESHEET = """
 @page {
   size: A4;
   margin: 20mm 18mm 18mm 18mm;
   @top-left {
-    content: "CAPITAL-AI  ·  " string(bundle-title);
+    content: string(bundle-title);
     font-family: "DejaVu Sans", sans-serif;
     font-size: 7.5pt;
-    font-weight: bold;
-    color: __GOLD_DARK__;
+    color: #7a8494;
   }
   @top-right {
     content: string(doc-title);
     font-family: "DejaVu Sans", sans-serif;
     font-size: 7.5pt;
-    color: __MUTED__;
+    color: #7a8494;
   }
-  @bottom-left {
-    content: "INTERNAL SOURCE PACKAGE";
-    font-family: "DejaVu Sans", sans-serif;
-    font-size: 7pt;
-    color: __MUTED__;
-  }
-  @bottom-right {
+  @bottom-center {
     content: counter(page) " / " counter(pages);
-    font-family: "DejaVu Sans Mono", monospace;
-    font-size: 7pt;
-    color: __MUTED__;
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 7.5pt;
+    color: #7a8494;
   }
 }
 
-@page cover {
-  margin: 0;
-  @top-left { content: none }
-  @top-right { content: none }
-  @bottom-left { content: none }
-  @bottom-right { content: none }
-}
+@page cover { margin: 0; @top-left { content: none } @top-right { content: none }
+  @bottom-center { content: none } }
 
 html { font-size: 10.5pt; }
+
 body {
   font-family: "DejaVu Sans", sans-serif;
-  color: __TEXT__;
+  color: #1d2430;
   line-height: 1.55;
   hyphens: auto;
 }
 
+/* --- cover ------------------------------------------------------------- */
 .cover {
   page: cover;
   page-break-after: always;
-  min-height: 297mm;
-  padding: 28mm 22mm 22mm 22mm;
-  background: __CANVAS__;
-  color: __FOREGROUND__;
+  height: 297mm;
+  padding: 32mm 22mm 22mm 22mm;
+  background: #10233d;
+  color: #ffffff;
   box-sizing: border-box;
-  position: relative;
 }
-.brand-lockup { display: flex; align-items: center; gap: 7mm; margin-bottom: 15mm; }
-.brand-emblem { width: 31mm; height: 28mm; overflow: visible; }
-.brand-emblem .gold-lines { stroke: __GOLD__; stroke-width: 1.7; fill: none; }
-.brand-emblem .accent-lines { stroke-width: 0.8; fill: none; opacity: 0.72; }
-.brand-emblem .cyan { stroke: __CYAN__; }
-.brand-emblem .purple { stroke: __PURPLE__; }
-.brand-emblem .nodes { fill: __GOLD__; stroke: __GOLD_DARK__; stroke-width: 0.7; }
-.wordmark { color: __GOLD__; font-size: 22pt; font-weight: 800; letter-spacing: 1.8pt; }
-.wordmark-sub { color: __FOREGROUND__; font-size: 8pt; letter-spacing: 2.1pt; margin-top: 1mm; }
-.cover .eyebrow { font-size: 8.5pt; letter-spacing: 2.3pt; text-transform: uppercase; color: __CYAN__; }
-.cover h1 { font-size: 28pt; line-height: 1.15; margin: 9mm 0 4mm 0; color: __FOREGROUND__; border: none; padding: 0; }
-.cover .subtitle { font-size: 12.5pt; color: __GOLD_LIGHT__; margin-bottom: 11mm; }
-.cover .summary { font-size: 10.5pt; line-height: 1.65; color: #E7E7EA; border-left: 2pt solid __GOLD__; padding-left: 6mm; margin-bottom: 13mm; }
-.cover .facts { font-size: 9.3pt; color: #D4D4D8; }
+.cover .eyebrow {
+  font-size: 9pt;
+  letter-spacing: 2.4pt;
+  text-transform: uppercase;
+  color: #7fb2e5;
+}
+.cover h1 {
+  font-size: 30pt;
+  line-height: 1.15;
+  margin: 10mm 0 4mm 0;
+  color: #ffffff;
+  border: none;
+  padding: 0;
+}
+.cover .subtitle { font-size: 13pt; color: #c3d6ec; margin-bottom: 12mm; }
+.cover .summary {
+  font-size: 10.5pt;
+  line-height: 1.65;
+  color: #e4edf7;
+  border-left: 2pt solid #4f86c6;
+  padding-left: 6mm;
+  margin-bottom: 14mm;
+}
+.cover .facts { font-size: 9.5pt; color: #b9cde4; }
 .cover .facts div { margin-bottom: 2.2mm; }
-.cover .facts b { color: __FOREGROUND__; font-weight: 600; }
-.cover .usage { margin-top: 13mm; font-size: 8.8pt; color: #D4D4D8; border-top: 0.7pt solid __PURPLE__; padding-top: 5mm; }
-.cover .profile { margin-top: 6mm; color: __CYAN__; font-size: 7.7pt; letter-spacing: 0.5pt; }
+.cover .facts b { color: #ffffff; font-weight: normal; }
+.cover .usage {
+  margin-top: 14mm;
+  font-size: 9pt;
+  color: #8fb4d9;
+  border-top: 0.6pt solid #2f4c72;
+  padding-top: 5mm;
+}
 
+/* --- table of contents ------------------------------------------------- */
 .toc { page-break-after: always; }
-.toc h2 { font-size: 17pt; margin: 0 0 7mm 0; padding-bottom: 2.5mm; border-bottom: 1.2pt solid __GOLD__; color: __TEXT__; }
+.toc h2 {
+  font-size: 17pt;
+  margin: 0 0 7mm 0;
+  padding-bottom: 2.5mm;
+  border-bottom: 1.2pt solid #10233d;
+  color: #10233d;
+}
 .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
-.toc li { counter-increment: toc; margin-bottom: 2.6mm; font-size: 9.8pt; border-bottom: 0.4pt dotted __BORDER__; padding-bottom: 1.4mm; }
-.toc a { text-decoration: none; color: __TEXT__; }
-.toc a::before { content: counter(toc) ". "; color: __GOLD_DARK__; }
-.toc a::after { content: target-counter(attr(href), page); float: right; color: __GOLD_DARK__; }
-.toc .path { display: block; font-family: "DejaVu Sans Mono", monospace; font-size: 7.2pt; color: __MUTED__; margin-top: 0.6mm; }
+.toc li {
+  counter-increment: toc;
+  margin-bottom: 2.6mm;
+  font-size: 9.8pt;
+  border-bottom: 0.4pt dotted #cfd7e2;
+  padding-bottom: 1.4mm;
+}
+.toc a { text-decoration: none; color: #1d2430; }
+.toc a::before { content: counter(toc) ". "; color: #7a8494; }
+.toc a::after {
+  content: target-counter(attr(href), page);
+  float: right;
+  color: #10233d;
+}
+.toc .path {
+  display: block;
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 7.2pt;
+  color: #8a94a4;
+  margin-top: 0.6mm;
+}
 
+/* --- documents --------------------------------------------------------- */
 .doc { page-break-before: always; }
-.doc h1 { string-set: doc-title content(); font-size: 19pt; line-height: 1.25; color: __TEXT__; margin: 0 0 1.5mm 0; padding-bottom: 2.5mm; border-bottom: 1.2pt solid __GOLD__; }
-.doc .source { font-family: "DejaVu Sans Mono", monospace; font-size: 7.8pt; color: __MUTED__; margin-bottom: 7mm; word-break: break-all; }
-h2 { font-size: 14pt; color: __TEXT__; margin: 8mm 0 2.5mm 0; page-break-after: avoid; border-left: 2pt solid __CYAN__; padding-left: 3mm; }
-h3 { font-size: 11.8pt; color: __TEXT__; margin: 6mm 0 2mm 0; page-break-after: avoid; }
-h4, h5, h6 { font-size: 10.5pt; color: #3F3F46; margin: 5mm 0 1.5mm 0; page-break-after: avoid; }
+.doc h1 {
+  string-set: doc-title content();
+  font-size: 19pt;
+  line-height: 1.25;
+  color: #10233d;
+  margin: 0 0 1.5mm 0;
+  padding-bottom: 2.5mm;
+  border-bottom: 1.2pt solid #10233d;
+}
+.doc .source {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 7.8pt;
+  color: #6d7688;
+  margin-bottom: 7mm;
+  word-break: break-all;
+}
+
+h2 { font-size: 14pt; color: #16304f; margin: 8mm 0 2.5mm 0; page-break-after: avoid; }
+h3 { font-size: 11.8pt; color: #16304f; margin: 6mm 0 2mm 0; page-break-after: avoid; }
+h4, h5, h6 { font-size: 10.5pt; color: #35455e; margin: 5mm 0 1.5mm 0; page-break-after: avoid; }
+
 p { margin: 0 0 3mm 0; orphans: 2; widows: 2; }
 ul, ol { margin: 0 0 3mm 0; padding-left: 6mm; }
 li { margin-bottom: 1.2mm; }
-a { color: __LINK__; word-break: break-word; text-decoration-thickness: 0.6pt; }
-code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.6pt; background: __SURFACE__; padding: 0.3mm 1mm; border-radius: 1mm; word-break: break-word; }
-pre { font-family: "DejaVu Sans Mono", monospace; font-size: 7.8pt; line-height: 1.4; background: __SURFACE__; border: 0.4pt solid __BORDER__; border-left: 2pt solid __PURPLE__; padding: 2.5mm 3mm; margin: 0 0 4mm 0; white-space: pre-wrap; word-break: break-word; }
-pre code { background: none; padding: 0; font-size: 7.8pt; }
-blockquote { margin: 0 0 4mm 0; padding: 1mm 0 1mm 4mm; border-left: 2pt solid __CYAN__; color: #3F3F46; }
-table { width: 100%; border-collapse: collapse; font-size: 8.2pt; margin: 0 0 4mm 0; table-layout: fixed; }
-th, td { border: 0.4pt solid __BORDER__; padding: 1.4mm 2mm; text-align: left; vertical-align: top; word-break: break-word; }
-th { background: __CANVAS__; color: __GOLD_LIGHT__; }
-hr { border: none; border-top: 0.5pt solid __BORDER__; margin: 6mm 0; }
-.front-matter { font-family: "DejaVu Sans Mono", monospace; font-size: 7.6pt; background: __SURFACE__; border: 0.4pt solid __BORDER__; padding: 2mm 3mm; margin: 0 0 5mm 0; color: #3F3F46; white-space: pre-wrap; }
-"""
 
-    for placeholder, value in colors.items():
-        stylesheet = stylesheet.replace(placeholder, value)
-    return stylesheet
+a { color: #1d4f8c; word-break: break-word; }
+
+code {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 8.6pt;
+  background: #eef1f6;
+  padding: 0.3mm 1mm;
+  border-radius: 1mm;
+  word-break: break-word;
+}
+pre {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 7.8pt;
+  line-height: 1.4;
+  background: #f5f7fa;
+  border: 0.4pt solid #d8dee8;
+  border-left: 2pt solid #4f86c6;
+  padding: 2.5mm 3mm;
+  margin: 0 0 4mm 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+pre code { background: none; padding: 0; font-size: 7.8pt; }
+
+blockquote {
+  margin: 0 0 4mm 0;
+  padding: 1mm 0 1mm 4mm;
+  border-left: 2pt solid #c3ccd9;
+  color: #46516a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.2pt;
+  margin: 0 0 4mm 0;
+  table-layout: fixed;
+}
+th, td {
+  border: 0.4pt solid #ccd4e0;
+  padding: 1.4mm 2mm;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+th { background: #eaeff6; color: #10233d; }
+
+hr { border: none; border-top: 0.5pt solid #d3dae4; margin: 6mm 0; }
+
+.front-matter {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 7.6pt;
+  background: #f7f8fa;
+  border: 0.4pt solid #dfe4ec;
+  padding: 2mm 3mm;
+  margin: 0 0 5mm 0;
+  color: #56607a;
+  white-space: pre-wrap;
+}
+"""
 
 
 def de_number(value: int) -> str:
+    """Format an integer with German thousand separators."""
+
     return f"{value:,}".replace(",", ".")
 
 
-def build_html(bundle: Bundle, revision: str, generated_at: str, tokens: dict[str, object]) -> tuple[str, int]:
+def build_html(bundle: Bundle, revision: str, generated_at: str) -> tuple[str, int]:
     entries: list[str] = []
     toc_items: list[str] = []
     total_words = 0
@@ -618,6 +712,7 @@ def build_html(bundle: Bundle, revision: str, generated_at: str, tokens: dict[st
         rel = str(path.relative_to(REPO_ROOT))
         raw = path.read_text(encoding="utf-8", errors="replace")
         total_words += len(raw.split())
+
         body, front_matter = strip_front_matter(raw)
         title = document_title(path, raw)
         anchor = f"doc-{index}"
@@ -628,26 +723,21 @@ def build_html(bundle: Bundle, revision: str, generated_at: str, tokens: dict[st
         )
 
         parts = [
-            f'<article class="doc" id="{anchor}">',
+            f'<section class="doc" id="{anchor}">',
             f"<h1>{html.escape(title)}</h1>",
-            f'<p class="source">Quelle: {html.escape(rel)}</p>',
+            f'<div class="source">Quelle: {html.escape(rel)}</div>',
         ]
         if front_matter and front_matter.strip():
-            parts.append(f'<div class="front-matter">{html.escape(front_matter.strip())}</div>')
+            parts.append(
+                f'<div class="front-matter">{html.escape(front_matter.strip())}</div>'
+            )
         parts.append(render_markdown(demote_headings(body)))
-        parts.append("</article>")
+        parts.append("</section>")
         entries.append("\n".join(parts))
 
     cover = f"""
-<header class="cover">
-  <div class="brand-lockup">
-    {brand_svg()}
-    <div>
-      <div class="wordmark">CAPITAL-AI</div>
-      <div class="wordmark-sub">QUANTITATIVE FINANCE INTELLIGENCE</div>
-    </div>
-  </div>
-  <div class="eyebrow">NotebookLM Quellpaket {bundle.key}</div>
+<section class="cover">
+  <div class="eyebrow">CAPITAL-AI &middot; NotebookLM Quellpaket {bundle.key}</div>
   <h1>{html.escape(bundle.title)}</h1>
   <div class="subtitle">{html.escape(bundle.subtitle)}</div>
   <div class="summary">{html.escape(bundle.summary)}</div>
@@ -659,103 +749,55 @@ def build_html(bundle: Bundle, revision: str, generated_at: str, tokens: dict[st
     <div>Umfang: <b>ca. {de_number(total_words)} Wörter</b></div>
   </div>
   <div class="usage">
-    Dieses PDF ist eine interne CAPITAL-AI Quelle für NotebookLM. Jedes eingebettete
-    Dokument beginnt auf einer neuen Seite und nennt seinen Repository-Pfad.
+    Dieses PDF ist eine Quelle für NotebookLM. Jedes eingebettete Dokument
+    beginnt auf einer neuen Seite und nennt seinen Repository-Pfad, damit
+    erzeugte Podcasts, Video-Skripte und Zusammenfassungen ihre Aussagen exakt
+    auf die Originaldatei zurückführen können.
   </div>
-  <div class="profile">Accessibility-Profil: documentation-weasyprint · PDF/UA-1 · tagged</div>
-</header>
+</section>
 """
 
     toc = (
-        '<nav class="toc" aria-label="Inhaltsverzeichnis"><h2>Inhalt dieses Quellpakets</h2><ol>'
+        '<section class="toc"><h2>Inhalt dieses Quellpakets</h2><ol>'
         + "\n".join(toc_items)
-        + "</ol></nav>"
+        + "</ol></section>"
     )
 
     document = f"""<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="author" content="CAPITAL-AI">
-<meta name="description" content="CAPITAL-AI NotebookLM Quellpaket {bundle.key}">
 <title>{html.escape(bundle.title)}</title>
 <style>
-{build_stylesheet(tokens)}
+{STYLESHEET}
 body {{ string-set: bundle-title "{html.escape(bundle.title)}"; }}
 </style>
 </head>
 <body>
 {cover}
 {toc}
-<main>
 {"".join(entries)}
-</main>
 </body>
 </html>
 """
     return document, total_words
 
 
-def build_smoke_html(tokens: dict[str, object]) -> str:
-    return f"""<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="author" content="CAPITAL-AI">
-<meta name="description" content="CAPITAL-AI PDF/UA renderer smoke">
-<title>CAPITAL-AI PDF/UA Smoke</title>
-<style>{build_stylesheet(tokens)} body {{ string-set: bundle-title "PDF/UA Smoke"; }}</style>
-</head>
-<body>
-<header class="cover">
-  <div class="brand-lockup">{brand_svg()}<div><div class="wordmark">CAPITAL-AI</div><div class="wordmark-sub">PDF RENDERER SMOKE</div></div></div>
-  <div class="eyebrow">Accessibility Verification Fixture</div>
-  <h1>CAPITAL-AI PDF/UA Smoke</h1>
-  <div class="subtitle">Branded semantic Documentation-as-Code output</div>
-  <div class="summary">Deterministisches Testartefakt für A4, Text-Extraktion, Branding und Tagged-PDF-Erkennung.</div>
-  <div class="profile">Accessibility-Profil: documentation-weasyprint · PDF/UA-1 · tagged</div>
-</header>
-<main>
-  <article class="doc" id="fixture">
-    <h1>Semantische Teststruktur</h1>
-    <p class="source">Quelle: scripts/docs/export_notebooklm_pdfs.py --smoke</p>
-    <h2>Heading-Hierarchie</h2>
-    <p>Dieser Text muss durch pdftotext extrahierbar sein.</p>
-    <h2>Tabellenstruktur</h2>
-    <table><thead><tr><th>Prüfung</th><th>Erwartung</th></tr></thead><tbody><tr><td>Tagged</td><td>yes</td></tr><tr><td>Page size</td><td>A4</td></tr></tbody></table>
-  </article>
-</main>
-</body>
-</html>"""
-
-
-def write_pdf(document: str, target: Path) -> None:
-    HTML(string=document, base_url=str(REPO_ROOT)).write_pdf(
-        target,
-        pdf_variant=PDF_VARIANT,
-        pdf_tags=PDF_TAGS,
-        custom_metadata=True,
-    )
-
-
 def write_manifest(
-    out_dir: Path,
-    bundles: list[Bundle],
-    stats: dict[str, tuple[int, int]],
-    revision: str,
-    generated_at: str,
+    out_dir: Path, bundles: list[Bundle], stats: dict[str, tuple[int, int]], revision: str, generated_at: str
 ) -> Path:
-    total_docs = sum(len(bundle.documents) for bundle in bundles)
+    total_docs = sum(len(b.documents) for b in bundles)
     total_words = sum(words for _, words in stats.values())
+
     lines = [
         "# NotebookLM Quellpakete",
         "",
-        "Thematisch gebündelte, CAPITAL-AI gebrandete PDF/UA-1-Exporte sämtlicher Markdown-Dokumente.",
+        "Thematisch gebündelte PDF-Exporte sämtlicher Markdown-Dokumente dieses",
+        "Repositories, aufbereitet zur Übergabe an NotebookLM (Google) für die",
+        "Erstellung von Podcasts, Video-Skripten und Zusammenfassungen.",
         "",
         f"- Stand: `{revision}`",
         f"- Erzeugt am: {generated_at}",
-        f"- Renderer: WeasyPrint {weasyprint.__version__}",
-        f"- Accessibility-Profil: `documentation-weasyprint` / `{PDF_VARIANT}` / tagged",
         f"- Pakete: {len(bundles)}",
         f"- Enthaltene Dokumente: {total_docs}",
         f"- Gesamtumfang: ca. {de_number(total_words)} Wörter",
@@ -765,32 +807,56 @@ def write_manifest(
         "| # | Paket | Dokumente | Wörter | Datei |",
         "| --- | --- | ---: | ---: | --- |",
     ]
+
     for bundle in bundles:
         docs, words = stats.get(bundle.key, (len(bundle.documents), 0))
-        lines.append(f"| {bundle.key} | {bundle.title} | {docs} | {de_number(words)} | `{bundle.filename}` |")
+        lines.append(
+            f"| {bundle.key} | {bundle.title} | {docs} | "
+            f"{de_number(words)} | `{bundle.filename}` |"
+        )
 
     lines += ["", "## Inhalt der Pakete", ""]
     for bundle in bundles:
-        lines += [f"### {bundle.key} — {bundle.title}", "", f"*{bundle.subtitle}*", "", bundle.summary, ""]
+        lines += [
+            f"### {bundle.key} — {bundle.title}",
+            "",
+            f"*{bundle.subtitle}*",
+            "",
+            bundle.summary,
+            "",
+        ]
 
     lines += [
+        "## Nutzung in NotebookLM",
+        "",
+        "1. In NotebookLM ein Notebook anlegen (z. B. `CAPITAL-AI Plattform`).",
+        "2. Die gewünschten PDFs unter *Quellen hinzufügen* hochladen. Für einen",
+        "   Gesamtüberblick reichen die Pakete 01 bis 05; für tiefe Detailfragen",
+        "   zusätzlich 06 bis 12.",
+        "3. Für einen Podcast die *Audio-Zusammenfassung* starten und im",
+        "   Anpassungsdialog die Zielgruppe vorgeben, etwa: *Erkläre die",
+        "   Architektur und Governance der CAPITAL-AI Plattform für technische",
+        "   Entscheider, mit Fokus auf Screening, Scoring und Compliance.*",
+        "4. Für Videos die *Video Overview* nutzen und als Struktur die",
+        "   Kapitelfolge des jeweiligen Inhaltsverzeichnisses vorgeben.",
+        "",
+        "Jedes eingebettete Dokument nennt seinen Repository-Pfad, sodass NotebookLM",
+        "seine Aussagen exakt auf die Originaldatei zurückführen kann.",
+        "",
         "## Neu erzeugen",
         "",
         "```bash",
-        "pip install -r scripts/docs/requirements-notebooklm-pdf.txt",
+        "pip install markdown weasyprint pygments",
         "python3 scripts/docs/export_notebooklm_pdfs.py",
         "```",
         "",
-        "Kleiner Renderer-Smoke:",
-        "",
-        "```bash",
-        "python3 scripts/docs/export_notebooklm_pdfs.py --smoke --out-dir /tmp/capital-ai-pdf-smoke",
-        "python3 scripts/docs/verify_pdf_render.py /tmp/capital-ai-pdf-smoke/CAPITAL_AI_NotebookLM_PDF_UA_Smoke.pdf --expect-tagged yes",
-        "```",
-        "",
-        "Der Generator prüft die vollständige Zuordnung der Markdown-Dateien. PDF/UA-Tagging ersetzt keine externe formale Konformitätszertifizierung; die Artefakt-Verifikation bleibt ein separates Gate.",
+        "Der Generator prüft, dass jede Markdown-Datei des Repositories genau einem",
+        "Paket zugeordnet ist, und bricht ab, sobald ein neues Dokument keiner Regel",
+        "entspricht. Neue Dokumentation kann dadurch nicht unbemerkt aus dem Export",
+        "herausfallen.",
         "",
     ]
+
     manifest = out_dir / "README.md"
     manifest.write_text("\n".join(lines), encoding="utf-8")
     return manifest
@@ -798,48 +864,54 @@ def write_manifest(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR), help="Zielverzeichnis der PDFs")
-    parser.add_argument("--only", action="append", default=None, help="Nur diese Paket-Keys erzeugen, z. B. --only 04")
-    parser.add_argument("--smoke", action="store_true", help="Nur ein kleines deterministisches PDF/UA-Testartefakt erzeugen")
+    parser.add_argument(
+        "--out-dir", default=str(DEFAULT_OUT_DIR), help="Zielverzeichnis der PDFs"
+    )
+    parser.add_argument(
+        "--only",
+        action="append",
+        default=None,
+        help="Nur diese Paket-Keys erzeugen (z. B. --only 04). Mehrfach nutzbar.",
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
-    tokens = load_design_tokens()
-
-    if args.smoke:
-        target = out_dir / "CAPITAL_AI_NotebookLM_PDF_UA_Smoke.pdf"
-        write_pdf(build_smoke_html(tokens), target)
-        print(f"Smoke PDF: {target}")
-        return 0
 
     bundles = build_bundles()
     files = discover_markdown_files()
     assign_documents(bundles, files)
 
     revision = git_revision()
-    generated_at = dt.datetime.now().astimezone().strftime("%d.%m.%Y")
+    generated_at = dt.datetime.now().strftime("%d.%m.%Y")
+
     selected = bundles
     if args.only:
         wanted = set(args.only)
-        selected = [bundle for bundle in bundles if bundle.key in wanted]
+        selected = [b for b in bundles if b.key in wanted]
         if not selected:
             sys.exit(f"Keine Pakete passen zu --only {sorted(wanted)}")
 
     print(f"{len(files)} Markdown-Dokumente in {len(bundles)} Paketen\n")
+
     stats: dict[str, tuple[int, int]] = {}
-    for bundle in selected:
+    for bundle in bundles:
+        if bundle not in selected:
+            continue
         if not bundle.documents:
             print(f"  {bundle.key}  übersprungen (keine Dokumente)")
             continue
-        document, words = build_html(bundle, revision, generated_at, tokens)
+
+        document, words = build_html(bundle, revision, generated_at)
         target = out_dir / bundle.filename
-        write_pdf(document, target)
+        HTML(string=document, base_url=str(REPO_ROOT)).write_pdf(target)
         stats[bundle.key] = (len(bundle.documents), words)
+
         size_mb = target.stat().st_size / 1_048_576
         print(
             f"  {bundle.key}  {target.name}\n"
-            f"      {len(bundle.documents):>3} Dokumente, {de_number(words):>9} Wörter, {size_mb:.1f} MB"
+            f"      {len(bundle.documents):>3} Dokumente, "
+            f"{de_number(words):>9} Wörter, {size_mb:.1f} MB"
         )
 
     if not args.only:

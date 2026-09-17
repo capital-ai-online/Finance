@@ -1,19 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createUniversalAssetIdentity, scoringModelRegistry } from '../../src/platform/Scoring';
 import { buildScoringLineage } from '../../src/services/scoringLineage';
 
 describe('scoring lineage', () => {
-  it('links correlation, retrieval, model selection, features, provenance and evidence ids', () => {
-    const resolution = scoringModelRegistry.resolve(
-      createUniversalAssetIdentity({ symbol: 'ETH', assetClass: 'crypto' }),
-    );
-    expect(resolution.status).toBe('RESOLVED');
-    if (resolution.status !== 'RESOLVED') return;
-
+  it('links correlation, retrieval, features, provenance and evidence ids', () => {
     const lineage = buildScoringLineage({
       correlationId: 'req-123:ETH',
-      assetId: 'crypto:ETH',
-      model: resolution.model,
+      assetId: 'ETH',
       canonical: {
         status: 'READY',
         score: 7.5,
@@ -38,10 +30,6 @@ describe('scoring lineage', () => {
     });
 
     expect(lineage.correlationId).toBe('req-123:ETH');
-    expect(lineage.assetId).toBe('crypto:ETH');
-    expect(lineage.model?.modelId).toBe('crypto-technical-provenance');
-    expect(lineage.model?.version).toBe('0.7.0');
-    expect(lineage.model?.alias).toBe('champion');
     expect(lineage.features).toEqual(['momentum', 'trend']);
     expect(lineage.provenanceFields).toEqual(['marketCapUsd']);
     expect(lineage.evidenceIds).toEqual(['ev-1']);

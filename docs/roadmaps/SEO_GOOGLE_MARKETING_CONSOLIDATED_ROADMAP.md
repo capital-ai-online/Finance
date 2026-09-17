@@ -6,311 +6,301 @@
 
 ## Status
 
-**ACTIVE — CANONICAL EXECUTION ROADMAP (Domain SEO / Google Marketing / Content Distribution)**  
-Stand: 2026-09-11  
-Version: **0002.16**  
-Current-main correlation: `main@12c9e129c7302df0d1bce7640cd7888f0998b9ca`  
-Working branch: `agent/seo-roadmap-sota-20260910`  
-Repository: `capital-ai-online/Finance`  
-Owner: SvenKulessa / `CAPITAL-AI-SEO` project coordination  
-Primary productive PVC: **N/A — cross-cutting; no productive PVC ownership**  
-Authority-Bindung: current `/AGENTS.md`, anwendbare Accepted ADR / aktive ESS. Diese Roadmap erzeugt keine Mutationsberechtigung.
+**ACTIVE — CANONICAL EXECUTION AUTHORITY (Domain SEO / Google Marketing / Content Distribution)**  
+Stand: 2026-08-16  
+Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** PR #375 + Owner Rich Results Test; **WP-S2 Prerender VERIFIED** ADR-0084)  
+Owner: SvenKulessa  
+Authority-Bindung: ADR-0035, ADR-0042, ADR-0080 (ACCEPTED), ADR-0082 (SeoEngine), ADR-0084 (Prerender), ADR-0085 (ESS-Nummernraum), ESS-0014, ESS-0024 (ACCEPTED), ADR-0071, ESS-0023
 
-> **0002.16 Owner-directed reopening.** Der mit 0002.15 geschlossene damalige SEO-Dokumentationsscope bleibt historisch korrekt. Die Owner-Anweisung vom 2026-09-07 eröffnet einen neuen, begrenzten Work Item: State-of-the-Art-SEO-Roadmap gegen current `main` korrelieren, fehlende Features aufnehmen und alle Arbeitspakete mindestens bis zu ihrer zulässigen Ownership-/Credential-Grenze starten. Nach Übertragung derselben Repository-Instanz auf `capital-ai-online/Finance` wird dieser Scope auf current main neu materialisiert. Produktive FE/OPS/GOV/COMP-Änderungen werden nicht in SEO-Ownership gezogen.
+> **Nummernkorrekturen 2026-08-16.** Die Marketing-Boundary-Entscheidung wurde bis v0002.7 als *ADR-0068* zitiert; unter **ADR-0081** wurde sie auf **ADR-0080** umgenummert. Die Nummer 0068 gehört seither ausschließlich zu `ADR-0068-first-bounded-autonomous-work-package.md`, einer **Systemadmin**-Entscheidung unter ESS-0021. Die zugehörige Spezifikation wurde unter **ADR-0085** von *ESS-0022* auf **ESS-0024** umgenummert; ESS-0022 bleibt die Passkey/M10-Spezifikation. Mappings: `docs/governance/ADR_CROSSREF_INVENTORY_2026-08-16.md`, `.ai/registry/ess-registry.json`.
 
 ## Zweck
 
-Ein einziger priorisierter SEO-/Google-Marketing-Ausführungsplan mit Task, Owner, Abhängigkeit, Impact/Effort, Messgröße und Exit Gate. Keine zweite Roadmap-Autorität, keine erfundenen Provider-PASS-Werte und keine stillschweigende Runtime-/Publishing-/IAM-Autorität.
+Dieses Dokument ist der **Single Point of Trust** für alle noch offenen und laufenden Arbeiten zu:
+
+- Technical SEO und SEO-Management (SeoEngine)
+- Google Analytics / Search Console / Consent Mode v2 / AdSense
+- Google Marketing MCP (Read-Plane vs. kontrollierte Write-Plane)
+- Content-Generierung, Media-Rendering und Social Distribution
+- Marketing-Agent-Governance (getrennt vom Systemadmin)
+- Monetarisierung (passives Einkommen) innerhalb bestehender Consent-/OWNER-Gates
+
+Es **löst** die parallelen, teilweise überlappenden Roadmaps und Teilspezifikationen ab, um:
+
+1. Wucherung und Unstimmigkeiten zu beenden,
+2. doppelte Architekturentscheidungen (SEO vs. Marketing vs. Google MCP) zu vermeiden,
+3. alle unerledigten Arbeitspakete auf einen aktuellen, evidence-gebundenen Stand zu bringen,
+4. klare Anschlüsse an Documentary, Vocabulary (Wiktionary-Äquivalent), VersionManager und die übrige Plattformarchitektur zu definieren.
+
+**Keine Mutationsberechtigung entsteht durch dieses Dokument allein.** Runtime-, Produktions-, Billing-, AdSense-, DNS- und externe Publish-Änderungen bleiben OWNER-genehmigungspflichtig (ADR-0035, ADR-0039, ESS-0014).
 
 ---
 
-## 1. Authority- und Ownership-Reihenfolge
+## 1. Supersedes (verbindliche Ablösung)
 
-1. current `/AGENTS.md` und höhere Authority;
-2. Project Value Chain / Primary Owner;
-3. anwendbare Accepted ADR / aktive ESS;
-4. diese Roadmap für SEO/Google-Marketing-Planung;
-5. `docs/seo/**` Runbooks, Checklists, Evidence;
-6. historische Claims und ältere Roadmap-Stände.
+Die folgenden Dokumente gelten ab Merge dieses Standes als **SUPERSEDED** für Programmautorität und offene Arbeitspakete. Historischer Evidence-Wert bleibt erhalten; sie dürfen keine parallele Architektur mehr begründen.
 
-`CAPITAL-AI-SEO` besitzt keinen produktiven `PVC-*`. Frontend bleibt `CAPITAL-AI-FE`, Render/Deploy/IAM bleibt `CAPITAL-AI-OPS`, Publishing-Control bleibt `CAPITAL-AI-GOV`, Rechts-/Compliance-Bewertung bleibt `CAPITAL-AI-COMP`.
-
-Für Google-Marketing gelten zusätzlich ESS-0014 und ADR-0035: Read-/Write-Plane bleiben getrennt, CookieHub bleibt Consent Source of Truth, Provider-Konfiguration ist kein Provider-PASS und externe Mutationen bleiben separat autorisiert.
-
----
-
-## 2. State-of-the-Art-Referenzrahmen — advisory only
-
-Die folgenden externen Quellen wurden am 2026-09-07 als aktuelle Best-Practice-Eingabe korreliert. Sie sind **advisory only** und überschreiben keine CAPITAL-AI-Authority.
-
-| Quelle | Relevantes Roadmap-Feature |
-|---|---|
-| Google Search Central — Generative-AI-Optimierung, aktualisiert 2026-07-10 (`developers.google.com/search/docs/fundamentals/ai-optimization-guide`) | klassische SEO-Basis bleibt Grundlage; einzigartige, hilfreiche, nicht-kommodifizierte Inhalte; hochwertige Bilder/Videos; keine speziellen „GEO-Hacks“ oder unnötiges `llms.txt` |
-| Google Search Console — Generative-AI-Performance-Reports, global ausgerollt bis 2026-08-31 (`developers.google.com/search/blog/2026/06/gen-ai-performance-reports`) | GenAI-Visibility als eigener messbarer KPI-Stream |
-| Google Search Central — Search Console + GA4 (`developers.google.com/search/docs/monitor-debug/google-analytics-search-console`) | GSC als Search-Performance-Quelle, GA4 als On-site-Behavior-Quelle; Trends gemeinsam, absolute Zahlen nicht gleichsetzen |
-| Google Search Central — Canonicalization, aktualisiert 2026-08 (`developers.google.com/search/docs/crawling-indexing/canonicalization`) | Redirect, Sitemap und `rel=canonical` konsistent; Canonical bleibt Signal/Hint, kein erzwungener Google-Entscheid |
-| Google Search Central — 2026 Updates (`developers.google.com/search/updates`) | FAQ-Rich-Result ab 2026-05-07 deprecated; JS-Canonical-Konsistenz, bevorzugte Bilder und Preferred Sources aktualisiert |
-| web.dev — Core Web Vitals (`web.dev/articles/vitals`) | p75: LCP <= 2.5 s, INP <= 200 ms, CLS <= 0.1; Mobile/Desktop getrennt beobachten |
-| Semrush SEO Roadmap, 2025 (`semrush.com/blog/seo-roadmap/`) | Ziele/KPIs, Audit, On-page, Content/Keyword Gap, Backlinks, Impact/Effort, Milestones, Owner, regelmäßige Revision |
-| Ahrefs SEO Roadmap / Plan Template (`ahrefs.com/blog/seo-roadmap/`, `ahrefs.com/blog/seo-plan-template/`) | 6–12-Monats-Living-Roadmap, kleine Tasks, Dependencies, Keyword/Content/Links/Tracking |
-
-### Daraus übernommene Roadmap-Mechanik
-
-Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, **Abhängigkeiten**, **Messgröße/Evidence** und **Exit Gate**. Monatliche Repriorisierung erfolgt datenbasiert; kein WP wird allein wegen Alter oder bereits investierter Arbeit priorisiert.
-
----
-
-## 3. Current-main Baseline — 2026-09-11
-
-### 3.1 Technical SEO / SeoEngine
-
-| WP | Status | Evidence / Gate |
+| Altes Dokument | Document ID / Rolle | Nachfolger |
 |---|---|---|
-| Q1 robots + sitemap + Harden | **IMPLEMENTED_ON_MAIN + zuletzt live verifiziert 2026-09-06** | PR #760; fünf kanonische URLs inkl. `/learning-platform`; Regression `tests/unit/seoPublicRouteSitemap.test.ts` |
-| Q2 canonical + trailing slash | **IMPLEMENTED_ON_MAIN** | Route-SEO + Server-Normalisierung; frischer Provider-Smoke in diesem Pass nicht ausgeführt |
-| Q3 Search Console Verify | **HISTORICAL_PROVIDER_EVIDENCE** | Domain `capital-ai.online`; kein frischer GSC-Read in diesem Pass |
-| Q4 Checklist | **CURRENT IN THIS BRANCH** | `docs/seo/SEO_CHECKLIST.md` |
-| Q5 og:image | **IMPLEMENTED_ON_MAIN** | first-party `public/og-image.svg` |
-| D1 JSON-LD | **IMPLEMENTED_ON_MAIN** | Organization/WebSite/SoftwareApplication |
-| D2 route titles/meta | **IMPLEMENTED_ON_MAIN** | `src/lib/routeSeo.ts` |
-| D3 Soft-404 | **IMPLEMENTED_ON_MAIN** | unknown -> 404 |
-| D4 Bundle / CWV | **OPEN — FE-OWNED** | FE-Roadmap führt p75 LCP/INP/CLS-Ziele; SEO verknüpft nur Mess-/Exit-Gate |
-| D5 Search Console Read | **NOT ENABLED** | Runbook vorhanden; Credential-/Provider-Gate |
-| S1 SeoEngine | **VERIFIED** | ADR-0082 |
-| S2 Prerender | **VERIFIED** | ADR-0084 |
-| S3 Dashboard | **IMPLEMENTED_ON_MAIN** | Admin SEO dashboard |
-| S4 Sprache / hreflang | **SPEC COMPLETE / CONDITIONAL** | German-first; kein produktives `hreflang` ohne reale Locale-URLs |
+| `docs/seo/SEO_MANAGEMENT_ROADMAP.md` | SEO-ROADMAP-0001 | **dieses Dokument** |
+| `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` | MA-Roadmap (DRAFT) | **dieses Dokument** (Abschnitt MA → WP-M) |
+| `docs/seo/S1_SEO_ENGINE.md` … `S4_…` (als Programmplan) | Block-Specs | eingearbeitet; Specs bleiben technische Evidence |
+| `docs/seo/Q_BLOCK_IMPLEMENTATION_NOTES.md`, `D_BLOCK_…` | Implementation Notes | Status in §4; Notes bleiben Evidence |
+| `docs/adr/ADR-DRAFT-seo-engine-platform-module.md` | Draft | **ADR-0082** (`docs/adr/ADR-0082-seo-engine-platform-module.md`) |
+| `docs/adr/ADR-DRAFT-prerender-public-routes.md` | Draft | **ADR-0084** (`docs/adr/ADR-0084-prerender-public-routes.md`) |
+| Parallele Aussagen in Architektur-MCP-Docs, soweit sie **offene Programmarbeit** duplizieren | — | ESS-0014 + dieses Dokument sind normativ für den Programmplan |
 
-### 3.2 Google / Consent / Measurement
+**Nicht supersediert (bleiben Authority):**
 
-| Thema | Status | Gate |
-|---|---|---|
-| GA4 Browser-ID | zuletzt live beobachtet | kein Data-API-PASS in diesem Pass |
-| GA4 MCP / Realtime | **NOT ENABLED / nicht neu verifiziert** | ESS-0014 Read-Plane |
-| Search Console MCP / API Read | **NOT ENABLED** | Credential-/Provider-Gate |
-| Consent Mode v2 | bestehende CookieHub-Invariante | kein neuer Pre-Opt-in-Trace in diesem Pass |
-| `GOOGLE_VISIBLE_PASS` | **NOT ENABLED** | keine frische Search-Console-/SERP-Evidence in diesem Pass |
-| GenAI Search visibility | **BASELINE NOT YET READ** | neuer Search-Console-GenAI-Report; Credential-Gate |
-
-### 3.3 Repository-Correlation
-
-- Repository: `capital-ai-online/Finance` — dieselbe Repository-Instanz wurde vom früheren Owner-Pfad `SvenKulessa/Finance` übertragen.
-- Final synchronisierte Baseline dieses Work Items: `main@12c9e129c7302df0d1bce7640cd7888f0998b9ca`.
-- Seit Approval-base `main@7e5f783caa6cb33bca8346582b31ddda33258ed9` wurden 20 Commits auf main integriert; keine der drei SEO-Dateien dieses Work Items wurde dabei verändert.
-- Current `/AGENTS.md` bleibt Control Plane 2.9.0 und wurde vor PR-Erstellung erneut gelesen. Die Approval-Envelope-v3.4-Semantik erlaubt die Fortgeltung der Owner-Freigabe bei nachgewiesener materieller Payload-Äquivalenz und frischer PASS-Korrelation.
-- Open PR #882 ändert `.mcp.json`, `scripts/security/validateMcpExecutableIdentity.mjs` und `tests/unit/mcpExecutableIdentity.test.ts`; kein SEO Changed-File-, semantischer, Namespace-, Authority- oder Security-Overlap.
-- Current Project: `CAPITAL-AI-SEO`; Project Folder: `docs/projects/seo/`; Primary productive PVC: `N/A`; Primary Owner: `CAPITAL-AI-SEO`.
-- FE-Performance-Authority bleibt in der Frontend-Roadmap; SEO führt keine zweite CWV-Implementierungsroadmap.
+- ADR-0035 (Protected Google Marketing / Strict CSP)
+- ADR-0042 (Consent Mode v2)
+- ESS-0014 / ESS-0014-CONTRACTS (Google Marketing MCP Governance)
+- ADR-0026 / ADR-0027 (Social Publishing Real Integration + Owner Restriction)
+- Bestehende SocialMediaEngine-Code- und OAuth-Boundaries
+- ROADMAP_CONSOLIDATION_MASTER_INDEX.md (Portfolio-Ebene; wird auf dieses Programm umgestellt)
 
 ---
 
-## 4. Priorisierungsmodell
+## 2. Authority-Reihenfolge (Domain)
 
-### Impact
+1. Verifizierte Runtime-/Production-Evidence und Code auf `main`
+2. Ausdrückliche Human/Owner-Freigabe (ADR-0039, Protected Change ADR-0035)
+3. ESS-0014, ADR-0035, ADR-0042, ADR-0082, ADR-0084 und akzeptierte ADRs dieses Programms
+4. **Dieses Dokument (SEO-GM-ROADMAP-0002)**
+5. Fachliche Block-Notes und Runbooks unter `docs/seo/`, `docs/runbooks/`
+6. Historische / als SUPERSEDED markierte Roadmaps
 
-- **H** — direkt crawl/index/visibility/data-integrity/blocking.
-- **M** — relevante Optimierung mit indirekter oder verzögerter Wirkung.
-- **L** — optional/experimentell, ohne aktuellen Blocker.
-
-### Effort
-
-- **S** — <= 2 PT bzw. kleines Dokument-/Konfigurationspaket.
-- **M** — mehrere Komponenten/Owner oder messbare Implementierung.
-- **L** — Architektur/Content-Programm/Provider-Integration mit mehreren Abhängigkeiten.
-
-### Status
-
-- `STARTED` — im aktuellen SEO-Branch wurde ein konkreter Artefakt-/Baseline-Schritt umgesetzt.
-- `STARTED_AT_BOUNDARY` — SEO-Anforderung/Exit Gate ist umgesetzt; produktive Umsetzung liegt bei einem anderen Primary Owner.
-- `STARTED_AT_GATE` — Spezifikation/Baseline ist umgesetzt; Credentials/Provider/Owner-Freigabe blockieren den nächsten Schritt.
-- `CONDITIONAL` — erst nach Eintritt einer dokumentierten Voraussetzung sinnvoll.
+Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agent-Identität (Marketing vs. Systemadmin) erzeugt keine Authority-Überschneidung (ADR-0080 / ESS-0024).
 
 ---
 
-## 5. State-of-the-Art Work Packages
+## 3. Zielbild (einheitlich)
 
-| WP | Ziel | Primary Owner / Route | Impact | Effort | Status in 0002.16 | Exit Gate |
-|---|---|---|---|---|---|---|
-| `WP-SEO-METRICS` | KPI-Baseline aus GSC + GA4: Clicks, Impressions, CTR, Queries, Landingpages, Organic Sessions/Conversions; Differenzen erklärbar statt „gleichgerechnet“ | SEO coordination; Owner credentials; ESS-0014 | H | M | **STARTED_AT_GATE** | reproduzierbarer Read-Snapshot + KPI-Baseline; keine synthetischen Werte |
-| `WP-SEO-AI-VIS` | GenAI Search / AI Overview / AI Mode Visibility im neuen Search-Console-Report messen | SEO coordination; GSC read credentials | H | S | **STARTED_AT_GATE** | GenAI-Impressions/Clicks bzw. dokumentiertes „keine Daten“ aus echter GSC-Evidence |
-| `WP-SEO-TECH-GATE` | Crawl-/Index-Release-Gate: Public-Route = Sitemap = Canonical-Allowlist; 404/redirect/noindex/JS-canonical-Konsistenz | SEO requirements; FE/OPS productive implementation | H | M | **STARTED_AT_BOUNDARY** | automatisierbare Prüfung + Owner-implementierte Regression; keine Canonical-/Sitemap-Drift |
-| `WP-SEO-SCHEMA` | Structured-Data-Lifecycle: unterstützte Typen, initial HTML wo sinnvoll, Validierung nach Template-Changes, Search-Console-Fehlertrend | SEO requirements; FE implementation | H | M | **STARTED_AT_BOUNDARY** | valide, inhaltsgetreue Markups; D1-Baseline dokumentiert; FAQ-Rich-Result nicht als Ziel geführt |
-| `WP-SEO-CWV` | CWV als SEO-/UX-Gate mit p75 LCP <=2.5 s, INP <=200 ms, CLS <=0.1, Mobile/Desktop getrennt | `CAPITAL-AI-FE` | H | L | **STARTED_AT_BOUNDARY** | FE-Evidence erfüllt p75-Ziele; SEO übernimmt nur Ergebnis/Trend |
-| `WP-SEO-TOPICS` | Keyword-/Topic-Map nach Intent, Brand-Relevanz, Business Value, Traffic-Potential und Content Gap | `CAPITAL-AI-SEO` | H | M | **STARTED** | priorisierte Topic Map mit Existing/New URL, Intent, Evidence und Owner |
-| `WP-SEO-CONTENT` | Helpful/non-commodity Content: eigener POV, First-party Evidence, Who/How/Why, Autor/Reviewer, Updated-Date, klare Struktur | SEO coordination; Publishing bleibt GOV | H | L | **STARTED** | Content-Brief-Contract + mindestens ein freigegebenes Pilot-Brief; keine scaled-content-Automation |
-| `WP-SEO-IA` | Informationsarchitektur/interne Links: keine Orphans, klare H1/H2-Struktur, beschreibende Anchor, kanonische Pfade | SEO requirements; FE implementation | M | M | **STARTED_AT_BOUNDARY** | Public-URL-Inventar + Linkgraph/Orphan-Check; FE behebt Runtime-Lücken |
-| `WP-SEO-MEDIA` | Image/Video SEO: first-party preferred image, Alt/Dateinamen, hochwertige Medien; VideoObject/Transcript nur bei echtem Video | SEO requirements; FE/SOCIAL implementation je Surface | M | M | **STARTED_AT_BOUNDARY** | bevorzugtes Bild konsistent; Media-Assets crawlbar; Video-Markup nur bei echter Medienseite |
-| `WP-SEO-REFRESH` | Content Decay, Cannibalization, veraltete Seiten, Merge/Refresh/Prune-Entscheidungen | `CAPITAL-AI-SEO` | M | M | **STARTED** | monatlicher Refresh-Backlog aus echten Search-/Content-Daten |
-| `WP-SEO-AUTHORITY` | relevante Backlinks/Digital PR/unlinked mentions; Qualität und Themenfit vor Volumen | SEO coordination; SOCIAL/GOV je Publish/Outreach | M | L | **STARTED_AT_BOUNDARY** | Baseline referring domains + priorisierte Outreach-Liste; keine manipulativen Linkschemata |
-| `WP-SEO-SPAM` | Google-Spam-/Site-Reputation-/Scaled-Content-Guardrails für AI-gestützte Inhalte | SEO coordination; GOV/COMP bei Policy/Legal | H | S | **STARTED** | Checklist blockiert scaled content abuse, cloaking, doorway/site-reputation abuse |
-| `WP-SEO-AGENT` | Browser-/Agent-Readiness: semantischer DOM, Accessibility Tree, stabile Interaktionszustände; nur wo Business Case besteht | `CAPITAL-AI-FE` | L | M | **STARTED_AT_BOUNDARY** | FE-Baseline/Tests; kein proprietärer SEO-Sonderpfad oder Crawler-Cloaking |
-| `WP-SEO-I18N` | `hreflang` + locale-spezifische Canonicals erst bei echten Übersetzungs-URLs | SEO requirements; FE implementation | M | M | **CONDITIONAL** | echte Locale-URLs + gegenseitige hreflang-Sets + korrekte Canonicals |
-| `WP-SEO-REVIEW` | monatliche Living-Roadmap: KPI-Delta, Search-Dokumentationsupdates, Impact/Effort und Owner-Queue neu priorisieren | `CAPITAL-AI-SEO` | H | S | **STARTED** | monatlicher Review-Eintrag mit Evidence und höchstens zwei unmittelbar priorisierten Folgeaktionen |
+**Mission.** Ein vollständiges Capital-AI SEO- und Google-Marketing-Management, das:
+
+- messbare Indexierung und Rankings liefert (No-Demo-Data),
+- Consent Mode v2 und Strict CSP einhält,
+- Content plant/generiert und nur nach hash-gebundener Owner-Freigabe verteilt,
+- Social-Plattformen über die **eigene** SocialMediaEngine anbindet (Open-Source-Tools nur als optionale Adapter/Evidence, nie als Authority),
+- Monetarisierung (AdSense, Affiliate, Subscriptions) hinter Consent- und OWNER-Gates ermöglicht (passives Einkommen),
+- an Documentary (Provenance), Vocabulary Registry und VersionManager angeschlossen ist.
+
+**Nicht-Ziele.**
+
+- Kein paralleles zweites Publishing-System neben SocialMediaEngine
+- Kein LLM-direkter Publish ohne Trust-/Approval-Plane
+- Keine Systemadmin-Authority für Marketing-Domain
+- Keine synthetischen Rankings oder Fake-Finanzkennzahlen
 
 ---
 
-## 6. Umsetzung in diesem Branch — Start aller WPs
+## 4. Ist-Stand (Evidence, 2026-08-16)
 
-### 6.1 SEO-owned sofort gestartet
+### 4.1 Technical SEO / SeoEngine
 
-#### `WP-SEO-TOPICS` — Seed Topic Map
+| WP | Status | Evidence |
+|----|--------|----------|
+| Q1 robots.txt + sitemap | **DONE** | `public/robots.txt`, `public/sitemap.xml` |
+| Q2 canonical + trailing slash | **PARTIAL** | Canonical in `index.html`; Server trailing-slash 301 live (`/impressum/` → `/impressum`); full Q-CLOSE still open |
+| Q3 Search Console Verify | **VERIFIED** | Domain property `capital-ai.online`; Ownership bestätigt (Owner 2026-08-16); Sitemap `sitemap.xml` Success in GSC; Claim + Runbook |
+| Q4 Checklist | **DONE** | `docs/seo/SEO_CHECKLIST.md` |
+| Q5 og:image first-party | **DONE** | `public/og-image.svg` |
+| Q6 obsolete CORS | **N/A** | Keine AI-Studio-Ausnahme im Tree |
+| D1 JSON-LD | **VERIFIED** | PR #375; ImageObject logo + SoftwareApplication `offers`/`image`; **Owner Rich Results Test success** (3 Legal-Unterseiten, 2026-08-16); prod live |
+| D2 route-specific titles/meta | **VERIFIED** | PR #375; `routeSeo` + `main.tsx` load/popstate; prerender; unique titles live `/` `/impressum` `/agb` `/datenschutz` |
+| D3 Soft-404 | **VERIFIED** | PR #360; prod commit `54c48ca`; unknown → 404 `text/plain`; evidence `docs/evidence/seo/D3_SOFT_404_PROD_GAP_2026-08-16.md` |
+| D4 Bundle-Splitting | offen (carried) | — |
+| D5 Search Console MCP Read | offen | Runbook vorhanden; nach Q3 |
+| S1 SeoEngine Platform | **VERIFIED** | Store + Routes + Tests (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; **ADR-0082** Accepted 2026-08-16 |
+| S2 Prerender/SSG | **VERIFIED** | **ADR-0084** Accepted 2026-08-16; build-wired `prerender-public-routes.mjs`; spaFallback serves path HTML; prod noscript without JS |
+| S3 SEO Dashboard | **DONE** | PR #309, Admin-Tab, No-Demo-Data |
+| S4 hreflang / Sprache | **IN PROGRESS / Branch** | Spec `S4_LANGUAGE_AND_HREFLANG_STRATEGY.md` |
 
-Die Seed-Liste ist **Planung**, keine Publikationsfreigabe und keine Behauptung vorhandener indexierbarer Seiten:
+### 4.2 Google Marketing / Consent / CSP
 
-| Topic Cluster | Search Intent | Brand-/Business-Relevanz | Nächster SEO-Schritt |
-|---|---|---|---|
-| CAPITAL-AI / verifizierte Finanzanalyse | navigational + informational | sehr hoch | Brand-/Entity-Surface und Suchnachfrage aus GSC korrelieren |
-| Crypto Scoring / verifizierte Signale | informational + product investigation | hoch | Query-Cluster, Intent und vorhandene produktive Surface zuordnen |
-| Sentiment / Momentum / Pattern Evidence | informational | hoch | nicht-kommodifizierten Erklär-/Evidence-Content statt generischer „Tipps“ planen |
-| Buffett Value Check / Value Investing | informational + product investigation | hoch | Suchintention gegen produktive Surface und FINTECH-Evidence abgleichen |
-| Screening / Ranking / Decision Support | informational + product investigation | hoch | canonical Ranking-/Screening-Surface identifizieren; keine Ranking-Versprechen erfinden |
-| Learning Platform / Finanzbildung | informational | hoch | `/learning-platform` als bestehende kanonische URL in Content- und Internal-Link-Plan aufnehmen |
-| Data Provenance / Freshness / Verified Scores | informational + trust | mittel/hoch | First-party Evidence und Methodik als Unique Value Proposition prüfen |
+| Thema | Status |
+|-------|--------|
+| Consent Mode v2 Gate | ADR-0042 ACCEPTED; Runtime-Consent-JS vorhanden |
+| Protected Marketing + Strict CSP + Nonce | ADR-0035 ACCEPTED, Implementation **IN PROGRESS** (DoD noch nicht erfüllt) |
+| ESS-0014 Read vs Write Plane | Published; Write-Plane noch nicht produktiv |
+| GA4 MCP Read | Runbook + Work-Claim; begrenzte Read-Integration |
+| AdSense | Architektur/Protected Scope; Smoke/DoD offen |
 
-Vor Keyword-/Volume-Priorisierung sind echte GSC-/Keyword-Daten erforderlich; keine Volumen- oder Ranking-Schätzwerte werden erfunden.
+### 4.3 Social / Content / Marketing Agent
 
-#### `WP-SEO-CONTENT` — Content-Brief-Contract
-
-Jeder neue SEO-Content-Brief führt mindestens:
-
-1. primäres Nutzerproblem / Intent;
-2. Ziel-URL und Canonical-Entscheid;
-3. einzigartige Perspektive / First-party Evidence;
-4. fachlicher Owner/Reviewer und Quellen;
-5. `Who / How / Why` der Inhaltserstellung;
-6. Title/H1/Description ohne Keyword-Stuffing;
-7. interne Eingangs-/Ausgangslinks;
-8. strukturierte Daten nur wenn inhaltlich passend und von Google aktuell unterstützt;
-9. bevorzugtes first-party Bild/Video, Alt/Caption/Transcript wo passend;
-10. Messgröße aus GSC/GA4 nach Veröffentlichung;
-11. `lastReviewed`/Refresh-Gate;
-12. GOV-/Publishing-Freigabe, falls externe Veröffentlichung betroffen ist.
-
-#### `WP-SEO-SPAM`
-
-Die SEO-Checkliste enthält ab 0002.16 explizite Negativgates für scaled-content abuse, cloaking, doorway-artige Seiten, künstliche Linkschemata und Site-Reputation-Abuse. AI-Unterstützung ist nur zulässig, wenn der resultierende Inhalt hilfreich, zuverlässig, originell und fachlich geprüft ist.
-
-#### `WP-SEO-REFRESH` und `WP-SEO-REVIEW`
-
-Das Refresh-Schema ist gestartet; echte Priorisierung wartet auf GSC/GA4-Reads. Monatlich werden mindestens Traffic-/Visibility-Delta, Content Decay, neue/entfallene Rich-Result-Features und Owner-Dependencies geprüft.
-
-### 6.2 Credential-gated gestartet
-
-`WP-SEO-METRICS` und `WP-SEO-AI-VIS` sind bis zum Read-Gate spezifiziert. Ohne echte Search-Console-/GA4-Evidence bleiben Werte `NOT ENABLED`/`NOT READ`; keine third-party oder synthetischen Rankings werden als PASS verwendet.
-
-### 6.3 Foreign-owner WPs an der Ownership-Grenze gestartet
-
-Für `WP-SEO-TECH-GATE`, `WP-SEO-SCHEMA`, `WP-SEO-CWV`, `WP-SEO-IA`, `WP-SEO-MEDIA`, `WP-SEO-AUTHORITY`, `WP-SEO-AGENT` und die bedingte `WP-SEO-I18N` sind Anforderungen und Exit Gates definiert. Produktive Änderungen an Frontend, Deploy/Runtime, Publishing oder Compliance werden **nicht** in diesem SEO-Branch implementiert.
+| Thema | Status |
+|-------|--------|
+| OAuth PKCE + Token Store + Publish X/Facebook | **produktiv** (Owner/Founder) |
+| YouTube/TikTok/Instagram | blockiert bis Media-Asset (`mediaRequiredError`) |
+| `POST /api/social-media/generate` (WP-N1) | **VORHANDEN** — `server/socialMedia/textContentGeneration.ts`, Route in `src/routes/socialMediaRoutes.ts`; Feature-Flag `CONTENT_GENERATION_ENABLED` |
+| Skript-Vorlagen (WP-N2) | **VORHANDEN** — `server/socialMedia/scriptTemplates.ts` (`buildScriptPackage`), Tests |
+| Asset-Validierung (WP-N3, Plane 7) | **VORHANDEN** — `server/socialMedia/mediaAssetValidation.ts`; schliesst SSRF ueber `mediaUrl` (der YouTube-Publisher holt die URL serverseitig ab) |
+| Approval-Gate (WP-N4) | **VORHANDEN inkl. Hash-Bindung** — Freigabe ist an Inhalt, Medien-Asset und Plattform-Set gebunden; Abweichung → DENY |
+| Marketing Agent MA0–MA7 | **DRAFT**, keine Runtime-Capability |
+| ADR-0080 / ESS-0024 | **ACCEPTED** (Owner 2026-08-16); Execution Policy bleibt DRAFT / NOT ACTIVE |
 
 ---
 
-## 7. Konkrete Acceptance Gates
+## 5. Einheitliche Arbeitspakete (Work Packages)
 
-### 7.1 Crawl / Index
+Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Phasen werden als **WP-M*** parallel geführt, ohne zweite Architektur.
 
-- exakt eine kanonische URL je indexierbarer Public Surface;
-- Sitemap enthält nur kanonische, indexierbare, HTTP-200-URLs;
-- Public-Route-Inventar, Sitemap und Prerender-Allowlist dürfen nicht driften;
-- keine widersprüchlichen Canonicals vor/nach JS-Rendering;
-- unknown URLs bleiben echte 404; keine irrelevanten Sammelredirects;
-- `noindex` wird nicht in initial HTML gesetzt, wenn eine Seite später indexierbar sein soll;
-- robots blockiert keine für Rendering/Indexierung notwendigen First-party-Ressourcen.
+### 5.1 Fundament & Messbarkeit (Fortsetzung Q/D)
 
-### 7.2 Structured Data
+| ID | Inhalt | Abhängigkeit | DoD (kurz) |
+|----|--------|--------------|------------|
+| WP-Q-CLOSE | Q2 Server-Trailing-Slash, Q3 Owner-Verify + Sitemap-Submit | Owner | Server-301 live; **Q3 VERIFIED** (Domain `capital-ai.online`, Sitemap Success 2026-08-16) |
+| WP-D1 | JSON-LD Organization/WebSite/SoftwareApplication | Q | **VERIFIED** — PR #375; Owner Rich Results Test 2026-08-16 |
+| WP-D2 | Routen-spezifische Title/Meta (Legal + Feature) | Q | **VERIFIED** — unique titles public routes + client sync (PR #375) |
+| WP-D3 | Soft-404: unbekannte Routen → HTTP 404 | — | **VERIFIED** — PR #360; prod unknown → 404 `text/plain` (2026-08-16) |
+| WP-D4 | Bundle-Splitting / CWV | — | Messbare LCP/JS-Verbesserung |
+| WP-D5 | Search Console als MCP-Read (Evidence) | ESS-0014, Q3 | Read-only MCP, kein Write |
 
-- Markup beschreibt sichtbaren echten Inhalt und keine nicht vorhandenen Features;
-- JSON-LD bleibt bevorzugtes Wartungsformat, soweit passend;
-- nach Template-/Schema-Änderungen: Rich Results Test bzw. Search-Console-Status prüfen;
-- `FAQPage` ist **kein** Roadmap-Ziel für Google-Rich-Results nach Deprecation 2026;
-- Product/Article/Video/etc. nur bei tatsächlich passender Surface.
+### 5.2 SEO-Management-Kern (S)
 
-### 7.3 CWV
+| ID | Inhalt | Abhängigkeit | DoD |
+|----|--------|--------------|-----|
+| WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | **VERIFIED** — Ranks nur search-console \| manual-import; Code DONE (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; **ADR-0082** Accepted 2026-08-16 |
+| WP-S2 | Prerender/SSG öffentlicher Routen | ADR formal | **VERIFIED** — **ADR-0084** Accepted; crawlers see title/meta/noscript without JS; soft-404 invariant preserved |
+| WP-S3 | Dashboard | **DONE** | — |
+| WP-S4 | hreflang + Sprachstrategie | Vocabulary | Konsistente `lang`/hreflang |
 
-- p75 LCP <= 2.5 s;
-- p75 INP <= 200 ms;
-- p75 CLS <= 0.1;
-- Mobile/Desktop getrennt;
-- Feldwerte priorisieren; Lab-Werte dienen Diagnose und Regression, nicht als Ersatz für Field-PASS.
+### 5.3 Content, Media, Distribution (N + MA)
 
-### 7.4 GenAI Search
+| ID | Inhalt | Abhängigkeit | DoD |
+|----|--------|--------------|-----|
+| WP-M0 | Governance-Paket: ESS-0024, ADR-0080, Policy, Traceability, inaktives Profil | Human Review | **ERFÜLLT** — Owner-ACCEPT 2026-08-16; Dokumente accepted, **keine** Runtime-Capability |
+| WP-N1 | `POST /api/social-media/generate` + Prompt-Orchestrierung | M0, bestehende Types | **ERFÜLLT** — Text-Packages ohne Publish; Route + `generateTextContent` + Tests |
+| WP-N2 | Skript-Vorlagen (Tweet, Community, Podcast, Short-Video) | N1 | **ERFÜLLT** — `scriptTemplates.ts` + `scriptTemplates.test.ts` |
+| WP-N3 | Media-Rendering (TTS/Video) als **ersetzbare Sidecar-Adapter** | N1, **Make-or-Buy Owner (offen)** | **Asset-Validierung ERFÜLLT** — `mediaUrl` wird vor jedem Plattform-Aufruf geprüft (https-only, keine Zugangsdaten, keine privaten/Loopback-/Link-Local-/CGNAT-Ziele, DNS-Auflösung muss öffentlich sein); Verstoß → HTTP 400 mit `media_url_*`-Code; 12 Negativtests. **Renderer-Auswahl weiterhin offen** und Owner-Entscheidung. |
+| WP-N4 | Content-Kalender + hash-gebundene Owner-Freigabe | N1 | **Hash-Bindung ERFÜLLT** — sha256 über Titel, Captions, Hashtags, Medien-URL, Medientyp und Plattform-Set; Mismatch → HTTP 403 `approval_content_mismatch`; 7 Negativtests. Content-Kalender (Scheduling-UI) weiterhin offen. |
+| WP-M5 | Erster bounded Marketing-Repo-Pilot (Docs/Contracts) | SA Host VERIFIED + M0 | Audit-before-side-effect, Human Merge |
+| WP-M6 | Controlled External Publishing Architecture | N4, starke Owner-Approval | Default `CONTENT_AUTO_PUBLISH_ENABLED=false` |
+| WP-H1 | Weitere Plattformen (LinkedIn, …) über SocialMediaEngine | M6 | Kein zweites Token-System |
+| WP-H2 | Google Admin/Write nur hinter ESS-0014 Gateway | ADR-0035 DoD | OWNER + Step-up |
+| WP-H3 | Feedback-Loop GSC/GA4 → ContentPerformanceScore | D5, S1 | Empfehlungen, kein Self-Publish |
 
-- keine separate „GEO“-Shadow-Architektur;
-- kein `llms.txt` als Pflicht oder Ranking-Hack;
-- Content bleibt people-first, fachlich geprüft und non-commodity;
-- Search-Console-GenAI-Report ist Messquelle, sobald Read-Evidence verfügbar ist;
-- Preferred Sources nur prüfen, wenn CAPITAL-AI eine dafür relevante Publisher/News-Surface betreibt.
+### 5.4 Autonomie & Monetarisierung (J + Revenue)
 
-### 7.5 Content / Authority
-
-- kein generischer Massencontent allein für Query-Varianten;
-- First-party Data/Evidence und fachliche Erfahrung werden sichtbar gemacht, wenn vorhanden;
-- interne Links folgen Nutzerpfaden und Themenbezug;
-- Linkaufbau priorisiert relevante redaktionelle Links/Erwähnungen; kein Kauf-/Tausch-/Spam-Schema;
-- veralteter oder kannibalisierender Content wird aktualisiert, konsolidiert oder bewusst entfernt.
-
----
-
-## 8. Now / Next / Later
-
-### NOW — 0–30 Tage
-
-1. `WP-SEO-METRICS` + `WP-SEO-AI-VIS`: echte read-only GSC/GA4-Baseline, falls Owner-Credentials freigegeben/verfügbar.
-2. `WP-SEO-TECH-GATE` + `WP-SEO-SCHEMA`: FE/OPS-Handoff für automatisierbare Crawl-/Canonical-/Structured-Data-Regressions.
-3. `WP-SEO-TOPICS` + `WP-SEO-CONTENT`: Seed Map mit echten Query-/Intent-Daten anreichern und erstes nicht-kommodifiziertes Pilot-Brief priorisieren.
-4. `WP-SEO-SPAM`: AI-/Content-Gates bei allen neuen Briefs anwenden.
-
-### NEXT — 31–90 Tage
-
-1. `WP-SEO-CWV`: FE-Evidence auf p75-Ziele und Route-Budgets.
-2. `WP-SEO-IA` + `WP-SEO-MEDIA`: Internal-Link-/Orphan-Audit, preferred image/media readiness.
-3. `WP-SEO-REFRESH`: Content-Decay-/Cannibalization-Backlog aus echten Daten.
-4. `WP-SEO-AUTHORITY`: relevante referring domains/unlinked mentions baseline und Outreach-Priorisierung.
-
-### LATER — 90–180+ Tage
-
-1. `WP-SEO-I18N` nur bei echten Locale-URLs.
-2. `WP-SEO-AGENT` nur bei validiertem Browser-Agent-Business-Case.
-3. Preferred-Sources-/Publisher-Optimierung nur bei passender redaktioneller Surface.
+| ID | Inhalt | Abhängigkeit | DoD |
+|----|--------|--------------|-----|
+| WP-J1 | Marketing-Agent im Multi-Agent-Framework (eigene Subject-ID) | M5 | Least Privilege, Kill Switch |
+| WP-J2 | Closed Loop mit harter Owner-Schranke | H3, M6 | Keine Autonomie ohne Freigabe-Klasse-ADR |
+| WP-R1 | AdSense unter Protected Scope + Consent | ADR-0035 DoD | Smoke ohne CSP-Block; Consent-gated |
+| WP-R2 | Affiliate-Links in ContentPackages (Disclosure) | N4 | Compliance-Disclosure Pflicht |
+| WP-R3 | Stripe-Subscriptions (bestehend) als Conversion-Ziel in SEO-Content | Entitlements ADR-0034 | Keine Preis-Mutation ohne Billing-ADR |
 
 ---
 
-## 9. Invarianten
+## 6. Architektur-Anschlüsse (verbindlich)
 
-1. CookieHub bleibt Consent Source of Truth.
-2. Read- und Write-Plane bleiben getrennt (ESS-0014).
-3. Config != Provider-PASS.
-4. Keine synthetischen Rankings, Traffics, Conversions, Keyword-Volumes oder GenAI-Visibility-Werte.
-5. Keine zweite Publishing-/Token-/SEO-Runtime-Authority.
-6. Merge bleibt Human/CODEOWNER-only.
-7. Ein geschlossener ungemergter PR ist nie current-main-Evidence.
-8. External SEO guidance ist advisory only.
-9. `llms.txt` ist kein Pflicht-WP; ein späterer Einsatz benötigt einen konkreten, belegten Consumer/Business Case.
-10. FAQ-Rich-Result ist nach Google-Deprecation 2026 kein Ziel-KPI.
-11. Foreign-owner Runtime-Arbeit endet an der Ownership-Grenze und wird an FE/OPS/GOV/COMP geroutet.
+### 6.1 Documentary
+
+- Jede generierte ContentPackage und jedes Rank-Snapshot-Event erhält Documentary-Provenance (Quelle, Modell, Template-Hash, Approval-Hash).
+- SEO-Programm-Status und Evidence-Dateien folgen Documentary D0–D7 Lifecycle, sobald D0 Baseline stabil ist.
+- Kein Marketing-Claim ohne nachvollziehbare Documentary-Linie.
+
+### 6.2 Vocabulary / „Wiktionary“
+
+- Kanonische SEO-/Marketing-Terme (Keyword, Rank Snapshot, ContentPackage, hreflang, Consent Gate, …) werden über Vocabulary Governance (ESS-0017 / ADR-0044/0046) registriert.
+- UI- und API-Bezeichner folgen der bilingualen Registry; keine Ad-hoc-Synonyme in neuen Modulen.
+
+### 6.3 VersionManager
+
+- Schema-Migrationen (`seo_*`), Feature-Flags und Release-Gates laufen über VersionManager / Release-Lifecycle (ESS-0004, ADR-0030 resolved).
+- Roadmap-Version dieses Dokuments und Schema-Versionen sind in Release-Changelogs referenzierbar.
+
+### 6.4 SocialMediaEngine & SeoEngine
+
+- **Eine** Distribution-Authority: `SocialMediaEngine` + bestehende Publisher.
+- **Eine** SEO-Management-Authority: `src/platform/SeoEngine/` (ADR-0082).
+- Open-Source (z. B. rank-tracker-ähnliche Tools, Postiz-ähnliche Orchestratoren, n8n): nur als **optionale Evidence-/Worker-Adapter** hinter CAPITAL-AI-Contracts; niemals OAuth-, Token- oder Policy-Root.
+
+### 6.5 Google MCP
+
+- Read/Evidence: GA4, Search Console (geplant) gemäß ESS-0014.
+- Write/Admin: nur CAPITAL-AI-Adapter + IAM + Approval + Audit; Claude/andere Modelle sind Host-Profile, nicht Trust Root (ADR-0035).
 
 ---
 
-## 10. Definition of Done — 0002.16 Work Item
+## 7. Sicherheits- und Governance-Invarianten (unverhandelbar)
 
-Dieser Roadmap-Modernisierungs-Work-Item ist repository-seitig fertig, wenn:
+1. AI-Provider ist nie Trust Root.
+2. Marketing-Agent erbt **keine** Systemadmin-Authority.
+3. Consent Mode v2 und Strict CSP+Nonce bleiben geschützt (Protected Change).
+4. Quantitative Finanzaussagen brauchen Source-Evidence; sonst DENY für Publish.
+5. Human/Owner-Approval ist hash-gebunden bis eine spätere ADR eine sichere autonome Klasse definiert.
+6. Merge bleibt Human-only.
+7. Shared Integration Zone (Workflows, global IAM, Bootstrap, shared Migrations) erfordert explizite Koordination / Single-Writer.
+8. No-Demo-Data: keine geschätzten Rankings in Produktion.
 
-- current-main-/open-PR-Korrelation vor PR-Gate erneut PASS ist;
-- `docs/projects/seo/ROADMAP.md`, diese Programm-Roadmap und `docs/seo/SEO_CHECKLIST.md` denselben 0002.16-Scope spiegeln;
-- jedes neue State-of-the-Art-WP Owner, Status, Impact/Effort, Evidence und Exit Gate besitzt;
-- SEO-owned Pakete mindestens mit konkretem Seed/Contract/Checklist-Artefakt gestartet sind;
-- Credential-/Foreign-owner-Pakete ehrlich an ihrem Gate stehen;
-- keine Produktiv-/Provider-/Publishing-Mutation aus SEO-Ownership erfolgt;
-- ausgeführte und nicht ausgeführte Checks getrennt dokumentiert sind.
+---
 
-Das **Gesamtprogramm** bleibt offen, solange Provider Reads, FE-CWV, foreign-owner Runtime-Gates oder echte Content-/Authority-Messungen fehlen.
+## 8. Open-Source- und externe Tools (Policy)
+
+| Kategorie | Erlaubt als | Nicht erlaubt |
+|-----------|-------------|---------------|
+| Rank-/SERP-Evidence | Read-Adapter hinter SeoEngine | Autoritative Ranking-Quelle ohne GSC/Manual |
+| Social Orchestration (Postiz-ähnlich) | Optionaler Worker hinter SocialMediaEngine | Eigenes Token-Store / Parallel-Publish |
+| Workflow (n8n o. ä.) | Interne Orchestrierung in Sandbox | Produktions-Secrets im Worker |
+| Media (TTS/Video OSS) | Sidecar mit validiertem Input/Output-Hash | Direktzugriff auf Social OAuth |
+
+Auswahl und Einführung jedes Adapters: eigener kleiner ADR-Nachtrag + Supply-Chain-Check (M6-Provenance-Prinzipien).
+
+---
+
+## 9. Traceability & Definition of Done (Programm)
+
+Pro WP mindestens:
+
+- Verweis auf dieses Roadmap-ID + WP-ID
+- ADR/ESS falls Architektur/Trust-Boundary
+- Tests (positiv + negativ)
+- redigierte Evidence unter `docs/evidence/` oder SEO-Notes
+- Aktualisierung der Marketing/SEO Traceability Matrix
+- PR mit Human Review; Branch löschen nach Merge
+
+Programm gilt als abgeschlossen, wenn:
+
+- alle WP-Q/D/S mit VERIFIED oder OWNER-ACCEPT,
+- N1–N4 und M0–M6 mit akzeptierter Governance und mindestens einem bounded Pilot,
+- ADR-0035 DoD erfüllt oder explizit risikobegründet akzeptiert,
+- keine parallele offene SEO-/Marketing-Roadmap mehr Authority beansprucht,
+- Master-Index auf SEO-GM-ROADMAP-0002 zeigt.
+
+---
+
+## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach WP-S2 VERIFIED)
+
+1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15.
+2. ~~**Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3)~~ — **VERIFIED** 2026-08-16 (Domain `capital-ai.online`, Ownership bestätigt, Sitemap Success).
+3. ~~ADR-Draft SeoEngine nummerieren~~ — **ADR-0082** Accepted (Kollisionscheck nach PR #345: 0075–0081 belegt).
+4. ~~ADR-0080 + ESS-0024 Owner-Review (WP-M0)~~ — **ERFÜLLT** (Owner-ACCEPT 2026-08-16). Review-Paket: `docs/governance/WP_M0_OWNER_REVIEW_PACKAGE.md`; drei Befunde vorher behoben (B1/B2 unter ADR-0085, B3 durch Ausarbeitung von ADR-0080). Kein Runtime-Enablement: Execution Policy §18 bleibt unerfüllt, Profil bleibt `READ/ANALYZE/PLAN`. Nächstes Marketing-Paket: **WP-N1**.
+5. ~~WP-D3 Soft-404~~ — **VERIFIED** (PR #360; prod curl 2026-08-16).
+6. ~~**WP-D1 / D2**~~ — **VERIFIED** (PR #375 merged; prod unique titles; Owner Rich Results Test success for Legal-Unterseiten 2026-08-16).
+7. ~~**WP-S2** formal Prerender-ADR~~ — **VERIFIED** (**ADR-0084** Accepted 2026-08-16; code already live).
+8. Optional: **WP-D5** Search Console MCP Read (Credentials Owner-separat).
+9. Optional follow-up: shared Legal-Copy-Module für noscript/body; single source `routeSeo` ↔ prerender.
+
+Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADRs: `docs/adr/ADR-0082-seo-engine-platform-module.md`, `docs/adr/ADR-0084-prerender-public-routes.md`. Q3 Runbook: `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`.
 
 ---
 
 ## 11. Änderungshistorie
 
 | Version | Datum | Änderung |
-|---|---|---|
-| 0002.0–0002.13 | 2026-08-15..16 | historische Konsolidierung; Evidence in Git-Historie |
-| 0002.14 | 2026-09-05 | ungemergter Entwurf gegen ältere Baseline; durch 0002.15 ersetzt |
-| 0002.15 | 2026-09-06 | damaliger SEO-Dokumentations-Closeout nach Q1-Production; Restqueue owner-/foreign-owner-gated |
-| **0002.16** | **2026-09-11** | Owner-directed SoTA-Reopening aus dem 2026-09-07 Work Item auf die übertragene Repository-Instanz `capital-ai-online/Finance`; final re-korreliert gegen `main@12c9e129c7302df0d1bce7640cd7888f0998b9ca`, moderne Roadmap-Mechanik, GenAI Search, GSC+GA4, CWV, content/topic/IA/media/authority/spam/refresh WPs ergänzt und alle Pakete bis zu ihrem zulässigen Gate gestartet |
+|---------|-------|----------|
+| 0002.0 | 2026-08-15 | Erstausgabe: Konsolidierung SEO-ROADMAP-0001 + MARKETING_AGENT_ROADMAP + Google-Marketing-Programmplan zu Single Point of Trust |
+| 0002.1 | 2026-08-15 | Ist-Stand S1: Store-Code PR #335 auf main; Owner-Gates (FK/Ledger/ADR) explizit; nächste Schritte aktualisiert |
+| 0002.2 | 2026-08-16 | WP-S1 **VERIFIED**: ADR-0082 Accepted (nach PR #345 Nummernraum); §4/§5.2/§10 synchronisiert |
+| 0002.3 | 2026-08-16 | WP-D3 Soft-404 **VERIFIED** (PR #360; prod commit `54c48ca`; unknown → 404); §4/§5.1/§10 synchronisiert |
+| 0002.4 | 2026-08-16 | **Q3 / WP-Q-CLOSE Search Console Domain property VERIFIED** (Owner: `capital-ai.online` Ownership bestätigt; Sitemap Success); §4/§5.1/§10 + Checklist/Runbook/Claim synchronisiert |
+| 0002.5 | 2026-08-16 | **WP-D1 / D2 CODE READY** — JSON-LD ImageObject + offers; routeSeo client popstate + unit test; §4/§5.1/§10 + Checklist/Claim |
+| 0002.6 | 2026-08-16 | **WP-D1 / D2 VERIFIED** — PR #375; Owner Rich Results Test success (3 Legal-Unterseiten); Claim + Checklist + §4/§5.1/§10 |
+| 0002.7 | 2026-08-16 | **WP-S2 VERIFIED** — ADR-0084 Accepted (Prerender public routes); draft superseded; Checklist + §4/§5.2/§10 |
+| 0002.8 | 2026-08-16 | **WP-M0 Review-Paket** `docs/governance/WP_M0_OWNER_REVIEW_PACKAGE.md` erstellt; drei blockierende Befunde erhoben. Zugleich **Nummernkorrektur ADR-0068 → ADR-0080** (Marketing-Boundary) nach ADR-0081 in 21 Fundstellen ueber neun Dateien. Keine Statusaenderung. |
+| 0002.9 | 2026-08-16 | **ESS-Nummernraum bereinigt (ADR-0085)** — Marketing-Spezifikation von ESS-0022 auf **ESS-0024** umgenummert (ESS-0022 bleibt Passkey/M10); Registry um ESS-0019 bis ESS-0024 ergaenzt, `freeNumberSpaceStartsAt` = ESS-0025. WP-M0-Befunde B1 und B2 geschlossen. |
+| 0002.10 | 2026-08-16 | **ADR-0080 auf Repository-Standard ausgearbeitet** — Context, fuenf verworfene Alternativen, Consequences, sechs Security-Invarianten, pruefbare DoD, `Implementation-Status`. Entscheidung inhaltlich unveraendert. WP-M0-Befund B3 geschlossen. |
+| 0002.13 | 2026-08-16 | **WP-N3 Asset-Validierung** — `mediaUrl` war voellig ungeprueft, obwohl `platformPublishers.ts` sie serverseitig per `fetch` abruft (SSRF-Vektor: Cloud-Metadata 169.254.169.254, Loopback, interne Hosts). ESS-0024 §13 fordert `invalid/private media URL -> DENY`; der Test existierte nicht. Neue providerneutrale Validierung inkl. IPv6-Expansion (der URL-Parser normalisiert `::ffff:169.254.169.254` zu Hex, eine Regex auf die Dotted-Form waere ein Bypass gewesen); 12 Negativtests. Renderer-Auswahl (Make-or-Buy) bleibt Owner-Entscheidung. |
+| 0002.12 | 2026-08-16 | **WP-N4 Hash-Bindung** — Owner-Freigabe war ein blosses Token: `consumeForPublish` prueft nur Existenz, Nutzer und Status, nie den Inhalt. Freigabe fuer Inhalt A konnte Inhalt B veroeffentlichen (ESS-0024 §10 / ADR-0080 Invariante 5 verletzt). Jetzt sha256-gebunden inkl. Plattform-Set und Medien-Asset; 7 Negativtests. Zugleich Ist-Stand-Korrektur: **WP-N1 und WP-N2 waren bereits implementiert**, die Roadmap fuehrte sie als fehlend. |
+| 0002.11 | 2026-08-16 | **WP-M0 ERFÜLLT — Owner-ACCEPT** fuer ESS-0024 und ADR-0080 (Antwort im Claim `WP-M0-MARKETING-GOVERNANCE-OWNER-ACCEPT-2026-08-16` woertlich protokolliert). Status PROPOSED → ACCEPTED, Registry-Eintrag ESS-0024 → published. **Keine Runtime-Capability**; Execution Policy bleibt DRAFT / NOT ACTIVE. |

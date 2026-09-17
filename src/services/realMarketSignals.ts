@@ -189,13 +189,12 @@ export function classifyTrendLabel(stats: ReturnStats): TrendLabel {
  * belegt, sondern aus der Summe ausgeschlossen; ihr Gewichtsanteil wird proportional auf die
  * vorhandenen Faktoren umgelegt (dynamische Neugewichtung, Audit-Massnahme S1).
  * `invert` markiert Faktoren, bei denen ein hoeherer Rohwert schlechter ist (z.B. volatility) -
- * fuer diese wird (100 - Wert) verwendet. Der Satz ist read-only: diese Bewertungsprimitive
- * konsumiert Inversionsmetadaten, mutiert sie aber nicht.
+ * fuer diese wird (100 - Wert) verwendet.
  */
 export function renormalizeAndScore(
   values: Record<string, number | undefined>,
   weights: Record<string, number>,
-  invert: ReadonlySet<string> = new Set<string>()
+  invert: Set<string> = new Set()
 ): { score: number; usedFactors: string[]; missingFactors: string[] } {
   const usedFactors: string[] = [];
   const missingFactors: string[] = [];

@@ -34,23 +34,7 @@ jobs:
     # (Zielpfad, Inhalt, Mandat) bleibt dabei trusted, bereits auf main gemergter Code — der
     # Issue-Body waehlt nur, WELCHES bereits genehmigte Arbeitspaket laeuft, nie WAS geschrieben
     # wird.
-    #
-    # STILLGELEGT 2026-08-24 auf ausdrueckliche Owner-Anweisung ("bitte deaktiviere die aktiven
-    # GitHub bot ... diese erstellen jeweils Projekte, die ich erstmal beiseite gelegt habe").
-    # Die betroffenen Arbeitspakete sind zurueckgestellt; ein Host, der bei jedem passenden Issue
-    # autonom anlaeuft, soll waehrenddessen nicht scharf bleiben.
-    #
-    # Die urspruengliche Sicherheitsannahme dieses Kommentars ist ausserdem veraltet: das gebundene
-    # Mandat .ai/mandates/REM-WORKPACKAGE-GEN-PROOF-001.json traegt heute `status: OWNER_APPROVED`,
-    # nicht `DRAFT`. Der beschriebene REM_SCOPE-Deny greift also nicht mehr; die Ausfuehrung war
-    # zuletzt nur noch durch `expiresAt: 2026-08-22` blockiert. Umso mehr ist die Stilllegung hier
-    # explizit und nicht implizit.
-    #
-    # Stillgelegt per `false &&` — identisch zu systemadmin-sa4-pilot.yml, damit der auditierte
-    # Vertrag (siehe tests/unit/systemadminWorkPackageCatalogContracts.test.ts) unveraendert
-    # nachweisbar bleibt. Reaktivierung ist ein eigener, dokumentierter Human/Owner-Change.
     if: >-
-      false &&
       github.event.issue.user.login == 'SvenKulessa' &&
       startsWith(github.event.issue.title, '[SYSTEMADMIN-WORK-PACKAGE]')
     runs-on: ubuntu-latest
@@ -58,14 +42,14 @@ jobs:
 
     steps:
       - name: Vertrauenswürdigen main-Stand auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: main
           fetch-depth: 1
           persist-credentials: false
 
       - name: Node.js einrichten
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24.18.0'
 

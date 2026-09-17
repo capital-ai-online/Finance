@@ -1,66 +1,42 @@
 component:
   name: Vocabulary
-  displayName: Canonical Vocabulary & Wording
-  version: 1.8.0
+  displayName: Canonical Vocabulary Registry
+  version: 1.0.0
   status: implemented
   lifecycle: Operational
-  health: Verified
+  health: Unknown
   owner: Platform Director
   category: platform
   layer: CrossCutting
   repository: Finance
-  effectiveSince: PR #477 implementation + PR #524 hygiene merge
 
 purposeDE: >
-  Kanonische Registry für Terminologie und zweisprachiges Produkt-Wording mit
-  Message Catalog, vollständiger read-only FinTech-Projektion, Usage Index,
-  Delivery-Adaptern, Documentary-Handoff, deterministischer Wiki-Projektion,
-  kontrollierter Source-Migration und kontinuierlicher Governance.
+  Zentrale kanonische Registry fuer Terminologie, Naming, zweisprachige Wortwahl,
+  Aliase und verbotene Begriffe innerhalb von CAPITAL-AI.
 purposeEN: >
-  Canonical registry for terminology and bilingual product wording with a
-  governed message catalog, complete read-only FinTech projection, usage index,
-  delivery adapters, Documentary handoff, deterministic Wiki projection,
-  controlled source migration and continuous governance.
+  Central canonical registry for terminology, naming, bilingual wording, aliases
+  and forbidden terms across CAPITAL-AI.
 
 responsibilities:
   - Canonical concept identities
-  - German and English preferred display mappings
+  - German and English display mappings
   - Alias and forbidden-term governance
-  - Governed UI Message Catalog
-  - Read-only 18-stage SC-MD-SPT-0001 wording bindings
-  - Evidence-based Wording Usage Index
-  - React PDF Email SEO Accessibility delivery adapters
-  - Commit-bound neutral Vocabulary Wording Snapshot
-  - Deterministic non-authoritative GitHub Wiki projection
-  - Controlled incremental source wording migration
-  - Read-only continuous governance and closure validation
+  - Deterministic collision detection
+  - Read-only terminology resolution for downstream components
 
 notResponsibleFor:
-  - Financial runtime decisions
-  - Market data or evidence mutation
-  - Scoring confidence ranking or eligibility
-  - IAM entitlement billing or compliance authorization
-  - Active code renames outside Safe Rename Gate
+  - Active code renames
   - Event routing
-  - Documentary Knowledge or Traceability implementation
-  - Knowledge Graph or Traceability persistence
-  - Autonomous Wiki publication
-  - Automatic migration of OPEN wording candidates
-  - Merge release deployment or production mutation
+  - Knowledge Graph storage
+  - Traceability storage
+  - Documentation generation
 
 structure:
   Domain: Canonical concept contracts
   Interfaces: Public registry interfaces
   Registry: Canonical in-memory registry and seed concepts
-  Messages: Governed bilingual UI Message Catalog and migration baseline
-  ValueChain: Read-only FinTech stage bindings
-  Usage: Source usage index and reverse-impact evidence
-  Delivery: Surface-specific read-only message adapters and browser resolver
-  Projection: Neutral Vocabulary Wording Snapshot
-  Wiki: Deterministic generated Wiki projection
-  Migration: Explicit source-literal-message migration plan
   Services: Read-oriented terminology access
-  Validators: Concept message cross-contract and closure validation
+  Validators: Concept and collision validation
   Tests: Contract tests
 
 dependencies:
@@ -70,30 +46,9 @@ dependencies:
     - src/platform/Knowledge
     - src/platform/Traceability
     - src/platform/Documentary
-    - src/platform/MarketData
-    - src/platform/Scoring
-    - src/platform/Ranking
 
 interfaces:
   - IVocabularyRegistry
-  - Messages/UiMessage.ts
-  - Messages/UiMessageCatalog.ts
-  - ValueChain/FintechWordingBinding.ts
-  - Usage/WordingUsage.ts
-  - Delivery/MessageDeliveryAdapter.ts
-  - Projection/VocabularyWordingSnapshot.ts
-  - Wiki/VocabularyWikiProjection.ts
-  - Migration/WordingMigrationPlan.ts
-
-integration:
-  documentaryConsumer: src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts
-  wikiRenderer: scripts/automation/renderVocabularyWiki.ts
-  wikiSync: scripts/automation/syncVocabularyWiki.ts
-  migrationValidator: scripts/automation/validateWordingMigration.ts
-  closureValidator: scripts/automation/validateVocabularyGovernanceClosure.ts
-  rule: >
-    Vocabulary remains dependency-free relative to Documentary/Knowledge/Traceability and financial hotpaths.
-    Wiki is one-way/non-authoritative, source migration is explicit/non-automatic, and repository quality is reused.
 
 references:
   ess:
@@ -103,21 +58,11 @@ references:
     - ESS-0017
     - ESS-0017-CONTRACTS
   adr:
-    - ADR-0078
-  authorities:
-    - SC-MD-SPT-0001
+    - ADR-0046
   documentation:
-    - docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md
-    - docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md
-    - docs/roadmaps/work-packages/VW-6_GITHUB_WIKI_PROJECTION_2026-08-21.md
-    - docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md
-    - docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md
+    - docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md
 
 implementationStatusDE: >
-  VW-0 bis VW-8 via PR #477 auf main implementiert. Wiki-Projektion ist deterministisch und standardmäßig Dry-Run;
-  externe Wiki-Publikation wurde nicht ausgeführt. Die fünf initialen VW-7-Kandidaten verwenden stabile Message Keys;
-  im kontrollierten initialen Slice verbleibt kein OPEN-Kandidat. Continuous Governance verwendet die bestehende Test-/Quality-Kette.
+  Phase-2-Kern implementiert. Keine aktiven Renames und keine neuen Event-Typen.
 implementationStatusEN: >
-  VW-0 through VW-8 are implemented on main via PR #477. Wiki projection is deterministic and dry-run by default;
-  Wiki publication remains a separately gated external action. The initial five VW-7 candidates are migrated through stable Message Keys.
-  Continuous governance reuses the existing test/quality chain.
+  Phase 2 core implemented. No active renames and no new event types.

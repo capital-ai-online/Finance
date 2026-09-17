@@ -152,7 +152,7 @@ export function getLocalSubscriptions(): Record<string, string> {
       return JSON.parse(data) || {};
     }
   } catch (e) {
-    console.warn('[Local Database Fallback] Error reading local subscriptions file:', e);
+    console.warn("[Local Database Fallback] Error reading local subscriptions file:", e);
   }
   return {};
 }
@@ -166,10 +166,9 @@ export function saveLocalSubscription(userIdentifier: string, tier: string) {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(LOCAL_SUBS_FILE, JSON.stringify(subs, null, 2), 'utf8');
-    const identifierType = userIdentifier.includes('@') ? 'email' : 'userId';
-    console.log(`[Local Database Fallback] Persisted development subscription (${identifierType}) without logging the identifier.`);
+    console.log(`[Local Database Fallback] Persisted ${userIdentifier} -> ${tier} locally.`);
   } catch (e) {
-    console.error('[Local Database Fallback] Error writing local subscriptions file:', e);
+    console.error("[Local Database Fallback] Error writing local subscriptions file:", e);
   }
 }
 
@@ -194,7 +193,7 @@ export async function saveSubscription(userId: string, tier: string, email: stri
     if (isProduction()) {
       assertPrivilegedSupabaseConfigured('subscription persistence');
     }
-    console.log('[Supabase Backend] Privileged Supabase not configured. Development subscription persisted locally without logging subject identifiers.');
+    console.log(`[Supabase Backend] Privileged Supabase not configured. Saved development subscription locally for userId: ${cleanUserId} -> ${tier}`);
     return;
   }
 
@@ -228,17 +227,17 @@ export async function saveSubscription(userId: string, tier: string, email: stri
         }
         console.warn(`[Supabase Backend] Both upsert strategies failed. Development fallback remains local: ${fallbackError.message}`);
       } else {
-        console.log('[Supabase Backend] Successfully persisted subscription through legacy email conflict fallback; subject identifier redacted.');
+        console.log(`[Supabase Backend] Successfully persisted subscription with email fallback conflict key: ${cleanEmail} -> ${tier}`);
       }
     } else {
-      console.log('[Supabase Backend] Successfully persisted subscription to remote DB; subject identifier redacted.');
+      console.log(`[Supabase Backend] Successfully persisted subscription to remote DB: userId ${cleanUserId} -> ${tier}`);
     }
   } catch (e: any) {
     if (isProduction()) {
       console.error('[Supabase Backend][SECURITY] Production subscription persistence failed closed:', e.message || e);
       throw e;
     }
-    console.warn('[Supabase Backend] Error in saveSubscription remote upsert, using development-local state:', e.message || e);
+    console.warn("[Supabase Backend] Error in saveSubscription remote upsert, using development-local state:", e.message || e);
   }
 }
 
@@ -296,7 +295,7 @@ export async function getSubscription(userIdOrEmail: string): Promise<string> {
       }
     }
   } catch (e: any) {
-    console.error('[Supabase Backend] Connection error in getSubscription; production fails closed to Free:', e.message || e);
+    console.error("[Supabase Backend] Connection error in getSubscription; production fails closed to Free:", e.message || e);
   }
 
   return isProduction() ? 'Free' : (localTier || 'Free');

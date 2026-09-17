@@ -1,9 +1,8 @@
 /**
  * SC-5 Phase B — multi-field CoinGecko market snapshot with matrix-aligned RL/CB.
- *
- * The snapshot is a research/display evidence contract. It may expose CoinGecko's verified
- * market price and 24h change, but remains explicitly non-execution-grade. ProviderMatrix
- * rate-limit/circuit-breaker controls and last-known-good semantics stay authoritative.
+ * VerifiedCryptoSnapshot API remains stable. Full CanonicalMarketDataSnapshot
+ * mapping for marketCap/supply stays a later phase; this path now shares
+ * ProviderMatrix coingecko rate-limit and circuit-breaker policies.
  */
 
 import { CircuitBreaker } from '../platform/MarketData/CircuitBreaker';
@@ -15,8 +14,6 @@ import {
 import { recordProviderHealth, type ProviderDiagnosticCode } from '../platform/Supervisor/providerHealth';
 
 export type CryptoSnapshotField =
-  | 'priceUsd'
-  | 'change24hPct'
   | 'marketCapUsd'
   | 'volume24hUsd'
   | 'circulatingSupply'
@@ -30,7 +27,7 @@ export interface VerifiedFieldProvenance {
   observedAt: string;
   retrievedAt: string;
   value: number | null;
-  unit: 'USD' | 'token' | 'percent';
+  unit: 'USD' | 'token';
 }
 
 export interface VerifiedCryptoSnapshot {
@@ -38,8 +35,6 @@ export interface VerifiedCryptoSnapshot {
   provider: 'CoinGecko';
   observedAt: string;
   retrievedAt: string;
-  priceUsd?: number;
-  change24hPct?: number;
   marketCapUsd?: number;
   volume24hUsd?: number;
   circulatingSupply?: number;
@@ -115,17 +110,13 @@ function finitePositive(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-function finiteNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
 async function fetchJsonWithTimeout(fetchImpl: typeof fetch, url: string, timeoutMs: number): Promise<any> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetchImpl(url, {
       signal: controller.signal,
-      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.7.0' },
+      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.6.3' },
     });
     if (!response.ok) throw new Error(`CoinGecko HTTP ${response.status}`);
     return await response.json();
@@ -140,7 +131,7 @@ function buildProvenance(
   sourcePath: string,
   observedAt: string,
   retrievedAt: string,
-  unit: 'USD' | 'token' | 'percent',
+  unit: 'USD' | 'token',
 ): VerifiedFieldProvenance | undefined {
   if (value === undefined) return undefined;
   return { field, provider: 'CoinGecko', sourcePath, observedAt, retrievedAt, value, unit };
@@ -167,7 +158,9 @@ function writeHealth(
 /**
  * Fetches a verified market snapshot with per-field provenance. No AssetRegistry bootstrap
  * value is used as fallback. On provider failure only a previously verified last-known-good
- * snapshot may be returned, explicitly marked degraded; freshness is enforced by consumers.
+ * snapshot may be returned, explicitly marked degraded; freshness is enforced by the scoring gate.
+ *
+ * SC-5 Phase B: rate-limit and circuit-breaker follow ProviderMatrix `coingecko` policies.
  */
 export async function getVerifiedCryptoSnapshot(
   symbol: string,
@@ -208,7 +201,12 @@ export async function getVerifiedCryptoSnapshot(
 
   const rl = budget.tryConsume(PROVIDER_ID, CAPABILITY);
   if (!rl.allowed) {
-    writeHealth(options, 'degraded', 'Rate-limit budget exhausted for coingecko market-fields.', 'rate_limited');
+    writeHealth(
+      options,
+      'degraded',
+      'Rate-limit budget exhausted for coingecko market-fields (SC-5 Phase B matrix).',
+      'rate_limited',
+    );
     return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
   }
 
@@ -221,8 +219,6 @@ export async function getVerifiedCryptoSnapshot(
       const md = data?.market_data;
       if (!md || typeof md !== 'object') throw new Error('CoinGecko snapshot missing market_data.');
 
-      const priceUsd = finitePositive(md?.current_price?.usd);
-      const change24hPct = finiteNumber(md?.price_change_percentage_24h);
       const marketCapUsd = finitePositive(md?.market_cap?.usd);
       const volume24hUsd = finitePositive(md?.total_volume?.usd);
       const circulatingSupply = finitePositive(md?.circulating_supply);
@@ -230,22 +226,18 @@ export async function getVerifiedCryptoSnapshot(
       const maxSupply = maxSupplyRaw === null ? null : finitePositive(maxSupplyRaw);
       const totalSupply = finitePositive(md?.total_supply);
 
-      if (!priceUsd && change24hPct === undefined && !marketCapUsd && !volume24hUsd && !circulatingSupply && maxSupply === undefined && !totalSupply) {
+      if (!marketCapUsd && !volume24hUsd && !circulatingSupply && maxSupply === undefined && !totalSupply) {
         throw new Error('CoinGecko snapshot contained no usable market fields.');
       }
 
       const retrievedAt = new Date(nowMs()).toISOString();
-      const observedCandidate = typeof data?.last_updated === 'string'
-        ? Date.parse(data.last_updated)
-        : typeof md?.last_updated === 'string'
-          ? Date.parse(md.last_updated)
-          : Number.NaN;
-      const observedAt = Number.isFinite(observedCandidate) ? new Date(observedCandidate).toISOString() : retrievedAt;
+      const observedCandidate = typeof md?.last_updated === 'string' ? Date.parse(md.last_updated) : Number.NaN;
+      const observedAt = Number.isFinite(observedCandidate)
+        ? new Date(observedCandidate).toISOString()
+        : retrievedAt;
 
       const provenance: VerifiedCryptoSnapshot['provenance'] = {};
-      const entries: Array<[CryptoSnapshotField, number | null | undefined, string, 'USD' | 'token' | 'percent']> = [
-        ['priceUsd', priceUsd, 'market_data.current_price.usd', 'USD'],
-        ['change24hPct', change24hPct, 'market_data.price_change_percentage_24h', 'percent'],
+      const entries: Array<[CryptoSnapshotField, number | null | undefined, string, 'USD' | 'token']> = [
         ['marketCapUsd', marketCapUsd, 'market_data.market_cap.usd', 'USD'],
         ['volume24hUsd', volume24hUsd, 'market_data.total_volume.usd', 'USD'],
         ['circulatingSupply', circulatingSupply, 'market_data.circulating_supply', 'token'],
@@ -262,8 +254,6 @@ export async function getVerifiedCryptoSnapshot(
         provider: 'CoinGecko' as const,
         observedAt,
         retrievedAt,
-        priceUsd,
-        change24hPct,
         marketCapUsd,
         volume24hUsd,
         circulatingSupply,
@@ -273,22 +263,33 @@ export async function getVerifiedCryptoSnapshot(
       };
       cache.set(s, { value, cachedAtMs: nowMs() });
       breaker.success(PROVIDER_ID);
-      writeHealth(options, 'healthy', 'Verified multi-field crypto snapshot received.');
+      writeHealth(
+        options,
+        'healthy',
+        `Verified multi-field crypto snapshot received for ${s} (SC-5 Phase B matrix guards).`,
+      );
       return { ...value, cacheMode: 'fresh', degraded: false };
     } catch (error) {
       lastError = error;
-      if (attempt < maxAttempts) await sleep(200 * 2 ** (attempt - 1) + Math.floor(random() * 100));
+      if (attempt < maxAttempts) {
+        await sleep(200 * 2 ** (attempt - 1) + Math.floor(random() * 100));
+      }
     }
   }
 
   breaker.failure(PROVIDER_ID);
   if (lastError) {
-    console.warn('[CryptoSnapshotProvider] verified CoinGecko snapshot unavailable for %s.', s, (lastError as Error)?.message || lastError);
+    console.warn(
+      `[CryptoSnapshotProvider] ${s}: verified CoinGecko snapshot unavailable.`,
+      (lastError as Error)?.message || lastError,
+    );
   }
   writeHealth(
     options,
     'unavailable',
-    lastError instanceof Error ? lastError.message : 'No verified multi-field crypto snapshot available.',
+    lastError instanceof Error
+      ? lastError.message
+      : `No verified multi-field crypto snapshot available for ${s}.`,
     'provider_error',
     breaker.openedUntilIso(PROVIDER_ID),
   );

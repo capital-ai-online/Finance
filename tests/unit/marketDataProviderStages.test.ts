@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createMarketDataProviderStages } from '../../server/marketData/createMarketDataProviderStages';
-import { createStooqProviderStage, STOOQ_RUNTIME_ENABLED } from '../../server/marketData/stooqProviderStage';
+import { createStooqProviderStage } from '../../server/marketData/stooqProviderStage';
 
 const fallbackAssets = [
   { symbol: 'BTC', name: 'Bitcoin', type: 'crypto', price: 1, change24h: 0, volume24h: 10, score: 5 },
@@ -9,15 +9,14 @@ const fallbackAssets = [
 ];
 
 describe('market-data provider stage composition', () => {
-  it('keeps only canonical active stages in the default provider order', () => {
+  it('keeps the canonical provider order crypto -> stooq -> fmp', () => {
     const stages = createMarketDataProviderStages({
       fallbackAssets,
       stockTickers: ['AAPL.US'],
       forexTickers: [],
       commodityTickers: ['XAUUSD'],
     });
-    expect(stages.map(stage => stage.name)).toEqual(['crypto-market-data', 'fmp-indices']);
-    expect(stages.some(stage => stage.name === 'stooq')).toBe(false);
+    expect(stages.map(stage => stage.name)).toEqual(['crypto-market-data', 'stooq', 'fmp-indices']);
   });
 
   it('appends custom provider stages after the canonical providers', () => {
@@ -30,24 +29,39 @@ describe('market-data provider stage composition', () => {
     });
     expect(stages.map(stage => stage.name)).toEqual([
       'crypto-market-data',
+      'stooq',
       'fmp-indices',
       'custom-provider',
     ]);
   });
 
-  it('keeps the legacy Stooq factory fail-closed with no network or fallback observations', async () => {
-    const fetchImpl = vi.fn();
+  it('marks stooq fallback data honestly when the provider fails', async () => {
     const stage = createStooqProviderStage({
       fallbackAssets,
       stockTickers: ['AAPL.US'],
       forexTickers: [],
       commodityTickers: ['XAUUSD'],
-      fetchImpl: fetchImpl as any,
+      fetchImpl: vi.fn(async () => { throw new Error('offline'); }) as any,
       logger: { warn: vi.fn() },
     });
+    const assets = await stage.load();
+    expect(assets.every(asset => asset.dataSource === 'fallback')).toBe(true);
+    expect(assets.some(asset => asset.symbol === 'AAPL')).toBe(true);
+  });
 
-    expect(STOOQ_RUNTIME_ENABLED).toBe(false);
-    expect(await stage.load()).toEqual([]);
-    expect(fetchImpl).not.toHaveBeenCalled();
+  it('does not synthesize commodity volume when stooq omits it', async () => {
+    const csv = 'Symbol,Date,Name,Open,Close,Change,Change%,Volume\nXAUUSD,2026-08-08,Gold,2000,2010,10,0.5%,0\n';
+    const stage = createStooqProviderStage({
+      fallbackAssets,
+      stockTickers: [],
+      forexTickers: [],
+      commodityTickers: ['XAUUSD'],
+      fetchImpl: vi.fn(async () => ({ ok: true, text: async () => csv })) as any,
+      logger: { warn: vi.fn() },
+    });
+    const assets = await stage.load();
+    const gold = assets.find(asset => asset.symbol === 'GLD');
+    expect(gold?.volume24h).toBe(30);
+    expect(gold?.dataSource).toBe('live');
   });
 });

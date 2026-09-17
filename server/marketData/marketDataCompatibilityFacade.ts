@@ -18,22 +18,6 @@ export interface MarketDataCompatibilityFacadeOptions {
   providerStages?: MarketDataProviderStage[];
 }
 
-function fallbackCompatibilityMetadata(asset: MarketDataAsset): MarketDataAsset {
-  const {
-    score: _score,
-    scoreEligible: _scoreEligible,
-    scoringEligible: _scoringEligible,
-    executionEligible: _executionEligible,
-    executionPriceEligible: _executionPriceEligible,
-    ...metadata
-  } = asset;
-  return {
-    ...metadata,
-    status: 'Fallback',
-    dataSource: 'fallback' as const,
-  };
-}
-
 function appendMissingFallbackAssets(
   collected: MarketDataAsset[],
   registryAssets: MarketDataAsset[],
@@ -41,21 +25,22 @@ function appendMissingFallbackAssets(
   const existingSymbols = new Set(collected.map(asset => asset.symbol.toUpperCase()));
   const missing = registryAssets
     .filter(asset => !existingSymbols.has(asset.symbol.toUpperCase()))
-    .map(fallbackCompatibilityMetadata);
+    .map(asset => ({
+      ...asset,
+      status: 'Fallback',
+      dataSource: 'fallback' as const,
+    }));
 
   return [...collected, ...missing];
 }
 
 /**
- * Compatibility facade for the legacy `/api/market-data` call sites.
+ * Compatibility facade for the legacy `fetchLiveMarketData()` call sites.
  *
- * Periodic refresh is deliberately restricted to evidence enrichment of assets that were actually
- * observed by a provider in the current refresh (`dataSource=live`). Catalog/bootstrap fallback
- * rows remain compatibility metadata and MUST NOT trigger downstream history/fundamental/scoring
- * provider calls. Fallback rows also have score/execution-eligibility fields stripped so catalog
- * bootstrap values cannot be mistaken for current scoring or execution authority. New and
- * long-tail assets use their per-symbol verified contracts instead (ADR-0032 revalidation /
- * SC-MD-SPT-0001).
+ * This module is deliberately responsible only for composition. Provider-specific I/O,
+ * scoring/enrichment and persistence remain injected or delegated to the canonical
+ * market-data modules. This keeps the eventual `server.application.ts` cutover small while
+ * preserving the existing fail-open and No-Demo-Data semantics.
  */
 export async function runMarketDataCompatibilityRefresh(
   options: MarketDataCompatibilityFacadeOptions,
@@ -70,16 +55,13 @@ export async function runMarketDataCompatibilityRefresh(
   return refreshMarketData({
     providerStages,
     appendMissingFallbackAssets: assets => appendMissingFallbackAssets(assets, options.registryAssets()),
-    enrichAssets: assets => Promise.all(assets.map(asset =>
-      asset.dataSource === 'live' ? options.enrichAsset(asset) : Promise.resolve(asset)
-    )),
+    enrichAssets: assets => Promise.all(assets.map(options.enrichAsset)),
     persistSnapshots: async assets => {
-      // Only provider-observed rows may participate in periodic snapshots/alerts. Compatibility
-      // fallback rows can carry historical bootstrap values and therefore are not evidence.
-      const liveAssets = assets.filter(asset => asset.dataSource === 'live');
+      // Both side effects are best-effort at the coordinator boundary. A failure here must
+      // not invalidate otherwise usable market data returned to the caller.
       const tasks: Promise<unknown>[] = [];
-      if (options.persistSnapshots && liveAssets.length > 0) tasks.push(Promise.resolve(options.persistSnapshots(liveAssets)));
-      if (options.evaluateAlerts && liveAssets.length > 0) tasks.push(Promise.resolve(options.evaluateAlerts(liveAssets)));
+      if (options.persistSnapshots) tasks.push(Promise.resolve(options.persistSnapshots(assets)));
+      if (options.evaluateAlerts) tasks.push(Promise.resolve(options.evaluateAlerts(assets)));
       await Promise.allSettled(tasks);
     },
     onProviderFailure: options.onProviderFailure,

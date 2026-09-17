@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   disabled-record:
-    if: 'false'
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - run: echo 'One-shot lockfile remediation completed; workflow intentionally disabled.'

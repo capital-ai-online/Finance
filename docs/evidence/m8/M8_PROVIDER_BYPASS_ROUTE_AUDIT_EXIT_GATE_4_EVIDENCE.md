@@ -120,21 +120,6 @@ das Bypass-Feld, nicht für die anderen fünf.
 - Keine Aktivierung von `evaluateProviderCutoverReadiness()` gegen einen echten Provider — das
   bleibt eine separate, vom Owner zu autorisierende Cutover-Entscheidung.
 
-## 8. Audit-Erweiterung — Quality Center Operationalization (2026-08-21)
-
-PR #464 ergänzt mit `/api/admin/quality-center` eine neue admin-nahe, ausschließlich lesende
-Quality-Evidence-Oberfläche. Die bestehende M8-Regressionsprüfung hat diese neue Mount-Position
-korrekt als auditpflichtig erkannt.
-
-| Mount | Router (Datei) | Autorisierung | Provider-spezifischer Bypass? |
-|---|---|---|---|
-| `/api/admin/quality-center` | `qualityCenterRouter` (`server/qualityCenter.ts`) | `checkAdminAccess(req, 'quality-center:read', DIAGNOSTIC_ZONE_ROLES)`; ausschließlich `GET`; Snapshot muss zusätzlich an die bestehende Runtime-Release-Commit-Identität gebunden sein | Nein |
-
-Die Route führt keinen provider-spezifischen Authentifizierungs- oder Autorisierungspfad ein,
-exponiert keine Mutationsmethode und erzeugt keinen Live-Repository-Scan im HTTP-Requestpfad.
-Damit bleibt der ursprüngliche M8-Befund unverändert: privilegierte Admin-nahe Routen verwenden
-die bestehenden gemeinsamen Guard-/Broker-Grenzen statt einer provider-spezifischen Bypass-Route.
-
 ## Verwandte Dokumente
 
 - `docs/runbooks/M8_AGENT_CUTOVER.md` — Cutover Sequence, Exit Gate
@@ -145,4 +130,3 @@ die bestehenden gemeinsamen Guard-/Broker-Grenzen statt einer provider-spezifisc
 - `src/platform/Security/providerProfile.ts` — `ProviderCutoverEvidence`,
   `evaluateProviderCutoverReadiness()`
 - `server/routes/registerApplicationRoutes.ts`, `src/platform/Security/authMiddleware.ts`
-- `server/qualityCenter.ts` — read-only Quality-Center-Adminroute aus PR #464

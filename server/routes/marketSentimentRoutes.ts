@@ -2,7 +2,6 @@ import express from 'express';
 import { Type } from '../../src/services/aiSchema';
 import { orchestrator } from '../../src/lib/requestOrchestrator';
 import { generateStructuredWithFallback } from '../../src/services/agentModelRouting';
-import { resolveVerifiedIdentity } from '../../src/platform/Security/authMiddleware';
 
 export interface MarketSentimentRouteDependencies {
   ai: any | null;
@@ -16,37 +15,17 @@ export function createMarketSentimentRouter(deps: MarketSentimentRouteDependenci
   const router = express.Router();
   const { anthropic, openai } = deps;
 
-  // SECURITY (2026-08-25, Router-Anbindung): dieser Router war bis dahin nirgends
-  // eingebunden (siehe docs/security/FULL_ARCHITECTURE_SECURITY_REVIEW_2026-08-25.md,
-  // "Nebenbefund"). Die einzigen Aufrufer (MarketSentiment.tsx, SentimentDashboard.tsx) rendern
-  // ausschließlich innerhalb des bereits Login-pflichtigen Dashboards (SessionComposition
-  // unterstützt keine anonymen Sessions) - konsistent mit der /api/chat-Absicherung wird daher
-  // auch hier eine verifizierte Identität verlangt, statt einen zweiten, unauthentifizierten
-  // KI-Kosten-Endpunkt gleicher Bauart entstehen zu lassen.
-  router.get('/market-sentiment', orchestrator.handle('Market Sentiment'), async (req, res) => {
-    const identity = await resolveVerifiedIdentity(req);
-    if (!identity) {
-      return res.status(401).json({ error: 'Anmeldung erforderlich.' });
-    }
-    // Der frühere Gemini/Google-Search-Pfad wurde entfernt. Das ist aktuell ein bekannter
-    // Capability-Zustand und kein transienter Serverausfall. Deshalb wird die Anfrage technisch
-    // erfolgreich mit einem expliziten DATA_UNAVAILABLE-Vertrag beantwortet, statt permanent 503
-    // zu erzeugen. Es wird weiterhin bewusst KEIN synthetischer Sentiment-Score zurückgegeben.
-    res.setHeader('Cache-Control', 'private, max-age=60');
-    return res.status(200).json({
+  // Der frühere Gemini/Google-Search-Pfad wurde entfernt. Ohne verifizierten News-
+  // Evidence-Provider wird bewusst kein synthetischer Sentiment-Score erzeugt.
+  router.get('/market-sentiment', orchestrator.handle('Market Sentiment'), (_req, res) => {
+    return res.status(503).json({
       status: 'DATA_UNAVAILABLE',
-      available: false,
-      code: 'VERIFIED_NEWS_EVIDENCE_UNAVAILABLE',
-      error: 'Verifizierte News-Evidence für das Markt-Sentiment ist derzeit nicht verfügbar.',
+      error: 'VERIFIED_NEWS_EVIDENCE_UNAVAILABLE',
       reason: 'Der frühere Gemini-Grounding-Provider wurde entfernt; ein verifizierter Ersatz ist noch nicht angebunden.',
     });
   });
 
   router.post('/market-sentiment/simulate-shock', express.json(), orchestrator.handle('Market Sentiment Simulator'), async (req, res) => {
-    const identity = await resolveVerifiedIdentity(req);
-    if (!identity) {
-      return res.status(401).json({ error: 'Anmeldung erforderlich, um die Schock-Simulation zu nutzen.' });
-    }
     if (!anthropic && !openai) {
       return res.status(503).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY oder OPENAI_API_KEY erforderlich).' });
     }

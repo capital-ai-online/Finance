@@ -1,66 +1,26 @@
 {
   "name": "Validators",
-  "version": "1.1.0",
-  "status": "implemented",
+  "version": "1.0.0",
+  "status": "unspecified",
   "owner": "CAPITAL-AI",
-  "description": "Central rule-neutral ValidatorRegistry, exact Chapter-12 capability catalog and executable Chapter12ValidatorRunner for all 16 mandatory validators. Domain rule authority remains in the owning components.",
+  "description": "",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS",
-    "ESS-0005",
-    "ESS-0006",
-    "ESS-0013"
+    "ESS-0001-CONTRACTS"
   ],
-  "adr": [
-    "ADR-0012",
-    "ADR-0016",
-    "ADR-0018",
-    "ADR-0096"
-  ],
-  "dependencies": [
-    "src/platform/Governance"
-  ],
+  "adr": [],
+  "dependencies": [],
   "events": {
     "produces": [],
     "consumes": []
   },
   "knowledge": [],
-  "interfaces": [
-    "ValidatorRegistry",
-    "MandatoryValidatorCatalog",
-    "Chapter12ValidatorRunner"
-  ],
-  "contracts": [
-    "repository-quality-observation/1.1.0",
-    "mandatory-validator-coverage/1.0.0",
-    "chapter12-validator-contract/1.0.0",
-    "chapter12-validation-report/1.0.0"
-  ],
+  "interfaces": [],
+  "contracts": [],
   "documentation": [
     "README.md"
   ],
-  "tests": [
-    "tests/unit/validatorRegistry.test.ts",
-    "tests/unit/mandatoryValidatorCatalog.test.ts",
-    "tests/unit/chapter12ValidatorRunner.test.ts"
-  ],
-  "implementation": {
-    "implementedAreas": [
-      "central validator registration",
-      "deterministic domain resolution",
-      "duplicate validator rejection",
-      "exact Chapter-12 mandatory-validator identity catalog",
-      "all 16 mandatory validator capabilities executable",
-      "actual validation findings separated from implementation availability",
-      "existing Naming, Documentation, Version, Security and Compliance authorities adapted instead of duplicated"
-    ],
-    "implementationCoverage": {
-      "total": 16,
-      "available": 16,
-      "partial": 0,
-      "notAvailable": 0
-    },
-    "conformanceNote": "Executable capability does not imply repository conformance. Chapter12ValidationReport remains the authoritative runtime evidence for PASS/FAIL/NOT_AVAILABLE results."
-  }
+  "tests": [],
+  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
 }

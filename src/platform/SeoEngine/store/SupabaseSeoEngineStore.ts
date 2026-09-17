@@ -19,7 +19,6 @@ import type {
   SeoRankSnapshot,
 } from '../types';
 import type { ISeoEngineStore } from './ISeoEngineStore';
-import { stripTrailingSlashes } from '../../Security/safeIo';
 
 interface KeywordRow {
   id: string;
@@ -98,7 +97,8 @@ function mapContent(row: ContentRow): SeoContentInventoryItem {
 }
 
 function normalizePath(pathname: string): string {
-  return stripTrailingSlashes(pathname);
+  if (!pathname || pathname === '/') return '/';
+  return pathname.replace(/\/+$/, '') || '/';
 }
 
 export class SupabaseSeoEngineStore implements ISeoEngineStore {

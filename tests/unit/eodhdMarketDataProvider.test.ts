@@ -68,24 +68,4 @@ describe('EODHDMarketDataProvider', () => {
     expect(snapshot.price).toBeNull();
     expect(snapshot.reason).toMatch(/no valid latest EOD close/);
   });
-
-  it('erfindet bei fehlendem oder ungültigem EOD-Datum keinen sourceTimestamp', async () => {
-    const provider = new EODHDMarketDataProvider({
-      apiKey: 'test-key',
-      nowMs: () => Date.parse('2026-08-16T10:00:00Z'),
-      fetchImpl: vi.fn(async () => new Response(JSON.stringify([
-        { date: '2026-02-30', adjusted_close: 61010 },
-      ]), { status: 200, headers: { 'Content-Type': 'application/json' } })) as unknown as typeof fetch,
-    });
-    const snapshot = await provider.getSnapshot({
-      symbol: 'BTC', assetClass: 'crypto', correlationId: 'corr-invalid-date',
-    });
-    expect(snapshot).toMatchObject({
-      qualityState: 'UNAVAILABLE',
-      price: null,
-      sourceTimestamp: null,
-      evidenceId: null,
-    });
-    expect(snapshot.reason).toMatch(/no valid source date/);
-  });
 });

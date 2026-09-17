@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getPlatformVersion } from '../../Release/Services/platformVersionControlPlane';
+import { getPlatformVersion } from '../../VersionManager/platformVersionAuthority';
 
 export const DOCUMENTARY_DOCUMENT_SCHEMA_VERSION = '1.0.0';
 

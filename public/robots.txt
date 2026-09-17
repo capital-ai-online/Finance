@@ -4,7 +4,6 @@ User-agent: *
 Allow: /
 
 # Public legal & marketing surfaces
-Allow: /learning-platform
 Allow: /impressum
 Allow: /agb
 Allow: /datenschutz

@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
+import { 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis, 
+  Radar, 
   ResponsiveContainer,
   Tooltip,
   Legend
 } from 'recharts';
-import {
-  Zap,
-  TrendingUp,
-  Sliders,
-  Activity,
-  ShieldAlert,
-  Coins,
-  Layers,
-  Gauge,
+import { 
+  Zap, 
+  TrendingUp, 
+  Sliders, 
+  Activity, 
+  ShieldAlert, 
+  Coins, 
+  Layers, 
+  Gauge, 
   ArrowRight,
   Info,
   RefreshCw,
   Droplet,
   PieChart
 } from 'lucide-react';
-import { authFetch } from '../lib/authFetch';
+import { generateCryptoScores, calculateDefiScore } from '../services/scoring.service';
+import { ClassificationService } from '../services/classification.service';
 
 interface DeFiPoolData {
   name: string;
@@ -45,16 +46,15 @@ const DEFI_TOKENS = [
   { symbol: 'COMP', name: 'Compound Governance Token', desc: 'Pionier unter den dezentralen Zins- und Geldmarkt-Protokollen.' }
 ];
 
+
 export function buildDefiRadarData(scores: any) {
   if (!scores) return [];
-  const riskQuality = typeof scores.risk === 'number' && Number.isFinite(scores.risk)
-    ? Math.max(0, Math.min(100, 100 - scores.risk))
-    : undefined;
   return [
-    { name: 'Fundamentaldaten', wert: scores.fundamentals, max: 100 },
-    { name: 'Technische Stärke', wert: scores.technicalStrength, max: 100 },
-    { name: 'Liquidität', wert: scores.liquidity, max: 100 },
-    { name: 'Risiko-Qualität', wert: riskQuality, max: 100 },
+    { name: 'Tokenomics (Supply-Ratio)', wert: scores.tokenomics, max: 100 },
+    { name: 'Netzwerk-Aktivität', wert: scores.networkActivity, max: 100 },
+    { name: 'Liquiditätstiefe', wert: scores.liquidity, max: 100 },
+    { name: 'Protokoll-Sicherheit', wert: scores.security, max: 100 },
+    { name: 'Adoption & Nutzen', wert: scores.utility, max: 100 },
   ].filter(item => typeof item.wert === 'number' && Number.isFinite(item.wert));
 }
 
@@ -63,39 +63,44 @@ export function DeFiOrchestration() {
   const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [agentReasoning, setAgentReasoning] = useState<string[]>([]);
   const [scores, setScores] = useState<any>(null);
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): loadTokenScores() nutzt generateCryptoScores()
+  // direkt -> 'market-data' (reale Marktdaten aus der AssetRegistry, aber ohne
+  // Multi-Agenten-Analyse). handleAgentTrigger() ruft /api/crypto/analyze auf, das echte
+  // LLM-Agenten-Werte mit den real-marktdatenbasierten Werten mischt -> 'mixed'.
+  const [scoreBasis, setScoreBasis] = useState<'market-data' | 'mixed'>('market-data');
 
   // IL Simulator State
-  const [priceChangeA, setPriceChangeA] = useState<number>(25);
-  const [priceChangeB, setPriceChangeB] = useState<number>(0);
-
+  const [priceChangeA, setPriceChangeA] = useState<number>(25); // in % (e.g. +25%)
+  const [priceChangeB, setPriceChangeB] = useState<number>(0);  // in % (e.g. 0%)
+  
+  // Initial loading
   useEffect(() => {
-    void loadTokenScores(selectedToken);
+    loadTokenScores(selectedToken);
   }, [selectedToken]);
 
   const loadTokenScores = async (symbol: string) => {
     setAnalyzing(true);
     try {
-      const assetName = DEFI_TOKENS.find(t => t.symbol === symbol)?.name || symbol;
-      const response = await authFetch('/api/crypto/score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, asset_name: assetName }),
-      });
-      const body = await response.json().catch(() => null);
-      if (!response.ok || !body || body.status !== 'READY' || !body.scores) {
-        setScores(null);
-        const reason = body?.reason || body?.integrity?.reason || body?.error || 'Kein kanonischer Score verfügbar.';
-        setAgentReasoning([`[SCORE_NOT_COMPUTABLE] ${reason}`]);
-        return;
-      }
+      // Fetch dynamic classification and generate composite base scores from real market data
+      const classification = ClassificationService.classifyAsset(symbol);
+      const generated = await generateCryptoScores(symbol, 4.2);
 
-      setScores(body.scores);
+      const payload = {
+        asset_name: DEFI_TOKENS.find(t => t.symbol === symbol)?.name || symbol,
+        symbol,
+        classification,
+        scores: generated
+      };
+
+      const computed = calculateDefiScore(payload);
+      setScores(computed);
+      setScoreBasis('market-data');
+
+      // Marktbasierte Scores sind keine ausgeführte Multi-Agenten-Analyse.
       setAgentReasoning([]);
-    } catch (error: any) {
-      console.error(error);
-      setScores(null);
-      setAgentReasoning([`[DATA_UNAVAILABLE] Kanonischer Score konnte nicht geladen werden: ${error?.message || error}`]);
-    } finally {
+      setAnalyzing(false);
+    } catch (e) {
+      console.error(e);
       setAnalyzing(false);
     }
   };
@@ -111,37 +116,46 @@ export function DeFiOrchestration() {
       });
       if (res.ok) {
         const data = await res.json();
-        const reasoning = Array.isArray(data?.reasoning) ? data.reasoning.map(String) : [];
-        setAgentReasoning([
-          ...reasoning,
-          ...(data?.scoreEligible === false
-            ? ['[SC-2] Agenten-Reanalyse ist Research/Enrichment-only und verändert den kanonischen Score nicht.']
-            : []),
-        ]);
+        if (data.scores) {
+          setScores(data.scores);
+          setScoreBasis('mixed');
+        }
+        if (data.reasoning) {
+          setAgentReasoning(data.reasoning);
+        }
       } else {
-        setAgentReasoning(['[DATA_UNAVAILABLE] Live-Agentenanalyse fehlgeschlagen; es wird keine Agenten-Evidence ergänzt.']);
+        setAgentReasoning(prev => [...prev, `[DATA_UNAVAILABLE] Live-Agentenanalyse fehlgeschlagen; es wird keine Agenten-Evidence ergänzt.`]);
       }
     } catch (err: any) {
-      setAgentReasoning([`[DATA_UNAVAILABLE] Netzwerkfehler: ${err.message || err}. Keine Agenten-Evidence verfügbar.`]);
+      setAgentReasoning(prev => [...prev, `[DATA_UNAVAILABLE] Netzwerkfehler: ${err.message || err}. Keine Agenten-Evidence verfügbar.`]);
     } finally {
       setAnalyzing(false);
     }
   };
 
+  // Calculate Impermanent Loss
+  // Formula: IL = 2 * sqrt(priceRatio) / (1 + priceRatio) - 1
+  // where priceRatio is the relative price change ratio of A to B.
   const factorA = 1 + priceChangeA / 100;
   const factorB = 1 + priceChangeB / 100;
   const priceRatio = factorA / factorB;
   const impermanentLossPct = ((2 * Math.sqrt(priceRatio)) / (1 + priceRatio) - 1) * 100;
+
+  // Derive Impermanent Loss Risk Score (0 - 100)
+  // Higher divergence = higher IL % = higher risk
   const ilRiskScore = Math.min(100, Math.round(Math.abs(impermanentLossPct) * 4));
+
+  // Das Radar zeigt ausschließlich vorhandene, numerische Scorefelder ohne Ersatzwerte.
   const radarData = buildDefiRadarData(scores);
+
+  // Pooldaten bleiben leer, bis ein verifizierter DEX-/On-chain-Provider angebunden ist.
   const currentPools: DeFiPoolData[] = [];
+
   const selectedTokenInfo = DEFI_TOKENS.find(t => t.symbol === selectedToken);
-  const riskQuality = typeof scores?.risk === 'number' && Number.isFinite(scores.risk)
-    ? Math.max(0, Math.min(100, 100 - scores.risk))
-    : null;
 
   return (
     <div id="defi-orchestration-widget" className="space-y-8">
+      {/* Top Banner / Intro */}
       <div className="bg-gradient-to-r from-purple-900/40 via-black/40 to-indigo-900/40 border border-purple-500/20 rounded-2xl p-6 backdrop-blur-md shadow-[0_0_30px_rgba(139,92,246,0.1)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -159,7 +173,7 @@ export function DeFiOrchestration() {
               DeFi Token Orchestration &amp; IL Radar
             </h2>
             <p className="text-xs text-white/60 leading-relaxed max-w-2xl">
-              Der angezeigte Finanz-Score stammt ausschließlich aus dem kanonischen, evidence-gated Crypto-Scoring-Pfad. Agenten-Reanalysen liefern getrennte Research-/Enrichment-Hinweise und können den Score nicht verändern. TVL-, Pool- und APR-Werte bleiben ohne verifizierten Provider unverfügbar.
+              Dezentrale Protokolle erfordern ein spezialisiertes Bewertungsverfahren. Dieser Leitstand zeigt ausschließlich verfügbare Scorefelder und berechnet das Risiko unbeständiger Verluste (Impermanent Loss) in einer klar getrennten Simulation. TVL-, Pool- und APR-Werte bleiben ohne verifizierten Provider unverfügbar.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -180,7 +194,10 @@ export function DeFiOrchestration() {
         </div>
       </div>
 
+      {/* Grid: 1. Main Telemetry and Radar, 2. Live Simulator & Pools */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left: Radar and Stats */}
         <div className="lg:col-span-7 bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-6">
@@ -200,65 +217,65 @@ export function DeFiOrchestration() {
               </button>
             </div>
 
+            {/* Radar Chart Container */}
             <div className="h-64 w-full flex items-center justify-center relative bg-gradient-to-b from-purple-950/5 to-transparent rounded-2xl border border-white/5 p-4 mb-6">
               {analyzing ? (
                 <div className="text-center space-y-2">
                   <div className="h-8 w-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <span className="text-2xs font-mono text-purple-300 uppercase tracking-widest block">Prüfe kanonische Daten / Research...</span>
+                  <span className="text-2xs font-mono text-purple-300 uppercase tracking-widest block">Lese Blockchain-Muster...</span>
                 </div>
-              ) : radarData.length > 0 ? (
+              ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                     <PolarGrid stroke="rgba(255,255,255,0.06)" />
                     <PolarAngleAxis dataKey="name" stroke="rgba(255,255,255,0.6)" fontSize={9} />
                     <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="rgba(255,255,255,0.15)" tick={false} />
-                    <Radar
-                      name={`${selectedToken} Score`}
-                      dataKey="wert"
-                      stroke="#a855f7"
-                      fill="#a855f7"
-                      fillOpacity={0.2}
+                    <Radar 
+                      name={`${selectedToken} Score`} 
+                      dataKey="wert" 
+                      stroke="#a855f7" 
+                      fill="#a855f7" 
+                      fillOpacity={0.2} 
                     />
-                    <Tooltip
+                    <Tooltip 
                       contentStyle={{ backgroundColor: '#120c1f', borderColor: 'rgba(168, 85, 247, 0.3)', borderRadius: '12px' }}
                       itemStyle={{ color: '#fff', fontSize: '11px', fontFamily: 'monospace' }}
                       labelStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px' }}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="text-center text-xs text-amber-200/70">SCORE_NOT_COMPUTABLE — keine ausreichend verifizierte Evidence verfügbar.</div>
               )}
             </div>
           </div>
 
+          {/* Metrics Quick Check */}
           {scores && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/5">
               <div className="bg-white/2 border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-[9px] font-mono text-white/40 uppercase block">Canonical Final Score</span>
+                <span className="text-[9px] font-mono text-white/40 uppercase block">DeFi Final Score</span>
                 <span className="text-xl font-black text-purple-400 font-display mt-1 block">
                   {typeof scores.final_score === 'number' ? scores.final_score.toFixed(1) : '—'}
                   <span className="text-xs text-white/50 font-normal">/100</span>
                 </span>
               </div>
               <div className="bg-white/2 border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-[9px] font-mono text-white/40 uppercase block">Technische Stärke</span>
+                <span className="text-[9px] font-mono text-white/40 uppercase block">Tokenomics</span>
                 <span className="text-xl font-black text-emerald-400 font-display mt-1 block">
-                  {typeof scores.technicalStrength === 'number' ? scores.technicalStrength : '—'}
+                  {scores.tokenomics ?? 0}
                   <span className="text-xs text-white/50 font-normal">/100</span>
                 </span>
               </div>
               <div className="bg-white/2 border border-white/5 rounded-xl p-3 text-center">
                 <span className="text-[9px] font-mono text-white/40 uppercase block">Liquidität</span>
                 <span className="text-xl font-black text-cyan-400 font-display mt-1 block">
-                  {typeof scores.liquidity === 'number' ? scores.liquidity : '—'}
+                  {scores.liquidity ?? 0}
                   <span className="text-xs text-white/50 font-normal">/100</span>
                 </span>
               </div>
               <div className="bg-white/2 border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-[9px] font-mono text-white/40 uppercase block">Risiko-Qualität</span>
-                <span className={`text-xl font-black font-display mt-1 block ${riskQuality !== null && riskQuality < 40 ? 'text-rose-400' : riskQuality !== null && riskQuality < 70 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                  {riskQuality !== null ? Math.round(riskQuality) : '—'}
+                <span className="text-[9px] font-mono text-white/40 uppercase block">IL Sensitivität</span>
+                <span className={`text-xl font-black font-display mt-1 block ${ilRiskScore > 60 ? 'text-rose-400' : ilRiskScore > 30 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {ilRiskScore}
                   <span className="text-xs text-white/50 font-normal">/100</span>
                 </span>
               </div>
@@ -266,22 +283,31 @@ export function DeFiOrchestration() {
           )}
         </div>
 
+        {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md, AUD2-F-001, S1/S2/S5) */}
         {scores && (
           <div className="lg:col-span-12 bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 flex items-start gap-3">
             <Info className="text-cyan-400 w-5 h-5 shrink-0 mt-0.5" />
             <p className="text-xs text-white/70 leading-relaxed">
-              <span className="font-bold text-cyan-400 uppercase tracking-widest">Kanonischer evidence-gated Score</span> — der Finanz-Score wird ausschließlich über `/api/crypto/score` und damit über UAI, ScoringModelRegistry und den kanonischen Dispatcher erzeugt. Agenten-Reanalyse ist Research/Enrichment-only (`scoreEligible=false`) und verändert diesen Score nicht. <span className="font-bold">Nicht als alleinige Grundlage für Anlageentscheidungen geeignet.</span>
+              <span className="font-bold text-cyan-400 uppercase tracking-widest">Marktdatenbasiert, keine vollständige Analyse</span> —{' '}
+              {scoreBasis === 'mixed'
+                ? 'ein Teil dieser Bewertung stammt aus echten Agenten-Analysen, der Rest (Marktkapitalisierung, Liquidität, Tokenomics, Angebots-Transparenz, Volatilität) aus realen Marktdaten der AssetRegistry.'
+                : 'diese Bewertung stammt aus realen Marktdaten der AssetRegistry (Marktkapitalisierung, Liquidität, Tokenomics, Angebots-Transparenz, Volatilität), enthält aber keine Multi-Agenten-Analyse (Netzwerk-Aktivität, Sicherheit, Sentiment) - dafür "Live-Analyse starten" nutzen.'}{' '}
+              <span className="font-bold">Nicht als alleinige Grundlage für Anlageentscheidungen geeignet.</span>
             </p>
           </div>
         )}
 
+        {/* Right: Live Simulator & Audit Log */}
         <div className="lg:col-span-5 space-y-6">
+          
+          {/* IL Simulator Widget */}
           <div className="bg-black/40 border border-white/10 rounded-2xl p-5 backdrop-blur-md">
             <h3 className="text-xs font-mono uppercase tracking-widest text-white/60 mb-4 flex items-center gap-1.5">
               <Sliders size={14} className="text-purple-400" />
               Impermanent Loss Simulator (50/50 AMM)
             </h3>
 
+            {/* Inputs sliders */}
             <div className="space-y-4 mb-5 bg-purple-950/10 border border-purple-500/10 p-4 rounded-xl">
               <div className="space-y-1">
                 <div className="flex justify-between text-2xs font-mono">
@@ -290,11 +316,11 @@ export function DeFiOrchestration() {
                     {priceChangeA >= 0 ? '+' : ''}{priceChangeA}%
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="-75"
-                  max="300"
-                  value={priceChangeA}
+                <input 
+                  type="range" 
+                  min="-75" 
+                  max="300" 
+                  value={priceChangeA} 
                   onChange={(e) => setPriceChangeA(Number(e.target.value))}
                   className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
                 />
@@ -307,17 +333,18 @@ export function DeFiOrchestration() {
                     {priceChangeB >= 0 ? '+' : ''}{priceChangeB}%
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="-75"
-                  max="300"
-                  value={priceChangeB}
+                <input 
+                  type="range" 
+                  min="-75" 
+                  max="300" 
+                  value={priceChangeB} 
                   onChange={(e) => setPriceChangeB(Number(e.target.value))}
                   className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
                 />
               </div>
             </div>
 
+            {/* Simulation Results */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="bg-black/60 border border-white/5 rounded-xl p-3 text-center">
                 <span className="text-[9px] font-mono text-white/40 uppercase block">Divergenz-Ratio</span>
@@ -333,11 +360,12 @@ export function DeFiOrchestration() {
               </div>
             </div>
 
+            {/* Explainer warning */}
             <div className={`p-3 rounded-lg flex items-start gap-2 text-[11px] leading-relaxed border ${
-              impermanentLossPct < -10
-                ? 'bg-rose-500/10 border-rose-500/20 text-rose-300'
-                : impermanentLossPct < -2
-                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+              impermanentLossPct < -10 
+                ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' 
+                : impermanentLossPct < -2 
+                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-300' 
                   : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
             }`}>
               <ShieldAlert size={14} className="shrink-0 mt-0.5" />
@@ -353,15 +381,16 @@ export function DeFiOrchestration() {
             </div>
           </div>
 
+          {/* Multi-Agent Live Audit Trail */}
           <div className="bg-black/40 border border-white/10 rounded-2xl p-5 backdrop-blur-md">
             <h3 className="text-xs font-mono uppercase tracking-widest text-white/60 mb-3 flex items-center gap-1.5">
               <Activity size={14} className="text-emerald-400" />
-              Multi-Agent Research-Trail
+              Multi-Agent Audit-Trail
             </h3>
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
               {agentReasoning.length === 0 && (
                 <div className="p-3 rounded-lg border border-amber-500/15 bg-amber-500/5 text-[10px] font-mono text-amber-100/65">
-                  Keine ausgeführte Agentenanalyse vorhanden. Der kanonische Score benötigt keinen Agenten-Output.
+                  Keine ausgeführte Agentenanalyse vorhanden. Marktbasierte Scores erzeugen keinen Agenten-Audit-Trail.
                 </div>
               )}
               {agentReasoning.map((r, idx) => (
@@ -372,9 +401,11 @@ export function DeFiOrchestration() {
               ))}
             </div>
           </div>
+
         </div>
       </div>
 
+      {/* Pools Table (Bottom Row) */}
       <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -431,10 +462,10 @@ export function DeFiOrchestration() {
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     <span className={`px-2 py-0.5 rounded-full text-3xs font-black uppercase border inline-block ${
-                      pool.ilRisk === 'low'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : pool.ilRisk === 'medium'
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      pool.ilRisk === 'low' 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                        : pool.ilRisk === 'medium' 
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
                           : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                     }`}>
                       {pool.ilRisk === 'high' ? 'Kritisch' : pool.ilRisk === 'medium' ? 'Moderat' : 'Gering'}

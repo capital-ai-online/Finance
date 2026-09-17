@@ -29,7 +29,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { AdrForm } from './AdrForm';
 import { authFetch } from '../lib/authFetch';
-import { CAPITAL_AI_VERSION } from '../platform/Release/clientVersion';
 
 interface DocumentHygienePanelProps {
   currentUserEmail: string;
@@ -433,21 +432,19 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
         });
       }
 
-      // DOC-01: only platform-version declarations belong to the Release version domain.
-      // Model/provider/schema/ADR versions remain independent and must not be rewritten.
-      const platformVersionMatch = line.match(
-        /(?:CAPITAL-AI|Plattform(?:-Version)?|System-Version|BETA-PHASE)[^0-9\n]{0,48}v?(\d+\.\d+\.\d+)/i,
-      );
-      const declaredPlatformVersion = platformVersionMatch?.[1];
-      if (declaredPlatformVersion && declaredPlatformVersion !== CAPITAL_AI_VERSION) {
+      // DOC-01: Legacy Versioning
+      const hasLegacyVersion = /(version|v7\.5|v1\.0\.0|v1\.0|v2\.0)\s*[:=]?\s*['"`]?[0-9]+\.[0-9]+(\.[0-9]+)?['"`]?/i.test(line) || 
+                               /version\s+7\.5/i.test(line) || /version\s+1\.0/i.test(line);
+      const isCorrectVersion = line.includes('0.7.0');
+      if (hasLegacyVersion && !isCorrectVersion) {
         customDiags.push({
           line: lineNum,
           severity: 'warning',
           ruleId: 'DOC-01',
-          ruleName: 'Abweichende Plattform-Version',
-          message: `Die Plattform-Version ${declaredPlatformVersion} weicht von der kanonischen Release-Version ${CAPITAL_AI_VERSION} ab.`,
+          ruleName: 'Veraltete Versionsangabe',
+          message: 'Veraltete Version referenziert. Die Plattform-Version muss fest auf 0.7.0 stehen.',
           evidence: line.trim(),
-          suggestion: `Nutzen Sie die Release-/VersionManager-Projektion statt eines Literals; aktuell ist Version ${CAPITAL_AI_VERSION}.`
+          suggestion: 'Ändern Sie die Angabe auf Version 0.7.0 ab.'
         });
       }
 
@@ -1087,7 +1084,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
                       // Extract target path from backup safe name (safe timestamp_safefilename format)
                       const parts = file.name.split('_');
                       parts.shift(); // remove timestamp
-                      const originalPath = parts.join('/');
+                      const originalPath = parts.join('/').replace('.md', '.md').replace('.json', '.json');
 
                       return (
                         <tr key={file.name} className="border-b border-white/5 hover:bg-white/5 transition-all">
@@ -1376,7 +1373,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
                   <span>ARCHITECTURE DECISION RECORDS (ADR) MANAGER</span>
                 </h3>
                 <p className="text-[11px] text-white/50 leading-relaxed max-w-2xl font-sans">
-                  Revisionssichere Dokumentation wesentlicher technischer Design- und Architekturentscheidungen der CAPITAL-AI Plattform (Version {CAPITAL_AI_VERSION}) im standardisierten Markdown-Format.
+                  Revisionssichere Dokumentation wesentlicher technischer Design- und Architekturentscheidungen der CAPITAL-AI Plattform (Version 0.7.0) im standardisierten Markdown-Format.
                 </p>
               </div>
               <button

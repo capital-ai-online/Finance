@@ -1,4 +1,0 @@
-# Deterministic image renderer for WP-N3 / ADR-0094.
-# Pillow is pinned because image decoders are an attack surface; keep this file
-# current with Pillow security releases. The renderer accepts no remote images.
-Pillow==12.3.0

@@ -1,99 +1,92 @@
-# VersionManager — Compatibility Namespace
+# VersionManager
 
-## Enterprise Component State
+## Enterprise Component
 
-**Status:** Compatibility / read-only  
-**Version:** `1.2.0`  
-**Owner:** CAPITAL-AI  
-**Governance:** ADR-0096 / CTRL-GOV-VERSION-001  
-**Historical specification:** ESS-0004 — `SUSPENDED`
+Status: Implemented
+
+Version: 1.1.0
+
+Owner: CAPITAL-AI
 
 ---
 
 ## Purpose
 
-`src/platform/VersionManager` no longer owns platform-version state or version mutation.
+Verwaltet die verbindliche Plattformversion und Build-Nummer von CAPITAL-AI. Fuehrt
+admin-getriggerte Versions-Bumps (patch/minor/major) aus, schreibt Git-/Docker-Tags fort und
+generiert dabei 11 Compliance-Markdown-Dokumente unter `docs/` (CHANGELOG, RELEASE_NOTES,
+ARCHITECTURE_REPORT, u.a.).
 
-The namespace remains temporarily for two narrow compatibility purposes:
+Mit Version 1.1.0 erweitert der **Naming & Repository Convention Validator** die Komponente um
+eine deterministische, read-only Repository-Pruefung. Sie validiert Projektidentitaet,
+Semantic-Version-Synchronitaet zwischen `package.json` und `package-lock.json`, ADR-/ESS-/React-
+und Platform-Namenskonventionen, case-insensitive Pfadkollisionen, Legacy-Identitaeten sowie
+abgelaufene Enterprise Exceptions.
 
-1. `versionManager.ts` exposes the existing admin URL `GET /api/admin/version` as an authenticated **read-only adapter** to `src/platform/Release/Services/platformVersionControlPlane.ts`;
-2. `repositoryConventionValidator.ts` remains a read-only repository-convention utility introduced under ADR-0020.
+Persistenz: `uploads/version_manager.json`. REST-API: `GET /api/admin/version`,
+`POST /api/admin/version/bump` (admin- und Step-Up-geschuetzt, siehe `server/iam/`).
 
-The current platform-version authority is exclusively `package.json#version`. Version transitions are implemented by the controlled Release Version Gate under ADR-0030.
+Repository-Validation:
 
----
+- `npm run repository:validate` — Strict Mode fuer gezielte Governance-/Quality-Pruefungen.
+- `npm run repository:validate:advisory` — Advisory Mode; Findings werden gemeldet, aber nicht blockiert.
+- `npm run predeploy:check` — prueft ausschliesslich technische und sicherheitsrelevante Deployment-Readiness und ruft den Repository Convention Validator bewusst nicht auf.
 
-## Client/runtime projection
+Der Repository Convention Validator ist damit **kein Deployment-Gate**. Governance-, Naming-,
+ADR-/ESS- und Repository-Policy-Findings werden ausserhalb der technischen Live-Deployability-
+Pipeline behandelt. Die Deployment-Pipeline beantwortet ausschliesslich, ob ein Build technisch
+und sicher in der Live-Umgebung betrieben werden kann.
 
-Human-facing browser surfaces do not receive a second version authority. `vite.config.ts` injects `package.json#version` as `__CAPITAL_AI_VERSION__`; `src/platform/Release/clientVersion.ts` exposes the validated `CAPITAL_AI_VERSION` projection to browser code. Branding, SEO and audited runtime surfaces consume that projection rather than maintaining local platform-version literals.
-
-The remaining Dashboard monolith is handled through a narrowly scoped build-time strangler in `vite.config.ts`. It replaces only the human-facing `Beta · Version x.y.z` label during transformation. Model, provider, schema, scoring and ADR versions remain independent version domains and are not rewritten.
-
-`VersionManager` does not own this projection; it remains a read-only compatibility surface to the same Release authority.
-
----
-
-## Retired legacy behavior
-
-The following former VersionManager semantics are explicitly retired and non-authorizing:
-
-- `uploads/version_manager.json` as current state/authority;
-- `POST /api/admin/version/bump`;
-- autonomous patch/minor/major mutation through the runtime API;
-- `executeEnterpriseEventChain` as version-mutation orchestration;
-- automatic CHANGELOG, release-note, ADR, architecture, compliance or other Markdown generation as a version side effect;
-- VersionManager-owned Git/Docker-tag progression;
-- product-version synchronization into `AGENTS.md`.
-
-The production runtime guard still denies writes to the retired local JSON path and the former mutation URL so stale callers fail closed rather than silently reactivating legacy behavior.
+Der Validator veraendert keine Dateien und genehmigt keine Ausnahmen. Abweichungen werden nur
+als Findings ausgegeben; Ausnahmen bleiben ausschliesslich der Governance bzw. dem Platform
+Director vorbehalten.
 
 ---
 
-## Read-only version adapter
+## ESS Reference
 
-`GET /api/admin/version`:
+ESS-0001
 
-- passes through normal Express admin/supervisor authorization;
-- reads `package.json#version` through the Release Platform Version Control Plane;
-- optionally validates immutable runtime release-manifest evidence;
-- returns `readOnly: true` and the explicit authority/contract;
-- provides no mutation action.
+ESS-0001-CONTRACTS
 
-The runtime artifact guard must not answer this GET before Express, because doing so would bypass the intended authorization middleware.
+ESS-0004 — Enterprise Version Manager
 
 ---
 
-## Repository Convention Validator
+## ADR References
 
-The Naming & Repository Convention Validator remains a separate **read-only validation capability** within this compatibility namespace. It validates project identity, package/lock consistency, naming conventions, case-insensitive path collisions, legacy identities and Enterprise Exception metadata.
+ADR-0011 — Bestandsschutz / Enterprise Exception Registry
 
-Commands:
-
-- `npm run repository:validate` — strict mode for targeted repository checks;
-- `npm run repository:validate:advisory` — advisory mode;
-- it is not the platform-version authority and is not a deployment authorization gate.
-
-A future cleanup may relocate this validator to a more appropriate Governance/Repository namespace, but that move is outside the current M10 prerequisite remediation scope.
+ADR-0020 — Naming & Repository Convention Validator Capability
 
 ---
 
-## Current dependencies
+## Dependencies
 
-- `src/platform/Release/Services/platformVersionControlPlane.ts`
-- `src/platform/Release/clientVersion.ts`
-- `src/platform/Security/authMiddleware.ts`
-- `src/platform/Security/types.ts`
-- Node.js `fs` / `path` for the independent repository convention validator
+`server/systemEvents.ts`, `server/documentHygiene.ts`, `server/iam/authMiddleware.ts`,
+`server/iam/types.ts`.
 
-There is no dependency on `server/documentHygiene.ts`, `server/systemEvents.ts` or mutable version-state persistence for the version projection.
+Die Convention-Validation selbst verwendet ausschliesslich Node.js `fs`/`path` und ist damit
+ohne weitere Runtime-Abhaengigkeiten ausfuehrbar.
 
 ---
 
-## Authority references
+## Events
 
-- ADR-0030 — controlled Release Version Gate
-- ADR-0096 — Governance Control Plane / single platform-version authority
-- ADR-0020 — repository convention validator capability
-- suspended ESS-0004 — historical/non-authorizing only
+Produziert aktuell keine Enterprise-Bus-Events (ESS-0013). Protokolliert stattdessen ueber das
+aeltere `logSystemEvent()`-Log. Die zuvor im manifest.json genannten Events
+(VersionCalculatedEvent u.a.) waren nie implementiert und wurden entfernt (ARCH-AUDIT-0002 J5).
 
-This namespace cannot determine a version, approve a release, mutate documentation or reactivate M10.
+---
+
+## Notes
+
+ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus `server/versionManager.ts` hierher verschoben.
+Vorher deklarierte die ESS-Registry (`implementedBy`) diesen Ordner fuer ESS-0004, obwohl er nur
+eine leere, vom Enterprise Bootstrapper generierte Huelle war und der tatsaechliche Code unter
+`server/` lag - eine Governance-Inkonsistenz, die mit dieser Verschiebung behoben wurde.
+
+ADR-0020 erweitert die bestehende Komponente bewusst um eine Validator-Capability statt einen
+parallelen Naming-Agenten einzufuehren. Damit bleibt Versionierungs- und Repository-Konformitaet
+in einer verantwortlichen Enterprise-Komponente gebuendelt, ohne das technische Deployment-Gate
+mit Governance-Policies zu vermischen.

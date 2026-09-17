@@ -14,194 +14,27 @@ permissions:
   contents: read
   pull-requests: read
 
-env:
-  # Single exact source identity shared by Quality evidence, release metadata and Docker builds.
-  # PR runs bind to the actual PR head, not GitHub's synthetic merge commit.
-  RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
-
 concurrency:
-  # Keep duplicate suppression inside one exact PR snapshot. A late stale PR event must never cancel
-  # validation for a newer head/base snapshot of the same pull request.
-  group: >-
-    ${{ github.event_name == 'pull_request'
-        && format('{0}-pr-{1}-{2}-{3}', github.workflow, github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)
-        || format('{0}-{1}', github.workflow, github.ref) }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# Production deployment authority remains verified main CI with inline supply-chain attestation ->
-# production-environment-bound exact-SHA Render deploy -> post-deploy identity verification.
-# Human Merge remains separate and mandatory. Retired M10 passkey authorization has no active
-# workflow trigger, dispatch input, authorization gate or reactivation switch in this workflow.
+# 2026-08-16: Pre-CI Owner-Gate (Checkboxen + Review 💪/okay) retired.
+# Merge bleibt Human/Owner-only. Ab M10: Passkey/WebAuthn für AUTHORIZE_PR_CI.
 jobs:
   build-and-test:
     name: build-and-test
-    permissions:
-      actions: read
-      contents: read
-      pull-requests: read
-      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden
-        id: cost_control
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
-        env:
-          CURRENT_PR_NUMBER: ${{ github.event.pull_request.number }}
-          CURRENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          CURRENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const prNumber = Number(process.env.CURRENT_PR_NUMBER);
-            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
-            const headSha = normalizeSha(process.env.CURRENT_HEAD_SHA);
-            const baseSha = normalizeSha(process.env.CURRENT_BASE_SHA);
-
-            const { data: livePr } = await github.rest.pulls.get({
-              owner,
-              repo,
-              pull_number: prNumber,
-            });
-            const liveHeadSha = normalizeSha(livePr.head?.sha);
-            const liveBaseSha = normalizeSha(livePr.base?.sha);
-            const currentSnapshot = livePr.state === 'open'
-              && liveHeadSha === headSha
-              && liveBaseSha === baseSha;
-            core.setOutput('current_snapshot', currentSnapshot ? 'true' : 'false');
-            if (!currentSnapshot) {
-              core.setOutput('reuse_exact_snapshot', 'false');
-              core.notice(
-                `Stale PR event ignored before checkout/npm/test work: event head/base=${headSha.slice(0, 12)}/${baseSha.slice(0, 12)}, live=${liveHeadSha.slice(0, 12)}/${liveBaseSha.slice(0, 12)}.`,
-              );
-              return;
-            }
-
-            const currentRun = await github.rest.actions.getWorkflowRun({
-              owner,
-              repo,
-              run_id: context.runId,
-            });
-            const workflowId = currentRun.data.workflow_id;
-            const currentAttempt = Number(currentRun.data.run_attempt ?? 1);
-
-            let reusable = null;
-            let reusedAttempt = null;
-
-            if (currentAttempt > 1) {
-              try {
-                const previousAttempt = await github.request(
-                  'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}',
-                  {
-                    owner,
-                    repo,
-                    run_id: context.runId,
-                    attempt_number: currentAttempt - 1,
-                  },
-                );
-                const previous = previousAttempt.data;
-                const previousCorrelatedPr = (previous.pull_requests ?? []).find((pr) => pr.number === prNumber);
-                if (
-                  previous.conclusion === 'success'
-                  && previous.workflow_id === workflowId
-                  && previous.event === 'pull_request'
-                  && normalizeSha(previous.head_sha) === headSha
-                  && normalizeSha(previousCorrelatedPr?.head?.sha) === headSha
-                  && normalizeSha(previousCorrelatedPr?.base?.sha) === baseSha
-                ) {
-                  reusable = previous;
-                  reusedAttempt = currentAttempt - 1;
-                }
-              } catch (error) {
-                core.warning(`Vorheriger Workflow-Attempt konnte nicht sicher korreliert werden; vollständige CI bleibt aktiv: ${error.message}`);
-              }
-            }
-
-            if (!reusable) {
-              const successfulRuns = await github.paginate(
-                github.rest.actions.listWorkflowRunsForRepo,
-                {
-                  owner,
-                  repo,
-                  event: 'pull_request',
-                  head_sha: headSha,
-                  status: 'success',
-                  per_page: 100,
-                },
-              );
-
-              reusable = successfulRuns.find((run) => {
-                if (run.id === context.runId || run.workflow_id !== workflowId) return false;
-                const correlatedPr = (run.pull_requests ?? []).find((pr) => pr.number === prNumber);
-                return normalizeSha(correlatedPr?.head?.sha) === headSha
-                  && normalizeSha(correlatedPr?.base?.sha) === baseSha;
-              }) ?? null;
-              if (reusable) reusedAttempt = Number(reusable.run_attempt ?? 1);
-            }
-
-            if (!reusable) {
-              core.setOutput('reuse_exact_snapshot', 'false');
-              core.info(`Kein früherer PASS für PR #${prNumber} mit head=${headSha} und base=${baseSha}; vollständige scope-klassifizierte CI bleibt erforderlich.`);
-              return;
-            }
-
-            core.setOutput('reuse_exact_snapshot', 'true');
-            core.setOutput('reused_run_id', String(reusable.id));
-            core.setOutput('reused_run_number', String(reusable.run_number));
-            core.setOutput('reused_attempt', String(reusedAttempt));
-            core.notice(`CI-Cost-Control: exakter PR-Snapshot bereits erfolgreich in CI Run #${reusable.run_number}, Attempt ${reusedAttempt} validiert; Checkout/npm/Test/Build werden nicht erneut ausgeführt.`);
-            await core.summary
-              .addHeading('P0 CI Cost Control')
-              .addRaw(`Exakter Snapshot bereits validiert: PR #${prNumber}, head \`${headSha}\`, base \`${baseSha}\`, wiederverwendeter CI Run #${reusable.run_number}, Attempt ${reusedAttempt}.`)
-              .write();
-
-      - name: Stale PR-Event vor teurer CI beenden
-        if: github.event_name == 'pull_request' && steps.cost_control.outputs.current_snapshot == 'false'
-        run: echo 'Stale PR-Snapshot erkannt; kein Checkout, npm ci, TypeScript, Test oder Build für veraltete Event-Evidence.'
-
-      - name: Exakten CI-PASS wiederverwenden
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot == 'true'
-        env:
-          REPORT_REUSED_RUN_NUMBER: ${{ steps.cost_control.outputs.reused_run_number }}
-          REPORT_REUSED_ATTEMPT: ${{ steps.cost_control.outputs.reused_attempt }}
-        run: |
-          echo "P0 Cost-Control: build-and-test PASS wird aus CI Run #$REPORT_REUSED_RUN_NUMBER, Attempt $REPORT_REUSED_ATTEMPT für denselben PR-Head und dieselbe Base wiederverwendet."
-          echo "Diese Deduplizierung ist keine Autorisierung und erweitert keine Merge-/Deployment-Rechte."
-
       - name: Repository auschecken
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Vertrauenswürdige PR-Policy aus Base-Snapshot vorbereiten
-        id: trusted_policy
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true' && github.event_name == 'pull_request'
-        shell: bash
-        env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -euo pipefail
-          policy_dir="$RUNNER_TEMP/capital-ai-pr-policy"
-          mkdir -p "$policy_dir"
-          git show "$PR_BASE_SHA:scripts/pr/classifyPrScope.mjs" > "$policy_dir/classifyPrScope.mjs"
-          echo "classifier_path=$policy_dir/classifyPrScope.mjs" >> "$GITHUB_OUTPUT"
-          if git cat-file -e "$PR_BASE_SHA:scripts/pr/planPrValidation.mjs" 2>/dev/null; then
-            git show "$PR_BASE_SHA:scripts/pr/planPrValidation.mjs" > "$policy_dir/planPrValidation.mjs"
-            echo "planner_available=true" >> "$GITHUB_OUTPUT"
-            echo "planner_path=$policy_dir/planPrValidation.mjs" >> "$GITHUB_OUTPUT"
-          else
-            echo "planner_available=false" >> "$GITHUB_OUTPUT"
-            echo "Base-Snapshot enthält den Planner noch nicht; Bootstrap läuft fail-closed mit vollständiger Test-/Analyseentscheidung."
-          fi
-
       - name: Prüfumfang klassifizieren (D/C/R)
         id: scope
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -209,73 +42,16 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          TRUSTED_CLASSIFIER_PATH: ${{ steps.trusted_policy.outputs.classifier_path }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            node "$TRUSTED_CLASSIFIER_PATH"
-          else
-            node scripts/pr/classifyPrScope.mjs
-          fi
-
-      - name: Diff-basierten Test-/CodeQL-/Review-Plan bestimmen
-        id: validation_plan
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          TRUSTED_PLANNER_AVAILABLE: ${{ steps.trusted_policy.outputs.planner_available }}
-          TRUSTED_PLANNER_PATH: ${{ steps.trusted_policy.outputs.planner_path }}
-        run: |
-          set -euo pipefail
-          if [ "$EVENT_NAME" = "push" ]; then
-            node scripts/pr/planPrValidation.mjs --force-full
-          elif [ "$TRUSTED_PLANNER_AVAILABLE" = "true" ]; then
-            node "$TRUSTED_PLANNER_PATH"
-          else
-            {
-              echo 'vitest_mode=full'
-              echo 'node_pr_tests=true'
-              echo 'node_systemadmin_tests=true'
-              echo 'node_security_assessment_tests=true'
-              echo 'codeql_mode=full'
-              echo 'codeql_languages=actions,javascript-typescript,python'
-              echo 'automated_code_review_mode=full'
-              echo 'reason=bootstrap-base-without-trusted-planner'
-            } >> "$GITHUB_OUTPUT"
-          fi
+          node scripts/pr/classifyPrScope.mjs
 
       - name: Scope-Zusammenfassung
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
-        env:
-          REPORT_CLASS: ${{ steps.scope.outputs.class }}
-          REPORT_NODE: ${{ steps.scope.outputs.node }}
-          REPORT_LINT: ${{ steps.scope.outputs.lint }}
-          REPORT_UNIT: ${{ steps.scope.outputs.unit }}
-          REPORT_BUILD: ${{ steps.scope.outputs.build }}
-          REPORT_AUDIT: ${{ steps.scope.outputs.audit }}
-          REPORT_PREDEPLOY: ${{ steps.scope.outputs.predeploy }}
-          REPORT_DOCKER: ${{ steps.scope.outputs.docker }}
-          REPORT_DOCKER_IMAGE: ${{ steps.scope.outputs.docker_image }}
-          REPORT_VITEST: ${{ steps.validation_plan.outputs.vitest_mode }}
-          REPORT_CODEQL: ${{ steps.validation_plan.outputs.codeql_mode }}
-          REPORT_CODEQL_LANGUAGES: ${{ steps.validation_plan.outputs.codeql_languages }}
-          REPORT_REVIEW: ${{ steps.validation_plan.outputs.automated_code_review_mode }}
-          REPORT_REASON: ${{ steps.validation_plan.outputs.reason }}
         run: |
-          echo "class=$REPORT_CLASS"
-          echo "node=$REPORT_NODE lint=$REPORT_LINT unit=$REPORT_UNIT"
-          echo "build=$REPORT_BUILD audit=$REPORT_AUDIT predeploy=$REPORT_PREDEPLOY"
-          echo "docker=$REPORT_DOCKER docker_image=$REPORT_DOCKER_IMAGE"
-          echo "vitest_mode=$REPORT_VITEST"
-          echo "codeql_mode=$REPORT_CODEQL codeql_languages=$REPORT_CODEQL_LANGUAGES"
-          echo "automated_code_review_mode=$REPORT_REVIEW"
-          echo "selection_reason=$REPORT_REASON"
-          echo "CodeQL/automated-code-review outputs are provider-neutral decisions only; provider execution remains separately governed."
+          echo "class=${{ steps.scope.outputs.class }}"
+          echo "node=${{ steps.scope.outputs.node }} lint=${{ steps.scope.outputs.lint }} unit=${{ steps.scope.outputs.unit }}"
+          echo "build=${{ steps.scope.outputs.build }} audit=${{ steps.scope.outputs.audit }} predeploy=${{ steps.scope.outputs.predeploy }}"
+          echo "docker=${{ steps.scope.outputs.docker }} docker_image=${{ steps.scope.outputs.docker_image }}"
 
       - name: Repository-Integrität prüfen
         if: steps.scope.outputs.integrity == 'true'
@@ -309,36 +85,9 @@ jobs:
         if: steps.scope.outputs.lint == 'true'
         run: npm run lint
 
-      - name: Vollständige Test-Suite ausführen
-        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode == 'full'
+      - name: Unit-Tests ausführen
+        if: steps.scope.outputs.unit == 'true'
         run: npm test
-
-      - name: Nur vom PR-Diff betroffene Vitest-Tests ausführen
-        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode == 'changed'
-        env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: npx vitest run --changed "$PR_BASE_SHA" --passWithNoTests
-
-      - name: PR-/CI-Validator-Tests gezielt ausführen
-        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode != 'full' && steps.validation_plan.outputs.node_pr_tests == 'true'
-        run: node --test scripts/pr/*.test.mjs
-
-      - name: Systemadmin-Validator-Tests gezielt ausführen
-        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode != 'full' && steps.validation_plan.outputs.node_systemadmin_tests == 'true'
-        run: node --test scripts/systemadmin/*.test.mjs
-
-      - name: Security-Assessment-Validator gezielt ausführen
-        if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode != 'full' && steps.validation_plan.outputs.node_security_assessment_tests == 'true'
-        run: node --test scripts/security/validateSecurityAssessment.test.mjs
-
-      - name: Keine Unit-Testgruppe für diesen Scope erforderlich
-        if: >-
-          steps.scope.outputs.unit == 'true'
-          && steps.validation_plan.outputs.vitest_mode == 'none'
-          && steps.validation_plan.outputs.node_pr_tests != 'true'
-          && steps.validation_plan.outputs.node_systemadmin_tests != 'true'
-          && steps.validation_plan.outputs.node_security_assessment_tests != 'true'
-        run: echo "Der trusted-base Planner hat für diesen Scope keine Unit-Testgruppe ausgewählt."
 
       - name: Produktions-Build erstellen
         if: steps.scope.outputs.build == 'true'
@@ -363,107 +112,20 @@ jobs:
 
       - name: Produktions-Docker-Image bauen und prüfen
         if: steps.scope.outputs.docker_image == 'true'
-        shell: bash
         run: |
-          set -euo pipefail
-          test "$RELEASE_SOURCE_COMMIT" = "$(git rev-parse HEAD)"
-          docker build \
-            --build-arg RELEASE_SOURCE_COMMIT="$RELEASE_SOURCE_COMMIT" \
-            --tag "capital-ai-ci:$RELEASE_SOURCE_COMMIT" \
-            .
-          test "$(docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{.Config.User}}')" = "capitalai"
-          test "$(docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
-          docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
-
-      - name: P2B Provenance-Bindung an gehosteten main-Build erzwingen
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: npx tsx scripts/security/verifySupplyChainProvenance.ts --require-ci
-
-      - name: P2B cosign für main-Provenance installieren
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-
-      - name: P2B Provenance keyless signieren (Sigstore/Fulcio/Rekor)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          cosign sign-blob --yes \
-            --bundle dist/security/provenance.json.sigstore.json \
-            dist/security/provenance.json
-
-      - name: P2B Signatur gegen erwartete Workflow-Identität verifizieren
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          cosign verify-blob \
-            --bundle dist/security/provenance.json.sigstore.json \
-            --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            dist/security/provenance.json
-
-      - name: P2B Post-Deploy-Verifier aus exaktem main-Build bundeln
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          mkdir -p artifacts/deployment
-          npx esbuild scripts/deployment/verifyDeploymentIdentity.ts \
-            --bundle \
-            --platform=node \
-            --format=esm \
-            --target=node24 \
-            --outfile=artifacts/deployment/verifyDeploymentIdentity.mjs
-          node --check artifacts/deployment/verifyDeploymentIdentity.mjs
-
-      - name: P2B Supply-Chain-Artefakte aus demselben main-Build ablegen
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: supply-chain-provenance-${{ github.sha }}
-          path: |
-            dist/security/sbom.cdx.json
-            dist/security/provenance.json
-            dist/security/provenance.json.sigstore.json
-            dist/control-plane/release-manifest.json
-            artifacts/deployment/verifyDeploymentIdentity.mjs
-          retention-days: 90
-          if-no-files-found: error
+          docker build --tag capital-ai-ci:${{ github.sha }} .
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
-    needs: [build-and-test]
-    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [build-and-test, supply-chain-attestation]
+    if: ${{ needs.build-and-test.result == 'success' && needs.supply-chain-attestation.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment: production
-    permissions:
-      actions: read
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 5
     steps:
-      - name: P2B verifizierte main-Artefakte aus demselben Workflow-Lauf laden
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: supply-chain-provenance-${{ github.sha }}
-          path: p2b-runtime
-
-      - name: Node.js für standalone Post-Deploy-Verifikation einrichten
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: '24.18.0'
-
-      - name: P2B Artefakt-Identität vor Production-Mutation prüfen
-        env:
-          VERIFIED_COMMIT_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          node - <<'NODE'
-          const fs = require('node:fs');
-          const manifestPath = 'p2b-runtime/dist/control-plane/release-manifest.json';
-          const verifierPath = 'p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs';
-          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-          if (manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA) {
-            throw new Error(`Release-Manifest ist an ${manifest.sourceCommit} statt ${process.env.VERIFIED_COMMIT_SHA} gebunden.`);
-          }
-          if (!fs.existsSync(verifierPath)) {
-            throw new Error('Standalone Deployment-Identity-Verifier fehlt im verifizierten Build-Artefakt.');
-          }
-          NODE
-
       - name: Render-Deployment für verifizierten main-Commit auslösen
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
@@ -477,17 +139,103 @@ jobs:
             --request POST \
             "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
 
+  verify-deployment-identity:
+    name: Deployment-Identität post-verifizieren
+    needs: [deploy-production]
+    if: ${{ needs.deploy-production.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
       - name: Deployte Commit-Identität und Health gegen erwarteten main-Commit verifizieren
         env:
           VERIFIED_COMMIT_SHA: ${{ github.sha }}
-          DEPLOYMENT_VERIFY_EVIDENCE_OUTPUT: p2b-runtime/artifacts/deployment/deployment-identity-evidence.json
-        run: node p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs
+        run: npx tsx scripts/deployment/verifyDeploymentIdentity.ts
 
       - name: Deployment-Identitäts-Evidence als Workflow-Artefakt ablegen
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: deployment-identity-evidence-${{ github.sha }}
-          path: p2b-runtime/artifacts/deployment/deployment-identity-evidence.json
+          path: artifacts/deployment/deployment-identity-evidence.json
+          retention-days: 90
+          if-no-files-found: error
+
+  supply-chain-attestation:
+    name: Supply-Chain-Provenance / Attestation
+    needs: [build-and-test]
+    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Vertrauenswürdigen main-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Produktions-Build und Supply-Chain-Kette erzeugen
+        run: |
+          npm run build
+          npm run predeploy:check
+
+      - name: Provenance-Bindung an gehosteten Build-Pfad erzwingen
+        run: npx tsx scripts/security/verifySupplyChainProvenance.ts --require-ci
+
+      - name: cosign installieren
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Provenance keyless signieren (Sigstore/Fulcio/Rekor)
+        run: |
+          cosign sign-blob --yes \
+            --bundle dist/security/provenance.json.sigstore.json \
+            dist/security/provenance.json
+
+      - name: Signatur gegen erwartete Workflow-Identität verifizieren
+        run: |
+          cosign verify-blob \
+            --bundle dist/security/provenance.json.sigstore.json \
+            --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            dist/security/provenance.json
+
+      - name: Supply-Chain-Artefakte als Workflow-Artefakt ablegen
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: supply-chain-provenance-${{ github.sha }}
+          path: |
+            dist/security/sbom.cdx.json
+            dist/security/provenance.json
+            dist/security/provenance.json.sigstore.json
+            dist/control-plane/release-manifest.json
           retention-days: 90
           if-no-files-found: error

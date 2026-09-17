@@ -17,7 +17,6 @@ describe('TwelveDataMarketDataProvider', () => {
       provider: 'TwelveData',
       providerFeed: 'NASDAQ',
       price: 213.42,
-      sourceTimestamp: '2026-08-15T00:00:00.000Z',
       qualityState: 'DELAYED',
       isRealtime: false,
       isDelayed: true,
@@ -66,25 +65,5 @@ describe('TwelveDataMarketDataProvider', () => {
       if (previous === undefined) delete process.env.TWELVEDATA_API_KEY;
       else process.env.TWELVEDATA_API_KEY = previous;
     }
-  });
-
-  it('erfindet bei fehlender Provider-Zeit keinen sourceTimestamp', async () => {
-    const provider = new TwelveDataMarketDataProvider({
-      apiKey: 'test-key',
-      nowMs: () => Date.parse('2026-08-15T00:01:00Z'),
-      fetchImpl: vi.fn(async () => new Response(JSON.stringify({
-        close: '213.42', currency: 'USD', exchange: 'NASDAQ',
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } })) as unknown as typeof fetch,
-    });
-    const snapshot = await provider.getSnapshot({
-      symbol: 'AAPL', assetClass: 'stock', correlationId: 'corr-missing-time',
-    });
-    expect(snapshot).toMatchObject({
-      qualityState: 'UNAVAILABLE',
-      price: null,
-      sourceTimestamp: null,
-      evidenceId: null,
-    });
-    expect(snapshot.reason).toMatch(/no valid source timestamp/);
   });
 });

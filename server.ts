@@ -1,6 +1,5 @@
 // ADR-0013 — thin process entry point.
-// Process-level fatal handling is installed first so an uncaught exception or unhandled
-// rejection can mark readiness unhealthy before the application begins bounded shutdown.
-// The application implementation remains isolated in server.application.ts.
-import './server/bootstrap/installProcessLifecycle';
+// The application implementation is isolated in server.application.ts so this file
+// remains a stable build/runtime entry and no longer owns middleware, routes,
+// providers, background jobs, billing ingress, market-data or shutdown logic.
 import './server.application';

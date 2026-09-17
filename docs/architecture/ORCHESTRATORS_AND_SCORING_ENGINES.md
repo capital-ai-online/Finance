@@ -1,386 +1,131 @@
-# CAPITAL-AI Orchestration & Scoring Architecture
+# CAPITAL-AI Orchestration & Scoring Engine System Specification
+**System Version:** 0.5.4 (Beta-Phase)  
+**Standard Compliance:** Auditable, Deterministic, Zero-Breach Data Integrity
 
-**Document status:** canonical architecture projection  
-**Last synchronized:** 2026-08-22  
-**Protected scoring authority:** ADR-0087  
-**FinTech workflow authority:** ADR-0099  
-**DeFi evidence authority:** ADR-0100  
-**Meme/DeFi supersession evidence:** `docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md`  
-**Meme/DeFi research implementation evidence:** `docs/evidence/sc-md/SC3_CRYPTO_MEME_DEFI_ORCHESTRATOR_SCORING_2026-08-22.md`
+---
 
-> Diese Datei beschreibt den aktuellen Runtime-/Authority-Stand. Aeltere Specialized-first-, Universal-Fallback-, Gemini-, direkte Domain-Scoring- und vor-ADR-0087-Blueprint-Darstellungen sind superseded und besitzen keine aktuelle Architektur-Authority.
+## 1. System Overview
 
-## 1. Grundprinzip
+The CAPITAL-AI platform evaluates financial assets and physical commodities utilizing a decoupled, model-independent **Multi-Agent Orchestrator** pattern. 
 
-CAPITAL-AI trennt Research-Orchestration, Evidence Acquisition, produktive Scoring-Ausfuehrung und Financial Workflow Composition strikt.
+To prevent code bloat ("Programm Überschwemmungen") and keep the system lean ("schlank"), the architecture operates under a strict hierarchy:
+1. **Specialized Weighting and Evaluation Orchestrators** are queried first whenever an asset matches a specialized domain (e.g., Raw Materials/Commodities, Bluechip Cryptocurrencies, or High-Velocity Meme-Coins).
+2. **The Universal/Fallback Score Engine** is strictly restricted to assets for which no specialized orchestrator exists (e.g., general indexes, standard stocks, and forex).
 
-Die kanonische produktive Scoring-Kette lautet:
-
-```text
-Universal Asset Identity (UAI)
-  -> Evidence Acquisition
-  -> Evidence / Data Quality Gate
-  -> Feature Contract
-  -> ScoringModelRegistry
-  -> ScoringDispatcher
-  -> Domain Executor Adapter
-  -> CanonicalScoreResult
-  -> Ranking / Eligibility
-  -> EventMesh / Traceability / Supervisor
+```
+                      +-----------------------------+
+                      |    Inbound Asset Query      |
+                      +--------------+--------------+
+                                     |
+                                     v
+                       Is there a Specialized Engine?
+                       /                           \
+                     YES                           NO
+                     /                               \
+                    v                                 v
+      +-----------------------------+   +-----------------------------+
+      | Specialized Scoring Service |   |  Universal Fallback Engine  |
+      |   (Raw Materials, Crypto,   |   | (Standard Stock/Forex/Index)|
+      |         Meme Coins)         |   +-----------------------------+
+      +-----------------------------+
 ```
 
-### Nicht verhandelbare Regeln
-
-1. `ScoringDispatcher` ist die einzige produktive Scoring-Execution-Authority.
-2. `ScoringModelRegistry` ist die einzige produktive Model-Registry-Authority.
-3. Domain-Orchestratoren duerfen Research/Evidence anreichern, aber keine produktive Score-Authority bilden.
-4. Kein Specialized-first-/Fallback-Routing darf `ScoringDispatcher` umgehen.
-5. Missing/stale/invalid Evidence wird nicht zu `0`, PASS, neutralem Score oder synthetischer Verfuegbarkeit umgedeutet.
-6. Challenger-/Category-/Meme-/DeFi-Modelle werden nur ueber explizite Registry-/Governance-Promotion produktiv.
-7. Correlated Raw Features duerfen vor validierter De-Korrelation/Latent-Factor-Transformation nicht mehrfach additiv gewichtet werden.
-8. LLM-/Agent-Ausgaben sind keine Risk-, Compliance-, IAM-, Trading- oder Execution-Freigabe.
-9. Research Scores, Research Trade Scores und Kill-Switch-Empfehlungen sind keine `CanonicalScoreResult`-, Order- oder Policy-Authority.
-
-## 2. Rollenmodell
-
-### Orchestrator
-
-Ein Orchestrator komponiert Research-/Evidence-/Workflow-Schritte. Er darf spezialisierte Analysebausteine koordinieren, besitzt aber nicht automatisch Scoring- oder Execution-Authority.
-
-`src/orchestrator/cryptoOrchestrator.ts` bleibt Research/Enrichment und `scoreEligible=false`. Die neue Methode `analyzeCategoryResearchModels(...)` delegiert deterministische Meme-/DeFi-/Signal-Research-Modelle an die Scoring-Plattform; sie erzeugt keine produktive Score- oder Order-Authority.
-
-### ScoringModelRegistry
-
-Die Registry bestimmt versioniert, welche Modelle fuer welche Domain/Assetklasse produktiv zulaessig sind. Challenger-Modelle werden nicht implizit promoted.
-
-### ScoringDispatcher
-
-Der Dispatcher ist der einzige produktive Ausfuehrungspunkt fuer Scoring. Er delegiert an zugelassene Domain Executor Adapter und liefert `CanonicalScoreResult`.
-
-### Domain Executor Adapter
-
-Ein Adapter verbindet die zentrale Dispatcher-Authority mit einer fachlichen, registrierten Modellimplementierung. Er ist kein zweiter Dispatcher und darf keine eigene Modellselektion etablieren.
-
-### FinTechCore
-
-`src/platform/FinTechCore/` ist Financial Workflow Composition Authority gemaess ADR-0099. Der Core komponiert Research/Paper, Risk/Compliance, OrderIntent und Reconciliation, besitzt aber keine produktive Score-Berechnung und keine autonome reale Execution.
-
-### Supervisor / EventMesh / Traceability
-
-Supervisor und EventMesh beobachten bzw. transportieren Zustands-/Evidence-Signale. Sie duerfen weder Scoring- noch Compliance-/Execution-Entscheidungen heimlich ueberschreiben.
-
-## 3. Crypto-Orchestration und Meme/DeFi Research 0.3.0
-
-### Canonical Crypto Champion
-
-Der produktive Crypto-Champion bleibt unveraendert:
-
-```text
-crypto-technical-provenance@0.7.0
-```
-
-Meme-/DeFi-Klassifikation, Research Scores, Regime-, Pattern-, Sentiment- und Momentum-Kontext besitzen keine Model-Promotion-Authority.
-
-### Meme Challenger 0.3.0
-
-```text
-model=crypto-meme-integrity@0.3.0
-featureContract=crypto-meme-research-features/0.3.0
-lifecycle=challenger
-scoreEligible=false
-evidencePolicy=research-only
-executor=research-only:not-executable
-executableWeights=false
-```
-
-Der source-backed Research Evaluator modelliert:
-
-- Execution/Liquidity: Liquidity, Slippage, Volume Consistency, Spread, Liquidity Lock;
-- Market Structure: 1h/24h Return Quality, Volume Acceleration, Relative Strength, Breakout, Funding;
-- Holder Distribution: Top-10/Top-50, Team, Exchange, Sniper, Dormant Whale;
-- Contract/Rug Risk: Mint, Blacklist, Tax, Liquidity Unlock, Proxy Upgrade, Deployer Concentration, Honeypot Simulation;
-- Social Authenticity: Unique Authors, Engagement, Mention Velocity, Sentiment Consensus, Influencer Diversity, Bot Resistance;
-- Narrative und Exchange Access.
-
-Source-defined top-level research weights:
-
-```text
-liquidity        0.25
-marketStructure  0.20
-sentiment        0.18
-narrative        0.15
-distribution     0.12
-exchangeAccess   0.10
-```
-
-Hard Gates umfassen Buy-/Sell-Simulation, Liquidity Lock, Transfer Tax, Contract Integrity und Manipulation Evidence. Weniger als zwei unabhaengige Market Confirmations fuer Social Evidence ergibt `NOT_COMPUTABLE`.
-
-Die historische 35/25/20/20-Formel aus `MemeCoinScoringService` bleibt non-authorizing.
-
-### DeFi Challenger 0.3.0
-
-```text
-model=crypto-defi-fundamental@0.3.0
-featureContract=crypto-defi-research-features/0.3.0
-lifecycle=challenger
-scoreEligible=false
-evidencePolicy=research-only
-executor=research-only:not-executable
-executableWeights=false
-```
-
-Der source-backed Research Evaluator modelliert:
-
-- Utilization: Users, Transactions, Organic Volume, TVL Stability, Retention, Developer Activity;
-- Revenue/Fundamentals: Fees, Revenue, Growth, Diversification;
-- Liquidity: Pool Depth, Volume/Liquidity, Slippage, Persistence, Market Count, Diversification;
-- Smart-Contract Security;
-- Oracle Integrity;
-- Tokenomics;
-- Governance;
-- Ecosystem;
-- Contract/Liquidity/Oracle/Governance/Fundamental/Tokenomics/Bridge Risk.
-
-Source-defined top-level research weights:
-
-```text
-fundamentals      0.20
-utilization       0.18
-liquidity         0.17
-contractSecurity  0.15
-governance        0.12
-tokenomics        0.10
-ecosystem         0.08
-```
-
-`protocol.tvlUsd`, `protocol.feesUsd` und `protocol.revenueUsd` bleiben gemeinsam in `defi-scale-activity`; sie werden nicht als drei unabhaengige additive Top-Level-Signale verwendet.
-
-Hard Gates blockieren insbesondere unverifizierte Smart-Contract Evidence, Oracle Risk ausserhalb Policy, unbekannte Mint-Authority und unresolved Exploits.
-
-### Research Scoring vs. Productive Promotion
-
-`CryptoCategoryResearchScoring.ts` besitzt source-defined Research-Gewichte und erzeugt Fingerprint-Lineage fuer den Research-Lauf. Das ist **nicht** gleichbedeutend mit produktiven/executable Registry Weights.
-
-Eine produktive Promotion benoetigt weiterhin:
-
-- verifizierte Feature-Provider mit DQ/Freshness;
-- versionierte executable weights;
-- Out-of-sample/Backtesting/Stress-Evidence;
-- Korrelations-/Double-Counting-Pruefung;
-- explizite Owner-Freigabe;
-- Binding ueber dieselbe `ScoringModelRegistry -> ScoringDispatcher`-Authority.
-
-### DeFiLlama
-
-ADR-0100 akzeptiert DeFiLlama ausschliesslich als Evidence-Provider. Es ist kein Score, Ranking, Eligibility Gate, Dispatcher, Orchestrator oder Order Authority.
-
-`defi-protocol-evidence/1.1.0` bleibt fail-closed:
-
-```text
-READY              -> alle emittierten Features VERIFIED
-PARTIAL            -> mindestens ein VERIFIED, Set nicht vollstaendig verified
-STALE              -> kein VERIFIED, stale Evidence vorhanden
-SOURCE_UNAVAILABLE -> keine verified/stale Evidence verfuegbar
-```
-
-`STALE`, `NOT_AVAILABLE` und `INVALID` erfuellen keine REQUIRED-/HARD_GATE-Semantik.
-
-## 4. Added Feature Kit: Sentiment, Momentum, Regime, Pattern, Signal Fusion
-
-### Sentiment
-
-`crypto-sentiment-research/0.1.0` verbindet Polarity, Intensity, Novelty, Credibility, Bot Probability, Recency Decay, Source Weight, Mention Intensity, Regime Adjustment und Evidence References.
-
-Fehlt informative Evidence, gilt `NOT_COMPUTABLE`; der im Source-Beispiel verwendete Neutral-Default `50` ist fuer CAPITAL-AI superseded.
-
-### Momentum
-
-`crypto-momentum-research/0.1.0` verbindet H1/H4/D1 Returns, Trend Strength, Relative Strength, Volume Ratio, Volume Acceleration, Open Interest, Liquidity Change sowie RSI/Funding/Liquidity Penalties.
-
-Missing Open Interest wird nicht zu `0`, sondern durch deterministische Effective-Weight-Renormalisierung behandelt und als Missing Field ausgewiesen.
-
-MACD Histogram, ADX, Trend Slope, ATR Percent und Volume Expansion aus dem neuen Kit sind im Research Output inventarisiert. Da das Source-Material keine kanonische Gewichtsmatrix fuer diese Erweiterung festlegt, bleiben sie bis zu einer Modellrevision unweighted telemetry.
-
-### Regime
-
-Es entsteht keine zweite Regime-Authority. Source-Phasen werden auf den bestehenden `MarketRegime`-Vertrag projiziert:
-
-```text
-TREND_UP      -> BULL
-TREND_DOWN    -> BEAR
-ACCUMULATION  -> RANGE + annotation
-PANIC         -> STRESS
-ILLIQUID      -> STRESS
-DISTRIBUTION  -> UNKNOWN + transition=true
-VOLATILE      -> HIGH_VOLATILITY nur mit governed threshold
-NEUTRAL       -> RANGE
-```
-
-### Multi-Timeframe Pattern Confluence
-
-Die bestehende `PatternResearchEngine`/`PatternSignalResolver`-Authority wird wiederverwendet. Das neue Confluence-Modul akzeptiert nur `SUPPORTED_CONTEXT`, fordert mindestens zwei gleichgerichtete Timeframes und mindestens eine Higher-Timeframe-Bestaetigung `>=4h`.
-
-Es entsteht kein neuer Pattern Detector und kein paralleles Pattern-Routing.
-
-### Signal Fusion
-
-Source-defined Research Fusion:
-
-```text
-regimeFit        0.30
-momentum         0.25
-patternQuality   0.20
-sentiment        0.15
-executionQuality 0.10
-```
-
-`tradeScore >= 70` und `regimeFit >= 60` werden nur als `sourceThresholdsMet` gespiegelt. Das Ergebnis ist `RESEARCH_CONTEXT_ONLY_NOT_TRADE_AUTHORIZATION` und `executionEligible=false`.
-
-## 5. Kill-Switch Research Telemetry
-
-Das hinzugefuegte L1-L4-Modell wird als read-only Risk Telemetry abgebildet:
-
-```text
-L1_SOFT_PAUSE
-L2_SESSION_HALT
-L3_BROKER_DISCONNECT
-L4_HARD_KILL
-```
-
-Der Evaluator liefert Trigger, Recommended Actions und `manualUnlockRequired`, fuehrt aber keine Aktion aus. Er besitzt weder Broker-/Order-/Risk-Policy- noch Runtime-Mutation-Authority.
-
-Die im Source-Kit genannten Limits (u. a. Daily Loss, Session Loss, Consecutive Losses, Reject Rate, Slippage) sind `RESEARCH_DEFAULT_NOT_PRODUCTION_POLICY`.
-
-Die im Source-Kit ebenfalls enthaltenen `deployment.environment=production` / `mode=live` Angaben werden nicht uebernommen.
-
-## 6. FinTech Core Crypto Module 01
-
-Die Financial Workflow Chain lautet bis FT-6B:
-
-```text
-Research / Evidence
-  -> canonical Scoring Result (falls fuer Workflow benoetigt)
-  -> deterministic Portfolio/Risk inputs
-  -> FT-5 Risk Decision Record
-  -> FT-5 Compliance Decision Record
-  -> FT-6B canonical OrderIntent binding
-  -> PAPER-only simulated handoff
-  -> typed Reconciliation
-  -> durable Evidence / Supervisor signal
-```
-
-### FT-6B Invarianten
-
-- ein `FinTechCoreOrderIntent`;
-- ein `FinTechCoreFixedPoint` fuer execution-relevante Quantity/Price/Money-Werte;
-- Risk-/Compliance-Approval ausschliesslich aus deterministischen FT-5 Decision Records;
-- Decision ID/Hash und Policy ID/Version werden immutable gebunden;
-- `clientOrderId`, `idempotencyKey`, `intentHash` werden deterministisch erzeugt;
-- PAPER bleibt Simulation;
-- Reconciliation-Mismatch bleibt unresolved Evidence und wird nicht automatisch repariert;
-- keine reale Exchange-/Wallet-/Custody-Capability vor FT-7+.
-
-### Operating Modes — Owner-approved fail-closed
-
-```text
-RESEARCH      real=false simulated=false newOrders=false
-PAPER         real=false simulated=true  newOrders=true
-GUARDED_LIVE  real=false simulated=false newOrders=false
-PRODUCTION    real=false simulated=false newOrders=false
-EMERGENCY     real=false simulated=false newOrders=false
-```
-
-`isOrderIntentEligibleForRealExecution(...)` bleibt fuer jeden Modus `false`. FT-7+ benoetigt eine separate Architektur-/Security-Entscheidung.
-
-### Legacy Persistence Projection
-
-Kanonische BOUND-FT-6B-Intents verwenden den v2-Persistence-RPC. Der weiterhin vorhandene v1-`UNBOUND`-Pfad ist ausschliesslich Legacy-/Research-Kompatibilitaet und keine zweite OrderIntent- oder Execution-Authority.
-
-## 7. Superseded Topologien
-
-Folgende fruehere Aussagen gelten nicht mehr als aktuelle Authority:
-
-- Specialized-first / Universal Fallback;
-- direkte Crypto-/Meme-/DeFi-Scoring-Authority aus API-/UI-/Orchestrator-Pfaden;
-- providergebundene Gemini-/LLM-Scoring-Architektur;
-- historische Crypto-/Meme-/DeFi-Gewichte ausserhalb der aktuellen Registry-/Model-Governance;
-- implizite DeFiLlama-to-Score-Verbindungen;
-- additive Mehrfachgewichtung korrelierter DeFi- oder Meme-Rohsignale;
-- parallele Regime-/Pattern-Authorities neben den bestehenden FinTechCore Contracts;
-- Research Trade Score als Execution-Freigabe.
-
-Aktuell gilt produktiv immer:
-
-```text
-Registry -> Dispatcher -> registrierter Domain Executor -> CanonicalScoreResult
-```
-
-## 8. Assetklassen-Erweiterung
-
-Kuenftige Orchestratoren fuer Aktien, Rohstoffe, Indizes und Forex muessen dieselben Plattformvertraege wiederverwenden:
-
-```text
-UAI
-Evidence / DQ
-Feature Contract
-ScoringModelRegistry
-ScoringDispatcher
-CanonicalScoreResult
-Ranking / Eligibility
-EventMesh / Traceability
-```
-
-Assetklassen duerfen eigene Research-/Feature-/Executor-Module besitzen, aber keine zweite Dispatcher-, Registry-, Evidence-, Queue-, Persistence- oder Governance-Architektur.
-
-## 9. Security / Governance Boundaries
-
-- IAM/AuthN/AuthZ bleibt bei der bestehenden IAM Authority.
-- Compliance Legal Applicability bleibt ausserhalb des FinTechCore-Evaluators.
-- Risk-/Compliance-Policy-Werte sind versionierte externe Policy Snapshots.
-- LLM/Agents duerfen keine Approval States setzen.
-- Exchange Credentials, Wallet Keys und Custody Secrets liegen nicht im Research-/FT-6 Domain Layer.
-- `public.outbox_jobs` bleibt Queue-/Lease-Authority.
-- `fintech_core` bleibt privates Financial-Persistence-Schema.
-- Production-/Guarded-Live-Cutover ist ein separater, human-gated FT-7+ Prozess.
-- Meme/DeFi-Model-Promotion ist ein eigener human-gated Model-Governance-Prozess innerhalb ADR-0087, keine neue Architektur.
-- FinBERT/social/news/orderbook/derivatives/contract-scanner/holder-clustering/honeypot/oracle/audit Provider muessen ueber bestehende Provider-/Evidence-/DQ-Vertraege angebunden werden; ihre blosse Nennung im Source-Kit erteilt keine Provider-Authority.
-
-## 10. Dokumenten-Authority
-
-Bei Widerspruch gilt folgende Reihenfolge:
-
-1. aktive ADR-/Governance-Authorities, insbesondere ADR-0087, ADR-0099 und ADR-0100;
-2. kanonische Runtime Contracts/Registries;
-3. aktuelle Roadmaps/Evidence;
-4. diese Architekturprojektion;
-5. historische/superseded Beschreibungen.
-
-Diese Datei darf nicht verwendet werden, um eine zweite Scoring-, Orchestrator-, Financial-Control- oder Execution-Authority zu begruenden.
-
-## 11. Historischer Supersession-Index
-
-| Historischer Pfad | Rolle heute | Current-state replacement |
-|---|---|---|
-| `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md` | historischer Audit-Snapshot | ADR-0087 + ADR-0099 + aktuelle Registries |
-| `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_NACHAUDIT.md` | historischer Audit-Snapshot | ADR-0087 + ADR-0099 + aktuelle Registries |
-| `docs/architecture/ENTERPRISE_FINTECH_FINALIZATION_REPORT.md` | historischer Remediation-Snapshot | aktuelle FinTech-Core-Roadmap + ADR-0087/0099/0100 |
-| `docs/architecture/ENTERPRISE_SCREENING_SCORING_MASTER_ARCHITECTURE.md` | superseded Pre-Single-Dispatcher Blueprint | ADR-0087 / `ScoringModelRegistry` / `ScoringDispatcher` |
-
-Physische Verschiebung/Loeschung dieser Artefakte ist nicht erforderlich, solange ihre historische Rolle eindeutig und die Referenzierbarkeit fuer Audit/RAG/Tests erhalten bleibt.
-
-## 12. Current State
-
-```text
-PR #484 = MERGED
-main baseline at implementation start = c1a81db2f75d9fbb0fb17ce4e6440967189ad6be
-FT-0 ... FT-6B = DONE on main
-Supersession A+B = MERGED via PR #484
-crypto champion = crypto-technical-provenance@0.7.0 unchanged
-Meme research challenger = crypto-meme-integrity@0.3.0 in implementation branch
-DeFi research challenger = crypto-defi-fundamental@0.3.0 in implementation branch
-Added-kit sentiment/momentum/regime/pattern/signal-fusion/kill-switch research modules = IMPLEMENTED in branch
-Meme/DeFi productive promotion = BLOCKED pending evidence/backtest/governance
-FT-7 = BLOCKED
-FT-8 = PLANNED
-FT-9 = PLANNED
-```
+---
+
+## 2. The Three Specialized Orchestrators & Multi-Agent Pipelines
+
+All specialized orchestrators utilize high-concurrency multi-agent prompts powered by the `@google/genai` TypeScript SDK (model: `gemini-2.5-flash`), combined with hard, deterministic scoring services.
+
+### A. Raw Materials (Commodity) Orchestrator
+* **Location:** `/src/orchestrator/rawMaterialsOrchestrator.ts`
+* **Agents Involved:**
+  * **Classification Agent:** Categorizes into Main Class (`Metal`, `Energy`, `Agriculture`, `Industrial`, `Recycling`, `Unknown`) and identifies precise sub-classes.
+  * **Fundamentals Agent:** Assesses ore grades, tonnage, substitution potential, and recyclability.
+  * **Risk Agent:** Audits geopolitical, supply-chain, regulatory, ESG risks, and volatility.
+  * **Valuation Agent:** Identifies military and industrial criticality.
+* **Scoring Engine:** `RawMaterialsScoringService.scoreMaterial`
+
+### B. Enterprise Cryptocurrency Orchestrator
+* **Location:** `/src/orchestrator/cryptoOrchestrator.ts`
+* **Agents Involved:**
+  * **Crypto Classification Agent:** Segregates assets by Tier (L1, L2, DeFi, Oracle, Web3).
+  * **Crypto On-Chain Agent:** Examines address growth velocity, transaction frequency, and smart money/whale wallet accumulation.
+  * **Crypto Sentiment Agent:** Quantifies global news flow, social media mention speeds, and narrative strength.
+  * **Crypto Risk Agent:** Analyzes wash-trading risks and custody centralisation risks.
+* **Scoring Engine:** `CryptoScoringService.scoreCrypto`
+
+### C. Meme-Coin Scoring (kein Orchestrator)
+* **Scoring Engine:** `MemeCoinScoringService.scoreMemeCoin` — `/src/services/memeCoinScoringService.ts`
+* **Aufrufpfad:** direkt aus `server.ts` (`/api/crypto-score`, `/api/meme-score`), ohne vorgelagerten Orchestrator.
+* **Agents Involved:** keine.
+
+> **Korrektur (Audit ARCH-AUDIT-0002, 2026-07-31):** Dieser Abschnitt beschrieb zuvor einen
+> „Meme-Coin Master Orchestrator" unter `/src/orchestrator/memeCoinOrchestrator.ts` mit zwei
+> Agenten (Meme Sentiment Agent, Meme Risk Agent). Weder die Orchestrator-Datei noch die beiden
+> Agenten existieren in dieser Codebasis. Die Meme-Coin-Bewertung erfolgt ausschliesslich ueber
+> die oben genannte Scoring-Engine. Der korrespondierende Falscheintrag in
+> `/api/admin/orchestrators/status` (`server/systemEvents.ts`) wurde im selben Zug entfernt.
+
+---
+
+## 3. Mathematical Foundations & Equations
+
+### I. Raw Materials (Commodities) Scoring Engine
+Aggregates geological, commercial, and physical parameters. Each sub-dimension is compiled using equal-weighted parameter averages (0–100 scale):
+
+1. **Liquidity ($L_{score}$):**
+   $$L_{score} = \frac{\text{market\_liquidity} + \text{trading\_volume}}{2}$$
+2. **Fundamentals ($F_{score}$):**
+   $$F_{score} = \frac{\text{ore\_grade} + \frac{\text{tonnage} + \text{tonnage\_reserve}}{2} + \text{substitution\_potential} + \text{recyclability}}{4}$$
+3. **Processing ($P_{score}$):**
+   $$P_{score} = \frac{(100 - \text{processing\_complexity}) + \text{infrastructure} + (100 - \text{extraction\_costs})}{3}$$
+4. **Risk Penalty ($R_{score}$):**
+   $$R_{score} = \frac{\text{geopolitical} + \text{supply\_chain} + \text{regulatory} + \text{esg} + \text{producer\_concentration} + \text{volatility}}{6}$$
+5. **Strategic Importance ($S_{score}$):**
+   $$S_{score} = \frac{\text{military\_importance} + \text{industrial\_importance}}{2}$$
+
+**Final Aggregate Formulation:**
+$$\text{FinalScore} = \text{Clamp}\left(0, 100, (F_{score} \times w_f) + ((100 - R_{score}) \times w_r) + (L_{score} \times w_l) + (P_{score} \times w_p) + (S_{score} \times w_s)\right)$$
+*Weights are set based on active versioning parameters.*
+
+---
+
+### II. Enterprise Cryptocurrency Scoring Engine
+Operates with **Positive Indicators** (total max points: 111) and **Negative Risks** (total max points: 28), which normalize dynamically into an 80-point base scale, a 15-point penalty scale, and a 20-point macro bonus.
+
+1. **Positive Components ($P_{sum}$):**
+   $$P_{sum} = \sum (\text{Trend} \times 14, \text{Momentum} \times 12, \text{VolQuality} \times 10, \text{Breakout} \times 8, \text{RSI} \times 8, \text{Volume} \times 10, \text{Orderbook} \times 8, \text{OnChain} \times 5, \text{Flows} \times 5, \text{Whales} \times 5, \text{Tokenomics} \times 4, \text{SocialVelocity} \times 6, \text{Narrative} \times 5, \text{News} \times 5, \text{Community} \times 4, \text{AIConfidence} \times 2)$$
+   $$\text{BaseScore} = \left(\frac{P_{sum}}{111}\right) \times 80$$
+
+2. **Negative Risk Penalty ($N_{sum}$):**
+   $$N_{sum} = \sum (\text{Spread} \times 8, \text{Slippage} \times 6, \text{WashTrading} \times 5, \text{Centralisation} \times 4, \text{RugpullRisk} \times 3, \text{OracleRisk} \times 2)$$
+   $$\text{RiskPenalty} = \left(\frac{N_{sum}}{28}\right) \times 15$$
+
+3. **Regime Bonus ($B_{regime}$):**
+   $$B_{regime} = \text{Clamp}(\text{regime\_bonus}) \times 20$$
+
+**Final Aggregate Formulation:**
+$$\text{FinalScore} = \text{Clamp}\left(0.0, 100.0, \text{BaseScore} - \text{RiskPenalty} + B_{regime}\right)$$
+
+---
+
+### III. High-Velocity Meme-Coin Scoring Engine
+Focuses purely on viral hype speed and structural traps. 
+
+1. **Base Hype Score ($H_{base}$):**
+   $$H_{base} = (\text{Liquidity} \times 0.15 + \text{VolumeTrend} \times 0.10 + \text{TrendStructure} \times 0.15 + \text{Momentum} \times 0.10 + \text{VolQuality} \times 0.10 + \text{SocialSentiment} \times 0.15 + \text{Narrative} \times 0.10 + \text{Catalyst} \times 0.10) \times 100$$
+2. **Speculative Penalty ($P_{spec}$):**
+   $$P_{spec} = (\text{SpreadPenalty} + \text{LiquidityPenalty} + \text{ManipulationPenalty} + \text{RugpullPenalty} + \text{DecayPenalty}) \times 100$$
+3. **AI Confidence Contribution ($C_{ai}$):**
+   $$C_{ai} = \text{Clamp}(\text{ai\_confidence\_bonus}, 0.0, 0.05) \times 100$$
+
+**Final Aggregate Formulation:**
+$$\text{FinalScore} = \text{Clamp}\left(0.0, 100.0, H_{base} - P_{spec} + C_{ai}\right)$$
+
+---
+
+## 4. Architectural Safety Benefits
+
+1. **Flexible Deployment:** All scoring algorithms are implemented as static class methods in the `/src/services` folder, permitting deterministic execution on both the server (Express API) and client (interactive charts and simulations) with zero state drift.
+2. **Defensive API Contracts:** All parameters are clamped inside $[0.0, 1.0]$, preventing buffer overflows or out-of-bounds calculations in external audits.
+3. **Absolute Transparency:** Clear split between upside multipliers and safety penalties makes every rating fully explainable and auditable.

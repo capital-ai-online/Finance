@@ -13,6 +13,10 @@ import type { AssetCatalogEntry } from '../../services/assetCatalogIntegrity';
 import { checkAdminAccess } from '../../platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../../platform/Security/types';
 import {
+  generateTraditionalAssetInputs,
+  TraditionalAssetScoringService,
+} from '../../services/traditionalAssetScoring';
+import {
   APPROVED_FRED_SERIES,
   fetchEcbEurReferenceFx,
   fetchFredSeries,
@@ -25,10 +29,16 @@ import { decorateScreeningBatchWithGovernance, type ScreeningBatchItem } from '.
 import { getMarketDataProviderTelemetry } from '../../services/marketDataProviderRouter';
 import { getScreeningSloSinkStatus, persistScreeningSloEvidence } from '../../services/screeningSloSink';
 import { getAllIndexProviderMappings } from '../../services/indexProviderMapping';
+import { buildIndexScoringInputsFromEvidence, getVerifiedIndexHistory } from '../../services/indexMarketEvidence';
+import { getTwelveDataCommodityEvidence } from '../../services/commodityMarketEvidence';
+import { scoreCommodityMarketEvidence } from '../../services/commodityEvidenceScoring';
+import { resolveSovereignBondProviderMapping } from '../../services/sovereignBondProviderMapping';
+import { getEodhdBondEvidence } from '../../services/eodhdBondEvidence';
+import { scoreSovereignBenchmarkEvidence } from '../../services/sovereignBenchmarkEvidenceScoring';
 import { logSystemEvent } from '../../../server/systemEvents';
+import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
 import { computeBinanceQuickAnalysis, normalizeSpotSymbol, QuickAnalysisError } from '../../../server/binanceLandingQuickAnalysis';
 import { checkRateLimit, getClientIp } from '../../platform/Security/rateLimiter';
-import { evaluateVerifiedCatalogSymbol } from './verifiedCatalogScoring';
 
 export interface AssetUpdatePayload {
   expectedReturn?: number;
@@ -38,6 +48,11 @@ export interface AssetUpdatePayload {
   change24h?: number;
   marketCap?: number;
   isLocked?: boolean;
+}
+
+interface VerifiedCatalogEvaluation {
+  httpStatus: number;
+  payload: Record<string, unknown>;
 }
 
 export function buildAssetUpdatePayload(body: any): AssetUpdatePayload {
@@ -102,6 +117,183 @@ function latestObservedAt(payload: Record<string, unknown>): string | null {
     .filter((value): value is string => Boolean(value) && Number.isFinite(Date.parse(value)))
     .sort((a, b) => Date.parse(b) - Date.parse(a));
   return timestamps[0] ?? null;
+}
+
+function canonicalEvidencePayload(input: {
+  correlationId: string;
+  symbol: string;
+  assetType: 'commodity' | 'bond';
+  result: ReturnType<typeof scoreCommodityMarketEvidence> | ReturnType<typeof scoreSovereignBenchmarkEvidence>;
+  lineageExtra?: Record<string, unknown>;
+}): VerifiedCatalogEvaluation {
+  const canonical = input.result.canonical;
+  const ready = canonical.status === 'READY';
+  return {
+    httpStatus: ready ? 200 : 422,
+    payload: {
+      correlationId: input.correlationId,
+      symbol: input.symbol,
+      assetType: input.assetType,
+      status: canonical.status,
+      score: canonical.final_score,
+      score10: canonical.score,
+      scoreSemantic: input.result.scoreSemantic,
+      contractVersion: input.result.contractVersion,
+      contractStatus: input.result.contractStatus,
+      providers: input.result.providers,
+      evidenceIds: input.result.evidenceIds,
+      usedFactors: input.result.usedFactors,
+      missingFactors: input.result.missingFactors,
+      factors: input.result.factors,
+      reasoning: input.result.reasoning,
+      integrity: canonical.integrity,
+      provenance: canonical.integrity.evidence,
+      lineage: {
+        correlationId: input.correlationId,
+        assetId: input.symbol,
+        assetClass: input.assetType,
+        providers: input.result.providers,
+        evidenceIds: input.result.evidenceIds,
+        scoringVersion: input.result.contractVersion,
+        generatedAt: new Date().toISOString(),
+        ...input.lineageExtra,
+      },
+    },
+  };
+}
+
+async function evaluateVerifiedCatalogSymbol(symbolInput: string, correlationId: string): Promise<VerifiedCatalogEvaluation> {
+  const symbol = symbolInput.toUpperCase().trim();
+  const asset = getAssetCatalogEntry(symbol);
+  if (!asset) {
+    return { httpStatus: 404, payload: { correlationId, symbol, status: 'ASSET_NOT_FOUND', score: null } };
+  }
+
+  try {
+    if (asset.type === 'commodity') {
+      const evidence = await getTwelveDataCommodityEvidence(symbol, 90);
+      const result = scoreCommodityMarketEvidence(evidence);
+      return canonicalEvidencePayload({
+        correlationId,
+        symbol,
+        assetType: 'commodity',
+        result,
+        lineageExtra: {
+          marketEvidenceVersion: evidence.version,
+          providerSymbol: evidence.providerSymbol,
+          providerName: evidence.providerName,
+        },
+      });
+    }
+
+    if (asset.type === 'bond') {
+      const mapping = await resolveSovereignBondProviderMapping(symbol);
+      if (!mapping) {
+        return {
+          httpStatus: 422,
+          payload: {
+            correlationId,
+            symbol,
+            assetType: 'bond',
+            status: 'SCORE_NOT_COMPUTABLE',
+            score: null,
+            providers: [],
+            evidenceIds: [],
+            provenance: [],
+            lineage: null,
+            reason: 'Kein explizit freigegebenes oder durch den EODHD-GBOND-Katalog bestätigtes Sovereign-Benchmark-Mapping vorhanden. Einzelanleihen bleiben nach ADR-0022 gesperrt.',
+          },
+        };
+      }
+      const evidence = await getEodhdBondEvidence(mapping.providerSymbol, 90);
+      const result = scoreSovereignBenchmarkEvidence(symbol, evidence);
+      return canonicalEvidencePayload({
+        correlationId,
+        symbol,
+        assetType: 'bond',
+        result,
+        lineageExtra: {
+          providerMappingVersion: mapping.version,
+          providerMappingMode: mapping.mappingMode,
+          providerSymbol: mapping.providerSymbol,
+          individualBondScoringEligible: false,
+        },
+      });
+    }
+
+    if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
+      return {
+        httpStatus: 400,
+        payload: {
+          correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', score: null,
+          reason: 'Für diese Assetklasse ist kein freigegebener Evidence-Scoring-Contract aktiv.',
+        },
+      };
+    }
+
+    let inputs;
+    if (asset.type === 'stock') {
+      await ensureFundamentalsFresh(symbol);
+      inputs = await generateTraditionalAssetInputs(symbol, 'stock', getCachedFundamentals(symbol));
+    } else if (asset.type === 'forex') {
+      inputs = await generateTraditionalAssetInputs(symbol, 'forex');
+    } else {
+      const evidence = await getVerifiedIndexHistory(symbol, 45);
+      if (!evidence) {
+        return {
+          httpStatus: 422,
+          payload: {
+            correlationId,
+            symbol,
+            assetType: 'index',
+            status: 'SCORE_NOT_COMPUTABLE',
+            score: null,
+            reason: 'Weder das freigegebene FMP-Mapping noch ein durch Provider-Metadaten verifiziertes Twelve-Data-Mapping lieferte ausreichende reale Index-Historie.',
+            providers: [],
+            evidenceIds: [],
+            provenance: [],
+            lineage: null,
+          },
+        };
+      }
+      inputs = buildIndexScoringInputsFromEvidence(evidence);
+    }
+
+    const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+    const providers = result.lineage?.providers ?? [];
+    const evidenceIds = result.lineage?.evidenceIds ?? [];
+    const correlatedLineage = result.lineage ? { ...result.lineage, correlationId } : null;
+
+    if (result.usedFactors.length === 0 || result.provenance.length === 0) {
+      return {
+        httpStatus: 422,
+        payload: {
+          correlationId, symbol, assetType: asset.type, status: 'SCORE_NOT_COMPUTABLE', score: null,
+          reason: 'Keine ausreichend belegten Scoring-Faktoren verfügbar.',
+          providers, evidenceIds, missingFactors: result.missingFactors,
+          provenance: result.provenance, lineage: correlatedLineage,
+        },
+      };
+    }
+
+    return {
+      httpStatus: 200,
+      payload: {
+        correlationId, symbol, assetType: asset.type, status: 'READY', score: result.score,
+        providers, evidenceIds, usedFactors: result.usedFactors, missingFactors: result.missingFactors,
+        reasoning: result.reasoning, provenance: result.provenance, lineage: correlatedLineage,
+      },
+    };
+  } catch (error) {
+    return {
+      httpStatus: 503,
+      payload: {
+        correlationId, symbol, assetType: asset.type, status: 'SCORE_NOT_COMPUTABLE', score: null,
+        reason: error instanceof Error ? error.message : String(error),
+        providers: [], evidenceIds: [], provenance: [], lineage: null,
+      },
+    };
+  }
 }
 
 export const registryRouter = express.Router();

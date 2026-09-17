@@ -1,13 +1,13 @@
 {
   "name": "Release",
-  "version": "1.2.0",
+  "version": "1.1.0",
   "status": "development",
-  "owner": "CAPITAL-AI-OPS / PVC-06 Version Management / PVC-07 Release Management",
-  "description": "Controlled CAPITAL-AI release lifecycle, single platform-version authority, deterministic ADR-0105 scoped-branch materialization and fail-closed read-only projection services. package.json#version is authoritative; final Git tags remain prohibited until production acceptance.",
+  "owner": "Platform Director",
+  "description": "Controlled CAPITAL-AI release lifecycle and fail-closed platform-version gate. package.json remains the platform-version source of truth; final Git tags are prohibited until production acceptance.",
   "category": "platform",
   "layer": "CrossCutting",
   "lifecycle": "Development",
-  "health": "validation-pending",
+  "health": "CI-validated",
   "repository": "Finance",
   "ess": [
     "ESS-0001",
@@ -15,65 +15,36 @@
     "ESS-0007"
   ],
   "adr": [
-    "ADR-0030",
-    "ADR-0096",
-    "ADR-0105"
+    "ADR-0030"
   ],
   "dependencies": [
     "package.json",
     "package-lock.json",
     "metadata.json",
-    "docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json",
-    "src/platform/Governance",
-    "src/platform/Documentary/Governance",
     "src/platform/Traceability"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "The version gate does not emit synthetic release events. EventMesh publication may be added only when a real accepted release state transition is persisted."
+    "note": "The version gate does not emit synthetic release events. EventMesh publication may be added only when a real release state transition is persisted."
   },
   "knowledge": [
     "docs/releases/candidates/"
   ],
   "interfaces": [
     "ReleaseVersionRequest",
-    "ReleaseVersionPlan",
-    "DeterministicVersionDecisionEvidence",
-    "ScopedBranchMaterializationContext",
-    "DeterministicVersionMaterializationResolution",
-    "PlatformVersionProjection"
+    "ReleaseVersionPlan"
   ],
   "contracts": [
-    "release-version-gate/1.1.0",
-    "deterministic-version-materialization/1.0.0",
-    "capital-ai-versioning-rules/1.0.0",
-    "platform-version-control-plane/1.0.0",
-    "CTRL-GOV-VERSION-001",
-    "CTRL-GOV-VERSION-002"
+    "release-version-gate/1.0.0",
+    "GOV-VER-002"
   ],
-  "authority": {
-    "platformVersion": "package.json#version",
-    "deterministicRuleContract": "AUTH-GOV-DETERMINISTIC-VERSIONING-RULE-CONTRACT",
-    "deterministicVersioningAdr": "AUTH-ADR-DETERMINISTIC-AUTONOMOUS-VERSIONING-2026-09-11",
-    "materializationOwner": "CAPITAL-AI-OPS / PVC-06 / PVC-07",
-    "readme": "derived projection",
-    "runtimeAdminApi": "read-only projection",
-    "agentsControlPlaneVersion": "independent governance metadata"
-  },
   "documentation": [
     "README.md",
-    "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md",
-    "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md",
-    "docs/adr/ADR-0105-deterministic-autonomous-versioning.md",
-    "docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json"
+    "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md"
   ],
   "tests": [
-    "tests/unit/releaseVersionGate.test.ts",
-    "tests/unit/deterministicVersionMaterialization.test.ts",
-    "tests/unit/platformVersionConsistency.test.ts",
-    "tests/unit/readmeVersionProjection.test.ts",
-    "scripts/pr/runtimeArtifactImmutability.test.mjs"
+    "tests/unit/releaseVersionGate.test.ts"
   ],
-  "note": "scripts/automation/releaseVersion.ts remains dry-run by default and requires explicit --apply. In deterministic mode it accepts --decision-evidence, refuses free --target/--classification input, validates the accepted ADR-0105 Rule Contract plus decision rule/ref/base/head identity and protected DENY boundaries, and delegates the evidence-derived target/classification into the existing release-version-gate/1.1.0 path. NONE, NO_CHANGE_ALREADY_APPLIED and materialization.eligible=false perform no mutation. Apply keeps the existing authority/projection rollback set, hygiene/governance/build/predeploy gates and rollback-on-failure behavior; release-candidate evidence is written only after those gates pass and no final Git tag is created. Legacy VersionManager mutation/state/document-generation semantics remain suspended under ADR-0096."
+  "note": "ADR-0030 implementation: scripts/automation/releaseVersion.ts provides dry-run by default and requires explicit --apply for mutations. It validates exact next SemVer transitions, classification, work-package/ADR traceability, rollback and acceptance requirements; synchronizes package/lock/metadata/governed mirrors; runs lint, version consistency, build and predeploy gates; restores version files on failure; writes release-candidate evidence only after gates pass; and never creates a final Git tag."
 }

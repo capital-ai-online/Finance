@@ -1,4 +1,4 @@
-export const TELEMETRY_SCHEMA_VERSION = '1.1.0' as const;
+export const TELEMETRY_SCHEMA_VERSION = '1.0.0' as const;
 
 /**
  * Kanonische operative Stufen der CAPITAL-AI FinTech-Wertschöpfungskette.
@@ -20,16 +20,11 @@ export type FinTechValueChainStage =
 export type TelemetrySignal = 'log' | 'metric' | 'trace';
 export type TelemetrySeverity = 'info' | 'warn' | 'error';
 export type TelemetryOutcome = 'success' | 'failure' | 'degraded' | 'denied' | 'unknown';
-export type TelemetryEdgeTrust = 'trusted-cloudflare-render' | 'untrusted' | 'not-render';
 
 export interface TelemetryContext {
   requestId?: string;
   traceId?: string;
   spanId?: string;
-  parentSpanId?: string;
-  traceFlags?: string;
-  edgeRayId?: string;
-  edgeTrust?: TelemetryEdgeTrust;
   service: string;
   environment: string;
   version?: string;

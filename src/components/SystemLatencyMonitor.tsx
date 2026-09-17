@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, CheckCircle2, Clock, Database, RefreshCw } from 'lucide-react';
-import { authFetch } from '../lib/authFetch';
 
 interface RequestLogEntry {
   id: string;
@@ -30,7 +29,7 @@ export function SystemLatencyMonitor() {
 
   const refresh = async () => {
     try {
-      const response = await authFetch('/api/orchestrator/stats');
+      const response = await fetch('/api/orchestrator/stats');
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const body = await response.json();
       setStats(body);

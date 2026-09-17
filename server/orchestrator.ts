@@ -2,33 +2,25 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { orchestrator } from '../src/lib/requestOrchestrator';
-import { validateOrchestratorConfigPatch } from '../src/lib/orchestratorConfigPolicy';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
 import { getCleanEnv } from './env';
-import { rateLimitMiddleware } from '../src/platform/Security/safeIo';
 
 export const orchestratorRouter = express.Router();
-orchestratorRouter.use(rateLimitMiddleware({ name: 'orchestrator-admin', maxRequests: 30, windowMs: 60_000 }));
 
 async function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   const authz = await checkAdminAccess(req, 'orchestrator-config', SUPERVISOR_ZONE_ROLES);
   if (!authz.authorized) {
-    const status = authz.reason === 'rate-limited'
-      ? 429
-      : authz.reason === 'insufficient-role'
-      ? 403
-      : 401;
-    return res.status(status).json({ error: 'Ungültiger Zugriff. Zugriff verweigert.' });
+    return res.status(authz.reason === 'rate-limited' ? 429 : 401).json({ error: 'Ungültiger Zugriff. Zugriff verweigert.' });
   }
   next();
 }
 
-orchestratorRouter.get('/stats', requireOrchestratorAdmin, (_req, res) => {
+orchestratorRouter.get('/stats', (_req, res) => {
   res.json(orchestrator.getStats());
 });
 
-orchestratorRouter.get('/ping-models', requireOrchestratorAdmin, (_req, res) => {
+orchestratorRouter.get('/ping-models', (_req, res) => {
   const models = [
     { id: 'claude', name: 'Claude 3.5 Sonnet', task: 'Code & Review', cost: '3.00', configured: false },
     { id: 'gpt4', name: 'GPT-4o', task: 'Reasoning & Legacy', cost: '2.50', configured: false },
@@ -51,17 +43,13 @@ orchestratorRouter.get('/ping-models', requireOrchestratorAdmin, (_req, res) => 
 });
 
 orchestratorRouter.post('/config', requireOrchestratorAdmin, (req, res) => {
-  const validation = validateOrchestratorConfigPatch(req.body);
-  if (validation.ok === false) {
-    return res.status(400).json({
-      error: 'Ungültige Orchestrator-Konfiguration.',
-      code: validation.code,
-      issues: validation.issues,
-    });
-  }
-
-  orchestrator.updateConfig(validation.value);
-  return res.json({ success: true, stats: orchestrator.getStats() });
+  const { concurrencyLimit, maxQueueSize, maxRequestsPerWindow } = req.body;
+  orchestrator.updateConfig({
+    concurrencyLimit: typeof concurrencyLimit === 'number' ? concurrencyLimit : undefined,
+    maxQueueSize: typeof maxQueueSize === 'number' ? maxQueueSize : undefined,
+    maxRequestsPerWindow: typeof maxRequestsPerWindow === 'number' ? maxRequestsPerWindow : undefined,
+  });
+  res.json({ success: true, stats: orchestrator.getStats() });
 });
 
 orchestratorRouter.post('/reset', requireOrchestratorAdmin, (_req, res) => {
@@ -89,11 +77,19 @@ orchestratorRouter.get('/audit-files', requireOrchestratorAdmin, (_req, res) => 
     return res.json({ files });
   } catch (error) {
     return res.status(500).json({
-      error: 'Fehler beim Auflisten der Audit-Dateien.',
+      error: `Fehler beim Auflisten der Audit-Dateien: ${error instanceof Error ? error.message : String(error)}`,
     });
   }
 });
 
+/**
+ * ARCH-AUDIT-0004 / AUD4-F-001 (P0)
+ *
+ * Legacy compatibility tombstone. The previous route persisted client-supplied/defaulted
+ * "audit" scores into docs/reports and made simulated records indistinguishable from real
+ * evidence. Enterprise audit evidence must originate from an instrumented control/runtime
+ * event and must never be manufactured by a UI or default value.
+ */
 orchestratorRouter.post('/create-simulated-audit', requireOrchestratorAdmin, (_req, res) => {
   return res.status(410).json({
     status: 'SIMULATED_AUDIT_DISABLED',

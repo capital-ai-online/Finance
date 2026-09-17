@@ -8,8 +8,7 @@ export type VocabularyCategory =
   | 'iam'
   | 'platform'
   | 'product'
-  | 'release'
-  | 'ai-development-chat-execution';
+  | 'release';
 
 export type VocabularyStatus = 'draft' | 'proposed' | 'approved' | 'deprecated' | 'retired';
 

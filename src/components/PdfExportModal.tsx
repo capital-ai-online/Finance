@@ -1,25 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
-import {
-  X,
-  FileDown,
-  Check,
-  CreditCard,
-  AlertTriangle,
-  Sparkles,
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  X, 
+  FileDown, 
+  Check, 
+  CreditCard, 
+  AlertTriangle, 
+  Sparkles, 
+  Zap, 
   CheckCircle,
-  RefreshCw,
+  HelpCircle,
+  RefreshCw
 } from 'lucide-react';
 import { ComplianceConsentWrapper } from './ComplianceConsentModal';
 import { authFetch } from '../lib/authFetch';
 import { runPdfExportFlow } from '../lib/pdfExportFlow';
-import { CAPITAL_AI_VERSION } from '../platform/Branding/runtimeBrand';
 
 interface PdfExportModalBaseProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Presentation/checkout metadata only. Authorization is derived from authFetch bearer identity. */
-  email?: string;
+  email: string;
 }
 
 type PdfExportModalProps = PdfExportModalBaseProps & (
@@ -39,21 +39,22 @@ type PdfExportModalProps = PdfExportModalBaseProps & (
 
 export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }: PdfExportModalProps) {
   const [loading, setLoading] = useState(false);
-  // Fail closed until the authenticated server ledger confirms a balance.
-  const [credits, setCredits] = useState<number>(0);
+  const [credits, setCredits] = useState<number>(3);
   const [isUnlimited, setIsUnlimited] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [demoMode, setDemoMode] = useState<boolean>(false);
 
   const prepareExport = onPrepare ?? (async () => async () => {
     await onSuccess!();
   });
 
   useEffect(() => {
-    if (isOpen) {
-      void fetchCredits();
+    if (isOpen && email) {
+      fetchCredits();
+      checkStripeConfig();
     }
-  }, [isOpen]);
+  }, [isOpen, email]);
 
   const fetchCredits = async () => {
     try {
@@ -62,26 +63,33 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
       const res = await authFetch('/api/stripe/pdf-credits');
       if (!res.ok) throw new Error('Fehler beim Laden der Credits');
       const data = await res.json();
-      const unlimited = data?.unlimited === true;
-      const nextCredits = Number(data?.credits);
-      if (!unlimited && (!Number.isInteger(nextCredits) || nextCredits < 0)) {
-        throw new Error('Ungültiger PDF-Credit-Stand vom Server.');
-      }
-      setCredits(unlimited ? 0 : nextCredits);
-      setIsUnlimited(unlimited);
+      setCredits(data.credits);
+      setIsUnlimited(!!data.unlimited);
     } catch (err: any) {
       console.error(err);
-      setCredits(0);
-      setIsUnlimited(false);
-      setError('Konnte PDF-Credits nicht vom Server abrufen. Export bleibt gesperrt.');
+      setError('Konnte PDF-Credits nicht vom Server abrufen.');
     } finally {
       setLoading(false);
     }
   };
 
+  const checkStripeConfig = async () => {
+    try {
+      const res = await fetch('/api/stripe/config-status');
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.publishableKeyConfigured || data.publishableKey?.startsWith('pk_test_...')) {
+          setDemoMode(true);
+        }
+      }
+    } catch (e) {
+      setDemoMode(true);
+    }
+  };
+
   const handleConsumeAndExport = async () => {
     if (!isUnlimited && credits <= 0) {
-      setError('Sie haben keine verifizierten Export-Credits. Bitte laden Sie den Credit-Stand neu oder erwerben Sie weitere Exporte.');
+      setError('Sie haben keine Credits mehr. Bitte laden Sie neue Credits auf.');
       return;
     }
 
@@ -108,9 +116,9 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
 
       if (consumption) {
         setCredits(consumption.credits);
-        setSuccessMsg('Download erfolgreich gestartet. 1 Export-Credit wurde serverseitig abgezogen.');
+        setSuccessMsg('Download erfolgreich gestartet! 1 Export-Credit abgezogen.');
       } else {
-        setSuccessMsg('Download erfolgreich gestartet. Enterprise-Export bleibt unbegrenzt.');
+        setSuccessMsg('Download erfolgreich gestartet! Enterprise-Export bleibt unbegrenzt.');
       }
 
       setTimeout(() => {
@@ -128,16 +136,16 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
     try {
       setLoading(true);
       setError(null);
-
-      const res = await authFetch('/api/stripe/create-checkout-session', {
+      
+      const res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: 'EXPORT_PDF',
-          ...(email ? { email } : {}),
+          email: email,
           successUrl: window.location.href,
-          cancelUrl: window.location.href,
-        }),
+          cancelUrl: window.location.href
+        })
       });
 
       const data = await res.json();
@@ -157,11 +165,14 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
     }
   };
 
+
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
+      {/* Backdrop */}
+      <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -169,42 +180,45 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
         className="absolute inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
       />
 
-      <motion.div
+      {/* Modal Box */}
+      <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="bg-background border border-border p-6 rounded-2xl max-w-md w-full relative z-10 overflow-hidden"
-        style={{ boxShadow: '0 0 40px color-mix(in srgb, var(--color-brand-primary) 15%, transparent)' }}
+        className="bg-zinc-950 border border-white/10 p-6 rounded-2xl max-w-md w-full relative z-10 shadow-[0_0_40px_rgba(245,196,83,0.15)] overflow-hidden"
       >
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-primary via-brand-primary to-brand-accent" />
+        {/* Accent Banner */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500" />
 
+        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-brand-primary/10 text-brand-primary">
+            <span className="p-1.5 rounded-lg bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT">
               <FileDown size={16} />
             </span>
-            <h3 className="font-display font-extrabold text-text-primary text-base">PDF-Export freigeben</h3>
+            <h3 className="font-display font-extrabold text-white text-base">BaFin PDF-Export freigeben</h3>
           </div>
-          <button
+          <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-surface/60 hover:brightness-110 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-            aria-label="PDF-Export schließen"
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
         </div>
 
+        {/* Content */}
         <div className="space-y-4">
-          <p className="text-xs text-text-secondary leading-relaxed">
-            Dieser Bericht wird mit dem CAPITAL-AI PDF-Export der Runtime-Version {CAPITAL_AI_VERSION} erzeugt. Credit-Stand und Abbuchung werden ausschließlich serverseitig verifiziert.
+          <p className="text-xs text-white/60 leading-relaxed">
+            Dieser Bericht ist Teil der exklusiven quantitativen Auswertungen von Capital-AI (Version 0.7.0).
           </p>
 
-          <div className="bg-surface/60 border border-border rounded-xl p-4 flex justify-between items-center">
+          {/* Credits Display */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex justify-between items-center">
             <div>
-              <p className="text-[10px] text-text-secondary uppercase font-mono tracking-wider">Verifizierte PDF-Exporte</p>
-              <p className="text-xl font-mono font-black text-text-primary mt-1">
+              <p className="text-[10px] text-white/40 uppercase font-mono tracking-wider">Ihre verbleibenden PDF-Exporte</p>
+              <p className="text-xl font-mono font-black text-white mt-1">
                 {isUnlimited ? (
-                  <span className="text-brand-primary flex items-center gap-1.5 text-base">
+                  <span className="text-aif-gold-DEFAULT flex items-center gap-1.5 text-base">
                     <Sparkles size={16} /> Unbegrenzt
                   </span>
                 ) : (
@@ -213,33 +227,33 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
               </p>
             </div>
             {isUnlimited && (
-              <span className="px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest bg-brand-primary/15 text-brand-primary uppercase font-mono">
+              <span className="px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT uppercase font-mono">
                 Enterprise-Vorteil
               </span>
             )}
           </div>
 
           {error && (
-            <div className="p-3 bg-score-worst/10 border border-score-worst/25 rounded-xl flex items-start gap-2 text-xs text-score-worst">
+            <div className="p-3 bg-red-500/10 border border-red-500/25 rounded-xl flex items-start gap-2 text-xs text-red-400">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <p className="leading-normal">{error}</p>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 bg-score-best/10 border border-score-best/25 rounded-xl flex items-start gap-2 text-xs text-score-best">
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl flex items-start gap-2 text-xs text-emerald-400">
               <CheckCircle size={14} className="mt-0.5 shrink-0 animate-pulse" />
               <p className="leading-normal">{successMsg}</p>
             </div>
           )}
 
+          {/* Action Buttons */}
           <div className="space-y-2.5 pt-2">
             {isUnlimited || credits > 0 ? (
-              <ComplianceConsentWrapper onConfirm={handleConsumeAndExport} reportName="CAPITAL-AI PDF-Export">
+              <ComplianceConsentWrapper onConfirm={handleConsumeAndExport} reportName="BaFin PDF-Export">
                 <button
                   disabled={loading}
-                  className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-brand-primary hover:brightness-110 text-black flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                  style={{ boxShadow: '0 0 15px color-mix(in srgb, var(--color-brand-primary) 25%, transparent)' }}
+                  className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-aif-gold-DEFAULT hover:bg-amber-500 text-black shadow-[0_0_15px_rgba(245,196,83,0.25)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <RefreshCw size={14} className="animate-spin" />
@@ -253,20 +267,22 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
               <button
                 disabled={loading}
                 onClick={handleBuyCredits}
-                className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-text-primary text-background hover:brightness-95 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-white text-black hover:bg-white/90 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <RefreshCw size={14} className="animate-spin" />
                 ) : (
                   <CreditCard size={14} />
                 )}
-                <span>3 PDF-Exporte freischalten</span>
+                <span>3 PDF-Exporte freischalten (3 €)</span>
               </button>
             )}
 
+
+
             <button
               onClick={onClose}
-              className="w-full py-2.5 rounded-xl font-bold text-xs text-text-secondary hover:text-text-primary hover:bg-surface/50 transition-all cursor-pointer text-center"
+              className="w-full py-2.5 rounded-xl font-bold text-xs text-white/50 hover:text-white hover:bg-white/5 transition-all cursor-pointer text-center"
             >
               Abbrechen
             </button>

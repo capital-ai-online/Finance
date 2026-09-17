@@ -2,15 +2,10 @@ import type { MarketDataAsset } from './marketDataCoordinator';
 import type { StooqFallbackAsset } from './stooqProviderStage';
 import { runMarketDataCompatibilityRefresh } from './marketDataCompatibilityFacade';
 import { createMarketDataRuntimeFacade } from './marketDataRuntimeFacade';
-import {
-  enrichAssetWithCanonicalScore,
-  isCanonicalScorableMarketDataAsset,
-} from './canonicalCryptoScoreEnrichment';
 
 const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'];
 const FOREX_TICKERS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'];
 const COMMODITY_TICKERS = ['XAUUSD', 'XAGUSD', 'CL.F', 'NG.F', 'CO.F'];
-export const APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS = 90_000;
 
 export interface ApplicationMarketDataRuntimeOptions {
   fallbackAssets: StooqFallbackAsset[];
@@ -27,20 +22,13 @@ export interface ApplicationMarketDataRuntimeOptions {
 /**
  * Canonical application-level composition for CAPITAL-AI market data.
  *
- * Provider ordering, cache/TTL and compatibility fallback completion stay owned by the market-data
- * architecture. Since SC-2 C3 every scorable financial asset class is intercepted before the
- * legacy composition-root enrichment callback and enters its domain evidence adapter followed by
- * UAI -> ScoringModelRegistry -> ScoringDispatcher. A missing evidence contract yields score=null;
- * no asset class may fall through to a productive heuristic model-selection path.
- *
- * Background provider refresh is throttled to a 90-second cadence at this boundary even if a
- * legacy composition-root timer invokes backgroundRefresh() more frequently. Calls inside the
- * throttle window are coalesced into the next eligible refresh instead of triggering provider I/O.
+ * The server composition root supplies only domain callbacks (enrichment, registry sync and
+ * best-effort side effects). Provider ordering, compatibility fallback completion, cache TTL
+ * and request coalescing stay owned by the extracted market-data architecture.
  */
 export function createApplicationMarketDataRuntime(options: ApplicationMarketDataRuntimeOptions) {
   return createMarketDataRuntimeFacade({
     ttlMs: options.ttlMs,
-    backgroundRefreshIntervalMs: APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS,
     syncAsset: options.syncAsset,
     onRefreshFailure: options.onRefreshFailure,
     refresh: () => runMarketDataCompatibilityRefresh({
@@ -49,9 +37,7 @@ export function createApplicationMarketDataRuntime(options: ApplicationMarketDat
       forexTickers: FOREX_TICKERS,
       commodityTickers: COMMODITY_TICKERS,
       registryAssets: options.registryAssets,
-      enrichAsset: (asset) => isCanonicalScorableMarketDataAsset(asset)
-        ? enrichAssetWithCanonicalScore(asset)
-        : options.enrichAsset(asset),
+      enrichAsset: options.enrichAsset,
       persistSnapshots: options.persistSnapshots,
       evaluateAlerts: options.evaluateAlerts,
       onProviderFailure: options.onProviderFailure,

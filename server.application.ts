@@ -8,8 +8,11 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { orchestrator } from './src/lib/requestOrchestrator';
 import { assetRegistry } from './src/lib/assetRegistry';
+import { CryptoScoringService } from './src/services/cryptoScoringService';
 import { MemeCoinScoringService } from './src/services/memeCoinScoringService';
 import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
+import { ClassificationService } from './src/services/classification.service';
+import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 import { generateStructuredWithFallback } from './src/services/agentModelRouting';
 import { recordDailySnapshots } from './server/scoreValidation';
 import { evaluateAlerts } from './server/alerts';
@@ -20,10 +23,6 @@ import { getAnthropicInstance, isAnthropicConfigured } from './server/anthropicC
 import { getOpenAIInstance, isOpenAIConfigured } from './server/openaiClient';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { createApplicationMarketDataRuntime } from './server/marketData/createApplicationMarketDataRuntime';
-import {
-  enrichStandardCryptoWithCanonicalScore,
-  isStandardCryptoMarketDataAsset,
-} from './server/marketData/canonicalCryptoScoreEnrichment';
 import { registerApplicationRoutes } from './server/routes/registerApplicationRoutes';
 import { createDocumentationRouter } from './server/routes/documentationRoutes';
 import { createHistoryRouter } from './server/routes/historyRoutes';
@@ -50,12 +49,9 @@ import { logSystemEvent } from './server/systemEvents';
 import { startRecursiveFileWatcher } from './server/documentHygiene';
 import { enforceScreeningQuota } from './server/quota';
 import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter';
-import { isOriginAllowed } from './server/middleware/cors';
-import { isKnownProbePath } from './server/middleware/probeProtection';
-import { createHoneytokenTripwire } from './server/security/honeytokenTripwire';
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
-import { getStripeConfigurationStatus, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
+import { getStripeConfigurationStatus, hasFiniteScoreValues, resolveHeuristicCryptoScore, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
 import { registerProductionSpaFallback } from './server/runtime/spaFallback';
 
 const serverLogger = createLogger('server');
@@ -84,12 +80,6 @@ app.use(requestContext);
 // spaeteren Middlewares/Routen abgelehnte Requests (CORS-Block, Rate-Limit) erfasst werden.
 app.use(metricsMiddleware);
 
-// Honeytoken-Tripwire. Frueh montiert, damit auch Requests erfasst werden, die spaeter am
-// Probe-Filter, am Rate-Limit oder an CORS abgewiesen werden - gerade dort taucht ein
-// ausprobiertes Credential auf. Die Middleware veraendert Antwortverhalten und Latenz nicht;
-// ohne konfiguriertes Honeytoken ist sie ein reiner Durchreicher.
-app.use(createHoneytokenTripwire());
-
 // ---------------------------------------------------------
 // Compliance-Review Punkt 1: Prozessweites Sicherheitsnetz gegen unbehandelte
 // Promise-Rejections/Exceptions. Ersetzt keinen sauberen try/catch in einzelnen
@@ -116,21 +106,33 @@ process.on('uncaughtException', (err) => {
 
 const isProductionEnv = getCleanEnv('NODE_ENV') === 'production';
 
-// F-03: Origin-Allowlist und Probe-Muster lagen doppelt vor - einmal hier inline (aktiv) und
-// einmal in server/middleware/ (unverdrahtet). Die Kopien sind jetzt aufgeloest: die Module unter
-// server/middleware/ sind die einzige Quelle, dieser Pfad konsumiert sie.
+// Produktionsdomains: fest codiert, keine Muster-/Suffix-Prüfung (ADR-0009 Regel 1+2).
+const PRODUCTION_ORIGINS = [
+  'https://capital-ai.online',
+  'https://www.capital-ai.online',
+];
+
+function isLocalDevOrigin(origin: string): boolean {
+  // Nur exakt localhost/127.0.0.1 mit optionalem Port - kein Teilstring-Match,
+  // der z.B. auf "http://localhost.attacker.com" anspringen könnte.
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
+function isOriginAllowed(origin: string): boolean {
+  if (PRODUCTION_ORIGINS.includes(origin)) return true;
+  if (!isProductionEnv) {
+    if (isLocalDevOrigin(origin)) return true;
+  }
+  return false;
+}
 
 async function logBlockedOrigin(origin: string, req: express.Request) {
   serverLogger.warn('Blocked CORS Origin', { requestId: req.requestId, origin, path: req.originalUrl });
   if (!isSupabaseConfigured()) return;
   try {
     const supabase = getServerSupabase();
-    // SECURITY (2026-08-25 architecture review, finding #7 Restbefund): letzte verbliebene lokale
-    // X-Forwarded-For-Auswertung im Live-Pfad, identifiziert im Security-Follow-up-Review nach der
-    // getClientIp()-Haertung von rateLimiter.ts/requestOrchestrator.ts/cors.ts - dieser Aufruf hier
-    // wurde beim ersten Konsolidierungs-Pass uebersehen. Nutzt jetzt dieselbe zentrale, Render-CF-
-    // Connecting-IP-bewusste Boundary statt eine vierte, unabhaengige Kopie zu erhalten.
-    const ip = getClientIp(req as any);
+    const xff = req.headers['x-forwarded-for'];
+    const ip = typeof xff === 'string' ? xff.split(',')[0].trim() : (req.socket?.remoteAddress || 'unknown');
     await supabase.from('security_events').insert({
       event_type: 'suspicious_request',
       ip_address: ip,
@@ -152,7 +154,7 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   if (origin) {
-    if (isOriginAllowed(origin, isProductionEnv)) {
+    if (isOriginAllowed(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       // Credentials nur setzen, wenn die Origin tatsächlich validiert wurde
       // (ADR-0009: "Voraussetzung: Origin muss vorher validiert sein.").
@@ -185,26 +187,61 @@ app.use((req, res, next) => {
   // 2. HTTP Security Headers Hardening (OWASP Compliance). Audit ARCH-AUDIT-0002 (N7)
   // nennt "Helmet" als Massnahme; bewusst kein zusaetzliches Paket eingefuehrt, weil
   // dieser Block bereits alle sicherheitsrelevanten Header setzt, die Helmet default-
-  // maessig liefern wuerde - inklusive der projektspezifischen ADR-0009-Origin-Allowlist-Logik,
-  // die eine generische Helmet-Konfiguration erst wieder nachbilden muesste. Ein zweites Paket
-  // mit eigener Default-CSP wuerde mit der bestehenden Logik kollidieren statt sie
-  // wiederzuverwenden. Die CSP selbst kommt ausschliesslich aus server/securityResponse.ts.
+  // maessig liefern wuerde (CSP, X-Content-Type-Options, Referrer-Policy, HSTS,
+  // Clickjacking-Schutz via frame-ancestors) - inklusive der projektspezifischen
+  // ADR-0009-Origin-Allowlist-Logik, die eine generische Helmet-Konfiguration erst
+  // wieder nachbilden muesste. Ein zweites Paket mit eigener Default-CSP wuerde mit
+  // dieser bestehenden Logik kollidieren statt sie wiederzuverwenden.
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   // Security-Audit (WebscanRadar, 02.08.2026): "X-Frame-Options fehlt" (MEDIUM, -10 Punkte) -
   // ohne diesen Header war die Seite per <iframe> einbettbar (Clickjacking). SAMEORIGIN passt
-  // zur CSP-Regel frame-ancestors 'self' aus server/securityResponse.ts (redundante, aber von
+  // zur bereits gesetzten CSP frame-ancestors 'self'-Regel weiter unten (redundante, aber von
   // aelteren Browsern ohne CSP-Unterstuetzung benoetigte Absicherung).
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
-  // F-04: Die Content-Security-Policy wird ausschliesslich von server/securityResponse.ts gesetzt
-  // (ADR-0035/ADR-0040, nonce-basiert, mit object-src 'none', base-uri 'none' und form-action).
-  // Der frueher hier stehende ADR-0009-Header war bereits wirkungslos, weil requestContext() -
-  // registriert vor diesem Block - res.setHeader patcht und jedes Setzen von
-  // Content-Security-Policy durch die gehaertete Fassung ersetzt. Er blieb aber eine Falle: haette
-  // sich die Middleware-Reihenfolge je verschoben, waere die Produktion still auf eine Policy ohne
-  // object-src/base-uri/form-action zurueckgefallen. Eine einzige Quelle schliesst das aus.
+  // Content-Security-Policy: frame-ancestors an dieselbe Allowlist-Logik wie CORS
+  // angeglichen (dieselbe `*.run.app`-Wildcard-Schwäche betraf zuvor auch hier
+  // die Clickjacking-Absicherung, siehe ADR-0009-Geist auch wenn nicht wörtlich
+  // Teil des ADR-Texts).
+  const frameAncestors = [
+    "'self'",
+    ...(!isProductionEnv ? ["http://localhost:*"] : []),
+  ].join(' ');
+  // Audit ARCH-AUDIT-0002 (N7): script-src und style-src ohne 'unsafe-inline'/'unsafe-eval'
+  // in Produktion. Der Vite-Produktionsbuild enthaelt weder Inline-<script>- noch
+  // Inline-<style>-Tags (nur externe, gehashte Dateien unter /assets, siehe
+  // dist/index.html); React setzt Inline-Styles ueber die DOM-CSSOM-Eigenschaft
+  // (element.style.xxx), nicht ueber das style=""-Attribut, und ist von style-src
+  // nicht betroffen. Verifiziert per Playwright-Konsolen-Check (securitypolicyviolation-
+  // Events) gegen den echten Produktionsbuild ueber mehrere Navigationspfade - keine
+  // CSP-Violation-Reports (tiefere, nur eingeloggt erreichbare Ansichten wurden mangels
+  // Testzugangsdaten in dieser Umgebung nicht erreicht, sollten aber denselben
+  // externen-Assets-Build durchlaufen). Im Entwicklungsmodus benoetigt Vites HMR-Client
+  // weiterhin 'unsafe-inline'/'unsafe-eval', daher dort unveraendert gelockert.
+  // CookieHub (Cookie-Consent-Banner) und Google Analytics (gtag.js, nur nach Einwilligung
+  // geladen, siehe Inline-Script in index.html) muessen hier explizit erlaubt werden - ohne
+  // diese beiden Hosts blockiert der Browser die Skripte still per CSP-Violation, das Banner
+  // erscheint nie und GA erhaelt selbst nach Opt-in keine Daten.
+  const scriptSrc = isProductionEnv
+    ? "'self' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com"
+    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com";
+  // CookieHub laedt sein eigenes Stylesheet von cdn.cookiehub.eu (siehe window.__cookiehub.css
+  // im ausgelieferten Snippet) - ohne diesen Host in style-src blockiert der Browser das
+  // Stylesheet per CSP (Konsolen-Meldung "Refused to apply style..."), das Banner-Markup wird
+  // zwar ins DOM injiziert, bleibt aber komplett unformatiert/unsichtbar, obwohl weder Skript-
+  // Laden noch die vom Server ausgelieferte Konfiguration selbst einen Fehler zeigen.
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self' https:; " +
+    `script-src ${scriptSrc}; ` +
+    "style-src 'self' https://fonts.googleapis.com https://cdn.cookiehub.eu; " +
+    "img-src 'self' data: https: referrer; " +
+    "font-src 'self' data: https://fonts.gstatic.com; " +
+    "frame-src 'self' https://*.stripe.com; " +
+    `frame-ancestors ${frameAncestors};`
+  );
 
   // Audit ARCH-AUDIT-0002 (N7, CSRF-Anteil): kein CSRF-Token-Mechanismus implementiert,
   // weil er hier keine reale Schutzwirkung haette - dieses Ergebnis, nicht eine
@@ -235,8 +272,16 @@ app.use((req, res, next) => {
 // verschleiert aber gegenueber automatisierten Scans nicht, dass hier nichts dergleichen
 // existiert. Diese Pfade jetzt frueh und explizit mit 404 beantworten, statt sie durch die
 // gesamte Middleware-Kette bis zum SPA-Fallback laufen zu lassen.
+const PROBE_PATH_PATTERNS = [
+  /\.php$/i,
+  /^\/wp-(admin|login|content|includes|json)(\/|$)/i,
+  /^\/(config|wp-config)\.(php|json|ya?ml|ini)$/i,
+  /^\/\.env(\.|$)/i,
+  /^\/\.git(\/|$)/i,
+  /^\/(phpinfo|info|test)\.php$/i,
+];
 app.use((req, res, next) => {
-  if (isKnownProbePath(req.path)) {
+  if (PROBE_PATH_PATTERNS.some((pattern) => pattern.test(req.path))) {
     return res.status(404).end();
   }
   next();
@@ -257,16 +302,16 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
     const stripe = getStripeInstance();
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err: any) {
-    console.error('Stripe Webhook signature verification failed: %s', err.message);
-    return res.status(400).send('Webhook Error: invalid signature.');
+    console.error(`❌ Stripe Webhook signature verification failed:`, err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   try {
     await handleWebhookEvent(event);
     res.json({ received: true });
   } catch (err: any) {
-    console.error('Webhook handling error: %s', err?.message || err);
-    res.status(500).json({ error: 'Webhook handling failed.' });
+    console.error(`❌ Webhook handling error:`, err);
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -442,29 +487,76 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
   return 'Andere';
 }
 
-// Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6, sowie S1/S2/S5, S6 Kapitel 14.3):
-// Standard-Crypto ist seit SC-2 C2a/C2b aus dieser Legacy-Berechnung entfernt und darf nur noch
-// über UAI -> ScoringModelRegistry -> ScoringDispatcher bewertet werden. Diese Funktion bleibt
-// bis C3 ausschließlich für Meme-Crypto sowie die noch nicht migrierten Traditional-/Commodity-
-// und Index-/Bond-Pfade bestehen. Die Herkunft jedes Legacy-score-Feldes bleibt gekennzeichnet.
+// Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6, sowie S1/S2/S5, S6 Kapitel 14.3): Legt
+// die Herkunft des score-Feldes offen, statt es unmarkiert wie eine einheitlich datenbasierte
+// Bewertung erscheinen zu lassen (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
+// - 'market-data': Crypto-Assets, wenn generateCryptoScores() bzw.
+//   MemeCoinScoringService.generateMemeCoinInputs() verifizierte Marktdaten liefern. Fehlt fuer
+//   ein Standard-Crypto die benoetigte Live-Historie, darf der Market-Data-Batch einen bereits
+//   vorhandenen endlichen Upstream-/Provider-Score nur explizit als 'heuristic' weiterfuehren;
+//   die deterministische Scoring-Engine selbst bleibt fail-closed und erfindet keine Features.
+// - 'market-data' (Aktien/Forex, seit H1): traditionalAssetScoring.ts kombiniert echte
+//   technische Faktoren (Trend/Momentum/Breakout/Volatilitaet/RSI aus assetRegistry.getHistory(),
+//   dieselben Primitive wie beim Krypto-Scoring) mit - nur bei Aktien - realen Fundamentaldaten
+//   (KGV/Dividendenrendite/Nettomarge von Alpha Vantage OVERVIEW, server/stockFundamentals.ts).
+//   Faellt fuer ein konkretes Symbol ohne jede reale Datenquelle auf die Heuristik zurueck
+//   (dann basis='heuristic', siehe calculateAssetScore()).
+// - 'market-data' (Indizes, seit J1-Folge): dieselbe technische Bewertung wie Forex (keine
+//   Unternehmensbilanz), aus echter Kurshistorie von FMP (server/fmpIndices.ts, Rate-Limit-
+//   bewusst schrittweise befuellt) statt der zuvor vollstaendig fehlenden Live-Kursquelle.
+// - 'heuristic': Anleihen (keine Live-Kursquelle vorhanden) sowie Aktien/Forex/Indizes im
+//   Fall ohne (noch) verfuegbare reale Datenquelle - eine Momentum-/Pattern-Heuristik auf
+//   Basis von change24h und einer ebenfalls deterministischen Mustererkennung
+//   (calculateAssetScore unterer Zweig).
+// - undefined: Rohstoffe (RawMaterialsScoringService) haben eine dedizierte, konfigurierbare
+//   Fachengine und sind von diesem Befund nicht betroffen.
 const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
 
 type ScoreBasis = 'market-data' | 'heuristic' | undefined;
 interface AssetScoreResult { score: number; basis: ScoreBasis }
 
 /**
- * Audit ARCH-AUDIT-0002 (H1): basis spiegelt die TATSAECHLICH verwendete Berechnung wider.
- * SC-2 C2b: Standard-Crypto ist hier explizit fail-closed; nur Meme-Crypto verbleibt bis C3.
+ * Audit ARCH-AUDIT-0002 (H1): basis spiegelt die TATSAECHLICH verwendete Berechnung wider,
+ * nicht nur den statischen Anlagetyp - Aktien/Forex fallen auf die alte Heuristik zurueck,
+ * wenn fuer ein konkretes Symbol weder reale Kurshistorie noch Fundamentaldaten vorliegen
+ * (siehe unten); in diesem Fall darf 'basis' NICHT 'market-data' behaupten, obwohl der
+ * Anlagetyp das normalerweise waere. Vorher war scoreBasis rein typbasiert (getScoreBasis())
+ * und konnte diesen Fall nicht abbilden.
  */
 async function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): Promise<AssetScoreResult> {
   const s = symbol.toUpperCase().trim();
   if (type === 'crypto') {
-    if (!MEME_COIN_SYMBOLS.includes(s)) {
-      throw new Error(`STANDARD_CRYPTO_REQUIRES_CANONICAL_DISPATCHER:${s}`);
+    const isMemeCoin = MEME_COIN_SYMBOLS.includes(s);
+    if (isMemeCoin) {
+      const inputs = await MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
+      const result = MemeCoinScoringService.scoreMemeCoin(inputs);
+      return { score: result.score, basis: 'market-data' };
+    } else {
+      const classification = ClassificationService.classifyAsset(s);
+      const seedScores = await generateCryptoScores(s, change24h);
+
+      // ADR-0037 runtime remediation: the scoring engine remains fail-closed when no
+      // verified feature set exists. The market-data aggregator may retain an already
+      // finite upstream/base score only as an explicitly labelled heuristic result, so one
+      // unsupported symbol cannot reject the entire Promise.all refresh batch.
+      if (!hasFiniteScoreValues(seedScores as Record<string, unknown>)) {
+        const heuristicScore = resolveHeuristicCryptoScore(baseScore);
+        if (heuristicScore !== null) {
+          return { score: heuristicScore, basis: 'heuristic' };
+        }
+      }
+
+      const payload = {
+        asset_name: s,
+        symbol: s,
+        classification,
+        scores: seedScores
+      };
+      const finalScores = classification.category_main === 'DeFi'
+        ? calculateDefiScore(payload)
+        : calculateBaseScore(payload);
+      return { score: Number(((finalScores.final_score ?? 0) / 10).toFixed(1)), basis: 'market-data' };
     }
-    const inputs = await MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
-    const result = MemeCoinScoringService.scoreMemeCoin(inputs);
-    return { score: result.score, basis: 'market-data' };
   }
 
   if (type === 'commodity') {
@@ -651,15 +743,6 @@ function syncAssetToRegistry(asset: any) {
 async function enrichMarketDataAsset(asset: any) {
   const pattern = await computeDisplayTrendLabel(asset.symbol);
   const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-
-  // C2b defense in depth: createApplicationMarketDataRuntime already intercepts Standard-Crypto
-  // during normal refreshes. The explicit guard here closes the direct cold-start fallback path
-  // below as well, so no caller of this composition-root helper can reach legacy Crypto scoring.
-  if (isStandardCryptoMarketDataAsset(asset)) {
-    const canonical = await enrichStandardCryptoWithCanonicalScore(asset);
-    return { ...canonical, pattern, applicationArea };
-  }
-
   const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
   return { ...asset, pattern, applicationArea, score, scoreBasis: basis };
 }
@@ -699,8 +782,8 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
     console.warn('[API Warning] Failed to retrieve live market-data, returning resilient fallback:', error.message || error);
     // marketDataRuntime.get() already falls back to a stale cache internally on a refresh error;
     // reaching here means there is no cache at all yet (e.g. the very first request after a cold
-    // start whose first refresh also failed). enrichMarketDataAsset has its own Standard-Crypto
-    // canonical guard, so this direct fallback cannot reopen the retired legacy scoring path.
+    // start whose first refresh also failed) - build a fresh, honestly-labeled fallback directly
+    // from the registry, same as the previous third fallback tier.
     const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
       const enriched = await enrichMarketDataAsset(asset);
       return { ...enriched, status: 'Fallback', dataSource: 'fallback' as const };
@@ -851,7 +934,7 @@ app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), 
       });
     }
   } catch (err: any) {
-    res.status(500).json({ error: 'Interner Serverfehler beim Abruf von Alpha Vantage.' });
+    res.status(500).json({ error: err.message || 'Interner Serverfehler beim Abruf von Alpha Vantage.' });
   }
 });
 
@@ -892,7 +975,7 @@ app.post('/api/docs-file', express.json(), (req, res) => {
     fs.writeFileSync(absolutePath, content, 'utf-8');
     res.json({ success: true, path: sanitizedPath });
   } catch (err: any) {
-    res.status(500).json({ error: 'Fehler beim Schreiben der Datei.' });
+    res.status(500).json({ error: `Fehler beim Schreiben der Datei: ${err.message || err}` });
   }
 });
 
@@ -904,12 +987,74 @@ app.post('/api/docs-file', express.json(), (req, res) => {
 // (server/routes/historyRoutes.ts) - identical registry-backed semantics, same range handling.
 app.use(createHistoryRouter());
 
-// SC-2 C2b: `/api/charts-scoring` is owned by legacyScoringCompatibilityRoutes.ts as an
-// explicitly NON_PRODUCTION_SIMULATION surface. The superseded local handler was removed.
+// Ad-hoc charts scoring engine using indicators
+app.post('/api/charts-scoring', express.json(), (req, res) => {
+  const { symbol, rsi, price, sma, ema } = req.body;
+  if (!symbol) {
+    return res.status(400).json({ error: 'Symbol parameter is required.' });
+  }
 
-// Meme-only fallback handlers. Standard-Crypto is intercepted by the earlier compatibility
-// router and must never reach this historical boundary. If route ordering regresses, deny rather
-// than silently reintroducing a direct Standard-Crypto model-selection/execution path.
+  const rawSymbol = String(symbol).toUpperCase().trim();
+  const rsiVal = typeof rsi === 'number' ? rsi : 50;
+  const currentPrice = typeof price === 'number' ? price : 100;
+  
+  let rsiSignal = 'Neutral (Mittelmaß)';
+  if (rsiVal > 70) rsiSignal = 'Überkauft (Bärisches Warnsignal)';
+  else if (rsiVal < 30) rsiSignal = 'Überverkauft (Bullisches Akkumulationssignal)';
+
+  let maSignal = 'Neutral';
+  if (ema !== undefined && sma !== undefined) {
+    maSignal = ema > sma ? 'Golden Cross (Bullisch)' : 'Death Cross (Bärisch)';
+  }
+
+  // Calculate score dynamically based on indicators, independent of symbol
+  const rsiFactor = (100 - rsiVal) / 100; // 0 to 1 (lower RSI = higher score)
+  let calculatedScore = 2.0 + rsiFactor * 6.0; // range 2.0 to 8.0
+
+  if (ema !== undefined && sma !== undefined) {
+    if (ema > sma) {
+      calculatedScore += 1.5; // Golden Cross bonus
+    } else {
+      calculatedScore -= 1.5; // Death Cross penalty
+    }
+  }
+
+  const score = Math.max(1.0, Math.min(10.0, Number(calculatedScore.toFixed(1))));
+  
+  let recommendation: 'STRONG BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG SELL' = 'HOLD';
+  if (score >= 8.0) recommendation = 'STRONG BUY';
+  else if (score >= 6.0) recommendation = 'BUY';
+  else if (score >= 4.0) recommendation = 'HOLD';
+  else if (score >= 2.5) recommendation = 'SELL';
+  else recommendation = 'STRONG SELL';
+
+  let summary = '';
+  if (recommendation === 'STRONG BUY') {
+    summary = `Der Screener bewertet ${rawSymbol} mit einer exzellenten Kaufempfehlung (Score: ${score}). Ein niedriger RSI von ${rsiVal.toFixed(1)} indiziert eine starke Akkumulationsphase, unterstützt durch eine bullische Struktur der gleitenden Durchschnitte.`;
+  } else if (recommendation === 'BUY') {
+    summary = `Positive Indikatorenstruktur für ${rawSymbol} (Score: ${score}). Der RSI von ${rsiVal.toFixed(1)} liegt im bullisch-neutralen Bereich, und der Aufwärtstrend wird durch die gleitenden Durchschnitte untermauert.`;
+  } else if (recommendation === 'HOLD') {
+    summary = `Seitwärtskonsolidierung für ${rawSymbol} (Score: ${score}). Der RSI-Wert von ${rsiVal.toFixed(1)} signalisiert ein ausgewogenes Kräfteverhältnis zwischen Käufern und Verkäufern. Es liegt kein klares Trendfolgesignal vor.`;
+  } else if (recommendation === 'SELL') {
+    summary = `Erhöhtes Risiko bei ${rawSymbol} (Score: ${score}). Der RSI von ${rsiVal.toFixed(1)} signalisiert eine überkaufte Marktsituation. Es wird zur Gewinnmitnahme oder Absicherung geraten.`;
+  } else {
+    summary = `Starkes Warnsignal für ${rawSymbol} (Score: ${score}). Mit einem überhitzten RSI von ${rsiVal.toFixed(1)} und einer schwachen Trendstruktur liegt eine ausgeprägte Abwärtstendenz vor.`;
+  }
+
+  res.json({
+    symbol: rawSymbol,
+    score,
+    recommendation,
+    rsiSignal,
+    maSignal,
+    summary,
+    timestamp: new Date().toISOString()
+  });
+});
+
+
+
+// GET detailed enterprise crypto scoring inputs and outputs
 app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const quota = await enforceScreeningQuota(req);
   if (!quota.allowed) {
@@ -922,28 +1067,33 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const symbol = req.params.symbol.toUpperCase();
   const asset = assetRegistry.getAsset(symbol) || FALLBACK_ASSETS.find(a => a.symbol === symbol);
   const change24h = asset ? asset.change24h : 0;
-  const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || MEME_COIN_SYMBOLS.includes(symbol);
+  const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
-  if (!isMemeCoin) {
-    return res.status(503).json({
-      status: 'SCORING_BOUNDARY_VIOLATION',
-      scoreEligible: false,
-      error: 'Standard-Crypto must be handled by the canonical scoring compatibility router.',
-      canonicalEndpoint: '/api/crypto/score',
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): inputs stammen aus realen Marktdaten der
+  // AssetRegistry (siehe calculateAssetScore() weiter oben in dieser Datei) statt eines
+  // Zeichen-Hash-Generators; fehlende Faktoren werden dynamisch ausgeschlossen.
+  if (isMemeCoin) {
+    const inputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
+    const result = MemeCoinScoringService.scoreMemeCoin(inputs);
+    res.json({
+      inputs,
+      result,
+      isMemeCoin: true,
+      scoreBasis: 'market-data'
+    });
+  } else {
+    const inputs = await CryptoScoringService.generateCryptoInputs(symbol, change24h);
+    const result = CryptoScoringService.scoreCrypto(inputs);
+    res.json({
+      inputs,
+      result,
+      isMemeCoin: false,
+      scoreBasis: 'market-data'
     });
   }
-
-  const inputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
-  const result = MemeCoinScoringService.scoreMemeCoin(inputs);
-  return res.json({
-    inputs,
-    result,
-    isMemeCoin: true,
-    scoreBasis: 'market-data'
-  });
 });
 
-// Meme-only what-if fallback until C3 migrates Meme scoring behind the canonical dispatcher.
+// POST to dynamically update scoring inputs and recalculate in real-time
 app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
   const quota = await enforceScreeningQuota(req);
   if (!quota.allowed) {
@@ -957,39 +1107,47 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
   const customInputs = req.body;
   const asset = assetRegistry.getAsset(symbol) || FALLBACK_ASSETS.find(a => a.symbol === symbol);
   const change24h = asset ? asset.change24h : 0;
-  const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || MEME_COIN_SYMBOLS.includes(symbol);
+  const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
-  if (!isMemeCoin) {
-    return res.status(503).json({
-      status: 'SCORING_BOUNDARY_VIOLATION',
-      scoreEligible: false,
-      error: 'Standard-Crypto must be handled by the canonical scoring compatibility router.',
-      canonicalEndpoint: '/api/crypto/score',
+  // scoreBasis: 'user-adjusted', sobald der Aufrufer eigene Eingangsgroessen mitsendet (der
+  // bewusste Was-waere-wenn-Simulator im Frontend), sonst 'market-data' fuer die aus der
+  // AssetRegistry bezogenen Default-Werte (AUD2-F-001, S1/S2/S5).
+  const hasCustomInputs = customInputs && Object.keys(customInputs).length > 0;
+  if (isMemeCoin) {
+    const defaultInputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
+    const mergedInputs = {
+      ...defaultInputs,
+      ...customInputs,
+      coin: symbol
+    };
+    const result = MemeCoinScoringService.scoreMemeCoin(mergedInputs);
+    res.json({
+      inputs: mergedInputs,
+      result,
+      isMemeCoin: true,
+      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'market-data'
+    });
+  } else {
+    const defaultInputs = await CryptoScoringService.generateCryptoInputs(symbol, change24h);
+    const mergedInputs = {
+      ...defaultInputs,
+      ...customInputs,
+      coin: symbol
+    };
+    const result = CryptoScoringService.scoreCrypto(mergedInputs);
+    res.json({
+      inputs: mergedInputs,
+      result,
+      isMemeCoin: false,
+      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'market-data'
     });
   }
-
-  const hasCustomInputs = customInputs && Object.keys(customInputs).length > 0;
-  const defaultInputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
-  const mergedInputs = {
-    ...defaultInputs,
-    ...customInputs,
-    coin: symbol
-  };
-  const result = MemeCoinScoringService.scoreMemeCoin(mergedInputs);
-  return res.json({
-    inputs: mergedInputs,
-    result,
-    isMemeCoin: true,
-    scoreBasis: hasCustomInputs ? 'user-adjusted' : 'market-data'
-  });
 });
 
 // GET all registry assets (highly efficient, zero rate-limit risk)
 
 
-// GET /api/market-sentiment wird vom modularen fail-closed Router bereitgestellt.
-
-// POST Simulate real-time market sentiment shock scenarios
+// GET /api/market-sentiment wird vom modularen fail-closed Router bereitgestellt.\n\n// POST Simulate real-time market sentiment shock scenarios
 // ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
 // -> Anthropic-/OpenAI-Kette umgestellt (kein Google-Search-Grounding hier, anders als /api/market-sentiment
 // oben - reine Reasoning-Aufgabe ohne Gemini-spezifische Abhaengigkeit). Ueber

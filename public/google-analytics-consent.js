@@ -1,17 +1,24 @@
 (function () {
   'use strict';
+
   var gaMeta = document.querySelector('meta[name="ga-measurement-id"]');
+  var adsMeta = document.querySelector('meta[name="adsense-publisher-id"]');
   var GA_MEASUREMENT_ID = gaMeta ? String(gaMeta.getAttribute('content') || '').trim() : '';
-  var validGaId = /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID);
-  var nonce = document.currentScript ? document.currentScript.nonce : '';
+  var ADSENSE_PUBLISHER_ID = adsMeta ? String(adsMeta.getAttribute('content') || '').trim() : '';
+
+  var validGaId = /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID) && GA_MEASUREMENT_ID.indexOf('%') !== 0;
+  var validPublisherId = /^ca-pub-\d+$/i.test(ADSENSE_PUBLISHER_ID) && ADSENSE_PUBLISHER_ID.indexOf('%') !== 0;
   var gaLoaded = false;
-  var privacyReloadScheduled = false;
+  var adsenseLoaded = false;
+  var firstConsentSync = true;
+  var lastAnalyticsConsent = false;
+  var lastMarketingConsent = false;
 
   window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+  window.gtag = window.gtag || function () {
+    window.dataLayer.push(arguments);
+  };
 
-  // Owner-approved Variant A: advertising is paused, including after "accept all".
-  // A future AdSense/TCF activation requires a separately reviewed protected change.
   function setDefaultConsent() {
     window.gtag('consent', 'default', {
       ad_storage: 'denied',
@@ -21,25 +28,41 @@
       functionality_storage: 'denied',
       personalization_storage: 'denied',
       security_storage: 'granted',
+      wait_for_update: 2000,
     });
     window.gtag('set', 'ads_data_redaction', true);
     window.gtag('set', 'url_passthrough', false);
   }
-  function updateConsent(analyticsAllowed) {
+
+  function updateConsent(analyticsAllowed, marketingAllowed) {
     window.gtag('consent', 'update', {
       analytics_storage: analyticsAllowed ? 'granted' : 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
+      ad_storage: marketingAllowed ? 'granted' : 'denied',
+      ad_user_data: marketingAllowed ? 'granted' : 'denied',
+      ad_personalization: marketingAllowed ? 'granted' : 'denied',
       functionality_storage: 'denied',
       personalization_storage: 'denied',
       security_storage: 'granted',
     });
   }
+
+  function appendScript(id, src, crossOrigin) {
+    if (document.getElementById(id)) return null;
+    var script = document.createElement('script');
+    script.id = id;
+    script.async = true;
+    script.src = src;
+    if (crossOrigin) script.crossOrigin = crossOrigin;
+    script.setAttribute('data-consent-managed', 'true');
+    document.head.appendChild(script);
+    return script;
+  }
+
   function loadGA() {
     if (!validGaId || gaLoaded) return;
     gaLoaded = true;
     window['ga-disable-' + GA_MEASUREMENT_ID] = false;
+
     window.gtag('js', new Date());
     window.gtag('config', GA_MEASUREMENT_ID, {
       anonymize_ip: true,
@@ -47,69 +70,133 @@
       allow_ad_personalization_signals: false,
       send_page_view: true,
     });
-    if (document.getElementById('capital-ai-ga4-loader')) return;
-    var script = document.createElement('script');
-    script.id = 'capital-ai-ga4-loader';
-    script.async = true;
-    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_MEASUREMENT_ID);
-    if (nonce) script.nonce = nonce;
-    script.setAttribute('data-consent-managed', 'true');
-    document.head.appendChild(script);
+
+    appendScript(
+      'capital-ai-ga4-loader',
+      'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_MEASUREMENT_ID),
+    );
   }
-  function clearGoogleAnalyticsCookies() {
-    var host = String(window.location && window.location.hostname || '');
-    var labels = host.split('.');
-    var domains = [''];
-    for (var i = 0; i < labels.length - 1; i += 1) {
-      var domain = labels.slice(i).join('.');
-      domains.push(domain, '.' + domain);
+
+  function loadAdSense() {
+    if (!validPublisherId || adsenseLoaded) return;
+    adsenseLoaded = true;
+    appendScript(
+      'capital-ai-adsense-loader',
+      'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(ADSENSE_PUBLISHER_ID),
+      'anonymous',
+    );
+  }
+
+  function expireCookie(name, domain) {
+    var cookie = encodeURIComponent(name) + '=; Max-Age=0; path=/; SameSite=Lax';
+    if (domain) cookie += '; domain=' + domain;
+    document.cookie = cookie;
+  }
+
+  function decodeCookieName(rawName) {
+    try {
+      return decodeURIComponent(rawName);
+    } catch (_error) {
+      return rawName;
     }
-    var names = String(document.cookie || '').split(';').map(function (entry) {
-      var name = entry.split('=')[0].trim();
-      try { return decodeURIComponent(name); } catch (_error) { return name; }
-    }).filter(function (name) { return name === '_ga' || name.indexOf('_ga_') === 0; });
+  }
+
+  function clearGoogleAnalyticsCookies() {
+    if (!validGaId || !document.cookie) return;
+    var host = String(window.location && window.location.hostname || '').replace(/^www\./i, '');
+    var domains = ['', host, host ? '.' + host : ''];
+    var names = document.cookie.split(';').map(function (entry) {
+      return decodeCookieName(entry.split('=')[0].trim());
+    }).filter(function (name) {
+      return name === '_ga' || name.indexOf('_ga_') === 0;
+    });
+
     names.forEach(function (name) {
       domains.forEach(function (domain) {
-        document.cookie = encodeURIComponent(name) + '=; Max-Age=0; path=/; SameSite=Lax' +
-          (domain ? '; domain=' + domain : '');
+        expireCookie(name, domain);
       });
     });
   }
+
   function disableGA() {
-    if (validGaId) window['ga-disable-' + GA_MEASUREMENT_ID] = true;
+    if (!validGaId) return;
+    window['ga-disable-' + GA_MEASUREMENT_ID] = true;
     clearGoogleAnalyticsCookies();
   }
-  function analyticsConsent() {
+
+  function hasConsented(category) {
     try {
-      var consent = window.CookieConsent;
-      return Boolean(consent &&
-        typeof consent.validConsent === 'function' && consent.validConsent() === true &&
-        typeof consent.acceptedCategory === 'function' && consent.acceptedCategory('analytics') === true);
+      return Boolean(
+        window.cookiehub &&
+        typeof window.cookiehub.hasConsented === 'function' &&
+        window.cookiehub.hasConsented(category)
+      );
     } catch (error) {
-      console.error('[Consent] Consent lookup failed closed.', error);
+      console.error('[Consent] CookieHub consent lookup failed closed.', error);
       return false;
     }
   }
-  function syncConsent() {
-    var allowed = analyticsConsent();
-    updateConsent(allowed);
-    if (allowed) loadGA();
-    else disableGA();
+
+  function schedulePrivacyReload() {
+    if (!window.location || typeof window.location.reload !== 'function') return;
+    window.setTimeout(function () {
+      window.location.reload();
+    }, 0);
   }
-  function handleSavedChange() {
-    syncConsent();
-    // cc:onChange is emitted after the new choice is saved, not on checkbox edits.
-    // Removing a script element cannot undo execution: restart the document once.
-    if (gaLoaded && !analyticsConsent() && !privacyReloadScheduled) {
-      privacyReloadScheduled = true;
-      window.setTimeout(function () { window.location.reload(); }, 0);
+
+  function syncConsent() {
+    var analyticsAllowed = hasConsented('analytics');
+    var marketingAllowed = hasConsented('marketing');
+
+    updateConsent(analyticsAllowed, marketingAllowed);
+
+    if (analyticsAllowed) loadGA();
+    else disableGA();
+
+    if (marketingAllowed) loadAdSense();
+
+    if (!firstConsentSync && (
+      (lastAnalyticsConsent && !analyticsAllowed) ||
+      (lastMarketingConsent && !marketingAllowed)
+    )) {
+      // Executed third-party scripts cannot be reliably unloaded. Reload after a persisted
+      // revocation so the next document starts in fail-closed Basic Consent Mode.
+      schedulePrivacyReload();
+    }
+
+    lastAnalyticsConsent = analyticsAllowed;
+    lastMarketingConsent = marketingAllowed;
+    firstConsentSync = false;
+  }
+
+  function syncWhenCookieHubReady(attempt) {
+    if (window.cookiehub && (
+      typeof window.cookiehub.isReady !== 'function' ||
+      window.cookiehub.isReady()
+    )) {
+      syncConsent();
+      return;
+    }
+
+    if (attempt < 20) {
+      window.setTimeout(function () {
+        syncWhenCookieHubReady(attempt + 1);
+      }, 250);
     }
   }
+
   setDefaultConsent();
-  // Disable collection during startup without erasing returning opt-in visitors' cookies.
-  if (validGaId) window['ga-disable-' + GA_MEASUREMENT_ID] = true;
-  // Registered before the deferred SDK/initializer, including returning visitors.
-  window.addEventListener('capital-ai:consent-ready', syncConsent);
-  window.addEventListener('cc:onConsent', syncConsent);
-  window.addEventListener('cc:onChange', handleSavedChange);
+
+  ['cookiehub_onInitialise', 'cookiehub_onStatusChange', 'cookiehub_onAllow', 'cookiehub_onRevoke']
+    .forEach(function (eventName) {
+      document.addEventListener(eventName, syncConsent);
+    });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      syncWhenCookieHubReady(0);
+    }, { once: true });
+  } else {
+    syncWhenCookieHubReady(0);
+  }
 })();

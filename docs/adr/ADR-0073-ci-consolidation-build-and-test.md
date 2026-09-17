@@ -55,108 +55,13 @@ Eine spätere physische Löschung der Datei bleibt möglich, erfordert aber eine
 Human/Owner-reviewten Änderungspfad für `verifyChangedWorkflowSecurity.mjs` und ist nicht
 Bestandteil dieser Entscheidung.
 
-## Betriebs-Addendum 2026-08-21 — P0 Cost-Control bei suspendiertem M10
-
-Die repository-weite Owner-Entscheidung in `AGENTS.md` vom 2026-08-19 suspendiert die
-M10-Passkey-Autorisierung für normale PR-CI. Diese spätere Owner-Entscheidung bleibt
-unverändert: `M10_CI_GATE_ENABLED` bleibt `false`; Cost-Control darf M10 weder implizit noch
-explizit reaktivieren.
-
-Zur Vermeidung nachgewiesener mehrfacher Vollausführungen desselben PR-Snapshots wird der
-kanonische `build-and-test`-Pfad um eine **Exact-Snapshot-Deduplizierung** erweitert. Ein bereits
-erfolgreicher CI-Lauf darf nur wiederverwendet werden, wenn alle folgenden Identitäten identisch
-sind:
-
-1. derselbe kanonische CI-Workflow (`workflow_id`),
-2. dieselbe Pull-Request-Nummer,
-3. exakt derselbe PR-Head-SHA,
-4. exakt derselbe PR-Base-SHA,
-5. der frühere Lauf ist erfolgreich abgeschlossen.
-
-Die Base-SHA-Bindung ist eine Sicherheits- und Integritätsinvariante: Bewegt sich `main`, ist ein
-früherer PASS selbst bei unverändertem Head nicht wiederverwendbar. Ein neuer Head-SHA invalidiert
-die Wiederverwendung ebenfalls. In beiden Fällen läuft der vollständige scope-klassifizierte
-CI-Pfad erneut.
-
-Die Deduplizierung ist ausschließlich eine Kostenoptimierung innerhalb desselben Required Checks:
-
-- sie erzeugt keinen zweiten Check-Namen und keinen synthetischen PASS-Reporter;
-- sie ist keine Human-, Owner-, M10-, Merge- oder Deployment-Autorisierung;
-- sie benötigt nur lesenden Zugriff auf GitHub-Actions-Läufe (`actions: read`);
-- sie ist ausschließlich für `pull_request` aktiv;
-- `push` auf `main` wird niemals aus einem PR-PASS wiederverwendet und durchläuft weiterhin die
-  vollständige Produktions-Build-/Attestation-/Deployment-Kette;
-- `workflow_dispatch` bleibt bei suspendiertem M10 als alternativer CI-Einstieg gesperrt.
-
-Die bereits vorhandene monatliche Kostenkontrolle in `pr-governance.yml` bleibt für optionale
-Advisory-Prüfungen zuständig. Sie wird nicht als zweite technische CI-Authority dupliziert. Die
-Exact-Snapshot-Deduplizierung adressiert dagegen unmittelbar die kostenintensive Pflicht-CI und
-bleibt damit innerhalb der ADR-0073-Single-`build-and-test`-Architektur.
-
-## Betriebs-Addendum 2026-08-21 — P1 Governance-Runner-Konsolidierung
-
-Die Analyse der PR-Governance ergab einen zweiten Kostenmultiplikator: `pr-governance.yml` startete
-für dasselbe PR-Ereignis mehrere getrennte `ubuntu-latest`-Jobs für Kosten-Gate,
-Workflow-Security, Repository-Advisory und PR-Vorlagenvertrag. Kurze Einzeljobs erzeugen damit
-unnötigen Hosted-Runner- und Billing-Overhead, obwohl sie denselben PR-Head und denselben trusted
-`main`-Policy-Stand prüfen.
-
-Die Governance-Prüfungen werden deshalb in **einen einzigen read-only Ubuntu-Job** konsolidiert.
-Die logischen Kontrollen bleiben als getrennte Steps erhalten:
-
-1. trusted `main` Policy einmal auschecken,
-2. Kandidaten-Head einmal auschecken,
-3. aktuellen `main` in den Kandidaten importieren,
-4. Node.js einmalig initialisieren,
-5. PR-Scope mit dem **trusted-main** Klassifikator bestimmen,
-6. 3.000-Minuten-Cost-Gate für das optionale Repository-Advisory prüfen,
-7. bei Workflow-Änderungen `verifyChangedWorkflowSecurity.mjs` aus trusted `main` fail-closed ausführen,
-8. optionale Repository-Konventionen nur unterhalb des bestehenden Kosten-Gates ausführen,
-9. Produktions-Baseline und kanonischen PR-Body-Vertrag unverändert fail-closed prüfen.
-
-### Autoritäts- und Ruleset-Grenzen
-
-Die Konsolidierung verändert **keinen Required-Check-Vertrag**. Der kanonische
-`main-production-protection`-Sollstand verlangt weiterhin ausschließlich:
-
-- `build-and-test`,
-- `GitGuardian Security Checks`.
-
-Die früheren Governance-Jobnamen sind keine Required-Check-Kontexte und dürfen daher ohne
-Ruleset-Cutover in einen internen Governance-Job überführt werden. Die Prüfungen selbst bleiben
-bestehen; lediglich die Runner-Topologie wird konsolidiert.
-
-Das M10-Modell bleibt unverändert suspendiert/off. Das Kosten-Gate ist weiterhin ausschließlich
-eine Steuerung für **optionale Advisory-Arbeit** und erzeugt weder CI-Autorisierung noch
-Merge-Authority.
-
-### Zusätzliche Härtung
-
-Die Scope-Klassifikation wird im konsolidierten Job nicht mehr aus dem PR-kontrollierten
-Kandidatenpfad aufgerufen, sondern aus dem vertrauenswürdigen `main`-Policy-Checkout. Sie arbeitet
-weiterhin im Kandidaten-Repository gegen `origin/main...HEAD`, wodurch ein PR seine eigene
-Klassifikation nicht durch Änderung von `scripts/pr/classifyPrScope.mjs` manipulieren kann.
-
-### Ereignisverhalten
-
-- `opened`, `reopened`, `synchronize`, `ready_for_review`: ein Governance-Runner.
-- `edited`: ein Governance-Runner; Cost-Gate, Scope-/Workflow-Security und Advisory werden
-  übersprungen, der vollständige Baseline-/PR-Body-Vertrag läuft erneut.
-- `merge_group`: wie zuvor kein PR-Governance-Runner, da die Jobs auf `pull_request` begrenzt sind.
-- der historische M10-Fix-Branch behält seine bestehende Ausnahme ausschließlich für den
-  PR-Template-Vertrag; Kosten-/Workflow-Prüfungen bleiben davon getrennt.
-
 ## Sicherheitsinvarianten
 
 - Checkout exakt des aktuellen PR-Heads.
-- Read-only Workflow-Permissions; `actions: read` ist nur für Cost-Control-/Budget-Lookups zulässig.
+- Read-only Workflow-Permissions.
 - `persist-credentials: false`.
-- M10-Passkey bleibt entsprechend der aktuellen Owner-Authority suspendiert/off.
-- Kostenkontrolle darf keine Autorisierungs- oder Merge-Authority erzeugen.
-- Neue Commits oder ein neuer Base-SHA invalidieren eine frühere Snapshot-Wiederverwendung.
-- Workflow-Security bleibt fail-closed und wird aus trusted `main` ausgeführt.
-- PR-Scope-Klassifikation wird aus trusted `main` ausgeführt.
-- Produktions-Baseline und PR-Body-Vertrag bleiben fail-closed.
+- Fail-closed Owner-Gate vor kostenintensivem PR-Build.
+- Neue Commits invalidieren die Head-Freigabe.
 - Separate menschliche Merge-Anweisung bleibt erforderlich.
 - Workflow-/Ruleset-Reparatur erfolgt über frischen Branch und normalen PR.
 
@@ -173,9 +78,6 @@ Vor dem Merge dieses ADR-/Workflow-PRs muss der Owner:
    `.github/policies/main-production-protection.expected.json` prüfen.
 7. Erst anschließend den PR mergen.
 
-Für das P1-Addendum ist **keine zusätzliche Ruleset-Mutation** erforderlich, weil keiner der
-konsolidierten Governance-Jobnamen als Required-Check-Kontext im Sollzustand registriert ist.
-
 ## Verifikation nach Merge
 
 Der nächste reale Pull Request muss zeigen:
@@ -183,23 +85,7 @@ Der nächste reale Pull Request muss zeigen:
 - `build-and-test` auf dem aktuellen Head PASS;
 - GitGuardian PASS;
 - kein erwarteter oder hängender `capital-ai-ci`-Kontext;
-- Merge bleibt ohne Human/CODEOWNER-Freigabe oder ohne `build-and-test` blockiert.
-
-Für das P0-Cost-Control-Addendum gilt zusätzlich:
-
-- der erste neue PR-Snapshot führt die erforderliche scope-klassifizierte CI real aus;
-- ein erneuter Event für exakt denselben Workflow/PR/Head/Base darf die erfolgreiche Snapshot-
-  Evidence wiederverwenden und Checkout/npm/Test/Build/Docker überspringen;
-- ein neuer Head oder ein neuer Base-SHA muss wieder eine reale CI-Ausführung erzwingen;
-- `main`-Pushes dürfen nie über die PR-Snapshot-Wiederverwendung abgekürzt werden.
-
-Für das P1-Addendum gilt zusätzlich:
-
-- ein normales PR-Ereignis startet in `pr-governance.yml` höchstens einen `ubuntu-latest`-Job;
-- Workflow-Änderungen werden weiterhin gegen die trusted-main Security-Policy validiert;
-- unterhalb des Monatsbudgets darf das Repository-Advisory innerhalb desselben Runners laufen;
-- oberhalb/bei pausiertem Advisory entstehen keine zusätzlichen Runner;
-- `edited` führt weiterhin den vollständigen PR-Baseline-/Body-Vertrag aus.
+- Merge bleibt ohne Owner-Gate oder ohne `build-and-test` blockiert.
 
 ## Rollback
 
@@ -208,68 +94,3 @@ Nach Merge: frischen Recovery-Branch erstellen, in `capital-ai-ci-shadow.yml` de
 `pull_request`-Trigger (`branches: [main]`, `types: [opened, synchronize, reopened, edited]`)
 wieder eintragen, PASS abwarten und erst danach `capital-ai-ci` wieder als Required Check
 aktivieren.
-
-Für einen isolierten Rollback der P0-Cost-Control wird ausschließlich die Exact-Snapshot-
-Deduplizierung aus `ci.yml` entfernt; `M10_CI_GATE_ENABLED=false`, die Single-`build-and-test`-
-Architektur und die Produktions-Main-Pipeline bleiben dabei unverändert.
-
-Für einen isolierten Rollback von P1 kann `pr-governance.yml` auf die letzte verifizierte
-Mehrjob-Struktur zurückgesetzt werden. Required Checks, M10-Switch und `ci.yml` werden dabei nicht
-verändert.
-
-## Betriebs-Addendum 2026-08-21 — P2B Production-CI Runner-Konsolidierung
-
-P2B konsolidiert ausschließlich die Runner-Topologie der bereits verpflichtenden Main-Production-
-Kette. Die Sicherheits- und Autoritätssemantik bleibt bestehen.
-
-Vor P2B wurden nach einem erfolgreichen `build-and-test` zwei weitere technische Vorbereitungspfade
-und ein separater Deployment-Identity-Pfad auf eigenen `ubuntu-latest`-Runnern ausgeführt. Dadurch
-wurden derselbe Main-SHA, Node-Abhängigkeiten, Build und Predeploy mehrfach vorbereitet.
-
-Die neue Topologie besteht aus genau zwei Runnern:
-
-1. **`build-and-test`** erzeugt den einzigen vollständigen Main-Build. Nur auf `push` nach `main`
-   erzwingt derselbe Runner anschließend die CI-Provenance-Bindung, installiert den immutable
-   gepinnten Cosign-Installer, signiert `provenance.json` keyless und verifiziert die Signatur gegen
-   `ci.yml@refs/heads/main` sowie den GitHub-OIDC-Issuer. Zusätzlich wird der bestehende
-   `verifyDeploymentIdentity.ts` aus exakt diesem Main-Build als standalone Node-24-Bundle erzeugt.
-2. **`deploy-production`** bleibt der einzige `environment: production`-Job. Er lädt das
-   SHA-benannte Build-Artefakt aus demselben Workflow-Lauf, prüft vor jeder Mutation
-   `release-manifest.sourceCommit === github.sha`, löst erst danach den Render-Hook mit exakt diesem
-   SHA aus und führt anschließend den gebündelten Deployment-Identity-Verifier aus.
-
-Der Production-Job führt bewusst **kein Checkout, kein `npm ci` und keinen Build** aus. Dadurch
-wird die privilegierte Environment-Oberfläche nicht durch Repository-Code oder Dependency-
-Lifecycle-Skripte erweitert.
-
-P2B entfernt die separaten Job-IDs `supply-chain-attestation` und `verify-deployment-identity`,
-nicht jedoch deren Funktionen. Supply-Chain-Signatur, 90-Tage-Evidence, Render-Deployment und
-post-deploy Exact-SHA-Verifikation bleiben verpflichtende Steps im erfolgreichen Main-Push-Pfad.
-
-Die OIDC-Berechtigung `id-token: write` verbleibt auf `build-and-test`, wo sie bereits vor P2B für
-das historische M10-Modell vorhanden war. P2B reaktiviert M10 nicht; `M10_CI_GATE_ENABLED` bleibt
-`false`.
-
-Workflow-Artefakte dienen ausschließlich als jobübergreifender Handoff desselben Workflow-Laufs.
-Der Deployment-Job akzeptiert kein externes Build und validiert das Release-Manifest erneut gegen
-`github.sha`, bevor der Render-Deploy-Hook aufgerufen wird.
-
-### P2B Verifikationsinvarianten
-
-- `ci.yml` besitzt genau zwei `runs-on: ubuntu-latest`-Jobs.
-- `npm run build` erscheint nur einmal im Workflow.
-- `npm ci` erscheint nur einmal im Workflow.
-- Provenance `--require-ci`, Cosign-Signatur und Signaturprüfung laufen nur für Main-Push.
-- `deploy-production` bleibt `environment: production` und `needs: [build-and-test]`.
-- Production enthält kein Checkout, kein `npm ci`, keinen Build.
-- Release-Manifest-SHA wird vor Render-Mutation gegen `github.sha` geprüft.
-- Render-Hook und post-deploy Health-Verifikation verwenden denselben SHA.
-- Supply-Chain- und Deployment-Identity-Evidence bleiben 90 Tage erhalten.
-
-Die detaillierte Implementierungs-Evidence liegt in
-`docs/evidence/P2B_PRODUCTION_CI_RUNNER_CONSOLIDATION_2026-08-21.md`.
-
-Ein isolierter P2B-Rollback darf die frühere Vier-Runner-Topologie wiederherstellen, jedoch nur mit
-vollständiger Provenance-/Sigstore-/Production-Environment-/Exact-SHA-Funktionalität. M10,
-Required-Check-Kontexte und Human/CODEOWNER-Merge-Authority dürfen durch einen P2B-Rollback nicht
-verändert werden.

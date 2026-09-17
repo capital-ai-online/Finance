@@ -1,7 +1,7 @@
 // Deckt src/lib/onboarding.ts ab: neue Registrierungen (profiles.onboarding_required = true)
 // muessen vor dem Dashboard-Zugriff durch RegistrationCompletionGate laufen; bestehende Konten
 // (onboarding_required = false, per Migration rueckwirkend gesetzt) bleiben unberuehrt.
-// Nicht verifizierbare Profile-/DB-Zustaende muessen fail-closed abbrechen.
+// Fail-open bei DB-Fehlern, analog zu loginStepUpRequirement().
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -48,17 +48,15 @@ describe('needsOnboarding', () => {
     expect(result).toBe(false);
   });
 
-  it('blockiert bei fehlendem profiles-Datensatz statt Onboarding zu umgehen', async () => {
+  it('faellt bei fehlendem profiles-Datensatz auf false zurueck (kein Aussperren)', async () => {
     profilesSelectMock.mockResolvedValue({ data: null, error: null });
-    await expect(needsOnboarding(session('user-3'))).rejects.toThrow(
-      'Profil fehlt; Onboarding-Status nicht verifizierbar.',
-    );
+    const result = await needsOnboarding(session('user-3'));
+    expect(result).toBe(false);
   });
 
-  it('blockiert bei DB-Fehler fail-closed', async () => {
+  it('faellt bei DB-Fehler fail-open auf false zurueck', async () => {
     profilesSelectMock.mockResolvedValue({ data: null, error: new Error('db down') });
-    await expect(needsOnboarding(session('user-4'))).rejects.toThrow(
-      'Status konnte nicht geladen werden.',
-    );
+    const result = await needsOnboarding(session('user-4'));
+    expect(result).toBe(false);
   });
 });

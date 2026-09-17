@@ -1,9 +1,10 @@
 import type { Express, Request, Response, NextFunction } from 'express';
 import { getServerSupabase, isSupabaseConfigured } from '../db';
-import { getClientIp } from '../../src/platform/Security/rateLimiter';
-import { CAPITAL_AI_PUBLIC_HOSTS } from '../../src/platform/Security/edgeTrust';
 
-const PRODUCTION_ORIGINS = CAPITAL_AI_PUBLIC_HOSTS.map((host) => `https://${host}`);
+const PRODUCTION_ORIGINS = [
+  'https://capital-ai.online',
+  'https://www.capital-ai.online',
+];
 
 export interface CorsLogger {
   warn(message: string, meta?: Record<string, unknown>): void;
@@ -32,7 +33,10 @@ async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger
 
   try {
     const supabase = getServerSupabase();
-    const ip = getClientIp(req);
+    const xff = req.headers['x-forwarded-for'];
+    const ip = typeof xff === 'string'
+      ? xff.split(',')[0].trim()
+      : (req.socket?.remoteAddress || 'unknown');
 
     await supabase.from('security_events').insert({
       event_type: 'suspicious_request',
@@ -51,12 +55,11 @@ async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger
 }
 
 /**
- * ADR-0009 CORS boundary.
+ * ADR-0009 CORS boundary extracted without changing policy semantics.
  *
- * Production accepts only the canonical CAPITAL-AI browser origins. Development may
- * additionally accept localhost/127.0.0.1. A disallowed Origin is rejected server-side for
- * every HTTP method rather than relying on the browser to hide the response. Requests without
- * an Origin remain valid for non-browser integrations such as Stripe webhooks and health probes.
+ * Production accepts only the two explicit CAPITAL-AI origins. Development may
+ * additionally accept localhost/127.0.0.1. Unknown origins never receive ACAO
+ * credentials.
  */
 export function registerCorsMiddleware(
   app: Express,
@@ -66,8 +69,6 @@ export function registerCorsMiddleware(
     const origin = req.headers.origin;
 
     if (origin) {
-      res.vary('Origin');
-
       if (isOriginAllowed(origin, options.isProduction)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -79,13 +80,14 @@ export function registerCorsMiddleware(
           });
         });
 
-        return res.status(403).json({ error: 'Origin nicht erlaubt.' });
+        if (req.method === 'OPTIONS') {
+          return res.status(403).json({ error: 'Origin nicht erlaubt.' });
+        }
       }
     }
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature, x-step-up-token');
-    res.setHeader('Access-Control-Max-Age', '600');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature');
 
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);

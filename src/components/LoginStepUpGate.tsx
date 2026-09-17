@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Fingerprint, KeyRound } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { markLoginStepUpPassed } from '../lib/loginStepUp';
+import { signInWithPasskey } from './PasskeySettings';
+import { verifyStepUp, StepUpError } from '../lib/stepUp';
+import { loginStepUpRequirement, markLoginStepUpPassed, type LoginStepUpRequirement } from '../lib/loginStepUp';
 import {
   NativeMfaError,
   getCurrentAssuranceLevel,
-  listVerifiedNativeMfaFactors,
+  listVerifiedTotpFactors,
   challengeTotpFactor,
   verifyTotpChallenge,
-  authenticateWebauthnMfaFactor,
 } from '../platform/Security/nativeMfa';
 
 interface LoginStepUpGateProps {
@@ -17,231 +18,142 @@ interface LoginStepUpGateProps {
   onAbort: () => void;
 }
 
-type GateRequirement = 'checking' | 'totp' | 'webauthn' | 'blocked';
-const MFA_OPERATION_TIMEOUT_MS = 10_000;
-
-function withMfaTimeout<T>(operation: Promise<T>, operationName: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timeoutId = window.setTimeout(() => {
-      reject(
-        new NativeMfaError(
-          `${operationName} hat das Sicherheits-Zeitlimit überschritten. Bitte erneut anmelden.`,
-        ),
-      );
-    }, MFA_OPERATION_TIMEOUT_MS);
-
-    operation.then(
-      (value) => {
-        window.clearTimeout(timeoutId);
-        resolve(value);
-      },
-      (error) => {
-        window.clearTimeout(timeoutId);
-        reject(error);
-      },
-    );
-  });
-}
+type GateRequirement = LoginStepUpRequirement | 'native' | 'checking';
 
 /**
- * Supabase-native assurance gate.
+ * Ganzseitiges Login-Gate: wird zwischen erfolgreicher Primär-Authentifizierung (Google-OAuth,
+ * Passwort, Session-Restore) und tatsächlichem Dashboard-Zugriff eingeblendet, sobald der Nutzer
+ * einen Passkey registriert oder 2FA aktiviert hat. Passkey hat Vorrang vor 2FA - ist ein Passkey
+ * registriert, genügt dessen Bestätigung allein.
  *
- * Primary authentication may arrive through email/password, Google OAuth or a native passkey.
- * Every path converges here. Supabase AAL/TOTP/WebAuthn failures remain fail-closed, and a
- * provider/client operation that never settles becomes an explicit blocked/error state instead
- * of an endless spinner. WebAuthn in this component is the Supabase MFA factor namespace and is
- * intentionally distinct from the primary-login `auth.signInWithPasskey()` API.
+ * ADR-0064 / ESS-0020 (M5A): natives Supabase-MFA ist, sobald ein verifizierter Faktor existiert,
+ * die vorrangige Prüfung - sie ist die einzige Quelle, die eine echte AAL2-Sitzung erzeugt (vom
+ * Server über requireVerifiedAal2 unabhängig nachprüfbar). Existiert kein nativer Faktor, greift
+ * unverändert der bisherige Passkey-/Legacy-TOTP-Pfad.
+ *
+ * Owner-Policy 2026-08-14: kein Notfall-Bypass-Mechanismus in der Anwendung - dieses Gate bietet
+ * bewusst KEINEN Break-Glass-/Recovery-Code-Pfad mehr an. Verlust von Passkey und Authenticator
+ * gleichzeitig wird ausschließlich außerhalb der Anwendung (Supabase-Dashboard-Administration
+ * durch den Owner) behoben.
  */
 export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
   const [requirement, setRequirement] = useState<GateRequirement>('checking');
-  const [totpFactorId, setTotpFactorId] = useState('');
-  const [totpChallengeId, setTotpChallengeId] = useState('');
-  const [webauthnFactorId, setWebauthnFactorId] = useState('');
+
+  const [nativeFactorId, setNativeFactorId] = useState('');
+  const [nativeChallengeId, setNativeChallengeId] = useState('');
   const [nativeCode, setNativeCode] = useState('');
   const [nativeVerifying, setNativeVerifying] = useState(false);
   const [nativeError, setNativeError] = useState<string | null>(null);
+
+  const [passkeyVerifying, setPasskeyVerifying] = useState(false);
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
+
+  const [totpCode, setTotpCode] = useState('');
+  const [totpVerifying, setTotpVerifying] = useState(false);
+  const [totpError, setTotpError] = useState<string | null>(null);
 
   const userId = session.user.id;
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
-      if (!supabase) {
-        if (!cancelled) {
-          setNativeError('Supabase ist nicht verfügbar. Der Sicherheitsstatus kann nicht geprüft werden.');
-          setRequirement('blocked');
+      // ADR-0064: natives MFA hat Vorrang, sofern ein verifizierter Faktor existiert - es ist die
+      // einzige Quelle, die eine echte, server-seitig nachprüfbare AAL2-Sitzung erzeugt. Existiert
+      // kein nativer Faktor (nextLevel !== 'aal2'), greift unverändert der bisherige Pfad.
+      if (supabase) {
+        try {
+          const level = await getCurrentAssuranceLevel(supabase);
+          if (!cancelled && level.nextLevel === 'aal2') {
+            if (level.currentLevel === 'aal2') {
+              markLoginStepUpPassed(userId);
+              onVerified();
+              return;
+            }
+            const factors = await listVerifiedTotpFactors(supabase);
+            if (!cancelled && factors.length > 0) {
+              const challengeId = await challengeTotpFactor(supabase, factors[0].id);
+              if (!cancelled) {
+                setNativeFactorId(factors[0].id);
+                setNativeChallengeId(challengeId);
+                setRequirement('native');
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[LoginStepUpGate] Nativer AAL-Status konnte nicht geladen werden, fahre mit Legacy-Pfad fort:', err);
         }
+      }
+
+      const req = await loginStepUpRequirement(session);
+      if (cancelled) return;
+      if (req === 'none') {
+        markLoginStepUpPassed(userId);
+        onVerified();
         return;
       }
-
-      try {
-        const level = await withMfaTimeout(
-          getCurrentAssuranceLevel(supabase),
-          'AAL-Prüfung',
-        );
-        if (cancelled) return;
-
-        if (level.currentLevel === 'aal2') {
-          markLoginStepUpPassed(userId);
-          onVerified();
-          return;
-        }
-
-        if (level.nextLevel === 'aal2') {
-          const factors = await withMfaTimeout(
-            listVerifiedNativeMfaFactors(supabase),
-            'MFA-Faktorprüfung',
-          );
-          if (cancelled) return;
-
-          const webauthnFactor = factors.find((factor) => factor.factorType === 'webauthn');
-          const totpFactor = factors.find((factor) => factor.factorType === 'totp');
-
-          setWebauthnFactorId(webauthnFactor?.id ?? '');
-          setTotpFactorId(totpFactor?.id ?? '');
-
-          // Prefer the phishing-resistant WebAuthn MFA factor when available. The ceremony itself
-          // starts only after a user click, preserving browser user-activation semantics.
-          if (webauthnFactor) {
-            setRequirement('webauthn');
-            return;
-          }
-
-          if (totpFactor) {
-            const challengeId = await withMfaTimeout(
-              challengeTotpFactor(supabase, totpFactor.id),
-              'MFA-Challenge',
-            );
-            if (cancelled) return;
-
-            setTotpChallengeId(challengeId);
-            setRequirement('totp');
-            return;
-          }
-
-          throw new NativeMfaError(
-            'AAL2 ist erforderlich, aber es wurde kein verifizierter nativer MFA-Faktor gefunden.',
-          );
-        }
-
-        if (level.currentLevel === 'aal1' && level.nextLevel === 'aal1') {
-          markLoginStepUpPassed(userId);
-          onVerified();
-          return;
-        }
-
-        throw new NativeMfaError('Unbekannter Authenticator-Assurance-Zustand.');
-      } catch (err) {
-        console.error('[LoginStepUpGate] Native Supabase assurance verification failed closed:', err);
-        if (!cancelled) {
-          setNativeError(
-            err instanceof NativeMfaError
-              ? err.message
-              : 'Der native Supabase-Sicherheitsstatus konnte nicht verifiziert werden.',
-          );
-          setRequirement('blocked');
-        }
-      }
+      setRequirement(req);
     })();
-
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  async function switchToTotp() {
-    if (!supabase || !totpFactorId) {
-      setNativeError('Kein verifizierter TOTP-Faktor als Fallback verfügbar.');
-      return;
-    }
-
-    setNativeVerifying(true);
-    setNativeError(null);
-    try {
-      const challengeId = await withMfaTimeout(
-        challengeTotpFactor(supabase, totpFactorId),
-        'MFA-Challenge',
-      );
-      setTotpChallengeId(challengeId);
-      setNativeCode('');
-      setRequirement('totp');
-    } catch (err) {
-      console.error('[LoginStepUpGate] TOTP fallback challenge failed closed:', err);
-      setNativeError(
-        err instanceof NativeMfaError ? err.message : 'TOTP-Challenge konnte nicht erstellt werden.',
-      );
-    } finally {
-      setNativeVerifying(false);
-    }
-  }
-
-  async function handleWebauthnVerify() {
-    if (!supabase || !webauthnFactorId) {
-      setNativeError('WebAuthn-MFA-Faktor ist nicht verfügbar. Verifikation wurde blockiert.');
-      return;
-    }
-
-    setNativeVerifying(true);
-    setNativeError(null);
-    try {
-      await withMfaTimeout(
-        authenticateWebauthnMfaFactor(supabase, webauthnFactorId),
-        'WebAuthn-MFA-Verifikation',
-      );
-
-      markLoginStepUpPassed(userId);
-      onVerified();
-    } catch (err) {
-      console.error('[LoginStepUpGate] Native WebAuthn MFA verification failed closed:', err);
-      setNativeError(
-        err instanceof NativeMfaError ? err.message : 'WebAuthn-MFA-Verifikation fehlgeschlagen.',
-      );
-    } finally {
-      setNativeVerifying(false);
-    }
-  }
-
   async function handleNativeVerify(e: React.FormEvent) {
     e.preventDefault();
-
-    if (!supabase) {
-      setNativeError('Supabase ist nicht verfügbar. Verifikation wurde blockiert.');
-      setRequirement('blocked');
-      return;
-    }
-
+    if (!supabase) return;
     if (nativeCode.trim().length !== 6) {
       setNativeError('Bitte den 6-stelligen Code aus deiner Authenticator-App eingeben.');
       return;
     }
-
     setNativeVerifying(true);
     setNativeError(null);
     try {
-      await withMfaTimeout(
-        verifyTotpChallenge(supabase, totpFactorId, totpChallengeId, nativeCode.trim()),
-        'MFA-Verifikation',
-      );
-
-      const verifiedLevel = await withMfaTimeout(
-        getCurrentAssuranceLevel(supabase),
-        'AAL2-Nachprüfung',
-      );
-      if (verifiedLevel.currentLevel !== 'aal2') {
-        throw new NativeMfaError('Die Sitzung hat nach der Verifikation kein AAL2 erreicht.');
-      }
-
+      await verifyTotpChallenge(supabase, nativeFactorId, nativeChallengeId, nativeCode.trim());
       markLoginStepUpPassed(userId);
       onVerified();
     } catch (err) {
-      console.error('[LoginStepUpGate] Native TOTP verification failed closed:', err);
-      setNativeError(
-        err instanceof NativeMfaError ? err.message : '2FA-Verifikation fehlgeschlagen.',
-      );
+      setNativeError(err instanceof NativeMfaError ? err.message : '2FA-Verifikation fehlgeschlagen.');
     } finally {
       setNativeVerifying(false);
+    }
+  }
+
+  async function handlePasskeyConfirm() {
+    setPasskeyVerifying(true);
+    setPasskeyError(null);
+    try {
+      const result: any = await signInWithPasskey();
+      if (result.error) throw result.error;
+      if (!result.data?.session || result.data.session.user.id !== userId) {
+        throw new Error('Der bestätigte Passkey gehört nicht zu diesem Konto.');
+      }
+      markLoginStepUpPassed(userId);
+      onVerified();
+    } catch (err: any) {
+      setPasskeyError(err?.message || 'Passkey-Bestätigung fehlgeschlagen oder abgebrochen.');
+    } finally {
+      setPasskeyVerifying(false);
+    }
+  }
+
+  async function handleTotpVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (totpCode.trim().length !== 6) {
+      setTotpError('Bitte den 6-stelligen Code aus deiner Authenticator-App eingeben.');
+      return;
+    }
+    setTotpVerifying(true);
+    setTotpError(null);
+    try {
+      await verifyStepUp(totpCode.trim(), 'login');
+      markLoginStepUpPassed(userId);
+      onVerified();
+    } catch (err) {
+      setTotpError(err instanceof StepUpError ? err.message : '2FA-Verifikation fehlgeschlagen.');
+    } finally {
+      setTotpVerifying(false);
     }
   }
 
@@ -250,112 +162,106 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       <div className="w-full max-w-md bg-black/40 border border-aif-gold-DEFAULT/30 rounded-2xl p-8 backdrop-blur-xl shadow-[0_0_50px_rgba(245,196,83,0.1)] space-y-6">
         <div className="flex items-center gap-2.5 justify-center">
           <ShieldCheck className="text-aif-gold-DEFAULT w-6 h-6" />
-          <h1 className="text-xl font-bold font-display tracking-tight text-white">
-            Sicherheits-Bestätigung
-          </h1>
+          <h1 className="text-xl font-bold font-display tracking-tight text-white">Sicherheits-Bestätigung</h1>
         </div>
 
         {requirement === 'checking' && (
           <p className="text-xs text-white/40 font-mono uppercase tracking-widest text-center animate-pulse">
-            Prüfe nativen Supabase-Sicherheitsstatus…
+            Prüfe Sicherheitseinstellungen…
           </p>
         )}
 
-        {requirement === 'webauthn' && (
+        {requirement === 'passkey' && (
           <div className="space-y-4">
             <p className="text-xs text-white/60 leading-relaxed text-center">
-              Für dieses Konto ist ein verifizierter WebAuthn-MFA-Faktor aktiv. Bestätige die
-              aktuelle Anmeldung mit deinem Passkey oder Sicherheitsschlüssel.
+              Für dieses Konto ist ein Passkey registriert. Bitte bestätige die Anmeldung mit deinem
+              Passkey.
             </p>
+            <button
+              onClick={handlePasskeyConfirm}
+              disabled={passkeyVerifying}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <Fingerprint size={16} />
+              {passkeyVerifying ? 'Warte auf Passkey…' : 'Mit Passkey bestätigen'}
+            </button>
+            {passkeyError && (
+              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+                {passkeyError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {requirement === 'totp' && (
+          <form onSubmit={handleTotpVerify} className="space-y-4">
+            <p className="text-xs text-white/60 leading-relaxed text-center">
+              Für dieses Konto ist 2FA aktiviert. Bitte gib den aktuellen 6-stelligen Code aus
+              deiner Authenticator-App ein.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              autoFocus
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
+            />
+            {totpError && (
+              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+                {totpError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={totpVerifying || totpCode.length !== 6}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <KeyRound size={16} />
+              {totpVerifying ? 'Prüfe…' : 'Bestätigen'}
+            </button>
+          </form>
+        )}
+
+        {requirement === 'native' && (
+          <form onSubmit={handleNativeVerify} className="space-y-4">
+            <p className="text-xs text-white/60 leading-relaxed text-center">
+              Bitte gib den aktuellen 6-stelligen Code aus deiner Authenticator-App ein.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              autoFocus
+              value={nativeCode}
+              onChange={(e) => setNativeCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
+            />
             {nativeError && (
               <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
                 {nativeError}
               </p>
             )}
             <button
-              type="button"
-              onClick={handleWebauthnVerify}
-              disabled={nativeVerifying}
+              type="submit"
+              disabled={nativeVerifying || nativeCode.length !== 6}
               className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
             >
-              <Fingerprint size={16} />
-              {nativeVerifying ? 'Prüfe WebAuthn-AAL2…' : 'Passkey-AAL2 bestätigen'}
+              <KeyRound size={16} />
+              {nativeVerifying ? 'Prüfe…' : 'Bestätigen'}
             </button>
-            {totpFactorId && (
-              <button
-                type="button"
-                onClick={switchToTotp}
-                disabled={nativeVerifying}
-                className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Stattdessen Authenticator-App verwenden
-              </button>
-            )}
-          </div>
+          </form>
         )}
 
-        {requirement === 'totp' && (
-          <div className="space-y-4">
-            <form onSubmit={handleNativeVerify} className="space-y-4">
-              <p className="text-xs text-white/60 leading-relaxed text-center">
-                Für dieses Konto ist natives Supabase-MFA aktiv. Bitte bestätige die aktuelle
-                Anmeldung mit dem Code aus deiner Authenticator-App.
-              </p>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                autoFocus
-                value={nativeCode}
-                onChange={(e) => setNativeCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="000000"
-                className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
-              />
-              {nativeError && (
-                <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
-                  {nativeError}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={nativeVerifying || nativeCode.length !== 6}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
-              >
-                <KeyRound size={16} />
-                {nativeVerifying ? 'Prüfe AAL2…' : 'AAL2 bestätigen'}
-              </button>
-            </form>
-            {webauthnFactorId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setNativeError(null);
-                  setRequirement('webauthn');
-                }}
-                disabled={nativeVerifying}
-                className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Stattdessen Passkey verwenden
-              </button>
-            )}
-          </div>
-        )}
-
-        {requirement === 'blocked' && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-300">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-              <p className="text-xs leading-relaxed">
-                {nativeError || 'Der Sicherheitsstatus konnte nicht verifiziert werden. Zugriff gesperrt.'}
-              </p>
-            </div>
-            <p className="text-[11px] text-white/35 text-center leading-relaxed">
-              Der native MFA-/AAL-Sicherheitsstatus wird nicht durch einen alternativen
-              Primärlogin oder einen unverifizierten Faktor umgangen.
-            </p>
-          </div>
-        )}
+        <p className="pt-2 border-t border-white/10 text-[11px] text-white/40 text-center leading-relaxed">
+          Kein Zugriff mehr auf Passkey oder Authenticator-App? Es gibt bewusst keinen
+          automatischen Recovery-Weg in der Anwendung - bitte wende dich an den Owner.
+        </p>
 
         <button
           onClick={onAbort}

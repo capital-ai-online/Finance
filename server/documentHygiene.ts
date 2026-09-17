@@ -5,11 +5,11 @@ import { Type } from '../src/services/aiSchema';
 import { logSystemEvent } from './systemEvents';
 import { FileWatcher } from './fileWatcher';
 import { decisionEngine } from './decisionEngine';
-import {
-  applyMarkdownBrandingHeader,
-  applyTextBrandingHeader,
-  applyJsonBrandingMetadata,
-  sanitizeAllDocs
+import { 
+  sanitizeMarkdownContent, 
+  sanitizeTextContent, 
+  sanitizeJsonContent, 
+  sanitizeAllDocs 
 } from './documentSanitizer';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
@@ -19,27 +19,12 @@ import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
 import { getPromptGovernanceEntry, recordAiEvaluation, type AiProvider } from '../src/services/aiGovernance';
 import { isDocumentHygieneRuntimeWritable } from './runtime/documentHygieneRuntimeMode';
-import {
-  UnsafePathError,
-  rateLimitMiddleware,
-  resolveWithinRoot,
-  resolveWorkspacePath,
-} from '../src/platform/Security/safeIo';
 
 export const hygieneRouter = express.Router();
-hygieneRouter.use(rateLimitMiddleware({ name: 'document-hygiene', maxRequests: 60, windowMs: 60_000 }));
 
 const DOCS_DIR = path.join(process.cwd(), 'docs');
-const HISTORY_DIR = docsPath('.history');
+const HISTORY_DIR = path.join(DOCS_DIR, '.history');
 const HYGIENE_DB_FILE = path.join(process.cwd(), 'uploads', 'document_hygiene.json');
-
-function docsPath(relativeFilePath: string): string {
-  return resolveWithinRoot(DOCS_DIR, relativeFilePath);
-}
-
-function historyPath(relativeFilePath: string): string {
-  return resolveWithinRoot(HISTORY_DIR, relativeFilePath);
-}
 
 // Types & Interfaces
 export type HygieneState =
@@ -212,7 +197,7 @@ export function buildDependencyGraph(): DependencyGraph {
               graph[relativePath] = dependencies;
             }
           } catch (e) {
-            console.error('Error parsing file for graph:', relativePath, e);
+            console.error(`Error parsing file ${relativePath} for graph:`, e);
           }
         }
       }
@@ -246,7 +231,7 @@ export function getAffectedFiles(changedFile: string, graph: DependencyGraph): s
 // Create file backup
 export function backupFile(relativeFilePath: string): string | null {
   try {
-    const srcPath = docsPath(relativeFilePath);
+    const srcPath = path.join(DOCS_DIR, relativeFilePath);
     if (!fs.existsSync(srcPath)) return null;
 
     if (!fs.existsSync(HISTORY_DIR)) {
@@ -256,18 +241,18 @@ export function backupFile(relativeFilePath: string): string | null {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const safeName = relativeFilePath.replace(/[\/\\]/g, '_');
     const backupName = `${timestamp}_${safeName}`;
-    const backupPath = historyPath(backupName);
+    const backupPath = path.join(HISTORY_DIR, backupName);
 
     fs.copyFileSync(srcPath, backupPath);
 
     // Keep history trimmed to latest 100 entries, prune old ones
     const backups = fs.readdirSync(HISTORY_DIR).sort((a, b) => {
-      return fs.statSync(historyPath(b)).mtimeMs - fs.statSync(historyPath(a)).mtimeMs;
+      return fs.statSync(path.join(HISTORY_DIR, b)).mtimeMs - fs.statSync(path.join(HISTORY_DIR, a)).mtimeMs;
     });
     if (backups.length > 100) {
       for (let i = 100; i < backups.length; i++) {
         try {
-          fs.unlinkSync(historyPath(backups[i]));
+          fs.unlinkSync(path.join(HISTORY_DIR, backups[i]));
         } catch (e) {}
       }
     }
@@ -284,13 +269,13 @@ export function ensureBrandingInContent(filePath: string, content: string): stri
   const ext = path.extname(filePath).toLowerCase();
   
   if (ext === '.md') {
-    return applyMarkdownBrandingHeader(content);
+    return sanitizeMarkdownContent(content);
   }
   if (ext === '.json') {
-    return applyJsonBrandingMetadata(content);
+    return sanitizeJsonContent(content);
   }
   if (ext === '.txt') {
-    return applyTextBrandingHeader(content);
+    return sanitizeTextContent(content);
   }
   
   return content;
@@ -471,7 +456,7 @@ Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${
     });
 
     if (!result) {
-      console.error('Kein KI-Provider verfuegbar fuer Propagation nach %s', dependentFilePath);
+      console.error(`Kein KI-Provider verfuegbar fuer Propagation nach ${dependentFilePath}`);
       return dependentContent;
     }
 
@@ -486,7 +471,7 @@ Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${
     const finalContent = text.trim();
     return ensureBrandingInContent(dependentFilePath, finalContent);
   } catch (err) {
-    console.error('Failed to propagate change to %s:', dependentFilePath, err);
+    console.error(`Failed to propagate change to ${dependentFilePath}:`, err);
     return dependentContent; // Fallback to unchanged
   }
 }
@@ -535,7 +520,7 @@ export async function processFileEvent(
       return;
     }
 
-    const fullPath = docsPath(normPath);
+    const fullPath = path.join(DOCS_DIR, normPath);
     if (!fs.existsSync(fullPath)) {
       throw new Error(`Datei existiert nicht: ${fullPath}`);
     }
@@ -553,10 +538,10 @@ export async function processFileEvent(
     if (fs.existsSync(HISTORY_DIR)) {
       const matchingBackups = fs.readdirSync(HISTORY_DIR)
         .filter(f => f.endsWith(safeName))
-        .sort((a, b) => fs.statSync(historyPath(b)).mtimeMs - fs.statSync(historyPath(a)).mtimeMs);
+        .sort((a, b) => fs.statSync(path.join(HISTORY_DIR, b)).mtimeMs - fs.statSync(path.join(HISTORY_DIR, a)).mtimeMs);
       
       if (matchingBackups.length > 0) {
-        oldContent = fs.readFileSync(historyPath(matchingBackups[0]), 'utf8');
+        oldContent = fs.readFileSync(path.join(HISTORY_DIR, matchingBackups[0]), 'utf8');
       }
     }
 
@@ -591,48 +576,95 @@ export async function processFileEvent(
     transitionTo('EXECUTING', { email: userEmail, filePath: normPath });
     logEntry.stateFlow.push('EXECUTING');
 
-    // SECURITY (2026-08-25 architecture review, finding #1): the AI classification above is
-    // computed from the very document content under review. A hostile or injected document can
-    // instruct the model to self-report suggestedAction=auto_override with a high confidence
-    // score, which previously caused fs.writeFileSync to run with no human confirmation at all -
-    // the model was simultaneously the attack target and the sole authorization authority. No
-    // classification outcome may trigger a direct file write anymore; every change (including
-    // trivial typos and dependency propagation) is now routed through the human-gated
-    // /review endpoint (requireAdmin + requireWritableDocumentHygiene), which performs the actual
-    // write only after an administrator explicitly approves the ticket.
-    logEntry.actionTaken = 'flagged_for_review';
-    logEntry.status = 'PAUSED';
-    logEntry.details = affected.length > 0
-      ? `Review erforderlich. Grund: ${analysis.reason} (Vorgeschlagene Aktion: ${analysis.suggestedAction}, Konfidenz: ${analysis.confidence}). Bei Freigabe werden zusätzlich ${affected.length} abhängige Dokumente aktualisiert: [${affected.join(', ')}].`
-      : `Review erforderlich. Grund: ${analysis.reason} (Vorgeschlagene Aktion: ${analysis.suggestedAction}, Konfidenz: ${analysis.confidence}).`;
-    logEntry.stateFlow.push('REVIEW_REQUIRED');
-    activeLogs.unshift(logEntry);
+    // Rule FA-11: auto_override applies only when confidence > 0.85 and action is auto_override
+    if (analysis.suggestedAction === 'auto_override' && analysis.confidence >= 0.85) {
+      backupFile(normPath);
+      logEntry.actionTaken = 'auto_override';
+      logEntry.details = `Automatische Freigabe erteilt. Begründung: ${analysis.reason}`;
+      logEntry.stateFlow.push('DONE');
+      activeLogs.unshift(logEntry);
 
-    const ticket: ReviewTicket = {
-      id: 'ticket_' + Math.random().toString(36).substring(2, 12),
-      filePath: normPath,
-      timestamp: new Date().toISOString(),
-      previousContent: oldContent,
-      proposedContent: newContent,
-      diff,
-      classification: analysis.classification,
-      confidence: analysis.confidence,
-      reason: analysis.reason,
-      status: 'PENDING',
-    };
+      logSystemEvent(
+        'ORCHESTRATOR',
+        'Auto Override Approved',
+        userEmail,
+        `Autonomously applied changes to ${normPath} (Confidence: ${analysis.confidence})`,
+        'SUCCESS'
+      );
+      transitionTo('IDLE', { email: userEmail, filePath: normPath });
+    } 
+    else if (analysis.suggestedAction === 'propagate_dependencies' && analysis.confidence >= 0.85 && affected.length > 0) {
+      // Automatic dependency propagation
+      backupFile(normPath);
+      logEntry.actionTaken = 'propagate_dependencies';
+      logEntry.details = `Änderung automatisch freigegeben und wird auf ${affected.length} abhängige Dokumente übertragen. Begründung: ${analysis.reason}`;
+      
+      const propagationList: string[] = [];
+      for (const depFile of affected) {
+        const depFullPath = path.join(DOCS_DIR, depFile);
+        if (fs.existsSync(depFullPath)) {
+          const currentDepContent = fs.readFileSync(depFullPath, 'utf8');
+          const updatedDepContent = await generatePropagatedContent(
+            depFile,
+            currentDepContent,
+            normPath,
+            diff
+          );
+          if (updatedDepContent && updatedDepContent !== currentDepContent) {
+            backupFile(depFile);
+            fs.writeFileSync(depFullPath, updatedDepContent, 'utf8');
+            propagationList.push(depFile);
+          }
+        }
+      }
 
-    // If a pending ticket already exists for this file, overwrite or replace it to avoid clutter
-    pendingTickets = pendingTickets.filter(t => t.filePath !== normPath);
-    pendingTickets.unshift(ticket);
+      logEntry.details += ` Übertragene Dateien: [${propagationList.join(', ')}]`;
+      logEntry.stateFlow.push('DONE');
+      activeLogs.unshift(logEntry);
 
-    logSystemEvent(
-      'SECURITY',
-      'Review Ticket Created',
-      userEmail,
-      `Document ${normPath} flagged for review. Decision chain paused. Reason: ${analysis.reason}`,
-      'WARNING'
-    );
-    transitionTo('REVIEW_REQUIRED', { email: userEmail, filePath: normPath });
+      logSystemEvent(
+        'ORCHESTRATOR',
+        'Auto Propagation Complete',
+        userEmail,
+        `Propagated changes from ${normPath} to: ${propagationList.join(', ')}`,
+        'SUCCESS'
+      );
+      transitionTo('IDLE', { email: userEmail, filePath: normPath });
+    }
+    else {
+      // Rule FA-13: manual_review triggered
+      logEntry.actionTaken = 'flagged_for_review';
+      logEntry.status = 'PAUSED';
+      logEntry.details = `Review erforderlich. Grund: ${analysis.reason} (Action: ${analysis.suggestedAction}, Konfidenz: ${analysis.confidence})`;
+      logEntry.stateFlow.push('REVIEW_REQUIRED');
+      activeLogs.unshift(logEntry);
+
+      const ticket: ReviewTicket = {
+        id: 'ticket_' + Math.random().toString(36).substring(2, 12),
+        filePath: normPath,
+        timestamp: new Date().toISOString(),
+        previousContent: oldContent,
+        proposedContent: newContent,
+        diff,
+        classification: analysis.classification,
+        confidence: analysis.confidence,
+        reason: analysis.reason,
+        status: 'PENDING',
+      };
+      
+      // If a pending ticket already exists for this file, overwrite or replace it to avoid clutter
+      pendingTickets = pendingTickets.filter(t => t.filePath !== normPath);
+      pendingTickets.unshift(ticket);
+
+      logSystemEvent(
+        'SECURITY',
+        'Review Ticket Created',
+        userEmail,
+        `Document ${normPath} flagged for review. Decision chain paused. Reason: ${analysis.reason}`,
+        'WARNING'
+      );
+      transitionTo('REVIEW_REQUIRED', { email: userEmail, filePath: normPath });
+    }
 
     saveHygieneDb();
   } catch (err: any) {
@@ -715,7 +747,7 @@ hygieneRouter.post('/review', requireAdmin, requireWritableDocumentHygiene, asyn
       backupFile(ticket.filePath);
       
       // Write proposed content
-      const fullPath = docsPath(ticket.filePath);
+      const fullPath = path.join(DOCS_DIR, ticket.filePath);
       const brandedProposedContent = ensureBrandingInContent(ticket.filePath, ticket.proposedContent);
       fs.writeFileSync(fullPath, brandedProposedContent, 'utf8');
 
@@ -725,7 +757,7 @@ hygieneRouter.post('/review', requireAdmin, requireWritableDocumentHygiene, asyn
       const propagatedFiles: string[] = [];
 
       for (const depFile of affected) {
-        const depFullPath = docsPath(depFile);
+        const depFullPath = path.join(DOCS_DIR, depFile);
         if (fs.existsSync(depFullPath)) {
           const currentDepContent = fs.readFileSync(depFullPath, 'utf8');
           const updatedDepContent = await generatePropagatedContent(
@@ -768,7 +800,7 @@ hygieneRouter.post('/review', requireAdmin, requireWritableDocumentHygiene, asyn
       ticket.status = 'DECLINED';
       
       // Revert the file back to old content
-      const fullPath = docsPath(ticket.filePath);
+      const fullPath = path.join(DOCS_DIR, ticket.filePath);
       if (ticket.previousContent) {
         fs.writeFileSync(fullPath, ticket.previousContent, 'utf8');
       } else {
@@ -820,8 +852,8 @@ hygieneRouter.post('/rollback', requireAdmin, requireWritableDocumentHygiene, (r
     return res.status(400).json({ error: 'filePath and backupName are required.' });
   }
 
-  const backupPath = historyPath(backupName);
-  const targetPath = docsPath(filePath);
+  const backupPath = path.join(HISTORY_DIR, backupName);
+  const targetPath = path.join(DOCS_DIR, filePath);
 
   try {
     if (!fs.existsSync(backupPath)) {
@@ -871,7 +903,7 @@ hygieneRouter.get('/history-files', requireAdmin, (req, res) => {
 
     const files = fs.readdirSync(HISTORY_DIR)
       .map(file => {
-        const filePath = historyPath(file);
+        const filePath = path.join(HISTORY_DIR, file);
         const stat = fs.statSync(filePath);
         return {
           name: file,
@@ -1176,13 +1208,13 @@ hygieneRouter.get('/lint', requireAdmin, (req, res) => {
           }
         }
       } catch (err) {
-        console.error('Error scanning file:', target.relPath, err);
+        console.error(`Error scanning file ${target.relPath}:`, err);
       }
     }
 
     res.json({ success: true, diagnostics });
   } catch (err: any) {
-    res.status(500).json({ error: 'Fehler beim Linten des Workspace.' });
+    res.status(500).json({ error: `Fehler beim Lintent des Workspace: ${err.message || err}` });
   }
 });
 
@@ -1193,15 +1225,7 @@ hygieneRouter.post('/lint-fix', requireAdmin, requireWritableDocumentHygiene, (r
     return res.status(400).json({ error: 'filePath and ruleId are required.' });
   }
 
-  let fullPath: string;
-  try {
-    fullPath = resolveWorkspacePath(String(filePath));
-  } catch (err) {
-    if (err instanceof UnsafePathError) {
-      return res.status(403).json({ error: 'Pfad liegt ausserhalb des Workspace.' });
-    }
-    throw err;
-  }
+  const fullPath = path.join(process.cwd(), filePath);
   if (!fs.existsSync(fullPath)) {
     return res.status(404).json({ error: `Datei nicht gefunden: ${filePath}` });
   }
@@ -1280,7 +1304,7 @@ hygieneRouter.post('/trigger', requireAdmin, requireWritableDocumentHygiene, asy
     return res.status(400).json({ error: 'filePath parameter is required.' });
   }
 
-  const fullPath = docsPath(filePath);
+  const fullPath = path.join(DOCS_DIR, filePath);
   if (!fs.existsSync(fullPath)) {
     return res.status(404).json({ error: `Dokument nicht gefunden: ${filePath}` });
   }

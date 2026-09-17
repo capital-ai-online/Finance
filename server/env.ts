@@ -34,28 +34,16 @@ export function resolveEnvironmentValue(
 ): string {
   const secrets = options.secretValues ?? secretFileValues;
   const environment = options.environment ?? process.env;
-  const isViteKey = key.startsWith('VITE_');
-  const canonicalKey = isViteKey ? key.substring(5) : key;
-  const isServerOnlySecret = secretFileKeySet.has(canonicalKey);
 
-  // Secrets in SECRET_FILE_KEYS are server-only by contract. They may be supplied by the
-  // canonical Render secret file or by the exact same-named server environment variable, but
-  // never through a VITE_* alias. Likewise, asking for VITE_<server-secret> must not fall back to
-  // the unprefixed server value. This keeps privileged credentials out of client-facing alias
-  // resolution and makes production boot validation genuinely fail closed.
-  if (isServerOnlySecret) {
-    if (isViteKey) return '';
-
+  if (secretFileKeySet.has(key)) {
     const canonicalSecret = cleanValue(secrets[key]);
     if (canonicalSecret) return canonicalSecret;
-
-    return cleanValue(environment[key]);
   }
 
   let val = environment[key];
-  if (!val && isViteKey) {
-    val = environment[canonicalKey];
-  } else if (!val) {
+  if (!val && key.startsWith('VITE_')) {
+    val = environment[key.substring(5)];
+  } else if (!val && !key.startsWith('VITE_')) {
     val = environment[`VITE_${key}`];
   }
   return cleanValue(val);
@@ -63,7 +51,6 @@ export function resolveEnvironmentValue(
 
 /**
  * Resolve runtime configuration with explicit secret-file precedence for canonical secrets.
- * Server-only secrets never use VITE_* compatibility aliases.
  */
 export function getCleanEnv(key: string): string {
   return resolveEnvironmentValue(key);

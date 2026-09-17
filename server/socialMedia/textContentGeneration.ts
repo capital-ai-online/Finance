@@ -6,12 +6,6 @@
  * Financial-claim policy: no invented prices/scores; educational tone + disclaimer.
  */
 
-import {
-  PLATFORM_CHARACTER_LIMITS,
-  conservativeCharacterCount,
-  type SocialMediaTextPlatform,
-} from './platformCharacterLimits';
-
 export type TextPlatform = 'x' | 'facebook' | 'community';
 
 export type ContentFormat = 'tweet' | 'facebook_post' | 'community_post' | 'thread';
@@ -53,24 +47,12 @@ function normalizeTopic(topic: string): string {
   return topic.replace(/\s+/g, ' ').trim().slice(0, 200);
 }
 
-function assertPlatformLimit(platform: SocialMediaTextPlatform, text: string): number {
-  const charCount = conservativeCharacterCount(text);
-  const maxCharacters = PLATFORM_CHARACTER_LIMITS[platform].maxCharacters;
-  if (charCount > maxCharacters) {
-    throw new Error(
-      `Generated ${platform} text exceeds platform character limit (${charCount}/${maxCharacters}).`,
-    );
-  }
-  return charCount;
-}
-
-function buildTweet(topic: string, locale: 'de' | 'en', disclaimer: string, note?: string): string {
+function buildTweet(topic: string, locale: 'de' | 'en', note?: string): string {
   if (locale === 'en') {
     return [
       `Quick take: ${topic}`,
       note ? `Context: ${note}` : null,
-      'Process over prediction — evidence, margin of safety, risk.',
-      disclaimer,
+      'Focus on process over prediction — margin of safety, evidence, risk.',
       '#CapitalAI #InvestingEducation',
     ]
       .filter(Boolean)
@@ -80,7 +62,6 @@ function buildTweet(topic: string, locale: 'de' | 'en', disclaimer: string, note
     `Kurz erklärt: ${topic}`,
     note ? `Kontext: ${note}` : null,
     'Prozess vor Prognose — Margin of Safety, Evidenz, Risiko.',
-    disclaimer,
     '#CapitalAI #Finanzbildung',
   ]
     .filter(Boolean)
@@ -151,23 +132,18 @@ export function generateTextContent(input: GenerateTextRequest): GenerateTextRes
   const variants: GeneratedTextVariant[] = platforms.map((platform) => {
     let format: ContentFormat;
     let text: string;
-    let charCount: number;
     if (platform === 'x') {
       format = 'tweet';
-      text = buildTweet(topic, locale, disclaimer, note);
-      charCount = assertPlatformLimit('x', text);
+      text = buildTweet(topic, locale, note);
+      if (text.length > 280) text = text.slice(0, 277) + '…';
     } else if (platform === 'facebook') {
       format = 'facebook_post';
       text = buildFacebook(topic, locale, note);
-      charCount = assertPlatformLimit('facebook', text);
     } else {
       format = 'community_post';
       text = buildCommunity(topic, locale, note);
-      // Community is an internal/generic surface without a canonical external
-      // platform limit. Count conservatively, but do not invent a limit.
-      charCount = conservativeCharacterCount(text);
     }
-    return { platform, format, text, charCount, disclaimer };
+    return { platform, format, text, charCount: text.length, disclaimer };
   });
 
   return {

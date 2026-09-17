@@ -113,7 +113,7 @@ export function MarkdownOrchestrator() {
       icon: Shield,
       color: 'from-red-500 to-rose-600',
       description: 'OWASP Top 10 Absicherung, Schutz vertraulicher Algorithmen, Sandboxing und API-Proxying.',
-      stateOfTheArtTool: 'GitGuardian Security Checks'
+      stateOfTheArtTool: 'GitLab Security Scan MD & Snyk'
     },
     {
       id: 'qa',

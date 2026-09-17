@@ -70,31 +70,6 @@ const CRYPTO_COINGECKO_IDS: Record<string, string> = {
   SHIB: 'shiba-inu',
 };
 
-// DeFiLlama-Protokoll-Slugs (https://api.llama.fi/protocol/{slug}) fuer die in der Registry
-// gefuehrten DeFi-Token. Nur kuratierte, verifizierte Slug-Zuordnungen; kein Symbol wird auf
-// Verdacht/Heuristik gemappt, um eine falsche Protokoll-Zuordnung auszuschliessen (P1-01/P1-02).
-// Nicht gelistete Symbole bleiben ohne DeFiLlama-Evidence statt einer geratenen Zuordnung.
-export const CRYPTO_DEFILLAMA_SLUGS: Readonly<Record<string, string>> = {
-  AAVE: 'aave',
-  UNI: 'uniswap',
-  MKR: 'makerdao',
-  LDO: 'lido',
-  CRV: 'curve-finance',
-  COMP: 'compound-finance',
-  SNX: 'synthetix',
-  SUSHI: 'sushiswap',
-  BAL: 'balancer',
-  YFI: 'yearn-finance',
-  '1INCH': '1inch-network',
-  GMX: 'gmx',
-  DYDX: 'dydx',
-  RUNE: 'thorchain',
-  CAKE: 'pancakeswap',
-  JOE: 'traderjoe-dex',
-  FXS: 'frax',
-  PENDLE: 'pendle',
-};
-
 // Stooq-Ticker fuer die US-Aktien aus der Registry (dieselbe .US-Konvention wie im
 // Live-Kurs-Pfad in server.ts, STOCK_TICKERS).
 const STOCK_STOOQ_TICKERS: Record<string, string> = {
@@ -655,7 +630,7 @@ export class AssetRegistry {
       });
       return { points, source: 'live' };
     } catch (err) {
-      console.warn('[AssetRegistry] CoinGecko-Historie fehlgeschlagen, falle auf Simulation zurueck:', coingeckoId, (err as Error)?.message || err);
+      console.warn(`[AssetRegistry] CoinGecko-Historie fuer ${coingeckoId} fehlgeschlagen, falle auf Simulation zurueck:`, (err as Error)?.message || err);
       return null;
     }
   }
@@ -690,7 +665,7 @@ export class AssetRegistry {
       if (points.length === 0) return null;
       return { points, source: 'live' };
     } catch (err) {
-      console.warn('[AssetRegistry] Stooq-Historie fehlgeschlagen, falle auf Simulation zurueck:', displaySymbol, (err as Error)?.message || err);
+      console.warn(`[AssetRegistry] Stooq-Historie fuer ${displaySymbol} fehlgeschlagen, falle auf Simulation zurueck:`, (err as Error)?.message || err);
       return null;
     }
   }
@@ -709,9 +684,7 @@ export class AssetRegistry {
     let currentPrice = startPrice;
     const now = new Date();
 
-    const days = Math.min(Math.max(Number(limit) || 1, 1), 1825);
-
-    for (let i = days; i >= 0; i--) {
+    for (let i = limit; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dateFormatted = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getFullYear()).substring(2)}`;
 
@@ -733,7 +706,7 @@ export class AssetRegistry {
 
   // Deterministic random generation so different backtest runs of same asset match perfectly
   private seededRandom(seed: string, step: number): number {
-    const str = `\( {String(seed).slice(0, 64)} \){step}`;
+    const str = seed + step;
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = (hash << 5) - hash + str.charCodeAt(i);

@@ -13,8 +13,6 @@ import Markdown from 'react-markdown';
 import { AssetLogo } from './AssetLogo';
 import { StatusBadge } from './StatusBadge';
 import { UserSession } from '../App';
-import { authFetch } from '../lib/authFetch';
-import { getReactMessage } from '../platform/Vocabulary/Delivery/browserMessageCatalog';
 
 interface MarketScreenerProps {
   onSelectSymbol: (symbol: string) => void;
@@ -67,7 +65,7 @@ const INTERVAL_OPTIONS = [
   { value: '1Y', label: '1 Jahr' },
 ];
 
-const ASSET_TYPE_ORDER: AssetType[] = ['crypto', 'stock', 'forex', 'commodity', 'index'];
+const ASSET_TYPE_ORDER: AssetType[] = ['crypto', 'stock', 'forex', 'commodity', 'index', 'bond'];
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   crypto: 'Krypto',
   stock: 'Aktien',
@@ -110,20 +108,6 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(input, { ...init, signal: controller.signal });
-  } finally {
-    window.clearTimeout(timer);
-  }
-}
-
-// SECURITY (2026-08-25 architecture review, finding #5): /api/chat requires a verified
-// Supabase session now; requestAiSummary() previously called it via the plain, unauthenticated
-// fetchWithTimeout(). authFetchWithTimeout() attaches the same Bearer token authFetch() would,
-// while keeping the existing AbortController timeout behavior.
-async function authFetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 10_000): Promise<Response> {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await authFetch(url, { ...init, signal: controller.signal });
   } finally {
     window.clearTimeout(timer);
   }
@@ -215,10 +199,7 @@ export function MarketScreener({
       .then((data) => {
         const list = Array.isArray(data)
           ? data.filter((item): item is CatalogAsset =>
-              typeof item?.symbol === 'string'
-              && typeof item?.name === 'string'
-              && typeof item?.type === 'string'
-              && item.type !== 'bond')
+              typeof item?.symbol === 'string' && typeof item?.name === 'string' && typeof item?.type === 'string')
           : [];
         setAssets(list);
         const preferred = ['BTC', 'AAPL', 'EURUSD']
@@ -298,7 +279,7 @@ export function MarketScreener({
   const requestAiSummary = async (result: ScreeningResult) => {
     setAnalysisLoading(result.symbol);
     try {
-      const response = await authFetchWithTimeout('/api/chat', {
+      const response = await fetchWithTimeout('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -331,8 +312,8 @@ export function MarketScreener({
               <ShieldCheck size={18} />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verified Enterprise Screener</span>
             </div>
-            <h2 className="mt-1 text-xl font-black text-white">{getReactMessage('screening.title')}</h2>
-            <p className="mt-1 text-xs text-white/45">{getReactMessage('screening.subtitle.contractSeparation')}</p>
+            <h2 className="mt-1 text-xl font-black text-white">Multi-Asset Screening</h2>
+            <p className="mt-1 text-xs text-white/45">Score, Evidence und Macro Context bleiben getrennte, versionierte Verträge.</p>
           </div>
           <button
             type="button"
@@ -341,7 +322,7 @@ export function MarketScreener({
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-aif-gold-DEFAULT/30 bg-aif-gold-DEFAULT/10 px-4 py-2 text-xs font-black text-aif-gold-DEFAULT disabled:opacity-50"
           >
             <RefreshCw size={14} className={scanning ? 'animate-spin' : ''} />
-            {scanning ? getReactMessage('screening.action.loading') : getReactMessage('screening.action.start')}
+            {scanning ? 'Verifizierte Daten prüfen…' : 'Screening starten'}
           </button>
         </div>
 
@@ -352,7 +333,7 @@ export function MarketScreener({
               value={searchVal}
               onChange={(event) => { setSearchVal(event.target.value); setShowDropdown(true); }}
               onFocus={() => setShowDropdown(true)}
-              placeholder={getReactMessage('screening.search.placeholder')}
+              placeholder="Asset, Symbol oder Währungspaar suchen…"
               className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
             />
             <ChevronDown size={14} className="text-white/25" />
@@ -471,14 +452,7 @@ export function MarketScreener({
                     <Sparkles size={13} />
                     {analysisLoading === result.symbol ? 'AI prüft Evidence…' : 'Kurze AI-Zusammenfassung'}
                   </button>
-                  {analysis[result.symbol] && (
-                    <div className="space-y-2">
-                      <div className="prose prose-invert prose-sm max-w-none rounded-xl border border-purple-500/15 bg-purple-500/[0.04] p-3 text-[11px]"><Markdown>{analysis[result.symbol]}</Markdown></div>
-                      <div className="rounded-lg border border-purple-500/10 bg-purple-500/[0.025] px-3 py-2 text-[9px] leading-relaxed text-purple-100/55" data-testid="ai-content-disclosure">
-                        <strong className="text-purple-100/75">AI-generierte Antwort.</strong> Retrieval-Evidence kann als Kontext verwendet worden sein; Retrieval allein bestätigt weder Claim-Level-Grounding noch Zitationsvollständigkeit. Die Zusammenfassung besitzt keine Scoring-, Ranking-, Eligibility- oder Anlageentscheidungs-Authority.
-                      </div>
-                    </div>
-                  )}
+                  {analysis[result.symbol] && <div className="prose prose-invert prose-sm max-w-none rounded-xl border border-purple-500/15 bg-purple-500/[0.04] p-3 text-[11px]"><Markdown>{analysis[result.symbol]}</Markdown></div>}
                 </div>
               )}
             </article>
@@ -487,7 +461,7 @@ export function MarketScreener({
       </div>
 
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 text-[10px] text-emerald-100/65">
-        <strong>Data Integrity:</strong> Katalogbestand und Marktbeobachtung sind getrennt. Ein gelistetes Asset erhält weder Preis noch Score allein durch seine Registry-Zugehörigkeit; READY erfordert Provider-Evidence und die jeweiligen Provenance-/Freshness-Gates. Indizes nutzen das versionierte Provider-Mapping und Rohstoffe den freigegebenen Commodity-Market-Evidence-Contract. Deaktivierte Assetklassen bleiben aus der produktiven Frontend-Auswahl entfernt; technische Domain-Contracts werden dadurch nicht verändert.
+        <strong>Data Integrity:</strong> Katalogbestand und Marktbeobachtung sind getrennt. Ein gelistetes Asset erhält weder Preis noch Score allein durch seine Registry-Zugehörigkeit; READY erfordert Provider-Evidence und die jeweiligen Provenance-/Freshness-Gates. Indizes nutzen das versionierte Provider-Mapping, Rohstoffe den freigegebenen Commodity-Market-Evidence-Contract und Government-Benchmark-Anleihen ausschließlich den Sovereign-Yield-Contract; allgemeines Einzelanleihen-Scoring bleibt gesperrt.
         {effectiveEmail ? '' : ' Nutzerkontext ist derzeit nicht angemeldet.'}
       </div>
     </section>

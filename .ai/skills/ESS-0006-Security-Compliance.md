@@ -2,9 +2,9 @@
 skill:
   id: ESS-0006
   name: Security & Compliance
-  version: 1.2.0
+  version: 1.0.0
   status: Enterprise Approved
-  maturity: Revalidated
+  maturity: Gold Standard
   owner: Platform Director
   category: Enterprise Architecture
   priority: Critical
@@ -17,355 +17,436 @@ capital_ai:
 
 classification:
   type: Component Specification
-  role: Komponentenspezifikation der bestehenden Security- und Compliance-Komponenten
+  role: Komponentenspezifikation Security Center und Compliance Center
   contractAuthority: ESS-0001-CONTRACTS
   note: >
-    Dieses Dokument spezifiziert ausschliesslich die bestehenden technischen Grenzen
-    src/platform/Security und src/platform/Compliance sowie deren zulässige Einbindung
-    in die bounded Security-Remediation nach CTRL-SEC-BOUNDED-REMEDIATION-001. Es erzeugt
-    weder globale Security-/Compliance-Regeln noch eine zweite Compliance Requirement
-    Registry, Audit-/Risk-Authority, Security-/Compliance-Runtime oder Projekt-Ownership.
+    Dieses Dokument spezifiziert ausschliesslich die Komponenten
+    src/platform/Security und src/platform/Compliance. Saemtliche Sicherheits- und
+    Compliance-Regeln verbleiben in ESS-0001-CONTRACTS Chapter 11.
 
 authority:
-  componentResponsibilities:
-    - reusable Security implementation boundary
-    - Security-specific adapters and enforcement helpers
-    - bounded Security-primary repository remediation under CTRL-SEC-BOUNDED-REMEDIATION-001
-    - repository-based Compliance scanner and evidence backend
-    - internal Compliance reporting and evidence persistence
+
+  controls:
+    - Security Classification Registry
+    - Audit Trail
+    - Risk Register
+    - Compliance Evidence
+    - Security Review Verfahren
+
+  collaborates:
+    - Documentary Engine
+    - Supervisor
+    - Platform Director
+    - Quality Center
+    - Version Manager
+    - Release Center
+
   cannot_modify:
-    - Enterprise Specifications ausserhalb des eigenen ESS-Lebenszyklus
+    - Enterprise Specifications
     - Architecture Decision Records
     - Enterprise Contracts
-    - Governance Control Plane oder kanonische Registries ausserhalb ihrer Owner-Grenzen
-    - IAM Regeln oder Berechtigungen ausserhalb bereits akzeptierter IAM-/Policy-Vertraege
-    - Legal Applicability, Zertifizierungsstatus oder Accepted Risk
-    - produktive PVC-Ownership fremder Projekte
-    - fachliche Business-Authority oder Produktlogik ausserhalb minimal notwendiger Security-Haertung
-    - geschuetzte externe Production-/IAM-/Billing-/Secret-/DNS-/Daten-Mutationen ohne separate Authority
+    - Audit Trail Eintraege
+    - IAM Regeln
+    - Berechtigungen
 
 crossReference:
   dependsOn:
     - ESS-0001
     - ESS-0001-CONTRACTS
   relatedEss:
+    - ESS-0002
+    - ESS-0003
     - ESS-0005
     - ESS-0011
     - ESS-0012
-    - ESS-0013
-    - ESS-0019
   relatedAdr:
+    - ADR-0003.5
     - ADR-0007
+    - ADR-0009
     - ADR-0012
     - ADR-0016
-    - ADR-0058
-    - ADR-0059
-    - ADR-0060
-    - ADR-0096
   relatedComponents:
     - src/platform/Security
     - src/platform/Compliance
-  relatedProjectSurfaces:
-    - docs/projects/security/README.md
-    - docs/projects/compliance/README.md
-    - docs/compliance/CAPITAL-AI-COMP/
+    - src/platform/Telemetry
+    - supabase/policies
+  relatedSkills:
+    - .ai/skills/ESS-0001-Contracts.md
+    - .ai/skills/ESS-0002-Supervisor-Architect.md
 
 created: 2026-07-31
-revalidated: 2026-09-10
 ---
 
 # Security & Compliance
 
-## 1. Zweck und aktuelle Authority-Grenze
+## Enterprise Purpose
 
-ESS-0006 bleibt die unter ADR-0016 reservierte **Komponentenspezifikation** fuer zwei getrennte,
-bereits vorhandene technische Komponenten:
+Dieses Dokument spezifiziert die Komponenten `src/platform/Security` und
+`src/platform/Compliance`.
 
-- `src/platform/Security`
-- `src/platform/Compliance`
+ESS-0001-CONTRACTS Chapter 11 definiert die verbindlichen Sicherheits- und
+Compliance-Verträge — Klassifizierung, Secret Contract, Audit Trail, Risk Contract,
+Compliance Evidence.
 
-Die gemeinsame ESS-Nummer bedeutet **keine gemeinsame produktive Security-/Compliance-Runtime**
-und keine gemeinsame Projekt-Ownership. Security und Compliance bleiben fachlich und organisatorisch
-getrennte cross-cutting Assurance-Domaenen.
+Dieses Dokument beschreibt ausschließlich, **wie** beide Komponenten diese Verträge
+durchsetzen.
 
-Verbindliche globale Security-/Compliance-Regeln stammen weiterhin aus den jeweils aktuellen
-Contracts, ADRs, Controls und dem Trust Root. ESS-0006 beschreibt die technische Komponentengrenze,
-die zulässige Evidence-Beziehung und die Einbindung des Security-Komponentenmodells in die durch
-`AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001` geregelte bounded
-Security-Remediation.
-
-ADR-0007 ist in der kanonischen ADR Registry als `historical` / non-authorizing registriert. Seine
-legacy Compliance Value Chain darf deshalb weder durch ESS-0006 noch durch Implementierungsdetails
-reaktiviert werden.
+Es definiert keine Sicherheitsregeln.
 
 ---
 
-## 2. Projekt- und Ownership-Grenzen
+# Warum beide Komponenten in einem Dokument
 
-### CAPITAL-AI-SEC
-
-`CAPITAL-AI-SEC` ist cross-cutting Security Requirements-, Findings-, Testing- und unabhängiger
-Verification-Owner. Es besitzt keinen produktiven `PVC-*`-Stage allein aufgrund dieser Rolle und
-erwirbt durch eine Remediation weder die langfristige Datei- noch Domain-/PVC-Ownership.
-
-Unter `CTRL-SEC-BOUNDED-REMEDIATION-001` darf `CAPITAL-AI-SEC` jedoch die kleinste ausreichende
-Security-spezifische Repository-Remediation selbst implementieren, wenn der primaere und unmittelbare
-Zweck die Behebung, Praevention oder technische Haertung eines bestaetigten Security-Findings ist,
-bestehende Domain-Semantik und accepted ADR/ESS-Vertraege unveraendert bleiben und keine geschuetzte
-externe Mutation oder parallele Control Plane entsteht.
-
-Die physische Dateiposition ist dafuer kein Ownership- oder DENY-Kriterium. Eine verwundbare
-Implementierung darf dort behoben werden, wo sie liegt, einschliesslich `server/**`,
-`scripts/security/**`, `scripts/automation/**`, `.github/workflows/**`, `package.json`, Lockfiles,
-Docker-/Runtime-Security-Konfiguration und Security-relevanten Tests. `src/platform/Security` bleibt
-die bevorzugte wiederverwendbare Security-Komponente, aber keine kuenstliche Ablagepflicht fuer
-fremde Domain-Logik.
-
-Sobald ein Fix fachliche Produktsemantik, neue Architecture Authority oder fremde Domain-
-Implementierung jenseits der trennbaren Security-Haertung erfordert, endet die Delegation. Security
-setzt nur den sauber trennbaren Security-Anteil um und dokumentiert/routet den verbleibenden Anteil
-an den kanonischen Primary Owner.
-
-### CAPITAL-AI-COMP
-
-`CAPITAL-AI-COMP` ist cross-cutting Owner fuer Applicability, Requirements Inventory,
-Requirement/Control Mapping, evidence-basierte Compliance-Bewertung, Findings, regulatorische
-Traceability, Remediation-Handoff und Legal-Review-Handoff. Es besitzt keinen produktiven
-`PVC-*`-Stage allein aufgrund dieser Rolle.
-
-Produktive Remediation bleibt beim Primary Owner des betroffenen PVC. Legal Applicability,
-regulatorischer Status, Zertifizierung oder Accepted Risk werden nicht durch ESS-0006 entschieden.
-Die Security-spezifische Delegation aus `CTRL-SEC-BOUNDED-REMEDIATION-001` wird dadurch nicht auf
-`CAPITAL-AI-COMP` erweitert.
-
-### Platform Director / Governance
-
-`CAPITAL-AI-GOV / PVC-05` pflegt den ESS-Lifecycle und die Architecture-/Authority-Grenze. Governance
-uebernimmt dadurch weder Security-Verifikation noch Compliance-Bewertung oder fremde produktive
-Implementierung.
-
----
-
-## 3. Keine zweite Requirement Registry
-
-Die historische v1.0.0-Bezeichnung `ComplianceRequirementRegistry` ist **keine aktuelle
-Implementierungsanforderung** und darf nicht als neue Runtime- oder Governance-Registry materialisiert
-werden.
-
-Die kanonischen Compliance-Requirements- und Applicability-Surfaces liegen unter:
-
-- `docs/compliance/CAPITAL-AI-COMP/inventory/COMPLIANCE_REQUIREMENTS_INVENTORY.md`
-- `docs/compliance/CAPITAL-AI-COMP/inventory/APPLICABILITY_MATRIX.md`
-- `docs/compliance/CAPITAL-AI-COMP/mappings/REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md`
-- `docs/compliance/CAPITAL-AI-COMP/traceability/`
-
-Diese Surfaces sind Compliance-owned Assessment-/Traceability-Projektionen und erzeugen keine zweite
-Governance Control Plane. `src/platform/Compliance` darf sie technisch konsumieren oder Evidence fuer
-sie liefern, wird aber nicht selbst zur normativen Requirements Registry.
-
----
-
-## 4. Security-Komponente und Remediation-Ausfuehrung
-
-`src/platform/Security` ist die bestehende wiederverwendbare technische Security-Grenze. Der aktuelle
-Bestand umfasst insbesondere Security-/IAM-Helper und Adapter wie Auth-Middleware, native MFA/AAL,
-Rate Limiting, Secret-Kryptographie und TOTP dort, wo aktuelle Contracts dies noch vorsehen.
-
-ESS-0006 erzeugt **keine** zweite IAM-Authority, keinen neuen Secret Store, kein zentrales
-Security-Orchestrator-System und keinen produktiven PVC-Owner. Bestehende Security-Komponenten und
-Contracts werden erweitert, bevor duplizierte Security-Infrastruktur geschaffen wird.
-
-Innerhalb eines zulaessigen bounded Security-Slices kann Security insbesondere umsetzen:
-
-- Input-Validation und Sanitization;
-- AuthN-/AuthZ-Haertung innerhalb bereits akzeptierter IAM-/Policy-Vertraege;
-- Secret-Schutz und Secret-Leak-Prevention;
-- Security-Headers, CSP-Guardrails und sichere Defaults;
-- Dependency-/Supply-Chain-Remediation und semantisch sichere Library-Upgrades;
-- fail-closed Guards sowie Rate-/Size-/Resource-Limits;
-- Upload-, Parser-, Mail-, URL-, Redirect- und SSRF-Haertung;
-- Security-spezifische Negative Tests und Audit-/Evidence-Instrumentierung;
-- Workflow-Security sowie SBOM-/Provenance-/Artifact-Verifikationskontrollen;
-- Entfernung eindeutig unsicherer oder nicht mehr benoetigter Security-relevanter Komponenten.
-
-Die Security-Remediation darf eine fremd platzierte Datei aendern, ohne deren langfristige Domain-
-Ownership zu uebernehmen. Reine Security-Remediation verwendet die `CAPITAL-AI-SEC` Projektidentitaet
-und einen frischen `security`-Branch/PR; der betroffene Primary Owner/PVC und seine Contracts bleiben
-in Correlation/Evidence sichtbar.
-
----
-
-## 5. Compliance-Komponente
-
-`src/platform/Compliance` ist das bestehende technische Backend des SecurityComplianceAuditor unter
-ADR-0012. Der aktuelle Bestand umfasst insbesondere:
-
-- `scanners.ts` fuer repository-basierte technische Scanner;
-- `router.ts` fuer die autorisierten `/api/compliance/*`-Routen;
-- `store.ts` fuer zweckgebundene Run-/Evidence-/Certificate-Persistenz;
-- `types.ts` fuer gemeinsame technische Typen.
-
-Die vorhandenen Begriffe `certify`, `certificate` oder ISO-Control-Zuordnungen sind **interne
-technische Evidence-/Reporting-Semantik**. Sie beweisen keine behoerdliche, rechtliche oder externe
-Zertifizierung und begruenden keine Legal-Sufficiency-Aussage.
-
-`src/platform/Compliance` ist keine zweite Compliance-Projektarchitektur und keine normative
-Requirements Registry. Evidence aus dieser Komponente wird von `CAPITAL-AI-COMP` innerhalb des
-jeweils aktuellen Requirement-/Applicability-Kontexts bewertet.
-
----
-
-## 6. Evidence- und Assurance-Beziehung
-
-Security- und Compliance-Evidence duerfen korreliert werden, aber die Rollen bleiben getrennt:
+Security und Compliance sind zwei Komponenten mit **einer** gemeinsamen Nachweiskette:
 
 ```text
-Security requirement / test / finding
-        -> bounded Security remediation OR owner-routed domain remainder
-        -> implementation evidence
-        -> EVIDENCE_READY
-        -> separate Security re-test / verification evidence
-        -> VERIFIED / CLOSED only when all required gates are satisfied
-
-Compliance requirement / applicability
-        -> Control-/Owner-Mapping
-        -> Evidence aus Security, Runtime, Tests, Docs oder anderen Primary Ownern
-        -> unabhängige Compliance assessment
+Security Classification → Kontrolle → Audit-Eintrag → Compliance Evidence → Nachweis
 ```
 
-Daraus folgen fuenf Invarianten:
+Eine getrennte Spezifikation würde diese Kette an der Dokumentgrenze zerschneiden. Die
+Nummernreservierung aus ESS-0001 führt beide Bereiche ebenfalls gemeinsam
+(*Security & Compliance*).
 
-1. Security Evidence ist Input fuer Compliance Assessment, aber kein automatischer Compliance-PASS.
-2. Compliance Assessment ersetzt keine getrennte Security Verification.
-3. Fehlende oder stale Evidence darf weder von Security noch Compliance stillschweigend als PASS
-   behandelt werden.
-4. Ein Finding und eine Security-Remediation erzeugen keine Ownership-Uebernahme; nur der bounded
-   Security-Teil darf unter `CTRL-SEC-BOUNDED-REMEDIATION-001` durch Security implementiert werden.
-5. Implementierungsnachweis allein ist nie `VERIFIED/CLOSED`; `EVIDENCE_READY != VERIFIED`.
-   Reproduzierbare positive und negative Tests sowie, wo relevant, Hosted-/Runtime-Evidence sind
-   erforderlich. Human/CODEOWNER- oder betroffene Owner-Verifikation bleibt zusaetzlich erforderlich,
-   wenn Risiko oder bestehende Contracts dies verlangen.
+Die Komponenten bleiben im Repository getrennt.
 
 ---
 
-## 7. Audit, Risk und Traceability
+# Abgrenzung
 
-Die v1.0.0-Komponentenbegriffe `AuditTrail` und `RiskRegister` werden **nicht** als neue zentrale
-ESS-0006-Runtime vorgeschrieben. Aktuelle Audit-, Risk-, EventMesh-, Traceability- und
-Evidence-Mechanismen bleiben bei ihren bestehenden Authorities und Primary Ownern.
-
-ESS-0006 darf vorhandene Audit-/Risk-/Traceability-Evidence konsumieren oder technische Evidence
-erzeugen, aber weder eine zweite Append-only Audit Authority noch ein zweites Risk Register oder eine
-zweite EventMesh-/Traceability-Plane einfuehren.
-
----
-
-## 8. Events und Integration
-
-ESS-0006 verlangt keine eigene Event-Bus-Implementierung und keine feste Liste von
-`Security*Event`-/`Compliance*Event`-Typen. Historische v1.0.0 Event-Listen sind keine
-Implementierungsanforderung.
-
-Wo Security- oder Compliance-Code Events publiziert oder konsumiert, gelten die aktuellen bestehenden
-EventMesh-/Traceability-Contracts. Nicht implementierte historische Events duerfen nicht allein wegen
-dieser ESS neu geschaffen werden.
-
-Direkte Abhaengigkeiten oder Zusammenarbeit mit Supervisor, Platform Director, Version Manager,
-Release Center oder Documentary Engine werden nur ueber die jeweils aktuellen Contracts/PVC-Owner-
-Grenzen abgeleitet; ESS-0006 erzeugt keine separate Orchestrierungsbeziehung.
+| Dokument | Verantwortung |
+|---|---|
+| ESS-0001-CONTRACTS Chapter 11 | sämtliche Sicherheits- und Compliance-Regeln |
+| ESS-0005 | Ausführung von Security-Validatoren |
+| ESS-0012-CONTRACTS | Governance-Prüfung der Dokumentation |
+| **ESS-0006** | **Komponentenspezifikation Security und Compliance** |
 
 ---
 
-## 9. Nicht-Ziele und harte Grenzen
+# Enterprise Principle
 
-ESS-0006 autorisiert insbesondere **nicht**:
+Sicherheit wird nachgewiesen, nicht behauptet.
 
-- eine zweite Compliance Requirement Registry;
-- eine zentrale Security-/Compliance-Runtime oder einen zweiten Orchestrator;
-- eine zweite IAM-, Policy-, Audit-, Risk-, Release-, Deployment-, Governance-, EventMesh- oder
-  Traceability-Authority;
-- eine gemeinsame Security/Compliance-Projekt-Ownership;
-- fremde fachliche Produkt-/Business-Implementierung oder dauerhafte PVC-Ownership durch SEC;
-- Security-Gate-Abschwaechung, Finding-Unterdrueckung oder niedrigere Audit-Thresholds;
-- geschuetzte Production-, IAM-Admin-, Billing-/Money-, Entitlement-, Secret-, DNS-, Datenloeschungs-
-  oder Resource-Mutationen ohne die separate zuständige Authority;
-- automatische Compliance-, regulatorische oder Legal-Sufficiency-Aussagen;
-- externe oder behoerdliche Zertifizierung aufgrund interner Scanner/Reports;
-- Wiederbelebung der historischen ADR-0007 Compliance Value Chain.
+Eine Compliance-Aussage ohne Nachweis besitzt keine Gültigkeit.
 
-Die bounded Security-Remediation aus `CTRL-SEC-BOUNDED-REMEDIATION-001` ist ausdruecklich **keine**
-Ausnahme von diesen Grenzen.
+Der Audit Trail ist unveränderbar — auch für die Komponente, die ihn schreibt.
 
 ---
 
-## 10. P0/P1- und Dependency-Referenzfall
+# Position in der Architektur
 
-Ein bestaetigtes `CRITICAL`/`HIGH` Finding darf auf einem frischen Security-Branch unmittelbar bounded
-remediert werden, wenn die technische Korrektur eindeutig ist, Domain-Semantik nicht erweitert wird,
-keine geschuetzte externe Mutation erforderlich ist und die current-main-/Writer-Korrelation
-konfliktfrei oder explizit sequenziert ist. PR-Creation-, Hosted-CI-, Human/CODEOWNER-Merge-, Release-
-und Production-Gates bleiben unveraendert.
+Beide Komponenten sind Querschnittsmodule gemäß ESS-0001-CONTRACTS Chapter 16.
 
-Bei einer bestaetigten High/Critical npm-Schwachstelle darf Security insbesondere die tatsaechlich
-betroffene Dependency und sichere Mindestversion bestimmen, `package.json`/`package-lock.json`
-aktualisieren, Runtime-Haertung/Defense-in-Depth und Negative Tests ergaenzen sowie verfuegbare
-`npm audit`-, TypeScript-, Unit-, Build- und Security-Checks ausfuehren. Der Fix wird nicht allein
-deshalb blockiert, weil Manifest, Lockfile oder verwundbare Implementierung organisatorisch einem
-produktiven Projektpfad zugeordnet sind.
+Zulässige Abhängigkeiten: Core, Shared.
 
-Erfordert das Upgrade fachliche Semantik, eine neue fremde Architecture Authority oder geschuetzte
-externe Mutation, endet die Delegation an dieser Grenze und der nicht trennbare Rest wird an den
-zustaendigen Owner geroutet.
+Unzulässig: Version Manager, Supervisor, Platform Director.
 
 ---
 
-## 11. Success Criteria
-
-ESS-0006 ist semantisch konsistent, wenn:
-
-- dieselbe stabile ESS-Identitaet als bounded Komponentenspezifikation erhalten bleibt;
-- `src/platform/Security` und `src/platform/Compliance` die einzigen von ESS-0006 direkt
-  spezifizierten technischen Komponenten sind;
-- Security Requirements/Testing/Verification bei `CAPITAL-AI-SEC` bleiben;
-- reine bounded Security-Remediation nach `CTRL-SEC-BOUNDED-REMEDIATION-001` durch
-  `CAPITAL-AI-SEC` implementierbar ist, auch in fremd platzierten Dateien;
-- diese Ausfuehrung keine fachliche Authority/PVC-Ownership uebertraegt und an Business-/Architecture-
-  oder Protected-Mutation-Grenzen stoppt;
-- `EVIDENCE_READY != VERIFIED` und Closure einen getrennten Re-Test/Evidence-Schritt erfordert;
-- Compliance Requirements/Applicability/Assessment bei `CAPITAL-AI-COMP` bleiben;
-- Compliance Requirements nur aus den kanonischen COMP-Surfaces bezogen werden;
-- keine zweite Requirement Registry, Security-/Compliance-Runtime, IAM-/Audit-/Risk-/Release-/
-  Deployment-/Governance-Plane oder EventMesh entsteht;
-- interne Compliance-Evidence keine Zertifizierungs- oder Legal-Sufficiency-Behauptung erzeugt.
+# End of Chapter 1
 
 ---
 
-## Governance Statement
+# Chapter 2
 
-ESS-0006 v1.2.0 ersetzt innerhalb derselben ESS-Identitaet die v1.1.0-Einschraenkung, nach der
-fremd platzierte produktive Security-Remediation grundsaetzlich beim Primary Owner verbleiben musste.
-Die neue Semantik ist eng: `CAPITAL-AI-SEC` darf nur bounded Security-primaere Repository-Remediation
-nach `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` / `CTRL-SEC-BOUNDED-REMEDIATION-001` implementieren.
-Datei- oder PVC-Zuordnung allein ist kein DENY-Kriterium und erzeugt keinen Ownership-Transfer.
+# Security Center
 
-Historische Texte/Evidence duerfen fuer Traceability erhalten bleiben, sind aber keine zusaetzliche
-aktuelle Authority. Laufende Security-Verifikation und Compliance-Bewertung bleiben von der
-Implementierung als getrennte Evidence-/Review-Schritte erhalten.
+## Kernkomponenten
+
+### ClassificationRegistry
+
+Führung der Sicherheitsklassifizierung je Komponente.
+
+Stufen gemäß Chapter 11: Public, Internal, Confidential, Restricted, Critical.
+
+Eine Komponente ohne Klassifizierung ist nicht integrationsfähig.
 
 ---
 
-## Version History
+### SecretGuard
+
+Durchsetzung des Secret Contracts.
+
+Prüft auf
+
+Secrets im Repository
+
+Secrets in Logs
+
+Secrets in Events
+
+Secrets in Dokumentation
+
+Secrets in Fehlermeldungen
+
+Ein Fund ist ausnahmslos ein Critical-Befund.
+
+---
+
+### AuditTrail
+
+Unveränderbare Protokollierung gemäß Chapter 11.
+
+Jeder Eintrag führt Zeitpunkt, auslösende Instanz, Komponente, Operation, Ergebnis, Version,
+Correlation ID, ESS- und ADR-Referenzen.
+
+Einträge werden **niemals** gelöscht oder verändert — auch nicht durch das Security Center
+selbst.
+
+---
+
+### RiskRegister
+
+Führung sämtlicher Risiken gemäß Chapter 11.
+
+Jedes Risiko besitzt ID, Kategorie, Eintrittswahrscheinlichkeit, Auswirkung, betroffene
+Komponenten, Maßnahme, Verantwortlichen, Status.
+
+Ein Risiko wird niemals ohne Dokumentation geschlossen.
+
+---
+
+### SecurityReviewCoordinator
+
+Steuerung der Review-Pflicht gemäß Chapter 11 — verbindlich bei Restricted- und
+Critical-Komponenten, Änderungen an Authentifizierung, Autorisierung, Zahlungsprozessen,
+Datenbank-Policies und Secret-Verwaltung.
+
+---
+
+# End of Chapter 2
+
+---
+
+# Chapter 3
+
+# Compliance Center
+
+## Kernkomponenten
+
+### ComplianceRequirementRegistry
+
+Zuordnung der Compliance-Anforderungen je Komponente.
+
+Datenschutz, Finanzaufsicht, Aufbewahrungs-, Nachweis-, Protokoll- und Exportpflichten.
+
+---
+
+### EvidenceCollector
+
+Sammlung der Nachweise gemäß Chapter 11, *Compliance Evidence*.
+
+Zulässige Nachweise: Audit Trail, Security Report, Compliance Report, Validation Report,
+Test Report, Architecture Report.
+
+Behauptungen ohne Nachweis werden verworfen.
+
+---
+
+### ComplianceReporter
+
+Aufbereitung der Nachweisdaten.
+
+Die physische Berichtserzeugung erfolgt durch die Documentary Engine gemäß ESS-0010.
+
+---
+
+# End of Chapter 3
+
+---
+
+# Chapter 4
+
+# Interfaces
+
+## ISecurityClassifier
+
+```text
+classify(component)      Klassifizierung ermitteln
+requiresReview(change)   Review-Pflicht prüfen
+```
+
+## IAuditTrail
+
+```text
+append(entry)            Eintrag hinzufügen, niemals ändern
+query(filter)            Auswertung
+verify()                 Integritätsprüfung
+```
+
+## IRiskRegister
+
+```text
+record(risk)             Aufnahme
+assess(risk)             Bewertung
+close(id, evidence)      Schließen ausschließlich mit Nachweis
+```
+
+## IComplianceEvidence
+
+```text
+collect(requirement)     Nachweise sammeln
+verify(requirement)      Erfüllung prüfen
+```
+
+---
+
+# End of Chapter 4
+
+---
+
+# Chapter 5
+
+# Events
+
+## Erzeugte Events
+
+SecurityScanCompletedEvent
+
+SecurityClassificationChangedEvent
+
+SecurityViolationDetectedEvent
+
+SecretExposureDetectedEvent
+
+ComplianceValidatedEvent
+
+ComplianceViolationDetectedEvent
+
+RiskDetectedEvent
+
+RiskResolvedEvent
+
+AuditCompletedEvent
+
+PermissionChangedEvent
+
+## Konsumierte Events
+
+RepositoryScannedEvent
+
+ImplementationCompletedEvent
+
+ComponentRegisteredEvent
+
+VersionChangedEvent
+
+MigrationCompletedEvent
+
+---
+
+# End of Chapter 5
+
+---
+
+# Chapter 6
+
+# Integration und Bestand
+
+## Supervisor
+
+Sicherheitsvorfälle werden gemäß ESS-0002 unmittelbar auf Eskalationsstufe 5 gemeldet.
+
+## Platform Director
+
+Entscheidet über Sicherheitsausnahmen und Risikoakzeptanz — ausschließlich per ADR.
+
+## Version Manager
+
+Sicherheitskorrekturen besitzen gemäß Chapter 11 jederzeit Vorrang vor funktionalen
+Änderungen.
+
+---
+
+# Bekannter Bestand
+
+Security besitzt den höchsten Implementierungsgrad der Plattform.
+
+`server/iam/` umfasst Authentifizierungs-Middleware, Rate Limiting, Secret-Verschlüsselung
+und TOTP. `server/stepUp.ts` ergänzt Step-Up-Authentifizierung. ADR-0003.5 ist als
+abgeschlossen verifiziert, ADR-0009 (CORS Hardening) ebenfalls.
+
+Die Datenbank führt `audit_logs_iam`, `iam_access_log`, `security_events`,
+`step_up_tokens` und `break_glass_codes`.
+
+**Diese Implementierung ist gemäß Chapter 14 zu registrieren und zu kapseln — niemals neu zu
+entwickeln.**
+
+## Offene Befunde
+
+| Befund | Regel |
+|---|---|
+| keine Komponente besitzt eine Sicherheitsklassifizierung | `GOV-REPO-007` |
+| kein Audit Trail im Sinne von Chapter 11 | Chapter 11 |
+| Security Metadata in 23 von 24 Manifesten unvollständig | `GOV-REPO-007` |
+| ADR-0012: Compliance-Endpunkte existieren nicht | `FND-ADR-0012-01` |
+
+---
+
+# Enterprise Rules
+
+Keine Komponente ohne Security Classification.
+
+Keine Restricted-Komponente ohne Security Review.
+
+Keine Compliance-Aussage ohne Nachweis.
+
+Keine Manipulation des Audit Trails.
+
+Keine Secrets im Repository.
+
+Keine Ausnahme ohne ADR.
+
+---
+
+# Success Criteria
+
+✓ sämtliche Komponenten klassifiziert
+
+✓ Audit Trail lückenlos und unveränderbar
+
+✓ sämtliche Risiken dokumentiert und bewertet
+
+✓ sämtliche Compliance-Anforderungen mit Nachweis belegt
+
+✓ keine Freigabe ohne Sicherheitsprüfung
+
+✓ Bestandsimplementierung gekapselt statt ersetzt
+
+---
+
+# Enterprise Final Summary
+
+**Document ID** ESS-0006
+
+**Titel** CAPITAL-AI Security & Compliance
+
+**Status** Enterprise Specification
+
+**Version** 1.0.0
+
+---
+
+# Governance Statement
+
+ESS-0006 ist die verbindliche Komponentenspezifikation von Security Center und
+Compliance Center.
+
+Abweichungen erfordern eine neue Architecture Decision Record.
+
+---
+
+# Version History
 
 | Version | Status | Beschreibung |
-|---|---|---|
-| 1.0.0 | Historical baseline | Initiale kombinierte Komponentenspezifikation mit heute stale Registry-/Audit-/Risk-/Event-/Collaboration-Annahmen |
-| 1.1.0 | Revalidated | Bounded Security-/Compliance-Komponentengrenze; getrennte SEC/COMP-Assurance-Rollen; keine zweite Requirement Registry oder parallele Runtime |
-| 1.2.0 | Revalidated | Delegated bounded Security-Remediation auch in fremd platzierten Repository-Dateien; keine PVC-/Domain-Ownership-Uebertragung; Verification bleibt getrennt |
+|----------|--------|--------------|
+| 1.0.0 | Initial Release | Erste Komponentenspezifikation Security und Compliance |
 
 ---
 
 # End of Document
 
-ESS-0006  
-CAPITAL-AI Security & Compliance  
-Version 1.2.0
+ESS-0006
+
+CAPITAL-AI Security & Compliance
+
+Version 1.0.0

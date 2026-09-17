@@ -12,15 +12,6 @@ import {
 } from '../../src/services/ranking.service';
 import { compositeLevelToRankingDqPoints } from '../../src/platform/MarketData/CompositeDataQuality';
 
-const callerClassification = {
-  category_main: 'Layer 1' as const,
-  category_sub: 'Chain-native Asset' as const,
-  asset_type: 'coin' as const,
-  tier: 3 as const,
-  confidence: 0.01,
-  reasoning: [] as string[],
-};
-
 describe('ranking.service', () => {
   describe('SC-7 composite opt-in gates', () => {
     it('keeps ranking score impact disabled', () => {
@@ -50,11 +41,18 @@ describe('ranking.service', () => {
       expect(resolveRankingDqPoints(payload, { compositeLevel: 'medium' })).toBe(70);
     });
 
-    it('calculateRankScore with compositeLevel high equals the high-DQ payload path', () => {
+    it('calculateRankScore with compositeLevel high equals legacy high payload path', () => {
       const base = {
-        asset_name: 'Bitcoin',
-        symbol: 'BTC',
-        classification: callerClassification,
+        asset_name: 'A',
+        symbol: 'A',
+        classification: {
+          category_main: 'Layer 1' as const,
+          category_sub: 'Chain-native Asset' as const,
+          asset_type: 'coin' as const,
+          tier: 1 as const,
+          confidence: 0.9,
+          reasoning: [] as string[],
+        },
         scores: { liquidity: 80 },
       };
       const viaPayload = calculateRankScore(
@@ -72,39 +70,23 @@ describe('ranking.service', () => {
   });
 
   describe('calculateRankScore', () => {
-    it('gewichtet final_score, Datenqualitaet, kanonisches Tier und Liquiditaet gemaess 0.70/0.15/0.10/0.05', () => {
+    it('gewichtet final_score, Datenqualitaet, Tier und Liquiditaet gemaess der dokumentierten Formel (0.70/0.15/0.10/0.05)', () => {
       const payload = {
-        asset_name: 'Bitcoin',
-        symbol: 'BTC',
+        asset_name: 'A',
+        symbol: 'A',
         data_quality: { level: 'high' as const },
-        classification: callerClassification,
+        classification: {
+          category_main: 'Layer 1' as const,
+          category_sub: 'Chain-native Asset' as const,
+          asset_type: 'coin' as const,
+          tier: 1 as const,
+          confidence: 0.9,
+          reasoning: [],
+        },
         scores: { liquidity: 80 },
       };
       const score = calculateRankScore(payload, 90);
       expect(score).toBeCloseTo(92, 5);
-    });
-
-    it('caller-provided tier/confidence cannot manipulate the rank score', () => {
-      const base = {
-        asset_name: 'Bitcoin',
-        symbol: 'BTC',
-        data_quality: { level: 'high' as const },
-        scores: { liquidity: 80 },
-      };
-      const spoofedLow = calculateRankScore({
-        ...base,
-        classification: callerClassification,
-      }, 90);
-      const spoofedHigh = calculateRankScore({
-        ...base,
-        classification: {
-          ...callerClassification,
-          tier: 1 as const,
-          confidence: 1,
-        },
-      }, 90);
-      expect(spoofedLow).toBeCloseTo(spoofedHigh, 10);
-      expect(spoofedLow).toBeCloseTo(92, 5);
     });
 
     it('niedrigere Datenqualitaet senkt den Rank-Score bei identischem final_score', () => {
@@ -121,44 +103,38 @@ describe('ranking.service', () => {
 
   describe('isTop10Eligible', () => {
     const eligibleBase = {
-      asset_name: 'Bitcoin',
-      symbol: 'BTC',
-      classification: callerClassification,
+      asset_name: 'A',
+      symbol: 'A',
+      classification: {
+        category_main: 'Layer 1' as const,
+        category_sub: 'Chain-native Asset' as const,
+        asset_type: 'coin' as const,
+        tier: 1 as const,
+        confidence: 0.8,
+        reasoning: [],
+      },
       scores: { liquidity: 60 },
       data_quality: { level: 'high' as const },
     };
 
-    it('ist erfuellt, wenn kanonische Confidence >= 0.65, Liquiditaet >= 50 und Datenqualitaet nicht low ist', () => {
+    it('ist erfuellt, wenn Confidence >= 0.65, Liquiditaet >= 50 und Datenqualitaet nicht "low" ist', () => {
       expect(isTop10Eligible(eligibleBase)).toBe(true);
     });
 
-    it('ignoriert niedrige Caller-Confidence bei einem kanonisch bekannten Asset', () => {
+    it('ist NICHT erfuellt bei Confidence unter 0.65', () => {
       expect(
         isTop10Eligible({
           ...eligibleBase,
-          classification: { ...eligibleBase.classification, confidence: 0 },
+          classification: { ...eligibleBase.classification, confidence: 0.5 },
         }),
-      ).toBe(true);
-    });
-
-    it('Caller-Classification kann ein kanonisch unbekanntes Asset nicht freischalten', () => {
-      expect(isTop10Eligible({
-        ...eligibleBase,
-        asset_name: 'Unknown',
-        symbol: 'UNKNOWN-ASSET',
-        classification: {
-          ...eligibleBase.classification,
-          tier: 1 as const,
-          confidence: 1,
-        },
-      })).toBe(false);
+      ).toBe(false);
     });
 
     it('ist NICHT erfuellt bei Liquiditaet unter 50', () => {
       expect(isTop10Eligible({ ...eligibleBase, scores: { liquidity: 20 } })).toBe(false);
     });
 
-    it('ist NICHT erfuellt bei Datenqualitaet low', () => {
+    it('ist NICHT erfuellt bei Datenqualitaet "low"', () => {
       expect(isTop10Eligible({ ...eligibleBase, data_quality: { level: 'low' } })).toBe(false);
     });
 

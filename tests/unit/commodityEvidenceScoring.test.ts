@@ -15,7 +15,6 @@ function evidence(lastDate = '2026-08-01'): CommodityMarketEvidence {
     version: 'commodity-market-evidence/1.0.0',
     symbol: 'CMD_GOLD_COMEX',
     provider: 'TwelveData',
-    providerId: 'twelvedata',
     providerSymbol: 'XAU/USD',
     providerName: 'Gold Spot',
     points,

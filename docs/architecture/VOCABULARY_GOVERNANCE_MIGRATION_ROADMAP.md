@@ -1,40 +1,60 @@
 # CAPITAL-AI Vocabulary Governance Migration Roadmap
 
-**Status:** SUPERSEDED / HISTORICAL IMPLEMENTATION EVIDENCE  
-**Original completion:** 2026-08-10  
-**Superseded by:** `VOCABULARY-WORDING-WIKI-SUPERSESSION-0001`  
-**Current architecture:** `docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md`  
-**Vocabulary authority:** `ESS-0017` / `ESS-0017-CONTRACTS` / `ADR-0078`
+Status: COMPLETE / OPERATIONAL  
+Datum / Date: 2026-08-10  
+Authority: ESS-0001-CONTRACTS  
+Related: ESS-0010, ESS-0012, ESS-0017, ESS-0017-CONTRACTS, ADR-0046  
+CI Cost Governance: `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md`
 
-## Historical purpose
+## Deutsch
 
-Dieses Dokument dokumentiert ausschließlich den abgeschlossenen Migrationspfad der ursprünglichen Vocabulary-Governance-Phasen. Es ist nach Wirksamwerden der Supersession **keine aktuelle Architektur-, Status- oder Roadmap-Authority** mehr.
+### Zielbild
+Naming, Wording, Dokumentation, Traceability und Governance werden als zusammenhängender, ereignisbasierter Teil der CAPITAL-AI Wertschöpfungskette betrieben. Code bleibt Englisch; Enterprise-Dokumentation wird Deutsch und Englisch geführt; menschlich sichtbare Pull-Request-Informationen werden Deutsch geführt.
 
-Die historischen Phasen bleiben für Traceability erhalten:
+### Phase 0 — Baseline und Schutz — COMPLETE
+### Phase 1 — Governance Foundation — COMPLETE
+### Phase 1.5 — Authority- und Nummernraum-Konsolidierung — COMPLETE
+`ESS-0012` bleibt Documentation Governance; `ESS-0017` / `ESS-0017-CONTRACTS` bleiben Vocabulary Governance; `ADR-0046` dokumentiert die Authority-Trennung.
 
-- Phase 0 — Baseline und Schutz — COMPLETE
-- Phase 1 — Governance Foundation — COMPLETE
-- Phase 1.5 — Authority- und Nummernraum-Konsolidierung — COMPLETE
-- Phase 2 — Canonical Vocabulary Registry — COMPLETE
-- Phase 3 — Safe Rename Gate — COMPLETE
-- Phase 4 — Bilingual Documentary Integration — COMPLETE
-- Phase 5 — Event-Driven Value Chain — COMPLETE
-- Phase 6 — Incremental Existing-Code Migration — COMPLETE
-- Phase 7 — Continuous Governance — COMPLETE
+### Phase 2 — Canonical Vocabulary Registry — COMPLETE
+Abschluss durch PR #145.
 
-Historische PR-/CI-Evidence bleibt über Git-Historie und bestehende Evidence-Artefakte nachvollziehbar. `ADR-0046` ist nur die frühere Display-ID der Vocabulary-Entscheidung; die aktuelle Display-ID lautet `ADR-0078`.
+### Phase 3 — Safe Rename Gate — COMPLETE
+Abschluss durch PR #151 / main CI #649.
 
-## Current successor
+### Phase 4 — Bilingual Documentary Integration — COMPLETE
+Abschluss durch PR #152 und erfolgreichen Deploy.
 
-Die aktuelle End-to-End-Struktur wird in folgenden Artefakten geführt:
+### Phase 5 — Event-Driven Value Chain — COMPLETE
+Abschluss durch PR #153 / main CI #656 / verifiziertes Render-Deployment.
 
-- `docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md`
-- `docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md`
-- `docs/roadmaps/work-packages/VW-0_VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md`
-- `docs/roadmaps/work-packages/VW-1_UI_MESSAGE_CATALOG_2026-08-21.md`
-- `docs/roadmaps/work-packages/VW-2_FINTECH_CONCEPT_BASELINE_2026-08-21.md`
-- `docs/roadmaps/work-packages/VW-3_WORDING_USAGE_INDEX_2026-08-21.md`
-- `docs/roadmaps/work-packages/VW-4_DELIVERY_ADAPTERS_2026-08-21.md`
-- `docs/roadmaps/work-packages/VW-5_DOCUMENTARY_KNOWLEDGE_TRACEABILITY_PROJECTION_2026-08-21.md`
+### Phase 6 — Incremental Existing-Code Migration — COMPLETE
+PR #154 etablierte Naming-Debt-Inventar und Klassifizierung. PR #155 schloss Phase 6 produktiv ab. `REN-0001: Plan -> SubscriptionTier` bleibt `CONDITIONAL`, `REN-0002: Screener -> Screening` bleibt `BLOCKED`. Es existierten keine `SAFE`-Kandidaten; deshalb wurde korrekt keine Rename-Mutation erzwungen. Nicht sichere Kandidaten verbleiben mit `automaticMigrationAllowed: false` im geschützten Backlog.
 
-Physische Archivierung weiterer historischer Phase-Dokumente erfolgt erst nach Reference-/Registry-Korrelation und ist nicht Bestandteil des automatischen Supersession-Schritts.
+### Phase 7 — Continuous Governance — COMPLETE
+Abschluss durch PR #156. Implementiert sind Continuous Repository Vocabulary Validation, kostengünstiger CI-Einstiegspunkt, Lifecycle Evidence sowie Regression Protection. Die Canonical Vocabulary Registry bleibt Single Source of Truth; Human Approval, Safe-Rename-Gate, EventMesh und CI-Budgetgrenzen bleiben übergeordnet.
+
+### Migrationsabschluss
+Die Vocabulary-Governance-Migration ist abgeschlossen und geht in den operativen Governance-Betrieb über. Weitere Verbesserungen an Documentary Engine, Event-Driven Value Chain und Documentation Hygiene werden in `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` geführt.
+
+## English
+
+### Migration sequence
+0. Baseline and protection — complete.  
+1. Governance foundation — complete.  
+1.5. Authority and namespace reconciliation — complete.  
+2. Canonical Vocabulary Registry — complete through PR #145.  
+3. Safe Rename Gate — complete through PR #151 / main CI #649.  
+4. Bilingual Documentary Integration — complete through PR #152.  
+5. Event-Driven Value Chain — complete through PR #153 / main CI #656.  
+6. Incremental Existing-Code Migration — complete through PRs #154 and #155; no unsafe rename was forced.  
+7. Continuous Governance — complete through PR #156.
+
+### Success criteria
+- English-only technical naming for new code.
+- DE/EN documentation cannot semantically drift independently.
+- Documentation Governance remains ESS-0012; Vocabulary Governance remains ESS-0017.
+- Active renames cannot bypass impact validation.
+- No non-SAFE rename can be automatically migrated.
+- Lifecycle events use the existing EventMesh.
+- Automation remains subordinate to protected-change boundaries and CI budget limits.

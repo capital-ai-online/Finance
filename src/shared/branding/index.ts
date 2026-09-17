@@ -1,1 +1,0 @@
-export { CapitalAiLogo } from './CapitalAiLogo';

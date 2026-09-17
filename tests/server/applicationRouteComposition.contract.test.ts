@@ -9,13 +9,12 @@ const applicationPath = path.join(repoRoot, 'server.application.ts');
 const expectedMounts = [
   "app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic, openai));",
   "app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));",
-  "app.use('/api/stripe', stripeReturnUrlGuard, stripeRouter);",
+  "app.use('/api/stripe', stripeRouter);",
   "app.use('/api/orchestrator', orchestratorRouter);",
-  "app.use(\n    '/api/admin/hygiene',\n    rateLimitMiddleware({ name: 'document-hygiene', maxRequests: 60, windowMs: 60_000 }),\n    hygieneRouter,\n  );",
+  "app.use('/api/admin/hygiene', hygieneRouter);",
   "app.use('/api/admin', systemEventsRouter);",
   "app.use('/api/admin', versionManagerRouter);",
   "app.use('/api/auth', stepUpRouter);",
-  "app.use('/api/privacy', privacyRouter);",
   "app.use('/api/compliance', complianceRouter);",
   "app.use('/api/scoring', scoreValidationRouter);",
   "app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));",
@@ -24,21 +23,16 @@ const expectedMounts = [
   "app.use('/api/admin/supervisor', supervisorRouter);",
   "app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));",
   "app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);",
-  "app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);",
+  "app.use('/api/news', newsRouter);",
   "app.use('/api/registry', registryRouter);",
-  "app.use(\n    '/api/social-media',\n    rateLimitMiddleware({ name: 'social-media', maxRequests: 60, windowMs: 60_000 }),\n    socialMediaRouter,\n  );",
+  "app.use('/api/social-media', socialMediaRouter);",
   "app.use('/api', aiRouter);",
 ] as const;
 
-const directNewsMountPattern = /app\.(?:use|get|post|put|patch|delete)\(\s*['"]\/api\/news(?:\/[^'"]*)?['"]/;
-
-describe('ADR-0083 application route composition contract', () => {
+describe('ADR-0014 application route composition contract', () => {
   it('keeps the canonical composer aligned with the current production route mounts', () => {
     const composer = fs.readFileSync(composerPath, 'utf8');
     const application = fs.readFileSync(applicationPath, 'utf8');
-
-    expect(composer).toContain("import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';");
-    expect(composer).toContain("import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';");
 
     for (const mount of expectedMounts) {
       expect(composer).toContain(mount);
@@ -49,17 +43,6 @@ describe('ADR-0083 application route composition contract', () => {
         expect(application).toContain(mount);
       }
     }
-  });
-
-  it('keeps every productive /api/news route behind the canonical entitlement parent gate', () => {
-    const composer = fs.readFileSync(composerPath, 'utf8');
-    const application = fs.readFileSync(applicationPath, 'utf8');
-
-    expect(composer).toContain(
-      "app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);",
-    );
-    expect(composer).not.toContain("app.use('/api/news', newsRouter);");
-    expect(application).not.toMatch(directNewsMountPattern);
   });
 
   it('keeps route composition free of Stripe raw-body and global middleware ownership', () => {

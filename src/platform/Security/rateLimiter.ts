@@ -12,12 +12,6 @@
 // ausgelagert werden. Für den aktuellen Deployment-Stand (eine Instanz)
 // ist das unkritisch, aber bei Skalierung erneut zu prüfen.
 
-import { isIP } from 'node:net';
-import {
-  resolveCloudflareRenderEdgeTrust,
-  type EdgeTrustOptions,
-} from './edgeTrust';
-
 interface Bucket {
   count: number;
   windowStart: number;
@@ -62,36 +56,11 @@ export function resetRateLimit(key: string): void {
   buckets.delete(key);
 }
 
-function validatedIp(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const candidate = value.trim();
-  return isIP(candidate) > 0 ? candidate : null;
-}
-
-export interface ClientIpResolutionOptions extends EdgeTrustOptions {}
-
-/**
- * Resolves the effective client IP without trusting caller-controlled forwarding headers.
- *
- * On Render, Cloudflare visitor identity is accepted only after the Cloudflare -> Render
- * provenance contract passes. Missing/mismatched edge proof fails closed to the direct peer
- * identity. This deliberately avoids raw X-Forwarded-For and prevents direct-origin callers from
- * choosing another rate-limit/audit identity by spoofing CF-Connecting-IP.
- */
-export function getClientIp(
-  req: { headers: Record<string, unknown>; socket?: { remoteAddress?: string }; ip?: string },
-  options: ClientIpResolutionOptions = {},
-): string {
-  const edgeTrust = resolveCloudflareRenderEdgeTrust(req, options);
-  if (edgeTrust.state === 'trusted-cloudflare-render' && edgeTrust.clientIp) {
-    return edgeTrust.clientIp;
+export function getClientIp(req: { headers: Record<string, unknown>; socket?: { remoteAddress?: string }; ip?: string }): string {
+  // Render terminiert TLS und setzt x-forwarded-for; erstes Element ist die echte Client-IP.
+  const xff = req.headers['x-forwarded-for'];
+  if (typeof xff === 'string' && xff.length > 0) {
+    return xff.split(',')[0].trim();
   }
-
-  // Ohne explizite Proxy-Vertrauensregel entspricht req.ip dem direkten Socket-Peer. Das ist für
-  // lokale/non-Render Umgebungen und für fail-closed Edge-Fallbacks die engste verfügbare Quelle.
-  const expressIp = validatedIp(req.ip);
-  if (expressIp) return expressIp;
-
-  const socketIp = validatedIp(req.socket?.remoteAddress);
-  return socketIp ?? 'unknown';
+  return req.ip || req.socket?.remoteAddress || 'unknown';
 }

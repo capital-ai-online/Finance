@@ -53,15 +53,6 @@ export function createCryptoPrimaryProviderStage(options: {
   const fetchImpl = options.fetchImpl ?? fetch;
   const now = options.now ?? Date.now;
   const logger = options.logger ?? console;
-  // The background market-data feed is a bounded compatibility surface, not the global asset
-  // discovery/scoring engine. Only symbols explicitly present in its configured fallback/core
-  // universe are eligible for periodic enrichment. All other catalog symbols are hydrated on
-  // demand through verified-asset-display/1.0.0 or their domain evidence contracts.
-  const configuredCryptoSymbols = new Set(
-    options.fallbackAssets
-      .filter(asset => asset.type === 'crypto')
-      .map(asset => asset.symbol.toUpperCase()),
-  );
 
   return {
     name: 'crypto-primary-sources',
@@ -75,9 +66,8 @@ export function createCryptoPrimaryProviderStage(options: {
           }
           const payload = await response.json() as any;
           if (!Array.isArray(payload)) throw new Error('CoinGecko API returned invalid format');
-          const boundedPayload = payload.filter((coin: any) => configuredCryptoSymbols.has(String(coin?.symbol ?? '').toUpperCase()));
-          logger.info(`[Crypto Live API] CoinGecko loaded ${payload.length} assets; ${boundedPayload.length} configured core assets enter periodic enrichment.`);
-          return boundedPayload.map((coin: any) => normalizeCryptoAsset({
+          logger.info(`[Crypto Live API] CoinGecko loaded ${payload.length} assets`);
+          return payload.map((coin: any) => normalizeCryptoAsset({
             symbol: coin.symbol,
             name: coin.name,
             price: coin.current_price,

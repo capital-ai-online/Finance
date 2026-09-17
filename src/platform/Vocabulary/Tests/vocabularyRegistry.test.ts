@@ -17,7 +17,7 @@ function concept(overrides: Partial<VocabularyConcept> = {}): VocabularyConcept 
     status: 'approved',
     version: '1.0.0',
     essReferences: ['ESS-0017'],
-    adrReferences: ['ADR-0078'],
+    adrReferences: ['ADR-0046'],
     traceabilityReferences: [],
     ...overrides,
   };
@@ -34,7 +34,6 @@ describe('VocabularyRegistry contracts', () => {
   it('normalizes lookup terms deterministically', () => {
     const registry = createDefaultVocabularyRegistry();
     expect(registry.resolveTerm('  MONTE CARLO  ')?.canonicalCodeTerm).toBe('MonteCarlo');
-    expect(registry.resolveTerm('Ｓｕｂｓｃｒｉｐｔｉｏｎ')?.canonicalCodeTerm).toBe('Subscription');
   });
 
   it('rejects duplicate concept IDs', () => {
@@ -45,78 +44,15 @@ describe('VocabularyRegistry contracts', () => {
 
   it('rejects cross-concept alias collisions', () => {
     const registry = new VocabularyRegistry();
-    registry.register(
-      concept({
-        id: 'VOC-PLATFORM-9998',
-        displayNameDE: 'Beispiel A',
-        displayNameEN: 'Example A',
-        aliases: ['SharedTerm'],
-      }),
-    );
+    registry.register(concept({ id: 'VOC-PLATFORM-9998', aliases: ['SharedTerm'] }));
     expect(() =>
       registry.register(
         concept({
           id: 'VOC-PLATFORM-9997',
           canonicalCodeTerm: 'OtherConcept',
-          displayNameDE: 'Beispiel B',
-          displayNameEN: 'Example B',
           aliases: ['sharedterm'],
         }),
       ),
-    ).toThrow(/TERM_COLLISION/);
-  });
-
-  it('rejects an active term that is already governed as forbidden', () => {
-    const registry = new VocabularyRegistry();
-    registry.register(
-      concept({
-        id: 'VOC-PLATFORM-9998',
-        displayNameDE: 'Beispiel A',
-        displayNameEN: 'Example A',
-        forbiddenTerms: ['LegacyTerm'],
-      }),
-    );
-
-    expect(() =>
-      registry.register(
-        concept({
-          id: 'VOC-PLATFORM-9997',
-          canonicalCodeTerm: 'LegacyTerm',
-          displayNameDE: 'Beispiel B',
-          displayNameEN: 'Example B',
-        }),
-      ),
-    ).toThrow(/TERM_COLLISION/);
-  });
-
-  it('rejects a forbidden term that is already active in another concept', () => {
-    const registry = new VocabularyRegistry();
-    registry.register(
-      concept({
-        id: 'VOC-PLATFORM-9998',
-        canonicalCodeTerm: 'ActiveTerm',
-        displayNameDE: 'Beispiel A',
-        displayNameEN: 'Example A',
-      }),
-    );
-
-    expect(() =>
-      registry.register(
-        concept({
-          id: 'VOC-PLATFORM-9997',
-          canonicalCodeTerm: 'OtherConcept',
-          displayNameDE: 'Beispiel B',
-          displayNameEN: 'Example B',
-          forbiddenTerms: ['activeterm'],
-        }),
-      ),
-    ).toThrow(/TERM_COLLISION/);
-  });
-
-  it('rejects active and forbidden term overlap within one concept', () => {
-    const registry = new VocabularyRegistry();
-    expect(() =>
-      registry.register(concept({ aliases: ['LegacyTerm'], forbiddenTerms: ['legacyterm'] })),
     ).toThrow(/TERM_COLLISION/);
   });
 
@@ -148,39 +84,5 @@ describe('VocabularyRegistry contracts', () => {
     input.aliases.push('LateMutation');
     expect(registry.resolveTerm('LateMutation')).toBeUndefined();
     expect(registry.getById(input.id)?.aliases.includes('LateMutation')).toBe(false);
-  });
-
-  it('uses the canonical ADR-0078 vocabulary authority and covers the complete FinTech baseline', () => {
-    const registry = createDefaultVocabularyRegistry();
-    expect(registry.list()).toHaveLength(67);
-    for (const item of registry.list()) {
-      expect(item.adrReferences).toContain('ADR-0078');
-      expect(item.adrReferences).not.toContain('ADR-0046');
-    }
-    expect(registry.getById('VOC-ANALYTICS-0108')?.canonicalCodeTerm).toBe('CanonicalScoreResult');
-    expect(registry.getById('VOC-PRODUCT-0103')?.canonicalCodeTerm).toBe('DeliverySurface');
-  });
-
-  it('provides the canonical AI Development Chat & Execution Terminology category', () => {
-    const registry = createDefaultVocabularyRegistry();
-    const developmentTerms = registry.list().filter((item) => item.category === 'ai-development-chat-execution');
-
-    expect(developmentTerms).toHaveLength(43);
-    expect(registry.resolveTerm('Pre-check')?.canonicalCodeTerm).toBe('PreCheck');
-    expect(registry.resolveTerm('Re-sync')?.canonicalCodeTerm).toBe('MainResync');
-    expect(registry.resolveTerm('Changed-file overlap')?.canonicalCodeTerm).toBe('ChangedFileOverlap');
-    expect(registry.resolveTerm('Head SHA')?.canonicalCodeTerm).toBe('HeadSha');
-    expect(registry.resolveTerm('Stand der Technik')?.canonicalCodeTerm).toBe('StateOfTheArt');
-    expect(registry.resolveTerm('/healthz')?.canonicalCodeTerm).toBe('LivenessEndpoint');
-    expect(registry.resolveTerm('/readyz')?.canonicalCodeTerm).toBe('ReadinessEndpoint');
-    expect(registry.resolveTerm('/healthz/readiness')?.canonicalCodeTerm).toBe('ReadinessProjectionEndpoint');
-    expect(registry.resolveTerm('Production URL')?.canonicalCodeTerm).toBe('ProductionBaseUrl');
-    expect(registry.resolveTerm('Online research')?.canonicalCodeTerm).toBe('ExternalResearchPreCheck');
-    expect(registry.resolveTerm('ASVS')?.canonicalCodeTerm).toBe('OWASPASVS');
-    expect(registry.resolveTerm('ASVS-Matrix')?.canonicalCodeTerm).toBe('ASVSVerificationMatrix');
-    expect(registry.resolveTerm('ASVA Matrix')).toBeUndefined();
-    expect(registry.findForbiddenUsage('ASVA Matrix')).toHaveLength(1);
-    expect(registry.resolveTerm('Candidate')).toBeUndefined();
-    expect(registry.resolveTerm('Main URL')).toBeUndefined();
   });
 });

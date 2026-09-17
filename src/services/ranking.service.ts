@@ -3,7 +3,6 @@ import {
   compositeLevelToRankingDqPoints,
   type CompositeDqLevel,
 } from "../platform/MarketData/CompositeDataQuality";
-import { ClassificationService } from "./classification.service";
 
 /**
  * SC-7 phase A (SC-MD-SPT-0001): ranking may resolve DQ points via the SC-3
@@ -46,20 +45,13 @@ export function resolveRankingDqPoints(
   return compositeLevelToRankingDqPoints(level);
 }
 
-function canonicalRankingClassification(payload: CryptoAnalysisPayload) {
-  const candidate = payload as CryptoAnalysisPayload & { symbol?: string; coin?: string };
-  const symbol = String(candidate.symbol ?? candidate.coin ?? '').toUpperCase().trim();
-  return ClassificationService.classifyAsset(symbol);
-}
-
 export function calculateRankScore(
   payload: CryptoAnalysisPayload,
   finalScore: number,
   options?: RankingDqOptions,
 ) {
   const dq = resolveRankingDqPoints(payload, options);
-  // P0 authority boundary: never trust payload.classification for ranking.
-  const tier = canonicalRankingClassification(payload).tier;
+  const tier = payload.classification?.tier ?? 3;
   const tierScore = tier === 1 ? 100 : tier === 2 ? 78 : 55;
   const liquidity = payload.scores?.liquidity ?? 0;
 
@@ -68,8 +60,7 @@ export function calculateRankScore(
 }
 
 export function isTop10Eligible(payload: CryptoAnalysisPayload): boolean {
-  // P0 authority boundary: caller-provided confidence has zero eligibility authority.
-  const confidence = canonicalRankingClassification(payload).confidence ?? 0;
+  const confidence = payload.classification?.confidence ?? 0;
   const liquidity = payload.scores?.liquidity ?? 0;
   const dq = payload.data_quality?.level ?? "unknown";
   return confidence >= 0.65 && liquidity >= 50 && dq !== "low";

@@ -17,32 +17,19 @@ function allComponentSources(): string {
 }
 
 describe('frontend financial data contract regression gate', () => {
-  it('RankingBoard renders progressively and uses only verified score boundaries from the canonical screening slice', () => {
-    const code = source('src/features/screening/ui/RankingBoard.tsx');
+  it('Best/Worst renders progressively and uses only verified score boundaries', () => {
+    const code = source('src/components/UniverseBestWorst.tsx');
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/api/registry/assets/verified-scores');
-    expect(code).toContain('Ranking Board');
+    expect(code).toContain('Progressive Scoring');
     expect(code).toContain('AbortController');
-    expect(code).toContain('text-asset-crypto');
-    expect(code).toContain("type ProductiveAssetType = Exclude<AssetType, 'bond'>;");
-    expect(code).not.toContain('text-asset-bond');
-    expect(code).toContain('extractSentiment');
-    expect(code).toContain('extractMomentum');
-    expect(code).toContain('extractLeadingPattern');
     expect(code).not.toMatch(/return\s+50(?:\.0)?\s*;/);
     expect(code).not.toContain('Math.random');
     expect(code).not.toContain('charCodeAt');
-
-    const alias = source('src/features/screening/ui/UniverseBestWorst.tsx');
-    expect(alias).toContain("from './RankingBoard'");
-    expect(alias).toContain('RankingBoard as UniverseBestWorst');
-
-    const compatibility = source('src/components/UniverseBestWorst.tsx');
-    expect(compatibility).toContain("../features/screening/ui/UniverseBestWorst");
   });
 
   it('Enterprise scorer supports all asset classes while canonical scoring stays backend-bound', () => {
-    const code = source('src/features/crypto/ui/CryptoScoringEnterprise.tsx');
+    const code = source('src/components/CryptoScoringEnterprise.tsx');
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/verified-score');
     expect(code).toContain("'commodity'");
@@ -50,46 +37,18 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('Asset-Suche');
     expect(code).not.toContain('charCodeAt');
     expect(code).not.toContain('Math.random');
+    // AUD3-F-001 removed a legacy `getTradingSetup(symbol, price, score, type)` helper that
+    // derived entry/SL/TP purely from hardcoded fixed multipliers (e.g. `price * 0.94`) applied
+    // to the (partly synthetic/bootstrap) registry price - fabricated, not evidence-gated.
+    // The current trade-setup panel is intentionally different: it renders `tradeSetup`/
+    // `priceStats` fields computed server-side by tradeSetupLevels.ts purely from verified
+    // ReturnStats (real 30d history), gated behind the same data-quality gate as the rest of
+    // the 9-factor model. These assertions guard against the legacy pattern reappearing while
+    // still allowing the new, evidence-gated feature.
     expect(code).not.toContain('getTradingSetup');
     expect(code).not.toMatch(/price \* 0\.\d/);
     expect(code).not.toMatch(/\.price\s*\*/);
     expect(code).toContain('tradeSetup');
-  });
-
-  it('binds only the supported daily interval to the existing 30x1D crypto score basis', () => {
-    const code = source('src/features/crypto/ui/CryptoScoringEnterprise.tsx');
-    const assetSearchIndex = code.indexOf('Asset-Suche');
-    const timeframeIndex = code.indexOf('Analyse-Zeitraum');
-    const selectedAssetHeaderIndex = code.indexOf('Enterprise Universum Scorer');
-    const quickAnalysisIndex = code.indexOf('<EnterpriseBinanceQuickAnalysis');
-
-    expect(assetSearchIndex).toBeGreaterThan(-1);
-    expect(timeframeIndex).toBeGreaterThan(assetSearchIndex);
-    expect(selectedAssetHeaderIndex).toBeGreaterThan(timeframeIndex);
-    expect(quickAnalysisIndex).toBeGreaterThan(selectedAssetHeaderIndex);
-    expect(code).toContain('aria-label="Analyse-Zeitraum des Enterprise Universum Scorers"');
-    expect(code).toContain("uiTimeframe: '1 tag'");
-    expect(code).toContain("barInterval: '1d'");
-    expect(code).toContain('lookbackBars: 30');
-    expect(code).toContain("{ value: '1 tag', label: '1 Tag', scoreBound: true }");
-    expect(code).toContain('Intraday-Scores werden nicht synthetisiert.');
-  });
-
-  it('Buffett is stock-only, entitlement-first and hydrates finance values through the verified display boundary', () => {
-    const code = source('src/components/BuffetValueCheck.tsx');
-    const authorizeIndex = code.indexOf('/api/entitlements/warren-buffett/authorize');
-    const displayIndex = code.indexOf('/verified-display');
-
-    expect(code).toContain("asset.type === 'stock'");
-    expect(authorizeIndex).toBeGreaterThanOrEqual(0);
-    expect(displayIndex).toBeGreaterThan(authorizeIndex);
-    expect(code).toContain("authorizationBody.allowed !== true");
-    expect(code).toContain('verified-asset-display/1.0.0');
-    expect(code).toContain('Aktien-Symbol oder Unternehmen suchen');
-    expect(code).toContain('Buffett Value Check akzeptiert ausschließlich Aktien.');
-    expect(code).not.toContain('price * 0.07');
-    expect(code).not.toContain("score || '7.5'");
-    expect(code).not.toContain('initialEps <= 0 ? 3.5');
   });
 
   it('restored enterprise analysis panels are explicitly read-only to scoring', () => {
@@ -101,28 +60,25 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('schreiben weder in den kanonischen Score noch in Ranking');
     expect(code).not.toContain('localStorage.setItem');
     expect(code).not.toContain('/api/registry/assets/');
+    // AI Kurzanalyse moved out to EnterpriseBinanceQuickAnalysis.tsx (see below) - it used to
+    // live inline here bound only to already-verified scoring facts, no live market data.
     expect(code).not.toContain('AI Kurzanalyse');
   });
 
-  it('Enterprise Binance analysis reuses scorer selection and embeds verified canonical 4h bars below it', () => {
-    const quickAnalysisCode = source('src/features/crypto/ui/EnterpriseBinanceQuickAnalysis.tsx');
-    const chartCode = source('src/features/crypto/ui/EnterpriseAsset4hChart.tsx');
+  it('enterprise scorer AI Kurzanalyse is Binance-live-data-backed and reuses the scorer asset selection', () => {
+    const quickAnalysisCode = source('src/components/EnterpriseBinanceQuickAnalysis.tsx');
     expect(quickAnalysisCode).toContain('AI Kurzanalyse mit Binance Spot');
     expect(quickAnalysisCode).toContain('/api/registry/assets/');
     expect(quickAnalysisCode).toContain('/quick-analysis');
-    expect(quickAnalysisCode).toContain('<EnterpriseAsset4hChart symbol={upper} />');
-    expect(quickAnalysisCode).not.toContain("useState('BTC')");
+    // Driven purely by the `symbol` prop from CryptoScoringEnterprise - no independent
+    // free-text search input duplicating the Enterprise Scorer's own Asset-Suche.
+    expect(quickAnalysisCode).not.toContain('useState(\'BTC\')');
     expect(quickAnalysisCode).not.toContain('placeholder="BTC, ETH, SOL ...."');
 
-    expect(chartCode).toContain('/api/market-data/history/');
-    expect(chartCode).toContain('interval=4h');
-    expect(chartCode).toContain('Kein Chart-Score');
-    expect(chartCode).not.toContain('/api/charts-scoring');
-    expect(chartCode).not.toContain('/api/backtest-history');
-    expect(chartCode).not.toContain('Math.random');
-
-    const enterpriseScorerCode = source('src/features/crypto/ui/CryptoScoringEnterprise.tsx');
+    const enterpriseScorerCode = source('src/components/CryptoScoringEnterprise.tsx');
     expect(enterpriseScorerCode).toContain('EnterpriseBinanceQuickAnalysis');
+    // Display order top to bottom: Asset-Suche (with class filters), then the currently
+    // selected asset header, then the Binance quick analysis.
     const assetSearchIndex = enterpriseScorerCode.indexOf('Asset-Suche');
     const selectedAssetHeaderIndex = enterpriseScorerCode.indexOf('Enterprise Universum Scorer');
     const quickAnalysisIndex = enterpriseScorerCode.indexOf('<EnterpriseBinanceQuickAnalysis');
@@ -133,7 +89,7 @@ describe('frontend financial data contract regression gate', () => {
     expect(selectedAssetHeaderIndex).toBeLessThan(quickAnalysisIndex);
   });
 
-  it('MarketScreener consumes verified score/context contracts and has no character-hash finance logic', () => {
+  it('MarketScreener consumes verified score/context contracts and has no symbol-hash finance logic', () => {
     const code = source('src/components/MarketScreener.tsx');
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/verified-context');
@@ -160,6 +116,11 @@ describe('frontend financial data contract regression gate', () => {
   });
 
   it('Legacy P0 copy is not presented as current provider status anywhere in the component tree', () => {
+    // CryptoEnterpriseEvaluator.tsx (a near-total visual/data duplicate of CryptoScoringEnterprise
+    // - same /api/crypto/score call, its own score gauge, its own EnterpriseAnalysisPanels
+    // instance) was removed so the dashboard renders exactly one enterprise scorer instead of two
+    // overlapping ones. This guard now scans every component for the banned legacy copy instead
+    // of one specific (now-deleted) file.
     const code = allComponentSources();
     expect(code).not.toContain('P0-Sicherheitsmodus');
     expect(fs.existsSync(path.join(repoRoot, 'src/components/CryptoEnterpriseEvaluator.tsx'))).toBe(false);

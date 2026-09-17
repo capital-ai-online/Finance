@@ -1,142 +1,272 @@
-# CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
+# CAPITAL-AI Enterprise Roadmap
 
-**Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.9.0`  
-**Status date:** `2026-09-16`  
-**Current repository baseline for this synchronization:** `main@2c4aca31e097a72ed979037eb6ecb66fec1d8619`  
-**Open PR correlation at this synchronization:** no open Pull Requests; relevant non-PR active writer `agent/operations-work-management-postmerge-20260916` is separately OPS-owned and updates only the OPS GitHub work-management Roadmap projection  
-**Platform version authority:** `package.json#version`  
-**Repository Agent Trust Root:** `/AGENTS.md`  
-**Execution policy:** `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
+Status date: 2026-08-12
+Baseline branch: `main`
+Baseline commit: `91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
+Platform version: `0.6.0`
+Canonical role: current-state DevelopmentChain status index. Historical detail remains in ADR/evidence documents.
+Operational roadmap: `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`.
 
-## Canonical role
+## Mandatory maintenance rule
 
-This file is the repository-wide **current-state index**. Project-specific work belongs in the affected `docs/projects/<project>/ROADMAP.md`; architecture decisions belong in ADRs; component/capability contracts belong in ESS; implementation truth is established by code, tests and evidence.
+Every merged DevelopmentChain step MUST update this file with the new `main` SHA, affected phase status, mutation/test state, next gate and evidence pointer. A roadmap-changing PR is incomplete without this synchronization.
 
-Historical implementation detail remains in ADR, ESS, runbooks, merged Pull Requests and `docs/evidence/**`. Exact repository SHAs are observations, not an independent platform-version authority.
+Documentation readiness and execution authorization are distinct states. A prepared Runbook/ESS/Threat Model does not unblock a phase whose predecessor gate is incomplete.
 
-`docs/architecture/DEVELOPMENT_CHAIN_ROADMAP.md` and older integrated DevelopmentChain/Systemadmin roadmap snapshots are historical/non-authorizing where they conflict with this current state.
-
-## Human-readable development model
+## DevelopmentChain execution invariant
 
 ```text
-PROJECT VALUE CHAIN / PVC
-→ PROJECT ROADMAP
-→ APPLICABLE ADR
-→ APPLICABLE ESS
-→ CODE / TESTS / EVIDENCE
-```
-
-Current repository execution follows the Human-merged 2026-09-15 Governance lifecycle:
-
-```text
-CURRENT MAIN + OPEN PRS
-→ RESOLVE PVC / PRIMARY OWNER
-→ READ PROJECT ROADMAP
-→ READ APPLICABLE ADR / ESS
-→ SECURITY / COMPLIANCE / REUSE PRE-CHECK
-→ FRESH SCOPED BRANCH
+READ-ONLY BASELINE
+→ ROADMAP / ESS / ADR / RUNBOOK
+→ HUMAN/OWNER REVIEW
+→ FRESH BRANCH FROM CURRENT MAIN
 → IMPLEMENTATION
-→ AVAILABLE LOW-COST PRE-PR VALIDATION
-→ FINAL MAIN RE-SYNC + OPEN-PR / SEMANTIC / AUTHORITY CORRELATION
-→ FINAL CREATE-CORRELATION PASS OR BLOCKED
-→ AUTOMATED DRAFT PULL REQUEST FOR PASS
-→ POST-PR HUMAN/OWNER REVIEW BOUNDARY
-→ HOSTED GOVERNANCE / TECHNICAL CHECKS
-→ FINAL PR-HEAD / CURRENT-MAIN CORRELATION
-→ HUMAN/CODEOWNER MERGE DECISION
-→ HUMAN MERGE OR OTHER TERMINAL PR OUTCOME
-→ ORDERED SUCCESSOR STARTS FROM THEN-CURRENT MAIN
-→ OPTIONAL PRODUCTION-MUTATION CONTROLS
-→ EVIDENCE + ROADMAP SYNC
+→ PR / HUMAN FILE REVIEW / CI
+→ HUMAN MERGE
+→ BRANCH DELETE
+→ OPTIONAL EXTERNAL PRECHECK
+→ EXPLICIT HUMAN MUTATION APPROVAL
+→ NON-AUTHORIZING MUTATION HANDOFF
+→ AUTHORIZED EXECUTION HOST
+→ POST-MUTATION VERIFICATION
+→ APPEND-ONLY EVIDENCE
+→ ROADMAP / TRACEABILITY SYNC
+→ NEXT PHASE
 ```
 
-Current Git identity terminology is `main SHA`, `branch head SHA`, `PR head SHA` and `merge SHA`. Candidate-Head/Candidate-Snapshot lifecycle terminology is retired from current work.
+Authorities:
 
-Human-merged PR #952 activated the correlation-gated Draft-PR creation path. The pre-create v3.4 Approval Envelope remains historical bootstrap evidence for PR #952 itself and is not a current credential for successor PR creation.
+- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
+- `docs/governance/DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md`
+- `docs/governance/DEVELOPMENT_CHAIN_RESPONSIBILITY_MATRIX.md`
+- `docs/runbooks/DEVELOPMENT_CHAIN_PHASE_EXECUTION.md`
 
-## Project Value Chain ownership
+## Branch / Clone lifecycle
 
-The canonical organizational ownership map is:
+Every work item uses a fresh scoped branch from current `main`. Direct work on `main` is prohibited for AI/agent workspaces. After successful Human merge into Finance, the corresponding remote work branch MUST be deleted and MUST NOT be reused. Ephemeral clone/worktree copies created only for the work item are cleaned up after required Evidence is secured.
 
-- `docs/projects/README.md`
-- `docs/projects/PROJECT_VALUE_CHAIN.md`
+Repository rollback uses a new revert/rollback branch from current `main`, not a resurrected merged branch.
 
-Primary productive ownership remains:
+## Human / Owner gate before expensive CI
 
-| PVC | Project |
-|---|---|
-| `PVC-01` | `CAPITAL-AI-CLIENT` |
-| `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18` | `CAPITAL-AI-OPS` |
-| `PVC-03` | `CAPITAL-AI-DOC` |
-| `PVC-05` | `CAPITAL-AI-GOV` |
-| `PVC-09`, `PVC-10`, `PVC-11` | `CAPITAL-AI-DATA` |
-| `PVC-12`..`PVC-17` | `CAPITAL-AI-FINTECH` |
+Every PR targeting `main` MUST be human-visible and explicitly reviewed by repository Owner `SvenKulessa` before expensive build/test validation starts.
 
-Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social projects validate, constrain or present work but do not acquire productive PVC ownership merely through that role.
+### Current transitional gate — until M10 VERIFIED PASS
 
-## Governance / ESS current state
+```text
+PR OPEN/UPDATE
+→ OWNER FILE REVIEW
+→ ALL FILES VIEWED
+→ CURRENT-HEAD REVIEW (💪/okay)
+→ OWNER CHECKBOXES LAST
+→ ONE build-and-test
+→ MERGE ELIGIBLE
+```
 
-| Area | Current state |
-|---|---|
-| Agent Trust Root | `/AGENTS.md` v2.11.0 is the sole repository-wide agent instruction surface and is active on current main through Human-merged PR #952 |
-| DevelopmentChain | `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` v3.0.0 preserves the Human-readable PVC/Roadmap/ADR/ESS model and is active on current main |
-| Pull Request creation | bounded agent-managed Draft PR creation requires final fail-closed create-correlation `PASS`; no separate pre-create Owner prompt |
-| Ordered Roadmap PR lane | at most one not-yet-integrated automated PR; successor starts from resulting current main only after predecessor terminal outcome |
-| Human merge | Human/CODEOWNER-only; never delegated to the agent; auto-merge prohibited |
-| ESS-0012 | Documentation Governance; documentation-only scope |
-| ESS-0019 | **v1.2.0 ACCEPTED**; provider-neutral capability/risk/audit + Research Evidence Contract |
-| GOV-07 Evolution Policy | **DONE_MAIN / MAINTAINED** via PR #790; baseline-not-ceiling semantics in `CTRL-AIMS-PDCA-001` |
-| M10 Passkey PR-CI runtime | `RETIRED / OFF`; no current implementation is expected |
-| Render native Auto Deploy | OFF; production promotion remains through verified `main` pipeline |
-| Platform version | `package.json#version` remains sole platform-version authority |
+Rules:
 
-No productive M10 implementation is expected in current state. Current-state discovery, architecture scans, roadmaps and gap analyses must not treat the absence of productive M10 implementation as a missing implementation or reactivation backlog.
+- every changed file is reviewed and marked `Viewed`;
+- Owner review targets the exact current head;
+- the current transitional review signal is `💪` or `okay`;
+- Owner checkbox edit is the final normal expensive-CI trigger;
+- new commits invalidate current-head review evidence;
+- documentation-only changes use the docs fast path;
+- green CI is technical Evidence, not merge authorization;
+- AI clients stop before merge unless separate Human merge authority exists.
 
-## Deep Research integration
+Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 
-### Completed at Governance boundary
+### Target gate after M10 VERIFIED PASS — File Review + Passkey only
 
-- **DR-01** — provider-neutral Deep Research skill/evidence pipeline merged.
-- **DR-02A** — ESS-0019 v1.2.0 Research Evidence Contract merged and accepted.
-- **DR-02B** — ADR-0060 Supply-Chain Authority Drift Reconciliation **DONE_MAIN / TERMINAL** through Human-merged PR #743. ADR-0060 v1.1.0 is accepted and registered; the existing M6 supply-chain implementation is reused rather than duplicated.
+```text
+PR OPEN/UPDATE
+→ OWNER FILE REVIEW / VIEWED
+→ EXACT PR STATE RESOLUTION
+→ CAPITAL-AI WEBAUTHN/PASSKEY APPROVAL
+→ ONE build-and-test
+→ HUMAN MERGE
+```
 
-### Current productive continuation — DR-03
+After verified cutover:
 
-Productive provider-adapter/execution work is **not a Governance backlog item**. Ownership is `CAPITAL-AI-OPS` under its applicable PVC stages and current OPS Roadmap.
+- Human File Review remains mandatory;
+- passkey/WebAuthn is the sole normal cryptographic Owner authorization for expensive CI;
+- approval binds Owner, repository, PR, base SHA, exact head SHA, changed-file-set hash, diff/review digest and `AUTHORIZE_PR_CI`;
+- server-generated short-lived single-use challenge, expected RP ID/origin, signature, UP and required UV are verified;
+- immutable approval Evidence must persist before CI request;
+- exactly one CI request consumes an approval/head;
+- `💪`, `okay`, PR-body Owner checkboxes, comments, reactions, labels, generic GitHub review state and GitHub login method no longer authorize CI;
+- Human merge remains separate.
 
-Current OPS correlation records DR-03 as queued behind higher-priority OPS gates. When it becomes executable it must reuse the existing provider-neutral control plane, request/orchestration boundaries, ESS-0019 and applicable IAM/security/observability contracts. It must not create a direct provider-SDK bypass, second agent architecture, remote-skill activation path, M10 reconstruction or implicit deployment authority.
+Authorities:
 
-Remote-skill distribution remains a separate later architecture/security decision.
+- `docs/adr/ADR-0066-passkey-only-owner-pr-authorization.md`
+- `.ai/skills/ESS-0022-Passkey-Only-Owner-PR-Authorization.md`
+- `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`
+- `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
 
-## Current project-state notes
+## Roadmap package before privileged autonomous agents
 
-- `CAPITAL-AI-GOV`: `GOV-CHAT-077` is `DONE_MAIN / TERMINAL` through Human-merged PR #952; `GOV-PR900-04` freshness/version validators are `DONE_MAIN / TERMINAL` through Human-merged PR #953. Broader GOV-07 User-Lifecycle closeout remains dependency-held.
-- `CAPITAL-AI-DOC`: Documentary/PVC-03 remains separately owned; documentary preservation work does not authorize Governance runtime or PR lifecycle changes.
-- `CAPITAL-AI-OPS`: productive provider/runtime, GitHub capability management and version/release work remain OPS-owned. `OPS-PR900-03` and `OPS-PR900-04` are the existing owner-correct GitHub capability and MCP/OAuth convergence Roadmap surfaces; Governance orchestration does not transfer deployment or production-mutation authority.
-- `CAPITAL-AI-CLIENT`: provider-neutral agent capability contracts remain subordinate to `/AGENTS.md`; this change does not create a second client execution authority.
+Privileged agent capability is allowed only after an approved Roadmap architecture package derived from:
 
-These summaries do not replace the affected project Roadmaps and must be re-correlated when those projects change.
+1. current best-practice / standards research where relevant;
+2. read-only repository and production Evidence;
+3. gap analysis;
+4. required ESS;
+5. required ADR;
+6. Runbook / threat model as applicable;
+7. traceability, mutation/test gates, rollback and kill switch;
+8. Human/Owner approval.
 
-## Protected current invariants
+Without the package, no privileged `BRANCH`, `COMMIT`, `PR`, `CI_REQUEST`, `DEPLOY_REQUEST` or `PRODUCTION_MUTATION` capability is implied. `MERGE` remains outside autonomous agent capability vocabulary.
 
-- no direct agent edits to `main`;
-- one scoped branch/work item;
-- PVC/Primary Owner resolved before implementation;
-- project Roadmap is the normal planning/status surface;
-- ADR used for material architecture decisions where applicable;
-- ESS used for component/capability contracts;
-- no fabricated evidence, market data, citations or compliance claims;
-- create-correlation and validation state remain fail-closed; `NOT RUN` is never `PASS`;
-- automated Roadmap successors do not assume unmerged predecessor payload;
-- Human/CODEOWNER-only merge and no auto-merge;
-- no reusable credentials in model-visible evidence;
-- external production mutation remains separately governed;
-- machine-readable registries support integrity and traceability but do not replace the Human-readable development chain;
-- historical work claims/handoffs/evidence cannot silently regain authority;
-- M10 remains retired unless a future explicit Human decision creates a new separately scoped mechanism.
+## Daily read-only agent exception
 
-## Current next actions
+Recurring/daily agents may run without prior Owner approval only when strictly limited to `READ` and `ANALYZE`, with no write credentials and no branch/commit/PR/CI/deploy/mutation/merge capability.
 
-1. Complete `GOV-PR900-02` current-state projection synchronization for the Human-merged PR #952 lifecycle activation and preserve PR #953 freshness/version validation as terminal current-main evidence.
-2. Re-correlate the existing OPS GitHub capability/MCP queue only after the current projection-sync predecessor reaches a terminal outcome; preserve the existing OPS/SEC ownership and provider-mutation boundaries.
+## Mutation handoff boundary
+
+Machine-readable work orders:
+
+- `docs/contracts/DEVELOPMENT_CHAIN_MUTATION_HANDOFF_CONTRACT.md`
+- `.ai/contracts/development-chain-mutation-handoff.schema.json`
+
+The Handoff is **non-authorizing**. A valid Handoff alone cannot cause a side effect. Autonomous mutation additionally requires exact Human/Owner mutation Approval when applicable, REM/IAM/reserved-action enforcement, a verified Execution Host and durable M5 authorization/outcome audit Evidence.
+
+## Mandatory mutation and verification gate
+
+Any external state change follows:
+
+```text
+ROADMAP / ADR / ESS
+→ HUMAN APPROVAL
+→ PRE-MUTATION VERIFICATION
+→ MUTATION
+→ POST-MUTATION VERIFICATION
+→ EVIDENCE
+→ ROADMAP UPDATE
+→ NEXT PHASE
+```
+
+Mutation states:
+
+- `NOT REQUIRED`
+- `PLANNED`
+- `HUMAN APPROVED`
+- `MUTATED`
+- `VERIFIED PASS`
+- `FAILED / ROLLED BACK`
+
+A later phase cannot start while a predecessor required mutation/test is missing, failed, inconclusive or undocumented.
+
+## Platform mutation schedule
+
+| Platform | Roadmap point | Allowed scope | Gate before next phase |
+|---|---|---|---|
+| Supabase | M5 Audit | append-only audit persistence and application writer both VERIFIED PASS (corrective runtime verification after PR #222 closed 2026-08-14) | real privileged audit insert confirmed, see `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
+| Supabase Auth | M5A | Native TOTP/AAL2, recovery, exact conditional Auth config only | code+CI → precheck → explicit Owner approval → factor/AAL2/recovery/advisor verification |
+| Render | M7 | exact deployment identity / environment-scoped deploy config | precheck → explicit Owner approval → mutation → deploy/health/readiness/rollback verification |
+| Stripe | M7 only when separately named | exact webhook/config/credential operation | dedicated authority + test/non-destructive precheck + explicit approval + verification |
+| IONOS / DNS / TLS | Human-reserved | exact separately approved ownership/config action | Human-only absent later stronger ADR |
+
+## Current status quo
+
+Repository/governance milestones:
+
+- M0–M4 are complete.
+- M5 production table/RLS/least-privilege persistence controls remain verified; the application writer entered corrective runtime verification after the first real SA3B host probe exposed schema-vocabulary drift and a separate privileged Supabase credential failure.
+- PR #214 established the Systemadmin Roadmap Executor governance package.
+- PR #215 completed SA1 REM validator / Control-Plane enforcement.
+- PR #216 completed SA2 Chat Execution Profile + CI hardening.
+- PR #217 merged the M10 passkey-only target architecture.
+- PR #218 merged SA3A append-only authorization/outcome audit correlation.
+- PR #219 merged Node-24 type/lockfile synchronization.
+- PR #220 merged the SA3B GitHub-Actions/OIDC Execution-Host repository implementation.
+- The first real SA3B post-merge host probe reached the broker and failed closed at durable M5 persistence; no probe branch was created.
+- PR #222 merged the corrective M5 writer↔production-schema mapping and regression contract into `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`.
+- PR #222 performs no Supabase schema/config, Render, Stripe, DNS or workflow mutation.
+- **SA3B remains `VERIFICATION PENDING`.** Its positive host exit gate still requires a valid Owner-controlled privileged Supabase backend credential, a successful real bounded branch probe, authorization-before-side-effect evidence, SUCCESS outcome evidence, a negative no-permit/stale probe and cleanup.
+- Until SA3B reaches `VERIFIED PASS`, the Systemadmin Executor is not treated by DEVELOPMENT Chain as a generally verified autonomous mutation executor.
+- M5A remains the active DEVELOPMENT Chain repository phase.
+- M6–M10 planning documents may exist in advance, but execution remains sequentially blocked.
+
+## DevelopmentChain M0–M10
+
+| Phase | Execution status | Documentation readiness | Authority | Mutation / test gate | Next gate |
+|---|---|---|---|---|---|
+| M0 Evidence Baseline | COMPLETE | COMPLETE | `docs/evidence/m0/*` | read-only | preserve |
+| M1 Git Guardrails | COMPLETE | COMPLETE | Owner/GitHub governance | policy validation | preserve |
+| M2 Architecture/Documentation | COMPLETE | COMPLETE | ESS-0019 + ADR-0057..0063 | documentation only | synchronized |
+| M2G Documentation Freeze | COMPLETE | COMPLETE | Freeze policy | freeze verification | sequential implementation |
+| M3 CI Hardening | COMPLETE | COMPLETE | ADR-0053/0060 + CI policy | scope-aware one `build-and-test` | preserve until M10 cutover |
+| M4 Agent IAM | COMPLETE | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
+| M5 Observability/Telemetry/Audit | **VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5 Evidence | corrected writer merged in PR #222; real successful audit insert confirmed 2026-08-14 (`docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) | autonomous mutation remains blocked independent of this (SA5/M10 gate) |
+| M5A Supabase Native MFA/AAL2 | **IN PROGRESS** | BASELINE/RUNBOOK READY | ESS-0020 + ADR-0064 + ADR-0003.5 | repository remediation + CI; Owner native factor mutation separately approved; AAL2/recovery/advisor tests | M6 blocked until VERIFIED PASS |
+| M6 Supply Chain | **BLOCKED BY M5A** | RUNBOOK READY | ADR-0060 | exact source/lock/SBOM/artifact/provenance/attestation verification | M7 after M6 VERIFIED PASS |
+| M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | RUNBOOK READY | ADR-0061 | exact target + approval + platform mutation + postverify/rollback | M8 after all required M7 PASS |
+| M8 Agent Cutover | **BLOCKED BY M7** | RUNBOOK READY | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy/bypass tests | M9 after cutover PASS |
+| M9 Assurance | **BLOCKED BY M8** | RUNBOOK READY | ADR-0063 | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback drills | M10 after assurance PASS |
+| M10 Passkey-only Owner PR Authorization | **BLOCKED BY M9** | ESS/RUNBOOK/THREAT MODEL READY | ADR-0066 + ESS-0022 | PR-state-bound WebAuthn + shadow/replay/recovery/single-CI + legacy cleanup | final DevelopmentChain assurance |
+
+## M5A verified baseline and active gaps
+
+Current baseline Evidence establishes:
+
+- Supabase Native MFA factors = 0 at the recorded baseline;
+- current assurance = AAL1 only at that baseline;
+- historical CAPITAL-AI custom TOTP state is distinct from Supabase Native MFA/AAL2;
+- native `mfa.enroll/challenge/verify` is not yet the authoritative flow;
+- privileged server IAM does not yet centrally require trusted AAL2;
+- privileged factor/status lookup has fail-open behavior that must be eliminated;
+- application step-up may remain only as defense-in-depth over trusted AAL2.
+
+Authority: `docs/evidence/m5a/M5A_SUPABASE_TOTP_AAL2_BASELINE.md`.
+
+M5A external mutation classification:
+
+- repository/application code: `REQUIRED`;
+- Owner Native TOTP enrollment: `REQUIRED / NOT YET AUTHORIZED` at recorded baseline;
+- Supabase project Auth configuration: `CONDITIONAL` only when exact need is proven;
+- Native MFA Postgres DDL: `NOT REQUIRED`;
+- legacy custom-TOTP cleanup: `DEFERRED / SEPARATE APPROVAL`;
+- Render/Stripe: `NOT REQUIRED` for M5A baseline.
+
+## Phase execution documents
+
+- Generic: `docs/runbooks/DEVELOPMENT_CHAIN_PHASE_EXECUTION.md`
+- M5A: `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md`
+- M6: `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md`
+- M7: `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`
+- M8: `docs/runbooks/M8_AGENT_CUTOVER.md`
+- M9: `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md`
+- M10: `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
+
+Evidence template: `docs/evidence/templates/DEVELOPMENT_CHAIN_PHASE_EVIDENCE_TEMPLATE.md`.
+
+Traceability:
+
+- `docs/traceability/AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md`
+- `docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md`
+
+## Protected invariants
+
+- no synthetic/demo financial scores in production;
+- fail-closed IAM/auth/runtime-secret semantics;
+- CoinMarketCap remains decommissioned;
+- Kraken remains public REST Evidence only;
+- protected `main` + bounded required CI;
+- Human File Review remains mandatory;
+- until M10 cutover, current transitional Owner gate remains authoritative;
+- after M10 cutover, exact-state WebAuthn/passkey becomes the sole normal CI authorization signal;
+- AI agents cannot self-approve or autonomously merge;
+- privileged autonomous agents require approved Roadmap/ESS/ADR scope and verified execution controls;
+- no next phase while required mutation/test Evidence is incomplete;
+- every work item uses a fresh branch and deletes it after successful Human merge.
+
+## Current next action
+
+**M5A remains the next DEVELOPMENT Chain repository implementation action.** Its repository implementation must use a fresh branch from the then-current `main`, complete code + CI first, and only then proceed to a separate read-only pre-mutation check and explicit Human/Owner production mutation approval for Native Owner-factor enrollment or any exact Auth configuration mutation proven necessary.
+
+Parallel dazu muss die PR-#222-Korrektur im realen M5-Auditpfad produktiv verifiziert und SA3B anschließend positiv/negativ abgeschlossen werden, bevor DEVELOPMENT Chain den autonomen Mutation Executor für spätere externe Mutationen als `VERIFIED PASS` verwendet.
+
+M6–M10 documentation is prepared to remove future planning gaps, but no blocked phase is authorized by this documentation package.

@@ -3,26 +3,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AnalysisPayload, CategoryMain, RawMaterialInput } from '../types/rawMaterials';
+import { AnalysisPayload, CategoryMain, RawMaterialInput, ScoreSet } from '../types/rawMaterials';
 import { SCORING_VERSIONS, ACTIVE_VERSION, findRawMaterialConfig } from '../config/rawMaterialsConfig';
 
-export const LEGACY_RAW_MATERIALS_SCORING_STATUS = 'legacy-research-only' as const;
-export const LEGACY_RAW_MATERIALS_NEUTRAL_MISSING_VALUE = 50 as const;
-
 /**
- * Historical structural/raw-material research scorer retained for dashboard/sandbox compatibility.
- *
- * IMPORTANT: this service is NOT a productive scoring authority. Canonical commodity scoring is
- * exclusively ScoringModelRegistry -> ScoringDispatcher -> commodity executor. The neutral value
- * below is deliberately confined to this legacy research service and MUST NOT enter Commodity
- * FeatureSnapshot, CanonicalScoreResult, ranking or eligibility.
+ * Main Raw Materials Scoring Engine.
+ * Serves as the Single Source of Truth for commodities risk & structural evaluations.
  */
 export class RawMaterialsScoringService {
+  /**
+   * Calculates the raw material score payload based on active version.
+   * Handles missing data gracefully without emitting per-score runtime logs.
+   */
   public static scoreMaterial(input: RawMaterialInput, requestedVersion: string = ACTIVE_VERSION): AnalysisPayload {
     const configVersion = SCORING_VERSIONS[requestedVersion] || SCORING_VERSIONS[ACTIVE_VERSION];
     const weights = configVersion.weights;
-    const registered = findRawMaterialConfig(input.name);
 
+    // Resolve base configurations if the material exists in the static registry
+    const registered = findRawMaterialConfig(input.name);
+    
+    // Merge inputs: user provided input takes precedence over registered database
     const merged: RawMaterialInput = {
       name: input.name,
       category_main: input.category_main || registered?.category_main || 'Unknown',
@@ -46,84 +46,124 @@ export class RawMaterialsScoringService {
       industrial_importance: input.industrial_importance ?? registered?.industrial_importance,
     };
 
-    const missingFields: string[] = [];
-    const getLegacyValue = (field: keyof Omit<RawMaterialInput, 'name' | 'category_main'>): number => {
-      const value = merged[field];
-      if (value === undefined || value === null || !Number.isFinite(value)) {
-        missingFields.push(field);
-        return LEGACY_RAW_MATERIALS_NEUTRAL_MISSING_VALUE;
+    const missing_fields: string[] = [];
+
+    // Helper to extract a score or track missing fields
+    const getVal = (field: keyof Omit<RawMaterialInput, 'name' | 'category_main'>, fallback: number = 50): number => {
+      const val = merged[field];
+      if (val === undefined || val === null) {
+        missing_fields.push(field);
+        return fallback;
       }
-      return value;
+      return val;
     };
 
-    const marketLiquidity = getLegacyValue('market_liquidity');
-    const tradingVolume = getLegacyValue('trading_volume');
-    const liquidityScore = Math.round((marketLiquidity + tradingVolume) / 2);
+    // 1. Markt und Liquidität
+    const market_liquidity = getVal('market_liquidity', 50);
+    const trading_volume = getVal('trading_volume', 50);
+    const liquidityScore = Math.round((market_liquidity + trading_volume) / 2);
 
-    const oreGrade = getLegacyValue('ore_grade');
-    const tonnage = getLegacyValue('tonnage');
-    const tonnageReserve = getLegacyValue('tonnage_reserve');
-    // Canonical semantic for this historical field: 100 = easy to substitute, 0 = no practical substitute.
-    const substitutability = getLegacyValue('substitution_potential');
-    const substitutionDifficulty = 100 - substitutability;
-    const recyclability = getLegacyValue('recyclability');
+    // 2. Fundamentaldaten
+    const ore_grade = getVal('ore_grade', 50);
+    const tonnage = getVal('tonnage', 50);
+    const tonnage_reserve = getVal('tonnage_reserve', 50);
+    const substitution_potential = getVal('substitution_potential', 50); // 100 means extreme strategic dependency / hard to substitute
+    const recyclability = getVal('recyclability', 50);
+    
+    // Fundamental average: higher gehalt, reserve, recyclability, and harder to substitute is better
     const fundamentalScore = Math.round(
-      (oreGrade + (tonnage + tonnageReserve) / 2 + substitutionDifficulty + recyclability) / 4,
+      (ore_grade + (tonnage + tonnage_reserve) / 2 + substitution_potential + recyclability) / 4
     );
 
-    const processingComplexity = getLegacyValue('processing_complexity');
-    const infrastructureAvailability = getLegacyValue('infrastructure_availability');
-    const extractionCosts = getLegacyValue('extraction_costs');
+    // 3. Förderbarkeit und Prozessierbarkeit
+    const processing_complexity = getVal('processing_complexity', 50); // 100 is extremely complex (bad)
+    const infrastructure_availability = getVal('infrastructure_availability', 50); // 100 is excellent (good)
+    const extraction_costs = getVal('extraction_costs', 50); // 100 is extremely expensive (bad)
+    
     const processingScore = Math.round(
-      ((100 - processingComplexity) + infrastructureAvailability + (100 - extractionCosts)) / 3,
+      ((100 - processing_complexity) + infrastructure_availability + (100 - extraction_costs)) / 3
     );
 
-    const geopoliticalRisk = getLegacyValue('geopolitical_risk');
-    const supplyChainRisk = getLegacyValue('supply_chain_risk');
-    const regulatoryRisk = getLegacyValue('regulatory_risk');
-    const esgRisk = getLegacyValue('esg_risk');
-    const producerConcentration = getLegacyValue('producer_concentration');
-    const volatility = getLegacyValue('volatility');
+    // 4. Risiko und Resilienz
+    const geopolitical_risk = getVal('geopolitical_risk', 50);
+    const supply_chain_risk = getVal('supply_chain_risk', 50);
+    const regulatory_risk = getVal('regulatory_risk', 50);
+    const esg_risk = getVal('esg_risk', 50);
+    const producer_concentration = getVal('producer_concentration', 50);
+    const volatility = getVal('volatility', 50);
+
     const riskScore = Math.round(
-      (geopoliticalRisk + supplyChainRisk + regulatoryRisk + esgRisk + producerConcentration + volatility) / 6,
+      (geopolitical_risk + supply_chain_risk + regulatory_risk + esg_risk + producer_concentration + volatility) / 6
     );
-    const riskResilienceScore = 100 - riskScore;
 
-    const militaryImportance = getLegacyValue('military_importance');
-    const industrialImportance = getLegacyValue('industrial_importance');
-    const strategicValueScore = Math.round((militaryImportance + industrialImportance) / 2);
+    // 5. Strategische Bedeutung
+    const military_importance = getVal('military_importance', 50);
+    const industrial_importance = getVal('industrial_importance', 50);
+    const strategicValueScore = Math.round((military_importance + industrial_importance) / 2);
 
-    const rawFinalScore =
-      (fundamentalScore * weights.fundamentals)
-      + (riskResilienceScore * weights.risk)
-      + (liquidityScore * weights.liquidity)
-      + (processingScore * weights.processing)
-      + (strategicValueScore * weights.strategicValue);
-    const finalScore = Number(Math.max(0, Math.min(100, rawFinalScore)).toFixed(1));
+    // Calculate dynamic weights
+    const fWeight = weights.fundamentals;
+    const rWeight = weights.risk;
+    const lWeight = weights.liquidity;
+    const pWeight = weights.processing;
+    const sWeight = weights.strategicValue;
 
+    // Final Score formula
+    const rawFinalScore = 
+      (fundamentalScore * fWeight) +
+      ((100 - riskScore) * rWeight) + // Low risk is positive, so we invert
+      (liquidityScore * lWeight) +
+      (processingScore * pWeight) +
+      (strategicValueScore * sWeight);
+
+    const final_score = Number(Math.max(0, Math.min(100, rawFinalScore)).toFixed(1));
+
+    // Determine data quality level
+    let dataQualityLevel: 'low' | 'medium' | 'high' | 'unknown' = 'high';
     const totalPossibleFields = 18;
-    const missingRatio = missingFields.length / totalPossibleFields;
-    const dataQualityLevel: 'low' | 'medium' | 'high' | 'unknown' = missingRatio > 0.6
-      ? 'unknown'
-      : missingRatio > 0.35
-        ? 'low'
-        : missingRatio > 0.15
-          ? 'medium'
-          : 'high';
+    const missingCount = missing_fields.length;
+    const missingRatio = missingCount / totalPossibleFields;
+
+    if (missingRatio > 0.6) {
+      dataQualityLevel = 'unknown';
+    } else if (missingRatio > 0.35) {
+      dataQualityLevel = 'low';
+    } else if (missingRatio > 0.15) {
+      dataQualityLevel = 'medium';
+    }
+
+    // Determine confidence: base is registered confidence or 0.90, penalized by missing fields
     const baseConfidence = (registered as any)?.confidence || 0.90;
-    const confidence = Number(Math.max(0.15, baseConfidence - missingFields.length * 0.04).toFixed(2));
+    const penalty = missingCount * 0.04;
+    const confidence = Number(Math.max(0.15, baseConfidence - penalty).toFixed(2));
 
+    // Compile reasoning items dynamically
     const reasoning: string[] = [];
-    if (finalScore >= 80) reasoning.push('Hohe strukturelle Forschungsbewertung innerhalb des Legacy-Modells.');
-    else if (finalScore >= 60) reasoning.push('Mittlere bis hohe strukturelle Forschungsbewertung innerhalb des Legacy-Modells.');
-    else if (finalScore >= 40) reasoning.push('Erhöhte strukturelle Risiko- oder Versorgungsfaktoren im Legacy-Modell.');
-    else reasoning.push('Niedrige strukturelle Forschungsbewertung im Legacy-Modell.');
-    if (geopoliticalRisk > 70 || producerConcentration > 70) reasoning.push('Hohe geopolitische bzw. Angebotskonzentration erkannt.');
-    if (substitutability < 30) reasoning.push('Geringe Substituierbarkeit erhöht die strukturelle Abhängigkeit.');
-    if (recyclability > 75) reasoning.push('Hohe Recyclingfähigkeit reduziert langfristige Primärabhängigkeit.');
-    if (missingFields.length > 0) reasoning.push(`Legacy-Neutralwerte wurden für ${missingFields.length} fehlende Datenpunkte verwendet; diese Werte sind nicht kanonisch.`);
+    if (final_score >= 80) {
+      reasoning.push(`Überragende strategische und fundamentale Stärke mit exzellenter Resilienz.`);
+    } else if (final_score >= 60) {
+      reasoning.push(`Solides Risikoprofil mit ausgeglichener Marktbewegung.`);
+    } else if (final_score >= 40) {
+      reasoning.push(`Erhöhte Risikofaktoren oder Versorgungsengpässe dämpfen die Gesamtbewertung.`);
+    } else {
+      reasoning.push(`Kritisches Risikoprofil. Starke Abhängigkeiten oder mangelnde Marktliquidität vorhanden.`);
+    }
 
-    return {
+    if (geopolitical_risk > 70 || producer_concentration > 70) {
+      reasoning.push(`Warnung: Extreme Marktkonzentration oder geopolitisches Risiko gefährdet Versorgung.`);
+    }
+    if (substitution_potential > 70) {
+      reasoning.push(`Kritisch: Extrem schwer zu substituieren in industriellen Prozessen.`);
+    }
+    if (recyclability > 75) {
+      reasoning.push(`Nachhaltig: Sehr hohe Recyclingfähigkeit mindert langfristige Primärabhängigkeit.`);
+    }
+    if (missingCount > 0) {
+      reasoning.push(`Datenqualität eingeschränkt durch ${missingCount} fehlende(n) Datenpunkt(e).`);
+    }
+
+    // Build the structural payload matching user requirements exactly
+    const payload: AnalysisPayload = {
       raw_material: merged.name,
       classification: {
         category_main: (merged.category_main as CategoryMain) || 'Unknown',
@@ -131,39 +171,38 @@ export class RawMaterialsScoringService {
         market_type: registered?.market_type || 'OTC oder Physischer Direktmarkt',
         valuation_mode: registered?.is_critical ? 'Kritikalität & Strategische Relevanz' : 'Standard-Marktbewertung',
         confidence,
-        reasoning: reasoning.slice(0, 3),
+        reasoning: reasoning.slice(0, 3)
       },
       scores: {
         fundamentals: fundamentalScore,
         risk: riskScore,
         liquidity: liquidityScore,
         strategicValue: strategicValueScore,
-        final_score: finalScore,
+        final_score: final_score,
         market_liquidity: liquidityScore,
         processing_complexity: processingScore,
-        risk_resilience: riskResilienceScore,
-        strategic_importance: strategicValueScore,
+        risk_resilience: riskScore,
+        strategic_importance: strategicValueScore
       },
       weights: {
-        fundamentals: weights.fundamentals,
-        risk: weights.risk,
-        liquidity: weights.liquidity,
-        processing: weights.processing,
-        strategic_value: weights.strategicValue,
+        fundamentals: fWeight,
+        risk: rWeight,
+        liquidity: lWeight,
+        processing: pWeight,
+        strategic_value: sWeight // support both camelCase and snake_case for maximum resilience
       },
       data_quality: {
         level: dataQualityLevel,
-        missing_fields: missingFields.length > 0 ? missingFields : undefined,
+        missing_fields: missing_fields.length > 0 ? missing_fields : undefined
       },
-      reasoning: [
-        ...reasoning,
-        `${LEGACY_RAW_MATERIALS_SCORING_STATUS}: not eligible for CanonicalScoreResult or productive ranking.`,
-      ],
+      reasoning: reasoning,
       inputs: merged,
       metadata: {
         scoring_version: requestedVersion,
-        data_quality: Number((1 - missingFields.length / totalPossibleFields).toFixed(2)),
-      },
+        data_quality: Number((1 - missingCount / totalPossibleFields).toFixed(2))
+      }
     };
+
+    return payload;
   }
 }

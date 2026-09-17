@@ -24,16 +24,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import {
-  PDF_BRAND,
-  PDF_NOTICES,
-  applyPdfDocumentMetadata,
-  createPdfReportMetadata,
-  drawCapitalAiFooter,
-  drawCapitalAiReportHeader,
-} from '../platform/PdfReporting/pdfBrand';
 import { PdfExportModal } from './PdfExportModal';
-import { authFetch } from '../lib/authFetch';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -252,11 +243,10 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
       setSimulatedSymbols([]);
 
       try {
-        // Fetch historical data for all assets in the portfolio over the maximum range (5 years).
-        // FIN-SEC-03: bearer-aware authFetch is required because the server performs the
-        // authoritative paid Backtest entitlement decision before history/provider I/O.
+        // Fetch historical data for all assets in the portfolio over the maximum range (5 years)
+        // Using Promise.all for fast parallel execution
         const fetchPromises = allocations.map(item =>
-          authFetch(`/api/backtest-history?symbol=${item.symbol}&range=5Y`)
+          fetch(`/api/backtest-history?symbol=${item.symbol}&range=5Y`)
             .then(res => {
               if (!res.ok) throw new Error(`HTTP_${res.status}`);
               return res.json();
@@ -433,9 +423,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
     setAIError(null);
 
     try {
-      // SECURITY (2026-08-25, Router-Anbindung): /api/portfolio-review verlangt jetzt eine
-      // verifizierte Identitaet (konsistent mit /api/chat) - authFetch() haengt das Bearer-Token an.
-      const response = await authFetch('/api/portfolio-review', {
+      const response = await fetch('/api/portfolio-review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -491,26 +479,41 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
     document.body.removeChild(link);
   };
 
-  // Generate PDF report using the canonical CAPITAL-AI P0 brand contract.
+  // Generate gorgeous PDF report
   const exportPortfolioPDF = () => {
     if (!simResults) return;
 
     const doc = new jsPDF();
-    const reportMetadata = createPdfReportMetadata('portfolio');
-    applyPdfDocumentMetadata(
-      doc,
-      reportMetadata,
-      'CAPITAL-AI Portfolio Allocation Backtest',
-      'Quantitativer Portfolio-Allokations- und Backtest-Bericht',
-    );
-    drawCapitalAiReportHeader(doc, reportMetadata, 'PORTFOLIO ALLOCATION QUANT BACKTEST REPORT');
+    
+    // Header block
+    doc.setFillColor(15, 15, 15);
+    doc.rect(0, 0, 210, 38, 'F');
+    doc.setFillColor(245, 196, 83); // Gold line
+    doc.rect(0, 38, 210, 2, 'F');
+
+    doc.setTextColor(245, 196, 83);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('CAPITAL-AI', 15, 18);
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('PORTFOLIO ALLOCATION QUANT BACKTEST REPORT', 15, 28);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(245, 196, 83);
+    doc.text('SYSTEM: PORTFOLIO CORE', 142, 18);
+    doc.setTextColor(200, 200, 200);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`DATUM: ${new Date().toLocaleDateString('de-DE')}`, 142, 28);
 
     let y = 50;
     doc.setTextColor(15, 15, 15);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.text('1. PORTFOLIO ALLOKATION (GEWÄHLTE GEWICHTUNG)', 15, y);
-    doc.setDrawColor(...PDF_BRAND.colors.gold);
+    doc.setDrawColor(245, 196, 83);
     doc.line(15, y + 2, 195, y + 2);
 
     y += 10;
@@ -540,13 +543,12 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
       y += 7;
     });
 
-    // Section 2: Performance breakdown across timeframes. The heading avoids an evidence/certification claim
-    // because one or more underlying histories may be explicitly marked as simulated.
+    // Section 2: Performance breakdown across timeframes
     y += 12;
     doc.setTextColor(15, 15, 15);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.text('2. PERFORMANCE-AUSWERTUNG (1, 3 & 5 JAHRE)', 15, y);
+    doc.text('2. HISTORISCHER ERFOLGS-NACHWEIS (1, 3 & 5 JAHRE)', 15, y);
     doc.line(15, y + 2, 195, y + 2);
 
     y += 10;
@@ -627,12 +629,13 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
       });
     }
 
-    drawCapitalAiFooter(doc, reportMetadata, {
-      y: 285,
-      notice: PDF_NOTICES.informational,
-    });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(140, 140, 140);
+    doc.text('CAPITAL-AI Portfoliodaten und Analysen entsprechen den Richtlinien für Zero-Breach Datenintegrität.', 15, 283);
+    doc.text('Dieses Dokument dient Informationszwecken. Historische Renditen sind keine Garantie für zukünftige Performance.', 15, 287);
 
-    doc.save(`CAPITAL_AI_Portfolio_Bericht_${reportMetadata.generatedAt.toISOString().slice(0, 10)}.pdf`);
+    doc.save(`CAPITAL_AI_Portfolio_Bericht.pdf`);
   };
 
   const currentPeriodMetrics = simResults ? simResults[activeChartRange] : null;
@@ -794,6 +797,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
               {totalWeight}% / 100%
             </span>
           </div>
+          
           <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
             <motion.div 
               className={`h-full ${totalWeight === 100 ? 'bg-emerald-500' : 'bg-rose-500'}`}

@@ -19,13 +19,13 @@
 export type PlatformType = 'tiktok' | 'youtube' | 'reels' | 'podcast' | 'multiplatform';
 
 export type ContentFormat =
-  | 'tiktok_short'
-  | 'reels_short'
-  | 'youtube_longform'
-  | 'youtube_short'
-  | 'podcast_dual_host'
-  | 'podcast_solo'
-  | 'linkedin_video_pack';
+  | 'tiktok_short'         // 15-60s vertical video
+  | 'reels_short'          // 30-90s vertical video
+  | 'youtube_longform'     // 8-15m horizontal video
+  | 'youtube_short'        // 30-60s vertical video
+  | 'podcast_dual_host'    // 10-30m dual host interview/dialogue
+  | 'podcast_solo'         // 5-15m solo host deep dive
+  | 'linkedin_video_pack'; // B2B video + slide deck script
 
 export type ToneOfVoice =
   | 'viral_high_energy'
@@ -55,7 +55,7 @@ export interface SocialMediaQuestionnaire {
   keyUSP?: string;
   platforms: PlatformType[];
   format: ContentFormat;
-  seriesCount: number;
+  seriesCount: number; // 1 to 10
   targetAudience: TargetAudience;
   tone: ToneOfVoice;
   marketingGoal: MarketingGoal;
@@ -85,7 +85,7 @@ export interface PodcastDialogueEntry {
   text: string;
   timestamp: string;
   ssmlVoice?: string;
-  audioCue?: string;
+  audioCue?: string; // e.g. "[Chime sound]", "[Laughs]", "[Intro Jingle]"
 }
 
 export interface GeneratedMediaItem {
@@ -95,7 +95,7 @@ export interface GeneratedMediaItem {
   format: ContentFormat;
   primaryPlatform: PlatformType;
   estimatedDuration: string;
-  viralPotentialScore: number;
+  viralPotentialScore: number; // 1-100
   hookOptions: {
     hookText: string;
     hookStyle: 'curiosity' | 'controversial' | 'data_driven' | 'story';
@@ -111,17 +111,13 @@ export interface GeneratedMediaItem {
     twitterThread: string[];
     instagramCaption: string;
     tiktokDescription: string;
-    /** Maintained CAPITAL-AI template fields stay optional for legacy handover producers. */
-    youtubeDescription?: string;
-    facebookPost?: string;
-    supportEmail?: string;
-    brandEmoji?: string;
-    brandEmojiTag?: string;
-    standaloneEmojiTags?: string[];
     hashtags: string[];
     ctaButtonText: string;
   };
   audioSsml: string;
+  /** ADR-0020: oeffentlich erreichbare URL des gerenderten Video-/Audio-Assets, sofern
+   *  vorhanden. Ohne dieses Feld koennen Video-Plattformen (YouTube/TikTok/Instagram) nicht
+   *  real veroeffentlicht werden - siehe PublishRequestPayload.mediaUrl. */
   mediaUrl?: string;
 }
 
@@ -136,7 +132,12 @@ export interface SocialMediaSeriesPackage {
   items: GeneratedMediaItem[];
 }
 
+// ---------------------------------------------------------
+// Social Media Account Integration & Direct Publisher Types
+// ---------------------------------------------------------
+
 export type SupportedAccountPlatform = 'youtube' | 'tiktok' | 'instagram' | 'x' | 'facebook';
+
 export type SocialAccountStatus = 'connected' | 'disconnected' | 'token_expired' | 'connecting';
 
 export interface SocialAccount {
@@ -150,6 +151,10 @@ export interface SocialAccount {
   scopes: string[];
   followersCount?: number;
   channelId?: string;
+  /** ADR-0020: NIE ein echtes Token, ausschliesslich eine gekuerzte, nicht-reversible
+   *  Anzeige-Referenz (letzte 4 Zeichen der Konto-ID) - siehe tokenStore.ts. Der Handover-
+   *  Prototyp nannte dieses Feld gleich, fuellte es aber mit `token_${platform}_${Date.now()}`ein
+   *  frei erfundener Wert ohne jeden Bezug zu einem echten Token. */
   accessTokenMasked?: string;
 }
 
@@ -161,19 +166,17 @@ export interface PublishRequestPayload {
   seriesTitle: string;
   targetPlatforms: SupportedAccountPlatform[];
   publishType: PublishExecutionType;
-  scheduledAt?: string;
+  scheduledAt?: string; // ISO String
   customCaptions: Partial<Record<SupportedAccountPlatform, string>>;
   videoTitle?: string;
   hashtags: string[];
   mediaType: 'short_video' | 'podcast_audio' | 'long_video' | 'social_post' | 'thread';
+  /** ADR-0020 (neu): oeffentlich erreichbare URL des zu veroeffentlichenden Video-/Audio-Assets.
+   *  Erforderlich fuer youtube/tiktok/instagram (Video-Content); optional fuer x/facebook, die
+   *  auch reine Text-Posts unterstuetzen. Fehlt sie fuer eine Video-Plattform, schlaegt die
+   *  Veroeffentlichung fuer diese Plattform mit einer expliziten Fehlermeldung fehl, statt eine
+   *  Erfolgs-URL vorzutaeuschen. */
   mediaUrl?: string;
-  /** SOCIAL-P0 canonical package correlation fields. */
-  contentPackageId?: string;
-  sourceContentId?: string;
-  sourceDomain?: string;
-  disclosures?: string[];
-  links?: string[];
-  referralDisclosure?: string;
 }
 
 export interface PublishLogEntry {

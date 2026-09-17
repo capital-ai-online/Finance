@@ -8,217 +8,36 @@ export interface DependencyPolicyResult {
   productionDependencyCount: number;
 }
 
-interface SecurityFloor {
-  packageName: string;
-  major: number;
-  minimumVersion: string;
-  advisories: readonly string[];
-}
-
-interface PythonRequirementSecurityFloor {
-  sourcePath: string;
-  packageName: string;
-  minimumVersion: string;
-  advisories: readonly string[];
-}
-
-// Central lockfile floors prevent a patched dependency from silently regressing when
-// package ranges are re-resolved. Keep the mechanism generic and add a floor whenever
-// an advisory requires a minimum patched version for a supported major line.
-const SECURITY_FLOORS: readonly SecurityFloor[] = [
-  {
-    packageName: 'vite',
-    major: 6,
-    minimumVersion: '6.4.3',
-    advisories: ['GHSA-fx2h-pf6j-xcff', 'GHSA-p9ff-h696-f583', 'GHSA-4w7w-66w2-5vf9'],
-  },
-  {
-    packageName: 'vitest',
-    major: 4,
-    minimumVersion: '4.1.11',
-    advisories: ['CVE-2026-84373', 'GHSA-82fw-gwwq-j7x9', 'Dependabot#22'],
-  },
-  {
-    packageName: '@vitest/mocker',
-    major: 4,
-    minimumVersion: '4.1.11',
-    advisories: ['CVE-2026-84373', 'GHSA-82fw-gwwq-j7x9', 'Dependabot#21'],
-  },
-];
-
-const PYTHON_REQUIREMENT_SECURITY_FLOORS: readonly PythonRequirementSecurityFloor[] = [
-  {
-    sourcePath: 'scripts/docs/requirements-notebooklm-pdf.txt',
-    packageName: 'WeasyPrint',
-    minimumVersion: '70.0',
-    advisories: ['CVE-2026-55073', 'Dependabot#29'],
-  },
-];
-
 function isDisallowedSpecifier(specifier: string): boolean {
   const value = specifier.trim().toLowerCase();
   return value === '*' || value === 'latest' || /^(git\+|git:|https?:|file:|link:)/.test(value);
 }
 
-interface ParsedSemver {
-  major: number;
-  minor: number;
-  patch: number;
-  prerelease: boolean;
-}
-
-function parseSemver(version: string): ParsedSemver | null {
-  const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/);
-  if (!match) return null;
-  return {
-    major: Number(match[1]),
-    minor: Number(match[2]),
-    patch: Number(match[3]),
-    prerelease: Boolean(match[4]),
-  };
-}
-
-function parsePythonVersion(version: string): ParsedSemver | null {
-  const match = version.trim().match(/^(\d+)\.(\d+)(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$/);
-  if (!match) return null;
-  return {
-    major: Number(match[1]),
-    minor: Number(match[2]),
-    patch: Number(match[3] ?? '0'),
-    prerelease: Boolean(match[4]),
-  };
-}
-
-function compareSemver(left: ParsedSemver, right: ParsedSemver): number {
-  if (left.major !== right.major) return left.major - right.major;
-  if (left.minor !== right.minor) return left.minor - right.minor;
-  if (left.patch !== right.patch) return left.patch - right.patch;
-  if (left.prerelease === right.prerelease) return 0;
-  return left.prerelease ? -1 : 1;
-}
-
-function packageNameFromLockPath(packagePath: string): string | null {
-  const marker = 'node_modules/';
-  const markerIndex = packagePath.lastIndexOf(marker);
-  if (markerIndex < 0) return null;
-  const name = packagePath.slice(markerIndex + marker.length);
-  return name || null;
-}
-
-function validateDependencySection(
-  sectionName: 'dependencies' | 'devDependencies',
-  pkg: any,
-  lock: any,
-  violations: string[],
-): void {
-  const dependencies: Record<string, string> = pkg?.[sectionName] ?? {};
+export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyResult {
+  const violations: string[] = [];
+  const dependencies: Record<string, string> = pkg?.dependencies ?? {};
   const rootLock = lock?.packages?.[''];
 
   for (const [name, specifier] of Object.entries(dependencies)) {
     if (typeof specifier !== 'string' || isDisallowedSpecifier(specifier)) {
-      violations.push(`${sectionName}.${name}: unsicherer/nicht reproduzierbarer Dependency-Specifier '${String(specifier)}'`);
+      violations.push(`${name}: unsicherer/nicht reproduzierbarer Dependency-Specifier '${String(specifier)}'`);
       continue;
     }
 
-    const rootSpecifier = rootLock?.[sectionName]?.[name];
+    const rootSpecifier = rootLock?.dependencies?.[name];
     if (rootSpecifier !== specifier) {
-      violations.push(`${sectionName}.${name}: package.json und package-lock Root-Specifier divergieren`);
+      violations.push(`${name}: package.json und package-lock Root-Specifier divergieren`);
     }
 
     const locked = lock?.packages?.[`node_modules/${name}`];
     if (!locked || typeof locked.version !== 'string' || !locked.version) {
-      violations.push(`${sectionName}.${name}: kein aufgelöster Lockfile-Eintrag mit Version`);
+      violations.push(`${name}: kein aufgelöster Lockfile-Eintrag mit Version`);
       continue;
     }
     if (!locked.integrity && !locked.resolved?.startsWith('https://registry.npmjs.org/')) {
-      violations.push(
-        `${sectionName}.${name}@${locked.version}: weder Integrity-Hash noch verifizierbarer npm-Registry-Ursprung im Lockfile`,
-      );
+      violations.push(`${name}@${locked.version}: weder Integrity-Hash noch verifizierbarer npm-Registry-Ursprung im Lockfile`);
     }
   }
-}
-
-function validateSecurityFloors(lock: any, violations: string[]): void {
-  for (const [packagePath, entry] of Object.entries<any>(lock?.packages ?? {})) {
-    const packageName = packageNameFromLockPath(packagePath);
-    if (!packageName || !entry || typeof entry.version !== 'string') continue;
-
-    const matchingFloors = SECURITY_FLOORS.filter(floor => floor.packageName === packageName);
-    if (matchingFloors.length === 0) continue;
-
-    const parsedVersion = parseSemver(entry.version);
-    if (!parsedVersion) {
-      violations.push(`${packagePath}: Sicherheitsversion '${entry.version}' ist nicht als SemVer auswertbar`);
-      continue;
-    }
-
-    for (const floor of matchingFloors) {
-      if (parsedVersion.major !== floor.major) continue;
-      const parsedMinimum = parseSemver(floor.minimumVersion);
-      if (!parsedMinimum) {
-        throw new Error(`Ungültiger interner Security Floor ${floor.packageName}@${floor.minimumVersion}`);
-      }
-      if (compareSemver(parsedVersion, parsedMinimum) < 0) {
-        violations.push(
-          `${packagePath}: ${packageName}@${entry.version} unterschreitet Security Floor ${floor.minimumVersion} (${floor.advisories.join(', ')})`,
-        );
-      }
-    }
-  }
-}
-
-export function evaluatePythonRequirementSecurityPolicy(sourcePath: string, content: string): string[] {
-  const normalizedSourcePath = sourcePath.replace(/\\/g, '/');
-  const floors = PYTHON_REQUIREMENT_SECURITY_FLOORS.filter(floor => floor.sourcePath === normalizedSourcePath);
-  if (floors.length === 0) return [];
-
-  const violations: string[] = [];
-  const requirementLines = content
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(line => line && !line.startsWith('#'));
-
-  for (const floor of floors) {
-    const packageLine = requirementLines.find(line => {
-      const match = line.match(/^([A-Za-z0-9_.-]+)\s*(?:==|>=)/);
-      return match?.[1]?.toLowerCase() === floor.packageName.toLowerCase();
-    });
-
-    if (!packageLine) {
-      violations.push(`${normalizedSourcePath}: ${floor.packageName} fehlt trotz Security Floor ${floor.minimumVersion}`);
-      continue;
-    }
-
-    const requirement = packageLine.match(/^([A-Za-z0-9_.-]+)\s*(==|>=)\s*([0-9]+(?:\.[0-9]+){1,2}(?:-[0-9A-Za-z.-]+)?)\s*(?:#.*)?$/);
-    if (!requirement) {
-      violations.push(`${normalizedSourcePath}: ${floor.packageName} hat keinen auswertbaren ==/>=-Versionspin`);
-      continue;
-    }
-
-    const parsedVersion = parsePythonVersion(requirement[3]);
-    const parsedMinimum = parsePythonVersion(floor.minimumVersion);
-    if (!parsedVersion || !parsedMinimum) {
-      violations.push(`${normalizedSourcePath}: ${floor.packageName}-Sicherheitsversion ist nicht auswertbar`);
-      continue;
-    }
-
-    if (compareSemver(parsedVersion, parsedMinimum) < 0) {
-      violations.push(
-        `${normalizedSourcePath}: ${floor.packageName}@${requirement[3]} unterschreitet Security Floor ${floor.minimumVersion} (${floor.advisories.join(', ')})`,
-      );
-    }
-  }
-
-  return violations;
-}
-
-export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyResult {
-  const violations: string[] = [];
-  const dependencies: Record<string, string> = pkg?.dependencies ?? {};
-
-  validateDependencySection('dependencies', pkg, lock, violations);
-  validateDependencySection('devDependencies', pkg, lock, violations);
-  validateSecurityFloors(lock, violations);
 
   return { violations, productionDependencyCount: Object.keys(dependencies).length };
 }

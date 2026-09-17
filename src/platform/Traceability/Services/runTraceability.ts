@@ -13,45 +13,24 @@ import { registerMatrix } from '../Registry/traceabilityRegistry';
 import { TraceabilityMatrixValidator } from '../Validators/traceabilityMatrixValidator';
 import { eventMeshBus } from '../../EventMesh/Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from '../../EventMesh/Services/EventMeshService';
-import type { OperationalTraceStateSourceRecord } from '../Contracts/OperationalTraceStateContract';
-import { buildOperationalTraceStateProjection } from './OperationalTraceStateProjection';
-import { buildPublishedTraceabilityEventOperationalSource } from './TraceabilityEventOperationalSource';
 
 const REPO_ROOT = process.cwd();
 const SOURCE_COMPONENT = 'src/platform/Traceability';
-const OPERATIONAL_TRACE_OUTPUT = '.ai/knowledge/traceability/operational-state.json';
-const operationalTraceSources: OperationalTraceStateSourceRecord[] = [];
 
 // ARCH-AUDIT-0002 (N4-Folge, Kapitel 14.4, Traceability Stufe 3): Event-Veroeffentlichung ist
 // best-effort und darf den eigentlichen Matrixlauf nicht gefaehrden - derselbe Grundsatz wie in
 // src/platform/Supervisor/supervisor.ts (executeSupervised()).
-//
-// correlationId is always the existing Traceability runId. This prevents the EventPublisher from
-// generating a new correlation per event and makes all events from one real run reproducibly bound.
-function publishTraceabilityEvent(
-  eventName: string,
-  payload: Record<string, unknown>,
-  correlationId: string,
-): void {
+function publishTraceabilityEvent(eventName: string, payload: Record<string, unknown>): void {
   try {
     if (!isBootstrapped()) bootstrapEventMesh(eventMeshBus);
-    const event = eventMeshBus.publish(eventName, payload, {
+    eventMeshBus.publish(eventName, payload, {
       sourceComponent: SOURCE_COMPONENT,
-      correlationId,
       essReferences: ['ESS-0011'],
       adrReferences: ['ADR-0015', 'ADR-0018'],
     });
-    operationalTraceSources.push(buildPublishedTraceabilityEventOperationalSource(event));
   } catch (e) {
     console.warn(`[traceability] Event "${eventName}" konnte nicht veroeffentlicht werden.`, e);
   }
-}
-
-function writeOperationalTraceStateProjection(generatedAt = new Date().toISOString()): void {
-  const projection = buildOperationalTraceStateProjection(operationalTraceSources, generatedAt);
-  const outputPath = path.join(REPO_ROOT, OPERATIONAL_TRACE_OUTPUT);
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, `${JSON.stringify(projection, null, 2)}\n`, 'utf8');
 }
 
 // Befundtypen, die auf eine tatsaechlich falsche Angabe hindeuten (dangling Referenz), nicht
@@ -83,7 +62,7 @@ function updateManifestTestsField(componentPath: string, testPaths: string[]): b
 
 function main() {
   const runId = new Date().toISOString();
-  publishTraceabilityEvent('TraceabilityBuildStartedEvent', { runId }, runId);
+  publishTraceabilityEvent('TraceabilityBuildStartedEvent', { runId });
 
   const builder = new TraceabilityBuilder();
   const matrix = builder.build();
@@ -95,7 +74,7 @@ function main() {
   publishTraceabilityEvent('TraceabilityReportGeneratedEvent', {
     runId,
     files: ['.ai/knowledge/traceability/matrix.json', '.ai/knowledge/traceability/coverage.json', '.ai/knowledge/traceability/orphans.json', 'docs/traceability/COVERAGE_REPORT.md'],
-  }, runId);
+  });
 
   const testsByComponent = new Map<string, string[]>();
   for (const link of matrix.links) {
@@ -116,13 +95,13 @@ function main() {
     essCoverageRatio: coverage.ess.ratio,
     componentTestRatio: coverage.components.testRatio,
     componentsTotal: coverage.components.total,
-  }, runId);
+  });
   if (orphans.length > 0) {
     publishTraceabilityEvent('OrphanDetectedEvent', {
       runId,
       count: orphans.length,
       findings: orphans.map(o => ({ type: o.type, id: o.id })),
-    }, runId);
+    });
   }
 
   console.log(`[traceability] ${matrix.ess.length} ESS-Eintraege, ${matrix.components.length} Komponenten, ${matrix.tests.length} Testdateien, ${matrix.links.length} Verknuepfungen.`);
@@ -136,8 +115,7 @@ function main() {
       runId,
       hardFailureCount: hardFailures.length,
       findings: hardFailures.map(f => ({ type: f.type, id: f.id })),
-    }, runId);
-    writeOperationalTraceStateProjection();
+    });
     for (const f of hardFailures) console.error(`[FEHLER] ${f.type}: ${f.detail}`);
     process.exit(1);
   }
@@ -148,8 +126,7 @@ function main() {
     componentCount: matrix.components.length,
     testCount: matrix.tests.length,
     linkCount: matrix.links.length,
-  }, runId);
-  writeOperationalTraceStateProjection();
+  });
 }
 
 main();

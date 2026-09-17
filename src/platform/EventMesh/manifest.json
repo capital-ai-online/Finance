@@ -50,7 +50,6 @@
     "Supervisor Events",
     "Platform Director Events",
     "AI Events",
-    "Quality Events",
     "System Events"
   ],
   "events": {
@@ -80,18 +79,9 @@
       "PlatformDecisionEvent",
       "SecurityViolationDetectedEvent",
       "GovernanceViolationDetectedEvent",
-      "TwinSynchronizedEvent",
-      "ValidationStartedEvent",
-      "ValidationCompletedEvent",
-      "ValidationFailedEvent",
-      "QualityGatePassedEvent",
-      "QualityGateFailedEvent",
-      "QualityScoreChangedEvent",
-      "TechnicalDebtDetectedEvent",
-      "TechnicalDebtResolvedEvent",
-      "CoverageCalculatedEvent"
+      "TwinSynchronizedEvent"
     ],
-    "routesNote": "Standardereignisse plus ESS-0005 Quality-Center-Lifecycle-Events; EventMesh bleibt reine Routing-Schicht ohne Quality-Geschaeftslogik."
+    "routesNote": "Ausgangsbestand der 15 Standardereignisse; E2/E5 aendern den fachlichen Katalog nicht."
   },
   "interfaces": [
     "IEventBus",
@@ -154,6 +144,6 @@
     "tests/unit/platformDecisionEventBridge.test.ts"
   ],
   "conformanceLevel": null,
-  "implementationStatus": "Implementiert (Stufe 1-4). E2 ergaenzt Event-ID-basierte Idempotency und correlation-spezifische Ordering-Evidence; E5 ergaenzt Failure-, Consumer-Health- und Poison-Event-Evidence. ESS-0005 Quality Events werden ueber denselben Katalog und Bus geroutet, ohne zweite Event-Infrastruktur.",
+  "implementationStatus": "Implementiert (Stufe 1-4). E2 ergaenzt Event-ID-basierte Idempotency und correlation-spezifische Ordering-Evidence; E5 ergaenzt Failure-, Consumer-Health- und Poison-Event-Evidence. In-Memory, ohne externe Abhaengigkeiten.",
   "note": "E2/E5 fuehren keine zweite EventMesh, keine fachliche Entscheidung und keine persistente Durable Queue ein. Durable Multi-Instance-Replay und autonome Retry-Orchestrierung bleiben separate Infrastruktur-Scope."
 }

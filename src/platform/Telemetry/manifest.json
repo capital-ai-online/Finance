@@ -1,9 +1,9 @@
 {
   "name": "Telemetry",
-  "version": "1.2.0",
+  "version": "1.1.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Vendor-neutrale Operational-Evidence-Schicht fuer Logs, Metriken, validierten Trace-Kontext und aggregationsfaehige Product Intelligence; Audit Evidence bleibt getrennt.",
+  "description": "Vendor-neutrale Operational-Evidence-Schicht fuer Logs, Metriken und Trace-Kontext entlang der FinTech-Wertschoepfungskette; Audit Evidence bleibt getrennt.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -11,12 +11,10 @@
     "ESS-0005",
     "ESS-0006",
     "ESS-0011",
-    "ESS-0013",
-    "ESS-0019"
+    "ESS-0013"
   ],
   "adr": [
-    "ADR-0056",
-    "ADR-0059"
+    "ADR-0056"
   ],
   "dependencies": [
     "server/logger.ts",
@@ -27,35 +25,28 @@
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "Telemetry- und Product-Intelligence-Contracts publizieren keine EventMesh-Domain-Events und fuehren keinen Vendor-Export aus."
+    "note": "O1 definiert kanonische Telemetry-Event-Namen, publiziert aber noch keine EventMesh-Domain-Events. Operational Telemetry und EventMesh bleiben getrennte Verantwortlichkeiten."
   },
   "knowledge": [
     "docs/architecture/OBSERVABILITY_TELEMETRY_O1_BASELINE.md"
   ],
   "interfaces": [
     "contracts.ts",
-    "productIntelligence.ts",
     "redaction.ts",
-    "traceContext.ts",
     "index.ts"
   ],
   "contracts": [
     "TelemetryRecord",
     "TelemetryContext",
-    "FinTechValueChainStage",
-    "ProductIntelligenceEvent",
-    "ProductIntelligenceContext",
-    "ParsedTraceParent"
+    "FinTechValueChainStage"
   ],
   "documentation": [
     "README.md",
     "docs/adr/ADR-0056-observability-telemetry-baseline.md",
-    "docs/adr/ADR-0059-agent-execution-audit-and-otel-correlation.md",
     "docs/architecture/OBSERVABILITY_TELEMETRY_O1_BASELINE.md"
   ],
   "tests": [
-    "tests/unit/telemetryContract.test.ts",
-    "tests/unit/edgeTrustTelemetryProductIntelligence.test.ts"
+    "tests/unit/telemetryContract.test.ts"
   ],
-  "note": "Bestehender server/logger.ts bleibt Logger-Authority. Der Post-#851 Slice fuegt Edge-Provenance, validierten W3C-Kontext und einen vendor-neutralen Product-Intelligence-Vertrag hinzu, ohne zweite Control Plane oder Provider-Mutation."
+  "note": "O1 ersetzt den bisherigen Bootstrap-Platzhalter durch eine codebasierte Baseline. Bestehender server/logger.ts bleibt Logger-Authority; Telemetry standardisiert Contract, Redaction und Wertschöpfungs-Metadaten."
 }

@@ -11,7 +11,7 @@ function findingForEvaluation(record: AiEvaluationRecord, sequence: number): Fin
     title: `AI evaluation ${record.outcome}: ${record.promptId}`,
     severity,
     description: `Prompt ${record.promptId}@${record.promptVersion} via ${record.modelProvider}:${record.model} produced governance outcome ${record.outcome}. Evaluation-ID: ${record.evaluationId}. Request-ID: ${record.requestId ?? 'n/a'}.`,
-    complianceReference: 'AI Governance / Model-Prompt-Evaluation Registry / ISO/IEC 42001 performance evaluation',
+    complianceReference: 'AI Governance / Model-Prompt-Evaluation Registry / NIST AI RMF Govern-Measure',
     risk: record.outcome === 'FAIL'
       ? 'Ein produktiver AI-Aufruf hat einen Governance-, Schema- oder Grounding-Check nicht bestanden.'
       : 'Ein produktiver AI-Aufruf benötigt zusätzliche Prüfung oder besitzt unvollständige Evidenz.',
@@ -41,7 +41,7 @@ export function buildAiGovernanceEvidenceScanner(
     id: 'RUNTIME-AI-01',
     name: 'Runtime AI Model / Prompt / Evaluation Governance',
     type: 'GOVERNANCE',
-    version: '1.0.1',
+    version: '1.0.0',
     complianceScore: Math.max(0, 100 - penalty),
     confidenceScore: 100,
     evidence: `${evaluations.length} recorded AI evaluations: ${pass} PASS, ${warn} WARN, ${fail} FAIL. Registry: ${inventory.models.length} provider roles, ${inventory.prompts.length} prompts.`,

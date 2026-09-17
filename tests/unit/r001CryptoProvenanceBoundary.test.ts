@@ -27,8 +27,7 @@ describe('R-001 crypto provenance boundary', () => {
     expect(crypto.data_quality.level).toBe('unknown');
     expect(crypto.data_quality.missing_fields).toContain('avg_daily_volume');
     expect(crypto.data_quality.missing_fields).toContain('supply_dynamics');
-    expect(crypto.data_quality.missing_fields).not.toContain('regime_bonus');
-    expect(crypto.data_quality.missing_fields).not.toContain('exchange_liquidity');
+    expect(crypto.data_quality.missing_fields).toContain('regime_bonus');
     expect(crypto.alerts.some(alert => alert.includes('keine reale Datenquelle'))).toBe(true);
 
     expect(meme.final_score).toBe(0);

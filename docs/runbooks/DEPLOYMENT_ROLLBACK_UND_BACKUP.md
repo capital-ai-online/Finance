@@ -6,291 +6,291 @@ RUNBOOK-0001
 
 ## Bezug
 
-ARCH-AUDIT-0002, ADR-0037 sowie die Production-/Security-Governance von CAPITAL-AI.
+ARCH-AUDIT-0002 (Enterprise FinTech Architecture Audit), Kapitel 14.5, Maßnahme H7
+„Deployment-Rollback und Backup-Verfahren".
 
-Verwandte kanonische Dokumente:
+Zusätzliche Render-Governance seit 03.08.2026:
 
-- `docs/architecture/RENDER_PRODUCTION_CONFIGURATION_AUDIT.md`
+- `docs/architecture/RENDER_PRODUCTION_CONFIGURATION_AUDIT.md` (RENDER-AUDIT-0001)
 - `docs/adr/ADR-0037-render-production-configuration-governance.md`
 - `docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md`
-- `docs/security/SECURITY_HARDENING_2026-08-29.md`
-- `.github/workflows/ops-recovery-evidence.yml`
-- `scripts/operations/recoveryDumpIntegrity.mjs`
+
+Für aktuelle Render-Dashboard-/Service-Konfigurationsdetails ist `RENDER_PRODUCTION_EVIDENCE_HANDOFF.md` maßgeblich. Dieses Runbook behandelt den Recovery-Ablauf.
 
 ## Status
 
-Aktiv — Recovery-Baseline am **06.09.2026** erneut read-only gegen den verbundenen Provider korreliert; operativer Evidence-Harness im OPS-08-SEC-07-Branch implementiert, Ausführung noch nicht als PASS behauptet.
+Aktiv
 
 ## Geltungsbereich
 
-Dieses Runbook trennt bewusst zwei Recovery-Ebenen:
+Dieses Runbook beschreibt, wie ein fehlgeschlagenes oder fehlerhaftes Produktiv-Deployment von
+CAPITAL-AI zurückgerollt wird und wie die Datenbasis (Supabase) im Notfall wiederhergestellt
+werden kann. Es deckt die Anwendungsebene (Render-Deployment) und die Datenebene (Supabase
+Postgres) getrennt ab, weil beide unterschiedliche Wiederherstellungsmechanismen haben und ein
+Rollback der einen Ebene die andere nicht automatisch mitzieht.
 
-1. **Anwendung/Deployment:** Render-Service und Git-Stand.
-2. **Daten:** Supabase Postgres und Nutzdaten.
-
-Ein Rollback auf einer Ebene stellt die andere Ebene **nicht** automatisch wieder her.
-
-Automatisierbare Vorbedingungen werden zusätzlich über `npm run predeploy:check` geprüft. Dieser
-Gate ersetzt weder einen Restore-Test noch die hier beschriebenen Incident-Schritte.
+Automatisierter Teil dieses Runbooks: `npm run predeploy:check`
+(`scripts/automation/verifyDeploymentReadiness.ts`). Das Skript prüft vor jedem Deploy
+automatisierbare Vorbedingungen (siehe Abschnitt 4) und läuft als eigener Schritt in der
+CI-Pipeline (`.github/workflows/ci.yml`). Es ersetzt dieses Runbook nicht — es verhindert nur
+eine Teilmenge der Fehler, die sonst erst nach dem Deploy sichtbar würden.
 
 ---
 
-## 1. Anwendungsebene: Render-Rollback
+## 1. Anwendungsebene: Rollback eines Render-Deployments
 
-Der produktive Render-Service `Finance` nutzt Docker, Branch `main`, Region Frankfurt und
-`healthCheckPath: /healthz`. Der read-only verifizierte Plattformzustand hat **Auto-Deploy
-deaktiviert**. Production-Deployments bleiben damit an den vorgesehenen GitHub-/Governance-Pfad
-gebunden und werden nicht allein durch einen Branch-Push ausgelöst.
+CAPITAL-AI läuft auf Render.com als Docker-Service (`render.yaml`, `runtime: docker`) mit
+`healthCheckPath: /healthz`. Render nutzt diesen Health-Check für Deployment Readiness: ein neuer
+Deploy wird erst dann live geschaltet, wenn die neue Instanz erfolgreich auf den konfigurierten
+Health-Check antwortet. Schlägt der neue Deploy vor dem Traffic-Switch fehl, bleibt die vorherige
+funktionierende Version aktiv.
 
-### 1.1 Sofort-Rollback in Render
+**Wichtig:** `/healthz` bestätigt derzeit vor allem Prozess-Liveness und keine vollständige
+fachliche Readiness aller externen Abhängigkeiten. ADR-0037 definiert deshalb die Weiterentwicklung
+zu einem expliziten Readiness Contract.
 
-Wenn ein bereits aktivierter Deploy fachlich fehlerhaft ist:
+Manuelles Eingreifen ist nötig, wenn ein Deploy zwar den Health-Check besteht, sich aber im
+Betrieb als fehlerhaft herausstellt (z. B. ein Bug, der erst bei echtem Nutzerverkehr auftritt,
+oder ein funktionaler Regressionsfehler wie die in ARCH-AUDIT-0002 dokumentierten P0-Vorfälle).
 
-1. Incident und aktuellen Production-Commit erfassen.
-2. Im Render-Dashboard den letzten bekannten guten erfolgreichen Deploy anhand Commit-SHA und
+### 1.1 Manueller Rollback über das Render-Dashboard
+
+Aktuelle Render-Semantik (erneut verifiziert 03.08.2026): Render kann bei einem Rollback auf einen
+vorherigen erfolgreichen Deploy dessen vorhandenes Build-Artefakt wiederverwenden. Ein Rollback
+ist deshalb nicht mit einem vollständigen Neu-Build des historischen Commits gleichzusetzen.
+
+Ablauf:
+
+1. Render-Dashboard öffnen → Service `capital-ai` → Tab **Deploys**.
+2. Den letzten bekannten funktionierenden Deploy anhand von Commit-SHA, Zeitpunkt und Incident-
    Evidence identifizieren.
-3. Rollback dieses Deploys ausführen.
-4. `/healthz` prüfen.
-5. Zusätzlich die konkret betroffene fachliche Funktion, Auth/IAM und relevante Provider prüfen.
-6. Deployment-/Incident-Evidence dokumentieren.
+3. Bei diesem erfolgreichen Deploy **Rollback** auswählen.
+4. Vor Bestätigung prüfen, dass der Ziel-Deploy tatsächlich die gewünschte Code-/Build-Version
+   enthält und keine Datenbank-Rücksetzung erwartet wird.
+5. Rollback ausführen.
+6. Nach dem Rollback: Render Health Check und die ursprünglich betroffene Funktion gezielt
+   verifizieren; ein grüner `/healthz` allein ist kein fachlicher Regressionstest.
 
-`/healthz` allein ist kein vollständiger fachlicher Regressionstest.
+#### Auto-Deploy-Schutz nach Dashboard-Rollback
 
-### 1.2 Nachvollziehbarer Git-Revert
+Render deaktiviert beim Rollback über das Dashboard automatische Deploys. Das schützt davor,
+dass ein nachfolgender Push den fehlerhaften Zustand unmittelbar wieder einführt.
 
-Direkte Änderungen an `main` sind für CAPITAL-AI **nicht** der normale Recovery-Pfad. Wenn ein
-Code-Revert erforderlich ist, wird ein frischer regelkonformer Branch aus dem dann aktuellen
-`main` erstellt, der fehlerhafte Commit per `git revert` rückgängig gemacht und der Revert über den
-normalen Human-gated PR-Pfad geführt. Die jeweils aktuelle Branch-Namenskonvention aus
-`/AGENTS.md` ist verbindlich; historische `hotfix/*` Beispiele sind nicht authorisierend.
+Nach erfolgreicher Ursachenbehebung muss Auto-Deploy bewusst wieder auf den gemäß ADR-0037
+freigegebenen Zustand gesetzt werden. Zielzustand für Production ist `After CI Checks Pass`
+(`autoDeployTrigger: checksPass`), sobald Dashboard Evidence und GitHub Required Checks dies
+bestätigen.
 
-### 1.3 Grenzen eines Anwendung-Rollbacks
+#### Was beim Render-Rollback nicht pauschal auf den historischen Zustand zurückkehrt
 
-Ein Render- oder Git-Rollback:
+Ein Render-Rollback ist kein vollständiger Infrastruktur-Zeitmaschinen-Snapshot. Je nach
+Konfiguration verwenden einzelne Service-Einstellungen weiterhin den aktuellen Zustand.
+Insbesondere sind Persistent Disks und bestimmte gemeinsam genutzte Environment-Group-Zustände
+separat zu betrachten. Vor einem Rollback mit Configuration Drift daher immer
+`RENDER_PRODUCTION_EVIDENCE_HANDOFF.md` heranziehen.
 
-- macht keine bereits ausgeführten Datenbankmutationen rückgängig;
-- stellt keine gelöschten Storage-Objekte wieder her;
-- ersetzt keine Secret-Rotation;
-- ist kein vollständiger Infrastruktur-Zeitmaschinen-Snapshot.
+### 1.2 Rollback per Git, falls ein nachvollziehbarer Revert gewünscht ist
 
-Bei möglicher Datenkorruption gilt Abschnitt 2.
+Ein `git revert` ist eine **andere Recovery-Methode** als ein Render Instant Rollback. Er erzeugt
+einen neuen Git-Commit, der die fehlerhafte Codeänderung zurücknimmt.
+
+```bash
+git fetch origin main
+git revert <fehlerhafter-commit-hash> --no-edit
+git push origin main
+```
+
+Ob und wann Render diesen Revert deployt, hängt von der tatsächlichen Auto-Deploy-Konfiguration
+ab. Nach ADR-0037 soll Production erst nach bestandenen CI Checks deployen. Daher darf dieses
+Runbook nicht mehr pauschal voraussetzen, dass jeder Push auf `main` sofort einen Render-Deploy
+auslöst.
+
+Dieser Weg ist sinnvoll, wenn:
+
+- die Ursache klar einem Commit zugeordnet ist;
+- der Revert selbst CI-/Security-Gates durchlaufen soll;
+- der Git-Verlauf den Recovery-Schritt dauerhaft abbilden soll.
+
+Ein Render Dashboard Rollback ist dagegen sinnvoll, wenn Time-to-Recovery wichtiger ist und ein
+bekannter guter Build sofort wiederhergestellt werden soll.
+
+### 1.3 Was ein Rollback NICHT abdeckt
+
+Ein Rollback auf Anwendungsebene macht keine Datenbankänderungen rückgängig. Wenn der
+fehlerhafte Deploy bereits Schreibzugriffe mit falscher Logik ausgeführt hat (z. B. fehlerhafte
+Daten in Supabase geschrieben), muss das getrennt behandelt werden — siehe Abschnitt 2.
+
+Zusätzlich gilt nach ADR-0037:
+
+- lokaler Render-Dateisystemzustand ist ohne verifizierten Persistent Disk als ephemeral zu
+  behandeln;
+- ein Code-Rollback darf nicht als Wiederherstellung von Subscription-/Credit-Dateien betrachtet
+  werden;
+- Secret-Rotation wird niemals durch Rückkehr zu einem möglicherweise kompromittierten alten
+  Secret ersetzt.
 
 ---
 
 ## 2. Datenebene: Supabase Backup und Wiederherstellung
 
-### 2.1 Verifizierte Plattform-Baseline — 06.09.2026
+Das aktive Supabase-Projekt ist `ryzywoktpmyhwzxmstyu` (Postgres 17, Region `eu-west-1`).
 
-Read-only gegen die aktive Supabase-Organisation und das Projekt verifiziert:
+### 2.1 Wichtiger Hinweis zur tatsächlichen Backup-Konfiguration
 
-- Organisation: `AIFINANCIAL`
-- Plan: **Free**
-- Projekt: `ryzywoktpmyhwzxmstyu`
-- Projektstatus: **ACTIVE_HEALTHY**
-- Region: `eu-west-1`
-- Postgres: **17.6.1.127** / Engine 17
-- `auth.users`: **5** Zeilen zum Korrelationszeitpunkt
-- `auth.identities`: **5** Zeilen zum Korrelationszeitpunkt
-- Supabase Storage: **0 Buckets / 0 Objects** zum Korrelationszeitpunkt
+**Dieses Runbook kann die tatsächlich aktive Backup-Stufe (Plan-Tier, Retention-Zeitraum,
+Point-in-Time-Recovery-Fenster) nicht angeben.** Die dafür verfügbaren Werkzeuge in der
+ursprünglichen Audit-Session lieferten Projekt-Metadaten, aber keine vollständige
+Backup-/Retention-Konfiguration. Gemäß der No-Demo-Data-Policy wird dieser Wert bewusst **nicht**
+geschätzt oder angenommen.
 
-Die aktuelle Supabase-Dokumentation unterscheidet klar zwischen den Plänen:
+**Vor dem ersten Ernstfall muss der Betreiber daher manuell verifizieren:**
+Supabase-Dashboard → Projekt → **Settings/Database/Backups** entsprechend der aktuellen Supabase-
+UI. Dort steht die tatsächliche Backup-Frequenz und Aufbewahrungsdauer des aktuellen Plans.
+Dieser Wert sollte nach Prüfung als Evidence ergänzt werden.
 
-- automatische tägliche Plattform-Backups werden für **Pro, Team und Enterprise** bereitgestellt;
-- Free-Projekte sollen ihre Daten regelmäßig selbst exportieren;
-- Point-in-Time Recovery (PITR) ist als Add-on für **Pro, Team und Enterprise** vorgesehen und
-  setzt mindestens Small Compute voraus;
-- PITR erreicht laut aktueller Provider-Dokumentation im Worst Case ein RPO von ungefähr zwei
-  Minuten, ist aber unter dem aktuell verifizierten Free-Plan keine verfügbare CAPITAL-AI-Baseline.
+### 2.2 Verifizierte Backup-Konfiguration
 
-Damit darf CAPITAL-AI unter dem aktuell verifizierten Free-Plan **keine automatische tägliche
-Provider-Retention und kein PITR als Recovery-Garantie behaupten**.
+*(Vom Betreiber auszufüllen, nachdem Abschnitt 2.1 im Dashboard geprüft wurde. Solange dieser
+Abschnitt leer ist, gilt: Backup-Konfiguration nicht verifiziert.)*
 
-### 2.2 Supabase-Dump-Semantik und Recovery-Grenze
+- Plan-Tier: —
+- Automatisches Backup-Intervall: —
+- Retention-Zeitraum: —
+- Point-in-Time-Recovery verfügbar: —
 
-Der aktuelle Supabase-CLI-Vertrag unterscheidet Schema- und Datensicherung:
+### 2.3 Wiederherstellung über die Supabase-eigene Backup-Funktion
 
-- der normale Schema-Dump filtert providerverwaltete Schemas wie `auth` und `storage`, weil deren
-  Struktur vom Ziel-Supabase bereitgestellt wird;
-- der dokumentierte `--data-only --use-copy`-Dump enthält dagegen die relevanten Auth-/Storage-
-  Daten, einschließlich `auth.users`;
-- Supabase Storage **Binärobjekte** liegen außerhalb des logischen Datenbank-Dumps und benötigen
-  einen eigenen Backup-/Transfer-Pfad.
+Sofern laut Abschnitt 2.2 automatische Backups aktiv sind, ist die Supabase-eigene
+Wiederherstellung der bevorzugte Weg. Vor jeder produktiven Wiederherstellung sind die aktuelle
+Supabase-Dokumentation, der genaue Restore-Scope und der erwartete Datenverlust seit dem
+Wiederherstellungspunkt zu prüfen.
 
-Für CAPITAL-AI folgt daraus ein fail-closed Vertrag:
+### 2.4 Manuelle Sicherung per `pg_dump` (planunabhängiger Fallback)
 
-1. `auth.users` und `auth.identities` müssen im produktionsbezogenen Datendump vorhanden sein;
-2. `storage.buckets` und `storage.objects` müssen als Datenbank-Metadaten vorhanden sein;
-3. solange kein Binärobjekt-Backup implementiert und autorisiert ist, muss der Recovery-Workflow
-   fehlschlagen, sobald `storage.objects` mehr als `0` Zeilen enthält;
-4. ein leerer Storage-Zustand darf als aktueller, eng begrenzter Zustand verwendet werden, aber
-   nicht als dauerhafte Annahme.
+Unabhängig vom Plan-Tier kann ein manueller Dump vor einer riskanten Migration als zusätzliche
+Absicherung verwendet werden:
 
-### 2.3 OPS-08-SEC-07 Recovery Objectives
+```bash
+# SUPABASE_DB_URL vorher manuell und NUR lokal in der Shell setzen.
+pg_dump "$SUPABASE_DB_URL" \
+  --format=custom \
+  --file="capital-ai-backup-$(date +%Y%m%d-%H%M%S).dump"
+```
 
-Die folgenden Werte sind der owner-directed technische Zielvertrag für den aktuellen Free-Plan-
-Fallback. Sie sind **Ziele**, keine bereits gemessenen Zusicherungen:
+Wiederherstellung eines solchen Dumps:
 
-| Ziel | Wert | Begründung | Evidence-Gate |
-|---|---:|---|---|
-| Datenbank-RPO | **≤ 24 Stunden** | täglicher, verschlüsselter logischer Export auf separatem Provider-Speicher | erst `MEASURED/OPERATING`, wenn wiederkehrende erfolgreiche Runs mit Zeitstempel/Hash vorliegen |
-| Datenbank-Restore-RTO | **≤ 60 Minuten** | isolierter Restore eines vollständigen logischen Backup-Sets inkl. Integritätsprüfung | erst `MEASURED`, wenn mindestens ein isolierter Drill erfolgreich und zeitlich gemessen ist |
-| Full-Service-RTO | **UNVERIFIED / nicht aus DB-Restore ableiten** | Render, Provider-Konfiguration, Secrets und externe Dienste haben eigene Recovery-Semantik | eigener End-to-End-Recovery-Drill erforderlich |
+```bash
+# SUPABASE_RESTORE_TARGET_URL nur lokal in der Shell setzen.
+pg_restore --dbname="$SUPABASE_RESTORE_TARGET_URL" \
+  --clean --if-exists \
+  capital-ai-backup-<ZEITSTEMPEL>.dump
+```
 
-Ein einmaliger Dump oder ein grün gerenderter Workflow-Code beweist weder RPO noch RTO. Security-
-`VERIFIED/CLOSED` bleibt ausschließlich bei `CAPITAL-AI-SEC`.
+`--clean --if-exists` kann bestehende Objekte löschen. Eine Anwendung gegen ein produktives,
+befülltes Ziel ist deshalb ein destruktiver Datenbankvorgang und nur mit expliziter Production-
+Freigabe zulässig.
 
-### 2.4 Kanonischer Free-Plan Evidence-Harness
+### 2.5 Strukturelle Wiederherstellung aus `supabase/migrations/`
 
-`.github/workflows/ops-recovery-evidence.yml` operationalisiert den bestehenden Runbook-Vertrag,
-ohne eine zweite Recovery-Architektur einzuführen:
+Unabhängig von jedem Backup ist das Datenbankschema als Sequenz versionierter Migrationen im
+Repository nachvollziehbar (`supabase/migrations/*.sql`). Im Extremfall lässt sich damit die
+Struktur — nicht die Nutzdaten — rekonstruieren.
 
-- täglicher Schedule `02:17 UTC` plus manueller Drill-Modus;
-- Ausführung ausschließlich auf `main`;
-- exakter Checkout von `github.sha` mit immutable Action-Pin und ohne persistierte Git-Credentials;
-- zusätzliche fail-closed Aktivierung über Repository-Variable
-  `OPS_RECOVERY_EXECUTION_ENABLED=true`;
-- Source-Korrelation auf das freigegebene Supabase-Projekt `ryzywoktpmyhwzxmstyu`;
-- Supabase CLI auf eine konkrete Version gepinnt;
-- logischer Export von Rollen, Schema und Daten;
-- pre-encryption Coverage-Gate über `scripts/operations/recoveryDumpIntegrity.mjs`;
-- explizite Auth-Coverage über `auth.users` und `auth.identities`;
-- explizite Storage-Metadaten-Coverage über `storage.buckets` und `storage.objects`;
-- fail-closed Abbruch bei vorhandenen Storage-Objekten, solange kein Binary-Backup existiert;
-- SHA-256-Evidence für Klartextbestandteile vor Löschung;
-- client-seitige `age`-X25519-Verschlüsselung;
-- nur das **verschlüsselte** Backup plus nicht-sensitive JSON-Evidence wird als GitHub-Actions-
-  Artefakt abgelegt;
-- Retention: 35 Tage, damit mindestens 30 tägliche Generationen überlappend belegbar sind;
-- Restore-Drill ausschließlich in einer isolierten lokalen Supabase-Instanz des GitHub Runners;
-- kein Workflow-Schritt enthält einen Production-`restore`, Provider-Planwechsel oder andere
-  Production-Mutation.
+```bash
+for f in supabase/migrations/*.sql; do
+  psql "$SUPABASE_DB_URL" -f "$f"
+done
+```
 
-Der Workflow erwartet folgende geschützte Inputs, speichert deren Werte aber nicht im Repository:
-
-| Input | Typ | Zweck |
-|---|---|---|
-| `SUPABASE_DB_URL` | GitHub Secret | read-only Quelle für logischen Dump; muss zum erlaubten Project Ref korrelieren |
-| `OPS_RECOVERY_AGE_RECIPIENT` | GitHub Variable | öffentlicher X25519-Empfänger zum Verschlüsseln |
-| `OPS_RECOVERY_AGE_IDENTITY` | GitHub Secret | private Identität nur für den manuellen isolierten Restore-Drill |
-| `OPS_RECOVERY_EXECUTION_ENABLED` | GitHub Variable | expliziter Execution Switch; Default/fehlend = kein Backup-Job |
-
-Das Setzen oder Ändern dieser GitHub Secrets/Variablen ist **nicht** durch dieses Repository-Paket
-autorisiert. Es ist eine separate geschützte External-/Execution-Host-Konfiguration.
-
-### 2.5 Backup-Evidence Contract
-
-Für jeden erfolgreichen produktionsbezogenen Backup-Lauf werden mindestens erfasst:
-
-- UTC Start/Ende;
-- Source Project Ref ohne Secret-Werte;
-- Repository/Commit/Workflow-Run-Identität;
-- Backup-Dauer;
-- Größe der Klartextbestandteile vor Löschung;
-- SHA-256 von Rollen-, Schema- und Datenexport;
-- Anzahl erfasster `public`-Relationen;
-- Anzahl und Row Counts der recovery-kritischen Auth-Relationen;
-- Anzahl und Row Counts der recovery-kritischen Storage-Metadatenrelationen;
-- expliziter Storage-Binary-Coverage-Status;
-- Größe und SHA-256 des verschlüsselten Artefakts;
-- Verschlüsselungsverfahren;
-- Off-site-Ziel und Retention;
-- RPO-Ziel und wahrheitsgemäßer Status;
-- Restore-Drill-Status, sofern angefordert;
-- ausdrückliche Kennzeichnung, dass Security Closure nicht behauptet wird.
-
-### 2.6 Isolierter Restore-Drill
-
-Restore niemals ungeprüft direkt über eine produktive Datenbank ausführen. Der kanonische Drill im
-Evidence-Harness:
-
-1. entschlüsselt das Backup nur im kurzlebigen GitHub Runner;
-2. startet eine lokale, isolierte Supabase-Instanz;
-3. spielt Rollen, Schema und Daten mit `ON_ERROR_STOP` in einer Transaktion ein;
-4. erzeugt erneut einen logischen Datendump des Restore-Ziels;
-5. vergleicht alle `public`-Relationen sowie `auth.users`, `auth.identities`, `storage.buckets` und
-   `storage.objects` über Row-Anzahl und order-unabhängigen SHA-256-Multiset-Fingerprint;
-6. behandelt andere providerinterne Auth-/Storage-Hilfstabellen nicht als CAPITAL-AI-Vertrag,
-   damit legitime providerseitige Versionsunterschiede keinen falschen Recovery-Fehler erzeugen;
-7. misst die Restore-Dauer;
-8. failt, wenn Integrität/Coverage nicht stimmt oder die Datenbank-Restore-Dauer über 3600 Sekunden
-   liegt;
-9. entfernt sensible temporäre Dateien und stoppt die lokale Supabase-Instanz.
-
-Der Datenbank-Drill deckt **nicht** automatisch ab:
-
-- Supabase Storage-Binärinhalte — der Workflow bleibt bei vorhandenen Objekten absichtlich
-  fail-closed, bis ein eigener autorisierter Binary-Backup-Pfad existiert;
-- externe Stripe-/AI-/Market-Data-Providerzustände;
-- Render-Konfiguration oder Secrets;
-- vollständige Service-Wiederanlaufzeit.
-
-### 2.7 Strukturelle Wiederherstellung
-
-`supabase/migrations/*.sql` ist die kanonische Schema-Historie. Sie kann die Struktur
-rekonstruieren, **nicht** die Nutzdaten. Migrationen ersetzen daher kein Backup.
+Dies ersetzt kein Daten-Backup.
 
 ---
 
-## 3. Incident-Ablauf
+## 3. Ablauf im Vorfall
 
-1. Incident klassifizieren: Code/Deploy, Konfiguration, Daten, Credential oder Kombination.
-2. Aktuellen Production Commit, Render Deploy und relevante Provider-Evidence erfassen.
-3. Schreibende Prozesse stoppen oder einschränken, wenn weitere Datenkorruption möglich ist.
-4. Anwendung und Datenbank getrennt recovern.
-5. Bei Credential-Incident: rotieren/revoken statt auf alte Secrets zurückzugehen.
-6. Nach Recovery mindestens Health, Fachfunktion, Auth/IAM, Datenintegrität und Provider prüfen.
-7. Root Cause, Recovery-Zeit und verbleibenden Datenverlust dokumentieren.
-8. RPO/RTO-Evidence nur mit tatsächlich gemessenen Werten aktualisieren.
-
----
-
-## 4. Pre-Deploy- und Recovery-Gates
-
-`npm run predeploy:check` deckt automatisierbare Repository-Voraussetzungen ab, darunter
-Deployment-Konfiguration, Migrationen und Supply-Chain-/Governance-Checks. Für Recovery gelten
-zusätzlich folgende Gates:
-
-- Main-/Commit-Identität bestätigt;
-- Backup-Evidence vor destruktiver Datenmutation vorhanden;
-- `auth.users` / `auth.identities` im Backup-Coverage-Gate vorhanden;
-- Storage-Binary-Coverage entweder implementiert oder `storage.objects=0`;
-- Restore-Ziel eindeutig vom Produktionsziel getrennt;
-- Secret-Werte nicht in Logs, PRs oder Evidence kopiert;
-- bei Produktionsrestore explizite Owner-Freigabe;
-- nach Restore Datenintegritäts- und Auth/RLS-Verifikation;
-- RPO/RTO-Zielwerte nicht als gemessene Werte ausgeben, solange die Evidence fehlt.
+1. Incident klassifizieren: Code/Deploy, Render Configuration, Daten, Secret oder Kombination?
+2. Aktuellen Production Commit und Service Configuration Evidence erfassen.
+3. Time-to-Recovery entscheiden:
+   - Render Instant Rollback für schnellen bekannten guten Build;
+   - Git Revert für nachvollziehbaren Code-Recovery-Pfad.
+4. Wenn Daten betroffen sind: Anwendung und Datenbank getrennt behandeln.
+5. Nach Recovery:
+   - Health;
+   - betroffene fachliche Funktion;
+   - Auth/IAM;
+   - relevante externe Provider;
+   - Logs/Alerts
+   prüfen.
+6. Auto-Deploy-Zustand nach Render Dashboard Rollback bewusst kontrollieren.
+7. Incident Evidence und Root Cause dokumentieren.
 
 ---
 
-## 5. Provider-Referenzen
+## 4. Automatisierte Pre-Deploy-Prüfung
 
-Provider-Verhalten ist vor einem realen Recovery erneut gegen den aktuellen Stand zu prüfen.
+`npm run predeploy:check` (`scripts/automation/verifyDeploymentReadiness.ts`) prüft vor Deploys
+unter anderem:
 
-- Supabase Database Backups: `https://supabase.com/docs/guides/platform/backups`
-- Supabase CLI Backup/Restore: `https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore`
-- Supabase Production Checklist: `https://supabase.com/docs/guides/deployment/going-into-prod`
+1. `render.yaml` definiert `healthCheckPath`.
+2. Statisch erkennbare serverseitige Environment-Variablen sind gegen Blueprint-/Alias-Listen
+   geprüft.
+3. `supabase/migrations/` besitzt gültige Migrationsdateien.
+4. Dependency-/Lockfile-/SBOM-Policy.
+5. Traceability, RAG Evidence und Prompt Registry.
+
+### Bekannte Grenze seit RENDER-AUDIT-0001
+
+Die Environment-Abdeckung ist **nicht vollständig**, wenn Schlüssel dynamisch zusammengesetzt
+oder über Wrapper wie `getStripeVar(key)` an `getCleanEnv(key)` weitergegeben werden.
+
+Beispiele, die daher separat durch ADR-0037 / Production Env Contract abgedeckt werden müssen:
+
+```text
+STRIPE_PRICE_ID_STARTER_MONTHLY
+STRIPE_PRICE_ID_STARTER_YEARLY
+STRIPE_PRICE_ID_PRO_MONTHLY
+STRIPE_PRICE_ID_PRO_YEARLY
+STRIPE_ID_FOUNDER / STRIPE_PRICE_ID_FOUNDER
+STRIPE_PRICE_ID_EXPORT_PDF
+```
+
+Der bestehende Gate ist weiterhin wertvoll, darf aber bis zur zentralen Env-Contract-
+Implementierung nicht als vollständiger Beweis der Render-Environment-Konfiguration gelten.
+
+---
+
+## 5. Render Configuration Recovery
+
+Bei einer fehlerhaften Dashboard-/Blueprint-Konfigurationsänderung:
+
+1. keine Secret-Werte in Tickets/PRs kopieren;
+2. vorherigen Setting-Fingerprint/Evidence verwenden;
+3. dokumentieren, welche Änderung einen Deploy/Restart ausgelöst hat;
+4. Konfiguration zurücksetzen oder via verifiziertem Blueprint korrigieren;
+5. neuen Deploy/Health/Smoke-Test abwarten;
+6. Secret nur dann auf alten Wert setzen, wenn ausdrücklich bestätigt ist, dass es nicht
+   kompromittiert wurde — bei Credential Incidents stattdessen rotieren/revoken;
+7. Audit/ADR/Runbook aktualisieren.
+
+---
+
+## Verwandte Dokumente
+
+- `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md`
+- `docs/architecture/RENDER_PRODUCTION_CONFIGURATION_AUDIT.md`
+- `docs/adr/ADR-0037-render-production-configuration-governance.md`
+- `docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md`
+- `render.yaml`
+- `Dockerfile`
+- `scripts/automation/verifyDeploymentReadiness.ts`
+- `.github/workflows/ci.yml`
+- `docs/DATENSCHUTZ_PROTOKOLL.md`
+
+## Provider-Referenzen
+
 - Render Deploys: `https://render.com/docs/deploys`
 - Render Rollbacks: `https://render.com/docs/rollbacks`
 - Render Health Checks: `https://render.com/docs/health-checks`
+- Render Persistent Disks: `https://render.com/docs/disks`
 
----
-
-## 6. OPS-08-SEC-07 Exit-Gate Status
-
-Repository-seitig ist der wiederholbare Evidence-Harness implementiert. Das operative Exit Gate
-bleibt bis zur tatsächlichen Execution offen:
-
-- [x] Free-Plan-/Provider-Baseline current-state read-only korreliert;
-- [x] aktuelle Auth- und Storage-Coverage read-only korreliert;
-- [x] RPO-Ziel ≤24 h definiert;
-- [x] Datenbank-Restore-RTO-Ziel ≤60 min definiert;
-- [x] wiederkehrender verschlüsselter Off-site-Backup-Harness implementiert;
-- [x] Auth-Coverage und Storage-Binary-Grenze fail-closed implementiert;
-- [x] isolierter gemessener Restore-Drill im Harness implementiert;
-- [ ] geschützte GitHub Inputs/Execution Switch separat konfiguriert;
-- [ ] mindestens zwei aufeinanderfolgende geplante Backup-Runs erfolgreich und Evidence verfügbar;
-- [ ] mindestens ein isolierter Restore-Drill erfolgreich, Auth/Public/Storage-Integrität PASS und Dauer gemessen;
-- [ ] RPO aus tatsächlichen Backup-Zeitpunkten als `MEASURED/OPERATING` belegt;
-- [ ] bei künftigem Supabase-Storage-Einsatz Binary-Backup vor Aktivierung/Weiterbetrieb des Recovery-Gates gelöst;
-- [ ] Full-Service-RTO bleibt explizit separat oder wird durch eigenen E2E-Drill gemessen;
-- [ ] CAPITAL-AI-SEC unabhängige Verifikation abgeschlossen.
+Provider-Verhalten ist bei jedem relevanten Recovery-Prozess erneut gegen den aktuellen Stand zu prüfen.

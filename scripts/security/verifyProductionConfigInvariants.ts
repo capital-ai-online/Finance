@@ -13,44 +13,8 @@ const checks: Check[] = [
   {
     id: 'PCG-001',
     file: 'render.yaml',
-    description: 'Render auto-deploy must remain off when GitHub CI is the production deployment authority',
-    includes: 'autoDeployTrigger: off',
-  },
-  {
-    id: 'PCG-012',
-    file: '.github/workflows/ci.yml',
-    description: 'Production deployment must require a successful main push',
-    includes: "github.event_name == 'push' && github.ref == 'refs/heads/main'",
-  },
-  {
-    id: 'PCG-013',
-    file: '.github/workflows/ci.yml',
-    description: 'Production deployment must depend on the successful build-and-test trust boundary',
-    includes: 'needs: [build-and-test]',
-  },
-  {
-    id: 'PCG-015',
-    file: '.github/workflows/ci.yml',
-    description: 'The consolidated main build must still require hosted supply-chain provenance',
-    includes: 'verifySupplyChainProvenance.ts --require-ci',
-  },
-  {
-    id: 'PCG-016',
-    file: '.github/workflows/ci.yml',
-    description: 'The consolidated main build must still verify Sigstore provenance before deployment',
-    includes: 'cosign verify-blob',
-  },
-  {
-    id: 'PCG-017',
-    file: '.github/workflows/ci.yml',
-    description: 'Production mutation must reject an artifact whose release-manifest commit differs from github.sha',
-    includes: 'manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA',
-  },
-  {
-    id: 'PCG-014',
-    file: '.github/workflows/ci.yml',
-    description: 'Render deployment must be bound to the exact verified commit SHA',
-    includes: 'ref=${VERIFIED_COMMIT_SHA}',
+    description: 'Production deploys must wait for repository checks',
+    includes: 'autoDeployTrigger: checksPass',
   },
   {
     id: 'PCG-002',

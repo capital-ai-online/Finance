@@ -1,102 +1,65 @@
-# Work Package SC-7 — Ranking Composite Opt-In & Cross-Asset Generalization
+# Work Package SC-7 — Ranking Composite Opt-In
 
 **SPT:** SC-MD-SPT-0001  
 **Priority:** P1  
-**Status:** PHASE A–C LANDED · PHASE D IMPLEMENTED / SHADOW — productive impact remains false  
-**Date:** 2026-08-19
+**Status:** PHASE A–C LANDED — orchestrator + valuation.service + cryptoRoutes all wire compositeLevel explicitly; scoreImpact still false  
+**Date:** 2026-08-16
 
 ## Goal
 
-SC-7 evolves ranking without silently changing financial decisions:
+Ranking resolves DQ contribution points via the SC-3 helper `compositeLevelToRankingDqPoints` instead of a duplicated inline ternary.
 
-1. reuse SC-3 DQ semantics in the existing Crypto rank formula; and
-2. generalize ranking across canonical multi-asset scores without assuming that different model, feature, intended-use or score-scale contracts are directly comparable.
-
-The productive Crypto formula and eligibility thresholds remain unchanged. Cross-asset ranking stays shadow/read-only until calibration evidence, runtime validation and a separate Owner impact decision exist.
+Optional `RankingDqOptions.compositeLevel` lets callers that already computed a composite pass the level explicitly — **same 100/70/40/50 map**, same formula weights.
 
 ## Delivered
 
-### Phase A–C — existing Crypto DQ opt-in
-- [x] shared `resolveRankingDqPoints`
-- [x] `RANKING_SCORE_IMPACT_ENABLED=false`
-- [x] orchestrator/valuation/Crypto route DQ wiring
-- [x] formula weights and Top-10 thresholds unchanged
+### Phase A
+- [x] `resolveRankingDqPoints` in `ranking.service.ts`
+- [x] `calculateRankScore(..., options?)` optional composite level
+- [x] `RANKING_SCORE_IMPACT_ENABLED = false` explicit constant
+- [x] Unit tests: parity payload level ↔ compositeLevel; formula regression (92 for high/tier1 case)
+- [x] Evidence under `docs/evidence/sc-md/`
 
-### Phase D — canonical cross-asset ranking foundation
+### Phase B (this commit)
+- [x] `cryptoOrchestrator.analyzeCrypto` passes `{ compositeLevel: composite.level }` into `calculateRankScore`
+- [x] Reasoning trail documents SC-7 Phase B + impact-off posture
+- [x] Pure SC-3 level used for rank DQ points (unknown → 50 fail-closed)
+- [x] Evidence `SC7_PHASE_B_ORCHESTRATOR_WIRING_2026-08-16.md`
 
-#### Platform
-- [x] `src/platform/Ranking/contracts.ts`
-- [x] `src/platform/Ranking/CrossAssetRanking.ts`
-- [x] `src/platform/Ranking/index.ts`
-- [x] `cross-asset-ranking/1.0.0`
-- [x] `CROSS_ASSET_RANKING_IMPACT_ENABLED=false`
+### Phase C (this commit)
+- [x] `valuation.service.ts` `ValuationService.analyze` passes `{ compositeLevel: payload.data_quality?.level ?? null }` into `calculateRankScore` instead of relying on the implicit default fallback
+- [x] `cryptoRoutes.ts` — all three `rank_score` call sites (list/score/top10) pass `{ compositeLevel: canonical.integrity.dataQuality }`
+- [x] No independent SC-3 composite computed at either call site (still payload-level `data_quality.level`/`integrity.dataQuality` as the source value) — this is explicit routing/consistency, not a new computation
+- [x] Unit tests: `tests/unit/valuationService.test.ts` proves numerical parity between the explicit-option path and the legacy default-fallback path for every DQ level (`high`/`medium`/`low`/`unknown`)
+- [x] Evidence under `docs/evidence/sc-md/SC7_PHASE_C_VALUATION_CRYPTOROUTES_WIRING_2026-08-16.md`
 
-#### Modes
-- [x] `overall | category | tier | growth`
+**Scope boundary:** `cryptoRoutes.ts` had no pre-existing unit test coverage; this change does not add route-level integration tests (out of scope for a mechanical, type-checked, single-line wiring change) — covered instead by the existing `resolveRankingDqPoints` parity guarantee (SC-7 Phase A) plus the new `valuationService.test.ts` parity proof for the identical pattern.
 
-#### Intended-use comparability contract
-- [x] Default cohort includes `modelId@modelVersion + assetClass + featureVersion + scoringVersion`
-- [x] Admission requires dispatcher, modelRegistry, model, executor, result-contract, feature and scoring lineage
-- [x] Same registry model id/version does not automatically create cross-asset comparability
-- [x] Static review confirmed `traditional-scoring@2.1.0` uses different Stock vs. Forex/Index weight sets
-- [x] C3 compatibility also preserves Crypto 0..10 vs. other financial presentation 0..100
-- [x] Cross-model/cross-asset ranking therefore requires separately verified `ScoreComparabilityEvidence`
-- [x] Evidence requires `normalizedValue`, `comparisonKey`, `methodVersion`, evidence lineage and `verified=true`
-- [x] `crossCohortOrder=false`
+## Explicitly NOT done (Owner gates)
 
-#### Growth
-- [x] Growth is not inferred from canonical score
-- [x] separate verified `GrowthRankingEvidence` required
+- [ ] Flip `scoreImpactEnabled` / `rankingImpactEnabled` to true
+- [ ] Change formula weights (0.70 / 0.15 / 0.10 / 0.05)
+- [ ] Cross-asset rank modes (Overall / Category / Tier / Growth)
+- [ ] Mandatory composite persistence on every payload
+- [ ] Compute an independent SC-3 composite (`computeCompositeDataQuality`) inside `valuation.service.ts`/`cryptoRoutes.ts` (Phase C only routes the existing payload-level value through the explicit option; a genuinely independent composite there is still open)
 
-#### Fail-closed admission
-- [x] canonical status/finite value
-- [x] UAI identity match
-- [x] complete scoring lineage
-- [x] explicit governance eligibility
-- [x] source-conflict block
-- [x] `UNAVAILABLE` / `NO_RUNTIME_EVIDENCE` block
-- [x] category/tier/growth/comparability metadata gates
-- [x] duplicate identity rejection
+## DoD Phase A + B
 
-#### Determinism / traceability
-- [x] ranking value desc, exact tie -> stable `assetId`
-- [x] no hidden financial tie-break factor
-- [x] ranked entries project dispatcher/registry/model/executor/result/feature/scoring lineage
+1. One DQ point map shared with SC-3  
+2. Existing consumers without options behave identically  
+3. Orchestrator (primary multi-agent path) uses composite opt-in  
+4. Tests prove numerical parity for explicit compositeLevel  
+5. No silent score inflation flags
 
-#### Regression proof prepared
-- [x] `tests/unit/crossAssetRanking.test.ts`
-- [x] intended-use cohort isolation
-- [x] Stock/Forex non-interleaving despite shared Traditional model id/version
-- [x] feature-contract drift isolation
-- [x] verified normalization requirement
-- [x] Growth evidence gate
-- [x] governance/identity/lineage fail-closed rules
-- [x] deterministic tie-break + duplicate rejection
-- [x] both impact flags false
+## DoD Phase C
 
-Evidence: `docs/evidence/sc-md/SC7_CROSS_ASSET_RANKING_GENERALIZATION_2026-08-19.md`
-
-## Explicitly NOT done / Owner gates
-
-- [ ] `scoreImpactEnabled` / `rankingImpactEnabled` activation
-- [ ] Crypto formula-weight changes
-- [ ] Top-10 threshold changes
-- [ ] cross-asset normalization/calibration algorithm
-- [ ] productive API/UI/alert/eligibility ordering
-- [ ] financial-decision persistence of Phase-D ranks
-- [ ] unverified Growth promotion
-
-## DoD Phase D
-
-1. ranking input is UAI + CanonicalScoreResult with complete execution lineage;
-2. default cohort equals the same intended-use contract, not merely the same model id;
-3. cross-cohort ranking requires verified normalized comparison evidence;
-4. category/tier/growth modes fail closed when evidence is absent;
-5. governance/source/operations/identity defects are explicit exclusions;
-6. deterministic output contains full ranking lineage;
-7. existing productive ranking behavior remains unchanged;
-8. repository TypeScript/unit/build validation occurs only after PR creation; Owner-managed M10 remediation remains a parallel control-plane item.
+1. `valuation.service.ts` and `cryptoRoutes.ts` route `calculateRankScore` through the explicit `compositeLevel` option
+2. No behavior change — same DQ point map, same source value, numerically identical rank scores
+3. No independent composite computed; no `scoreImpact`/`rankingImpact` mutation
+4. Tests prove parity for every DQ level
 
 ## Risk
 
-Medium architectural scope, **zero productive ranking impact**. The principal risk is false output comparability. Phase D mitigates it by treating intended-use contract identity and normalization evidence as explicit ranking prerequisites rather than inferring comparability from shared model names or numeric ranges.
+Low–medium: Phase B uses pure `composite.level` for ranking points. When composite is `unknown`, rank DQ points are **50** (fail-closed) rather than the display rewrite on `payload.data_quality` (medium/high). Formula weights and eligibility thresholds unchanged. scoreImpact remains false.
+
+Phase C: Low — purely mechanical, type-checked routing of an already-present value through an existing, already-tested option parameter. No new computation, no behavior change (proven by parity test).

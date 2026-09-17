@@ -36,7 +36,6 @@ import {
   Activity,
   Award
 } from 'lucide-react';
-import { authFetch } from '../lib/authFetch';
 
 interface SentimentDriver {
   text: string;
@@ -163,9 +162,7 @@ export function SentimentDashboard() {
     setLoading(true);
     setError(null);
     try {
-      // SECURITY (2026-08-25, Router-Anbindung): /api/market-sentiment verlangt jetzt eine
-      // verifizierte Identitaet (konsistent mit /api/chat) - authFetch() haengt das Bearer-Token an.
-      const response = await authFetch(`/api/market-sentiment?symbol=${encodeURIComponent(symbol)}&assetClass=${encodeURIComponent(assetClass)}`);
+      const response = await fetch(`/api/market-sentiment?symbol=${encodeURIComponent(symbol)}&assetClass=${encodeURIComponent(assetClass)}`);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data.error || `Fehler beim Laden der API (Status ${response.status})`);
@@ -200,11 +197,7 @@ export function SentimentDashboard() {
     setSimResult(null);
 
     try {
-      // Pfad-Korrektur (2026-08-25, Router-Anbindung): der Router definiert den Pfad als
-      // '/market-sentiment/simulate-shock' (siehe server/routes/marketSentimentRoutes.ts); das
-      // hier zuvor verwendete '/analyze-shock' existierte serverseitig nie. Da der Router bis
-      // dahin ohnehin nicht eingebunden war, ist dieser Aufruf immer mit 404 fehlgeschlagen.
-      const response = await authFetch('/api/market-sentiment/simulate-shock', {
+      const response = await fetch('/api/market-sentiment/analyze-shock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

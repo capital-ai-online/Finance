@@ -10,7 +10,6 @@ import { getServerSupabase, isSupabaseConfigured, getSubscription } from './db';
 import { resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
 import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
 import {
-  canUseFeature,
   getWindowedFeatureLimit,
   normalizeSubscriptionTier,
   type SubscriptionTier,
@@ -64,7 +63,7 @@ function nextEligibleIso(windowStart: string, windowDays: number): string | unde
 
 async function consumeWindowedQuota(input: {
   req: Request;
-  quotaKind: 'screening' | 'monte_carlo' | 'full_ai_analysis' | 'buffett_value_check';
+  quotaKind: 'screening' | 'buffett_value_check';
   limit: WindowedLimit;
   tier: SubscriptionTier;
   identityKey: string;
@@ -169,66 +168,6 @@ export async function enforceScreeningQuota(req: Request): Promise<QuotaResult> 
     identityKey: `user:${identity.userId}`,
     email: identity.email,
   });
-}
-
-export async function enforceBacktestEntitlement(req: Request): Promise<QuotaResult> {
-  const identity = await resolveVerifiedIdentity(req);
-  if (!identity) {
-    return {
-      allowed: false,
-      remaining: 0,
-      tier: 'Free',
-      reason: 'authentication-required',
-    };
-  }
-
-  const tier = normalizeSubscriptionTier(await getSubscription(identity.userId));
-  if (!canUseFeature('registered', tier, 'backtest')) {
-    return { allowed: false, remaining: 0, tier, reason: 'feature-not-entitled' };
-  }
-
-  return { allowed: true, remaining: 9999, tier };
-}
-
-async function enforceWindowedPaidAnalysisQuota(
-  req: Request,
-  feature: 'monte_carlo' | 'full_ai_analysis',
-): Promise<QuotaResult> {
-  const identity = await resolveVerifiedIdentity(req);
-  if (!identity) {
-    return {
-      allowed: false,
-      remaining: 0,
-      tier: 'Free',
-      reason: 'authentication-required',
-    };
-  }
-
-  const tier = normalizeSubscriptionTier(await getSubscription(identity.userId));
-  const limit = getWindowedFeatureLimit(tier, feature);
-  if (limit === 'unlimited') {
-    return { allowed: true, remaining: 9999, tier };
-  }
-  if (limit === 'none' || limit === 'preview_only') {
-    return { allowed: false, remaining: 0, tier, reason: 'feature-not-entitled' };
-  }
-
-  return consumeWindowedQuota({
-    req,
-    quotaKind: feature,
-    limit,
-    tier,
-    identityKey: `user:${identity.userId}`,
-    email: identity.email ?? undefined,
-  });
-}
-
-export function enforceMonteCarloQuota(req: Request): Promise<QuotaResult> {
-  return enforceWindowedPaidAnalysisQuota(req, 'monte_carlo');
-}
-
-export function enforceFullAiAnalysisQuota(req: Request): Promise<QuotaResult> {
-  return enforceWindowedPaidAnalysisQuota(req, 'full_ai_analysis');
 }
 
 export async function enforceBuffettValueCheckQuota(req: Request, subjectKey: string): Promise<QuotaResult> {

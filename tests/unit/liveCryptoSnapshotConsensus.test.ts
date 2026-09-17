@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getLiveCryptoSnapshotConsensus } from '../../src/services/liveCryptoSnapshotConsensus';
 import { resetCryptoSnapshotProviderState } from '../../src/services/cryptoSnapshotProvider';
-import { hostEquals } from '../../src/platform/Security/safeIo';
 
 function jsonResponse(payload: unknown): Response {
   return new Response(JSON.stringify(payload), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -13,7 +12,7 @@ describe('live crypto snapshot consensus', () => {
     const observedAt = '2026-08-02T08:00:00.000Z';
     const fetchImpl = (async (input: RequestInfo | URL) => {
       const url = String(input);
-      if (hostEquals(url, 'api.coingecko.com')) {
+      if (url.includes('api.coingecko.com')) {
         return jsonResponse({
           market_data: {
             market_cap: { usd: 1_000_000 },

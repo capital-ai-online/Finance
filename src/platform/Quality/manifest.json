@@ -1,151 +1,26 @@
 {
   "name": "Quality",
-  "version": "1.2.0",
-  "status": "implemented",
+  "version": "1.0.0",
+  "status": "unspecified",
   "owner": "CAPITAL-AI",
-  "description": "ESS-0005 Quality Center: executable Chapter-12 validation, commit-bound Contract/Test/Build evidence, eight quality gates, deterministic quality scoring, technical-debt and coverage evidence, EventMesh lifecycle publication, read-only 18-stage SC-MD-SPT FinTech value-chain homogeneity projection, release-bound QualityCenterReport operationalization and the read-only CAPITAL-AI component verification Skill Engine.",
+  "description": "",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS",
-    "ESS-0005",
-    "ESS-0006",
-    "ESS-0012",
-    "ESS-0013",
-    "ESS-0017"
+    "ESS-0001-CONTRACTS"
   ],
-  "adr": [
-    "ADR-0012",
-    "ADR-0016",
-    "ADR-0018",
-    "ADR-0030",
-    "ADR-0096"
-  ],
-  "dependencies": [
-    "src/platform/Governance",
-    "src/platform/Validators",
-    "src/platform/Release",
-    "src/platform/Vocabulary"
-  ],
+  "adr": [],
+  "dependencies": [],
   "events": {
-    "produces": [
-      "ValidationStartedEvent",
-      "ValidationCompletedEvent",
-      "ValidationFailedEvent",
-      "QualityGatePassedEvent",
-      "QualityGateFailedEvent",
-      "QualityScoreChangedEvent",
-      "TechnicalDebtDetectedEvent",
-      "TechnicalDebtResolvedEvent",
-      "CoverageCalculatedEvent"
-    ],
-    "consumes": [],
-    "note": "Quality lifecycle events use the existing EventMesh composition adapter. Event delivery and Skill Engine output never authorize merge, release, deployment, production mutation, vocabulary mutation or governance mutation."
+    "produces": [],
+    "consumes": []
   },
   "knowledge": [],
-  "interfaces": [
-    "RepositoryQualityCoordinator",
-    "QualityCenterOrchestrator",
-    "Chapter12ValidatorRunner",
-    "QualityGateRunner",
-    "QualityScoreCalculator",
-    "CoverageCollector",
-    "TechnicalDebtRegister",
-    "DocumentationConsistencyValidator",
-    "FintechValueChainQualityProjection",
-    "QualityCenterSnapshotStore",
-    "SkillEnginePromptCompiler",
-    "SkillEngineCatalog",
-    "GET /api/admin/quality-center"
-  ],
-  "contracts": [
-    "repository-quality-observation/1.1.0",
-    "quality-center-contract/1.3.0",
-    "mandatory-validator-coverage/1.0.0",
-    "chapter12-validator-contract/1.0.0",
-    "chapter12-validation-report/1.0.0",
-    "quality-execution-evidence/1.0.0",
-    "quality-coverage/1.0.0",
-    "technical-debt-register/1.1.0",
-    "fintech-value-chain-quality/1.0.0",
-    "skill-engine-verification/1.0.0"
-  ],
+  "interfaces": [],
+  "contracts": [],
   "documentation": [
-    "README.md",
-    "docs/architecture/REPOSITORY_QUALITY_P0_P2_IMPLEMENTATION.md",
-    "docs/architecture/QUALITY_CENTER_CORE_ORCHESTRATION.md",
-    "docs/architecture/QUALITY_CENTER_COMPLETION.md",
-    "docs/architecture/QUALITY_CENTER_OPERATIONALIZATION.md",
-    "docs/architecture/CAPITAL_AI_SKILL_ENGINE.md",
-    ".ai/skills/Capital-AI-Skill-Engine.md"
+    "README.md"
   ],
-  "tests": [
-    "tests/unit/repositoryQualityCoordinator.test.ts",
-    "tests/unit/repositoryQualityAdapters.test.ts",
-    "tests/unit/validatorRegistry.test.ts",
-    "tests/unit/mandatoryValidatorCatalog.test.ts",
-    "tests/unit/chapter12ValidatorRunner.test.ts",
-    "tests/unit/qualityGateRunner.test.ts",
-    "tests/unit/qualityExecutionEvidence.test.ts",
-    "tests/unit/qualityScoreCalculator.test.ts",
-    "tests/unit/technicalDebtRegister.test.ts",
-    "tests/unit/documentationConsistencyValidator.test.ts",
-    "tests/unit/qualityCenterOrchestrator.test.ts",
-    "tests/unit/coverageCollector.test.ts",
-    "tests/unit/qualityCenterSnapshotStore.test.ts",
-    "tests/unit/adminRouterBypassAudit.test.ts",
-    "tests/unit/skillEngine.test.ts",
-    "tests/contract/qualityCenterContract.test.ts",
-    "tests/architecture/qualityCenterBoundary.test.ts",
-    "tests/architecture/qualityFintechValueChainProjection.test.ts",
-    "tests/architecture/qualityCenterOperationalization.test.ts",
-    "tests/security/qualityCenterAuthorityBoundary.test.ts",
-    "tests/performance/qualityCenterDeterminism.test.ts",
-    "tests/e2e/qualityCenterOrchestration.test.ts"
-  ],
-  "implementation": {
-    "level": "contract-complete-operationalized",
-    "implementedAreas": [
-      "RepositoryQualityCoordinator",
-      "ValidatorRegistry integration",
-      "16/16 executable Chapter-12 mandatory validators",
-      "QualityCenterContract 1.3.0",
-      "Chapter12ValidationReport",
-      "commit-bound Contract/Test/Build execution evidence",
-      "eight-gate fail-closed evidence runner",
-      "QualityScoreCalculator without fabricated measurements",
-      "CoverageCollector with executable-test-area measurement and optional real code-coverage ingestion",
-      "real Test Score provider from mandatory test-area coverage",
-      "real Security Score provider from established SecurityComplianceAuditor aggregation semantics",
-      "TechnicalDebtRegister with evidence-required resolution and lifecycle event publication",
-      "QM DocumentationConsistencyValidator",
-      "Governance and Compliance evidence integration",
-      "EventMesh lifecycle publication through existing EventBus",
-      "read-only 18-stage SC-MD-SPT FinTech value-chain homogeneity projection",
-      "Quality hot-path isolation validation for MarketData, Scoring, Ranking, Orchestrator and application runtime",
-      "shared QualityCenterReport composition factory for CLI and build snapshot",
-      "atomic commit-bound QualityCenterReport snapshot in .quality and dist/quality",
-      "runtime snapshot-to-release commit equality through the existing platformVersionControlPlane",
-      "read-only IAM-protected Quality Center admin API",
-      "M8 provider-bypass audit registration for the Quality Center admin route",
-      "Quality Evidence Panel in the existing Performance-Zentrale with no synthetic fallback values",
-      "read-only CAPITAL-AI Skill Engine with 22 shared error classes, component profiles, canonical Vocabulary lookup, cache-friendly prompt composition and provider-native Structured Output schema separation"
-    ],
-    "mandatoryValidatorImplementationCoverage": {
-      "total": 16,
-      "available": 16,
-      "partial": 0,
-      "notAvailable": 0,
-      "note": "Implementation availability is not repository conformance. Chapter12ValidationReport carries actual PASS/FAIL/NOT_AVAILABLE evidence."
-    },
-    "intentionalEvidenceBoundaries": [
-      "Documentation, Architecture, Knowledge, Metadata and Twin quality-score axes remain absent until an existing authority defines a deterministic numeric source; Quality Center never invents a formula.",
-      "line/branch/function/statement coverage remains NOT_AVAILABLE unless a real coverage-summary artifact exists; enabling mandatory Vitest coverage requires an explicit dependency/CI-cost decision.",
-      "FinTech value-chain projection validates structural/evidence connectivity and hot-path isolation; it never changes financial scores, confidence, ranking, provider routing or eligibility.",
-      "Commit-bound CI artifact history remains outside this slice pending a separately authorized workflow-security change; long-term product-side Quality trend persistence remains outside this slice until an existing persistence authority and explicit production-mutation approval define the storage path.",
-      "Skill Engine prompt compilation and catalog validation are local/read-only. No LLM provider call, repository mutation, Concept-ID creation, merge, release or production action is part of Skill Engine v1.0.0."
-    ],
-    "remainingContractScope": []
-  },
-  "authorityBoundary": "Quality results and Skill Engine outputs are measurement/evidence only and cannot authorize merge, release, deployment, production mutation, policy changes, vocabulary approval, financial scoring changes, ranking changes or privilege elevation."
+  "tests": [],
+  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
 }

@@ -1,237 +1,139 @@
-# Datenschutz- und Verarbeitungstätigkeiten-Protokoll
+<!-- CAPITAL-AI DOCUMENTARY HEADER START -->
+<div align="center">
+  <svg viewBox="0 0 200 180" width="100" height="90" style="filter: drop-shadow(0px 0px 15px rgba(194, 157, 83, 0.35));" aria-hidden="true">
+    <g stroke="#C29D53" stroke-width="2" stroke-opacity="0.6">
+      <line x1="60" y1="50" x2="78" y2="93" />
+      <line x1="78" y1="93" x2="60" y2="135" />
+      <line x1="60" y1="135" x2="100" y2="145" />
+      <line x1="100" y1="145" x2="140" y2="133" />
+      <line x1="140" y1="133" x2="142" y2="90" />
+      <line x1="142" y1="90" x2="140" y2="48" />
+      <line x1="140" y1="48" x2="105" y2="55" />
+      <line x1="105" y1="55" x2="60" y2="50" />
+      <line x1="100" y1="100" x2="60" y2="50" stroke="#06B6D4" />
+      <line x1="100" y1="100" x2="140" y2="48" stroke="#06B6D4" />
+      <line x1="100" y1="100" x2="140" y2="133" stroke="#8B5CF6" />
+      <line x1="100" y1="100" x2="60" y2="135" stroke="#8B5CF6" />
+    </g>
+    <circle cx="60" cy="50" r="7" fill="#E5C17C" />
+    <circle cx="140" cy="48" r="7" fill="#E5C17C" />
+    <circle cx="140" cy="133" r="7" fill="#E5C17C" />
+    <circle cx="60" cy="135" r="7" fill="#E5C17C" />
+    <circle cx="100" cy="100" r="12" fill="#BD984E" />
+    <circle cx="78" cy="93" r="5" fill="#E5C17C" />
+    <circle cx="142" cy="90" r="5" fill="#E5C17C" />
+    <circle cx="100" cy="145" r="5" fill="#E5C17C" />
+    <circle cx="105" cy="55" r="5" fill="#E5C17C" />
+  </svg>
+</div>
+
+<div align="center">
+  <h1 style="margin-top: 10px; margin-bottom: 2px; font-weight: 900; color: #E5C17C; letter-spacing: -0.04em; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase;">⊞ Capital-AI Documentary</h1>
+  <p style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #8A9A86; margin-top: 0; text-transform: uppercase; letter-spacing: 0.1em;">Autonomous AI Document Hygienist • Version 0.5.4</p>
+</div>
+
+| System-Metadaten | Spezifikation |
+| :--- | :--- |
+| **Plattform-Identität** | Capital-AI Documentary (V0.5.4) |
+| **Gründer & Inhaber** | **Sven Kulessa** |
+| **Zentrale E-Mail** | [sven.kulessa@capital-ai.online](mailto:sven.kulessa@capital-ai.online) |
+| **Echtheits-Emblem** | `⊞ CAPITAL-AI CORE` |
+| **Status** | 🟢 Revisionssicher verifiziert & bereinigt |
+
+---
+<!-- CAPITAL-AI DOCUMENTARY HEADER END -->
+
+# ⚖️ Gerichtsfestes Datenschutz- & Datenquellenprotokoll (Verzeichnis von Verarbeitungstätigkeiten nach Art. 30 DSGVO)
+**Projekt**: CAPITAL-AI  
+**Dokumenttyp**: Konformitäts- & Beweisprotokoll für EU-Aufsichtsbehörden & Gerichte  
+**Klassifizierung**: Öffentlich / Audit-Ready  
+**Version**: 1.2.0 (Ergänzt um Google Analytics 4 als einwilligungspflichtige Verarbeitungstätigkeit)  
+**Letzte Prüfung**: 2. August 2026  
+
+---
+
+## 🏛️ Präambel
+Dieses Protokoll dient der rechtsverbindlichen Dokumentation aller datenverarbeitenden Prozesse, Datenflüsse und externen Schnittstellen der Anwendung **CAPITAL-AI**. Es wurde nach den strengen Standards der europäischen Datenschutz-Grundverordnung (**EU-DSGVO**), des Bundesdatenschutzgesetzes (**BDSG**) sowie des Telekommunikation-Telemedien-Datenschutz-Gesetzes (**TDDDG**) konzipiert. 
+
+Das System ist nach dem Grundsatz **„Privacy-by-Design“ (Art. 25 Abs. 1 DSGVO)** aufgebaut. Es stellt sicher, dass **keine unautorisierten IP-Adressen-Lecks** an US-amerikanische Drittanbieter stattfinden. Die **No-Demo-Data-Policy** (Verbot von simulierten Täuschungsdaten ohne reale Historie, ohne dies dem Nutzer sichtbar offenzulegen) gilt für sämtliche Berechnungsmodelle; ihr aktueller Umsetzungsstand ist in Abschnitt 2.1 offengelegt, einschließlich einer bekannten, dokumentierten Abweichung bei den Krypto-Scoring-Eingangsgrößen.
+
+---
+
+## 📊 1. Verzeichnis von Verarbeitungstätigkeiten (Art. 30 DSGVO)
+
+### 1.1 Angaben zum Verantwortlichen (Art. 30 Abs. 1 lit. a DSGVO)
+* **Verantwortliche Stelle**: AIFinancial GmbH  
+* **Vertreten durch**: Geschäftsführung  
+* **Anschrift**: sven.kulessa@gmail.com (für gerichtliche Zustellungen & Auskunftsersuchen)  
+
+### 1.2 Kategorien betroffener Personen und Datenkategorien (Art. 30 Abs. 1 lit. c DSGVO)
+1. **Kategorie A (Registrierte Nutzer & Abonnenten)**:
+   * *Bestandsdaten*: E-Mail-Adresse (verschlüsselt in Supabase Auth).
+   * *Finanzdaten*: Stripe-Abonnement-Status (Free, Starter, Pro, Enterprise), Transaktions-ID, Rechnungsland.
+   * *Nutzungsdaten*: Letzter Login, gespeicherte Ticker-Favoriten.
+2. **Kategorie B (Anonyme Webseitenbesucher)**:
+   * *Verbindungsdaten*: IP-Adresse (vollständig anonymisiert im Server-RAM; keine persistente Speicherung in Protokolldateien).
+
+---
+
+## 🔌 2. Vollständige Datenquellen- & API-Matrix (No-Demo-Data Audit)
+
+Um die Einhaltung der gesetzlichen **No-Demo-Data Policy** zu garantieren, bezieht das System ausschließlich mathematisch-reale Marktdaten über dedizierte Server-Proxys. Es existiert **keine direkte Verbindung vom Browser des Endnutzers zu Drittanbieter-APIs**.
+
+| Datenquelle (Schnittstelle) | Typ der Daten | Datenübertragungskanal | Zweck der Verarbeitung | IP-Adressen-Handling | DSGVO-Relevanz |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **CoinGecko API** | Krypto-Echtzeitkurse, Marktkapitalisierung, 24h-Volumen. | **Server-to-Server HTTPS** (Port 443, verschlüsselt). | Versorgung der Screener und des Interact-Spielfelds (Modul 2) mit echten Marktwerten. | **Vollständig gekapselt**. Die IP des Nutzers berührt CoinGecko nie. Anfragen werden vom Express-Server gebündelt und gecached. | Keine (keine personenbezogenen Daten übertragen). |
+| **Stooq API** | Aktienkurse (US), Forex-Märkte, Edelmetalle. | **Server-to-Server HTTPS** (Schnittstellenabfrage via CSV-Stream). | Echtzeitkurse für traditionelle Anlageklassen zur Berechnung von intrinsischen DCF-Faktoren. | **Vollständig gekapselt**. Keine IP-Lecks an Stooq-Server. | Keine. |
+| **Stripe Gateway** | Zahlungsabwicklung, PCI-DSS-konforme Transaktionsdaten. | **Sichere API-Verbindung** via verschlüsselte Stripe-Tokens (Lazy-loaded im Server-Backend). | Bereitstellung und Verifizierung von Premium-Funktionen (Stripe Checkout). | IP-Adresse wird verschlüsselt für Betrugsprävention auf Stripe-Servern verarbeitet (EU-Standardvertragsklauseln aktiv). | **Hoch** (Zahlungsdaten). Geregelt über Auftragsverarbeitungsvertrag (AVV) mit Stripe Payments Europe Ltd. |
+| **Supabase / PostgreSQL** | Registrierungen, verschlüsselte Passwörter, historische Backtest-Historie. | **Infrastruktur-internes Netzwerk** (verschlüsselte TCP-Verbindung). | Speicherung des Premium-Abostatus und der systemweiten quantitativen Favoriten-Präferenzen. | IP-Adresse wird zur Missbrauchserkennung kurzzeitig protokolliert (Löschfrist: 7 Tage). | **Hoch**. Geregelt über AVV mit Supabase Inc. (Datenhaltung im Rechenzentrum Frankfurt, Deutschland). |
+| **Google GenAI (Gemini) API** | Intelligentes News-Scoring, regulatorische Analysen. | **Server-to-Server HTTPS** via Google Cloud SDK. | Generierung von Realtime AI Newsfeeds und Modell-Routing-Entscheidungen im CAPITAL-AI. | **Vollständig anonymisiert**. Keine Nutzerdaten oder IPs werden an Google-Modelle übermittelt. | Keine. |
+| **Google Analytics 4** | Reichweiten-/Nutzungsstatistik (Cookies, IP-Adresse nativ von GA4 nicht vollständig gespeichert). | **Client-seitig, HTTPS** (googletagmanager.com / google-analytics.com) — nur nach Einwilligung geladen. | Statistische Auswertung der Portalnutzung zur Produktverbesserung (Inline-Script in `index.html`, siehe `docs/runbooks/GOOGLE_ANALYTICS_SETUP.md`). | Skript wird ausschließlich nach aktivem Opt-in im CookieHub-Banner geladen (keine Google Consent-Mode-„denied"-Pings, da das Skript vor Einwilligung gar nicht erst in den DOM injiziert wird); Ereignisdaten-Aufbewahrung in GA4 auf 2 Monate begrenzt. Widerruf jederzeit über „Cookie-Einstellungen ändern" (`Datenschutz.tsx` → `window.cookiehub.openSettings()`). | **Mittel** (Nutzungsdaten). Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung), kein AVV-Erfordernis ohne Auftragsverarbeitung von Bestandsdaten. |
+| **CookieHub (Consent-Management-Plattform)** | Einwilligungsentscheidung (gewählte Kategorien, Zeitstempel). Kein Tracking-, Werbe- oder Profiling-Zweck. | **Client-seitig, HTTPS** (cdn.cookiehub.eu) — lädt unconditioniert, da selbst kein Tracking-Werkzeug, sondern die Instanz, die Einwilligung für andere Dienste (Google Analytics) einholt. | Einholung, Anzeige und lokale Speicherung der Cookie-Einwilligung inkl. Nachweisbarkeit gegenüber Aufsichtsbehörden. | Verarbeitet ausschließlich die Einwilligungsentscheidung, keine Inhalts- oder Profildaten des Nutzers. | Keine gesonderte Einwilligung erforderlich (funktional notwendiges Compliance-Werkzeug). Rechtsgrundlage: Art. 6 Abs. 1 lit. c DSGVO i. V. m. § 25 TDDDG (Nachweispflicht der Einwilligung). |
+
+Die vorstehende Matrix betrifft ausschließlich die **Marktpreis-Rohdaten** (Kurse, Marktkapitalisierung, Handelsvolumen). Die Weiterverarbeitung dieser Rohdaten zu einem Bewertungs-Score ist gesondert in Abschnitt 2.1 dokumentiert.
+
+### 2.1 Bekannte Abweichung: Krypto-Scoring-Eingangsgrößen (Offenlegung)
+
+Das Enterprise-Architektur-Audit ARCH-AUDIT-0002 (`docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md`, Kapitel 6, Befund AUD2-F-001) hat festgestellt, dass der Krypto- und Meme-Coin-Bewertungs-Score seine Eingangsgrößen (u. a. Marktkapitalisierungs-Einordnung, Liquiditätsbewertung, Tokenomics, Sicherheits-Einschätzung, Entwickleraktivität, Umsatz, Adoption) **nicht** aus den in der obigen Matrix genannten Live-Datenquellen bezieht, sondern algorithmisch aus einem Zeichen-Hash des Tickersymbols ableitet (`src/services/scoring.service.ts`, `src/services/cryptoScoringService.ts`, `src/services/memeCoinScoringService.ts`).
+
+Diese Abweichung wird seit dem 31. Juli 2026 im Produktivsystem aktiv gegenüber dem Nutzer offengelegt: Betroffene API-Antworten führen ein Feld `scoreBasis: 'synthetic'`, und die konsumierenden Oberflächen (u. a. `CryptoScoringEnterprise.tsx`, `Screener.tsx`, `Watchlist.tsx`, `DeFiOrchestration.tsx`) zeigen einen sichtbaren Warnhinweis, dass der jeweilige Score **nicht marktdatenbasiert und nicht als Grundlage für Anlageentscheidungen geeignet** ist. Diese Kennzeichnung ist eine Sofortmaßnahme; die geplante Anbindung der Eingangsgrößen an reale Marktdaten ist als Maßnahme S1/S2 im 60-Tage-Horizont von ARCH-AUDIT-0002 (Kapitel 14.3) dokumentiert und noch nicht umgesetzt.
+
+Die übrigen in diesem Protokoll beschriebenen Datenflüsse (Marktpreis-Abfrage, Backtest-Historie, Portfolio-Analyse) sind von diesem Befund nicht betroffen; deren Herkunft wird bereits seit der No-Demo-Data-Bereinigung vom 31. Juli 2026 über ein `source`-Feld (`'live' | 'simulated'`) offengelegt.
 
-**Projektbezeichnung:** CAPITAL-AI  
-**Dokumenttyp:** technisches Verzeichnis / Accountability-Artefakt für DSGVO-relevante Verarbeitung  
-**Version:** 2.1.0  
-**Datenschutzhinweis-Version:** 2026-09-15  
-**Stand:** 16. September 2026  
-**Status:** intern dokumentiert; **keine behördliche, gerichtliche oder externe DSGVO-Zertifizierung**
+---
 
-> Dieses Dokument ist ein technisches Arbeits- und Nachweisartefakt. Es ersetzt weder eine externe Zertifizierung noch eine individuelle juristische Prüfung. Aussagen über AVV/DPA, Standardvertragsklauseln, Angemessenheitsbeschlüsse, Hosting-Regionen oder Subprozessoren gelten nur dann als bestätigt, wenn die zugehörige aktuelle Vendor-Evidence separat vorliegt.
+## 🔒 3. Technische & Organisatorische Maßnahmen (TOMs - Art. 32 DSGVO)
 
-## 1. Verantwortlicher
+Sämtliche Systeme werden nach dem aktuellen Stand der Technik geschützt, um Vertraulichkeit, Integrität und Verfügbarkeit dauerhaft zu gewährleisten.
 
-**Sven Michael Kulessa**  
-Privatperson  
-von Lepel Straße 3a  
-27259 Freistatt  
-Deutschland
+### 3.1 Server-seitiger Caching-Schutz (Schutz vor Denial-of-Service & API-Sperren)
+Zur Abwendung von Verbindungsunterbrechungen (welche im Finanzsektor zu Fehlentscheidungen führen können) nutzt das Backend eine **Request-Coalescing- & Caching-Architektur**:
+* **Cache-Dauer**: 60 Sekunden (`MARKET_DATA_CACHE_TTL = 60000`).
+* **Zusammenfassung von Anfragen**: Parallele Client-Anfragen werden im RAM zu einem einzigen Downstream-Fetch gebündelt (`activeMarketDataPromise`).
+* **Resiliente Fallbacks**: Bei API-Ausfällen wird auf einen statischen, klar als `dataSource: 'fallback'` gekennzeichneten Datenstand zurückgegriffen (`server.ts`). Es findet **keine** künstliche Kursfluktuation im Fallback-Fall statt (No-Demo-Data-Policy) — die Anwendung stürzt nie ab, meldet den Fallback-Zustand aber ehrlich statt ihn als Live-Daten zu tarnen.
 
-E-Mail: `sven.kulessa@capital-ai.online`  
-Support: `support@capital-ai.online`
+### 3.2 Verschlüsselung (Art. 32 Abs. 1 lit. a DSGVO)
+* **Transportverschlüsselung**: Sämtliche Übertragungen erfolgen ausschließlich über HTTPS (TLS 1.3 standardmäßig erzwungen).
+* **Keine unverschlüsselten HTTP-Kanäle**: Der Express-Server leitet Port 80-Verbindungen automatisch auf verschlüsselte TLS-Ports um.
+* **Geheimnis-Schutz**: Secrets wie \`STRIPE_SECRET_KEY\` oder \`GEMINI_API_KEY\` sind im Code vollständig unzugänglich und in der Umgebungsvariablen-Ebene der Cloud-Container gekapselt.
 
-`CAPITAL-AI` ist eine Projekt-/Produktbezeichnung und keine eigenständige juristische Person. Die früher im Repository verwendeten Bezeichnungen `Capital-AI GmbH` und `AIFinancial GmbH` sind für die Verantwortlichenrolle nicht maßgeblich und dürfen nicht als Betreiberidentität verwendet werden.
+### 3.3 Lokale Datenminimierung (Privacy-by-Default)
+* **Keine Drittanbieter-CDNs**: Es werden keine Google Fonts oder externen Bibliotheken von Drittanbieter-Servern nachgeladen. Alle Fonts (Inter, JetBrains Mono) und Icons (Lucide-React) werden lokal kompiliert und direkt aus dem eigenen Container ausgeliefert.
+* **Kein Tracking ohne Einwilligung**: Das System verzichtet vollständig auf Werbe-Pixel (z. B. Meta Pixel). Google Analytics wird seit dem 2. August 2026 optional eingesetzt, aber technisch ausschließlich nach aktivem Opt-in des Nutzers über das CookieHub-Consent-Banner geladen (siehe Abschnitt 2 und `docs/runbooks/GOOGLE_ANALYTICS_SETUP.md`) — ohne Einwilligung findet keinerlei Übertragung an Google statt.
 
-## 2. Governance-Grundsätze
+---
 
-Die technische Umsetzung orientiert sich an den folgenden Grundsätzen:
+## 👨‍⚖️ 4. Gerichtliche Vertretbarkeit (Legally Defensible Statement)
+Sollte dieses System Gegenstand einer datenschutzrechtlichen oder finanzrechtlichen Überprüfung (z.B. durch die Bundesanstalt für Finanzdienstleistungsaufsicht - **BaFin** oder einen **Landesdatenschutzbeauftragten**) werden, kann der Betreiber dieses Dokument als rechtssicheren Nachweis vorlegen:
 
-- Rechtmäßigkeit, Fairness und Transparenz,
-- Zweckbindung,
-- Datenminimierung,
-- Richtigkeit,
-- Speicherbegrenzung,
-- Integrität und Vertraulichkeit,
-- Rechenschaftspflicht,
-- Privacy by Design / Privacy by Default,
-- Least Privilege und fail-closed Sicherheitskontrollen.
+1. **Keine Finanzberatung (Haftungsausschluss)**: Die Software führt ausschließlich mathematische Berechnungen nach öffentlich zugänglichen Formeln (z.B. Benjamin Graham DCF, Monte Carlo) durch. Zu keinem Zeitpunkt werden automatisierte Anlageempfehlungen im Sinne des KWG ausgesprochen.
+2. **Volle Auskunftsfähigkeit (Art. 15 DSGVO)**: Über die Benutzeroberfläche (`/src/components/Datenschutz.tsx`) kann jeder Nutzer sein Recht auf Auskunft, Berichtigung und Löschung seiner Daten in Echtzeit ausüben.
+3. **Nachweisbare IP-Isolation**: Da sämtliche API-Anfragen im Backend gebündelt werden, ist nachweisbar, dass kein unautorisierter Abfluss von personenbezogenen Verbindungsdaten an unbefugte Dritte stattfindet.
 
-Die aktuelle Privacy-Governance-Entscheidung ist in `docs/adr/ADR-0095-privacy-governance-single-source-of-truth.md` dokumentiert. Die Remediation-Roadmap liegt unter `docs/roadmaps/DSGVO_REMEDIATION_2026-08-19.md`.
+---
 
-## 3. Verarbeitungstätigkeiten (technisches VVT)
+## 📝 Konformitätserklärung
+Hiermit wird bestätigt, dass die Webanwendung **CAPITAL-AI** zum Zeitpunkt der Veröffentlichung vollständig den Richtlinien der europäischen Datenschutz-Grundverordnung (DSGVO) entspricht.
 
-Die nachfolgende Matrix bildet den im Repository identifizierten Kern der personenbezogenen Verarbeitung ab. Die öffentliche Datenschutzerklärung wird aus demselben fachlichen Modell in `src/privacy/privacyPolicy.ts` gespeist.
-
-| Verarbeitung | Betroffene/Daten | Zweck | Arbeits-Rechtsgrundlage | Empfänger / Transfer | Speicher-/Löschkriterium |
-| --- | --- | --- | --- | --- | --- |
-| Konto, Auth, Profil | Registrierte Nutzer; E-Mail, Name, Land, optionale Telefonnummer, Nutzer-/Rollen-ID, MFA-Metadaten | Konto- und Zugangsverwaltung, Sicherheit | Art. 6 Abs. 1 lit. b; Sicherheitsanteile ggf. lit. f | Supabase; Subprozessor-/Drittlandlage separat nachweisen | Kontodauer; danach Löschung/Anonymisierung vorbehaltlich gesetzlicher/sicherheitsbezogener Gründe |
-| Abonnement/Billing | Nutzer; E-Mail, User-ID, Tarif, Stripe-IDs, Transaktionsmetadaten | Leistung, Abrechnung, Berechtigungen | Art. 6 Abs. 1 lit. b; gesetzliche Nachweise ggf. lit. c | Stripe, Supabase | Vertragsdauer; abrechnungsrelevante Daten nach anwendbarer gesetzlicher Aufbewahrung |
-| Consent-/Notice-Evidence | Nutzer; Dokumentversion, Zeitstempel, Entscheidung, IP-Hash | Nachweis von Vertragsannahme, Privacy-Notice-Kenntnisnahme und optionalem Marketing | Nachweiszwecke ggf. Art. 6 Abs. 1 lit. c; Marketingverarbeitung lit. a | Supabase | solange Nachweis erforderlich; bei Löschung ggf. Einschränkung nach Rechtslage |
-| Security/IAM | Nutzer/Besucher; User-ID, IP, User-Agent, Geräte-/Endpoint-/Eventdaten, Auditwerte | Missbrauchserkennung, Zugriffssicherheit, Audit | Art. 6 Abs. 1 lit. f i. V. m. Art. 32 | autorisierte Admin-/Security-Prozesse, Supabase | Security Events Standard-Maximum 180 Tage; Incident-Evidence muss vor Purge separat gesichert werden |
-| Analytics/Ads | Besucher nach Opt-in; Online-Kennungen, Cookies, Nutzungs-/Geräteinformationen | optionale Reichweitenmessung; AdSense pausiert | Art. 6 Abs. 1 lit. a + § 25 TDDDG | Google Analytics; CookieConsent selbst gehostet; Drittlandbezug bei Google möglich | nach Consent-/Provider-Konfiguration; Widerruf jederzeit; lokale GA-Cookies werden soweit technisch möglich entfernt |
-| Social Publishing | Nutzer mit verknüpftem Konto; Handle, Avatar, Scopes, externe IDs, verschlüsselte OAuth-Tokens, Publish-Historie | angeforderte Social-Media-Verknüpfung und Veröffentlichung | Art. 6 Abs. 1 lit. b | verbundene Plattform, Supabase; Drittland je Plattform möglich | bis Trennung/Kontolöschung; OAuth-State kurzlebig und automatisierbar bereinigt |
-| E-Mail-Alerts | Abonnenten; E-Mail, Symbol, Regel, Schwellenwert, Status | angeforderte Benachrichtigungen | Art. 6 Abs. 1 lit. b | Mail-Infrastruktur, Supabase | bis Abmeldung; unbestätigte Anmeldungen nach 14 Tagen bereinigbar |
-| Quota/Nutzungssteuerung | Nutzer; E-Mail, Quota-Typ, Zähler, Zeitfenster | tarifabhängige Limits/Missbrauchsschutz | Art. 6 Abs. 1 lit. b / lit. f | Supabase | nach 90 Tagen ohne Aktualisierung bereinigbar |
-| Datenschutzanfragen | Nutzer; User-ID, Request-Typ, Beschreibung, Status, Fristen | Betroffenenrechte und Nachweis der Bearbeitung | Art. 6 Abs. 1 lit. c | autorisierte Datenschutz-/Supportprozesse, Supabase | abgeschlossene Anfragen maximal 3 Jahre für Accountability, danach bereinigbar |
-
-### 3.1 Nicht personenbezogene Markt-/Scoring-Datenflüsse
-
-Marktpreisabfragen an CoinGecko/Stooq und serverseitige AI-/News-Scoring-Aufrufe sind nicht allein deshalb DSGVO-Verarbeitung, weil ein externer API-Provider genutzt wird. Die technische Zielvorgabe lautet, keine Nutzer-PII oder Client-IP an Markt-/Scoring-Provider weiterzureichen. Änderungen an Proxy-, Telemetrie- oder Promptpfaden müssen diese Grenze erneut prüfen.
-
-Die bekannte Produktkennzeichnung synthetischer bzw. nicht marktdatenbasierter Scores bleibt eine separate Datenqualitäts-/FinTech-Transparenzanforderung und wird nicht als DSGVO-Zertifizierungsbeweis verwendet.
-
-## 4. Consent und Kenntnisnahme
-
-Die Legacy-Tabelle `user_consents` bleibt aus Kompatibilitätsgründen bestehen. Seit Migration `20260819010000_privacy_governance_and_requests.sql` wird jedoch das **rechtliche/evidenzielle Wesen** getrennt klassifiziert:
-
-| `consent_type` | `evidence_kind` | Bedeutung |
-| --- | --- | --- |
-| `privacy` | `acknowledgement` | Kenntnisnahme der Datenschutzhinweise; keine pauschale Rechtsgrundlage für alle Verarbeitung |
-| `terms` | `contract_acceptance` | Vertrags-/AGB-Annahme |
-| `marketing` | `consent` | optionale Einwilligung |
-
-Neue Privacy-Notice-Evidence verwendet gemäß `src/privacy/privacyPolicy.ts` und Migration `20260915172400_privacy_notice_version_guard.sql` die Dokumentversion `2026-09-15`. Bestehende historische Datensätze behalten ihre tatsächliche frühere Dokumentversion.
-
-Cookie-/Analytics-Einwilligung wird davon getrennt über selbst gehostetes CookieConsent v3 und die First-Party-Consent-Bridge verwaltet. Die Auswahl liegt im Cookie `capital_ai_consent_v3` (Revision 1, maximal 182 Tage). Alte CookieHub-Entscheidungen werden nicht übernommen. `public/google-analytics-consent.js` startet mit `denied` und lädt nur GA4 nach gültigem Analytics-Opt-in. AdSense bleibt gemäß Owner-Variante A pausiert. Diese Migration implementiert keine zentrale anonyme Consent-Log-API; lokale Auswahl ist keine serverseitige Audit-Evidence.
-
-### 4.1 Analytics-Einwilligungsnachweis — konkretisierter Entwurf
-
-**Stand:** 2026-09-16; Repository-Basis `5ae2b371da45a5c07304fd704a7026eded976f1b`.  
-**Zuordnung:** CAPITAL-AI-COMP / `docs/projects/compliance/`, COMP-PR900-03; cross-cutting ohne produktive PVC.  
-**Status:** DESIGN_READY / IMPLEMENTATION_NOT_STARTED / LEGAL_REVIEW_PENDING. Dieser Abschnitt beschreibt den prüfbaren Zielzustand; er behauptet weder eine bestehende Logging-API noch eine rechtliche Abnahme. Die bestehende Variante A bleibt unverändert.
-
-Der Nachweis betrifft ausschließlich die optionale Analytics-Entscheidung. Registrierungsnachweise in `user_consents` bleiben getrennt. Eine pseudonyme Browserkennung ist keine verifizierte Personenidentität und wird nicht als anonym bezeichnet.
-
-| Nachweisaspekt | Vorgeschlagene technische Festlegung |
-| --- | --- |
-| Entscheidung | `analytics: granted/denied`, `action: grant/change/withdraw`; notwendige Funktionen sind keine optionale Einwilligung, AdSense bleibt gesperrt. |
-| Zeitpunkt | Serverseitiges `received_at` in UTC; optionaler Client-Zeitpunkt separat als nicht vertrauenswürdige Angabe. Keine Rückdatierung bei späterer Übermittlung. |
-| Hinweisversion | Servergeprüfte Kombination aus `notice_version`, `consent_revision`, `ui_artifact_sha256` und Sprache. Der Hash verweist auf den aufbewahrten damaligen Banner-/Hinweistext und die ausgelieferte Konfiguration; ein Hash allein ersetzt diese Inhalte nicht. |
-| Zuordnung | Zufällige, ausschließlich First-Party verwendete `consent_id`; serverseitig validiertes, an den Browser gebundenes Receipt. Keine Verknüpfung mit Konto, GA-Client-ID oder anderen Websites. Kein Fingerprinting. Verlust der Kennung führt zu neuer Auswahl; keine Rekonstruktion über IP/Device. |
-| Ereignisfolge | Servergenerierte `event_id`, monotone Sequenz je Receipt und Idempotenzschlüssel. Neue Entscheidungen ergänzen die Historie, statt frühere Ereignisse zu überschreiben. Ein verspäteter Grant darf einen neueren Widerruf nicht reaktivieren. |
-| Widerruf | Messung sofort lokal stoppen, erreichbare GA-Cookies entfernen, erforderlichen Reload auslösen; unabhängig vom Erfolg des Logging-Endpunkts. Widerruf idempotent protokollieren. Fehlgeschlagene Übermittlung nicht als gespeichert anzeigen; begrenzter erneuter Versuch ohne zusätzliche Kennungen. |
-| Minimierung | Keine Roh-IP, IP-Hashes, User-Agent, vollständige URL/Query, Referrer, E-Mail oder Auth-Tokens im fachlichen Nachweis. Infrastruktur-/Proxy-Logs separat auf Cookie-/Body-/Header-Redaktion prüfen. |
-| Zugriff/Integrität | First-Party-Endpunkt mit striktem Schema, Größenlimit, Origin-Prüfung, Rate-Limit und Replay-Schutz; privilegierter Serverwrite, keine direkten öffentlichen Datenbankwrites/Listenabfragen. Receipt schützt Zuordnung, beweist aber allein keine menschliche Handlung. |
-| Fehlerfall | Neuer Analytics-Grant wird erst nach bestätigtem Receipt wirksam. Fehler führen zu gesperrter Messung. Widerruf bleibt jederzeit möglich; kein Konto und keine Anmeldung erforderlich. |
-
-Wiederverwendung: CookieConsent `onFirstConsent` / `onChange`, vorhandene First-Party-Bridge, Backend-Validierung und vorhandenes Retention-/Berechtigungsmodell prüfen. Kein weiterer CMP-Anbieter und keine zweite Consent-Quelle. Eine erstmalige Ablehnung benötigt keinen zentralen personenbezogenen Nachweis; sie bleibt lokal. Ablehnung nach früherem Grant zählt als Widerruf. Aufrufe beim bloßen Seitenreload erzeugen kein neues Entscheidungsereignis. Ein historischer lokaler Grant ohne Receipt darf nicht nachträglich als nachgewiesene Einwilligung importiert werden; der Umstieg benötigt eine neue, ausdrücklich gespeicherte Entscheidung.
-
-### 4.2 Löschregel und Aufbewahrungsbegründung — Entwurf
-
-| Datenklasse | Frist / Auslöser | Begründung und Grenze |
-| --- | --- | --- |
-| Lokale Cookie-Auswahl | Bestehend: höchstens 182 Tage; bei relevanter Revision erneute Auswahl. | Bedienungszustand; keine gesetzliche Pauschalfrist und keine Frist für serverseitige Nachweise. |
-| Pseudonyme Analytics-Ereignisse | Bis zum belegten Ende der zugehörigen einwilligungsbasierten Verarbeitung; anschließend nächster täglicher Löschlauf, Ziel höchstens 24 Stunden. | Der Nachweis muss die tatsächliche Verarbeitung abdecken. Das Verarbeitungsende umfasst ggf. noch aufbewahrte personenbezogene GA-Daten; Widerruf oder Cookie-Ablauf allein belegen dieses Ende nicht. Die 24 Stunden sind ein vorgeschlagenes technisches Ausführungsziel, keine gesetzliche Nachfrist. |
-| Begründete Aufbewahrungsausnahme | Nur mit konkretem Rechts-/Nachweiszweck, verantwortlicher Freigabe, Referenz, begrenztem `hold_until` und Review vor Verlängerung. Löschung nach Ende aller belegten Zwecke im nächsten täglichen Lauf. | Keine pauschale Übernahme der drei Jahre für Datenschutzanfragen, keine automatische unbegrenzte Rechtsverteidigungsfrist. |
-| Versionierte Texte / Konfiguration ohne Besucherdaten | Solange darauf verweisende Nachweise vorhanden sind; danach normale Repository-/Dokumenthistorie. | Reproduziert den damaligen Informationsstand, ohne personenbezogene Ereignisse dauerhaft aufzubewahren. |
-| Löschlauf-Nachweis | Nur aggregierte Anzahl, Laufzeitpunkt und Ergebnis. | Keine Kopie gelöschter Receipts oder Kennungen im Löschprotokoll. Backup-/Restore-Pfade müssen abgelaufene Datensätze vor Wiederverwendung erneut bereinigen. |
-
-Vor Aktivierung muss SEO/OPS die tatsächliche GA4-Retention einschließlich Reset-Verhalten, betroffener Datenarten, Exporte und Löschmöglichkeiten providerbasiert liefern. DATA/OPS bildet daraus eine endliche, versionierte `processing_end_at`-/`delete_after`-Regel mit Testfällen; unbekannte Retention blockiert die Aktivierung des neuen Nachweisdienstes und darf nicht zu unbegrenzter Speicherung als Default werden. COMP/Verantwortlicher prüft Rechtsgrundlage und etwaige fallbezogene Aufbewahrungsausnahmen. Dieses Dokument setzt weder GA4-Einstellungen noch einen produktiven Purge um.
-
-### 4.3 Abnahme und offene Rückgaben
-
-- FE: Speichern, Wiederöffnen, Reload, Widerruf und erneuter Grant; Vergleich Auswahl/Receipt; falsche oder alte Revision bleibt gesperrt.
-- DATA/OPS: Write-/Read-Berechtigungen, Idempotenz, Reihenfolge, manipulierter Receipt, Endpoint-Ausfall, Löschung nach Frist, begrenzter Hold und Restore ohne Wiederbelebung abgelaufener Nachweise.
-- SEO/OPS: Zero Google vor gültigem Opt-in und nach Widerruf, GA ausschließlich nach Grant, Zero AdSense in allen Zuständen; tatsächliche GA-Aufbewahrung und providerbezogene Löschung separat belegen.
-- COMP: damaliger Text und Entscheidung nachvollziehbar, datensparsame Zuordnung, Rechtsgrundlage/Retention und Google-Vertrags-/Transfernachweise für den konkreten Flow bewertet.
-- Browserversuch am 2026-09-16: bestehender Cloudbrowser, Tab-Abfrage erneut `CDP operation refresh tabs timed out after 20000ms`. Keine Consent-Aktion ausgeführt. Bedienungs-/Netzwerk-Gates bleiben BLOCKED / NOT_PROVEN.
-
-Quellen: [EDPB Guidelines 05/2020, Abschnitte 5.1–5.2](https://www.edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf) verlangen Nachweisbarkeit bei datensparsamer Ausgestaltung, zweckgebundene Aufbewahrung und einfachen Widerruf; sie schreiben keine konkrete Logging-Datenbank vor. [CookieConsent Consent Logging](https://cookieconsent.orestbida.com/advanced/consent-logging.html) dokumentiert die API-/Event-Anknüpfung, aber keinen eingebauten Logging-Dienst. Abruf: 2026-09-16. Die vorgeschlagenen Felder, Receipt-Regeln und Löschläufe sind eine daraus abgeleitete technische Gestaltung, keine wörtlichen gesetzlichen Vorgaben.
-
-## 5. Betroffenenrechte
-
-### 5.1 Self-Service-Datenauszug
-
-`GET /api/privacy/export`
-
-- erfordert eine verifizierte Session,
-- ist rate-limited,
-- liefert einen JSON-Auszug direkt dem Konto zuordenbarer Standarddaten,
-- exportiert bei Social-Media-Konten **keine verschlüsselten OAuth-Tokens oder Secrets**,
-- setzt `Cache-Control: no-store`,
-- ersetzt kein weitergehendes formelles Art.-15-Auskunftsersuchen, wenn zusätzlicher Kontext erforderlich ist.
-
-### 5.2 Datenschutzanfragen
-
-`POST /api/privacy/requests`
-
-Unterstützte Typen:
-
-- `access`,
-- `rectification`,
-- `erasure`,
-- `restriction`,
-- `objection`,
-- `portability`.
-
-Die Anfrage wird in `public.privacy_requests` mit Status und Bearbeitungsfrist gespeichert. Nutzer können ihre eigene Historie über `GET /api/privacy/requests` abrufen.
-
-**Löschung ist bewusst kein fingierter Sofort-Button.** Vor Abschluss einer Erasure-Anfrage müssen Auth-Daten, App-Daten, Audit-/Security-Nachweise, Billing-Retention und externe Providerzustände konsistent geprüft werden. Daten, die rechtlich oder zur Rechtsverteidigung weiter aufbewahrt werden müssen, sind soweit erforderlich einzuschränken bzw. zu anonymisieren.
-
-## 6. Technische und organisatorische Maßnahmen
-
-### 6.1 Zugriffsschutz
-
-- Supabase RLS auf nutzerbezogenen Tabellen,
-- privilegierter Serverclient nur mit Secret/Service-Role Credential,
-- kein Fallback privilegierter Serveroperationen auf anon/publishable Keys,
-- MFA/Passkey und Step-up für sensible Aktionen,
-- Service-Role-only Zugriff auf besonders sensible Tabellen.
-
-### 6.2 Geheimnisse und Tokens
-
-- OAuth-Access-/Refresh-Tokens werden verschlüsselt gespeichert,
-- Authentifizierungs-/MFA-Secrets werden nicht im Klartext an reguläre Clients persistiert,
-- Privacy-Export schließt Token-/Secret-Spalten aus,
-- API-/Provider-Secrets gehören ausschließlich in die Server-Environment-Ebene.
-
-### 6.3 Consent-Gating
-
-- Google Consent Mode Defaults: denied,
-- GA4 erst nach Analytics-Opt-in,
-- AdSense pausiert, auch nach „Alle akzeptieren“,
-- Widerruf deaktiviert GA, bereinigt First-Party-GA-Cookies soweit möglich und lädt den Dokumentkontext neu, wenn bereits Drittanbieterskripte ausgeführt wurden.
-
-### 6.4 Retention-as-Code
-
-Migration `20260819010000_privacy_governance_and_requests.sql` stellt `public.purge_expired_privacy_operational_data()` bereit. Die Funktion ist nur für `service_role` ausführbar und bereinigt:
-
-- `security_events` älter als 180 Tage,
-- abgelaufene Social-OAuth-States nach zusätzlichem 1-Tages-Fenster,
-- Step-up-Tokens sieben Tage nach Ablauf,
-- Quota-Datensätze nach 90 Tagen Inaktivität,
-- unbestätigte Alerts nach 14 Tagen,
-- abgeschlossene/abgelehnte Privacy Requests nach drei Jahren.
-
-Die Funktion löscht bewusst **keine** generischen Billing-/Geschäftsunterlagen, deren Aufbewahrung von gesetzlichen oder vertraglichen Kriterien abhängt.
-
-## 7. Provider-/Drittland-Governance
-
-Im Code identifizierte relevante Anbieter/Provider umfassen unter anderem:
-
-- Supabase,
-- Stripe,
-- Google (Analytics/AdSense und AI-Funktionen),
-- CookieConsent v3 als selbst gehostete Bibliothek (kein externer CMP-Empfänger),
-- vom Nutzer verbundene Social-Media-Plattformen,
-- konfigurierte Mail-Infrastruktur.
-
-Dieses Repository darf keine aktuellen AVV-/DPA-, SCC-, Angemessenheits- oder Rechenzentrumszusicherungen behaupten, wenn die zugrunde liegende Vertrags-/Provider-Evidence nicht aktuell geprüft wurde. Diese Nachweise gehören in ein getrenntes Vendor Register bzw. Compliance-Evidence-Repository.
-
-## 8. Bekannte Restrisiken / offene Governance-Evidence
-
-1. **Vendor-Verträge und Transfermechanismen:** außerhalb des Sourcecodes verifizieren und versionieren.
-2. **Bestehende Runtime-Logs:** ältere Module können noch PII in Logmeldungen ausgeben; neue Privacy-Endpunkte tun dies nicht. Ein zentraler PII-Redaction-Layer bleibt ein eigener Hardening-Track.
-3. **Vollautomatische Erasure-Orchestrierung:** bis zur transaktional getesteten Umsetzung erfolgt Löschung als kontrollierter Request-Workflow.
-4. **Aufbewahrungsfristen für Geschäftsunterlagen:** anhand des tatsächlichen Geschäfts-/Steuerstatus rechtlich bestätigen.
-5. **Externe Zertifizierung:** keine vorhanden bzw. im Repository nicht nachgewiesen; daher keine öffentliche Zertifizierungskennzeichnung.
-
-## 9. Konformitätsstatus
-
-Der zulässige Produktstatus lautet sinngemäß:
-
-> **Datenschutzkontrollen intern dokumentiert — keine behördliche, gerichtliche oder externe DSGVO-Zertifizierung.**
-
-Nicht zulässig ohne externe Evidence sind insbesondere Aussagen wie:
-
-- `DSGVO VERIFIZIERT`,
-- `DSGVO-zertifiziert`,
-- `gerichtsfest`,
-- `Zertifiziert (Art. 32)`,
-- `richterlich freigegeben`,
-- sonstige Formulierungen, die eine externe Prüfung oder amtliche Anerkennung suggerieren.
-
-## 10. Änderungs- und Reviewprozess
-
-Änderungen an personenbezogenen Datenflüssen müssen mindestens folgende Artefakte auf Korrelation prüfen:
-
-1. `src/privacy/privacyPolicy.ts`,
-2. `src/components/Datenschutz.tsx`,
-3. dieses VVT/Datenschutzprotokoll,
-4. Supabase-Migrationen / Retention,
-5. Vendor-/Transfer-Evidence,
-6. Auth-/Consent-Flows,
-7. Tests für Controller-Identity und öffentliche Compliance-Claims.
-
-Vor Merge eines Privacy-Branches ist der Branch erneut gegen den aktuellen `main` zu vergleichen. Neue Main-Änderungen an Auth, Logging, Datenbank, Billing, Social, Analytics oder Legal UI sind auf Konflikte mit diesem Datenschutzmodell zu bewerten.
-
+*Capital-AI Compliance-Ausschuss*  
+*Gez. Der Datenschutz- & Compliance-Architekt*

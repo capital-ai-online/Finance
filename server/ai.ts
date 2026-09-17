@@ -1,21 +1,17 @@
 import express from 'express';
 import { orchestrator } from '../src/lib/requestOrchestrator';
-import { checkAdminAccess, resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
+import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/services/aiUsageTracker';
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
-import { buildAiChatModelInput } from '../src/services/aiChatTrustBoundary';
-import { generateTextWithFallback } from '../src/services/agentModelRouting';
+import { generateTextWithFallback, type ChatTurn } from '../src/services/agentModelRouting';
 import { getPromptGovernanceEntry, recordAiEvaluation, getAiGovernanceInventory, type AiProvider } from '../src/services/aiGovernance';
-import { createAiContentTransparencyEnvelope } from '../src/services/aiContentTransparency';
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
-import { SupabaseAiGovernanceSink } from './aiGovernanceSupabaseSink';
 import { entitlementsRouter } from './entitlements';
 import { binanceLandingQuickAnalysisRouter } from './binanceLandingQuickAnalysis';
 
 export const aiRouter = express.Router();
-const aiGovernanceSink = new SupabaseAiGovernanceSink();
 
 aiRouter.use('/entitlements', entitlementsRouter);
 aiRouter.use('/landing', binanceLandingQuickAnalysisRouter);
@@ -26,18 +22,6 @@ function parseProviderAttribution(provider: string): { modelProvider: AiProvider
 }
 
 aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
-  // SECURITY (2026-08-25 architecture review, finding #5): dieser Endpunkt loest kostenpflichtige
-  // Anthropic/OpenAI-Completions aus und war zuvor komplett unauthentifiziert erreichbar; kombiniert
-  // mit dem zuvor ungeprueften x-forwarded-for-basierten Rate-Limit (siehe requestOrchestrator.ts)
-  // liess sich das 30-req/min-Limit trivial umgehen, was einen unbegrenzten Kosten-DoS gegen das
-  // KI-Budget ermoeglichte. Ein gueltiges, per Supabase verifiziertes Bearer-Token ist jetzt
-  // erforderlich; das nutzerbezogene Rate-Limit in resolveVerifiedIdentity/checkAdminAccess-Mustern
-  // bleibt zusaetzlich eine zweite Verteidigungslinie unabhaengig von der Client-IP.
-  const identity = await resolveVerifiedIdentity(req);
-  if (!identity) {
-    return res.status(401).json({ error: 'Anmeldung erforderlich, um den KI-Assistenten zu nutzen.' });
-  }
-
   const anthropic = isAnthropicConfigured() ? getAnthropicInstance() : null;
   const openai = isOpenAIConfigured() ? getOpenAIInstance() : null;
   if (!anthropic && !openai) {
@@ -49,6 +33,9 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
     if (typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'Eine nicht-leere Nachricht ist erforderlich.' });
     }
+    const chatHistory: ChatTurn[] = Array.isArray(history)
+      ? history.map((msg: any) => ({ role: msg.role === 'user' ? 'user' : 'assistant', text: String(msg.text ?? '') }))
+      : [];
 
     const promptEntry = getPromptGovernanceEntry('chat-assistant');
     const retrieval = await retrieveRelevantChunksWithEvidence(message, {
@@ -57,19 +44,19 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
       topK: 5,
       minScore: 0.5,
     });
-    const modelInput = buildAiChatModelInput({
-      message,
-      history,
-      retrievedContext: retrieval.chunks.length > 0 ? formatChunksForPrompt(retrieval.chunks) : undefined,
-    });
+
+    let systemInstruction = 'You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Prioritize clarity and evidence.';
+    if (retrieval.chunks.length > 0) {
+      systemInstruction += `\n\nNutze diese geprüften internen Quellen als Kontext und zitiere sie bei Übernahme:\n\n${formatChunksForPrompt(retrieval.chunks)}`;
+    }
 
     const result = await generateTextWithFallback({
       anthropic,
       openai,
       promptId: 'chat-assistant',
-      contents: modelInput.contents,
-      history: modelInput.history,
-      systemInstruction: modelInput.systemInstruction,
+      contents: message,
+      history: chatHistory,
+      systemInstruction,
       requestId: req.requestId,
     });
 
@@ -85,34 +72,9 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
       model: attribution.model,
       requestId: req.requestId,
       evidenceIds,
-      checks: {},
+      checks: { grounded: hasEvidence },
       outcome: hasEvidence ? 'PASS' : 'WARN',
-      notes: hasEvidence
-        ? `RAG evidence quality: ${retrieval.evidence.evaluation.quality}. Retrieval availability is recorded; claim-level grounding and citation completeness are not independently verified.`
-        : 'Keine Repository-Evidence verfügbar; claim-level grounding and citation completeness are not independently verified.',
-    });
-    const persistence = await aiGovernanceSink.write(evaluation);
-
-    if (!persistence.persisted) {
-      console.warn('[AI Governance] Durable evaluation evidence unavailable', {
-        evaluationId: evaluation.evaluationId,
-        sink: persistence.sink,
-        reason: persistence.reason,
-      });
-    }
-
-    const transparency = createAiContentTransparencyEnvelope({
-      origin: 'ai-generated',
-      provider: attribution.modelProvider,
-      model: attribution.model,
-      promptId: 'chat-assistant',
-      promptVersion: promptEntry?.version ?? 'unregistered',
-      requestId: req.requestId,
-      retrievalId: retrieval.evidence.attribution.retrievalId,
-      evidenceIds,
-      grounding: 'not-verified',
-      citationCompleteness: 'not-verified',
-      humanReview: 'not-reviewed',
+      notes: hasEvidence ? `RAG evidence quality: ${retrieval.evidence.evaluation.quality}.` : 'Keine Repository-Evidence verfügbar.',
     });
 
     res.json({
@@ -123,13 +85,7 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
         evidenceQuality: retrieval.evidence.evaluation.quality,
         evidenceIds,
         retrievalId: retrieval.evidence.attribution.retrievalId,
-        persistence: {
-          durable: persistence.persisted,
-          sink: persistence.sink,
-          reason: persistence.persisted ? undefined : persistence.reason,
-        },
       },
-      transparency,
     });
   } catch (error: any) {
     console.log('[System Info] Chat finished with warning', error?.message || error);
@@ -153,13 +109,6 @@ aiRouter.get('/usage', async (req, res) => {
     summary: getUsageSummary(),
     ledger: getUsageLedger(),
     promptRegistry: PROMPT_REGISTRY,
-    governance: {
-      ...getAiGovernanceInventory(),
-      evaluationCache: {
-        durable: false,
-        type: 'process-memory',
-        note: 'Recent evaluations are a bounded operational cache. Durable evidence uses the server-side append-only Supabase sink when available.',
-      },
-    },
+    governance: getAiGovernanceInventory(),
   });
 });

@@ -41,19 +41,16 @@ describe('D3 soft-404 intercept', () => {
     process.env.NODE_ENV = prev;
   });
 
-  it('isPublicSpaPath allows only explicitly governed public surfaces', () => {
+  it('isPublicSpaPath allows only marketing/legal surfaces', () => {
     expect(isPublicSpaPath('/')).toBe(true);
-    expect(isPublicSpaPath('/learning-platform')).toBe(true);
-    expect(isPublicSpaPath('/learning-platform/')).toBe(true);
     expect(isPublicSpaPath('/impressum')).toBe(true);
     expect(isPublicSpaPath('/agb/')).toBe(true);
     expect(isPublicSpaPath('/datenschutz')).toBe(true);
-    expect(isPublicSpaPath('/learning-platform-admin')).toBe(false);
     expect(isPublicSpaPath('/wp-admin')).toBe(false);
     expect(isPublicSpaPath('/this-does-not-exist')).toBe(false);
   });
 
-  it('production catch-all serves Learning Platform but keeps unknown paths at 404', async () => {
+  it('production catch-all returns 404 for unknown paths', async () => {
     const app = express();
     app.get('*', (_req, res) => {
       res.status(200).send('SPA_SHELL');
@@ -62,10 +59,6 @@ describe('D3 soft-404 intercept', () => {
     const unknown = await requestApp(app, '/totally-unknown-path-xyz');
     expect(unknown.status).toBe(404);
     expect(unknown.text).toBe('Not Found');
-
-    const learning = await requestApp(app, '/learning-platform');
-    expect(learning.status).toBe(200);
-    expect(learning.text).toBe('SPA_SHELL');
 
     const legal = await requestApp(app, '/impressum');
     expect(legal.status).toBe(200);
