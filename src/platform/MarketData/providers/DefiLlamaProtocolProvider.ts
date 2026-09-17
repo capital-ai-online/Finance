@@ -234,7 +234,7 @@ export class DefiLlamaProtocolProvider {
 
     if (!this.circuitBreaker.allow(DEFILLAMA_PROVIDER_ID)) {
       const reason = `DeFiLlama circuit open (cooldown until ${this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID)}).`;
-      recordProviderHealth({ provider: 'DeFiLlama', capability: 'defi-evidence', state: 'unavailable', message: reason, circuitOpenUntil: this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID) });
+      recordProviderHealth({ provider: 'DeFiLlama', capability: 'defi-evidence', state: 'unavailable', message: reason, circuitOpenUntil: this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID) ?? undefined });
       return this.lastKnownGoodOrUnavailable(cached, now, reason);
     }
 
@@ -291,7 +291,7 @@ export class DefiLlamaProtocolProvider {
       capability: 'defi-evidence',
       state: 'unavailable',
       message: reason,
-      circuitOpenUntil: this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID),
+      circuitOpenUntil: this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID) ?? undefined,
     });
     return this.lastKnownGoodOrUnavailable(cached, now, reason);
   }

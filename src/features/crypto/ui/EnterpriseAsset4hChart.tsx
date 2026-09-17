@@ -201,7 +201,7 @@ export function EnterpriseAsset4hChart({ symbol }: EnterpriseAsset4hChartProps) 
                     fontSize: 11,
                   }}
                   labelStyle={{ color: 'var(--color-text-secondary)' }}
-                  formatter={(value: number) => [`${formatPrice(value)} ${result?.currency ?? ''}`.trim(), 'Close']}
+                  formatter={(value) => [typeof value === 'number' ? `${formatPrice(value)} ${result?.currency ?? ''}`.trim() : '—', 'Close']}
                 />
                 <Area
                   type="monotone"

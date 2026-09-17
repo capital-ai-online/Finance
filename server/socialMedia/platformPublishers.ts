@@ -66,7 +66,7 @@ async function publishToYouTube(input: PublishInput): Promise<PublishResult> {
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${input.accessToken}` },
-        body: buildMultipartYoutubeBody(metadata, videoBytes),
+        body: Uint8Array.from(buildMultipartYoutubeBody(metadata, videoBytes)),
       }
     );
     const json: any = await uploadRes.json();
