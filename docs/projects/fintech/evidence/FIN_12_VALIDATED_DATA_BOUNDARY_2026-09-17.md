@@ -39,7 +39,7 @@ Feature Contract
 
 The initial preflight observed `main@7fdabfcdd8719b65ed1b99504e39ccd68e1387e5`. Before the first write, `main` advanced to `fb4d8e430bed17c89c21163c184eb3dbb0598104`. The earlier write snapshot was discarded and the branch was created fresh from the later current main.
 
-The intervening main delta was the Universe Frontend/public-route slice and did not modify `src/platform/MarketData/**`, `docs/projects/data/**`, the FINTECH Roadmap, or the applicable DATA/scoring authorities.
+The intervening main delta was the Universe Frontend/public-route slice and did not modify `src/platform/MarketData/**`, `docs/projects/fintech/**`, the FINTECH Roadmap, or the applicable validated-data/scoring contracts.
 
 At write time the remaining open Pull Requests were:
 
@@ -62,7 +62,7 @@ The still-missing validated data-boundary returns identified by the FIN-12 bound
 
 ### Field-level validated feature input
 
-`src/platform/MarketData/ValidatedFeatureInput.ts` binds arbitrary numeric DATA fields to the existing canonical `MarketEvidenceQualityRecord`, UAI identity, correlation identity, provenance-lineage evaluator and Data Quality status vocabulary.
+`src/platform/MarketData/ValidatedFeatureInput.ts` binds arbitrary numeric data fields to the existing canonical `MarketEvidenceQualityRecord`, UAI identity, correlation identity, provenance-lineage evaluator and Data Quality status vocabulary.
 
 The contract is intentionally generic so productive crypto fields such as:
 
@@ -76,7 +76,7 @@ and traditional fundamentals such as:
 - `profitMarginPct`;
 - `debtToEquity`;
 
-use the same DATA authority instead of creating provider- or asset-class-local validation planes.
+use the same validated-data contract instead of creating provider- or asset-class-local validation planes.
 
 Required fields are explicit. Missing values remain `MISSING`; stale evidence remains `STALE`; conflicting evidence remains `UNKNOWN`; malformed/non-finite/identity-inconsistent fields become `FAIL`. None is upgraded to valid numeric production evidence.
 
@@ -104,14 +104,14 @@ The projection rechecks the downstream boundary invariants needed for numeric FI
 - provenance completeness;
 - point timestamp/value validity;
 - history freshness;
-- source DATA status;
+- source data-quality status;
 - explicit `POSITIVE_PRICE` vs `SIGNED_VALUE` semantics.
 
 The same handoff therefore covers productive crypto and traditional histories, while sovereign-yield histories retain finite negative values only through the already integrated `SIGNED_VALUE` semantics.
 
 ## Fail-closed behavior
 
-For the DATA -> FINTECH boundary this package enforces:
+For the internal FINTECH `PVC-11 -> PVC-12` validated-data boundary this package enforces:
 
 ```text
 missing  -> NOT_COMPUTABLE -> zero numeric/history export
@@ -161,11 +161,11 @@ This package performs no provider credential, entitlement, provider activation, 
 
 ### Phase 1 — FINTECH validated data-boundary materialization
 
-Repository implementation/evidence is materialized on the scoped DATA branch. Final branch/main correlation, canonical PR rendering and Hosted CI remain required before Human/CODEOWNER merge readiness.
+Repository implementation/evidence is materialized on the scoped FINTECH work branch. Final branch/main correlation, canonical PR rendering and Hosted CI remain required before Human/CODEOWNER merge readiness.
 
 ### Phase 2 — current-main integration gate
 
-`BLOCKED_BY_HUMAN_CODEOWNER_MERGE` until this DATA payload is Human/CODEOWNER-merged and the four required returns are re-read directly from then-current `main`.
+`BLOCKED_BY_HUMAN_CODEOWNER_MERGE` until this FINTECH validated-data payload is Human/CODEOWNER-merged and the four required returns are re-read directly from then-current `main`.
 
 An open PR or branch is explicitly not current-main authority.
 
@@ -173,4 +173,4 @@ An open PR or branch is explicitly not current-main authority.
 
 `NOT_STARTED / PROHIBITED_UNTIL_PHASE_2_PASS`.
 
-No FINTECH successor branch may be created from this unintegrated DATA branch. After Human/CODEOWNER merge, FINTECH must start from a fresh then-current-main branch and repeat the full authority/writer/correlation gate.
+No FINTECH continuation branch may be created from this unintegrated branch. After Human/CODEOWNER merge, FINTECH must start from a fresh then-current-main branch and repeat the full authority/writer/correlation gate.
