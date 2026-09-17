@@ -111,4 +111,32 @@ describe('FINTECH FIN-12 validated-data canonical history handoff', () => {
     expect(projection.points).toEqual([]);
     expect(projection.blockingReasons).toContain('provenance-incomplete');
   });
+  it('rejects reverse-ordered history instead of exporting inverted trends', () => {
+    const asset = createUniversalAssetIdentity({ symbol: 'BTC', assetClass: 'crypto' });
+    const validated = buildValidatedHistoryInput(asset, history('BTC', 'crypto', [
+      { timestamp: '2026-09-17T00:00:00.000Z', close: 116_500 },
+      { timestamp: '2026-09-16T12:00:00.000Z', close: 115_000 },
+    ]));
+
+    expect(validated.status).toBe('PASS');
+    const projection = projectValidatedHistoryInputForFintech(validated);
+    expect(projection.computability).toBe('NOT_COMPUTABLE');
+    expect(projection.points).toEqual([]);
+    expect(projection.blockingReasons).toContain('history-points-not-strictly-ascending');
+  });
+
+  it('rejects duplicate history timestamps', () => {
+    const asset = createUniversalAssetIdentity({ symbol: 'AAPL', assetClass: 'stock' });
+    const validated = buildValidatedHistoryInput(asset, history('AAPL', 'stock', [
+      { timestamp: '2026-09-17T00:00:00.000Z', close: 247.1 },
+      { timestamp: '2026-09-17T00:00:00.000Z', close: 247.2 },
+    ]));
+
+    expect(validated.status).toBe('PASS');
+    const projection = projectValidatedHistoryInputForFintech(validated);
+    expect(projection.computability).toBe('NOT_COMPUTABLE');
+    expect(projection.points).toEqual([]);
+    expect(projection.blockingReasons).toContain('history-points-not-strictly-ascending');
+  });
+
 });
