@@ -232,6 +232,7 @@ jobs:
           policy_dir="$RUNNER_TEMP/capital-ai-pr-policy"
           mkdir -p "$policy_dir"
           git show "$PR_BASE_SHA:scripts/pr/classifyPrScope.mjs" > "$policy_dir/classifyPrScope.mjs"
+          git show "$PR_BASE_SHA:scripts/pr/runtimeConsumedArtifacts.mjs" > "$policy_dir/runtimeConsumedArtifacts.mjs"
           echo "classifier_path=$policy_dir/classifyPrScope.mjs" >> "$GITHUB_OUTPUT"
           if git cat-file -e "$PR_BASE_SHA:scripts/pr/planPrValidation.mjs" 2>/dev/null; then
             git show "$PR_BASE_SHA:scripts/pr/planPrValidation.mjs" > "$policy_dir/planPrValidation.mjs"
