@@ -26,7 +26,9 @@ describe('CI and Render deployment control plane', () => {
     expect(ci).toContain('cosign verify-blob');
     expect(ci).toContain('RENDER_DEPLOY_HOOK_URL');
     expect(ci).toContain('manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA');
-    expect(ci).toContain('ref=${VERIFIED_COMMIT_SHA}');
+    expect(ci).toContain('live_main_sha');
+    expect(ci).toContain('ref=main');
+    expect(ci).not.toContain('ref=${VERIFIED_COMMIT_SHA}');
     expect(ci).toContain('node p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs');
   });
 
