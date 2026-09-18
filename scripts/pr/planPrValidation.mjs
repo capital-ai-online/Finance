@@ -22,14 +22,13 @@
 
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import {
+  findRuntimeConsumedPaths,
+  isDocsPath,
+  normalizePath,
+} from './runtimeConsumedArtifacts.mjs';
 
-export function normalizePath(value) {
-  return String(value || '')
-    .replace(/\\/g, '/')
-    .replace(/^\.\//, '')
-    .replace(/\/+/g, '/')
-    .trim();
-}
+export { findRuntimeConsumedPaths, isDocsPath, normalizePath };
 
 export function parseChangedFilesJson(value) {
   const parsed = JSON.parse(String(value ?? ''));
@@ -37,11 +36,6 @@ export function parseChangedFilesJson(value) {
     throw new TypeError('CHANGED_FILES_JSON must be a JSON array of strings');
   }
   return parsed.map(normalizePath).filter(Boolean);
-}
-
-export function isDocsPath(filePath) {
-  const p = normalizePath(filePath);
-  return !p || p.startsWith('docs/') || p.startsWith('.ai/') || p.endsWith('.md');
 }
 
 export function isTestPath(filePath) {
@@ -110,6 +104,13 @@ export function isGlobalTestTrigger(filePath) {
     || p === '.github/workflows/selective-copilot-code-review.yml';
 }
 
+/**
+ * Keep the validation planner aligned with classifyPrScope.mjs: documentary
+ * artifacts are only safe for the no-test fast path when no executable/test/
+ * workflow surface consumes the exact repository path.
+ */
+
+
 function inferCodeqlLanguages(files) {
   const languages = new Set();
   for (const file of files) {
@@ -130,7 +131,7 @@ function explain(primary, files) {
 
 /**
  * @param {string[]} files
- * @param {{ forceFull?: boolean }} [options]
+ * @param {{ forceFull?: boolean, runtimeConsumedPaths?: string[] }} [options]
  */
 export function planChangedFiles(files, options = {}) {
   const normalized = (files || []).map(normalizePath).filter(Boolean);
@@ -149,7 +150,10 @@ export function planChangedFiles(files, options = {}) {
     };
   }
 
-  if (normalized.length === 0 || normalized.every(isDocsPath)) {
+  const runtimeConsumed = new Set((options.runtimeConsumedPaths || []).map(normalizePath));
+  const consumerEscalation = normalized.some((file) => runtimeConsumed.has(file));
+
+  if ((normalized.length === 0 || normalized.every(isDocsPath)) && !consumerEscalation) {
     return {
       validation_profile: 'none',
       vitest_mode: 'none',
@@ -160,6 +164,24 @@ export function planChangedFiles(files, options = {}) {
       codeql_languages: '',
       automated_code_review_mode: 'none',
       reason: explain('documentation-only', normalized),
+    };
+  }
+
+  // The scope classifier already escalates runtime-consumed documentary artifacts
+  // to class C. Without the same signal here, CI could build/predeploy that class C
+  // change while selecting zero unit tests. Until a narrower dependency mapping is
+  // proven, fail closed to full validation for this uncommon boundary case.
+  if (consumerEscalation) {
+    return {
+      validation_profile: 'full',
+      vitest_mode: 'full',
+      node_pr_tests: true,
+      node_systemadmin_tests: true,
+      node_security_assessment_tests: true,
+      codeql_mode: 'full',
+      codeql_languages: allCurrentRepositoryCodeqlLanguages().join(','),
+      automated_code_review_mode: 'full',
+      reason: explain('runtime-consumed-documentary-artifact', normalized),
     };
   }
 
@@ -280,6 +302,7 @@ function main() {
     || process.argv.includes('--force-full');
 
   let files = [];
+  let runtimeConsumedPaths = [];
   if (!forceFull) {
     const base = process.env.PR_BASE_SHA || process.env.BASE_SHA || '';
     const head = process.env.PR_HEAD_SHA || process.env.HEAD_SHA || 'HEAD';
@@ -292,10 +315,12 @@ function main() {
       // newline-delimited paths. Security-sensitive provider workflows use JSON.
       files = process.env.CHANGED_FILES.split(/\r?\n/).map(normalizePath).filter(Boolean);
     }
+    runtimeConsumedPaths = findRuntimeConsumedPaths(files, head);
   }
 
-  const plan = planChangedFiles(files, { forceFull });
-  console.log(`[planPrValidation] profile=${plan.validation_profile} vitest=${plan.vitest_mode} codeql=${plan.codeql_mode} review=${plan.automated_code_review_mode} files=${forceFull ? '(force-full)' : files.length}`);
+  const plan = planChangedFiles(files, { forceFull, runtimeConsumedPaths });
+  console.log(`[planPrValidation] profile=${plan.validation_profile} vitest=${plan.vitest_mode} codeql=${plan.codeql_mode} review=${plan.automated_code_review_mode} consumer_escalation=${runtimeConsumedPaths.length > 0} files=${forceFull ? '(force-full)' : files.length}`);
+  if (runtimeConsumedPaths.length > 0) console.log(`[planPrValidation] runtime-consumed changed artifacts: ${runtimeConsumedPaths.join(', ')}`);
   console.log(JSON.stringify(plan, null, 2));
   writeGithubOutput(plan);
 }
