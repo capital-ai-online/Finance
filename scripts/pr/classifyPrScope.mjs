@@ -16,23 +16,13 @@
 
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import {
+  findRuntimeConsumedPaths,
+  isDocsPath,
+  normalizePath,
+} from './runtimeConsumedArtifacts.mjs';
 
-export function normalizePath(value) {
-  return String(value || '')
-    .replace(/\\/g, '/')
-    .replace(/^\.\//, '')
-    .replace(/\/+/g, '/')
-    .trim();
-}
-
-export function isDocsPath(filePath) {
-  const p = normalizePath(filePath);
-  if (!p) return true;
-  if (p.startsWith('docs/')) return true;
-  if (p.startsWith('.ai/')) return true;
-  if (p.endsWith('.md')) return true;
-  return false;
-}
+export { findRuntimeConsumedPaths, isDocsPath, normalizePath };
 
 export function isWorkflowPath(filePath) {
   const p = normalizePath(filePath);
@@ -72,28 +62,7 @@ export function isKnownNonProductionValidationPath(filePath) {
   return false;
 }
 
-export function findRuntimeConsumedPaths(files, headRef = 'HEAD') {
-  const roots = ['src', 'server', 'scripts', '.github/workflows', 'tests'];
-  const consumed = [];
 
-  for (const rawFile of files || []) {
-    const file = normalizePath(rawFile);
-    if (!file || !isDocsPath(file)) continue;
-    try {
-      const out = execFileSync(
-        'git',
-        ['grep', '-F', '-l', '-e', file, headRef, '--', ...roots],
-        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-      ).trim();
-      if (out) consumed.push(file);
-    } catch (error) {
-      if (error && typeof error === 'object' && 'status' in error && error.status === 1) continue;
-      throw error;
-    }
-  }
-
-  return Array.from(new Set(consumed));
-}
 
 /** @param {string[]} files @param {{ forceFull?: boolean, runtimeConsumedPaths?: string[] }} [options] */
 export function classifyChangedFiles(files, options = {}) {
