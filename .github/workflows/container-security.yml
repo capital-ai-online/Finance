@@ -127,18 +127,44 @@ jobs:
           mkdir -p artifacts/container-security
           npm audit --omit=dev --json > artifacts/container-security/npm-audit-production.json
           status=$?
-          node --input-type=module <<'NODE'
+          NPM_AUDIT_STATUS="$status" node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const report = JSON.parse(fs.readFileSync('artifacts/container-security/npm-audit-production.json', 'utf8'));
-          const v = report.metadata?.vulnerabilities ?? {};
+          const auditStatus = Number(process.env.NPM_AUDIT_STATUS);
+          if (!Number.isInteger(auditStatus) || auditStatus < 0) {
+            throw new Error(`Invalid npm audit exit status: ${String(process.env.NPM_AUDIT_STATUS)}`);
+          }
+          if (report?.error || report?.statusCode || report?.message && !report?.metadata?.vulnerabilities) {
+            throw new Error(`npm audit returned an advisory-service error response: ${JSON.stringify({
+              statusCode: report?.statusCode ?? null,
+              error: report?.error ?? null,
+              message: report?.message ?? null,
+            })}`);
+          }
+          const v = report?.metadata?.vulnerabilities;
+          if (!v || typeof v !== 'object' || Array.isArray(v)) {
+            throw new Error('npm audit response is missing metadata.vulnerabilities; refusing false-clean evidence.');
+          }
+          const fields = ['critical', 'high', 'moderate', 'low', 'total'];
+          for (const field of fields) {
+            if (!Number.isFinite(Number(v[field])) || Number(v[field]) < 0) {
+              throw new Error(`npm audit response has invalid vulnerabilities.${field}: ${String(v[field])}`);
+            }
+          }
           const summary = {
-            critical: Number(v.critical ?? 0),
-            high: Number(v.high ?? 0),
-            moderate: Number(v.moderate ?? 0),
-            low: Number(v.low ?? 0),
-            total: Number(v.total ?? 0),
+            critical: Number(v.critical),
+            high: Number(v.high),
+            moderate: Number(v.moderate),
+            low: Number(v.low),
+            total: Number(v.total),
           };
           fs.writeFileSync('artifacts/container-security/npm-audit-summary.json', JSON.stringify(summary, null, 2) + '\n');
+          if (auditStatus !== 0 && summary.total === 0) {
+            throw new Error(`npm audit exited ${auditStatus} without vulnerability evidence; advisory check did not complete cleanly.`);
+          }
+          if (auditStatus > 1) {
+            throw new Error(`npm audit exited with unexpected status ${auditStatus}; refusing to classify infrastructure/tool failure as vulnerability-only output.`);
+          }
           if (summary.critical > 0 || summary.high > 0) {
             console.error(`::error::Production lock graph contains ${summary.critical} CRITICAL and ${summary.high} HIGH npm advisories.`);
             process.exit(1);
