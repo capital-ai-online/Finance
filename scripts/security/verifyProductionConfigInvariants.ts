@@ -49,8 +49,14 @@ const checks: Check[] = [
   {
     id: 'PCG-014',
     file: '.github/workflows/ci.yml',
-    description: 'Render deployment must be bound to the exact verified commit SHA',
-    includes: 'ref=${VERIFIED_COMMIT_SHA}',
+    description: 'Render deployment hook must use the deployable main ref after exact main-SHA revalidation',
+    includes: 'ref=main',
+  },
+  {
+    id: 'PCG-018',
+    file: '.github/workflows/ci.yml',
+    description: 'Render deployment must fail closed unless live main still equals the exact verified commit SHA',
+    includes: 'test "$live_main_sha" = "$VERIFIED_COMMIT_SHA"',
   },
   {
     id: 'PCG-002',
