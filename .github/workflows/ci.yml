@@ -475,6 +475,7 @@ jobs:
     environment: production
     permissions:
       actions: read
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -511,14 +512,28 @@ jobs:
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           VERIFIED_COMMIT_SHA: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           test -n "$RENDER_DEPLOY_HOOK_URL"
+
+          # Render Deploy Hooks resolve Git refs (branch/tag), not arbitrary 40-char commit IDs.
+          # Fail closed if main moved after this workflow's verified build, then deploy the still-exact main ref.
+          live_main_sha="$(
+            curl --fail-with-body --silent --show-error --location \
+              --header "Authorization: Bearer $GITHUB_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/main" \
+              | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>process.stdout.write(JSON.parse(d).sha))"
+          )"
+          test "$live_main_sha" = "$VERIFIED_COMMIT_SHA"
+
           separator='?'
           case "$RENDER_DEPLOY_HOOK_URL" in *\?*) separator='&' ;; esac
           curl --fail-with-body --silent --show-error --location \
             --request POST \
-            "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
+            "${RENDER_DEPLOY_HOOK_URL}${separator}ref=main"
 
       - name: Deployte Commit-Identität und Health gegen erwarteten main-Commit verifizieren
         env:

@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
-import { parseChangedFilesJson, planChangedFiles } from './planPrValidation.mjs';
+import { classifyChangedFiles } from './classifyPrScope.mjs';
+import {
+  findRuntimeConsumedPaths,
+  parseChangedFilesJson,
+  planChangedFiles,
+} from './planPrValidation.mjs';
 
 describe('planChangedFiles', () => {
   it('uses NONE and skips software tests, CodeQL and automated review for docs-only changes', () => {
@@ -9,6 +19,68 @@ describe('planChangedFiles', () => {
     assert.equal(plan.vitest_mode, 'none');
     assert.equal(plan.codeql_mode, 'none');
     assert.equal(plan.automated_code_review_mode, 'none');
+  });
+
+  it('fails closed to FULL when a documentary artifact is consumed by runtime/test/workflow code', () => {
+    const path = 'docs/contracts/runtime-policy.md';
+    const plan = planChangedFiles([path], { runtimeConsumedPaths: [path] });
+    assert.equal(plan.validation_profile, 'full');
+    assert.equal(plan.vitest_mode, 'full');
+    assert.equal(plan.node_pr_tests, true);
+    assert.equal(plan.node_systemadmin_tests, true);
+    assert.equal(plan.node_security_assessment_tests, true);
+    assert.equal(plan.codeql_mode, 'full');
+    assert.equal(plan.automated_code_review_mode, 'full');
+    assert.match(plan.reason, /runtime-consumed-documentary-artifact/);
+  });
+
+  it('discovers a real runtime consumer and escalates planner, classifier and CLI fail-closed', () => {
+    const repository = mkdtempSync(join(tmpdir(), 'capital-ai-runtime-consumer-'));
+    const artifact = 'docs/contracts/runtime-policy.md';
+    try {
+      mkdirSync(join(repository, 'docs/contracts'), { recursive: true });
+      mkdirSync(join(repository, 'src'), { recursive: true });
+      writeFileSync(join(repository, artifact), 'version: 1\n', 'utf8');
+      writeFileSync(
+        join(repository, 'src/consumer.ts'),
+        "export const policyPath = 'docs/contracts/runtime-policy.md';\n",
+        'utf8',
+      );
+      execFileSync('git', ['init'], { cwd: repository, stdio: 'ignore' });
+      execFileSync('git', ['config', 'user.email', 'ci@example.invalid'], { cwd: repository });
+      execFileSync('git', ['config', 'user.name', 'CI Test'], { cwd: repository });
+      execFileSync('git', ['add', '.'], { cwd: repository });
+      execFileSync('git', ['commit', '-m', 'base'], { cwd: repository, stdio: 'ignore' });
+      const base = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim();
+
+      const runtimeConsumedPaths = findRuntimeConsumedPaths([artifact], 'HEAD', { cwd: repository });
+      assert.deepEqual(runtimeConsumedPaths, [artifact]);
+      assert.equal(planChangedFiles([artifact], { runtimeConsumedPaths }).validation_profile, 'full');
+      assert.equal(classifyChangedFiles([artifact], { runtimeConsumedPaths }).class, 'C');
+
+      writeFileSync(join(repository, artifact), 'version: 2\n', 'utf8');
+      execFileSync('git', ['add', artifact], { cwd: repository });
+      execFileSync('git', ['commit', '-m', 'change policy'], { cwd: repository, stdio: 'ignore' });
+      const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim();
+      const planner = fileURLToPath(new URL('./planPrValidation.mjs', import.meta.url));
+      const output = execFileSync(process.execPath, [planner], {
+        cwd: repository,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          EVENT_NAME: 'pull_request',
+          CI_FORCE_FULL: 'false',
+          GITHUB_OUTPUT: '',
+          PR_BASE_SHA: base,
+          PR_HEAD_SHA: head,
+        },
+      });
+      assert.match(output, /profile=full/);
+      assert.match(output, /consumer_escalation=true/);
+      assert.match(output, /runtime-consumed-documentary-artifact/);
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
   });
 
   it('uses FOCUSED changed Vitest only for test-only changes and skips CodeQL/review', () => {
