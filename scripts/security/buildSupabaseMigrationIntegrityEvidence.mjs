@@ -1,6 +1,10 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  loadSupabaseMigrationLedger,
+  validateSupabaseMigrationLedgerObject,
+} from '../governance/verifySupabaseMigrationLedgerReconciliation.mjs';
 
 const repoRoot = process.cwd();
 const migrationDir = path.join(repoRoot, 'supabase', 'migrations');
@@ -53,30 +57,94 @@ const manifestPayload = entries.map(({ version, name, path: filePath, contentSha
 const migrationManifestSha256 = sha256(Buffer.from(manifestPayload, 'utf8'));
 
 const providerSnapshotPath = process.env.SUPABASE_PROVIDER_SNAPSHOT || '';
+const requireCorrelation = process.env.REQUIRE_SUPABASE_MIGRATION_CORRELATION === 'true';
+if (requireCorrelation && !providerSnapshotPath) {
+  throw new Error('REQUIRE_SUPABASE_MIGRATION_CORRELATION=true requires SUPABASE_PROVIDER_SNAPSHOT.');
+}
 const provider = readProviderSnapshot(providerSnapshotPath);
 let correlation = null;
 
 if (provider) {
-  const providerVersions = new Map(provider.migrations.map(item => [String(item.version), String(item.name || '')]));
-  const repositoryVersions = new Map(entries.map(item => [item.version, item.name]));
-  const missingInProvider = entries.filter(item => !providerVersions.has(item.version)).map(item => item.version);
-  const providerOnly = [...providerVersions.keys()].filter(version => !repositoryVersions.has(version));
-  const nameMismatches = entries
-    .filter(item => providerVersions.has(item.version) && providerVersions.get(item.version) !== item.name)
-    .map(item => ({ version: item.version, repository: item.name, provider: providerVersions.get(item.version) }));
+  const ledger = loadSupabaseMigrationLedger(repoRoot);
+  const ledgerErrors = validateSupabaseMigrationLedgerObject(repoRoot, ledger);
+  if (ledgerErrors.length > 0) {
+    throw new Error(`Canonical Supabase migration reconciliation ledger is invalid: ${ledgerErrors.join('; ')}`);
+  }
+
+  const providerRows = provider.migrations.map((item, index) => {
+    const version = String(item?.version ?? '');
+    const name = String(item?.name ?? '');
+    if (!/^\d{14}$/.test(version) || !name) {
+      throw new Error(`Provider snapshot migrations[${index}] must contain a 14-digit version and non-empty name.`);
+    }
+    return { version, name };
+  });
+  const providerVersions = new Set();
+  for (const row of providerRows) {
+    if (providerVersions.has(row.version)) {
+      throw new Error(`Provider snapshot contains duplicate migration version ${row.version}.`);
+    }
+    providerVersions.add(row.version);
+  }
+
+  const ledgerRows = ledger.remote_migrations.map(item => ({
+    version: String(item.remote_version),
+    name: String(item.remote_name),
+    classification: item.classification,
+    localVersion: item.local_version,
+    localPath: item.local_path,
+  }));
+  const ledgerByVersion = new Map(ledgerRows.map(item => [item.version, item]));
+  const providerByVersion = new Map(providerRows.map(item => [item.version, item]));
+
+  const missingFromProvider = ledgerRows
+    .filter(item => !providerByVersion.has(item.version))
+    .map(item => ({ version: item.version, expectedName: item.name, classification: item.classification }));
+  const unexpectedProvider = providerRows
+    .filter(item => !ledgerByVersion.has(item.version))
+    .map(item => ({ version: item.version, providerName: item.name }));
+  const nameMismatches = providerRows
+    .filter(item => ledgerByVersion.has(item.version) && ledgerByVersion.get(item.version).name !== item.name)
+    .map(item => ({
+      version: item.version,
+      expected: ledgerByVersion.get(item.version).name,
+      provider: item.name,
+      classification: ledgerByVersion.get(item.version).classification,
+    }));
+
+  const acceptedTimestampAliases = ledgerRows
+    .filter(item => item.classification === 'TIMESTAMP_ALIAS')
+    .map(item => ({
+      providerVersion: item.version,
+      providerName: item.name,
+      localVersion: item.localVersion,
+      localPath: item.localPath,
+    }));
+  const acceptedRemoteHistory = ledgerRows
+    .filter(item => item.classification === 'REMOTE_ONLY_HISTORY')
+    .map(item => ({ providerVersion: item.version, providerName: item.name }));
+  const knownLocalOnly = (ledger.local_only_migrations ?? []).map(item => ({
+    localVersion: String(item.local_version),
+    localName: String(item.local_name),
+    localPath: String(item.local_path),
+  }));
 
   correlation = {
-    status: missingInProvider.length === 0 && providerOnly.length === 0 && nameMismatches.length === 0 ? 'PASS' : 'DRIFT',
+    status: missingFromProvider.length === 0 && unexpectedProvider.length === 0 && nameMismatches.length === 0 ? 'PASS' : 'DRIFT',
+    basis: 'OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION',
     providerProjectRef: provider.projectRef ?? null,
     productionSchemaSha256: provider.productionSchemaSha256,
-    providerMigrationCount: provider.migrations.length,
+    providerMigrationCount: providerRows.length,
     repositoryMigrationCount: entries.length,
-    missingInProvider,
-    providerOnly,
+    acceptedTimestampAliases,
+    acceptedRemoteHistory,
+    knownLocalOnly,
+    missingFromProvider,
+    unexpectedProvider,
     nameMismatches,
   };
 
-  if (process.env.REQUIRE_SUPABASE_MIGRATION_CORRELATION === 'true' && correlation.status !== 'PASS') {
+  if (requireCorrelation && correlation.status !== 'PASS') {
     fs.mkdirSync(outputDir, { recursive: true });
     fs.writeFileSync(path.join(outputDir, 'migration-integrity-evidence.json'), JSON.stringify({
       schemaVersion: '1.0.0',
@@ -84,7 +152,11 @@ if (provider) {
       migrations: entries,
       correlation,
     }, null, 2) + '\n');
-    throw new Error(`Supabase migration correlation drift: ${JSON.stringify({ missingInProvider, providerOnly, nameMismatches })}`);
+    throw new Error(`Supabase migration correlation drift: ${JSON.stringify({
+      missingFromProvider,
+      unexpectedProvider,
+      nameMismatches,
+    })}`);
   }
 }
 
