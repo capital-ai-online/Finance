@@ -110,12 +110,12 @@ jobs:
             }
 
             let production = await readProduction();
-            let ciEvidence = { run: null, job: null, step: null };
+            let ciEvidence = context.eventName === 'push'
+              ? await inspectCiDeployTrigger()
+              : { run: null, job: null, step: null };
 
             if (context.eventName === 'push') {
               while (Date.now() <= slaDeadlineMs) {
-                ciEvidence = await inspectCiDeployTrigger();
-                production = await readProduction();
                 const triggerStarted = Boolean(ciEvidence.step?.started_at);
                 const productionConverged = production.reachable
                   && production.status === 'ok'
@@ -126,6 +126,8 @@ jobs:
                 const remaining = slaDeadlineMs - Date.now();
                 if (remaining <= 0) break;
                 await new Promise(resolve => setTimeout(resolve, Math.min(pollMs, remaining)));
+                ciEvidence = await inspectCiDeployTrigger();
+                production = await readProduction();
               }
             }
 
