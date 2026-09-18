@@ -9,7 +9,7 @@ Operate or migrate a provider path without bypassing the canonical FINTECH valid
 1. Resolve UAI identity first; do not treat catalog/provider symbols as evidence.
 2. Register/resolve the provider through the approved provider matrix/registry for the capability.
 3. Fetch provider output as untrusted input.
-4. Apply existing Security source-policy/credential/SSRF/input controls where applicable; do not create a second Security layer inside DATA.
+4. Apply existing Security source-policy/credential/SSRF/input controls where applicable; do not create a second Security layer inside FINTECH.
 5. Validate provider schema, symbol/asset binding, timestamps and numeric fields.
 6. Create/preserve evidence identity and correlation lineage.
 7. Evaluate provenance completeness.
