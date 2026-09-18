@@ -31,6 +31,16 @@ describe('post-merge production correlation workflow', () => {
     expect(workflow).toContain("response.headers.get('x-capital-ai-repo')");
   });
 
+  it('reads historical deploy evidence before polling so runner queue delay cannot create false drift', () => {
+    const evidenceInit = "let ciEvidence = context.eventName === 'push'\n              ? await inspectCiDeployTrigger()";
+    const pollingLoop = "while (Date.now() <= slaDeadlineMs)";
+    expect(workflow).toContain(evidenceInit);
+    expect(workflow.indexOf(evidenceInit)).toBeLessThan(workflow.indexOf(pollingLoop));
+    expect(workflow).toContain('const triggerStarted = Boolean(ciEvidence.step?.started_at)');
+    expect(workflow).toContain('const triggerDeltaMs = triggerStartedAt ? Date.parse(triggerStartedAt) - commitTimeMs : null');
+    expect(workflow).toContain('triggerDeltaMs >= 0 && triggerDeltaMs <= slaMs');
+  });
+
   it('deduplicates production-drift issues and closes them after recovery', () => {
     expect(workflow).toContain("DRIFT_ISSUE_TITLE: '[AUTO] Production drift — Render/Main correlation'");
     expect(workflow).toContain('CAPITAL_AI_PRODUCTION_DRIFT_AUTO');
