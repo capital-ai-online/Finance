@@ -17,14 +17,11 @@ function readPrivateKey() {
   return fs.readFileSync(keyPath, 'utf8');
 }
 
-function projectBudget(budget) {
+function projectBudgetEvidence(budget) {
   return Object.freeze({
-    id: budget.id,
     budgetType: budget.budgetType,
     productSkus: budget.productSkus,
     scope: budget.scope,
-    entityName: budget.entityName,
-    amount: budget.amount,
     preventFurtherUsage: budget.preventFurtherUsage,
     alertingEnabled: budget.alerting?.willAlert === true,
   });
@@ -54,7 +51,7 @@ const output = Object.freeze({
   installationId: authEvidence.installationId,
   installationTokenExpiresAt: authEvidence.installationTokenExpiresAt,
   budgetCount: result.budgets.length,
-  budgets: result.budgets.map(projectBudget),
+  budgets: result.budgets.map(projectBudgetEvidence),
 });
 
 process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
