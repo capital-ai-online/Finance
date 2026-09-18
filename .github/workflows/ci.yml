@@ -60,7 +60,6 @@ jobs:
     permissions:
       actions: read
       contents: read
-      contents: read
       pull-requests: read
       id-token: write
     runs-on: ubuntu-latest
@@ -476,6 +475,7 @@ jobs:
     environment: production
     permissions:
       actions: read
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
