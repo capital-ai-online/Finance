@@ -76,7 +76,9 @@ describe('P2B production CI runner consolidation', () => {
     expect(deploy).not.toContain('actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093');
     expect(deploy).toContain("node-version: '24.18.0'");
     expect(deploy).toContain('manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA');
-    expect(deploy).toContain('ref=${VERIFIED_COMMIT_SHA}');
+    expect(deploy).toContain('live_main_sha');
+    expect(deploy).toContain('ref=main');
+    expect(deploy).not.toContain('ref=${VERIFIED_COMMIT_SHA}');
     expect(deploy).toContain('node p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs');
   });
 
