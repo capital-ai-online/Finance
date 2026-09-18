@@ -137,7 +137,7 @@ export function CryptoPatternTrooper({
   return (
     <section
       id="crypto-pattern-trooper"
-      className={`relative overflow-hidden rounded-3xl border border-asset-crypto/25 bg-surface/55 p-5 shadow-[0_0_50px_rgba(141,38,255,0.08)] sm:p-6 ${className}`}
+      className={`relative overflow-hidden rounded-3xl border border-asset-crypto/25 bg-surface/55 p-5 shadow-xl sm:p-6 ${className}`}
       aria-labelledby="crypto-pattern-trooper-title"
     >
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
