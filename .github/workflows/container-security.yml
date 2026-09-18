@@ -158,7 +158,55 @@ jobs:
             low: Number(v.low),
             total: Number(v.total),
           };
-          fs.writeFileSync('artifacts/container-security/npm-audit-summary.json', JSON.stringify(summary, null, 2) + '\n');
+
+          const vulnerabilities = Object.entries(report.vulnerabilities ?? {})
+            .map(([name, finding]) => ({
+              name,
+              severity: String(finding?.severity ?? 'unknown'),
+              isDirect: Boolean(finding?.isDirect),
+              fixAvailable: finding?.fixAvailable ?? false,
+              via: Array.isArray(finding?.via)
+                ? finding.via.map(item => typeof item === 'string' ? item : {
+                    source: item?.source ?? null,
+                    name: item?.name ?? null,
+                    severity: item?.severity ?? null,
+                    title: item?.title ?? null,
+                    url: item?.url ?? null,
+                  })
+                : [],
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+          const remediationCandidates = vulnerabilities
+            .filter(item => item.fixAvailable !== false)
+            .map(item => ({
+              ...item,
+              codeRelevant: item.isDirect || ['moderate', 'high', 'critical'].includes(item.severity),
+              requiresReview: true,
+            }));
+
+          fs.writeFileSync(
+            'artifacts/container-security/npm-audit-summary.json',
+            JSON.stringify(summary, null, 2) + '\n',
+          );
+          fs.writeFileSync(
+            'artifacts/container-security/npm-audit-remediation-candidates.json',
+            JSON.stringify({
+              schemaVersion: '1.0.0',
+              policy: {
+                ignoreCodeRelevantSuggestions: false,
+                autoForceFix: false,
+                blockingSeverities: ['high', 'critical'],
+                reviewRule: 'All fixAvailable findings are evidence; code-relevant candidates require explicit remediation review.',
+              },
+              candidates: remediationCandidates,
+            }, null, 2) + '\n',
+          );
+
+          for (const item of remediationCandidates.filter(item => item.codeRelevant)) {
+            console.warn(`::warning::npm audit remediation candidate: ${item.name} severity=${item.severity} direct=${item.isDirect} fixAvailable=${JSON.stringify(item.fixAvailable)}`);
+          }
+
           if (auditStatus !== 0 && summary.total === 0) {
             throw new Error(`npm audit exited ${auditStatus} without vulnerability evidence; advisory check did not complete cleanly.`);
           }
