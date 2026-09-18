@@ -46,7 +46,6 @@ chatterbox_image = (
     .entrypoint([])
     .apt_install("git", "ffmpeg", "libsndfile1", "sox")
     .pip_install(
-        "huggingface-hub==0.36.0",
         "soundfile==0.13.1",
         "chatterbox-tts==0.1.7",
     )
