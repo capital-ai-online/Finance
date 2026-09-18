@@ -64,14 +64,16 @@ describe('GitHub Billing Gateway Adapter', () => {
     const calls: Array<{ method: string; path: string }> = [];
     const githubRest = async (request: { method: string; path: string }) => {
       calls.push(request);
-      if (request.path.includes('page=1')) {
+      const url = new URL(request.path, 'https://api.github.test');
+      const page = url.searchParams.get('page');
+      if (page === '1') {
         return {
           budgets: [budget('2066deda-923f-43f9-88d2-62395a28c0cd')],
           has_next_page: true,
           total_count: 2,
         };
       }
-      if (request.path.includes('page=2')) {
+      if (page === '2') {
         return {
           budgets: [budget('f47ac10b-58cc-4372-a567-0e02b2c3d479', 250)],
           has_next_page: false,
