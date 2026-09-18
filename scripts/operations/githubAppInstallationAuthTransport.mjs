@@ -120,6 +120,13 @@ function assertBillingPath(method, path, enterprise) {
   }
 }
 
+/**
+ * @param {{
+ *   clientId?: string;
+ *   privateKeyPem?: string;
+ *   nowMs?: number;
+ * }} [options]
+ */
 export function createGitHubAppJwt({
   clientId,
   privateKeyPem,
