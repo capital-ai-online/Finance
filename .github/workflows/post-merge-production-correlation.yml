@@ -1,0 +1,221 @@
+name: Post-Merge Production Correlation
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: post-merge-production-correlation
+  cancel-in-progress: false
+
+jobs:
+  correlate-production:
+    name: Main / Render Post-Merge-Korrelation
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: SLA, Production-SHA und Drift-Issue korrelieren
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+          SLA_MILLISECONDS: '300000'
+          POLL_MILLISECONDS: '15000'
+          DRIFT_ISSUE_TITLE: '[AUTO] Production drift — Render/Main correlation'
+          DRIFT_ISSUE_LABEL: production-drift
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const healthUrl = process.env.PRODUCTION_HEALTH_URL;
+            const slaMs = Number(process.env.SLA_MILLISECONDS || '300000');
+            const pollMs = Number(process.env.POLL_MILLISECONDS || '15000');
+            const issueTitle = process.env.DRIFT_ISSUE_TITLE;
+            const issueLabel = process.env.DRIFT_ISSUE_LABEL;
+            const marker = '<!-- CAPITAL_AI_PRODUCTION_DRIFT_AUTO -->';
+
+            const mainBranch = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            const expectedSha = String(mainBranch.data.commit.sha || '').toLowerCase();
+            if (!/^[0-9a-f]{40}$/.test(expectedSha)) {
+              core.setFailed(`CURRENT_MAIN SHA ungültig: ${expectedSha}`);
+              return;
+            }
+
+            if (context.eventName === 'push' && String(context.sha).toLowerCase() !== expectedSha) {
+              core.notice(`Staler Push-Run für ${context.sha}; CURRENT_MAIN ist bereits ${expectedSha}. Keine veraltete SLA-Eskalation.`);
+              return;
+            }
+
+            const commitResponse = await github.rest.repos.getCommit({ owner, repo, ref: expectedSha });
+            const commitTimestamp = commitResponse.data.commit.committer?.date || commitResponse.data.commit.author?.date;
+            if (!commitTimestamp) {
+              core.setFailed('Merge-/Commit-Zeitstempel für CURRENT_MAIN fehlt.');
+              return;
+            }
+            const commitTimeMs = Date.parse(commitTimestamp);
+            const slaDeadlineMs = commitTimeMs + slaMs;
+
+            async function readProduction() {
+              try {
+                const response = await fetch(healthUrl, {
+                  headers: { Accept: 'application/json' },
+                  signal: AbortSignal.timeout(10_000),
+                });
+                let payload = null;
+                try { payload = await response.json(); } catch {}
+                return {
+                  reachable: response.ok,
+                  status: payload?.status ?? null,
+                  sha: String(response.headers.get('x-capital-ai-commit') || '').toLowerCase() || null,
+                  branch: response.headers.get('x-capital-ai-branch'),
+                  repoSlug: response.headers.get('x-capital-ai-repo'),
+                  provider: response.headers.get('x-capital-ai-provider'),
+                };
+              } catch (error) {
+                return { reachable: false, status: null, sha: null, branch: null, repoSlug: null, provider: null, error: String(error) };
+              }
+            }
+
+            async function inspectCiDeployTrigger() {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: 'ci.yml',
+                branch: 'main',
+                event: 'push',
+                head_sha: expectedSha,
+                per_page: 20,
+              });
+              const run = runs.data.workflow_runs
+                .filter(candidate => String(candidate.head_sha).toLowerCase() === expectedSha)
+                .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
+              if (!run) return { run: null, job: null, step: null };
+
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                owner,
+                repo,
+                run_id: run.id,
+                per_page: 100,
+              });
+              const job = jobs.find(candidate => candidate.name === 'Deployment verifiziert / Render-Produktion') || null;
+              const step = job?.steps?.find(candidate => candidate.name === 'Render-Deployment für verifizierten main-Commit auslösen') || null;
+              return { run, job, step };
+            }
+
+            let production = await readProduction();
+            let ciEvidence = { run: null, job: null, step: null };
+
+            if (context.eventName === 'push') {
+              while (Date.now() <= slaDeadlineMs) {
+                ciEvidence = await inspectCiDeployTrigger();
+                production = await readProduction();
+                const triggerStarted = Boolean(ciEvidence.step?.started_at);
+                const productionConverged = production.reachable
+                  && production.status === 'ok'
+                  && production.sha === expectedSha
+                  && (!production.branch || production.branch === 'main')
+                  && (!production.repoSlug || production.repoSlug === `${owner}/${repo}`);
+                if (triggerStarted && productionConverged) break;
+                const remaining = slaDeadlineMs - Date.now();
+                if (remaining <= 0) break;
+                await new Promise(resolve => setTimeout(resolve, Math.min(pollMs, remaining)));
+              }
+            }
+
+            if (context.eventName !== 'push') {
+              production = await readProduction();
+            }
+
+            const triggerStartedAt = ciEvidence.step?.started_at || null;
+            const triggerDeltaMs = triggerStartedAt ? Date.parse(triggerStartedAt) - commitTimeMs : null;
+            const triggerWithinSla = context.eventName !== 'push'
+              ? null
+              : Boolean(triggerStartedAt && triggerDeltaMs >= 0 && triggerDeltaMs <= slaMs);
+
+            const violations = [];
+            if (context.eventName === 'push' && !triggerWithinSla) {
+              violations.push(triggerStartedAt
+                ? `Deploy-Hook-Step startete nach ${triggerDeltaMs} ms und überschritt die 5-Minuten-SLA.`
+                : 'Deploy-Hook-Step wurde innerhalb der 5-Minuten-SLA nicht beobachtet.');
+            }
+            if (!production.reachable) violations.push('Production /healthz ist nicht erfolgreich erreichbar.');
+            if (production.status !== 'ok') violations.push(`Production health status ist ${String(production.status)} statt ok.`);
+            if (production.sha !== expectedSha) violations.push(`Production SHA ${production.sha || 'MISSING'} entspricht nicht CURRENT_MAIN ${expectedSha}.`);
+            if (production.branch && production.branch !== 'main') violations.push(`Production branch ist ${production.branch} statt main.`);
+            if (production.repoSlug && production.repoSlug !== `${owner}/${repo}`) violations.push(`Production repo ist ${production.repoSlug} statt ${owner}/${repo}.`);
+
+            const drift = violations.length > 0;
+            const now = new Date().toISOString();
+            const runUrl = ciEvidence.run?.html_url || null;
+            const body = `${marker}
+            # Automatische Production-Drift-Korrelation
+
+            - Detected at: \`${now}\`
+            - Source event: \`${context.eventName}\`
+            - CURRENT_MAIN: \`${expectedSha}\`
+            - Main commit timestamp: \`${commitTimestamp}\`
+            - Production SHA: \`${production.sha || 'MISSING'}\`
+            - Production status: \`${production.status || 'MISSING'}\`
+            - Production branch: \`${production.branch || 'MISSING'}\`
+            - Production repo: \`${production.repoSlug || 'MISSING'}\`
+            - CI deploy run: ${runUrl ? `[${ciEvidence.run.id}](${runUrl})` : '`NOT_OBSERVED`'}
+            - Deploy-hook step started: \`${triggerStartedAt || 'NOT_OBSERVED'}\`
+            - Merge→deploy-trigger delta ms: \`${triggerDeltaMs ?? 'NOT_AVAILABLE'}\`
+            - Trigger within 5-minute SLA: \`${triggerWithinSla ?? 'NOT_APPLICABLE'}\`
+
+            ## Current violations
+            ${violations.length ? violations.map(value => `- ${value}`).join('\n') : '- none'}
+
+            This issue is maintained by the post-merge production-correlation workflow. It records drift evidence only and does not authorize production mutation.
+            `;
+
+            let openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            openIssues = openIssues.filter(issue => !issue.pull_request && issue.title === issueTitle && String(issue.body || '').includes(marker));
+            const existing = openIssues[0] || null;
+
+            if (drift) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: issueLabel });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({ owner, repo, name: issueLabel, description: 'Automatisch erkannte Production/Main-Drift', color: 'B60205' });
+                } else {
+                  throw error;
+                }
+              }
+
+              if (existing) {
+                await github.rest.issues.update({ owner, repo, issue_number: existing.number, body, labels: [issueLabel] });
+                core.warning(`PRODUCTION_DRIFT: Issue #${existing.number} aktualisiert.`);
+              } else {
+                const created = await github.rest.issues.create({ owner, repo, title: issueTitle, body, labels: [issueLabel] });
+                core.warning(`PRODUCTION_DRIFT: Issue #${created.data.number} erstellt.`);
+              }
+              core.setFailed(violations.join(' | '));
+              return;
+            }
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: existing.number,
+                body: `✅ Automatische Recovery-Korrelation ${now}: Production ist healthy und entspricht CURRENT_MAIN \`${expectedSha}\`. Issue wird geschlossen.`,
+              });
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, state: 'closed' });
+              core.notice(`Production konvergiert; Drift-Issue #${existing.number} automatisch geschlossen.`);
+            }
+
+            core.notice(`Post-Merge Production Correlation PASS: ${expectedSha}`);
