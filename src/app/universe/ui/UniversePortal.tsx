@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { PublicAnalysisWorkbench } from '../../../app/public/PublicAnalysisWorkbench';
+import { CryptoPatternTrooper } from '../../../features/crypto/ui';
 import { getAssetCatalogIntegrity, getAssetClassCounts } from '../../../lib/assetSearchCatalog';
 
 const VISIBLE_ASSET_CLASSES = [
@@ -231,6 +232,22 @@ export function UniversePortal() {
               );
             })}
           </div>
+        </section>
+
+        <section className="pb-8" aria-labelledby="crypto-pattern-trooper-universe-heading">
+          <div className="mb-4">
+            <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-asset-crypto">
+              Crypto Universe · Research Surface
+            </p>
+            <h2 id="crypto-pattern-trooper-universe-heading" className="mt-1 text-2xl font-black text-text-primary">
+              Altcoin Pattern Trooper
+            </h2>
+            <p className="mt-2 max-w-4xl text-xs leading-relaxed text-text-secondary">
+              Die grafische Fläche ist bereits FINTECH-contract-ready, bleibt auf current main jedoch bewusst
+              NOT_COMPUTABLE, bis attestierte Pattern-Research-Evidence über den Backend-Vertrag angebunden ist.
+            </p>
+          </div>
+          <CryptoPatternTrooper />
         </section>
 
         <section className="grid gap-4 py-8 lg:grid-cols-3" aria-label="FinTech Orchestrator Capabilities">
