@@ -73,6 +73,7 @@ def main() -> int:
                 "correlation": correlation,
             })
 
+        large_pass = all(x["large_v3_matched"] for x in term_rows)
         rows.append({
             "engine": s["engine"],
             "sample_id": s["sample_id"],
@@ -83,7 +84,8 @@ def main() -> int:
             "small_wer_normalized": s["wer_normalized"],
             "large_v3_wer_normalized": l["wer_normalized"],
             "required_terms": term_rows,
-            "large_v3_required_terms_pass": all(x["large_v3_matched"] for x in term_rows),
+            "large_v3_required_terms_pass": large_pass,
+            "acceptance_status": "PASS" if large_pass else "FAILED",
         })
 
     payload = {
@@ -93,6 +95,11 @@ def main() -> int:
         "large_model": large["asr_model"],
         "productive_case_count": len(rows),
         "large_v3_production_required_terms_pass": all(r["large_v3_required_terms_pass"] for r in rows),
+        "failed_productive_cases": [
+            f'{r["engine"]}::{r["sample_id"]}'
+            for r in rows
+            if r["acceptance_status"] == "FAILED"
+        ],
         "cases": rows,
     }
 
