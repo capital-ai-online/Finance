@@ -7,6 +7,9 @@ import {
   renderProductionBaselineBlock,
 } from './lib.mjs';
 
+const PR_TEMPLATE_V15_MARKER = '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->';
+const V15_BASELINE_HEADING = '## 7. Maschinenlesbare Baseline';
+
 const PRODUCTION_BASELINE_SECTION_PAIRS = [
   {
     baseline: '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
@@ -32,13 +35,23 @@ function repairMissingProductionBaselineBlock(text, baseline, markers) {
   if (markerOccurrences > 0) {
     fail(
       'PR-Body enthält einen unvollständigen oder duplizierten Produktions-Baseline-Markerzustand; ' +
-        'Auto-Refresh repariert nur vollständig markerfreie kanonische Abschnitt-3-Bodies.',
+        'Auto-Refresh repariert nur vollständig markerfreie kanonische Baseline-Bodies.',
     );
   }
 
   const candidates = PRODUCTION_BASELINE_SECTION_PAIRS.filter(({ baseline: heading, next }) =>
     occurrenceCount(text, heading) === 1 && (next === null || occurrenceCount(text, next) === 1),
   );
+  if (candidates.length === 0 && occurrenceCount(text, PR_TEMPLATE_V15_MARKER) === 1 && occurrenceCount(text, V15_BASELINE_HEADING) === 0) {
+    const replacement = renderProductionBaselineBlock(baseline);
+    return {
+      body: `${text.trimEnd()}\n\n${V15_BASELINE_HEADING}\n\n${replacement}\n`,
+      changed: true,
+      evidenceState: 'STALE',
+      baselineId: baseline.baselineId,
+    };
+  }
+
   if (candidates.length !== 1) {
     fail(
       'PR-Body besitzt keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt; ' +
