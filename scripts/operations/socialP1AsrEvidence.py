@@ -114,10 +114,13 @@ def main() -> int:
             matched, matched_as = _term_match(term, transcript)
             checks.append({"term": term, "matched": matched, "matched_as": matched_as})
 
+        productive_acceptance = str(sample["language"]).startswith("de")
         row = {
             "engine": engine,
             "sample_id": sample_id,
             "language": sample["language"],
+            "evidence_role": "productive_acceptance" if productive_acceptance else "historical_comparison",
+            "productive_acceptance": productive_acceptance,
             "wav_file": wav.name,
             "audio_sha256": _sha256(wav),
             "reference_text": sample["text"],
@@ -129,13 +132,19 @@ def main() -> int:
         }
         rows.append(row)
 
+    productive_rows = [r for r in rows if r["productive_acceptance"]]
+    historical_rows = [r for r in rows if not r["productive_acceptance"]]
     payload = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "asr_engine": "openai-whisper",
         "asr_package_version": "20250625",
         "asr_model": args.model,
         "case_count": len(rows),
-        "all_required_terms_pass": all(r["required_terms_pass"] for r in rows),
+        "productive_acceptance_case_count": len(productive_rows),
+        "historical_comparison_case_count": len(historical_rows),
+        "productive_acceptance_language_policy": ["de-DE"],
+        "production_required_terms_pass": all(r["required_terms_pass"] for r in productive_rows),
+        "all_cases_required_terms_pass": all(r["required_terms_pass"] for r in rows),
         "cases": rows,
     }
 
@@ -144,9 +153,9 @@ def main() -> int:
 
     with (args.output_dir / "social-p1-asr-evidence.csv").open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["engine", "sample_id", "language", "audio_sha256", "wer_normalized", "required_terms_pass", "transcript"])
+        w.writerow(["engine", "sample_id", "language", "evidence_role", "productive_acceptance", "audio_sha256", "wer_normalized", "required_terms_pass", "transcript"])
         for r in rows:
-            w.writerow([r["engine"], r["sample_id"], r["language"], r["audio_sha256"], r["wer_normalized"], r["required_terms_pass"], r["transcript"]])
+            w.writerow([r["engine"], r["sample_id"], r["language"], r["evidence_role"], r["productive_acceptance"], r["audio_sha256"], r["wer_normalized"], r["required_terms_pass"], r["transcript"]])
 
     for r in rows:
         print(f'{r["engine"]}::{r["sample_id"]} WER={r["wer_normalized"]:.3f} terms={r["required_terms_pass"]}')
