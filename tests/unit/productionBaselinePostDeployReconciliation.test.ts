@@ -76,7 +76,9 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).toContain('normalizeSha(item.base?.sha) === expectedMainSha');
     expect(yaml).toContain("exactRun.conclusion === 'failure'");
     expect(yaml).toContain("Number(exactRun.run_attempt || 1) === 1");
-    expect(yaml).toContain('const shouldRerun = baselineChanged || firstFailedAttempt;');
+    expect(yaml).toContain("const bodyRepaired = String(process.env.PR_BODY_REPAIRED || '').toLowerCase() === 'true';");
+    expect(yaml).toContain('PR_BODY_REPAIRED: ${{ steps.body_repair.outputs.changed }}');
+    expect(yaml).toContain('const shouldRerun = bodyRepaired || baselineChanged || firstFailedAttempt;');
     expect(yaml).toContain("POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun");
     expect(yaml).not.toContain('run_id: sourceRunId');
     expect(yaml).toContain('main änderte sich während der Baseline-Revalidierung');
