@@ -6,6 +6,8 @@ export { CryptoCategoryWorkspace } from './CryptoCategoryWorkspace';
 export { CryptoCategoryResearchLenses } from './CryptoCategoryResearchLenses';
 export { CryptoResearchVisualizationSuite } from './CryptoResearchVisualizationSuite';
 export { CryptoPatternTrooper } from './CryptoPatternTrooper';
+export { CryptoPatternTrooperLive } from './CryptoPatternTrooperLive';
+export { fetchAltcoinPatternResearchView } from './cryptoPatternTrooperClient';
 export type { CryptoPatternTrooperProps } from './CryptoPatternTrooper';
 export {
   buildCryptoPatternTrooperViewModel,

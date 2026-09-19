@@ -30,6 +30,11 @@ import {
   type AltcoinPatternResearchScoreRequest,
 } from '../platform/FinTechCore/Modules/Crypto/Pattern/AltcoinPatternResearchScorer';
 import {
+  createAltcoinPatternResearchViewProjection,
+  type AltcoinPatternResearchViewTimeframe,
+} from '../platform/FinTechCore/Modules/Crypto/Pattern/AltcoinPatternResearchViewContract';
+import { altcoinPatternResearchProjectionStore } from '../platform/FinTechCore/Modules/Crypto/Pattern/AltcoinPatternResearchProjectionStore';
+import {
   orchestratorAgentRuntimeProjection,
   type OrchestratorAgentDescriptor,
 } from './agentRuntimeProjection';
@@ -105,8 +110,48 @@ export class CryptoOrchestrator {
    */
   public analyzeAltcoinPatternResearch(
     input: AltcoinPatternResearchScoreRequest,
+    viewContext?: Readonly<{
+      symbol: string;
+      correlationId: string;
+      publishedAt?: string;
+    }>,
   ): AltcoinPatternResearchScoreAssessment {
-    return evaluateAltcoinPatternResearchScore(input);
+    const assessment = evaluateAltcoinPatternResearchScore(input);
+
+    if (viewContext) {
+      const timeframe = input.confirmation.timeframe;
+      if (timeframe !== '4h' && timeframe !== '1d') {
+        throw new Error('ALTCOIN_PATTERN_VIEW_UNSUPPORTED_TIMEFRAME');
+      }
+      const symbol = viewContext.symbol.toUpperCase().trim();
+      const assetId = 'crypto:' + symbol;
+      const primaryAssetId = input.resolution.primary?.evidence.assetId;
+      if (primaryAssetId && primaryAssetId !== assetId) {
+        throw new Error('ALTCOIN_PATTERN_VIEW_PRIMARY_ASSET_MISMATCH');
+      }
+
+      const evidenceRefs = [
+        ...assessment.evidenceRefs,
+        ...(input.resolution.primary?.evidence.evidenceRefs ?? []),
+        ...(input.resolution.primary?.reliability.evidenceRefs ?? []),
+        ...input.confirmation.evidenceRefs,
+      ];
+
+      altcoinPatternResearchProjectionStore.publish(
+        createAltcoinPatternResearchViewProjection({
+          assetId,
+          symbol,
+          timeframe: timeframe as AltcoinPatternResearchViewTimeframe,
+          observedAt: input.confirmation.observedAt,
+          publishedAt: viewContext.publishedAt,
+          correlationId: viewContext.correlationId,
+          assessment,
+          evidenceRefs,
+        }),
+      );
+    }
+
+    return assessment;
   }
 
   /**
