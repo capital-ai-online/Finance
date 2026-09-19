@@ -5,10 +5,10 @@ import {
   extractProductionBaselineBlock,
   fail,
   renderProductionBaselineBlock,
+  detectPrTemplateVersion,
 } from './lib.mjs';
 
-const PR_TEMPLATE_V15_MARKER = '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->';
-const V15_BASELINE_HEADING = '## 7. Maschinenlesbare Baseline';
+const TERMINAL_BASELINE_HEADING = '## 7. Maschinenlesbare Baseline';
 
 const PRODUCTION_BASELINE_SECTION_PAIRS = [
   {
@@ -42,10 +42,10 @@ function repairMissingProductionBaselineBlock(text, baseline, markers) {
   const candidates = PRODUCTION_BASELINE_SECTION_PAIRS.filter(({ baseline: heading, next }) =>
     occurrenceCount(text, heading) === 1 && (next === null || occurrenceCount(text, next) === 1),
   );
-  if (candidates.length === 0 && occurrenceCount(text, PR_TEMPLATE_V15_MARKER) === 1 && occurrenceCount(text, V15_BASELINE_HEADING) === 0) {
+  if (candidates.length === 0 && detectPrTemplateVersion(text) !== null && occurrenceCount(text, TERMINAL_BASELINE_HEADING) === 0) {
     const replacement = renderProductionBaselineBlock(baseline);
     return {
-      body: `${text.trimEnd()}\n\n${V15_BASELINE_HEADING}\n\n${replacement}\n`,
+      body: `${text.trimEnd()}\n\n${TERMINAL_BASELINE_HEADING}\n\n${replacement}\n`,
       changed: true,
       evidenceState: 'STALE',
       baselineId: baseline.baselineId,
