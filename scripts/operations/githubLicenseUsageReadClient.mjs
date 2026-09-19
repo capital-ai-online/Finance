@@ -270,11 +270,6 @@ export function createGitHubLicenseUsageReadClient({
       );
     },
 
-    /**
-     * Runtime validation intentionally accepts a string here so invalid products
-     * remain testable and fail closed at the public boundary.
-     * @param {{ product?: string, page?: number }} [options]
-     */
     async getOrganizationUsageSummary({ year, month, day, repository } = {}) {
       assertOptionalInteger(year, 'year', 2000, 2100);
       assertOptionalInteger(month, 'month', 1, 12);
@@ -296,6 +291,11 @@ export function createGitHubLicenseUsageReadClient({
       );
     },
 
+    /**
+     * Runtime validation intentionally accepts a string here so invalid products
+     * remain testable and fail closed at the public boundary.
+     * @param {{ product?: string, page?: number }} [options]
+     */
     async getAdvancedSecurityActiveCommitters({ product, page = 1 } = {}) {
       if (!['code_security', 'secret_protection'].includes(product)) {
         fail('product must be code_security or secret_protection');
