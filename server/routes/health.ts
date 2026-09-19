@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { isSupabaseConfigured } from '../db';
-import { isAlpacaConfigured } from '../../src/services/alpacaShadowProvider';
 import { isAnthropicConfigured } from '../anthropicClient';
 import { isOpenAIConfigured } from '../openaiClient';
 
@@ -8,8 +7,8 @@ import { isOpenAIConfigured } from '../openaiClient';
  * Network-independent process health endpoint for Render and local probes.
  *
  * This route intentionally reports configuration presence only. It must not call
- * Supabase or any AI provider because deployment health must remain independent
- * from third-party availability and must never expose secret material.
+ * Supabase or any AI/market-data provider because deployment health must remain
+ * independent from third-party availability and must never expose secret material.
  */
 export function createHealthRouter(): Router {
   const router = Router();
@@ -21,7 +20,6 @@ export function createHealthRouter(): Router {
       uptimeSeconds: Math.floor(process.uptime()),
       configured: {
         supabase: isSupabaseConfigured(),
-        alpaca: isAlpacaConfigured(),
         anthropic: isAnthropicConfigured(),
         openai: isOpenAIConfigured(),
       },

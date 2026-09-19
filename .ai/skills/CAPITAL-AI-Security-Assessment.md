@@ -2,7 +2,7 @@
 skill:
   id: CAPITAL-AI-SECURITY-ASSESSMENT
   name: CAPITAL-AI Security Assessment
-  version: 1.1.0
+  version: 1.2.0
   status: Security Project Capability
   owner: CAPITAL-AI-SEC
   category: Security Assessment
@@ -17,7 +17,6 @@ classification:
 crossReference:
   dependsOn:
     - /AGENTS.md
-    - docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md
     - .ai/skills/ESS-0006-Security-Compliance.md
     - docs/projects/README.md
     - docs/projects/security/README.md
@@ -42,7 +41,7 @@ crossReference:
 
 This skill defines a reproducible, evidence-bound methodology for **authorized** adversarial assessment of CAPITAL-AI Web, API, mobile/smartphone and business-logic surfaces.
 
-It is an additive testing capability under `CAPITAL-AI-SEC`. It does **not** replace or supersede `/AGENTS.md`, `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`, `CTRL-SEC-BOUNDED-REMEDIATION-001`, `ESS-0006`, any ADR, ESS, Governance control, IAM authority, target-project architecture, or current project/PVC ownership mapping.
+It is an additive testing capability under `CAPITAL-AI-SEC`. It does **not** replace or supersede `/AGENTS.md`, `CTRL-SEC-BOUNDED-REMEDIATION-001`, `ESS-0006`, any ADR, ESS, Governance control, IAM authority, target-project architecture, or current project/PVC ownership mapping.
 
 External assessment methodologies referenced by this skill are **advisory/non-authorizing**. They may guide test design and evidence quality, but they do not create repository Authority, CI gates, mandatory remediation, ownership transfer or accepted-risk authority.
 
@@ -250,9 +249,9 @@ Use only the canonical current-main project-folder and Project Value Chain mappi
 | PVC-06 | CAPITAL-AI-OPS |
 | PVC-07 | CAPITAL-AI-OPS |
 | PVC-08 | CAPITAL-AI-OPS |
-| PVC-09 | CAPITAL-AI-DATA |
-| PVC-10 | CAPITAL-AI-DATA |
-| PVC-11 | CAPITAL-AI-DATA |
+| PVC-09 | CAPITAL-AI-FINTECH |
+| PVC-10 | CAPITAL-AI-FINTECH |
+| PVC-11 | CAPITAL-AI-FINTECH |
 | PVC-12 | CAPITAL-AI-FINTECH |
 | PVC-13 | CAPITAL-AI-FINTECH |
 | PVC-14 | CAPITAL-AI-FINTECH |
@@ -260,6 +259,8 @@ Use only the canonical current-main project-folder and Project Value Chain mappi
 | PVC-16 | CAPITAL-AI-FINTECH |
 | PVC-17 | CAPITAL-AI-FINTECH |
 | PVC-18 | CAPITAL-AI-OPS |
+
+`CAPITAL-AI-DATA` is retained only as historical/compatibility terminology and owns no current productive PVC stage.
 
 A finding in a foreign productive file/path is **not automatically** `REFERRED_NOT_EXECUTED`. After current-main/open-writer/authority correlation, classify remediation as follows:
 
@@ -328,7 +329,7 @@ Before declaring the skill change PR-ready, verify:
 
 - no Authority duplication or supersession is introduced;
 - `/AGENTS.md` and current project/PVC mapping remain the routing source;
-- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`, `CTRL-SEC-BOUNDED-REMEDIATION-001` and `ESS-0006` are referenced rather than cloned;
+- `CTRL-SEC-BOUNDED-REMEDIATION-001` and `ESS-0006` are referenced rather than cloned;
 - external methodologies are explicitly advisory/non-authorizing;
 - no withdrawn post-PVC routing contract is required;
 - no registry is lossily replaced;

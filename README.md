@@ -104,16 +104,16 @@ Google Gemini ist wieder als **server-only, Free-Tier-only Research-Evidence-Pro
 | CAPITAL-AI Plattform | `0.6.0` | `package.json#version` |
 | Node.js Runtime | `24.18.0` | `.nvmrc` |
 | Node.js Engine | `>=24.18.0 <25` | `package.json#engines.node` |
-| TypeScript | `~5.8.2` | `package.json#devDependencies.typescript` |
-| React | `^19.0.1` | `package.json#dependencies.react` |
-| Vite | `^6.2.3` | `package.json#devDependencies.vite` |
+| TypeScript | `~7.0.2` | `package.json#devDependencies.typescript` |
+| React | `^19.3.0` | `package.json#dependencies.react` |
+| Vite | `^8.3.0` | `package.json#devDependencies.vite` |
 | Tailwind CSS | `^4.1.14` | `package.json#devDependencies.tailwindcss` |
 | OpenAI SDK | `^7.3.0` | `package.json#dependencies.openai` |
 | Anthropic SDK | `^0.115.0` | `package.json#dependencies.@anthropic-ai/sdk` |
-| Supabase JS | `^2.108.2` | `package.json#dependencies.@supabase/supabase-js` |
+| Supabase JS | `^2.116.0` | `package.json#dependencies.@supabase/supabase-js` |
 | Stripe Server SDK | `^22.3.0` | `package.json#dependencies.stripe` |
 | Stripe Browser SDK | `^9.8.0` | `package.json#dependencies.@stripe/stripe-js` |
-| Express | `^4.21.2` | `package.json#dependencies.express` |
+| Express | `^4.22.3` | `package.json#dependencies.express` |
 | Vitest | `^4.1.11` | `package.json#devDependencies.vitest` |
 <!-- README_VERSION_MATRIX:END -->
 

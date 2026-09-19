@@ -72,7 +72,7 @@ export async function listPublishLogForUser(userId: string, limit = 100): Promis
     logger.error('listPublishLogForUser fehlgeschlagen', { error: error.message });
     return [];
   }
-  return (data || []).map(row => ({
+  return (data || []).map((row: Record<string, any>) => ({
     id: row.id,
     episodeId: row.episode_id,
     episodeTitle: row.episode_title,

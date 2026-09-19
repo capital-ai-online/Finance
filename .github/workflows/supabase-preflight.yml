@@ -1,0 +1,138 @@
+name: Supabase Preflight (Free Tier)
+run-name: >-
+  Supabase Preflight – PR #${{ inputs.pr_number }} @ ${{ inputs.expected_head_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Open same-repository pull request number
+        required: true
+        type: string
+      expected_head_sha:
+        description: Exact pull request head SHA approved by the Owner
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: >-
+    supabase-preflight-pr-${{ inputs.pr_number }}-${{ inputs.expected_head_sha }}
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_REF: 'ryzywoktpmyhwzxmstyu'
+
+jobs:
+  preflight:
+    name: Supabase Preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Exakten PR-Snapshot gegen current main korrelieren
+        id: snapshot
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = Number(process.env.INPUT_PR_NUMBER || '');
+            const expectedHead = String(process.env.INPUT_EXPECTED_HEAD_SHA || '').toLowerCase();
+            if (!Number.isInteger(prNumber) || prNumber <= 0) return core.setFailed('Ungültige PR-Nummer.');
+            if (!/^[0-9a-f]{40}$/.test(expectedHead)) return core.setFailed('Ungültiger expected_head_sha.');
+
+            const pull = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+            if (pull.data.state !== 'open') return core.setFailed(`PR #${prNumber} ist nicht offen.`);
+            if (pull.data.head.repo?.full_name !== `${owner}/${repo}`) return core.setFailed('Cross-repository PR ist nicht zulässig.');
+            if (pull.data.base.ref !== 'main') return core.setFailed('PR base muss main sein.');
+            const liveHead = String(pull.data.head.sha || '').toLowerCase();
+            if (liveHead !== expectedHead) return core.setFailed(`PR head drift: live=${liveHead} expected=${expectedHead}`);
+
+            const mainBranch = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            const mainSha = String(mainBranch.data.commit.sha || '').toLowerCase();
+            const compare = await github.rest.repos.compareCommitsWithBasehead({
+              owner,
+              repo,
+              basehead: `${mainSha}...${liveHead}`,
+            });
+            if (Number(compare.data.behind_by || 0) !== 0) {
+              return core.setFailed(`PR #${prNumber} ist ${compare.data.behind_by} Commit(s) behind current main.`);
+            }
+
+            core.setOutput('head_sha', liveHead);
+            core.setOutput('main_sha', mainSha);
+            core.notice(`Supabase preflight snapshot: PR #${prNumber}, head=${liveHead}, main=${mainSha}, behind=0`);
+
+      - name: Trusted Preflight-Code aus current main auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ steps.snapshot.outputs.main_sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Kandidaten-Snapshot read-only auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ steps.snapshot.outputs.head_sha }}
+          path: candidate
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+
+      - name: Read-only PostgreSQL Client einrichten
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+          psql --version
+
+      - name: Supabase Production-Migration-History read-only erfassen
+        id: remote
+        shell: bash
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_DB_URL"
+          python3 - <<'PY'
+          import os
+          from urllib.parse import urlparse
+
+          url = os.environ['SUPABASE_DB_URL']
+          ref = os.environ['SUPABASE_PROJECT_REF']
+          parsed = urlparse(url)
+          if parsed.scheme not in {'postgres', 'postgresql'}:
+              raise SystemExit('SUPABASE_DB_URL must use postgres/postgresql.')
+          if ref not in url:
+              raise SystemExit('SUPABASE_DB_URL does not correlate to SUPABASE_PROJECT_REF.')
+          PY
+
+          REMOTE_TSV="$RUNNER_TEMP/supabase-remote-migrations.tsv"
+          export PGOPTIONS='-c default_transaction_read_only=on'
+          psql "$SUPABASE_DB_URL"             --no-psqlrc             --set ON_ERROR_STOP=1             --tuples-only             --no-align             --field-separator=$'\t'             --command 'SELECT version, name FROM supabase_migrations.schema_migrations ORDER BY version'             > "$REMOTE_TSV"
+          test -s "$REMOTE_TSV"
+          echo "remote_tsv=$REMOTE_TSV" >> "$GITHUB_OUTPUT"
+
+      - name: Live Supabase gegen kanonischen Ledger und Kandidaten-Migrationen prüfen
+        shell: bash
+        env:
+          REMOTE_TSV: ${{ steps.remote.outputs.remote_tsv }}
+        run: |
+          set -euo pipefail
+          node trusted/scripts/governance/verifySupabasePreflight.mjs \
+            --candidate-root candidate \
+            --remote-tsv "$REMOTE_TSV" \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --summary "$GITHUB_STEP_SUMMARY"
