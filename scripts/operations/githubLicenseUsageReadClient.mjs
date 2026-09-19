@@ -75,6 +75,20 @@ async function parseJson(response) {
   }
 }
 
+/**
+ * @typedef {object} GitHubLicenseUsageReadClientOptions
+ * @property {string} [clientId]
+ * @property {string} [privateKeyPem]
+ * @property {string} [enterprise]
+ * @property {string} [organization]
+ * @property {typeof fetch} [fetchImpl]
+ * @property {string} [apiBaseUrl]
+ * @property {() => number} [now]
+ */
+
+/**
+ * @param {GitHubLicenseUsageReadClientOptions} [options]
+ */
 export function createGitHubLicenseUsageReadClient({
   clientId,
   privateKeyPem,
@@ -205,6 +219,9 @@ export function createGitHubLicenseUsageReadClient({
       });
     },
 
+    /**
+     * @param {{ page?: number }} [options]
+     */
     async getEnterpriseConsumedLicenses({ page = 1 } = {}) {
       if (!Number.isInteger(page) || page < 1 || page > 1000) fail('page must be an integer between 1 and 1000');
       return authenticatedGet(
@@ -214,6 +231,11 @@ export function createGitHubLicenseUsageReadClient({
       );
     },
 
+    /**
+     * Runtime validation intentionally accepts a string here so invalid products
+     * remain testable and fail closed at the public boundary.
+     * @param {{ product?: string, page?: number }} [options]
+     */
     async getAdvancedSecurityActiveCommitters({ product, page = 1 } = {}) {
       if (!['code_security', 'secret_protection'].includes(product)) {
         fail('product must be code_security or secret_protection');
