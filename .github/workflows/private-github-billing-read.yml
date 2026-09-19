@@ -54,7 +54,7 @@ jobs:
           printf '%s' "${APP_PRIVATE_KEY}" > "${key_path}"
           echo "CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH=${key_path}" >> "${GITHUB_ENV}"
 
-      - name: Read-only Enterprise Billing Smoke-Test
+      - name: Read-only Enterprise Billing Inventory
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
