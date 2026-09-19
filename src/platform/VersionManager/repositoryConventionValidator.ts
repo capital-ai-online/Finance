@@ -211,7 +211,8 @@ export function validateRepositoryConventions(
 
   const summary = findings.reduce(
     (acc, finding) => {
-      acc[finding.severity] += 1;
+      const severityKey = finding.severity === 'error' ? 'errors' : finding.severity === 'warning' ? 'warnings' : 'info';
+      acc[severityKey] += 1;
       acc.total += 1;
       return acc;
     },
