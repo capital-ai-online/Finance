@@ -18,6 +18,7 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--manifest", type=Path, required=True)
     p.add_argument("--output-dir", type=Path, required=True)
     p.add_argument("--model", default="small")
+    p.add_argument("--productive-only", action="store_true")
     return p.parse_args()
 
 
@@ -88,6 +89,15 @@ def main() -> int:
     if len(wavs) != 8:
         raise RuntimeError(f"expected exactly 8 WAV files, found {len(wavs)}")
 
+    if args.productive_only:
+        wavs = [
+            wav for wav in wavs
+            if "--" in wav.stem
+            and str(samples[wav.stem.split("--", 1)[1]]["language"]).startswith("de")
+        ]
+        if len(wavs) != 4:
+            raise RuntimeError(f"expected exactly 4 German productive WAV files, found {len(wavs)}")
+
     model = whisper.load_model(args.model, device="cpu")
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -143,6 +153,7 @@ def main() -> int:
         "asr_package_version": "20250625",
         "asr_model": args.model,
         "case_count": len(rows),
+        "productive_only": args.productive_only,
         "productive_acceptance_case_count": len(productive_rows),
         "historical_comparison_case_count": len(historical_rows),
         "productive_acceptance_language_policy": ["de-DE"],
