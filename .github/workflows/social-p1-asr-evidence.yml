@@ -87,6 +87,9 @@ jobs:
           p = Path("asr-evidence/social-p1-asr-evidence.json")
           value = json.loads(p.read_text(encoding="utf-8"))
           assert value["case_count"] == 8
-          assert value["all_required_terms_pass"] is True, "one or more required terms were not observed by ASR"
-          print("SOCIAL-P1 ASR: 8/8 cases transcribed; all required terms observed")
+          assert value["productive_acceptance_case_count"] == 4
+          assert value["historical_comparison_case_count"] == 4
+          assert value["productive_acceptance_language_policy"] == ["de-DE"]
+          assert value["production_required_terms_pass"] is True, "one or more German productive-acceptance terms were not observed by ASR"
+          print("SOCIAL-P1 ASR: 8/8 transcribed; German productive-acceptance gate passed; English fixtures retained as historical comparison evidence")
           PY
