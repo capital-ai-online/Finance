@@ -76,6 +76,8 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          GHCR_PUBLISH_ENABLED: ${{ vars.GHCR_DIGEST_PUBLISH_ENABLED }}
         run: |
           set -euo pipefail
           required=true
@@ -89,6 +91,20 @@ jobs:
                   ;;
               esac
             done < <(git diff --name-only "$BASE_SHA...$SOURCE_SHA")
+          elif [ "$EVENT_NAME" = 'push' ] && [ "$GHCR_PUBLISH_ENABLED" != 'true' ]; then
+            required=false
+            if ! [[ "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$BEFORE_SHA" = '0000000000000000000000000000000000000000' ]; then
+              required=true
+            else
+              while IFS= read -r path; do
+                case "$path" in
+                  Dockerfile|.dockerignore|package.json|package-lock.json|server/runtime/viteProductionDisabled.ts|scripts/security/verifyDockerHardening.mjs|.github/workflows/container-security.yml)
+                    required=true
+                    break
+                    ;;
+                esac
+              done < <(git diff --name-only "$BEFORE_SHA...$SOURCE_SHA")
+            fi
           fi
           echo "required=$required" >> "$GITHUB_OUTPUT"
           echo "Container security heavy path required=$required"
@@ -377,7 +393,7 @@ jobs:
             "capital-ai-security:$SOURCE_SHA"
 
       - name: Exakt geprüftes Main-Image für privilegierten Publisher serialisieren
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.scope.outputs.required == 'true'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' && steps.scope.outputs.required == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -390,7 +406,7 @@ jobs:
           cp artifacts/container-security/final-supply-chain-binding.json artifacts/production-image/
 
       - name: Exakt geprüftes Main-Image kurzlebig an Publisher übergeben
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.scope.outputs.required == 'true'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' && steps.scope.outputs.required == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: production-image-${{ env.SOURCE_SHA }}
@@ -410,7 +426,7 @@ jobs:
   publish-ghcr:
     name: Signed private GHCR image / exact digest
     needs: image-security
-    if: ${{ needs.image-security.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.image-security.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
