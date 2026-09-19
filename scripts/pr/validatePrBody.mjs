@@ -2,7 +2,8 @@
 
 import fs from 'node:fs';
 import {
-  PR_TEMPLATE_MARKER,
+  PR_TEMPLATE_VERSION,
+  detectPrTemplateVersion,
   PRODUCTION_BASELINE_END,
   PRODUCTION_BASELINE_START,
   bodyHasGovernanceId,
@@ -48,13 +49,36 @@ function occurrenceCount(text, needle) {
   return String(text || '').split(needle).length - 1;
 }
 
-if (!body.includes(PR_TEMPLATE_MARKER)) {
-  fail(`PR #${prNumber} verwendet nicht den Marker der kanonischen Vorlage: ${PR_TEMPLATE_MARKER}`);
+const templateVersion = detectPrTemplateVersion(body);
+if (!templateVersion) {
+  fail(
+    `PR #${prNumber} verwendet keinen unterstützten PR-Vorlagenmarker. ` +
+      `Aktuell kanonisch ist v${PR_TEMPLATE_VERSION}; v1.5.0 bleibt nur für bereits offene PRs kompatibel.`,
+  );
 }
 
 const missingSections = findMissingRequiredSections(body);
 if (missingSections.length > 0) {
   fail(`PR #${prNumber} enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ${missingSections.join(', ')}`);
+}
+
+if (templateVersion === PR_TEMPLATE_VERSION) {
+  const priority = body.match(/^- \*\*Priorität:\*\* (.+)$/m)?.[1]?.trim();
+  const versionImpact = body.match(/^- \*\*Versionsimpact:\*\* (.+)$/m)?.[1]?.trim();
+  const versionManagerCheck = body.match(/^- \*\*Version-Manager-Check:\*\* (.+)$/m)?.[1]?.trim();
+
+  const allowedPriorities = new Set(['P0 🔴 Kritisch', 'P1 🟠 Hoch', 'P2 🟡 Normal', 'P3 🟢 Niedrig']);
+  const allowedVersionImpacts = new Set(['NOT_EVALUATED ⚪', 'NONE ➖', 'PATCH 🩹', 'MINOR ✨', 'MAJOR 💥']);
+
+  if (!allowedPriorities.has(priority)) {
+    fail(`PR #${prNumber} enthält keine gültige Prioritätsbewertung (P0–P3) der Vorlage v${PR_TEMPLATE_VERSION}.`);
+  }
+  if (!allowedVersionImpacts.has(versionImpact)) {
+    fail(`PR #${prNumber} enthält keinen gültigen Versionsimpact der Vorlage v${PR_TEMPLATE_VERSION}.`);
+  }
+  if (!versionManagerCheck) {
+    fail(`PR #${prNumber} enthält keinen Version-Manager-Check-Status.`);
+  }
 }
 
 const requiredIds = [PRODUCTION_BASELINE_START, PRODUCTION_BASELINE_END];
@@ -137,6 +161,6 @@ if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
 }
 
 console.log(
-  `[PR-VORLAGE] PR #${prNumber} entspricht Vorlagenvertrag v1.5.0; ` +
+  `[PR-VORLAGE] PR #${prNumber} entspricht unterstütztem Vorlagenvertrag v${templateVersion}; ` +
     `Baseline ${baseline.baselineId} bindet Production/main/head und Drift atomar an den aktuellen Preflight.`,
 );
