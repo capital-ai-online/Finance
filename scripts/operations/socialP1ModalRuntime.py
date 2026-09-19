@@ -100,9 +100,10 @@ def prepare_models() -> dict[str, Any]:
     return resolved
 
 
-def _run_candidate(*, candidate: str, source_sha: str, run_key: str, model_dir: str) -> str:
+def _run_candidate(*, candidate: str, source_sha: str, run_key: str, model_dir: str, sample_id: str = "all") -> str:
     source_sha = _safe_component(source_sha, "source_sha")
     run_key = _safe_component(run_key, "run_key")
+    sample_id = _safe_component(sample_id, "sample_id")
     output_dir = Path("/evidence") / "runs" / source_sha / run_key / candidate
     if output_dir.exists():
         shutil.rmtree(output_dir)
@@ -116,6 +117,8 @@ def _run_candidate(*, candidate: str, source_sha: str, run_key: str, model_dir: 
         candidate,
         "--device",
         "cuda:0",
+        "--sample",
+        sample_id,
     ]
     if candidate == "qwen3-tts":
         command += ["--qwen-model-dir", model_dir]
@@ -133,12 +136,13 @@ def _run_candidate(*, candidate: str, source_sha: str, run_key: str, model_dir: 
     volumes={"/models": model_volume.read_only(), "/evidence": evidence_volume},
     timeout=60 * 30,
 )
-def run_qwen(source_sha: str, run_key: str, model_dir: str) -> str:
+def run_qwen(source_sha: str, run_key: str, model_dir: str, sample_id: str = "all") -> str:
     return _run_candidate(
         candidate="qwen3-tts",
         source_sha=source_sha,
         run_key=run_key,
         model_dir=model_dir,
+        sample_id=sample_id,
     )
 
 
@@ -148,12 +152,13 @@ def run_qwen(source_sha: str, run_key: str, model_dir: str) -> str:
     volumes={"/models": model_volume.read_only(), "/evidence": evidence_volume},
     timeout=60 * 30,
 )
-def run_chatterbox(source_sha: str, run_key: str, model_dir: str) -> str:
+def run_chatterbox(source_sha: str, run_key: str, model_dir: str, sample_id: str = "all") -> str:
     return _run_candidate(
         candidate="chatterbox-multilingual-v3",
         source_sha=source_sha,
         run_key=run_key,
         model_dir=model_dir,
+        sample_id=sample_id,
     )
 
 
@@ -162,9 +167,11 @@ def combine_runtime_evidence(
     source_sha: str,
     run_key: str,
     model_provenance: dict[str, Any],
+    sample_id: str = "all",
 ) -> str:
     source_sha = _safe_component(source_sha, "source_sha")
     run_key = _safe_component(run_key, "run_key")
+    sample_id = _safe_component(sample_id, "sample_id")
     root = Path("/evidence") / "runs" / source_sha / run_key
 
     qwen = _read_json(root / "qwen3-tts" / "runtime-evidence.partial.json")
@@ -174,13 +181,17 @@ def combine_runtime_evidence(
         raise RuntimeError("candidate runs are bound to different manifest bytes")
     if qwen.get("benchmark_eligible") is not True or chatter.get("benchmark_eligible") is not True:
         raise RuntimeError("candidate runtime is not benchmark eligible")
-    if qwen.get("actual_run_count") != 4 or chatter.get("actual_run_count") != 4:
-        raise RuntimeError("each candidate must contribute exactly four runtime cases")
+    expected_per_candidate = 4 if sample_id == "all" else 1
+    expected_total = expected_per_candidate * 2
+    if qwen.get("actual_run_count") != expected_per_candidate or chatter.get("actual_run_count") != expected_per_candidate:
+        raise RuntimeError(f"each candidate must contribute exactly {expected_per_candidate} runtime case(s)")
 
     records = list(qwen.get("runtime_records", [])) + list(chatter.get("runtime_records", []))
     case_ids = [record.get("benchmark_case_id") for record in records if isinstance(record, dict)]
-    if len(records) != 8 or len(set(case_ids)) != 8:
-        raise RuntimeError("combined runtime evidence must contain exactly eight unique cases")
+    if len(records) != expected_total or len(set(case_ids)) != expected_total:
+        raise RuntimeError(f"combined runtime evidence must contain exactly {expected_total} unique cases")
+    if sample_id != "all" and any(not str(case_id).endswith(f"::{sample_id}") for case_id in case_ids):
+        raise RuntimeError("remediation runtime contains a case outside the requested sample")
 
     combined = {
         "schema_version": "1.0.0",
@@ -188,9 +199,10 @@ def combine_runtime_evidence(
         "source_manifest_sha256": qwen["source_manifest_sha256"],
         "protected_runtime": True,
         "benchmark_eligible": True,
-        "expected_complete_run_count": 8,
-        "actual_run_count": 8,
-        "complete_matrix": True,
+        "requested_sample_id": sample_id,
+        "expected_complete_run_count": expected_total,
+        "actual_run_count": expected_total,
+        "complete_matrix": sample_id == "all",
         "runtime_records": records,
         "truth_boundary": (
             "REAL_RUNTIME_EVIDENCE_COMPLETE — transcript and human listening review are still "
@@ -216,15 +228,17 @@ def combine_runtime_evidence(
 
 
 @app.local_entrypoint()
-def main(source_sha: str, run_key: str) -> None:
+def main(source_sha: str, run_key: str, sample_id: str = "all") -> None:
     source_sha = _safe_component(source_sha, "source_sha")
     run_key = _safe_component(run_key, "run_key")
+    sample_id = _safe_component(sample_id, "sample_id")
     models = prepare_models.remote()
-    run_qwen.remote(source_sha, run_key, models["qwen3-tts"]["model_dir"])
+    run_qwen.remote(source_sha, run_key, models["qwen3-tts"]["model_dir"], sample_id)
     run_chatterbox.remote(
         source_sha,
         run_key,
         models["chatterbox-multilingual-v3"]["model_dir"],
+        sample_id,
     )
-    root = combine_runtime_evidence.remote(source_sha, run_key, models)
+    root = combine_runtime_evidence.remote(source_sha, run_key, models, sample_id)
     print(root)
