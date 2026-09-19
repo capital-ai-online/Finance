@@ -3,7 +3,7 @@
 **Evidence-ID:** FINTECH-ALTCOIN-PATTERN-VIEW-WIRING-2026-09-20  
 **Project / Owner:** CAPITAL-AI-FINTECH  
 **Primary PVC:** PVC-09..17  
-**Baseline:** main@8d602d5183a8414209b8dc792029a35ddb3bcbdd  
+**Baseline:** main@5eac81f46dab41cb83ff514c3c59b4e494952442  
 **Work package:** FINTECH-ALTCOIN-PATTERN-VIEW-WIRING-01
 
 ## Goal
