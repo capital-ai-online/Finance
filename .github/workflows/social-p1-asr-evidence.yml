@@ -43,6 +43,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
           ffmpeg -version >/dev/null
           python -m pip install --disable-pip-version-check "openai-whisper==20250625"
 
