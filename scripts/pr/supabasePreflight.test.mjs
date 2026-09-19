@@ -45,10 +45,10 @@ test('Supabase preflight workflow is manual, read-only and never uses preview br
   assert.match(workflow, /default_transaction_read_only=on/);
   assert.match(workflow, /SUPABASE_DB_URL: \$\{\{ secrets\.SUPABASE_DB_URL \}\}/);
   assert.match(workflow, /verifySupabasePreflight\.mjs/);
-  assert.match(workflow, /runs-on: ubuntu-24\\.04/);
-  assert.match(workflow, /REMOTE_TSV: \\$\\{\\{ steps\\.remote\\.outputs\\.remote_tsv \\}\\}/);
-  assert.match(workflow, /--remote-tsv "\\$REMOTE_TSV"/);
-  assert.doesNotMatch(workflow, /--remote-tsv "\\$\\{\\{ steps\\.remote\\.outputs\\.remote_tsv \\}\\}"/);
+  assert.match(workflow, /runs-on: ubuntu-24\.04/);
+  assert.match(workflow, /REMOTE_TSV: \$\{\{ steps\.remote\.outputs\.remote_tsv \}\}/);
+  assert.match(workflow, /--remote-tsv "\$REMOTE_TSV"/);
+  assert.doesNotMatch(workflow, /--remote-tsv "\$\{\{ steps\.remote\.outputs\.remote_tsv \}\}"/);
   for (const forbidden of ['db push', 'migration repair', 'db reset', 'apply_migration', 'create_branch']) {
     assert.ok(!workflow.includes(forbidden), `forbidden Supabase mutation primitive: ${forbidden}`);
   }
