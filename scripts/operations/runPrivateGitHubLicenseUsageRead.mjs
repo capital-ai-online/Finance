@@ -129,12 +129,14 @@ const clientId = requiredEnv('CAPITAL_AI_GITHUB_APP_CLIENT_ID');
 const privateKeyPem = readPrivateKey();
 const enterprise = requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_SLUG');
 const organization = requiredEnv('CAPITAL_AI_GITHUB_ORG_LOGIN');
+const enterpriseReadPat = String(process.env.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT || '').trim() || undefined;
 
 const client = createGitHubLicenseUsageReadClient({
   clientId,
   privateKeyPem,
   enterprise,
   organization,
+  enterpriseReadPat,
 });
 
 const installationEvidence = await client.preflight();
@@ -162,6 +164,9 @@ const output = Object.freeze({
   mode: 'PRIVATE_SINGLE_USER_LICENSE_USAGE_ATTRIBUTION',
   enterprise,
   organization,
+  enterpriseConsumedLicensesAuth: enterpriseReadPat
+    ? 'github_app_with_pat_fallback'
+    : 'github_app_only',
   installationEvidence,
   enterpriseLicenses,
   githubAdvancedSecurity: Object.freeze({
@@ -169,6 +174,7 @@ const output = Object.freeze({
     secretProtection,
   }),
   emailAddressesLogged: false,
+  personalAccessTokenLogged: false,
   secretsOrTokensLogged: false,
 });
 

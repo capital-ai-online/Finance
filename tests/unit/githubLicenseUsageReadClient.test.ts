@@ -132,6 +132,61 @@ describe('GitHub license usage read client', () => {
     expect(calls.some((call) => call.path.includes('advanced_security_product=secret_protection'))).toBe(true);
   });
 
+  it('falls back to a read:enterprise PAT only when consumed-licenses is blocked for the Enterprise installation', async () => {
+    const key = privateKeyPem();
+    const nowMs = Date.UTC(2026, 8, 19, 16, 0, 0);
+    const authorizations: string[] = [];
+
+    const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+      const parsed = new URL(String(url));
+      const method = String(init?.method || 'GET');
+      const authorization = String(new Headers(init?.headers).get('Authorization') || '');
+      authorizations.push(authorization);
+
+      if (method === 'GET' && parsed.pathname === '/app/installations') {
+        return jsonResponse([
+          { id: 100, target_type: 'Enterprise', account: { slug: ENTERPRISE } },
+          { id: 200, target_type: 'Organization', account: { login: ORGANIZATION } },
+        ]);
+      }
+
+      if (method === 'POST' && parsed.pathname === '/app/installations/100/access_tokens') {
+        return jsonResponse({
+          token: 'ghs_enterprise_without_admin_read',
+          expires_at: new Date(nowMs + 60 * 60 * 1000).toISOString(),
+        });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/enterprises/${ENTERPRISE}/consumed-licenses`) {
+        if (authorization === 'Bearer ghp_enterprise_read_pat_for_test') {
+          return jsonResponse({
+            total_seats_consumed: 1,
+            total_seats_purchased: 1,
+            users: [{ github_com_login: 'owner', license_type: 'enterprise' }],
+          });
+        }
+        return jsonResponse({ message: 'Resource not accessible by integration' }, 403);
+      }
+
+      throw new Error(`unexpected request: ${method} ${parsed.pathname}`);
+    };
+
+    const client = createGitHubLicenseUsageReadClient({
+      clientId: CLIENT_ID,
+      privateKeyPem: key,
+      enterprise: ENTERPRISE,
+      organization: ORGANIZATION,
+      enterpriseReadPat: 'ghp_enterprise_read_pat_for_test',
+      fetchImpl: fetchImpl as typeof fetch,
+      now: () => nowMs,
+    });
+
+    const licenses = await client.getEnterpriseConsumedLicenses();
+    expect(licenses.total_seats_consumed).toBe(1);
+    expect(client.describeBoundary().enterpriseConsumedLicensesAuth).toBe('github_app_with_pat_fallback');
+    expect(authorizations).toContain('Bearer ghp_enterprise_read_pat_for_test');
+  });
+
   it('exposes only bounded read capabilities and rejects unsupported products', async () => {
     const client = createGitHubLicenseUsageReadClient({
       clientId: CLIENT_ID,
@@ -151,6 +206,7 @@ describe('GitHub license usage read client', () => {
         'organization.advanced_security.active_committers.secret_protection',
         'organization.billing.usage.summary',
       ],
+      enterpriseConsumedLicensesAuth: 'github_app_only',
       tokenPersistence: false,
       clientSecretUsed: false,
     });
