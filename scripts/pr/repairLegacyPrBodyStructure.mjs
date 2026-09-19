@@ -2,27 +2,37 @@
 
 import {
   PR_TEMPLATE_MARKER,
+  PR_TEMPLATE_VERSION,
   appendGithubOutput,
+  detectPrTemplateVersion,
   fail,
   githubJson,
 } from './lib.mjs';
-import { findMissingRequiredSections } from './prBodySectionContract.mjs';
+import {
+  canonicalizeKnownSectionHeadings,
+  findMissingRequiredSections,
+} from './prBodySectionContract.mjs';
+
+const SECTION_PROJECT = '## 2. 📦 Projekt & Scope';
+const SECTION_ROADMAP = '## 4. 📌 Priorität & Roadmap';
+const SECTION_VERSION = '## 5. 🔢 Version & PR-Klasse';
+const SECTION_CHECK = '## 6. ✅ Prüfung & Merge';
 
 export const LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS = Object.freeze([
   Object.freeze([
-    '## 4. Roadmap',
-    '## 5. PR-Klasse',
-    '## 6. Prüfung',
+    SECTION_ROADMAP,
+    SECTION_VERSION,
+    SECTION_CHECK,
   ]),
   Object.freeze([
-    '## 4. Roadmap',
-    '## 6. Prüfung',
+    SECTION_ROADMAP,
+    SECTION_CHECK,
   ]),
   Object.freeze([
-    '## 2. Projektzuordnung',
-    '## 4. Roadmap',
-    '## 5. PR-Klasse',
-    '## 6. Prüfung',
+    SECTION_PROJECT,
+    SECTION_ROADMAP,
+    SECTION_VERSION,
+    SECTION_CHECK,
   ]),
 ]);
 
@@ -34,15 +44,51 @@ function sameOrderedValues(left, right) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+function upgradeRepairedBodyToCurrentTemplate(bodyText) {
+  let body = String(bodyText || '');
+  body = body.replace(/CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.5\.0/g, PR_TEMPLATE_MARKER);
+  body = canonicalizeKnownSectionHeadings(body);
+
+  if (!body.includes('- **Priorität:** ')) {
+    body = body.replace(
+      SECTION_ROADMAP,
+      [
+        SECTION_ROADMAP,
+        '',
+        '- **Priorität:** P2 🟡 Normal',
+        '- **Warum diese Priorität:** Bestehender PR; keine P0/P1-Eskalation ist im vorhandenen Body belegt.',
+      ].join('\n'),
+    );
+  }
+
+  if (!body.includes('- **Versionsimpact:** ')) {
+    body = body.replace(
+      SECTION_VERSION,
+      [
+        SECTION_VERSION,
+        '',
+        '- **Versionsimpact:** NOT_EVALUATED ⚪',
+        '- **Versionsbegründung:** Bestehender PR; keine deterministische Versionsevidence ist im Body belegt.',
+        '- **Version-Manager-Check:** NOT_RUN — separate fokussierte PR-Check-Evidence erforderlich.',
+      ].join('\n'),
+    );
+  }
+
+  return body;
+}
+
 export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) {
   const body = String(bodyText || '');
+  if (PR_TEMPLATE_VERSION !== '1.6.0') {
+    throw new Error('Legacy repair requires review for a newer PR template contract.');
+  }
   const missing = findMissingRequiredSections(body);
 
   if (missing.length === 0) {
     return { eligible: false, changed: false, reason: 'already-canonical', body };
   }
-  if (!body.includes(PR_TEMPLATE_MARKER)) {
-    return { eligible: false, changed: false, reason: 'missing-canonical-template-marker', body };
+  if (!detectPrTemplateVersion(body)) {
+    return { eligible: false, changed: false, reason: 'missing-supported-template-marker', body };
   }
   const fullLegacyMissing = sameOrderedValues(
     missing,
@@ -86,18 +132,18 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     }
 
     let repaired = body
-      .replace(/^## 2\. Projekt-\/Owner-Zuordnung\s*$/m, '## 2. Projektzuordnung')
-      .replace(/^## 4\. Zero-Cost-Invariante\s*$/m, '## 4. Roadmap\n\n### Zero-Cost-Invariante')
+      .replace(/^## 2\. Projekt-\/Owner-Zuordnung\s*$/m, SECTION_PROJECT)
+      .replace(/^## 4\. Zero-Cost-Invariante\s*$/m, SECTION_ROADMAP + '\n\n### Zero-Cost-Invariante')
       .replace(
         /^## 5\. Validierung\s*$/m,
         [
-          '## 5. PR-Klasse',
+          SECTION_VERSION,
           '',
           '- **Klasse:** ' + prClass,
           '- **Begründung:** Trusted-main classifyPrScope.mjs für den exakt gebundenen PR-Head/Base-Snapshot.',
           '- **Erforderliche Checks:** gemäß ermittelter PR-Klasse und Repository-Policy; NOT_RUN, skipped, missing, stale oder failed sind kein PASS.',
           '',
-          '## 6. Prüfung',
+          SECTION_CHECK,
           '',
           '### Validierung',
         ].join('\\n'),
@@ -111,6 +157,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
       );
     }
 
+    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
     const missingAfter = findMissingRequiredSections(repaired);
     if (missingAfter.length > 0) {
       throw new Error('Project/Owner legacy template repair did not converge: ' + missingAfter.join(', '));
@@ -128,7 +175,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     return {
       eligible: true,
       changed: repaired !== body,
-      reason: 'legacy-v1.5-project-owner-structure-repaired',
+      reason: 'legacy-to-v1.6-project-owner-structure-repaired',
       body: repaired,
     };
   }
@@ -146,8 +193,8 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     }
 
     let repaired = body
-      .replace(/^## 4\. Work Package \/ Exit Gate\s*$/m, '## 4. Roadmap')
-      .replace(/^## 6\. Aktuelle Korrelation\s*$/m, '## 6. Prüfung');
+      .replace(/^## 4\. Work Package \/ Exit Gate\s*$/m, SECTION_ROADMAP)
+      .replace(/^## 6\. Aktuelle Korrelation\s*$/m, SECTION_CHECK);
 
     repaired = repaired.replace(
       /^- \*\*Human\/CODEOWNER Merge:\*\* erforderlich; kein Agent-Self-Merge\/Auto-Merge\.?$/m,
@@ -158,6 +205,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
       '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
     );
 
+    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
     const missingAfter = findMissingRequiredSections(repaired);
     if (missingAfter.length > 0) {
       throw new Error('Partial legacy template repair did not converge: ' + missingAfter.join(', '));
@@ -175,7 +223,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     return {
       eligible: true,
       changed: repaired !== body,
-      reason: 'legacy-v1.5-partial-structure-repaired',
+      reason: 'legacy-to-v1.6-partial-structure-repaired',
       body: repaired,
     };
   }
@@ -199,9 +247,9 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
   let repaired = body.replace(
     /^## 4\. Exit Gate\s*\n([\s\S]*?)(?=^## 5\. Prüfung\s*$)/m,
     [
-      '## 4. Roadmap',
+      SECTION_ROADMAP,
       '',
-      '- **Roadmap / Work Package:** N/A — bestehender PR; deterministische Template-v1.5.0-Strukturmigration',
+      '- **Roadmap / Work Package:** N/A — bestehender PR; deterministische Template-v1.6.0-Strukturmigration',
       '- **Ziel / Exit Gate:**',
       '',
       exitGateBody,
@@ -212,13 +260,13 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
   repaired = repaired.replace(
     /^## 5\. Prüfung\s*$/m,
     [
-      '## 5. PR-Klasse',
+      SECTION_VERSION,
       '',
       '- **Klasse:** ' + prClass,
       '- **Begründung:** Trusted-main classifyPrScope.mjs für den exakt gebundenen PR-Head/Base-Snapshot.',
       '- **Erforderliche Checks:** gemäß ermittelter PR-Klasse und Repository-Policy; NOT_RUN, skipped, missing, stale oder failed sind kein PASS.',
       '',
-      '## 6. Prüfung',
+      SECTION_CHECK,
     ].join('\n'),
   );
 
@@ -231,6 +279,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
   );
 
+  repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
   const missingAfter = findMissingRequiredSections(repaired);
   if (missingAfter.length > 0) {
     throw new Error('Legacy template repair did not converge: ' + missingAfter.join(', '));
@@ -242,7 +291,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     throw new Error('Legacy template repair changed production-baseline marker cardinality.');
   }
 
-  return { eligible: true, changed: repaired !== body, reason: 'legacy-v1.5-structure-repaired', body: repaired };
+  return { eligible: true, changed: repaired !== body, reason: 'legacy-to-v1.6-structure-repaired', body: repaired };
 }
 
 function normalizeSha(value) {
