@@ -321,7 +321,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--qwen-model-dir", type=Path)
     parser.add_argument("--chatterbox-model-dir", type=Path)
-    parser.add_argument("--candidate", action="append", default=["all"])
+    parser.add_argument("--candidate", action="append", default=[])
     parser.add_argument("--sample", action="append", default=["all"])
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--allow-non-gpu-smoke", action="store_true")
