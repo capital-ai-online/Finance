@@ -415,9 +415,9 @@ export function createCryptoRouter(
           ? 422
           : 200;
       return res.status(httpStatus).json({
+        ...consensus,
         correlationId,
         symbol,
-        ...consensus,
         scoringGateActive: false,
       });
     } catch (error: any) {
