@@ -477,7 +477,7 @@ jobs:
           visibility="$(gh api -H 'Accept: application/vnd.github+json' "/orgs/$owner/packages/container/$package_name" --jq '.visibility')"
           test "$visibility" = 'private'
           image_ref="$GHCR_IMAGE@$IMAGE_DIGEST"
-          docker image rm "$GHCR_IMAGE:$GITHUB_SHA" >/dev/null
+          docker image rm "$GHCR_IMAGE:$GITHUB_SHA" "capital-ai-security:$GITHUB_SHA" >/dev/null
           docker pull "$image_ref"
           test "$(docker image inspect "$image_ref" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')" = "$GITHUB_SHA"
           printf '%s\n' "$image_ref" > artifacts/production-image/ghcr-image-reference.txt
@@ -517,9 +517,7 @@ jobs:
                 id: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}/attempts/${process.env.GITHUB_RUN_ATTEMPT}`,
               },
               metadata: {
-                invocationId: `${process.env.GITHUB_RUN_ID}/${process.env.GITHUB_RUN_ATTEMPT}`,
-                startedOn: null,
-                finishedOn: null,
+                invocationId: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}/attempts/${process.env.GITHUB_RUN_ATTEMPT}`,
               },
               byproducts: [{
                 name: 'runtime-image-sbom.cdx.json',
@@ -541,7 +539,7 @@ jobs:
           set -euo pipefail
           image_ref="$GHCR_IMAGE@$IMAGE_DIGEST"
           cosign sign --yes "$image_ref"
-          cosign attest --yes --type slsaprovenance \
+          cosign attest --yes --type slsaprovenance1 \
             --predicate artifacts/production-image/ghcr-slsa-provenance.json \
             "$image_ref"
           cosign attest --yes --type cyclonedx \
@@ -562,7 +560,7 @@ jobs:
             --certificate-oidc-issuer "$issuer" \
             "$image_ref" > artifacts/production-image/cosign-signature-verification.json
           cosign verify-attestation \
-            --type slsaprovenance \
+            --type slsaprovenance1 \
             --certificate-identity "$identity" \
             --certificate-oidc-issuer "$issuer" \
             "$image_ref" > artifacts/production-image/cosign-provenance-verification.json
