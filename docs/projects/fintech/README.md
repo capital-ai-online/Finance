@@ -110,3 +110,14 @@ FIN-17 is `DONE_MAIN / TERMINAL` for this bounded authority split and is not reo
 - `evidence/`
 
 The older `docs/fintech/CAPITAL-AI-FINTECH/**` package remains a supporting inventory/evidence source during migration; `docs/projects/fintech/` is the canonical organizational project execution entry point.
+
+
+## Migrated validated-data references
+
+The former CAPITAL-AI-DATA active supporting documentation now resolves inside the FINTECH owner surface:
+
+- [Validated Data Contract & Status Semantics](./references/DATA_CONTRACTS.md)
+- [Validated Data → Feature Handoff Runbook](./references/runbooks/DATA_FINTECH_HANDOFF.md)
+- [Provider Ingress & DQ Runbook](./references/runbooks/DATA_PROVIDER_INGRESS_AND_DQ.md)
+
+These references support the current `PVC-09..PVC-17` ownership model. Historical DATA evidence remains under the non-executable compatibility surface until the separately governed archive-retention migration is authorized.
