@@ -6,9 +6,10 @@
 **Canonical detailed evidence surface:** `docs/seo/`  
 **Primary productive PVC:** `N/A — cross-cutting; no productive PVC ownership`  
 **Primary Owner:** `CAPITAL-AI-SEO`  
-**Execution baseline:** `main@4310fa4007278e925272c23149337d0b90c7a061`  
+**Execution baseline:** `main@bb9d14aba0cf47a6998503f45f42dd2b2ce69498`  
 **Branch:** `agent/seo-production-growth-readback-20260917`  
-**Trust root:** `/AGENTS.md@4310fa4007278e925272c23149337d0b90c7a061`, Control Plane `2.11.0`
+**Trust root:** `/AGENTS.md@bb9d14aba0cf47a6998503f45f42dd2b2ce69498`, Control Plane `4.3.0`  
+**Correlation refreshed:** `2026-09-19`
 
 ## 1. Purpose
 
@@ -30,13 +31,7 @@ Current organizational resolution remains:
 
 Applicable Google Marketing architecture remains `ESS-0014` plus Accepted `ADR-0035`. The active Owner-approved consent variant keeps Google Analytics behind valid analytics consent, advertising signals denied and AdSense paused. Read and Write planes remain separate.
 
-Open Pull Requests during final correlation are:
-
-- `#1033` — `CAPITAL-AI-FE`, Universe subdomain presentation slice;
-- `#1032` — `CAPITAL-AI-FE`, News-consumer Strangler;
-- `#1022` — `CAPITAL-AI-GOV`, proposed Trust-Root consolidation.
-
-None changes this evidence path. `#1033` is semantically relevant to future SEO because it proposes a new `universe.capital-ai.online` surface, but it remains unmerged and its DNS/TLS/SEO activation is explicitly outside that PR. This evidence does not assume its payload. `#1022` writes `/AGENTS.md` and governance authority surfaces, therefore any merge of `#1022` before this slice reaches PR creation or merge readiness requires fresh authority correlation.
+Open-writer correlation was refreshed against `main@bb9d14aba0cf47a6998503f45f42dd2b2ce69498`. The effective PR diff remains exactly this SEO evidence file; no same-file writer among the currently relevant open PR set changes this evidence path. Any later main/head movement still invalidates this snapshot and requires a fresh correlation before merge readiness.
 
 ## 3. Predecessor state
 
@@ -54,30 +49,33 @@ The predecessor is terminal and is not reused as a working branch.
 
 ### 4.1 Latest observed machine baseline
 
-The freshest repository-produced machine baseline visible during final correlation is in open PR `#1033`, generated at `2026-09-16T23:00:30Z` after current main reached `4310fa4007278e925272c23149337d0b90c7a061`.
+Fresh provider/repository correlation on `2026-09-19` establishes the current deployment identity directly:
 
-It reports:
-
-- Production commit: `4310fa4007278e925272c23149337d0b90c7a061`;
+- current repository `main`: `bb9d14aba0cf47a6998503f45f42dd2b2ce69498`;
+- Production commit: `bb9d14aba0cf47a6998503f45f42dd2b2ce69498`;
 - Production branch: `main`;
-- current main: `4310fa4007278e925272c23149337d0b90c7a061`;
-- Production → main drift: `0` commits.
+- Production → main drift: `0` commits;
+- source merge: PR `#1078`, merged at `2026-09-19T19:28:23Z`;
+- canonical Render service: `Finance`;
+- Render deploy trigger: `deploy_hook`;
+- deploy start: `2026-09-19T19:32:40.948123Z`;
+- deploy finished/live: `2026-09-19T19:33:47.695911Z`.
 
-A separately refreshed baseline in PR `#1032` reports the same Production/current-main identity shortly afterwards. No deployment was triggered by this SEO work.
+The deploy hook was observed within the repository trust-root five-minute trigger SLA. The current Production SHA therefore matches the exact current-main SHA rather than relying on the older PR-local baseline that previously referenced `4310fa4007278e925272c23149337d0b90c7a061`.
 
-**Classification:** `PRODUCTION_MAIN_IDENTITY_VERIFIED_FROM_CURRENT_REPOSITORY_BASELINE`.
+**Classification:** `PRODUCTION_MAIN_IDENTITY_VERIFIED / EXACT_SHA_MATCH`.
 
-The earlier intermediate observation of Production at `085299e88e5c0b16bb5d9cb62f7599c607a4aca2` is superseded for current-state reporting by the later exact-SHA baseline above.
+No deployment was triggered by this SEO evidence update itself.
 
 ### 4.2 Public acquisition lineage contained in current Production
 
-Current Production/main `4310fa4007278e925272c23149337d0b90c7a061` contains the relevant Human-merged acquisition lineage:
+Current Production/main `bb9d14aba0cf47a6998503f45f42dd2b2ce69498` contains the relevant Human-merged acquisition lineage:
 
 - PR `#1013`: richer public landing, fixed-BTC Enterprise Scorer presentation, capability framing, Vocabulary link and account CTA;
 - PR `#1017`: SEO monetization/marketing Evidence + Measurement Blueprint;
 - PR `#1029`: public scorer first-paint split via the existing React/Vite path while preserving direct visibility and canonical scoring authority.
 
-Because Production and current main now identify the same commit, there is no remaining Git/Release identity gap for these merged application changes.
+Because Production and current main identify the same exact current SHA after the 2026-09-19 provider readback, there is no remaining Git/Release identity gap for these merged application changes.
 
 This proves Production artifact/code identity. It does **not** by itself prove rendered browser behavior, network success, JavaScript completion, CTA interaction, Core Web Vitals, search-engine rendering or conversion performance.
 
