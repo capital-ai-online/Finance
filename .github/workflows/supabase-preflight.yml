@@ -29,7 +29,7 @@ env:
 jobs:
   preflight:
     name: Supabase Preflight
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - name: Exakten PR-Snapshot gegen current main korrelieren
@@ -127,6 +127,12 @@ jobs:
 
       - name: Live Supabase gegen kanonischen Ledger und Kandidaten-Migrationen prüfen
         shell: bash
+        env:
+          REMOTE_TSV: ${{ steps.remote.outputs.remote_tsv }}
         run: |
           set -euo pipefail
-          node trusted/scripts/governance/verifySupabasePreflight.mjs             --candidate-root candidate             --remote-tsv "${{ steps.remote.outputs.remote_tsv }}"             --project-ref "$SUPABASE_PROJECT_REF"             --summary "$GITHUB_STEP_SUMMARY"
+          node trusted/scripts/governance/verifySupabasePreflight.mjs \
+            --candidate-root candidate \
+            --remote-tsv "$REMOTE_TSV" \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --summary "$GITHUB_STEP_SUMMARY"
