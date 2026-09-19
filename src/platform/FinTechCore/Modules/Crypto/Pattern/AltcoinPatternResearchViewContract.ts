@@ -130,9 +130,13 @@ export function createAltcoinPatternResearchViewProjection(input: Readonly<{
   publishedAt?: string;
   correlationId: string;
   assessment: AltcoinPatternResearchScoreAssessment;
+  evidenceRefs?: readonly string[];
 }>): AltcoinPatternResearchViewProjection {
   const publishedAt = input.publishedAt ?? new Date().toISOString();
   const symbol = validateProjectionIdentity({ ...input, publishedAt });
+  const evidenceRefs = Object.freeze([
+    ...new Set((input.evidenceRefs ?? input.assessment.evidenceRefs).map((ref) => ref.trim()).filter(Boolean)),
+  ]);
   return Object.freeze({
     contractVersion: ALTCOIN_PATTERN_RESEARCH_VIEW_CONTRACT_VERSION,
     assetId: input.assetId,
@@ -142,7 +146,7 @@ export function createAltcoinPatternResearchViewProjection(input: Readonly<{
     publishedAt,
     correlationId: input.correlationId.trim(),
     assessment: input.assessment,
-    evidenceRefs: Object.freeze([...input.assessment.evidenceRefs]),
+    evidenceRefs,
     scoreEligible: false as const,
     executionEligible: false as const,
     canonicalScoreImpact: 'NONE' as const,
@@ -227,10 +231,17 @@ export function isAltcoinPatternResearchViewEnvelope(
       || typeof candidate.publishedAt !== 'string'
       || !isValidTimestamp(candidate.publishedAt)
       || typeof candidate.correlationId !== 'string'
+      || !candidate.correlationId.trim()
+      || candidate.correlationId.length > 128
       || !Array.isArray(candidate.evidenceRefs)
+      || candidate.evidenceRefs.some((ref) => typeof ref !== 'string' || !ref.trim())
       || !hasResearchAuthority(candidate)
       || !isAssessmentShape(candidate.assessment)) {
       return false;
+    }
+    if (candidate.assessment.status === 'READY') {
+      const viewRefs = new Set(candidate.evidenceRefs);
+      if (candidate.assessment.evidenceRefs.some((ref) => !viewRefs.has(ref))) return false;
     }
   }
   return true;
