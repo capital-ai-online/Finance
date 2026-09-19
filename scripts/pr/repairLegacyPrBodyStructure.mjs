@@ -8,10 +8,16 @@ import {
 } from './lib.mjs';
 import { findMissingRequiredSections } from './prBodySectionContract.mjs';
 
-export const LEGACY_TEMPLATE_MISSING_SECTIONS = Object.freeze([
-  '## 4. Roadmap',
-  '## 5. PR-Klasse',
-  '## 6. Prüfung',
+export const LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS = Object.freeze([
+  Object.freeze([
+    '## 4. Roadmap',
+    '## 5. PR-Klasse',
+    '## 6. Prüfung',
+  ]),
+  Object.freeze([
+    '## 4. Roadmap',
+    '## 6. Prüfung',
+  ]),
 ]);
 
 function occurrenceCount(text, needle) {
@@ -32,7 +38,15 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
   if (!body.includes(PR_TEMPLATE_MARKER)) {
     return { eligible: false, changed: false, reason: 'missing-canonical-template-marker', body };
   }
-  if (!sameOrderedValues(missing, LEGACY_TEMPLATE_MISSING_SECTIONS)) {
+  const fullLegacyMissing = sameOrderedValues(
+    missing,
+    LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS[0],
+  );
+  const partialLegacyMissing = sameOrderedValues(
+    missing,
+    LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS[1],
+  );
+  if (!fullLegacyMissing && !partialLegacyMissing) {
     return {
       eligible: false,
       changed: false,
@@ -42,6 +56,56 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
   }
   if (!['D', 'C', 'R'].includes(String(prClass))) {
     throw new Error('Trusted PR class must be one of D/C/R before template repair.');
+  }
+
+  const baselineStartBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_START');
+  const baselineEndBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_END');
+
+  if (partialLegacyMissing) {
+    const workPackageMatches = [...body.matchAll(/^## 4\. Work Package \/ Exit Gate\s*$/gm)];
+    const prClassMatches = [...body.matchAll(/^## 5\. PR-Klasse\s*$/gm)];
+    const correlationMatches = [...body.matchAll(/^## 6\. Aktuelle Korrelation\s*$/gm)];
+    if (
+      workPackageMatches.length !== 1 ||
+      prClassMatches.length !== 1 ||
+      correlationMatches.length !== 1
+    ) {
+      return { eligible: false, changed: false, reason: 'unsupported-partial-legacy-shape', body };
+    }
+
+    let repaired = body
+      .replace(/^## 4\. Work Package \/ Exit Gate\s*$/m, '## 4. Roadmap')
+      .replace(/^## 6\. Aktuelle Korrelation\s*$/m, '## 6. Prüfung');
+
+    repaired = repaired.replace(
+      /^- \*\*Human\/CODEOWNER Merge:\*\* erforderlich; kein Agent-Self-Merge\/Auto-Merge\.?$/m,
+      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja\n- **Agent-Self-Merge/Auto-Merge:** Nein.',
+    );
+    repaired = repaired.replace(
+      /^- \*\*Human\/CODEOWNER Merge erforderlich:\*\* Ja\.?$/m,
+      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    );
+
+    const missingAfter = findMissingRequiredSections(repaired);
+    if (missingAfter.length > 0) {
+      throw new Error('Partial legacy template repair did not converge: ' + missingAfter.join(', '));
+    }
+    if (!repaired.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
+      throw new Error('Partial legacy template repair did not preserve the Human/CODEOWNER merge gate.');
+    }
+    if (
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_START') !== baselineStartBefore ||
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_END') !== baselineEndBefore
+    ) {
+      throw new Error('Partial legacy template repair changed production-baseline marker cardinality.');
+    }
+
+    return {
+      eligible: true,
+      changed: repaired !== body,
+      reason: 'legacy-v1.5-partial-structure-repaired',
+      body: repaired,
+    };
   }
 
   const exitGateMatches = [...body.matchAll(/^## 4\. Exit Gate\s*$/gm)];
@@ -59,9 +123,6 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
   if (!exitGateBody) {
     return { eligible: false, changed: false, reason: 'legacy-exit-gate-empty', body };
   }
-
-  const baselineStartBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_START');
-  const baselineEndBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_END');
 
   let repaired = body.replace(
     /^## 4\. Exit Gate\s*\n([\s\S]*?)(?=^## 5\. Prüfung\s*$)/m,
