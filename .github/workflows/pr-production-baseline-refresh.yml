@@ -26,8 +26,11 @@ on: # zizmor: ignore[dangerous-triggers]
 permissions: {}
 
 concurrency:
+  # Keep duplicate suppression within one source workflow only. PR Governance repair and
+  # CI completion events intentionally use different groups so a completed CI run cannot
+  # cancel an in-flight Governance baseline/template repair for the same PR.
   group: >-
-    pr-production-baseline-${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && 'main-deploy' || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+    pr-production-baseline-${{ github.event.workflow_run.path }}-${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && 'main-deploy' || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
