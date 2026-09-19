@@ -105,6 +105,23 @@ Ein neuer Commit, der den Scope erweitert, kann Checkklasse oder Production Impa
 
 Für `push` auf `main` gilt unabhängig vom ursprünglichen PR-Scope weiterhin **Full Production CI**. Die Production-Promotion-Kette darf nicht aus einem eingeschränkten PR-Check wiederverwendet oder abgekürzt werden.
 
+## Supabase Free-Tier Preflight
+
+Supabase Preview Branching ist im aktuellen Free-Tier-Betrieb kein verlässlicher PR-Gate. Für Supabase-relevante Änderungen wird stattdessen der repository-eigene **Supabase Preflight** verwendet.
+
+Der Preflight wird ausschließlich nach ausdrücklicher Owner-Freigabe über `workflow_dispatch` gestartet. Er erzeugt keinen Preview Branch und führt keine Supabase-Mutation aus. Vor dem Provider-Zugriff muss der PR offen, same-repository, auf `main` basiert, an den freigegebenen Head-SHA gebunden und `behind=0` sein.
+
+Die Provider-Prüfung verwendet die bestehende `SUPABASE_DB_URL` nur in einer serverseitig erzwungenen read-only PostgreSQL-Session. Verglichen werden:
+
+- Erreichbarkeit der freigegebenen Produktionsdatenbank;
+- live `supabase_migrations.schema_migrations`;
+- der kanonische Migration-Ledger aus CAPITAL-AI-OPS;
+- die Migrationen des exakten PR-Kandidaten.
+
+Neue lokale Migrationen dürfen als explizite `local_only_migrations` vorliegen; unbekannte Remote-Migrationen, geänderte Remote-Namen, fehlende Ledger-Klassifikation, falscher Projektbezug oder PR/Main-Drift führen fail-closed zu FAIL.
+
+Der Check ersetzt keinen Security-Gate. GitGuardian, HIGH/CRITICAL-CVE-Gate, Governance und `build-and-test` bleiben unabhängig. Supabase Security-Advisor-Befunde werden weiterhin nach ADR-0031 bewertet; planbedingt nicht verfügbare Features dürfen nicht als PASS dargestellt werden.
+
 ## Merge-Regel
 
 Ein PR ist merge-fähig, wenn:
