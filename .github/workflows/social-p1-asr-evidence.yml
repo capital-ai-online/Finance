@@ -55,6 +55,12 @@ jobs:
           set -euo pipefail
           python scripts/operations/socialP1AsrEvidence.test.py
 
+      - name: Validate ASR correlation logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrCorrelation.test.py
+
       - name: Download immutable SOCIAL-P1 runtime artifact
         shell: bash
         run: |
