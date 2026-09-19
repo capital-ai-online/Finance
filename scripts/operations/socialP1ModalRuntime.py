@@ -47,7 +47,7 @@ chatterbox_image = (
     .apt_install("git", "ffmpeg", "libsndfile1", "sox")
     .pip_install(
         "soundfile==0.13.1",
-        "chatterbox-tts==0.1.7",
+        "git+https://github.com/resemble-ai/chatterbox.git@5de7a54aa4e5e2baadb0182dde554908b48b85c2",
     )
     .add_local_dir(repo_root, remote_path="/workspace", ignore=ignores)
 )
