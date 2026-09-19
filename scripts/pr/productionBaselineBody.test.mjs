@@ -195,3 +195,22 @@ test('non-v1.5 marker-free body without canonical baseline section still fails c
     /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt/,
   );
 });
+
+
+test('marker-free current v1.6 body gets one canonical terminal baseline section', () => {
+  const baseline = validBaseline();
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0 -->',
+    '# CAPITAL-AI Pull Request',
+    '',
+    '## 6. ✅ Prüfung & Merge',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+  ].join('\n');
+
+  const result = replaceProductionBaselineBlock(body, baseline);
+  assert.equal(result.changed, true);
+  assert.equal(result.evidenceState, 'STALE');
+  assert.match(result.body, /## 7\. Maschinenlesbare Baseline/);
+  assert.match(result.body, /<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/);
+  assert.ok(result.body.includes(baseline.baselineId));
+});
