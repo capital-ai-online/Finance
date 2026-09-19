@@ -66,7 +66,8 @@ async function publishToYouTube(input: PublishInput): Promise<PublishResult> {
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${input.accessToken}` },
-        body: buildMultipartYoutubeBody(metadata, videoBytes),
+        // Node fetch accepts Buffer at runtime; keep this conversion type-only so large video payloads are not copied again.
+        body: buildMultipartYoutubeBody(metadata, videoBytes) as unknown as RequestInit['body'],
       }
     );
     const json: any = await uploadRes.json();

@@ -104,7 +104,7 @@ Google Gemini und `@google/genai` gehören nicht mehr zur aktiven Anwendungsarch
 | CAPITAL-AI Plattform | `0.6.0` | `package.json#version` |
 | Node.js Runtime | `24.18.0` | `.nvmrc` |
 | Node.js Engine | `>=24.18.0 <25` | `package.json#engines.node` |
-| TypeScript | `~5.8.2` | `package.json#devDependencies.typescript` |
+| TypeScript | `~7.0.2` | `package.json#devDependencies.typescript` |
 | React | `^19.3.0` | `package.json#dependencies.react` |
 | Vite | `^6.2.3` | `package.json#devDependencies.vite` |
 | Tailwind CSS | `^4.1.14` | `package.json#devDependencies.tailwindcss` |

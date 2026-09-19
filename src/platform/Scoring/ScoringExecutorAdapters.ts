@@ -35,7 +35,7 @@ export interface TraditionalCanonicalScoringAssessment extends TraditionalAssetS
 
 function latestIso(values: Array<string | undefined>): string | undefined {
   return values
-    .filter((value): value is string => Boolean(value) && Number.isFinite(Date.parse(value)))
+    .filter((value): value is string => typeof value === 'string' && Number.isFinite(Date.parse(value)))
     .sort((a, b) => Date.parse(b) - Date.parse(a))[0];
 }
 

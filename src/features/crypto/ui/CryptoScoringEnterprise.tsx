@@ -385,7 +385,7 @@ function FactorRadar({ data }: { data: RadarFactor[] }) {
             contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: 12 }}
             itemStyle={{ color: 'var(--color-text-primary)', fontSize: 11, fontFamily: 'monospace' }}
             labelStyle={{ color: 'var(--color-text-secondary)', fontSize: 10 }}
-            formatter={(value: number) => [value.toFixed(1), 'Score']}
+            formatter={(value) => [typeof value === 'number' ? value.toFixed(1) : '—', 'Score']}
           />
         </RadarChart>
       </ResponsiveContainer>

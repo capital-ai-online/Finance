@@ -90,7 +90,7 @@ export async function fetchFredSeries(
     return {
       provider: 'FRED', seriesId, title: meta.title, unit: meta.unit,
       purpose: meta.purpose, executionPriceEligible: false, points, retrievedAt, sourcePath,
-      evidenceIds: points.map(point => evidenceId('FRED', seriesId, point.date)),
+      evidenceIds: points.map((point: MacroEvidencePoint) => evidenceId('FRED', seriesId, point.date)),
     };
   } catch (error) {
     recordProviderHealth({ provider: 'FRED', capability: 'macro-series', state: 'unavailable', message: error instanceof Error ? error.message : String(error) });
