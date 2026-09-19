@@ -23,11 +23,10 @@ jobs:
           && github.event.pull_request.base.ref == 'main'
           && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-'))
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     env:
       SOURCE_RUN_ID: "35472686350"
       SOURCE_ARTIFACT_NAME: "social-p1-modal-runtime-9b43849bb16be69ac93f95ca1ccc14eec8fd7920-35472686350-1"
-      WHISPER_MODEL: "small"
       GH_TOKEN: ${{ github.token }}
 
     steps:
@@ -64,15 +63,35 @@ jobs:
           gh run download "$SOURCE_RUN_ID" --repo "${GITHUB_REPOSITORY}" --name "$SOURCE_ARTIFACT_NAME" --dir source-artifact
           test "$(find source-artifact -type f -name '*.wav' | wc -l)" -eq 8
 
-      - name: Run real ASR over all 8 WAV files
+      - name: Run Whisper small over all 8 WAV files
         shell: bash
         run: |
           set -euo pipefail
           python scripts/operations/socialP1AsrEvidence.py \
             --artifact-dir source-artifact \
             --manifest docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json \
-            --output-dir asr-evidence \
-            --model "$WHISPER_MODEL"
+            --output-dir asr-evidence/small \
+            --model small
+
+      - name: Run Whisper large-v3 over German productive WAV files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.py \
+            --artifact-dir source-artifact \
+            --manifest docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json \
+            --output-dir asr-evidence/large-v3 \
+            --model large-v3 \
+            --productive-only
+
+      - name: Correlate small and large-v3 German evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrCorrelation.py \
+            --small asr-evidence/small/social-p1-asr-evidence.json \
+            --large asr-evidence/large-v3/social-p1-asr-evidence.json \
+            --output-dir asr-evidence/correlation
 
       - name: Upload ASR evidence
         if: always()
@@ -90,12 +109,23 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          p = Path("asr-evidence/social-p1-asr-evidence.json")
-          value = json.loads(p.read_text(encoding="utf-8"))
-          assert value["case_count"] == 8
-          assert value["productive_acceptance_case_count"] == 4
-          assert value["historical_comparison_case_count"] == 4
-          assert value["productive_acceptance_language_policy"] == ["de-DE"]
-          assert value["production_required_terms_pass"] is True, "one or more German productive-acceptance terms were not observed by ASR"
-          print("SOCIAL-P1 ASR: 8/8 transcribed; German productive-acceptance gate passed; English fixtures retained as historical comparison evidence")
+          small = json.loads(Path("asr-evidence/small/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          large = json.loads(Path("asr-evidence/large-v3/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          correlation = json.loads(Path("asr-evidence/correlation/social-p1-asr-correlation.json").read_text(encoding="utf-8"))
+
+          assert small["case_count"] == 8
+          assert small["productive_acceptance_case_count"] == 4
+          assert small["historical_comparison_case_count"] == 4
+          assert small["productive_acceptance_language_policy"] == ["de-DE"]
+
+          assert large["case_count"] == 4
+          assert large["productive_only"] is True
+          assert large["productive_acceptance_case_count"] == 4
+          assert large["historical_comparison_case_count"] == 0
+          assert large["productive_acceptance_language_policy"] == ["de-DE"]
+
+          assert correlation["productive_case_count"] == 4
+          assert correlation["source_audio_policy"] == "same immutable SOCIAL-P1 runtime WAVs; no TTS regeneration"
+          assert correlation["large_v3_production_required_terms_pass"] is True, "one or more German productive-acceptance terms were not observed by Whisper large-v3"
+          print("SOCIAL-P1 ASR: small comparator + large-v3 German verification complete; large-v3 productive gate passed")
           PY
