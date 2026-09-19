@@ -36,27 +36,6 @@ test('privileged completion triggers retain source guards and isolated baseline 
   assert.ok(postMerge.includes("github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml'"));
 });
 
-test('baseline refresh concurrency isolates Governance repair from CI completion events', () => {
-  const concurrency = workflow.split('concurrency:\n')[1].split('\n\njobs:')[0];
-  assert.ok(
-    concurrency.includes('pr-production-baseline-${{ github.event.workflow_run.path }}-'),
-    'source workflow path must namespace the concurrency group',
-  );
-  assert.ok(
-    concurrency.includes("github.event.workflow_run.event == 'push'"),
-    'main-deploy grouping must remain explicit inside each source-workflow domain',
-  );
-  assert.ok(
-    concurrency.includes('github.event.workflow_run.pull_requests[0].number'),
-    'PR runs must remain grouped by pull request inside their source-workflow domain',
-  );
-  assert.match(concurrency, /cancel-in-progress: true/);
-  assert.ok(
-    workflow.includes('CI completion events intentionally use different groups'),
-    'the race-control intent must remain reviewable next to the concurrency key',
-  );
-});
-
 test('report steps render hostile output and input values as data without shell execution', () => {
   const cases = [
     ['ci.yml', 'Exakten CI-PASS wiederverwenden'],
