@@ -27,7 +27,7 @@ function readPackageVersion(): string {
   } catch {
     cachedVersion = 'unknown';
   }
-  return cachedVersion;
+  return cachedVersion ?? 'unknown';
 }
 
 function clean(value: string | undefined): string | null {
