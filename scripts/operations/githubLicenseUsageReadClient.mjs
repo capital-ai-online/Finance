@@ -109,6 +109,7 @@ async function parseJson(response) {
  * @property {string} [privateKeyPem]
  * @property {string} [enterprise]
  * @property {string} [organization]
+ * @property {string} [enterpriseReadPat]
  * @property {typeof fetch} [fetchImpl]
  * @property {string} [apiBaseUrl]
  * @property {() => number} [now]
@@ -122,6 +123,7 @@ export function createGitHubLicenseUsageReadClient({
   privateKeyPem,
   enterprise,
   organization,
+  enterpriseReadPat = undefined,
   fetchImpl = globalThis.fetch,
   apiBaseUrl = DEFAULT_GITHUB_API_BASE_URL,
   now = () => Date.now(),
@@ -129,6 +131,15 @@ export function createGitHubLicenseUsageReadClient({
   assertClientId(clientId);
   assertSlug(enterprise, 'enterprise');
   assertSlug(organization, 'organization');
+  if (
+    enterpriseReadPat !== undefined
+    && (typeof enterpriseReadPat !== 'string' || enterpriseReadPat.trim().length < 20)
+  ) {
+    fail('enterpriseReadPat must be a non-empty secret token when provided');
+  }
+  const normalizedEnterpriseReadPat = typeof enterpriseReadPat === 'string'
+    ? enterpriseReadPat.trim()
+    : null;
   if (typeof privateKeyPem !== 'string' || privateKeyPem.length < 64) fail('privateKeyPem is required');
   if (typeof fetchImpl !== 'function') fail('fetchImpl is required');
   if (typeof now !== 'function') fail('now must be a function');
@@ -253,6 +264,9 @@ export function createGitHubLicenseUsageReadClient({
           'organization.advanced_security.active_committers.secret_protection',
           'organization.billing.usage.summary',
         ]),
+        enterpriseConsumedLicensesAuth: normalizedEnterpriseReadPat
+          ? 'github_app_with_pat_fallback'
+          : 'github_app_only',
         tokenPersistence: false,
         clientSecretUsed: false,
       });
@@ -263,11 +277,23 @@ export function createGitHubLicenseUsageReadClient({
      */
     async getEnterpriseConsumedLicenses({ page = 1 } = {}) {
       if (!Number.isInteger(page) || page < 1 || page > 1000) fail('page must be an integer between 1 and 1000');
-      return authenticatedGet(
-        'Enterprise',
-        enterprise,
-        `/enterprises/${enterprise}/consumed-licenses?per_page=100&page=${page}`,
-      );
+      const path = `/enterprises/${enterprise}/consumed-licenses?per_page=100&page=${page}`;
+
+      try {
+        return await authenticatedGet('Enterprise', enterprise, path);
+      } catch (error) {
+        if (
+          normalizedEnterpriseReadPat
+          && (error?.status === 403 || error?.status === 404)
+        ) {
+          return request({
+            method: 'GET',
+            path,
+            authorization: normalizedEnterpriseReadPat,
+          });
+        }
+        throw error;
+      }
     },
 
     async getOrganizationUsageSummary({ year, month, day, repository } = {}) {
