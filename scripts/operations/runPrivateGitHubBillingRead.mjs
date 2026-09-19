@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import { createGitHubBillingGatewayAdapter } from './githubBillingGatewayAdapter.mjs';
 import { createGitHubAppInstallationAuthTransport } from './githubAppInstallationAuthTransport.mjs';
+import {
+  projectBudgetInventoryEvidence,
+  projectCostCenterInventoryEvidence,
+  projectUsageInventoryEvidence,
+} from './githubBillingInventoryProjection.mjs';
 
 function requiredEnv(name) {
   const value = String(process.env[name] || '').trim();
@@ -15,16 +20,6 @@ function readPrivateKey() {
   const stat = fs.statSync(keyPath);
   if (!stat.isFile()) throw new Error('[PRIVATE-GITHUB-BILLING-READ] private key path is not a file');
   return fs.readFileSync(keyPath, 'utf8');
-}
-
-function projectBudgetEvidence(budget) {
-  return Object.freeze({
-    budgetType: budget.budgetType,
-    productSkus: budget.productSkus,
-    scope: budget.scope,
-    preventFurtherUsage: budget.preventFurtherUsage,
-    alertingEnabled: budget.alerting?.willAlert === true,
-  });
 }
 
 const clientId = requiredEnv('CAPITAL_AI_GITHUB_APP_CLIENT_ID');
@@ -42,16 +37,24 @@ const billing = createGitHubBillingGatewayAdapter({
   enterprise,
   githubRest: auth.githubRest,
 });
-const result = await billing.execute('github.billing.budgets.list');
+
+const [budgets, usageSummary, costCenters] = await Promise.all([
+  billing.execute('github.billing.budgets.list'),
+  billing.execute('github.billing.usage.summary'),
+  billing.execute('github.billing.cost_centers.list'),
+]);
 
 const output = Object.freeze({
   status: 'PASS',
-  mode: 'PRIVATE_SINGLE_USER_READ',
+  mode: 'PRIVATE_SINGLE_USER_READ_INVENTORY',
   enterprise,
   installationId: authEvidence.installationId,
   installationTokenExpiresAt: authEvidence.installationTokenExpiresAt,
-  budgetCount: result.budgets.length,
-  budgets: result.budgets.map(projectBudgetEvidence),
+  inventoryComplete: true,
+  budgets: projectBudgetInventoryEvidence(budgets),
+  usage: projectUsageInventoryEvidence(usageSummary),
+  costCenters: projectCostCenterInventoryEvidence(costCenters),
+  sensitiveAmountsLogged: false,
 });
 
 process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
