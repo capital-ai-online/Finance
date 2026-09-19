@@ -58,6 +58,25 @@ describe('GitHub license usage read client', () => {
         });
       }
 
+      if (method === 'GET' && parsed.pathname === `/organizations/${ORGANIZATION}/settings/billing/usage/summary`) {
+        return jsonResponse({
+          timePeriod: { year: 2026, month: 9, day: null },
+          organization: ORGANIZATION,
+          usageItems: [{
+            product: 'Actions',
+            sku: 'actions_linux',
+            unitType: 'minutes',
+            pricePerUnit: 0.006,
+            grossQuantity: 100,
+            grossAmount: 0.6,
+            discountQuantity: 100,
+            discountAmount: 0.6,
+            netQuantity: 0,
+            netAmount: 0,
+          }],
+        });
+      }
+
       if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/settings/billing/advanced-security`) {
         return jsonResponse({
           total_advanced_security_committers: 1,
@@ -90,6 +109,14 @@ describe('GitHub license usage read client', () => {
     const licenses = await client.getEnterpriseConsumedLicenses();
     expect(licenses.total_seats_consumed).toBe(1);
 
+    const organizationUsage = await client.getOrganizationUsageSummary({
+      year: 2026,
+      month: 9,
+      repository: `${ORGANIZATION}/Finance`,
+    });
+    expect(organizationUsage.organization).toBe(ORGANIZATION);
+    expect(organizationUsage.usageItems).toHaveLength(1);
+
     const codeSecurity = await client.getAdvancedSecurityActiveCommitters({ product: 'code_security' });
     expect(codeSecurity.total_advanced_security_committers).toBe(1);
 
@@ -99,6 +126,8 @@ describe('GitHub license usage read client', () => {
     expect(calls.filter((call) => call.method === 'POST')).toHaveLength(2);
     expect(calls.filter((call) => call.path.startsWith('/app/installations?'))).toHaveLength(1);
     expect(calls.some((call) => call.path.includes('/consumed-licenses?per_page=100&page=1'))).toBe(true);
+    expect(calls.some((call) => call.path.includes(`/organizations/${ORGANIZATION}/settings/billing/usage/summary?`))).toBe(true);
+    expect(calls.some((call) => call.path.includes('repository=capital-ai-online%2FFinance'))).toBe(true);
     expect(calls.some((call) => call.path.includes('advanced_security_product=code_security'))).toBe(true);
     expect(calls.some((call) => call.path.includes('advanced_security_product=secret_protection'))).toBe(true);
   });
@@ -120,6 +149,7 @@ describe('GitHub license usage read client', () => {
         'enterprise.consumed_licenses.list',
         'organization.advanced_security.active_committers.code_security',
         'organization.advanced_security.active_committers.secret_protection',
+        'organization.billing.usage.summary',
       ],
       tokenPersistence: false,
       clientSecretUsed: false,
@@ -128,5 +158,9 @@ describe('GitHub license usage read client', () => {
     await expect(
       client.getAdvancedSecurityActiveCommitters({ product: 'unsupported' }),
     ).rejects.toThrow(/product must be code_security or secret_protection/);
+
+    await expect(
+      client.getOrganizationUsageSummary({ repository: 'invalid repository' }),
+    ).rejects.toThrow(/repository must use owner\/repository form/);
   });
 });
