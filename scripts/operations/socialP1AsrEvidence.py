@@ -46,7 +46,7 @@ ALIASES = {
     "1.234,56 Euro": ["1 234 56 euro", "1234 56 euro", "tausendzweihundertvierunddreissig komma sechsundfunfzig euro", "eintausendzweihundertvierunddreissig komma sechsundfunfzig euro"],
     "BTC": ["btc", "b t c"],
     "ETH": ["eth", "e t h"],
-    "CAPITAL-AI": ["capital ai", "capital a i", "capital eye"],
+    "CAPITAL-AI": ["capital ai", "capital a i", "capital eye", "capital i"],
     "OAuth 2.0": ["oauth 2 0", "o auth 2 0"],
     "AES-256-GCM": ["aes 256 gcm", "a e s 256 g c m"],
     "SHA-256": ["sha 256", "s h a 256"],
