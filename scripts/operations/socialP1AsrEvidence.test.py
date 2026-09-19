@@ -30,6 +30,9 @@ class RequiredTermMatcherTest(unittest.TestCase):
     def test_capital_eye_is_explicit_asr_equivalent(self) -> None:
         self.assertMatch("CAPITAL-AI", "Willkommen zum Capital Eye Technik Dialog.")
 
+    def test_capital_i_is_explicit_asr_equivalent(self) -> None:
+        self.assertMatch("CAPITAL-AI", "Willkommen zum Capital-I Technik Dialog.")
+
     def test_exact_numeric_value_and_currency_remain_required(self) -> None:
         self.assertMatch("1.234,56 Euro", "Der Betrag lautet 1.234,56 Euro.")
         self.assertNoMatch("1.234,56 Euro", "Der Betrag lautet 1,2453,6 Euro.")
