@@ -7,8 +7,16 @@ import {
   renderProductionBaselineBlock,
 } from './lib.mjs';
 
-const PRODUCTION_BASELINE_SECTION_HEADING = '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis';
-const NEXT_SECTION_HEADING = '## 4. Umfang / Multi-Agent-Koordination';
+const PRODUCTION_BASELINE_SECTION_PAIRS = [
+  {
+    baseline: '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
+    next: '## 4. Umfang / Multi-Agent-Koordination',
+  },
+  {
+    baseline: '## 7. Maschinenlesbare Baseline',
+    next: null,
+  },
+];
 
 function occurrenceCount(text, needle) {
   if (!needle) return 0;
@@ -28,26 +36,28 @@ function repairMissingProductionBaselineBlock(text, baseline, markers) {
     );
   }
 
-  if (
-    occurrenceCount(text, PRODUCTION_BASELINE_SECTION_HEADING) !== 1 ||
-    occurrenceCount(text, NEXT_SECTION_HEADING) !== 1
-  ) {
+  const candidates = PRODUCTION_BASELINE_SECTION_PAIRS.filter(({ baseline: heading, next }) =>
+    occurrenceCount(text, heading) === 1 && (next === null || occurrenceCount(text, next) === 1),
+  );
+  if (candidates.length !== 1) {
     fail(
-      'PR-Body besitzt keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt 3; ' +
+      'PR-Body besitzt keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt; ' +
         'Auto-Refresh bleibt fail-closed.',
     );
   }
 
-  const sectionStart = text.indexOf(PRODUCTION_BASELINE_SECTION_HEADING);
-  const sectionBodyStart = sectionStart + PRODUCTION_BASELINE_SECTION_HEADING.length;
-  const nextSectionStart = text.indexOf(NEXT_SECTION_HEADING, sectionBodyStart);
-  if (sectionStart < 0 || nextSectionStart < 0 || nextSectionStart <= sectionBodyStart) {
+  const { baseline: sectionHeading, next: nextHeading } = candidates[0];
+  const sectionStart = text.indexOf(sectionHeading);
+  const sectionBodyStart = sectionStart + sectionHeading.length;
+  const nextSectionStart = nextHeading === null ? text.length : text.indexOf(nextHeading, sectionBodyStart);
+  if (sectionStart < 0 || nextSectionStart < sectionBodyStart) {
     fail('Kanonische Abschnittsgrenzen für die Produktions-Baseline konnten nicht sicher bestimmt werden.');
   }
 
   const replacement = renderProductionBaselineBlock(baseline);
+  const suffix = nextHeading === null ? '' : `\n\n${text.slice(nextSectionStart)}`;
   return {
-    body: `${text.slice(0, sectionBodyStart)}\n\n${replacement}\n\n${text.slice(nextSectionStart)}`,
+    body: `${text.slice(0, sectionBodyStart)}\n\n${replacement}${suffix}`,
     changed: true,
     evidenceState: 'STALE',
     baselineId: baseline.baselineId,
