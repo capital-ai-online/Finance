@@ -32,6 +32,7 @@ def _sha256(path: Path) -> str:
 def _normalize(text: str) -> str:
     text = unicodedata.normalize("NFKC", text).casefold()
     text = text.replace("ß", "ss")
+    text = text.replace("%", " prozent ")
     text = re.sub(r"(?<=\d)[\.,](?=\d)", " ", text)
     text = re.sub(r"[-_/]", " ", text)
     text = re.sub(r"[^\w\s]", " ", text, flags=re.UNICODE)
@@ -44,7 +45,7 @@ ALIASES = {
     "1.234,56 Euro": ["1 234 56 euro", "1234 56 euro", "tausendzweihundertvierunddreissig komma sechsundfunfzig euro", "eintausendzweihundertvierunddreissig komma sechsundfunfzig euro"],
     "BTC": ["btc", "b t c"],
     "ETH": ["eth", "e t h"],
-    "CAPITAL-AI": ["capital ai", "capital a i"],
+    "CAPITAL-AI": ["capital ai", "capital a i", "capital eye"],
     "OAuth 2.0": ["oauth 2 0", "o auth 2 0"],
     "AES-256-GCM": ["aes 256 gcm", "a e s 256 g c m"],
     "SHA-256": ["sha 256", "s h a 256"],
@@ -57,7 +58,9 @@ def _term_match(term: str, transcript: str) -> tuple[bool, str | None]:
     candidates = [term, *ALIASES.get(term, [])]
     for candidate in candidates:
         needle = _normalize(candidate)
-        if needle and needle in hay:
+        if not needle:
+            continue
+        if re.search(rf"(?:^|\s){re.escape(needle)}(?:$|\s)", hay):
             return True, candidate
     return False, None
 
