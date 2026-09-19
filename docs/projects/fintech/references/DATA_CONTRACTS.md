@@ -1,17 +1,17 @@
-# CAPITAL-AI-DATA — Contract & Status Semantics
+# CAPITAL-AI-FINTECH — Validated Data Contract & Status Semantics
 
-This document defines the intended DATA boundary. It is a project contract proposal and does not supersede current runtime contract versions until implemented and accepted through normal repository governance.
+This document defines the validated-data boundary inside CAPITAL-AI-FINTECH. It remains a supporting project contract and does not supersede current runtime contract versions until implemented and accepted through normal repository governance.
 
 ## Project-routing identity
 
-- DATA owns `PVC-09`, `PVC-10`, `PVC-11`.
-- FINTECH owns the next project stage `PVC-12`.
+- CAPITAL-AI-FINTECH owns `PVC-09` through `PVC-17`.
+- `PVC-09`/`PVC-10`/`PVC-11` cover ingestion, evidence and Data Quality; `PVC-12` is the internal Feature Engineering successor stage.
 - `PVC-*` is organizational routing only.
 - Existing technical `VC-*` under `SC-MD-SPT-0001` remains separately governed.
 
-## DATA status model
+## Validated-data status model
 
-| DATA status | Meaning | Downstream numeric feature eligibility |
+| validated-data status | Meaning | Downstream numeric feature eligibility |
 |---|---|---|
 | `PASS` | Required schema, identity, provenance, freshness and DQ checks satisfied | allowed as validated source input |
 | `PARTIAL` | Optional/declared fields missing but required core remains valid | only present validated fields; never impute missing fields |
@@ -26,7 +26,7 @@ This document defines the intended DATA boundary. It is a project contract propo
 - `FAIL -> PASS` requires new validated evidence, never a default.
 - `STALE -> PASS` requires new fresh evidence, not a label rewrite.
 - `MISSING -> numeric` is forbidden without new source evidence.
-- `NOT_COMPUTABLE -> numeric score` is forbidden in DATA.
+- `NOT_COMPUTABLE -> numeric score` is forbidden at this validated-data boundary.
 - `UNKNOWN -> PASS` requires deterministic resolution evidence.
 - `PARTIAL` must identify exactly which fields are absent/non-admissible.
 
@@ -43,11 +43,11 @@ This document defines the intended DATA boundary. It is a project contract propo
 | Evidence `CONFLICTING` | `FAIL` or `UNKNOWN` through explicit conflict-resolution policy; never PASS |
 | Evidence `NOT_APPLICABLE` | `NOT_COMPUTABLE` for computations requiring that evidence, otherwise explicitly excluded |
 
-The word `candidate` is intentional: no source label alone is sufficient if other required DATA gates fail.
+The word `candidate` is intentional: no source label alone is sufficient if other required FINTECH data-quality gates fail.
 
 ## Security stale/current verification states — S1-R2-11
 
-The Security handoff requires a separate verification-observation state machine. These labels do not replace the DATA DQ statuses above.
+The Security handoff requires a separate verification-observation state machine. These labels do not replace the validated-data DQ statuses above.
 
 | Security observation | Required meaning |
 |---|---|
@@ -65,7 +65,7 @@ Rules:
 - failed/untrusted refresh remains non-current;
 - Security `VERIFIED/CLOSED` is outside DATA authority.
 
-## Canonical DATA exit envelope
+## Canonical validated-data exit envelope
 
 ```text
 ValidatedDataInput
@@ -121,12 +121,12 @@ Provider symbols are identity mappings, not evidence.
 - `target_project_folder: docs/projects/fintech/`
 - `primary_owner: CAPITAL-AI-FINTECH`
 - `task: consume ValidatedDataInput and perform feature engineering plus downstream scoring/ranking semantics`
-- `reason: DATA must remain upstream of feature/scoring authority`
-- `dependency: DATA PVC-11 validated output; docs/projects/fintech/ROADMAP.md`
+- `reason: the validated-data boundary must remain upstream of feature/scoring authority`
+- `dependency: FINTECH PVC-11 validated output; docs/projects/fintech/ROADMAP.md`
 - `required_evidence: versioned contract compatibility and preservation of non-computable/missing/stale states`
 - `verification_gate: FINTECH target-project tests and normal project governance`
 - `status: REFERRED_NOT_EXECUTED`
 
-FINTECH owns transformation of validated DATA observations into engineered features and all scoring/ranking semantics. FINTECH must reject or preserve non-numeric states rather than coercing them to neutral values.
+Within CAPITAL-AI-FINTECH, PVC-12..17 own transformation of validated PVC-09..11 observations into engineered features and downstream scoring/ranking semantics. FINTECH must reject or preserve non-numeric states rather than coercing them to neutral values.
 
 The compatibility `VC-12` marker is routing metadata; it is not a technical `SC-MD-SPT-0001` stage claim.
