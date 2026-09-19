@@ -10,6 +10,7 @@ describe('GHCR digest publication contract', () => {
     expect(publishGhcr).toContain('packages: write');
     expect(publishGhcr).toContain("github.event_name == 'push'");
     expect(publishGhcr).toContain("github.ref == 'refs/heads/main'");
+    expect(publishGhcr).toContain("vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true'");
   });
 
   it('publishes the exact scanned image without latest authority', () => {
