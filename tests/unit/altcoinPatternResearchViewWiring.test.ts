@@ -85,6 +85,32 @@ describe('altcoin pattern research backend view wiring', () => {
     ]);
   });
 
+  it('preserves upstream provenance even when the reference scorer remains NOT_COMPUTABLE', () => {
+    const orchestrator = new CryptoOrchestrator(null);
+    const assessment = orchestrator.analyzeAltcoinPatternResearch({
+      resolution: resolution('crypto:ETH', 'flag'),
+      confirmation: {
+        contractVersion: ALTCOIN_PATTERN_CONFIRMATION_CONTRACT_VERSION,
+        patternId: 'flag',
+        timeframe: '4h',
+        observedAt: '2026-09-20T08:00:00.000Z',
+        evidenceRefs: ['indicator:evidence:eth:catalog-only'],
+      },
+    }, {
+      symbol: 'ETH',
+      correlationId: 'pattern-read:eth:not-computable',
+      publishedAt: '2026-09-20T08:00:01.000Z',
+    });
+
+    expect(assessment.status).toBe('NOT_COMPUTABLE');
+    expect(assessment.evidenceRefs).toEqual([]);
+    expect(altcoinPatternResearchProjectionStore.read('crypto:ETH', '4h')?.evidenceRefs).toEqual([
+      'ohlcv:verified:1',
+      'backtest:asset-timeframe-regime:1',
+      'indicator:evidence:eth:catalog-only',
+    ]);
+  });
+
   it('rejects a view context whose symbol does not match the resolved UAI asset identity', () => {
     const orchestrator = new CryptoOrchestrator(null);
     expect(() => orchestrator.analyzeAltcoinPatternResearch({
