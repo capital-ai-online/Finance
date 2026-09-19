@@ -1,12 +1,22 @@
 import express from 'express';
+import { randomUUID } from 'node:crypto';
 import { fetchCryptoExtendedEvidence } from '../../src/services/cryptoExtendedEvidence';
 import { resolveCryptoEvidenceIdentity } from '../../src/platform/MarketData/CryptoEvidenceIdentityRegistry';
 import { resolveDuneSavedQueriesForSymbol } from '../../src/platform/MarketData/DuneSavedQueryRegistry';
+import { assetRegistry } from '../../src/lib/assetRegistry';
+import { buildUniversalAssetId } from '../../src/platform/Scoring/UniversalAssetAdapter';
+import { buildAltcoinPatternResearchViewEnvelope } from '../../src/platform/FinTechCore/Modules/Crypto/Pattern/AltcoinPatternResearchViewContract';
+import { altcoinPatternResearchProjectionStore } from '../../src/platform/FinTechCore/Modules/Crypto/Pattern/AltcoinPatternResearchProjectionStore';
 
 function normalizeSymbol(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const symbol = value.toUpperCase().trim();
   return /^[A-Z0-9.=-]{1,20}$/.test(symbol) ? symbol : null;
+}
+
+function requestCorrelationId(req: express.Request): string {
+  const incoming = req.header('x-correlation-id');
+  return incoming && incoming.trim() ? incoming.trim().slice(0, 128) : randomUUID();
 }
 
 /**
@@ -18,6 +28,45 @@ function normalizeSymbol(value: unknown): string | null {
  * to arbitrary provider identities or query IDs.
  */
 export const cryptoEvidenceRouter = express.Router();
+
+cryptoEvidenceRouter.get('/pattern-research/:symbol', (req, res) => {
+  const readCorrelationId = requestCorrelationId(req);
+  res.setHeader('x-correlation-id', readCorrelationId);
+  const symbol = normalizeSymbol(req.params.symbol);
+
+  if (!symbol) {
+    return res.status(400).json({
+      status: 'INVALID_REQUEST',
+      scoreEligible: false,
+      executionEligible: false,
+      canonicalScoreImpact: 'NONE',
+      reason: 'Ungültiges Krypto-Symbol.',
+    });
+  }
+
+  const asset = assetRegistry.getAsset(symbol);
+  if (!asset || asset.type !== 'crypto') {
+    return res.status(404).json({
+      status: 'NOT_AVAILABLE',
+      symbol,
+      scoreEligible: false,
+      executionEligible: false,
+      canonicalScoreImpact: 'NONE',
+      reason: 'Krypto-Asset ist nicht im kanonischen Registry-Scope verfügbar.',
+    });
+  }
+
+  const assetId = buildUniversalAssetId('crypto', symbol);
+  const envelope = buildAltcoinPatternResearchViewEnvelope({
+    assetId,
+    symbol,
+    readCorrelationId,
+    lanes: altcoinPatternResearchProjectionStore.readLanes(assetId),
+  });
+
+  res.setHeader('Cache-Control', 'no-store');
+  return res.json(envelope);
+});
 
 cryptoEvidenceRouter.get('/:symbol', async (req, res) => {
   const symbol = normalizeSymbol(req.params.symbol);
