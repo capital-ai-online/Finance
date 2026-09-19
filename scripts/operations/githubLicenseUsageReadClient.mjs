@@ -29,6 +29,34 @@ function assertClientId(value) {
   }
 }
 
+function assertOptionalInteger(value, label, min, max) {
+  if (value === undefined || value === null) return;
+  if (!Number.isInteger(value) || value < min || value > max) {
+    fail(`${label} must be an integer between ${min} and ${max}`);
+  }
+}
+
+function assertOptionalRepository(value) {
+  if (value === undefined || value === null) return;
+  if (
+    typeof value !== 'string'
+    || value.length < 3
+    || value.length > 202
+    || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)
+  ) {
+    fail('repository must use owner/repository form');
+  }
+}
+
+function buildQuery(path, entries) {
+  const params = new URLSearchParams();
+  for (const [key, value] of entries) {
+    if (value !== undefined && value !== null) params.set(key, String(value));
+  }
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 function normalizeBaseUrl(value) {
   let url;
   try {
@@ -223,6 +251,7 @@ export function createGitHubLicenseUsageReadClient({
           'enterprise.consumed_licenses.list',
           'organization.advanced_security.active_committers.code_security',
           'organization.advanced_security.active_committers.secret_protection',
+          'organization.billing.usage.summary',
         ]),
         tokenPersistence: false,
         clientSecretUsed: false,
@@ -238,6 +267,27 @@ export function createGitHubLicenseUsageReadClient({
         'Enterprise',
         enterprise,
         `/enterprises/${enterprise}/consumed-licenses?per_page=100&page=${page}`,
+      );
+    },
+
+    async getOrganizationUsageSummary({ year, month, day, repository } = {}) {
+      assertOptionalInteger(year, 'year', 2000, 2100);
+      assertOptionalInteger(month, 'month', 1, 12);
+      assertOptionalInteger(day, 'day', 1, 31);
+      assertOptionalRepository(repository);
+
+      return authenticatedGet(
+        'Organization',
+        organization,
+        buildQuery(
+          `/organizations/${organization}/settings/billing/usage/summary`,
+          [
+            ['year', year],
+            ['month', month],
+            ['day', day],
+            ['repository', repository],
+          ],
+        ),
       );
     },
 
