@@ -152,13 +152,17 @@ describe('VocabularyRegistry contracts', () => {
 
   it('uses the canonical ADR-0078 vocabulary authority and covers the complete FinTech baseline', () => {
     const registry = createDefaultVocabularyRegistry();
-    expect(registry.list()).toHaveLength(67);
+    expect(registry.list()).toHaveLength(69);
     for (const item of registry.list()) {
       expect(item.adrReferences).toContain('ADR-0078');
       expect(item.adrReferences).not.toContain('ADR-0046');
     }
     expect(registry.getById('VOC-ANALYTICS-0108')?.canonicalCodeTerm).toBe('CanonicalScoreResult');
     expect(registry.getById('VOC-PRODUCT-0103')?.canonicalCodeTerm).toBe('DeliverySurface');
+    expect(registry.resolveTerm('GHAS')?.canonicalCodeTerm).toBe('GitHubAdvancedSecurity');
+    expect(registry.resolveTerm('GHEC')?.canonicalCodeTerm).toBe('GitHubEnterpriseCloud');
+    expect(registry.getById('VOC-BILLING-0003')?.displayNameEN).toBe('GitHub Advanced Security');
+    expect(registry.getById('VOC-BILLING-0004')?.displayNameEN).toBe('GitHub Enterprise Cloud');
   });
 
   it('provides the canonical AI Development Chat & Execution Terminology category', () => {
