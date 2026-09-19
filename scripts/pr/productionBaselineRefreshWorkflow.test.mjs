@@ -71,7 +71,7 @@ test('report steps render hostile output and input values as data without shell 
 
 test('Governance reconciliation runs for every eligible PR snapshot and receives the atomic baseline-change result', () => {
   assert.match(workflow, /id: refresh/);
-  assert.match(workflow, /- name: Baseline-Write oder Race-Recovery an exakte PR-Governance binden/);
+  assert.match(workflow, /- name: Baseline-\/Template-Write oder Race-Recovery an exakte PR-Governance binden/);
   assert.match(
     workflow,
     /if: steps\.pr\.outputs\.eligible == 'true'\n\s+uses: actions\/github-script@/,
@@ -79,6 +79,10 @@ test('Governance reconciliation runs for every eligible PR snapshot and receives
   assert.ok(
     workflow.includes('BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}'),
     'reconciliation must receive the canonical baseline updater result',
+  );
+  assert.ok(
+    workflow.includes('PR_BODY_REPAIRED: ${{ steps.body_repair.outputs.changed }}'),
+    'reconciliation must receive the deterministic PR-body repair result',
   );
   assert.ok(
     workflow.includes("const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';"),
@@ -111,8 +115,8 @@ test('unchanged baseline permits exactly one stale-baseline race recovery and th
     'race recovery must require a failed first Governance attempt',
   );
   assert.ok(
-    workflow.includes('const shouldRerun = baselineChanged || firstFailedAttempt;'),
-    'rerun authority must be limited to a real baseline write or the bounded first-attempt recovery',
+    workflow.includes('const shouldRerun = bodyRepaired || baselineChanged || firstFailedAttempt;'),
+    'rerun authority must be limited to a deterministic body repair, real baseline write or the bounded first-attempt recovery',
   );
   assert.ok(
     workflow.includes('if (!shouldRerun)'),
@@ -130,4 +134,19 @@ test('unchanged baseline permits exactly one stale-baseline race recovery and th
     workflow.includes("POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun"),
     'the exact workflow-run rerun endpoint must be used',
   );
+});
+
+
+test('Governance template remediation is failure-only, trusted-main and exact-snapshot bound', () => {
+  for (const token of [
+    'Fehlende kanonische PR-Abschnitte deterministisch reparieren',
+    "github.event.workflow_run.conclusion == 'failure'",
+    'node ../policy/scripts/pr/classifyPrScope.mjs',
+    'node ../policy/scripts/pr/repairLegacyPrBodyStructure.mjs',
+    'EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}',
+    'EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}',
+    'PR_CHECK_CLASS: ${{ steps.body_scope.outputs.class }}',
+  ]) assert.ok(workflow.includes(token), 'missing bounded template-repair control: ' + token);
+  assert.doesNotMatch(workflow, /node scripts\/pr\/repairLegacyPrBodyStructure\.mjs/);
+  assert.doesNotMatch(workflow, /pull_request_target\s*:/);
 });
