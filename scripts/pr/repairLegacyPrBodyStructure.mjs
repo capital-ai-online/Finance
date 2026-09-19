@@ -146,14 +146,14 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
           SECTION_CHECK,
           '',
           '### Validierung',
-        ].join('\\n'),
+        ].join('\n'),
       )
       .replace(/^## 6\. Merge-Abhängigkeiten\s*$/m, '### Merge-Abhängigkeiten');
 
     if (!repaired.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
       repaired = repaired.replace(
         /^- Kein Agent-Self-Merge, kein Auto-Merge\.?$/m,
-        '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja\\n- Kein Agent-Self-Merge, kein Auto-Merge.',
+        '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja\n- Kein Agent-Self-Merge, kein Auto-Merge.',
       );
     }
 
