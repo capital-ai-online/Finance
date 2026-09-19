@@ -1,7 +1,6 @@
 import { getCleanEnv } from '../env';
 import { isSupabaseConfigured } from '../db';
 import { runIamSchemaHealthCheck } from '../../src/platform/Security/authMiddleware';
-import { isAlpacaConfigured } from '../../src/services/alpacaShadowProvider';
 import { isAnthropicConfigured } from '../anthropicClient';
 import { isOpenAIConfigured } from '../openaiClient';
 import { getStripeConfigurationStatus, type StripeConfigurationStatus } from './renderRuntimeSafety';
@@ -13,7 +12,6 @@ export interface BusinessReadinessInput {
   iamSchemaHealthy: boolean;
   stripe: StripeConfigurationStatus;
   optionalProviders: {
-    alpaca: boolean;
     anthropic: boolean;
     openai: boolean;
   };
@@ -128,7 +126,6 @@ export async function probeBusinessReadiness(now = Date.now()): Promise<Business
       iamSchemaHealthy: false,
       stripe: getStripeConfigurationStatus(getCleanEnv),
       optionalProviders: {
-        alpaca: isAlpacaConfigured(),
         anthropic: isAnthropicConfigured(),
         openai: isOpenAIConfigured(),
       },
@@ -147,7 +144,6 @@ export async function probeBusinessReadiness(now = Date.now()): Promise<Business
     iamSchemaHealthy,
     stripe,
     optionalProviders: {
-      alpaca: isAlpacaConfigured(),
       anthropic: isAnthropicConfigured(),
       openai: isOpenAIConfigured(),
     },
