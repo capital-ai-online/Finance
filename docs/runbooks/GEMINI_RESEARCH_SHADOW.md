@@ -1,6 +1,6 @@
 # Gemini Research Evidence Shadow — Runbook
 
-**Status:** DEFAULT-OFF / SERVER-ONLY / FREE-TIER-ONLY  
+**Status:** ARCHITECTURE-ENABLED / SERVER-ONLY / FREE-TIER-ONLY / QUOTA-DORMANT  
 **Authority:** ADR-0088, ADR-0089, ADR-0090, SC-MD-SPT-0001
 
 ## Zweck
@@ -11,13 +11,14 @@ Diese Runtime darf ausschließlich mit einem Gemini Developer API **Free-Tier-Ke
 
 ## Aktueller externer Free-Tier-Vertrag
 
-Stand 2026-08-19 dokumentiert Google für `gemini-2.5-flash`:
+Stand 2026-09-18 dokumentiert Google für `gemini-2.5-flash`:
 
 - Input Tokens im Free Tier: kostenlos;
 - Output Tokens im Free Tier: kostenlos;
 - URL Context im Free Tier: kostenlos;
 - Google Search Grounding im Free Tier: bis zu 500 RPD kostenlos, geteilt mit Flash-Lite;
-- Free Tier ist in EWR/EU verfügbar.
+- Free Tier ist in EWR/EU verfügbar;
+- Requests-per-day (RPD) werden projektweit gezählt und um Mitternacht Pacific Time zurückgesetzt.
 
 Diese externen Bedingungen können sich ändern. **Vor jeder erstmaligen Aktivierung und nach jeder relevanten Google-Preis-/Quota-Änderung ist die offizielle Gemini Pricing/Billing/Rate-Limit-Dokumentation erneut zu prüfen.**
 
@@ -106,6 +107,19 @@ Diese Regeln verhindern **beabsichtigte** kostenpflichtige Nutzung. Die Plattfor
 8. Claims ohne belastbare Citation-Span-Bindung werden downstream verworfen.
 9. Research-Candidates bleiben `scoreEligible=false`.
 10. Kein Gemini-Consumer darf den Free-Tier-Factory umgehen.
+
+## Quota-Dormancy und automatische Wiederaufnahme
+
+Der Key wird bei ausgeschöpftem Free-Tier-Kontingent **nicht gelöscht oder rotiert**. Stattdessen ruht ausschließlich der Gemini-Netzwerkpfad.
+
+- Lokale Tagesbudgets verwenden denselben Pacific-Time-Tageswechsel wie Googles dokumentierte RPD-Quota.
+- Ein lokales Tagesbudget-Limit setzt die Runtime bis zur nächsten Pacific-Midnight-Grenze auf Dormancy.
+- Ein Provider-`429 RESOURCE_EXHAUSTED` setzt `QUOTA_DORMANT`.
+- Liefert Google `Retry-After`, wird exakt diese Freigabezeit verwendet.
+- Fehlt `Retry-After`, wird fail-closed bis zur nächsten Pacific-Midnight-Grenze pausiert.
+- Während Dormancy werden **keine** Gemini-Requests gesendet; der Secret-Key bleibt unverändert in der kanonischen Secret-Verwaltung.
+- Nach Ablauf der Freigabezeit darf der nächste zulässige Request den Provider automatisch wieder verwenden.
+- Dormancy autorisiert niemals Paid-Tier-Nutzung, Quota-Kauf, Billing-Aktivierung oder einen zweiten Key zur Quota-Umgehung.
 
 ## Provider Health / Telemetrie
 
