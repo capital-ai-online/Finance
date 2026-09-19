@@ -21,7 +21,7 @@ describe('GHCR digest publication contract', () => {
 
   it('requires keyless signature plus provenance and SBOM attestations', () => {
     expect(workflow).toContain('cosign sign --yes "$image_ref"');
-    expect(workflow).toContain('cosign attest --yes --type slsaprovenance');
+    expect(workflow).toContain('cosign attest --yes --type slsaprovenance1');
     expect(workflow).toContain('cosign attest --yes --type cyclonedx');
     expect(workflow).toContain('--certificate-oidc-issuer "$issuer"');
     expect(workflow).toContain('container-security.yml@refs/heads/main');
