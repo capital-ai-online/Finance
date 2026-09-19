@@ -21,7 +21,7 @@ function input(overrides: Partial<BusinessReadinessInput> = {}): BusinessReadine
     supabaseConfigured: true,
     iamSchemaHealthy: true,
     stripe: completeStripe,
-    optionalProviders: { alpaca: false, anthropic: false, openai: false },
+    optionalProviders: { anthropic: false, openai: false },
     ...overrides,
   };
 }
@@ -62,14 +62,13 @@ describe('business readiness', () => {
     expect(snapshot.blockingChecks.processHealthy).toBe(false);
   });
 
-  it('does not make optional AI or market-data-provider availability a restart condition', () => {
+  it('does not make optional AI-provider availability a restart condition', () => {
     const snapshot = evaluateBusinessReadiness(input({
-      optionalProviders: { alpaca: false, anthropic: false, openai: false },
+      optionalProviders: { anthropic: false, openai: false },
     }));
 
     expect(snapshot.ready).toBe(true);
     expect(snapshot.capabilities.optionalProviders).toEqual({
-      alpaca: false,
       anthropic: false,
       openai: false,
     });
