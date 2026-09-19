@@ -77,7 +77,7 @@ flowchart LR
 | **Platform Services** | Authentifizierung, Billing, Dokumenterzeugung, Traceability und unterstützende Plattformfähigkeiten |
 | **Delivery Plane** | Build, Tests, Supply-Chain-Evidence, Release- und Deployment-Kontrollen |
 
-Google Gemini und `@google/genai` gehören nicht mehr zur aktiven Anwendungsarchitektur.
+Google Gemini ist wieder als **server-only, Free-Tier-only Research-Evidence-Provider** Teil der aktiven Architektur. Der Zugriff erfolgt ausschließlich über den kanonischen REST-Transport in `server/researchEvidence/`; es gibt keinen Browser-Key, keinen Paid-Mode und keinen direkten Scoring-/Ranking-Pfad. Bei erschöpftem Free-Tier-Kontingent wechselt der Provider in `QUOTA_DORMANT` und sendet bis zur nächsten Provider-Freigabe keine Requests.
 
 ---
 
