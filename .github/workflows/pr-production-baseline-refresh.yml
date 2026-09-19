@@ -11,7 +11,7 @@ run-name: >-
 # - A main-CI trigger is accepted only when the exact main SHA also has a successful
 #   "Deployment verifiziert / Render-Produktion" job and /healthz reports that same SHA.
 # - Candidate code is checked out as data but never executed; all executed policy scripts come from main.
-# - The updater replaces only the canonical baseline block and is idempotent.
+# - The updater may repair only the explicitly allowlisted legacy v1.5 PR-body shape; otherwise it replaces only the canonical baseline block and is idempotent.
 # - Baseline writes and first-attempt stale-baseline races are rebound to an exact completed
 #   PR Governance run for the same PR/head/base. Race recovery is limited to run_attempt == 1,
 #   so a real Governance failure cannot create an automatic rerun loop.
@@ -123,6 +123,28 @@ jobs:
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
+      - name: PR-Scope für deterministischen Template-Fix klassifizieren
+        id: body_scope
+        if: steps.pr.outputs.eligible == 'true' && github.event.workflow_run.conclusion == 'failure'
+        working-directory: candidate
+        env:
+          PR_BASE_SHA: ${{ steps.policy_main.outputs.sha }}
+          PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: node ../policy/scripts/pr/classifyPrScope.mjs
+
+      - name: Fehlende kanonische PR-Abschnitte deterministisch reparieren
+        id: body_repair
+        if: steps.pr.outputs.eligible == 'true' && github.event.workflow_run.conclusion == 'failure'
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}
+          PR_CHECK_CLASS: ${{ steps.body_scope.outputs.class }}
+        run: node ../policy/scripts/pr/repairLegacyPrBodyStructure.mjs
+
       - name: Nur kanonischen Produktions-Baseline-Block aktualisieren
         id: refresh
         if: steps.pr.outputs.eligible == 'true'
@@ -134,7 +156,7 @@ jobs:
           PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
         run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
 
-      - name: Baseline-Write oder Race-Recovery an exakte PR-Governance binden
+      - name: Baseline-/Template-Write oder Race-Recovery an exakte PR-Governance binden
         if: steps.pr.outputs.eligible == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
@@ -142,6 +164,7 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}
           BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}
+          PR_BODY_REPAIRED: ${{ steps.body_repair.outputs.changed }}
         with:
           script: |
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
@@ -150,6 +173,7 @@ jobs:
             const expectedHeadSha = normalizeSha(process.env.EXPECTED_HEAD_SHA);
             const expectedMainSha = normalizeSha(process.env.EXPECTED_MAIN_SHA);
             const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';
+            const bodyRepaired = String(process.env.PR_BODY_REPAIRED || '').toLowerCase() === 'true';
             const sourceRun = context.payload.workflow_run;
 
             if (!Number.isInteger(prNumber) || prNumber <= 0) fail('PR-Nummer für Governance-Re-Run ist ungültig.');
@@ -209,11 +233,11 @@ jobs:
 
             const firstFailedAttempt =
               exactRun.conclusion === 'failure' && Number(exactRun.run_attempt || 1) === 1;
-            const shouldRerun = baselineChanged || firstFailedAttempt;
+            const shouldRerun = bodyRepaired || baselineChanged || firstFailedAttempt;
 
             if (!shouldRerun) {
               core.info(
-                `PR #${prNumber}: Baseline bereits korrekt; latest Governance ${exactRun.id} conclusion=${exactRun.conclusion} attempt=${exactRun.run_attempt || 1}; kein automatischer Re-Run.`,
+                `PR #${prNumber}: Baseline und PR-Body bereits korrekt; latest Governance ${exactRun.id} conclusion=${exactRun.conclusion} attempt=${exactRun.run_attempt || 1}; kein automatischer Re-Run.`,
               );
               return;
             }
@@ -224,9 +248,11 @@ jobs:
               run_id: exactRun.id,
             });
             core.notice(
-              baselineChanged
-                ? `PR #${prNumber}: Baseline-Write an exact-head/base Governance Run ${exactRun.id} gebunden; Governance wird erneut ausgeführt.`
-                : `PR #${prNumber}: Race-Recovery für bereits korrekte Baseline; fehlgeschlagener Governance Run ${exactRun.id} wird einmalig von attempt 1 erneut ausgeführt.`,
+              bodyRepaired
+                ? `PR #${prNumber}: kanonische PR-Body-Struktur deterministisch repariert; exact-head/base Governance Run ${exactRun.id} wird erneut ausgeführt.`
+                : baselineChanged
+                  ? `PR #${prNumber}: Baseline-Write an exact-head/base Governance Run ${exactRun.id} gebunden; Governance wird erneut ausgeführt.`
+                  : `PR #${prNumber}: Race-Recovery für bereits korrekte Baseline; fehlgeschlagener Governance Run ${exactRun.id} wird einmalig von attempt 1 erneut ausgeführt.`,
             );
 
       - name: Baseline-Status bestätigen
