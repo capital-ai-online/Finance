@@ -25,6 +25,11 @@ import {
   type CryptoOrchestratorResearchModelRequest,
 } from '../platform/Scoring/CryptoOrchestratorResearchModels';
 import {
+  evaluateAltcoinPatternResearchScore,
+  type AltcoinPatternResearchScoreAssessment,
+  type AltcoinPatternResearchScoreRequest,
+} from '../platform/FinTechCore/Modules/Crypto/Pattern/AltcoinPatternResearchScorer';
+import {
   orchestratorAgentRuntimeProjection,
   type OrchestratorAgentDescriptor,
 } from './agentRuntimeProjection';
@@ -89,6 +94,19 @@ export class CryptoOrchestrator {
     input: CryptoOrchestratorResearchModelRequest,
   ): CryptoOrchestratorResearchModelAssessment {
     return evaluateCryptoOrchestratorResearchModels(input);
+  }
+
+  /**
+   * Owner-reference altcoin pattern research projection.
+   *
+   * Pattern detection, exact reliability validation and resolver precedence stay in FT-2C. This
+   * adapter only delegates the supplied 4h/1d reference scoring profile and cannot create a
+   * CanonicalScoreResult, ranking/eligibility state or execution authorization.
+   */
+  public analyzeAltcoinPatternResearch(
+    input: AltcoinPatternResearchScoreRequest,
+  ): AltcoinPatternResearchScoreAssessment {
+    return evaluateAltcoinPatternResearchScore(input);
   }
 
   /**
