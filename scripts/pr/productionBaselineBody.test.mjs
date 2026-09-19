@@ -107,6 +107,30 @@ test('marker-free canonical section 3 is classified STALE and reconstructed atom
   assert.match(result.body, /## 4\. Umfang \/ Multi-Agent-Koordination\n\nOwner note after baseline stays$/);
 });
 
+test('marker-free v1.5 section 7 is reconstructed atomically without guessing', () => {
+  const baseline = validBaseline();
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->',
+    '# CAPITAL-AI Pull Request',
+    '',
+    '## 6. Prüfung',
+    '',
+    '- **Agent-Self-Merge:** Nein',
+    '',
+    '## 7. Maschinenlesbare Baseline',
+    '',
+    '{{PRODUCTION_BASELINE_BLOCK}}',
+  ].join('\n');
+
+  const result = replaceProductionBaselineBlock(body, baseline);
+
+  assert.equal(result.changed, true);
+  assert.equal(result.evidenceState, 'STALE');
+  assert.match(result.body, /## 7\. Maschinenlesbare Baseline/);
+  assert.match(result.body, /<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/);
+  assert.doesNotMatch(result.body, /\{\{PRODUCTION_BASELINE_BLOCK\}\}/);
+});
+
 test('partial or duplicate baseline markers remain fail-closed', () => {
   const baseline = validBaseline();
   const block = renderProductionBaselineBlock(baseline);
@@ -126,7 +150,7 @@ test('marker-free body without unique canonical section boundaries remains fail-
 
   assert.throws(
     () => replaceProductionBaselineBlock('kein Baseline-Block', baseline),
-    /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt 3/,
+    /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt/,
   );
 
   const duplicateHeading = [
@@ -138,6 +162,36 @@ test('marker-free body without unique canonical section boundaries remains fail-
   ].join('\n');
   assert.throws(
     () => replaceProductionBaselineBlock(duplicateHeading, baseline),
-    /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt 3/,
+    /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt/,
+  );
+});
+
+
+test('marker-free v1.5 body that predates section 7 gets one canonical terminal baseline section', () => {
+  const baseline = validBaseline();
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->',
+    '# CAPITAL-AI Pull Request',
+    '',
+    '## 6. Offene Grenze',
+    'Manual evidence remains untouched.',
+    '',
+    '## 8. Provider Evidence',
+    'Provider evidence remains untouched.',
+  ].join('\n');
+
+  const result = replaceProductionBaselineBlock(body, baseline);
+  assert.equal(result.changed, true);
+  assert.equal(result.evidenceState, 'STALE');
+  assert.match(result.body, /Provider evidence remains untouched\.\n\n## 7\. Maschinenlesbare Baseline\n\n<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/);
+  assert.equal((result.body.match(/## 7\. Maschinenlesbare Baseline/g) || []).length, 1);
+  assert.ok(result.body.includes(baseline.baselineId));
+});
+
+test('non-v1.5 marker-free body without canonical baseline section still fails closed', () => {
+  const baseline = validBaseline();
+  assert.throws(
+    () => replaceProductionBaselineBlock('# ad-hoc PR\nno canonical template marker', baseline),
+    /keinen eindeutig reparierbaren kanonischen Produktions-Baseline-Abschnitt/,
   );
 });

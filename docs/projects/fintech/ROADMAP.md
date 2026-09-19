@@ -1,46 +1,43 @@
 # CAPITAL-AI-FINTECH — Canonical Roadmap
 
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+**Baseline:** `main@2358642ff80f128e271e02ae88401008663578b7`
 
 **Project:** `CAPITAL-AI-FINTECH`  
 **Folder:** `docs/projects/fintech/`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-09..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-17 — historical task activation removed; PVC-09..11 ownership consolidated into FINTECH  
-**Trust root:** `/AGENTS.md@current-main`
+**Reconciliation:** 2026-09-17 — DATA ownership supersession and post-PR-#1039 baseline re-correlated  
+**Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
 
 `historical/non-terminal != active`
 
-This file is the temporary active FINTECH execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Historical/archive entries, old non-terminal markers, chat context and superseded branches are evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction.
+This file is the temporary active FINTECH execution projection until the separately requested Roadmap-removal work is freshly authorized and re-correlated. Historical/archive entries, old non-terminal markers, chat context and superseded branches are evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction.
 
 `CAPITAL-AI-DATA` is not an independent Project Owner. PVC-09, PVC-10 and PVC-11 are FINTECH-owned under `CAPITAL-AI-FINTECH-DATA-OWNERSHIP-SUPERSESSION-2026-09-17`.
 
-Canonical chain: Validated data → Feature Contract → ScoringModelRegistry → ScoringDispatcher → Domain Executor → CanonicalScoreResult → Ranking / Decision Support.
+Canonical chain: Provider/data ingress → Evidence/Provenance/Freshness → Data Quality → Validated data → Feature Contract → ScoringModelRegistry → ScoringDispatcher → Domain Executor → CanonicalScoreResult → Ranking / Decision Support.
 
-## PR #900 / #901 work packages
+## Current bounded work
 
-### FIN-PR900-01 — Verified data→feature→score→rank chain
-Consume fail-closed PVC-11 output, preserve feature lineage, keep PVC-16 canonical scoring before PVC-17 ranking and forbid synthetic production fallback.
+### FIN-12 — Validated data → Feature Contract
 
-### FIN-PR900-02 — F01/F06 AI-chat trust
-With CLIENT/PVC-01, separate retrieved/history data from instructions, preserve session/history role provenance and prove negative tests for indirect prompt injection and history-role spoofing.
+**State:** `P1 / SELECTED / PR #1037 RE-CORRELATION REQUIRED`
 
-### FIN-PR900-03 — Security entitlement child returns
-Complete FINTECH-owned authorization evidence for Backtest, Monte Carlo, `full_ai_analysis`, remaining Buffett consumer integration and other FINTECH capability slices without changing business entitlement semantics.
+The prior foreign DATA dependency is retired. Required provider/data/evidence/DQ semantics belong to `CAPITAL-AI-FINTECH / PVC-09..11`; the PVC-11→PVC-12 boundary remains fail-closed and internal to FINTECH. PR #1037 contains the bounded validated-data contract slice and must be correlated to the post-supersession `CURRENT_MAIN` before merge.
 
-### FIN-PR900-04 — SC-MD-SPT-0001 boundary preservation
-Re-correlate the exact current technical financial-stage boundary; no frontend-local or alternate scoring authority.
+### FINTECH startup/provider/promo-retirement
 
-### FIN-PR900-05 — Regulated expansion proposals
-Treat money-like/token or monetization concepts as proposals only until GOV/COMP/SEC/OPS/Human routing is complete.
+**State:** `SEPARATE PR #1046 / RE-CORRELATION REQUIRED`
+
+PR #1046 removes Alpaca/CoinGecko from bounded startup/readiness paths and retires `promo_redemptions` through a guarded migration. It is independent from FIN-12 implementation and requires its own fresh main/head/open-writer correlation before merge.
 
 ## Historical FINTECH work inventory — non-active unless currently revalidated
 
 | ID | Historical state / current gate |
 |---|---|
-| FIN-12 Validated data → Feature Contract | `PARTIAL / P1 — SELECTED` in prior projection; must be revalidated against current main before execution |
+| FIN-12 Validated data → Feature Contract | current bounded implementation in PR #1037; re-correlation required |
 | FIN-13 Scoring Models | `VERIFIED CORE / DRIFT WATCH` |
 | FIN-14 Scoring Orchestration | `VERIFIED CORE` |
 | FIN-15 Domain executors | `VERIFIED/PARTIAL`; independent Security return may remain |
@@ -81,9 +78,7 @@ FIN-17 is complete for the bounded authority split that previously blocked FIN-1
 
 FIN-17 is `DONE_MAIN / TERMINAL`; it is not an executable next slice.
 
-## FIN-12 historical selection note
-
-The prior projection selected `FIN-12 — Validated data → Feature Contract`. That selection does not self-reactivate. Before any FIN-12 execution, re-read `CURRENT_MAIN`, confirm the exact active FINTECH identity and revalidate the required PVC-09..11 input semantics under FINTECH ownership.
+## FIN-12 contract requirements
 
 Productive FINTECH feature builders may require:
 
@@ -95,7 +90,9 @@ Productive FINTECH feature builders may require:
 Those contract/provider/DQ semantics belong to `CAPITAL-AI-FINTECH / PVC-09..11`. FINTECH must preserve a single provider-normalization and Data Quality plane. Historical evidence remains in `evidence/FIN_12_VALIDATED_FEATURE_BOUNDARY_RECORRELATION_2026-09-16.md` but does not activate work by itself.
 
 ## Dependencies
+
 SEC verification, CLIENT trust boundary, OPS runtime/provider evidence, QM exact-head tests. PVC-09..11 data-ingress/evidence/DQ work is internal FINTECH ownership, not a foreign DATA-project dependency.
 
 ## Project exit gate
-One active FINTECH roadmap; PVC-09..17 ownership is coherent; canonical scoring/ranking and entitlement evidence are owner-correct; historical task state never self-activates; no parallel provider/DQ authority exists.
+
+One active FINTECH roadmap; PVC-09..17 ownership is coherent; canonical provider/DQ/scoring/ranking and entitlement evidence are owner-correct; historical task state never self-activates; no parallel provider/DQ authority exists.
