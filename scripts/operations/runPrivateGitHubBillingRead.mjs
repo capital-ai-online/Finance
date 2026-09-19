@@ -6,6 +6,7 @@ import {
   projectCostCenterInventoryEvidence,
   projectUsageInventoryEvidence,
 } from './githubBillingInventoryProjection.mjs';
+import { projectMonthlyBillingActuals } from './githubBillingMonthlyActualsProjection.mjs';
 
 function requiredEnv(name) {
   const value = String(process.env[name] || '').trim();
@@ -25,6 +26,11 @@ function readPrivateKey() {
 const clientId = requiredEnv('CAPITAL_AI_GITHUB_APP_CLIENT_ID');
 const enterprise = requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_SLUG');
 const privateKeyPem = readPrivateKey();
+const now = new Date();
+const billingPeriod = Object.freeze({
+  year: now.getUTCFullYear(),
+  month: now.getUTCMonth() + 1,
+});
 
 const auth = createGitHubAppInstallationAuthTransport({
   clientId,
@@ -40,13 +46,13 @@ const billing = createGitHubBillingGatewayAdapter({
 
 const [budgets, usageSummary, costCenters] = await Promise.all([
   billing.execute('github.billing.budgets.list'),
-  billing.execute('github.billing.usage.summary'),
+  billing.execute('github.billing.usage.summary', billingPeriod),
   billing.execute('github.billing.cost_centers.list'),
 ]);
 
 const output = Object.freeze({
   status: 'PASS',
-  mode: 'PRIVATE_SINGLE_USER_READ_INVENTORY',
+  mode: 'PRIVATE_SINGLE_USER_READ_MONTHLY_ACTUALS',
   enterprise,
   installationId: authEvidence.installationId,
   installationTokenExpiresAt: authEvidence.installationTokenExpiresAt,
@@ -54,7 +60,10 @@ const output = Object.freeze({
   budgets: projectBudgetInventoryEvidence(budgets),
   usage: projectUsageInventoryEvidence(usageSummary),
   costCenters: projectCostCenterInventoryEvidence(costCenters),
-  sensitiveAmountsLogged: false,
+  monthlyActuals: projectMonthlyBillingActuals(usageSummary),
+  amountSemantics: 'netAmount is the billed cost returned by GitHub usage summary',
+  billingAmountsLogged: true,
+  secretsOrTokensLogged: false,
 });
 
 process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
