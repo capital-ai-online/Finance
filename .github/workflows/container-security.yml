@@ -33,7 +33,7 @@ env:
 
 jobs:
   image-security:
-    name: Lockfile + hardened image / HIGH+CRITICAL CVE gate
+    name: Hardened image / HIGH+CRITICAL CVE gate
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -116,7 +116,7 @@ jobs:
           mkdir -p artifacts/container-security
           sha256sum package-lock.json | tee artifacts/container-security/package-lock.sha256
           npm ci --omit=dev --ignore-scripts
-          npm ls --omit=dev --all --json > artifacts/container-security/npm-production-graph.json
+          npm ls --omit=dev --all --json --package-lock-only > artifacts/container-security/npm-production-graph.json
           sha256sum artifacts/container-security/npm-production-graph.json | tee artifacts/container-security/npm-production-graph.sha256
 
       - name: Lockfile-/Production-Graph gegen aktuelle npm Advisories prüfen
