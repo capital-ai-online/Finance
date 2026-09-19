@@ -60,6 +60,13 @@ jobs:
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
         run: node scripts/operations/runPrivateGitHubBillingRead.mjs
 
+      - name: Read-only Enterprise License Usage Attribution
+        env:
+          CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
+        run: node scripts/operations/runPrivateGitHubLicenseUsageRead.mjs
+
       - name: Private Key aus Runner-Dateisystem entfernen
         if: always()
         shell: bash
