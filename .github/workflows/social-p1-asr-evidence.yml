@@ -1,6 +1,12 @@
 name: SOCIAL-P1 ASR Evidence
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/social-p1-asr-evidence.yml"
+      - "scripts/operations/socialP1AsrEvidence.py"
+      - "docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json"
   workflow_dispatch:
 
 permissions:
@@ -10,6 +16,12 @@ permissions:
 jobs:
   asr:
     name: transcribe-8-runtime-samples
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.event.pull_request.base.ref == 'main'
+          && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
