@@ -173,7 +173,7 @@ function emptyViewModel(): CryptoPatternTrooperViewModel {
     executionEligible: false as const,
     canonicalScoreImpact: 'NONE' as const,
     authority: 'RESEARCH' as const,
-    reason: 'FINTECH Pattern-Research-Evidence ist noch nicht an diese Präsentationsfläche gebunden.',
+    reason: 'Keine attestierte FINTECH Pattern-Research-Projektion für den gewählten Asset-/Timeframe-Kontext verfügbar.',
   });
 }
 
