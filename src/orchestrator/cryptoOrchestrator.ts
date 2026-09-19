@@ -130,6 +130,13 @@ export class CryptoOrchestrator {
         throw new Error('ALTCOIN_PATTERN_VIEW_PRIMARY_ASSET_MISMATCH');
       }
 
+      const evidenceRefs = [
+        ...assessment.evidenceRefs,
+        ...(input.resolution.primary?.evidence.evidenceRefs ?? []),
+        ...(input.resolution.primary?.reliability.evidenceRefs ?? []),
+        ...input.confirmation.evidenceRefs,
+      ];
+
       altcoinPatternResearchProjectionStore.publish(
         createAltcoinPatternResearchViewProjection({
           assetId,
@@ -139,6 +146,7 @@ export class CryptoOrchestrator {
           publishedAt: viewContext.publishedAt,
           correlationId: viewContext.correlationId,
           assessment,
+          evidenceRefs,
         }),
       );
     }
