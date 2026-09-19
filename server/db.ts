@@ -50,7 +50,7 @@ export function assertPrivilegedSupabaseConfigured(context = 'privileged Supabas
   if (!getPrivilegedSupabaseKey()) {
     throw new Error(
       `[Supabase][SECURITY] ${context} blocked: SUPABASE_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY is missing; `
-      + 'publishable fallback is forbidden for privileged operations.'
+      + 'publishable/anon fallback is forbidden for privileged operations.'
     );
   }
 }
