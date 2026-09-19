@@ -35,7 +35,7 @@ jobs:
   image-security:
     name: Hardened image / HIGH+CRITICAL CVE gate
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: PR-Snapshot gegen Live-Head/Base korrelieren
         id: snapshot
@@ -66,7 +66,7 @@ jobs:
 
       - name: Stale PR-Event kostensparend beenden
         if: github.event_name == 'pull_request' && steps.snapshot.outputs.current_snapshot == 'false'
-        run: echo 'Stale PR-Snapshot erkannt; kein Checkout, Docker-Build oder Trivy-Scan für veraltete Evidence.'
+        run: echo 'Stale PR-Snapshot erkannt; kein Checkout, Docker-Build oder CVE-Scan für veraltete Evidence.'
 
       - name: Repository auschecken
         if: github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true'
@@ -102,19 +102,152 @@ jobs:
 
       - name: Kostensparpfad — kein Container-Scope
         if: (github.event_name != 'pull_request' || steps.snapshot.outputs.current_snapshot == 'true') && steps.scope.outputs.required != 'true'
-        run: echo 'Kein containerrelevanter Diff; Required-Check-Kontext bleibt PASS ohne Docker-Build/Trivy-Scan.'
+        run: echo 'Kein containerrelevanter Diff; Required-Check-Kontext bleibt PASS ohne Docker-Build/CVE-Scan.'
 
       - name: Docker-Hardening-Invarianten prüfen
         if: steps.scope.outputs.required == 'true'
         run: node scripts/security/verifyDockerHardening.mjs
 
-      - name: Produktionsimage aus exakt diesem Commit bauen
+      - name: Lockfile-Identität und exakten Production-Graph erfassen
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/container-security
+          sha256sum package-lock.json | tee artifacts/container-security/package-lock.sha256
+          npm ci --omit=dev --ignore-scripts
+          npm ls --omit=dev --all --json --package-lock-only > artifacts/container-security/npm-production-graph.json
+          sha256sum artifacts/container-security/npm-production-graph.json | tee artifacts/container-security/npm-production-graph.sha256
+
+      - name: Lockfile-/Production-Graph gegen aktuelle npm Advisories prüfen
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p artifacts/container-security
+          npm audit --omit=dev --json > artifacts/container-security/npm-audit-production.json
+          status=$?
+          NPM_AUDIT_STATUS="$status" node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('artifacts/container-security/npm-audit-production.json', 'utf8'));
+          const auditStatus = Number(process.env.NPM_AUDIT_STATUS);
+          if (!Number.isInteger(auditStatus) || auditStatus < 0) {
+            throw new Error(`Invalid npm audit exit status: ${String(process.env.NPM_AUDIT_STATUS)}`);
+          }
+          if (report?.error || report?.statusCode || report?.message && !report?.metadata?.vulnerabilities) {
+            throw new Error(`npm audit returned an advisory-service error response: ${JSON.stringify({
+              statusCode: report?.statusCode ?? null,
+              error: report?.error ?? null,
+              message: report?.message ?? null,
+            })}`);
+          }
+          const v = report?.metadata?.vulnerabilities;
+          if (!v || typeof v !== 'object' || Array.isArray(v)) {
+            throw new Error('npm audit response is missing metadata.vulnerabilities; refusing false-clean evidence.');
+          }
+          const fields = ['critical', 'high', 'moderate', 'low', 'total'];
+          for (const field of fields) {
+            if (!Number.isFinite(Number(v[field])) || Number(v[field]) < 0) {
+              throw new Error(`npm audit response has invalid vulnerabilities.${field}: ${String(v[field])}`);
+            }
+          }
+          const summary = {
+            critical: Number(v.critical),
+            high: Number(v.high),
+            moderate: Number(v.moderate),
+            low: Number(v.low),
+            total: Number(v.total),
+          };
+
+          const vulnerabilities = Object.entries(report.vulnerabilities ?? {})
+            .map(([name, finding]) => ({
+              name,
+              severity: String(finding?.severity ?? 'unknown'),
+              isDirect: Boolean(finding?.isDirect),
+              fixAvailable: finding?.fixAvailable ?? false,
+              via: Array.isArray(finding?.via)
+                ? finding.via.map(item => typeof item === 'string' ? item : {
+                    source: item?.source ?? null,
+                    name: item?.name ?? null,
+                    severity: item?.severity ?? null,
+                    title: item?.title ?? null,
+                    url: item?.url ?? null,
+                  })
+                : [],
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+          const remediationCandidates = vulnerabilities
+            .filter(item => item.fixAvailable !== false)
+            .map(item => ({
+              ...item,
+              codeRelevant: item.isDirect || ['moderate', 'high', 'critical'].includes(item.severity),
+              requiresReview: true,
+            }));
+
+          fs.writeFileSync(
+            'artifacts/container-security/npm-audit-summary.json',
+            JSON.stringify(summary, null, 2) + '\n',
+          );
+          fs.writeFileSync(
+            'artifacts/container-security/npm-audit-remediation-candidates.json',
+            JSON.stringify({
+              schemaVersion: '1.0.0',
+              policy: {
+                ignoreCodeRelevantSuggestions: false,
+                autoForceFix: false,
+                blockingSeverities: ['high', 'critical'],
+                reviewRule: 'All fixAvailable findings are evidence; code-relevant candidates require explicit remediation review.',
+              },
+              candidates: remediationCandidates,
+            }, null, 2) + '\n',
+          );
+
+          for (const item of remediationCandidates.filter(item => item.codeRelevant)) {
+            console.warn(`::warning::npm audit remediation candidate: ${item.name} severity=${item.severity} direct=${item.isDirect} fixAvailable=${JSON.stringify(item.fixAvailable)}`);
+          }
+
+          if (auditStatus !== 0 && summary.total === 0) {
+            throw new Error(`npm audit exited ${auditStatus} without vulnerability evidence; advisory check did not complete cleanly.`);
+          }
+          if (auditStatus > 1) {
+            throw new Error(`npm audit exited with unexpected status ${auditStatus}; refusing to classify infrastructure/tool failure as vulnerability-only output.`);
+          }
+          if (summary.critical > 0 || summary.high > 0) {
+            console.error(`::error::Production lock graph contains ${summary.critical} CRITICAL and ${summary.high} HIGH npm advisories.`);
+            process.exit(1);
+          }
+          NODE
+          node_status=$?
+          if [ "$node_status" -ne 0 ]; then exit "$node_status"; fi
+          # npm audit may use a non-zero code for vulnerability classes already evaluated above.
+          # Any malformed/unavailable report is caught by the JSON parser and fails closed.
+          printf 'npm audit exit code: %s\n' "$status" > artifacts/container-security/npm-audit-exit-code.txt
+
+      - name: Produktionsimage aus exakt diesem Commit bauen und OCI-Metadaten erfassen
         if: steps.scope.outputs.required == 'true'
         shell: bash
         run: |
           set -euo pipefail
           test "$SOURCE_SHA" = "$(git rev-parse HEAD)"
-          docker build --build-arg RELEASE_SOURCE_COMMIT="$SOURCE_SHA" --tag "capital-ai-security:$SOURCE_SHA" .
+          mkdir -p artifacts/container-security
+          docker buildx build \
+            --load \
+            --build-arg RELEASE_SOURCE_COMMIT="$SOURCE_SHA" \
+            --metadata-file artifacts/container-security/buildx-metadata.json \
+            --iidfile artifacts/container-security/image-id.txt \
+            --tag "capital-ai-security:$SOURCE_SHA" \
+            .
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const metadata = JSON.parse(fs.readFileSync('artifacts/container-security/buildx-metadata.json', 'utf8'));
+          const digest = metadata['containerimage.digest'];
+          if (typeof digest !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(digest)) {
+            throw new Error(`Missing/invalid OCI containerimage.digest: ${String(digest)}`);
+          }
+          fs.writeFileSync('artifacts/container-security/oci-image-digest.txt', `${digest}\n`);
+          NODE
+          printf '%s\n' "$SOURCE_SHA" > artifacts/container-security/source-sha.txt
 
       - name: Runtime-Metadaten und Angriffsfläche fail-closed prüfen
         if: steps.scope.outputs.required == 'true'
@@ -162,17 +295,7 @@ jobs:
             fi
           done
 
-      - name: Finale Image-ID als Supply-Chain-Evidence erfassen
-        if: steps.scope.outputs.required == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts/container-security
-          image="capital-ai-security:$SOURCE_SHA"
-          docker image inspect "$image" --format '{{.Id}}' > artifacts/container-security/image-id.txt
-          printf '%s\n' "$SOURCE_SHA" > artifacts/container-security/source-sha.txt
-
-      - name: CycloneDX-SBOM aus dem finalen Runtime-Image erzeugen
+      - name: CycloneDX-SBOM aus dem finalen geprunten Runtime-Image erzeugen
         if: steps.scope.outputs.required == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -191,20 +314,72 @@ jobs:
           expected="${TRIVY_VERSION#v}"
           test -n "$actual"
           test "$actual" = "$expected"
-          printf 'Verified Trivy CLI %s\n' "$actual"
+          printf 'Verified Trivy CLI %s\n' "$actual" | tee artifacts/container-security/trivy-version.txt
+
+      - name: Final-SBOM hashen und Source/Lock/OCI-Kette beweisbar binden
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum artifacts/container-security/runtime-image-sbom.cdx.json | tee artifacts/container-security/runtime-image-sbom.sha256
+          node --input-type=module <<'NODE'
+          import crypto from 'node:crypto';
+          import fs from 'node:fs';
+          const sha256 = (path) => crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex');
+          const sourceSha = fs.readFileSync('artifacts/container-security/source-sha.txt', 'utf8').trim();
+          const lockSha = sha256('package-lock.json');
+          const graphSha = sha256('artifacts/container-security/npm-production-graph.json');
+          const sbomSha = sha256('artifacts/container-security/runtime-image-sbom.cdx.json');
+          const ociDigest = fs.readFileSync('artifacts/container-security/oci-image-digest.txt', 'utf8').trim();
+          const evidence = {
+            schemaVersion: '1.0.0',
+            sourceCommit: sourceSha,
+            packageLockSha256: lockSha,
+            productionGraphSha256: graphSha,
+            finalSbomSha256: sbomSha,
+            ociImageDigest: ociDigest,
+            chain: [
+              'package-lock.json',
+              'npm ci --omit=dev',
+              'Dockerfile hardening/pruning',
+              'FINAL CycloneDX SBOM',
+              'SBOM SHA-256',
+              'OCI image digest',
+              'Git SHA / Release Manifest',
+            ],
+          };
+          if (!/^[0-9a-f]{40}$/.test(sourceSha)) throw new Error('invalid source commit binding');
+          if (!/^sha256:[0-9a-f]{64}$/.test(ociDigest)) throw new Error('invalid OCI digest binding');
+          fs.writeFileSync('artifacts/container-security/final-supply-chain-binding.json', JSON.stringify(evidence, null, 2) + '\n');
+          NODE
+
+      - name: Vollständige CVE-Evidence für finales OCI-Image erzeugen
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="capital-ai-security:$SOURCE_SHA"
+          trivy image \
+            --scanners vuln \
+            --vuln-type os,library \
+            --format json \
+            --output artifacts/container-security/trivy-runtime-vulnerabilities.json \
+            "$image"
+          sha256sum artifacts/container-security/trivy-runtime-vulnerabilities.json | tee artifacts/container-security/trivy-runtime-vulnerabilities.sha256
 
       - name: Fixbare HIGH/CRITICAL Schwachstellen im finalen Image blockieren
         if: steps.scope.outputs.required == 'true'
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          version: ${{ env.TRIVY_VERSION }}
-          skip-setup-trivy: 'true'
-          image-ref: capital-ai-security:${{ env.SOURCE_SHA }}
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'HIGH,CRITICAL'
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy image \
+            --scanners vuln \
+            --vuln-type os,library \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --format table \
+            "capital-ai-security:$SOURCE_SHA"
 
       - name: Container-Security-Evidence unveränderlich zum Run ablegen
         if: always() && steps.scope.outputs.required == 'true'

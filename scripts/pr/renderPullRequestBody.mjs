@@ -29,6 +29,31 @@ function cleanCell(value) {
   return String(value ?? '').replace(/`/g, '').replace(/\*\*/g, '').trim();
 }
 
+const PRIORITY_PRESENTATION = Object.freeze({
+  P0: 'P0 🔴 Kritisch',
+  P1: 'P1 🟠 Hoch',
+  P2: 'P2 🟡 Normal',
+  P3: 'P3 🟢 Niedrig',
+});
+
+const VERSION_IMPACT_PRESENTATION = Object.freeze({
+  NOT_EVALUATED: 'NOT_EVALUATED ⚪',
+  NONE: 'NONE ➖',
+  PATCH: 'PATCH 🩹',
+  MINOR: 'MINOR ✨',
+  MAJOR: 'MAJOR 💥',
+});
+
+function normalizePriority(value) {
+  const key = String(value || '').trim().toUpperCase().match(/^P[0-3]/)?.[0] || 'P2';
+  return PRIORITY_PRESENTATION[key];
+}
+
+function normalizeVersionImpact(value) {
+  const key = String(value || '').trim().toUpperCase().split(/\s+/)[0];
+  return VERSION_IMPACT_PRESENTATION[key] || VERSION_IMPACT_PRESENTATION.NOT_EVALUATED;
+}
+
 function resolveProjectPresentation(projectId) {
   const markdown = fs.readFileSync(projectMappingPath, 'utf8');
   const marker = '## Canonical project-folder routing';
@@ -112,6 +137,21 @@ const projectId = String(claim.projectId || process.env.PR_PROJECT_ID || 'N/A').
 const affectedPvc = String(claim.projectStage || process.env.PR_AFFECTED_PVC || 'N/A').trim();
 const primaryOwner = String(process.env.PR_PRIMARY_OWNER || projectId || 'N/A').trim();
 const agentClient = String(process.env.PR_AGENT_CLIENT || 'ChatGPT').trim();
+const priority = normalizePriority(process.env.PR_PRIORITY || claim.priority || 'P2');
+const priorityReason = String(
+  process.env.PR_PRIORITY_REASON ||
+  claim.priorityReason ||
+  'Standardpriorität — keine P0/P1-Eskalation ist im Work Claim belegt.',
+).trim();
+const versionImpact = normalizeVersionImpact(process.env.PR_VERSION_IMPACT || 'NOT_EVALUATED');
+const versionImpactReason = String(
+  process.env.PR_VERSION_IMPACT_REASON ||
+  'Keine deterministische Versionsevidence wurde an den PR-Renderer übergeben.',
+).trim();
+const versionManagerCheck = String(
+  process.env.PR_VERSION_MANAGER_CHECK ||
+  'NOT_RUN — fokussierter Function-Smoke ist als PR-Check vorgesehen und benötigt Human-Freigabe.',
+).trim();
 
 if (!projectId || projectId === 'N/A') fail('Kanonischer PR-Titel erfordert eine aufgelöste PROJECT-ID.');
 if (!agentClient) fail('Kanonischer PR-Titel erfordert einen faktischen Agent-Client.');
@@ -127,6 +167,11 @@ const targetPresentation = resolveProjectPresentation(targetProjectId);
 
 const replacements = {
   WORK_ITEM: workItem,
+  PRIORITY: priority,
+  PRIORITY_REASON: priorityReason,
+  VERSION_IMPACT: versionImpact,
+  VERSION_IMPACT_REASON: versionImpactReason,
+  VERSION_MANAGER_CHECK: versionManagerCheck,
   CLAIM_ID: claim.claimId,
   CLAIM_FILE: claimPath,
   HEAD_BRANCH: headBranch,

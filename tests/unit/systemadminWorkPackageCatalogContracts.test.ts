@@ -43,6 +43,7 @@ describe('Generalized Systemadmin work-package catalog contracts', () => {
 
   it('the catalog generator only produces trusted, deterministic content from bounded metadata', () => {
     const entry = lookupWorkPackage('GENERALIZATION-PROOF');
+    if (!entry) throw new Error('GENERALIZATION-PROOF catalog entry must exist');
     const content = entry.generate({
       request: { mandateId: entry.mandateId, roadmapItem: entry.roadmapItem, baseSha: '0'.repeat(40), branchName: 'agent/systemadmin-work-package-gen-proof-1' },
       issueNumber: 999,

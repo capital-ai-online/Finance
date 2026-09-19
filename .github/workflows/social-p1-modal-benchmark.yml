@@ -1,0 +1,193 @@
+name: SOCIAL-P1 Modal Runtime Benchmark
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/social-p1-modal-benchmark.yml"
+      - "scripts/operations/socialP1ModalRuntime.py"
+      - "scripts/operations/socialP1TtsRuntime.py"
+      - "scripts/operations/socialP1TtsEvidence.ts"
+      - "server/socialMedia/p1Benchmark.ts"
+      - "server/socialMedia/voiceContract.ts"
+      - "docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json"
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact repository commit to benchmark
+        required: true
+        type: string
+      expected_head_ref:
+        description: Exact authorized SOCIAL-P1 runtime branch
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: social-p1-modal-${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  modal-runtime:
+    name: real-8-case-modal-runtime
+    if: >-
+      (github.event_name == 'pull_request'
+       && github.event.pull_request.head.repo.full_name == github.repository
+       && github.event.pull_request.base.ref == 'main'
+       && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-modal-runtime-'))
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
+      SOURCE_REF: ${{ github.event.pull_request.head.ref || inputs.expected_head_ref }}
+      RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
+      MODAL_STARTER_MONTHLY_BUDGET_USD: "30.00"
+
+    steps:
+      - name: Verify exact authorized snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SOURCE_SHA"
+          test -n "$SOURCE_REF"
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$SOURCE_REF" == agent/operations-social-p1-modal-runtime-* ]]
+          test -n "$MODAL_TOKEN_ID"
+          test -n "$MODAL_TOKEN_SECRET"
+
+      - name: Checkout exact benchmark source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned Modal client
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "modal==1.5.3"
+          modal token info >/dev/null
+
+      - name: Modal Starter billing preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p modal-billing
+          modal billing summary --for "this month" --json > modal-billing/summary.json
+          modal billing report --for "this month" --show-resources --json > modal-billing/report.json
+          python - <<'PY'
+          import json
+          import os
+          from decimal import Decimal, InvalidOperation
+          from pathlib import Path
+
+          budget = Decimal(os.environ["MODAL_STARTER_MONTHLY_BUDGET_USD"])
+          summary_path = Path("modal-billing/summary.json")
+          summary = json.loads(summary_path.read_text(encoding="utf-8"))
+
+          if not isinstance(summary, dict):
+              raise SystemExit("Modal billing preflight: unexpected summary JSON shape")
+
+          raw_metered = summary.get("metered_cost")
+          if raw_metered is None:
+              raise SystemExit("Modal billing preflight: metered_cost missing; fail closed")
+
+          try:
+              metered = Decimal(str(raw_metered))
+          except (InvalidOperation, ValueError) as exc:
+              raise SystemExit(
+                  f"Modal billing preflight: invalid metered_cost {raw_metered!r}"
+              ) from exc
+
+          remaining = budget - metered
+          print(
+              f"Modal billing preflight: metered_cost_usd={metered} "
+              f"starter_budget_usd={budget} remaining_usd={remaining}"
+          )
+
+          if remaining <= 0:
+              raise SystemExit(
+                  "Modal Starter billing preflight blocked: monthly metered usage "
+                  "has reached or exceeded the $30 compute budget."
+              )
+          PY
+
+      - name: Upload Modal billing preflight evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-p1-modal-billing-${{ env.SOURCE_SHA }}-${{ env.RUN_KEY }}
+          path: modal-billing/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Execute real SOCIAL-P1 4x2 benchmark on Modal L40S
+        shell: bash
+        run: |
+          set -euo pipefail
+          modal run scripts/operations/socialP1ModalRuntime.py             --source-sha "$SOURCE_SHA"             --run-key "$RUN_KEY"
+
+      - name: Download immutable runtime evidence from Modal Volume
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p modal-evidence
+          modal volume get             capital-ai-social-p1-evidence             "/runs/$SOURCE_SHA/$RUN_KEY"             modal-evidence
+
+      - name: Verify complete real runtime bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          paths = list(Path("modal-evidence").rglob("runtime-evidence.partial.json"))
+          combined = [
+              path
+              for path in paths
+              if path.parent.name not in {"qwen3-tts", "chatterbox-multilingual-v3"}
+          ]
+          if len(combined) != 1:
+              raise SystemExit(f"expected one combined runtime bundle, found {combined}")
+
+          value = json.loads(combined[0].read_text(encoding="utf-8"))
+          assert value["benchmark_eligible"] is True
+          assert value["complete_matrix"] is True
+          assert value["actual_run_count"] == 8
+          records = value["runtime_records"]
+          assert len(records) == 8
+          assert len({record["benchmark_case_id"] for record in records}) == 8
+
+          for record in records:
+              audio = record["audio"]
+              runtime = record["runtime"]
+              timing = record["timing"]
+              assert len(audio["sha256"]) == 64
+              assert audio["duration_ms"] > 0
+              assert timing["total_latency_ms"] > 0
+              assert timing["realtime_factor"] > 0
+              assert len(runtime["dependency_sha256"]) == 64
+              assert len(runtime["model_artifact_sha256"]) == 64
+
+          print("SOCIAL-P1 Modal runtime: REAL_RUNTIME_EVIDENCE 8/8 generated")
+          print("Transcript/listening/final validator remain separate gates.")
+          PY
+
+      - name: Upload runtime evidence and WAV files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-p1-modal-runtime-${{ env.SOURCE_SHA }}-${{ env.RUN_KEY }}
+          path: modal-evidence/
+          if-no-files-found: error
+          retention-days: 14

@@ -25,8 +25,6 @@ services:
         sync: false
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
         sync: false
-      - key: VITE_SUPABASE_ANON_KEY
-        sync: false
       # Public hCaptcha browser sitekey. The secret key remains exclusively in Supabase Auth.
       - key: VITE_HCAPTCHA_SITE_KEY
         sync: false
@@ -76,7 +74,7 @@ services:
       # Gemini quotas are project-scoped, not API-key-scoped; no second key is configured merely
       # to multiply Free-Tier capacity.
       - key: GEMINI_RESEARCH_SHADOW_ENABLED
-        value: "false"
+        value: "true"
       - key: GEMINI_RESEARCH_FREE_TIER_ONLY
         value: "true"
       - key: GEMINI_RESEARCH_FREE_TIER_ATTESTED

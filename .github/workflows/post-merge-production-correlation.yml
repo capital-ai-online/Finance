@@ -28,6 +28,7 @@ jobs:
           PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
           SLA_MILLISECONDS: '300000'
           POLL_MILLISECONDS: '15000'
+          CONVERGENCE_MILLISECONDS: '600000'
           DRIFT_ISSUE_TITLE: '[AUTO] Production drift — Render/Main correlation'
           DRIFT_ISSUE_LABEL: production-drift
         with:
@@ -37,6 +38,7 @@ jobs:
             const healthUrl = process.env.PRODUCTION_HEALTH_URL;
             const slaMs = Number(process.env.SLA_MILLISECONDS || '300000');
             const pollMs = Number(process.env.POLL_MILLISECONDS || '15000');
+            const convergenceMs = Number(process.env.CONVERGENCE_MILLISECONDS || '600000');
             const issueTitle = process.env.DRIFT_ISSUE_TITLE;
             const issueLabel = process.env.DRIFT_ISSUE_LABEL;
             const marker = '<!-- CAPITAL_AI_PRODUCTION_DRIFT_AUTO -->';
@@ -61,6 +63,7 @@ jobs:
             }
             const commitTimeMs = Date.parse(commitTimestamp);
             const slaDeadlineMs = commitTimeMs + slaMs;
+            const convergenceDeadlineMs = commitTimeMs + convergenceMs;
 
             async function readProduction() {
               try {
@@ -110,12 +113,12 @@ jobs:
             }
 
             let production = await readProduction();
-            let ciEvidence = { run: null, job: null, step: null };
+            let ciEvidence = context.eventName === 'push'
+              ? await inspectCiDeployTrigger()
+              : { run: null, job: null, step: null };
 
             if (context.eventName === 'push') {
-              while (Date.now() <= slaDeadlineMs) {
-                ciEvidence = await inspectCiDeployTrigger();
-                production = await readProduction();
+              while (Date.now() <= convergenceDeadlineMs) {
                 const triggerStarted = Boolean(ciEvidence.step?.started_at);
                 const productionConverged = production.reachable
                   && production.status === 'ok'
@@ -123,9 +126,11 @@ jobs:
                   && (!production.branch || production.branch === 'main')
                   && (!production.repoSlug || production.repoSlug === `${owner}/${repo}`);
                 if (triggerStarted && productionConverged) break;
-                const remaining = slaDeadlineMs - Date.now();
+                const remaining = convergenceDeadlineMs - Date.now();
                 if (remaining <= 0) break;
                 await new Promise(resolve => setTimeout(resolve, Math.min(pollMs, remaining)));
+                ciEvidence = await inspectCiDeployTrigger();
+                production = await readProduction();
               }
             }
 

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import * as ts from 'typescript';
+import { transformSync } from 'esbuild';
 
 export const AST_GREP_PACKAGE = '@ast-grep/cli';
 export const AST_GREP_VERSION = '0.45.3';
@@ -105,13 +105,16 @@ export function assertTypeScriptSyntax(filePath: string, source: string): void {
   const extension = extname(filePath).toLowerCase();
   if (!['.ts', '.tsx', '.mts', '.cts'].includes(extension)) return;
 
-  const scriptKind = extension === '.tsx' ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, scriptKind);
-  const diagnostics = (sourceFile as ts.SourceFile & { parseDiagnostics?: readonly ts.Diagnostic[] }).parseDiagnostics ?? [];
-  if (diagnostics.length > 0) {
-    const message = diagnostics
-      .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'))
-      .join('; ');
+  try {
+    transformSync(source, {
+      loader: extension === '.tsx' ? 'tsx' : 'ts',
+      sourcefile: filePath,
+      target: 'esnext',
+      format: 'esm',
+      logLevel: 'silent',
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     throw new Error(`TypeScript parse failed for ${filePath}: ${message}`);
   }
 }

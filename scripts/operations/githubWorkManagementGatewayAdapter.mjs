@@ -69,6 +69,7 @@ export const WIKI_NAVIGATION_PAGES = Object.freeze({
   ].join('\n'),
 });
 
+/** @returns {never} */
 function fail(message) {
   throw new Error(`[GITHUB-WORK-MANAGEMENT-GATEWAY] ${message}`);
 }
@@ -161,6 +162,17 @@ async function listMilestones(githubRest, owner, repo) {
   fail(`milestone pagination exceeded safety limit of ${MAX_MILESTONE_PAGES} pages`);
 }
 
+/**
+ * @param {{
+ *   githubRest?: (request: { method: string; path: string; body?: Record<string, unknown> }) => Promise<any>;
+ *   wikiTransport?: {
+ *     readPage(input: { wikiRepository: string; page: string }): Promise<string>;
+ *     writePage(input: { wikiRepository: string; page: string; content: string }): Promise<void>;
+ *   };
+ *   owner?: string;
+ *   repo?: string;
+ * }} [options]
+ */
 export function createGitHubWorkManagementGatewayAdapter({
   githubRest = undefined,
   wikiTransport = undefined,

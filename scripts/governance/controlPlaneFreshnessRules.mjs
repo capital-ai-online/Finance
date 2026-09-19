@@ -70,7 +70,9 @@ export function validateCurrentStateProjectionFreshness({ filePath, text, expect
   return findings;
 }
 
-export function extractAuthorityMetadata({ text = '', jsonValue = null } = {}) {
+/** @param {{ text?: string; jsonValue?: Record<string, any> | null }} [options] */
+export function extractAuthorityMetadata(options) {
+  const { text = '', jsonValue = null } = options ?? {};
   if (jsonValue && typeof jsonValue === 'object' && !Array.isArray(jsonValue)) {
     return {
       authorityId: typeof jsonValue.authorityId === 'string' ? jsonValue.authorityId.trim() : null,
@@ -84,15 +86,27 @@ export function extractAuthorityMetadata({ text = '', jsonValue = null } = {}) {
   };
 }
 
-export function validateAuthorityProjection({
-  filePath,
-  expectedAuthorityId,
-  expectedVersion,
-  text = '',
-  jsonValue = null,
-  requireAuthorityId = false,
-  requireVersion = false,
-}) {
+/**
+ * @param {{
+ *   filePath: string;
+ *   expectedAuthorityId: string;
+ *   expectedVersion: string;
+ *   text?: string;
+ *   jsonValue?: Record<string, any> | null;
+ *   requireAuthorityId?: boolean;
+ *   requireVersion?: boolean;
+ * }} options
+ */
+export function validateAuthorityProjection(options) {
+  const {
+    filePath,
+    expectedAuthorityId,
+    expectedVersion,
+    text = '',
+    jsonValue = null,
+    requireAuthorityId = false,
+    requireVersion = false,
+  } = options;
   const findings = [];
   const metadata = extractAuthorityMetadata({ text, jsonValue });
 

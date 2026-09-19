@@ -23,12 +23,25 @@ describe('post-merge production correlation workflow', () => {
 
   it('binds the five-minute SLA to the exact CI deploy-hook step and production identity', () => {
     expect(workflow).toContain("SLA_MILLISECONDS: '300000'");
+    expect(workflow).toContain("CONVERGENCE_MILLISECONDS: '600000'");
     expect(workflow).toContain("workflow_id: 'ci.yml'");
     expect(workflow).toContain("candidate.name === 'Deployment verifiziert / Render-Produktion'");
     expect(workflow).toContain("candidate.name === 'Render-Deployment für verifizierten main-Commit auslösen'");
     expect(workflow).toContain("response.headers.get('x-capital-ai-commit')");
     expect(workflow).toContain("response.headers.get('x-capital-ai-branch')");
     expect(workflow).toContain("response.headers.get('x-capital-ai-repo')");
+  });
+
+  it('reads historical deploy evidence before polling so runner queue delay cannot create false drift', () => {
+    const evidenceInit = "let ciEvidence = context.eventName === 'push'\n              ? await inspectCiDeployTrigger()";
+    const pollingLoop = "while (Date.now() <= convergenceDeadlineMs)";
+    expect(workflow).toContain(evidenceInit);
+    expect(workflow.indexOf(evidenceInit)).toBeLessThan(workflow.indexOf(pollingLoop));
+    expect(workflow).toContain('const triggerStarted = Boolean(ciEvidence.step?.started_at)');
+    expect(workflow).toContain('const triggerDeltaMs = triggerStartedAt ? Date.parse(triggerStartedAt) - commitTimeMs : null');
+    expect(workflow).toContain('triggerDeltaMs >= 0 && triggerDeltaMs <= slaMs');
+    expect(workflow).toContain('const convergenceDeadlineMs = commitTimeMs + convergenceMs');
+    expect(workflow).toContain('const remaining = convergenceDeadlineMs - Date.now()');
   });
 
   it('deduplicates production-drift issues and closes them after recovery', () => {
