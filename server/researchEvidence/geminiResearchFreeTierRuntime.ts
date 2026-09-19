@@ -7,9 +7,9 @@ import {
   type GeminiResearchShadowRuntime,
 } from './geminiResearchTransport';
 
-export const GEMINI_RESEARCH_FREE_TIER_POLICY_VERSION = 'gemini-research-free-tier-policy/1.0.0' as const;
+export const GEMINI_RESEARCH_FREE_TIER_POLICY_VERSION = 'gemini-research-free-tier-policy/1.1.0' as const;
 export const GEMINI_RESEARCH_FREE_TIER_MODEL = 'gemini-2.5-flash' as const;
-export const GEMINI_RESEARCH_FREE_TIER_VERIFIED_AT = '2026-08-19' as const;
+export const GEMINI_RESEARCH_FREE_TIER_VERIFIED_AT = '2026-09-18' as const;
 export const GEMINI_RESEARCH_FREE_TIER_DOCUMENTED_SEARCH_RPD = 500 as const;
 export const GEMINI_RESEARCH_FREE_TIER_LOCAL_DAILY_REQUEST_CAP = 100 as const;
 

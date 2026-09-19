@@ -74,7 +74,7 @@ services:
       # Gemini quotas are project-scoped, not API-key-scoped; no second key is configured merely
       # to multiply Free-Tier capacity.
       - key: GEMINI_RESEARCH_SHADOW_ENABLED
-        value: "false"
+        value: "true"
       - key: GEMINI_RESEARCH_FREE_TIER_ONLY
         value: "true"
       - key: GEMINI_RESEARCH_FREE_TIER_ATTESTED
