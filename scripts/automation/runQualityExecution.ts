@@ -13,11 +13,12 @@ import {
 } from '../../src/platform/Quality/Operations/QualityCenterSnapshotStore';
 import { resolveSourceCommit } from './sourceIdentity';
 
-const phase = process.argv[2] as QualityExecutionPhase | undefined;
-if (phase !== 'test' && phase !== 'build') {
+const requestedPhase = process.argv[2] as QualityExecutionPhase | undefined;
+if (requestedPhase !== 'test' && requestedPhase !== 'build') {
   console.error('[QualityExecution] usage: tsx scripts/automation/runQualityExecution.ts <test|build> [release-manifest-script]');
   process.exit(2);
 }
+const phase: QualityExecutionPhase = requestedPhase === 'test' ? 'test' : 'build';
 
 const repoRoot = process.cwd();
 const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
