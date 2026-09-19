@@ -19,6 +19,7 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--output-dir", type=Path, required=True)
     p.add_argument("--model", default="small")
     p.add_argument("--productive-only", action="store_true")
+    p.add_argument("--expected-wav-count", type=int, default=8)
     return p.parse_args()
 
 
@@ -86,8 +87,10 @@ def main() -> int:
     samples = {x["sample_id"]: x for x in manifest["samples"]}
 
     wavs = sorted(args.artifact_dir.rglob("*.wav"))
-    if len(wavs) != 8:
-        raise RuntimeError(f"expected exactly 8 WAV files, found {len(wavs)}")
+    if args.expected_wav_count <= 0:
+        raise RuntimeError("expected WAV count must be positive")
+    if len(wavs) != args.expected_wav_count:
+        raise RuntimeError(f"expected exactly {args.expected_wav_count} WAV files, found {len(wavs)}")
 
     if args.productive_only:
         wavs = [
@@ -153,6 +156,7 @@ def main() -> int:
         "asr_package_version": "20250625",
         "asr_model": args.model,
         "case_count": len(rows),
+        "expected_wav_count": args.expected_wav_count,
         "productive_only": args.productive_only,
         "productive_acceptance_case_count": len(productive_rows),
         "historical_comparison_case_count": len(historical_rows),
