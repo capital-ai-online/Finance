@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import * as ts from '@typescript/typescript6';
+import * as ts from 'typescript';
 
 export const AST_GREP_PACKAGE = '@ast-grep/cli';
 export const AST_GREP_VERSION = '0.45.3';
