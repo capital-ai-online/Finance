@@ -68,7 +68,8 @@ export function readQualityCenterReport(
     try {
       const parsed = JSON.parse(fs.readFileSync(candidate, 'utf8')) as unknown;
       if (!isValidReport(parsed)) continue;
-      if (expectedSourceCommit && parsed.repositoryObservation.sourceCommit.toLowerCase() !== expectedSourceCommit.toLowerCase()) {
+      const observedSourceCommit = parsed.repositoryObservation.sourceCommit;
+      if (expectedSourceCommit && (!observedSourceCommit || observedSourceCommit.toLowerCase() !== expectedSourceCommit.toLowerCase())) {
         continue;
       }
       return Object.freeze({

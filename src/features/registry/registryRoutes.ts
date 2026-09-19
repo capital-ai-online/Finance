@@ -99,7 +99,7 @@ function latestObservedAt(payload: Record<string, unknown>): string | null {
   const provenance = Array.isArray(payload.provenance) ? payload.provenance as Array<Record<string, unknown>> : [];
   const timestamps = provenance
     .map(item => typeof item.observedAt === 'string' ? item.observedAt : null)
-    .filter((value): value is string => Boolean(value) && Number.isFinite(Date.parse(value)))
+    .filter((value): value is string => typeof value === 'string' && Number.isFinite(Date.parse(value)))
     .sort((a, b) => Date.parse(b) - Date.parse(a));
   return timestamps[0] ?? null;
 }

@@ -140,7 +140,7 @@ export function buildRawMaterialFallbackList() {
   return Object.values(RAW_MATERIALS_DATABASE).map(item => ({
     symbol: item.symbol,
     name: item.name,
-    category_main: item.category_main,
+    category_main: item.category_main ?? 'Unknown',
     category_sub: item.category_sub,
     is_critical: item.is_critical,
     score: null,
@@ -906,7 +906,7 @@ export function RawMaterialsDashboard() {
                   <div className="grid grid-cols-3 gap-2 text-[10px] text-white/60 font-mono">
                     <div>Militärische Wichtigkeit: {payload.inputs.military_importance}%</div>
                     <div>Industrielle Unverzichtbarkeit: {payload.inputs.industrial_importance}%</div>
-                    <div>Substitutions-Hürde: {100 - payload.inputs.substitution_potential}%</div>
+                    <div>Substitutions-Hürde: {typeof payload.inputs.substitution_potential === 'number' ? `${100 - payload.inputs.substitution_potential}%` : 'N/A'}</div>
                   </div>
                 </div>
               </div>

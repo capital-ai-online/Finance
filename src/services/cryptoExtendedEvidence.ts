@@ -204,7 +204,8 @@ export async function fetchCryptoExtendedEvidence(
 
   const verifiedFeatureCount = evidence.filter((item) => item.status === 'VERIFIED').length;
   const unavailableFeatureCount = evidence.length - verifiedFeatureCount;
-  const hasVerifiedEvidence = verifiedFeatureCount > 0 || newsArticles.length > 0 || solanaSecurity?.status === 'VERIFIED';
+  const hasVerifiedSolanaSecurity = (solanaSecurity as GoPlusSolanaTokenSecurityEvidence | null)?.status === 'VERIFIED';
+  const hasVerifiedEvidence = verifiedFeatureCount > 0 || newsArticles.length > 0 || hasVerifiedSolanaSecurity;
   const hasUnavailable = unavailableFeatureCount > 0 || providers.some((item) => !['VERIFIED', 'READY'].includes(item.status));
   const status: CryptoExtendedEvidenceStatus = !hasVerifiedEvidence
     ? 'NOT_AVAILABLE'
