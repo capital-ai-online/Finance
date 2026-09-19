@@ -50,6 +50,12 @@ jobs:
           ffmpeg -version >/dev/null
           python -m pip install --disable-pip-version-check "openai-whisper==20250625"
 
+      - name: Validate German Required-Term matcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.test.py
+
       - name: Download immutable SOCIAL-P1 runtime artifact
         shell: bash
         run: |
