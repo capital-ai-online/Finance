@@ -46,6 +46,7 @@ jobs:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || inputs.expected_head_sha }}
       SOURCE_REF: ${{ github.event.pull_request.head.ref || inputs.expected_head_ref }}
       RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
+      MODAL_STARTER_MONTHLY_BUDGET_USD: "30.00"
 
     steps:
       - name: Verify exact authorized snapshot
@@ -76,6 +77,59 @@ jobs:
           set -euo pipefail
           python -m pip install --disable-pip-version-check "modal==1.5.3"
           modal token info >/dev/null
+
+      - name: Modal Starter billing preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p modal-billing
+          modal billing summary --for "this month" --json > modal-billing/summary.json
+          modal billing report --for "this month" --show-resources --json > modal-billing/report.json
+          python - <<'PY'
+          import json
+          import os
+          from decimal import Decimal, InvalidOperation
+          from pathlib import Path
+
+          budget = Decimal(os.environ["MODAL_STARTER_MONTHLY_BUDGET_USD"])
+          summary_path = Path("modal-billing/summary.json")
+          summary = json.loads(summary_path.read_text(encoding="utf-8"))
+
+          if not isinstance(summary, dict):
+              raise SystemExit("Modal billing preflight: unexpected summary JSON shape")
+
+          raw_metered = summary.get("metered_cost")
+          if raw_metered is None:
+              raise SystemExit("Modal billing preflight: metered_cost missing; fail closed")
+
+          try:
+              metered = Decimal(str(raw_metered))
+          except (InvalidOperation, ValueError) as exc:
+              raise SystemExit(
+                  f"Modal billing preflight: invalid metered_cost {raw_metered!r}"
+              ) from exc
+
+          remaining = budget - metered
+          print(
+              f"Modal billing preflight: metered_cost_usd={metered} "
+              f"starter_budget_usd={budget} remaining_usd={remaining}"
+          )
+
+          if remaining <= 0:
+              raise SystemExit(
+                  "Modal Starter billing preflight blocked: monthly metered usage "
+                  "has reached or exceeded the $30 compute budget."
+              )
+          PY
+
+      - name: Upload Modal billing preflight evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-p1-modal-billing-${{ env.SOURCE_SHA }}-${{ env.RUN_KEY }}
+          path: modal-billing/
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Execute real SOCIAL-P1 4x2 benchmark on Modal L40S
         shell: bash
