@@ -107,6 +107,7 @@ export function createGitHubLicenseUsageReadClient({
 
   const baseUrl = normalizeBaseUrl(apiBaseUrl);
   let installations = null;
+  let installationsPromise = null;
   const tokenCache = new Map();
 
   function mintJwt() {
@@ -140,22 +141,31 @@ export function createGitHubLicenseUsageReadClient({
 
   async function loadInstallations() {
     if (installations) return installations;
+    if (installationsPromise) return installationsPromise;
 
-    const jwt = mintJwt();
-    const rows = [];
-    for (let page = 1; page <= MAX_INSTALLATION_PAGES; page += 1) {
-      const pageRows = await request({
-        method: 'GET',
-        path: `/app/installations?per_page=100&page=${page}`,
-        authorization: jwt,
-      });
-      if (!Array.isArray(pageRows)) fail('GET /app/installations must return an array');
-      rows.push(...pageRows);
-      if (pageRows.length < 100) break;
-      if (page === MAX_INSTALLATION_PAGES) fail('installation pagination exceeded safety limit');
+    installationsPromise = (async () => {
+      const jwt = mintJwt();
+      const rows = [];
+      for (let page = 1; page <= MAX_INSTALLATION_PAGES; page += 1) {
+        const pageRows = await request({
+          method: 'GET',
+          path: `/app/installations?per_page=100&page=${page}`,
+          authorization: jwt,
+        });
+        if (!Array.isArray(pageRows)) fail('GET /app/installations must return an array');
+        rows.push(...pageRows);
+        if (pageRows.length < 100) break;
+        if (page === MAX_INSTALLATION_PAGES) fail('installation pagination exceeded safety limit');
+      }
+      installations = rows;
+      return installations;
+    })();
+
+    try {
+      return await installationsPromise;
+    } finally {
+      installationsPromise = null;
     }
-    installations = rows;
-    return installations;
   }
 
   async function resolveInstallation(targetType, slug) {
