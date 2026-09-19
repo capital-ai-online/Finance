@@ -26,8 +26,7 @@ export const ADR_0104_PROJECT_OPTIONS: readonly CanonicalProjectSelection[] = [
   { projectId: 'CAPITAL-AI-OPS', projectFolder: 'docs/projects/operations/', projectStages: ['PVC-02', 'PVC-04', 'PVC-06', 'PVC-07', 'PVC-08', 'PVC-18'], primaryOwner: 'CAPITAL-AI-OPS' },
   { projectId: 'CAPITAL-AI-DOC', projectFolder: 'docs/projects/documentary/', projectStages: ['PVC-03'], primaryOwner: 'CAPITAL-AI-DOC' },
   { projectId: 'CAPITAL-AI-GOV', projectFolder: 'docs/projects/governance/', projectStages: ['PVC-05'], primaryOwner: 'CAPITAL-AI-GOV' },
-  { projectId: 'CAPITAL-AI-DATA', projectFolder: 'docs/projects/data/', projectStages: ['PVC-09', 'PVC-10', 'PVC-11'], primaryOwner: 'CAPITAL-AI-DATA' },
-  { projectId: 'CAPITAL-AI-FINTECH', projectFolder: 'docs/projects/fintech/', projectStages: ['PVC-12', 'PVC-13', 'PVC-14', 'PVC-15', 'PVC-16', 'PVC-17'], primaryOwner: 'CAPITAL-AI-FINTECH' },
+  { projectId: 'CAPITAL-AI-FINTECH', projectFolder: 'docs/projects/fintech/', projectStages: ['PVC-09', 'PVC-10', 'PVC-11', 'PVC-12', 'PVC-13', 'PVC-14', 'PVC-15', 'PVC-16', 'PVC-17'], primaryOwner: 'CAPITAL-AI-FINTECH' },
 ] as const;
 
 function stableProjectRecord(project: CanonicalProjectSelection): string {
