@@ -136,3 +136,73 @@ test('refuses an unsupported partial legacy heading shape', () => {
   assert.equal(result.changed, false);
   assert.equal(result.reason, 'unsupported-partial-legacy-shape');
 });
+
+
+const projectOwnerLegacyBody = [
+  '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->',
+  'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0',
+  '# CAPITAL-AI Pull Request',
+  '',
+  '## 1. Herkunft',
+  '- **Branch:** agent/data-gemini-example → main',
+  '',
+  '## 2. Projekt-/Owner-Zuordnung',
+  '- **Aktuelle Authority:** CAPITAL-AI-FINTECH.',
+  '',
+  '## 3. Umsetzung',
+  '- Gemini Free-Tier behavior remains unchanged.',
+  '',
+  '## 4. Zero-Cost-Invariante',
+  '- Kein Paid-Mode.',
+  '',
+  '## 5. Validierung',
+  '- Hosted checks bind to the exact head.',
+  '',
+  '## 6. Merge-Abhängigkeiten',
+  '- Kein Agent-Self-Merge, kein Auto-Merge.',
+  '',
+  '## 7. Maschinenlesbare Baseline',
+  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+  'CAPITAL_AI_PRODUCTION_BASELINE_START',
+  '- **Baseline-ID:** sha256:test',
+  'CAPITAL_AI_PRODUCTION_BASELINE_END',
+  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  '',
+].join('\\n');
+
+test('repairs the project/owner legacy shape and preserves its semantic subsections', () => {
+  assert.deepEqual(findMissingRequiredSections(projectOwnerLegacyBody), [
+    '## 2. Projektzuordnung',
+    '## 4. Roadmap',
+    '## 5. PR-Klasse',
+    '## 6. Prüfung',
+  ]);
+  const result = repairLegacyPrBodyStructure(projectOwnerLegacyBody, { prClass: 'R' });
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'legacy-v1.5-project-owner-structure-repaired');
+  assert.deepEqual(findMissingRequiredSections(result.body), []);
+  assert.match(result.body, /^## 2\. Projektzuordnung$/m);
+  assert.match(result.body, /^## 4\. Roadmap$/m);
+  assert.match(result.body, /^### Zero-Cost-Invariante$/m);
+  assert.match(result.body, /^## 5\. PR-Klasse$/m);
+  assert.match(result.body, /- \*\*Klasse:\*\* R/);
+  assert.match(result.body, /^## 6\. Prüfung$/m);
+  assert.match(result.body, /^### Validierung$/m);
+  assert.match(result.body, /^### Merge-Abhängigkeiten$/m);
+  assert.match(result.body, /Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja/);
+  assert.match(result.body, /Gemini Free-Tier behavior remains unchanged\./);
+  assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_START/g) || []).length, 2);
+  assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_END/g) || []).length, 2);
+});
+
+test('refuses an unsupported project/owner legacy heading shape', () => {
+  const body = projectOwnerLegacyBody.replace(
+    '## 6. Merge-Abhängigkeiten',
+    '## 6. Andere Abhängigkeiten',
+  );
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'R' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'unsupported-project-owner-legacy-shape');
+});

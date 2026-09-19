@@ -18,6 +18,12 @@ export const LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS = Object.freeze([
     '## 4. Roadmap',
     '## 6. Prüfung',
   ]),
+  Object.freeze([
+    '## 2. Projektzuordnung',
+    '## 4. Roadmap',
+    '## 5. PR-Klasse',
+    '## 6. Prüfung',
+  ]),
 ]);
 
 function occurrenceCount(text, needle) {
@@ -46,7 +52,11 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     missing,
     LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS[1],
   );
-  if (!fullLegacyMissing && !partialLegacyMissing) {
+  const projectOwnerLegacyMissing = sameOrderedValues(
+    missing,
+    LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS[2],
+  );
+  if (!fullLegacyMissing && !partialLegacyMissing && !projectOwnerLegacyMissing) {
     return {
       eligible: false,
       changed: false,
@@ -60,6 +70,68 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
 
   const baselineStartBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_START');
   const baselineEndBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_END');
+
+  if (projectOwnerLegacyMissing) {
+    const projectOwnerMatches = [...body.matchAll(/^## 2\. Projekt-\/Owner-Zuordnung\s*$/gm)];
+    const zeroCostMatches = [...body.matchAll(/^## 4\. Zero-Cost-Invariante\s*$/gm)];
+    const validationMatches = [...body.matchAll(/^## 5\. Validierung\s*$/gm)];
+    const dependencyMatches = [...body.matchAll(/^## 6\. Merge-Abhängigkeiten\s*$/gm)];
+    if (
+      projectOwnerMatches.length !== 1 ||
+      zeroCostMatches.length !== 1 ||
+      validationMatches.length !== 1 ||
+      dependencyMatches.length !== 1
+    ) {
+      return { eligible: false, changed: false, reason: 'unsupported-project-owner-legacy-shape', body };
+    }
+
+    let repaired = body
+      .replace(/^## 2\. Projekt-\/Owner-Zuordnung\s*$/m, '## 2. Projektzuordnung')
+      .replace(/^## 4\. Zero-Cost-Invariante\s*$/m, '## 4. Roadmap\n\n### Zero-Cost-Invariante')
+      .replace(
+        /^## 5\. Validierung\s*$/m,
+        [
+          '## 5. PR-Klasse',
+          '',
+          '- **Klasse:** ' + prClass,
+          '- **Begründung:** Trusted-main classifyPrScope.mjs für den exakt gebundenen PR-Head/Base-Snapshot.',
+          '- **Erforderliche Checks:** gemäß ermittelter PR-Klasse und Repository-Policy; NOT_RUN, skipped, missing, stale oder failed sind kein PASS.',
+          '',
+          '## 6. Prüfung',
+          '',
+          '### Validierung',
+        ].join('\\n'),
+      )
+      .replace(/^## 6\. Merge-Abhängigkeiten\s*$/m, '### Merge-Abhängigkeiten');
+
+    if (!repaired.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
+      repaired = repaired.replace(
+        /^- Kein Agent-Self-Merge, kein Auto-Merge\.?$/m,
+        '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja\\n- Kein Agent-Self-Merge, kein Auto-Merge.',
+      );
+    }
+
+    const missingAfter = findMissingRequiredSections(repaired);
+    if (missingAfter.length > 0) {
+      throw new Error('Project/Owner legacy template repair did not converge: ' + missingAfter.join(', '));
+    }
+    if (!repaired.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
+      throw new Error('Project/Owner legacy template repair did not preserve the Human/CODEOWNER merge gate.');
+    }
+    if (
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_START') !== baselineStartBefore ||
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_END') !== baselineEndBefore
+    ) {
+      throw new Error('Project/Owner legacy template repair changed production-baseline marker cardinality.');
+    }
+
+    return {
+      eligible: true,
+      changed: repaired !== body,
+      reason: 'legacy-v1.5-project-owner-structure-repaired',
+      body: repaired,
+    };
+  }
 
   if (partialLegacyMissing) {
     const workPackageMatches = [...body.matchAll(/^## 4\. Work Package \/ Exit Gate\s*$/gm)];
