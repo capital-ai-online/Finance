@@ -19,7 +19,7 @@ app = modal.App(APP_NAME)
 model_volume = modal.Volume.from_name(MODEL_VOLUME_NAME, create_if_missing=True)
 evidence_volume = modal.Volume.from_name(EVIDENCE_VOLUME_NAME, create_if_missing=True)
 
-repo_root = Path(__file__).resolve().parents[2]
+repo_root = Path(__file__).resolve().parents[2] if modal.is_local() else Path("/workspace")
 ignores = [".git/**", "node_modules/**", "dist/**", "coverage/**", ".venv/**", "**/__pycache__/**"]
 
 prepare_image = modal.Image.debian_slim(python_version="3.11").uv_pip_install("huggingface-hub==0.36.0")
