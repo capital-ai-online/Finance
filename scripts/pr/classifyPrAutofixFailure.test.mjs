@@ -25,6 +25,41 @@ test('delegates exact current-state baseline drift to the existing specialist', 
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_CURRENT_STATE_BASELINE);
 });
 
+test('delegates an exact stale production baseline before broad protected-provider vocabulary', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: [
+      'const example = "supabase migration";',
+      'Error: PR #1143 enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline. Erwartete aktuelle Baseline-ID: sha256:test.',
+    ].join('\n'),
+    prMetadataShape: 'CURRENT_V17_CANONICAL',
+  });
+  assert.equal(result.classification, 'PR_PRODUCTION_BASELINE_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
+  assert.equal(result.reason, 'stale-production-baseline-specialist-owned');
+});
+
+test('delegates only the exact allowlisted v1.7 legacy baseline-section drift', () => {
+  const logText = 'Error: PR #1142 muss in v1.7.0 exakt drei sichtbare Hauptabschnitte besitzen: ## 1. 🧭 Entscheidung, ## 2. ✅ Evidence, ## 3. 🔍 Technical Evidence';
+
+  const allowed = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText,
+    prMetadataShape: 'CURRENT_V17_LEGACY_BASELINE_SECTION',
+  });
+  assert.equal(allowed.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
+  assert.equal(allowed.reason, 'current-v1.7-legacy-baseline-section-repairable');
+
+  const denied = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText,
+    prMetadataShape: 'CURRENT_V17_OTHER',
+  });
+  assert.equal(denied.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(denied.reason, 'current-v1.7-structure-drift-not-allowlisted');
+});
+
 test('delegates repairable PR metadata drift to the existing baseline/template writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
