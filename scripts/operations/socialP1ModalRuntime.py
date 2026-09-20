@@ -168,25 +168,42 @@ def combine_runtime_evidence(
     run_key: str,
     model_provenance: dict[str, Any],
     sample_id: str = "all",
+    candidate_id: str = "all",
 ) -> str:
     source_sha = _safe_component(source_sha, "source_sha")
     run_key = _safe_component(run_key, "run_key")
     sample_id = _safe_component(sample_id, "sample_id")
+    candidate_id = _safe_component(candidate_id, "candidate_id")
     root = Path("/evidence") / "runs" / source_sha / run_key
 
-    qwen = _read_json(root / "qwen3-tts" / "runtime-evidence.partial.json")
-    chatter = _read_json(root / "chatterbox-multilingual-v3" / "runtime-evidence.partial.json")
+    candidate_ids = (
+        ["qwen3-tts", "chatterbox-multilingual-v3"]
+        if candidate_id == "all"
+        else [candidate_id]
+    )
+    if any(candidate not in {"qwen3-tts", "chatterbox-multilingual-v3"} for candidate in candidate_ids):
+        raise RuntimeError("unsupported candidate_id")
 
-    if qwen.get("source_manifest_sha256") != chatter.get("source_manifest_sha256"):
+    payloads = {
+        candidate: _read_json(root / candidate / "runtime-evidence.partial.json")
+        for candidate in candidate_ids
+    }
+    manifest_hashes = {payload.get("source_manifest_sha256") for payload in payloads.values()}
+    if len(manifest_hashes) != 1:
         raise RuntimeError("candidate runs are bound to different manifest bytes")
-    if qwen.get("benchmark_eligible") is not True or chatter.get("benchmark_eligible") is not True:
+    if any(payload.get("benchmark_eligible") is not True for payload in payloads.values()):
         raise RuntimeError("candidate runtime is not benchmark eligible")
-    expected_per_candidate = 4 if sample_id == "all" else 1
-    expected_total = expected_per_candidate * 2
-    if qwen.get("actual_run_count") != expected_per_candidate or chatter.get("actual_run_count") != expected_per_candidate:
-        raise RuntimeError(f"each candidate must contribute exactly {expected_per_candidate} runtime case(s)")
 
-    records = list(qwen.get("runtime_records", [])) + list(chatter.get("runtime_records", []))
+    expected_per_candidate = 4 if sample_id == "all" else 1
+    expected_total = expected_per_candidate * len(candidate_ids)
+    if any(payload.get("actual_run_count") != expected_per_candidate for payload in payloads.values()):
+        raise RuntimeError(f"each selected candidate must contribute exactly {expected_per_candidate} runtime case(s)")
+
+    records = [
+        record
+        for candidate in candidate_ids
+        for record in payloads[candidate].get("runtime_records", [])
+    ]
     case_ids = [record.get("benchmark_case_id") for record in records if isinstance(record, dict)]
     if len(records) != expected_total or len(set(case_ids)) != expected_total:
         raise RuntimeError(f"combined runtime evidence must contain exactly {expected_total} unique cases")
@@ -195,11 +212,12 @@ def combine_runtime_evidence(
 
     combined = {
         "schema_version": "1.0.0",
-        "manifest_id": qwen["manifest_id"],
-        "source_manifest_sha256": qwen["source_manifest_sha256"],
+        "manifest_id": next(iter(payloads.values()))["manifest_id"],
+        "source_manifest_sha256": next(iter(payloads.values()))["source_manifest_sha256"],
         "protected_runtime": True,
         "benchmark_eligible": True,
         "requested_sample_id": sample_id,
+        "requested_candidate_id": candidate_id,
         "expected_complete_run_count": expected_total,
         "actual_run_count": expected_total,
         "complete_matrix": sample_id == "all",
@@ -228,17 +246,23 @@ def combine_runtime_evidence(
 
 
 @app.local_entrypoint()
-def main(source_sha: str, run_key: str, sample_id: str = "all") -> None:
+def main(source_sha: str, run_key: str, sample_id: str = "all", candidate_id: str = "all") -> None:
     source_sha = _safe_component(source_sha, "source_sha")
     run_key = _safe_component(run_key, "run_key")
     sample_id = _safe_component(sample_id, "sample_id")
+    candidate_id = _safe_component(candidate_id, "candidate_id")
+    if candidate_id not in {"all", "qwen3-tts", "chatterbox-multilingual-v3"}:
+        raise RuntimeError("unsupported candidate_id")
+
     models = prepare_models.remote()
-    run_qwen.remote(source_sha, run_key, models["qwen3-tts"]["model_dir"], sample_id)
-    run_chatterbox.remote(
-        source_sha,
-        run_key,
-        models["chatterbox-multilingual-v3"]["model_dir"],
-        sample_id,
-    )
-    root = combine_runtime_evidence.remote(source_sha, run_key, models, sample_id)
+    if candidate_id in {"all", "qwen3-tts"}:
+        run_qwen.remote(source_sha, run_key, models["qwen3-tts"]["model_dir"], sample_id)
+    if candidate_id in {"all", "chatterbox-multilingual-v3"}:
+        run_chatterbox.remote(
+            source_sha,
+            run_key,
+            models["chatterbox-multilingual-v3"]["model_dir"],
+            sample_id,
+        )
+    root = combine_runtime_evidence.remote(source_sha, run_key, models, sample_id, candidate_id)
     print(root)
