@@ -17,6 +17,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  issues: write
 
 concurrency:
   group: github-cost-watch
@@ -74,6 +75,19 @@ jobs:
         env:
           CAPITAL_AI_GITHUB_BILLING_ALERT_ENDPOINT: https://capital-ai.online/api/internal/github-billing-alert/email
         run: node scripts/operations/postGitHubCostWatchReport.mjs
+
+      - name: 45.000-Minuten-Hard-Blocker mit GitHub-Issue synchronisieren
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "${CAPITAL_AI_GITHUB_COST_WATCH_REPORT_PATH}" || {
+            echo "::error::Cost-Watch-Report fehlt; Blocker-Zustand kann nicht sicher synchronisiert werden."
+            exit 1
+          }
+          node scripts/operations/syncGitHubActionsMinuteBlocker.mjs
 
       - name: Temporäre Billing-Artefakte entfernen
         if: always()

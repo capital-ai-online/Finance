@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`
+**Baseline:** `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
@@ -21,16 +21,31 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 ### WP-SEO-LAUNCH-01 — Public Web & Social Launch Management
 
-**State:** `ACTIVE_CANONICAL / SEO_COORDINATION_ONLY`.
+**State:** `ACTIVE_CANONICAL / EXECUTION_STARTED / PROVIDER_GATES_OPEN`.
 
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
 **Detailed work package:** `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`  
-**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.17`.
+**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.18`.
+
+**Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.
+
+Execution readback at this baseline:
+
+- repository landing/CTA freeze: `PASS_REPOSITORY`;
+- current public URL inventory: six canonical sitemap URLs including `/universe`;
+- Production freeze: `PASS` after an initially observed drift; canonical main CI run `35529208910` triggered the verified Render deploy within the five-minute SLA and Production is now live at exact `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`;
+- root landing metadata/prerender semantic alignment: `OPEN_FE_HANDOFF`;
+- Search Analytics/current six-URL GSC baseline: `READ_BLOCKED_NOT_CONNECTED`;
+- GA4 Data API/MCP baseline: `READ_BLOCKED_NOT_CONNECTED`;
+- X/Facebook provider accounts: `NOT_CONNECTED` in the current production Social account store;
+- Social Wave 1: canonical SEO source content and owner-correct handoff started; provider publication remains `NOT_RUN`.
+
+No missing provider read or provider account is converted into `PASS` or `NO_DATA_VERIFIED`.
 
 Current owner-correct dependencies:
 
-- Human/CODEOWNER-merged FE PR `#1153` is now current-main landing truth; launch copy/screenshots/CTA acceptance use that merged state while production verification remains separate;
+- Human/CODEOWNER-merged FE PR `#1153` plus the later merged landing AI-Newsfeed integration PR `#1159` are part of the current-main landing candidate; production verification remains separate;
 - `CAPITAL-AI-SOCIAL` owns channel adaptation, Social content packages, provider publication and publication/analytics evidence;
 - `CAPITAL-AI-OPS` owns production/deployment/provider runtime readback;
 - `CAPITAL-AI-GOV`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FINTECH` and `CAPITAL-AI-QM` retain their existing control, security, compliance, domain-truth and independent-assurance boundaries.
@@ -63,7 +78,7 @@ A missing execution surface, repository configuration, credential-file existence
 | `SEO-CHAT-02` URL Inspection | `VERIFIED` | five individual provider inspection calls returned real responses for the then-current sitemap set |
 | GA4 read lane | `CONFIGURATION_NOT_OBSERVED / NOT RUN` | no GA4 PASS inferred from GSC evidence |
 
-The then-current canonical URL set for this evidence was:
+The then-current canonical URL set for this **historical 2026-09-16 provider evidence** was:
 
 1. `https://capital-ai.online/`
 2. `https://capital-ai.online/learning-platform`
@@ -82,7 +97,7 @@ Human-merged PR #893 added the FE-owned public-route/sitemap regression and Huma
 ### SEO-PR900-01 — Least-privileged GSC/GA4/provider reads
 Verify Search Console, URL Inspection, GA4 and GenAI-visibility reads with least privilege and current provider evidence.
 
-**Observed state:** `GSC_READ_VERIFIED / URL_INSPECTION_VERIFIED / GA4_AND_PERFORMANCE_READS_OPEN`.
+**Observed state:** `GSC_HISTORICAL_PROPERTY_AND_5_URL_INSPECTION_VERIFIED / CURRENT_6_URL_AND_SEARCH_ANALYTICS_READ_BLOCKED_NOT_CONNECTED / GA4_READ_BLOCKED_NOT_CONNECTED`. The current sitemap additionally contains `/universe`, which is not covered by the historical five-URL inspection set.
 
 ### SEO-CHAT-02 — Search Console URL Inspection
 **State:** `VERIFIED` for the five-URL provider-response requirement on 2026-09-16. This terminal evidence does not reactivate itself or imply that every URL is indexed or SEO-optimal.

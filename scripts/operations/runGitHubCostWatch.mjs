@@ -135,6 +135,7 @@ process.stdout.write(`${JSON.stringify({
   mode: report.mode,
   cycle: report.cycle,
   coverage: report.coverage,
+  actionsMinutes: report.actionsMinutes,
   totals: report.totals,
   alertRowCount: report.alertRows.length,
   alertFingerprint: report.alertFingerprint,
