@@ -355,7 +355,7 @@ export function createGitHubSettingsInventoryReadClient({
       if (!descriptor) fail(`unsupported capability: ${capability}`);
       if (descriptor.scope === 'repository' && !repository) fail('repository is required');
       const path = descriptor.path(context(repository));
-      if (descriptor.pagination === 'artifactCollection') return readArtifactCollection(path);
+      if ('pagination' in descriptor && descriptor.pagination === 'artifactCollection') return readArtifactCollection(path);
       return authenticatedGet(path);
     },
 
