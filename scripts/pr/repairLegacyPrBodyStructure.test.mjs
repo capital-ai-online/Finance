@@ -63,6 +63,45 @@ function assertV16Repair(result) {
   assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_END/g) || []).length, 2);
 }
 
+
+test('normalizes the merge gate in an otherwise canonical v1.6 body', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0 -->',
+    'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0',
+    '# CAPITAL-AI Pull Request',
+    '',
+    '## 1. 🎯 Kurzüberblick',
+    '- Exact evidence remains unchanged.',
+    '',
+    '## 2. 📦 Projekt & Scope',
+    '- **Projekt:** CAPITAL-AI-OPS',
+    '',
+    '## 3. 🛠️ Umsetzung',
+    '- Existing implementation stays intact.',
+    '',
+    '## 4. 📌 Priorität & Roadmap',
+    '- **Priorität:** P1 🟠 Hoch',
+    '',
+    '## 5. 🔢 Version & PR-Klasse',
+    '- **Versionsimpact:** NONE ➖',
+    '- **Version-Manager-Check:** STATIC_ONLY',
+    '',
+    '## 6. ✅ Prüfung & Merge',
+    '- **Human-/CODEOWNER-Merge erforderlich:** Ja',
+    '- **Self-/Auto-Merge:** Nein',
+    '',
+  ].join('\n');
+
+  assert.deepEqual(findMissingRequiredSections(body), []);
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'R' });
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'current-template-merge-gate-normalized');
+  assert.match(result.body, /- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja/);
+  assert.doesNotMatch(result.body, /Human-\/CODEOWNER-Merge erforderlich/);
+  assert.match(result.body, /Exact evidence remains unchanged\./);
+});
+
 test('repairs only the allowlisted legacy v1.5 structure and upgrades it to v1.6', () => {
   assert.deepEqual(findMissingRequiredSections(legacyBody), [CURRENT.roadmap, CURRENT.version, CURRENT.check]);
   const result = repairLegacyPrBodyStructure(legacyBody, { prClass: 'R' });
