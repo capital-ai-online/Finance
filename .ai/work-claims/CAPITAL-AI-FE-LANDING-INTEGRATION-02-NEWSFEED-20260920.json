@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-LANDING-INTEGRATION-02-NEWSFEED-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -38,5 +38,19 @@
   "supersedesBranch": "agent/frontend-landing-integration-02-newsfeed-20260920",
   "scopeBoundary": "No Market Overview, Core Modules/Scoring, Universe Sideboard, provider, backend route, Supabase, IAM, billing, entitlement, scoring, persistence, or production mutation. No fake news, prices, scores, provider status, or synthetic fallback.",
   "exitGate": "Landing visibly consumes the canonical news capability through app composition; anonymous public state does not call the protected news REST surface; Pro/Enterprise availability is derived from the canonical entitlement contract; login handoff leads to the existing authenticated Dashboard Newsfeed; current-main/open-writer correlation and exact-head checks pass.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-20T16:37:45Z",
+  "releaseReason": "PR #1159 merged into main; current-main post-merge correlation confirms the LANDING-INTEGRATION-02 implementation is contained in main and the work claim is terminal.",
+  "mergedPr": 1159,
+  "mergedAt": "2026-09-20T16:37:45Z",
+  "mergeCommit": "eeb58468481692bac638a115a89190a3e89fc7ff",
+  "postMergeCorrelation": {
+    "currentMainSha": "e86955225887bb7f34036c175ad1da89b8aec14d",
+    "correlatedAt": "2026-09-20T18:23:00Z",
+    "branchHeadSha": "c53e6f8f37020ce9e68ef6746bacc9825fbe423b",
+    "currentMainAheadBy": 59,
+    "currentMainBehindBy": 0,
+    "canonicalBranchState": "merged-and-deleted",
+    "supersededBranch": "agent/frontend-landing-integration-02-newsfeed-20260920"
+  }
 }
