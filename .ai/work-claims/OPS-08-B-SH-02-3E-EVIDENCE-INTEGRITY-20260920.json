@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-3E-EVIDENCE-INTEGRITY-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Bind positive Self-Healing states to reproducible generation/source/integrity/readback evidence and project canonical SH work packages read-only in the Control Panel without creating a parallel control plane.",
+  "priority": "P0-HIGHEST",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "startedAt": "2026-09-20T15:18:00Z",
+  "baseBranch": "main",
+  "baseSha": "ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2",
+  "branch": "agent/operations-sh02-3e-evidence-integrity-main-sync-20260920",
+  "parentContract": "SH-02.3 / self-healing-contract/1.0.0",
+  "dependency": "PR #1147 owns the parent SH-02 architecture/work-graph projection paths; no changed-file overlap is permitted.",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-3E-EVIDENCE-INTEGRITY-20260920.json",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_3E_EVIDENCE_INTEGRITY_2026-09-20.md",
+    "src/platform/Supervisor/selfHealingContract.ts",
+    "tests/unit/selfHealingContract.test.ts",
+    "src/features/governance/ui/process-graph/processGraphModel.ts",
+    "src/features/governance/ui/process-graph/processGraphModel.test.ts",
+    "src/features/governance/ui/process-graph/AdminProcessGraph.tsx"
+  ],
+  "scopeNote": "No new Governance, Evidence, Supervisor, EventMesh, QM or Security authority. Control Panel remains read-only/non-authorizing. Final merge remains Human/CODEOWNER-only.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "validationState": "TARGETED_TESTS_PENDING_HOSTED_CI",
+  "recorrelatedAt": "2026-09-20T15:24:00Z",
+  "correlationNote": "Rebased from the implementation branch onto CURRENT_MAIN ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2 after PR #1148 merged. The intervening main delta changes only the landing-page claim, LandingPage.tsx and frontend appearance test; no changed-file or Self-Healing authority overlap. PR #1147 remains an open semantic dependency and owns only the parent SH-02 architecture/work-graph projection paths, none of which are changed by SH-02.3E."
+}
