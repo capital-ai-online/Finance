@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Replace reliance on revoked or proprietary automatic reviewers with a bounded open-source review stack that can run automatically without per-run Owner approval while remaining separate from build, test, deploy and protected external mutation.
+Replace reliance on proprietary automatic reviewers with a bounded open-source review stack that can run automatically without per-run Owner approval while remaining separate from build, test, deploy and protected external mutation. CodeRabbit removal is an external GitHub-App action and is not considered verified until repository readback shows no new CodeRabbit activity.
 
 ## Selected stack
 
@@ -43,7 +43,11 @@ The deterministic Semgrep path executes on the GitHub-hosted runner and publishe
 
 ## Existing reviewer state
 
-No active CodeRabbit workflow/configuration was found on current main. The remaining `CodeRabbit` text occurrence is test-fixture/history content and does not represent an active integration.
+No active CodeRabbit workflow/configuration was found in the repository itself. However, repository-level absence of config does not prove that the GitHub App is revoked.
+
+Fresh readback on 2026-09-20 observed a new `coderabbitai[bot]` comment on PR #1111 at `2026-09-20T06:31:34Z`, including a CodeRabbit run ID and repository/organization UI configuration metadata. Therefore the external CodeRabbit integration is **NOT_VERIFIED_REVOKED** and must not be represented as removed until a later readback proves that no new CodeRabbit check/comment/review activity can occur.
+
+This OSS review stack is independent of that external removal. Its merge does not itself uninstall, disable or revoke CodeRabbit.
 
 The existing `selective-copilot-code-review.yml` remains manual-only and is not part of the automatic OSS exception.
 
