@@ -7,10 +7,10 @@
 ## Status
 
 **ACTIVE — CANONICAL EXECUTION ROADMAP (Domain SEO / Google Marketing / Content Distribution)**  
-Stand: 2026-09-20  
-Version: **0002.18**  
-Current-main correlation: `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`  
-Working branch: `agent/seo-launch-01-production-baseline-wave1-20260920`  
+Stand: 2026-09-21  
+Version: **0002.19**  
+Current-main correlation: `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`  
+Working branch: `agent/seo-management-launch-refresh-20260921`  
 Repository: `capital-ai-online/Finance`  
 Owner: SvenKulessa / `CAPITAL-AI-SEO` project coordination  
 Primary productive PVC: **N/A — cross-cutting; no productive PVC ownership**  
@@ -21,6 +21,8 @@ Authority-Bindung: current `/AGENTS.md`, anwendbare Accepted ADR / aktive ESS. D
 > **0002.17 Owner-directed public launch convergence.** Die Owner-Anweisung vom 2026-09-20 aktiviert `WP-SEO-LAUNCH-01` als übergeordneten Launch-Management-Slice über die bereits vorhandenen SEO-, Landing-, Measurement- und Social-Fähigkeiten. Das Detailpaket liegt unter `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`. Es erzeugt keine zweite Roadmap, keine Publishing- oder Provider-Autorität und übernimmt keine FE/SOCIAL/OPS/GOV/SEC/COMP/FINTECH/QM-Ownership.
 
 > **0002.18 Owner-directed launch execution.** Der Owner startet Production-/CTA-Freeze, GSC/GA4-Baseline und die X/Facebook-Wave. Repository-CTA-/URL-Evidence ist materialisiert; Production ist beim Readback nicht exakt auf `CURRENT_MAIN`, GSC/GA4 sind in diesem Chat nicht verbunden und die produktive Social-Account-Tabelle enthält keine X-/Facebook-Verbindung. Deshalb bleiben diese Lanes explizit non-PASS. Detail-Evidence: `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.
+
+> **0002.19 SEO management takeover / launch refresh.** Fresh Owner direction assigns the SEO-management scope to this execution context. The snapshot is re-correlated after merged FE branding work (#1178): Production is exact on `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`, CTA targets remain repository-valid, root metadata/prerender message drift persists, `/universe` lacks a visible landing internal link, GSC/GA4 reads remain connection-gated and X/Facebook production account identities remain absent. SEO-owned topic mapping and the first launch content brief are materialized in the same bounded scope. Detail evidence: `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
 
 ## Zweck
 
@@ -333,3 +335,4 @@ Das **Gesamtprogramm** bleibt offen, solange der Public-Launch-Exit-Gate, Provid
 | **0002.16** | **2026-09-11** | Owner-directed SoTA-Reopening aus dem 2026-09-07 Work Item auf die übertragene Repository-Instanz `capital-ai-online/Finance`; final re-korreliert gegen `main@12c9e129c7302df0d1bce7640cd7888f0998b9ca`, moderne Roadmap-Mechanik, GenAI Search, GSC+GA4, CWV, content/topic/IA/media/authority/spam/refresh WPs ergänzt und alle Pakete bis zu ihrem zulässigen Gate gestartet |
 | **0002.17** | **2026-09-20** | Owner-directed `WP-SEO-LAUNCH-01` ergänzt: öffentliche Web-/Search-/Social-Launch-Kette, Landing-/CTA-Dependency auf offenen FE-PR #1153, consent-safe Measurement, Social-Package-/Provider-Evidence, T-relativer Launchkalender und same-candidate Launch-Gates; current-main re-korreliert auf `c9980602f691b855fd6f8c66a49822e7a9611b4a` |
 | **0002.18** | **2026-09-20** | Launch-Ausführung gegen `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`: CTA-/6-URL-Repository-Freeze, initialer Production-Drift plus canonical exact-SHA Recovery/SLA-PASS, Root-Metadata-Handoff, GSC/GA4 `READ_BLOCKED_NOT_CONNECTED`, reale Supabase-Readback-Evidence ohne X/Facebook-Accounts und owner-korrekte Social-Wave-1-Übergabe materialisiert |
+| **0002.19** | **2026-09-21** | SEO-Management-Übernahme gegen `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`: Production exact-SHA PASS, Post-#1178 Landing-Re-Freeze, persistierender Root-Metadata-Handoff, neuer `/universe`-IA-Handoff, GSC/GA4 Provider-Read-Gates, X/Facebook Account-Gate sowie SEO-owned Topic Map + Launch Content Brief materialisiert |
