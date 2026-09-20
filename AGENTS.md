@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.7.0`  
+**Control Plane Version:** `4.8.0`  
 **Status:** OWNER-DIRECTED — effective after Human Owner merge  
 **Effective date:** 2026-09-20  
 **Repository:** `capital-ai-online/Finance`
@@ -123,6 +123,8 @@ Repository mutation is branch-only. Direct mutation of `main` is prohibited.
 Before mutation, resolve an exact fresh `CURRENT_MAIN` SHA and correlate current writers. Use a bounded, project-identifiable branch. Keep changes atomic and owner-correct.
 
 Before Pull Request readiness, re-read current `main`, branch head, merge base, open writers, changed-file overlap, semantic overlap, namespace/authority overlap and Security/Compliance impact. Any head movement invalidates earlier correlation evidence.
+
+Immediately before the Human/CODEOWNER merge decision, the exact review-ready PR MUST be re-correlated against then-current `main`. If `CURRENT_MAIN` is not already an ancestor of the exact PR head, the trusted branch-synchronization path MUST update that PR first and the resulting exact head MUST pass its ordinary required checks again. A stale head, stale base, unresolved overlap, missing exact-head evidence or failed synchronization blocks merge readiness. After every merge, the Post-Merge Production Correlation remains the mandatory downstream checkpoint; affected/dependent open PRs are re-correlated in dependency order and the next eligible review-ready PR is synchronized through the canonical continuation lane. Pre-merge and post-merge synchronization are therefore one standard convergence process, not separate merge authorities.
 
 Every repository change is delivered through a Pull Request. PR creation and PR updates may be automated after final correlation PASS and truthful evidence rendering; unresolved or blocked correlation stops readiness. `NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`.
 

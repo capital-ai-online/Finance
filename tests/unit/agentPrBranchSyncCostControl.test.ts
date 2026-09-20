@@ -18,6 +18,18 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain('workflow_dispatch: {}');
   });
 
+  it('uses an approved review as the exact-PR pre-merge synchronization checkpoint', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('pull_request_review:\n    types: [submitted]');
+    expect(yaml).toContain("github.event_name == 'pull_request_review'");
+    expect(yaml).toContain("github.event.review.state == 'approved'");
+    expect(yaml).toContain("github.event.pull_request.base.ref == 'main'");
+    expect(yaml).toContain("github.event.pull_request.head.repo.full_name == github.repository");
+    expect(yaml).toContain("if [ \"$EVENT_NAME\" = 'pull_request' ] || [ \"$EVENT_NAME\" = 'pull_request_review' ]; then");
+    expect(yaml).toContain("if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'");
+    expect(yaml).toContain("(github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token");
+  });
+
   it('hard-binds the privileged correlation source before allocating the write lane', () => {
     const yaml = workflow();
     expect(yaml).toContain('github.event.workflow_run.repository.full_name == github.repository');
@@ -115,16 +127,16 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain("[ \"$after_lineage\" = 'identical' ]");
   });
 
-  it('uses a pinned GitHub App token only for the trusted automatic lane', () => {
+  it('uses a pinned GitHub App token only for trusted automatic post-merge and approved-review lanes', () => {
     const yaml = workflow();
     expect(yaml).toContain('contents: write');
     expect(yaml).toContain('pull-requests: write');
-    expect(yaml).toContain("if: github.event_name == 'workflow_run'");
+    expect(yaml).toContain("if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'");
     expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
     expect(yaml).toContain('client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}');
     expect(yaml).toContain('private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}');
     expect(yaml).toContain('permission-contents: write');
     expect(yaml).toContain('permission-pull-requests: write');
-    expect(yaml).toContain("GH_TOKEN: ${{ github.event_name == 'workflow_run' && steps.app_token.outputs.token || github.token }}");
+    expect(yaml).toContain("GH_TOKEN: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token || github.token }}");
   });
 });

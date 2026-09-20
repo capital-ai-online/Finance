@@ -11,6 +11,7 @@ run-name: >-
 # the trusted post-merge Production/Main correlation so PR checks do not race ahead of correlation:
 # - successful Post-Merge Production Correlation: sync exactly one next eligible review-ready PR;
 # - ready_for_review: sync exactly the PR that just left draft state;
+# - approved review: perform the mandatory immediately-before-merge current-main synchronization for that exact PR;
 # - workflow_dispatch: explicit recovery/maintenance path that may sync drafts as well.
 #
 # Trusted work branches are same-repository PRs against main and either:
@@ -25,6 +26,8 @@ on: # zizmor: ignore[dangerous-triggers]
   pull_request:
     branches: [main]
     types: [ready_for_review]
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch: {}
 
 permissions:
@@ -55,6 +58,10 @@ jobs:
        github.event.workflow_run.conclusion == 'success') ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'pull_request_review' &&
+       github.event.review.state == 'approved' &&
+       github.event.pull_request.base.ref == 'main' &&
        github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -75,7 +82,7 @@ jobs:
 
       - name: GitHub-App-Token für automatischen Post-Korrelations-Sync erzeugen
         id: app_token
-        if: github.event_name == 'workflow_run'
+        if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
@@ -85,7 +92,7 @@ jobs:
 
       - name: Review-bereite Agenten-PRs per Update-Branch-API synchronisieren
         env:
-          GH_TOKEN: ${{ github.event_name == 'workflow_run' && steps.app_token.outputs.token || github.token }}
+          GH_TOKEN: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token || github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -93,7 +100,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "$EVENT_NAME" = 'pull_request' ]; then
+          if [ "$EVENT_NAME" = 'pull_request' ] || [ "$EVENT_NAME" = 'pull_request_review' ]; then
             # ready_for_review is a single-PR transition. Keep the operation scoped to that PR.
             prs="$(gh pr view "$EVENT_PR_NUMBER" --repo "$REPO" \
               --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
@@ -180,7 +187,7 @@ jobs:
               continue
             fi
 
-            if [ "$EVENT_NAME" = 'pull_request' ] && [ "$draft" = 'true' ]; then
+            if { [ "$EVENT_NAME" = 'pull_request' ] || [ "$EVENT_NAME" = 'pull_request_review' ]; } && [ "$draft" = 'true' ]; then
               echo "PR #$number ($head): ready_for_review Event meldet weiterhin Draft; fail-closed uebersprungen."
               continue
             fi
