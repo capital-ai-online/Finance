@@ -114,7 +114,7 @@ if (!containerWorkflow.includes('test ! -e /app/node_modules/vite')) {
 if (
   !containerWorkflow.includes('for path in /app/node_modules /app/dist /app/server /app/package.json /app/package-lock.json; do')
   || !containerWorkflow.includes('test ! -w "$path"')
-  || !containerWorkflow.includes('find /app/node_modules /app/dist /app/server -perm -0002 -print -quit')
+  || !containerWorkflow.includes('find /app/node_modules /app/dist /app/server \\( -type f -o -type d \\) -perm -0002 -print -quit')
 ) {
   failures.push('container workflow must prove root-owned runtime artifacts are non-writable to the application user');
 }
