@@ -60,6 +60,8 @@ def main() -> int:
         disclaimer = normalize_text(raw.get("disclaimer", DEFAULT_DISCLAIMER), field="disclaimer", max_chars=220)
         scenes = validate_scenes(raw.get("scenes"))
         voiceover = validate_voiceover_binding(raw.get("voiceover"), manifest_dir=args.manifest.parent)
+        if voiceover is not None and not args.video:
+            raise MediaRenderError("voiceover requires --video so audio evidence cannot be attached to image-only output")
         palette = load_brand_palette()
         args.out_dir.mkdir(parents=True, exist_ok=True)
 
