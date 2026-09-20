@@ -2,32 +2,38 @@
 
 **Document ID:** EVID-OPS-GHA-INV-2026-09-20  
 **Status:** EVIDENCE — NON-AUTHORIZING  
-**Baseline:** `main@0478b62ba365ccae895f029a8f8ddc58bee4230e`  
+**Snapshot baseline:** `main@0478b62ba365ccae895f029a8f8ddc58bee4230e`  
+**Execution baseline:** `main@4a2f43842f380c6da6d088bbea57729bae383be7`  
 **Source:** GitHub Actions API `list_workflows` + tree `.github/workflows`  
 **Convention:** `docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md`  
 **Deletion review:** `docs/security/WORKFLOW_DELETION_REVIEW.json`
 
-This file records the correlation snapshot. It does not authorize merge, deploy, workflow deletion, or Actions-API disable.
+This file records the correlation snapshot and the executed S1 follow-up. It does not authorize merge, deploy, additional workflow deletion, or Actions-API disable.
 
 ## Counts
 
+Snapshot before S1 execution:
+
 - 67 registered workflows, all `state: active`
-- 38 YAML files on `main`
+- 38 YAML files on `main@0478b62` / `main@4a2f438`
 - 25 orphan API records (file absent on `main`)
 - 4 GitHub-managed `dynamic/*` workflows
 - 0 self-hosted runners
 
-## Stubs still on `main` (delete only after this policy is on trusted main)
+Expected tree after this follow-up merges:
 
-`pr-governance.yml` runs `verifyChangedWorkflowSecurity.mjs` from the `policy/` checkout of `main`. A PR that changes that script cannot also delete workflows, because CI would still execute the old fail-closed copy.
+- 35 YAML files on `main`
+- 28 orphan API records until Owner disables the three newly deleted stubs plus the existing 25
 
-| Path | State |
-|---|---|
-| `.github/workflows/document-hygiene-evidence-migration.yml` | dispatch-only echo stub |
-| `.github/workflows/document-hygiene-evidence-once.yml` | dispatch-only echo stub |
-| `.github/workflows/lockfile-remediation.yml` | dispatch + `if: false` |
+## Stubs deleted in S1 follow-up
 
-The review JSON already lists these three paths so a follow-up PR after Human merge of the policy can delete them without changing the validator again.
+`pr-governance.yml` runs `verifyChangedWorkflowSecurity.mjs` from the `policy/` checkout of `main`. PR #1099 landed that reviewed deletion path. This follow-up deletes only the three allowlisted unused echo stubs and does not change the validator.
+
+| Path | Pre-delete state | Post-delete state |
+|---|---|---|
+| `.github/workflows/document-hygiene-evidence-migration.yml` | dispatch-only echo stub | file removed; API record may stay `active` |
+| `.github/workflows/document-hygiene-evidence-once.yml` | dispatch-only echo stub | file removed; API record may stay `active` |
+| `.github/workflows/lockfile-remediation.yml` | dispatch + `if: false` | file removed; API record may stay `active` |
 
 ## Orphan API records (disable in Actions UI — not this PR)
 
@@ -58,6 +64,8 @@ The review JSON already lists these three paths so a follow-up PR after Human me
 | 337371365 | `.github/workflows/tmp-p1a-documentary-validation.yml` |
 | 337382088 | `.github/workflows/tmp-p1a-repository-governance-validation.yml` |
 | 337394618 | `.github/workflows/tmp-p1a-runtime-admin-validation.yml` |
+
+After merge the three S1 paths join this orphan class until disabled.
 
 ## Dynamic platform workflows (keep)
 

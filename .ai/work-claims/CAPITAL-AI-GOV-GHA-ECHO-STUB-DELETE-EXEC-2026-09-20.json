@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-GHA-ECHO-STUB-DELETE-EXEC-2026-09-20",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Delete the three unused echo workflow stubs allowlisted by WORKFLOW_DELETION_REVIEW.json after PR #1099 landed on trusted main. Do not rename required checks, disable API orphans, or change the validator.",
+  "workItemDE": "Die drei von WORKFLOW_DELETION_REVIEW.json allowlisted unused Echo-Stubs loeschen, nachdem PR #1099 auf trusted main liegt. Required Checks nicht umbenennen, API-Orphans nicht disablen, Validator nicht aendern.",
+  "startedAt": "2026-09-20T04:53:00Z",
+  "baseBranch": "main",
+  "baseSha": "4a2f43842f380c6da6d088bbea57729bae383be7",
+  "branch": "docs/gov-unused-echo-workflow-delete-20260920",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV",
+  "ownerDirection": "S1 jetzt, nach Human-Merge S3",
+  "parallelOpenWriters": [
+    {
+      "pullRequest": 1100,
+      "title": "[CAPITAL-AI-DOC] [ChatGPT] DATA-Kompatibilitaetsflaeche archivieren",
+      "overlap": "none on claimed paths"
+    }
+  ],
+  "productionBaseline": {
+    "checkedAt": "2026-09-20T04:53:00Z",
+    "version": "0.6.0",
+    "commitSha": "4a2f43842f380c6da6d088bbea57729bae383be7",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".github/workflows/document-hygiene-evidence-migration.yml",
+    ".github/workflows/document-hygiene-evidence-once.yml",
+    ".github/workflows/lockfile-remediation.yml",
+    ".ai/work-claims/CAPITAL-AI-GOV-GHA-ECHO-STUB-DELETE-EXEC-2026-09-20.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-GHA-WORKFLOW-STUB-DELETE-2026-09-20.json",
+    "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md",
+    "docs/evidence/ops/WORKFLOW_USAGE_CORRELATION_2026-09-20.md"
+  ],
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge."
+}
