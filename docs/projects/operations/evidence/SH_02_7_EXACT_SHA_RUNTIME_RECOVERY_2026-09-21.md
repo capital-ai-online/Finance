@@ -5,7 +5,7 @@
 **Primary PVC:** `PVC-08 — Production Operations`  
 **Supporting PVC:** `PVC-07 — Release Management`, `PVC-18 — EventMesh / Traceability`  
 **Implementation baseline:** `main@53c38dbeaf85262ed1784ce3458d61b54f6da3bb`  
-**State:** `IMPLEMENTATION_IN_PROGRESS / HOSTED_VALIDATION_PENDING`
+**State:** `CAPABILITY_IMPLEMENTED / ACTIVATION_HELD / HOSTED_VALIDATION_PENDING`
 
 ## Reconciled capability
 
@@ -29,6 +29,7 @@ A mutation is eligible only when all of these are true:
 - the canonical deploy job is terminal and rerunnable;
 - the original CI run has not already consumed the one allowed recovery attempt;
 - the 300000 ms cooldown has elapsed;
+- the explicit activation variable `CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY` is `true`;
 - the kill switch `CAPITAL_AI_DISABLE_EXACT_SHA_RECOVERY` is not `true`;
 - `CURRENT_MAIN` and Production identity are re-read immediately before mutation.
 
@@ -51,3 +52,7 @@ Any mismatch fails the verification and leaves the recovery circuit exhausted af
 ## Validation state
 
 Repository-hosted checks have not yet evaluated the final PR head. Until they do, implementation validation remains `PENDING`; this document does not manufacture a PASS.
+
+## Activation boundary
+
+This PR deliberately keeps `REDEPLOY_EXACT_SHA` `HELD` in the canonical Self-Healing contract and defaults the workflow to no mutation. The implementation can be activated only by a separately correlated follow-up after the current competing Supervisor test writer is terminal. This avoids creating an overlapping writer merely to change a shared projection expectation.
