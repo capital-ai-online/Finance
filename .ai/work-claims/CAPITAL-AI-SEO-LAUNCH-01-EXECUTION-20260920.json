@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-LAUNCH-01-EXECUTION-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "WP-SEO-LAUNCH-01 execution: freeze the merged/current landing and CTA source, capture production and GSC/GA4 baseline evidence, and create the owner-correct X/Facebook Wave-1 Social handoff without taking over Social/provider ownership.",
+  "startedAt": "2026-09-20T20:25:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "79eef34e8cd7cd852305641cb1b49cd90dbd2af5",
+  "branch": "agent/seo-launch-01-production-baseline-wave1-20260920",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "Owner-directed launch execution against the merged/current public landing with provider evidence and Wave-1 handoff required before public promotion.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-PUBLIC-LAUNCH-MANAGEMENT-20260920.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-LAUNCH-01-EXECUTION-20260920.json",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md",
+    "docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md"
+  ],
+  "foreignDependencies": [
+    "CAPITAL-AI-OPS — exact Production↔CURRENT_MAIN deployment identity; current execution observes Production drift and does not bypass the canonical GitHub→Render deployment path.",
+    "CAPITAL-AI-FE — root prerender/client metadata must converge with the visible market-intelligence landing message; SEO records the finding but does not mutate FE source.",
+    "CAPITAL-AI-SOCIAL — create contract-valid X/Facebook SocialContentPackages, validate connected provider identities/scopes, execute publication, and return publication/analytics evidence.",
+    "CAPITAL-AI-COMP — consent/privacy and public financial-disclosure constraints remain independent.",
+    "CAPITAL-AI-QM — independent launch evidence assurance."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no self-merge or auto-merge authority."
+}
