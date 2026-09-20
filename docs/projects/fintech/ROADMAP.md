@@ -1,12 +1,12 @@
 # CAPITAL-AI-FINTECH — Canonical Roadmap
 
-**Baseline:** `main@2358642ff80f128e271e02ae88401008663578b7`
+**Baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`
 
 **Project:** `CAPITAL-AI-FINTECH`  
 **Folder:** `docs/projects/fintech/`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-09..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-17 — DATA ownership supersession and post-PR-#1039 baseline re-correlated  
+**Reconciliation:** 2026-09-20 — merged FIN-12/provider/ownership state plus Owner-reference orchestrator universe re-correlated  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -23,29 +23,36 @@ Canonical chain: Provider/data ingress → Evidence/Provenance/Freshness → Dat
 
 ### FIN-12 — Validated data → Feature Contract
 
-**State:** `P1 / SELECTED / PR #1037 RE-CORRELATION REQUIRED`
+**State:** `DONE_MAIN / BOUNDED CONTRACT SLICE`
 
-The prior foreign DATA dependency is retired. Required provider/data/evidence/DQ semantics belong to `CAPITAL-AI-FINTECH / PVC-09..11`; the PVC-11→PVC-12 boundary remains fail-closed and internal to FINTECH. PR #1037 contains the bounded validated-data contract slice and must be correlated to the post-supersession `CURRENT_MAIN` before merge.
+Human-merged PR #1037 (`692286551977e54d816812b70d5014d955c93183`) materialized the FINTECH-owned validated field/history boundary for crypto market-cap/volume/supply, traditional fundamentals, validated history and signed sovereign-yield semantics. The former foreign DATA dependency is retired; `PVC-09..11 -> PVC-12` remains an internal fail-closed FINTECH boundary.
 
 ### FINTECH startup/provider/promo-retirement
 
-**State:** `SEPARATE PR #1046 / RE-CORRELATION REQUIRED`
+**State:** `DONE_MAIN`
 
-PR #1046 removes Alpaca/CoinGecko from bounded startup/readiness paths and retires `promo_redemptions` through a guarded migration. It is independent from FIN-12 implementation and requires its own fresh main/head/open-writer correlation before merge.
+Human-merged PR #1046 (`f4d94581eaa1e59b19c08293c4ddbda2f7d33d9a`) removed Alpaca/CoinGecko from bounded startup/readiness paths while retaining governed on-demand evidence and retired `promo_redemptions` through its guarded migration.
+
+### FIN-21 — Multi-Asset Orchestrator Universe
+
+**State:** `OWNER-DIRECTED / IMPLEMENTED_BRANCH / VALIDATION_PENDING`
+
+Project all six existing canonical scorable asset classes through one read-only FINTECH universe/orchestration view over the existing model/module authorities. Add the 20 Owner-reference Equity subclass lenses only as `RESEARCH_TARGET_NOT_MODEL`, bound to `traditional-scoring@2.1.0`. Do not invent workflow-module availability, provider evidence, scoring weights or productive subclass models. Evidence: `evidence/FIN_21_MULTI_ASSET_ORCHESTRATOR_UNIVERSE_2026-09-20.md`.
 
 ## Historical FINTECH work inventory — non-active unless currently revalidated
 
 | ID | Historical state / current gate |
 |---|---|
-| FIN-12 Validated data → Feature Contract | current bounded implementation in PR #1037; re-correlation required |
+| FIN-12 Validated data → Feature Contract | `DONE_MAIN` through PR #1037; retain fail-closed drift watch |
 | FIN-13 Scoring Models | `VERIFIED CORE / DRIFT WATCH` |
 | FIN-14 Scoring Orchestration | `VERIFIED CORE` |
 | FIN-15 Domain executors | `VERIFIED/PARTIAL`; independent Security return may remain |
 | FIN-16 Canonical scoring | `VERIFIED/PARTIAL`; independent Security return may remain |
 | FIN-17 Ranking / Decision Support | `DONE_MAIN / TERMINAL` |
 | FIN-18 Asset-class inventory | `VERIFIED` |
-| FIN-19 Provider capability mapping | prior `PARTIAL / OPEN`; must resolve within FINTECH PVC-09..17 ownership |
-| FIN-20 End-to-end scoring evidence | prior `PARTIAL / OPEN`; must be revalidated |
+| FIN-19 Provider capability mapping | `PARTIAL / OPEN`; re-evaluate expanded stock/crypto/commodity research requirements against the single ProviderMatrix and PVC-09..11 boundary |
+| FIN-20 End-to-end scoring evidence | `PARTIAL / REVALIDATION READY`; FIN-12 bounded prerequisite is on main, exact runtime/OPS lineage evidence remains open |
+| FIN-21 Multi-Asset Orchestrator Universe | `OWNER-DIRECTED / IMPLEMENTED_BRANCH / VALIDATION_PENDING`; six-class read-only projection plus Equity research lenses |
 | FIN-DRIFT-01 Deterministic drift checks | historical `PLANNED`; not active by status alone |
 | FIN-SEC-02 verified_screening | prior `IMPLEMENTED / EVIDENCE_READY`; independent SEC verification separate |
 | FIN-SEC-03 analysis entitlement | prior `IMPLEMENTED / EVIDENCE_READY`; independent SEC verification separate |
