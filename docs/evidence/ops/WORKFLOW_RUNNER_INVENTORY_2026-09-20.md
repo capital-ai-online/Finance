@@ -7,9 +7,9 @@
 **Convention:** `docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md`  
 **Deletion review:** `docs/security/WORKFLOW_DELETION_REVIEW.json`
 
-This file records the correlation snapshot. It does not authorize merge, deploy, or Actions-API disable.
+This file records the correlation snapshot. It does not authorize merge, deploy, workflow deletion, or Actions-API disable.
 
-## Counts before Phase 1b
+## Counts
 
 - 67 registered workflows, all `state: active`
 - 38 YAML files on `main`
@@ -17,15 +17,17 @@ This file records the correlation snapshot. It does not authorize merge, deploy,
 - 4 GitHub-managed `dynamic/*` workflows
 - 0 self-hosted runners
 
-## Phase 1b deletions (reviewed)
+## Stubs still on `main` (delete only after this policy is on trusted main)
 
-| Path | Review reason |
+`pr-governance.yml` runs `verifyChangedWorkflowSecurity.mjs` from the `policy/` checkout of `main`. A PR that changes that script cannot also delete workflows, because CI would still execute the old fail-closed copy.
+
+| Path | State |
 |---|---|
-| `.github/workflows/document-hygiene-evidence-migration.yml` | dispatch-only echo stub, `contents: read` |
-| `.github/workflows/document-hygiene-evidence-once.yml` | dispatch-only echo stub, duplicate disabled name |
-| `.github/workflows/lockfile-remediation.yml` | dispatch + `if: false`, historical PR #30 record |
+| `.github/workflows/document-hygiene-evidence-migration.yml` | dispatch-only echo stub |
+| `.github/workflows/document-hygiene-evidence-once.yml` | dispatch-only echo stub |
+| `.github/workflows/lockfile-remediation.yml` | dispatch + `if: false` |
 
-After merge the three paths become additional orphan API records until the Owner disables them in the Actions UI. GitHub does not delete workflow IDs when the YAML disappears.
+The review JSON already lists these three paths so a follow-up PR after Human merge of the policy can delete them without changing the validator again.
 
 ## Orphan API records (disable in Actions UI — not this PR)
 
@@ -65,7 +67,3 @@ After merge the three paths become additional orphan API records until the Owner
 | `dynamic/dependabot/update-graph` | Dependency Graph |
 | `dynamic/github-code-scanning/codeql` | CodeQL |
 | `dynamic/github-code-scanning/code-security-risk-assessment` | Security Risk Assessment |
-
-## Runner observation
-
-All inspected live jobs use GitHub-hosted `ubuntu-latest` or `ubuntu-24.04`. No custom runner group and no `[self-hosted]` label were present on the baseline tree.
