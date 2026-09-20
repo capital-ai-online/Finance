@@ -15,7 +15,9 @@ const dashboardNavigation = read('src/app/dashboard/DashboardNavigation.tsx');
 describe('BB-2B through BB-2G dashboard consumer cutover', () => {
   it('owns the active-view and session projection in the app composition root', () => {
     expect(appDashboard).toContain("import type { DashboardView } from './dashboardViews'");
-    expect(appDashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(appDashboard).toContain('readDashboardView(window.location.search)');
+    expect(appDashboard).toContain("window.addEventListener('popstate', syncFromLocation)");
+    expect(appDashboard).toContain('window.history.pushState(nextState, document.title, nextUrl)');
     expect(appDashboard).toContain("import type { UserSession } from '../types/UserSession'");
     expect(appDashboard).not.toContain("from '../../components/Dashboard'");
   });

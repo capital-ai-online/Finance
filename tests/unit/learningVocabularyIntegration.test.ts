@@ -33,7 +33,7 @@ describe('Capital-AI Learning Platform integration', () => {
 
     expect(dashboard).toContain("from './DashboardViewRouter'");
     expect(dashboard).toContain("import type { DashboardView } from './dashboardViews'");
-    expect(dashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(dashboard).toContain('readDashboardView(window.location.search)');
     expect(dashboard).toContain('<DashboardHeader');
     expect(dashboard).not.toContain('<DashboardNavigation');
     expect(dashboardHeader).toContain('<DashboardNavigation');
