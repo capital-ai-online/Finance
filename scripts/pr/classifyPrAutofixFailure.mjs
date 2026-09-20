@@ -73,6 +73,8 @@ function result({
   repairerId = '',
   repairerPath = '',
   allowedPaths = [],
+  findingClass = '',
+  actionId = '',
 }) {
   return {
     classification,
@@ -82,6 +84,8 @@ function result({
     repairerId,
     repairerPath,
     allowedPaths,
+    findingClass,
+    actionId,
   };
 }
 
@@ -185,6 +189,8 @@ export function classifyPrAutofixFailure(
       repairerId: repair.repairerId,
       repairerPath: repair.repairerPath,
       allowedPaths: repair.allowedPaths,
+      findingClass: 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
     });
   }
 
@@ -212,6 +218,8 @@ export function classifyPrAutofixFailure(
       classification: 'CURRENT_STATE_BASELINE_DRIFT',
       decision: PR_AUTOFIX_DECISIONS.DELEGATE_CURRENT_STATE_BASELINE,
       reason: 'existing-current-state-baseline-specialist-owns-write',
+      findingClass: 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
     });
   }
 
@@ -307,6 +315,8 @@ function emitClassification(value) {
     repairer_id: value.repairerId,
     repairer_path: value.repairerPath,
     allowed_paths_json: JSON.stringify(value.allowedPaths),
+    self_healing_finding_class: value.findingClass,
+    self_healing_action_id: value.actionId,
   });
 }
 
