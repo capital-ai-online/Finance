@@ -11,20 +11,36 @@ describe('GitHub user billing read client', () => {
         path: `${parsed.pathname}${parsed.search}`,
         authorization: new Headers(init?.headers).get('Authorization'),
       });
+      if (parsed.pathname.endsWith('/usage/summary')) {
+        return new Response(JSON.stringify({
+          timePeriod: { year: 2026, month: 10, day: null },
+          user: 'SvenKulessa',
+          usageItems: [{
+            product: 'Actions',
+            sku: 'actions_linux',
+            unitType: 'minutes',
+            pricePerUnit: 0.006,
+            grossQuantity: 10,
+            grossAmount: 0.06,
+            discountQuantity: 10,
+            discountAmount: 0.06,
+            netQuantity: 0,
+            netAmount: 0,
+          }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
       return new Response(JSON.stringify({
-        timePeriod: { year: 2026, month: 10, day: null },
-        user: 'SvenKulessa',
         usageItems: [{
+          date: '2026-10-01',
           product: 'Actions',
-          sku: 'actions_linux',
+          sku: 'Actions Linux',
+          quantity: 10,
           unitType: 'minutes',
           pricePerUnit: 0.006,
-          grossQuantity: 10,
           grossAmount: 0.06,
-          discountQuantity: 10,
           discountAmount: 0.06,
-          netQuantity: 0,
           netAmount: 0,
+          repositoryName: 'SvenKulessa/personal-repo',
         }],
       }), { status: 200, headers: { 'content-type': 'application/json' } });
     };
@@ -35,20 +51,33 @@ describe('GitHub user billing read client', () => {
       fetchImpl: fetchImpl as typeof fetch,
     });
 
+    const detail = await client.getUsageReport({ year: 2026, month: 10 });
+    expect(detail.usageItems[0].repositoryName).toBe('SvenKulessa/personal-repo');
+
     const result = await client.getUsageSummary({ year: 2026, month: 10 });
     expect(result.user).toBe('SvenKulessa');
     expect(result.usageItems).toHaveLength(1);
-    expect(calls).toEqual([{
-      method: 'GET',
-      path: '/users/SvenKulessa/settings/billing/usage/summary?year=2026&month=10',
-      authorization: 'Bearer github_pat_test_user_billing_read_only',
-    }]);
+    expect(calls).toEqual([
+      {
+        method: 'GET',
+        path: '/users/SvenKulessa/settings/billing/usage?year=2026&month=10',
+        authorization: 'Bearer github_pat_test_user_billing_read_only',
+      },
+      {
+        method: 'GET',
+        path: '/users/SvenKulessa/settings/billing/usage/summary?year=2026&month=10',
+        authorization: 'Bearer github_pat_test_user_billing_read_only',
+      },
+    ]);
     expect(client.describeBoundary()).toEqual({
       username: 'SvenKulessa',
       requiredPermission: 'user.plan:read',
       acceptedCredential: 'github_app_user_access_token_or_fine_grained_pat',
       publicMethods: ['GET'],
-      publicPath: '/users/SvenKulessa/settings/billing/usage/summary',
+      publicPaths: [
+        '/users/SvenKulessa/settings/billing/usage',
+        '/users/SvenKulessa/settings/billing/usage/summary',
+      ],
       tokenPersistence: false,
     });
   });
