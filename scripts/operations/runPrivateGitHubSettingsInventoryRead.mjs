@@ -5,6 +5,10 @@ import {
 } from './githubSettingsInventoryReadClient.mjs';
 import {
   projectActionsPermissions,
+  projectArtifactStorageInventory,
+  projectCacheRetentionLimit,
+  projectCacheStorageLimit,
+  projectCacheUsage,
   projectCapturedSetting,
   projectCustomPropertyInventory,
   projectForkPrSettings,
@@ -71,11 +75,18 @@ const capabilityCalls = [
   ['organization.actions.retention.get', projectRetentionSettings],
   ['organization.actions.fork_pr_private_repos.get', projectForkPrSettings],
   ['organization.actions.self_hosted_runners.get', projectSelfHostedRunnerSettings],
+  ['organization.actions.cache_usage.get', projectCacheUsage],
+  ['organization.actions.cache_retention_limit.get', projectCacheRetentionLimit],
+  ['organization.actions.cache_storage_limit.get', projectCacheStorageLimit],
   ['repository.settings.get', projectRepositorySettings],
   ['repository.actions.permissions.get', projectActionsPermissions],
   ['repository.actions.workflow_permissions.get', projectWorkflowPermissions],
   ['repository.actions.retention.get', projectRetentionSettings],
   ['repository.actions.fork_pr_private_repos.get', projectForkPrSettings],
+  ['repository.actions.cache_usage.get', projectCacheUsage],
+  ['repository.actions.cache_retention_limit.get', projectCacheRetentionLimit],
+  ['repository.actions.cache_storage_limit.get', projectCacheStorageLimit],
+  ['repository.actions.artifacts.list', projectArtifactStorageInventory],
   ['repository.custom_properties.list', projectCustomPropertyInventory],
 ];
 
@@ -119,5 +130,13 @@ const output = Object.freeze({
   paidUsageMutationPerformed: false,
   secretsOrTokensLogged: false,
 });
+
+const evidencePath = String(process.env.CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH || '').trim();
+if (evidencePath) {
+  fs.writeFileSync(evidencePath, `${JSON.stringify(output, null, 2)}\n`, {
+    encoding: 'utf8',
+    mode: 0o600,
+  });
+}
 
 process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
