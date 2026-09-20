@@ -32,9 +32,9 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
       '.github/workflows/open-agent-draft-pr.yml',
       'tests/unit/githubAgentDraftPrWorkflow.test.ts',
     ]));
-    expect(agents).toContain('PR creation may be automated after final correlation PASS');
-    expect(agents).toContain('unresolved or blocked correlation stops creation');
-    expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
+    expect(agents).toContain('PR creation and PR updates may be automated after final correlation PASS');
+    expect(agents).toContain('unresolved or blocked correlation stops readiness');
+    expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
   });
 
   it('requires fresh current-main correlation and truthful validation rather than a pre-create credential', () => {
@@ -61,7 +61,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const workflow = read('.github/workflows/open-agent-draft-pr.yml');
 
     expect(agents).toContain('A Pull Request changing this file cannot authorize itself');
-    expect(agents).toContain('Until Human/CODEOWNER merge, the rules on then-current `main` govern creation, validation, review and merge of that Pull Request');
+    expect(agents).toContain('Until Human Owner merge, the rules on then-current `main` govern creation, validation, review and merge of that Pull Request');
     expect(agents).toContain('After merge, this file alone is the repository-wide ChatGPT/AI/development instruction surface');
     expect(workflow).not.toContain('owner_pr_create_approval:');
     expect(workflow).not.toContain('approval_envelope_json:');
@@ -127,8 +127,8 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const security = control('CTRL-SEC-BOUNDED-REMEDIATION-001');
 
     expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
-    expect(agents).toContain('Agents MUST NOT self-approve, self-merge, enable auto-merge');
-    expect(merge?.requirement).toContain('Every main merge is a distinct Human/CODEOWNER decision');
+    expect(agents).toContain('Agents and automation MUST NOT self-merge, enable auto-merge');
+    expect(merge?.requirement).toContain('Every main merge is a distinct Human Owner decision');
     expect(merge?.requirement).toContain('Agent self-merge and auto-merge remain prohibited');
     expect(security?.requirement).toContain('bounded by ownership');
     expect(security?.requirement).toContain('protected-action gates');
@@ -141,7 +141,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
     expect(authorities.version).toBe('1.64.0');
-    expect(catalog.version).toBe('1.27.0');
+    expect(catalog.version).toBe('1.28.0');
     expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('4.1.0');
     expect(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.version).toBe('4.0.0');
     expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('4.0.0');
@@ -150,6 +150,6 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     expect(pluginUse).toBeDefined();
     expect(catalog.controls.filter((item) => item.controlId === 'CTRL-SDLC-PLUGIN-USE-001')).toHaveLength(1);
     expect(canonicalRoadmap).toContain('ACTIVE — CANONICAL PROJECT ROADMAP');
-    expect(canonicalRoadmap).toContain('Human/CODEOWNER-only merge remains mandatory');
+    expect(canonicalRoadmap).toContain('**Trust root:** `/AGENTS.md@current-main`');
   });
 });
