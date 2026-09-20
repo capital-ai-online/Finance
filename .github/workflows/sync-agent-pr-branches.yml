@@ -109,8 +109,16 @@ jobs:
           set -euo pipefail
 
           if [ "$EVENT_NAME" = 'pull_request' ] || [ "$EVENT_NAME" = 'pull_request_review' ]; then
-            # ready_for_review is a single-PR transition. Keep the operation scoped to that PR.
+            # PR-native events are always exact-PR transitions.
             prs="$(gh pr view "$EVENT_PR_NUMBER" --repo "$REPO" \
+              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
+              | jq -c '[.]')"
+          elif [ "$EVENT_NAME" = 'workflow_dispatch' ] && [ -n "${DISPATCH_PR_NUMBER:-}" ]; then
+            if ! printf '%s' "$DISPATCH_PR_NUMBER" | grep -Eq '^[1-9][0-9]*$'; then
+              echo "workflow_dispatch pr_number muss eine positive PR-Nummer sein." >&2
+              exit 1
+            fi
+            prs="$(gh pr view "$DISPATCH_PR_NUMBER" --repo "$REPO" \
               --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
               | jq -c '[.]')"
           else
