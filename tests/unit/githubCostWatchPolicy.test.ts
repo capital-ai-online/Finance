@@ -17,11 +17,33 @@ describe('GitHub cost watch policy', () => {
       enterprise: 'capital-ai-online',
       username: 'SvenKulessa',
       enterpriseUsage,
+      organizationUsageDetail: {
+        usageItems: [{
+          date: '2026-10-01',
+          product: 'GHAS',
+          sku: 'GitHub Code Security',
+          unitType: 'user-months',
+          netAmount: 6,
+          organizationName: 'capital-ai-online',
+          repositoryName: 'capital-ai-online/Finance',
+        }],
+      },
       personalUsage: {
         usageItems: [
           { product: 'GitHub Pro', sku: 'github_pro', unitType: 'months', grossAmount: 4, discountAmount: 0, netAmount: 4 },
         ],
       },
+      personalUsageDetail: {
+        usageItems: [{
+          date: '2026-10-01',
+          product: 'GitHub Pro',
+          sku: 'GitHub Pro',
+          unitType: 'months',
+          netAmount: 4,
+          repositoryName: 'SvenKulessa/personal-repo',
+        }],
+      },
+      organizationCoverage: { status: 'PASS', reason: null },
       personalCoverage: { status: 'PASS', reason: null },
     });
 
@@ -36,6 +58,10 @@ describe('GitHub cost watch policy', () => {
       'github_pro',
     ]);
     expect(report.emailRequired).toBe(true);
+    expect(report.alertDetailRows.map((row) => row.repositoryName)).toEqual([
+      'capital-ai-online/Finance',
+      'SvenKulessa/personal-repo',
+    ]);
   });
 
   it('does not change alert fingerprint when only the running amount increases', () => {
@@ -63,6 +89,63 @@ describe('GitHub cost watch policy', () => {
     });
 
     expect(base.alertFingerprint).toBe(increased.alertFingerprint);
+  });
+
+  it('changes alert fingerprint when the same billed SKU appears in a new repository', () => {
+    const baseInput = {
+      mode: 'monitor',
+      generatedAt: '2026-10-01T00:15:00.000Z',
+      enterprise: 'capital-ai-online',
+      username: 'SvenKulessa',
+      enterpriseUsage: {
+        usageItems: [{ product: 'Actions', sku: 'actions_linux', unitType: 'minutes', netAmount: 1 }],
+      },
+      personalUsage: { usageItems: [] },
+      personalCoverage: { status: 'PASS', reason: null },
+      organizationCoverage: { status: 'PASS', reason: null },
+    };
+
+    const finance = buildGitHubCostWatchReport({
+      ...baseInput,
+      organizationUsageDetail: {
+        usageItems: [{
+          date: '2026-10-01',
+          product: 'Actions',
+          sku: 'Actions Linux',
+          unitType: 'minutes',
+          netAmount: 1,
+          organizationName: 'capital-ai-online',
+          repositoryName: 'capital-ai-online/Finance',
+        }],
+      },
+    });
+    const secondRepo = buildGitHubCostWatchReport({
+      ...baseInput,
+      organizationUsageDetail: {
+        usageItems: [
+          {
+            date: '2026-10-01',
+            product: 'Actions',
+            sku: 'Actions Linux',
+            unitType: 'minutes',
+            netAmount: 1,
+            organizationName: 'capital-ai-online',
+            repositoryName: 'capital-ai-online/Finance',
+          },
+          {
+            date: '2026-10-02',
+            product: 'Actions',
+            sku: 'Actions Linux',
+            unitType: 'minutes',
+            netAmount: 0.5,
+            organizationName: 'capital-ai-online',
+            repositoryName: 'capital-ai-online/second-repo',
+          },
+        ],
+      },
+    });
+
+    expect(finance.alertFingerprint).not.toBe(secondRepo.alertFingerprint);
   });
 
   it('forces an email when personal billing coverage is blocked', () => {
