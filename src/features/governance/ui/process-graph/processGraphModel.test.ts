@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import {
+  getRemediationActions,
+  getRemediationPolicies,
+} from '../../../../platform/Supervisor/selfHealingContract';
 import type {
   OperationalTraceStateEnvelope,
   OperationalTraceStateRecord,
 } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
 import {
+  buildFixAlgorithmProjection,
   buildProcessGraphViewModel,
   mapOperationalTraceState,
   parseAutonomousWorkStages,
@@ -165,6 +170,30 @@ describe('process graph canonical projection', () => {
       source: 'SH-02.3',
       target: 'SH-02.3E',
       relation: 'dependency',
+    });
+  });
+
+  it('projects the canonical bounded fix algorithm without creating execution authority', () => {
+    const fixes = buildFixAlgorithmProjection(
+      getRemediationActions(),
+      getRemediationPolicies(),
+    );
+    const repositoryFix = fixes.find(
+      (fix) => fix.actionId === 'RECONCILE_REPOSITORY_PROJECTION',
+    );
+
+    expect(repositoryFix).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.autofix',
+      verificationProbe: 'exact-pr-head-ci-governance-readback',
+      maxAttempts: 1,
+      preferredForFindingClasses: [
+        'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+        'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+      ],
     });
   });
 
