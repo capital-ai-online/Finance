@@ -120,8 +120,22 @@ test('PR metadata delegation dispatches only the exact failed Governance run to 
     "sourceRun.conclusion !== 'failure'",
     'normalizeSha(pr.head.sha) !== expectedHead',
     'normalizeSha(main.commit.sha) !== expectedBase',
+    "event: 'workflow_run'",
+    'head_sha: expectedHead',
+    "run.path === '.github/workflows/pr-production-baseline-refresh.yml'",
+    "String(run.name || '') === 'PR Production Baseline Auto-Refresh'",
+    'normalizeSha(run.head_sha) === expectedHead',
+    'Number(run.run_attempt || 1) === 1',
+    'No completed PR Production Baseline Auto-Refresh run is bound to head',
     "POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun",
+    'run_id: exactSpecialist.id',
   ]) assert.ok(block.includes(token), 'missing metadata delegation guard: ' + token);
   assert.doesNotMatch(block, /pull-requests: write|contents: write/);
   assert.doesNotMatch(block, /repairLegacyPrBodyStructure\.mjs|updatePrProductionBaseline\.mjs/);
+});
+
+test('metadata delegation never relies on re-running Governance to fan out a nested workflow_run', () => {
+  const block = workflow.split('  delegate_pr_metadata:\n')[1].split('\n  repair:\n')[0];
+  assert.doesNotMatch(block, /run_id: sourceRun\.id/);
+  assert.ok(block.includes('run_id: exactSpecialist.id'));
 });
