@@ -247,6 +247,16 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
     [...body.matchAll(/^## 5\. ✅ Prüfung & Merge\s*$/gm)].length === 1 &&
     [...body.matchAll(/^## 6\. 🔢 Version\s*$/gm)].length === 1;
 
+  const currentV16SecurityBoundaryLikeHeading =
+    detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
+    /^## 4\. 🔐 Security Boundar.*$/m.test(body);
+
+  const currentV16GenericMissingSectionsShape =
+    fullLegacyMissing &&
+    detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
+    occurrenceCount(body, '## 7. Maschinenlesbare Baseline') === 1 &&
+    !currentV16SecurityBoundaryLikeHeading;
+
   if (currentV16SecurityBoundaryShape) {
     const malformedBlock = body.match(
       /^## 4\. 🔐 Security Boundary\s*\n([\s\S]*?)^## 5\. ✅ Prüfung & Merge\s*\n([\s\S]*?)^## 6\. 🔢 Version\s*\n([\s\S]*?)(?=^## 7\. Maschinenlesbare Baseline\s*$)/m,
@@ -311,6 +321,80 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
       eligible: true,
       changed: repaired !== body,
       reason: 'current-v1.6-security-boundary-shape-repaired',
+      body: repaired,
+    };
+  }
+
+  if (currentV16GenericMissingSectionsShape) {
+    const baselineHeading = '## 7. Maschinenlesbare Baseline';
+    const baselineIndex = body.indexOf(baselineHeading);
+    if (baselineIndex < 0) {
+      return { eligible: false, changed: false, reason: 'current-v1.6-baseline-heading-missing', body };
+    }
+
+    const prefix = body.slice(0, baselineIndex);
+    const baselineAndAfter = body.slice(baselineIndex);
+    const demotedPrefix = prefix.replace(
+      /^## ([456])\. (.+)$/gm,
+      (_match, _number, title) => '### ' + String(title).trim(),
+    );
+
+    const priority =
+      body.match(/^> \*\*(P[0-3] (?:🔴 Kritisch|🟠 Hoch|🟡 Normal|🟢 Niedrig)) ·/m)?.[1] ||
+      'P2 🟡 Normal';
+    const versionImpact =
+      body.match(/^> \*\*P[0-3] (?:🔴 Kritisch|🟠 Hoch|🟡 Normal|🟢 Niedrig) · (NOT_EVALUATED ⚪|NONE ➖|PATCH 🩹|MINOR ✨|MAJOR 💥) ·/m)?.[1] ||
+      'NOT_EVALUATED ⚪';
+    const existingPrClass =
+      body.match(/^> \*\*P[0-3] (?:🔴 Kritisch|🟠 Hoch|🟡 Normal|🟢 Niedrig) · (?:NOT_EVALUATED ⚪|NONE ➖|PATCH 🩹|MINOR ✨|MAJOR 💥) · PR-Klasse ([DCRM])\*\*/m)?.[1] ||
+      prClass;
+
+    const canonicalSections = [
+      SECTION_ROADMAP,
+      '',
+      '- **Priorität:** ' + priority,
+      '- **Warum diese Priorität:** Aus der bestehenden v1.6-Prioritätszeile übernommen; der Autofix bewertet die Priorität nicht neu.',
+      '- **Roadmap / Work Package:** N/A — deterministische Reparatur eines bestehenden PR-Bodys; keine neue Task-Autorität wird erzeugt.',
+      '',
+      SECTION_VERSION,
+      '',
+      '- **Versionsimpact:** ' + versionImpact,
+      '- **Versionsbegründung:** Aus dem bestehenden v1.6-Banner übernommen; der Autofix bewertet den Versionsimpact nicht neu.',
+      '- **Version-Manager-Check:** NOT_RUN — repositoryseitige Checks liefern die technische Evidence.',
+      '- **PR-Klasse:** ' + existingPrClass,
+      '- **Klassenbegründung:** Bestehende PR-Klassenangabe wird erhalten; trusted-main Scope-Klassifikation für den Reparaturpfad: ' + prClass + '.',
+      '- **Erforderliche Checks:** gemäß trusted-main PR-Scope und Repository-Policy.',
+      '',
+      SECTION_CHECK,
+      '',
+      '- **Main synchronisiert:** durch exact-head/base Specialist-Grenze gebunden.',
+      '- **Changed-File-/Semantic-Overlap:** wird außerhalb dieses Body-Autofix weiterhin fail-closed korreliert.',
+      canonicalMergeGate,
+      '- **Agent-Self-Merge / Auto-Merge:** Nein',
+      '',
+    ].join('\n');
+
+    let repaired = demotedPrefix + canonicalSections + baselineAndAfter;
+    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
+
+    const missingAfter = findMissingRequiredSections(repaired);
+    if (missingAfter.length > 0) {
+      throw new Error('Current v1.6 generic missing-section repair did not converge: ' + missingAfter.join(', '));
+    }
+    if (!repaired.includes(canonicalMergeGate)) {
+      throw new Error('Current v1.6 generic missing-section repair did not preserve the Human/CODEOWNER merge gate.');
+    }
+    if (
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_START') !== baselineStartBefore ||
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_END') !== baselineEndBefore
+    ) {
+      throw new Error('Current v1.6 generic missing-section repair changed production-baseline marker cardinality.');
+    }
+
+    return {
+      eligible: true,
+      changed: repaired !== body,
+      reason: 'current-v1.6-generic-missing-sections-repaired',
       body: repaired,
     };
   }
