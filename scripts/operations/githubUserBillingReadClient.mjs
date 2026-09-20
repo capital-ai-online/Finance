@@ -117,6 +117,14 @@ function buildQuery(path, entries) {
   return query ? `${path}?${query}` : path;
 }
 
+/**
+ * @param {{
+ *   username?: string;
+ *   userAccessToken?: string;
+ *   fetchImpl?: typeof fetch;
+ *   apiBaseUrl?: string;
+ * }} [options]
+ */
 export function createGitHubUserBillingReadClient({
   username,
   userAccessToken,
