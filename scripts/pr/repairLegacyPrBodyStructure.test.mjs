@@ -183,6 +183,65 @@ test('repairs the observed current v1.6 security-boundary shape without inventin
   assert.match(result.body, /Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja/);
 });
 
+const currentV16GenericMissingSectionsBody = [
+  '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0 -->',
+  'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0',
+  '# CAPITAL-AI Pull Request',
+  '',
+  '> **P1 🟠 Hoch · PATCH 🩹 · PR-Klasse M**',
+  '> Enterprise Cost Center Writer aktivieren',
+  '',
+  '## 1. 🎯 Kurzüberblick',
+  '- Existing overview stays intact.',
+  '',
+  '## 2. 📦 Projekt & Scope',
+  '- **Projekt:** CAPITAL-AI-OPS · Operations',
+  '',
+  '## 3. 🛠️ Umsetzung',
+  '- Existing implementation stays intact.',
+  '',
+  '## 4. 🔐 Provider-Voraussetzung',
+  '- Enterprise billing: write is required.',
+  '',
+  '## 5. ✅ Prüfung & Merge',
+  '- **Human-/CODEOWNER-Merge erforderlich:** Ja',
+  '- **Agent-Self-Merge / Auto-Merge:** Nein',
+  '',
+  '## 6. Erwartete Provider-Mutation',
+  '- name: Enterprise',
+  '',
+  '## 7. Maschinenlesbare Baseline',
+  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+  'CAPITAL_AI_PRODUCTION_BASELINE_START',
+  '- **Baseline-ID:** sha256:test',
+  'CAPITAL_AI_PRODUCTION_BASELINE_END',
+  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  '',
+].join('\n');
+
+test('repairs a current v1.6 body with generic conflicting sections 4-6 like PR #1123', () => {
+  assert.deepEqual(findMissingRequiredSections(currentV16GenericMissingSectionsBody), [
+    CURRENT.roadmap,
+    CURRENT.version,
+    CURRENT.check,
+  ]);
+
+  const result = repairLegacyPrBodyStructure(currentV16GenericMissingSectionsBody, { prClass: 'C' });
+
+  assertV16Repair(result, { priority: 'P1 🟠 Hoch', versionImpact: 'PATCH 🩹' });
+  assert.equal(result.reason, 'current-v1.6-generic-missing-sections-repaired');
+  assert.match(result.body, /^### 🔐 Provider-Voraussetzung$/m);
+  assert.match(result.body, /^### ✅ Prüfung & Merge$/m);
+  assert.match(result.body, /^### Erwartete Provider-Mutation$/m);
+  assert.match(result.body, /- \*\*PR-Klasse:\*\* M/);
+  assert.match(result.body, /trusted-main Scope-Klassifikation für den Reparaturpfad: C/);
+  assert.match(result.body, /Enterprise billing: write is required\./);
+  assert.match(result.body, /name: Enterprise/);
+  assert.doesNotMatch(result.body, /^## 4\. 🔐 Provider-Voraussetzung$/m);
+  assert.doesNotMatch(result.body, /^## 5\. ✅ Prüfung & Merge$/m);
+  assert.doesNotMatch(result.body, /^## 6\. Erwartete Provider-Mutation$/m);
+});
+
 test('preserves replacement-like PR text as inert data during current v1.6 repair', () => {
   const body = currentV16SecurityBoundaryBody.replace(
     '- Least-privilege review boundary remains advisory.',
