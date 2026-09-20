@@ -1,0 +1,114 @@
+name: Set variables
+
+on:
+  workflow_dispatch:
+    inputs:
+      value:
+        description: GHCR_DIGEST_PUBLISH_ENABLED value
+        required: true
+        type: choice
+        default: 'true'
+        options:
+          - 'true'
+          - 'false'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/set-variables.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: set-variables
+  cancel-in-progress: false
+
+jobs:
+  set-variable:
+    name: Set allowlisted repository variable
+    if: github.event_name == 'push' || github.actor == 'SvenKulessa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Mutation fail-closed autorisieren
+        id: gate
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          REQUESTED_VALUE: ${{ inputs.value }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            case "$REQUESTED_VALUE" in
+              true|false) ;;
+              *)
+                echo "::error::Unsupported variable value."
+                exit 1
+                ;;
+            esac
+            echo "authorized=true" >> "$GITHUB_OUTPUT"
+            echo "value=$REQUESTED_VALUE" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] || [[ "$BEFORE_SHA" == '0000000000000000000000000000000000000000' ]]; then
+            echo "::error::Bootstrap requires an existing main predecessor."
+            exit 1
+          fi
+
+          if git diff --diff-filter=A --name-only "$BEFORE_SHA" "$GITHUB_SHA" --             .github/workflows/set-variables.yml | grep -Fxq '.github/workflows/set-variables.yml'; then
+            echo "authorized=true" >> "$GITHUB_OUTPUT"
+            echo "value=true" >> "$GITHUB_OUTPUT"
+            echo "One-time bootstrap authorized by first addition of Set variables workflow."
+          else
+            echo "authorized=false" >> "$GITHUB_OUTPUT"
+            echo "No mutation: workflow was not newly added in this main push."
+          fi
+
+      - name: Node.js 24 einrichten
+        if: steps.gate.outputs.authorized == 'true'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+
+      - name: GitHub App Konfiguration fail-closed vorbereiten
+        if: steps.gate.outputs.authorized == 'true'
+        env:
+          APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$APP_CLIENT_ID"
+          test -n "$APP_PRIVATE_KEY"
+          key_path="${RUNNER_TEMP}/capital-ai-github-app-private-key.pem"
+          umask 077
+          printf '%s' "$APP_PRIVATE_KEY" > "$key_path"
+          echo "CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - name: GHCR publish variable setzen und zurücklesen
+        if: steps.gate.outputs.authorized == 'true'
+        env:
+          CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
+          CAPITAL_AI_GITHUB_REPOSITORY: ${{ github.repository }}
+          CAPITAL_AI_GITHUB_VARIABLE_VALUE: ${{ steps.gate.outputs.value }}
+        run: node scripts/operations/runSetGitHubVariable.mjs
+
+      - name: Private Key aus Runner-Dateisystem entfernen
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-}" ]]; then
+            rm -f -- "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH}"
+          fi
