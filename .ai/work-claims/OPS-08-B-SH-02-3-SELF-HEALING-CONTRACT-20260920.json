@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-3-SELF-HEALING-CONTRACT-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -40,5 +40,7 @@
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
   "recorrelatedAt": "2026-09-20T12:45:00Z",
-  "scopeNote": "SH-02.3 also deactivates/archives predecessor Self-Healing rules and adds deterministic supersession validation; /AGENTS.md and current Security/Compliance/QM/domain controls remain higher/current constraints."
+  "scopeNote": "SH-02.3 also deactivates/archives predecessor Self-Healing rules and adds deterministic supersession validation; /AGENTS.md and current Security/Compliance/QM/domain controls remain higher/current constraints.",
+  "releasedAt": "2026-09-20T12:55:02Z",
+  "releaseReason": "SH-02.3 merged via PR #1125 as 70c33dc0f283584275798b2e186e3771b2bfccf8; continuation moves to SH-02.4 from fresh CURRENT_MAIN."
 }
