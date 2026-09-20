@@ -108,8 +108,7 @@ function isExactEnterpriseInstallation(installation, enterprise) {
   return installationIdentityCandidates(installation).includes(enterprise.toLowerCase());
 }
 
-function assertBillingPath(method, path, enterprise) {
-  if (method !== 'GET') fail('authenticated public transport only allows GET');
+function assertSafeBillingPath(path, enterprise) {
   if (typeof path !== 'string' || path.includes('://') || path.includes('\\') || path.includes('..')) {
     fail('GitHub REST path must be a safe relative API path');
   }
@@ -118,6 +117,27 @@ function assertBillingPath(method, path, enterprise) {
   if (!path.startsWith(allowedPrefix)) {
     fail(`GitHub REST path must stay inside ${allowedPrefix}`);
   }
+}
+
+function assertBillingReadPath(method, path, enterprise) {
+  if (method !== 'GET') fail('authenticated billing reader only allows GET');
+  assertSafeBillingPath(path, enterprise);
+}
+
+function assertCostCenterName(name) {
+  if (typeof name !== 'string' || name.trim().length < 1 || name.trim().length > 255) {
+    fail('cost center name must be between 1 and 255 characters');
+  }
+  if (!/^[A-Za-z0-9 _.-]+$/.test(name.trim())) {
+    fail('cost center name contains unsupported characters');
+  }
+}
+
+function assertCostCenterCreateRequest(method, path, enterprise) {
+  if (method !== 'POST') fail('cost center create transport only allows POST');
+  assertSafeBillingPath(path, enterprise);
+  const expectedPath = `/enterprises/${enterprise}/settings/billing/cost-centers`;
+  if (path !== expectedPath) fail(`cost center create path must equal ${expectedPath}`);
 }
 
 /**
@@ -291,7 +311,7 @@ export function createGitHubAppInstallationAuthTransport({
   }
 
   async function authenticatedBillingGet(path, { retry401 = true } = {}) {
-    assertBillingPath('GET', path, enterprise);
+    assertBillingReadPath('GET', path, enterprise);
     const token = await getInstallationToken();
 
     try {
@@ -310,6 +330,35 @@ export function createGitHubAppInstallationAuthTransport({
     }
   }
 
+  async function authenticatedCostCenterCreate(name, aiCreditPoolEnabled, { retry401 = true } = {}) {
+    const path = `/enterprises/${enterprise}/settings/billing/cost-centers`;
+    assertCostCenterCreateRequest('POST', path, enterprise);
+    assertCostCenterName(name);
+    if (typeof aiCreditPoolEnabled !== 'boolean') {
+      fail('aiCreditPoolEnabled must be a boolean');
+    }
+
+    const token = await getInstallationToken();
+    try {
+      return await providerRequest({
+        method: 'POST',
+        path,
+        authorization: token,
+        body: {
+          name: name.trim(),
+          ai_credit_pool_enabled: aiCreditPoolEnabled,
+        },
+      });
+    } catch (error) {
+      if (retry401 && error?.status === 401) {
+        installationToken = null;
+        installationTokenExpiresAt = 0;
+        return authenticatedCostCenterCreate(name, aiCreditPoolEnabled, { retry401: false });
+      }
+      throw error;
+    }
+  }
+
   return Object.freeze({
     describeAuthBoundary() {
       return Object.freeze({
@@ -318,16 +367,26 @@ export function createGitHubAppInstallationAuthTransport({
         jwtAlgorithm: 'RS256',
         jwtMaxLifetimeSeconds: JWT_LIFETIME_SECONDS,
         installationTokenRefreshSkewSeconds: INSTALLATION_TOKEN_REFRESH_SKEW_MS / 1000,
-        publicMethods: Object.freeze(['GET']),
+        publicMethods: Object.freeze(['GET', 'POST(cost-centers:create)']),
         publicPathPrefix: `/enterprises/${enterprise}/settings/billing/`,
+        mutationCapabilities: Object.freeze(['github.billing.cost_centers.create']),
+        rawMutationProxy: false,
         clientSecretUsed: false,
         tokenPersistence: false,
       });
     },
 
     async githubRest({ method, path }) {
-      assertBillingPath(method, path, enterprise);
+      assertBillingReadPath(method, path, enterprise);
       return authenticatedBillingGet(path);
+    },
+
+    /**
+     * @param {{ name: string; aiCreditPoolEnabled?: boolean }} input
+     */
+    async createCostCenter(input) {
+      const { name, aiCreditPoolEnabled = false } = input;
+      return authenticatedCostCenterCreate(name, aiCreditPoolEnabled);
     },
 
     async preflight() {

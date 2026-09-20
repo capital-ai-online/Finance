@@ -254,6 +254,76 @@ describe('GitHub App installation auth transport', () => {
     expect(providerCalls).toBe(0);
   });
 
+  it('allows only the bounded Enterprise cost-center create mutation', async () => {
+    const { privateKeyPem } = keys();
+    const nowMs = Date.UTC(2026, 8, 18, 10, 0, 0);
+    const calls: Array<{ method: string; path: string; body: unknown }> = [];
+
+    const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+      const parsed = new URL(String(url));
+      const method = String(init?.method || 'GET');
+
+      if (method === 'GET' && parsed.pathname === '/app/installations') {
+        return jsonResponse([
+          { id: 707, target_type: 'Enterprise', account: { slug: ENTERPRISE } },
+        ]);
+      }
+
+      if (method === 'POST' && parsed.pathname === '/app/installations/707/access_tokens') {
+        return jsonResponse({
+          token: 'ghs_cost_center_write_token',
+          expires_at: new Date(nowMs + 60 * 60 * 1000).toISOString(),
+        });
+      }
+
+      if (method === 'POST' && parsed.pathname === `/enterprises/${ENTERPRISE}/settings/billing/cost-centers`) {
+        const body = JSON.parse(String(init?.body || '{}'));
+        calls.push({ method, path: parsed.pathname, body });
+        return jsonResponse({
+          id: 'cc-enterprise',
+          name: body.name,
+          state: 'active',
+          ai_credit_pool_enabled: body.ai_credit_pool_enabled,
+        }, 201);
+      }
+
+      throw new Error(`unexpected request: ${method} ${parsed.pathname}`);
+    };
+
+    const auth = createGitHubAppInstallationAuthTransport({
+      clientId: CLIENT_ID,
+      privateKeyPem,
+      enterprise: ENTERPRISE,
+      fetchImpl: fetchImpl as typeof fetch,
+      now: () => nowMs,
+    });
+
+    const result = await auth.createCostCenter({
+      name: 'Enterprise',
+      aiCreditPoolEnabled: false,
+    });
+
+    expect(result).toMatchObject({
+      id: 'cc-enterprise',
+      name: 'Enterprise',
+      state: 'active',
+      ai_credit_pool_enabled: false,
+    });
+    expect(calls).toEqual([{
+      method: 'POST',
+      path: `/enterprises/${ENTERPRISE}/settings/billing/cost-centers`,
+      body: {
+        name: 'Enterprise',
+        ai_credit_pool_enabled: false,
+      },
+    }]);
+
+    await expect(auth.createCostCenter({
+      name: '../unsafe',
+      aiCreditPoolEnabled: false,
+    })).rejects.toThrow(/unsupported characters/);
+  });
+
   it('fails closed when no exact Enterprise installation matches the configured slug', async () => {
     const { privateKeyPem } = keys();
 
@@ -294,8 +364,10 @@ describe('GitHub App installation auth transport', () => {
       jwtAlgorithm: 'RS256',
       jwtMaxLifetimeSeconds: 540,
       installationTokenRefreshSkewSeconds: 300,
-      publicMethods: ['GET'],
+      publicMethods: ['GET', 'POST(cost-centers:create)'],
       publicPathPrefix: `/enterprises/${ENTERPRISE}/settings/billing/`,
+      mutationCapabilities: ['github.billing.cost_centers.create'],
+      rawMutationProxy: false,
       clientSecretUsed: false,
       tokenPersistence: false,
     });

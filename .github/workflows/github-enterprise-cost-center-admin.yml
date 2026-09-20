@@ -1,0 +1,59 @@
+name: GitHub Enterprise Cost Center Admin
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-enterprise-cost-center-admin
+  cancel-in-progress: false
+
+jobs:
+  ensure-enterprise-cost-center:
+    name: Ensure Enterprise cost center
+    if: github.actor == 'SvenKulessa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+
+      - name: Billing-Writer Konfiguration fail-closed prüfen
+        env:
+          APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          APP_PRIVATE_KEY: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${APP_CLIENT_ID}" ]] || { echo "::error::CAPITAL_AI_GITHUB_APP_CLIENT_ID fehlt."; exit 1; }
+          [[ -n "${ENTERPRISE_SLUG}" ]] || { echo "::error::CAPITAL_AI_GITHUB_ENTERPRISE_SLUG fehlt."; exit 1; }
+          [[ -n "${APP_PRIVATE_KEY}" ]] || { echo "::error::CAPITAL_AI_GITHUB_APP_PRIVATE_KEY fehlt."; exit 1; }
+
+          key_path="${RUNNER_TEMP}/capital-ai-github-app-private-key.pem"
+          umask 077
+          printf '%s' "${APP_PRIVATE_KEY}" > "${key_path}"
+          echo "CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH=${key_path}" >> "${GITHUB_ENV}"
+
+      - name: Enterprise Cost Center idempotent anlegen
+        env:
+          CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+        run: node scripts/operations/runPrivateGitHubEnterpriseCostCenterWrite.mjs
+
+      - name: Temporäres Private-Key-Artefakt entfernen
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f -- "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-}"
