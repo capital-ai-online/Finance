@@ -431,7 +431,7 @@ test('markerless bootstrap stays fail-closed for unresolved placeholders or base
 });
 
 
-test('current v1.7 Human Decision body is never rewritten by the legacy autofix', () => {
+test('canonical current v1.7 Human Decision body is left unchanged', () => {
   const body = [
     '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
     '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
@@ -456,11 +456,108 @@ test('current v1.7 Human Decision body is never rewritten by the legacy autofix'
     '',
     '## 3. 🔍 Technical Evidence',
     '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+    '',
+    '</details>',
   ].join('\n');
 
   const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
   assert.equal(result.eligible, false);
   assert.equal(result.changed, false);
-  assert.equal(result.reason, 'current-v1.7-owned-by-canonical-renderer');
+  assert.equal(result.reason, 'already-canonical');
   assert.equal(result.body, body);
+});
+
+test('repairs only the exact current v1.7 legacy baseline-section migration artifact', () => {
+  const baseline = [
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test`',
+    '- **Produktions-Commit:** `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`',
+    '- **Aktueller main-Commit:** `bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`',
+    '- **PR-Head-Commit:** `cccccccccccccccccccccccccccccccccccccccc`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  ].join('\n');
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '# Human Decision PR',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '',
+    '- Fachliche Evidence bleibt exakt erhalten.',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '',
+    '</details>',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    '{{PRODUCTION_BASELINE_BLOCK}}',
+    '',
+    '</details>',
+    '',
+    '## 7. Maschinenlesbare Baseline',
+    '',
+    baseline,
+    '',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'current-v1.7-legacy-baseline-section-repaired');
+  assert.deepEqual(result.body.match(/^## .+$/gm), [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ]);
+  assert.doesNotMatch(result.body, /\{\{PRODUCTION_BASELINE_BLOCK\}\}/);
+  assert.doesNotMatch(result.body, /^## 7\. Maschinenlesbare Baseline$/m);
+  assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_START/g) || []).length, 2);
+  assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_END/g) || []).length, 2);
+  assert.match(result.body, /Fachliche Evidence bleibt exakt erhalten\./);
+  assert.match(
+    result.body,
+    /<summary>🤖 Maschinenlesbare Produktions-Baseline<\/summary>[\s\S]*sha256:test[\s\S]*<\/details>/,
+  );
+});
+
+test('other malformed current v1.7 shapes remain fail-closed', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+    '## 4. Unexpected',
+  ].join('\n');
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'current-v1.7-unsupported-shape');
 });

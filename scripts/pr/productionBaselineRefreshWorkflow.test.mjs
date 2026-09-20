@@ -146,6 +146,28 @@ test('Governance reconciliation runs for every eligible PR snapshot and receives
   );
 });
 
+test('baseline write is gated by source success or a proven canonical/repaired body', () => {
+  const refresh = workflow.split('      - name: Nur kanonischen Produktions-Baseline-Block aktualisieren\n')[1]
+    .split('\n      - name: Aktualisierten PR-Body gegen trusted-main Validator prüfen\n')[0];
+  for (const token of [
+    "steps.source.outputs.conclusion != 'failure'",
+    "steps.body_repair.outputs.changed == 'true'",
+    "steps.body_repair.outputs.reason == 'already-canonical'",
+  ]) assert.ok(refresh.includes(token), 'missing safe baseline-write prerequisite: ' + token);
+});
+
+test('mutated PR metadata is revalidated with trusted-main validatePrBody before Governance rerun', () => {
+  const validation = workflow.split('      - name: Aktualisierten PR-Body gegen trusted-main Validator prüfen\n')[1]
+    .split('\n      - name: Baseline-/Template-Write oder Race-Recovery an exakte PR-Governance binden\n')[0];
+  for (const token of [
+    "steps.body_repair.outputs.changed == 'true' || steps.refresh.outputs.changed == 'true'",
+    'PR_BASE_REF: origin/main',
+    'PR_HEAD_REF: HEAD',
+    'PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json',
+    'node ../policy/scripts/pr/validatePrBody.mjs',
+  ]) assert.ok(validation.includes(token), 'missing trusted PR-body revalidation control: ' + token);
+});
+
 test('blocked template repair stays fail-closed and is never reported as already correct', () => {
   for (const token of [
     "const bodyRepairEligible = String(process.env.PR_BODY_REPAIR_ELIGIBLE || '').toLowerCase() === 'true';",

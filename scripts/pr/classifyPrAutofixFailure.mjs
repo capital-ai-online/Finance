@@ -27,6 +27,12 @@ const PROTECTED_FAILURE = [
   /(?:^|\b)(?:error|failed|failure|fatal|denied)\b[^\n]*(?:render|production deploy|registry auth|ghcr auth|deployment identity|\biam\b|billing|database mutation|supabase migration)/i,
 ];
 
+const EXACT_STALE_PRODUCTION_BASELINE =
+  /Error: PR #\d+ enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline\./i;
+
+const EXACT_V17_STRUCTURE_DRIFT =
+  /Error: PR #\d+ muss in v1\.7\.0 exakt drei sichtbare Hauptabschnitte besitzen:/i;
+
 const TEMPLATE_DELEGATION_PATTERNS = [
   /verwendet keinen unterstützten PR-Vorlagenmarker/i,
   /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i,
@@ -90,6 +96,33 @@ export function classifyPrAutofixFailure(
       decision: PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN,
       reason: 'unsupported-source-workflow',
     });
+  }
+
+  // Exact PR-Governance contract failures take precedence over broad provider/security
+  // vocabulary found in shell/source excerpts inside gh --log-failed output.
+  if (source === '.github/workflows/pr-governance.yml') {
+    if (EXACT_STALE_PRODUCTION_BASELINE.test(log)) {
+      return result({
+        classification: 'PR_PRODUCTION_BASELINE_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
+        reason: 'stale-production-baseline-specialist-owned',
+      });
+    }
+
+    if (EXACT_V17_STRUCTURE_DRIFT.test(log)) {
+      if (metadataShape === 'CURRENT_V17_LEGACY_BASELINE_SECTION') {
+        return result({
+          classification: 'PR_TEMPLATE_METADATA_DRIFT',
+          decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
+          reason: 'current-v1.7-legacy-baseline-section-repairable',
+        });
+      }
+      return result({
+        classification: 'PR_TEMPLATE_METADATA_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason: 'current-v1.7-structure-drift-not-allowlisted',
+      });
+    }
   }
 
   if (SECURITY_FAILURE.some((pattern) => pattern.test(failureLines))) {
