@@ -17,7 +17,7 @@ on: # zizmor: ignore[dangerous-triggers]
 permissions: {}
 
 concurrency:
-  group: pr-autofix-controller-${{ github.event.workflow_run.path }}-${{ github.event.workflow_run.head_sha }}
+  group: pr-autofix-controller-${{ github.event.workflow_run.path }}-${{ github.event.workflow_run.head_sha }}-${{ github.event.workflow_run.run_attempt }}-${{ github.event.action }}
   cancel-in-progress: true
 
 jobs:
