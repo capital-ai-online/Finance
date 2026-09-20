@@ -38,6 +38,8 @@ test('delegates v1.7 Decision/Evidence drift only to the live reconciler', () =>
     assert.equal(result.classification, 'PR_DECISION_EVIDENCE_DRIFT');
     assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
     assert.equal(result.reason, 'decision-evidence-reconciler-owns-write');
+    assert.equal(result.findingClass, 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
+    assert.equal(result.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
   }
 });
 
@@ -52,6 +54,8 @@ test('classifies the 45k Actions minute gate as an explicit protected blocker', 
   assert.equal(result.classification, 'PROTECTED_ACTIONS_MINUTE_COST_BLOCKER');
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_PROTECTED_ACTION);
   assert.equal(result.reason, 'protected-45k-actions-minute-blocker');
+  assert.equal(result.findingClass, 'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER');
+  assert.equal(result.actionId, 'OBSERVE_ONLY');
 });
 
 test('delegates exact current-state baseline drift to the existing specialist', () => {
