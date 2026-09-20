@@ -6,6 +6,7 @@
 import { eventMeshBus } from '../EventMesh/Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from '../EventMesh/Services/EventMeshService';
 import { getProviderHealth, type ProviderHealthRecord } from './providerHealth';
+import { getSelfHealingContractSnapshot, type SelfHealingContractSnapshot } from './selfHealingContract';
 import { evaluateWritePolicy } from '../Compliance/PolicyGate';
 import { consumeApproval } from '../Security/approvals';
 import type { Capability } from '../Security/capabilities';
@@ -271,6 +272,8 @@ export interface SupervisorStatus {
   agentProviderChain: AgentProviderObservation;
   /** Lightweight findings — observation only; no decision authority. */
   findings: SupervisorFinding[];
+  /** Pure remediation contract projection; it does not itself execute a recovery action. */
+  selfHealingContract: SelfHealingContractSnapshot;
   capabilities: {
     taskRouting: boolean;
     toolSelection: boolean;
@@ -278,6 +281,7 @@ export interface SupervisorStatus {
     retry: boolean;
     recovery: boolean;
     selfHealing: boolean;
+    selfHealingContract: boolean;
     conflictResolution: boolean;
     providerHealth: boolean;
     marketDataRouting: boolean;
@@ -303,6 +307,7 @@ export function getSupervisorStatus(): SupervisorStatus {
   const recentExecutions = getRecentExecutions();
   const agentProviderChain = observeAgentProviderChain();
   const findings = buildFindingsFromExecutions(recentExecutions, agentProviderChain);
+  const selfHealingContract = getSelfHealingContractSnapshot();
 
   return {
     routingTable: getRoutingTable(),
@@ -330,13 +335,15 @@ export function getSupervisorStatus(): SupervisorStatus {
     },
     agentProviderChain,
     findings,
+    selfHealingContract,
     capabilities: {
       taskRouting: true,
       toolSelection: true,
       executionControl: true,
       retry: true,
       recovery: true,
-      selfHealing: true,
+      selfHealing: false,
+      selfHealingContract: selfHealingContract.valid,
       conflictResolution: true,
       providerHealth: true,
       marketDataRouting: true,
@@ -359,6 +366,7 @@ export function getSupervisorStatus(): SupervisorStatus {
       'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
       'agentProviderChain: canonical providers ChatGPT, Claude, Grok (Owner 2026-08-16). Google AI Studio / NotebookLM / Gemini = RETIRED.',
       'findings: observation-only; Supervisor entscheidet niemals (ESS-0002).',
+      `selfHealingContract: ${selfHealingContract.valid ? 'VALID' : 'INVALID'}; enabled=${selfHealingContract.enabledActionIds.join(',') || 'none'}; held=${selfHealingContract.heldActionIds.join(',') || 'none'}. Runtime selfHealing bleibt false, bis konkrete Remediation-Executors in SH-02.4+ an diesen Vertrag gebunden und verifiziert sind.`,
       ...agentProviderChain.notes,
     ],
   };

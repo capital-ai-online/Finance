@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-AUTONOMOUS-SELF-HEALING-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -34,5 +34,7 @@
     "tests/unit/healthRouteModel.test.ts",
     "tests/unit/frontendRecovery.test.ts"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-20T12:20:00Z",
+  "releaseReason": "Initial SH-02.0..02.2 slice merged via PR #1122; follow-up work continues under a new atomic work claim."
 }
