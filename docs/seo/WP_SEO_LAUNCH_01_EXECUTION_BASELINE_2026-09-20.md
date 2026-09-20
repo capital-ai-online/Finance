@@ -50,44 +50,43 @@ No unmerged branch content is promoted to launch truth.
 
 ## 3. Production freeze
 
-### 3.1 Provider readback
+### 3.1 Before state — drift observed
 
-Render workspace/service readback:
+Initial Render readback during this execution:
 
 - workspace: `AICapital`;
 - service: `Finance`;
-- canonical branch: `main`;
-- provider auto-deploy: off;
-- live deploy: `dep-dao287ek1f9s73ad8iig`;
-- live commit: `e86955225887bb7f34036c175ad1da89b8aec14d`;
-- provider state: `live`.
+- expected current main: `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`;
+- initially live deploy: `dep-dao287ek1f9s73ad8iig`;
+- initially live commit: `e86955225887bb7f34036c175ad1da89b8aec14d`;
+- classification at that observation: `PRODUCTION_DRIFT / FREEZE_BLOCKED`.
 
-### 3.2 Exact-SHA result
+The drift was not waived even though the intervening main delta was coordination/work-claim metadata.
 
-Expected current main:
+### 3.2 Canonical recovery evidence
 
-`79eef34e8cd7cd852305641cb1b49cd90dbd2af5`
+The normal main CI/deployment path subsequently converged without an SEO-side provider bypass:
 
-Observed production:
+- current-main commit time: `2026-09-20T18:29:12Z`;
+- GitHub main CI run: `35529208910` — `success`;
+- `build-and-test`: `success`;
+- `Deployment verifiziert / Render-Produktion`: `success`;
+- deploy-hook step `Render-Deployment für verifizierten main-Commit auslösen` started at `2026-09-20T18:32:47Z`;
+- merge/main-commit → deploy-trigger delta: `215 s` — within the five-minute SLA;
+- exact-SHA post-deploy verification: `success`;
+- Render live deploy: `dep-dao2dk0ae00c73aha6c0`;
+- Render live commit: `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`;
+- Render provider state: `live`.
 
-`e86955225887bb7f34036c175ad1da89b8aec14d`
+### 3.3 Exact-SHA freeze result
 
 Result:
 
-`PRODUCTION_DRIFT / FREEZE_BLOCKED`
+`PRODUCTION_FREEZE_PASS`
 
-The observed drift is only current work-claim metadata, but the current trust-root contract requires exact Production ↔ CURRENT_MAIN identity. The SEO launch gate therefore does not weaken the exact-SHA rule.
+Production, current main and the repository landing candidate are correlated to the same current-main SHA at this readback.
 
-The canonical GitHub → verified main CI → Render deploy-hook path is not bypassed by a direct provider redeploy.
-
-### 3.3 Unblock condition
-
-Production freeze becomes eligible for PASS only when:
-
-1. the then-current `main` SHA is re-read;
-2. Render production is healthy and reports exactly that SHA;
-3. repository and branch identities remain correct;
-4. no newer current-main movement invalidates the candidate.
+This PASS is snapshot-bound. Any later movement of current main or the landing source invalidates the freeze and requires a fresh readback.
 
 ## 4. CTA freeze
 
@@ -300,7 +299,7 @@ Remaining Social-owned scope:
 | Repository landing candidate | `PASS` | no |
 | CTA repository freeze | `PASS` | no |
 | Public six-URL inventory | `PASS_REPOSITORY` | no |
-| Production exact-SHA freeze | `PRODUCTION_DRIFT` | yes |
+| Production exact-SHA freeze | `PASS` — exact `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`, canonical deploy path and SLA verified | no |
 | Root metadata ↔ visible landing semantics | `OPEN_FE_HANDOFF` | yes |
 | GSC current performance baseline | `READ_BLOCKED_NOT_CONNECTED` | yes for measurement baseline |
 | GA4 baseline | `READ_BLOCKED_NOT_CONNECTED` | yes for measurement baseline |
