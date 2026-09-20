@@ -14,7 +14,7 @@ permissions: {}
 
 concurrency:
   group: current-state-baseline-autofix-${{ github.event.workflow_run.head_sha }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   plan:
