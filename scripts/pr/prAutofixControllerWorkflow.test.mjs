@@ -118,3 +118,38 @@ test('repeat-autofix signature trailer remains a loop-prevention boundary', () =
     assert.ok(workflow.includes(token));
   }
 });
+
+
+test('controller materializes one immutable PR convergence generation from trusted main', () => {
+  const classify = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  for (const token of [
+    'Kanonische PR-Generation aus Trusted Main materialisieren',
+    'node scripts/pr/prConvergenceGeneration.mjs',
+    'CURRENT_MAIN_SHA: ${{ steps.pr.outputs.current_main_sha }}',
+    'generation_id: ${{ steps.generation.outputs.generation_id }}',
+    'control_plane_version: ${{ steps.generation.outputs.control_plane_version }}',
+    'writer_lease_key: ${{ steps.generation.outputs.writer_lease_key }}',
+  ]) assert.ok(classify.includes(token), 'missing convergence generation binding: ' + token);
+});
+
+test('registered writer is serialized by the shared per-PR writer lease', () => {
+  const write = workflow.split('  write:\n')[1];
+  assert.ok(write.includes('group: ${{ needs.classify.outputs.writer_lease_key }}'));
+  assert.ok(write.includes('cancel-in-progress: false'));
+  assert.ok(workflow.includes('capital-ai-pr-writer-') === false, 'lease construction belongs to the trusted generation helper, not duplicated workflow literals');
+});
+
+test('write-time readback recomputes and verifies the exact generation before mutation', () => {
+  const write = workflow.split('  write:\n')[1];
+  for (const token of [
+    'EXPECTED_GENERATION_ID: ${{ needs.classify.outputs.generation_id }}',
+    'EXPECTED_CONTROL_PLANE_VERSION: ${{ needs.classify.outputs.control_plane_version }}',
+    "path: 'AGENTS.md'",
+    "ref: expectedBase",
+    'schema=capital-ai-pr-convergence-generation/1.0.0',
+    'PR generation drift before autofix write',
+    'Control-plane drift before autofix write',
+    'CAPITAL_AI_PR_GENERATION:',
+  ]) assert.ok(write.includes(token), 'missing generation readback guard: ' + token);
+  assert.ok(write.indexOf('PR generation drift before autofix write') < write.indexOf('createCommit'));
+});
