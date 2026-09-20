@@ -522,7 +522,7 @@ test('normalizes only the observed current v1.7 P0-HIGHEST priority token', () =
   assert.equal(result.changed, true);
   assert.equal(result.reason, 'current-v1.7-priority-token-normalized');
   assert.match(result.body, /^> P0 🔴 Kritisch · PR-Klasse C · NONE ➖$/m);
-  assert.match(result.body, /^- \\*\\*Priorität:\\*\\* P0 🔴 Kritisch$/m);
+  assert.match(result.body, /^- \*\*Priorität:\*\* P0 🔴 Kritisch$/m);
   assert.doesNotMatch(result.body, /P0-HIGHEST 🔴 Kritisch/);
 });
 
