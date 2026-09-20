@@ -16,6 +16,13 @@ const REGISTRY = Object.freeze([
     exactSignatures: Object.freeze(['EXPECTATION_SAMPLE_V1']),
     repairerPath: 'scripts/pr/repairers/expectationSampleV1.mjs',
     allowedPaths: Object.freeze(['tests/unit/sample.test.ts']),
+    evidenceBinding: Object.freeze({
+      kind: 'EXACT_LOG_TOKENS_V1',
+      requiredTokens: Object.freeze([
+        'tests/unit/sample.test.ts',
+        'expected 2 to equal 3',
+      ]),
+    }),
   }),
 ]);
 
