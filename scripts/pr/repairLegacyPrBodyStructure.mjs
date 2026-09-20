@@ -168,29 +168,27 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
         '\n- **Version-Manager-Check:** NOT_RUN — separate fokussierte PR-Check-Evidence erforderlich.';
     }
 
-    let repaired = body.replace(
-      malformedBlock[0],
-      [
-        '### 🔐 Security Boundary',
-        '',
-        securityBoundary,
-        '',
-        SECTION_ROADMAP,
-        '',
-        '- **Priorität:** ' + priority,
-        '- **Warum diese Priorität:** Aus der bestehenden PR-Prioritätszeile übernommen; der Autofix bewertet die Priorität nicht neu.',
-        '- **Roadmap / Work Package:** N/A — deterministische Reparatur eines bestehenden PR-Bodys; keine Roadmap-Autorität wird erzeugt.',
-        '',
-        SECTION_VERSION,
-        '',
-        versionBody,
-        '',
-        SECTION_CHECK,
-        '',
-        checkBody,
-        '',
-      ].join('\n'),
-    );
+    const replacement = [
+      '### 🔐 Security Boundary',
+      '',
+      securityBoundary,
+      '',
+      SECTION_ROADMAP,
+      '',
+      '- **Priorität:** ' + priority,
+      '- **Warum diese Priorität:** Aus der bestehenden PR-Prioritätszeile übernommen; der Autofix bewertet die Priorität nicht neu.',
+      '- **Roadmap / Work Package:** N/A — deterministische Reparatur eines bestehenden PR-Bodys; keine Roadmap-Autorität wird erzeugt.',
+      '',
+      SECTION_VERSION,
+      '',
+      versionBody,
+      '',
+      SECTION_CHECK,
+      '',
+      checkBody,
+      '',
+    ].join('\n');
+    let repaired = body.replace(malformedBlock[0], () => replacement);
 
     repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
     const missingAfter = findMissingRequiredSections(repaired);
