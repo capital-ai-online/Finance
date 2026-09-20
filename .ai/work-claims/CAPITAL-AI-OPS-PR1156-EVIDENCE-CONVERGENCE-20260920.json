@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-PR1156-EVIDENCE-CONVERGENCE-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -25,5 +25,19 @@
     "docs/projects/operations/evidence/OPS_02_PR1156_SUPABASE_OUTBOX_RECOVERY_POST_MERGE_2026-09-20.md"
   ],
   "scopeNote": "Evidence/coordination convergence only. No RPC, migration, SECURITY DEFINER, grant, database data, provider, IAM, secret, billing, deployment or workflow definition mutation.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "validationState": "MERGED_PRODUCTION_LIVE_POST_MERGE_CONVERGED",
+  "releasedAt": "2026-09-20T18:10:56Z",
+  "releaseReason": "Release condition satisfied by Human/CODEOWNER merge of PR #1163; the merged follow-up claim must not remain an active/exclusive writer on current main.",
+  "mergeCommitSha": "a98399cf60ba95ce2d7232ba36b855bdf8d1db16",
+  "finalHeadSha": "d540a08a9ff3c618f4a6fd8c3eee9640e7b1615b",
+  "postMergeMainSha": "e86955225887bb7f34036c175ad1da89b8aec14d",
+  "productionEvidence": {
+    "provider": "render",
+    "service": "Finance",
+    "deployId": "dep-dao24vjtqb8s73dk7al0",
+    "liveCommitSha": "a98399cf60ba95ce2d7232ba36b855bdf8d1db16",
+    "status": "live",
+    "finishedAt": "2026-09-20T18:15:13.804619Z"
+  }
 }
