@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Implement policy-bound per-PR auto-merge, fail-closed legacy-template exclusion, and a single-writer proactive live decision dashboard.",
-  "workItemDE": "Jeden Pull Request fail-closed gegen den Auto-Merge Safety Contract klassifizieren, Legacy-PR-Vorlagen vollständig von Merge/Auto-Merge ausschließen und v1.7 über denselben Evidence→Decision-Reconciler als synchrones proaktives Live Dashboard fortführen.",
+  "workItem": "Implement policy-bound per-PR auto-merge, fail-closed legacy-template exclusion, and canonical PR Template v1.8 proactive live decision dashboard.",
+  "workItemDE": "Jeden Pull Request fail-closed gegen den Auto-Merge Safety Contract klassifizieren, Legacy-PR-Vorlagen vollständig vom Merge ausschließen und das Human-Decision-Template als v1.8 mit synchronem, proaktivem Live Dashboard fortführen; v1.7 wird ausschließlich durch den bestehenden Evidence→Decision-Reconciler atomar migriert.",
   "priority": "P1",
   "priorityReason": "Reduziert manuelle Merge- und Synchronisationsschritte, ohne Human/CODEOWNER-Schutzklassen, Required Checks oder den kanonischen Branch-Writer zu umgehen.",
   "projectId": "CAPITAL-AI-GOV",
@@ -22,25 +22,33 @@
   "claimedPaths": [
     ".ai/work-claims/GOV-PR-AUTO-MERGE-ROUTER-20260920.json",
     ".github/pull_request_template.md",
+    ".github/workflows/pr-autofix-controller.yml",
     ".github/workflows/pr-decision-reconciler.yml",
     ".github/workflows/sync-agent-pr-branches.yml",
     "scripts/pr/classifyPrAutofixFailure.mjs",
     "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "scripts/pr/lib.mjs",
     "scripts/pr/prAutoMergeSafety.mjs",
     "scripts/pr/prAutoMergeSafety.test.mjs",
+    "scripts/pr/prAutofixControllerWorkflow.test.mjs",
+    "scripts/pr/prBodySectionContract.mjs",
+    "scripts/pr/prBodySectionContract.test.mjs",
     "scripts/pr/prDecisionState.mjs",
     "scripts/pr/prDecisionState.test.mjs",
+    "scripts/pr/prTemplateVersionManagerSmoke.test.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
     "scripts/pr/renderPullRequestBody.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs",
     "scripts/pr/validatePrBody.mjs",
     "tests/unit/agentPrBranchSyncCostControl.test.ts"
   ],
-  "exitGate": "Every open same-repository PR against main is evaluated fail-closed; non-current PR template versions can never pass merge governance or auto-merge eligibility; current v1.7 Decision/Evidence state is projected into one live dashboard by the existing reconciler; only exact-head/current-base fully evidenced eligible PRs may be armed.",
+  "exitGate": "Template v1.8 is the only merge-valid PR contract; v1.7 is atomically migratable only by the existing Decision Reconciler; v1.6/v1.5 and markerless bodies remain fail-closed; the live dashboard is derived from the same canonical Evidence state; only exact-head/current-base fully evidenced eligible PRs may be armed.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct agent self-merge and no second PR-body or branch-sync writer.",
   "currentMainCorrelation": {
     "sha": "bc679ccc221616d3180f084b44ab51b66f96a062",
     "status": "SYNCED",
-    "correlatedAt": "2026-09-20T22:49:00Z"
+    "correlatedAt": "2026-09-20T22:54:00Z"
   }
 }
