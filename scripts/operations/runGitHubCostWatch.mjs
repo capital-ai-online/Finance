@@ -50,7 +50,7 @@ const enterprise = requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_SLUG');
 const username = String(process.env.CAPITAL_AI_GITHUB_USERNAME || 'SvenKulessa').trim();
 const organization = requiredEnv('CAPITAL_AI_GITHUB_ORG_LOGIN');
 const privateKeyPem = readPrivateKey();
-const userAccessToken = String(process.env.CAPITAL_AI_GITHUB_USER_ACCESS_TOKEN || '').trim();
+const userAccessToken = String(process.env.CAPITAL_AI_GITHUB_USER_BILLING_READ_TOKEN || '').trim();
 const billingPeriod = Object.freeze({
   year: now.getUTCFullYear(),
   month: now.getUTCMonth() + 1,
@@ -110,7 +110,7 @@ if (userAccessToken) {
 } else {
   personalCoverage = {
     status: 'BLOCKED',
-    reason: 'CAPITAL_AI_GITHUB_USER_ACCESS_TOKEN is not configured; personal repositories outside the Enterprise are not observable',
+    reason: 'CAPITAL_AI_GITHUB_USER_BILLING_READ_TOKEN is not configured; personal repositories outside the Enterprise are not observable',
   };
 }
 
