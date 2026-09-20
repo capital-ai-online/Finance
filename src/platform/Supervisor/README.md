@@ -17,8 +17,9 @@ Owner: CAPITAL-AI
 **Implemented:**
 
 - **Task Routing / Tool Selection** — `routeTask()`
-- **Execution Control / Retry** — `executeSupervised()` (legacy generic retry path; dependency-specific convergence is SH-02.4 scope)
+- **Execution Control / Retry** — `executeSupervised()` retries only explicitly `READ_ONLY`/`IDEMPOTENT` operations; unclassified and side-effecting work is fail-closed to a single attempt, with bounded exponential backoff + jitter for safe retries
 - **Self-Healing Control Contract** — `selfHealingContract.ts` defines finding taxonomy, action registry, budgets, cooldowns, kill switches, verification and the recovery state machine without executing protected remediation
+- **Dependency Resilience (SH-02.4)** — `dependencyResilience.ts` normalizes provider health/circuit/LKG evidence and provides a contract-bound generic retry executor that remains blocked while `RETRY_SAFE_OPERATION` is `HELD`; provider-native retry/circuit/LKG owners are never wrapped in a second retry loop
 - **Approved write path** — `executeApprovedSupervisedAction()` (Policy → Approval → Apply → Audit)
 - **Agent Provider Chain Observation** — ChatGPT, Claude, Grok via `observeAgentProviderChain()`
 - **Findings** — evidence-based findings from failed supervised executions and provider inventory
@@ -38,7 +39,7 @@ Protected documents remain review-only; the Supervisor does not downgrade that b
 
 - Multi-engine Conflict Resolution (one authoritative engine per asset class)
 - Full ESS-0002 Digital Twin / complete finding lifecycle persistence
-- SH-02.4+ concrete dependency/worker/runtime remediation executors; `getSupervisorStatus().capabilities.selfHealing` remains `false` until an executor is contract-bound and verified
+- SH-02.5+ worker/runtime remediation executors and SH-02.11 production activation; `getSupervisorStatus().capabilities.selfHealing` remains `false` and generic `RETRY_SAFE_OPERATION` remains `HELD` until staged activation
 
 ---
 
