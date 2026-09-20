@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-5-WORKER-JOB-RECOVERY-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -39,6 +39,8 @@
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
   "scopeNote": "Reuse the existing ADR-0054 outbox as the only queue/retry/dead-letter authority. Generic QUARANTINE_WORK_ITEM in self-healing-contract/1.0.0 remains HELD; this slice only hardens the already-owned outbox lifecycle and evidence.",
   "activationBoundary": "No SH-2/SH-3 capability is activated. Automatic stale replay is allowed only for handlers explicitly registered as IDEMPOTENT; ambiguous side-effect handlers fail closed into outbox dead-letter/quarantine.",
-  "recorrelatedAt": "2026-09-20T14:21:00Z",
-  "correlationNote": "Re-correlated to CURRENT_MAIN fb8b9dd3c661ecf5d202d570fe435496cbe47461 after PR #1140 merged. The intervening GOV-PR-UX-01 delta only changes PR-template/governance tooling and has no path or semantic overlap with SH-02.5. CI reconciliation evidence additionally requires the canonical OPS/PVC-02 Supabase migration ledger to classify the new local-only migration."
+  "recorrelatedAt": "2026-09-20T15:04:00Z",
+  "correlationNote": "Re-correlated to CURRENT_MAIN fb8b9dd3c661ecf5d202d570fe435496cbe47461 after PR #1140 merged. The intervening GOV-PR-UX-01 delta only changes PR-template/governance tooling and has no path or semantic overlap with SH-02.5. CI reconciliation evidence additionally requires the canonical OPS/PVC-02 Supabase migration ledger to classify the new local-only migration.",
+  "releasedAt": "2026-09-20T14:27:17Z",
+  "releaseReason": "PR #1141 merged to main as 5a89e8ab0f12267838c30994b6e84ccbe002605f; final-head CI, Governance, Container Security and PR review workflows succeeded."
 }
