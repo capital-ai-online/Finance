@@ -7,7 +7,7 @@
 **Frontend role:** presentation/recovery consumer; no productive PVC ownership  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Status:** OWNER-DIRECTED / CURRENT SELF-HEALING ARCHITECTURE  
-**Correlation baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`  
+**Correlation baseline:** `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`  
 **Runtime contract:** `src/platform/Supervisor/selfHealingContract.ts` / `self-healing-contract/1.0.0`
 
 ## 1. Goal
@@ -37,6 +37,12 @@ After Human/CODEOWNER merge of the SH-02.3 contract change, all older Self-Heali
 Historical material may remain only as clearly historical evidence or under `docs/archive/**`. It cannot activate, deny, broaden or weaken a current remediation. Current eligibility is derived only from the trust root, applicable current Security/Compliance/QM/domain controls and `self-healing-contract/1.0.0`.
 
 The only current recovery tiers are `SH-0`, `SH-1`, `SH-2` and `SH-3`. Legacy `SH-R*` names have no current execution semantics.
+
+### 1.2 Policy-homogeneity and priority invariant
+
+Within `CAPITAL-AI-OPS`, `OPS-08-B-SH-02` is the highest executable P0 work package until SH-02.11 reaches a terminal state or a real dependency blocks the next slice. This priority does not transfer foreign-project ownership and cannot override Security, Compliance, QM or domain gates.
+
+Repository-development instruction conflicts are classified as policy drift and fail closed to `/AGENTS.md@CURRENT_MAIN`. Self-Healing may correct OPS-owned stale projections directly; contradictions in GOV, DOC, SEC, COMP or QM are handed to their canonical Primary Owner with exact file, conflicting statement and exit gate. Historical evidence remains unchanged.
 
 ## 2. Non-negotiable invariants
 
@@ -85,7 +91,7 @@ Actions are tiered:
 | Tier | Meaning | Examples | Default |
 |---|---|---|---|
 | `SH-0` | observe only | evidence, diagnostics, alerting | enabled |
-| `SH-1` | local/reversible | bounded retry, cache refresh, circuit reset after cooldown, stale frontend asset reload | enabled when contract exists |
+| `SH-1` | local/reversible | bounded retry, cache refresh, circuit reset after cooldown, stale frontend asset reload | action-specific; only `activation=ENABLED` actions are executable |
 | `SH-2` | runtime/provider bounded | graceful process recycle, exact-SHA redeploy/readback through an already-authorized workflow | eligible only inside existing protected capability |
 | `SH-3` | state-changing protected recovery | deployment rollback, database restore, IAM/secret/Billing/DNS mutation | disabled until an explicit capability contract and verification gate exists |
 
@@ -111,7 +117,7 @@ The canonical process lifecycle marks fatal state unhealthy, performs bounded sh
 Liveness must not depend on Supabase, AI providers, market-data providers or any other external network.
 
 ### Dependency resilience
-Existing provider-specific retry/backoff/circuit-breaker/LKG semantics are preserved. A later package introduces a shared remediation registry, not a generic retry-everything wrapper. Side-effecting operations require idempotency evidence before retry.
+Existing provider-specific retry/backoff/circuit-breaker/LKG semantics are preserved. SH-02.4 binds dependency resilience to the shared remediation contract without adding a generic retry-everything wrapper; `RETRY_SAFE_OPERATION` remains `HELD`. SH-02.5 hardens the existing ADR-0054 outbox worker lifecycle while generic `QUARANTINE_WORK_ITEM` remains `HELD`. Side-effecting operations require explicit replay/idempotency evidence before retry.
 
 ### Workers and jobs
 Durable outbox/job handlers gain lease/stall detection, bounded retry, dead-letter/quarantine evidence and restart-safe idempotency. A stalled worker may restart locally; data repair is a separate action class.
