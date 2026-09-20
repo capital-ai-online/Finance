@@ -118,18 +118,6 @@ function hasClientTransition(valueChainMarkdown, projectReadme) {
     && /Value-chain stage:\*\*\s*`VC-01\b/i.test(projectReadme);
 }
 
-function isApprovedSupersededCompatibilityFolder(relativeFolder, projectReadme) {
-  if (relativeFolder !== 'docs/projects/data') return false;
-  const identity = projectReadme.match(/\*\*(?:Project ID|Project):\*\*\s*`?(CAPITAL-AI-[A-Z0-9-]+)`?/i)?.[1] ?? null;
-  const lifecycle = projectReadme.match(/\*\*Lifecycle:\*\*\s*`?([^\n`]+)`?/i)?.[1]?.trim() ?? '';
-  return identity === 'CAPITAL-AI-DATA'
-    && /SUPERSEDED/i.test(lifecycle)
-    && /NON-EXECUTABLE COMPATIBILITY SURFACE/i.test(lifecycle)
-    && hasExplicitZeroProductiveOwnership(projectReadme)
-    && /Canonical current productive project:\*\*\s*\[?`?\.\.\/fintech\/README\.md`?/i.test(projectReadme)
-    && /not an active project execution source/i.test(projectReadme);
-}
-
 function parseCanonicalValueChain(valueChainMarkdown, errors) {
   const rows = parseFirstTable(getSection(valueChainMarkdown, 'Canonical Project Value Chain'));
   if (!rows) {
@@ -304,8 +292,6 @@ export function validateProjectValueChain({ root = process.cwd() } = {}) {
     if (!fs.existsSync(readmePath)) continue;
     const relativeFolder = `docs/projects/${entry.name}`;
     if (!routedFolders.has(relativeFolder)) {
-      const projectReadme = fs.readFileSync(readmePath, 'utf8');
-      if (isApprovedSupersededCompatibilityFolder(relativeFolder, projectReadme)) continue;
       errors.push(`${relativeFolder}: project folder with README exists but is missing from canonical routing table`);
     }
   }
