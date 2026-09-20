@@ -80,7 +80,7 @@ describe('post-correlation next PR pipeline gate', () => {
     const yaml = workflow();
     expect(yaml).toContain("grep -Eq '^[0-9a-f]{40}$'");
     expect(yaml).toContain('-f "expected_head_sha=$head_sha"');
-    expect(yaml).toContain('bereits aktuell, Head inzwischen geaendert oder Update laeuft schon (422)');
+    expect(yaml).toContain('422 is ambiguous: accept it only after exact CURRENT_MAIN ancestry readback.');
   });
 
   it('stops fail-closed instead of skipping a selected stacked PR', () => {
@@ -90,10 +90,29 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain('Post-Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen.');
   });
 
-  it('serializes the automatic correlation lane while keeping ready-for-review isolated', () => {
+  it('shares the canonical PR writer lease for ready-for-review and serializes the dynamic continuation lane', () => {
     const yaml = workflow();
-    expect(yaml).toContain("group: sync-agent-pr-branches-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'main' }}");
-    expect(yaml).toContain('cancel-in-progress: true');
+    expect(yaml).toContain("format('capital-ai-pr-writer-{0}', github.event.pull_request.number)");
+    expect(yaml).toContain("'capital-ai-post-merge-continuation-main'");
+    expect(yaml).toContain('cancel-in-progress: false');
+  });
+
+  it('binds every post-correlation update to the canonical PR generation immediately before mutation', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('node policy/scripts/pr/prConvergenceGeneration.mjs');
+    expect(yaml).toContain('generation="$(generation_for "$number" "$head_sha" "$current_main_sha")"');
+    expect(yaml).toContain('live_generation="$(generation_for "$number" "$live_head_sha" "$live_main_sha")"');
+    expect(yaml).toContain('Continuation Generation drifted before mutation');
+    expect(yaml).toContain('gh api "repos/$REPO/compare/$current_main_sha...$head_sha"');
+  });
+
+  it('treats update-branch 422 as converged only after exact current-main ancestry readback', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('422 is ambiguous');
+    expect(yaml).toContain('after_lineage');
+    expect(yaml).toContain('422 ohne beweisbare Konvergenz');
+    expect(yaml).toContain("[ \"$after_lineage\" = 'ahead' ]");
+    expect(yaml).toContain("[ \"$after_lineage\" = 'identical' ]");
   });
 
   it('uses a pinned GitHub App token only for the trusted automatic lane', () => {

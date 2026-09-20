@@ -16,7 +16,7 @@ permissions: {}
 
 concurrency:
   group: self-healing-package-continuation-main
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   handoff:
@@ -40,6 +40,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         with:
           script: |
+            const crypto = require('crypto');
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const source = context.payload.workflow_run;
@@ -57,6 +58,50 @@ jobs:
             if (currentMainSha !== sourceSha) {
               core.notice(`Continuation source ${sourceSha} is stale; CURRENT_MAIN=${currentMainSha}. No handoff is written.`);
               return;
+            }
+
+            const agentsResponse = await github.rest.repos.getContent({
+              owner,
+              repo,
+              path: 'AGENTS.md',
+              ref: currentMainSha,
+            });
+            const agentsData = agentsResponse.data;
+            if (Array.isArray(agentsData) || agentsData.type !== 'file' || !agentsData.content) {
+              throw new Error('AGENTS.md could not be read for continuation generation.');
+            }
+            const agentsText = Buffer.from(agentsData.content, agentsData.encoding || 'base64').toString('utf8');
+            const controlPlaneMatch = agentsText.match(/^\*\*Control Plane Version:\*\*\s+`([^`]+)`\s*$/m);
+            if (!controlPlaneMatch) throw new Error('AGENTS.md Control Plane Version is missing.');
+            const controlPlaneVersion = controlPlaneMatch[1].trim();
+
+            function buildContinuationGeneration(state, nextId, mergedPrNumber, completedId) {
+              const canonical = [
+                'schema=capital-ai-self-healing-continuation-generation/1.0.0',
+                `repository=${owner.toLowerCase()}/${repo.toLowerCase()}`,
+                `source_main=${currentMainSha}`,
+                `source_run=${source.id}`,
+                `merged_pr=${mergedPrNumber}`,
+                `completed=${completedId}`,
+                `next=${nextId}`,
+                `state=${state}`,
+                `control_plane=${controlPlaneVersion}`,
+              ].join('\n') + '\n';
+              return `sha256:${crypto.createHash('sha256').update(canonical, 'utf8').digest('hex')}`;
+            }
+
+            async function revalidateContinuationGeneration(expectedGeneration, state, nextId, mergedPrNumber, completedId) {
+              const { data: liveMain } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+              const liveMainSha = String(liveMain.commit.sha || '').toLowerCase();
+              if (liveMainSha !== currentMainSha) {
+                core.notice(`Continuation Generation drifted before handoff mutation: source_main=${currentMainSha} current_main=${liveMainSha}. No handoff is written.`);
+                return false;
+              }
+              const observedGeneration = buildContinuationGeneration(state, nextId, mergedPrNumber, completedId);
+              if (observedGeneration !== expectedGeneration) {
+                throw new Error(`Continuation Generation mismatch: expected=${expectedGeneration} observed=${observedGeneration}`);
+              }
+              return true;
             }
 
             const associated = await github.paginate(
@@ -208,12 +253,14 @@ jobs:
 
             if (!next) {
               if (queued.length === 0) {
+                const continuationGeneration = buildContinuationGeneration('COMPLETE', 'NONE', mergedPr.number, completedId);
+                if (!(await revalidateContinuationGeneration(continuationGeneration, 'COMPLETE', 'NONE', mergedPr.number, completedId))) return;
                 if (existing && existing.state === 'open') {
                   await github.rest.issues.createComment({
                     owner,
                     repo,
                     issue_number: existing.number,
-                    body: `✅ ${now}: SH-02 has no remaining QUEUED slice after ${completedId} / PR #${mergedPr.number}. Continuation handoff closed.`,
+                    body: `✅ ${now}: SH-02 has no remaining QUEUED slice after ${completedId} / PR #${mergedPr.number}. Continuation generation \`${continuationGeneration}\`. Handoff closed.`,
                   });
                   await github.rest.issues.update({
                     owner,
@@ -226,6 +273,9 @@ jobs:
                 return;
               }
 
+              const continuationGeneration = buildContinuationGeneration('BLOCKED', 'NONE', mergedPr.number, completedId);
+              if (!(await revalidateContinuationGeneration(continuationGeneration, 'BLOCKED', 'NONE', mergedPr.number, completedId))) return;
+
               const body = `${marker}
             # Self-Healing package continuation — BLOCKED
 
@@ -234,6 +284,7 @@ jobs:
             - Merge / CURRENT_MAIN SHA: \`${currentMainSha}\`
             - Completed slice: \`${completedId}\`
             - State: \`BLOCKED\`
+            - Continuation generation: \`${continuationGeneration}\`
 
             No dependency-ready QUEUED SH-02 slice can be activated automatically.
 
@@ -254,6 +305,9 @@ jobs:
               return;
             }
 
+            const continuationGeneration = buildContinuationGeneration('READY', next.id, mergedPr.number, completedId);
+            if (!(await revalidateContinuationGeneration(continuationGeneration, 'READY', next.id, mergedPr.number, completedId))) return;
+
             const body = `${marker}
             # Self-Healing package continuation — READY
 
@@ -266,6 +320,7 @@ jobs:
             - Dependencies: \`${next.dependencies}\`
             - Exit gate: ${next.exitGate}
             - State: \`READY_FOR_FRESH_CURRENT_MAIN_CORRELATION\`
+            - Continuation generation: \`${continuationGeneration}\`
 
             Continue immediately with a fresh CURRENT_MAIN read, exclusive work claim, fresh branch, writer/ownership/security correlation, bounded implementation, validation and a new PR. No additional per-slice Owner prompt is required while this work remains inside the already Owner-directed \`OPS-08-B-SH-02\` package and all gates remain satisfied.
 

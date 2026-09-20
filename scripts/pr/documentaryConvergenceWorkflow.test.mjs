@@ -29,3 +29,16 @@ test('WP-06E keeps protected authority out of the Documentary workflow', async (
   assert.doesNotMatch(workflow, /auto-merge|gh\s+pr\s+merge|id-token:\s*write/i);
   assert.match(workflow, /Supervisor -> Platform Director APPROVED -> Agent IAM/);
 });
+
+
+test('Documentary freshness uses authenticated GitHub API readback and local before-snapshot transport', async () => {
+  const workflow = await fs.readFile('.github/workflows/documentary-change-impact.yml', 'utf8');
+
+  assert.match(workflow, /Stalen Main-Run per GitHub-API verwerfen/);
+  assert.match(workflow, /github\.rest\.repos\.getBranch/);
+  assert.match(workflow, /Before-Snapshot ohne persistierte Zugangsdaten auschecken/);
+  assert.match(workflow, /git fetch --no-tags before-snapshot/);
+  assert.match(workflow, /rm -rf before-snapshot/);
+  assert.doesNotMatch(workflow, /git fetch --no-tags origin main/);
+  assert.doesNotMatch(workflow, /git fetch --no-tags origin "\$base"/);
+});

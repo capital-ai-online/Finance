@@ -222,3 +222,13 @@ test('Governance template remediation is failure-only, trusted-main and exact-sn
   assert.doesNotMatch(workflow, /node scripts\/pr\/repairLegacyPrBodyStructure\.mjs/);
   assert.doesNotMatch(workflow, /pull_request_target\s*:/);
 });
+
+
+test('all production baseline PR writers share the canonical per-PR writer lease', () => {
+  const direct = workflow.split('  refresh-baseline:\n')[1].split('\n  discover_post_deploy_prs:\n')[0];
+  const postDeploy = workflow.split('  refresh_post_deploy_baselines:\n')[1];
+  assert.ok(direct.includes('group: capital-ai-pr-writer-${{ github.event.workflow_run.pull_requests[0].number }}'));
+  assert.ok(postDeploy.includes('group: capital-ai-pr-writer-${{ matrix.pr_number }}'));
+  assert.match(direct, /cancel-in-progress: false/);
+  assert.match(postDeploy, /cancel-in-progress: false/);
+});

@@ -69,7 +69,8 @@ test('zizmor workflow analysis is isolated by exact PR head/base snapshot', () =
 test('remaining PR-number concurrency surfaces are already bounded or non-automatic', () => {
   assert.ok(branchSync.includes('headRefOid'));
   assert.ok(branchSync.includes('-f "expected_head_sha=$head_sha"'));
-  assert.ok(branchSync.includes('Head inzwischen geaendert oder Update laeuft schon (422)'));
+  assert.ok(branchSync.includes('422 is ambiguous: accept it only after exact CURRENT_MAIN ancestry readback.'));
+  assert.ok(branchSync.includes('422 ohne beweisbare Konvergenz'));
   assert.ok(shadow.includes('on:\n  workflow_dispatch:'));
   assert.ok(!shadow.includes('on:\n  pull_request:'));
 });
