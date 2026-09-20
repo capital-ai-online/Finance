@@ -82,6 +82,11 @@ describe('supervisor', () => {
       expect(status.marketIntegrity.hardGateEnabled).toBe(false);
       expect(status.capabilities.taskRouting).toBe(true);
       expect(status.capabilities.retry).toBe(true);
+      expect(status.capabilities.selfHealingContract).toBe(true);
+      expect(status.capabilities.selfHealing).toBe(false);
+      expect(status.selfHealingContract.valid).toBe(true);
+      expect(status.selfHealingContract.enabledActionIds).toContain('FRONTEND_RELOAD_ONCE');
+      expect(status.selfHealingContract.heldActionIds).toContain('REDEPLOY_EXACT_SHA');
       expect(status.capabilities.aiGovernance).toBe(true);
       expect(status.capabilities.agentProviderObservation).toBe(true);
       expect(status.capabilities.findings).toBe(true);

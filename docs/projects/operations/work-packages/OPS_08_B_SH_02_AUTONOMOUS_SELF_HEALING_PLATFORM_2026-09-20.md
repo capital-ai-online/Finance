@@ -6,8 +6,10 @@
 **Frontend participant:** `CAPITAL-AI-FE` (presentation/recovery only; no productive PVC)  
 **Priority:** P0  
 **Status:** ACTIVE / OWNER-DIRECTED / IMPLEMENTATION STARTED  
-**Baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`  
-**Branch:** `agent/operations-autonomous-self-healing-platform-20260920`  
+**Initial baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`  
+**Initial slice:** merged via PR #1122  
+**Current SH-02.3 baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`  
+**Current branch:** `agent/operations-self-healing-contract-20260920`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -20,10 +22,10 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 
 | WP | Scope | Owner/PVC | Dependencies | Exit gate | State |
 |---|---|---|---|---|---|
-| SH-02.0 | Authority/supersession + architecture baseline | OPS / PVC-08 | current main | stale owner-gating projections reconciled to current trust root; no weakened gate | IMPLEMENTED_BRANCH |
-| SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
-| SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
-| SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | QUEUED |
+| SH-02.0 | Authority/supersession + architecture baseline | OPS / PVC-08 | current main | stale owner-gating projections reconciled to current trust root; no weakened gate | IMPLEMENTED_ON_MAIN |
+| SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_ON_MAIN |
+| SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_ON_MAIN |
+| SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | QUEUED |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | QUEUED |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | QUEUED |
@@ -37,9 +39,11 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 
 ### Deliverables
 - architecture concept;
-- narrow supersession projection for stale SH-R2/per-run owner-gate language;
+- canonical `self-healing-contract/1.0.0`;
+- archive and deactivate predecessor Self-Healing rule projections;
 - current-main work claim;
-- roadmap/work-package reconciliation.
+- roadmap/work-package reconciliation;
+- deterministic supersession validation/evidence.
 
 ### Exit
 No change to `/AGENTS.md` is required because current main already contains the workflow-autonomy and bounded self-healing rules needed for this package.
@@ -119,6 +123,28 @@ OBSERVED
 ```
 
 No self-healing action may recursively authorize itself.
+
+### Canonical supersession rule
+
+After Human/CODEOWNER merge of SH-02.3, `self-healing-contract/1.0.0` is the only executable Self-Healing finding/action/eligibility/convergence contract. It does not supersede `/AGENTS.md@CURRENT_MAIN` or current Security/Compliance/QM/domain controls; it supersedes only older Self-Healing-specific execution rules and projections.
+
+The predecessor `OPS-08-B-SH-01`, legacy `SH-R*` labels and the narrow `AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md` control-plane projection are archived/non-authorizing. They cannot be used to activate, deny or classify remediation.
+
+Archive evidence:
+- `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md`;
+- `docs/archive/governance/superseded/AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md`.
+
+### SH-02.3 branch implementation
+
+- `src/platform/Supervisor/selfHealingContract.ts` is the single pure contract/registry surface; it creates no second Supervisor and performs no provider mutation.
+- all canonical finding classes resolve to deterministic remediation policies;
+- every action carries tier, activation state, idempotency class, blast radius, bounded attempt/cooldown/timeout budget, kill switch and verification probe;
+- SH-2/SH-3 actions are `HELD` and require an external capability contract; the registry cannot grant its own capability;
+- the only state-changing SH-1 action already marked `ENABLED` is the previously implemented one-shot frontend stale-asset reload;
+- the Supervisor exposes contract validity separately from executable runtime self-healing and now reports `capabilities.selfHealing=false` until SH-02.4+ bind and verify concrete executors;
+- focused unit tests cover taxonomy completeness, held protected actions, one-shot budgeting, fail-closed eligibility, legal state transitions and verification-to-convergence semantics.
+
+Validation remains `VALIDATION_PENDING` until repository CI evaluates the final PR head. `tests/unit/selfHealingSupersession.test.ts` additionally verifies that active Self-Healing surfaces contain no legacy `SH-R*` execution rules and that predecessor artifacts exist only in the archive paths.
 
 ## SH-02.4 — Backend dependency resilience
 
