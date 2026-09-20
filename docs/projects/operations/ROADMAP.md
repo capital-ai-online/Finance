@@ -17,7 +17,7 @@ This file remains a temporary project execution projection until the separately 
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
-SH-02.0..02.5 and the SH-02.3E Evidence Integrity child package are Human-merged on main. SH-02.3E merged via PR #1150 as `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`; its exact final head `5e107b18c4aed6fe5418a407c245c07a0e68b9f0` passed Container Security, Label Classification, automated PR review, PR Governance and CI. The current bounded coordination slice releases stale post-merge metadata against `main@59b65e4907b27f57acd639d56f83ab365f30e4a5`. SH-02.6 is the next dependency-ready functional slice.
+SH-02.0..02.6 and the SH-02.3E Evidence Integrity child package are Human-merged on main. The current execution baseline for the next functional slice is `main@53c38dbeaf85262ed1784ce3458d61b54f6da3bb`. SH-02.7 — Exact-SHA runtime recovery — is the current dependency-ready P0 slice; its provenance/capability prerequisite is reconciled by reusing the exact `ci.yml` main/push deploy-production job and its SHA-bound supply-chain artifact. Hosted validation remains PENDING until the final PR head is evaluated.
 
 Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
 
