@@ -28,10 +28,12 @@ const PROTECTED_FAILURE = [
   /(?:^|\b)(?:error|failed|failure|fatal|denied)\b[^\n]*(?:render|production deploy|registry auth|ghcr auth|deployment identity|\biam\b|billing|database mutation|supabase migration)/i,
 ];
 
+// The 45k guard is emitted by actions/github-script through core.setFailed(), which
+// GitHub renders as an explicit ##[error] line. Match that runtime failure record,
+// never the same strings echoed as JavaScript source by `gh run view --log-failed`.
 const PROTECTED_ACTIONS_MINUTE_BLOCKER = [
-  /GitHub Actions Hard-Blocker aktiv: Issue #\d+/i,
-  /Der monatliche Enterprise-Actions-Verbrauch hat 45\.000 Minuten erreicht/i,
-  /Mehrere offene Actions-Minuten-Blocker gefunden:/i,
+  /##\[error\]GitHub Actions Hard-Blocker aktiv: Issue #\d+\.\s+Der monatliche Enterprise-Actions-Verbrauch hat 45\.000 Minuten erreicht;[^\n]*fail-closed gestoppt\./i,
+  /##\[error\]Mehrere offene Actions-Minuten-Blocker gefunden: #[^\n]+\./i,
 ];
 
 const EXACT_STALE_PRODUCTION_BASELINE =

@@ -43,19 +43,57 @@ test('delegates v1.7 Decision/Evidence drift only to the live reconciler', () =>
   }
 });
 
-test('classifies the 45k Actions minute gate as an explicit protected blocker', () => {
+test('classifies the 45k Actions minute gate only from the explicit core.setFailed runtime record', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',
     logText: [
-      'Error: GitHub Actions Hard-Blocker aktiv: Issue #2001.',
-      'Der monatliche Enterprise-Actions-Verbrauch hat 45.000 Minuten erreicht;',
-    ].join(' '),
+      '2026-09-20T00:00:00Z ##[error]GitHub Actions Hard-Blocker aktiv: Issue #2001. Der monatliche Enterprise-Actions-Verbrauch hat 45.000 Minuten erreicht; kostenrelevante Required-Workflow-Arbeit wird fail-closed gestoppt.',
+      '2026-09-20T00:00:00Z ##[error]Process completed with exit code 1.',
+    ].join('\n'),
   });
   assert.equal(result.classification, 'PROTECTED_ACTIONS_MINUTE_COST_BLOCKER');
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_PROTECTED_ACTION);
   assert.equal(result.reason, 'protected-45k-actions-minute-blocker');
   assert.equal(result.findingClass, 'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER');
   assert.equal(result.actionId, 'OBSERVE_ONLY');
+});
+
+test('does not treat the 45k guard source echoed in failed Governance logs as an active blocker', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: [
+      'if (blockers.length === 1) {',
+      '  core.setFailed(',
+      '    `GitHub Actions Hard-Blocker aktiv: Issue #${blockers[0].number}. ` +',
+      "    'Der monatliche Enterprise-Actions-Verbrauch hat 45.000 Minuten erreicht; ' +",
+      "    'kostenrelevante Required-Workflow-Arbeit wird fail-closed gestoppt.',",
+      '  );',
+      '}',
+      'Error: PR #1179 verwendet keinen unterstützten PR-Vorlagenmarker. Aktuell kanonisch ist v1.7.0; v1.6.0 und v1.5.0 bleiben nur für bereits offene PRs kompatibel.',
+      '##[error]Process completed with exit code 1.',
+    ].join('\n'),
+    prMetadataShape: 'OTHER',
+  });
+  assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
+  assert.equal(result.reason, 'existing-pr-production-baseline-refresh-specialist-owns-write');
+});
+
+test('does not let echoed 45k guard source hide an unrelated CI failure', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'core.setFailed(`GitHub Actions Hard-Blocker aktiv: Issue #${blockers[0].number}. ` +',
+      "  'Der monatliche Enterprise-Actions-Verbrauch hat 45.000 Minuten erreicht; ' +",
+      "  'kostenrelevante Required-Workflow-Arbeit wird fail-closed gestoppt.');",
+      'FAIL tests/unit/frontend1608AppearanceContract.test.ts > GOV-CHAT-079 16.08 appearance contract',
+      'AssertionError: expected "Montserrat" to contain \'Poppins\'',
+      '##[error]Process completed with exit code 1.',
+    ].join('\n'),
+  });
+  assert.equal(result.classification, 'UNKNOWN_FAILURE');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN);
+  assert.equal(result.reason, 'no-exact-allowlisted-failure-class');
 });
 
 test('delegates exact current-state baseline drift to the existing specialist', () => {
