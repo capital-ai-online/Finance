@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const LEDGER_RELATIVE_PATH = 'docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json';
-export const EXPECTED_REMOTE_TOTAL = 71;
+export const EXPECTED_REMOTE_TOTAL = 74;
 export const ALLOWED_CLASSIFICATIONS = new Set([
   'EXACT_MATCH',
   'TIMESTAMP_ALIAS',
@@ -151,6 +151,6 @@ if (isDirectRun) {
     for (const error of errors) console.error(`ERROR: ${error}`);
     process.exitCode = 1;
   } else {
-    console.log('Supabase migration ledger reconciliation: OK — 71/71 remote versions classified, unknown=0');
+    console.log('Supabase migration ledger reconciliation: OK — 74/74 remote versions classified, unknown=0');
   }
 }
