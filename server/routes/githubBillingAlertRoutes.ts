@@ -33,6 +33,8 @@ function validReport(value: unknown): value is Record<string, unknown> {
   if (!validFingerprint(value.alertFingerprint)) return false;
   if (!Array.isArray(value.rows) || value.rows.length > 500) return false;
   if (!Array.isArray(value.alertRows) || value.alertRows.length > 500) return false;
+  if (!Array.isArray(value.detailRows) || value.detailRows.length > 1000) return false;
+  if (!Array.isArray(value.alertDetailRows) || value.alertDetailRows.length > 1000) return false;
   if (!Array.isArray(value.potentialCostSurfaces) || value.potentialCostSurfaces.length > 100) return false;
   if (typeof value.generatedAt !== 'string' || !Number.isFinite(Date.parse(value.generatedAt))) return false;
   return true;
