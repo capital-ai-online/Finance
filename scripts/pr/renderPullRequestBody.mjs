@@ -9,9 +9,18 @@ import {
   listAddedClaimFiles,
   readJsonFile,
   renderProductionBaselineBlock,
+  validateProductionBaselineForPr,
   PR_TEMPLATE_VERSION,
 } from './lib.mjs';
 import { canonicalizeKnownSectionHeadings } from './prBodySectionContract.mjs';
+import {
+  decisionImpactLabel,
+  deriveDecisionStatus,
+  formatDecisionGateState,
+  normalizeDecisionGateState,
+  summarizeDecisionBlockers,
+  summarizeDecisionEvidence,
+} from './prDecisionState.mjs';
 
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
@@ -27,6 +36,15 @@ if (!fs.existsSync(projectMappingPath)) fail(`Projekt-Mapping nicht gefunden: ${
 
 function cleanCell(value) {
   return String(value ?? '').replace(/`/g, '').replace(/\*\*/g, '').trim();
+}
+
+function compactDecisionCell(value, fallback) {
+  const text = String(value || fallback || '')
+    .replace(/\r?\n+/g, ' ')
+    .replace(/\|/g, '\\|')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text || String(fallback || 'N/A');
 }
 
 const PRIORITY_PRESENTATION = Object.freeze({
@@ -150,7 +168,7 @@ const versionImpactReason = String(
 ).trim();
 const versionManagerCheck = String(
   process.env.PR_VERSION_MANAGER_CHECK ||
-  'NOT_RUN — fokussierter Function-Smoke ist als PR-Check vorgesehen und benötigt Human-Freigabe.',
+  'NOT_RUN — erforderlicher Check wurde noch nicht ausgeführt.',
 ).trim();
 
 if (!projectId || projectId === 'N/A') fail('Kanonischer PR-Titel erfordert eine aufgelöste PROJECT-ID.');
@@ -164,6 +182,26 @@ const sourceProjectId = String(process.env.PR_SOURCE_PROJECT_ID || projectId).tr
 const targetProjectId = String(process.env.PR_TARGET_PROJECT_ID || projectId).trim();
 const sourcePresentation = resolveProjectPresentation(sourceProjectId);
 const targetPresentation = resolveProjectPresentation(targetProjectId);
+
+const prClass = String(process.env.PR_CHECK_CLASS || 'N/A').trim().toUpperCase();
+const baselineGate = validateProductionBaselineForPr(baseline).length === 0 ? 'PASS' : 'BLOCKED';
+const decisionGates = Object.freeze({
+  main: normalizeDecisionGateState(
+    process.env.PR_DECISION_MAIN ||
+      (baseline?.checks?.branchContainsCurrentMain === true ? 'PASS' : 'BLOCKED'),
+  ),
+  scope: normalizeDecisionGateState(
+    process.env.PR_DECISION_SCOPE ||
+      (primaryOwner !== 'N/A' && affectedPvc !== 'N/A' ? 'PASS' : 'PENDING'),
+  ),
+  overlap: normalizeDecisionGateState(process.env.PR_DECISION_OVERLAP || 'PENDING'),
+  checks: normalizeDecisionGateState(process.env.PR_DECISION_REQUIRED_CHECKS || 'PENDING'),
+  security: normalizeDecisionGateState(process.env.PR_DECISION_SECURITY_COMPLIANCE || 'PENDING'),
+  baseline: normalizeDecisionGateState(process.env.PR_DECISION_BASELINE || baselineGate),
+});
+const decisionStatus = deriveDecisionStatus(decisionGates);
+const implementationDetail = String(process.env.PR_IMPLEMENTATION || workItem).trim();
+const whyDetail = String(process.env.PR_WHY || 'N/A — im PR-Kontext zu konkretisieren').trim();
 
 const replacements = {
   WORK_ITEM: workItem,
@@ -195,11 +233,23 @@ const replacements = {
   TARGET_PROJECT_COLOR: targetPresentation.color,
   PRIMARY_OWNER: primaryOwner,
   AFFECTED_PVC: affectedPvc,
-  IMPLEMENTATION: process.env.PR_IMPLEMENTATION || workItem,
-  WHY: process.env.PR_WHY || 'N/A — im PR-Kontext zu konkretisieren',
+  DECISION_STATUS: decisionStatus,
+  DECISION_MAIN: formatDecisionGateState(decisionGates.main),
+  DECISION_SCOPE: formatDecisionGateState(decisionGates.scope),
+  DECISION_OVERLAP: formatDecisionGateState(decisionGates.overlap),
+  DECISION_CHECKS: formatDecisionGateState(decisionGates.checks),
+  DECISION_SECURITY: formatDecisionGateState(decisionGates.security),
+  DECISION_BASELINE: formatDecisionGateState(decisionGates.baseline),
+  IMPACT_RISK: decisionImpactLabel(prClass, decisionGates.security),
+  EVIDENCE_SUMMARY: summarizeDecisionEvidence(decisionGates),
+  BLOCKER_SUMMARY: compactDecisionCell(summarizeDecisionBlockers(decisionGates), 'Keine'),
+  IMPLEMENTATION_DECISION: compactDecisionCell(implementationDetail, workItem),
+  WHY_DECISION: compactDecisionCell(whyDetail, 'N/A'),
+  IMPLEMENTATION_DETAIL: implementationDetail,
+  WHY_DETAIL: whyDetail,
   ROADMAP: process.env.PR_ROADMAP || 'N/A — nicht im Work Claim spezifiziert',
   EXIT_GATE: process.env.PR_EXIT_GATE || 'N/A — im PR-Kontext zu konkretisieren',
-  PR_CLASS: process.env.PR_CHECK_CLASS || 'N/A',
+  PR_CLASS: prClass,
   PR_CLASS_REASON: process.env.PR_CHECK_CLASS_REASON || 'N/A — im PR-Kontext zu konkretisieren',
   EXPECTED_CHECKS: process.env.PR_EXPECTED_CHECKS || 'gemäß ermittelter PR-Klasse',
   MAIN_SYNC_STATUS: process.env.PR_MAIN_SYNC_STATUS || 'Ja — gegen die gebundene Preflight-Baseline',
@@ -220,7 +270,7 @@ const semanticPatchCandidates = Array.isArray(claim.semanticPatchCandidates)
 
 if (reviewRequiredPaths.length > 0 || semanticPatchCandidates.length > 0) {
   const handoffSection = [
-    '## Documentary Handoff Evidence',
+    '### Documentary Handoff Evidence',
     '',
     reviewRequiredPaths.length > 0
       ? `- **Review-only paths:** ${reviewRequiredPaths.map((value) => `\`${value}\``).join(', ')}`
@@ -232,11 +282,11 @@ if (reviewRequiredPaths.length > 0 || semanticPatchCandidates.length > 0) {
     '',
   ].join('\n');
 
-  const baselineHeading = '## 7. Maschinenlesbare Baseline';
-  if (body.includes(baselineHeading)) {
-    body = body.replace(baselineHeading, `${handoffSection}\n${baselineHeading}`);
+  const machineEvidenceMarker = '<details>\n<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
+  if (body.includes(machineEvidenceMarker)) {
+    body = body.replace(machineEvidenceMarker, handoffSection + '\n' + machineEvidenceMarker);
   } else {
-    body = `${body.trimEnd()}\n\n${handoffSection}`;
+    fail('v1.7 Technical-Evidence-Marker fehlt; Documentary Handoff darf keinen vierten Hauptabschnitt erzeugen.');
   }
 }
 

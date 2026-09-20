@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-PR-UX-01-HUMAN-DECISION-V17-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement GOV-PR-UX-01 Human Decision PR Template v1.7 as a compact non-authorizing decision/evidence projection with fail-closed decision-state derivation and legacy v1.6/v1.5 compatibility.",
+  "workItemDE": "GOV-PR-UX-01 Human Decision PR Template v1.7 als kompakte, nicht-autorisierende Entscheidungs-/Evidence-Projektion mit fail-closed Decision-State-Ableitung und v1.6/v1.5-Kompatibilität implementieren.",
+  "priority": "P1",
+  "priorityReason": "The PR body is the human merge decision surface; reducing duplicated metadata while preserving truthful evidence improves owner review without weakening governance.",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-20T13:37:00Z",
+  "baseBranch": "main",
+  "baseSha": "3a9a55262dbb8ee87dac087a863b1e3369e71d22",
+  "branch": "agent/governance-gov-pr-ux-01-human-decision-v17-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-PR-UX-01-HUMAN-DECISION-V17-20260920.json",
+    ".github/pull_request_template.md",
+    "scripts/pr/lib.mjs",
+    "scripts/pr/prBodySectionContract.mjs",
+    "scripts/pr/prDecisionState.mjs",
+    "scripts/pr/renderPullRequestBody.mjs",
+    "scripts/pr/validatePrBody.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.mjs",
+    "scripts/pr/prTemplateVersionManagerSmoke.test.mjs",
+    "scripts/pr/prDecisionState.test.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs",
+    "scripts/pr/prBodySectionContract.test.mjs",
+    "scripts/pr/productionBaselineBody.test.mjs"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "scopeNote": "Template v1.7 is presentation/evidence only. /AGENTS.md@CURRENT_MAIN remains the sole repository-wide development authority. READY_FOR_HUMAN_DECISION never grants merge authority; Human/CODEOWNER merge remains mandatory.",
+  "correlation": {
+    "currentMainAtStart": "3a9a55262dbb8ee87dac087a863b1e3369e71d22",
+    "openPullRequestsChecked": [
+      1139
+    ],
+    "changedFileOverlap": false,
+    "semanticBoundary": "PR #1139 hardens PR writer leases and baseline-refresh orchestration. GOV-PR-UX-01 changes the PR-body presentation/validation contract but preserves the existing CAPITAL_AI_PRODUCTION_BASELINE_* marker interface and does not mutate PR #1139 workflow paths."
+  }
+}

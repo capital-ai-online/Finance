@@ -429,3 +429,38 @@ test('markerless bootstrap stays fail-closed for unresolved placeholders or base
   assert.equal(partialBaseline.eligible, false);
   assert.equal(partialBaseline.reason, 'markerless-body-has-baseline-markers');
 });
+
+
+test('current v1.7 Human Decision body is never rewritten by the legacy autofix', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '# Human Decision PR',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '| Scope / Ownership | 🟢 PASS |',
+    '| Overlap | 🟡 PENDING |',
+    '| Required Checks | 🟡 PENDING |',
+    '| Security / Compliance | 🟡 PENDING |',
+    '| Production Baseline | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'current-v1.7-owned-by-canonical-renderer');
+  assert.equal(result.body, body);
+});
