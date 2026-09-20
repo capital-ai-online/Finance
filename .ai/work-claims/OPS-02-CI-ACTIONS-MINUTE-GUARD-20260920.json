@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-02-CI-ACTIONS-MINUTE-GUARD-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Add monthly GitHub Actions minute warning and hard-block controls to the canonical GitHub cost-watch and required-workflow chain.",
+  "workItemDE": "Monatliche GitHub-Actions-Minutenwarnung bei 5.000 und Hard-Blocker bei 45.000 Minuten in Cost-Watch und Required-Workflow-Kette integrieren.",
+  "priority": "P1",
+  "priorityReason": "Verhindert unkontrollierte Actions-Kosten und nutzt den bereits produktiv verifizierten SMTP-/Billing-Evidence-Pfad.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-20T18:32:00Z",
+  "baseBranch": "main",
+  "baseSha": "6207e1cc094b1d5d599963dc7f1ed25c73bab928",
+  "branch": "agent/operations-actions-minute-thresholds-current-main-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-02-CI-ACTIONS-MINUTE-GUARD-20260920.json",
+    "docs/projects/operations/evidence/OPS_02_ACTIONS_MINUTE_GUARD_2026-09-20.md",
+    ".github/workflows/ci.yml",
+    ".github/workflows/pr-governance.yml",
+    ".github/workflows/container-security.yml",
+    ".github/workflows/github-cost-watch.yml",
+    "scripts/operations/githubCostWatchPolicy.mjs",
+    "scripts/operations/runGitHubCostWatch.mjs",
+    "scripts/operations/syncGitHubActionsMinuteBlocker.mjs",
+    "server/billing/githubBillingAlertMailer.ts",
+    "tests/unit/githubCostWatchPolicy.test.ts",
+    "tests/unit/githubBillingAlertMailer.test.ts",
+    "tests/unit/githubCostWatchWorkflow.test.ts",
+    "tests/unit/githubActionsMinuteBlocker.test.ts",
+    "tests/unit/githubActionsMinuteBlockerWorkflow.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+}
