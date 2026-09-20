@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-TRACE-CAPITAL-AI-SEC-2026-08-31`  
 **Project:** `CAPITAL-AI-SEC`  
-**Version:** `2.1.2`  
+**Version:** `2.1.3`  
 **Status:** `CURRENT-STATE CROSS-CUTTING TRACEABILITY / NON-AUTHORIZING`  
-**Date:** `2026-08-31`  
-**Baseline:** `main@8e0e4a541da24ce2e28988e31c9a8bb7e5711a25`  
+**Date:** `2026-09-20`  
+**Baseline:** `main@02c9bdb4bd3820da3ad7e1e06d86722c2a2eb891`  
 **Primary Project Value Chain ownership:** `[]`  
 **Project coverage:** `PVC-01..PVC-18`  
 **Technical coverage:** applicable existing `VC-*` stages, separately namespaced
@@ -36,9 +36,9 @@ Unknown ownership remains fail-closed as `UNROUTED/BLOCKED`.
 | PVC-06 Version Management | CAPITAL-AI-OPS | toolchain/version identity and integrity | SEC-05,06,08,10 | requirements + verification only |
 | PVC-07 Release Management | CAPITAL-AI-OPS | provenance, attestation, unverified promotion denial | SEC-06,08,10 | requirements + verification only |
 | PVC-08 Production Operations | CAPITAL-AI-OPS | runtime hardening, protected permissions, recovery | SEC-05,08,09,10 | requirements + verification only |
-| PVC-09 UAI / Data Ingestion | CAPITAL-AI-DATA | external input validation, provenance, credentials | SEC-01,03,04,08 | requirements + verification only |
-| PVC-10 Evidence Management | CAPITAL-AI-DATA | exact identity, freshness, evidence integrity | SEC-04,06,10 | requirements + verification only |
-| PVC-11 Data Quality | CAPITAL-AI-DATA | fail-closed DQ, no synthetic success | SEC-04,08,10 | requirements + verification only |
+| PVC-09 UAI / Data Ingestion | CAPITAL-AI-FINTECH | external input validation, provenance, credentials | SEC-01,03,04,08 | requirements + verification only |
+| PVC-10 Evidence Management | CAPITAL-AI-FINTECH | exact identity, freshness, evidence integrity | SEC-04,06,10 | requirements + verification only |
+| PVC-11 Data Quality | CAPITAL-AI-FINTECH | fail-closed DQ, no synthetic success | SEC-04,08,10 | requirements + verification only |
 | PVC-12 Feature Engineering | CAPITAL-AI-FINTECH | feature/input integrity and provenance | SEC-01,04,08 | requirements + verification only |
 | PVC-13 Scoring Models | CAPITAL-AI-FINTECH | model/registry integrity, least privilege | SEC-04,07,08 | requirements + verification only |
 | PVC-14 Scoring Orchestration | CAPITAL-AI-FINTECH | dispatcher/tool integrity and no bypass | SEC-03,07,08 | requirements + verification only |
@@ -69,7 +69,7 @@ The pre-sync labels are retained as historical source references only. Current r
 | S1-R2-07 | DC-SA / VC-05 | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | recovery Security requirement + measured verification | REFERRED_NOT_EXECUTED |
 | S1-R2-09 | SEO-GM / VC-18 | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | CSP promotion gate + compatibility verification | WAITING_FOR_EVIDENCE |
 | S1-R2-10 | DEVELOPMENT / VC-03 | `PVC-08` Production Operations | `CAPITAL-AI-OPS` | production reachability verification | WAITING_FOR_EVIDENCE |
-| S1-R2-11 | DC-SA / VC-17 | `PVC-10` Evidence Management | `CAPITAL-AI-DATA` | evidence identity/freshness requirement + verification | WAITING_FOR_EVIDENCE |
+| S1-R2-11 | DC-SA / VC-17 | `PVC-10` Evidence Management | `CAPITAL-AI-FINTECH` | evidence identity/freshness requirement + verification | WAITING_FOR_EVIDENCE |
 | MFA/AAL lifecycle drift | GOV / VC-02 | `PVC-05` Platform Director | `CAPITAL-AI-GOV` | identify lifecycle mismatch + verify Governance reconciliation | REFERRED_NOT_EXECUTED / CLARIFY |
 
 ## 5. Detailed current handoffs
@@ -202,20 +202,20 @@ The pre-sync labels are retained as historical source references only. Current r
 
 ### SEC-FIND-S1-R2-11 — Evidence identity and stale-state automation
 
-- **security_marker:** `[SECURITY_HANDOFF -> CAPITAL-AI-DATA | VC-10]`
-- **repository_marker:** `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-10]`
+- **security_marker:** `[SECURITY_HANDOFF -> CAPITAL-AI-FINTECH | VC-10]`
+- **repository_marker:** `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-10]`
 - **project_namespace:** `PVC`
 - **project_stage:** `PVC-10`
-- **target_project / affected_project:** `CAPITAL-AI-DATA`
+- **target_project / affected_project:** `CAPITAL-AI-FINTECH`
 - **task:** own the evidence identity/freshness semantics and return evidence that `CURRENT`, `STALE`, `CURRENT_AFTER_REFRESH` and `STALE_RETRY_REQUIRED` behave on current immutable identities without candidate self-authorization.
 - **reason / threat_or_control:** stale or wrong-identity evidence must not authorize current state.
 - **severity:** `P2 / MEDIUM`
 - **evidence:** S1-R2-11; `scripts/pr/updatePrProductionBaseline.mjs` current implementation is relevant tooling evidence.
-- **dependency:** `CAPITAL-AI-OPS` owns recurring DevelopmentChain/PR/trace tooling integration; any future tooling-code remediation is a secondary OPS handoff under the applicable `PVC-02`/`PVC-18` stage, not implicit DATA implementation ownership.
+- **dependency:** `CAPITAL-AI-OPS` owns recurring DevelopmentChain/PR/trace tooling integration; any future tooling-code remediation is a secondary OPS handoff under the applicable `PVC-02`/`PVC-18` stage, not implicit FINTECH implementation ownership.
 - **required_remediation:** evidence-semantic correction only if verification exposes a gap; tooling corrections remain target-owned by OPS.
 - **required_evidence:** current immutable baseline/head identities and trusted refresh/retry observations.
 - **verification_gate:** Security verifies evidence freshness/current-identity behavior without treating evidence as authority.
-- **roadmap_reference:** `docs/projects/data/ROADMAP.md` (target canonical DATA roadmap; creation remains DATA-owned).
+- **roadmap_reference:** `docs/projects/fintech/ROADMAP.md` (canonical FINTECH roadmap for PVC-09..17).
 - **status:** `WAITING_FOR_EVIDENCE`.
 
 ### SEC-FIND-AUTH-LIFECYCLE-01 — MFA/AAL lifecycle drift
