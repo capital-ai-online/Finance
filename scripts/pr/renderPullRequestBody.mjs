@@ -290,7 +290,7 @@ if (reviewRequiredPaths.length > 0 || semanticPatchCandidates.length > 0) {
   if (body.includes(machineEvidenceMarker)) {
     body = body.replace(machineEvidenceMarker, handoffSection + '\n' + machineEvidenceMarker);
   } else {
-    fail('v1.7 Technical-Evidence-Marker fehlt; Documentary Handoff darf keinen vierten Hauptabschnitt erzeugen.');
+    fail(`v${PR_TEMPLATE_VERSION} Technical-Evidence-Marker fehlt; Documentary Handoff darf keinen vierten Hauptabschnitt erzeugen.`);
   }
 }
 
