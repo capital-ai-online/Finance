@@ -154,7 +154,7 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
           <p className="mx-auto max-w-6xl text-sm leading-relaxed text-text-secondary sm:text-base">
             CAPITAL-AI verbindet Marktinformationen, nachvollziehbare KI-gestützte Analyse- und
             Scoring-Werkzeuge sowie Research in einer gemeinsamen Multi-Asset-Oberfläche für Aktien,
-            Indizes, Forex, Kryptowährungen und Rohstoffe. Ziel sind erklärbare KI-Scorings mit
+            Indizes, Forex, Kryptowährungen und Rohstoffe. Ziel ist eine nachvollziehbare Entscheidungsgrundlage mit erklärbaren KI-Scorings mit
             sichtbar getrennten Evidenz- und Zugriffsgrenzen.
           </p>
         </section>
