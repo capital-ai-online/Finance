@@ -88,6 +88,27 @@ describe('GitHub settings inventory read client', () => {
         return jsonResponse({ enabled_repositories: 'none' });
       }
 
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/cache/usage`) {
+        return jsonResponse({
+          total_active_caches_count: 2,
+          total_active_caches_size_in_bytes: 2048,
+        });
+      }
+
+      if (
+        method === 'GET'
+        && parsed.pathname === `/orgs/${ORGANIZATION}/actions/cache/retention-limit`
+      ) {
+        return jsonResponse({ days: 7 });
+      }
+
+      if (
+        method === 'GET'
+        && parsed.pathname === `/orgs/${ORGANIZATION}/actions/cache/storage-limit`
+      ) {
+        return jsonResponse({ max_cache_size_gb: 10 });
+      }
+
       if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}`) {
         return jsonResponse({
           visibility: 'private',
@@ -124,6 +145,38 @@ describe('GitHub settings inventory read client', () => {
           send_write_tokens_to_workflows: false,
           send_secrets_and_variables: false,
           require_approval_for_fork_pr_workflows: true,
+        });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/cache/usage`) {
+        return jsonResponse({
+          full_name: REPOSITORY,
+          active_caches_size_in_bytes: 1024,
+          active_caches_count: 1,
+        });
+      }
+
+      if (
+        method === 'GET'
+        && parsed.pathname === `/repos/${REPOSITORY}/actions/cache/retention-limit`
+      ) {
+        return jsonResponse({ days: 7 });
+      }
+
+      if (
+        method === 'GET'
+        && parsed.pathname === `/repos/${REPOSITORY}/actions/cache/storage-limit`
+      ) {
+        return jsonResponse({ max_cache_size_gb: 10 });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/artifacts`) {
+        return jsonResponse({
+          total_count: 2,
+          artifacts: [
+            { id: 1, name: 'evidence', size_in_bytes: 2048, expired: false },
+            { id: 2, name: 'old', size_in_bytes: 512, expired: true },
+          ],
         });
       }
 
