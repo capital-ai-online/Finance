@@ -61,6 +61,8 @@ jobs:
           base="$BEFORE_SHA"
           if [ -z "$base" ] || [ "$base" = "$zero" ]; then
             base="$(git rev-parse "$AFTER_SHA^")"
+          else
+            git fetch --no-tags origin "$base"
           fi
           npm run documentary:impact:plan -- \
             --base="$base" \
