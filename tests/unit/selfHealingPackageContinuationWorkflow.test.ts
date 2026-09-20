@@ -30,6 +30,12 @@ describe('Self-Healing package continuation workflow', () => {
     expect(workflow).toContain('READY_FOR_FRESH_CURRENT_MAIN_CORRELATION');
   });
 
+  it('never reselects a completed slice from a stale QUEUED work-graph projection', () => {
+    expect(workflow).toContain("row.state === 'QUEUED' && completed.has(row.number)");
+    expect(workflow).toContain("row.state === 'QUEUED' && !completed.has(row.number)");
+    expect(workflow).toContain('Ignoring stale QUEUED rows already completed by current merge/state');
+  });
+
   it('generation-binds READY/BLOCKED/COMPLETE handoff writes to unchanged current main', () => {
     expect(workflow).toContain('capital-ai-self-healing-continuation-generation/1.0.0');
     expect(workflow).toContain("const crypto = require('crypto')");
