@@ -42,7 +42,7 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1136 / ACTIVATION_HELD |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1141 / GENERIC_ACTION_HELD |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1161 |
-| SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | IN_PROGRESS / PROVENANCE_CAPABILITY_RECONCILED / HOSTED_VALIDATION_PENDING |
+| SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | IN_PROGRESS / CAPABILITY_IMPLEMENTED / ACTIVATION_HELD / HOSTED_VALIDATION_PENDING |
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
 | SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | QUEUED |
 | SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.9 | deterministic failure matrix proves bounded recovery and safe exhaustion | QUEUED |
@@ -247,9 +247,10 @@ Repeated failure opens the deployment circuit and escalates.
 - Production identity is read before mutation; a bare liveness failure does not get reclassified as `DEPLOYMENT_IDENTITY_DRIFT`.
 - The action re-runs only `Deployment verifiziert / Render-Produktion` via the GitHub Actions job-rerun API. The existing production Environment remains the sole holder of provider mutation capability.
 - One recovery attempt is allowed, followed by circuit exhaustion. The contract cooldown remains `300000 ms`; the action timeout remains `900000 ms`.
-- `CAPITAL_AI_DISABLE_EXACT_SHA_RECOVERY=true` is the repository-variable kill switch.
+- `CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY=true` is an explicit activation gate; absent/false keeps the new mutation path fail-closed while the current shared Supervisor writer overlap remains non-terminal.
+- `CAPITAL_AI_DISABLE_EXACT_SHA_RECOVERY=true` is the repository-variable kill switch and overrides activation.
 - A successful second CI attempt is independently read back against `/healthz` and strict `/readyz`, including commit, branch, repository and provider identity.
-- `REDEPLOY_EXACT_SHA` becomes `ENABLED` in the Self-Healing registry only with the existing external capability requirement `release.redeploy.exact-sha`; `PROTECTED_ROLLBACK_RESTORE` remains `HELD`.
+- `REDEPLOY_EXACT_SHA` remains `HELD` in the Self-Healing registry in this capability slice. Activation is a separate convergence step after the competing `tests/unit/supervisor.test.ts` writer is terminal and current-main correlation is repeated; `PROTECTED_ROLLBACK_RESTORE` remains `HELD`.
 - Hosted validation is `PENDING` until the final PR head is evaluated by repository checks. No unexecuted result is represented as PASS.
 
 Capability-correlation evidence: `docs/projects/operations/evidence/SH_02_7_EXACT_SHA_RUNTIME_RECOVERY_2026-09-21.md`.
