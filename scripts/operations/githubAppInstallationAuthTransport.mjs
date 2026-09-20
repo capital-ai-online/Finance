@@ -381,7 +381,11 @@ export function createGitHubAppInstallationAuthTransport({
       return authenticatedBillingGet(path);
     },
 
-    async createCostCenter({ name, aiCreditPoolEnabled = false } = {}) {
+    /**
+     * @param {{ name: string; aiCreditPoolEnabled?: boolean }} input
+     */
+    async createCostCenter(input) {
+      const { name, aiCreditPoolEnabled = false } = input;
       return authenticatedCostCenterCreate(name, aiCreditPoolEnabled);
     },
 
