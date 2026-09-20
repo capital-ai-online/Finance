@@ -2,7 +2,9 @@
 
 import {
   PR_TEMPLATE_MARKER,
+  PR_TEMPLATE_VERSION,
   appendGithubOutput,
+  detectPrTemplateVersion,
   fail,
   githubJson,
 } from './lib.mjs';
@@ -303,10 +305,47 @@ function upsertDecisionSummaryRow(bodyText, label, value) {
   return body.slice(0, decisionStart) + updatedSection + body.slice(evidenceStart);
 }
 
+function migrateV17DecisionContract(bodyText) {
+  const body = String(bodyText || '');
+  const detected = detectPrTemplateVersion(body);
+  if (detected === PR_TEMPLATE_VERSION) {
+    return { eligible: true, migrated: false, reason: 'current-contract', body };
+  }
+  if (detected !== '1.7.0') {
+    return { eligible: false, migrated: false, reason: 'unsupported-template-version', body };
+  }
+
+  const legacyMarker = 'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0';
+  const markerCount = body.split(legacyMarker).length - 1;
+  const requiredHeadings = [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ];
+  if (
+    markerCount !== 2 ||
+    requiredHeadings.some((heading) => body.split(heading).length - 1 !== 1)
+  ) {
+    return { eligible: false, migrated: false, reason: 'v1.7-migration-boundary-ambiguous', body };
+  }
+
+  const migrated = body.replaceAll(legacyMarker, PR_TEMPLATE_MARKER);
+  if (detectPrTemplateVersion(migrated) !== PR_TEMPLATE_VERSION) {
+    throw new Error('v1.7 -> v' + PR_TEMPLATE_VERSION + ' migration did not converge.');
+  }
+  return {
+    eligible: true,
+    migrated: true,
+    reason: 'v1.7-to-v1.8-live-dashboard-contract',
+    body: migrated,
+  };
+}
+
 export function reconcileDecisionBody(bodyText, gates) {
   const original = String(bodyText || '');
-  if (!original.includes(PR_TEMPLATE_MARKER) || !/CAPITAL_AI_PR_TEMPLATE_VERSION:\s*1\.7\.0/.test(original)) {
-    return { eligible: false, changed: false, reason: 'non-v1.7-body', body: original };
+  const contract = migrateV17DecisionContract(original);
+  if (!contract.eligible || !contract.body.includes(PR_TEMPLATE_MARKER)) {
+    return { eligible: false, changed: false, reason: contract.reason, body: original };
   }
 
   const requiredHeadings = [
@@ -314,12 +353,12 @@ export function reconcileDecisionBody(bodyText, gates) {
     '## 2. ✅ Evidence',
     '## 3. 🔍 Technical Evidence',
   ];
-  if (requiredHeadings.some((heading) => original.split(heading).length - 1 !== 1)) {
+  if (requiredHeadings.some((heading) => contract.body.split(heading).length - 1 !== 1)) {
     return { eligible: false, changed: false, reason: 'decision-section-boundary-ambiguous', body: original };
   }
 
   const decisionStatus = deriveDecisionStatus(gates);
-  let body = ensureDecisionStatusLine(original, decisionStatus);
+  let body = ensureDecisionStatusLine(contract.body, decisionStatus);
   if (body == null) {
     return { eligible: false, changed: false, reason: 'decision-status-boundary-ambiguous', body: original };
   }
@@ -347,7 +386,12 @@ export function reconcileDecisionBody(bodyText, gates) {
   return {
     eligible: true,
     changed: body !== original,
-    reason: body === original ? 'already-current' : 'decision-evidence-reconciled',
+    reason:
+      body === original
+        ? 'already-current'
+        : contract.migrated
+          ? 'v1.7-to-v1.8-live-dashboard-migrated'
+          : 'decision-evidence-reconciled',
     decisionStatus,
     body,
   };
@@ -512,7 +556,7 @@ async function reconcileOne({ repository, token, prNumber }) {
   const classification = classifyAutoMergeEligibility({
     pr,
     repository,
-    body: originalBody,
+    body: rendered.eligible ? rendered.body : originalBody,
     files: snapshot.files,
     gates: snapshot.gates,
     compareStatus: snapshot.compare?.status,
