@@ -36,19 +36,67 @@ import {
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
+export const SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID =
+  'ScoringDispatcher.dispatchCanonicalScore' as const;
+
 export interface TaskRoute {
-  engineId: string;
+  /**
+   * Legacy compatibility field for Supervisor consumers.
+   * It now identifies the productive score authority, never a research orchestrator.
+   */
+  engineId: typeof SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID;
+  scoreAuthorityId: typeof SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID;
+  domainExecutorId: string;
+  researchOrchestratorId?: 'crypto_orchestrator' | 'rawmaterials_orchestrator';
   label: string;
   hasDedicatedEngine: boolean;
 }
 
 const TASK_ROUTING_TABLE: Record<AssetClass, TaskRoute> = {
-  crypto: { engineId: 'crypto_orchestrator', label: 'Crypto/DeFi/Meme-Coin Scoring (verified market data + provenance)', hasDedicatedEngine: true },
-  commodity: { engineId: 'rawmaterials_orchestrator', label: 'Rohstoff-Scoring (dedizierte Fachengine)', hasDedicatedEngine: true },
-  stock: { engineId: 'traditional_asset_engine', label: 'Aktien-Scoring (Technik + Alpha-Vantage-Fundamentaldaten)', hasDedicatedEngine: true },
-  forex: { engineId: 'traditional_asset_engine', label: 'Forex-Scoring (reale Kurshistorie, rein technisch)', hasDedicatedEngine: true },
-  index: { engineId: 'traditional_asset_engine', label: 'Index-Scoring (FMP-Kurshistorie, rein technisch)', hasDedicatedEngine: true },
-  bond: { engineId: 'sovereign_benchmark_yield_engine', label: 'Anleihen-Scoring: Sovereign-Benchmark-Rendite (ADR-0033, yield-state; kein Einzelanleihen-/Credit-/Duration-Score)', hasDedicatedEngine: true },
+  crypto: {
+    engineId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    scoreAuthorityId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    domainExecutorId: 'verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore',
+    researchOrchestratorId: 'crypto_orchestrator',
+    label: 'Crypto-Scoring via ScoringDispatcher; CryptoOrchestrator bleibt Research/Enrichment only.',
+    hasDedicatedEngine: true,
+  },
+  commodity: {
+    engineId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    scoreAuthorityId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    domainExecutorId: 'commodityEvidenceScoring.scoreCommodityMarketEvidence',
+    researchOrchestratorId: 'rawmaterials_orchestrator',
+    label: 'Rohstoff-Scoring via ScoringDispatcher; RawMaterialsOrchestrator bleibt Research/Evidence only.',
+    hasDedicatedEngine: true,
+  },
+  stock: {
+    engineId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    scoreAuthorityId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    domainExecutorId: 'traditionalAssetScoring.TraditionalAssetScoringService',
+    label: 'Aktien-Scoring via ScoringDispatcher und registriertem Traditional Domain Executor.',
+    hasDedicatedEngine: true,
+  },
+  forex: {
+    engineId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    scoreAuthorityId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    domainExecutorId: 'traditionalAssetScoring.TraditionalAssetScoringService',
+    label: 'Forex-Scoring via ScoringDispatcher und registriertem Traditional Domain Executor.',
+    hasDedicatedEngine: true,
+  },
+  index: {
+    engineId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    scoreAuthorityId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    domainExecutorId: 'traditionalAssetScoring.TraditionalAssetScoringService',
+    label: 'Index-Scoring via ScoringDispatcher und registriertem Traditional Domain Executor.',
+    hasDedicatedEngine: true,
+  },
+  bond: {
+    engineId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    scoreAuthorityId: SUPERVISOR_CANONICAL_SCORE_AUTHORITY_ID,
+    domainExecutorId: 'sovereignBenchmarkEvidenceScoring.scoreSovereignBenchmarkEvidence',
+    label: 'Anleihen-Scoring via ScoringDispatcher: Sovereign-Benchmark-Rendite; kein Einzelanleihen-/Credit-/Duration-Score.',
+    hasDedicatedEngine: true,
+  },
 };
 
 export function routeTask(assetClass: string): TaskRoute | undefined {
