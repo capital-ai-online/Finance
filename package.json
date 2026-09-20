@@ -70,7 +70,8 @@
     "rag:build-index": "tsx scripts/automation/buildRagIndex.ts",
     "governance:shadow-adr": "node scripts/governance/shadowAdrMetadataValidator.mjs",
     "governance:score": "node scripts/governance/weeklyGovernanceScore.mjs",
-    "documentary:impact:plan": "tsx scripts/automation/planDocumentaryChangeImpact.ts"
+    "documentary:impact:plan": "tsx scripts/automation/planDocumentaryChangeImpact.ts",
+    "documentary:autosync:plan": "tsx scripts/automation/planDocumentaryAutoSync.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
