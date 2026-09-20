@@ -57,6 +57,7 @@ concurrency:
 jobs:
   build-and-test:
     name: build-and-test
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     permissions:
       actions: read
       contents: read
