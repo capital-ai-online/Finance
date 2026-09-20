@@ -221,8 +221,8 @@ Ambiguous ownership or conflicting authority is `BLOCKED`, not auto-fixed.
 
 - **WP-06A — Detection foundation:** `DONE_MAIN` through Human-merged PR #1108.
 - **WP-06B — Event workflow:** `DONE_MAIN` through Human-merged PR #1109; exact `main` push identity, stale-run cancellation, exact `before..after` impact planning, fail-closed documentation hygiene, low-cost state classification and 7-day impact artifact retention.
-- **WP-06C — Deterministic AUTO_SYNC rules:** implemented on the current branch; explicit allowlisted rules generate SHA-256-bound patch plans and a separated `contents: write` job may materialize only those validated patches plus one work claim on an isolated `agent/documentary-autosync-*` branch. No PR, merge or deploy authority is granted.
-- **WP-06D — Semantic maintenance handoff:** pending WP-06C and existing Supervisor/Platform-Director/Agent-IAM evidence binding.
+- **WP-06C — Deterministic AUTO_SYNC rules:** `DONE_MAIN` through Human-merged PR #1110; explicit allowlisted rules generate SHA-256-bound patch plans and a separated `contents: write` job may materialize only those validated patches plus one work claim on an isolated `agent/documentary-autosync-*` branch.
+- **WP-06D — Semantic maintenance handoff:** implemented on the current branch. Validated AUTO_SYNC branches are handed to the existing `open-agent-draft-pr.yml` through a trusted-main `workflow_call`; review-only and semantic-maintenance candidate paths are carried in the work claim and rendered as PR evidence. Semantic mutation itself still requires the existing Supervisor/Platform-Director/Agent-IAM authorization chain; no missing approval evidence is synthesized.
 - **WP-06E — Closure/self-healing evidence:** pending.
 
 ## 10. Definition of Done
