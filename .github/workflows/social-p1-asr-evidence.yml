@@ -1,0 +1,434 @@
+name: SOCIAL-P1 ASR Evidence
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/social-p1-asr-evidence.yml"
+      - "scripts/operations/socialP1AsrEvidence.py"
+      - "scripts/operations/socialP1AsrCorrelation.py"
+      - "scripts/operations/socialP1AsrRematch.py"
+      - "scripts/operations/socialP1ModalRuntime.py"
+      - "scripts/operations/socialP1TtsRuntime.py"
+      - "docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: social-p1-asr-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  asr:
+    name: transcribe-8-runtime-samples
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      SOURCE_RUN_ID: "35472686350"
+      SOURCE_ARTIFACT_NAME: "social-p1-modal-runtime-9b43849bb16be69ac93f95ca1ccc14eec8fd7920-35472686350-1"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact ASR implementation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned ASR runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version >/dev/null
+          python -m pip install --disable-pip-version-check "openai-whisper==20250625"
+
+      - name: Validate German Required-Term matcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.test.py
+
+      - name: Validate ASR correlation logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrCorrelation.test.py
+
+      - name: Validate DE-Finance pronunciation projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1TtsRuntime.test.py
+
+      - name: Download immutable SOCIAL-P1 runtime artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p source-artifact
+          gh run download "$SOURCE_RUN_ID" --repo "${GITHUB_REPOSITORY}" --name "$SOURCE_ARTIFACT_NAME" --dir source-artifact
+          test "$(find source-artifact -type f -name '*.wav' | wc -l)" -eq 8
+
+      - name: Run Whisper small over all 8 WAV files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.py \
+            --artifact-dir source-artifact \
+            --manifest docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json \
+            --output-dir asr-evidence/small \
+            --model small
+
+      - name: Run Whisper large-v3 over German productive WAV files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.py \
+            --artifact-dir source-artifact \
+            --manifest docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json \
+            --output-dir asr-evidence/large-v3 \
+            --model large-v3 \
+            --productive-only
+
+      - name: Correlate small and large-v3 German evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrCorrelation.py \
+            --small asr-evidence/small/social-p1-asr-evidence.json \
+            --large asr-evidence/large-v3/social-p1-asr-evidence.json \
+            --output-dir asr-evidence/correlation
+
+      - name: Upload ASR evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-p1-asr-evidence-${{ github.sha }}
+          path: asr-evidence/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Validate historical German failure classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          small = json.loads(Path("asr-evidence/small/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          large = json.loads(Path("asr-evidence/large-v3/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          correlation = json.loads(Path("asr-evidence/correlation/social-p1-asr-correlation.json").read_text(encoding="utf-8"))
+
+          assert small["case_count"] == 8
+          assert small["productive_acceptance_case_count"] == 4
+          assert small["historical_comparison_case_count"] == 4
+          assert large["case_count"] == 4
+          assert large["productive_acceptance_case_count"] == 4
+          assert correlation["productive_case_count"] == 4
+
+          expected_failed = {
+              "qwen3-tts::de-finance-numbers-v1",
+              "chatterbox-multilingual-v3::de-finance-numbers-v1",
+          }
+          assert set(correlation["failed_productive_cases"]) == expected_failed, (
+              "historical acceptance classification drifted; only the two DE-Finance cases "
+              "may remain FAILED before remediation"
+          )
+          assert correlation["large_v3_production_required_terms_pass"] is False
+          print("Historical SOCIAL-P1 baseline: DE-Dialogue PASS; both DE-Finance cases explicitly FAILED.")
+          PY
+
+
+  finance-remediation:
+    name: resume-at-de-finance-remediation
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: read
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}-finance
+      SAMPLE_ID: de-finance-numbers-v1
+      CANDIDATE_ID: chatterbox-multilingual-v3
+      MODAL_STARTER_MONTHLY_BUDGET_USD: "30.00"
+
+    steps:
+      - name: Verify exact remediation boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Resume mode: historical 8-WAV ASR baseline is not rerun on PR synchronize."
+          echo "Only Chatterbox/de-finance-numbers-v1 is regenerated and verified."
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$SAMPLE_ID" = "de-finance-numbers-v1"
+          test "$CANDIDATE_ID" = "chatterbox-multilingual-v3"
+          test -n "$MODAL_TOKEN_ID"
+          test -n "$MODAL_TOKEN_SECRET"
+
+      - name: Checkout exact remediation source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned Modal and ASR runtimes
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          python -m pip install --disable-pip-version-check "modal==1.5.3" "openai-whisper==20250625"
+          modal token info >/dev/null
+          ffmpeg -version >/dev/null
+
+      - name: Validate matcher and correlation logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.test.py
+          python scripts/operations/socialP1AsrCorrelation.test.py
+          python scripts/operations/socialP1TtsRuntime.test.py
+
+      - name: Modal Starter billing preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p finance-billing
+          modal billing summary --for "this month" --json > finance-billing/summary.json
+          python - <<'PY'
+          import json, os
+          from decimal import Decimal
+          from pathlib import Path
+          summary = json.loads(Path("finance-billing/summary.json").read_text(encoding="utf-8"))
+          metered = Decimal(str(summary["metered_cost"]))
+          budget = Decimal(os.environ["MODAL_STARTER_MONTHLY_BUDGET_USD"])
+          remaining = budget - metered
+          print(f"Modal finance remediation: metered={metered} budget={budget} remaining={remaining}")
+          if remaining <= 0:
+              raise SystemExit("Modal Starter billing preflight blocked: no remaining budget")
+          PY
+
+      - name: Generate exactly one new Chatterbox DE-Finance WAV
+        shell: bash
+        run: |
+          set -euo pipefail
+          modal run scripts/operations/socialP1ModalRuntime.py \
+            --source-sha "$SOURCE_SHA" \
+            --run-key "$RUN_KEY" \
+            --sample-id "$SAMPLE_ID" \
+            --candidate-id "$CANDIDATE_ID"
+
+      - name: Download immutable finance remediation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p finance-runtime
+          modal volume get \
+            capital-ai-social-p1-evidence \
+            "/runs/$SOURCE_SHA/$RUN_KEY" \
+            finance-runtime
+          test "$(find finance-runtime -type f -name '*.wav' | wc -l)" -eq 1
+
+      - name: Verify finance-only TTS evidence boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          paths = [
+              p for p in Path("finance-runtime").rglob("runtime-evidence.partial.json")
+              if p.parent.name not in {"qwen3-tts", "chatterbox-multilingual-v3"}
+          ]
+          assert len(paths) == 1
+          value = json.loads(paths[0].read_text(encoding="utf-8"))
+          assert value["requested_sample_id"] == "de-finance-numbers-v1"
+          assert value["requested_candidate_id"] == "chatterbox-multilingual-v3"
+          assert value["actual_run_count"] == 1
+          assert value["complete_matrix"] is False
+          records = value["runtime_records"]
+          assert len(records) == 1
+          assert records[0]["candidate_id"] == "chatterbox-multilingual-v3"
+          assert records[0]["sample_id"] == "de-finance-numbers-v1"
+          assert records[0]["adapter_semantics"]["pronunciation_projection"] == "de_finance_pronunciation_projection_v3_chatterbox_segmented"
+          assert "Danach einzeln: E, Tee, Haa." in records[0]["adapter_semantics"]["synthesis_text"]
+          assert "Danach einzeln: Capital, A, I." in records[0]["adapter_semantics"]["synthesis_text"]
+          assert len(records[0]["adapter_semantics"]["synthesis_text_sha256"]) == 64
+          print("Finance remediation boundary: exactly 1 regenerated Chatterbox DE-Finance WAV.")
+          PY
+
+      - name: Run Whisper small over regenerated finance WAVs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.py \
+            --artifact-dir finance-runtime \
+            --manifest docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json \
+            --output-dir finance-asr/small \
+            --model small \
+            --expected-wav-count 1
+
+      - name: Run Whisper large-v3 over regenerated finance WAVs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrEvidence.py \
+            --artifact-dir finance-runtime \
+            --manifest docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json \
+            --output-dir finance-asr/large-v3 \
+            --model large-v3 \
+            --expected-wav-count 1
+
+      - name: Correlate regenerated finance ASR
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1AsrCorrelation.py \
+            --small finance-asr/small/social-p1-asr-evidence.json \
+            --large finance-asr/large-v3/social-p1-asr-evidence.json \
+            --output-dir finance-asr/correlation
+
+      - name: Upload finance remediation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-p1-de-finance-remediation-${{ env.SOURCE_SHA }}-${{ env.RUN_KEY }}
+          path: |
+            finance-billing/
+            finance-runtime/
+            finance-asr/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce regenerated DE-Finance acceptance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          small = json.loads(Path("finance-asr/small/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          large = json.loads(Path("finance-asr/large-v3/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          correlation = json.loads(Path("finance-asr/correlation/social-p1-asr-correlation.json").read_text(encoding="utf-8"))
+          assert small["case_count"] == 1
+          assert large["case_count"] == 1
+          assert small["productive_acceptance_case_count"] == 1
+          assert large["productive_acceptance_case_count"] == 1
+          assert correlation["productive_case_count"] == 1
+          assert correlation["cases"][0]["engine"] == "chatterbox-multilingual-v3"
+          assert correlation["cases"][0]["sample_id"] == "de-finance-numbers-v1"
+          assert correlation["failed_productive_cases"] == []
+          assert correlation["large_v3_production_required_terms_pass"] is True, (
+              "regenerated Chatterbox DE-Finance TTS still fails one or more Required Terms in Whisper large-v3"
+          )
+          print("Regenerated Chatterbox DE-Finance TTS: PASS in large-v3; small retained as correlated comparator.")
+          PY
+
+
+  finance-rematch-checkpoint:
+    name: rematch-existing-de-finance-evidence
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.base.ref == 'main'
+      && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CHECKPOINT_RUN_ID: "35485889860"
+      CHECKPOINT_ARTIFACT_NAME: "social-p1-de-finance-remediation-2b21ec2c7d1e85f3cefb5d3bf01aac21fe961701-35485889860-1-finance"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact matcher implementation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate Required-Term matcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/operations/socialP1AsrEvidence.test.py
+
+      - name: Download existing DE-Finance checkpoint artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p checkpoint
+          gh run download "$CHECKPOINT_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$CHECKPOINT_ARTIFACT_NAME" \
+            --dir checkpoint
+          test -f checkpoint/finance-asr/small/social-p1-asr-evidence.json
+          test -f checkpoint/finance-asr/large-v3/social-p1-asr-evidence.json
+
+      - name: Re-match existing transcripts with current matcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/operations/socialP1AsrRematch.py \
+            --input checkpoint/finance-asr/small/social-p1-asr-evidence.json \
+            --output checkpoint/rematched/small/social-p1-asr-evidence.json
+          python3 scripts/operations/socialP1AsrRematch.py \
+            --input checkpoint/finance-asr/large-v3/social-p1-asr-evidence.json \
+            --output checkpoint/rematched/large-v3/social-p1-asr-evidence.json
+
+      - name: Correlate re-matched checkpoint evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/operations/socialP1AsrCorrelation.py \
+            --small checkpoint/rematched/small/social-p1-asr-evidence.json \
+            --large checkpoint/rematched/large-v3/social-p1-asr-evidence.json \
+            --output-dir checkpoint/rematched/correlation
+
+      - name: Enforce re-matched DE-Finance acceptance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          large = json.loads(Path("checkpoint/rematched/large-v3/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          correlation = json.loads(Path("checkpoint/rematched/correlation/social-p1-asr-correlation.json").read_text(encoding="utf-8"))
+
+          assert large["case_count"] == 1
+          assert large["rematched_from_existing_transcript"] is True
+          case = large["cases"][0]
+          assert case["engine"] == "chatterbox-multilingual-v3"
+          assert case["sample_id"] == "de-finance-numbers-v1"
+          assert case["audio_sha256"] == "78b1dac9f55bb7cda41b8c57d6fafa6447fe5b9d852c8dec1ad152b2b3ef5303"
+          assert case["required_terms_pass"] is True
+          assert correlation["failed_productive_cases"] == []
+          assert correlation["large_v3_production_required_terms_pass"] is True
+          print("Checkpoint PASS: existing Chatterbox DE-Finance audio accepted after narrow BTC ASR rematch.")
+          PY
+
+      - name: Upload re-matched checkpoint evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-p1-de-finance-rematch-${{ github.sha }}
+          path: checkpoint/rematched/
+          if-no-files-found: error
+          retention-days: 14
