@@ -202,7 +202,7 @@ Inventory references, but does not silently supersede:
 - `SC-MD-SPT-0001` + ADR-0087;
 - current FINTECH Registry/Dispatcher/model/orchestration contracts;
 - ADR-0094 + current SocialMediaEngine/MediaProject contracts;
-- CAPITAL-AI-DATA / PVC-09..11;
+- CAPITAL-AI-FINTECH / PVC-09..11;
 - CAPITAL-AI-FINTECH / PVC-12..17;
 - `CAPITAL-AI-SOCIAL` cross-cutting media/publishing ownership;
 - current Governance/IAM authorities;
