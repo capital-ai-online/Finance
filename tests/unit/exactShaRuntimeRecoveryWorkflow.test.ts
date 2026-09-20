@@ -39,6 +39,8 @@ describe('SH-02.7 exact-SHA runtime recovery workflow', () => {
     expect(workflow).toContain("RECOVERY_MAX_CI_ATTEMPT: '1'");
     expect(workflow).toContain('Number(ciRun.run_attempt || 1) > maxCiAttempt');
     expect(workflow).toContain('ageMs < cooldownMs');
+    expect(workflow).toContain('CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY');
+    expect(workflow).toContain('activation remains HELD');
     expect(workflow).toContain('CAPITAL_AI_DISABLE_EXACT_SHA_RECOVERY');
     expect(workflow).toContain('Recovery circuit open');
   });
