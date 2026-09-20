@@ -8,8 +8,9 @@
 **Status:** ACTIVE / OWNER-DIRECTED / IMPLEMENTATION STARTED  
 **Initial baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`  
 **Initial slice:** merged via PR #1122  
-**Current SH-02.3 baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`  
-**Current branch:** `agent/operations-self-healing-contract-20260920`  
+**SH-02.3 merge:** PR #1125 → `70c33dc0f283584275798b2e186e3771b2bfccf8`  
+**Current SH-02.4 baseline:** `main@7c087994f8569028b05102dd426323f7a571ddad`  
+**Current branch:** `agent/operations-sh02-4-dependency-resilience-recovery-20260920`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -25,8 +26,8 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.0 | Authority/supersession + architecture baseline | OPS / PVC-08 | current main | stale owner-gating projections reconciled to current trust root; no weakened gate | IMPLEMENTED_ON_MAIN |
 | SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_ON_MAIN |
 | SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_ON_MAIN |
-| SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
-| SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | QUEUED |
+| SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1125 |
+| SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_BRANCH / VALIDATION_PENDING / ACTIVATION_HELD |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | QUEUED |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | QUEUED |
 | SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | QUEUED |
@@ -154,6 +155,30 @@ For each dependency:
 - normalize retry/backoff/jitter/circuit evidence;
 - preserve domain freshness/provenance rules;
 - prohibit heuristic business-data fabrication as "recovery".
+
+### SH-02.4 branch implementation
+
+- `RETRY_SAFE_OPERATION` remains `HELD` in `self-healing-contract/1.0.0`; SH-02.4 implements and verifies the boundary without performing the staged SH-1 production activation reserved for SH-02.11.
+- `src/platform/Supervisor/dependencyResilience.ts` is the bounded executor/projection contract. Raw `SIDE_EFFECTING` and `PROTECTED` operations fail closed before execution; provider-native owners are never wrapped in another retry loop.
+- `executeSupervised()` now defaults unclassified work to `SIDE_EFFECTING` and suppresses automatic retries unless the caller explicitly declares `READ_ONLY` or `IDEMPOTENT`; safe retries use bounded exponential backoff plus jitter.
+- The contract-bound generic dependency executor carries the existing budget (timeout, max attempts, cooldown, kill switch and mandatory post-action verification) but returns fail-closed `ACTION_HELD` until staged activation.
+- Dependencies that already own retry/circuit/LKG behavior are classified `DEPENDENCY_NATIVE` and receive no second outer retry loop. Their health state is projected into the canonical finding taxonomy only.
+- Provider circuit-open, authentication, schema/configuration and persistent-failure states are normalized to `PROVIDER_CIRCUIT_OPEN`, `SECURITY_OR_POLICY_BLOCKED` or `DEPENDENCY_PERSISTENT`; these states are observed/escalated rather than blindly retried.
+- Existing MarketDataGateway, CoinGecko and DeFiLlama retry/circuit/rate-limit/LKG semantics remain owner-correct and are not duplicated.
+- Supervisor status exposes the SH-02.4 contract and provider-native resilience projection. Runtime `capabilities.selfHealing` remains `false`; SH-1 generic retry and all SH-2/SH-3 actions stay held until their staged activation gates.
+
+### Continuous Self-Healing package continuation
+
+Fresh Owner direction on 2026-09-20 establishes this continuation rule for the currently active `OPS-08-B-SH-02` work package:
+
+1. after a Self-Healing PR is Human/CODEOWNER-merged, the exact merge/current-main state and Production identity must first satisfy the canonical post-merge correlation gate;
+2. after that PASS, the next lowest-numbered `QUEUED` SH-02 slice whose explicit SH dependencies are terminal on main becomes the continuation candidate immediately; no additional per-slice Owner prompt is required while it remains inside this already active Owner-directed package;
+3. every continuation still starts from freshly read `CURRENT_MAIN`, uses a fresh exclusive claim and branch, re-resolves writers/owners/security constraints, validates truthfully and delivers a new PR;
+4. `HELD` slices, unresolved textual prerequisites (for example provenance/recovery evidence), foreign-owner implementation, protected external capability expansion, Security/Compliance/QM acceptance, or ambiguous dependency state stop automatic continuation fail-closed;
+5. `.github/workflows/self-healing-package-continuation.yml` records the post-merge handoff as a deduplicated issue. That issue is a non-authorizing orchestration/evidence surface; it does not create a second task registry and does not implement code by itself;
+6. final merge remains Human/CODEOWNER-only under `/AGENTS.md@CURRENT_MAIN`. The continuation workflow must not enable auto-merge, merge a PR, weaken checks or bypass protection.
+
+This rule advances the package without idle owner prompts while preserving the repository's current merge-authority boundary.
 
 ## SH-02.5 — Worker/job recovery
 
