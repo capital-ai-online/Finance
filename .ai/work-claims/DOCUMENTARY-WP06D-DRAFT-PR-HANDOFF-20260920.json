@@ -17,7 +17,7 @@
   "projectStage": "PVC-03",
   "startedAt": "2026-09-20T11:44:00Z",
   "baseBranch": "main",
-  "baseSha": "6889a7c5f7f5ac0176ea500b251ada795cf628e4",
+  "baseSha": "e99919bffd7d2e02cf5d871dd64a24c6c1d8bce2",
   "branch": "agent/documentary-wp06d-draft-pr-handoff-current-main-20260920",
   "claimedPaths": [
     ".ai/work-claims/DOCUMENTARY-WP06D-DRAFT-PR-HANDOFF-20260920.json",
