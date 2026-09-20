@@ -28,6 +28,7 @@ const PROTECTED_FAILURE = [
 ];
 
 const TEMPLATE_DELEGATION_PATTERNS = [
+  /verwendet keinen unterstützten PR-Vorlagenmarker/i,
   /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i,
   /fehlt mindestens eine maschinenlesbare Governance-ID:/i,
   /enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline/i,
@@ -37,7 +38,6 @@ const TEMPLATE_DELEGATION_PATTERNS = [
 ];
 
 const TEMPLATE_UNSUPPORTED_PATTERNS = [
-  /verwendet keinen unterstützten PR-Vorlagenmarker/i,
   /enthält keine gültige Prioritätsbewertung/i,
   /enthält keinen gültigen Versionsimpact/i,
   /enthält keinen Version-Manager-Check-Status/i,
