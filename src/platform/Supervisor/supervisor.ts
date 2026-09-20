@@ -6,7 +6,17 @@
 import { eventMeshBus } from '../EventMesh/Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from '../EventMesh/Services/EventMeshService';
 import { getProviderHealth, type ProviderHealthRecord } from './providerHealth';
-import { getSelfHealingContractSnapshot, type SelfHealingContractSnapshot } from './selfHealingContract';
+import {
+  getSelfHealingContractSnapshot,
+  type IdempotencyClass,
+  type SelfHealingContractSnapshot,
+} from './selfHealingContract';
+import {
+  getDependencyResilienceSnapshot,
+  projectProviderResilience,
+  type DependencyResilienceSnapshot,
+  type ProviderResilienceProjection,
+} from './dependencyResilience';
 import { evaluateWritePolicy } from '../Compliance/PolicyGate';
 import { consumeApproval } from '../Security/approvals';
 import type { Capability } from '../Security/capabilities';
@@ -55,6 +65,9 @@ export interface SupervisedExecutionRecord {
   succeeded: boolean;
   durationMs: number;
   timestamp: string;
+  idempotencyClass: IdempotencyClass;
+  requestedRetries: number;
+  retrySuppressed: boolean;
   error?: string;
 }
 
@@ -77,6 +90,16 @@ function sleep(ms: number): Promise<void> {
 export interface SupervisionOptions {
   retries?: number;
   backoffMs?: number;
+  jitterMs?: number;
+  idempotencyClass?: IdempotencyClass;
+  sleep?: (ms: number) => Promise<void>;
+  random?: () => number;
+}
+
+function boundedRandom(random: () => number): number {
+  const value = random();
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(0.999999, Math.max(0, value));
 }
 
 export async function executeSupervised<T>(
@@ -84,8 +107,14 @@ export async function executeSupervised<T>(
   fn: () => Promise<T>,
   options: SupervisionOptions = {}
 ): Promise<T> {
-  const retries = options.retries ?? 2;
-  const backoffMs = options.backoffMs ?? 500;
+  const requestedRetries = Math.max(0, Math.floor(options.retries ?? 2));
+  const idempotencyClass = options.idempotencyClass ?? 'SIDE_EFFECTING';
+  const retrySafe = idempotencyClass === 'READ_ONLY' || idempotencyClass === 'IDEMPOTENT';
+  const retries = retrySafe ? requestedRetries : 0;
+  const backoffMs = Math.max(0, Math.floor(options.backoffMs ?? 500));
+  const jitterMs = Math.max(0, Math.floor(options.jitterMs ?? Math.min(backoffMs, 250)));
+  const sleepFn = options.sleep ?? sleep;
+  const random = options.random ?? Math.random;
   const start = Date.now();
   let lastError: unknown;
 
@@ -98,11 +127,18 @@ export async function executeSupervised<T>(
         succeeded: true,
         durationMs: Date.now() - start,
         timestamp: new Date().toISOString(),
+        idempotencyClass,
+        requestedRetries,
+        retrySuppressed: requestedRetries > 0 && !retrySafe,
       });
       return result;
     } catch (err) {
       lastError = err;
-      if (attempt <= retries) await sleep(backoffMs * Math.pow(2, attempt - 1));
+      if (attempt <= retries) {
+        const exponential = backoffMs * Math.pow(2, attempt - 1);
+        const jitter = Math.floor(boundedRandom(random) * jitterMs);
+        await sleepFn(exponential + jitter);
+      }
     }
   }
 
@@ -113,6 +149,9 @@ export async function executeSupervised<T>(
     succeeded: false,
     durationMs: Date.now() - start,
     timestamp: new Date().toISOString(),
+    idempotencyClass,
+    requestedRetries,
+    retrySuppressed: requestedRetries > 0 && !retrySafe,
     error: errorMessage,
   });
 
@@ -274,6 +313,9 @@ export interface SupervisorStatus {
   findings: SupervisorFinding[];
   /** Pure remediation contract projection; it does not itself execute a recovery action. */
   selfHealingContract: SelfHealingContractSnapshot;
+  /** SH-02.4 dependency-resilience projection; provider-native retry remains owner-correct. */
+  dependencyResilience: DependencyResilienceSnapshot;
+  providerResilience: ProviderResilienceProjection[];
   capabilities: {
     taskRouting: boolean;
     toolSelection: boolean;
@@ -308,11 +350,14 @@ export function getSupervisorStatus(): SupervisorStatus {
   const agentProviderChain = observeAgentProviderChain();
   const findings = buildFindingsFromExecutions(recentExecutions, agentProviderChain);
   const selfHealingContract = getSelfHealingContractSnapshot();
+  const dependencyResilience = getDependencyResilienceSnapshot();
+  const providerHealth = getProviderHealth();
+  const providerResilience = providerHealth.map(record => projectProviderResilience(record));
 
   return {
     routingTable: getRoutingTable(),
     recentExecutions,
-    providerHealth: getProviderHealth(),
+    providerHealth,
     marketDataRouting: {
       registeredProviders: marketProviders.length,
       activeProviders: marketProviders.filter(provider => provider.activation === 'active').length,
@@ -336,6 +381,8 @@ export function getSupervisorStatus(): SupervisorStatus {
     agentProviderChain,
     findings,
     selfHealingContract,
+    dependencyResilience,
+    providerResilience,
     capabilities: {
       taskRouting: true,
       toolSelection: true,
@@ -366,7 +413,8 @@ export function getSupervisorStatus(): SupervisorStatus {
       'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
       'agentProviderChain: canonical providers ChatGPT, Claude, Grok (Owner 2026-08-16). Google AI Studio / NotebookLM / Gemini = RETIRED.',
       'findings: observation-only; Supervisor entscheidet niemals (ESS-0002).',
-      `selfHealingContract: ${selfHealingContract.valid ? 'VALID' : 'INVALID'}; enabled=${selfHealingContract.enabledActionIds.join(',') || 'none'}; held=${selfHealingContract.heldActionIds.join(',') || 'none'}. Runtime selfHealing bleibt false, bis konkrete Remediation-Executors in SH-02.4+ an diesen Vertrag gebunden und verifiziert sind.`,
+      `selfHealingContract: ${selfHealingContract.valid ? 'VALID' : 'INVALID'}; enabled=${selfHealingContract.enabledActionIds.join(',') || 'none'}; held=${selfHealingContract.heldActionIds.join(',') || 'none'}.`,
+      `dependencyResilience: ${dependencyResilience.valid ? 'VALID' : 'INVALID'}; genericSafeRetry=${dependencyResilience.genericSafeRetryActivation}; provider-native retry/circuit/LKG remains owner-correct and is projected without nested retries. Runtime selfHealing remains false until staged activation in SH-02.11.`,
       ...agentProviderChain.notes,
     ],
   };
