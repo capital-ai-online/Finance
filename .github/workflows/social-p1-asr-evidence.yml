@@ -7,6 +7,7 @@ on:
       - ".github/workflows/social-p1-asr-evidence.yml"
       - "scripts/operations/socialP1AsrEvidence.py"
       - "scripts/operations/socialP1AsrCorrelation.py"
+      - "scripts/operations/socialP1AsrRematch.py"
       - "scripts/operations/socialP1ModalRuntime.py"
       - "scripts/operations/socialP1TtsRuntime.py"
       - "docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_TTS_SAMPLE_MANIFEST_2026-09-11.json"
@@ -149,12 +150,7 @@ jobs:
 
   finance-remediation:
     name: resume-at-de-finance-remediation
-    if: >-
-      github.event_name == 'workflow_dispatch'
-      || (github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository
-          && github.event.pull_request.base.ref == 'main'
-          && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-'))
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
@@ -345,3 +341,94 @@ jobs:
           )
           print("Regenerated Chatterbox DE-Finance TTS: PASS in large-v3; small retained as correlated comparator.")
           PY
+
+
+  finance-rematch-checkpoint:
+    name: rematch-existing-de-finance-evidence
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.base.ref == 'main'
+      && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CHECKPOINT_RUN_ID: "35485889860"
+      CHECKPOINT_ARTIFACT_NAME: "social-p1-de-finance-remediation-2b21ec2c7d1e85f3cefb5d3bf01aac21fe961701-35485889860-1-finance"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact matcher implementation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate Required-Term matcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/operations/socialP1AsrEvidence.test.py
+
+      - name: Download existing DE-Finance checkpoint artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p checkpoint
+          gh run download "$CHECKPOINT_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$CHECKPOINT_ARTIFACT_NAME" \
+            --dir checkpoint
+          test -f checkpoint/finance-asr/small/social-p1-asr-evidence.json
+          test -f checkpoint/finance-asr/large-v3/social-p1-asr-evidence.json
+
+      - name: Re-match existing transcripts with current matcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/operations/socialP1AsrRematch.py \
+            --input checkpoint/finance-asr/small/social-p1-asr-evidence.json \
+            --output checkpoint/rematched/small/social-p1-asr-evidence.json
+          python3 scripts/operations/socialP1AsrRematch.py \
+            --input checkpoint/finance-asr/large-v3/social-p1-asr-evidence.json \
+            --output checkpoint/rematched/large-v3/social-p1-asr-evidence.json
+
+      - name: Correlate re-matched checkpoint evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/operations/socialP1AsrCorrelation.py \
+            --small checkpoint/rematched/small/social-p1-asr-evidence.json \
+            --large checkpoint/rematched/large-v3/social-p1-asr-evidence.json \
+            --output-dir checkpoint/rematched/correlation
+
+      - name: Enforce re-matched DE-Finance acceptance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          large = json.loads(Path("checkpoint/rematched/large-v3/social-p1-asr-evidence.json").read_text(encoding="utf-8"))
+          correlation = json.loads(Path("checkpoint/rematched/correlation/social-p1-asr-correlation.json").read_text(encoding="utf-8"))
+
+          assert large["case_count"] == 1
+          assert large["rematched_from_existing_transcript"] is True
+          case = large["cases"][0]
+          assert case["engine"] == "chatterbox-multilingual-v3"
+          assert case["sample_id"] == "de-finance-numbers-v1"
+          assert case["audio_sha256"] == "78b1dac9f55bb7cda41b8c57d6fafa6447fe5b9d852c8dec1ad152b2b3ef5303"
+          assert case["required_terms_pass"] is True
+          assert correlation["failed_productive_cases"] == []
+          assert correlation["large_v3_production_required_terms_pass"] is True
+          print("Checkpoint PASS: existing Chatterbox DE-Finance audio accepted after narrow BTC ASR rematch.")
+          PY
+
+      - name: Upload re-matched checkpoint evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-p1-de-finance-rematch-${{ github.sha }}
+          path: checkpoint/rematched/
+          if-no-files-found: error
+          retention-days: 14
