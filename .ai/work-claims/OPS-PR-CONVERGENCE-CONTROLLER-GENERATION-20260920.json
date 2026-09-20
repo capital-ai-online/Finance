@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR-CONVERGENCE-CONTROLLER-GENERATION-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Evolve the existing PR Autofix Controller toward the canonical PR Convergence Controller, starting with immutable PR generation identity and fail-closed generation revalidation.",
+  "workItemDE": "Den bestehenden PR Autofix Controller zum kanonischen PR Convergence Controller weiterentwickeln; erster atomarer Slice ist unveränderliche PR-Generation-Identität plus fail-closed Revalidierung.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "parentContract": "SH-02.3",
+  "parentContractVersion": "self-healing-contract/1.0.0",
+  "startedAt": "2026-09-20T13:20:00Z",
+  "baseBranch": "main",
+  "baseSha": "7c087994f8569028b05102dd426323f7a571ddad",
+  "branch": "agent/operations-pr-convergence-generation-main-sync-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR-CONVERGENCE-CONTROLLER-GENERATION-20260920.json",
+    ".github/workflows/pr-autofix-controller.yml",
+    "docs/projects/operations/work-packages/OPS_PR_CONVERGENCE_CONTROLLER_2026-09-20.md",
+    "scripts/pr/prAutofixControllerWorkflow.test.mjs",
+    "scripts/pr/prConvergenceGeneration.mjs",
+    "scripts/pr/prConvergenceGeneration.test.mjs"
+  ],
+  "correlation": {
+    "currentMain": "7c087994f8569028b05102dd426323f7a571ddad",
+    "openPullRequestsChecked": [],
+    "changedFileOverlap": false,
+    "authorityOverlap": "SH-02.3 consumed; no second self-healing registry created"
+  },
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+}
