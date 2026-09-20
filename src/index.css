@@ -24,6 +24,13 @@
   --color-decorative-cyan: #0DDDDD;
   --color-decorative-purple: #B026FF;
 
+  /* Owner-directed roadmap palette. Presentation roles only; semantic PASS/FAIL colors stay separate. */
+  --color-roadmap-foundation: #F5C453;
+  --color-roadmap-automation: #44DE88;
+  --color-roadmap-runtime: #22D3EE;
+  --color-roadmap-product-market: #8D26FF;
+  --color-roadmap-scaling: #E879F9;
+
   /* Productive Universe semantic roles are intentionally preserved. */
   --color-asset-crypto: #8D26FF;
   --color-asset-stock: #44DE88;

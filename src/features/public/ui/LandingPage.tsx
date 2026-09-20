@@ -319,37 +319,13 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
               </div>
             </div>
 
-            <div className="relative flex min-h-[390px] items-center justify-center overflow-hidden px-4 pb-7 lg:min-h-full lg:px-8 lg:pb-0">
-              <div className="relative aspect-square w-full max-w-[500px]">
-                <div className="absolute inset-[4%] rounded-full border border-brand-primary/30 shadow-[0_0_60px_color-mix(in_srgb,var(--color-brand-primary)_18%,transparent)]" />
-                <div className="absolute inset-[12%] rounded-full border border-brand-primary/20" />
-                <div className="absolute inset-[20%] rounded-full border border-decorative-cyan/20" />
-                <div className="absolute inset-[27%] rounded-full bg-background/60 shadow-[inset_0_0_80px_color-mix(in_srgb,var(--color-brand-primary)_15%,transparent)] backdrop-blur-sm" />
-                <Globe2
-                  aria-hidden="true"
-                  strokeWidth={0.8}
-                  className="absolute inset-[18%] h-[64%] w-[64%] text-brand-primary drop-shadow-[0_0_24px_color-mix(in_srgb,var(--color-brand-primary)_55%,transparent)]"
-                />
-                <span className="absolute left-[10%] top-[28%] h-3 w-3 rounded-full border border-brand-primary bg-background shadow-[0_0_18px_var(--color-brand-primary)]" />
-                <span className="absolute right-[12%] top-[23%] h-2.5 w-2.5 rounded-full bg-decorative-cyan shadow-[0_0_16px_var(--color-decorative-cyan)]" />
-                <span className="absolute bottom-[22%] right-[16%] h-3 w-3 rounded-full bg-brand-primary shadow-[0_0_18px_var(--color-brand-primary)]" />
-                <span className="absolute bottom-[18%] left-[20%] h-2.5 w-2.5 rounded-full bg-brand-accent shadow-[0_0_16px_var(--color-brand-accent)]" />
-
-                <div className="absolute left-0 top-[16%] rounded-xl border border-border bg-background/80 px-3 py-2 backdrop-blur-md">
-                  <p className="font-mono text-[9px] uppercase tracking-wider text-text-secondary">Nordamerika</p>
-                  <p className="mt-1 text-[10px] font-black text-brand-primary">Globale Perspektive</p>
-                </div>
-                <div className="absolute right-0 top-[31%] rounded-xl border border-border bg-background/80 px-3 py-2 backdrop-blur-md">
-                  <p className="font-mono text-[9px] uppercase tracking-wider text-text-secondary">Europa</p>
-                  <p className="mt-1 text-[10px] font-black text-decorative-cyan">Marktkontext</p>
-                </div>
-                <div className="absolute bottom-[11%] right-[7%] rounded-xl border border-border bg-background/80 px-3 py-2 backdrop-blur-md">
-                  <p className="font-mono text-[9px] uppercase tracking-wider text-text-secondary">Asien</p>
-                  <p className="mt-1 text-[10px] font-black text-brand-accent">Multi-Asset</p>
-                </div>
-              </div>
-
-              <p className="absolute bottom-5 right-5 max-w-44 text-right font-mono text-[9px] font-black uppercase tracking-[0.28em] text-text-secondary/70 lg:bottom-8 lg:right-8">
+            <div className="relative flex min-h-[390px] items-center justify-center overflow-hidden px-4 pb-7 lg:min-h-full lg:px-0 lg:pb-0">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[url('/brand/hero/capital-ai-earth-hero.svg')] bg-cover bg-[72%_center] bg-no-repeat opacity-95 sm:bg-[68%_center] lg:bg-center"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--color-background)_0%,color-mix(in_srgb,var(--color-background)_58%,transparent)_28%,transparent_68%),radial-gradient(circle_at_72%_48%,transparent_0%,color-mix(in_srgb,var(--color-background)_12%,transparent)_62%,var(--color-background)_100%)]" />
+              <p className="absolute bottom-5 right-5 max-w-52 text-right font-mono text-[9px] font-black uppercase tracking-[0.28em] text-text-secondary/80 lg:bottom-8 lg:right-8">
                 Globale Intelligenz. Eine bessere Zukunft.
               </p>
             </div>
