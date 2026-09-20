@@ -23,6 +23,8 @@ export const FINDING_CLASSES = [
   'DATA_RECOVERY_REQUIRED',
   'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
   'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+  'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+  'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
   'SECURITY_OR_POLICY_BLOCKED',
 ] as const;
 
@@ -38,6 +40,7 @@ export type RemediationActionId =
   | 'RETRY_SAFE_OPERATION'
   | 'QUARANTINE_WORK_ITEM'
   | 'RECONCILE_REPOSITORY_PROJECTION'
+  | 'RECONCILE_PR_DECISION_EVIDENCE'
   | 'RUNTIME_PROCESS_RECYCLE'
   | 'REDEPLOY_EXACT_SHA'
   | 'PROTECTED_ROLLBACK_RESTORE';
@@ -135,6 +138,19 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     exhaustionState: 'ESCALATED',
     description: 'Delegate an exact allowlisted repository projection or deterministic expectation repair to the existing PR autofix specialists, then require exact-head CI/Governance readback.',
   },
+  RECONCILE_PR_DECISION_EVIDENCE: {
+    id: 'RECONCILE_PR_DECISION_EVIDENCE',
+    tier: 'SH-1',
+    activation: 'ENABLED',
+    idempotencyClass: 'IDEMPOTENT',
+    blastRadius: 'WORK_ITEM',
+    requiredCapability: 'repository.pr.decision-evidence-reconciler',
+    killSwitch: 'self-healing.pr-decision-evidence-reconciler',
+    verificationProbe: 'exact-pr-decision-evidence-readback',
+    budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
+    exhaustionState: 'ESCALATED',
+    description: 'Delegate canonical v1.7 Decision/Evidence projection drift to the existing PR Decision Evidence Reconciler; no second PR-body writer is created.',
+  },
   RUNTIME_PROCESS_RECYCLE: {
     id: 'RUNTIME_PROCESS_RECYCLE',
     tier: 'SH-2',
@@ -198,6 +214,16 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
     'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
     'RECONCILE_REPOSITORY_PROJECTION',
     ['RECONCILE_REPOSITORY_PROJECTION', 'OBSERVE_ONLY'],
+  ),
+  REPOSITORY_PR_DECISION_EVIDENCE_DRIFT: policy(
+    'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+    'RECONCILE_PR_DECISION_EVIDENCE',
+    ['RECONCILE_PR_DECISION_EVIDENCE', 'OBSERVE_ONLY'],
+  ),
+  PROTECTED_GITHUB_ACTIONS_COST_BLOCKER: policy(
+    'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
+    'OBSERVE_ONLY',
+    ['OBSERVE_ONLY'],
   ),
   SECURITY_OR_POLICY_BLOCKED: policy('SECURITY_OR_POLICY_BLOCKED', 'OBSERVE_ONLY', ['OBSERVE_ONLY']),
 };
