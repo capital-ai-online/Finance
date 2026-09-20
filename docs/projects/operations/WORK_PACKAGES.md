@@ -2,9 +2,9 @@
 
 **Project:** `CAPITAL-AI-OPS`  
 **Status:** ACTIVE BACKLOG / NON-AUTHORIZING  
-**Correlation baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
-**Correlation date:** `2026-09-16`  
-**Open PR baseline:** none at post-PR #996 / post-PR #1001 current-main sync
+**Correlation baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`  
+**Correlation date:** `2026-09-20`  
+**Open PR baseline:** #1125 Self-Healing contract writer; #1126 Governance Autofix has no changed-file overlap
 
 ## Current terminal repository packages
 
@@ -107,21 +107,19 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 | P1 | `OPS-08-A` Production Handoff & Recovery | `PVC-08` | OPEN / PARTIAL |
 | P1 | `OPS-18-A` EventMesh/Traceability Coverage | `PVC-18` | OPEN / PARTIAL; Post-#851 trace-correlation slice implemented |
 | P2 | `OPS-02-CI-01` Build/Test Cost & Scope Reduction | `PVC-02` | `IMPLEMENTED_ON_MAIN / COST_PROFILE_AND_STALE_EVENT_GUARD_MERGED` via PR #988 + PR #996; hosted cost/race evidence remains open and real-evidence-only |
-| P2 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / PARTIAL; any historical Self-Healing branch requires fresh current-main correlation before continuation |
+| P0 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / SH-02; current Self-Healing execution resolves only through `CAPITAL-AI-ASH-01` + `self-healing-contract/1.0.0` |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | OPEN / PARTIAL |
 
-## `OPS-08-B-SH-01` — Self-Healing Readiness Foundation — SUPERSEDED PROJECTION
+## Historical Self-Healing predecessor
 
-**Historical branch reference:** `agent/operations-self-healing-readiness-20260910`  
-**Disposition:** HISTORICAL / NON-ACTIVE / SUPERSEDED_BY_SH_02
-
-The historical package remains evidence only. Its blanket projection that productive autonomous recovery or `SH-R2` actions require a separate per-run Human/Owner approval is superseded where it conflicts with `/AGENTS.md@CURRENT_MAIN`. The historical branch is not resumed and is not an integration base.
+`OPS-08-B-SH-01` and its legacy execution rules have been removed from the active project surface and archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md`. The archive is evidence-only and cannot be resumed or used as an integration/authorization source.
 
 ## `OPS-08-B-SH-02` — Autonomous Self-Healing Backend & Frontend
 
-**Current branch:** `agent/operations-autonomous-self-healing-platform-20260920`  
+**Current branch:** `agent/operations-self-healing-contract-20260920`  
+**Current PR:** `#1125` / SH-02.3  
 **Primary PVC:** `PVC-08`; supporting `PVC-02`, `PVC-04`, `PVC-07`, `PVC-18`  
-**Status:** OWNER-DIRECTED / ACTIVE / IMPLEMENTATION STARTED
+**Status:** OWNER-DIRECTED / ACTIVE / SH-02.3 IMPLEMENTED_BRANCH / VALIDATION_PENDING
 
 Fresh Owner direction selects one bounded self-healing platform from current main. The package reuses Supervisor, process lifecycle/health, Telemetry/logger, EventMesh, Recovery Evidence Harness, Frontend architecture and the existing exact-SHA GitHub→Render promotion path.
 
@@ -132,6 +130,12 @@ Current implementation starts with:
 - no new provider credentials, merge authority or parallel control plane.
 
 Detailed work graph: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
+
+Current correlation evidence:
+- `CURRENT_MAIN=ae813ac19d7d0496d787682b284f0270c0b52c4f`;
+- PR #1125 is the sole Self-Healing contract writer and is 3 commits ahead / 0 behind that main snapshot at correlation time;
+- PR #1126 has no changed-file overlap with the Self-Healing contract scope;
+- predecessor SH-01 rules and the narrow 2026-09-20 supersession projection are archived/non-authorizing.
 
 ## DR-03 — Provider Adapter / Execution Integration
 
@@ -178,7 +182,7 @@ PR #872 demonstrates that separation: Security executed the bounded implementati
 9. External edge identity remains untrusted until the edge-proof contract succeeds.
 10. External credential capability observed by successful reads does not prove absence of unobserved provider scopes.
 11. Productive M10 remains retired/off and is not reconstructed as a current package.
-12. Self-Healing readiness cannot convert SH-R2 protected actions into automatic remediation.
+12. Self-Healing execution resolves only through `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0` under `/AGENTS.md@CURRENT_MAIN` and applicable Security/Compliance/QM/domain controls; legacy `SH-R*` rules are archived and non-executable.
 13. GitHub Work Management remains coordination/navigation only; Issue/Project/Milestone/Wiki metadata cannot become a parallel Roadmap, version, Governance, Security, Release, Deployment, PR or merge authority.
 
 ## Current terminal references
@@ -216,7 +220,7 @@ PR #872 demonstrates that separation: Security executed the bounded implementati
 | PR #1001 branch work-package / post-merge continuation | merged as current-main Authority update; `/AGENTS.md` re-read before this sync |
 | GitGuardian Health #34468840264 | terminal success on exact post-#863 main; required monitoring PASS; denied/unsupported categories remain NOT-RUN |
 
-## Current writer correlation — 2026-09-16
+## Historical writer correlation — 2026-09-16 — NON-ACTIVE EVIDENCE
 
 - current main: `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`;
 - PR #996 is terminal/Human-merged and its OPS-02-CI-01 payload is consumed as main state;
@@ -225,7 +229,7 @@ PR #872 demonstrates that separation: Security executed the bounded implementati
 - historical OPS status/integrity branches are search input only and are not used as successor bases;
 - no provider write, credential mutation, connector mutation, OAuth/permission change, Vault/secret mutation or Production mutation occurs in this status sync.
 
-## Exit gate for current post-PR #996 sync
+## Historical exit gate for post-PR #996 sync — NON-ACTIVE EVIDENCE
 
 - this projection is bound to current main `96e305aa076e5c8e2eb49ee4051770f756ef2fbc`;
 - PR #996 is represented as merged/current-main work, not active-branch work;
