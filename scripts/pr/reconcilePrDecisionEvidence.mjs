@@ -12,8 +12,10 @@ import {
   extractDecisionGates,
   extractDecisionStatus,
   formatDecisionGateState,
+  nextVerifiableDecisionStep,
   summarizeDecisionBlockers,
   summarizeDecisionEvidence,
+  summarizeLiveDecisionSync,
 } from './prDecisionState.mjs';
 import {
   AUTO_MERGE_ELIGIBLE,
@@ -249,6 +251,40 @@ function ensureDecisionStatusLine(bodyText, decisionStatus) {
     body.slice(headingEnd);
 }
 
+function upsertLiveDashboard(bodyText, gates, decisionStatus) {
+  const body = String(bodyText || '');
+  const decisionHeading = '## 1. 🧭 Entscheidung';
+  const evidenceHeading = '## 2. ✅ Evidence';
+  const decisionStart = body.indexOf(decisionHeading);
+  const evidenceStart = body.indexOf(evidenceHeading, decisionStart + decisionHeading.length);
+  if (decisionStart < 0 || evidenceStart < 0) return null;
+
+  const marker = '### 📡 Live Dashboard';
+  const markerCount = body.split(marker).length - 1;
+  if (markerCount > 1) return null;
+
+  const dashboard = [
+    marker,
+    '',
+    '| Live-Signal | Zustand |',
+    '|---|---|',
+    '| Status | ' + decisionStatus + ' |',
+    '| Synchronität | ' + compactCell(summarizeLiveDecisionSync(gates)) + ' |',
+    '| Nächster Schritt | ' + compactCell(nextVerifiableDecisionStep(gates)) + ' |',
+  ].join('\n');
+
+  if (markerCount === 0) {
+    const insertion = decisionStart + decisionHeading.length;
+    return body.slice(0, insertion) + '\n\n' + dashboard + body.slice(insertion);
+  }
+
+  const section = body.slice(decisionStart, evidenceStart);
+  const pattern = /### 📡 Live Dashboard\s*\n\s*\| Live-Signal \| Zustand \|\s*\n\|---\|---\|\s*\n\| Status \|[^\n]*\|\s*\n\| Synchronität \|[^\n]*\|\s*\n\| Nächster Schritt \|[^\n]*\|/m;
+  if (!pattern.test(section)) return null;
+  const updatedSection = section.replace(pattern, dashboard);
+  return body.slice(0, decisionStart) + updatedSection + body.slice(evidenceStart);
+}
+
 function upsertDecisionSummaryRow(bodyText, label, value) {
   const body = String(bodyText || '');
   const replaced = replaceRow(body, label, value);
@@ -286,6 +322,11 @@ export function reconcileDecisionBody(bodyText, gates) {
   let body = ensureDecisionStatusLine(original, decisionStatus);
   if (body == null) {
     return { eligible: false, changed: false, reason: 'decision-status-boundary-ambiguous', body: original };
+  }
+
+  body = upsertLiveDashboard(body, gates, decisionStatus);
+  if (body == null) {
+    return { eligible: false, changed: false, reason: 'live-dashboard-boundary-ambiguous', body: original };
   }
 
   body = replaceCanonicalEvidenceTable(body, gates);
