@@ -281,6 +281,13 @@ jobs:
           docker run --rm --entrypoint sh "$image" -c '
             set -eu
             test "$(id -u)" != "0"
+            for path in /app/node_modules /app/dist /app/server /app/package.json /app/package-lock.json; do
+              test "$(stat -c "%U:%G" "$path")" = "root:root"
+              test ! -w "$path"
+            done
+            test -z "$(find /app/node_modules /app/dist /app/server \( -type f -o -type d \) -perm -0002 -print -quit)"
+            test -w /app/uploads
+            test -w /tmp/capitalai
             test ! -e /app/dist/server.cjs.map
             test ! -e /app/node_modules/esbuild
             test ! -e /app/node_modules/@esbuild

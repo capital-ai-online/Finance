@@ -89,11 +89,12 @@ ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
     HOME=/tmp/capitalai \
     TMPDIR=/tmp/capitalai
 
-# Deny writes to all application/dependency artifacts; only uploads and the dedicated
-# temp/home directory are writable. The backend source map was already removed in builder.
+# COPY --chown=root:root above already gives the immutable application/dependency trees
+# their final ownership. Avoid recursive chown/chmod here: on OverlayFS those metadata rewrites
+# copy up the complete node_modules tree and can consume most of the five-minute deploy-trigger SLA.
+# Runtime container checks verify that the unprivileged capitalai user still cannot write these
+# roots. Only uploads and the dedicated temp/home directory remain writable.
 RUN mkdir -p /app/uploads /app/docs /tmp/capitalai \
-  && chown -R root:root /app/node_modules /app/package*.json /app/dist /app/server /app/docs \
-  && chmod -R a-w /app/node_modules /app/dist /app/server \
   && chmod a-w /app/package*.json \
   && chmod 0555 /app/docs \
   && chown capitalai:capitalai /app/uploads /tmp/capitalai \
