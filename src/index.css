@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@700;800&family=Poppins:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 /* Pattern direction x strength classes are assembled from verified state at runtime.
@@ -67,7 +67,7 @@
   --color-aif-neon-cyan: #0DDDDD;
   --color-aif-neon-purple: #B026FF;
 
-  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
