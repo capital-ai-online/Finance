@@ -10,7 +10,9 @@ run-name: >-
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI, PR Governance]
-    types: [completed]
+    # GitHub does not emit the requested activity for re-runs. Keep completed as the
+    # primary completion path and materialize an in_progress fallback only for run_attempt > 1.
+    types: [in_progress, completed]
 
 permissions: {}
 
@@ -25,7 +27,8 @@ jobs:
       github.event.workflow_run.repository.full_name == github.repository &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'failure' &&
+      (github.event.action == 'completed' ||
+       (github.event.action == 'in_progress' && github.event.workflow_run.run_attempt > 1)) &&
       (github.event.workflow_run.path == '.github/workflows/ci.yml' ||
        github.event.workflow_run.path == '.github/workflows/pr-governance.yml')
     runs-on: ubuntu-latest
@@ -50,7 +53,52 @@ jobs:
       allowed_paths_json: ${{ steps.classifier.outputs.allowed_paths_json }}
 
     steps:
+      - name: Source-Run bis zum Abschluss exakt binden
+        id: source
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const payloadRun = context.payload.workflow_run;
+            const expectedId = Number(payloadRun.id);
+            const expectedHead = normalizeSha(payloadRun.head_sha);
+            const expectedPath = String(payloadRun.path || '');
+            let sourceRun = payloadRun;
+
+            if (context.payload.action === 'in_progress') {
+              const deadline = Date.now() + 240_000;
+              while (sourceRun.status !== 'completed' && Date.now() < deadline) {
+                await new Promise((resolve) => setTimeout(resolve, 5_000));
+                const { data } = await github.rest.actions.getWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: expectedId,
+                });
+                if (
+                  Number(data.id) !== expectedId ||
+                  normalizeSha(data.head_sha) !== expectedHead ||
+                  String(data.path || '') !== expectedPath
+                ) {
+                  throw new Error('Source-Run-Identität änderte sich während des Re-Run-Fallbacks.');
+                }
+                sourceRun = data;
+              }
+            }
+
+            if (sourceRun.status !== 'completed') {
+              throw new Error(
+                `Source-Run ${expectedId} wurde innerhalb des gebundenen Fallback-Fensters nicht abgeschlossen.`,
+              );
+            }
+
+            core.setOutput('conclusion', String(sourceRun.conclusion || ''));
+            core.setOutput('run_attempt', String(sourceRun.run_attempt || payloadRun.run_attempt || 1));
+            core.notice(
+              `Source-Run ${expectedId} gebunden: conclusion=${sourceRun.conclusion}, attempt=${sourceRun.run_attempt || payloadRun.run_attempt || 1}, trigger=${context.payload.action}.`,
+            );
+
       - name: Exakten offenen Same-Repo-PR und aktuellen main binden
+        if: steps.source.outputs.conclusion == 'failure'
         id: pr
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         with:
