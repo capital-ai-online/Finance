@@ -243,7 +243,12 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /workflows: \[CI, PR Governance, Container Security\]/);
   assert.match(workflow, /check_run:/);
   assert.match(workflow, /push:/);
+  assert.match(workflow, /actions: write/);
   assert.match(workflow, /pull-requests: write/);
   assert.match(workflow, /capital-ai-pr-writer-\$\{\{ matrix\.pr_number \}\}/);
+  assert.match(workflow, /branch_sync_required/);
+  assert.match(workflow, /sync-agent-pr-branches\.yml/);
+  assert.match(workflow, /createWorkflowDispatch/);
+  assert.match(workflow, /auto_merge_state/);
   assert.doesNotMatch(workflow, /pull_request_target:/);
 });
