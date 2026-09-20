@@ -72,7 +72,8 @@
     "governance:score": "node scripts/governance/weeklyGovernanceScore.mjs",
     "documentary:impact:plan": "tsx scripts/automation/planDocumentaryChangeImpact.ts",
     "documentary:autosync:plan": "tsx scripts/automation/planDocumentaryAutoSync.ts",
-    "documentary:handoff:build": "tsx scripts/automation/buildDocumentaryMaintenanceHandoff.ts"
+    "documentary:handoff:build": "tsx scripts/automation/buildDocumentaryMaintenanceHandoff.ts",
+    "documentary:convergence:evidence": "tsx scripts/automation/buildDocumentaryConvergenceEvidence.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
