@@ -17,7 +17,7 @@
   "projectStage": "PVC-02",
   "startedAt": "2026-09-20T18:32:00Z",
   "baseBranch": "main",
-  "baseSha": "6207e1cc094b1d5d599963dc7f1ed25c73bab928",
+  "baseSha": "8c45be2e1386294de32927357dc50f1dfd03bb73",
   "branch": "agent/operations-actions-minute-thresholds-current-main-20260920",
   "claimedPaths": [
     ".ai/work-claims/OPS-02-CI-ACTIONS-MINUTE-GUARD-20260920.json",
@@ -36,5 +36,10 @@
     "tests/unit/githubActionsMinuteBlocker.test.ts",
     "tests/unit/githubActionsMinuteBlockerWorkflow.test.ts"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "currentMainCorrelation": {
+    "sha": "8c45be2e1386294de32927357dc50f1dfd03bb73",
+    "status": "SYNCED",
+    "correlatedAt": "2026-09-20T18:43:31Z"
+  }
 }
