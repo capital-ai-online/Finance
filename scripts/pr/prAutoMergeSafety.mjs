@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { PR_TEMPLATE_VERSION, detectPrTemplateVersion } from './lib.mjs';
 
 export const AUTO_MERGE_EVIDENCE_START = '<!-- CAPITAL_AI_AUTO_MERGE_EVIDENCE_START -->';
 export const AUTO_MERGE_EVIDENCE_END = '<!-- CAPITAL_AI_AUTO_MERGE_EVIDENCE_END -->';
@@ -40,6 +41,7 @@ export function protectedAutoMergeReasons({ pr, body, files }) {
   const reasons = new Set();
   const title = String(pr?.title || '');
   const text = String(body || '');
+  if (detectPrTemplateVersion(text) !== PR_TEMPLATE_VERSION) reasons.add('non-current-pr-template');
   if (/\[CAPITAL-AI-GOV\]/i.test(title)) reasons.add('governance-control-plane');
   if (/\[CAPITAL-AI-SEC\]/i.test(title)) reasons.add('security-sensitive');
   if (/(?:^|\n)(?:>\s*)?P0(?:\s|🔴|·|$)/m.test(text) || /\*\*Priorität:\*\*\s*P0\b/i.test(text)) {
