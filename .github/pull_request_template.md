@@ -58,10 +58,10 @@
 - **Source Projectfolder:** `{{SOURCE_PROJECT_FOLDER}}`
 - **Target Project:** {{TARGET_PROJECT_SYMBOL}} {{TARGET_PROJECT_DISPLAY_NAME}} · `{{TARGET_PROJECT_ID}}` · `{{TARGET_PROJECT_COLOR}}`
 - **Target Projectfolder:** `{{TARGET_PROJECT_FOLDER}}`
-- **Merge-Modus:** {{MERGE_MODE}} <!-- HUMAN_MERGE_REQUIRED | AUTO_MERGE_ELIGIBLE -->
-- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** {{HUMAN_MERGE_REQUIRED}}
+- **Merge-Modus:** HUMAN_MERGE_REQUIRED
+- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja
 - **Agent-Self-Merge:** Nein
-- **Auto-Merge:** {{AUTO_MERGE_STATUS}} <!-- nur nach /AGENTS.md@CURRENT_MAIN Auto-Merge Safety Contract -->
+- **Auto-Merge:** Nein <!-- Fail-closed default; AUTO_MERGE_ELIGIBLE requires a separately validated implementation under /AGENTS.md@CURRENT_MAIN. -->
 
 Symbol und Farbe sind nur Präsentationsmetadaten. Projekt-ID, Projektordner, Primary Owner und PVC bleiben die maßgeblichen Identitäten; Farbe ist nie alleiniger Bedeutungsträger. Current, Source und Target werden aus `docs/projects/README.md` aufgelöst.
 </details>
