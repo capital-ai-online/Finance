@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "DOCUMENTARY-WP06E-SELF-HEALING-CONTRACT-BOUND-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Complete WP-06E closure evidence under the canonical SH-02.3 self-healing contract without creating a parallel recovery control plane.",
+  "workItemDE": "WP-06E-Abschlussevidence unter dem kanonischen SH-02.3-Self-Healing-Vertrag fertigstellen, ohne eine parallele Recovery-Control-Plane zu erzeugen.",
+  "priority": "P1",
+  "priorityReason": "WP-06 may close only after its Documentary evidence is directly correlated to the merged canonical Self-Healing contract.",
+  "projectId": "CAPITAL-AI-DOC",
+  "projectFolder": "docs/projects/documentary/",
+  "projectStage": "PVC-03",
+  "parentWorkPackage": "OPS-08-B-SH-02",
+  "parentContract": "SH-02.3",
+  "parentContractVersion": "self-healing-contract/1.0.0",
+  "parentContractState": "MERGED_MAIN",
+  "startedAt": "2026-09-20T13:07:00Z",
+  "baseBranch": "main",
+  "baseSha": "c307ab9a4e0eb5ba415b70da7a84bff1a7dc803b",
+  "branch": "agent/documentary-wp06e-self-healing-contract-bound-main-sync-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/DOCUMENTARY-WP06E-SELF-HEALING-CONTRACT-BOUND-20260920.json",
+    ".github/workflows/documentary-change-impact.yml",
+    "docs/projects/documentary/work-packages/CAPITAL-AI-DOC-REPO-STRUCTURE-ARCHIVE-01/WP_06_APPLICATION_WIDE_DOCUMENTARY_AUTO_CONVERGENCE.md",
+    "package.json",
+    "scripts/automation/buildDocumentaryConvergenceEvidence.ts",
+    "scripts/pr/documentaryConvergenceWorkflow.test.mjs",
+    "src/platform/Documentary/Orchestration/DocumentaryConvergenceEvidence.ts",
+    "tests/unit/applicationChangeImpactAnalyzer.test.ts",
+    "tests/unit/documentaryConvergenceEvidence.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; SH-02 remains the parent recovery authority.",
+  "recorrelatedAt": "2026-09-20T13:14:30Z"
+}
