@@ -78,6 +78,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
       ['CAPITAL-AI-GOV', 'docs/projects/governance/', 'Governance', '🧠', '#A1A1AA'],
       ['CAPITAL-AI-SEC', 'docs/projects/security/', 'Security', '💻', '#E04C4C'],
       ['CAPITAL-AI-FE', 'docs/projects/frontend/', 'Frontend', '🎨', '#DC7CA8'],
+      ['CAPITAL-AI-DATA', 'docs/projects/data/', 'Data', '📁', '#8058CC'],
       ['CAPITAL-AI-QM', 'docs/projects/quality-management/', 'Quality Management', '🩺', '#4480E8'],
       ['CAPITAL-AI-OPS', 'docs/projects/operations/', 'Operations', '✈️', '#845CDC'],
       ['CAPITAL-AI-DOC', 'docs/projects/documentary/', 'Documentary', '📋', '#5CB060'],
@@ -102,8 +103,6 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     expect(mapping).toContain('No second project-presentation registry');
     expect(mapping).toContain('Color is supplementary only');
     expect(mapping).toContain('Source and Target project presentation MUST each resolve independently through this same mapping source');
-    expect(mapping).not.toMatch(/^\| `CAPITAL-AI-DATA` \|/m);
-    expect(mapping).not.toContain('`docs/projects/data/` | `data`');
 
     for (const placeholder of [
       'PROJECT_DISPLAY_NAME', 'PROJECT_SYMBOL', 'PROJECT_COLOR', 'PROJECT_FOLDER',
@@ -140,9 +139,9 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const canonicalRoadmap = read('docs/projects/governance/ROADMAP.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
-    expect(authorities.version).toBe('1.64.0');
+    expect(authorities.version).toBe('1.63.0');
     expect(catalog.version).toBe('1.27.0');
-    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('4.1.0');
+    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('4.0.0');
     expect(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.version).toBe('4.0.0');
     expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('4.0.0');
     expect(String(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.scope ?? '')).toContain('resolved exclusively through AGENTS.md');
