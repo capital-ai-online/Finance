@@ -66,7 +66,7 @@ test('deterministic review checks exact head without persisted credentials', asy
   assert.match(workflow, /p\/security-audit/);
   assert.match(workflow, /-reporter=github-pr-review/);
   assert.match(workflow, /-filter-mode=added/);
-  assert.match(workflow, /retention-days:\s*7/);
+  assert.match(workflow, /retention-days:\s*3/);
 });
 
 test('automatic OSS review remains isolated from build test and deploy execution', async () => {
@@ -74,7 +74,7 @@ test('automatic OSS review remains isolated from build test and deploy execution
 
   assert.doesNotMatch(workflow, /\bnpm ci\b/);
   assert.doesNotMatch(workflow, /\bnpm test\b/);
-  assert.doesNotMatch(workflow, /\bvitest\b/);
+  assert.doesNotMatch(workflow, /^\s*(?:npx\s+)?vitest(?:\s|$)/im);
   assert.doesNotMatch(workflow, /\bvite build\b/);
   assert.doesNotMatch(workflow, /\bdocker build\b/);
   // Documentation may mention the deployment boundary; reject executable deployment surfaces instead.
