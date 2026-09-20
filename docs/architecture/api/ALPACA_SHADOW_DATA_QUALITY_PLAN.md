@@ -34,4 +34,4 @@ Mindestens 14 Handelstage, mindestens 1.000 vergleichbare Beobachtungen, keine S
 
 ## Betrieb
 
-Die Render Secret File heißt exakt `finance-secrets.env`. Benötigte Schlüssel: `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY`; optional `ALPACA_DATA_FEED=iex` als normale Konfiguration. Der Auth-Smoke-Test erfolgt erst nach Merge und Deployment, ohne Schlüsselwerte auszugeben.
+Die Render server-only Render environment variables heißt exakt Render Environment Variables. Benötigte Schlüssel: `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY`; optional `ALPACA_DATA_FEED=iex` als normale Konfiguration. Der Auth-Smoke-Test erfolgt erst nach Merge und Deployment, ohne Schlüsselwerte auszugeben.
