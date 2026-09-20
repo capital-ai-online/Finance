@@ -23,6 +23,8 @@ test('delegates exact current-state baseline drift to the existing specialist', 
     logText: 'ERROR CURRENT_STATE_PROJECTION_BASELINE_STALE: docs/projects/operations/ROADMAP.md',
   });
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_CURRENT_STATE_BASELINE);
+  assert.equal(result.findingClass, 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT');
+  assert.equal(result.actionId, 'RECONCILE_REPOSITORY_PROJECTION');
 });
 
 test('delegates an exact stale production baseline before broad protected-provider vocabulary', () => {
@@ -209,6 +211,8 @@ test('registers the exact stale Self-Healing next-slice assertion as an invarian
   assert.equal(result.failureSignature, 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1');
   assert.equal(result.repairerId, 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1');
   assert.deepEqual(result.allowedPaths, ['tests/unit/selfHealingSupersession.test.ts']);
+  assert.equal(result.findingClass, 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT');
+  assert.equal(result.actionId, 'RECONCILE_REPOSITORY_PROJECTION');
 });
 
 test('does not generalize unrelated assertion failures into a work-graph autofix', () => {
