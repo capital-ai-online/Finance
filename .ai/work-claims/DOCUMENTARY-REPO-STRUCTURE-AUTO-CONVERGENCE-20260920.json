@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "DOCUMENTARY-REPO-STRUCTURE-AUTO-CONVERGENCE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge CAPITAL-AI-DOC-REPO-STRUCTURE-AUTO-01 with current workflow autonomy and current DATA-to-FINTECH routing without rewriting historical evidence.",
+  "workItemDE": "CAPITAL-AI-DOC-REPO-STRUCTURE-AUTO-01 auf aktuelle Workflow-Autonomie und DATA→FINTECH-Routing konvergieren, ohne historische Evidence umzuschreiben.",
+  "priority": "P1",
+  "priorityReason": "Current routing/procedure drift conflicts with /AGENTS.md@CURRENT_MAIN and must converge before further repository-structure work.",
+  "projectId": "CAPITAL-AI-DOC",
+  "projectFolder": "docs/projects/documentary/",
+  "projectStage": "PVC-03",
+  "startedAt": "2026-09-20T16:01:00Z",
+  "baseBranch": "main",
+  "baseSha": "c9980602f691b855fd6f8c66a49822e7a9611b4a",
+  "branch": "agent/documentary-repo-structure-auto-convergence-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/DOCUMENTARY-REPO-STRUCTURE-AUTO-CONVERGENCE-20260920.json",
+    "docs/projects/documentary/work-packages/CAPITAL-AI-DOC-REPO-STRUCTURE-AUTO-01/AUTOMATIC_WORK_PACKAGE.md",
+    "docs/projects/documentary/work-packages/CAPITAL-AI-DOC-REPO-STRUCTURE-AUTO-01/CURRENT_MAIN_CONVERGENCE_EVIDENCE_2026-09-20.md",
+    "docs/fintech/CAPITAL-AI-FINTECH/mappings/VALUE_CHAIN_OWNERSHIP.md",
+    "docs/projects/fintech/WORK_PACKAGES.md",
+    "docs/social-media/CAPITAL-AI-SOCIAL/mappings/CROSS_PROJECT_HANDOFFS.md"
+  ],
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment; automated workflows and reviews have no merge authority."
+}
