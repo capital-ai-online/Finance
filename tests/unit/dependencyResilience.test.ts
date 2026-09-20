@@ -43,7 +43,7 @@ describe('dependency resilience', () => {
         resilienceOwner: 'SUPERVISOR_SAFE_RETRY',
       },
       operation,
-      () => ({ status: 'PASS', probe: 'dependency-operation-readback' }),
+      () => ({ status: 'NOT_RUN', probe: 'dependency-operation-readback' }),
     );
 
     expect(result).toMatchObject({ status: 'BLOCKED', reason: 'ACTION_HELD' });
@@ -60,7 +60,7 @@ describe('dependency resilience', () => {
         resilienceOwner: 'SUPERVISOR_SAFE_RETRY',
       },
       operation,
-      () => ({ status: 'PASS', probe: 'write-readback' }),
+      () => ({ status: 'NOT_RUN', probe: 'write-readback' }),
     );
 
     expect(result).toMatchObject({ status: 'BLOCKED', reason: 'UNSAFE_OPERATION_CLASS' });
@@ -77,7 +77,7 @@ describe('dependency resilience', () => {
         resilienceOwner: 'DEPENDENCY_NATIVE',
       },
       operation,
-      () => ({ status: 'PASS', probe: 'provider-health-readback' }),
+      () => ({ status: 'NOT_RUN', probe: 'provider-health-readback' }),
     );
 
     expect(result).toMatchObject({
