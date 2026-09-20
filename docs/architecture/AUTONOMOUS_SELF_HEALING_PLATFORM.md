@@ -6,8 +6,9 @@
 **Supporting PVC:** `PVC-02`, `PVC-04`, `PVC-07`, `PVC-18`  
 **Frontend role:** presentation/recovery consumer; no productive PVC ownership  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Status:** OWNER-DIRECTED / IMPLEMENTATION STARTED  
-**Baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`
+**Status:** OWNER-DIRECTED / CURRENT SELF-HEALING ARCHITECTURE  
+**Correlation baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`  
+**Runtime contract:** `src/platform/Supervisor/selfHealingContract.ts` / `self-healing-contract/1.0.0`
 
 ## 1. Goal
 
@@ -21,6 +22,21 @@ Observe -> Detect -> Diagnose -> Plan -> Remediate -> Verify -> Converge
 "Autonomous" means that eligible recovery actions execute without an additional per-run approval when they are already inside an authorized repository/provider capability boundary and all configured controls permit them. It does not create new credentials, IAM grants, production authority, domain authority, merge authority, Security acceptance or Compliance acceptance.
 
 "Self-healing" means that a reproducible drift is corrected by a bounded, reversible action and then verified against the actual observed state. A retry, restart or redeploy without verification is not convergence.
+
+### 1.1 Canonical contract set and supersession
+
+Within the Self-Healing subject-matter scope, the current contract set is deliberately singular:
+
+- `/AGENTS.md@CURRENT_MAIN` remains the repository-wide trust root and is never superseded by this architecture;
+- this document (`CAPITAL-AI-ASH-01`) is the current Self-Healing architecture contract;
+- `src/platform/Supervisor/selfHealingContract.ts` (`self-healing-contract/1.0.0`) is the executable finding/action/eligibility/convergence contract;
+- `OPS-08-B-SH-02` is an execution/status projection and cannot create authority.
+
+After Human/CODEOWNER merge of the SH-02.3 contract change, all older Self-Healing execution-rule projections are retired. This includes `OPS-08-B-SH-01`, legacy `SH-R*` classifications, blanket per-run Owner-gating rules for eligible recovery, and historical claims that generic retry behavior alone constitutes current Self-Healing.
+
+Historical material may remain only as clearly historical evidence or under `docs/archive/**`. It cannot activate, deny, broaden or weaken a current remediation. Current eligibility is derived only from the trust root, applicable current Security/Compliance/QM/domain controls and `self-healing-contract/1.0.0`.
+
+The only current recovery tiers are `SH-0`, `SH-1`, `SH-2` and `SH-3`. Legacy `SH-R*` names have no current execution semantics.
 
 ## 2. Non-negotiable invariants
 
