@@ -15,7 +15,7 @@
   "projectStage": "PVC-08",
   "startedAt": "2026-09-20T16:47:00Z",
   "baseBranch": "main",
-  "baseSha": "10dd68d1c448a71f681da78b76329d960d7a9279",
+  "baseSha": "59b65e4907b27f57acd639d56f83ab365f30e4a5",
   "branch": "agent/operations-sh02-3e-post-merge-convergence-20260920",
   "claimedPaths": [
     ".ai/work-claims/OPS-08-B-SH-02-3E-POST-MERGE-CONVERGENCE-20260920.json",
@@ -26,7 +26,8 @@
     "docs/projects/operations/ROADMAP.md"
   ],
   "scopeNote": "Coordination/documentation convergence only. No runtime, provider, IAM, secret, billing, database, deployment or merge mutation. The executable SH-02.3E contract on main is read back but not changed.",
-  "correlationNote": "CURRENT_MAIN 10dd68d1c448a71f681da78b76329d960d7a9279. PR #1147, #1149 and #1150 are Human-merged. The only open PR at correlation time is #1157 in CAPITAL-AI-FINTECH and has no claimed OPS/Self-Healing path overlap.",
+  "correlationNote": "CURRENT_MAIN 59b65e4907b27f57acd639d56f83ab365f30e4a5. PR #1157 is Human-merged into this baseline; the only remaining open Self-Healing PR is #1161 and its parent SH-02 file overlap was removed, leaving #1160 as the sole parent-graph/ROADMAP convergence writer. Final merge remains Human/CODEOWNER-only.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; final merge remains Human/CODEOWNER-only.",
-  "validationState": "HOSTED_VALIDATION_PENDING"
+  "validationState": "HOSTED_REVALIDATION_PENDING_AFTER_CURRENT_MAIN_SYNC",
+  "recorrelatedAt": "2026-09-20T17:01:00Z"
 }
