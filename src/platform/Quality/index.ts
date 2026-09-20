@@ -56,3 +56,22 @@ export type {
   QualityCenterOrchestratorDependencies,
   QualityCenterRunRequest,
 } from './Orchestration/QualityCenterOrchestrator';
+
+export {
+  OSS_QUALITY_TOOL_IDS,
+  UNIFIED_OSS_QUALITY_BUNDLE_SCHEMA,
+  UNIFIED_OSS_QUALITY_FINDING_SCHEMA,
+  buildUnifiedQualityFindingId,
+  isOssQualityToolId,
+} from './Findings/UnifiedFindingContract';
+export type {
+  OssQualityToolId,
+  UnifiedQualityDomain,
+  UnifiedQualityDuplicationMeasurement,
+  UnifiedQualityEvidenceBundle,
+  UnifiedQualityFinding,
+  UnifiedQualityFindingState,
+  UnifiedQualitySeverity,
+  UnifiedQualityToolEvidence,
+  UnifiedQualityToolStatus,
+} from './Findings/UnifiedFindingContract';
