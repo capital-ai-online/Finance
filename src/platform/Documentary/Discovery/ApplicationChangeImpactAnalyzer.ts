@@ -39,6 +39,12 @@ export function classifyApplicationChange(pathValue: string): ApplicationChangeK
   const basename = path.posix.basename(value);
 
   if (value.startsWith('.github/workflows/')) return 'WORKFLOW';
+  if (
+    value.startsWith('docs/contracts/') ||
+    value.includes('/contracts/') ||
+    value.endsWith('.schema.json') ||
+    value.endsWith('.schema.ts')
+  ) return 'CONTRACT';
   if (value.startsWith('docs/')) return 'DOCUMENTATION';
   if (
     value === 'package.json' ||
@@ -53,12 +59,6 @@ export function classifyApplicationChange(pathValue: string): ApplicationChangeK
     basename === 'server.ts' ||
     basename === 'app.tsx'
   ) return 'ROUTE';
-  if (
-    value.startsWith('docs/contracts/') ||
-    value.includes('/contracts/') ||
-    value.endsWith('.schema.json') ||
-    value.endsWith('.schema.ts')
-  ) return 'CONTRACT';
   if (
     value.endsWith('.yml') ||
     value.endsWith('.yaml') ||
