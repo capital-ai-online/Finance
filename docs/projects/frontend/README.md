@@ -56,7 +56,7 @@ Frontend does not own:
 
 Frontend consumes contracts from productive Primary Owners and renders them without redefining their semantics. When a presentation change requires a domain contract change, that change is routed to the relevant owner rather than implemented as hidden Frontend business logic.
 
-In particular, `CAPITAL-AI-FINTECH` retains productive `PVC-12..17` business/scoring ownership; `CAPITAL-AI-DATA` retains `PVC-09..11` data/evidence ownership; Governance and Operations retain their respective control and runtime responsibilities.
+In particular, `CAPITAL-AI-FINTECH` retains productive `PVC-09..17` ownership, including data ingestion/evidence/Data Quality and downstream business/scoring stages; `CAPITAL-AI-DATA` is superseded as an independent productive PVC owner and remains a historical/compatibility surface only; Governance and Operations retain their respective control and runtime responsibilities.
 
 ## Project navigation
 
