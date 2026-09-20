@@ -66,83 +66,16 @@ describe('self-healing contract', () => {
     expect(validateSelfHealingContract()).toEqual([]);
   });
 
-  it('keeps protected actions held except the capability-bound SH-02.7 exact-SHA recovery', () => {
+  it('keeps SH-2 and SH-3 actions held behind external capabilities', () => {
     const snapshot = getSelfHealingContractSnapshot();
     expect(snapshot.valid).toBe(true);
 
-    expect(snapshot.enabledActionIds).toContain('REDEPLOY_EXACT_SHA');
-    expect(snapshot.heldActionIds).not.toContain('REDEPLOY_EXACT_SHA');
-
-    const redeploy = getRemediationAction('REDEPLOY_EXACT_SHA');
-    expect(redeploy).toMatchObject({
-      tier: 'SH-2',
-      activation: 'ENABLED',
-      idempotencyClass: 'SIDE_EFFECTING',
-      blastRadius: 'PRODUCTION_RUNTIME',
-      requiredCapability: 'release.redeploy.exact-sha',
-      killSwitch: 'self-healing.exact-sha-redeploy',
-      verificationProbe: 'production-identity-liveness-readiness-readback',
-      budget: { maxAttempts: 1, cooldownMs: 300_000, timeoutMs: 900_000 },
-    });
-
-    for (const actionId of snapshot.protectedActionIds.filter(id => id !== 'REDEPLOY_EXACT_SHA')) {
+    for (const actionId of snapshot.protectedActionIds) {
       const action = getRemediationAction(actionId);
       expect(action.activation).toBe('HELD');
       expect(action.requiredCapability).toBeTruthy();
       expect(action.requiredCapability).not.toBe(action.id);
     }
-  });
-
-  it('fails closed around the exact-SHA recovery capability, budget and cooldown', () => {
-    const unauthorized = evaluateRemediationEligibility({
-      findingClass: 'DEPLOYMENT_IDENTITY_DRIFT',
-      actionId: 'REDEPLOY_EXACT_SHA',
-      attemptsUsed: 0,
-      nowMs: 600_000,
-      killSwitchActive: false,
-      capabilityAuthorized: false,
-      verificationAvailable: true,
-      operationIdempotency: 'SIDE_EFFECTING',
-    });
-    expect(unauthorized).toMatchObject({ state: 'BLOCKED', reason: 'CAPABILITY_NOT_AUTHORIZED' });
-
-    const eligible = evaluateRemediationEligibility({
-      findingClass: 'DEPLOYMENT_IDENTITY_DRIFT',
-      actionId: 'REDEPLOY_EXACT_SHA',
-      attemptsUsed: 0,
-      nowMs: 600_000,
-      lastAttemptAtMs: 0,
-      killSwitchActive: false,
-      capabilityAuthorized: true,
-      verificationAvailable: true,
-      operationIdempotency: 'SIDE_EFFECTING',
-    });
-    expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
-
-    const coolingDown = evaluateRemediationEligibility({
-      findingClass: 'DEPLOYMENT_IDENTITY_DRIFT',
-      actionId: 'REDEPLOY_EXACT_SHA',
-      attemptsUsed: 0,
-      nowMs: 599_999,
-      lastAttemptAtMs: 300_000,
-      killSwitchActive: false,
-      capabilityAuthorized: true,
-      verificationAvailable: true,
-      operationIdempotency: 'SIDE_EFFECTING',
-    });
-    expect(coolingDown).toMatchObject({ state: 'BLOCKED', reason: 'COOLDOWN_ACTIVE' });
-
-    const exhausted = evaluateRemediationEligibility({
-      findingClass: 'DEPLOYMENT_IDENTITY_DRIFT',
-      actionId: 'REDEPLOY_EXACT_SHA',
-      attemptsUsed: 1,
-      nowMs: 900_000,
-      killSwitchActive: false,
-      capabilityAuthorized: true,
-      verificationAvailable: true,
-      operationIdempotency: 'SIDE_EFFECTING',
-    });
-    expect(exhausted).toMatchObject({ state: 'BLOCKED', reason: 'BUDGET_EXHAUSTED' });
   });
 
   it('allows the already implemented frontend stale-asset recovery only once', () => {
