@@ -13,7 +13,7 @@
 **SH-02.5 merge:** PR #1141 → `5a89e8ab0f12267838c30994b6e84ccbe002605f`  
 **Policy-homogeneity merge:** PR #1147 → `f0c14ed5571a4b681c4360e27bc84bbd0ab3527f`  
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
-**Current baseline:** `main@10dd68d1c448a71f681da78b76329d960d7a9279`  
+**Current baseline:** `main@59b65e4907b27f57acd639d56f83ab365f30e4a5`  
 **Current coordination slice:** SH-02.3E post-merge convergence  
 **Next functional slice:** `SH-02.6` — Frontend degraded-mode + version-skew recovery  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
