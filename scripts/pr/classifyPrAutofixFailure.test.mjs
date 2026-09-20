@@ -34,6 +34,19 @@ test('delegates repairable PR metadata drift to the existing baseline/template w
 });
 
 
+test('delegates the exact PR #1123 missing-sections failure to the metadata specialist', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: [
+      'Error: PR #1123 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:',
+      '## 4. 📌 Priorität & Roadmap, ## 5. 🔢 Version & PR-Klasse, ## 6. ✅ Prüfung & Merge',
+    ].join(' '),
+  });
+  assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
+  assert.equal(result.reason, 'existing-pr-production-baseline-refresh-specialist-owns-write');
+});
+
 test('delegates canonical Human/CODEOWNER merge-gate drift to the existing metadata writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
