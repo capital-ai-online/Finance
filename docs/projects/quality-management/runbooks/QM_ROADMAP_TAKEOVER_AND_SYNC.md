@@ -37,9 +37,9 @@ Route a confirmed Quality finding to the correct Primary Owner without transferr
 - VC-06 -> `CAPITAL-AI-OPS`
 - VC-07 -> `CAPITAL-AI-OPS`
 - VC-08 -> `CAPITAL-AI-OPS`
-- VC-09 -> `CAPITAL-AI-DATA`
-- VC-10 -> `CAPITAL-AI-DATA`
-- VC-11 -> `CAPITAL-AI-DATA`
+- VC-09 -> `CAPITAL-AI-FINTECH`
+- VC-10 -> `CAPITAL-AI-FINTECH`
+- VC-11 -> `CAPITAL-AI-FINTECH`
 - VC-12..VC-17 -> `CAPITAL-AI-FINTECH`
 - VC-18 -> `CAPITAL-AI-OPS`
 
