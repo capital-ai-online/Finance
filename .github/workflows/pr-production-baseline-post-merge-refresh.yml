@@ -3,7 +3,7 @@ run-name: >-
   ${{ format('main@{0} – PR-Produktions-Baselines nach Merge-Sync aktualisieren', github.event.workflow_run.head_sha) }}
 
 # Trusted post-merge writer. This workflow never executes candidate code. It reuses only
-# current-main productionPreflight/updatePrProductionBaseline contracts and fails closed on
+# current-main classifyPrScope/repairLegacyPrBodyStructure/productionPreflight/updatePrProductionBaseline contracts and fails closed on
 # stale main/head/production identities. The later post-deploy refresh remains authoritative
 # for the Production = main state.
 # Reviewed privileged completion trigger: exact source path/repository/event guards,
@@ -199,6 +199,14 @@ jobs:
         with:
           node-version: '24.18.0'
 
+      - name: PR-Scope für deterministischen Template-Fix klassifizieren
+        id: body_scope
+        working-directory: candidate
+        env:
+          PR_BASE_SHA: ${{ matrix.base_sha }}
+          PR_HEAD_SHA: ${{ matrix.head_sha }}
+        run: node ../policy/scripts/pr/classifyPrScope.mjs
+
       - name: Baseline ausschließlich mit trusted-main Policy erzeugen
         id: baseline
         working-directory: candidate
@@ -244,6 +252,19 @@ jobs:
             core.setOutput('stable', stable ? 'true' : 'false');
             if (!stable) core.notice(`PR #${prNumber}: Snapshot änderte sich vor Baseline-Write; dieser Lauf schreibt nichts. Ein neuer Merge-/Deploy-Lauf übernimmt.`);
 
+      - name: Kanonische PR-Body-Struktur deterministisch reparieren
+        id: body_repair
+        if: steps.freshness.outputs.stable == 'true'
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ matrix.head_sha }}
+          EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
+          PR_CHECK_CLASS: ${{ steps.body_scope.outputs.class }}
+        run: node ../policy/scripts/pr/repairLegacyPrBodyStructure.mjs
+
       - name: Kanonischen Baseline-Block atomar aktualisieren
         id: refresh
         if: steps.freshness.outputs.stable == 'true'
@@ -255,13 +276,15 @@ jobs:
           PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
         run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
 
-      - name: Geänderte Baseline an exakte Governance binden
-        if: steps.refresh.outputs.changed == 'true'
+      - name: Geänderten PR-Body oder Baseline an exakte Governance binden
+        if: steps.body_repair.outputs.changed == 'true' || steps.refresh.outputs.changed == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
           PR_NUMBER: ${{ matrix.pr_number }}
           EXPECTED_MAIN_SHA: ${{ matrix.base_sha }}
           EXPECTED_HEAD_SHA: ${{ matrix.head_sha }}
+          BODY_REPAIRED: ${{ steps.body_repair.outputs.changed }}
+          BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}
         with:
           retries: 3
           retry-exempt-status-codes: 400,401,403,404,422
@@ -270,6 +293,8 @@ jobs:
             const prNumber = Number(process.env.PR_NUMBER);
             const expectedMain = normalizeSha(process.env.EXPECTED_MAIN_SHA);
             const expectedHead = normalizeSha(process.env.EXPECTED_HEAD_SHA);
+            const bodyRepaired = String(process.env.BODY_REPAIRED || '').toLowerCase() === 'true';
+            const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';
             const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -283,7 +308,7 @@ jobs:
               .filter((run) => (run.pull_requests || []).some((item) => Number(item.number) === prNumber && normalizeSha(item.head?.sha) === expectedHead && normalizeSha(item.base?.sha) === expectedMain))
               .sort((a, b) => Number(b.id) - Number(a.id))[0];
             if (!exactRun) {
-              core.notice(`PR #${prNumber}: Baseline aktualisiert; noch kein abgeschlossener exact-head/base Governance-Run vorhanden. Der laufende synchronize-Run bzw. dessen bestehender Baseline-Recovery-Pfad übernimmt.`);
+              core.notice(`PR #${prNumber}: PR-Body/Baseline aktualisiert; noch kein abgeschlossener exact-head/base Governance-Run vorhanden. Der laufende synchronize-Run bzw. dessen bestehender Recovery-Pfad übernimmt.`);
               return;
             }
             await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
@@ -291,4 +316,8 @@ jobs:
               repo: context.repo.repo,
               run_id: exactRun.id,
             });
-            core.notice(`PR #${prNumber}: Baseline nach Merge aktualisiert; Governance Run ${exactRun.id} wird auf exakt head/base erneut ausgeführt.`);
+            core.notice(
+              bodyRepaired
+                ? `PR #${prNumber}: PR-Body${baselineChanged ? ' und Baseline' : ''} nach Merge deterministisch repariert; Governance Run ${exactRun.id} wird auf exakt head/base erneut ausgeführt.`
+                : `PR #${prNumber}: Baseline nach Merge aktualisiert; Governance Run ${exactRun.id} wird auf exakt head/base erneut ausgeführt.`,
+            );
