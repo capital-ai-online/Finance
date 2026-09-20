@@ -7,7 +7,8 @@ run-name: >-
 # Every mutation is bound to one immutable PR generation derived from repository/PR/head/base/current-main/control-plane identity.
 # Existing specialist writers remain single-owner:
 # - Current-State Baseline Autofix owns CURRENT_STATE_PROJECTION_BASELINE_* repository writes.
-# - PR Production Baseline Auto-Refresh owns deterministic PR-body/template/baseline writes.
+# - PR Production Baseline Auto-Refresh owns production-baseline and bounded legacy-template writes.
+# - PR Decision Evidence Reconciler owns the canonical v1.7 Decision/Evidence projection.
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI, PR Governance]
@@ -338,6 +339,29 @@ jobs:
           set -euo pipefail
           printf 'PR #%s metadata drift on generation %s head %s/base %s with semantic shape %s is owned by the independently subscribed PR Production Baseline Auto-Refresh workflow. No second writer or rerun dispatch is created by the controller.\n' \
             "$PR_NUMBER" "$PR_GENERATION" "$EXPECTED_HEAD_SHA" "$EXPECTED_BASE_SHA" "$PR_METADATA_SHAPE"
+
+
+  delegate_pr_decision_evidence:
+    name: Decision/Evidence-Reconciler bestätigen
+    needs: [classify]
+    if: needs.classify.result == 'success' && needs.classify.outputs.decision == 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - name: Exklusive Reconciler-Subscription bestätigen
+        env:
+          PR_NUMBER: ${{ needs.classify.outputs.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ needs.classify.outputs.head_sha }}
+          EXPECTED_BASE_SHA: ${{ needs.classify.outputs.base_sha }}
+          PR_GENERATION: ${{ needs.classify.outputs.generation_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'PR #%s Decision/Evidence drift on generation %s head %s/base %s is exclusively owned by the already subscribed PR Decision Evidence Reconciler. The Autofix Controller creates no PR-body write and no Governance rerun.\n' \
+            "$PR_NUMBER" "$PR_GENERATION" "$EXPECTED_HEAD_SHA" "$EXPECTED_BASE_SHA"
+
 
   repair:
     name: Registrierten Patch ohne Write-Credential erzeugen
