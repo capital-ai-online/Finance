@@ -32,14 +32,14 @@ def main() -> int:
         raise RuntimeError("small evidence is not Whisper small")
     if large.get("asr_model") != "large-v3":
         raise RuntimeError("large evidence is not Whisper large-v3")
-    if small.get("productive_acceptance_case_count") != 4:
-        raise RuntimeError("small evidence must contain four German productive cases")
-    if large.get("productive_acceptance_case_count") != 4:
-        raise RuntimeError("large-v3 evidence must contain four German productive cases")
+    small_count = int(small.get("productive_acceptance_case_count", 0))
+    large_count = int(large.get("productive_acceptance_case_count", 0))
+    if small_count <= 0 or small_count != large_count:
+        raise RuntimeError("ASR evidence must contain the same positive number of German productive cases")
 
     si = _index(small)
     li = _index(large)
-    if set(si) != set(li) or len(si) != 4:
+    if set(si) != set(li) or len(si) != small_count:
         raise RuntimeError("German case identity mismatch between ASR passes")
 
     rows = []
