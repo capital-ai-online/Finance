@@ -211,6 +211,35 @@ let body = template;
 for (const [key, value] of Object.entries(replacements)) body = body.split(`{{${key}}}`).join(String(value));
 body = canonicalizeKnownSectionHeadings(body);
 
+const reviewRequiredPaths = Array.isArray(claim.reviewRequiredPaths)
+  ? [...new Set(claim.reviewRequiredPaths.map((value) => String(value).trim()).filter(Boolean))].sort()
+  : [];
+const semanticPatchCandidates = Array.isArray(claim.semanticPatchCandidates)
+  ? [...new Set(claim.semanticPatchCandidates.map((value) => String(value).trim()).filter(Boolean))].sort()
+  : [];
+
+if (reviewRequiredPaths.length > 0 || semanticPatchCandidates.length > 0) {
+  const handoffSection = [
+    '## Documentary Handoff Evidence',
+    '',
+    reviewRequiredPaths.length > 0
+      ? `- **Review-only paths:** ${reviewRequiredPaths.map((value) => `\`${value}\``).join(', ')}`
+      : '- **Review-only paths:** none',
+    semanticPatchCandidates.length > 0
+      ? `- **Semantic maintenance candidates:** ${semanticPatchCandidates.map((value) => `\`${value}\``).join(', ')}`
+      : '- **Semantic maintenance candidates:** none',
+    '- Protected/review-only paths are evidence only and are not autonomously rewritten by this PR handoff.',
+    '',
+  ].join('\n');
+
+  const baselineHeading = '## 7. Maschinenlesbare Baseline';
+  if (body.includes(baselineHeading)) {
+    body = body.replace(baselineHeading, `${handoffSection}\n${baselineHeading}`);
+  } else {
+    body = `${body.trimEnd()}\n\n${handoffSection}`;
+  }
+}
+
 const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
 if (unresolved.length > 0) fail(`PR-Vorlage enthält noch nicht aufgelöste Vorlagenplatzhalter: ${[...new Set(unresolved)].join(', ')}`);
 
