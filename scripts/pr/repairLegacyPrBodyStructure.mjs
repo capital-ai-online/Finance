@@ -247,10 +247,15 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
     [...body.matchAll(/^## 5\. ✅ Prüfung & Merge\s*$/gm)].length === 1 &&
     [...body.matchAll(/^## 6\. 🔢 Version\s*$/gm)].length === 1;
 
+  const currentV16SecurityBoundaryLikeHeading =
+    detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
+    /^## 4\. 🔐 Security Boundar.*$/m.test(body);
+
   const currentV16GenericMissingSectionsShape =
     fullLegacyMissing &&
     detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
-    occurrenceCount(body, '## 7. Maschinenlesbare Baseline') === 1;
+    occurrenceCount(body, '## 7. Maschinenlesbare Baseline') === 1 &&
+    !currentV16SecurityBoundaryLikeHeading;
 
   if (currentV16SecurityBoundaryShape) {
     const malformedBlock = body.match(
