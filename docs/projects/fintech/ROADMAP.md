@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Canonical Roadmap
 
-**Baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`
+**Baseline:** `main@c64210a11bc67c6af24411eb7960cd98b696d5b2`
 
 **Project:** `CAPITAL-AI-FINTECH`  
 **Folder:** `docs/projects/fintech/`  
