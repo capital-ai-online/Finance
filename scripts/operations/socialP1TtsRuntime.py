@@ -223,16 +223,21 @@ def _synthesis_text(sample: dict[str, Any], candidate: str) -> tuple[str, str]:
     if sample.get("sample_id") != "de-finance-numbers-v1":
         return sample["text"], "canonical_fixture_text"
 
-    eth_projection = "E T Ha" if candidate == "chatterbox-multilingual-v3" else "E T H"
+    if candidate == "chatterbox-multilingual-v3":
+        pronunciation_clause = (
+            "Sprich B T C klar aus. "
+            "Danach einzeln: E, Tee, Haa. "
+            "Danach einzeln: Capital, A, I."
+        )
+        projection = "de_finance_pronunciation_projection_v3_chatterbox_segmented"
+    else:
+        pronunciation_clause = "Sprich B T C, E T H und Capital A I klar aus."
+        projection = "de_finance_pronunciation_projection_v1"
+
     text = (
         "Aussprachetest: zwölf Komma fünf Prozent und eintausendzweihundertvierunddreißig Euro "
         "und sechsundfünfzig Cent sind hier reine Testwerte, keine Marktdaten. "
-        f"Sprich B T C, {eth_projection} und Capital A I klar aus; dies ist keine Anlageberatung."
-    )
-    projection = (
-        "de_finance_pronunciation_projection_v2_chatterbox_eth_ha"
-        if candidate == "chatterbox-multilingual-v3"
-        else "de_finance_pronunciation_projection_v1"
+        f"{pronunciation_clause} Dies ist keine Anlageberatung."
     )
     return text, projection
 
