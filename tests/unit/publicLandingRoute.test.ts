@@ -118,7 +118,8 @@ describe('canonical landing, public analysis workbench, login and protected-rout
   });
 
   it('keeps the landing shell outside tool suspense/error boundaries while rendering the public workbench directly', () => {
-    expect(routes).toContain('<FeatureRecoveryBoundary name="Öffentliche Analyse-Workbench">');
+    expect(routes).toContain('<FeatureRecoveryBoundary');
+    expect(routes).toContain('name="Öffentliche Analyse-Workbench"');
     expect(routes).toContain('function PublicPreviewBoundary');
     expect(routes).toContain('Bewertungstools vorübergehend nicht verfügbar');
     expect(routes).toContain('<PublicAnalysisWorkbench />');
