@@ -67,15 +67,45 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
     expect(landing).toContain('bg-background');
     expect(landing).toContain('text-brand-primary');
     expect(landing).toContain('border-border');
+    expect(landing).toContain('ui-panel');
     expect(landing).toContain('{preview}');
     expect(landing).toContain('BTC · Public Fixed');
     expect(landing).not.toContain('loadPreview');
     expect(landing).not.toContain('WorkbenchActivationState');
     expect(landing).not.toContain('IntersectionObserver');
+    expect(landing).not.toContain('bg-[#');
+    expect(landing).not.toContain('text-[#');
     expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
     expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
     expect(publicWorkbench).toContain("lg:grid-cols-[88px_minmax(0,1fr)]");
     expect(publicWorkbench).toContain("lg:grid-cols-[300px_minmax(0,1fr)]");
+  });
+
+  it('renders the design-first landing sections in the owner-directed order without fake data', () => {
+    const orderedMarkers = [
+      'data-landing-section="application-description"',
+      'data-landing-section="ai-newsfeed-slot"',
+      'data-landing-section="hero"',
+      'data-landing-section="feature-symbol-strip"',
+      'data-landing-section="market-overview-slot"',
+      'data-landing-section="core-modules-slot"',
+      'data-landing-section="scoring-analysis-slot"',
+      'data-landing-section="how-it-works"',
+      'data-landing-section="trust-and-evidence"',
+      'data-landing-section="footer"',
+    ];
+
+    let previous = -1;
+    for (const marker of orderedMarkers) {
+      const current = landing.indexOf(marker);
+      expect(current).toBeGreaterThan(previous);
+      previous = current;
+    }
+
+    expect(landing).toContain('Komponente wird schrittweise angebunden');
+    expect(landing).toContain('Live-Marktprojektionen');
+    expect(landing).not.toMatch(/€\s?\d/);
+    expect(landing).not.toMatch(/\$\s?\d/);
   });
 
   it('keeps the decorative neural layer non-interactive and separate from semantic asset colors', () => {
