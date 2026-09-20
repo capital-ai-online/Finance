@@ -7,12 +7,15 @@
   "owner": "CAPITAL-AI-GOV",
   "pvc": "PVC-05",
   "branch": "agent/governance-auto-merge-safety-contract-20260920",
-  "baseSha": "24850d31cc503b28b1ff786b377826733bf9671f",
+  "baseSha": "e86955225887bb7f34036c175ad1da89b8aec14d",
   "scope": [
     "AGENTS.md",
     ".github/pull_request_template.md",
     "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
-    "docs/projects/governance/evidence/AUTO_MERGE_SAFETY_CONTRACT_2026-09-20.md"
+    "docs/projects/governance/evidence/AUTO_MERGE_SAFETY_CONTRACT_2026-09-20.md",
+    "docs/governance/control-catalog.json",
+    "tests/unit/governanceAuthorityConsistency.test.ts",
+    "tests/unit/prApprovalEnvelopeGovernance.test.ts"
   ],
   "purpose": "Introduce a fail-closed per-PR Auto-Merge Safety Contract before SH-02.7 may use auto-merge.",
   "boundaries": [
