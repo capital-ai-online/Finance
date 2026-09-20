@@ -23,7 +23,8 @@ const requirements = [
   ['non-root runtime user', /USER\s+capitalai/],
   ['root-owned runtime build artifacts', /COPY\s+--from=builder\s+--chown=root:root\s+\/app\/dist/],
   ['root-owned runtime guard', /COPY\s+--from=builder\s+--chown=root:root\s+\/app\/server\/runtime\/runtimeArtifactGuard\.mjs/],
-  ['read-only application artifacts', /chmod\s+-R\s+a-w\s+\/app\/node_modules\s+\/app\/dist\s+\/app\/server/],
+  ['root-owned production dependencies', /COPY\s+--from=prod-deps\s+--chown=root:root\s+\/app\/node_modules\s+\.\/node_modules/],
+  ['read-only package manifests', /chmod\s+a-w\s+\/app\/package\*\.json/],
   ['explicit writable uploads path', /chown\s+capitalai:capitalai\s+\/app\/uploads/],
   ['isolated runtime temp directory', /TMPDIR=\/tmp\/capitalai/],
   ['private runtime temp permissions', /chmod\s+0700\s+\/tmp\/capitalai/],
@@ -45,6 +46,8 @@ const forbidden = [
   ['root runtime user', /^USER\s+root\s*$/m],
   ['production npm shim command', /CMD\s*\[\s*"npm"/],
   ['runtime artifacts owned by application user', /COPY\s+--from=(?:builder|prod-deps)\s+--chown=capitalai:capitalai/],
+  ['recursive runtime ownership rewrite', /chown\s+-R\s+root:root\s+\/app\/node_modules/],
+  ['recursive runtime permission rewrite', /chmod\s+-R\s+a-w\s+\/app\/node_modules/],
   ['source commit persisted as image ENV', /^ENV\s+RELEASE_SOURCE_COMMIT\b/m],
   ['legacy exposed port 3000', /^EXPOSE\s+3000\s*$/m],
   ['legacy fixed healthcheck port 3000', /127\.0\.0\.1:3000\/healthz/],
@@ -107,6 +110,13 @@ if (!viteProductionStub.includes("throw new Error('VITE_DEV_SERVER_DISABLED_IN_P
 }
 if (!containerWorkflow.includes('test ! -e /app/node_modules/vite')) {
   failures.push('container workflow must assert that Vite is absent from the runtime image');
+}
+if (
+  !containerWorkflow.includes('for path in /app/node_modules /app/dist /app/server /app/package.json /app/package-lock.json; do')
+  || !containerWorkflow.includes('test ! -w "$path"')
+  || !containerWorkflow.includes('find /app/node_modules /app/dist /app/server -perm -0002 -print -quit')
+) {
+  failures.push('container workflow must prove root-owned runtime artifacts are non-writable to the application user');
 }
 if (!containerWorkflow.includes('format: cyclonedx') || !containerWorkflow.includes('runtime-image-sbom.cdx.json')) {
   failures.push('container workflow must generate a CycloneDX SBOM from the final runtime image');
