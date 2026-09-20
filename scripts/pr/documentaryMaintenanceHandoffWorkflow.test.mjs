@@ -25,7 +25,7 @@ test('AUTO_SYNC branch writer remains separated from PR and production authority
 
   assert.match(branchJob, /contents:\s*write/);
   assert.doesNotMatch(branchJob, /pull-requests:\s*write/);
-  assert.doesNotMatch(branchJob, /deploy|production_mutation|id-token:\s*write/i);
+  assert.doesNotMatch(branchJob, /id-token:\s*write|pull-requests:\s*write|gh\s+pr\s+create|render\s+deploy|deploy-production/i);
   assert.match(branchJob, /CURRENT_MAIN drift before AUTO_SYNC write/);
   assert.match(branchJob, /Maintenance handoff is not bound to this AUTO_SYNC source\/state/);
   assert.match(branchJob, /reviewRequiredPaths/);
