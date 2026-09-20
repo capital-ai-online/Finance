@@ -122,4 +122,12 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(reuse).toContain("if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot == 'true'");
     expect(yaml).toContain("github.event_name == 'push' && github.ref == 'refs/heads/main'");
   });
+
+  it('serializes current-state branch mutation through the canonical per-PR writer lease', () => {
+    const yaml = fs.readFileSync(baselineAutofixWorkflowPath, 'utf8');
+    const write = yaml.split('  write:\n')[1];
+    expect(write).toContain('group: capital-ai-pr-writer-${{ needs.plan.outputs.pr_number }}');
+    expect(write).toContain('cancel-in-progress: false');
+  });
+
 });
