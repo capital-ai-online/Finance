@@ -26,13 +26,14 @@
     "tests/unit/selfHealingContract.test.ts",
     "src/features/governance/ui/process-graph/processGraphModel.ts",
     "src/features/governance/ui/process-graph/processGraphModel.test.ts",
-    "src/features/governance/ui/process-graph/AdminProcessGraph.tsx"
+    "src/features/governance/ui/process-graph/AdminProcessGraph.tsx",
+    "tests/unit/dependencyResilience.test.ts"
   ],
   "scopeNote": "No new Governance, Evidence, Supervisor, EventMesh, QM or Security authority. Control Panel remains read-only/non-authorizing. Final merge remains Human/CODEOWNER-only.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
-  "validationState": "HOSTED_VALIDATION_PENDING",
-  "recorrelatedAt": "2026-09-20T15:24:00Z",
-  "correlationNote": "Rebased from the implementation branch onto CURRENT_MAIN ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2 after PR #1148 merged. The intervening main delta changes only the landing-page claim, LandingPage.tsx and frontend appearance test; no changed-file or Self-Healing authority overlap. PR #1147 remains an open semantic dependency and owns only the parent SH-02 architecture/work-graph projection paths, none of which are changed by SH-02.3E.",
+  "validationState": "HOSTED_REVALIDATION_PENDING_AFTER_PASS_TYPE_HARDENING",
+  "recorrelatedAt": "2026-09-20T15:34:00Z",
+  "correlationNote": "CURRENT_MAIN remains ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2. PR #1147 advanced to head 5a78bde07f1505094299894f9f4766d96df941fa but retains the same eight parent SH-02 projection paths; changed-file overlap with SH-02.3E remains zero. PR #1149 is the owner-correct FE fix for the unrelated CURRENT_MAIN landing-route regression and has exact-head CI PASS.",
   "finalCorrelationBaseSha": "ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2",
   "finalCorrelationState": "CURRENT_MAIN_ANCESTRY_PASS_OPEN_PR_1147_SEMANTIC_DEPENDENCY_ZERO_CHANGED_FILE_OVERLAP"
 }
