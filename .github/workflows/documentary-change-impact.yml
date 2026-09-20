@@ -119,6 +119,17 @@ jobs:
             --autosync=artifacts/documentary/autosync-plan.json \
             --output=artifacts/documentary/maintenance-handoff.json
 
+      - name: WP-06E Self-Healing-Convergence-Evidence erzeugen
+        if: steps.freshness.outputs.current == 'true'
+        run: |
+          npm run documentary:convergence:evidence -- \
+            --impact=artifacts/documentary/change-impact.json \
+            --autosync=artifacts/documentary/autosync-plan.json \
+            --handoff=artifacts/documentary/maintenance-handoff.json \
+            --output=artifacts/documentary/convergence-evidence.json \
+            --current-main=true \
+            --concurrency-key=documentary-change-impact-main
+
       - name: Impact-, AUTO_SYNC- und Handoff-Evidence hochladen
         if: steps.freshness.outputs.current == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -144,8 +155,14 @@ jobs:
             echo "- Deterministic AUTO_SYNC patches: `${AUTOSYNC_PATCHES}`"
             echo "- Semantic patch candidates: `${PATCHABLE}`"
             echo "- Review-only candidates: `${REVIEW_ONLY}`"
+            echo "- Self-Healing parent: `OPS-08-B-SH-02`"
+            echo "- Evidence role: `EVIDENCE_PROJECTION_ONLY`"
+            echo "- Trigger model: `MAIN_PUSH_EVENT_DRIVEN`"
+            echo "- Stale-main policy: `ABORT_AND_RESTART_ON_NEXT_MAIN_PUSH`"
+            echo "- Concurrency: `documentary-change-impact-main / cancel-in-progress=true`"
+            echo "- Branch collision: `IDEMPOTENT_REUSE`"
             echo
-            echo "AUTO_SYNC may enter only the validated isolated-branch lane. Semantic maintenance remains bound to Supervisor -> Platform Director APPROVED -> Agent IAM."
+            echo "WP-06 evidence is subordinate to SH-02 and does not create Finding/Action/Budget authority. AUTO_SYNC may enter only the validated isolated-branch lane. Semantic maintenance remains bound to Supervisor -> Platform Director APPROVED -> Agent IAM."
           } >> "$GITHUB_STEP_SUMMARY"
 
   autosync-branch:

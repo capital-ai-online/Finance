@@ -6,6 +6,18 @@
 **Direction:** event-driven, branch-only, fail-closed  
 **Target state:** every accepted application change produces a deterministic documentation-impact assessment and, where policy permits, a bounded background synchronization candidate.
 
+**Parent work package:** `OPS-08-B-SH-02 — Autonomous Self-Healing Backend & Frontend`  
+**Self-Healing role:** subordinate Documentary recovery/evidence specialization; no independent Finding/Action/Budget authority.
+
+### Resolution order inside this work package
+
+1. `/AGENTS.md@CURRENT_MAIN` remains the sole repository-wide trust root.
+2. The merged `OPS-08-B-SH-02` Self-Healing package and its current contracts define recovery/convergence semantics for WP-06.
+3. WP-06 defines the Documentary-specific implementation and evidence projection beneath SH-02.
+4. Other Documentary/ADR/ESS/runbook material remains subject-matter evidence/constraints and cannot create a competing control plane.
+
+When SH-02 and an older Documentary projection disagree on self-healing semantics, the current SH-02 contract wins. WP-06 must be reconciled rather than maintaining compatibility rules in parallel.
+
 ## 1. Goal
 
 Application changes must not leave routes, dependency descriptions, ownership projections, runbooks, project indexes or other current documentation silently stale.
@@ -222,8 +234,8 @@ Ambiguous ownership or conflicting authority is `BLOCKED`, not auto-fixed.
 - **WP-06A — Detection foundation:** `DONE_MAIN` through Human-merged PR #1108.
 - **WP-06B — Event workflow:** `DONE_MAIN` through Human-merged PR #1109; exact `main` push identity, stale-run cancellation, exact `before..after` impact planning, fail-closed documentation hygiene, low-cost state classification and 7-day impact artifact retention.
 - **WP-06C — Deterministic AUTO_SYNC rules:** `DONE_MAIN` through Human-merged PR #1110; explicit allowlisted rules generate SHA-256-bound patch plans and a separated `contents: write` job may materialize only those validated patches plus one work claim on an isolated `agent/documentary-autosync-*` branch.
-- **WP-06D — Semantic maintenance handoff:** implemented on the current branch. Validated AUTO_SYNC branches are handed to the existing `open-agent-draft-pr.yml` through a trusted-main `workflow_call`; review-only and semantic-maintenance candidate paths are carried in the work claim and rendered as PR evidence. Semantic mutation itself still requires the existing Supervisor/Platform-Director/Agent-IAM authorization chain; no missing approval evidence is synthesized.
-- **WP-06E — Closure/self-healing evidence:** pending.
+- **WP-06D — Semantic maintenance handoff:** `DONE_MAIN` through Human-merged PR #1121. Validated AUTO_SYNC branches are handed to the existing `open-agent-draft-pr.yml` through a trusted-main `workflow_call`; review-only and semantic-maintenance candidate paths are carried in the work claim and rendered as PR evidence. Semantic mutation itself still requires the existing Supervisor/Platform-Director/Agent-IAM authorization chain; no missing approval evidence is synthesized.
+- **WP-06E — Closure/self-healing evidence:** implemented on the current branch as an `EVIDENCE_PROJECTION_ONLY` specialization beneath `OPS-08-B-SH-02 / SH-02.3`; exact-source correlation, stale-main rejection, idempotent branch-collision handling, route/dependency fixtures, current/history separation and concurrency/cost evidence are covered. The evidence builder binds directly to `self-healing-contract/1.0.0`, fails closed on invalid contract state and never creates a second Self-Healing registry. Direct typed binding to `src/platform/Supervisor/selfHealingContract.ts` is active on the current branch because SH-02.3 is now merged to `main`; invalid contract snapshots fail closed. WP-06 consumes the canonical contract snapshot only and does not duplicate Finding/Action/Eligibility/Convergence rules.
 
 ## 10. Definition of Done
 
