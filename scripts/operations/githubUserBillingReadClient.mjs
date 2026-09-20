@@ -69,6 +69,30 @@ function normalizeUsageItem(raw) {
   });
 }
 
+function normalizeDetailedUsageItem(raw) {
+  if (!raw || typeof raw !== 'object') fail('detailed usage item must be an object');
+  return Object.freeze({
+    date: stringOrNull(raw.date),
+    product: stringOrNull(raw.product),
+    sku: stringOrNull(raw.sku),
+    quantity: numberOrNull(raw.quantity),
+    unitType: stringOrNull(raw.unitType),
+    pricePerUnit: numberOrNull(raw.pricePerUnit),
+    grossAmount: numberOrNull(raw.grossAmount),
+    discountAmount: numberOrNull(raw.discountAmount),
+    netAmount: numberOrNull(raw.netAmount),
+    repositoryName: stringOrNull(raw.repositoryName),
+  });
+}
+
+function normalizeUsageReport(raw) {
+  if (!raw || typeof raw !== 'object') fail('usage report must be an object');
+  const usageItems = Array.isArray(raw.usageItems) ? raw.usageItems : [];
+  return Object.freeze({
+    usageItems: Object.freeze(usageItems.map(normalizeDetailedUsageItem)),
+  });
+}
+
 function normalizeUsageSummary(raw) {
   if (!raw || typeof raw !== 'object') fail('usage summary must be an object');
   const period = raw.timePeriod && typeof raw.timePeriod === 'object' ? raw.timePeriod : {};
@@ -106,16 +130,7 @@ export function createGitHubUserBillingReadClient({
   const baseUrl = normalizeBaseUrl(apiBaseUrl);
   const token = userAccessToken.trim();
 
-  async function getUsageSummary({ year, month, day } = {}) {
-    assertOptionalInteger(year, 'year', 2000, 2100);
-    assertOptionalInteger(month, 'month', 1, 12);
-    assertOptionalInteger(day, 'day', 1, 31);
-
-    const path = buildQuery(
-      `/users/${username}/settings/billing/usage/summary`,
-      [['year', year], ['month', month], ['day', day]],
-    );
-
+  async function authenticatedGet(path) {
     let response;
     try {
       response = await fetchImpl(`${baseUrl}${path}`, {
@@ -146,7 +161,32 @@ export function createGitHubUserBillingReadClient({
       error.status = response.status;
       throw error;
     }
-    return normalizeUsageSummary(payload);
+    return payload;
+  }
+
+  async function getUsageReport({ year, month, day } = {}) {
+    assertOptionalInteger(year, 'year', 2000, 2100);
+    assertOptionalInteger(month, 'month', 1, 12);
+    assertOptionalInteger(day, 'day', 1, 31);
+
+    const path = buildQuery(
+      `/users/${username}/settings/billing/usage`,
+      [['year', year], ['month', month], ['day', day]],
+    );
+    return normalizeUsageReport(await authenticatedGet(path));
+  }
+
+  async function getUsageSummary({ year, month, day } = {}) {
+    assertOptionalInteger(year, 'year', 2000, 2100);
+    assertOptionalInteger(month, 'month', 1, 12);
+    assertOptionalInteger(day, 'day', 1, 31);
+
+    const path = buildQuery(
+      `/users/${username}/settings/billing/usage/summary`,
+      [['year', year], ['month', month], ['day', day]],
+    );
+
+    return normalizeUsageSummary(await authenticatedGet(path));
   }
 
   return Object.freeze({
@@ -156,10 +196,14 @@ export function createGitHubUserBillingReadClient({
         requiredPermission: GITHUB_USER_BILLING_REQUIRED_PERMISSION,
         acceptedCredential: 'github_app_user_access_token_or_fine_grained_pat',
         publicMethods: Object.freeze(['GET']),
-        publicPath: `/users/${username}/settings/billing/usage/summary`,
+        publicPaths: Object.freeze([
+          `/users/${username}/settings/billing/usage`,
+          `/users/${username}/settings/billing/usage/summary`,
+        ]),
         tokenPersistence: false,
       });
     },
+    getUsageReport,
     getUsageSummary,
   });
 }
