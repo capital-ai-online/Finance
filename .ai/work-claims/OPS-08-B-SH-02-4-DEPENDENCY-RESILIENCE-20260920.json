@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-4-DEPENDENCY-RESILIENCE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement SH-02.4 backend dependency resilience convergence and a fail-closed post-merge Self-Healing continuation handoff without introducing a second control plane or merge authority.",
+  "workItemDE": "SH-02.4 Backend-Dependency-Resilience konvergent implementieren und einen fail-closed Post-Merge-Self-Healing-Continuation-Handoff ergänzen, ohne zweite Control Plane oder Merge-Authority.",
+  "priority": "P0",
+  "priorityReason": "After merged SH-02.3, dependency retry/circuit/LKG semantics must become owner-correct and verifiable before later worker/runtime recovery slices can safely execute.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "startedAt": "2026-09-20T13:05:00Z",
+  "baseBranch": "main",
+  "baseSha": "7c087994f8569028b05102dd426323f7a571ddad",
+  "branch": "agent/operations-sh02-4-dependency-resilience-recovery-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-3-SELF-HEALING-CONTRACT-20260920.json",
+    ".ai/work-claims/OPS-08-B-SH-02-4-DEPENDENCY-RESILIENCE-20260920.json",
+    "src/platform/Supervisor/dependencyResilience.ts",
+    "src/platform/Supervisor/supervisor.ts",
+    "src/platform/Supervisor/README.md",
+    "tests/unit/dependencyResilience.test.ts",
+    "tests/unit/supervisor.test.ts",
+    ".github/workflows/self-healing-package-continuation.yml",
+    "tests/unit/selfHealingPackageContinuationWorkflow.test.ts",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/evidence/SH_02_AUTO_MERGE_SECURITY_EVALUATION_2026-09-20.md",
+    "src/services/cryptoSnapshotProvider.ts",
+    "tests/unit/cryptoSnapshotProvider.test.ts",
+    "src/platform/MarketData/providers/DefiLlamaProtocolProvider.ts",
+    "tests/unit/defiLlamaProtocolProvider.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "scopeNote": "SH-02.4 implements fail-closed dependency retry classification, preserves provider-native retry/circuit/LKG ownership, and adds truthful LKG health evidence plus a non-authorizing post-merge continuation handoff. RETRY_SAFE_OPERATION remains HELD; SH-1 production activation is reserved for SH-02.11. No protected SH-2/SH-3 mutation or auto-merge is enabled.",
+  "recorrelatedAt": "2026-09-20T13:33:00Z",
+  "activationBoundary": "RETRY_SAFE_OPERATION remains HELD under self-healing-contract/1.0.0. Provider-native resilience may continue under existing provider contracts; generic Self-Healing retry activation remains SH-02.11 scope."
+}
