@@ -476,6 +476,56 @@ test('canonical current v1.7 Human Decision body is left unchanged', () => {
   assert.equal(result.body, body);
 });
 
+test('normalizes only the observed current v1.7 P0-HIGHEST priority token', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '# Human Decision PR',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '> P0-HIGHEST 🔴 Kritisch · PR-Klasse C · NONE ➖',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '',
+    '- **Priorität:** P0-HIGHEST 🔴 Kritisch',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '',
+    '</details>',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+    '',
+    '</details>',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'current-v1.7-priority-token-normalized');
+  assert.match(result.body, /^> P0 🔴 Kritisch · PR-Klasse C · NONE ➖$/m);
+  assert.match(result.body, /^- \\*\\*Priorität:\\*\\* P0 🔴 Kritisch$/m);
+  assert.doesNotMatch(result.body, /P0-HIGHEST 🔴 Kritisch/);
+});
+
 test('repairs only the exact current v1.7 legacy baseline-section migration artifact', () => {
   const baseline = [
     '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
