@@ -1,27 +1,26 @@
 # GitHub Actions Workflow-Runner Convention
 
 **Document ID:** GOV-GHA-RUNNER-CONV-2026-09-20  
-**Version:** 1.1.0  
-**Status:** ACTIVE CONVENTION — DOCUMENTATION SLICE  
+**Version:** 1.2.1  
+**Status:** ACTIVE CONVENTION — PHASE 1b POLICY SLICE  
 **Date:** 2026-09-20  
 **Repository:** `capital-ai-online/Finance`  
-**Baseline:** `main@df7b970e40ca5b3bd1046ae595af060e0f4b7317`  
+**Baseline:** `main@0478b62ba365ccae895f029a8f8ddc58bee4230e`  
 **Owner:** CAPITAL-AI Owner (`SvenKulessa`)  
 **Document role:** `governance convention` (nicht Merge-/Deploy-Authority)  
 **Companion inventory:** `docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md`  
+**Deletion review:** `docs/security/WORKFLOW_DELETION_REVIEW.json`  
 **Related:** `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md`, ADR-0069, `scripts/security/verifyChangedWorkflowSecurity.mjs`
 
-Does not authorize: Self-Merge, Required-Check-Rename, `ci.yml`/`pr-governance.yml` Cutover, Self-Hosted Runner, M10-Reaktivierung, Actions-API-Disable ohne Owner-UI, Workflow-Datei-Löschung.
+Does not authorize: Self-Merge, Required-Check-Rename, `ci.yml`/`pr-governance.yml` Cutover, Self-Hosted Runner, M10-Reaktivierung, Actions-API-Disable ohne Owner-UI.
 
-Owner-Freigabe für den Dokumentations-Slice: `PR Erstellung : Freigegeben` am 2026-09-20 (Chat-Gate).
+Owner-Freigabe: `PR Erstellung : Freigegeben` am 2026-09-20 (Chat-Gate) für den reviewed deletion path.
 
-**Policy-Korrektur:** `verifyChangedWorkflowSecurity.mjs` bewertet jede Workflow-Löschung (`git status D`) als FAIL. Es gibt kein Review-Token im Validator. Deshalb bleiben die drei Stub-YAMLs in diesem PR erhalten. Löschung ist ein eigener Owner-reviewed Security-Schnitt (Policy zuerst, dann Datei).
+**Trusted-main Regel:** `pr-governance.yml` führt `verifyChangedWorkflowSecurity.mjs` aus dem Checkout `policy/` = aktuelles `main` aus, nicht aus dem PR-Head. Deshalb darf derselbe PR den Validator nicht ändern **und** Workflows löschen. Reihenfolge: (1) Policy nach `main` mergen, (2) danach Stubs in einem Folgeschnitt löschen.
 
 ---
 
 ## 1. Lagebild
-
-Stand der Korrelation:
 
 | Schicht | Anzahl |
 |---|---:|
@@ -31,8 +30,6 @@ Stand der Korrelation:
 | GitHub-managed `dynamic/*` | 4 |
 | Self-Hosted Runner | 0 |
 | Runner-Labels | `ubuntu-latest`, `ubuntu-24.04` |
-
-`docs/evidence/m0/WORKFLOW_ACTION_INVENTORY_2026-08-10.md` ist stale (7 Dateien) und bleibt historische Evidence.
 
 ---
 
@@ -48,109 +45,50 @@ Stand der Korrelation:
 
 ## 3. Namenskonvention
 
-### Datei
-
-```text
-{plane}-{capability}[-{qualifier}].yml
-```
-
+Datei: `{plane}-{capability}[-{qualifier}].yml`  
 Planes: `ci` | `gov` | `sec` | `ops` | `cost` | `plat` | `agent` | `proj`
 
-- kebab-case, Extension `.yml`
-- keine `-v2`/`-v3`, keine `tmp-`/`audit4-`/`pr[0-9]+-` auf `main`
-- One-Shot-Hosts leben auf dem Feature-Branch und werden vor Merge nach `main` gelöscht — aber nur nach Anpassung von `verifyChangedWorkflowSecurity.mjs`
-- `ci.yml` bleibt als kanonischer Dateiname Allowlist-Ausnahme
-
-### `name:`
-
-```text
-{PLANE} — {Klartext, Englisch, max. 60 Zeichen}
-```
-
-Kein Dateipfad als Name. Kein `(disabled)` im Namen als Dauerzustand — Datei erst löschen, wenn die Security-Policy Löschungen reviewed zulässt.
-
-### `run-name:`
-
-PR-/Run-gebundene Workflows setzen ein `run-name:` mit Plane und PR- oder Run-Nummer.
-
-### Jobs
-
-- Job-ID kebab-case
-- Job-`name:` ist der Status-Check-Name
-- Required-Check-Namen (`build-and-test` und der Workflow-Name `CI`) sind eingefroren bis Phase-3-Shadow
+`name:`: `{PLANE} — {Klartext, Englisch, max. 60 Zeichen}`
 
 ---
 
 ## 4. Control-Plane Freeze
 
-Nicht in diesem Slice umbenennen:
+Nicht löschen und nicht in Phase 1/2 umbenennen:
 
-| Datei | Grund |
-|---|---|
-| `ci.yml` | Required Check `build-and-test`; `workflow_run`-Quelle |
-| `pr-governance.yml` | Template-Contract; Listener filtert den Pfad |
-| Autofix-/Baseline-Listener | hängen an Name und/oder Pfad |
-
-Listener (Cutover nur Phase 3): `pr-autofix-controller.yml`, `controlled-pr-ci-autofix.yml`, `current-state-baseline-autofix.yml`, `pr-production-baseline-refresh.yml`, `pr-production-baseline-post-merge-refresh.yml`, `post-merge-production-correlation.yml`, `ops-bb2e-workflow-run-trigger.yml`.
+`ci.yml`, `pr-governance.yml`, `capital-ai-ci-shadow.yml`, Autofix-/Baseline-Listener (`pr-autofix-controller.yml`, `controlled-pr-ci-autofix.yml`, `current-state-baseline-autofix.yml`, `pr-production-baseline-refresh.yml`, `pr-production-baseline-post-merge-refresh.yml`, `post-merge-production-correlation.yml`, `ops-bb2e-workflow-run-trigger.yml`).
 
 ---
 
-## 5. Phasen
+## 5. Reviewed deletion path
+
+Nach Merge dieses PRs erlaubt der Validator auf `main` `git` status `D` nur wenn:
+
+1. `docs/security/WORKFLOW_DELETION_REVIEW.json` existiert, `schemaVersion=1.0.0`
+2. `ownerApproval` ist exakt `PR Erstellung : Freigegeben`
+3. der Pfad steht in `allowedDeletions`
+4. der Pfad ist nicht frozen
+5. die Base-Revision ist dispatch-only, ohne write permissions und ohne `pull_request_target`
+
+---
+
+## 6. Phasen
 
 | Phase | Inhalt | Dieser PR |
 |---|---|---|
-| 0 | Orphan-Records in der Actions-UI disablen | Owner-UI, nicht Repo |
-| 1a | Konvention + Inventar kanonisieren | **ja** |
-| 1b | Stub-YAMLs löschen | **nein** — blockiert durch Workflow-Security |
+| 0 | Orphan-Records in der Actions-UI disablen | Owner-UI |
+| 1a | Konvention + Inventar | erledigt in #1098 |
+| 1b-policy | Reviewed deletion path auf trusted main | **ja** |
+| 1b-delete | drei Stub-YAMLs löschen | **nein** — Folgeschnitt nach Merge |
 | 2 | Rename ohne Required-Check/Listener-Bruch | nein |
 | 3 | Shadow-Cutover `CI` / `PR Governance` | nein |
-| 4 | Policy-as-Code inkl. reviewed deletion path | eigener SEC/Owner-PR |
-
-Nicht gelöscht: Hygiene-Stubs, Lockfile-Stub, SA4-/Systemadmin-Hosts, Self-Heal-Diagnose, Node-Toolchain-Supersession.
 
 ---
 
-## 6. Orphans
-
-25 Actions-API-Records ohne Datei auf `main` bleiben `state: active`. Disable ist eine UI-/API-Aktion des Owners. IDs stehen im Companion-Inventar.
-
-Dynamics (`Dependabot Updates`, `Dependency Graph`, `CodeQL`, `Security Risk Assessment`) bleiben unangetastet.
-
----
-
-## 7. Kopf-Schablone für neue Workflows
-
-```yaml
-name: OPS — Example
-run-name: OPS #${{ github.run_number }} — example
-
-on:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ops-example-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  example:
-    name: Example
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - name: …
-```
-
-Actions bleiben SHA-gepinnt. `workflow_run`-Listener dokumentieren Quell-`name:` und Quell-Pfad im Kommentar.
-
----
-
-## 8. Nicht-Ziele
+## 7. Nicht-Ziele
 
 - kein zweites CI neben `ci.yml`
 - keine M10-Reaktivierung
 - kein Self-Hosted-Runner-Setup
-- keine Aufweichung von `verifyChangedWorkflowSecurity.mjs` in diesem PR
+- keine Workflow-Deletes in demselben PR, der den Validator ändert
 - `package.json#version` bleibt einzige Plattform-Versionsautorität
