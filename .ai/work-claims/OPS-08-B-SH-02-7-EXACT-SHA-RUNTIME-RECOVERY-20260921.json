@@ -26,16 +26,13 @@
   "claimedPaths": [
     ".ai/work-claims/OPS-08-B-SH-02-7-EXACT-SHA-RUNTIME-RECOVERY-20260921.json",
     ".github/workflows/ops-exact-sha-runtime-recovery.yml",
-    "src/platform/Supervisor/selfHealingContract.ts",
-    "tests/unit/selfHealingContract.test.ts",
-    "tests/unit/supervisor.test.ts",
     "tests/unit/exactShaRuntimeRecoveryWorkflow.test.ts",
     "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
     "docs/projects/operations/ROADMAP.md",
     "docs/projects/operations/evidence/SH_02_7_EXACT_SHA_RUNTIME_RECOVERY_2026-09-21.md"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
-  "scopeNote": "No second deployment authority is introduced. The recovery workflow can only re-run the existing ci.yml deploy-production job for the exact current main push run with a live provenance artifact; Render credentials remain isolated in the existing production environment job.",
-  "activationBoundary": "REDEPLOY_EXACT_SHA becomes contract-enabled only with external capability authorization, one-attempt budget, 300000ms cooldown, kill switch, exact-main/provenance binding and post-action liveness/readiness/identity readback. Rollback/restore remains HELD.",
-  "correlationNote": "CI exposed two deterministic expectation drifts: the active OPS Roadmap header still referenced main@59b65e..., and supervisor.test.ts still projected REDEPLOY_EXACT_SHA as HELD. PR #1186 also changes supervisor.test.ts, but its current branch leaves this exact Self-Healing expectation unchanged; overlap is same-file/non-conflicting-hunk and must be re-correlated immediately before merge."
+  "scopeNote": "Materialize the exact-SHA recovery capability without creating a second deployment authority. The workflow reuses ci.yml/deploy-production and remains fail-closed unless CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY=true; Render credentials stay isolated in the existing production environment job.",
+  "activationBoundary": "Activation remains HELD in self-healing-contract/1.0.0 and by default in the workflow. A separate current-main activation convergence is required after the competing Supervisor writer is terminal. Kill switch CAPITAL_AI_DISABLE_EXACT_SHA_RECOVERY=true always overrides activation.",
+  "correlationNote": "Initial CI exposed a stale active OPS Roadmap baseline plus a shared Supervisor expectation. The stale Roadmap baseline is fixed here. The Supervisor overlap with open PR #1186 is avoided by reverting all shared Supervisor contract/test paths to CURRENT_MAIN and separating capability implementation from activation."
 }
