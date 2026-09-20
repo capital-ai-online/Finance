@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`
+**Baseline:** `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`
 
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
@@ -17,13 +17,15 @@ This file remains a temporary project execution projection until the separately 
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
-The SH-02 foundation (SH-02.0..02.2) is merged via PR #1122. The current bounded writer is PR #1125 / branch `agent/operations-self-healing-contract-20260920` for SH-02.3 against `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`. This package remains the current Self-Healing execution projection while unrelated PR #1126 has no changed-file overlap.
+SH-02.0..02.5 are Human-merged on main; SH-02.5 merged via PR #1141 and its final-head CI, Governance, Container Security and PR review workflows succeeded. The current bounded writer is `agent/operations-sh02-policy-homogeneity-20260920` for the P0 policy-homogeneity gate against `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`. After this gate, SH-02.6 is the next dependency-ready functional slice.
 
 Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
 
 Detailed package: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 
 ### Existing OPS backlog context
+
+**Priority rule:** while a dependency-ready SH-02 slice exists, `OPS-08-B-SH-02` is the highest executable OPS priority. The backlog below remains valid but is not selected ahead of SH-02 unless Self-Healing is genuinely blocked by a real dependency.
 
 1. `OPS-PR900-06 — Security owner returns` is the next normal executable OPS Roadmap evidence-return slice only if fresh current-main correlation still confirms that exact active identity. `OPS-PR900-05` repository materialization is Human-merged via PR #980; its deterministic evidence contract is ready while real live SLO/incident/RPO/RTO/vendor measurements remain explicitly open and must not be synthesized.
 2. `OPS-02-CI-01 — Build/Test Cost & Scope Reduction` is repository-integrated for the current bounded slices: PR #988 merged the `NONE / FOCUSED / FULL / REUSE` cost-profile policy and PR #996 merged snapshot-bound stale-event/concurrency hardening. Remaining hosted cost/race observations stay real-evidence-only; no unobserved race or saving is promoted to PASS.
