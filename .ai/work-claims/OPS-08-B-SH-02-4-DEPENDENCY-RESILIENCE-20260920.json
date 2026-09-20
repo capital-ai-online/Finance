@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-4-DEPENDENCY-RESILIENCE-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -39,5 +39,7 @@
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
   "scopeNote": "SH-02.4 implements fail-closed dependency retry classification, preserves provider-native retry/circuit/LKG ownership, and adds truthful LKG health evidence plus a non-authorizing post-merge continuation handoff. RETRY_SAFE_OPERATION remains HELD; SH-1 production activation is reserved for SH-02.11. No protected SH-2/SH-3 mutation or auto-merge is enabled.",
   "recorrelatedAt": "2026-09-20T13:41:00Z",
-  "activationBoundary": "RETRY_SAFE_OPERATION remains HELD under self-healing-contract/1.0.0. Provider-native resilience may continue under existing provider contracts; generic Self-Healing retry activation remains SH-02.11 scope."
+  "activationBoundary": "RETRY_SAFE_OPERATION remains HELD under self-healing-contract/1.0.0. Provider-native resilience may continue under existing provider contracts; generic Self-Healing retry activation remains SH-02.11 scope.",
+  "releasedAt": "2026-09-20T14:10:00Z",
+  "releaseReason": "PR #1136 merged to main; successor SH-02.5 claim owns the next bounded slice."
 }

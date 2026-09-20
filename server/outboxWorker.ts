@@ -1,73 +1,162 @@
-// ADR-0054 / R-101 -- canonical durable outbox worker.
+// ADR-0054 / SH-02.5 -- canonical durable outbox worker.
 //
-// Polls public.outbox_jobs (via server/outbox.ts's claimOutboxJob) and dispatches each claimed
-// job to the handler registered for its job_type, then completes or records-and-backs-off the
-// job based on the handler's outcome. Handlers MUST be idempotent: a stale lease is
-// automatically reclaimed and re-dispatched by claim_outbox_job, so the same payload can execute
-// more than once under contention/crash recovery.
+// The worker reuses public.outbox_jobs as the only durable queue/retry/dead-letter authority.
+// Expired leases are replayed only for handlers explicitly registered as IDEMPOTENT. Handlers
+// whose external side effect can have an ambiguous outcome are quarantined for reconciliation
+// instead of being silently replayed after a crash or uncertain failure.
 
 import { randomUUID } from 'crypto';
-import { claimOutboxJob, completeOutboxJob, failOutboxJob } from './outbox';
+import {
+  claimOutboxJob,
+  completeOutboxJob,
+  failOutboxJob,
+  heartbeatOutboxJob,
+  quarantineOutboxJob,
+  type OutboxReplaySafety,
+} from './outbox';
 
 export type OutboxJobHandler = (payload: Record<string, unknown>) => Promise<void>;
 
-const handlers = new Map<string, OutboxJobHandler>();
+export interface OutboxJobHandlerOptions {
+  replaySafety: OutboxReplaySafety;
+}
 
-/** Registers (or replaces) the handler for a job_type. Call once per job_type at composition time. */
-export function registerOutboxJobHandler(jobType: string, handler: OutboxJobHandler): void {
-  handlers.set(jobType, handler);
+interface OutboxJobHandlerRegistration {
+  handler: OutboxJobHandler;
+  replaySafety: OutboxReplaySafety;
+}
+
+const handlers = new Map<string, OutboxJobHandlerRegistration>();
+
+/**
+ * Registers (or replaces) the handler for a job_type.
+ *
+ * Replay safety is mandatory. IDEMPOTENT means an expired processing lease may be reclaimed and
+ * executed again. REQUIRES_RECONCILIATION means any ambiguous/stalled attempt must fail closed
+ * into the existing outbox dead-letter state.
+ */
+export function registerOutboxJobHandler(
+  jobType: string,
+  handler: OutboxJobHandler,
+  options: OutboxJobHandlerOptions,
+): void {
+  if (!jobType.trim()) {
+    throw new Error('[Outbox Worker] jobType must be non-empty.');
+  }
+  handlers.set(jobType, { handler, replaySafety: options.replaySafety });
+}
+
+export function getOutboxReplaySafeJobTypes(): string[] {
+  return [...handlers.entries()]
+    .filter(([, registration]) => registration.replaySafety === 'IDEMPOTENT')
+    .map(([jobType]) => jobType)
+    .sort();
+}
+
+const DEFAULT_INTERVAL_MS = 15_000;
+export const OUTBOX_LEASE_SECONDS = 60;
+export const OUTBOX_HEARTBEAT_INTERVAL_MS = 20_000;
+export const OUTBOX_MAX_JOBS_PER_DRAIN = 25;
+
+function startLeaseHeartbeat(jobId: string, leaseOwner: string): NodeJS.Timeout {
+  let heartbeatInFlight = false;
+
+  const timer = setInterval(() => {
+    if (heartbeatInFlight) return;
+    heartbeatInFlight = true;
+    void heartbeatOutboxJob(jobId, leaseOwner, OUTBOX_LEASE_SECONDS)
+      .then(held => {
+        if (!held) {
+          console.error(
+            `[Outbox Worker] Lease heartbeat lost ownership for job ${jobId}; completion will fail closed.`,
+          );
+        }
+      })
+      .catch(err => {
+        console.error(
+          `[Outbox Worker] Lease heartbeat failed for job ${jobId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      })
+      .finally(() => {
+        heartbeatInFlight = false;
+      });
+  }, OUTBOX_HEARTBEAT_INTERVAL_MS);
+
+  timer.unref();
+  return timer;
 }
 
 /**
- * Claims and processes at most one job. Returns false when nothing was claimable (the caller's
- * poll loop should stop draining for this tick), true otherwise -- including when the claimed
- * job's handler failed, since that failure was already recorded via failOutboxJob and must never
- * propagate out of the poll loop.
+ * Claims and processes at most one job.
+ *
+ * Retry behavior is contract-bound:
+ * - IDEMPOTENT handlers use the existing bounded failOutboxJob retry budget.
+ * - REQUIRES_RECONCILIATION handlers are quarantined on uncertain failure.
+ * - missing handlers are quarantined rather than consuming repeated retries.
  */
 export async function processOneOutboxJob(leaseOwner: string): Promise<boolean> {
-  const job = await claimOutboxJob(leaseOwner);
+  const job = await claimOutboxJob(
+    leaseOwner,
+    OUTBOX_LEASE_SECONDS,
+    getOutboxReplaySafeJobTypes(),
+  );
   if (!job) {
     return false;
   }
 
-  const handler = handlers.get(job.jobType);
-  if (!handler) {
-    console.error(`[Outbox Worker] No handler registered for job_type=${job.jobType} (job ${job.jobId}); recording failure.`);
-    await failOutboxJob(job.jobId, leaseOwner, `no handler registered for job_type=${job.jobType}`);
+  const registration = handlers.get(job.jobType);
+  if (!registration) {
+    const reason = `no handler registered for job_type=${job.jobType}`;
+    console.error(
+      `[Outbox Worker] ${reason} (job ${job.jobId}); quarantining for reconciliation.`,
+    );
+    await quarantineOutboxJob(job.jobId, leaseOwner, reason);
     return true;
   }
 
+  const heartbeatTimer = startLeaseHeartbeat(job.jobId, leaseOwner);
+
   try {
-    await handler(job.payload);
-    await completeOutboxJob(job.jobId, leaseOwner);
-    console.log(`[Outbox Worker] Completed job ${job.jobId} (job_type=${job.jobType}, attempt ${job.attempts}/${job.maxAttempts}).`);
-  } catch (err: any) {
-    const outcome = await failOutboxJob(job.jobId, leaseOwner, err);
-    console.warn(`[Outbox Worker] Job ${job.jobId} (job_type=${job.jobType}) failed on attempt ${job.attempts}/${job.maxAttempts}: ${err?.message || err} -> ${outcome}`);
+    await registration.handler(job.payload);
+
+    const completed = await completeOutboxJob(job.jobId, leaseOwner);
+    if (!completed) {
+      console.error(
+        `[Outbox Worker] Job ${job.jobId} (job_type=${job.jobType}) finished handler execution but no longer owns its lease; success is not recorded.`,
+      );
+      return true;
+    }
+
+    console.log(
+      `[Outbox Worker] Completed job ${job.jobId} (job_type=${job.jobType}, attempt ${job.attempts}/${job.maxAttempts}).`,
+    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+
+    if (registration.replaySafety === 'IDEMPOTENT') {
+      const outcome = await failOutboxJob(job.jobId, leaseOwner, err);
+      console.warn(
+        `[Outbox Worker] Replay-safe job ${job.jobId} (job_type=${job.jobType}) failed on attempt ${job.attempts}/${job.maxAttempts}: ${message} -> ${outcome}`,
+      );
+    } else {
+      const reason = `handler requires reconciliation after failure: ${message}`;
+      const quarantined = await quarantineOutboxJob(job.jobId, leaseOwner, reason);
+      console.warn(
+        `[Outbox Worker] Non-replay-safe job ${job.jobId} (job_type=${job.jobType}) failed with ambiguous side-effect state; quarantine=${quarantined}.`,
+      );
+    }
+  } finally {
+    clearInterval(heartbeatTimer);
   }
 
   return true;
 }
 
-let pollTimer: NodeJS.Timeout | null = null;
-let workerId: string | null = null;
-
-export interface OutboxWorkerOptions {
-  intervalMs?: number;
-  leaseOwner?: string;
-}
-
-const DEFAULT_INTERVAL_MS = 15_000;
-export const OUTBOX_MAX_JOBS_PER_DRAIN = 25;
-
 /**
  * Canonical bounded execution seam for ADR-0054 jobs.
  *
- * This function intentionally reuses the existing outbox queue/lease/retry/dead-letter authority.
- * A future external execution host (including Render Workflows) may invoke this bounded drain, but
- * MUST NOT introduce a second durable queue, retry budget, dead-letter store or job-type routing
- * authority. Provider-level retries should therefore be disabled or limited to the wake-up call;
- * retry ownership remains in public.outbox_jobs / server/outbox.ts.
+ * A future external execution host may invoke this bounded drain, but MUST NOT introduce a second
+ * durable queue, retry budget, dead-letter store or job-type routing authority.
  */
 export async function drainOutboxJobs(
   leaseOwner: string,
@@ -81,6 +170,14 @@ export async function drainOutboxJobs(
   return processed;
 }
 
+let pollTimer: NodeJS.Timeout | null = null;
+let workerId: string | null = null;
+
+export interface OutboxWorkerOptions {
+  intervalMs?: number;
+  leaseOwner?: string;
+}
+
 /** Starts the poll loop. Idempotent -- a second call while already running is a no-op. */
 export function startOutboxWorker(options: OutboxWorkerOptions = {}): void {
   if (pollTimer) {
@@ -92,8 +189,11 @@ export function startOutboxWorker(options: OutboxWorkerOptions = {}): void {
   const tick = async () => {
     try {
       await drainOutboxJobs(workerId as string);
-    } catch (err: any) {
-      console.error('[Outbox Worker] Poll tick failed:', err?.message || err);
+    } catch (err: unknown) {
+      console.error(
+        '[Outbox Worker] Poll tick failed:',
+        err instanceof Error ? err.message : String(err),
+      );
     }
   };
 
