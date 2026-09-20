@@ -286,7 +286,7 @@ def _chatterbox_run(
     _seed_everything(EXPECTED_SEED, torch_module, numpy_module)
     _sync_cuda(torch_module, device)
     started = time.perf_counter()
-    synthesis_text, pronunciation_projection = _synthesis_text(sample)
+    synthesis_text, pronunciation_projection = _synthesis_text(sample, "chatterbox-multilingual-v3")
     wav = model.generate(synthesis_text, language_id=language)
     _sync_cuda(torch_module, device)
     total_ms = (time.perf_counter() - started) * 1000.0
