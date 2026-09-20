@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEC-WEB-HARDENING-01-20260920",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-SEC",
+  "projectFolder": "docs/projects/security/",
+  "owner": "CAPITAL-AI-SEC",
+  "primaryProductivePvc": [],
+  "branchName": "agent/security-sec-web-hardening-01-20260920",
+  "baseBranch": "main",
+  "baseSha": "e86955225887bb7f34036c175ad1da89b8aec14d",
+  "workItem": "SEC-WEB-HARDENING-01 — Public Website & Secure Deployment Convergence",
+  "approvedScope": "Materialize the freshly owner-directed cross-cutting Security work package for the rebuilt public website and secure deployment chain; define threat model, findings SEC-WEB-F01..F30, dependency-ordered child packages, owner-correct routing, evidence and exit gates. Documentation/evidence only; no runtime/provider/secret/IAM/DNS/Production/Ruleset mutation.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEC-WEB-HARDENING-01-20260920.json",
+    "docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md",
+    "docs/projects/security/ROADMAP.md",
+    "docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md",
+    "docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md",
+    "docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md"
+  ],
+  "foreignWork": [
+    {
+      "target": "CAPITAL-AI-OPS",
+      "scope": "release/runtime/deployment/API remediation and evidence"
+    },
+    {
+      "target": "CAPITAL-AI-FE",
+      "scope": "landing/browser/CSP implementation"
+    },
+    {
+      "target": "CAPITAL-AI-CLIENT",
+      "scope": "client/session security semantics where applicable"
+    },
+    {
+      "target": "CAPITAL-AI-GOV",
+      "scope": "ruleset/CODEOWNER provider enforcement decision"
+    },
+    {
+      "target": "CAPITAL-AI-COMP",
+      "scope": "supply-chain/compliance requirement overlay"
+    },
+    {
+      "target": "CAPITAL-AI-QM",
+      "scope": "independent assurance"
+    }
+  ],
+  "startedAt": "2026-09-20T20:12:00+02:00",
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector",
+  "initialBaseSha": "a98399cf60ba95ce2d7232ba36b855bdf8d1db16",
+  "recorrelatedAt": "2026-09-20T20:19:00+02:00"
+}

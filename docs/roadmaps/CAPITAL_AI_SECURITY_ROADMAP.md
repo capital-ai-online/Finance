@@ -207,3 +207,24 @@ The next Security sequence after this matrix slice completes its normal PR lifec
 ## 11. PR / merge / production boundary
 
 PR creation requires separate explicit Human/Owner approval for the exact current-main, branch-head, changed-file scope, correlation result and resolved title after final re-correlation. Hosted checks run after PR according to current repository controls. Merge remains Human/CODEOWNER-only. CI, roadmap status or Security evidence does not authorize Release, Production or protected provider mutation.
+
+## 5A. Fresh priority package — SEC-WEB-HARDENING-01
+
+**State:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED  
+**Owner direction:** 2026-09-20  
+**Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
+**Detailed package:** docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md
+
+This package is the current website/deployment Security convergence overlay for the rebuilt public landing experience. It reuses SEC-01..SEC-10 and the existing Release/Production controls rather than creating a parallel control plane.
+
+Dependency order:
+
+1. SEC-WEB-00 exact attack-surface/control baseline;
+2. SEC-WEB-10 signed single-artifact supply-chain convergence;
+3. SEC-WEB-20 route-minimal browser/CSP isolation;
+4. SEC-WEB-30 public API/auth/input/abuse hardening;
+5. SEC-WEB-40 exact production/readiness/rollback resilience;
+6. SEC-WEB-50 independent hosted/runtime/DAST/transport assurance.
+
+P0 findings are SEC-WEB-F01, F10, F15, F16 and F23. Implementation remains owner-correct; Security independently verifies returned evidence. The package does not itself authorize protected provider/Production/Ruleset mutations.
+

@@ -270,3 +270,22 @@ Correlation does not reopen closed or historically verified Security work withou
 - no duplicate Security authority;
 - no duplicated domain implementation;
 - no Security PR may absorb target-project productive remediation merely to keep one Security backlog.
+
+## 9. SEC-WEB-HARDENING-01 traceability
+
+**Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
+**Detailed package:** docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md  
+**Status:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED
+
+| Finding group | Threat/control | Primary target | Security role | Current state |
+|---|---|---|---|---|
+| SEC-WEB-F01/F13-F17/F23 | dependency/build/OCI/registry/signature/provenance/secret exposure | CAPITAL-AI-OPS / PVC-02, PVC-07, PVC-08; COMP overlay | SEC-04/06/08/10 requirements + verification | OWNER_ROUTED / VERIFICATION_OPEN |
+| SEC-WEB-F02-F04/F06/F09/F11-F12/F26 | browser isolation, CSP, safe DOM, runtime headers | CAPITAL-AI-FE + CAPITAL-AI-OPS / PVC-08 runtime delivery | SEC-03/08/10 | OWNER_ROUTED / VERIFICATION_OPEN |
+| SEC-WEB-F05/F07-F08/F21-F22/F24-F25 | public API, input, method/CORS, abuse/cost, safe errors, telemetry | CAPITAL-AI-OPS / PVC-02/18 plus affected domain owner | SEC-03/04/08/09/10 | OWNER_ROUTED / VERIFICATION_OPEN |
+| SEC-WEB-F10 | OAuth/session/authentication boundary | CAPITAL-AI-CLIENT / PVC-01 + FE/OPS affected surfaces | SEC-02/03/08/10 | OWNER_ROUTED / P0 VERIFICATION_OPEN |
+| SEC-WEB-F18-F20/F27-F28 | liveness/readiness, rollback, scaling rate limit, DAST, DNS/TLS | CAPITAL-AI-OPS / PVC-04/07/08 | SEC-05/08/10 | OWNER_ROUTED / VERIFICATION_OPEN |
+| SEC-WEB-F29 | review/CODEOWNER provider enforcement decision | CAPITAL-AI-GOV / PVC-05 | Security requirement input; Governance mutation authority | OWNER_DECISION_REQUIRED |
+| SEC-WEB-F30 | consolidated website-security verification suite | owner-correct implementation + CAPITAL-AI-SEC verification + QM assurance | SEC-08/10 | PLANNED |
+
+Traceability invariant: documentation materialization is not remediation evidence. Each finding must return exact candidate/runtime/provider evidence before Security can mark it VERIFIED; QM assurance remains independent where required.
+
