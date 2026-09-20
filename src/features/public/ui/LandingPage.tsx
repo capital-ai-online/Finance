@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Activity,
   ArrowRight,
-  ArrowUpRight,
   BarChart3,
   BookOpen,
   Brain,
@@ -16,7 +15,6 @@ import {
   Menu,
   Play,
   ShieldCheck,
-  Sparkles,
   Users,
 } from 'lucide-react';
 import { CapitalAiLogo } from '../../../shared/branding';
