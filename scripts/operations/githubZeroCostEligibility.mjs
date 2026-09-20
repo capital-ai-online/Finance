@@ -20,6 +20,16 @@ function normalizeEntitlement(value) {
   return value;
 }
 
+/**
+ * @param {{
+ *   capabilityId?: string;
+ *   entitlement?: 'INCLUDED_VERIFIED' | 'NOT_INCLUDED' | 'UNKNOWN';
+ *   settingsStatus?: string;
+ *   netAmount?: number | null;
+ *   usageObserved?: boolean;
+ *   evidence?: string[];
+ * }} [options]
+ */
 export function evaluateZeroCostCapability({
   capabilityId,
   entitlement = 'UNKNOWN',
@@ -81,7 +91,7 @@ export function evaluateZeroCostCapability({
   });
 }
 
-export function summarizeZeroCostDecisions(decisions) {
+/** @param {Array<{ state?: string }>} decisions */\nexport function summarizeZeroCostDecisions(decisions) {
   const rows = Array.isArray(decisions) ? decisions : [];
   const byState = Object.fromEntries(
     ZERO_COST_DECISION_STATES.map((state) => [
