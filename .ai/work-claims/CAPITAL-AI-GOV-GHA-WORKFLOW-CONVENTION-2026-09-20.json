@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-GHA-WORKFLOW-CONVENTION-2026-09-20",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok 4.6",
@@ -11,6 +11,8 @@
   "workItem": "Canonicalize GitHub Actions workflow-runner naming convention. Do not delete workflow files in this PR because verifyChangedWorkflowSecurity.mjs fail-closes on deletion.",
   "workItemDE": "GitHub-Actions-Workflow-Runner-Namenskonvention kanonisieren. Keine Workflow-Datei in diesem PR loeschen, weil verifyChangedWorkflowSecurity.mjs Loeschungen fail-closed ablehnt.",
   "startedAt": "2026-09-20T04:05:00Z",
+  "releasedAt": "2026-09-20T04:16:13Z",
+  "releaseReason": "PR #1098 merged. Successor claim CAPITAL-AI-GOV-GHA-WORKFLOW-STUB-DELETE-2026-09-20.",
   "baseBranch": "main",
   "baseSha": "df7b970e40ca5b3bd1046ae595af060e0f4b7317",
   "branch": "agent/governance-actions-workflow-convention-20260920",
@@ -31,5 +33,5 @@
     "docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md",
     "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md"
   ],
-  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge. Workflow deletions and Actions-API disable remain out of scope."
+  "releaseCondition": "Released after Human merge of PR #1098. No Self-Merge."
 }
