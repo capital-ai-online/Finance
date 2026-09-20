@@ -3,6 +3,11 @@ import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
 import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 import {
+  PASSWORD_MIN_LENGTH,
+  assertStrongUncompromisedPassword,
+  validatePasswordStrength,
+} from '../../../lib/passwordSecurity';
+import {
   PASSWORD_RECOVERY_QUERY_PARAM,
   isPasswordRecoveryLocation,
 } from '../auth/passwordRecovery';
@@ -86,13 +91,21 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
       setError('Bitte einen Namen für das Konto eingeben.');
       return;
     }
-    if (mode === 'register' && password.length < 8) {
-      setError('Das Passwort muss mindestens 8 Zeichen lang sein.');
-      return;
+    if (mode === 'register') {
+      try {
+        validatePasswordStrength(password);
+      } catch (passwordError) {
+        setError(passwordError instanceof Error ? passwordError.message : 'Das Passwort erfüllt die Sicherheitsanforderungen nicht.');
+        return;
+      }
     }
 
     setActiveAction('email');
     try {
+      if (mode === 'register') {
+        await assertStrongUncompromisedPassword(password);
+      }
+
       const captchaToken = await requestHcaptchaToken();
 
       if (mode === 'login') {
@@ -181,8 +194,10 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
       setError('Supabase ist nicht konfiguriert. Das Passwort kann nicht aktualisiert werden.');
       return;
     }
-    if (recoveryPassword.length < 8) {
-      setError('Das neue Passwort muss mindestens 8 Zeichen lang sein.');
+    try {
+      validatePasswordStrength(recoveryPassword);
+    } catch (passwordError) {
+      setError(passwordError instanceof Error ? passwordError.message : 'Das neue Passwort erfüllt die Sicherheitsanforderungen nicht.');
       return;
     }
     if (recoveryPassword !== confirmRecoveryPassword) {
@@ -196,6 +211,8 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
       if (sessionError || !sessionData.session) {
         throw new Error('Der Passwort-Link ist ungültig oder abgelaufen.');
       }
+
+      await assertStrongUncompromisedPassword(recoveryPassword);
 
       const { error: updateError } = await supabase.auth.updateUser({ password: recoveryPassword });
       if (updateError) throw updateError;
@@ -343,7 +360,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
                         id="recovery-password"
                         type="password"
                         autoComplete="new-password"
-                        minLength={8}
+                        minLength={PASSWORD_MIN_LENGTH}
                         value={recoveryPassword}
                         onChange={(event) => setRecoveryPassword(event.target.value)}
                         required
@@ -359,7 +376,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
                         id="recovery-password-confirm"
                         type="password"
                         autoComplete="new-password"
-                        minLength={8}
+                        minLength={PASSWORD_MIN_LENGTH}
                         value={confirmRecoveryPassword}
                         onChange={(event) => setConfirmRecoveryPassword(event.target.value)}
                         required
@@ -450,7 +467,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
                           id="auth-password"
                           type="password"
                           autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                          minLength={mode === 'register' ? 8 : undefined}
+                          minLength={mode === 'register' ? PASSWORD_MIN_LENGTH : undefined}
                           value={password}
                           onChange={(event) => setPassword(event.target.value)}
                           required
