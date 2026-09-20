@@ -139,7 +139,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const canonicalRoadmap = read('docs/projects/governance/ROADMAP.md');
     const pluginUse = control('CTRL-SDLC-PLUGIN-USE-001');
 
-    expect(authorities.version).toBe('1.63.0');
+    expect(authorities.version).toBe('1.64.0');
     expect(catalog.version).toBe('1.27.0');
     expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('4.0.0');
     expect(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.version).toBe('4.0.0');
