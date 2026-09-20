@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-GHA-WORKFLOW-CONVENTION-2026-09-20",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Canonicalize GitHub Actions workflow-runner naming convention. Do not delete workflow files in this PR because verifyChangedWorkflowSecurity.mjs fail-closes on deletion.",
+  "workItemDE": "GitHub-Actions-Workflow-Runner-Namenskonvention kanonisieren. Keine Workflow-Datei in diesem PR loeschen, weil verifyChangedWorkflowSecurity.mjs Loeschungen fail-closed ablehnt.",
+  "startedAt": "2026-09-20T04:05:00Z",
+  "baseBranch": "main",
+  "baseSha": "df7b970e40ca5b3bd1046ae595af060e0f4b7317",
+  "branch": "agent/governance-actions-workflow-convention-20260920",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV",
+  "pullRequest": 1098,
+  "productionBaseline": {
+    "checkedAt": "2026-09-20T04:10:09.191Z",
+    "version": "0.6.0",
+    "commitSha": "081490f1eed9b19bde7bc427cb4a0dee6d2373da",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-GHA-WORKFLOW-CONVENTION-2026-09-20.json",
+    "docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md",
+    "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md"
+  ],
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge. Workflow deletions and Actions-API disable remain out of scope."
+}
