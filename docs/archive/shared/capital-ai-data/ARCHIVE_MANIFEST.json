@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0.0",
+  "migrationId": "CAPITAL-AI-DOC-REPO-STRUCTURE-ARCHIVE-01-WP04",
+  "sourceCommit": "4a2f43842f380c6da6d088bbea57729bae383be7",
+  "sourceProject": "CAPITAL-AI-DATA",
+  "productiveOwner": "CAPITAL-AI-FINTECH",
+  "documentaryOwner": "CAPITAL-AI-DOC",
+  "createdAt": "2026-09-20",
+  "contentPolicy": "BYTE_PRESERVED",
+  "artifactCount": 17,
+  "entries": [
+    {
+      "sourcePath": "docs/projects/data/evidence/CANONICAL_DATA_CONNECTIONS_2026-09-03.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-10/evidence/CANONICAL_DATA_CONNECTIONS_2026-09-03.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "f6e2b41199a061d157ffe11a1d9793eb4e07a303",
+      "archiveBlobSha": "f6e2b41199a061d157ffe11a1d9793eb4e07a303",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/CURRENT_MAIN_SECURITY_HANDOFF_RECONCILIATION_2026-09-02.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-10/evidence/CURRENT_MAIN_SECURITY_HANDOFF_RECONCILIATION_2026-09-02.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "38f0b19a8dae1a484912ef3b6400131ab4fb8f31",
+      "archiveBlobSha": "38f0b19a8dae1a484912ef3b6400131ab4fb8f31",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/DATA_09_PROVIDER_TIMESTAMP_VALIDATION_2026-09-16.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-09/evidence/DATA_09_PROVIDER_TIMESTAMP_VALIDATION_2026-09-16.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "d4307652362c1674d15c58e46118720712ab7d7d",
+      "archiveBlobSha": "d4307652362c1674d15c58e46118720712ab7d7d",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/DATA_10_14_GAP_CLOSE_2026-09-07.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-10/evidence/DATA_10_14_GAP_CLOSE_2026-09-07.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "5659b65b335bd638b7566efd5c885684a788477e",
+      "archiveBlobSha": "5659b65b335bd638b7566efd5c885684a788477e",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/DATA_11_QUALITY_GATE_2026-09-07.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-11/evidence/DATA_11_QUALITY_GATE_2026-09-07.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "8189c0c6596d46aa85f008b7c3b07d98b84522fb",
+      "archiveBlobSha": "8189c0c6596d46aa85f008b7c3b07d98b84522fb",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/DATA_12_PROVENANCE_LINEAGE_2026-09-07.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-10/evidence/DATA_12_PROVENANCE_LINEAGE_2026-09-07.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "7f7b9f0bd7977d22d9592b3a821b2758c8a49106",
+      "archiveBlobSha": "7f7b9f0bd7977d22d9592b3a821b2758c8a49106",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/DATA_13_FRESHNESS_2026-09-07.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-11/evidence/DATA_13_FRESHNESS_2026-09-07.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "db375de79ca939ffd832a9faf091927299989dfb",
+      "archiveBlobSha": "db375de79ca939ffd832a9faf091927299989dfb",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/DATA_14_PROVIDER_INPUT_2026-09-07.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-09/evidence/DATA_14_PROVIDER_INPUT_2026-09-07.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "d66b92c6737087807a4cc11cf81f19ce53138636",
+      "archiveBlobSha": "d66b92c6737087807a4cc11cf81f19ce53138636",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/DATA_FIN12_SIGNED_HISTORY_VALUE_SEMANTICS_2026-09-16.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-11/evidence/DATA_FIN12_SIGNED_HISTORY_VALUE_SEMANTICS_2026-09-16.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "0733728388c73b8217fb18d28df8ab52f15879e1",
+      "archiveBlobSha": "0733728388c73b8217fb18d28df8ab52f15879e1",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/S1_R2_11_EVIDENCE_IDENTITY_FRESHNESS_2026-09-07.md",
+      "archivePath": "docs/archive/projects/fintech/pvc-10/evidence/S1_R2_11_EVIDENCE_IDENTITY_FRESHNESS_2026-09-07.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "e35321611b19d303a3cebe5530446a96de055561",
+      "archiveBlobSha": "e35321611b19d303a3cebe5530446a96de055561",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md",
+      "archivePath": "docs/archive/shared/capital-ai-data/handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md",
+      "classification": "HISTORICAL_EVIDENCE",
+      "sourceBlobSha": "6d8806ea6522e923e26f35646a02f6bb84f2119b",
+      "archiveBlobSha": "6d8806ea6522e923e26f35646a02f6bb84f2119b",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/DATA_BASELINE.md",
+      "archivePath": "docs/archive/shared/capital-ai-data/DATA_BASELINE.md",
+      "classification": "SUPERSEDED",
+      "sourceBlobSha": "0416afb6ec3d5c63accd2817dac2a81691db5f5d",
+      "archiveBlobSha": "0416afb6ec3d5c63accd2817dac2a81691db5f5d",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/HANDOFFS.md",
+      "archivePath": "docs/archive/shared/capital-ai-data/HANDOFFS.md",
+      "classification": "SUPERSEDED",
+      "sourceBlobSha": "eb3bd342c2987fbd4c0c0a8d1935bb0b912af7b6",
+      "archiveBlobSha": "eb3bd342c2987fbd4c0c0a8d1935bb0b912af7b6",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/README.md",
+      "archivePath": "docs/archive/shared/capital-ai-data/README.md",
+      "classification": "SUPERSEDED",
+      "sourceBlobSha": "d8af66f8d18ee25518094a54062eacad0c644d18",
+      "archiveBlobSha": "d8af66f8d18ee25518094a54062eacad0c644d18",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/ROADMAP.md",
+      "archivePath": "docs/archive/shared/capital-ai-data/ROADMAP.md",
+      "classification": "SUPERSEDED",
+      "sourceBlobSha": "41405fc379253f447554d55c1ff77593a067547b",
+      "archiveBlobSha": "41405fc379253f447554d55c1ff77593a067547b",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/TAKEOVER_INDEX.md",
+      "archivePath": "docs/archive/shared/capital-ai-data/TAKEOVER_INDEX.md",
+      "classification": "SUPERSEDED",
+      "sourceBlobSha": "5adabf7c09edc602fac82ec65470e04dc43be325",
+      "archiveBlobSha": "5adabf7c09edc602fac82ec65470e04dc43be325",
+      "contentPreserved": true
+    },
+    {
+      "sourcePath": "docs/projects/data/evidence/README.md",
+      "archivePath": "docs/archive/shared/capital-ai-data/evidence/README.md",
+      "classification": "SUPERSEDED",
+      "sourceBlobSha": "0e86e90d1040b13f3426d566810850869b95a1c7",
+      "archiveBlobSha": "0e86e90d1040b13f3426d566810850869b95a1c7",
+      "contentPreserved": true
+    }
+  ]
+}
