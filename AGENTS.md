@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.6.0`  
+**Control Plane Version:** `4.7.0`  
 **Status:** OWNER-DIRECTED — effective after Human Owner merge  
 **Effective date:** 2026-09-20  
 **Repository:** `capital-ai-online/Finance`
@@ -132,7 +132,23 @@ Every repository change is delivered through a Pull Request. PR creation and PR 
 
 GitHub Actions, CI/CD pipelines, builds, tests, security scans, automated code reviews, PR autofix, preflights, validation workflows, deployment workflows, repository automation and equivalent automated workflow execution MAY start, rerun and continue automatically when their repository/provider triggers and scope controls allow it. No per-run Human/Owner approval is required. Automated execution MUST still preserve branch-only mutation, least privilege, truthful evidence, scope/ownership boundaries, required checks, rulesets, provider protections and Security/Compliance/domain controls.
 
-The final Pull Request merge is the sole mandatory Human Owner action in the repository-development lifecycle. Agents and automation MUST NOT self-merge, enable auto-merge, bypass branch/ruleset protection, weaken required checks, or infer merge authority from green CI, reviews, approvals, labels, comments, elapsed time or metadata. Automated reviews and approvals are evidence/gates only and never constitute merge authority.
+The default final Pull Request merge remains a Human Owner action. Direct agent self-merge remains prohibited. GitHub auto-merge MAY be armed only under the bounded Auto-Merge Safety Contract below; enabling repository-level auto-merge is capability availability, not merge authority. Agents and automation MUST NOT bypass branch/ruleset protection, weaken required checks, or infer eligibility from green CI, reviews, approvals, labels, comments, elapsed time or metadata alone. Automated reviews and approvals are evidence/gates only.
+
+### Auto-Merge Safety Contract
+
+Auto-merge is fail-closed and opt-in per Pull Request. It MAY be armed only when all of the following are true at the exact PR head and current base:
+
+1. the Pull Request explicitly declares `AUTO_MERGE_ELIGIBLE` under this contract; absence, ambiguity or a legacy `Auto-Merge: Nein` declaration is ineligible;
+2. the PR is same-repository, non-draft, targets `main`, has a trusted bounded work-branch identity, and has no unresolved writer/file/semantic/namespace/authority/ownership overlap;
+3. the head is synchronized with `CURRENT_MAIN` (`behind_by=0`) immediately before arming; any later head or base movement invalidates the earlier eligibility evidence and requires fresh correlation;
+4. every currently required repository/ruleset status check for that exact head is terminal-success, including Governance, build/test, GitGuardian and HIGH/CRITICAL container-CVE gates when required by the active ruleset; skipped, neutral, missing, pending, stale or expected-but-absent evidence is not PASS unless the governing check contract explicitly defines it as not applicable;
+5. Security/Compliance/domain controls and the production-baseline/provenance evidence required by the PR class are PASS and attributable to the exact head/base pair;
+6. the PR does not mutate or expand protected Production, IAM, Secrets, credentials, Billing, DNS, destructive database/data operations, protected rollback/restore, branch/ruleset protection, merge authority, this trust root, or the Auto-Merge Safety Contract itself;
+7. P0, Security-sensitive, Governance/control-plane, IAM, Secret, database/schema/migration, Production-runtime/deployment, protected recovery, and other explicitly Human/CODEOWNER-gated classes remain ineligible unless a later Human Owner change to `/AGENTS.md@CURRENT_MAIN` expressly admits that class;
+8. repository auto-merge is enabled and GitHub remains the enforcing merge gate. Arming auto-merge MUST NOT perform a direct merge, create a bypass actor, disable a required check, or change a ruleset;
+9. eligibility and arming are recorded as evidence with PR number, head SHA, base SHA, required-check set, correlation result and timestamp. A failed arming attempt is evidence of failure, never permission to fall back to direct merge.
+
+A PR that does not satisfy every applicable condition remains `HUMAN_MERGE_REQUIRED`. Existing/open PRs retain their declared merge mode unless they are freshly re-correlated and explicitly migrated under this contract. The contract therefore permits bounded provider-managed auto-merge without granting agents an unrestricted merge capability.
 
 Protected Production, IAM, Billing, Secret, DNS, destructive-data and equivalent external mutations MAY execute without a separate per-run Owner approval only when they are already inside an authorized workflow/provider capability boundary and all configured technical controls permit the action. Repository scope does not grant new credentials or capability. Mutations outside an already-authorized workflow/provider capability boundary fail closed.
 
