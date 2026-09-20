@@ -5,6 +5,7 @@ import {
   evaluateRemediationEligibility,
   getRemediationAction,
   getRemediationPolicies,
+  getRemediationPolicy,
   getSelfHealingContractSnapshot,
   resolveConvergence,
   validateSelfHealingContract,
@@ -102,6 +103,56 @@ describe('self-healing contract', () => {
       operationIdempotency: 'IDEMPOTENT',
     });
     expect(exhausted).toMatchObject({ state: 'BLOCKED', reason: 'BUDGET_EXHAUSTED' });
+  });
+
+  it('maps repository projection drift to one bounded PR-autofix action', () => {
+    for (const findingClass of [
+      'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+    ] as const) {
+      const policy = getRemediationPolicy(findingClass);
+      expect(policy.preferredActionId).toBe('RECONCILE_REPOSITORY_PROJECTION');
+      expect(policy.allowedActionIds).toEqual([
+        'RECONCILE_REPOSITORY_PROJECTION',
+        'OBSERVE_ONLY',
+      ]);
+    }
+
+    const action = getRemediationAction('RECONCILE_REPOSITORY_PROJECTION');
+    expect(action).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.autofix',
+      killSwitch: 'self-healing.repository-pr-autofix',
+      verificationProbe: 'exact-pr-head-ci-governance-readback',
+      budget: { maxAttempts: 1 },
+    });
+
+    const unauthorized = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: false,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(unauthorized).toMatchObject({ state: 'BLOCKED', reason: 'CAPABILITY_NOT_AUTHORIZED' });
+
+    const eligible = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
   });
 
   it('fails closed for held, killed, unverified and unsafe remediation', () => {
