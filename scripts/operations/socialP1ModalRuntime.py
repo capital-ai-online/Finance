@@ -73,20 +73,31 @@ def _safe_component(value: str, field: str) -> str:
 
 
 @app.function(image=prepare_image, volumes={"/models": model_volume}, timeout=60 * 30)
-def prepare_models() -> dict[str, Any]:
+def prepare_models(candidate_id: str = "all") -> dict[str, Any]:
     from huggingface_hub import HfApi, snapshot_download
+
+    candidate_id = _safe_component(candidate_id, "candidate_id")
+    if candidate_id not in {"all", "qwen3-tts", "chatterbox-multilingual-v3"}:
+        raise RuntimeError("unsupported candidate_id")
 
     api = HfApi()
     resolved: dict[str, Any] = {}
-    for candidate, repo_id in (
+    sources = (
         ("qwen3-tts", QWEN_REPO),
         ("chatterbox-multilingual-v3", CHATTERBOX_REPO),
-    ):
+    )
+    for candidate, repo_id in sources:
+        if candidate_id != "all" and candidate != candidate_id:
+            continue
         info = api.model_info(repo_id)
         revision = str(info.sha)
         model_dir = Path("/models") / candidate / revision
-        model_dir.mkdir(parents=True, exist_ok=True)
-        snapshot_download(repo_id=repo_id, revision=revision, local_dir=model_dir)
+        cached_files = list(model_dir.rglob("*")) if model_dir.exists() else []
+        if not any(path.is_file() for path in cached_files):
+            model_dir.mkdir(parents=True, exist_ok=True)
+            snapshot_download(repo_id=repo_id, revision=revision, local_dir=model_dir)
+        else:
+            print(f"Reusing cached Modal model volume: {candidate}@{revision}")
         card_data = getattr(info, "card_data", None)
         license_id = getattr(card_data, "license", None) if card_data is not None else None
         resolved[candidate] = {
@@ -94,6 +105,7 @@ def prepare_models() -> dict[str, Any]:
             "resolved_revision": revision,
             "license": license_id,
             "model_dir": str(model_dir),
+            "cache_reused": any(path.is_file() for path in cached_files),
         }
 
     model_volume.commit()
@@ -254,7 +266,7 @@ def main(source_sha: str, run_key: str, sample_id: str = "all", candidate_id: st
     if candidate_id not in {"all", "qwen3-tts", "chatterbox-multilingual-v3"}:
         raise RuntimeError("unsupported candidate_id")
 
-    models = prepare_models.remote()
+    models = prepare_models.remote(candidate_id)
     if candidate_id in {"all", "qwen3-tts"}:
         run_qwen.remote(source_sha, run_key, models["qwen3-tts"]["model_dir"], sample_id)
     if candidate_id in {"all", "chatterbox-multilingual-v3"}:
