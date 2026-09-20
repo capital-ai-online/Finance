@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@700;800&family=Poppins:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* Pattern direction x strength classes are assembled from verified state at runtime.
@@ -23,6 +23,13 @@
   --color-brand-danger: #F87171;
   --color-decorative-cyan: #0DDDDD;
   --color-decorative-purple: #B026FF;
+
+  /* Owner-directed roadmap palette. Presentation roles only; semantic PASS/FAIL colors stay separate. */
+  --color-roadmap-foundation: #F5C453;
+  --color-roadmap-automation: #44DE88;
+  --color-roadmap-runtime: #22D3EE;
+  --color-roadmap-product-market: #8D26FF;
+  --color-roadmap-scaling: #E879F9;
 
   /* Productive Universe semantic roles are intentionally preserved. */
   --color-asset-crypto: #8D26FF;
@@ -60,7 +67,7 @@
   --color-aif-neon-cyan: #0DDDDD;
   --color-aif-neon-purple: #B026FF;
 
-  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
