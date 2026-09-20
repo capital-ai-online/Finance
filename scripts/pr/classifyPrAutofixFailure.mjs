@@ -33,6 +33,9 @@ const EXACT_STALE_PRODUCTION_BASELINE =
 const EXACT_V17_STRUCTURE_DRIFT =
   /Error: PR #\d+ muss in v1\.7\.0 exakt drei sichtbare Hauptabschnitte besitzen:/i;
 
+const EXACT_V17_PRIORITY_DRIFT =
+  /Error: PR #\d+ enthält keine gültige Prioritätsbewertung \(P0[–-]P3\) der Vorlage v1\.7\.0\./i;
+
 const TEMPLATE_DELEGATION_PATTERNS = [
   /verwendet keinen unterstützten PR-Vorlagenmarker/i,
   /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i,
@@ -106,6 +109,21 @@ export function classifyPrAutofixFailure(
         classification: 'PR_PRODUCTION_BASELINE_DRIFT',
         decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
         reason: 'stale-production-baseline-specialist-owned',
+      });
+    }
+
+    if (EXACT_V17_PRIORITY_DRIFT.test(log)) {
+      if (metadataShape === 'CURRENT_V17_CANONICAL') {
+        return result({
+          classification: 'PR_TEMPLATE_METADATA_DRIFT',
+          decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
+          reason: 'current-v1.7-priority-token-repairable',
+        });
+      }
+      return result({
+        classification: 'PR_TEMPLATE_METADATA_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason: 'current-v1.7-priority-drift-requires-canonical-shape',
       });
     }
 
