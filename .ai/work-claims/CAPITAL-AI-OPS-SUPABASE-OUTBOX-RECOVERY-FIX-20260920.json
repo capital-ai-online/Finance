@@ -15,9 +15,9 @@
   "branch": "agent/operations-supabase-outbox-recovery-fix-20260920",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
-  "projectStage": "PVC-08 — Production Operations",
+  "projectStage": "PVC-02",
   "priority": "P1",
-  "priorityReason": "Production worker polling failed continuously because the merged database migration was missing, then exposed an ambiguous output-column reference after deployment; runtime convergence and durable evidence require correction.",
+  "priorityReason": "Production Supabase drift and worker failure require controlled implementation convergence (PVC-02) with verified production operations evidence (PVC-08).",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-SUPABASE-OUTBOX-RECOVERY-FIX-20260920.json",
     "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
@@ -26,5 +26,6 @@
     "supabase/migrations/20260920161445_fix_outbox_worker_recovery_job_id_ambiguity.sql",
     "tests/unit/outboxWorkerRecoveryMigration.test.ts"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "secondaryProjectStage": "PVC-08"
 }
