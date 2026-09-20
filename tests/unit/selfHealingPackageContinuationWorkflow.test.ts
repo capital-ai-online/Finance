@@ -30,6 +30,15 @@ describe('Self-Healing package continuation workflow', () => {
     expect(workflow).toContain('READY_FOR_FRESH_CURRENT_MAIN_CORRELATION');
   });
 
+  it('generation-binds READY/BLOCKED/COMPLETE handoff writes to unchanged current main', () => {
+    expect(workflow).toContain('capital-ai-self-healing-continuation-generation/1.0.0');
+    expect(workflow).toContain("const crypto = require('crypto')");
+    expect(workflow).toContain('Continuation Generation drifted before handoff mutation');
+    expect(workflow).toContain('revalidateContinuationGeneration');
+    expect(workflow).toContain('Continuation generation:');
+    expect(workflow).toContain('cancel-in-progress: false');
+  });
+
   it('does not checkout or execute candidate branch code', () => {
     expect(workflow).not.toContain('actions/checkout@');
     expect(workflow).not.toContain('npm ci');
