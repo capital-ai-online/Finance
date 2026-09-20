@@ -1,12 +1,12 @@
 # CAPITAL-AI-FINTECH — Canonical Roadmap
 
-**Baseline:** `main@10dd68d1c448a71f681da78b76329d960d7a9279`
+**Baseline:** `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`
 
 **Project:** `CAPITAL-AI-FINTECH`  
 **Folder:** `docs/projects/fintech/`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-09..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-20 — merged FIN-12/provider/ownership state plus Owner-reference orchestrator universe re-correlated  
+**Reconciliation:** 2026-09-21 — FIN-21 post-merge state converged against current main; stale branch/validation projections retired  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -35,9 +35,9 @@ Human-merged PR #1046 (`f4d94581eaa1e59b19c08293c4ddbda2f7d33d9a`) removed Alpac
 
 ### FIN-21 — Multi-Asset Orchestrator Universe
 
-**State:** `OWNER-DIRECTED / IMPLEMENTED_BRANCH / VALIDATION_PENDING`
+**State:** `DONE_MAIN / TERMINAL PROJECTION SLICE`
 
-Project all six existing canonical scorable asset classes through one read-only FINTECH universe/orchestration view over the existing model/module authorities. Add the 20 Owner-reference Equity subclass lenses only as `RESEARCH_TARGET_NOT_MODEL`, bound to `traditional-scoring@2.1.0`. Do not invent workflow-module availability, provider evidence, scoring weights or productive subclass models. Evidence: `evidence/FIN_21_MULTI_ASSET_ORCHESTRATOR_UNIVERSE_2026-09-20.md`.
+Human-merged PR #1157 (`59b65e4907b27f57acd639d56f83ab365f30e4a5`) materialized the six-class read-only FINTECH universe/orchestration projection plus 20 Equity subclass lenses as `RESEARCH_TARGET_NOT_MODEL`, all without creating a second registry, dispatcher, taxonomy, provider plane or productive subclass score. Current main contains the merged implementation and remains descended from the merge commit. Evidence: `evidence/FIN_21_MULTI_ASSET_ORCHESTRATOR_UNIVERSE_2026-09-20.md`.
 
 ## Historical FINTECH work inventory — non-active unless currently revalidated
 
@@ -52,7 +52,7 @@ Project all six existing canonical scorable asset classes through one read-only 
 | FIN-18 Asset-class inventory | `VERIFIED` |
 | FIN-19 Provider capability mapping | `PARTIAL / OPEN`; re-evaluate expanded stock/crypto/commodity research requirements against the single ProviderMatrix and PVC-09..11 boundary |
 | FIN-20 End-to-end scoring evidence | `PARTIAL / REVALIDATION READY`; FIN-12 bounded prerequisite is on main, exact runtime/OPS lineage evidence remains open |
-| FIN-21 Multi-Asset Orchestrator Universe | `OWNER-DIRECTED / IMPLEMENTED_BRANCH / VALIDATION_PENDING`; six-class read-only projection plus Equity research lenses |
+| FIN-21 Multi-Asset Orchestrator Universe | `DONE_MAIN / TERMINAL PROJECTION SLICE` through PR #1157; six-class read-only projection plus Equity research lenses retained |
 | FIN-DRIFT-01 Deterministic drift checks | historical `PLANNED`; not active by status alone |
 | FIN-SEC-02 verified_screening | prior `IMPLEMENTED / EVIDENCE_READY`; independent SEC verification separate |
 | FIN-SEC-03 analysis entitlement | prior `IMPLEMENTED / EVIDENCE_READY`; independent SEC verification separate |
