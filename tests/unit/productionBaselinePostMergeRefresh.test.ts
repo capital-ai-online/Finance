@@ -7,11 +7,11 @@ const workflowPath = path.join(root, '.github/workflows/pr-production-baseline-p
 const workflow = () => fs.readFileSync(workflowPath, 'utf8');
 
 describe('production baseline post-merge refresh', () => {
-  it('binds only to the trusted main-push branch-sync workflow', () => {
+  it('binds only to the trusted post-correlation branch-sync workflow', () => {
     const yaml = workflow();
     expect(yaml).toContain("workflows: ['Agenten-PR-Branches synchronisieren']");
     expect(yaml).toContain("github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml'");
-    expect(yaml).toContain("github.event.workflow_run.event == 'push'");
+    expect(yaml).toContain("github.event.workflow_run.event == 'workflow_run'");
     expect(yaml).toContain("github.event.workflow_run.head_branch == 'main'");
     expect(yaml).toContain("github.event.workflow_run.conclusion == 'success'");
     expect(yaml).not.toContain('pull_request_target');

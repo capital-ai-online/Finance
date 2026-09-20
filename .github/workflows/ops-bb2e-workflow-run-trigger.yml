@@ -31,7 +31,7 @@ jobs:
       github.event.workflow_run.repository.full_name == github.repository &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml' &&
-      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.event == 'workflow_run' &&
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
             if (sourceRun?.repository?.full_name !== repoFullName || sourceRun?.head_repository?.full_name !== repoFullName) {
               fail('workflow_run stammt nicht aus dem kanonischen Repository.');
             }
-            if (sourceRun?.path !== sourceWorkflowPath || sourceRun?.event !== 'push' || sourceRun?.head_branch !== 'main' || sourceRun?.conclusion !== 'success') {
+            if (sourceRun?.path !== sourceWorkflowPath || sourceRun?.event !== 'workflow_run' || sourceRun?.head_branch !== 'main' || sourceRun?.conclusion !== 'success') {
               fail('workflow_run erfüllt die gebundene trusted-main Triggerbedingung nicht.');
             }
 

@@ -8,7 +8,7 @@ const workflow = readFileSync(
 );
 
 describe('OPS BB-2E workflow_run trigger', () => {
-  it('runs only after the trusted main branch-sync workflow completes successfully', () => {
+  it('runs only after the trusted post-correlation branch-sync workflow completes successfully', () => {
     expect(workflow).toContain('workflow_run:');
     expect(workflow).toContain("workflows: ['Agenten-PR-Branches synchronisieren']");
     expect(workflow).toContain('types: [completed]');
@@ -18,7 +18,7 @@ describe('OPS BB-2E workflow_run trigger', () => {
     expect(workflow).toContain(
       "github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml'",
     );
-    expect(workflow).toContain("github.event.workflow_run.event == 'push'");
+    expect(workflow).toContain("github.event.workflow_run.event == 'workflow_run'");
     expect(workflow).toContain("github.event.workflow_run.head_branch == 'main'");
     expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
   });
