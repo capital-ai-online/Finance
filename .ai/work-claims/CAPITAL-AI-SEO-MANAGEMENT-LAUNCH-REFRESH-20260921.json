@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-MANAGEMENT-LAUNCH-REFRESH-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "WP-SEO-LAUNCH-01 SEO management continuation: re-freeze the current landing/Production candidate after merged branding changes, manage SEO-owned topic/content/measurement evidence, and maintain owner-correct FE/SOCIAL/OPS handoffs.",
+  "startedAt": "2026-09-21T00:00:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "4f2c746a20a8683d784a1cbe54c763a64ddd1da3",
+  "branch": "agent/seo-management-launch-refresh-20260921",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "Public-launch SEO management remains active after the landing branding update; current evidence, message alignment, discoverability and measurement gates must track the exact current-main candidate.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-LAUNCH-01-EXECUTION-20260920.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-MANAGEMENT-LAUNCH-REFRESH-20260921.json",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md",
+    "docs/seo/SEO_TOPIC_MAP_PUBLIC_LAUNCH_2026-09-21.md",
+    "docs/seo/SEO_LAUNCH_CONTENT_BRIEF_01_2026-09-21.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
+  ],
+  "foreignDependencies": [
+    "CAPITAL-AI-FE — root metadata/prerender message parity and visible internal-link implementation for /universe.",
+    "CAPITAL-AI-SOCIAL — X/Facebook provider account connection, contract-valid SocialContentPackage adaptation, publication and publication analytics evidence.",
+    "CAPITAL-AI-OPS — exact Production/current-main deployment identity and runtime readback.",
+    "CAPITAL-AI-COMP — consent/privacy and public financial-disclosure constraints.",
+    "CAPITAL-AI-QM — independent launch evidence assurance."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; any auto-merge eligibility must be separately proven against /AGENTS.md@CURRENT_MAIN."
+}
