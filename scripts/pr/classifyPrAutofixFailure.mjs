@@ -36,6 +36,9 @@ const PROTECTED_ACTIONS_MINUTE_BLOCKER = [
   /##\[error\]Mehrere offene Actions-Minuten-Blocker gefunden: #[^\n]+\./i,
 ];
 
+const EXACT_LEGACY_TEMPLATE_BLOCK =
+  /Error: PR #\d+ verwendet die Legacy-Vorlage v(?:1\.5\.0|1\.6\.0)\.[^\n]*dürfen nicht gemerged werden; erforderlich ist v1\.7\.0\./i;
+
 const EXACT_STALE_PRODUCTION_BASELINE =
   /Error: PR #\d+ enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline\./i;
 
@@ -139,6 +142,16 @@ export function classifyPrAutofixFailure(
   // Exact PR-Governance contract failures take precedence over broad provider/security
   // vocabulary found in shell/source excerpts inside gh --log-failed output.
   if (source === '.github/workflows/pr-governance.yml') {
+    if (EXACT_LEGACY_TEMPLATE_BLOCK.test(log)) {
+      return result({
+        classification: 'PR_LEGACY_TEMPLATE_BLOCK',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason: 'legacy-template-must-migrate-to-current-contract',
+        findingClass: 'REPOSITORY_PR_LEGACY_TEMPLATE',
+        actionId: 'MIGRATE_PR_TEMPLATE_TO_CURRENT',
+      });
+    }
+
     if (DECISION_EVIDENCE_DRIFT_PATTERNS.some((pattern) => pattern.test(log))) {
       return result({
         classification: 'PR_DECISION_EVIDENCE_DRIFT',
