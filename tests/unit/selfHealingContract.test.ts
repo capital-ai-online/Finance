@@ -8,7 +8,54 @@ import {
   getSelfHealingContractSnapshot,
   resolveConvergence,
   validateSelfHealingContract,
+  validateVerificationEvidence,
+  type VerificationEvidence,
 } from '../../src/platform/Supervisor/selfHealingContract';
+
+const SHA_A = 'a'.repeat(40);
+const SHA_B = 'b'.repeat(40);
+const SHA_C = 'c'.repeat(40);
+const DIGEST_A = `sha256:${'a'.repeat(64)}`;
+const DIGEST_B = `sha256:${'b'.repeat(64)}`;
+const DIGEST_C = `sha256:${'c'.repeat(64)}`;
+const DIGEST_D = `sha256:${'d'.repeat(64)}`;
+
+function validEvidence(overrides: Partial<VerificationEvidence> = {}): VerificationEvidence {
+  return {
+    schema: 'self-healing-evidence/1.0.0',
+    evidenceId: 'EV-TEST-001',
+    generation: {
+      kind: 'PR',
+      repository: 'capital-ai-online/Finance',
+      prNumber: 1,
+      headSha: SHA_A,
+      baseSha: SHA_B,
+      currentMainSha: SHA_C,
+      controlPlaneVersion: '4.6.0',
+      generationDigest: DIGEST_A,
+    },
+    source: {
+      authority: 'vitest',
+      ref: 'tests/unit/selfHealingContract.test.ts',
+      observedAt: '2026-09-20T15:30:00.000Z',
+    },
+    integrity: {
+      inputDigest: DIGEST_B,
+      resultDigest: DIGEST_C,
+      recordDigest: DIGEST_D,
+    },
+    reproducible: true,
+    current: true,
+    generationBound: true,
+    sourceBound: true,
+    integrityValid: true,
+    readback: { required: true, verified: true },
+    contradictionFree: true,
+    requiredAssurance: [],
+    assurance: {},
+    ...overrides,
+  };
+}
 
 describe('self-healing contract', () => {
   it('covers every canonical finding class with one deterministic policy', () => {
@@ -140,17 +187,92 @@ describe('self-healing contract', () => {
     expect(canTransitionRecoveryState('CONVERGED', 'REMEDIATING')).toBe(false);
   });
 
-  it('never treats missing or failed verification as convergence', () => {
-    expect(resolveConvergence('FRONTEND_RELOAD_ONCE', {
+  it('permits convergence only for a PASS backed by valid generation-bound evidence', () => {
+    const result = resolveConvergence('FRONTEND_RELOAD_ONCE', {
       status: 'PASS',
       probe: 'frontend-runtime-rehydrated',
       evidenceRef: 'test:pass',
-    }, 1)).toMatchObject({ state: 'CONVERGED', converged: true, reason: 'VERIFIED' });
+      evidence: validEvidence(),
+    }, 1);
 
+    expect(result).toMatchObject({
+      state: 'CONVERGED',
+      converged: true,
+      reason: 'VERIFIED',
+      evidenceValidation: { valid: true, issues: [] },
+    });
+  });
+
+  it('rejects a bare PASS and every stale/readback-invalid positive claim', () => {
     expect(resolveConvergence('FRONTEND_RELOAD_ONCE', {
-      status: 'NOT_RUN',
+      status: 'PASS',
       probe: 'frontend-runtime-rehydrated',
-    }, 1)).toMatchObject({ state: 'ESCALATED', converged: false, reason: 'VERIFICATION_NOT_RUN' });
+      evidenceRef: 'test:bare-pass',
+    }, 1)).toMatchObject({
+      state: 'ESCALATED',
+      converged: false,
+      reason: 'VERIFICATION_EVIDENCE_INVALID',
+      evidenceValidation: { valid: false, issues: ['EVIDENCE_REQUIRED'] },
+    });
+
+    const stale = validEvidence({ current: false });
+    expect(validateVerificationEvidence(stale)).toMatchObject({
+      valid: false,
+      issues: expect.arrayContaining(['EVIDENCE_STALE']),
+    });
+
+    const noReadback = validEvidence({ readback: { required: true, verified: false } });
+    expect(validateVerificationEvidence(noReadback)).toMatchObject({
+      valid: false,
+      issues: expect.arrayContaining(['READBACK_NOT_VERIFIED']),
+    });
+  });
+
+  it('requires independent QM and Security assurance for protected SH-3 convergence', () => {
+    const withoutAssurance = resolveConvergence('PROTECTED_ROLLBACK_RESTORE', {
+      status: 'PASS',
+      probe: 'independent-rollback-restore-integrity',
+      evidenceRef: 'test:protected',
+      evidence: validEvidence(),
+    }, 1);
+    expect(withoutAssurance).toMatchObject({
+      state: 'ESCALATED',
+      converged: false,
+      reason: 'VERIFICATION_EVIDENCE_INVALID',
+    });
+    expect(withoutAssurance.evidenceValidation.issues).toEqual(
+      expect.arrayContaining(['QM_ASSURANCE_NOT_VERIFIED', 'SECURITY_ASSURANCE_NOT_VERIFIED']),
+    );
+
+    const withAssurance = resolveConvergence('PROTECTED_ROLLBACK_RESTORE', {
+      status: 'PASS',
+      probe: 'independent-rollback-restore-integrity',
+      evidenceRef: 'test:protected-verified',
+      evidence: validEvidence({
+        assurance: { QM: 'VERIFIED', SECURITY: 'VERIFIED' },
+      }),
+    }, 1);
+    expect(withAssurance).toMatchObject({ state: 'CONVERGED', converged: true, reason: 'VERIFIED' });
+  });
+
+  it('maps explicit non-positive evidence states without manufacturing convergence', () => {
+    const expected = [
+      ['NOT_RUN', 'VERIFICATION_NOT_RUN'],
+      ['NOT_EXECUTED', 'VERIFICATION_NOT_RUN'],
+      ['PENDING', 'VERIFICATION_PENDING'],
+      ['NOT_AVAILABLE', 'EVIDENCE_NOT_AVAILABLE'],
+      ['STALE', 'EVIDENCE_STALE'],
+      ['IDENTITY_MISMATCH', 'IDENTITY_MISMATCH'],
+      ['READBACK_FAILED', 'READBACK_FAILED'],
+      ['BLOCKED', 'VERIFICATION_BLOCKED'],
+    ] as const;
+
+    for (const [status, reason] of expected) {
+      expect(resolveConvergence('FRONTEND_RELOAD_ONCE', {
+        status,
+        probe: 'frontend-runtime-rehydrated',
+      }, 1)).toMatchObject({ state: 'ESCALATED', converged: false, reason });
+    }
 
     expect(resolveConvergence('FRONTEND_RELOAD_ONCE', {
       status: 'FAIL',
