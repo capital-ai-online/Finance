@@ -18,7 +18,7 @@ import {
 function requiredEnv(name) {
   const value = String(process.env[name] || '').trim();
   if (!value) {
-    throw new Error(\`[PRIVATE-GITHUB-SETTINGS-INVENTORY] missing required environment variable: \${name}\`);
+    throw new Error(`[PRIVATE-GITHUB-SETTINGS-INVENTORY] missing required environment variable: ${name}`);
   }
   return value;
 }
@@ -45,7 +45,7 @@ async function capture(label, requiredPermission, operation) {
         status: 'NOT_OBSERVABLE',
         requiredPermission,
         providerStatus: error.status,
-        reason: \`\${label} is not readable with the current GitHub App installation permissions\`,
+        reason: `${label} is not readable with the current GitHub App installation permissions`,
       });
     }
     throw error;
@@ -120,4 +120,4 @@ const output = Object.freeze({
   secretsOrTokensLogged: false,
 });
 
-process.stdout.write(\`\${JSON.stringify(output, null, 2)}\n\`);
+process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
