@@ -24,6 +24,7 @@
     "scripts/governance/verifySupabaseMigrationLedgerReconciliation.mjs",
     "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs",
     "supabase/migrations/20260920161445_fix_outbox_worker_recovery_job_id_ambiguity.sql",
+    "supabase/migrations/20260920162905_m10_shadow_evaluations_credential_fk_index.sql",
     "tests/unit/outboxWorkerRecoveryMigration.test.ts"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
