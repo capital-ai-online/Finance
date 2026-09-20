@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-PUBLIC-LAUNCH-MANAGEMENT-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "WP-SEO-LAUNCH-01: owner-directed Marketing & SEO Launch Management package that coordinates public web/search/social readiness without taking over Frontend, Social, Operations, Governance, Security, Compliance, FINTECH or Quality ownership.",
+  "startedAt": "2026-09-20T18:12:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c9980602f691b855fd6f8c66a49822e7a9611b4a",
+  "branch": "agent/seo-public-launch-management-main-sync-v2-20260920",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "Owner-directed public-launch readiness package that coordinates already-existing SEO, measurement, landing, content and Social capabilities into one evidence-based go-public sequence.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-PUBLIC-LAUNCH-MANAGEMENT-20260920.json",
+    "docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
+  ],
+  "foreignDependencies": [
+    "Merged PR #1153 CAPITAL-AI-FE — landing visual-fidelity is now current-main product truth; production/runtime verification remains a separate launch gate",
+    "Open PR #1154 CAPITAL-AI-DOC — repository-structure convergence; no changed-file or SEO ownership overlap at recorrelation",
+    "CAPITAL-AI-SOCIAL — channel adaptation, content packages, provider publication and publication analytics evidence",
+    "CAPITAL-AI-OPS — production/deployment/provider runtime readback",
+    "CAPITAL-AI-GOV — publishing/control-plane decisions where applicable",
+    "CAPITAL-AI-SEC — OAuth/credential/provider-security assurance where applicable",
+    "CAPITAL-AI-COMP — consent, privacy, legal/disclosure assessment",
+    "CAPITAL-AI-FINTECH — factual scoring/methodology/domain truth used in public claims",
+    "CAPITAL-AI-QM — independent launch evidence assurance"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
