@@ -138,6 +138,81 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
   const baselineStartBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_START');
   const baselineEndBefore = occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_END');
 
+  const currentV16SecurityBoundaryShape =
+    fullLegacyMissing &&
+    detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
+    [...body.matchAll(/^## 4\. 🔐 Security Boundary\s*$/gm)].length === 1 &&
+    [...body.matchAll(/^## 5\. ✅ Prüfung & Merge\s*$/gm)].length === 1 &&
+    [...body.matchAll(/^## 6\. 🔢 Version\s*$/gm)].length === 1;
+
+  if (currentV16SecurityBoundaryShape) {
+    const malformedBlock = body.match(
+      /^## 4\. 🔐 Security Boundary\s*\n([\s\S]*?)^## 5\. ✅ Prüfung & Merge\s*\n([\s\S]*?)^## 6\. 🔢 Version\s*\n([\s\S]*?)(?=^## 7\. Maschinenlesbare Baseline\s*$)/m,
+    );
+    if (!malformedBlock) {
+      return { eligible: false, changed: false, reason: 'unsupported-current-v1.6-security-shape', body };
+    }
+
+    const securityBoundary = String(malformedBlock[1] || '').trim();
+    const checkBody = String(malformedBlock[2] || '').trim();
+    let versionBody = String(malformedBlock[3] || '').trim();
+    if (!securityBoundary || !checkBody || !versionBody) {
+      return { eligible: false, changed: false, reason: 'incomplete-current-v1.6-security-shape', body };
+    }
+
+    const priority =
+      body.match(/^> \*\*(P[0-3] (?:🔴 Kritisch|🟠 Hoch|🟡 Normal|🟢 Niedrig)) ·/m)?.[1] ||
+      'P2 🟡 Normal';
+    if (!/^- \*\*Version-Manager-Check:\*\*/m.test(versionBody)) {
+      versionBody +=
+        '\n- **Version-Manager-Check:** NOT_RUN — separate fokussierte PR-Check-Evidence erforderlich.';
+    }
+
+    const replacement = [
+      '### 🔐 Security Boundary',
+      '',
+      securityBoundary,
+      '',
+      SECTION_ROADMAP,
+      '',
+      '- **Priorität:** ' + priority,
+      '- **Warum diese Priorität:** Aus der bestehenden PR-Prioritätszeile übernommen; der Autofix bewertet die Priorität nicht neu.',
+      '- **Roadmap / Work Package:** N/A — deterministische Reparatur eines bestehenden PR-Bodys; keine Roadmap-Autorität wird erzeugt.',
+      '',
+      SECTION_VERSION,
+      '',
+      versionBody,
+      '',
+      SECTION_CHECK,
+      '',
+      checkBody,
+      '',
+    ].join('\n');
+    let repaired = body.replace(malformedBlock[0], () => replacement);
+
+    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
+    const missingAfter = findMissingRequiredSections(repaired);
+    if (missingAfter.length > 0) {
+      throw new Error('Current v1.6 security-boundary repair did not converge: ' + missingAfter.join(', '));
+    }
+    if (!repaired.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
+      throw new Error('Current v1.6 security-boundary repair did not preserve the Human/CODEOWNER merge gate.');
+    }
+    if (
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_START') !== baselineStartBefore ||
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_END') !== baselineEndBefore
+    ) {
+      throw new Error('Current v1.6 security-boundary repair changed production-baseline marker cardinality.');
+    }
+
+    return {
+      eligible: true,
+      changed: repaired !== body,
+      reason: 'current-v1.6-security-boundary-shape-repaired',
+      body: repaired,
+    };
+  }
+
   if (projectOwnerLegacyMissing) {
     const projectOwnerMatches = [...body.matchAll(/^## 2\. Projekt-\/Owner-Zuordnung\s*$/gm)];
     const zeroCostMatches = [...body.matchAll(/^## 4\. Zero-Cost-Invariante\s*$/gm)];

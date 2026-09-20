@@ -11,7 +11,7 @@ run-name: >-
 # - A main-CI trigger is accepted only when the exact main SHA also has a successful
 #   "Deployment verifiziert / Render-Produktion" job and /healthz reports that same SHA.
 # - Candidate code is checked out as data but never executed; all executed policy scripts come from main.
-# - The updater may repair only the explicitly allowlisted legacy v1.5 PR-body shape; otherwise it replaces only the canonical baseline block and is idempotent.
+# - The updater may repair only explicitly allowlisted, deterministic PR-body shapes; otherwise it replaces only the canonical baseline block and is idempotent.
 # - Baseline writes and first-attempt stale-baseline races are rebound to an exact completed
 #   PR Governance run for the same PR/head/base. Race recovery is limited to run_attempt == 1,
 #   so a real Governance failure cannot create an automatic rerun loop.
@@ -168,6 +168,8 @@ jobs:
           EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}
           BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}
           PR_BODY_REPAIRED: ${{ steps.body_repair.outputs.changed }}
+          PR_BODY_REPAIR_ELIGIBLE: ${{ steps.body_repair.outputs.eligible }}
+          PR_BODY_REPAIR_REASON: ${{ steps.body_repair.outputs.reason }}
         with:
           script: |
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
@@ -177,6 +179,8 @@ jobs:
             const expectedMainSha = normalizeSha(process.env.EXPECTED_MAIN_SHA);
             const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';
             const bodyRepaired = String(process.env.PR_BODY_REPAIRED || '').toLowerCase() === 'true';
+            const bodyRepairEligible = String(process.env.PR_BODY_REPAIR_ELIGIBLE || '').toLowerCase() === 'true';
+            const bodyRepairReason = String(process.env.PR_BODY_REPAIR_REASON || '').trim();
             const sourceRun = context.payload.workflow_run;
 
             if (!Number.isInteger(prNumber) || prNumber <= 0) fail('PR-Nummer für Governance-Re-Run ist ungültig.');
@@ -185,6 +189,19 @@ jobs:
             if (sourceRun.event !== 'pull_request') fail(`Unerwartetes Workflow-Run-Event: ${sourceRun.event}`);
             if (Number(sourceRun.pull_requests?.[0]?.number) !== prNumber) {
               fail('Triggering Workflow Run ist nicht an denselben Pull Request gebunden.');
+            }
+
+            const bodyAlreadyCanonical = bodyRepairReason === 'already-canonical';
+            const bodyRepairBlocked =
+              sourceRun.conclusion === 'failure' &&
+              !bodyRepaired &&
+              !bodyAlreadyCanonical;
+            if (bodyRepairBlocked) {
+              fail(
+                `PR #${prNumber}: PR-Body-Reparatur konnte nicht deterministisch konvergieren ` +
+                `(eligible=${bodyRepairEligible}, reason=${bodyRepairReason || 'missing-repair-result'}). ` +
+                'Governance bleibt fail-closed; der Body darf nicht als bereits korrekt gemeldet werden.',
+              );
             }
 
             const { data: pr } = await github.rest.pulls.get({
@@ -239,8 +256,9 @@ jobs:
             const shouldRerun = bodyRepaired || baselineChanged || firstFailedAttempt;
 
             if (!shouldRerun) {
+              const bodyState = bodyAlreadyCanonical ? 'canonical' : 'repair-not-applicable';
               core.info(
-                `PR #${prNumber}: Baseline und PR-Body bereits korrekt; latest Governance ${exactRun.id} conclusion=${exactRun.conclusion} attempt=${exactRun.run_attempt || 1}; kein automatischer Re-Run.`,
+                `PR #${prNumber}: Baseline unverändert; PR-Body-Status=${bodyState}; latest Governance ${exactRun.id} conclusion=${exactRun.conclusion} attempt=${exactRun.run_attempt || 1}; kein automatischer Re-Run.`,
               );
               return;
             }
