@@ -92,6 +92,18 @@ class AssetRecord:
     kind: str = "image"
 
 
+@dataclass(frozen=True)
+class VoiceoverBinding:
+    audio_path: Path
+    audio_sha256: str
+    request_hash: str
+    content_package_id: str
+    candidate_content_hash: str
+    runtime_evidence_reference: str
+    license_evidence_reference: str
+    listening_review_reference: str
+
+
 def _token_value(node: Any) -> Any:
     if not isinstance(node, dict):
         return node
@@ -182,6 +194,68 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _required_sha256(value: Any, *, field: str) -> str:
+    normalized = normalize_text(value, field=field, max_chars=64).lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", normalized):
+        raise MediaRenderError(f"{field} must be a lowercase/hex SHA-256")
+    return normalized
+
+
+def validate_voiceover_binding(raw: Any, *, manifest_dir: Path) -> VoiceoverBinding | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise MediaRenderError("voiceover must be an object")
+
+    if raw.get("acceptanceStatus") != "PASS":
+        raise MediaRenderError("voiceover requires explicit Human/Owner listening acceptance PASS")
+
+    audio_ref = normalize_text(raw.get("audioPath"), field="voiceover.audioPath", max_chars=240)
+    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", audio_ref):
+        raise MediaRenderError("voiceover.audioPath must be a local relative path")
+    relative = Path(audio_ref)
+    if relative.is_absolute():
+        raise MediaRenderError("voiceover.audioPath must be relative to the render manifest")
+    root = manifest_dir.resolve()
+    audio_path = (root / relative).resolve()
+    if not audio_path.is_relative_to(root):
+        raise MediaRenderError("voiceover.audioPath escapes the render manifest directory")
+    if not audio_path.is_file():
+        raise MediaRenderError(f"voiceover audio not found: {audio_ref}")
+
+    expected_audio_sha = _required_sha256(raw.get("audioSha256"), field="voiceover.audioSha256")
+    actual_audio_sha = sha256_file(audio_path)
+    if actual_audio_sha != expected_audio_sha:
+        raise MediaRenderError("voiceover audio SHA-256 mismatch")
+
+    return VoiceoverBinding(
+        audio_path=audio_path,
+        audio_sha256=expected_audio_sha,
+        request_hash=_required_sha256(raw.get("requestHash"), field="voiceover.requestHash"),
+        content_package_id=normalize_text(
+            raw.get("contentPackageId"), field="voiceover.contentPackageId", max_chars=160
+        ),
+        candidate_content_hash=_required_sha256(
+            raw.get("candidateContentHash"), field="voiceover.candidateContentHash"
+        ),
+        runtime_evidence_reference=normalize_text(
+            raw.get("runtimeEvidenceReference"),
+            field="voiceover.runtimeEvidenceReference",
+            max_chars=240,
+        ),
+        license_evidence_reference=normalize_text(
+            raw.get("licenseEvidenceReference"),
+            field="voiceover.licenseEvidenceReference",
+            max_chars=240,
+        ),
+        listening_review_reference=normalize_text(
+            raw.get("listeningReviewReference"),
+            field="voiceover.listeningReviewReference",
+            max_chars=240,
+        ),
+    )
 
 
 def run_checked(argv: Sequence[str], *, timeout: int = SUBPROCESS_TIMEOUT_SECONDS) -> subprocess.CompletedProcess[str]:
@@ -462,6 +536,7 @@ def render_short_video(
     *,
     output_path: Path,
     allow_gpl_ffmpeg: bool = False,
+    voiceover: VoiceoverBinding | None = None,
     ffmpeg_executable: str = "ffmpeg",
     ffprobe_executable: str = "ffprobe",
 ) -> tuple[AssetRecord, FfmpegBuildInfo]:
@@ -496,42 +571,59 @@ def render_short_video(
         lines.append(f"file '{last_path}'")
         concat_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-        run_checked(
-            [
-                ffmpeg_info.executable,
-                "-hide_banner",
-                "-loglevel", "error",
-                "-y",
-                "-safe", "0",
-                "-f", "concat",
-                "-i", str(concat_path),
-                "-t", f"{total_duration:.3f}",
-                "-an",
-                "-vf", "fps=30,format=yuv420p",
-                "-c:v", "mpeg4",
-                "-q:v", "3",
-                "-movflags", "+faststart",
-                str(output_path),
-            ],
-            timeout=180,
-        )
+        command = [
+            ffmpeg_info.executable,
+            "-hide_banner",
+            "-loglevel", "error",
+            "-y",
+            "-safe", "0",
+            "-f", "concat",
+            "-i", str(concat_path),
+        ]
+        if voiceover is not None:
+            command += [
+                "-i", str(voiceover.audio_path),
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+            ]
+        command += [
+            "-t", f"{total_duration:.3f}",
+            "-vf", "fps=30,format=yuv420p",
+            "-c:v", "mpeg4",
+            "-q:v", "3",
+        ]
+        if voiceover is None:
+            command += ["-an"]
+        else:
+            command += [
+                "-af", f"apad,atrim=0:{total_duration:.3f}",
+                "-c:a", "aac",
+                "-b:a", "192k",
+            ]
+        command += ["-movflags", "+faststart", str(output_path)]
+        run_checked(command, timeout=180)
 
     probe = run_checked(
         [
             ffprobe,
             "-v", "error",
-            "-select_streams", "v:0",
-            "-show_entries", "stream=width,height:format=duration",
+            "-show_entries", "stream=codec_type,width,height:format=duration",
             "-of", "json",
             str(output_path),
         ]
     )
     info = json.loads(probe.stdout)
     streams = info.get("streams") or []
-    if not streams:
+    video_streams = [stream for stream in streams if stream.get("codec_type") == "video"]
+    audio_streams = [stream for stream in streams if stream.get("codec_type") == "audio"]
+    if not video_streams:
         raise MediaRenderError("ffprobe returned no video stream")
-    width = int(streams[0].get("width", 0))
-    height = int(streams[0].get("height", 0))
+    if voiceover is not None and len(audio_streams) != 1:
+        raise MediaRenderError("voiceover render must contain exactly one audio stream")
+    if voiceover is None and audio_streams:
+        raise MediaRenderError("silent render unexpectedly contains an audio stream")
+    width = int(video_streams[0].get("width", 0))
+    height = int(video_streams[0].get("height", 0))
     duration = float((info.get("format") or {}).get("duration") or 0)
     if (width, height) != (1080, 1920):
         raise MediaRenderError(f"rendered short has invalid dimensions: {width}x{height}")
