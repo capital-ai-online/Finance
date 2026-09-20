@@ -48,13 +48,13 @@ function sum(rows, key) {
 }
 
 function sortedAlertFingerprintInput(rows, cycle) {
+  // Deliberately exclude running amounts/quantities. One SKU should alert once when it first
+  // becomes billable in a cycle, not every time its accumulated amount changes.
   const normalized = rows.map((row) => ({
     source: row.source,
     product: row.product,
     sku: row.sku,
     unitType: row.unitType,
-    netAmount: row.netAmount,
-    netQuantity: row.netQuantity,
   })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return JSON.stringify({ cycle, rows: normalized });
 }
