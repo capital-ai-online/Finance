@@ -43,6 +43,12 @@ test('canonical PR template v1.7 contains exactly three human-decision sections'
   assert.ok(template.includes('<summary>Technische Details & Traceability</summary>'));
   assert.ok(template.includes('<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>'));
   assert.ok(template.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja'));
+  assert.ok(template.includes([
+    '- **Umsetzung:** {{IMPLEMENTATION_DETAIL}}',
+    '- **Warum:** {{WHY_DETAIL}}',
+    '- **Roadmap / Work Package:** {{ROADMAP}}',
+  ].join('\n')));
+  assert.equal(template.includes('{{IMPLEMENTATION_DETAIL}}\\n- **Warum:**'), false);
 });
 
 test('v1.6 canonical body remains legacy-compatible without becoming the current contract', () => {
