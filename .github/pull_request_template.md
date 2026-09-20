@@ -7,6 +7,14 @@
 
 ## 1. 🧭 Entscheidung
 
+### 📡 Live Dashboard
+
+| Live-Signal | Zustand |
+|---|---|
+| Status | {{DECISION_STATUS}} |
+| Synchronität | {{LIVE_SYNC_SUMMARY}} |
+| Nächster Schritt | {{NEXT_VERIFIABLE_STEP}} |
+
 | Frage | Ergebnis |
 |---|---|
 | Was ändert sich? | {{IMPLEMENTATION_DECISION}} |
