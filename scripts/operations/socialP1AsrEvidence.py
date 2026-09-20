@@ -9,7 +9,6 @@ import unicodedata
 from pathlib import Path
 from typing import Iterable
 
-import whisper
 
 
 def _parse_args() -> argparse.Namespace:
@@ -100,6 +99,8 @@ def main() -> int:
         ]
         if len(wavs) != 4:
             raise RuntimeError(f"expected exactly 4 German productive WAV files, found {len(wavs)}")
+
+    import whisper
 
     model = whisper.load_model(args.model, device="cpu")
     args.output_dir.mkdir(parents=True, exist_ok=True)
