@@ -28,6 +28,17 @@ describe('GitHub billing alert mail projection', () => {
         netAmount: 7,
       }],
       alertRows: [],
+      detailRows: [{
+        source: 'organization',
+        date: '2026-10-01',
+        organizationName: 'capital-ai-online',
+        repositoryName: 'capital-ai-online/Finance',
+        product: 'Actions',
+        sku: 'Actions Linux',
+        unitType: 'minutes',
+        netAmount: 0,
+      }],
+      alertDetailRows: [],
       potentialCostSurfaces: [{
         label: 'GitHub Enterprise Cloud (GHEC)',
         units: ['user-months'],
@@ -37,6 +48,7 @@ describe('GitHub billing alert mail projection', () => {
 
     expect(message.subject).toContain('vollständige Kostenübersicht');
     expect(message.html).toContain('GitHub Enterprise Cloud (GHEC)');
+    expect(message.html).toContain('capital-ai-online/Finance');
     expect(message.html).toContain('&lt;script&gt;bad&lt;/script&gt;');
     expect(message.html).not.toContain('<script>bad</script>');
   });
