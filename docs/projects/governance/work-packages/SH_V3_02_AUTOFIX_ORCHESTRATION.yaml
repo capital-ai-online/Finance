@@ -1,0 +1,50 @@
+schema_version: "3.0.0"
+work_package: "SH-V3-02"
+project: "CAPITAL-AI-GOV"
+title: "Control Panel Autofix Orchestration Watchdog"
+authority:
+  trust_root: "/AGENTS.md@CURRENT_MAIN"
+objective: >
+  Close Finding→Repairer Dispatch→Mutation→Readback→Verification so the
+  Control Panel can prove that an eligible repair was actually started.
+states:
+  - FINDING_OBSERVED
+  - ELIGIBILITY_CLASSIFIED
+  - REPAIRER_SELECTED
+  - DISPATCH_EXPECTED
+  - DISPATCH_READBACK
+  - REMEDIATING
+  - MUTATION_READBACK
+  - VERIFYING
+  - CONVERGED
+  - ESCALATED
+failure_classes:
+  ORCHESTRATION_TRIGGER_MISSING:
+    condition: "eligible finding has no matching controller run/readback"
+    action: "fail closed; emit evidence; do not pretend remediation started"
+  TEST_CONTRACT_DRIFT:
+    action: "dispatch only an explicitly registered deterministic repairer"
+  PR_TEMPLATE_DRIFT:
+    action: "delegate exclusively to canonical Decision Evidence Reconciler"
+  BASELINE_METADATA_RACE:
+    action: "delegate to existing bounded baseline reconciliation path"
+guardrails:
+  - "No generic rerun for unchanged failed Governance."
+  - "No recursive self-authorization."
+  - "No second PR-body writer."
+  - "Attempt budget keyed by PR + generation + failure signature + repairer."
+  - "Missing or stale run evidence is not PASS."
+control_panel:
+  expose:
+    - finding_id
+    - classifier
+    - selected_repairer
+    - dispatch_status
+    - run_id
+    - mutation_sha
+    - verification_status
+    - escalation_reason
+exit_gate:
+  - "eligible autofix dispatch has positive run readback"
+  - "missing dispatch becomes ORCHESTRATION_TRIGGER_MISSING"
+  - "repair outcome is exact-head verified"
