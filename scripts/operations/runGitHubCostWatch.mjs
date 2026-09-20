@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { createGitHubAppInstallationAuthTransport } from './githubAppInstallationAuthTransport.mjs';
 import { createGitHubBillingGatewayAdapter } from './githubBillingGatewayAdapter.mjs';
+import { createGitHubLicenseUsageReadClient } from './githubLicenseUsageReadClient.mjs';
 import { createGitHubUserBillingReadClient } from './githubUserBillingReadClient.mjs';
 import {
   buildGitHubCostWatchReport,
@@ -47,6 +48,7 @@ if (mode === 'monitor' && now.getTime() < startMs) {
 const clientId = requiredEnv('CAPITAL_AI_GITHUB_APP_CLIENT_ID');
 const enterprise = requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_SLUG');
 const username = String(process.env.CAPITAL_AI_GITHUB_USERNAME || 'SvenKulessa').trim();
+const organization = requiredEnv('CAPITAL_AI_GITHUB_ORG_LOGIN');
 const privateKeyPem = readPrivateKey();
 const userAccessToken = String(process.env.CAPITAL_AI_GITHUB_USER_ACCESS_TOKEN || '').trim();
 const billingPeriod = Object.freeze({
@@ -68,7 +70,26 @@ const billing = createGitHubBillingGatewayAdapter({
 
 const enterpriseUsage = await billing.execute('github.billing.usage.summary', billingPeriod);
 
+const organizationReader = createGitHubLicenseUsageReadClient({
+  clientId,
+  privateKeyPem,
+  enterprise,
+  organization,
+});
+
+let organizationUsageDetail = null;
+let organizationCoverage = { status: 'PASS', reason: null };
+try {
+  organizationUsageDetail = await organizationReader.getOrganizationUsageReport(billingPeriod);
+} catch (error) {
+  organizationCoverage = {
+    status: 'BLOCKED',
+    reason: `organization repository attribution failed with provider status ${Number.isInteger(error?.status) ? error.status : 'unknown'}`,
+  };
+}
+
 let personalUsage = null;
+let personalUsageDetail = null;
 let personalCoverage = { status: 'PASS', reason: null };
 if (userAccessToken) {
   try {
@@ -76,7 +97,10 @@ if (userAccessToken) {
       username,
       userAccessToken,
     });
-    personalUsage = await personal.getUsageSummary(billingPeriod);
+    [personalUsage, personalUsageDetail] = await Promise.all([
+      personal.getUsageSummary(billingPeriod),
+      personal.getUsageReport(billingPeriod),
+    ]);
   } catch (error) {
     personalCoverage = {
       status: 'BLOCKED',
@@ -97,7 +121,10 @@ const report = buildGitHubCostWatchReport({
   enterprise,
   username,
   enterpriseUsage,
+  organizationUsageDetail,
   personalUsage,
+  personalUsageDetail,
+  organizationCoverage,
   personalCoverage,
 });
 
