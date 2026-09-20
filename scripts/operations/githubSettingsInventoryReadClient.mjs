@@ -142,6 +142,16 @@ async function parseJson(response) {
   }
 }
 
+/**
+ * @param {{
+ *   clientId?: string;
+ *   privateKeyPem?: string;
+ *   organization?: string;
+ *   fetchImpl?: typeof fetch;
+ *   apiBaseUrl?: string;
+ *   now?: () => number;
+ * }} [options]
+ */
 export function createGitHubSettingsInventoryReadClient({
   clientId,
   privateKeyPem,
