@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-PR1156-EVIDENCE-CONVERGENCE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge the merged PR #1156 Supabase outbox recovery work claim and record post-merge production/security evidence without changing runtime, database, grants or provider configuration.",
+  "startedAt": "2026-09-20T19:45:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "24850d31cc503b28b1ff786b377826733bf9671f",
+  "branch": "agent/operations-pr1156-evidence-convergence-20260920",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "secondaryProjectStage": "PVC-08",
+  "priority": "P1",
+  "priorityReason": "PR #1156 is terminal and production-verified, but its coordination claim remains stale active/exclusive on current main.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-PR1156-EVIDENCE-CONVERGENCE-20260920.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-SUPABASE-OUTBOX-RECOVERY-FIX-20260920.json",
+    "docs/projects/operations/evidence/OPS_02_PR1156_SUPABASE_OUTBOX_RECOVERY_POST_MERGE_2026-09-20.md"
+  ],
+  "scopeNote": "Evidence/coordination convergence only. No RPC, migration, SECURITY DEFINER, grant, database data, provider, IAM, secret, billing, deployment or workflow definition mutation.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+}
