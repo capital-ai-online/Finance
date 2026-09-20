@@ -3,7 +3,7 @@
 **Project:** `CAPITAL-AI-OPS`  
 **Work package:** `OPS-08-B-SH-02 / SH-02.6`  
 **Frontend participation:** `CAPITAL-AI-FE` cross-cutting presentation/recovery only  
-**Baseline:** `main@10dd68d1c448a71f681da78b76329d960d7a9279`  
+**Baseline:** `main@59b65e4907b27f57acd639d56f83ab365f30e4a5`  
 **Branch:** `agent/operations-sh02-6-frontend-degraded-mode-v2-20260920`  
 **Status:** `IMPLEMENTED_BRANCH / VALIDATION_PENDING`
 
