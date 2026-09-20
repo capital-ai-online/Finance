@@ -26,7 +26,7 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
 **Detailed work package:** `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`  
-**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.17`.
+**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.18`.
 
 **Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.
 
