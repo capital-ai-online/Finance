@@ -4,7 +4,7 @@
 **Project folder:** `docs/projects/fintech/`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC ownership:** `PVC-09..PVC-17`  
-**Correlation baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`  
+**Correlation baseline:** `main@c64210a11bc67c6af24411eb7960cd98b696d5b2`  
 **Re-correlated:** 2026-09-20  
 **FIN-SEC-03 merge provenance:** `PR #929` · `103689c2f30536e573b7958f63b503ca428f69cf` · historical branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
 **FIN-17 terminal provenance:** backend PR #946 · `c8a88afc7f9cfad367b592e9567654451f81e436`; FE consumer PR #951 · `3aa41faa2742dfc2601339b000e660f271380cf1`  
