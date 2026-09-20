@@ -36,20 +36,23 @@ const PROTECTED_ACTIONS_MINUTE_BLOCKER = [
   /##\[error\]Mehrere offene Actions-Minuten-Blocker gefunden: #[^\n]+\./i,
 ];
 
+const EXACT_MIGRATABLE_V17_TEMPLATE_BLOCK =
+  /Error: PR #\d+ verwendet die Legacy-Vorlage v1\.7\.0\.[^\n]*dürfen nicht gemerged werden; erforderlich ist v1\.8\.0\./i;
+
 const EXACT_LEGACY_TEMPLATE_BLOCK =
-  /Error: PR #\d+ verwendet die Legacy-Vorlage v(?:1\.5\.0|1\.6\.0)\.[^\n]*dürfen nicht gemerged werden; erforderlich ist v1\.7\.0\./i;
+  /Error: PR #\d+ verwendet die Legacy-Vorlage v(?:1\.5\.0|1\.6\.0)\.[^\n]*dürfen nicht gemerged werden; erforderlich ist v1\.8\.0\./i;
 
 const EXACT_STALE_PRODUCTION_BASELINE =
   /Error: PR #\d+ enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline\./i;
 
-const EXACT_V17_STRUCTURE_DRIFT =
-  /Error: PR #\d+ muss in v1\.7\.0 exakt drei sichtbare Hauptabschnitte besitzen:/i;
+const EXACT_V18_STRUCTURE_DRIFT =
+  /Error: PR #\d+ muss in v1\.8\.0 exakt drei sichtbare Hauptabschnitte besitzen:/i;
 
-const EXACT_V17_PRIORITY_DRIFT =
-  /Error: PR #\d+ enthält keine gültige Prioritätsbewertung \(P0[–-]P3\) der Vorlage v1\.7\.0\./i;
+const EXACT_V18_PRIORITY_DRIFT =
+  /Error: PR #\d+ enthält keine gültige Prioritätsbewertung \(P0[–-]P3\) der Vorlage v1\.8\.0\./i;
 
 const DECISION_EVIDENCE_DRIFT_PATTERNS = [
-  /Error: PR #\d+ enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1\.7\.0\./i,
+  /Error: PR #\d+ enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1\.8\.0\./i,
   /Error: PR #\d+ fehlt kanonische Decision-Evidence:/i,
   /Error: PR #\d+ behauptet Decision Status (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED), aber die sichtbaren Gate-Zustände ergeben (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\./i,
 ];
@@ -142,6 +145,16 @@ export function classifyPrAutofixFailure(
   // Exact PR-Governance contract failures take precedence over broad provider/security
   // vocabulary found in shell/source excerpts inside gh --log-failed output.
   if (source === '.github/workflows/pr-governance.yml') {
+    if (EXACT_MIGRATABLE_V17_TEMPLATE_BLOCK.test(log)) {
+      return result({
+        classification: 'PR_TEMPLATE_VERSION_MIGRATION',
+        decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
+        reason: 'v1.7-to-v1.8-live-reconciler-owned',
+        findingClass: 'REPOSITORY_PR_TEMPLATE_VERSION_DRIFT',
+        actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+      });
+    }
+
     if (EXACT_LEGACY_TEMPLATE_BLOCK.test(log)) {
       return result({
         classification: 'PR_LEGACY_TEMPLATE_BLOCK',
@@ -170,33 +183,33 @@ export function classifyPrAutofixFailure(
       });
     }
 
-    if (EXACT_V17_PRIORITY_DRIFT.test(log)) {
-      if (metadataShape === 'CURRENT_V17_CANONICAL') {
+    if (EXACT_V18_PRIORITY_DRIFT.test(log)) {
+      if (metadataShape === 'CURRENT_V18_CANONICAL') {
         return result({
           classification: 'PR_TEMPLATE_METADATA_DRIFT',
           decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
-          reason: 'current-v1.7-priority-token-repairable',
+          reason: 'current-v1.8-priority-token-repairable',
         });
       }
       return result({
         classification: 'PR_TEMPLATE_METADATA_DRIFT',
         decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
-        reason: 'current-v1.7-priority-drift-requires-canonical-shape',
+        reason: 'current-v1.8-priority-drift-requires-canonical-shape',
       });
     }
 
-    if (EXACT_V17_STRUCTURE_DRIFT.test(log)) {
-      if (metadataShape === 'CURRENT_V17_LEGACY_BASELINE_SECTION') {
+    if (EXACT_V18_STRUCTURE_DRIFT.test(log)) {
+      if (metadataShape === 'CURRENT_V18_LEGACY_BASELINE_SECTION') {
         return result({
           classification: 'PR_TEMPLATE_METADATA_DRIFT',
           decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
-          reason: 'current-v1.7-legacy-baseline-section-repairable',
+          reason: 'current-v1.8-legacy-baseline-section-repairable',
         });
       }
       return result({
         classification: 'PR_TEMPLATE_METADATA_DRIFT',
         decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
-        reason: 'current-v1.7-structure-drift-not-allowlisted',
+        reason: 'current-v1.8-structure-drift-not-allowlisted',
       });
     }
   }
