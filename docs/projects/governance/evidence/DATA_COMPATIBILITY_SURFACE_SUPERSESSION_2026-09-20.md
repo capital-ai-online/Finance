@@ -18,10 +18,10 @@
 
 After Human/CODEOWNER merge of this slice:
 
-1. `CAPITAL-AI-DATA` remains superseded and is no longer a canonical project-folder route.
-2. `docs/projects/data/` becomes migration drift rather than a retained current project surface.
-3. Historical DATA material may be archived under `docs/archive/` with provenance preserved.
-4. Documentary WP-04/WP-05 may remove the compatibility folder only after re-correlation against the merged main.
+1. `CAPITAL-AI-DATA` remains superseded and the Trust Root no longer requires permanent retention of its compatibility folder.
+2. The existing DATA routing row remains temporarily present in this bootstrap slice because `docs/projects/data/README.md` still exists and the current fail-closed Project Value Chain validator requires those states to match.
+3. Historical DATA material may be archived under `docs/archive/` with provenance preserved after this slice is Human/CODEOWNER merged.
+4. Documentary WP-04/WP-05 must remove `docs/projects/data/` and the DATA routing row atomically in its successor PR after re-correlation against the merged main.
 5. No runtime/provider/scoring/data-plane authority moves; FINTECH remains the sole productive owner for `PVC-09..17`.
 
 ## Owner-correct follow-ons
@@ -41,6 +41,6 @@ After Human/CODEOWNER merge of this slice:
 ## Exit gate
 
 - Trust root no longer requires DATA compatibility-folder retention.
-- Canonical project routing contains no DATA row.
+- This bootstrap slice keeps the DATA routing row until the physical compatibility folder is removed atomically by the Documentary successor.
 - FINTECH remains `PVC-09..17` owner.
 - Human/CODEOWNER merge remains the activation boundary.
