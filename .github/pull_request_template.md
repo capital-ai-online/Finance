@@ -39,7 +39,9 @@
 - **Erstellt durch:** {{AGENT_PROVIDER}} / {{AGENT_MODEL}} via {{AGENT_SURFACE}}
 - **Claim:** `{{CLAIM_ID}}` · `{{CLAIM_FILE}}`
 - **Projektordner:** `{{PROJECT_FOLDER}}`
-- **Umsetzung:** {{IMPLEMENTATION_DETAIL}}\n- **Warum:** {{WHY_DETAIL}}\n- **Roadmap / Work Package:** {{ROADMAP}}
+- **Umsetzung:** {{IMPLEMENTATION_DETAIL}}
+- **Warum:** {{WHY_DETAIL}}
+- **Roadmap / Work Package:** {{ROADMAP}}
 - **Ziel / Exit Gate:** {{EXIT_GATE}}
 - **Priorität:** {{PRIORITY}}
 - **Warum diese Priorität:** {{PRIORITY_REASON}}
