@@ -127,16 +127,16 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain("[ \"$after_lineage\" = 'identical' ]");
   });
 
-  it('uses a pinned GitHub App token only for the trusted automatic lane', () => {
+  it('uses a pinned GitHub App token only for trusted automatic post-merge and approved-review lanes', () => {
     const yaml = workflow();
     expect(yaml).toContain('contents: write');
     expect(yaml).toContain('pull-requests: write');
-    expect(yaml).toContain("if: github.event_name == 'workflow_run'");
+    expect(yaml).toContain("if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'");
     expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
     expect(yaml).toContain('client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}');
     expect(yaml).toContain('private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}');
     expect(yaml).toContain('permission-contents: write');
     expect(yaml).toContain('permission-pull-requests: write');
-    expect(yaml).toContain("GH_TOKEN: ${{ github.event_name == 'workflow_run' && steps.app_token.outputs.token || github.token }}");
+    expect(yaml).toContain("GH_TOKEN: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token || github.token }}");
   });
 });
