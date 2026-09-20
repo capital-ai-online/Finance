@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.3.0`  
+**Control Plane Version:** `4.4.0`  
 **Status:** OWNER-DIRECTED — effective after Human/CODEOWNER merge  
 **Effective date:** 2026-09-17  
 **Repository:** `capital-ai-online/Finance`
@@ -66,7 +66,7 @@ Missing, contradictory or ambiguous authority fails closed. Never invent a PVC, 
 
 ### DATA → FINTECH ownership supersession invariant
 
-Effective with Human/CODEOWNER merge of this control-plane update, `CAPITAL-AI-DATA` is **superseded as an independent Project Owner and execution source**. `PVC-09`, `PVC-10` and `PVC-11` resolve to `CAPITAL-AI-FINTECH`; the FINTECH productive ownership range is therefore `PVC-09..PVC-17`. `docs/projects/data/` is retained only as a historical/compatibility surface and MUST NOT advertise active Primary ownership, create executable tasks or act as a current project-routing source.
+Effective with Human/CODEOWNER merge of this control-plane update, `CAPITAL-AI-DATA` is **superseded as an independent Project Owner and execution source**. `PVC-09`, `PVC-10` and `PVC-11` resolve to `CAPITAL-AI-FINTECH`; the FINTECH productive ownership range is therefore `PVC-09..PVC-17`. `docs/projects/data/` is no longer a canonical project surface. After Human/CODEOWNER merge of this change, its remaining historical material MUST be archived under `docs/archive/` with provenance preserved, and the compatibility folder MAY be removed by the owner-correct Documentary migration. It MUST NOT be retained as current project routing, task, ownership or execution surface.
 
 All current organizational projections — including `docs/projects/README.md`, `docs/projects/PROJECT_VALUE_CHAIN.md`, project `PVC_OWNERSHIP.md` files, ROADMAP/TASK_REGISTER projections, generated reports and current machine-readable ownership indexes — MUST converge on that mapping. A current projection that still assigns `PVC-09..11` to `CAPITAL-AI-DATA` is stale drift and MUST be treated fail-closed until corrected.
 
