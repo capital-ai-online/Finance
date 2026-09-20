@@ -38,6 +38,22 @@ function tableRows(items: JsonRecord[]): string {
   </tr>`).join('');
 }
 
+function attributionRows(items: JsonRecord[]): string {
+  if (items.length === 0) {
+    return '<tr><td colspan="8">Keine Repository-/Organisationszuordnung von GitHub gemeldet.</td></tr>';
+  }
+  return items.map((item) => `<tr>
+    <td>${escapeHtml(text(item.source))}</td>
+    <td>${escapeHtml(text(item.date))}</td>
+    <td>${escapeHtml(text(item.organizationName))}</td>
+    <td>${escapeHtml(text(item.repositoryName))}</td>
+    <td>${escapeHtml(text(item.product))}</td>
+    <td>${escapeHtml(text(item.sku))}</td>
+    <td>${escapeHtml(text(item.unitType))}</td>
+    <td style="text-align:right"><strong>${escapeHtml(amount(item.netAmount))}</strong></td>
+  </tr>`).join('');
+}
+
 function catalogRows(items: JsonRecord[]): string {
   return items.map((item) => {
     const units = Array.isArray(item.units) ? item.units.filter((unit) => typeof unit === 'string').join(', ') : 'provider-defined';
@@ -54,10 +70,13 @@ export function buildGitHubBillingCostWatchEmail(reportInput: unknown): { subjec
   const mode = text(report.mode, 'monitor');
   const status = text(report.status, 'UNKNOWN');
   const coverage = record(report.coverage);
+  const organizationAttributionCoverage = record(coverage.organizationAttribution);
   const personalCoverage = record(coverage.personal);
   const totals = record(report.totals);
   const allRows = rows(report.rows);
   const alertRows = rows(report.alertRows);
+  const detailRows = rows(report.detailRows);
+  const alertDetailRows = rows(report.alertDetailRows);
   const surfaces = rows(report.potentialCostSurfaces);
 
   const subject = mode === 'test'
@@ -85,6 +104,8 @@ export function buildGitHubBillingCostWatchEmail(reportInput: unknown): { subjec
     <h3>Überwachungsabdeckung</h3>
     <ul>
       <li>Enterprise: ${escapeHtml(text(record(coverage.enterprise).status))}</li>
+      <li>Organisation/Repository-Zuordnung: ${escapeHtml(text(organizationAttributionCoverage.status))}</li>
+      ${organizationAttributionCoverage.reason ? `<li>Hinweis Organisation: ${escapeHtml(text(organizationAttributionCoverage.reason))}</li>` : ''}
       <li>Persönliches Billing außerhalb Enterprise: ${escapeHtml(text(personalCoverage.status))}</li>
       ${personalCoverage.reason ? `<li>Hinweis: ${escapeHtml(text(personalCoverage.reason))}</li>` : ''}
     </ul>
@@ -93,6 +114,18 @@ export function buildGitHubBillingCostWatchEmail(reportInput: unknown): { subjec
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
       <thead><tr><th>Quelle</th><th>Produkt</th><th>SKU</th><th>Einheit</th><th>Brutto</th><th>Rabatt</th><th>Netto</th></tr></thead>
       <tbody>${tableRows(allRows)}</tbody>
+    </table>
+
+    <h3>Kostenursprung nach Organisation / Repository</h3>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+      <thead><tr><th>Quelle</th><th>Datum</th><th>Organisation</th><th>Repository</th><th>Produkt</th><th>SKU</th><th>Einheit</th><th>Netto</th></tr></thead>
+      <tbody>${attributionRows(detailRows)}</tbody>
+    </table>
+
+    <h3>Alarmrelevanter Kostenursprung</h3>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+      <thead><tr><th>Quelle</th><th>Datum</th><th>Organisation</th><th>Repository</th><th>Produkt</th><th>SKU</th><th>Einheit</th><th>Netto</th></tr></thead>
+      <tbody>${attributionRows(alertDetailRows)}</tbody>
     </table>
 
     <h3>Alarmrelevante Positionen</h3>
