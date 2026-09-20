@@ -104,7 +104,7 @@ Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, 
 - Current Project: `CAPITAL-AI-SEO`; Project Folder: `docs/projects/seo/`; Primary productive PVC: `N/A — cross-cutting`; Primary Owner: `CAPITAL-AI-SEO`.
 - Human/CODEOWNER-merged PRs `#1153` and `#1159` are part of the repository launch candidate.
 - Open PRs `#1164` (GOV), `#1165` (SEC) and `#1167` (FE claim closure) have no changed-file overlap with this SEO execution slice at branch creation; Security assurance remains an independent final-launch input.
-- Current Render readback is live at `e86955225887bb7f34036c175ad1da89b8aec14d`, not exact current main; launch Production freeze is therefore `PRODUCTION_DRIFT`.
+- Production initially lagged current main, then converged through canonical main CI run `35529208910`: deploy-hook trigger at `18:32:47Z` was 215 s after the main commit and Render deploy `dep-dao2dk0ae00c73aha6c0` is live at exact `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`; snapshot-bound Production freeze is `PASS`.
 - This SEO slice owns launch coordination/evidence only. FE metadata implementation, OPS deployment, SOCIAL provider packages/publication, COMP privacy/legal and QM assurance stay foreign-owner work.
 
 ---
@@ -332,4 +332,4 @@ Das **Gesamtprogramm** bleibt offen, solange der Public-Launch-Exit-Gate, Provid
 | 0002.15 | 2026-09-06 | damaliger SEO-Dokumentations-Closeout nach Q1-Production; Restqueue owner-/foreign-owner-gated |
 | **0002.16** | **2026-09-11** | Owner-directed SoTA-Reopening aus dem 2026-09-07 Work Item auf die übertragene Repository-Instanz `capital-ai-online/Finance`; final re-korreliert gegen `main@12c9e129c7302df0d1bce7640cd7888f0998b9ca`, moderne Roadmap-Mechanik, GenAI Search, GSC+GA4, CWV, content/topic/IA/media/authority/spam/refresh WPs ergänzt und alle Pakete bis zu ihrem zulässigen Gate gestartet |
 | **0002.17** | **2026-09-20** | Owner-directed `WP-SEO-LAUNCH-01` ergänzt: öffentliche Web-/Search-/Social-Launch-Kette, Landing-/CTA-Dependency auf offenen FE-PR #1153, consent-safe Measurement, Social-Package-/Provider-Evidence, T-relativer Launchkalender und same-candidate Launch-Gates; current-main re-korreliert auf `c9980602f691b855fd6f8c66a49822e7a9611b4a` |
-| **0002.18** | **2026-09-20** | Launch-Ausführung gegen `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`: CTA-/6-URL-Repository-Freeze, exact-SHA Production-Drift, Root-Metadata-Handoff, GSC/GA4 `READ_BLOCKED_NOT_CONNECTED`, reale Supabase-Readback-Evidence ohne X/Facebook-Accounts und owner-korrekte Social-Wave-1-Übergabe materialisiert |
+| **0002.18** | **2026-09-20** | Launch-Ausführung gegen `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`: CTA-/6-URL-Repository-Freeze, initialer Production-Drift plus canonical exact-SHA Recovery/SLA-PASS, Root-Metadata-Handoff, GSC/GA4 `READ_BLOCKED_NOT_CONNECTED`, reale Supabase-Readback-Evidence ohne X/Facebook-Accounts und owner-korrekte Social-Wave-1-Übergabe materialisiert |
