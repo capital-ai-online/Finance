@@ -22,10 +22,9 @@ describe('SessionComposition authentication boundary', () => {
     expect(source).not.toContain('const [loading, setLoading]');
     expect(source).not.toContain('Lade Sicherheits-Modul...');
 
-    const failureHandler =
-      source.match(
-        /establishSession\(session\)\.catch\(\(err\) => \{([\s\S]*?)\n      \}\);/,
-      )?.[1] ?? '';
+    const failureStart = source.indexOf('void establishSession(candidate.session)');
+    const failureEnd = source.indexOf('    return () => {', failureStart);
+    const failureHandler = source.slice(failureStart, failureEnd);
 
     expect(failureHandler).toContain(
       "console.error('[Auth] Session establishment failed:', err);",
