@@ -223,6 +223,10 @@ Apply to durable outbox and other recurring workers:
 - server deployment version/commit skew detection;
 - cache/state reset without full user-session destruction where possible.
 
+## SH-02.7 precondition — Auto-Merge Safety Contract
+
+Before SH-02.7 may arm provider-managed auto-merge, the repository trust root must contain the Human-merged Auto-Merge Safety Contract. The contract is a governance prerequisite only; it does not make SH-02.7 auto-merge eligible by default. SH-02.7 is P0 and Production-runtime/deployment-sensitive, so it remains `HUMAN_MERGE_REQUIRED` under the initial contract unless a later Human Owner trust-root change explicitly admits that class.
+
 ## SH-02.7 — Exact-SHA runtime recovery
 
 Reuse the existing production chain. Eligible recovery may re-drive deployment only for an already merged, provenance-valid SHA and only through the existing protected workflow/provider path. Mandatory readback:
