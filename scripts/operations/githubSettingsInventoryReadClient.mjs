@@ -8,6 +8,7 @@ const REQUEST_TIMEOUT_MS = 15_000;
 const TOKEN_REFRESH_SKEW_MS = 5 * 60 * 1000;
 const MAX_INSTALLATION_PAGES = 100;
 const MAX_RULESET_PAGES = 100;
+const MAX_ARTIFACT_PAGES = 100;
 
 export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
   'organization.actions.permissions.get': Object.freeze({
@@ -35,6 +36,21 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     requiredPermission: 'Administration: read',
     path: ({ organization }) => `/orgs/${organization}/actions/permissions/self-hosted-runners`,
   }),
+  'organization.actions.cache_usage.get': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/cache/usage`,
+  }),
+  'organization.actions.cache_retention_limit.get': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/cache/retention-limit`,
+  }),
+  'organization.actions.cache_storage_limit.get': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/cache/storage-limit`,
+  }),
   'repository.settings.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Metadata: read',
@@ -59,6 +75,27 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     scope: 'repository',
     requiredPermission: 'Administration: read',
     path: ({ repository }) => `/repos/${repository}/actions/permissions/fork-pr-workflows-private-repos`,
+  }),
+  'repository.actions.cache_usage.get': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Actions: read',
+    path: ({ repository }) => `/repos/${repository}/actions/cache/usage`,
+  }),
+  'repository.actions.cache_retention_limit.get': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Administration: read',
+    path: ({ repository }) => `/repos/${repository}/actions/cache/retention-limit`,
+  }),
+  'repository.actions.cache_storage_limit.get': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Actions: read',
+    path: ({ repository }) => `/repos/${repository}/actions/cache/storage-limit`,
+  }),
+  'repository.actions.artifacts.list': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Actions: read',
+    pagination: 'artifactCollection',
+    path: ({ repository }) => `/repos/${repository}/actions/artifacts`,
   }),
   'repository.custom_properties.list': Object.freeze({
     scope: 'repository',
@@ -276,6 +313,30 @@ export function createGitHubSettingsInventoryReadClient({
     return { organization, repository };
   }
 
+  async function readArtifactCollection(path) {
+    const artifacts = [];
+    let totalCount = 0;
+
+    for (let page = 1; page <= MAX_ARTIFACT_PAGES; page += 1) {
+      const joiner = path.includes('?') ? '&' : '?';
+      const payload = await authenticatedGet(`${path}${joiner}per_page=100&page=${page}`);
+      if (!payload || !Array.isArray(payload.artifacts)) {
+        fail('repository artifacts response must contain an artifacts array');
+      }
+      if (page === 1 && Number.isInteger(payload.total_count)) totalCount = payload.total_count;
+      artifacts.push(...payload.artifacts);
+      if (payload.artifacts.length < 100) {
+        return Object.freeze({
+          total_count: totalCount || artifacts.length,
+          artifacts: Object.freeze(artifacts),
+        });
+      }
+      if (page === MAX_ARTIFACT_PAGES) fail('artifact pagination exceeded safety limit');
+    }
+
+    return Object.freeze({ total_count: artifacts.length, artifacts: Object.freeze(artifacts) });
+  }
+
   return Object.freeze({
     describeBoundary() {
       return Object.freeze({
@@ -293,7 +354,9 @@ export function createGitHubSettingsInventoryReadClient({
       const descriptor = GITHUB_SETTINGS_READ_CAPABILITIES[capability];
       if (!descriptor) fail(`unsupported capability: ${capability}`);
       if (descriptor.scope === 'repository' && !repository) fail('repository is required');
-      return authenticatedGet(descriptor.path(context(repository)));
+      const path = descriptor.path(context(repository));
+      if (descriptor.pagination === 'artifactCollection') return readArtifactCollection(path);
+      return authenticatedGet(path);
     },
 
     async listRepositoryRulesets({ repository } = {}) {
