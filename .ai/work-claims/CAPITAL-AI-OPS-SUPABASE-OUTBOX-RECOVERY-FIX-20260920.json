@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SUPABASE-OUTBOX-RECOVERY-FIX-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Owner-directed Supabase production convergence for already-merged outbox worker recovery, including correction of the PL/pgSQL job_id ambiguity proven by runtime readback.",
+  "startedAt": "2026-09-20T18:15:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c9980602f691b855fd6f8c66a49822e7a9611b4a",
+  "branch": "agent/operations-supabase-outbox-recovery-fix-20260920",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "priority": "P1",
+  "priorityReason": "Production Supabase drift and worker failure require controlled implementation convergence (PVC-02) with verified production operations evidence (PVC-08).",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SUPABASE-OUTBOX-RECOVERY-FIX-20260920.json",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
+    "scripts/governance/verifySupabaseMigrationLedgerReconciliation.mjs",
+    "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs",
+    "supabase/migrations/20260920161445_fix_outbox_worker_recovery_job_id_ambiguity.sql",
+    "supabase/migrations/20260920162905_m10_shadow_evaluations_credential_fk_index.sql",
+    "tests/unit/outboxWorkerRecoveryMigration.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "secondaryProjectStage": "PVC-08"
+}

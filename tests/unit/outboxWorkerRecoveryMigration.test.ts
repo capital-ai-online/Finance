@@ -7,9 +7,17 @@ const migrationPath = path.join(
   root,
   'supabase/migrations/20260920141000_outbox_worker_recovery.sql',
 );
+const correctiveMigrationPath = path.join(
+  root,
+  'supabase/migrations/20260920161445_fix_outbox_worker_recovery_job_id_ambiguity.sql',
+);
 
 function migration(): string {
   return fs.readFileSync(migrationPath, 'utf8');
+}
+
+function correctiveMigration(): string {
+  return fs.readFileSync(correctiveMigrationPath, 'utf8');
 }
 
 describe('SH-02.5 outbox worker recovery migration', () => {
@@ -53,5 +61,18 @@ describe('SH-02.5 outbox worker recovery migration', () => {
     expect(sql).toContain('create or replace function public.claim_outbox_job(');
     expect(sql).toContain('from public.claim_outbox_job_v2(');
     expect(sql).toContain("'{}'::text[]");
+  });
+
+  it('corrects the PL/pgSQL output-column ambiguity found during production readback', () => {
+    const sql = correctiveMigration();
+    expect(sql).toContain('create or replace function public.claim_outbox_job_v2');
+    expect(sql).toContain('returning 1 as recorded');
+    expect(sql).not.toContain('returning job_id');
+    expect(sql).toContain(
+      'revoke all on function public.claim_outbox_job_v2(text, integer, text[]) from public, anon, authenticated',
+    );
+    expect(sql).toContain(
+      'grant execute on function public.claim_outbox_job_v2(text, integer, text[]) to service_role',
+    );
   });
 });
