@@ -11,6 +11,7 @@ describe('SOCIAL-P2 voice-over integration boundary', () => {
     expect(core).toContain('voiceover requires explicit Human/Owner listening acceptance PASS');
     expect(core).toContain('raw.get("acceptanceStatus") != "PASS"');
     expect(renderer).toContain('validate_voiceover_binding(raw.get("voiceover")');
+    expect(renderer).toContain('voiceover requires --video so audio evidence cannot be attached to image-only output');
   });
 
   it('binds the voice-over to immutable TTS and content identities', () => {
