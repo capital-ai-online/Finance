@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Implement policy-bound per-PR auto-merge and exact routing into the canonical branch synchronization workflow.",
-  "workItemDE": "Jeden Pull Request fail-closed gegen den Auto-Merge Safety Contract klassifizieren, zulässige PRs nach Exact-Head-Revalidierung über GitHub Auto-Merge armen und CURRENT_MAIN-Drift exakt an den bestehenden kanonischen Branch-Sync-Workflow delegieren.",
+  "workItem": "Implement policy-bound per-PR auto-merge, fail-closed legacy-template exclusion, and a single-writer proactive live decision dashboard.",
+  "workItemDE": "Jeden Pull Request fail-closed gegen den Auto-Merge Safety Contract klassifizieren, Legacy-PR-Vorlagen vollständig von Merge/Auto-Merge ausschließen und v1.7 über denselben Evidence→Decision-Reconciler als synchrones proaktives Live Dashboard fortführen.",
   "priority": "P1",
   "priorityReason": "Reduziert manuelle Merge- und Synchronisationsschritte, ohne Human/CODEOWNER-Schutzklassen, Required Checks oder den kanonischen Branch-Writer zu umgehen.",
   "projectId": "CAPITAL-AI-GOV",
@@ -21,19 +21,24 @@
   "branch": "agent/governance-pr-auto-merge-router-20260920",
   "claimedPaths": [
     ".ai/work-claims/GOV-PR-AUTO-MERGE-ROUTER-20260920.json",
+    ".github/pull_request_template.md",
     ".github/workflows/pr-decision-reconciler.yml",
     ".github/workflows/sync-agent-pr-branches.yml",
     "scripts/pr/prAutoMergeSafety.mjs",
     "scripts/pr/prAutoMergeSafety.test.mjs",
+    "scripts/pr/prDecisionState.mjs",
+    "scripts/pr/prDecisionState.test.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    "scripts/pr/renderPullRequestBody.mjs",
+    "scripts/pr/validatePrBody.mjs",
     "tests/unit/agentPrBranchSyncCostControl.test.ts"
   ],
-  "exitGate": "Every open same-repository PR against main is evaluated fail-closed; only exact-head/current-base AUTO_MERGE_ELIGIBLE PRs with all required evidence PASS are armed through GitHub provider auto-merge after a fresh Governance revalidation; protected classes remain HUMAN_MERGE_REQUIRED; trusted stale PRs route only to the existing canonical branch-sync writer.",
+  "exitGate": "Every open same-repository PR against main is evaluated fail-closed; non-current PR template versions can never pass merge governance or auto-merge eligibility; current v1.7 Decision/Evidence state is projected into one live dashboard by the existing reconciler; only exact-head/current-base fully evidenced eligible PRs may be armed.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct agent self-merge and no second PR-body or branch-sync writer.",
   "currentMainCorrelation": {
-    "sha": "4f2c746a20a8683d784a1cbe54c763a64ddd1da3",
+    "sha": "4c454a67dc8a4f7dcd39ad7360cd6af32c114aac",
     "status": "SYNCED",
-    "correlatedAt": "2026-09-20T21:40:00Z"
+    "correlatedAt": "2026-09-20T22:42:00Z"
   }
 }
