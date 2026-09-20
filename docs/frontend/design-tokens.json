@@ -101,7 +101,7 @@
     }
   },
   "font": {
-    "sans": { "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif", "css": "--font-sans", "role": "body", "note": "Owner-directed roadmap typography convergence: Montserrat is the application-wide brand sans." },
+    "sans": { "value": "\"Poppins\", ui-sans-serif, system-ui, sans-serif", "css": "--font-sans", "role": "body", "note": "Branding Manifest v6.2 body typography; preserved while Montserrat remains the display/heading family." },
     "display": { "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif", "css": "--font-display", "role": "headings" },
     "mono": { "value": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, monospace", "css": "--font-mono", "role": "tech-data" }
   },
