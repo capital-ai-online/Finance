@@ -13,11 +13,8 @@ services:
     autoDeployTrigger: off
     healthCheckPath: /healthz
     maxShutdownDelaySeconds: 30
-    # ADR-0037: real secrets live only in finance-secrets.env. Full key inventory is defined by
-    # scripts/security/secretFileManifest.ts. SC-4 DUNE_API_KEY therefore remains in the secret file;
-    # non-secret entitlement/policy gates below stay normal envVars.
-    secretFiles:
-      - name: finance-secrets.env
+    # Production runtime configuration is sourced exclusively from Render environment variables.
+    # Secret values remain Dashboard-managed and are declared here only as sync:false keys.
     envVars:
       - key: VITE_GA_MEASUREMENT_ID
         sync: false
@@ -51,6 +48,59 @@ services:
       - key: STRIPE_PRICE_ID_PRO
         sync: false
       - key: STRIPE_PRICE_ID_ENTERPRISE
+        sync: false
+      # Server-only secrets. Values are configured in the Render Dashboard and never committed.
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: TOTP_ENCRYPTION_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALPACA_API_KEY_ID
+        sync: false
+      - key: ALPACA_API_SECRET_KEY
+        sync: false
+      - key: ALPHA_VANTAGE_API_KEY
+        sync: false
+      - key: COIN_API_KEY
+        sync: false
+      - key: EODHD_API_KEY
+        sync: false
+      - key: TWELVEDATA_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+      - key: FMP_API_KEY
+        sync: false
+      - key: CAPITAL_AI_EDGE_TRUST_SECRET
+        sync: false
+      - key: DUNE_API_KEY
+        sync: false
+      - key: GOPLUS_API_KEY
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: METRICS_TOKEN
+        sync: false
+      - key: YOUTUBE_CLIENT_SECRET
+        sync: false
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+      - key: INSTAGRAM_CLIENT_SECRET
+        sync: false
+      - key: X_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_CLIENT_SECRET
         sync: false
       - key: SMTP_HOST
         sync: false
@@ -95,7 +145,7 @@ services:
         value: "1200"
       - key: GEMINI_RESEARCH_THINKING_LEVEL
         value: "low"
-      # SC-4 Dune evidence. DUNE_API_KEY stays in finance-secrets.env.
+      # SC-4 Dune evidence. DUNE_API_KEY is a server-only Render environment variable.
       # Default remains fail-closed FREE_TIER until entitlement is explicitly attested.
       # TRIAL_14D is supported only with explicit start/end timestamps + Owner attestation and
       # automatically blocks at expiry. Dataset entitlement never relaxes semantic query governance.

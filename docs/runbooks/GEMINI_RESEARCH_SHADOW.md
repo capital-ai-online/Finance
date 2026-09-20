@@ -26,7 +26,7 @@ Diese externen Bedingungen können sich ändern. **Vor jeder erstmaligen Aktivie
 
 Owner-Attestation:
 
-- `GEMINI_API_KEY` liegt in der kanonischen `finance-secrets.env`;
+- `GEMINI_API_KEY` liegt in der kanonischen Render Environment Variables;
 - der zugehörige Gemini/Google API-Key stammt laut Owner-Bestätigung aus einem Projekt ohne Billing;
 - Render Service `Finance`: `GEMINI_RESEARCH_FREE_TIER_ONLY=true`;
 - Render Service `Finance`: `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true`;
@@ -38,7 +38,7 @@ Damit ist die Free-Tier-/Billing-Voraussetzung erfüllt, **der Providertraffic b
 
 Vor `GEMINI_RESEARCH_SHADOW_ENABLED=true` müssen alle Bedingungen erfüllt sein:
 
-1. `GEMINI_API_KEY` liegt ausschließlich in `/etc/secrets/finance-secrets.env`;
+1. `GEMINI_API_KEY` liegt ausschließlich in `Render Environment`;
 2. der Key gehört zu einem Google/Gemini-Projekt **ohne Billing-Verknüpfung**;
 3. `GEMINI_RESEARCH_FREE_TIER_ONLY=true`;
 4. nach manueller Billing-Kontrolle ist `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true` gesetzt;
@@ -151,4 +151,4 @@ Primärer Kill-Switch: `GEMINI_RESEARCH_SHADOW_ENABLED=false`.
 
 Zero-Cost-Sicherheitsgate: `GEMINI_RESEARCH_FREE_TIER_ATTESTED=false`.
 
-Beide Zustände verhindern einen aktiven kanonischen Transport. Wird am Google-Projekt Billing aktiviert oder ist der Free-Tier-Status unklar, Attestation sofort auf `false` setzen und den Key optional aus `finance-secrets.env` entfernen/rotieren.
+Beide Zustände verhindern einen aktiven kanonischen Transport. Wird am Google-Projekt Billing aktiviert oder ist der Free-Tier-Status unklar, Attestation sofort auf `false` setzen und den Key optional aus Render Environment Variables entfernen/rotieren.

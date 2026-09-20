@@ -66,30 +66,27 @@ const checks: Check[] = [
   },
   {
     id: 'PCG-003',
-    // Deploy-Härtung: SUPABASE_SECRET_KEY kommt seit der Secret-File-Migration nicht mehr
-    // als einzelne render.yaml-envVar, sondern über die Render Secret File - deklariert in
-    // scripts/security/secretFileManifest.ts (Single Source of Truth, siehe dort).
-    file: 'scripts/security/secretFileManifest.ts',
-    description: 'A dedicated Supabase secret key must be declared for privileged backend access',
-    includes: "'SUPABASE_SECRET_KEY',",
+    file: 'render.yaml',
+    description: 'A dedicated Supabase secret key must be declared as a Dashboard-managed Render env var',
+    includes: '- key: SUPABASE_SECRET_KEY',
   },
   {
     id: 'PCG-009',
     file: 'render.yaml',
-    description: 'Secrets must be sourced from the Render Secret File, not individual envVars',
-    includes: 'secretFiles:',
+    description: 'Render Secret Files must not be part of the production configuration authority',
+    excludes: 'secretFiles:',
   },
   {
     id: 'PCG-010',
     file: 'render.yaml',
-    description: 'Stripe secret key must not be redeclared as a plain envVar (belongs in the Secret File)',
-    excludes: '- key: STRIPE_SECRET_KEY',
+    description: 'Stripe secret key must be declared as a Dashboard-managed Render env var',
+    includes: '- key: STRIPE_SECRET_KEY',
   },
   {
     id: 'PCG-011',
     file: 'render.yaml',
-    description: 'TOTP encryption key must not be redeclared as a plain envVar (belongs in the Secret File)',
-    excludes: '- key: TOTP_ENCRYPTION_KEY',
+    description: 'TOTP encryption key must be declared as a Dashboard-managed Render env var',
+    includes: '- key: TOTP_ENCRYPTION_KEY',
   },
   {
     id: 'PCG-004',
