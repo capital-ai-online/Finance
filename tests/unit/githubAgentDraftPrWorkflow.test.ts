@@ -36,6 +36,10 @@ describe('GitHub agent draft PR bot governance', () => {
     const yaml = workflow();
     expect(yaml).toContain("github.triggering_actor == 'SvenKulessa'");
     expect(yaml).toContain("github.actor == 'SvenKulessa'");
+    expect(yaml).toContain('workflow_call:');
+    expect(yaml).toContain("inputs.trusted_handoff == 'documentary-autosync'");
+    expect(yaml).toContain("github.event_name == 'push'");
+    expect(yaml).toContain("github.ref == 'refs/heads/main'");
     expect(yaml).not.toContain('approval_envelope_json:');
     expect(yaml).not.toContain('owner_pr_create_approval:');
     expect(yaml).not.toContain('PR Erstellung : Freigegeben');
