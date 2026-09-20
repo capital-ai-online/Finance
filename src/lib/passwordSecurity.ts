@@ -1,8 +1,8 @@
 export const PASSWORD_MIN_LENGTH = 14;
 
 const REQUIRED_SYMBOL = /[^A-Za-z0-9]/;
-const HIBP_RANGE_URL = 'https://api.pwnedpasswords.com/range';
-const HIBP_TIMEOUT_MS = 5000;
+const PASSWORD_SCREENING_ENDPOINT = '/api/auth/password-security/check';
+const COMPROMISE_CHECK_TIMEOUT_MS = 7_000;
 
 export class PasswordSecurityError extends Error {
   constructor(message: string) {
@@ -31,65 +31,41 @@ export function validatePasswordStrength(password: string): void {
   }
 }
 
-async function sha1Hex(value: string): Promise<string> {
-  if (!globalThis.crypto?.subtle) {
-    throw new PasswordSecurityError('Die sichere Passwortprüfung wird von diesem Browser nicht unterstützt.');
-  }
-
-  const digest = await globalThis.crypto.subtle.digest(
-    'SHA-1',
-    new TextEncoder().encode(value),
-  );
-
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-    .toUpperCase();
-}
-
 /**
- * Privacy-preserving Pwned Passwords check.
- *
- * The plaintext password and the complete SHA-1 hash never leave the browser.
- * Only the first five hash characters are sent to HIBP (k-anonymity). Padding
- * reduces response-size correlation. The returned suffix list is compared
- * locally and discarded immediately.
+ * Calls the first-party backend screening boundary. The browser never talks to
+ * HIBP directly; the backend performs the SHA-1 k-anonymity range lookup and
+ * never persists or logs the supplied password.
  */
 export async function assertPasswordNotPwned(password: string): Promise<void> {
-  const sha1 = await sha1Hex(password);
-  const prefix = sha1.slice(0, 5);
-  const suffix = sha1.slice(5);
   const controller = new AbortController();
-  const timeout = globalThis.setTimeout(() => controller.abort(), HIBP_TIMEOUT_MS);
+  const timeout = globalThis.setTimeout(() => controller.abort(), COMPROMISE_CHECK_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${HIBP_RANGE_URL}/${prefix}`, {
-      method: 'GET',
+    const response = await fetch(PASSWORD_SCREENING_ENDPOINT, {
+      method: 'POST',
       headers: {
-        'Add-Padding': 'true',
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
+      credentials: 'same-origin',
       cache: 'no-store',
+      body: JSON.stringify({ password }),
       signal: controller.signal,
     });
 
-    if (!response.ok) {
-      throw new PasswordSecurityError(
-        'Die Prüfung auf kompromittierte Passwörter ist derzeit nicht verfügbar.',
-      );
-    }
+    if (response.status === 204) return;
 
-    const body = await response.text();
-    for (const line of body.split(/\r?\n/)) {
-      const [candidateSuffix, countValue] = line.trim().split(':');
-      if (candidateSuffix?.toUpperCase() !== suffix) continue;
-
-      const breachCount = Number.parseInt(countValue || '0', 10);
-      if (Number.isFinite(breachCount) && breachCount > 0) {
-        throw new PasswordSecurityError(
-          'Dieses Passwort ist aus bekannten Datenlecks bekannt. Bitte verwenden Sie ein neues, einzigartiges Passwort.',
-        );
+    let message = 'Die Prüfung auf kompromittierte Passwörter ist derzeit nicht verfügbar.';
+    try {
+      const payload = await response.json();
+      if (typeof payload?.error === 'string' && payload.error.trim()) {
+        message = payload.error;
       }
+    } catch {
+      // Keep the generic fail-closed message; never expose upstream response bodies.
     }
+
+    throw new PasswordSecurityError(message);
   } catch (error) {
     if (error instanceof PasswordSecurityError) throw error;
     if ((error as Error)?.name === 'AbortError') {

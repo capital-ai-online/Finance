@@ -18,7 +18,7 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts",
+    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/security/verifyPasswordSecurityBoundary.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts",
     "build:raw": "vite build && node scripts/seo/prerender-public-routes.mjs && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --alias:vite=./server/runtime/viteProductionDisabled.ts --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
@@ -59,7 +59,7 @@
     "sandbox:prepr": "node scripts/automation/runChatGptSandboxPrePr.mjs",
     "sandbox:prepr:full": "node scripts/automation/runChatGptSandboxPrePr.mjs --full",
     "governance:control-plane": "node scripts/governance/validateGovernanceControlPlane.mjs",
-    "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts && npm run supplychain:provenance && npm run supplychain:verify",
+    "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/security/verifyPasswordSecurityBoundary.ts && tsx scripts/automation/verifyDeploymentReadiness.ts && npm run supplychain:provenance && npm run supplychain:verify",
     "release:version": "tsx scripts/automation/releaseVersion.ts",
     "release:manifest": "tsx scripts/automation/buildRuntimeReleaseManifest.ts",
     "readme:sync": "tsx scripts/automation/syncReadmeVersions.ts",

@@ -20,18 +20,6 @@ function validCandidate(): string {
   return requiredClasses + chars(120).repeat(PASSWORD_MIN_LENGTH);
 }
 
-async function sha1Hex(value: string): Promise<string> {
-  const digest = await globalThis.crypto.subtle.digest(
-    'SHA-1',
-    new TextEncoder().encode(value),
-  );
-
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-    .toUpperCase();
-}
-
 describe('password security policy', () => {
   it('requires at least 14 characters and all configured character groups', () => {
     expect(PASSWORD_MIN_LENGTH).toBe(14);
@@ -49,45 +37,41 @@ describe('password security policy', () => {
     expect(() => validatePasswordStrength(validCandidate())).not.toThrow();
   });
 
-  it('uses the HIBP k-anonymity range API and sends only the five-character SHA-1 prefix', async () => {
+  it('sends screening only to the first-party backend boundary', async () => {
     const candidate = validCandidate();
-    const fullHash = await sha1Hex(candidate);
-    const expectedPrefix = fullHash.slice(0, 5);
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(`${chars(48).repeat(35)}:0\r\n`, { status: 200 }),
-    );
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
 
     await assertPasswordNotPwned(candidate);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe(`https://api.pwnedpasswords.com/range/${expectedPrefix}`);
-    expect(String(url)).not.toContain(candidate);
-    expect(String(url)).not.toContain(fullHash);
-    expect(init?.headers).toEqual({ 'Add-Padding': 'true' });
+    expect(url).toBe('/api/auth/password-security/check');
+    expect(String(url)).not.toContain('pwnedpasswords.com');
+    expect(init?.method).toBe('POST');
+    expect(init?.credentials).toBe('same-origin');
     expect(init?.cache).toBe('no-store');
+    expect(JSON.parse(String(init?.body))).toEqual({ password: candidate });
   });
 
-  it('rejects a password when its locally compared hash suffix has a positive breach count', async () => {
-    const candidate = validCandidate();
-    const fullHash = await sha1Hex(candidate);
-    const compromisedSuffix = fullHash.slice(5);
-
+  it('surfaces backend rejection for a compromised password', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(`${compromisedSuffix}:42\r\n${chars(48).repeat(35)}:0`, {
-          status: 200,
-        }),
+        new Response(
+          JSON.stringify({
+            error: 'Dieses Passwort ist aus bekannten Datenlecks bekannt. Bitte verwenden Sie ein neues, einzigartiges Passwort.',
+          }),
+          { status: 422, headers: { 'Content-Type': 'application/json' } },
+        ),
       ),
     );
 
-    await expect(assertStrongUncompromisedPassword(candidate))
+    await expect(assertStrongUncompromisedPassword(validCandidate()))
       .rejects.toThrow(/Datenlecks/);
   });
 
-  it('fails closed if the breach check is unavailable', async () => {
+  it('fails closed if the backend screening boundary is unavailable', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unavailable')));
 
     await expect(assertStrongUncompromisedPassword(validCandidate()))
