@@ -77,8 +77,12 @@ test('PR template contract version is independent from the platform product vers
   const before = packageVersion();
 
   assert.equal(PR_TEMPLATE_VERSION, '1.7.0');
-  assert.match(template, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.6\.0/);
+  assert.match(template, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.7\.0/);
   assert.ok(template.includes('{{VERSION_IMPACT}}'));
-  assert.ok(template.includes('{{VERSION_MANAGER_CHECK}}'));\n  assert.ok(template.includes('{{DECISION_STATUS}}'));\n  assert.ok(template.includes('## 1. 🧭 Entscheidung'));\n  assert.ok(template.includes('## 2. ✅ Evidence'));\n  assert.ok(template.includes('## 3. 🔍 Technical Evidence'));
+  assert.ok(template.includes('{{VERSION_MANAGER_CHECK}}'));
+  assert.ok(template.includes('{{DECISION_STATUS}}'));
+  assert.ok(template.includes('## 1. 🧭 Entscheidung'));
+  assert.ok(template.includes('## 2. ✅ Evidence'));
+  assert.ok(template.includes('## 3. 🔍 Technical Evidence'));
   assert.equal(packageVersion(), before);
 });
