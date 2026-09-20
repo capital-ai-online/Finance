@@ -30,7 +30,9 @@
   ],
   "scopeNote": "No new Governance, Evidence, Supervisor, EventMesh, QM or Security authority. Control Panel remains read-only/non-authorizing. Final merge remains Human/CODEOWNER-only.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
-  "validationState": "TARGETED_TESTS_PENDING_HOSTED_CI",
+  "validationState": "HOSTED_VALIDATION_PENDING",
   "recorrelatedAt": "2026-09-20T15:24:00Z",
-  "correlationNote": "Rebased from the implementation branch onto CURRENT_MAIN ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2 after PR #1148 merged. The intervening main delta changes only the landing-page claim, LandingPage.tsx and frontend appearance test; no changed-file or Self-Healing authority overlap. PR #1147 remains an open semantic dependency and owns only the parent SH-02 architecture/work-graph projection paths, none of which are changed by SH-02.3E."
+  "correlationNote": "Rebased from the implementation branch onto CURRENT_MAIN ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2 after PR #1148 merged. The intervening main delta changes only the landing-page claim, LandingPage.tsx and frontend appearance test; no changed-file or Self-Healing authority overlap. PR #1147 remains an open semantic dependency and owns only the parent SH-02 architecture/work-graph projection paths, none of which are changed by SH-02.3E.",
+  "finalCorrelationBaseSha": "ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2",
+  "finalCorrelationState": "CURRENT_MAIN_ANCESTRY_PASS_OPEN_PR_1147_SEMANTIC_DEPENDENCY_ZERO_CHANGED_FILE_OVERLAP"
 }
