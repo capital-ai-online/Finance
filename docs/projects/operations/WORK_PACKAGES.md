@@ -107,7 +107,7 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 | P1 | `OPS-08-A` Production Handoff & Recovery | `PVC-08` | OPEN / PARTIAL |
 | P1 | `OPS-18-A` EventMesh/Traceability Coverage | `PVC-18` | OPEN / PARTIAL; Post-#851 trace-correlation slice implemented |
 | P2 | `OPS-02-CI-01` Build/Test Cost & Scope Reduction | `PVC-02` | `IMPLEMENTED_ON_MAIN / COST_PROFILE_AND_STALE_EVENT_GUARD_MERGED` via PR #988 + PR #996; hosted cost/race evidence remains open and real-evidence-only |
-| P0 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / SH-02; current Self-Healing execution resolves only through `CAPITAL-AI-ASH-01` + `self-healing-contract/1.0.0` |
+| P0-HIGHEST | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / SH-02; highest executable OPS priority through SH-02.11; current Self-Healing execution resolves only through `CAPITAL-AI-ASH-01` + `self-healing-contract/1.0.0` |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | OPEN / PARTIAL |
 
 ## Historical Self-Healing predecessor
@@ -116,10 +116,10 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 
 ## `OPS-08-B-SH-02` — Autonomous Self-Healing Backend & Frontend
 
-**Current branch:** `agent/operations-self-healing-contract-20260920`  
-**Current PR:** `#1125` / SH-02.3  
+**Current branch:** `agent/operations-sh02-policy-homogeneity-20260920`  
+**Current PR:** policy-homogeneity corrective PR pending creation  
 **Primary PVC:** `PVC-08`; supporting `PVC-02`, `PVC-04`, `PVC-07`, `PVC-18`  
-**Status:** OWNER-DIRECTED / ACTIVE / SH-02.3 IMPLEMENTED_BRANCH / VALIDATION_PENDING
+**Status:** OWNER-DIRECTED / ACTIVE / P0 SELF-HEALING HOMOGENEITY GATE / SH-02.5 MERGED / SH-02.6 NEXT
 
 Fresh Owner direction selects one bounded self-healing platform from current main. The package reuses Supervisor, process lifecycle/health, Telemetry/logger, EventMesh, Recovery Evidence Harness, Frontend architecture and the existing exact-SHA GitHub→Render promotion path.
 
@@ -132,9 +132,9 @@ Current implementation starts with:
 Detailed work graph: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 
 Current correlation evidence:
-- `CURRENT_MAIN=ae813ac19d7d0496d787682b284f0270c0b52c4f`;
-- PR #1125 is the sole Self-Healing contract writer and is 3 commits ahead / 0 behind that main snapshot at correlation time;
-- PR #1126 has no changed-file overlap with the Self-Healing contract scope;
+- `CURRENT_MAIN=39aeb4473ae3f0b26a174cf5654bb78b3a288c29`;
+- SH-02.5 is Human-merged via PR #1141 and its stale active claim is released by the current corrective slice;
+- open PR #1145 changes Docker/container-security paths and open PR #1146 changes PR-autofix/governance paths; neither overlaps the OPS Self-Healing homogeneity scope;
 - predecessor SH-01 rules and the narrow 2026-09-20 supersession projection are archived/non-authorizing.
 
 ## DR-03 — Provider Adapter / Execution Integration
@@ -155,7 +155,7 @@ DR-03 remains separate. No current package activates a provider adapter, modifie
 | `OPS-PR900-04A` GitHub App / MCP Reader Setup | `PVC-02` | `MERGED / READER_CONTRACT_READY / PROVIDER_MUTATION_HELD` via PR #970 (`7f680c432dbf172a5b672ae0a3bd521b36b11dbe`) | least-privileged Reader contract only; GitHub App/OAuth/permission/Vault/PAT setup remains separately Human/Owner-authorized |
 | `OPS-PR900-04B` GitHub Work-Management Gateway Adapter | `PVC-02` | `MERGED / REPOSITORY_ADAPTER_READY / PROVIDER_HOST_HELD` via PR #982 (`89d10a14830285ca8d7abd344f6f0da7b3b4c399`) | official GitHub MCP reused; bounded Finance-only Milestone + navigation-only Wiki complement on main; real gateway/Vault host and provider readback remain held |
 | `OPS-PR900-05` Production Observability / Readiness | primary `PVC-08`; supporting `PVC-07`, `PVC-18` | `MERGED / EVIDENCE_CONTRACT_READY / LIVE_MEASUREMENT_OPEN` via PR #980 (`b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`) | deterministic readiness evidence contract on main; numerical SLO/incident/RPO/RTO/vendor measurements remain real-evidence-only |
-| `OPS-PR900-06` Security Owner Returns | OPS-owned return surfaces | `NEXT_EXECUTABLE / PRIORITY_1` | exact-identity/time/snapshot evidence only; independent Security `VERIFIED/CLOSED` remains with CAPITAL-AI-SEC |
+| `OPS-PR900-06` Security Owner Returns | OPS-owned return surfaces | `DEFERRED_BY_P0_SH02` | exact-identity/time/snapshot evidence only; independent Security `VERIFIED/CLOSED` remains with CAPITAL-AI-SEC |
 
 Provider/native feature availability, connected execution-surface capability and effective credential grants are distinct facts. Repository adapters or contracts never prove provider grants by themselves.
 
