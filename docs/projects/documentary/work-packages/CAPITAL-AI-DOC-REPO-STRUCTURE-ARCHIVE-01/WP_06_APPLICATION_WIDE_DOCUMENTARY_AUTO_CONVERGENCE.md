@@ -220,8 +220,8 @@ Ambiguous ownership or conflicting authority is `BLOCKED`, not auto-fixed.
 ## Current implementation status
 
 - **WP-06A — Detection foundation:** `DONE_MAIN` through Human-merged PR #1108.
-- **WP-06B — Event workflow:** implemented on the current branch; exact `main` push identity, stale-run cancellation, exact `before..after` impact planning, fail-closed documentation hygiene, low-cost state classification and 7-day impact artifact retention. The lane is read-only and grants no branch/PR/merge/deploy authority.
-- **WP-06C — Deterministic AUTO_SYNC rules:** next dependent slice after WP-06B merge.
+- **WP-06B — Event workflow:** `DONE_MAIN` through Human-merged PR #1109; exact `main` push identity, stale-run cancellation, exact `before..after` impact planning, fail-closed documentation hygiene, low-cost state classification and 7-day impact artifact retention.
+- **WP-06C — Deterministic AUTO_SYNC rules:** implemented on the current branch; explicit allowlisted rules generate SHA-256-bound patch plans and a separated `contents: write` job may materialize only those validated patches plus one work claim on an isolated `agent/documentary-autosync-*` branch. No PR, merge or deploy authority is granted.
 - **WP-06D — Semantic maintenance handoff:** pending WP-06C and existing Supervisor/Platform-Director/Agent-IAM evidence binding.
 - **WP-06E — Closure/self-healing evidence:** pending.
 
