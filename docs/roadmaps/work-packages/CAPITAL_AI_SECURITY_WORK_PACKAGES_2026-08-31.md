@@ -178,3 +178,29 @@ Current priorities include exact S1-R2-04 runtime return and the newly routed `S
 ## PR ownership rule
 
 CAPITAL-AI-SEC PRs contain Security-owned cross-cutting documentation, evidence, tests/utilities or inherently reusable Security implementation only. If remediation primarily changes another project's productive implementation, the PR belongs to that target project; Security remains requirements/testing/verification owner.
+
+---
+
+## SEC-WEB-HARDENING-01 — Public Website & Secure Deployment Convergence
+
+**Priority:** P0/P1  
+**Security Owner:** CAPITAL-AI-SEC  
+**State:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED  
+**Fresh Human/Owner direction:** 2026-09-20  
+**Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
+**Detailed package:** docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md
+
+This package protects the rebuilt public website and its deployment chain without creating a second Security or Release architecture. It decomposes into SEC-WEB-00/10/20/30/40/50 and carries SEC-WEB-F01..F30. P0 starts with exact-current-main attack-surface readback, OCI/GHCR digest convergence, one verified production artifact, client/build/container secret exposure gates and current OAuth/session negative tests.
+
+Primary implementation routing:
+
+- CAPITAL-AI-OPS / PVC-07 and PVC-08: signed artifact, registry/deploy identity, readiness, rollback, runtime and production correlation;
+- CAPITAL-AI-OPS / PVC-02 where controlled API/CI implementation is affected;
+- CAPITAL-AI-FE: public landing/browser/CSP presentation implementation without productive PVC ownership;
+- CAPITAL-AI-CLIENT / PVC-01 where client/session semantics are affected;
+- CAPITAL-AI-GOV / PVC-05: optional review/CODEOWNER provider enforcement decision;
+- CAPITAL-AI-COMP: supply-chain/compliance requirement/evidence overlay;
+- CAPITAL-AI-QM: independent assurance.
+
+Security remains requirement/finding/testing/verification authority. EVIDENCE_READY != VERIFIED. The package does not itself mutate Production, IAM, DNS, Secrets, Billing, database state or GitHub Rulesets.
+
