@@ -91,21 +91,10 @@ app.use(metricsMiddleware);
 // ohne konfiguriertes Honeytoken ist sie ein reiner Durchreicher.
 app.use(createHoneytokenTripwire());
 
-// ---------------------------------------------------------
-// Compliance-Review Punkt 1: Prozessweites Sicherheitsnetz gegen unbehandelte
-// Promise-Rejections/Exceptions. Ersetzt keinen sauberen try/catch in einzelnen
-// Handlern (die bleiben die erste Verteidigungslinie), verhindert aber, dass ein
-// übersehener Fall den gesamten Prozess unkontrolliert abstürzen lässt.
-// ---------------------------------------------------------
-process.on('unhandledRejection', (reason) => {
-  console.error('[PROCESS][UNHANDLED REJECTION]', reason);
-});
-process.on('uncaughtException', (err) => {
-  console.error('[PROCESS][UNCAUGHT EXCEPTION]', err);
-  // Bewusst kein process.exit(): ein einzelner unerwarteter Fehler soll nicht den
-  // gesamten Server für alle Nutzer beenden. Stattdessen wird geloggt, damit das
-  // Monitoring (Compliance-Review Punkt 3) den Vorfall sichtbar macht.
-});
+// Fatal process lifecycle is installed before this module by server.ts via
+// server/bootstrap/installProcessLifecycle.ts. Do not register a second set of
+// uncaughtException/unhandledRejection listeners here: one fatal-state authority
+// must own unhealthy marking, bounded SIGTERM shutdown and non-zero exit semantics.
 
 // ---------------------------------------------------------
 // ADR-0009 — CORS Hardening. Ersetzt die vorherige OWASP-Mitigation, die via
@@ -321,22 +310,8 @@ try {
   console.warn("Failed to retrieve OpenAI instance on boot:", e);
 }
 
-// Health-Check-Endpunkt fuer Deployment-Plattformen (Audit ARCH-AUDIT-0002, Befund AUD2-F: kein
-// Health-Check vorhanden). Bewusst ohne Netzwerkaufrufe an Drittanbieter - ein Health-Check muss
-// schnell und unabhaengig von externen Ausfaellen antworten. `configured` spiegelt nur, ob die
-// jeweilige Umgebungsvariable gesetzt ist, keine Live-Erreichbarkeit.
-app.get('/healthz', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptimeSeconds: Math.floor(process.uptime()),
-    configured: {
-      supabase: isSupabaseConfigured(),
-      anthropic: isAnthropicConfigured(),
-      openai: isOpenAIConfigured(),
-    },
-  });
-});
+// /healthz is mounted once by registerApplicationRoutes() through
+// server/routes/health.ts. Business readiness remains /healthz/readiness + /readyz.
 
 // Audit ARCH-AUDIT-0002 (H6): Prometheus-Exposition-Format, siehe server/metrics.ts.
 // Bewusst NICHT ueber checkAdminAccess/Supabase geschuetzt - Metrics-Scraper koennen in der

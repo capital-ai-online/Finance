@@ -110,12 +110,28 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 | P2 | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / PARTIAL; any historical Self-Healing branch requires fresh current-main correlation before continuation |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | OPEN / PARTIAL |
 
-## `OPS-08-B-SH-01` — Self-Healing Readiness Foundation
+## `OPS-08-B-SH-01` — Self-Healing Readiness Foundation — SUPERSEDED PROJECTION
 
 **Historical branch reference:** `agent/operations-self-healing-readiness-20260910`  
-**Primary PVC:** `PVC-08`; supporting `PVC-04`, `PVC-18`, `PVC-02`
+**Disposition:** HISTORICAL / NON-ACTIVE / SUPERSEDED_BY_SH_02
 
-The package extends existing Supervisor/Telemetry surfaces with Observe→Detect→Diagnose readiness and a bounded remediation contract. It does not authorize productive autonomous recovery. SH-R2 actions remain Human/Owner-gated. Any continuation must first be re-correlated from then-current main; historical branch state is not current execution authority.
+The historical package remains evidence only. Its blanket projection that productive autonomous recovery or `SH-R2` actions require a separate per-run Human/Owner approval is superseded where it conflicts with `/AGENTS.md@CURRENT_MAIN`. The historical branch is not resumed and is not an integration base.
+
+## `OPS-08-B-SH-02` — Autonomous Self-Healing Backend & Frontend
+
+**Current branch:** `agent/operations-autonomous-self-healing-platform-20260920`  
+**Primary PVC:** `PVC-08`; supporting `PVC-02`, `PVC-04`, `PVC-07`, `PVC-18`  
+**Status:** OWNER-DIRECTED / ACTIVE / IMPLEMENTATION STARTED
+
+Fresh Owner direction selects one bounded self-healing platform from current main. The package reuses Supervisor, process lifecycle/health, Telemetry/logger, EventMesh, Recovery Evidence Harness, Frontend architecture and the existing exact-SHA GitHub→Render promotion path.
+
+Current implementation starts with:
+- one canonical backend liveness/lifecycle authority;
+- bounded one-shot Frontend stale-asset recovery;
+- deterministic recovery tiers and verification semantics;
+- no new provider credentials, merge authority or parallel control plane.
+
+Detailed work graph: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 
 ## DR-03 — Provider Adapter / Execution Integration
 
