@@ -2,30 +2,32 @@
 
 **Document ID:** EVID-OPS-GHA-INV-2026-09-20  
 **Status:** EVIDENCE — NON-AUTHORIZING  
-**Baseline:** `main@081490f1eed9b19bde7bc427cb4a0dee6d2373da`  
+**Baseline:** `main@df7b970e40ca5b3bd1046ae595af060e0f4b7317`  
 **Source:** GitHub Actions API `list_workflows` + tree `.github/workflows`  
 **Convention:** `docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md`
 
-This file records the correlation snapshot used for the Phase-1 convention PR. It does not authorize merge, deploy, or Actions-API disable.
+This file records the correlation snapshot. It does not authorize merge, deploy, workflow deletion, or Actions-API disable.
 
 ## Counts
 
 - 67 registered workflows, all `state: active`
-- 38 YAML files on baseline `main`
+- 38 YAML files on `main`
 - 25 orphan API records (file absent on `main`)
 - 4 GitHub-managed `dynamic/*` workflows
 - 0 self-hosted runners
 - ~19 572 historical workflow runs in the repository (includes `workflow_run` fan-out)
 
-## Phase-1 deletions in the associated PR
+## Stub workflows still on `main` (deletion blocked)
 
-| Path | Why removable |
+`scripts/security/verifyChangedWorkflowSecurity.mjs` fails closed on `git` status `D` for any `.github/workflows/*` file. There is no review token. Associated PR #1098 therefore restores and keeps:
+
+| Path | Current state |
 |---|---|
-| `.github/workflows/document-hygiene-evidence-migration.yml` | 303 B echo stub, `name` contains `(disabled)`, dispatch only |
+| `.github/workflows/document-hygiene-evidence-migration.yml` | 303 B echo stub, dispatch only, `(disabled)` |
 | `.github/workflows/document-hygiene-evidence-once.yml` | 255 B echo stub, duplicate display name |
 | `.github/workflows/lockfile-remediation.yml` | dispatch + `if: 'false'`, historical PR #30 record |
 
-No other live workflow path is claimed for deletion in this slice.
+A later Owner-reviewed SEC PR must first define how a reviewed deletion is attested, then delete these files.
 
 ## Orphan API records (disable in Actions UI — not this PR)
 
