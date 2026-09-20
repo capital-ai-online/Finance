@@ -15,7 +15,7 @@
 
 ## Universalization
 
-The PR Convergence Controller already delegates exact `CURRENT_STATE_PROJECTION_BASELINE_MISSING/STALE` failures to the dedicated baseline specialist. This change keeps that single-writer boundary and adds one exact registered repair class for stale Self-Healing next-slice test literals.
+The PR Convergence Controller delegates exact `CURRENT_STATE_PROJECTION_BASELINE_MISSING/STALE` failures to the dedicated baseline specialist and canonical v1.7 Decision/Evidence drift to the already subscribed PR Decision Evidence Reconciler. This preserves one writer per PR-body surface. The change also adds one exact registered repair class for stale Self-Healing next-slice test literals and treats the 45,000-minute Actions state as a protected blocker rather than a repair candidate.
 
 The registered test repair is deliberately semantic and bounded:
 
@@ -23,14 +23,24 @@ The registered test repair is deliberately semantic and bounded:
 - it may change only `tests/unit/selfHealingSupersession.test.ts`;
 - it never substitutes a new concrete SH slice number;
 - it converts the brittle expectation into a canonical work-graph invariant;
+- the repairer is eligible only when its individually registered failure signature and all declared exact log-evidence tokens are present;
 - repeated same-signature repair is blocked by the existing PR Autofix generation/signature logic;
-- authoritative CI must re-run on the new exact head.
+- authoritative CI must re-run on the new exact head;
+- unchanged Governance failures are never generically re-run: only an observed production-baseline write or deterministic metadata repair may trigger the exact-head/base Governance re-run.
 
 ## Control Panel fix algorithm
 
-The canonical `self-healing-contract/1.0.0` now projects two repository finding classes:
+The canonical `self-healing-contract/1.0.0` now projects four repository/governance findings relevant to this convergence path:
 
 - `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT`;
-- `REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT`.
+- `REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT`;
+- `REPOSITORY_PR_DECISION_EVIDENCE_DRIFT`;
+- `PROTECTED_GITHUB_ACTIONS_COST_BLOCKER`.
 
-Both prefer `RECONCILE_REPOSITORY_PROJECTION`, an SH-1 idempotent, single-attempt action requiring the already-authorized `repository.pr.autofix` capability and exact-head CI/Governance readback. The Control Panel renders this registry as read-only algorithm information; it gains no repository-write, merge, Security, provider or Production authority.
+The first two prefer `RECONCILE_REPOSITORY_PROJECTION`, an SH-1 idempotent, single-attempt action requiring the already-authorized `repository.pr.autofix` capability and exact-head CI/Governance readback.
+
+`REPOSITORY_PR_DECISION_EVIDENCE_DRIFT` prefers the separate `RECONCILE_PR_DECISION_EVIDENCE` action. That action delegates only to the existing PR Decision Evidence Reconciler, is single-attempt and idempotent, and does not create another PR-body writer or merge authority.
+
+`PROTECTED_GITHUB_ACTIONS_COST_BLOCKER` permits only `OBSERVE_ONLY`. Reaching the 45,000-minute threshold therefore remains a protected fail-closed condition; the Self-Healing contract cannot clear, weaken or autonomously repair it.
+
+The Control Panel renders these policies as read-only algorithm information. It gains no repository-write, merge, Security, billing/provider or Production authority.
