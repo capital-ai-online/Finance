@@ -33,6 +33,7 @@ const TEMPLATE_DELEGATION_PATTERNS = [
   /enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline/i,
   /enthält keinen eindeutig abgegrenzten Produktions-Baseline-Block/i,
   /enthält nicht aufgelöste Vorlagenplatzhalter:/i,
+  /Der kanonische PR muss die Human-\/CODEOWNER-Freigabe ausdrücklich beibehalten\./i,
 ];
 
 const TEMPLATE_UNSUPPORTED_PATTERNS = [
