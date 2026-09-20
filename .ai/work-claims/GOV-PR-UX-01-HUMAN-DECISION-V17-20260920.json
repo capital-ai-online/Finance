@@ -35,5 +35,13 @@
     "scripts/pr/productionBaselineBody.test.mjs"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
-  "scopeNote": "Template v1.7 is presentation/evidence only. /AGENTS.md@CURRENT_MAIN remains the sole repository-wide development authority. READY_FOR_HUMAN_DECISION never grants merge authority; Human/CODEOWNER merge remains mandatory."
+  "scopeNote": "Template v1.7 is presentation/evidence only. /AGENTS.md@CURRENT_MAIN remains the sole repository-wide development authority. READY_FOR_HUMAN_DECISION never grants merge authority; Human/CODEOWNER merge remains mandatory.",
+  "correlation": {
+    "currentMainAtStart": "3a9a55262dbb8ee87dac087a863b1e3369e71d22",
+    "openPullRequestsChecked": [
+      1139
+    ],
+    "changedFileOverlap": false,
+    "semanticBoundary": "PR #1139 hardens PR writer leases and baseline-refresh orchestration. GOV-PR-UX-01 changes the PR-body presentation/validation contract but preserves the existing CAPITAL_AI_PRODUCTION_BASELINE_* marker interface and does not mutate PR #1139 workflow paths."
+  }
 }
