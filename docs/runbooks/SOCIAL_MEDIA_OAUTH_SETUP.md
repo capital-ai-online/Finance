@@ -62,7 +62,7 @@ oder Forwarded-Header keine OAuth-Redirect-Authority erzeugen.
 Die fünf Client-IDs sind nicht-geheime Render-Konfigurationswerte und werden in `render.yaml` als
 `sync: false` geführt. Die fünf Client-Secrets sind dagegen Teil der kanonischen Secret-File-
 Inventarisierung in `scripts/security/secretFileManifest.ts` und gehören in
-`finance-secrets.env`; sie werden **nicht** als normale `render.yaml`-Env-Var gepflegt.
+Render Environment Variables; sie werden **nicht** als normale `render.yaml`-Env-Var gepflegt.
 
 Ohne gesetztes Client-ID/Secret-Paar bleibt die jeweilige Plattform serverseitig gesperrt (`GET
 /api/social-media/auth/url` liefert HTTP 503) — es gibt keinen Fallback ohne echte Credentials
@@ -218,8 +218,8 @@ Human/Owner-Freigabe.
 1. Render-Service gemäß `render.yaml` (`Finance`) öffnen.
 2. Die fünf Client-IDs aus Abschnitt 0 als die bereits vorgesehenen `sync: false`-
    Konfigurationswerte pflegen.
-3. Die fünf Client-Secrets ausschließlich über die kanonische Secret File
-   `finance-secrets.env` pflegen; `scripts/security/secretFileManifest.ts` ist die
+3. Die fünf Client-Secrets ausschließlich über die kanonische server-only Render environment variables
+   Render Environment Variables pflegen; `scripts/security/secretFileManifest.ts` ist die
    Repository-Quelle der Secret-Key-Inventarisierung.
 4. Keine echten Werte in Git, `.env.example`, PR-Beschreibungen, CI-Logs oder Evidence kopieren.
 5. Eine Konfigurationsänderung ist **keine Deployment-Autorisierung**. `render.yaml` hält
