@@ -57,6 +57,8 @@ jobs:
       repairer_id: ${{ steps.classifier.outputs.repairer_id }}
       repairer_path: ${{ steps.classifier.outputs.repairer_path }}
       allowed_paths_json: ${{ steps.classifier.outputs.allowed_paths_json }}
+      self_healing_finding_class: ${{ steps.classifier.outputs.self_healing_finding_class }}
+      self_healing_action_id: ${{ steps.classifier.outputs.self_healing_action_id }}
 
     steps:
       - name: Abgeschlossenen Source-Run exakt binden
@@ -287,6 +289,8 @@ jobs:
           REPORT_CLASSIFICATION: ${{ steps.classifier.outputs.classification }}
           REPORT_DECISION: ${{ steps.classifier.outputs.decision }}
           REPORT_REASON: ${{ steps.classifier.outputs.reason }}
+          REPORT_FINDING_CLASS: ${{ steps.classifier.outputs.self_healing_finding_class }}
+          REPORT_ACTION_ID: ${{ steps.classifier.outputs.self_healing_action_id }}
           REPORT_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}
           REPORT_PR: ${{ steps.pr.outputs.pr_number }}
           REPORT_HEAD: ${{ steps.pr.outputs.head_sha }}
@@ -307,6 +311,8 @@ jobs:
             printf -- '- decision: `%s`\n' "$REPORT_DECISION"
             printf -- '- metadata shape: `%s`\n' "$REPORT_METADATA_SHAPE"
             printf -- '- reason: `%s`\n' "$REPORT_REASON"
+            if [ -n "$REPORT_FINDING_CLASS" ]; then printf -- '- self-healing finding: `%s`\n' "$REPORT_FINDING_CLASS"; fi
+            if [ -n "$REPORT_ACTION_ID" ]; then printf -- '- preferred fix action: `%s`\n' "$REPORT_ACTION_ID"; fi
             echo '- merge authority: unchanged, Human/CODEOWNER only'
           } >> "$GITHUB_STEP_SUMMARY"
 
