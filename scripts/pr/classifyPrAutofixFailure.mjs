@@ -10,6 +10,7 @@ import {
 export const PR_AUTOFIX_DECISIONS = Object.freeze({
   DELEGATE_CURRENT_STATE_BASELINE: 'DELEGATE_CURRENT_STATE_BASELINE_AUTOFIX',
   DELEGATE_PR_METADATA: 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH',
+  DELEGATE_PR_DECISION_EVIDENCE: 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER',
   REGISTERED_TEST_REPAIR: 'REGISTERED_TEST_REPAIR',
   BLOCKED_SECURITY_COMPLIANCE: 'BLOCKED_SECURITY_COMPLIANCE',
   BLOCKED_PROTECTED_ACTION: 'BLOCKED_PROTECTED_ACTION',
@@ -27,6 +28,12 @@ const PROTECTED_FAILURE = [
   /(?:^|\b)(?:error|failed|failure|fatal|denied)\b[^\n]*(?:render|production deploy|registry auth|ghcr auth|deployment identity|\biam\b|billing|database mutation|supabase migration)/i,
 ];
 
+const PROTECTED_ACTIONS_MINUTE_BLOCKER = [
+  /GitHub Actions Hard-Blocker aktiv: Issue #\d+/i,
+  /Der monatliche Enterprise-Actions-Verbrauch hat 45\.000 Minuten erreicht/i,
+  /Mehrere offene Actions-Minuten-Blocker gefunden:/i,
+];
+
 const EXACT_STALE_PRODUCTION_BASELINE =
   /Error: PR #\d+ enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline\./i;
 
@@ -35,6 +42,12 @@ const EXACT_V17_STRUCTURE_DRIFT =
 
 const EXACT_V17_PRIORITY_DRIFT =
   /Error: PR #\d+ enthält keine gültige Prioritätsbewertung \(P0[–-]P3\) der Vorlage v1\.7\.0\./i;
+
+const DECISION_EVIDENCE_DRIFT_PATTERNS = [
+  /Error: PR #\d+ enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1\.7\.0\./i,
+  /Error: PR #\d+ fehlt kanonische Decision-Evidence:/i,
+  /Error: PR #\d+ behauptet Decision Status (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED), aber die sichtbaren Gate-Zustände ergeben (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\./i,
+];
 
 const SELF_HEALING_NEXT_SLICE_SIGNATURE = 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1';
 const EXACT_SELF_HEALING_NEXT_SLICE_TEST =
@@ -61,7 +74,7 @@ const TEMPLATE_UNSUPPORTED_PATTERNS = [
 function normalizedFailureLines(logText) {
   return String(logText || '')
     .split(/\r?\n/)
-    .filter((line) => /error|fail|fatal|denied|violation|exposed|leak|vulnerab|critical/i.test(line))
+    .filter((line) => /error|fail|fatal|denied|violation|exposed|leak|vulnerab|critical|blocker/i.test(line))
     .join('\n');
 }
 
@@ -111,9 +124,25 @@ export function classifyPrAutofixFailure(
     });
   }
 
+  if (PROTECTED_ACTIONS_MINUTE_BLOCKER.some((pattern) => pattern.test(log))) {
+    return result({
+      classification: 'PROTECTED_ACTIONS_MINUTE_COST_BLOCKER',
+      decision: PR_AUTOFIX_DECISIONS.BLOCKED_PROTECTED_ACTION,
+      reason: 'protected-45k-actions-minute-blocker',
+    });
+  }
+
   // Exact PR-Governance contract failures take precedence over broad provider/security
   // vocabulary found in shell/source excerpts inside gh --log-failed output.
   if (source === '.github/workflows/pr-governance.yml') {
+    if (DECISION_EVIDENCE_DRIFT_PATTERNS.some((pattern) => pattern.test(log))) {
+      return result({
+        classification: 'PR_DECISION_EVIDENCE_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
+        reason: 'decision-evidence-reconciler-owns-write',
+      });
+    }
+
     if (EXACT_STALE_PRODUCTION_BASELINE.test(log)) {
       return result({
         classification: 'PR_PRODUCTION_BASELINE_DRIFT',
@@ -169,7 +198,7 @@ export function classifyPrAutofixFailure(
     }
 
     const repair = resolveRegisteredPrAutofixRepair(
-      { sourceWorkflow: source, signature: failureSignature },
+      { sourceWorkflow: source, signature: failureSignature, evidenceText: log },
       registry,
     );
     if (!repair.registered) {
@@ -275,7 +304,7 @@ export function classifyPrAutofixFailure(
       }
 
       const repair = resolveRegisteredPrAutofixRepair(
-        { sourceWorkflow: source, signature: failureSignature },
+        { sourceWorkflow: source, signature: failureSignature, evidenceText: log },
         registry,
       );
       if (!repair.registered) {
