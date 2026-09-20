@@ -36,6 +36,12 @@ const EXACT_V17_STRUCTURE_DRIFT =
 const EXACT_V17_PRIORITY_DRIFT =
   /Error: PR #\d+ enthält keine gültige Prioritätsbewertung \(P0[–-]P3\) der Vorlage v1\.7\.0\./i;
 
+const SELF_HEALING_NEXT_SLICE_SIGNATURE = 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1';
+const EXACT_SELF_HEALING_NEXT_SLICE_TEST =
+  /FAIL\s+tests\/unit\/selfHealingSupersession\.test\.ts\s*>\s*self-healing supersession surfaces\s*>\s*releases merged SH-02 claims and advances the canonical work graph/i;
+const EXACT_SELF_HEALING_NEXT_SLICE_LITERAL =
+  /expected[^\n]*to contain '\*\*Next functional slice:\*\* \`SH-02\.\d+[A-Z]?\`'/i;
+
 const TEMPLATE_DELEGATION_PATTERNS = [
   /verwendet keinen unterstützten PR-Vorlagenmarker/i,
   /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i,
@@ -141,6 +147,45 @@ export function classifyPrAutofixFailure(
         reason: 'current-v1.7-structure-drift-not-allowlisted',
       });
     }
+  }
+
+  if (
+    source === '.github/workflows/ci.yml' &&
+    EXACT_SELF_HEALING_NEXT_SLICE_TEST.test(log) &&
+    EXACT_SELF_HEALING_NEXT_SLICE_LITERAL.test(log)
+  ) {
+    const failureSignature = SELF_HEALING_NEXT_SLICE_SIGNATURE;
+    if (failureSignature === String(previousAutofixSignature || '').trim()) {
+      return result({
+        classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX,
+        reason: 'same-autofix-signature-repeated-on-autofix-head',
+        failureSignature,
+      });
+    }
+
+    const repair = resolveRegisteredPrAutofixRepair(
+      { sourceWorkflow: source, signature: failureSignature },
+      registry,
+    );
+    if (!repair.registered) {
+      return result({
+        classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason: repair.reason,
+        failureSignature,
+      });
+    }
+
+    return result({
+      classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+      decision: PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR,
+      reason: 'stale-self-healing-next-slice-literal-replaced-by-work-graph-invariant',
+      failureSignature,
+      repairerId: repair.repairerId,
+      repairerPath: repair.repairerPath,
+      allowedPaths: repair.allowedPaths,
+    });
   }
 
   if (SECURITY_FAILURE.some((pattern) => pattern.test(failureLines))) {
