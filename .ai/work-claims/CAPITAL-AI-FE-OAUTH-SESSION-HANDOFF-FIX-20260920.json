@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-OAUTH-SESSION-HANDOFF-FIX-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Owner-directed repair of Google OAuth session establishment so Supabase callback handling remains synchronous and onboarding/MFA/subscription enrichment resumes outside the onAuthStateChange callback context.",
+  "startedAt": "2026-09-20T18:15:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c9980602f691b855fd6f8c66a49822e7a9611b4a",
+  "branch": "agent/frontend-oauth-session-handoff-fix-20260920",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "priority": "P1",
+  "priorityReason": "Productive Google OAuth login establishes Supabase AAL1 but stalls before MFA and subscription handoff, preventing active subscribers from reaching the authenticated application.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-OAUTH-SESSION-HANDOFF-FIX-20260920.json",
+    "src/app/auth/SessionComposition.tsx",
+    "tests/unit/sessionCompositionTimeouts.test.ts",
+    "tests/unit/oauthSubscriptionHandoffRegression.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
