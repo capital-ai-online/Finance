@@ -66,4 +66,12 @@ const output = Object.freeze({
   secretsOrTokensLogged: false,
 });
 
+const evidencePath = String(process.env.CAPITAL_AI_GITHUB_BILLING_EVIDENCE_PATH || '').trim();
+if (evidencePath) {
+  fs.writeFileSync(evidencePath, `${JSON.stringify(output, null, 2)}\n`, {
+    encoding: 'utf8',
+    mode: 0o600,
+  });
+}
+
 process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
