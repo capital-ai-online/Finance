@@ -227,6 +227,7 @@ jobs:
                 break
               fi
             elif grep -q '"status": *"422"' err.log 2>/dev/null || grep -qi '422' err.log 2>/dev/null; then
+              # 422 is ambiguous: accept it only after exact CURRENT_MAIN ancestry readback.
               after_main_sha="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
               after_head_sha="$(gh pr view "$number" --repo "$REPO" --json headRefOid --jq '.headRefOid')"
               after_lineage='unknown'
