@@ -24,6 +24,8 @@
     ".github/pull_request_template.md",
     ".github/workflows/pr-decision-reconciler.yml",
     ".github/workflows/sync-agent-pr-branches.yml",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
     "scripts/pr/prAutoMergeSafety.mjs",
     "scripts/pr/prAutoMergeSafety.test.mjs",
     "scripts/pr/prDecisionState.mjs",
@@ -37,8 +39,8 @@
   "exitGate": "Every open same-repository PR against main is evaluated fail-closed; non-current PR template versions can never pass merge governance or auto-merge eligibility; current v1.7 Decision/Evidence state is projected into one live dashboard by the existing reconciler; only exact-head/current-base fully evidenced eligible PRs may be armed.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct agent self-merge and no second PR-body or branch-sync writer.",
   "currentMainCorrelation": {
-    "sha": "4c454a67dc8a4f7dcd39ad7360cd6af32c114aac",
+    "sha": "bc679ccc221616d3180f084b44ab51b66f96a062",
     "status": "SYNCED",
-    "correlatedAt": "2026-09-20T22:42:00Z"
+    "correlatedAt": "2026-09-20T22:49:00Z"
   }
 }
