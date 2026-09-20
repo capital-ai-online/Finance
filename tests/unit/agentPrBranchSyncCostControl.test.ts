@@ -9,17 +9,43 @@ function workflow(): string {
   return fs.readFileSync(workflowPath, 'utf8');
 }
 
-describe('P2 agent PR main-sync cost control', () => {
-  it('keeps main-push sync and adds a single-PR ready-for-review recovery path', () => {
+describe('post-correlation next PR pipeline gate', () => {
+  it('replaces direct main-push fan-out with the successful post-merge correlation trigger', () => {
     const yaml = workflow();
-    expect(yaml).toContain('push:\n    branches: [main]');
+    expect(yaml).toContain("workflow_run:\n    workflows: ['Post-Merge Production Correlation']\n    types: [completed]\n    branches: [main]");
+    expect(yaml).not.toContain('on:\n  push:\n    branches: [main]');
     expect(yaml).toContain('pull_request:\n    branches: [main]\n    types: [ready_for_review]');
     expect(yaml).toContain('workflow_dispatch: {}');
   });
 
-  it('does not allocate a write-capable runner for fork ready-for-review events', () => {
+  it('hard-binds the privileged correlation source before allocating the write lane', () => {
     const yaml = workflow();
-    expect(yaml).toContain("if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository");
+    expect(yaml).toContain('github.event.workflow_run.repository.full_name == github.repository');
+    expect(yaml).toContain('github.event.workflow_run.head_repository.full_name == github.repository');
+    expect(yaml).toContain("github.event.workflow_run.path == '.github/workflows/post-merge-production-correlation.yml'");
+    expect(yaml).toContain("github.event.workflow_run.event == 'push'");
+    expect(yaml).toContain("github.event.workflow_run.head_branch == 'main'");
+    expect(yaml).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(yaml).not.toContain('pull_request_target:');
+    expect(yaml).toContain("github.event_name == 'workflow_dispatch'");
+    expect(yaml).toContain("github.event_name == 'pull_request'");
+    expect(yaml).toContain('github.event.pull_request.head.repo.full_name == github.repository');
+  });
+
+  it('rejects stale correlation before any PR synchronization', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('SOURCE_MAIN_SHA: ${{ github.event.workflow_run.head_sha }}');
+    expect(yaml).toContain("current_main_sha=\"$(gh api \"repos/$REPO/branches/main\" --jq '.commit.sha')\"");
+    expect(yaml).toContain('if [ "$current_main_sha" != "$SOURCE_MAIN_SHA" ]; then');
+    expect(yaml).toContain('Kein PR wird synchronisiert.');
+  });
+
+  it('selects exactly one review-ready eligible PR in deterministic FIFO order', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("prs=\"$(echo \"$prs\" | jq -c 'sort_by(.number)')\"");
+    expect(yaml).toContain("if [ \"$EVENT_NAME\" = 'workflow_run' ] && [ \"$draft\" = 'true' ]; then");
+    expect(yaml).toContain('Post-Korrelation: PR #$number ($head) ist der naechste eligible FIFO-PR');
+    expect(yaml).toContain("done < <(echo \"$prs\" | jq -c '.[]')");
   });
 
   it('observes draft, author and exact head identity before deciding to sync', () => {
@@ -32,13 +58,6 @@ describe('P2 agent PR main-sync cost control', () => {
     expect(yaml).toContain("author=\"$(echo \"$pr\" | jq -r '.author.login // \"\"')\"");
   });
 
-  it('skips draft PRs only for automatic main-push fan-out', () => {
-    const yaml = workflow();
-    expect(yaml).toContain("if [ \"$EVENT_NAME\" = 'push' ] && [ \"$draft\" = 'true' ]; then");
-    expect(yaml).toContain('Draft bleibt bei main-Push bewusst unsynchronisiert (P2 Cost-Control).');
-    expect(yaml).not.toContain("if [ \"$EVENT_NAME\" = 'workflow_dispatch' ] && [ \"$draft\" = 'true' ]; then");
-  });
-
   it('scopes ready-for-review to exactly the event PR', () => {
     const yaml = workflow();
     expect(yaml).toContain('EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}');
@@ -46,14 +65,13 @@ describe('P2 agent PR main-sync cost control', () => {
     expect(yaml).toContain("| jq -c '[.]'");
   });
 
-  it('keeps active provider prefixes and covers owner-authored conventional work branches', () => {
+  it('keeps active provider prefixes and owner-authored conventional work branches', () => {
     const yaml = workflow();
     expect(yaml).toContain("if [ \"$base\" != 'main' ]; then");
     expect(yaml).toContain('agent/*|claude/*|grok/*|ai/*');
     expect(yaml).toContain('feat/*|fix/*|hotfix/*|chore/*|refactor/*|docs/*|test/*|perf/*|security/*');
     expect(yaml).toContain('repo_owner="${REPO%%/*}"');
     expect(yaml).toContain('if [ "$author" != "$repo_owner" ]; then');
-    expect(yaml).toContain('konventioneller Work-Branch, aber Autor $author ist nicht Repository-Owner $repo_owner; fail-closed uebersprungen.');
     expect(yaml).not.toContain('gemini/*');
     expect(yaml).not.toContain('copilot/*');
   });
@@ -65,26 +83,29 @@ describe('P2 agent PR main-sync cost control', () => {
     expect(yaml).toContain('bereits aktuell, Head inzwischen geaendert oder Update laeuft schon (422)');
   });
 
-  it('treats only the GitHub stacked-PR update-branch 403 as a nonfatal platform limitation', () => {
+  it('stops fail-closed instead of skipping a selected stacked PR', () => {
     const yaml = workflow();
     expect(yaml).toContain("Updating a stacked PR's branch via this endpoint is not supported");
     expect(yaml).toContain("&& grep -qi '403' err.log");
-    expect(yaml).toContain('Stacked PR erkannt; GitHub update-branch ist fuer diesen Zustand nicht unterstuetzt (403).');
-    expect(yaml).toContain('current-main ancestry bleibt vor Merge durch die bestehende PR-Governance fail-closed erzwungen.');
-    expect(yaml).toContain('cat err.log');
-    expect(yaml).toContain('exit 1');
+    expect(yaml).toContain('Post-Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen.');
   });
 
-  it('does not let a single ready-for-review sync cancel a repository-wide main sync', () => {
+  it('serializes the automatic correlation lane while keeping ready-for-review isolated', () => {
     const yaml = workflow();
     expect(yaml).toContain("group: sync-agent-pr-branches-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'main' }}");
     expect(yaml).toContain('cancel-in-progress: true');
   });
 
-  it('uses only the write permissions required by GitHub update-branch and no external actions', () => {
+  it('uses a pinned GitHub App token only for the trusted automatic lane', () => {
     const yaml = workflow();
     expect(yaml).toContain('contents: write');
     expect(yaml).toContain('pull-requests: write');
-    expect(yaml).not.toContain('uses:');
+    expect(yaml).toContain("if: github.event_name == 'workflow_run'");
+    expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
+    expect(yaml).toContain('client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}');
+    expect(yaml).toContain('private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}');
+    expect(yaml).toContain('permission-contents: write');
+    expect(yaml).toContain('permission-pull-requests: write');
+    expect(yaml).toContain("GH_TOKEN: ${{ github.event_name == 'workflow_run' && steps.app_token.outputs.token || github.token }}");
   });
 });
