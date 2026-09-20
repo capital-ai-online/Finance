@@ -5,7 +5,7 @@
 **Trust root:** /AGENTS.md@CURRENT_MAIN  
 **Owner direction:** 2026-09-20 — implement unused GitHub settings/capacity without creating additional cost  
 **Initial baseline:** main@242e1847800af27ad80d4b4a693a28b9754eb25d  
-**Status:** IMPLEMENTING — 03D.1/03D.2 FIRST SLICE  
+**Status:** IMPLEMENTING — 03D.1/03D.2 MERGED VIA #1173; 03D.3 EVIDENCE STORAGE IN PROGRESS  
 **Merge authority:** HUMAN_MERGE_REQUIRED
 
 ## Purpose
@@ -57,13 +57,34 @@ Even then automatic enablement remains false. This first slice performs no paid-
 
 ### 03D.3 Evidence-storage foundation
 
-The new settings inventory includes artifact/log retention evidence. This is the prerequisite for later differentiating:
+PR #1173 merged the bounded settings inventory. The continuation slice now makes current repository storage observable without enabling storage mutations.
 
-- CACHE;
-- TRANSIENT_ARTIFACT;
-- EVIDENCE_ARTIFACT.
+Implemented read-only evidence:
 
-No retention value is changed by this slice.
+- repository and organization Actions cache usage;
+- repository and organization cache retention limits;
+- repository and organization cache storage limits;
+- repository Actions artifact inventory with names and workflow identity redacted;
+- existing repository and organization artifact/log retention;
+- enterprise billing rows correlated with Actions artifact storage, Actions cache storage, and Packages storage.
+
+The storage model remains purpose-bound:
+
+- CACHE — recreatable acceleration only, maximum CAPITAL-AI retention 7 days;
+- TRANSIENT_ARTIFACT — handoff/debug/downstream consumption, maximum CAPITAL-AI retention 7 days;
+- EVIDENCE_ARTIFACT — verification/provenance/audit/rollback/release evidence, maximum CAPITAL-AI retention 90 days.
+
+Current zero-cost guardrails use the verified GitHub Enterprise Cloud included allowances:
+
+- shared Actions artifact + GitHub Packages storage: 50 GiB;
+- Actions cache: 10 GiB per repository;
+- internal warning at 35 GiB shared-pool usage;
+- nonessential artifact freeze at 40 GiB;
+- hard stop / cost review at 50 GiB or any positive observed billed storage.
+
+The shared 50 GiB pool remains NOT_OBSERVABLE unless a current provider readback for total shared-pool usage is supplied. Repository artifact bytes alone MUST NOT be treated as the whole shared pool.
+
+No retention, cache limit, artifact upload, package, GHCR, billing, or provider setting is changed by this slice.
 
 ## Cost boundary
 
@@ -109,11 +130,10 @@ Provider documentation remains external evidence and does not create repository 
 
 ## Deferred slices
 
-After this slice merges and real provider readback is available:
+After 03D.3 merges and real provider readback is available:
 
-1. correlate actual Actions artifact/cache/Packages usage against included capacity;
-2. materialize the CACHE / TRANSIENT_ARTIFACT / EVIDENCE_ARTIFACT retention matrix;
-3. assess GHCR as canonical container storage under current billing evidence;
-4. correlate Included-Usage alerts and metered-product hard-stop budgets;
-5. optimize Cost Watch polling only if warning/blocker semantics remain reproducible;
-6. produce an explicit candidate list of currently unused settings that can be enabled with zero observed paid usage.
+1. assess GHCR as canonical container storage under current billing evidence; current post-merge evidence has already shown a local-vs-pushed manifest digest mismatch on the publisher path, so GHCR MUST remain a separate fail-closed follow-up;
+2. correlate Included-Usage alerts and metered-product hard-stop budgets;
+3. optimize Cost Watch polling only if warning/blocker semantics remain reproducible;
+4. produce an explicit candidate list of currently unused settings that can be enabled with zero observed paid usage;
+5. only after exact shared-pool readback PASS, decide whether additional EVIDENCE_ARTIFACT uploads can be admitted below the 35 GiB warning threshold.

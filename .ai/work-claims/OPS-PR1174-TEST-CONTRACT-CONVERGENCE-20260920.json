@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR1174-TEST-CONTRACT-CONVERGENCE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge stale production-baseline reconciliation test expectations after PR #1174.",
+  "workItemDE": "Veraltete Test-Erwartungen der Production-Baseline-Reconciliation nach PR #1174 an den aktuellen Control-Panel-Vertrag angleichen.",
+  "priority": "P0",
+  "priorityReason": "Current main CI is blocked by two deterministic stale assertions, preventing the verified production deployment path.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-20T19:45:00Z",
+  "baseBranch": "main",
+  "baseSha": "921620b2a672cc585bd627ecdeeec86ea51cb577",
+  "branch": "agent/operations-pr1174-test-contract-convergence-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR1174-TEST-CONTRACT-CONVERGENCE-20260920.json",
+    "tests/unit/productionBaselinePostDeployReconciliation.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. Test-only convergence; no workflow/provider/production mutation.",
+  "currentMainCorrelation": {
+    "sha": "921620b2a672cc585bd627ecdeeec86ea51cb577",
+    "status": "SYNCED",
+    "correlatedAt": "2026-09-20T19:45:00Z"
+  }
+}
