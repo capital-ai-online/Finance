@@ -2,6 +2,7 @@
 
 **Version:** 2.1.2  
 **Synchronized baseline:** `main@1f01120164ba4a3c194a4e0a79292a262a372588`  
+**DATA→FINTECH routing reconciliation:** `2026-09-20 / main@c9980602f691b855fd6f8c66a49822e7a9611b4a`  
 **Rule:** foreign-domain work is referenced here and is not implemented by the Social project branch.
 
 ## Repository routing boundary
@@ -44,7 +45,7 @@ Source synchronization:
 - Security work packages: `docs/roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md`;
 - Security traceability: `docs/traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md`.
 
-Current Security traceability routes findings to `CAPITAL-AI-OPS`, `CAPITAL-AI-DATA` and `CAPITAL-AI-GOV`; no existing Security finding is routed to `CAPITAL-AI-SOCIAL` on this baseline. Accordingly there is **no fabricated Security handoff record** in this file.
+Historical Security traceability may still contain DATA-era routing evidence, but current productive routing for former `PVC-09..11` targets resolves to `CAPITAL-AI-FINTECH`; `CAPITAL-AI-OPS` and `CAPITAL-AI-GOV` retain their canonical stages. No current ownership projection routes productive work to `CAPITAL-AI-DATA`, and no existing Security finding is routed to `CAPITAL-AI-SOCIAL` by this mapping. Accordingly there is **no fabricated Security handoff record** in this file.
 
 [SOCIAL_HANDOFF -> CAPITAL-AI-SEC | Own provider credential/API Security requirements, Security findings, negative-test expectations, secret/OAuth Security and independent Security verification. Social stores no credential values and does not self-close Security findings.]
 
