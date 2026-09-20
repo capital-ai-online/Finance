@@ -88,7 +88,7 @@ Current classification:
 
 - repository landing + actionable CTA inventory: `PASS_REPOSITORY`;
 - current sitemap/public URL set: six URLs including `/universe`;
-- exact Production ↔ CURRENT_MAIN: `PRODUCTION_DRIFT` at readback and therefore no final Production freeze;
+- exact Production ↔ CURRENT_MAIN: `PASS` after canonical automatic recovery; main CI run `35529208910` and Render deploy `dep-dao2dk0ae00c73aha6c0` bind Production to exact `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`;
 - root SEO/prerender message parity with the visible landing: `OPEN_FE_HANDOFF`;
 - GSC current Search Analytics and six-URL inspection baseline: `READ_BLOCKED_NOT_CONNECTED`;
 - GA4 Data API/MCP baseline: `READ_BLOCKED_NOT_CONNECTED`;
@@ -430,7 +430,7 @@ No secret/token material is included.
 
 ## 14. Current blockers / open gates at creation
 
-1. PRs `#1153` and `#1159` are merged and form the current repository landing candidate; exact current-main Production readback remains a separate launch gate and is currently blocked by observed Production drift.
+1. PRs `#1153` and `#1159` are merged and form the current repository landing candidate; the exact current-main Production gate recovered through the canonical CI→Render path and is PASS for snapshot `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`.
 2. Current SEO evidence confirms historical Search Console property/five-URL Inspection evidence, while the current six-URL set (including `/universe`), Search Analytics and GA4 provider reads are currently `READ_BLOCKED_NOT_CONNECTED` in this execution.
 3. Current production Social-account readback shows no connected X or Facebook account; Wave-1 publication is therefore `BLOCKED_PROVIDER_ACCOUNT_IDENTITY`. Social analytics adapter/provider evidence is also not verified.
 4. Media-first Social channels require real validated media; no synthetic launch asset is accepted.
