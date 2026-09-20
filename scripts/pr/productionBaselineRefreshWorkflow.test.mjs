@@ -36,6 +36,24 @@ test('privileged completion triggers retain source guards and isolated baseline 
   assert.ok(postMerge.includes("github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml'"));
 });
 
+test('Governance rerun fallback materializes only for re-run attempts and binds the exact source run', () => {
+  assert.match(workflow, /types: \[in_progress, completed\]/);
+  for (const token of [
+    "github.event.action == 'completed'",
+    "github.event.action == 'in_progress'",
+    'github.event.workflow_run.run_attempt > 1',
+    'Governance-Source-Run bis zum Abschluss exakt binden',
+    'github.rest.actions.getWorkflowRun',
+    'run_id: expectedId',
+    'Number(data.id) !== expectedId',
+    'normalizeSha(data.head_sha) !== expectedHead',
+    "String(data.path || '') !== expectedPath",
+    "sourceRun.status !== 'completed'",
+    "core.setOutput('conclusion'",
+    'Date.now() + 240_000',
+  ]) assert.ok(workflow.includes(token), 'missing Governance rerun fallback control: ' + token);
+});
+
 test('baseline refresh concurrency isolates Governance repair from CI completion events', () => {
   const concurrency = workflow.split('concurrency:\n')[1].split('\n\njobs:')[0];
   assert.ok(
@@ -114,6 +132,10 @@ test('Governance reconciliation runs for every eligible PR snapshot and receives
     'reconciliation must receive the deterministic PR-body repair reason',
   );
   assert.ok(
+    workflow.includes('SOURCE_CONCLUSION: ${{ steps.source.outputs.conclusion }}'),
+    'reconciliation must use the completion-bound source conclusion for rerun fallbacks',
+  );
+  assert.ok(
     workflow.includes("const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';"),
     'baseline-change state must be normalized inside the trusted rerun decision',
   );
@@ -124,7 +146,7 @@ test('blocked template repair stays fail-closed and is never reported as already
     "const bodyRepairEligible = String(process.env.PR_BODY_REPAIR_ELIGIBLE || '').toLowerCase() === 'true';",
     "const bodyRepairReason = String(process.env.PR_BODY_REPAIR_REASON || '').trim();",
     "const bodyAlreadyCanonical = bodyRepairReason === 'already-canonical';",
-    "sourceRun.conclusion === 'failure'",
+    "sourceConclusion === 'failure'",
     '!bodyRepaired',
     '!bodyAlreadyCanonical',
     'PR-Body-Reparatur konnte nicht deterministisch konvergieren',
@@ -185,7 +207,7 @@ test('unchanged baseline permits exactly one stale-baseline race recovery and th
 test('Governance template remediation is failure-only, trusted-main and exact-snapshot bound', () => {
   for (const token of [
     'Fehlende kanonische PR-Abschnitte deterministisch reparieren',
-    "github.event.workflow_run.conclusion == 'failure'",
+    "steps.source.outputs.conclusion == 'failure'",
     'node ../policy/scripts/pr/classifyPrScope.mjs',
     'node ../policy/scripts/pr/repairLegacyPrBodyStructure.mjs',
     'EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}',
