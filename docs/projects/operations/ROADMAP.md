@@ -1,12 +1,12 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`
+**Baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`
 
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-17 — historical task activation removed  
+**Reconciliation:** 2026-09-20 — SH-02.3 contract/supersession correlated to current main  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -17,7 +17,9 @@ This file remains a temporary project execution projection until the separately 
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
-Fresh Human/Owner direction activates `OPS-08-B-SH-02 — Autonomous Self-Healing Backend & Frontend` from `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`. This package has execution priority for its bounded branch scope while unrelated open PRs remain independent writers. It does not resurrect the historical SH-01 branch.
+The SH-02 foundation (SH-02.0..02.2) is merged via PR #1122. The current bounded writer is PR #1125 / branch `agent/operations-self-healing-contract-20260920` for SH-02.3 against `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`. This package remains the current Self-Healing execution projection while unrelated PR #1126 has no changed-file overlap.
+
+Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
 
 Detailed package: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 
@@ -124,7 +126,7 @@ Return reproducible evidence for CORS composition, CSP reporting/strict-CSP prom
 | OPS-02-SEC-06 Entitlement inventory | PVC-02 | parent complete; child/SEC evidence may remain |
 | OPS-02-CI-01 Build/Test Cost & Scope Reduction | PVC-02 | integrated via PR #988 and PR #996; hosted evidence remains real-evidence-only |
 | DR-03 | — | historical blocked state |
-| OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | historical branch state; no automatic continuation |
+| OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | ARCHIVED / NON-AUTHORIZING — `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` |
 
 Invariants: Render native Auto Deploy remains off; productive M10 is `RETIRED / OFF`; new provider capability/credential provisioning remains separately authorized, while eligible mutations already inside an authorized workflow/provider capability boundary follow `/AGENTS.md@CURRENT_MAIN`; GitGuardian health/audit is management evidence, not a second scanner.
 
