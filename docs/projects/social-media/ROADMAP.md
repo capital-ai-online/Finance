@@ -53,11 +53,11 @@ Protected runtime/provider setup, credentials, IAM, provider activation and othe
 
 ### SOCIAL-P2 — Short-video + voice-over integration
 
-**State:** `BLOCKED_BY_SOCIAL_P1_EXIT`.
+**State:** `IN_PROGRESS / PREPARATORY_INTEGRATION / P1_LISTENING_GATE_ENFORCED`.
 
-P2 becomes executable only after the current canonical P1 exit evidence exists on then-current repository/evidence state. Historical P1 non-terminal state alone never unblocks P2.
+The Human/Owner explicitly started P2 on 2026-09-20. P2 may therefore advance its repository-side integration structure, but consumption of real P1 audio remains fail-closed until the missing Human/Owner listening evidence is bound to the exact audio identity.
 
-When unblocked, P2 may consume only validated source/brand assets and validated P1 audio evidence. It must preserve `publishReady=false` before the applicable approval boundary and perform no implicit provider publication action.
+The active first slice extends only the existing deterministic Pillow/FFmpeg renderer with a validated voice-over binding. It accepts only local audio with exact audio/request/content hashes, runtime/license evidence and explicit Human/Owner listening `PASS`. It preserves `publishReady=false` and performs no implicit provider publication action.
 
 ### SOCIAL-P3 — Publication/analytics evidence completion
 

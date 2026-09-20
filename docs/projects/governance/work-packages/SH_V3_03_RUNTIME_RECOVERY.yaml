@@ -1,0 +1,54 @@
+schema_version: "3.0.0"
+work_package: "SH-V3-03"
+project: "CAPITAL-AI-GOV"
+title: "Exact-SHA Runtime Recovery"
+authority:
+  trust_root: "/AGENTS.md@CURRENT_MAIN"
+  merge_gate: "Human/CODEOWNER"
+objective: >
+  Continue SH-02.7 by allowing bounded re-drive only for an already merged,
+  provenance-valid SHA through the existing protected deployment path.
+eligibility:
+  required:
+    - "sha is reachable from verified CURRENT_MAIN history"
+    - "sha is already merged"
+    - "repository and provider identity match canonical configuration"
+    - "recovery action is registered and evidence-bound"
+recovery_loop:
+  - EXPECTED_SHA_READBACK
+  - DEPLOYMENT_PATH_VERIFY
+  - REDRIVE
+  - PRODUCTION_SHA_READBACK
+  - LIVENESS_READBACK
+  - READINESS_READBACK
+  - IDENTITY_READBACK
+  - CONVERGED
+failure_policy:
+  repeated_failure:
+    action:
+      - "open deployment circuit"
+      - "stop automatic re-drive"
+      - "emit escalation evidence"
+      - "require Human/CODEOWNER decision"
+  provenance_mismatch:
+    action: "QUARANTINED"
+prohibited:
+  - "deploying an unmerged SHA"
+  - "inventing production evidence"
+  - "bypassing protected deployment/provider paths"
+  - "automatic rollback/restore in this milestone"
+evidence:
+  required:
+    - expected_sha
+    - observed_production_sha
+    - liveness
+    - readiness
+    - repository_identity
+    - branch_identity
+    - provider_identity
+    - recovery_attempt
+exit_gate:
+  - "expected and observed production SHA agree"
+  - "liveness and readiness PASS"
+  - "identity readback PASS"
+  - "bounded recovery circuit remains enforceable"

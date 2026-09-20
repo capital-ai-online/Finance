@@ -1,0 +1,345 @@
+name: OPS — Exact SHA Runtime Recovery
+run-name: >-
+  Exact-SHA recovery for ${{ github.event.workflow_run.head_sha }}
+
+# SH-02.7: bounded re-drive of the existing CI deploy-production job.
+# This workflow never calls Render directly and never reads the Render deploy-hook secret.
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: ['CI', 'Post-Merge Production Correlation']
+    types: [completed]
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: exact-sha-runtime-recovery-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  recover-exact-main:
+    name: Exact-SHA deployment drift recover
+    if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'main' &&
+      (github.event.workflow_run.conclusion == 'failure' ||
+       github.event.workflow_run.conclusion == 'timed_out') &&
+      (github.event.workflow_run.path == '.github/workflows/ci.yml' ||
+       github.event.workflow_run.path == '.github/workflows/post-merge-production-correlation.yml')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - name: Re-drive exact verified deploy job once
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+          RECOVERY_COOLDOWN_MS: '300000'
+          RECOVERY_MAX_CI_ATTEMPT: '1'
+          EXACT_SHA_RECOVERY_ACTIVATION: ${{ vars.CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY }}
+          EXACT_SHA_RECOVERY_KILL_SWITCH: ${{ vars.CAPITAL_AI_DISABLE_EXACT_SHA_RECOVERY }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const source = context.payload.workflow_run;
+            const sourceSha = String(source.head_sha || '').toLowerCase();
+            const expectedRepo = `${owner}/${repo}`;
+            const healthUrl = process.env.PRODUCTION_HEALTH_URL;
+            const cooldownMs = Number(process.env.RECOVERY_COOLDOWN_MS || '300000');
+            const maxCiAttempt = Number(process.env.RECOVERY_MAX_CI_ATTEMPT || '1');
+
+            if (String(process.env.EXACT_SHA_RECOVERY_ACTIVATION || '').toLowerCase() !== 'true') {
+              core.notice('Exact-SHA recovery capability is implemented but activation remains HELD; set CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY=true only after the activation gate is authorized.');
+              return;
+            }
+            if (String(process.env.EXACT_SHA_RECOVERY_KILL_SWITCH || '').toLowerCase() === 'true') {
+              core.notice('Exact-SHA recovery kill switch is active; no mutation is attempted.');
+              return;
+            }
+            if (!/^[0-9a-f]{40}$/.test(sourceSha)) {
+              core.setFailed(`Invalid immutable source SHA: ${sourceSha}`);
+              return;
+            }
+
+            const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            const currentMainSha = String(main.commit.sha || '').toLowerCase();
+            if (sourceSha !== currentMainSha) {
+              core.notice(`Recovery source is stale: source=${sourceSha} CURRENT_MAIN=${currentMainSha}. No mutation.`);
+              return;
+            }
+
+            async function readHealth() {
+              try {
+                const response = await fetch(healthUrl, {
+                  headers: { Accept: 'application/json' },
+                  signal: AbortSignal.timeout(10_000),
+                });
+                let payload = null;
+                try { payload = await response.json(); } catch {}
+                const deployment = payload?.deployment || {};
+                return {
+                  reachable: response.ok,
+                  status: payload?.status ?? null,
+                  sha: String(response.headers.get('x-capital-ai-commit') || deployment.commitSha || '').toLowerCase() || null,
+                  branch: response.headers.get('x-capital-ai-branch') || deployment.branch || null,
+                  repoSlug: response.headers.get('x-capital-ai-repo') || deployment.repoSlug || null,
+                  provider: response.headers.get('x-capital-ai-provider') || deployment.provider || null,
+                };
+              } catch (error) {
+                return { reachable: false, status: null, sha: null, branch: null, repoSlug: null, provider: null, error: String(error) };
+              }
+            }
+
+            const production = await readHealth();
+            if (!production.reachable || production.status !== 'ok') {
+              core.setFailed('Production liveness is not healthy; REDEPLOY_EXACT_SHA is not authorized for a bare liveness failure.');
+              return;
+            }
+
+            const identityConverged =
+              production.sha === sourceSha &&
+              production.branch === 'main' &&
+              production.repoSlug === expectedRepo &&
+              production.provider === 'render';
+
+            if (identityConverged) {
+              core.notice(`Production identity already converged on ${sourceSha}; no re-drive is required.`);
+              return;
+            }
+
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id: 'ci.yml',
+              branch: 'main',
+              event: 'push',
+              head_sha: sourceSha,
+              per_page: 20,
+            });
+            const ciRun = runs.data.workflow_runs
+              .filter(run =>
+                String(run.head_sha || '').toLowerCase() === sourceSha &&
+                run.head_branch === 'main' &&
+                run.event === 'push' &&
+                run.path === '.github/workflows/ci.yml' &&
+                run.head_repository?.full_name === expectedRepo
+              )
+              .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
+
+            if (!ciRun) {
+              core.setFailed('No exact trusted main/push CI run exists for the requested recovery SHA.');
+              return;
+            }
+            if (source.path === '.github/workflows/ci.yml' && Number(source.id) !== Number(ciRun.id)) {
+              core.setFailed('CI-triggered recovery is not bound to the exact selected CI run.');
+              return;
+            }
+            if (Number(ciRun.run_attempt || 1) > maxCiAttempt) {
+              core.setFailed(`Recovery circuit open: CI run attempt is already ${ciRun.run_attempt}; one bounded recovery attempt is allowed.`);
+              return;
+            }
+
+            const artifactsResponse = await github.rest.actions.listWorkflowRunArtifacts({
+              owner,
+              repo,
+              run_id: ciRun.id,
+              per_page: 100,
+            });
+            const provenanceName = `supply-chain-provenance-${sourceSha}`;
+            const provenance = artifactsResponse.data.artifacts.find(artifact =>
+              artifact.name === provenanceName &&
+              artifact.expired !== true &&
+              Number(artifact.size_in_bytes || 0) > 0
+            );
+            if (!provenance) {
+              core.setFailed(`Required exact-SHA provenance artifact is missing or expired: ${provenanceName}`);
+              return;
+            }
+
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner,
+              repo,
+              run_id: ciRun.id,
+              filter: 'latest',
+              per_page: 100,
+            });
+            const deployJob = jobs.find(job => job.name === 'Deployment verifiziert / Render-Produktion');
+            if (!deployJob || deployJob.status !== 'completed' || deployJob.conclusion === 'skipped') {
+              core.setFailed('Canonical deploy-production job is not in a rerunnable terminal state.');
+              return;
+            }
+
+            if (source.path === '.github/workflows/ci.yml' && !['failure', 'cancelled', 'timed_out'].includes(String(deployJob.conclusion))) {
+              core.setFailed(`CI source failed outside deploy-production; deploy job conclusion=${deployJob.conclusion}. No production mutation.`);
+              return;
+            }
+
+            const completedAtMs = Date.parse(deployJob.completed_at || deployJob.started_at || '');
+            if (!Number.isFinite(completedAtMs)) {
+              core.setFailed('Deploy job completion timestamp is unavailable; cooldown cannot be proven.');
+              return;
+            }
+            const ageMs = Date.now() - completedAtMs;
+            if (ageMs < cooldownMs) {
+              core.notice(`Exact-SHA deployment drift is inside the ${cooldownMs}ms cooldown (age=${ageMs}ms). No mutation.`);
+              return;
+            }
+
+            const { data: liveMain } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            const liveMainSha = String(liveMain.commit.sha || '').toLowerCase();
+            if (liveMainSha !== sourceSha) {
+              core.notice(`CURRENT_MAIN moved before mutation: expected=${sourceSha} observed=${liveMainSha}. No mutation.`);
+              return;
+            }
+
+            const beforeMutation = await readHealth();
+            const stillDrifted =
+              beforeMutation.reachable &&
+              beforeMutation.status === 'ok' &&
+              (
+                beforeMutation.sha !== sourceSha ||
+                beforeMutation.branch !== 'main' ||
+                beforeMutation.repoSlug !== expectedRepo ||
+                beforeMutation.provider !== 'render'
+              );
+            if (!stillDrifted) {
+              core.notice('Production identity converged or became non-diagnostic before mutation; no re-drive is attempted.');
+              return;
+            }
+
+            await github.request('POST /repos/{owner}/{repo}/actions/jobs/{job_id}/rerun', {
+              owner,
+              repo,
+              job_id: deployJob.id,
+            });
+
+            await core.summary
+              .addHeading('SH-02.7 Exact-SHA recovery initiated')
+              .addRaw(`Target CURRENT_MAIN: \`${sourceSha}\`\n\n`)
+              .addRaw(`Canonical CI run: #${ciRun.run_number} / id \`${ciRun.id}\`\n\n`)
+              .addRaw(`Re-driven job id: \`${deployJob.id}\`\n\n`)
+              .addRaw(`Provenance artifact: \`${provenanceName}\`\n\n`)
+              .addRaw('No Render credential was read here; the existing production-environment deploy job remains the only provider mutation path.')
+              .write();
+
+            core.notice(`Exact-SHA recovery re-drive requested for ${sourceSha} through CI run ${ciRun.id}, deploy job ${deployJob.id}.`);
+
+  verify-recovery-readback:
+    name: Exact-SHA recovery readback verify
+    if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.path == '.github/workflows/ci.yml' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Verify exact SHA, liveness, readiness and provider identity
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+          PRODUCTION_READINESS_URL: https://capital-ai.online/readyz
+          EXPECTED_RECOVERY_ATTEMPT: '2'
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const source = context.payload.workflow_run;
+            const sourceSha = String(source.head_sha || '').toLowerCase();
+            const expectedRepo = `${owner}/${repo}`;
+            const expectedAttempt = Number(process.env.EXPECTED_RECOVERY_ATTEMPT || '2');
+
+            if (Number(source.run_attempt || 1) !== expectedAttempt) {
+              core.notice(`CI run attempt ${source.run_attempt || 1} is not the bounded recovery attempt ${expectedAttempt}; verification is not applicable.`);
+              return;
+            }
+            if (!/^[0-9a-f]{40}$/.test(sourceSha)) {
+              core.setFailed(`Invalid CI recovery SHA: ${sourceSha}`);
+              return;
+            }
+
+            const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            const currentMainSha = String(main.commit.sha || '').toLowerCase();
+            if (sourceSha !== currentMainSha) {
+              core.notice(`Recovery verification became stale: source=${sourceSha} CURRENT_MAIN=${currentMainSha}.`);
+              return;
+            }
+
+            const artifactsResponse = await github.rest.actions.listWorkflowRunArtifacts({
+              owner,
+              repo,
+              run_id: source.id,
+              per_page: 100,
+            });
+            const provenanceName = `supply-chain-provenance-${sourceSha}`;
+            const provenance = artifactsResponse.data.artifacts.find(artifact =>
+              artifact.name === provenanceName &&
+              artifact.expired !== true &&
+              Number(artifact.size_in_bytes || 0) > 0
+            );
+            if (!provenance) {
+              core.setFailed(`Recovery verification cannot bind provenance artifact ${provenanceName}.`);
+              return;
+            }
+
+            async function getJson(url) {
+              try {
+                const response = await fetch(url, {
+                  headers: { Accept: 'application/json' },
+                  signal: AbortSignal.timeout(10_000),
+                });
+                let payload = null;
+                try { payload = await response.json(); } catch {}
+                return { response, payload };
+              } catch (error) {
+                return { response: null, payload: null, error: String(error) };
+              }
+            }
+
+            const health = await getJson(process.env.PRODUCTION_HEALTH_URL);
+            const readiness = await getJson(process.env.PRODUCTION_READINESS_URL);
+            const deployment = health.payload?.deployment || {};
+            const observed = {
+              healthOk: Boolean(health.response?.ok && health.payload?.status === 'ok'),
+              sha: String(health.response?.headers.get('x-capital-ai-commit') || deployment.commitSha || '').toLowerCase() || null,
+              branch: health.response?.headers.get('x-capital-ai-branch') || deployment.branch || null,
+              repoSlug: health.response?.headers.get('x-capital-ai-repo') || deployment.repoSlug || null,
+              provider: health.response?.headers.get('x-capital-ai-provider') || deployment.provider || null,
+              readinessOk: Boolean(readiness.response?.ok && readiness.payload?.ready === true),
+            };
+
+            const violations = [];
+            if (!observed.healthOk) violations.push('LIVENESS_NOT_OK');
+            if (observed.sha !== sourceSha) violations.push('DEPLOYED_SHA_MISMATCH');
+            if (observed.branch !== 'main') violations.push('DEPLOYED_BRANCH_MISMATCH');
+            if (observed.repoSlug !== expectedRepo) violations.push('DEPLOYED_REPOSITORY_MISMATCH');
+            if (observed.provider !== 'render') violations.push('DEPLOYED_PROVIDER_MISMATCH');
+            if (!observed.readinessOk) violations.push('READINESS_NOT_OK');
+
+            await core.summary
+              .addHeading('SH-02.7 Exact-SHA recovery verification')
+              .addRaw(`Expected SHA: \`${sourceSha}\`\n\n`)
+              .addRaw(`Observed SHA: \`${observed.sha || 'MISSING'}\`\n\n`)
+              .addRaw(`Liveness: \`${observed.healthOk ? 'PASS' : 'FAIL'}\`\n\n`)
+              .addRaw(`Readiness: \`${observed.readinessOk ? 'PASS' : 'FAIL'}\`\n\n`)
+              .addRaw(`Branch / repo / provider: \`${observed.branch || 'MISSING'} / ${observed.repoSlug || 'MISSING'} / ${observed.provider || 'MISSING'}\`\n\n`)
+              .addRaw(`Provenance: \`${provenanceName}\``)
+              .write();
+
+            if (violations.length > 0) {
+              core.setFailed(`Recovery circuit exhausted after one attempt: ${violations.join(', ')}`);
+              return;
+            }
+
+            core.notice(`SH-02.7 recovery CONVERGED for exact CURRENT_MAIN ${sourceSha}.`);

@@ -7,6 +7,7 @@ import {
   projectUsageInventoryEvidence,
 } from './githubBillingInventoryProjection.mjs';
 import { projectMonthlyBillingActuals } from './githubBillingMonthlyActualsProjection.mjs';
+import { projectGitHubCostCenterManagement } from './githubCostCenterManagementProjection.mjs';
 
 function requiredEnv(name) {
   const value = String(process.env[name] || '').trim();
@@ -50,6 +51,26 @@ const [budgets, usageSummary, costCenters] = await Promise.all([
   billing.execute('github.billing.cost_centers.list'),
 ]);
 
+const activeCanonicalCostCenters = costCenters.filter((item) => (
+  String(item?.name || '').trim().toLowerCase() === 'enterprise'
+  && String(item?.state || '').trim().toLowerCase() === 'active'
+));
+
+let costCenterUsageSummary = null;
+if (activeCanonicalCostCenters.length === 1) {
+  costCenterUsageSummary = await billing.execute('github.billing.usage.summary', {
+    ...billingPeriod,
+    costCenterId: activeCanonicalCostCenters[0].id,
+  });
+}
+
+const costManagement = projectGitHubCostCenterManagement({
+  enterpriseUsageSummary: usageSummary,
+  costCenterUsageSummary,
+  costCenters,
+  budgets,
+});
+
 const output = Object.freeze({
   status: 'PASS',
   mode: 'PRIVATE_SINGLE_USER_READ_MONTHLY_ACTUALS',
@@ -61,6 +82,7 @@ const output = Object.freeze({
   usage: projectUsageInventoryEvidence(usageSummary),
   costCenters: projectCostCenterInventoryEvidence(costCenters),
   monthlyActuals: projectMonthlyBillingActuals(usageSummary),
+  costManagement,
   amountSemantics: 'netAmount is the billed cost returned by GitHub usage summary',
   billingAmountsLogged: true,
   secretsOrTokensLogged: false,

@@ -98,6 +98,27 @@ Current classification:
 
 The SEO work item stops at FE/OPS/SOCIAL ownership boundaries and does not bypass provider identity, production deployment or publication gates.
 
+## 2.5 SEO management refresh — 2026-09-21
+
+Fresh Owner direction continues the SEO-owned management scope after the previous execution slice merged.
+
+Current detailed evidence:
+
+`docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`
+
+Snapshot classification:
+
+- exact Production ↔ `CURRENT_MAIN` at `4f2c746a20a8683d784a1cbe54c763a64ddd1da3`: `PASS`;
+- merged FE branding/earth-hero change #1178 invalidated the older landing snapshot and is included in the new freeze;
+- CTA targets remain `PASS_REPOSITORY`;
+- root metadata/prerender message parity remains `OPEN_FE_HANDOFF`;
+- visible internal linking from the landing to canonical `/universe` is `OPEN_FE_HANDOFF`;
+- GSC/GA4 current provider reads remain `READ_BLOCKED_NOT_CONNECTED`;
+- X/Facebook connected production accounts remain `0 / 0`, so external Wave-1 publication remains `BLOCKED_PROVIDER_ACCOUNT_IDENTITY`;
+- SEO-owned topic mapping and first launch content brief are materialized without invented search metrics.
+
+The prior execution-baseline file remains historical snapshot evidence and is not treated as current provider state after this refresh.
+
 ## 3. Launch principles
 
 1. **Product truth before promotion.** Public copy, SEO content and Social derivatives must trace to merged product/domain truth.
