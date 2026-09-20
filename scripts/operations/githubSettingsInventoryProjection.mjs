@@ -115,11 +115,16 @@ export function projectCacheUsage(raw) {
   const settings = raw && typeof raw === 'object' ? raw : {};
   const bytes = typeof settings.active_caches_size_in_bytes === 'number'
     ? settings.active_caches_size_in_bytes
-    : 0;
+    : typeof settings.total_active_caches_size_in_bytes === 'number'
+      ? settings.total_active_caches_size_in_bytes
+      : 0;
+  const count = Number.isInteger(settings.active_caches_count)
+    ? settings.active_caches_count
+    : Number.isInteger(settings.total_active_caches_count)
+      ? settings.total_active_caches_count
+      : 0;
   return Object.freeze({
-    activeCachesCount: Number.isInteger(settings.active_caches_count)
-      ? settings.active_caches_count
-      : 0,
+    activeCachesCount: count,
     activeCachesSizeInBytes: bytes,
     activeCachesSizeGiB: roundedGiB(bytes),
     fullName: typeof settings.full_name === 'string' ? settings.full_name : null,
