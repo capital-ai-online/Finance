@@ -185,6 +185,36 @@ function repairCurrentV17BodyStructure(bodyText) {
     occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
 
   if (canonical) {
+    const summaryPriorityDrift = /^> P0-HIGHEST 🔴 Kritisch ·/m.test(body);
+    const technicalPriorityDrift =
+      /^- \\*\\*Priorität:\\*\\* P0-HIGHEST 🔴 Kritisch\\s*$/m.test(body);
+
+    if (summaryPriorityDrift || technicalPriorityDrift) {
+      let repaired = body;
+      if (summaryPriorityDrift) {
+        repaired = repaired.replace(/^> P0-HIGHEST 🔴 Kritisch ·/m, '> P0 🔴 Kritisch ·');
+      }
+      if (technicalPriorityDrift) {
+        repaired = repaired.replace(
+          /^- \\*\\*Priorität:\\*\\* P0-HIGHEST 🔴 Kritisch\\s*$/m,
+          '- **Priorität:** P0 🔴 Kritisch',
+        );
+      }
+      if (
+        repaired === body ||
+        /^> P0-HIGHEST 🔴 Kritisch ·/m.test(repaired) ||
+        /^- \\*\\*Priorität:\\*\\* P0-HIGHEST 🔴 Kritisch\\s*$/m.test(repaired)
+      ) {
+        throw new Error('Current v1.7 priority-token repair did not converge.');
+      }
+      return {
+        eligible: true,
+        changed: true,
+        reason: 'current-v1.7-priority-token-normalized',
+        body: repaired,
+      };
+    }
+
     return { eligible: false, changed: false, reason: 'already-canonical', body };
   }
 
