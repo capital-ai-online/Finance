@@ -1,0 +1,13 @@
+name: Document Hygiene Evidence Migration (disabled)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "One-shot migration is disabled. No repository writes are performed."
