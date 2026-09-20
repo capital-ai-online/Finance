@@ -59,7 +59,7 @@
 - **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja
 - **Agent-Self-Merge / Auto-Merge:** Nein
 
-Symbol und Farbe sind nur Präsentationsmetadaten. Projekt-ID, Projektordner, Primary Owner und PVC bleiben die maßgeblichen Identitäten; Farbe ist nie alleiniger Bedeutungsträger.
+Symbol und Farbe sind nur Präsentationsmetadaten. Projekt-ID, Projektordner, Primary Owner und PVC bleiben die maßgeblichen Identitäten; Farbe ist nie alleiniger Bedeutungsträger. Current, Source und Target werden aus `docs/projects/README.md` aufgelöst.
 </details>
 
 <details>
