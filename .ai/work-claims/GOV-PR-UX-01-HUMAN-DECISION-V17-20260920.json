@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-UX-01-HUMAN-DECISION-V17-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -43,5 +43,9 @@
     ],
     "changedFileOverlap": false,
     "semanticBoundary": "PR #1139 hardens PR writer leases and baseline-refresh orchestration. GOV-PR-UX-01 changes the PR-body presentation/validation contract but preserves the existing CAPITAL_AI_PRODUCTION_BASELINE_* marker interface and does not mutate PR #1139 workflow paths."
-  }
+  },
+  "releasedAt": "2026-09-20T14:20:00Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #1140; post-merge convergence cleanup.",
+  "mergedPr": 1140,
+  "mergedCommit": "fb8b9dd3c661ecf5d202d570fe435496cbe47461"
 }
