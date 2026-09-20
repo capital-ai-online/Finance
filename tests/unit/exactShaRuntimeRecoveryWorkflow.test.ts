@@ -27,7 +27,7 @@ describe('SH-02.7 exact-SHA runtime recovery workflow', () => {
 
   it('binds mutation to CURRENT_MAIN and immutable provenance evidence', () => {
     expect(workflow).toContain("sourceSha !== currentMainSha");
-    expect(workflow).toContain("sourceSha !== liveMainSha");
+    expect(workflow).toContain("liveMainSha !== sourceSha");
     expect(workflow).toContain('supply-chain-provenance-${sourceSha}');
     expect(workflow).toContain("artifact.expired !== true");
     expect(workflow).toContain("run.path === '.github/workflows/ci.yml'");
