@@ -106,9 +106,33 @@ test('Governance reconciliation runs for every eligible PR snapshot and receives
     'reconciliation must receive the deterministic PR-body repair result',
   );
   assert.ok(
+    workflow.includes('PR_BODY_REPAIR_ELIGIBLE: ${{ steps.body_repair.outputs.eligible }}'),
+    'reconciliation must receive whether the deterministic PR-body repair was eligible',
+  );
+  assert.ok(
+    workflow.includes('PR_BODY_REPAIR_REASON: ${{ steps.body_repair.outputs.reason }}'),
+    'reconciliation must receive the deterministic PR-body repair reason',
+  );
+  assert.ok(
     workflow.includes("const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';"),
     'baseline-change state must be normalized inside the trusted rerun decision',
   );
+});
+
+test('blocked template repair stays fail-closed and is never reported as already correct', () => {
+  for (const token of [
+    "const bodyRepairEligible = String(process.env.PR_BODY_REPAIR_ELIGIBLE || '').toLowerCase() === 'true';",
+    "const bodyRepairReason = String(process.env.PR_BODY_REPAIR_REASON || '').trim();",
+    "const bodyAlreadyCanonical = bodyRepairReason === 'already-canonical';",
+    "sourceRun.conclusion === 'failure'",
+    '!bodyRepaired',
+    '!bodyAlreadyCanonical',
+    'PR-Body-Reparatur konnte nicht deterministisch konvergieren',
+    'Governance bleibt fail-closed; der Body darf nicht als bereits korrekt gemeldet werden.',
+  ]) {
+    assert.ok(workflow.includes(token), 'missing blocked-body-repair guard: ' + token);
+  }
+  assert.doesNotMatch(workflow, /Baseline und PR-Body bereits korrekt/);
 });
 
 test('Governance rerun is bound to the same PR, immutable head and current main SHA', () => {
