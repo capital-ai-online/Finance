@@ -35,17 +35,22 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(rootStart).toBeGreaterThanOrEqual(0);
     expect(loginStart).toBeGreaterThan(rootStart);
     expect(routes).toContain("import('../public/PublicAnalysisWorkbench')");
+    expect(routes).toContain("import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';");
     expect(routes).toContain('default: module.PublicAnalysisWorkbench');
     expect(routes).toContain('function PublicAnalysisPreview()');
     expect(rootBlock).toContain('<LandingPage');
+    expect(rootBlock).toContain('newsfeed={<LandingRealtimeAiNewsfeed onLoginNavigate={clearJustLoggedOut} />}');
     expect(rootBlock).toContain('preview={<PublicAnalysisPreview />}');
     expect(rootBlock).not.toContain('<Dashboard');
+    expect(landingPage).toContain('{newsfeed}');
     expect(landingPage).toContain('{preview}');
     expect(landingPage).toContain('id="analysis-workbench"');
     expect(landingPage).toContain('Enterprise Scorer & Bewertungstools');
     expect(landingPage).not.toContain('WorkbenchActivationState');
     expect(landingPage).not.toContain('loadPreview');
     expect(landingPage).not.toContain("from '../../../app");
+    expect(landingPage).not.toContain('fetchAuthenticatedNews');
+    expect(landingPage).not.toContain('/api/news');
   });
 
   it('restores a compact expandable assessment-tool sideboard without importing the legacy Dashboard', () => {

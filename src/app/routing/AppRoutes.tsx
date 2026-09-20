@@ -5,6 +5,7 @@
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Datenschutz, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui';
+import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';
 import type { UserSession } from '../types/UserSession';
 
 const Dashboard = lazy(() =>
@@ -294,6 +295,7 @@ export function AppRoutes({
     return (
       <LandingPage
         onLoginNavigate={clearJustLoggedOut}
+        newsfeed={<LandingRealtimeAiNewsfeed onLoginNavigate={clearJustLoggedOut} />}
         preview={<PublicAnalysisPreview />}
       />
     );
