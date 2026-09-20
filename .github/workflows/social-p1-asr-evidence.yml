@@ -64,6 +64,12 @@ jobs:
           set -euo pipefail
           python scripts/operations/socialP1AsrCorrelation.test.py
 
+      - name: Validate DE-Finance pronunciation projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/operations/socialP1TtsRuntime.test.py
+
       - name: Download immutable SOCIAL-P1 runtime artifact
         shell: bash
         run: |
@@ -202,6 +208,7 @@ jobs:
           set -euo pipefail
           python scripts/operations/socialP1AsrEvidence.test.py
           python scripts/operations/socialP1AsrCorrelation.test.py
+          python scripts/operations/socialP1TtsRuntime.test.py
 
       - name: Modal Starter billing preflight
         shell: bash
