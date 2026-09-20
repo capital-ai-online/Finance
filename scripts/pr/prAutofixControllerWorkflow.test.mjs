@@ -13,7 +13,7 @@ test('controller is a privileged completion trigger with rerun fallback and defa
 });
 
 test('classifier is read-only and binds exact same-repository PR head to current main', () => {
-  const block = workflow.split('  classify:\n')[1].split('\n  repair:\n')[0];
+  const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
   for (const token of [
     'actions: read',
     'contents: read',
@@ -33,7 +33,7 @@ test('classifier is read-only and binds exact same-repository PR head to current
 });
 
 test('rerun fallback waits for the exact source run without adding write authority', () => {
-  const classify = workflow.split('  classify:\n')[1].split('\n  repair:\n')[0];
+  const classify = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
   for (const token of [
     'Source-Run bis zum Abschluss exakt binden',
     'github.rest.actions.getWorkflowRun',
