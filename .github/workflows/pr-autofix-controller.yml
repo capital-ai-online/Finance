@@ -251,6 +251,66 @@ jobs:
             echo '- merge authority: unchanged, Human/CODEOWNER only'
           } >> "$GITHUB_STEP_SUMMARY"
 
+
+  delegate_pr_metadata:
+    name: PR-Metadata-Reparatur an kanonischen Spezialisten delegieren
+    needs: [classify]
+    if: needs.classify.result == 'success' && needs.classify.outputs.decision == 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Exact Source-Run an PR-Metadata-Spezialisten übergeben
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ needs.classify.outputs.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ needs.classify.outputs.head_sha }}
+          EXPECTED_BASE_SHA: ${{ needs.classify.outputs.base_sha }}
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const prNumber = Number(process.env.PR_NUMBER);
+            const expectedHead = normalizeSha(process.env.EXPECTED_HEAD_SHA);
+            const expectedBase = normalizeSha(process.env.EXPECTED_BASE_SHA);
+            const sourceRun = context.payload.workflow_run;
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber,
+            });
+            const { data: main } = await github.rest.repos.getBranch({
+              owner: context.repo.owner, repo: context.repo.repo, branch: 'main',
+            });
+            if (
+              pr.state !== 'open' ||
+              pr.base.ref !== 'main' ||
+              pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}` ||
+              normalizeSha(pr.head.sha) !== expectedHead ||
+              normalizeSha(pr.base.sha) !== expectedBase ||
+              normalizeSha(main.commit.sha) !== expectedBase
+            ) throw new Error('PR metadata delegation boundary drifted; fail closed.');
+
+            if (
+              sourceRun.path !== '.github/workflows/pr-governance.yml' ||
+              sourceRun.conclusion !== 'failure' ||
+              Number(sourceRun.pull_requests?.[0]?.number) !== prNumber ||
+              normalizeSha(sourceRun.head_sha) !== expectedHead
+            ) throw new Error('Source run is not the exact failed PR Governance run.');
+
+            // The existing PR Production Baseline Auto-Refresh workflow is triggered
+            // by PR Governance workflow_run events. Re-run the exact failed Governance
+            // attempt once so its in_progress/completed event is consumed by that
+            // specialist; no second PR-body writer is introduced here.
+            await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+              owner: context.repo.owner, repo: context.repo.repo, run_id: sourceRun.id,
+            });
+            core.notice(
+              `PR #${prNumber}: exact Governance run ${sourceRun.id} re-run delegated to canonical PR metadata specialist.`,
+            );
+
+
   repair:
     name: Registrierten Patch ohne Write-Credential erzeugen
     needs: [classify]
