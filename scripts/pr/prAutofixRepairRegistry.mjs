@@ -6,12 +6,46 @@ export const PR_AUTOFIX_REPAIR_REGISTRY = Object.freeze([
     exactSignatures: Object.freeze(['SELF_HEALING_NEXT_SLICE_INVARIANT_V1']),
     repairerPath: 'scripts/pr/repairers/selfHealingNextSliceInvariantV1.mjs',
     allowedPaths: Object.freeze(['tests/unit/selfHealingSupersession.test.ts']),
+    evidenceBinding: Object.freeze({
+      kind: 'EXACT_LOG_TOKENS_V1',
+      requiredTokens: Object.freeze([
+        'tests/unit/selfHealingSupersession.test.ts',
+        'releases merged SH-02 claims and advances the canonical work graph',
+        '**Next functional slice:**',
+      ]),
+    }),
   }),
 ]);
 
 const SAFE_ID = /^[A-Z0-9][A-Z0-9_.:-]{0,127}$/;
 const SAFE_PATH = /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*[\r\n])[A-Za-z0-9._/@+\-]+(?:\/[A-Za-z0-9._/@+\-]+)*$/;
 const REPAIRER_PATH = /^scripts\/pr\/repairers\/[A-Za-z0-9._-]+\.mjs$/;
+const EVIDENCE_KIND = 'EXACT_LOG_TOKENS_V1';
+
+function validateEvidenceBinding(entry) {
+  const binding = entry?.evidenceBinding;
+  if (!binding || typeof binding !== 'object' || Array.isArray(binding)) {
+    throw new Error(`Repairer ${entry.id} requires an evidenceBinding object.`);
+  }
+  if (binding.kind !== EVIDENCE_KIND) {
+    throw new Error(`Repairer ${entry.id} evidenceBinding.kind must be ${EVIDENCE_KIND}.`);
+  }
+  if (!Array.isArray(binding.requiredTokens) || binding.requiredTokens.length === 0) {
+    throw new Error(`Repairer ${entry.id} requires at least one exact evidence token.`);
+  }
+  const seen = new Set();
+  for (const token of binding.requiredTokens) {
+    const normalized = String(token || '');
+    if (!normalized || normalized.length > 512 || /[\r\n]/.test(normalized)) {
+      throw new Error(`Repairer ${entry.id} has an invalid exact evidence token.`);
+    }
+    if (seen.has(normalized)) {
+      throw new Error(`Repairer ${entry.id} has a duplicate exact evidence token.`);
+    }
+    seen.add(normalized);
+  }
+  return binding;
+}
 
 export function validatePrAutofixRepairRegistry(registry = PR_AUTOFIX_REPAIR_REGISTRY) {
   if (!Array.isArray(registry)) throw new Error('PR autofix repair registry must be an array.');
@@ -40,6 +74,7 @@ export function validatePrAutofixRepairRegistry(registry = PR_AUTOFIX_REPAIR_REG
     if (!Array.isArray(entry.allowedPaths) || entry.allowedPaths.length === 0) {
       throw new Error(`Repairer ${entry.id} requires a non-empty exact path allowlist.`);
     }
+    validateEvidenceBinding(entry);
 
     for (const signature of entry.exactSignatures) {
       if (!SAFE_ID.test(String(signature || ''))) {
@@ -62,7 +97,7 @@ export function validatePrAutofixRepairRegistry(registry = PR_AUTOFIX_REPAIR_REG
 }
 
 export function resolveRegisteredPrAutofixRepair(
-  { sourceWorkflow, signature },
+  { sourceWorkflow, signature, evidenceText = '' },
   registry = PR_AUTOFIX_REPAIR_REGISTRY,
 ) {
   validatePrAutofixRepairRegistry(registry);
@@ -78,15 +113,32 @@ export function resolveRegisteredPrAutofixRepair(
       repairerId: '',
       repairerPath: '',
       allowedPaths: [],
+      evidenceTokens: [],
+    };
+  }
+
+  const evidence = String(evidenceText || '');
+  const requiredTokens = match.evidenceBinding.requiredTokens.map(String);
+  const missingTokens = requiredTokens.filter((token) => !evidence.includes(token));
+  if (missingTokens.length > 0) {
+    return {
+      registered: false,
+      reason: 'registered-repairer-evidence-not-proven',
+      repairerId: match.id,
+      repairerPath: match.repairerPath,
+      allowedPaths: [...match.allowedPaths],
+      evidenceTokens: requiredTokens,
+      missingEvidenceTokens: missingTokens,
     };
   }
 
   return {
     registered: true,
-    reason: 'exact-registered-repairer',
+    reason: 'exact-registered-evidence-bound-repairer',
     repairerId: match.id,
     repairerPath: match.repairerPath,
     allowedPaths: [...match.allowedPaths],
+    evidenceTokens: requiredTokens,
   };
 }
 
