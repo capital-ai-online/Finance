@@ -1,23 +1,45 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "reviewId": "GOV-GHA-DEL-2026-09-20",
   "reviewer": "SvenKulessa",
   "ownerApproval": "PR Erstellung : Freigegeben",
-  "reviewedAt": "2026-09-20T04:18:00Z",
+  "reviewedAt": "2026-09-20T04:28:00Z",
+  "baselineSha": "0478b62ba365ccae895f029a8f8ddc58bee4230e",
   "claimId": "CAPITAL-AI-GOV-GHA-WORKFLOW-STUB-DELETE-2026-09-20",
-  "scope": "Dispatch-only disabled echo stubs. Control-plane workflows remain frozen.",
+  "scope": "Only dispatch-only echo stubs with zero executable repo references. Live hosts stay.",
+  "usageScanRoots": [
+    ".github/workflows",
+    "scripts",
+    "package.json",
+    "src",
+    "server",
+    "tests",
+    "AGENTS.md"
+  ],
   "allowedDeletions": [
     {
       "path": ".github/workflows/document-hygiene-evidence-migration.yml",
-      "reason": "workflow_dispatch echo stub, contents:read, display name already marked disabled"
+      "unusedInRepo": true,
+      "reason": "dispatch-only echo stub, contents:read, no workflow_run listener, no script/package/test reference"
     },
     {
       "path": ".github/workflows/document-hygiene-evidence-once.yml",
-      "reason": "workflow_dispatch echo stub, contents:read, duplicate disabled display name"
+      "unusedInRepo": true,
+      "reason": "dispatch-only echo stub, duplicate disabled name, no executable reference"
     },
     {
       "path": ".github/workflows/lockfile-remediation.yml",
-      "reason": "workflow_dispatch plus if:false historical PR #30 record, contents:read"
+      "unusedInRepo": true,
+      "reason": "dispatch plus if:false historical PR #30 record, no executable reference"
     }
+  ],
+  "explicitKeep": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/pr-governance.yml",
+    ".github/workflows/self-heal-ci.yml",
+    ".github/workflows/systemadmin-sa4-pilot.yml",
+    ".github/workflows/systemadmin-work-package-runner.yml",
+    ".github/workflows/systemadmin-roadmap-executor.yml",
+    ".github/workflows/node-toolchain-write-boundary-supersession.yml"
   ]
 }
