@@ -10,12 +10,18 @@
 **Initial slice:** merged via PR #1122  
 **SH-02.3 merge:** PR #1125 → `70c33dc0f283584275798b2e186e3771b2bfccf8`  
 **SH-02.4 merged baseline:** `main@3a9a55262dbb8ee87dac087a863b1e3369e71d22` via PR #1136  
-**Current slice:** `SH-02.5` — Worker/job recovery  
-**Current SH-02.5 baseline:** `main@fb8b9dd3c661ecf5d202d570fe435496cbe47461`  
-**Current branch:** `agent/operations-sh02-5-worker-job-recovery-20260920`  
+**SH-02.5 merge:** PR #1141 → `5a89e8ab0f12267838c30994b6e84ccbe002605f`  
+**Current corrective gate:** Self-Healing policy homogeneity / owner-correct handoff correlation  
+**Current baseline:** `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`  
+**Current branch:** `agent/operations-sh02-policy-homogeneity-20260920`  
+**Next functional slice:** `SH-02.6` — Frontend degraded-mode + version-skew recovery  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
+
+**P0 priority invariant:** until SH-02.11 is terminal, the next dependency-ready SH-02 slice is the highest executable CAPITAL-AI-OPS work item. Other normal OPS backlog items are deferred while a SH-02 slice is executable. Real Security/Compliance/QM/domain dependencies remain blocking and are never bypassed.
+
+**Policy-homogeneity gate:** before advancing a functional slice, active repository-development projections must not contradict `/AGENTS.md@CURRENT_MAIN` or the action activation state in `self-healing-contract/1.0.0`. OPS-owned drift is corrected in this package; foreign-owner drift becomes a traceable handoff and does not silently transfer ownership.
 
 Deliver one bounded, evidence-driven recovery system that can detect failures, perform eligible reversible remediation, verify the resulting state and either converge or safely quarantine/escalate.
 
@@ -30,7 +36,7 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_ON_MAIN |
 | SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1125 |
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1136 / ACTIVATION_HELD |
-| SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | IMPLEMENTED_BRANCH / VALIDATION_PENDING / GENERIC_ACTION_HELD |
+| SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1141 / GENERIC_ACTION_HELD |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | QUEUED |
 | SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | QUEUED |
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
