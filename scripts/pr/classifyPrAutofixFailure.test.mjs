@@ -33,6 +33,16 @@ test('delegates repairable PR metadata drift to the existing baseline/template w
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
 });
 
+
+test('delegates canonical Human/CODEOWNER merge-gate drift to the existing metadata writer', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: 'Error: Der kanonische PR muss die Human-/CODEOWNER-Freigabe ausdrücklich beibehalten.',
+  });
+  assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
+});
+
 test('does not invent a repair for an unsupported or absent template marker', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
