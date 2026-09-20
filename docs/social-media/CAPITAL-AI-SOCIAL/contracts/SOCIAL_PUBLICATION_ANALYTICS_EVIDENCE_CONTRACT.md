@@ -81,7 +81,7 @@ It does not authorize or implement:
 - provider permission/scope changes;
 - production deployment.
 
-Where durable evidence management is required, the productive ownership remains with `CAPITAL-AI-DATA / PVC-10` according to the current Project Value Chain. Required production database/runtime execution remains separately controlled through the applicable `CAPITAL-AI-OPS` path.
+Where durable evidence management is required, the productive ownership remains with `CAPITAL-AI-FINTECH / PVC-10` according to the current Project Value Chain. Required production database/runtime execution remains separately controlled through the applicable `CAPITAL-AI-OPS` path.
 
 The current production Supabase state must therefore be treated as an external dependency, not silently repaired by Social. In particular, repository migration files or schema intent are not proof that the corresponding production migration/history state is present.
 
