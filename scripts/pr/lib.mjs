@@ -3,8 +3,8 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
-export const PR_TEMPLATE_VERSION = '1.6.0';
-export const LEGACY_PR_TEMPLATE_VERSIONS = Object.freeze(['1.5.0']);
+export const PR_TEMPLATE_VERSION = '1.7.0';
+export const LEGACY_PR_TEMPLATE_VERSIONS = Object.freeze(['1.6.0', '1.5.0']);
 export const SUPPORTED_PR_TEMPLATE_VERSIONS = Object.freeze([
   PR_TEMPLATE_VERSION,
   ...LEGACY_PR_TEMPLATE_VERSIONS,
