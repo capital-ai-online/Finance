@@ -47,15 +47,21 @@ const legacyBody = [
   '',
 ].join('\n');
 
-function assertV16Repair(result) {
+function assertV16Repair(
+  result,
+  {
+    priority = 'P2 🟡 Normal',
+    versionImpact = 'NOT_EVALUATED ⚪',
+  } = {},
+) {
   assert.equal(result.eligible, true);
   assert.equal(result.changed, true);
   assert.deepEqual(findMissingRequiredSections(result.body), []);
   assert.match(result.body, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.6\.0/);
   assert.match(result.body, /^## 4\. 📌 Priorität & Roadmap$/m);
-  assert.match(result.body, /- \*\*Priorität:\*\* P2 🟡 Normal/);
+  assert.ok(result.body.includes('- **Priorität:** ' + priority));
   assert.match(result.body, /^## 5\. 🔢 Version & PR-Klasse$/m);
-  assert.match(result.body, /- \*\*Versionsimpact:\*\* NOT_EVALUATED ⚪/);
+  assert.ok(result.body.includes('- **Versionsimpact:** ' + versionImpact));
   assert.match(result.body, /- \*\*Version-Manager-Check:\*\* NOT_RUN/);
   assert.match(result.body, /^## 6\. ✅ Prüfung & Merge$/m);
   assert.match(result.body, /Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja/);
@@ -166,7 +172,7 @@ test('repairs the observed current v1.6 security-boundary shape without inventin
   ]);
 
   const result = repairLegacyPrBodyStructure(currentV16SecurityBoundaryBody, { prClass: 'C' });
-  assertV16Repair(result);
+  assertV16Repair(result, { priority: 'P1 🟠 Hoch', versionImpact: 'NONE ➖' });
   assert.equal(result.reason, 'current-v1.6-security-boundary-shape-repaired');
   assert.match(result.body, /^### 🔐 Security Boundary$/m);
   assert.match(result.body, /- \*\*Priorität:\*\* P1 🟠 Hoch/);
