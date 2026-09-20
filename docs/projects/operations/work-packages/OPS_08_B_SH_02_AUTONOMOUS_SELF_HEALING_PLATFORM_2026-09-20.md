@@ -13,9 +13,11 @@
 **SH-02.5 merge:** PR #1141 → `5a89e8ab0f12267838c30994b6e84ccbe002605f`  
 **Policy-homogeneity merge:** PR #1147 → `f0c14ed5571a4b681c4360e27bc84bbd0ab3527f`  
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
-**Current baseline:** `main@59b65e4907b27f57acd639d56f83ab365f30e4a5`  
-**Current coordination slice:** SH-02.3E post-merge convergence  
-**Next functional slice:** `SH-02.6` — Frontend degraded-mode + version-skew recovery  
+**SH-02.6 merge:** PR #1161 → `24850d31cc503b28b1ff786b377826733bf9671f`  
+**Auto-Merge Safety Contract merge:** PR #1164 → `6207e1cc094b1d5d599963dc7f1ed25c73bab928`  
+**Current baseline:** `main@8c45be2e1386294de32927357dc50f1dfd03bb73`  
+**Current coordination slice:** SH-02.6 post-merge status convergence; continuation self-selection fix tracked separately by PR #1170  
+**Next functional slice:** `SH-02.7` — Exact-SHA runtime recovery  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -39,8 +41,8 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.3E | Evidence Integrity + read-only Control Panel projection | OPS / PVC-08,18 | 02.3 | positive states require generation/source/integrity/readback evidence; SH-3 additionally requires independent QM + Security assurance | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1150 |
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1136 / ACTIVATION_HELD |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1141 / GENERIC_ACTION_HELD |
-| SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | QUEUED |
-| SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | QUEUED |
+| SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1161 |
+| SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | QUEUED / PROVENANCE_CAPABILITY_RECONCILIATION_REQUIRED |
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
 | SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | QUEUED |
 | SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.9 | deterministic failure matrix proves bounded recovery and safe exhaustion | QUEUED |
