@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: documentary-change-impact-main
@@ -16,6 +15,12 @@ jobs:
     name: Main-Änderung auf Dokumentationsfolgen korrelieren
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    permissions:
+      contents: read
+    outputs:
+      current: ${{ steps.freshness.outputs.current }}
+      state: ${{ steps.impact.outputs.state }}
+      autosync_patches: ${{ steps.impact.outputs.autosync_patches }}
 
     steps:
       - name: Exakten Main-Stand auschecken
@@ -46,7 +51,7 @@ jobs:
           fi
           echo "current=true" >> "$GITHUB_OUTPUT"
 
-      - name: Abhängigkeiten für read-only Analyse installieren
+      - name: Abhängigkeiten für trusted Analyse installieren
         if: steps.freshness.outputs.current == 'true'
         run: npm ci --ignore-scripts
 
@@ -69,7 +74,15 @@ jobs:
             --head="$AFTER_SHA" \
             --output=artifacts/documentary/change-impact.json
 
-      - name: Dokumentationshygiene fail-closed prüfen
+      - name: Deterministischen AUTO_SYNC-Plan erzeugen und lokal anwenden
+        if: steps.freshness.outputs.current == 'true'
+        run: |
+          npm run documentary:autosync:plan -- \
+            --head="${GITHUB_SHA}" \
+            --output=artifacts/documentary/autosync-plan.json \
+            --apply
+
+      - name: Kandidaten-Hygiene nach AUTO_SYNC fail-closed prüfen
         if: steps.freshness.outputs.current == 'true'
         run: npm run docs:hygiene:check
 
@@ -80,20 +93,28 @@ jobs:
           set -euo pipefail
           node <<'NODE'
           const fs = require('node:fs');
-          const report = JSON.parse(fs.readFileSync('artifacts/documentary/change-impact.json', 'utf8'));
-          const patchable = Number(report.patchableDocumentationPaths?.length || 0);
-          const reviewOnly = Number(report.reviewOnlyDocumentationPaths?.length || 0);
-          const state = patchable > 0 ? 'MAINTENANCE_CANDIDATE' : reviewOnly > 0 ? 'REVIEW_ONLY' : 'NO_ACTION';
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `state=${state}\npatchable=${patchable}\nreview_only=${reviewOnly}\n`);
-          console.log(JSON.stringify({ state, patchable, reviewOnly }, null, 2));
+          const impact = JSON.parse(fs.readFileSync('artifacts/documentary/change-impact.json', 'utf8'));
+          const autoSync = JSON.parse(fs.readFileSync('artifacts/documentary/autosync-plan.json', 'utf8'));
+          const patchable = Number(impact.patchableDocumentationPaths?.length || 0);
+          const reviewOnly = Number(impact.reviewOnlyDocumentationPaths?.length || 0);
+          const autosync = Number(autoSync.patches?.length || 0);
+          const state = autosync > 0
+            ? 'AUTO_SYNC'
+            : patchable > 0
+              ? 'MAINTENANCE_CANDIDATE'
+              : reviewOnly > 0
+                ? 'REVIEW_ONLY'
+                : 'NO_ACTION';
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `state=${state}\npatchable=${patchable}\nreview_only=${reviewOnly}\nautosync_patches=${autosync}\n`);
+          console.log(JSON.stringify({ state, patchable, reviewOnly, autosync }, null, 2));
           NODE
 
-      - name: Impact-Evidence hochladen
+      - name: Impact- und AUTO_SYNC-Evidence hochladen
         if: steps.freshness.outputs.current == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: documentary-change-impact-${{ github.sha }}
-          path: artifacts/documentary/change-impact.json
+          path: artifacts/documentary/
           if-no-files-found: error
           retention-days: 7
 
@@ -101,16 +122,156 @@ jobs:
         if: steps.freshness.outputs.current == 'true'
         env:
           IMPACT_STATE: ${{ steps.impact.outputs.state }}
-          PATCHABLE: ${{ steps.impact.outputs.patchable }}
-          REVIEW_ONLY: ${{ steps.impact.outputs.review_only }}
+          AUTOSYNC_PATCHES: ${{ steps.impact.outputs.autosync_patches }}
         run: |
           {
             echo "## Documentary Change Impact"
             echo
-            echo "- Source commit: \`${GITHUB_SHA}\`"
-            echo "- State: \`${IMPACT_STATE}\`"
-            echo "- Patchable candidates: \`${PATCHABLE}\`"
-            echo "- Review-only candidates: \`${REVIEW_ONLY}\`"
+            echo "- Source commit: `${GITHUB_SHA}`"
+            echo "- State: `${IMPACT_STATE}`"
+            echo "- Deterministic AUTO_SYNC patches: `${AUTOSYNC_PATCHES}`"
             echo
-            echo "This workflow is read-only. It creates evidence only and grants no branch, PR, merge, deploy or production authority."
+            echo "Analysis is read-only against main. Only an exact validated AUTO_SYNC plan may enter the isolated branch-write job."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  autosync-branch:
+    name: Validierten Documentary AUTO_SYNC-Branch materialisieren
+    needs: analyze
+    if: needs.analyze.outputs.current == 'true' && needs.analyze.outputs.autosync_patches != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Validierten AUTO_SYNC-Plan laden
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: documentary-change-impact-${{ github.sha }}
+          path: ${{ runner.temp }}/documentary-autosync
+
+      - name: Exact-Main und Patch-Hashes revalidieren und Branch schreiben
+        id: write
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          ARTIFACT_DIR: ${{ runner.temp }}/documentary-autosync
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const crypto = require('crypto');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sourceSha = String(process.env.SOURCE_SHA || '').toLowerCase();
+            if (!/^[0-9a-f]{40}$/.test(sourceSha)) throw new Error('Invalid source SHA.');
+
+            const planPath = path.join(process.env.ARTIFACT_DIR, 'autosync-plan.json');
+            const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+            if (String(plan.sourceCommit || '').toLowerCase() !== sourceSha) {
+              throw new Error('AUTO_SYNC plan/source SHA mismatch.');
+            }
+            if (!Array.isArray(plan.patches) || plan.patches.length < 1 || plan.patches.length > 10) {
+              throw new Error('AUTO_SYNC patch count is outside the bounded write corridor.');
+            }
+
+            const allowed = new Set([
+              'docs/projects/README.md',
+              'docs/projects/PROJECT_VALUE_CHAIN.md',
+              'docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md',
+            ]);
+            const sha256 = value => crypto.createHash('sha256').update(value, 'utf8').digest('hex');
+
+            const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            if (String(main.commit.sha).toLowerCase() !== sourceSha) {
+              throw new Error(`CURRENT_MAIN drift before AUTO_SYNC write: expected=${sourceSha} observed=${main.commit.sha}`);
+            }
+
+            const branch = `agent/documentary-autosync-${sourceSha.slice(0, 12)}`;
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+              core.notice(`AUTO_SYNC branch already exists: ${branch}; idempotent no-op.`);
+              core.setOutput('branch', branch);
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+            const { data: sourceCommit } = await github.rest.git.getCommit({ owner, repo, commit_sha: sourceSha });
+            const treeItems = [];
+            const claimedPaths = [];
+
+            for (const patch of plan.patches) {
+              if (!allowed.has(patch.path)) throw new Error(`AUTO_SYNC path is not allowlisted: ${patch.path}`);
+              const { data: currentFile } = await github.rest.repos.getContent({ owner, repo, path: patch.path, ref: sourceSha });
+              if (Array.isArray(currentFile) || currentFile.type !== 'file' || !currentFile.content) {
+                throw new Error(`AUTO_SYNC target is not a regular repository file: ${patch.path}`);
+              }
+              const current = Buffer.from(currentFile.content, currentFile.encoding || 'base64').toString('utf8');
+              if (sha256(current) !== patch.previousSha256) throw new Error(`Source hash drift: ${patch.path}`);
+              if (sha256(patch.proposedContent) !== patch.proposedSha256) throw new Error(`Proposed hash mismatch: ${patch.path}`);
+
+              const { data: blob } = await github.rest.git.createBlob({
+                owner, repo, content: patch.proposedContent, encoding: 'utf-8',
+              });
+              treeItems.push({ path: patch.path, mode: '100644', type: 'blob', sha: blob.sha });
+              claimedPaths.push(patch.path);
+            }
+
+            const claimId = `DOCUMENTARY-AUTOSYNC-${sourceSha.slice(0, 12).toUpperCase()}`;
+            const claimPath = `.ai/work-claims/${claimId}.json`;
+            const claim = {
+              schemaVersion: '1.0.0',
+              claimId,
+              status: 'active',
+              exclusive: true,
+              branch,
+              project: 'CAPITAL-AI-DOC',
+              projectFolder: 'documentary',
+              agent: {
+                provider: 'github-actions',
+                model: 'deterministic',
+                executionSurface: 'Documentary Change Impact / AUTO_SYNC',
+              },
+              workItem: 'Apply bounded deterministic Documentary AUTO_SYNC rules derived from exact CURRENT_MAIN.',
+              startedAt: new Date().toISOString(),
+              baseBranch: 'main',
+              baseSha: sourceSha,
+              claimedPaths: [...claimedPaths, claimPath].sort(),
+              releaseCondition: 'Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.',
+            };
+            const { data: claimBlob } = await github.rest.git.createBlob({
+              owner, repo, content: JSON.stringify(claim, null, 2) + '\n', encoding: 'utf-8',
+            });
+            treeItems.push({ path: claimPath, mode: '100644', type: 'blob', sha: claimBlob.sha });
+
+            const { data: tree } = await github.rest.git.createTree({
+              owner, repo, base_tree: sourceCommit.tree.sha, tree: treeItems,
+            });
+            const { data: commit } = await github.rest.git.createCommit({
+              owner,
+              repo,
+              message: `docs(documentary): deterministic auto-sync ${sourceSha.slice(0, 12)}`,
+              tree: tree.sha,
+              parents: [sourceSha],
+            });
+            await github.rest.git.createRef({
+              owner, repo, ref: `refs/heads/${branch}`, sha: commit.sha,
+            });
+            core.setOutput('branch', branch);
+            core.setOutput('commit', commit.sha);
+
+      - name: Write-Lane zusammenfassen
+        env:
+          BRANCH: ${{ steps.write.outputs.branch }}
+          COMMIT: ${{ steps.write.outputs.commit }}
+        run: |
+          {
+            echo "## Documentary deterministic AUTO_SYNC"
+            echo
+            echo "- branch: `${BRANCH}`"
+            echo "- commit: `${COMMIT:-EXISTING_BRANCH}`"
+            echo "- main mutation: `NO`"
+            echo "- PR/merge/deploy: `NOT_AUTHORIZED_IN_WP-06C`"
           } >> "$GITHUB_STEP_SUMMARY"
