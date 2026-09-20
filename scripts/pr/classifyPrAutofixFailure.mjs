@@ -1,0 +1,210 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs';
+import { appendGithubOutput, fail } from './lib.mjs';
+import {
+  PR_AUTOFIX_REPAIR_REGISTRY,
+  resolveRegisteredPrAutofixRepair,
+} from './prAutofixRepairRegistry.mjs';
+
+export const PR_AUTOFIX_DECISIONS = Object.freeze({
+  DELEGATE_CURRENT_STATE_BASELINE: 'DELEGATE_CURRENT_STATE_BASELINE_AUTOFIX',
+  DELEGATE_PR_METADATA: 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH',
+  REGISTERED_TEST_REPAIR: 'REGISTERED_TEST_REPAIR',
+  BLOCKED_SECURITY_COMPLIANCE: 'BLOCKED_SECURITY_COMPLIANCE',
+  BLOCKED_PROTECTED_ACTION: 'BLOCKED_PROTECTED_ACTION',
+  BLOCKED_NOT_PROVEN: 'BLOCKED_NOT_PROVEN',
+  BLOCKED_REPEAT_AUTOFIX: 'BLOCKED_REPEAT_AUTOFIX',
+  BLOCKED_UNKNOWN: 'BLOCKED_UNKNOWN',
+});
+
+const SECURITY_FAILURE = [
+  /(?:^|\b)(?:error|failed|failure|fatal|denied|violation)\b[^\n]*(?:workflow security|credential exposure|secret scanning|gitguardian|dependency security|provenance|signature verification|cosign|high\+critical cve|trivy)/i,
+  /(?:secret|credential)[^\n]*(?:exposed|leak|detected|found)/i,
+];
+
+const PROTECTED_FAILURE = [
+  /(?:^|\b)(?:error|failed|failure|fatal|denied)\b[^\n]*(?:render|production deploy|registry auth|ghcr auth|deployment identity|\biam\b|billing|database mutation|supabase migration)/i,
+];
+
+const TEMPLATE_DELEGATION_PATTERNS = [
+  /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i,
+  /fehlt mindestens eine maschinenlesbare Governance-ID:/i,
+  /enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline/i,
+  /enthält keinen eindeutig abgegrenzten Produktions-Baseline-Block/i,
+  /enthält nicht aufgelöste Vorlagenplatzhalter:/i,
+];
+
+const TEMPLATE_UNSUPPORTED_PATTERNS = [
+  /verwendet keinen unterstützten PR-Vorlagenmarker/i,
+  /enthält keine gültige Prioritätsbewertung/i,
+  /enthält keinen gültigen Versionsimpact/i,
+  /enthält keinen Version-Manager-Check-Status/i,
+];
+
+function normalizedFailureLines(logText) {
+  return String(logText || '')
+    .split(/\r?\n/)
+    .filter((line) => /error|fail|fatal|denied|violation|exposed|leak|vulnerab|critical/i.test(line))
+    .join('\n');
+}
+
+function result({
+  classification,
+  decision,
+  reason,
+  failureSignature = '',
+  repairerId = '',
+  repairerPath = '',
+  allowedPaths = [],
+}) {
+  return {
+    classification,
+    decision,
+    reason,
+    failureSignature,
+    repairerId,
+    repairerPath,
+    allowedPaths,
+  };
+}
+
+export function classifyPrAutofixFailure(
+  {
+    sourceWorkflow,
+    logText,
+    previousAutofixSignature = '',
+  },
+  registry = PR_AUTOFIX_REPAIR_REGISTRY,
+) {
+  const source = String(sourceWorkflow || '').trim();
+  const log = String(logText || '');
+  const failureLines = normalizedFailureLines(log);
+
+  if (!['.github/workflows/ci.yml', '.github/workflows/pr-governance.yml'].includes(source)) {
+    return result({
+      classification: 'UNKNOWN_FAILURE',
+      decision: PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN,
+      reason: 'unsupported-source-workflow',
+    });
+  }
+
+  if (SECURITY_FAILURE.some((pattern) => pattern.test(failureLines))) {
+    return result({
+      classification: 'SECURITY_OR_COMPLIANCE_FAILURE',
+      decision: PR_AUTOFIX_DECISIONS.BLOCKED_SECURITY_COMPLIANCE,
+      reason: 'security-or-compliance-failure-detected',
+    });
+  }
+
+  if (PROTECTED_FAILURE.some((pattern) => pattern.test(failureLines))) {
+    return result({
+      classification: 'PRODUCTION_OR_PROVIDER_FAILURE',
+      decision: PR_AUTOFIX_DECISIONS.BLOCKED_PROTECTED_ACTION,
+      reason: 'protected-production-or-provider-failure-detected',
+    });
+  }
+
+  if (
+    source === '.github/workflows/ci.yml' &&
+    /ERROR CURRENT_STATE_PROJECTION_BASELINE_(?:MISSING|STALE): docs\/projects\/[^ :]+\/(?:ROADMAP|TASK_REGISTER)\.md/.test(log)
+  ) {
+    return result({
+      classification: 'CURRENT_STATE_BASELINE_DRIFT',
+      decision: PR_AUTOFIX_DECISIONS.DELEGATE_CURRENT_STATE_BASELINE,
+      reason: 'existing-current-state-baseline-specialist-owns-write',
+    });
+  }
+
+  if (source === '.github/workflows/pr-governance.yml') {
+    if (TEMPLATE_UNSUPPORTED_PATTERNS.some((pattern) => pattern.test(log))) {
+      return result({
+        classification: 'PR_TEMPLATE_METADATA_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason: 'metadata-drift-not-deterministically-repairable-by-current-specialist',
+      });
+    }
+
+    if (TEMPLATE_DELEGATION_PATTERNS.some((pattern) => pattern.test(log))) {
+      return result({
+        classification: 'PR_TEMPLATE_METADATA_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
+        reason: 'existing-pr-production-baseline-refresh-specialist-owns-write',
+      });
+    }
+  }
+
+  if (source === '.github/workflows/ci.yml') {
+    const signatureMatch = log.match(/ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT:\s*([A-Z0-9][A-Z0-9_.:-]{0,127})/);
+    if (signatureMatch) {
+      const failureSignature = signatureMatch[1];
+      if (failureSignature === String(previousAutofixSignature || '').trim()) {
+        return result({
+          classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+          decision: PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX,
+          reason: 'same-autofix-signature-repeated-on-autofix-head',
+          failureSignature,
+        });
+      }
+
+      const repair = resolveRegisteredPrAutofixRepair(
+        { sourceWorkflow: source, signature: failureSignature },
+        registry,
+      );
+      if (!repair.registered) {
+        return result({
+          classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+          decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+          reason: repair.reason,
+          failureSignature,
+        });
+      }
+
+      return result({
+        classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR,
+        reason: repair.reason,
+        failureSignature,
+        repairerId: repair.repairerId,
+        repairerPath: repair.repairerPath,
+        allowedPaths: repair.allowedPaths,
+      });
+    }
+  }
+
+  return result({
+    classification: 'UNKNOWN_FAILURE',
+    decision: PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN,
+    reason: 'no-exact-allowlisted-failure-class',
+  });
+}
+
+function emitClassification(value) {
+  appendGithubOutput({
+    classification: value.classification,
+    decision: value.decision,
+    reason: value.reason,
+    failure_signature: value.failureSignature,
+    repairer_id: value.repairerId,
+    repairer_path: value.repairerPath,
+    allowed_paths_json: JSON.stringify(value.allowedPaths),
+  });
+}
+
+if (process.argv[1]?.endsWith('classifyPrAutofixFailure.mjs')) {
+  const logPath = String(process.env.FAILURE_LOG || '').trim();
+  const sourceWorkflow = String(process.env.SOURCE_WORKFLOW_PATH || '').trim();
+  const previousAutofixSignature = String(process.env.PREVIOUS_AUTOFIX_SIGNATURE || '').trim();
+
+  if (!logPath || !fs.existsSync(logPath)) fail('FAILURE_LOG fehlt oder existiert nicht.');
+  const logText = fs.readFileSync(logPath, 'utf8');
+  const classification = classifyPrAutofixFailure({
+    sourceWorkflow,
+    logText,
+    previousAutofixSignature,
+  });
+  emitClassification(classification);
+  console.log(
+    `[PR-AUTOFIX] classification=${classification.classification} decision=${classification.decision} reason=${classification.reason}`,
+  );
+}
