@@ -3,9 +3,9 @@
 // Generalizes the claim-table pattern already proven in production by
 // server/stripeEventInbox.ts (ADR-0045) and server/pdfCreditLedger.ts (ADR-0052) into a
 // reusable job outbox: enqueue once, lease-claim for exclusive processing, then complete or
-// schedule a backoff retry up to max_attempts before moving to dead_letter. Registered job
-// handlers (server/outboxWorker.ts) MUST be idempotent -- a stale lease is automatically
-// reclaimed by claim_outbox_job (supabase/migrations/20260810160000_outbox_jobs.sql).
+// schedule a bounded retry before moving to dead_letter. SH-02.5 adds explicit replay-safety:
+// stale leases are reclaimed only for handlers registered as IDEMPOTENT; ambiguous side effects
+// are quarantined for reconciliation with durable recovery evidence.
 
 import {
   assertPrivilegedSupabaseConfigured,
@@ -26,6 +26,8 @@ export interface OutboxEnqueueResult {
   enqueued: boolean;
   jobId: string | null;
 }
+
+export type OutboxReplaySafety = 'IDEMPOTENT' | 'REQUIRES_RECONCILIATION';
 
 export interface ClaimedOutboxJob {
   jobId: string;
@@ -107,26 +109,31 @@ export async function enqueueOutboxJob(input: EnqueueOutboxJobInput): Promise<Ou
 }
 
 /**
- * Atomically claims one eligible job (pending and due, or a stale-lease reclaim) for leaseOwner.
+ * Atomically claims one eligible job for leaseOwner. Pending due work may be claimed normally;
+ * an expired processing lease is reclaimed only when its job type is explicitly replay-safe and
+ * still within max_attempts. Unsafe/exhausted stale work is quarantined by the v2 RPC.
+ *
  * Returns null when nothing is claimable, or -- in local development without Supabase -- always,
  * since there is no durable queue to poll there.
  */
 export async function claimOutboxJob(
   leaseOwner: string,
   leaseSeconds: number = DEFAULT_LEASE_SECONDS,
+  replaySafeJobTypes: readonly string[] = [],
 ): Promise<ClaimedOutboxJob | null> {
   const supabase = requireSupabase('Outbox job claim');
   if (!supabase) {
     return null;
   }
 
-  const { data, error } = await supabase.rpc('claim_outbox_job', {
+  const { data, error } = await supabase.rpc('claim_outbox_job_v2', {
     p_lease_owner: leaseOwner,
     p_lease_seconds: leaseSeconds,
+    p_replay_safe_job_types: [...new Set(replaySafeJobTypes.filter(Boolean))],
   });
 
   if (error) {
-    throw new Error(`[Outbox] claim_outbox_job failed: ${error.message || JSON.stringify(error)}`);
+    throw new Error(`[Outbox] claim_outbox_job_v2 failed: ${error.message || JSON.stringify(error)}`);
   }
 
   const row = normalizeRpcRow(data);
@@ -141,6 +148,61 @@ export async function claimOutboxJob(
     attempts: Number(row.attempts),
     maxAttempts: Number(row.max_attempts),
   };
+}
+
+/**
+ * Extends the current processing lease only while this worker still owns an unexpired lease.
+ * An expired lease is never resurrected by a late heartbeat.
+ */
+export async function heartbeatOutboxJob(
+  jobId: string,
+  leaseOwner: string,
+  leaseSeconds: number = DEFAULT_LEASE_SECONDS,
+): Promise<boolean> {
+  const supabase = requireSupabase('Outbox job heartbeat');
+  if (!supabase) {
+    return false;
+  }
+
+  const { data, error } = await supabase.rpc('heartbeat_outbox_job', {
+    p_job_id: jobId,
+    p_lease_owner: leaseOwner,
+    p_lease_seconds: leaseSeconds,
+  });
+
+  if (error) {
+    throw new Error(`[Outbox] heartbeat_outbox_job failed for ${jobId}: ${error.message || JSON.stringify(error)}`);
+  }
+
+  return Boolean(data);
+}
+
+/**
+ * Moves the currently leased job directly into the canonical dead-letter/quarantine state.
+ * Use when replay safety is not proven or when a non-recoverable worker contract failure occurs.
+ */
+export async function quarantineOutboxJob(
+  jobId: string,
+  leaseOwner: string,
+  reason: unknown,
+): Promise<boolean> {
+  const supabase = requireSupabase('Outbox job quarantine');
+  if (!supabase) {
+    return false;
+  }
+
+  const message = reason instanceof Error ? reason.message : String(reason);
+  const { data, error } = await supabase.rpc('quarantine_outbox_job', {
+    p_job_id: jobId,
+    p_lease_owner: leaseOwner,
+    p_reason: message,
+  });
+
+  if (error) {
+    throw new Error(`[Outbox] quarantine_outbox_job failed for ${jobId}: ${error.message || JSON.stringify(error)}`);
+  }
+
+  return Boolean(data);
 }
 
 /** Marks a claimed job succeeded. Returns false if this caller no longer holds the lease. */
