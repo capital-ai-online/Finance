@@ -39,6 +39,7 @@ console.log(JSON.stringify({
   sourceCommit: evidence.sourceCommit,
   observedCurrentMain: evidence.observedCurrentMain,
   impactState: evidence.impactState,
-  selfHealingContractPresent: evidence.selfHealingContract.presentOnCheckout,
+  selfHealingContractVersion: evidence.selfHealingContract.version,
+  selfHealingContractValid: evidence.selfHealingContract.valid,
   convergenceClaim: evidence.convergenceClaim,
 }, null, 2));
