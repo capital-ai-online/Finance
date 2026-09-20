@@ -3,6 +3,7 @@ import {
   SYSTEMADMIN_GITHUB_OIDC_ISSUER,
   SYSTEMADMIN_GITHUB_REPOSITORY,
   SYSTEMADMIN_GITHUB_REPOSITORY_ID,
+  SYSTEMADMIN_GITHUB_REPOSITORY_OWNER,
   SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID,
   SYSTEMADMIN_GITHUB_ACTOR,
   SYSTEMADMIN_GITHUB_ACTOR_ID,
@@ -115,6 +116,13 @@ function requireString(claims: RawClaims, key: keyof RawClaims): string {
   return value;
 }
 
+export function githubBillingAlertSubjectMatchesCanonicalRepository(subject: string): boolean {
+  return subject.startsWith(`repo:${SYSTEMADMIN_GITHUB_REPOSITORY}:`)
+    || subject.startsWith(
+      `repo:${SYSTEMADMIN_GITHUB_REPOSITORY_OWNER}@${SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID}/Finance@${SYSTEMADMIN_GITHUB_REPOSITORY_ID}:`,
+    );
+}
+
 function validateClaims(claims: RawClaims, nowSeconds: number): VerifiedGitHubBillingAlertIdentity {
   if (claims.iss !== SYSTEMADMIN_GITHUB_OIDC_ISSUER) fail('OIDC issuer ist nicht GitHub Actions.');
   if (!audienceContains(claims.aud, GITHUB_BILLING_ALERT_OIDC_AUDIENCE)) fail('OIDC audience ist nicht freigegeben.');
@@ -134,7 +142,7 @@ function validateClaims(claims: RawClaims, nowSeconds: number): VerifiedGitHubBi
   const workflowSha = requireString(claims, 'workflow_sha');
   const runId = requireString(claims, 'run_id');
 
-  if (!subject.startsWith(`repo:${SYSTEMADMIN_GITHUB_REPOSITORY}:`)) fail('OIDC subject liegt außerhalb von Finance.');
+  if (!githubBillingAlertSubjectMatchesCanonicalRepository(subject)) fail('OIDC subject liegt außerhalb von Finance.');
   if (repository !== SYSTEMADMIN_GITHUB_REPOSITORY) fail('OIDC repository ist nicht Finance.');
   if (repositoryId !== SYSTEMADMIN_GITHUB_REPOSITORY_ID) fail('OIDC repository_id ist nicht Finance.');
   if (repositoryOwnerId !== SYSTEMADMIN_GITHUB_REPOSITORY_OWNER_ID) fail('OIDC repository_owner_id ist nicht kanonisch.');
