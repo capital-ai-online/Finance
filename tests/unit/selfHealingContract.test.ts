@@ -204,11 +204,12 @@ describe('self-healing contract', () => {
   });
 
   it('rejects a bare PASS and every stale/readback-invalid positive claim', () => {
-    expect(resolveConvergence('FRONTEND_RELOAD_ONCE', {
+    const untypedBarePass = {
       status: 'PASS',
       probe: 'frontend-runtime-rehydrated',
       evidenceRef: 'test:bare-pass',
-    }, 1)).toMatchObject({
+    } as unknown as import('../../src/platform/Supervisor/selfHealingContract').VerificationResult;
+    expect(resolveConvergence('FRONTEND_RELOAD_ONCE', untypedBarePass, 1)).toMatchObject({
       state: 'ESCALATED',
       converged: false,
       reason: 'VERIFICATION_EVIDENCE_INVALID',
