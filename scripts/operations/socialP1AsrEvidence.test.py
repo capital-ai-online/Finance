@@ -38,6 +38,9 @@ class RequiredTermMatcherTest(unittest.TestCase):
         self.assertNoMatch("1.234,56 Euro", "Der Betrag lautet 1,2453,6 Euro.")
         self.assertNoMatch("1.234,56 Euro", "Der Betrag lautet 1234,56 ohne Währung.")
 
+    def test_btc_segmented_as_bt_c_is_explicit_asr_equivalent(self) -> None:
+        self.assertMatch("BTC", "Sprich BT, C klar aus.")
+
     def test_eth_misrecognitions_remain_fail_closed(self) -> None:
         self.assertMatch("ETH", "Sprich BTC, ETH und CAPITAL-AI klar aus.")
         self.assertNoMatch("ETH", "Sprich BTC, ETS und Capital Eye klar aus.")
