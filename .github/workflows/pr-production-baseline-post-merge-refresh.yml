@@ -165,6 +165,9 @@ jobs:
       matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    concurrency:
+      group: capital-ai-pr-writer-${{ matrix.pr_number }}
+      cancel-in-progress: false
 
     steps:
       - name: Trusted-main Policy auschecken
