@@ -21,8 +21,8 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | WP | Scope | Owner/PVC | Dependencies | Exit gate | State |
 |---|---|---|---|---|---|
 | SH-02.0 | Authority/supersession + architecture baseline | OPS / PVC-08 | current main | stale owner-gating projections reconciled to current trust root; no weakened gate | IMPLEMENTED_BRANCH |
-| SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IN_IMPLEMENTATION |
-| SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IN_IMPLEMENTATION |
+| SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
+| SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
 | SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | QUEUED |
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | QUEUED |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | QUEUED |
@@ -84,6 +84,18 @@ Introduce a small reliability helper:
 
 ### Tests
 Classification and one-shot budget behavior are unit tested without requiring a browser network.
+
+## Current branch implementation evidence
+
+Implemented on the branch before PR validation:
+- canonical `server/routes/health.ts` now projects process fatal state and drives 200/503 liveness without dependency network calls;
+- `registerApplicationRoutes.ts` mounts the canonical health router once;
+- `server.application.ts` no longer owns a shadow `/healthz` or duplicate fatal process listeners;
+- `src/app/reliability/frontendRecovery.ts` provides one-shot stale-asset recovery budgeting;
+- the root `ErrorBoundary` consumes that policy and does not expose raw exception messages in the recovery UI;
+- focused unit tests cover backend liveness state and frontend recovery classification/budget behavior.
+
+Validation is intentionally represented as pending until repository CI executes against the PR head. No unexecuted test is labeled PASS.
 
 ## SH-02.3 — Self-Healing control contract
 
