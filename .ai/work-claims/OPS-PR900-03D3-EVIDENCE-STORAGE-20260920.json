@@ -29,7 +29,9 @@
     "scripts/operations/runPrivateGitHubBillingRead.mjs",
     "scripts/operations/githubEvidenceStoragePolicy.mjs",
     "scripts/operations/runPrivateGitHubStorageCapabilityReport.mjs",
-    "tests/unit/githubEvidenceStoragePolicy.test.ts"
+    "tests/unit/githubEvidenceStoragePolicy.test.ts",
+    "tests/unit/githubSettingsInventoryReadClient.test.ts",
+    "tests/unit/githubSettingsInventoryProjection.test.ts"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. No storage, cache, package, GHCR, billing or provider-setting mutation is authorized by this claim.",
   "currentMainCorrelation": {
