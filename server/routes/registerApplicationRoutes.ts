@@ -38,6 +38,7 @@ import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
 import { createMtaStsRouter } from './mtaStsRoutes';
 import { createBusinessReadinessRouter } from './businessReadinessRoutes';
 import { createHealthRouter } from './health';
+import { passwordSecurityRouter } from './passwordSecurityRoutes';
 import { registerMarketDataAdapters } from './registerMarketDataAdapters';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
@@ -114,6 +115,7 @@ export function registerApplicationRoutes(
   );
   app.use('/api/admin', systemEventsRouter);
   app.use('/api/admin', versionManagerRouter);
+  app.use('/api/auth', passwordSecurityRouter);
   app.use('/api/auth', stepUpRouter);
   app.use('/api/privacy', privacyRouter);
   app.use('/api/compliance', complianceRouter);

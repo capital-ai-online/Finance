@@ -62,6 +62,7 @@ describe('password recovery login boundary', () => {
     expect(loginPage).toContain('const captchaToken = await requestHcaptchaToken()');
     expect(loginPage).toContain('captchaToken,');
     expect(loginPage).toContain('PASSWORD_RECOVERY_QUERY_PARAM');
+    expect(loginPage).toContain('await assertStrongUncompromisedPassword(recoveryPassword)');
     expect(loginPage).toContain('supabase.auth.updateUser({ password: recoveryPassword })');
     expect(loginPage).toContain("supabase.auth.signOut({ scope: 'local' })");
     expect(loginPage).toContain('vorhandene MFA-Prüfungen bleiben aktiv');
