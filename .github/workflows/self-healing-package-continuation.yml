@@ -218,8 +218,15 @@ jobs:
               return { refs: [...refs], unresolved: residual };
             }
 
+            const staleQueuedCompleted = rows
+              .filter(row => row.state === 'QUEUED' && completed.has(row.number))
+              .map(row => row.id);
+            if (staleQueuedCompleted.length > 0) {
+              core.notice(`Ignoring stale QUEUED rows already completed by current merge/state: ${staleQueuedCompleted.join(', ')}.`);
+            }
+
             const queued = rows
-              .filter(row => row.state === 'QUEUED')
+              .filter(row => row.state === 'QUEUED' && !completed.has(row.number))
               .sort((a, b) => a.number - b.number);
 
             let next = null;
