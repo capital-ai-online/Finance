@@ -9,24 +9,26 @@ export const TARGET_PATH = 'tests/unit/selfHealingSupersession.test.ts';
 const BRITTLE_ASSERTION =
   /^    expect\(workPackage\)\.toContain\('\*\*Next functional slice:\*\* \`SH-02\.\d+[A-Z]?\`'\);\s*$/m;
 
-const INVARIANT_BLOCK = `    const nextSlices = [
-      ...workPackage.matchAll(/^\\*\\*Next functional slice:\\*\\*\\s*\\`(SH-02\\.\\d+[A-Z]?)\\`/gm),
-    ];
-    expect(nextSlices, 'canonical work package must declare exactly one next functional slice').toHaveLength(1);
-
-    const nextSlice = nextSlices[0][1];
-    const nextRow = workPackage
-      .split(/\\r?\\n/)
-      .find((line) => line.startsWith(\\`| \${nextSlice} |\\`));
-    expect(nextRow, \`missing work-graph row for \${nextSlice}\`).toBeDefined();
-
-    const nextState = String(nextRow)
-      .split('|')
-      .map((cell) => cell.trim())
-      .filter(Boolean)
-      .at(-1);
-    expect(nextState, \`${nextSlice} must expose a work-graph state\`).toBeTruthy();
-    expect(nextState).not.toMatch(/^IMPLEMENTED_ON_MAIN(?:\\s*\\/|$)/);`;
+const INVARIANT_BLOCK = [
+  '    const nextSlices = [',
+  '      ...workPackage.matchAll(/^\\*\\*Next functional slice:\\*\\*\\s*`(SH-02\\.\\d+[A-Z]?)`/gm),',
+  '    ];',
+  "    expect(nextSlices, 'canonical work package must declare exactly one next functional slice').toHaveLength(1);",
+  '',
+  '    const nextSlice = nextSlices[0][1];',
+  '    const nextRow = workPackage',
+  "      .split(/\\r?\\n/)",
+  '      .find((line) => line.startsWith(`| ${nextSlice} |`));',
+  '    expect(nextRow, `missing work-graph row for ${nextSlice}`).toBeDefined();',
+  '',
+  '    const nextState = String(nextRow)',
+  "      .split('|')",
+  '      .map((cell) => cell.trim())',
+  '      .filter(Boolean)',
+  '      .at(-1);',
+  '    expect(nextState, `${nextSlice} must expose a work-graph state`).toBeTruthy();',
+  '    expect(nextState).not.toMatch(/^IMPLEMENTED_ON_MAIN(?:\\s*\\/|$)/);',
+].join('\\n');
 
 export async function repairPrAutofix({ worktree, signature }) {
   if (signature !== SIGNATURE) {
