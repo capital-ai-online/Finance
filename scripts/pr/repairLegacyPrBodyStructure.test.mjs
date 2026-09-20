@@ -195,10 +195,6 @@ test('preserves replacement-like PR text as inert data during current v1.6 repai
   assert.doesNotMatch(result.body, /## 4\. 🔐 Security Boundary[\s\S]*## 4\. 🔐 Security Boundary/);
 });
 
-test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => { \$1 \$\$/);
-  assert.doesNotMatch(result.body, /## 4\. 🔐 Security Boundary[\s\S]*## 4\. 🔐 Security Boundary/);
-});
-
 test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => {
   const body = currentV16SecurityBoundaryBody.replace(
     '## 4. 🔐 Security Boundary',
