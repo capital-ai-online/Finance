@@ -218,6 +218,30 @@ def _sync_cuda(torch_module: Any, device: str) -> None:
         torch_module.cuda.synchronize()
 
 
+def _synthesis_text(sample: dict[str, Any], candidate: str) -> tuple[str, str]:
+    """Return an explicit speech projection while preserving canonical fixture identity."""
+    if sample.get("sample_id") != "de-finance-numbers-v1":
+        return sample["text"], "canonical_fixture_text"
+
+    if candidate == "chatterbox-multilingual-v3":
+        pronunciation_clause = (
+            "Sprich B T C klar aus. "
+            "Danach einzeln: E, Tee, Haa. "
+            "Danach einzeln: Capital, A, I."
+        )
+        projection = "de_finance_pronunciation_projection_v3_chatterbox_segmented"
+    else:
+        pronunciation_clause = "Sprich B T C, E T H und Capital A I klar aus."
+        projection = "de_finance_pronunciation_projection_v1"
+
+    text = (
+        "Aussprachetest: zwölf Komma fünf Prozent und eintausendzweihundertvierunddreißig Euro "
+        "und sechsundfünfzig Cent sind hier reine Testwerte, keine Marktdaten. "
+        f"{pronunciation_clause} Dies ist keine Anlageberatung."
+    )
+    return text, projection
+
+
 def _qwen_run(
     *,
     model: Any,
@@ -233,8 +257,9 @@ def _qwen_run(
     _seed_everything(EXPECTED_SEED, torch_module, numpy_module)
     _sync_cuda(torch_module, device)
     started = time.perf_counter()
+    synthesis_text, pronunciation_projection = _synthesis_text(sample, "qwen3-tts")
     wavs, sample_rate = model.generate_voice_design(
-        text=sample["text"],
+        text=synthesis_text,
         language=language,
         instruct=persona["style_intent"],
     )
@@ -245,6 +270,9 @@ def _qwen_run(
     return wavs[0], int(sample_rate), total_ms, {
         "persona_binding": "native_voice_design_instruction",
         "style_intent_enforced": True,
+        "synthesis_text": synthesis_text,
+        "synthesis_text_sha256": _sha256_text(synthesis_text),
+        "pronunciation_projection": pronunciation_projection,
         "first_audio_measurement": "non_streaming_completion_proxy",
     }
 
@@ -263,7 +291,8 @@ def _chatterbox_run(
     _seed_everything(EXPECTED_SEED, torch_module, numpy_module)
     _sync_cuda(torch_module, device)
     started = time.perf_counter()
-    wav = model.generate(sample["text"], language_id=language)
+    synthesis_text, pronunciation_projection = _synthesis_text(sample, "chatterbox-multilingual-v3")
+    wav = model.generate(synthesis_text, language_id=language)
     _sync_cuda(torch_module, device)
     total_ms = (time.perf_counter() - started) * 1000.0
     if hasattr(wav, "detach"):
@@ -271,6 +300,9 @@ def _chatterbox_run(
     return wav, int(model.sr), total_ms, {
         "persona_binding": "provider_builtin_conditioning_without_reference_audio",
         "style_intent_enforced": False,
+        "synthesis_text": synthesis_text,
+        "synthesis_text_sha256": _sha256_text(synthesis_text),
+        "pronunciation_projection": pronunciation_projection,
         "style_gap": "Chatterbox Multilingual V3 does not consume the Social designed-persona text instruction; human listening review must assess suitability.",
         "first_audio_measurement": "non_streaming_completion_proxy",
     }
@@ -322,7 +354,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--qwen-model-dir", type=Path)
     parser.add_argument("--chatterbox-model-dir", type=Path)
     parser.add_argument("--candidate", action="append", default=[])
-    parser.add_argument("--sample", action="append", default=["all"])
+    parser.add_argument("--sample", action="append", default=[])
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--allow-non-gpu-smoke", action="store_true")
     parser.add_argument("--plan-only", action="store_true")

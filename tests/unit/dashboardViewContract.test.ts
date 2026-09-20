@@ -73,7 +73,9 @@ describe('BB-2G dashboard view contract', () => {
 
   it('binds app-owned composition and navigation to the canonical view contract', () => {
     expect(dashboard).toContain("import type { DashboardView } from './dashboardViews'");
-    expect(dashboard).toContain("useState<DashboardView>('dashboard')");
+    expect(dashboard).toContain('useState<DashboardView>(() =>');
+    expect(dashboard).toContain('readDashboardView(window.location.search)');
+    expect(dashboard).toContain(": 'dashboard',");
     expect(dashboard).toContain('<DashboardHeader');
     expect(dashboard).toContain('<DashboardHome');
     expect(dashboard).toContain('<MyWorkspaceView');
