@@ -36,23 +36,19 @@ test('privileged completion triggers retain source guards and isolated baseline 
   assert.ok(postMerge.includes("github.event.workflow_run.path == '.github/workflows/sync-agent-pr-branches.yml'"));
 });
 
-test('Governance rerun fallback materializes only for re-run attempts and binds the exact source run', () => {
-  assert.match(workflow, /types: \[in_progress, completed\]/);
+test('Governance repair consumes completed events for initial runs and reruns without polling', () => {
+  assert.match(workflow, /types: \[completed\]/);
+  assert.doesNotMatch(workflow, /types: \[[^\]]*in_progress/);
   for (const token of [
     "github.event.action == 'completed'",
-        'github.event.workflow_run.run_attempt == 1',
-    "github.event.action == 'in_progress'",
-    'github.event.workflow_run.run_attempt > 1',
-    'Governance-Source-Run bis zum Abschluss exakt binden',
-    'github.rest.actions.getWorkflowRun',
-    'run_id: expectedId',
-    'Number(data.id) !== expectedId',
-    'normalizeSha(data.head_sha) !== expectedHead',
-    "String(data.path || '') !== expectedPath",
+    'Abgeschlossenen Governance-Source-Run exakt binden',
+    "context.payload.action !== 'completed'",
     "sourceRun.status !== 'completed'",
+    'Number(sourceRun.run_attempt) < 1',
     "core.setOutput('conclusion'",
-    'Date.now() + 240_000',
-  ]) assert.ok(workflow.includes(token), 'missing Governance rerun fallback control: ' + token);
+    "core.setOutput('run_attempt'",
+  ]) assert.ok(workflow.includes(token), 'missing completed Governance source control: ' + token);
+  assert.doesNotMatch(workflow, /getWorkflowRun|Date\.now\(\) \+ 240_000|setTimeout/);
 });
 
 test('baseline refresh concurrency isolates Governance repair from CI completion events', () => {
