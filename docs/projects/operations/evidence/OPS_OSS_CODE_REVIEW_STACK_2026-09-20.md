@@ -61,3 +61,7 @@ Static repository tests must verify that the workflow:
 8. keeps provider workflow changes on the conservative validation path.
 
 Hosted build/test validation is deliberately not started by this implementation branch. It remains subject to the separate Owner-controlled CI boundary.
+
+## Initial PR activation gate
+
+Owner approved Pull Request creation on 2026-09-20, but did not separately authorize hosted build/test/deploy execution. The branch HEAD therefore carries GitHub's supported `[skip ci]` annotation solely for the initial PR-open event. This prevents unrelated automatic `pull_request` CI from starting while preserving the repository rule that pipeline execution requires separate Owner approval. The OSS review workflow itself becomes active for subsequent pull requests only after Human/CODEOWNER merge into `main`.
