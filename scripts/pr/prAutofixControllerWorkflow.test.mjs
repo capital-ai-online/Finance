@@ -24,6 +24,7 @@ test('classifier is read-only and binds exact same-repository PR head to current
     'normalizeSha(pr.head.sha) === headSha',
     'mainSha !== baseSha',
     "github.event.action == 'completed'",
+        'github.event.workflow_run.run_attempt == 1',
     "github.event.action == 'in_progress'",
     'github.event.workflow_run.run_attempt > 1',
     "steps.source.outputs.conclusion == 'failure'",
