@@ -43,15 +43,15 @@ remediation_execution_local: false
 
 | VC | Primary Owner | VC | Primary Owner |
 |---|---|---|---|
-| VC-01 | `CAPITAL-AI-CLIENT` | VC-10 | `CAPITAL-AI-DATA` |
-| VC-02 | `CAPITAL-AI-OPS` | VC-11 | `CAPITAL-AI-DATA` |
+| VC-01 | `CAPITAL-AI-CLIENT` | VC-10 | `CAPITAL-AI-FINTECH` |
+| VC-02 | `CAPITAL-AI-OPS` | VC-11 | `CAPITAL-AI-FINTECH` |
 | VC-03 | `CAPITAL-AI-DOC` | VC-12 | `CAPITAL-AI-FINTECH` |
 | VC-04 | `CAPITAL-AI-OPS` | VC-13 | `CAPITAL-AI-FINTECH` |
 | VC-05 | `CAPITAL-AI-GOV` | VC-14 | `CAPITAL-AI-FINTECH` |
 | VC-06 | `CAPITAL-AI-OPS` | VC-15 | `CAPITAL-AI-FINTECH` |
 | VC-07 | `CAPITAL-AI-OPS` | VC-16 | `CAPITAL-AI-FINTECH` |
 | VC-08 | `CAPITAL-AI-OPS` | VC-17 | `CAPITAL-AI-FINTECH` |
-| VC-09 | `CAPITAL-AI-DATA` | VC-18 | `CAPITAL-AI-OPS` |
+| VC-09 | `CAPITAL-AI-FINTECH` | VC-18 | `CAPITAL-AI-OPS` |
 
 This routing table governs QM referral. It does not redefine the internal technical authority of the target projects.
 
@@ -127,7 +127,7 @@ This ADR does **not supersede**:
 - ESS-0001-CONTRACTS Chapter 12;
 - ESS-0005 Quality Center;
 - ESS-0012 Documentation Governance;
-- Security/IAM/Compliance/Release/Frontend/Data/Financial domain authorities;
+- Security/IAM/Compliance/Release/Frontend/FinTech domain authorities;
 - `AGENTS.md` repository-wide PR/merge execution controls.
 
 ESS-0005 is clarified in place. No competing ESS or Quality runtime is created.

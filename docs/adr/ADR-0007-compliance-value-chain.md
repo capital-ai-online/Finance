@@ -16,9 +16,9 @@ Human-merged PR #755 established the immutable Authority ID `AUTH-ADR-COMPLIANCE
 
 The historical five-stage model spans concerns that now resolve through separate current owners and authorities:
 
-1. **Data ingestion / validation:** `CAPITAL-AI-DATA / PVC-09..PVC-11` and applicable current Data/Evidence authorities.
+1. **Data ingestion / validation:** `CAPITAL-AI-FINTECH / PVC-09..PVC-11` and applicable current FinTech/Evidence authorities.
 2. **Privacy / PII:** applicable current Privacy authorities; legal conclusions remain Human/Legal determinations rather than engineering inference.
-3. **Deterministic scoring / financial computation:** `CAPITAL-AI-FINTECH / PVC-12..PVC-17` and the current canonical Scoring authority.
+3. **Deterministic scoring / financial computation:** `CAPITAL-AI-FINTECH / PVC-12..PVC-17` and the current canonical Scoring authority. Together with the ingestion/validation stages above, FINTECH owns the current productive `PVC-09..PVC-17` range.
 4. **Audit / traceability:** current Traceability/Event authorities and mapped Primary Owners, including `PVC-18` where applicable.
 5. **Documents / exports:** `CAPITAL-AI-DOC / PVC-03` and applicable Documentary authorities.
 
