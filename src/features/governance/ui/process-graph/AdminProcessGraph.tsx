@@ -1,12 +1,22 @@
 import React from 'react';
-import { AlertTriangle, ArrowRight, CheckCircle2, History, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, History, ShieldCheck, Wrench } from 'lucide-react';
 import agentTrustRootMarkdown from '../../../../../AGENTS.md?raw';
 import pvcMarkdown from '../../../../../docs/projects/PROJECT_VALUE_CHAIN.md?raw';
 import projectMappingMarkdown from '../../../../../docs/projects/README.md?raw';
 import selfHealingWorkPackageMarkdown from '../../../../../docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md?raw';
 import selfHealingEvidenceWorkPackageMarkdown from '../../../../../docs/projects/operations/work-packages/OPS_08_B_SH_02_3E_EVIDENCE_INTEGRITY_2026-09-20.md?raw';
+import {
+  getRemediationActions,
+  getRemediationPolicies,
+} from '../../../../platform/Supervisor/selfHealingContract';
 import type { OperationalTraceStateEnvelope } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
-import { buildProcessGraphViewModel, type ProcessGraphNode, type ProcessGraphState } from './processGraphModel';
+import {
+  buildFixAlgorithmProjection,
+  buildProcessGraphViewModel,
+  type ProcessGraphFixActionProjection,
+  type ProcessGraphNode,
+  type ProcessGraphState,
+} from './processGraphModel';
 
 const stateLabel: Record<ProcessGraphState, string> = {
   current: 'Current',
@@ -88,6 +98,33 @@ function GraphNodeCard({ node }: { node: ProcessGraphNode }) {
   );
 }
 
+function FixAlgorithmCard({ fix }: { fix: ProcessGraphFixActionProjection }) {
+  return (
+    <article className="rounded-xl border border-white/10 bg-black/30 p-4" aria-label={`${fix.actionId}. ${fix.activation}. ${fix.tier}.`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">bounded remediation action</p>
+          <h4 className="mt-1 break-all text-sm font-bold text-white">{fix.actionId}</h4>
+        </div>
+        <Wrench size={16} className="shrink-0 text-aif-gold-DEFAULT" aria-hidden="true" />
+      </div>
+      <p className="mt-3 text-xs leading-relaxed text-white/55">{fix.description}</p>
+      <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-mono uppercase tracking-wide">
+        <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">{fix.tier}</span>
+        <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">{fix.activation}</span>
+        <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">{fix.idempotencyClass}</span>
+        <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">max {fix.maxAttempts} attempt(s)</span>
+      </div>
+      <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-white/45">
+        <p><span className="font-semibold text-white/65">Preferred for:</span> {fix.preferredForFindingClasses.join(', ') || 'fallback only'}</p>
+        <p><span className="font-semibold text-white/65">Capability:</span> {fix.requiredCapability || 'none'}</p>
+        <p><span className="font-semibold text-white/65">Verification:</span> {fix.verificationProbe}</p>
+        <p><span className="font-semibold text-white/65">Kill switch:</span> {fix.killSwitch}</p>
+      </div>
+    </article>
+  );
+}
+
 function HorizontalChain({ nodes, label }: { nodes: ProcessGraphNode[]; label: string }) {
   return (
     <section aria-label={label} className="space-y-3">
@@ -107,6 +144,10 @@ function HorizontalChain({ nodes, label }: { nodes: ProcessGraphNode[]; label: s
 }
 
 export function AdminProcessGraph({ operationalState = null }: AdminProcessGraphProps) {
+  const fixAlgorithm = React.useMemo(
+    () => buildFixAlgorithmProjection(getRemediationActions(), getRemediationPolicies()),
+    [],
+  );
   const graph = React.useMemo(
     () => buildProcessGraphViewModel(
       pvcMarkdown,
@@ -143,6 +184,17 @@ export function AdminProcessGraph({ operationalState = null }: AdminProcessGraph
       <HorizontalChain nodes={pvcNodes} label="Project Value Chain" />
       <HorizontalChain nodes={workStageNodes} label="Autonomous work graph" />
       <HorizontalChain nodes={selfHealingWorkPackageNodes} label="Self-Healing Work Packages · read-only orchestration projection" />
+      <section aria-label="Bounded fix algorithm" className="space-y-3">
+        <div>
+          <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-white/60">Bounded Fix Algorithm · read-only contract projection</h3>
+          <p className="mt-2 max-w-4xl text-xs leading-relaxed text-white/45">
+            Finding-to-action mappings come directly from the canonical Self-Healing contract. This surface can explain eligibility, capability, budget, kill switch and verification requirements; it cannot execute a repair, grant a capability, merge a Pull Request or turn missing evidence into PASS.
+          </p>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          {fixAlgorithm.map((fix) => <FixAlgorithmCard key={fix.actionId} fix={fix} />)}
+        </div>
+      </section>
       <section aria-label="Authority and evidence gates" className="space-y-3">
         <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-white/60">Authority / evidence distinction</h3>
         <div className="grid gap-3 md:grid-cols-2">{gateNodes.map((node) => <GraphNodeCard key={node.id} node={node} />)}</div>
