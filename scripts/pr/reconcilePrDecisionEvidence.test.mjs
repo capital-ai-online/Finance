@@ -169,6 +169,10 @@ test('reconciler normalizes v1.7 decision surface and is idempotent', () => {
   assert.match(first.body, /^\| Production Baseline \| 🟢 PASS \|$/m);
   assert.match(first.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
   assert.match(first.body, /^\| Blocker \| Keine \|$/m);
+  assert.match(first.body, /^### 📡 Live Dashboard$/m);
+  assert.match(first.body, /^\| Status \| READY_FOR_HUMAN_DECISION \|$/m);
+  assert.match(first.body, /^\| Synchronität \| Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS \|$/m);
+  assert.match(first.body, /^\| Nächster Schritt \| Merge-Modus anhand des Auto-Merge Safety Contract revalidieren \|$/m);
 
   const second = reconcileDecisionBody(first.body, gates);
   assert.equal(second.changed, false);
