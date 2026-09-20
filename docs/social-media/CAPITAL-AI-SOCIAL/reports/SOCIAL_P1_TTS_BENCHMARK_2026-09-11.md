@@ -4,7 +4,7 @@
 **Roadmap item:** `SOCIAL-P1`  
 **Date checked:** 2026-09-11  
 **Evidence class:** provider/model documentation + repository contract validation  
-**Acoustic runtime benchmark:** `NOT RUN` — no Social-authorized model host, GPU weights or paid-provider credential is provisioned by this work item.
+**Acoustic runtime benchmark:** `RUN / TECHNICAL EVIDENCE PRESENT` — owner-routed Modal L40S execution and ASR evidence are correlated in `SOCIAL_P1_RUNTIME_ACCEPTANCE_2026-09-20.md`; human listening remains `NOT RUN`.
 
 ## Decision
 
@@ -52,14 +52,14 @@ Every adapter/runtime benchmark MUST use the exact sample IDs and `text_sha256` 
 
 | Candidate | Local audio generated | Listening review | Measured latency | Output SHA-256 | Status |
 |---|---:|---:|---:|---:|---|
-| Qwen3-TTS | no | no | no | none | `NOT RUN — protected runtime/model provisioning required` |
-| Chatterbox V3 | no | no | no | none | `NOT RUN — protected runtime/model provisioning required` |
+| Qwen3-TTS | yes | no | yes | present in immutable runtime evidence | `TECHNICAL RUNTIME EVIDENCE PRESENT / HUMAN REVIEW OPEN` |
+| Chatterbox V3 | yes | no | yes | present; Finance remediation SHA explicitly bound | `TECHNICAL RUNTIME + ASR EVIDENCE PRESENT / HUMAN REVIEW OPEN` |
 | CosyVoice3 | no | no | no | none | `NOT RUN — protected runtime/model provisioning required` |
 | Kokoro | no | no | no | none | `NOT RUN` |
 | F5-TTS | no | no | no | none | `NOT RUN / license-blocked for production default` |
 | Eleven v3 | no | no | no | none | `NOT RUN — paid provider credential not provisioned` |
 
-No listening score, MOS, WER, latency or audio hash is invented by this report.
+No listening score or MOS is invented by this report. Real runtime/latency/audio-hash and ASR evidence are referenced from the merged artifacts; subjective listening remains `NOT RUN`.
 
 ## Official source set checked on 2026-09-11
 
@@ -92,4 +92,4 @@ SOCIAL-P2 may implement an adapter around the selected provider-neutral contract
 4. any reference/cloned voice has explicit license and consent evidence;
 5. the existing deterministic renderer consumes the audio manifest without bypassing `publishReady=false`.
 
-Until those gates are met, the current repository evidence is intentionally contract/benchmark evidence rather than synthesized-audio evidence.
+Gates 1–3 now have real owner-routed runtime evidence; no cloned/reference voice was used for the accepted designed-voice path. The remaining SOCIAL-P1 gate is Human/Owner listening evidence and the Social acceptance decision. Until that gate is recorded, SOCIAL-P2 remains blocked.
