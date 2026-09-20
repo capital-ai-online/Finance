@@ -21,8 +21,10 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-FE-OAUTH-SESSION-HANDOFF-FIX-20260920.json",
     "src/app/auth/SessionComposition.tsx",
-    "tests/unit/sessionCompositionTimeouts.test.ts",
-    "tests/unit/oauthSubscriptionHandoffRegression.test.ts"
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/oauthSubscriptionHandoffRegression.test.ts",
+    "tests/unit/sessionCompositionSecurityBoundary.test.ts",
+    "tests/unit/sessionCompositionTimeouts.test.ts"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
 }
