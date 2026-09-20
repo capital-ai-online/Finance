@@ -19,6 +19,12 @@ import {
 import {
   findMissingRequiredSections,
 } from './prBodySectionContract.mjs';
+import {
+  PR_DECISION_GATES,
+  deriveDecisionStatus,
+  extractDecisionGates,
+  extractDecisionStatus,
+} from './prDecisionState.mjs';
 
 const repository = process.env.GITHUB_REPOSITORY;
 const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
@@ -53,7 +59,7 @@ const templateVersion = detectPrTemplateVersion(body);
 if (!templateVersion) {
   fail(
     `PR #${prNumber} verwendet keinen unterstützten PR-Vorlagenmarker. ` +
-      `Aktuell kanonisch ist v${PR_TEMPLATE_VERSION}; v1.5.0 bleibt nur für bereits offene PRs kompatibel.`,
+      `Aktuell kanonisch ist v${PR_TEMPLATE_VERSION}; v1.6.0 und v1.5.0 bleiben nur für bereits offene PRs kompatibel.`,
   );
 }
 
@@ -63,6 +69,48 @@ if (missingSections.length > 0) {
 }
 
 if (templateVersion === PR_TEMPLATE_VERSION) {
+  const decisionStatus = extractDecisionStatus(body);
+  const decisionGates = extractDecisionGates(body);
+  const missingDecisionGates = PR_DECISION_GATES
+    .filter(({ key }) => !decisionGates[key])
+    .map(({ label }) => label);
+  if (!decisionStatus) {
+    fail(`PR #${prNumber} enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v${PR_TEMPLATE_VERSION}.`);
+  }
+  if (missingDecisionGates.length > 0) {
+    fail(`PR #${prNumber} fehlt kanonische Decision-Evidence: ${missingDecisionGates.join(', ')}.`);
+  }
+
+  const derivedDecisionStatus = deriveDecisionStatus(decisionGates);
+  if (decisionStatus !== derivedDecisionStatus) {
+    fail(
+      `PR #${prNumber} behauptet Decision Status ${decisionStatus}, aber die sichtbaren Gate-Zustände ergeben ${derivedDecisionStatus}. ` +
+        'Decision Status darf nicht manuell von der Evidence abweichen.',
+    );
+  }
+
+  const visibleLevelTwoHeadings = body.match(/^## .+$/gm) || [];
+  const expectedV17Headings = [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ];
+  if (
+    visibleLevelTwoHeadings.length !== expectedV17Headings.length ||
+    !expectedV17Headings.every((heading, index) => visibleLevelTwoHeadings[index] === heading)
+  ) {
+    fail(
+      `PR #${prNumber} muss in v${PR_TEMPLATE_VERSION} exakt drei sichtbare Hauptabschnitte besitzen: ` +
+        expectedV17Headings.join(', '),
+    );
+  }
+  if (!body.includes('<summary>Technische Details & Traceability</summary>')) {
+    fail(`PR #${prNumber} muss technische Traceability in v${PR_TEMPLATE_VERSION} standardmäßig einklappen.`);
+  }
+  if (!body.includes('<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>')) {
+    fail(`PR #${prNumber} muss die maschinenlesbare Baseline in v${PR_TEMPLATE_VERSION} standardmäßig einklappen.`);
+  }
+
   const priority = body.match(/^- \*\*Priorität:\*\* (.+)$/m)?.[1]?.trim();
   const versionImpact = body.match(/^- \*\*Versionsimpact:\*\* (.+)$/m)?.[1]?.trim();
   const versionManagerCheck = body.match(/^- \*\*Version-Manager-Check:\*\* (.+)$/m)?.[1]?.trim();
@@ -158,6 +206,9 @@ if (claims.length === 1) {
 
 if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
   fail('Der kanonische PR muss die Human-/CODEOWNER-Freigabe ausdrücklich beibehalten.');
+}
+if (templateVersion === PR_TEMPLATE_VERSION && !body.includes('| Owner-Aktion | Human/CODEOWNER Merge erforderlich |')) {
+  fail('Die Human Decision Card muss die verbleibende Owner-Aktion ausdrücklich als Human/CODEOWNER Merge ausweisen.');
 }
 
 console.log(
