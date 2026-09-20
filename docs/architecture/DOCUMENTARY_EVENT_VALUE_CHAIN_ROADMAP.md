@@ -34,7 +34,7 @@ Productive Documentary implementation remains `src/platform/Documentary/`. This 
 
 - `CAPITAL-AI-OPS / PVC-02,04,06,07,08,18`: controlled implementation lifecycle, Supervisor execution lifecycle, Platform Version Management, Release, Production, EventMesh and central Traceability runtime;
 - `CAPITAL-AI-GOV / PVC-05`: Platform Director decisions and repository-wide Governance Control Plane;
-- `CAPITAL-AI-DATA / PVC-09..11`: ingestion, evidence management and Data Quality semantics;
+- `CAPITAL-AI-FINTECH / PVC-09..11`: ingestion, evidence management and Data Quality semantics;
 - `CAPITAL-AI-FINTECH / PVC-12..17`: feature engineering, scoring, orchestration, eligibility and ranking;
 - Security/Compliance/Quality owners retain requirements, findings and independent verification responsibilities.
 
