@@ -91,7 +91,8 @@ export function evaluateZeroCostCapability({
   });
 }
 
-/** @param {Array<{ state?: string }>} decisions */\nexport function summarizeZeroCostDecisions(decisions) {
+/** @param {Array<{ state?: string }>} decisions */
+export function summarizeZeroCostDecisions(decisions) {
   const rows = Array.isArray(decisions) ? decisions : [];
   const byState = Object.fromEntries(
     ZERO_COST_DECISION_STATES.map((state) => [
