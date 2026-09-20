@@ -69,6 +69,14 @@ test('baseline refresh concurrency isolates Governance repair from CI completion
     concurrency.includes('github.event.workflow_run.pull_requests[0].number'),
     'PR runs must remain grouped by pull request inside their source-workflow domain',
   );
+  assert.ok(
+    concurrency.includes('github.event.workflow_run.run_attempt'),
+    'a later event from the same source run must not cancel another attempt lane',
+  );
+  assert.ok(
+    concurrency.includes('github.event.action'),
+    'in_progress fallback and completed notification must use distinct concurrency lanes',
+  );
   assert.match(concurrency, /cancel-in-progress: true/);
   assert.ok(
     workflow.includes('CI completion events intentionally use different groups'),
