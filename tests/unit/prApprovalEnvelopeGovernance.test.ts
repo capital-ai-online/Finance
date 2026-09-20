@@ -41,10 +41,10 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const agents = read('AGENTS.md');
 
     expect(agents).toContain('Before Pull Request readiness');
-    expect(agents).toContain('PR creation may be automated after final correlation PASS');
-    expect(agents).toContain('unresolved or blocked correlation stops creation');
+    expect(agents).toContain('PR creation and PR updates may be automated after final correlation PASS');
+    expect(agents).toContain('unresolved or blocked correlation stops readiness');
     expect(agents).toContain('`NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`');
-    expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
+    expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
   });
 
   it('keeps unmerged predecessor state non-authorizing and re-correlates against CURRENT_MAIN', () => {
@@ -126,7 +126,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const merge = control('CTRL-MERGE-HUMAN-001');
     const security = control('CTRL-SEC-BOUNDED-REMEDIATION-001');
 
-    expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
+    expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
     expect(agents).toContain('Agents and automation MUST NOT self-merge, enable auto-merge');
     expect(merge?.requirement).toContain('Every main merge is a distinct Human Owner decision');
     expect(merge?.requirement).toContain('Agent self-merge and auto-merge remain prohibited');
