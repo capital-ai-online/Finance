@@ -12,6 +12,7 @@ describe('GitHub cost watch workflow contract', () => {
     expect(yaml).toContain("cron: '3,18,33,48 * * * *'");
     expect(yaml).toContain('id-token: write');
     expect(yaml).toContain("CAPITAL_AI_GITHUB_COST_WATCH_START_AT: '2026-10-01T00:00:00.000Z'");
+    expect(yaml).toContain('CAPITAL_AI_GITHUB_ORG_LOGIN');
     expect(yaml).toContain('CAPITAL_AI_GITHUB_USER_ACCESS_TOKEN');
     expect(yaml).not.toContain('SMTP_PASSWORD');
     expect(yaml).not.toContain('SMTP_HOST');
