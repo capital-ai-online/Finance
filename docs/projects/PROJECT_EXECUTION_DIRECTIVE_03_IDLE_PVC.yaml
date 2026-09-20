@@ -1,0 +1,63 @@
+schema_version: "1.0.0"
+projection_id: "CAPITAL-AI-PROJECT-EXECUTION-DIRECTIVE-03"
+part: "3/3"
+title: "Idle three-PVC review and work-package derivation"
+status: "NON_AUTHORIZING_PROJECTION"
+authority_ref:
+  file: "/AGENTS.md@CURRENT_MAIN"
+  section: "4"
+idle_entry:
+  condition: "no active canonical task remains after fresh CURRENT_MAIN correlation"
+  action: "THREE_PVC_REVIEW"
+pvc_review:
+  count: 3
+  source: "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN"
+  selection_basis:
+    - "current project scope relevance"
+    - "dependency relevance"
+    - "risk relevance"
+    - "evidence gap relevance"
+  ownership_transfer: false
+  required_fields:
+    - "pvc_id"
+    - "primary_owner"
+    - "current_state"
+    - "evidence_state"
+    - "findings"
+    - "risks"
+    - "dependencies"
+    - "owner_correct_handover_if_required"
+deduplication:
+  required: true
+  compare_against:
+    - "CURRENT_MAIN"
+    - "canonical project Roadmap"
+    - "active work packages"
+    - "open Pull Requests"
+    - ".ai/work-claims"
+    - "already resolved findings"
+work_package_derivation:
+  required_when: "fresh evidence-backed actionable follow-up exists"
+  allowed_categories:
+    - "verification"
+    - "maintenance"
+    - "remediation"
+    - "improvement"
+  required_fields:
+    - "canonical_identity"
+    - "resolved_owner"
+    - "project_and_pvc_relationship"
+    - "scope"
+    - "dependencies"
+    - "exit_evidence"
+    - "acceptance_criteria"
+  continue_after_creation: true
+  no_action_behavior:
+    state: "NO_ACTIONABLE_FINDING"
+    create_artificial_mutation: false
+guardrails:
+  - "Do not fabricate defects or evidence."
+  - "Do not duplicate active work."
+  - "Foreign-owner findings become handovers, not local implementation."
+  - "Security, Compliance, Human and CODEOWNER gates remain fail-closed."
+  - "The YAML projection never overrides /AGENTS.md@CURRENT_MAIN."
