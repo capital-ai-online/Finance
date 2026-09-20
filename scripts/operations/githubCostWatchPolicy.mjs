@@ -60,8 +60,14 @@ function normalizeDetailRows(source, usageReport) {
 }
 
 function isExpectedEnterpriseLicense(row) {
-  return row.source === 'enterprise'
-    && String(row.sku || '').toLowerCase() === 'ghec_licenses';
+  if (row.source === 'personal') return false;
+  const product = String(row.product || '').trim().toLowerCase();
+  const sku = String(row.sku || '').trim().toLowerCase();
+  return sku === 'ghec_licenses'
+    || sku.includes('ghec')
+    || sku.includes('github enterprise')
+    || product === 'ghec'
+    || product.includes('github enterprise');
 }
 
 function sum(rows, key) {
@@ -115,7 +121,9 @@ export function buildGitHubCostWatchReport({
     ...normalizeDetailRows('organization', organizationUsageDetail),
     ...normalizeDetailRows('personal', personalUsageDetail),
   ]);
-  const positiveDetailRows = Object.freeze(detailRows.filter((row) => row.netAmount > 0));
+  const positiveDetailRows = Object.freeze(
+    detailRows.filter((row) => !isExpectedEnterpriseLicense(row) && row.netAmount > 0),
+  );
 
   const cycle = Object.freeze({
     year: timestamp.getUTCFullYear(),
@@ -170,7 +178,10 @@ export function buildGitHubCostWatchReport({
     alertDetailRows: positiveDetailRows,
     potentialCostSurfaces: GITHUB_COST_SURFACE_CATALOG,
     alertFingerprint: fingerprint,
-    emailRequired: mode === 'test' || coverageBlocked || positiveAdditionalRows.length > 0,
+    emailRequired: mode === 'test'
+      || coverageBlocked
+      || positiveAdditionalRows.length > 0
+      || positiveDetailRows.length > 0,
     secretsOrTokensLogged: false,
   });
 }
