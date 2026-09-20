@@ -16,6 +16,8 @@ export * from './Reconciliation/ReconciliationContracts';
 export * from './Portfolio/PortfolioAllocationContracts';
 export * from './Portfolio/DeterministicPortfolioAllocator';
 export * from './Portfolio/PortfolioRiskEvidenceProjection';
+export * from './Universe/FinTechUniverseProjection';
+export * from './Universe/EquityResearchUniverse';
 export * from './Modules/Crypto/CryptoCoreModule';
 export * from './Modules/Crypto/CryptoCategoryProfileResolver';
 export * from './Modules/Crypto/CryptoCategoryFeatureContracts';

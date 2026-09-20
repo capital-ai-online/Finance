@@ -5,7 +5,7 @@
 **Canonical project path:** `docs/projects/fintech/`  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
 **Primary Project Value Chain ownership:** `PVC-09` through `PVC-17`  
-**Current-main synchronization baseline:** `main@2c6b29102333baf86b3acf8f1c1012b0cc9ac9e6`  
+**Current-main synchronization baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`  
 **Trust root:** `/AGENTS.md`  
 **Project model:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`
 
@@ -91,10 +91,10 @@ FIN-17 is `DONE_MAIN / TERMINAL` for this bounded authority split and is not reo
 ## Current execution priorities
 
 1. Independent Security verification remains open for FIN-SEC-02 and FIN-SEC-03; their FINTECH implementation/test artifacts are `EVIDENCE_READY`.
-2. `FIN-12` remains the selected FINTECH P1 item, but all former DATA return requirements are now internal FINTECH `PVC-09..11 -> PVC-12` dependencies rather than a foreign-project handoff.
-3. PR #1037 contains the bounded FIN-12 validated-data contract work and must be re-correlated against the post-supersession main before merge; this project-surface migration does not duplicate its code changes.
-4. PR #1046 contains startup/provider/promo-retirement work and must likewise be re-correlated against the post-supersession main before merge.
-5. Keep `FIN-19` provider capability projection synchronized to the single FINTECH-owned provider/data-quality plane; `FIN-20` follows validated FIN-12 lineage.
+2. `FIN-12` is `DONE_MAIN` for the bounded validated-data contract slice through Human-merged PR #1037 (`692286551977e54d816812b70d5014d955c93183`); missing/stale/conflicting financial evidence remains fail-closed.
+3. The startup/provider/promo-retirement slice is `DONE_MAIN` through Human-merged PR #1046 (`f4d94581eaa1e59b19c08293c4ddbda2f7d33d9a`).
+4. `FIN-21` is the current Owner-directed multi-asset orchestration/universe projection slice: project existing canonical asset/model/module state, add source-backed Equity research lenses without promoting models, and keep missing workflow modules explicit.
+5. Re-evaluate `FIN-19` provider capability coverage against the expanded research requirements, then revalidate `FIN-20` exact data → feature → score → rank → trace lineage on current main.
 
 ## Canonical project documents
 
