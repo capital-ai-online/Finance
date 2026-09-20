@@ -172,3 +172,17 @@ test('provider merge method follows repository capabilities without bypass selec
   assert.equal(resolveAutoMergeMethod({ allow_rebase_merge: true }), 'REBASE');
   assert.equal(resolveAutoMergeMethod({}), null);
 });
+
+
+test('legacy PR template is never auto-merge eligible', () => {
+  const result = classifyAutoMergeEligibility({
+    pr: pr(),
+    repository,
+    body: canonicalBody().replace(/1\.7\.0/g, '1.6.0'),
+    files: ['client/src/components/MarketingHero.tsx'],
+    gates: passGates,
+    compareStatus: 'ahead',
+  });
+  assert.equal(result.eligible, false);
+  assert.ok(result.reasons.includes('non-current-pr-template'));
+});
