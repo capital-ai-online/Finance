@@ -1,0 +1,114 @@
+import React from 'react';
+import { ArrowRight, Filter, LockKeyhole, Newspaper, ShieldCheck } from 'lucide-react';
+import {
+  canUseFeature,
+  type SubscriptionTier,
+} from '../../../config/subscriptionEntitlements';
+
+interface LandingRealtimeAiNewsfeedProps {
+  onLoginNavigate?: () => void;
+}
+
+const SUBSCRIPTION_TIERS: readonly SubscriptionTier[] = ['Free', 'Starter', 'Pro', 'Enterprise'];
+
+const NEWSFEED_ENABLED_TIERS = SUBSCRIPTION_TIERS.filter((tier) =>
+  canUseFeature('registered', tier, 'realtime_ai_newsfeed'),
+);
+
+const CAPABILITY_FACTS = [
+  {
+    title: 'Verifizierte Artikel',
+    description: 'Externe Artikel-Evidence statt erfundener Schlagzeilen.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Multi-Asset-Filter',
+    description: 'Asset- und Quellenfilter bleiben Teil des kanonischen Newsfeed.',
+    icon: Filter,
+  },
+  {
+    title: 'Evidence-only',
+    description: 'News-Sentiment bleibt Präsentationsmetadatum ohne direkten Score-Impact.',
+    icon: Newspaper,
+  },
+] as const;
+
+/**
+ * Public landing projection of the canonical realtime AI Newsfeed capability.
+ *
+ * The productive feed remains authenticated and server-entitlement protected. Because the
+ * public landing route is intentionally anonymous, this component does not invoke the protected
+ * news REST surface and does not create a second public news transport or synthetic preview dataset.
+ */
+export function LandingRealtimeAiNewsfeed({
+  onLoginNavigate,
+}: LandingRealtimeAiNewsfeedProps) {
+  const enabledTierLabel = NEWSFEED_ENABLED_TIERS.join(' / ');
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="rounded-2xl border border-brand-accent/20 bg-background/45 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brand-accent/30 bg-brand-accent/10 text-brand-accent">
+              <Newspaper size={20} aria-hidden="true" />
+            </span>
+            <div>
+              <p className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-brand-accent">
+                Canonical Realtime AI Newsfeed
+              </p>
+              <h3 className="mt-1 text-base font-black text-text-primary sm:text-lg">
+                Live-News nach verifiziertem Zugang
+              </h3>
+            </div>
+          </div>
+
+          <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-primary/25 bg-brand-primary/10 px-3 py-2 font-mono text-[10px] font-black uppercase tracking-wider text-brand-primary">
+            <LockKeyhole size={13} aria-hidden="true" />
+            {enabledTierLabel}
+          </span>
+        </div>
+
+        <p className="mt-5 max-w-3xl text-sm leading-relaxed text-text-secondary">
+          Der produktive CAPITAL-AI Newsfeed bleibt an eine verifizierte Sitzung und die
+          bestehende serverseitige Berechtigung gebunden. Die öffentliche Landingpage öffnet
+          deshalb keinen zweiten News-Datenpfad und zeigt keine Demo-Schlagzeilen.
+        </p>
+
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a
+            href="/login"
+            onClick={onLoginNavigate}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-3 text-xs font-black uppercase tracking-wider text-background shadow-[0_0_22px_color-mix(in_srgb,var(--color-brand-primary)_24%,transparent)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+          >
+            Anmelden & Newsfeed öffnen
+            <ArrowRight size={15} aria-hidden="true" />
+          </a>
+          <p className="text-[11px] leading-relaxed text-text-secondary">
+            Nach erfolgreicher Anmeldung führt CAPITAL-AI in den bestehenden Dashboard-Newsfeed;
+            die Zugriffsentscheidung bleibt serverseitig.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+        {CAPABILITY_FACTS.map(({ title, description, icon: Icon }) => (
+          <article
+            key={title}
+            className="rounded-xl border border-border bg-background/45 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-primary/20 bg-brand-primary/[0.07] text-brand-primary">
+                <Icon size={16} aria-hidden="true" />
+              </span>
+              <div>
+                <h4 className="text-xs font-black text-text-primary">{title}</h4>
+                <p className="mt-1 text-[10px] leading-relaxed text-text-secondary">{description}</p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
