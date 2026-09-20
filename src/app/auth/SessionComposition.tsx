@@ -54,6 +54,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   const [authError, setAuthError] = useState<AuthErrorState | null>(null);
   const [pendingStepUpSession, setPendingStepUpSession] = useState<any | null>(null);
   const [pendingOnboardingSession, setPendingOnboardingSession] = useState<any | null>(null);
+  const [sessionEstablishmentCandidate, setSessionEstablishmentCandidate] = useState<{
+    key: string;
+    session: any;
+  } | null>(null);
   const sessionBootstrapKeyRef = useRef<string | null>(null);
 
   const updateUserSession = (session: UserSession | null) => {
@@ -67,6 +71,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
   const resetAuthProjection = () => {
     sessionBootstrapKeyRef.current = null;
+    setSessionEstablishmentCandidate(null);
     setPendingStepUpSession(null);
     setPendingOnboardingSession(null);
     updateUserSession(null);
@@ -169,17 +174,39 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     sessionBootstrapKeyRef.current = key;
     setAuthBootstrapPending(true);
 
-    queueMicrotask(() => {
-      establishSession(session).catch((err) => {
+    // Keep the onAuthStateChange callback synchronous. Supabase documents a client deadlock when
+    // additional asynchronous Supabase work is started from the auth callback context. React state
+    // is used as the handoff boundary; the effect below runs only after the callback has returned.
+    setSessionEstablishmentCandidate({ key, session });
+  };
+
+  useEffect(() => {
+    const candidate = sessionEstablishmentCandidate;
+    if (!candidate) return;
+
+    let disposed = false;
+    void establishSession(candidate.session)
+      .catch((err) => {
         console.error('[Auth] Session establishment failed:', err);
-        if (sessionBootstrapKeyRef.current === key) sessionBootstrapKeyRef.current = null;
+        if (sessionBootstrapKeyRef.current === candidate.key) {
+          sessionBootstrapKeyRef.current = null;
+        }
         updateUserSession(null);
         setPendingStepUpSession(null);
         setPendingOnboardingSession(null);
         setAuthBootstrapPending(false);
+      })
+      .finally(() => {
+        if (disposed) return;
+        setSessionEstablishmentCandidate((current) =>
+          current?.key === candidate.key ? null : current,
+        );
       });
-    });
-  };
+
+    return () => {
+      disposed = true;
+    };
+  }, [sessionEstablishmentCandidate]);
 
   const performLogout = async (scope: 'local' | 'global') => {
     sessionBootstrapKeyRef.current = null;

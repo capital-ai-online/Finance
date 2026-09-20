@@ -18,7 +18,22 @@ describe('SessionComposition zero-blocking auth shell', () => {
     expect(source).not.toContain('Lade Sicherheits-Modul...');
     expect(source).not.toContain('if (loading &&');
     expect(source).toContain('supabase.auth.onAuthStateChange((event, session) =>');
-    expect(source).toContain('queueMicrotask(() => {');
+    expect(source).not.toContain('queueMicrotask(() => {');
+    expect(source).toContain('setSessionEstablishmentCandidate({ key, session });');
+    expect(source).toContain('const candidate = sessionEstablishmentCandidate;');
+  });
+
+  it('keeps async Supabase session work outside the onAuthStateChange callback context', () => {
+    const listenerStart = source.indexOf('supabase.auth.onAuthStateChange((event, session) =>');
+    const listenerEnd = source.indexOf('    });', listenerStart);
+    const listener = source.slice(listenerStart, listenerEnd);
+
+    expect(listenerStart).toBeGreaterThan(-1);
+    expect(listener).toContain('scheduleSessionEstablishment(session);');
+    expect(listener).not.toContain('establishSession(');
+    expect(listener).not.toContain('needsOnboarding(');
+    expect(listener).not.toContain('queueMicrotask');
+    expect(source).toContain('void establishSession(candidate.session)');
   });
 
   it('resolves persisted Supabase state directly and keeps subscription enrichment off the render path', () => {

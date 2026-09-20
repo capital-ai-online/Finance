@@ -9,6 +9,22 @@ function readRepoFile(relativePath: string): string {
 }
 
 describe('OAuth subscription handoff regression boundary', () => {
+  it('defers post-OAuth Supabase work until after the auth callback has returned', () => {
+    const source = readRepoFile('src/app/auth/SessionComposition.tsx');
+
+    const listenerStart = source.indexOf('supabase.auth.onAuthStateChange((event, session) =>');
+    const listenerEnd = source.indexOf('    });', listenerStart);
+    const listener = source.slice(listenerStart, listenerEnd);
+
+    expect(listenerStart).toBeGreaterThan(-1);
+    expect(listener).toContain('scheduleSessionEstablishment(session);');
+    expect(listener).not.toContain('needsOnboarding(');
+    expect(listener).not.toContain('establishSession(');
+    expect(source).toContain('setSessionEstablishmentCandidate({ key, session });');
+    expect(source).toContain('void establishSession(candidate.session)');
+    expect(source).not.toContain('queueMicrotask(() =>');
+  });
+
   it('repairs one rotated Supabase session before emitting a global unauthorized event', () => {
     const source = readRepoFile('src/lib/authFetch.ts');
 
