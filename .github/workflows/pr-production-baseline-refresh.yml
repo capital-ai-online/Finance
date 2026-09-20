@@ -21,7 +21,9 @@ run-name: >-
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: ['PR Governance', 'CI']
-    types: [completed]
+    # completed remains primary. in_progress materializes a trusted fallback only for
+    # re-run attempts, because requested is not emitted for re-runs.
+    types: [in_progress, completed]
 
 permissions: {}
 
@@ -45,11 +47,57 @@ jobs:
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.path == '.github/workflows/pr-governance.yml' &&
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.pull_requests[0].number != null
+      github.event.workflow_run.pull_requests[0].number != null &&
+      (github.event.action == 'completed' ||
+       (github.event.action == 'in_progress' && github.event.workflow_run.run_attempt > 1))
     runs-on: ubuntu-latest
     timeout-minutes: 8
 
     steps:
+      - name: Governance-Source-Run bis zum Abschluss exakt binden
+        id: source
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const payloadRun = context.payload.workflow_run;
+            const expectedId = Number(payloadRun.id);
+            const expectedHead = normalizeSha(payloadRun.head_sha);
+            const expectedPath = String(payloadRun.path || '');
+            let sourceRun = payloadRun;
+
+            if (context.payload.action === 'in_progress') {
+              const deadline = Date.now() + 240_000;
+              while (sourceRun.status !== 'completed' && Date.now() < deadline) {
+                await new Promise((resolve) => setTimeout(resolve, 5_000));
+                const { data } = await github.rest.actions.getWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: expectedId,
+                });
+                if (
+                  Number(data.id) !== expectedId ||
+                  normalizeSha(data.head_sha) !== expectedHead ||
+                  String(data.path || '') !== expectedPath
+                ) {
+                  throw new Error('Governance-Source-Run-Identität änderte sich während des Re-Run-Fallbacks.');
+                }
+                sourceRun = data;
+              }
+            }
+
+            if (sourceRun.status !== 'completed') {
+              throw new Error(
+                `Governance-Source-Run ${expectedId} wurde innerhalb des gebundenen Fallback-Fensters nicht abgeschlossen.`,
+              );
+            }
+
+            core.setOutput('conclusion', String(sourceRun.conclusion || ''));
+            core.setOutput('run_attempt', String(sourceRun.run_attempt || payloadRun.run_attempt || 1));
+            core.notice(
+              `Governance-Source-Run ${expectedId} gebunden: conclusion=${sourceRun.conclusion}, attempt=${sourceRun.run_attempt || payloadRun.run_attempt || 1}, trigger=${context.payload.action}.`,
+            );
+
       - name: Vertrauenswürdigen Policy-Stand aus main auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
@@ -128,7 +176,7 @@ jobs:
 
       - name: PR-Scope für deterministischen Template-Fix klassifizieren
         id: body_scope
-        if: steps.pr.outputs.eligible == 'true' && github.event.workflow_run.conclusion == 'failure'
+        if: steps.pr.outputs.eligible == 'true' && steps.source.outputs.conclusion == 'failure'
         working-directory: candidate
         env:
           PR_BASE_SHA: ${{ steps.policy_main.outputs.sha }}
@@ -137,7 +185,7 @@ jobs:
 
       - name: Fehlende kanonische PR-Abschnitte deterministisch reparieren
         id: body_repair
-        if: steps.pr.outputs.eligible == 'true' && github.event.workflow_run.conclusion == 'failure'
+        if: steps.pr.outputs.eligible == 'true' && steps.source.outputs.conclusion == 'failure'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -170,6 +218,7 @@ jobs:
           PR_BODY_REPAIRED: ${{ steps.body_repair.outputs.changed }}
           PR_BODY_REPAIR_ELIGIBLE: ${{ steps.body_repair.outputs.eligible }}
           PR_BODY_REPAIR_REASON: ${{ steps.body_repair.outputs.reason }}
+          SOURCE_CONCLUSION: ${{ steps.source.outputs.conclusion }}
         with:
           script: |
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
@@ -181,6 +230,7 @@ jobs:
             const bodyRepaired = String(process.env.PR_BODY_REPAIRED || '').toLowerCase() === 'true';
             const bodyRepairEligible = String(process.env.PR_BODY_REPAIR_ELIGIBLE || '').toLowerCase() === 'true';
             const bodyRepairReason = String(process.env.PR_BODY_REPAIR_REASON || '').trim();
+            const sourceConclusion = String(process.env.SOURCE_CONCLUSION || '').trim();
             const sourceRun = context.payload.workflow_run;
 
             if (!Number.isInteger(prNumber) || prNumber <= 0) fail('PR-Nummer für Governance-Re-Run ist ungültig.');
@@ -193,7 +243,7 @@ jobs:
 
             const bodyAlreadyCanonical = bodyRepairReason === 'already-canonical';
             const bodyRepairBlocked =
-              sourceRun.conclusion === 'failure' &&
+              sourceConclusion === 'failure' &&
               !bodyRepaired &&
               !bodyAlreadyCanonical;
             if (bodyRepairBlocked) {
