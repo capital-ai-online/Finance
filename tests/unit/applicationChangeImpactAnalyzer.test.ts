@@ -69,9 +69,12 @@ function fixture(): string {
 }
 
 describe('ApplicationChangeImpactAnalyzer', () => {
-  it('classifies application route and dependency changes', () => {
+  it('classifies route, dependency, runtime, contract, config and workflow changes', () => {
     expect(classifyApplicationChange('server/routes/registerApplicationRoutes.ts')).toBe('ROUTE');
     expect(classifyApplicationChange('package.json')).toBe('DEPENDENCY');
+    expect(classifyApplicationChange('src/platform/Documentary/service.ts')).toBe('RUNTIME');
+    expect(classifyApplicationChange('docs/contracts/API.schema.json')).toBe('CONTRACT');
+    expect(classifyApplicationChange('config/runtime.yml')).toBe('CONFIG');
     expect(classifyApplicationChange('.github/workflows/ci.yml')).toBe('WORKFLOW');
   });
 
