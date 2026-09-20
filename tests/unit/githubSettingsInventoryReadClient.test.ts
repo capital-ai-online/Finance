@@ -31,7 +31,7 @@ describe('GitHub settings inventory read client', () => {
       const parsed = new URL(String(url));
       const method = String(init?.method || 'GET');
       const authorization = String(new Headers(init?.headers).get('Authorization') || '');
-      const path = \`${parsed.pathname}${parsed.search}\`;
+      const path = `${parsed.pathname}${parsed.search}`;
       calls.push({ method, path, authorization });
 
       if (method === 'GET' && parsed.pathname === '/app/installations') {
@@ -47,7 +47,7 @@ describe('GitHub settings inventory read client', () => {
         });
       }
 
-      if (method === 'GET' && parsed.pathname === \`/orgs/${ORGANIZATION}/actions/permissions\`) {
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions`) {
         return jsonResponse({
           enabled_repositories: 'all',
           allowed_actions: 'selected',
@@ -55,7 +55,7 @@ describe('GitHub settings inventory read client', () => {
         });
       }
 
-      if (method === 'GET' && parsed.pathname === \`/orgs/${ORGANIZATION}/actions/permissions/workflow\`) {
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions/workflow`) {
         return jsonResponse({
           default_workflow_permissions: 'read',
           can_approve_pull_request_reviews: false,
@@ -64,14 +64,14 @@ describe('GitHub settings inventory read client', () => {
 
       if (
         method === 'GET'
-        && parsed.pathname === \`/orgs/${ORGANIZATION}/actions/permissions/artifact-and-log-retention\`
+        && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions/artifact-and-log-retention`
       ) {
         return jsonResponse({ days: 90, maximum_allowed_days: 365 });
       }
 
       if (
         method === 'GET'
-        && parsed.pathname === \`/orgs/${ORGANIZATION}/actions/permissions/fork-pr-workflows-private-repos\`
+        && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions/fork-pr-workflows-private-repos`
       ) {
         return jsonResponse({
           run_workflows_from_fork_pull_requests: false,
@@ -83,12 +83,12 @@ describe('GitHub settings inventory read client', () => {
 
       if (
         method === 'GET'
-        && parsed.pathname === \`/orgs/${ORGANIZATION}/actions/permissions/self-hosted-runners\`
+        && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions/self-hosted-runners`
       ) {
         return jsonResponse({ enabled_repositories: 'none' });
       }
 
-      if (method === 'GET' && parsed.pathname === \`/repos/${REPOSITORY}\`) {
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}`) {
         return jsonResponse({
           visibility: 'private',
           default_branch: 'main',
@@ -97,11 +97,11 @@ describe('GitHub settings inventory read client', () => {
         });
       }
 
-      if (method === 'GET' && parsed.pathname === \`/repos/${REPOSITORY}/actions/permissions\`) {
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/permissions`) {
         return jsonResponse({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true });
       }
 
-      if (method === 'GET' && parsed.pathname === \`/repos/${REPOSITORY}/actions/permissions/workflow\`) {
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/permissions/workflow`) {
         return jsonResponse({
           default_workflow_permissions: 'read',
           can_approve_pull_request_reviews: false,
@@ -110,14 +110,14 @@ describe('GitHub settings inventory read client', () => {
 
       if (
         method === 'GET'
-        && parsed.pathname === \`/repos/${REPOSITORY}/actions/permissions/artifact-and-log-retention\`
+        && parsed.pathname === `/repos/${REPOSITORY}/actions/permissions/artifact-and-log-retention`
       ) {
         return jsonResponse({ days: 90, maximum_allowed_days: 365 });
       }
 
       if (
         method === 'GET'
-        && parsed.pathname === \`/repos/${REPOSITORY}/actions/permissions/fork-pr-workflows-private-repos\`
+        && parsed.pathname === `/repos/${REPOSITORY}/actions/permissions/fork-pr-workflows-private-repos`
       ) {
         return jsonResponse({
           run_workflows_from_fork_pull_requests: false,
@@ -127,15 +127,15 @@ describe('GitHub settings inventory read client', () => {
         });
       }
 
-      if (method === 'GET' && parsed.pathname === \`/repos/${REPOSITORY}/properties/values\`) {
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/properties/values`) {
         return jsonResponse([{ property_name: 'environment', value: 'production' }]);
       }
 
-      if (method === 'GET' && parsed.pathname === \`/repos/${REPOSITORY}/rulesets\`) {
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/rulesets`) {
         return jsonResponse([{ id: 1, target: 'branch', enforcement: 'active' }]);
       }
 
-      throw new Error(\`unexpected request: ${method} ${path}\`);
+      throw new Error(`unexpected request: ${method} ${path}`);
     };
 
     const client = createGitHubSettingsInventoryReadClient({
