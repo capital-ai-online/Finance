@@ -48,6 +48,17 @@ function assertOptionalRepository(value) {
   }
 }
 
+function assertVariableName(value) {
+  if (
+    typeof value !== 'string'
+    || value.length < 1
+    || value.length > 100
+    || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)
+  ) {
+    fail('variable name must use GitHub Actions variable syntax');
+  }
+}
+
 function buildQuery(path, entries) {
   const params = new URLSearchParams();
   for (const [key, value] of entries) {
@@ -264,6 +275,8 @@ export function createGitHubLicenseUsageReadClient({
           'organization.advanced_security.active_committers.secret_protection',
           'organization.billing.usage.summary',
           'organization.billing.usage.report',
+          'repository.actions.variable.get',
+          'organization.actions.variable.get',
         ]),
         enterpriseConsumedLicensesAuth: normalizedEnterpriseReadPat
           ? 'github_app_with_pat_fallback'
@@ -334,6 +347,31 @@ export function createGitHubLicenseUsageReadClient({
             ['repository', repository],
           ],
         ),
+      );
+    },
+
+    async getRepositoryVariable({ repository, name } = {}) {
+      assertOptionalRepository(repository);
+      if (!repository) fail('repository is required');
+      const [owner] = repository.split('/');
+      if (owner.toLowerCase() !== organization.toLowerCase()) {
+        fail('repository owner must match the configured organization');
+      }
+      assertVariableName(name);
+
+      return authenticatedGet(
+        'Organization',
+        organization,
+        `/repos/${repository}/actions/variables/${encodeURIComponent(name)}`,
+      );
+    },
+
+    async getOrganizationVariable({ name } = {}) {
+      assertVariableName(name);
+      return authenticatedGet(
+        'Organization',
+        organization,
+        `/orgs/${organization}/actions/variables/${encodeURIComponent(name)}`,
       );
     },
 
