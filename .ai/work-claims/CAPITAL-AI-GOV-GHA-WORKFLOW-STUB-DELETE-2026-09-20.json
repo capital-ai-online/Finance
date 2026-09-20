@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-GHA-WORKFLOW-STUB-DELETE-2026-09-20",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Add a reviewed deletion path to verifyChangedWorkflowSecurity.mjs and delete three dispatch-only disabled stub workflows.",
+  "workItemDE": "Reviewed-Deletion-Pfad in verifyChangedWorkflowSecurity.mjs ergaenzen und drei dispatch-only deaktivierte Stub-Workflows loeschen.",
+  "startedAt": "2026-09-20T04:18:00Z",
+  "baseBranch": "main",
+  "baseSha": "0478b62ba365ccae895f029a8f8ddc58bee4230e",
+  "branch": "agent/governance-workflow-deletion-review-20260920",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV",
+  "productionBaseline": {
+    "checkedAt": "2026-09-20T04:15:03.329Z",
+    "version": "0.6.0",
+    "commitSha": "df7b970e40ca5b3bd1046ae595af060e0f4b7317",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-GHA-WORKFLOW-STUB-DELETE-2026-09-20.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-GHA-WORKFLOW-CONVENTION-2026-09-20.json",
+    "scripts/security/verifyChangedWorkflowSecurity.mjs",
+    "docs/security/WORKFLOW_DELETION_REVIEW.json",
+    "docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md",
+    "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md",
+    ".github/workflows/document-hygiene-evidence-migration.yml",
+    ".github/workflows/document-hygiene-evidence-once.yml",
+    ".github/workflows/lockfile-remediation.yml"
+  ],
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge. Orphan UI disable and Phase-2/3 renames remain out of scope."
+}
