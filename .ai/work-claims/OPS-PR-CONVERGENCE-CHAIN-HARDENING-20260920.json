@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR-CONVERGENCE-CHAIN-HARDENING-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend the merged PR Convergence foundation with shared per-PR writer leasing, atomic post-merge continuation generation readback, strict update-branch 422 convergence proof and credential-free Documentary main correlation.",
+  "workItemDE": "Die gemergte PR-Convergence-Basis um gemeinsamen PR-Writer-Lease, atomaren Post-Merge-Continuation-Generation-Readback, beweispflichtige 422-Konvergenz und credential-freie Documentary-Main-Korrelation erweitern.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "parentContract": "SH-02.3",
+  "parentContractVersion": "self-healing-contract/1.0.0",
+  "startedAt": "2026-09-20T13:42:00Z",
+  "baseBranch": "main",
+  "baseSha": "3a9a55262dbb8ee87dac087a863b1e3369e71d22",
+  "branch": "agent/operations-pr-convergence-chain-hardening-main-sync-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR-CONVERGENCE-CHAIN-HARDENING-20260920.json",
+    ".github/workflows/sync-agent-pr-branches.yml",
+    ".github/workflows/current-state-baseline-autofix.yml",
+    ".github/workflows/controlled-pr-ci-autofix.yml",
+    ".github/workflows/pr-production-baseline-refresh.yml",
+    ".github/workflows/pr-production-baseline-post-merge-refresh.yml",
+    ".github/workflows/documentary-change-impact.yml",
+    "tests/unit/agentPrBranchSyncCostControl.test.ts",
+    "tests/unit/ciCostControl.test.ts",
+    "scripts/pr/controlledPrCiAutofixWorkflow.test.mjs",
+    "scripts/pr/productionBaselineRefreshWorkflow.test.mjs",
+    "tests/unit/productionBaselinePostMergeRefresh.test.ts",
+    "scripts/pr/documentaryConvergenceWorkflow.test.mjs",
+    "scripts/pr/prEventSnapshotConcurrency.test.mjs",
+    "docs/projects/operations/work-packages/OPS_PR_CONVERGENCE_CONTROLLER_2026-09-20.md",
+    ".github/workflows/self-healing-package-continuation.yml",
+    "tests/unit/selfHealingPackageContinuationWorkflow.test.ts"
+  ],
+  "correlation": {
+    "currentMainAtStart": "3a9a55262dbb8ee87dac087a863b1e3369e71d22",
+    "openPullRequestsChecked": [1137],
+    "changedFileOverlap": false,
+    "authorityOverlap": "PR #1136 is merged into CURRENT_MAIN; its self-healing continuation workflow is now hardened in this slice. PR #1137 remains overlap-free and untouched."
+  },
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+}

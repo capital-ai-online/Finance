@@ -101,4 +101,12 @@ describe('production baseline post-merge refresh', () => {
     expect(yaml).toContain('contents: read');
     expect(yaml).toContain('pull-requests: write');
   });
+
+  it('serializes each post-merge PR body writer through the canonical lease', () => {
+    const yaml = workflow();
+    const refresh = yaml.split('  refresh:\n')[1];
+    expect(refresh).toContain('group: capital-ai-pr-writer-${{ matrix.pr_number }}');
+    expect(refresh).toContain('cancel-in-progress: false');
+  });
+
 });
