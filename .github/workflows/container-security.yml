@@ -6,6 +6,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_ghcr:
+        description: 'Publish the exact scanned main image to private GHCR after all security gates pass'
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -393,7 +399,7 @@ jobs:
             "capital-ai-security:$SOURCE_SHA"
 
       - name: Exakt geprüftes Main-Image für privilegierten Publisher serialisieren
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' && steps.scope.outputs.required == 'true'
+        if: github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' && steps.scope.outputs.required == 'true' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.actor == 'SvenKulessa' && inputs.publish_ghcr == true))
         shell: bash
         run: |
           set -euo pipefail
@@ -406,7 +412,7 @@ jobs:
           cp artifacts/container-security/final-supply-chain-binding.json artifacts/production-image/
 
       - name: Exakt geprüftes Main-Image kurzlebig an Publisher übergeben
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' && steps.scope.outputs.required == 'true'
+        if: github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' && steps.scope.outputs.required == 'true' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.actor == 'SvenKulessa' && inputs.publish_ghcr == true))
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: production-image-${{ env.SOURCE_SHA }}
@@ -426,7 +432,7 @@ jobs:
   publish-ghcr:
     name: Signed private GHCR image / exact digest
     needs: image-security
-    if: ${{ needs.image-security.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' }}
+    if: ${{ needs.image-security.result == 'success' && github.ref == 'refs/heads/main' && vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.actor == 'SvenKulessa' && inputs.publish_ghcr == true)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
