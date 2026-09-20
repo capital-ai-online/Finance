@@ -218,17 +218,23 @@ def _sync_cuda(torch_module: Any, device: str) -> None:
         torch_module.cuda.synchronize()
 
 
-def _synthesis_text(sample: dict[str, Any]) -> tuple[str, str]:
+def _synthesis_text(sample: dict[str, Any], candidate: str) -> tuple[str, str]:
     """Return an explicit speech projection while preserving canonical fixture identity."""
     if sample.get("sample_id") != "de-finance-numbers-v1":
         return sample["text"], "canonical_fixture_text"
 
+    eth_projection = "E T Ha" if candidate == "chatterbox-multilingual-v3" else "E T H"
     text = (
         "Aussprachetest: zwölf Komma fünf Prozent und eintausendzweihundertvierunddreißig Euro "
         "und sechsundfünfzig Cent sind hier reine Testwerte, keine Marktdaten. "
-        "Sprich B T C, E T H und Capital A I klar aus; dies ist keine Anlageberatung."
+        f"Sprich B T C, {eth_projection} und Capital A I klar aus; dies ist keine Anlageberatung."
     )
-    return text, "de_finance_pronunciation_projection_v1"
+    projection = (
+        "de_finance_pronunciation_projection_v2_chatterbox_eth_ha"
+        if candidate == "chatterbox-multilingual-v3"
+        else "de_finance_pronunciation_projection_v1"
+    )
+    return text, projection
 
 
 def _qwen_run(
@@ -246,7 +252,7 @@ def _qwen_run(
     _seed_everything(EXPECTED_SEED, torch_module, numpy_module)
     _sync_cuda(torch_module, device)
     started = time.perf_counter()
-    synthesis_text, pronunciation_projection = _synthesis_text(sample)
+    synthesis_text, pronunciation_projection = _synthesis_text(sample, "qwen3-tts")
     wavs, sample_rate = model.generate_voice_design(
         text=synthesis_text,
         language=language,
