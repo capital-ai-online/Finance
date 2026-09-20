@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import {
-  PR_TEMPLATE_MARKER,
   PR_TEMPLATE_VERSION,
   appendGithubOutput,
   detectPrTemplateVersion,
@@ -19,6 +18,9 @@ const SECTION_PROJECT = '## 2. 📦 Projekt & Scope';
 const SECTION_ROADMAP = '## 4. 📌 Priorität & Roadmap';
 const SECTION_VERSION = '## 5. 🔢 Version & PR-Klasse';
 const SECTION_CHECK = '## 6. ✅ Prüfung & Merge';
+
+const LEGACY_REPAIR_TARGET_VERSION = '1.6.0';
+const LEGACY_REPAIR_TARGET_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${LEGACY_REPAIR_TARGET_VERSION}`;
 
 export const LEGACY_TEMPLATE_MISSING_SECTION_PATTERNS = Object.freeze([
   Object.freeze([
@@ -46,9 +48,9 @@ function sameOrderedValues(left, right) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-function upgradeRepairedBodyToCurrentTemplate(bodyText) {
+function upgradeRepairedBodyToLegacyTarget(bodyText) {
   let body = String(bodyText || '');
-  body = body.replace(/CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.5\.0/g, PR_TEMPLATE_MARKER);
+  body = body.replace(/CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.5\.0/g, LEGACY_REPAIR_TARGET_MARKER);
   body = canonicalizeKnownSectionHeadings(body);
 
   if (!body.includes('- **Priorität:** ')) {
@@ -102,8 +104,8 @@ function bootstrapMarkerlessBody(bodyText, { prClass, durableClaimEvidence = [] 
 
   const evidence = [...new Set(durableClaimEvidence.map((value) => String(value || '').trim()).filter(Boolean))];
   const repaired = [
-    '<!-- ' + PR_TEMPLATE_MARKER + ' -->',
-    '`' + PR_TEMPLATE_MARKER + '`',
+    '<!-- ' + LEGACY_REPAIR_TARGET_MARKER + ' -->',
+    '`' + LEGACY_REPAIR_TARGET_MARKER + '`',
     '# CAPITAL-AI Pull Request',
     '',
     `> **P2 🟡 Normal · NOT_EVALUATED ⚪ · PR-Klasse ${prClass}**`,
@@ -151,7 +153,7 @@ function bootstrapMarkerlessBody(bodyText, { prClass, durableClaimEvidence = [] 
     '',
   ].join('\n');
 
-  if (detectPrTemplateVersion(repaired) !== PR_TEMPLATE_VERSION) {
+  if (detectPrTemplateVersion(repaired) !== LEGACY_REPAIR_TARGET_VERSION) {
     throw new Error('Markerless template bootstrap did not converge to v1.6.');
   }
   const missingAfter = findMissingRequiredSections(repaired);
@@ -162,10 +164,19 @@ function bootstrapMarkerlessBody(bodyText, { prClass, durableClaimEvidence = [] 
 }
 export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durableClaimEvidence = [] } = {}) {
   const body = String(bodyText || '');
-  if (PR_TEMPLATE_VERSION !== '1.6.0') {
-    throw new Error('Legacy repair requires review for a newer PR template contract.');
+  const detectedVersion = detectPrTemplateVersion(body);
+
+  // v1.7 is the canonical Human Decision contract and is owned by the normal
+  // renderer/validator path. Legacy repair must never rewrite a valid current
+  // contract or manufacture Decision Evidence.
+  if (detectedVersion === PR_TEMPLATE_VERSION) {
+    return { eligible: false, changed: false, reason: 'current-v1.7-owned-by-canonical-renderer', body };
   }
-  const missing = findMissingRequiredSections(body);
+
+  const missing = findMissingRequiredSections(
+    body,
+    detectedVersion || LEGACY_REPAIR_TARGET_VERSION,
+  );
   const canonicalMergeGate = '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja';
   const currentNonCanonicalMergeGate = '- **Human-/CODEOWNER-Merge erforderlich:** Ja';
 
@@ -175,11 +186,11 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
     // canonical v1.6.0 marker pair; later baseline refresh remains specialist-owned.
     if (!detectPrTemplateVersion(body)) {
       const repaired = [
-        '<!-- ' + PR_TEMPLATE_MARKER + ' -->',
-        '`' + PR_TEMPLATE_MARKER + '`',
+        '<!-- ' + LEGACY_REPAIR_TARGET_MARKER + ' -->',
+        '`' + LEGACY_REPAIR_TARGET_MARKER + '`',
         body,
       ].join('\n');
-      if (detectPrTemplateVersion(repaired) !== PR_TEMPLATE_VERSION) {
+      if (detectPrTemplateVersion(repaired) !== LEGACY_REPAIR_TARGET_VERSION) {
         throw new Error('Missing-marker repair did not converge to the current template version.');
       }
       return {
@@ -242,18 +253,18 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
 
   const currentV16SecurityBoundaryShape =
     fullLegacyMissing &&
-    detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
+    detectPrTemplateVersion(body) === LEGACY_REPAIR_TARGET_VERSION &&
     [...body.matchAll(/^## 4\. 🔐 Security Boundary\s*$/gm)].length === 1 &&
     [...body.matchAll(/^## 5\. ✅ Prüfung & Merge\s*$/gm)].length === 1 &&
     [...body.matchAll(/^## 6\. 🔢 Version\s*$/gm)].length === 1;
 
   const currentV16SecurityBoundaryLikeHeading =
-    detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
+    detectPrTemplateVersion(body) === LEGACY_REPAIR_TARGET_VERSION &&
     /^## 4\. 🔐 Security Boundar.*$/m.test(body);
 
   const currentV16GenericMissingSectionsShape =
     fullLegacyMissing &&
-    detectPrTemplateVersion(body) === PR_TEMPLATE_VERSION &&
+    detectPrTemplateVersion(body) === LEGACY_REPAIR_TARGET_VERSION &&
     occurrenceCount(body, '## 7. Maschinenlesbare Baseline') === 1 &&
     !currentV16SecurityBoundaryLikeHeading;
 
@@ -302,7 +313,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
     ].join('\n');
     let repaired = body.replace(malformedBlock[0], () => replacement);
 
-    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
+    repaired = upgradeRepairedBodyToLegacyTarget(repaired);
     const missingAfter = findMissingRequiredSections(repaired);
     if (missingAfter.length > 0) {
       throw new Error('Current v1.6 security-boundary repair did not converge: ' + missingAfter.join(', '));
@@ -375,7 +386,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
     ].join('\n');
 
     let repaired = demotedPrefix + canonicalSections + baselineAndAfter;
-    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
+    repaired = upgradeRepairedBodyToLegacyTarget(repaired);
 
     const missingAfter = findMissingRequiredSections(repaired);
     if (missingAfter.length > 0) {
@@ -439,7 +450,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
       );
     }
 
-    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
+    repaired = upgradeRepairedBodyToLegacyTarget(repaired);
     const missingAfter = findMissingRequiredSections(repaired);
     if (missingAfter.length > 0) {
       throw new Error('Project/Owner legacy template repair did not converge: ' + missingAfter.join(', '));
@@ -487,7 +498,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
       '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
     );
 
-    repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
+    repaired = upgradeRepairedBodyToLegacyTarget(repaired);
     const missingAfter = findMissingRequiredSections(repaired);
     if (missingAfter.length > 0) {
       throw new Error('Partial legacy template repair did not converge: ' + missingAfter.join(', '));
@@ -561,7 +572,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
     '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
   );
 
-  repaired = upgradeRepairedBodyToCurrentTemplate(repaired);
+  repaired = upgradeRepairedBodyToLegacyTarget(repaired);
   const missingAfter = findMissingRequiredSections(repaired);
   if (missingAfter.length > 0) {
     throw new Error('Legacy template repair did not converge: ' + missingAfter.join(', '));
