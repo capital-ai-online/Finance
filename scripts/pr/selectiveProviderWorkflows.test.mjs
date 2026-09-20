@@ -65,6 +65,7 @@ test('planner exposes repository-wide NONE FOCUSED FULL profiles and keeps provi
   assert.match(planner, /\? 'full'\s*:\s*'focused'/);
   assert.match(planner, /\.github\/workflows\/selective-codeql\.yml/);
   assert.match(planner, /\.github\/workflows\/selective-copilot-code-review\.yml/);
+  assert.match(planner, /\.github\/workflows\/oss-code-review\.yml/);
   assert.match(planner, /Exact-snapshot reuse is intentionally owned by ci\.yml/);
 });
 
