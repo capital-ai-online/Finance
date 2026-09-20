@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+**Baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
@@ -16,6 +16,26 @@
 This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, prior chat/work context, old branch state and historical non-terminal markers are evidence only and do not select or activate work.
 
 A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Provider-dependent `WAITING`, `BLOCKED` or `NOT RUN` applies only to the affected evidence lane and does not itself create a task.
+
+## Current Owner-directed work item — 2026-09-20
+
+### WP-SEO-LAUNCH-01 — Public Web & Social Launch Management
+
+**State:** `ACTIVE_CANONICAL / SEO_COORDINATION_ONLY`.
+
+Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
+
+**Detailed work package:** `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`  
+**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.17`.
+
+Current owner-correct dependencies:
+
+- Human/CODEOWNER-merged FE PR `#1153` is now current-main landing truth; launch copy/screenshots/CTA acceptance use that merged state while production verification remains separate;
+- `CAPITAL-AI-SOCIAL` owns channel adaptation, Social content packages, provider publication and publication/analytics evidence;
+- `CAPITAL-AI-OPS` owns production/deployment/provider runtime readback;
+- `CAPITAL-AI-GOV`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FINTECH` and `CAPITAL-AI-QM` retain their existing control, security, compliance, domain-truth and independent-assurance boundaries.
+
+This section is a thin current-work projection only. The detailed launch contract lives in the work-package file and the existing consolidated roadmap remains the single SEO/Google-Marketing program roadmap.
 
 ## Current provider evidence
 
