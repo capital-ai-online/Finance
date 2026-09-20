@@ -18,7 +18,7 @@ class FinancePronunciationProjectionTest(unittest.TestCase):
             "sample_id": "de-finance-numbers-v1",
             "text": "Aussprachetest: 12,5 Prozent und 1.234,56 Euro. Sprich BTC, ETH und CAPITAL-AI klar aus.",
         }
-        text, projection = MODULE._synthesis_text(sample)
+        text, projection = MODULE._synthesis_text(sample, "qwen3-tts")
 
         self.assertEqual(projection, "de_finance_pronunciation_projection_v1")
         self.assertIn("eintausendzweihundertvierunddreißig Euro und sechsundfünfzig Cent", text)
@@ -26,9 +26,19 @@ class FinancePronunciationProjectionTest(unittest.TestCase):
         self.assertIn("Capital A I", text)
         self.assertNotIn("1.234,56", text)
 
+    def test_chatterbox_finance_projection_spells_h_in_german(self) -> None:
+        sample = {
+            "sample_id": "de-finance-numbers-v1",
+            "text": "Aussprachetest: 12,5 Prozent und 1.234,56 Euro. Sprich BTC, ETH und CAPITAL-AI klar aus.",
+        }
+        text, projection = MODULE._synthesis_text(sample, "chatterbox-multilingual-v3")
+        self.assertEqual(projection, "de_finance_pronunciation_projection_v2_chatterbox_eth_ha")
+        self.assertIn("E T Ha", text)
+        self.assertNotIn("E T H und", text)
+
     def test_non_finance_fixture_remains_canonical(self) -> None:
         sample = {"sample_id": "de-dialogue-host-v1", "text": "Willkommen zum CAPITAL-AI Technikdialog."}
-        text, projection = MODULE._synthesis_text(sample)
+        text, projection = MODULE._synthesis_text(sample, "qwen3-tts")
         self.assertEqual(text, sample["text"])
         self.assertEqual(projection, "canonical_fixture_text")
 
