@@ -145,7 +145,7 @@ jobs:
       group: capital-ai-pr-writer-${{ matrix.pr_number }}
       cancel-in-progress: false
     permissions:
-      actions: read
+      actions: write
       checks: read
       contents: read
       pull-requests: write
@@ -173,11 +173,45 @@ jobs:
           PR_NUMBER: ${{ matrix.pr_number }}
         run: node scripts/pr/reconcilePrDecisionEvidence.mjs
 
+      - name: Main-Drift an kanonischen Branch-Sync delegieren
+        if: steps.reconcile.outputs.branch_sync_required == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+        with:
+          script: |
+            const prNumber = String(process.env.PR_NUMBER || '').trim();
+            if (!/^\d+$/.test(prNumber)) {
+              core.setFailed('Branch-Sync dispatch requires an exact numeric PR number.');
+              return;
+            }
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'sync-agent-pr-branches.yml',
+              ref: 'main',
+              inputs: { pr_number: prNumber },
+            });
+            core.info(`PR #${prNumber}: canonical branch-sync workflow dispatched.`);
+
       - name: Decision-State ausgeben
         env:
           PR_NUMBER: ${{ matrix.pr_number }}
           DECISION_STATUS: ${{ steps.reconcile.outputs.decision_status }}
           CHANGED: ${{ steps.reconcile.outputs.changed }}
           REASON: ${{ steps.reconcile.outputs.reason }}
+          BRANCH_SYNC_REQUIRED: ${{ steps.reconcile.outputs.branch_sync_required }}
+          AUTO_MERGE_STATE: ${{ steps.reconcile.outputs.auto_merge_state }}
+          AUTO_MERGE_REASON: ${{ steps.reconcile.outputs.auto_merge_reason }}
+          AUTO_MERGE_HEAD: ${{ steps.reconcile.outputs.auto_merge_head }}
+          AUTO_MERGE_BASE: ${{ steps.reconcile.outputs.auto_merge_base }}
+          AUTO_MERGE_CHECKS: ${{ steps.reconcile.outputs.auto_merge_required_checks }}
+          AUTO_MERGE_EVALUATED_AT: ${{ steps.reconcile.outputs.auto_merge_evaluated_at }}
+          AUTO_MERGE_ARMED_AT: ${{ steps.reconcile.outputs.auto_merge_armed_at }}
         run: |
           echo "PR #$PR_NUMBER decision_status=${DECISION_STATUS:-unchanged} changed=$CHANGED reason=$REASON"
+          echo "branch_sync_required=${BRANCH_SYNC_REQUIRED:-false}"
+          echo "auto_merge_state=${AUTO_MERGE_STATE:-n/a} reason=${AUTO_MERGE_REASON:-n/a}"
+          echo "auto_merge_head=${AUTO_MERGE_HEAD:-n/a} base=${AUTO_MERGE_BASE:-n/a}"
+          echo "auto_merge_checks=${AUTO_MERGE_CHECKS:-n/a}"
+          echo "auto_merge_evaluated_at=${AUTO_MERGE_EVALUATED_AT:-n/a} armed_at=${AUTO_MERGE_ARMED_AT:-n/a}"
