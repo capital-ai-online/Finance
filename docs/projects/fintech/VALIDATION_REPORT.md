@@ -7,6 +7,14 @@
 **Scope:** `docs/projects/fintech/**` project-surface synchronization only  
 **PR:** NOT CREATED
 
+## Current DATA → FINTECH convergence addendum
+
+**Current correlation baseline:** `main@2c6b29102333baf86b3acf8f1c1012b0cc9ac9e6`  
+**Current productive ownership:** `CAPITAL-AI-FINTECH / PVC-09..17`  
+**Former DATA project surface:** retired from `docs/projects/`; historical evidence preserved under `docs/archive/`.
+
+This addendum supersedes current-state ownership/routing statements below where they reflect the 2026-09-01 snapshot. The older snapshot remains provenance for the original FIN-SYNC-01 validation, not current routing authority.
+
 ## Precheck result
 
 | Check | Result |
@@ -22,10 +30,13 @@
 
 ## Current project ownership
 
-`docs/projects/README.md` assigns `PVC-12..17` to `CAPITAL-AI-FINTECH`. Technical `SC-MD-SPT-0001` `VC-*` stages remain separate and unchanged.
+`docs/projects/README.md` assigns `PVC-09..17` to `CAPITAL-AI-FINTECH`. Technical `SC-MD-SPT-0001` `VC-*` stages remain separate and unchanged.
 
 FINTECH retains:
 
+- PVC-09 UAI / Data Ingestion;
+- PVC-10 Evidence Management;
+- PVC-11 Data Quality;
 - PVC-12 Feature Engineering;
 - PVC-13 Scoring Models;
 - PVC-14 Scoring Orchestration;
@@ -33,7 +44,7 @@ FINTECH retains:
 - PVC-16 Canonical Scoring;
 - PVC-17 Ranking / Decision Support.
 
-DATA retains PVC-09..11; OPS retains PVC-18. Frontend, Quality, Security and Compliance remain cross-cutting consumers/validators and do not acquire FINTECH productive PVC ownership.
+`CAPITAL-AI-DATA` is superseded and has no current project route. OPS retains PVC-18. Frontend, Quality, Security and Compliance remain cross-cutting consumers/validators and do not acquire FINTECH productive PVC ownership.
 
 ## Project-routing validation
 
@@ -41,7 +52,6 @@ Current canonical project folders are consumed from `docs/projects/README.md`.
 
 | Target | Current canonical folder | Result |
 |---|---|---|
-| CAPITAL-AI-DATA | `docs/projects/data/` | PASS |
 | CAPITAL-AI-OPS | `docs/projects/operations/` | PASS |
 | CAPITAL-AI-QM | `docs/projects/quality-management/` | corrected from stale materialization note |
 | CAPITAL-AI-SEC | `docs/projects/security/` | PASS boundary reference |
@@ -73,7 +83,7 @@ Corrections applied:
 - Provider count remains 22;
 - Stooq is `enabled=false`, `not_wired`, with productive direct network access retired;
 - TwelveData commodity history is documented behind the governed history/research-evidence transport;
-- CoinAPI direct consensus use remains a boundary observation to assess against DATA/gateway ownership;
+- CoinAPI direct consensus use remains a boundary observation to assess against the canonical FINTECH provider/gateway ownership;
 - EODHD historical/EOD semantics are preserved as non-live evidence.
 
 Static provider registration is not interpreted as runtime health, entitlement, freshness or semantic fallback equivalence.
@@ -86,7 +96,7 @@ Static provider registration is not interpreted as runtime health, entitlement, 
 | one productive ScoringDispatcher preserved | PASS — no runtime change |
 | CanonicalScoreResult family preserved | PASS — no runtime change |
 | no synthetic/neutral fallback introduced | PASS — documentation invariants retained |
-| DATA/DQ authority retained upstream | PASS |
+| FINTECH PVC-09..11 provider/evidence/DQ authority retained upstream of PVC-12 | PASS |
 | ProviderMatrix reused, not duplicated | PASS |
 | ranking business ownership mapped to FINTECH PVC-17 | PASS organizationally |
 | one productive ranking runtime authority | PARTIAL — FIN-17 remains open |
@@ -103,11 +113,11 @@ Static provider registration is not interpreted as runtime health, entitlement, 
 ### P1
 
 3. `FIN-17` — backend ranking authority consolidation before FE consumer migration.
-4. `FIN-12` — explicit validated DATA/evidence/DQ → versioned feature-contract boundary.
+4. `FIN-12` — explicit validated PVC-09..11 evidence/DQ → versioned PVC-12 feature-contract boundary.
 
 ### P2
 
-5. `FIN-19` — provider capability requirements must stay mapped to canonical DATA contracts and current ProviderMatrix without ingress takeover.
+5. `FIN-19` — provider capability requirements must stay mapped to canonical FINTECH PVC-09..11 contracts and current ProviderMatrix without creating a second ingress plane.
 6. `FIN-20` — complete exact scoring/ranking lineage and Security/OPS return evidence.
 
 ## Scope integrity
