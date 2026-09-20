@@ -8,7 +8,7 @@
 **Status:** ACTIVE / OWNER-DIRECTED / IMPLEMENTATION STARTED  
 **Initial baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`  
 **Initial slice:** merged via PR #1122  
-**Current SH-02.3 baseline:** `main@e99919bffd7d2e02cf5d871dd64a24c6c1d8bce2`  
+**Current SH-02.3 baseline:** `main@ae813ac19d7d0496d787682b284f0270c0b52c4f`  
 **Current branch:** `agent/operations-self-healing-contract-20260920`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
@@ -39,9 +39,11 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 
 ### Deliverables
 - architecture concept;
-- narrow supersession projection for stale SH-R2/per-run owner-gate language;
+- canonical `self-healing-contract/1.0.0`;
+- archive and deactivate predecessor Self-Healing rule projections;
 - current-main work claim;
-- roadmap/work-package reconciliation.
+- roadmap/work-package reconciliation;
+- deterministic supersession validation/evidence.
 
 ### Exit
 No change to `/AGENTS.md` is required because current main already contains the workflow-autonomy and bounded self-healing rules needed for this package.
@@ -122,6 +124,16 @@ OBSERVED
 
 No self-healing action may recursively authorize itself.
 
+### Canonical supersession rule
+
+After Human/CODEOWNER merge of SH-02.3, `self-healing-contract/1.0.0` is the only executable Self-Healing finding/action/eligibility/convergence contract. It does not supersede `/AGENTS.md@CURRENT_MAIN` or current Security/Compliance/QM/domain controls; it supersedes only older Self-Healing-specific execution rules and projections.
+
+The predecessor `OPS-08-B-SH-01`, legacy `SH-R*` labels and the narrow `AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md` control-plane projection are archived/non-authorizing. They cannot be used to activate, deny or classify remediation.
+
+Archive evidence:
+- `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md`;
+- `docs/archive/governance/superseded/AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md`.
+
 ### SH-02.3 branch implementation
 
 - `src/platform/Supervisor/selfHealingContract.ts` is the single pure contract/registry surface; it creates no second Supervisor and performs no provider mutation.
@@ -132,7 +144,7 @@ No self-healing action may recursively authorize itself.
 - the Supervisor exposes contract validity separately from executable runtime self-healing and now reports `capabilities.selfHealing=false` until SH-02.4+ bind and verify concrete executors;
 - focused unit tests cover taxonomy completeness, held protected actions, one-shot budgeting, fail-closed eligibility, legal state transitions and verification-to-convergence semantics.
 
-Validation remains `VALIDATION_PENDING` until repository CI evaluates the final PR head.
+Validation remains `VALIDATION_PENDING` until repository CI evaluates the final PR head. `tests/unit/selfHealingSupersession.test.ts` additionally verifies that active Self-Healing surfaces contain no legacy `SH-R*` execution rules and that predecessor artifacts exist only in the archive paths.
 
 ## SH-02.4 — Backend dependency resilience
 
