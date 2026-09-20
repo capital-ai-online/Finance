@@ -39,6 +39,28 @@ test('delegates an exact stale production baseline before broad protected-provid
   assert.equal(result.reason, 'stale-production-baseline-specialist-owned');
 });
 
+test('delegates the exact observed v1.7 P0-HIGHEST priority drift only for canonical bodies', () => {
+  const logText =
+    'Error: PR #1147 enthält keine gültige Prioritätsbewertung (P0–P3) der Vorlage v1.7.0.';
+
+  const allowed = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText,
+    prMetadataShape: 'CURRENT_V17_CANONICAL',
+  });
+  assert.equal(allowed.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
+  assert.equal(allowed.reason, 'current-v1.7-priority-token-repairable');
+
+  const denied = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText,
+    prMetadataShape: 'CURRENT_V17_OTHER',
+  });
+  assert.equal(denied.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(denied.reason, 'current-v1.7-priority-drift-requires-canonical-shape');
+});
+
 test('delegates only the exact allowlisted v1.7 legacy baseline-section drift', () => {
   const logText = 'Error: PR #1142 muss in v1.7.0 exakt drei sichtbare Hauptabschnitte besitzen: ## 1. 🧭 Entscheidung, ## 2. ✅ Evidence, ## 3. 🔍 Technical Evidence';
 
