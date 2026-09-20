@@ -79,3 +79,11 @@ test('never fabricates required CI or merge authority', async () => {
   assert.doesNotMatch(yaml, /auto-merge/);
   assert.match(yaml, /no synthetic `build-and-test` PASS was created/);
 });
+
+
+test('serializes the privileged branch writer through the canonical per-PR lease', async () => {
+  const yaml = await workflow();
+  const apply = jobSection(yaml, 'apply-and-push');
+  assert.match(apply, /group: capital-ai-pr-writer-\$\{\{ needs\.plan\.outputs\.pr_number \}\}/);
+  assert.match(apply, /cancel-in-progress: false/);
+});
