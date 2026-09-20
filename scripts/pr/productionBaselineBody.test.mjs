@@ -214,3 +214,43 @@ test('marker-free current v1.6 body gets one canonical terminal baseline section
   assert.match(result.body, /<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/);
   assert.ok(result.body.includes(baseline.baselineId));
 });
+
+
+test('v1.7 collapsed machine-evidence block refreshes atomically without changing the decision view', () => {
+  const previous = validBaseline({ generatedAt: '2026-09-20T13:00:00.000Z' });
+  const next = validBaseline({
+    generatedAt: '2026-09-20T13:10:00.000Z',
+    main: { sha: '4'.repeat(40) },
+    head: { sha: '5'.repeat(40), version: '0.7.0' },
+    drift: { productionToMainCommits: 2, mainToHeadCommits: 0 },
+  });
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
+    '# Human Decision PR',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '',
+    '## 1. 🧭 Entscheidung',
+    'Owner view remains untouched.',
+    '',
+    '## 2. ✅ Evidence',
+    'Evidence view remains untouched.',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    renderProductionBaselineBlock(previous),
+    '',
+    '</details>',
+  ].join('\n');
+
+  const result = replaceProductionBaselineBlock(body, next);
+  assert.equal(result.changed, true);
+  assert.equal(result.evidenceState, 'STALE');
+  assert.match(result.body, /Owner view remains untouched\./);
+  assert.match(result.body, /Evidence view remains untouched\./);
+  assert.match(result.body, /<summary>🤖 Maschinenlesbare Produktions-Baseline<\/summary>/);
+  assert.ok(result.body.includes(next.baselineId));
+  assert.doesNotMatch(result.body, new RegExp(previous.baselineId.replace(/[.*+?^$()|[\]\\]/g, '\\$&')));
+});
