@@ -87,6 +87,25 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
   const currentNonCanonicalMergeGate = '- **Human-/CODEOWNER-Merge erforderlich:** Ja';
 
   if (missing.length === 0) {
+    // A structurally complete body without a supported marker is a deterministic
+    // metadata-drift case. Preserve all existing content and only prepend the
+    // canonical v1.6.0 marker pair; later baseline refresh remains specialist-owned.
+    if (!detectPrTemplateVersion(body)) {
+      const repaired = [
+        '<!-- ' + PR_TEMPLATE_MARKER + ' -->',
+        '`' + PR_TEMPLATE_MARKER + '`',
+        body,
+      ].join('\n');
+      if (detectPrTemplateVersion(repaired) !== PR_TEMPLATE_VERSION) {
+        throw new Error('Missing-marker repair did not converge to the current template version.');
+      }
+      return {
+        eligible: true,
+        changed: true,
+        reason: 'missing-template-marker-upgraded-to-v1.6',
+        body: repaired,
+      };
+    }
     if (
       detectPrTemplateVersion(body) &&
       !body.includes(canonicalMergeGate) &&

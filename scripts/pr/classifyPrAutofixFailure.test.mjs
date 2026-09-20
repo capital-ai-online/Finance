@@ -43,12 +43,13 @@ test('delegates canonical Human/CODEOWNER merge-gate drift to the existing metad
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
 });
 
-test('does not invent a repair for an unsupported or absent template marker', () => {
+test('delegates missing template marker drift to the deterministic metadata writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText: 'Error: PR #1 verwendet keinen unterstützten PR-Vorlagenmarker.',
   });
-  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
 });
 
 test('security and protected-provider failures always fail closed', () => {
