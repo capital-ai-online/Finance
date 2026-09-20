@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-POLICY-HOMOGENEITY-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate active guideline drift against AGENTS.md and CAPITAL-AI-ASH-01, repair OPS-owned Self-Healing projections, release stale SH-02.5 coordination state, and hand foreign-owner contradictions to their canonical owners.",
+  "priority": "P0-HIGHEST",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "startedAt": "2026-09-20T15:04:00Z",
+  "baseBranch": "main",
+  "baseSha": "39aeb4473ae3f0b26a174cf5654bb78b3a288c29",
+  "branch": "agent/operations-sh02-policy-homogeneity-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-POLICY-HOMOGENEITY-20260920.json",
+    ".ai/work-claims/OPS-08-B-SH-02-5-WORKER-JOB-RECOVERY-20260920.json",
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/evidence/SH_02_POLICY_HOMOGENEITY_CORRELATION_2026-09-20.md",
+    "tests/unit/selfHealingSupersession.test.ts"
+  ],
+  "scopeNote": "OPS-owned corrections only. GOV/DOC/SEC/COMP/QM contradictions are evidence-backed handoffs and are not mutated from this branch.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; merge authority remains Human/CODEOWNER-only.",
+  "recorrelatedAt": "2026-09-20T15:09:00Z"
+}

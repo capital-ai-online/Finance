@@ -27,6 +27,20 @@ describe('self-healing supersession surfaces', () => {
     expect(existsSync(retiredActiveSupersession)).toBe(false);
   });
 
+  it('releases merged SH-02 claims and advances the canonical work graph', () => {
+    const claim = JSON.parse(readFileSync('.ai/work-claims/OPS-08-B-SH-02-5-WORKER-JOB-RECOVERY-20260920.json', 'utf8'));
+    const workPackage = readFileSync(
+      'docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md',
+      'utf8',
+    );
+
+    expect(claim.status).toBe('released');
+    expect(claim.exclusive).toBe(false);
+    expect(workPackage).toContain('SH-02.5 merge');
+    expect(workPackage).toContain('**Next functional slice:** `SH-02.6`');
+    expect(workPackage).toContain('P0 priority invariant');
+  });
+
   it('binds current Self-Healing semantics to the canonical contract version', () => {
     const architecture = readFileSync('docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md', 'utf8');
     const workPackage = readFileSync(
