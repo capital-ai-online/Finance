@@ -71,7 +71,7 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).not.toContain('npm --prefix candidate');
   });
 
-  it('re-runs only exact completed Governance and bounds stale-baseline race recovery to attempt one', () => {
+  it('re-runs exact completed Governance only after proven baseline or metadata mutation', () => {
     const yaml = workflow();
     expect(yaml).toContain("run.path === '.github/workflows/pr-governance.yml'");
     expect(yaml).not.toContain("run.name === 'PR Governance'");
@@ -83,6 +83,8 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).toContain('const provenMetadataRace = bodyRepaired;');
     expect(yaml).toContain('const provenBaselineRace = baselineChanged;');
     expect(yaml).toContain('const shouldRerun = provenMetadataRace || provenBaselineRace;');
+    expect(yaml).toContain('An unchanged failed Governance run never receives a generic retry');
+    expect(yaml).not.toContain('firstFailedAttempt');
     expect(yaml).toContain("POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun");
     expect(yaml).not.toContain('run_id: sourceRunId');
     expect(yaml).toContain('main änderte sich während der Baseline-Revalidierung');
@@ -94,7 +96,7 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).toContain('cancel-in-progress: true');
     expect(yaml).toContain('BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}');
     expect(yaml).toContain('kein automatischer Re-Run');
-    expect(yaml).toContain('An unchanged failed Governance run never receives a generic retry from this workflow.');
+    expect(yaml).toContain('keine nachgewiesene Baseline-/Metadata-Mutation');
     expect(yaml).toContain('max-parallel: 4');
   });
 
