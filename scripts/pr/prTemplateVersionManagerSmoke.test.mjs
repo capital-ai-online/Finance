@@ -83,6 +83,10 @@ test('PR template contract version is independent from the platform product vers
   assert.ok(template.includes('{{DECISION_STATUS}}'));
   assert.ok(template.includes('{{LIVE_SYNC_SUMMARY}}'));
   assert.ok(template.includes('{{NEXT_VERIFIABLE_STEP}}'));
+  assert.ok(template.includes('{{DECISION_MAIN_REASON}}'));
+  assert.ok(template.includes('{{DECISION_CHECKS_REASON}}'));
+  assert.ok(template.includes('{{DECISION_CHECKS_NEXT}}'));
+  assert.ok(template.includes('Warum offen / blockiert'));
   assert.ok(template.includes('### 📡 Live Dashboard'));
   assert.ok(template.includes('## 1. 🧭 Entscheidung'));
   assert.ok(template.includes('## 2. ✅ Evidence'));

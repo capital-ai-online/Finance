@@ -14,6 +14,7 @@ import {
 } from './lib.mjs';
 import { canonicalizeKnownSectionHeadings } from './prBodySectionContract.mjs';
 import {
+  decisionEvidenceRows,
   decisionImpactLabel,
   deriveDecisionStatus,
   formatDecisionGateState,
@@ -202,6 +203,9 @@ const decisionGates = Object.freeze({
   baseline: normalizeDecisionGateState(process.env.PR_DECISION_BASELINE || baselineGate),
 });
 const decisionStatus = deriveDecisionStatus(decisionGates);
+const decisionEvidence = Object.fromEntries(
+  decisionEvidenceRows(decisionGates).map((row) => [row.key, row]),
+);
 const implementationDetail = String(process.env.PR_IMPLEMENTATION || workItem).trim();
 const whyDetail = String(process.env.PR_WHY || 'N/A — im PR-Kontext zu konkretisieren').trim();
 
@@ -242,6 +246,18 @@ const replacements = {
   DECISION_CHECKS: formatDecisionGateState(decisionGates.checks),
   DECISION_SECURITY: formatDecisionGateState(decisionGates.security),
   DECISION_BASELINE: formatDecisionGateState(decisionGates.baseline),
+  DECISION_MAIN_REASON: compactDecisionCell(decisionEvidence.main.reason, 'N/A'),
+  DECISION_MAIN_NEXT: compactDecisionCell(decisionEvidence.main.nextStep, 'N/A'),
+  DECISION_SCOPE_REASON: compactDecisionCell(decisionEvidence.scope.reason, 'N/A'),
+  DECISION_SCOPE_NEXT: compactDecisionCell(decisionEvidence.scope.nextStep, 'N/A'),
+  DECISION_OVERLAP_REASON: compactDecisionCell(decisionEvidence.overlap.reason, 'N/A'),
+  DECISION_OVERLAP_NEXT: compactDecisionCell(decisionEvidence.overlap.nextStep, 'N/A'),
+  DECISION_CHECKS_REASON: compactDecisionCell(decisionEvidence.checks.reason, 'N/A'),
+  DECISION_CHECKS_NEXT: compactDecisionCell(decisionEvidence.checks.nextStep, 'N/A'),
+  DECISION_SECURITY_REASON: compactDecisionCell(decisionEvidence.security.reason, 'N/A'),
+  DECISION_SECURITY_NEXT: compactDecisionCell(decisionEvidence.security.nextStep, 'N/A'),
+  DECISION_BASELINE_REASON: compactDecisionCell(decisionEvidence.baseline.reason, 'N/A'),
+  DECISION_BASELINE_NEXT: compactDecisionCell(decisionEvidence.baseline.nextStep, 'N/A'),
   IMPACT_RISK: decisionImpactLabel(prClass, decisionGates.security),
   EVIDENCE_SUMMARY: summarizeDecisionEvidence(decisionGates),
   BLOCKER_SUMMARY: compactDecisionCell(summarizeDecisionBlockers(decisionGates), 'Keine'),

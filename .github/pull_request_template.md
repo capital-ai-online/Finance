@@ -26,14 +26,14 @@
 
 ## 2. ✅ Evidence
 
-| Gate | Status |
-|---|---|
-| Current Main | {{DECISION_MAIN}} |
-| Scope / Ownership | {{DECISION_SCOPE}} |
-| Overlap | {{DECISION_OVERLAP}} |
-| Required Checks | {{DECISION_CHECKS}} |
-| Security / Compliance | {{DECISION_SECURITY}} |
-| Production Baseline | {{DECISION_BASELINE}} |
+| Gate | Status | Warum offen / blockiert | Nächster verifizierbarer Schritt |
+|---|---|---|---|
+| Current Main | {{DECISION_MAIN}} | {{DECISION_MAIN_REASON}} | {{DECISION_MAIN_NEXT}} |
+| Scope / Ownership | {{DECISION_SCOPE}} | {{DECISION_SCOPE_REASON}} | {{DECISION_SCOPE_NEXT}} |
+| Overlap | {{DECISION_OVERLAP}} | {{DECISION_OVERLAP_REASON}} | {{DECISION_OVERLAP_NEXT}} |
+| Required Checks | {{DECISION_CHECKS}} | {{DECISION_CHECKS_REASON}} | {{DECISION_CHECKS_NEXT}} |
+| Security / Compliance | {{DECISION_SECURITY}} | {{DECISION_SECURITY_REASON}} | {{DECISION_SECURITY_NEXT}} |
+| Production Baseline | {{DECISION_BASELINE}} | {{DECISION_BASELINE_REASON}} | {{DECISION_BASELINE_NEXT}} |
 
 ## 3. 🔍 Technical Evidence
 

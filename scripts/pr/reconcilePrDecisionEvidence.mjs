@@ -10,6 +10,7 @@ import {
 } from './lib.mjs';
 import {
   PR_DECISION_GATES,
+  decisionEvidenceRows,
   deriveDecisionStatus,
   extractDecisionGates,
   extractDecisionStatus,
@@ -185,17 +186,17 @@ function replaceRow(body, label, value) {
   return body.replace(expression, `| ${label} | ${compactCell(value)} |`);
 }
 
-function canonicalEvidenceTable(gates) {
+function canonicalEvidenceTable(gates, details = {}) {
   return [
-    '| Gate | Status |',
-    '|---|---|',
-    ...PR_DECISION_GATES.map(({ key, label }) =>
-      `| ${label} | ${formatDecisionGateState(gates?.[key])} |`
+    '| Gate | Status | Warum offen / blockiert | Nächster verifizierbarer Schritt |',
+    '|---|---|---|---|',
+    ...decisionEvidenceRows(gates, details).map(({ label, status, reason, nextStep }) =>
+      `| ${label} | ${status} | ${compactCell(reason)} | ${compactCell(nextStep)} |`
     ),
   ].join('\n');
 }
 
-function replaceCanonicalEvidenceTable(bodyText, gates) {
+function replaceCanonicalEvidenceTable(bodyText, gates, details = {}) {
   const body = String(bodyText || '');
   const evidenceHeading = '## 2. ✅ Evidence';
   const technicalHeading = '## 3. 🔍 Technical Evidence';
@@ -205,8 +206,8 @@ function replaceCanonicalEvidenceTable(bodyText, gates) {
 
   const sectionPrefixEnd = sectionStart + evidenceHeading.length;
   const section = body.slice(sectionPrefixEnd, sectionEnd);
-  const table = canonicalEvidenceTable(gates);
-  const tablePattern = /\| Gate \| Status \|\s*\n\|---\|---\|(?:\s*\n\|[^\n]*\|[^\n]*\|)*/m;
+  const table = canonicalEvidenceTable(gates, details);
+  const tablePattern = /^\| Gate \| Status[^\n]*\n\|[-:| ]+\|(?:\n\|[^\n]*\|)*/m;
 
   let nextSection;
   if (tablePattern.test(section)) {
@@ -341,7 +342,7 @@ function migrateV17DecisionContract(bodyText) {
   };
 }
 
-export function reconcileDecisionBody(bodyText, gates) {
+export function reconcileDecisionBody(bodyText, gates, details = {}) {
   const original = String(bodyText || '');
   const contract = migrateV17DecisionContract(original);
   if (!contract.eligible || !contract.body.includes(PR_TEMPLATE_MARKER)) {
@@ -368,7 +369,7 @@ export function reconcileDecisionBody(bodyText, gates) {
     return { eligible: false, changed: false, reason: 'live-dashboard-boundary-ambiguous', body: original };
   }
 
-  body = replaceCanonicalEvidenceTable(body, gates);
+  body = replaceCanonicalEvidenceTable(body, gates, details);
   if (body == null) {
     return { eligible: false, changed: false, reason: 'decision-evidence-section-missing', body: original };
   }
@@ -466,6 +467,64 @@ async function evaluateOverlapLive(repository, prNumber, token) {
   };
 }
 
+function checkObservation(requirement, checkRuns) {
+  const run = latestMatchingCheck(requirement, checkRuns);
+  const state = decisionStateForCheck(run);
+  const observed = !run
+    ? 'MISSING'
+    : run.status !== 'completed'
+      ? String(run.status || 'UNKNOWN').toUpperCase()
+      : String(run.conclusion || 'UNKNOWN').toUpperCase();
+  return { state, text: String(requirement.context || 'unknown') + '=' + observed };
+}
+
+function checkGateReason(requirements, checkRuns, gateState, passLabel) {
+  const observations = (requirements || []).map((requirement) => checkObservation(requirement, checkRuns));
+  if (gateState === 'PASS') return passLabel + ' (' + observations.length + ').';
+  if (observations.length === 0) return 'Keine auswertbare Check-Policy vorhanden.';
+  const relevant = observations.filter((entry) => entry.state !== 'PASS');
+  const prefix = gateState === 'BLOCKED' ? 'Nicht erfolgreich: ' : 'Noch ausstehend: ';
+  return prefix + (relevant.length > 0 ? relevant.map((entry) => entry.text).join(', ') : 'Evidence nicht terminal.');
+}
+
+function overlapGateReason(conflicts, gateState) {
+  if (gateState === 'PASS') return 'Kein blockierender Changed-File-Overlap mit anderen offenen PRs erkannt.';
+  if (!Array.isArray(conflicts) || conflicts.length === 0) return 'Overlap-Evidence ist noch nicht vollständig.';
+  return 'Overlap erkannt: ' + conflicts.map((conflict) => {
+    const files = (conflict.files || []).slice(0, 3);
+    const remaining = Math.max(0, (conflict.files || []).length - files.length);
+    return 'PR #' + conflict.number + ': ' + files.join(', ') + (remaining > 0 ? ' (+' + remaining + ')' : '');
+  }).join('; ');
+}
+
+function liveGateDetails({ mainSha, headSha, compare, checkRuns, policy, governanceRequirement, overlaps, gates }) {
+  const security = securityRequirements(policy);
+  return {
+    main: {
+      reason: gates.main === 'PASS'
+        ? 'PR-Head ' + headSha.slice(0, 12) + ' enthält CURRENT_MAIN ' + mainSha.slice(0, 12) + '.'
+        : 'PR-Head ' + headSha.slice(0, 12) + ' enthält CURRENT_MAIN ' + mainSha.slice(0, 12) + ' nicht (compare=' + String(compare?.status || 'unknown') + ').',
+    },
+    scope: {
+      reason: checkGateReason([governanceRequirement], checkRuns, gates.scope, 'PR Governance bestätigt Scope / Ownership'),
+    },
+    overlap: {
+      reason: overlapGateReason(overlaps, gates.overlap),
+    },
+    checks: {
+      reason: checkGateReason(policy.requiredChecks, checkRuns, gates.checks, 'Alle Required Checks sind auf dem Exact Head erfolgreich'),
+    },
+    security: {
+      reason: checkGateReason(security, checkRuns, gates.security, 'Alle erforderlichen Security-/Compliance-Checks sind erfolgreich'),
+    },
+    baseline: {
+      reason: gates.baseline === 'PASS'
+        ? 'Production-, CURRENT_MAIN- und PR-Head-Baseline sind für main ' + mainSha.slice(0, 12) + ' / head ' + headSha.slice(0, 12) + ' korreliert.'
+        : 'Produktions-Baseline ist nicht auf CURRENT_MAIN ' + mainSha.slice(0, 12) + ' und PR-Head ' + headSha.slice(0, 12) + ' mit Production-Drift 0 gebunden.',
+    },
+  };
+}
+
 async function evaluateSnapshot({ repository, token, prNumber, pr, mainSha }) {
   const body = String(pr?.body || '');
   const headSha = normalizeSha(pr?.head?.sha);
@@ -500,6 +559,16 @@ async function evaluateSnapshot({ repository, token, prNumber, pr, mainSha }) {
     files: overlap.targetFiles,
     overlaps: overlap.conflicts,
     gates,
+    gateDetails: liveGateDetails({
+      mainSha,
+      headSha,
+      compare,
+      checkRuns,
+      policy,
+      governanceRequirement,
+      overlaps: overlap.conflicts,
+      gates,
+    }),
   };
 }
 
@@ -552,7 +621,7 @@ async function reconcileOne({ repository, token, prNumber }) {
   if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('CURRENT_MAIN could not be resolved.');
 
   const snapshot = await evaluateSnapshot({ repository, token, prNumber, pr, mainSha });
-  const rendered = reconcileDecisionBody(originalBody, snapshot.gates);
+  const rendered = reconcileDecisionBody(originalBody, snapshot.gates, snapshot.gateDetails);
   const classification = classifyAutoMergeEligibility({
     pr,
     repository,

@@ -165,10 +165,11 @@ test('reconciler normalizes v1.8 decision surface and is idempotent', () => {
   assert.equal(first.changed, true);
   assert.equal(first.decisionStatus, 'READY_FOR_HUMAN_DECISION');
   assert.match(first.body, /^> 🧭 \*\*Entscheidungsstatus: READY_FOR_HUMAN_DECISION\*\*$/m);
-  assert.match(first.body, /^\| Required Checks \| 🟢 PASS \|$/m);
-  assert.match(first.body, /^\| Production Baseline \| 🟢 PASS \|$/m);
+  assert.match(first.body, /^\| Required Checks \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(first.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
   assert.match(first.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
   assert.match(first.body, /^\| Blocker \| Keine \|$/m);
+  assert.match(first.body, /^\| Gate \| Status \| Warum offen \/ blockiert \| Nächster verifizierbarer Schritt \|$/m);
   assert.match(first.body, /^### 📡 Live Dashboard$/m);
   assert.match(first.body, /^\| Status \| READY_FOR_HUMAN_DECISION \|$/m);
   assert.match(first.body, /^\| Synchronität \| Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS \|$/m);
@@ -203,12 +204,12 @@ test('reconciler repairs missing v1.8 Decision/Evidence projections without touc
   assert.match(repaired.body, /^> 🧭 \*\*Entscheidungsstatus: READY_FOR_HUMAN_DECISION\*\*$/m);
   assert.match(repaired.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
   assert.match(repaired.body, /^\| Blocker \| Keine \|$/m);
-  assert.match(repaired.body, /^\| Current Main \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Scope \/ Ownership \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Required Checks \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Security \/ Compliance \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \|$/m);
+  assert.match(repaired.body, /^\| Current Main \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Scope \/ Ownership \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Required Checks \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Security \/ Compliance \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
   assert.equal(repaired.body.split('## 3. 🔍 Technical Evidence')[1], technical);
 });
 
@@ -262,6 +263,7 @@ test('a blocked gate dominates the human decision state', () => {
   });
   assert.equal(result.decisionStatus, 'BLOCKED');
   assert.match(result.body, /^\| Blocker \| Blockiert: Overlap \|$/m);
+  assert.match(result.body, /^\| Overlap \| 🔴 BLOCKED \| .*Overlap.* \| .*Overlap auflösen.* \|$/m);
 });
 
 test('workflow uses trusted completion events and the shared PR writer lease', () => {
