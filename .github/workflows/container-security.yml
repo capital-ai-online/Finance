@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
   pull-requests: read
 
 concurrency:
@@ -37,6 +38,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
+      - name: P0 GitHub Actions 45.000-Minuten-Blocker prüfen
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            const marker = '<!-- CAPITAL_AI_ACTIONS_MINUTE_BLOCKER_V1 -->';
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const blockers = issues.filter((issue) =>
+              !issue.pull_request && String(issue.body || '').includes(marker));
+            if (blockers.length > 1) {
+              core.setFailed(`Mehrere offene Actions-Minuten-Blocker gefunden: ${blockers.map((issue) => '#' + issue.number).join(', ')}.`);
+              return;
+            }
+            if (blockers.length === 1) {
+              core.setFailed(
+                `GitHub Actions Hard-Blocker aktiv: Issue #${blockers[0].number}. ` +
+                'Der monatliche Enterprise-Actions-Verbrauch hat 45.000 Minuten erreicht; ' +
+                'kostenrelevante Required-Workflow-Arbeit wird fail-closed gestoppt.',
+              );
+              return;
+            }
+            core.info('Kein aktiver 45.000-Minuten-Actions-Blocker.');
+
       - name: PR-Snapshot gegen Live-Head/Base korrelieren
         id: snapshot
         if: github.event_name == 'pull_request'

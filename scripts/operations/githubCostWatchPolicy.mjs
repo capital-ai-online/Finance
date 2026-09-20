@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 export const GITHUB_COST_WATCH_SCHEMA_VERSION = '1.0.0';
 export const GITHUB_COST_WATCH_DEFAULT_START = '2026-10-01T00:00:00.000Z';
 export const GITHUB_COST_WATCH_RECIPIENT = 'sven.kulessa@capital-ai.online';
+export const GITHUB_ACTIONS_WARNING_MINUTES = 5_000;
+export const GITHUB_ACTIONS_BLOCKER_MINUTES = 45_000;
 
 export const GITHUB_COST_SURFACE_CATALOG = Object.freeze([
   Object.freeze({ id: 'ghec', label: 'GitHub Enterprise Cloud (GHEC)', units: ['user-months'], policy: 'EXPECTED_ENTERPRISE_BASELINE' }),
@@ -73,8 +75,39 @@ function isExpectedEnterpriseLicense(row) {
 function sum(rows, key) {
   return Number(rows.reduce((total, row) => total + finiteOrZero(row[key]), 0).toFixed(6));
 }
+function isActionsMinuteRow(row) {
+  return String(row?.product || '').trim().toLowerCase() === 'actions'
+    && String(row?.unitType || '').trim().toLowerCase() === 'minutes';
+}
 
-function sortedAlertFingerprintInput(rows, detailRows, cycle) {
+function evaluateActionsMinutePolicy(enterpriseRows) {
+  const actionsRows = enterpriseRows.filter(isActionsMinuteRow);
+  const consumedGrossMinutes = Number(
+    actionsRows.reduce((total, row) => total + finiteOrZero(row.grossQuantity), 0).toFixed(6),
+  );
+  const state = consumedGrossMinutes >= GITHUB_ACTIONS_BLOCKER_MINUTES
+    ? 'BLOCKED'
+    : consumedGrossMinutes >= GITHUB_ACTIONS_WARNING_MINUTES
+      ? 'WARNING'
+      : 'BELOW_WARNING';
+
+  return Object.freeze({
+    source: 'enterprise.billing.usage.summary',
+    consumedGrossMinutes,
+    warningThresholdMinutes: GITHUB_ACTIONS_WARNING_MINUTES,
+    blockerThresholdMinutes: GITHUB_ACTIONS_BLOCKER_MINUTES,
+    remainingToBlockerMinutes: Math.max(0, GITHUB_ACTIONS_BLOCKER_MINUTES - consumedGrossMinutes),
+    state,
+    warningTriggered: state === 'WARNING' || state === 'BLOCKED',
+    blockerRequired: state === 'BLOCKED',
+    matchedSkus: Object.freeze(
+      actionsRows.map((row) => String(row.sku || '')).filter(Boolean).sort(),
+    ),
+  });
+}
+
+
+function sortedAlertFingerprintInput(rows, detailRows, cycle, actionsMinuteState) {
   // Deliberately exclude running amounts/quantities. One SKU should alert once when it first
   // becomes billable in a cycle, not every time its accumulated amount changes.
   const normalized = rows.map((row) => ({
@@ -91,7 +124,7 @@ function sortedAlertFingerprintInput(rows, detailRows, cycle) {
     sku: row.sku,
     unitType: row.unitType,
   })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  return JSON.stringify({ cycle, rows: normalized, detailed });
+  return JSON.stringify({ cycle, rows: normalized, detailed, actionsMinuteState });
 }
 
 /**
@@ -144,9 +177,10 @@ export function buildGitHubCostWatchReport({
     year: timestamp.getUTCFullYear(),
     month: timestamp.getUTCMonth() + 1,
   });
+  const actionsMinutes = evaluateActionsMinutePolicy(enterpriseRows);
   const coverageBlocked = organizationCoverage?.status !== 'PASS' || personalCoverage?.status !== 'PASS';
   const fingerprint = createHash('sha256')
-    .update(sortedAlertFingerprintInput(positiveAdditionalRows, positiveDetailRows, cycle))
+    .update(sortedAlertFingerprintInput(positiveAdditionalRows, positiveDetailRows, cycle, actionsMinutes.state))
     .update(coverageBlocked
       ? `|coverage:org=${organizationCoverage?.reason || organizationCoverage?.status || 'blocked'};personal=${personalCoverage?.reason || personalCoverage?.status || 'blocked'}`
       : '|coverage:pass')
@@ -168,6 +202,7 @@ export function buildGitHubCostWatchReport({
       alertCondition: 'Every positive netAmount outside enterprise ghec_licenses, plus any coverage failure.',
       amountSemantics: 'netAmount is the billed cost returned by GitHub billing usage summary; nested organization/repository views are not added again.',
       pollingSemantics: 'Near-real-time only: alert at the first successful poll after GitHub exposes the billed usage.',
+      actionsMinuteSemantics: 'Enterprise Actions grossQuantity with unitType=minutes is the monthly consumed-minute authority. At >=5000 minutes warn by SMTP; at >=45000 minutes activate the repository Actions cost blocker.',
     }),
     coverage: Object.freeze({
       enterprise: Object.freeze({ status: 'PASS' }),
@@ -180,6 +215,7 @@ export function buildGitHubCostWatchReport({
         reason: personalCoverage?.reason || null,
       }),
     }),
+    actionsMinutes,
     totals: Object.freeze({
       enterpriseNet: sum(enterpriseRows, 'netAmount'),
       personalNet: sum(personalRows, 'netAmount'),
@@ -194,6 +230,7 @@ export function buildGitHubCostWatchReport({
     potentialCostSurfaces: GITHUB_COST_SURFACE_CATALOG,
     alertFingerprint: fingerprint,
     emailRequired: mode === 'test'
+      || actionsMinutes.warningTriggered
       || coverageBlocked
       || positiveAdditionalRows.length > 0
       || positiveDetailRows.length > 0,

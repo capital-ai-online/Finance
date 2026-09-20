@@ -64,6 +64,90 @@ describe('GitHub cost watch policy', () => {
     ]);
   });
 
+  it('warns once the monthly Enterprise Actions gross minutes reach 5,000', () => {
+    const report = buildGitHubCostWatchReport({
+      mode: 'monitor',
+      generatedAt: '2026-10-01T00:15:00.000Z',
+      enterprise: 'capital-ai-online',
+      username: 'SvenKulessa',
+      enterpriseUsage: {
+        usageItems: [
+          { product: 'Actions', sku: 'actions_linux', unitType: 'minutes', grossQuantity: 5_000, netQuantity: 0, netAmount: 0 },
+        ],
+      },
+      personalUsage: { usageItems: [] },
+      organizationCoverage: { status: 'PASS', reason: null },
+      personalCoverage: { status: 'PASS', reason: null },
+    });
+
+    expect(report.actionsMinutes).toMatchObject({
+      consumedGrossMinutes: 5_000,
+      warningThresholdMinutes: 5_000,
+      blockerThresholdMinutes: 45_000,
+      remainingToBlockerMinutes: 40_000,
+      state: 'WARNING',
+      warningTriggered: true,
+      blockerRequired: false,
+    });
+    expect(report.emailRequired).toBe(true);
+  });
+
+  it('activates the hard blocker at 45,000 monthly Enterprise Actions gross minutes', () => {
+    const report = buildGitHubCostWatchReport({
+      mode: 'monitor',
+      generatedAt: '2026-10-01T00:15:00.000Z',
+      enterprise: 'capital-ai-online',
+      username: 'SvenKulessa',
+      enterpriseUsage: {
+        usageItems: [
+          { product: 'Actions', sku: 'actions_linux', unitType: 'minutes', grossQuantity: 30_000, netAmount: 0 },
+          { product: 'Actions', sku: 'actions_windows', unitType: 'minutes', grossQuantity: 15_000, netAmount: 0 },
+          { product: 'Packages', sku: 'packages_storage', unitType: 'gigabyte-hours', grossQuantity: 99_000, netAmount: 0 },
+        ],
+      },
+      personalUsage: { usageItems: [] },
+      organizationCoverage: { status: 'PASS', reason: null },
+      personalCoverage: { status: 'PASS', reason: null },
+    });
+
+    expect(report.actionsMinutes).toMatchObject({
+      consumedGrossMinutes: 45_000,
+      remainingToBlockerMinutes: 0,
+      state: 'BLOCKED',
+      warningTriggered: true,
+      blockerRequired: true,
+    });
+    expect(report.actionsMinutes.matchedSkus).toEqual(['actions_linux', 'actions_windows']);
+    expect(report.emailRequired).toBe(true);
+  });
+
+  it('changes the monthly alert fingerprint when Actions crosses warning and blocker states, but not while remaining inside one state', () => {
+    const build = (grossQuantity: number) => buildGitHubCostWatchReport({
+      mode: 'monitor',
+      generatedAt: '2026-10-01T00:15:00.000Z',
+      enterprise: 'capital-ai-online',
+      username: 'SvenKulessa',
+      enterpriseUsage: {
+        usageItems: [
+          { product: 'Actions', sku: 'actions_linux', unitType: 'minutes', grossQuantity, netAmount: 0 },
+        ],
+      },
+      personalUsage: { usageItems: [] },
+      organizationCoverage: { status: 'PASS', reason: null },
+      personalCoverage: { status: 'PASS', reason: null },
+    });
+
+    const below = build(4_999);
+    const warning = build(5_000);
+    const warningLater = build(20_000);
+    const blocked = build(45_000);
+
+    expect(below.actionsMinutes.state).toBe('BELOW_WARNING');
+    expect(warning.alertFingerprint).not.toBe(below.alertFingerprint);
+    expect(warningLater.alertFingerprint).toBe(warning.alertFingerprint);
+    expect(blocked.alertFingerprint).not.toBe(warning.alertFingerprint);
+  });
+
   it('does not change alert fingerprint when only the running amount increases', () => {
     const base = buildGitHubCostWatchReport({
       mode: 'monitor',

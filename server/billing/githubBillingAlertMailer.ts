@@ -22,6 +22,12 @@ function text(value: unknown, fallback = '—'): string {
 function amount(value: unknown): string {
   return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(6).replace(/0+$/, '').replace(/\.$/, '') : '0';
 }
+function minutes(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(value)
+    : '0';
+}
+
 
 function tableRows(items: JsonRecord[]): string {
   if (items.length === 0) {
@@ -73,23 +79,39 @@ export function buildGitHubBillingCostWatchEmail(reportInput: unknown): { subjec
   const organizationAttributionCoverage = record(coverage.organizationAttribution);
   const personalCoverage = record(coverage.personal);
   const totals = record(report.totals);
+  const actionsMinutes = record(report.actionsMinutes);
   const allRows = rows(report.rows);
   const alertRows = rows(report.alertRows);
   const detailRows = rows(report.detailRows);
   const alertDetailRows = rows(report.alertDetailRows);
   const surfaces = rows(report.potentialCostSurfaces);
 
+  const actionsMinuteState = text(actionsMinutes.state, 'BELOW_WARNING');
   const subject = mode === 'test'
     ? '[CAPITAL-AI] GitHub Billing – vollständige Kostenübersicht (Test)'
-    : status === 'PARTIAL_COVERAGE'
-      ? '[CAPITAL-AI][BILLING] Kostenüberwachung unvollständig'
-      : '[CAPITAL-AI][KOSTENALARM] GitHub Zusatzkosten erkannt';
+    : actionsMinuteState === 'BLOCKED'
+      ? '[CAPITAL-AI][ACTIONS-BLOCKER] 45.000 Minuten erreicht'
+      : actionsMinuteState === 'WARNING'
+        ? '[CAPITAL-AI][ACTIONS-WARNUNG] 5.000 Minuten erreicht'
+        : status === 'PARTIAL_COVERAGE'
+          ? '[CAPITAL-AI][BILLING] Kostenüberwachung unvollständig'
+          : '[CAPITAL-AI][KOSTENALARM] GitHub Zusatzkosten erkannt';
 
   const html = `<!doctype html>
 <html lang="de">
   <body style="font-family:Arial,sans-serif;color:#111;line-height:1.45">
     <h2>CAPITAL-AI · GitHub Billing Cost Watch</h2>
     <p><strong>Modus:</strong> ${escapeHtml(mode)} · <strong>Status:</strong> ${escapeHtml(status)} · <strong>Zeit:</strong> ${escapeHtml(text(report.generatedAt))}</p>
+
+    <h3>GitHub Actions Minuten-Schutz</h3>
+    <ul>
+      <li>Verbrauchte Enterprise-Actions-Minuten: <strong>${escapeHtml(minutes(actionsMinutes.consumedGrossMinutes))}</strong></li>
+      <li>SMTP-Warnschwelle: <strong>${escapeHtml(minutes(actionsMinutes.warningThresholdMinutes))}</strong></li>
+      <li>Hard-Blocker-Schwelle: <strong>${escapeHtml(minutes(actionsMinutes.blockerThresholdMinutes))}</strong></li>
+      <li>Verbleibend bis Hard-Blocker: <strong>${escapeHtml(minutes(actionsMinutes.remainingToBlockerMinutes))}</strong></li>
+      <li>Status: <strong>${escapeHtml(actionsMinuteState)}</strong></li>
+    </ul>
+    <p><small>Die Minuten werden aus der monatlichen Enterprise-Billing-Usage-Summary als Actions grossQuantity mit unitType=minutes ermittelt.</small></p>
 
     <h3>Kostenübersicht</h3>
     <ul>
