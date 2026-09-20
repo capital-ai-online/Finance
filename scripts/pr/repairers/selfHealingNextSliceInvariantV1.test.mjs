@@ -40,7 +40,7 @@ test('works for another concrete SH-02 slice without encoding the replacement sl
   await repairPrAutofix({ worktree: root, signature: SIGNATURE });
   const content = await fs.readFile(target, 'utf8');
   assert.doesNotMatch(content, /SH-02\.9/);
-  assert.match(content, /SH-02\\\.\\d\+\[A-Z\]\?/);
+  assert.ok(content.includes('SH-02\\\\.\\\\d+[A-Z]?'));
 });
 
 test('fails closed when the expected brittle assertion or signature is absent', async () => {
