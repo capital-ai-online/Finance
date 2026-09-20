@@ -326,3 +326,47 @@ test('refuses an unsupported project/owner legacy heading shape', () => {
   assert.equal(result.changed, false);
   assert.equal(result.reason, 'unsupported-project-owner-legacy-shape');
 });
+
+
+test('bootstraps a markerless free-form PR body into v1.6 while preserving it as quoted evidence', () => {
+  const body = [
+    '## 🧭 Ziel',
+    'Konvergiert bestehende Repository-Struktur.',
+    '',
+    '## 🔧 Änderungen',
+    '- Bestehende Aussage bleibt erhalten.',
+    '',
+    '## 🛡️ Governance',
+    '- Human merge bleibt erforderlich.',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, {
+    prClass: 'C',
+    durableClaimEvidence: ['CLAIM-123', '.ai/work-claims/CLAIM-123.json'],
+  });
+
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'markerless-body-bootstrapped-to-v1.6');
+  assert.deepEqual(findMissingRequiredSections(result.body), []);
+  assert.match(result.body, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.6\.0/);
+  assert.match(result.body, /- \*\*Priorität:\*\* P2 🟡 Normal/);
+  assert.match(result.body, /- \*\*Versionsimpact:\*\* NOT_EVALUATED ⚪/);
+  assert.match(result.body, /- \*\*PR-Klasse:\*\* C/);
+  assert.match(result.body, /keine separate Start-Freigabe erforderlich/);
+  assert.match(result.body, /- \*\*Dauerhafte Claim-Evidence:\*\* CLAIM-123/);
+  assert.match(result.body, /> ## 🧭 Ziel/);
+  assert.match(result.body, /> - Bestehende Aussage bleibt erhalten\./);
+  assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_START/g) || []).length, 0);
+  assert.match(result.body, /^## 7\. Maschinenlesbare Baseline$/m);
+});
+
+test('markerless bootstrap stays fail-closed for unresolved placeholders or baseline marker fragments', () => {
+  const unresolved = repairLegacyPrBodyStructure('Text {{PROJECT_ID}}', { prClass: 'C' });
+  assert.equal(unresolved.eligible, false);
+  assert.equal(unresolved.reason, 'markerless-body-has-unresolved-placeholders');
+
+  const partialBaseline = repairLegacyPrBodyStructure('Text CAPITAL_AI_PRODUCTION_BASELINE_START', { prClass: 'C' });
+  assert.equal(partialBaseline.eligible, false);
+  assert.equal(partialBaseline.reason, 'markerless-body-has-baseline-markers');
+});

@@ -7,6 +7,8 @@ import {
   detectPrTemplateVersion,
   fail,
   githubJson,
+  listAddedClaimFiles,
+  readJsonFile,
 } from './lib.mjs';
 import {
   canonicalizeKnownSectionHeadings,
@@ -77,7 +79,88 @@ function upgradeRepairedBodyToCurrentTemplate(bodyText) {
   return body;
 }
 
-export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) {
+function quoteExistingBodyAsEvidence(bodyText) {
+  return String(bodyText || '')
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => line.length > 0 ? `> ${line}` : '>')
+    .join('\n');
+}
+
+function bootstrapMarkerlessBody(bodyText, { prClass, durableClaimEvidence = [] }) {
+  const body = String(bodyText || '').trim();
+  if (!body) return { eligible: false, changed: false, reason: 'empty-markerless-body', body };
+  if (!['D', 'C', 'R'].includes(String(prClass))) {
+    throw new Error('Trusted PR class must be one of D/C/R before markerless template bootstrap.');
+  }
+  if (/\{\{[A-Z0-9_]+\}\}/.test(body)) {
+    return { eligible: false, changed: false, reason: 'markerless-body-has-unresolved-placeholders', body };
+  }
+  if (/CAPITAL_AI_PRODUCTION_BASELINE_(?:START|END)/.test(body)) {
+    return { eligible: false, changed: false, reason: 'markerless-body-has-baseline-markers', body };
+  }
+
+  const evidence = [...new Set(durableClaimEvidence.map((value) => String(value || '').trim()).filter(Boolean))];
+  const repaired = [
+    '<!-- ' + PR_TEMPLATE_MARKER + ' -->',
+    '`' + PR_TEMPLATE_MARKER + '`',
+    '# CAPITAL-AI Pull Request',
+    '',
+    `> **P2 🟡 Normal · NOT_EVALUATED ⚪ · PR-Klasse ${prClass}**`,
+    '> Bestehender PR-Body wurde deterministisch in den kanonischen v1.6-Rahmen überführt; fachlicher Inhalt bleibt als Evidence erhalten.',
+    '',
+    '## 1. 🎯 Kurzüberblick',
+    '',
+    '- **Warum:** PR-Governance hat einen markerlosen bestehenden PR-Body erkannt.',
+    '- **Ziel / Exit Gate:** Kanonischen v1.6-Metadatenrahmen herstellen, ohne fachliche Aussagen des bestehenden Bodys neu zu bewerten.',
+    '',
+    SECTION_PROJECT,
+    '',
+    '- **Projekt / Owner / PVC:** aus bestehendem PR-Inhalt und Repository-Evidence; Autofix erzeugt keine neue Ownership-Aussage.',
+    ...evidence.map((value) => `- **Dauerhafte Claim-Evidence:** ${value}`),
+    '',
+    '## 3. 🛠️ Umsetzung',
+    '',
+    '### Vorheriger PR-Body — unveränderte Evidence',
+    '',
+    quoteExistingBodyAsEvidence(body),
+    '',
+    SECTION_ROADMAP,
+    '',
+    '- **Priorität:** P2 🟡 Normal',
+    '- **Warum diese Priorität:** Konservativer Autofix-Default; keine P0/P1-Eskalation wird aus markerlosem Freitext erfunden.',
+    '- **Roadmap / Work Package:** N/A — bestehender PR; Autofix erzeugt keine neue Task-Autorität.',
+    '',
+    SECTION_VERSION,
+    '',
+    '- **Versionsimpact:** NOT_EVALUATED ⚪',
+    '- **Versionsbegründung:** Markerloser Alt-Body liefert keine deterministische Versionsevidence.',
+    '- **Version-Manager-Check:** NOT_RUN — repositoryseitige Checks liefern die technische Evidence; keine separate Start-Freigabe erforderlich.',
+    `- **PR-Klasse:** ${prClass}`,
+    '- **Klassenbegründung:** Von trusted-main classifyPrScope übernommen.',
+    '- **Erforderliche Checks:** gemäß trusted-main PR-Klasse.',
+    '',
+    SECTION_CHECK,
+    '',
+    '- **Main synchronisiert:** durch exact-head/base Specialist-Grenze gebunden.',
+    '- **Changed-File-/Semantic-Overlap:** wird außerhalb dieses Body-Autofix weiterhin fail-closed korreliert.',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '- **Agent-Self-Merge / Auto-Merge:** Nein',
+    '',
+    '## 7. Maschinenlesbare Baseline',
+    '',
+  ].join('\n');
+
+  if (detectPrTemplateVersion(repaired) !== PR_TEMPLATE_VERSION) {
+    throw new Error('Markerless template bootstrap did not converge to v1.6.');
+  }
+  const missingAfter = findMissingRequiredSections(repaired);
+  if (missingAfter.length > 0) {
+    throw new Error('Markerless template bootstrap left missing sections: ' + missingAfter.join(', '));
+  }
+  return { eligible: true, changed: true, reason: 'markerless-body-bootstrapped-to-v1.6', body: repaired };
+}
+export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durableClaimEvidence = [] } = {}) {
   const body = String(bodyText || '');
   if (PR_TEMPLATE_VERSION !== '1.6.0') {
     throw new Error('Legacy repair requires review for a newer PR template contract.');
@@ -128,7 +211,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     return { eligible: false, changed: false, reason: 'already-canonical', body };
   }
   if (!detectPrTemplateVersion(body)) {
-    return { eligible: false, changed: false, reason: 'missing-supported-template-marker', body };
+    return bootstrapMarkerlessBody(body, { prClass, durableClaimEvidence });
   }
   const fullLegacyMissing = sameOrderedValues(
     missing,
@@ -450,7 +533,18 @@ async function main() {
   }
 
   const originalBody = String(livePr.body || '');
-  const repair = repairLegacyPrBodyStructure(originalBody, { prClass });
+  const baseRef = process.env.PR_BASE_REF || 'origin/main';
+  const headRef = process.env.PR_HEAD_REF || 'HEAD';
+  const claimFiles = listAddedClaimFiles(baseRef, headRef);
+  if (claimFiles.length > 1) fail(`Markerless PR repair erwartet höchstens einen neuen Work-Claim; gefunden: ${claimFiles.length}.`);
+  const durableClaimEvidence = [];
+  if (claimFiles.length === 1) {
+    const claimPath = claimFiles[0];
+    const claim = readJsonFile(claimPath);
+    if (claim?.claimId) durableClaimEvidence.push(String(claim.claimId));
+    durableClaimEvidence.push(claimPath);
+  }
+  const repair = repairLegacyPrBodyStructure(originalBody, { prClass, durableClaimEvidence });
   if (!repair.eligible || !repair.changed) {
     console.log('[PR-TEMPLATE-REPAIR] no write: ' + repair.reason);
     appendGithubOutput({ changed: 'false', eligible: repair.eligible ? 'true' : 'false', reason: repair.reason });
