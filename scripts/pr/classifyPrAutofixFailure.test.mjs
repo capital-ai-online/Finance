@@ -196,6 +196,32 @@ test('repeated same-signature autofix heads are blocked', () => {
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX);
 });
 
+test('registers the exact stale Self-Healing next-slice assertion as an invariant repair', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'FAIL tests/unit/selfHealingSupersession.test.ts > self-healing supersession surfaces > releases merged SH-02 claims and advances the canonical work graph',
+      "AssertionError: expected '# OPS-08-B-SH-02' to contain '**Next functional slice:** \`SH-02.6\`'",
+    ].join('\n'),
+  });
+  assert.equal(result.classification, 'DETERMINISTIC_TEST_EXPECTATION_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR);
+  assert.equal(result.failureSignature, 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1');
+  assert.equal(result.repairerId, 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1');
+  assert.deepEqual(result.allowedPaths, ['tests/unit/selfHealingSupersession.test.ts']);
+});
+
+test('does not generalize unrelated assertion failures into a work-graph autofix', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'FAIL tests/unit/other.test.ts > unrelated test',
+      "AssertionError: expected value to contain '**Next functional slice:** \`SH-02.6\`'",
+    ].join('\n'),
+  });
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN);
+});
+
 test('ordinary unknown test failures remain blocked', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',
