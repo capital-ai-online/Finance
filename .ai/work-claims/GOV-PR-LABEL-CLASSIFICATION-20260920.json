@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-PR-LABEL-CLASSIFICATION-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Classify pull requests from the complete attached GitHub label set while preserving unknown labels, surfacing contradictory metadata drift, and keeping labels non-authorizing.",
+  "workItemDE": "Pull Requests anhand des vollständigen angehängten GitHub-Label-Sets klassifizieren, unbekannte Labels erhalten, widersprüchliche Metadaten als Drift sichtbar machen und Labels strikt nicht-autorisierend halten.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-20T14:20:00Z",
+  "baseBranch": "main",
+  "baseSha": "fb8b9dd3c661ecf5d202d570fe435496cbe47461",
+  "branch": "agent/governance-pr-label-classification-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-PR-LABEL-CLASSIFICATION-20260920.json",
+    ".github/workflows/pr-label-classification.yml",
+    "docs/projects/governance/work-packages/GOV_PR_LABEL_CLASSIFICATION_2026-09-20.md",
+    "scripts/pr/prLabelClassification.mjs",
+    "scripts/pr/prLabelClassification.test.mjs"
+  ],
+  "correlation": {
+    "currentMainAtStart": "fb8b9dd3c661ecf5d202d570fe435496cbe47461",
+    "openPullRequestsChecked": [],
+    "changedFileOverlap": false,
+    "authorityOverlap": "PR #1140 owns PR-template v1.7 files. This slice uses separate classifier/workflow/work-package paths and does not modify the open PR contract."
+  },
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+}
