@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { createGitHubLicenseUsageReadClient } from './githubLicenseUsageReadClient.mjs';
+import { classifyGitHubVariablesReadStatus } from './githubVariablesReadPolicy.mjs';
 
 function requiredEnv(name) {
   const value = String(process.env[name] || '').trim();
@@ -50,9 +51,10 @@ async function capture(scope, operation) {
     }
     if (error?.status === 404) {
       return Object.freeze({
-        status: 'NOT_FOUND_OR_NOT_SHARED',
+        status: 'NOT_CONFIGURED',
         scope,
         providerStatus: 404,
+        reason: 'GitHub returned 404 for this variable at the requested scope',
       });
     }
     throw error;
@@ -85,10 +87,10 @@ const [repositoryVariable, organizationVariable] = await Promise.all([
   ),
 ]);
 
+const decision = classifyGitHubVariablesReadStatus(repositoryVariable, organizationVariable);
+
 const output = Object.freeze({
-  status: repositoryVariable.status === 'PASS' || organizationVariable.status === 'PASS'
-    ? 'PASS'
-    : 'BLOCKED',
+  status: decision.status,
   mode: 'PRIVATE_GITHUB_ACTIONS_VARIABLE_READ',
   organization,
   repository,
@@ -102,4 +104,4 @@ const output = Object.freeze({
 });
 
 process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
-if (output.status !== 'PASS') process.exitCode = 2;
+if (decision.exitCode !== 0) process.exitCode = decision.exitCode;
