@@ -48,8 +48,8 @@ function successfulRun(name, appId, id) {
 
 function canonicalBody() {
   return [
-    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
-    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
     '# Test',
     '',
     '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
@@ -151,7 +151,7 @@ test('exact changed-file overlap is deterministic and owner-neutral', () => {
   );
 });
 
-test('reconciler normalizes v1.7 decision surface and is idempotent', () => {
+test('reconciler normalizes v1.8 decision surface and is idempotent', () => {
   const gates = {
     main: 'PASS',
     scope: 'PASS',
@@ -179,7 +179,7 @@ test('reconciler normalizes v1.7 decision surface and is idempotent', () => {
   assert.equal(second.reason, 'already-current');
 });
 
-test('reconciler repairs missing v1.7 Decision/Evidence projections without touching technical evidence', () => {
+test('reconciler repairs missing v1.8 Decision/Evidence projections without touching technical evidence', () => {
   const gates = {
     main: 'PASS',
     scope: 'PASS',
@@ -228,6 +228,29 @@ test('reconciler refuses ambiguous duplicate Decision section boundaries', () =>
   assert.equal(result.eligible, false);
   assert.equal(result.reason, 'decision-section-boundary-ambiguous');
 });
+test('reconciler atomically migrates canonical v1.7 to v1.8 and adds the live dashboard', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PENDING',
+    security: 'PASS',
+    baseline: 'PASS',
+  };
+  const legacy = canonicalBody().replaceAll(
+    'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0',
+    'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0',
+  );
+  const result = reconcileDecisionBody(legacy, gates);
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'v1.7-to-v1.8-live-dashboard-migrated');
+  assert.match(result.body, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.8\.0/);
+  assert.doesNotMatch(result.body, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.7\.0/);
+  assert.match(result.body, /^### 📡 Live Dashboard$/m);
+  assert.match(result.body, /^\| Status \| EVIDENCE_PENDING \|$/m);
+});
+
 test('a blocked gate dominates the human decision state', () => {
   const result = reconcileDecisionBody(canonicalBody(), {
     main: 'PASS',
