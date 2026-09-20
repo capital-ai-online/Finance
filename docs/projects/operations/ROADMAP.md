@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@59b65e4907b27f57acd639d56f83ab365f30e4a5`
+**Baseline:** `main@53c38dbeaf85262ed1784ce3458d61b54f6da3bb`
 
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
