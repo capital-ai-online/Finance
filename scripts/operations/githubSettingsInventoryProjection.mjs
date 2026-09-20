@@ -105,6 +105,70 @@ export function projectRulesetInventory(raw) {
   });
 }
 
+
+function roundedGiB(bytes) {
+  const value = typeof bytes === 'number' && Number.isFinite(bytes) ? bytes : 0;
+  return Number((value / (1024 ** 3)).toFixed(6));
+}
+
+export function projectCacheUsage(raw) {
+  const settings = raw && typeof raw === 'object' ? raw : {};
+  const bytes = typeof settings.active_caches_size_in_bytes === 'number'
+    ? settings.active_caches_size_in_bytes
+    : 0;
+  return Object.freeze({
+    activeCachesCount: Number.isInteger(settings.active_caches_count)
+      ? settings.active_caches_count
+      : 0,
+    activeCachesSizeInBytes: bytes,
+    activeCachesSizeGiB: roundedGiB(bytes),
+    fullName: typeof settings.full_name === 'string' ? settings.full_name : null,
+  });
+}
+
+export function projectCacheRetentionLimit(raw) {
+  const settings = raw && typeof raw === 'object' ? raw : {};
+  return Object.freeze({
+    days: Number.isInteger(settings.days) ? settings.days : null,
+  });
+}
+
+export function projectCacheStorageLimit(raw) {
+  const settings = raw && typeof raw === 'object' ? raw : {};
+  return Object.freeze({
+    maxCacheSizeGiB: typeof settings.max_cache_size_gb === 'number'
+      && Number.isFinite(settings.max_cache_size_gb)
+      ? settings.max_cache_size_gb
+      : null,
+  });
+}
+
+export function projectArtifactStorageInventory(raw) {
+  const payload = raw && typeof raw === 'object' ? raw : {};
+  const artifacts = Array.isArray(payload.artifacts) ? payload.artifacts : [];
+  const active = artifacts.filter((artifact) => artifact?.expired !== true);
+  const expired = artifacts.filter((artifact) => artifact?.expired === true);
+  const activeBytes = active.reduce(
+    (sum, artifact) => sum + (
+      typeof artifact?.size_in_bytes === 'number' && Number.isFinite(artifact.size_in_bytes)
+        ? artifact.size_in_bytes
+        : 0
+    ),
+    0,
+  );
+
+  return Object.freeze({
+    totalCount: Number.isInteger(payload.total_count) ? payload.total_count : artifacts.length,
+    observedCount: artifacts.length,
+    activeCount: active.length,
+    expiredCount: expired.length,
+    activeSizeInBytes: activeBytes,
+    activeSizeGiB: roundedGiB(activeBytes),
+    namesRedacted: true,
+    workflowIdentityRedacted: true,
+  });
+}
+
 export function projectCapturedSetting(capture, projector) {
   if (!capture || capture.status !== 'PASS') {
     return Object.freeze({
