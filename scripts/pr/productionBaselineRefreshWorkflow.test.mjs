@@ -40,6 +40,7 @@ test('Governance rerun fallback materializes only for re-run attempts and binds 
   assert.match(workflow, /types: \[in_progress, completed\]/);
   for (const token of [
     "github.event.action == 'completed'",
+        'github.event.workflow_run.run_attempt == 1',
     "github.event.action == 'in_progress'",
     'github.event.workflow_run.run_attempt > 1',
     'Governance-Source-Run bis zum Abschluss exakt binden',
