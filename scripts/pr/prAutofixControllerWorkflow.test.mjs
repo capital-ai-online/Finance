@@ -4,8 +4,9 @@ import test from 'node:test';
 
 const workflow = fs.readFileSync('.github/workflows/pr-autofix-controller.yml', 'utf8');
 
-test('controller is a privileged completion trigger with default-deny permissions', () => {
+test('controller is a privileged completion trigger with rerun fallback and default-deny permissions', () => {
   assert.match(workflow, /workflow_run:\n\s+workflows: \[CI, PR Governance\]/);
+  assert.match(workflow, /types: \[in_progress, completed\]/);
   assert.match(workflow, /^permissions: \{\}$/m);
   assert.doesNotMatch(workflow, /pull_request_target\s*:/);
   assert.doesNotMatch(workflow, /permissions:\s*write-all/);
@@ -22,9 +23,28 @@ test('classifier is read-only and binds exact same-repository PR head to current
     'pr.head.repo?.full_name === repository',
     'normalizeSha(pr.head.sha) === headSha',
     'mainSha !== baseSha',
-    "github.event.workflow_run.conclusion == 'failure'",
+    "github.event.action == 'completed'",
+    "github.event.action == 'in_progress'",
+    'github.event.workflow_run.run_attempt > 1',
+    "steps.source.outputs.conclusion == 'failure'",
   ]) assert.ok(block.includes(token), 'missing classify guard: ' + token);
   assert.doesNotMatch(block, /contents: write|pull-requests: write|actions: write/);
+});
+
+test('rerun fallback waits for the exact source run without adding write authority', () => {
+  const classify = workflow.split('  classify:\n')[1].split('\n  repair:\n')[0];
+  for (const token of [
+    'Source-Run bis zum Abschluss exakt binden',
+    'github.rest.actions.getWorkflowRun',
+    'run_id: expectedId',
+    'Number(data.id) !== expectedId',
+    'normalizeSha(data.head_sha) !== expectedHead',
+    "String(data.path || '') !== expectedPath",
+    "sourceRun.status !== 'completed'",
+    "core.setOutput('conclusion'",
+    'Date.now() + 240_000',
+  ]) assert.ok(classify.includes(token), 'missing rerun source binding: ' + token);
+  assert.doesNotMatch(classify, /contents: write|pull-requests: write|actions: write/);
 });
 
 test('failure logs are bounded, redacted and never uploaded as artifacts', () => {
