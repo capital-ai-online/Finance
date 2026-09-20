@@ -431,10 +431,10 @@ test('markerless bootstrap stays fail-closed for unresolved placeholders or base
 });
 
 
-test('canonical current v1.7 Human Decision body is left unchanged', () => {
+test('canonical current v1.8 Human Decision + Live Dashboard body is left unchanged', () => {
   const body = [
-    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
-    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
     '# Human Decision PR',
     '',
     '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
@@ -476,10 +476,10 @@ test('canonical current v1.7 Human Decision body is left unchanged', () => {
   assert.equal(result.body, body);
 });
 
-test('normalizes only the observed current v1.7 P0-HIGHEST priority token', () => {
+test('normalizes only the observed current v1.8 P0-HIGHEST priority token', () => {
   const body = [
-    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
-    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
     '# Human Decision PR',
     '',
     '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
@@ -520,13 +520,13 @@ test('normalizes only the observed current v1.7 P0-HIGHEST priority token', () =
   const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
   assert.equal(result.eligible, true);
   assert.equal(result.changed, true);
-  assert.equal(result.reason, 'current-v1.7-priority-token-normalized');
+  assert.equal(result.reason, 'current-v1.8-priority-token-normalized');
   assert.match(result.body, /^> P0 🔴 Kritisch · PR-Klasse C · NONE ➖$/m);
   assert.match(result.body, /^- \*\*Priorität:\*\* P0 🔴 Kritisch$/m);
   assert.doesNotMatch(result.body, /P0-HIGHEST 🔴 Kritisch/);
 });
 
-test('repairs only the exact current v1.7 legacy baseline-section migration artifact', () => {
+test('repairs only the exact current v1.8 legacy baseline-section migration artifact', () => {
   const baseline = [
     '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
     '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
@@ -538,8 +538,8 @@ test('repairs only the exact current v1.7 legacy baseline-section migration arti
     '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
   ].join('\n');
   const body = [
-    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
-    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
     '# Human Decision PR',
     '',
     '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
@@ -580,7 +580,7 @@ test('repairs only the exact current v1.7 legacy baseline-section migration arti
   const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
   assert.equal(result.eligible, true);
   assert.equal(result.changed, true);
-  assert.equal(result.reason, 'current-v1.7-legacy-baseline-section-repaired');
+  assert.equal(result.reason, 'current-v1.8-legacy-baseline-section-repaired');
   assert.deepEqual(result.body.match(/^## .+$/gm), [
     '## 1. 🧭 Entscheidung',
     '## 2. ✅ Evidence',
@@ -597,10 +597,10 @@ test('repairs only the exact current v1.7 legacy baseline-section migration arti
   );
 });
 
-test('other malformed current v1.7 shapes remain fail-closed', () => {
+test('other malformed current v1.8 shapes remain fail-closed', () => {
   const body = [
-    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
-    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
     '## 1. 🧭 Entscheidung',
     '## 2. ✅ Evidence',
     '## 3. 🔍 Technical Evidence',
@@ -609,5 +609,5 @@ test('other malformed current v1.7 shapes remain fail-closed', () => {
   const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
   assert.equal(result.eligible, false);
   assert.equal(result.changed, false);
-  assert.equal(result.reason, 'current-v1.7-unsupported-shape');
+  assert.equal(result.reason, 'current-v1.8-unsupported-shape');
 });
