@@ -195,6 +195,23 @@ describe('process graph canonical projection', () => {
         'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
       ],
     });
+
+    const decisionFix = fixes.find(
+      (fix) => fix.actionId === 'RECONCILE_PR_DECISION_EVIDENCE',
+    );
+    expect(decisionFix).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.decision-evidence-reconciler',
+      verificationProbe: 'exact-pr-decision-evidence-readback',
+      maxAttempts: 1,
+      preferredForFindingClasses: ['REPOSITORY_PR_DECISION_EVIDENCE_DRIFT'],
+    });
+
+    const observeOnly = fixes.find((fix) => fix.actionId === 'OBSERVE_ONLY');
+    expect(observeOnly?.preferredForFindingClasses).toContain('PROTECTED_GITHUB_ACTIONS_COST_BLOCKER');
   });
 
   it('accepts effective Self-Healing package state only from the evidence-only PVC-18 envelope', () => {
