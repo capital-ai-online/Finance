@@ -141,7 +141,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
 
     expect(authorities.version).toBe('1.64.0');
     expect(catalog.version).toBe('1.27.0');
-    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('4.0.0');
+    expect(authority('AUTH-GOV-AGENT-TRUST-ROOT')?.version).toBe('4.1.0');
     expect(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.version).toBe('4.0.0');
     expect(authority('AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION')?.version).toBe('4.0.0');
     expect(String(authority('AUTH-GOV-HUMAN-OWNER-PR-APPROVAL')?.scope ?? '')).toContain('resolved exclusively through AGENTS.md');
