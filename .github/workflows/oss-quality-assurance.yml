@@ -104,8 +104,7 @@ jobs:
           scan-args: |-
             --format=json
             --output=artifacts/oss-quality/osv-base.json
-            -L
-            package-lock.json
+            --lockfile=package-lock.json
 
       - name: Restore exact PR head
         if: always()
@@ -123,8 +122,7 @@ jobs:
           scan-args: |-
             --format=json
             --output=artifacts/oss-quality/osv-head.json
-            -L
-            package-lock.json
+            --lockfile=package-lock.json
 
       - name: Setup repository Node runtime
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
