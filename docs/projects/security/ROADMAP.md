@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEC — Canonical Roadmap
 
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+**Baseline:** `main@f1c9fc86be83f8aacd8372fc918aa88e4012ba6d`
 
 **Project:** `CAPITAL-AI-SEC`  
 **Folder:** `docs/projects/security/`  
