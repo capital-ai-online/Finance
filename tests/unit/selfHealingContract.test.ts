@@ -5,6 +5,7 @@ import {
   evaluateRemediationEligibility,
   getRemediationAction,
   getRemediationPolicies,
+  getRemediationPolicy,
   getSelfHealingContractSnapshot,
   resolveConvergence,
   validateSelfHealingContract,
@@ -102,6 +103,95 @@ describe('self-healing contract', () => {
       operationIdempotency: 'IDEMPOTENT',
     });
     expect(exhausted).toMatchObject({ state: 'BLOCKED', reason: 'BUDGET_EXHAUSTED' });
+  });
+
+  it('maps repository projection drift to one bounded PR-autofix action', () => {
+    for (const findingClass of [
+      'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+    ] as const) {
+      const policy = getRemediationPolicy(findingClass);
+      expect(policy.preferredActionId).toBe('RECONCILE_REPOSITORY_PROJECTION');
+      expect(policy.allowedActionIds).toEqual([
+        'RECONCILE_REPOSITORY_PROJECTION',
+        'OBSERVE_ONLY',
+      ]);
+    }
+
+    const action = getRemediationAction('RECONCILE_REPOSITORY_PROJECTION');
+    expect(action).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.autofix',
+      killSwitch: 'self-healing.repository-pr-autofix',
+      verificationProbe: 'exact-pr-head-ci-governance-readback',
+      budget: { maxAttempts: 1 },
+    });
+
+    const unauthorized = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: false,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(unauthorized).toMatchObject({ state: 'BLOCKED', reason: 'CAPABILITY_NOT_AUTHORIZED' });
+
+    const eligible = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
+  });
+
+  it('routes Decision/Evidence drift only through the existing single PR-body reconciler', () => {
+    const policy = getRemediationPolicy('REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
+    expect(policy.preferredActionId).toBe('RECONCILE_PR_DECISION_EVIDENCE');
+    expect(policy.allowedActionIds).toEqual([
+      'RECONCILE_PR_DECISION_EVIDENCE',
+      'OBSERVE_ONLY',
+    ]);
+
+    const action = getRemediationAction('RECONCILE_PR_DECISION_EVIDENCE');
+    expect(action).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.decision-evidence-reconciler',
+      killSwitch: 'self-healing.pr-decision-evidence-reconciler',
+      verificationProbe: 'exact-pr-decision-evidence-readback',
+      budget: { maxAttempts: 1 },
+    });
+  });
+
+  it('keeps the 45k Actions cost finding protected from autonomous remediation', () => {
+    const policy = getRemediationPolicy('PROTECTED_GITHUB_ACTIONS_COST_BLOCKER');
+    expect(policy.preferredActionId).toBe('OBSERVE_ONLY');
+    expect(policy.allowedActionIds).toEqual(['OBSERVE_ONLY']);
+
+    const repairAttempt = evaluateRemediationEligibility({
+      findingClass: 'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(repairAttempt).toMatchObject({ state: 'BLOCKED', reason: 'ACTION_NOT_ALLOWED_FOR_FINDING' });
   });
 
   it('fails closed for held, killed, unverified and unsafe remediation', () => {

@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import {
+  getRemediationActions,
+  getRemediationPolicies,
+} from '../../../../platform/Supervisor/selfHealingContract';
 import type {
   OperationalTraceStateEnvelope,
   OperationalTraceStateRecord,
 } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
 import {
+  buildFixAlgorithmProjection,
   buildProcessGraphViewModel,
   mapOperationalTraceState,
   parseAutonomousWorkStages,
@@ -166,6 +171,47 @@ describe('process graph canonical projection', () => {
       target: 'SH-02.3E',
       relation: 'dependency',
     });
+  });
+
+  it('projects the canonical bounded fix algorithm without creating execution authority', () => {
+    const fixes = buildFixAlgorithmProjection(
+      getRemediationActions(),
+      getRemediationPolicies(),
+    );
+    const repositoryFix = fixes.find(
+      (fix) => fix.actionId === 'RECONCILE_REPOSITORY_PROJECTION',
+    );
+
+    expect(repositoryFix).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.autofix',
+      verificationProbe: 'exact-pr-head-ci-governance-readback',
+      maxAttempts: 1,
+      preferredForFindingClasses: [
+        'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+        'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+      ],
+    });
+
+    const decisionFix = fixes.find(
+      (fix) => fix.actionId === 'RECONCILE_PR_DECISION_EVIDENCE',
+    );
+    expect(decisionFix).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.decision-evidence-reconciler',
+      verificationProbe: 'exact-pr-decision-evidence-readback',
+      maxAttempts: 1,
+      preferredForFindingClasses: ['REPOSITORY_PR_DECISION_EVIDENCE_DRIFT'],
+    });
+
+    const observeOnly = fixes.find((fix) => fix.actionId === 'OBSERVE_ONLY');
+    expect(observeOnly?.preferredForFindingClasses).toContain('PROTECTED_GITHUB_ACTIONS_COST_BLOCKER');
   });
 
   it('accepts effective Self-Healing package state only from the evidence-only PVC-18 envelope', () => {

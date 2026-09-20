@@ -14,8 +14,49 @@ const REGISTERED = Object.freeze([
     exactSignatures: Object.freeze(['EXPECTATION_SAMPLE_V1']),
     repairerPath: 'scripts/pr/repairers/expectationSampleV1.mjs',
     allowedPaths: Object.freeze(['tests/unit/sample.test.ts']),
+    evidenceBinding: Object.freeze({
+      kind: 'EXACT_LOG_TOKENS_V1',
+      requiredTokens: Object.freeze([
+        'tests/unit/sample.test.ts',
+        'expected 2 to equal 3',
+      ]),
+    }),
   }),
 ]);
+
+test('delegates v1.7 Decision/Evidence drift only to the live reconciler', () => {
+  for (const logText of [
+    'Error: PR #1173 enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1.7.0.',
+    'Error: PR #1173 fehlt kanonische Decision-Evidence: Required Checks.',
+    'Error: PR #1173 behauptet Decision Status EVIDENCE_PENDING, aber die sichtbaren Gate-Zustände ergeben READY_FOR_HUMAN_DECISION. Decision Status darf nicht manuell von der Evidence abweichen.',
+  ]) {
+    const result = classifyPrAutofixFailure({
+      sourceWorkflow: '.github/workflows/pr-governance.yml',
+      logText,
+      prMetadataShape: 'CURRENT_V17_CANONICAL',
+    });
+    assert.equal(result.classification, 'PR_DECISION_EVIDENCE_DRIFT');
+    assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
+    assert.equal(result.reason, 'decision-evidence-reconciler-owns-write');
+    assert.equal(result.findingClass, 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
+    assert.equal(result.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
+  }
+});
+
+test('classifies the 45k Actions minute gate as an explicit protected blocker', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'Error: GitHub Actions Hard-Blocker aktiv: Issue #2001.',
+      'Der monatliche Enterprise-Actions-Verbrauch hat 45.000 Minuten erreicht;',
+    ].join(' '),
+  });
+  assert.equal(result.classification, 'PROTECTED_ACTIONS_MINUTE_COST_BLOCKER');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_PROTECTED_ACTION);
+  assert.equal(result.reason, 'protected-45k-actions-minute-blocker');
+  assert.equal(result.findingClass, 'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER');
+  assert.equal(result.actionId, 'OBSERVE_ONLY');
+});
 
 test('delegates exact current-state baseline drift to the existing specialist', () => {
   const result = classifyPrAutofixFailure({
@@ -23,6 +64,8 @@ test('delegates exact current-state baseline drift to the existing specialist', 
     logText: 'ERROR CURRENT_STATE_PROJECTION_BASELINE_STALE: docs/projects/operations/ROADMAP.md',
   });
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_CURRENT_STATE_BASELINE);
+  assert.equal(result.findingClass, 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT');
+  assert.equal(result.actionId, 'RECONCILE_REPOSITORY_PROJECTION');
 });
 
 test('delegates an exact stale production baseline before broad protected-provider vocabulary', () => {
@@ -174,11 +217,23 @@ test('only an exact registered deterministic expectation signature becomes repai
   validatePrAutofixRepairRegistry(REGISTERED);
   const allowed = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',
-    logText: 'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: EXPECTATION_SAMPLE_V1',
+    logText: [
+      'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: EXPECTATION_SAMPLE_V1',
+      'tests/unit/sample.test.ts',
+      'expected 2 to equal 3',
+    ].join('\n'),
   }, REGISTERED);
   assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR);
   assert.equal(allowed.repairerId, 'EXPECTATION_SAMPLE_V1');
   assert.deepEqual(allowed.allowedPaths, ['tests/unit/sample.test.ts']);
+  assert.equal(allowed.reason, 'exact-registered-evidence-bound-repairer');
+
+  const evidenceMissing = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: 'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: EXPECTATION_SAMPLE_V1',
+  }, REGISTERED);
+  assert.equal(evidenceMissing.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(evidenceMissing.reason, 'registered-repairer-evidence-not-proven');
 
   const denied = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',
@@ -190,10 +245,42 @@ test('only an exact registered deterministic expectation signature becomes repai
 test('repeated same-signature autofix heads are blocked', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',
-    logText: 'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: EXPECTATION_SAMPLE_V1',
+    logText: [
+      'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: EXPECTATION_SAMPLE_V1',
+      'tests/unit/sample.test.ts',
+      'expected 2 to equal 3',
+    ].join('\n'),
     previousAutofixSignature: 'EXPECTATION_SAMPLE_V1',
   }, REGISTERED);
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX);
+});
+
+test('registers the exact stale Self-Healing next-slice assertion as an invariant repair', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'FAIL tests/unit/selfHealingSupersession.test.ts > self-healing supersession surfaces > releases merged SH-02 claims and advances the canonical work graph',
+      "AssertionError: expected '# OPS-08-B-SH-02' to contain '**Next functional slice:** \`SH-02.6\`'",
+    ].join('\n'),
+  });
+  assert.equal(result.classification, 'DETERMINISTIC_TEST_EXPECTATION_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR);
+  assert.equal(result.failureSignature, 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1');
+  assert.equal(result.repairerId, 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1');
+  assert.deepEqual(result.allowedPaths, ['tests/unit/selfHealingSupersession.test.ts']);
+  assert.equal(result.findingClass, 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT');
+  assert.equal(result.actionId, 'RECONCILE_REPOSITORY_PROJECTION');
+});
+
+test('does not generalize unrelated assertion failures into a work-graph autofix', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'FAIL tests/unit/other.test.ts > unrelated test',
+      "AssertionError: expected value to contain '**Next functional slice:** \`SH-02.6\`'",
+    ].join('\n'),
+  });
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN);
 });
 
 test('ordinary unknown test failures remain blocked', () => {
@@ -213,4 +300,9 @@ test('registry rejects duplicate signatures and foreign ownership', () => {
   assert.throws(() => validatePrAutofixRepairRegistry([
     { ...REGISTERED[0], owner: 'CAPITAL-AI-FE' },
   ]), /CAPITAL-AI-OPS/);
+
+  const { evidenceBinding: _binding, ...withoutEvidenceBinding } = REGISTERED[0];
+  assert.throws(() => validatePrAutofixRepairRegistry([
+    withoutEvidenceBinding,
+  ]), /evidenceBinding/);
 });

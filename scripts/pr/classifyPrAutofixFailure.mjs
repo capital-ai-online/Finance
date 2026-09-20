@@ -10,6 +10,7 @@ import {
 export const PR_AUTOFIX_DECISIONS = Object.freeze({
   DELEGATE_CURRENT_STATE_BASELINE: 'DELEGATE_CURRENT_STATE_BASELINE_AUTOFIX',
   DELEGATE_PR_METADATA: 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH',
+  DELEGATE_PR_DECISION_EVIDENCE: 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER',
   REGISTERED_TEST_REPAIR: 'REGISTERED_TEST_REPAIR',
   BLOCKED_SECURITY_COMPLIANCE: 'BLOCKED_SECURITY_COMPLIANCE',
   BLOCKED_PROTECTED_ACTION: 'BLOCKED_PROTECTED_ACTION',
@@ -27,6 +28,12 @@ const PROTECTED_FAILURE = [
   /(?:^|\b)(?:error|failed|failure|fatal|denied)\b[^\n]*(?:render|production deploy|registry auth|ghcr auth|deployment identity|\biam\b|billing|database mutation|supabase migration)/i,
 ];
 
+const PROTECTED_ACTIONS_MINUTE_BLOCKER = [
+  /GitHub Actions Hard-Blocker aktiv: Issue #\d+/i,
+  /Der monatliche Enterprise-Actions-Verbrauch hat 45\.000 Minuten erreicht/i,
+  /Mehrere offene Actions-Minuten-Blocker gefunden:/i,
+];
+
 const EXACT_STALE_PRODUCTION_BASELINE =
   /Error: PR #\d+ enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline\./i;
 
@@ -35,6 +42,18 @@ const EXACT_V17_STRUCTURE_DRIFT =
 
 const EXACT_V17_PRIORITY_DRIFT =
   /Error: PR #\d+ enthält keine gültige Prioritätsbewertung \(P0[–-]P3\) der Vorlage v1\.7\.0\./i;
+
+const DECISION_EVIDENCE_DRIFT_PATTERNS = [
+  /Error: PR #\d+ enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1\.7\.0\./i,
+  /Error: PR #\d+ fehlt kanonische Decision-Evidence:/i,
+  /Error: PR #\d+ behauptet Decision Status (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED), aber die sichtbaren Gate-Zustände ergeben (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\./i,
+];
+
+const SELF_HEALING_NEXT_SLICE_SIGNATURE = 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1';
+const EXACT_SELF_HEALING_NEXT_SLICE_TEST =
+  /FAIL\s+tests\/unit\/selfHealingSupersession\.test\.ts\s*>\s*self-healing supersession surfaces\s*>\s*releases merged SH-02 claims and advances the canonical work graph/i;
+const EXACT_SELF_HEALING_NEXT_SLICE_LITERAL =
+  /expected[^\n]*to contain '\*\*Next functional slice:\*\* \`SH-02\.\d+[A-Z]?\`'/i;
 
 const TEMPLATE_DELEGATION_PATTERNS = [
   /verwendet keinen unterstützten PR-Vorlagenmarker/i,
@@ -55,7 +74,7 @@ const TEMPLATE_UNSUPPORTED_PATTERNS = [
 function normalizedFailureLines(logText) {
   return String(logText || '')
     .split(/\r?\n/)
-    .filter((line) => /error|fail|fatal|denied|violation|exposed|leak|vulnerab|critical/i.test(line))
+    .filter((line) => /error|fail|fatal|denied|violation|exposed|leak|vulnerab|critical|blocker/i.test(line))
     .join('\n');
 }
 
@@ -67,6 +86,8 @@ function result({
   repairerId = '',
   repairerPath = '',
   allowedPaths = [],
+  findingClass = '',
+  actionId = '',
 }) {
   return {
     classification,
@@ -76,6 +97,8 @@ function result({
     repairerId,
     repairerPath,
     allowedPaths,
+    findingClass,
+    actionId,
   };
 }
 
@@ -101,9 +124,29 @@ export function classifyPrAutofixFailure(
     });
   }
 
+  if (PROTECTED_ACTIONS_MINUTE_BLOCKER.some((pattern) => pattern.test(log))) {
+    return result({
+      classification: 'PROTECTED_ACTIONS_MINUTE_COST_BLOCKER',
+      decision: PR_AUTOFIX_DECISIONS.BLOCKED_PROTECTED_ACTION,
+      reason: 'protected-45k-actions-minute-blocker',
+      findingClass: 'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
+      actionId: 'OBSERVE_ONLY',
+    });
+  }
+
   // Exact PR-Governance contract failures take precedence over broad provider/security
   // vocabulary found in shell/source excerpts inside gh --log-failed output.
   if (source === '.github/workflows/pr-governance.yml') {
+    if (DECISION_EVIDENCE_DRIFT_PATTERNS.some((pattern) => pattern.test(log))) {
+      return result({
+        classification: 'PR_DECISION_EVIDENCE_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
+        reason: 'decision-evidence-reconciler-owns-write',
+        findingClass: 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+        actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+      });
+    }
+
     if (EXACT_STALE_PRODUCTION_BASELINE.test(log)) {
       return result({
         classification: 'PR_PRODUCTION_BASELINE_DRIFT',
@@ -143,6 +186,47 @@ export function classifyPrAutofixFailure(
     }
   }
 
+  if (
+    source === '.github/workflows/ci.yml' &&
+    EXACT_SELF_HEALING_NEXT_SLICE_TEST.test(log) &&
+    EXACT_SELF_HEALING_NEXT_SLICE_LITERAL.test(log)
+  ) {
+    const failureSignature = SELF_HEALING_NEXT_SLICE_SIGNATURE;
+    if (failureSignature === String(previousAutofixSignature || '').trim()) {
+      return result({
+        classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX,
+        reason: 'same-autofix-signature-repeated-on-autofix-head',
+        failureSignature,
+      });
+    }
+
+    const repair = resolveRegisteredPrAutofixRepair(
+      { sourceWorkflow: source, signature: failureSignature, evidenceText: log },
+      registry,
+    );
+    if (!repair.registered) {
+      return result({
+        classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason: repair.reason,
+        failureSignature,
+      });
+    }
+
+    return result({
+      classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+      decision: PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR,
+      reason: 'stale-self-healing-next-slice-literal-replaced-by-work-graph-invariant',
+      failureSignature,
+      repairerId: repair.repairerId,
+      repairerPath: repair.repairerPath,
+      allowedPaths: repair.allowedPaths,
+      findingClass: 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+    });
+  }
+
   if (SECURITY_FAILURE.some((pattern) => pattern.test(failureLines))) {
     return result({
       classification: 'SECURITY_OR_COMPLIANCE_FAILURE',
@@ -167,6 +251,8 @@ export function classifyPrAutofixFailure(
       classification: 'CURRENT_STATE_BASELINE_DRIFT',
       decision: PR_AUTOFIX_DECISIONS.DELEGATE_CURRENT_STATE_BASELINE,
       reason: 'existing-current-state-baseline-specialist-owns-write',
+      findingClass: 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
     });
   }
 
@@ -222,7 +308,7 @@ export function classifyPrAutofixFailure(
       }
 
       const repair = resolveRegisteredPrAutofixRepair(
-        { sourceWorkflow: source, signature: failureSignature },
+        { sourceWorkflow: source, signature: failureSignature, evidenceText: log },
         registry,
       );
       if (!repair.registered) {
@@ -262,6 +348,8 @@ function emitClassification(value) {
     repairer_id: value.repairerId,
     repairer_path: value.repairerPath,
     allowed_paths_json: JSON.stringify(value.allowedPaths),
+    self_healing_finding_class: value.findingClass,
+    self_healing_action_id: value.actionId,
   });
 }
 

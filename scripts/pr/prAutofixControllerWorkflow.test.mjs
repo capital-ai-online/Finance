@@ -80,10 +80,11 @@ test('failure logs are bounded, redacted and never uploaded as artifacts', () =>
   assert.doesNotMatch(workflow, /path: \$\{\{ runner\.temp \}\}\/pr-autofix-failed/);
 });
 
-test('existing baseline and PR metadata writers remain specialist-owned', () => {
+test('existing specialist writers remain single-owner with Decision/Evidence assigned to the reconciler', () => {
   assert.ok(workflow.includes('Current-State Baseline Autofix owns CURRENT_STATE_PROJECTION_BASELINE_* repository writes.'));
-  assert.ok(workflow.includes('PR Production Baseline Auto-Refresh owns deterministic PR-body/template/baseline writes.'));
-  assert.doesNotMatch(workflow, /updatePrProductionBaseline\.mjs|repairLegacyPrBodyStructure\.mjs/);
+  assert.ok(workflow.includes('PR Production Baseline Auto-Refresh owns production-baseline and bounded legacy-template writes.'));
+  assert.ok(workflow.includes('PR Decision Evidence Reconciler owns the canonical v1.7 Decision/Evidence projection.'));
+  assert.doesNotMatch(workflow, /updatePrProductionBaseline\.mjs|repairLegacyPrBodyStructure\.mjs|reconcilePrDecisionEvidence\.mjs/);
 });
 
 test('metadata delegation creates no second writer and no rerun dispatch', () => {
@@ -93,6 +94,15 @@ test('metadata delegation creates no second writer and no rerun dispatch', () =>
   assert.ok(block.includes('independently subscribed PR Production Baseline Auto-Refresh workflow'));
   assert.doesNotMatch(block, /actions: write|pull-requests: write|contents: write/);
   assert.doesNotMatch(block, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{run_id\}\/rerun|exactSpecialist/);
+});
+
+test('Decision/Evidence delegation creates no second PR-body writer and no Governance rerun', () => {
+  const block = workflow.split('  delegate_pr_decision_evidence:\n')[1].split('\n\n  repair:\n')[0];
+  assert.ok(block.includes("needs.classify.outputs.decision == 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER'"));
+  assert.match(block, /permissions:\n      contents: read/);
+  assert.ok(block.includes('exclusively owned by the already subscribed PR Decision Evidence Reconciler'));
+  assert.doesNotMatch(block, /actions: write|pull-requests: write|contents: write/);
+  assert.doesNotMatch(block, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{run_id\}\/rerun|reconcilePrDecisionEvidence\.mjs/);
 });
 
 test('candidate checkout exists only in read-only repair job and never in write job', () => {

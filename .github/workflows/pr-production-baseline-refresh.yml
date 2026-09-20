@@ -12,9 +12,9 @@ run-name: >-
 #   "Deployment verifiziert / Render-Produktion" job and /healthz reports that same SHA.
 # - Candidate code is checked out as data but never executed; all executed policy scripts come from main.
 # - The updater may repair only explicitly allowlisted, deterministic PR-body shapes; otherwise it replaces only the canonical baseline block and is idempotent.
-# - Baseline writes and first-attempt stale-baseline races are rebound to an exact completed
-#   PR Governance run for the same PR/head/base. Race recovery is limited to run_attempt == 1,
-#   so a real Governance failure cannot create an automatic rerun loop.
+# - Governance reruns are rebound to an exact completed PR Governance run for the same PR/head/base
+#   and are permitted only after a proven production-baseline write or deterministic metadata repair.
+#   An unchanged failed Governance run never receives a generic retry from this workflow.
 # Reviewed privileged completion trigger: exact source path/repository/event guards,
 # trusted-main policy only, no PR code/artifacts/caches executed, isolated output.
 # Regression coverage: scripts/pr/productionBaselineRefreshWorkflow.test.mjs.
@@ -294,14 +294,14 @@ jobs:
               return;
             }
 
-            const firstFailedAttempt =
-              exactRun.conclusion === 'failure' && Number(exactRun.run_attempt || 1) === 1;
-            const shouldRerun = bodyRepaired || baselineChanged || firstFailedAttempt;
+            const provenMetadataRace = bodyRepaired;
+            const provenBaselineRace = baselineChanged;
+            const shouldRerun = provenMetadataRace || provenBaselineRace;
 
             if (!shouldRerun) {
               const bodyState = bodyAlreadyCanonical ? 'canonical' : 'repair-not-applicable';
               core.info(
-                `PR #${prNumber}: Baseline unverändert; PR-Body-Status=${bodyState}; latest Governance ${exactRun.id} conclusion=${exactRun.conclusion} attempt=${exactRun.run_attempt || 1}; kein automatischer Re-Run.`,
+                `PR #${prNumber}: keine nachgewiesene Baseline-/Metadata-Mutation; PR-Body-Status=${bodyState}; latest Governance ${exactRun.id} conclusion=${exactRun.conclusion} attempt=${exactRun.run_attempt || 1}; kein automatischer Re-Run.`,
               );
               return;
             }
@@ -312,16 +312,14 @@ jobs:
               run_id: exactRun.id,
             });
             core.notice(
-              bodyRepaired
-                ? `PR #${prNumber}: kanonische PR-Body-Struktur deterministisch repariert; exact-head/base Governance Run ${exactRun.id} wird erneut ausgeführt.`
-                : baselineChanged
-                  ? `PR #${prNumber}: Baseline-Write an exact-head/base Governance Run ${exactRun.id} gebunden; Governance wird erneut ausgeführt.`
-                  : `PR #${prNumber}: Race-Recovery für bereits korrekte Baseline; fehlgeschlagener Governance Run ${exactRun.id} wird einmalig von attempt 1 erneut ausgeführt.`,
+              provenMetadataRace
+                ? `PR #${prNumber}: deterministische Metadata-Reparatur nachgewiesen; exact-head/base Governance Run ${exactRun.id} wird erneut ausgeführt.`
+                : `PR #${prNumber}: Produktions-Baseline-Write nachgewiesen; exact-head/base Governance Run ${exactRun.id} wird erneut ausgeführt.`,
             );
 
       - name: Baseline-Status bestätigen
         if: steps.pr.outputs.eligible == 'true'
-        run: echo "Baseline-Korrelation abgeschlossen; etwaige Governance-Revalidierung ist exact-head/base gebunden und gegen Rerun-Schleifen begrenzt."
+        run: echo "Baseline-Korrelation abgeschlossen; Governance-Revalidierung erfolgt nur nach nachgewiesenem Baseline-/Metadata-Write und bleibt exact-head/base gebunden."
 
       - name: Nicht autorisierten PR ohne Mutation überspringen
         if: steps.pr.outputs.eligible != 'true'

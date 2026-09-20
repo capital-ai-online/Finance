@@ -175,6 +175,55 @@ test('reconciler normalizes v1.7 decision surface and is idempotent', () => {
   assert.equal(second.reason, 'already-current');
 });
 
+test('reconciler repairs missing v1.7 Decision/Evidence projections without touching technical evidence', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PASS',
+    security: 'PASS',
+    baseline: 'PASS',
+  };
+  const technical = canonicalBody().split('## 3. 🔍 Technical Evidence')[1];
+  const damaged = canonicalBody()
+    .replace('> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**\n', '')
+    .replace('| Evidence | alte manuelle Evidence |\n', '')
+    .replace('| Blocker | alte Blocker |\n', '')
+    .replace('| Required Checks | 🟡 PENDING |\n', '')
+    .replace('| Security / Compliance | 🟡 PENDING |\n', '');
+
+  const repaired = reconcileDecisionBody(damaged, gates);
+  assert.equal(repaired.eligible, true);
+  assert.equal(repaired.changed, true);
+  assert.equal(repaired.decisionStatus, 'READY_FOR_HUMAN_DECISION');
+  assert.match(repaired.body, /^> 🧭 \*\*Entscheidungsstatus: READY_FOR_HUMAN_DECISION\*\*$/m);
+  assert.match(repaired.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
+  assert.match(repaired.body, /^\| Blocker \| Keine \|$/m);
+  assert.match(repaired.body, /^\| Current Main \| 🟢 PASS \|$/m);
+  assert.match(repaired.body, /^\| Scope \/ Ownership \| 🟢 PASS \|$/m);
+  assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \|$/m);
+  assert.match(repaired.body, /^\| Required Checks \| 🟢 PASS \|$/m);
+  assert.match(repaired.body, /^\| Security \/ Compliance \| 🟢 PASS \|$/m);
+  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \|$/m);
+  assert.equal(repaired.body.split('## 3. 🔍 Technical Evidence')[1], technical);
+});
+
+test('reconciler refuses ambiguous duplicate Decision section boundaries', () => {
+  const damaged = canonicalBody().replace(
+    '## 3. 🔍 Technical Evidence',
+    '## 2. ✅ Evidence\n\n## 3. 🔍 Technical Evidence',
+  );
+  const result = reconcileDecisionBody(damaged, {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PASS',
+    security: 'PASS',
+    baseline: 'PASS',
+  });
+  assert.equal(result.eligible, false);
+  assert.equal(result.reason, 'decision-section-boundary-ambiguous');
+});
 test('a blocked gate dominates the human decision state', () => {
   const result = reconcileDecisionBody(canonicalBody(), {
     main: 'PASS',

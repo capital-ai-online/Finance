@@ -169,40 +169,127 @@ function replaceRow(body, label, value) {
   return body.replace(expression, `| ${label} | ${compactCell(value)} |`);
 }
 
+function canonicalEvidenceTable(gates) {
+  return [
+    '| Gate | Status |',
+    '|---|---|',
+    ...PR_DECISION_GATES.map(({ key, label }) =>
+      `| ${label} | ${formatDecisionGateState(gates?.[key])} |`
+    ),
+  ].join('\n');
+}
+
+function replaceCanonicalEvidenceTable(bodyText, gates) {
+  const body = String(bodyText || '');
+  const evidenceHeading = '## 2. ✅ Evidence';
+  const technicalHeading = '## 3. 🔍 Technical Evidence';
+  const sectionStart = body.indexOf(evidenceHeading);
+  const sectionEnd = body.indexOf(technicalHeading, sectionStart + evidenceHeading.length);
+  if (sectionStart < 0 || sectionEnd < 0 || sectionEnd <= sectionStart) return null;
+
+  const sectionPrefixEnd = sectionStart + evidenceHeading.length;
+  const section = body.slice(sectionPrefixEnd, sectionEnd);
+  const table = canonicalEvidenceTable(gates);
+  const tablePattern = /\| Gate \| Status \|\s*\n\|---\|---\|(?:\s*\n\|[^\n]*\|[^\n]*\|)*/m;
+
+  let nextSection;
+  if (tablePattern.test(section)) {
+    nextSection = section.replace(tablePattern, table);
+  } else {
+    nextSection = `\n\n${table}\n${section.replace(/^\s*/, '')}`;
+  }
+
+  return body.slice(0, sectionPrefixEnd) + nextSection + body.slice(sectionEnd);
+}
+
+function ensureDecisionStatusLine(bodyText, decisionStatus) {
+  const body = String(bodyText || '');
+  const exactStatus =
+    /^> 🧭 \*\*Entscheidungsstatus: (READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\*\*\s*$/gm;
+  const exactMatches = [...body.matchAll(exactStatus)];
+  if (exactMatches.length > 1) return null;
+  if (exactMatches.length === 1) {
+    return body.replace(
+      /^> 🧭 \*\*Entscheidungsstatus: (READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\*\*\s*$/m,
+      `> 🧭 **Entscheidungsstatus: ${decisionStatus}**`,
+    );
+  }
+
+  const malformedStatus = /^> 🧭 \*\*Entscheidungsstatus:[^\n]*$/gm;
+  const malformedMatches = [...body.matchAll(malformedStatus)];
+  if (malformedMatches.length > 1) return null;
+  if (malformedMatches.length === 1) {
+    return body.replace(
+      /^> 🧭 \*\*Entscheidungsstatus:[^\n]*$/m,
+      `> 🧭 **Entscheidungsstatus: ${decisionStatus}**`,
+    );
+  }
+
+  const decisionHeadingIndex = body.indexOf('## 1. 🧭 Entscheidung');
+  if (decisionHeadingIndex < 0) return null;
+  const prefix = body.slice(0, decisionHeadingIndex);
+  const headings = [...prefix.matchAll(/^# (?!#).+$/gm)];
+  if (headings.length !== 1) return null;
+  const heading = headings[0][0];
+  const headingEnd = prefix.indexOf(heading) + heading.length;
+  return body.slice(0, headingEnd) +
+    `\n\n> 🧭 **Entscheidungsstatus: ${decisionStatus}**` +
+    body.slice(headingEnd);
+}
+
+function upsertDecisionSummaryRow(bodyText, label, value) {
+  const body = String(bodyText || '');
+  const replaced = replaceRow(body, label, value);
+  if (replaced != null) return replaced;
+
+  const decisionStart = body.indexOf('## 1. 🧭 Entscheidung');
+  const evidenceStart = body.indexOf('## 2. ✅ Evidence', decisionStart + 1);
+  if (decisionStart < 0 || evidenceStart < 0) return null;
+  const section = body.slice(decisionStart, evidenceStart);
+  const ownerExpression = /^\|\s*Owner-Aktion\s*\|.*\|$/m;
+  if (!ownerExpression.test(section)) return null;
+  const updatedSection = section.replace(
+    ownerExpression,
+    `| ${label} | ${compactCell(value)} |\n$&`,
+  );
+  return body.slice(0, decisionStart) + updatedSection + body.slice(evidenceStart);
+}
+
 export function reconcileDecisionBody(bodyText, gates) {
   const original = String(bodyText || '');
   if (!original.includes(PR_TEMPLATE_MARKER) || !/CAPITAL_AI_PR_TEMPLATE_VERSION:\s*1\.7\.0/.test(original)) {
     return { eligible: false, changed: false, reason: 'non-v1.7-body', body: original };
   }
 
-  let body = original;
+  const requiredHeadings = [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ];
+  if (requiredHeadings.some((heading) => original.split(heading).length - 1 !== 1)) {
+    return { eligible: false, changed: false, reason: 'decision-section-boundary-ambiguous', body: original };
+  }
+
   const decisionStatus = deriveDecisionStatus(gates);
-  const statusExpression =
-    /^> 🧭 \*\*Entscheidungsstatus: (READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\*\*\s*$/m;
-  if (!statusExpression.test(body)) {
-    return { eligible: false, changed: false, reason: 'decision-status-line-missing', body: original };
-  }
-  body = body.replace(statusExpression, `> 🧭 **Entscheidungsstatus: ${decisionStatus}**`);
-
-  for (const { key, label } of PR_DECISION_GATES) {
-    const replaced = replaceRow(body, label, formatDecisionGateState(gates?.[key]));
-    if (replaced == null) {
-      return { eligible: false, changed: false, reason: `decision-gate-row-missing:${key}`, body: original };
-    }
-    body = replaced;
+  let body = ensureDecisionStatusLine(original, decisionStatus);
+  if (body == null) {
+    return { eligible: false, changed: false, reason: 'decision-status-boundary-ambiguous', body: original };
   }
 
-  const evidence = replaceRow(body, 'Evidence', summarizeDecisionEvidence(gates));
-  if (evidence == null) {
-    return { eligible: false, changed: false, reason: 'decision-evidence-row-missing', body: original };
+  body = replaceCanonicalEvidenceTable(body, gates);
+  if (body == null) {
+    return { eligible: false, changed: false, reason: 'decision-evidence-section-missing', body: original };
   }
-  body = evidence;
 
-  const blockers = replaceRow(body, 'Blocker', summarizeDecisionBlockers(gates));
-  if (blockers == null) {
-    return { eligible: false, changed: false, reason: 'decision-blocker-row-missing', body: original };
+  body = upsertDecisionSummaryRow(body, 'Evidence', summarizeDecisionEvidence(gates));
+  if (body == null) {
+    return { eligible: false, changed: false, reason: 'decision-evidence-summary-boundary-missing', body: original };
   }
-  body = blockers;
+
+  body = upsertDecisionSummaryRow(body, 'Blocker', summarizeDecisionBlockers(gates));
+  if (body == null) {
+    return { eligible: false, changed: false, reason: 'decision-blocker-summary-boundary-missing', body: original };
+  }
 
   return {
     eligible: true,
