@@ -195,12 +195,7 @@ test('preserves replacement-like PR text as inert data during current v1.6 repai
   assert.doesNotMatch(result.body, /## 4\. 🔐 Security Boundary[\s\S]*## 4\. 🔐 Security Boundary/);
 });
 
-test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => { $1 $',
-  );
-  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
-  assert.equal(result.eligible, true);
-  assert.equal(result.changed, true);
-  assert.match(result.body, /Literal replacement tokens stay inert: \test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => { \$1 \$\$/);
+test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => { \$1 \$\$/);
   assert.doesNotMatch(result.body, /## 4\. 🔐 Security Boundary[\s\S]*## 4\. 🔐 Security Boundary/);
 });
 
