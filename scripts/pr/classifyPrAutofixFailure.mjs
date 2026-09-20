@@ -34,7 +34,7 @@ const EXACT_V17_STRUCTURE_DRIFT =
   /Error: PR #\d+ muss in v1\.7\.0 exakt drei sichtbare Hauptabschnitte besitzen:/i;
 
 const EXACT_V17_PRIORITY_DRIFT =
-  /Error: PR #\\d+ enthält keine gültige Prioritätsbewertung \\(P0[–-]P3\\) der Vorlage v1\\.7\\.0\\./i;
+  /Error: PR #\d+ enthält keine gültige Prioritätsbewertung \(P0[–-]P3\) der Vorlage v1\.7\.0\./i;
 
 const TEMPLATE_DELEGATION_PATTERNS = [
   /verwendet keinen unterstützten PR-Vorlagenmarker/i,
