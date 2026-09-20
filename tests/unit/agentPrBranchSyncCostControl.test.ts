@@ -111,8 +111,8 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain('422 is ambiguous');
     expect(yaml).toContain('after_lineage');
     expect(yaml).toContain('422 ohne beweisbare Konvergenz');
-    expect(yaml).toContain("after_lineage" = 'ahead'");
-    expect(yaml).toContain("after_lineage" = 'identical'");
+    expect(yaml).toContain("[ \"$after_lineage\" = 'ahead' ]");
+    expect(yaml).toContain("[ \"$after_lineage\" = 'identical' ]");
   });
 
   it('uses a pinned GitHub App token only for the trusted automatic lane', () => {
