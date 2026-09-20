@@ -18,8 +18,10 @@ import {
   deriveDecisionStatus,
   formatDecisionGateState,
   normalizeDecisionGateState,
+  nextVerifiableDecisionStep,
   summarizeDecisionBlockers,
   summarizeDecisionEvidence,
+  summarizeLiveDecisionSync,
 } from './prDecisionState.mjs';
 
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
@@ -243,6 +245,8 @@ const replacements = {
   IMPACT_RISK: decisionImpactLabel(prClass, decisionGates.security),
   EVIDENCE_SUMMARY: summarizeDecisionEvidence(decisionGates),
   BLOCKER_SUMMARY: compactDecisionCell(summarizeDecisionBlockers(decisionGates), 'Keine'),
+  LIVE_SYNC_SUMMARY: compactDecisionCell(summarizeLiveDecisionSync(decisionGates), 'N/A'),
+  NEXT_VERIFIABLE_STEP: compactDecisionCell(nextVerifiableDecisionStep(decisionGates), 'N/A'),
   IMPLEMENTATION_DECISION: compactDecisionCell(implementationDetail, workItem),
   WHY_DECISION: compactDecisionCell(whyDetail, 'N/A'),
   IMPLEMENTATION_DETAIL: implementationDetail,
