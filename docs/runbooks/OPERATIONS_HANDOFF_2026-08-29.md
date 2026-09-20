@@ -227,7 +227,7 @@ The merged implementation retains trusted-main PR baseline generation and expose
 
 Canonical server-only authority remains:
 
-- `finance-secrets.env`;
+- Render Environment Variables;
 - `scripts/security/secretFileManifest.ts`;
 - `server/env.ts`;
 - `server/validateRuntimeSecrets.ts`;
