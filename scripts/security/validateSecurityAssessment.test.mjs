@@ -145,6 +145,18 @@ test('PVC primary owner mismatch fails closed', () => {
   assert.ok(codes(assessment).has('PVC_OWNER_MISMATCH'));
 });
 
+test('PVC-09..11 route to FINTECH and reject superseded DATA ownership', () => {
+  for (const pvc of ['PVC-09', 'PVC-10', 'PVC-11']) {
+    assert.equal(PVC_OWNER[pvc], 'CAPITAL-AI-FINTECH');
+  }
+
+  const assessment = validAssessment();
+  for (const row of assessment.pvcAssessments.filter((item) => ['PVC-09', 'PVC-10', 'PVC-11'].includes(item.pvc))) {
+    row.primaryOwner = 'CAPITAL-AI-DATA';
+  }
+  assert.ok(codes(assessment).has('PVC_OWNER_MISMATCH'));
+});
+
 test('PASS dimension requires evidence', () => {
   const assessment = validAssessment();
   assessment.pvcAssessments[0].blackboxResistance = dimension('PASS', []);
