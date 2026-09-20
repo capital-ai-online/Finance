@@ -75,11 +75,13 @@ export function classifyPrAutofixFailure(
     sourceWorkflow,
     logText,
     previousAutofixSignature = '',
+    prMetadataShape = '',
   },
   registry = PR_AUTOFIX_REPAIR_REGISTRY,
 ) {
   const source = String(sourceWorkflow || '').trim();
   const log = String(logText || '');
+  const metadataShape = String(prMetadataShape || '').trim();
   const failureLines = normalizedFailureLines(log);
 
   if (!['.github/workflows/ci.yml', '.github/workflows/pr-governance.yml'].includes(source)) {
@@ -118,6 +120,26 @@ export function classifyPrAutofixFailure(
   }
 
   if (source === '.github/workflows/pr-governance.yml') {
+    const missingSectionsFailure =
+      /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i.test(log);
+    if (
+      missingSectionsFailure &&
+      ![
+        'CURRENT_V16_GENERIC_MISSING_SECTIONS',
+        'CURRENT_V16_SECURITY_BOUNDARY_EXACT',
+        'OTHER',
+      ].includes(metadataShape)
+    ) {
+      return result({
+        classification: 'PR_TEMPLATE_METADATA_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason:
+          metadataShape === 'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE'
+            ? 'current-v1.6-security-boundary-lookalike-not-allowlisted'
+            : 'pr-metadata-shape-unavailable-or-unsupported',
+      });
+    }
+
     if (TEMPLATE_UNSUPPORTED_PATTERNS.some((pattern) => pattern.test(log))) {
       return result({
         classification: 'PR_TEMPLATE_METADATA_DRIFT',
@@ -196,6 +218,7 @@ if (process.argv[1]?.endsWith('classifyPrAutofixFailure.mjs')) {
   const logPath = String(process.env.FAILURE_LOG || '').trim();
   const sourceWorkflow = String(process.env.SOURCE_WORKFLOW_PATH || '').trim();
   const previousAutofixSignature = String(process.env.PREVIOUS_AUTOFIX_SIGNATURE || '').trim();
+  const prMetadataShape = String(process.env.PR_METADATA_SHAPE || '').trim();
 
   if (!logPath || !fs.existsSync(logPath)) fail('FAILURE_LOG fehlt oder existiert nicht.');
   const logText = fs.readFileSync(logPath, 'utf8');
@@ -203,6 +226,7 @@ if (process.argv[1]?.endsWith('classifyPrAutofixFailure.mjs')) {
     sourceWorkflow,
     logText,
     previousAutofixSignature,
+    prMetadataShape,
   });
   emitClassification(classification);
   console.log(

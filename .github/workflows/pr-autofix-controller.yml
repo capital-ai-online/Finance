@@ -41,6 +41,7 @@ jobs:
       head_sha: ${{ steps.pr.outputs.head_sha }}
       head_ref: ${{ steps.pr.outputs.head_ref }}
       base_sha: ${{ steps.pr.outputs.base_sha }}
+      pr_metadata_shape: ${{ steps.pr.outputs.pr_metadata_shape }}
       source_workflow_path: ${{ steps.pr.outputs.source_workflow_path }}
       classification: ${{ steps.classifier.outputs.classification }}
       decision: ${{ steps.classifier.outputs.decision }}
@@ -88,6 +89,7 @@ jobs:
               core.notice(`PR Autofix held: ${reason}`);
               core.setOutput('eligible', 'false');
               core.setOutput('pr_number', '');
+              core.setOutput('pr_metadata_shape', 'UNAVAILABLE');
               core.setOutput('previous_autofix_signature', '');
             };
 
@@ -130,6 +132,31 @@ jobs:
             }
 
             const pr = open[0];
+            const body = String(pr.body || '');
+            const headingCount = (pattern) => (body.match(pattern) || []).length;
+            const currentV16 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\s*1\.6\.0/.test(body);
+            const exactSecurityBoundary =
+              currentV16 &&
+              headingCount(/^## 4\. 🔐 Security Boundary\s*$/gm) === 1 &&
+              headingCount(/^## 5\. ✅ Prüfung & Merge\s*$/gm) === 1 &&
+              headingCount(/^## 6\. 🔢 Version\s*$/gm) === 1;
+            const securityBoundaryLike =
+              currentV16 && /^## 4\. 🔐 Security Boundar.*$/m.test(body);
+            const genericMissingSections =
+              currentV16 &&
+              headingCount(/^## 4\. 📌 Priorität & Roadmap\s*$/gm) === 0 &&
+              headingCount(/^## 5\. 🔢 Version & PR-Klasse\s*$/gm) === 0 &&
+              headingCount(/^## 6\. ✅ Prüfung & Merge\s*$/gm) === 0 &&
+              headingCount(/^## 7\. Maschinenlesbare Baseline\s*$/gm) === 1 &&
+              !securityBoundaryLike;
+            const prMetadataShape = exactSecurityBoundary
+              ? 'CURRENT_V16_SECURITY_BOUNDARY_EXACT'
+              : securityBoundaryLike
+                ? 'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE'
+                : genericMissingSections
+                  ? 'CURRENT_V16_GENERIC_MISSING_SECTIONS'
+                  : 'OTHER';
+
             const { data: main } = await github.rest.repos.getBranch({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -155,6 +182,7 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('head_ref', pr.head.ref);
             core.setOutput('base_sha', baseSha);
+            core.setOutput('pr_metadata_shape', prMetadataShape);
             core.setOutput('source_workflow_path', run.path);
             core.setOutput('previous_autofix_signature', previousSignature);
 
@@ -199,6 +227,7 @@ jobs:
         env:
           FAILURE_LOG: ${{ steps.failure_log.outputs.path }}
           SOURCE_WORKFLOW_PATH: ${{ steps.pr.outputs.source_workflow_path }}
+          PR_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}
           PREVIOUS_AUTOFIX_SIGNATURE: ${{ steps.pr.outputs.previous_autofix_signature }}
         run: node scripts/pr/classifyPrAutofixFailure.mjs
 
@@ -208,6 +237,7 @@ jobs:
           REPORT_CLASSIFICATION: ${{ steps.classifier.outputs.classification }}
           REPORT_DECISION: ${{ steps.classifier.outputs.decision }}
           REPORT_REASON: ${{ steps.classifier.outputs.reason }}
+          REPORT_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}
           REPORT_PR: ${{ steps.pr.outputs.pr_number }}
           REPORT_HEAD: ${{ steps.pr.outputs.head_sha }}
         shell: bash
@@ -219,6 +249,7 @@ jobs:
             printf -- '- head: `%s`\n' "$REPORT_HEAD"
             printf -- '- classification: `%s`\n' "$REPORT_CLASSIFICATION"
             printf -- '- decision: `%s`\n' "$REPORT_DECISION"
+            printf -- '- metadata shape: `%s`\n' "$REPORT_METADATA_SHAPE"
             printf -- '- reason: `%s`\n' "$REPORT_REASON"
             echo '- merge authority: unchanged, Human/CODEOWNER only'
           } >> "$GITHUB_STEP_SUMMARY"
@@ -238,11 +269,12 @@ jobs:
           PR_NUMBER: ${{ needs.classify.outputs.pr_number }}
           EXPECTED_HEAD_SHA: ${{ needs.classify.outputs.head_sha }}
           EXPECTED_BASE_SHA: ${{ needs.classify.outputs.base_sha }}
+          PR_METADATA_SHAPE: ${{ needs.classify.outputs.pr_metadata_shape }}
         shell: bash
         run: |
           set -euo pipefail
-          printf 'PR #%s metadata drift on head %s/base %s is owned by the independently subscribed PR Production Baseline Auto-Refresh workflow. No second writer or rerun dispatch is created by the controller.\n' \
-            "$PR_NUMBER" "$EXPECTED_HEAD_SHA" "$EXPECTED_BASE_SHA"
+          printf 'PR #%s metadata drift on head %s/base %s with semantic shape %s is owned by the independently subscribed PR Production Baseline Auto-Refresh workflow. No second writer or rerun dispatch is created by the controller.\n' \
+            "$PR_NUMBER" "$EXPECTED_HEAD_SHA" "$EXPECTED_BASE_SHA" "$PR_METADATA_SHAPE"
 
   repair:
     name: Registrierten Patch ohne Write-Credential erzeugen
