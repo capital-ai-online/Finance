@@ -115,7 +115,7 @@ describe('supervisor', () => {
       expect(status.capabilities.selfHealing).toBe(false);
       expect(status.selfHealingContract.valid).toBe(true);
       expect(status.selfHealingContract.enabledActionIds).toContain('FRONTEND_RELOAD_ONCE');
-      expect(status.selfHealingContract.enabledActionIds).toContain('REDEPLOY_EXACT_SHA');
+      expect(status.selfHealingContract.heldActionIds).toContain('REDEPLOY_EXACT_SHA');
       expect(status.dependencyResilience).toMatchObject({
         valid: true,
         genericSafeRetryActivation: 'HELD',
