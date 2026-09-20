@@ -1,30 +1,32 @@
 # GitHub Actions Workflow-Runner Convention
 
 **Document ID:** GOV-GHA-RUNNER-CONV-2026-09-20  
-**Version:** 1.0.0  
-**Status:** ACTIVE CONVENTION — PHASE-1 SLICE ONLY  
+**Version:** 1.1.0  
+**Status:** ACTIVE CONVENTION — DOCUMENTATION SLICE  
 **Date:** 2026-09-20  
 **Repository:** `capital-ai-online/Finance`  
-**Baseline:** `main@081490f1eed9b19bde7bc427cb4a0dee6d2373da`  
+**Baseline:** `main@df7b970e40ca5b3bd1046ae595af060e0f4b7317`  
 **Owner:** CAPITAL-AI Owner (`SvenKulessa`)  
 **Document role:** `governance convention` (nicht Merge-/Deploy-Authority)  
 **Companion inventory:** `docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md`  
 **Related:** `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md`, ADR-0069, `scripts/security/verifyChangedWorkflowSecurity.mjs`
 
-Does not authorize: Self-Merge, Required-Check-Rename, `ci.yml`/`pr-governance.yml` Cutover, Self-Hosted Runner, M10-Reaktivierung, Actions-API-Disable ohne Owner-UI.
+Does not authorize: Self-Merge, Required-Check-Rename, `ci.yml`/`pr-governance.yml` Cutover, Self-Hosted Runner, M10-Reaktivierung, Actions-API-Disable ohne Owner-UI, Workflow-Datei-Löschung.
 
-Owner-Freigabe für diesen Slice: `PR Erstellung : Freigegeben` am 2026-09-20 (Chat-Gate). Ausgeführt in diesem PR: Konvention kanonisieren + drei tote Stub-YAMLs löschen. Nicht ausgeführt: Phase 2/3 Rename, SA4-Host-Delete, Orphan-Disable in der Actions-UI.
+Owner-Freigabe für den Dokumentations-Slice: `PR Erstellung : Freigegeben` am 2026-09-20 (Chat-Gate).
+
+**Policy-Korrektur:** `verifyChangedWorkflowSecurity.mjs` bewertet jede Workflow-Löschung (`git status D`) als FAIL. Es gibt kein Review-Token im Validator. Deshalb bleiben die drei Stub-YAMLs in diesem PR erhalten. Löschung ist ein eigener Owner-reviewed Security-Schnitt (Policy zuerst, dann Datei).
 
 ---
 
 ## 1. Lagebild
 
-Stand der Korrelation auf dem Baseline-SHA:
+Stand der Korrelation:
 
 | Schicht | Anzahl |
 |---|---:|
 | Actions-API `list_workflows` (`state: active`) | 67 |
-| YAML auf `main` unter `.github/workflows/` | 38 vor diesem PR; 35 danach |
+| YAML auf `main` unter `.github/workflows/` | 38 |
 | API-Records ohne Datei auf `main` (Orphans) | 25 |
 | GitHub-managed `dynamic/*` | 4 |
 | Self-Hosted Runner | 0 |
@@ -56,7 +58,7 @@ Planes: `ci` | `gov` | `sec` | `ops` | `cost` | `plat` | `agent` | `proj`
 
 - kebab-case, Extension `.yml`
 - keine `-v2`/`-v3`, keine `tmp-`/`audit4-`/`pr[0-9]+-` auf `main`
-- One-Shot-Hosts leben auf dem Feature-Branch und werden vor Merge nach `main` gelöscht
+- One-Shot-Hosts leben auf dem Feature-Branch und werden vor Merge nach `main` gelöscht — aber nur nach Anpassung von `verifyChangedWorkflowSecurity.mjs`
 - `ci.yml` bleibt als kanonischer Dateiname Allowlist-Ausnahme
 
 ### `name:`
@@ -65,7 +67,7 @@ Planes: `ci` | `gov` | `sec` | `ops` | `cost` | `plat` | `agent` | `proj`
 {PLANE} — {Klartext, Englisch, max. 60 Zeichen}
 ```
 
-Kein Dateipfad als Name. Kein `(disabled)` im Namen — Datei löschen.
+Kein Dateipfad als Name. Kein `(disabled)` im Namen als Dauerzustand — Datei erst löschen, wenn die Security-Policy Löschungen reviewed zulässt.
 
 ### `run-name:`
 
@@ -81,7 +83,7 @@ PR-/Run-gebundene Workflows setzen ein `run-name:` mit Plane und PR- oder Run-Nu
 
 ## 4. Control-Plane Freeze
 
-Nicht in Phase 1 umbenennen:
+Nicht in diesem Slice umbenennen:
 
 | Datei | Grund |
 |---|---|
@@ -98,24 +100,19 @@ Listener (Cutover nur Phase 3): `pr-autofix-controller.yml`, `controlled-pr-ci-a
 | Phase | Inhalt | Dieser PR |
 |---|---|---|
 | 0 | Orphan-Records in der Actions-UI disablen | Owner-UI, nicht Repo |
-| 1 | Tote Stub-YAMLs löschen + Konvention | **ja** |
+| 1a | Konvention + Inventar kanonisieren | **ja** |
+| 1b | Stub-YAMLs löschen | **nein** — blockiert durch Workflow-Security |
 | 2 | Rename ohne Required-Check/Listener-Bruch | nein |
 | 3 | Shadow-Cutover `CI` / `PR Governance` | nein |
-| 4 | Policy-as-Code in `verifyChangedWorkflowSecurity.mjs` | nein |
+| 4 | Policy-as-Code inkl. reviewed deletion path | eigener SEC/Owner-PR |
 
-Phase-1-Deletes dieses PRs:
-
-- `.github/workflows/document-hygiene-evidence-migration.yml`
-- `.github/workflows/document-hygiene-evidence-once.yml`
-- `.github/workflows/lockfile-remediation.yml`
-
-Nicht gelöscht (Tests/Owner-DEFER): `systemadmin-sa4-pilot.yml`, `systemadmin-work-package-runner.yml`, `systemadmin-roadmap-executor.yml`, `self-heal-ci.yml`, `node-toolchain-write-boundary-supersession.yml`.
+Nicht gelöscht: Hygiene-Stubs, Lockfile-Stub, SA4-/Systemadmin-Hosts, Self-Heal-Diagnose, Node-Toolchain-Supersession.
 
 ---
 
 ## 6. Orphans
 
-25 Actions-API-Records ohne Datei auf `main` bleiben nach Dateilöschung `state: active`. Disable ist eine UI-/API-Aktion des Owners. IDs und Pfade stehen im Companion-Inventar. Kein Recreate der YAML nur zum Löschen.
+25 Actions-API-Records ohne Datei auf `main` bleiben `state: active`. Disable ist eine UI-/API-Aktion des Owners. IDs stehen im Companion-Inventar.
 
 Dynamics (`Dependabot Updates`, `Dependency Graph`, `CodeQL`, `Security Risk Assessment`) bleiben unangetastet.
 
@@ -155,4 +152,5 @@ Actions bleiben SHA-gepinnt. `workflow_run`-Listener dokumentieren Quell-`name:`
 - kein zweites CI neben `ci.yml`
 - keine M10-Reaktivierung
 - kein Self-Hosted-Runner-Setup
+- keine Aufweichung von `verifyChangedWorkflowSecurity.mjs` in diesem PR
 - `package.json#version` bleibt einzige Plattform-Versionsautorität
