@@ -23,12 +23,13 @@ Transfer the Owner-approved roadmap visual language into the application without
 - Status: IMPLEMENTED_ON_BRANCH
 - Exit: token registry and web projection agree; semantic PASS/FAIL roles are not replaced by decorative roadmap roles.
 
-### FE-RB-02 — Application-wide roadmap typography
-- Montserrat becomes the canonical application-wide sans/display family.
+### FE-RB-02 — Canonical typography roles
+- Montserrat remains the canonical display/heading family.
+- Poppins remains the canonical body/sans family from Branding Manifest v6.2.
 - JetBrains Mono remains technical/data typography.
-- Remove Poppins from the web font request.
+- Keep the three roles explicit in the web font request; no global role collapse.
 - Status: IMPLEMENTED_ON_BRANCH
-- Exit: global theme owns typography; no component-local replacement authority.
+- Exit: global theme preserves Poppins body, Montserrat display/headings and JetBrains Mono technical/data roles; no component-local replacement authority.
 
 ### FE-RB-03 — Responsive canonical Earth Hero
 - Replace the current synthetic globe presentation with one production-safe canonical Earth asset.
@@ -80,6 +81,6 @@ The generated design reference from the Owner conversation is visual direction o
 
 ## Current implementation evidence
 
-- `docs/frontend/design-tokens.json`: roadmap palette + application-wide Montserrat projection.
-- `src/index.css`: matching Tailwind theme tokens + Montserrat global sans.
+- `docs/frontend/design-tokens.json`: roadmap palette + canonical Poppins body / Montserrat display / JetBrains Mono data typography.
+- `src/index.css`: matching Tailwind theme tokens with Poppins body and Montserrat display/headings.
 - Earth asset integration intentionally remains pending until a repository-safe binary asset with provenance is available.
