@@ -39,10 +39,32 @@ function fixture(): string {
         lifecycle: 'reviewed',
         path: 'docs/security/ROUTE_EVIDENCE.md',
       },
+      {
+        documentId: 'DOC-APP-DEPS',
+        type: 'reference',
+        owner: 'CAPITAL-AI-DOC',
+        authority: 'docs',
+        version: '1.0.0',
+        language: 'en',
+        lifecycle: 'reviewed',
+        path: 'docs/projects/documentary/DEPENDENCIES.md',
+      },
+      {
+        documentId: 'DOC-OLD-DEPS',
+        type: 'archive',
+        owner: 'CAPITAL-AI-DOC',
+        authority: 'docs',
+        version: '1.0.0',
+        language: 'en',
+        lifecycle: 'archived',
+        path: 'docs/archive/OLD_DEPENDENCIES.md',
+      },
     ],
   }, null, 2));
   write(root, 'docs/projects/documentary/APP_ROUTES.md', '# Routes\n\nDepends on server/routes/registerApplicationRoutes.ts\n@depends on server/routes/registerApplicationRoutes.ts\n');
   write(root, 'docs/security/ROUTE_EVIDENCE.md', '# Security routes\n\nserver/routes/registerApplicationRoutes.ts\n');
+  write(root, 'docs/projects/documentary/DEPENDENCIES.md', '# Dependencies\n\n@depends on package.json\n');
+  write(root, 'docs/archive/OLD_DEPENDENCIES.md', '# Historical dependencies\n\n@depends on package.json\n');
   return root;
 }
 
@@ -51,6 +73,22 @@ describe('ApplicationChangeImpactAnalyzer', () => {
     expect(classifyApplicationChange('server/routes/registerApplicationRoutes.ts')).toBe('ROUTE');
     expect(classifyApplicationChange('package.json')).toBe('DEPENDENCY');
     expect(classifyApplicationChange('.github/workflows/ci.yml')).toBe('WORKFLOW');
+  });
+
+  it('maps dependency drift to current docs while excluding archived history', () => {
+    const root = fixture();
+    const report = analyzeApplicationChangeImpact({
+      repoRoot: root,
+      correlationId: 'DOC-DEPENDENCY-REGRESSION',
+      sourceCommit: 'b'.repeat(40),
+      sourceChanges: [{ path: 'package.json' }],
+      generatedAt: '2026-09-20T00:00:00.000Z',
+    });
+
+    expect(report.dependencySignals).toEqual(['package.json']);
+    expect(report.patchableDocumentationPaths).toContain('docs/projects/documentary/DEPENDENCIES.md');
+    expect(report.patchableDocumentationPaths).not.toContain('docs/archive/OLD_DEPENDENCIES.md');
+    expect(report.reviewOnlyDocumentationPaths).not.toContain('docs/archive/OLD_DEPENDENCIES.md');
   });
 
   it('maps changed application paths to patchable and review-only documentation', () => {
