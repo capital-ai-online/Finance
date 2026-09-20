@@ -108,6 +108,22 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
     expect(landing).not.toMatch(/\$\s?\d/);
   });
 
+  it('aligns the public landing shell with the approved desktop and mobile visual direction', () => {
+    expect(landing).toContain('AI-driven market intelligence');
+    expect(landing).toContain('Live markets. Real insights.');
+    expect(landing).toContain('Marktdaten <span className="text-brand-primary">verstehen.</span>');
+    expect(landing).toContain('Chancen besser erkennen.');
+    expect(landing).toContain('Produkt entdecken');
+    expect(landing).toContain('Globale Märkte im Überblick');
+    expect(landing).toContain('Enterprise Scorer');
+    expect(landing).toContain('Buffett Value Check');
+    expect(landing).toContain('Vocabulary');
+    expect(landing).toContain('NeuralBackground');
+    expect(landing).toContain('min-h-11');
+    expect(landing).not.toContain('bg-[#');
+    expect(landing).not.toContain('text-[#');
+  });
+
   it('keeps the decorative neural layer non-interactive and separate from semantic asset colors', () => {
     expect(neural).toContain('pointer-events-none');
     expect(neural).toContain('var(--color-decorative-cyan)');
