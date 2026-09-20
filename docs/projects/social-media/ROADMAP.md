@@ -1,6 +1,6 @@
 # CAPITAL-AI-SOCIAL — Canonical Roadmap
 
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+**Baseline:** `main@c307ab9a4e0eb5ba415b70da7a84bff1a7dc803b`
 
 **Project:** `CAPITAL-AI-SOCIAL`  
 **Folder:** `docs/projects/social-media/`  
@@ -33,9 +33,9 @@ Deterministic package mapping, `/generate` integration, provenance/disclosure fa
 
 ### SOCIAL-P1 — Real TTS runtime evidence
 
-**State:** `ACTIVE_CANONICAL / RUNTIME_EVIDENCE_REQUIRED`.
+**State:** `ACTIVE_CANONICAL / TECHNICAL_RUNTIME_EVIDENCE_PRESENT / HUMAN_LISTENING_REQUIRED`.
 
-The provider-neutral TTS request/result contract, profile semantics, tests, sample manifest and benchmark structure are already repository materialization. The remaining bounded exit is **real, reproducible runtime evidence** through the owner-correct operational/runtime boundary.
+The provider-neutral TTS request/result contract, profile semantics, tests, sample manifest and benchmark structure are repository materialization. Real owner-routed runtime/WAV evidence and final ASR Required-Term evidence are now present. The remaining bounded exit is **truthful human listening evidence plus the Social acceptance decision**.
 
 Required exit evidence:
 
@@ -47,7 +47,7 @@ Required exit evidence:
 - reproducible listening/acoustic assessment evidence without synthetic PASS;
 - truthful `NOT RUN`, `BLOCKED` or provider failure where real execution cannot be performed.
 
-Protected runtime/provider setup, credentials, IAM, provider activation and other external mutations remain separately authorized and normally OPS-owned. Historical P1 branches or chat payloads are correlation evidence only and MUST NOT be reused as execution baselines.
+Protected runtime/provider setup, credentials, IAM, provider activation and other external mutations remain separately authorized and normally OPS-owned. The merged evidence is correlated in `docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_RUNTIME_ACCEPTANCE_2026-09-20.md`. Human listening remains `NOT_RUN`; no subjective PASS is inferred from ASR.
 
 **Exit:** one real `TtsSynthesisResult` and associated immutable evidence satisfy the current contract; no synthetic audio, latency, listening result or provider PASS.
 
