@@ -34,7 +34,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     ]));
     expect(agents).toContain('PR creation and PR updates may be automated after final correlation PASS');
     expect(agents).toContain('unresolved or blocked correlation stops readiness');
-    expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
+    expect(agents).toContain('The default final Pull Request merge remains a Human Owner action');
   });
 
   it('requires fresh current-main correlation and truthful validation rather than a pre-create credential', () => {
@@ -44,7 +44,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     expect(agents).toContain('PR creation and PR updates may be automated after final correlation PASS');
     expect(agents).toContain('unresolved or blocked correlation stops readiness');
     expect(agents).toContain('`NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`');
-    expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
+    expect(agents).toContain('The default final Pull Request merge remains a Human Owner action');
   });
 
   it('keeps unmerged predecessor state non-authorizing and re-correlates against CURRENT_MAIN', () => {
@@ -126,10 +126,13 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     const merge = control('CTRL-MERGE-HUMAN-001');
     const security = control('CTRL-SEC-BOUNDED-REMEDIATION-001');
 
-    expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
-    expect(agents).toContain('Agents and automation MUST NOT self-merge, enable auto-merge');
-    expect(merge?.requirement).toContain('Every main merge is a distinct Human Owner decision');
-    expect(merge?.requirement).toContain('Agent or automation self-merge and auto-merge remain prohibited');
+    expect(agents).toContain('The default final Pull Request merge remains a Human Owner action');
+    expect(agents).toContain('Direct agent self-merge remains prohibited');
+    expect(agents).toContain('GitHub auto-merge MAY be armed only under the bounded Auto-Merge Safety Contract below');
+    expect(merge?.requirement).toContain('Main merges remain Human Owner decisions by default');
+    expect(merge?.requirement).toContain('Direct agent or automation self-merge remains prohibited');
+    expect(merge?.requirement).toContain('AUTO_MERGE_ELIGIBLE');
+    expect(merge?.requirement).toContain('fail-closed Auto-Merge Safety Contract');
     expect(security?.requirement).toContain('bounded by ownership');
     expect(security?.requirement).toContain('protected-action gates');
     expect(agents).toContain('ownership remains unchanged');
