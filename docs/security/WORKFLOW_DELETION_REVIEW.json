@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "reviewId": "GOV-GHA-DEL-2026-09-20",
+  "reviewer": "SvenKulessa",
+  "ownerApproval": "PR Erstellung : Freigegeben",
+  "reviewedAt": "2026-09-20T04:18:00Z",
+  "claimId": "CAPITAL-AI-GOV-GHA-WORKFLOW-STUB-DELETE-2026-09-20",
+  "scope": "Dispatch-only disabled echo stubs. Control-plane workflows remain frozen.",
+  "allowedDeletions": [
+    {
+      "path": ".github/workflows/document-hygiene-evidence-migration.yml",
+      "reason": "workflow_dispatch echo stub, contents:read, display name already marked disabled"
+    },
+    {
+      "path": ".github/workflows/document-hygiene-evidence-once.yml",
+      "reason": "workflow_dispatch echo stub, contents:read, duplicate disabled display name"
+    },
+    {
+      "path": ".github/workflows/lockfile-remediation.yml",
+      "reason": "workflow_dispatch plus if:false historical PR #30 record, contents:read"
+    }
+  ]
+}
