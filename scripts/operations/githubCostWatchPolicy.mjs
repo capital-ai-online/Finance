@@ -94,6 +94,21 @@ function sortedAlertFingerprintInput(rows, detailRows, cycle) {
   return JSON.stringify({ cycle, rows: normalized, detailed });
 }
 
+/**
+ * @param {{
+ *   mode?: string;
+ *   generatedAt?: string | number | Date;
+ *   startAt?: string;
+ *   enterprise?: string;
+ *   username?: string;
+ *   enterpriseUsage?: any;
+ *   organizationUsageDetail?: any;
+ *   personalUsage?: any;
+ *   personalUsageDetail?: any;
+ *   organizationCoverage?: { status?: string, reason?: string | null };
+ *   personalCoverage?: { status?: string, reason?: string | null };
+ * }} [options]
+ */
 export function buildGitHubCostWatchReport({
   mode,
   generatedAt,
