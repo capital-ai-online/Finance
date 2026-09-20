@@ -23,12 +23,7 @@ concurrency:
 jobs:
   asr:
     name: transcribe-8-runtime-samples
-    if: >-
-      github.event_name == 'workflow_dispatch'
-      || (github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository
-          && github.event.pull_request.base.ref == 'main'
-          && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-'))
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 75
     env:
@@ -153,15 +148,13 @@ jobs:
 
 
   finance-remediation:
-    name: regenerate-and-verify-de-finance-only
-    needs: [asr]
+    name: resume-at-de-finance-remediation
     if: >-
-      needs.asr.result == 'success'
-      && (github.event_name == 'workflow_dispatch'
-          || (github.event_name == 'pull_request'
-              && github.event.pull_request.head.repo.full_name == github.repository
-              && github.event.pull_request.base.ref == 'main'
-              && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-')))
+      github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.event.pull_request.base.ref == 'main'
+          && startsWith(github.event.pull_request.head.ref, 'agent/operations-social-p1-asr-'))
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
@@ -181,6 +174,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "Resume mode: historical 8-WAV ASR baseline is not rerun on PR synchronize."
+          echo "Only Chatterbox/de-finance-numbers-v1 is regenerated and verified."
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
           test "$SAMPLE_ID" = "de-finance-numbers-v1"
           test "$CANDIDATE_ID" = "chatterbox-multilingual-v3"
