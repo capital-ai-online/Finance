@@ -6,7 +6,7 @@ export const ZERO_COST_DECISION_STATES = Object.freeze([
 ]);
 
 function fail(message) {
-  throw new Error(\`[GITHUB-ZERO-COST-ELIGIBILITY] \${message}\`);
+  throw new Error(`[GITHUB-ZERO-COST-ELIGIBILITY] ${message}`);
 }
 
 function finiteOrNull(value) {
