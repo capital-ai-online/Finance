@@ -34,6 +34,7 @@
     "scripts/pr/productionBaselineRefreshWorkflow.test.mjs",
     "tests/unit/productionBaselinePostMergeRefresh.test.ts",
     "scripts/pr/documentaryConvergenceWorkflow.test.mjs",
+    "scripts/pr/prEventSnapshotConcurrency.test.mjs",
     "docs/projects/operations/work-packages/OPS_PR_CONVERGENCE_CONTROLLER_2026-09-20.md",
     ".github/workflows/self-healing-package-continuation.yml",
     "tests/unit/selfHealingPackageContinuationWorkflow.test.ts"
