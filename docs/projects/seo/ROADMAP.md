@@ -34,7 +34,7 @@ Execution readback at this baseline:
 
 - repository landing/CTA freeze: `PASS_REPOSITORY`;
 - current public URL inventory: six canonical sitemap URLs including `/universe`;
-- Production freeze: `PRODUCTION_DRIFT` — Render was observed live at `e86955225887bb7f34036c175ad1da89b8aec14d` while current main is `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`;
+- Production freeze: `PASS` after an initially observed drift; canonical main CI run `35529208910` triggered the verified Render deploy within the five-minute SLA and Production is now live at exact `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`;
 - root landing metadata/prerender semantic alignment: `OPEN_FE_HANDOFF`;
 - Search Analytics/current six-URL GSC baseline: `READ_BLOCKED_NOT_CONNECTED`;
 - GA4 Data API/MCP baseline: `READ_BLOCKED_NOT_CONNECTED`;
