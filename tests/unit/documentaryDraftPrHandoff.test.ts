@@ -13,7 +13,7 @@ describe('Documentary WP-06D draft PR handoff', () => {
     const yaml = read('.github/workflows/documentary-change-impact.yml');
 
     expect(yaml).toContain('outputs:\n      branch: ${{ steps.write.outputs.branch }}');
-    expect(yaml).toContain('draft-pr-handoff:');
+    expect(yaml).toContain('autosync-draft-pr:');
     expect(yaml).toContain('needs: autosync-branch');
     expect(yaml).toContain("if: needs.autosync-branch.outputs.branch != ''");
     expect(yaml).toContain('uses: ./.github/workflows/open-agent-draft-pr.yml');
@@ -25,8 +25,8 @@ describe('Documentary WP-06D draft PR handoff', () => {
   it('binds review-only and semantic candidates into the generated work claim', () => {
     const yaml = read('.github/workflows/documentary-change-impact.yml');
 
-    expect(yaml).toContain('reviewRequiredPaths: Array.isArray(impact.reviewOnlyDocumentationPaths)');
-    expect(yaml).toContain('semanticPatchCandidates: Array.isArray(impact.patchableDocumentationPaths)');
+    expect(yaml).toContain('reviewRequiredPaths: Array.isArray(handoff.reviewRequiredPaths)');
+    expect(yaml).toContain('semanticPatchCandidates: Array.isArray(handoff.semanticPatchPaths)');
     expect(yaml).toContain("projectId: 'CAPITAL-AI-DOC'");
     expect(yaml).toContain("projectStage: 'PVC-03'");
   });
