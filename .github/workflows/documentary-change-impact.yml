@@ -32,26 +32,42 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
+      - name: Before-Snapshot ohne persistierte Zugangsdaten auschecken
+        if: github.event.before != '0000000000000000000000000000000000000000'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ github.event.before }}
+          path: before-snapshot
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Node.js einrichten
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
         with:
           node-version: '24.18.0'
           cache: npm
 
-      - name: Stalen Main-Run verwerfen
+      - name: Stalen Main-Run per GitHub-API verwerfen
         id: freshness
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
           PUSH_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          git fetch --no-tags origin main
-          live_main="$(git rev-parse origin/main)"
-          if [ "$PUSH_SHA" != "$live_main" ]; then
-            echo "current=false" >> "$GITHUB_OUTPUT"
-            echo "Staler Documentary-Impact-Run: push=$PUSH_SHA current_main=$live_main"
-            exit 0
-          fi
-          echo "current=true" >> "$GITHUB_OUTPUT"
+        with:
+          script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const pushSha = normalizeSha(process.env.PUSH_SHA);
+            const { data: main } = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main',
+            });
+            const liveMain = normalizeSha(main.commit?.sha);
+            if (pushSha !== liveMain) {
+              core.setOutput('current', 'false');
+              core.notice(`Staler Documentary-Impact-Run: push=${pushSha} current_main=${liveMain}`);
+              return;
+            }
+            core.setOutput('current', 'true');
 
       - name: Abhängigkeiten für trusted Analyse installieren
         if: steps.freshness.outputs.current == 'true'
@@ -69,8 +85,10 @@ jobs:
           if [ -z "$base" ] || [ "$base" = "$zero" ]; then
             base="$(git rev-parse "$AFTER_SHA^")"
           else
-            git fetch --no-tags origin "$base"
+            git fetch --no-tags before-snapshot "$base:refs/remotes/documentary/before"
+            test "$(git rev-parse refs/remotes/documentary/before)" = "$base"
           fi
+          rm -rf before-snapshot
           npm run documentary:impact:plan -- \
             --base="$base" \
             --head="$AFTER_SHA" \
