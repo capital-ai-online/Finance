@@ -83,8 +83,29 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A' } = {}) 
     throw new Error('Legacy repair requires review for a newer PR template contract.');
   }
   const missing = findMissingRequiredSections(body);
+  const canonicalMergeGate = '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja';
+  const currentNonCanonicalMergeGate = '- **Human-/CODEOWNER-Merge erforderlich:** Ja';
 
   if (missing.length === 0) {
+    if (
+      detectPrTemplateVersion(body) &&
+      !body.includes(canonicalMergeGate) &&
+      body.includes(currentNonCanonicalMergeGate)
+    ) {
+      const repaired = body.replace(currentNonCanonicalMergeGate, canonicalMergeGate);
+      if (repaired === body) {
+        throw new Error('Current-template merge-gate repair did not change the PR body.');
+      }
+      if (!repaired.includes(canonicalMergeGate)) {
+        throw new Error('Current-template merge-gate repair did not converge.');
+      }
+      return {
+        eligible: true,
+        changed: true,
+        reason: 'current-template-merge-gate-normalized',
+        body: repaired,
+      };
+    }
     return { eligible: false, changed: false, reason: 'already-canonical', body };
   }
   if (!detectPrTemplateVersion(body)) {
