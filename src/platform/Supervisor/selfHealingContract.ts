@@ -21,6 +21,8 @@ export const FINDING_CLASSES = [
   'FRONTEND_RENDER_FAILURE',
   'VERSION_SKEW',
   'DATA_RECOVERY_REQUIRED',
+  'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+  'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
   'SECURITY_OR_POLICY_BLOCKED',
 ] as const;
 
@@ -35,6 +37,7 @@ export type RemediationActionId =
   | 'FRONTEND_RELOAD_ONCE'
   | 'RETRY_SAFE_OPERATION'
   | 'QUARANTINE_WORK_ITEM'
+  | 'RECONCILE_REPOSITORY_PROJECTION'
   | 'RUNTIME_PROCESS_RECYCLE'
   | 'REDEPLOY_EXACT_SHA'
   | 'PROTECTED_ROLLBACK_RESTORE';
@@ -119,6 +122,19 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     exhaustionState: 'QUARANTINED',
     description: 'Move an exhausted durable work item into a bounded quarantine/dead-letter state.',
   },
+  RECONCILE_REPOSITORY_PROJECTION: {
+    id: 'RECONCILE_REPOSITORY_PROJECTION',
+    tier: 'SH-1',
+    activation: 'ENABLED',
+    idempotencyClass: 'IDEMPOTENT',
+    blastRadius: 'WORK_ITEM',
+    requiredCapability: 'repository.pr.autofix',
+    killSwitch: 'self-healing.repository-pr-autofix',
+    verificationProbe: 'exact-pr-head-ci-governance-readback',
+    budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
+    exhaustionState: 'ESCALATED',
+    description: 'Delegate an exact allowlisted repository projection or deterministic expectation repair to the existing PR autofix specialists, then require exact-head CI/Governance readback.',
+  },
   RUNTIME_PROCESS_RECYCLE: {
     id: 'RUNTIME_PROCESS_RECYCLE',
     tier: 'SH-2',
@@ -173,6 +189,16 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
   FRONTEND_RENDER_FAILURE: policy('FRONTEND_RENDER_FAILURE', 'OBSERVE_ONLY', ['OBSERVE_ONLY']),
   VERSION_SKEW: policy('VERSION_SKEW', 'FRONTEND_RELOAD_ONCE', ['FRONTEND_RELOAD_ONCE', 'OBSERVE_ONLY']),
   DATA_RECOVERY_REQUIRED: policy('DATA_RECOVERY_REQUIRED', 'PROTECTED_ROLLBACK_RESTORE', ['PROTECTED_ROLLBACK_RESTORE', 'OBSERVE_ONLY']),
+  REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT: policy(
+    'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+    'RECONCILE_REPOSITORY_PROJECTION',
+    ['RECONCILE_REPOSITORY_PROJECTION', 'OBSERVE_ONLY'],
+  ),
+  REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT: policy(
+    'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+    'RECONCILE_REPOSITORY_PROJECTION',
+    ['RECONCILE_REPOSITORY_PROJECTION', 'OBSERVE_ONLY'],
+  ),
   SECURITY_OR_POLICY_BLOCKED: policy('SECURITY_OR_POLICY_BLOCKED', 'OBSERVE_ONLY', ['OBSERVE_ONLY']),
 };
 
