@@ -13,7 +13,10 @@ export const GITHUB_COST_SURFACE_CATALOG = Object.freeze([
   Object.freeze({ id: 'codespaces', label: 'GitHub Codespaces compute/storage', units: ['compute', 'storage'], policy: 'ALERT_ON_NET_POSITIVE' }),
   Object.freeze({ id: 'ghas_code_security', label: 'GitHub Code Security', units: ['user-months'], policy: 'ALERT_ON_NET_POSITIVE' }),
   Object.freeze({ id: 'ghas_secret_protection', label: 'GitHub Secret Protection', units: ['user-months'], policy: 'ALERT_ON_NET_POSITIVE' }),
-  Object.freeze({ id: 'copilot_ai', label: 'GitHub Copilot / premium AI requests / AI credits', units: ['seats', 'premium-requests', 'credits'], policy: 'ALERT_ON_NET_POSITIVE' }),
+  Object.freeze({ id: 'code_quality', label: 'GitHub Code Quality', units: ['committer-licenses', 'ai-credits'], policy: 'ALERT_ON_NET_POSITIVE' }),
+  Object.freeze({ id: 'copilot_ai', label: 'GitHub Copilot licenses / premium requests / AI credits', units: ['seats', 'premium-requests', 'ai-credits'], policy: 'ALERT_ON_NET_POSITIVE' }),
+  Object.freeze({ id: 'copilot_sandboxes', label: 'GitHub Copilot cloud/local sandboxes', units: ['compute', 'storage', 'provider-defined'], policy: 'ALERT_ON_NET_POSITIVE' }),
+  Object.freeze({ id: 'account_plans', label: 'Paid GitHub account plans or fixed subscriptions', units: ['seats', 'months'], policy: 'ALERT_ON_NET_POSITIVE_IF_REPORTED' }),
   Object.freeze({ id: 'models', label: 'GitHub Models or other metered AI usage', units: ['requests', 'tokens', 'provider-defined'], policy: 'ALERT_ON_NET_POSITIVE' }),
   Object.freeze({ id: 'other', label: 'Any new or provider-defined GitHub SKU', units: ['provider-defined'], policy: 'DYNAMIC_CATCH_ALL_ALERT_ON_NET_POSITIVE' }),
 ]);
