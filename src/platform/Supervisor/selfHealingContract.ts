@@ -380,12 +380,19 @@ export type VerificationStatus =
   | 'IDENTITY_MISMATCH'
   | 'READBACK_FAILED';
 
-export interface VerificationResult {
-  status: VerificationStatus;
-  probe: string;
-  evidenceRef?: string;
-  evidence?: VerificationEvidence;
-}
+export type VerificationResult =
+  | {
+      status: 'PASS';
+      probe: string;
+      evidenceRef: string;
+      evidence: VerificationEvidence;
+    }
+  | {
+      status: Exclude<VerificationStatus, 'PASS'>;
+      probe: string;
+      evidenceRef?: string;
+      evidence?: VerificationEvidence;
+    };
 
 export interface EvidenceValidationResult {
   valid: boolean;
