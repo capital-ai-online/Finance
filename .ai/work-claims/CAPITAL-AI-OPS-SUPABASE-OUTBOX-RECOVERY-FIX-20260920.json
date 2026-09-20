@@ -20,6 +20,9 @@
   "priorityReason": "Production worker polling failed continuously because the merged database migration was missing, then exposed an ambiguous output-column reference after deployment; runtime convergence and durable evidence require correction.",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-SUPABASE-OUTBOX-RECOVERY-FIX-20260920.json",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
+    "scripts/governance/verifySupabaseMigrationLedgerReconciliation.mjs",
+    "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs",
     "supabase/migrations/20260920161445_fix_outbox_worker_recovery_job_id_ambiguity.sql",
     "tests/unit/outboxWorkerRecoveryMigration.test.ts"
   ],
