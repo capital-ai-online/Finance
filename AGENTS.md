@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.5.0`  
+**Control Plane Version:** `4.6.0`  
 **Status:** OWNER-DIRECTED — effective after Human Owner merge  
 **Effective date:** 2026-09-20  
 **Repository:** `capital-ai-online/Finance`
@@ -147,7 +147,8 @@ For the canonical GitHub→Render production path, the post-merge SLA is:
 3. production MUST be verified against the exact then-current `main` SHA through the canonical deployment-identity surface (`/healthz` deployment headers or a stronger provider readback); branch/repository identity and health MUST remain consistent;
 4. a missing deploy trigger, trigger later than five minutes, failed deployment verification, or production SHA different from then-current `main` is `PRODUCTION_DRIFT` and MUST NOT be represented as PASS;
 5. every dependent/open Pull Request whose base, ancestry, production baseline, owner projection or semantic assumptions changed because of the merge MUST be re-correlated in dependency order before it is treated merge-ready;
-6. the repository automation SHOULD create or update one deduplicated production-drift issue containing expected SHA, observed production SHA, detection time, workflow/deploy evidence and current remediation state; after exact convergence is proven, that issue SHOULD be automatically annotated and closed.
+6. after exact Production ↔ `CURRENT_MAIN` correlation PASS, repository automation MUST immediately advance exactly one next eligible review-ready Pull Request into current-main synchronization. Eligibility requires an open same-repository non-draft Pull Request against `main` with a trusted work-branch identity. Among otherwise eligible Pull Requests, ascending PR number is the deterministic FIFO tie-breaker. That synchronization MUST trigger the ordinary scope-classified `pull_request` pipeline checks automatically and requires no separate Human/Owner workflow-start action. The automatic synchronization MUST use a credential class whose PR update can emit downstream workflow events; a GitHub App installation token is preferred and a `GITHUB_TOKEN`-only update is not sufficient evidence that the required PR checks were started. If the selected Pull Request cannot be safely synchronized, automation MUST stop fail-closed instead of skipping ahead to a later PR;
+7. the repository automation SHOULD create or update one deduplicated production-drift issue containing expected SHA, observed production SHA, detection time, workflow/deploy evidence and current remediation state; after exact convergence is proven, that issue SHOULD be automatically annotated and closed.
 
 The five-minute value is an operational SLA for observing the deploy trigger, not permission to bypass required pre-deploy validation. If required CI prevents a safe deployment from starting within the SLA, the condition is reported as an SLA breach with its blocking evidence; controls are never weakened merely to meet the clock.
 
