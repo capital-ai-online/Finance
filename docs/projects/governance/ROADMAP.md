@@ -1,6 +1,6 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@da37d227cca5b3b19ae5dbfa477dd08fe583c540`
+**Baseline:** `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
@@ -62,7 +62,7 @@ The following Pull Requests are terminal evidence/prerequisites, not active work
 
 These are coordination references only and do not transfer productive ownership:
 
-- `CAPITAL-AI-FE`: PR #1178 and subsequent landing/branding work remain FE-owned.
+- `CAPITAL-AI-FE`: PR #1178 is merged evidence on current main; subsequent landing/branding work remains FE-owned.
 - `CAPITAL-AI-SEO`: `WP-SEO-LAUNCH-01` remains the canonical public Web/Search/Social launch coordination package.
 - `CAPITAL-AI-FINTECH`: data, scoring and orchestrator work remains FINTECH-owned under PVC-09..PVC-17.
 - `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-QM`: independent security/compliance/assurance gates remain owner-correct and cannot be absorbed by GOV.
