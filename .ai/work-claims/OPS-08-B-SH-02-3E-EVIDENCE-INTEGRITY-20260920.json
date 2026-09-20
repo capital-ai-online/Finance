@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-3E-EVIDENCE-INTEGRITY-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -31,9 +31,13 @@
   ],
   "scopeNote": "No new Governance, Evidence, Supervisor, EventMesh, QM or Security authority. Control Panel remains read-only/non-authorizing. Final merge remains Human/CODEOWNER-only.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
-  "validationState": "HOSTED_REVALIDATION_PENDING_AFTER_PASS_TYPE_HARDENING",
+  "validationState": "IMPLEMENTED_ON_MAIN_VALIDATED",
   "recorrelatedAt": "2026-09-20T15:34:00Z",
-  "correlationNote": "CURRENT_MAIN remains ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2. PR #1147 advanced to head 5a78bde07f1505094299894f9f4766d96df941fa but retains the same eight parent SH-02 projection paths; changed-file overlap with SH-02.3E remains zero. PR #1149 is the owner-correct FE fix for the unrelated CURRENT_MAIN landing-route regression and has exact-head CI PASS.",
+  "correlationNote": "Post-merge readback on CURRENT_MAIN 10dd68d1c448a71f681da78b76329d960d7a9279. PR #1147 and PR #1150 are merged; PR #1149 is merged; the only open PR is #1157 in CAPITAL-AI-FINTECH with no OPS/Self-Healing path ownership. SH-02.3E executable contract is present on main.",
   "finalCorrelationBaseSha": "ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2",
-  "finalCorrelationState": "CURRENT_MAIN_ANCESTRY_PASS_OPEN_PR_1147_SEMANTIC_DEPENDENCY_ZERO_CHANGED_FILE_OVERLAP"
+  "finalCorrelationState": "CURRENT_MAIN_ANCESTRY_PASS_OPEN_PR_1147_SEMANTIC_DEPENDENCY_ZERO_CHANGED_FILE_OVERLAP",
+  "releasedAt": "2026-09-20T16:00:14Z",
+  "releaseReason": "PR #1150 merged by Human Owner as f0e145cea02e2ddd72df5f35aee8ee8426c67f8d; exact final head 5e107b18c4aed6fe5418a407c245c07a0e68b9f0 had Container Security, PR Label Classification, automated PR review, PR Governance and CI all SUCCESS.",
+  "postMergeReadbackAt": "2026-09-20T16:47:00Z",
+  "postMergeMainSha": "10dd68d1c448a71f681da78b76329d960d7a9279"
 }

@@ -4,10 +4,10 @@
 **Parent:** `OPS-08-B-SH-02 / SH-02.3 / self-healing-contract/1.0.0`  
 **Primary PVC:** `PVC-08`; supporting `PVC-02`, `PVC-04`, `PVC-18`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Baseline:** `main@ac45e05da2e2c4eb95dd2cd63d0e22712538a5c2`  
-**Branch:** `agent/operations-sh02-3e-evidence-integrity-main-sync-20260920`  
-**Dependency:** open PR #1147 owns the parent SH-02 architecture/work-graph projection paths; this slice has zero changed-file overlap with those paths and must be re-correlated after #1147 changes state.  
-**Status:** `IMPLEMENTED_BRANCH / VALIDATION_PENDING / DEPENDENCY_CORRELATION_REQUIRED`
+**Merged baseline:** `main@f0e145cea02e2ddd72df5f35aee8ee8426c67f8d` via PR #1150  
+**Merged branch:** `agent/operations-sh02-3e-evidence-integrity-main-sync-20260920`  
+**Dependency:** RESOLVED — PR #1147 merged before PR #1150; final changed-file/authority correlation remained non-overlapping.  
+**Status:** `IMPLEMENTED_ON_MAIN / VALIDATED via PR #1150`
 
 ## Purpose
 
@@ -38,9 +38,9 @@ Missing or invalid evidence fails closed. Explicit non-positive states include `
 
 | WP | Scope | Owner/PVC | Dependencies | Exit gate | State |
 |---|---|---|---|---|---|
-| SH-02.3E | Evidence Integrity + read-only Control Panel projection | OPS / PVC-08,18 | SH-02.3 | bare PASS cannot converge; evidence generation/source/integrity/readback predicates are mandatory; SH-3 requires independent QM + Security assurance; Control Panel derives package declarations from canonical work-package documents and effective state only from PVC-18 | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
+| SH-02.3E | Evidence Integrity + read-only Control Panel projection | OPS / PVC-08,18 | SH-02.3 | bare PASS cannot converge; evidence generation/source/integrity/readback predicates are mandatory; SH-3 requires independent QM + Security assurance; Control Panel derives package declarations from canonical work-package documents and effective state only from PVC-18 | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1150 |
 
-This child package is intentionally materialized separately while PR #1147 owns the parent SH-02 architecture/work-package files. After #1147 reaches a terminal state, the parent work graph may consume this child entry through normal current-main correlation; this file never becomes a second Self-Healing authority.
+PR #1147 is terminal/Human-merged and PR #1150 is terminal/Human-merged. The parent work graph may therefore consume this child entry from CURRENT_MAIN. This file remains a subordinate package projection and never becomes a second Self-Healing authority.
 
 ## Implementation
 
@@ -110,3 +110,13 @@ SH-02.3E is eligible for `READY_FOR_HUMAN_DECISION` only when:
 - no auto-merge or Human Owner authority is introduced.
 
 Final merge remains Human/CODEOWNER-only.
+
+
+## Post-merge readback
+
+- PR #1150 merged at `2026-09-20T16:00:14Z` as `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`.
+- Exact final head `5e107b18c4aed6fe5418a407c245c07a0e68b9f0`: Container Security PASS; PR Label Classification PASS; automated PR review PASS; PR Governance PASS; CI PASS.
+- Readback baseline: `CURRENT_MAIN=10dd68d1c448a71f681da78b76329d960d7a9279`.
+- The executable Evidence Integrity invariant remains present in `src/platform/Supervisor/selfHealingContract.ts`.
+- The stale active/exclusive work claim is released by the post-merge convergence slice.
+- Next dependency-ready functional package remains `SH-02.6 — Frontend degraded-mode + version-skew recovery`.
