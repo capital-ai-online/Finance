@@ -38,6 +38,24 @@ function normalizeRows(source, usageSummary) {
   }));
 }
 
+function normalizeDetailRows(source, usageReport) {
+  const rows = Array.isArray(usageReport?.usageItems) ? usageReport.usageItems : [];
+  return rows.map((row) => Object.freeze({
+    source,
+    date: typeof row?.date === 'string' ? row.date : null,
+    organizationName: typeof row?.organizationName === 'string' ? row.organizationName : null,
+    repositoryName: typeof row?.repositoryName === 'string' ? row.repositoryName : null,
+    product: typeof row?.product === 'string' ? row.product : null,
+    sku: typeof row?.sku === 'string' ? row.sku : null,
+    quantity: typeof row?.quantity === 'number' ? row.quantity : null,
+    unitType: typeof row?.unitType === 'string' ? row.unitType : null,
+    pricePerUnit: typeof row?.pricePerUnit === 'number' ? row.pricePerUnit : null,
+    grossAmount: finiteOrZero(row?.grossAmount),
+    discountAmount: finiteOrZero(row?.discountAmount),
+    netAmount: finiteOrZero(row?.netAmount),
+  }));
+}
+
 function isExpectedEnterpriseLicense(row) {
   return row.source === 'enterprise'
     && String(row.sku || '').toLowerCase() === 'ghec_licenses';
@@ -47,7 +65,7 @@ function sum(rows, key) {
   return Number(rows.reduce((total, row) => total + finiteOrZero(row[key]), 0).toFixed(6));
 }
 
-function sortedAlertFingerprintInput(rows, cycle) {
+function sortedAlertFingerprintInput(rows, detailRows, cycle) {
   // Deliberately exclude running amounts/quantities. One SKU should alert once when it first
   // becomes billable in a cycle, not every time its accumulated amount changes.
   const normalized = rows.map((row) => ({
@@ -56,7 +74,15 @@ function sortedAlertFingerprintInput(rows, cycle) {
     sku: row.sku,
     unitType: row.unitType,
   })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  return JSON.stringify({ cycle, rows: normalized });
+  const detailed = detailRows.map((row) => ({
+    source: row.source,
+    organizationName: row.organizationName,
+    repositoryName: row.repositoryName,
+    product: row.product,
+    sku: row.sku,
+    unitType: row.unitType,
+  })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  return JSON.stringify({ cycle, rows: normalized, detailed });
 }
 
 export function buildGitHubCostWatchReport({
@@ -66,7 +92,10 @@ export function buildGitHubCostWatchReport({
   enterprise,
   username,
   enterpriseUsage = null,
+  organizationUsageDetail = null,
   personalUsage = null,
+  personalUsageDetail = null,
+  organizationCoverage = { status: 'PASS', reason: null },
   personalCoverage = { status: 'PASS', reason: null },
 } = {}) {
   if (!['monitor', 'test'].includes(mode)) throw new Error('[GITHUB-COST-WATCH] mode must be monitor or test');
@@ -79,15 +108,22 @@ export function buildGitHubCostWatchReport({
   const expectedEnterpriseLicenseRows = Object.freeze(allRows.filter(isExpectedEnterpriseLicense));
   const additionalRows = Object.freeze(allRows.filter((row) => !isExpectedEnterpriseLicense(row)));
   const positiveAdditionalRows = Object.freeze(additionalRows.filter((row) => row.netAmount > 0));
+  const detailRows = Object.freeze([
+    ...normalizeDetailRows('organization', organizationUsageDetail),
+    ...normalizeDetailRows('personal', personalUsageDetail),
+  ]);
+  const positiveDetailRows = Object.freeze(detailRows.filter((row) => row.netAmount > 0));
 
   const cycle = Object.freeze({
     year: timestamp.getUTCFullYear(),
     month: timestamp.getUTCMonth() + 1,
   });
-  const coverageBlocked = personalCoverage?.status !== 'PASS';
+  const coverageBlocked = organizationCoverage?.status !== 'PASS' || personalCoverage?.status !== 'PASS';
   const fingerprint = createHash('sha256')
-    .update(sortedAlertFingerprintInput(positiveAdditionalRows, cycle))
-    .update(coverageBlocked ? `|coverage:${personalCoverage?.reason || 'blocked'}` : '|coverage:pass')
+    .update(sortedAlertFingerprintInput(positiveAdditionalRows, positiveDetailRows, cycle))
+    .update(coverageBlocked
+      ? `|coverage:org=${organizationCoverage?.reason || organizationCoverage?.status || 'blocked'};personal=${personalCoverage?.reason || personalCoverage?.status || 'blocked'}`
+      : '|coverage:pass')
     .digest('hex');
 
   return Object.freeze({
@@ -109,6 +145,10 @@ export function buildGitHubCostWatchReport({
     }),
     coverage: Object.freeze({
       enterprise: Object.freeze({ status: 'PASS' }),
+      organizationAttribution: Object.freeze({
+        status: organizationCoverage?.status || 'BLOCKED',
+        reason: organizationCoverage?.reason || null,
+      }),
       personal: Object.freeze({
         status: personalCoverage?.status || 'BLOCKED',
         reason: personalCoverage?.reason || null,
@@ -123,6 +163,8 @@ export function buildGitHubCostWatchReport({
     }),
     rows: allRows,
     alertRows: positiveAdditionalRows,
+    detailRows,
+    alertDetailRows: positiveDetailRows,
     potentialCostSurfaces: GITHUB_COST_SURFACE_CATALOG,
     alertFingerprint: fingerprint,
     emailRequired: mode === 'test' || coverageBlocked || positiveAdditionalRows.length > 0,
