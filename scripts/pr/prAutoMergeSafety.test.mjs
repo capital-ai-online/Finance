@@ -40,7 +40,7 @@ function pr(overrides = {}) {
 
 function canonicalBody() {
   return [
-    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
     '# Test',
     '',
     '## 1. 🧭 Entscheidung',
@@ -178,7 +178,7 @@ test('legacy PR template is never auto-merge eligible', () => {
   const result = classifyAutoMergeEligibility({
     pr: pr(),
     repository,
-    body: canonicalBody().replace(/1\.7\.0/g, '1.6.0'),
+    body: canonicalBody().replace(/1\.8\.0/g, '1.7.0'),
     files: ['client/src/components/MarketingHero.tsx'],
     gates: passGates,
     compareStatus: 'ahead',
