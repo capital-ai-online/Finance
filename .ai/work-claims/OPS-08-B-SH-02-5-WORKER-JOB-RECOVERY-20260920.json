@@ -15,7 +15,9 @@
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
   "projectStage": "PVC-08",
-  "supportingStages": ["PVC-02"],
+  "supportingStages": [
+    "PVC-02"
+  ],
   "startedAt": "2026-09-20T14:10:00Z",
   "baseBranch": "main",
   "baseSha": "fb8b9dd3c661ecf5d202d570fe435496cbe47461",
@@ -23,6 +25,7 @@
   "claimedPaths": [
     ".ai/work-claims/OPS-08-B-SH-02-4-DEPENDENCY-RESILIENCE-20260920.json",
     ".ai/work-claims/OPS-08-B-SH-02-5-WORKER-JOB-RECOVERY-20260920.json",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
     "supabase/migrations/20260920141000_outbox_worker_recovery.sql",
     "server/outbox.ts",
     "server/outboxWorker.ts",
@@ -37,5 +40,5 @@
   "scopeNote": "Reuse the existing ADR-0054 outbox as the only queue/retry/dead-letter authority. Generic QUARANTINE_WORK_ITEM in self-healing-contract/1.0.0 remains HELD; this slice only hardens the already-owned outbox lifecycle and evidence.",
   "activationBoundary": "No SH-2/SH-3 capability is activated. Automatic stale replay is allowed only for handlers explicitly registered as IDEMPOTENT; ambiguous side-effect handlers fail closed into outbox dead-letter/quarantine.",
   "recorrelatedAt": "2026-09-20T14:21:00Z",
-  "correlationNote": "Re-correlated to CURRENT_MAIN fb8b9dd3c661ecf5d202d570fe435496cbe47461 after PR #1140 merged. The intervening GOV-PR-UX-01 delta only changes PR-template/governance tooling and has no path or semantic overlap with SH-02.5."
+  "correlationNote": "Re-correlated to CURRENT_MAIN fb8b9dd3c661ecf5d202d570fe435496cbe47461 after PR #1140 merged. The intervening GOV-PR-UX-01 delta only changes PR-template/governance tooling and has no path or semantic overlap with SH-02.5. CI reconciliation evidence additionally requires the canonical OPS/PVC-02 Supabase migration ledger to classify the new local-only migration."
 }

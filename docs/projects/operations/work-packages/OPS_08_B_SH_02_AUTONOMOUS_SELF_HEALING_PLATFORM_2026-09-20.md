@@ -203,6 +203,7 @@ Apply to durable outbox and other recurring workers:
 - Runtime handler registration now requires explicit `IDEMPOTENT` or `REQUIRES_RECONCILIATION` replay safety. Existing SMTP jobs are conservatively classified `REQUIRES_RECONCILIATION` because provider acceptance can be ambiguous across process failure; they quarantine rather than risk duplicate side effects.
 - Handler failure for an explicitly idempotent type continues through the existing bounded `fail_outbox_job` backoff/max-attempt authority. Missing handlers and uncertain side-effect failures quarantine immediately.
 - The generic Self-Healing `QUARANTINE_WORK_ITEM` action remains `HELD`; this slice hardens the pre-existing outbox-native dead-letter lifecycle and does not activate generic SH-1 remediation.
+- The canonical OPS/PVC-02 Supabase migration ledger records `20260920141000_outbox_worker_recovery.sql` as a new local-only migration (`local_total=56`, `local_only=11`), keeping migration reconciliation evidence consistent with the checked-in schema set.
 - Focused tests cover replay-safety filtering, lost-lease completion, idempotent bounded retry, reconciliation-required quarantine and SQL migration invariants. Validation remains `VALIDATION_PENDING` until hosted repository checks execute against the final PR head.
 
 ## SH-02.6 — Frontend degraded mode
