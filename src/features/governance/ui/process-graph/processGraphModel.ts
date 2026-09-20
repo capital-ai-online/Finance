@@ -6,7 +6,7 @@ import type {
 } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
 
 export type ProcessGraphState = 'current' | 'blocked' | 'waiting-for-evidence' | 'historical' | 'unknown';
-export type ProcessGraphNodeKind = 'pvc' | 'work-stage' | 'evidence-gate' | 'owner-gate';
+export type ProcessGraphNodeKind = 'pvc' | 'work-stage' | 'self-healing-work-package' | 'evidence-gate' | 'owner-gate';
 
 export interface ProcessGraphStateEvidence {
   generatedAt: string;
@@ -28,6 +28,9 @@ export interface ProcessGraphNode {
   authority: 'authorizing' | 'evidence-only' | 'non-authorizing';
   source: string;
   stateEvidence?: ProcessGraphStateEvidence;
+  declaredState?: string;
+  dependencies?: string[];
+  exitGate?: string;
 }
 
 export interface ProcessGraphEdge {
@@ -47,6 +50,15 @@ export interface ProcessGraphViewModel {
 
 interface PvcRow { pvc: string; stage: string; owner: string; }
 interface WorkStageDefinition { id: string; heading: string; label: string; }
+
+export interface SelfHealingWorkPackageProjection {
+  id: string;
+  label: string;
+  owner: string;
+  dependencies: string[];
+  exitGate: string;
+  declaredState: string;
+}
 
 const stripTicks = (value: string) => value.replace(/`/g, '').trim();
 
@@ -83,6 +95,40 @@ export function parseAutonomousWorkStages(agentTrustRootMarkdown: string): Array
   return WORK_STAGE_DEFINITIONS
     .filter((stage) => agentTrustRootMarkdown.includes(stage.heading))
     .map(({ id, label }) => ({ id, label }));
+}
+
+function normalizeSelfHealingDependency(value: string): string[] {
+  const matches = value.match(/(?:SH-)?02\.[0-9]+[A-Z]?/gi) ?? [];
+  return Array.from(new Set(matches.map((item) => {
+    const normalized = item.toUpperCase();
+    return normalized.startsWith('SH-') ? normalized : `SH-${normalized}`;
+  })));
+}
+
+export function parseSelfHealingWorkPackages(markdowns: readonly string[]): SelfHealingWorkPackageProjection[] {
+  const packages = new Map<string, SelfHealingWorkPackageProjection>();
+
+  for (const markdown of markdowns) {
+    for (const rawLine of markdown.split('\n')) {
+      const line = rawLine.trim();
+      if (!/^\|\s*SH-02\.[0-9]+[A-Z]?\s*\|/i.test(line)) continue;
+      const cells = line.split('|').slice(1, -1).map(stripTicks);
+      if (cells.length < 6) continue;
+      const [idRaw, label, owner, dependencyText, exitGate, declaredState] = cells;
+      const id = idRaw.toUpperCase();
+      if (packages.has(id)) continue;
+      packages.set(id, {
+        id,
+        label,
+        owner,
+        dependencies: normalizeSelfHealingDependency(dependencyText).filter((dependency) => dependency !== id),
+        exitGate,
+        declaredState,
+      });
+    }
+  }
+
+  return Array.from(packages.values());
 }
 
 function isOperationalEnvelopeTrustedForProjection(
@@ -156,12 +202,14 @@ export function buildProcessGraphViewModel(
   projectMappingMarkdown: string,
   agentTrustRootMarkdown: string,
   operationalState?: OperationalTraceStateEnvelope | null,
+  selfHealingWorkPackageMarkdowns: readonly string[] = [],
 ): ProcessGraphViewModel {
   const rows = parsePvcRows(pvcMarkdown);
   const folders = parseProjectFolders(projectMappingMarkdown);
   const workStages = parseAutonomousWorkStages(agentTrustRootMarkdown);
   const operationalStateAvailable = isOperationalEnvelopeTrustedForProjection(operationalState)
     && operationalState.records.length > 0;
+  const selfHealingWorkPackages = parseSelfHealingWorkPackages(selfHealingWorkPackageMarkdowns);
 
   const pvcNodes: ProcessGraphNode[] = rows.map((row) => ({
     id: row.pvc,
@@ -181,6 +229,19 @@ export function buildProcessGraphViewModel(
     ...resolveStateFromOperationalProjection(stage.id, 'work-stage', operationalState),
     authority: 'non-authorizing',
     source: 'AGENTS.md — autonomous development work graph; state: PVC-18 OperationalTraceStateEnvelope',
+  }));
+
+  const selfHealingWorkPackageNodes: ProcessGraphNode[] = selfHealingWorkPackages.map((workPackage) => ({
+    id: workPackage.id,
+    kind: 'self-healing-work-package',
+    label: workPackage.label,
+    owner: workPackage.owner,
+    ...resolveStateFromOperationalProjection(workPackage.id, 'self-healing-work-package', operationalState),
+    authority: 'non-authorizing',
+    source: 'OPS-08-B-SH-02 canonical work-package documents; effective state: PVC-18 OperationalTraceStateEnvelope only',
+    declaredState: workPackage.declaredState,
+    dependencies: workPackage.dependencies,
+    exitGate: workPackage.exitGate,
   }));
 
   const gateNodes: ProcessGraphNode[] = [
@@ -204,11 +265,22 @@ export function buildProcessGraphViewModel(
 
   const chainEdges: ProcessGraphEdge[] = pvcNodes.slice(1).map((node, index) => ({ id: `handoff-${pvcNodes[index].id}-${node.id}`, source: pvcNodes[index].id, target: node.id, relation: 'handoff' }));
   const workStageEdges: ProcessGraphEdge[] = workStageNodes.slice(1).map((node, index) => ({ id: `dependency-${workStageNodes[index].id}-${node.id}`, source: workStageNodes[index].id, target: node.id, relation: 'dependency' }));
+  const selfHealingIds = new Set(selfHealingWorkPackageNodes.map((node) => node.id));
+  const selfHealingEdges: ProcessGraphEdge[] = selfHealingWorkPackageNodes.flatMap((node) =>
+    (node.dependencies ?? [])
+      .filter((dependency) => selfHealingIds.has(dependency))
+      .map((dependency) => ({
+        id: `sh-dependency-${dependency}-${node.id}`,
+        source: dependency,
+        target: node.id,
+        relation: 'dependency' as const,
+      })),
+  );
   const gateEdges: ProcessGraphEdge[] = [{ id: 'evidence-owner', source: 'evidence-gate', target: 'owner-gate', relation: 'validation/evidence' }];
 
   return {
-    nodes: [...pvcNodes, ...workStageNodes, ...gateNodes],
-    edges: [...chainEdges, ...workStageEdges, ...gateEdges],
+    nodes: [...pvcNodes, ...workStageNodes, ...selfHealingWorkPackageNodes, ...gateNodes],
+    edges: [...chainEdges, ...workStageEdges, ...selfHealingEdges, ...gateEdges],
     operationalStateAvailable,
     ...(isOperationalEnvelopeTrustedForProjection(operationalState)
       ? { operationalStateGeneratedAt: operationalState.generatedAt }
