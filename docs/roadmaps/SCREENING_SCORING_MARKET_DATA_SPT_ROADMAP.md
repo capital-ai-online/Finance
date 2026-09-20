@@ -23,7 +23,7 @@ The repository's organizational Project Value Chain uses the separate qualified 
 | Verified display | `verified-asset-display/1.0.0` | read-only presentation/research projection; never execution-price or scoring authority |
 | Scoring | ADR-0087 + `ScoringModelRegistry` + `ScoringDispatcher` | only productive multi-asset scoring exit |
 | FinTech Core workflow composition | ADR-0099 | workflow/OrderIntent/Risk/Paper composition; cannot replace ADR-0087 scoring authority |
-| CAPITAL-AI-FINTECH project execution | `docs/projects/fintech/ROADMAP.md` | Primary Project Owner for organizational `PVC-12..17`; reuses technical authorities and does not renumber this SPT |
+| CAPITAL-AI-FINTECH project execution | `docs/projects/fintech/ROADMAP.md` | Primary Project Owner for organizational `PVC-09..17`; reuses technical authorities and does not renumber this SPT |
 | DeFiLlama | ADR-0100 | evidence-only; no direct score/dispatcher bypass |
 | Ranking / eligibility | canonical Ranking contracts/services | consumes canonical score/evidence; no caller-provided rank authority |
 | Quality | ESS-0005 + `FintechValueChainQualityProjection` | read-only structural/evidence validation; non-authorizing |
@@ -80,7 +80,7 @@ This technical numbering remains current. Historical evidence recorded under old
 
 Current main separately defines:
 
-- `PVC-09..11` -> `CAPITAL-AI-DATA`;
+- `PVC-09..17` -> `CAPITAL-AI-FINTECH`;
 - `PVC-12..17` -> `CAPITAL-AI-FINTECH`;
 - `PVC-18` -> `CAPITAL-AI-OPS`.
 
@@ -120,9 +120,9 @@ Technical VC-08 is intentionally separated from the canonical scoring lane. `ver
 
 FinTech Core composes financial workflows downstream/adjacent to the canonical scoring/evidence authorities. ADR-0087 remains productive scoring authority and ADR-0099 remains workflow-composition authority.
 
-`docs/projects/fintech/ROADMAP.md` is the canonical organizational execution roadmap for CAPITAL-AI-FINTECH. It owns project work across `PVC-12..17` while reusing this technical SPT, ADR-0087 and current runtime contracts.
+`docs/projects/fintech/ROADMAP.md` is the canonical organizational execution roadmap for CAPITAL-AI-FINTECH. It owns project work across `PVC-09..17` while reusing this technical SPT, ADR-0087 and current runtime contracts.
 
-Provider/data ingress and DQ remain DATA-owned; EventMesh/Traceability project ownership remains OPS; Frontend remains a consumer; Quality, Security and Compliance remain cross-cutting.
+Provider/data ingress and DQ for `PVC-09..11` are FINTECH-owned under the DATA supersession; EventMesh/Traceability project ownership remains OPS; Frontend remains a consumer; Quality, Security and Compliance remain cross-cutting.
 
 Security requirements from CAPITAL-AI-SEC PR #631 are integrated in `docs/projects/fintech/SECURITY_HANDOFFS.md`. Security owns findings and independent verification; FINTECH implements only concrete FINTECH-owned remediation and cannot self-set Security VERIFIED/CLOSED.
 
