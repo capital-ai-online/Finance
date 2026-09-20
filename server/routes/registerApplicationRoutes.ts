@@ -23,6 +23,7 @@ import { aiRouter } from '../ai';
 import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
 import { breakGlassRouter } from '../systemadmin/breakGlassRouter';
 import { ownerAuthorizationRouter } from '../ownerAuthorization/router';
+import { githubBillingAlertRouter } from './githubBillingAlertRoutes';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';
 import { realtimeAiNewsfeedEntitlement } from '../middleware/realtimeAiNewsfeedEntitlement';
@@ -120,6 +121,7 @@ export function registerApplicationRoutes(
   app.use('/api/admin/supervisor', supervisorRouter);
   app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
   app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);
+  app.use('/api/internal/github-billing-alert', githubBillingAlertRouter);
   app.use('/api/systemadmin/break-glass', breakGlassRouter);
   app.use('/api/owner-authorization', ownerAuthorizationRouter);
   app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);

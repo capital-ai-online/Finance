@@ -44,6 +44,7 @@ import {
 } from './server/db';
 import { handleWebhookEvent, getStripeInstance } from './server/stripe';
 import { processSubscriptionConfirmationMailJob } from './server/mailer';
+import { processGitHubBillingAlertMailJob } from './server/billing/githubBillingAlertMailer';
 import { registerOutboxJobHandler, startOutboxWorker, stopOutboxWorker } from './server/outboxWorker';
 import { logSystemEvent } from './server/systemEvents';
 import { startRecursiveFileWatcher } from './server/documentHygiene';
@@ -63,6 +64,7 @@ const serverLogger = createLogger('server');
 // loop starts. subscription_confirmation_mail retries a failed checkout-confirmation SMTP send
 // (server/mailer.ts) with backoff instead of the previous permanent failure (see OPS-001).
 registerOutboxJobHandler('subscription_confirmation_mail', processSubscriptionConfirmationMailJob);
+registerOutboxJobHandler('github_billing_cost_alert_mail', processGitHubBillingAlertMailJob);
 
 dotenv.config();
 
