@@ -90,6 +90,13 @@ test('normalizes the merge gate in an otherwise canonical v1.6 body', () => {
     '- **Human-/CODEOWNER-Merge erforderlich:** Ja',
     '- **Self-/Auto-Merge:** Nein',
     '',
+    '## 7. Maschinenlesbare Baseline',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    'CAPITAL_AI_PRODUCTION_BASELINE_START',
+    '- **Baseline-ID:** sha256:test',
+    'CAPITAL_AI_PRODUCTION_BASELINE_END',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+    '',
   ].join('\n');
 
   assert.deepEqual(findMissingRequiredSections(body), []);
