@@ -1,4 +1,10 @@
 export const REQUIRED_PR_SECTIONS = Object.freeze([
+  '## 1. 🧭 Entscheidung',
+  '## 2. ✅ Evidence',
+  '## 3. 🔍 Technical Evidence',
+]);
+
+export const LEGACY_V16_REQUIRED_PR_SECTIONS = Object.freeze([
   '## 1. 🎯 Kurzüberblick',
   '## 2. 📦 Projekt & Scope',
   '## 3. 🛠️ Umsetzung',
@@ -8,8 +14,6 @@ export const REQUIRED_PR_SECTIONS = Object.freeze([
   '## 7. Maschinenlesbare Baseline',
 ]);
 
-// Existing open PRs from earlier canonical templates remain structurally compatible.
-// Newly rendered PRs use the compact, human-first v1.6 headings above.
 export const PR_SECTION_ALIASES = Object.freeze({
   '## 1. 🎯 Kurzüberblick': Object.freeze(['## 1. Herkunft', '## 1. Arbeitsauftrag']),
   '## 2. 📦 Projekt & Scope': Object.freeze(['## 2. Projektzuordnung', '## 4. Umfang / Multi-Agent-Koordination']),
@@ -27,14 +31,23 @@ export function normalizePrHeading(text) {
     .trim();
 }
 
-function headingCandidates(requiredHeading) {
-  return [
-    requiredHeading,
-    ...(PR_SECTION_ALIASES[requiredHeading] || []),
-  ];
+export function detectPrBodyContractVersion(bodyText) {
+  return String(bodyText || '').match(/CAPITAL_AI_PR_TEMPLATE_VERSION:\s*(1\.[0-9]+\.[0-9]+)/)?.[1] || null;
 }
 
-export function bodyHasRequiredSection(bodyText, requiredHeading) {
+function requiredSectionsForVersion(version) {
+  if (version === '1.5.0' || version === '1.6.0') return LEGACY_V16_REQUIRED_PR_SECTIONS;
+  return REQUIRED_PR_SECTIONS;
+}
+
+function headingCandidates(requiredHeading, version) {
+  if (version === '1.5.0' || version === '1.6.0') {
+    return [requiredHeading, ...(PR_SECTION_ALIASES[requiredHeading] || [])];
+  }
+  return [requiredHeading];
+}
+
+export function bodyHasRequiredSection(bodyText, requiredHeading, version = detectPrBodyContractVersion(bodyText) || '1.7.0') {
   const normalizedLines = new Set(
     String(bodyText || '')
       .split(/\r?\n/)
@@ -42,20 +55,23 @@ export function bodyHasRequiredSection(bodyText, requiredHeading) {
       .filter(Boolean),
   );
 
-  return headingCandidates(requiredHeading)
+  return headingCandidates(requiredHeading, version)
     .map(normalizePrHeading)
     .some((heading) => normalizedLines.has(heading));
 }
 
-export function findMissingRequiredSections(bodyText) {
-  return REQUIRED_PR_SECTIONS.filter(
-    (heading) => !bodyHasRequiredSection(bodyText, heading),
+export function findMissingRequiredSections(bodyText, version = detectPrBodyContractVersion(bodyText) || '1.7.0') {
+  return requiredSectionsForVersion(version).filter(
+    (heading) => !bodyHasRequiredSection(bodyText, heading, version),
   );
 }
 
-export function canonicalizeKnownSectionHeadings(bodyText) {
-  const canonicalByNormalizedAlias = new Map();
+// Legacy body repair intentionally converges only the v1.5/v1.6 compatibility
+// contract. New v1.7 bodies are rendered directly from the canonical template.
+export function canonicalizeKnownSectionHeadings(bodyText, targetVersion = '1.6.0') {
+  if (targetVersion !== '1.5.0' && targetVersion !== '1.6.0') return String(bodyText || '');
 
+  const canonicalByNormalizedAlias = new Map();
   for (const [canonical, aliases] of Object.entries(PR_SECTION_ALIASES)) {
     for (const alias of aliases) {
       canonicalByNormalizedAlias.set(normalizePrHeading(alias), canonical);
