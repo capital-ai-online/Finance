@@ -18,6 +18,10 @@ on: # zizmor: ignore[dangerous-triggers]
 
 permissions: {}
 
+concurrency:
+  group: pr-decision-reconciler-${{ github.event_name }}-${{ github.event.workflow_run.head_sha || github.event.check_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   resolve:
     name: Betroffene PRs fail-closed auflösen
