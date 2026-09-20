@@ -84,9 +84,8 @@ CAPITAL-AI-DOC coordinates and evidences:
 CAPITAL-AI-DOC does not absorb:
 
 - `CAPITAL-AI-GOV / PVC-05` Platform Director or repository Governance Control Plane ownership;
-- `CAPITAL-AI-DATA / PVC-09..PVC-11` ingestion, evidence-management or Data Quality implementation;
+- `CAPITAL-AI-FINTECH / PVC-09..PVC-17` provider/data ingestion, evidence-management, Data Quality, feature engineering, scoring, orchestration, domain execution, canonical scoring or ranking;
 - `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18` controlled implementation lifecycle, Supervisor execution, Platform Version Management, Release, Production, EventMesh/Traceability runtime;
-- `CAPITAL-AI-FINTECH / PVC-12..PVC-17` feature engineering, scoring, orchestration, domain execution, canonical scoring or ranking;
 - productive Knowledge, Vocabulary, Wiki, Governance, Release or EventMesh architectures that already have canonical owners/contracts.
 
 Foreign implementation is not executed here. Ownership is resolved only through [`../README.md`](../README.md) and [`../PROJECT_VALUE_CHAIN.md`](../PROJECT_VALUE_CHAIN.md).
