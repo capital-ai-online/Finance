@@ -46,6 +46,8 @@ test('rerun fallback waits for the exact source run without adding write authori
     'Date.now() + 240_000',
   ]) assert.ok(classify.includes(token), 'missing rerun source binding: ' + token);
   assert.doesNotMatch(classify, /contents: write|pull-requests: write|actions: write/);
+  assert.ok(workflow.includes('${{ github.event.workflow_run.run_attempt }}-${{ github.event.action }}'));
+  assert.match(workflow, /cancel-in-progress: true/);
 });
 
 test('failure logs are bounded, redacted and never uploaded as artifacts', () => {
