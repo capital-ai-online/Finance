@@ -1,0 +1,288 @@
+name: Self-Healing Package Continuation
+run-name: >-
+  Post-Merge Self-Healing continuation for ${{ github.event.workflow_run.head_sha }}
+
+# Non-authorizing continuation handoff for the already active OPS-08-B-SH-02 package.
+# It runs only after the canonical Post-Merge Production Correlation succeeded for current main.
+# It selects the next dependency-ready SH-02 slice and records one deduplicated issue.
+# It does not create implementation, mutate a work branch, approve, enable auto-merge or merge.
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: ['Post-Merge Production Correlation']
+    types: [completed]
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: self-healing-package-continuation-main
+  cancel-in-progress: true
+
+jobs:
+  handoff:
+    name: Next Self-Healing slice deterministically hand off
+    if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.path == '.github/workflows/post-merge-production-correlation.yml' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: write
+
+    steps:
+      - name: Current-main Self-Healing work graph correlate and hand off
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const source = context.payload.workflow_run;
+            const sourceSha = String(source.head_sha || '').toLowerCase();
+            const marker = '<!-- CAPITAL_AI_SH_CONTINUATION_V1 -->';
+            const issueTitle = '[SELF-HEALING-CONTINUATION] OPS-08-B-SH-02';
+            const workPackagePath = 'docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md';
+
+            if (!/^[0-9a-f]{40}$/.test(sourceSha)) {
+              throw new Error('Post-merge correlation did not provide an immutable head SHA.');
+            }
+
+            const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            const currentMainSha = String(main.commit.sha || '').toLowerCase();
+            if (currentMainSha !== sourceSha) {
+              core.notice(`Continuation source ${sourceSha} is stale; CURRENT_MAIN=${currentMainSha}. No handoff is written.`);
+              return;
+            }
+
+            const associated = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              { owner, repo, commit_sha: sourceSha, per_page: 100 },
+            );
+
+            const merged = [];
+            for (const candidate of associated) {
+              if (!candidate.number) continue;
+              const { data: pr } = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: candidate.number,
+              });
+              if (
+                pr.state === 'closed' &&
+                pr.merged_at &&
+                String(pr.merge_commit_sha || '').toLowerCase() === sourceSha
+              ) {
+                merged.push(pr);
+              }
+            }
+
+            if (merged.length !== 1) {
+              core.notice(`Expected one merged PR for exact main SHA ${sourceSha}; observed=${merged.length}. This push is not an unambiguous SH continuation source.`);
+              return;
+            }
+
+            const mergedPr = merged[0];
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number: mergedPr.number, per_page: 100 },
+            );
+
+            const shClaims = files
+              .filter(file => file.status === 'added')
+              .map(file => file.filename)
+              .map(path => ({
+                path,
+                match: path.match(/^\.ai\/work-claims\/OPS-08-B-SH-02-(\d+)-[A-Z0-9-]+\.json$/),
+              }))
+              .filter(item => item.match);
+
+            if (shClaims.length === 0) {
+              core.notice(`Merged PR #${mergedPr.number} is not an atomic SH-02 slice; no Self-Healing continuation handoff.`);
+              return;
+            }
+            if (shClaims.length !== 1) {
+              throw new Error(`Merged PR #${mergedPr.number} contains ${shClaims.length} new SH-02 atomic claims; continuation fails closed.`);
+            }
+
+            const completedNumber = Number(shClaims[0].match[1]);
+            const completedId = `SH-02.${completedNumber}`;
+
+            const contentResponse = await github.rest.repos.getContent({
+              owner,
+              repo,
+              path: workPackagePath,
+              ref: currentMainSha,
+            });
+            const data = contentResponse.data;
+            if (Array.isArray(data) || data.type !== 'file' || !data.content) {
+              throw new Error('Canonical SH-02 work package could not be read as a file.');
+            }
+            const markdown = Buffer.from(data.content, data.encoding || 'base64').toString('utf8');
+
+            const rows = [];
+            for (const line of markdown.split(/\r?\n/)) {
+              const match = line.match(/^\|\s*(SH-02\.(\d+))\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/);
+              if (!match) continue;
+              rows.push({
+                id: match[1],
+                number: Number(match[2]),
+                scope: match[3].trim(),
+                owner: match[4].trim(),
+                dependencies: match[5].trim(),
+                exitGate: match[6].trim(),
+                state: match[7].trim(),
+              });
+            }
+            if (rows.length === 0) {
+              throw new Error('Canonical SH-02 work graph contains no parseable rows.');
+            }
+
+            const byNumber = new Map(rows.map(row => [row.number, row]));
+            const completed = new Set(
+              rows
+                .filter(row => /IMPLEMENTED_ON_MAIN|VALIDATED|CLOSED|COMPLETE/.test(row.state))
+                .map(row => row.number),
+            );
+            completed.add(completedNumber);
+
+            function parseDependencies(text) {
+              const refs = new Set();
+              let residual = String(text || '');
+
+              residual = residual.replace(/02\.(\d+)\.\.02\.(\d+)/g, (_, startText, endText) => {
+                const start = Number(startText);
+                const end = Number(endText);
+                for (let value = start; value <= end; value += 1) refs.add(value);
+                return ' ';
+              });
+              residual = residual.replace(/02\.(\d+)/g, (_, valueText) => {
+                refs.add(Number(valueText));
+                return ' ';
+              });
+              residual = residual
+                .replace(/current\s+main/gi, ' ')
+                .replace(/[,+]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+              return { refs: [...refs], unresolved: residual };
+            }
+
+            const queued = rows
+              .filter(row => row.state === 'QUEUED')
+              .sort((a, b) => a.number - b.number);
+
+            let next = null;
+            const blocked = [];
+            for (const row of queued) {
+              const parsed = parseDependencies(row.dependencies);
+              const missing = parsed.refs.filter(number => !completed.has(number));
+              if (parsed.unresolved || missing.length > 0) {
+                blocked.push({
+                  id: row.id,
+                  unresolved: parsed.unresolved || null,
+                  missing: missing.map(number => `SH-02.${number}`),
+                });
+                continue;
+              }
+              next = row;
+              break;
+            }
+
+            const issues = await github.paginate(
+              github.rest.issues.listForRepo,
+              { owner, repo, state: 'all', per_page: 100 },
+            );
+            const existing = issues.find(issue =>
+              !issue.pull_request &&
+              issue.title === issueTitle &&
+              String(issue.body || '').includes(marker)
+            ) || null;
+
+            const now = new Date().toISOString();
+
+            if (!next) {
+              if (queued.length === 0) {
+                if (existing && existing.state === 'open') {
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: existing.number,
+                    body: `✅ ${now}: SH-02 has no remaining QUEUED slice after ${completedId} / PR #${mergedPr.number}. Continuation handoff closed.`,
+                  });
+                  await github.rest.issues.update({
+                    owner,
+                    repo,
+                    issue_number: existing.number,
+                    state: 'closed',
+                  });
+                }
+                core.notice('SH-02 continuation complete: no QUEUED slice remains.');
+                return;
+              }
+
+              const body = `${marker}
+            # Self-Healing package continuation — BLOCKED
+
+            - Observed at: \`${now}\`
+            - Merged PR: #${mergedPr.number}
+            - Merge / CURRENT_MAIN SHA: \`${currentMainSha}\`
+            - Completed slice: \`${completedId}\`
+            - State: \`BLOCKED\`
+
+            No dependency-ready QUEUED SH-02 slice can be activated automatically.
+
+            ## Blocked candidates
+            ${blocked.map(item => `- \`${item.id}\`: missing=${item.missing.join(', ') || 'none'}; unresolved prerequisite=\`${item.unresolved || 'none'}\``).join('\n')}
+
+            This issue is a non-authorizing orchestration/evidence handoff. \`/AGENTS.md@CURRENT_MAIN\` and the canonical SH-02 work package remain authoritative. No branch, code mutation, approval, auto-merge or merge authority is created here.
+            `;
+
+              if (existing) {
+                await github.rest.issues.update({
+                  owner, repo, issue_number: existing.number, state: 'open', body,
+                });
+              } else {
+                await github.rest.issues.create({ owner, repo, title: issueTitle, body });
+              }
+              core.warning('SH-02 continuation is BLOCKED by explicit dependencies/prerequisites.');
+              return;
+            }
+
+            const body = `${marker}
+            # Self-Healing package continuation — READY
+
+            - Observed at: \`${now}\`
+            - Merged PR: #${mergedPr.number}
+            - Merge / CURRENT_MAIN SHA: \`${currentMainSha}\`
+            - Completed slice: \`${completedId}\`
+            - Next slice: \`${next.id}\` — ${next.scope}
+            - Owner/PVC projection: ${next.owner}
+            - Dependencies: \`${next.dependencies}\`
+            - Exit gate: ${next.exitGate}
+            - State: \`READY_FOR_FRESH_CURRENT_MAIN_CORRELATION\`
+
+            Continue immediately with a fresh CURRENT_MAIN read, exclusive work claim, fresh branch, writer/ownership/security correlation, bounded implementation, validation and a new PR. No additional per-slice Owner prompt is required while this work remains inside the already Owner-directed \`OPS-08-B-SH-02\` package and all gates remain satisfied.
+
+            This issue is a non-authorizing orchestration/evidence handoff. It does not execute implementation by itself and cannot create merge authority. Final merge remains Human/CODEOWNER-only under \`/AGENTS.md@CURRENT_MAIN\`.
+            `;
+
+            let issue;
+            if (existing) {
+              const response = await github.rest.issues.update({
+                owner, repo, issue_number: existing.number, state: 'open', body,
+              });
+              issue = response.data;
+            } else {
+              const response = await github.rest.issues.create({
+                owner, repo, title: issueTitle, body,
+              });
+              issue = response.data;
+            }
+
+            core.notice(`Self-Healing continuation READY: ${next.id}; handoff issue #${issue.number}.`);
