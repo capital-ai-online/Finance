@@ -28,18 +28,25 @@ on: # zizmor: ignore[dangerous-triggers]
     types: [ready_for_review]
   pull_request_review:
     types: [submitted]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Optional exact open same-repository PR number. Empty keeps the manual all-PR maintenance lane.
+        required: false
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  # ready_for_review shares the canonical PR writer lease. The dynamic post-correlation/manual lane
-  # remains globally serialized and uses exact generation/CAS readback before mutation.
+  # Exact PR events and exact workflow-dispatch requests share the canonical PR writer lease.
+  # Post-correlation and intentionally unscoped manual maintenance remain globally serialized.
   group: >-
     ${{ github.event_name == 'pull_request'
         && format('capital-ai-pr-writer-{0}', github.event.pull_request.number)
+        || github.event_name == 'workflow_dispatch' && inputs.pr_number != ''
+        && format('capital-ai-pr-writer-{0}', inputs.pr_number)
         || 'capital-ai-post-merge-continuation-main' }}
   cancel-in-progress: false
 
@@ -82,7 +89,7 @@ jobs:
 
       - name: GitHub-App-Token für automatischen Post-Korrelations-Sync erzeugen
         id: app_token
-        if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'
+        if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review' || (github.event_name == 'workflow_dispatch' && inputs.pr_number != '')
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
@@ -92,10 +99,11 @@ jobs:
 
       - name: Review-bereite Agenten-PRs per Update-Branch-API synchronisieren
         env:
-          GH_TOKEN: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token || github.token }}
+          GH_TOKEN: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_review' || (github.event_name == 'workflow_dispatch' && inputs.pr_number != '')) && steps.app_token.outputs.token || github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}
           SOURCE_MAIN_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
