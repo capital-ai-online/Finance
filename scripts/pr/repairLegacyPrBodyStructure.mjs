@@ -4,6 +4,7 @@ import {
   PR_TEMPLATE_VERSION,
   appendGithubOutput,
   detectPrTemplateVersion,
+  extractProductionBaselineBlock,
   fail,
   githubJson,
   listAddedClaimFiles,
@@ -162,15 +163,112 @@ function bootstrapMarkerlessBody(bodyText, { prClass, durableClaimEvidence = [] 
   }
   return { eligible: true, changed: true, reason: 'markerless-body-bootstrapped-to-v1.6', body: repaired };
 }
+function repairCurrentV17BodyStructure(bodyText) {
+  const body = String(bodyText || '');
+  const expectedHeadings = [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ];
+  const visibleHeadings = body.match(/^## .+$/gm) || [];
+  const placeholder = '{{PRODUCTION_BASELINE_BLOCK}}';
+  const legacyHeading = '## 7. Maschinenlesbare Baseline';
+  const baselineBlock = extractProductionBaselineBlock(body);
+
+  const canonical =
+    visibleHeadings.length === expectedHeadings.length &&
+    expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
+    occurrenceCount(body, placeholder) === 0 &&
+    occurrenceCount(body, legacyHeading) === 0 &&
+    Boolean(baselineBlock) &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 1 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
+
+  if (canonical) {
+    return { eligible: false, changed: false, reason: 'already-canonical', body };
+  }
+
+  const exactLegacyBaselineShape =
+    visibleHeadings.length === 4 &&
+    expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
+    visibleHeadings[3] === legacyHeading &&
+    occurrenceCount(body, placeholder) === 1 &&
+    occurrenceCount(body, legacyHeading) === 1 &&
+    Boolean(baselineBlock) &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 1 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
+
+  if (!exactLegacyBaselineShape) {
+    return { eligible: false, changed: false, reason: 'current-v1.7-unsupported-shape', body };
+  }
+
+  const legacyIndex = body.indexOf('\n' + legacyHeading);
+  if (legacyIndex < 0) {
+    return { eligible: false, changed: false, reason: 'current-v1.7-legacy-baseline-heading-not-isolated', body };
+  }
+
+  const prefix = body.slice(0, legacyIndex);
+  const legacyTail = body.slice(legacyIndex + 1).trim();
+  const expectedLegacyTail = [legacyHeading, '', baselineBlock.trim()].join('\n').trim();
+  if (legacyTail !== expectedLegacyTail) {
+    return { eligible: false, changed: false, reason: 'current-v1.7-legacy-baseline-tail-has-extra-content', body };
+  }
+
+  const summary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
+  const summaryIndex = prefix.indexOf(summary);
+  const placeholderIndex = prefix.indexOf(placeholder);
+  const detailsEndIndex = prefix.indexOf('</details>', placeholderIndex);
+  if (
+    summaryIndex < 0 ||
+    placeholderIndex < 0 ||
+    detailsEndIndex < 0 ||
+    !(summaryIndex < placeholderIndex && placeholderIndex < detailsEndIndex)
+  ) {
+    return { eligible: false, changed: false, reason: 'current-v1.7-baseline-placeholder-not-in-machine-details', body };
+  }
+
+  const repaired = prefix.replace(placeholder, baselineBlock.trim()).trimEnd() + '\n';
+  const repairedHeadings = repaired.match(/^## .+$/gm) || [];
+  if (
+    repairedHeadings.length !== expectedHeadings.length ||
+    !expectedHeadings.every((heading, index) => repairedHeadings[index] === heading)
+  ) {
+    throw new Error('Current v1.7 legacy-baseline repair did not converge to exactly three visible main sections.');
+  }
+  if (occurrenceCount(repaired, placeholder) !== 0 || occurrenceCount(repaired, legacyHeading) !== 0) {
+    throw new Error('Current v1.7 legacy-baseline repair left legacy structure behind.');
+  }
+  if (
+    occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_START') !==
+      occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_START') ||
+    occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_END') !==
+      occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_END')
+  ) {
+    throw new Error('Current v1.7 legacy-baseline repair changed baseline marker cardinality.');
+  }
+  const missingAfter = findMissingRequiredSections(repaired, PR_TEMPLATE_VERSION);
+  if (missingAfter.length > 0) {
+    throw new Error('Current v1.7 legacy-baseline repair left missing sections: ' + missingAfter.join(', '));
+  }
+
+  return {
+    eligible: true,
+    changed: repaired !== body,
+    reason: 'current-v1.7-legacy-baseline-section-repaired',
+    body: repaired,
+  };
+}
+
 export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durableClaimEvidence = [] } = {}) {
   const body = String(bodyText || '');
   const detectedVersion = detectPrTemplateVersion(body);
 
-  // v1.7 is the canonical Human Decision contract and is owned by the normal
-  // renderer/validator path. Legacy repair must never rewrite a valid current
-  // contract or manufacture Decision Evidence.
+  // v1.7 is the canonical Human Decision contract. The only mutable current-version
+  // shape is the exact post-migration artifact where a rendered baseline remained in a
+  // legacy level-two section while the canonical machine-details block still held the
+  // renderer placeholder. All other v1.7 drift remains fail-closed.
   if (detectedVersion === PR_TEMPLATE_VERSION) {
-    return { eligible: false, changed: false, reason: 'current-v1.7-owned-by-canonical-renderer', body };
+    return repairCurrentV17BodyStructure(body);
   }
 
   const missing = findMissingRequiredSections(

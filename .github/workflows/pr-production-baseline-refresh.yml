@@ -173,7 +173,11 @@ jobs:
 
       - name: Nur kanonischen Produktions-Baseline-Block aktualisieren
         id: refresh
-        if: steps.pr.outputs.eligible == 'true'
+        if: >-
+          steps.pr.outputs.eligible == 'true' &&
+          (steps.source.outputs.conclusion != 'failure' ||
+           steps.body_repair.outputs.changed == 'true' ||
+           steps.body_repair.outputs.reason == 'already-canonical')
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -181,6 +185,20 @@ jobs:
           PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
           PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
         run: node ../policy/scripts/pr/updatePrProductionBaseline.mjs
+
+      - name: Aktualisierten PR-Body gegen trusted-main Validator prüfen
+        if: >-
+          steps.pr.outputs.eligible == 'true' &&
+          (steps.body_repair.outputs.changed == 'true' || steps.refresh.outputs.changed == 'true')
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: ${{ runner.temp }}/production-baseline.json
+        run: node ../policy/scripts/pr/validatePrBody.mjs
 
       - name: Baseline-/Template-Write oder Race-Recovery an exakte PR-Governance binden
         if: steps.pr.outputs.eligible == 'true'

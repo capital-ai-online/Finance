@@ -20,6 +20,7 @@ test('classifier is read-only and binds exact same-repository PR head to current
     'contents: read',
     'pull-requests: read',
     "github.event.action == 'completed'",
+    "github.event.workflow_run.conclusion == 'failure'",
     "pr.state === 'open'",
     "pr.base.ref === 'main'",
     'pr.head.repo?.full_name === repository',
@@ -34,6 +35,9 @@ test('controller derives a bounded PR metadata shape before semantic delegation'
   const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
   for (const token of [
     "core.setOutput('pr_metadata_shape', prMetadataShape)",
+    'CURRENT_V17_CANONICAL',
+    'CURRENT_V17_LEGACY_BASELINE_SECTION',
+    'CURRENT_V17_OTHER',
     'CURRENT_V16_GENERIC_MISSING_SECTIONS',
     'CURRENT_V16_SECURITY_BOUNDARY_EXACT',
     'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE',
@@ -41,6 +45,17 @@ test('controller derives a bounded PR metadata shape before semantic delegation'
     'REPORT_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}',
   ]) assert.ok(block.includes(token), 'missing metadata-shape semantic guard: ' + token);
   assert.doesNotMatch(block, /core\.setOutput\('pr_body'/);
+});
+
+test('v1.7 legacy-baseline shape detection is exact and bounded', () => {
+  const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  for (const token of [
+    "v17Headings.length === 4",
+    "v17Headings[3] === '## 7. Maschinenlesbare Baseline'",
+    "occurrenceCount('{{PRODUCTION_BASELINE_BLOCK}}') === 1",
+    "occurrenceCount('<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 1",
+    "occurrenceCount('<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1",
+  ]) assert.ok(block.includes(token), 'missing exact v1.7 legacy-baseline shape guard: ' + token);
 });
 
 test('completed source binding accepts every valid run_attempt without polling', () => {

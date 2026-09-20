@@ -27,6 +27,7 @@ jobs:
       github.event.workflow_run.repository.full_name == github.repository &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'failure' &&
       github.event.action == 'completed' &&
       (github.event.workflow_run.path == '.github/workflows/ci.yml' ||
        github.event.workflow_run.path == '.github/workflows/pr-governance.yml')
@@ -140,6 +141,29 @@ jobs:
             const pr = open[0];
             const body = String(pr.body || '');
             const headingCount = (pattern) => (body.match(pattern) || []).length;
+            const occurrenceCount = (needle) => body.split(needle).length - 1;
+            const currentV17 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\s*1\.7\.0/.test(body);
+            const v17Headings = body.match(/^## .+$/gm) || [];
+            const expectedV17Headings = [
+              '## 1. 🧭 Entscheidung',
+              '## 2. ✅ Evidence',
+              '## 3. 🔍 Technical Evidence',
+            ];
+            const currentV17Canonical =
+              currentV17 &&
+              v17Headings.length === 3 &&
+              expectedV17Headings.every((heading, index) => v17Headings[index] === heading) &&
+              occurrenceCount('{{PRODUCTION_BASELINE_BLOCK}}') === 0 &&
+              headingCount(/^## 7\. Maschinenlesbare Baseline\s*$/gm) === 0;
+            const currentV17LegacyBaselineSection =
+              currentV17 &&
+              v17Headings.length === 4 &&
+              expectedV17Headings.every((heading, index) => v17Headings[index] === heading) &&
+              v17Headings[3] === '## 7. Maschinenlesbare Baseline' &&
+              occurrenceCount('{{PRODUCTION_BASELINE_BLOCK}}') === 1 &&
+              occurrenceCount('<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 1 &&
+              occurrenceCount('<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
+
             const currentV16 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\s*1\.6\.0/.test(body);
             const exactSecurityBoundary =
               currentV16 &&
@@ -155,13 +179,19 @@ jobs:
               headingCount(/^## 6\. ✅ Prüfung & Merge\s*$/gm) === 0 &&
               headingCount(/^## 7\. Maschinenlesbare Baseline\s*$/gm) === 1 &&
               !securityBoundaryLike;
-            const prMetadataShape = exactSecurityBoundary
-              ? 'CURRENT_V16_SECURITY_BOUNDARY_EXACT'
-              : securityBoundaryLike
-                ? 'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE'
-                : genericMissingSections
-                  ? 'CURRENT_V16_GENERIC_MISSING_SECTIONS'
-                  : 'OTHER';
+            const prMetadataShape = currentV17LegacyBaselineSection
+              ? 'CURRENT_V17_LEGACY_BASELINE_SECTION'
+              : currentV17Canonical
+                ? 'CURRENT_V17_CANONICAL'
+                : currentV17
+                  ? 'CURRENT_V17_OTHER'
+                  : exactSecurityBoundary
+                    ? 'CURRENT_V16_SECURITY_BOUNDARY_EXACT'
+                    : securityBoundaryLike
+                      ? 'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE'
+                      : genericMissingSections
+                        ? 'CURRENT_V16_GENERIC_MISSING_SECTIONS'
+                        : 'OTHER';
 
             const { data: main } = await github.rest.repos.getBranch({
               owner: context.repo.owner,

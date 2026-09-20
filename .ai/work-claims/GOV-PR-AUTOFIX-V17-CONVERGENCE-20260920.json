@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-PR-AUTOFIX-V17-CONVERGENCE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Align PR Governance autofix with canonical v1.7: exact stale-baseline delegation, deterministic legacy-baseline-section repair, trusted validation and exact-head/base rerun.",
+  "workItemDE": "PR-Governance-Autofix auf die kanonische v1.7-Konvergenz ausrichten: exakte stale-Baseline-Delegation, deterministische Legacy-Baseline-Section-Reparatur, trusted Validierung und exact-head/base Re-Run.",
+  "priority": "P0",
+  "priorityReason": "Observed Governance failures on PR #1142/#1143 demonstrate that the v1.6-era autofix classifier and body-repair coupling can block deterministic v1.7 convergence.",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-20T14:40:00Z",
+  "baseBranch": "main",
+  "baseSha": "e379d64075e34f713743c6c4cfe259d9da30d0e7",
+  "branch": "agent/governance-pr-autofix-v17-convergence-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-PR-AUTOFIX-V17-CONVERGENCE-20260920.json",
+    ".github/workflows/pr-autofix-controller.yml",
+    ".github/workflows/pr-production-baseline-refresh.yml",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "scripts/pr/prAutofixControllerWorkflow.test.mjs",
+    "scripts/pr/productionBaselineRefreshWorkflow.test.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "scopeNote": "No new mutation authority. Existing PR Production Baseline Auto-Refresh remains the sole PR-body/baseline specialist writer. Unknown v1.7 shapes remain fail-closed.",
+  "correlationNote": "Fresh CURRENT_MAIN e379d64075e34f713743c6c4cfe259d9da30d0e7. Open PR #1142 is synchronized to that base and changes only its v1.7 template cleanup claim/template/test paths; no changed-file overlap with this control-plane patch. Semantic dependency is compatible: this patch consumes the canonical v1.7 contract and does not rewrite PR #1142 branch content.",
+  "validationState": "TARGETED_TESTS_PENDING_HOSTED_CI"
+}
