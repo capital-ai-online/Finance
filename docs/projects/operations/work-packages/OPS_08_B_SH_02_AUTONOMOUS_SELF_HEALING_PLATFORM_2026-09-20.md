@@ -11,9 +11,10 @@
 **SH-02.3 merge:** PR #1125 → `70c33dc0f283584275798b2e186e3771b2bfccf8`  
 **SH-02.4 merged baseline:** `main@3a9a55262dbb8ee87dac087a863b1e3369e71d22` via PR #1136  
 **SH-02.5 merge:** PR #1141 → `5a89e8ab0f12267838c30994b6e84ccbe002605f`  
-**Current corrective gate:** Self-Healing policy homogeneity / owner-correct handoff correlation  
-**Current baseline:** `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`  
-**Current branch:** `agent/operations-sh02-policy-homogeneity-20260920`  
+**Policy-homogeneity merge:** PR #1147 → `f0c14ed5571a4b681c4360e27bc84bbd0ab3527f`  
+**SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
+**Current baseline:** `main@10dd68d1c448a71f681da78b76329d960d7a9279`  
+**Current coordination slice:** SH-02.3E post-merge convergence  
 **Next functional slice:** `SH-02.6` — Frontend degraded-mode + version-skew recovery  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
@@ -35,6 +36,7 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_ON_MAIN |
 | SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_ON_MAIN |
 | SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1125 |
+| SH-02.3E | Evidence Integrity + read-only Control Panel projection | OPS / PVC-08,18 | 02.3 | positive states require generation/source/integrity/readback evidence; SH-3 additionally requires independent QM + Security assurance | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1150 |
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1136 / ACTIVATION_HELD |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1141 / GENERIC_ACTION_HELD |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | QUEUED |

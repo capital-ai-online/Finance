@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@d4296b1b334e3a6d452eeecf54cae9c2deefbd37`
+**Baseline:** `main@10dd68d1c448a71f681da78b76329d960d7a9279`
 
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
@@ -17,7 +17,7 @@ This file remains a temporary project execution projection until the separately 
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
-SH-02.0..02.5 are Human-merged on main; SH-02.5 merged via PR #1141 and its final-head CI, Governance, Container Security and PR review workflows succeeded. The current bounded writer is `agent/operations-sh02-policy-homogeneity-20260920` for the P0 policy-homogeneity gate against `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`. After this gate, SH-02.6 is the next dependency-ready functional slice.
+SH-02.0..02.5 and the SH-02.3E Evidence Integrity child package are Human-merged on main. SH-02.3E merged via PR #1150 as `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`; its exact final head `5e107b18c4aed6fe5418a407c245c07a0e68b9f0` passed Container Security, Label Classification, automated PR review, PR Governance and CI. The current bounded coordination slice releases stale post-merge metadata against `main@10dd68d1c448a71f681da78b76329d960d7a9279`. SH-02.6 is the next dependency-ready functional slice.
 
 Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
 
