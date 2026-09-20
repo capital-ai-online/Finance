@@ -37,6 +37,7 @@ import { createMarketSentimentRouter } from './marketSentimentRoutes';
 import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
 import { createMtaStsRouter } from './mtaStsRoutes';
 import { createBusinessReadinessRouter } from './businessReadinessRoutes';
+import { createHealthRouter } from './health';
 import { registerMarketDataAdapters } from './registerMarketDataAdapters';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
@@ -79,9 +80,12 @@ export function registerApplicationRoutes(
   // declarations that still remain in server.application.ts.
   registerMarketDataAdapters(app);
 
-  // Operations readiness: `/healthz` remains the platform liveness contract owned by
-  // server.application.ts. This router adds the full non-secret projection under
-  // `/healthz/readiness` and a strict 200/503 business gate under `/readyz`.
+  // Operations health has one composition authority:
+  // - /healthz = network-independent process liveness and fatal-state readback;
+  // - /healthz/readiness = diagnostic business-readiness projection;
+  // - /readyz = strict business-readiness gate.
+  // Liveness is intentionally mounted separately from dependency readiness.
+  app.use(createHealthRouter());
   app.use(createBusinessReadinessRouter());
 
   // RFC 8461 policy endpoint. DNS discovery and the mta-sts custom domain remain
