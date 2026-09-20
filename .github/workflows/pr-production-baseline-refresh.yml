@@ -21,9 +21,8 @@ run-name: >-
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: ['PR Governance', 'CI']
-    # completed remains primary. in_progress materializes a trusted fallback only for
-    # re-run attempts, because requested is not emitted for re-runs.
-    types: [in_progress, completed]
+    # completed is emitted for initial runs and re-runs; process only the final source state.
+    types: [completed]
 
 permissions: {}
 
@@ -48,56 +47,29 @@ jobs:
       github.event.workflow_run.path == '.github/workflows/pr-governance.yml' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.pull_requests[0].number != null &&
-      ((github.event.action == 'completed' && github.event.workflow_run.run_attempt == 1) ||
-       (github.event.action == 'in_progress' && github.event.workflow_run.run_attempt > 1))
+      github.event.action == 'completed'
     runs-on: ubuntu-latest
     timeout-minutes: 8
 
     steps:
-      - name: Governance-Source-Run bis zum Abschluss exakt binden
+      - name: Abgeschlossenen Governance-Source-Run exakt binden
         id: source
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         with:
           script: |
-            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
-            const payloadRun = context.payload.workflow_run;
-            const expectedId = Number(payloadRun.id);
-            const expectedHead = normalizeSha(payloadRun.head_sha);
-            const expectedPath = String(payloadRun.path || '');
-            let sourceRun = payloadRun;
-
-            if (context.payload.action === 'in_progress') {
-              const deadline = Date.now() + 240_000;
-              while (sourceRun.status !== 'completed' && Date.now() < deadline) {
-                await new Promise((resolve) => setTimeout(resolve, 5_000));
-                const { data } = await github.rest.actions.getWorkflowRun({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  run_id: expectedId,
-                });
-                if (
-                  Number(data.id) !== expectedId ||
-                  normalizeSha(data.head_sha) !== expectedHead ||
-                  String(data.path || '') !== expectedPath
-                ) {
-                  throw new Error('Governance-Source-Run-Identität änderte sich während des Re-Run-Fallbacks.');
-                }
-                sourceRun = data;
-              }
+            const sourceRun = context.payload.workflow_run;
+            if (context.payload.action !== 'completed' || sourceRun.status !== 'completed') {
+              throw new Error('Baseline-Autofix verarbeitet ausschließlich abgeschlossene Governance-Runs.');
             }
-
-            if (sourceRun.status !== 'completed') {
-              throw new Error(
-                `Governance-Source-Run ${expectedId} wurde innerhalb des gebundenen Fallback-Fensters nicht abgeschlossen.`,
-              );
+            if (!Number.isInteger(Number(sourceRun.run_attempt)) || Number(sourceRun.run_attempt) < 1) {
+              throw new Error('Governance-Source-Run besitzt keinen gültigen run_attempt.');
             }
 
             core.setOutput('conclusion', String(sourceRun.conclusion || ''));
-            core.setOutput('run_attempt', String(sourceRun.run_attempt || payloadRun.run_attempt || 1));
+            core.setOutput('run_attempt', String(sourceRun.run_attempt));
             core.notice(
-              `Governance-Source-Run ${expectedId} gebunden: conclusion=${sourceRun.conclusion}, attempt=${sourceRun.run_attempt || payloadRun.run_attempt || 1}, trigger=${context.payload.action}.`,
+              `Governance-Source-Run ${sourceRun.id} gebunden: conclusion=${sourceRun.conclusion}, attempt=${sourceRun.run_attempt}.`,
             );
-
       - name: Vertrauenswürdigen Policy-Stand aus main auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:

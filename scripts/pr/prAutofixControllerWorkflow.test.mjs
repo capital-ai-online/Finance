@@ -4,9 +4,10 @@ import test from 'node:test';
 
 const workflow = fs.readFileSync('.github/workflows/pr-autofix-controller.yml', 'utf8');
 
-test('controller is a privileged completion trigger with rerun fallback and default-deny permissions', () => {
+test('controller uses completed workflow_run for initial runs and reruns with default-deny permissions', () => {
   assert.match(workflow, /workflow_run:\n\s+workflows: \[CI, PR Governance\]/);
-  assert.match(workflow, /types: \[in_progress, completed\]/);
+  assert.match(workflow, /types: \[completed\]/);
+  assert.doesNotMatch(workflow, /types: \[[^\]]*in_progress/);
   assert.match(workflow, /^permissions: \{\}$/m);
   assert.doesNotMatch(workflow, /pull_request_target\s*:/);
   assert.doesNotMatch(workflow, /permissions:\s*write-all/);
@@ -18,45 +19,36 @@ test('classifier is read-only and binds exact same-repository PR head to current
     'actions: read',
     'contents: read',
     'pull-requests: read',
+    "github.event.action == 'completed'",
     "pr.state === 'open'",
     "pr.base.ref === 'main'",
     'pr.head.repo?.full_name === repository',
     'normalizeSha(pr.head.sha) === headSha',
     'mainSha !== baseSha',
-    "github.event.action == 'completed'",
-        'github.event.workflow_run.run_attempt == 1',
-    "github.event.action == 'in_progress'",
-    'github.event.workflow_run.run_attempt > 1',
     "steps.source.outputs.conclusion == 'failure'",
   ]) assert.ok(block.includes(token), 'missing classify guard: ' + token);
   assert.doesNotMatch(block, /contents: write|pull-requests: write|actions: write/);
 });
 
-test('rerun fallback waits for the exact source run without adding write authority', () => {
+test('completed source binding accepts every valid run_attempt without polling', () => {
   const classify = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
   for (const token of [
-    'Source-Run bis zum Abschluss exakt binden',
-    'github.rest.actions.getWorkflowRun',
-    'run_id: expectedId',
-    'Number(data.id) !== expectedId',
-    'normalizeSha(data.head_sha) !== expectedHead',
-    "String(data.path || '') !== expectedPath",
+    'Abgeschlossenen Source-Run exakt binden',
+    "context.payload.action !== 'completed'",
     "sourceRun.status !== 'completed'",
+    'Number(sourceRun.run_attempt) < 1',
     "core.setOutput('conclusion'",
-    'Date.now() + 240_000',
-  ]) assert.ok(classify.includes(token), 'missing rerun source binding: ' + token);
-  assert.doesNotMatch(classify, /contents: write|pull-requests: write|actions: write/);
-  assert.ok(workflow.includes('${{ github.event.workflow_run.run_attempt }}-${{ github.event.action }}'));
-  assert.match(workflow, /cancel-in-progress: true/);
+    "core.setOutput('run_attempt'",
+  ]) assert.ok(classify.includes(token), 'missing completed source binding: ' + token);
+  assert.doesNotMatch(classify, /getWorkflowRun|Date\.now\(\) \+ 240_000|setTimeout/);
 });
 
 test('failure logs are bounded, redacted and never uploaded as artifacts', () => {
   assert.ok(workflow.includes('tail -n 700 "$raw" > "$bounded"'));
   assert.ok(workflow.includes('head -c 120000 "$bounded"'));
-  assert.ok(workflow.includes('[REDACTED_GITHUB_TOKEN]'));
-  assert.ok(workflow.includes('[REDACTED_API_TOKEN]'));
-  assert.ok(workflow.includes('[REDACTED_STRIPE_TOKEN]'));
-  assert.ok(workflow.includes('[REDACTED_SUPABASE_TOKEN]'));
+  for (const marker of ['[REDACTED_GITHUB_TOKEN]','[REDACTED_API_TOKEN]','[REDACTED_STRIPE_TOKEN]','[REDACTED_SUPABASE_TOKEN]']) {
+    assert.ok(workflow.includes(marker));
+  }
   assert.doesNotMatch(workflow, /path: \$\{\{ runner\.temp \}\}\/pr-autofix-failed/);
 });
 
@@ -66,6 +58,15 @@ test('existing baseline and PR metadata writers remain specialist-owned', () => 
   assert.doesNotMatch(workflow, /updatePrProductionBaseline\.mjs|repairLegacyPrBodyStructure\.mjs/);
 });
 
+test('metadata delegation creates no second writer and no rerun dispatch', () => {
+  const block = workflow.split('  delegate_pr_metadata:\n')[1].split('\n\n  repair:\n')[0];
+  assert.ok(block.includes("needs.classify.outputs.decision == 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH'"));
+  assert.match(block, /permissions:\n      contents: read/);
+  assert.ok(block.includes('independently subscribed PR Production Baseline Auto-Refresh workflow'));
+  assert.doesNotMatch(block, /actions: write|pull-requests: write|contents: write/);
+  assert.doesNotMatch(block, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{run_id\}\/rerun|exactSpecialist/);
+});
+
 test('candidate checkout exists only in read-only repair job and never in write job', () => {
   const repair = workflow.split('  repair:\n')[1].split('\n  write:\n')[0];
   const write = workflow.split('  write:\n')[1];
@@ -73,7 +74,6 @@ test('candidate checkout exists only in read-only repair job and never in write 
   assert.ok(repair.includes('Kandidaten-Head ohne persistierte Credentials auschecken'));
   assert.ok(repair.includes('persist-credentials: false'));
   assert.doesNotMatch(repair, /contents: write|actions: write|pull-requests: write/);
-
   assert.match(write, /actions: write\n      contents: write\n      pull-requests: read/);
   assert.doesNotMatch(write, /actions\/checkout@/);
   assert.doesNotMatch(write, /node (?:work|candidate)\//);
@@ -97,45 +97,11 @@ test('write is exact-head/main, non-force and CI redispatch is after the branch 
 test('all referenced marketplace actions are pinned to immutable commit SHAs', () => {
   const refs = [...workflow.matchAll(/uses:\s+([^\s#]+)/g)].map((match) => match[1]);
   assert.ok(refs.length > 0);
-  for (const ref of refs) {
-    assert.match(ref, /@[0-9a-f]{40}$/i, 'un-pinned action: ' + ref);
+  for (const ref of refs) assert.match(ref, /@[0-9a-f]{40}$/i, 'un-pinned action: ' + ref);
+});
+
+test('repeat-autofix signature trailer remains a loop-prevention boundary', () => {
+  for (const token of ['CAPITAL_AI_AUTOFIX_SIGNATURE:','previous_autofix_signature','PREVIOUS_AUTOFIX_SIGNATURE']) {
+    assert.ok(workflow.includes(token));
   }
-});
-
-test('repeat-autofix signature trailer is read and written for loop prevention', () => {
-  assert.ok(workflow.includes('CAPITAL_AI_AUTOFIX_SIGNATURE:'));
-  assert.ok(workflow.includes('previous_autofix_signature'));
-  assert.ok(workflow.includes('PREVIOUS_AUTOFIX_SIGNATURE'));
-});
-
-
-test('PR metadata delegation dispatches only the exact failed Governance run to the existing specialist', () => {
-  const block = workflow.split('  delegate_pr_metadata:\n')[1].split('\n  repair:\n')[0];
-  for (const token of [
-    "needs.classify.outputs.decision == 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH'",
-    'actions: write',
-    'contents: read',
-    'pull-requests: read',
-    "sourceRun.path !== '.github/workflows/pr-governance.yml'",
-    "sourceRun.conclusion !== 'failure'",
-    'normalizeSha(pr.head.sha) !== expectedHead',
-    'normalizeSha(main.commit.sha) !== expectedBase',
-    "event: 'workflow_run'",
-    'head_sha: expectedHead',
-    "run.path === '.github/workflows/pr-production-baseline-refresh.yml'",
-    "String(run.name || '') === 'PR Production Baseline Auto-Refresh'",
-    'normalizeSha(run.head_sha) === expectedHead',
-    'Number(run.run_attempt || 1) === 1',
-    'No completed PR Production Baseline Auto-Refresh run is bound to head',
-    "POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun",
-    'run_id: exactSpecialist.id',
-  ]) assert.ok(block.includes(token), 'missing metadata delegation guard: ' + token);
-  assert.doesNotMatch(block, /pull-requests: write|contents: write/);
-  assert.doesNotMatch(block, /repairLegacyPrBodyStructure\.mjs|updatePrProductionBaseline\.mjs/);
-});
-
-test('metadata delegation never relies on re-running Governance to fan out a nested workflow_run', () => {
-  const block = workflow.split('  delegate_pr_metadata:\n')[1].split('\n  repair:\n')[0];
-  assert.doesNotMatch(block, /run_id: sourceRun\.id/);
-  assert.ok(block.includes('run_id: exactSpecialist.id'));
 });
