@@ -120,6 +120,74 @@ test('repairs only the allowlisted legacy v1.5 structure and upgrades it to v1.6
   assert.match(result.body, /Keep generated release notes\./);
 });
 
+const currentV16SecurityBoundaryBody = [
+  '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0 -->',
+  'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.6.0',
+  '# CAPITAL-AI Pull Request',
+  '',
+  '> **P1 🟠 Hoch · NONE ➖ · PR-Klasse C**',
+  '> Existing review-stack change.',
+  '',
+  '## 1. 🎯 Kurzüberblick',
+  '- Existing overview stays intact.',
+  '',
+  '## 2. 📦 Projekt & Scope',
+  '- **Projekt:** CAPITAL-AI-OPS',
+  '',
+  '## 3. 🛠️ Umsetzung',
+  '- Existing implementation stays intact.',
+  '',
+  '## 4. 🔐 Security Boundary',
+  '- Least-privilege review boundary remains advisory.',
+  '',
+  '## 5. ✅ Prüfung & Merge',
+  '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+  '- **Agent-Self-Merge / Auto-Merge:** Nein.',
+  '',
+  '## 6. 🔢 Version',
+  '- **Versionsimpact:** NONE ➖',
+  '- **PR-Klasse:** C',
+  '- **Begründung:** Workflow review infrastructure only.',
+  '',
+  '## 7. Maschinenlesbare Baseline',
+  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+  'CAPITAL_AI_PRODUCTION_BASELINE_START',
+  '- **Baseline-ID:** sha256:test',
+  'CAPITAL_AI_PRODUCTION_BASELINE_END',
+  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  '',
+].join('\n');
+
+test('repairs the observed current v1.6 security-boundary shape without inventing priority', () => {
+  assert.deepEqual(findMissingRequiredSections(currentV16SecurityBoundaryBody), [
+    CURRENT.roadmap,
+    CURRENT.version,
+    CURRENT.check,
+  ]);
+
+  const result = repairLegacyPrBodyStructure(currentV16SecurityBoundaryBody, { prClass: 'C' });
+  assertV16Repair(result);
+  assert.equal(result.reason, 'current-v1.6-security-boundary-shape-repaired');
+  assert.match(result.body, /^### 🔐 Security Boundary$/m);
+  assert.match(result.body, /- \*\*Priorität:\*\* P1 🟠 Hoch/);
+  assert.match(result.body, /- \*\*Versionsimpact:\*\* NONE ➖/);
+  assert.match(result.body, /- \*\*PR-Klasse:\*\* C/);
+  assert.match(result.body, /- \*\*Version-Manager-Check:\*\* NOT_RUN/);
+  assert.match(result.body, /Least-privilege review boundary remains advisory\./);
+  assert.match(result.body, /Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja/);
+});
+
+test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => {
+  const body = currentV16SecurityBoundaryBody.replace(
+    '## 4. 🔐 Security Boundary',
+    '## 4. 🔐 Security Boundaries',
+  );
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'unsupported-legacy-shape');
+});
+
 test('refuses to rewrite an unsupported malformed body', () => {
   const body = legacyBody.replace('## 6. Abgrenzung', '## 6. Something Else');
   const result = repairLegacyPrBodyStructure(body, { prClass: 'R' });
