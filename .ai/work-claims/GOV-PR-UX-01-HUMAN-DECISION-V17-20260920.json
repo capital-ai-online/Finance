@@ -30,7 +30,9 @@
     "scripts/pr/repairLegacyPrBodyStructure.mjs",
     "scripts/pr/prTemplateVersionManagerSmoke.test.mjs",
     "scripts/pr/prDecisionState.test.mjs",
-    "scripts/pr/repairLegacyPrBodyStructure.test.mjs"
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs",
+    "scripts/pr/prBodySectionContract.test.mjs",
+    "scripts/pr/productionBaselineBody.test.mjs"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
   "scopeNote": "Template v1.7 is presentation/evidence only. /AGENTS.md@CURRENT_MAIN remains the sole repository-wide development authority. READY_FOR_HUMAN_DECISION never grants merge authority; Human/CODEOWNER merge remains mandatory."
