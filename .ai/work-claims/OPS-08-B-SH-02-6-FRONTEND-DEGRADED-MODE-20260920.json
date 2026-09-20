@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-6-FRONTEND-DEGRADED-MODE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement SH-02.6 frontend degraded-mode and version-skew recovery with bounded safe-request retry, feature-local recovery, explicit stale-data opt-in, accessible connectivity state and session-preserving rehydration.",
+  "workItemDE": "SH-02.6 Frontend-Degraded-Mode und Version-Skew-Recovery mit begrenztem Safe-Request-Retry, feature-lokaler Recovery, explizitem Stale-Data-Opt-in, zugänglichem Connectivity-State und session-erhaltender Rehydration implementieren.",
+  "priority": "P0",
+  "priorityReason": "After SH-02.3 and the merged backend/worker recovery slices, frontend recovery must converge without infinite reloads, unsafe mutation retries, stale financial-value fabrication or destructive session resets.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04"
+  ],
+  "frontendParticipation": "CAPITAL-AI-FE cross-cutting presentation/recovery only; no productive PVC ownership.",
+  "startedAt": "2026-09-20T15:22:00Z",
+  "baseBranch": "main",
+  "baseSha": "10dd68d1c448a71f681da78b76329d960d7a9279",
+  "branch": "agent/operations-sh02-6-frontend-degraded-mode-v2-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-6-FRONTEND-DEGRADED-MODE-20260920.json",
+    "src/app/reliability/frontendDegradedMode.ts",
+    "src/app/reliability/FrontendReliabilityBoundary.tsx",
+    "src/shared/ui/FeatureRecoveryBoundary.tsx",
+    "src/app/App.tsx",
+    "src/app/routing/AppRoutes.tsx",
+    "src/app/public/PublicAnalysisWorkbench.tsx",
+    "tests/unit/frontendDegradedMode.test.ts",
+    "tests/unit/frontendReliabilityComposition.test.ts",
+    "docs/projects/operations/evidence/SH_02_6_FRONTEND_DEGRADED_MODE_2026-09-20.md",
+    "src/shared/ui/index.ts",
+    "tests/unit/publicLandingRoute.test.ts",
+    "tests/unit/privateRouteAuthResolution.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "scopeNote": "No source is permitted to use Last-Known-Good data unless it explicitly opts into a bounded stale-data policy. Mutation requests are never automatically retried. Version-skew recovery updates only reliability session state and reloads the document at most once per observed deployment transition; Supabase/auth persistent session storage is not cleared.",
+  "dependencies": [
+    "SH-02.2",
+    "SH-02.3"
+  ],
+  "implementationBoundary": "Global reliability is event-driven and presentation-only. Feature remount preserves persistent auth/session state. Generic retries are GET/HEAD-only. LKG is deny-by-default and requires explicit bounded source opt-in.",
+  "recorrelatedAt": "2026-09-20T16:58:00Z",
+  "correlationNote": "Re-correlated to CURRENT_MAIN 10dd68d1c448a71f681da78b76329d960d7a9279. PR #1160 is the sole writer for SH-02.3E parent-graph/ROADMAP convergence; this branch restored the shared parent work-package file to CURRENT_MAIN so changed-file overlap is removed. PR #1157 is FINTECH-owned and has no SH-02.6 changed-file overlap. Final merge remains Human/CODEOWNER-only.",
+  "validationState": "HOSTED_REVALIDATION_PENDING_AFTER_FALLBACK_FIX_AND_WRITER_DECONFLICT"
+}

@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useState } from 'react';
+import { FeatureRecoveryBoundary } from '../../shared/ui/FeatureRecoveryBoundary';
 import {
   AlertTriangle,
   Award,
@@ -193,32 +194,6 @@ function WorkbenchLoadingState() {
   );
 }
 
-class PublicToolErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() { return { hasError: true }; }
-
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Public analysis tool failed to render:', error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-status-reject/30 bg-status-reject/5 px-6 text-center">
-          <AlertTriangle size={22} className="text-status-reject" />
-          <p className="text-sm font-black text-text-primary">Dieses Bewertungstool konnte nicht gestartet werden.</p>
-          <p className="max-w-xl text-xs leading-relaxed text-text-secondary">Das Sideboard und die übrige Landingpage bleiben verfügbar. Es werden keine Ersatzwerte oder synthetischen Scores erzeugt.</p>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 function ProtectedToolNotice({ tool }: { tool: ToolDefinition }) {
   const disabled = tool.availability === 'disabled';
   return (
@@ -366,9 +341,9 @@ export function PublicAnalysisWorkbench() {
             </div>
           </header>
 
-          <PublicToolErrorBoundary key={activeTool}>
+          <FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>
             <Suspense fallback={<WorkbenchLoadingState />}>{renderActiveTool()}</Suspense>
-          </PublicToolErrorBoundary>
+          </FeatureRecoveryBoundary>
         </section>
       </div>
     </div>

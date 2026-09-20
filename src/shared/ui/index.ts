@@ -10,3 +10,4 @@ export { ResearchOnlyBanner, type ResearchOnlyBannerProps } from './ResearchOnly
 export { Skeleton, type SkeletonProps } from './Skeleton';
 export { StatusBadge, type StatusBadgeProps, type StatusBadgeStatus } from './StatusBadge';
 export { Tooltip, type TooltipProps } from './Tooltip';
+export { FeatureRecoveryBoundary } from './FeatureRecoveryBoundary';

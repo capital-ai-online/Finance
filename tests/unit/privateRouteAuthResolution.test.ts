@@ -24,7 +24,7 @@ describe('zero-blocking private-route auth resolution', () => {
 
   it('uses no artificial timer or animated spinner for private route resolution', () => {
     const resolutionStart = routes.indexOf('function AuthRouteResolution()');
-    const resolutionEnd = routes.indexOf('interface PublicPreviewErrorBoundaryState', resolutionStart);
+    const resolutionEnd = routes.indexOf('function PublicPreviewBoundary', resolutionStart);
     const resolution = routes.slice(resolutionStart, resolutionEnd);
 
     expect(resolutionStart).toBeGreaterThan(-1);

@@ -118,7 +118,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
   });
 
   it('keeps the landing shell outside tool suspense/error boundaries while rendering the public workbench directly', () => {
-    expect(routes).toContain('class PublicPreviewErrorBoundary');
+    expect(routes).toContain('<FeatureRecoveryBoundary name="Öffentliche Analyse-Workbench">');
     expect(routes).toContain('function PublicPreviewBoundary');
     expect(routes).toContain('Bewertungstools vorübergehend nicht verfügbar');
     expect(routes).toContain('<PublicAnalysisWorkbench />');
@@ -126,7 +126,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(landingPage).toContain('{preview}');
     expect(landingPage).not.toContain('IntersectionObserver');
     expect(landingPage).not.toContain('Analyse-Workbench starten');
-    expect(publicWorkbench).toContain('class PublicToolErrorBoundary');
+    expect(publicWorkbench).toContain('<FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>');
     expect(publicWorkbench).toContain('<Suspense fallback={<WorkbenchLoadingState />}>');
   });
 
