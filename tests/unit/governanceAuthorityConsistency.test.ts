@@ -157,8 +157,8 @@ describe('governance authority consistency', () => {
     expect(merge.requirement).toMatch(/Every main merge is a distinct Human Owner decision/i);
     expect(merge.requirement).toMatch(/self-merge and auto-merge remain prohibited/i);
     expect(agents).toContain('Every repository change is delivered through a Pull Request');
-    expect(agents).toContain('Human/CODEOWNER review and merge remain separate external authority');
-    expect(agents).toContain('Agents MUST NOT self-approve, self-merge, enable auto-merge');
+    expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
+    expect(agents).toContain('Agents and automation MUST NOT self-merge, enable auto-merge');
   });
 
   it('requires diff and impact analysis before semantic supersession becomes effective', () => {
