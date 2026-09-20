@@ -140,7 +140,13 @@ The test contract asserts:
 
 Repository mutation was branch-only. At the time of branch re-materialization, current main was
 `c9980602f691b855fd6f8c66a49822e7a9611b4a`; the intervening main delta affected the
-Frontend landing-page slice only and had no same-file overlap with this FINTECH package.
+Frontend landing-page slice only.
+
+During final correlation, open Documentary PR #1154 was found to own
+`docs/projects/fintech/WORK_PACKAGES.md`. The branch-local edit to that exact path was reverted to
+current-main content and delegated to #1154, so this package retains no same-file overlap with that
+parallel writer. FIN-21 remains projected through `README.md`, `ROADMAP.md`, `TASK_REGISTER.md`
+and this evidence document.
 
 Hosted TypeScript/unit/governance/security validation has not yet been observed for the final branch
 head. Therefore this package is **not** represented as PASS or merge-ready until exact-head checks
