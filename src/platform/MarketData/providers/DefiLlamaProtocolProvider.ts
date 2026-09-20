@@ -17,7 +17,7 @@
 import { CircuitBreaker } from '../CircuitBreaker';
 import { RateLimitBudget } from '../RateLimitBudget';
 import { getProviderMatrixEntry } from '../ProviderMatrix';
-import { recordProviderHealth } from '../../Supervisor/providerHealth';
+import { recordProviderHealth, type ProviderDiagnosticCode } from '../../Supervisor/providerHealth';
 
 export const DEFILLAMA_PROVIDER_ID = 'defillama' as const;
 export const DEFILLAMA_FREE_BASE_URL = 'https://api.llama.fi' as const;
@@ -233,16 +233,15 @@ export class DefiLlamaProtocolProvider {
     }
 
     if (!this.circuitBreaker.allow(DEFILLAMA_PROVIDER_ID)) {
-      const reason = `DeFiLlama circuit open (cooldown until ${this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID)}).`;
-      recordProviderHealth({ provider: 'DeFiLlama', capability: 'defi-evidence', state: 'unavailable', message: reason, circuitOpenUntil: this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID) ?? undefined });
-      return this.lastKnownGoodOrUnavailable(cached, now, reason);
+      const circuitOpenUntil = this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID) ?? undefined;
+      const reason = `DeFiLlama circuit open (cooldown until ${circuitOpenUntil ?? 'unknown'}).`;
+      return this.lastKnownGoodOrUnavailable(cached, now, reason, 'provider_error', circuitOpenUntil);
     }
 
     const rateLimit = this.rateLimitBudget.tryConsume(DEFILLAMA_PROVIDER_ID, 'fundamentals');
     if (!rateLimit.allowed) {
       const reason = `DeFiLlama rate limit exhausted (resets at ${new Date(rateLimit.resetAtMs).toISOString()}).`;
-      recordProviderHealth({ provider: 'DeFiLlama', capability: 'defi-evidence', state: 'degraded', message: reason });
-      return this.lastKnownGoodOrUnavailable(cached, now, reason);
+      return this.lastKnownGoodOrUnavailable(cached, now, reason, 'rate_limited');
     }
 
     let lastError: unknown;
@@ -270,7 +269,15 @@ export class DefiLlamaProtocolProvider {
 
         this.circuitBreaker.success(DEFILLAMA_PROVIDER_ID);
         this.cache.set(cacheKey, { data, expiresAtMs: this.nowMsFn() + cacheTtlMs, cachedAtMs: this.nowMsFn() });
-        recordProviderHealth({ provider: 'DeFiLlama', capability: 'defi-evidence', state: 'healthy', cacheMode: 'provider', message: `DeFiLlama ${path} received.` });
+        recordProviderHealth({
+          provider: 'DeFiLlama',
+          capability: 'defi-evidence',
+          state: 'healthy',
+          diagnosticCode: 'healthy',
+          payloadUsable: true,
+          cacheMode: 'provider',
+          message: `DeFiLlama ${path} received.`,
+        });
         return { data, cacheMode: 'fresh' };
       } catch (error) {
         lastError = error;
@@ -286,24 +293,45 @@ export class DefiLlamaProtocolProvider {
 
     this.circuitBreaker.failure(DEFILLAMA_PROVIDER_ID);
     const reason = lastError instanceof Error ? lastError.message : String(lastError);
-    recordProviderHealth({
-      provider: 'DeFiLlama',
-      capability: 'defi-evidence',
-      state: 'unavailable',
-      message: reason,
-      circuitOpenUntil: this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID) ?? undefined,
-    });
-    return this.lastKnownGoodOrUnavailable(cached, now, reason);
+    return this.lastKnownGoodOrUnavailable(
+      cached,
+      now,
+      reason,
+      'provider_error',
+      this.circuitBreaker.openedUntilIso(DEFILLAMA_PROVIDER_ID) ?? undefined,
+    );
   }
 
   private lastKnownGoodOrUnavailable(
     cached: CacheEntry | undefined,
     nowMs: number,
     reason: string,
+    diagnosticCode: ProviderDiagnosticCode,
+    circuitOpenUntil?: string,
   ): { data: unknown; cacheMode: DefiLlamaCacheMode; reason?: string } {
     if (cached && nowMs - cached.cachedAtMs <= MAX_STALE_SERVE_MS) {
+      recordProviderHealth({
+        provider: 'DeFiLlama',
+        capability: 'defi-evidence',
+        state: 'degraded',
+        diagnosticCode,
+        payloadUsable: true,
+        cacheMode: 'last-known-good',
+        circuitOpenUntil,
+        message: reason,
+      });
       return { data: cached.data, cacheMode: 'last-known-good', reason };
     }
+    recordProviderHealth({
+      provider: 'DeFiLlama',
+      capability: 'defi-evidence',
+      state: 'unavailable',
+      diagnosticCode,
+      payloadUsable: false,
+      cacheMode: 'fresh',
+      circuitOpenUntil,
+      message: reason,
+    });
     return { data: null, cacheMode: 'fresh', reason };
   }
 }
