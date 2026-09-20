@@ -11,21 +11,40 @@ import {
 
 describe('supervisor', () => {
   describe('routeTask / getRoutingTable', () => {
-    it('routet Crypto auf den Crypto-Orchestrator mit dedizierter Engine', () => {
+    it('projiziert ScoringDispatcher als produktive Score-Authority und Crypto-Orchestrator separat als Research', () => {
       const route = routeTask('crypto');
-      expect(route?.engineId).toBe('crypto_orchestrator');
+      expect(route?.engineId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(route?.scoreAuthorityId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(route?.domainExecutorId).toBe('verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore');
+      expect(route?.researchOrchestratorId).toBe('crypto_orchestrator');
       expect(route?.hasDedicatedEngine).toBe(true);
     });
 
-    it('routet Aktien, Forex und Indizes auf die traditionelle Engine', () => {
-      expect(routeTask('stock')?.engineId).toBe('traditional_asset_engine');
-      expect(routeTask('forex')?.engineId).toBe('traditional_asset_engine');
-      expect(routeTask('index')?.engineId).toBe('traditional_asset_engine');
+    it('projiziert ScoringDispatcher als Commodity-Score-Authority und RawMaterialsOrchestrator separat als Research', () => {
+      const route = routeTask('commodity');
+      expect(route?.engineId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(route?.scoreAuthorityId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(route?.domainExecutorId).toBe('commodityEvidenceScoring.scoreCommodityMarketEvidence');
+      expect(route?.researchOrchestratorId).toBe('rawmaterials_orchestrator');
+      expect(route?.hasDedicatedEngine).toBe(true);
     });
 
-    it('routet Anleihen auf die Sovereign-Benchmark-Rendite-Engine', () => {
+    it('projiziert traditionelle Assetklassen ueber Dispatcher plus registrierten Domain Executor', () => {
+      for (const assetClass of ['stock', 'forex', 'index'] as const) {
+        const route = routeTask(assetClass);
+        expect(route?.engineId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+        expect(route?.scoreAuthorityId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+        expect(route?.domainExecutorId).toBe('traditionalAssetScoring.TraditionalAssetScoringService');
+        expect(route?.researchOrchestratorId).toBeUndefined();
+      }
+    });
+
+    it('projiziert Anleihen ueber Dispatcher plus Sovereign-Benchmark-Domain-Executor', () => {
       const route = routeTask('bond');
-      expect(route?.engineId).toBe('sovereign_benchmark_yield_engine');
+      expect(route?.engineId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(route?.scoreAuthorityId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(route?.domainExecutorId).toBe('sovereignBenchmarkEvidenceScoring.scoreSovereignBenchmarkEvidence');
+      expect(route?.researchOrchestratorId).toBeUndefined();
       expect(route?.hasDedicatedEngine).toBe(true);
     });
 
@@ -145,7 +164,10 @@ describe('supervisor', () => {
     it('enthaelt die Routing-Tabelle und juengste Ausfuehrungen', async () => {
       await executeSupervised('test-task-status', async () => 'y');
       const status = getSupervisorStatus();
-      expect(status.routingTable.crypto.engineId).toBe('crypto_orchestrator');
+      expect(status.routingTable.crypto.engineId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(status.routingTable.crypto.researchOrchestratorId).toBe('crypto_orchestrator');
+      expect(status.routingTable.commodity.engineId).toBe('ScoringDispatcher.dispatchCanonicalScore');
+      expect(status.routingTable.commodity.researchOrchestratorId).toBe('rawmaterials_orchestrator');
       expect(status.recentExecutions.some(r => r.taskName === 'test-task-status')).toBe(true);
     });
 
