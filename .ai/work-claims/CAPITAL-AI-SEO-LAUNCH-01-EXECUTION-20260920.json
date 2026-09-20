@@ -24,7 +24,8 @@
     ".ai/work-claims/CAPITAL-AI-SEO-LAUNCH-01-EXECUTION-20260920.json",
     "docs/projects/seo/ROADMAP.md",
     "docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md",
-    "docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md"
+    "docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
   ],
   "foreignDependencies": [
     "CAPITAL-AI-OPS — exact Production↔CURRENT_MAIN deployment identity; current execution observes Production drift and does not bypass the canonical GitHub→Render deployment path.",
