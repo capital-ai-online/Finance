@@ -129,6 +129,8 @@ export function classifyPrAutofixFailure(
       classification: 'PROTECTED_ACTIONS_MINUTE_COST_BLOCKER',
       decision: PR_AUTOFIX_DECISIONS.BLOCKED_PROTECTED_ACTION,
       reason: 'protected-45k-actions-minute-blocker',
+      findingClass: 'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
+      actionId: 'OBSERVE_ONLY',
     });
   }
 
@@ -140,6 +142,8 @@ export function classifyPrAutofixFailure(
         classification: 'PR_DECISION_EVIDENCE_DRIFT',
         decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
         reason: 'decision-evidence-reconciler-owns-write',
+        findingClass: 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+        actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
       });
     }
 
