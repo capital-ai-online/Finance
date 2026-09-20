@@ -81,7 +81,7 @@ This technical numbering remains current. Historical evidence recorded under old
 Current main separately defines:
 
 - `PVC-09..17` -> `CAPITAL-AI-FINTECH`;
-- `PVC-12..17` -> `CAPITAL-AI-FINTECH`;
+- `PVC-09..17` -> `CAPITAL-AI-FINTECH`;
 - `PVC-18` -> `CAPITAL-AI-OPS`.
 
 This qualified project namespace resolves the earlier V2 project-number ambiguity. No technical SPT or Quality stage renumbering is required merely to express project ownership.
@@ -122,7 +122,7 @@ FinTech Core composes financial workflows downstream/adjacent to the canonical s
 
 `docs/projects/fintech/ROADMAP.md` is the canonical organizational execution roadmap for CAPITAL-AI-FINTECH. It owns project work across `PVC-09..17` while reusing this technical SPT, ADR-0087 and current runtime contracts.
 
-Provider/data ingress and DQ for `PVC-09..11` are FINTECH-owned under the DATA supersession; EventMesh/Traceability project ownership remains OPS; Frontend remains a consumer; Quality, Security and Compliance remain cross-cutting.
+Provider/data ingress and DQ for `PVC-09..11` are FINTECH-owned under the former DATA-surface supersession; EventMesh/Traceability project ownership remains OPS; Frontend remains a consumer; Quality, Security and Compliance remain cross-cutting.
 
 Security requirements from CAPITAL-AI-SEC PR #631 are integrated in `docs/projects/fintech/SECURITY_HANDOFFS.md`. Security owns findings and independent verification; FINTECH implements only concrete FINTECH-owned remediation and cannot self-set Security VERIFIED/CLOSED.
 
