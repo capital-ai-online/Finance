@@ -9,6 +9,7 @@ import {
   compareSemver,
   computeProductionBaselineId,
   fail,
+  findGithubActionsSkipDirective,
   git,
   gitSucceeds,
   writeJsonFile,
@@ -104,6 +105,16 @@ async function fetchProductionHealth() {
 
 ensureRef(baseRef);
 ensureRef(headRef);
+
+const headCommitMessage = git(['show', '-s', '--format=%B', headRef]);
+const actionsSkipDirective = findGithubActionsSkipDirective(headCommitMessage);
+if (actionsSkipDirective) {
+  fail(
+    `PR head contains GitHub Actions skip directive "${actionsSkipDirective}". ` +
+      'Draft PR cost control must use the existing draft job guards, not commit-message CI suppression. ' +
+      'Create a new head commit without a skip directive before PR creation or ready-for-review.',
+  );
+}
 
 const mainSha = git(['rev-parse', baseRef]);
 const headSha = git(['rev-parse', headRef]);
