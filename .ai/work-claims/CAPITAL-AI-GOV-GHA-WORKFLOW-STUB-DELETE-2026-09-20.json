@@ -8,8 +8,8 @@
     "model": "Grok 4.6",
     "executionSurface": "Grok GitHub Connector"
   },
-  "workItem": "Land a reviewed deletion path in verifyChangedWorkflowSecurity.mjs on trusted main. Do not delete workflow files in this PR because PR Governance executes the validator from main, not from the candidate head.",
-  "workItemDE": "Reviewed-Deletion-Pfad in verifyChangedWorkflowSecurity.mjs auf trusted main bringen. In diesem PR keine Workflow-Dateien loeschen, weil PR Governance den Validator von main ausfuehrt, nicht vom Candidate-Head.",
+  "workItem": "Land a reviewed deletion path that accepts only unused dispatch-only stubs. Do not delete workflow files in this PR because PR Governance executes the validator from trusted main.",
+  "workItemDE": "Reviewed-Deletion-Pfad landen, der nur ungenutzte dispatch-only Stubs akzeptiert. In diesem PR keine Workflow-Dateien loeschen, weil PR Governance den Validator von trusted main ausfuehrt.",
   "startedAt": "2026-09-20T04:18:00Z",
   "baseBranch": "main",
   "baseSha": "0478b62ba365ccae895f029a8f8ddc58bee4230e",
@@ -20,7 +20,7 @@
   "primaryOwner": "CAPITAL-AI-GOV",
   "pullRequest": 1099,
   "productionBaseline": {
-    "checkedAt": "2026-09-20T04:22:30.207Z",
+    "checkedAt": "2026-09-20T04:27:05.443Z",
     "version": "0.6.0",
     "commitSha": "0478b62ba365ccae895f029a8f8ddc58bee4230e",
     "branch": "main",
@@ -32,7 +32,8 @@
     "scripts/security/verifyChangedWorkflowSecurity.mjs",
     "docs/security/WORKFLOW_DELETION_REVIEW.json",
     "docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md",
-    "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md"
+    "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md",
+    "docs/evidence/ops/WORKFLOW_USAGE_CORRELATION_2026-09-20.md"
   ],
-  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge. Stub deletion is a follow-up PR after this policy is on main."
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge. Stub deletion is a follow-up PR after this policy is on main and only for unusedInRepo paths."
 }
