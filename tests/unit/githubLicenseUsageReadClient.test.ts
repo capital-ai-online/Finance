@@ -231,6 +231,8 @@ describe('GitHub license usage read client', () => {
         'organization.advanced_security.active_committers.secret_protection',
         'organization.billing.usage.summary',
         'organization.billing.usage.report',
+        'repository.actions.variable.get',
+        'organization.actions.variable.get',
       ],
       enterpriseConsumedLicensesAuth: 'github_app_only',
       tokenPersistence: false,
