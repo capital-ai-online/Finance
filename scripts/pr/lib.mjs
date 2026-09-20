@@ -28,6 +28,26 @@ export const PRODUCTION_BASELINE_SCHEMA_VERSION = '1.2.0';
 export const PRODUCTION_BASELINE_START = 'CAPITAL_AI_PRODUCTION_BASELINE_START';
 export const PRODUCTION_BASELINE_END = 'CAPITAL_AI_PRODUCTION_BASELINE_END';
 
+const GITHUB_ACTIONS_SKIP_DIRECTIVES = Object.freeze([
+  '[skip ci]',
+  '[ci skip]',
+  '[no ci]',
+  '[skip actions]',
+  '[actions skip]',
+]);
+
+export function findGithubActionsSkipDirective(commitMessage) {
+  const message = String(commitMessage || '');
+  const normalized = message.toLowerCase();
+  const bracketDirective = GITHUB_ACTIONS_SKIP_DIRECTIVES.find((directive) =>
+    normalized.includes(directive)
+  );
+  if (bracketDirective) return bracketDirective;
+
+  const trailer = message.match(/(?:^|\n)skip-checks:\s*true\s*(?=\n|$)/i);
+  return trailer ? trailer[0].trim() : null;
+}
+
 export function fail(message) {
   throw new Error(message);
 }

@@ -4,6 +4,7 @@ import {
   claimScopesOverlap,
   computeProductionBaselineId,
   findClaimConflicts,
+  findGithubActionsSkipDirective,
   gitSucceeds,
   globToRegExp,
   pathMatchesClaim,
@@ -50,6 +51,23 @@ test('work claim rejects repository-wide wildcard ownership', () => {
   }, '.ai/work-claims/test.json');
 
   assert.equal(errors.some((error) => error.includes('repository-wide wildcard')), true);
+});
+
+test('GitHub Actions skip directives are detected before PR readiness', () => {
+  for (const directive of [
+    '[skip ci]',
+    '[ci skip]',
+    '[no ci]',
+    '[skip actions]',
+    '[actions skip]',
+    'skip-checks:true',
+    'skip-checks: true',
+  ]) {
+    assert.ok(findGithubActionsSkipDirective(`Subject\n\n${directive}`), directive);
+  }
+
+  assert.equal(findGithubActionsSkipDirective('Normal validation commit'), null);
+  assert.equal(findGithubActionsSkipDirective('Document the words skip ci without brackets'), null);
 });
 
 test('silent git commands report success independently of stdout', () => {
