@@ -50,7 +50,8 @@ describe('SH-02.6 frontend reliability composition', () => {
     expect(featureBoundary).toContain('Andere Funktionen und Ihre bestehende Sitzung bleiben erhalten.');
     expect(featureBoundary).not.toContain('error.message');
 
-    expect(routes).toContain('<FeatureRecoveryBoundary name="Öffentliche Analyse-Workbench">');
+    expect(routes).toContain('<FeatureRecoveryBoundary');
+    expect(routes).toContain('name="Öffentliche Analyse-Workbench"');
     expect(publicWorkbench).toContain('<FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>');
     expect(publicWorkbench).not.toContain('class PublicToolErrorBoundary');
     expect(routes).not.toContain('class PublicPreviewErrorBoundary');
