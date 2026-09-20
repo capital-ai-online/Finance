@@ -10,7 +10,6 @@ import {
   evaluatePythonRequirementSecurityPolicy,
   writeCycloneDxSbom,
 } from './dependencySecurity';
-import { SECRET_FILE_KEYS } from '../security/secretFileManifest';
 
 const REPO_ROOT = process.cwd();
 let hasErrors = false;
@@ -109,11 +108,9 @@ function findRenderYamlKeys(): Set<string> {
 }
 
 const usedVars = findEnvVarUsages();
-// Deploy-Härtung: echte Secrets kommen seit der Secret-File-Migration nicht mehr über
-// render.yaml `envVars`, sondern über die Render Secret File (siehe render.yaml
-// `secretFiles` + scripts/security/secretFileManifest.ts). Ohne diese Ergänzung würde
-// dieses Gate jeden migrierten Secret-Key fälschlich als "ohne Deployment-Abdeckung" melden.
-const renderYamlKeys = new Set([...findRenderYamlKeys(), ...SECRET_FILE_KEYS]);
+// Render environment variables are the single deployment configuration surface. Secret values
+// remain Dashboard-managed, while render.yaml declares only their keys via sync:false.
+const renderYamlKeys = findRenderYamlKeys();
 const alternateGroupOf = new Map<string, string[]>();
 for (const group of ALTERNATE_NAME_GROUPS) for (const name of group) alternateGroupOf.set(name, group);
 const uncoveredVars = [...usedVars].filter(name => {
