@@ -21,6 +21,8 @@ jobs:
       current: ${{ steps.freshness.outputs.current }}
       state: ${{ steps.impact.outputs.state }}
       autosync_patches: ${{ steps.impact.outputs.autosync_patches }}
+      patchable: ${{ steps.impact.outputs.patchable }}
+      review_only: ${{ steps.impact.outputs.review_only }}
 
     steps:
       - name: Exakten Main-Stand auschecken
@@ -109,7 +111,15 @@ jobs:
           console.log(JSON.stringify({ state, patchable, reviewOnly, autosync }, null, 2));
           NODE
 
-      - name: Impact- und AUTO_SYNC-Evidence hochladen
+      - name: Deterministische Maintenance-Handoff-Evidence erzeugen
+        if: steps.freshness.outputs.current == 'true'
+        run: |
+          npm run documentary:handoff:build -- \
+            --impact=artifacts/documentary/change-impact.json \
+            --autosync=artifacts/documentary/autosync-plan.json \
+            --output=artifacts/documentary/maintenance-handoff.json
+
+      - name: Impact-, AUTO_SYNC- und Handoff-Evidence hochladen
         if: steps.freshness.outputs.current == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -123,6 +133,8 @@ jobs:
         env:
           IMPACT_STATE: ${{ steps.impact.outputs.state }}
           AUTOSYNC_PATCHES: ${{ steps.impact.outputs.autosync_patches }}
+          PATCHABLE: ${{ steps.impact.outputs.patchable }}
+          REVIEW_ONLY: ${{ steps.impact.outputs.review_only }}
         run: |
           {
             echo "## Documentary Change Impact"
@@ -130,28 +142,33 @@ jobs:
             echo "- Source commit: `${GITHUB_SHA}`"
             echo "- State: `${IMPACT_STATE}`"
             echo "- Deterministic AUTO_SYNC patches: `${AUTOSYNC_PATCHES}`"
+            echo "- Semantic patch candidates: `${PATCHABLE}`"
+            echo "- Review-only candidates: `${REVIEW_ONLY}`"
             echo
-            echo "Analysis is read-only against main. Only an exact validated AUTO_SYNC plan may enter the isolated branch-write job."
+            echo "AUTO_SYNC may enter only the validated isolated-branch lane. Semantic maintenance remains bound to Supervisor -> Platform Director APPROVED -> Agent IAM."
           } >> "$GITHUB_STEP_SUMMARY"
 
   autosync-branch:
     name: Validierten Documentary AUTO_SYNC-Branch materialisieren
     needs: analyze
-    if: needs.analyze.outputs.current == 'true' && needs.analyze.outputs.autosync_patches != '0'
+    if: needs.analyze.outputs.current == 'true' && needs.analyze.outputs.state == 'AUTO_SYNC'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       actions: read
       contents: write
+    outputs:
+      branch: ${{ steps.write.outputs.branch }}
+      commit: ${{ steps.write.outputs.commit }}
 
     steps:
-      - name: Validierten AUTO_SYNC-Plan laden
+      - name: Validierte AUTO_SYNC-/Handoff-Evidence laden
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: documentary-change-impact-${{ github.sha }}
           path: ${{ runner.temp }}/documentary-autosync
 
-      - name: Exact-Main und Patch-Hashes revalidieren und Branch schreiben
+      - name: Exact-Main, Handoff und Patch-Hashes revalidieren und Branch schreiben
         id: write
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
@@ -167,10 +184,14 @@ jobs:
             const sourceSha = String(process.env.SOURCE_SHA || '').toLowerCase();
             if (!/^[0-9a-f]{40}$/.test(sourceSha)) throw new Error('Invalid source SHA.');
 
-            const planPath = path.join(process.env.ARTIFACT_DIR, 'autosync-plan.json');
-            const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+            const plan = JSON.parse(fs.readFileSync(path.join(process.env.ARTIFACT_DIR, 'autosync-plan.json'), 'utf8'));
+            const handoff = JSON.parse(fs.readFileSync(path.join(process.env.ARTIFACT_DIR, 'maintenance-handoff.json'), 'utf8'));
+
             if (String(plan.sourceCommit || '').toLowerCase() !== sourceSha) {
               throw new Error('AUTO_SYNC plan/source SHA mismatch.');
+            }
+            if (String(handoff.sourceCommit || '').toLowerCase() !== sourceSha || handoff.state !== 'AUTO_SYNC_DRAFT_PR') {
+              throw new Error('Maintenance handoff is not bound to this AUTO_SYNC source/state.');
             }
             if (!Array.isArray(plan.patches) || plan.patches.length < 1 || plan.patches.length > 10) {
               throw new Error('AUTO_SYNC patch count is outside the bounded write corridor.');
@@ -191,7 +212,7 @@ jobs:
             const branch = `agent/documentary-autosync-${sourceSha.slice(0, 12)}`;
             try {
               await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
-              core.notice(`AUTO_SYNC branch already exists: ${branch}; idempotent no-op.`);
+              core.notice(`AUTO_SYNC branch already exists: ${branch}; idempotent reuse.`);
               core.setOutput('branch', branch);
               return;
             } catch (error) {
@@ -235,12 +256,26 @@ jobs:
                 executionSurface: 'Documentary Change Impact / AUTO_SYNC',
               },
               workItem: 'Apply bounded deterministic Documentary AUTO_SYNC rules derived from exact CURRENT_MAIN.',
+              workItemDE: 'Deterministische Documentary-AUTO_SYNC-Korrektur aus exaktem CURRENT_MAIN materialisieren.',
+              priority: 'P2',
+              priorityReason: 'Deterministische, reversible Dokumentationskonvergenz ohne Runtime- oder Production-Mutation.',
+              projectId: 'CAPITAL-AI-DOC',
+              projectFolder: 'docs/projects/documentary/',
+              projectStage: 'PVC-03',
+              semanticPatchCandidates: Array.isArray(handoff.semanticPatchPaths) ? handoff.semanticPatchPaths : [],
               startedAt: new Date().toISOString(),
               baseBranch: 'main',
               baseSha: sourceSha,
               claimedPaths: [...claimedPaths, claimPath].sort(),
+              reviewRequiredPaths: Array.isArray(handoff.reviewRequiredPaths) ? handoff.reviewRequiredPaths : [],
+              maintenanceHandoff: {
+                version: handoff.handoffVersion,
+                state: handoff.state,
+                correlationId: handoff.correlationId,
+              },
               releaseCondition: 'Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.',
             };
+
             const { data: claimBlob } = await github.rest.git.createBlob({
               owner, repo, content: JSON.stringify(claim, null, 2) + '\n', encoding: 'utf-8',
             });
@@ -273,5 +308,42 @@ jobs:
             echo "- branch: `${BRANCH}`"
             echo "- commit: `${COMMIT:-EXISTING_BRANCH}`"
             echo "- main mutation: `NO`"
-            echo "- PR/merge/deploy: `NOT_AUTHORIZED_IN_WP-06C`"
+            echo "- Draft-PR handoff: `READY`"
+            echo "- merge/deploy: `NOT_AUTHORIZED`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  autosync-draft-pr:
+    name: AUTO_SYNC-Branch an bestehenden Draft-PR-Pfad übergeben
+    needs: autosync-branch
+    if: needs.autosync-branch.outputs.branch != ''
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/open-agent-draft-pr.yml
+    with:
+      head_branch: ${{ needs.autosync-branch.outputs.branch }}
+      trusted_handoff: documentary-autosync
+
+  semantic-handoff:
+    name: Semantischen Maintenance-Handoff fail-closed ausweisen
+    needs: analyze
+    if: needs.analyze.outputs.current == 'true' && needs.analyze.outputs.state == 'MAINTENANCE_CANDIDATE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Autorisierungsgrenze zusammenfassen
+        env:
+          PATCHABLE: ${{ needs.analyze.outputs.patchable }}
+          REVIEW_ONLY: ${{ needs.analyze.outputs.review_only }}
+        run: |
+          {
+            echo "## Documentary Semantic Maintenance Handoff"
+            echo
+            echo "- state: `SEMANTIC_AUTHORIZATION_REQUIRED`"
+            echo "- patchable candidates: `${PATCHABLE}`"
+            echo "- review-only candidates: `${REVIEW_ONLY}`"
+            echo "- required chain: `Supervisor -> Platform Director APPROVED -> Agent IAM`"
+            echo "- synthetic approval: `FORBIDDEN`"
+            echo "- execution entry point: `scripts/automation/runDocumentaryMaintenanceControlLoop.ts`"
           } >> "$GITHUB_STEP_SUMMARY"

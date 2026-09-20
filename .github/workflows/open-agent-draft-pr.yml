@@ -3,6 +3,17 @@ run-name: >-
   Agenten-Draft-PR für ${{ inputs.head_branch }} korrelieren und öffnen
 
 on:
+  workflow_call:
+    inputs:
+      head_branch:
+        description: 'Agenten-Branch mit genau einem neuen .ai/work-claims/*.json-Claim'
+        required: true
+        type: string
+      trusted_handoff:
+        description: 'Nur für repository-interne, auf main laufende wiederverwendbare Handoffs'
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       head_branch:
@@ -21,7 +32,13 @@ concurrency:
 jobs:
   preflight-and-open:
     name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung
-    if: github.triggering_actor == 'SvenKulessa' && github.actor == 'SvenKulessa'
+    if: >-
+      (inputs.trusted_handoff == 'documentary-autosync' &&
+       github.event_name == 'push' &&
+       github.ref == 'refs/heads/main') ||
+      (inputs.trusted_handoff == '' &&
+       github.triggering_actor == 'SvenKulessa' &&
+       github.actor == 'SvenKulessa')
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -43,6 +60,7 @@ jobs:
         working-directory: policy
         env:
           HEAD_BRANCH: ${{ inputs.head_branch }}
+          TRUSTED_HANDOFF: ${{ inputs.trusted_handoff }}
         run: |
           set -euo pipefail
           git check-ref-format --branch "$HEAD_BRANCH" >/dev/null
@@ -50,6 +68,12 @@ jobs:
             agent/*|claude/*|grok/*|ai/*) ;;
             *) echo "Agenten-Branch muss einen freigegebenen Präfix verwenden: agent/, claude/, grok/, ai/" >&2; exit 1 ;;
           esac
+          if [ "$TRUSTED_HANDOFF" = "documentary-autosync" ]; then
+            case "$HEAD_BRANCH" in
+              agent/documentary-autosync-*) ;;
+              *) echo "Trusted Documentary AUTO_SYNC darf nur agent/documentary-autosync-* übergeben." >&2; exit 1 ;;
+            esac
+          fi
 
       - name: Angeforderten Agenten-Branch auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
