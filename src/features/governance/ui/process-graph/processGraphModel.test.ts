@@ -9,6 +9,7 @@ import {
   parseAutonomousWorkStages,
   parseProjectFolders,
   parsePvcRows,
+  parseSelfHealingWorkPackages,
 } from './processGraphModel';
 
 const pvc = `
@@ -33,6 +34,13 @@ const agentTrustRoot = `
 ## 7. Validation and cost control
 ## 8. Evidence, EventMesh and handover
 ## 9. Capability and tool boundary
+`;
+
+const selfHealingWorkPackages = `
+| WP | Scope | Owner/PVC | Dependencies | Exit gate | State |
+|---|---|---|---|---|---|
+| SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic verification | IMPLEMENTED_ON_MAIN |
+| SH-02.3E | Evidence Integrity + read-only Control Panel projection | OPS / PVC-08,18 | SH-02.3 | bare PASS cannot converge | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
 `;
 
 function record(overrides: Partial<OperationalTraceStateRecord> = {}): OperationalTraceStateRecord {
@@ -114,6 +122,69 @@ describe('process graph canonical projection', () => {
       'GOV-EVIDENCE',
       'GOV-CAPABILITY',
     ]);
+  });
+
+  it('parses canonical SH work-package declarations without treating declared state as effective state', () => {
+    const packages = parseSelfHealingWorkPackages([selfHealingWorkPackages]);
+    expect(packages).toEqual([
+      {
+        id: 'SH-02.3',
+        label: 'Self-Healing finding/action contract',
+        owner: 'OPS / PVC-04,18',
+        dependencies: ['SH-02.1'],
+        exitGate: 'deterministic verification',
+        declaredState: 'IMPLEMENTED_ON_MAIN',
+      },
+      {
+        id: 'SH-02.3E',
+        label: 'Evidence Integrity + read-only Control Panel projection',
+        owner: 'OPS / PVC-08,18',
+        dependencies: ['SH-02.3'],
+        exitGate: 'bare PASS cannot converge',
+        declaredState: 'IMPLEMENTED_BRANCH / VALIDATION_PENDING',
+      },
+    ]);
+
+    const graph = buildProcessGraphViewModel(
+      pvc,
+      projects,
+      agentTrustRoot,
+      null,
+      [selfHealingWorkPackages],
+    );
+    const child = graph.nodes.find((node) => node.id === 'SH-02.3E');
+    expect(child).toMatchObject({
+      kind: 'self-healing-work-package',
+      state: 'unknown',
+      authority: 'non-authorizing',
+      declaredState: 'IMPLEMENTED_BRANCH / VALIDATION_PENDING',
+      dependencies: ['SH-02.3'],
+    });
+    expect(graph.edges).toContainEqual({
+      id: 'sh-dependency-SH-02.3-SH-02.3E',
+      source: 'SH-02.3',
+      target: 'SH-02.3E',
+      relation: 'dependency',
+    });
+  });
+
+  it('accepts effective Self-Healing package state only from the evidence-only PVC-18 envelope', () => {
+    const effective = record({
+      identity: { projectId: 'CAPITAL-AI-OPS', pvcId: 'PVC-18', statusId: 'SH-02.3E' },
+      state: 'CURRENT',
+      reportedState: 'CURRENT',
+    });
+    const graph = buildProcessGraphViewModel(
+      pvc,
+      projects,
+      agentTrustRoot,
+      envelope([effective]),
+      [selfHealingWorkPackages],
+    );
+    expect(graph.nodes.find((node) => node.id === 'SH-02.3E')).toMatchObject({
+      state: 'current',
+      authority: 'non-authorizing',
+    });
   });
 
   it('fails closed for every graph node when no operational state envelope is connected', () => {

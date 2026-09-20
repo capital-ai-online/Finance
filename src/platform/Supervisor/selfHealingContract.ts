@@ -306,17 +306,180 @@ function blocked(action: RemediationAction, reason: RemediationBlockReason): Rem
   return { state: 'BLOCKED', action: cloneAction(action), reason };
 }
 
-export interface VerificationResult {
-  status: 'PASS' | 'FAIL' | 'BLOCKED' | 'NOT_RUN';
-  probe: string;
-  evidenceRef?: string;
+export const SELF_HEALING_EVIDENCE_CONTRACT_VERSION = 'self-healing-evidence/1.0.0' as const;
+
+export type IndependentAssuranceDomain = 'QM' | 'SECURITY';
+export type IndependentAssuranceState = 'NOT_REQUIRED' | 'VERIFIED' | 'PENDING' | 'BLOCKED' | 'FAILED';
+
+export type EvidenceGenerationIdentity =
+  | {
+      kind: 'PR';
+      repository: string;
+      prNumber: number;
+      headSha: string;
+      baseSha: string;
+      currentMainSha: string;
+      controlPlaneVersion: string;
+      generationDigest: string;
+    }
+  | {
+      kind: 'RUNTIME';
+      repository: string;
+      deployedSha: string;
+      currentMainSha: string;
+      controlPlaneVersion: string;
+      generationDigest: string;
+    }
+  | {
+      kind: 'PROVIDER';
+      repository: string;
+      resource: string;
+      observedRevision: string;
+      currentMainSha: string;
+      controlPlaneVersion: string;
+      generationDigest: string;
+    };
+
+export interface VerificationEvidence {
+  schema: typeof SELF_HEALING_EVIDENCE_CONTRACT_VERSION;
+  evidenceId: string;
+  generation: EvidenceGenerationIdentity;
+  source: {
+    authority: string;
+    ref: string;
+    observedAt: string;
+  };
+  integrity: {
+    inputDigest: string;
+    resultDigest: string;
+    recordDigest: string;
+  };
+  reproducible: boolean;
+  current: boolean;
+  generationBound: boolean;
+  sourceBound: boolean;
+  integrityValid: boolean;
+  readback: {
+    required: boolean;
+    verified: boolean;
+  };
+  contradictionFree: boolean;
+  requiredAssurance: IndependentAssuranceDomain[];
+  assurance: Partial<Record<IndependentAssuranceDomain, IndependentAssuranceState>>;
 }
+
+export type VerificationStatus =
+  | 'PASS'
+  | 'FAIL'
+  | 'BLOCKED'
+  | 'NOT_RUN'
+  | 'NOT_EXECUTED'
+  | 'PENDING'
+  | 'NOT_AVAILABLE'
+  | 'STALE'
+  | 'IDENTITY_MISMATCH'
+  | 'READBACK_FAILED';
+
+export type VerificationResult =
+  | {
+      status: 'PASS';
+      probe: string;
+      evidenceRef: string;
+      evidence: VerificationEvidence;
+    }
+  | {
+      status: Exclude<VerificationStatus, 'PASS'>;
+      probe: string;
+      evidenceRef?: string;
+      evidence?: VerificationEvidence;
+    };
+
+export interface EvidenceValidationResult {
+  valid: boolean;
+  issues: string[];
+}
+
+const SHA40 = /^[0-9a-f]{40}$/i;
+const SHA256 = /^sha256:[0-9a-f]{64}$/i;
+
+function nonEmpty(value: string | undefined): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function validGeneration(generation: EvidenceGenerationIdentity, issues: string[]): void {
+  if (!nonEmpty(generation.repository)) issues.push('GENERATION_REPOSITORY_REQUIRED');
+  if (!SHA40.test(generation.currentMainSha)) issues.push('CURRENT_MAIN_SHA_INVALID');
+  if (!nonEmpty(generation.controlPlaneVersion)) issues.push('CONTROL_PLANE_VERSION_REQUIRED');
+  if (!SHA256.test(generation.generationDigest)) issues.push('GENERATION_DIGEST_INVALID');
+
+  if (generation.kind === 'PR') {
+    if (!Number.isInteger(generation.prNumber) || generation.prNumber < 1) issues.push('PR_NUMBER_INVALID');
+    if (!SHA40.test(generation.headSha)) issues.push('PR_HEAD_SHA_INVALID');
+    if (!SHA40.test(generation.baseSha)) issues.push('PR_BASE_SHA_INVALID');
+  } else if (generation.kind === 'RUNTIME') {
+    if (!SHA40.test(generation.deployedSha)) issues.push('DEPLOYED_SHA_INVALID');
+  } else {
+    if (!nonEmpty(generation.resource)) issues.push('PROVIDER_RESOURCE_REQUIRED');
+    if (!nonEmpty(generation.observedRevision)) issues.push('PROVIDER_REVISION_REQUIRED');
+  }
+}
+
+export function validateVerificationEvidence(
+  evidence: VerificationEvidence | undefined,
+  additionalRequiredAssurance: readonly IndependentAssuranceDomain[] = [],
+): EvidenceValidationResult {
+  const issues: string[] = [];
+  if (!evidence) return { valid: false, issues: ['EVIDENCE_REQUIRED'] };
+
+  if (evidence.schema !== SELF_HEALING_EVIDENCE_CONTRACT_VERSION) issues.push('EVIDENCE_SCHEMA_INVALID');
+  if (!nonEmpty(evidence.evidenceId)) issues.push('EVIDENCE_ID_REQUIRED');
+  validGeneration(evidence.generation, issues);
+
+  if (!nonEmpty(evidence.source.authority)) issues.push('AUTHORITATIVE_SOURCE_REQUIRED');
+  if (!nonEmpty(evidence.source.ref)) issues.push('SOURCE_REFERENCE_REQUIRED');
+  if (!Number.isFinite(Date.parse(evidence.source.observedAt))) issues.push('SOURCE_TIMESTAMP_INVALID');
+
+  for (const [name, digest] of Object.entries(evidence.integrity)) {
+    if (!SHA256.test(digest)) issues.push(`${name.toUpperCase()}_INVALID`);
+  }
+
+  if (!evidence.reproducible) issues.push('NOT_REPRODUCIBLE');
+  if (!evidence.current) issues.push('EVIDENCE_STALE');
+  if (!evidence.generationBound) issues.push('GENERATION_NOT_BOUND');
+  if (!evidence.sourceBound) issues.push('SOURCE_NOT_BOUND');
+  if (!evidence.integrityValid) issues.push('INTEGRITY_NOT_VALID');
+  if (evidence.readback.required && !evidence.readback.verified) issues.push('READBACK_NOT_VERIFIED');
+  if (!evidence.contradictionFree) issues.push('EVIDENCE_CONTRADICTION');
+
+  const requiredAssurance = new Set<IndependentAssuranceDomain>([
+    ...evidence.requiredAssurance,
+    ...additionalRequiredAssurance,
+  ]);
+  for (const domain of requiredAssurance) {
+    if (evidence.assurance[domain] !== 'VERIFIED') issues.push(`${domain}_ASSURANCE_NOT_VERIFIED`);
+  }
+
+  return { valid: issues.length === 0, issues };
+}
+
+export type ConvergenceReason =
+  | 'VERIFIED'
+  | 'VERIFICATION_FAILED'
+  | 'VERIFICATION_BLOCKED'
+  | 'VERIFICATION_NOT_RUN'
+  | 'VERIFICATION_PENDING'
+  | 'EVIDENCE_NOT_AVAILABLE'
+  | 'EVIDENCE_STALE'
+  | 'IDENTITY_MISMATCH'
+  | 'READBACK_FAILED'
+  | 'VERIFICATION_EVIDENCE_INVALID';
 
 export interface ConvergenceResult {
   state: TerminalRecoveryState;
   converged: boolean;
-  reason: 'VERIFIED' | 'VERIFICATION_FAILED' | 'VERIFICATION_BLOCKED' | 'VERIFICATION_NOT_RUN';
+  reason: ConvergenceReason;
   verification: VerificationResult;
+  evidenceValidation: EvidenceValidationResult;
 }
 
 export function resolveConvergence(
@@ -325,15 +488,49 @@ export function resolveConvergence(
   attemptsUsed: number,
 ): ConvergenceResult {
   const action = ACTIONS[actionId];
+  const additionalAssurance: IndependentAssuranceDomain[] =
+    action.tier === 'SH-3' ? ['QM', 'SECURITY'] : [];
+  const evidenceValidation = validateVerificationEvidence(verification.evidence, additionalAssurance);
 
   if (verification.status === 'PASS') {
-    return { state: 'CONVERGED', converged: true, reason: 'VERIFIED', verification: { ...verification } };
+    if (!verification.evidenceRef || !evidenceValidation.valid) {
+      return {
+        state: 'ESCALATED',
+        converged: false,
+        reason: 'VERIFICATION_EVIDENCE_INVALID',
+        verification: { ...verification },
+        evidenceValidation,
+      };
+    }
+    return {
+      state: 'CONVERGED',
+      converged: true,
+      reason: 'VERIFIED',
+      verification: { ...verification },
+      evidenceValidation,
+    };
   }
+
   if (verification.status === 'BLOCKED') {
-    return { state: 'ESCALATED', converged: false, reason: 'VERIFICATION_BLOCKED', verification: { ...verification } };
+    return { state: 'ESCALATED', converged: false, reason: 'VERIFICATION_BLOCKED', verification: { ...verification }, evidenceValidation };
   }
-  if (verification.status === 'NOT_RUN') {
-    return { state: 'ESCALATED', converged: false, reason: 'VERIFICATION_NOT_RUN', verification: { ...verification } };
+  if (verification.status === 'NOT_RUN' || verification.status === 'NOT_EXECUTED') {
+    return { state: 'ESCALATED', converged: false, reason: 'VERIFICATION_NOT_RUN', verification: { ...verification }, evidenceValidation };
+  }
+  if (verification.status === 'PENDING') {
+    return { state: 'ESCALATED', converged: false, reason: 'VERIFICATION_PENDING', verification: { ...verification }, evidenceValidation };
+  }
+  if (verification.status === 'NOT_AVAILABLE') {
+    return { state: 'ESCALATED', converged: false, reason: 'EVIDENCE_NOT_AVAILABLE', verification: { ...verification }, evidenceValidation };
+  }
+  if (verification.status === 'STALE') {
+    return { state: 'ESCALATED', converged: false, reason: 'EVIDENCE_STALE', verification: { ...verification }, evidenceValidation };
+  }
+  if (verification.status === 'IDENTITY_MISMATCH') {
+    return { state: 'ESCALATED', converged: false, reason: 'IDENTITY_MISMATCH', verification: { ...verification }, evidenceValidation };
+  }
+  if (verification.status === 'READBACK_FAILED') {
+    return { state: 'ESCALATED', converged: false, reason: 'READBACK_FAILED', verification: { ...verification }, evidenceValidation };
   }
 
   const exhausted = attemptsUsed >= action.budget.maxAttempts;
@@ -342,11 +539,14 @@ export function resolveConvergence(
     converged: false,
     reason: 'VERIFICATION_FAILED',
     verification: { ...verification },
+    evidenceValidation,
   };
 }
 
 export interface SelfHealingContractSnapshot {
   version: typeof SELF_HEALING_CONTRACT_VERSION;
+  evidenceContractVersion: typeof SELF_HEALING_EVIDENCE_CONTRACT_VERSION;
+  positiveStateInvariant: 'EVIDENCE_REQUIRED_FOR_PASS_VERIFIED_CONVERGED_READY';
   valid: boolean;
   validationErrors: string[];
   findingClasses: readonly FindingClass[];
@@ -401,6 +601,8 @@ export function getSelfHealingContractSnapshot(): SelfHealingContractSnapshot {
 
   return {
     version: SELF_HEALING_CONTRACT_VERSION,
+    evidenceContractVersion: SELF_HEALING_EVIDENCE_CONTRACT_VERSION,
+    positiveStateInvariant: 'EVIDENCE_REQUIRED_FOR_PASS_VERIFIED_CONVERGED_READY',
     valid: validationErrors.length === 0,
     validationErrors,
     findingClasses: [...FINDING_CLASSES],

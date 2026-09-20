@@ -3,6 +3,8 @@ import { AlertTriangle, ArrowRight, CheckCircle2, History, ShieldCheck } from 'l
 import agentTrustRootMarkdown from '../../../../../AGENTS.md?raw';
 import pvcMarkdown from '../../../../../docs/projects/PROJECT_VALUE_CHAIN.md?raw';
 import projectMappingMarkdown from '../../../../../docs/projects/README.md?raw';
+import selfHealingWorkPackageMarkdown from '../../../../../docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md?raw';
+import selfHealingEvidenceWorkPackageMarkdown from '../../../../../docs/projects/operations/work-packages/OPS_08_B_SH_02_3E_EVIDENCE_INTEGRITY_2026-09-20.md?raw';
 import type { OperationalTraceStateEnvelope } from '../../../../platform/Traceability/Contracts/OperationalTraceStateContract';
 import { buildProcessGraphViewModel, type ProcessGraphNode, type ProcessGraphState } from './processGraphModel';
 
@@ -44,6 +46,22 @@ function GraphNodeCard({ node }: { node: ProcessGraphNode }) {
       </div>
       {node.owner && <p className="mt-3 text-xs text-white/65"><span className="font-semibold text-white/80">Primary Owner:</span> {node.owner}</p>}
       {node.projectFolder && <p className="mt-1 break-all font-mono text-[10px] text-white/45">{node.projectFolder}</p>}
+      {node.declaredState && (
+        <p className="mt-2 text-[10px] text-white/45">
+          <span className="font-semibold text-white/65">Declared work-package state:</span> {node.declaredState}
+          {' '}<span className="text-white/30">(projection only)</span>
+        </p>
+      )}
+      {node.dependencies && node.dependencies.length > 0 && (
+        <p className="mt-1 text-[10px] text-white/45">
+          <span className="font-semibold text-white/65">Dependencies:</span> {node.dependencies.join(', ')}
+        </p>
+      )}
+      {node.exitGate && (
+        <p className="mt-1 text-[10px] leading-relaxed text-white/45">
+          <span className="font-semibold text-white/65">Exit gate:</span> {node.exitGate}
+        </p>
+      )}
       <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-mono uppercase tracking-wide">
         <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">{stateLabel[node.state]}</span>
         <span className="rounded-full border border-white/10 px-2 py-1 text-white/60">{node.authority}</span>
@@ -95,11 +113,13 @@ export function AdminProcessGraph({ operationalState = null }: AdminProcessGraph
       projectMappingMarkdown,
       agentTrustRootMarkdown,
       operationalState,
+      [selfHealingWorkPackageMarkdown, selfHealingEvidenceWorkPackageMarkdown],
     ),
     [operationalState],
   );
   const pvcNodes = graph.nodes.filter((node) => node.kind === 'pvc');
   const workStageNodes = graph.nodes.filter((node) => node.kind === 'work-stage');
+  const selfHealingWorkPackageNodes = graph.nodes.filter((node) => node.kind === 'self-healing-work-package');
   const gateNodes = graph.nodes.filter((node) => node.kind === 'evidence-gate' || node.kind === 'owner-gate');
 
   return (
@@ -122,6 +142,7 @@ export function AdminProcessGraph({ operationalState = null }: AdminProcessGraph
       </header>
       <HorizontalChain nodes={pvcNodes} label="Project Value Chain" />
       <HorizontalChain nodes={workStageNodes} label="Autonomous work graph" />
+      <HorizontalChain nodes={selfHealingWorkPackageNodes} label="Self-Healing Work Packages · read-only orchestration projection" />
       <section aria-label="Authority and evidence gates" className="space-y-3">
         <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-white/60">Authority / evidence distinction</h3>
         <div className="grid gap-3 md:grid-cols-2">{gateNodes.map((node) => <GraphNodeCard key={node.id} node={node} />)}</div>
