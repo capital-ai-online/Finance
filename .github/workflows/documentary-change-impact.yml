@@ -1,0 +1,114 @@
+name: Documentary Change Impact
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentary-change-impact-main
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Main-Änderung auf Dokumentationsfolgen korrelieren
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Exakten Main-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+          cache: npm
+
+      - name: Stalen Main-Run verwerfen
+        id: freshness
+        env:
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          live_main="$(git rev-parse origin/main)"
+          if [ "$PUSH_SHA" != "$live_main" ]; then
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Staler Documentary-Impact-Run: push=$PUSH_SHA current_main=$live_main"
+            exit 0
+          fi
+          echo "current=true" >> "$GITHUB_OUTPUT"
+
+      - name: Abhängigkeiten für read-only Analyse installieren
+        if: steps.freshness.outputs.current == 'true'
+        run: npm ci --ignore-scripts
+
+      - name: Exakten before..after Impact-Plan erzeugen
+        if: steps.freshness.outputs.current == 'true'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          zero="0000000000000000000000000000000000000000"
+          base="$BEFORE_SHA"
+          if [ -z "$base" ] || [ "$base" = "$zero" ]; then
+            base="$(git rev-parse "$AFTER_SHA^")"
+          fi
+          npm run documentary:impact:plan -- \
+            --base="$base" \
+            --head="$AFTER_SHA" \
+            --output=artifacts/documentary/change-impact.json
+
+      - name: Dokumentationshygiene fail-closed prüfen
+        if: steps.freshness.outputs.current == 'true'
+        run: npm run docs:hygiene:check
+
+      - name: Impact-Zustand klassifizieren
+        if: steps.freshness.outputs.current == 'true'
+        id: impact
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('artifacts/documentary/change-impact.json', 'utf8'));
+          const patchable = Number(report.patchableDocumentationPaths?.length || 0);
+          const reviewOnly = Number(report.reviewOnlyDocumentationPaths?.length || 0);
+          const state = patchable > 0 ? 'MAINTENANCE_CANDIDATE' : reviewOnly > 0 ? 'REVIEW_ONLY' : 'NO_ACTION';
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `state=${state}\npatchable=${patchable}\nreview_only=${reviewOnly}\n`);
+          console.log(JSON.stringify({ state, patchable, reviewOnly }, null, 2));
+          NODE
+
+      - name: Impact-Evidence hochladen
+        if: steps.freshness.outputs.current == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: documentary-change-impact-${{ github.sha }}
+          path: artifacts/documentary/change-impact.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Ergebnis zusammenfassen
+        if: steps.freshness.outputs.current == 'true'
+        env:
+          IMPACT_STATE: ${{ steps.impact.outputs.state }}
+          PATCHABLE: ${{ steps.impact.outputs.patchable }}
+          REVIEW_ONLY: ${{ steps.impact.outputs.review_only }}
+        run: |
+          {
+            echo "## Documentary Change Impact"
+            echo
+            echo "- Source commit: \`${GITHUB_SHA}\`"
+            echo "- State: \`${IMPACT_STATE}\`"
+            echo "- Patchable candidates: \`${PATCHABLE}\`"
+            echo "- Review-only candidates: \`${REVIEW_ONLY}\`"
+            echo
+            echo "This workflow is read-only. It creates evidence only and grants no branch, PR, merge, deploy or production authority."
+          } >> "$GITHUB_STEP_SUMMARY"
