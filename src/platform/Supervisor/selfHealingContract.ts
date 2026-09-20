@@ -167,7 +167,7 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
   REDEPLOY_EXACT_SHA: {
     id: 'REDEPLOY_EXACT_SHA',
     tier: 'SH-2',
-    activation: 'ENABLED',
+    activation: 'HELD',
     idempotencyClass: 'SIDE_EFFECTING',
     blastRadius: 'PRODUCTION_RUNTIME',
     requiredCapability: 'release.redeploy.exact-sha',
