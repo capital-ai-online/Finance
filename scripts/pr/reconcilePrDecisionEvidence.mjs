@@ -15,6 +15,18 @@ import {
   summarizeDecisionBlockers,
   summarizeDecisionEvidence,
 } from './prDecisionState.mjs';
+import {
+  AUTO_MERGE_ELIGIBLE,
+  HUMAN_MERGE_REQUIRED,
+  autoMergeEvidenceMatches,
+  classifyAutoMergeEligibility,
+  governanceCheckFreshAfterDeclaration,
+  parseAutoMergeEvidence,
+  reconcileAutoMergeProjection,
+  requiredCheckEvidence,
+  requiredCheckFingerprint,
+  resolveAutoMergeMethod,
+} from './prAutoMergeSafety.mjs';
 
 const SECURITY_CONTEXT_PATTERN = /(gitguardian|hardened image|security|cve|vulnerab|license compliance)/i;
 const GOVERNANCE_CONTEXT = 'PR Governance (Kosten / Workflow / Vorlage)';
@@ -352,7 +364,7 @@ async function fetchDecisionPolicy(repository, token) {
 async function evaluateOverlapLive(repository, prNumber, token) {
   const targetFiles = await fetchPullFiles(repository, prNumber, token);
   const open = await paginateArray(
-    `https://api.github.com/repos/${repository}/pulls?state=open&base=main`,
+    'https://api.github.com/repos/' + repository + '/pulls?state=open&base=main',
     token,
   );
   const peerPulls = [];
@@ -363,26 +375,19 @@ async function evaluateOverlapLive(repository, prNumber, token) {
       files: await fetchPullFiles(repository, Number(pr.number), token),
     });
   }
-  return findExactOverlap(targetFiles, peerPulls);
+  return {
+    targetFiles,
+    conflicts: findExactOverlap(targetFiles, peerPulls),
+  };
 }
 
-async function reconcileOne({ repository, token, prNumber }) {
-  let pr = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token);
-  if (pr?.state !== 'open' || pr?.base?.ref !== 'main' || pr?.head?.repo?.full_name !== repository) {
-    console.log(`[PR-DECISION] PR #${prNumber} outside mutable open/same-repo/main boundary; skipped.`);
-    return { changed: false, skipped: true, reason: 'outside-mutable-boundary' };
-  }
-
-  const originalBody = String(pr?.body || '');
+async function evaluateSnapshot({ repository, token, prNumber, pr, mainSha }) {
+  const body = String(pr?.body || '');
   const headSha = normalizeSha(pr?.head?.sha);
-  if (!/^[0-9a-f]{40}$/.test(headSha)) fail(`PR #${prNumber} has invalid head SHA.`);
+  if (!/^[0-9a-f]{40}$/.test(headSha)) fail('PR #' + prNumber + ' has invalid head SHA.');
 
-  const main = await githubJson(`https://api.github.com/repos/${repository}/branches/main`, token);
-  const mainSha = normalizeSha(main?.commit?.sha);
-  if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('CURRENT_MAIN could not be resolved.');
-
-  const [compare, checkRuns, policy, overlaps] = await Promise.all([
-    githubJson(`https://api.github.com/repos/${repository}/compare/${mainSha}...${headSha}`, token),
+  const [compare, checkRuns, policy, overlap] = await Promise.all([
+    githubJson('https://api.github.com/repos/' + repository + '/compare/' + mainSha + '...' + headSha, token),
     fetchCheckRuns(repository, headSha, token),
     fetchDecisionPolicy(repository, token),
     evaluateOverlapLive(repository, prNumber, token),
@@ -392,76 +397,350 @@ async function reconcileOne({ repository, token, prNumber }) {
     policy.requiredChecks.find((check) => check.context === GOVERNANCE_CONTEXT) ||
     { context: GOVERNANCE_CONTEXT, integrationId: null };
 
-  const mainGate = ['ahead', 'identical'].includes(String(compare?.status || ''))
-    ? 'PASS'
-    : 'BLOCKED';
-  const scopeGate = gateForRequirements([governanceRequirement], checkRuns);
-  const overlapGate = overlaps.length === 0 ? 'PASS' : 'BLOCKED';
-  const checksGate = gateForRequirements(policy.requiredChecks, checkRuns);
-  const securityGate = gateForRequirements(securityRequirements(policy), checkRuns);
-  const baselineGate = evaluateProductionBaseline(originalBody, mainSha, headSha);
-
   const gates = {
-    main: mainGate,
-    scope: scopeGate,
-    overlap: overlapGate,
-    checks: checksGate,
-    security: securityGate,
-    baseline: baselineGate,
+    main: ['ahead', 'identical'].includes(String(compare?.status || '')) ? 'PASS' : 'BLOCKED',
+    scope: gateForRequirements([governanceRequirement], checkRuns),
+    overlap: overlap.conflicts.length === 0 ? 'PASS' : 'BLOCKED',
+    checks: gateForRequirements(policy.requiredChecks, checkRuns),
+    security: gateForRequirements(securityRequirements(policy), checkRuns),
+    baseline: evaluateProductionBaseline(body, mainSha, headSha),
   };
 
-  const rendered = reconcileDecisionBody(originalBody, gates);
-  if (!rendered.eligible) {
-    console.log(`[PR-DECISION] PR #${prNumber}: body not safely mutable (${rendered.reason}); no write.`);
-    return { changed: false, skipped: true, reason: rendered.reason, gates };
+  return {
+    headSha,
+    compare,
+    checkRuns,
+    policy,
+    governanceRun: latestMatchingCheck(governanceRequirement, checkRuns),
+    files: overlap.targetFiles,
+    overlaps: overlap.conflicts,
+    gates,
+  };
+}
+
+async function mutateAutoMerge({ repository, token, pr, enabled }) {
+  const pullRequestId = String(pr?.node_id || '');
+  if (!pullRequestId) fail('PR #' + String(pr?.number || '?') + ' has no GraphQL node_id.');
+
+  let query;
+  let variables;
+  if (enabled) {
+    const settings = await githubJson('https://api.github.com/repos/' + repository, token);
+    if (settings?.allow_auto_merge !== true) fail('Repository-level auto-merge capability is disabled.');
+    const mergeMethod = resolveAutoMergeMethod(settings);
+    if (!mergeMethod) fail('Repository exposes no supported auto-merge method.');
+    query = 'mutation($pullRequestId:ID!,$mergeMethod:PullRequestMergeMethod!){enablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId,mergeMethod:$mergeMethod}){pullRequest{number autoMergeRequest{enabledAt mergeMethod}}}}';
+    variables = { pullRequestId, mergeMethod };
+  } else {
+    query = 'mutation($pullRequestId:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId}){pullRequest{number autoMergeRequest{enabledAt mergeMethod}}}}';
+    variables = { pullRequestId };
   }
 
-  const [livePr, liveMain] = await Promise.all([
-    githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token),
-    githubJson(`https://api.github.com/repos/${repository}/branches/main`, token),
+  const response = await githubJson('https://api.github.com/graphql', token, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (Array.isArray(response?.errors) && response.errors.length > 0) {
+    fail('GitHub auto-merge mutation failed: ' + response.errors.map((item) => item?.message || 'unknown').join('; '));
+  }
+  const key = enabled ? 'enablePullRequestAutoMerge' : 'disablePullRequestAutoMerge';
+  const observed = response?.data?.[key]?.pullRequest;
+  if (!observed || Number(observed.number) !== Number(pr.number)) {
+    fail('GitHub auto-merge mutation readback missing for PR #' + pr.number + '.');
+  }
+  if (enabled && !observed.autoMergeRequest) fail('GitHub auto-merge arming readback missing for PR #' + pr.number + '.');
+  if (!enabled && observed.autoMergeRequest) fail('GitHub auto-merge disable readback still active for PR #' + pr.number + '.');
+  return observed;
+}
+
+async function reconcileOne({ repository, token, prNumber }) {
+  let pr = await githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token);
+  if (pr?.state !== 'open' || pr?.base?.ref !== 'main' || pr?.head?.repo?.full_name !== repository) {
+    console.log('[PR-DECISION] PR #' + prNumber + ' outside mutable open/same-repo/main boundary; skipped.');
+    return { changed: false, skipped: true, reason: 'outside-mutable-boundary' };
+  }
+
+  const originalBody = String(pr?.body || '');
+  const main = await githubJson('https://api.github.com/repos/' + repository + '/branches/main', token);
+  const mainSha = normalizeSha(main?.commit?.sha);
+  if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('CURRENT_MAIN could not be resolved.');
+
+  const snapshot = await evaluateSnapshot({ repository, token, prNumber, pr, mainSha });
+  const rendered = reconcileDecisionBody(originalBody, snapshot.gates);
+  const classification = classifyAutoMergeEligibility({
+    pr,
+    repository,
+    body: originalBody,
+    files: snapshot.files,
+    gates: snapshot.gates,
+    compareStatus: snapshot.compare?.status,
+  });
+
+  if (!rendered.eligible) {
+    console.log('[PR-DECISION] PR #' + prNumber + ': body not safely mutable (' + rendered.reason + '); no write or arming.');
+    return {
+      changed: false,
+      skipped: true,
+      reason: rendered.reason,
+      gates: snapshot.gates,
+      branchSyncRequired: classification.branchSyncRequired,
+      autoMergeEligible: false,
+      autoMergeState: HUMAN_MERGE_REQUIRED,
+      autoMergeReason: rendered.reason,
+    };
+  }
+
+  const requiredChecks = requiredCheckEvidence(snapshot.policy);
+  const requiredChecksFingerprint = requiredCheckFingerprint(snapshot.policy);
+  const contract = classification.eligible ? AUTO_MERGE_ELIGIBLE : HUMAN_MERGE_REQUIRED;
+  const autoMergeReason = classification.eligible
+    ? 'all-contract-gates-pass'
+    : (classification.reasons.join(',') || 'policy-ineligible');
+  const correlation = classification.eligible ? 'PASS' : 'BLOCKED';
+  const expectedEvidence = {
+    contract,
+    headSha: snapshot.headSha,
+    baseSha: mainSha,
+    requiredChecksFingerprint,
+    correlation,
+    reason: autoMergeReason,
+  };
+  const previousEvidence = parseAutoMergeEvidence(originalBody);
+  const evaluatedAt =
+    autoMergeEvidenceMatches(previousEvidence, expectedEvidence) && previousEvidence?.evaluatedAt
+      ? previousEvidence.evaluatedAt
+      : new Date().toISOString();
+
+  const projection = reconcileAutoMergeProjection(rendered.body, {
+    ...expectedEvidence,
+    requiredChecks,
+    state: classification.eligible ? 'ELIGIBLE_PENDING_PROVIDER_ARMING' : HUMAN_MERGE_REQUIRED,
+    evaluatedAt,
+  });
+  if (!projection.eligible) {
+    console.log('[PR-DECISION] PR #' + prNumber + ': auto-merge projection refused (' + projection.reason + ').');
+    return {
+      changed: false,
+      skipped: true,
+      reason: projection.reason,
+      gates: snapshot.gates,
+      branchSyncRequired: classification.branchSyncRequired,
+      autoMergeEligible: false,
+      autoMergeState: HUMAN_MERGE_REQUIRED,
+      autoMergeReason: projection.reason,
+    };
+  }
+
+  const candidateBody = projection.body;
+  const bodyChanged = candidateBody !== originalBody;
+  let [livePr, liveMain] = await Promise.all([
+    githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token),
+    githubJson('https://api.github.com/repos/' + repository + '/branches/main', token),
   ]);
   if (
     livePr?.state !== 'open' ||
     livePr?.base?.ref !== 'main' ||
     livePr?.head?.repo?.full_name !== repository ||
-    normalizeSha(livePr?.head?.sha) !== headSha ||
+    normalizeSha(livePr?.head?.sha) !== snapshot.headSha ||
     normalizeSha(liveMain?.commit?.sha) !== mainSha ||
     String(livePr?.body || '') !== originalBody
   ) {
-    console.log(`[PR-DECISION] PR #${prNumber}: live snapshot drifted before write; later event will reconcile it.`);
-    return { changed: false, skipped: true, reason: 'snapshot-drift-before-write', gates };
+    console.log('[PR-DECISION] PR #' + prNumber + ': snapshot drift before mutation; later event will reconcile.');
+    return {
+      changed: false,
+      skipped: true,
+      reason: 'snapshot-drift-before-write',
+      gates: snapshot.gates,
+      branchSyncRequired: classification.branchSyncRequired,
+      autoMergeEligible: false,
+      autoMergeState: HUMAN_MERGE_REQUIRED,
+      autoMergeReason: 'snapshot-drift-before-write',
+    };
   }
 
-  if (!rendered.changed) {
-    console.log(`[PR-DECISION] PR #${prNumber}: ${rendered.decisionStatus}; body already current.`);
-    return { changed: false, skipped: false, reason: 'already-current', gates, decisionStatus: rendered.decisionStatus };
-  }
-
-  const updated = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body: rendered.body }),
-  });
-
-  const observedBody = String(updated?.body || '');
-  const observedStatus = extractDecisionStatus(observedBody);
-  const observedGates = extractDecisionGates(observedBody);
-  if (observedStatus !== rendered.decisionStatus) {
-    fail(`PR #${prNumber} write readback has unexpected decision status ${String(observedStatus)}.`);
-  }
-  for (const { key } of PR_DECISION_GATES) {
-    if (observedGates[key] !== gates[key]) {
-      fail(`PR #${prNumber} write readback mismatch for gate ${key}: ${String(observedGates[key])} != ${gates[key]}.`);
+  if (bodyChanged) {
+    if (livePr?.auto_merge) {
+      await mutateAutoMerge({ repository, token, pr: livePr, enabled: false });
     }
+
+    const updated = await githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: candidateBody }),
+    });
+
+    const observedBody = String(updated?.body || '');
+    const observedStatus = extractDecisionStatus(observedBody);
+    const observedGates = extractDecisionGates(observedBody);
+    if (observedStatus !== rendered.decisionStatus) {
+      fail('PR #' + prNumber + ' write readback has unexpected decision status ' + String(observedStatus) + '.');
+    }
+    for (const { key } of PR_DECISION_GATES) {
+      if (observedGates[key] !== snapshot.gates[key]) {
+        fail('PR #' + prNumber + ' write readback mismatch for gate ' + key + '.');
+      }
+    }
+    if (!autoMergeEvidenceMatches(parseAutoMergeEvidence(observedBody), expectedEvidence)) {
+      fail('PR #' + prNumber + ' auto-merge declaration readback mismatch.');
+    }
+
+    console.log(
+      '[PR-DECISION] PR #' + prNumber + ': ' + rendered.decisionStatus +
+      '; auto_merge_contract=' + contract +
+      '; declaration written; provider arming waits for fresh Governance revalidation.',
+    );
+    return {
+      changed: true,
+      skipped: false,
+      reason: 'decision-and-auto-merge-evidence-reconciled',
+      gates: snapshot.gates,
+      decisionStatus: rendered.decisionStatus,
+      branchSyncRequired: classification.branchSyncRequired,
+      autoMergeEligible: classification.eligible,
+      autoMergeState: classification.eligible ? 'DECLARED_PENDING_REVALIDATION' : HUMAN_MERGE_REQUIRED,
+      autoMergeReason,
+      autoMergeHead: snapshot.headSha,
+      autoMergeBase: mainSha,
+      requiredChecks: requiredChecks.join('; '),
+      evaluatedAt,
+    };
   }
+
+  if (!classification.eligible) {
+    let state = HUMAN_MERGE_REQUIRED;
+    if (livePr?.auto_merge) {
+      await mutateAutoMerge({ repository, token, pr: livePr, enabled: false });
+      state = 'DISARMED_HUMAN_MERGE_REQUIRED';
+    }
+    console.log('[PR-DECISION] PR #' + prNumber + ': ' + state + '; reason=' + autoMergeReason + '.');
+    return {
+      changed: false,
+      skipped: false,
+      reason: 'already-current',
+      gates: snapshot.gates,
+      decisionStatus: rendered.decisionStatus,
+      branchSyncRequired: classification.branchSyncRequired,
+      autoMergeEligible: false,
+      autoMergeState: state,
+      autoMergeReason,
+      autoMergeHead: snapshot.headSha,
+      autoMergeBase: mainSha,
+      requiredChecks: requiredChecks.join('; '),
+      evaluatedAt,
+    };
+  }
+
+  const declaration = parseAutoMergeEvidence(originalBody);
+  if (
+    !autoMergeEvidenceMatches(declaration, expectedEvidence) ||
+    !governanceCheckFreshAfterDeclaration(snapshot.governanceRun, declaration?.evaluatedAt)
+  ) {
+    console.log('[PR-DECISION] PR #' + prNumber + ': AUTO_MERGE_ELIGIBLE awaits fresh Governance revalidation.');
+    return {
+      changed: false,
+      skipped: false,
+      reason: 'governance-revalidation-pending',
+      gates: snapshot.gates,
+      decisionStatus: rendered.decisionStatus,
+      branchSyncRequired: false,
+      autoMergeEligible: true,
+      autoMergeState: 'DECLARED_PENDING_REVALIDATION',
+      autoMergeReason,
+      autoMergeHead: snapshot.headSha,
+      autoMergeBase: mainSha,
+      requiredChecks: requiredChecks.join('; '),
+      evaluatedAt: declaration?.evaluatedAt || evaluatedAt,
+    };
+  }
+
+  livePr = await githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token);
+  liveMain = await githubJson('https://api.github.com/repos/' + repository + '/branches/main', token);
+  if (
+    livePr?.state !== 'open' ||
+    livePr?.base?.ref !== 'main' ||
+    livePr?.head?.repo?.full_name !== repository ||
+    normalizeSha(livePr?.head?.sha) !== snapshot.headSha ||
+    normalizeSha(liveMain?.commit?.sha) !== mainSha ||
+    String(livePr?.body || '') !== originalBody
+  ) {
+    return {
+      changed: false,
+      skipped: true,
+      reason: 'snapshot-drift-before-auto-merge-arm',
+      gates: snapshot.gates,
+      autoMergeEligible: false,
+      autoMergeState: HUMAN_MERGE_REQUIRED,
+      autoMergeReason: 'snapshot-drift-before-auto-merge-arm',
+    };
+  }
+
+  const finalSnapshot = await evaluateSnapshot({ repository, token, prNumber, pr: livePr, mainSha });
+  const finalClassification = classifyAutoMergeEligibility({
+    pr: livePr,
+    repository,
+    body: originalBody,
+    files: finalSnapshot.files,
+    gates: finalSnapshot.gates,
+    compareStatus: finalSnapshot.compare?.status,
+  });
+  const finalExpected = {
+    contract: AUTO_MERGE_ELIGIBLE,
+    headSha: finalSnapshot.headSha,
+    baseSha: mainSha,
+    requiredChecksFingerprint: requiredCheckFingerprint(finalSnapshot.policy),
+    correlation: 'PASS',
+    reason: 'all-contract-gates-pass',
+  };
+  const finalDeclaration = parseAutoMergeEvidence(originalBody);
+  if (
+    !finalClassification.eligible ||
+    !autoMergeEvidenceMatches(finalDeclaration, finalExpected) ||
+    !governanceCheckFreshAfterDeclaration(finalSnapshot.governanceRun, finalDeclaration?.evaluatedAt)
+  ) {
+    console.log('[PR-DECISION] PR #' + prNumber + ': final auto-merge revalidation failed closed.');
+    return {
+      changed: false,
+      skipped: false,
+      reason: 'final-auto-merge-revalidation-failed',
+      gates: finalSnapshot.gates,
+      branchSyncRequired: finalClassification.branchSyncRequired,
+      autoMergeEligible: false,
+      autoMergeState: HUMAN_MERGE_REQUIRED,
+      autoMergeReason: finalClassification.reasons.join(',') || 'revalidation-failed',
+    };
+  }
+
+  const armedAt = new Date().toISOString();
+  if (!livePr?.auto_merge) {
+    await mutateAutoMerge({ repository, token, pr: livePr, enabled: true });
+  }
+  const readback = await githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token);
+  if (!readback?.auto_merge) fail('PR #' + prNumber + ' auto-merge readback is not active after arming.');
 
   console.log(
-    `[PR-DECISION] PR #${prNumber}: ${rendered.decisionStatus}; ` +
-    `main=${mainGate} scope=${scopeGate} overlap=${overlapGate} checks=${checksGate} ` +
-    `security=${securityGate} baseline=${baselineGate}; required_checks=${policy.requiredChecks.length}; ` +
-    `overlap_conflicts=${overlaps.length}.`,
+    '[PR-AUTO-MERGE] ARMED pr=' + prNumber +
+    ' head=' + finalSnapshot.headSha +
+    ' base=' + mainSha +
+    ' checks=' + requiredCheckEvidence(finalSnapshot.policy).join(';') +
+    ' correlation=PASS at=' + armedAt,
   );
-  return { changed: true, skipped: false, gates, decisionStatus: rendered.decisionStatus };
+  return {
+    changed: false,
+    skipped: false,
+    reason: 'auto-merge-armed',
+    gates: finalSnapshot.gates,
+    decisionStatus: rendered.decisionStatus,
+    branchSyncRequired: false,
+    autoMergeEligible: true,
+    autoMergeState: 'ARMED',
+    autoMergeReason: 'all-contract-gates-pass',
+    autoMergeHead: finalSnapshot.headSha,
+    autoMergeBase: mainSha,
+    requiredChecks: requiredCheckEvidence(finalSnapshot.policy).join('; '),
+    evaluatedAt: finalDeclaration.evaluatedAt,
+    armedAt,
+  };
 }
 
 async function main() {
@@ -484,6 +763,15 @@ async function main() {
     gate_checks: result.gates?.checks || '',
     gate_security: result.gates?.security || '',
     gate_baseline: result.gates?.baseline || '',
+    branch_sync_required: String(result.branchSyncRequired === true),
+    auto_merge_eligible: String(result.autoMergeEligible === true),
+    auto_merge_state: result.autoMergeState || '',
+    auto_merge_reason: result.autoMergeReason || '',
+    auto_merge_head: result.autoMergeHead || '',
+    auto_merge_base: result.autoMergeBase || '',
+    auto_merge_required_checks: result.requiredChecks || '',
+    auto_merge_evaluated_at: result.evaluatedAt || '',
+    auto_merge_armed_at: result.armedAt || '',
   });
 }
 
