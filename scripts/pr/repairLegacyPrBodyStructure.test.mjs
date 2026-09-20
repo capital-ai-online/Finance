@@ -183,6 +183,18 @@ test('repairs the observed current v1.6 security-boundary shape without inventin
   assert.match(result.body, /Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja/);
 });
 
+test('preserves replacement-like PR text as inert data during current v1.6 repair', () => {
+  const body = currentV16SecurityBoundaryBody.replace(
+    '- Least-privilege review boundary remains advisory.',
+    '- Literal replacement tokens stay inert: test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => { $1 $',
+  );
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.match(result.body, /Literal replacement tokens stay inert: \test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => { \$1 \$\$/);
+  assert.doesNotMatch(result.body, /## 4\. 🔐 Security Boundary[\s\S]*## 4\. 🔐 Security Boundary/);
+});
+
 test('refuses a lookalike current v1.6 security shape outside the exact allowlist', () => {
   const body = currentV16SecurityBoundaryBody.replace(
     '## 4. 🔐 Security Boundary',
