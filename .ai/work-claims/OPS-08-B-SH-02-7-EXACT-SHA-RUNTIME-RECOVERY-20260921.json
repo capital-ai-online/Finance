@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-7-EXACT-SHA-RUNTIME-RECOVERY-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement SH-02.7 exact-SHA runtime recovery by re-driving only the canonical verified CI deploy-production job for the exact current-main SHA and independently verifying production identity, liveness and readiness.",
+  "workItemDE": "SH-02.7 Exact-SHA Runtime Recovery implementieren, indem ausschließlich der kanonische verifizierte CI-Deploy-Production-Job für den exakten Current-Main-SHA erneut ausgeführt und Production-Identität, Liveness und Readiness unabhängig zurückgelesen werden.",
+  "priority": "P0",
+  "priorityReason": "OPS-08-B-SH-02 remains the highest executable OPS package until SH-02.11 is terminal; SH-02.7 is the next functional slice after SH-02.6.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-07",
+    "PVC-18"
+  ],
+  "startedAt": "2026-09-20T22:20:43Z",
+  "baseBranch": "main",
+  "baseSha": "53c38dbeaf85262ed1784ce3458d61b54f6da3bb",
+  "branch": "agent/operations-sh02-7-exact-sha-runtime-recovery-20260921",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-7-EXACT-SHA-RUNTIME-RECOVERY-20260921.json",
+    ".github/workflows/ops-exact-sha-runtime-recovery.yml",
+    "src/platform/Supervisor/selfHealingContract.ts",
+    "tests/unit/selfHealingContract.test.ts",
+    "tests/unit/exactShaRuntimeRecoveryWorkflow.test.ts",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/evidence/SH_02_7_EXACT_SHA_RUNTIME_RECOVERY_2026-09-21.md"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "scopeNote": "No second deployment authority is introduced. The recovery workflow can only re-run the existing ci.yml deploy-production job for the exact current main push run with a live provenance artifact; Render credentials remain isolated in the existing production environment job.",
+  "activationBoundary": "REDEPLOY_EXACT_SHA becomes contract-enabled only with external capability authorization, one-attempt budget, 300000ms cooldown, kill switch, exact-main/provenance binding and post-action liveness/readiness/identity readback. Rollback/restore remains HELD."
+}
