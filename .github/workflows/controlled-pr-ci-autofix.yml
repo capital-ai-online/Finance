@@ -15,7 +15,7 @@ permissions: {}
 
 concurrency:
   group: controlled-pr-ci-autofix-${{ github.event.workflow_run.head_sha }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   plan:
