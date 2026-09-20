@@ -55,6 +55,8 @@ const DECISION_EVIDENCE_DRIFT_PATTERNS = [
   /Error: PR #\d+ enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1\.8\.0\./i,
   /Error: PR #\d+ fehlt kanonische Decision-Evidence:/i,
   /Error: PR #\d+ behauptet Decision Status (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED), aber die sichtbaren Gate-Zustände ergeben (?:READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\./i,
+  /Error: PR #\d+ enthält kein vollständiges proaktives Live Dashboard der Vorlage v1\.8\.0\./i,
+  /Error: PR #\d+ enthält ein vom kanonischen Evidence-Zustand abweichendes Live Dashboard\./i,
 ];
 
 const SELF_HEALING_NEXT_SLICE_SIGNATURE = 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1';
