@@ -2,22 +2,28 @@
 
 **Document ID:** EVID-OPS-GHA-USAGE-2026-09-20  
 **Status:** EVIDENCE — NON-AUTHORIZING  
-**Baseline:** `main@0478b62ba365ccae895f029a8f8ddc58bee4230e`  
+**Scan baseline:** `main@0478b62ba365ccae895f029a8f8ddc58bee4230e`  
+**Execution baseline:** `main@4a2f43842f380c6da6d088bbea57729bae383be7`  
 **Scan roots:** `.github/workflows`, `scripts`, `package.json`, `src`, `server`, `tests`, `AGENTS.md`
 
 Delete is allowed only when a workflow is unused in those executable surfaces. Docs/evidence mentions are not usage.
 
-## Delete candidates (unused)
+## Executed deletions (this follow-up)
 
-| Path | Trigger | Write | Repo references |
-|---|---|---|---|
-| `.github/workflows/document-hygiene-evidence-migration.yml` | `workflow_dispatch` only | no | none outside inventory/review |
-| `.github/workflows/document-hygiene-evidence-once.yml` | `workflow_dispatch` only | no | none outside inventory/review |
-| `.github/workflows/lockfile-remediation.yml` | `workflow_dispatch` + `if: false` | no | none outside inventory/review |
+Owner direction 2026-09-20: `S1 jetzt, nach Human-Merge S3`.  
+Allowlist source: `docs/security/WORKFLOW_DELETION_REVIEW.json` after Human-merged PR #1099.
+
+| Path | Trigger | Write | Repo references | Branch state |
+|---|---|---|---|---|
+| `.github/workflows/document-hygiene-evidence-migration.yml` | `workflow_dispatch` only | no | none outside inventory/review | deleted on `docs/gov-unused-echo-workflow-delete-20260920` |
+| `.github/workflows/document-hygiene-evidence-once.yml` | `workflow_dispatch` only | no | none outside inventory/review | deleted on `docs/gov-unused-echo-workflow-delete-20260920` |
+| `.github/workflows/lockfile-remediation.yml` | `workflow_dispatch` + `if: false` | no | none outside inventory/review | deleted on `docs/gov-unused-echo-workflow-delete-20260920` |
 
 No `workflow_run` listener points at these names. No reusable `uses: ./` call exists in `.github/workflows`. Required check remains `build-and-test` / `CI`.
 
-The two hygiene stubs share the display name `Document Hygiene Evidence Migration (disabled)`. They must be deleted in the **same** follow-up PR, otherwise the remaining twin counts as a live name reference.
+The two hygiene stubs shared the display name `Document Hygiene Evidence Migration (disabled)` and were deleted in the same follow-up so no twin display-name remains.
+
+GitHub Actions API records for deleted YAML files may remain `state: active` until the Owner disables them in the Actions UI. That disable is S2 / Owner-UI and is not part of this slice.
 
 ## Keep — still used or still an operational host
 

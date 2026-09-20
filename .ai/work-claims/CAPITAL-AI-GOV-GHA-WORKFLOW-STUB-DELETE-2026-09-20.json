@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-GHA-WORKFLOW-STUB-DELETE-2026-09-20",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok 4.6",
@@ -11,6 +11,8 @@
   "workItem": "Land a reviewed deletion path that accepts only unused dispatch-only stubs. Do not delete workflow files in this PR because PR Governance executes the validator from trusted main.",
   "workItemDE": "Reviewed-Deletion-Pfad landen, der nur ungenutzte dispatch-only Stubs akzeptiert. In diesem PR keine Workflow-Dateien loeschen, weil PR Governance den Validator von trusted main ausfuehrt.",
   "startedAt": "2026-09-20T04:18:00Z",
+  "releasedAt": "2026-09-20T04:55:00Z",
+  "releaseReason": "Human-merged via PR #1099; follow-up execution uses CAPITAL-AI-GOV-GHA-ECHO-STUB-DELETE-EXEC-2026-09-20.",
   "baseBranch": "main",
   "baseSha": "0478b62ba365ccae895f029a8f8ddc58bee4230e",
   "branch": "agent/governance-workflow-deletion-review-20260920",
@@ -35,5 +37,5 @@
     "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md",
     "docs/evidence/ops/WORKFLOW_USAGE_CORRELATION_2026-09-20.md"
   ],
-  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge. Stub deletion is a follow-up PR after this policy is on main and only for unusedInRepo paths."
+  "releaseCondition": "Released after Human merge of PR #1099. No Self-Merge."
 }
