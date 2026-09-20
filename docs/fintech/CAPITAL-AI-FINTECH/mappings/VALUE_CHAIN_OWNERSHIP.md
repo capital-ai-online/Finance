@@ -10,6 +10,9 @@ Canonical current mapping:
 
 Current ownership is:
 
+- `PVC-09` UAI / Data Ingestion -> CAPITAL-AI-FINTECH
+- `PVC-10` Evidence Management -> CAPITAL-AI-FINTECH
+- `PVC-11` Data Quality -> CAPITAL-AI-FINTECH
 - `PVC-12` Feature Engineering -> CAPITAL-AI-FINTECH
 - `PVC-13` Scoring Models -> CAPITAL-AI-FINTECH
 - `PVC-14` Scoring Orchestration -> CAPITAL-AI-FINTECH
@@ -17,6 +20,6 @@ Current ownership is:
 - `PVC-16` Canonical Scoring -> CAPITAL-AI-FINTECH
 - `PVC-17` Ranking / Decision Support -> CAPITAL-AI-FINTECH
 
-Upstream `PVC-09..11` remain CAPITAL-AI-DATA and downstream `PVC-18` remains CAPITAL-AI-OPS.
+Former DATA ownership of `PVC-09..11` is historical provenance only. Current productive routing is `CAPITAL-AI-FINTECH / PVC-09..17`; downstream `PVC-18` remains CAPITAL-AI-OPS.
 
 Existing technical `VC-*` meanings under `SC-MD-SPT-0001` are separate and unchanged. This file must not be used to renumber them.
