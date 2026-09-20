@@ -1,9 +1,10 @@
-name: PR Autofix Controller
+name: PR Convergence Controller
 run-name: >-
-  ${{ format('{0} #{1} – Fail-Closed PR-Autofix klassifizieren', github.event.workflow_run.name, github.event.workflow_run.run_number) }}
+  ${{ format('{0} #{1} – PR-Convergence fail-closed klassifizieren', github.event.workflow_run.name, github.event.workflow_run.run_number) }}
 
-# Privileged completion controller for explicitly bounded repair classes only.
+# Privileged convergence controller for explicitly bounded repair classes only.
 # The controller never executes candidate code with write permission.
+# Every mutation is bound to one immutable PR generation derived from repository/PR/head/base/current-main/control-plane identity.
 # Existing specialist writers remain single-owner:
 # - Current-State Baseline Autofix owns CURRENT_STATE_PROJECTION_BASELINE_* repository writes.
 # - PR Production Baseline Auto-Refresh owns deterministic PR-body/template/baseline writes.
@@ -41,6 +42,11 @@ jobs:
       head_sha: ${{ steps.pr.outputs.head_sha }}
       head_ref: ${{ steps.pr.outputs.head_ref }}
       base_sha: ${{ steps.pr.outputs.base_sha }}
+      current_main_sha: ${{ steps.pr.outputs.current_main_sha }}
+      generation_id: ${{ steps.generation.outputs.generation_id }}
+      writer_lease_key: ${{ steps.generation.outputs.writer_lease_key }}
+      control_plane_version: ${{ steps.generation.outputs.control_plane_version }}
+      generation_schema: ${{ steps.generation.outputs.generation_schema }}
       pr_metadata_shape: ${{ steps.pr.outputs.pr_metadata_shape }}
       source_workflow_path: ${{ steps.pr.outputs.source_workflow_path }}
       classification: ${{ steps.classifier.outputs.classification }}
@@ -182,6 +188,7 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('head_ref', pr.head.ref);
             core.setOutput('base_sha', baseSha);
+            core.setOutput('current_main_sha', mainSha);
             core.setOutput('pr_metadata_shape', prMetadataShape);
             core.setOutput('source_workflow_path', run.path);
             core.setOutput('previous_autofix_signature', previousSignature);
@@ -201,12 +208,27 @@ jobs:
         with:
           node-version: '24.18.0'
 
+      - name: Kanonische PR-Generation aus Trusted Main materialisieren
+        id: generation
+        if: steps.pr.outputs.eligible == 'true'
+        working-directory: policy
+        env:
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+          CURRENT_MAIN_SHA: ${{ steps.pr.outputs.current_main_sha }}
+          AGENTS_PATH: AGENTS.md
+        run: node scripts/pr/prConvergenceGeneration.mjs
+
       - name: Fehlgeschlagene Source-Logs begrenzt und redigiert erfassen
         id: failure_log
         if: steps.pr.outputs.eligible == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          EXPECTED_GENERATION_ID: ${{ needs.classify.outputs.generation_id }}
+          EXPECTED_CONTROL_PLANE_VERSION: ${{ needs.classify.outputs.control_plane_version }}
         shell: bash
         run: |
           set -euo pipefail
@@ -240,6 +262,9 @@ jobs:
           REPORT_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}
           REPORT_PR: ${{ steps.pr.outputs.pr_number }}
           REPORT_HEAD: ${{ steps.pr.outputs.head_sha }}
+          REPORT_GENERATION: ${{ steps.generation.outputs.generation_id }}
+          REPORT_CONTROL_PLANE: ${{ steps.generation.outputs.control_plane_version }}
+          REPORT_WRITER_LEASE: ${{ steps.generation.outputs.writer_lease_key }}
         shell: bash
         run: |
           {
@@ -247,6 +272,9 @@ jobs:
             echo
             printf -- '- PR: #%s\n' "$REPORT_PR"
             printf -- '- head: `%s`\n' "$REPORT_HEAD"
+            printf -- '- generation: `%s`\n' "$REPORT_GENERATION"
+            printf -- '- control plane: `%s`\n' "$REPORT_CONTROL_PLANE"
+            printf -- '- writer lease: `%s`\n' "$REPORT_WRITER_LEASE"
             printf -- '- classification: `%s`\n' "$REPORT_CLASSIFICATION"
             printf -- '- decision: `%s`\n' "$REPORT_DECISION"
             printf -- '- metadata shape: `%s`\n' "$REPORT_METADATA_SHAPE"
@@ -270,11 +298,12 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ needs.classify.outputs.head_sha }}
           EXPECTED_BASE_SHA: ${{ needs.classify.outputs.base_sha }}
           PR_METADATA_SHAPE: ${{ needs.classify.outputs.pr_metadata_shape }}
+          PR_GENERATION: ${{ needs.classify.outputs.generation_id }}
         shell: bash
         run: |
           set -euo pipefail
-          printf 'PR #%s metadata drift on head %s/base %s with semantic shape %s is owned by the independently subscribed PR Production Baseline Auto-Refresh workflow. No second writer or rerun dispatch is created by the controller.\n' \
-            "$PR_NUMBER" "$EXPECTED_HEAD_SHA" "$EXPECTED_BASE_SHA" "$PR_METADATA_SHAPE"
+          printf 'PR #%s metadata drift on generation %s head %s/base %s with semantic shape %s is owned by the independently subscribed PR Production Baseline Auto-Refresh workflow. No second writer or rerun dispatch is created by the controller.\n' \
+            "$PR_NUMBER" "$PR_GENERATION" "$EXPECTED_HEAD_SHA" "$EXPECTED_BASE_SHA" "$PR_METADATA_SHAPE"
 
   repair:
     name: Registrierten Patch ohne Write-Credential erzeugen
@@ -374,6 +403,9 @@ jobs:
       actions: write
       contents: write
       pull-requests: read
+    concurrency:
+      group: ${{ needs.classify.outputs.writer_lease_key }}
+      cancel-in-progress: false
 
     steps:
       - name: Validiertes Bundle ohne Candidate-Checkout laden
@@ -408,6 +440,7 @@ jobs:
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
         with:
           script: |
+            const crypto = require('crypto');
             const fs = require('fs');
             const path = require('path');
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
@@ -418,6 +451,8 @@ jobs:
             const expectedTree = normalizeSha(process.env.EXPECTED_TREE_SHA);
             const failureSignature = String(process.env.FAILURE_SIGNATURE || '');
             const repairerId = String(process.env.REPAIRER_ID || '');
+            const expectedGeneration = String(process.env.EXPECTED_GENERATION_ID || '').trim().toLowerCase();
+            const expectedControlPlaneVersion = String(process.env.EXPECTED_CONTROL_PLANE_VERSION || '').trim();
 
             if (!Number.isInteger(prNumber) || prNumber <= 0) fail('Invalid PR number.');
             for (const [label, value] of [['head', expectedHead], ['base', expectedBase], ['tree', expectedTree]]) {
@@ -425,6 +460,10 @@ jobs:
             }
             if (!/^[A-Z0-9][A-Z0-9_.:-]{0,127}$/.test(failureSignature)) fail('Invalid autofix failure signature.');
             if (!/^[A-Z0-9][A-Z0-9_.:-]{0,127}$/.test(repairerId)) fail('Invalid repairer id.');
+            if (!/^sha256:[0-9a-f]{64}$/.test(expectedGeneration)) fail('Invalid PR convergence generation id.');
+            if (!/^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9._-]+)?$/.test(expectedControlPlaneVersion)) {
+              fail('Invalid expected Control Plane Version.');
+            }
 
             const changed = JSON.parse(fs.readFileSync(path.join(process.env.BUNDLE_DIR, 'changed-paths.json'), 'utf8'));
             const allowed = JSON.parse(fs.readFileSync(path.join(process.env.BUNDLE_DIR, 'allowed-paths.json'), 'utf8'));
@@ -451,6 +490,36 @@ jobs:
             if (pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}`) fail('PR head repository drift.');
             if (normalizeSha(pr.head.sha) !== expectedHead || pr.head.ref !== process.env.EXPECTED_HEAD_REF) fail('PR head drift before autofix write.');
             if (normalizeSha(pr.base.sha) !== expectedBase || normalizeSha(main.commit.sha) !== expectedBase) fail('Current-main/base drift before autofix write.');
+
+            const { data: agentsFile } = await github.rest.repos.getContent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path: 'AGENTS.md',
+              ref: expectedBase,
+            });
+            if (Array.isArray(agentsFile) || typeof agentsFile.content !== 'string') {
+              fail('Trusted AGENTS.md snapshot is unavailable.');
+            }
+            const agentsText = Buffer.from(agentsFile.content, agentsFile.encoding || 'base64').toString('utf8');
+            const controlPlaneMatch = agentsText.match(/^\*\*Control Plane Version:\*\*\s+`([^`]+)`\s*$/m);
+            if (!controlPlaneMatch) fail('Trusted AGENTS.md Control Plane Version is unavailable.');
+            const observedControlPlaneVersion = controlPlaneMatch[1].trim();
+            if (observedControlPlaneVersion !== expectedControlPlaneVersion) {
+              fail(`Control-plane drift before autofix write: expected=${expectedControlPlaneVersion} observed=${observedControlPlaneVersion}`);
+            }
+            const canonicalGeneration = [
+              'schema=capital-ai-pr-convergence-generation/1.0.0',
+              `repository=${context.repo.owner.toLowerCase()}/${context.repo.repo.toLowerCase()}`,
+              `pr=${prNumber}`,
+              `head=${expectedHead}`,
+              `base=${expectedBase}`,
+              `current_main=${normalizeSha(main.commit.sha)}`,
+              `control_plane=${observedControlPlaneVersion}`,
+            ].join('\n') + '\n';
+            const observedGeneration = `sha256:${crypto.createHash('sha256').update(canonicalGeneration, 'utf8').digest('hex')}`;
+            if (observedGeneration !== expectedGeneration) {
+              fail(`PR generation drift before autofix write: expected=${expectedGeneration} observed=${observedGeneration}`);
+            }
 
             const { data: ref } = await github.rest.git.getRef({
               owner: context.repo.owner,
@@ -495,7 +564,8 @@ jobs:
               message:
                 `fix(pr-autofix): ${repairerId}\n\n` +
                 `CAPITAL_AI_AUTOFIX_SIGNATURE:${failureSignature}\n` +
-                `CAPITAL_AI_AUTOFIX_SOURCE_RUN:${process.env.SOURCE_RUN_ID}`,
+                `CAPITAL_AI_AUTOFIX_SOURCE_RUN:${process.env.SOURCE_RUN_ID}\n` +
+                `CAPITAL_AI_PR_GENERATION:${expectedGeneration}`,
               tree: tree.sha,
               parents: [expectedHead],
             });
@@ -527,6 +597,8 @@ jobs:
           REPORT_NEW_HEAD: ${{ steps.write.outputs.new_head_sha }}
           REPORT_REPAIRER: ${{ needs.classify.outputs.repairer_id }}
           REPORT_SIGNATURE: ${{ needs.classify.outputs.failure_signature }}
+          REPORT_GENERATION: ${{ needs.classify.outputs.generation_id }}
+          REPORT_WRITER_LEASE: ${{ needs.classify.outputs.writer_lease_key }}
         shell: bash
         run: |
           {
@@ -536,6 +608,8 @@ jobs:
             printf -- '- new head: `%s`\n' "$REPORT_NEW_HEAD"
             printf -- '- repairer: `%s`\n' "$REPORT_REPAIRER"
             printf -- '- exact signature: `%s`\n' "$REPORT_SIGNATURE"
+            printf -- '- generation: `%s`\n' "$REPORT_GENERATION"
+            printf -- '- writer lease: `%s`\n' "$REPORT_WRITER_LEASE"
             echo '- write: validated exact Git tree, force=false'
             echo '- CI: exact new head dispatched for revalidation'
             echo '- merge authority: unchanged, Human/CODEOWNER only'
