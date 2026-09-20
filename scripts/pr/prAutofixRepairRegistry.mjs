@@ -1,10 +1,12 @@
 export const PR_AUTOFIX_REPAIR_REGISTRY = Object.freeze([
-  // Intentionally empty by default.
-  // A repairer may be added only through a reviewed repository change that declares:
-  // - an exact deterministic failure signature,
-  // - a trusted-main repairer module,
-  // - exact allowed paths,
-  // - CAPITAL-AI-OPS ownership.
+  Object.freeze({
+    id: 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1',
+    owner: 'CAPITAL-AI-OPS',
+    sourceWorkflow: '.github/workflows/ci.yml',
+    exactSignatures: Object.freeze(['SELF_HEALING_NEXT_SLICE_INVARIANT_V1']),
+    repairerPath: 'scripts/pr/repairers/selfHealingNextSliceInvariantV1.mjs',
+    allowedPaths: Object.freeze(['tests/unit/selfHealingSupersession.test.ts']),
+  }),
 ]);
 
 const SAFE_ID = /^[A-Z0-9][A-Z0-9_.:-]{0,127}$/;
