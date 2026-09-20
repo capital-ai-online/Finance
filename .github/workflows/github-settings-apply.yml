@@ -1,0 +1,52 @@
+name: GitHub Settings Desired-State Apply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/projects/governance/github-desired-state.yml'
+      - 'docs/projects/governance/GITHUB_SETTINGS_DESIRED_STATE.md'
+      - '.github/workflows/github-settings-apply.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'plan never mutates; apply requires owner-accepted apply flags'
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-settings-desired-state
+  cancel-in-progress: false
+
+jobs:
+  plan-or-apply:
+    name: Desired-state plan
+    if: github.event_name == 'schedule' || github.actor == 'SvenKulessa' || github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+
+      - name: Plan only (fail-closed until Enterprise App writes exist)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '::notice::CAPITAL-AI GitHub desired-state trigger reached.'
+          echo "event=${GITHUB_EVENT_NAME} actor=${GITHUB_ACTOR} sha=${GITHUB_SHA}"
+          echo 'Apply is PLAN_ONLY until owner grants scoped App writes and checks apply: true.'
+          test -f docs/projects/governance/github-desired-state.yml
+          test -f docs/projects/governance/GITHUB_SETTINGS_DESIRED_STATE.md
+          if [[ "${{ github.event_name }}" == 'workflow_dispatch' && "${{ inputs.mode }}" == 'apply' ]]; then
+            echo '::error::Apply mode is fail-closed until the settings applicator and App writes exist.'
+            exit 1
+          fi
