@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR-AUTOFIX-CONTROL-PANEL-ROOT-CAUSE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Generalize observed active-PR build/test root causes into bounded PR autofix rules and project those rules into the read-only Control Panel fix algorithm.",
+  "workItemDE": "Wiederkehrende Build-/Test-Root-Causes aktiver PRs als begrenzte PR-Autofix-Regeln verallgemeinern und diese Regeln in den read-only Control-Panel-Fixalgorithmus projizieren.",
+  "priority": "P0",
+  "priorityReason": "Stale repository projections and brittle work-graph expectations currently cause avoidable full CI failures across otherwise valid PRs.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "startedAt": "2026-09-20T19:10:00Z",
+  "baseBranch": "main",
+  "baseSha": "242e1847800af27ad80d4b4a693a28b9754eb25d",
+  "branch": "agent/operations-pr-autofix-control-panel-root-cause-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR-AUTOFIX-CONTROL-PANEL-ROOT-CAUSE-20260920.json",
+    "scripts/pr/prAutofixRepairRegistry.mjs",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "scripts/pr/repairers/selfHealingNextSliceInvariantV1.mjs",
+    "scripts/pr/repairers/selfHealingNextSliceInvariantV1.test.mjs",
+    "src/platform/Supervisor/selfHealingContract.ts",
+    "tests/unit/selfHealingContract.test.ts",
+    "src/features/governance/ui/process-graph/processGraphModel.ts",
+    "src/features/governance/ui/process-graph/processGraphModel.test.ts",
+    "src/features/governance/ui/process-graph/AdminProcessGraph.tsx",
+    "docs/projects/operations/evidence/PR_AUTOFIX_ROOT_CAUSE_CONTROL_PANEL_2026-09-20.md"
+  ],
+  "boundaries": [
+    "No direct main mutation",
+    "No test suppression or expectation rewriting to a new concrete slice number",
+    "No Security/Compliance/provider/Production failure autofix",
+    "Repository repair remains exact-signature/path allowlisted and generation-bound",
+    "Control Panel remains a read-only projection and gains no mutation or merge authority"
+  ],
+  "exitGate": "Observed PR build/test failures are repaired, deterministic recurring classes are safely classified/repairable, and the Control Panel projects the bounded finding-to-fix mapping from the canonical self-healing contract.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, close, supersession or abandonment."
+}
