@@ -6,6 +6,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Datenschutz, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui';
 import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';
+import { FeatureRecoveryBoundary } from '../../shared/ui/FeatureRecoveryBoundary';
 import type { UserSession } from '../types/UserSession';
 
 const Dashboard = lazy(() =>
@@ -68,59 +69,31 @@ function AuthRouteResolution() {
   );
 }
 
-interface PublicPreviewErrorBoundaryState {
-  hasError: boolean;
-}
-
-class PublicPreviewErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  PublicPreviewErrorBoundaryState
-> {
-  state: PublicPreviewErrorBoundaryState = { hasError: false };
-
-  static getDerivedStateFromError(): PublicPreviewErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Public analysis workbench failed to render:', error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <section className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface/35 px-4 py-10 text-center text-text-primary sm:px-6">
-          <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-brand-primary">
-            Bewertungstools vorübergehend nicht verfügbar
-          </p>
-          <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">
-            Die öffentliche CAPITAL-AI-Landingpage bleibt verfügbar. Die Analyse-Workbench konnte in diesem Browser nicht gestartet werden.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="/login"
-              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-primary px-4 py-2 text-xs font-black uppercase tracking-wider text-background"
-            >
-              Zur Anmeldung
-            </a>
-            <a
-              href="/learning-platform"
-              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface/50 px-4 py-2 text-xs font-bold text-text-primary"
-            >
-              Learning öffnen
-            </a>
-          </div>
-        </section>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
 function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
   return (
-    <PublicPreviewErrorBoundary>
+    <FeatureRecoveryBoundary
+      name="Öffentliche Analyse-Workbench"
+      fallback={(reset) => (
+        <section
+          role="alert"
+          className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-status-warning/30 bg-status-warning/5 px-4 py-10 text-center text-text-primary sm:px-6"
+        >
+          <div className="max-w-xl space-y-2">
+            <p className="text-sm font-black">Bewertungstools vorübergehend nicht verfügbar</p>
+            <p className="text-xs leading-relaxed text-text-secondary">
+              Nur die öffentliche Analyse-Workbench wurde angehalten. Landingpage und Navigation bleiben verfügbar.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={reset}
+            className="ui-hit inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-primary/35 bg-brand-primary/10 px-4 py-2 text-xs font-black text-text-primary transition hover:bg-brand-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+          >
+            Bewertungstools erneut laden
+          </button>
+        </section>
+      )}
+    >
       <Suspense
         fallback={
           <section className="flex min-h-72 items-center justify-center rounded-2xl border border-border bg-surface/35 px-4 py-10 text-text-primary sm:px-6">
@@ -130,7 +103,7 @@ function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
       >
         {children}
       </Suspense>
-    </PublicPreviewErrorBoundary>
+    </FeatureRecoveryBoundary>
   );
 }
 
