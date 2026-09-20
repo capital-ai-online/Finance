@@ -9,8 +9,19 @@ describe('GHCR digest publication contract', () => {
     expect(imageSecurity).not.toContain('packages: write');
     expect(publishGhcr).toContain('packages: write');
     expect(publishGhcr).toContain("github.event_name == 'push'");
+    expect(publishGhcr).toContain("github.event_name == 'workflow_dispatch'");
+    expect(publishGhcr).toContain("github.actor == 'SvenKulessa'");
+    expect(publishGhcr).toContain("inputs.publish_ghcr == true");
     expect(publishGhcr).toContain("github.ref == 'refs/heads/main'");
     expect(publishGhcr).toContain("vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true'");
+  });
+
+  it('keeps manual publication explicit, default-off and main-only', () => {
+    expect(workflow).toContain('publish_ghcr:');
+    expect(workflow).toContain('type: boolean');
+    expect(workflow).toContain('default: false');
+    expect(workflow).toContain("github.ref == 'refs/heads/main'");
+    expect(workflow).toContain("vars.GHCR_DIGEST_PUBLISH_ENABLED == 'true'");
   });
 
   it('publishes the exact scanned image without latest authority', () => {
