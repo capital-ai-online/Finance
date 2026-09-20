@@ -106,6 +106,22 @@ test('delegates exact current-state baseline drift to the existing specialist', 
   assert.equal(result.actionId, 'RECONCILE_REPOSITORY_PROJECTION');
 });
 
+test('legacy template block outranks baseline repair and cannot re-enter the v1.6 autofix lane', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: [
+      'Error: PR #1199 verwendet die Legacy-Vorlage v1.6.0. Legacy-Vorlagen sind nur Migrations-Evidence und dürfen nicht gemerged werden; erforderlich ist v1.7.0.',
+      'Error: PR #1199 enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline.',
+    ].join('\n'),
+    prMetadataShape: 'CURRENT_V16_GENERIC_MISSING_SECTIONS',
+  });
+  assert.equal(result.classification, 'PR_LEGACY_TEMPLATE_BLOCK');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(result.reason, 'legacy-template-must-migrate-to-current-contract');
+  assert.equal(result.findingClass, 'REPOSITORY_PR_LEGACY_TEMPLATE');
+  assert.equal(result.actionId, 'MIGRATE_PR_TEMPLATE_TO_CURRENT');
+});
+
 test('delegates an exact stale production baseline before broad protected-provider vocabulary', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
