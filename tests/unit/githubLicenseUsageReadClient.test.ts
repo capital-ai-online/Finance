@@ -58,6 +58,24 @@ describe('GitHub license usage read client', () => {
         });
       }
 
+      if (method === 'GET' && parsed.pathname === `/organizations/${ORGANIZATION}/settings/billing/usage`) {
+        return jsonResponse({
+          usageItems: [{
+            date: '2026-09-19',
+            product: 'Actions',
+            sku: 'Actions Linux',
+            quantity: 100,
+            unitType: 'minutes',
+            pricePerUnit: 0.006,
+            grossAmount: 0.6,
+            discountAmount: 0.6,
+            netAmount: 0,
+            organizationName: ORGANIZATION,
+            repositoryName: `${ORGANIZATION}/Finance`,
+          }],
+        });
+      }
+
       if (method === 'GET' && parsed.pathname === `/organizations/${ORGANIZATION}/settings/billing/usage/summary`) {
         return jsonResponse({
           timePeriod: { year: 2026, month: 9, day: null },
@@ -109,6 +127,12 @@ describe('GitHub license usage read client', () => {
     const licenses = await client.getEnterpriseConsumedLicenses();
     expect(licenses.total_seats_consumed).toBe(1);
 
+    const organizationDetail = await client.getOrganizationUsageReport({
+      year: 2026,
+      month: 9,
+    });
+    expect(organizationDetail.usageItems[0].repositoryName).toBe(`${ORGANIZATION}/Finance`);
+
     const organizationUsage = await client.getOrganizationUsageSummary({
       year: 2026,
       month: 9,
@@ -126,6 +150,7 @@ describe('GitHub license usage read client', () => {
     expect(calls.filter((call) => call.method === 'POST')).toHaveLength(2);
     expect(calls.filter((call) => call.path.startsWith('/app/installations?'))).toHaveLength(1);
     expect(calls.some((call) => call.path.includes('/consumed-licenses?per_page=100&page=1'))).toBe(true);
+    expect(calls.some((call) => call.path.includes(`/organizations/${ORGANIZATION}/settings/billing/usage?`))).toBe(true);
     expect(calls.some((call) => call.path.includes(`/organizations/${ORGANIZATION}/settings/billing/usage/summary?`))).toBe(true);
     expect(calls.some((call) => call.path.includes('repository=capital-ai-online%2FFinance'))).toBe(true);
     expect(calls.some((call) => call.path.includes('advanced_security_product=code_security'))).toBe(true);
@@ -205,6 +230,7 @@ describe('GitHub license usage read client', () => {
         'organization.advanced_security.active_committers.code_security',
         'organization.advanced_security.active_committers.secret_protection',
         'organization.billing.usage.summary',
+        'organization.billing.usage.report',
       ],
       enterpriseConsumedLicensesAuth: 'github_app_only',
       tokenPersistence: false,
