@@ -73,7 +73,11 @@
     "documentary:impact:plan": "tsx scripts/automation/planDocumentaryChangeImpact.ts",
     "documentary:autosync:plan": "tsx scripts/automation/planDocumentaryAutoSync.ts",
     "documentary:handoff:build": "tsx scripts/automation/buildDocumentaryMaintenanceHandoff.ts",
-    "documentary:convergence:evidence": "tsx scripts/automation/buildDocumentaryConvergenceEvidence.ts"
+    "documentary:convergence:evidence": "tsx scripts/automation/buildDocumentaryConvergenceEvidence.ts",
+    "quality:coverage": "npm exec --yes --package=vitest@4.1.11 --package=@vitest/coverage-v8@4.1.11 -- vitest run --coverage --coverage.provider=v8 --coverage.reporter=json-summary --coverage.reportsDirectory=.quality",
+    "quality:knip": "npx --yes knip@6.31.0 --config knip.json --reporter json",
+    "quality:jscpd": "npx --yes jscpd@5.0.12 src server scripts --config .jscpd.json",
+    "quality:oss:normalize": "tsx scripts/quality/normalizeOssQualityFindings.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
