@@ -77,6 +77,13 @@ test('automatic OSS review remains isolated from build test and deploy execution
   assert.doesNotMatch(workflow, /\bvitest\b/);
   assert.doesNotMatch(workflow, /\bvite build\b/);
   assert.doesNotMatch(workflow, /\bdocker build\b/);
-  assert.doesNotMatch(workflow, /\bdeploy\b/i);
+  // Documentation may mention the deployment boundary; reject executable deployment surfaces instead.
+  assert.doesNotMatch(workflow, /^\s*environment\s*:/m);
+  assert.doesNotMatch(workflow, /^\s*uses:\s*[^\n#]*deploy[^\n#]*@/im);
+  assert.doesNotMatch(workflow, /^\s*(?:npm|pnpm|yarn)\s+(?:run\s+)?deploy\b/im);
+  assert.doesNotMatch(workflow, /^\s*(?:render|vercel|netlify|flyctl)\s+deploy\b/im);
+  assert.doesNotMatch(workflow, /^\s*kubectl\s+(?:apply|rollout|set\s+image)\b/im);
+  assert.doesNotMatch(workflow, /^\s*(?:bash|sh)\s+[^\n#]*deploy[^\n#]*$/im);
+  assert.doesNotMatch(workflow, /^\s*\.\/?[^\s#]*deploy[^\s#]*(?:\s|$)/im);
   assert.doesNotMatch(workflow, /\bgit push\b/);
 });
