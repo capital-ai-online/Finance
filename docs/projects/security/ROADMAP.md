@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEC — Canonical Roadmap
 
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+**Baseline:** `main@242e1847800af27ad80d4b4a693a28b9754eb25d`
 
 **Project:** `CAPITAL-AI-SEC`  
 **Folder:** `docs/projects/security/`  
@@ -73,3 +73,19 @@ Current owner-correct evidence from OPS, FINTECH, CLIENT, FE, DOC, COMP and othe
 
 ## Project exit gate
 No historical/non-terminal Security state self-activates; independent verification remains separate from owner implementation; provider state is never inferred from repository presence; no duplicate task queue or instruction plane exists; this Roadmap is removed only by the dedicated post-Social Roadmap-removal Pull Request.
+
+## Fresh owner-directed package — SEC-WEB-HARDENING-01
+
+**Fresh direction:** 2026-09-20  
+**Baseline at materialization:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
+**State:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED  
+**Canonical detail:** docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md
+
+The package is freshly authorized by the Human/Owner in the current interaction and therefore satisfies the active-work identity rule in /AGENTS.md section 4. It protects the rebuilt public website and exact production delivery chain through six dependency-ordered slices: current attack-surface baseline, signed single-artifact supply chain, browser/CSP isolation, public API/auth/abuse boundaries, production/rollback resilience and continuous independent assurance.
+
+The package is cross-cutting Security work only. Foreign implementation stays owner-correct and returns evidence to Security; Security does not acquire productive PVC ownership.
+
+**Immediate P0 sequence:** SEC-WEB-00 → current Container Security publisher readback → SEC-WEB-F01/F16 digest convergence → SEC-WEB-F15 one-artifact production path → SEC-WEB-F23 secret exposure gate → SEC-WEB-F10 OAuth/session negative baseline → production/open-PR re-correlation.
+
+**Exit:** all P0/P1 findings have owner-correct terminal dispositions; the deployed artifact is exactly bound to current source SHA, registry digest, signature, SBOM and provenance; website/browser/API/auth controls are independently verified; rollback/readiness/runtime evidence is current; no unresolved CRITICAL/HIGH production finding remains.
+
