@@ -299,15 +299,37 @@ jobs:
               normalizeSha(sourceRun.head_sha) !== expectedHead
             ) throw new Error('Source run is not the exact failed PR Governance run.');
 
-            // The existing PR Production Baseline Auto-Refresh workflow is triggered
-            // by PR Governance workflow_run events. Re-run the exact failed Governance
-            // attempt once so its in_progress/completed event is consumed by that
-            // specialist; no second PR-body writer is introduced here.
+            // GitHub does not emit workflow_run events for a workflow re-run that was
+            // itself requested from a workflow_run chain reliably enough to make that
+            // event fan-out our delegation contract. The specialist already owns the
+            // PR-body write; invoke its existing workflow by re-running the exact
+            // specialist run bound to this Governance source snapshot instead.
+            const specialistRuns = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event: 'workflow_run',
+              head_sha: expectedHead,
+              status: 'completed',
+              per_page: 100,
+            });
+            const exactSpecialist = specialistRuns
+              .filter((run) => run.path === '.github/workflows/pr-production-baseline-refresh.yml')
+              .filter((run) => String(run.name || '') === 'PR Production Baseline Auto-Refresh')
+              .filter((run) => normalizeSha(run.head_sha) === expectedHead)
+              .filter((run) => Number(run.run_attempt || 1) === 1)
+              .sort((a, b) => Number(b.id) - Number(a.id))[0];
+
+            if (!exactSpecialist) {
+              throw new Error(
+                `No completed PR Production Baseline Auto-Refresh run is bound to head ${expectedHead}; fail closed.`,
+              );
+            }
+
             await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
-              owner: context.repo.owner, repo: context.repo.repo, run_id: sourceRun.id,
+              owner: context.repo.owner, repo: context.repo.repo, run_id: exactSpecialist.id,
             });
             core.notice(
-              `PR #${prNumber}: exact Governance run ${sourceRun.id} re-run delegated to canonical PR metadata specialist.`,
+              `PR #${prNumber}: specialist run ${exactSpecialist.id} re-run for exact head/base metadata repair.`,
             );
 
 
