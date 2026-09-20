@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR900-03D3-EVIDENCE-STORAGE-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement zero-cost GitHub evidence-storage observability and policy after PR #1173 merge.",
+  "workItemDE": "Zero-Cost-GitHub-Evidence-Storage-Observability und Policy nach Merge von PR #1173 umsetzen.",
+  "priority": "P1",
+  "priorityReason": "Turns included storage into measurable, fail-closed evidence capacity without enabling paid storage or widening provider permissions.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-20T19:33:00Z",
+  "baseBranch": "main",
+  "baseSha": "921620b2a672cc585bd627ecdeeec86ea51cb577",
+  "branch": "agent/operations-zero-cost-evidence-storage-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR900-03D3-EVIDENCE-STORAGE-20260920.json",
+    "docs/projects/operations/work-packages/OPS_PR900_03D_ZERO_COST_GITHUB_CAPABILITY_CONVERGENCE_2026-09-20.md",
+    ".github/workflows/private-github-billing-read.yml",
+    "scripts/operations/githubSettingsInventoryReadClient.mjs",
+    "scripts/operations/githubSettingsInventoryProjection.mjs",
+    "scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs",
+    "scripts/operations/runPrivateGitHubBillingRead.mjs",
+    "scripts/operations/githubEvidenceStoragePolicy.mjs",
+    "scripts/operations/runPrivateGitHubStorageCapabilityReport.mjs",
+    "tests/unit/githubEvidenceStoragePolicy.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. No storage, cache, package, GHCR, billing or provider-setting mutation is authorized by this claim.",
+  "currentMainCorrelation": {
+    "sha": "921620b2a672cc585bd627ecdeeec86ea51cb577",
+    "status": "SYNCED",
+    "correlatedAt": "2026-09-20T19:33:00Z"
+  }
+}
