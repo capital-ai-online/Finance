@@ -116,10 +116,10 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 
 ## `OPS-08-B-SH-02` — Autonomous Self-Healing Backend & Frontend
 
-**Current branch:** `agent/operations-sh02-policy-homogeneity-20260920`  
-**Current PR:** policy-homogeneity corrective PR pending creation  
+**Current coordination branch:** `agent/operations-sh02-3e-post-merge-convergence-20260920`  
+**Current package state:** SH-02.3E merged via PR #1150; stale coordination metadata converging  
 **Primary PVC:** `PVC-08`; supporting `PVC-02`, `PVC-04`, `PVC-07`, `PVC-18`  
-**Status:** OWNER-DIRECTED / ACTIVE / P0 SELF-HEALING HOMOGENEITY GATE / SH-02.5 MERGED / SH-02.6 NEXT
+**Status:** OWNER-DIRECTED / ACTIVE / P0 / SH-02.3E IMPLEMENTED_ON_MAIN / SH-02.6 NEXT
 
 Fresh Owner direction selects one bounded self-healing platform from current main. The package reuses Supervisor, process lifecycle/health, Telemetry/logger, EventMesh, Recovery Evidence Harness, Frontend architecture and the existing exact-SHA GitHub→Render promotion path.
 
@@ -132,9 +132,10 @@ Current implementation starts with:
 Detailed work graph: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 
 Current correlation evidence:
-- `CURRENT_MAIN=39aeb4473ae3f0b26a174cf5654bb78b3a288c29`;
-- SH-02.5 is Human-merged via PR #1141 and its stale active claim is released by the current corrective slice;
-- open PR #1145 changes Docker/container-security paths and open PR #1146 changes PR-autofix/governance paths; neither overlaps the OPS Self-Healing homogeneity scope;
+- `CURRENT_MAIN=59b65e4907b27f57acd639d56f83ab365f30e4a5`;
+- SH-02.3E is Human-merged via PR #1150 and its final-head Container Security, Label Classification, automated review, Governance and CI checks all succeeded;
+- the stale SH-02.3E active/exclusive claim is released by the current post-merge convergence slice;
+- the only open PR at readback is #1157 in CAPITAL-AI-FINTECH; it has no OPS/Self-Healing path ownership;
 - predecessor SH-01 rules and the narrow 2026-09-20 supersession projection are archived/non-authorizing.
 
 ## DR-03 — Provider Adapter / Execution Integration
