@@ -17,7 +17,7 @@
   "projectStage": "PVC-08",
   "startedAt": "2026-09-20T12:20:00Z",
   "baseBranch": "main",
-  "baseSha": "e99919bffd7d2e02cf5d871dd64a24c6c1d8bce2",
+  "baseSha": "ae813ac19d7d0496d787682b284f0270c0b52c4f",
   "branch": "agent/operations-self-healing-contract-20260920",
   "claimedPaths": [
     ".ai/work-claims/OPS-08-B-SH-02-AUTONOMOUS-SELF-HEALING-20260920.json",
@@ -27,8 +27,18 @@
     "src/platform/Supervisor/README.md",
     "tests/unit/selfHealingContract.test.ts",
     "tests/unit/supervisor.test.ts",
-    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md"
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/roadmaps/AI_SYSTEM_ADMIN_DIAGNOSTICS_IAM_ROADMAP.md",
+    "docs/reports/SUPERVISOR_SYSTEMADMIN_COMPLIANCE_AI_VALUE_CHAIN_REPORT.md",
+    "docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md",
+    "docs/archive/governance/superseded/AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md",
+    "tests/unit/selfHealingSupersession.test.ts",
+    "docs/governance/control-plane/AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
-  "recorrelatedAt": "2026-09-20T12:24:00Z"
+  "recorrelatedAt": "2026-09-20T12:45:00Z",
+  "scopeNote": "SH-02.3 also deactivates/archives predecessor Self-Healing rules and adds deterministic supersession validation; /AGENTS.md and current Security/Compliance/QM/domain controls remain higher/current constraints."
 }
