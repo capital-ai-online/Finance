@@ -263,6 +263,7 @@ export function createGitHubLicenseUsageReadClient({
           'organization.advanced_security.active_committers.code_security',
           'organization.advanced_security.active_committers.secret_protection',
           'organization.billing.usage.summary',
+          'organization.billing.usage.report',
         ]),
         enterpriseConsumedLicensesAuth: normalizedEnterpriseReadPat
           ? 'github_app_with_pat_fallback'
@@ -294,6 +295,25 @@ export function createGitHubLicenseUsageReadClient({
         }
         throw error;
       }
+    },
+
+    async getOrganizationUsageReport({ year, month, day } = {}) {
+      assertOptionalInteger(year, 'year', 2000, 2100);
+      assertOptionalInteger(month, 'month', 1, 12);
+      assertOptionalInteger(day, 'day', 1, 31);
+
+      return authenticatedGet(
+        'Organization',
+        organization,
+        buildQuery(
+          `/organizations/${organization}/settings/billing/usage`,
+          [
+            ['year', year],
+            ['month', month],
+            ['day', day],
+          ],
+        ),
+      );
     },
 
     async getOrganizationUsageSummary({ year, month, day, repository } = {}) {
