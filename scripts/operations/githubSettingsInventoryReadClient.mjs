@@ -13,62 +13,62 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
   'organization.actions.permissions.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
-    path: ({ organization }) => \`/orgs/\${organization}/actions/permissions\`,
+    path: ({ organization }) => `/orgs/${organization}/actions/permissions`,
   }),
   'organization.actions.workflow_permissions.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
-    path: ({ organization }) => \`/orgs/\${organization}/actions/permissions/workflow\`,
+    path: ({ organization }) => `/orgs/${organization}/actions/permissions/workflow`,
   }),
   'organization.actions.retention.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
-    path: ({ organization }) => \`/orgs/\${organization}/actions/permissions/artifact-and-log-retention\`,
+    path: ({ organization }) => `/orgs/${organization}/actions/permissions/artifact-and-log-retention`,
   }),
   'organization.actions.fork_pr_private_repos.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
-    path: ({ organization }) => \`/orgs/\${organization}/actions/permissions/fork-pr-workflows-private-repos\`,
+    path: ({ organization }) => `/orgs/${organization}/actions/permissions/fork-pr-workflows-private-repos`,
   }),
   'organization.actions.self_hosted_runners.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
-    path: ({ organization }) => \`/orgs/\${organization}/actions/permissions/self-hosted-runners\`,
+    path: ({ organization }) => `/orgs/${organization}/actions/permissions/self-hosted-runners`,
   }),
   'repository.settings.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Metadata: read',
-    path: ({ repository }) => \`/repos/\${repository}\`,
+    path: ({ repository }) => `/repos/${repository}`,
   }),
   'repository.actions.permissions.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Administration: read',
-    path: ({ repository }) => \`/repos/\${repository}/actions/permissions\`,
+    path: ({ repository }) => `/repos/${repository}/actions/permissions`,
   }),
   'repository.actions.workflow_permissions.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Administration: read',
-    path: ({ repository }) => \`/repos/\${repository}/actions/permissions/workflow\`,
+    path: ({ repository }) => `/repos/${repository}/actions/permissions/workflow`,
   }),
   'repository.actions.retention.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Administration: read',
-    path: ({ repository }) => \`/repos/\${repository}/actions/permissions/artifact-and-log-retention\`,
+    path: ({ repository }) => `/repos/${repository}/actions/permissions/artifact-and-log-retention`,
   }),
   'repository.actions.fork_pr_private_repos.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Administration: read',
-    path: ({ repository }) => \`/repos/\${repository}/actions/permissions/fork-pr-workflows-private-repos\`,
+    path: ({ repository }) => `/repos/${repository}/actions/permissions/fork-pr-workflows-private-repos`,
   }),
   'repository.custom_properties.list': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Metadata: read',
-    path: ({ repository }) => \`/repos/\${repository}/properties/values\`,
+    path: ({ repository }) => `/repos/${repository}/properties/values`,
   }),
 });
 
 function fail(message) {
-  throw new Error(\`[GITHUB-SETTINGS-INVENTORY-READ] \${message}\`);
+  throw new Error(`[GITHUB-SETTINGS-INVENTORY-READ] ${message}`);
 }
 
 function assertSlug(value, label) {
@@ -78,7 +78,7 @@ function assertSlug(value, label) {
     || value.length > 100
     || !/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/.test(value)
   ) {
-    fail(\`\${label} must be a valid GitHub slug\`);
+    fail(`${label} must be a valid GitHub slug`);
   }
 }
 
@@ -168,23 +168,23 @@ export function createGitHubSettingsInventoryReadClient({
   async function request({ method, path, authorization }) {
     let response;
     try {
-      response = await fetchImpl(\`\${baseUrl}\${path}\`, {
+      response = await fetchImpl(`${baseUrl}${path}`, {
         method,
         headers: {
           Accept: 'application/vnd.github+json',
-          Authorization: \`Bearer \${authorization}\`,
+          Authorization: `Bearer ${authorization}`,
           'X-GitHub-Api-Version': GITHUB_API_VERSION,
         },
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
     } catch (error) {
-      fail(\`GitHub API network request failed: \${error?.name || 'unknown error'}\`);
+      fail(`GitHub API network request failed: ${error?.name || 'unknown error'}`);
     }
 
     const payload = await parseJson(response);
     if (!response.ok) {
       const error = new Error(
-        \`[GITHUB-SETTINGS-INVENTORY-READ] GitHub API request failed with HTTP \${response.status}\`,
+        `[GITHUB-SETTINGS-INVENTORY-READ] GitHub API request failed with HTTP ${response.status}`,
       );
       error.status = response.status;
       throw error;
@@ -200,7 +200,7 @@ export function createGitHubSettingsInventoryReadClient({
     for (let page = 1; page <= MAX_INSTALLATION_PAGES; page += 1) {
       const pageRows = await request({
         method: 'GET',
-        path: \`/app/installations?per_page=100&page=\${page}\`,
+        path: `/app/installations?per_page=100&page=${page}`,
         authorization: jwt,
       });
       if (!Array.isArray(pageRows)) fail('GET /app/installations must return an array');
@@ -211,7 +211,7 @@ export function createGitHubSettingsInventoryReadClient({
 
     const matches = rows.filter((row) => installationMatches(row, organization));
     if (matches.length !== 1) {
-      fail(\`expected exactly one Organization installation for \${organization}; found \${matches.length}\`);
+      fail(`expected exactly one Organization installation for ${organization}; found ${matches.length}`);
     }
     installation = matches[0];
     return installation;
@@ -231,7 +231,7 @@ export function createGitHubSettingsInventoryReadClient({
     const resolved = await resolveOrganizationInstallation();
     const payload = await request({
       method: 'POST',
-      path: \`/app/installations/\${resolved.id}/access_tokens\`,
+      path: `/app/installations/${resolved.id}/access_tokens`,
       authorization: mintJwt(),
     });
     if (!payload || typeof payload.token !== 'string' || payload.token.length < 10) {
@@ -281,7 +281,7 @@ export function createGitHubSettingsInventoryReadClient({
 
     async read(capability, { repository } = {}) {
       const descriptor = GITHUB_SETTINGS_READ_CAPABILITIES[capability];
-      if (!descriptor) fail(\`unsupported capability: \${capability}\`);
+      if (!descriptor) fail(`unsupported capability: ${capability}`);
       if (descriptor.scope === 'repository' && !repository) fail('repository is required');
       return authenticatedGet(descriptor.path(context(repository)));
     },
@@ -291,7 +291,7 @@ export function createGitHubSettingsInventoryReadClient({
       const rulesets = [];
       for (let page = 1; page <= MAX_RULESET_PAGES; page += 1) {
         const pageRows = await authenticatedGet(
-          \`/repos/\${repository}/rulesets?per_page=100&page=\${page}\`,
+          `/repos/${repository}/rulesets?per_page=100&page=${page}`,
         );
         if (!Array.isArray(pageRows)) fail('repository rulesets response must be an array');
         rulesets.push(...pageRows);
