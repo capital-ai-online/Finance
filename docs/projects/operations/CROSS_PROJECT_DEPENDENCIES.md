@@ -74,16 +74,16 @@ Security does not transfer Security verification authority. Returned evidence us
 - **verification_gate:** CAPITAL-AI-SEC independent S1-R2-06 verification.
 - **status:** `REFERRED_NOT_EXECUTED`.
 
-## Outbound — R2-06 DATA Newsfeed ingress
+## Outbound — R2-06 FINTECH Newsfeed ingress
 
-### [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-09]
+### [CROSS_PROJECT_HANDOFF -> CAPITAL-AI-FINTECH | VC-09]
 
 - **project_namespace:** `PVC`
 - **project_stage:** `PVC-09`
-- **target_project:** `CAPITAL-AI-DATA`
-- **target_project_folder:** `docs/projects/data/`
-- **primary_owner:** `CAPITAL-AI-DATA`
-- **task:** reconcile public `/api/news*` evidence ingress with the accepted Pro/Enterprise `realtime_ai_newsfeed` entitlement while preserving DATA provider/evidence semantics.
+- **target_project:** `CAPITAL-AI-FINTECH`
+- **target_project_folder:** `docs/projects/fintech/`
+- **primary_owner:** `CAPITAL-AI-FINTECH`
+- **task:** reconcile public `/api/news*` evidence ingress with the accepted Pro/Enterprise `realtime_ai_newsfeed` entitlement while preserving the canonical FINTECH PVC-09..11 provider/evidence semantics.
 - **reason:** current public server route and presentation-only tier display permit direct use without the accepted paid-plan boundary.
 - **dependency:** ADR-0034; current news provider/evidence boundary; presentation consumers must not define access authority.
 - **required_evidence:** direct Free/Starter DENY and entitled ALLOW if the paid classification remains effective; forged/missing bearer, stale entitlement and all `/api/news*` alternate-route cases covered, or an explicit higher-authority product reclassification.
@@ -95,11 +95,10 @@ Security does not transfer Security verification authority. Returned evidence us
 If later remediation correlation identifies additional foreign productive code:
 
 - Agent Client code → `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-CLIENT | VC-01]`, `project_stage: PVC-01`.
-- Data code → target appropriate `CAPITAL-AI-DATA / PVC-09..11`.
-- FinTech code → target appropriate `CAPITAL-AI-FINTECH / PVC-12..17`.
+- Provider/data/evidence/DQ and FinTech code → target appropriate `CAPITAL-AI-FINTECH / PVC-09..17`.
 
 OPS records the dependency and does not absorb the implementation merely because the parent Security finding is routed through PVC-02.
 
 ## R2-11 boundary
 
-`S1-R2-11` is currently `CAPITAL-AI-DATA / PVC-10` primary work. OPS must not implement it unless a separate owner mapping identifies concrete OPS-owned PR/trace tooling code. Until then it remains an external dependency only.
+`S1-R2-11` is currently `CAPITAL-AI-FINTECH / PVC-10` primary work. OPS must not implement it unless a separate owner mapping identifies concrete OPS-owned PR/trace tooling code. Until then it remains an external dependency only.
