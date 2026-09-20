@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.4.0`  
-**Status:** OWNER-DIRECTED — effective after Human/CODEOWNER merge  
-**Effective date:** 2026-09-17  
+**Control Plane Version:** `4.5.0`  
+**Status:** OWNER-DIRECTED — effective after Human Owner merge  
+**Effective date:** 2026-09-20  
 **Repository:** `capital-ai-online/Finance`
 
 ## 1. Single instruction surface
@@ -104,7 +104,7 @@ If no active canonical task is available, produce a project-folder-scoped report
 
 The default autonomous lifecycle is:
 
-`CURRENT_MAIN → scope/owner/PVC resolution → project report/state read → finding or defined work item → atomic dependency-sorted work package → branch execution → validation → bounded self-healing → re-correlation → Pull Request → evidence → Human/CODEOWNER merge → post-merge readback`.
+`CURRENT_MAIN → scope/owner/PVC resolution → project report/state read → finding or defined work item → atomic dependency-sorted work package → branch execution → validation → bounded self-healing → re-correlation → Pull Request → evidence → Human Owner merge → post-merge readback`.
 
 ### Master Roadmaps, aggregate views and generated chats
 
@@ -124,11 +124,17 @@ Before mutation, resolve an exact fresh `CURRENT_MAIN` SHA and correlate current
 
 Before Pull Request readiness, re-read current `main`, branch head, merge base, open writers, changed-file overlap, semantic overlap, namespace/authority overlap and Security/Compliance impact. Any head movement invalidates earlier correlation evidence.
 
-Every repository change is delivered through a Pull Request. PR creation may be automated after final correlation PASS and truthful evidence rendering; unresolved or blocked correlation stops creation. `NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`.
+Every repository change is delivered through a Pull Request. PR creation and PR updates may be automated after final correlation PASS and truthful evidence rendering; unresolved or blocked correlation stops readiness. `NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`.
 
-Human/CODEOWNER review and merge remain separate external authority. Agents MUST NOT self-approve, self-merge, enable auto-merge, remove protection, weaken required checks or infer merge authority from green CI, reviews, labels, comments, elapsed time or metadata.
+### Workflow-execution autonomy supersession
 
-Protected Production, IAM, Billing, Secret, DNS, destructive-data and equivalent external mutations require their separately applicable authority; repository scope alone does not grant them.
+`CAPITAL-AI-GOV-WORKFLOW-AUTONOMY-2026-09-20` is the active workflow-execution rule after Human Owner merge of this change. It supersedes every earlier rule, projection, PR body, chat instruction or historical policy that required a separate Owner approval before starting, rerunning or continuing an eligible workflow.
+
+GitHub Actions, CI/CD pipelines, builds, tests, security scans, automated code reviews, PR autofix, preflights, validation workflows, deployment workflows, repository automation and equivalent automated workflow execution MAY start, rerun and continue automatically when their repository/provider triggers and scope controls allow it. No per-run Human/Owner approval is required. Automated execution MUST still preserve branch-only mutation, least privilege, truthful evidence, scope/ownership boundaries, required checks, rulesets, provider protections and Security/Compliance/domain controls.
+
+The final Pull Request merge is the sole mandatory Human Owner action in the repository-development lifecycle. Agents and automation MUST NOT self-merge, enable auto-merge, bypass branch/ruleset protection, weaken required checks, or infer merge authority from green CI, reviews, approvals, labels, comments, elapsed time or metadata. Automated reviews and approvals are evidence/gates only and never constitute merge authority.
+
+Protected Production, IAM, Billing, Secret, DNS, destructive-data and equivalent external mutations MAY execute without a separate per-run Owner approval only when they are already inside an authorized workflow/provider capability boundary and all configured technical controls permit the action. Repository scope does not grant new credentials or capability. Mutations outside an already-authorized workflow/provider capability boundary fail closed.
 
 ### Post-merge production correlation SLA
 
@@ -149,7 +155,7 @@ The five-minute value is an operational SLA for observing the deploy trigger, no
 
 For every applicable work package compare desired state against observed state. Desired state comes from current main, canonical subject-matter contracts/controls and the accepted work-package exit gate. Observed state comes from repository/readback, tests, runtime/provider readback and evidence.
 
-Classify drift such as code, contract, configuration, documentation, runtime, evidence, dependency or stale-head drift. Autonomous remediation is allowed only when the root cause is reproducible, the fix is reversible/bounded, ownership remains unchanged, no protected external mutation is required, and Security/Compliance/domain contracts are not weakened.
+Classify drift such as code, contract, configuration, documentation, runtime, evidence, dependency or stale-head drift. Autonomous remediation is allowed only when the root cause is reproducible, the fix is reversible/bounded, ownership remains unchanged, any external mutation stays inside an already-authorized workflow/provider capability boundary with configured controls intact, and Security/Compliance/domain contracts are not weakened.
 
 Self-healing MUST NOT suppress tests, alter expected results merely to obtain green status, fabricate evidence, hide failures, silently change public contracts, accept residual Security risk, create a parallel control plane or broaden authority.
 
@@ -157,9 +163,9 @@ After remediation, re-read the actual state. Convergence exists only when observ
 
 ## 7. Validation and cost control
 
-Use the smallest sufficient validation before PR creation. Costly hosted build/test work is deferred until the Pull Request exists unless a specific current control requires earlier evidence.
+Use the smallest sufficient validation for the changed scope. Eligible workflows MAY run automatically before or after PR creation whenever repository/provider triggers and current controls require or permit them; no separate Owner approval is required to start, rerun or continue execution.
 
-After PR creation, run only the checks required by the changed scope and protected repository rules. Documentation/governance-only changes must not trigger unrelated application/deployment work merely by convention.
+Cost control is achieved through scope-aware triggers, path filtering, concurrency/cancellation, caching, incremental execution and the smallest sufficient check set — not through a manual workflow-start gate. Documentation/governance-only changes must not trigger unrelated application/deployment work merely by convention.
 
 A skipped/not-applicable check is reported as such; it is never PASS. Technical checks establish technical evidence only and never merge authority.
 
@@ -216,4 +222,4 @@ Machine-readable registries and catalogs are verification/index surfaces only. T
 
 ## 12. No self-bootstrap
 
-A Pull Request changing this file cannot authorize itself. Until Human/CODEOWNER merge, the rules on then-current `main` govern creation, validation, review and merge of that Pull Request. After merge, this file alone is the repository-wide ChatGPT/AI/development instruction surface.
+A Pull Request changing this file cannot authorize itself. Until Human Owner merge, the rules on then-current `main` govern creation, validation, review and merge of that Pull Request. After merge, this file alone is the repository-wide ChatGPT/AI/development instruction surface.
