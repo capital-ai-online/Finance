@@ -9,8 +9,8 @@
 
 | Frage | Ergebnis |
 |---|---|
-| Was ändert sich? | {{IMPLEMENTATION}} |
-| Warum jetzt? | {{WHY}} |
+| Was ändert sich? | {{IMPLEMENTATION_DECISION}} |
+| Warum jetzt? | {{WHY_DECISION}} |
 | Auswirkung / Risikoklasse | {{IMPACT_RISK}} |
 | Evidence | {{EVIDENCE_SUMMARY}} |
 | Blocker | {{BLOCKER_SUMMARY}} |
@@ -39,7 +39,7 @@
 - **Erstellt durch:** {{AGENT_PROVIDER}} / {{AGENT_MODEL}} via {{AGENT_SURFACE}}
 - **Claim:** `{{CLAIM_ID}}` · `{{CLAIM_FILE}}`
 - **Projektordner:** `{{PROJECT_FOLDER}}`
-- **Roadmap / Work Package:** {{ROADMAP}}
+- **Umsetzung:** {{IMPLEMENTATION_DETAIL}}\n- **Warum:** {{WHY_DETAIL}}\n- **Roadmap / Work Package:** {{ROADMAP}}
 - **Ziel / Exit Gate:** {{EXIT_GATE}}
 - **Priorität:** {{PRIORITY}}
 - **Warum diese Priorität:** {{PRIORITY_REASON}}
