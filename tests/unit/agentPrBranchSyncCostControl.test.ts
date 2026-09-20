@@ -15,7 +15,7 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain("workflow_run:\n    workflows: ['Post-Merge Production Correlation']\n    types: [completed]\n    branches: [main]");
     expect(yaml).not.toContain('on:\n  push:\n    branches: [main]');
     expect(yaml).toContain('pull_request:\n    branches: [main]\n    types: [ready_for_review]');
-    expect(yaml).toContain('workflow_dispatch: {}');
+    expect(yaml).toContain('workflow_dispatch:\n    inputs:\n      pr_number:');
   });
 
   it('uses an approved review as the exact-PR pre-merge synchronization checkpoint', () => {
@@ -26,8 +26,9 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain("github.event.pull_request.base.ref == 'main'");
     expect(yaml).toContain("github.event.pull_request.head.repo.full_name == github.repository");
     expect(yaml).toContain("if [ \"$EVENT_NAME\" = 'pull_request' ] || [ \"$EVENT_NAME\" = 'pull_request_review' ]; then");
-    expect(yaml).toContain("if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'");
-    expect(yaml).toContain("(github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token");
+    expect(yaml).toContain("github.event_name == 'pull_request_review'");
+    expect(yaml).toContain("github.event_name == 'workflow_dispatch' && inputs.pr_number != ''");
+    expect(yaml).toContain('steps.app_token.outputs.token || github.token');
   });
 
   it('hard-binds the privileged correlation source before allocating the write lane', () => {
@@ -127,16 +128,26 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain("[ \"$after_lineage\" = 'identical' ]");
   });
 
-  it('uses a pinned GitHub App token only for trusted automatic post-merge and approved-review lanes', () => {
+  it('routes exact workflow-dispatch PRs through the same canonical writer lease and App token', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("format('capital-ai-pr-writer-{0}', inputs.pr_number)");
+    expect(yaml).toContain('DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}');
+    expect(yaml).toContain("[ \"$EVENT_NAME\" = 'workflow_dispatch' ] && [ -n \"${DISPATCH_PR_NUMBER:-}\" ]");
+    expect(yaml).toContain('gh pr view \"$DISPATCH_PR_NUMBER\"');
+    expect(yaml).toContain('workflow_dispatch pr_number muss eine positive PR-Nummer sein.');
+  });
+
+  it('uses a pinned GitHub App token for trusted automatic and exact-dispatch lanes', () => {
     const yaml = workflow();
     expect(yaml).toContain('contents: write');
     expect(yaml).toContain('pull-requests: write');
-    expect(yaml).toContain("if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'");
+    expect(yaml).toContain("github.event_name == 'workflow_dispatch' && inputs.pr_number != ''");
     expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
     expect(yaml).toContain('client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}');
     expect(yaml).toContain('private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}');
     expect(yaml).toContain('permission-contents: write');
     expect(yaml).toContain('permission-pull-requests: write');
-    expect(yaml).toContain("GH_TOKEN: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token || github.token }}");
+    expect(yaml).toContain("(github.event_name == 'workflow_dispatch' && inputs.pr_number != '')");
+    expect(yaml).toContain('steps.app_token.outputs.token || github.token');
   });
 });
