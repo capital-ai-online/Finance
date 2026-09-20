@@ -19,6 +19,11 @@ import {
 import { DashboardViewRouter, type DashboardAdminTab } from './DashboardViewRouter';
 import { MyWorkspaceView } from './MyWorkspaceView';
 import type { DashboardView } from './dashboardViews';
+import {
+  buildDashboardViewUrl,
+  mergeDashboardHistoryState,
+  readDashboardView,
+} from '../routing/dashboardHistory';
 
 export interface DashboardProps {
   userSession: UserSession;
@@ -69,7 +74,9 @@ export function Dashboard({
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [timeframe, setTimeframe] = useState('1std');
-  const [activeView, setActiveView] = useState<DashboardView>('dashboard');
+  const [activeView, setActiveView] = useState<DashboardView>(() =>
+    typeof window !== 'undefined' ? readDashboardView(window.location.search) : 'dashboard',
+  );
   const [adminTab, setAdminTab] = useState<DashboardAdminTab>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -98,15 +105,75 @@ export function Dashboard({
     id: userSession.id,
   });
 
+  const commitDashboardView = React.useCallback((
+    view: DashboardView,
+    mode: 'push' | 'replace' = 'push',
+    removeSearchParams: readonly string[] = [],
+  ) => {
+    if (typeof window === 'undefined') {
+      setActiveView(view);
+      return;
+    }
+
+    const nextUrl = buildDashboardViewUrl(window.location.href, view, removeSearchParams);
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const currentView = readDashboardView(window.location.search);
+
+    if (mode === 'push' && currentView === view && currentUrl === nextUrl) {
+      setActiveView(view);
+      return;
+    }
+
+    const nextState = mergeDashboardHistoryState(window.history.state, view);
+    if (mode === 'push') {
+      window.history.pushState(nextState, document.title, nextUrl);
+    } else {
+      window.history.replaceState(nextState, document.title, nextUrl);
+    }
+    setActiveView(view);
+  }, []);
+
+  const navigateTo = React.useCallback((view: DashboardView) => {
+    commitDashboardView(view);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [commitDashboardView]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const syncFromLocation = () => {
+      setActiveView(readDashboardView(window.location.search));
+    };
+    const initialView = readDashboardView(window.location.search);
+    const canonicalUrl = buildDashboardViewUrl(window.location.href, initialView);
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+    if (
+      canonicalUrl !== currentUrl
+      || window.history.state?.capitalAiDashboardView !== initialView
+    ) {
+      window.history.replaceState(
+        mergeDashboardHistoryState(window.history.state, initialView),
+        document.title,
+        canonicalUrl,
+      );
+    }
+
+    window.addEventListener('popstate', syncFromLocation);
+    return () => window.removeEventListener('popstate', syncFromLocation);
+  }, []);
+
   React.useEffect(() => {
     localStorage.setItem('capital_ai_watchlist', JSON.stringify(watchlist));
   }, [watchlist]);
 
   React.useEffect(() => {
     if (userSession.type === 'registered' && activeView === 'login') {
-      setActiveView('dashboard');
+      commitDashboardView('dashboard', 'replace');
     }
-  }, [userSession.type, activeView]);
+  }, [userSession.type, activeView, commitDashboardView]);
 
   React.useEffect(() => {
     const loadSecureProfile = async () => {
@@ -151,8 +218,7 @@ export function Dashboard({
         ...previous,
         subscriptionTier: plan as UserUI.UserProfile['subscriptionTier'],
       }));
-      setActiveView('abonnements');
-      window.history.replaceState({}, document.title, window.location.pathname);
+      commitDashboardView('abonnements', 'replace', ['payment', 'plan']);
     }
 
     if (userSession.type === 'registered' && userSession.id) {
@@ -198,11 +264,6 @@ export function Dashboard({
 
     setAttempts(1);
     onExecute();
-  };
-
-  const navigateTo = (view: DashboardView) => {
-    setActiveView(view);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const triggerPushNotification = React.useCallback((data: DashboardPushNotificationInput) => {
@@ -288,9 +349,8 @@ export function Dashboard({
         onSelectSymbol={setSelectedSymbol}
         onCategoryFilterChange={setCategoryFilter}
         onAdminNavigate={(tab) => {
-          setActiveView('admin-portal');
+          navigateTo('admin-portal');
           setAdminTab(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onUpgradeClick={() => setIsSubscriptionModalOpen(true)}
       />
