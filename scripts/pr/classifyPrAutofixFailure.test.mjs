@@ -24,16 +24,18 @@ const REGISTERED = Object.freeze([
   }),
 ]);
 
-test('delegates v1.7 Decision/Evidence drift only to the live reconciler', () => {
+test('delegates v1.8 Decision/Evidence drift only to the live reconciler', () => {
   for (const logText of [
-    'Error: PR #1173 enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1.7.0.',
+    'Error: PR #1173 enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v1.8.0.',
     'Error: PR #1173 fehlt kanonische Decision-Evidence: Required Checks.',
     'Error: PR #1173 behauptet Decision Status EVIDENCE_PENDING, aber die sichtbaren Gate-Zustände ergeben READY_FOR_HUMAN_DECISION. Decision Status darf nicht manuell von der Evidence abweichen.',
+    'Error: PR #1173 enthält kein vollständiges proaktives Live Dashboard der Vorlage v1.8.0.',
+    'Error: PR #1173 enthält ein vom kanonischen Evidence-Zustand abweichendes Live Dashboard. Dashboard-Projektionen dürfen ausschließlich vom Evidence → Decision Reconciler abgeleitet werden.',
   ]) {
     const result = classifyPrAutofixFailure({
       sourceWorkflow: '.github/workflows/pr-governance.yml',
       logText,
-      prMetadataShape: 'CURRENT_V17_CANONICAL',
+      prMetadataShape: 'CURRENT_V18_CANONICAL',
     });
     assert.equal(result.classification, 'PR_DECISION_EVIDENCE_DRIFT');
     assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
@@ -69,7 +71,7 @@ test('does not treat the 45k guard source echoed in failed Governance logs as an
       "    'kostenrelevante Required-Workflow-Arbeit wird fail-closed gestoppt.',",
       '  );',
       '}',
-      'Error: PR #1179 verwendet keinen unterstützten PR-Vorlagenmarker. Aktuell kanonisch ist v1.7.0; v1.6.0 und v1.5.0 bleiben nur für bereits offene PRs kompatibel.',
+      'Error: PR #1179 verwendet keinen unterstützten PR-Vorlagenmarker. Aktuell kanonisch ist v1.8.0; markerlose oder unbekannte Vorlagen sind nicht mergefähig.',
       '##[error]Process completed with exit code 1.',
     ].join('\n'),
     prMetadataShape: 'OTHER',
@@ -106,6 +108,35 @@ test('delegates exact current-state baseline drift to the existing specialist', 
   assert.equal(result.actionId, 'RECONCILE_REPOSITORY_PROJECTION');
 });
 
+test('v1.7 contract drift delegates only to the live reconciler', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: 'Error: PR #1198 verwendet die Legacy-Vorlage v1.7.0. Legacy-Vorlagen sind nur Migrations-Evidence und dürfen nicht gemerged werden; erforderlich ist v1.8.0.',
+    prMetadataShape: 'OTHER',
+  });
+  assert.equal(result.classification, 'PR_TEMPLATE_VERSION_MIGRATION');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
+  assert.equal(result.reason, 'v1.7-to-v1.8-live-reconciler-owned');
+  assert.equal(result.findingClass, 'REPOSITORY_PR_TEMPLATE_VERSION_DRIFT');
+  assert.equal(result.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
+});
+
+test('v1.6 legacy template block outranks baseline repair and cannot re-enter the old autofix lane', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: [
+      'Error: PR #1199 verwendet die Legacy-Vorlage v1.6.0. Legacy-Vorlagen sind nur Migrations-Evidence und dürfen nicht gemerged werden; erforderlich ist v1.8.0.',
+      'Error: PR #1199 enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline.',
+    ].join('\n'),
+    prMetadataShape: 'CURRENT_V16_GENERIC_MISSING_SECTIONS',
+  });
+  assert.equal(result.classification, 'PR_LEGACY_TEMPLATE_BLOCK');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(result.reason, 'legacy-template-must-migrate-to-current-contract');
+  assert.equal(result.findingClass, 'REPOSITORY_PR_LEGACY_TEMPLATE');
+  assert.equal(result.actionId, 'MIGRATE_PR_TEMPLATE_TO_CURRENT');
+});
+
 test('delegates an exact stale production baseline before broad protected-provider vocabulary', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
@@ -113,54 +144,54 @@ test('delegates an exact stale production baseline before broad protected-provid
       'const example = "supabase migration";',
       'Error: PR #1143 enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline. Erwartete aktuelle Baseline-ID: sha256:test.',
     ].join('\n'),
-    prMetadataShape: 'CURRENT_V17_CANONICAL',
+    prMetadataShape: 'CURRENT_V18_CANONICAL',
   });
   assert.equal(result.classification, 'PR_PRODUCTION_BASELINE_DRIFT');
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
   assert.equal(result.reason, 'stale-production-baseline-specialist-owned');
 });
 
-test('delegates the exact observed v1.7 P0-HIGHEST priority drift only for canonical bodies', () => {
+test('delegates the exact observed v1.8 P0-HIGHEST priority drift only for canonical bodies', () => {
   const logText =
-    'Error: PR #1147 enthält keine gültige Prioritätsbewertung (P0–P3) der Vorlage v1.7.0.';
+    'Error: PR #1147 enthält keine gültige Prioritätsbewertung (P0–P3) der Vorlage v1.8.0.';
 
   const allowed = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText,
-    prMetadataShape: 'CURRENT_V17_CANONICAL',
+    prMetadataShape: 'CURRENT_V18_CANONICAL',
   });
   assert.equal(allowed.classification, 'PR_TEMPLATE_METADATA_DRIFT');
   assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
-  assert.equal(allowed.reason, 'current-v1.7-priority-token-repairable');
+  assert.equal(allowed.reason, 'current-v1.8-priority-token-repairable');
 
   const denied = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText,
-    prMetadataShape: 'CURRENT_V17_OTHER',
+    prMetadataShape: 'CURRENT_V18_OTHER',
   });
   assert.equal(denied.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
-  assert.equal(denied.reason, 'current-v1.7-priority-drift-requires-canonical-shape');
+  assert.equal(denied.reason, 'current-v1.8-priority-drift-requires-canonical-shape');
 });
 
-test('delegates only the exact allowlisted v1.7 legacy baseline-section drift', () => {
-  const logText = 'Error: PR #1142 muss in v1.7.0 exakt drei sichtbare Hauptabschnitte besitzen: ## 1. 🧭 Entscheidung, ## 2. ✅ Evidence, ## 3. 🔍 Technical Evidence';
+test('delegates only the exact allowlisted v1.8 legacy baseline-section drift', () => {
+  const logText = 'Error: PR #1142 muss in v1.8.0 exakt drei sichtbare Hauptabschnitte besitzen: ## 1. 🧭 Entscheidung, ## 2. ✅ Evidence, ## 3. 🔍 Technical Evidence';
 
   const allowed = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText,
-    prMetadataShape: 'CURRENT_V17_LEGACY_BASELINE_SECTION',
+    prMetadataShape: 'CURRENT_V18_LEGACY_BASELINE_SECTION',
   });
   assert.equal(allowed.classification, 'PR_TEMPLATE_METADATA_DRIFT');
   assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
-  assert.equal(allowed.reason, 'current-v1.7-legacy-baseline-section-repairable');
+  assert.equal(allowed.reason, 'current-v1.8-legacy-baseline-section-repairable');
 
   const denied = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText,
-    prMetadataShape: 'CURRENT_V17_OTHER',
+    prMetadataShape: 'CURRENT_V18_OTHER',
   });
   assert.equal(denied.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
-  assert.equal(denied.reason, 'current-v1.7-structure-drift-not-allowlisted');
+  assert.equal(denied.reason, 'current-v1.8-structure-drift-not-allowlisted');
 });
 
 test('delegates repairable PR metadata drift to the existing baseline/template writer', () => {

@@ -48,8 +48,8 @@ function successfulRun(name, appId, id) {
 
 function canonicalBody() {
   return [
-    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0 -->',
-    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0`',
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
     '# Test',
     '',
     '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
@@ -151,7 +151,7 @@ test('exact changed-file overlap is deterministic and owner-neutral', () => {
   );
 });
 
-test('reconciler normalizes v1.7 decision surface and is idempotent', () => {
+test('reconciler normalizes v1.8 decision surface and is idempotent', () => {
   const gates = {
     main: 'PASS',
     scope: 'PASS',
@@ -165,17 +165,22 @@ test('reconciler normalizes v1.7 decision surface and is idempotent', () => {
   assert.equal(first.changed, true);
   assert.equal(first.decisionStatus, 'READY_FOR_HUMAN_DECISION');
   assert.match(first.body, /^> 🧭 \*\*Entscheidungsstatus: READY_FOR_HUMAN_DECISION\*\*$/m);
-  assert.match(first.body, /^\| Required Checks \| 🟢 PASS \|$/m);
-  assert.match(first.body, /^\| Production Baseline \| 🟢 PASS \|$/m);
+  assert.match(first.body, /^\| Required Checks \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(first.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
   assert.match(first.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
   assert.match(first.body, /^\| Blocker \| Keine \|$/m);
+  assert.match(first.body, /^\| Gate \| Status \| Warum offen \/ blockiert \| Nächster verifizierbarer Schritt \|$/m);
+  assert.match(first.body, /^### 📡 Live Dashboard$/m);
+  assert.match(first.body, /^\| Status \| READY_FOR_HUMAN_DECISION \|$/m);
+  assert.match(first.body, /^\| Synchronität \| Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS \|$/m);
+  assert.match(first.body, /^\| Nächster Schritt \| Merge-Modus anhand des Auto-Merge Safety Contract revalidieren \|$/m);
 
   const second = reconcileDecisionBody(first.body, gates);
   assert.equal(second.changed, false);
   assert.equal(second.reason, 'already-current');
 });
 
-test('reconciler repairs missing v1.7 Decision/Evidence projections without touching technical evidence', () => {
+test('reconciler repairs missing v1.8 Decision/Evidence projections without touching technical evidence', () => {
   const gates = {
     main: 'PASS',
     scope: 'PASS',
@@ -199,12 +204,12 @@ test('reconciler repairs missing v1.7 Decision/Evidence projections without touc
   assert.match(repaired.body, /^> 🧭 \*\*Entscheidungsstatus: READY_FOR_HUMAN_DECISION\*\*$/m);
   assert.match(repaired.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
   assert.match(repaired.body, /^\| Blocker \| Keine \|$/m);
-  assert.match(repaired.body, /^\| Current Main \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Scope \/ Ownership \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Required Checks \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Security \/ Compliance \| 🟢 PASS \|$/m);
-  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \|$/m);
+  assert.match(repaired.body, /^\| Current Main \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Scope \/ Ownership \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Required Checks \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Security \/ Compliance \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
   assert.equal(repaired.body.split('## 3. 🔍 Technical Evidence')[1], technical);
 });
 
@@ -224,6 +229,29 @@ test('reconciler refuses ambiguous duplicate Decision section boundaries', () =>
   assert.equal(result.eligible, false);
   assert.equal(result.reason, 'decision-section-boundary-ambiguous');
 });
+test('reconciler atomically migrates canonical v1.7 to v1.8 and adds the live dashboard', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PENDING',
+    security: 'PASS',
+    baseline: 'PASS',
+  };
+  const legacy = canonicalBody().replaceAll(
+    'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0',
+    'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.7.0',
+  );
+  const result = reconcileDecisionBody(legacy, gates);
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'v1.7-to-v1.8-live-dashboard-migrated');
+  assert.match(result.body, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.8\.0/);
+  assert.doesNotMatch(result.body, /CAPITAL_AI_PR_TEMPLATE_VERSION: 1\.7\.0/);
+  assert.match(result.body, /^### 📡 Live Dashboard$/m);
+  assert.match(result.body, /^\| Status \| EVIDENCE_PENDING \|$/m);
+});
+
 test('a blocked gate dominates the human decision state', () => {
   const result = reconcileDecisionBody(canonicalBody(), {
     main: 'PASS',
@@ -235,6 +263,7 @@ test('a blocked gate dominates the human decision state', () => {
   });
   assert.equal(result.decisionStatus, 'BLOCKED');
   assert.match(result.body, /^\| Blocker \| Blockiert: Overlap \|$/m);
+  assert.match(result.body, /^\| Overlap \| 🔴 BLOCKED \| .*Overlap.* \| .*Overlap auflösen.* \|$/m);
 });
 
 test('workflow uses trusted completion events and the shared PR writer lease', () => {
@@ -243,7 +272,12 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /workflows: \[CI, PR Governance, Container Security\]/);
   assert.match(workflow, /check_run:/);
   assert.match(workflow, /push:/);
+  assert.match(workflow, /actions: write/);
   assert.match(workflow, /pull-requests: write/);
   assert.match(workflow, /capital-ai-pr-writer-\$\{\{ matrix\.pr_number \}\}/);
+  assert.match(workflow, /branch_sync_required/);
+  assert.match(workflow, /sync-agent-pr-branches\.yml/);
+  assert.match(workflow, /createWorkflowDispatch/);
+  assert.match(workflow, /auto_merge_state/);
   assert.doesNotMatch(workflow, /pull_request_target:/);
 });

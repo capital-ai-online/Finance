@@ -11,13 +11,13 @@ import {
   findMissingRequiredSections,
 } from './prBodySectionContract.mjs';
 
-test('canonical PR template v1.7 contains exactly three human-decision sections', () => {
+test('canonical PR template v1.8 contains exactly three human-decision sections', () => {
   const template = fs.readFileSync(
     path.join(process.cwd(), '.github/pull_request_template.md'),
     'utf8',
   );
 
-  assert.equal(detectPrBodyContractVersion(template), '1.7.0');
+  assert.equal(detectPrBodyContractVersion(template), '1.8.0');
   assert.deepEqual(findMissingRequiredSections(template), []);
   assert.equal(REQUIRED_PR_SECTIONS.length, 3);
   assert.deepEqual(
@@ -33,11 +33,19 @@ test('canonical PR template v1.7 contains exactly three human-decision sections'
     '{{DECISION_CHECKS}}',
     '{{DECISION_SECURITY}}',
     '{{DECISION_BASELINE}}',
+    '{{DECISION_MAIN_REASON}}',
+    '{{DECISION_MAIN_NEXT}}',
+    '{{DECISION_CHECKS_REASON}}',
+    '{{DECISION_CHECKS_NEXT}}',
+    '{{DECISION_SECURITY_REASON}}',
+    '{{DECISION_SECURITY_NEXT}}',
+    '{{DECISION_BASELINE_REASON}}',
+    '{{DECISION_BASELINE_NEXT}}',
     '{{IMPACT_RISK}}',
     '{{EVIDENCE_SUMMARY}}',
     '{{BLOCKER_SUMMARY}}',
   ]) {
-    assert.ok(template.includes(placeholder), 'missing v1.7 decision placeholder: ' + placeholder);
+    assert.ok(template.includes(placeholder), 'missing v1.8 decision placeholder: ' + placeholder);
   }
 
   assert.ok(template.includes('<summary>Technische Details & Traceability</summary>'));
@@ -110,7 +118,7 @@ test('similar but non-contract v1.7 headings are rejected', () => {
     bodyHasRequiredSection(
       '## 3. 🔍 Technical Evidence erweitert',
       '## 3. 🔍 Technical Evidence',
-      '1.7.0',
+      '1.8.0',
     ),
     false,
   );

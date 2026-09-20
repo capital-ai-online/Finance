@@ -47,7 +47,7 @@ function headingCandidates(requiredHeading, version) {
   return [requiredHeading];
 }
 
-export function bodyHasRequiredSection(bodyText, requiredHeading, version = detectPrBodyContractVersion(bodyText) || '1.7.0') {
+export function bodyHasRequiredSection(bodyText, requiredHeading, version = detectPrBodyContractVersion(bodyText) || '1.8.0') {
   const normalizedLines = new Set(
     String(bodyText || '')
       .split(/\r?\n/)
@@ -60,14 +60,14 @@ export function bodyHasRequiredSection(bodyText, requiredHeading, version = dete
     .some((heading) => normalizedLines.has(heading));
 }
 
-export function findMissingRequiredSections(bodyText, version = detectPrBodyContractVersion(bodyText) || '1.7.0') {
+export function findMissingRequiredSections(bodyText, version = detectPrBodyContractVersion(bodyText) || '1.8.0') {
   return requiredSectionsForVersion(version).filter(
     (heading) => !bodyHasRequiredSection(bodyText, heading, version),
   );
 }
 
 // Legacy body repair intentionally converges only the v1.5/v1.6 compatibility
-// contract. New v1.7 bodies are rendered directly from the canonical template.
+// contract. New v1.8 bodies are rendered directly from the canonical template.
 export function canonicalizeKnownSectionHeadings(bodyText, targetVersion = '1.6.0') {
   if (targetVersion !== '1.5.0' && targetVersion !== '1.6.0') return String(bodyText || '');
 
