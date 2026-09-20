@@ -186,10 +186,7 @@ test('repairs the observed current v1.6 security-boundary shape without inventin
 test('preserves replacement-like PR text as inert data during current v1.6 repair', () => {
   const body = currentV16SecurityBoundaryBody.replace(
     '- Least-privilege review boundary remains advisory.',
-    () => '- Literal replacement tokens stay inert:   const body = currentV16SecurityBoundaryBody.replace(
-    '- Least-privilege review boundary remains advisory.',
-    '- Literal replacement tokens stay inert: $& $1 $$',
-  ); $1 $',
+    () => '- Literal replacement tokens stay inert: $& $1 $$',
   );
   const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
   assert.equal(result.eligible, true);
