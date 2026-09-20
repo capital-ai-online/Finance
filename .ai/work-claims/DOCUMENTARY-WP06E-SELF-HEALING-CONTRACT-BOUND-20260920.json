@@ -21,7 +21,7 @@
   "parentContractState": "MERGED_MAIN",
   "startedAt": "2026-09-20T13:07:00Z",
   "baseBranch": "main",
-  "baseSha": "7dbd771a7a422e970deece8e068464ec83387ab2",
+  "baseSha": "c307ab9a4e0eb5ba415b70da7a84bff1a7dc803b",
   "branch": "agent/documentary-wp06e-self-healing-contract-bound-20260920",
   "claimedPaths": [
     ".ai/work-claims/DOCUMENTARY-WP06E-SELF-HEALING-CONTRACT-BOUND-20260920.json",
@@ -34,5 +34,6 @@
     "tests/unit/applicationChangeImpactAnalyzer.test.ts",
     "tests/unit/documentaryConvergenceEvidence.test.ts"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; SH-02 remains the parent recovery authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; SH-02 remains the parent recovery authority.",
+  "recorrelatedAt": "2026-09-20T13:13:30Z"
 }
