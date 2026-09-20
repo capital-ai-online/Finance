@@ -5,7 +5,7 @@
 **Canonical project path:** `docs/projects/fintech/`  
 **Role:** `PRIMARY_VALUE_CHAIN_OWNER`  
 **Primary Project Value Chain ownership:** `PVC-09` through `PVC-17`  
-**Current-main synchronization baseline:** `main@2358642ff80f128e271e02ae88401008663578b7`  
+**Current-main synchronization baseline:** `main@2c6b29102333baf86b3acf8f1c1012b0cc9ac9e6`  
 **Trust root:** `/AGENTS.md`  
 **Project model:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`
 
@@ -120,4 +120,4 @@ The former CAPITAL-AI-DATA active supporting documentation now resolves inside t
 - [Validated Data → Feature Handoff Runbook](./references/runbooks/DATA_FINTECH_HANDOFF.md)
 - [Provider Ingress & DQ Runbook](./references/runbooks/DATA_PROVIDER_INGRESS_AND_DQ.md)
 
-These references support the current `PVC-09..PVC-17` ownership model. Historical DATA evidence remains under the non-executable compatibility surface until the separately governed archive-retention migration is authorized.
+These references support the current `PVC-09..PVC-17` ownership model. Historical DATA evidence is preserved under `docs/archive/projects/fintech/` and `docs/archive/shared/capital-ai-data/`; `docs/projects/data/` is retired and is not a current project surface.

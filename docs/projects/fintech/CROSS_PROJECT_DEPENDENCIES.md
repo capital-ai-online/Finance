@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Cross-Project Dependencies
 
-**Baseline:** `main@96e305aa076e5c8e2eb49ee4051770f756ef2fbc`  
+**Baseline:** `main@2c6b29102333baf86b3acf8f1c1012b0cc9ac9e6`  
 **Project:** `CAPITAL-AI-FINTECH`  
 **Canonical folder:** `docs/projects/fintech/`
 
@@ -45,63 +45,42 @@ Merged OPS PR #694 completed `OPS-02-SEC-06` and routed concrete `S1-R2-06` chil
 
 FINTECH does not set the parent Security finding to `VERIFIED` or `CLOSED`.
 
-## Upstream DATA — FIN-12 current return required
+## Internal FINTECH PVC-09..11 → PVC-12 dependency
 
-Current DATA-to-FINTECH evidence confirms that the validated exit exists and PVC-12 consumption belongs to FINTECH. The 2026-09-16 current-main re-correlation in `evidence/FIN_12_VALIDATED_FEATURE_BOUNDARY_RECORRELATION_2026-09-16.md` narrows the remaining dependency: the existing snapshot/history contracts are necessary but do not yet cover every productive champion feature input.
+The former cross-project DATA return is retired. `CAPITAL-AI-FINTECH` owns `PVC-09..17`; provider/data ingress, evidence/provenance/freshness and Data Quality are internal upstream FINTECH stages for FIN-12.
 
 ### PVC-09 — UAI / Data Ingestion
 
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-09]`
-- project_namespace: `PVC`
+- repository_marker: `[INTERNAL_FINTECH_DEPENDENCY | PVC-09 -> PVC-12]`
 - project_stage: `PVC-09`
-- target_project: `CAPITAL-AI-DATA`
-- target_project_folder: `docs/projects/data/`
-- primary_owner: `CAPITAL-AI-DATA`
-- task: preserve the existing canonical ingress and add/return only the provider-neutral field/history capability needed to express all productive FINTECH feature inputs; no FINTECH-owned provider adapter or direct provider-schema bypass
-- reason: productive crypto snapshot dimensions, traditional fundamentals and productive history consumers cannot be made fully validated by inventing normalization inside PVC-12
+- owner: `CAPITAL-AI-FINTECH`
+- canonical_project_folder: `docs/projects/fintech/`
+- task: preserve the existing canonical ingress and provide the provider-neutral field/history capability needed by productive FINTECH feature inputs without creating a second provider plane
 - dependency: existing UAI/provider authorities; ADR-0041 / ESS-0016
-- required_evidence: exact input identity, provider provenance, correlation, contract validation and capability semantics for the returned fields/history
-- verification_gate: DATA-owned validated contract on then-current main; FINTECH consumes accepted output only
-- status: `RETURN_REQUIRED_FOR_FIN-12`
+- exit_evidence: exact input identity, provider provenance, correlation, contract validation and capability semantics
+- status: `INTERNAL_UPSTREAM_DEPENDENCY`
 
 ### PVC-10 — Evidence Management
 
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-10]`
-- project_namespace: `PVC`
+- repository_marker: `[INTERNAL_FINTECH_DEPENDENCY | PVC-10 -> PVC-12]`
 - project_stage: `PVC-10`
-- target_project: `CAPITAL-AI-DATA`
-- target_project_folder: `docs/projects/data/`
-- primary_owner: `CAPITAL-AI-DATA`
-- task: preserve evidence identity, field-level provenance and freshness for the additional productive crypto/traditional fields and validated history/value contracts supplied to FINTECH
-- reason: scoring/feature engineering cannot infer or manufacture missing evidence
-- dependency: existing Evidence contracts and provider data plane
-- required_evidence: evidence IDs, timestamps, provider lineage, correlation and explicit missing/stale/conflicting disposition
-- verification_gate: DATA evidence contract; no missing evidence promoted to numeric FINTECH feature input
-- status: `RETURN_REQUIRED_FOR_FIN-12`
+- owner: `CAPITAL-AI-FINTECH`
+- canonical_project_folder: `docs/projects/fintech/`
+- task: preserve evidence identity, field-level provenance and freshness for productive crypto/traditional fields and validated history/value contracts
+- exit_evidence: evidence IDs, timestamps, provider lineage, correlation and explicit missing/stale/conflicting disposition
+- status: `INTERNAL_UPSTREAM_DEPENDENCY`
 
 ### PVC-11 — Data Quality
 
-- repository_marker: `[CROSS_PROJECT_HANDOFF -> CAPITAL-AI-DATA | VC-11]`
-- project_namespace: `PVC`
+- repository_marker: `[INTERNAL_FINTECH_DEPENDENCY | PVC-11 -> PVC-12]`
 - project_stage: `PVC-11`
-- target_project: `CAPITAL-AI-DATA`
-- target_project_folder: `docs/projects/data/`
-- primary_owner: `CAPITAL-AI-DATA`
-- task: extend/return canonical validated semantics so productive crypto market-cap/volume/supply fields, traditional fundamentals and productive history consumers are explicit; distinguish positive price-series validation from legitimate signed observations such as sovereign benchmark yields
-- reason: the current positive-price history validation cannot safely represent valid negative government yields, while FINTECH must not weaken DATA DQ locally
-- dependency: DATA DQ authority; current `ValidatedDataInput/1.0.0` and validated-history boundary
-- required_evidence: fail-closed DQ status and negative tests for missing/stale/conflicting/invalid inputs; signed value semantics where the domain permits negative values
-- verification_gate: no FINTECH feature/score path bypasses failed DQ and no legitimate signed yield is rejected merely by price-only semantics
-- status: `RETURN_REQUIRED_FOR_FIN-12`
+- owner: `CAPITAL-AI-FINTECH`
+- canonical_project_folder: `docs/projects/fintech/`
+- task: preserve fail-closed validated semantics for productive crypto fields, traditional fundamentals and history consumers, including explicit signed-value semantics where required
+- exit_evidence: negative tests for missing/stale/conflicting/invalid inputs plus accepted signed-value semantics
+- status: `INTERNAL_UPSTREAM_DEPENDENCY`
 
-Required DATA return for FIN-12, without prescribing foreign implementation details:
-
-1. canonical validated coverage for productive crypto snapshot dimensions used by `crypto-technical-features/0.7.0`, including market-cap/volume and supply fields;
-2. canonical validated fundamentals coverage for the productive traditional stock fields used by `traditional-features/2.1.0`;
-3. a canonical validated-history bridge or equivalent accepted DATA contract for productive crypto/traditional history consumers; and
-4. explicit value/history semantics capable of preserving legitimate signed sovereign-yield observations.
-
-No synthetic/default values, second provider plane or FINTECH-local DQ authority is permitted as a workaround.
+No synthetic/default values, second provider plane or parallel Data Quality authority is permitted. Historical DATA handoff evidence remains archival provenance only.
 
 ## Downstream OPS
 
