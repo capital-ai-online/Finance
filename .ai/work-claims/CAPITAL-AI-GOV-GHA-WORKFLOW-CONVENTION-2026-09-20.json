@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-GHA-WORKFLOW-CONVENTION-2026-09-20",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Canonicalize GitHub Actions workflow-runner naming convention and delete three disabled one-shot stub workflows on main without renaming CI or PR Governance.",
+  "workItemDE": "GitHub-Actions-Workflow-Runner-Namenskonvention kanonisieren und drei deaktivierte One-Shot-Stub-Workflows auf main loeschen, ohne CI oder PR Governance umzubenennen.",
+  "startedAt": "2026-09-20T04:05:00Z",
+  "baseBranch": "main",
+  "baseSha": "081490f1eed9b19bde7bc427cb4a0dee6d2373da",
+  "branch": "agent/governance-actions-workflow-convention-20260920",
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "governance",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV",
+  "productionBaseline": {
+    "checkedAt": "2026-09-20T03:55:19.020Z",
+    "version": "0.6.0",
+    "commitSha": "081490f1eed9b19bde7bc427cb4a0dee6d2373da",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-GHA-WORKFLOW-CONVENTION-2026-09-20.json",
+    "docs/governance/GITHUB_ACTIONS_WORKFLOW_CONVENTION.md",
+    "docs/evidence/ops/WORKFLOW_RUNNER_INVENTORY_2026-09-20.md",
+    ".github/workflows/document-hygiene-evidence-migration.yml",
+    ".github/workflows/document-hygiene-evidence-once.yml",
+    ".github/workflows/lockfile-remediation.yml"
+  ],
+  "releaseCondition": "Release on Human merge, PR close, supersession or abandonment. No Self-Merge. Phase-2/3 renames and Actions-API disable remain out of scope."
+}
