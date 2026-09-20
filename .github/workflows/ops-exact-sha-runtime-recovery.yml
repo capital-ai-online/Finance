@@ -40,6 +40,7 @@ jobs:
           PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
           RECOVERY_COOLDOWN_MS: '300000'
           RECOVERY_MAX_CI_ATTEMPT: '1'
+          EXACT_SHA_RECOVERY_ACTIVATION: ${{ vars.CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY }}
           EXACT_SHA_RECOVERY_KILL_SWITCH: ${{ vars.CAPITAL_AI_DISABLE_EXACT_SHA_RECOVERY }}
         with:
           script: |
@@ -52,6 +53,10 @@ jobs:
             const cooldownMs = Number(process.env.RECOVERY_COOLDOWN_MS || '300000');
             const maxCiAttempt = Number(process.env.RECOVERY_MAX_CI_ATTEMPT || '1');
 
+            if (String(process.env.EXACT_SHA_RECOVERY_ACTIVATION || '').toLowerCase() !== 'true') {
+              core.notice('Exact-SHA recovery capability is implemented but activation remains HELD; set CAPITAL_AI_ENABLE_EXACT_SHA_RECOVERY=true only after the activation gate is authorized.');
+              return;
+            }
             if (String(process.env.EXACT_SHA_RECOVERY_KILL_SWITCH || '').toLowerCase() === 'true') {
               core.notice('Exact-SHA recovery kill switch is active; no mutation is attempted.');
               return;
