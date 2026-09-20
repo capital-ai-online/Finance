@@ -26,6 +26,7 @@ Der maschinenlesbare Panel-Datenvertrag bleibt `QualityCenterReport` (`quality-c
 - `Coverage/CoverageCollector.ts` — reale Belegung der sieben Pflicht-Testbereiche plus optionale echte Code-Coverage;
 - `Scoring/QualityScoreCalculator.ts` — sieben 0..100-Messachsen ohne erfundene Ersatzwerte;
 - `TechnicalDebt/TechnicalDebtRegister.ts` — evidenzpflichtiges Debt-Management;
+- `Findings/UnifiedFindingContract.ts` — einheitlicher, stabil fingerprintbarer Evidence-Vertrag fuer Gitleaks, OSV, Vitest-Coverage, Knip und jscpd; die Findings sind nicht-autorisierend und werden ausserhalb des Runtime-Hot-Paths erzeugt;
 - `Validators/DocumentationConsistencyValidator.ts` — QM-Dokument-/Manifest-Konsistenz;
 - `ValueChain/FintechValueChainQualityProjection.ts` — read-only Homogenitaetsprojektion der aktuellen 18-stufigen SC-MD-SPT-FinTech-Wertschoepfungskette;
 - `Orchestration/QualityCenterOrchestrator.ts` — einheitlicher `QualityCenterReport`;
