@@ -1,0 +1,116 @@
+schema_version: "1.0.0"
+id: CAPITAL-AI-GOV-GITHUB-DESIRED-STATE
+updated: "2026-09-20"
+base_sha: "de4ebc6fb25ccf0fa3d2a2712e0410432cdc0793"
+repository: capital-ai-online/Finance
+enterprise: capital-ai-online
+organization: capital-ai-online
+self_healing:
+  enabled: true
+  merge_authority: human-only
+  autofix_may_dispatch: true
+  autofix_may_merge: false
+  last_push_approval: false
+  owner_review_count_solo: 0
+apply_policy:
+  trigger: merge-to-main-of-this-file
+  unchecked_items: ignore
+  paid_github_security_products: owner-explicit-only
+  fail_closed_without_enterprise_admin_app: true
+items:
+  - id: RS-MAIN-CHECKS
+    apply: true
+    status: live
+    level: repository
+    setting: ruleset main-production-protection
+    desired: "required checks build-and-test, PR Governance, Hardened image CVE, GitGuardian; strict; non-fast-forward"
+  - id: RS-MAIN-DELETION
+    apply: true
+    status: live
+    level: repository
+    setting: ruleset main-owner-gate-and-deletion-2026-09-20 deletion
+    desired: "main cannot be deleted"
+  - id: RS-MAIN-SOLO-OWNER
+    apply: true
+    status: live
+    level: repository
+    setting: owner-gate ruleset review parameters
+    desired: "review count 0; last-push-approval false; merge method merge; EnterpriseOwner bypass always"
+  - id: RS-TAGS
+    apply: true
+    status: live
+    level: repository
+    setting: ruleset tag-release-protection-2026-09-20
+    desired: "all tags no delete no force-push; EnterpriseOwner bypass always"
+  - id: REPO-WIKI-OFF
+    apply: false
+    status: proposed
+    level: repository
+    setting: has_wiki
+    desired: false
+  - id: REPO-PROJECTS-OFF
+    apply: false
+    status: proposed
+    level: repository
+    setting: has_projects
+    desired: false
+  - id: REPO-FORKING
+    apply: false
+    status: proposed
+    level: repository
+    setting: allow_forking
+    desired: false
+  - id: ENV-PRODUCTION
+    apply: false
+    status: proposed
+    level: repository
+    setting: environment production protection
+    desired: "required reviewer SvenKulessa; no wait timer"
+  - id: ORG-ACTIONS-FORKS
+    apply: false
+    status: proposed
+    level: organization
+    setting: actions fork PR workflows
+    desired: disabled
+  - id: ORG-ACTIONS-POLICY
+    apply: false
+    status: proposed
+    level: organization
+    setting: allowed actions
+    desired: "selected github + verified + existing pins only"
+  - id: ORG-PAT-CLASSIC
+    apply: false
+    status: proposed
+    level: organization
+    setting: classic PAT policy
+    desired: "restrict classic PATs; fine-grained require approval"
+  - id: GHAS-CODE-SECURITY
+    apply: false
+    status: blocked-cost
+    level: repository
+    setting: GitHub Code Security
+    desired: "do not enable until 6.00 origin is ACCEPT or product cancelled"
+  - id: GHAS-SECRET-PROTECTION
+    apply: false
+    status: blocked-cost
+    level: repository
+    setting: Secret Protection
+    desired: "do not enable until 3.80 origin is ACCEPT or product cancelled"
+  - id: SECRET-SCANNING-ALERTS
+    apply: false
+    status: proposed
+    level: repository
+    setting: secret scanning alerts only
+    desired: "alerts without push protection / without paid Secret Protection"
+  - id: APP-ENTERPRISE-ADMIN-READ
+    apply: false
+    status: owner-pending
+    level: enterprise
+    setting: CAPITAL-AI GitHub App enterprise installation
+    desired: "inventory read pack only until first approved apply step"
+  - id: APP-SETTINGS-APPLY-WRITE
+    apply: false
+    status: owner-pending
+    level: enterprise
+    setting: scoped write for settings apply workflow
+    desired: "one write permission per accepted item; never secrets:write + org-install:write together"
