@@ -101,7 +101,8 @@ export function isGlobalTestTrigger(filePath) {
     || p === 'scripts/pr/planPrValidation.mjs'
     || p === '.github/workflows/ci.yml'
     || p === '.github/workflows/selective-codeql.yml'
-    || p === '.github/workflows/selective-copilot-code-review.yml';
+    || p === '.github/workflows/selective-copilot-code-review.yml'
+    || p === '.github/workflows/oss-code-review.yml';
 }
 
 /**
