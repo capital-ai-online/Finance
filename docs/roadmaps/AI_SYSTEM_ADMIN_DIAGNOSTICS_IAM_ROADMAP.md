@@ -190,16 +190,11 @@ Map each capability to IAM role, service identity, required step-up and audit se
 
 Reports MUST redact secrets and provide evidence references, not credential material.
 
-### Phase 6 — Controlled self-healing (P2/P3)
+### Phase 6 — Controlled self-healing (P2/P3) — SUPERSEDED PROJECTION
 
-Permit only pre-approved low-risk actions automatically:
-- retry idempotent jobs;
-- restart unhealthy worker;
-- redeploy same known-good commit;
-- quarantine a failed provider and switch to an approved fallback;
-- disable a non-critical failing scheduled task.
+The original 2026-08-10 Self-Healing action/gating rules from this phase are retired as current execution semantics and preserved in the SH-01 archive: `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md`.
 
-Schema changes, secret rotation, billing mutations, IAM grants and destructive actions remain human-authorized.
+Current Self-Healing action eligibility MUST be derived from `/AGENTS.md@CURRENT_MAIN`, applicable current Security/Compliance/QM/domain controls, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. Protected SH-2/SH-3 actions remain held unless the current contract plus an already-authorized capability boundary and required verification permit the exact action; a blanket per-run Human approval rule is not recreated here.
 
 ### Phase 7 — Break-glass and incident command (P2)
 

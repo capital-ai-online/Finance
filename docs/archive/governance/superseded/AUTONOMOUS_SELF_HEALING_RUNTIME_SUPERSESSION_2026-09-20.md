@@ -1,3 +1,15 @@
+# ARCHIVED — Autonomous Self-Healing Runtime Supersession — 2026-09-20
+
+**Lifecycle:** HISTORICAL / NON-AUTHORIZING / SUPERSEDED  
+**Original path:** `docs/governance/control-plane/AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md`  
+**Archived by:** `OPS-08-B-SH-02.3`  
+**Superseded by:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md` + `src/platform/Supervisor/selfHealingContract.ts` (`self-healing-contract/1.0.0`)  
+**Trust root:** `/AGENTS.md@CURRENT_MAIN`
+
+This file preserves the predecessor projection as audit evidence only. It MUST NOT be used to authorize, deny, classify, gate or execute a current Self-Healing action. Current action eligibility is derived from the repository trust root, current Security/Compliance/domain controls and the current Self-Healing contract set.
+
+---
+
 # Autonomous Self-Healing Runtime Supersession — 2026-09-20
 
 **Projection ID:** `CAPITAL-AI-OPS-SH-SUPERSESSION-2026-09-20`  
@@ -50,3 +62,4 @@ This projection does not supersede or weaken:
 ## Historical branch treatment
 
 The historical `agent/operations-self-healing-readiness-20260910` branch is evidence/search input only and is not resumed or used as an integration base. `OPS-08-B-SH-02` is fresh Owner-directed work from current main.
+

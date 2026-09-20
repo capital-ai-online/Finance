@@ -2,8 +2,9 @@
 
 **Document ID:** REPORT-SVC-AI-VC-0001  
 **Version:** 1.0.0  
-**Status:** ACTIVE — GOVERNANCE & ARCHITECTURE REPORT  
+**Status:** HISTORICAL SNAPSHOT / NON-AUTHORIZING  
 **Datum:** 2026-08-16  
+**Current-state note (2026-09-20):** Self-Healing capability/eligibility MUST NOT be inferred from this historical report. Current semantics are `CAPITAL-AI-ASH-01` + `self-healing-contract/1.0.0` under `/AGENTS.md@CURRENT_MAIN`.  
 **Repository:** SvenKulessa/Finance  
 **Owner:** SvenKulessa  
 **Authority:** ESS-0001 / ESS-0001-CONTRACTS, ESS-0002, ESS-0003, ESS-0018, ESS-0021, ESS-0023, ADR-0006, ADR-0012, ADR-0058–0074, DEVELOPMENT_CHAIN, SYSTEMADMIN_AGENT_ROADMAP, INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP (ROADMAP-INTEGRATED-DC-SA-0001), COMP-SOA-0001  

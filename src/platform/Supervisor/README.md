@@ -2,9 +2,9 @@
 
 ## Enterprise Component
 
-Status: Implemented (extended 2026-08-20)
+Status: Implemented (extended 2026-09-20)
 
-Version: 1.3.0
+Version: 1.4.0
 
 Owner: CAPITAL-AI
 
@@ -17,7 +17,8 @@ Owner: CAPITAL-AI
 **Implemented:**
 
 - **Task Routing / Tool Selection** — `routeTask()`
-- **Execution Control / Retry / Recovery / Self-Healing** — `executeSupervised()`
+- **Execution Control / Retry** — `executeSupervised()` (legacy generic retry path; dependency-specific convergence is SH-02.4 scope)
+- **Self-Healing Control Contract** — `selfHealingContract.ts` defines finding taxonomy, action registry, budgets, cooldowns, kill switches, verification and the recovery state machine without executing protected remediation
 - **Approved write path** — `executeApprovedSupervisedAction()` (Policy → Approval → Apply → Audit)
 - **Agent Provider Chain Observation** — ChatGPT, Claude, Grok via `observeAgentProviderChain()`
 - **Findings** — evidence-based findings from failed supervised executions and provider inventory
@@ -37,6 +38,7 @@ Protected documents remain review-only; the Supervisor does not downgrade that b
 
 - Multi-engine Conflict Resolution (one authoritative engine per asset class)
 - Full ESS-0002 Digital Twin / complete finding lifecycle persistence
+- SH-02.4+ concrete dependency/worker/runtime remediation executors; `getSupervisorStatus().capabilities.selfHealing` remains `false` until an executor is contract-bound and verified
 
 ---
 
