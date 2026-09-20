@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { consumeAutomaticFrontendRecovery } from '../app/reliability/frontendRecovery';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -24,7 +25,25 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Erro
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[ErrorBoundary] Unbehandelter Render-Fehler:', error, errorInfo.componentStack);
+    console.error('[ErrorBoundary] Unbehandelter Render-Fehler:', {
+      name: error.name,
+      componentStack: errorInfo.componentStack,
+    });
+
+    if (typeof window === 'undefined') return;
+
+    const recovery = consumeAutomaticFrontendRecovery(
+      window.sessionStorage,
+      error,
+      window.location.pathname,
+    );
+
+    if (recovery.shouldReload) {
+      console.warn('[ErrorBoundary] Bounded stale-asset recovery reload', {
+        fingerprint: recovery.fingerprint,
+      });
+      window.location.reload();
+    }
   }
 
   render() {
@@ -37,13 +56,8 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Erro
             </h1>
             <p className="text-sm text-white/60 leading-relaxed">
               Die Anwendung ist auf einen unerwarteten Fehler gestoßen. Ihre Daten sind davon
-              nicht betroffen. Ein Neuladen der Seite behebt das Problem in der Regel.
+              nicht betroffen. Die Anwendung konnte den betroffenen Zustand nicht automatisch wiederherstellen. Ein erneutes Laden startet einen frischen Anwendungszustand.
             </p>
-            {this.state.error?.message && (
-              <p className="text-xs font-mono text-white/30 break-words">
-                {this.state.error.message}
-              </p>
-            )}
             <button
               onClick={() => window.location.reload()}
               className="px-5 py-2.5 bg-aif-gold-DEFAULT hover:bg-aif-gold-dark text-black font-bold text-xs uppercase tracking-widest rounded-lg transition-all cursor-pointer"
