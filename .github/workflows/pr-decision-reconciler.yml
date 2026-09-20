@@ -1,0 +1,183 @@
+name: PR Decision Evidence Reconciler
+run-name: Decision Evidence gegen Live-Repository-State korrelieren
+
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: [CI, PR Governance, Container Security]
+    types: [completed]
+  check_run:
+    types: [completed]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Optional open same-repository PR number; empty reconciles all open PRs.
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: pr-decision-reconciler-${{ github.event_name }}-${{ github.event.workflow_run.head_sha || github.event.check_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  resolve:
+    name: Betroffene PRs fail-closed auflösen
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr_numbers: ${{ steps.targets.outputs.pr_numbers }}
+    steps:
+      - name: Exakte offene Same-Repo-PRs bestimmen
+        id: targets
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}
+        with:
+          script: |
+            const repository = `${context.repo.owner}/${context.repo.repo}`;
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const numbers = new Set();
+
+            async function addIfEligible(number, expectedHeadSha = '') {
+              if (!Number.isInteger(Number(number)) || Number(number) <= 0) return;
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: Number(number),
+              });
+              if (
+                pr.state !== 'open' ||
+                pr.base?.ref !== 'main' ||
+                pr.head?.repo?.full_name !== repository
+              ) return;
+              if (expectedHeadSha && normalizeSha(pr.head?.sha) !== normalizeSha(expectedHeadSha)) return;
+              numbers.add(Number(pr.number));
+            }
+
+            if (context.eventName === 'workflow_run') {
+              const run = context.payload.workflow_run;
+              if (
+                context.payload.action !== 'completed' ||
+                run?.repository?.full_name !== repository ||
+                run?.head_repository?.full_name !== repository ||
+                run?.event !== 'pull_request'
+              ) {
+                core.setOutput('pr_numbers', '[]');
+                return;
+              }
+
+              let candidates = run.pull_requests || [];
+              if (candidates.length === 0 && /^[0-9a-f]{40}$/.test(normalizeSha(run.head_sha))) {
+                candidates = await github.paginate(
+                  github.rest.repos.listPullRequestsAssociatedWithCommit,
+                  {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    commit_sha: normalizeSha(run.head_sha),
+                    per_page: 100,
+                  },
+                );
+              }
+              for (const candidate of candidates) {
+                await addIfEligible(candidate.number, run.head_sha);
+              }
+            } else if (context.eventName === 'check_run') {
+              const check = context.payload.check_run;
+              // GitHub Actions checks are handled through workflow_run. This lane exists for
+              // external required/security checks such as GitGuardian and license compliance.
+              if (check?.app?.slug === 'github-actions') {
+                core.setOutput('pr_numbers', '[]');
+                return;
+              }
+              for (const candidate of check?.pull_requests || []) {
+                await addIfEligible(candidate.number, check.head_sha);
+              }
+            } else if (context.eventName === 'push') {
+              if (context.ref !== 'refs/heads/main') {
+                core.setOutput('pr_numbers', '[]');
+                return;
+              }
+              const pulls = await github.paginate(github.rest.pulls.list, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                base: 'main',
+                per_page: 100,
+              });
+              for (const pr of pulls) await addIfEligible(pr.number);
+            } else if (context.eventName === 'workflow_dispatch') {
+              const requested = Number(process.env.DISPATCH_PR_NUMBER || 0);
+              if (requested > 0) {
+                await addIfEligible(requested);
+              } else {
+                const pulls = await github.paginate(github.rest.pulls.list, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  base: 'main',
+                  per_page: 100,
+                });
+                for (const pr of pulls) await addIfEligible(pr.number);
+              }
+            }
+
+            const resolved = [...numbers].sort((a, b) => a - b);
+            core.info(`Decision Evidence targets: ${resolved.length ? resolved.join(', ') : 'none'}`);
+            core.setOutput('pr_numbers', JSON.stringify(resolved));
+
+  reconcile:
+    name: PR #${{ matrix.pr_number }} Decision Evidence aktualisieren
+    needs: [resolve]
+    if: needs.resolve.outputs.pr_numbers != '[]' && needs.resolve.outputs.pr_numbers != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        pr_number: ${{ fromJSON(needs.resolve.outputs.pr_numbers) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    concurrency:
+      group: capital-ai-pr-writer-${{ matrix.pr_number }}
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Trusted CURRENT_MAIN Policy auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24
+        with:
+          node-version: '24.18.0'
+
+      - name: Evidence → Decision gegen Live-State reconciliieren
+        id: reconcile
+        working-directory: policy
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+        run: node scripts/pr/reconcilePrDecisionEvidence.mjs
+
+      - name: Decision-State ausgeben
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+          DECISION_STATUS: ${{ steps.reconcile.outputs.decision_status }}
+          CHANGED: ${{ steps.reconcile.outputs.changed }}
+          REASON: ${{ steps.reconcile.outputs.reason }}
+        run: |
+          echo "PR #$PR_NUMBER decision_status=${DECISION_STATUS:-unchanged} changed=$CHANGED reason=$REASON"
