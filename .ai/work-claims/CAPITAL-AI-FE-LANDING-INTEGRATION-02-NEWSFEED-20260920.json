@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-LANDING-INTEGRATION-02-NEWSFEED-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "LANDING-INTEGRATION-02: bind the public landing Newsfeed surface to the canonical CAPITAL-AI news capability without weakening the accepted Pro/Enterprise server-side entitlement, without a second public news data path, and without synthetic headlines or scoring semantics.",
+  "startedAt": "2026-09-20T16:31:00Z",
+  "baseBranch": "main",
+  "baseSha": "c64210a11bc67c6af24411eb7960cd98b696d5b2",
+  "branch": "agent/frontend-landing-integration-02-newsfeed-main-sync-20260920",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "N/A — cross-cutting presentation; no productive PVC",
+  "priority": "P2",
+  "priorityReason": "Fresh owner-authorized landing Phase 2. The live Newsfeed remains protected by canonical entitlement and identity contracts; this slice is a bounded presentation/composition integration.",
+  "dependencies": [
+    "ADR-0034 subscription-entitlements/1.0.0",
+    "server/middleware/realtimeAiNewsfeedEntitlement.ts",
+    "src/features/news/ui/RealtimeAiNewsfeed.tsx",
+    "src/features/news/authenticatedNewsFetch.ts"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-LANDING-DESIGN-01-FIDELITY-MAIN-SYNC-20260920.json",
+    ".ai/work-claims/CAPITAL-AI-FE-LANDING-INTEGRATION-02-NEWSFEED-20260920.json",
+    "src/features/news/ui/LandingRealtimeAiNewsfeed.tsx",
+    "src/features/news/ui/index.ts",
+    "src/features/public/ui/LandingPage.tsx",
+    "src/app/routing/AppRoutes.tsx",
+    "tests/unit/frontend1608AppearanceContract.test.ts",
+    "tests/unit/publicLandingRoute.test.ts",
+    "tests/unit/landingNewsfeedIntegration.test.ts"
+  ],
+  "supersedesBranch": "agent/frontend-landing-integration-02-newsfeed-20260920",
+  "scopeBoundary": "No Market Overview, Core Modules/Scoring, Universe Sideboard, provider, backend route, Supabase, IAM, billing, entitlement, scoring, persistence, or production mutation. No fake news, prices, scores, provider status, or synthetic fallback.",
+  "exitGate": "Landing visibly consumes the canonical news capability through app composition; anonymous public state does not call the protected news REST surface; Pro/Enterprise availability is derived from the canonical entitlement contract; login handoff leads to the existing authenticated Dashboard Newsfeed; current-main/open-writer correlation and exact-head checks pass.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}

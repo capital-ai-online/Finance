@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-LANDING-DESIGN-01-FIDELITY-MAIN-SYNC-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -24,5 +24,7 @@
     "tests/unit/frontend1608AppearanceContract.test.ts"
   ],
   "supersedesBranch": "agent/frontend-landing-design-01-fidelity-20260920",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-20T16:26:08Z",
+  "releaseReason": "PR #1153 was Human/CODEOWNER merged; the LANDING-DESIGN-01B writer is terminal and superseded by the separately authorized LANDING-INTEGRATION-02 newsfeed slice."
 }

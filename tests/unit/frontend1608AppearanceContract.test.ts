@@ -102,7 +102,9 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
       previous = current;
     }
 
-    expect(landing).toContain('Komponente wird schrittweise angebunden');
+    expect(landing).toContain('{newsfeed}');
+    expect(landing).toContain('Kanonischer News-Zugang');
+    expect(landing).not.toContain('NEWSFEED_SLOTS');
     expect(landing).toContain('Live-Marktprojektionen');
     expect(landing).not.toMatch(/€\s?\d/);
     expect(landing).not.toMatch(/\$\s?\d/);

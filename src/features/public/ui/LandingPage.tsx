@@ -22,6 +22,7 @@ import { NeuralBackground } from '../../../shared/visuals/NeuralBackground';
 
 interface LandingPageProps {
   preview: React.ReactNode;
+  newsfeed: React.ReactNode;
   onLoginNavigate?: () => void;
 }
 
@@ -46,12 +47,6 @@ const APPLICATION_PILLARS = [
     description: 'Aktien, Krypto, Forex, Rohstoffe, Indizes.',
     icon: Globe2,
   },
-] as const;
-
-const NEWSFEED_SLOTS = [
-  { label: 'Makro', icon: Globe2 },
-  { label: 'Aktien', icon: BarChart3 },
-  { label: 'Krypto', icon: Brain },
 ] as const;
 
 const FEATURE_SYMBOLS = [
@@ -154,11 +149,11 @@ function MobileNavigation({ onLoginNavigate }: { onLoginNavigate?: () => void })
 /**
  * Canonical public landing page for /.
  *
- * The public feature owns presentation only. Application composition supplies the public analysis
- * workbench from src/app so the dependency direction remains app -> features. Authentication stays
- * on /login; this component creates no session and defines no scoring/data authority.
+ * The public feature owns presentation only. Application composition supplies cross-feature public
+ * surfaces (Newsfeed access + analysis workbench) so the dependency direction remains app -> features.
+ * Authentication stays on /login; this component creates no session and defines no scoring/data authority.
  */
-export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
+export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-text-primary selection:bg-brand-primary/30 selection:text-text-primary">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,color-mix(in_srgb,var(--color-brand-primary)_9%,transparent),transparent_30%),radial-gradient(circle_at_90%_20%,color-mix(in_srgb,var(--color-decorative-purple)_8%,transparent),transparent_30%),radial-gradient(circle_at_52%_72%,color-mix(in_srgb,var(--color-decorative-cyan)_4%,transparent),transparent_34%)]" />
@@ -257,28 +252,19 @@ export function LandingPage({ preview, onLoginNavigate }: LandingPageProps) {
           aria-labelledby="ai-newsfeed-title"
           className="ui-panel overflow-hidden border-brand-accent/20 bg-surface/35"
         >
-          <div className="grid lg:grid-cols-[240px_minmax(0,1fr)]">
-            <div className="flex items-center gap-3 border-b border-border px-5 py-4 lg:border-b-0 lg:border-r">
+          <div className="border-b border-border px-5 py-4">
+            <div className="flex items-center gap-3">
               <span className="h-10 w-1 rounded-full bg-brand-accent shadow-[0_0_20px_color-mix(in_srgb,var(--color-brand-accent)_45%,transparent)]" />
               <div>
                 <SectionLabel>AI Newsfeed</SectionLabel>
-                <h2 id="ai-newsfeed-title" className="mt-1 text-sm font-black text-text-primary">Verifizierter Kontext</h2>
+                <h2 id="ai-newsfeed-title" className="mt-1 text-sm font-black text-text-primary">
+                  Kanonischer News-Zugang
+                </h2>
               </div>
             </div>
-            <div className="grid sm:grid-cols-3">
-              {NEWSFEED_SLOTS.map(({ label, icon: Icon }, index) => (
-                <div key={label} className="flex min-h-24 items-center gap-3 border-b border-border px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background/50 text-text-secondary">
-                    <Icon size={16} aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-mono text-[9px] font-black uppercase tracking-[0.16em] text-brand-primary">{String(index + 1).padStart(2, '0')} · {label}</p>
-                    <p className="mt-1 text-xs font-bold text-text-primary">Komponente wird schrittweise angebunden</p>
-                    <p className="mt-1 text-[10px] text-text-secondary">Keine erfundenen Headlines oder Scores.</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          </div>
+          <div className="p-4 sm:p-5">
+            {newsfeed}
           </div>
         </section>
 
