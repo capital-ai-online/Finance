@@ -6,9 +6,11 @@ import {
   extractDecisionGates,
   extractDecisionStatus,
   formatDecisionGateState,
+  nextVerifiableDecisionStep,
   normalizeDecisionGateState,
   summarizeDecisionBlockers,
   summarizeDecisionEvidence,
+  summarizeLiveDecisionSync,
 } from './prDecisionState.mjs';
 
 const pass = {
@@ -68,4 +70,24 @@ test('presentation and parser preserve canonical gate states', () => {
 test('impact label is deterministic and does not invent a free-form risk score', () => {
   assert.equal(decisionImpactLabel('C', 'PASS'), 'C — Code/Tests/Config');
   assert.match(decisionImpactLabel('M', 'BLOCKED'), /Security\/Compliance BLOCKED/);
+});
+
+
+test('live dashboard projection is derived only from canonical gates', () => {
+  assert.equal(
+    summarizeLiveDecisionSync(pass),
+    'Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS',
+  );
+  assert.equal(
+    nextVerifiableDecisionStep({ ...pass, checks: 'PENDING' }),
+    'Ausstehende Evidence vervollständigen: Required Checks',
+  );
+  assert.equal(
+    nextVerifiableDecisionStep({ ...pass, overlap: 'BLOCKED', checks: 'PENDING' }),
+    'Blocker beheben und Evidence neu korrelieren: Overlap',
+  );
+  assert.equal(
+    nextVerifiableDecisionStep(pass),
+    'Merge-Modus anhand des Auto-Merge Safety Contract revalidieren',
+  );
 });
