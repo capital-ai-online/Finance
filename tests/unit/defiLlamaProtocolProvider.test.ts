@@ -3,7 +3,7 @@ import {
   DefiLlamaProtocolProvider,
   isDefiLlamaProviderEnabled,
 } from '../../src/platform/MarketData/providers/DefiLlamaProtocolProvider';
-import { resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
+import { getProviderHealth, resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
 
 function protocolPayload(overrides: Record<string, unknown> = {}) {
   return {
@@ -172,6 +172,16 @@ describe('DefiLlamaProtocolProvider.getProtocolTvl', () => {
     expect(result.cacheMode).toBe('last-known-good');
     expect(result.status).toBe('STALE');
     expect(result.tvlUsd).toBe(10_800_000_000);
+
+    const health = getProviderHealth().find(
+      (record) => record.provider === 'DeFiLlama' && record.capability === 'defi-evidence',
+    );
+    expect(health).toMatchObject({
+      state: 'degraded',
+      payloadUsable: true,
+      cacheMode: 'last-known-good',
+      diagnosticCode: 'provider_error',
+    });
   });
 });
 
