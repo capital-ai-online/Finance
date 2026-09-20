@@ -9,8 +9,10 @@
 **Initial baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`  
 **Initial slice:** merged via PR #1122  
 **SH-02.3 merge:** PR #1125 → `70c33dc0f283584275798b2e186e3771b2bfccf8`  
-**Current SH-02.4 baseline:** `main@de4ebc6fb25ccf0fa3d2a2712e0410432cdc0793`  
-**Current branch:** `agent/operations-sh02-4-dependency-resilience-recovery-20260920`  
+**SH-02.4 merged baseline:** `main@3a9a55262dbb8ee87dac087a863b1e3369e71d22` via PR #1136  
+**Current slice:** `SH-02.5` — Worker/job recovery  
+**Current SH-02.5 baseline:** `main@fb8b9dd3c661ecf5d202d570fe435496cbe47461`  
+**Current branch:** `agent/operations-sh02-5-worker-job-recovery-20260920`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -27,8 +29,8 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_ON_MAIN |
 | SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_ON_MAIN |
 | SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1125 |
-| SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_BRANCH / VALIDATION_PENDING / ACTIVATION_HELD |
-| SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | QUEUED |
+| SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1136 / ACTIVATION_HELD |
+| SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | IMPLEMENTED_BRANCH / VALIDATION_PENDING / GENERIC_ACTION_HELD |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | QUEUED |
 | SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | QUEUED |
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
@@ -189,6 +191,20 @@ Apply to durable outbox and other recurring workers:
 - dead-letter/quarantine after budget exhaustion;
 - process-restart safety;
 - replay evidence.
+
+### SH-02.5 branch implementation
+
+- ADR-0054 `public.outbox_jobs` remains the single durable queue, retry-budget and dead-letter authority; no second worker control plane or queue is introduced.
+- `heartbeat_outbox_job` extends only a currently owned, still-unexpired processing lease. A late heartbeat cannot resurrect an expired lease.
+- `claim_outbox_job_v2` receives the exact set of job types whose handlers are registered as `IDEMPOTENT`. An expired processing lease is automatically reclaimed only for those types and only while `attempts < max_attempts`.
+- Expired jobs that exhausted their attempt budget, or whose handler is not proven replay-safe, move fail-closed to the existing `dead_letter` state instead of being re-executed.
+- `outbox_recovery_events` persists bounded `stale_lease_reclaimed` and `work_item_quarantined` evidence with job identity, lease-owner correlation, attempt budget and reason.
+- The legacy `claim_outbox_job` RPC remains available for rolling rollback compatibility but delegates with an empty replay-safe set, so an older application revision cannot silently restore unsafe stale replay.
+- Runtime handler registration now requires explicit `IDEMPOTENT` or `REQUIRES_RECONCILIATION` replay safety. Existing SMTP jobs are conservatively classified `REQUIRES_RECONCILIATION` because provider acceptance can be ambiguous across process failure; they quarantine rather than risk duplicate side effects.
+- Handler failure for an explicitly idempotent type continues through the existing bounded `fail_outbox_job` backoff/max-attempt authority. Missing handlers and uncertain side-effect failures quarantine immediately.
+- The generic Self-Healing `QUARANTINE_WORK_ITEM` action remains `HELD`; this slice hardens the pre-existing outbox-native dead-letter lifecycle and does not activate generic SH-1 remediation.
+- The canonical OPS/PVC-02 Supabase migration ledger records `20260920141000_outbox_worker_recovery.sql` as a new local-only migration (`local_total=56`, `local_only=11`), keeping migration reconciliation evidence consistent with the checked-in schema set.
+- Focused tests cover replay-safety filtering, lost-lease completion, idempotent bounded retry, reconciliation-required quarantine and SQL migration invariants. Validation remains `VALIDATION_PENDING` until hosted repository checks execute against the final PR head.
 
 ## SH-02.6 — Frontend degraded mode
 

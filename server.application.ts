@@ -60,11 +60,19 @@ import { registerProductionSpaFallback } from './server/runtime/spaFallback';
 
 const serverLogger = createLogger('server');
 
-// ADR-0054 / R-101: register outbox job handlers at composition time, before the worker poll
-// loop starts. subscription_confirmation_mail retries a failed checkout-confirmation SMTP send
-// (server/mailer.ts) with backoff instead of the previous permanent failure (see OPS-001).
-registerOutboxJobHandler('subscription_confirmation_mail', processSubscriptionConfirmationMailJob);
-registerOutboxJobHandler('github_billing_cost_alert_mail', processGitHubBillingAlertMailJob);
+// ADR-0054 / SH-02.5: register outbox job handlers at composition time, before the worker poll
+// loop starts. SMTP delivery can have an ambiguous external outcome across crashes/timeouts, so
+// these handlers require reconciliation instead of stale-lease replay or blind automatic retry.
+registerOutboxJobHandler(
+  'subscription_confirmation_mail',
+  processSubscriptionConfirmationMailJob,
+  { replaySafety: 'REQUIRES_RECONCILIATION' },
+);
+registerOutboxJobHandler(
+  'github_billing_cost_alert_mail',
+  processGitHubBillingAlertMailJob,
+  { replaySafety: 'REQUIRES_RECONCILIATION' },
+);
 
 dotenv.config();
 

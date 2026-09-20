@@ -24,7 +24,14 @@ vi.mock('../../server/db', () => ({
   })),
 }));
 
-import { enqueueOutboxJob, claimOutboxJob, completeOutboxJob, failOutboxJob } from '../../server/outbox';
+import {
+  enqueueOutboxJob,
+  claimOutboxJob,
+  completeOutboxJob,
+  failOutboxJob,
+  heartbeatOutboxJob,
+  quarantineOutboxJob,
+} from '../../server/outbox';
 
 describe('server/outbox (ADR-0054 / R-101)', () => {
   beforeEach(() => {
@@ -53,6 +60,14 @@ describe('server/outbox (ADR-0054 / R-101)', () => {
 
     it('completeOutboxJob throws instead of silently returning false', async () => {
       await expect(completeOutboxJob('job-1', 'worker-1')).rejects.toThrow(/SUPABASE_URL is missing/);
+    });
+
+    it('heartbeatOutboxJob throws instead of silently extending a lease', async () => {
+      await expect(heartbeatOutboxJob('job-1', 'worker-1')).rejects.toThrow(/SUPABASE_URL is missing/);
+    });
+
+    it('quarantineOutboxJob throws instead of silently discarding recovery evidence', async () => {
+      await expect(quarantineOutboxJob('job-1', 'worker-1', 'unsafe replay')).rejects.toThrow(/SUPABASE_URL is missing/);
     });
 
     it('failOutboxJob throws instead of silently returning not_claimed', async () => {
@@ -115,14 +130,42 @@ describe('server/outbox (ADR-0054 / R-101)', () => {
         data: [{ job_id: 'job-1', job_type: 'x', payload: { a: 1 }, attempts: 1, max_attempts: 5 }],
         error: null,
       });
-      const job = await claimOutboxJob('worker-1', 30);
+      const job = await claimOutboxJob('worker-1', 30, ['safe_job', 'safe_job']);
       expect(job).toEqual({ jobId: 'job-1', jobType: 'x', payload: { a: 1 }, attempts: 1, maxAttempts: 5 });
-      expect(mocks.rpc).toHaveBeenCalledWith('claim_outbox_job', { p_lease_owner: 'worker-1', p_lease_seconds: 30 });
+      expect(mocks.rpc).toHaveBeenCalledWith('claim_outbox_job_v2', {
+        p_lease_owner: 'worker-1',
+        p_lease_seconds: 30,
+        p_replay_safe_job_types: ['safe_job'],
+      });
     });
 
     it('returns null when nothing is claimable', async () => {
       mocks.rpc.mockResolvedValue({ data: [], error: null });
       await expect(claimOutboxJob('worker-1')).resolves.toBeNull();
+    });
+  });
+
+  describe('heartbeatOutboxJob / quarantineOutboxJob', () => {
+    it('extends only the currently owned lease through the recovery RPC', async () => {
+      mocks.rpc.mockResolvedValue({ data: true, error: null });
+      await expect(heartbeatOutboxJob('job-1', 'worker-1', 45)).resolves.toBe(true);
+      expect(mocks.rpc).toHaveBeenCalledWith('heartbeat_outbox_job', {
+        p_job_id: 'job-1',
+        p_lease_owner: 'worker-1',
+        p_lease_seconds: 45,
+      });
+    });
+
+    it('moves an unsafe work item into canonical dead-letter quarantine with evidence', async () => {
+      mocks.rpc.mockResolvedValue({ data: true, error: null });
+      await expect(
+        quarantineOutboxJob('job-1', 'worker-1', new Error('ambiguous side effect')),
+      ).resolves.toBe(true);
+      expect(mocks.rpc).toHaveBeenCalledWith('quarantine_outbox_job', {
+        p_job_id: 'job-1',
+        p_lease_owner: 'worker-1',
+        p_reason: 'ambiguous side effect',
+      });
     });
   });
 
