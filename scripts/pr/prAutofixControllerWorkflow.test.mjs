@@ -13,7 +13,7 @@ test('controller is a privileged completion trigger with rerun fallback and defa
 });
 
 test('classifier is read-only and binds exact same-repository PR head to current main', () => {
-  const block = workflow.split('  classify:\n')[1].split('\n  repair:\n')[0];
+  const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
   for (const token of [
     'actions: read',
     'contents: read',
@@ -33,7 +33,7 @@ test('classifier is read-only and binds exact same-repository PR head to current
 });
 
 test('rerun fallback waits for the exact source run without adding write authority', () => {
-  const classify = workflow.split('  classify:\n')[1].split('\n  repair:\n')[0];
+  const classify = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
   for (const token of [
     'Source-Run bis zum Abschluss exakt binden',
     'github.rest.actions.getWorkflowRun',
@@ -106,4 +106,22 @@ test('repeat-autofix signature trailer is read and written for loop prevention',
   assert.ok(workflow.includes('CAPITAL_AI_AUTOFIX_SIGNATURE:'));
   assert.ok(workflow.includes('previous_autofix_signature'));
   assert.ok(workflow.includes('PREVIOUS_AUTOFIX_SIGNATURE'));
+});
+
+
+test('PR metadata delegation dispatches only the exact failed Governance run to the existing specialist', () => {
+  const block = workflow.split('  delegate_pr_metadata:\n')[1].split('\n  repair:\n')[0];
+  for (const token of [
+    "needs.classify.outputs.decision == 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH'",
+    'actions: write',
+    'contents: read',
+    'pull-requests: read',
+    "sourceRun.path !== '.github/workflows/pr-governance.yml'",
+    "sourceRun.conclusion !== 'failure'",
+    'normalizeSha(pr.head.sha) !== expectedHead',
+    'normalizeSha(main.commit.sha) !== expectedBase',
+    "POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun",
+  ]) assert.ok(block.includes(token), 'missing metadata delegation guard: ' + token);
+  assert.doesNotMatch(block, /pull-requests: write|contents: write/);
+  assert.doesNotMatch(block, /repairLegacyPrBodyStructure\.mjs|updatePrProductionBaseline\.mjs/);
 });
