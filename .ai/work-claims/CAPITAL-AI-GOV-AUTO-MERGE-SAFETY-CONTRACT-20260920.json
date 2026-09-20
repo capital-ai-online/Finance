@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "CAPITAL-AI-GOV-AUTO-MERGE-SAFETY-CONTRACT-20260920",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-GOV",
+  "owner": "CAPITAL-AI-GOV",
+  "pvc": "PVC-05",
+  "branch": "agent/governance-auto-merge-safety-contract-20260920",
+  "baseSha": "24850d31cc503b28b1ff786b377826733bf9671f",
+  "scope": [
+    "AGENTS.md",
+    ".github/pull_request_template.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/governance/evidence/AUTO_MERGE_SAFETY_CONTRACT_2026-09-20.md"
+  ],
+  "purpose": "Introduce a fail-closed per-PR Auto-Merge Safety Contract before SH-02.7 may use auto-merge.",
+  "boundaries": [
+    "No direct merge",
+    "No ruleset weakening or bypass",
+    "No auto-merge for this governance/control-plane PR",
+    "Existing PRs retain their declared merge mode unless explicitly migrated",
+    "SH-02.7 remains unable to use auto-merge until this contract is Human-merged onto current main."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, close, supersession or abandonment."
+}
