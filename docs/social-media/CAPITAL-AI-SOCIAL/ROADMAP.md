@@ -182,11 +182,13 @@ Detect stale copy, policy drift, provider-contract drift, platform-limit drift, 
 **Exit gate:** reproducible real-audio benchmark evidence + exact artifact-license inventory + output hashes + Social acceptance decision; no autonomous publication and no secret/model-host authority added.
 
 ### `SOCIAL-P2` — Short-video + voice-over integration
-**State:** `BLOCKED — REQUIRES VALIDATED SOCIAL-P1 RUNTIME RESULT`
+**State:** `IN_PROGRESS — PREPARATORY VOICE-OVER INTEGRATION / P1 HUMAN-LISTENING GATE ENFORCED`
 
-**Scope:** connect approved script + validated assets + selected TTS output to the existing deterministic short renderer and asset/publishing preparation boundary. Preserve original source assets, brand validation, hashes, duration metadata and explicit `publishReady=false` until existing approval/execution gates are satisfied.
+**Scope:** connect approved script + validated assets + selected TTS output to the existing deterministic short renderer and asset/publishing preparation boundary. Human/Owner direction on 2026-09-20 starts the repository-side integration now. Real audio remains fail-closed unless exact TTS/content/audio identity, runtime/license evidence and Human/Owner listening `PASS` are present. Preserve original source assets, brand validation, hashes, duration metadata and explicit `publishReady=false` until existing approval/execution gates are satisfied.
 
-**Exit gate:** deterministic approximately-20-second fixture render with exact input/asset hashes, voice manifest, brand/logo validation, negative tests, and no direct publishing side effect. Productive FFmpeg licensing/build profile must be independently acceptable before production use.
+**Current implementation:** `scripts/media/capital_ai_media.py` and `scripts/media/render_content_assets.py` are being extended rather than replaced. The first slice adds local voice-over binding, immutable TTS/content evidence propagation, SHA verification, path-traversal/remote-input denial, deterministic audio mux and exact audio-stream validation while retaining the silent path.
+
+**Exit gate:** deterministic approximately-20-second fixture render with exact input/asset hashes, voice manifest, brand/logo validation, negative tests, A/V evidence, and no direct publishing side effect. Productive FFmpeg licensing/build profile must be independently acceptable before production use.
 
 ### `SOCIAL-P3` — Publication/analytics evidence completion
 **State:** `NOW — HIGHEST-PRIORITY SOCIAL-OWNED UNBLOCKED FOLLOW-UP`
