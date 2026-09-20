@@ -18,6 +18,18 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain('workflow_dispatch: {}');
   });
 
+  it('uses an approved review as the exact-PR pre-merge synchronization checkpoint', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('pull_request_review:\n    types: [submitted]');
+    expect(yaml).toContain("github.event_name == 'pull_request_review'");
+    expect(yaml).toContain("github.event.review.state == 'approved'");
+    expect(yaml).toContain("github.event.pull_request.base.ref == 'main'");
+    expect(yaml).toContain("github.event.pull_request.head.repo.full_name == github.repository");
+    expect(yaml).toContain("if [ \"$EVENT_NAME\" = 'pull_request' ] || [ \"$EVENT_NAME\" = 'pull_request_review' ]; then");
+    expect(yaml).toContain("if: github.event_name == 'workflow_run' || github.event_name == 'pull_request_review'");
+    expect(yaml).toContain("(github.event_name == 'workflow_run' || github.event_name == 'pull_request_review') && steps.app_token.outputs.token");
+  });
+
   it('hard-binds the privileged correlation source before allocating the write lane', () => {
     const yaml = workflow();
     expect(yaml).toContain('github.event.workflow_run.repository.full_name == github.repository');
