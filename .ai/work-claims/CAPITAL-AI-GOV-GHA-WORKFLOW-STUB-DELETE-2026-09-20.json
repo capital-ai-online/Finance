@@ -18,6 +18,7 @@
   "projectFolder": "governance",
   "projectStage": "PVC-05",
   "primaryOwner": "CAPITAL-AI-GOV",
+  "pullRequest": 1099,
   "productionBaseline": {
     "checkedAt": "2026-09-20T04:15:03.329Z",
     "version": "0.6.0",
