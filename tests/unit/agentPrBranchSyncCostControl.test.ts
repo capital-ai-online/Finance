@@ -78,9 +78,56 @@ describe('post-correlation next PR pipeline gate', () => {
 
   it('binds update-branch to the observed exact PR head SHA', () => {
     const yaml = workflow();
-    expect(yaml).toContain("grep -Eq '^[0-9a-f]{40}$'");
+    expect(yaml).toContain("grep -Eq '^[0-9a-f]{40}
+
+  it('stops fail-closed instead of skipping a selected stacked PR', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("Updating a stacked PR's branch via this endpoint is not supported");
+    expect(yaml).toContain("&& grep -qi '403' err.log");
+    expect(yaml).toContain('Post-Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen.');
+  });
+
+  it('shares the canonical PR writer lease for ready-for-review and serializes the dynamic continuation lane', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("format('capital-ai-pr-writer-{0}', github.event.pull_request.number)");
+    expect(yaml).toContain("'capital-ai-post-merge-continuation-main'");
+    expect(yaml).toContain('cancel-in-progress: false');
+  });
+
+  it('binds every post-correlation update to the canonical PR generation immediately before mutation', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('node policy/scripts/pr/prConvergenceGeneration.mjs');
+    expect(yaml).toContain('generation="$(generation_for "$number" "$head_sha" "$current_main_sha")"');
+    expect(yaml).toContain('live_generation="$(generation_for "$number" "$live_head_sha" "$live_main_sha")"');
+    expect(yaml).toContain('Continuation Generation drifted before mutation');
+    expect(yaml).toContain('gh api "repos/$REPO/compare/$current_main_sha...$head_sha"');
+  });
+
+  it('treats update-branch 422 as converged only after exact current-main ancestry readback', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('422 is ambiguous');
+    expect(yaml).toContain('after_lineage');
+    expect(yaml).toContain('422 ohne beweisbare Konvergenz');
+    expect(yaml).toContain("[ \"$after_lineage\" = 'ahead' ]");
+    expect(yaml).toContain("[ \"$after_lineage\" = 'identical' ]");
+  });
+
+  it('uses a pinned GitHub App token only for the trusted automatic lane', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('contents: write');
+    expect(yaml).toContain('pull-requests: write');
+    expect(yaml).toContain("if: github.event_name == 'workflow_run'");
+    expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
+    expect(yaml).toContain('client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}');
+    expect(yaml).toContain('private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}');
+    expect(yaml).toContain('permission-contents: write');
+    expect(yaml).toContain('permission-pull-requests: write');
+    expect(yaml).toContain("GH_TOKEN: ${{ github.event_name == 'workflow_run' && steps.app_token.outputs.token || github.token }}");
+  });
+});
+");
     expect(yaml).toContain('-f "expected_head_sha=$head_sha"');
-    expect(yaml).toContain('bereits aktuell, Head inzwischen geaendert oder Update laeuft schon (422)');
+    expect(yaml).toContain('422 is ambiguous: accept it only after exact CURRENT_MAIN ancestry readback.');
   });
 
   it('stops fail-closed instead of skipping a selected stacked PR', () => {
