@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "DOCUMENTARY-WP06D-DRAFT-PR-HANDOFF-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Connect validated Documentary AUTO_SYNC branches to the canonical trusted Draft-PR handoff while preserving fail-closed semantic maintenance authorization.",
+  "workItemDE": "Validierte Documentary-AUTO_SYNC-Branches an den kanonischen vertrauenswürdigen Draft-PR-Handoff anbinden und semantische Maintenance weiterhin fail-closed autorisieren.",
+  "priority": "P1",
+  "priorityReason": "Schließt die automatische Documentary-Selbstheilung bis zum Draft-PR-Handoff, ohne Merge- oder Deploy-Autorität zu erweitern.",
+  "projectId": "CAPITAL-AI-DOC",
+  "projectFolder": "docs/projects/documentary/",
+  "projectStage": "PVC-03",
+  "startedAt": "2026-09-20T11:44:00Z",
+  "baseBranch": "main",
+  "baseSha": "6889a7c5f7f5ac0176ea500b251ada795cf628e4",
+  "branch": "agent/documentary-wp06d-draft-pr-handoff-current-main-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/DOCUMENTARY-WP06D-DRAFT-PR-HANDOFF-20260920.json",
+    ".github/workflows/documentary-change-impact.yml",
+    ".github/workflows/open-agent-draft-pr.yml",
+    "docs/projects/documentary/work-packages/CAPITAL-AI-DOC-REPO-STRUCTURE-ARCHIVE-01/WP_06_APPLICATION_WIDE_DOCUMENTARY_AUTO_CONVERGENCE.md",
+    "package.json",
+    "scripts/automation/buildDocumentaryMaintenanceHandoff.ts",
+    "scripts/pr/documentaryMaintenanceHandoffWorkflow.test.mjs",
+    "scripts/pr/renderPullRequestBody.mjs",
+    "src/platform/Documentary/Orchestration/DocumentaryMaintenanceHandoff.ts",
+    "tests/unit/documentaryDraftPrHandoff.test.ts",
+    "tests/unit/documentaryMaintenanceHandoff.test.ts",
+    "tests/unit/githubAgentDraftPrWorkflow.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+}
