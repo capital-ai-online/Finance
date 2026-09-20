@@ -6,8 +6,10 @@
 **Frontend participant:** `CAPITAL-AI-FE` (presentation/recovery only; no productive PVC)  
 **Priority:** P0  
 **Status:** ACTIVE / OWNER-DIRECTED / IMPLEMENTATION STARTED  
-**Baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`  
-**Branch:** `agent/operations-autonomous-self-healing-platform-20260920`  
+**Initial baseline:** `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`  
+**Initial slice:** merged via PR #1122  
+**Current SH-02.3 baseline:** `main@e99919bffd7d2e02cf5d871dd64a24c6c1d8bce2`  
+**Current branch:** `agent/operations-self-healing-contract-20260920`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -20,10 +22,10 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 
 | WP | Scope | Owner/PVC | Dependencies | Exit gate | State |
 |---|---|---|---|---|---|
-| SH-02.0 | Authority/supersession + architecture baseline | OPS / PVC-08 | current main | stale owner-gating projections reconciled to current trust root; no weakened gate | IMPLEMENTED_BRANCH |
-| SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
-| SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
-| SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | QUEUED |
+| SH-02.0 | Authority/supersession + architecture baseline | OPS / PVC-08 | current main | stale owner-gating projections reconciled to current trust root; no weakened gate | IMPLEMENTED_ON_MAIN |
+| SH-02.1 | Backend liveness/lifecycle convergence | OPS / PVC-08,04 | 02.0 | one /healthz authority; fatal process state -> 503; duplicate fatal listeners removed | IMPLEMENTED_ON_MAIN |
+| SH-02.2 | Frontend bounded recovery boundary | FE + OPS / cross-cutting | 02.0 | stale deployment-asset failures auto-reload at most once per fingerprint/session; persistent failures do not loop | IMPLEMENTED_ON_MAIN |
+| SH-02.3 | Self-Healing finding/action contract | OPS / PVC-04,18 | 02.1 | deterministic drift taxonomy, action registry, budgets, cooldowns, kill switches, verification | IMPLEMENTED_BRANCH / VALIDATION_PENDING |
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | QUEUED |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | QUEUED |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | QUEUED |
@@ -119,6 +121,18 @@ OBSERVED
 ```
 
 No self-healing action may recursively authorize itself.
+
+### SH-02.3 branch implementation
+
+- `src/platform/Supervisor/selfHealingContract.ts` is the single pure contract/registry surface; it creates no second Supervisor and performs no provider mutation.
+- all canonical finding classes resolve to deterministic remediation policies;
+- every action carries tier, activation state, idempotency class, blast radius, bounded attempt/cooldown/timeout budget, kill switch and verification probe;
+- SH-2/SH-3 actions are `HELD` and require an external capability contract; the registry cannot grant its own capability;
+- the only state-changing SH-1 action already marked `ENABLED` is the previously implemented one-shot frontend stale-asset reload;
+- the Supervisor exposes contract validity separately from executable runtime self-healing and now reports `capabilities.selfHealing=false` until SH-02.4+ bind and verify concrete executors;
+- focused unit tests cover taxonomy completeness, held protected actions, one-shot budgeting, fail-closed eligibility, legal state transitions and verification-to-convergence semantics.
+
+Validation remains `VALIDATION_PENDING` until repository CI evaluates the final PR head.
 
 ## SH-02.4 — Backend dependency resilience
 
