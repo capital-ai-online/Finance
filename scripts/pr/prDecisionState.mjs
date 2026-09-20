@@ -70,6 +70,28 @@ export function summarizeDecisionBlockers(gates) {
   return 'Keine';
 }
 
+export function summarizeLiveDecisionSync(gates) {
+  return [
+    'Main ' + formatDecisionGateState(gates?.main),
+    'Checks ' + formatDecisionGateState(gates?.checks),
+    'Security ' + formatDecisionGateState(gates?.security),
+    'Baseline ' + formatDecisionGateState(gates?.baseline),
+  ].join(' · ');
+}
+
+export function nextVerifiableDecisionStep(gates) {
+  const blocked = [];
+  const pending = [];
+  for (const { key, label } of PR_DECISION_GATES) {
+    const state = normalizeDecisionGateState(gates?.[key], 'PENDING');
+    if (state === 'BLOCKED') blocked.push(label);
+    else if (state === 'PENDING') pending.push(label);
+  }
+  if (blocked.length > 0) return 'Blocker beheben und Evidence neu korrelieren: ' + blocked.join(', ');
+  if (pending.length > 0) return 'Ausstehende Evidence vervollständigen: ' + pending.join(', ');
+  return 'Merge-Modus anhand des Auto-Merge Safety Contract revalidieren';
+}
+
 export function decisionImpactLabel(prClass, securityGate = 'PENDING') {
   const klass = String(prClass || '').trim().toUpperCase();
   const labels = Object.freeze({
