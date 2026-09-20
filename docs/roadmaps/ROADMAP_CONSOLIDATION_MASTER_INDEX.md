@@ -23,8 +23,7 @@ The withdrawn Roadmap Registry policy surface is not current. Folder-to-PVC owne
 | `CAPITAL-AI-OPS` | `PVC-02`, `PVC-04`, `PVC-06`, `PVC-07`, `PVC-08`, `PVC-18` | [`docs/projects/operations/ROADMAP.md`](../projects/operations/ROADMAP.md) |
 | `CAPITAL-AI-DOC` | `PVC-03` | [`docs/projects/documentary/ROADMAP.md`](../projects/documentary/ROADMAP.md) |
 | `CAPITAL-AI-GOV` | `PVC-05` + cross-cutting Governance | [`docs/projects/governance/ROADMAP.md`](../projects/governance/ROADMAP.md) |
-| `CAPITAL-AI-DATA` | `PVC-09..PVC-11` | [`docs/projects/data/ROADMAP.md`](../projects/data/ROADMAP.md) |
-| `CAPITAL-AI-FINTECH` | `PVC-12..PVC-17` | [`docs/projects/fintech/ROADMAP.md`](../projects/fintech/ROADMAP.md) |
+| `CAPITAL-AI-FINTECH` | `PVC-09..PVC-17` | [`docs/projects/fintech/ROADMAP.md`](../projects/fintech/ROADMAP.md) |
 | `CAPITAL-AI-QM` | cross-cutting | [`docs/projects/quality-management/ROADMAP.md`](../projects/quality-management/ROADMAP.md) |
 | `CAPITAL-AI-SEC` | cross-cutting | [`docs/projects/security/ROADMAP.md`](../projects/security/ROADMAP.md) |
 | `CAPITAL-AI-COMP` | cross-cutting | [`docs/projects/compliance/ROADMAP.md`](../projects/compliance/ROADMAP.md) |
