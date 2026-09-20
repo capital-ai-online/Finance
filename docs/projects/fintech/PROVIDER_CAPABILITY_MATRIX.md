@@ -82,7 +82,7 @@ FINTECH owns the mapping:
 
 `asset class -> financial feature/model requirement -> required provider capability`.
 
-`CAPITAL-AI-DATA / PVC-09..11` retains provider ingestion, canonical evidence identity, freshness and DQ. `CAPITAL-AI-SEC` retains credential/API Security requirements and independent Security verification. Provider availability never grants scoring or entitlement authority.
+`CAPITAL-AI-FINTECH / PVC-09..11` retains provider ingestion, canonical evidence identity, freshness and DQ. `CAPITAL-AI-SEC` retains credential/API Security requirements and independent Security verification. Provider availability never grants scoring or entitlement authority.
 
 ## Correlated open work
 
