@@ -8,9 +8,9 @@
 
 **ACTIVE — CANONICAL EXECUTION ROADMAP (Domain SEO / Google Marketing / Content Distribution)**  
 Stand: 2026-09-20  
-Version: **0002.17**  
-Current-main correlation: `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`  
-Working branch: `agent/seo-public-launch-management-main-sync-v2-20260920`  
+Version: **0002.18**  
+Current-main correlation: `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`  
+Working branch: `agent/seo-launch-01-production-baseline-wave1-20260920`  
 Repository: `capital-ai-online/Finance`  
 Owner: SvenKulessa / `CAPITAL-AI-SEO` project coordination  
 Primary productive PVC: **N/A — cross-cutting; no productive PVC ownership**  
@@ -19,6 +19,8 @@ Authority-Bindung: current `/AGENTS.md`, anwendbare Accepted ADR / aktive ESS. D
 > **0002.16 Owner-directed reopening.** Der mit 0002.15 geschlossene damalige SEO-Dokumentationsscope bleibt historisch korrekt. Die Owner-Anweisung vom 2026-09-07 eröffnet einen neuen, begrenzten Work Item: State-of-the-Art-SEO-Roadmap gegen current `main` korrelieren, fehlende Features aufnehmen und alle Arbeitspakete mindestens bis zu ihrer zulässigen Ownership-/Credential-Grenze starten. Nach Übertragung derselben Repository-Instanz auf `capital-ai-online/Finance` wird dieser Scope auf current main neu materialisiert. Produktive FE/OPS/GOV/COMP-Änderungen werden nicht in SEO-Ownership gezogen.
 
 > **0002.17 Owner-directed public launch convergence.** Die Owner-Anweisung vom 2026-09-20 aktiviert `WP-SEO-LAUNCH-01` als übergeordneten Launch-Management-Slice über die bereits vorhandenen SEO-, Landing-, Measurement- und Social-Fähigkeiten. Das Detailpaket liegt unter `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`. Es erzeugt keine zweite Roadmap, keine Publishing- oder Provider-Autorität und übernimmt keine FE/SOCIAL/OPS/GOV/SEC/COMP/FINTECH/QM-Ownership.
+
+> **0002.18 Owner-directed launch execution.** Der Owner startet Production-/CTA-Freeze, GSC/GA4-Baseline und die X/Facebook-Wave. Repository-CTA-/URL-Evidence ist materialisiert; Production ist beim Readback nicht exakt auf `CURRENT_MAIN`, GSC/GA4 sind in diesem Chat nicht verbunden und die produktive Social-Account-Tabelle enthält keine X-/Facebook-Verbindung. Deshalb bleiben diese Lanes explizit non-PASS. Detail-Evidence: `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.
 
 ## Zweck
 
@@ -68,9 +70,9 @@ Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, 
 
 | WP | Status | Evidence / Gate |
 |---|---|---|
-| Q1 robots + sitemap + Harden | **IMPLEMENTED_ON_MAIN + zuletzt live verifiziert 2026-09-06** | PR #760; fünf kanonische URLs inkl. `/learning-platform`; Regression `tests/unit/seoPublicRouteSitemap.test.ts` |
+| Q1 robots + sitemap + Harden | **IMPLEMENTED_ON_MAIN / CURRENT REPOSITORY SET = 6 URLS** | aktueller Sitemap-/Route-/Prerender-Set enthält zusätzlich `/universe`; historische Live-/GSC-Evidence vor dieser Erweiterung beweist nicht automatisch die sechste URL |
 | Q2 canonical + trailing slash | **IMPLEMENTED_ON_MAIN** | Route-SEO + Server-Normalisierung; frischer Provider-Smoke in diesem Pass nicht ausgeführt |
-| Q3 Search Console Verify | **READ_VERIFIED 2026-09-16** | reale Provider-Evidence für `sc-domain:capital-ai.online` und fünf URL-Inspection-Reads; Performance-/Search-Analytics-Lane bleibt separat offen |
+| Q3 Search Console Verify | **HISTORICAL_READ_VERIFIED / CURRENT_READ_BLOCKED_NOT_CONNECTED** | reale 2026-09-16 Provider-Evidence für `sc-domain:capital-ai.online` + fünf URL-Inspection-Reads; aktueller 6-URL-Set inkl. `/universe` und Search Analytics nicht frisch lesbar |
 | Q4 Checklist | **IMPLEMENTED_ON_MAIN** | `docs/seo/SEO_CHECKLIST.md` |
 | Q5 og:image | **IMPLEMENTED_ON_MAIN** | first-party `public/og-image.svg` |
 | D1 JSON-LD | **IMPLEMENTED_ON_MAIN** | Organization/WebSite/SoftwareApplication |
@@ -88,8 +90,8 @@ Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, 
 | Thema | Status | Gate |
 |---|---|---|
 | GA4 Browser-ID | zuletzt live beobachtet | kein Data-API-PASS in diesem Pass |
-| GA4 MCP / Realtime | **NOT ENABLED / nicht neu verifiziert** | ESS-0014 Read-Plane |
-| Search Console read plane | **PROPERTY + URL INSPECTION READ VERIFIED** | Search Analytics / GenAI performance remain separate provider-evidence gates |
+| GA4 MCP / Realtime | **READ_BLOCKED_NOT_CONNECTED** | Repository-Hostvertrag existiert; Provider-Tool/Credentials sind diesem Chat nicht exponiert; daraus wird kein NO_DATA/PASS abgeleitet |
+| Search Console read plane | **HISTORICAL PROPERTY + 5 URL INSPECTIONS VERIFIED / CURRENT PERFORMANCE READ BLOCKED** | `/universe`, Search Analytics und GenAI performance benötigen frische Provider-Evidence |
 | Consent / Google measurement | **CURRENT-MAIN CONSENT-GATED ARCHITECTURE** | kein frischer Pre-Opt-in-/Provider-Trace in diesem Work Item; kein PASS aus Konfiguration abgeleitet |
 | `GOOGLE_VISIBLE_PASS` | **NOT ENABLED** | keine frische Search-Console-/SERP-Evidence in diesem Pass |
 | GenAI Search visibility | **BASELINE NOT YET READ** | neuer Search-Console-GenAI-Report; Credential-Gate |
@@ -97,13 +99,13 @@ Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, 
 ### 3.3 Repository-Correlation
 
 - Repository: `capital-ai-online/Finance`.
-- Current-main baseline for this Work Item: `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`.
-- `/AGENTS.md@CURRENT_MAIN` is Control Plane `4.6.0` and remains the single repository-wide development instruction surface.
+- Current-main baseline for this execution slice: `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`.
+- `/AGENTS.md@CURRENT_MAIN` remains Control Plane `4.6.0`.
 - Current Project: `CAPITAL-AI-SEO`; Project Folder: `docs/projects/seo/`; Primary productive PVC: `N/A — cross-cutting`; Primary Owner: `CAPITAL-AI-SEO`.
-- Human/CODEOWNER-merged PR `#1153` belongs to `CAPITAL-AI-FE` and is now part of current main; its landing shell is the repository-side launch baseline. Production/runtime readback remains independently required.
-- Open PR `#1154` belongs to `CAPITAL-AI-DOC` and addresses repository-structure convergence; at this correlation it has no changed-file overlap with the SEO package and no SEO ownership transfer.
-- This Work Item changes SEO documentation/projection files plus its work claim only. It does not mutate Frontend, Social provider adapters, production runtime, credentials, publishing, billing, FINTECH scoring/domain logic or provider configuration.
-- FE performance/landing implementation, SOCIAL distribution/publishing, OPS runtime/deploy, GOV controls, SEC assurance, COMP/privacy/legal assessment, FINTECH factual domain truth and QM independent assurance remain owner-correct foreign dependencies.
+- Human/CODEOWNER-merged PRs `#1153` and `#1159` are part of the repository launch candidate.
+- Open PRs `#1164` (GOV), `#1165` (SEC) and `#1167` (FE claim closure) have no changed-file overlap with this SEO execution slice at branch creation; Security assurance remains an independent final-launch input.
+- Production initially lagged current main, then converged through canonical main CI run `35529208910`: deploy-hook trigger at `18:32:47Z` was 215 s after the main commit and Render deploy `dep-dao2dk0ae00c73aha6c0` is live at exact `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`; snapshot-bound Production freeze is `PASS`.
+- This SEO slice owns launch coordination/evidence only. FE metadata implementation, OPS deployment, SOCIAL provider packages/publication, COMP privacy/legal and QM assurance stay foreign-owner work.
 
 ---
 
@@ -132,9 +134,9 @@ Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, 
 
 ## 5. State-of-the-Art Work Packages
 
-| WP | Ziel | Primary Owner / Route | Impact | Effort | Status in 0002.17 | Exit Gate |
+| WP | Ziel | Primary Owner / Route | Impact | Effort | Status in 0002.18 | Exit Gate |
 |---|---|---|---|---|---|---|
-| `WP-SEO-LAUNCH-01` | Web-, Search- und Social-Readiness als eine evidence-basierte Public-Launch-Kette konvergieren; kein zweites Marketing-/Publishing-System | `CAPITAL-AI-SEO` coordination -> FE/SOCIAL/OPS/GOV/SEC/COMP/FINTECH/QM | H | L | **STARTED** | gleiche Launch-Candidate-Identity über Web/SEO/Measurement/Social/Production-Evidence; alle Blocker klassifiziert; finale Public-Launch-Entscheidung bleibt Human Owner |
+| `WP-SEO-LAUNCH-01` | Web-, Search- und Social-Readiness als eine evidence-basierte Public-Launch-Kette konvergieren; kein zweites Marketing-/Publishing-System | `CAPITAL-AI-SEO` coordination -> FE/SOCIAL/OPS/GOV/SEC/COMP/FINTECH/QM | H | L | **EXECUTION_STARTED / PROVIDER_GATES_OPEN** | gleiche Launch-Candidate-Identity über Web/SEO/Measurement/Social/Production-Evidence; alle Blocker klassifiziert; finale Public-Launch-Entscheidung bleibt Human Owner |
 | `WP-SEO-METRICS` | KPI-Baseline aus GSC + GA4: Clicks, Impressions, CTR, Queries, Landingpages, Organic Sessions/Conversions; Differenzen erklärbar statt „gleichgerechnet“ | SEO coordination; Owner credentials; ESS-0014 | H | M | **STARTED_AT_GATE** | reproduzierbarer Read-Snapshot + KPI-Baseline; keine synthetischen Werte |
 | `WP-SEO-AI-VIS` | GenAI Search / AI Overview / AI Mode Visibility im neuen Search-Console-Report messen | SEO coordination; GSC read credentials | H | S | **STARTED_AT_GATE** | GenAI-Impressions/Clicks bzw. dokumentiertes „keine Daten“ aus echter GSC-Evidence |
 | `WP-SEO-TECH-GATE` | Crawl-/Index-Release-Gate: Public-Route = Sitemap = Canonical-Allowlist; 404/redirect/noindex/JS-canonical-Konsistenz | SEO requirements; FE/OPS productive implementation | H | M | **STARTED_AT_BOUNDARY** | automatisierbare Prüfung + Owner-implementierte Regression; keine Canonical-/Sitemap-Drift |
@@ -161,7 +163,7 @@ Der aktuelle Owner-Auftrag ist als detailliertes Launch-Management-Paket materia
 
 `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`
 
-Es führt bestehende SEO-/Search-, Landing-, Analytics-, Content- und Social-Gates in einer T-relativen Launch-Kette zusammen. Produktive Foreign-Owner-Änderungen werden nicht in diesem SEO-Branch ausgeführt. Der offene FE-PR `#1153` bleibt bis zum Human/CODEOWNER-Merge lediglich Dependency-/Correlation-Evidence.
+Es führt bestehende SEO-/Search-, Landing-, Analytics-, Content- und Social-Gates in einer T-relativen Launch-Kette zusammen. Die aktuelle Execution-Baseline ist unter `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md` materialisiert. Produktive Foreign-Owner-Änderungen werden nicht in diesem SEO-Branch ausgeführt.
 
 
 ### 6.1 SEO-owned sofort gestartet
@@ -267,7 +269,7 @@ Für `WP-SEO-TECH-GATE`, `WP-SEO-SCHEMA`, `WP-SEO-CWV`, `WP-SEO-IA`, `WP-SEO-MED
 
 ### NOW — 0–30 Tage
 
-1. `WP-SEO-LAUNCH-01`: den durch PR #1153 gemergten Landing-/Message-/CTA-Stand gegen `CURRENT_MAIN` einfrieren, Launch-Evidence-Bundle aufbauen und Web/Search/Social-Go-Public-Gates korrelieren.
+1. `WP-SEO-LAUNCH-01`: aktuellen durch PRs #1153/#1159 geprägten Landing-/CTA-Stand korrelieren; Production-Drift, FE-Metadata-Handoff, GSC/GA4 Read-Gates und X/Facebook Provider-Account-Gate bis zur echten Evidence konvergieren.
 2. `WP-SEO-METRICS` + `WP-SEO-AI-VIS`: echte read-only GSC/GA4-Baseline, falls Owner-Credentials freigegeben/verfügbar.
 3. `WP-SEO-TECH-GATE` + `WP-SEO-SCHEMA`: FE/OPS-Handoff für automatisierbare Crawl-/Canonical-/Structured-Data-Regressions.
 4. `WP-SEO-TOPICS` + `WP-SEO-CONTENT`: Seed Map mit echten Query-/Intent-Daten anreichern und erstes nicht-kommodifiziertes Pilot-Brief priorisieren.
@@ -304,7 +306,7 @@ Für `WP-SEO-TECH-GATE`, `WP-SEO-SCHEMA`, `WP-SEO-CWV`, `WP-SEO-IA`, `WP-SEO-MED
 
 ---
 
-## 10. Definition of Done — 0002.17 Launch Management Work Item
+## 10. Definition of Done — 0002.18 Launch Execution Work Item
 
 Dieses Work Item ist repository-seitig fertig, wenn:
 
@@ -312,7 +314,8 @@ Dieses Work Item ist repository-seitig fertig, wenn:
 - `WP-SEO-LAUNCH-01` als Detailpaket vorliegt und bestehende SEO-/Social-/Product-Authorities referenziert statt dupliziert;
 - `docs/projects/seo/ROADMAP.md` und diese konsolidierte Programm-Roadmap denselben aktiven Launch-Slice auf die gleiche current-main Baseline projizieren;
 - Web-, Search-, Measurement-, Content-, Social-, Production-, Security-/Compliance- und QM-Gates mit Owner, Evidence und Exit State definiert sind;
-- der durch PR `#1153` gemergte Landing-Stand als current-main Produktbaseline behandelt wird, ohne daraus ungeprüfte Production-Evidence abzuleiten;
+- der durch PRs `#1153` und `#1159` geprägte current-main Landing-Stand als Repository-Produktbaseline behandelt wird, ohne daraus ungeprüfte Production-/Provider-Evidence abzuleiten;
+- Production-Drift, Root-Metadata-Drift, GSC/GA4-Connection-Gates und fehlende X/Facebook-Account-Identitäten explizit als non-PASS dokumentiert sind;
 - keine Produktiv-/Provider-/Publishing-/Credential-Mutation aus SEO-Ownership erfolgt;
 - ausgeführte und nicht ausgeführte Checks getrennt dokumentiert sind.
 
@@ -329,3 +332,4 @@ Das **Gesamtprogramm** bleibt offen, solange der Public-Launch-Exit-Gate, Provid
 | 0002.15 | 2026-09-06 | damaliger SEO-Dokumentations-Closeout nach Q1-Production; Restqueue owner-/foreign-owner-gated |
 | **0002.16** | **2026-09-11** | Owner-directed SoTA-Reopening aus dem 2026-09-07 Work Item auf die übertragene Repository-Instanz `capital-ai-online/Finance`; final re-korreliert gegen `main@12c9e129c7302df0d1bce7640cd7888f0998b9ca`, moderne Roadmap-Mechanik, GenAI Search, GSC+GA4, CWV, content/topic/IA/media/authority/spam/refresh WPs ergänzt und alle Pakete bis zu ihrem zulässigen Gate gestartet |
 | **0002.17** | **2026-09-20** | Owner-directed `WP-SEO-LAUNCH-01` ergänzt: öffentliche Web-/Search-/Social-Launch-Kette, Landing-/CTA-Dependency auf offenen FE-PR #1153, consent-safe Measurement, Social-Package-/Provider-Evidence, T-relativer Launchkalender und same-candidate Launch-Gates; current-main re-korreliert auf `c9980602f691b855fd6f8c66a49822e7a9611b4a` |
+| **0002.18** | **2026-09-20** | Launch-Ausführung gegen `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`: CTA-/6-URL-Repository-Freeze, initialer Production-Drift plus canonical exact-SHA Recovery/SLA-PASS, Root-Metadata-Handoff, GSC/GA4 `READ_BLOCKED_NOT_CONNECTED`, reale Supabase-Readback-Evidence ohne X/Facebook-Accounts und owner-korrekte Social-Wave-1-Übergabe materialisiert |

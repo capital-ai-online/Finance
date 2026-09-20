@@ -2,7 +2,7 @@
 
 **Status:** ACTIVE — OWNER-DIRECTED WORK PACKAGE  
 **Date:** 2026-09-20  
-**Execution baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`  
+**Execution baseline:** `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`  
 **Project:** `CAPITAL-AI-SEO`  
 **Canonical project folder:** `docs/projects/seo/`  
 **Primary productive PVC:** N/A — cross-cutting; no productive PVC ownership  
@@ -50,16 +50,17 @@ The package is a coordination and acceptance layer. Productive implementation re
 Current public sitemap set evidenced by the SEO project includes:
 
 1. `/`
-2. `/learning-platform`
-3. `/impressum`
-4. `/agb`
-5. `/datenschutz`
+2. `/universe`
+3. `/learning-platform`
+4. `/impressum`
+5. `/agb`
+6. `/datenschutz`
 
 Historical provider evidence from 2026-09-16 records `/learning-platform` as discovered but not indexed. That finding is not treated as a provider failure and does not justify synthetic success.
 
 ### 2.2 Landing-page dependency
 
-Human/CODEOWNER-merged PR `#1153` (`CAPITAL-AI-FE`) is now part of `CURRENT_MAIN` and provides the public landing visual-fidelity baseline.
+Human/CODEOWNER-merged PR `#1153` (`CAPITAL-AI-FE`) provides the public landing visual-fidelity baseline, and later Human/CODEOWNER-merged PR `#1159` adds the canonical AI-Newsfeed landing integration. Both are part of the current launch candidate.
 
 Launch messaging, screenshots, Social launch assets and final conversion-path acceptance MUST be frozen against this merged/current landing state and re-read after any later landing change. Production/runtime evidence remains a separate gate; merge-to-main alone is not production verification.
 
@@ -78,6 +79,24 @@ Repository-evidenced provider capabilities:
 | Mastodon | no provider adapter evidenced | out of scope |
 
 Provider adapter presence is not credential evidence and is not publication evidence.
+
+## 2.4 Execution readback — 2026-09-20
+
+Detailed evidence: `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.
+
+Current classification:
+
+- repository landing + actionable CTA inventory: `PASS_REPOSITORY`;
+- current sitemap/public URL set: six URLs including `/universe`;
+- exact Production ↔ CURRENT_MAIN: `PASS` after canonical automatic recovery; main CI run `35529208910` and Render deploy `dep-dao2dk0ae00c73aha6c0` bind Production to exact `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`;
+- root SEO/prerender message parity with the visible landing: `OPEN_FE_HANDOFF`;
+- GSC current Search Analytics and six-URL inspection baseline: `READ_BLOCKED_NOT_CONNECTED`;
+- GA4 Data API/MCP baseline: `READ_BLOCKED_NOT_CONNECTED`;
+- X/Facebook production account identities: `NOT_CONNECTED`;
+- Wave-1 source content/handoff: `STARTED`;
+- X/Facebook provider publication: `NOT_RUN`.
+
+The SEO work item stops at FE/OPS/SOCIAL ownership boundaries and does not bypass provider identity, production deployment or publication gates.
 
 ## 3. Launch principles
 
@@ -411,9 +430,9 @@ No secret/token material is included.
 
 ## 14. Current blockers / open gates at creation
 
-1. PR `#1153` is merged and therefore satisfies the repository-side landing dependency; production deployment/readback of the merged landing remains a separate launch gate.
-2. Current SEO evidence confirms Search Console property/URL Inspection history, but Search Analytics and GA4 provider readback remain independently evidence-gated.
-3. Social analytics adapter/provider evidence is not generally verified in the current channel matrix.
+1. PRs `#1153` and `#1159` are merged and form the current repository landing candidate; the exact current-main Production gate recovered through the canonical CI→Render path and is PASS for snapshot `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`.
+2. Current SEO evidence confirms historical Search Console property/five-URL Inspection evidence, while the current six-URL set (including `/universe`), Search Analytics and GA4 provider reads are currently `READ_BLOCKED_NOT_CONNECTED` in this execution.
+3. Current production Social-account readback shows no connected X or Facebook account; Wave-1 publication is therefore `BLOCKED_PROVIDER_ACCOUNT_IDENTITY`. Social analytics adapter/provider evidence is also not verified.
 4. Media-first Social channels require real validated media; no synthetic launch asset is accepted.
 5. Final public launch date is intentionally not invented; calendar uses T-relative sequencing until the Owner selects the date.
 
