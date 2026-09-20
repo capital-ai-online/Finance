@@ -42,6 +42,18 @@ class FinancePronunciationProjectionTest(unittest.TestCase):
         self.assertEqual(text, sample["text"])
         self.assertEqual(projection, "canonical_fixture_text")
 
+
+    def test_chatterbox_runtime_calls_candidate_specific_projection(self) -> None:
+        source = MODULE_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            '_synthesis_text(sample, "chatterbox-multilingual-v3")',
+            source,
+        )
+        self.assertNotIn(
+            'synthesis_text, pronunciation_projection = _synthesis_text(sample)\n    wav = model.generate',
+            source,
+        )
+
     def test_finance_sample_selection_is_exact(self) -> None:
         manifest = {
             "samples": [
