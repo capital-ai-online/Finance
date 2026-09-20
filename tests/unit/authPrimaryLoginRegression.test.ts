@@ -142,7 +142,9 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).not.toContain('onAuthStateChange(async');
     expect(sessionComposition).toContain('isSessionEstablishmentEvent(event)');
     expect(sessionComposition).toContain('scheduleSessionEstablishment(session)');
-    expect(sessionComposition).toContain('queueMicrotask(() => {');
+    expect(sessionComposition).not.toContain('queueMicrotask(() => {');
+    expect(sessionComposition).toContain('setSessionEstablishmentCandidate({ key, session });');
+    expect(sessionComposition).toContain('void establishSession(candidate.session)');
     expect(sessionComposition).toContain('getSessionBootstrapKey(session)');
 
     const bootstrapStart = sessionComposition.indexOf('useEffect(() => {');
