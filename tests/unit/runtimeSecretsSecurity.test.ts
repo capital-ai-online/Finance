@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveEnvironmentValue } from '../../server/env';
 import { validateRuntimeSecrets } from '../../server/validateRuntimeSecrets';
-import { SECRET_FILE_KEYS } from '../../scripts/security/secretFileManifest';
+import { SERVER_SECRET_ENV_KEYS } from '../../scripts/security/secretFileManifest';
 
 const TEST_KEYS = [
   'SUPABASE_SECRET_KEY',
@@ -101,41 +101,35 @@ describe('production runtime secret hardening', () => {
 
   it('does not resolve server-only secrets across the VITE namespace in either direction', () => {
     expect(resolveEnvironmentValue('SUPABASE_SECRET_KEY', {
-      secretValues: {},
       environment: { VITE_SUPABASE_SECRET_KEY: 'vite-only-value' },
     })).toBe('');
 
     expect(resolveEnvironmentValue('VITE_SUPABASE_SECRET_KEY', {
-      secretValues: { SUPABASE_SECRET_KEY: 'server-secret-file-value' },
       environment: { SUPABASE_SECRET_KEY: 'server-env-value' },
     })).toBe('');
   });
 
-  it('keeps the Cloudflare to Render edge proof in the canonical server secret boundary', () => {
-    expect(SECRET_FILE_KEYS).toContain('CAPITAL_AI_EDGE_TRUST_SECRET');
+  it('keeps the Cloudflare to Render edge proof in the canonical server-only environment boundary', () => {
+    expect(SERVER_SECRET_ENV_KEYS).toContain('CAPITAL_AI_EDGE_TRUST_SECRET');
 
     expect(resolveEnvironmentValue('CAPITAL_AI_EDGE_TRUST_SECRET', {
-      secretValues: {},
       environment: { VITE_CAPITAL_AI_EDGE_TRUST_SECRET: 'vite-only-test-value' },
     })).toBe('');
 
     expect(resolveEnvironmentValue('VITE_CAPITAL_AI_EDGE_TRUST_SECRET', {
-      secretValues: { CAPITAL_AI_EDGE_TRUST_SECRET: 'server-secret-file-test-value' },
       environment: { CAPITAL_AI_EDGE_TRUST_SECRET: 'server-env-test-value' },
     })).toBe('');
   });
 
-  it('keeps Alpha Vantage canonical-only in the server secret manifest and VITE boundary', () => {
-    expect(SECRET_FILE_KEYS).toContain('ALPHA_VANTAGE_API_KEY');
-    expect(SECRET_FILE_KEYS).not.toContain('ALPHA_VANTAGE_KEY');
+  it('keeps Alpha Vantage canonical-only in the server secret environment manifest and VITE boundary', () => {
+    expect(SERVER_SECRET_ENV_KEYS).toContain('ALPHA_VANTAGE_API_KEY');
+    expect(SERVER_SECRET_ENV_KEYS).not.toContain('ALPHA_VANTAGE_KEY');
 
     expect(resolveEnvironmentValue('ALPHA_VANTAGE_API_KEY', {
-      secretValues: {},
       environment: { VITE_ALPHA_VANTAGE_API_KEY: 'vite-only-test-value' },
     })).toBe('');
 
     expect(resolveEnvironmentValue('VITE_ALPHA_VANTAGE_API_KEY', {
-      secretValues: { ALPHA_VANTAGE_API_KEY: 'server-secret-file-test-value' },
       environment: { ALPHA_VANTAGE_API_KEY: 'server-env-test-value' },
     })).toBe('');
   });
