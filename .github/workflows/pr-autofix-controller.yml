@@ -10,9 +10,8 @@ run-name: >-
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI, PR Governance]
-    # GitHub does not emit the requested activity for re-runs. Keep completed as the
-    # primary completion path and materialize an in_progress fallback only for run_attempt > 1.
-    types: [in_progress, completed]
+    # completed is emitted for initial runs and re-runs. Avoid in_progress polling/races.
+    types: [completed]
 
 permissions: {}
 
@@ -27,8 +26,7 @@ jobs:
       github.event.workflow_run.repository.full_name == github.repository &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.event == 'pull_request' &&
-      ((github.event.action == 'completed' && github.event.workflow_run.run_attempt == 1) ||
-       (github.event.action == 'in_progress' && github.event.workflow_run.run_attempt > 1)) &&
+      github.event.action == 'completed' &&
       (github.event.workflow_run.path == '.github/workflows/ci.yml' ||
        github.event.workflow_run.path == '.github/workflows/pr-governance.yml')
     runs-on: ubuntu-latest
@@ -53,50 +51,24 @@ jobs:
       allowed_paths_json: ${{ steps.classifier.outputs.allowed_paths_json }}
 
     steps:
-      - name: Source-Run bis zum Abschluss exakt binden
+      - name: Abgeschlossenen Source-Run exakt binden
         id: source
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         with:
           script: |
-            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
-            const payloadRun = context.payload.workflow_run;
-            const expectedId = Number(payloadRun.id);
-            const expectedHead = normalizeSha(payloadRun.head_sha);
-            const expectedPath = String(payloadRun.path || '');
-            let sourceRun = payloadRun;
-
-            if (context.payload.action === 'in_progress') {
-              const deadline = Date.now() + 240_000;
-              while (sourceRun.status !== 'completed' && Date.now() < deadline) {
-                await new Promise((resolve) => setTimeout(resolve, 5_000));
-                const { data } = await github.rest.actions.getWorkflowRun({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  run_id: expectedId,
-                });
-                if (
-                  Number(data.id) !== expectedId ||
-                  normalizeSha(data.head_sha) !== expectedHead ||
-                  String(data.path || '') !== expectedPath
-                ) {
-                  throw new Error('Source-Run-Identität änderte sich während des Re-Run-Fallbacks.');
-                }
-                sourceRun = data;
-              }
+            const sourceRun = context.payload.workflow_run;
+            if (context.payload.action !== 'completed' || sourceRun.status !== 'completed') {
+              throw new Error('PR Autofix verarbeitet ausschließlich abgeschlossene Source-Runs.');
             }
-
-            if (sourceRun.status !== 'completed') {
-              throw new Error(
-                `Source-Run ${expectedId} wurde innerhalb des gebundenen Fallback-Fensters nicht abgeschlossen.`,
-              );
+            if (!Number.isInteger(Number(sourceRun.run_attempt)) || Number(sourceRun.run_attempt) < 1) {
+              throw new Error('Source-Run besitzt keinen gültigen run_attempt.');
             }
 
             core.setOutput('conclusion', String(sourceRun.conclusion || ''));
-            core.setOutput('run_attempt', String(sourceRun.run_attempt || payloadRun.run_attempt || 1));
+            core.setOutput('run_attempt', String(sourceRun.run_attempt));
             core.notice(
-              `Source-Run ${expectedId} gebunden: conclusion=${sourceRun.conclusion}, attempt=${sourceRun.run_attempt || payloadRun.run_attempt || 1}, trigger=${context.payload.action}.`,
+              `Source-Run ${sourceRun.id} gebunden: conclusion=${sourceRun.conclusion}, attempt=${sourceRun.run_attempt}.`,
             );
-
       - name: Exakten offenen Same-Repo-PR und aktuellen main binden
         if: steps.source.outputs.conclusion == 'failure'
         id: pr
@@ -253,85 +225,24 @@ jobs:
 
 
   delegate_pr_metadata:
-    name: PR-Metadata-Reparatur an kanonischen Spezialisten delegieren
+    name: PR-Metadata-Spezialistenpfad bestätigen
     needs: [classify]
     if: needs.classify.result == 'success' && needs.classify.outputs.decision == 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     permissions:
-      actions: write
       contents: read
-      pull-requests: read
     steps:
-      - name: Exact Source-Run an PR-Metadata-Spezialisten übergeben
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+      - name: Direkte Specialist-Subscription bestätigen
         env:
           PR_NUMBER: ${{ needs.classify.outputs.pr_number }}
           EXPECTED_HEAD_SHA: ${{ needs.classify.outputs.head_sha }}
           EXPECTED_BASE_SHA: ${{ needs.classify.outputs.base_sha }}
-        with:
-          script: |
-            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
-            const prNumber = Number(process.env.PR_NUMBER);
-            const expectedHead = normalizeSha(process.env.EXPECTED_HEAD_SHA);
-            const expectedBase = normalizeSha(process.env.EXPECTED_BASE_SHA);
-            const sourceRun = context.payload.workflow_run;
-
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber,
-            });
-            const { data: main } = await github.rest.repos.getBranch({
-              owner: context.repo.owner, repo: context.repo.repo, branch: 'main',
-            });
-            if (
-              pr.state !== 'open' ||
-              pr.base.ref !== 'main' ||
-              pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}` ||
-              normalizeSha(pr.head.sha) !== expectedHead ||
-              normalizeSha(pr.base.sha) !== expectedBase ||
-              normalizeSha(main.commit.sha) !== expectedBase
-            ) throw new Error('PR metadata delegation boundary drifted; fail closed.');
-
-            if (
-              sourceRun.path !== '.github/workflows/pr-governance.yml' ||
-              sourceRun.conclusion !== 'failure' ||
-              Number(sourceRun.pull_requests?.[0]?.number) !== prNumber ||
-              normalizeSha(sourceRun.head_sha) !== expectedHead
-            ) throw new Error('Source run is not the exact failed PR Governance run.');
-
-            // GitHub does not emit workflow_run events for a workflow re-run that was
-            // itself requested from a workflow_run chain reliably enough to make that
-            // event fan-out our delegation contract. The specialist already owns the
-            // PR-body write; invoke its existing workflow by re-running the exact
-            // specialist run bound to this Governance source snapshot instead.
-            const specialistRuns = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              event: 'workflow_run',
-              head_sha: expectedHead,
-              status: 'completed',
-              per_page: 100,
-            });
-            const exactSpecialist = specialistRuns
-              .filter((run) => run.path === '.github/workflows/pr-production-baseline-refresh.yml')
-              .filter((run) => String(run.name || '') === 'PR Production Baseline Auto-Refresh')
-              .filter((run) => normalizeSha(run.head_sha) === expectedHead)
-              .filter((run) => Number(run.run_attempt || 1) === 1)
-              .sort((a, b) => Number(b.id) - Number(a.id))[0];
-
-            if (!exactSpecialist) {
-              throw new Error(
-                `No completed PR Production Baseline Auto-Refresh run is bound to head ${expectedHead}; fail closed.`,
-              );
-            }
-
-            await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
-              owner: context.repo.owner, repo: context.repo.repo, run_id: exactSpecialist.id,
-            });
-            core.notice(
-              `PR #${prNumber}: specialist run ${exactSpecialist.id} re-run for exact head/base metadata repair.`,
-            );
-
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'PR #%s metadata drift on head %s/base %s is owned by the independently subscribed PR Production Baseline Auto-Refresh workflow. No second writer or rerun dispatch is created by the controller.\n' \
+            "$PR_NUMBER" "$EXPECTED_HEAD_SHA" "$EXPECTED_BASE_SHA"
 
   repair:
     name: Registrierten Patch ohne Write-Credential erzeugen

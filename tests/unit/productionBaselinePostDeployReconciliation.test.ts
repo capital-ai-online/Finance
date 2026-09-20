@@ -13,9 +13,11 @@ describe('production baseline post-deploy reconciliation', () => {
   it('uses the workflow_run source allowlist instead of dynamic run-name labels as identity', () => {
     const yaml = workflow();
     expect(yaml).toContain("workflows: ['PR Governance', 'CI']");
-    expect(yaml).toContain('types: [in_progress, completed]');
-    expect(yaml).toContain("github.event.action == 'completed' && github.event.workflow_run.run_attempt == 1");
-    expect(yaml).toContain("github.event.action == 'in_progress' && github.event.workflow_run.run_attempt > 1");
+    expect(yaml).toContain('types: [completed]');
+    expect(yaml).toContain("github.event.action == 'completed'");
+    expect(yaml).not.toContain('types: [in_progress, completed]');
+    expect(yaml).not.toContain("github.event.action == 'in_progress'");
+    expect(yaml).toContain('Number(sourceRun.run_attempt) < 1');
     expect(yaml).not.toContain("github.event.workflow_run.name == 'PR Governance'");
     expect(yaml).not.toContain("github.event.workflow_run.name == 'CI'");
     expect(yaml).not.toContain("sourceRun.name !== 'CI'");
