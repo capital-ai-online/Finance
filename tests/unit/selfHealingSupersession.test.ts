@@ -37,7 +37,7 @@ describe('self-healing supersession surfaces', () => {
     expect(claim.status).toBe('released');
     expect(claim.exclusive).toBe(false);
     expect(workPackage).toContain('SH-02.5 merge');
-    expect(workPackage).toContain('Next functional slice: `SH-02.6`');
+    expect(workPackage).toContain('**Next functional slice:** `SH-02.6`');
     expect(workPackage).toContain('P0 priority invariant');
   });
 
