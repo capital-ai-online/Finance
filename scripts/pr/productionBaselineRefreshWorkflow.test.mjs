@@ -138,7 +138,7 @@ test('Governance reconciliation runs for every eligible PR snapshot and receives
   );
   assert.ok(
     workflow.includes('SOURCE_CONCLUSION: ${{ steps.source.outputs.conclusion }}'),
-    'reconciliation must use the completion-bound source conclusion for rerun fallbacks',
+    'reconciliation must use the completion-bound source conclusion for fail-closed metadata handling',
   );
   assert.ok(
     workflow.includes("const baselineChanged = String(process.env.BASELINE_CHANGED || '').toLowerCase() === 'true';"),
@@ -203,33 +203,33 @@ test('Governance rerun is bound to the same PR, immutable head and current main 
   }
 });
 
-test('unchanged baseline permits exactly one stale-baseline race recovery and then terminates', () => {
+test('Governance rerun requires a proven baseline or metadata mutation', () => {
   assert.ok(
-    workflow.includes("exactRun.conclusion === 'failure' && Number(exactRun.run_attempt || 1) === 1"),
-    'race recovery must require a failed first Governance attempt',
+    workflow.includes('const provenMetadataRace = bodyRepaired;'),
+    'metadata rerun authority must be tied to an observed deterministic body mutation',
   );
   assert.ok(
-    workflow.includes('const shouldRerun = bodyRepaired || baselineChanged || firstFailedAttempt;'),
-    'rerun authority must be limited to a deterministic body repair, real baseline write or the bounded first-attempt recovery',
+    workflow.includes('const provenBaselineRace = baselineChanged;'),
+    'baseline rerun authority must be tied to an observed production-baseline mutation',
   );
   assert.ok(
-    workflow.includes('if (!shouldRerun)'),
-    'all unchanged non-first-failure states must terminate without another rerun',
+    workflow.includes('const shouldRerun = provenMetadataRace || provenBaselineRace;'),
+    'rerun authority must contain no generic failed-attempt fallback',
+  );
+  assert.doesNotMatch(
+    workflow,
+    /firstFailedAttempt|Race-Recovery für bereits korrekte Baseline/,
+    'unchanged failed Governance runs must never be generically retried',
   );
   assert.ok(
-    workflow.includes('kein automatischer Re-Run.'),
-    'the workflow must explicitly terminate after a successful or already-retried Governance result',
-  );
-  assert.ok(
-    workflow.includes('Race-Recovery für bereits korrekte Baseline'),
-    'the bounded stale-baseline recovery path must remain explicit and reviewable',
+    workflow.includes('keine nachgewiesene Baseline-/Metadata-Mutation'),
+    'unchanged failure must explicitly terminate without a rerun',
   );
   assert.ok(
     workflow.includes("POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun"),
-    'the exact workflow-run rerun endpoint must be used',
+    'the exact workflow-run rerun endpoint remains available only for proven mutations',
   );
 });
-
 
 test('Governance template remediation is failure-only, trusted-main and exact-snapshot bound', () => {
   for (const token of [
