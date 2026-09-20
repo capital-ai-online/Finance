@@ -1,0 +1,82 @@
+name: GitHub Cost Watch
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'test sends a complete overview; monitor sends only on cost/coverage alerts'
+        required: true
+        default: test
+        type: choice
+        options:
+          - test
+          - monitor
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: github-cost-watch
+  cancel-in-progress: false
+
+jobs:
+  github-cost-watch:
+    name: Global GitHub cost watch
+    if: github.event_name == 'schedule' || github.actor == 'SvenKulessa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+
+      - name: Billing-Reader Konfiguration fail-closed prüfen
+        env:
+          APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          APP_PRIVATE_KEY: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${APP_CLIENT_ID}" ]] || { echo "::error::CAPITAL_AI_GITHUB_APP_CLIENT_ID fehlt."; exit 1; }
+          [[ -n "${ENTERPRISE_SLUG}" ]] || { echo "::error::CAPITAL_AI_GITHUB_ENTERPRISE_SLUG fehlt."; exit 1; }
+          [[ -n "${APP_PRIVATE_KEY}" ]] || { echo "::error::CAPITAL_AI_GITHUB_APP_PRIVATE_KEY fehlt."; exit 1; }
+
+          key_path="${RUNNER_TEMP}/capital-ai-github-app-private-key.pem"
+          report_path="${RUNNER_TEMP}/github-cost-watch-report.json"
+          umask 077
+          printf '%s' "${APP_PRIVATE_KEY}" > "${key_path}"
+          echo "CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH=${key_path}" >> "${GITHUB_ENV}"
+          echo "CAPITAL_AI_GITHUB_COST_WATCH_REPORT_PATH=${report_path}" >> "${GITHUB_ENV}"
+
+      - name: GitHub Kosten über alle Billing-Ebenen lesen
+        env:
+          CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          CAPITAL_AI_GITHUB_USERNAME: SvenKulessa
+          CAPITAL_AI_GITHUB_USER_ACCESS_TOKEN: ${{ secrets.CAPITAL_AI_GITHUB_USER_ACCESS_TOKEN }}
+          CAPITAL_AI_GITHUB_COST_WATCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'monitor' }}
+          CAPITAL_AI_GITHUB_COST_WATCH_START_AT: '2026-10-01T00:00:00.000Z'
+        run: node scripts/operations/runGitHubCostWatch.mjs
+
+      - name: Kostenalarm oder Testübersicht über Produktions-SMTP einreihen
+        env:
+          CAPITAL_AI_GITHUB_BILLING_ALERT_ENDPOINT: https://capital-ai.online/api/internal/github-billing-alert/email
+        run: node scripts/operations/postGitHubCostWatchReport.mjs
+
+      - name: Temporäre Billing-Artefakte entfernen
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f -- "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-}" "${CAPITAL_AI_GITHUB_COST_WATCH_REPORT_PATH:-}"
