@@ -15,7 +15,13 @@
 
 This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context, prior branch state and historical non-terminal markers are ledger/evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
 
-## Current execution priority — post-PR #996
+## Current execution priority — Owner-directed Self-Healing 2026-09-20
+
+Fresh Human/Owner direction activates `OPS-08-B-SH-02 — Autonomous Self-Healing Backend & Frontend` from `main@6889a7c5f7f5ac0176ea500b251ada795cf628e4`. This package has execution priority for its bounded branch scope while unrelated open PRs remain independent writers. It does not resurrect the historical SH-01 branch.
+
+Detailed package: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
+
+### Existing OPS backlog context
 
 1. `OPS-PR900-06 — Security owner returns` is the next normal executable OPS Roadmap evidence-return slice only if fresh current-main correlation still confirms that exact active identity. `OPS-PR900-05` repository materialization is Human-merged via PR #980; its deterministic evidence contract is ready while real live SLO/incident/RPO/RTO/vendor measurements remain explicitly open and must not be synthesized.
 2. `OPS-02-CI-01 — Build/Test Cost & Scope Reduction` is repository-integrated for the current bounded slices: PR #988 merged the `NONE / FOCUSED / FULL / REUSE` cost-profile policy and PR #996 merged snapshot-bound stale-event/concurrency hardening. Remaining hosted cost/race observations stay real-evidence-only; no unobserved race or saving is promoted to PASS.
@@ -120,7 +126,7 @@ Return reproducible evidence for CORS composition, CSP reporting/strict-CSP prom
 | DR-03 | — | historical blocked state |
 | OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | historical branch state; no automatic continuation |
 
-Invariants: Render native Auto Deploy remains off; productive M10 is `RETIRED / OFF`; provider/production mutation requires separate authorization; GitGuardian health/audit is management evidence, not a second scanner.
+Invariants: Render native Auto Deploy remains off; productive M10 is `RETIRED / OFF`; new provider capability/credential provisioning remains separately authorized, while eligible mutations already inside an authorized workflow/provider capability boundary follow `/AGENTS.md@CURRENT_MAIN`; GitGuardian health/audit is management evidence, not a second scanner.
 
 ## Dependencies
 GOV authority, QM gate classification, SEC/COMP verification, CLIENT request boundary, FINTECH child returns. PVC-09..11 no longer route to a separate DATA project.
