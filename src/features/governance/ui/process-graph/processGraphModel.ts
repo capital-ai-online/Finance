@@ -1,4 +1,8 @@
 import type {
+  RemediationAction,
+  RemediationPolicy,
+} from '../../../../platform/Supervisor/selfHealingContract';
+import type {
   OperationalTraceState,
   OperationalTraceStateEnvelope,
   OperationalTraceStateRecord,
@@ -58,6 +62,46 @@ export interface SelfHealingWorkPackageProjection {
   dependencies: string[];
   exitGate: string;
   declaredState: string;
+}
+
+export interface ProcessGraphFixActionProjection {
+  actionId: string;
+  tier: string;
+  activation: string;
+  idempotencyClass: string;
+  blastRadius: string;
+  requiredCapability: string | null;
+  killSwitch: string;
+  verificationProbe: string;
+  maxAttempts: number;
+  description: string;
+  preferredForFindingClasses: string[];
+}
+
+export function buildFixAlgorithmProjection(
+  actions: readonly RemediationAction[],
+  policies: readonly RemediationPolicy[],
+): ProcessGraphFixActionProjection[] {
+  const preferredByAction = new Map<string, string[]>();
+  for (const policy of policies) {
+    const findings = preferredByAction.get(policy.preferredActionId) ?? [];
+    findings.push(policy.findingClass);
+    preferredByAction.set(policy.preferredActionId, findings);
+  }
+
+  return actions.map((action) => ({
+    actionId: action.id,
+    tier: action.tier,
+    activation: action.activation,
+    idempotencyClass: action.idempotencyClass,
+    blastRadius: action.blastRadius,
+    requiredCapability: action.requiredCapability,
+    killSwitch: action.killSwitch,
+    verificationProbe: action.verificationProbe,
+    maxAttempts: action.budget.maxAttempts,
+    description: action.description,
+    preferredForFindingClasses: [...(preferredByAction.get(action.id) ?? [])].sort(),
+  }));
 }
 
 const stripTicks = (value: string) => value.replace(/`/g, '').trim();
