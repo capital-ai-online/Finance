@@ -1,7 +1,7 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
-  "version": "0.7.0-1608-appearance",
+  "version": "0.8.0-roadmap-brand-system",
   "description": "Canonical CAPITAL-AI design-token registry. The Owner-approved 16.08 appearance language restores the charcoal/Capital-Gold visual hierarchy while current asset, score, status and evidence semantics remain unchanged. Historical design material is provenance input only; this file remains runtime token authority.",
   "provenance": {
     "brandManifestVersion": "6.2",
@@ -27,6 +27,13 @@
       "cyan": { "value": "#F5C453", "type": "color", "css": "--color-brand-cyan", "deprecated": true, "note": "Deprecated compatibility alias. New code must use explicit brand/semantic/decorative roles." },
       "success": { "value": "#44DE88", "type": "color", "css": "--color-brand-success", "note": "Semantic compatibility role; not a primary brand color" },
       "danger": { "value": "#F87171", "type": "color", "css": "--color-brand-danger", "note": "Semantic compatibility role; not a primary brand color" }
+    },
+    "roadmap": {
+      "foundation": { "value": "#F5C453", "type": "color", "css": "--color-roadmap-foundation", "note": "Capital Gold / Foundation" },
+      "automation": { "value": "#44DE88", "type": "color", "css": "--color-roadmap-automation", "note": "Automation / verified convergence" },
+      "runtime": { "value": "#22D3EE", "type": "color", "css": "--color-roadmap-runtime", "note": "Self-healing runtime / intelligence blue-cyan" },
+      "productMarket": { "value": "#8D26FF", "type": "color", "css": "--color-roadmap-product-market", "note": "Product & Market / platform violet" },
+      "scaling": { "value": "#E879F9", "type": "color", "css": "--color-roadmap-scaling", "note": "Scaling / StarTroops Magenta" }
     },
     "decorative": {
       "cyan": { "value": "#0DDDDD", "type": "color", "css": "--color-decorative-cyan", "note": "16.08 decorative intelligence/data atmosphere only; no financial semantics" },
@@ -94,7 +101,7 @@
     }
   },
   "font": {
-    "sans": { "value": "\"Poppins\", ui-sans-serif, system-ui, sans-serif", "css": "--font-sans", "role": "body" },
+    "sans": { "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif", "css": "--font-sans", "role": "body", "note": "Owner-directed roadmap typography convergence: Montserrat is the application-wide brand sans." },
     "display": { "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif", "css": "--font-display", "role": "headings" },
     "mono": { "value": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, monospace", "css": "--font-mono", "role": "tech-data" }
   },
