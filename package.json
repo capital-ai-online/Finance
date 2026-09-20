@@ -69,7 +69,8 @@
     "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts",
     "rag:build-index": "tsx scripts/automation/buildRagIndex.ts",
     "governance:shadow-adr": "node scripts/governance/shadowAdrMetadataValidator.mjs",
-    "governance:score": "node scripts/governance/weeklyGovernanceScore.mjs"
+    "governance:score": "node scripts/governance/weeklyGovernanceScore.mjs",
+    "documentary:impact:plan": "tsx scripts/automation/planDocumentaryChangeImpact.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
