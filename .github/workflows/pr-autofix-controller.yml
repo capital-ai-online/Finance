@@ -1,4 +1,4 @@
-name: PR Convergence Controller
+name: PR Autofix Controller
 run-name: >-
   ${{ format('{0} #{1} – PR-Convergence fail-closed klassifizieren', github.event.workflow_run.name, github.event.workflow_run.run_number) }}
 
