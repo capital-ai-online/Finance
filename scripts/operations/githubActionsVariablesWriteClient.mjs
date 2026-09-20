@@ -96,6 +96,19 @@ async function parseJson(response) {
   }
 }
 
+/**
+ * @typedef {object} GitHubActionsVariablesWriteClientOptions
+ * @property {string} [clientId]
+ * @property {string} [privateKeyPem]
+ * @property {string} [organization]
+ * @property {typeof fetch} [fetchImpl]
+ * @property {string} [apiBaseUrl]
+ * @property {() => number} [now]
+ */
+
+/**
+ * @param {GitHubActionsVariablesWriteClientOptions} [options]
+ */
 export function createGitHubActionsVariablesWriteClient({
   clientId,
   privateKeyPem,
