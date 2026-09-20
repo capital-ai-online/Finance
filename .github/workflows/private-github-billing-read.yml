@@ -58,6 +58,7 @@ jobs:
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          CAPITAL_AI_GITHUB_BILLING_EVIDENCE_PATH: ${{ runner.temp }}/capital-ai-github-billing-evidence.json
         run: node scripts/operations/runPrivateGitHubBillingRead.mjs
 
       - name: Read-only Organization and Finance Repository Billing
@@ -90,7 +91,14 @@ jobs:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
           CAPITAL_AI_GITHUB_REPOSITORY: ${{ github.repository }}
+          CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH: ${{ runner.temp }}/capital-ai-github-settings-evidence.json
         run: node scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs
+
+      - name: Zero-cost Storage Capability korrelieren
+        env:
+          CAPITAL_AI_GITHUB_BILLING_EVIDENCE_PATH: ${{ runner.temp }}/capital-ai-github-billing-evidence.json
+          CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH: ${{ runner.temp }}/capital-ai-github-settings-evidence.json
+        run: node scripts/operations/runPrivateGitHubStorageCapabilityReport.mjs
 
       - name: Private Key aus Runner-Dateisystem entfernen
         if: always()
@@ -100,3 +108,4 @@ jobs:
           if [[ -n "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-}" ]]; then
             rm -f -- "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH}"
           fi
+          rm -f --             "${RUNNER_TEMP}/capital-ai-github-billing-evidence.json"             "${RUNNER_TEMP}/capital-ai-github-settings-evidence.json"
