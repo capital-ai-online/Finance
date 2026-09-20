@@ -19,7 +19,7 @@ This runbook separates account/security/dataset mutations from repository prepar
 
 ## Phase 1 — Dune account/key setup
 
-- [x] Owner provisioned `DUNE_API_KEY` with read permissions in Render `finance-secrets.env` on 2026-08-22.
+- [x] Owner provisioned `DUNE_API_KEY` with read permissions in Render Render Environment Variables on 2026-08-22.
 - [ ] Confirm Dune extra-credit/overage spending is disabled or capped in the account/team settings.
 - [ ] Determine the entitlement mode currently applicable to the account: permanent `FREE_TIER` or Owner-reported temporary `TRIAL_14D` fuller/full-data-source entitlement.
 
@@ -54,7 +54,7 @@ Repository preparation:
 - [x] No new secret is required for Binance Public or Kraken Public.
 
 Manual production cleanup after supersession is deployed and verified:
-- [ ] Remove obsolete `NEWS_API_KEY` from the production secret file if still present.
+- [ ] Remove obsolete `NEWS_API_KEY` from the production server-only Render environment variables if still present.
 - [ ] Do not add CoinGlass/LunarCrush/Messari keys for SC4.
 
 ## Phase 4 — Provider identity governance

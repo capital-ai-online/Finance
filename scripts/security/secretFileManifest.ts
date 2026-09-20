@@ -1,20 +1,14 @@
-// ADR-0037-Folge / Deploy-Härtung (siehe render.yaml `secretFiles`): einzige Quelle der
-// Wahrheit dafür, welche ENV-Vars künftig über die Render Secret File statt über einzelne
-// `envVars`-Einträge kommen. Referenziert von:
-//   - server/env.ts (lädt die Secret File zur Laufzeit)
-//   - server/validateRuntimeSecrets.ts (Boot-Validierung der kritischsten Werte)
-//   - scripts/automation/verifyDeploymentReadiness.ts (Env-Var-Abdeckungs-Gate)
-// Ein einzelner Ort verhindert, dass diese drei Stellen auseinanderlaufen, wenn ein Secret
-// hinzukommt oder migriert wird.
+// Canonical inventory of server-only secret environment variables.
+// Values are provisioned in Render's Environment settings and are never committed to the repo.
+// Referenced by:
+//   - server/env.ts (blocks VITE_* alias resolution for privileged values)
+//   - server/validateRuntimeSecrets.ts (boot validation for critical secrets)
+//   - deployment/security tests and readiness gates.
+//
+// The historical filename is retained temporarily to avoid breaking historical evidence links;
+// there is no runtime Secret File contract anymore.
 
-export const SECRET_FILE_NAME = 'finance-secrets.env';
-export const SECRET_FILE_MOUNT_PATH = `/etc/secrets/${SECRET_FILE_NAME}`;
-
-// Nur echte Secrets (Server-Credentials, API-Keys, Signierschlüssel). OAuth-Client-IDs,
-// Stripe-Price-IDs, Publishable/Anon-Keys und sonstige Konfigurationswerte sind absichtlich
-// NICHT enthalten - sie sind ohnehin clientseitig sichtbar bzw. nicht vertraulich und bleiben
-// als normale Render-`envVars` bestehen.
-export const SECRET_FILE_KEYS = [
+export const SERVER_SECRET_ENV_KEYS = [
   'SUPABASE_SECRET_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
   'STRIPE_SECRET_KEY',
@@ -32,7 +26,7 @@ export const SECRET_FILE_KEYS = [
   'FRED_API_KEY',
   'FMP_API_KEY',
   // OPS-POST851-EDGE-01: shared proof for the Cloudflare -> Render provenance boundary.
-  // It is server-only and belongs to the canonical Render secret file; never expose it via VITE_*.
+  // It is server-only and belongs to the canonical server-only Render environment; never expose it via VITE_*.
   'CAPITAL_AI_EDGE_TRUST_SECRET',
   // SC-4: Dune is the only previously landed crypto-evidence provider secret. Runtime policy
   // additionally requires Free-Tier attestation + allowlisted saved query IDs; the key alone grants nothing.

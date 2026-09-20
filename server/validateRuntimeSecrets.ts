@@ -96,7 +96,7 @@ export function validateRuntimeSecrets(isProduction: boolean): void {
 
   if (isProduction) {
     console.error(report);
-    console.error('[SECRETS] Produktionsstart abgebrochen (fail-closed) - siehe render.yaml / Secret File.');
+    console.error('[SECRETS] Produktionsstart abgebrochen (fail-closed) - siehe Render Environment / render.yaml.');
     process.exit(1);
   } else {
     console.warn(report);

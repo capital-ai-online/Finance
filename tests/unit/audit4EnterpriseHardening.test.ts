@@ -30,16 +30,12 @@ describe('ARCH-AUDIT-0004 enterprise hardening', () => {
     expect(code).toContain('keine synthetischen Kurs-, Volumen- oder Momentumwerte');
   });
 
-  it('declares every active external market-data key for Render deployment without values', () => {
-    // Deploy-Härtung: diese Keys sind echte Secrets und kommen seit der Secret-File-
-    // Migration nicht mehr als einzelne render.yaml-envVar, sondern über die Render
-    // Secret File (scripts/security/secretFileManifest.ts ist die Single Source of Truth,
-    // siehe auch render.yaml `secretFiles`-Block).
+  it('declares every active external market-data key as Dashboard-managed Render env vars', () => {
     const manifest = source('render.yaml');
-    expect(manifest).toContain('secretFiles:');
-    expect(manifest).toContain('finance-secrets.env');
+    expect(manifest).not.toContain('secretFiles:');
+    expect(manifest).not.toContain('finance-secrets.env');
     for (const key of ['COIN_API_KEY', 'TWELVEDATA_API_KEY', 'EODHD_API_KEY', 'FRED_API_KEY']) {
-      expect(manifest).not.toContain(`- key: ${key}`);
+      expect(manifest).toContain(`- key: ${key}`);
     }
     expect(manifest).not.toMatch(/COIN_API_KEY:\s*\S+/);
     expect(manifest).not.toMatch(/TWELVEDATA_API_KEY:\s*\S+/);
@@ -47,6 +43,7 @@ describe('ARCH-AUDIT-0004 enterprise hardening', () => {
     expect(manifest).not.toMatch(/FRED_API_KEY:\s*\S+/);
 
     const secretManifest = source('scripts/security/secretFileManifest.ts');
+    expect(secretManifest).toContain('SERVER_SECRET_ENV_KEYS');
     for (const key of ['COIN_API_KEY', 'TWELVEDATA_API_KEY', 'EODHD_API_KEY', 'FRED_API_KEY']) {
       expect(secretManifest).toContain(`'${key}'`);
     }
