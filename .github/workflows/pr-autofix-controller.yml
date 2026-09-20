@@ -227,8 +227,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
-          EXPECTED_GENERATION_ID: ${{ needs.classify.outputs.generation_id }}
-          EXPECTED_CONTROL_PLANE_VERSION: ${{ needs.classify.outputs.control_plane_version }}
         shell: bash
         run: |
           set -euo pipefail
@@ -438,6 +436,8 @@ jobs:
           FAILURE_SIGNATURE: ${{ needs.classify.outputs.failure_signature }}
           REPAIRER_ID: ${{ needs.classify.outputs.repairer_id }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          EXPECTED_GENERATION_ID: ${{ needs.classify.outputs.generation_id }}
+          EXPECTED_CONTROL_PLANE_VERSION: ${{ needs.classify.outputs.control_plane_version }}
         with:
           script: |
             const crypto = require('crypto');
