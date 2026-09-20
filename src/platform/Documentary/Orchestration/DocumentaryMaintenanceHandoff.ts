@@ -63,7 +63,7 @@ export function buildDocumentaryMaintenanceHandoff(options: {
       chain: authorizationRequired
         ? ['Supervisor recommendation', 'Platform Director APPROVED decision', 'Agent IAM ANALYZE/PLAN/BRANCH/COMMIT/PR']
         : [],
-      syntheticApprovalAllowed: false,
+      syntheticApprovalAllowed: false as const,
     },
   });
 }
