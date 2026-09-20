@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`
+**Baseline:** `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
@@ -28,7 +28,8 @@ Fresh Human/Owner direction in the current interaction activates one bounded lau
 **Detailed work package:** `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`  
 **Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.18`.
 
-**Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.
+**Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.  
+**Current management refresh:** `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
 
 Execution readback at this baseline:
 
@@ -51,6 +52,23 @@ Current owner-correct dependencies:
 - `CAPITAL-AI-GOV`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FINTECH` and `CAPITAL-AI-QM` retain their existing control, security, compliance, domain-truth and independent-assurance boundaries.
 
 This section is a thin current-work projection only. The detailed launch contract lives in the work-package file and the existing consolidated roadmap remains the single SEO/Google-Marketing program roadmap.
+
+## Current SEO management refresh — 2026-09-21
+
+Fresh Owner direction assigns the SEO-management portion of `WP-SEO-LAUNCH-01` to this execution context.
+
+Current snapshot:
+
+- `CURRENT_MAIN`: `4f2c746a20a8683d784a1cbe54c763a64ddd1da3`;
+- Production: exact same SHA on Render deploy `dep-dao54cajnfac73ak74rg` — `PASS` for this snapshot;
+- merged FE PR `#1178` changed the landing hero/branding, invalidating the older snapshot freeze but not the inspected CTA targets;
+- root route metadata/prerender remains semantically stale against the visible market-intelligence landing — `OPEN_FE_HANDOFF`;
+- `/universe` remains a canonical sitemap route but lacks a visible landing-page internal link in the inspected source — `OPEN_FE_HANDOFF`;
+- GSC current performance and GA4 provider reads remain `READ_BLOCKED_NOT_CONNECTED` in this Chat execution;
+- production Social account readback remains X=`0`, Facebook=`0`; Wave-1 publishing is `BLOCKED_PROVIDER_ACCOUNT_IDENTITY`;
+- SEO-owned topic map and first launch content brief are now materialized without synthetic search metrics.
+
+Detailed evidence: `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
 
 ## Current provider evidence
 

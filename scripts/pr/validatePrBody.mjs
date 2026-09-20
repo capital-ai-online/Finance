@@ -24,6 +24,8 @@ import {
   deriveDecisionStatus,
   extractDecisionGates,
   extractDecisionStatus,
+  nextVerifiableDecisionStep,
+  summarizeLiveDecisionSync,
 } from './prDecisionState.mjs';
 
 const repository = process.env.GITHUB_REPOSITORY;
@@ -59,7 +61,13 @@ const templateVersion = detectPrTemplateVersion(body);
 if (!templateVersion) {
   fail(
     `PR #${prNumber} verwendet keinen unterstützten PR-Vorlagenmarker. ` +
-      `Aktuell kanonisch ist v${PR_TEMPLATE_VERSION}; v1.6.0 und v1.5.0 bleiben nur für bereits offene PRs kompatibel.`,
+      `Aktuell kanonisch ist v${PR_TEMPLATE_VERSION}; markerlose oder unbekannte Vorlagen sind nicht mergefähig.`,
+  );
+}
+if (templateVersion !== PR_TEMPLATE_VERSION) {
+  fail(
+    `PR #${prNumber} verwendet die Legacy-Vorlage v${templateVersion}. ` +
+      `Legacy-Vorlagen sind nur Migrations-Evidence und dürfen nicht gemerged werden; erforderlich ist v${PR_TEMPLATE_VERSION}.`,
   );
 }
 
@@ -86,6 +94,21 @@ if (templateVersion === PR_TEMPLATE_VERSION) {
     fail(
       `PR #${prNumber} behauptet Decision Status ${decisionStatus}, aber die sichtbaren Gate-Zustände ergeben ${derivedDecisionStatus}. ` +
         'Decision Status darf nicht manuell von der Evidence abweichen.',
+    );
+  }
+
+  const dashboardStatus = body.match(/^\|\s*Status\s*\|\s*([^|\n]+?)\s*\|$/m)?.[1]?.trim() || null;
+  const dashboardSync = body.match(/^\|\s*Synchronität\s*\|\s*([^\n]+?)\s*\|$/m)?.[1]?.trim() || null;
+  const dashboardNext = body.match(/^\|\s*Nächster Schritt\s*\|\s*([^\n]+?)\s*\|$/m)?.[1]?.trim() || null;
+  const expectedDashboardSync = summarizeLiveDecisionSync(decisionGates);
+  const expectedDashboardNext = nextVerifiableDecisionStep(decisionGates);
+  if (!body.includes('### 📡 Live Dashboard') || !dashboardStatus || !dashboardSync || !dashboardNext) {
+    fail(`PR #${prNumber} enthält kein vollständiges proaktives Live Dashboard der Vorlage v${PR_TEMPLATE_VERSION}.`);
+  }
+  if (dashboardStatus !== decisionStatus || dashboardSync !== expectedDashboardSync || dashboardNext !== expectedDashboardNext) {
+    fail(
+      `PR #${prNumber} enthält ein vom kanonischen Evidence-Zustand abweichendes Live Dashboard. ` +
+        'Dashboard-Projektionen dürfen ausschließlich vom Evidence → Decision Reconciler abgeleitet werden.',
     );
   }
 

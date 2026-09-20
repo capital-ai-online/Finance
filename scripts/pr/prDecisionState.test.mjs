@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  decisionEvidenceRows,
   decisionImpactLabel,
   deriveDecisionStatus,
   extractDecisionGates,
   extractDecisionStatus,
   formatDecisionGateState,
+  nextVerifiableDecisionStep,
   normalizeDecisionGateState,
   summarizeDecisionBlockers,
   summarizeDecisionEvidence,
+  summarizeLiveDecisionSync,
 } from './prDecisionState.mjs';
 
 const pass = {
@@ -43,14 +46,14 @@ test('presentation and parser preserve canonical gate states', () => {
   const body = [
     '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
     '',
-    '| Gate | Status |',
-    '|---|---|',
-    '| Current Main | 🟢 PASS |',
-    '| Scope / Ownership | 🟢 PASS |',
-    '| Overlap | 🟡 PENDING |',
-    '| Required Checks | 🟡 PENDING |',
-    '| Security / Compliance | 🟢 PASS |',
-    '| Production Baseline | 🟢 PASS |',
+    '| Gate | Status | Warum offen / blockiert | Nächster verifizierbarer Schritt |',
+    '|---|---|---|---|',
+    '| Current Main | 🟢 PASS | erfüllt | keine |',
+    '| Scope / Ownership | 🟢 PASS | erfüllt | keine |',
+    '| Overlap | 🟡 PENDING | noch offen | erneut korrelieren |',
+    '| Required Checks | 🟡 PENDING | laufen | warten |',
+    '| Security / Compliance | 🟢 PASS | erfüllt | keine |',
+    '| Production Baseline | 🟢 PASS | erfüllt | keine |',
   ].join('\n');
 
   assert.equal(extractDecisionStatus(body), 'EVIDENCE_PENDING');
@@ -65,7 +68,39 @@ test('presentation and parser preserve canonical gate states', () => {
   assert.equal(formatDecisionGateState('BLOCKED'), '🔴 BLOCKED');
 });
 
+test('evidence rows explain why a gate is blocked and what happens next', () => {
+  const rows = decisionEvidenceRows({ ...pass, overlap: 'BLOCKED', checks: 'PENDING' });
+  const overlap = rows.find((row) => row.key === 'overlap');
+  const checks = rows.find((row) => row.key === 'checks');
+  assert.equal(overlap.status, '🔴 BLOCKED');
+  assert.match(overlap.reason, /Overlap/);
+  assert.match(overlap.nextStep, /Overlap auflösen/);
+  assert.equal(checks.status, '🟡 PENDING');
+  assert.match(checks.reason, /Required Check/);
+  assert.match(checks.nextStep, /Exact-Head-Checks/);
+});
+
 test('impact label is deterministic and does not invent a free-form risk score', () => {
   assert.equal(decisionImpactLabel('C', 'PASS'), 'C — Code/Tests/Config');
   assert.match(decisionImpactLabel('M', 'BLOCKED'), /Security\/Compliance BLOCKED/);
+});
+
+
+test('live dashboard projection is derived only from canonical gates', () => {
+  assert.equal(
+    summarizeLiveDecisionSync(pass),
+    'Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS',
+  );
+  assert.equal(
+    nextVerifiableDecisionStep({ ...pass, checks: 'PENDING' }),
+    'Ausstehende Evidence vervollständigen: Required Checks',
+  );
+  assert.equal(
+    nextVerifiableDecisionStep({ ...pass, overlap: 'BLOCKED', checks: 'PENDING' }),
+    'Blocker beheben und Evidence neu korrelieren: Overlap',
+  );
+  assert.equal(
+    nextVerifiableDecisionStep(pass),
+    'Merge-Modus anhand des Auto-Merge Safety Contract revalidieren',
+  );
 });

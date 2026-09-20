@@ -1,0 +1,46 @@
+schema_version: "3.0.0"
+work_package: "SH-V3-01"
+project: "CAPITAL-AI-GOV"
+title: "Convergence Readback & Overlap Recovery"
+authority:
+  trust_root: "/AGENTS.md@CURRENT_MAIN"
+  mutation_model: "branch-only"
+objective: >
+  Turn the verified PR1176→PR1177→PR1171 convergence pattern into a bounded,
+  evidence-driven self-healing state machine.
+state_machine:
+  - OBSERVE
+  - MAIN_READBACK
+  - PR_HEAD_READBACK
+  - DEPENDENCY_SCAN
+  - OVERLAP_CLASSIFY
+  - SYNC
+  - EXACT_HEAD_READBACK
+  - VERIFY
+  - CONVERGED
+  - BLOCKED
+overlap_classes:
+  ABSORBED_BY_MAIN:
+    action: "drop only the proven identical residual diff"
+  NON_CONFLICTING_REBASE:
+    action: "use canonical branch synchronization"
+  SEMANTIC_CONFLICT:
+    action: "fail closed and create decision evidence"
+invariants:
+  - "Never infer CURRENT_MAIN from an earlier event payload."
+  - "Every mutation uses exact head/generation CAS semantics."
+  - "A moved head invalidates prior check evidence."
+  - "No second branch-sync writer."
+  - "Human/CODEOWNER merge authority remains unchanged."
+evidence:
+  required:
+    - current_main_sha
+    - pr_head_before
+    - pr_head_after
+    - overlap_class
+    - writer_lease
+    - exact_head_checks
+exit_gate:
+  - "post-merge affected PRs converge to behind_by=0"
+  - "semantic conflicts remain BLOCKED"
+  - "stale evidence cannot produce MERGE_READY"

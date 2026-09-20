@@ -21,6 +21,7 @@ from capital_ai_media import (
     render_short_video,
     safe_output_stem,
     validate_scenes,
+    validate_voiceover_binding,
     write_asset_manifest,
 )
 
@@ -58,6 +59,9 @@ def main() -> int:
         subtitle = normalize_text(raw.get("subtitle"), field="subtitle", max_chars=240)
         disclaimer = normalize_text(raw.get("disclaimer", DEFAULT_DISCLAIMER), field="disclaimer", max_chars=220)
         scenes = validate_scenes(raw.get("scenes"))
+        voiceover = validate_voiceover_binding(raw.get("voiceover"), manifest_dir=args.manifest.parent)
+        if voiceover is not None and not args.video:
+            raise MediaRenderError("voiceover requires --video so audio evidence cannot be attached to image-only output")
         palette = load_brand_palette()
         args.out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -97,6 +101,7 @@ def main() -> int:
                 frame_pairs,
                 output_path=args.out_dir / f"{slug}-short-1080x1920.mp4",
                 allow_gpl_ffmpeg=args.allow_gpl_ffmpeg,
+                voiceover=voiceover,
             )
             assets.append(video_asset)
             ffmpeg_payload = {
@@ -113,6 +118,20 @@ def main() -> int:
             "videoCodec": "mpeg4" if args.video else None,
             "networkAccess": False,
             "brandTextMode": "deterministic",
+            "voiceover": (
+                {
+                    "audioSha256": voiceover.audio_sha256,
+                    "requestHash": voiceover.request_hash,
+                    "contentPackageId": voiceover.content_package_id,
+                    "candidateContentHash": voiceover.candidate_content_hash,
+                    "runtimeEvidenceReference": voiceover.runtime_evidence_reference,
+                    "licenseEvidenceReference": voiceover.license_evidence_reference,
+                    "listeningReviewReference": voiceover.listening_review_reference,
+                    "acceptanceStatus": "PASS",
+                }
+                if voiceover is not None
+                else None
+            ),
         }
         manifest_path = write_asset_manifest(
             output_path=args.out_dir / f"{slug}-asset-manifest.json",

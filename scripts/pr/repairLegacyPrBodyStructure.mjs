@@ -163,7 +163,7 @@ function bootstrapMarkerlessBody(bodyText, { prClass, durableClaimEvidence = [] 
   }
   return { eligible: true, changed: true, reason: 'markerless-body-bootstrapped-to-v1.6', body: repaired };
 }
-function repairCurrentV17BodyStructure(bodyText) {
+function repairCurrentDecisionBodyStructure(bodyText) {
   const body = String(bodyText || '');
   const expectedHeadings = [
     '## 1. 🧭 Entscheidung',
@@ -205,12 +205,12 @@ function repairCurrentV17BodyStructure(bodyText) {
         /^> P0-HIGHEST 🔴 Kritisch ·/m.test(repaired) ||
         /^- \*\*Priorität:\*\* P0-HIGHEST 🔴 Kritisch\s*$/m.test(repaired)
       ) {
-        throw new Error('Current v1.7 priority-token repair did not converge.');
+        throw new Error('Current v1.8 priority-token repair did not converge.');
       }
       return {
         eligible: true,
         changed: true,
-        reason: 'current-v1.7-priority-token-normalized',
+        reason: 'current-v1.8-priority-token-normalized',
         body: repaired,
       };
     }
@@ -229,19 +229,19 @@ function repairCurrentV17BodyStructure(bodyText) {
     occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
 
   if (!exactLegacyBaselineShape) {
-    return { eligible: false, changed: false, reason: 'current-v1.7-unsupported-shape', body };
+    return { eligible: false, changed: false, reason: 'current-v1.8-unsupported-shape', body };
   }
 
   const legacyIndex = body.indexOf('\n' + legacyHeading);
   if (legacyIndex < 0) {
-    return { eligible: false, changed: false, reason: 'current-v1.7-legacy-baseline-heading-not-isolated', body };
+    return { eligible: false, changed: false, reason: 'current-v1.8-legacy-baseline-heading-not-isolated', body };
   }
 
   const prefix = body.slice(0, legacyIndex);
   const legacyTail = body.slice(legacyIndex + 1).trim();
   const expectedLegacyTail = [legacyHeading, '', baselineBlock.trim()].join('\n').trim();
   if (legacyTail !== expectedLegacyTail) {
-    return { eligible: false, changed: false, reason: 'current-v1.7-legacy-baseline-tail-has-extra-content', body };
+    return { eligible: false, changed: false, reason: 'current-v1.8-legacy-baseline-tail-has-extra-content', body };
   }
 
   const summary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
@@ -254,7 +254,7 @@ function repairCurrentV17BodyStructure(bodyText) {
     detailsEndIndex < 0 ||
     !(summaryIndex < placeholderIndex && placeholderIndex < detailsEndIndex)
   ) {
-    return { eligible: false, changed: false, reason: 'current-v1.7-baseline-placeholder-not-in-machine-details', body };
+    return { eligible: false, changed: false, reason: 'current-v1.8-baseline-placeholder-not-in-machine-details', body };
   }
 
   const repaired = prefix.replace(placeholder, baselineBlock.trim()).trimEnd() + '\n';
@@ -263,10 +263,10 @@ function repairCurrentV17BodyStructure(bodyText) {
     repairedHeadings.length !== expectedHeadings.length ||
     !expectedHeadings.every((heading, index) => repairedHeadings[index] === heading)
   ) {
-    throw new Error('Current v1.7 legacy-baseline repair did not converge to exactly three visible main sections.');
+    throw new Error('Current v1.8 legacy-baseline repair did not converge to exactly three visible main sections.');
   }
   if (occurrenceCount(repaired, placeholder) !== 0 || occurrenceCount(repaired, legacyHeading) !== 0) {
-    throw new Error('Current v1.7 legacy-baseline repair left legacy structure behind.');
+    throw new Error('Current v1.8 legacy-baseline repair left legacy structure behind.');
   }
   if (
     occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_START') !==
@@ -274,17 +274,17 @@ function repairCurrentV17BodyStructure(bodyText) {
     occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_END') !==
       occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_END')
   ) {
-    throw new Error('Current v1.7 legacy-baseline repair changed baseline marker cardinality.');
+    throw new Error('Current v1.8 legacy-baseline repair changed baseline marker cardinality.');
   }
   const missingAfter = findMissingRequiredSections(repaired, PR_TEMPLATE_VERSION);
   if (missingAfter.length > 0) {
-    throw new Error('Current v1.7 legacy-baseline repair left missing sections: ' + missingAfter.join(', '));
+    throw new Error('Current v1.8 legacy-baseline repair left missing sections: ' + missingAfter.join(', '));
   }
 
   return {
     eligible: true,
     changed: repaired !== body,
-    reason: 'current-v1.7-legacy-baseline-section-repaired',
+    reason: 'current-v1.8-legacy-baseline-section-repaired',
     body: repaired,
   };
 }
@@ -293,12 +293,12 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
   const body = String(bodyText || '');
   const detectedVersion = detectPrTemplateVersion(body);
 
-  // v1.7 is the canonical Human Decision contract. The only mutable current-version
+  // v1.8 is the canonical Human Decision + Live Dashboard contract. The only mutable current-version
   // shape is the exact post-migration artifact where a rendered baseline remained in a
   // legacy level-two section while the canonical machine-details block still held the
-  // renderer placeholder. All other v1.7 drift remains fail-closed.
+  // renderer placeholder. Live Dashboard drift remains owned by the Decision Reconciler.
   if (detectedVersion === PR_TEMPLATE_VERSION) {
-    return repairCurrentV17BodyStructure(body);
+    return repairCurrentDecisionBodyStructure(body);
   }
 
   const missing = findMissingRequiredSections(
