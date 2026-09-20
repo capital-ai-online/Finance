@@ -129,7 +129,7 @@ describe('correlation-gated PR creation and post-create Owner governance', () =>
     expect(agents).toContain('The final Pull Request merge is the sole mandatory Human Owner action');
     expect(agents).toContain('Agents and automation MUST NOT self-merge, enable auto-merge');
     expect(merge?.requirement).toContain('Every main merge is a distinct Human Owner decision');
-    expect(merge?.requirement).toContain('Agent self-merge and auto-merge remain prohibited');
+    expect(merge?.requirement).toContain('Agent or automation self-merge and auto-merge remain prohibited');
     expect(security?.requirement).toContain('bounded by ownership');
     expect(security?.requirement).toContain('protected-action gates');
     expect(agents).toContain('ownership remains unchanged');
