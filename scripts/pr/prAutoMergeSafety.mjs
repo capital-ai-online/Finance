@@ -133,21 +133,6 @@ export function autoMergeEvidenceMatches(observed, expected) {
     observed.headSha === expected.headSha &&
     observed.baseSha === expected.baseSha &&
     observed.requiredChecksFingerprint === expected.requiredChecksFingerprint &&
-    observed.correlation: read('Auto-Merge Correlation'),
-    state: read('Auto-Merge State'),
-    evaluatedAt: read('Auto-Merge Evaluated At'),
-    reason: read('Auto-Merge Reason'),
-  };
-}
-
-export function autoMergeEvidenceMatches(observed, expected) {
-  return Boolean(
-    observed &&
-    !observed.malformed &&
-    observed.contract === expected.contract &&
-    observed.headSha === expected.headSha &&
-    observed.baseSha === expected.baseSha &&
-    observed.requiredChecksFingerprint === expected.requiredChecksFingerprint &&
     observed.correlation === expected.correlation &&
     observed.reason === expected.reason
   );
