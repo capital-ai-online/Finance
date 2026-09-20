@@ -13,13 +13,13 @@
     "REMOTE_ONLY_HISTORY": "No current local migration has the same remote timestamp or normalized migration name. Consolidated/catch-up schema may exist elsewhere, but is not treated as an alias without exact migration-name identity."
   },
   "summary": {
-    "remote_total": 74,
-    "local_total": 57,
-    "exact_match": 16,
+    "remote_total": 75,
+    "local_total": 58,
+    "exact_match": 17,
     "timestamp_alias": 32,
     "remote_only_history": 26,
     "unknown": 0,
-    "mapped_current_local": 48,
+    "mapped_current_local": 49,
     "local_only": 9
   },
   "remote_migrations": [
@@ -540,6 +540,13 @@
       "classification": "EXACT_MATCH",
       "local_version": "20260920161445",
       "local_path": "supabase/migrations/20260920161445_fix_outbox_worker_recovery_job_id_ambiguity.sql"
+    },
+    {
+      "remote_version": "20260920162905",
+      "remote_name": "m10_shadow_evaluations_credential_fk_index",
+      "classification": "EXACT_MATCH",
+      "local_version": "20260920162905",
+      "local_path": "supabase/migrations/20260920162905_m10_shadow_evaluations_credential_fk_index.sql"
     }
   ],
   "local_only_migrations": [
