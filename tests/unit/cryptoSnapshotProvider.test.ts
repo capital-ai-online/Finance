@@ -116,6 +116,8 @@ describe('SC-5 Phase B matrix guards', () => {
     );
     expect(health?.state).toBe('degraded');
     expect(health?.diagnosticCode).toBe('rate_limited');
+    expect(health?.cacheMode).toBe('last-known-good');
+    expect(health?.payloadUsable).toBe(true);
   });
 
   it('skips upstream when circuit breaker is open', async () => {

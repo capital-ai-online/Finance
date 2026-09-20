@@ -152,6 +152,8 @@ function writeHealth(
   message: string,
   diagnosticCode?: ProviderDiagnosticCode,
   circuitOpenUntil?: string | null,
+  cacheMode?: string,
+  payloadUsable?: boolean,
 ): void {
   if (options.recordHealth === false) return;
   recordProviderHealth({
@@ -160,6 +162,8 @@ function writeHealth(
     state,
     diagnosticCode: diagnosticCode ?? (state === 'healthy' ? 'healthy' : 'provider_error'),
     circuitOpenUntil: circuitOpenUntil ?? undefined,
+    cacheMode,
+    payloadUsable,
     message,
   });
 }
@@ -196,19 +200,31 @@ export async function getVerifiedCryptoSnapshot(
   const breaker = options.circuitBreaker ?? guards.breaker;
 
   if (!breaker.allow(PROVIDER_ID)) {
+    const hasLastKnownGood = Boolean(cached);
     writeHealth(
       options,
-      'degraded',
+      hasLastKnownGood ? 'degraded' : 'unavailable',
       'Circuit breaker open for coingecko market-fields (SC-5 Phase B matrix).',
       'provider_error',
       breaker.openedUntilIso(PROVIDER_ID),
+      hasLastKnownGood ? 'last-known-good' : undefined,
+      hasLastKnownGood,
     );
     return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
   }
 
   const rl = budget.tryConsume(PROVIDER_ID, CAPABILITY);
   if (!rl.allowed) {
-    writeHealth(options, 'degraded', 'Rate-limit budget exhausted for coingecko market-fields.', 'rate_limited');
+    const hasLastKnownGood = Boolean(cached);
+    writeHealth(
+      options,
+      hasLastKnownGood ? 'degraded' : 'unavailable',
+      'Rate-limit budget exhausted for coingecko market-fields.',
+      'rate_limited',
+      undefined,
+      hasLastKnownGood ? 'last-known-good' : undefined,
+      hasLastKnownGood,
+    );
     return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
   }
 
@@ -273,7 +289,15 @@ export async function getVerifiedCryptoSnapshot(
       };
       cache.set(s, { value, cachedAtMs: nowMs() });
       breaker.success(PROVIDER_ID);
-      writeHealth(options, 'healthy', 'Verified multi-field crypto snapshot received.');
+      writeHealth(
+        options,
+        'healthy',
+        'Verified multi-field crypto snapshot received.',
+        'healthy',
+        undefined,
+        'provider',
+        true,
+      );
       return { ...value, cacheMode: 'fresh', degraded: false };
     } catch (error) {
       lastError = error;
@@ -285,12 +309,15 @@ export async function getVerifiedCryptoSnapshot(
   if (lastError) {
     console.warn('[CryptoSnapshotProvider] verified CoinGecko snapshot unavailable for %s.', s, (lastError as Error)?.message || lastError);
   }
+  const hasLastKnownGood = Boolean(cached);
   writeHealth(
     options,
-    'unavailable',
+    hasLastKnownGood ? 'degraded' : 'unavailable',
     lastError instanceof Error ? lastError.message : 'No verified multi-field crypto snapshot available.',
     'provider_error',
     breaker.openedUntilIso(PROVIDER_ID),
+    hasLastKnownGood ? 'last-known-good' : undefined,
+    hasLastKnownGood,
   );
   return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
 }
