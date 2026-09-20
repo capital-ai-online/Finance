@@ -51,7 +51,13 @@ describe('supervisor', () => {
         calls += 1;
         if (calls < 2) throw new Error('transienter Fehler');
         return 'ok';
-      }, { retries: 2, backoffMs: 1 });
+      }, {
+        retries: 2,
+        backoffMs: 1,
+        jitterMs: 0,
+        idempotencyClass: 'READ_ONLY',
+        sleep: async () => {},
+      });
       expect(result).toBe('ok');
       expect(calls).toBe(2);
     });
@@ -61,8 +67,31 @@ describe('supervisor', () => {
       await expect(executeSupervised('test-task-fail', async () => {
         calls += 1;
         throw new Error('dauerhafter Fehler');
-      }, { retries: 1, backoffMs: 1 })).rejects.toThrow('dauerhafter Fehler');
+      }, {
+        retries: 1,
+        backoffMs: 1,
+        jitterMs: 0,
+        idempotencyClass: 'READ_ONLY',
+        sleep: async () => {},
+      })).rejects.toThrow('dauerhafter Fehler');
       expect(calls).toBe(2);
+    });
+
+    it('unterdrueckt Retries fuer unklassifizierte oder side-effecting Operationen fail-closed', async () => {
+      let calls = 0;
+      await expect(executeSupervised('test-side-effect-no-retry', async () => {
+        calls += 1;
+        throw new Error('write failed');
+      }, { retries: 3, backoffMs: 1 })).rejects.toThrow('write failed');
+
+      expect(calls).toBe(1);
+      const record = getRecentExecutions(10).find(r => r.taskName === 'test-side-effect-no-retry');
+      expect(record).toMatchObject({
+        attempts: 1,
+        idempotencyClass: 'SIDE_EFFECTING',
+        requestedRetries: 3,
+        retrySuppressed: true,
+      });
     });
 
     it('zeichnet erfolgreiche und fehlgeschlagene Ausfuehrungen im Ringpuffer auf', async () => {
@@ -87,6 +116,12 @@ describe('supervisor', () => {
       expect(status.selfHealingContract.valid).toBe(true);
       expect(status.selfHealingContract.enabledActionIds).toContain('FRONTEND_RELOAD_ONCE');
       expect(status.selfHealingContract.heldActionIds).toContain('REDEPLOY_EXACT_SHA');
+      expect(status.dependencyResilience).toMatchObject({
+        valid: true,
+        genericSafeRetryActivation: 'HELD',
+        automaticGenericRetryEnabled: false,
+      });
+      expect(status.capabilities.selfHealing).toBe(false);
       expect(status.capabilities.aiGovernance).toBe(true);
       expect(status.capabilities.agentProviderObservation).toBe(true);
       expect(status.capabilities.findings).toBe(true);
