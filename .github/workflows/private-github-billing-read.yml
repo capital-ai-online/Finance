@@ -85,6 +85,13 @@ jobs:
           CAPITAL_AI_GITHUB_VARIABLE_NAME: GHCR_DIGEST_PUBLISH_ENABLED
         run: node scripts/operations/runPrivateGitHubVariablesRead.mjs
 
+      - name: Read-only GitHub Settings and Retention Inventory
+        env:
+          CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
+          CAPITAL_AI_GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs
+
       - name: Private Key aus Runner-Dateisystem entfernen
         if: always()
         shell: bash

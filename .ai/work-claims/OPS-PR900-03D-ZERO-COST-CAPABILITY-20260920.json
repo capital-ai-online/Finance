@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR900-03D-ZERO-COST-CAPABILITY-20260920",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement the first zero-cost GitHub capability convergence slice: bounded settings inventory, zero-cost eligibility classification, and retention evidence foundation.",
+  "workItemDE": "Ersten Zero-Cost-GitHub-Capability-Slice umsetzen: begrenztes Settings-Inventar, Zero-Cost-Eignungsklassifizierung und Retention-Evidence-Grundlage.",
+  "priority": "P1",
+  "priorityReason": "Makes already-available GitHub capacity observable before any protected enablement and fails closed on positive billed usage or missing entitlement evidence.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-20T19:10:00Z",
+  "baseBranch": "main",
+  "baseSha": "242e1847800af27ad80d4b4a693a28b9754eb25d",
+  "branch": "agent/operations-zero-cost-capability-inventory-20260920",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR900-03D-ZERO-COST-CAPABILITY-20260920.json",
+    "docs/projects/operations/work-packages/OPS_PR900_03D_ZERO_COST_GITHUB_CAPABILITY_CONVERGENCE_2026-09-20.md",
+    ".github/workflows/private-github-billing-read.yml",
+    "scripts/operations/githubSettingsInventoryReadClient.mjs",
+    "scripts/operations/githubSettingsInventoryProjection.mjs",
+    "scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs",
+    "scripts/operations/githubZeroCostEligibility.mjs",
+    "tests/unit/githubSettingsInventoryReadClient.test.ts",
+    "tests/unit/githubZeroCostEligibility.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no provider permission or paid-usage mutation is authorized by this claim.",
+  "currentMainCorrelation": {
+    "sha": "242e1847800af27ad80d4b4a693a28b9754eb25d",
+    "status": "SYNCED",
+    "correlatedAt": "2026-09-20T19:10:00Z"
+  }
+}
