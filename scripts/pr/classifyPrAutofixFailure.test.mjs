@@ -29,6 +29,7 @@ test('delegates repairable PR metadata drift to the existing baseline/template w
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText: 'Error: PR #1 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ## 4. 📌 Priorität & Roadmap',
+    prMetadataShape: 'OTHER',
   });
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
 });
@@ -41,10 +42,43 @@ test('delegates the exact PR #1123 missing-sections failure to the metadata spec
       'Error: PR #1123 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:',
       '## 4. 📌 Priorität & Roadmap, ## 5. 🔢 Version & PR-Klasse, ## 6. ✅ Prüfung & Merge',
     ].join(' '),
+    prMetadataShape: 'CURRENT_V16_GENERIC_MISSING_SECTIONS',
   });
   assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
   assert.equal(result.reason, 'existing-pr-production-baseline-refresh-specialist-owns-write');
+});
+
+test('delegates the exact current v1.6 security-boundary shape but blocks semantic lookalikes', () => {
+  const logText = [
+    'Error: PR #1123 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:',
+    '## 4. 📌 Priorität & Roadmap, ## 5. 🔢 Version & PR-Klasse, ## 6. ✅ Prüfung & Merge',
+  ].join(' ');
+
+  const exact = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText,
+    prMetadataShape: 'CURRENT_V16_SECURITY_BOUNDARY_EXACT',
+  });
+  assert.equal(exact.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
+
+  const lookalike = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText,
+    prMetadataShape: 'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE',
+  });
+  assert.equal(lookalike.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(lookalike.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(lookalike.reason, 'current-v1.6-security-boundary-lookalike-not-allowlisted');
+});
+
+test('missing-section delegation requires a controller-provided semantic body shape', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: 'Error: PR #1 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ## 4. 📌 Priorität & Roadmap',
+  });
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(result.reason, 'pr-metadata-shape-unavailable-or-unsupported');
 });
 
 test('delegates canonical Human/CODEOWNER merge-gate drift to the existing metadata writer', () => {

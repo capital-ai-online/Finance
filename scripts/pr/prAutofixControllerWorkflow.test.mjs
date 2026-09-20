@@ -30,6 +30,19 @@ test('classifier is read-only and binds exact same-repository PR head to current
   assert.doesNotMatch(block, /contents: write|pull-requests: write|actions: write/);
 });
 
+test('controller derives a bounded PR metadata shape before semantic delegation', () => {
+  const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  for (const token of [
+    "core.setOutput('pr_metadata_shape', prMetadataShape)",
+    'CURRENT_V16_GENERIC_MISSING_SECTIONS',
+    'CURRENT_V16_SECURITY_BOUNDARY_EXACT',
+    'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE',
+    'PR_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}',
+    'REPORT_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}',
+  ]) assert.ok(block.includes(token), 'missing metadata-shape semantic guard: ' + token);
+  assert.doesNotMatch(block, /core\.setOutput\('pr_body'/);
+});
+
 test('completed source binding accepts every valid run_attempt without polling', () => {
   const classify = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
   for (const token of [
