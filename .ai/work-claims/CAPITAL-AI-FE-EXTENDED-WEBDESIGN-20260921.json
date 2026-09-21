@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-EXTENDED-WEBDESIGN-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Synchronize the extended SvenKulessa/FRONTEND graphical architecture and bind the new login, FAQ and active responsive desktop presentation surfaces without transferring Auth, Compliance, FinTech, SEO or Operations authority.",
+  "startedAt": "2026-09-21T21:19:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
+  "branch": "frontend/extended-webdesign-sync-20260921",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "claimedPaths": [
+    "docs/frontend/upstream-source/SvenKulessa-FRONTEND/**",
+    "src/features/public/ui/LandingPage.tsx",
+    "src/features/public/ui/frontend-port/frontend-port.css",
+    "src/features/public/ui/LoginPage.tsx",
+    "src/features/public/ui/FaqPage.tsx",
+    "src/features/public/ui/index.ts",
+    "src/app/routing/AppRoutes.tsx",
+    "tests/unit/publicLandingRoute.test.ts",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    ".ai/work-claims/CAPITAL-AI-FE-EXTENDED-WEBDESIGN-20260921.json"
+  ],
+  "foreignOwnerHandoffs": [
+    "CAPITAL-AI-OPS: bind/configure auth lifecycle and add direct production SPA fallback for /faq",
+    "CAPITAL-AI-COMP: maintain FAQ/legal content and compliance assertions",
+    "CAPITAL-AI-SEO: add /faq to canonical SEO/prerender/sitemap lifecycle",
+    "CAPITAL-AI-FINTECH: bind canonical asset classes/subclasses to synchronized Sideboard presentation"
+  ],
+  "exitEvidence": [
+    "new upstream snapshot pinned to 64a0c24bd60501611aef10d36c61f71eba81f752",
+    "mobile-first landing remains active",
+    "responsive desktop landing is explicitly active at >=1024px with Finance-owned 1280px desktop canvas, mobile preview chrome removed and card rails promoted to desktop grids",
+    "/login uses the synchronized visual language while Finance auth handlers remain intact",
+    "/faq exists as a public React presentation owned for content by CAPITAL-AI-COMP",
+    "asset subclass presentation is mirrored without promoting mockData into productive authority",
+    "open-writer and exact-main correlation passes before PR creation",
+    "required exact-head checks remain truthful"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

@@ -3,15 +3,27 @@
   "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
   "sourceRepository": "SvenKulessa/FRONTEND",
   "sourceRef": "main",
-  "sourceSha": "8f6b629c985ca2e46c822ff911f53741d0141e07",
+  "sourceSha": "64a0c24bd60501611aef10d36c61f71eba81f752",
   "adoptionMode": "FULL_PRESENTATION_ARCHITECTURE_SNAPSHOT",
   "allCurrentElementsMirrored": true,
-  "currentGraphicalComponentCount": 13,
+  "currentGraphicalComponentCount": 16,
   "visualFixtureOnly": [
     "src/data/mockData.ts"
   ],
   "runtimePromotionAutomatic": false,
   "financeComponentsBindAfterArchitectureAdoption": true,
+  "presentationSurfaces": {
+    "login": "src/components/LoginPage.tsx",
+    "legalAndFaq": "src/components/LegalAndFaqPages.tsx",
+    "assetSubclass": "src/components/SubclassDetailModal.tsx",
+    "routingBlueprint": "src/App.tsx"
+  },
+  "ownerBoundaries": {
+    "auth": "Finance canonical auth/session remains authoritative; upstream LoginPage is presentation source only",
+    "compliance": "CAPITAL-AI-COMP remains authoritative for legal/compliance content; upstream legal/FAQ is presentation source only",
+    "fintech": "CAPITAL-AI-FINTECH remains authoritative for asset classes/subclasses; mockData is visual fixture only",
+    "analytics": "upstream src/utils/analytics.ts and index.html are intentionally not mirrored by the presentation allowlist"
+  },
   "files": [
     {
       "sourcePath": "src/App.tsx",
@@ -23,42 +35,18 @@
     },
     {
       "sourcePath": "src/index.css",
-      "role": "PRESENTATION_ARCHITECTURE"
+      "role": "VISUAL_STYLE"
     },
     {
       "sourcePath": "src/types.ts",
-      "role": "PRESENTATION_ARCHITECTURE"
+      "role": "PRESENTATION_TYPE_SHAPE"
     },
     {
       "sourcePath": "src/data/mockData.ts",
       "role": "VISUAL_FIXTURE_ONLY"
     },
     {
-      "sourcePath": "src/components/Hero.tsx",
-      "role": "GRAPHICAL_COMPONENT"
-    },
-    {
-      "sourcePath": "src/components/Header.tsx",
-      "role": "GRAPHICAL_COMPONENT"
-    },
-    {
-      "sourcePath": "src/components/Footer.tsx",
-      "role": "GRAPHICAL_COMPONENT"
-    },
-    {
-      "sourcePath": "src/components/BrandLogo.tsx",
-      "role": "GRAPHICAL_COMPONENT"
-    },
-    {
-      "sourcePath": "src/components/StatusBar.tsx",
-      "role": "GRAPHICAL_COMPONENT"
-    },
-    {
-      "sourcePath": "src/components/KeyPillars.tsx",
-      "role": "GRAPHICAL_COMPONENT"
-    },
-    {
-      "sourcePath": "src/components/CoreModules.tsx",
+      "sourcePath": "src/components/AllMarketsModal.tsx",
       "role": "GRAPHICAL_COMPONENT"
     },
     {
@@ -66,11 +54,47 @@
       "role": "GRAPHICAL_COMPONENT"
     },
     {
+      "sourcePath": "src/components/AssetDetailModal.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/BrandLogo.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/CoreModules.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/Footer.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/Header.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/Hero.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/KeyPillars.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/LegalAndFaqPages.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/LoginPage.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
       "sourcePath": "src/components/MarketOverview.tsx",
       "role": "GRAPHICAL_COMPONENT"
     },
     {
-      "sourcePath": "src/components/AllMarketsModal.tsx",
+      "sourcePath": "src/components/ModuleDetailModal.tsx",
       "role": "GRAPHICAL_COMPONENT"
     },
     {
@@ -78,12 +102,28 @@
       "role": "GRAPHICAL_COMPONENT"
     },
     {
-      "sourcePath": "src/components/AssetDetailModal.tsx",
+      "sourcePath": "src/components/StatusBar.tsx",
       "role": "GRAPHICAL_COMPONENT"
     },
     {
-      "sourcePath": "src/components/ModuleDetailModal.tsx",
+      "sourcePath": "src/components/SubclassDetailModal.tsx",
       "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
+      "role": "VISUAL_ASSET"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_full_logo_1789997869885.jpg",
+      "role": "VISUAL_ASSET"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_wide_banner_1789999064950.jpg",
+      "role": "VISUAL_ASSET"
+    },
+    {
+      "sourcePath": "src/assets/images/glowing_earth_nodes_1789997454893.jpg",
+      "role": "VISUAL_ASSET"
     }
   ]
 }

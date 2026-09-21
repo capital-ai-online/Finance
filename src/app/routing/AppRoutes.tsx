@@ -4,7 +4,7 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Datenschutz, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui';
+import { Datenschutz, FaqPage, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
 const Dashboard = lazy(() =>
@@ -182,6 +182,10 @@ export function AppRoutes({
         </div>
       </div>
     );
+  }
+
+  if (currentPath === '/faq') {
+    return <FaqPage />;
   }
 
   if (currentPath === '/learning-platform') {

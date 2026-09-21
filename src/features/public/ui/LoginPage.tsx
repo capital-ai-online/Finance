@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Globe2, Loader2, Lock, LogIn, Mail, Shield, ShieldCheck, Sparkles, TrendingUp, UserPlus } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
 import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 import {
@@ -267,280 +267,305 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
     <main
       role="main"
       id="main-content"
-      className="relative min-h-screen overflow-y-auto bg-black px-4 py-10 text-white selection:bg-aif-gold-DEFAULT selection:text-black sm:px-6"
+      data-design-source="SvenKulessa/FRONTEND"
+      data-design-source-commit="64a0c24bd60501611aef10d36c61f71eba81f752"
+      className="relative min-h-screen overflow-hidden bg-[#02050e] px-4 pb-16 pt-4 text-slate-100 selection:bg-aif-gold-DEFAULT selection:text-black sm:px-6"
     >
-      <div className="relative z-10 mx-auto w-full max-w-5xl">
-        <a
-          href="/"
-          className="mb-6 inline-flex text-xs font-bold text-white/50 transition-colors hover:text-aif-gold-DEFAULT"
-        >
-          ← Zurück zur Landingpage
-        </a>
+      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-10 h-96 w-96 -translate-x-1/2 rounded-full bg-violet-600/10 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -left-20 top-40 h-80 w-80 rounded-full bg-amber-400/10 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-20 bottom-20 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
 
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
-          <aside
-            className="order-2 mx-auto w-full max-w-xl space-y-5 lg:order-1 lg:mx-0"
-            aria-label="Webinhalte und Funktionsübersicht"
+      <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col">
+        <div className="flex items-center justify-between pb-4 pt-2">
+          <a
+            href="/"
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
           >
-            <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-brand-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-primary shadow-[0_0_8px_rgba(249,191,33,0.55)]" />
-              <span>Finanzanalyse-Plattform</span>
-            </div>
-            <h1 className="text-balance text-2xl font-black leading-tight text-white sm:text-3xl">
-              Multi-Asset-Analyse mit erklärbaren KI-Scorings
-            </h1>
-            <p className="text-sm leading-relaxed text-white/60">
-              CAPITAL-AI screent Aktien, Indizes, Forex, Krypto und Rohstoffe, berechnet quantitative
-              Scorings und liefert nachvollziehbare, geprüfte Analysen. Mit einem Konto speichern Sie
-              Watchlists, erhalten den Realtime-Newsfeed und schalten Backtesting frei.
-            </p>
-            <ul className="space-y-2">
-              <li className="flex items-start gap-2 text-xs text-white/55">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-aif-gold-DEFAULT" />
-                <span>Fundamentale Bewertung (Graham, DCF)</span>
-              </li>
-              <li className="flex items-start gap-2 text-xs text-white/55">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-aif-gold-DEFAULT" />
-                <span>Backtesting &amp; Stressszenarien</span>
-              </li>
-              <li className="flex items-start gap-2 text-xs text-white/55">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-aif-gold-DEFAULT" />
-                <span>PDF-/CSV-Exporte für Compliance</span>
-              </li>
-            </ul>
-          </aside>
-
-          <div className="order-1 mx-auto w-full max-w-md space-y-5 lg:order-2">
-            <div className="relative overflow-hidden rounded-2xl p-[2px] shadow-2xl">
-              <div
-                aria-hidden="true"
-                className="absolute inset-[-180%] bg-[conic-gradient(from_0deg,var(--color-brand-primary)_0deg,var(--color-brand-accent)_180deg,var(--color-brand-primary)_360deg)] animate-[spin_8s_linear_infinite] motion-reduce:animate-none"
-              />
-              <section className="relative z-10 rounded-[14px] bg-[#06070B]/95 p-6 backdrop-blur-2xl sm:p-8">
-                <div className="mb-6 flex flex-col items-center text-center">
-                  <CapitalAiLogo size={110} showText={true} />
-                  <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.2em] text-white/40">
-                    {isRecoveryFlow ? 'Passwort sicher setzen' : 'Sichere Kontoanmeldung'}
-                  </p>
-                </div>
-
-                {justLoggedOut && !isRecoveryFlow && (
-                  <div className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-                    <CheckCircle2 size={15} />
-                    Erfolgreich abgemeldet.
-                  </div>
-                )}
-
-                {error && (
-                  <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-300">
-                    <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                {notice && (
-                  <div className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-                    <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
-                    <span>{notice}</span>
-                  </div>
-                )}
-
-                {isRecoveryFlow ? (
-                  <form onSubmit={handleRecoveryPasswordUpdate} className="space-y-3" aria-label="Neues Passwort setzen">
-                    <p className="text-xs leading-relaxed text-white/55">
-                      Setze ein neues Passwort für dieses verifizierte Konto. Danach wird die
-                      temporäre Recovery-Sitzung beendet und die nächste Anmeldung läuft wieder
-                      vollständig durch die vorhandenen Sicherheitsprüfungen.
-                    </p>
-                    <div className="space-y-1.5">
-                      <label htmlFor="recovery-password" className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                        Neues Passwort
-                      </label>
-                      <input
-                        id="recovery-password"
-                        type="password"
-                        autoComplete="new-password"
-                        minLength={PASSWORD_MIN_LENGTH}
-                        value={recoveryPassword}
-                        onChange={(event) => setRecoveryPassword(event.target.value)}
-                        required
-                        disabled={activeAction !== null}
-                        className="min-h-11 w-full rounded-xl border border-white/15 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-aif-gold-DEFAULT/60 focus:ring-1 focus:ring-aif-gold-DEFAULT/30 disabled:opacity-50"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label htmlFor="recovery-password-confirm" className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                        Passwort bestätigen
-                      </label>
-                      <input
-                        id="recovery-password-confirm"
-                        type="password"
-                        autoComplete="new-password"
-                        minLength={PASSWORD_MIN_LENGTH}
-                        value={confirmRecoveryPassword}
-                        onChange={(event) => setConfirmRecoveryPassword(event.target.value)}
-                        required
-                        disabled={activeAction !== null}
-                        className="min-h-11 w-full rounded-xl border border-white/15 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-aif-gold-DEFAULT/60 focus:ring-1 focus:ring-aif-gold-DEFAULT/30 disabled:opacity-50"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={activeAction !== null}
-                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-aif-gold-DEFAULT px-4 py-3 text-xs font-black text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {activeAction === 'recovery-update' && <Loader2 size={16} className="animate-spin" />}
-                      Passwort speichern
-                    </button>
-                  </form>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/30 p-1">
-                      <button
-                        type="button"
-                        onClick={() => switchMode('login')}
-                        disabled={activeAction !== null}
-                        className={`min-h-10 rounded-lg px-3 text-xs font-bold transition ${
-                          mode === 'login'
-                            ? 'bg-aif-gold-DEFAULT text-black'
-                            : 'text-white/55 hover:bg-white/5 hover:text-white'
-                        } disabled:cursor-not-allowed disabled:opacity-50`}
-                      >
-                        Anmelden
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => switchMode('register')}
-                        disabled={activeAction !== null}
-                        className={`min-h-10 rounded-lg px-3 text-xs font-bold transition ${
-                          mode === 'register'
-                            ? 'bg-aif-gold-DEFAULT text-black'
-                            : 'text-white/55 hover:bg-white/5 hover:text-white'
-                        } disabled:cursor-not-allowed disabled:opacity-50`}
-                      >
-                        Registrieren
-                      </button>
-                    </div>
-
-                    <form onSubmit={handleEmailAuth} className="space-y-3" aria-label="E-Mail Kontoanmeldung">
-                      {mode === 'register' && (
-                        <div className="space-y-1.5">
-                          <label htmlFor="auth-name" className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                            Name
-                          </label>
-                          <input
-                            id="auth-name"
-                            type="text"
-                            autoComplete="name"
-                            value={name}
-                            onChange={(event) => setName(event.target.value)}
-                            required
-                            disabled={activeAction !== null}
-                            className="min-h-11 w-full rounded-xl border border-white/15 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-aif-gold-DEFAULT/60 focus:ring-1 focus:ring-aif-gold-DEFAULT/30 disabled:opacity-50"
-                            placeholder="Vor- und Nachname"
-                          />
-                        </div>
-                      )}
-
-                      <div className="space-y-1.5">
-                        <label htmlFor="auth-email" className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                          E-Mail-Adresse
-                        </label>
-                        <input
-                          id="auth-email"
-                          type="email"
-                          autoComplete="email"
-                          value={email}
-                          onChange={(event) => setEmail(event.target.value)}
-                          required
-                          disabled={activeAction !== null}
-                          className="min-h-11 w-full rounded-xl border border-white/15 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-aif-gold-DEFAULT/60 focus:ring-1 focus:ring-aif-gold-DEFAULT/30 disabled:opacity-50"
-                          placeholder="name@example.com"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label htmlFor="auth-password" className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                          Passwort
-                        </label>
-                        <input
-                          id="auth-password"
-                          type="password"
-                          autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                          minLength={mode === 'register' ? PASSWORD_MIN_LENGTH : undefined}
-                          value={password}
-                          onChange={(event) => setPassword(event.target.value)}
-                          required
-                          disabled={activeAction !== null}
-                          className="min-h-11 w-full rounded-xl border border-white/15 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-aif-gold-DEFAULT/60 focus:ring-1 focus:ring-aif-gold-DEFAULT/30 disabled:opacity-50"
-                          placeholder="••••••••"
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={activeAction !== null}
-                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-aif-gold-DEFAULT px-4 py-3 text-xs font-black text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {activeAction === 'email' && <Loader2 size={16} className="animate-spin" />}
-                        {mode === 'login' ? 'Mit E-Mail anmelden' : 'Normales Nutzerkonto registrieren'}
-                      </button>
-                    </form>
-
-                    {mode === 'login' && (
-                      <button
-                        type="button"
-                        onClick={handlePasswordRecoveryRequest}
-                        disabled={activeAction !== null}
-                        className="w-full text-center text-[11px] text-white/45 transition-colors hover:text-aif-gold-DEFAULT disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {activeAction === 'recovery-request'
-                          ? 'Passwort-Link wird angefordert…'
-                          : 'Passwort vergessen oder noch kein Passwort gesetzt?'}
-                      </button>
-                    )}
-
-                    <div className="flex items-center gap-3">
-                      <div className="h-px flex-1 bg-white/10" />
-                      <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">
-                        Oder
-                      </span>
-                      <div className="h-px flex-1 bg-white/10" />
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={activeAction !== null}
-                      onClick={handleGoogleLogin}
-                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-3 text-xs font-bold text-neutral-800 shadow-sm transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="Mit Google anmelden"
-                    >
-                      <svg
-                        className="h-4 w-4 shrink-0"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.53-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-8.83z" />
-                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.11 0-5.74-2.11-6.68-4.96H1.21v3.15C3.18 21.88 7.39 24 12 24z" />
-                        <path fill="#FBBC05" d="M5.32 14.24A7.16 7.16 0 0 1 5 12c0-.79.13-1.57.32-2.34V6.51H1.21A11.94 11.94 0 0 0 0 12c0 1.92.45 3.74 1.21 5.39l4.11-3.15z" />
-                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.39 0 3.18 2.12 1.21 5.39l4.11 3.15c.94-2.85 3.57-4.96 6.68-4.96z" />
-                      </svg>
-                      {activeAction === 'google' ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                      <span>Mit Google anmelden</span>
-                    </button>
-
-                    <p className="text-center text-[10px] leading-relaxed text-white/35">
-                      E-Mail/Passwort und Google sind die regulären Anmeldewege. Ein in den
-                      Benutzereinstellungen aktivierter WebAuthn-Passkey wird anschließend als
-                      zusätzlicher AAL2-Faktor abgefragt; er ist kein separater Login-Button.
-                    </p>
-                  </div>
-                )}
-              </section>
-            </div>
+            <ArrowLeft className="h-3.5 w-3.5 text-aif-gold-DEFAULT" />
+            <span>Zurück zur Übersicht</span>
+          </a>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-mono text-emerald-400">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Sicherer Zugang</span>
           </div>
         </div>
+
+        <section className="mb-5 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-400/10 via-fuchsia-500/10 to-violet-600/15 p-4 shadow-[0_10px_35px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-5">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="rounded-lg border border-amber-400/30 bg-amber-400/15 p-1.5 text-amber-300">
+              <Sparkles className="h-3.5 w-3.5" />
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 sm:text-[11px]">
+              Capital-AI Webanwendung
+            </span>
+          </div>
+          <h1 className="text-base font-extrabold leading-snug tracking-tight text-white sm:text-lg">
+            Marktintelligenz und Analyse in einer Oberfläche
+          </h1>
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
+            Die Login-Oberfläche folgt der aktuellen grafischen Architektur aus dem FRONTEND-Repository.
+            Authentifizierung, Session-Sicherheit und Recovery bleiben an die produktiven Finance-Verträge gebunden.
+          </p>
+          <div className="mt-3.5 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+            <div className="flex items-center gap-2 text-[11px] text-slate-200">
+              <Globe2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+              <span className="font-semibold">Multi-Asset</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-slate-200">
+              <TrendingUp className="h-3.5 w-3.5 shrink-0 text-fuchsia-400" />
+              <span className="font-semibold">Erklärbares Scoring</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-slate-200">
+              <Shield className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+              <span className="font-semibold">Geschützter Zugang</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-slate-200">
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <span className="font-semibold">Compliance-Grenzen</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative rounded-3xl border border-amber-500/25 bg-[#070b19]/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(249,191,33,0.12)] backdrop-blur-xl sm:p-8">
+          <div className="mb-5 flex flex-col items-center text-center">
+            <CapitalAiLogo size={110} showText={true} />
+            <h2 className="mt-4 text-xl font-bold tracking-tight text-white">
+              {isRecoveryFlow ? 'Passwort sicher setzen' : mode === 'login' ? 'Terminal Anmeldung' : 'Neues Konto erstellen'}
+            </h2>
+            <p className="mt-1 max-w-xs text-xs text-slate-400">
+              {isRecoveryFlow
+                ? 'Setze ein neues Passwort über die verifizierte Recovery-Sitzung.'
+                : mode === 'login'
+                  ? 'Sicherer Zugang zur Capital-AI Anwendung.'
+                  : 'Erstelle ein reguläres Nutzerkonto über den bestehenden sicheren Registrierungsprozess.'}
+            </p>
+          </div>
+
+          {justLoggedOut && !isRecoveryFlow && (
+            <div className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+              <CheckCircle2 size={15} />
+              Erfolgreich abgemeldet.
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-300">
+              <AlertCircle size={15} className="mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {notice && (
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+              <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
+              <span>{notice}</span>
+            </div>
+          )}
+
+          {isRecoveryFlow ? (
+            <form onSubmit={handleRecoveryPasswordUpdate} className="space-y-4" aria-label="Neues Passwort setzen">
+              <div>
+                <label htmlFor="recovery-password" className="mb-1.5 block text-xs font-medium text-slate-300">
+                  Neues Passwort
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input
+                    id="recovery-password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={PASSWORD_MIN_LENGTH}
+                    value={recoveryPassword}
+                    onChange={(event) => setRecoveryPassword(event.target.value)}
+                    required
+                    disabled={activeAction !== null}
+                    className="min-h-11 w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="recovery-password-confirm" className="mb-1.5 block text-xs font-medium text-slate-300">
+                  Passwort bestätigen
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input
+                    id="recovery-password-confirm"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={PASSWORD_MIN_LENGTH}
+                    value={confirmRecoveryPassword}
+                    onChange={(event) => setConfirmRecoveryPassword(event.target.value)}
+                    required
+                    disabled={activeAction !== null}
+                    className="min-h-11 w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={activeAction !== null}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-emerald-400 to-violet-500 px-4 py-3 text-sm font-extrabold text-black shadow-[0_0_20px_rgba(249,191,33,0.25)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {activeAction === 'recovery-update' && <Loader2 size={16} className="animate-spin" />}
+                Passwort speichern
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1">
+                <button
+                  type="button"
+                  id="tab-mode-login"
+                  onClick={() => switchMode('login')}
+                  disabled={activeAction !== null}
+                  className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition ${
+                    mode === 'login'
+                      ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow'
+                      : 'text-slate-400 hover:text-white'
+                  } disabled:opacity-50`}
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  Anmelden
+                </button>
+                <button
+                  type="button"
+                  id="tab-mode-register"
+                  onClick={() => switchMode('register')}
+                  disabled={activeAction !== null}
+                  className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition ${
+                    mode === 'register'
+                      ? 'bg-gradient-to-r from-fuchsia-500 to-violet-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  } disabled:opacity-50`}
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Registrieren
+                </button>
+              </div>
+
+              <form onSubmit={handleEmailAuth} className="space-y-4" aria-label="E-Mail Kontoanmeldung">
+                {mode === 'register' && (
+                  <div>
+                    <label htmlFor="auth-name" className="mb-1.5 block text-xs font-medium text-slate-300">
+                      Vollständiger Name
+                    </label>
+                    <input
+                      id="auth-name"
+                      type="text"
+                      autoComplete="name"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      required
+                      disabled={activeAction !== null}
+                      className="min-h-11 w-full rounded-xl border border-slate-700/80 bg-black/50 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 disabled:opacity-50"
+                      placeholder="Vor- und Nachname"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="auth-email" className="mb-1.5 block text-xs font-medium text-slate-300">
+                    E-Mail-Adresse
+                  </label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    <input
+                      id="auth-email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      required
+                      disabled={activeAction !== null}
+                      className="min-h-11 w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 disabled:opacity-50"
+                      placeholder="name@beispiel.de"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="auth-password" className="mb-1.5 block text-xs font-medium text-slate-300">
+                    Passwort
+                  </label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    <input
+                      id="auth-password"
+                      type="password"
+                      autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                      minLength={mode === 'register' ? PASSWORD_MIN_LENGTH : undefined}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      required
+                      disabled={activeAction !== null}
+                      className="min-h-11 w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 disabled:opacity-50"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  id="login-submit-btn"
+                  type="submit"
+                  disabled={activeAction !== null}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-emerald-400 to-violet-500 px-4 py-3 text-sm font-extrabold text-black shadow-[0_0_20px_rgba(249,191,33,0.25)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {activeAction === 'email' && <Loader2 size={16} className="animate-spin" />}
+                  {mode === 'login' ? (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      <span>Mit E-Mail anmelden</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4" />
+                      <span>Normales Nutzerkonto registrieren</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={handlePasswordRecoveryRequest}
+                  disabled={activeAction !== null}
+                  className="w-full text-center text-[11px] text-amber-400 transition hover:text-amber-300 disabled:opacity-50"
+                >
+                  {activeAction === 'recovery-request'
+                    ? 'Passwort-Link wird angefordert…'
+                    : 'Passwort vergessen oder noch kein Passwort gesetzt?'}
+                </button>
+              )}
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">Oder</span>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+
+              <button
+                type="button"
+                disabled={activeAction !== null}
+                onClick={handleGoogleLogin}
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-3 text-xs font-bold text-neutral-800 shadow-sm transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Mit Google anmelden"
+              >
+                {activeAction === 'google' ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                <span>Mit Google anmelden</span>
+              </button>
+
+              <p className="text-center text-[10px] leading-relaxed text-white/35">
+                E-Mail/Passwort und Google bleiben die produktiven Primärwege. Ein aktivierter
+                WebAuthn-Passkey wird anschließend als zusätzlicher AAL2-Faktor geprüft.
+              </p>
+              <p className="text-center text-[10px] text-white/35">
+                Fragen zu rechtlichen und allgemeinen Nutzungsthemen findest du in den <a href="/faq" className="text-amber-400 hover:underline">FAQ</a>.
+              </p>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
