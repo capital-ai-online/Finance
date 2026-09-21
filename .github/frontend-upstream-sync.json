@@ -75,19 +75,12 @@
     "automatic": false,
     "destinationUnderSrcAllowed": false,
     "adapterReviewRequired": true,
-    "financeComponentsBindAfterArchitectureAdoption": true,
-    "desktopWebsiteAdapter": {
-      "required": true,
-      "minWidthPx": 1024,
-      "preserveBelowDesktopBreakpoint": true,
-      "adapterPath": "src/features/public/ui/frontend-port/frontend-port.css",
-      "validationTest": "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
-      "rule": "Every promoted FRONTEND sync must preserve the current sub-1024px presentation and revalidate the CAPITAL-AI-FE desktop website adapter."
-    }
+    "financeComponentsBindAfterArchitectureAdoption": true
   },
   "responsiveRuntimeAdapter": {
     "required": true,
     "path": "src/features/public/ui/frontend-port/frontend-port.css",
+    "validationTest": "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
     "strategy": "DESKTOP_VIEWPORT_ADAPTER",
     "desktopMinPx": 1024,
     "preserveMobileSourceLayout": true,
