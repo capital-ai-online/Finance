@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-LANDING-FIRST-GATE-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "WP-SEO-LAUNCH-01 Landing-First continuation: bind SEO launch, crawlability and measurement work to LF-01_STATIC_VISUAL_LANDING_PASS; preserve preparation-only SEO work before the gate and record owner-correct FE/OPS/QM/SEC/COMP handoffs.",
+  "startedAt": "2026-09-21T14:50:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "branch": "agent/seo-landing-first-gate-20260921",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "The public launch work package must not advertise or measure productive landing integrations before the owner-directed static visual landing baseline is independently evidenced.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-MANAGEMENT-LAUNCH-REFRESH-20260921.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-LANDING-FIRST-GATE-20260921.json",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md",
+    "docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md"
+  ],
+  "foreignDependencies": [
+    "CAPITAL-AI-FE — PR #1195 must be re-scoped or superseded so LF-01 is a static visual baseline without productive pricing/scoring/news/subscription dependencies; exact-head frontend evidence remains FE-owned.",
+    "CAPITAL-AI-OPS — runtime/routing correlation may prepare before LF-01 but productive landing integration and performance deltas follow the shared phase gate.",
+    "CAPITAL-AI-QM — independently verify LF-01 exit evidence.",
+    "CAPITAL-AI-SEC — static landing security baseline and later integration-specific security reviews remain independent.",
+    "CAPITAL-AI-COMP — public claims, consent and later analytics activation remain independently gated.",
+    "CAPITAL-AI-SOCIAL — public communication must remain VISUAL_PREVIEW until verified integration stages advance."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no self-merge authority."
+}
