@@ -1,6 +1,6 @@
 # CAPITAL-AI-FINTECH — Canonical Roadmap
 
-**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`
+**Baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`
 
 **Project:** `CAPITAL-AI-FINTECH`  
 **Folder:** `docs/projects/fintech/`  
@@ -41,9 +41,9 @@ Human-merged PR #1157 (`59b65e4907b27f57acd639d56f83ab365f30e4a5`) materialized 
 
 ### FIN-LF-01 — Landing Scorer Consumer Contract
 
-**State:** `HELD / PREPARATION_ONLY / LF-01_DEPENDENCY`
+**State:** `HELD / LANDING_BASELINE_PRESENT / LATER_PHASE_DEPENDENCY`
 
-Owner-directed landing-first integration adds a shared dependency for productive landing scoring. FINTECH may preserve/verify the minimal consumer contract now, but must not activate productive landing scoring before `LF-01_STATIC_VISUAL_LANDING_PASS`; LF-04 additionally depends on LF-02/LF-03 plus Security and QM readiness. The future landing consumer remains BTC-only for free/no-paid access and must consume the existing `ScoringDispatcher -> CanonicalScoreResult` chain with no synthetic fallback, browser-local scoring, ranking, provider or entitlement authority.
+Owner-directed landing-first integration remains gated for productive scoring, but the landing-creation prerequisite is now satisfied: merged #1195 established the root/static semantics and merged #1206 established the pinned FRONTEND presentation. The former landing-existence blocker is superseded. LF-04 still depends on later LF-02/LF-03 integration readiness, #1209 desktop stabilization where relevant, plus Security and QM readiness. The future landing consumer remains BTC-only for free/no-paid access and must consume the existing `ScoringDispatcher -> CanonicalScoreResult` chain with no synthetic fallback, browser-local scoring, ranking, provider or entitlement authority.
 
 Canonical package: `work-packages/FIN_LF_01_LANDING_SCORER_CONSUMER_CONTRACT_2026-09-21.md`.
 
