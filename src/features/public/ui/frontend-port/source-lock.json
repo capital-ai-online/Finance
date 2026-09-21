@@ -189,8 +189,8 @@
     },
     {
       "sourcePath": "src/components/LegalAndFaqPages.tsx",
-      "runtimeTarget": "src/features/public/ui/LegalPageShell.tsx + route-specific COMP content",
-      "authority": "CAPITAL-AI-COMP remains content authority; upstream is design reference only"
+      "runtimeTarget": "src/features/public/ui/LegalAndFaqPages.tsx",
+      "authority": "FRONTEND design is canonical; CAPITAL-AI-COMP supplies productive legal/FAQ content only"
     }
   ],
   "analyticsAdapter": {
