@@ -12,7 +12,8 @@ import { ProductTourModal } from './components/ProductTourModal';
 import { AssetDetailModal } from './components/AssetDetailModal';
 import { ModuleDetailModal } from './components/ModuleDetailModal';
 import { AllMarketsModal } from './components/AllMarketsModal';
-import { MarketAsset, CoreModule } from './types';
+import { SubclassDetailModal } from './components/SubclassDetailModal';
+import { MarketAsset, CoreModule, MainCategory, AssetSubclass } from './types';
 import { CORE_MODULES } from './data/mockData';
 
 export default function App() {
@@ -20,8 +21,10 @@ export default function App() {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [isProductTourOpen, setIsProductTourOpen] = useState(false);
   const [isAllMarketsOpen, setIsAllMarketsOpen] = useState(false);
+  const [marketCategoryFilter, setMarketCategoryFilter] = useState<'ALLE' | MainCategory>('ALLE');
   const [selectedAsset, setSelectedAsset] = useState<MarketAsset | null>(null);
   const [selectedModule, setSelectedModule] = useState<CoreModule | null>(null);
+  const [selectedSubclass, setSelectedSubclass] = useState<{ subclass: AssetSubclass; category: MainCategory } | null>(null);
 
   const handleOpenModuleById = (moduleId: string) => {
     const found = CORE_MODULES.find((m) => m.id === moduleId);
@@ -104,6 +107,13 @@ export default function App() {
         <Header
           onOpenAnalysis={() => setIsAnalysisOpen(true)}
           onOpenModule={handleOpenModuleById}
+          onNavigateLogin={() => window.location.assign('/login')}
+          onNavigate={(path) => window.location.assign(path)}
+          onSelectSubclass={(subclass, category) => setSelectedSubclass({ subclass, category })}
+          onViewAllMarkets={() => {
+            setMarketCategoryFilter('ALLE');
+            setIsAllMarketsOpen(true);
+          }}
         />
 
         {/* Hero Section */}
@@ -118,7 +128,10 @@ export default function App() {
         {/* Global Markets Overview */}
         <MarketOverview
           onSelectAsset={(asset) => setSelectedAsset(asset)}
-          onViewAllMarkets={() => setIsAllMarketsOpen(true)}
+          onViewAllMarkets={() => {
+            setMarketCategoryFilter('ALLE');
+            setIsAllMarketsOpen(true);
+          }}
         />
 
         {/* Core Modules ("Unsere Kernmodule") */}
@@ -128,7 +141,7 @@ export default function App() {
         />
 
         {/* Footer with Slogan & Home Indicator */}
-        <Footer />
+        <Footer onNavigate={(path) => window.location.assign(path)} />
       </main>
 
       {/* Interactive Modals */}
@@ -160,9 +173,27 @@ export default function App() {
         }}
       />
 
+      <SubclassDetailModal
+        isOpen={!!selectedSubclass}
+        onClose={() => setSelectedSubclass(null)}
+        subclass={selectedSubclass?.subclass ?? null}
+        category={selectedSubclass?.category ?? null}
+        onOpenAnalysis={() => {
+          setSelectedSubclass(null);
+          setIsAnalysisOpen(true);
+        }}
+        onExploreMarkets={() => {
+          if (!selectedSubclass) return;
+          setMarketCategoryFilter(selectedSubclass.category);
+          setSelectedSubclass(null);
+          setIsAllMarketsOpen(true);
+        }}
+      />
+
       <AllMarketsModal
         isOpen={isAllMarketsOpen}
         onClose={() => setIsAllMarketsOpen(false)}
+        initialCategory={marketCategoryFilter}
         onSelectAsset={(asset) => {
           setIsAllMarketsOpen(false);
           setSelectedAsset(asset);
