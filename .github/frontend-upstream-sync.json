@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
   "source": {
     "repository": "SvenKulessa/FRONTEND",
@@ -7,18 +7,29 @@
     "ref": "main"
   },
   "destination": "docs/frontend/upstream-source/SvenKulessa-FRONTEND",
+  "architectureRoots": [
+    "src/App.tsx",
+    "src/main.tsx",
+    "src/index.css",
+    "src/types.ts"
+  ],
+  "visualFixtureExactPaths": [
+    "src/data/mockData.ts"
+  ],
   "allowedExactPaths": [
     "src/App.tsx",
-    "src/index.css"
+    "src/main.tsx",
+    "src/index.css",
+    "src/types.ts",
+    "src/data/mockData.ts"
   ],
   "allowedPathPatterns": [
-    "^src/components/[^/]+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
+    "^src/components/.+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
     "^src/features/[^/]+/ui/.+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
     "^src/shared/(?:ui|branding|visuals)/.+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
-    "^src/assets/images/.+\\.(?:svg|png|jpe?g|webp|avif|gif)$"
+    "^src/assets/(?:images/)?[^/].+\\.(?:svg|png|jpe?g|webp|avif|gif)$"
   ],
   "neverCopyPathPatterns": [
-    "(?:^|/)data(?:/|$)",
     "(?:^|/)services?(?:/|$)",
     "(?:^|/)api(?:/|$)",
     "(?:^|/)server(?:/|$)",
@@ -51,6 +62,7 @@
   "runtimePromotion": {
     "automatic": false,
     "destinationUnderSrcAllowed": false,
-    "adapterReviewRequired": true
+    "adapterReviewRequired": true,
+    "financeComponentsBindAfterArchitectureAdoption": true
   }
 }
