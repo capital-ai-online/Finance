@@ -3,43 +3,29 @@
 **Project:** `CAPITAL-AI-FE`  
 **Source repository:** `SvenKulessa/FRONTEND`  
 **Source ref:** `main`  
-**Finance execution authority:** `/AGENTS.md@CURRENT_MAIN`  
-**Status:** presentation-source contract; no productive domain authority
+**Pinned adoption snapshot in PR #1206:** `8f6b629c985ca2e46c822ff911f53741d0141e07`  
+**Finance execution authority:** `/AGENTS.md@CURRENT_MAIN`
 
-## Purpose
+## Architecture adoption
 
-The public `SvenKulessa/FRONTEND` repository is the leading upstream source for graphical components, visual slices and the presentation composition blueprint. Finance consumes that source without importing a second business/runtime authority.
+Merge of PR #1206 adopts the current `SvenKulessa/FRONTEND` presentation architecture as the leading graphical architecture for CAPITAL-AI.
 
-## What the hourly sync may copy
+The adopted snapshot includes the complete current presentation surface: application composition, entry point, global styles, presentation type shapes, all graphical components/modals, and the fixture data required to reproduce those components visually.
 
-The allowlist in `.github/frontend-upstream-sync.json` is intentionally narrow:
+The snapshot is physically stored under `docs/frontend/upstream-source/SvenKulessa-FRONTEND/` and is pinned to the upstream SHA in its manifest. It is therefore reviewable and reproducible at merge time rather than being merely a future-sync declaration.
 
-- graphical React components under `src/components/`;
-- future UI-only feature slices under `src/features/<slice>/ui/`;
-- shared UI, branding and visual primitives;
-- visual image assets;
-- `src/App.tsx` as a non-executable composition blueprint;
-- `src/index.css` as a non-executable style blueprint.
+## Boundary
 
-The generated copy lives only under `docs/frontend/upstream-source/SvenKulessa-FRONTEND/`. TypeScript/CSS sources are stored with a `.source` suffix where applicable and are not imported by the Finance runtime.
+The upstream repository owns visual intent, graphical components, UI slices and presentation composition. Finance retains productive auth/session, data/provider, news, scoring, entitlement, billing, Security, Compliance, Governance and deployment authority.
 
-## What the sync must never copy or activate
+`src/data/mockData.ts` is adopted solely as `VISUAL_FIXTURE_ONLY`. Its prices, scores, news, labels or other sample values are not productive evidence and must never be wired as live Finance data.
 
-The sync does not copy upstream data, service/API, provider, auth, billing/Stripe, scoring, entitlement, server/runtime, package/dependency or environment/configuration authority. It does not install upstream dependencies and never runs upstream scripts.
+## Binding sequence after #1206
 
-A presentation file may reference mock/demo data in the upstream repository. Such a file can be mirrored as an inert design reference, but the manifest marks the file runtime-promotion-blocked. Finance must replace that dependency with an owner-correct adapter before any separately reviewed runtime promotion.
+1. merge #1206 and establish the upstream presentation architecture on CURRENT_MAIN;
+2. treat the pinned snapshot and future hourly snapshots as the graphical reference;
+3. bind existing Finance-owned components/contracts to that graphical architecture through owner-correct adapters;
+4. remove or replace mock/demo dependencies during each productive adapter step;
+5. verify exact-head TypeScript, Frontend architecture, tests/build and applicable SEC/COMP/QM gates.
 
-## Promotion boundary
-
-Hourly sync means **source convergence, not automatic production mutation**.
-
-Any later promotion from the inert mirror into `src/` requires a separate Finance PR that:
-
-1. resolves the current Product/Owner/PVC boundaries from `CURRENT_MAIN`;
-2. removes mock/demo/business authority from the component;
-3. consumes canonical Finance contracts through adapters;
-4. preserves Security/Compliance/QM gates;
-5. passes exact-head Frontend architecture, TypeScript, tests and build checks;
-6. remains Human/CODEOWNER merge-gated.
-
-This contract deliberately prevents the public design repository from becoming a second auth, data, scoring, billing, provider or deployment authority.
+The hourly workflow updates the same presentation architecture scope and opens/updates a review PR. It never executes upstream code and never promotes a snapshot automatically into Finance runtime `src/`.
