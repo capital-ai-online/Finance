@@ -308,7 +308,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Frage oder Stichwort suchen..."
-                  className="w-full pl-10 pr-4 py-1.5.5 bg-black/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all font-sans"
+                  className="w-full pl-10 pr-4 py-2.5 bg-black/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all font-sans"
                 />
               </div>
 
@@ -516,7 +516,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                 type="button"
                 onClick={submitPrivacyRequest}
                 disabled={requestState === 'submitting'}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold hover:bg-white/10 disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold hover:bg-white/10"
               >
                 <Send className="w-4 h-4" />
                 {requestState === 'submitting' ? 'Anfrage wird erfasst…' : `${REQUEST_LABELS[requestType]} anfragen`}
@@ -537,7 +537,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                 type="button"
                 onClick={downloadAccountData}
                 disabled={exporting}
-                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:bg-white/10 transition-all disabled:opacity-50"
+                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:bg-white/10 transition-all"
               >
                 <Download className="w-5 h-5 text-emerald-400" />
                 <strong className="block pt-2 text-sm text-white">Self-Service-Datenauszug</strong>
@@ -548,7 +548,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
               <button
                 type="button"
                 onClick={() => openCookieConsentSettings()}
-                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:bg-white/10 transition"
+                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:bg-white/10 transition-all"
               >
                 <Globe2 className="w-5 h-5 text-emerald-400" />
                 <strong className="block pt-2 text-sm text-white">Cookie- & Analytics-Einstellungen</strong>
