@@ -1,9 +1,9 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
   "sourceRepository": "SvenKulessa/FRONTEND",
   "sourceRef": "main",
-  "sourceSha": "64a0c24bd60501611aef10d36c61f71eba81f752",
+  "sourceSha": "f2a101330d74420c373f0ec56fa58caac53d741d",
   "adoptionMode": "FULL_PRESENTATION_ARCHITECTURE_SNAPSHOT",
   "allCurrentElementsMirrored": true,
   "currentGraphicalComponentCount": 16,
@@ -13,14 +13,21 @@
   "runtimePromotionAutomatic": false,
   "financeComponentsBindAfterArchitectureAdoption": true,
   "presentationSurfaces": {
-    "login": "src/components/LoginPage.tsx",
+    "login": "/login",
     "legalAndFaq": "src/components/LegalAndFaqPages.tsx",
     "assetSubclass": "src/components/SubclassDetailModal.tsx",
-    "routingBlueprint": "src/App.tsx"
+    "routingBlueprint": "src/App.tsx",
+    "legalRoutes": [
+      "/impressum",
+      "/datenschutz",
+      "/agb",
+      "/faq"
+    ],
+    "routeNormalization": "src/App.tsx::resolveAppRoute"
   },
   "ownerBoundaries": {
     "auth": "Finance canonical auth/session remains authoritative; upstream LoginPage is presentation source only",
-    "compliance": "CAPITAL-AI-COMP remains authoritative for legal/compliance content; upstream legal/FAQ is presentation source only",
+    "compliance": "CAPITAL-AI-COMP remains authoritative for all productive legal/FAQ content; upstream LegalAndFaqPages is design/routing reference only and its sample legal text MUST NOT be promoted",
     "fintech": "CAPITAL-AI-FINTECH remains authoritative for asset classes/subclasses; mockData is visual fixture only",
     "analytics": "upstream src/utils/analytics.ts and index.html are intentionally not mirrored by the presentation allowlist"
   },
@@ -125,5 +132,10 @@
       "sourcePath": "src/assets/images/glowing_earth_nodes_1789997454893.jpg",
       "role": "VISUAL_ASSET"
     }
-  ]
+  ],
+  "assetPresentation": {
+    "visibleAssetCount": 15,
+    "symbolContract": "Every market asset already visible on the landing carries a non-empty symbol/ticker and the active landing card renders asset.symbol.",
+    "authority": "Presentation only; canonical asset taxonomy/data/scoring remains CAPITAL-AI-FINTECH."
+  }
 }
