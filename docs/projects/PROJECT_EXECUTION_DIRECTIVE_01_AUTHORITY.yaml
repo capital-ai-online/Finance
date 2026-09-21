@@ -28,3 +28,11 @@ routing:
   project_folder_source: "docs/projects/README.md@CURRENT_MAIN"
   foreign_work_behavior: "OWNER_CORRECT_HANDOVER"
   historical_state_behavior: "EVIDENCE_ONLY"
+
+implementation_bindings:
+  validator: "scripts/governance/validateProjectExecutionDirective.mjs"
+  workflow: ".github/workflows/project-execution-directive.yml"
+  documentation: "docs/projects/PROJECT_EXECUTION_DIRECTIVE_IMPLEMENTATION.md"
+  mode: "READ_ONLY_FAIL_CLOSED_VALIDATION"
+  authority_source: "/AGENTS.md@CURRENT_MAIN"
+  may_mutate_repository: false

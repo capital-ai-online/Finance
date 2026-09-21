@@ -7,6 +7,7 @@ import {
   extractProductionBaselineBlock,
   fail,
   githubJson,
+  gitSucceeds,
   listAddedClaimFiles,
   readJsonFile,
 } from './lib.mjs';
@@ -787,6 +788,23 @@ function normalizeSha(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+export function validatePrMutationBoundary({
+  livePr,
+  liveMain,
+  repository,
+  expectedHeadSha,
+  expectedMainSha,
+  mainIsAncestorOfHead,
+}) {
+  if (livePr?.state !== 'open') return 'pr-not-open';
+  if (livePr?.base?.ref !== 'main') return 'base-not-main';
+  if (livePr?.head?.repo?.full_name !== repository) return 'cross-repository-pr';
+  if (normalizeSha(livePr?.head?.sha) !== normalizeSha(expectedHeadSha)) return 'head-drift';
+  if (normalizeSha(liveMain?.commit?.sha) !== normalizeSha(expectedMainSha)) return 'main-drift';
+  if (mainIsAncestorOfHead !== true) return 'main-not-ancestor-of-head';
+  return '';
+}
+
 async function main() {
   const repository = String(process.env.GITHUB_REPOSITORY || '').trim();
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
@@ -804,15 +822,19 @@ async function main() {
   const fetchPr = () => githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token);
   const fetchMain = () => githubJson('https://api.github.com/repos/' + repository + '/branches/main', token);
 
-  const validateBoundary = (livePr, liveMain) => {
-    if (livePr?.state !== 'open') return 'pr-not-open';
-    if (livePr?.base?.ref !== 'main') return 'base-not-main';
-    if (livePr?.head?.repo?.full_name !== repository) return 'cross-repository-pr';
-    if (normalizeSha(livePr?.head?.sha) !== expectedHeadSha) return 'head-drift';
-    if (normalizeSha(livePr?.base?.sha) !== expectedMainSha) return 'base-drift';
-    if (normalizeSha(liveMain?.commit?.sha) !== expectedMainSha) return 'main-drift';
-    return '';
-  };
+  const validateBoundary = (livePr, liveMain) => validatePrMutationBoundary({
+    livePr,
+    liveMain,
+    repository,
+    expectedHeadSha,
+    expectedMainSha,
+    mainIsAncestorOfHead: gitSucceeds([
+      'merge-base',
+      '--is-ancestor',
+      expectedMainSha,
+      expectedHeadSha,
+    ]),
+  });
 
   let livePr = await fetchPr();
   let liveMain = await fetchMain();
