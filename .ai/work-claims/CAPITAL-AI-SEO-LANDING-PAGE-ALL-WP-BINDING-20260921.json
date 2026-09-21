@@ -26,7 +26,10 @@
     "docs/seo/SEO_LANDING_PAGE_BINDING_2026-09-21.md",
     "src/lib/routeSeo.ts",
     "src/lib/routeSeo.test.ts",
-    "scripts/seo/prerender-public-routes.mjs"
+    "scripts/seo/prerender-public-routes.mjs",
+    "index.html",
+    "tests/unit/routeSeo.test.ts",
+    "src/platform/SeoEngine/store/MemorySeoEngineStore.ts"
   ],
   "landingTarget": {
     "canonicalUrl": "https://capital-ai.online/",
@@ -50,6 +53,7 @@
   "exitEvidence": [
     "active SEO coordination references PR #1241/current main rather than PR #1206/#1209",
     "root title/description match the current visible market-intelligence landing",
+    "source HTML, OpenGraph/Twitter and JSON-LD root metadata reflect the current visible landing proposition",
     "Impressum SEO metadata uses § 5 DDG rather than stale TMG wording",
     "final CWV remains measurement-gated rather than blocked by a superseded frontend PR",
     "/faq is not inserted into the canonical SEO route set until OPS #1223 preserves the existing route-set equality/security invariant",
