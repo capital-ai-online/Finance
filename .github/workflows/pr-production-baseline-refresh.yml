@@ -32,7 +32,10 @@ concurrency:
   # cancel an in-flight Governance baseline/template repair for the same PR.
   group: >-
     pr-production-baseline-${{ github.event.workflow_run.path }}-${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && 'main-deploy' || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.event.action }}
-  cancel-in-progress: true
+  # A baseline writer must never be cancelled after it acquired a source event.
+  # Duplicate completion events queue behind the canonical per-PR writer lease so
+  # the first exact-head baseline write can finish and be read back.
+  cancel-in-progress: false
 
 jobs:
   refresh-baseline:
