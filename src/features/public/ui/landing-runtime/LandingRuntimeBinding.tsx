@@ -409,7 +409,7 @@ export function useLandingRuntimeBinding() {
     const buttonText = normalizeText(button?.textContent);
 
     const opensPublicScorer =
-      buttonText === 'Analyse starten' ||
+      buttonText.includes('Analyse starten') ||
       buttonText === 'Analyse' ||
       buttonText.includes('KI-Marktanalyse') ||
       buttonText.includes('Enterprise Scorer');
