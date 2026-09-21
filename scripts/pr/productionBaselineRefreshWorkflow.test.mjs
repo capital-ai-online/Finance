@@ -254,3 +254,18 @@ test('all production baseline PR writers share the canonical per-PR writer lease
   assert.match(direct, /cancel-in-progress: false/);
   assert.match(postDeploy, /cancel-in-progress: false/);
 });
+
+
+test('post-deploy and post-merge baseline reconciliation advance at most one FIFO PR', () => {
+  const postMerge = fs.readFileSync('.github/workflows/pr-production-baseline-post-merge-refresh.yml', 'utf8');
+  for (const source of [workflow, postMerge]) {
+    assert.ok(source.includes('sort((a, b) => Number(a.number) - Number(b.number))'));
+    assert.ok(source.includes("break;"));
+    assert.match(source, /max-parallel: 1/);
+    assert.doesNotMatch(source, /max-parallel: 4/);
+  }
+  assert.doesNotMatch(postMerge, /setTimeout\(/);
+  assert.doesNotMatch(postMerge, /maxRounds/);
+  assert.ok(postMerge.includes('next-pr-not-synced'));
+  assert.ok(workflow.includes('next-pr-not-synced'));
+});
