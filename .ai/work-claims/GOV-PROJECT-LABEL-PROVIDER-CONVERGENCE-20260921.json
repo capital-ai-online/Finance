@@ -29,7 +29,8 @@
     "scripts/pr/prLabelClassification.mjs",
     "scripts/pr/prLabelClassification.test.mjs",
     "docs/projects/governance/work-packages/GOV_PR_LABEL_CLASSIFICATION_2026-09-20.md",
-    "tests/unit/githubAgentDraftPrWorkflow.test.ts"
+    "tests/unit/githubAgentDraftPrWorkflow.test.ts",
+    ".ai/work-claims/VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20.json"
   ],
   "correlation": {
     "currentMainAtStart": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
@@ -52,6 +53,11 @@
         "claimId": "GOV-PR-PRECREATE-LABEL-CLASSIFICATION-20260921",
         "terminalPullRequest": 1215,
         "terminalState": "MERGED"
+      },
+      {
+        "claimId": "VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20",
+        "terminalPullRequest": 458,
+        "terminalState": "CLOSED"
       }
     ],
     "semanticOverlap": "PR #1211 is SEO-only and does not modify the claimed Governance label-classification paths. Three overlapping historical claims are terminal merged evidence and are released in this slice before the new writer is considered authoritative.",
@@ -102,6 +108,11 @@
       "failedStep": "Angeforderten Agenten-Branch validieren",
       "cause": "Branch namespace governance/* is not allowed by CURRENT_MAIN Draft-PR workflow; allowed namespaces are agent/*, claude/*, grok/*, ai/*.",
       "remediation": "Work copied losslessly to agent/governance-project-label-provider-convergence-20260921; old noncanonical branch is retired from active use."
+    },
+    "latestWorkflowRun": {
+      "runId": 35652598767,
+      "state": "PR_CREATE_PROVIDER_BLOCKED_AFTER_PRECREATE_PASS",
+      "evidence": "Branch validation, baseline, work-claim correlation, German PR rendering and pre-create label classification all passed. GitHub Actions provider setting blocked createPullRequest."
     }
   }
 }
