@@ -12,20 +12,26 @@ import { ProductTourModal } from './components/ProductTourModal';
 import { AssetDetailModal } from './components/AssetDetailModal';
 import { ModuleDetailModal } from './components/ModuleDetailModal';
 import { AllMarketsModal } from './components/AllMarketsModal';
-import { MarketAsset, CoreModule } from './types';
+import { SubclassDetailModal } from './components/SubclassDetailModal';
+import { MarketAsset, CoreModule, MainCategory, AssetSubclass } from './types';
 import { CORE_MODULES } from './data/mockData';
+import { useCurrentLandingRuntimeBinding } from '../runtime/CurrentLandingRuntimeBinding';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup');
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [isProductTourOpen, setIsProductTourOpen] = useState(false);
   const [isAllMarketsOpen, setIsAllMarketsOpen] = useState(false);
+  const [marketCategoryFilter, setMarketCategoryFilter] = useState<'ALLE' | MainCategory>('ALLE');
   const [selectedAsset, setSelectedAsset] = useState<MarketAsset | null>(null);
   const [selectedModule, setSelectedModule] = useState<CoreModule | null>(null);
+  const [selectedSubclass, setSelectedSubclass] = useState<{ subclass: AssetSubclass; category: MainCategory } | null>(null);
+  const runtimeBinding = useCurrentLandingRuntimeBinding();
 
   const handleOpenModuleById = (moduleId: string) => {
     const found = CORE_MODULES.find((m) => m.id === moduleId);
     if (found) {
+      if (runtimeBinding.handleModuleSelection(found)) return;
       setSelectedModule(found);
     }
   };
@@ -102,13 +108,20 @@ export default function App() {
 
         {/* Header */}
         <Header
-          onOpenAnalysis={() => setIsAnalysisOpen(true)}
+          onOpenAnalysis={runtimeBinding.openScorerGate}
           onOpenModule={handleOpenModuleById}
+          onNavigateLogin={() => window.location.assign('/login')}
+          onNavigate={(path) => window.location.assign(path)}
+          onSelectSubclass={(subclass, category) => setSelectedSubclass({ subclass, category })}
+          onViewAllMarkets={() => {
+            setMarketCategoryFilter('ALLE');
+            setIsAllMarketsOpen(true);
+          }}
         />
 
         {/* Hero Section */}
         <Hero
-          onStartAnalysis={() => setIsAnalysisOpen(true)}
+          onStartAnalysis={runtimeBinding.openScorerGate}
           onExploreProduct={() => setIsProductTourOpen(true)}
         />
 
@@ -117,18 +130,23 @@ export default function App() {
 
         {/* Global Markets Overview */}
         <MarketOverview
-          onSelectAsset={(asset) => setSelectedAsset(asset)}
-          onViewAllMarkets={() => setIsAllMarketsOpen(true)}
+          onSelectAsset={runtimeBinding.openVerifiedAsset}
+          onViewAllMarkets={() => {
+            setMarketCategoryFilter('ALLE');
+            setIsAllMarketsOpen(true);
+          }}
         />
 
         {/* Core Modules ("Unsere Kernmodule") */}
         <CoreModules
-          onSelectModule={(module) => setSelectedModule(module)}
+          onSelectModule={(module) => {
+            if (!runtimeBinding.handleModuleSelection(module)) setSelectedModule(module);
+          }}
           onViewAllModules={() => handleOpenModuleById('enterprise-scorer')}
         />
 
         {/* Footer with Slogan & Home Indicator */}
-        <Footer />
+        <Footer onNavigate={(path) => window.location.assign(path)} />
       </main>
 
       {/* Interactive Modals */}
@@ -142,7 +160,7 @@ export default function App() {
         onClose={() => setIsProductTourOpen(false)}
         onStartAnalysis={() => {
           setIsProductTourOpen(false);
-          setIsAnalysisOpen(true);
+          runtimeBinding.openScorerGate();
         }}
       />
 
@@ -155,19 +173,41 @@ export default function App() {
         module={selectedModule}
         onClose={() => setSelectedModule(null)}
         onOpenAnalysis={() => {
+          const moduleId = selectedModule?.id;
           setSelectedModule(null);
-          setIsAnalysisOpen(true);
+          if (moduleId === 'enterprise-scorer') runtimeBinding.openScorerGate();
+          else window.location.assign('/login');
+        }}
+      />
+
+      <SubclassDetailModal
+        isOpen={!!selectedSubclass}
+        onClose={() => setSelectedSubclass(null)}
+        subclass={selectedSubclass?.subclass ?? null}
+        category={selectedSubclass?.category ?? null}
+        onOpenAnalysis={() => {
+          setSelectedSubclass(null);
+          runtimeBinding.openScorerGate();
+        }}
+        onExploreMarkets={() => {
+          if (!selectedSubclass) return;
+          setMarketCategoryFilter(selectedSubclass.category);
+          setSelectedSubclass(null);
+          setIsAllMarketsOpen(true);
         }}
       />
 
       <AllMarketsModal
         isOpen={isAllMarketsOpen}
         onClose={() => setIsAllMarketsOpen(false)}
+        initialCategory={marketCategoryFilter}
         onSelectAsset={(asset) => {
           setIsAllMarketsOpen(false);
-          setSelectedAsset(asset);
+          runtimeBinding.openVerifiedAsset(asset);
         }}
       />
+
+      {runtimeBinding.overlays}
     </div>
   );
 }

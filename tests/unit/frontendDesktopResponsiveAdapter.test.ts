@@ -17,14 +17,14 @@ const sourceLock = JSON.parse(
 };
 
 describe('desktop landing responsive adapter', () => {
-  it('keeps the PR #1206 FRONTEND source lock intact', () => {
-    expect(sourceLock.sourceCommit).toBe('8f6b629c985ca2e46c822ff911f53741d0141e07');
-    expect(sourceLock.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_BRANDING_ADAPTER');
+  it('keeps the current FRONTEND source lock intact', () => {
+    expect(sourceLock.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(sourceLock.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_PRESENTATION_ADAPTERS');
     expect(
       sourceLock.entries
         .filter((entry) => entry.mode !== 'EXACT_GIT_BLOB')
         .map((entry) => entry.sourcePath),
-    ).toEqual(['src/components/BrandLogo.tsx']);
+    ).toEqual(['src/App.tsx', 'src/components/BrandLogo.tsx']);
 
     expect(referenceApp).toContain(
       "const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup')",

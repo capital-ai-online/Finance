@@ -24,13 +24,27 @@ Branding authority stays in the Finance repository.
 - **Colors:** `docs/frontend/design-tokens.json`
 - **Typography:** `docs/frontend/design-tokens.json`
 - **Product/wordmark naming:** Finance repository
-- **Logo geometry only:** `SvenKulessa/FRONTEND@8f6b629c...` → `src/components/BrandLogo.tsx`
+- **Logo geometry only:** current runtime generation `SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d` → `src/components/BrandLogo.tsx`
 - **Canonical geometry contract:** `docs/frontend/brandmark.json`
 - **Canonical React emblem:** `src/shared/branding/CapitalAiEmblem.tsx`
 
 The FRONTEND repository therefore does **not** replace Finance branding colors, typography, naming or semantic color roles. Its logo geometry is projected through Finance-owned brand tokens.
 
 `src/features/public/ui/frontend-port/components/BrandLogo.tsx` is the only allowed runtime branding adapter in the pinned presentation tree. `source-lock.json` records this explicitly as `FINANCE_BRANDING_ADAPTER`; all other locked runtime source artifacts remain `EXACT_GIT_BLOB`.
+
+## Current runtime promotion — 2026-09-22
+
+The review snapshot has converged to `SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d`.
+The productive landing runtime is promoted to the same graphical generation with explicit Finance adapters:
+
+- current Header/Footer, market-category/subclass presentation and modal composition are adopted;
+- `SubclassDetailModal.tsx` is now present in runtime;
+- the Cyber-Earth / planetary neural-grid emblem geometry is adopted while Finance design tokens remain color/typography authority;
+- upstream Login and Legal/FAQ files remain design references only; productive Auth/Session and Compliance content stay on their canonical Finance surfaces;
+- upstream third-party analytics/SEO code is not promoted. Header/Footer events terminate in a Finance-owned presentation event bridge with no external script or cookie side effect;
+- the Finance desktop >=1024px website adapter remains required.
+
+The runtime source lock is `src/features/public/ui/frontend-port/source-lock.json` and must identify this exact upstream commit/tree.
 
 ## Productive authority boundary
 
