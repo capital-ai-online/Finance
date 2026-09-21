@@ -208,6 +208,15 @@ export function classifyPrAutofixFailure(
           reason: 'current-v1.8-legacy-baseline-section-repairable',
         });
       }
+      if (metadataShape === 'CURRENT_V18_OTHER') {
+        return result({
+          classification: 'PR_DECISION_EVIDENCE_DRIFT',
+          decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
+          reason: 'current-v1.8-structure-bootstrap-reconciler-owned',
+          findingClass: 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+          actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+        });
+      }
       return result({
         classification: 'PR_TEMPLATE_METADATA_DRIFT',
         decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
@@ -289,6 +298,15 @@ export function classifyPrAutofixFailure(
   if (source === '.github/workflows/pr-governance.yml') {
     const missingSectionsFailure =
       /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i.test(log);
+    if (missingSectionsFailure && metadataShape === 'CURRENT_V18_OTHER') {
+      return result({
+        classification: 'PR_DECISION_EVIDENCE_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
+        reason: 'current-v1.8-structure-bootstrap-reconciler-owned',
+        findingClass: 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+        actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+      });
+    }
     if (
       missingSectionsFailure &&
       ![

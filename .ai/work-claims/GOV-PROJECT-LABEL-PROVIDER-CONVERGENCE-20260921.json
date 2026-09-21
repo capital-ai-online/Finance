@@ -1,0 +1,148 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-PROJECT-LABEL-PROVIDER-CONVERGENCE-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge canonical GitHub project-label provider metadata from the single docs/projects/README.md mapping on relevant CURRENT_MAIN changes while preserving pre-create classification as the only PR classification path.",
+  "workItemDE": "Kanonische GitHub-Projektlabel-Provider-Metadaten aus dem einzigen Mapping docs/projects/README.md bei relevanten CURRENT_MAIN-Änderungen konvergieren, ohne einen zweiten PR-Klassifizierer einzuführen.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-21T20:12:00Z",
+  "baseBranch": "main",
+  "baseSha": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
+  "branch": "agent/governance-project-label-provider-convergence-20260921",
+  "parentWorkPackage": "GOV-PR-LABEL-01",
+  "issue": 1224,
+  "claimedPaths": [
+    ".ai/work-claims/GOV-PROJECT-LABEL-PROVIDER-CONVERGENCE-20260921.json",
+    ".ai/work-claims/GOV-PR-PRECREATE-LABEL-CLASSIFICATION-20260921.json",
+    ".ai/work-claims/DOCUMENTARY-WP06D-DRAFT-PR-HANDOFF-20260920.json",
+    ".ai/work-claims/CAPITAL-AI-SEC-PR-CREATE-ENVELOPE-GATE-2026-09-14.json",
+    ".github/workflows/open-agent-draft-pr.yml",
+    "scripts/pr/prLabelClassification.mjs",
+    "scripts/pr/prLabelClassification.test.mjs",
+    "docs/projects/governance/work-packages/GOV_PR_LABEL_CLASSIFICATION_2026-09-20.md",
+    "tests/unit/githubAgentDraftPrWorkflow.test.ts",
+    ".ai/work-claims/VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20.json",
+    ".ai/work-claims/GOV-PR-DECISION-RECONCILER-20260920.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/reconcilePrDecisionEvidence.mjs",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs"
+  ],
+  "correlation": {
+    "currentMainAtStart": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
+    "openPullRequestsChecked": [
+      1211
+    ],
+    "changedFileOverlap": false,
+    "staleClaimReconciliation": [
+      {
+        "claimId": "CAPITAL-AI-SEC-PR-CREATE-ENVELOPE-GATE-2026-09-14",
+        "terminalPullRequest": 907,
+        "terminalState": "MERGED"
+      },
+      {
+        "claimId": "DOCUMENTARY-WP06D-DRAFT-PR-HANDOFF-20260920",
+        "terminalPullRequest": 1121,
+        "terminalState": "MERGED"
+      },
+      {
+        "claimId": "GOV-PR-PRECREATE-LABEL-CLASSIFICATION-20260921",
+        "terminalPullRequest": 1215,
+        "terminalState": "MERGED"
+      },
+      {
+        "claimId": "VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20",
+        "terminalPullRequest": 458,
+        "terminalState": "CLOSED"
+      },
+      {
+        "claimId": "GOV-PR-DECISION-RECONCILER-20260920",
+        "terminalPullRequest": 1172,
+        "terminalState": "MERGED",
+        "terminalMergeSha": "242e1847800af27ad80d4b4a693a28b9754eb25d"
+      }
+    ],
+    "semanticOverlap": "PR #1211 is SEO-only and does not modify the claimed Governance label-classification paths. Three overlapping historical claims are terminal merged evidence and are released in this slice before the new writer is considered authoritative.",
+    "permissionVerification": {
+      "source": "GitHub REST API label endpoint documentation",
+      "finding": "Repository label create/update accepts either Issues(write) or Pull requests(write); existing pull-requests: write is sufficient, so no permission widening is required."
+    }
+  },
+  "exitEvidence": [
+    "project:CAPITAL-AI-FE must read back provider-side with canonical color #DC7CA8 and the canonical Frontend description before the system-wide label blocker may be closed or Frontend PR creation treated as unblocked",
+    "project:CAPITAL-AI-OPS resolves to canonical color #845CDC and current canonical description from docs/projects/README.md",
+    "all canonical project labels are derived by the existing prLabelClassification.mjs parser; no second registry or post-create PR classifier exists",
+    "relevant main changes trigger a bounded provider-label convergence job in the existing open-agent-draft-pr workflow",
+    "provider mutation occurs only after exact CURRENT_MAIN/event SHA correlation and each label is read back and compared",
+    "ordinary PR creation still classifies exactly one project before gh pr create",
+    "Human/CODEOWNER merge authority is unchanged"
+  ],
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment.",
+  "prCreateReadiness": {
+    "state": "READY_FOR_CANONICAL_DRAFT_PR_WORKFLOW_RETRY",
+    "observedAt": "2026-09-21T20:12:00Z",
+    "currentMain": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
+    "observed": [
+      {
+        "label": "project:CAPITAL-AI-GOV",
+        "color": "EDEDED",
+        "description": null,
+        "expectedColor": "A1A1AA"
+      },
+      {
+        "label": "project:CAPITAL-AI-OPS",
+        "color": "EDEDED",
+        "description": null,
+        "expectedColor": "845CDC"
+      }
+    ],
+    "reason": "AGENTS.md@CURRENT_MAIN requires canonical project-label metadata to be ensured before the external PR-create mutation. The connected GitHub surface can assign labels to issues/PRs but exposes no repository-label metadata create/update action and no workflow-dispatch action.",
+    "nextCanonicalAction": {
+      "workflow": ".github/workflows/open-agent-draft-pr.yml@CURRENT_MAIN",
+      "workflowName": "Agenten-Draft-PR öffnen",
+      "input": {
+        "head_branch": "agent/governance-project-label-provider-convergence-20260921"
+      },
+      "expectedEffect": "The existing CURRENT_MAIN pre-create writer force-converges project:CAPITAL-AI-GOV to #A1A1AA with its canonical description, verifies final correlation, and then creates the draft PR. After Human/CODEOWNER merge, the new direct-main convergence job synchronizes the complete canonical project-label catalog, including project:CAPITAL-AI-OPS -> #845CDC."
+    },
+    "previousFailedRun": {
+      "runId": 35651773575,
+      "failedAt": "2026-09-21T20:33:25Z",
+      "failedStep": "Angeforderten Agenten-Branch validieren",
+      "cause": "Branch namespace governance/* is not allowed by CURRENT_MAIN Draft-PR workflow; allowed namespaces are agent/*, claude/*, grok/*, ai/*.",
+      "remediation": "Work copied losslessly to agent/governance-project-label-provider-convergence-20260921; old noncanonical branch is retired from active use."
+    },
+    "latestWorkflowRun": {
+      "runId": 35652598767,
+      "state": "PR_CREATE_PROVIDER_BLOCKED_AFTER_PRECREATE_PASS",
+      "evidence": "Branch validation, baseline, work-claim correlation, German PR rendering and pre-create label classification all passed. GitHub Actions provider setting blocked createPullRequest."
+    }
+  },
+  "hardExitGate": {
+    "id": "FE_PROJECT_LABEL_PROVIDER_READBACK",
+    "label": "project:CAPITAL-AI-FE",
+    "expectedColor": "DC7CA8",
+    "expectedDescription": "🎨 Frontend · CAPITAL-AI-FE",
+    "requiredState": "PROVIDER_READBACK_EXACT",
+    "closureBehavior": "Fail closed. Do not mark GOV-PR-LABEL-01 converged and do not treat Frontend PR creation as unblocked until exact provider readback matches both color and description."
+  },
+  "autofixConvergence": {
+    "observedPr": 1224,
+    "failedGovernanceRun": 35653780824,
+    "failure": "Canonical v1.8 required headings missing.",
+    "controllerState": "CURRENT_V18_OTHER -> BLOCKED_NOT_PROVEN",
+    "reconcilerRun": 35653871371,
+    "reconcilerState": "changed=false / decision-section-boundary-ambiguous",
+    "target": "Route bounded current-v1.8 structural drift to the existing Decision Evidence Reconciler and let that single writer bootstrap through trusted-main renderPullRequestBody.mjs before live Evidence/Decision reconciliation."
+  }
+}

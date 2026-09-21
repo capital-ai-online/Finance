@@ -3,8 +3,8 @@
 **Project:** `CAPITAL-AI-GOV`  
 **Primary PVC:** `PVC-05`  
 **Authority:** `/AGENTS.md@CURRENT_MAIN`  
-**Baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`  
-**Status:** `POST_CREATE_PIPELINE_SUPERSEDED / PRE_CREATE_IMPLEMENTED_BRANCH`
+**Baseline:** `main@9ab7776114beff33412e1bd2cfb57c3db84e31b9`  
+**Status:** `IMPLEMENTED_BRANCH / PR_CREATE_BLOCKED_PROVIDER_LABEL_DRIFT`
 
 ## Owner supersession
 
@@ -42,6 +42,21 @@ Examples:
 6. Missing/duplicate project mapping or malformed color fails closed before PR creation.
 7. No post-create label classifier workflow or required label-classification status check is used.
 
+## Provider-Metadaten-Konvergenz — Issue #1224
+
+Der Provider-Readback für `project:CAPITAL-AI-OPS` zeigte am 2026-09-21 weiterhin `#EDEDED`, obwohl die kanonische Routing-Zeile `#845CDC` vorgibt. Der finale Pre-Create-Readback des Reparatur-Branches zeigte zusätzlich `project:CAPITAL-AI-GOV = #EDEDED` ohne Beschreibung statt kanonisch `#A1A1AA`; damit ist der Drift katalogweit und blockiert die regelkonforme Erstellung des Governance-Reparatur-PRs selbst. Der Pre-Create-Pfad enthält bereits den einzigen autorisierten Label-Writer (`gh label create --force`), lief aber nur während einer konkreten PR-Erstellung. Bestehender Provider-Drift konnte deshalb vor einem direkten PR-Handoff bestehen bleiben.
+
+Diese Remediation **erweitert denselben Writer**, sie erzeugt weder eine zweite Label-Registry noch einen post-create PR-Klassifizierer:
+
+- `prLabelClassification.mjs` kann aus demselben `docs/projects/README.md`-Mapping zusätzlich den vollständigen kanonischen Projektlabel-Satz ableiten;
+- `.github/workflows/open-agent-draft-pr.yml` konvergiert diesen Satz nur bei einem direkten relevanten Push auf `main` (Änderung des Mapping, Classifiers oder des Writers selbst);
+- ein wiederverwendbarer Documentary-Handoff mit gesetztem `head_branch` kann diese Main-Konvergenz nicht auslösen;
+- unmittelbar vor jeder Provider-Mutation müssen Event-SHA, ausgecheckter Policy-SHA und Live-`CURRENT_MAIN` exakt übereinstimmen;
+- jedes erzeugte/aktualisierte Label wird anschließend über den GitHub-Provider zurückgelesen und Name, Farbe sowie Beschreibung werden exakt verglichen;
+- die normale PR-Erstellung klassifiziert weiterhin genau ein Projekt **vor** `gh pr create`.
+
+Der Merge dieser Remediation ist selbst die relevante Main-Änderung und löst dadurch die einmalige Katalog-Konvergenz aus. Erst der erfolgreiche Provider-Readback nach Human/CODEOWNER-Merge schließt die externe Drift-Evidence von Issue #1224; bis dahin bleibt der Provider-Fix bewusst `PENDING_HUMAN_MERGE`.
+
 ## Validation boundary
 
 The classifier may have normal regression tests as source-code validation. Those tests are not the operational classification mechanism and do not classify a live PR. Runtime classification occurs only in the pre-create PR path.
@@ -65,7 +80,28 @@ The stable work-package identity `GOV-PR-LABEL-01` is retained and evolved rathe
 - exactly one canonical project label is resolved;
 - label color is sourced from `docs/projects/README.md`, not a second color registry;
 - the repository label is ensured before PR creation;
+- relevant canonical main changes converge the complete project-label provider catalog through the same classifier and exact provider readback;
 - the PR create command carries the resolved label;
 - the former dedicated PR label-classification workflow has no automatic trigger and its only job is statically disabled;
 - ordinary regression tests cover fail-closed mapping behavior;
 - final merge remains Human/CODEOWNER gated because this slice changes Governance/control-plane behavior.
+
+
+## Draft-PR Workflow Recovery — Run 35651773575
+
+Der erste manuelle Draft-PR-Run scheiterte korrekt vor jeder Mutation in Schritt `Angeforderten Agenten-Branch validieren`, weil `governance/*` kein von `CURRENT_MAIN` zugelassener Agenten-Branch-Namespace ist. Zulässig sind ausschließlich `agent/*`, `claude/*`, `grok/*` und `ai/*`.
+
+Die vollständige Remediation wurde verlustfrei auf `agent/governance-project-label-provider-convergence-20260921` kopiert. Dieser Branch erfüllt den bestehenden Namespace-Vertrag; kein Workflow- oder Trust-Root-Bypass wird eingeführt.
+
+## Frontend-Hard-Exit
+
+Der systemische Label-Blocker ist **nicht** erledigt, solange der GitHub-Provider für `project:CAPITAL-AI-FE` weiterhin `#EDEDED` oder eine andere von der kanonischen Vorgabe abweichende Farbe liefert.
+
+Verbindlicher Exit-Readback:
+
+- Label: `project:CAPITAL-AI-FE`
+- erwartete Farbe: `#DC7CA8`
+- erwartete Beschreibung: `🎨 Frontend · CAPITAL-AI-FE`
+- Quelle: `docs/projects/README.md@CURRENT_MAIN`
+
+Ohne exakten Provider-Readback bleibt `GOV-PR-LABEL-01` offen und Frontend-PR-Erstellung weiterhin fail-closed. Ein grüner Code-/Workflow-Test allein ist hierfür keine ausreichende Evidence.

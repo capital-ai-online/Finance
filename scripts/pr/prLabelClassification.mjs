@@ -96,6 +96,40 @@ export function resolvePreCreatePrLabel({ projectId, mappingMarkdown }) {
   };
 }
 
+export function resolveCanonicalProjectLabelSet({ mappingMarkdown }) {
+  const markdown = String(mappingMarkdown || '');
+  const presentations = parseProjectPresentations(markdown);
+  if (presentations.length === 0) fail('Canonical project presentation set is empty.');
+
+  const seen = new Set();
+  const labels = presentations.map((presentation) => {
+    if (seen.has(presentation.projectId)) {
+      fail(`${presentation.projectId} must occur exactly once in the canonical project presentation set.`);
+    }
+    seen.add(presentation.projectId);
+    const resolved = resolvePreCreatePrLabel({
+      projectId: presentation.projectId,
+      mappingMarkdown: markdown,
+    });
+    return {
+      projectId: resolved.project.projectId,
+      ...resolved.label,
+    };
+  });
+
+  return {
+    schema: LABEL_CLASSIFICATION_SCHEMA,
+    state: 'CANONICAL_PROJECT_LABEL_SET_CLASSIFIED',
+    phase: 'CURRENT_MAIN_PROVIDER_CONVERGENCE',
+    labels,
+    authority: {
+      labels_can_authorize_merge: false,
+      merge_authority: 'HUMAN_OWNER_OR_ACTIVE_AUTO_MERGE_CONTRACT_ONLY',
+      note: 'Provider label convergence reuses the canonical pre-create project mapping and creates no second PR classifier.',
+    },
+  };
+}
+
 function appendGithubOutput(result) {
   if (!process.env.GITHUB_OUTPUT) return;
   const lines = [
@@ -114,13 +148,18 @@ function appendGithubOutput(result) {
 function main() {
   const mappingPath = process.env.PR_PROJECT_MAPPING_PATH || 'docs/projects/README.md';
   const projectId = process.env.PR_PROJECT_ID;
+  const scope = String(process.env.PR_LABEL_CLASSIFICATION_SCOPE || 'SINGLE_PROJECT').trim();
   if (!fs.existsSync(mappingPath)) fail(`Project mapping not found: ${mappingPath}`);
 
-  const result = resolvePreCreatePrLabel({
-    projectId,
-    mappingMarkdown: fs.readFileSync(mappingPath, 'utf8'),
-  });
+  const mappingMarkdown = fs.readFileSync(mappingPath, 'utf8');
+  if (scope === 'ALL_PROJECTS') {
+    const result = resolveCanonicalProjectLabelSet({ mappingMarkdown });
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+  if (scope !== 'SINGLE_PROJECT') fail(`Unsupported PR_LABEL_CLASSIFICATION_SCOPE: ${scope}`);
 
+  const result = resolvePreCreatePrLabel({ projectId, mappingMarkdown });
   appendGithubOutput(result);
   console.log(JSON.stringify(result, null, 2));
 }
