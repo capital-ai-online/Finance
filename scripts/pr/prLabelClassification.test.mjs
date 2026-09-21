@@ -1,75 +1,75 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
-import { classifyPrLabels } from './prLabelClassification.mjs';
+import { resolvePreCreatePrLabel } from './prLabelClassification.mjs';
 
-test('consumes every attached label and classifies across dimensions', () => {
-  const result = classifyPrLabels([
-    { name: 'project:CAPITAL-AI-GOV', color: 'a1a1aa' },
-    { name: 'priority:P1' },
-    { name: 'security' },
-    { name: 'feature' },
-    { name: 'version:minor' },
-    { name: 'workflow' },
-    { name: 'agent:ChatGPT' },
-    { name: 'component:pull-request' },
-    { name: 'customer-visible-note' },
-  ]);
+const projectMapping = fs.readFileSync(new URL('../../docs/projects/README.md', import.meta.url), 'utf8');
+const createWorkflowPath = new URL('../../.github/workflows/open-agent-draft-pr.yml', import.meta.url);
+const retiredWorkflowPath = new URL('../../.github/workflows/pr-label-classification.yml', import.meta.url);
 
-  assert.equal(result.label_count, 9);
-  assert.equal(result.all_labels.length, 9);
-  assert.equal(result.effective.priority, 'P1');
-  assert.equal(result.effective.version_impact, 'MINOR');
-  assert.deepEqual(result.dimensions.risk_security, ['security']);
-  assert.deepEqual(result.unmapped.map((label) => label.name), ['customer-visible-note']);
-  assert.equal(result.state, 'PARTIAL_CLASSIFICATION');
+test('resolves the canonical GOV project label before PR creation', () => {
+  const result = resolvePreCreatePrLabel({
+    projectId: 'CAPITAL-AI-GOV',
+    mappingMarkdown: projectMapping,
+  });
+
+  assert.equal(result.state, 'PRE_CREATE_CLASSIFIED');
+  assert.equal(result.phase, 'PRE_PR_CREATE');
+  assert.equal(result.label.name, 'project:CAPITAL-AI-GOV');
+  assert.equal(result.label.color, 'A1A1AA');
+  assert.match(result.label.description, /Governance/);
   assert.equal(result.authority.labels_can_authorize_merge, false);
 });
 
-test('selects the strictest priority while exposing contradictory priority labels as drift', () => {
-  const result = classifyPrLabels(['priority:P2', 'P0', 'docs']);
-  assert.equal(result.effective.priority, 'P0');
-  assert.equal(result.state, 'LABEL_DRIFT');
-  assert.ok(result.drift.some((item) => item.code === 'PRIORITY_CONFLICT'));
+test('uses the canonical project color instead of a second label color registry', () => {
+  const result = resolvePreCreatePrLabel({
+    projectId: 'CAPITAL-AI-FE',
+    mappingMarkdown: projectMapping,
+  });
+
+  assert.equal(result.label.name, 'project:CAPITAL-AI-FE');
+  assert.equal(result.label.color, 'DC7CA8');
+  assert.match(result.label.description, /Frontend/);
 });
 
-test('selects the strictest version impact while preserving all version labels', () => {
-  const result = classifyPrLabels(['version:patch', 'semver:major']);
-  assert.equal(result.effective.version_impact, 'MAJOR');
-  assert.equal(result.dimensions.version_impact.length, 2);
-  assert.ok(result.drift.some((item) => item.code === 'VERSION_IMPACT_CONFLICT'));
+test('fails closed when project resolution is missing or ambiguous', () => {
+  assert.throws(
+    () => resolvePreCreatePrLabel({ projectId: 'CAPITAL-AI-UNKNOWN', mappingMarkdown: projectMapping }),
+    /exactly one canonical project presentation row/,
+  );
+
+  const duplicated = projectMapping.replace(
+    '| `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance',
+    '| `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance\n| `CAPITAL-AI-GOV` | `PVC-05` Primary Owner + cross-cutting Governance',
+  );
+  assert.throws(
+    () => resolvePreCreatePrLabel({ projectId: 'CAPITAL-AI-GOV', mappingMarkdown: duplicated }),
+    /exactly one canonical project presentation row/,
+  );
 });
 
-test('blocked plus ready is fail-closed label drift and never merge authority', () => {
-  const result = classifyPrLabels(['blocked', 'ready']);
-  assert.equal(result.effective.blocked_by_label, true);
-  assert.ok(result.drift.some((item) => item.code === 'STATUS_CONFLICT'));
-  assert.equal(result.authority.merge_authority, 'HUMAN_OWNER_ONLY');
+test('fails closed on malformed canonical project color', () => {
+  const malformed = projectMapping.replace('`#A1A1AA`', '`gray`');
+  assert.throws(
+    () => resolvePreCreatePrLabel({ projectId: 'CAPITAL-AI-GOV', mappingMarkdown: malformed }),
+    /color must be canonical #RRGGBB/,
+  );
 });
 
-test('unknown labels are retained verbatim instead of dropped', () => {
-  const result = classifyPrLabels([{ name: 'experimental-x', color: '123456', description: 'future taxonomy' }]);
-  assert.equal(result.state, 'PARTIAL_CLASSIFICATION');
-  assert.deepEqual(result.unmapped, [{ name: 'experimental-x', color: '123456', description: 'future taxonomy' }]);
-  assert.equal(result.all_labels[0].name, 'experimental-x');
+test('PR create workflow classifies and ensures the label before gh pr create', () => {
+  const workflow = fs.readFileSync(createWorkflowPath, 'utf8');
+  const classifyIndex = workflow.indexOf('node ../create-policy/scripts/pr/prLabelClassification.mjs');
+  const ensureIndex = workflow.indexOf('gh label create "$PR_LABEL_NAME"');
+  const createIndex = workflow.indexOf('gh pr create');
+
+  assert.ok(classifyIndex >= 0, 'pre-create label classification step missing');
+  assert.ok(ensureIndex > classifyIndex, 'repository label must be ensured after classification');
+  assert.ok(createIndex > ensureIndex, 'PR must be created only after classification and label ensure');
+  assert.match(workflow, /--label "\$PR_LABEL_NAME"/);
+  assert.match(workflow, /issues:\s*write/);
+  assert.doesNotMatch(workflow, /PR_LABELS_JSON/);
 });
 
-test('empty label set is explicit and non-authorizing', () => {
-  const result = classifyPrLabels([]);
-  assert.equal(result.state, 'NO_LABELS');
-  assert.equal(result.label_count, 0);
-  assert.equal(result.coverage.mapped_ratio, 0);
-  assert.equal(result.authority.labels_can_authorize_merge, false);
-});
-
-test('workflow evaluates the complete pull_request label payload read-only', () => {
-  const workflow = fs.readFileSync(new URL('../../.github/workflows/pr-label-classification.yml', import.meta.url), 'utf8');
-  for (const action of ['opened', 'reopened', 'synchronize', 'edited', 'labeled', 'unlabeled', 'ready_for_review', 'converted_to_draft']) {
-    assert.ok(workflow.includes(action), 'missing pull_request action ' + action);
-  }
-  assert.match(workflow, /PR_LABELS_JSON:\s*\$\{\{\s*toJSON\(github\.event\.pull_request\.labels\)\s*\}\}/);
-  assert.match(workflow, /node scripts\/pr\/prLabelClassification\.mjs --fail-on-drift/);
-  assert.match(workflow, /contents:\s*read/);
-  assert.match(workflow, /pull-requests:\s*read/);
-  assert.doesNotMatch(workflow, /pull_request_target|contents:\s*write|pull-requests:\s*write|auto-merge|gh\s+pr\s+merge/i);
+test('the former post-create PR label classification workflow is retired', () => {
+  assert.equal(fs.existsSync(retiredWorkflowPath), false);
 });
