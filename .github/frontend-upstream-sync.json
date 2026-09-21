@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
   "source": {
     "repository": "SvenKulessa/FRONTEND",
@@ -75,7 +75,14 @@
     "automatic": false,
     "destinationUnderSrcAllowed": false,
     "adapterReviewRequired": true,
-    "financeComponentsBindAfterArchitectureAdoption": true
+    "financeComponentsBindAfterArchitectureAdoption": true,
+    "responsiveAdapterRequired": true,
+    "previewShellDesktopPromotionAllowed": false,
+    "devicePolicy": {
+      "mobile": "preserve-current-source-behavior",
+      "tablet": "preserve-current-source-behavior",
+      "desktop": "finance-website-adapter-required"
+    }
   },
   "responsiveRuntimeAdapter": {
     "required": true,
