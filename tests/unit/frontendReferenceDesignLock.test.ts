@@ -132,7 +132,10 @@ describe('FRONTEND reference design lock', () => {
     expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
 
     const app = fs.readFileSync(path.join(root, 'src/features/public/ui/frontend-port/ReferenceApp.tsx'), 'utf8');
-    expect(app).toContain("const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup')");
+    expect(app).toContain("const DESKTOP_LANDING_MEDIA_QUERY = '(min-width: 1024px)'");
+    expect(app).toContain("type LandingViewMode = 'mockup' | 'fullscreen'");
+    expect(app).toContain('const [viewMode, setViewMode] = useState<LandingViewMode>(resolveViewportViewMode)');
+    expect(app).toContain("setViewMode(matches ? 'fullscreen' : 'mockup')");
     expect(app).toContain('<Header');
     expect(app).toContain('<Hero');
     expect(app).toContain('<KeyPillars');

@@ -59,8 +59,8 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(landing).toContain('data-desktop-view="responsive-active"');
 
     expect(landingCss).toContain('@media (min-width: 1024px)');
-    expect(landingCss).toContain('max-width: 1280px !important');
-    expect(landingCss).toContain('grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))');
+    expect(landingCss).toContain('max-width: 1440px !important');
+    expect(landingCss).toContain('grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))');
     expect(landingCss).toContain('.capital-ai-frontend-port > div > main > .hidden.sm\\:block');
     expect(landingCss).toContain('display: none !important');
   });
