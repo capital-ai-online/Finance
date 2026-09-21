@@ -597,6 +597,64 @@ test('repairs only the exact current v1.8 legacy baseline-section migration arti
   );
 });
 
+test('repairs the exact current v1.8 baseline-only legacy section observed on PR #1193', () => {
+  const baseline = [
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test`',
+    '- **Produktions-Commit:** `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`',
+    '- **Aktueller main-Commit:** `bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`',
+    '- **PR-Head-Commit:** `cccccccccccccccccccccccccccccccccccccccc`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  ].join('\n');
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Human Decision PR',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Human-/CODEOWNER-Entscheidung | Erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '| Changed-file overlap | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '- Fachliche Evidence bleibt exakt erhalten.',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '',
+    '## 7. Maschinenlesbare Baseline',
+    '',
+    baseline,
+    '',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'current-v1.8-legacy-baseline-only-section-repaired');
+  assert.deepEqual(result.body.match(/^## .+$/gm), [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ]);
+  assert.doesNotMatch(result.body, /^## 7\. Maschinenlesbare Baseline$/m);
+  assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_START/g) || []).length, 2);
+  assert.equal((result.body.match(/CAPITAL_AI_PRODUCTION_BASELINE_END/g) || []).length, 2);
+  assert.match(result.body, /Fachliche Evidence bleibt exakt erhalten\./);
+  assert.match(
+    result.body,
+    /<summary>🤖 Maschinenlesbare Produktions-Baseline<\/summary>[\s\S]*sha256:test[\s\S]*<\/details>/,
+  );
+});
+
 test('other malformed current v1.8 shapes remain fail-closed', () => {
   const body = [
     '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
