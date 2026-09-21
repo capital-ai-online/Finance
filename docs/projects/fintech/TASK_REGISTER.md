@@ -4,8 +4,8 @@
 **Project folder:** `docs/projects/fintech/`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **Primary PVC ownership:** `PVC-09..PVC-17`  
-**Correlation baseline:** `main@10dd68d1c448a71f681da78b76329d960d7a9279`  
-**Re-correlated:** 2026-09-20  
+**Correlation baseline:** `main@4088582d6b49f1551002022638ee0bcb187c8923`  
+**Re-correlated:** 2026-09-21  
 **FIN-SEC-03 merge provenance:** `PR #929` · `103689c2f30536e573b7958f63b503ca428f69cf` · historical branch `agent/fintech-fin-sec-03-analysis-entitlement-20260915`  
 **FIN-17 terminal provenance:** backend PR #946 · `c8a88afc7f9cfad367b592e9567654451f81e436`; FE consumer PR #951 · `3aa41faa2742dfc2601339b000e660f271380cf1`  
 **Status:** `ACTIVE`
@@ -20,7 +20,6 @@ This register is a supporting execution projection. Current planning priority is
 |---|---|---|---|---|---|---|
 | `FIN-SEC-02` | P1/HIGH | PVC-16 | Make every productive canonical verified-score/context/batch path consume the accepted `verified_screening` entitlement/quota boundary without creating a second scoring or entitlement authority | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | ADR-0034; current entitlement inventory; Roadmap; `server/middleware/verifiedScreeningEntitlement.ts` | independent CAPITAL-AI-SEC verification; FINTECH does not self-close |
 | `FIN-SEC-03` | P1/HIGH | PVC-15 | Define one authoritative entitlement boundary for Backtest and Monte Carlo; bind `full_ai_analysis` to an explicit productive financial-domain execution contract; preserve Buffett server authority | IMPLEMENTED / EVIDENCE_READY / SECURITY VERIFICATION REQUESTED | ADR-0034; PR #929 / merge `103689c2f30536e573b7958f63b503ca428f69cf`; `server/middleware/paidAnalysisEntitlement.ts`; `docs/projects/fintech/evidence/FIN_SEC_03_PAID_ANALYSIS_ENTITLEMENT_2026-09-15.md` | independent CAPITAL-AI-SEC verification; pre-PR/hosted execution evidence remains separate; FINTECH does not self-close |
-| `FIN-21` | P2 / OWNER-DIRECTED | PVC-12..17 supporting | Project the canonical six-class FINTECH universe/orchestration state and add source-backed Equity research lenses without creating a second registry/dispatcher/taxonomy authority | IMPLEMENTED_BRANCH / VALIDATION_PENDING | Owner Drive references; `SCORABLE_ASSET_CLASSES`; `ScoringModelRegistry`; `FinTechCoreModuleRegistry`; `UniverseSla`; `evidence/FIN_21_MULTI_ASSET_ORCHESTRATOR_UNIVERSE_2026-09-20.md` | exact-head tests prove six classes, truthful workflow gaps, no synthetic universe fill and Equity lenses remain research-only |
 | `FIN-19` | P2 | PVC-09..12 supporting | Keep asset/model requirements mapped to canonical provider/data-quality capability contracts and current `ProviderMatrix` without creating a parallel ingress plane | PARTIAL / RE-EVALUATION REQUIRED | `src/platform/MarketData/ProviderMatrix.ts`; ADR-0041 / ESS-0016; FIN-21 reference-derived requirements | stock/crypto/commodity research requirements map to provider-neutral FINTECH PVC-09..11 capabilities/current matrix with no direct bypass |
 | `FIN-20` | P2 | supporting | Complete validated data → feature → model → dispatcher → executor → canonical score → backend rank evidence lineage | PARTIAL / REVALIDATION READY | FIN-12..17; PR #1037; OPS traceability; Security evidence return | exact current Git/runtime lineage and required return paths are evidenced |
 | `FIN-DRIFT-01` | P3 | supporting | Add low-cost deterministic drift checks for project/PVC/baseline/provider/consumer/security-routing projections | PLANNED / NOT ACTIVE BY STATUS ALONE | current Roadmap and project surface | representative stale projections fail deterministically without creating new Authority/policy overlay |
@@ -36,6 +35,7 @@ This register is a supporting execution projection. Current planning priority is
 | `FIN-13` Scoring Models | VERIFIED CORE / DRIFT WATCH | one `ScoringModelRegistry`; canonical/champion resolution; challengers non-productive until promotion |
 | `FIN-14` Scoring Orchestration | VERIFIED CORE | one productive `ScoringDispatcher`; no alternate productive dispatcher |
 | `FIN-18` Asset Inventory | VERIFIED | repository-derived supported classes only |
+| `FIN-21` Multi-Asset Orchestrator Universe | DONE_MAIN / TERMINAL PROJECTION SLICE | Human-merged PR #1157 (`59b65e4907b27f57acd639d56f83ab365f30e4a5`); six-class projection and 20 Equity research lenses retained; no new scoring authority |
 | former DATA project boundary | SUPERSEDED / HISTORICAL | PVC-09..11 are internal FINTECH ownership; historical DATA files/claims remain evidence only |
 | former FINTECH Security handoff overlay | HISTORICAL / NON-AUTHORIZING | current remediation routes through affected PVC + applicable ADR/ESS + implementation/tests/evidence |
 
@@ -44,7 +44,7 @@ This register is a supporting execution projection. Current planning priority is
 1. `FIN-SEC-02` and `FIN-SEC-03` implementation/test artifacts are `EVIDENCE_READY`; independent `CAPITAL-AI-SEC` verification remains open and FINTECH does not self-close either Security finding.
 2. `FIN-17` is terminal on current main: PR #946 completed the FINTECH backend ranking authority and PR #951 completed FE backend-order consumption.
 3. `FIN-12` and the separate #1046 provider/promo slice are Human-merged on main; their former re-correlation gates are closed as merge prerequisites.
-4. `FIN-21` is the current Owner-directed bounded implementation: read-only six-class orchestration projection plus 20 Equity research lenses, with no new productive model or workflow-module authority.
+4. `FIN-21` is `DONE_MAIN / TERMINAL PROJECTION SLICE` through Human-merged PR #1157; its stale branch/validation state is retired.
 5. Re-evaluate `FIN-19` provider capability coverage against those research requirements, then revalidate `FIN-20` exact current-main lineage; `FIN-DRIFT-01` remains non-active unless freshly authorized.
 
 ## Ownership boundaries
