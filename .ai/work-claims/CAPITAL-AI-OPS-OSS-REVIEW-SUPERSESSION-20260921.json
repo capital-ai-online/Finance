@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-OSS-REVIEW-SUPERSESSION-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Supersede the automatic OSS Code Review pipeline check to stop excessive GitHub Actions runner consumption while preserving independent required Security, Quality, Governance and build controls.",
+  "startedAt": "2026-09-21T17:55:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "d6be9db867d058d057c39df6e93e49fe3c875145",
+  "branch": "operations/oss-review-supersession-20260921",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / Controlled Implementation",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-OSS-REVIEW-SUPERSESSION-20260921.json",
+    ".github/workflows/oss-code-review.yml",
+    "scripts/pr/ossCodeReviewWorkflow.test.mjs",
+    "docs/projects/operations/evidence/OPS_OSS_CODE_REVIEW_SUPERSESSION_2026-09-21.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "current GitHub rulesets must not require the retired OSS review contexts",
+    "workflow security deletion policy remains unchanged",
+    "separate OSS Quality Assurance and required Security/Governance/build controls remain intact",
+    "QM-owned documentation drift is handed over rather than mutated by OPS"
+  ],
+  "exitEvidence": [
+    "OSS review workflow has no automatic triggers on exact head",
+    "superseded job is statically false and allocates no hosted runner",
+    "retired DeepSeek/Semgrep/reviewdog implementation is absent from the workflow",
+    "workflow regression test prevents silent reactivation",
+    "oss-quality-assurance remains present",
+    "required ruleset contexts do not include DeepSeek AI Review or Semgrep CE + reviewdog",
+    "owner-correct QM handover recorded",
+    "Human/CODEOWNER merge followed by CURRENT_MAIN readback"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
