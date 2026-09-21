@@ -29,9 +29,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: open-agent-draft-pr-${{ inputs.head_branch }}
@@ -40,6 +38,9 @@ concurrency:
 jobs:
   converge-project-labels:
     name: Kanonische Projektlabel-Provider-Metadaten konvergieren
+    permissions:
+      contents: read
+      issues: write
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
@@ -111,6 +112,9 @@ jobs:
 
   preflight-and-open:
     name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung
+    permissions:
+      contents: read
+      pull-requests: write
     if: >-
       (inputs.head_branch != '' &&
        inputs.trusted_handoff == 'documentary-autosync' &&
