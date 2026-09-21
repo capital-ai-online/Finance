@@ -388,6 +388,14 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /sync-agent-pr-branches\.yml/);
   assert.match(workflow, /createWorkflowDispatch/);
   assert.match(workflow, /auto_merge_state/);
+  assert.match(workflow, /PR-v1\.8-Struktur und exakten Bootstrap-Snapshot binden/);
+  assert.match(workflow, /bootstrap_required/);
+  assert.match(workflow, /ref: \${\{ steps\.bootstrap_snapshot\.outputs\.head_sha \}\}/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/productionPreflight\.mjs/);
+  assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/renderPullRequestBody\.mjs/);
+  assert.match(workflow, /PR_CANONICAL_BOOTSTRAP_BODY: \.\.\/candidate\/artifacts\/pr\/decision-reconciler-bootstrap-body\.md/);
+
   assert.doesNotMatch(workflow, /pull_request_target:/);
 });
 
