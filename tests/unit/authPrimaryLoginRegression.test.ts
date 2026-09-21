@@ -49,7 +49,7 @@ describe('website primary login regression boundary', () => {
 
   it('keeps the FRONTEND-derived branded login presentation without moving auth authority', () => {
     expect(loginPage).toContain('data-design-source="SvenKulessa/FRONTEND"');
-    expect(loginPage).toContain('64a0c24bd60501611aef10d36c61f71eba81f752');
+    expect(loginPage).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
     expect(loginPage).toContain('Capital-AI Webanwendung');
     expect(loginPage).toContain('Marktintelligenz und Analyse in einer Oberfläche');
     expect(loginPage).toContain('Terminal Anmeldung');
@@ -57,6 +57,10 @@ describe('website primary login regression boundary', () => {
     expect(loginPage).toContain('Erklärbares Scoring');
     expect(loginPage).toContain('Compliance-Grenzen');
     expect(loginPage).toContain('CapitalAiLogo');
+    expect(loginPage).toContain('href="/impressum"');
+    expect(loginPage).toContain('href="/datenschutz"');
+    expect(loginPage).toContain('href="/agb"');
+    expect(loginPage).toContain('href="/faq"');
     expect(loginPage).not.toContain('setTimeout(');
     expect(loginPage).not.toContain('trackEvent(');
   });
