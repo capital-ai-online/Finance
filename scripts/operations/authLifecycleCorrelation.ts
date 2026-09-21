@@ -18,6 +18,11 @@ function read(repoRoot: string, relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
 
+function readOptional(repoRoot: string, relativePath: string): string {
+  const filePath = path.join(repoRoot, relativePath);
+  return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+}
+
 function finding(
   id: string,
   result: LifecycleResult,
@@ -39,9 +44,12 @@ function sliceCurrentPathBlock(source: string, pathname: string, nextPathname: s
 export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd()): AuthLifecycleFinding[] {
   const loginPage = read(repoRoot, 'src/features/public/ui/LoginPage.tsx');
   const appRoutes = read(repoRoot, 'src/app/routing/AppRoutes.tsx');
-  const checkout = read(repoRoot, 'src/features/billing/ui/Checkout.tsx');
   const spaRouteContract = read(repoRoot, 'server/middleware/seoUrlNormalize.ts');
   const spaFallback = read(repoRoot, 'server/runtime/spaFallback.ts');
+  const publicScorerPreview = read(repoRoot, 'src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
+  const enterpriseScorer = read(repoRoot, 'src/features/crypto/ui/CryptoScoringEnterprise.tsx');
+  const landingNewsfeed = read(repoRoot, 'src/features/news/ui/LandingRealtimeAiNewsfeed.tsx');
+  const landingPricing = readOptional(repoRoot, 'src/app/public/LandingPricingPanel.tsx');
   const sessionComposition = read(repoRoot, 'src/app/auth/SessionComposition.tsx');
   const appDashboard = read(repoRoot, 'src/app/dashboard/Dashboard.tsx');
   const registrationGate = read(repoRoot, 'src/components/RegistrationCompletionGate.tsx');
@@ -144,20 +152,6 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       : 'The authenticated unknown-route fallback still targets /dashboard or lacks a canonical-root handoff.',
   ));
 
-  const checkoutReturnsToRoot =
-    checkout.includes('successUrl: `${window.location.origin}/?checkout=pending`') &&
-    checkout.includes('cancelUrl: `${window.location.origin}/?checkout=cancelled`');
-  findings.push(finding(
-    'checkout_root_return_handoff',
-    checkoutReturnsToRoot ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['src/features/billing/ui/Checkout.tsx'],
-    'Checkout success and cancel browser returns target /; OPS observes routing only and does not define Billing policy.',
-    checkoutReturnsToRoot
-      ? 'Checkout success/cancel URLs both return to the canonical landing root.'
-      : 'Checkout return URLs are not both rooted on the canonical landing page.',
-  ));
-
   const spaSupportsCanonicalRoutes =
     spaRouteContract.includes("  '/',") &&
     spaRouteContract.includes("  '/login',") &&
@@ -176,6 +170,57 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
     spaSupportsCanonicalRoutes
       ? 'Canonical public/application SPA paths are explicitly served and unknown paths remain 404.'
       : 'The production SPA fallback does not fully represent the canonical application-route contract.',
+  ));
+
+  const rootHasLandingProfileProjection =
+    rootBlock.includes('profile={userSession') ||
+    rootBlock.includes('userSession={userSession}');
+  const productiveScorerReachableFromRoot =
+    rootBlock.includes('preview={<PublicAnalysisPreview') &&
+    publicScorerPreview.includes('CanonicalCryptoScoringEnterprise') &&
+    (enterpriseScorer.includes("fetch('/api/crypto/score'") ||
+      enterpriseScorer.includes('/verified-score'));
+  const productiveNewsReachableFromRoot =
+    rootBlock.includes('<LandingRealtimeAiNewsfeed') &&
+    /\b(?:fetch|authFetch)\s*\(/.test(landingNewsfeed);
+  const productivePricingReachableFromRoot =
+    (rootBlock.includes('<LandingPricingPanel') ||
+      rootBlock.includes('pricing={<LandingPricingPanel')) &&
+    /\b(?:fetch|authFetch)\s*\(/.test(landingPricing);
+
+  const lf01Blockers = [
+    !rootBlock.includes('<LandingPage')
+      ? 'canonical root does not render LandingPage'
+      : null,
+    rootHasLandingProfileProjection
+      ? 'LF-02 session/profile projection is already wired into the root landing composition'
+      : null,
+    productivePricingReachableFromRoot
+      ? 'LF-03 pricing/entitlement runtime is reachable from the root landing composition'
+      : null,
+    productiveScorerReachableFromRoot
+      ? 'LF-04 productive scoring runtime is reachable from the root landing composition'
+      : null,
+    productiveNewsReachableFromRoot
+      ? 'LF-05 productive news runtime is reachable from the root landing composition'
+      : null,
+  ].filter((item): item is string => Boolean(item));
+
+  const staticVisualLandingPass = rootBlock.includes('<LandingPage') && lf01Blockers.length === 0;
+  findings.push(finding(
+    'landing_first_lf01_static_visual_gate',
+    staticVisualLandingPass ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    [
+      'src/app/routing/AppRoutes.tsx',
+      'src/features/crypto/ui/PublicCryptoScoringPreview.tsx',
+      'src/features/crypto/ui/CryptoScoringEnterprise.tsx',
+      'src/features/news/ui/LandingRealtimeAiNewsfeed.tsx',
+    ],
+    'LF-01 renders the canonical landing as a presentation-only baseline with no productive scoring, pricing/entitlement or news runtime wired into the root composition and no LF-02 profile/session projection on the landing surface.',
+    staticVisualLandingPass
+      ? 'The root landing composition is static/presentational for LF-01; later productive landing integrations may still proceed only in dependency order with their own owner-correct gates.'
+      : `LF-01 is not a static-only baseline: ${lf01Blockers.join('; ')}.`,
   ));
 
   const localLogoutDefault = sessionComposition.includes("supabase.auth.signOut({ scope: 'local' })");
