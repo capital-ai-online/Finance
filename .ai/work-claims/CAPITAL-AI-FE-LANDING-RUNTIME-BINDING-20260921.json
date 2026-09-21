@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-LANDING-RUNTIME-BINDING-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Bind the pinned landing presentation to existing verified market-data and canonical public scoring logic without mutating the source-locked frontend-port or creating a second domain authority.",
+  "startedAt": "2026-09-21T23:41:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "a54f54c43fd7e33e9a77b61542f75947e6deb23c",
+  "branch": "frontend/landing-runtime-binding-20260921",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation consumer; no productive PVC ownership; consumes FINTECH PVC-09..17 contracts",
+  "claimedPaths": [
+    "src/features/public/ui/LandingPage.tsx",
+    "src/features/public/ui/landing-runtime/**",
+    "tests/unit/frontendLandingRuntimeBinding.test.ts",
+    "tests/unit/publicLandingRoute.test.ts",
+    "docs/projects/frontend/work-packages/FE_LF_03_LANDING_RUNTIME_BINDING_2026-09-21.md",
+    "docs/projects/frontend/ROADMAP.md",
+    ".ai/work-claims/CAPITAL-AI-FE-DESKTOP-RESPONSIVE-20260921.json",
+    ".ai/work-claims/CAPITAL-AI-FE-LANDING-RUNTIME-BINDING-20260921.json"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "PR #1209 / merge 9ab7776114beff33412e1bd2cfb57c3db84e31b9 is reconciled and its stale claim released",
+    "SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07 remains the pinned graphical source",
+    "src/features/public/ui/frontend-port/source-lock.json remains unchanged",
+    "verified-asset-display/1.0.0 remains the read-only per-symbol display contract",
+    "CAPITAL-AI-FINTECH remains scoring/data authority for PVC-09..17"
+  ],
+  "exitEvidence": [
+    "pinned frontend-port files are unchanged",
+    "landing fixture values are neutralized before productive interaction",
+    "selected market assets hydrate through /api/registry/assets/:symbol/verified-display",
+    "no direct provider endpoint is called by the landing adapter",
+    "analysis CTAs route to PublicCryptoScoringPreview with public BTC-only semantics",
+    "protected module flows retain login/server entitlement gates",
+    "focused landing runtime regression passes",
+    "required exact-head repository checks pass"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
