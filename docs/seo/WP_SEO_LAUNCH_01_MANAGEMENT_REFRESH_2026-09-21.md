@@ -1,8 +1,8 @@
 # WP-SEO-LAUNCH-01 — SEO Management Refresh
 
-**Status:** `ACTIVE / CURRENT-MAIN RECORRELATED / PROVIDER GATES OPEN`  
+**Status:** `ACTIVE / LANDING_FIRST_GATE_ACTIVE / LF_01_PENDING`  
 **Date:** 2026-09-21  
-**Current-main baseline:** `4f2c746a20a8683d784a1cbe54c763a64ddd1da3`  
+**Current-main baseline:** `bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`  
 **Project:** `CAPITAL-AI-SEO`  
 **Primary Owner:** `CAPITAL-AI-SEO`  
 **Primary productive PVC:** N/A — cross-cutting; no productive PVC  
@@ -219,3 +219,34 @@ The brief is a source/content specification only. It is not Frontend implementat
 ## 11. Exit interpretation
 
 This SEO management refresh is complete when its repository evidence is Human/CODEOWNER-merged and its claim is released. The broader `WP-SEO-LAUNCH-01` remains active until current GSC/GA4 evidence, FE metadata/IA returns, provider publication evidence and applicable launch-assurance gates converge.
+
+
+## 12. Landing-First gate correlation — 2026-09-21
+
+**Shared dependency:** `LF-01_STATIC_VISUAL_LANDING_PASS`  
+**Current state:** `PENDING / NOT PASS`
+
+Fresh `CURRENT_MAIN` correlation resolved the SEO project as cross-cutting with no productive PVC. Open writers #1195 (FE), #1199 (GOV) and #1200 (OPS) have no changed-file overlap with this SEO continuation.
+
+### PR #1195 evidence
+
+- base SHA: `bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`;
+- head SHA: `9901590b3544d08df55f3771bdb35c60d5fb7d53`;
+- branch scope includes the mobile mockup image plus `LandingPricingPanel`, `PublicAnalysisWorkbench`, route/session projection and checkout redirect changes;
+- `build-and-test`: **FAIL** — TypeScript error TS2741 at `src/app/universe/ui/UniversePortal.tsx(300,12)`, missing required `userSession` for `PublicAnalysisWorkbench`;
+- OSS quality evidence: **FAIL / NOT_AVAILABLE** for vitest coverage, Knip and jscpd on the inspected head;
+- Container Security and Governance checks observed success, but those successes do not convert failed or missing LF-01 evidence into PASS.
+
+### SEO execution mode until LF-01 PASS
+
+`PREPARATION_ONLY`:
+
+- preserve crawlable root semantics and metadata requirements;
+- prepare content, canonical URL, internal-link and measurement specifications;
+- define CWV/baseline capture requirements without treating unrun measurements as PASS;
+- keep Social/public claims aligned to `VISUAL_PREVIEW` rather than live integration claims;
+- do not activate a new landing analytics/provider dependency or infer productive scorer/pricing/news readiness.
+
+### Exit dependency
+
+SEO may move into the next landing integration/measurement phase only after FE provides a static visual landing candidate with productive landing dependencies removed from first render and QM independently verifies the LF-01 exit evidence. Security and Compliance remain independent blockers even after that visual gate passes.
