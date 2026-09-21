@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "server.ts",
+    "src/main.tsx",
+    "scripts/**/*.{ts,mjs}"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "server/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,mjs}",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "dist/**",
+    "coverage/**",
+    ".quality/**",
+    "artifacts/**",
+    "docs/archive/**"
+  ]
+}
