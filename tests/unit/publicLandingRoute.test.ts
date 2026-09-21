@@ -213,9 +213,8 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).toContain("if (currentPath === '/agb')");
     expect(routes).toContain("if (currentPath === '/impressum')");
     expect(routes).toContain("if (currentPath === '/faq')");
-    expect(routes).toContain('<LegalPageShell activeRoute="/datenschutz">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/agb">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/impressum">');
+    expect(routes).toContain('<LegalAndFaqPages route={currentPath} />');
+    expect(routes).not.toContain('<LegalPageShell activeRoute=');
     expect(routes).toContain('normalizeRoutePath(window.location.pathname)');
   });
 
