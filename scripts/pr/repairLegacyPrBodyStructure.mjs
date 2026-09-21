@@ -218,6 +218,74 @@ function repairCurrentDecisionBodyStructure(bodyText) {
     return { eligible: false, changed: false, reason: 'already-canonical', body };
   }
 
+  const machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
+  const exactLegacyBaselineOnlyShape =
+    visibleHeadings.length === 4 &&
+    expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
+    visibleHeadings[3] === legacyHeading &&
+    occurrenceCount(body, placeholder) === 0 &&
+    occurrenceCount(body, legacyHeading) === 1 &&
+    Boolean(baselineBlock) &&
+    occurrenceCount(body, machineBaselineSummary) === 0 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 1 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
+
+  if (exactLegacyBaselineOnlyShape) {
+    const legacyIndex = body.indexOf('\n' + legacyHeading);
+    if (legacyIndex < 0) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-legacy-baseline-heading-not-isolated', body };
+    }
+
+    const prefix = body.slice(0, legacyIndex).trimEnd();
+    const legacyTail = body.slice(legacyIndex + 1).trim();
+    const expectedLegacyTail = [legacyHeading, '', baselineBlock.trim()].join('\n').trim();
+    if (legacyTail !== expectedLegacyTail) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-legacy-baseline-tail-has-extra-content', body };
+    }
+
+    const repaired = [
+      prefix,
+      '',
+      '<details>',
+      machineBaselineSummary,
+      '',
+      baselineBlock.trim(),
+      '',
+      '</details>',
+      '',
+    ].join('\n');
+
+    const repairedHeadings = repaired.match(/^## .+$/gm) || [];
+    if (
+      repairedHeadings.length !== expectedHeadings.length ||
+      !expectedHeadings.every((heading, index) => repairedHeadings[index] === heading)
+    ) {
+      throw new Error('Current v1.8 baseline-only repair did not converge to exactly three visible main sections.');
+    }
+    if (occurrenceCount(repaired, placeholder) !== 0 || occurrenceCount(repaired, legacyHeading) !== 0) {
+      throw new Error('Current v1.8 baseline-only repair left legacy structure behind.');
+    }
+    if (
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_START') !==
+        occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_START') ||
+      occurrenceCount(repaired, 'CAPITAL_AI_PRODUCTION_BASELINE_END') !==
+        occurrenceCount(body, 'CAPITAL_AI_PRODUCTION_BASELINE_END')
+    ) {
+      throw new Error('Current v1.8 baseline-only repair changed baseline marker cardinality.');
+    }
+    const missingAfter = findMissingRequiredSections(repaired, PR_TEMPLATE_VERSION);
+    if (missingAfter.length > 0) {
+      throw new Error('Current v1.8 baseline-only repair left missing sections: ' + missingAfter.join(', '));
+    }
+
+    return {
+      eligible: true,
+      changed: repaired !== body,
+      reason: 'current-v1.8-legacy-baseline-only-section-repaired',
+      body: repaired,
+    };
+  }
+
   const exactLegacyBaselineShape =
     visibleHeadings.length === 4 &&
     expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
