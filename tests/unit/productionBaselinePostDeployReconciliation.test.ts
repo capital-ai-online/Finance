@@ -90,10 +90,11 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).toContain('main änderte sich während der Baseline-Revalidierung');
   });
 
-  it('keeps reconciliation idempotent and bounded under one main-deploy concurrency group', () => {
+  it('keeps reconciliation idempotent and queued under one main-deploy concurrency group', () => {
     const yaml = workflow();
     expect(yaml).toContain("'main-deploy'");
-    expect(yaml).toContain('cancel-in-progress: true');
+    expect(yaml).toContain('cancel-in-progress: false');
+    expect(yaml).not.toContain('cancel-in-progress: true');
     expect(yaml).toContain('BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}');
     expect(yaml).toContain('kein automatischer Re-Run');
     expect(yaml).toContain('keine nachgewiesene Baseline-/Metadata-Mutation');

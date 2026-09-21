@@ -192,3 +192,14 @@ test('stale PR generations are synchronized before any Governance or test fix', 
   assert.ok(sync.includes("workflow_id: 'sync-agent-pr-branches.yml'"));
   assert.ok(sync.includes('CURRENT_MAIN correlation dispatched before any Governance/test fix.'));
 });
+
+
+test('CI workflow_dispatch revalidation re-enters the controller with exact branch identity', () => {
+  const classify = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
+  assert.ok(classify.includes("github.event.workflow_run.event == 'workflow_dispatch'"));
+  assert.ok(classify.includes("github.event.workflow_run.path == '.github/workflows/ci.yml'"));
+  assert.ok(classify.includes("run.event === 'workflow_dispatch'"));
+  assert.ok(classify.includes("String(run.head_branch || '') !== pr.head.ref"));
+  assert.ok(classify.includes("github.event.workflow_run.path == '.github/workflows/pr-governance.yml'"));
+  assert.ok(classify.includes("github.event.workflow_run.event == 'pull_request'"));
+});

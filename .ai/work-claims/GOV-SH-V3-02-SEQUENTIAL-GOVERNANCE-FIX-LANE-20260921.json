@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-SH-V3-02-SEQUENTIAL-GOVERNANCE-FIX-LANE-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
   "owner": "CAPITAL-AI-GOV",
@@ -44,5 +44,7 @@
   "executionSurface": "ChatGPT GitHub Connector",
   "startedAt": "2026-09-21T14:30:00+02:00",
   "recorrelatedAt": "2026-09-21T14:40:00+02:00",
-  "initialBaseSha": "60f703365cb3bceb51fdb32325d17457ce9c32ec"
+  "initialBaseSha": "60f703365cb3bceb51fdb32325d17457ce9c32ec",
+  "releasedAt": "2026-09-21",
+  "releaseReason": "Associated implementation PR #1199 is merged on CURRENT_MAIN; stale exclusive coordination metadata released before the dispatch re-entry fix."
 }
