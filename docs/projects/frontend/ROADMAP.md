@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-21 — FRONTEND architecture, canonical root and logo-only branding adapter correlated  
-**Baseline:** `main@523275263f1c8a3e6f8047fae16653a76f6d8372`  
+**Reconciliation:** 2026-09-21 — PR #1206 merged; upstream graphical source re-correlated; responsive promotion defect identified from current main  
+**Baseline:** `main@d6be9db867d058d057c39df6e93e49fe3c875145`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -41,6 +41,46 @@ The 16.08 layout/mockup target is superseded as historical evidence. Current Fin
 After #1206 merges, productive Finance-owned capabilities are integrated into this graphical shell through owner-correct adapters. Auth/session, provider/data, scoring, entitlement, billing and other productive authority remain with their canonical owners.
 
 The hourly upstream sync maintains future source visibility through review PRs only.
+
+## FE-LF-02-PVC-RESPONSIVE-ADAPTER — Device-native promotion contract
+
+**Canonical identity:** `FE-LF-02-PVC-RESPONSIVE-ADAPTER`  
+**Resolved Owner:** `CAPITAL-AI-FE`  
+**Project/PVC relationship:** `presentation_consumer` across applicable `PVC-01..18`; no productive PVC ownership transfer  
+**Status:** `IMPLEMENTED_PENDING_EXACT_HEAD_EVIDENCE`  
+**Finding:** the pinned FRONTEND source is synchronized correctly, but its source `App.tsx` is a design-preview shell whose desktop default remains an iPhone frame (`sm:max-w-[412px]`). Promoting that shell unchanged therefore produces the wrong website/desktop presentation.
+
+### Scope
+
+- preserve the upstream source and hash lock unchanged;
+- require a FE-owned responsive adapter for every runtime promotion;
+- render the canonical root against the actual mobile/tablet/desktop viewport;
+- remove source preview controls, phone chrome and fixed 412px desktop framing from production presentation;
+- convert mobile-only card carousels to desktop grids at the FE adapter layer without changing source data or productive domain semantics;
+- expose PVC units as presentation-consumer review scope so FE can remediate rendering/interaction findings while Primary Owners retain domain truth.
+
+### Dependencies
+
+- `/AGENTS.md@CURRENT_MAIN`;
+- `docs/projects/PROJECT_VALUE_CHAIN.md` Primary Owner mapping;
+- pinned `SvenKulessa/FRONTEND` graphical source and source lock;
+- Finance branding tokens and accepted Frontend architecture;
+- owner-correct contracts from any PVC whose output is rendered.
+
+### Exit evidence
+
+1. `LandingPage` identifies the FE-owned device-native responsive shell.
+2. Runtime CSS has explicit mobile-first, tablet (`>=640px`) and desktop (`>=1024px`) behavior.
+3. Desktop production presentation is not constrained to the upstream 412px iPhone frame.
+4. Upstream preview controls/status chrome are not exposed as canonical website UI.
+5. Desktop card collections use responsive grid behavior while the source components remain hash-verifiable.
+6. `.github/frontend-upstream-sync.json` requires the responsive adapter and forbids direct preview-shell promotion.
+7. Unit contracts verify the promotion boundary and PVC presentation-consumer relationship.
+8. Exact-head required checks pass before Human/CODEOWNER merge.
+
+### Acceptance criteria
+
+The same synchronized graphical architecture is usable on phone, tablet and desktop through FE-owned adaptation; no productive PVC/domain authority moves into Frontend; future source syncs cannot be promoted by treating an upstream device-preview shell as the production viewport contract.
 
 ## Preserved frontend invariants
 
