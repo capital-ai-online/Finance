@@ -63,20 +63,22 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
     expect(shell).toContain('app-shell-frame');
   });
 
-  it('keeps the public landing token-driven while applying the Owner-directed fixed-BTC Universe surface', () => {
+  it('keeps the landing token-driven while preserving BTC-only access for users without a paid subscription', () => {
     expect(landing).toContain('bg-background');
     expect(landing).toContain('text-brand-primary');
     expect(landing).toContain('border-border');
     expect(landing).toContain('ui-panel');
     expect(landing).toContain('{preview}');
-    expect(landing).toContain('BTC · Public Fixed');
+    expect(landing).toContain("'BTC · ohne Abo'");
     expect(landing).not.toContain('loadPreview');
     expect(landing).not.toContain('WorkbenchActivationState');
     expect(landing).not.toContain('IntersectionObserver');
     expect(landing).not.toContain('bg-[#');
     expect(landing).not.toContain('text-[#');
     expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
-    expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
+    expect(publicWorkbench).toContain('const activeSymbol = hasPaidSubscription ? selectedSymbol : PUBLIC_FIXED_SYMBOL');
+    expect(publicWorkbench).toContain('selectedSymbol={activeSymbol}');
+    expect(publicWorkbench).toContain('onSelectSymbol={hasPaidSubscription ? setSelectedSymbol : undefined}');
     expect(publicWorkbench).toContain("lg:grid-cols-[88px_minmax(0,1fr)]");
     expect(publicWorkbench).toContain("lg:grid-cols-[300px_minmax(0,1fr)]");
   });
@@ -91,6 +93,7 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
       'data-landing-section="market-overview-slot"',
       'data-landing-section="core-modules-slot"',
       'data-landing-section="scoring-analysis-slot"',
+      'data-landing-section="pricing"',
       'data-landing-section="how-it-works"',
       'data-landing-section="trust-and-evidence"',
       'data-landing-section="footer"',
@@ -123,6 +126,8 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
     expect(landing).toContain('Produkt entdecken');
     expect(landing).toContain('Globale Märkte im Überblick');
     expect(landing).toContain('Enterprise Scorer');
+    expect(landing).toContain('profile.subscriptionTier');
+    expect(landing).toContain('Preise &amp; Abo');
     expect(landing).toContain('Buffett Value Check');
     expect(landing).toContain('Vocabulary');
     expect(landing).toContain('NeuralBackground');
