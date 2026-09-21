@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -65,5 +65,7 @@
     "LF-01 exit convergence becomes PASS only after Human/CODEOWNER merge and required exact-head evidence",
     "Gitleaks false positives for the public pinned FRONTEND commit SHA are suppressed only by exact commit/path/rule/line fingerprints; no detection rule is weakened."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-21T17:57:00+02:00",
+  "releaseReason": "PR #1206 merged into main@d6be9db867d058d057c39df6e93e49fe3c875145; retained as terminal evidence only."
 }
