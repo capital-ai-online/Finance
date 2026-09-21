@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-21 — PR #1206 merged; mobile/tablet source layout accepted; desktop-only runtime adapter correlated  
-**Baseline:** `main@22541eedb57d5cc690b13bc9b8284ae5a6f07c0c`  
+**Reconciliation:** 2026-09-22 — upstream review snapshot is f2a101; FE-LF-03 promotes that graphical generation into runtime while preserving host authorities  
+**Baseline:** `main@a328f9cfdb1dba2845aa0e5c2c78e5a286a0e64d`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -59,6 +59,25 @@ The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance 
 - marker drift fails closed with a desktop-adapter correlation error so a future sync cannot silently restore the phone preview on desktop.
 
 The hourly upstream sync therefore keeps future source visibility through review PRs while requiring desktop re-correlation before changed preview-shell architecture is accepted.
+
+## FE-LF-03-RUNTIME-PROMOTION-F2A101 — Current graphical generation
+
+**Canonical identity:** `FE-LF-03-RUNTIME-PROMOTION-F2A101`  
+**Resolved Owner:** `CAPITAL-AI-FE`  
+**Source:** `SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d`  
+**Status:** `IMPLEMENTED_PENDING_EXACT_HEAD_EVIDENCE`
+
+This work closes the gap where the hourly source-sync updated only the inert review snapshot while productive runtime remained locked to `8f6b629...`.
+
+Exit evidence:
+
+- landing runtime and source-lock identify `f2a101330...`;
+- new Header/Footer, market subclass navigation and `SubclassDetailModal` are present;
+- Cyber-Earth emblem geometry is current while Finance design tokens remain authoritative;
+- productive Auth/Session and Compliance content are not replaced by upstream demo/sample logic;
+- desktop adapter remains correlated at >=1024px;
+- source-sync schema 1.2 is executable and can no longer reject its own config;
+- exact-head Frontend/unit/build evidence is green before merge readiness.
 
 ## Preserved frontend invariants
 

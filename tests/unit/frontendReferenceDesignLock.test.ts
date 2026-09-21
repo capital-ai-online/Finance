@@ -11,6 +11,8 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
   sourceTree: string;
   lockMode: string;
   canonicalLanding: string;
+  compositionAdapter: { sourcePath: string; runtimeTarget: string; policy: string };
+  hostPresentationAdapters: Array<{ sourcePath: string; runtimeTarget: string; authority: string }>;
   componentInventory: string[];
   brandingAdapter: {
     sourcePath: string;
@@ -27,7 +29,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
     sourcePath: string;
     targetPath: string;
     blobSha: string;
-    mode: 'EXACT_GIT_BLOB' | 'FINANCE_BRANDING_ADAPTER';
+    mode: 'EXACT_GIT_BLOB' | 'FINANCE_BRANDING_ADAPTER' | 'FINANCE_COMPOSITION_ADAPTER';
   }>;
 };
 
@@ -41,14 +43,14 @@ function gitBlobSha(buffer: Buffer): string {
 describe('FRONTEND reference design lock', () => {
   it('pins the canonical landing design authority to the current selected FRONTEND commit', () => {
     expect(manifest.sourceRepository).toBe('SvenKulessa/FRONTEND');
-    expect(manifest.sourceCommit).toBe('8f6b629c985ca2e46c822ff911f53741d0141e07');
-    expect(manifest.sourceTree).toBe('bceb7721ad825508d8c4fc39e7217011d927d6e7');
-    expect(manifest.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_BRANDING_ADAPTER');
+    expect(manifest.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(manifest.sourceTree).toBe('ddd6f578e1c95f98e100978f3841f1627807b6ad');
+    expect(manifest.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_PRESENTATION_ADAPTERS');
 
     const landing = fs.readFileSync(path.join(root, manifest.canonicalLanding), 'utf8');
     expect(landing).toContain("import ReferenceApp from './frontend-port/ReferenceApp'");
     expect(landing).toContain('data-landing-design-repository="SvenKulessa/FRONTEND"');
-    expect(landing).toContain('data-landing-design-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"');
+    expect(landing).toContain('data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
   });
 
   it('contains every graphical component from the pinned source component directory', () => {
@@ -70,6 +72,7 @@ describe('FRONTEND reference design lock', () => {
       'ModuleDetailModal.tsx',
       'ProductTourModal.tsx',
       'StatusBar.tsx',
+      'SubclassDetailModal.tsx',
     ]);
     expect(actual).toEqual(manifest.componentInventory.slice().sort());
   });
@@ -86,7 +89,7 @@ describe('FRONTEND reference design lock', () => {
   it('allows only BrandLogo to adapt upstream logo geometry to Finance branding authority', () => {
     expect(manifest.brandingAdapter).toMatchObject({
       sourcePath: 'src/components/BrandLogo.tsx',
-      sourceBlobSha: '49e3580466cc4566068c5fdcc1dfa94ead3a31dd',
+      sourceBlobSha: 'db72c7d18185e09cd64c56e0d40cdbd2d50f658c',
       geometrySource: 'SvenKulessa/FRONTEND',
       colorAuthority: 'docs/frontend/design-tokens.json',
       namingAuthority: 'capital-ai-online/Finance',
@@ -111,7 +114,16 @@ describe('FRONTEND reference design lock', () => {
     expect(sharedEmblem).toContain('var(--color-brand-accent)');
   });
 
-  it('retains source app composition rather than a reconstructed shadow composition', () => {
+  it('retains current source presentation composition while keeping host routing explicit', () => {
+    expect(manifest.compositionAdapter).toMatchObject({
+      sourcePath: 'src/App.tsx',
+      runtimeTarget: 'src/features/public/ui/frontend-port/ReferenceApp.tsx',
+      policy: 'UPSTREAM_PRESENTATION_COMPOSITION_WITH_FINANCE_HOST_ROUTING',
+    });
+    expect(manifest.hostPresentationAdapters.map((entry) => entry.sourcePath)).toEqual(
+      expect.arrayContaining(['src/components/LoginPage.tsx', 'src/components/LegalAndFaqPages.tsx']),
+    );
+
     const app = fs.readFileSync(path.join(root, 'src/features/public/ui/frontend-port/ReferenceApp.tsx'), 'utf8');
     expect(app).toContain("const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup')");
     expect(app).toContain('<Header');
@@ -125,6 +137,8 @@ describe('FRONTEND reference design lock', () => {
     expect(app).toContain('<AssetDetailModal');
     expect(app).toContain('<ModuleDetailModal');
     expect(app).toContain('<AllMarketsModal');
+    expect(app).toContain('<SubclassDetailModal');
+    expect(app).toContain("window.location.assign('/login')");
     expect(fs.existsSync(path.join(root, 'src/features/public/ui/frontend-port/FrontendLandingExperience.tsx'))).toBe(false);
   });
 });
