@@ -5,7 +5,7 @@
 **Owner/PVC:** `CAPITAL-AI-QM / cross-cutting; no productive PVC`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Implementation baseline:** `main@4088582d6b49f1551002022638ee0bcb187c8923`  
-**Status:** `IMPLEMENTED_ON_BRANCH / EXACT-HEAD_VALIDATION_PENDING`  
+**Status:** `DONE_MAIN / MERGED_PR_1191`  
 **Authority:** evidence/status only; this document creates no Quality, Security, Governance, merge, release or production authority.
 
 ## Owner-directed scope
@@ -96,3 +96,8 @@ The work package reaches `DONE_MAIN` only after:
 8. post-merge readback confirms the implementation on current main.
 
 No branch-only or pending evidence is represented as `PASS`.
+
+
+## Post-merge readback
+
+PR #1191 wurde am 2026-09-21 Human/CODEOWNER-gated gemerged. Die Funktion ist auf CURRENT_MAIN vorhanden. Der urspruengliche per-PR Vollausfuehrungsmodus wurde danach als kostenineffizient identifiziert: aktuelle erfolgreiche Samples benoetigen etwa 2:54–2:59 Minuten Runner-Zeit; davon entfallen rund 108–125 Sekunden allein auf eine zweite vollstaendige Vitest-V8-Coverage-Ausfuehrung. Die owner-gerechte Kostenremediation wird separat als `QM-OSS-CODE-QUALITY-02` verfolgt; sie aendert nicht die historische Exit-Evidence dieses Pakets.

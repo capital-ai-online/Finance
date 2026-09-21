@@ -107,7 +107,12 @@ Der `CoverageCollector` misst `tests/unit`, `tests/integration`, `tests/contract
 
 `coverage/coverage-summary.json` oder `.quality/coverage-summary.json` wird nur eingelesen, wenn das Artefakt real existiert. Fehlt es, bleibt Statements/Branches/Functions/Lines `NOT_AVAILABLE`.
 
-Der Projekt-Dependency-Graph installiert weiterhin keinen verpflichtenden Coverage-Provider. Der separate, read-only `OSS Quality Assurance`-Workflow erzeugt jedoch fuer relevante Pull Requests reale V8-Coverage mit exakt `vitest@4.1.11` + `@vitest/coverage-v8@4.1.11` als ephemer gepinnter Toolchain und schreibt `.quality/coverage-summary.json`. Anschliessend liest der bestehende `CoverageCollector` genau dieses Artefakt und der bestehende Quality-Center-Snapshot muss `codeCoverage.status=AVAILABLE` bestaetigen. Ausserhalb einer tatsaechlich ausgefuehrten Coverage-Lane bleibt fehlende Evidence korrekt `NOT_AVAILABLE`; es wird kein synthetischer Coverage-Wert erzeugt.
+Der Projekt-Dependency-Graph installiert weiterhin keinen verpflichtenden Coverage-Provider. Um Pull-Request-Runner-Minuten nicht durch eine zweite vollstaendige Testsuite zu duplizieren, ist die OSS-Quality-Ausfuehrung in zwei explizite Profile geteilt:
+
+- `PR_FAST`: exact-head PR-Evidence fuer Gitleaks und OSV; reale neue Secret-/Dependency-Regressions bleiben fail-closed. Vitest-Coverage, Knip und jscpd sind in diesem Profil explizit `NOT_APPLICABLE` und niemals PASS.
+- `DEEP_BASELINE`: einmal taeglich auf dem aktuellen `main` ausgefuehrte Vollmessung mit `vitest@4.1.11` + `@vitest/coverage-v8@4.1.11`, Knip und jscpd. Sie schreibt `.quality/coverage-summary.json`, aktualisiert den read-only Quality-Center-Snapshot und erzeugt die globale Maintainability-/Duplication-Baseline.
+
+`NOT_APPLICABLE` bedeutet ausschliesslich, dass ein Tool absichtlich ausserhalb des gewaehlten Ausfuehrungsprofils liegt. Fehlende Evidence fuer ein innerhalb des Profils erforderliches Tool bleibt `NOT_AVAILABLE` und fail-closed. Es wird kein synthetischer Coverage-Wert erzeugt.
 
 ## Quality Scoring
 

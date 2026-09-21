@@ -58,13 +58,16 @@ export type {
 } from './Orchestration/QualityCenterOrchestrator';
 
 export {
+  OSS_QUALITY_PROFILES,
   OSS_QUALITY_TOOL_IDS,
   UNIFIED_OSS_QUALITY_BUNDLE_SCHEMA,
   UNIFIED_OSS_QUALITY_FINDING_SCHEMA,
   buildUnifiedQualityFindingId,
+  isOssQualityProfile,
   isOssQualityToolId,
 } from './Findings/UnifiedFindingContract';
 export type {
+  OssQualityProfile,
   OssQualityToolId,
   UnifiedQualityDomain,
   UnifiedQualityDuplicationMeasurement,

@@ -39,12 +39,12 @@ const port = readTypeScriptTree('src/features/public/ui/frontend-port');
 describe('FRONTEND upstream appearance contract', () => {
   it('treats SvenKulessa/FRONTEND as the leading graphical source for the landing', () => {
     expect(sourceLock.sourceRepository).toBe('SvenKulessa/FRONTEND');
-    expect(sourceLock.sourceCommit).toBe('8f6b629c985ca2e46c822ff911f53741d0141e07');
+    expect(sourceLock.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
     expect(sourceLock.canonicalLanding).toBe('src/features/public/ui/LandingPage.tsx');
 
     expect(landing).toContain("import ReferenceApp from './frontend-port/ReferenceApp'");
     expect(landing).toContain('data-landing-design-repository="SvenKulessa/FRONTEND"');
-    expect(landing).toContain('data-landing-design-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"');
+    expect(landing).toContain('data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
   });
 
   it('keeps the complete current upstream component composition as the visual target', () => {
@@ -62,6 +62,7 @@ describe('FRONTEND upstream appearance contract', () => {
       'ModuleDetailModal.tsx',
       'ProductTourModal.tsx',
       'StatusBar.tsx',
+      'SubclassDetailModal.tsx',
     ]);
 
     for (const component of [
@@ -77,6 +78,7 @@ describe('FRONTEND upstream appearance contract', () => {
       '<AssetDetailModal',
       '<ModuleDetailModal',
       '<AllMarketsModal',
+      '<SubclassDetailModal',
     ]) {
       expect(referenceApp).toContain(component);
     }
@@ -104,7 +106,7 @@ describe('FRONTEND upstream appearance contract', () => {
       'Enterprise Scorer',
       'Buffett Value Check',
       'Vocabulary',
-      'GLOBALE INTELLIGENZ. EINE BESSERE ZUKUNFT.',
+      'MARKET INTELLIGENCE • NEXT-GEN QUANT TERMINAL',
     ]) {
       expect(port).toContain(text);
     }

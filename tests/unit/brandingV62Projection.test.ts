@@ -59,9 +59,9 @@ describe('Branding Manifest v6.2 projection contract', () => {
     expect(brandmark.namingAuthority).toBe('capital-ai-online/Finance');
     expect(brandmark.geometrySource).toMatchObject({
       repository: 'SvenKulessa/FRONTEND',
-      commit: '8f6b629c985ca2e46c822ff911f53741d0141e07',
+      commit: 'f2a101330d74420c373f0ec56fa58caac53d741d',
       path: 'src/components/BrandLogo.tsx',
-      blobSha: '49e3580466cc4566068c5fdcc1dfa94ead3a31dd',
+      blobSha: 'db72c7d18185e09cd64c56e0d40cdbd2d50f658c',
       scope: 'LOGO_GEOMETRY_ONLY',
     });
     expect(brandmark.rules).toMatchObject({
@@ -80,7 +80,7 @@ describe('Branding Manifest v6.2 projection contract', () => {
     expect(logo).toContain('text-brand-primary');
 
     expect(emblem).toContain('data-logo-source="SvenKulessa/FRONTEND"');
-    expect(emblem).toContain('data-logo-source-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"');
+    expect(emblem).toContain('data-logo-source-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
     expect(emblem).toContain('var(--color-brand-primary)');
     expect(emblem).toContain('var(--color-brand-accent)');
     expect(emblem).not.toMatch(/#[0-9A-Fa-f]{6}/);

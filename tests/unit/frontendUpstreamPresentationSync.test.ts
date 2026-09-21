@@ -9,6 +9,7 @@ describe('FRONTEND upstream presentation sync contract', () => {
   const syncScript = fs.readFileSync(path.join(root, 'scripts/frontend/syncFrontendPresentationSource.mjs'), 'utf8');
 
   it('adopts the complete allowlisted FRONTEND presentation architecture outside Finance runtime', () => {
+    expect(config.schemaVersion).toBe('1.2.0');
     expect(config.source.repository).toBe('SvenKulessa/FRONTEND');
     expect(config.source.ref).toBe('main');
     expect(config.architectureRoots).toEqual(
@@ -35,6 +36,8 @@ describe('FRONTEND upstream presentation sync contract', () => {
     for (const boundary of ['api', 'server', 'auth', 'billing', 'scoring', 'entitlement', 'provider', 'package']) {
       expect(denied).toContain(boundary);
     }
+    expect(syncScript).toContain("config?.schemaVersion !== '1.2.0'");
+    expect(syncScript).toContain('schemaVersion: config.schemaVersion');
     expect(syncScript).toContain('VISUAL_FIXTURE_ONLY');
     expect(syncScript).toContain('runtimePromotionEligible: !fixtureOnly');
   });
