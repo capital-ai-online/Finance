@@ -15,7 +15,7 @@ import { AllMarketsModal } from './components/AllMarketsModal';
 import { SubclassDetailModal } from './components/SubclassDetailModal';
 import { MarketAsset, CoreModule, MainCategory, AssetSubclass } from './types';
 import { CORE_MODULES } from './data/mockData';
-import { CurrentLandingDataNotice, useCurrentLandingRuntimeBinding } from '../runtime/CurrentLandingRuntimeBinding';
+import { useCurrentLandingRuntimeBinding } from '../runtime/CurrentLandingRuntimeBinding';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup');
@@ -127,9 +127,6 @@ export default function App() {
 
         {/* 4 Feature Key Pillars */}
         <KeyPillars />
-
-        {/* Finance runtime binding notice; current f2a101 visual components remain source-locked. */}
-        <CurrentLandingDataNotice />
 
         {/* Global Markets Overview */}
         <MarketOverview
