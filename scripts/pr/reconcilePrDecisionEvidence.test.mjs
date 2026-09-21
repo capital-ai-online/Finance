@@ -339,3 +339,12 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /auto_merge_state/);
   assert.doesNotMatch(workflow, /pull_request_target:/);
 });
+
+
+test('Decision Evidence Reconciler consumes exact dispatched CI revalidation events', () => {
+  const workflow = fs.readFileSync('.github/workflows/pr-decision-reconciler.yml', 'utf8');
+  assert.match(workflow, /run\?\.event === 'workflow_dispatch'/);
+  assert.match(workflow, /run\?\.path === '\.github\/workflows\/ci\.yml'/);
+  assert.match(workflow, /expectedHeadRef/);
+  assert.match(workflow, /run\.event === 'workflow_dispatch' \? run\.head_branch : ''/);
+});
