@@ -23,7 +23,8 @@ jobs:
       github.event.workflow_run.repository.full_name == github.repository &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.path == '.github/workflows/ci.yml' &&
-      github.event.workflow_run.event == 'pull_request' &&
+      (github.event.workflow_run.event == 'pull_request' ||
+       github.event.workflow_run.event == 'workflow_dispatch') &&
       github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -71,6 +72,11 @@ jobs:
               return;
             }
             const pr = open[0];
+            if (run.event === 'workflow_dispatch' && String(run.head_branch || '') !== pr.head.ref) {
+              core.setOutput('pr_number', '');
+              core.notice(`Baseline Autofix held: workflow_dispatch head_branch=${run.head_branch || 'missing'} does not match PR head ref ${pr.head.ref}.`);
+              return;
+            }
             const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
             const mainSha = String(main.commit?.sha || '').toLowerCase();
             if (!/^[0-9a-f]{40}$/.test(mainSha)) throw new Error('CURRENT_MAIN SHA is invalid.');

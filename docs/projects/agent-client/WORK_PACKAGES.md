@@ -1,7 +1,7 @@
 # CAPITAL-AI-CLIENT — Work Packages
 
-**Baseline:** `main@e9b2551a4e2e24c5fed3dac72362b8bf1727bf42`  
-**Correlation date:** `2026-09-10`  
+**Baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`  
+**Correlation date:** `2026-09-21`  
 **Scope:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`
 
@@ -139,6 +139,31 @@ Validation boundary:
 - no physical CLIENT runtime module;
 - no new registry/control plane;
 - no runtime test `PASS` claim for absent code.
+
+## CLIENT-LF-01 — Landing-First client/request boundary readiness
+
+**State:** `DEPENDENCY_HELD / LANDING_BASELINE_PRESENT`
+
+Fresh Owner direction in the 2026-09-21 interaction establishes the shared landing sequence and explicitly requires every project to hold productive landing integration until `LF-01_STATIC_VISUAL_LANDING_PASS`, except work strictly required for LF-00/LF-01 or independent Security/Compliance/QM verification. For PVC-01 this produces a contract/evidence-only work package.
+
+Current-main evidence:
+- `/AGENTS.md@CURRENT_MAIN` remains the sole execution authority;
+- `CAPITAL-AI-CLIENT / PVC-01` remains the single client/request Primary Owner;
+- merged PR #1195 establishes the root/static landing semantics;
+- merged PR #1206 establishes the pinned FRONTEND presentation;
+- open PR #1209 owns only the remaining desktop-responsive stabilization;
+- current CLIENT runtime mapping remains `NO_PHYSICAL_RUNTIME_TRIGGER`;
+- landing existence therefore no longer blocks CLIENT, while foreign FE presentation work still does not authorize a parallel CLIENT runtime writer.
+
+Acceptance:
+- landing creation/presence is already satisfied and is not used as a blocker;
+- no productive CLIENT runtime begins without a later concrete PVC-01 trigger and its own exact-head gates;
+- CLIENT does not modify FE landing presentation, OPS lifecycle/runtime correlation, FINTECH scoring/data authority, billing/entitlement authority, or provider activation;
+- placeholders and static visual surfaces never become CLIENT business authority;
+- a later landing phase may activate PVC-01 implementation only when both the shared phase prerequisite and `CLIENT-RUNTIME-01` physical trigger are satisfied on then-current main;
+- foreign-owner findings are handed over rather than implemented locally.
+
+Evidence: `docs/projects/agent-client/evidence/CLIENT_LANDING_FIRST_CORRELATION_2026-09-21.md`.
 
 ## Physical runtime gate
 

@@ -44,7 +44,7 @@ jobs:
             const normalizeSha = (value) => String(value || '').trim().toLowerCase();
             const numbers = new Set();
 
-            async function addIfEligible(number, expectedHeadSha = '') {
+            async function addIfEligible(number, expectedHeadSha = '', expectedHeadRef = '') {
               if (!Number.isInteger(Number(number)) || Number(number) <= 0) return;
               const { data: pr } = await github.rest.pulls.get({
                 owner: context.repo.owner,
@@ -57,16 +57,20 @@ jobs:
                 pr.head?.repo?.full_name !== repository
               ) return;
               if (expectedHeadSha && normalizeSha(pr.head?.sha) !== normalizeSha(expectedHeadSha)) return;
+              if (expectedHeadRef && String(pr.head?.ref || '') !== String(expectedHeadRef)) return;
               numbers.add(Number(pr.number));
             }
 
             if (context.eventName === 'workflow_run') {
               const run = context.payload.workflow_run;
+              const supportedRunEvent =
+                run?.event === 'pull_request' ||
+                (run?.event === 'workflow_dispatch' && run?.path === '.github/workflows/ci.yml');
               if (
                 context.payload.action !== 'completed' ||
                 run?.repository?.full_name !== repository ||
                 run?.head_repository?.full_name !== repository ||
-                run?.event !== 'pull_request'
+                !supportedRunEvent
               ) {
                 core.setOutput('pr_numbers', '[]');
                 return;
@@ -85,7 +89,11 @@ jobs:
                 );
               }
               for (const candidate of candidates) {
-                await addIfEligible(candidate.number, run.head_sha);
+                await addIfEligible(
+                  candidate.number,
+                  run.head_sha,
+                  run.event === 'workflow_dispatch' ? run.head_branch : '',
+                );
               }
             } else if (context.eventName === 'check_run') {
               const check = context.payload.check_run;

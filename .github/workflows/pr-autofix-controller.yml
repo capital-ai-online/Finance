@@ -27,11 +27,13 @@ jobs:
     if: >-
       github.event.workflow_run.repository.full_name == github.repository &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
-      github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.action == 'completed' &&
-      (github.event.workflow_run.path == '.github/workflows/ci.yml' ||
-       github.event.workflow_run.path == '.github/workflows/pr-governance.yml')
+      ((github.event.workflow_run.path == '.github/workflows/ci.yml' &&
+        (github.event.workflow_run.event == 'pull_request' ||
+         github.event.workflow_run.event == 'workflow_dispatch')) ||
+       (github.event.workflow_run.path == '.github/workflows/pr-governance.yml' &&
+        github.event.workflow_run.event == 'pull_request'))
     runs-on: ubuntu-latest
     timeout-minutes: 6
     permissions:
@@ -143,6 +145,12 @@ jobs:
             }
 
             const pr = open[0];
+            if (run.event === 'workflow_dispatch') {
+              if (run.path !== '.github/workflows/ci.yml' || String(run.head_branch || '') !== pr.head.ref) {
+                held(`workflow_dispatch identity mismatch: path=${run.path}, head_branch=${run.head_branch || 'missing'}, pr_head_ref=${pr.head.ref}`);
+                return;
+              }
+            }
             const body = String(pr.body || '');
             const headingCount = (pattern) => (body.match(pattern) || []).length;
             const occurrenceCount = (needle) => body.split(needle).length - 1;

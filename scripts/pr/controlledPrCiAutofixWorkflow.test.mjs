@@ -103,3 +103,12 @@ test('stale CI fixes delegate to exact Update Branch before mutation and revalid
   assert.match(apply, /workflow_id: 'ci\.yml'/);
   assert.match(apply, /expected_base_sha: postMain\.commit\.sha/);
 });
+
+
+test('exact CI workflow_dispatch revalidation can re-enter bounded autofix and is branch-bound', async () => {
+  const yaml = await workflow();
+  assert.match(yaml, /github\.event\.workflow_run\.event == 'workflow_dispatch'/);
+  assert.match(yaml, /run\.event === 'workflow_dispatch'/);
+  assert.match(yaml, /String\(run\.head_branch \|\| ''\) !== pr\.head\.ref/);
+  assert.match(yaml, /github\.event\.workflow_run\.path == '\.github\/workflows\/ci\.yml'/);
+});
