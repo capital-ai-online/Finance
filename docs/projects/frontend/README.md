@@ -6,6 +6,7 @@
 **Role:** cross-cutting presentation consumer, Frontend architecture and UX execution project  
 **Primary Productive PVC ownership:** `[]`  
 **Coverage:** presentation/interaction overlay across applicable `PVC-01..PVC-18` outputs  
+**PVC relationship:** `presentation_consumer` for rendered outputs; Primary Productive Owners unchanged  
 **Trust root:** `/AGENTS.md`  
 **Status:** ACTIVE PROJECT EXECUTION PROJECTION — NON-AUTHORIZING
 
@@ -52,6 +53,21 @@ Frontend does not own:
 - release/deployment/production authority;
 - a second feature-domain architecture merely because UI consumes it.
 
+## PVC-driven Frontend adaptation
+
+`CAPITAL-AI-FE` may select applicable PVC units as presentation-consumer scope whenever a user-visible Frontend surface renders or interacts with their owner-correct output.
+
+Within that relationship FE may:
+
+- adapt layout, viewport behavior and responsive composition for mobile, tablet and desktop;
+- change FE-owned components, presentation adapters, accessibility behavior and interaction flow;
+- derive FE-owned verification/remediation work from the three-PVC review required by `/AGENTS.md@CURRENT_MAIN` when the finding is strictly presentation-layer work;
+- preserve upstream graphical sources as immutable/reference evidence while implementing Finance-owned runtime adapters around them.
+
+The boundary is fail-closed: a PVC review does not authorize FE to redefine source data, scoring, evidence, entitlement, IAM, Governance, release or production semantics. Any such required change is handed to the Primary Owner.
+
+For synchronized graphical sources, a phone-frame/mockup or preview toggle from the source repository is never automatically a production viewport contract. Runtime promotion requires a FE-owned responsive adapter that renders against the actual device viewport and preserves mobile-first behavior while providing tablet and desktop layouts.
+
 ## Cross-project execution model
 
 Frontend consumes contracts from productive Primary Owners and renders them without redefining their semantics. When a presentation change requires a domain contract change, that change is routed to the relevant owner rather than implemented as hidden Frontend business logic.
@@ -76,7 +92,8 @@ The Frontend project surface remains valid when:
 4. product/domain semantics are consumed rather than silently reimplemented in UI;
 5. scoring/data/Governance/IAM/Release authority boundaries remain unchanged;
 6. accessibility, performance and presentation evidence remain traceable to canonical Frontend sources;
-7. merged/closed Frontend work claims are terminalized and cannot remain active parallel writers.
+7. merged/closed Frontend work claims are terminalized and cannot remain active parallel writers;
+8. synchronized graphical sources are wrapped by a FE-owned device-responsive runtime adapter before production promotion.
 
 ## Non-goals
 
