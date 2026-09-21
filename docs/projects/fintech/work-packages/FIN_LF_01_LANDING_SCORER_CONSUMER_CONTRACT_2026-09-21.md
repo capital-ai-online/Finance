@@ -5,27 +5,28 @@
 **Canonical identity:** `FIN-LF-01`  
 **Primary owner:** `CAPITAL-AI-FINTECH`  
 **PVC relationship:** `PVC-09..PVC-17` (productive FINTECH chain; Frontend remains presentation-only)  
-**Correlation baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`  
+**Correlation baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`  
 **Authority:** `/AGENTS.md@CURRENT_MAIN`  
-**Status:** `HELD / PREPARATION_ONLY / LF-01_DEPENDENCY`
+**Status:** `HELD / LANDING_BASELINE_PRESENT / LATER_PHASE_DEPENDENCY`
 
 ## Purpose
 
-Prepare the smallest FINTECH-owned consumer contract required for the future landing Enterprise Scorer without activating a productive landing integration before the shared graphical baseline is complete.
+Prepare the smallest FINTECH-owned consumer contract required for the future landing Enterprise Scorer. The shared landing page now exists on CURRENT_MAIN; this package remains non-productive until the later auth/pricing/security/quality prerequisites are satisfied.
 
 This package does not authorize Frontend mutation, billing/entitlement policy, IAM changes, provider activation, scoring execution from the landing page, or any second scoring/data authority.
 
 ## Shared dependency
 
-Productive landing scoring is blocked on:
+Landing creation/presentation is already satisfied by merged PR #1195 and merged PR #1206. The former landing-creation blocker is superseded.
 
-- `LF-01_STATIC_VISUAL_LANDING_PASS`;
-- then `LF-02_AUTH_PROFILE_PASS`;
-- then `LF-03_PRICING_ENTITLEMENTS_PASS`;
+Productive landing scoring remains gated on:
+- `LF-02_AUTH_PROFILE_PASS`;
+- `LF-03_PRICING_ENTITLEMENTS_PASS`;
+- relevant completion of FE PR #1209 for desktop presentation;
 - `SEC_REVIEW_READY`;
 - `QM_VALIDATION_READY`.
 
-At correlation time, FE PR #1195 is open and its exact head is not LF-01 PASS because `build-and-test` fails. OPS PR #1200 is a foreign-owner routing/lifecycle correlation writer and does not transfer Frontend or FINTECH authority.
+These gates do not transfer Frontend, entitlement, IAM or scoring authority to FINTECH.
 
 ## Existing authority to reuse
 
@@ -53,9 +54,9 @@ When LF-04 becomes dependency-ready, the landing consumer may request only a bou
 
 Paid multi-asset selection is a later consumer capability and must use existing registry/dispatcher/domain contracts rather than a landing-specific scoring path.
 
-## Pre-gate scope allowed now
+## Current non-productive scope
 
-Before `LF-01_STATIC_VISUAL_LANDING_PASS`, FINTECH may:
+With the landing baseline present, FINTECH may:
 
 1. preserve this contract and its dependencies;
 2. verify that current canonical scoring/evidence/DQ contracts remain sufficient;
@@ -65,7 +66,7 @@ FINTECH must not activate a landing scoring request, add provider initialization
 
 ## Dependencies and handovers
 
-- **CAPITAL-AI-FE:** produce and evidence `LF-01_STATIC_VISUAL_LANDING_PASS`; later consume the FINTECH contract without creating domain authority.
+- **CAPITAL-AI-FE:** preserve the merged landing baseline and complete #1209 desktop stabilization; later consume the FINTECH contract without creating domain authority.
 - **CAPITAL-AI-OPS:** provide runtime/deployment/traceability evidence where required; no scoring authority transfer.
 - **CAPITAL-AI-SEC:** independently review scoring API/auth/input/output boundaries before LF-04.
 - **CAPITAL-AI-QM:** independently validate the phase evidence and before/after behavior.
@@ -77,7 +78,7 @@ FINTECH must not activate a landing scoring request, add provider initialization
 This package may move from `HELD` to implementation only when evidence includes:
 
 - fresh `current_main_sha`;
-- `LF-01_STATIC_VISUAL_LANDING_PASS`;
+- evidence that the existing landing baseline remains on then-current main;
 - `LF-02_AUTH_PROFILE_PASS`;
 - `LF-03_PRICING_ENTITLEMENTS_PASS`;
 - exact canonical scoring route/contract identity;
@@ -90,7 +91,7 @@ LF-04 implementation exit additionally requires exact-head tests proving BTC-onl
 
 ## Acceptance criteria
 
-- The work remains non-productive while the shared landing gate is closed.
+- The work remains non-productive until the later auth/pricing/security/quality gates are satisfied; landing existence itself is no longer a blocker.
 - The future landing consumer is defined as a consumer of the one canonical FINTECH scoring chain.
 - BTC-only free/no-paid semantics are explicit without moving entitlement authority into Frontend.
 - The public quick-analysis endpoint is not confused with canonical scoring.
