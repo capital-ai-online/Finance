@@ -1,0 +1,97 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const read = (relativePath: string) =>
+  fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
+
+const routes = read('src/app/routing/AppRoutes.tsx');
+const faq = read('src/features/public/ui/FaqPage.tsx');
+const legalShell = read('src/features/public/ui/LegalPageShell.tsx');
+const login = read('src/features/public/ui/LoginPage.tsx');
+const landing = read('src/features/public/ui/LandingPage.tsx');
+const landingCss = read('src/features/public/ui/frontend-port/frontend-port.css');
+const facade = read('src/features/public/ui/index.ts');
+const snapshotManifest = JSON.parse(
+  read('docs/frontend/upstream-source/SvenKulessa-FRONTEND/manifest.json'),
+) as {
+  sourceSha: string;
+  currentGraphicalComponentCount: number;
+  presentationSurfaces?: Record<string, unknown>;
+  ownerBoundaries?: Record<string, string>;
+  assetPresentation?: {
+    visibleAssetCount?: number;
+    symbolContract?: string;
+    authority?: string;
+  };
+};
+
+describe('extended FRONTEND webdesign sync', () => {
+  it('pins the synchronized graphical architecture to the latest selected upstream commit', () => {
+    expect(snapshotManifest.sourceSha).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(snapshotManifest.currentGraphicalComponentCount).toBe(16);
+    expect(snapshotManifest.presentationSurfaces).toMatchObject({
+      login: '/login',
+      legalAndFaq: 'src/components/LegalAndFaqPages.tsx',
+      assetSubclass: 'src/components/SubclassDetailModal.tsx',
+      legalRoutes: ['/impressum', '/datenschutz', '/agb', '/faq'],
+      routeNormalization: 'src/App.tsx::resolveAppRoute',
+    });
+  });
+
+  it('keeps both mobile-first and active desktop landing presentation', () => {
+    expect(landing).toContain("import './frontend-port/frontend-port.css'");
+    expect(landing).toContain('data-mobile-view="active"');
+    expect(landing).toContain('data-desktop-view="responsive-active"');
+
+    expect(landingCss).toContain('@media (min-width: 1024px)');
+    expect(landingCss).toContain('max-width: 1280px !important');
+    expect(landingCss).toContain('grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))');
+    expect(landingCss).toContain('.capital-ai-frontend-port > div > main > .hidden.sm\\:block');
+    expect(landingCss).toContain('display: none !important');
+  });
+
+  it('uses the latest graphical source for /login while retaining Finance auth handlers', () => {
+    expect(login).toContain('data-design-source="SvenKulessa/FRONTEND"');
+    expect(login).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(login).toContain('supabase.auth.signInWithPassword');
+    expect(login).toContain('supabase.auth.signUp');
+    expect(login).toContain('supabase.auth.signInWithOAuth');
+    expect(login).toContain('href="/impressum"');
+    expect(login).toContain('href="/datenschutz"');
+    expect(login).toContain('href="/agb"');
+    expect(login).toContain('href="/faq"');
+    expect(login).not.toContain('setTimeout(');
+    expect(login).not.toContain('trackEvent(');
+  });
+
+  it('binds all canonical legal and FAQ paths to a shared design shell without transferring content authority', () => {
+    expect(facade).toContain("export { FaqPage } from './FaqPage'");
+    expect(facade).toContain("export { LegalPageShell } from './LegalPageShell'");
+    expect(routes).toContain('<LegalPageShell activeRoute="/datenschutz">');
+    expect(routes).toContain('<LegalPageShell activeRoute="/agb">');
+    expect(routes).toContain('<LegalPageShell activeRoute="/impressum">');
+    expect(routes).toContain("if (currentPath === '/faq')");
+    expect(faq).toContain('<LegalPageShell activeRoute="/faq">');
+    expect(legalShell).toContain('data-content-owner="CAPITAL-AI-COMP"');
+    expect(legalShell).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(faq).toContain('Inhaltliche Pflege: CAPITAL-AI-COMP');
+    expect(faq).toContain('Darstellung: CAPITAL-AI-FE');
+  });
+
+  it('adopts robust canonical-path normalization without introducing a second routing authority', () => {
+    expect(routes).toContain('function normalizeRoutePath(rawPath: string): string');
+    expect(routes).toContain("rawPath.trim().toLowerCase().replace(/\\/+$/, '') || '/'");
+    expect(routes).toContain('normalizeRoutePath(window.location.pathname)');
+  });
+
+  it('keeps productive domain authority outside the synchronized presentation snapshot', () => {
+    expect(snapshotManifest.ownerBoundaries?.auth).toContain('Finance canonical auth/session');
+    expect(snapshotManifest.ownerBoundaries?.compliance).toContain('CAPITAL-AI-COMP');
+    expect(snapshotManifest.ownerBoundaries?.compliance).toContain('MUST NOT be promoted');
+    expect(snapshotManifest.ownerBoundaries?.fintech).toContain('CAPITAL-AI-FINTECH');
+    expect(snapshotManifest.ownerBoundaries?.analytics).toContain('not mirrored');
+    expect(snapshotManifest.assetPresentation?.visibleAssetCount).toBe(15);
+    expect(snapshotManifest.assetPresentation?.authority).toContain('CAPITAL-AI-FINTECH');
+  });
+});
