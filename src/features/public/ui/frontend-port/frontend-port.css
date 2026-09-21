@@ -23,6 +23,38 @@
   animation: capitalAiFrontendPortPulseSlow 6s ease-in-out infinite;
 }
 
+/*
+ * Finance-owned responsive adapter for the pinned FRONTEND presentation.
+ *
+ * Mobile and tablet keep the upstream preview behavior exactly as adopted in
+ * PR #1206. On desktop, the production landing must render as a website rather
+ * than as an iPhone mockup. The upstream React tree remains byte-identical;
+ * only its desktop container presentation is adapted here.
+ */
+@media (min-width: 1024px) {
+  .capital-ai-frontend-port > div {
+    align-items: stretch;
+  }
+
+  .capital-ai-frontend-port > div > .hidden.sm\:flex {
+    display: none !important;
+  }
+
+  .capital-ai-frontend-port > div > main {
+    width: 100%;
+    max-width: 1280px !important;
+    margin: 0 auto !important;
+    border-width: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .capital-ai-frontend-port > div > main > .hidden.sm\:block {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .capital-ai-frontend-port .animate-pulse-slow {
     animation: none !important;
