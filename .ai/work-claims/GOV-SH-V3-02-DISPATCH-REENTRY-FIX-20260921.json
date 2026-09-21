@@ -14,8 +14,8 @@
   "baseBranch": "main",
   "baseSha": "21d9c45e3580425b55df5ea9d19fb9cf89ff775d",
   "workItem": "Restore Self-Healing convergence by allowing exact CI workflow_dispatch revalidation runs to re-enter the existing bounded autofix and Decision/Evidence listeners.",
-  "rootCause": "Canonical repair writers dispatch exact CI revalidation with workflow_dispatch, while downstream workflow_run listeners accepted only pull_request events, terminating the remediation loop after the first write.",
-  "approvedScope": "Modify only the existing canonical listeners and regression tests; preserve single-writer ownership, exact PR/head/ref/current-main binding, allowlisted repairers, bounded attempts and Human/CODEOWNER merge authority.",
+  "rootCause": "Two coupled orchestration defects stopped convergence: exact CI revalidation was redispatched as workflow_dispatch while downstream listeners accepted only pull_request, and the Decision/Evidence Reconciler treated a uniquely bounded but non-canonical v1.8 Live Dashboard as ambiguous instead of replacing that table atomically. PR #1218 exposed the second defect after Governance rejected its incomplete dashboard.",
+  "approvedScope": "Modify only the existing canonical listeners/reconciler and regression tests; allow bounded replacement of exactly one table-only Live Dashboard immediately before the canonical Human Decision table; preserve single-writer ownership, exact PR/head/ref/current-main binding, allowlisted repairers, bounded attempts and Human/CODEOWNER merge authority.",
   "claimedPaths": [
     ".ai/work-claims/GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921.json",
     ".ai/work-claims/GOV-SH-V3-02-SEQUENTIAL-GOVERNANCE-FIX-LANE-20260921.json",
@@ -41,6 +41,7 @@
     "workflow_dispatch re-entry is restricted to exact CI path plus live PR head SHA/ref/current-main correlation.",
     "Current-State and bounded CI repair specialists can continue after their own exact-head CI redispatch.",
     "Decision/Evidence reconciliation observes exact dispatched CI completion.",
+    "A uniquely bounded table-only malformed v1.8 Live Dashboard is atomically replaced by the canonical Evidence-derived dashboard, while prose/duplicate/ambiguous boundaries remain fail-closed.",
     "No second writer, branch-sync path, PR-body writer or merge authority is introduced.",
     "Hosted workflow security/governance/tests pass on the exact PR head."
   ],
