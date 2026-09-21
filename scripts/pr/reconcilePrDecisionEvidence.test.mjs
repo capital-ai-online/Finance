@@ -348,3 +348,67 @@ test('Decision Evidence Reconciler consumes exact dispatched CI revalidation eve
   assert.match(workflow, /expectedHeadRef/);
   assert.match(workflow, /run\.event === 'workflow_dispatch' \? run\.head_branch : ''/);
 });
+
+
+test('reconciler deterministically replaces a bounded non-canonical v1.8 live dashboard like PR #1218', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PENDING',
+    security: 'PASS',
+    baseline: 'PENDING',
+  };
+  const damaged = canonicalBody().replace(
+    [
+      '### 📡 Live Dashboard',
+      '',
+      '| Live-Signal | Zustand |',
+      '|---|---|',
+      '| Status | EVIDENCE_PENDING |',
+      '| Synchronität | Main 🟢 PASS · Checks 🟡 PENDING · Security 🟢 PASS · Baseline 🟢 PASS |',
+      '| Nächster Schritt | Ausstehende Evidence vervollständigen: Required Checks |',
+    ].join('\n'),
+    [
+      '### 📡 Live Dashboard',
+      '',
+      '| Live-Signal | Zustand |',
+      '|---|---|',
+      '| Status | EVIDENCE_PENDING |',
+      '| CURRENT_MAIN | `1111111111111111111111111111111111111111` |',
+      '| Exact PR Head | `2222222222222222222222222222222222222222` |',
+      '| Branch-Sync | PASS — behind_by=0 |',
+      '| Scope / Owner | PASS — CAPITAL-AI-GOV / PVC-05 |',
+      '| Hosted Checks | PENDING |',
+    ].join('\n'),
+  );
+
+  const result = reconcileDecisionBody(damaged, gates);
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'decision-evidence-reconciled');
+  assert.match(result.body, /^\| Status \| EVIDENCE_PENDING \|$/m);
+  assert.match(result.body, /^\| Synchronität \| Main 🟢 PASS · Checks 🟡 PENDING · Security 🟢 PASS · Baseline 🟡 PENDING \|$/m);
+  assert.match(result.body, /^\| Nächster Schritt \| Ausstehende Evidence vervollständigen: Required Checks, Production Baseline \|$/m);
+  assert.doesNotMatch(result.body, /^\| CURRENT_MAIN \|/m);
+  assert.doesNotMatch(result.body, /^\| Exact PR Head \|/m);
+  assert.doesNotMatch(result.body, /^\| Branch-Sync \|/m);
+});
+
+test('reconciler still fails closed when a malformed dashboard contains non-table prose before the Human Decision table', () => {
+  const damaged = canonicalBody().replace(
+    '| Synchronität | Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS |',
+    'manual prose that must not be swallowed',
+  );
+  const result = reconcileDecisionBody(damaged, {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PASS',
+    security: 'PASS',
+    baseline: 'PASS',
+  });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'live-dashboard-boundary-ambiguous');
+});
