@@ -15,7 +15,7 @@
   "branch": "frontend/desktop-landing-responsive-fix-20260921",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
-  "projectStage": "cross-cutting presentation; no productive PVC",
+  "projectStage": "cross-cutting presentation coverage across applicable PVC-01..18 outputs; no productive PVC",
   "claimedPaths": [
     "src/features/public/ui/frontend-port/frontend-port.css",
     "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
@@ -30,7 +30,8 @@
     "/AGENTS.md@CURRENT_MAIN",
     "SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07 remains the pinned graphical source",
     "src/features/public/ui/frontend-port/source-lock.json remains unchanged",
-    "Finance branding authority remains unchanged"
+    "Finance branding authority remains unchanged",
+    "docs/projects/frontend/README.md coverage permits presentation/interaction overlay across applicable PVC-01..18 outputs"
   ],
   "exitEvidence": [
     "desktop widths >= 1024px render the landing as a bounded website canvas rather than an iPhone mockup",
@@ -40,6 +41,7 @@
     "ReferenceApp and all locked upstream component blobs remain unchanged",
     "every upstream sync validates the desktop adapter and current source-shell markers",
     "source-shell drift fails closed with desktop adapter correlation required",
+    "affected PVC outputs may scope FE-owned layout/responsive/accessibility adaptation while their Primary Owner and domain contract remain unchanged",
     "focused regression plus required repository checks pass on the exact PR head"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
