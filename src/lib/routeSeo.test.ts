@@ -25,6 +25,8 @@ describe('routeSeo (WP-D2)', () => {
     expect(learning.title).toContain('Capital-AI Learning Platform');
     expect(learning.canonicalPath).toBe('/learning-platform');
     expect(impressum.title).toContain('Impressum');
+    expect(impressum.description).toContain('§ 5 DDG');
+    expect(home.description).toContain('Echtzeit-Marktdaten');
     expect(agb.title).toContain('AGB');
     expect(datenschutz.title).toContain('Datenschutz');
   });
