@@ -13,6 +13,11 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
     expect(findings.map((item) => item.id)).toEqual([
       'google_oauth_provider_handoff',
       'authenticated_root_landing_handoff',
+      'authenticated_login_root_handoff',
+      'dashboard_protected_deep_link',
+      'authenticated_unknown_route_root_handoff',
+      'checkout_root_return_handoff',
+      'canonical_spa_fallback_contract',
       'logout_local_default',
       'logout_explicit_global_action',
       'registration_primary_contract',
@@ -27,6 +32,7 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
   it('does not inspect legacy dashboard menu implementation details', () => {
     const findings = byId();
     expect(findings.has('dashboard_menu_interaction_contract')).toBe(false);
+    expect(findings.has('authenticated_root_dashboard_handoff')).toBe(false);
 
     const surfaces = evaluateAuthLifecycleRepositoryContracts().flatMap((item) => item.surface);
     expect(surfaces).not.toContain('src/components/Dashboard.tsx');
@@ -44,6 +50,11 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
     const findings = byId();
     const owners: Record<string, string> = {
       authenticated_root_landing_handoff: 'CAPITAL-AI-FE',
+      authenticated_login_root_handoff: 'CAPITAL-AI-FE',
+      dashboard_protected_deep_link: 'CAPITAL-AI-FE',
+      authenticated_unknown_route_root_handoff: 'CAPITAL-AI-FE',
+      checkout_root_return_handoff: 'CAPITAL-AI-FE',
+      canonical_spa_fallback_contract: 'CAPITAL-AI-OPS',
       logout_local_default: 'CAPITAL-AI-FE',
       logout_explicit_global_action: 'CAPITAL-AI-FE',
       registration_roadmap_closure: 'CAPITAL-AI-FE',
