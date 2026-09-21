@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-TEMPLATE-SUPERSESSION-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Supersede legacy PR-template versions and enforce one automatic current GitHub PR-template discovery source.",
+  "workItemDE": "Alte PR-Template-Versionen superseden; nur die aktuelle v1.8 als automatisch gültige PR-Vorlage zulassen.",
+  "startedAt": "2026-09-21T15:01:00Z",
+  "baseBranch": "main",
+  "baseSha": "523275263f1c8a3e6f8047fae16653a76f6d8372",
+  "branch": "agent/governance-pr-template-supersession-20260921",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "primaryOwner": "CAPITAL-AI-GOV",
+  "observedCanonicalTemplate": ".github/pull_request_template.md@1.8.0",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-TEMPLATE-SUPERSESSION-20260921.json",
+    "scripts/pr/lib.mjs",
+    "scripts/pr/prTemplateVersionManagerSmoke.test.mjs",
+    ".ai/work-claims/PR-TEMPLATE-CONTRACT-HARDENING-2026-08-15.json",
+    ".ai/work-claims/GOV-MERGE-SIMPLIFY-RETIRE-OWNER-GATE-2026-08-16.json",
+    ".ai/work-claims/GOV-PR-AUTO-MERGE-ROUTER-20260920.json"
+  ],
+  "exitGate": "Exactly one GitHub PR-template discovery source remains (.github/pull_request_template.md); v1.8.0 is the only supported template version; v1.7/v1.6/v1.5 remain detectable only as superseded migration/evidence markers; all open PRs are already v1.8.0.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
