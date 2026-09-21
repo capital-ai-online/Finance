@@ -280,3 +280,11 @@ test('direct Governance baseline writer correlates CURRENT_MAIN before any PR-bo
   assert.ok(direct.includes("core.setOutput('eligible', 'false')"));
   assert.ok(direct.includes('CURRENT_MAIN ancestry PASS; Governance baseline fix may continue.'));
 });
+
+
+test('top-level baseline refresh concurrency never cancels an in-flight exact-head writer', () => {
+  const prefix = workflow.split('\njobs:')[0];
+  assert.match(prefix, /pr-production-baseline-/);
+  assert.match(prefix, /cancel-in-progress: false/);
+  assert.doesNotMatch(prefix, /cancel-in-progress: true/);
+});
