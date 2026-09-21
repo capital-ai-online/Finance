@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`
+**Baseline:** `main@9c8a3e80c4451ed0b6ea45f368175604608f6f4b`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
@@ -21,7 +21,7 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 ### WP-SEO-LAUNCH-01 — Public Web & Social Launch Management
 
-**State:** `ACTIVE_CANONICAL / LANDING_FIRST_GATE_ACTIVE / LF_01_PENDING`.
+**State:** `ACTIVE_CANONICAL / CURRENT_FRONTEND_1241_BOUND / FAQ_OPS_DEPENDENCY_OPEN`.
 
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
@@ -85,6 +85,21 @@ Current correlation against `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`:
 - blocked before LF-01: new productive analytics activation tied to the landing, launch claims that present later integrations as live, and publication/measurement decisions that assume scorer/pricing/news integration is production-ready.
 
 Owner-correct handoff: FE owns PR #1195 re-scope/supersession and static visual baseline implementation; QM independently validates the exit evidence. SEO records the dependency and does not mutate FE runtime.
+
+## Current frontend / SEO convergence — 2026-09-22
+
+Fresh Human/Owner direction requires all active SEO website work to target the current merged Frontend rather than older landing snapshots.
+
+- Current main is `9c8a3e80c4451ed0b6ea45f368175604608f6f4b`, exactly the merge of FE PR #1241.
+- PR #1241 promotes `SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d` into the current landing runtime.
+- PR #1206/#1209 references are historical evidence only for active SEO coordination.
+- Root title/description are corrected in the open SEO PR to the current visible “Marktdaten verstehen. Chancen besser erkennen.” proposition.
+- Impressum route/prerender metadata is corrected from TMG to `§ 5 DDG`.
+- Final Mobile/Desktop CWV is measurement-gated; no superseded FE PR remains a blocker.
+- `/faq` exists in the current frontend, but canonical SEO route/sitemap/prerender promotion remains blocked on OPS Issue #1223 because the production SPA allowlist/fallback has not yet converged. SEO Issue #1233 remains the owner-correct continuation.
+- GSC/GA4/GenAI provider states remain independently evidence-gated.
+
+Current binding evidence: `docs/seo/SEO_LANDING_PAGE_BINDING_2026-09-21.md`.
 
 ## Current provider evidence
 
