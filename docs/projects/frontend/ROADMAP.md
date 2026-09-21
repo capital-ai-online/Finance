@@ -44,7 +44,7 @@ After #1206 merged, the owner clarified the device contract: the synchronized mo
 
 **Canonical identity:** `FE-LF-02-DESKTOP-RESPONSIVE`  
 **Resolved Owner:** `CAPITAL-AI-FE`  
-**Scope:** Frontend presentation only; no productive PVC ownership  
+**Scope:** Frontend presentation only; affected rendered `PVC-01..PVC-18` output may be used as presentation/adaptation scope; no productive PVC ownership  
 **Desktop breakpoint:** `>=1024px`  
 **Status:** `IMPLEMENTED_PENDING_EXACT_HEAD_EVIDENCE`
 
@@ -54,6 +54,7 @@ The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance 
 - desktop removes the source preview toolbar, simulated phone frame/status chrome and iOS home indicator;
 - desktop uses a bounded website canvas, desktop hero hierarchy and responsive card grids;
 - no User-Agent/device sniffing is introduced;
+- when a rendered surface consumes an owner-correct PVC output, FE may adapt its own layout, responsive behavior, accessibility and interaction while the PVC Primary Owner and domain semantics remain unchanged;
 - every upstream sync requires the desktop adapter and validates the current `src/App.tsx` preview-shell markers;
 - marker drift fails closed with a desktop-adapter correlation error so a future sync cannot silently restore the phone preview on desktop.
 
