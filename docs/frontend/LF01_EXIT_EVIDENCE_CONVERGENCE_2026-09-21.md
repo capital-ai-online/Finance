@@ -11,31 +11,38 @@
 
 PR #1206 adopts the complete current graphical architecture from `SvenKulessa/FRONTEND` and fixes the canonical root landing page to that exact pinned source version.
 
-The runtime landing binding is presentation-only. Existing Finance auth/session, provider/data, scoring, news, pricing/entitlement, billing, Security, Compliance, Governance and deployment authority is not replaced by the design repository.
+The 16.08 visual-layout template is superseded as an active appearance target. It remains historical evidence only.
+
+Branding is intentionally split:
+
+- Finance keeps canonical colors, typography, semantic color roles and product/wordmark naming;
+- only logo geometry is sourced from `SvenKulessa/FRONTEND`;
+- the logo geometry is rendered through Finance design tokens.
 
 ## Snapshot and runtime completeness
 
 PR #1206 contains:
 
-- pinned upstream `src/App.tsx` as the runtime `ReferenceApp.tsx`;
-- all 13 current upstream files under `src/components/`, byte-identical by Git blob SHA;
-- `src/data/mockData.ts` and `src/types.ts`, byte-identical to the pinned presentation source;
-- all four current upstream image assets, including the new wide banner;
-- the exact upstream `src/index.css` retained as source evidence plus a scoped Finance style adapter;
-- `source-lock.json` with source/target blob identities;
-- a unit test that recomputes Git blob SHAs and fails on graphical drift;
+- pinned upstream `src/App.tsx` as runtime `ReferenceApp.tsx`;
+- all 13 current upstream component identities;
+- exact-source locking for every non-branding runtime presentation artifact;
+- one explicit `BrandLogo.tsx` branding adapter using `CapitalAiEmblem`;
+- `src/data/mockData.ts` and `src/types.ts` as presentation-only inputs;
+- all four current upstream image assets;
+- the exact upstream stylesheet retained as source evidence plus a scoped Finance style adapter;
+- `source-lock.json` with exact-source and branding-adapter modes;
+- tests that verify exact Git blob identity and the branding boundary;
 - the canonical Finance `LandingPage` rendering the pinned `ReferenceApp`.
-
-This is a physical runtime binding and a physical evidence snapshot, not only a scheduled-sync promise.
 
 ## LF-01 semantics
 
 After Human/CODEOWNER merge of PR #1206, `LF-01_EXIT_EVIDENCE_CONVERGENCE = PASS` means:
 
 - the selected FRONTEND commit is the fixed graphical source for the public root;
-- every current upstream graphical component is present in the Finance runtime presentation subtree;
-- the root landing renders that pinned composition directly;
-- future upstream changes remain review-only until another Finance PR intentionally advances the pin;
+- all current upstream graphical components are present;
+- Finance branding authority remains intact;
+- only the logo geometry is imported into the canonical Finance brand projection;
+- future upstream changes remain review-only until another Finance PR advances the pin;
 - productive Finance authorities remain separate and owner-correct.
 
-Independent Security, Compliance and Quality findings are not implicitly converted to PASS. Applicable SEC/COMP/QM gates remain fail-closed.
+Independent Security, Compliance and Quality findings are not implicitly converted to PASS.
