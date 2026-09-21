@@ -156,12 +156,13 @@ If a FINTECH task discovers productive work owned by another Primary Owner, FINT
 - correlation_id: `FIN-LF-01-20260921`
 - source_project: `CAPITAL-AI-FINTECH`
 - target_project: `CAPITAL-AI-FE`
-- source_phase: `FIN-LF-01 / PREPARATION_ONLY`
+- source_phase: `FIN-LF-01 / LANDING_BASELINE_PRESENT`
 - completed_scope: minimal FINTECH landing scoring consumer contract and authority boundaries documented; no productive integration activated
-- remaining_scope: FE `LF-01_STATIC_VISUAL_LANDING_PASS`, then LF-02/LF-03 and dependency-ready LF-04 consumer integration
-- dependency: `LF-01_STATIC_VISUAL_LANDING_PASS`
-- evidence_reference: FE PR #1195 is open at correlation time and its exact-head build-and-test is not PASS; OPS PR #1200 is a separate owner-correct routing/lifecycle writer
-- exit_gate: FINTECH productive landing scoring remains blocked until the shared gate and later SEC/QM prerequisites are evidenced
-- continuation_condition: fresh CURRENT_MAIN correlation proves LF-01 PASS and no conflicting writer/authority overlap
+- completed_landing_baseline: merged #1195 established root/static semantics and merged #1206 established the pinned FRONTEND presentation
+- remaining_scope: #1209 desktop-only stabilization where relevant, then LF-02/LF-03 and dependency-ready LF-04 consumer integration
+- dependency: landing creation is satisfied; later productive activation depends on LF-02/LF-03 plus SEC/QM and exact-head readiness
+- evidence_reference: #1195 and #1206 are merged terminal landing-baseline evidence; #1209 owns the remaining desktop presentation correction
+- exit_gate: FINTECH productive landing scoring is no longer blocked by landing creation; LF-04 still requires later auth/pricing integration readiness plus SEC/QM evidence
+- continuation_condition: fresh CURRENT_MAIN correlation confirms the existing landing baseline, remaining prerequisite evidence, and no conflicting writer/authority overlap
 
 This dependency does not transfer Frontend ownership to FINTECH or financial scoring authority to Frontend. `ScoringDispatcher` remains the sole productive scoring execution authority; the landing layer is a consumer only.
