@@ -4,7 +4,7 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Datenschutz, FaqPage, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui';
+import { Datenschutz, FaqPage, ImpressumAgb, LandingPage, LegalPageShell, LoginPage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
 const Dashboard = lazy(() =>
@@ -62,6 +62,10 @@ function AuthRouteResolution() {
   );
 }
 
+function normalizeRoutePath(rawPath: string): string {
+  return rawPath.trim().toLowerCase().replace(/\/+$/, '') || '/';
+}
+
 function RouteRedirect({ to, label }: { to: string; label: string }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -93,7 +97,7 @@ export function AppRoutes({
 }: AppRoutesProps) {
   const [currentPath] = useState(() => {
     return typeof window !== 'undefined'
-      ? window.location.pathname.replace(/\/+$/, '') || '/'
+      ? normalizeRoutePath(window.location.pathname)
       : '/';
   });
 
@@ -129,58 +133,25 @@ export function AppRoutes({
 
   if (currentPath === '/datenschutz') {
     return (
-      <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-cyan-500/30 selection:text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(13,221,221,0.08),rgba(0,0,0,0))]" />
-        <div className="max-w-5xl mx-auto space-y-6 relative z-10">
-          <div className="flex justify-between items-center bg-[#0d0e12]/80 border border-white/10 rounded-xl p-4 backdrop-blur-md">
-            <a href="/" className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-2 text-white">
-              ← Zurück zur Landingpage
-            </a>
-            <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">
-              Public Security Compliance Document
-            </span>
-          </div>
-          <Datenschutz />
-        </div>
-      </div>
+      <LegalPageShell activeRoute="/datenschutz">
+        <Datenschutz />
+      </LegalPageShell>
     );
   }
 
   if (currentPath === '/impressum') {
     return (
-      <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-aif-gold-DEFAULT/30 selection:text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,196,83,0.08),rgba(0,0,0,0))]" />
-        <div className="max-w-4xl mx-auto space-y-6 relative z-10">
-          <div className="flex justify-between items-center bg-[#0d0e12]/80 border border-white/10 rounded-xl p-4 backdrop-blur-md">
-            <a href="/" className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-2 text-white">
-              ← Zurück zur Landingpage
-            </a>
-            <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">
-              Anbieterkennzeichnung gemäß § 5 DDG
-            </span>
-          </div>
-          <ImpressumAgb />
-        </div>
-      </div>
+      <LegalPageShell activeRoute="/impressum">
+        <ImpressumAgb />
+      </LegalPageShell>
     );
   }
 
   if (currentPath === '/agb') {
     return (
-      <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-aif-gold-DEFAULT/30 selection:text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,196,83,0.08),rgba(0,0,0,0))]" />
-        <div className="max-w-4xl mx-auto space-y-6 relative z-10">
-          <div className="flex justify-between items-center bg-[#0d0e12]/80 border border-white/10 rounded-xl p-4 backdrop-blur-md">
-            <a href="/" className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-2 text-white">
-              ← Zurück zur Landingpage
-            </a>
-            <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">
-              Allgemeine Geschäftsbedingungen
-            </span>
-          </div>
-          <ImpressumAgb initialTab="agb" />
-        </div>
-      </div>
+      <LegalPageShell activeRoute="/agb">
+        <ImpressumAgb initialTab="agb" />
+      </LegalPageShell>
     );
   }
 
