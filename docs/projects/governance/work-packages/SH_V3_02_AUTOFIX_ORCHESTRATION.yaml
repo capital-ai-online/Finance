@@ -1,4 +1,4 @@
-schema_version: "3.1.0"
+schema_version: "3.2.0"
 work_package: "SH-V3-02"
 project: "CAPITAL-AI-GOV"
 title: "Control Panel Autofix Orchestration Watchdog"
@@ -40,6 +40,10 @@ failure_classes:
   ORCHESTRATION_TRIGGER_MISSING:
     condition: "eligible finding has no matching controller run/readback"
     action: "fail closed; emit evidence; do not pretend remediation started"
+
+  AUTOFIX_REVALIDATION_REENTRY_MISSING:
+    condition: "an eligible repair writes a new exact PR head and CI revalidation starts via workflow_dispatch, but the canonical repair/reconciler listeners reject that CI run because it is not pull_request"
+    action: "accept only exact same-repository CI workflow_dispatch revalidation bound to the open PR head SHA, head ref and CURRENT_MAIN; keep PR Governance PR-native and preserve all existing writer boundaries"
 
   TEST_CONTRACT_DRIFT:
     action: "dispatch only an explicitly registered deterministic repairer"
@@ -146,44 +150,51 @@ merge_continuation_contract:
 
 current_queue_snapshot:
   role: "NON_AUTHORIZING_GENERATION_BOUND_EVIDENCE"
-  current_main: "896722e55ab1304bd798da6fc8c6f2d9b178a12e"
+  state: "INVALIDATED"
+  captured_main: "896722e55ab1304bd798da6fc8c6f2d9b178a12e"
+  invalidated_by_current_main: "df06eeff15f682e8a0ae3c00c2fc002251831522"
   captured_date: "2026-09-21"
-  primary_convergence_lane:
-    - 1199
-    - 1209
-    - 1201
-    - 1202
-    - 1205
-    - 1211
-  primary_lane_rationale:
-    - "#1199 owns current SH-V3-02 workflow sequencing and must converge before dependent PR repair lanes rely on it."
-    - "#1209 is the remaining desktop landing stabilization dependency."
-    - "#1201 → #1202 → #1205 preserves compliance gate → general client consumer → FINTECH scorer consumer progression."
-    - "#1211 depends on the accepted responsive landing baseline for final desktop/CWV evidence."
-  independent_frontend_language_lane:
-    - 1212
-    - 1213
-  frontend_language_lane_rationale:
-    - "#1212 materializes the canonical VOC-FRONTEND registry identities."
-    - "#1213 consumes those identities in the canonical component inventory."
-    - "This lane may interleave with the primary lane only after fresh no-overlap/dependency proof for the current generation."
-  invalidation_rule: >
-    This snapshot is immediately stale after any Human or auto-merge, any relevant
-    PR head/base movement, or any new writer that changes the dependency/overlap
-    graph. The Control Panel must then recompute rather than preserve these numbers
-    as permanent merge authority.
+  reason: >
+    The previous queue contained PRs that have since reached terminal outcomes,
+    including the SH-V3-02 implementation writer #1199 and continuation #1214.
+    It cannot be reused as work-selection authority; the next lane must be
+    recomputed from fresh CURRENT_MAIN and live open-writer/dependency evidence.
 
 implementation_boundary:
-  existing_writer_dependency:
+  merged_writer_foundation:
     pr: 1199
+    state: "DONE_MAIN / TERMINAL"
+    merge_sha: "cfbb334a45db71ea10b82a8114942b42f3b8e40e"
     scope: >
-      PR #1199 remains the active implementation writer for branch synchronization,
-      controlled PR CI autofix, baseline specialists and PR autofix controller sequencing.
-    rule: "This work-package extension does not duplicate or overwrite its workflow files."
-  future_runtime_change: >
-    Any implementation needed beyond PR #1199 must be selected only after #1199 reaches
-    a terminal outcome and CURRENT_MAIN is re-read. This projection alone does not
-    authorize a second workflow/controller.
+      PR #1199 is the merged foundation for branch synchronization, controlled PR
+      CI autofix, baseline specialists and PR autofix-controller sequencing.
+      Its historical work claim is released and must not remain an exclusive writer.
+  current_dispatch_reentry_fix:
+    canonical_identity: "GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921"
+    owner: "CAPITAL-AI-GOV"
+    pvc: "PVC-05"
+    base: "main@df06eeff15f682e8a0ae3c00c2fc002251831522"
+    scope: >
+      Repair the missing re-entry edge from exact CI workflow_dispatch validation
+      into the existing PR Autofix Controller, Current-State Baseline Autofix,
+      bounded Controlled PR CI Autofix and Decision Evidence Reconciler. No second
+      writer, classifier, branch-sync lane or PR-body authority is introduced.
+    dispatch_identity:
+      workflow: "CI"
+      accepted_source_events:
+        - "pull_request"
+        - "workflow_dispatch"
+      workflow_dispatch_guards:
+        - "source workflow path is exactly .github/workflows/ci.yml"
+        - "head SHA resolves to exactly one open same-repository PR against main"
+        - "workflow_run head_branch equals the live PR head ref"
+        - "CURRENT_MAIN ancestry is revalidated before any mutation"
+    pr_governance_event_boundary: "pull_request only"
+    exit_evidence:
+      - "a failed exact dispatched CI run is classified by the canonical controller"
+      - "Current-State baseline drift on dispatched CI can reach its existing specialist"
+      - "Decision/Evidence updates after dispatched CI completion"
+      - "all writer leases, exact-head checks, bounded repair allowlists and Human/CODEOWNER merge boundaries remain unchanged"
 
 guardrails:
   - "No generic rerun for unchanged failed Governance."
@@ -231,6 +242,7 @@ control_panel:
 exit_gate:
   - "eligible autofix dispatch has positive run readback"
   - "missing dispatch becomes ORCHESTRATION_TRIGGER_MISSING"
+  - "exact CI workflow_dispatch revalidation re-enters the existing bounded repair/reconciliation listeners"
   - "repair outcome is exact-head verified"
   - "protected Actions-minute blockers never enter remediation"
   - "every observed merge is bound to the resulting CURRENT_MAIN generation"
