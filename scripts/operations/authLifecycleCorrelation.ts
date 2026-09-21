@@ -144,6 +144,40 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       : 'The authenticated unknown-route fallback still targets /dashboard or lacks a canonical-root handoff.',
   ));
 
+  const checkoutReturnsToRoot =
+    checkout.includes('successUrl: `${window.location.origin}/?checkout=pending`') &&
+    checkout.includes('cancelUrl: `${window.location.origin}/?checkout=cancelled`');
+  findings.push(finding(
+    'checkout_root_return_handoff',
+    checkoutReturnsToRoot ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/features/billing/ui/Checkout.tsx'],
+    'Checkout success and cancel browser returns target /; OPS observes routing only and does not define Billing policy.',
+    checkoutReturnsToRoot
+      ? 'Checkout success/cancel URLs both return to the canonical landing root.'
+      : 'Checkout return URLs are not both rooted on the canonical landing page.',
+  ));
+
+  const spaSupportsCanonicalRoutes =
+    spaRouteContract.includes("  '/',") &&
+    spaRouteContract.includes("  '/login',") &&
+    spaRouteContract.includes("  '/dashboard',") &&
+    spaFallback.includes("case '/':") &&
+    spaFallback.includes("case '/login':") &&
+    spaFallback.includes("case '/dashboard':") &&
+    spaFallback.includes("case '/media-studio':") &&
+    spaFallback.includes("return res.status(404).type('text/plain').send('Not Found');");
+  findings.push(finding(
+    'canonical_spa_fallback_contract',
+    spaSupportsCanonicalRoutes ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-OPS',
+    ['server/middleware/seoUrlNormalize.ts', 'server/runtime/spaFallback.ts'],
+    'Production SPA fallback serves canonical /, /login, /dashboard and supported app routes without soft-200 unknown paths.',
+    spaSupportsCanonicalRoutes
+      ? 'Canonical public/application SPA paths are explicitly served and unknown paths remain 404.'
+      : 'The production SPA fallback does not fully represent the canonical application-route contract.',
+  ));
+
   const localLogoutDefault = sessionComposition.includes("supabase.auth.signOut({ scope: 'local' })");
   findings.push(finding(
     'logout_local_default',
