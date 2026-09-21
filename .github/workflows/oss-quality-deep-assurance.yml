@@ -1,0 +1,143 @@
+name: OSS Quality Deep Assurance
+run-name: main@${{ github.sha }} - OSS Quality Deep Baseline
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: oss-quality-deep-main
+  cancel-in-progress: true
+
+jobs:
+  deep-assurance:
+    name: OSS quality daily deep baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+      BASE_SHA: ${{ github.sha }}
+      OSS_QUALITY_PROFILE: DEEP_BASELINE
+      KNIP_VERSION: '6.31.0'
+      JSCPD_VERSION: '5.0.12'
+      VITEST_VERSION: '4.1.11'
+
+    steps:
+      - name: Checkout exact current-main snapshot without persisted credentials
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify scheduled source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          mkdir -p artifacts/oss-quality .quality
+
+      - name: Setup repository Node runtime
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+          cache: npm
+
+      - name: Install locked repository dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate real Vitest V8 coverage once per day
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm exec --yes             --package="vitest@${VITEST_VERSION}"             --package="@vitest/coverage-v8@${VITEST_VERSION}"             -- vitest run               --coverage               --coverage.provider=v8               --coverage.reporter=json-summary               --coverage.reportsDirectory=.quality
+          test -s .quality/coverage-summary.json
+
+      - name: Run pinned Knip maintainability baseline
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes "knip@${KNIP_VERSION}"             --config knip.json             --reporter json             > artifacts/oss-quality/knip.json
+
+      - name: Run pinned jscpd duplication baseline
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes "jscpd@${JSCPD_VERSION}"             src server scripts             --config .jscpd.json
+          test -s artifacts/oss-quality/jscpd/jscpd-report.json
+
+      - name: Normalize deep OSS findings
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsx scripts/quality/normalizeOssQualityFindings.ts
+          test -s artifacts/oss-quality/unified-findings.json
+
+      - name: Project real coverage through the existing Quality Center
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .quality/coverage-summary.json
+          npm run repository:quality:snapshot
+          test -s .quality/quality-center-report.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('.quality/quality-center-report.json', 'utf8'));
+          if (report.coverage?.codeCoverage?.status !== 'AVAILABLE') {
+            throw new Error('Quality Center did not consume real coverage evidence.');
+          }
+          NODE
+
+      - name: Enforce deep evidence availability without inventing PR gates
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path = 'artifacts/oss-quality/unified-findings.json';
+          if (!fs.existsSync(path)) throw new Error('Unified OSS quality evidence is missing.');
+          const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+          if (report.profile !== 'DEEP_BASELINE') throw new Error('Unexpected OSS quality profile: ' + report.profile);
+          const tools = new Map((report.tools ?? []).map((tool) => [tool.tool, tool]));
+          const unavailable = ['vitest-coverage', 'knip', 'jscpd'].filter(
+            (tool) => !tools.has(tool) || tools.get(tool)?.status === 'NOT_AVAILABLE' || tools.get(tool)?.status === 'NOT_APPLICABLE',
+          );
+          const misplacedFastTools = ['gitleaks', 'osv-scanner'].filter(
+            (tool) => tools.get(tool)?.status !== 'NOT_APPLICABLE',
+          );
+          console.log(JSON.stringify({
+            profile: report.profile,
+            sourceSha: report.sourceSha,
+            unavailableDeepTools: unavailable,
+            coverage: report.measurements?.coverage ?? null,
+            duplication: report.measurements?.duplication ?? null,
+          }, null, 2));
+          if (unavailable.length > 0) {
+            throw new Error('Required deep evidence unavailable: ' + unavailable.join(', '));
+          }
+          if (misplacedFastTools.length > 0) {
+            throw new Error('PR-fast tools unexpectedly executed in DEEP_BASELINE: ' + misplacedFastTools.join(', '));
+          }
+          NODE
+
+      - name: Upload daily deep Quality evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oss-quality-deep-${{ github.sha }}
+          path: |
+            artifacts/oss-quality/
+            .quality/coverage-summary.json
+            .quality/quality-center-report.json
+          retention-days: 14
+          if-no-files-found: error
