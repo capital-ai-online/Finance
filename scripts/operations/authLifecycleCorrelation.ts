@@ -75,7 +75,7 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
     'CAPITAL-AI-FE',
     ['src/app/routing/AppRoutes.tsx'],
     'After successful OAuth/session composition, an authenticated user remains on the canonical / landing page.',
-    authenticatedRootToDashboard
+    authenticatedRootLanding
       ? 'The root route renders LandingPage without an authenticated /dashboard default redirect.'
       : 'The root route still diverts authenticated users away from the canonical landing page.',
   ));
