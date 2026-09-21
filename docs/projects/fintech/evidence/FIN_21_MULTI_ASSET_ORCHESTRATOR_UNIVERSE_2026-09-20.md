@@ -4,9 +4,12 @@
 **Project folder:** `docs/projects/fintech/`  
 **Primary Owner:** `CAPITAL-AI-FINTECH`  
 **PVC:** `PVC-09..PVC-17`  
-**Correlation baseline at re-materialization:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`  
-**Branch:** `agent/fintech-universe-orchestrator-expansion-20260920`  
-**State:** `IMPLEMENTED_BRANCH / HOSTED_VALIDATION_PENDING / HUMAN_MERGE_REQUIRED`
+**Post-merge correlation baseline:** `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`  
+**Implementation branch:** `agent/fintech-universe-orchestrator-expansion-20260920`  
+**Merged PR:** `#1157`  
+**Merge commit:** `59b65e4907b27f57acd639d56f83ab365f30e4a5`  
+**Final implementation head:** `3e379c31a547f7d97e442068c4a90e1d1154e435`  
+**State:** `DONE_MAIN / TERMINAL PROJECTION SLICE`
 
 ## 1. Owner-reference correlation
 
@@ -138,16 +141,18 @@ The test contract asserts:
 
 ## 6. Validation truth
 
-Repository mutation was branch-only. At the time of branch re-materialization, current main was
-`c9980602f691b855fd6f8c66a49822e7a9611b4a`; the intervening main delta affected the
-Frontend landing-page slice only.
+Repository mutation was branch-only. PR #1157 was Human-merged on 2026-09-20 at
+`59b65e4907b27f57acd639d56f83ab365f30e4a5` from final implementation head
+`3e379c31a547f7d97e442068c4a90e1d1154e435`.
 
-During final correlation, open Documentary PR #1154 was found to own
-`docs/projects/fintech/WORK_PACKAGES.md`. The branch-local edit to that exact path was reverted to
-current-main content and delegated to #1154, so this package retains no same-file overlap with that
-parallel writer. FIN-21 remains projected through `README.md`, `ROADMAP.md`, `TASK_REGISTER.md`
-and this evidence document.
+Exact-head hosted validation for that implementation head completed successfully: the PR CI,
+Governance, Container Security and PR workflow runs all concluded `success`. The earlier overlap
+with Documentary PR #1154 on `docs/projects/fintech/WORK_PACKAGES.md` had been removed before
+merge.
 
-Hosted TypeScript/unit/governance/security validation has not yet been observed for the final branch
-head. Therefore this package is **not** represented as PASS or merge-ready until exact-head checks
-and a fresh final current-main/open-writer correlation are read back.
+Post-merge readback on 2026-09-21 proves current `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`
+is descended from the FIN-21 merge commit (196 commits ahead / 0 behind from that merge baseline)
+and still contains `FinTechUniverseProjection.ts`, `EquityResearchUniverse.ts` and the focused
+unit-test contract. FIN-21 is therefore terminal for this bounded projection slice. FIN-19 provider
+closure and additional FinTechCore workflow modules remain separate follow-up work and do not reopen
+FIN-21.

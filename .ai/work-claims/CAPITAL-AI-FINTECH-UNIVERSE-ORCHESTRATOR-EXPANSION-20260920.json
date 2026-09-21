@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FINTECH-UNIVERSE-ORCHESTRATOR-EXPANSION-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -30,5 +30,11 @@
     "src/platform/FinTechCore/index.ts",
     "tests/unit/fintechUniverseProjection.test.ts"
   ],
-  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment; automated workflows and reviews have no merge authority."
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment; automated workflows and reviews have no merge authority.",
+  "releaseReason": "Human Owner merged PR #1157; post-merge current-main readback confirms the implementation is present and the original release condition is satisfied.",
+  "mergedPullRequest": 1157,
+  "mergeCommitSha": "59b65e4907b27f57acd639d56f83ab365f30e4a5",
+  "finalHeadSha": "3e379c31a547f7d97e442068c4a90e1d1154e435",
+  "postMergeMainSha": "4f2c746a20a8683d784a1cbe54c763a64ddd1da3",
+  "validationState": "DONE_MAIN_TERMINAL_PROJECTION_SLICE"
 }
