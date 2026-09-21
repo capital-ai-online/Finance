@@ -70,6 +70,10 @@ test('PR create workflow classifies and ensures the label before gh pr create', 
   assert.doesNotMatch(workflow, /PR_LABELS_JSON/);
 });
 
-test('the former post-create PR label classification workflow is retired', () => {
-  assert.equal(fs.existsSync(retiredWorkflowPath), false);
+test('the former post-create PR label workflow is an inert no-runner tombstone', () => {
+  const retired = fs.readFileSync(retiredWorkflowPath, 'utf8');
+  assert.match(retired, /on:\n  workflow_dispatch:/);
+  assert.match(retired, /permissions:\s*\{\}/);
+  assert.match(retired, /if:\s*false/);
+  assert.doesNotMatch(retired, /^\s{2}(pull_request|pull_request_target|push|schedule|workflow_run):/m);
 });
