@@ -28,7 +28,8 @@
     ".github/workflows/open-agent-draft-pr.yml",
     "scripts/pr/prLabelClassification.mjs",
     "scripts/pr/prLabelClassification.test.mjs",
-    "docs/projects/governance/work-packages/GOV_PR_LABEL_CLASSIFICATION_2026-09-20.md"
+    "docs/projects/governance/work-packages/GOV_PR_LABEL_CLASSIFICATION_2026-09-20.md",
+    "tests/unit/githubAgentDraftPrWorkflow.test.ts"
   ],
   "correlation": {
     "currentMainAtStart": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
@@ -53,7 +54,11 @@
         "terminalState": "MERGED"
       }
     ],
-    "semanticOverlap": "PR #1211 is SEO-only and does not modify the claimed Governance label-classification paths. Three overlapping historical claims are terminal merged evidence and are released in this slice before the new writer is considered authoritative."
+    "semanticOverlap": "PR #1211 is SEO-only and does not modify the claimed Governance label-classification paths. Three overlapping historical claims are terminal merged evidence and are released in this slice before the new writer is considered authoritative.",
+    "permissionVerification": {
+      "source": "GitHub REST API label endpoint documentation",
+      "finding": "Repository label create/update accepts either Issues(write) or Pull requests(write); existing pull-requests: write is sufficient, so no permission widening is required."
+    }
   },
   "exitEvidence": [
     "project:CAPITAL-AI-OPS resolves to canonical color #845CDC and current canonical description from docs/projects/README.md",
