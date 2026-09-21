@@ -26,12 +26,12 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
 **Detailed work package:** `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`  
-**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.18`.
+**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.21`.
 
 **Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.  
 **Current management refresh:** `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
 
-Execution readback at this baseline:
+Historical launch-execution readback retained for provenance (superseded by the 2026-09-22 current-frontend convergence below):
 
 - repository landing/CTA freeze: `PASS_REPOSITORY`;
 - current public URL inventory: six canonical sitemap URLs including `/universe`;
@@ -44,7 +44,7 @@ Execution readback at this baseline:
 
 No missing provider read or provider account is converted into `PASS` or `NO_DATA_VERIFIED`.
 
-Current owner-correct dependencies:
+Historical owner-correct dependencies for that snapshot:
 
 - Human/CODEOWNER-merged FE PR `#1153` plus the later merged landing AI-Newsfeed integration PR `#1159` are part of the current-main landing candidate; production verification remains separate;
 - `CAPITAL-AI-SOCIAL` owns channel adaptation, Social content packages, provider publication and publication/analytics evidence;
@@ -53,11 +53,11 @@ Current owner-correct dependencies:
 
 This section is a thin current-work projection only. The detailed launch contract lives in the work-package file and the existing consolidated roadmap remains the single SEO/Google-Marketing program roadmap.
 
-## Current SEO management refresh — 2026-09-21
+## Historical SEO management refresh — 2026-09-21
 
 Fresh Owner direction assigns the SEO-management portion of `WP-SEO-LAUNCH-01` to this execution context.
 
-Current snapshot:
+Historical snapshot (not current execution baseline):
 
 - `CURRENT_MAIN`: `4f2c746a20a8683d784a1cbe54c763a64ddd1da3`;
 - Production: exact same SHA on Render deploy `dep-dao54cajnfac73ak74rg` — `PASS` for this snapshot;
@@ -70,7 +70,7 @@ Current snapshot:
 
 Detailed evidence: `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
 
-## Landing-First correlation — 2026-09-21
+## Historical Landing-First correlation — 2026-09-21
 
 Fresh Owner direction establishes `LF-01_STATIC_VISUAL_LANDING_PASS` as the shared dependency before any new productive landing-page integration. For CAPITAL-AI-SEO this does **not** create a second authority or a new roadmap; it constrains the existing `WP-SEO-LAUNCH-01` execution under `/AGENTS.md@CURRENT_MAIN`.
 
