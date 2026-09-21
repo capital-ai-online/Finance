@@ -96,13 +96,17 @@ jobs:
         with:
           node-version: '24.18.0'
 
-      - name: Aktuellen PR-Snapshot für den Write-Pfad autorisieren
+      - name: Aktuellen PR-Snapshot und CURRENT_MAIN vor Write autorisieren
         id: pr
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}
         with:
           script: |
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
             const number = context.payload.workflow_run.pull_requests?.[0]?.number;
-            if (!number) {
+            const expectedMain = normalizeSha(process.env.EXPECTED_MAIN_SHA);
+            if (!number || !/^[0-9a-f]{40}$/.test(expectedMain)) {
               core.setOutput('eligible', 'false');
               return;
             }
@@ -112,16 +116,60 @@ jobs:
               repo: context.repo.repo,
               pull_number: number,
             });
-
+            const { data: liveMain } = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main',
+            });
+            const liveMainSha = normalizeSha(liveMain.commit?.sha);
             const sameRepo = pr.head.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
-            const eligible = pr.state === 'open' && pr.base.ref === 'main' && sameRepo;
-
-            core.info(
-              `PR #${number}: state=${pr.state}, base=${pr.base.ref}, headRepo=${pr.head.repo?.full_name || 'missing'}, eligible=${eligible}`,
-            );
-            core.setOutput('eligible', eligible ? 'true' : 'false');
+            const boundaryEligible = pr.state === 'open' && pr.base.ref === 'main' && sameRepo;
             core.setOutput('pr_number', String(number));
             core.setOutput('head_sha', pr.head.sha || '');
+
+            if (!boundaryEligible) {
+              core.setOutput('eligible', 'false');
+              core.info(`PR #${number}: write boundary not eligible (state=${pr.state}, base=${pr.base.ref}, headRepo=${pr.head.repo?.full_name || 'missing'}).`);
+              return;
+            }
+
+            if (liveMainSha !== expectedMain) {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(number) },
+              });
+              core.setOutput('eligible', 'false');
+              core.setOutput('sync_required', 'true');
+              core.notice(`PR #${number}: CURRENT_MAIN moved from trusted policy snapshot; exact Update Branch dispatched before Governance baseline fix.`);
+              return;
+            }
+
+            const lineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${expectedMain}...${pr.head.sha}`,
+            });
+            const containsMain = lineage.data.status === 'ahead' || lineage.data.status === 'identical';
+            if (!containsMain) {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(number) },
+              });
+              core.setOutput('eligible', 'false');
+              core.setOutput('sync_required', 'true');
+              core.notice(`PR #${number}: head does not contain CURRENT_MAIN; exact Update Branch dispatched before Governance baseline fix.`);
+              return;
+            }
+
+            core.setOutput('eligible', 'true');
+            core.setOutput('sync_required', 'false');
+            core.info(`PR #${number}: CURRENT_MAIN ancestry PASS; Governance baseline fix may continue.`);
 
       - name: Kandidaten-Head ohne persistierte Zugangsdaten auschecken
         if: steps.pr.outputs.eligible == 'true'
