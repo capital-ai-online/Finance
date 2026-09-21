@@ -1,6 +1,6 @@
 # CAPITAL-AI-COMP — Canonical Roadmap
 
-**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`
+**Baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`
 
 **Project:** `CAPITAL-AI-COMP`  
 **Folder:** `docs/projects/compliance/`  
@@ -17,13 +17,13 @@ This file remains a temporary project execution projection until the separately 
 
 ## Owner-directed landing-first gate — COMP-LF-01
 
-**State:** `ACTIVE / PRE_LF01 / EVIDENCE_GATE`  
+**State:** `ACTIVE / LANDING_BASELINE_PRESENT / EVIDENCE_GATE`  
 **Canonical identity:** `COMP-LF-01-STATIC-LANDING-COMPLIANCE-GATE-20260921`  
 **Work package:** `../../compliance/CAPITAL-AI-COMP/work-packages/COMP_LF_01_STATIC_LANDING_COMPLIANCE_GATE_2026-09-21.md`
 
-Fresh Human/Owner direction on 2026-09-21 establishes a landing-first dependency program as a non-authorizing projection resolving to `/AGENTS.md@CURRENT_MAIN`. For Compliance, productive landing integrations remain held until the shared `LF-01_STATIC_VISUAL_LANDING_PASS` gate is evidenced. Before that gate, COMP may perform only the requirement/evidence work necessary to assess the static landing baseline: public-claim truthfulness, placeholder/live-state separation, privacy/consent/analytics boundary, legal-navigation preservation and owner-correct remediation handoff.
+Fresh Human/Owner direction on 2026-09-21 establishes a landing-first dependency program as a non-authorizing projection resolving to `/AGENTS.md@CURRENT_MAIN`. The landing-creation prerequisite is now satisfied on CURRENT_MAIN by merged #1195 and #1206. Compliance therefore no longer holds work merely because a landing page must be created; only remaining concrete evidence gates apply, including truthful live/preview separation, privacy/consent, legal navigation, #1209 desktop stabilization, and independent SEC/QM evidence.
 
-At `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`, LF-01 is not evidenced complete. Open FE PR #1195 is the current landing writer and remains blocked; its observed scope also contains pricing/session/scorer/runtime couplings that exceed a static-only baseline. COMP does not re-scope or implement that foreign FE work; it records the return evidence required from FE/OPS/SEC/QM and reassesses once supplied.
+At `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`, the root landing and pinned presentation are already present. The previous existence blocker is superseded. PR #1209 is the remaining FE desktop-only stabilization writer; COMP keeps only genuine residual evidence gates open and does not re-open merged #1195/#1206 work.
 
 **Exit:** `LF01_COMP_EVIDENCE_READY` only after exact-head/current-main evidence demonstrates a truthful static/presentational root, no productive feature API dependency required for first render, preserved legal/consent boundaries, independent SEC/QM state and explicit owner-routed gaps. This Compliance evidence state does not itself declare the cross-project LF-01 gate PASS.
 
