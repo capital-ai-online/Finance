@@ -24,7 +24,13 @@ export function LandingPage(_props: LandingPageProps) {
       data-landing-design-repository="SvenKulessa/FRONTEND"
       data-landing-design-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"
     >
-      <ReferenceApp />
+      <div
+        className="frontend-runtime-responsive-shell"
+        data-responsive-presentation="device-native"
+        data-responsive-owner="CAPITAL-AI-FE"
+      >
+        <ReferenceApp />
+      </div>
     </section>
   );
 }
