@@ -1,12 +1,12 @@
 # CAPITAL-AI-SOCIAL — Canonical Roadmap
 
-**Baseline:** `main@c307ab9a4e0eb5ba415b70da7a84bff1a7dc803b`
+**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`
 
 **Project:** `CAPITAL-AI-SOCIAL`  
 **Folder:** `docs/projects/social-media/`  
 **Role:** cross-cutting Social Media distribution planning and channel coordination  
 **Status:** `ACTIVE — FINAL ROADMAP BEFORE ROADMAP-REMOVAL PR`  
-**Reconciliation:** `2026-09-17 — historical backlog activation removed`  
+**Reconciliation:** `2026-09-21 — landing-first dependency correlated; historical backlog activation remains removed`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -22,6 +22,26 @@ Detailed historical Social material remains in Git history and `docs/social-medi
 ## Current direction
 
 Version 1 remains the current product direction. This does not resurrect discarded direct-upload automation or grant provider publication authority. Any scope expansion requires a fresh explicit Human/Owner decision.
+
+## Landing-first dependency projection
+
+**State:** `DEPENDENCY_HELD / PREPARATION_ONLY`  
+**Shared dependency:** `LF-01_STATIC_VISUAL_LANDING_PASS`  
+**Owner direction correlation:** `CAPITAL-AI-LANDING-FIRST-INTEGRATION-01..03` supplied 2026-09-21  
+**Execution authority:** `/AGENTS.md@CURRENT_MAIN`
+
+Social Media remains cross-cutting and acquires no productive PVC or Frontend/FinTech/Operations authority through this dependency. Before the shared LF-01 gate is truthfully evidenced as complete, Social may prepare only non-productive communication material based on approved static landing screenshots/mockups. Visual previews MUST be identified as previews and MUST NOT claim that authentication, pricing, subscription, scoring, market/news data, analytics, provider publication or other not-yet-integrated runtime behavior is live.
+
+Landing-related productive Social work remains held until the shared gate passes. After that point, communication may follow this non-authorizing presentation sequence as the corresponding product phases become independently verified:
+
+1. `VISUAL_PREVIEW`
+2. `ACCOUNT_EXPERIENCE`
+3. `PRICING`
+4. `BTC_ENTERPRISE_SCORER`
+5. `MULTI_ASSET`
+6. `NEWS_DATA`
+
+The sequence above is communication-state projection only. It does not authorize product integration, provider publication, analytics activation, or cross-owner implementation. Each public claim must reflect the actually verified implementation state; foreign-owner requirements are handed to the resolved canonical owner rather than implemented from Social.
 
 ## Current execution set
 
