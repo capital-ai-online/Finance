@@ -19,6 +19,9 @@ describe('FRONTEND upstream presentation sync contract', () => {
     expect(config.destination.startsWith('src/')).toBe(false);
     expect(config.runtimePromotion.automatic).toBe(false);
     expect(config.runtimePromotion.financeComponentsBindAfterArchitectureAdoption).toBe(true);
+    expect(config.runtimePromotion.responsiveAdapterRequired).toBe(true);
+    expect(config.runtimePromotion.previewShellPromotionAllowed).toBe(false);
+    expect(config.runtimePromotion.deviceClasses).toEqual(['mobile', 'tablet', 'desktop']);
   });
 
   it('keeps the upstream demo dataset solely as a visual fixture and excludes productive authorities', () => {
