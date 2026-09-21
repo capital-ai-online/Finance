@@ -1,0 +1,22 @@
+name: PR Label Classification (SUPERSEDED)
+run-name: PR Label Classification — SUPERSEDED / no runner
+
+# OWNER-DIRECTED SUPERSESSION — 2026-09-21
+#
+# Live PR classification moved into the trusted pre-create PR path.
+# This tombstone intentionally has no automatic event and allocates no runner.
+# It is retained because the workflow deletion gate permits physical deletion
+# only for already-unused dispatch-only stubs.
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  superseded:
+    name: PR label classification retired — no runner allocation
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inert supersession marker
+        run: echo "PR label classification is pre-create metadata; this workflow is intentionally unreachable."
