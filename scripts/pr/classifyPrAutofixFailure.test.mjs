@@ -185,13 +185,29 @@ test('delegates only the exact allowlisted v1.8 legacy baseline-section drift', 
   assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
   assert.equal(allowed.reason, 'current-v1.8-legacy-baseline-section-repairable');
 
-  const denied = classifyPrAutofixFailure({
+  const routed = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText,
     prMetadataShape: 'CURRENT_V18_OTHER',
   });
-  assert.equal(denied.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
-  assert.equal(denied.reason, 'current-v1.8-structure-drift-not-allowlisted');
+  assert.equal(routed.classification, 'PR_DECISION_EVIDENCE_DRIFT');
+  assert.equal(routed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
+  assert.equal(routed.reason, 'current-v1.8-structure-bootstrap-reconciler-owned');
+  assert.equal(routed.findingClass, 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
+  assert.equal(routed.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
+});
+
+test('routes current v1.8 missing-section drift to the single Decision Evidence writer', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: 'Error: PR #1224 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ## 1. 🧭 Entscheidung, ## 2. ✅ Evidence, ## 3. 🔍 Technical Evidence',
+    prMetadataShape: 'CURRENT_V18_OTHER',
+  });
+  assert.equal(result.classification, 'PR_DECISION_EVIDENCE_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
+  assert.equal(result.reason, 'current-v1.8-structure-bootstrap-reconciler-owned');
+  assert.equal(result.findingClass, 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
+  assert.equal(result.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
 });
 
 test('delegates repairable PR metadata drift to the existing baseline/template writer', () => {
