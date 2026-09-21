@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "SOCIAL-LANDING-FIRST-INTEGRATION-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate CAPITAL-AI-SOCIAL with the owner-directed landing-first program without creating a second authority: hold productive landing-related Social work until LF-01_STATIC_VISUAL_LANDING_PASS and permit preview-only communication preparation.",
+  "startedAt": "2026-09-21T14:50:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "branch": "social-media/landing-first-communication-gate-20260921",
+  "projectId": "CAPITAL-AI-SOCIAL",
+  "projectFolder": "docs/projects/social-media/",
+  "projectStage": "cross-cutting; no productive PVC",
+  "priority": "P1",
+  "priorityReason": "Owner direction requires all project folders to honor the shared LF-01 landing gate before productive landing integration.",
+  "claimedPaths": [
+    ".ai/work-claims/SOCIAL-LANDING-FIRST-INTEGRATION-20260921.json",
+    "docs/projects/social-media/ROADMAP.md"
+  ],
+  "dependencies": [
+    "LF-01_STATIC_VISUAL_LANDING_PASS",
+    "CAPITAL-AI-FE remains presentation owner",
+    "CAPITAL-AI-FINTECH remains scoring/data authority",
+    "CAPITAL-AI-OPS remains runtime/operations owner where assigned"
+  ],
+  "exitEvidence": [
+    "Social Roadmap records DEPENDENCY_HELD / PREPARATION_ONLY for landing-related productive work",
+    "Visual preview communication is explicitly separated from live/productive claims",
+    "No productive provider/publication/analytics authority is introduced",
+    "No changed-file overlap with existing open writers at correlation"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no direct merge authority."
+}

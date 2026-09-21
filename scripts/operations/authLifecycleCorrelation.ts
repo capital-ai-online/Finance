@@ -18,6 +18,11 @@ function read(repoRoot: string, relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
 
+function readOptional(repoRoot: string, relativePath: string): string {
+  const filePath = path.join(repoRoot, relativePath);
+  return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+}
+
 function finding(
   id: string,
   result: LifecycleResult,
@@ -39,6 +44,12 @@ function sliceCurrentPathBlock(source: string, pathname: string, nextPathname: s
 export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd()): AuthLifecycleFinding[] {
   const loginPage = read(repoRoot, 'src/features/public/ui/LoginPage.tsx');
   const appRoutes = read(repoRoot, 'src/app/routing/AppRoutes.tsx');
+  const spaRouteContract = read(repoRoot, 'server/middleware/seoUrlNormalize.ts');
+  const spaFallback = read(repoRoot, 'server/runtime/spaFallback.ts');
+  const publicScorerPreview = read(repoRoot, 'src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
+  const enterpriseScorer = read(repoRoot, 'src/features/crypto/ui/CryptoScoringEnterprise.tsx');
+  const landingNewsfeed = read(repoRoot, 'src/features/news/ui/LandingRealtimeAiNewsfeed.tsx');
+  const landingPricing = readOptional(repoRoot, 'src/app/public/LandingPricingPanel.tsx');
   const sessionComposition = read(repoRoot, 'src/app/auth/SessionComposition.tsx');
   const appDashboard = read(repoRoot, 'src/app/dashboard/Dashboard.tsx');
   const registrationGate = read(repoRoot, 'src/components/RegistrationCompletionGate.tsx');
@@ -65,18 +76,151 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
   ));
 
   const rootBlock = sliceCurrentPathBlock(appRoutes, '/', '/login');
-  const authenticatedRootToDashboard =
-    rootBlock.includes('userSession') &&
-    (rootBlock.includes('to="/dashboard"') || rootBlock.includes("window.location.replace('/dashboard')"));
+  const authenticatedRootLanding =
+    rootBlock.includes('<LandingPage') &&
+    !rootBlock.includes('to="/dashboard"') &&
+    !rootBlock.includes("window.location.replace('/dashboard')");
   findings.push(finding(
-    'authenticated_root_dashboard_handoff',
-    authenticatedRootToDashboard ? 'PASS' : 'FAIL',
+    'authenticated_root_landing_handoff',
+    authenticatedRootLanding ? 'PASS' : 'FAIL',
     'CAPITAL-AI-FE',
     ['src/app/routing/AppRoutes.tsx'],
-    'After successful OAuth/session composition, an authenticated visit to / deterministically continues to /dashboard.',
-    authenticatedRootToDashboard
-      ? 'The root route contains an authenticated dashboard handoff.'
-      : 'The root route renders the public landing composition without an authenticated /dashboard handoff.',
+    'After successful OAuth/session composition, an authenticated user remains on the canonical / landing page.',
+    authenticatedRootLanding
+      ? 'The root route renders LandingPage without an authenticated /dashboard default redirect.'
+      : 'The root route still diverts authenticated users away from the canonical landing page.',
+  ));
+
+  const loginBlock = sliceCurrentPathBlock(appRoutes, '/login', '/dashboard');
+  const authenticatedLoginToRoot =
+    loginBlock.includes('if (userSession)') &&
+    loginBlock.includes('to="/"') &&
+    !loginBlock.includes('to="/dashboard"');
+  findings.push(finding(
+    'authenticated_login_root_handoff',
+    authenticatedLoginToRoot ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/app/routing/AppRoutes.tsx'],
+    'An authenticated session visiting /login converges to / rather than /dashboard.',
+    authenticatedLoginToRoot
+      ? 'The authenticated /login branch redirects to the canonical root landing page.'
+      : 'The authenticated /login branch does not converge to the canonical root landing page.',
+  ));
+
+  const dashboardBlock = sliceCurrentPathBlock(appRoutes, '/dashboard', '/media-studio');
+  const dashboardRendererStart = appRoutes.indexOf('const renderAuthenticatedDashboard = () => {');
+  const dashboardRendererEnd =
+    dashboardRendererStart >= 0
+      ? appRoutes.indexOf("if (currentPath === '/datenschutz')", dashboardRendererStart)
+      : -1;
+  const dashboardRenderer =
+    dashboardRendererStart >= 0
+      ? appRoutes.slice(
+          dashboardRendererStart,
+          dashboardRendererEnd > dashboardRendererStart ? dashboardRendererEnd : undefined,
+        )
+      : '';
+  const protectedDashboard =
+    dashboardBlock.includes('renderAuthenticatedDashboard()') &&
+    dashboardRenderer.includes('if (!userSession)') &&
+    dashboardRenderer.includes('<RouteRedirect to="/login"');
+  findings.push(finding(
+    'dashboard_protected_deep_link',
+    protectedDashboard ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/app/routing/AppRoutes.tsx'],
+    '/dashboard remains a protected deep link and unauthenticated access converges to /login.',
+    protectedDashboard
+      ? 'The dashboard route delegates to an auth-gated renderer with an unauthenticated /login redirect.'
+      : 'The protected-dashboard deep-link contract is missing or divergent.',
+  ));
+
+  const unknownAuthenticatedStart = appRoutes.lastIndexOf('if (userSession)');
+  const unknownAuthenticatedBlock =
+    unknownAuthenticatedStart >= 0 ? appRoutes.slice(unknownAuthenticatedStart) : '';
+  const unknownAuthenticatedToRoot =
+    unknownAuthenticatedBlock.includes('to="/"') &&
+    !unknownAuthenticatedBlock.includes('to="/dashboard"');
+  findings.push(finding(
+    'authenticated_unknown_route_root_handoff',
+    unknownAuthenticatedToRoot ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/app/routing/AppRoutes.tsx'],
+    'Unsupported authenticated routes converge to / and never use /dashboard as the implicit default.',
+    unknownAuthenticatedToRoot
+      ? 'The authenticated unknown-route fallback converges to /.'
+      : 'The authenticated unknown-route fallback still targets /dashboard or lacks a canonical-root handoff.',
+  ));
+
+  const spaSupportsCanonicalRoutes =
+    spaRouteContract.includes("  '/',") &&
+    spaRouteContract.includes("  '/login',") &&
+    spaRouteContract.includes("  '/dashboard',") &&
+    spaFallback.includes("case '/':") &&
+    spaFallback.includes("case '/login':") &&
+    spaFallback.includes("case '/dashboard':") &&
+    spaFallback.includes("case '/media-studio':") &&
+    spaFallback.includes("return res.status(404).type('text/plain').send('Not Found');");
+  findings.push(finding(
+    'canonical_spa_fallback_contract',
+    spaSupportsCanonicalRoutes ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-OPS',
+    ['server/middleware/seoUrlNormalize.ts', 'server/runtime/spaFallback.ts'],
+    'Production SPA fallback serves canonical /, /login, /dashboard and supported app routes without soft-200 unknown paths.',
+    spaSupportsCanonicalRoutes
+      ? 'Canonical public/application SPA paths are explicitly served and unknown paths remain 404.'
+      : 'The production SPA fallback does not fully represent the canonical application-route contract.',
+  ));
+
+  const rootHasLandingProfileProjection =
+    rootBlock.includes('profile={userSession') ||
+    rootBlock.includes('userSession={userSession}');
+  const productiveScorerReachableFromRoot =
+    rootBlock.includes('preview={<PublicAnalysisPreview') &&
+    publicScorerPreview.includes('CanonicalCryptoScoringEnterprise') &&
+    (enterpriseScorer.includes("fetch('/api/crypto/score'") ||
+      enterpriseScorer.includes('/verified-score'));
+  const productiveNewsReachableFromRoot =
+    rootBlock.includes('<LandingRealtimeAiNewsfeed') &&
+    /\b(?:fetch|authFetch)\s*\(/.test(landingNewsfeed);
+  const productivePricingReachableFromRoot =
+    (rootBlock.includes('<LandingPricingPanel') ||
+      rootBlock.includes('pricing={<LandingPricingPanel')) &&
+    /\b(?:fetch|authFetch)\s*\(/.test(landingPricing);
+
+  const lf01Blockers = [
+    !rootBlock.includes('<LandingPage')
+      ? 'canonical root does not render LandingPage'
+      : null,
+    rootHasLandingProfileProjection
+      ? 'LF-02 session/profile projection is already wired into the root landing composition'
+      : null,
+    productivePricingReachableFromRoot
+      ? 'LF-03 pricing/entitlement runtime is reachable from the root landing composition'
+      : null,
+    productiveScorerReachableFromRoot
+      ? 'LF-04 productive scoring runtime is reachable from the root landing composition'
+      : null,
+    productiveNewsReachableFromRoot
+      ? 'LF-05 productive news runtime is reachable from the root landing composition'
+      : null,
+  ].filter((item): item is string => Boolean(item));
+
+  const staticVisualLandingPass = rootBlock.includes('<LandingPage') && lf01Blockers.length === 0;
+  findings.push(finding(
+    'landing_first_lf01_static_visual_gate',
+    staticVisualLandingPass ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    [
+      'src/app/routing/AppRoutes.tsx',
+      'src/features/crypto/ui/PublicCryptoScoringPreview.tsx',
+      'src/features/crypto/ui/CryptoScoringEnterprise.tsx',
+      'src/features/news/ui/LandingRealtimeAiNewsfeed.tsx',
+    ],
+    'LF-01 renders the canonical landing as a presentation-only baseline with no productive scoring, pricing/entitlement or news runtime wired into the root composition and no LF-02 profile/session projection on the landing surface.',
+    staticVisualLandingPass
+      ? 'The root landing composition is static/presentational for LF-01; later productive landing integrations may still proceed only in dependency order with their own owner-correct gates.'
+      : `LF-01 is not a static-only baseline: ${lf01Blockers.join('; ')}.`,
   ));
 
   const localLogoutDefault = sessionComposition.includes("supabase.auth.signOut({ scope: 'local' })");

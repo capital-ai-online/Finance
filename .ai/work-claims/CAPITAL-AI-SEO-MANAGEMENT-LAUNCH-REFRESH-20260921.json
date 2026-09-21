@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEO-MANAGEMENT-LAUNCH-REFRESH-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -35,5 +35,9 @@
     "CAPITAL-AI-COMP — consent/privacy and public financial-disclosure constraints.",
     "CAPITAL-AI-QM — independent launch evidence assurance."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; any auto-merge eligibility must be separately proven against /AGENTS.md@CURRENT_MAIN."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; any auto-merge eligibility must be separately proven against /AGENTS.md@CURRENT_MAIN.",
+  "releasedAt": "2026-09-21T14:50:00+02:00",
+  "releaseReason": "PR #1183 was Human/CODEOWNER merged; its branch is no longer present. The stale active/exclusive marker is released during fresh CURRENT_MAIN correlation before the Landing-First continuation.",
+  "mergeCommitSha": "53c38dbeaf85262ed1784ce3458d61b54f6da3bb",
+  "postMergeContinuationClaim": "CAPITAL-AI-SEO-LANDING-FIRST-GATE-20260921"
 }

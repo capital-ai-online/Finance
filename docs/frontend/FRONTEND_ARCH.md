@@ -276,3 +276,12 @@ Zusätzlich gilt als Governance-Regel für Frontend-Dokumente:
 4. `FRONTEND_ROADMAP.md` beschreibt ausschließlich Reihenfolge, Status und geplante Arbeit.
 5. Fachliche Runtime-/Data-/Scoring-Regeln müssen auf ihre Parent-Authority verweisen statt sie erneut vollständig zu definieren.
 6. Wird eine Parent-Authority geändert, müssen abhängige Frontend-Dokumente auf veraltete Projektionen geprüft werden; eine duplizierte Ablaufdefinition ist als Dokumentationsdrift zu behandeln.
+
+
+## Upstream presentation source — SvenKulessa/FRONTEND
+
+The public repository `SvenKulessa/FRONTEND` is the leading upstream **design/presentation source** for graphical components, UI slices, visual assets and composition blueprints. It is source input, not repository execution authority and not a productive domain authority.
+
+The canonical Finance runtime architecture remains governed locally by this document and the owner/domain boundaries resolved through `/AGENTS.md@CURRENT_MAIN`. Upstream source is synchronized through the allowlisted contract in `.github/frontend-upstream-sync.json` into an inert snapshot under `docs/frontend/upstream-source/`. It is never executed directly and never promoted automatically into `src/`.
+
+Productive Finance adapters may consume the visual intent only after removing mock/demo/runtime dependencies and binding the component to the canonical Finance contracts for auth, data, scoring, entitlement, billing, providers, Security, Compliance and Quality as applicable. This preserves **Projection, not Redefinition** while making the external FRONTEND repository the primary visual source.

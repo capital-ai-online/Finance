@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-MERGE-SIMPLIFY-RETIRE-OWNER-GATE-2026-08-16",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok",
@@ -27,5 +27,11 @@
     "scripts/pr/validatePrBody.mjs",
     ".ai/work-claims/GOV-MERGE-SIMPLIFY-RETIRE-OWNER-GATE-2026-08-16.json"
   ],
-  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted.",
+  "releaseEvidence": {
+    "reason": "merged",
+    "pullRequest": 353,
+    "mergedAt": "2026-08-15T23:29:59Z",
+    "releasedBy": "CAPITAL-AI-GOV-PR-TEMPLATE-SUPERSESSION-20260921"
+  }
 }

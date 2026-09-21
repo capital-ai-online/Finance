@@ -6,7 +6,13 @@ import {
   PLATFORM_VERSION_AUTHORITY,
   RULE_ENGINE_VERSION,
 } from '../governance/deterministicVersioningDecision.mjs';
-import { PR_TEMPLATE_VERSION } from './lib.mjs';
+import {
+  PR_TEMPLATE_VERSION,
+  SUPERSEDED_PR_TEMPLATE_VERSIONS,
+  SUPPORTED_PR_TEMPLATE_VERSIONS,
+  bodyHasSupportedPrTemplateMarker,
+  detectPrTemplateVersion,
+} from './lib.mjs';
 
 function packageVersion() {
   return JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
@@ -92,4 +98,32 @@ test('PR template contract version is independent from the platform product vers
   assert.ok(template.includes('## 2. ✅ Evidence'));
   assert.ok(template.includes('## 3. 🔍 Technical Evidence'));
   assert.equal(packageVersion(), before);
+});
+
+
+test('PR template supersession leaves exactly one GitHub discovery source and only v1.8 is supported', () => {
+  const canonicalPath = '.github/pull_request_template.md';
+  const forbiddenDiscoveryPaths = [
+    'pull_request_template.md',
+    'PULL_REQUEST_TEMPLATE.md',
+    'docs/pull_request_template.md',
+    'docs/PULL_REQUEST_TEMPLATE.md',
+    '.github/PULL_REQUEST_TEMPLATE.md',
+    '.github/PULL_REQUEST_TEMPLATE',
+  ];
+
+  assert.equal(fs.existsSync(canonicalPath), true);
+  for (const candidate of forbiddenDiscoveryPaths) {
+    assert.equal(fs.existsSync(candidate), false, `superseded PR template discovery path must not exist: ${candidate}`);
+  }
+
+  assert.deepEqual(SUPPORTED_PR_TEMPLATE_VERSIONS, ['1.8.0']);
+  assert.deepEqual(SUPERSEDED_PR_TEMPLATE_VERSIONS, ['1.7.0', '1.6.0', '1.5.0']);
+  assert.equal(bodyHasSupportedPrTemplateMarker('CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0'), true);
+
+  for (const version of SUPERSEDED_PR_TEMPLATE_VERSIONS) {
+    const body = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${version}`;
+    assert.equal(detectPrTemplateVersion(body), version, 'superseded marker remains detectable for migration/evidence');
+    assert.equal(bodyHasSupportedPrTemplateMarker(body), false, 'superseded marker must never be merge-supported');
+  }
 });
