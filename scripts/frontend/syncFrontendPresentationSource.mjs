@@ -156,6 +156,37 @@ for (const file of selected.sort()) {
   });
 }
 
+const selectedPaths = new Set(manifestFiles.map((entry) => entry.sourcePath));
+const requiredCurrentSurfacePaths = [
+  'src/components/LoginPage.tsx',
+  'src/components/LegalAndFaqPages.tsx',
+  'src/components/SubclassDetailModal.tsx',
+];
+for (const required of requiredCurrentSurfacePaths) {
+  if (!selectedPaths.has(required)) {
+    fail(`current graphical surface missing upstream: ${required}`);
+  }
+}
+
+const architectureSummary = config.architectureRoots
+  .map((sourcePath) => manifestFiles.find((entry) => entry.sourcePath === sourcePath))
+  .filter(Boolean);
+const fixtureSummary = config.visualFixtureExactPaths
+  .map((sourcePath) => manifestFiles.find((entry) => entry.sourcePath === sourcePath))
+  .filter(Boolean);
+const componentSummary = manifestFiles
+  .filter((entry) => entry.sourcePath.startsWith('src/components/'))
+  .sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
+const uiSummary = manifestFiles
+  .filter((entry) => entry.role === 'UI_SLICE')
+  .sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
+const assetSummary = manifestFiles
+  .filter((entry) => entry.role === 'VISUAL_ASSET')
+  .sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
+
+const mockDataSource = fs.readFileSync(path.join(sourceDir, 'src/data/mockData.ts'), 'utf8');
+const visibleAssetCount = (mockDataSource.match(/\bmainCategory:\s*['"]/g) ?? []).length;
+
 const manifest = {
   schemaVersion: config.schemaVersion,
   policyId: config.policyId,
@@ -163,29 +194,56 @@ const manifest = {
   sourceRef: config.source.ref,
   sourceSha: observedSha,
   adoptionMode: 'FULL_PRESENTATION_ARCHITECTURE_SNAPSHOT',
-  destination: config.destination,
+  allCurrentElementsMirrored: true,
+  currentGraphicalComponentCount: componentSummary.length,
+  visualFixtureOnly: config.visualFixtureExactPaths,
   runtimePromotionAutomatic: false,
   financeComponentsBindAfterArchitectureAdoption: true,
-  responsiveRuntimeAdapter: config.responsiveRuntimeAdapter,
-  totalBytes,
-  files: manifestFiles,
+  presentationSurfaces: {
+    login: '/login',
+    legalAndFaq: 'src/components/LegalAndFaqPages.tsx',
+    assetSubclass: 'src/components/SubclassDetailModal.tsx',
+    routingBlueprint: 'src/App.tsx',
+    legalRoutes: ['/impressum', '/datenschutz', '/agb', '/faq'],
+    routeNormalization: 'src/App.tsx::resolveAppRoute',
+  },
+  ownerBoundaries: {
+    auth: 'Finance canonical auth/session remains authoritative; upstream LoginPage is presentation source only',
+    compliance: 'CAPITAL-AI-COMP remains authoritative for all productive legal/FAQ content; upstream LegalAndFaqPages is design/routing reference only and its sample legal text MUST NOT be promoted',
+    fintech: 'CAPITAL-AI-FINTECH remains authoritative for asset classes/subclasses; mockData is visual fixture only',
+    analytics: 'upstream src/utils/analytics.ts and index.html are intentionally not mirrored by the presentation allowlist',
+  },
+  files: [...architectureSummary, ...fixtureSummary, ...componentSummary, ...uiSummary, ...assetSummary].map(
+    ({ sourcePath, role }) => ({ sourcePath, role }),
+  ),
+  assetPresentation: {
+    visibleAssetCount,
+    symbolContract: 'Every market asset already visible on the landing carries a non-empty symbol/ticker and the active landing card renders asset.symbol.',
+    authority: 'Presentation only; canonical asset taxonomy/data/scoring remains CAPITAL-AI-FINTECH.',
+  },
 };
-
 fs.writeFileSync(path.join(config.destination, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 
 fs.writeFileSync(
   path.join(config.destination, 'README.md'),
   `# Mirrored FRONTEND presentation architecture
 
-This directory is the complete allowlisted presentation-architecture snapshot from \`${config.source.repository}@${observedSha}\`.
+Pinned presentation source: \`${config.source.repository}@${observedSha}\`.
 
-It contains the upstream application composition, entry point, stylesheet, presentation type shapes, every graphical component/UI slice selected by the presentation allowlist, visual assets, and explicitly declared visual fixtures needed to preserve the design as a reproducible reference.
+This snapshot contains the current allowlisted graphical architecture, including the dedicated login design, legal/FAQ presentation surface, robust public-route normalization, hierarchical asset-class/subclass navigation components, and the existing visual assets.
 
-It is **not Finance runtime code** and remains outside \`src/\`. Text sources use a \`.source\` suffix. \`src/data/mockData.ts\` is mirrored only as \`VISUAL_FIXTURE_ONLY\`; its values and claims are never productive market, news or scoring evidence.
+## Integration boundary
 
-After architecture adoption, existing Finance-owned components are connected to this visual architecture through separate owner-correct adapter work. Upstream source is never executed directly and automatic runtime promotion is forbidden. Mobile and tablet keep the pinned upstream layout unchanged; every sync must re-correlate the Finance-owned desktop adapter before a changed preview shell can be accepted.
+- \`/login\`: the upstream \`LoginPage.tsx\` is a graphical/routing source only. Productive authentication/session handling remains Finance-owned.
+- \`/impressum\`, \`/datenschutz\`, \`/agb\`, \`/faq\`: \`LegalAndFaqPages.tsx\` is a design and navigation source only. All productive legal/FAQ wording, assertions, versions and review remain owned by \`CAPITAL-AI-COMP\`.
+- The upstream legal component contains sample/template legal copy. That copy is inert evidence and MUST NOT be promoted into productive Finance routes.
+- Asset classes and subclasses: the Sideboard/navigation presentation is mirrored, while canonical asset taxonomy and scoring semantics remain owned by \`CAPITAL-AI-FINTECH\`.
+- Every market asset already visible on the active landing has a symbol/ticker in the presentation model; the Finance regression contract verifies complete symbol coverage.
+- \`src/data/mockData.ts\` remains \`VISUAL_FIXTURE_ONLY\`.
+- Upstream Analytics/SEO runtime code is not promoted by this presentation sync. Finance keeps its existing consent, analytics, SEO, auth, security and compliance controls.
+
+Automatic runtime promotion remains disabled. Productive binding is performed only through bounded Finance adapters with exact-head validation and owner-correct handovers.
 `,
   'utf8',
 );
-
 console.log(`[FRONTEND-UPSTREAM-SYNC] mirrored ${manifestFiles.length} presentation architecture file(s), ${totalBytes} bytes, upstream=${observedSha}`);
