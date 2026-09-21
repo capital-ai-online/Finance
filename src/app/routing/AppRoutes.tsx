@@ -5,17 +5,10 @@
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Datenschutz, ImpressumAgb, LandingPage, LoginPage } from '../../features/public/ui';
-import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';
-import { FeatureRecoveryBoundary } from '../../shared/ui/FeatureRecoveryBoundary';
 import type { UserSession } from '../types/UserSession';
 
 const Dashboard = lazy(() =>
   import('../dashboard/Dashboard').then((module) => ({ default: module.Dashboard })),
-);
-const PublicAnalysisWorkbench = lazy(() =>
-  import('../public/PublicAnalysisWorkbench').then((module) => ({
-    default: module.PublicAnalysisWorkbench,
-  })),
 );
 const LearningVocabulary = lazy(() =>
   import('../../features/learning/ui/LearningVocabulary').then((module) => ({
@@ -66,52 +59,6 @@ function AuthRouteResolution() {
         </a>
       </div>
     </div>
-  );
-}
-
-function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
-  return (
-    <FeatureRecoveryBoundary
-      name="Öffentliche Analyse-Workbench"
-      fallback={(reset) => (
-        <section
-          role="alert"
-          className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-status-warning/30 bg-status-warning/5 px-4 py-10 text-center text-text-primary sm:px-6"
-        >
-          <div className="max-w-xl space-y-2">
-            <p className="text-sm font-black">Bewertungstools vorübergehend nicht verfügbar</p>
-            <p className="text-xs leading-relaxed text-text-secondary">
-              Nur die öffentliche Analyse-Workbench wurde angehalten. Landingpage und Navigation bleiben verfügbar.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={reset}
-            className="ui-hit inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-primary/35 bg-brand-primary/10 px-4 py-2 text-xs font-black text-text-primary transition hover:bg-brand-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-          >
-            Bewertungstools erneut laden
-          </button>
-        </section>
-      )}
-    >
-      <Suspense
-        fallback={
-          <section className="flex min-h-72 items-center justify-center rounded-2xl border border-border bg-surface/35 px-4 py-10 text-text-primary sm:px-6">
-            <p className="text-xs font-mono uppercase tracking-widest text-text-secondary">Bewertungstools werden geladen…</p>
-          </section>
-        }
-      >
-        {children}
-      </Suspense>
-    </FeatureRecoveryBoundary>
-  );
-}
-
-function PublicAnalysisPreview() {
-  return (
-    <PublicPreviewBoundary>
-      <PublicAnalysisWorkbench />
-    </PublicPreviewBoundary>
   );
 }
 
@@ -261,22 +208,12 @@ export function AppRoutes({
   }
 
   if (currentPath === '/') {
-    if (userSession) {
-      return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
-    }
-
-    return (
-      <LandingPage
-        onLoginNavigate={clearJustLoggedOut}
-        newsfeed={<LandingRealtimeAiNewsfeed onLoginNavigate={clearJustLoggedOut} />}
-        preview={<PublicAnalysisPreview />}
-      />
-    );
+    return <LandingPage onLoginNavigate={clearJustLoggedOut} />;
   }
 
   if (currentPath === '/login') {
     if (userSession) {
-      return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
+      return <RouteRedirect to="/" label="Zur Landingpage" />;
     }
     return <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />;
   }
@@ -314,7 +251,7 @@ export function AppRoutes({
   }
 
   if (userSession) {
-    return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
+    return <RouteRedirect to="/" label="Zur Landingpage" />;
   }
 
   if (authBootstrapPending) {

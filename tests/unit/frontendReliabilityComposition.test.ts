@@ -45,13 +45,14 @@ describe('SH-02.6 frontend reliability composition', () => {
     expect(degradedMode).not.toContain('CanonicalScoreResult');
   });
 
-  it('uses reusable feature-local boundaries for the public workbench and preview', () => {
+  it('keeps reusable feature-local recovery available without coupling it into the LF-01 root', () => {
     expect(featureBoundary).toContain('generation: state.generation + 1');
     expect(featureBoundary).toContain('Andere Funktionen und Ihre bestehende Sitzung bleiben erhalten.');
     expect(featureBoundary).not.toContain('error.message');
 
-    expect(routes).toContain('<FeatureRecoveryBoundary');
-    expect(routes).toContain('name="Öffentliche Analyse-Workbench"');
+    expect(routes).not.toContain('<FeatureRecoveryBoundary');
+    expect(routes).not.toContain('name="Öffentliche Analyse-Workbench"');
+    expect(routes).not.toContain('PublicAnalysisWorkbench');
     expect(publicWorkbench).toContain('<FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>');
     expect(publicWorkbench).not.toContain('class PublicToolErrorBoundary');
     expect(routes).not.toContain('class PublicPreviewErrorBoundary');

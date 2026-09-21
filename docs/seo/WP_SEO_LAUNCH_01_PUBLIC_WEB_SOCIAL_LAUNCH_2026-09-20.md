@@ -119,6 +119,20 @@ Snapshot classification:
 
 The prior execution-baseline file remains historical snapshot evidence and is not treated as current provider state after this refresh.
 
+## 2.6 Landing-First shared dependency — 2026-09-21
+
+Fresh Owner direction makes `LF-01_STATIC_VISUAL_LANDING_PASS` a prerequisite for new productive landing integrations across the canonical projects. This work package remains the existing SEO launch-management package; no second launch authority is created.
+
+Until LF-01 is independently evidenced:
+
+- SEO may prepare crawlability, metadata, content, internal-link, measurement and launch-claim requirements;
+- SEO must not represent pricing, subscription, Enterprise Scorer, news/data or analytics integrations as live merely because presentation surfaces exist;
+- Social launch language remains at visual-preview / implementation-stage truth unless later integration phases are verified;
+- provider reads may be collected when independently available, but they do not authorize landing integration or publication;
+- CWV/performance evidence captured before LF-01 is diagnostic unless it is attributable to the accepted static visual baseline.
+
+Current FE handoff evidence is recorded in `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`. The next productive SEO landing phase waits on `LF-01_STATIC_VISUAL_LANDING_PASS` plus any independent Security/Compliance/Quality gates that apply.
+
 ## 3. Launch principles
 
 1. **Product truth before promotion.** Public copy, SEO content and Social derivatives must trace to merged product/domain truth.
