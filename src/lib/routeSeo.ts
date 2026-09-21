@@ -15,7 +15,7 @@ export interface RouteSeo {
 const DEFAULT: RouteSeo = {
   title: 'CAPITAL-AI – Marktdaten verstehen. Chancen besser erkennen.',
   description:
-    `CAPITAL-AI (Version ${CAPITAL_AI_VERSION}) vereint Echtzeit-Marktdaten, KI-gestütztes Scoring und fundierte Analysen für transparentere Entscheidungen an den globalen Märkten.`,
+    `Offizielles CAPITAL-AI Portal (Version ${CAPITAL_AI_VERSION}) – Marktdaten verstehen. Chancen besser erkennen: Echtzeit-Marktdaten, KI-gestütztes Scoring und fundierte Analysen für transparentere Entscheidungen an globalen Märkten.`,
   canonicalPath: '/',
 };
 
