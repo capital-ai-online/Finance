@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { findMissingRequiredSections } from './prBodySectionContract.mjs';
-import { repairLegacyPrBodyStructure } from './repairLegacyPrBodyStructure.mjs';
+import {
+  repairLegacyPrBodyStructure,
+  validatePrMutationBoundary,
+} from './repairLegacyPrBodyStructure.mjs';
 
 const CURRENT = {
   project: '## 2. 📦 Projekt & Scope',
@@ -9,6 +12,47 @@ const CURRENT = {
   version: '## 5. 🔢 Version & PR-Klasse',
   check: '## 6. ✅ Prüfung & Merge',
 };
+
+const BOUNDARY_REPOSITORY = 'capital-ai-online/Finance';
+const BOUNDARY_MAIN_SHA = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const BOUNDARY_HEAD_SHA = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+const HISTORICAL_PR_BASE_SHA = 'cccccccccccccccccccccccccccccccccccccccc';
+
+function boundaryFixture() {
+  return {
+    livePr: {
+      state: 'open',
+      base: { ref: 'main', sha: HISTORICAL_PR_BASE_SHA },
+      head: {
+        sha: BOUNDARY_HEAD_SHA,
+        repo: { full_name: BOUNDARY_REPOSITORY },
+      },
+    },
+    liveMain: { commit: { sha: BOUNDARY_MAIN_SHA } },
+    repository: BOUNDARY_REPOSITORY,
+    expectedHeadSha: BOUNDARY_HEAD_SHA,
+    expectedMainSha: BOUNDARY_MAIN_SHA,
+    mainIsAncestorOfHead: true,
+  };
+}
+
+test('accepts a synchronized PR when pull.base.sha is historical but current main is an ancestor of the exact head', () => {
+  const fixture = boundaryFixture();
+  assert.notEqual(fixture.livePr.base.sha, fixture.expectedMainSha);
+  assert.equal(validatePrMutationBoundary(fixture), '');
+});
+
+test('fails closed when exact current main is not an ancestor of the exact PR head', () => {
+  const fixture = boundaryFixture();
+  fixture.mainIsAncestorOfHead = false;
+  assert.equal(validatePrMutationBoundary(fixture), 'main-not-ancestor-of-head');
+});
+
+test('fails closed when live main moved after the expected main snapshot was bound', () => {
+  const fixture = boundaryFixture();
+  fixture.liveMain.commit.sha = 'dddddddddddddddddddddddddddddddddddddddd';
+  assert.equal(validatePrMutationBoundary(fixture), 'main-drift');
+});
 
 const legacyBody = [
   '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->',
