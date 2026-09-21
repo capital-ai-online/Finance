@@ -34,3 +34,11 @@ test('baseline fix remains serialized by the canonical per-PR writer lease', () 
   assert.ok(sync.includes('cancel-in-progress: false'));
   assert.ok(write.includes('cancel-in-progress: false'));
 });
+
+
+test('current-state baseline autofix accepts exact CI workflow_dispatch revalidation without broadening writer scope', () => {
+  assert.ok(workflow.includes("github.event.workflow_run.event == 'workflow_dispatch'"));
+  assert.ok(workflow.includes("run.event === 'workflow_dispatch'"));
+  assert.ok(workflow.includes("String(run.head_branch || '') !== pr.head.ref"));
+  assert.ok(workflow.includes("github.event.workflow_run.path == '.github/workflows/ci.yml'"));
+});
