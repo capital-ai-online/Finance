@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Bind the pinned landing presentation to existing verified market-data and canonical public scoring logic without mutating the source-locked frontend-port or creating a second domain authority.",
+  "workItem": "Bind the pinned landing presentation to existing verified market-data logic, neutralize design fixtures, and fail-close productive scorer activation on the canonical FIN-LF-01 dependency gates without mutating the source-locked frontend-port.",
   "startedAt": "2026-09-21T23:41:00+02:00",
   "baseBranch": "main",
   "baseSha": "a54f54c43fd7e33e9a77b61542f75947e6deb23c",
@@ -32,14 +32,16 @@
     "SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07 remains the pinned graphical source",
     "src/features/public/ui/frontend-port/source-lock.json remains unchanged",
     "verified-asset-display/1.0.0 remains the read-only per-symbol display contract",
-    "CAPITAL-AI-FINTECH remains scoring/data authority for PVC-09..17"
+    "CAPITAL-AI-FINTECH remains scoring/data authority for PVC-09..17",
+    "FIN-LF-01 keeps productive landing scoring HELD until LF-02_AUTH_PROFILE_PASS, LF-03_PRICING_ENTITLEMENTS_PASS, SEC_REVIEW_READY and QM_VALIDATION_READY"
   ],
   "exitEvidence": [
     "pinned frontend-port files are unchanged",
     "landing fixture values are neutralized before productive interaction",
     "selected market assets hydrate through /api/registry/assets/:symbol/verified-display",
     "no direct provider endpoint is called by the landing adapter",
-    "analysis CTAs route to PublicCryptoScoringPreview with public BTC-only semantics",
+    "mock analysis CTAs are intercepted and cannot promote fixture scores",
+    "productive landing scoring remains fail-closed behind FIN-LF-01 dependency gates",
     "protected module flows retain login/server entitlement gates",
     "focused landing runtime regression passes",
     "required exact-head repository checks pass"
