@@ -31,6 +31,7 @@ const sourceLock = JSON.parse(
 const landing = read('src/features/public/ui/LandingPage.tsx');
 const referenceApp = read('src/features/public/ui/frontend-port/ReferenceApp.tsx');
 const brandLogo = read('src/features/public/ui/frontend-port/components/BrandLogo.tsx');
+const sharedEmblem = read('src/shared/branding/CapitalAiEmblem.tsx');
 const hero = read('src/features/public/ui/frontend-port/components/Hero.tsx');
 const portCss = read('src/features/public/ui/frontend-port/frontend-port.css');
 const port = readTypeScriptTree('src/features/public/ui/frontend-port');
@@ -81,10 +82,17 @@ describe('FRONTEND upstream appearance contract', () => {
     }
   });
 
-  it('accepts the current upstream vector brand implementation instead of enforcing the historical 16.08 JPG', () => {
-    expect(brandLogo).toContain('CapitalAIVectorEmblem');
-    expect(brandLogo).toContain('<svg');
-    expect(brandLogo).not.toContain('capital_ai_brand_emblem_1789997857835.jpg');
+  it('uses only the FRONTEND logo geometry while Finance retains branding colors and naming', () => {
+    expect(brandLogo).toContain('CapitalAiEmblem');
+    expect(brandLogo).toContain('CAPITAL-AI');
+    expect(brandLogo).toContain('text-brand-primary');
+    expect(brandLogo).toContain('font-display');
+    expect(brandLogo).not.toMatch(/#[0-9A-Fa-f]{6}/);
+
+    expect(sharedEmblem).toContain('data-logo-source="SvenKulessa/FRONTEND"');
+    expect(sharedEmblem).toContain('var(--color-brand-primary)');
+    expect(sharedEmblem).toContain('var(--color-brand-accent)');
+    expect(sharedEmblem).not.toMatch(/#[0-9A-Fa-f]{6}/);
   });
 
   it('preserves current upstream visual hierarchy without reviving superseded 16.08 constraints', () => {
