@@ -1,5 +1,5 @@
 name: OSS Quality Assurance
-run-name: PR #${{ github.event.pull_request.number }} - OSS Quality Assurance
+run-name: PR #${{ github.event.pull_request.number }} - OSS Quality Fast Assurance
 
 on:
   pull_request:
@@ -15,32 +15,31 @@ on:
       - 'knip.json'
       - '.jscpd.json'
       - '.github/workflows/oss-quality-assurance.yml'
+      - '.github/workflows/oss-quality-deep-assurance.yml'
 
 permissions: {}
 
 concurrency:
-  group: oss-quality-assurance-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}-${{ github.event.pull_request.base.sha }}
+  group: oss-quality-fast-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}-${{ github.event.pull_request.base.sha }}
   cancel-in-progress: true
 
 jobs:
   quality-assurance:
-    name: OSS quality evidence
+    name: OSS quality PR fast evidence
     if: >-
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     permissions:
       contents: read
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      OSS_QUALITY_PROFILE: PR_FAST
       GITLEAKS_VERSION: '8.30.1'
       GITLEAKS_LINUX_X64_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
       OSV_SCANNER_VERSION: '2.6.0'
-      KNIP_VERSION: '6.31.0'
-      JSCPD_VERSION: '5.0.12'
-      VITEST_VERSION: '4.1.11'
 
     steps:
       - name: Checkout exact PR head without persisted credentials
@@ -57,7 +56,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           git cat-file -e "$BASE_SHA^{commit}"
           test "$SOURCE_SHA" != "$BASE_SHA"
-          mkdir -p artifacts/oss-quality .quality
+          mkdir -p artifacts/oss-quality
 
       - name: Install pinned Gitleaks CLI
         shell: bash
@@ -128,65 +127,20 @@ jobs:
             --output=artifacts/oss-quality/osv-head.json
             --lockfile=package-lock.json
 
-      - name: Setup repository Node runtime
+      - name: Setup bounded Node runtime for evidence normalization
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '24.18.0'
-          cache: npm
 
-      - name: Install locked repository dependencies
-        run: npm ci
-
-      - name: Generate real Vitest V8 coverage
-        id: coverage
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm exec --yes             --package="vitest@${VITEST_VERSION}"             --package="@vitest/coverage-v8@${VITEST_VERSION}"             -- vitest run               --coverage               --coverage.provider=v8               --coverage.reporter=json-summary               --coverage.reportsDirectory=.quality
-          test -s .quality/coverage-summary.json
-
-      - name: Run pinned Knip maintainability analysis
-        id: knip
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-          npx --yes "knip@${KNIP_VERSION}"             --config knip.json             --reporter json             > artifacts/oss-quality/knip.json
-
-      - name: Run pinned jscpd duplicate analysis
-        id: jscpd
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-          npx --yes "jscpd@${JSCPD_VERSION}"             src server scripts             --config .jscpd.json
-          test -s artifacts/oss-quality/jscpd/jscpd-report.json
-
-      - name: Normalize OSS findings into one commit-bound contract
+      - name: Normalize fast OSS findings without repository dependency install
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          npx tsx scripts/quality/normalizeOssQualityFindings.ts
+          npm exec --yes --package=tsx@4.21.0 -- tsx scripts/quality/normalizeOssQualityFindings.ts
           test -s artifacts/oss-quality/unified-findings.json
 
-      - name: Project real coverage through the existing Quality Center
-        if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s .quality/coverage-summary.json
-          npm run repository:quality:snapshot
-          test -s .quality/quality-center-report.json
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const report = JSON.parse(fs.readFileSync('.quality/quality-center-report.json', 'utf8'));
-          if (report.coverage?.codeCoverage?.status !== 'AVAILABLE') {
-            throw new Error('Quality Center did not consume real coverage evidence.');
-          }
-          NODE
-
-      - name: Enforce new secret, dependency and evidence regressions
+      - name: Enforce only PR-introduced blocking regressions
         if: always()
         shell: bash
         run: |
@@ -196,45 +150,44 @@ jobs:
           const path = 'artifacts/oss-quality/unified-findings.json';
           if (!fs.existsSync(path)) throw new Error('Unified OSS quality evidence is missing.');
           const report = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const unavailable = (report.tools ?? []).filter((tool) => tool.status === 'NOT_AVAILABLE');
+          if (report.profile !== 'PR_FAST') throw new Error('Unexpected OSS quality profile: ' + report.profile);
+          const tools = new Map((report.tools ?? []).map((tool) => [tool.tool, tool]));
+          const unavailable = ['gitleaks', 'osv-scanner'].filter(
+            (tool) => !tools.has(tool) || tools.get(tool)?.status === 'NOT_AVAILABLE' || tools.get(tool)?.status === 'NOT_APPLICABLE',
+          );
+          const misplacedDeepTools = ['vitest-coverage', 'knip', 'jscpd'].filter(
+            (tool) => tools.get(tool)?.status !== 'NOT_APPLICABLE',
+          );
           const newSecrets = (report.findings ?? []).filter(
             (finding) => finding.sourceTool === 'gitleaks' && finding.newInPr,
           );
           const newVulnerabilities = (report.findings ?? []).filter(
             (finding) => finding.sourceTool === 'osv-scanner' && finding.newInPr,
           );
-          const coverageMissing = (report.findings ?? []).filter(
-            (finding) => finding.sourceTool === 'vitest-coverage' && finding.ruleId === 'coverage/not-available',
-          );
-          const advisory = (report.findings ?? []).filter(
-            (finding) => finding.sourceTool === 'knip' || finding.sourceTool === 'jscpd',
-          );
           console.log(JSON.stringify({
+            profile: report.profile,
             sourceSha: report.sourceSha,
             baseSha: report.baseSha,
-            unavailableTools: unavailable.map((tool) => tool.tool),
+            unavailableFastTools: unavailable,
             newSecrets: newSecrets.length,
             newDependencyVulnerabilities: newVulnerabilities.length,
-            advisoryMaintainabilityFindings: advisory.length,
-            coverage: report.measurements?.coverage ?? null,
-            duplication: report.measurements?.duplication ?? null,
+            deferredDeepTools: ['vitest-coverage', 'knip', 'jscpd'],
           }, null, 2));
           if (unavailable.length > 0) {
-            throw new Error('Required OSS quality tool evidence unavailable: ' + unavailable.map((tool) => tool.tool).join(', '));
+            throw new Error('Required PR-fast evidence unavailable: ' + unavailable.join(', '));
+          }
+          if (misplacedDeepTools.length > 0) {
+            throw new Error('Deep-only tools unexpectedly executed in PR_FAST: ' + misplacedDeepTools.join(', '));
           }
           if (newSecrets.length > 0) throw new Error(`New Gitleaks findings: ${newSecrets.length}`);
           if (newVulnerabilities.length > 0) throw new Error(`New OSV dependency vulnerabilities: ${newVulnerabilities.length}`);
-          if (coverageMissing.length > 0) throw new Error('Real Vitest coverage evidence is missing or incomplete.');
           NODE
 
-      - name: Upload commit-bound OSS quality evidence
+      - name: Upload compact commit-bound PR quality evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: oss-quality-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-          path: |
-            artifacts/oss-quality/
-            .quality/coverage-summary.json
-            .quality/quality-center-report.json
-          retention-days: 14
+          name: oss-quality-fast-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: artifacts/oss-quality/
+          retention-days: 7
           if-no-files-found: error
