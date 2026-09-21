@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-21 — FRONTEND architecture, canonical root and logo-only branding adapter correlated  
-**Baseline:** `main@523275263f1c8a3e6f8047fae16653a76f6d8372`  
+**Reconciliation:** 2026-09-21 — PR #1206 merged; mobile/tablet source layout accepted; desktop-only runtime adapter correlated  
+**Baseline:** `main@d6be9db867d058d057c39df6e93e49fe3c875145`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -18,9 +18,9 @@ Archive/superseded copies and historical non-terminal markers are evidence only.
 
 **Pinned source for PR #1206:** `SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07`  
 **Scope:** current graphical/presentation architecture + canonical root binding  
-**LF-01 exit state on branch:** `PASS_AFTER_HUMAN_MERGE`
+**LF-01 exit state:** `MERGED / RECONCILED ON MAIN`
 
-PR #1206 adopts the current upstream application composition, presentation types, all current graphical components/modals and visual image assets.
+PR #1206 adopted the current upstream application composition, presentation types, all current graphical components/modals and visual image assets.
 
 The canonical `LandingPage` renders the pinned `ReferenceApp`. `source-lock.json` prevents silent source drift.
 
@@ -38,9 +38,26 @@ The 16.08 layout/mockup target is superseded as historical evidence. Current Fin
 
 ### Continuation after merge
 
-After #1206 merges, productive Finance-owned capabilities are integrated into this graphical shell through owner-correct adapters. Auth/session, provider/data, scoring, entitlement, billing and other productive authority remain with their canonical owners.
+After #1206 merged, the owner clarified the device contract: the synchronized mobile/tablet view is accepted unchanged; only desktop requires a website adaptation.
 
-The hourly upstream sync maintains future source visibility through review PRs only.
+## FE-LF-02-DESKTOP-RESPONSIVE — Desktop website adapter
+
+**Canonical identity:** `FE-LF-02-DESKTOP-RESPONSIVE`  
+**Resolved Owner:** `CAPITAL-AI-FE`  
+**Scope:** Frontend presentation only; no productive PVC ownership  
+**Desktop breakpoint:** `>=1024px`  
+**Status:** `IMPLEMENTED_PENDING_EXACT_HEAD_EVIDENCE`
+
+The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance adapts only desktop presentation through `frontend-port.css`:
+
+- sub-1024px mobile/tablet layout remains upstream-identical from the Finance adapter perspective;
+- desktop removes the source preview toolbar, simulated phone frame/status chrome and iOS home indicator;
+- desktop uses a bounded website canvas, desktop hero hierarchy and responsive card grids;
+- no User-Agent/device sniffing is introduced;
+- every upstream sync requires the desktop adapter and validates the current `src/App.tsx` preview-shell markers;
+- marker drift fails closed with a desktop-adapter correlation error so a future sync cannot silently restore the phone preview on desktop.
+
+The hourly upstream sync therefore keeps future source visibility through review PRs while requiring desktop re-correlation before changed preview-shell architecture is accepted.
 
 ## Preserved frontend invariants
 
