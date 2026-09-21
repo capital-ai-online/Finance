@@ -11,7 +11,7 @@
   ],
   "branchName": "governance/sh-v3-02-sequential-governance-fix-lane-20260921",
   "baseBranch": "main",
-  "baseSha": "b5f0f637513959414a524657e96b05dbbddc5c18",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
   "workItem": "Serialize PR Governance/Test Fix execution and require CURRENT_MAIN correlation before Update Branch, every PR test fix, and ordered next-PR continuation.",
   "approvedScope": "Reuse the existing canonical branch-sync and autofix writers. Before any PR test/governance fix, prove CURRENT_MAIN ancestry or dispatch exact Update Branch and defer mutation. After each fix commit, re-read CURRENT_MAIN and either run exact-head CI or re-sync first. Post-merge/post-deploy baseline refresh advances at most one FIFO eligible PR. Manual unscoped dispatch advances exactly one FIFO PR.",
   "claimedPaths": [
@@ -43,6 +43,6 @@
   "authority": "/AGENTS.md@CURRENT_MAIN",
   "executionSurface": "ChatGPT GitHub Connector",
   "startedAt": "2026-09-21T14:30:00+02:00",
-  "recorrelatedAt": "2026-09-21T14:34:00+02:00",
+  "recorrelatedAt": "2026-09-21T14:40:00+02:00",
   "initialBaseSha": "60f703365cb3bceb51fdb32325d17457ce9c32ec"
 }
