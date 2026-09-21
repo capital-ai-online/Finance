@@ -85,3 +85,10 @@ The stable work-package identity `GOV-PR-LABEL-01` is retained and evolved rathe
 - the former dedicated PR label-classification workflow has no automatic trigger and its only job is statically disabled;
 - ordinary regression tests cover fail-closed mapping behavior;
 - final merge remains Human/CODEOWNER gated because this slice changes Governance/control-plane behavior.
+
+
+## Draft-PR Workflow Recovery — Run 35651773575
+
+Der erste manuelle Draft-PR-Run scheiterte korrekt vor jeder Mutation in Schritt `Angeforderten Agenten-Branch validieren`, weil `governance/*` kein von `CURRENT_MAIN` zugelassener Agenten-Branch-Namespace ist. Zulässig sind ausschließlich `agent/*`, `claude/*`, `grok/*` und `ai/*`.
+
+Die vollständige Remediation wurde verlustfrei auf `agent/governance-project-label-provider-convergence-20260921` kopiert. Dieser Branch erfüllt den bestehenden Namespace-Vertrag; kein Workflow- oder Trust-Root-Bypass wird eingeführt.
