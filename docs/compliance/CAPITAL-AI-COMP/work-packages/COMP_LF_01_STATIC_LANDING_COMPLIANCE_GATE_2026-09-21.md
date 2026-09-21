@@ -3,8 +3,8 @@
 **Canonical identity:** `COMP-LF-01-STATIC-LANDING-COMPLIANCE-GATE-20260921`  
 **Project:** `CAPITAL-AI-COMP`  
 **Canonical project folder:** `docs/projects/compliance/`  
-**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`  
-**State:** `ACTIVE / PRE_LF01 / EVIDENCE_GATE`  
+**Baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`  
+**State:** `ACTIVE / LANDING_BASELINE_PRESENT / EVIDENCE_GATE`  
 **Authority:** `/AGENTS.md@CURRENT_MAIN`  
 **Source direction:** Human Owner landing-first direction from 2026-09-21; non-authorizing projection only.
 
@@ -26,27 +26,19 @@ This package is composed through the existing Compliance workstreams `COMP-01..0
 
 ### CURRENT_MAIN
 
-At `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`:
+At `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e` the canonical root landing already exists.
 
-- authenticated `/` still redirects to `/dashboard`;
-- the root landing still receives `LandingRealtimeAiNewsfeed` and `PublicAnalysisWorkbench`;
-- the current landing contains legal navigation to `/datenschutz/`, `/agb/` and `/impressum/`;
-- the repository consent bootstrap defaults optional analytics/ad storage to `denied` and only loads GA4 after a valid analytics opt-in;
-- the current privacy notice contract identifies version `2026-09-15`.
+- PR #1195 is merged and established the static/root landing semantics.
+- PR #1206 is merged and established the pinned FRONTEND presentation.
+- The former "landing page must first be created" blocker is therefore superseded and must not be used as an execution or merge blocker.
+- PR #1209 remains the owner-correct Frontend writer for the outstanding desktop-only responsive correction.
+- Independent SEC/QM and truthful live-vs-preview evidence remain separate acceptance inputs.
 
-Therefore `LF-00` and `LF-01` are not evidenced complete on CURRENT_MAIN.
+Landing existence is PASS on CURRENT_MAIN; final cross-owner LF-01 acceptance remains evidence-gated only by the remaining concrete checks.
 
-### Open Frontend writer
+### Frontend continuation
 
-PR #1195 is the active Frontend landing writer. Its observed change set moves the routing direction toward the owner target, but also includes runtime/productive couplings such as:
-
-- `LandingPricingPanel` fetching `/api/entitlements/plans`;
-- session/profile/subscription projection on the landing surface;
-- Enterprise Scorer entitlement-dependent runtime behavior;
-- checkout return routing;
-- retained productive news/scoring surfaces.
-
-PR #1195 is currently documented as `BLOCKED`; it therefore cannot be used as `LF-01_STATIC_VISUAL_LANDING_PASS` evidence.
+PR #1195 and PR #1206 are terminal merged evidence for landing existence and presentation establishment. PR #1209 is the remaining Frontend stabilization writer for desktop layout only. COMP does not re-open the already satisfied landing-creation gate.
 
 ## Compliance scope before LF-01 PASS
 
@@ -110,7 +102,7 @@ No state is inferred from design completion alone.
 
 **Target:** `CAPITAL-AI-FE`  
 **Required return:** exact-head evidence that LF-01 root rendering is static/presentational and no productive scoring/news/pricing/subscription request is required for first render.  
-**Current dependency:** PR #1195 must be re-correlated/re-scoped or superseded owner-correctly; COMP does not modify its implementation.
+**Current dependency:** Landing creation is complete via merged #1195/#1206. FE return is limited to remaining #1209 desktop stabilization and exact-head presentation evidence; COMP does not modify FE implementation.
 
 ### OPS handover
 
@@ -132,7 +124,7 @@ No state is inferred from design completion alone.
 
 ### Later FINTECH / pricing / data handovers
 
-No productive scoring, pricing, entitlement, news or provider integration is assessed as ready under this package. Those are phase-dependent returns after LF-01 and remain with their canonical owners.
+Landing existence does not authorize productive scoring, pricing, entitlement, news or provider integration. Those remain phase-dependent returns with their canonical owners and require their own evidence/gates.
 
 ## Exit evidence
 
