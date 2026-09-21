@@ -7,6 +7,20 @@ const read = (relativePath: string) =>
 
 const routes = read('src/app/routing/AppRoutes.tsx');
 const legalPages = read('src/features/public/ui/LegalAndFaqPages.tsx');
+const legalDesignSource = read(
+  'docs/frontend/upstream-source/SvenKulessa-FRONTEND/src/components/LegalAndFaqPages.tsx.source',
+);
+
+function classTokens(source: string): Set<string> {
+  const tokens = new Set<string>();
+  for (const match of source.matchAll(/className=(?:["']([^"']*)["']|\{`([\s\S]*?)`\})/g)) {
+    const raw = (match[1] ?? match[2] ?? '').replace(/\$\{[\s\S]*?\}/g, ' ');
+    for (const token of raw.split(/\s+/).filter(Boolean)) {
+      if (!/^\d+$/.test(token)) tokens.add(token);
+    }
+  }
+  return tokens;
+}
 const login = read('src/features/public/ui/LoginPage.tsx');
 const landing = read('src/features/public/ui/LandingPage.tsx');
 const landingCss = read('src/features/public/ui/frontend-port/frontend-port.css');
@@ -81,6 +95,17 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(legalPages).toContain('bg-emerald-500/20');
     expect(legalPages).toContain('bg-pink-500/20');
     expect(legalPages).toContain('bg-purple-500/20');
+  });
+
+  it('prevents visible legal styling from drifting beyond the canonical FRONTEND source', () => {
+    const sourceTokens = classTokens(legalDesignSource);
+    const runtimeTokens = classTokens(legalPages);
+    const accessibilityOnly = new Set(['sr-only']);
+    const foreignVisibleTokens = [...runtimeTokens].filter(
+      (token) => !sourceTokens.has(token) && !accessibilityOnly.has(token),
+    );
+
+    expect(foreignVisibleTokens).toEqual([]);
   });
 
   it('adopts robust canonical-path normalization without introducing a second routing authority', () => {
