@@ -22,8 +22,9 @@
     ".ai/work-claims/CAPITAL-AI-OPS-LF02-AUTH-PROFILE-CORRELATION-20260922.json",
     "scripts/operations/authLifecycleCorrelation.ts",
     "tests/unit/authLifecycleCorrelation.test.ts",
-    "docs/projects/operations/work-packages/OPS_AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md",
-    "docs/projects/operations/evidence/AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md"
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/work-packages/OPS_LF02_AUTH_PROFILE_PROVIDER_CORRELATION_2026-09-22.md",
+    "docs/projects/operations/evidence/AUTH_PROFILE_PROVIDER_CORRELATION_2026-09-22.md"
   ],
   "externalHandoffs": [
     "GitHub issue #1237 -> CAPITAL-AI-FE",
@@ -32,5 +33,9 @@
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge.",
   "overlapNotes": [
     "PR #1225 exclusively changes docs/projects/operations/ROADMAP.md; this LF-02 claim intentionally excludes that path."
+  ],
+  "historicalEvidencePreserved": [
+    "docs/projects/operations/work-packages/OPS_AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md",
+    "docs/projects/operations/evidence/AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md"
   ]
 }
