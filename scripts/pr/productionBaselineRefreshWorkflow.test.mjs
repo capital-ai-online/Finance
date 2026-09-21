@@ -51,7 +51,7 @@ test('Governance repair consumes completed events for initial runs and reruns wi
   assert.doesNotMatch(workflow, /getWorkflowRun|Date\.now\(\) \+ 240_000|setTimeout/);
 });
 
-test('baseline refresh concurrency isolates Governance repair from CI completion events', () => {
+test('baseline refresh concurrency isolates source domains without cancelling an in-flight writer', () => {
   const concurrency = workflow.split('concurrency:\n')[1].split('\n\njobs:')[0];
   assert.ok(
     concurrency.includes('pr-production-baseline-${{ github.event.workflow_run.path }}-'),
@@ -73,10 +73,11 @@ test('baseline refresh concurrency isolates Governance repair from CI completion
     concurrency.includes('github.event.action'),
     'in_progress fallback and completed notification must use distinct concurrency lanes',
   );
-  assert.match(concurrency, /cancel-in-progress: true/);
+  assert.match(concurrency, /cancel-in-progress: false/);
+  assert.doesNotMatch(concurrency, /cancel-in-progress: true/);
   assert.ok(
     workflow.includes('CI completion events intentionally use different groups'),
-    'the race-control intent must remain reviewable next to the concurrency key',
+    'the source-domain isolation intent must remain reviewable next to the concurrency key',
   );
 });
 
