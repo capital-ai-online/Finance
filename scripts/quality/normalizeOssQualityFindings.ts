@@ -5,7 +5,10 @@ import {
   UNIFIED_OSS_QUALITY_BUNDLE_SCHEMA,
   UNIFIED_OSS_QUALITY_FINDING_SCHEMA,
   buildUnifiedQualityFindingId,
+  isOssQualityProfile,
+  type OssQualityProfile,
   type OssQualityToolId,
+  type UnifiedQualityCoverageMeasurement,
   type UnifiedQualityDuplicationMeasurement,
   type UnifiedQualityEvidenceBundle,
   type UnifiedQualityFinding,
@@ -18,9 +21,22 @@ const artifactRoot = path.join(root, 'artifacts', 'oss-quality');
 const sourceSha = String(process.env.SOURCE_SHA || '').trim();
 const baseSha = String(process.env.BASE_SHA || '').trim();
 const repository = String(process.env.GITHUB_REPOSITORY || 'capital-ai-online/Finance').trim();
+const requestedProfile = String(process.env.OSS_QUALITY_PROFILE || 'FULL').trim().toUpperCase();
 
 if (!/^[0-9a-f]{40}$/i.test(sourceSha)) throw new Error('SOURCE_SHA must be an exact 40-character commit SHA.');
 if (!/^[0-9a-f]{40}$/i.test(baseSha)) throw new Error('BASE_SHA must be an exact 40-character commit SHA.');
+if (!isOssQualityProfile(requestedProfile)) {
+  throw new Error(`OSS_QUALITY_PROFILE must be one of PR_FAST, DEEP_BASELINE or FULL; received ${requestedProfile || '(empty)'}.`);
+}
+
+const profile: OssQualityProfile = requestedProfile;
+const applicable = Object.freeze({
+  gitleaks: profile !== 'DEEP_BASELINE',
+  osv: profile !== 'DEEP_BASELINE',
+  coverage: profile !== 'PR_FAST',
+  knip: profile !== 'PR_FAST',
+  jscpd: profile !== 'PR_FAST',
+});
 
 fs.mkdirSync(artifactRoot, { recursive: true });
 
@@ -90,20 +106,25 @@ function toolEvidence(
   version: string,
   artifactPath: string,
   count: number,
+  isApplicable: boolean,
 ): UnifiedQualityToolEvidence {
+  if (!isApplicable) {
+    return Object.freeze({ tool, version, status: 'NOT_APPLICABLE', artifactPath: null });
+  }
+  const evidence = readJson(artifactPath);
   return Object.freeze({
     tool,
     version,
-    status: readJson(artifactPath) === null ? 'NOT_AVAILABLE' : count > 0 ? 'FINDINGS' : 'PASS',
-    artifactPath: readJson(artifactPath) === null ? null : artifactPath,
+    status: evidence === null ? 'NOT_AVAILABLE' : count > 0 ? 'FINDINGS' : 'PASS',
+    artifactPath: evidence === null ? null : artifactPath,
   });
 }
 
 const findings: UnifiedQualityFinding[] = [];
 
 const gitleaksPath = 'artifacts/oss-quality/gitleaks.json';
-const gitleaks = readJson(gitleaksPath);
-const gitleaksRows = Array.isArray(gitleaks) ? gitleaks : [];
+const gitleaks = applicable.gitleaks ? readJson(gitleaksPath) : null;
+const gitleaksRows = applicable.gitleaks && Array.isArray(gitleaks) ? gitleaks : [];
 for (const raw of gitleaksRows) {
   if (!raw || typeof raw !== 'object') continue;
   const row = raw as Record<string, unknown>;
@@ -120,13 +141,11 @@ for (const raw of gitleaksRows) {
     title: typeof row.Description === 'string' && row.Description ? row.Description : 'Potential secret detected',
     path: file,
     line,
-    newInPr: true,
+    newInPr: profile === 'PR_FAST',
     artifactPath: gitleaksPath,
     toolVersion: '8.30.1',
     configSha256: null,
-    metadata: {
-      fingerprint: identity,
-    },
+    metadata: { fingerprint: identity },
     identity,
   }));
 }
@@ -184,8 +203,8 @@ function collectOsv(input: unknown): OsvPackageFinding[] {
 
 const osvBasePath = 'artifacts/oss-quality/osv-base.json';
 const osvHeadPath = 'artifacts/oss-quality/osv-head.json';
-const osvBase = collectOsv(readJson(osvBasePath));
-const osvHead = collectOsv(readJson(osvHeadPath));
+const osvBase = applicable.osv ? collectOsv(readJson(osvBasePath)) : [];
+const osvHead = applicable.osv ? collectOsv(readJson(osvHeadPath)) : [];
 const osvBaseKeys = new Set(osvBase.map((item) => item.key));
 for (const item of osvHead) {
   findings.push(finding({
@@ -197,7 +216,7 @@ for (const item of osvHead) {
     title: item.summary,
     path: item.source,
     line: null,
-    newInPr: !osvBaseKeys.has(item.key),
+    newInPr: profile === 'PR_FAST' && !osvBaseKeys.has(item.key),
     artifactPath: osvHeadPath,
     toolVersion: '2.6.0',
     configSha256: null,
@@ -211,8 +230,10 @@ for (const item of osvHead) {
 }
 
 const knipPath = 'artifacts/oss-quality/knip.json';
-const knip = readJson(knipPath);
-const knipIssues = knip && typeof knip === 'object' && Array.isArray((knip as { issues?: unknown }).issues)
+const knip = applicable.knip ? readJson(knipPath) : null;
+const knipIssues = applicable.knip
+  && knip && typeof knip === 'object'
+  && Array.isArray((knip as { issues?: unknown }).issues)
   ? ((knip as { issues: unknown[] }).issues)
   : [];
 const knipCategories = [
@@ -263,8 +284,10 @@ for (const issue of knipIssues) {
 }
 
 const jscpdPath = 'artifacts/oss-quality/jscpd/jscpd-report.json';
-const jscpd = readJson(jscpdPath);
-const duplicates = jscpd && typeof jscpd === 'object' && Array.isArray((jscpd as { duplicates?: unknown }).duplicates)
+const jscpd = applicable.jscpd ? readJson(jscpdPath) : null;
+const duplicates = applicable.jscpd
+  && jscpd && typeof jscpd === 'object'
+  && Array.isArray((jscpd as { duplicates?: unknown }).duplicates)
   ? ((jscpd as { duplicates: unknown[] }).duplicates)
   : [];
 for (const duplicate of duplicates) {
@@ -299,8 +322,10 @@ for (const duplicate of duplicates) {
 }
 
 const coveragePath = '.quality/coverage-summary.json';
-const coverage = readJson(coveragePath);
-const total = coverage && typeof coverage === 'object' && (coverage as { total?: unknown }).total
+const coverage = applicable.coverage ? readJson(coveragePath) : null;
+const total = applicable.coverage
+  && coverage && typeof coverage === 'object'
+  && (coverage as { total?: unknown }).total
   && typeof (coverage as { total?: unknown }).total === 'object'
   ? (coverage as { total: Record<string, unknown> }).total
   : null;
@@ -309,18 +334,25 @@ const readPct = (key: string): number | null => {
   if (!metric || typeof metric !== 'object') return null;
   return finiteNumber((metric as { pct?: unknown }).pct);
 };
-const coverageMeasurement = {
-  status: total ? 'AVAILABLE' as const : 'NOT_AVAILABLE' as const,
-  source: total ? coveragePath : null,
-  statements: readPct('statements'),
-  branches: readPct('branches'),
-  functions: readPct('functions'),
-  lines: readPct('lines'),
-};
+
+const coverageStatus: UnifiedQualityCoverageMeasurement['status'] =
+  !applicable.coverage ? 'NOT_APPLICABLE' : total ? 'AVAILABLE' : 'NOT_AVAILABLE';
+const coverageMeasurement: UnifiedQualityCoverageMeasurement = Object.freeze({
+  status: coverageStatus,
+  source: coverageStatus === 'AVAILABLE' ? coveragePath : null,
+  statements: coverageStatus === 'AVAILABLE' ? readPct('statements') : null,
+  branches: coverageStatus === 'AVAILABLE' ? readPct('branches') : null,
+  functions: coverageStatus === 'AVAILABLE' ? readPct('functions') : null,
+  lines: coverageStatus === 'AVAILABLE' ? readPct('lines') : null,
+});
+
 if (
-  coverageMeasurement.status === 'NOT_AVAILABLE'
-  || [coverageMeasurement.statements, coverageMeasurement.branches, coverageMeasurement.functions, coverageMeasurement.lines]
-    .some((value) => value === null)
+  applicable.coverage
+  && (
+    coverageMeasurement.status === 'NOT_AVAILABLE'
+    || [coverageMeasurement.statements, coverageMeasurement.branches, coverageMeasurement.functions, coverageMeasurement.lines]
+      .some((value) => value === null)
+  )
 ) {
   findings.push(finding({
     sourceTool: 'vitest-coverage',
@@ -331,47 +363,62 @@ if (
     title: 'Vitest V8 coverage evidence is not complete',
     path: coveragePath,
     line: null,
-    newInPr: true,
+    newInPr: false,
     artifactPath: coveragePath,
     toolVersion: '4.1.11',
     configSha256: null,
-    metadata: {},
+    metadata: { profile },
     identity: 'coverage-summary',
   }));
 }
 
-const stats = jscpd && typeof jscpd === 'object'
+const stats = applicable.jscpd
+  && jscpd && typeof jscpd === 'object'
   && (jscpd as { statistics?: { total?: unknown } }).statistics?.total
   && typeof (jscpd as { statistics?: { total?: unknown } }).statistics?.total === 'object'
   ? (jscpd as { statistics: { total: Record<string, unknown> } }).statistics.total
   : null;
+
+const duplicationStatus: UnifiedQualityDuplicationMeasurement['status'] =
+  !applicable.jscpd ? 'NOT_APPLICABLE' : stats ? 'AVAILABLE' : 'NOT_AVAILABLE';
 const duplicationMeasurement: UnifiedQualityDuplicationMeasurement = Object.freeze({
-  status: stats ? 'AVAILABLE' : 'NOT_AVAILABLE',
-  source: stats ? jscpdPath : null,
-  percentage: stats ? finiteNumber(stats.percentage) : null,
-  clones: stats ? finiteNumber(stats.clones) : null,
-  duplicatedLines: stats ? finiteNumber(stats.duplicatedLines) : null,
-  totalLines: stats ? finiteNumber(stats.lines) : null,
+  status: duplicationStatus,
+  source: duplicationStatus === 'AVAILABLE' ? jscpdPath : null,
+  percentage: duplicationStatus === 'AVAILABLE' ? finiteNumber(stats?.percentage) : null,
+  clones: duplicationStatus === 'AVAILABLE' ? finiteNumber(stats?.clones) : null,
+  duplicatedLines: duplicationStatus === 'AVAILABLE' ? finiteNumber(stats?.duplicatedLines) : null,
+  totalLines: duplicationStatus === 'AVAILABLE' ? finiteNumber(stats?.lines) : null,
 });
 
+const osvBaseEvidence = applicable.osv ? readJson(osvBasePath) : null;
+const osvHeadEvidence = applicable.osv ? readJson(osvHeadPath) : null;
 const tools: UnifiedQualityToolEvidence[] = [
-  toolEvidence('gitleaks', '8.30.1', gitleaksPath, gitleaksRows.length),
-  {
-    tool: 'osv-scanner',
-    version: '2.6.0',
-    status: readJson(osvBasePath) === null || readJson(osvHeadPath) === null
-      ? 'NOT_AVAILABLE'
-      : osvHead.length > 0 ? 'FINDINGS' : 'PASS',
-    artifactPath: readJson(osvBasePath) === null || readJson(osvHeadPath) === null ? null : osvHeadPath,
-  },
+  toolEvidence('gitleaks', '8.30.1', gitleaksPath, gitleaksRows.length, applicable.gitleaks),
+  applicable.osv
+    ? {
+        tool: 'osv-scanner',
+        version: '2.6.0',
+        status: osvBaseEvidence === null || osvHeadEvidence === null
+          ? 'NOT_AVAILABLE'
+          : osvHead.length > 0 ? 'FINDINGS' : 'PASS',
+        artifactPath: osvBaseEvidence === null || osvHeadEvidence === null ? null : osvHeadPath,
+      }
+    : {
+        tool: 'osv-scanner',
+        version: '2.6.0',
+        status: 'NOT_APPLICABLE',
+        artifactPath: null,
+      },
   {
     tool: 'vitest-coverage',
     version: '4.1.11',
-    status: coverageMeasurement.status === 'AVAILABLE' ? 'PASS' : 'NOT_AVAILABLE',
+    status: coverageMeasurement.status === 'AVAILABLE'
+      ? 'PASS'
+      : coverageMeasurement.status === 'NOT_APPLICABLE' ? 'NOT_APPLICABLE' : 'NOT_AVAILABLE',
     artifactPath: coverageMeasurement.status === 'AVAILABLE' ? coveragePath : null,
   },
-  toolEvidence('knip', '6.31.0', knipPath, knipFindingCount),
-  toolEvidence('jscpd', '5.0.12', jscpdPath, duplicates.length),
+  toolEvidence('knip', '6.31.0', knipPath, knipFindingCount, applicable.knip),
+  toolEvidence('jscpd', '5.0.12', jscpdPath, duplicates.length, applicable.jscpd),
 ];
 
 const bundle: UnifiedQualityEvidenceBundle = Object.freeze({
@@ -380,12 +427,13 @@ const bundle: UnifiedQualityEvidenceBundle = Object.freeze({
   repository,
   sourceSha: sourceSha.toLowerCase(),
   baseSha: baseSha.toLowerCase(),
+  profile,
   nonAuthorizingStatement:
-    'OSS Quality findings are commit-bound evidence only. Existing Governance, Security, Quality, Human/CODEOWNER, release and production controls retain their authority.',
+    'OSS Quality findings are commit-bound evidence only. NOT_APPLICABLE means the tool is intentionally outside the selected execution profile; it is never PASS. Existing Governance, Security, Quality, Human/CODEOWNER, release and production controls retain their authority.',
   tools: Object.freeze(tools.map((tool) => Object.freeze({ ...tool }))),
   findings: Object.freeze(findings),
   measurements: Object.freeze({
-    coverage: Object.freeze(coverageMeasurement),
+    coverage: coverageMeasurement,
     duplication: duplicationMeasurement,
   }),
 });
@@ -396,5 +444,5 @@ fs.writeFileSync(outputPath, JSON.stringify(bundle, null, 2) + '\n');
 const newSecrets = findings.filter((item) => item.sourceTool === 'gitleaks' && item.newInPr).length;
 const newVulnerabilities = findings.filter((item) => item.sourceTool === 'osv-scanner' && item.newInPr).length;
 process.stdout.write(
-  `[OSS Quality] findings=${findings.length} newSecrets=${newSecrets} newVulnerabilities=${newVulnerabilities} output=${path.relative(root, outputPath)}\n`,
+  `[OSS Quality] profile=${profile} findings=${findings.length} newSecrets=${newSecrets} newVulnerabilities=${newVulnerabilities} output=${path.relative(root, outputPath)}\n`,
 );
