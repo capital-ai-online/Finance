@@ -23,6 +23,87 @@
   animation: capitalAiFrontendPortPulseSlow 6s ease-in-out infinite;
 }
 
+/*
+ * Finance-owned responsive adapter for the pinned FRONTEND presentation.
+ *
+ * Mobile and tablet keep the upstream preview behavior exactly as adopted in
+ * PR #1206. On desktop, the production landing must render as a website rather
+ * than as an iPhone mockup. The upstream React tree remains byte-identical;
+ * only its desktop container presentation is adapted here.
+ */
+@media (min-width: 1024px) {
+  .capital-ai-frontend-port > div {
+    align-items: stretch;
+  }
+
+  .capital-ai-frontend-port > div > .hidden.sm\:flex {
+    display: none !important;
+  }
+
+  .capital-ai-frontend-port > div > main {
+    width: 100%;
+    max-width: 1280px !important;
+    margin: 0 auto !important;
+    border-width: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .capital-ai-frontend-port > div > main > .hidden.sm\:block {
+    display: none !important;
+  }
+
+  /* Bound real website content inside the desktop canvas. */
+  .capital-ai-frontend-port > div > main > header,
+  .capital-ai-frontend-port > div > main > section,
+  .capital-ai-frontend-port > div > main > footer {
+    width: min(calc(100% - 64px), 1180px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type {
+    min-height: clamp(36rem, 72vh, 46rem);
+    padding-top: clamp(4rem, 7vw, 7rem) !important;
+    padding-bottom: 4rem !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type > .relative.z-10 {
+    max-width: 46rem;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type h1 {
+    font-size: clamp(3.25rem, 5vw, 5.25rem) !important;
+    line-height: 0.98 !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type p {
+    max-width: 42rem !important;
+    font-size: 1rem !important;
+  }
+
+  /* Mobile horizontal card rails become real desktop card grids only on desktop. */
+  .capital-ai-frontend-port > div > main .snap-mandatory {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+  }
+
+  .capital-ai-frontend-port > div > main .snap-mandatory > * {
+    width: auto !important;
+    min-width: 0 !important;
+    scroll-snap-align: none !important;
+  }
+
+  /* Source-preview iOS home indicator is not desktop website chrome. */
+  .capital-ai-frontend-port > div > main > footer > :last-child {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .capital-ai-frontend-port .animate-pulse-slow {
     animation: none !important;

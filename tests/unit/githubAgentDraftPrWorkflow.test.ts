@@ -27,9 +27,21 @@ describe('GitHub agent draft PR bot governance', () => {
 
   it('keeps least privilege and never persists checkout credentials', () => {
     const yaml = workflow();
-    expect(yaml).toContain('permissions:\n  contents: read\n  pull-requests: write');
-    expect(yaml.match(/persist-credentials: false/g)?.length).toBe(3);
+    expect(yaml).toContain('permissions: {}');
+    expect(yaml).toContain('converge-project-labels:\n    name: Kanonische Projektlabel-Provider-Metadaten konvergieren\n    permissions:\n      contents: read\n      issues: write');
+    expect(yaml).toContain('preflight-and-open:\n    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung\n    permissions:\n      contents: read\n      pull-requests: write');
+    expect(yaml.match(/persist-credentials: false/g)?.length).toBe(4);
     expect(yaml).not.toContain('contents: write');
+  });
+
+  it('runs provider-label convergence only on direct relevant main pushes and never on reusable handoffs', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("paths:\n      - 'docs/projects/README.md'");
+    expect(yaml).toContain("github.event_name == 'push' &&");
+    expect(yaml).toContain("inputs.head_branch == ''");
+    expect(yaml).toContain('PR_LABEL_CLASSIFICATION_SCOPE=ALL_PROJECTS');
+    expect(yaml).toContain('CANONICAL_PROJECT_LABEL_SET_CLASSIFIED');
+    expect(yaml).toContain('Provider-Readback');
   });
 
   it('removes pre-create Owner approval inputs while retaining Owner-bound dispatch identity', () => {

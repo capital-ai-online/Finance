@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-PR-CREATE-ENVELOPE-GATE-2026-09-14",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok 4.6",
@@ -38,5 +38,9 @@
     "src/platform/Quality/SkillEngine/skillCatalog.ts"
   ],
   "authorityGuard": "No new ADR/ESS/AUTH/CTRL identity is created. The change reuses AUTH-GOV-HUMAN-OWNER-PR-APPROVAL and scripts/pr/approvalEnvelope.mjs. File changes do not transfer PVC ownership. Merge remains Human/CODEOWNER-only.",
-  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated."
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment. PR creation remains exact-snapshot Human/Owner-gated.",
+  "releasedAt": "2026-09-21T20:12:00Z",
+  "releaseReason": "PR #907 merged; terminal evidence only (merge 969533097fe8225945f9195b8626dd19a30c701a). Released during GOV-PROJECT-LABEL-PROVIDER-CONVERGENCE-20260921 stale-writer correlation.",
+  "terminalPullRequest": 907,
+  "terminalMergeSha": "969533097fe8225945f9195b8626dd19a30c701a"
 }

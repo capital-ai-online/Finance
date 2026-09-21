@@ -19,6 +19,13 @@ describe('FRONTEND upstream presentation sync contract', () => {
     expect(config.destination.startsWith('src/')).toBe(false);
     expect(config.runtimePromotion.automatic).toBe(false);
     expect(config.runtimePromotion.financeComponentsBindAfterArchitectureAdoption).toBe(true);
+    expect(config.runtimePromotion.responsiveAdapterRequired).toBe(true);
+    expect(config.runtimePromotion.previewShellDesktopPromotionAllowed).toBe(false);
+    expect(config.runtimePromotion.devicePolicy).toEqual({
+      mobile: 'preserve-current-source-behavior',
+      tablet: 'preserve-current-source-behavior',
+      desktop: 'finance-website-adapter-required',
+    });
   });
 
   it('keeps the upstream demo dataset solely as a visual fixture and excludes productive authorities', () => {
@@ -30,6 +37,28 @@ describe('FRONTEND upstream presentation sync contract', () => {
     }
     expect(syncScript).toContain('VISUAL_FIXTURE_ONLY');
     expect(syncScript).toContain('runtimePromotionEligible: !fixtureOnly');
+  });
+
+  it('requires the desktop-only Finance adapter and re-correlates it on every upstream sync', () => {
+    expect(config.responsiveRuntimeAdapter).toMatchObject({
+      required: true,
+      path: 'src/features/public/ui/frontend-port/frontend-port.css',
+      validationTest: 'tests/unit/frontendDesktopResponsiveAdapter.test.ts',
+      strategy: 'DESKTOP_VIEWPORT_ADAPTER',
+      desktopMinPx: 1024,
+      preserveMobileSourceLayout: true,
+      preserveTabletSourceLayout: true,
+      upstreamPreviewChromeRuntimeOnDesktop: false,
+      userAgentBranching: false,
+    });
+    expect(config.responsiveRuntimeAdapter.sourceLayoutMarkers).toEqual(
+      expect.arrayContaining(['viewMode', 'sm:max-w-[412px]', 'max-w-md', 'hidden sm:flex']),
+    );
+    expect(syncScript).toContain('desktop responsive runtime adapter must be required');
+    expect(syncScript).toContain('mobile source layout must remain unchanged');
+    expect(syncScript).toContain('tablet source layout must remain unchanged');
+    expect(syncScript).toContain('desktop adapter correlation required');
+    expect(syncScript).toContain('responsiveRuntimeAdapter: config.responsiveRuntimeAdapter');
   });
 
   it('runs hourly from trusted main with least privilege and immutable actions', () => {

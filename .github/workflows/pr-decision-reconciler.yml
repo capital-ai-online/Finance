@@ -172,6 +172,105 @@ jobs:
         with:
           node-version: '24.18.0'
 
+      - name: PR-v1.8-Struktur und exakten Bootstrap-Snapshot binden
+        id: bootstrap_snapshot
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+        with:
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            const repository = `${context.repo.owner}/${context.repo.repo}`;
+            const normalizeSha = (value) => String(value || '').trim().toLowerCase();
+            const [{ data: pr }, { data: main }] = await Promise.all([
+              github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              }),
+              github.rest.repos.getBranch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: 'main',
+              }),
+            ]);
+            if (
+              pr.state !== 'open' ||
+              pr.base?.ref !== 'main' ||
+              pr.head?.repo?.full_name !== repository
+            ) {
+              core.setFailed('PR liegt außerhalb der sicheren Same-Repo/main-Bootstrap-Grenze.');
+              return;
+            }
+            const body = String(pr.body || '');
+            const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\\s*1\\.8\\.0/.test(body);
+            const headings = body.match(/^## .+$/gm) || [];
+            const expected = [
+              '## 1. 🧭 Entscheidung',
+              '## 2. ✅ Evidence',
+              '## 3. 🔍 Technical Evidence',
+            ];
+            const canonical =
+              headings.length === expected.length &&
+              expected.every((heading, index) => headings[index] === heading);
+            core.setOutput('bootstrap_required', currentV18 && !canonical ? 'true' : 'false');
+            core.setOutput('head_sha', normalizeSha(pr.head.sha));
+            core.setOutput('head_ref', String(pr.head.ref || ''));
+            core.setOutput('main_sha', normalizeSha(main.commit.sha));
+
+      - name: Trusted Policy exakt an Live-CURRENT_MAIN binden
+        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
+        working-directory: policy
+        env:
+          EXPECTED_MAIN_SHA: ${{ steps.bootstrap_snapshot.outputs.main_sha }}
+        run: |
+          set -euo pipefail
+          observed="$(git rev-parse HEAD)"
+          if [ "$observed" != "$EXPECTED_MAIN_SHA" ]; then
+            echo "Trusted policy drift: checkout=$observed live=$EXPECTED_MAIN_SHA" >&2
+            exit 1
+          fi
+
+      - name: Kandidaten-Head nur als Datenquelle auschecken
+        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ steps.bootstrap_snapshot.outputs.head_sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Trusted CURRENT_MAIN in Kandidaten-Repository importieren
+        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
+        working-directory: candidate
+        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
+
+      - name: Bootstrap-Produktionsbaseline aus Trusted Main erzeugen
+        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/decision-reconciler-bootstrap-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+        run: node ../policy/scripts/pr/productionPreflight.mjs
+
+      - name: Kanonischen v1.8-Body ausschließlich mit Trusted-Main-Renderer erzeugen
+        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
+        working-directory: candidate
+        env:
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_HEAD_BRANCH: ${{ steps.bootstrap_snapshot.outputs.head_ref }}
+          PR_BASELINE_OUTPUT: artifacts/pr/decision-reconciler-bootstrap-baseline.json
+          PR_TEMPLATE_PATH: ../policy/.github/pull_request_template.md
+          PR_PROJECT_MAPPING_PATH: ../policy/docs/projects/README.md
+          PR_BODY_OUTPUT: artifacts/pr/decision-reconciler-bootstrap-body.md
+        run: node ../policy/scripts/pr/renderPullRequestBody.mjs
+
       - name: Evidence → Decision gegen Live-State reconciliieren
         id: reconcile
         working-directory: policy
@@ -179,6 +278,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ matrix.pr_number }}
+          PR_CANONICAL_BOOTSTRAP_BODY: ../candidate/artifacts/pr/decision-reconciler-bootstrap-body.md
         run: node scripts/pr/reconcilePrDecisionEvidence.mjs
 
       - name: Main-Drift an kanonischen Branch-Sync delegieren

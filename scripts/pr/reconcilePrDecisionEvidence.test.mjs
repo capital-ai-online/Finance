@@ -8,6 +8,7 @@ import {
   findExactOverlap,
   gateForRequirements,
   reconcileDecisionBody,
+  reconcileDecisionBodyWithBootstrap,
   securityRequirements,
 } from './reconcilePrDecisionEvidence.mjs';
 
@@ -180,6 +181,56 @@ test('reconciler normalizes v1.8 decision surface and is idempotent', () => {
   assert.equal(second.reason, 'already-current');
 });
 
+test('reconciler bootstraps malformed current v1.8 structure through a canonical renderer body', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PENDING',
+    security: 'PASS',
+    baseline: 'PASS',
+  };
+  const malformed = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Test',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '',
+    '## 1. Entscheidung',
+    'free-form body',
+  ].join('\n');
+
+  const result = reconcileDecisionBodyWithBootstrap(malformed, canonicalBody(), gates);
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.bootstrapped, true);
+  assert.equal(result.reason, 'canonical-v1.8-renderer-bootstrap-reconciled');
+  assert.deepEqual(result.body.match(/^## .+$/gm), [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ]);
+  assert.match(result.body, /^\| Required Checks \| 🟡 PENDING \| .* \| .* \|$/m);
+});
+
+test('reconciler rejects unsafe v1.8 bootstrap bodies and remains fail closed', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PASS',
+    security: 'PASS',
+    baseline: 'PASS',
+  };
+  const malformed = canonicalBody().replace('## 1. 🧭 Entscheidung', '## 1. Entscheidung');
+  const unsafeBootstrap = canonicalBody().replace('## 2. ✅ Evidence', '## 2. Evidence');
+  const result = reconcileDecisionBodyWithBootstrap(malformed, unsafeBootstrap, gates);
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'bootstrap-headings-noncanonical');
+});
+
 test('reconciler repairs missing v1.8 Decision/Evidence projections without touching technical evidence', () => {
   const gates = {
     main: 'PASS',
@@ -337,6 +388,14 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /sync-agent-pr-branches\.yml/);
   assert.match(workflow, /createWorkflowDispatch/);
   assert.match(workflow, /auto_merge_state/);
+  assert.match(workflow, /PR-v1\.8-Struktur und exakten Bootstrap-Snapshot binden/);
+  assert.match(workflow, /bootstrap_required/);
+  assert.match(workflow, /ref: \${\{ steps\.bootstrap_snapshot\.outputs\.head_sha \}\}/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/productionPreflight\.mjs/);
+  assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/renderPullRequestBody\.mjs/);
+  assert.match(workflow, /PR_CANONICAL_BOOTSTRAP_BODY: \.\.\/candidate\/artifacts\/pr\/decision-reconciler-bootstrap-body\.md/);
+
   assert.doesNotMatch(workflow, /pull_request_target:/);
 });
 

@@ -1,8 +1,16 @@
 name: Agenten-Draft-PR öffnen
 run-name: >-
-  Agenten-Draft-PR für ${{ inputs.head_branch }} korrelieren und öffnen
+  ${{ inputs.head_branch != ''
+      && format('Agenten-Draft-PR für {0} korrelieren und öffnen', inputs.head_branch)
+      || format('Kanonische Projektlabels auf main@{0} konvergieren', github.sha) }}
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/projects/README.md'
+      - 'scripts/pr/prLabelClassification.mjs'
+      - '.github/workflows/open-agent-draft-pr.yml'
   workflow_call:
     inputs:
       head_branch:
@@ -21,22 +29,99 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: open-agent-draft-pr-${{ inputs.head_branch }}
   cancel-in-progress: false
 
 jobs:
+  converge-project-labels:
+    name: Kanonische Projektlabel-Provider-Metadaten konvergieren
+    permissions:
+      contents: read
+      issues: write
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.head_branch == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Exakten CURRENT_MAIN-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ github.sha }}
+          path: label-policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+
+      - name: Kanonischen Projektlabel-Katalog konvergieren und Provider-Readback prüfen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          live_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          policy_main_sha="$(git -C label-policy rev-parse HEAD)"
+          event_sha="${GITHUB_SHA,,}"
+          if [ "$live_main_sha" != "$event_sha" ] || [ "$policy_main_sha" != "$event_sha" ]; then
+            echo "Projektlabel-Konvergenz ist stale: event=$event_sha checkout=$policy_main_sha live=$live_main_sha. Keine Provider-Mutation." >&2
+            exit 1
+          fi
+
+          catalog="$RUNNER_TEMP/canonical-project-labels.json"
+          PR_LABEL_CLASSIFICATION_SCOPE=ALL_PROJECTS \
+          PR_PROJECT_MAPPING_PATH=label-policy/docs/projects/README.md \
+            node label-policy/scripts/pr/prLabelClassification.mjs > "$catalog"
+
+          jq -e '.state == "CANONICAL_PROJECT_LABEL_SET_CLASSIFIED" and (.labels | length > 0)' "$catalog" >/dev/null
+
+          while IFS= read -r row; do
+            name="$(jq -r '.name' <<<"$row")"
+            color="$(jq -r '.color' <<<"$row")"
+            description="$(jq -r '.description' <<<"$row")"
+            project_id="$(jq -r '.projectId' <<<"$row")"
+
+            gh label create "$name" \
+              --repo "$GITHUB_REPOSITORY" \
+              --color "$color" \
+              --description "$description" \
+              --force
+
+            encoded="$(jq -rn --arg value "$name" '$value | @uri')"
+            observed="$(gh api "repos/${GITHUB_REPOSITORY}/labels/$encoded")"
+            observed_name="$(jq -r '.name' <<<"$observed")"
+            observed_color="$(jq -r '.color' <<<"$observed")"
+            observed_description="$(jq -r '.description // ""' <<<"$observed")"
+
+            if [ "$observed_name" != "$name" ] || \
+               [ "${observed_color^^}" != "${color^^}" ] || \
+               [ "$observed_description" != "$description" ]; then
+              echo "Provider-Readback FAIL für $project_id: expected=$name/$color/$description observed=$observed_name/$observed_color/$observed_description" >&2
+              exit 1
+            fi
+            echo "Provider-Readback PASS für $project_id: $name #${observed_color^^}"
+          done < <(jq -c '.labels[]' "$catalog")
+
   preflight-and-open:
     name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung
+    permissions:
+      contents: read
+      pull-requests: write
     if: >-
-      (inputs.trusted_handoff == 'documentary-autosync' &&
+      (inputs.head_branch != '' &&
+       inputs.trusted_handoff == 'documentary-autosync' &&
        github.event_name == 'push' &&
        github.ref == 'refs/heads/main') ||
-      (inputs.trusted_handoff == '' &&
+      (inputs.head_branch != '' &&
+       inputs.trusted_handoff == '' &&
        github.triggering_actor == 'SvenKulessa' &&
        github.actor == 'SvenKulessa')
     runs-on: ubuntu-latest

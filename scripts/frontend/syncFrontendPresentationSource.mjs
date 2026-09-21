@@ -17,6 +17,27 @@ function readConfig() {
   if (!config?.source?.repository || !config?.destination) fail('source/destination missing');
   if (String(config.destination).startsWith('src/')) fail('destination must remain outside runtime src/');
   if (config?.runtimePromotion?.automatic !== false) fail('automatic runtime promotion must stay disabled');
+
+  const responsive = config?.responsiveRuntimeAdapter;
+  if (responsive?.required !== true) fail('desktop responsive runtime adapter must be required');
+  if (responsive?.strategy !== 'DESKTOP_VIEWPORT_ADAPTER') fail('responsive runtime adapter must be desktop-only');
+  if (responsive?.preserveMobileSourceLayout !== true) fail('mobile source layout must remain unchanged');
+  if (responsive?.preserveTabletSourceLayout !== true) fail('tablet source layout must remain unchanged');
+  if (responsive?.upstreamPreviewChromeRuntimeOnDesktop !== false) fail('upstream preview chrome must stay disabled on desktop');
+  if (responsive?.userAgentBranching !== false) fail('responsive adaptation must not branch on user-agent detection');
+  if (!Number.isInteger(responsive?.desktopMinPx) || responsive.desktopMinPx < 1024) {
+    fail('desktop runtime breakpoint must be at least 1024px');
+  }
+
+  const adapterPath = safeRelativePath(responsive?.path ?? '');
+  if (!adapterPath.startsWith('src/features/public/ui/frontend-port/')) {
+    fail('desktop runtime adapter must stay inside the bounded frontend-port runtime');
+  }
+  if (!fs.existsSync(adapterPath)) fail('desktop runtime adapter missing: ' + adapterPath);
+  if (!responsive?.validationTest || !fs.existsSync(safeRelativePath(responsive.validationTest))) {
+    fail('desktop runtime adapter validation test missing');
+  }
+
   return config;
 }
 
@@ -83,6 +104,17 @@ for (const required of config.architectureRoots) {
   if (!tracked.includes(required)) fail(`required presentation architecture root missing upstream: ${required}`);
 }
 
+const upstreamApp = fs.readFileSync(path.join(sourceDir, 'src/App.tsx'), 'utf8');
+const desktopLayoutMarkers = config?.responsiveRuntimeAdapter?.sourceLayoutMarkers ?? [];
+if (!Array.isArray(desktopLayoutMarkers) || desktopLayoutMarkers.length === 0) {
+  fail('desktop adapter source layout markers are required');
+}
+for (const marker of desktopLayoutMarkers) {
+  if (!upstreamApp.includes(marker)) {
+    fail(`desktop adapter correlation required: upstream src/App.tsx no longer contains "${marker}"`);
+  }
+}
+
 const selected = tracked.filter((file) => isAllowedPath(file, config));
 if (selected.length === 0) fail('allowlist selected no upstream presentation files');
 
@@ -134,6 +166,7 @@ const manifest = {
   destination: config.destination,
   runtimePromotionAutomatic: false,
   financeComponentsBindAfterArchitectureAdoption: true,
+  responsiveRuntimeAdapter: config.responsiveRuntimeAdapter,
   totalBytes,
   files: manifestFiles,
 };
@@ -150,7 +183,7 @@ It contains the upstream application composition, entry point, stylesheet, prese
 
 It is **not Finance runtime code** and remains outside \`src/\`. Text sources use a \`.source\` suffix. \`src/data/mockData.ts\` is mirrored only as \`VISUAL_FIXTURE_ONLY\`; its values and claims are never productive market, news or scoring evidence.
 
-After architecture adoption, existing Finance-owned components are connected to this visual architecture through separate owner-correct adapter work. Upstream source is never executed directly and automatic runtime promotion is forbidden.
+After architecture adoption, existing Finance-owned components are connected to this visual architecture through separate owner-correct adapter work. Upstream source is never executed directly and automatic runtime promotion is forbidden. Mobile and tablet keep the pinned upstream layout unchanged; every sync must re-correlate the Finance-owned desktop adapter before a changed preview shell can be accepted.
 `,
   'utf8',
 );

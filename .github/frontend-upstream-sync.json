@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
   "source": {
     "repository": "SvenKulessa/FRONTEND",
@@ -55,14 +55,52 @@
     "import\\.meta\\.env",
     "(?:^|/)data/mockData"
   ],
-  "textExtensions": [".tsx", ".ts", ".css", ".svg"],
-  "binaryExtensions": [".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif"],
+  "textExtensions": [
+    ".tsx",
+    ".ts",
+    ".css",
+    ".svg"
+  ],
+  "binaryExtensions": [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".avif",
+    ".gif"
+  ],
   "maxFileBytes": 5242880,
   "maxTotalBytes": 26214400,
   "runtimePromotion": {
     "automatic": false,
     "destinationUnderSrcAllowed": false,
     "adapterReviewRequired": true,
-    "financeComponentsBindAfterArchitectureAdoption": true
+    "financeComponentsBindAfterArchitectureAdoption": true,
+    "responsiveAdapterRequired": true,
+    "previewShellDesktopPromotionAllowed": false,
+    "devicePolicy": {
+      "mobile": "preserve-current-source-behavior",
+      "tablet": "preserve-current-source-behavior",
+      "desktop": "finance-website-adapter-required"
+    }
+  },
+  "responsiveRuntimeAdapter": {
+    "required": true,
+    "path": "src/features/public/ui/frontend-port/frontend-port.css",
+    "validationTest": "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
+    "strategy": "DESKTOP_VIEWPORT_ADAPTER",
+    "desktopMinPx": 1024,
+    "preserveMobileSourceLayout": true,
+    "preserveTabletSourceLayout": true,
+    "upstreamPreviewChromeRuntimeOnDesktop": false,
+    "userAgentBranching": false,
+    "sourceLayoutMarkers": [
+      "viewMode",
+      "'mockup'",
+      "'fullscreen'",
+      "sm:max-w-[412px]",
+      "max-w-md",
+      "hidden sm:flex"
+    ]
   }
 }

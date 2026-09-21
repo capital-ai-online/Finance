@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-DECISION-RECONCILER-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -31,5 +31,9 @@
     "sha": "f1c9fc86be83f8aacd8372fc918aa88e4012ba6d",
     "status": "SYNCED",
     "correlatedAt": "2026-09-20T19:01:00Z"
-  }
+  },
+  "releasedAt": "2026-09-21T21:00:00Z",
+  "releaseReason": "Associated PR #1172 merged at 2026-09-20T19:08:40Z (merge 242e1847800af27ad80d4b4a693a28b9754eb25d); stale writer claim released before current GOV autofix convergence work.",
+  "terminalPullRequest": 1172,
+  "terminalMergeSha": "242e1847800af27ad80d4b4a693a28b9754eb25d"
 }
