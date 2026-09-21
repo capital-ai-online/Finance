@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-AUTO-MERGE-ROUTER-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -50,5 +50,12 @@
     "sha": "bc679ccc221616d3180f084b44ab51b66f96a062",
     "status": "SYNCED",
     "correlatedAt": "2026-09-20T22:54:00Z"
+  },
+  "pullRequest": 1182,
+  "releaseEvidence": {
+    "reason": "merged",
+    "pullRequest": 1182,
+    "mergedAt": "2026-09-20T23:16:35Z",
+    "releasedBy": "CAPITAL-AI-GOV-PR-TEMPLATE-SUPERSESSION-20260921"
   }
 }

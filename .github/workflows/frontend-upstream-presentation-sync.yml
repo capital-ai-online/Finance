@@ -1,0 +1,121 @@
+name: Frontend upstream presentation sync
+run-name: Frontend presentation sync — ${{ github.run_id }}
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: frontend-upstream-presentation-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'capital-ai-online/Finance' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Trusted Finance main auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+
+      - name: Main-Identität binden und dedizierten Writer-Branch vorbereiten
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: agent/frontend-upstream-source-sync
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          checked_out_main="$(git rev-parse HEAD)"
+          live_main="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
+          test "$checked_out_main" = "$live_main"
+          git fetch origin "$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null || true
+          git checkout -B "$BRANCH" "$checked_out_main"
+          printf '%s' "$checked_out_main" > "$RUNNER_TEMP/source-main-sha"
+
+      - name: Öffentliche Presentation-Quelle read-only klonen
+        env:
+          SOURCE_URL: https://github.com/SvenKulessa/FRONTEND.git
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/frontend-upstream"
+          git -c protocol.version=2 clone --depth=1 --branch main "$SOURCE_URL" "$RUNNER_TEMP/frontend-upstream"
+          test "$(git -C "$RUNNER_TEMP/frontend-upstream" remote get-url origin)" = "$SOURCE_URL"
+          upstream_sha="$(git -C "$RUNNER_TEMP/frontend-upstream" rev-parse HEAD)"
+          test "$(printf '%s' "$upstream_sha" | wc -c)" -eq 40
+          printf '%s' "$upstream_sha" > "$RUNNER_TEMP/upstream-sha"
+
+      - name: Nur Presentation-/UI-Quelle spiegeln
+        env:
+          FRONTEND_UPSTREAM_DIR: ${{ runner.temp }}/frontend-upstream
+        run: |
+          set -euo pipefail
+          export FRONTEND_UPSTREAM_SHA="$(cat "$RUNNER_TEMP/upstream-sha")"
+          node scripts/frontend/syncFrontendPresentationSource.mjs
+
+      - name: Keine Änderung ohne PR beenden
+        id: delta
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/frontend/upstream-source/SvenKulessa-FRONTEND; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Snapshot committen und Sync-PR erstellen oder aktualisieren
+        if: steps.delta.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: agent/frontend-upstream-source-sync
+        run: |
+          set -euo pipefail
+          source_main="$(cat "$RUNNER_TEMP/source-main-sha")"
+          live_main="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
+          if [ "$source_main" != "$live_main" ]; then
+            echo "CURRENT_MAIN moved during sync; fail closed and retry on next schedule." >&2
+            exit 1
+          fi
+
+          upstream_sha="$(cat "$RUNNER_TEMP/upstream-sha")"
+          git config user.name "capital-ai-frontend-sync"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/frontend/upstream-source/SvenKulessa-FRONTEND
+          git commit -m "chore(frontend): sync presentation source $upstream_sha"
+          git push --force-with-lease origin "HEAD:refs/heads/$BRANCH"
+
+          pr_number="$(gh pr list --repo "$REPO" --state open --head "$BRANCH" --base main --json number --jq '.[0].number // empty')"
+          if [ -z "$pr_number" ]; then
+            cat > "$RUNNER_TEMP/pr-body.md" <<EOF
+          <!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->
+          `CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`
+          # FE-UPSTREAM-SYNC — Presentation-source refresh
+
+          > 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**
+
+          Automated, review-only refresh from `SvenKulessa/FRONTEND@$upstream_sha`.
+
+          Scope is restricted by `.github/frontend-upstream-sync.json` to graphical components, UI slices, visual assets, the presentation composition blueprint and stylesheet. The generated snapshot remains inert under `docs/frontend/upstream-source/`; no upstream data, API, provider, auth, billing, scoring, entitlement, server or package code is promoted to runtime.
+
+          Runtime promotion is explicitly disabled. Any later adapter/promotion into `src/` requires a separate owner-correct PR and exact-head validation. Human/CODEOWNER merge remains required.
+          EOF
+            gh pr create               --repo "$REPO"               --base main               --head "$BRANCH"               --title "[CAPITAL-AI-FE] [Automation] Sync FRONTEND presentation source"               --body-file "$RUNNER_TEMP/pr-body.md"
+          else
+            gh pr comment "$pr_number" --repo "$REPO"               --body "Presentation source refreshed to `SvenKulessa/FRONTEND@$upstream_sha`. Existing Human/CODEOWNER merge gate remains unchanged."
+          fi

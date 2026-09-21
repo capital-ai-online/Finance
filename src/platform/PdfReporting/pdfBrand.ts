@@ -135,47 +135,52 @@ export function applyPdfDocumentMetadata(
   });
 }
 
-type EmblemNode = readonly [number, number, number];
-type EmblemEdge = readonly [number, number, number, number, 'gold' | 'cyan' | 'purple'];
+type EmblemNode = readonly [number, number, number, 'gold' | 'purple'];
+type EmblemEdge = readonly [number, number, number, number, 'gold' | 'purple'];
 
-// Print-safe flattening of the product's 3D network-node emblem. Coordinates
-// intentionally mirror CapitalAiLogo while avoiding external images or fonts.
+// Print-safe projection of the canonical logo geometry sourced from
+// SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07.
+// Color and naming authority remain the Finance design-token/branding contracts.
 const EMBLEM_NODES: readonly EmblemNode[] = [
-  [0.50, 0.54, 0.078],
-  [0.16, 0.14, 0.046],
-  [0.54, 0.18, 0.034],
-  [0.84, 0.13, 0.050],
-  [0.20, 0.42, 0.034],
-  [0.34, 0.48, 0.038],
-  [0.86, 0.46, 0.043],
-  [0.16, 0.82, 0.054],
-  [0.50, 0.90, 0.040],
-  [0.84, 0.80, 0.058],
+  [0.50, 0.12, 0.062, 'gold'],
+  [0.20, 0.26, 0.075, 'gold'],
+  [0.80, 0.26, 0.075, 'gold'],
+  [0.33, 0.36, 0.042, 'purple'],
+  [0.67, 0.36, 0.042, 'purple'],
+  [0.15, 0.60, 0.065, 'gold'],
+  [0.85, 0.60, 0.065, 'gold'],
+  [0.32, 0.82, 0.068, 'purple'],
+  [0.68, 0.82, 0.068, 'purple'],
+  [0.50, 0.48, 0.090, 'purple'],
 ] as const;
 
 const EMBLEM_EDGES: readonly EmblemEdge[] = [
-  [0.16, 0.14, 0.34, 0.48, 'gold'],
-  [0.34, 0.48, 0.16, 0.82, 'gold'],
-  [0.16, 0.82, 0.50, 0.90, 'gold'],
-  [0.50, 0.90, 0.84, 0.80, 'gold'],
-  [0.84, 0.80, 0.86, 0.46, 'gold'],
-  [0.86, 0.46, 0.84, 0.13, 'gold'],
-  [0.84, 0.13, 0.54, 0.18, 'gold'],
-  [0.54, 0.18, 0.50, 0.54, 'gold'],
-  [0.50, 0.54, 0.50, 0.90, 'gold'],
-  [0.50, 0.54, 0.34, 0.48, 'gold'],
-  [0.50, 0.54, 0.86, 0.46, 'gold'],
-  [0.16, 0.14, 0.84, 0.13, 'cyan'],
-  [0.20, 0.42, 0.86, 0.46, 'cyan'],
-  [0.50, 0.90, 0.20, 0.42, 'cyan'],
-  [0.16, 0.14, 0.84, 0.80, 'purple'],
-  [0.84, 0.13, 0.16, 0.82, 'purple'],
+  [0.20, 0.26, 0.50, 0.12, 'gold'],
+  [0.50, 0.12, 0.80, 0.26, 'gold'],
+  [0.80, 0.26, 0.85, 0.60, 'gold'],
+  [0.85, 0.60, 0.68, 0.82, 'purple'],
+  [0.68, 0.82, 0.32, 0.82, 'purple'],
+  [0.32, 0.82, 0.15, 0.60, 'purple'],
+  [0.15, 0.60, 0.20, 0.26, 'gold'],
+
+  [0.20, 0.26, 0.50, 0.48, 'purple'],
+  [0.80, 0.26, 0.50, 0.48, 'purple'],
+  [0.15, 0.60, 0.50, 0.48, 'gold'],
+  [0.85, 0.60, 0.50, 0.48, 'gold'],
+  [0.32, 0.82, 0.50, 0.48, 'purple'],
+  [0.68, 0.82, 0.50, 0.48, 'purple'],
+  [0.50, 0.12, 0.50, 0.48, 'gold'],
+
+  [0.33, 0.36, 0.67, 0.36, 'purple'],
+  [0.33, 0.36, 0.20, 0.26, 'gold'],
+  [0.67, 0.36, 0.80, 0.26, 'gold'],
+  [0.33, 0.36, 0.32, 0.82, 'purple'],
+  [0.67, 0.36, 0.68, 0.82, 'purple'],
+  [0.15, 0.60, 0.85, 0.60, 'gold'],
 ] as const;
 
 function edgeColor(kind: EmblemEdge[4]): PdfRgb {
-  if (kind === 'cyan') return PDF_BRAND.colors.cyan;
-  if (kind === 'purple') return PDF_BRAND.colors.purple;
-  return PDF_BRAND.colors.gold;
+  return kind === 'purple' ? PDF_BRAND.colors.purple : PDF_BRAND.colors.gold;
 }
 
 export function drawCapitalAiEmblem(
@@ -184,18 +189,19 @@ export function drawCapitalAiEmblem(
   y: number,
   width = 18,
 ): void {
-  const height = width * 0.9;
+  const height = width;
 
   for (const [x1, y1, x2, y2, kind] of EMBLEM_EDGES) {
     doc.setDrawColor(...edgeColor(kind));
-    doc.setLineWidth(kind === 'gold' ? 0.45 : 0.22);
+    doc.setLineWidth(kind === 'gold' ? 0.42 : 0.28);
     doc.line(x + x1 * width, y + y1 * height, x + x2 * width, y + y2 * height);
   }
 
-  for (const [nx, ny, radius] of EMBLEM_NODES) {
-    doc.setFillColor(...PDF_BRAND.colors.gold);
-    doc.setDrawColor(...PDF_BRAND.colors.goldDark);
-    doc.setLineWidth(0.18);
+  for (const [nx, ny, radius, kind] of EMBLEM_NODES) {
+    const fill = kind === 'purple' ? PDF_BRAND.colors.purple : PDF_BRAND.colors.gold;
+    doc.setFillColor(...fill);
+    doc.setDrawColor(...fill);
+    doc.setLineWidth(0.16);
     doc.circle(x + nx * width, y + ny * height, radius * width, 'FD');
   }
 }

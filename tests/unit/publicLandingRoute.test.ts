@@ -5,8 +5,21 @@ import { describe, expect, it } from 'vitest';
 const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
+const readTypeScriptTree = (relativeDir: string): string => {
+  const root = path.join(process.cwd(), relativeDir);
+  const visit = (dir: string): string[] =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const absolute = path.join(dir, entry.name);
+      if (entry.isDirectory()) return visit(absolute);
+      if (!/\.tsx?$/.test(entry.name)) return [];
+      return [fs.readFileSync(absolute, 'utf8')];
+    });
+  return visit(root).join('\n');
+};
+
 const routes = read('src/app/routing/AppRoutes.tsx');
 const landingPage = read('src/features/public/ui/LandingPage.tsx');
+const landingPort = readTypeScriptTree('src/features/public/ui/frontend-port');
 const publicWorkbench = read('src/app/public/PublicAnalysisWorkbench.tsx');
 const publicCryptoFacade = read('src/features/crypto/ui/public.ts');
 const publicScorerPreview = read('src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
@@ -26,34 +39,31 @@ const legacyDashboardBridge = read('src/components/Dashboard.tsx');
 const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
 
-describe('canonical landing, public analysis workbench, login and protected-route boundary', () => {
-  it('uses LandingPage as the canonical public root with the app-owned analysis workbench visible', () => {
+describe('canonical landing-first routing, static baseline and protected-route boundary', () => {
+  it('uses LandingPage as the canonical LF-01 root without productive landing integrations', () => {
     const rootStart = routes.indexOf("if (currentPath === '/')");
     const loginStart = routes.indexOf("if (currentPath === '/login')");
     const rootBlock = routes.slice(rootStart, loginStart);
 
     expect(rootStart).toBeGreaterThanOrEqual(0);
     expect(loginStart).toBeGreaterThan(rootStart);
-    expect(routes).toContain("import('../public/PublicAnalysisWorkbench')");
-    expect(routes).toContain("import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';");
-    expect(routes).toContain('default: module.PublicAnalysisWorkbench');
-    expect(routes).toContain('function PublicAnalysisPreview()');
-    expect(rootBlock).toContain('<LandingPage');
-    expect(rootBlock).toContain('newsfeed={<LandingRealtimeAiNewsfeed onLoginNavigate={clearJustLoggedOut} />}');
-    expect(rootBlock).toContain('preview={<PublicAnalysisPreview />}');
+    expect(rootBlock).toContain('<LandingPage onLoginNavigate={clearJustLoggedOut} />');
     expect(rootBlock).not.toContain('<Dashboard');
-    expect(landingPage).toContain('{newsfeed}');
-    expect(landingPage).toContain('{preview}');
-    expect(landingPage).toContain('id="analysis-workbench"');
-    expect(landingPage).toContain('Enterprise Scorer & Bewertungstools');
-    expect(landingPage).not.toContain('WorkbenchActivationState');
-    expect(landingPage).not.toContain('loadPreview');
-    expect(landingPage).not.toContain("from '../../../app");
-    expect(landingPage).not.toContain('fetchAuthenticatedNews');
-    expect(landingPage).not.toContain('/api/news');
+    expect(routes).not.toContain("import('../public/PublicAnalysisWorkbench')");
+    expect(routes).not.toContain('LandingRealtimeAiNewsfeed');
+    expect(routes).not.toContain('LandingPricingPanel');
+    expect(routes).not.toContain('PublicPreviewBoundary');
+
+    expect(landingPage).toContain('ReferenceApp');
+    expect(landingPage).toContain('frontend-reference-design-port');
+    expect(landingPage).toContain('data-landing-design-repository="SvenKulessa/FRONTEND"');
+    expect(landingPage).toContain('data-landing-design-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"');
+    expect(landingPort).not.toContain('fetch(');
+    expect(landingPort).not.toContain('/api/');
+    expect(landingPort).not.toContain('supabase');
   });
 
-  it('restores a compact expandable assessment-tool sideboard without importing the legacy Dashboard', () => {
+  it('retains the compact assessment-tool sideboard outside the LF-01 root', () => {
     expect(publicWorkbench).toContain('Universe Sideboard');
     expect(publicWorkbench).toContain('Enterprise Scorer');
     expect(publicWorkbench).toContain('Universe TOP Rankings');
@@ -68,14 +78,12 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(publicWorkbench).toContain('Backtest Engine');
     expect(publicWorkbench).toContain('Value-at-Risk Assessment');
     expect(publicWorkbench).toContain('const [sideboardExpanded, setSideboardExpanded] = useState(false)');
-    expect(publicWorkbench).toContain("lg:grid-cols-[88px_minmax(0,1fr)]");
-    expect(publicWorkbench).toContain("lg:grid-cols-[300px_minmax(0,1fr)]");
     expect(publicWorkbench).not.toMatch(/from\s+['"][^'"]*components\/Dashboard/);
     expect(publicWorkbench).not.toContain('PUBLIC_VISITOR_SESSION');
     expect(publicWorkbench).not.toContain("type: 'guest'");
   });
 
-  it('keeps the public Enterprise Scorer fixed to BTC while preserving server/login boundaries', () => {
+  it('keeps the existing productive public Enterprise Scorer contract separate from LF-01', () => {
     expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
     expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
     expect(publicWorkbench).not.toContain('onSelectSymbol={setSelectedSymbol}');
@@ -98,7 +106,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(publicWorkbench).not.toContain('<DeFiOrchestration');
   });
 
-  it('keeps Buffett stock-only in navigation and reserves a non-executable Satoshi FINTECH handoff in Crypto', () => {
+  it('keeps Buffett stock-only in navigation and reserves the Crypto handoff', () => {
     expect(dashboardNavigation).toContain("universe.id === 'equities'");
     expect(dashboardNavigation).toContain('Buffett Value Check');
     expect(dashboardNavigation).toContain("navigateAsset(universe.symbol, universe.category, 'buffet-value')");
@@ -117,16 +125,14 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(enterpriseScorer).toContain("fetch('/api/crypto/score'");
   });
 
-  it('keeps the landing shell outside tool suspense/error boundaries while rendering the public workbench directly', () => {
-    expect(routes).toContain('<FeatureRecoveryBoundary');
-    expect(routes).toContain('name="Öffentliche Analyse-Workbench"');
-    expect(routes).toContain('function PublicPreviewBoundary');
-    expect(routes).toContain('Bewertungstools vorübergehend nicht verfügbar');
-    expect(routes).toContain('<PublicAnalysisWorkbench />');
-    expect(landingPage).toContain('id="analysis-workbench"');
-    expect(landingPage).toContain('{preview}');
-    expect(landingPage).not.toContain('IntersectionObserver');
-    expect(landingPage).not.toContain('Analyse-Workbench starten');
+  it('keeps productive scorer components outside the LF-01 design dependency chain', () => {
+    expect(routes).not.toContain('<FeatureRecoveryBoundary');
+    expect(routes).not.toContain('function PublicPreviewBoundary');
+    expect(routes).not.toContain('<PublicAnalysisWorkbench');
+    expect(landingPort).toContain('Enterprise Scorer');
+    expect(landingPage).toContain('frontend-reference-design-port');
+    expect(landingPort).not.toContain('CryptoScoringEnterprise');
+    expect(landingPort).not.toContain('/api/crypto/score');
     expect(publicWorkbench).toContain('<FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>');
     expect(publicWorkbench).toContain('<Suspense fallback={<WorkbenchLoadingState />}>');
   });
@@ -148,7 +154,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(loginPage).toContain('Canonical authentication page for `/login`');
     expect(loginPage).toContain('href="/"');
     expect(loginPage).toContain('← Zurück zur Landingpage');
-    expect(landingPage).toContain('href="/login"');
+    expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
   });
 
   it('routes the app-owned dashboard login action to /login', () => {
@@ -163,12 +169,12 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(loginPageRedirect).toContain('href="/login"');
   });
 
-  it('protects dashboard/application deep links and redirects authenticated login sessions', () => {
+  it('protects dashboard/application deep links while authenticated login and unknown routes return to root', () => {
     expect(routes).toContain("if (currentPath === '/dashboard')");
     expect(routes).toContain("if (currentPath === '/media-studio')");
     expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution />;');
     expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
-    expect(routes).toContain('<RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />');
+    expect(routes).toContain('<RouteRedirect to="/" label="Zur Landingpage" />');
   });
 
   it('serves /login and protected app routes through the production SPA fallback', () => {
@@ -193,13 +199,17 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(routes).toContain("if (currentPath === '/login')");
   });
 
-  it('keeps the canonical landing page suitable for Google OAuth branding review', () => {
-    expect(landingPage).toContain('CAPITAL-AI – quantitative Multi-Asset-Analyse');
-    expect(landingPage).toMatch(/Aktien,\s+Indizes,\s+Forex,\s+Kryptowährungen\s+und\s+Rohstoffe/);
-    expect(landingPage).toMatch(/erklärbaren\s+KI-Scorings/);
-    expect(landingPage).toContain('href="/datenschutz/"');
-    expect(landingPage).toContain('href="/agb/"');
-    expect(landingPage).toContain('href="/impressum/"');
+  it('keeps the canonical landing suitable for public brand and legal review', () => {
+    expect(landingPort).toContain('Capital-AI');
+    expect(landingPort).toContain('Marktdaten');
+    expect(landingPort).toContain('Chancen besser');
+    expect(landingPort).toContain('Globale Märkte im Überblick');
+    expect(landingPort).toContain('Enterprise Scorer');
+    expect(landingPort).toContain('Impressum');
+    expect(landingPort).toContain('Datenschutz');
+    expect(routes).toContain("if (currentPath === '/datenschutz')");
+    expect(routes).toContain("if (currentPath === '/agb')");
+    expect(routes).toContain("if (currentPath === '/impressum')");
   });
 
   it('does not create a presentation visitor session and still rejects anonymous Supabase sessions', () => {
@@ -208,6 +218,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(routes).not.toContain('@capital-ai.online');
     expect(routes).not.toContain('@guest');
     expect(landingPage).not.toContain('UserSession');
+    expect(landingPort).not.toContain('UserSession');
     expect(publicWorkbench).not.toContain('UserSession');
     expect(sessionComposition).toContain('session.user.is_anonymous');
     expect(sessionComposition).toContain('rejectAnonymousSession');
@@ -215,12 +226,13 @@ describe('canonical landing, public analysis workbench, login and protected-rout
 
   it('does not allow the public feature to depend back on application composition', () => {
     expect(landingPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
+    expect(landingPort).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(loginPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(routes).toContain("import('../dashboard/Dashboard')");
-    expect(routes).toContain("import('../public/PublicAnalysisWorkbench')");
+    expect(routes).not.toContain("import('../public/PublicAnalysisWorkbench')");
   });
 
-  it('keeps the authenticated Dashboard separate from the public analysis workbench', () => {
+  it('keeps Dashboard as a protected deep link while root remains the static landing surface', () => {
     const rootStart = routes.indexOf("if (currentPath === '/')");
     const loginStart = routes.indexOf("if (currentPath === '/login')");
     const rootBlock = routes.slice(rootStart, loginStart);
@@ -229,7 +241,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(rootBlock).not.toContain('handleLogin');
     expect(rootBlock).not.toContain('handleRegister');
     expect(routes).toContain('const Dashboard = lazy');
-    expect(routes).toContain('const PublicAnalysisWorkbench = lazy');
+    expect(routes).not.toContain('const PublicAnalysisWorkbench = lazy');
   });
 
   it('removes ambiguous full-page implementation filenames from their former locations', () => {

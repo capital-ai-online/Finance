@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.1.0",
+  "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
+  "source": {
+    "repository": "SvenKulessa/FRONTEND",
+    "cloneUrl": "https://github.com/SvenKulessa/FRONTEND.git",
+    "ref": "main"
+  },
+  "destination": "docs/frontend/upstream-source/SvenKulessa-FRONTEND",
+  "architectureRoots": [
+    "src/App.tsx",
+    "src/main.tsx",
+    "src/index.css",
+    "src/types.ts"
+  ],
+  "visualFixtureExactPaths": [
+    "src/data/mockData.ts"
+  ],
+  "allowedExactPaths": [
+    "src/App.tsx",
+    "src/main.tsx",
+    "src/index.css",
+    "src/types.ts",
+    "src/data/mockData.ts"
+  ],
+  "allowedPathPatterns": [
+    "^src/components/.+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
+    "^src/features/[^/]+/ui/.+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
+    "^src/shared/(?:ui|branding|visuals)/.+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
+    "^src/assets/(?:images/)?[^/].+\\.(?:svg|png|jpe?g|webp|avif|gif)$"
+  ],
+  "neverCopyPathPatterns": [
+    "(?:^|/)services?(?:/|$)",
+    "(?:^|/)api(?:/|$)",
+    "(?:^|/)server(?:/|$)",
+    "(?:^|/)auth(?:/|$)",
+    "(?:^|/)billing(?:/|$)",
+    "(?:^|/)scoring(?:/|$)",
+    "(?:^|/)entitlements?(?:/|$)",
+    "(?:^|/)providers?(?:/|$)",
+    "(?:^|/)package(?:-lock)?\\.json$",
+    "(?:^|/)vite\\.config\\.",
+    "(?:^|/)\\.env"
+  ],
+  "promotionBlockContentPatterns": [
+    "\\bfetch\\s*\\(",
+    "\\baxios\\b",
+    "\\bsupabase\\b",
+    "\\bstripe\\b",
+    "\\/api\\/",
+    "\\bScoringDispatcher\\b",
+    "\\bentitlements?\\b",
+    "@google/genai",
+    "process\\.env",
+    "import\\.meta\\.env",
+    "(?:^|/)data/mockData"
+  ],
+  "textExtensions": [".tsx", ".ts", ".css", ".svg"],
+  "binaryExtensions": [".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif"],
+  "maxFileBytes": 5242880,
+  "maxTotalBytes": 26214400,
+  "runtimePromotion": {
+    "automatic": false,
+    "destinationUnderSrcAllowed": false,
+    "adapterReviewRequired": true,
+    "financeComponentsBindAfterArchitectureAdoption": true
+  }
+}

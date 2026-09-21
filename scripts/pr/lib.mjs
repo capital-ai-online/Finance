@@ -4,22 +4,26 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
 export const PR_TEMPLATE_VERSION = '1.8.0';
-export const LEGACY_PR_TEMPLATE_VERSIONS = Object.freeze(['1.7.0', '1.6.0', '1.5.0']);
-export const SUPPORTED_PR_TEMPLATE_VERSIONS = Object.freeze([
-  PR_TEMPLATE_VERSION,
-  ...LEGACY_PR_TEMPLATE_VERSIONS,
+export const SUPERSEDED_PR_TEMPLATE_VERSIONS = Object.freeze(['1.7.0', '1.6.0', '1.5.0']);
+export const SUPPORTED_PR_TEMPLATE_VERSIONS = Object.freeze([PR_TEMPLATE_VERSION]);
+export const KNOWN_PR_TEMPLATE_VERSIONS = Object.freeze([
+  ...SUPPORTED_PR_TEMPLATE_VERSIONS,
+  ...SUPERSEDED_PR_TEMPLATE_VERSIONS,
 ]);
 export const PR_TEMPLATE_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${PR_TEMPLATE_VERSION}`;
 
 export function detectPrTemplateVersion(bodyText) {
   const body = String(bodyText || '');
-  return SUPPORTED_PR_TEMPLATE_VERSIONS.find((version) =>
+  return KNOWN_PR_TEMPLATE_VERSIONS.find((version) =>
     body.includes(`CAPITAL_AI_PR_TEMPLATE_VERSION: ${version}`)
   ) || null;
 }
 
 export function bodyHasSupportedPrTemplateMarker(bodyText) {
-  return detectPrTemplateVersion(bodyText) !== null;
+  const body = String(bodyText || '');
+  return SUPPORTED_PR_TEMPLATE_VERSIONS.some((version) =>
+    body.includes(`CAPITAL_AI_PR_TEMPLATE_VERSION: ${version}`)
+  );
 }
 export const DEFAULT_PRODUCTION_URL = 'https://capital-ai.online/';
 export const DEFAULT_PRODUCTION_HEALTH_URL = 'https://capital-ai.online/healthz';

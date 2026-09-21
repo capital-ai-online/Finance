@@ -1,0 +1,158 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const CONFIG_PATH = '.github/frontend-upstream-sync.json';
+
+function fail(message) {
+  console.error(`[FRONTEND-UPSTREAM-SYNC] ${message}`);
+  process.exit(1);
+}
+
+function readConfig() {
+  const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  if (config?.schemaVersion !== '1.1.0') fail('unsupported config schema');
+  if (!config?.source?.repository || !config?.destination) fail('source/destination missing');
+  if (String(config.destination).startsWith('src/')) fail('destination must remain outside runtime src/');
+  if (config?.runtimePromotion?.automatic !== false) fail('automatic runtime promotion must stay disabled');
+  return config;
+}
+
+function git(cwd, args) {
+  return execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
+}
+
+function safeRelativePath(value) {
+  const normalized = String(value).replaceAll('\\', '/');
+  if (!normalized || normalized.startsWith('/') || normalized.includes('../') || normalized.includes('/..')) {
+    fail(`unsafe upstream path: ${value}`);
+  }
+  return normalized;
+}
+
+function matchesAny(value, patterns = []) {
+  return patterns.some((pattern) => new RegExp(pattern).test(value));
+}
+
+function isAllowedPath(file, config) {
+  return config.allowedExactPaths.includes(file) || matchesAny(file, config.allowedPathPatterns);
+}
+
+function isVisualFixture(file, config) {
+  return config.visualFixtureExactPaths.includes(file);
+}
+
+function destinationFor(file, config) {
+  const ext = path.extname(file).toLowerCase();
+  const base = path.join(config.destination, file);
+  return config.textExtensions.includes(ext) ? `${base}.source` : base;
+}
+
+function contentPromotionBlocks(buffer, file, config) {
+  const ext = path.extname(file).toLowerCase();
+  if (!config.textExtensions.includes(ext)) return [];
+  const text = buffer.toString('utf8');
+  return config.promotionBlockContentPatterns.filter((pattern) => new RegExp(pattern, 'm').test(text));
+}
+
+function sourceRole(file, config) {
+  if (isVisualFixture(file, config)) return 'VISUAL_FIXTURE_ONLY';
+  if (file === 'src/App.tsx' || file === 'src/main.tsx') return 'PRESENTATION_ARCHITECTURE';
+  if (file === 'src/index.css') return 'VISUAL_STYLE';
+  if (file === 'src/types.ts') return 'PRESENTATION_TYPE_SHAPE';
+  if (file.startsWith('src/components/')) return 'GRAPHICAL_COMPONENT';
+  if (file.includes('/ui/')) return 'UI_SLICE';
+  return 'VISUAL_ASSET';
+}
+
+const config = readConfig();
+const sourceDir = process.env.FRONTEND_UPSTREAM_DIR;
+const expectedSha = process.env.FRONTEND_UPSTREAM_SHA;
+
+if (!sourceDir) fail('FRONTEND_UPSTREAM_DIR is required');
+if (!expectedSha || !/^[0-9a-f]{40}$/i.test(expectedSha)) fail('FRONTEND_UPSTREAM_SHA must be a full commit SHA');
+
+const observedSha = git(sourceDir, ['rev-parse', 'HEAD']);
+if (observedSha !== expectedSha) fail(`upstream SHA mismatch: expected=${expectedSha} observed=${observedSha}`);
+
+const tracked = git(sourceDir, ['ls-files', '-z']).split('\0').filter(Boolean).map(safeRelativePath);
+
+for (const required of config.architectureRoots) {
+  if (!tracked.includes(required)) fail(`required presentation architecture root missing upstream: ${required}`);
+}
+
+const selected = tracked.filter((file) => isAllowedPath(file, config));
+if (selected.length === 0) fail('allowlist selected no upstream presentation files');
+
+for (const file of selected) {
+  if (matchesAny(file, config.neverCopyPathPatterns)) fail(`allowlist/denylist conflict for ${file}`);
+}
+
+fs.rmSync(config.destination, { recursive: true, force: true });
+fs.mkdirSync(config.destination, { recursive: true });
+
+let totalBytes = 0;
+const manifestFiles = [];
+
+for (const file of selected.sort()) {
+  const sourcePath = path.join(sourceDir, file);
+  const stat = fs.lstatSync(sourcePath);
+  if (stat.isSymbolicLink()) fail(`symlink rejected: ${file}`);
+  if (!stat.isFile()) continue;
+  if (stat.size > config.maxFileBytes) fail(`file too large: ${file} (${stat.size} bytes)`);
+  totalBytes += stat.size;
+  if (totalBytes > config.maxTotalBytes) fail(`selected source exceeds ${config.maxTotalBytes} bytes`);
+
+  const buffer = fs.readFileSync(sourcePath);
+  const targetPath = destinationFor(file, config);
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  fs.writeFileSync(targetPath, buffer);
+
+  const promotionBlockPatterns = contentPromotionBlocks(buffer, file, config);
+  const fixtureOnly = isVisualFixture(file, config);
+  manifestFiles.push({
+    sourcePath: file,
+    mirroredPath: targetPath.replaceAll('\\', '/'),
+    role: sourceRole(file, config),
+    bytes: stat.size,
+    runtimePromotionEligible: !fixtureOnly && promotionBlockPatterns.length === 0,
+    promotionBlockPatterns: fixtureOnly
+      ? ['VISUAL_FIXTURE_ONLY', ...promotionBlockPatterns]
+      : promotionBlockPatterns,
+  });
+}
+
+const manifest = {
+  schemaVersion: '1.1.0',
+  policyId: config.policyId,
+  sourceRepository: config.source.repository,
+  sourceRef: config.source.ref,
+  sourceSha: observedSha,
+  adoptionMode: 'FULL_PRESENTATION_ARCHITECTURE_SNAPSHOT',
+  destination: config.destination,
+  runtimePromotionAutomatic: false,
+  financeComponentsBindAfterArchitectureAdoption: true,
+  totalBytes,
+  files: manifestFiles,
+};
+
+fs.writeFileSync(path.join(config.destination, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+
+fs.writeFileSync(
+  path.join(config.destination, 'README.md'),
+  `# Mirrored FRONTEND presentation architecture
+
+This directory is the complete allowlisted presentation-architecture snapshot from \`${config.source.repository}@${observedSha}\`.
+
+It contains the upstream application composition, entry point, stylesheet, presentation type shapes, every graphical component/UI slice selected by the presentation allowlist, visual assets, and explicitly declared visual fixtures needed to preserve the design as a reproducible reference.
+
+It is **not Finance runtime code** and remains outside \`src/\`. Text sources use a \`.source\` suffix. \`src/data/mockData.ts\` is mirrored only as \`VISUAL_FIXTURE_ONLY\`; its values and claims are never productive market, news or scoring evidence.
+
+After architecture adoption, existing Finance-owned components are connected to this visual architecture through separate owner-correct adapter work. Upstream source is never executed directly and automatic runtime promotion is forbidden.
+`,
+  'utf8',
+);
+
+console.log(`[FRONTEND-UPSTREAM-SYNC] mirrored ${manifestFiles.length} presentation architecture file(s), ${totalBytes} bytes, upstream=${observedSha}`);

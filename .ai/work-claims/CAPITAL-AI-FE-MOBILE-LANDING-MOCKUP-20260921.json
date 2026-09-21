@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-MOBILE-LANDING-MOCKUP-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "LF-00/LF-01 Landing-First re-scope: preserve canonical root/login routing and the approved mobile-first visual design while establishing a static landing baseline with explicit non-live placeholders; defer auth/profile, pricing/entitlements, scoring, news and other productive integrations to later gated phases.",
+  "startedAt": "2026-09-21T13:07:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "branch": "frontend/mobile-landing-mockup-background-20260921",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "N/A — cross-cutting presentation; no productive PVC",
+  "priority": "P1",
+  "priorityReason": "The Owner explicitly defines the public root, post-login landing, subscription presentation and Enterprise Scorer access experience as the canonical website flow.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-MOBILE-LANDING-MOCKUP-20260921.json",
+    "public/brand/hero/capital-ai-mobile-landing.jpg",
+    "src/app/routing/AppRoutes.tsx",
+    "src/features/public/ui/LandingPage.tsx",
+    "tests/unit/publicLandingRoute.test.ts",
+    "tests/unit/frontend1608AppearanceContract.test.ts",
+    "tests/unit/authLifecycleRemediation.test.ts",
+    "tests/unit/frontendReliabilityComposition.test.ts",
+    "tests/unit/landingNewsfeedIntegration.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "lastSyncedMainSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "phase": "LF-01_STATIC_VISUAL_LANDING",
+  "deferredProductiveIntegrations": [
+    "LF-02 auth/profile/subscription projection",
+    "LF-03 pricing/entitlement provider integration",
+    "LF-04 Enterprise Scorer runtime integration",
+    "LF-05 news/data runtime integration"
+  ],
+  "ciExpectationDriftRepair": [
+    "auth root expectation updated from authenticated / -> /dashboard to authenticated stay-on-root",
+    "public workbench recovery expectation moved out of LF-01 root while preserving reusable feature-local boundary",
+    "landing news integration expectation changed from productive composition to explicit static LF-05 presentation slot"
+  ]
+}

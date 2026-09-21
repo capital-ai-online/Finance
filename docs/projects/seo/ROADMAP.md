@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`
+**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
@@ -21,7 +21,7 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 ### WP-SEO-LAUNCH-01 — Public Web & Social Launch Management
 
-**State:** `ACTIVE_CANONICAL / EXECUTION_STARTED / PROVIDER_GATES_OPEN`.
+**State:** `ACTIVE_CANONICAL / LANDING_FIRST_GATE_ACTIVE / LF_01_PENDING`.
 
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
@@ -69,6 +69,22 @@ Current snapshot:
 - SEO-owned topic map and first launch content brief are now materialized without synthetic search metrics.
 
 Detailed evidence: `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
+
+## Landing-First correlation — 2026-09-21
+
+Fresh Owner direction establishes `LF-01_STATIC_VISUAL_LANDING_PASS` as the shared dependency before any new productive landing-page integration. For CAPITAL-AI-SEO this does **not** create a second authority or a new roadmap; it constrains the existing `WP-SEO-LAUNCH-01` execution under `/AGENTS.md@CURRENT_MAIN`.
+
+Current correlation against `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`:
+
+- open FE PR `#1195` head `9901590b3544d08df55f3771bdb35c60d5fb7d53` is based on this exact main snapshot;
+- `LF-01_STATIC_VISUAL_LANDING_PASS` is **not evidenced**: PR #1195 changes productive pricing, subscription/session, Enterprise Scorer and Stripe checkout surfaces in addition to the visual landing work;
+- exact-head `build-and-test` fails because `src/app/universe/ui/UniversePortal.tsx` instantiates `PublicAnalysisWorkbench` without the newly required `userSession` prop;
+- OSS-quality evidence is independently non-PASS on that head because vitest-coverage, Knip and jscpd evidence are reported unavailable;
+- therefore SEO must remain in **PREPARATION_ONLY** mode for landing-related work until FE + QM provide LF-01 exit evidence;
+- allowed SEO work before LF-01: canonical-root/metadata requirements, crawlable static semantics, content/claim preparation, baseline measurement design, and owner-correct handoffs;
+- blocked before LF-01: new productive analytics activation tied to the landing, launch claims that present later integrations as live, and publication/measurement decisions that assume scorer/pricing/news integration is production-ready.
+
+Owner-correct handoff: FE owns PR #1195 re-scope/supersession and static visual baseline implementation; QM independently validates the exit evidence. SEO records the dependency and does not mutate FE runtime.
 
 ## Current provider evidence
 
