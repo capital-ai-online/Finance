@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "owner": "CAPITAL-AI-GOV",
+  "primaryProductivePvc": [
+    "PVC-05"
+  ],
+  "priority": "P0",
+  "branchName": "governance/sh-v3-02-dispatch-reentry-fix-20260921",
+  "baseBranch": "main",
+  "baseSha": "df06eeff15f682e8a0ae3c00c2fc002251831522",
+  "workItem": "Restore Self-Healing convergence by allowing exact CI workflow_dispatch revalidation runs to re-enter the existing bounded autofix and Decision/Evidence listeners.",
+  "rootCause": "Canonical repair writers dispatch exact CI revalidation with workflow_dispatch, while downstream workflow_run listeners accepted only pull_request events, terminating the remediation loop after the first write.",
+  "approvedScope": "Modify only the existing canonical listeners and regression tests; preserve single-writer ownership, exact PR/head/ref/current-main binding, allowlisted repairers, bounded attempts and Human/CODEOWNER merge authority.",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921.json",
+    ".ai/work-claims/GOV-SH-V3-02-SEQUENTIAL-GOVERNANCE-FIX-LANE-20260921.json",
+    ".ai/work-claims/GOV-SH-V3-02-MERGE-CONTINUATION-20260921.json",
+    ".github/workflows/pr-autofix-controller.yml",
+    ".github/workflows/current-state-baseline-autofix.yml",
+    ".github/workflows/controlled-pr-ci-autofix.yml",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/prAutofixControllerWorkflow.test.mjs",
+    "scripts/pr/currentStateBaselineAutofixWorkflow.test.mjs",
+    "scripts/pr/controlledPrCiAutofixWorkflow.test.mjs",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    "docs/projects/governance/work-packages/SH_V3_02_AUTOFIX_ORCHESTRATION.yaml"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN sections 4-8",
+    "PR #1199 merged writer foundation",
+    "PR #1214 merged SH-V3-02 continuation projection",
+    "Existing CI workflow_dispatch exact-snapshot contract"
+  ],
+  "exitEvidence": [
+    "CI pull_request and exact CI workflow_dispatch failures both reach the canonical controller.",
+    "workflow_dispatch re-entry is restricted to exact CI path plus live PR head SHA/ref/current-main correlation.",
+    "Current-State and bounded CI repair specialists can continue after their own exact-head CI redispatch.",
+    "Decision/Evidence reconciliation observes exact dispatched CI completion.",
+    "No second writer, branch-sync path, PR-body writer or merge authority is introduced.",
+    "Hosted workflow security/governance/tests pass on the exact PR head."
+  ],
+  "releaseCondition": "Release when the associated Pull Request is merged, closed, superseded or abandoned.",
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector"
+}
