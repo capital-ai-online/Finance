@@ -12,7 +12,7 @@
   "priority": "P0",
   "branchName": "governance/sh-v3-02-dispatch-reentry-fix-20260921",
   "baseBranch": "main",
-  "baseSha": "df06eeff15f682e8a0ae3c00c2fc002251831522",
+  "baseSha": "21d9c45e3580425b55df5ea9d19fb9cf89ff775d",
   "workItem": "Restore Self-Healing convergence by allowing exact CI workflow_dispatch revalidation runs to re-enter the existing bounded autofix and Decision/Evidence listeners.",
   "rootCause": "Canonical repair writers dispatch exact CI revalidation with workflow_dispatch, while downstream workflow_run listeners accepted only pull_request events, terminating the remediation loop after the first write.",
   "approvedScope": "Modify only the existing canonical listeners and regression tests; preserve single-writer ownership, exact PR/head/ref/current-main binding, allowlisted repairers, bounded attempts and Human/CODEOWNER merge authority.",
@@ -46,5 +46,6 @@
   ],
   "releaseCondition": "Release when the associated Pull Request is merged, closed, superseded or abandoned.",
   "authority": "/AGENTS.md@CURRENT_MAIN",
-  "executionSurface": "ChatGPT GitHub Connector"
+  "executionSurface": "ChatGPT GitHub Connector",
+  "recorrelatedAt": "2026-09-21"
 }

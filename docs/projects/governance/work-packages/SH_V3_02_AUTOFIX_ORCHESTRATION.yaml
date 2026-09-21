@@ -152,7 +152,7 @@ current_queue_snapshot:
   role: "NON_AUTHORIZING_GENERATION_BOUND_EVIDENCE"
   state: "INVALIDATED"
   captured_main: "896722e55ab1304bd798da6fc8c6f2d9b178a12e"
-  invalidated_by_current_main: "df06eeff15f682e8a0ae3c00c2fc002251831522"
+  invalidated_by_current_main: "21d9c45e3580425b55df5ea9d19fb9cf89ff775d"
   captured_date: "2026-09-21"
   reason: >
     The previous queue contained PRs that have since reached terminal outcomes,
@@ -173,7 +173,7 @@ implementation_boundary:
     canonical_identity: "GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921"
     owner: "CAPITAL-AI-GOV"
     pvc: "PVC-05"
-    base: "main@df06eeff15f682e8a0ae3c00c2fc002251831522"
+    base: "main@21d9c45e3580425b55df5ea9d19fb9cf89ff775d"
     scope: >
       Repair the missing re-entry edge from exact CI workflow_dispatch validation
       into the existing PR Autofix Controller, Current-State Baseline Autofix,

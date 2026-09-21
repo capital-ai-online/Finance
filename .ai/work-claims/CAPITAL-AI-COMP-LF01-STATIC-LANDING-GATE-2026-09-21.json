@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-COMP-LF01-STATIC-LANDING-GATE-2026-09-21",
+  "status": "active",
+  "exclusive": true,
+  "lifecycle": "active",
+  "activeWriter": true,
+  "authorizing": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Materialize the bounded CAPITAL-AI-COMP LF-01 static landing Compliance evidence gate and owner-correct handovers without productive landing integration or foreign remediation.",
+  "startedAt": "2026-09-21T14:50:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "branch": "compliance/landing-first-lf01-gate-20260921",
+  "project": "CAPITAL-AI-COMP",
+  "projectFolder": "compliance",
+  "productivePvcOwnership": [],
+  "pvcCoverage": "PVC-01..PVC-18 compliance overlay only",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-COMP-LF01-STATIC-LANDING-GATE-2026-09-21.json",
+    "docs/compliance/CAPITAL-AI-COMP/work-packages/COMP_LF_01_STATIC_LANDING_COMPLIANCE_GATE_2026-09-21.md",
+    "docs/projects/compliance/ROADMAP.md"
+  ],
+  "dependencies": [
+    "LF-01_STATIC_VISUAL_LANDING_PASS",
+    "CAPITAL-AI-FE PR #1195",
+    "independent SEC/QM evidence"
+  ],
+  "releaseCondition": "Release on Human merge, close, supersession or abandonment.",
+  "sourceDirection": "CAPITAL-AI-LANDING-FIRST-INTEGRATION-01..03 supplied by Human Owner in current interaction; non-authorizing projection resolving to /AGENTS.md@CURRENT_MAIN."
+}
