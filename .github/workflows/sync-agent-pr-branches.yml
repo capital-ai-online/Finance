@@ -130,6 +130,7 @@ jobs:
           sequential_lane='false'
           if [ "$EVENT_NAME" = 'workflow_run' ] || { [ "$EVENT_NAME" = 'workflow_dispatch' ] && [ -z "${DISPATCH_PR_NUMBER:-}" ]; }; then
             sequential_lane='true'
+            prs="$(echo "$prs" | jq -c 'sort_by(.number)')"
           fi
 
           current_main_sha="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
@@ -152,7 +153,6 @@ jobs:
               echo "Korrelations-Run fuer $SOURCE_MAIN_SHA ist stale; CURRENT_MAIN ist $current_main_sha. Kein PR wird synchronisiert."
               exit 0
             fi
-            prs="$(echo "$prs" | jq -c 'sort_by(.number)')"
           fi
 
           generation_for() {
