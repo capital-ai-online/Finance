@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-SH-V3-02-MERGE-CONTINUATION-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -12,7 +12,9 @@
   "priority": "P0-HIGHEST",
   "projectId": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
-  "pvc": ["PVC-05"],
+  "pvc": [
+    "PVC-05"
+  ],
   "branch": "governance/sh-v3-02-merge-continuation-20260921",
   "baseSha": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
   "claimedPaths": [
@@ -36,8 +38,18 @@
   },
   "observedQueueSnapshot": {
     "currentMain": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
-    "primaryConvergenceLane": [1199, 1209, 1201, 1202, 1205, 1211],
-    "frontendLanguageLane": [1212, 1213],
+    "primaryConvergenceLane": [
+      1199,
+      1209,
+      1201,
+      1202,
+      1205,
+      1211
+    ],
+    "frontendLanguageLane": [
+      1212,
+      1213
+    ],
     "nonAuthorizing": true
   },
   "exitEvidence": [
@@ -46,5 +58,7 @@
     "Next PR is selected only after fresh CURRENT_MAIN/open-writer/dependency correlation.",
     "Auto-merge remains fail-closed under AGENTS.md and protected classes remain Human/CODEOWNER-gated."
   ],
-  "releaseCondition": "Release when the associated Pull Request is merged, closed, superseded or abandoned."
+  "releaseCondition": "Release when the associated Pull Request is merged, closed, superseded or abandoned.",
+  "releasedAt": "2026-09-21",
+  "releaseReason": "Associated continuation PR #1214 is merged as CURRENT_MAIN df06eeff15f682e8a0ae3c00c2fc002251831522; stale exclusive coordination metadata released before further SH-V3-02 mutation."
 }
