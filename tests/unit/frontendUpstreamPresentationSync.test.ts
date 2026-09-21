@@ -32,6 +32,18 @@ describe('FRONTEND upstream presentation sync contract', () => {
     expect(syncScript).toContain('runtimePromotionEligible: !fixtureOnly');
   });
 
+  it('requires the desktop-only Finance adapter for every promoted upstream sync', () => {
+    expect(config.runtimePromotion.desktopWebsiteAdapter.required).toBe(true);
+    expect(config.runtimePromotion.desktopWebsiteAdapter.minWidthPx).toBe(1024);
+    expect(config.runtimePromotion.desktopWebsiteAdapter.preserveBelowDesktopBreakpoint).toBe(true);
+    expect(config.runtimePromotion.desktopWebsiteAdapter.adapterPath).toBe(
+      'src/features/public/ui/frontend-port/frontend-port.css',
+    );
+    expect(config.runtimePromotion.desktopWebsiteAdapter.validationTest).toBe(
+      'tests/unit/frontendDesktopResponsiveAdapter.test.ts',
+    );
+  });
+
   it('runs hourly from trusted main with least privilege and immutable actions', () => {
     expect(workflow).toContain("cron: '23 * * * *'");
     expect(workflow).toContain("github.ref == 'refs/heads/main'");
