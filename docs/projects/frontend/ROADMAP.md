@@ -74,7 +74,7 @@ The accepted graphical landing is now connected through a Finance-owned adapter 
 - presentation fixtures are neutralized before productive interaction and never become Finance evidence;
 - market cards map to canonical Finance asset identities and hydrate only the selected asset through `verified-asset-display/1.0.0`;
 - the adapter performs no direct provider calls and no browser-local scoring;
-- landing analysis CTAs consume the existing `PublicCryptoScoringPreview`, with public/Free scope fixed to BTC;
+- landing analysis CTAs no longer open the pinned mock analysis; productive scoring remains fail-closed behind the `FIN-LF-01` dependency gates;
 - protected module actions remain behind their existing login/server entitlement gates;
 - FINTECH remains the sole data/scoring authority for the consumed `PVC-09..17` outputs.
 
