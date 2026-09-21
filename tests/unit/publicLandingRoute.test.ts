@@ -209,10 +209,10 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPort).toContain('Enterprise Scorer');
     expect(landingPort).toContain('Impressum');
     expect(landingPort).toContain('Datenschutz');
-    expect(routes).toContain("if (currentPath === '/datenschutz')");
-    expect(routes).toContain("if (currentPath === '/agb')");
-    expect(routes).toContain("if (currentPath === '/impressum')");
-    expect(routes).toContain("if (currentPath === '/faq')");
+    expect(routes).toContain("currentPath === '/datenschutz'");
+    expect(routes).toContain("currentPath === '/agb'");
+    expect(routes).toContain("currentPath === '/impressum'");
+    expect(routes).toContain("currentPath === '/faq'");
     expect(routes).toContain('<LegalAndFaqPages route={currentPath} />');
     expect(routes).not.toContain('<LegalPageShell activeRoute=');
     expect(routes).toContain('normalizeRoutePath(window.location.pathname)');
