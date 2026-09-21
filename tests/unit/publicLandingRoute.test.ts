@@ -20,6 +20,7 @@ const readTypeScriptTree = (relativeDir: string): string => {
 const routes = read('src/app/routing/AppRoutes.tsx');
 const landingPage = read('src/features/public/ui/LandingPage.tsx');
 const landingPort = readTypeScriptTree('src/features/public/ui/frontend-port');
+const landingRuntimeBinding = read('src/features/public/ui/landing-runtime/LandingRuntimeBinding.tsx');
 const publicWorkbench = read('src/app/public/PublicAnalysisWorkbench.tsx');
 const publicCryptoFacade = read('src/features/crypto/ui/public.ts');
 const publicScorerPreview = read('src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
@@ -40,7 +41,7 @@ const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
 const spaFallback = read('server/runtime/spaFallback.ts');
 
 describe('canonical landing-first routing, static baseline and protected-route boundary', () => {
-  it('uses LandingPage as the canonical LF-01 root without productive landing integrations', () => {
+  it('uses LandingPage as the canonical LF-01 root with productive adapters outside the pinned presentation tree', () => {
     const rootStart = routes.indexOf("if (currentPath === '/')");
     const loginStart = routes.indexOf("if (currentPath === '/login')");
     const rootBlock = routes.slice(rootStart, loginStart);
@@ -61,6 +62,11 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPort).not.toContain('fetch(');
     expect(landingPort).not.toContain('/api/');
     expect(landingPort).not.toContain('supabase');
+    expect(landingPage).toContain('data-landing-runtime-binding="verified-asset-display/1.0.0"');
+    expect(landingPage).toContain('useLandingRuntimeBinding');
+    expect(landingRuntimeBinding).toContain('/verified-display');
+    expect(landingRuntimeBinding).toContain('PublicCryptoScoringPreview');
+    expect(landingRuntimeBinding).toContain("const PUBLIC_SCORER_SYMBOL = 'BTC' as const");
   });
 
   it('retains the compact assessment-tool sideboard outside the LF-01 root', () => {
@@ -125,7 +131,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(enterpriseScorer).toContain("fetch('/api/crypto/score'");
   });
 
-  it('keeps productive scorer components outside the LF-01 design dependency chain', () => {
+  it('keeps productive scorer logic outside the pinned LF-01 design tree and reuses the canonical public scorer through the Finance adapter', () => {
     expect(routes).not.toContain('<FeatureRecoveryBoundary');
     expect(routes).not.toContain('function PublicPreviewBoundary');
     expect(routes).not.toContain('<PublicAnalysisWorkbench');
@@ -133,6 +139,8 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPage).toContain('frontend-reference-design-port');
     expect(landingPort).not.toContain('CryptoScoringEnterprise');
     expect(landingPort).not.toContain('/api/crypto/score');
+    expect(landingRuntimeBinding).toContain('PublicCryptoScoringPreview');
+    expect(landingRuntimeBinding).not.toContain("fetch('/api/crypto/score'");
     expect(publicWorkbench).toContain('<FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>');
     expect(publicWorkbench).toContain('<Suspense fallback={<WorkbenchLoadingState />}>');
   });
