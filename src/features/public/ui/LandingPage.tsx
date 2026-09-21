@@ -158,7 +158,7 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
     <div className="relative min-h-screen overflow-hidden bg-background text-text-primary selection:bg-brand-primary/30 selection:text-text-primary">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,color-mix(in_srgb,var(--color-brand-primary)_9%,transparent),transparent_30%),radial-gradient(circle_at_90%_20%,color-mix(in_srgb,var(--color-decorative-purple)_8%,transparent),transparent_30%),radial-gradient(circle_at_52%_72%,color-mix(in_srgb,var(--color-decorative-cyan)_4%,transparent),transparent_34%)]" />
 
-      <header className="sticky top-0 z-40 border-b border-brand-primary/20 bg-background/88 backdrop-blur-xl shadow-[0_8px_32px_color-mix(in_srgb,var(--color-brand-primary)_7%,transparent)]">
+      <header className="sticky top-0 z-40 hidden border-b border-brand-primary/20 bg-background/88 backdrop-blur-xl shadow-[0_8px_32px_color-mix(in_srgb,var(--color-brand-primary)_7%,transparent)] md:block">
         <div className="mx-auto flex min-h-20 max-w-[1480px] items-center justify-between gap-4 px-4 sm:px-6">
           <a
             href="/"
@@ -225,6 +225,30 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
 
       <main className="relative z-10 mx-auto max-w-[1480px] space-y-5 px-3 py-4 sm:px-6 sm:py-6 lg:space-y-6">
         <section
+          data-landing-section="mobile-mockup-hero"
+          aria-label="CAPITAL-AI Mobile Startansicht nach freigegebenem Mockup"
+          className="relative left-1/2 aspect-[9/16] w-screen -translate-x-1/2 overflow-hidden bg-[url('/brand/hero/capital-ai-mobile-landing.jpg')] bg-cover bg-top bg-no-repeat shadow-[0_28px_90px_color-mix(in_srgb,var(--color-brand-primary)_10%,transparent)] md:hidden"
+        >
+          <span className="sr-only">
+            Mobile CAPITAL-AI Startansicht. Die dargestellte Grafik ist das freigegebene Layout-Mockup; Finanzdaten und Scoring bleiben an die nachfolgenden kanonischen Laufzeitflächen gebunden.
+          </span>
+          <a
+            href="#analysis-workbench"
+            aria-label="Analyse starten"
+            className="absolute left-[11%] top-[44.6%] h-[5.4%] w-[45%] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+          >
+            <span className="sr-only">Analyse starten</span>
+          </a>
+          <a
+            href="#core-modules"
+            aria-label="Produkt entdecken"
+            className="absolute left-[11%] top-[50.4%] h-[4.9%] w-[45%] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+          >
+            <span className="sr-only">Produkt entdecken</span>
+          </a>
+        </section>
+
+        <section
           data-landing-section="application-description"
           aria-label="CAPITAL-AI Anwendungsbeschreibung"
           className="ui-panel overflow-hidden border-brand-primary/20 bg-surface/30"
@@ -271,7 +295,7 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
         <section
           id="produkt"
           data-landing-section="hero"
-          className="ui-panel relative overflow-hidden border-brand-primary/25 bg-surface/30 shadow-[0_28px_90px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)]"
+          className="ui-panel relative hidden overflow-hidden border-brand-primary/25 bg-surface/30 shadow-[0_28px_90px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)] md:block"
         >
           <NeuralBackground intensity="standard" className="opacity-35" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_74%_48%,color-mix(in_srgb,var(--color-brand-primary)_16%,transparent),transparent_25%),linear-gradient(90deg,color-mix(in_srgb,var(--color-background)_94%,transparent)_0%,color-mix(in_srgb,var(--color-background)_70%,transparent)_55%,transparent_100%)]" />

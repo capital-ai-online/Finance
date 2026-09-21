@@ -83,6 +83,7 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
 
   it('renders the design-first landing sections in the owner-directed order without fake data', () => {
     const orderedMarkers = [
+      'data-landing-section="mobile-mockup-hero"',
       'data-landing-section="application-description"',
       'data-landing-section="ai-newsfeed-slot"',
       'data-landing-section="hero"',
@@ -112,6 +113,10 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
 
   it('aligns the public landing shell with the approved desktop and mobile visual direction', () => {
     expect(landing).toContain('AI-driven market intelligence');
+    expect(landing).toContain('data-landing-section="mobile-mockup-hero"');
+    expect(landing).toContain("capital-ai-mobile-landing.jpg");
+    expect(landing).toContain('aspect-[9/16]');
+    expect(landing).toContain('md:hidden');
     expect(landing).toContain('Live markets. Real insights.');
     expect(landing).toContain('Marktdaten <span className="text-brand-primary">verstehen.</span>');
     expect(landing).toContain('Chancen besser erkennen.');
