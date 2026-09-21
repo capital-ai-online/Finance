@@ -6,8 +6,8 @@
 **Version:** 2.0.0  
 **Date:** 2026-08-25  
 **Repository:** SvenKulessa/Finance  
-**Current-state authority:** `docs/architecture/ROADMAP.md` / `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Governance authority:** ADR-0096 + `/AGENTS.md` + `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`  
+**Current-state index (non-authorizing):** `docs/architecture/ROADMAP.md` / `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
+**Execution trust root:** `/AGENTS.md@CURRENT_MAIN`; ADR-0096 remains a Governance subject-matter architecture constraint  
 **Owner:** SvenKulessa
 
 ---
@@ -23,8 +23,8 @@ Ausführungsroadmap". Diese Rollenbehauptung ist durch ADR-0096 und den heutigen
 Control Plane überholt. Die aktuelle Ausführungs- und Statusauflösung erfolgt über:
 
 1. `/AGENTS.md` als Repository Trust Root;
-2. `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` für den Branch-/PR-/Sync-Lifecycle;
-3. `docs/architecture/ROADMAP.md` als current-state DevelopmentChain Status Index;
+2. `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` nur als stabiler historischer Alias, der exklusiv auf `/AGENTS.md@CURRENT_MAIN` auflöst; es existiert keine eigenständige DevelopmentChain-Ausführungspolicy;
+3. `docs/architecture/ROADMAP.md` als nicht autorisierender current-state DevelopmentChain Status Index;
 4. stabile ADR-/ESS-/Authority-/Control-Registries für fachliche und technische Authorities;
 5. Human/Owner-Entscheidungen für Merge und geschützte externe Mutationen.
 
@@ -39,13 +39,13 @@ Roadmaps, historische Runbooks und Evidence dürfen diese Authority-Reihenfolge 
 | I0 | M0–M7 Baseline | SA0–SA4 Baseline | **VERIFIED PASS** | Erhalten; keine historische Evidence als neue Authority interpretieren |
 | I1 | M8 Agent Cutover | Work-Package-/Provider-Control-Plane | **COMPLETE / VERIFIED PASS** | Provider-/Capability-Erweiterungen nur über aktuelle Governance |
 | I2 | M9 Assurance / Incident / Break-Glass | Assurance Evidence | **COMPLETE / VERIFIED PASS** | Historische Drill-Evidence bleibt Evidence; neue Mutationen benötigen heutigen Scope/Gates |
-| I3 | M10 Passkey Owner PR Authorization | Passkey/WebAuthn-Evidence | **HISTORISCH VERIFIZIERT; CURRENT ENFORCEMENT `SUSPENDED / OFF`** | M10 darf nicht aus alter Evidence reaktiviert werden; neue explizite Owner-Entscheidung + aktuelle Prerequisites erforderlich |
+| I3 | M10 Passkey Owner PR Authorization | Passkey/WebAuthn-Evidence | **HISTORISCH VERIFIZIERT; CURRENT ENFORCEMENT `RETIRED / OFF`** | M10 darf nicht aus alter Evidence reaktiviert werden; neue explizite Owner-Entscheidung + aktuelle Prerequisites erforderlich |
 | I4 | Closure / SA5 external mutation | Bounded External Mutation | **NICHT DURCH DIESE ROADMAP AUTORISIERT** | Separate aktuelle ADR/Owner-Authority und jeweilige Production-Mutation-Gates erforderlich |
 
 ### M10-Klarstellung
 
 M10 besitzt historische Implementierungs-, Incident- und Verification-Evidence. Der aktuelle
-Control Plane setzt `AUTHORIZE_PR_CI` dennoch ausdrücklich auf **`SUSPENDED / OFF`**. Human/
+Trust Root setzt den produktiven M10-/`AUTHORIZE_PR_CI`-Pfad ausdrücklich auf **`RETIRED / OFF`**. Seine Abwesenheit ist kein Implementierungsgap. Human/
 CODEOWNER-Review und Human Merge bleiben maßgeblich. Dieses Dokument kann den Gate-Zustand nicht
 ändern.
 
@@ -97,7 +97,7 @@ Insbesondere bleiben separat geschützt:
 
 - `/AGENTS.md` — Repository Trust Root;
 - `docs/architecture/ROADMAP.md` — current-state DevelopmentChain Status Index;
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` — DevelopmentChain Execution Policy;
+- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` — historischer Alias; aktuelle Semantik ausschließlich aus `/AGENTS.md@CURRENT_MAIN`;
 - `docs/governance/authority-registry.json` — stabile Authority-Identitäten;
 - `docs/governance/control-catalog.json` — Governance-/Security-Control-Katalog;
 - `docs/adr/registry.json` und `.ai/registry/ess-registry.json` — ADR-/ESS-Namespace und Lifecycle.
@@ -146,15 +146,12 @@ Version-History bis `1.0.24` werden hiermit auf einen eindeutigen Dokumentstand 
 
 ## 8. Current next action
 
-Aktuelle Arbeit wird ausschließlich aus dem jeweils gültigen current-state Index, ADR/ESS,
-Owner-Prioritäten, Quick Wins oder explizit markierten Folgepunkten abgeleitet. Vor jedem neuen
-Work Package sind current `main`, offene Writer/PRs, Scope-Korrelationen und die wirksamen
-Governance-/Security-Authorities erneut zu prüfen.
+Aktuelle Arbeit wird ausschließlich nach `/AGENTS.md@CURRENT_MAIN` aus kanonischem Projekt-/Roadmap-Status oder frischer Human/Owner-Direction ausgewählt. Current-state Index, ADR/ESS, Quick Wins und Reports sind dabei nicht autorisierende Status- bzw. Subject-Matter-Eingaben. Vor jedem neuen Work Package sind current `main`, offene Writer/PRs, Scope-Korrelationen und die wirksamen Governance-/Security-Constraints erneut zu prüfen.
 
 Für M10 gilt bis zu einer neuen expliziten Owner-Reaktivierungsentscheidung unverändert:
 
 ```text
-AUTHORIZE_PR_CI = SUSPENDED / OFF
+AUTHORIZE_PR_CI = RETIRED / OFF
 HUMAN/CODEOWNER REVIEW = REQUIRED
 HUMAN MERGE = REQUIRED
 ```
@@ -165,14 +162,12 @@ HUMAN MERGE = REQUIRED
 
 - `AGENTS.md`
 - `docs/architecture/ROADMAP.md`
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
-- `docs/governance/SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md`
-- `docs/governance/DOCUMENTATION_HYGIENE_POLICY.md`
+- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` (historical alias -> `AGENTS.md`)
+- `docs/governance/DOCUMENTATION_HYGIENE_POLICY.md` (historical/documentary projection only)
 - `docs/governance/authority-registry.json`
 - `docs/governance/control-catalog.json`
 - `docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md`
-- `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`
-- `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md`
+- historical DevelopmentChain/Systemadmin roadmap snapshots in Git/archive provenance
 - `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md`
 - `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md`
 - `docs/evidence/m9/M9_CLOSURE_EVIDENCE.md`
