@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
-import { resolvePreCreatePrLabel } from './prLabelClassification.mjs';
+import { resolveCanonicalProjectLabelSet, resolvePreCreatePrLabel } from './prLabelClassification.mjs';
 
 const projectMapping = fs.readFileSync(new URL('../../docs/projects/README.md', import.meta.url), 'utf8');
 const createWorkflowPath = new URL('../../.github/workflows/open-agent-draft-pr.yml', import.meta.url);
@@ -32,6 +32,29 @@ test('uses the canonical project color instead of a second label color registry'
   assert.match(result.label.description, /Frontend/);
 });
 
+test('resolves the complete canonical project label set for provider convergence without a second registry', () => {
+  const result = resolveCanonicalProjectLabelSet({ mappingMarkdown: projectMapping });
+
+  assert.equal(result.state, 'CANONICAL_PROJECT_LABEL_SET_CLASSIFIED');
+  assert.equal(result.phase, 'CURRENT_MAIN_PROVIDER_CONVERGENCE');
+  assert.equal(result.labels.length, 11);
+  assert.equal(new Set(result.labels.map((label) => label.name)).size, result.labels.length);
+  assert.deepEqual(
+    result.labels.find((label) => label.projectId === 'CAPITAL-AI-OPS'),
+    {
+      projectId: 'CAPITAL-AI-OPS',
+      name: 'project:CAPITAL-AI-OPS',
+      color: '845CDC',
+      description: '✈️ Operations · CAPITAL-AI-OPS',
+    },
+  );
+  assert.equal(
+    result.labels.find((label) => label.projectId === 'CAPITAL-AI-FE')?.color,
+    'DC7CA8',
+  );
+  assert.equal(result.authority.labels_can_authorize_merge, false);
+});
+
 test('fails closed when project resolution is missing or ambiguous', () => {
   assert.throws(
     () => resolvePreCreatePrLabel({ projectId: 'CAPITAL-AI-UNKNOWN', mappingMarkdown: projectMapping }),
@@ -56,7 +79,7 @@ test('fails closed on malformed canonical project color', () => {
   );
 });
 
-test('PR create workflow classifies and ensures the label before gh pr create', () => {
+test('PR create workflow classifies before creation and converges provider metadata from current main', () => {
   const workflow = fs.readFileSync(createWorkflowPath, 'utf8');
   const classifyIndex = workflow.indexOf('node ../create-policy/scripts/pr/prLabelClassification.mjs');
   const ensureIndex = workflow.indexOf('gh label create "$PR_LABEL_NAME"');
@@ -69,6 +92,11 @@ test('PR create workflow classifies and ensures the label before gh pr create', 
   assert.match(workflow, /pull-requests:\s*write/);
   assert.doesNotMatch(workflow, /issues:\s*write/);
   assert.doesNotMatch(workflow, /PR_LABELS_JSON/);
+  assert.match(workflow, /PR_LABEL_CLASSIFICATION_SCOPE=ALL_PROJECTS/);
+  assert.match(workflow, /CANONICAL_PROJECT_LABEL_SET_CLASSIFIED/);
+  assert.match(workflow, /gh label create "\$name"/);
+  assert.match(workflow, /Provider-Readback/);
+  assert.match(workflow, /inputs\.head_branch == ''/);
 });
 
 test('the former post-create PR label workflow is an inert no-runner tombstone', () => {
