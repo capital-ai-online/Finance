@@ -36,5 +36,22 @@
     "note": "PR #1225 changes OPS CI telemetry/Roadmap paths; PR #1211 changes SEO paths. Neither overlaps the SOCIAL-P1 evidence/remediation paths."
   },
   "scopeNote": "Social-owned acceptance/evidence and owner-correct runtime handoff only. No model/provider/GPU mutation and no scripts/operations runtime implementation on this branch.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "validationState": "READY_FOR_PR",
+  "validatedAt": "2026-09-22T00:19:00+02:00",
+  "finalCorrelation": {
+    "currentMain": "a328f9cfdb1dba2845aa0e5c2c78e5a286a0e64d",
+    "openPullRequests": [
+      1234,
+      1225,
+      1211
+    ],
+    "changedFileOverlap": false,
+    "notes": [
+      "PR #1234 changes only docs/runbooks/SOCIAL_MEDIA_OAUTH_SETUP.md.",
+      "PR #1225 changes OPS CI telemetry/Roadmap paths.",
+      "PR #1211 changes SEO landing paths.",
+      "No open PR overlaps the SOCIAL-P1 evidence/remediation files in this branch."
+    ]
+  }
 }
