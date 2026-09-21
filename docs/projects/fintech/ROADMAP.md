@@ -1,12 +1,12 @@
 # CAPITAL-AI-FINTECH — Canonical Roadmap
 
-**Baseline:** `main@4088582d6b49f1551002022638ee0bcb187c8923`
+**Baseline:** `main@daffc24ec0ce3c80d7aad3022902d1380b3a7eb6`
 
 **Project:** `CAPITAL-AI-FINTECH`  
 **Folder:** `docs/projects/fintech/`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-09..PVC-17`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-21 — FIN-21 post-merge state converged against current main; stale branch/validation projections retired  
+**Reconciliation:** 2026-09-21 — FIN-21 remains terminal; landing-first Owner direction correlated; FIN-LF-01 added as dependency-held preparation
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -38,6 +38,14 @@ Human-merged PR #1046 (`f4d94581eaa1e59b19c08293c4ddbda2f7d33d9a`) removed Alpac
 **State:** `DONE_MAIN / TERMINAL PROJECTION SLICE`
 
 Human-merged PR #1157 (`59b65e4907b27f57acd639d56f83ab365f30e4a5`) materialized the six-class read-only FINTECH universe/orchestration projection plus 20 Equity subclass lenses as `RESEARCH_TARGET_NOT_MODEL`, all without creating a second registry, dispatcher, taxonomy, provider plane or productive subclass score. Current main contains the merged implementation and remains descended from the merge commit. Evidence: `evidence/FIN_21_MULTI_ASSET_ORCHESTRATOR_UNIVERSE_2026-09-20.md`.
+
+### FIN-LF-01 — Landing Scorer Consumer Contract
+
+**State:** `HELD / LANDING_BASELINE_PRESENT / LATER_PHASE_DEPENDENCY`
+
+Owner-directed landing-first integration remains gated for productive scoring, but the landing-creation prerequisite is now satisfied: merged #1195 established the root/static semantics and merged #1206 established the pinned FRONTEND presentation. The former landing-existence blocker is superseded. LF-04 still depends on later LF-02/LF-03 integration readiness, #1209 desktop stabilization where relevant, plus Security and QM readiness. The future landing consumer remains BTC-only for free/no-paid access and must consume the existing `ScoringDispatcher -> CanonicalScoreResult` chain with no synthetic fallback, browser-local scoring, ranking, provider or entitlement authority.
+
+Canonical package: `work-packages/FIN_LF_01_LANDING_SCORER_CONSUMER_CONTRACT_2026-09-21.md`.
 
 ## Historical FINTECH work inventory — non-active unless currently revalidated
 

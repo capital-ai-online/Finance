@@ -57,3 +57,12 @@ FIN-17 is terminal for the bounded ranking-authority split. PR #946 Human-merged
 5. P3 — `FIN-DRIFT-01`.
 
 Detailed current planning semantics are maintained in `ROADMAP.md`; atomic execution projection is maintained in `TASK_REGISTER.md`.
+
+## FIN-LF-01 — Landing Scorer Consumer Contract
+
+**Status:** `HELD / LANDING_BASELINE_PRESENT / LATER_PHASE_DEPENDENCY`  
+**Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-09..17`  
+**Scope:** define and preserve the minimal future landing scoring consumer contract without activating productive integration.  
+**Dependency:** Landing creation/presentation is satisfied by merged #1195/#1206 and is no longer a blocker. Productive LF-04 still requires LF-02/LF-03 plus relevant #1209 desktop stabilization and SEC/QM readiness.  
+**Exit:** BTC-only free/no-paid consumer behavior is bound to the existing ScoringDispatcher/CanonicalScoreResult chain with evidence/DQ/error semantics, no synthetic fallback and no duplicate authority.  
+**Detail:** `work-packages/FIN_LF_01_LANDING_SCORER_CONSUMER_CONTRACT_2026-09-21.md`.
