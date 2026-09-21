@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-DESKTOP-RESPONSIVE-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -44,5 +44,7 @@
     "affected PVC outputs may scope FE-owned layout/responsive/accessibility adaptation while their Primary Owner and domain contract remain unchanged",
     "focused regression plus required repository checks pass on the exact PR head"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-21T23:41:00+02:00",
+  "releaseReason": "PR #1209 merged as 9ab7776114beff33412e1bd2cfb57c3db84e31b9 and is an ancestor of CURRENT_MAIN a54f54c43fd7e33e9a77b61542f75947e6deb23c; claim retained as terminal evidence only."
 }
