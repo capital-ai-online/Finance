@@ -25,7 +25,8 @@ test('classifier is read-only and binds exact same-repository PR head to current
     "pr.base.ref === 'main'",
     'pr.head.repo?.full_name === repository',
     'normalizeSha(pr.head.sha) === headSha',
-    'mainSha !== baseSha',
+    "basehead: `${mainSha}...${headSha}`",
+    "core.setOutput('base_sha', mainSha)",
     "steps.source.outputs.conclusion == 'failure'",
   ]) assert.ok(block.includes(token), 'missing classify guard: ' + token);
   assert.doesNotMatch(block, /contents: write|pull-requests: write|actions: write/);
@@ -130,7 +131,7 @@ test('write is exact-head/main, non-force and CI redispatch is after the branch 
     'expected_head_sha: commit.sha',
     'expected_base_sha: postMainSha',
   ]) assert.ok(write.includes(token), 'missing write guard: ' + token);
-  assert.ok(write.indexOf('updateRef') < write.indexOf('createWorkflowDispatch'));
+  assert.ok(write.indexOf('updateRef') < write.indexOf("workflow_id: 'ci.yml'"));
 });
 
 test('all referenced marketplace actions are pinned to immutable commit SHAs', () => {
