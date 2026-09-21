@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import fs from 'node:fs';
 import {
   PR_TEMPLATE_MARKER,
   PR_TEMPLATE_VERSION,
@@ -436,6 +437,82 @@ export function reconcileDecisionBody(bodyText, gates, details = {}) {
   };
 }
 
+const CANONICAL_V18_HEADINGS = Object.freeze([
+  '## 1. 🧭 Entscheidung',
+  '## 2. ✅ Evidence',
+  '## 3. 🔍 Technical Evidence',
+]);
+
+function validateCanonicalBootstrapBody(bodyText) {
+  const body = String(bodyText || '');
+  if (detectPrTemplateVersion(body) !== PR_TEMPLATE_VERSION) return 'bootstrap-template-version-invalid';
+  const headings = body.match(/^## .+$/gm) || [];
+  if (
+    headings.length !== CANONICAL_V18_HEADINGS.length ||
+    !CANONICAL_V18_HEADINGS.every((heading, index) => headings[index] === heading)
+  ) return 'bootstrap-headings-noncanonical';
+  if (/\{\{[A-Z0-9_]+\}\}/.test(body)) return 'bootstrap-has-unresolved-placeholders';
+  for (const marker of [
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+  ]) {
+    if (body.split(marker).length - 1 !== 1) return 'bootstrap-baseline-boundary-invalid';
+  }
+  return '';
+}
+
+export function reconcileDecisionBodyWithBootstrap(
+  bodyText,
+  canonicalBootstrapBody,
+  gates,
+  details = {},
+) {
+  const original = String(bodyText || '');
+  const direct = reconcileDecisionBody(original, gates, details);
+  if (direct.eligible) return { ...direct, bootstrapped: false };
+  if (
+    direct.reason !== 'decision-section-boundary-ambiguous' ||
+    detectPrTemplateVersion(original) !== PR_TEMPLATE_VERSION
+  ) {
+    return { ...direct, bootstrapped: false };
+  }
+
+  const bootstrap = String(canonicalBootstrapBody || '');
+  if (!bootstrap.trim()) return { ...direct, bootstrapped: false };
+
+  const bootstrapError = validateCanonicalBootstrapBody(bootstrap);
+  if (bootstrapError) {
+    return {
+      eligible: false,
+      changed: false,
+      reason: bootstrapError,
+      body: original,
+      bootstrapped: false,
+    };
+  }
+
+  const reconciled = reconcileDecisionBody(bootstrap, gates, details);
+  if (!reconciled.eligible) {
+    return {
+      eligible: false,
+      changed: false,
+      reason: 'bootstrap-' + reconciled.reason,
+      body: original,
+      bootstrapped: false,
+    };
+  }
+
+  return {
+    ...reconciled,
+    changed: reconciled.body !== original,
+    reason: 'canonical-v1.8-renderer-bootstrap-reconciled',
+    bootstrapped: true,
+  };
+}
+
+
 async function paginateArray(url, token) {
   const values = [];
   for (let page = 1; page <= 20; page += 1) {
@@ -646,7 +723,7 @@ async function mutateAutoMerge({ repository, token, pr, enabled }) {
   return observed;
 }
 
-async function reconcileOne({ repository, token, prNumber }) {
+async function reconcileOne({ repository, token, prNumber, canonicalBootstrapBody = '' }) {
   let pr = await githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token);
   if (pr?.state !== 'open' || pr?.base?.ref !== 'main' || pr?.head?.repo?.full_name !== repository) {
     console.log('[PR-DECISION] PR #' + prNumber + ' outside mutable open/same-repo/main boundary; skipped.');
@@ -659,7 +736,12 @@ async function reconcileOne({ repository, token, prNumber }) {
   if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('CURRENT_MAIN could not be resolved.');
 
   const snapshot = await evaluateSnapshot({ repository, token, prNumber, pr, mainSha });
-  const rendered = reconcileDecisionBody(originalBody, snapshot.gates, snapshot.gateDetails);
+  const rendered = reconcileDecisionBodyWithBootstrap(
+    originalBody,
+    canonicalBootstrapBody,
+    snapshot.gates,
+    snapshot.gateDetails,
+  );
   const classification = classifyAutoMergeEligibility({
     pr,
     repository,
@@ -943,7 +1025,11 @@ async function main() {
   if (!token) fail('GITHUB_TOKEN/GH_TOKEN is missing.');
   if (!Number.isInteger(prNumber) || prNumber <= 0) fail('PR_NUMBER must identify one open pull request.');
 
-  const result = await reconcileOne({ repository, token, prNumber });
+  const bootstrapPath = String(process.env.PR_CANONICAL_BOOTSTRAP_BODY || '').trim();
+  const canonicalBootstrapBody = bootstrapPath && fs.existsSync(bootstrapPath)
+    ? fs.readFileSync(bootstrapPath, 'utf8')
+    : '';
+  const result = await reconcileOne({ repository, token, prNumber, canonicalBootstrapBody });
   appendGithubOutput({
     changed: String(result.changed === true),
     skipped: String(result.skipped === true),
