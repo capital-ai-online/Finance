@@ -12,7 +12,7 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
     const findings = evaluateAuthLifecycleRepositoryContracts();
     expect(findings.map((item) => item.id)).toEqual([
       'google_oauth_provider_handoff',
-      'authenticated_root_dashboard_handoff',
+      'authenticated_root_landing_handoff',
       'logout_local_default',
       'logout_explicit_global_action',
       'registration_primary_contract',
@@ -43,7 +43,7 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
   it('routes remediation findings to the owning projects and allows them to turn from FAIL to PASS without changing the OPS inventory', () => {
     const findings = byId();
     const owners: Record<string, string> = {
-      authenticated_root_dashboard_handoff: 'CAPITAL-AI-FE',
+      authenticated_root_landing_handoff: 'CAPITAL-AI-FE',
       logout_local_default: 'CAPITAL-AI-FE',
       logout_explicit_global_action: 'CAPITAL-AI-FE',
       registration_roadmap_closure: 'CAPITAL-AI-FE',
