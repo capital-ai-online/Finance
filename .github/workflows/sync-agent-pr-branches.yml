@@ -12,7 +12,7 @@ run-name: >-
 # - successful Post-Merge Production Correlation: sync exactly one next eligible review-ready PR;
 # - ready_for_review: sync exactly the PR that just left draft state;
 # - approved review: perform the mandatory immediately-before-merge current-main synchronization for that exact PR;
-# - workflow_dispatch: explicit recovery/maintenance path that may sync drafts as well.
+# - workflow_dispatch: explicit recovery path; an exact PR stays exact, an empty request advances exactly one FIFO PR.
 #
 # Trusted work branches are same-repository PRs against main and either:
 # - active provider prefixes agent/*, claude/*, grok/*, ai/*; or
@@ -31,7 +31,7 @@ on: # zizmor: ignore[dangerous-triggers]
   workflow_dispatch:
     inputs:
       pr_number:
-        description: Optional exact open same-repository PR number. Empty keeps the manual all-PR maintenance lane.
+        description: Optional exact open same-repository PR number. Empty advances exactly one next eligible FIFO PR.
         required: false
         type: string
 
@@ -125,6 +125,11 @@ jobs:
             prs="$(gh pr list --repo "$REPO" --state open \
               --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
               --limit 200)"
+          fi
+
+          sequential_lane='false'
+          if [ "$EVENT_NAME" = 'workflow_run' ] || { [ "$EVENT_NAME" = 'workflow_dispatch' ] && [ -z "${DISPATCH_PR_NUMBER:-}" ]; }; then
+            sequential_lane='true'
           fi
 
           current_main_sha="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
@@ -233,7 +238,7 @@ jobs:
             lineage_status="$(gh api "repos/$REPO/compare/$current_main_sha...$head_sha" --jq '.status')"
             if [ "$lineage_status" = 'ahead' ] || [ "$lineage_status" = 'identical' ]; then
               echo "PR #$number ($head): generation=$generation enthaelt CURRENT_MAIN bereits; kein Branch-Write erforderlich."
-              [ "$EVENT_NAME" = 'workflow_run' ] && break
+              [ "$sequential_lane" = 'true' ] && break
               continue
             fi
 
@@ -245,7 +250,7 @@ jobs:
               "repos/$REPO/pulls/$number/update-branch" \
               -f "expected_head_sha=$head_sha" >/dev/null 2>err.log; then
               echo "PR #$number ($head): Update-Branch angestossen."
-              if [ "$EVENT_NAME" = 'workflow_run' ]; then
+              if [ "$sequential_lane" = 'true' ]; then
                 rm -f err.log
                 break
               fi
@@ -259,7 +264,7 @@ jobs:
               fi
               if [ "$after_main_sha" = "$current_main_sha" ] && { [ "$after_lineage" = 'ahead' ] || [ "$after_lineage" = 'identical' ]; }; then
                 echo "PR #$number ($head): 422, aber Readback beweist Konvergenz: main=$current_main_sha head=$after_head_sha lineage=$after_lineage."
-                if [ "$EVENT_NAME" = 'workflow_run' ]; then
+                if [ "$sequential_lane" = 'true' ]; then
                   rm -f err.log
                   break
                 fi
@@ -275,9 +280,9 @@ jobs:
               # This is not a permission failure and must not masquerade as a broken baseline. We also do
               # not invent a second merge/rebase path here: ADR-0036 remains the final current-main gate.
               echo "PR #$number ($head): Stacked PR erkannt; GitHub update-branch ist fuer diesen Zustand nicht unterstuetzt (403). Kein Auto-Sync ausgefuehrt; current-main ancestry bleibt vor Merge durch die bestehende PR-Governance fail-closed erzwungen."
-              if [ "$EVENT_NAME" = 'workflow_run' ]; then
+              if [ "$sequential_lane" = 'true' ]; then
                 rm -f err.log
-                echo "Post-Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen."
+                echo "Sequentielle Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen."
                 exit 0
               fi
             else
