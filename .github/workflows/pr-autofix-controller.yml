@@ -40,6 +40,7 @@ jobs:
       pull-requests: read
     outputs:
       eligible: ${{ steps.pr.outputs.eligible }}
+      sync_required: ${{ steps.pr.outputs.sync_required }}
       pr_number: ${{ steps.pr.outputs.pr_number }}
       head_sha: ${{ steps.pr.outputs.head_sha }}
       head_ref: ${{ steps.pr.outputs.head_ref }}
@@ -202,11 +203,32 @@ jobs:
               branch: 'main',
             });
             const mainSha = normalizeSha(main.commit.sha);
-            const baseSha = normalizeSha(pr.base.sha);
-            if (mainSha !== baseSha) {
-              held(`current main drifted from PR base (${mainSha} != ${baseSha})`);
+            if (!/^[0-9a-f]{40}$/.test(mainSha)) {
+              held('current main SHA is invalid');
               return;
             }
+            const baseSha = mainSha;
+            const lineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${mainSha}...${headSha}`,
+            });
+            const containsMain = lineage.data.status === 'ahead' || lineage.data.status === 'identical';
+            if (!containsMain) {
+              core.notice(`PR Autofix deferred: PR #${pr.number} does not contain CURRENT_MAIN ${mainSha}; canonical Update Branch is required first.`);
+              core.setOutput('eligible', 'false');
+              core.setOutput('sync_required', 'true');
+              core.setOutput('pr_number', String(pr.number));
+              core.setOutput('head_sha', headSha);
+              core.setOutput('head_ref', pr.head.ref);
+              core.setOutput('base_sha', mainSha);
+              core.setOutput('current_main_sha', mainSha);
+              core.setOutput('pr_metadata_shape', prMetadataShape);
+              core.setOutput('source_workflow_path', run.path);
+              core.setOutput('previous_autofix_signature', '');
+              return;
+            }
+            core.setOutput('sync_required', 'false');
 
             const { data: headCommit } = await github.rest.repos.getCommit({
               owner: context.repo.owner,
@@ -308,6 +330,7 @@ jobs:
             printf -- '- generation: `%s`\n' "$REPORT_GENERATION"
             printf -- '- control plane: `%s`\n' "$REPORT_CONTROL_PLANE"
             printf -- '- writer lease: `%s`\n' "$REPORT_WRITER_LEASE"
+            printf -- '- revalidation: `%s`\n' "${REPORT_REVALIDATION:-sync-deferred}"
             printf -- '- classification: `%s`\n' "$REPORT_CLASSIFICATION"
             printf -- '- decision: `%s`\n' "$REPORT_DECISION"
             printf -- '- metadata shape: `%s`\n' "$REPORT_METADATA_SHAPE"
@@ -317,6 +340,37 @@ jobs:
             echo '- merge authority: unchanged, Human/CODEOWNER only'
           } >> "$GITHUB_STEP_SUMMARY"
 
+
+  sync-before-fix:
+    name: PR vor Governance-/Testfix auf CURRENT_MAIN korrelieren
+    needs: [classify]
+    if: needs.classify.result == 'success' && needs.classify.outputs.sync_required == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    concurrency:
+      group: capital-ai-pr-writer-${{ needs.classify.outputs.pr_number }}
+      cancel-in-progress: false
+    steps:
+      - name: Kanonischen Update-Branch für exakt diesen PR anstoßen
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ needs.classify.outputs.pr_number }}
+        with:
+          script: |
+            const prNumber = String(process.env.PR_NUMBER || '').trim();
+            if (!/^[1-9][0-9]*$/.test(prNumber)) throw new Error('Exact PR number required for current-main correlation.');
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'sync-agent-pr-branches.yml',
+              ref: 'main',
+              inputs: { pr_number: prNumber },
+            });
+            core.notice(`PR #${prNumber}: CURRENT_MAIN correlation dispatched before any Governance/test fix.`);
 
   delegate_pr_metadata:
     name: PR-Metadata-Spezialistenpfad bestätigen
@@ -549,7 +603,35 @@ jobs:
             if (pr.state !== 'open' || pr.base.ref !== 'main') fail('PR is no longer open against main.');
             if (pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}`) fail('PR head repository drift.');
             if (normalizeSha(pr.head.sha) !== expectedHead || pr.head.ref !== process.env.EXPECTED_HEAD_REF) fail('PR head drift before autofix write.');
-            if (normalizeSha(pr.base.sha) !== expectedBase || normalizeSha(main.commit.sha) !== expectedBase) fail('Current-main/base drift before autofix write.');
+            if (normalizeSha(main.commit.sha) !== expectedBase) {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(prNumber) },
+              });
+              core.notice(`PR #${prNumber}: CURRENT_MAIN moved before registered autofix write; Update Branch dispatched and stale fix abandoned.`);
+              core.setOutput('deferred_to_sync', 'true');
+              return;
+            }
+            const lineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${expectedBase}...${expectedHead}`,
+            });
+            if (lineage.data.status !== 'ahead' && lineage.data.status !== 'identical') {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(prNumber) },
+              });
+              core.notice(`PR #${prNumber}: exact head no longer contains CURRENT_MAIN; Update Branch dispatched before registered fix.`);
+              core.setOutput('deferred_to_sync', 'true');
+              return;
+            }
 
             const { data: agentsFile } = await github.rest.repos.getContent({
               owner: context.repo.owner,
@@ -636,20 +718,46 @@ jobs:
               sha: commit.sha,
               force: false,
             });
-            await github.rest.actions.createWorkflowDispatch({
+            core.setOutput('new_head_sha', commit.sha);
+
+            const { data: postMain } = await github.rest.repos.getBranch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'ci.yml',
-              ref: pr.head.ref,
-              inputs: {
-                pr_number: String(prNumber),
-                expected_head_sha: commit.sha,
-                expected_head_ref: pr.head.ref,
-                expected_base_sha: expectedBase,
-                source_autofix_run_id: String(context.runId),
-              },
+              branch: 'main',
             });
-            core.setOutput('new_head_sha', commit.sha);
+            const postMainSha = normalizeSha(postMain.commit.sha);
+            const postLineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${postMainSha}...${commit.sha}`,
+            });
+            if (postLineage.data.status !== 'ahead' && postLineage.data.status !== 'identical') {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(prNumber) },
+              });
+              core.setOutput('revalidation', 'branch-sync');
+              core.notice(`PR #${prNumber}: CURRENT_MAIN moved during registered fix; Update Branch dispatched before new tests.`);
+            } else {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'ci.yml',
+                ref: pr.head.ref,
+                inputs: {
+                  pr_number: String(prNumber),
+                  expected_head_sha: commit.sha,
+                  expected_head_ref: pr.head.ref,
+                  expected_base_sha: postMainSha,
+                  source_autofix_run_id: String(context.runId),
+                },
+              });
+              core.setOutput('revalidation', 'ci');
+              core.notice(`PR #${prNumber}: registered fix remains correlated with CURRENT_MAIN; exact-head CI dispatched.`);
+            }
 
       - name: Ergebnis dokumentieren
         env:
@@ -659,6 +767,7 @@ jobs:
           REPORT_SIGNATURE: ${{ needs.classify.outputs.failure_signature }}
           REPORT_GENERATION: ${{ needs.classify.outputs.generation_id }}
           REPORT_WRITER_LEASE: ${{ needs.classify.outputs.writer_lease_key }}
+          REPORT_REVALIDATION: ${{ steps.write.outputs.revalidation }}
         shell: bash
         run: |
           {

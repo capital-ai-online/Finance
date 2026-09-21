@@ -100,7 +100,7 @@ describe('post-correlation next PR pipeline gate', () => {
     const yaml = workflow();
     expect(yaml).toContain("Updating a stacked PR's branch via this endpoint is not supported");
     expect(yaml).toContain("&& grep -qi '403' err.log");
-    expect(yaml).toContain('Post-Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen.');
+    expect(yaml).toContain('Sequentielle Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen.');
   });
 
   it('shares the canonical PR writer lease for ready-for-review and serializes the dynamic continuation lane', () => {

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-FRONTEND-PRESENTATION-VOCABULARY-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend the canonical ESS-0017 vocabulary with owner-requested frontend graphical terminology while preserving Frontend and domain authority boundaries.",
+  "startedAt": "2026-09-21T18:26:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
+  "branch": "governance/frontend-presentation-vocabulary-20260921",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 Platform Director plus cross-cutting Governance",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-FRONTEND-PRESENTATION-VOCABULARY-20260921.json",
+    "src/platform/Vocabulary/Registry/frontendPresentationConcepts.ts",
+    "src/platform/Vocabulary/index.ts",
+    "src/platform/Vocabulary/Tests/vocabularyRegistry.test.ts"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "ESS-0017 / ESS-0017-CONTRACTS",
+    "ADR-0078",
+    "docs/frontend/FRONTEND_ARCH.md",
+    "docs/frontend/COMPONENT_INVENTORY.md",
+    "CAPITAL-AI-FE remains presentation architecture owner; this package governs terminology only"
+  ],
+  "exitEvidence": [
+    "43 frontend presentation concepts have stable VOC-FRONTEND IDs and DE/EN preferred terms",
+    "default VocabularyRegistry exposes the concepts",
+    "registry collision and authority checks remain active",
+    "frontend concepts trace to FRONTEND_ARCH and COMPONENT_INVENTORY",
+    "no financial, IAM, entitlement, billing, compliance, release or deployment authority is transferred"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
