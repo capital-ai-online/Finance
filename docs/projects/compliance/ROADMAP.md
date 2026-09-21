@@ -1,6 +1,6 @@
 # CAPITAL-AI-COMP — Canonical Roadmap
 
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+**Baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`
 
 **Project:** `CAPITAL-AI-COMP`  
 **Folder:** `docs/projects/compliance/`  
@@ -14,6 +14,18 @@
 `historical/non-terminal != active`
 
 This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context, branch state and historical non-terminal markers are ledger/evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
+
+## Owner-directed landing-first gate — COMP-LF-01
+
+**State:** `ACTIVE / LANDING_BASELINE_PRESENT / EVIDENCE_GATE`  
+**Canonical identity:** `COMP-LF-01-STATIC-LANDING-COMPLIANCE-GATE-20260921`  
+**Work package:** `../../compliance/CAPITAL-AI-COMP/work-packages/COMP_LF_01_STATIC_LANDING_COMPLIANCE_GATE_2026-09-21.md`
+
+Fresh Human/Owner direction on 2026-09-21 establishes a landing-first dependency program as a non-authorizing projection resolving to `/AGENTS.md@CURRENT_MAIN`. The landing-creation prerequisite is now satisfied on CURRENT_MAIN by merged #1195 and #1206. Compliance therefore no longer holds work merely because a landing page must be created; only remaining concrete evidence gates apply, including truthful live/preview separation, privacy/consent, legal navigation, #1209 desktop stabilization, and independent SEC/QM evidence.
+
+At `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`, the root landing and pinned presentation are already present. The previous existence blocker is superseded. PR #1209 is the remaining FE desktop-only stabilization writer; COMP keeps only genuine residual evidence gates open and does not re-open merged #1195/#1206 work.
+
+**Exit:** `LF01_COMP_EVIDENCE_READY` only after exact-head/current-main evidence demonstrates a truthful static/presentational root, no productive feature API dependency required for first render, preserved legal/consent boundaries, independent SEC/QM state and explicit owner-routed gaps. This Compliance evidence state does not itself declare the cross-project LF-01 gate PASS.
 
 ## Current return reassessment — REQ-COMP-033
 
