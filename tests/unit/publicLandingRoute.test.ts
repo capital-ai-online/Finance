@@ -5,8 +5,21 @@ import { describe, expect, it } from 'vitest';
 const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
+const readTypeScriptTree = (relativeDir: string): string => {
+  const root = path.join(process.cwd(), relativeDir);
+  const visit = (dir: string): string[] =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const absolute = path.join(dir, entry.name);
+      if (entry.isDirectory()) return visit(absolute);
+      if (!/\.tsx?$/.test(entry.name)) return [];
+      return [fs.readFileSync(absolute, 'utf8')];
+    });
+  return visit(root).join('\n');
+};
+
 const routes = read('src/app/routing/AppRoutes.tsx');
 const landingPage = read('src/features/public/ui/LandingPage.tsx');
+const landingPort = readTypeScriptTree('src/features/public/ui/frontend-port');
 const publicWorkbench = read('src/app/public/PublicAnalysisWorkbench.tsx');
 const publicCryptoFacade = read('src/features/crypto/ui/public.ts');
 const publicScorerPreview = read('src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
@@ -40,18 +53,17 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).not.toContain('LandingRealtimeAiNewsfeed');
     expect(routes).not.toContain('LandingPricingPanel');
     expect(routes).not.toContain('PublicPreviewBoundary');
-    expect(landingPage).toContain('data-static-slot="news"');
-    expect(landingPage).toContain('data-static-slot="scorer"');
-    expect(landingPage).toContain('data-static-slot="pricing"');
-    expect(landingPage).toContain('data-static-slot="profile-subscription"');
-    expect(landingPage).not.toContain('{newsfeed}');
-    expect(landingPage).not.toContain('{preview}');
-    expect(landingPage).not.toContain('{pricing}');
-    expect(landingPage).not.toContain('fetch(');
-    expect(landingPage).not.toContain('/api/');
+
+    expect(landingPage).toContain('ReferenceApp');
+    expect(landingPage).toContain('frontend-reference-design-port');
+    expect(landingPage).toContain('data-landing-design-repository="SvenKulessa/FRONTEND"');
+    expect(landingPage).toContain('data-landing-design-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"');
+    expect(landingPort).not.toContain('fetch(');
+    expect(landingPort).not.toContain('/api/');
+    expect(landingPort).not.toContain('supabase');
   });
 
-  it('restores a compact expandable assessment-tool sideboard without importing the legacy Dashboard', () => {
+  it('retains the compact assessment-tool sideboard outside the LF-01 root', () => {
     expect(publicWorkbench).toContain('Universe Sideboard');
     expect(publicWorkbench).toContain('Enterprise Scorer');
     expect(publicWorkbench).toContain('Universe TOP Rankings');
@@ -66,14 +78,12 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(publicWorkbench).toContain('Backtest Engine');
     expect(publicWorkbench).toContain('Value-at-Risk Assessment');
     expect(publicWorkbench).toContain('const [sideboardExpanded, setSideboardExpanded] = useState(false)');
-    expect(publicWorkbench).toContain("lg:grid-cols-[88px_minmax(0,1fr)]");
-    expect(publicWorkbench).toContain("lg:grid-cols-[300px_minmax(0,1fr)]");
     expect(publicWorkbench).not.toMatch(/from\s+['"][^'"]*components\/Dashboard/);
     expect(publicWorkbench).not.toContain('PUBLIC_VISITOR_SESSION');
     expect(publicWorkbench).not.toContain("type: 'guest'");
   });
 
-  it('keeps the public Enterprise Scorer fixed to BTC while preserving server/login boundaries', () => {
+  it('keeps the existing productive public Enterprise Scorer contract separate from LF-01', () => {
     expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
     expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
     expect(publicWorkbench).not.toContain('onSelectSymbol={setSelectedSymbol}');
@@ -96,7 +106,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(publicWorkbench).not.toContain('<DeFiOrchestration');
   });
 
-  it('keeps Buffett stock-only in navigation and reserves a non-executable Satoshi FINTECH handoff in Crypto', () => {
+  it('keeps Buffett stock-only in navigation and reserves the Crypto handoff', () => {
     expect(dashboardNavigation).toContain("universe.id === 'equities'");
     expect(dashboardNavigation).toContain('Buffett Value Check');
     expect(dashboardNavigation).toContain("navigateAsset(universe.symbol, universe.category, 'buffet-value')");
@@ -115,13 +125,14 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(enterpriseScorer).toContain("fetch('/api/crypto/score'");
   });
 
-  it('keeps productive scorer components outside the LF-01 root dependency chain', () => {
+  it('keeps productive scorer components outside the LF-01 design dependency chain', () => {
     expect(routes).not.toContain('<FeatureRecoveryBoundary');
     expect(routes).not.toContain('function PublicPreviewBoundary');
     expect(routes).not.toContain('<PublicAnalysisWorkbench');
-    expect(landingPage).toContain('id="analysis-workbench"');
-    expect(landingPage).toContain('data-static-slot="scorer"');
-    expect(landingPage).toContain('Keine produktive Scoring-, Evidence-, DQ- oder Ranking-Ausgabe');
+    expect(landingPort).toContain('Enterprise Scorer');
+    expect(landingPage).toContain('frontend-reference-design-port');
+    expect(landingPort).not.toContain('CryptoScoringEnterprise');
+    expect(landingPort).not.toContain('/api/crypto/score');
     expect(publicWorkbench).toContain('<FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>');
     expect(publicWorkbench).toContain('<Suspense fallback={<WorkbenchLoadingState />}>');
   });
@@ -143,7 +154,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(loginPage).toContain('Canonical authentication page for `/login`');
     expect(loginPage).toContain('href="/"');
     expect(loginPage).toContain('← Zurück zur Landingpage');
-    expect(landingPage).toContain('href="/login"');
+    expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
   });
 
   it('routes the app-owned dashboard login action to /login', () => {
@@ -188,13 +199,17 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).toContain("if (currentPath === '/login')");
   });
 
-  it('keeps the canonical landing page suitable for Google OAuth branding review', () => {
-    expect(landingPage).toContain('CAPITAL-AI – quantitative Multi-Asset-Analyse');
-    expect(landingPage).toMatch(/Aktien,\s+Indizes,\s+Forex,\s+Kryptowährungen\s+und\s+Rohstoffe/);
-    expect(landingPage).toMatch(/erklärbaren\s+KI-Scorings/);
-    expect(landingPage).toContain('href="/datenschutz/"');
-    expect(landingPage).toContain('href="/agb/"');
-    expect(landingPage).toContain('href="/impressum/"');
+  it('keeps the canonical landing suitable for public brand and legal review', () => {
+    expect(landingPort).toContain('Capital-AI');
+    expect(landingPort).toContain('Marktdaten');
+    expect(landingPort).toContain('Chancen besser');
+    expect(landingPort).toContain('Globale Märkte im Überblick');
+    expect(landingPort).toContain('Enterprise Scorer');
+    expect(landingPort).toContain('Impressum');
+    expect(landingPort).toContain('Datenschutz');
+    expect(routes).toContain("if (currentPath === '/datenschutz')");
+    expect(routes).toContain("if (currentPath === '/agb')");
+    expect(routes).toContain("if (currentPath === '/impressum')");
   });
 
   it('does not create a presentation visitor session and still rejects anonymous Supabase sessions', () => {
@@ -203,6 +218,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).not.toContain('@capital-ai.online');
     expect(routes).not.toContain('@guest');
     expect(landingPage).not.toContain('UserSession');
+    expect(landingPort).not.toContain('UserSession');
     expect(publicWorkbench).not.toContain('UserSession');
     expect(sessionComposition).toContain('session.user.is_anonymous');
     expect(sessionComposition).toContain('rejectAnonymousSession');
@@ -210,6 +226,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
 
   it('does not allow the public feature to depend back on application composition', () => {
     expect(landingPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
+    expect(landingPort).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(loginPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(routes).toContain("import('../dashboard/Dashboard')");
     expect(routes).not.toContain("import('../public/PublicAnalysisWorkbench')");

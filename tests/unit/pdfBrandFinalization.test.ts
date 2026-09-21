@@ -36,6 +36,7 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
   const vite = read('vite.config.ts');
   const pdfBrand = read('src/platform/PdfReporting/pdfBrand.ts');
   const logo = read('src/shared/branding/CapitalAiLogo.tsx');
+  const emblem = read('src/shared/branding/CapitalAiEmblem.tsx');
   const neuralBackground = read('src/shared/visuals/NeuralBackground.tsx');
   const notebook = read('scripts/docs/export_notebooklm_pdfs.py');
   const requirements = read('scripts/docs/requirements-notebooklm-pdf.txt');
@@ -104,16 +105,22 @@ describe('CAPITAL-AI Branding Manifest v6.2 / PDF brand projection', () => {
     expect(pdfBrand).not.toContain('canvas: [24, 24, 27]');
   });
 
-  it('renders the canonical shared mark with Gold plus restrained decorative Cyan/Purple atmosphere', () => {
+  it('uses FRONTEND logo geometry while keeping Finance branding tokens and naming authoritative', () => {
     expect(pdfBrand).toContain('drawCapitalAiEmblem');
     expect(pdfBrand).toContain('drawCapitalAiWordmark');
+    expect(pdfBrand).toContain('SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07');
     expect(pdfBrand).toContain('EMBLEM_NODES');
     expect(pdfBrand).toContain('EMBLEM_EDGES');
+    expect(pdfBrand).not.toContain("'cyan']");
+
     expect(logo).toContain("from '../../platform/Branding/runtimeBrand'");
     expect(logo).toContain('version = CAPITAL_AI_VERSION');
-    expect(logo).toContain('var(--color-brand-primary)');
-    expect(logo).toContain('var(--color-brand-accent)');
-    expect(logo).not.toContain('var(--color-aif-neon-cyan)');
+    expect(logo).toContain('CAPITAL-AI');
+    expect(emblem).toContain('data-logo-source="SvenKulessa/FRONTEND"');
+    expect(emblem).toContain('var(--color-brand-primary)');
+    expect(emblem).toContain('var(--color-brand-accent)');
+    expect(emblem).not.toContain('var(--color-aif-neon-cyan)');
+
     expect(neuralBackground).toContain('var(--color-brand-primary)');
     expect(neuralBackground).toContain('var(--color-decorative-cyan)');
     expect(neuralBackground).toContain('var(--color-decorative-purple)');
