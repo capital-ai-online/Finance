@@ -11,19 +11,29 @@ import {
   Gauge,
   Globe2,
   LogIn,
+  LogOut,
   Mail,
   Menu,
   Play,
   ShieldCheck,
+  UserRound,
   Users,
 } from 'lucide-react';
 import { CapitalAiLogo } from '../../../shared/branding';
 import { NeuralBackground } from '../../../shared/visuals/NeuralBackground';
 
+interface LandingPageProfile {
+  name: string;
+  subscriptionTier: string;
+}
+
 interface LandingPageProps {
   preview: React.ReactNode;
   newsfeed: React.ReactNode;
+  pricing: React.ReactNode;
+  profile?: LandingPageProfile | null;
   onLoginNavigate?: () => void;
+  onLogout?: () => void | Promise<void>;
 }
 
 const APPLICATION_PILLARS = [
@@ -117,7 +127,15 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MobileNavigation({ onLoginNavigate }: { onLoginNavigate?: () => void }) {
+function MobileNavigation({
+  profile,
+  onLoginNavigate,
+  onLogout,
+}: {
+  profile?: LandingPageProfile | null;
+  onLoginNavigate?: () => void;
+  onLogout?: () => void | Promise<void>;
+}) {
   return (
     <details className="group relative lg:hidden">
       <summary
@@ -126,20 +144,41 @@ function MobileNavigation({ onLoginNavigate }: { onLoginNavigate?: () => void })
       >
         <Menu size={20} aria-hidden="true" />
       </summary>
-      <div className="absolute right-0 top-14 z-50 w-64 rounded-2xl border border-brand-primary/20 bg-background/95 p-3 shadow-2xl backdrop-blur-xl">
+      <div className="absolute right-0 top-14 z-50 w-72 rounded-2xl border border-brand-primary/20 bg-background/95 p-3 shadow-2xl backdrop-blur-xl">
+        {profile ? (
+          <div className="mb-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-3">
+            <div className="flex items-center gap-2 text-xs font-black text-text-primary">
+              <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
+              <span className="truncate">{profile.name}</span>
+            </div>
+            <span className="mt-2 inline-flex rounded-full border border-brand-primary/30 bg-brand-primary/10 px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary">
+              {profile.subscriptionTier}
+            </span>
+          </div>
+        ) : null}
         <nav className="grid gap-1 text-sm" aria-label="Mobile Hauptnavigation">
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#produkt">Produkt</a>
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#analysis-workbench">Analysen</a>
-          <span className="min-h-11 rounded-xl px-3 py-3 text-text-secondary/55">Preise</span>
+          <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#pricing">Preise &amp; Abo</a>
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="/learning-platform">Learning</a>
-          <span className="min-h-11 rounded-xl px-3 py-3 text-text-secondary/55">Über uns</span>
-          <a
-            className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-brand-primary/25 bg-brand-primary/10 px-3 py-3 font-black text-brand-primary"
-            href="/login"
-            onClick={onLoginNavigate}
-          >
-            Anmelden
-          </a>
+          {!profile ? (
+            <a
+              className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-brand-primary/25 bg-brand-primary/10 px-3 py-3 font-black text-brand-primary"
+              href="/login"
+              onClick={onLoginNavigate}
+            >
+              Anmelden
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void onLogout?.()}
+              className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-surface/60 px-3 py-3 font-black text-text-primary"
+            >
+              <LogOut size={15} aria-hidden="true" />
+              Abmelden
+            </button>
+          )}
         </nav>
       </div>
     </details>
@@ -153,7 +192,14 @@ function MobileNavigation({ onLoginNavigate }: { onLoginNavigate?: () => void })
  * surfaces (Newsfeed access + analysis workbench) so the dependency direction remains app -> features.
  * Authentication stays on /login; this component creates no session and defines no scoring/data authority.
  */
-export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageProps) {
+export function LandingPage({
+  preview,
+  newsfeed,
+  pricing,
+  profile,
+  onLoginNavigate,
+  onLogout,
+}: LandingPageProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-text-primary selection:bg-brand-primary/30 selection:text-text-primary">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,color-mix(in_srgb,var(--color-brand-primary)_9%,transparent),transparent_30%),radial-gradient(circle_at_90%_20%,color-mix(in_srgb,var(--color-decorative-purple)_8%,transparent),transparent_30%),radial-gradient(circle_at_52%_72%,color-mix(in_srgb,var(--color-decorative-cyan)_4%,transparent),transparent_34%)]" />
@@ -189,9 +235,12 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
             >
               Analysen
             </a>
-            <span className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-xs font-bold text-text-secondary/55" title="Noch keine kanonische Zielroute freigegeben">
-              Preise
-            </span>
+            <a
+              href="#pricing"
+              className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-xs font-bold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+            >
+              Preise &amp; Abo
+            </a>
             <a
               href="/learning-platform"
               className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-xs font-bold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
@@ -204,13 +253,25 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
           </nav>
 
           <div className="flex items-center gap-2">
-            <a
-              href="/login"
-              onClick={onLoginNavigate}
-              className="hidden min-h-11 items-center justify-center rounded-xl border border-border bg-surface/50 px-4 py-2 text-xs font-bold text-text-primary transition hover:border-brand-primary/35 hover:bg-surface sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-            >
-              Anmelden
-            </a>
+            {profile ? (
+              <div className="hidden items-center gap-2 sm:flex">
+                <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface/50 px-3 py-2 text-xs font-bold text-text-primary">
+                  <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
+                  <span className="max-w-32 truncate">{profile.name}</span>
+                </span>
+                <span className="inline-flex min-h-11 items-center rounded-xl border border-brand-primary/30 bg-brand-primary/10 px-3 py-2 font-mono text-[10px] font-black uppercase tracking-wider text-brand-primary">
+                  {profile.subscriptionTier}
+                </span>
+              </div>
+            ) : (
+              <a
+                href="/login"
+                onClick={onLoginNavigate}
+                className="hidden min-h-11 items-center justify-center rounded-xl border border-border bg-surface/50 px-4 py-2 text-xs font-bold text-text-primary transition hover:border-brand-primary/35 hover:bg-surface sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+              >
+                Anmelden
+              </a>
+            )}
             <a
               href="#analysis-workbench"
               className="hidden min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-xs font-black uppercase tracking-wider text-background shadow-[0_0_20px_color-mix(in_srgb,var(--color-brand-primary)_24%,transparent)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary sm:inline-flex"
@@ -218,7 +279,7 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
               <Gauge size={14} aria-hidden="true" />
               Analyse starten
             </a>
-            <MobileNavigation onLoginNavigate={onLoginNavigate} />
+            <MobileNavigation profile={profile} onLoginNavigate={onLoginNavigate} onLogout={onLogout} />
           </div>
         </div>
       </header>
@@ -232,6 +293,17 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
           <span className="sr-only">
             Mobile CAPITAL-AI Startansicht. Die dargestellte Grafik ist das freigegebene Layout-Mockup; Finanzdaten und Scoring bleiben an die nachfolgenden kanonischen Laufzeitflächen gebunden.
           </span>
+          {profile ? (
+            <div className="absolute right-3 top-3 z-10 flex max-w-[72%] flex-wrap justify-end gap-2">
+              <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-background/85 px-3 py-2 text-[10px] font-black text-text-primary backdrop-blur-md">
+                <UserRound size={13} className="text-brand-primary" aria-hidden="true" />
+                <span className="max-w-28 truncate">{profile.name}</span>
+              </span>
+              <span className="inline-flex min-h-9 items-center rounded-full border border-brand-primary/35 bg-background/85 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary backdrop-blur-md">
+                {profile.subscriptionTier}
+              </span>
+            </div>
+          ) : null}
           <a
             href="#analysis-workbench"
             aria-label="Analyse starten"
@@ -464,6 +536,15 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
             </div>
             {preview}
           </div>
+        </section>
+
+        <section
+          id="pricing"
+          data-landing-section="pricing"
+          aria-label="Pricing und Abonnement"
+          className="scroll-mt-24"
+        >
+          {pricing}
         </section>
 
         <section
