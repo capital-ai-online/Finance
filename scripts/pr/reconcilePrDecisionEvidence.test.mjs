@@ -242,7 +242,8 @@ test('reconciler repairs the observed v1.8 human-decision anchor and stale evide
   assert.equal(repaired.reason, 'decision-evidence-reconciled');
   assert.match(repaired.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
   assert.match(repaired.body, /^\| Blocker \| Keine \|$/m);
-  assert.match(repaired.body, /^\| Human-\/CODEOWNER-Entscheidung \| Erforderlich — geschützter Merge \|$/m);
+  assert.match(repaired.body, /^\| Owner-Aktion \| Human\/CODEOWNER Merge erforderlich \|$/m);
+  assert.doesNotMatch(repaired.body, /^\| Human-\/CODEOWNER-Entscheidung \|/m);
   assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \| .* \| .* \|$/m);
   assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
   assert.doesNotMatch(repaired.body, /^\| Changed-file overlap \|/m);
