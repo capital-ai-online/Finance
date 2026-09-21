@@ -19,6 +19,13 @@ describe('FRONTEND upstream presentation sync contract', () => {
     expect(config.destination.startsWith('src/')).toBe(false);
     expect(config.runtimePromotion.automatic).toBe(false);
     expect(config.runtimePromotion.financeComponentsBindAfterArchitectureAdoption).toBe(true);
+    expect(config.runtimePromotion.responsiveAdapterRequired).toBe(true);
+    expect(config.runtimePromotion.previewShellDesktopPromotionAllowed).toBe(false);
+    expect(config.runtimePromotion.devicePolicy).toEqual({
+      mobile: 'preserve-current-source-behavior',
+      tablet: 'preserve-current-source-behavior',
+      desktop: 'finance-website-adapter-required',
+    });
   });
 
   it('keeps the upstream demo dataset solely as a visual fixture and excludes productive authorities', () => {
