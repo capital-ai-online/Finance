@@ -24,7 +24,7 @@ describe('desktop landing responsive adapter', () => {
       sourceLock.entries
         .filter((entry) => entry.mode !== 'EXACT_GIT_BLOB')
         .map((entry) => entry.sourcePath),
-    ).toEqual(['src/App.tsx', 'src/components/BrandLogo.tsx']);
+    ).toEqual(['src/App.tsx', 'src/components/BrandLogo.tsx', 'src/components/Header.tsx']);
 
     expect(referenceApp).toContain(
       "const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup')",
