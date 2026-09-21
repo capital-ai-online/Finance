@@ -17,12 +17,26 @@ const brandmark = json<{
   version: string;
   manifestVersion: string;
   designTokenSource: string;
-  nodes: Array<{ id: string; fillToken: string }>;
-  edges: Array<{ strokeToken: string }>;
-  rules: { allowBrandCyan: boolean };
+  geometrySource: {
+    repository: string;
+    commit: string;
+    path: string;
+    blobSha: string;
+    scope: string;
+  };
+  namingAuthority: string;
+  colorAuthority: string;
+  rules: {
+    upstreamScope: string;
+    preserveFinanceColors: boolean;
+    preserveFinanceTypography: boolean;
+    preserveFinanceNaming: boolean;
+    allowBrandCyan: boolean;
+  };
 }>(`docs/frontend/brandmark.json`);
 
 const logo = read('src/shared/branding/CapitalAiLogo.tsx');
+const emblem = read('src/shared/branding/CapitalAiEmblem.tsx');
 const og = read('public/og-image.svg');
 const favicon = read('public/favicon.svg');
 const authorityBadge = read('src/shared/ui/AuthorityBadge.tsx');
@@ -35,37 +49,57 @@ const forbiddenLegacyColors = [
 ];
 
 describe('Branding Manifest v6.2 projection contract', () => {
-  it('keeps one versioned brandmark geometry contract bound to canonical design tokens', () => {
+  it('keeps Finance as naming/color authority while sourcing only logo geometry from FRONTEND', () => {
     expect(tokens.provenance.brandManifestVersion).toBe('6.2');
     expect(tokens.provenance.runtimeAuthority).toBe('docs/frontend/design-tokens.json');
-    expect(brandmark.version).toBe('1.0.0-manifest-v6.2');
+
     expect(brandmark.manifestVersion).toBe(tokens.provenance.brandManifestVersion);
     expect(brandmark.designTokenSource).toBe(tokens.provenance.runtimeAuthority);
-    expect(brandmark.rules.allowBrandCyan).toBe(false);
-    expect(brandmark.nodes.every((node) => node.fillToken === 'color.brand.primary')).toBe(true);
-    expect(new Set(brandmark.edges.map((edge) => edge.strokeToken))).toEqual(
-      new Set(['color.brand.primary', 'color.brand.accent']),
-    );
+    expect(brandmark.colorAuthority).toBe(tokens.provenance.runtimeAuthority);
+    expect(brandmark.namingAuthority).toBe('capital-ai-online/Finance');
+    expect(brandmark.geometrySource).toMatchObject({
+      repository: 'SvenKulessa/FRONTEND',
+      commit: '8f6b629c985ca2e46c822ff911f53741d0141e07',
+      path: 'src/components/BrandLogo.tsx',
+      blobSha: '49e3580466cc4566068c5fdcc1dfa94ead3a31dd',
+      scope: 'LOGO_GEOMETRY_ONLY',
+    });
+    expect(brandmark.rules).toMatchObject({
+      upstreamScope: 'geometry-only',
+      preserveFinanceColors: true,
+      preserveFinanceTypography: true,
+      preserveFinanceNaming: true,
+      allowBrandCyan: false,
+    });
   });
 
-  it('derives the React brandmark geometry from the versioned contract', () => {
-    expect(logo).toContain("import brandmark from '../../../docs/frontend/brandmark.json'");
-    expect(logo).toContain('data-brandmark-version={brandmark.version}');
-    expect(logo).toContain('Branding Manifest v6.2');
-    expect(logo).not.toContain('Branding Manifest v6.0');
-    expect(logo).not.toContain('brand-cyan');
+  it('projects the FRONTEND emblem through Finance-owned tokens and wordmark naming', () => {
+    expect(logo).toContain("import { CapitalAiEmblem } from './CapitalAiEmblem'");
+    expect(logo).toContain('CAPITAL-AI');
+    expect(logo).toContain('font-display');
+    expect(logo).toContain('text-brand-primary');
+
+    expect(emblem).toContain('data-logo-source="SvenKulessa/FRONTEND"');
+    expect(emblem).toContain('data-logo-source-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"');
+    expect(emblem).toContain('var(--color-brand-primary)');
+    expect(emblem).toContain('var(--color-brand-accent)');
+    expect(emblem).not.toMatch(/#[0-9A-Fa-f]{6}/);
   });
 
-  it('keeps OpenGraph and favicon projections synchronized to the current 16.08 brand tokens', () => {
+  it('keeps OpenGraph and favicon projections on Finance colors/naming with the current logo geometry', () => {
     for (const asset of [og, favicon]) {
       expect(asset).toContain(`data-brandmark-version="${brandmark.version}"`);
       expect(asset).toContain(tokens.color.background.value);
       expect(asset).toContain(tokens.color.brand.primary.value);
       expect(asset).toContain(tokens.color.brand.accent.value);
+      expect(asset).toContain('data-logo-source="SvenKulessa/FRONTEND"');
       for (const forbidden of forbiddenLegacyColors) {
         expect(asset.toUpperCase()).not.toContain(forbidden);
       }
     }
+
+    expect(og).toContain('CAPITAL-AI');
+    expect(og).toContain('AI-Driven Market Intelligence');
     expect(og).toContain('font-family="Montserrat, ui-sans-serif, system-ui, sans-serif"');
     expect(og).toContain('font-family="Poppins, ui-sans-serif, system-ui, sans-serif"');
     expect(og).toContain('font-family="JetBrains Mono, ui-monospace, monospace"');

@@ -4,53 +4,56 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-17 — historical task activation superseded  
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`  
-**Trust root:** `/AGENTS.md@current-main`
+**Reconciliation:** 2026-09-21 — FRONTEND architecture, canonical root and logo-only branding adapter correlated  
+**Baseline:** `main@523275263f1c8a3e6f8047fae16653a76f6d8372`  
+**Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
 
 `historical/non-terminal != active`
 
-This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context and historical non-terminal markers are ledger/evidence only and are not an execution source. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
+Archive/superseded copies and historical non-terminal markers are evidence only. Executable work must resolve from CURRENT_MAIN and current Owner direction.
 
-## PR #900 / #901 work packages
+## FE-LF-01-UPSTREAM-ARCH — Current presentation architecture adoption
 
-### FE-PR900-01 — Universe branding consumers
-Finish current-main materialization of Branding Kit/Universe design consumers. Preserve Vader Black, Capital Gold, Krypto Purple, Aktien Deadly Green, Indizes Pluto Blue and Forex Star Troops Magenta plus three signal-intensity badge levels.
+**Pinned source for PR #1206:** `SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07`  
+**Scope:** current graphical/presentation architecture + canonical root binding  
+**LF-01 exit state on branch:** `PASS_AFTER_HUMAN_MERGE`
 
-### FE-PR900-02 — Bond presentation removal
-Verify search/filter/tab/card/newsfeed surfaces do not expose Bond as user-selectable while stable technical identifiers remain where required. Visible German spelling remains `Krypto`.
+PR #1206 adopts the current upstream application composition, presentation types, all current graphical components/modals and visual image assets.
 
-### FE-PR900-03 — Canonical ranking consumer
-Keep the current RankingBoard as canonical presentation consumer; do not add frontend-local scoring authority or synthetic score fills.
+The canonical `LandingPage` renders the pinned `ReferenceApp`. `source-lock.json` prevents silent source drift.
 
-### FE-PR900-04 — Exact-head validation
-Run design/pattern regression, TypeScript, FE architecture checks, tests and build on the final exact branch head for implementation slices.
+### Branding invariant
 
-## Historical baseline (pre-2026-09-13) — non-active ledger
+Finance remains the Branding Authority:
 
-Detailed Frontend state remains in `docs/frontend/FRONTEND_ROADMAP.md`, `FRONTEND_ARCH.md` and `COMPONENT_INVENTORY.md`. This project file does not create a second Frontend architecture or scoring authority.
+- `docs/frontend/design-tokens.json` owns colors, typography and semantic visual roles;
+- Finance owns product/wordmark naming;
+- `docs/frontend/brandmark.json` records the canonical logo geometry contract;
+- only logo geometry is sourced from `SvenKulessa/FRONTEND`;
+- `BrandLogo.tsx` is the single explicit branding adapter in the upstream runtime port.
 
-Current composition order absent a newer Owner priority: BB-2E Navigation/Drawer → BB-2F Header/Shell → BB-2G Dashboard Home / MyWorkspace.
+The 16.08 layout/mockup target is superseded as historical evidence. Current Finance brand tokens are not superseded by that decision.
 
-Class A canonicalize-now: Buffett Value Check, Sentiment Dashboard, Momentum Dashboard, Asset-Universe model visuals, Crypto category/subclass workspace, Social visualization projection.
+### Continuation after merge
 
-Frontend never becomes scoring/data/entitlement/IAM/Governance/Social-publishing authority.
+After #1206 merges, productive Finance-owned capabilities are integrated into this graphical shell through owner-correct adapters. Auth/session, provider/data, scoring, entitlement, billing and other productive authority remain with their canonical owners.
+
+The hourly upstream sync maintains future source visibility through review PRs only.
+
+## Preserved frontend invariants
+
+- `docs/frontend/FRONTEND_ARCH.md` remains the Finance runtime dependency/presentation boundary.
+- FRONTEND upstream is the leading graphical source, not repository execution authority.
+- Finance remains Branding Authority except for adopted logo geometry.
+- Frontend never becomes scoring/data/entitlement/IAM/Governance/Social-publishing authority.
+- Exact-head Frontend architecture, TypeScript, tests and build evidence remain required.
 
 ## Dependencies
-DATA/FINTECH verified scoring/data, QM checks, SEO technical handoffs, SOCIAL render/publish ownership.
+
+FINTECH provides verified scoring/data contracts; OPS owns runtime/deployment responsibilities where assigned; SEC/COMP/QM retain independent gates; SEO/SOCIAL consume verified presentation outcomes.
 
 ## Project exit gate
-One active FE roadmap; design tokens are canonical/consumed consistently, disabled Bond presentation stays absent and required exact-head checks are evidenced.
 
-## FE-CONSENT-V3 — CookieHub ablösen / Owner-Variante A
-
-**Priorität:** 5/5. **Owner:** CAPITAL-AI-FE, kein eigener produktiver PVC. **Executor:** CAPITAL-AI-OPS.
-**Owner-Freigabe:** „Variante A freigegeben“ (2026-09-15). **Status:** IMPLEMENTED_ON_BRANCH / VALIDATION_PARTIAL / PRODUCTION_NOT_PROVEN.
-
-CookieConsent v3.1.0 lokal ausliefern, Konfiguration versionieren, neue Einwilligung verlangen, GA4 nur nach gültigem Opt-in laden und AdSense vollständig pausieren. Einstellungen müssen auf jeder Route wieder geöffnet werden können. Bestehende Login-/Landing-Consumer behalten den kompatiblen Settings-Aufruf. Der Providerwechsel ersetzt keine Security-/Compliance-Assurance.
-
-**Evidence:** `evidence/COOKIECONSENT_V3_MIGRATION_2026-09-15.md`.
-**Exit:** geschützte Invarianten und Verhaltenstests bestanden; TypeScript/Build/FE-Gates auf dem endgültigen Head; Browserprüfung für Mobile, Pointer/Overlay, Speichern, Wiederöffnung, Reload-Persistenz und Widerruf; COMP-Bewertung des Consent-Nachweises. Keine Production Acceptance aus Repositorytests.
-**Folgeschritt:** AdSense-CMP-/TCF-Eignung separat klären; bis zur separaten Freigabe bleiben Anzeigen aus.
+One active FE architecture; upstream visual source pinned and hash-verifiable; canonical root bound to the pinned graphical composition; Finance branding authority preserved with logo-only upstream geometry; no fixture promoted to productive authority; required exact-head evidence green.
