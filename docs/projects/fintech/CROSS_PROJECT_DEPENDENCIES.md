@@ -150,3 +150,18 @@ Security requirements and return rules are maintained in `SECURITY_HANDOFFS.md`.
 ## Cross-domain rule
 
 If a FINTECH task discovers productive work owned by another Primary Owner, FINTECH stops local implementation for that foreign portion. Ownership is resolved from the folder-to-PVC mapping. No routing marker transfers underlying Authority.
+
+## Landing-first shared program dependency
+
+- correlation_id: `FIN-LF-01-20260921`
+- source_project: `CAPITAL-AI-FINTECH`
+- target_project: `CAPITAL-AI-FE`
+- source_phase: `FIN-LF-01 / PREPARATION_ONLY`
+- completed_scope: minimal FINTECH landing scoring consumer contract and authority boundaries documented; no productive integration activated
+- remaining_scope: FE `LF-01_STATIC_VISUAL_LANDING_PASS`, then LF-02/LF-03 and dependency-ready LF-04 consumer integration
+- dependency: `LF-01_STATIC_VISUAL_LANDING_PASS`
+- evidence_reference: FE PR #1195 is open at correlation time and its exact-head build-and-test is not PASS; OPS PR #1200 is a separate owner-correct routing/lifecycle writer
+- exit_gate: FINTECH productive landing scoring remains blocked until the shared gate and later SEC/QM prerequisites are evidenced
+- continuation_condition: fresh CURRENT_MAIN correlation proves LF-01 PASS and no conflicting writer/authority overlap
+
+This dependency does not transfer Frontend ownership to FINTECH or financial scoring authority to Frontend. `ScoringDispatcher` remains the sole productive scoring execution authority; the landing layer is a consumer only.
