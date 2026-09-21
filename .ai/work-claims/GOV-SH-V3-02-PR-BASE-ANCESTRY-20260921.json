@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-SH-V3-02-PR-BASE-ANCESTRY-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "SH-V3-02 convergence repair: replace false PR base-SHA equality with exact current-main-to-head ancestry proof in the existing PR body/baseline specialist writer.",
+  "workItemDE": "SH-V3-02-Konvergenzfix: die fehlerhafte Gleichsetzung des historischen PR-base.sha mit CURRENT_MAIN durch einen exakten Git-Ancestry-Nachweis CURRENT_MAIN → PR-Head im bestehenden PR-Body-/Baseline-Spezialwriter ersetzen.",
+  "priority": "P0",
+  "priorityReason": "Observed PR #1195 evidence proves the current specialist writer generates the correct baseline and then blocks it as base-drift although CURRENT_MAIN is already an ancestor of the exact PR head.",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-21T14:02:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "8a64644ad6257f2c295959f6d79a80cc29a51b28",
+  "branch": "governance/sh-v3-02-pr-base-ancestry-20260921",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-SH-V3-02-PR-BASE-ANCESTRY-20260921.json",
+    "scripts/pr/repairLegacyPrBodyStructure.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs"
+  ],
+  "dependencies": [
+    "GOV-SH-V3 / SH-V3-02 remains ACTIVE on CURRENT_MAIN",
+    "Existing PR Production Baseline Auto-Refresh remains the sole PR-body/baseline specialist writer",
+    "PR #1195 provides reproducible false base-drift evidence"
+  ],
+  "scopeNote": "No second writer, no merge-authority expansion and no weakening of fail-closed gates. The mutation boundary still requires an open same-repository PR targeting main, exact head identity, exact live CURRENT_MAIN identity, and now proves synchronization by Git ancestry.",
+  "exitEvidence": [
+    "Regression proves historical pull.base.sha is accepted only when exact CURRENT_MAIN is an ancestor of the exact head",
+    "Regression proves missing ancestry remains fail-closed",
+    "Regression proves live-main movement remains fail-closed",
+    "Hosted repository checks validate the exact branch head"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "validationState": "TARGETED_REGRESSION_ADDED_HOSTED_CI_PENDING"
+}
