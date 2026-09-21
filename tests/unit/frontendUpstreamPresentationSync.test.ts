@@ -32,16 +32,26 @@ describe('FRONTEND upstream presentation sync contract', () => {
     expect(syncScript).toContain('runtimePromotionEligible: !fixtureOnly');
   });
 
-  it('requires the desktop-only Finance adapter for every promoted upstream sync', () => {
-    expect(config.runtimePromotion.desktopWebsiteAdapter.required).toBe(true);
-    expect(config.runtimePromotion.desktopWebsiteAdapter.minWidthPx).toBe(1024);
-    expect(config.runtimePromotion.desktopWebsiteAdapter.preserveBelowDesktopBreakpoint).toBe(true);
-    expect(config.runtimePromotion.desktopWebsiteAdapter.adapterPath).toBe(
-      'src/features/public/ui/frontend-port/frontend-port.css',
+  it('requires the desktop-only Finance adapter and re-correlates it on every upstream sync', () => {
+    expect(config.responsiveRuntimeAdapter).toMatchObject({
+      required: true,
+      path: 'src/features/public/ui/frontend-port/frontend-port.css',
+      validationTest: 'tests/unit/frontendDesktopResponsiveAdapter.test.ts',
+      strategy: 'DESKTOP_VIEWPORT_ADAPTER',
+      desktopMinPx: 1024,
+      preserveMobileSourceLayout: true,
+      preserveTabletSourceLayout: true,
+      upstreamPreviewChromeRuntimeOnDesktop: false,
+      userAgentBranching: false,
+    });
+    expect(config.responsiveRuntimeAdapter.sourceLayoutMarkers).toEqual(
+      expect.arrayContaining(['viewMode', 'sm:max-w-[412px]', 'max-w-md', 'hidden sm:flex']),
     );
-    expect(config.runtimePromotion.desktopWebsiteAdapter.validationTest).toBe(
-      'tests/unit/frontendDesktopResponsiveAdapter.test.ts',
-    );
+    expect(syncScript).toContain('desktop responsive runtime adapter must be required');
+    expect(syncScript).toContain('mobile source layout must remain unchanged');
+    expect(syncScript).toContain('tablet source layout must remain unchanged');
+    expect(syncScript).toContain('desktop adapter correlation required');
+    expect(syncScript).toContain('responsiveRuntimeAdapter: config.responsiveRuntimeAdapter');
   });
 
   it('runs hourly from trusted main with least privilege and immutable actions', () => {
