@@ -54,3 +54,16 @@ CookieConsent v3.1.0 lokal ausliefern, Konfiguration versionieren, neue Einwilli
 **Evidence:** `evidence/COOKIECONSENT_V3_MIGRATION_2026-09-15.md`.
 **Exit:** geschützte Invarianten und Verhaltenstests bestanden; TypeScript/Build/FE-Gates auf dem endgültigen Head; Browserprüfung für Mobile, Pointer/Overlay, Speichern, Wiederöffnung, Reload-Persistenz und Widerruf; COMP-Bewertung des Consent-Nachweises. Keine Production Acceptance aus Repositorytests.
 **Folgeschritt:** AdSense-CMP-/TCF-Eignung separat klären; bis zur separaten Freigabe bleiben Anzeigen aus.
+
+
+## FE-LF-01-UPSTREAM-SYNC — Presentation source convergence
+
+**Owner direction:** 2026-09-21  
+**Source:** `SvenKulessa/FRONTEND@main`  
+**Scope:** graphical components, UI slices, visual assets and Frontend composition architecture only  
+**Productive domain/runtime import:** prohibited by the sync contract  
+**LF-01 exit state on this branch:** `PASS_AFTER_HUMAN_MERGE`
+
+The hourly synchronization is review-only and writes only an inert presentation-source snapshot outside `src/`. Mock/demo data, API/provider, auth, billing/Stripe, scoring, entitlement, server/runtime, package and environment source classes are excluded from automatic productive adoption. Files with risky upstream dependencies are marked adapter-blocked in the generated manifest.
+
+After Human/CODEOWNER merge of the exact PR carrying this decision, `LF-01_EXIT_EVIDENCE_CONVERGENCE = PASS` releases dependency-correct continuation into later Landing-First phases. This release does not convert independent Security, Compliance or Quality findings into PASS; their applicable gates remain independently fail-closed.
