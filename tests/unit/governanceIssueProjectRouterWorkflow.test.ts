@@ -16,6 +16,8 @@ describe('governance issue project router workflow', () => {
 
   it('is metadata-only and has no repository, PR, release or merge mutation authority', () => {
     expect(workflow).toContain('permissions: {}');
+    expect(workflow).toContain('capital-ai-self-healing-issue-router-${{ github.event_name }}');
+    expect(workflow).toContain('cancel-in-progress: false');
     expect(workflow).toContain('contents: read');
     expect(workflow).toContain('issues: write');
     expect(workflow).not.toContain('contents: write');
