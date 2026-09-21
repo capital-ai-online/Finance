@@ -30,7 +30,13 @@
     "scripts/pr/prLabelClassification.test.mjs",
     "docs/projects/governance/work-packages/GOV_PR_LABEL_CLASSIFICATION_2026-09-20.md",
     "tests/unit/githubAgentDraftPrWorkflow.test.ts",
-    ".ai/work-claims/VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20.json"
+    ".ai/work-claims/VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20.json",
+    ".ai/work-claims/GOV-PR-DECISION-RECONCILER-20260920.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/reconcilePrDecisionEvidence.mjs",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs"
   ],
   "correlation": {
     "currentMainAtStart": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
@@ -58,6 +64,12 @@
         "claimId": "VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20",
         "terminalPullRequest": 458,
         "terminalState": "CLOSED"
+      },
+      {
+        "claimId": "GOV-PR-DECISION-RECONCILER-20260920",
+        "terminalPullRequest": 1172,
+        "terminalState": "MERGED",
+        "terminalMergeSha": "242e1847800af27ad80d4b4a693a28b9754eb25d"
       }
     ],
     "semanticOverlap": "PR #1211 is SEO-only and does not modify the claimed Governance label-classification paths. Three overlapping historical claims are terminal merged evidence and are released in this slice before the new writer is considered authoritative.",
@@ -123,5 +135,14 @@
     "expectedDescription": "🎨 Frontend · CAPITAL-AI-FE",
     "requiredState": "PROVIDER_READBACK_EXACT",
     "closureBehavior": "Fail closed. Do not mark GOV-PR-LABEL-01 converged and do not treat Frontend PR creation as unblocked until exact provider readback matches both color and description."
+  },
+  "autofixConvergence": {
+    "observedPr": 1224,
+    "failedGovernanceRun": 35653780824,
+    "failure": "Canonical v1.8 required headings missing.",
+    "controllerState": "CURRENT_V18_OTHER -> BLOCKED_NOT_PROVEN",
+    "reconcilerRun": 35653871371,
+    "reconcilerState": "changed=false / decision-section-boundary-ambiguous",
+    "target": "Route bounded current-v1.8 structural drift to the existing Decision Evidence Reconciler and let that single writer bootstrap through trusted-main renderPullRequestBody.mjs before live Evidence/Decision reconciliation."
   }
 }
