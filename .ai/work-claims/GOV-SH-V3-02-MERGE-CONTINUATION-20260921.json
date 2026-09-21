@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-SH-V3-02-MERGE-CONTINUATION-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend SH-V3-02 so Human Owner merges and policy-compliant GitHub auto-merges converge through one post-merge CURRENT_MAIN re-correlation lane.",
+  "priority": "P0-HIGHEST",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "pvc": ["PVC-05"],
+  "branch": "governance/sh-v3-02-merge-continuation-20260921",
+  "baseSha": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-SH-V3-02-MERGE-CONTINUATION-20260921.json",
+    "docs/projects/governance/work-packages/SH_V3_02_AUTOFIX_ORCHESTRATION.yaml"
+  ],
+  "dependencies": [
+    "PR #1199 remains the active workflow-implementation writer for branch synchronization/autofix sequencing.",
+    "No workflow implementation file is mutated by this documentation/contract slice.",
+    "Every actual merge creates a new CURRENT_MAIN generation and requires fresh open-PR correlation."
+  ],
+  "mergeContinuation": {
+    "acceptedMergeOrigins": [
+      "HUMAN_OWNER_MERGE",
+      "GITHUB_AUTO_MERGE"
+    ],
+    "providerAutoMergeOnly": true,
+    "agentDirectMerge": false,
+    "queuePolicy": "dynamic dependency order; at most one selected next PR per generation",
+    "staleQueueBehavior": "invalidate and recompute after every merged PR or head/base movement"
+  },
+  "observedQueueSnapshot": {
+    "currentMain": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
+    "primaryConvergenceLane": [1199, 1209, 1201, 1202, 1205, 1211],
+    "frontendLanguageLane": [1212, 1213],
+    "nonAuthorizing": true
+  },
+  "exitEvidence": [
+    "SH-V3-02 work package names Human and GitHub auto-merge as equivalent post-merge correlation triggers.",
+    "Old queue generation is invalidated after every merge.",
+    "Next PR is selected only after fresh CURRENT_MAIN/open-writer/dependency correlation.",
+    "Auto-merge remains fail-closed under AGENTS.md and protected classes remain Human/CODEOWNER-gated."
+  ],
+  "releaseCondition": "Release when the associated Pull Request is merged, closed, superseded or abandoned."
+}
