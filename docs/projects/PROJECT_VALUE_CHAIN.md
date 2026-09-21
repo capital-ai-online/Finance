@@ -65,8 +65,6 @@ All development execution across `PVC-01..18` resolves exclusively through `/AGE
 
 A relationship may be classified as `primary_pvc`, `cross_cutting` or `foreign_execution`. `foreign_execution` is a relationship classification, not permission to seize foreign Owner scope. If implementation/Authority belongs elsewhere, the current project emits an owner-correct correlation-ID handover with dependencies, evidence, exit gate and continuation condition as required by the trust root.
 
-`CAPITAL-AI-FE` uses its existing `cross_cutting` relationship as presentation-adaptation scope for rendered `PVC-01..PVC-18` outputs. FE may alter only its own layout, responsive/device behavior, accessibility, interaction and visual composition; the stage Primary Owner retains data, scoring, evidence, entitlement, runtime and other domain semantics.
-
 ## Transitional repository state
 
 Historical/current documents may temporarily contain stale references to superseded procedure or former DATA ownership. Such text is migration drift only and cannot override `/AGENTS.md@CURRENT_MAIN`. Current organizational projections MUST be reconciled to `CAPITAL-AI-FINTECH / PVC-09..17`; immutable historical evidence may retain the former mapping for provenance.
