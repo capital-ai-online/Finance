@@ -92,3 +92,16 @@ The stable work-package identity `GOV-PR-LABEL-01` is retained and evolved rathe
 Der erste manuelle Draft-PR-Run scheiterte korrekt vor jeder Mutation in Schritt `Angeforderten Agenten-Branch validieren`, weil `governance/*` kein von `CURRENT_MAIN` zugelassener Agenten-Branch-Namespace ist. Zulässig sind ausschließlich `agent/*`, `claude/*`, `grok/*` und `ai/*`.
 
 Die vollständige Remediation wurde verlustfrei auf `agent/governance-project-label-provider-convergence-20260921` kopiert. Dieser Branch erfüllt den bestehenden Namespace-Vertrag; kein Workflow- oder Trust-Root-Bypass wird eingeführt.
+
+## Frontend-Hard-Exit
+
+Der systemische Label-Blocker ist **nicht** erledigt, solange der GitHub-Provider für `project:CAPITAL-AI-FE` weiterhin `#EDEDED` oder eine andere von der kanonischen Vorgabe abweichende Farbe liefert.
+
+Verbindlicher Exit-Readback:
+
+- Label: `project:CAPITAL-AI-FE`
+- erwartete Farbe: `#DC7CA8`
+- erwartete Beschreibung: `🎨 Frontend · CAPITAL-AI-FE`
+- Quelle: `docs/projects/README.md@CURRENT_MAIN`
+
+Ohne exakten Provider-Readback bleibt `GOV-PR-LABEL-01` offen und Frontend-PR-Erstellung weiterhin fail-closed. Ein grüner Code-/Workflow-Test allein ist hierfür keine ausreichende Evidence.
