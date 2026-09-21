@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 export const UNIFIED_OSS_QUALITY_FINDING_SCHEMA = 'oss-quality-finding/1.0.0' as const;
-export const UNIFIED_OSS_QUALITY_BUNDLE_SCHEMA = 'oss-quality-evidence/1.0.0' as const;
+export const UNIFIED_OSS_QUALITY_BUNDLE_SCHEMA = 'oss-quality-evidence/1.1.0' as const;
 
 export const OSS_QUALITY_TOOL_IDS = [
   'gitleaks',
@@ -11,7 +11,14 @@ export const OSS_QUALITY_TOOL_IDS = [
   'jscpd',
 ] as const;
 
+export const OSS_QUALITY_PROFILES = [
+  'PR_FAST',
+  'DEEP_BASELINE',
+  'FULL',
+] as const;
+
 export type OssQualityToolId = typeof OSS_QUALITY_TOOL_IDS[number];
+export type OssQualityProfile = typeof OSS_QUALITY_PROFILES[number];
 export type UnifiedQualityDomain =
   | 'SECURITY'
   | 'DEPENDENCY'
@@ -25,7 +32,7 @@ export type UnifiedQualityFindingState =
   | 'FIXED'
   | 'ACCEPTED_EXCEPTION'
   | 'FALSE_POSITIVE';
-export type UnifiedQualityToolStatus = 'PASS' | 'FINDINGS' | 'NOT_AVAILABLE';
+export type UnifiedQualityToolStatus = 'PASS' | 'FINDINGS' | 'NOT_AVAILABLE' | 'NOT_APPLICABLE';
 
 export interface UnifiedQualityFinding {
   schemaVersion: typeof UNIFIED_OSS_QUALITY_FINDING_SCHEMA;
@@ -56,7 +63,7 @@ export interface UnifiedQualityToolEvidence {
 }
 
 export interface UnifiedQualityCoverageMeasurement {
-  status: 'AVAILABLE' | 'NOT_AVAILABLE';
+  status: 'AVAILABLE' | 'NOT_AVAILABLE' | 'NOT_APPLICABLE';
   source: string | null;
   statements: number | null;
   branches: number | null;
@@ -65,7 +72,7 @@ export interface UnifiedQualityCoverageMeasurement {
 }
 
 export interface UnifiedQualityDuplicationMeasurement {
-  status: 'AVAILABLE' | 'NOT_AVAILABLE';
+  status: 'AVAILABLE' | 'NOT_AVAILABLE' | 'NOT_APPLICABLE';
   source: string | null;
   percentage: number | null;
   clones: number | null;
@@ -79,6 +86,7 @@ export interface UnifiedQualityEvidenceBundle {
   repository: string;
   sourceSha: string;
   baseSha: string;
+  profile: OssQualityProfile;
   nonAuthorizingStatement: string;
   tools: readonly UnifiedQualityToolEvidence[];
   findings: readonly UnifiedQualityFinding[];
@@ -107,4 +115,8 @@ export function buildUnifiedQualityFindingId(input: {
 
 export function isOssQualityToolId(value: string): value is OssQualityToolId {
   return (OSS_QUALITY_TOOL_IDS as readonly string[]).includes(value);
+}
+
+export function isOssQualityProfile(value: string): value is OssQualityProfile {
+  return (OSS_QUALITY_PROFILES as readonly string[]).includes(value);
 }
