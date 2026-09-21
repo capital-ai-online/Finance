@@ -65,18 +65,19 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
   ));
 
   const rootBlock = sliceCurrentPathBlock(appRoutes, '/', '/login');
-  const authenticatedRootToDashboard =
-    rootBlock.includes('userSession') &&
-    (rootBlock.includes('to="/dashboard"') || rootBlock.includes("window.location.replace('/dashboard')"));
+  const authenticatedRootLanding =
+    rootBlock.includes('<LandingPage') &&
+    !rootBlock.includes('to="/dashboard"') &&
+    !rootBlock.includes("window.location.replace('/dashboard')");
   findings.push(finding(
-    'authenticated_root_dashboard_handoff',
-    authenticatedRootToDashboard ? 'PASS' : 'FAIL',
+    'authenticated_root_landing_handoff',
+    authenticatedRootLanding ? 'PASS' : 'FAIL',
     'CAPITAL-AI-FE',
     ['src/app/routing/AppRoutes.tsx'],
-    'After successful OAuth/session composition, an authenticated visit to / deterministically continues to /dashboard.',
+    'After successful OAuth/session composition, an authenticated user remains on the canonical / landing page.',
     authenticatedRootToDashboard
-      ? 'The root route contains an authenticated dashboard handoff.'
-      : 'The root route renders the public landing composition without an authenticated /dashboard handoff.',
+      ? 'The root route renders LandingPage without an authenticated /dashboard default redirect.'
+      : 'The root route still diverts authenticated users away from the canonical landing page.',
   ));
 
   const localLogoutDefault = sessionComposition.includes("supabase.auth.signOut({ scope: 'local' })");
