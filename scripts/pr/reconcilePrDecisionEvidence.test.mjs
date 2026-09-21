@@ -396,18 +396,25 @@ test('reconciler deterministically replaces a bounded non-canonical v1.8 live da
 });
 
 test('reconciler still fails closed when a malformed dashboard contains non-table prose before the Human Decision table', () => {
-  const damaged = canonicalBody().replace(
-    '| Synchronität | Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS |',
-    'manual prose that must not be swallowed',
-  );
-  const result = reconcileDecisionBody(damaged, {
+  const gates = {
     main: 'PASS',
     scope: 'PASS',
     overlap: 'PASS',
     checks: 'PASS',
     security: 'PASS',
     baseline: 'PASS',
-  });
+  };
+  const canonical = reconcileDecisionBody(canonicalBody(), gates);
+  assert.equal(canonical.eligible, true);
+  assert.equal(canonical.changed, true);
+
+  const damaged = canonical.body.replace(
+    '| Synchronität | Main 🟢 PASS · Checks 🟢 PASS · Security 🟢 PASS · Baseline 🟢 PASS |',
+    'manual prose that must not be swallowed',
+  );
+  assert.notEqual(damaged, canonical.body);
+
+  const result = reconcileDecisionBody(damaged, gates);
   assert.equal(result.eligible, false);
   assert.equal(result.changed, false);
   assert.equal(result.reason, 'live-dashboard-boundary-ambiguous');
