@@ -68,5 +68,33 @@
     "ordinary PR creation still classifies exactly one project before gh pr create",
     "Human/CODEOWNER merge authority is unchanged"
   ],
-  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment.",
+  "prCreateReadiness": {
+    "state": "BLOCKED_PROVIDER_LABEL_DRIFT",
+    "observedAt": "2026-09-21T20:12:00Z",
+    "currentMain": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
+    "observed": [
+      {
+        "label": "project:CAPITAL-AI-GOV",
+        "color": "EDEDED",
+        "description": null,
+        "expectedColor": "A1A1AA"
+      },
+      {
+        "label": "project:CAPITAL-AI-OPS",
+        "color": "EDEDED",
+        "description": null,
+        "expectedColor": "845CDC"
+      }
+    ],
+    "reason": "AGENTS.md@CURRENT_MAIN requires canonical project-label metadata to be ensured before the external PR-create mutation. The connected GitHub surface can assign labels to issues/PRs but exposes no repository-label metadata create/update action and no workflow-dispatch action.",
+    "nextCanonicalAction": {
+      "workflow": ".github/workflows/open-agent-draft-pr.yml@CURRENT_MAIN",
+      "workflowName": "Agenten-Draft-PR öffnen",
+      "input": {
+        "head_branch": "governance/project-label-provider-convergence-20260921"
+      },
+      "expectedEffect": "The existing CURRENT_MAIN pre-create writer force-converges project:CAPITAL-AI-GOV to #A1A1AA with its canonical description, verifies final correlation, and then creates the draft PR. After Human/CODEOWNER merge, the new direct-main convergence job synchronizes the complete canonical project-label catalog, including project:CAPITAL-AI-OPS -> #845CDC."
+    }
+  }
 }
