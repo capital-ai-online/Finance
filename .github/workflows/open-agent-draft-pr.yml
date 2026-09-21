@@ -23,6 +23,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: write
 
 concurrency:
@@ -130,6 +131,14 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: PR-Label vor der Create-Mutation klassifizieren
+        id: pr-label
+        working-directory: candidate
+        env:
+          PR_PROJECT_ID: ${{ steps.render.outputs.project_id }}
+          PR_PROJECT_MAPPING_PATH: ../create-policy/docs/projects/README.md
+        run: node ../create-policy/scripts/pr/prLabelClassification.mjs
+
       - name: Final korrelieren, geordnete Agenten-Lane prüfen und Draft-PR öffnen
         working-directory: candidate
         env:
@@ -144,6 +153,9 @@ jobs:
           PR_CORRELATION_OUTPUT: artifacts/pr/final-create-correlation.json
           PR_COORDINATION_FAIL_CLOSED: 'true'
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+          PR_LABEL_NAME: ${{ steps.pr-label.outputs.label_name }}
+          PR_LABEL_COLOR: ${{ steps.pr-label.outputs.label_color }}
+          PR_LABEL_DESCRIPTION: ${{ steps.pr-label.outputs.label_description }}
         run: |
           set -euo pipefail
 
@@ -189,10 +201,22 @@ jobs:
           node ../create-policy/scripts/pr/productionPreflight.mjs
           node ../create-policy/scripts/pr/validateWorkClaim.mjs
 
+          if [ -z "$PR_LABEL_NAME" ] || [ -z "$PR_LABEL_COLOR" ] || [ -z "$PR_LABEL_DESCRIPTION" ]; then
+            echo "Pre-create PR label classification did not resolve complete metadata." >&2
+            exit 1
+          fi
+
+          gh label create "$PR_LABEL_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --color "$PR_LABEL_COLOR" \
+            --description "$PR_LABEL_DESCRIPTION" \
+            --force
+
           gh pr create \
             --repo "$GITHUB_REPOSITORY" \
             --draft \
             --base main \
             --head "$HEAD_BRANCH" \
             --title "$PR_TITLE" \
+            --label "$PR_LABEL_NAME" \
             --body-file artifacts/pr/pull-request-body.md
