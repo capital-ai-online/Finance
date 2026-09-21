@@ -132,6 +132,16 @@ Immediately before the Human/CODEOWNER merge decision, the exact review-ready PR
 
 Every repository change is delivered through a Pull Request. PR creation and PR updates may be automated after final correlation PASS and truthful evidence rendering; unresolved or blocked correlation stops readiness. `NOT_RUN`, missing evidence, `BLOCKED` and `FAIL` are never represented as `PASS`.
 
+### Pre-create Pull Request classification and project label
+
+Every new Pull Request MUST be classified **before** the external PR-create mutation. The classifier resolves the canonical Project/Owner/PVC relationship from fresh `CURRENT_MAIN` evidence and derives the project presentation label from exactly one row of `docs/projects/README.md@CURRENT_MAIN`.
+
+The canonical project label form is `project:<PROJECT_ID>`. Its GitHub label color MUST equal the canonical project `Color` value from that routing row, while the textual label name remains the primary semantic cue. Before PR creation, the create path MUST ensure that repository label exists with the resolved name/color/description and MUST pass that already-resolved label into the PR-create operation. Missing, duplicate or malformed project/presentation resolution fails closed before PR creation.
+
+PR label classification is pre-create metadata resolution, **not a post-create CI gate**. A dedicated runner-backed `pull_request`/`pull_request_target` label-classification workflow or required status check MUST NOT be used merely to classify labels after a PR already exists. Ordinary repository tests MAY verify the classifier implementation as regression coverage; those tests do not perform or authorize runtime PR classification.
+
+Labels remain descriptive, non-authorizing metadata. They MUST NOT grant merge authority, weaken Human/CODEOWNER/Security/Compliance gates, or substitute for Project/Owner/PVC resolution.
+
 ### Workflow-execution autonomy supersession
 
 `CAPITAL-AI-GOV-WORKFLOW-AUTONOMY-2026-09-20` is the active workflow-execution rule after Human Owner merge of this change. It supersedes every earlier rule, projection, PR body, chat instruction or historical policy that required a separate Owner approval before starting, rerunning or continuing an eligible workflow.
