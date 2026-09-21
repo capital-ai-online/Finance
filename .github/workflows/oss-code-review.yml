@@ -3,7 +3,7 @@ run-name: OSS Code Review — SUPERSEDED / no runner
 
 # OWNER-DIRECTED SUPERSESSION — 2026-09-21
 #
-# The former automatic OSS review lane (DeepSeek + Semgrep/reviewdog) is retired
+# The former automatic semantic OSS review lane is retired
 # because its pull-request fan-out consumed disproportionate GitHub Actions runner
 # minutes. This file is intentionally retained as a fail-closed tombstone instead
 # of deleting a previously automatic workflow through the workflow-deletion gate.
