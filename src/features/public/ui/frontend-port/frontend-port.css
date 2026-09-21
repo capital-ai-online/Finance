@@ -28,3 +28,88 @@
     animation: none !important;
   }
 }
+
+/*
+ * Finance-owned runtime adapter.
+ *
+ * SvenKulessa/FRONTEND is preserved as a hash-verifiable graphical source. Its App.tsx contains
+ * an interactive iPhone-preview shell for design review; that preview chrome is not the production
+ * viewport contract for capital-ai.online.
+ */
+.capital-ai-frontend-port .frontend-runtime-responsive-shell {
+  width: 100%;
+  min-width: 0;
+}
+
+.capital-ai-frontend-port .frontend-runtime-responsive-shell > div {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Hide the upstream desktop preview toggle in the canonical website runtime. */
+.capital-ai-frontend-port .frontend-runtime-responsive-shell > div > :nth-child(2) {
+  display: none !important;
+}
+
+/* The production page uses the actual device viewport, never the upstream 412px phone frame. */
+.capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+  border-width: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+/* The mock phone status bar is reference chrome, not website UI. */
+.capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main > :first-child.hidden {
+  display: none !important;
+}
+
+@media (min-width: 640px) {
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main {
+    max-width: 960px !important;
+  }
+
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main > header,
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main > section,
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main > footer {
+    width: min(100%, 896px);
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main {
+    max-width: 1440px !important;
+  }
+
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main > header,
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main > section,
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell > div > main > footer {
+    width: min(100% - 64px, 1280px);
+  }
+
+  /*
+   * Mobile source carousels become desktop card grids while their data, interactions and
+   * visual source components remain unchanged.
+   */
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell .snap-mandatory {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+  }
+
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell .snap-mandatory > * {
+    width: auto !important;
+    min-width: 0 !important;
+    scroll-snap-align: none !important;
+  }
+
+  .capital-ai-frontend-port .frontend-runtime-responsive-shell footer > :last-child {
+    display: none;
+  }
+}
