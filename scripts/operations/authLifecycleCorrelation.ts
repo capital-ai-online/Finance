@@ -39,6 +39,9 @@ function sliceCurrentPathBlock(source: string, pathname: string, nextPathname: s
 export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd()): AuthLifecycleFinding[] {
   const loginPage = read(repoRoot, 'src/features/public/ui/LoginPage.tsx');
   const appRoutes = read(repoRoot, 'src/app/routing/AppRoutes.tsx');
+  const checkout = read(repoRoot, 'src/features/billing/ui/Checkout.tsx');
+  const spaRouteContract = read(repoRoot, 'server/middleware/seoUrlNormalize.ts');
+  const spaFallback = read(repoRoot, 'server/runtime/spaFallback.ts');
   const sessionComposition = read(repoRoot, 'src/app/auth/SessionComposition.tsx');
   const appDashboard = read(repoRoot, 'src/app/dashboard/Dashboard.tsx');
   const registrationGate = read(repoRoot, 'src/components/RegistrationCompletionGate.tsx');
