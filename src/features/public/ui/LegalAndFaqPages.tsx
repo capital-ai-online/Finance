@@ -308,7 +308,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Frage oder Stichwort suchen..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-black/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all font-sans"
+                  className="w-full pl-10 pr-4 py-1.5.5 bg-black/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all font-sans"
                 />
               </div>
 
@@ -321,7 +321,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                       selectedCategory === category
                         ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold'
-                        : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
+                        : 'bg-white/5 text-slate-400 hover:text-white border border-slate-800/80'
                     }`}
                   >
                     {category}
@@ -356,7 +356,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
 
             <div className="space-y-3 pt-2">
               {filteredFaqs.length === 0 ? (
-                <div className="text-center py-8 text-sm text-slate-500 bg-white/[0.02] rounded-2xl border border-white/5">
+                <div className="text-center p-4 text-sm text-slate-500 bg-black/40 rounded-2xl border border-slate-800/80">
                   Keine passende Frage gefunden.
                 </div>
               ) : (
@@ -366,11 +366,11 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                       type="button"
                       onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
                       aria-expanded={openFaqIndex === index}
-                      className="w-full flex items-center justify-between gap-4 p-4 text-left hover:bg-white/[0.025] transition-colors cursor-pointer"
+                      className="w-full flex items-center justify-between gap-4 p-4 text-left hover:bg-white/10 transition-all cursor-pointer"
                     >
                       <div>
-                        <span className="text-[10px] uppercase tracking-wider text-amber-400/80 font-mono">{item.category}</span>
-                        <h2 className="text-sm font-bold text-white mt-1">{item.question}</h2>
+                        <span className="text-[10px] uppercase tracking-wider text-amber-300 font-mono">{item.category}</span>
+                        <h2 className="text-sm font-bold text-white ">{item.question}</h2>
                       </div>
                       {openFaqIndex === index ? (
                         <ChevronUp className="w-4 h-4 text-amber-400 shrink-0" />
@@ -386,7 +386,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden"
                         >
-                          <p className="px-4 pb-4 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/70 pt-3">
+                          <p className="px-4 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/80 pt-2">
                             {item.answer}
                           </p>
                         </motion.div>
@@ -426,7 +426,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-100">
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-200">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <p className="text-xs leading-relaxed">{PRIVACY_COMPLIANCE_STATUS.disclaimer}</p>
             </div>
@@ -455,13 +455,13 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                 <h2 className="text-base font-bold text-white text-emerald-300 flex items-center gap-2">
                   <Database className="w-4 h-4" /> Verarbeitungstätigkeiten
                 </h2>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className=" text-xs text-slate-400">
                   Die Einträge bilden die im Repository dokumentierten personenbezogenen Kernverarbeitungen ab.
                 </p>
               </div>
               {PROCESSING_ACTIVITIES.map((activity) => (
                 <details key={activity.id} className="rounded-2xl bg-black/40 border border-slate-800/80 overflow-hidden">
-                  <summary className="cursor-pointer px-4 py-3 font-bold text-white flex items-center justify-between">
+                  <summary className="cursor-pointer px-4 py-2.5 font-bold text-white flex items-center justify-between">
                     <span>{activity.title}</span>
                     <span className="text-[10px] uppercase font-mono text-emerald-400">Details</span>
                   </summary>
@@ -482,7 +482,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
               ))}
             </div>
 
-            <section className="space-y-4">
+            <section className="space-y-3">
               <h2 className="text-base font-bold text-white text-emerald-300 flex items-center gap-2">
                 <Lock className="w-4 h-4" /> Ihre Datenschutzrechte
               </h2>
@@ -496,9 +496,9 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                     key={type}
                     type="button"
                     onClick={() => setRequestType(type)}
-                    className={`px-3 py-2 rounded-xl text-[11px] font-bold border transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
                       requestType === type
-                        ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200'
+                        ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300'
                         : 'border-slate-800 bg-black/40 text-slate-400 hover:text-white'
                     }`}
                   >
@@ -510,19 +510,19 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                 value={details}
                 onChange={(event) => setDetails(event.target.value.slice(0, 2000))}
                 placeholder="Optionale Angaben zur Anfrage (keine Passwörter, MFA-Secrets oder Zahlungsdaten eingeben)."
-                className="w-full min-h-24 bg-black/40 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-black/40 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
               />
               <button
                 type="button"
                 onClick={submitPrivacyRequest}
                 disabled={requestState === 'submitting'}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 text-xs font-bold hover:bg-emerald-500/20 disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold hover:bg-white/10 disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
                 {requestState === 'submitting' ? 'Anfrage wird erfasst…' : `${REQUEST_LABELS[requestType]} anfragen`}
               </button>
               {requestMessage && (
-                <div className={`text-xs rounded-xl border px-3 py-2 ${
+                <div className={`text-xs rounded-xl border px-3 py-1.5 ${
                   requestState === 'error'
                     ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
                     : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300'
@@ -537,22 +537,22 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                 type="button"
                 onClick={downloadAccountData}
                 disabled={exporting}
-                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:border-emerald-500/30 transition disabled:opacity-50"
+                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:bg-white/10 transition-all disabled:opacity-50"
               >
                 <Download className="w-5 h-5 text-emerald-400" />
-                <strong className="block mt-2 text-sm text-white">Self-Service-Datenauszug</strong>
-                <span className="block mt-1 text-xs text-slate-400">
+                <strong className="block pt-2 text-sm text-white">Self-Service-Datenauszug</strong>
+                <span className="block text-xs text-slate-400">
                   {exporting ? 'Export wird erstellt…' : 'Kontobezogene Standarddaten als JSON exportieren.'}
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => openCookieConsentSettings()}
-                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:border-emerald-500/30 transition"
+                className="p-4 rounded-2xl bg-black/40 border border-slate-800 text-left hover:bg-white/10 transition"
               >
                 <Globe2 className="w-5 h-5 text-emerald-400" />
-                <strong className="block mt-2 text-sm text-white">Cookie- & Analytics-Einstellungen</strong>
-                <span className="block mt-1 text-xs text-slate-400">
+                <strong className="block pt-2 text-sm text-white">Cookie- & Analytics-Einstellungen</strong>
+                <span className="block text-xs text-slate-400">
                   Einwilligungen prüfen, ändern oder widerrufen.
                 </span>
               </button>
@@ -639,14 +639,14 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                   Stripe. Der im Stripe-Checkout ausgewiesene Gesamtbetrag ist für die konkrete Bestellung maßgeblich.
                 </p>
                 <div className="overflow-x-auto rounded-2xl bg-black/40 border border-slate-800">
-                  <table className="w-full min-w-[460px] text-left text-xs">
+                  <table className="w-full text-left text-xs">
                     <thead className="border-b border-slate-800 text-pink-300">
-                      <tr><th className="px-3 py-2">Tarif</th><th className="px-3 py-2">Monatlich</th><th className="px-3 py-2">Jährlich</th></tr>
+                      <tr><th className="px-3 py-1.5">Tarif</th><th className="px-3 py-1.5">Monatlich</th><th className="px-3 py-1.5">Jährlich</th></tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      <tr><td className="px-3 py-2 font-bold text-white">Starter</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.monthly)}</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.yearly)}</td></tr>
-                      <tr><td className="px-3 py-2 font-bold text-white">Pro</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.monthly)}</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.yearly)}</td></tr>
-                      <tr><td className="px-3 py-2 font-bold text-white">Enterprise</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.monthly)}</td><td className="px-3 py-2">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.yearly)}</td></tr>
+                    <tbody className=" ">
+                      <tr><td className="px-3 py-1.5 font-bold text-white">Starter</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.monthly)}</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.yearly)}</td></tr>
+                      <tr><td className="px-3 py-1.5 font-bold text-white">Pro</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.monthly)}</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.yearly)}</td></tr>
+                      <tr><td className="px-3 py-1.5 font-bold text-white">Enterprise</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.monthly)}</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.yearly)}</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -730,7 +730,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/25 text-xs text-slate-300 leading-relaxed">
+            <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs text-slate-300 leading-relaxed">
               <strong className="text-white">Rechtlicher Status:</strong> CAPITAL-AI ist eine Projekt-/Produktbezeichnung.
               Anbieter und Verantwortlicher ist {CONTROLLER.name} als natürliche Person.
             </div>
@@ -750,8 +750,8 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
                 <h2 className="text-xs font-mono text-purple-400 uppercase tracking-wider">Kontaktmöglichkeiten</h2>
                 <div className="text-xs text-slate-300 space-y-1">
                   <p className="flex items-center justify-between gap-3"><span className="text-slate-400">Telefon:</span><span className="font-mono text-white">{PUBLIC_CONTACT_PHONE}</span></p>
-                  <p className="flex items-center justify-between gap-3"><span className="text-slate-400">E-Mail:</span><a className="font-mono text-purple-300 underline break-all" href={`mailto:${CONTROLLER.email}`}>{CONTROLLER.email}</a></p>
-                  <p className="flex items-center justify-between gap-3"><span className="text-slate-400">Support:</span><a className="font-mono text-purple-300 underline break-all" href={`mailto:${CONTROLLER.supportEmail}`}>{CONTROLLER.supportEmail}</a></p>
+                  <p className="flex items-center justify-between gap-3"><span className="text-slate-400">E-Mail:</span><a className="font-mono text-purple-300 underline " href={`mailto:${CONTROLLER.email}`}>{CONTROLLER.email}</a></p>
+                  <p className="flex items-center justify-between gap-3"><span className="text-slate-400">Support:</span><a className="font-mono text-purple-300 underline " href={`mailto:${CONTROLLER.supportEmail}`}>{CONTROLLER.supportEmail}</a></p>
                   <p className="flex items-center justify-between gap-3"><span className="text-slate-400">Web:</span><a className="font-mono text-purple-300 underline" href="/">capital-ai.online</a></p>
                 </div>
               </div>
@@ -794,7 +794,7 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
         )}
       </div>
 
-      <div className="w-full max-w-4xl text-center text-xs text-slate-500 py-6 border-t border-slate-900 mt-10 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div className="w-full max-w-4xl text-center text-xs text-slate-500 py-6 border-t border-slate-900 0 flex flex-col sm:flex-row items-center justify-between gap-2">
         <span>© {new Date().getFullYear()} CAPITAL-AI · {CONTROLLER.name}</span>
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => navigate('/impressum')} className="hover:text-slate-300 cursor-pointer">Impressum</button>
