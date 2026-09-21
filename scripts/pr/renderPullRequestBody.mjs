@@ -317,5 +317,5 @@ fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, body, 'utf8');
 
 const title = `[${projectId}] [${agentClient}] ${workItem}`.slice(0, 240);
-appendGithubOutput({ pr_body_output: outputPath, pr_title: title, claim_id: claim.claimId, claim_file: claimPath, baseline_id: baseline.baselineId });
+appendGithubOutput({ pr_body_output: outputPath, pr_title: title, claim_id: claim.claimId, claim_file: claimPath, baseline_id: baseline.baselineId, project_id: projectId });
 console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Vorlage v${PR_TEMPLATE_VERSION} mit atomarer Baseline ${baseline.baselineId} erzeugt.`);

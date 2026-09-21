@@ -38,14 +38,14 @@ describe('P0 GitHub Actions CI cost control', () => {
   it('dispatches CI only after the validated non-force branch write and evaluates the planner eligibility output fail-closed', () => {
     const yaml = fs.readFileSync(baselineAutofixWorkflowPath, 'utf8');
     const write = yaml.indexOf('await github.rest.git.updateRef');
-    const dispatch = yaml.indexOf('await github.rest.actions.createWorkflowDispatch');
+    const dispatch = yaml.indexOf("workflow_id: 'ci.yml'", write);
 
     expect(write).toBeGreaterThan(-1);
     expect(dispatch).toBeGreaterThan(write);
     expect(yaml).toContain('force: false');
     expect(yaml).toContain('expected_head_sha: commit.sha');
     expect(yaml).toContain('expected_head_ref: pr.head.ref');
-    expect(yaml).toContain('expected_base_sha: process.env.EXPECTED_BASE_SHA');
+    expect(yaml).toContain('expected_base_sha: postMain.commit.sha');
     expect(yaml).toContain("if: ${{ needs.plan.result == 'success' && fromJSON(needs.plan.outputs.eligible || 'false') }}");
     expect(yaml).toContain('tail -n 700 "$raw" > "$bounded"');
     expect(yaml).not.toContain('tail -n 700 "$raw" | head -c 120000');

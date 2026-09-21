@@ -1,8 +1,8 @@
 # CAPITAL-AI Frontend – Component Inventory
 
-**Stand:** 7. September 2026  
-**Version:** 1.9.0  
-**Korrelationsbasis:** `main@fb3fff1f3959d1c6f87d20228036366848600487`  
+**Stand:** 21. September 2026  
+**Version:** 1.10.0  
+**Korrelationsbasis:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`  
 **Current Project:** `CAPITAL-AI-FE`  
 **Current Project Folder:** `docs/projects/frontend/`  
 **Primary Productive PVC:** `N/A` (`[]`)  
@@ -11,9 +11,100 @@
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
 **Migrations-/Prioritätsauthority:** `docs/frontend/FRONTEND_ROADMAP.md`
 
-Dieses Dokument ist das bestehende kanonische Frontend-Komponenten-Inventar. Version 1.9.0 erweitert die vorhandene Visual-Recovery-Matrix um die Owner-gerichtete Class-A-Einstufung von Buffett Value Check, Sentiment Dashboard und Momentum Dashboard sowie um Asset-Universe-/FINTECH-Modellprojektionen, Crypto-Kategorie-/Unterklassen-Navigation und die wiederverwendbare Social-Render-Projektion. Es definiert keine zweite Roadmap oder Source-Tree-, Market-Data-, Scoring-, Ranking-, Evidence-, Freshness-, Entitlement-, Social-Publishing-, IAM- oder Governance-Authority.
+Dieses Dokument ist das bestehende kanonische Frontend-Komponenten-Inventar. Version 1.10.0 ergänzt eine einheitliche, fachlich benannte grafische Frontend-Sprache und bindet die inventarisierten UI-Muster über stabile `VOC-FRONTEND-*` Concept IDs an das kanonische ESS-0017 Vocabulary. Version 1.9.0 erweiterte die vorhandene Visual-Recovery-Matrix um die Owner-gerichtete Class-A-Einstufung von Buffett Value Check, Sentiment Dashboard und Momentum Dashboard sowie um Asset-Universe-/FINTECH-Modellprojektionen, Crypto-Kategorie-/Unterklassen-Navigation und die wiederverwendbare Social-Render-Projektion. Es definiert keine zweite Roadmap oder Source-Tree-, Market-Data-, Scoring-, Ranking-, Evidence-, Freshness-, Entitlement-, Social-Publishing-, IAM- oder Governance-Authority.
 
 Zielpfade bestimmt `FRONTEND_ARCH.md`; Reihenfolge bestimmt `FRONTEND_ROADMAP.md`; fachliche Contracts bleiben bei ihren then-current Primary Owners. `src/components/` ist Legacy-/Compatibility-Zone. `CAPITAL-AI-SOCIAL` behält MediaProject-/Rendering-/Publishing-Integration; Frontend inventarisiert nur die wiederverwendbare Präsentationsprojektion.
+
+---
+
+## 0. Kanonische grafische Frontend-Sprache
+
+### 0.1 Zweck und Bindung
+
+Die grafische Frontend-Sprache ist die semantische Benennungsschicht zwischen **Design**, **Frontend-Implementierung**, **Dokumentation**, **Vocabulary** und späteren UI-/Agenten-Anbindungen. Sie beschreibt, *wie ein sichtbares Element fachlich heißt*, ohne aus der Benennung eine neue Runtime- oder Domain-Authority abzuleiten.
+
+Verbindliche Zuordnung:
+
+```text
+Grafisches Element / UI Pattern
+        ↓
+VOC-FRONTEND-* Concept ID
+        ↓
+DE Preferred Term ↔ EN Preferred Term / canonicalCodeTerm
+        ↓
+COMPONENT_INVENTORY (Ist-Bestand / Mapping)
+        ↓
+FRONTEND_ARCH (bestehende Presentation-/Dependency-Authority)
+        ↓
+konkrete React-Komponente / Feature-Surface
+```
+
+Vocabulary-Authority bleibt `ESS-0017 / ADR-0078`; Frontend-Architektur-Authority bleibt `docs/frontend/FRONTEND_ARCH.md`. Die Concept IDs werden durch `src/platform/Vocabulary/Registry/frontendPresentationConcepts.ts` bereitgestellt (Owner-correcte Vocabulary-Erweiterung: PR #1212). Dieses Inventar ist der Frontend-Consumer derselben IDs und erzeugt **keine zweite Terminologie-Registry**.
+
+**Naming-Regeln:**
+
+- Technische Concept-/Code-Terme sind Englisch und stabil; die UI-/Dokumentationssprache kann den deutschen Preferred Term verwenden.
+- Bei fachlicher Kommunikation ist `Deutsch (English)` zulässig, wenn dadurch die Zuordnung klarer wird.
+- Ein Dateiname oder React-Komponentenname muss nicht sofort dem Preferred Term entsprechen. Ein Rename ist eine getrennte Änderung und bleibt hinter dem ESS-0017 **Safe Rename Gate**.
+- Ein **Badge** ist grundsätzlich eine kompakte nicht-interaktive Kennzeichnung; ein **Chip** ist eine kompakte Status-/Kontextdarstellung, deren Interaktivität explizit erkennbar sein muss.
+- Ein **Modaler Dialog (Modal Dialog)** bindet temporär den Interaktionsfokus; ein **Navigations-Drawer (Navigation Drawer)** ist ein seitlich ein-/ausblendbares Navigationspanel. Diese Begriffe werden nicht synonym verwendet.
+- Visuelle Begriffe dürfen gelieferten Status, Authority, Evidence oder Freshness **nur projizieren** und niemals fachliche Zustände erzeugen, hochstufen oder synthetisieren.
+
+### 0.2 Komponenten- und Elementinventar
+
+| Concept ID | Bevorzugter Begriff DE | Canonical / EN | Klasse | Aktuelle Implementierung / Zuordnung | Inventarstatus |
+|---|---|---|---|---|---|
+| `VOC-FRONTEND-0001` | Anwendungsshell | `ApplicationShell` / Application shell | Struktur | `src/app/AppShell.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0002` | Seitencontainer | `PageContainer` / Page container | Struktur | Root-/Page-Container in App- und Landing-Composition | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0003` | Geräte-Vorschaurahmen | `DevicePreviewFrame` / Device preview frame | Präsentationsmuster | `frontend-port/ReferenceApp.tsx` Desktop-Preview | PRESENTATION_ONLY |
+| `VOC-FRONTEND-0004` | Webseitenkopf | `SiteHeader` / Site header | Navigation | `frontend-port/components/Header.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0005` | Anwendungskopf | `ApplicationHeader` / Application header | Navigation | `src/app/dashboard/DashboardHeader.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0006` | Markenlogo | `BrandLogo` / Brand logo | Branding | `frontend-port/components/BrandLogo.tsx`, `src/shared/branding/CapitalAiLogo.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0007` | Primärnavigation | `PrimaryNavigation` / Primary navigation | Navigation | Landing Navigation + `DashboardNavigation.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0008` | Navigations-Drawer | `NavigationDrawer` / Navigation drawer | Navigation | Landing Slide-in Drawer + `DashboardNavigationDrawer.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0009` | Navigationseintrag | `NavigationItem` / Navigation item | Navigation | Ziele innerhalb Landing-/Dashboard-Navigation | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0010` | Hintergrund-Scrim | `BackdropScrim` / Backdrop scrim | Overlay | Abdunklung hinter Drawer/Modal | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0011` | Statusleiste | `StatusBar` / Status bar | Status | `frontend-port/components/StatusBar.tsx` | PRESENTATION_ONLY |
+| `VOC-FRONTEND-0012` | Aktionsschaltfläche | `ActionButton` / Action button | Primitive | `src/shared/ui/Button.tsx` + fachliche Button-Consumer | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0013` | Icon-Schaltfläche | `IconButton` / Icon button | Primitive | Menü-/Close-/Icon-Aktionen; zugänglicher Name erforderlich | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0014` | Primäre Handlungsaufforderung | `PrimaryCallToAction` / Primary call to action | Aktion | primäre Hero-/Feature-Aktion | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0015` | Sekundäre Handlungsaufforderung | `SecondaryCallToAction` / Secondary call to action | Aktion | sekundäre Hero-/Feature-Aktion | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0016` | Inhaltskarte | `ContentCard` / Content card | Primitive | `src/shared/ui/Card.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0017` | Texteingabefeld | `TextInput` / Text input | Primitive | `src/shared/ui/Input.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0018` | Tooltip | `Tooltip` | Primitive | `src/shared/ui/Tooltip.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0019` | Modaler Dialog | `ModalDialog` / Modal dialog | Overlay | `src/shared/ui/Modal.tsx`; Landing Analysis/Product/Asset/Module/Market Dialogs | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0020` | Hero-Bereich | `HeroSection` / Hero section | Content Pattern | `frontend-port/components/Hero.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0021` | Einordnungszeile | `EyebrowText` / Eyebrow text | Typografie | kurze Kontextzeile oberhalb einer Hauptüberschrift | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0022` | Hero-Visual | `HeroVisual` / Hero visual | Visual | Earth-/Lead-Visual in `Hero.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0023` | Abschnittskopf | `SectionHeader` / Section header | Content Pattern | Überschrift/Kontext/Aktion eines Inhaltsabschnitts | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0024` | Funktionsraster | `FeatureGrid` / Feature grid | Layout | `KeyPillars.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0025` | Funktionskarte | `FeatureCard` / Feature card | Content Pattern | einzelne Key-Pillar-/Capability-Karte | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0026` | Marktübersicht | `MarketOverview` / Market overview | Feature Surface | `frontend-port/components/MarketOverview.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0027` | Marktdatenkarte | `MarketDataCard` / Market data card | Data Presentation | Asset-/Market-Eintrag innerhalb Market Overview | PRESENTATION_CONSUMER |
+| `VOC-FRONTEND-0028` | Modulraster | `ModuleGrid` / Module grid | Layout | `frontend-port/components/CoreModules.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0029` | Modulkarte | `ModuleCard` / Module card | Content Pattern | einzelne Core-Module-Karte | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0030` | Seitenfuß | `PageFooter` / Page footer | Struktur | `frontend-port/components/Footer.tsx`, Dashboard Footer | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0031` | Status-Chip | `StatusChip` / Status chip | Status | LIVE-/System-/Kontext-Pills in Landing-/Navigation | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0032` | Status-Badge | `StatusBadge` / Status badge | Status Primitive | `src/shared/ui/StatusBadge.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0033` | Authority-Badge | `AuthorityBadge` / Authority badge | Status Primitive | `src/shared/ui/AuthorityBadge.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0034` | Aktualitäts-Badge | `FreshnessBadge` / Freshness badge | Status Primitive | `src/shared/ui/FreshnessBadge.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0035` | Evidence-Statusanzeige | `EvidenceStateIndicator` / Evidence state indicator | Status Primitive | `src/shared/ui/EvidenceStateIndicator.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0036` | Research-only-Hinweisbanner | `ResearchOnlyBanner` / Research-only banner | Status Pattern | `src/shared/ui/ResearchOnlyBanner.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0037` | Leerzustand | `EmptyState` / Empty state | State Primitive | `src/shared/ui/EmptyState.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0038` | Lade-Skelett | `LoadingSkeleton` / Loading skeleton | State Primitive | `src/shared/ui/Skeleton.tsx` | CANONICAL_CONNECTED |
+| `VOC-FRONTEND-0039` | Datenvisualisierung | `DataVisualization` / Data visualization | Visualisierung | Charts/Graphs als read-only Presentation Projection | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0040` | Diagrammrahmen | `ChartFrame` / Chart frame | Visualisierung | in §3 als geplanter Shared Visualization Primitive geführt | PLANNED_SHARED_PRIMITIVE |
+| `VOC-FRONTEND-0041` | Visualisierungslegende | `VisualizationLegend` / Visualization legend | Visualisierung | in §3 als geplanter Shared Visualization Primitive geführt | PLANNED_SHARED_PRIMITIVE |
+| `VOC-FRONTEND-0042` | Dekorativer Hintergrund | `DecorativeBackground` / Decorative background | Visual | Ambient-/Glow-/Light-Ray-Layer der Landing | CANONICAL_PATTERN |
+| `VOC-FRONTEND-0043` | Neuronaler Hintergrund | `NeuralBackground` / Neural background | Visual Primitive | `src/shared/visuals/NeuralBackground.tsx` | CANONICAL_CONNECTED |
+
+### 0.3 Sprachgebrauch in Entwicklung und Architektur
+
+Für neue Frontend-Arbeit gilt: Anforderungen, Work Packages, PR-Beschreibungen, Design-Reviews und Komponenten-Mappings sollen den **Preferred Term** oder den `canonicalCodeTerm` aus dieser Tabelle verwenden. Feature-Namen wie **Enterprise Scorer**, **Buffett Value Check** oder **Market Overview** bleiben Produkt-/Domain-Namen; sie werden nicht künstlich in generische UI-Primitive umbenannt.
+
+Beispiel: „Öffne den **Navigations-Drawer (Navigation Drawer)** über die **Icon-Schaltfläche (Icon Button)** im **Webseitenkopf (Site Header)**“ ist eindeutig. „Öffne das Menü-Ding links oben“ ist kein kanonischer Architekturbegriff.
+
+Die Zuordnung ist absichtlich **semantisch**, nicht dateinamensgetrieben: `src/shared/ui/Modal.tsx` bleibt beispielsweise physisch `Modal.tsx`, wird architektonisch aber als `VOC-FRONTEND-0019 / ModalDialog` referenziert. Dadurch kann die gemeinsame Sprache sofort genutzt werden, ohne unnötige Rename-Risiken oder Import-Drift zu erzeugen.
 
 ---
 

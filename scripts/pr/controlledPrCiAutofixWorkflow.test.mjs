@@ -35,6 +35,7 @@ test('contains no agentic provider execution or ad-hoc package installation', as
 test('keeps the write-capable job free of PR checkout and PR code execution', async () => {
   const yaml = await workflow();
   const apply = jobSection(yaml, 'apply-and-push');
+  assert.match(apply, /actions: write/);
   assert.match(apply, /contents: write/);
   assert.doesNotMatch(apply, /actions\/checkout@/);
   assert.doesNotMatch(apply, /\bnpm (?:ci|install|test|run)\b/);
@@ -57,7 +58,8 @@ test('binds patch, README blob and exact validated tree before privileged write'
   assert.match(apply, /EXPECTED_PATCH_SHA/);
   assert.match(apply, /EXPECTED_VALIDATED_TREE/);
   assert.match(apply, /EXPECTED_VALIDATED_BLOB/);
-  assert.match(apply, /current main drift/);
+  assert.match(apply, /CURRENT_MAIN moved before autofix write/);
+  assert.match(apply, /compare\/\{basehead\}/);
   assert.match(apply, /PR head drift/);
 });
 
@@ -86,4 +88,18 @@ test('serializes the privileged branch writer through the canonical per-PR lease
   const apply = jobSection(yaml, 'apply-and-push');
   assert.match(apply, /group: capital-ai-pr-writer-\$\{\{ needs\.plan\.outputs\.pr_number \}\}/);
   assert.match(apply, /cancel-in-progress: false/);
+});
+
+
+test('stale CI fixes delegate to exact Update Branch before mutation and revalidate after the fix', async () => {
+  const yaml = await workflow();
+  const sync = jobSection(yaml, 'sync-before-fix', 'deterministic-patch');
+  const apply = jobSection(yaml, 'apply-and-push');
+  assert.match(yaml, /sync_required: \$\{\{ steps\.pr\.outputs\.sync_required \}\}/);
+  assert.ok(yaml.includes("basehead: `${mainSha}...${pr.head.sha}`"));
+  assert.match(sync, /workflow_id: 'sync-agent-pr-branches\.yml'/);
+  assert.match(sync, /CURRENT_MAIN correlation dispatched before any CI autofix mutation/);
+  assert.match(apply, /workflow_id: 'sync-agent-pr-branches\.yml'/);
+  assert.match(apply, /workflow_id: 'ci\.yml'/);
+  assert.match(apply, /expected_base_sha: postMain\.commit\.sha/);
 });
