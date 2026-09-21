@@ -6,8 +6,7 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const routes = read('src/app/routing/AppRoutes.tsx');
-const faq = read('src/features/public/ui/FaqPage.tsx');
-const legalShell = read('src/features/public/ui/LegalPageShell.tsx');
+const legalPages = read('src/features/public/ui/LegalAndFaqPages.tsx');
 const login = read('src/features/public/ui/LoginPage.tsx');
 const landing = read('src/features/public/ui/LandingPage.tsx');
 const landingCss = read('src/features/public/ui/frontend-port/frontend-port.css');
@@ -65,18 +64,23 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(login).not.toContain('trackEvent(');
   });
 
-  it('binds all canonical legal and FAQ paths to a shared design shell without transferring content authority', () => {
-    expect(facade).toContain("export { FaqPage } from './FaqPage'");
-    expect(facade).toContain("export { LegalPageShell } from './LegalPageShell'");
-    expect(routes).toContain('<LegalPageShell activeRoute="/datenschutz">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/agb">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/impressum">');
-    expect(routes).toContain("if (currentPath === '/faq')");
-    expect(faq).toContain('<LegalPageShell activeRoute="/faq">');
-    expect(legalShell).toContain('data-content-owner="CAPITAL-AI-COMP"');
-    expect(legalShell).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
-    expect(faq).toContain('Inhaltliche Pflege: CAPITAL-AI-COMP');
-    expect(faq).toContain('Darstellung: CAPITAL-AI-FE');
+  it('binds all canonical legal and FAQ paths to the current FRONTEND legal design without transferring content authority', () => {
+    expect(facade).toContain("export { LegalAndFaqPages, type LegalRoute } from './LegalAndFaqPages'");
+    expect(routes).toContain("currentPath === '/datenschutz'");
+    expect(routes).toContain("currentPath === '/agb'");
+    expect(routes).toContain("currentPath === '/impressum'");
+    expect(routes).toContain("currentPath === '/faq'");
+    expect(routes).toContain('<LegalAndFaqPages route={currentPath} />');
+    expect(legalPages).toContain('data-design-source="SvenKulessa/FRONTEND"');
+    expect(legalPages).toContain('data-content-owner="CAPITAL-AI-COMP"');
+    expect(legalPages).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(legalPages).toContain("from './frontend-port/components/BrandLogo'");
+    expect(legalPages).toContain('w-full max-w-4xl');
+    expect(legalPages).toContain('bg-[#02050e]');
+    expect(legalPages).toContain('bg-amber-400/20');
+    expect(legalPages).toContain('bg-emerald-500/20');
+    expect(legalPages).toContain('bg-pink-500/20');
+    expect(legalPages).toContain('bg-purple-500/20');
   });
 
   it('adopts robust canonical-path normalization without introducing a second routing authority', () => {
