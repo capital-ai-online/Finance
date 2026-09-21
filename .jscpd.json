@@ -1,0 +1,18 @@
+{
+  "minLines": 5,
+  "minTokens": 50,
+  "mode": "mild",
+  "reporters": ["json"],
+  "output": "artifacts/oss-quality/jscpd",
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/.quality/**",
+    "**/artifacts/**",
+    "**/docs/archive/**",
+    "**/*.min.*",
+    "**/*.lock",
+    "**/package-lock.json"
+  ]
+}
