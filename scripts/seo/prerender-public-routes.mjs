@@ -23,11 +23,11 @@ const ROUTES = [
   {
     routePath: '/',
     file: 'index.html',
-    title: 'CAPITAL-AI Portal',
+    title: 'CAPITAL-AI – Marktdaten verstehen. Chancen besser erkennen.',
     description:
-      `Offizielles CAPITAL-AI Portal (Version ${PLATFORM_VERSION}) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.`,
+      `CAPITAL-AI (Version ${PLATFORM_VERSION}) vereint Echtzeit-Marktdaten, KI-gestütztes Scoring und fundierte Analysen für transparentere Entscheidungen an den globalen Märkten.`,
     noscript:
-      'CAPITAL-AI Portal: quantitative Analysen, Compliance und Asset-Scoring. Bildungsorientiert — keine Anlageberatung.',
+      'CAPITAL-AI: Marktdaten verstehen, Chancen besser erkennen — mit Echtzeit-Marktdaten, KI-gestütztem Scoring und fundierten Analysen. Bildungsorientiert — keine Anlageberatung.',
   },
   {
     routePath: '/universe',
@@ -52,7 +52,7 @@ const ROUTES = [
     file: 'impressum/index.html',
     title: 'Impressum – CAPITAL-AI',
     description:
-      'Impressum und Anbieterkennzeichnung gemäß TMG §5 für CAPITAL-AI (Sven Kulessa).',
+      'Impressum und Anbieterkennzeichnung gemäß § 5 DDG für CAPITAL-AI (Sven Kulessa).',
     noscript:
       'Impressum CAPITAL-AI — Anbieter: Sven Kulessa. Vollständiger Text nach Aktivierung von JavaScript.',
   },
