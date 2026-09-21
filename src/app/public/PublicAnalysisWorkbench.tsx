@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { FeatureRecoveryBoundary } from '../../shared/ui/FeatureRecoveryBoundary';
+import type { UserSession } from '../types/UserSession';
 import {
   AlertTriangle,
   Award,
@@ -212,10 +213,14 @@ function ProtectedToolNotice({ tool }: { tool: ToolDefinition }) {
   );
 }
 
-export function PublicAnalysisWorkbench() {
+export function PublicAnalysisWorkbench({ userSession }: { userSession: UserSession | null }) {
   const [activeTool, setActiveTool] = useState<PublicToolId>('enterprise-scorer');
   const [sideboardExpanded, setSideboardExpanded] = useState(false);
   const [timeframe, setTimeframe] = useState('1 tag');
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(PUBLIC_FIXED_SYMBOL);
+  const hasPaidSubscription =
+    userSession?.type === 'registered' && userSession.subscriptionTier !== 'Free';
+  const activeSymbol = hasPaidSubscription ? selectedSymbol : PUBLIC_FIXED_SYMBOL;
 
   const activeDefinition = TOOL_BY_ID.get(activeTool) ?? TOOL_BY_ID.get('enterprise-scorer')!;
 
@@ -224,18 +229,34 @@ export function PublicAnalysisWorkbench() {
       case 'enterprise-scorer':
         return (
           <PublicEnterpriseScorer
-            selectedSymbol={PUBLIC_FIXED_SYMBOL}
+            selectedSymbol={activeSymbol}
+            onSelectSymbol={hasPaidSubscription ? setSelectedSymbol : undefined}
             timeframe={timeframe}
             onChangeTimeframe={setTimeframe}
-            subscriptionTier="Free"
+            subscriptionTier={userSession?.subscriptionTier ?? 'Free'}
           />
         );
       case 'ranking-board':
-        return <RankingBoard onSelectAsset={() => setActiveTool('enterprise-scorer')} />;
+        return (
+          <RankingBoard
+            onSelectAsset={(symbol) => {
+              if (hasPaidSubscription) setSelectedSymbol(symbol);
+              setActiveTool('enterprise-scorer');
+            }}
+          />
+        );
       case 'buffett-value':
         return <ProtectedToolNotice tool={activeDefinition} />;
       case 'market-screener':
-        return <MarketScreener selectedSymbol={PUBLIC_FIXED_SYMBOL} onSelectSymbol={() => setActiveTool('enterprise-scorer')} />;
+        return (
+          <MarketScreener
+            selectedSymbol={activeSymbol}
+            onSelectSymbol={(symbol) => {
+              if (hasPaidSubscription) setSelectedSymbol(symbol);
+              setActiveTool('enterprise-scorer');
+            }}
+          />
+        );
       case 'raw-materials':
         return <RawMaterialsDashboard />;
       default:
@@ -284,11 +305,18 @@ export function PublicAnalysisWorkbench() {
                 <ShieldCheck size={16} aria-hidden="true" />
                 <span className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">Universe Sideboard</span>
               </div>
-              <p className="text-xs leading-relaxed text-text-secondary">Schmale Cockpit-Navigation mit ausklappbaren Bewertungstools. Der öffentliche Enterprise Scorer bleibt auf BTC fixiert.</p>
+              <p className="text-xs leading-relaxed text-text-secondary">
+                {hasPaidSubscription
+                  ? 'Mit aktivem Abo ist die Asset-Auswahl im Enterprise Scorer freigeschaltet.'
+                  : 'Ohne aktives Abo bleibt der Enterprise Scorer auf BTC fixiert.'}
+              </p>
             </div>
           ) : (
-            <div className="mb-4 flex items-center justify-center rounded-xl border border-asset-crypto/20 bg-asset-crypto/[0.06] py-2 font-mono text-[9px] font-black text-asset-crypto" title="Public Asset fixiert auf BTC">
-              BTC
+            <div
+              className="mb-4 flex items-center justify-center rounded-xl border border-asset-crypto/20 bg-asset-crypto/[0.06] py-2 font-mono text-[9px] font-black text-asset-crypto"
+              title={hasPaidSubscription ? `Aktives Asset: ${activeSymbol}` : 'Ohne Abo auf BTC begrenzt'}
+            >
+              {activeSymbol}
             </div>
           )}
 
@@ -337,7 +365,10 @@ export function PublicAnalysisWorkbench() {
               <p className="mt-2 text-sm leading-relaxed text-text-secondary">{activeDefinition.description}</p>
             </div>
             <div className="rounded-xl border border-asset-crypto/25 bg-asset-crypto/[0.07] px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-text-secondary">
-              Public Asset: <span className="font-black text-asset-crypto">{PUBLIC_FIXED_SYMBOL} · fixiert</span>
+              Enterprise Asset:{' '}
+              <span className="font-black text-asset-crypto">
+                {activeSymbol} · {hasPaidSubscription ? 'Abo-Auswahl' : 'ohne Abo fixiert'}
+              </span>
             </div>
           </header>
 
