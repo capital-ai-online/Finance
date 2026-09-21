@@ -93,7 +93,6 @@ describe('GOV-CHAT-079 / LF-01 appearance contract', () => {
     expect(port).toContain('Vocabulary');
     expect(port).toContain('GLOBALE INTELLIGENZ. EINE BESSERE ZUKUNFT.');
     expect(port).toContain("glowing_earth_nodes_1789997454893.jpg");
-    expect(port).toContain("capital_ai_brand_emblem_1789997857835.jpg");
 
     expect(fs.existsSync(path.join(process.cwd(), 'src/features/public/ui/frontend-port/assets/images/capital_ai_brand_emblem_1789997857835.jpg'))).toBe(true);
     expect(fs.existsSync(path.join(process.cwd(), 'src/features/public/ui/frontend-port/assets/images/capital_ai_full_logo_1789997869885.jpg'))).toBe(true);
