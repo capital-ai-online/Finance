@@ -25,7 +25,7 @@ const ROUTES = [
     file: 'index.html',
     title: 'CAPITAL-AI – Marktdaten verstehen. Chancen besser erkennen.',
     description:
-      `CAPITAL-AI (Version ${PLATFORM_VERSION}) vereint Echtzeit-Marktdaten, KI-gestütztes Scoring und fundierte Analysen für transparentere Entscheidungen an den globalen Märkten.`,
+      `Offizielles CAPITAL-AI Portal (Version ${PLATFORM_VERSION}) – Marktdaten verstehen. Chancen besser erkennen: Echtzeit-Marktdaten, KI-gestütztes Scoring und fundierte Analysen für transparentere Entscheidungen an globalen Märkten.`,
     noscript:
       'CAPITAL-AI: Marktdaten verstehen, Chancen besser erkennen — mit Echtzeit-Marktdaten, KI-gestütztem Scoring und fundierten Analysen. Bildungsorientiert — keine Anlageberatung.',
   },
