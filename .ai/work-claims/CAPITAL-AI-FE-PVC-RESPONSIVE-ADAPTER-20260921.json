@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-PVC-RESPONSIVE-ADAPTER-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Enable CAPITAL-AI-FE to use PVC units as presentation-consumer review scope and correct the FRONTEND upstream promotion so the canonical landing adapts to mobile, tablet and desktop instead of rendering the upstream iPhone preview shell on desktop.",
+  "startedAt": "2026-09-21T17:59:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "d6be9db867d058d057c39df6e93e49fe3c875145",
+  "branch": "frontend/pvc-responsive-adapter-20260921",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "presentation_consumer across applicable PVC-01..18 outputs; no productive PVC ownership",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-PVC-RESPONSIVE-ADAPTER-20260921.json",
+    ".github/frontend-upstream-sync.json",
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md",
+    "docs/projects/frontend/README.md",
+    "docs/projects/frontend/ROADMAP.md",
+    "src/features/public/ui/LandingPage.tsx",
+    "src/features/public/ui/frontend-port/frontend-port.css",
+    "tests/unit/frontendUpstreamAppearanceContract.test.ts",
+    "tests/unit/frontendUpstreamPresentationSync.test.ts"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "SvenKulessa/FRONTEND remains read-only graphical source",
+    "Primary PVC ownership remains unchanged",
+    "FINTECH/domain, IAM, Governance, Security, Compliance and OPS authorities remain owner-correct"
+  ],
+  "exitEvidence": [
+    "CAPITAL-AI-FE has an explicit presentation_consumer relationship to relevant PVC outputs without Primary ownership transfer",
+    "runtime promotion requires a Finance-owned responsive adapter",
+    "canonical landing removes upstream phone-preview chrome from production presentation",
+    "mobile, tablet and desktop breakpoints are represented by the responsive adapter contract",
+    "upstream source blobs remain unchanged and source-lock verification remains intact",
+    "unit contracts cover PVC presentation-consumer and responsive-promotion invariants",
+    "exact-head required checks pass before merge readiness"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
