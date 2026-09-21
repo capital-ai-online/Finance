@@ -165,7 +165,7 @@
     "sourceBlobSha": "db72c7d18185e09cd64c56e0d40cdbd2d50f658c",
     "runtimeTarget": "src/features/public/ui/frontend-port/components/BrandLogo.tsx",
     "sharedEmblem": "src/shared/branding/CapitalAiEmblem.tsx",
-    "geometrySource": "SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d",
+    "geometrySource": "SvenKulessa/FRONTEND",
     "colorAuthority": "docs/frontend/design-tokens.json",
     "namingAuthority": "capital-ai-online/Finance",
     "typographyAuthority": "docs/frontend/design-tokens.json",
