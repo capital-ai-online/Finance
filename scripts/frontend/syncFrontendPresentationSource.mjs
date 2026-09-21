@@ -13,7 +13,7 @@ function fail(message) {
 
 function readConfig() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-  if (config?.schemaVersion !== '1.1.0') fail('unsupported config schema');
+  if (config?.schemaVersion !== '1.2.0') fail('unsupported config schema');
   if (!config?.source?.repository || !config?.destination) fail('source/destination missing');
   if (String(config.destination).startsWith('src/')) fail('destination must remain outside runtime src/');
   if (config?.runtimePromotion?.automatic !== false) fail('automatic runtime promotion must stay disabled');
@@ -157,7 +157,7 @@ for (const file of selected.sort()) {
 }
 
 const manifest = {
-  schemaVersion: '1.1.0',
+  schemaVersion: config.schemaVersion,
   policyId: config.policyId,
   sourceRepository: config.source.repository,
   sourceRef: config.source.ref,
