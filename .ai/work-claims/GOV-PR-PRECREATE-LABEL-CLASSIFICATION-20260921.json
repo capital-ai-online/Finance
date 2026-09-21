@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-PRECREATE-LABEL-CLASSIFICATION-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -44,5 +44,9 @@
     "changedFileOverlap": false,
     "semanticOverlap": "PR #1199 modifies separate existing PR autofix/sync workflows and does not write the PR-create or label-classification files. Other open PRs are project/domain slices with no claimed-path overlap. This work remains Governance-owned and preserves existing merge/security controls."
   },
-  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-21T20:12:00Z",
+  "releaseReason": "PR #1215 merged; terminal evidence only (merge 73ff07c117ac47091cba473b8a5896e949a39003). Released during GOV-PROJECT-LABEL-PROVIDER-CONVERGENCE-20260921 stale-writer correlation.",
+  "terminalPullRequest": 1215,
+  "terminalMergeSha": "73ff07c117ac47091cba473b8a5896e949a39003"
 }
