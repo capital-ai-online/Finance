@@ -11,6 +11,6 @@ describe('routeSeo (D2)', () => {
     expect(getRouteSeo('/impressum').title).toMatch(/Impressum/);
     expect(getRouteSeo('/agb').title).toMatch(/AGB/);
     expect(getRouteSeo('/datenschutz').title).toMatch(/Datenschutz/);
-    expect(getRouteSeo('/').title).toMatch(/CAPITAL-AI Portal/);
+    expect(getRouteSeo('/').title).toMatch(/Marktdaten verstehen/);
   });
 });
