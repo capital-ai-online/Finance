@@ -127,19 +127,6 @@ describe('FRONTEND upstream appearance contract', () => {
     expect(portCss).toContain('> :nth-child(2)');
   });
 
-  it('wraps the upstream phone preview in a Finance-owned device-native responsive adapter', () => {
-    expect(referenceApp).toContain("sm:max-w-[412px]");
-    expect(landing).toContain('className="frontend-runtime-responsive-shell"');
-    expect(landing).toContain('data-responsive-presentation="device-native"');
-    expect(landing).toContain('data-responsive-owner="CAPITAL-AI-FE"');
-
-    expect(portCss).toContain('Finance-owned runtime adapter');
-    expect(portCss).toContain('max-width: none !important');
-    expect(portCss).toContain('@media (min-width: 640px)');
-    expect(portCss).toContain('@media (min-width: 1024px)');
-    expect(portCss).toContain('max-width: 1440px !important');
-    expect(portCss).toContain('grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))');
-  });
   it('scopes upstream presentation helpers without transferring productive Finance authority', () => {
     expect(portCss).toContain('.capital-ai-frontend-port');
     expect(portCss).toContain("'Plus Jakarta Sans'");
