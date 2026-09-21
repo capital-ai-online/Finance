@@ -65,8 +65,9 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPage).toContain('data-landing-runtime-binding="verified-asset-display/1.0.0"');
     expect(landingPage).toContain('useLandingRuntimeBinding');
     expect(landingRuntimeBinding).toContain('/verified-display');
-    expect(landingRuntimeBinding).toContain('PublicCryptoScoringPreview');
-    expect(landingRuntimeBinding).toContain("const PUBLIC_SCORER_SYMBOL = 'BTC' as const");
+    expect(landingRuntimeBinding).toContain("const FINTECH_LANDING_SCORER_GATE = 'FIN-LF-01' as const");
+    expect(landingRuntimeBinding).toContain('LF-02_AUTH_PROFILE_PASS');
+    expect(landingRuntimeBinding).toContain('LF-03_PRICING_ENTITLEMENTS_PASS');
   });
 
   it('retains the compact assessment-tool sideboard outside the LF-01 root', () => {
@@ -131,7 +132,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(enterpriseScorer).toContain("fetch('/api/crypto/score'");
   });
 
-  it('keeps productive scorer logic outside the pinned LF-01 design tree and reuses the canonical public scorer through the Finance adapter', () => {
+  it('keeps productive scorer logic outside the pinned LF-01 design tree and fail-closes landing activation on FIN-LF-01 gates', () => {
     expect(routes).not.toContain('<FeatureRecoveryBoundary');
     expect(routes).not.toContain('function PublicPreviewBoundary');
     expect(routes).not.toContain('<PublicAnalysisWorkbench');
@@ -139,8 +140,10 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPage).toContain('frontend-reference-design-port');
     expect(landingPort).not.toContain('CryptoScoringEnterprise');
     expect(landingPort).not.toContain('/api/crypto/score');
-    expect(landingRuntimeBinding).toContain('PublicCryptoScoringPreview');
-    expect(landingRuntimeBinding).not.toContain("fetch('/api/crypto/score'");
+    expect(landingRuntimeBinding).not.toContain('PublicCryptoScoringPreview');
+    expect(landingRuntimeBinding).not.toContain('/api/crypto/score');
+    expect(landingRuntimeBinding).toContain('SEC_REVIEW_READY');
+    expect(landingRuntimeBinding).toContain('QM_VALIDATION_READY');
     expect(publicWorkbench).toContain('<FeatureRecoveryBoundary key={activeTool} name={activeDefinition.label}>');
     expect(publicWorkbench).toContain('<Suspense fallback={<WorkbenchLoadingState />}>');
   });
