@@ -1,7 +1,7 @@
 # CAPITAL-AI-CLIENT — Runtime & Architecture Mapping
 
-**Baseline:** `main@e9b2551a4e2e24c5fed3dac72362b8bf1727bf42`  
-**Correlation date:** `2026-09-10`  
+**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`  
+**Correlation date:** `2026-09-21`  
 **Project stage:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`
 
@@ -27,6 +27,7 @@ CLIENT-08 changes project contracts only. No productive code is moved, no client
 | `scripts/systemadmin/**` principal/request builders | Operations execution host | `NOT-CLIENT` | foreign; no local refactor |
 | ESS-0019 remote-skill semantics | external skill/tool metadata is untrusted; remote loading not enabled | `CONSUMER` | CLIENT-08 consumes contract only; no activation/runtime introduced |
 | `CLIENT_CONTRACTS.md` CLIENT-08 | project-skill/plugin/tool discovery + invocation-request contract | `OWNED CONTRACT` | documentation semantics only; no physical adapter |
+| root landing `/` and open FE PR #1195 | presentation plus prospective session/profile/pricing/scorer consumers | `FOREIGN PRESENTATION / POTENTIAL FUTURE CONSUMER` | dependency-held; does not create a PVC-01 runtime trigger before LF-01 PASS |
 
 ## Target logical components
 
@@ -66,6 +67,18 @@ Physical migration is permitted only if at least one is evidenced:
 | productive remote-skill/plugin invocation implementation | `NOT FOUND / NOT INTRODUCED` |
 
 Current relocation state: `NO_PHYSICAL_RUNTIME_TRIGGER`.
+
+### Landing-First trigger check — 2026-09-21
+
+| Landing trigger | Result |
+|---|---|
+| `LF-01_STATIC_VISUAL_LANDING_PASS` on current main | `NOT EVIDENCED` |
+| `STATIC_VISUAL_BASELINE` evidence on current main | `NOT FOUND` |
+| current root landing requires a canonical PVC-01 runtime module | `NOT EVIDENCED` |
+| open FE PR #1195 creates CLIENT ownership | `NO — FOREIGN FE WRITER` |
+| session/profile/pricing/scorer coupling in PR #1195 is a CLIENT runtime trigger | `NO — RE-SCOPE/HANDOVER EVIDENCE ONLY` |
+
+The Landing-First Owner direction therefore does not satisfy the physical-runtime gate. CLIENT may preserve its contracts and dependency evidence, but must not create a new landing request/session runtime until a later dependency-ready phase both passes its shared prerequisite and demonstrates a concrete PVC-01 consumer trigger.
 
 Current GitHub code search on the CLIENT-08 branch-start baseline finds `requestedCapability` and named logical CLIENT components only in CLIENT documentation/contract/claim material. `src/platform/Security/agentIam.ts` remains the productive principal/capability/authorization surface. Creating an unconsumed Agent Client runtime or remote-skill loader now would therefore be parallel implementation rather than strangler/refactor.
 
