@@ -8,37 +8,38 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Apply the bounded desktop-only responsive landing fix, harden future FRONTEND sync promotion against desktop preview-shell reuse, and document CAPITAL-AI-FE's existing PVC-01..18 coverage as project-local presentation/adaptation scope without changing Primary PVC routing.",
+  "workItem": "Preserve the accepted SvenKulessa/FRONTEND mobile/tablet layout exactly while adapting only desktop viewports and re-correlating that desktop adapter after every graphical upstream sync.",
   "startedAt": "2026-09-21T17:53:00+02:00",
   "baseBranch": "main",
   "baseSha": "d6be9db867d058d057c39df6e93e49fe3c875145",
   "branch": "frontend/desktop-landing-responsive-fix-20260921",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
-  "projectStage": "cross_cutting presentation adaptation PVC-01..18; no productive PVC",
+  "projectStage": "cross-cutting presentation; no productive PVC",
   "claimedPaths": [
     "src/features/public/ui/frontend-port/frontend-port.css",
     "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
     ".github/frontend-upstream-sync.json",
+    "scripts/frontend/syncFrontendPresentationSource.mjs",
     "tests/unit/frontendUpstreamPresentationSync.test.ts",
-    "docs/projects/frontend/README.md",
     "docs/projects/frontend/ROADMAP.md",
+    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921.json",
     ".ai/work-claims/CAPITAL-AI-FE-DESKTOP-RESPONSIVE-20260921.json"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
     "SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07 remains the pinned graphical source",
     "src/features/public/ui/frontend-port/source-lock.json remains unchanged",
-    "docs/projects/PROJECT_VALUE_CHAIN.md Primary Owners remain unchanged",
     "Finance branding authority remains unchanged"
   ],
   "exitEvidence": [
-    "desktop widths >= 1024px render the landing as a website container rather than an iPhone mockup",
-    "desktop preview control and smartphone status chrome are hidden",
-    "mobile and tablet presentation rules are not changed",
+    "desktop widths >= 1024px render the landing as a bounded website canvas rather than an iPhone mockup",
+    "desktop preview control, smartphone status chrome and iOS home indicator are hidden",
+    "mobile and tablet presentation rules below 1024px are not changed",
+    "desktop mobile-card rails become desktop-only responsive grids",
     "ReferenceApp and all locked upstream component blobs remain unchanged",
-    "future upstream promotion requires a desktop website adapter and preserves mobile/tablet behavior",
-    "CAPITAL-AI-FE project documentation permits PVC outputs as presentation/adaptation scope without changing Primary PVC ownership",
+    "every upstream sync validates the desktop adapter and current source-shell markers",
+    "source-shell drift fails closed with desktop adapter correlation required",
     "focused regression plus required repository checks pass on the exact PR head"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
