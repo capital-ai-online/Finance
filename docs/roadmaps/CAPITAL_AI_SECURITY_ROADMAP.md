@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-ROADMAP-CAPITAL-AI-SEC-2026-08-31`  
 **Project ID:** `CAPITAL-AI-SEC`  
-**Version:** `2.4.0`  
+**Version:** `2.5.0`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
-**Date:** `2026-09-11`  
-**Repository baseline:** `main@a7ed0e9139ce9e2899afd863baf2e50f8eed75fb`  
+**Date:** `2026-09-21`  
+**Repository baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`  
 **Role:** `CROSS_CUTTING_SECURITY`  
 **Primary Project Value Chain ownership:** `[]`  
 **Project coverage:** `PVC-01` through `PVC-18` as Security overlay  
@@ -208,23 +208,78 @@ The next Security sequence after this matrix slice completes its normal PR lifec
 
 PR creation requires separate explicit Human/Owner approval for the exact current-main, branch-head, changed-file scope, correlation result and resolved title after final re-correlation. Hosted checks run after PR according to current repository controls. Merge remains Human/CODEOWNER-only. CI, roadmap status or Security evidence does not authorize Release, Production or protected provider mutation.
 
-## 5A. Fresh priority package — SEC-WEB-HARDENING-01
+## 5A. Active website security roadmap — SEC-WEB-HARDENING-01
 
-**State:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED  
-**Owner direction:** 2026-09-20  
-**Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
-**Detailed package:** docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md
+**State:** `ACTIVE / ROADMAP_PROMOTED / IMPLEMENTATION_OPEN`  
+**Owner direction:** 2026-09-20; roadmap promotion reaffirmed 2026-09-21  
+**Original materialization:** Human-merged PR #1165  
+**Current roadmap baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`  
+**Canonical package:** `docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md`
 
-This package is the current website/deployment Security convergence overlay for the rebuilt public landing experience. It reuses SEC-01..SEC-10 and the existing Release/Production controls rather than creating a parallel control plane.
+SEC-WEB-HARDENING-01 is the active website/deployment Security roadmap. It reuses SEC-01..SEC-10 and all existing Release/Production/IAM/Governance controls. The roadmap is orchestration/status only and does not become a second instruction, task, finding, evidence or deployment authority.
 
-Dependency order:
+### 5A.1 Dependency graph
 
-1. SEC-WEB-00 exact attack-surface/control baseline;
-2. SEC-WEB-10 signed single-artifact supply-chain convergence;
-3. SEC-WEB-20 route-minimal browser/CSP isolation;
-4. SEC-WEB-30 public API/auth/input/abuse hardening;
-5. SEC-WEB-40 exact production/readiness/rollback resilience;
-6. SEC-WEB-50 independent hosted/runtime/DAST/transport assurance.
+| Order | Roadmap slice | Priority | Security objective | Primary implementation return | State |
+|---:|---|---|---|---|---|
+| 1 | `SEC-WEB-00` | P0 | exact attack-surface and control baseline | SEC correlation + owner readbacks | `READY` |
+| 2 | `SEC-WEB-10` | P0 | signed single-artifact supply-chain convergence | OPS / PVC-07 + PVC-08 | `READY` |
+| 3 | `SEC-WEB-20` | P1 | route-minimal browser isolation and strict CSP | FE + OPS | `READY_AFTER_P0` |
+| 4 | `SEC-WEB-30` | P1 | public API/Auth/input/abuse hardening | OPS + CLIENT/FE + affected owner | `READY_AFTER_P0` |
+| 5 | `SEC-WEB-40` | P1 | exact production/readiness/rollback resilience | OPS / PVC-04/07/08 | `READY_AFTER_P0` |
+| 6 | `SEC-WEB-50` | P1 | independent hosted/runtime/DAST/transport assurance | SEC + QM; OPS target | `DEPENDS_ON_IMPLEMENTATION_RETURN` |
 
-P0 findings are SEC-WEB-F01, F10, F15, F16 and F23. Implementation remains owner-correct; Security independently verifies returned evidence. The package does not itself authorize protected provider/Production/Ruleset mutations.
+### 5A.2 P0 implementation queue
 
+The current P0 queue is:
+
+1. `SEC-WEB-00` — re-read current public/API/browser/deployment attack surface.
+2. `SEC-WEB-F01/F16` — converge local/registry digest semantics and select one canonical registry artifact identity.
+3. `SEC-WEB-F15` — build once and deploy the exact already-scanned/signed/attested artifact.
+4. `SEC-WEB-F23` — enforce client/build/container secret-exposure gates and public-env allowlisting.
+5. `SEC-WEB-F10` — complete current OAuth/session negative-security coverage.
+6. Re-correlate Production ↔ CURRENT_MAIN, open writers and dependent PR assumptions.
+7. Promote eligible P1 slices only after P0 evidence is current.
+
+No queue item may lower an existing Required Check or reinterpret missing/stale evidence as PASS.
+
+### 5A.3 Finding-to-workstream map
+
+| Finding set | SEC streams | Implementation return |
+|---|---|---|
+| F01, F13-F17, F23 | SEC-04, SEC-06, SEC-08, SEC-10 | OPS / PVC-02/07/08; COMP overlay |
+| F02-F04, F06, F09, F11-F12, F26 | SEC-03, SEC-08, SEC-10 | FE + OPS runtime |
+| F05, F07-F08, F21-F25 | SEC-03, SEC-04, SEC-08, SEC-09, SEC-10 | OPS + affected domain owner |
+| F10 | SEC-02, SEC-03, SEC-08, SEC-10 | CLIENT + FE/OPS affected surfaces |
+| F18-F20, F27-F28 | SEC-05, SEC-08, SEC-10 | OPS / PVC-04/07/08 |
+| F29-F30 | SEC-08, SEC-10 plus Governance/QM dependencies | GOV for F29; owner implementations + SEC/QM verification for F30 |
+
+### 5A.4 Milestones
+
+**M0 — Baseline locked:** exact current-main inventory and P0 finding identities are fresh.
+
+**M1 — Artifact trust:** registry digest, signature, SBOM and provenance identify one artifact; deployment consumes that exact artifact.
+
+**M2 — Browser boundary:** landing CSP/header/origin policy is minimal and production verified.
+
+**M3 — Public capability boundary:** public API/auth/input/rate/cost behavior has negative-test evidence.
+
+**M4 — Resilient production:** liveness/readiness/deployment identity and rollback are independently proven.
+
+**M5 — Continuous assurance:** runtime/DAST/transport evidence is current; SEC verification and QM assurance close applicable findings.
+
+### 5A.5 Completion criteria
+
+The roadmap reaches `CONVERGED` only when:
+
+- all P0/P1 findings have owner-correct terminal dispositions;
+- no known unresolved CRITICAL/HIGH finding remains in the deployed artifact;
+- production source SHA and deployed registry digest are exact/current;
+- signature, SBOM and provenance are bound to the deployed digest;
+- browser/CSP/API/Auth/abuse controls have current independent evidence;
+- liveness/readiness/rollback/deployment identity evidence is current;
+- runtime/DAST/transport evidence is exact-identity bound;
+- CAPITAL-AI-SEC has independently verified applicable gates;
+- CAPITAL-AI-QM assurance is complete where required.
+
+The complete threat model, trust boundaries, per-finding owners and exact verification gates remain in the canonical package; this Roadmap intentionally does not duplicate them.
