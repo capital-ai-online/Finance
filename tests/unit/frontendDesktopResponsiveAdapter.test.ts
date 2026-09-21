@@ -39,6 +39,8 @@ describe('desktop landing responsive adapter', () => {
     expect(portCss).toContain('border-radius: 0 !important');
     expect(portCss).toContain('box-shadow: none !important');
     expect(portCss).toContain('overflow: visible !important');
+    expect(portCss).toContain('grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))');
+    expect(portCss).toContain('font-size: clamp(3.25rem, 5vw, 5.25rem) !important');
   });
 
   it('removes desktop-only mockup chrome without changing mobile or tablet rules', () => {
