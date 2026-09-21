@@ -17,6 +17,8 @@ describe('current f2a101 landing runtime binding', () => {
     expect(sourceLock.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
     expect(sourceLock.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_PRESENTATION_ADAPTERS');
     expect(landing).toContain('data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
+    expect(landing).toContain('data-market-data-binding="verified-on-selection"');
+    expect(landing).toContain('data-landing-scorer-gate="FIN-LF-01"');
     expect(referenceApp).toContain('useCurrentLandingRuntimeBinding');
     expect(referenceApp).toContain('<CurrentLandingDataNotice />');
   });
