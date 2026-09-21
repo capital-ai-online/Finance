@@ -53,6 +53,55 @@
   .capital-ai-frontend-port > div > main > .hidden.sm\:block {
     display: none !important;
   }
+
+  /* Bound real website content inside the desktop canvas. */
+  .capital-ai-frontend-port > div > main > header,
+  .capital-ai-frontend-port > div > main > section,
+  .capital-ai-frontend-port > div > main > footer {
+    width: min(calc(100% - 64px), 1180px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type {
+    min-height: clamp(36rem, 72vh, 46rem);
+    padding-top: clamp(4rem, 7vw, 7rem) !important;
+    padding-bottom: 4rem !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type > .relative.z-10 {
+    max-width: 46rem;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type h1 {
+    font-size: clamp(3.25rem, 5vw, 5.25rem) !important;
+    line-height: 0.98 !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section:first-of-type p {
+    max-width: 42rem !important;
+    font-size: 1rem !important;
+  }
+
+  /* Mobile horizontal card rails become real desktop card grids only on desktop. */
+  .capital-ai-frontend-port > div > main .snap-mandatory {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+  }
+
+  .capital-ai-frontend-port > div > main .snap-mandatory > * {
+    width: auto !important;
+    min-width: 0 !important;
+    scroll-snap-align: none !important;
+  }
+
+  /* Source-preview iOS home indicator is not desktop website chrome. */
+  .capital-ai-frontend-port > div > main > footer > :last-child {
+    display: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
