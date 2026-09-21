@@ -3,41 +3,36 @@
 **Project:** `CAPITAL-AI-FE`  
 **Gate:** `LF-01_EXIT_EVIDENCE_CONVERGENCE`  
 **Branch decision:** `PASS_AFTER_HUMAN_MERGE`  
-**Current-main state before this PR merges:** `PENDING_HUMAN_MERGE`  
+**Current-main state before PR #1206 merges:** `PENDING_HUMAN_MERGE`  
 **Baseline observed:** `main@523275263f1c8a3e6f8047fae16653a76f6d8372`  
-**Upstream presentation source observed:** `SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07`
+**Adopted upstream snapshot:** `SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07`
 
 ## Owner decision
 
-The Human Owner directs that future main Frontend graphics, UI slices and presentation architecture are sourced from `SvenKulessa/FRONTEND`, while productive Finance runtime/business/domain logic remains in its canonical owner boundaries.
+The Human Owner directs that merge of PR #1206 adopts the **current complete presentation architecture** from `SvenKulessa/FRONTEND`: graphical components, modals, UI slices, application composition, entry point, styles, presentation type shapes and required visual fixtures.
 
-The Human Owner also releases `LF-01_EXIT_EVIDENCE_CONVERGENCE` as PASS for continuation **after this exact decision is merged to CURRENT_MAIN**.
+Existing Finance repository components are connected to that graphical architecture **after** this adoption through separate owner-correct adapter work. Productive Finance logic is not replaced by demo logic from the design repository.
 
-## Current-main evidence
+## Snapshot completeness
 
-On the observed current main:
+PR #1206 contains the pinned current upstream presentation tree:
 
-- root composes the static `LandingPage`;
-- authenticated login return targets `/`;
-- root routing does not compose `LandingRealtimeAiNewsfeed`, `PublicAnalysisWorkbench` or `LandingPricingPanel`;
-- `LandingPage.tsx` contains no direct `fetch(...)` call;
-- static presentation slots exist for profile/subscription, news, scorer and pricing;
-- PR #1195 is merged and established the LF-01 static visual baseline;
-- OPS PR #1200 is merged and aligned auth/lifecycle routing to the root landing;
-- SEO #1204 and SOCIAL #1203 are merged as dependency-aware downstream projections.
+- `src/App.tsx` and `src/main.tsx`;
+- `src/index.css` and `src/types.ts`;
+- all 13 current files under `src/components/`;
+- `src/data/mockData.ts` as `VISUAL_FIXTURE_ONLY`;
+- a source manifest tying the snapshot to upstream SHA `8f6b629c...`.
 
-## Convergence delta in this PR
+This is a physical merge artifact, not only a scheduled-sync promise.
 
-This PR closes the remaining Frontend-source ambiguity by establishing one controlled path:
+## LF-01 semantics
 
-`SvenKulessa/FRONTEND -> hourly allowlisted inert snapshot -> Finance adapter PR -> productive Finance frontend`.
+On observed CURRENT_MAIN, root already renders the static LandingPage, login returns to `/`, productive news/workbench/pricing surfaces are absent from root composition and LandingPage has no direct fetch requirement.
 
-The hourly sync cannot promote upstream source into `src/`, cannot execute upstream code and cannot copy domain/runtime source classes. This keeps LF-01 visual authority separated from later productive phases.
+After Human/CODEOWNER merge of PR #1206, `LF-01_EXIT_EVIDENCE_CONVERGENCE = PASS` means:
 
-## PASS semantics
+- the static Landing-First baseline remains established;
+- the authoritative graphical target is the pinned FRONTEND presentation architecture;
+- later work may begin adapter-based binding of Finance-owned components to that target in dependency order.
 
-After Human/CODEOWNER merge, `LF-01_EXIT_EVIDENCE_CONVERGENCE = PASS` releases dependency-correct continuation to later Landing-First work.
-
-This PASS does **not** relabel independent Security, Compliance or Quality findings as PASS. Those projects keep their own evidence/approval boundaries, and an affected later-phase PR remains fail-closed when its applicable SEC/COMP/QM evidence is missing or failed.
-
-An unmerged branch cannot authorize itself. Until merge, CURRENT_MAIN remains the canonical source and this document is proposed evidence only.
+This PASS does not turn independent Security, Compliance or Quality findings into PASS. Applicable SEC/COMP/QM gates remain independently fail-closed.
