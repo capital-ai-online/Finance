@@ -10,7 +10,7 @@
 
 Human Owner direction on 2026-09-21 supersedes the former post-create Full-Set Label Classification design. PR classification is no longer a dedicated `pull_request` pipeline/check. The project classification must already be resolved before the external Pull Request create mutation, and the resulting colored project label is supplied during PR creation.
 
-The former read-only post-create workflow is retired. This is a behavioral replacement, not a second label architecture.
+The former read-only post-create workflow is retained only as an inert `workflow_dispatch` tombstone with `if: false`, no automatic event and no normal runner allocation. This satisfies the existing workflow-deletion security gate without preserving post-create classification behavior. This is a behavioral replacement, not a second label architecture.
 
 ## Canonical classification source
 
@@ -52,7 +52,7 @@ Labels never authorize merge, never replace Human/CODEOWNER review and never wea
 
 Retired by this slice:
 
-- `.github/workflows/pr-label-classification.yml`
+- automatic execution of `.github/workflows/pr-label-classification.yml` (file retained only as an inert no-runner tombstone)
 - post-create consumption of `github.event.pull_request.labels`
 - `--fail-on-drift` as a dedicated PR status check
 - runner allocation solely to classify labels after PR creation
@@ -66,6 +66,6 @@ The stable work-package identity `GOV-PR-LABEL-01` is retained and evolved rathe
 - label color is sourced from `docs/projects/README.md`, not a second color registry;
 - the repository label is ensured before PR creation;
 - the PR create command carries the resolved label;
-- the former dedicated PR label-classification workflow is absent;
+- the former dedicated PR label-classification workflow has no automatic trigger and its only job is statically disabled;
 - ordinary regression tests cover fail-closed mapping behavior;
 - final merge remains Human/CODEOWNER gated because this slice changes Governance/control-plane behavior.
