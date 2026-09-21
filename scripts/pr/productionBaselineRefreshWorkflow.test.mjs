@@ -269,3 +269,14 @@ test('post-deploy and post-merge baseline reconciliation advance at most one FIF
   assert.ok(postMerge.includes('next-pr-not-synced'));
   assert.ok(workflow.includes('next-pr-not-synced'));
 });
+
+
+test('direct Governance baseline writer correlates CURRENT_MAIN before any PR-body mutation', () => {
+  const direct = workflow.split('  refresh-baseline:\n')[1].split('\n  discover_post_deploy_prs:\n')[0];
+  assert.ok(direct.includes('Aktuellen PR-Snapshot und CURRENT_MAIN vor Write autorisieren'));
+  assert.ok(direct.includes('EXPECTED_MAIN_SHA: ${{ steps.policy_main.outputs.sha }}'));
+  assert.ok(direct.includes("basehead: `${expectedMain}...${pr.head.sha}`"));
+  assert.ok(direct.includes("workflow_id: 'sync-agent-pr-branches.yml'"));
+  assert.ok(direct.includes("core.setOutput('eligible', 'false')"));
+  assert.ok(direct.includes('CURRENT_MAIN ancestry PASS; Governance baseline fix may continue.'));
+});
