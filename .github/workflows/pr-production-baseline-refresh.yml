@@ -438,11 +438,12 @@ jobs:
 
             const include = [];
             const skipped = [];
-            for (const pr of pulls) {
+            const ordered = [...pulls].sort((a, b) => Number(a.number) - Number(b.number));
+            for (const pr of ordered) {
               const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
               const headSha = normalizeSha(pr.head?.sha);
-              if (!sameRepo || !/^[0-9a-f]{40}$/.test(headSha)) {
-                skipped.push(`#${pr.number}:cross-repo-or-invalid-head`);
+              if (!sameRepo || pr.draft === true || !/^[0-9a-f]{40}$/.test(headSha)) {
+                skipped.push(`#${pr.number}:${pr.draft === true ? 'draft' : 'cross-repo-or-invalid-head'}`);
                 continue;
               }
 
@@ -453,8 +454,8 @@ jobs:
               });
               const containsMain = compare.data.status === 'ahead' || compare.data.status === 'identical';
               if (!containsMain) {
-                skipped.push(`#${pr.number}:not-synced(${compare.data.status})`);
-                continue;
+                skipped.push(`#${pr.number}:next-pr-not-synced(${compare.data.status})`);
+                break;
               }
 
               include.push({
@@ -462,6 +463,7 @@ jobs:
                 head_sha: headSha,
                 base_sha: mainSha,
               });
+              break;
             }
 
             core.setOutput('matrix', JSON.stringify({ include }));
@@ -469,7 +471,7 @@ jobs:
             core.setOutput('main_sha', mainSha);
             core.setOutput('production_sha', productionSha);
             core.notice(
-              `Post-Deploy-Korrelation PASS: production=main=${mainSha.slice(0, 12)}; ${include.length} synchronisierte offene PR(s), ${skipped.length} fail-closed übersprungen.`,
+              `Post-Deploy-Korrelation PASS: production=main=${mainSha.slice(0, 12)}; sequentieller Ziel-PR=${include.length ? '#' + include[0].pr_number : 'keiner'}, skipped=${skipped.length ? skipped.join(',') : 'keine'}.`,
             );
             await core.summary
               .addHeading('Production/Main/PR Korrelation')
@@ -486,7 +488,7 @@ jobs:
     if: ${{ needs.discover_post_deploy_prs.result == 'success' && needs.discover_post_deploy_prs.outputs.count != '0' }}
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 1
       matrix: ${{ fromJSON(needs.discover_post_deploy_prs.outputs.matrix) }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
