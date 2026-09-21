@@ -8,14 +8,14 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Preserve the accepted SvenKulessa/FRONTEND mobile/tablet layout exactly while adapting only desktop viewports and re-correlating that desktop adapter after every graphical upstream sync.",
+  "workItem": "Apply the desktop-only landing fix and make it a persistent per-sync CAPITAL-AI-FE presentation adaptation across rendered PVC-01..18 outputs, while preserving Mobile/Tablet and all Primary PVC/domain ownership.",
   "startedAt": "2026-09-21T17:53:00+02:00",
   "baseBranch": "main",
   "baseSha": "d6be9db867d058d057c39df6e93e49fe3c875145",
   "branch": "frontend/desktop-landing-responsive-fix-20260921",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
-  "projectStage": "cross-cutting presentation; no productive PVC",
+  "projectStage": "cross_cutting presentation adaptation PVC-01..18; no productive PVC",
   "claimedPaths": [
     "src/features/public/ui/frontend-port/frontend-port.css",
     "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
@@ -24,7 +24,11 @@
     "tests/unit/frontendUpstreamPresentationSync.test.ts",
     "docs/projects/frontend/ROADMAP.md",
     ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921.json",
-    ".ai/work-claims/CAPITAL-AI-FE-DESKTOP-RESPONSIVE-20260921.json"
+    ".ai/work-claims/CAPITAL-AI-FE-DESKTOP-RESPONSIVE-20260921.json",
+    "docs/frontend/FRONTEND_ARCH.md",
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md",
+    "docs/projects/frontend/README.md"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
@@ -33,14 +37,13 @@
     "Finance branding authority remains unchanged"
   ],
   "exitEvidence": [
-    "desktop widths >= 1024px render the landing as a bounded website canvas rather than an iPhone mockup",
-    "desktop preview control, smartphone status chrome and iOS home indicator are hidden",
-    "mobile and tablet presentation rules below 1024px are not changed",
-    "desktop mobile-card rails become desktop-only responsive grids",
-    "ReferenceApp and all locked upstream component blobs remain unchanged",
-    "every upstream sync validates the desktop adapter and current source-shell markers",
-    "source-shell drift fails closed with desktop adapter correlation required",
-    "focused regression plus required repository checks pass on the exact PR head"
+    "desktop widths >= 1024px render as the actual website rather than the upstream iPhone preview",
+    "mobile and tablet source presentation remain unchanged",
+    "every upstream sync/promotion requires and revalidates the DESKTOP_VIEWPORT_ADAPTER",
+    "CAPITAL-AI-FE may adapt presentation of rendered PVC-01..18 outputs without taking productive PVC/domain ownership",
+    "ReferenceApp/source lock and Finance branding boundary remain unchanged",
+    "focused regression plus required repository checks pass on the exact PR head",
+    "Human/CODEOWNER merge remains required"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
 }

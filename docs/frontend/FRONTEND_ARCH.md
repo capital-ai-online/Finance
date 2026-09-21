@@ -285,3 +285,9 @@ The public repository `SvenKulessa/FRONTEND` is the leading upstream **design/pr
 The canonical Finance runtime architecture remains governed locally by this document and the owner/domain boundaries resolved through `/AGENTS.md@CURRENT_MAIN`. Upstream source is synchronized through the allowlisted contract in `.github/frontend-upstream-sync.json` into an inert snapshot under `docs/frontend/upstream-source/`. It is never executed directly and never promoted automatically into `src/`.
 
 Productive Finance adapters may consume the visual intent only after removing mock/demo/runtime dependencies and binding the component to the canonical Finance contracts for auth, data, scoring, entitlement, billing, providers, Security, Compliance and Quality as applicable. This preserves **Projection, not Redefinition** while making the external FRONTEND repository the primary visual source.
+
+### Desktop sync-promotion contract
+
+The synchronized FRONTEND source may contain device-preview behavior because it is also a visual reference. The current sub-desktop presentation is preserved. For production desktop widths (`min-width: 1024px`), `CAPITAL-AI-FE` owns the presentation-only adapter that turns the same graphical composition into the actual website canvas.
+
+The desktop adapter is deliberately outside the synchronized upstream snapshot, so a source sync cannot overwrite it. Every later sync or runtime promotion must revalidate that adapter. If an upstream structural change breaks the adapter, promotion fails closed until FE repairs the presentation layer. This permission covers layout, responsive sizing, preview/frame chrome, accessibility and interaction only; domain/data/scoring/IAM/billing/Governance semantics remain with their Primary Owners.

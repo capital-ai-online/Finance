@@ -50,6 +50,8 @@ The `PVC-*` namespace is intentionally distinct from the existing technical fina
 
 Cross-cutting projects such as `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-FE`, `CAPITAL-AI-SEO` and `CAPITAL-AI-SOCIAL` own no productive PVC stage solely because they validate, constrain, present or distribute outputs.
 
+`CAPITAL-AI-FE` has an explicit cross-cutting presentation-adaptation relationship to rendered `PVC-01..PVC-18` outputs. It may change Frontend-owned layout, responsive/device behavior, accessibility, interaction and visual composition while the listed Primary Owner remains authoritative for productive/domain semantics.
+
 Execution remains owner-correct under `/AGENTS.md@CURRENT_MAIN`. Work whose Authority or implementation belongs to another project is not silently taken over locally; it produces the owner-correct handover defined by the trust root. No handover transfers Primary PVC or Domain ownership.
 
 ## Canonical project-folder routing
@@ -70,7 +72,7 @@ Project-folder routing is an organizational mapping only. It does not create tec
 | `CAPITAL-AI-QM` | cross-cutting; no productive PVC | `docs/projects/quality-management/` | `quality-management` | Quality Management | 🩺 | `#4480E8` | `CAPITAL-AI-QM` | present |
 | `CAPITAL-AI-SEC` | cross-cutting; no productive PVC | `docs/projects/security/` | `security` | Security | 💻 | `#E04C4C` | `CAPITAL-AI-SEC` | present |
 | `CAPITAL-AI-COMP` | cross-cutting; no productive PVC | `docs/projects/compliance/` | `compliance` | Compliance | ⚖️ | `#E84848` | `CAPITAL-AI-COMP` | present |
-| `CAPITAL-AI-FE` | cross-cutting; no productive PVC | `docs/projects/frontend/` | `frontend` | Frontend | 🎨 | `#DC7CA8` | `CAPITAL-AI-FE` | present |
+| `CAPITAL-AI-FE` | cross-cutting presentation adaptation `PVC-01..18`; no productive PVC | `docs/projects/frontend/` | `frontend` | Frontend | 🎨 | `#DC7CA8` | `CAPITAL-AI-FE` | present |
 | `CAPITAL-AI-SEO` | cross-cutting; no productive PVC | `docs/projects/seo/` | `seo` | SEO | ✒️ | `#E8C464` | `CAPITAL-AI-SEO` | present |
 | `CAPITAL-AI-SOCIAL` | cross-cutting; no productive PVC | `docs/projects/social-media/` | `social-media` | Social Media | ♡ | `#E8C45C` | `CAPITAL-AI-SOCIAL` | present |
 

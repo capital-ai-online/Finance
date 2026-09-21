@@ -59,6 +59,23 @@ The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance 
 
 The hourly upstream sync therefore keeps future source visibility through review PRs while requiring desktop re-correlation before changed preview-shell architecture is accepted.
 
+## FE-DESKTOP-PVC-SYNC-01 — Desktop-only PVC presentation adaptation
+
+**Canonical identity:** `FE-DESKTOP-PVC-SYNC-01`  
+**Resolved Owner:** `CAPITAL-AI-FE`  
+**Project/PVC relationship:** existing `cross_cutting` presentation scope across rendered `PVC-01..PVC-18`; no productive PVC ownership transfer  
+**Mobile/Tablet:** preserve the synchronized source presentation  
+**Desktop:** from `1024px`, remove source preview/phone constraints and render the actual website composition  
+**Sync invariant:** `responsiveRuntimeAdapter` is required and revalidated on every upstream sync/promotion
+
+### Exit evidence
+
+- source lock and upstream component blobs remain unchanged;
+- `frontend-port.css` adapts only desktop widths and retains the sub-desktop source presentation;
+- the sync contract requires `DESKTOP_VIEWPORT_ADAPTER` and points to the focused regression test;
+- project/PVC routing explicitly permits FE-owned responsive/layout/accessibility/interaction adaptation without moving Primary PVC semantics;
+- exact-head required checks pass before Human/CODEOWNER merge.
+
 ## Preserved frontend invariants
 
 - `docs/frontend/FRONTEND_ARCH.md` remains the Finance runtime dependency/presentation boundary.
