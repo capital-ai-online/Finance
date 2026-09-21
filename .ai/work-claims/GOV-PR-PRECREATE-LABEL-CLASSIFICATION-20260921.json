@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-PR-PRECREATE-LABEL-CLASSIFICATION-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Replace post-create runner-backed PR label classification with fail-closed pre-create project classification and attach the canonical colored project label during PR creation.",
+  "workItemDE": "Die runner-basierte PR-Label-Klassifizierung nach PR-Erstellung durch fail-closed Pre-Create-Projektklassifizierung ersetzen und das kanonische farbige Projektlabel bereits bei der PR-Erstellung anhängen.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-21T16:37:00Z",
+  "baseBranch": "main",
+  "baseSha": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
+  "branch": "governance/precreate-pr-label-classification-20260921",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-PR-LABEL-CLASSIFICATION-20260920.json",
+    ".ai/work-claims/GOV-PR-PRECREATE-LABEL-CLASSIFICATION-20260921.json",
+    ".github/workflows/open-agent-draft-pr.yml",
+    ".github/workflows/pr-label-classification.yml",
+    "AGENTS.md",
+    "docs/projects/governance/work-packages/GOV_PR_LABEL_CLASSIFICATION_2026-09-20.md",
+    "scripts/pr/prLabelClassification.mjs",
+    "scripts/pr/prLabelClassification.test.mjs",
+    "scripts/pr/renderPullRequestBody.mjs"
+  ],
+  "correlation": {
+    "currentMainAtStart": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
+    "openPullRequestsChecked": [
+      1199,
+      1201,
+      1202,
+      1205,
+      1209,
+      1211,
+      1212,
+      1213
+    ],
+    "changedFileOverlap": false,
+    "semanticOverlap": "PR #1199 modifies separate existing PR autofix/sync workflows and does not write the PR-create or label-classification files. Other open PRs are project/domain slices with no claimed-path overlap. This work remains Governance-owned and preserves existing merge/security controls."
+  },
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+}

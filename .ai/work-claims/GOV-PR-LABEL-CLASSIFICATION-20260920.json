@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-LABEL-CLASSIFICATION-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -31,5 +31,8 @@
     "changedFileOverlap": false,
     "authorityOverlap": "PR #1140 owns PR-template v1.7 files. This slice uses separate classifier/workflow/work-package paths and does not modify the open PR contract."
   },
-  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment.",
+  "lifecycle": "superseded",
+  "activeWriter": false,
+  "releaseReason": "Human Owner superseded the post-create runner-backed label classifier with pre-create project-label resolution. The prior implementation is terminal historical evidence and must not remain an active writer."
 }
