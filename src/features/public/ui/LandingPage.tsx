@@ -526,12 +526,14 @@ export function LandingPage({
                   Enterprise Scorer & Bewertungstools im neuen Landing-Shell
                 </h2>
                 <p className="text-sm leading-relaxed text-text-secondary">
-                  Der öffentliche Enterprise Scorer bleibt über die bestehende Injection-Boundary eingebunden. Lazy Loading, BTC-Fixierung sowie Login- und Entitlement-Grenzen werden durch diesen Design-Slice nicht verändert.
+                  Der Enterprise Scorer bleibt für alle sichtbar. Ohne aktives Abo ist die Asset-Auswahl auf BTC begrenzt; ein aktives Starter-, Pro- oder Enterprise-Abo schaltet die bestehende Asset-Auswahl frei, ohne eine zweite Scoring-Authority einzuführen.
                 </p>
               </div>
               <div className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl border border-brand-accent/25 bg-brand-accent/[0.08] px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary lg:self-auto">
                 <Activity size={13} className="text-brand-accent" aria-hidden="true" />
-                BTC · Public Fixed
+                {profile && profile.subscriptionTier !== 'Free'
+                  ? `${profile.subscriptionTier} · Asset-Auswahl`
+                  : 'BTC · ohne Abo'}
               </div>
             </div>
             {preview}
