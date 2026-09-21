@@ -199,6 +199,7 @@ const manifest = {
   visualFixtureOnly: config.visualFixtureExactPaths,
   runtimePromotionAutomatic: false,
   financeComponentsBindAfterArchitectureAdoption: true,
+  responsiveRuntimeAdapter: config.responsiveRuntimeAdapter,
   presentationSurfaces: {
     login: '/login',
     legalAndFaq: 'src/components/LegalAndFaqPages.tsx',
