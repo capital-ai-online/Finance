@@ -4,66 +4,44 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-17 — historical task activation superseded  
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`  
-**Trust root:** `/AGENTS.md@current-main`
+**Reconciliation:** 2026-09-21 — FRONTEND upstream architecture adoption correlated  
+**Baseline:** `main@523275263f1c8a3e6f8047fae16653a76f6d8372`  
+**Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
 
 `historical/non-terminal != active`
 
-This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context and historical non-terminal markers are ledger/evidence only and are not an execution source. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
+Archive/superseded copies and historical non-terminal markers are evidence only. Executable work must resolve from CURRENT_MAIN and current Owner direction.
 
-## PR #900 / #901 work packages
-
-### FE-PR900-01 — Universe branding consumers
-Finish current-main materialization of Branding Kit/Universe design consumers. Preserve Vader Black, Capital Gold, Krypto Purple, Aktien Deadly Green, Indizes Pluto Blue and Forex Star Troops Magenta plus three signal-intensity badge levels.
-
-### FE-PR900-02 — Bond presentation removal
-Verify search/filter/tab/card/newsfeed surfaces do not expose Bond as user-selectable while stable technical identifiers remain where required. Visible German spelling remains `Krypto`.
-
-### FE-PR900-03 — Canonical ranking consumer
-Keep the current RankingBoard as canonical presentation consumer; do not add frontend-local scoring authority or synthetic score fills.
-
-### FE-PR900-04 — Exact-head validation
-Run design/pattern regression, TypeScript, FE architecture checks, tests and build on the final exact branch head for implementation slices.
-
-## Historical baseline (pre-2026-09-13) — non-active ledger
-
-Detailed Frontend state remains in `docs/frontend/FRONTEND_ROADMAP.md`, `FRONTEND_ARCH.md` and `COMPONENT_INVENTORY.md`. This project file does not create a second Frontend architecture or scoring authority.
-
-Current composition order absent a newer Owner priority: BB-2E Navigation/Drawer → BB-2F Header/Shell → BB-2G Dashboard Home / MyWorkspace.
-
-Class A canonicalize-now: Buffett Value Check, Sentiment Dashboard, Momentum Dashboard, Asset-Universe model visuals, Crypto category/subclass workspace, Social visualization projection.
-
-Frontend never becomes scoring/data/entitlement/IAM/Governance/Social-publishing authority.
-
-## Dependencies
-DATA/FINTECH verified scoring/data, QM checks, SEO technical handoffs, SOCIAL render/publish ownership.
-
-## Project exit gate
-One active FE roadmap; design tokens are canonical/consumed consistently, disabled Bond presentation stays absent and required exact-head checks are evidenced.
-
-## FE-CONSENT-V3 — CookieHub ablösen / Owner-Variante A
-
-**Priorität:** 5/5. **Owner:** CAPITAL-AI-FE, kein eigener produktiver PVC. **Executor:** CAPITAL-AI-OPS.
-**Owner-Freigabe:** „Variante A freigegeben“ (2026-09-15). **Status:** IMPLEMENTED_ON_BRANCH / VALIDATION_PARTIAL / PRODUCTION_NOT_PROVEN.
-
-CookieConsent v3.1.0 lokal ausliefern, Konfiguration versionieren, neue Einwilligung verlangen, GA4 nur nach gültigem Opt-in laden und AdSense vollständig pausieren. Einstellungen müssen auf jeder Route wieder geöffnet werden können. Bestehende Login-/Landing-Consumer behalten den kompatiblen Settings-Aufruf. Der Providerwechsel ersetzt keine Security-/Compliance-Assurance.
-
-**Evidence:** `evidence/COOKIECONSENT_V3_MIGRATION_2026-09-15.md`.
-**Exit:** geschützte Invarianten und Verhaltenstests bestanden; TypeScript/Build/FE-Gates auf dem endgültigen Head; Browserprüfung für Mobile, Pointer/Overlay, Speichern, Wiederöffnung, Reload-Persistenz und Widerruf; COMP-Bewertung des Consent-Nachweises. Keine Production Acceptance aus Repositorytests.
-**Folgeschritt:** AdSense-CMP-/TCF-Eignung separat klären; bis zur separaten Freigabe bleiben Anzeigen aus.
-
-
-## FE-LF-01-UPSTREAM-SYNC — Presentation source convergence
+## FE-LF-01-UPSTREAM-ARCH — Current presentation architecture adoption
 
 **Owner direction:** 2026-09-21  
-**Source:** `SvenKulessa/FRONTEND@main`  
-**Scope:** graphical components, UI slices, visual assets and Frontend composition architecture only  
-**Productive domain/runtime import:** prohibited by the sync contract  
-**LF-01 exit state on this branch:** `PASS_AFTER_HUMAN_MERGE`
+**Pinned source for PR #1206:** `SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07`  
+**Scope:** complete current graphical/presentation architecture  
+**LF-01 exit state on branch:** `PASS_AFTER_HUMAN_MERGE`
 
-The hourly synchronization is review-only and writes only an inert presentation-source snapshot outside `src/`. Mock/demo data, API/provider, auth, billing/Stripe, scoring, entitlement, server/runtime, package and environment source classes are excluded from automatic productive adoption. Files with risky upstream dependencies are marked adapter-blocked in the generated manifest.
+PR #1206 physically adopts the current upstream application composition, entry point, styles, presentation types, all graphical components/modals and the visual fixture required to reproduce them. The snapshot is inert and reviewable under `docs/frontend/upstream-source/SvenKulessa-FRONTEND/`.
 
-After Human/CODEOWNER merge of the exact PR carrying this decision, `LF-01_EXIT_EVIDENCE_CONVERGENCE = PASS` releases dependency-correct continuation into later Landing-First phases. This release does not convert independent Security, Compliance or Quality findings into PASS; their applicable gates remain independently fail-closed.
+`mockData.ts` is `VISUAL_FIXTURE_ONLY`: it may reproduce layout/content density but it is not productive market, news or scoring evidence.
+
+### Continuation after merge
+
+After #1206 merges, existing Finance-owned frontend/domain consumers are bound to this graphical architecture through adapters. Auth/session, data/provider, scoring, entitlement, billing and other productive authority remain with their canonical Finance owners. Each binding slice removes demo dependencies and preserves applicable SEC/COMP/QM gates.
+
+The hourly upstream sync maintains the same presentation-architecture scope through review PRs; it does not directly mutate productive runtime.
+
+## Preserved frontend invariants
+
+- `docs/frontend/FRONTEND_ARCH.md` remains the Finance runtime dependency/presentation boundary.
+- FRONTEND upstream is the leading visual source, not repository execution authority.
+- Frontend never becomes scoring/data/entitlement/IAM/Governance/Social-publishing authority.
+- Exact-head Frontend architecture, TypeScript, tests and build evidence remain required for productive adapter changes.
+
+## Dependencies
+
+FINTECH provides verified scoring/data contracts; OPS owns runtime/deployment responsibilities where assigned; SEC/COMP/QM retain independent gates; SEO/SOCIAL consume verified presentation outcomes.
+
+## Project exit gate
+
+One active FE architecture; upstream visual snapshot traceable to an exact SHA; productive Finance components connected through owner-correct adapters; no demo fixture promoted to live authority; required exact-head evidence green.
