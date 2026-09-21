@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "DOCUMENTARY-WP06D-DRAFT-PR-HANDOFF-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -33,5 +33,9 @@
     "tests/unit/documentaryMaintenanceHandoff.test.ts",
     "tests/unit/githubAgentDraftPrWorkflow.test.ts"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-21T20:12:00Z",
+  "releaseReason": "PR #1121 merged; terminal evidence only (merge a86b6fe19256f72ba32f83c2f6e9a074670e92f9). Released during GOV-PROJECT-LABEL-PROVIDER-CONVERGENCE-20260921 stale-writer correlation.",
+  "terminalPullRequest": 1121,
+  "terminalMergeSha": "a86b6fe19256f72ba32f83c2f6e9a074670e92f9"
 }
