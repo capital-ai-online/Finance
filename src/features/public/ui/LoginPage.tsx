@@ -268,7 +268,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
       role="main"
       id="main-content"
       data-design-source="SvenKulessa/FRONTEND"
-      data-design-source-commit="64a0c24bd60501611aef10d36c61f71eba81f752"
+      data-design-source-commit="f2a101330d74420c373f0ec56fa58caac53d741d"
       className="relative min-h-screen overflow-hidden bg-[#02050e] px-4 pb-16 pt-4 text-slate-100 selection:bg-aif-gold-DEFAULT selection:text-black sm:px-6"
     >
       <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-10 h-96 w-96 -translate-x-1/2 rounded-full bg-violet-600/10 blur-3xl" />
@@ -561,7 +561,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
                 WebAuthn-Passkey wird anschließend als zusätzlicher AAL2-Faktor geprüft.
               </p>
               <p className="text-center text-[10px] text-white/35">
-                Fragen zu rechtlichen und allgemeinen Nutzungsthemen findest du in den <a href="/faq" className="text-amber-400 hover:underline">FAQ</a>.
+                Rechtliches: <a href="/impressum" className="text-slate-300 hover:text-white hover:underline">Impressum</a> · <a href="/datenschutz" className="text-slate-300 hover:text-white hover:underline">Datenschutz</a> · <a href="/agb" className="text-slate-300 hover:text-white hover:underline">AGB</a> · <a href="/faq" className="text-amber-400 hover:underline">FAQ</a>.
               </p>
             </div>
           )}
