@@ -103,53 +103,32 @@ jobs:
               base: 'main',
               per_page: 100,
             });
-            const pending = new Map();
             const skipped = [];
-            for (const pr of pulls) {
+            const include = [];
+            const ordered = [...pulls].sort((a, b) => Number(a.number) - Number(b.number));
+            for (const pr of ordered) {
               const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
-              if (!sameRepo || pr.draft === true) {
-                skipped.push(`#${pr.number}:${pr.draft === true ? 'draft' : 'cross-repo'}`);
+              const headSha = normalizeSha(pr.head?.sha);
+              if (!sameRepo || pr.draft === true || !/^[0-9a-f]{40}$/.test(headSha)) {
+                skipped.push(`#${pr.number}:${pr.draft === true ? 'draft' : 'cross-repo-or-invalid-head'}`);
                 continue;
               }
-              pending.set(Number(pr.number), pr);
-            }
-
-            const include = [];
-            const maxRounds = 7;
-            for (let round = 0; round < maxRounds && pending.size > 0; round += 1) {
-              for (const [number, initialPr] of [...pending.entries()]) {
-                const pr = round === 0 ? initialPr : (await github.rest.pulls.get({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: number,
-                })).data;
-                const headSha = normalizeSha(pr.head?.sha);
-                const sameRepo = pr.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
-                if (pr.state !== 'open' || pr.base?.ref !== 'main' || !sameRepo || pr.draft === true || !/^[0-9a-f]{40}$/.test(headSha)) {
-                  skipped.push(`#${number}:boundary-changed`);
-                  pending.delete(number);
-                  continue;
-                }
-                const compare = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  basehead: `${mainSha}...${headSha}`,
-                });
-                if (compare.data.status === 'ahead' || compare.data.status === 'identical') {
-                  include.push({ pr_number: number, head_sha: headSha, base_sha: mainSha });
-                  pending.delete(number);
-                }
+              const compare = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                basehead: `${mainSha}...${headSha}`,
+              });
+              if (compare.data.status !== 'ahead' && compare.data.status !== 'identical') {
+                skipped.push(`#${pr.number}:next-pr-not-synced(${compare.data.status})`);
+                break;
               }
-              if (pending.size > 0 && round < maxRounds - 1) {
-                core.info(`Warte auf ${pending.size} Update-Branch-Head(s), Runde ${round + 1}/${maxRounds}.`);
-                await new Promise((resolve) => setTimeout(resolve, 5_000));
-              }
+              include.push({ pr_number: Number(pr.number), head_sha: headSha, base_sha: mainSha });
+              break;
             }
-            for (const [number] of pending) skipped.push(`#${number}:sync-timeout`);
 
             core.setOutput('matrix', JSON.stringify({ include }));
             core.setOutput('count', String(include.length));
-            core.notice(`Post-Merge-Baseline-Korrelation PASS: production=${productionSha.slice(0, 12)} <= main=${mainSha.slice(0, 12)}; ${include.length} PR(s) synchronisiert; skipped=${skipped.length ? skipped.join(',') : 'keine'}.`);
+            core.notice(`Post-Merge-Baseline-Korrelation PASS: production=${productionSha.slice(0, 12)} <= main=${mainSha.slice(0, 12)}; sequentieller Ziel-PR=${include.length ? '#' + include[0].pr_number : 'keiner'}; skipped=${skipped.length ? skipped.join(',') : 'keine'}.`);
 
   refresh:
     permissions:
@@ -161,7 +140,7 @@ jobs:
     if: ${{ needs.discover.result == 'success' && needs.discover.outputs.count != '0' }}
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 1
       matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
     runs-on: ubuntu-latest
     timeout-minutes: 8

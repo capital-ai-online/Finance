@@ -26,14 +26,17 @@ describe('production baseline post-merge refresh', () => {
     expect(yaml).toContain('productionRepo !== `${context.repo.owner}/${context.repo.repo}`');
   });
 
-  it('waits boundedly for update-branch and mutates only synchronized same-repo non-draft PRs', () => {
+  it('selects at most one FIFO synchronized same-repo non-draft PR without polling or skipping ahead', () => {
     const yaml = workflow();
-    expect(yaml).toContain('const maxRounds = 7;');
-    expect(yaml).toContain('setTimeout(resolve, 5_000)');
+    expect(yaml).toContain('const ordered = [...pulls].sort((a, b) => Number(a.number) - Number(b.number));');
     expect(yaml).toContain("state: 'open'");
     expect(yaml).toContain("base: 'main'");
     expect(yaml).toContain('pr.draft === true');
     expect(yaml).toContain("basehead: `${mainSha}...${headSha}`");
+    expect(yaml).toContain('next-pr-not-synced');
+    expect(yaml).toContain('max-parallel: 1');
+    expect(yaml).not.toContain('const maxRounds = 7;');
+    expect(yaml).not.toContain('setTimeout(resolve, 5_000)');
   });
 
   it('retries transient GitHub API failures while keeping client and authorization errors fail-closed', () => {
