@@ -34,6 +34,7 @@ jobs:
     outputs:
       eligible: ${{ steps.targets.outputs.eligible }}
       reason: ${{ steps.targets.outputs.reason }}
+      sync_required: ${{ steps.pr.outputs.sync_required }}
       pr_number: ${{ steps.pr.outputs.pr_number }}
       base_sha: ${{ steps.pr.outputs.base_sha }}
       head_sha: ${{ steps.pr.outputs.head_sha }}
@@ -71,21 +72,32 @@ jobs:
             }
             const pr = open[0];
             const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
-            if (main.commit.sha !== pr.base.sha) {
-              core.setOutput('pr_number', '');
-              core.notice(`Baseline Autofix held: current main drifted from PR base (${main.commit.sha} != ${pr.base.sha}).`);
-              return;
-            }
-            const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: pr.number, per_page: 100 });
+            const mainSha = String(main.commit?.sha || '').toLowerCase();
+            if (!/^[0-9a-f]{40}$/.test(mainSha)) throw new Error('CURRENT_MAIN SHA is invalid.');
             core.setOutput('pr_number', String(pr.number));
-            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('base_sha', mainSha);
             core.setOutput('head_sha', pr.head.sha);
             core.setOutput('head_ref', pr.head.ref);
+
+            const lineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+              owner,
+              repo,
+              basehead: `${mainSha}...${pr.head.sha}`,
+            });
+            const containsMain = lineage.data.status === 'ahead' || lineage.data.status === 'identical';
+            if (!containsMain) {
+              core.setOutput('sync_required', 'true');
+              core.notice(`Baseline Autofix deferred: PR #${pr.number} does not contain CURRENT_MAIN ${mainSha}; Update Branch must run before any baseline fix.`);
+              return;
+            }
+            core.setOutput('sync_required', 'false');
+
+            const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: pr.number, per_page: 100 });
             core.setOutput('changed_files_json', JSON.stringify(files.map((entry) => entry.filename)));
 
       - name: Fehlgeschlagene CI-Logs begrenzt erfassen
         id: failure_log
-        if: steps.pr.outputs.pr_number != ''
+        if: steps.pr.outputs.pr_number != '' && steps.pr.outputs.sync_required != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
@@ -106,7 +118,7 @@ jobs:
 
       - name: Nur exakte Current-State-Baseline-Fehler zulassen
         id: targets
-        if: steps.pr.outputs.pr_number != ''
+        if: steps.pr.outputs.pr_number != '' && steps.pr.outputs.sync_required != 'true'
         env:
           FAILURE_LOG: ${{ steps.failure_log.outputs.path }}
           CHANGED_FILES_JSON: ${{ steps.pr.outputs.changed_files_json }}
@@ -136,6 +148,37 @@ jobs:
           echo 'eligible=true' >> "$GITHUB_OUTPUT"
           echo 'reason=exact-current-state-baseline-failure' >> "$GITHUB_OUTPUT"
           echo "targets_json=$targets_json" >> "$GITHUB_OUTPUT"
+
+  sync-before-fix:
+    name: PR vor Baseline-Fix auf CURRENT_MAIN korrelieren
+    needs: [plan]
+    if: needs.plan.result == 'success' && needs.plan.outputs.sync_required == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    concurrency:
+      group: capital-ai-pr-writer-${{ needs.plan.outputs.pr_number }}
+      cancel-in-progress: false
+    steps:
+      - name: Kanonischen Update-Branch für exakt diesen PR anstoßen
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ needs.plan.outputs.pr_number }}
+        with:
+          script: |
+            const prNumber = String(process.env.PR_NUMBER || '').trim();
+            if (!/^[1-9][0-9]*$/.test(prNumber)) throw new Error('Exact PR number required for current-main correlation.');
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'sync-agent-pr-branches.yml',
+              ref: 'main',
+              inputs: { pr_number: prNumber },
+            });
+            core.notice(`PR #${prNumber}: CURRENT_MAIN correlation dispatched before baseline autofix.`);
 
   patch:
     name: Baseline-Patch read-only erzeugen und validieren
@@ -291,7 +334,35 @@ jobs:
             if (pr.state !== 'open' || pr.base.ref !== 'main') throw new Error('PR is no longer open against main.');
             if (pr.head.sha !== process.env.EXPECTED_HEAD_SHA || pr.head.ref !== process.env.EXPECTED_HEAD_REF) throw new Error('PR head drift before baseline write.');
             if (pr.head.repo?.full_name !== `${owner}/${repo}`) throw new Error('PR head repository drift.');
-            if (pr.base.sha !== process.env.EXPECTED_BASE_SHA || main.commit.sha !== process.env.EXPECTED_BASE_SHA) throw new Error('Current-main/base drift before baseline write.');
+            if (main.commit.sha !== process.env.EXPECTED_BASE_SHA) {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(prNumber) },
+              });
+              core.notice(`PR #${prNumber}: CURRENT_MAIN moved before baseline fix; Update Branch dispatched and stale fix abandoned.`);
+              core.setOutput('deferred_to_sync', 'true');
+              return;
+            }
+            const lineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
+              owner,
+              repo,
+              basehead: `${main.commit.sha}...${pr.head.sha}`,
+            });
+            if (lineage.data.status !== 'ahead' && lineage.data.status !== 'identical') {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(prNumber) },
+              });
+              core.notice(`PR #${prNumber}: exact head no longer contains CURRENT_MAIN; Update Branch dispatched before baseline fix.`);
+              core.setOutput('deferred_to_sync', 'true');
+              return;
+            }
 
             const { data: ref } = await github.rest.git.getRef({ owner, repo, ref: `heads/${pr.head.ref}` });
             if (ref.object.sha !== process.env.EXPECTED_HEAD_SHA) throw new Error('Branch ref drift before baseline write.');
@@ -312,21 +383,42 @@ jobs:
               parents: [process.env.EXPECTED_HEAD_SHA],
             });
             await github.rest.git.updateRef({ owner, repo, ref: `heads/${pr.head.ref}`, sha: commit.sha, force: false });
-            await github.rest.actions.createWorkflowDispatch({
+            core.setOutput('new_head_sha', commit.sha);
+            const { data: postMain } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+            const postLineage = await github.request('GET /repos/{owner}/{repo}/compare/{basehead}', {
               owner,
               repo,
-              workflow_id: 'ci.yml',
-              ref: pr.head.ref,
-              inputs: {
-                pr_number: String(prNumber),
-                expected_head_sha: commit.sha,
-                expected_head_ref: pr.head.ref,
-                expected_base_sha: process.env.EXPECTED_BASE_SHA,
-                source_autofix_run_id: String(context.runId),
-              },
+              basehead: `${postMain.commit.sha}...${commit.sha}`,
             });
-            core.setOutput('new_head_sha', commit.sha);
-            core.setOutput('ci_dispatched', 'true');
+            if (postLineage.data.status !== 'ahead' && postLineage.data.status !== 'identical') {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'sync-agent-pr-branches.yml',
+                ref: 'main',
+                inputs: { pr_number: String(prNumber) },
+              });
+              core.setOutput('ci_dispatched', 'false');
+              core.setOutput('revalidation', 'branch-sync');
+              core.notice(`PR #${prNumber}: CURRENT_MAIN moved during baseline fix; Update Branch dispatched before new tests.`);
+            } else {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'ci.yml',
+                ref: pr.head.ref,
+                inputs: {
+                  pr_number: String(prNumber),
+                  expected_head_sha: commit.sha,
+                  expected_head_ref: pr.head.ref,
+                  expected_base_sha: postMain.commit.sha,
+                  source_autofix_run_id: String(context.runId),
+                },
+              });
+              core.setOutput('ci_dispatched', 'true');
+              core.setOutput('revalidation', 'ci');
+              core.notice(`PR #${prNumber}: baseline fix remains correlated with CURRENT_MAIN; exact-head CI dispatched.`);
+            }
 
       - name: Ergebnis zusammenfassen
         env:
@@ -334,6 +426,7 @@ jobs:
           NEW_HEAD: ${{ steps.write.outputs.new_head_sha }}
           TARGETS: ${{ needs.plan.outputs.targets_json }}
           CI_DISPATCHED: ${{ steps.write.outputs.ci_dispatched }}
+          REVALIDATION: ${{ steps.write.outputs.revalidation }}
         shell: bash
         run: |
           {
@@ -345,6 +438,6 @@ jobs:
             echo '- source: exact CI baseline freshness errors only'
             echo '- policy/runtime: trusted current-main checkout only'
             echo '- write: exact validated Git tree, force=false'
-            echo "- CI revalidation: workflow_dispatch for exact new head (`$CI_DISPATCHED`)"
+            echo "- revalidation: \`${REVALIDATION:-sync-deferred}\` (CI dispatched=\`$CI_DISPATCHED\`)"
             echo '- merge authority: unchanged, Human/CODEOWNER only'
           } >> "$GITHUB_STEP_SUMMARY"
