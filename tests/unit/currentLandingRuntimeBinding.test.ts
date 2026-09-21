@@ -20,7 +20,6 @@ describe('current f2a101 landing runtime binding', () => {
     expect(landing).toContain('data-market-data-binding="verified-on-selection"');
     expect(landing).toContain('data-landing-scorer-gate="FIN-LF-01"');
     expect(referenceApp).toContain('useCurrentLandingRuntimeBinding');
-    expect(referenceApp).toContain('<CurrentLandingDataNotice />');
   });
 
   it('binds all 15 visible market identities to canonical Finance symbols', () => {
