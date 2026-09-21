@@ -55,8 +55,20 @@
     "import\\.meta\\.env",
     "(?:^|/)data/mockData"
   ],
-  "textExtensions": [".tsx", ".ts", ".css", ".svg"],
-  "binaryExtensions": [".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif"],
+  "textExtensions": [
+    ".tsx",
+    ".ts",
+    ".css",
+    ".svg"
+  ],
+  "binaryExtensions": [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".avif",
+    ".gif"
+  ],
   "maxFileBytes": 5242880,
   "maxTotalBytes": 26214400,
   "runtimePromotion": {
@@ -64,5 +76,23 @@
     "destinationUnderSrcAllowed": false,
     "adapterReviewRequired": true,
     "financeComponentsBindAfterArchitectureAdoption": true
+  },
+  "responsiveRuntimeAdapter": {
+    "required": true,
+    "path": "src/features/public/ui/frontend-port/frontend-port.css",
+    "strategy": "DESKTOP_VIEWPORT_ADAPTER",
+    "desktopMinPx": 1024,
+    "preserveMobileSourceLayout": true,
+    "preserveTabletSourceLayout": true,
+    "upstreamPreviewChromeRuntimeOnDesktop": false,
+    "userAgentBranching": false,
+    "sourceLayoutMarkers": [
+      "viewMode",
+      "'mockup'",
+      "'fullscreen'",
+      "sm:max-w-[412px]",
+      "max-w-md",
+      "hidden sm:flex"
+    ]
   }
 }
