@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, ArrowLeft, CheckCircle2, Globe2, Loader2, Lock, LogIn, Mail, Shield, ShieldCheck, Sparkles, TrendingUp, UserPlus, Zap } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Lock, LogIn, Mail, Shield, ShieldCheck, Sparkles, TrendingUp, UserPlus, Zap } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
 import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 import {
@@ -11,7 +11,6 @@ import {
   PASSWORD_RECOVERY_QUERY_PARAM,
   isPasswordRecoveryLocation,
 } from '../auth/passwordRecovery';
-import { motion } from 'motion/react';
 import { BrandLogo } from './frontend-port/components/BrandLogo';
 
 interface LoginPageProps {
