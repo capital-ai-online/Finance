@@ -42,7 +42,8 @@
     "src/platform/PdfReporting/pdfBrand.ts",
     "public/favicon.svg",
     "public/og-image.svg",
-    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921.json"
+    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921.json",
+    ".gitleaksignore"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
@@ -61,7 +62,8 @@
     "the historical frontend1608AppearanceContract guard is retired",
     "mockData remains presentation-only and does not transfer Finance data/scoring authority",
     "future upstream changes do not auto-promote into runtime",
-    "LF-01 exit convergence becomes PASS only after Human/CODEOWNER merge and required exact-head evidence"
+    "LF-01 exit convergence becomes PASS only after Human/CODEOWNER merge and required exact-head evidence",
+    "Gitleaks false positives for the public pinned FRONTEND commit SHA are suppressed only by exact commit/path/rule/line fingerprints; no detection rule is weakened."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
 }
