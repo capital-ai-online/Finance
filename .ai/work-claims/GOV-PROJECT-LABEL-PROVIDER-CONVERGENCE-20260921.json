@@ -17,7 +17,7 @@
   "startedAt": "2026-09-21T20:12:00Z",
   "baseBranch": "main",
   "baseSha": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
-  "branch": "governance/project-label-provider-convergence-20260921",
+  "branch": "agent/governance-project-label-provider-convergence-20260921",
   "parentWorkPackage": "GOV-PR-LABEL-01",
   "issue": 1224,
   "claimedPaths": [
@@ -70,7 +70,7 @@
   ],
   "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment.",
   "prCreateReadiness": {
-    "state": "BLOCKED_PROVIDER_LABEL_DRIFT",
+    "state": "READY_FOR_CANONICAL_DRAFT_PR_WORKFLOW_RETRY",
     "observedAt": "2026-09-21T20:12:00Z",
     "currentMain": "9ab7776114beff33412e1bd2cfb57c3db84e31b9",
     "observed": [
@@ -92,9 +92,16 @@
       "workflow": ".github/workflows/open-agent-draft-pr.yml@CURRENT_MAIN",
       "workflowName": "Agenten-Draft-PR öffnen",
       "input": {
-        "head_branch": "governance/project-label-provider-convergence-20260921"
+        "head_branch": "agent/governance-project-label-provider-convergence-20260921"
       },
       "expectedEffect": "The existing CURRENT_MAIN pre-create writer force-converges project:CAPITAL-AI-GOV to #A1A1AA with its canonical description, verifies final correlation, and then creates the draft PR. After Human/CODEOWNER merge, the new direct-main convergence job synchronizes the complete canonical project-label catalog, including project:CAPITAL-AI-OPS -> #845CDC."
+    },
+    "previousFailedRun": {
+      "runId": 35651773575,
+      "failedAt": "2026-09-21T20:33:25Z",
+      "failedStep": "Angeforderten Agenten-Branch validieren",
+      "cause": "Branch namespace governance/* is not allowed by CURRENT_MAIN Draft-PR workflow; allowed namespaces are agent/*, claude/*, grok/*, ai/*.",
+      "remediation": "Work copied losslessly to agent/governance-project-label-provider-convergence-20260921; old noncanonical branch is retired from active use."
     }
   }
 }
